@@ -593,10 +593,14 @@ public abstract class CVODES {
     // For cv_mem.cv_setup_select
     final int cvDlsSetup_select = 1;
     final int cvDlsLapackSetup_select = 2;
-    // For cv_mem.cv_fS1_select
+    // For cv_mem.cv_fS1
     final int cvSensRhs1InternalDQ_select = -1;
-    // For cv_mem.cv_f_select
+    // For cv_mem.cv_f
     final int cvSensRhsInternalDQ_select = -1;
+    final int cvDlsJacBWrapper_select = 101;
+    final int CVArhs_select = 100;
+	final int cvDlsFreeB_select = 100;
+	final int CVArhsQ_select = 200;
 
     final int cvsRoberts_dns = 1;
     final int cvsDirectDemo_ls_Problem_1 = 2;
@@ -2530,9 +2534,9 @@ public abstract class CVODES {
 	  int cv_ism;                 /* ism = SIMULTANEOUS or STAGGERED              */
 
 	  //CVSensRhsFn cv_fS;          /* fS = (df/dy)*yS + (df/dp)                    */
-	  int cv_fS_select;
+	  int cv_fS;
 	  //CVSensRhs1Fn cv_fS1;        /* fS1 = (df/dy)*yS_i + (df/dp)                 */
-	  int cv_fS1_select;
+	  int cv_fS1;
 	  //void *cv_fS_data;           /* data pointer passed to fS                    */
 	  UserData cv_fS_data = new UserData();;
 	  boolean cv_fSDQ;        /* SUNTRUE if using internal DQ functions       */
@@ -2966,7 +2970,7 @@ public abstract class CVODES {
     	  /* Set default values for quad. optional inputs */
 
     	  cv_mem.cv_quadr      = false;
-    	  //cv_mem.cv_fQ         = null;
+    	  cv_mem.cv_fQ         = -1;
     	  cv_mem.cv_errconQ    = false;
     	  cv_mem.cv_itolQ      = CV_NN;
 
@@ -2975,9 +2979,9 @@ public abstract class CVODES {
     	  cv_mem.cv_sensi      = false;
     	  cv_mem.cv_fS_data    = new UserData();
     	  //cv_mem.cv_fS         = cvSensRhsInternalDQ;
-    	  cv_mem.cv_fS_select = cvSensRhsInternalDQ_select;
+    	  cv_mem.cv_fS = cvSensRhsInternalDQ_select;
     	  //cv_mem.cv_fS1         = cvSensRhs1InternalDQ;
-    	  cv_mem.cv_fS1_select = cvSensRhs1InternalDQ_select;
+    	  cv_mem.cv_fS1 = cvSensRhs1InternalDQ_select;
     	  cv_mem.cv_fSDQ       = true;
     	  cv_mem.cv_ifS        = CV_ONESENS;
     	  cv_mem.cv_DQtype     = CV_CENTERED;
@@ -3139,7 +3143,7 @@ public abstract class CVODES {
 
        /* Copy the input parameters into CVODES state */
 
-       //cv_mem.cv_f  = f;
+       cv_mem.cv_f  = f;
        cv_mem.cv_tn = t0;
 
        /* Set step parameters */
@@ -3804,6 +3808,7 @@ public abstract class CVODES {
     }
     cvdls_mem = cv_mem.cv_lmem;
 
+    
     if (jac >= 0) {
       cvdls_mem.jacDQ  = false;
       cvdls_mem.jac    = jac;
@@ -3914,7 +3919,11 @@ public abstract class CVODES {
        * If computing quadr. sensi., call fQS at (t0,y0,yS0), set znQS[1][is] = yQS'(t0), is=1,...,Ns.
        */
 
-      if (testMode) {
+      if (cv_mem.cv_f == CVArhs_select) {
+    	  retval = CVArhs(cv_mem.cv_tn, cv_mem.cv_zn[0],
+                  cv_mem.cv_zn[1], cv_mem.cv_user_data.memRec);     
+      }
+      else if (testMode) {
     	  retval = fTestMode(cv_mem.cv_tn, cv_mem.cv_zn[0],
                   cv_mem.cv_zn[1], cv_mem.cv_user_data);   
       }
@@ -3935,7 +3944,11 @@ public abstract class CVODES {
       }
 
       if (cv_mem.cv_quadr) {
-    	if (testMode) {
+    	if (cv_mem.cv_fQ == CVArhsQ_select) {
+    		retval = CVArhsQ(cv_mem.cv_tn, cv_mem.cv_zn[0],
+                    cv_mem.cv_znQ[1], cv_mem.cv_user_data.memRec);		
+    	}
+        else if (testMode) {
     		retval = fQTestMode(cv_mem.cv_tn, cv_mem.cv_zn[0],
                     cv_mem.cv_znQ[1], cv_mem.cv_user_data);	
     	}
@@ -5801,7 +5814,11 @@ public abstract class CVODES {
    
    /* tempv <- f(t+h, h*y'(t)+y(t)) */
 
-   if (testMode) {
+   if (cv_mem.cv_f == CVArhs_select) {
+	   retval = CVArhs(cv_mem.cv_tn+hg, cv_mem.cv_y,
+               cv_mem.cv_tempv, cv_mem.cv_user_data.memRec);      
+   }
+   else if (testMode) {
 	   retval = fTestMode(cv_mem.cv_tn+hg, cv_mem.cv_y,
                cv_mem.cv_tempv, cv_mem.cv_user_data);   
    }
@@ -5814,7 +5831,11 @@ public abstract class CVODES {
    if (retval > 0) return(RHSFUNC_RECVR);
 
    if (cv_mem.cv_quadr && cv_mem.cv_errconQ) {
-	 if (testMode) {
+	 if (cv_mem.cv_fQ == CVArhsQ_select) {
+		 retval = CVArhsQ(cv_mem.cv_tn+hg, cv_mem.cv_y,
+                 cv_mem.cv_tempvQ, cv_mem.cv_user_data.memRec);	 
+	 }
+     else if (testMode) {
 		 retval = fQTestMode(cv_mem.cv_tn+hg, cv_mem.cv_y,
                  cv_mem.cv_tempvQ, cv_mem.cv_user_data);	 
 	 }
@@ -6754,8 +6775,11 @@ else                return(snrm);
        /* Evaluate f at converged y, needed for future evaluations of sens. RHS 
         * If f() fails recoverably, treat it as a convergence failure and 
         * attempt the step again */
-
-       if (testMode) {
+       if (cv_mem.cv_f == CVArhs_select) {
+    	   retval = CVArhs(cv_mem.cv_tn, cv_mem.cv_y,
+                   cv_mem.cv_ftemp, cv_mem.cv_user_data.memRec);      
+       }
+       else if (testMode) {
     	   retval = fTestMode(cv_mem.cv_tn, cv_mem.cv_y,
                    cv_mem.cv_ftemp, cv_mem.cv_user_data);   
        }
@@ -7558,7 +7582,11 @@ else                return(snrm);
    /* Initialize delS and Delp to avoid compiler warning message */
    delS = Delp = ZERO;
 
-   if (testMode) {
+   if (cv_mem.cv_f == CVArhs_select) {
+	   retval = CVArhs(cv_mem.cv_tn, cv_mem.cv_zn[0],
+               cv_mem.cv_tempv, cv_mem.cv_user_data.memRec);    
+   }
+   else if (testMode) {
 	   retval = fTestMode(cv_mem.cv_tn, cv_mem.cv_zn[0],
                cv_mem.cv_tempv, cv_mem.cv_user_data);   
    }
@@ -7666,7 +7694,11 @@ else                return(snrm);
 
      Delp = Del;
 
-     if (testMode) {
+     if (cv_mem.cv_f == CVArhs_select) {
+    	 retval = CVArhs(cv_mem.cv_tn, cv_mem.cv_y,
+                 cv_mem.cv_tempv, cv_mem.cv_user_data.memRec);	 
+     }
+     else if (testMode) {
     	 retval = fTestMode(cv_mem.cv_tn, cv_mem.cv_y,
                  cv_mem.cv_tempv, cv_mem.cv_user_data);
 	 
@@ -7768,7 +7800,11 @@ else                return(snrm);
 
    for(;;) {
 
-     if (testMode) {
+     if (cv_mem.cv_f == CVArhs_select) {
+    	 retval = CVArhs(cv_mem.cv_tn, cv_mem.cv_zn[0],
+                 cv_mem.cv_ftemp, cv_mem.cv_user_data.memRec);	 	 
+     }
+	 else if (testMode) {
     	 retval = fTestMode(cv_mem.cv_tn, cv_mem.cv_zn[0],
                  cv_mem.cv_ftemp, cv_mem.cv_user_data);	 
      }
@@ -7911,6 +7947,10 @@ else                return(snrm);
 
        if (cvdls_mem.jacDQ) {
     	   cvDlsDenseDQJac(cv_mem.cv_tn, y, fy, cvdls_mem.A, cv_mem, tmp1);  
+       }
+       else if (cvdls_mem.jac == cvDlsJacBWrapper_select) {
+    	   retval = cvDlsJacBWrapper(cv_mem.cv_tn, y, fy, cvdls_mem.A, 
+                   cvdls_mem.J_data.memRec, tmp1, tmp2, tmp3);  
        }
        else if (testMode) {
     	   retval = JacTestMode(cv_mem.cv_tn, y, fy, cvdls_mem.A, 
@@ -8293,7 +8333,11 @@ else                return(snrm);
        
        /* Save norm of correction, evaluate f, and loop again */
        Delp = Del;
-       if (testMode) {
+       if (cv_mem.cv_f == CVArhs_select) {
+    	   retval = CVArhs(cv_mem.cv_tn, cv_mem.cv_y,
+                   cv_mem.cv_ftemp, cv_mem.cv_user_data.memRec);      
+       }
+       else if (testMode) {
     	   retval = fTestMode(cv_mem.cv_tn, cv_mem.cv_y,
                    cv_mem.cv_ftemp, cv_mem.cv_user_data);   
        }
@@ -8732,7 +8776,11 @@ else                return(snrm);
 	   cv_mem.cv_qwait = LONG_WAIT;
 	   cv_mem.cv_nscon = 0;
 
-	   if (testMode) {
+	   if (cv_mem.cv_f == CVArhs_select) {
+		   retval = CVArhs(cv_mem.cv_tn, cv_mem.cv_zn[0],
+                   cv_mem.cv_tempv, cv_mem.cv_user_data.memRec);         
+	   }
+	   else if (testMode) {
 		   retval = fTestMode(cv_mem.cv_tn, cv_mem.cv_zn[0],
                    cv_mem.cv_tempv, cv_mem.cv_user_data);   
 	   }
@@ -8748,7 +8796,11 @@ else                return(snrm);
 
 	   if (cv_mem.cv_quadr) {
 
-	     if (testMode) {
+		 if (cv_mem.cv_fQ == CVArhsQ_select) {
+			 retval = CVArhsQ(cv_mem.cv_tn, cv_mem.cv_zn[0],
+                     cv_mem.cv_tempvQ, cv_mem.cv_user_data.memRec);		   
+		 }
+	     else if (testMode) {
 	    	 retval = fQTestMode(cv_mem.cv_tn, cv_mem.cv_zn[0],
                      cv_mem.cv_tempvQ, cv_mem.cv_user_data);	 
 	     }
@@ -8823,7 +8875,11 @@ else                return(snrm);
 	   int retval;
 
 	   /* Save quadrature correction in acorQ */
-	   if (testMode) {
+       if (cv_mem.cv_fQ == CVArhsQ_select) {
+    	   retval = CVArhsQ(cv_mem.cv_tn, cv_mem.cv_y,
+                   cv_mem.cv_acorQ, cv_mem.cv_user_data.memRec);   
+       }
+	   else if (testMode) {
 		   retval = fQTestMode(cv_mem.cv_tn, cv_mem.cv_y,
                    cv_mem.cv_acorQ, cv_mem.cv_user_data);   
 	   }
@@ -9598,7 +9654,10 @@ else                return(snrm);
 	     N_VLinearSum_Serial(ONE,y,Delta,yS,ytemp);
 	     cv_mem.cv_p[which] = psave + Delta;
 
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, ytemp, ySdot, cv_mem.cv_user_data.memRec);		 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, ytemp, ySdot, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9610,7 +9669,10 @@ else                return(snrm);
 	     N_VLinearSum_Serial(ONE,y,-Delta,yS,ytemp);
 	     cv_mem.cv_p[which] = psave - Delta;
 
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, ytemp, ftemp, cv_mem.cv_user_data.memRec);	 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, ytemp, ftemp, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9630,7 +9692,10 @@ else                return(snrm);
 	     
 	     N_VLinearSum_Serial(ONE,y,Deltay,yS,ytemp);
 
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, ytemp, ySdot, cv_mem.cv_user_data.memRec);		 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, ytemp, ySdot, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9641,7 +9706,10 @@ else                return(snrm);
 
 	     N_VLinearSum_Serial(ONE,y,-Deltay,yS,ytemp);
 
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, ytemp, ftemp, cv_mem.cv_user_data.memRec);	 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, ytemp, ftemp, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9653,7 +9721,10 @@ else                return(snrm);
 	     N_VLinearSum_Serial(r2Deltay, ySdot, -r2Deltay, ftemp, ySdot);
 	     
 	     cv_mem.cv_p[which] = psave + Deltap;
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, y, ytemp, cv_mem.cv_user_data.memRec);	 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, y, ytemp, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9663,7 +9734,10 @@ else                return(snrm);
 	     if (retval != 0) return(retval);
 
 	     cv_mem.cv_p[which] = psave - Deltap;
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, y, ftemp, cv_mem.cv_user_data.memRec);	 	 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, y, ftemp, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9686,7 +9760,10 @@ else                return(snrm);
 	     N_VLinearSum_Serial(ONE,y,Delta,yS,ytemp);
 	     cv_mem.cv_p[which] = psave + Delta;
 
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, ytemp, ySdot, cv_mem.cv_user_data.memRec);	 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, ytemp, ySdot, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9703,7 +9780,10 @@ else                return(snrm);
 	     
 	     N_VLinearSum_Serial(ONE,y,Deltay,yS,ytemp);
 
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, ytemp, ySdot, cv_mem.cv_user_data.memRec);	 	 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, ytemp, ySdot, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9715,7 +9795,10 @@ else                return(snrm);
 	     N_VLinearSum_Serial(rDeltay, ySdot, -rDeltay, ydot, ySdot);
 	     
 	     cv_mem.cv_p[which] = psave + Deltap;
-	     if (testMode) {
+	     if (cv_mem.cv_f == CVArhs_select) {
+	    	 retval = CVArhs(t, y, ytemp, cv_mem.cv_user_data.memRec);		 
+	     }
+	     else if (testMode) {
 	    	 retval = fTestMode(t, y, ytemp, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9809,7 +9892,10 @@ else                return(snrm);
 	     N_VLinearSum_Serial(ONE, y, Delta, yS, tmp);
 	     cv_mem.cv_p[which] = psave + Delta;
 
-	     if (testMode) {
+	     if (cv_mem.cv_fQ == CVArhsQ_select) {
+	    	 retval = CVArhsQ(t, tmp, yQSdot, cv_mem.cv_user_data.memRec);		 
+	     }
+	     else if (testMode) {
 	    	 retval = fQTestMode(t, tmp, yQSdot, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9820,8 +9906,11 @@ else                return(snrm);
 	     
 	     N_VLinearSum_Serial(ONE, y, -Delta, yS, tmp);
 	     cv_mem.cv_p[which] = psave - Delta;
-
-	     if (testMode) {
+         
+	     if (cv_mem.cv_fQ == CVArhsQ_select) {
+	    	 retval = CVArhsQ(t, tmp, tmpQ, cv_mem.cv_user_data.memRec);	 
+	     }
+	     else if (testMode) {
 	    	 retval = fQTestMode(t, tmp, tmpQ, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -9842,7 +9931,10 @@ else                return(snrm);
 	     N_VLinearSum_Serial(ONE, y, Delta, yS, tmp);
 	     cv_mem.cv_p[which] = psave + Delta;
 
-	     if (testMode) {
+	     if (cv_mem.cv_fQ == CVArhsQ_select) {
+	    	 retval = CVArhsQ(t, tmp, yQSdot, cv_mem.cv_user_data.memRec);		 
+	     }
+	     else if (testMode) {
 	    	 retval = fQTestMode(t, tmp, yQSdot, cv_mem.cv_user_data);	 
 	     }
 	     else {
@@ -10948,7 +11040,7 @@ else                return(snrm);
 	     return(CV_SUCCESS);
 	   }
 
-	   private int CVodeSStolerances(CVodeMemRec cv_mem, double reltol, double abstol)
+	   protected int CVodeSStolerances(CVodeMemRec cv_mem, double reltol, double abstol)
 	   {
 
 	     if (cv_mem==null) {
@@ -11392,18 +11484,18 @@ else                return(snrm);
 
 	  cv_mem.cv_ifS = CV_ONESENS;
 	  //cv_mem.cv_fS  = null;
-	  cv_mem.cv_fS_select = -1;
+	  cv_mem.cv_fS = -1;
 
 	  if (fS1_select < 0) {
 
 	    cv_mem.cv_fSDQ = true;
-	    cv_mem.cv_fS1_select  = cvSensRhs1InternalDQ_select;
+	    cv_mem.cv_fS1  = cvSensRhs1InternalDQ_select;
 	    cv_mem.cv_fS_data.memRec = cv_mem;
 
 	  } else {
 
 	    cv_mem.cv_fSDQ = false;
-	    cv_mem.cv_fS1_select  = fS1_select;
+	    cv_mem.cv_fS1  = fS1_select;
 	    cv_mem.cv_fS_data = cv_mem.cv_user_data;
 
 	  }
@@ -11924,20 +12016,23 @@ else                return(snrm);
 
 		  /* Right hand side function for backward run */
 		  //CVRhsFnB cv_f;
+		  int cv_f;
 		  //CVRhsFnBS cv_fs;
 
 		  /* Right hand side quadrature function for backward run */
 		  //CVQuadRhsFnB cv_fQ;
+		  int cv_fQ;
 		  //CVQuadRhsFnBS cv_fQs;
 
 		  /* User user_data */
 		  UserData cv_user_data;
 		    
 		  /* Memory block for a linear solver's interface to CVODEA */
-		  //void *cv_lmem;
+		  CVDlsMemRecB cv_lmem;
 
 		  /* Function to free any memory allocated by the linear solver */
 		  //int (*cv_lfree)(CVodeBMem cvB_mem);
+		  int cv_lfree_select;
 
 		  /* Memory block for a preconditioner's module interface to CVODEA */ 
 		  //void *cv_pmem;
@@ -12057,6 +12152,510 @@ else                return(snrm);
 		  NVector yS[];
 		  int order;
 		};
+
+		class CVDlsMemRecB {
+
+			  //CVDlsJacFnB jacB;
+			  int jacB;
+			  //CVDlsJacFnBS jacBS;
+	          int jacBS;
+			};
+			
+		/* cvDlsJacBWrapper interfaces to the CVDlsJacFnB routine provided 
+		   by the user. cvDlsJacBWrapper is of type CVDlsJacFn.
+		   NOTE: data here contains cvode_mem */
+		private int cvDlsJacBWrapper(double t, NVector yB, NVector fyB, 
+		                            double JB[][], CVodeMemRec cv_mem,
+		                            NVector tmp1B, NVector tmp2B, NVector tmp3B)
+		{
+		  CVadjMemRec ca_mem;
+		  CVodeBMemRec cvB_mem;
+		  int retval, flag;
+
+		  /* Check if cvode_mem exists */
+		  if (cv_mem == null) {
+		    cvProcessError(null, CVDLS_MEM_NULL, "CVSDLS",
+		                   "cvDlsJacBWrapper", MSGD_CVMEM_NULL);
+		    return(CVDLS_MEM_NULL);
+		  }
+
+		  /* Was ASA initialized? */
+		  if (cv_mem.cv_adjMallocDone == false) {
+		    cvProcessError(cv_mem, CVDLS_NO_ADJ, "CVSDLS",
+		                   "cvDlsJacBWrapper", MSGD_NO_ADJ);
+		    return(CVDLS_NO_ADJ);
+		  } 
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  if (ca_mem.ca_bckpbCrt == null) {
+		    cvProcessError(cv_mem, CVDLS_LMEMB_NULL, "CVSDLS",
+		                   "cvDlsJacBWrapper", MSGD_LMEMB_NULL);
+		    return(CVDLS_LMEMB_NULL);
+		  }
+		  cvB_mem = ca_mem.ca_bckpbCrt;
+
+		  /* Forward solution from interpolation */
+		  if (ca_mem.ca_IMget == CVAhermiteGetY_select) {
+		        flag = CVAhermiteGetY(cv_mem, t, ca_mem.ca_ytmp, null);
+		  }
+		  else {
+			  flag = CVApolynomialGetY(cv_mem, t, ca_mem.ca_ytmp, null);
+		  }
+		  if (flag != CV_SUCCESS) {
+		    cvProcessError(cv_mem, -1, "CVSDLS", "cvDlsJacBWrapper",
+		                   MSGD_BAD_TINTERP);
+		    return(-1);
+		  }
+
+		  /* Call user's adjoint jacB routine (of type CVDlsJacFnB) */
+		  if (testMode) {
+			  retval = JacBTestMode(t, ca_mem.ca_ytmp, yB, fyB,
+                      JB, cvB_mem.cv_user_data,
+                      tmp1B, tmp2B, tmp3B);
+		  }
+		  else {
+		  retval = JacB(t, ca_mem.ca_ytmp, yB, fyB,
+		                            JB, cvB_mem.cv_user_data,
+		                            tmp1B, tmp2B, tmp3B);
+		  }
+		  return(retval);
+		}
+		
+		/*
+		 * CVAhermiteGetY ( -> IMget )
+		 *
+		 * This routine uses cubic piece-wise Hermite interpolation for 
+		 * the forward solution vector. 
+		 * It is typically called by the wrapper routines before calling
+		 * user provided routines (fB, djacB, bjacB, jtimesB, psolB) but
+		 * can be directly called by the user through CVodeGetAdjY
+		 */
+
+		protected int CVAhermiteGetY(CVodeMemRec cv_mem, double t,
+		                          NVector y, NVector yS[])
+		{
+		  CVadjMemRec ca_mem;
+		  DtpntMemRec dt_mem[];
+		  HermiteDataMemRec content0, content1;
+
+		  double t0, t1, delta;
+		  double factor1, factor2, factor3;
+
+		  NVector y0, yd0, y1, yd1;
+		  NVector yS0[]=null;
+		  NVector ySd0[]= null;
+		  NVector yS1[], ySd1[];
+
+		  int flag, is, NS;
+		  long indx[] = new long[1];
+		  boolean newpoint[] = new boolean[1];
+
+		 
+		  ca_mem = cv_mem.cv_adj_mem;
+		  dt_mem = ca_mem.dt_mem;
+		 
+		  /* Local value of Ns */
+		 
+		  NS = (ca_mem.ca_IMinterpSensi && (yS != null)) ? cv_mem.cv_Ns : 0;
+
+		  /* Get the index in dt_mem */
+
+		  flag = CVAfindIndex(cv_mem, t, indx, newpoint);
+		  if (flag != CV_SUCCESS) return(flag);
+
+		  /* If we are beyond the left limit but close enough,
+		     then return y at the left limit. */
+
+		  if (indx[0] == 0) {
+		    content0 = dt_mem[0].hermiteContent;
+		    N_VScale_Serial(ONE, content0.y, y);
+		    for (is=0; is<NS; is++) N_VScale_Serial(ONE, content0.yS[is], yS[is]);
+		    return(CV_SUCCESS);
+		  }
+
+		  /* Extract stuff from the appropriate data points */
+
+		  t0 = dt_mem[(int)(indx[0]-1)].t;
+		  t1 = dt_mem[(int)indx[0]].t;
+		  delta = t1 - t0;
+
+		  content0 = dt_mem[(int)(indx[0]-1)].hermiteContent;
+		  y0  = content0.y;
+		  yd0 = content0.yd;
+		  if (ca_mem.ca_IMinterpSensi) {
+		    yS0  = content0.yS;
+		    ySd0 = content0.ySd;
+		  }
+
+		  if (newpoint[0]) {
+		    
+		    /* Recompute Y0 and Y1 */
+
+		    content1 = dt_mem[(int)indx[0]].hermiteContent;
+
+		    y1  = content1.y;
+		    yd1 = content1.yd;
+
+		    N_VLinearSum_Serial(ONE, y1, -ONE, y0, ca_mem.ca_Y[0]);
+		    N_VLinearSum_Serial(ONE, yd1,  ONE, yd0, ca_mem.ca_Y[1]);
+		    N_VLinearSum_Serial(delta, ca_mem.ca_Y[1], -TWO, ca_mem.ca_Y[0], ca_mem.ca_Y[1]);
+		    N_VLinearSum_Serial(ONE, ca_mem.ca_Y[0], -delta, yd0, ca_mem.ca_Y[0]);
+
+
+		    yS1  = content1.yS;
+		    ySd1 = content1.ySd;
+		      
+		    for (is=0; is<NS; is++) {
+		      N_VLinearSum_Serial(ONE, yS1[is], -ONE, yS0[is], ca_mem.ca_YS[0][is]);
+		      N_VLinearSum_Serial(ONE, ySd1[is],  ONE, ySd0[is], ca_mem.ca_YS[1][is]);
+		      N_VLinearSum_Serial(delta, ca_mem.ca_YS[1][is], -TWO, ca_mem.ca_YS[0][is], ca_mem.ca_YS[1][is]);
+		      N_VLinearSum_Serial(ONE, ca_mem.ca_YS[0][is], -delta, ySd0[is], ca_mem.ca_YS[0][is]);
+		    }
+
+		  }
+
+		  /* Perform the actual interpolation. */
+
+		  factor1 = t - t0;
+
+		  factor2 = factor1/delta;
+		  factor2 = factor2*factor2;
+
+		  factor3 = factor2*(t-t1)/delta;
+
+		  N_VLinearSum_Serial(ONE, y0, factor1, yd0, y);
+		  N_VLinearSum_Serial(ONE, y, factor2, ca_mem.ca_Y[0], y);
+		  N_VLinearSum_Serial(ONE, y, factor3, ca_mem.ca_Y[1], y);
+
+		  for (is=0; is<NS; is++) {
+		    N_VLinearSum_Serial(ONE, yS0[is], factor1, ySd0[is], yS[is]);
+		    N_VLinearSum_Serial(ONE, yS[is], factor2, ca_mem.ca_YS[0][is], yS[is]);
+		    N_VLinearSum_Serial(ONE, yS[is], factor3, ca_mem.ca_YS[1][is], yS[is]);
+		  }
+
+
+		  return(CV_SUCCESS);
+		}
+		
+		/*
+		 * CVAfindIndex
+		 *
+		 * Finds the index in the array of data point strctures such that
+		 *     dt_mem[indx-1].t <= t < dt_mem[indx].t
+		 * If indx is changed from the previous invocation, then newpoint = SUNTRUE
+		 *
+		 * If t is beyond the leftmost limit, but close enough, indx=0.
+		 *
+		 * Returns CV_SUCCESS if successful and CV_GETY_BADT if unable to
+		 * find indx (t is too far beyond limits).
+		 */
+
+		private int CVAfindIndex(CVodeMemRec cv_mem, double t, 
+		                        long indx[], boolean newpoint[])
+		{
+		  CVadjMemRec ca_mem;
+		  long ilast = 0;
+		  DtpntMemRec dt_mem[];
+		  int sign;
+		  boolean to_left, to_right;
+
+		  ca_mem = cv_mem.cv_adj_mem;
+		  dt_mem = ca_mem.dt_mem;
+
+		  newpoint[0] = false;
+
+		  /* Find the direction of integration */
+		  sign = (ca_mem.ca_tfinal - ca_mem.ca_tinitial > ZERO) ? 1 : -1;
+
+		  /* If this is the first time we use new data */
+		  if (ca_mem.ca_IMnewData) {
+		    ilast     = ca_mem.ca_np-1;
+		    newpoint[0] = true;
+		    ca_mem.ca_IMnewData   = false;
+		  }
+
+		  /* Search for indx starting from ilast */
+		  to_left  = ( sign*(t - dt_mem[(int)(ilast-1)].t) < ZERO);
+		  to_right = ( sign*(t - dt_mem[(int)(ilast)].t)   > ZERO);
+
+		  if ( to_left ) {
+		    /* look for a new indx to the left */
+
+		    newpoint[0] = true;
+		    
+		    indx[0] = ilast;
+		    for(;;) {
+		      if ( indx[0] == 0 ) break;
+		      if ( sign*(t - dt_mem[(int)(indx[0]-1)].t) <= ZERO ) (indx[0])--;
+		      else                                         break;
+		    }
+
+		    if ( indx[0] == 0 )
+		      ilast = 1;
+		    else
+		      ilast = indx[0];
+
+		    if ( indx[0] == 0 ) {
+		      /* t is beyond leftmost limit. Is it too far? */  
+		      if ( Math.abs(t - dt_mem[0].t) > FUZZ_FACTOR * cv_mem.cv_uround ) {
+		        return(CV_GETY_BADT);
+		      }
+		    }
+
+		  } else if ( to_right ) {
+		    /* look for a new indx to the right */
+
+		    newpoint[0] = true;
+
+		    indx [0]= ilast;
+		    for(;;) {
+		      if ( sign*(t - dt_mem[(int)indx[0]].t) > ZERO) (indx[0])++;
+		      else                                     break;
+		    }
+
+		    ilast = indx[0];
+
+
+		  } else {
+		    /* ilast is still OK */
+
+		    indx[0] = ilast;
+
+		  }
+
+		  return(CV_SUCCESS);
+
+
+		}
+
+		/*
+		 * CVApolynomialGetY ( -> IMget )
+		 *
+		 * This routine uses polynomial interpolation for the forward solution vector. 
+		 * It is typically called by the wrapper routines before calling
+		 * user provided routines (fB, djacB, bjacB, jtimesB, psolB)) but
+		 * can be directly called by the user through CVodeGetAdjY.
+		 */
+
+		protected int CVApolynomialGetY(CVodeMemRec cv_mem, double t,
+		                             NVector y, NVector yS[])
+		{
+		  CVadjMemRec ca_mem;
+		  DtpntMemRec dt_mem[];
+		  PolynomialDataMemRec content;
+
+		  int flag, dir, order, i, j, is, NS;
+		  long indx[] = new long[1]; 
+		  long base;
+		  boolean newpoint[] = new boolean[1];
+		  double dt, factor;
+
+		  ca_mem = cv_mem.cv_adj_mem;
+		  dt_mem = ca_mem.dt_mem;
+		  
+		  /* Local value of Ns */
+		 
+		  NS = (ca_mem.ca_IMinterpSensi && (yS != null)) ? cv_mem.cv_Ns : 0;
+
+		  /* Get the index in dt_mem */
+
+		  flag = CVAfindIndex(cv_mem, t, indx, newpoint);
+		  if (flag != CV_SUCCESS) return(flag);
+
+		  /* If we are beyond the left limit but close enough,
+		     then return y at the left limit. */
+
+		  if (indx[0] == 0) {
+		    content = dt_mem[0].polynomialContent;
+		    N_VScale_Serial(ONE, content.y, y);
+		    for (is=0; is<NS; is++) N_VScale_Serial(ONE, content.yS[is], yS[is]);
+		    return(CV_SUCCESS);
+		  }
+
+		  /* Scaling factor */
+
+		  dt = Math.abs(dt_mem[(int)indx[0]].t - dt_mem[(int)(indx[0]-1)].t);
+
+		  /* Find the direction of the forward integration */
+
+		  dir = (ca_mem.ca_tfinal - ca_mem.ca_tinitial > ZERO) ? 1 : -1;
+
+		  /* Establish the base point depending on the integration direction.
+		     Modify the base if there are not enough points for the current order */
+
+		  if (dir == 1) {
+		    base = indx[0];
+		    content = dt_mem[(int)base].polynomialContent;
+		    order = content.order;
+		    if(indx[0] < order) base += order-indx[0];
+		  } else {
+		    base = indx[0]-1;
+		    content = dt_mem[(int)base].polynomialContent;
+		    order = content.order;
+		    if (ca_mem.ca_np-indx[0] > order) base -= indx[0]+order-ca_mem.ca_np;
+		  }
+
+		  /* Recompute Y (divided differences for Newton polynomial) if needed */
+
+		  if (newpoint[0]) {
+
+		    /* Store 0-th order DD */
+		    if (dir == 1) {
+		      for(j=0;j<=order;j++) {
+		        ca_mem.ca_T[j] = dt_mem[(int)(base-j)].t;
+		        content = dt_mem[(int)(base-j)].polynomialContent;
+		        N_VScale_Serial(ONE, content.y, ca_mem.ca_Y[j]);
+		        for (is=0; is<NS; is++) N_VScale_Serial(ONE, content.yS[is], ca_mem.ca_YS[j][is]);
+		      }
+		    } else {
+		      for(j=0;j<=order;j++) {
+		        ca_mem.ca_T[j] = dt_mem[(int)(base-1+j)].t;
+		        content = dt_mem[(int)(base-1+j)].polynomialContent;
+		        N_VScale_Serial(ONE, content.y, ca_mem.ca_Y[j]);
+		        for (is=0; is<NS; is++) N_VScale_Serial(ONE, content.yS[is], ca_mem.ca_YS[j][is]);
+		      }
+		    }
+
+		    /* Compute higher-order DD */
+		    for(i=1;i<=order;i++) {
+		      for(j=order;j>=i;j--) {
+		        factor = dt/(ca_mem.ca_T[j]-ca_mem.ca_T[j-i]);
+		        N_VLinearSum_Serial(factor, ca_mem.ca_Y[j], -factor, ca_mem.ca_Y[j-1], ca_mem.ca_Y[j]);
+		        for (is=0; is<NS; is++) 
+		        	N_VLinearSum_Serial(factor, ca_mem.ca_YS[j][is], -factor, ca_mem.ca_YS[j-1][is], ca_mem.ca_YS[j][is]);
+		      }
+		    }
+		  }
+
+		  /* Perform the actual interpolation using nested multiplications */
+
+		  N_VScale_Serial(ONE, ca_mem.ca_Y[order], y);
+		  for (is=0; is<NS; is++) N_VScale_Serial(ONE, ca_mem.ca_YS[order][is], yS[is]);
+		  for (i=order-1; i>=0; i--) {
+		    factor = (t-ca_mem.ca_T[i])/dt;
+		    N_VLinearSum_Serial(factor, y, ONE, ca_mem.ca_Y[i], y);
+		    for (is=0; is<NS; is++) N_VLinearSum_Serial(factor, yS[is], ONE, ca_mem.ca_YS[i][is], yS[is]);
+		  }
+
+		  return(CV_SUCCESS);
+
+		}
+		
+		/*
+		 * CVArhs
+		 *
+		 * This routine interfaces to the CVRhsFnB (or CVRhsFnBS) routine 
+		 * provided by the user.
+		 */
+
+
+		private int CVArhs(double t, NVector yB, 
+		                  NVector yBdot, CVodeMemRec cv_mem)
+		{
+		  CVadjMemRec ca_mem;
+		  CVodeBMemRec cvB_mem;
+		  int flag = 0;
+		  int retval = 0;
+
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  cvB_mem = ca_mem.ca_bckpbCrt;
+
+		  /* Get forward solution from interpolation */
+
+		  if (ca_mem.ca_IMinterpSensi)
+			if (ca_mem.ca_IMget == CVAhermiteGetY_select) {
+		        flag = CVAhermiteGetY(cv_mem, t, ca_mem.ca_ytmp, ca_mem.ca_yStmp);
+			}
+			else {
+				flag = CVApolynomialGetY(cv_mem, t, ca_mem.ca_ytmp, ca_mem.ca_yStmp);	
+			}
+		  else 
+			  if (ca_mem.ca_IMget == CVAhermiteGetY_select) {
+		          flag = CVAhermiteGetY(cv_mem, t, ca_mem.ca_ytmp, null);
+			  }
+			  else {
+				  flag = CVApolynomialGetY(cv_mem, t, ca_mem.ca_ytmp, null);  
+			  }
+
+		  if (flag != CV_SUCCESS) {
+		    cvProcessError(cv_mem, -1, "CVODEA", "CVArhs", MSGCV_BAD_TINTERP, t);
+		    return(-1);
+		  }
+
+		  /* Call the user's RHS function */
+
+		  if (cvB_mem.cv_f_withSensi)
+			if (testMode) {
+				//retval = fBS1TestMode(t, ca_mem.ca_ytmp, ca_mem.ca_yStmp, yB, yBdot, cvB_mem.cv_user_data);	
+			}
+			else {
+		        //retval = fBS1(t, ca_mem.ca_ytmp, ca_mem.ca_yStmp, yB, yBdot, cvB_mem.cv_user_data);
+			}
+		  else
+			  if (testMode) {
+				  retval = fBTestMode(t, ca_mem.ca_ytmp, yB, yBdot, cvB_mem.cv_user_data);
+			  }
+			  else {
+		          retval = fB(t, ca_mem.ca_ytmp, yB, yBdot, cvB_mem.cv_user_data);
+			  }
+
+		  return(retval);
+		}
+		
+		/*
+		 * CVArhsQ
+		 *
+		 * This routine interfaces to the CVQuadRhsFnB (or CVQuadRhsFnBS) routine
+		 * provided by the user.
+		 */
+
+	private int CVArhsQ(double t, NVector yB, 
+		                   NVector qBdot, CVodeMemRec cv_mem)
+		{
+		  CVadjMemRec ca_mem;
+		  CVodeBMemRec cvB_mem;
+		  /* int flag; */
+		  int retval = 0;
+
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  cvB_mem = ca_mem.ca_bckpbCrt;
+
+		  /* Get forward solution from interpolation */
+
+		  if (ca_mem.ca_IMinterpSensi) {
+			  if (ca_mem.ca_IMget == CVAhermiteGetY_select) {
+		           /* flag = */ CVAhermiteGetY(cv_mem, t, ca_mem.ca_ytmp, ca_mem.ca_yStmp);
+			  }
+			  else {
+				  /* flag = */ CVApolynomialGetY(cv_mem, t, ca_mem.ca_ytmp, ca_mem.ca_yStmp);
+			  }
+		  }
+		  else {
+			  if (ca_mem.ca_IMget == CVAhermiteGetY_select)  {
+		            /* flag = */ CVAhermiteGetY(cv_mem, t, ca_mem.ca_ytmp, null);
+			  }
+			  else {
+				  /* flag = */ CVApolynomialGetY(cv_mem, t, ca_mem.ca_ytmp, null);
+			  }
+		  }
+
+		  /* Call the user's RHS function */
+
+		  if (cvB_mem.cv_fQ_withSensi) {
+		    //retval = (cvB_mem->cv_fQs)(t, ca_mem->ca_ytmp, ca_mem->ca_yStmp, yB, qBdot, cvB_mem->cv_user_data);
+		  }
+		  else
+			if (testMode) {
+				retval = fQBTestMode(t, ca_mem.ca_ytmp, yB, qBdot, cvB_mem.cv_user_data);
+			}
+			else {
+		    retval = fQB(t, ca_mem.ca_ytmp, yB, qBdot, cvB_mem.cv_user_data);
+			}
+
+		  return(retval);
+		}
 
 
 }
