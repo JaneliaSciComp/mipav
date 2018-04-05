@@ -160,6 +160,7 @@ public abstract class CVODES_ASA extends CVODES {
 		int fB = cvsRoberts_ASAi_dns;
 		double AB[][];
 		SUNLinearSolver LSB;
+		long nstB[] = new long[1];
 		
 		// Print problem description 
 		System.out.printf("\nAdjoint Sensitivity Example for Chemical Kinetics\n");
@@ -429,6 +430,81 @@ public abstract class CVODES_ASA extends CVODES {
 		
 		// Call CVodeBto integrate the backward ODE problem.
 		flag = CVodeB(cvode_mem, TBout1, CV_NORMAL);
+		if (flag < 0) {
+			return;
+		}
+		
+		// Call CVodeGetB to get yB of the backward ODE problem
+		flag = CVodeGetB(cvode_mem, indexB[0], time, yB);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CvodeGetAdjY to get the interpolated value of the forward solution
+		// y during a backward integration.
+		flag = CVodeGetAdjY(cvode_mem, TBout1, y);
+		if (flag < 0) {
+			return;
+		}
+		
+		System.out.printf("returned t: " + time[0] + "\n");
+		System.out.printf("tout: " + TBout1 + "\n");
+		System.out.printf("lambda(t): " + yB.data[0] + "  " + yB.data[1] + "  " + yB.data[2] + "\n");
+		System.out.printf("y(t): " + y.data[0] + "  " + y.data[1] + "  " + y.data[2] + "\n");
+		
+		// Then at t = T0
+		
+		flag = CVodeB(cvode_mem, T0, CV_NORMAL);
+		if (flag < 0) {
+			return;
+		}
+		
+		CVodeGetNumSteps(CVodeGetAdjCVodeBmem(cvode_mem, indexB[0]), nstB);
+		System.out.printf("Done (nst = " + nstB[0] + ")\n");
+		
+		flag = CVodeGetB(cvode_mem, indexB[0], time, yB);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeGetQuadB to get the quadrature solution vector after a
+		// successful return from CVodeB.
+		flag = CVodeGetQuadB(cvode_mem, indexB[0], time, qB);
+		if (flag < 0) {
+			return;
+		}
+		
+		flag = CVodeGetAdjY(cvode_mem, T0, y);
+		if (flag < 0) {
+			return;
+		}
+		
+		System.out.printf("returned t: " + time[0] + "\n");
+		System.out.printf("lambda(t0): " + yB.data[0] + "  " + yB.data[1] + "  " + yB.data[2] + "\n");
+		System.out.printf("y(t0): " + y.data[0] + "  " + y.data[1] + "  " + y.data[2] + "\n");
+		System.out.printf("dG/dp: " + (-qB.data[0]) + "  " + (-qB.data[1]) + "  " + (-qB.data[2]) + "\n");
+		
+		// Reinitialize backward phase (new tB0)
+		
+		yB.data[0] = ZERO;
+		yB.data[1] = ZERO;
+		yB.data[2] = ZERO;
+		
+		qB.data[0] = ZERO;
+		qB.data[1] = ZERO;
+		qB.data[2] = ZERO;
+		
+		System.out.printf("Re-initialize CVODES memory for backward run\n");
+		
+		flag = CVodeReInitB(cvode_mem, indexB[0], TB2, yB);
+		if (flag < 0) {
+			return;
+		}
+		
+		flag = CVodeQuadReInitB(cvode_mem, indexB[0], qB);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
 	} 
 	
 	/*
@@ -2166,7 +2242,6 @@ public abstract class CVODES_ASA extends CVODES {
 	  CVadjMemRec ca_mem;
 	  CVodeBMemRec cvB_mem;
 	  CVodeMemRec cvodeB_mem;
-	  int flag;
 
 	  /* Check if cvode_mem exists */
 	  if (cv_mem == null) {
@@ -2511,13 +2586,18 @@ public abstract class CVODES_ASA extends CVODES {
 	  dt_mem = ca_mem.dt_mem;
 
 	  /* Initialize cv_mem with data from ck_mem */
-	  //flag = CVAckpntGet(cv_mem, ck_mem);
-	  //if (flag != CV_SUCCESS)
-	    //return(CV_REIFWD_FAIL);
+	  flag = CVAckpntGet(cv_mem, ck_mem);
+	  if (flag != CV_SUCCESS)
+	    return(CV_REIFWD_FAIL);
 
 	  /* Set first structure in dt_mem[0] */
 	  dt_mem[0].t = ck_mem.ck_t0;
-	  //ca_mem.ca_IMstore(cv_mem, dt_mem[0]);
+	  if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+	        CVAhermiteStorePnt(cv_mem, dt_mem[0]);
+	  }
+	  else {
+		    CVApolynomialStorePnt(cv_mem, dt_mem[0]);
+	  }
 
 	  /* Decide whether TSTOP must be activated */
 	  if (ca_mem.ca_tstopCVodeFcall) {
@@ -2535,7 +2615,12 @@ public abstract class CVODES_ASA extends CVODES {
 	    if (flag < 0) return(CV_FWD_FAIL);
 
 	    dt_mem[(int)i].t = t[0];
-	    //ca_mem.ca_IMstore(cv_mem, dt_mem[(int)i]);
+	    if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+	        CVAhermiteStorePnt(cv_mem, dt_mem[(int)i]);
+	  }
+	  else {
+		    CVApolynomialStorePnt(cv_mem, dt_mem[(int)i]);
+	  }
 	    i++;
 
 	  } while ( sign*(ck_mem.ck_t1 - t[0]) > ZERO );
@@ -2581,6 +2666,678 @@ public abstract class CVODES_ASA extends CVODES {
 	  return(CV_SUCCESS);
 	}
 
+	/*
+	 * CVAckpntGet
+	 *
+	 * This routine prepares CVODES for a hot restart from
+	 * the check point ck_mem
+	 */
 
+	private int CVAckpntGet(CVodeMemRec cv_mem, CkpntMemRec ck_mem) 
+	{
+	  int flag, j, is, qmax;
+
+	  if (ck_mem.ck_next == null) {
+
+	    /* In this case, we just call the reinitialization routine,
+	     * but make sure we use the same initial stepsize as on 
+	     * the first run. */
+
+	    // Specify the initial step size
+		  cv_mem.cv_hin = cv_mem.cv_h0u;
+
+	    flag = CVodeReInit(cv_mem, ck_mem.ck_t0, ck_mem.ck_zn[0]);
+	    if (flag != CV_SUCCESS) return(flag);
+
+	    if (ck_mem.ck_quadr) {
+	      flag = CVodeQuadReInit(cv_mem, ck_mem.ck_znQ[0]);
+	      if (flag != CV_SUCCESS) return(flag);
+	    }
+
+	    if (ck_mem.ck_sensi) {
+	      flag = CVodeSensReInit(cv_mem, cv_mem.cv_ism, ck_mem.ck_znS[0]);
+	      if (flag != CV_SUCCESS) return(flag);
+	    }
+
+	    if (ck_mem.ck_quadr_sensi) {
+	      flag = CVodeQuadSensReInit(cv_mem, ck_mem.ck_znQS[0]);
+	      if (flag != CV_SUCCESS) return(flag);
+	    }
+
+	  } else {
+	    
+	    qmax = cv_mem.cv_qmax;
+
+	    /* Copy parameters from check point data structure */
+
+	    cv_mem.cv_nst       = ck_mem.ck_nst;
+	    cv_mem.cv_tretlast  = ck_mem.ck_tretlast;
+	    cv_mem.cv_q         = ck_mem.ck_q;
+	    cv_mem.cv_qprime    = ck_mem.ck_qprime;
+	    cv_mem.cv_qwait     = ck_mem.ck_qwait;
+	    cv_mem.cv_L         = ck_mem.ck_L;
+	    cv_mem.cv_gammap    = ck_mem.ck_gammap;
+	    cv_mem.cv_h         = ck_mem.ck_h;
+	    cv_mem.cv_hprime    = ck_mem.ck_hprime;
+	    cv_mem.cv_hscale    = ck_mem.ck_hscale;
+	    cv_mem.cv_eta       = ck_mem.ck_eta;
+	    cv_mem.cv_etamax    = ck_mem.ck_etamax;
+	    cv_mem.cv_tn        = ck_mem.ck_t0;
+	    cv_mem.cv_saved_tq5 = ck_mem.ck_saved_tq5;
+	    
+	    /* Copy the arrays from check point data structure */
+
+	    for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, ck_mem.ck_zn[j], cv_mem.cv_zn[j]);
+	    if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, ck_mem.ck_zn[qmax], cv_mem.cv_zn[qmax]);
+
+	    if (ck_mem.ck_quadr) {
+	      for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, ck_mem.ck_znQ[j], cv_mem.cv_znQ[j]);
+	      if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, ck_mem.ck_znQ[qmax], cv_mem.cv_znQ[qmax]);
+	    }
+
+	    if (ck_mem.ck_sensi) {
+	      for (is=0; is<cv_mem.cv_Ns; is++) {
+	        for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, ck_mem.ck_znS[j][is], cv_mem.cv_znS[j][is]);
+	        if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, ck_mem.ck_znS[qmax][is], cv_mem.cv_znS[qmax][is]);
+	      }
+	    }
+
+	    if (ck_mem.ck_quadr_sensi) {
+	      for (is=0; is<cv_mem.cv_Ns; is++) {
+	        for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, ck_mem.ck_znQS[j][is], cv_mem.cv_znQS[j][is]);
+	        if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, ck_mem.ck_znQS[qmax][is], cv_mem.cv_znQS[qmax][is]);
+	      }
+	    }
+
+	    for (j=0; j<=L_MAX; j++)        cv_mem.cv_tau[j] = ck_mem.ck_tau[j];
+	    for (j=0; j<=NUM_TESTS; j++)    cv_mem.cv_tq[j] = ck_mem.ck_tq[j];
+	    for (j=0; j<=cv_mem.cv_q; j++) cv_mem.cv_l[j] = ck_mem.ck_l[j];
+	    
+	    /* Force a call to setup */
+
+	    cv_mem.cv_forceSetup = true;
+
+	  }
+
+	  return(CV_SUCCESS);
+	}
+	
+	/*
+	 * CVodeReInit
+	 *
+	 * CVodeReInit re-initializes CVODES's memory for a problem, assuming
+	 * it has already been allocated in a prior CVodeInit call.
+	 * All problem specification inputs are checked for errors.
+	 * If any error occurs during initialization, it is reported to the
+	 * file whose file pointer is errfp.
+	 * The return value is CV_SUCCESS = 0 if no errors occurred, or
+	 * a negative value otherwise.
+	 */
+
+	private int CVodeReInit(CVodeMemRec cv_mem, double t0, NVector y0)
+	{
+	  int i,k;
+	 
+	  /* Check cvode_mem */
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeReInit",
+	                   MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Check if cvode_mem was allocated */
+
+	  if (cv_mem.cv_MallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_MALLOC, "CVODES", "CVodeReInit",
+	                   MSGCV_NO_MALLOC);
+	    return(CV_NO_MALLOC);
+	  }
+
+	  /* Check for legal input parameters */
+
+	  if (y0 == null) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeReInit",
+	                   MSGCV_NULL_Y0);
+	    return(CV_ILL_INPUT);
+	  }
+	  
+	  /* Copy the input parameters into CVODES state */
+
+	  cv_mem.cv_tn = t0;
+
+	  /* Set step parameters */
+
+	  cv_mem.cv_q      = 1;
+	  cv_mem.cv_L      = 2;
+	  cv_mem.cv_qwait  = cv_mem.cv_L;
+	  cv_mem.cv_etamax = ETAMX1;
+
+	  cv_mem.cv_qu     = 0;
+	  cv_mem.cv_hu     = ZERO;
+	  cv_mem.cv_tolsf  = ONE;
+
+	  /* Set forceSetup to SUNFALSE */
+
+	  cv_mem.cv_forceSetup = false;
+
+	  /* Initialize zn[0] in the history array */
+
+	  N_VScale_Serial(ONE, y0, cv_mem.cv_zn[0]);
+	 
+	  /* Initialize all the counters */
+
+	  cv_mem.cv_nst     = 0;
+	  cv_mem.cv_nfe     = 0;
+	  cv_mem.cv_ncfn[0]    = 0;
+	  cv_mem.cv_netf[0]    = 0;
+	  cv_mem.cv_nni     = 0;
+	  cv_mem.cv_nsetups = 0;
+	  cv_mem.cv_nhnil   = 0;
+	  cv_mem.cv_nstlp   = 0;
+	  cv_mem.cv_nscon   = 0;
+	  cv_mem.cv_nge     = 0;
+
+	  cv_mem.cv_irfnd   = 0;
+
+	  /* Initialize other integrator optional outputs */
+
+	  cv_mem.cv_h0u      = ZERO;
+	  cv_mem.cv_next_h   = ZERO;
+	  cv_mem.cv_next_q   = 0;
+
+	  /* Initialize Stablilty Limit Detection data */
+
+	  cv_mem.cv_nor = 0;
+	  for (i = 1; i <= 5; i++)
+	    for (k = 1; k <= 3; k++) 
+	      cv_mem.cv_ssdat[i-1][k-1] = ZERO;
+	  
+	  /* Problem has been successfully re-initialized */
+
+	  return(CV_SUCCESS);
+	}
+
+	/*
+	 * CVodeQuadReInit
+	 *
+	 * CVodeQuadReInit re-initializes CVODES's quadrature related memory 
+	 * for a problem, assuming it has already been allocated in prior 
+	 * calls to CVodeInit and CVodeQuadInit. 
+	 * All problem specification inputs are checked for errors.
+	 * If any error occurs during initialization, it is reported to the
+	 * file whose file pointer is errfp.
+	 * The return value is CV_SUCCESS = 0 if no errors occurred, or
+	 * a negative value otherwise.
+	 */
+
+	private int CVodeQuadReInit(CVodeMemRec cv_mem, NVector yQ0)
+	{
+
+	  /* Check cvode_mem */
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES",
+	                   "CVodeQuadReInit", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Ckeck if quadrature was initialized? */
+	  if (cv_mem.cv_QuadMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_QUAD, "CVODES",
+	                   "CVodeQuadReInit", MSGCV_NO_QUAD);
+	    return(CV_NO_QUAD);
+	  }
+
+	  /* Initialize znQ[0] in the history array */
+	  N_VScale_Serial(ONE, yQ0, cv_mem.cv_znQ[0]);
+
+	  /* Initialize counters */
+	  cv_mem.cv_nfQe  = 0;
+	  cv_mem.cv_netfQ[0] = 0;
+
+	  /* Quadrature integration turned ON */
+	  cv_mem.cv_quadr = true;
+
+	  /* Quadrature re-initialization was successfull */
+	  return(CV_SUCCESS);
+	}
+
+	/*
+	 * CVodeSensReInit
+	 *
+	 * CVodeSensReInit re-initializes CVODES's sensitivity related memory 
+	 * for a problem, assuming it has already been allocated in prior 
+	 * calls to CVodeInit and CVodeSensInit/CVodeSensInit1. 
+	 * All problem specification inputs are checked for errors.
+	 * The number of sensitivities Ns is assumed to be unchanged since
+	 * the previous call to CVodeSensInit.
+	 * If any error occurs during initialization, it is reported to the
+	 * file whose file pointer is errfp.
+	 * The return value is CV_SUCCESS = 0 if no errors occurred, or
+	 * a negative value otherwise.
+	 */ 
+
+	private int CVodeSensReInit(CVodeMemRec cv_mem, int ism, NVector yS0[])
+	{
+	  int is;  
+
+	  /* Check cvode_mem */
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSensReInit",
+	                   MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was sensitivity initialized? */
+
+	  if (cv_mem.cv_SensMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_SENS, "CVODES", "CVodeSensReInit",
+	                   MSGCV_NO_SENSI);
+	    return(CV_NO_SENS);
+	  } 
+
+	  /* Check if ism is compatible */
+
+	  if ((cv_mem.cv_ifS==CV_ALLSENS) && (ism==CV_STAGGERED1)) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                   "CVodeSensReInit", MSGCV_BAD_ISM_IFS);
+	    return(CV_ILL_INPUT);
+	  }
+	  
+	  /* Check if ism is legal */
+
+	  if ((ism!=CV_SIMULTANEOUS) && (ism!=CV_STAGGERED) && (ism!=CV_STAGGERED1)) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                   "CVodeSensReInit", MSGCV_BAD_ISM);
+	    return(CV_ILL_INPUT);
+	  }
+	  cv_mem.cv_ism = ism;
+
+	  /* Check if yS0 is non-null */
+
+	  if (yS0 == null) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                   "CVodeSensReInit", MSGCV_NULL_YS0);
+	    return(CV_ILL_INPUT);
+	  }  
+
+	  /* Allocate ncfS1, ncfnS1, and nniS1 if needed */
+
+	  if ( (ism==CV_STAGGERED1) && (cv_mem.cv_stgr1alloc==false) ) {
+	    cv_mem.cv_stgr1alloc = true;
+	    cv_mem.cv_ncfS1 = null;
+	    cv_mem.cv_ncfS1 = new int[cv_mem.cv_Ns][1];
+	    cv_mem.cv_ncfnS1 = null;
+	    cv_mem.cv_ncfnS1 = new long[cv_mem.cv_Ns][1];
+	    cv_mem.cv_nniS1 = null;
+	    cv_mem.cv_nniS1 = new long[cv_mem.cv_Ns];
+	    if ( (cv_mem.cv_ncfS1==null) ||
+	         (cv_mem.cv_ncfnS1==null) ||
+	         (cv_mem.cv_nniS1==null) ) {
+	      cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES",
+	                     "CVodeSensReInit", MSGCV_MEM_FAIL);
+	      return(CV_MEM_FAIL);
+	    }
+	  }
+
+	  /*---------------------------------------------- 
+	    All error checking is complete at this point 
+	    -----------------------------------------------*/
+
+	  /* Initialize znS[0] in the history array */
+
+	  for (is=0; is<cv_mem.cv_Ns; is++) 
+	    N_VScale_Serial(ONE, yS0[is], cv_mem.cv_znS[0][is]);
+
+	  /* Initialize all sensitivity related counters */
+
+	  cv_mem.cv_nfSe     = 0;
+	  cv_mem.cv_nfeS     = 0;
+	  cv_mem.cv_ncfnS[0]    = 0;
+	  cv_mem.cv_netfS[0]    = 0;
+	  cv_mem.cv_nniS     = 0;
+	  cv_mem.cv_nsetupsS = 0;
+	  if (ism==CV_STAGGERED1)
+	    for (is=0; is<cv_mem.cv_Ns; is++) {
+	      cv_mem.cv_ncfnS1[is][0] = 0;
+	      cv_mem.cv_nniS1[is] = 0;
+	    }
+
+	  /* Problem has been successfully re-initialized */
+
+	  cv_mem.cv_sensi = true;
+
+	  return(CV_SUCCESS);
+	}
+	
+	/*
+	 * CVodeQuadSensReInit
+	 *
+	 */
+
+	private int CVodeQuadSensReInit(CVodeMemRec cv_mem, NVector yQS0[])
+	{
+	  int is;
+
+	  /* Check cvode_mem */
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeQuadSensReInit",
+	                   MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Check if sensitivity analysis is active */
+	  if (!cv_mem.cv_sensi) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                   "CVodeQuadSensReInit", MSGCV_NO_SENSI);
+	    return(CV_NO_SENS);
+	  }
+
+	  /* Was quadrature sensitivity initialized? */
+	  if (cv_mem.cv_QuadSensMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_QUADSENS, "CVODES",
+	                   "CVodeQuadSensReInit", MSGCV_NO_QUADSENSI);
+	    return(CV_NO_QUADSENS);
+	  } 
+
+	  /* Check if yQS0 is non-null */
+	  if (yQS0 == null) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                   "CVodeQuadSensReInit", MSGCV_NULL_YQS0);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /*---------------------------------------------- 
+	    All error checking is complete at this point 
+	    -----------------------------------------------*/
+
+	  /* Initialize znQS[0] in the history array */
+	  for (is=0; is<cv_mem.cv_Ns; is++) 
+	    N_VScale_Serial(ONE, yQS0[is], cv_mem.cv_znQS[0][is]);
+
+	  /* Initialize all sensitivity related counters */
+	  cv_mem.cv_nfQSe  = 0;
+	  cv_mem.cv_nfQeS  = 0;
+	  cv_mem.cv_netfQS[0] = 0;
+
+	  /* Quadrature sensitivities will be computed */
+	  cv_mem.cv_quadr_sensi = true;
+
+	  /* Problem has been successfully re-initialized */
+	  return(CV_SUCCESS);
+	}
+
+	private int CVodeGetB(CVodeMemRec cv_mem, int which, double tret[], NVector yB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeGetB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeGetB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check the value of which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeGetB", MSGCV_BAD_WHICH);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  } 
+
+	  N_VScale_Serial(ONE, cvB_mem.cv_y, yB);
+	  tret[0] = cvB_mem.cv_tout;
+
+	  return(CV_SUCCESS);
+	}
+	
+	/*
+	 * CVodeGetAdjY
+	 *
+	 * This routine returns the interpolated forward solution at time t.
+	 * The user must allocate space for y.
+	 */
+
+	private int CVodeGetAdjY(CVodeMemRec cv_mem, double t, NVector y)
+	{
+	  CVadjMemRec ca_mem;
+	  int flag;
+
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeGetAdjY", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  if (ca_mem.ca_IMget == CVAhermiteGetY_select) {
+	        flag = CVAhermiteGetY(cv_mem, t, y, null);
+	  }
+	  else {
+		    flag = CVApolynomialGetY(cv_mem, t, y, null);
+	  }
+	  
+	  return(flag);
+	}
+	
+	/*
+	 * CVodeGetAdjCVodeBmem
+	 *
+	 * This function returns a (void *) pointer to the CVODES     
+	 * memory allocated for the backward problem. This pointer can    
+	 * then be used to call any of the CVodeGet* CVODES routines to  
+	 * extract optional output for the backward integration phase.
+	 */
+
+	private CVodeMemRec CVodeGetAdjCVodeBmem(CVodeMemRec cv_mem, int which)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVodeMemRec cvodeB_mem;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, 0, "CVODEA", "CVodeGetAdjCVodeBmem", MSGCV_NO_MEM);
+	    return(null);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, 0, "CVODEA", "CVodeGetAdjCVodeBmem", MSGCV_NO_ADJ);
+	    return(null);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, 0, "CVODEA", "CVodeGetAdjCVodeBmem", MSGCV_BAD_WHICH);
+	    return(null);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  cvodeB_mem = cvB_mem.cv_mem;
+
+	  return(cvodeB_mem);
+	}
+
+	/*
+	 * CVodeGetNumSteps
+	 *
+	 * Returns the current number of integration steps
+	 */
+
+	private int CVodeGetNumSteps(CVodeMemRec cv_mem, long nsteps[])
+	{
+
+	  if (cv_mem== null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetNumSteps", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  nsteps[0] = cv_mem.cv_nst;
+
+	  return(CV_SUCCESS);
+	}
+
+	/*
+	 * CVodeGetQuadB
+	 */
+
+	private int CVodeGetQuadB(CVodeMemRec cv_mem, int which, double tret[], NVector qB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVodeMemRec cvodeB_mem;
+	  long nstB[] = new long[1];
+	  int flag;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeGetQuadB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeGetQuadB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check the value of which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeGetQuadB", MSGCV_BAD_WHICH);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  } 
+
+	  cvodeB_mem = cvB_mem.cv_mem;
+
+	  /* If the integration for this backward problem has not started yet,
+	   * simply return the current value of qB (i.e. the final conditions) */
+
+	  flag = CVodeGetNumSteps(cvodeB_mem, nstB);
+	  
+	  if (nstB[0] == 0) {
+	    N_VScale_Serial(ONE, cvB_mem.cv_mem.cv_znQ[0], qB);
+	    tret[0] = cvB_mem.cv_tout;
+	  } else {
+	    flag = CVodeGetQuad(cvodeB_mem, tret, qB);
+	  }
+
+	  return(flag);
+	}
+	
+		private int CVodeReInitB(CVodeMemRec cv_mem, int which,
+	            double tB0, NVector yB0)
+	{
+	CVadjMemRec ca_mem;
+	CVodeBMemRec cvB_mem;
+	CVodeMemRec cvodeB_mem;
+	int flag;
+	
+	/* Check if cvode_mem exists */
+	if (cv_mem == null) {
+	cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeReInitB", MSGCV_NO_MEM);
+	return(CV_MEM_NULL);
+	}
+	
+	/* Was ASA initialized? */
+	if (cv_mem.cv_adjMallocDone == false) {
+	cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeReInitB", MSGCV_NO_ADJ);
+	return(CV_NO_ADJ);
+	}
+	ca_mem = cv_mem.cv_adj_mem;
+	
+	/* Check the value of which */
+	if ( which >= ca_mem.ca_nbckpbs ) {
+	cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeReInitB", MSGCV_BAD_WHICH);
+	return(CV_ILL_INPUT);
+	}
+	
+	/* Find the CVodeBMem entry in the linked list corresponding to which */
+	cvB_mem = ca_mem.cvB_mem;
+	while (cvB_mem != null) {
+	if ( which == cvB_mem.cv_index ) break;
+	cvB_mem = cvB_mem.cv_next;
+	}
+	
+	cvodeB_mem = cvB_mem.cv_mem;
+	
+	/* Reinitialize CVODES object */
+	
+	flag = CVodeReInit(cvodeB_mem, tB0, yB0);
+	
+	return(flag);
+	}
+
+	private int CVodeQuadReInitB(CVodeMemRec cv_mem, int which, NVector yQB0)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVodeMemRec cvodeB_mem;
+	  int flag;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeQuadReInitB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeQuadReInitB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check the value of which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeQuadReInitB", MSGCV_BAD_WHICH);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  cvodeB_mem = cvB_mem.cv_mem;
+
+	  flag = CVodeQuadReInit(cvodeB_mem, yQB0);
+	  if (flag != CV_SUCCESS) return(flag);
+
+	  return(CV_SUCCESS);
+	}
 
 }
