@@ -610,7 +610,8 @@ public abstract class CVODES {
     final int cvsRoberts_dnsL = 4;
     final int cvsRoberts_FSA_dns = 5;
     final int cvsRoberts_ASAi_dns = 6;
-    int problem = cvsRoberts_ASAi_dns;
+    final int cvsAdvDiff_FSA_non = 7;
+    int problem = cvsAdvDiff_FSA_non;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -635,8 +636,8 @@ public abstract class CVODES {
 	// Use the following code to call CVODES or CVODES_ASA from another module:
 	/*boolean testme = true;
 	Use only one of the following 2 lines
-    class CVODEStest extends CVODES { // if not running runcvsRoberts_ASAi_dns()
-    class CVODEStest extends CVODES_ASA { // if running runcvsRoberts_ASAi_dns()
+    class CVODEStest extends CVODES { // if not running runcvsRoberts_ASAi_dns() or runcvsAdvDiff_FSA_non()
+    class CVODEStest extends CVODES_ASA { // if running runcvsRoberts_ASAi_dns() or runcvsAdvDiff_FSA_non()
     	  public CVODEStest() {
     		  super();
     	  }
@@ -2260,6 +2261,36 @@ public abstract class CVODES {
 			ydot[0] = y[1];
 			ydot[1] = (ONE - y[0]*y[0]) * P1_ETA * y[1] - y[0];
 		}
+		else if (problem == cvsAdvDiff_FSA_non) {
+			int i;
+			int NEQ = 10;
+		    double dx;
+		    double ui, ult, urt, hordc, horac, hdiff, hadv;
+		    dx = user_data.dx;
+		    hordc = user_data.array[0]/(dx*dx);
+		    horac = user_data.array[1]/(2.0*dx);
+		    
+		    /* Loop over all grid points. */
+		    for (i=0; i<NEQ; i++) {
+
+		      /* Extract u at x_i and two neighboring points */
+		      ui = y[i];
+		      if(i!=0) 
+		        ult = y[i-1];
+		      else
+		        ult = ZERO;
+		      if(i!=NEQ-1)
+		        urt = y[i+1];
+		      else
+		        urt = ZERO;
+
+		      /* Set diffusion and advection terms and load into udot */
+		      hdiff = hordc*(ult - 2.0*ui + urt);
+		      hadv = horac*(urt - ult);
+		      ydot[i] = hdiff + hadv;
+		    }
+
+		}
 		return 0;
 	}
 	
@@ -2482,6 +2513,7 @@ public abstract class CVODES {
 	public class UserData {
 		CVodeMemRec memRec;
 		double[] array;
+		double dx;
 	}
 	
 	  
@@ -5062,7 +5094,7 @@ public abstract class CVODES {
     return;
   }
   
-  private double N_VMaxNorm_Serial(NVector x)
+  protected double N_VMaxNorm_Serial(NVector x)
   {
     int i, N;
     double max, xd[];
@@ -5101,7 +5133,7 @@ public abstract class CVODES {
     return(Math.sqrt(sum/N));
   }
   
-  private void N_VConst_Serial(double c, NVector z)
+  protected void N_VConst_Serial(double c, NVector z)
   {
     int i, N;
     double zd[];
@@ -11672,7 +11704,7 @@ else                return(snrm);
 	 * a negative value otherwise.
 	 */
     // CVSensRhs1Fn fS1
-	private int CVodeSensInit1(CVodeMemRec cv_mem, int Ns, int ism, int fS1_select, NVector yS0[])
+	protected int CVodeSensInit1(CVodeMemRec cv_mem, int Ns, int ism, int fS1_select, NVector yS0[])
 	{
 	  boolean allocOK;
 	  int is;
@@ -11925,7 +11957,7 @@ else                return(snrm);
 	  return(true);
 	}
 
-	private int CVodeSensEEtolerances(CVodeMemRec cv_mem)
+	protected int CVodeSensEEtolerances(CVodeMemRec cv_mem)
 	{
 
 	  if (cv_mem==null) {
@@ -11947,7 +11979,7 @@ else                return(snrm);
 	  return(CV_SUCCESS);
 	}
 
-	private int CVodeSetSensParams(CVodeMemRec cv_mem, double p[], double pbar[], int plist[])
+	protected int CVodeSetSensParams(CVodeMemRec cv_mem, double p[], double pbar[], int plist[])
 	{
 	  int is, Ns;
 
@@ -12008,7 +12040,7 @@ else                return(snrm);
 	 * This is just a wrapper that calls CVodeSensDky with k=0.
 	 */
 	 
-	private int CVodeGetSens(CVodeMemRec cv_mem, double tret[], NVector ySout[])
+	protected int CVodeGetSens(CVodeMemRec cv_mem, double tret[], NVector ySout[])
 	{
 	  int flag;
 
