@@ -1,19 +1,25 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.CVODES.CVodeMemRec;
 import gov.nih.mipav.view.MipavUtil;
 
 public abstract class CVODES_ASA extends CVODES {
 	
 	public CVODES_ASA() {
 		super();
-		runcvsRoberts_ASAi_dns();
+		if (problem == cvsRoberts_ASAi_dns) {
+		    runcvsRoberts_ASAi_dns();
+		}
+		else if (problem == cvsAdvDiff_FSA_non) {
+			runcvsAdvDiff_FSA_non();
+		}
 	}
 	
 	// In CVODES.java have int problem = cvsRoberts_ASAi_dns;
 	// Use the following code to call CVODES_ASA from another module:
 		/*boolean testme = true;
-	    class CVODEStest extends CVODES_ASA { // if running runcvsRoberts_ASAi_dns()
+	    class CVODEStest extends CVODES_ASA { // if running runcvsRoberts_ASAi_dns() or runcvsAdvDiff_FSA_non()
 	    	  public CVODEStest() {
 	    		  super();
 	    	  }
@@ -60,6 +66,245 @@ public abstract class CVODES_ASA extends CVODES {
 	    	new CVODEStest();
 	    	return;
 	    } */
+	
+	private void runcvsAdvDiff_FSA_non() {
+		/* -----------------------------------------------------------------
+		 * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, George D. Byrne,
+		 *              and Radu Serban @ LLNL
+		 * -----------------------------------------------------------------
+		 * Example problem:
+		 *
+		 * The following is a simple example problem, with the program for
+		 * its solution by CVODES. The problem is the semi-discrete form of
+		 * the advection-diffusion equation in 1-D:
+		 *   du/dt = q1 * d^2 u / dx^2 + q2 * du/dx
+		 * on the interval 0 <= x <= 2, and the time interval 0 <= t <= 5.
+		 * Homogeneous Dirichlet boundary conditions are posed, and the
+		 * initial condition is:
+		 *   u(x,y,t=0) = x(2-x)exp(2x).
+		 * The PDE is discretized on a uniform grid of size MX+2 with
+		 * central differencing, and with boundary values eliminated,
+		 * leaving an ODE system of size NEQ = MX.
+		 * This program solves the problem with the option for nonstiff
+		 * systems: ADAMS method and functional iteration.
+		 * It uses scalar relative and absolute tolerances.
+		 * Output is printed at t = .5, 1.0, ..., 5.
+		 * Run statistics (optional outputs) are printed at the end.
+		 *
+		 * Optionally, CVODES can compute sensitivities with respect to the
+		 * problem parameters q1 and q2.
+		 * Any of three sensitivity methods (SIMULTANEOUS, STAGGERED, and
+		 * STAGGERED1) can be used and sensitivities may be included in the
+		 * error test or not (error control set on FULL or PARTIAL,
+		 * respectively).
+		 *
+		 * Execution:
+		 *
+		 * If no sensitivities are desired:
+		 *    % cvsAdvDiff_FSA_non -nosensi
+		 * If sensitivities are to be computed:
+		 *    % cvsAdvDiff_FSA_non -sensi sensi_meth err_con
+		 * where sensi_meth is one of {sim, stg, stg1} and err_con is one of
+		 * {t, f}.
+		 * -----------------------------------------------------------------*/
+		
+		/* Problem Constants */
+		double XMAX = 2.0;   /* domain boundary           */
+		int MX = 10;   /* mesh dimension            */
+		int NEQ = MX;  /* number of equations       */
+		double ATOL = 1.e-5; /* scalar absolute tolerance */
+		double T0 = 0.0;   /* initial time              */
+		double T1 = 0.5;   /* first output time         */
+		double DTOUT = 0.5;   /* output time increment     */
+		int NOUT = 10;    /* number of output times    */
+
+		int NP = 2;
+		int NS = 2;
+
+		CVodeMemRec cvode_mem;
+		UserData data;
+		double dx, reltol, abstol, tout;
+		double t[] = new double[1];
+	    NVector u;
+		int iout, flag;
+
+		double pbar[];
+		int is, plist[];
+		NVector uS[];
+		double udata[];
+		int i;
+		double x;
+		int f = cvsAdvDiff_FSA_non;
+		int qu;
+		double hu;
+
+		cvode_mem = null;
+		data = null;
+		u = null;
+		pbar = null;
+		plist = null;
+		uS = null;
+		
+		// In CVODES.java set sensi to true or false.  If sensi is true, set sensi_meth to
+		// CV_SIMULTANEOUS, CV_STAGGERED, or CV_STAGGERED1.  Set err_con to true or false.
+		data = new UserData();
+		data.array = new double[NP];
+        dx = data.dx = XMAX/((double)(MX+1));
+        data.array[0] = 1.0;
+        data.array[1] = 0.5;
+        
+        // Allocate and set initial states
+        u = new NVector();
+        N_VNew_Serial(u,NEQ);
+        
+        /* Set pointer to data array and get local length of u. */
+  	    udata = u.data;
+
+  	    /* Load initial profile into u vector */
+  	    for (i=0; i<NEQ; i++) {
+  	      x = (i+1)*dx;
+  	      udata[i] = x*(XMAX - x)*Math.exp(2.0*x);
+  	    }  
+  	    
+  	    /* Set integration tolerances */
+  	    reltol = ZERO;
+  	    abstol = ATOL;
+
+  	    /* Create CVODES object */
+  	    cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
+  	    if (cvode_mem == null) {
+		    return;	
+        }
+  	    
+  	    cvode_mem.cv_user_data = data;
+  	    
+  	    /* Allocate CVODES memory */
+  	    flag = CVodeInit(cvode_mem, f, T0, u);
+  	    if (flag != CV_SUCCESS) {
+			return;
+		}
+  	    
+  	    flag = CVodeSStolerances(cvode_mem, reltol, abstol);
+  	    if (flag < 0) {
+  		  return;
+  	    }
+  	    
+  	    System.out.printf("\n1-D advection-diffusion equation, mesh size = " + MX + "\n");
+
+  	    /* Sensitivity-related settings */
+  	    if(sensi) {
+
+  	      plist = new int[NS];
+  	      for(is=0; is<NS; is++) plist[is] = is;
+
+  	      pbar  = new double[NS];
+  	      for(is=0; is<NS; is++) pbar[is] = data.array[plist[is]];
+
+  	      uS = N_VCloneVectorArray_Serial(NS, u);
+  	      if (uS == null) {
+  	    	  return;
+  	      }
+  	      for(is=0;is<NS;is++)
+  	          N_VConst_Serial(ZERO, uS[is]);
+
+  	      flag = CVodeSensInit1(cvode_mem, NS, sensi_meth, -1, uS);
+  	      if (flag < 0) {
+			  return;
+		  }
+
+  	      flag = CVodeSensEEtolerances(cvode_mem);
+  	      if (flag < 0) {
+			  return;
+		  }
+
+  	      // Set sensitivity analysis optional inputs.
+  	      // Call CVodeSetSensErrCon to specify the error control strategy for
+  	      // sensitivity variables.
+  	 	  cvode_mem.cv_errconS = err_con;
+
+  	      flag = CVodeSetSensDQMethod(cvode_mem, CV_CENTERED, ZERO);
+  	      if (flag != CV_SUCCESS) {
+			  return;
+		  }
+
+  	      flag = CVodeSetSensParams(cvode_mem, data.array, pbar, plist);
+  	      if (flag < 0) {
+			  return;
+		  }
+
+  	      System.out.printf("Sensitivity: YES ");
+  	      if(sensi_meth == CV_SIMULTANEOUS)   
+  	          System.out.printf("( SIMULTANEOUS +");
+  	      else 
+  	        if(sensi_meth == CV_STAGGERED) System.out.printf("( STAGGERED +");
+  	        else                           System.out.printf("( STAGGERED1 +");   
+  	      if(err_con) System.out.printf(" FULL ERROR CONTROL )");
+  	      else        System.out.printf(" PARTIAL ERROR CONTROL )");
+
+  	  } else {
+
+  	      System.out.printf("Sensitivity: NO ");
+
+  	  }
+  	    
+  	  /* In loop over output points, call CVode, print results, test for error */
+
+  	  
+  	  for (iout=1, tout=T1; iout <= NOUT; iout++, tout += DTOUT) {
+  	    flag = CVode(cvode_mem, tout, u, t, CV_NORMAL);
+  	    if(flag < 0) break;
+  	    System.out.println("t = " + t[0]);
+  	    // Returns the order on the last successful step
+	    qu = cvode_mem.cv_qu;
+	    // Return the step size used on the last successful step
+	    hu = cvode_mem.cv_hu;
+	    System.out.println("Step order qu = " + qu);
+	    System.out.println("Step size hu = " + hu);
+	    System.out.println("Number of integrations steps = " + cvode_mem.cv_nst);
+	    System.out.println("Max norm of solution = " + N_VMaxNorm_Serial(u));
+  	    if (sensi) {
+  	      flag = CVodeGetSens(cvode_mem, t, uS);
+  	      if(flag < 0) break;
+  	      System.out.println("Max norm of sensitivity 1 -= " + N_VMaxNorm_Serial(uS[0]));
+  	      System.out.println("Max norm of sensitivity 2 -= " + N_VMaxNorm_Serial(uS[1]));
+  	    } 
+  	    System.out.printf("------------------------------------------------------------\n");
+  	  }
+
+  	  /* Print final statistics */
+  	  PrintFinalStats(cvode_mem, sensi);
+
+  	  /* Free memory */
+  	  N_VDestroy(u);
+  	  if (sensi) {
+  	    N_VDestroyVectorArray_Serial(uS, NS);
+  	    plist = null;
+  	    pbar = null;
+  	  }
+  	  data.array = null;
+  	  data = null;
+  	  CVodeFree(cvode_mem);
+	}
+	
+	private void PrintFinalStats(CVodeMemRec cv_mem, boolean sensi) {
+		System.out.println("Final statistics:");
+		System.out.println("Number of integrations steps = " + cv_mem.cv_nst);
+		System.out.println("Number of calls to f = " + cv_mem.cv_nfe);
+		System.out.println("Number of calls to the linear solver setup routine = " + cv_mem.cv_nsetups);
+		System.out.println("Number of error test failures = " + cv_mem.cv_netf[0]);
+	    System.out.println("Number of nonlinear solver iterations = " + cv_mem.cv_nni);
+	    System.out.println("Number of nonlinear solver convergence failures = " + cv_mem.cv_ncfn[0]);
+	    if (sensi) {
+	    	System.out.println("Number of calls to the sensitivity right hand side routine = " + cv_mem.cv_nfSe);
+	    	System.out.println("Number of calls to the user f routine due to finite difference evaluations ");
+	        System.out.println("of the sensitivity equations = " + cv_mem.cv_nfeS);
+	        System.out.println("Number of calls made to the linear solver's setup routine due to ");
+            System.out.println("sensitivity computations = " + cv_mem.cv_nsetupsS);
+            System.out.println("Number of local error test failures for sensitivity variables = " + cv_mem.cv_netfS[0]);
+            System.out.println("Total number of nonlinear iterations for sensitivity variables = " + cv_mem.cv_nniS);
+            System.out.println("Total number of nonlinear convergence failures for sensitivity variables = " + cv_mem.cv_ncfnS[0]);
+	    }
+	}
 	
 	private void runcvsRoberts_ASAi_dns() {
 		/* -----------------------------------------------------------------
@@ -585,6 +830,7 @@ public abstract class CVODES_ASA extends CVODES {
 		if (ckpnt != null) ckpnt = null;
 		data = null;
 	} 
+
 	
 	/*
 	 * CVodeQuadInit
@@ -3418,5 +3664,30 @@ public abstract class CVODES_ASA extends CVODES {
 
 	  return(CV_SUCCESS);
 	}
+	
+	private int CVodeSetSensDQMethod(CVodeMemRec cv_mem, int DQtype, double DQrhomax)
+	{
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSetSensDQMethod", MSGCV_NO_MEM);    
+	    return(CV_MEM_NULL);
+	  }
+
+	  if ( (DQtype != CV_CENTERED) && (DQtype != CV_FORWARD) ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSetSensDQMethod", MSGCV_BAD_DQTYPE);    
+	    return(CV_ILL_INPUT);
+	  }
+
+	  if (DQrhomax < ZERO ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSetSensDQMethod", MSGCV_BAD_DQRHO);    
+	    return(CV_ILL_INPUT);
+	  }
+
+	  cv_mem.cv_DQtype = DQtype;
+	  cv_mem.cv_DQrhomax = DQrhomax;
+
+	  return(CV_SUCCESS);
+	}
+
 
 }
