@@ -173,6 +173,8 @@ public abstract class CVODES {
 	final int CVApolynomialStorePnt_select = 2;
 	final int CVAhermiteGetY_select = 1;
 	final int CVApolynomialGetY_select = 2;
+	final int CVAhermiteFree_select = 1;
+	final int CVApolynomialFree_select = 2;
 
 	/* 
 	 * ----------------------------------------
@@ -626,6 +628,9 @@ public abstract class CVODES {
 	final double P1_T1 = 1.39283880203;
 	final double P1_DTOUT = 2.214773875;
 	final double P1_TOL_FACTOR = 1.0E4;
+	
+	// Used in CVAfindIndex
+	private long ilast = 0;
 	
 	// Use the following code to call CVODES or CVODES_ASA from another module:
 	/*boolean testme = true;
@@ -10722,7 +10727,7 @@ else                return(snrm);
 	  * sensitivity computations by CVodeSensInit.
 	  */
 
-	 private void CVodeFree(CVodeMemRec cv_mem)
+	 protected void CVodeFree(CVodeMemRec cv_mem)
 	 {
 
 	   if (cv_mem == null) return;
@@ -10735,7 +10740,7 @@ else                return(snrm);
 
 	   CVodeQuadSensFree(cv_mem);
 
-	   //CVodeAdjFree(cv_mem);
+	   CVodeAdjFree(cv_mem);
 
 	   cvDlsFree(cv_mem);
 
@@ -10750,6 +10755,242 @@ else                return(snrm);
 	   
 	   cv_mem = null;
 	 }
+	 
+	 /*
+	  * CVodeAdjFree
+	  *
+	  * This routine frees the memory allocated by CVodeAdjInit.
+	  */
+
+	 private void CVodeAdjFree(CVodeMemRec cv_mem)
+	 {
+	   CVadjMemRec ca_mem;
+	   int i;
+	   
+	   if (cv_mem == null) return;
+
+	   if (cv_mem.cv_adjMallocDone) {
+
+	     ca_mem = cv_mem.cv_adj_mem;
+
+	     /* Delete check points one by one */
+	     while (ca_mem.ck_mem != null) CVAckpntDelete(ca_mem.ck_mem);
+
+	     /* Free vectors at all data points */
+	     if (ca_mem.ca_IMmallocDone) {
+	       if (ca_mem.ca_IMfree == CVAhermiteFree_select) {
+	           CVAhermiteFree(cv_mem);
+	       }
+	       else {
+	    	   CVApolynomialFree(cv_mem);
+	       }
+	     }
+	     for(i=0; i<=ca_mem.ca_nsteps; i++) {
+	       ca_mem.dt_mem[i] = null;
+	     }
+	     ca_mem.dt_mem = null;
+
+	     /* Delete backward problems one by one */
+	     while (ca_mem.cvB_mem != null) CVAbckpbDelete(ca_mem.cvB_mem);
+
+	     /* Free CVODEA memory */
+	     ca_mem = null;
+	     cv_mem.cv_adj_mem = null;
+
+	   }
+
+	 }
+	 
+	 private void CVAbckpbDelete(CVodeBMemRec cvB_memPtr)
+	 {
+	   CVodeBMemRec tmp;
+	   CVodeMemRec cvode_mem;
+
+	   if (cvB_memPtr != null) {
+
+	     /* Save head of the list */
+	     tmp = cvB_memPtr;
+
+	     /* Move head of the list */
+	     cvB_memPtr = cvB_memPtr.cv_next;
+
+	     /* Free CVODES memory in tmp */
+	     cvode_mem = tmp.cv_mem;
+	     CVodeFree(cvode_mem);
+
+	     /* Free linear solver memory */
+	     if (tmp.cv_lfree == cvDlsFreeB_select) cvDlsFreeB(tmp);
+
+	     /* Free preconditioner memory */
+	     //if (tmp.cv_pfree != NULL) tmp.cv_pfree(tmp);
+
+	     /* Free workspace Nvector */
+	     N_VDestroy(tmp.cv_y);
+
+	     tmp = null;
+
+	   }
+
+	 }
+	 
+	 private int cvDlsFreeB(CVodeBMemRec cvB_mem)
+	 {
+	   CVDlsMemRecB cvdlsB_mem;
+
+	   /* Return immediately if IDAB_mem or IDAB_mem->ida_lmem are NULL */
+	   if (cvB_mem == null)  return (CVDLS_SUCCESS);
+	   if (cvB_mem.cv_lmem == null)  return(CVDLS_SUCCESS);
+	   cvdlsB_mem = cvB_mem.cv_lmem;
+
+	   /* free CVDlsMemB interface structure */
+	   cvdlsB_mem = null;
+	   
+	   return(CVDLS_SUCCESS);
+	 }
+
+
+	 
+	 /*
+	  * CVAhermiteFree
+	  *
+	  * This routine frees the memory allocated for data storage.
+	  */
+
+	 private void CVAhermiteFree(CVodeMemRec cv_mem)
+	 {  
+	   CVadjMemRec ca_mem;
+	   DtpntMemRec dt_mem[];
+	   HermiteDataMemRec content;
+	   int i;
+
+	   ca_mem = cv_mem.cv_adj_mem;
+
+	   N_VDestroy(ca_mem.ca_ytmp);
+
+	   if (ca_mem.ca_IMstoreSensi) {
+	     N_VDestroyVectorArray(ca_mem.ca_yStmp, cv_mem.cv_Ns);
+	   }
+
+	   dt_mem = ca_mem.dt_mem;
+
+	   for (i=0; i<=ca_mem.ca_nsteps; i++) {
+	     content = dt_mem[i].hermiteContent;
+	     N_VDestroy(content.y);
+	     N_VDestroy(content.yd);
+	     if (ca_mem.ca_IMstoreSensi) {
+	       N_VDestroyVectorArray(content.yS, cv_mem.cv_Ns);
+	       N_VDestroyVectorArray(content.ySd, cv_mem.cv_Ns);
+	     }
+	     dt_mem[i].hermiteContent = null;
+	   }
+	 }
+	 
+	 /*
+	  * CVApolynomialFree
+	  *
+	  * This routine frees the memeory allocated for data storage.
+	  */
+
+	 private void CVApolynomialFree(CVodeMemRec cv_mem)
+	 {
+	   CVadjMemRec ca_mem;
+	   DtpntMemRec dt_mem[];
+	   PolynomialDataMemRec content;
+	   int i;
+
+	   ca_mem = cv_mem.cv_adj_mem;
+
+	   N_VDestroy(ca_mem.ca_ytmp);
+
+	   if (ca_mem.ca_IMstoreSensi) {
+	     N_VDestroyVectorArray(ca_mem.ca_yStmp, cv_mem.cv_Ns);
+	   }
+
+	   dt_mem = ca_mem.dt_mem;
+
+	   for (i=0; i<=ca_mem.ca_nsteps; i++) {
+	     content = dt_mem[i].polynomialContent;
+	     N_VDestroy(content.y);
+	     if (ca_mem.ca_IMstoreSensi) {
+	       N_VDestroyVectorArray(content.yS, cv_mem.cv_Ns);
+	     }
+	     dt_mem[i].polynomialContent = null;
+	   }
+	 }
+
+
+	 
+	 /*
+	  * CVAckpntDelete
+	  *
+	  * This routine deletes the first check point in list and returns
+	  * the new list head
+	  */
+
+	 private void CVAckpntDelete(CkpntMemRec ck_memPtr)
+	 {
+	   CkpntMemRec tmp;
+	   int j;
+
+	   if (ck_memPtr == null) return;
+
+	   /* store head of list */
+	   tmp = ck_memPtr;
+
+	   /* move head of list */
+	   ck_memPtr = ck_memPtr.ck_next;
+
+	   /* free N_Vectors in tmp */
+	   for (j=0;j<=tmp.ck_q;j++) N_VDestroy(tmp.ck_zn[j]);
+	   if (tmp.ck_zqm != 0) N_VDestroy(tmp.ck_zn[tmp.ck_zqm]);
+
+	   /* free N_Vectors for quadratures in tmp 
+	    * Note that at the check point at t_initial, only znQ_[0] 
+	    * was allocated */
+	   if (tmp.ck_quadr) {
+
+	     if (tmp.ck_next != null) {
+	       for (j=0;j<=tmp.ck_q;j++) N_VDestroy(tmp.ck_znQ[j]);
+	       if (tmp.ck_zqm != 0) N_VDestroy(tmp.ck_znQ[tmp.ck_zqm]);
+	     } else {
+	       N_VDestroy(tmp.ck_znQ[0]);
+	     }
+	     
+	   }
+
+	   /* free N_Vectors for sensitivities in tmp
+	    * Note that at the check point at t_initial, only znS_[0] 
+	    * was allocated */
+	   if (tmp.ck_sensi) {
+	     
+	     if (tmp.ck_next != null) {
+	       for (j=0;j<=tmp.ck_q;j++) N_VDestroyVectorArray(tmp.ck_znS[j], tmp.ck_Ns);
+	       if (tmp.ck_zqm != 0) N_VDestroyVectorArray(tmp.ck_znS[tmp.ck_zqm], tmp.ck_Ns);
+	     } else {
+	       N_VDestroyVectorArray(tmp.ck_znS[0], tmp.ck_Ns);
+	     }
+	     
+	   }
+
+	   /* free N_Vectors for quadrature sensitivities in tmp
+	    * Note that at the check point at t_initial, only znQS_[0] 
+	    * was allocated */
+	   if (tmp.ck_quadr_sensi) {
+	     
+	     if (tmp.ck_next != null) {
+	       for (j=0;j<=tmp.ck_q;j++) N_VDestroyVectorArray(tmp.ck_znQS[j], tmp.ck_Ns);
+	       if (tmp.ck_zqm != 0) N_VDestroyVectorArray(tmp.ck_znQS[tmp.ck_zqm], tmp.ck_Ns);
+	     } else {
+	       N_VDestroyVectorArray(tmp.ck_znQS[0], tmp.ck_Ns);
+	     }
+	     
+	   }
+
+	   tmp = null;
+
+	 }
+
+
 
 	 
 	 /*  
@@ -10985,7 +11226,7 @@ else                return(snrm);
 
 	   }
 	   
-	   private int SUNLinSolFree_Dense(SUNLinearSolver S)
+	   protected int SUNLinSolFree_Dense(SUNLinearSolver S)
 	   {
 	     /* return if S is already free */
 	     if (S == null)
@@ -11962,8 +12203,8 @@ else                return(snrm);
 		  int ca_IMtype;
 
 		  /* Functions set by the interpolation module */
-		  int   ca_IMmalloc; 
-		  //cvaIMFreeFn     ca_IMfree;
+		  int ca_IMmalloc; 
+		  int ca_IMfree;
 		  int ca_IMstore; /* store a new interpolation point */
 		  int ca_IMget;   /* interpolate forward solution    */
 
@@ -12032,7 +12273,7 @@ else                return(snrm);
 
 		  /* Function to free any memory allocated by the linear solver */
 		  //int (*cv_lfree)(CVodeBMem cvB_mem);
-		  int cv_lfree_select;
+		  int cv_lfree;
 
 		  /* Memory block for a preconditioner's module interface to CVODEA */ 
 		  //void *cv_pmem;
@@ -12354,7 +12595,6 @@ else                return(snrm);
 		                        long indx[], boolean newpoint[])
 		{
 		  CVadjMemRec ca_mem;
-		  long ilast = 0;
 		  DtpntMemRec dt_mem[];
 		  int sign;
 		  boolean to_left, to_right;
