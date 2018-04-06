@@ -118,19 +118,14 @@ public abstract class CVODES_ASA extends CVODES {
 	
 		/** Problem Constants */
 		final int NEQ = 3; // Number of equations
-		//final double RTOL = 1.0E-6; // scalar relative tolerance
-		final double RTOL = 1.0E-12;
-		//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
-		final double ATOL1 = 1.0E-12;
-		//final double ATOL2 = 1.0E-14;
-		final double ATOL2 = 1.0E-15;
-		//final double ATOL3 = 1.0E-6;
-		final double ATOL3 = 1.0E-12;
+		final double RTOL = 1.0E-6; // scalar relative tolerance
 		final double ATOLl = 1.0E-8; // absolute tolerance for adjoint variables
-		final double ATOLq = 1.0E-6; // absolute tolerannce for quuadratures
+		final double ATOLq = 1.0E-6; // absolute tolerance for quadratures
 		final double T0 = 0.0; // initial time
-		final double TOUT = 4.0E7; // final time
-		final double TB1 = 4.0E7; // starting point for adjoint problem
+		//final double TOUT = 4.0E7; // final time
+		//final double TB1 = 4.0E7; // starting point for adjoint problem
+		final double TOUT = 4.0E4; // final time
+	    final double TB1 = 4.0E4; // starting point for adjoint problem
 		final double TB2 = 50.0; // starting point for adjoint problem
 		final double TBout1 = 40.0; // intermediate t for adjoint problem
 		final int STEPS = 150; // number of steps between check points
@@ -152,7 +147,7 @@ public abstract class CVODES_ASA extends CVODES {
 		int ncheck[] = new int[1];
 		long nst;
 		int i;
-		CVadjCheckPointRec ckpnt[];
+		CVadjCheckPointRec ckpnt[] = null;
 		double reltolB;
 		double abstolB;
 		double abstolQB;
@@ -360,6 +355,12 @@ public abstract class CVODES_ASA extends CVODES {
 			return;
 		}
 		
+		// Allow unlimited steps in reaching tout
+		flag = CVodeSetMaxNumSteps(cvode_mem, -1);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
 		// Call CVodeInitB to allocate internal memory and initialize the
 		// backward problem.
 		flag = CVodeInitB(cvode_mem, indexB[0], fB, TB1, yB);
@@ -505,6 +506,84 @@ public abstract class CVODES_ASA extends CVODES {
 		if (flag != CV_SUCCESS) {
 			return;
 		}
+		
+		System.out.printf("Backward integration from tB0 = " + TB2 + "\n\n");
+		
+		// First get results at t = TBout1
+		
+		flag = CVodeB(cvode_mem, TBout1, CV_NORMAL);
+		if (flag < 0) {
+			return;
+		}
+		
+		flag = CVodeGetB(cvode_mem, indexB[0], time, yB);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		flag = CVodeGetAdjY(cvode_mem, TBout1, y);
+		if (flag < 0) {
+			return;
+		}
+		
+		System.out.printf("returned t: " + time[0] + "\n");
+		System.out.printf("tout: " + TBout1 + "\n");
+		System.out.printf("lambda(t): " + yB.data[0] + "  " + yB.data[1] + "  " + yB.data[2] + "\n");
+		System.out.printf("y(t): " + y.data[0] + "  " + y.data[1] + "  " + y.data[2] + "\n");
+		
+		// Then at t = T0
+		
+		flag = CVodeB(cvode_mem, T0, CV_NORMAL);
+		if (flag < 0) {
+			return;
+		}
+		
+		CVodeGetNumSteps(CVodeGetAdjCVodeBmem(cvode_mem, indexB[0]), nstB);
+		System.out.printf("Done (nst = " + nstB[0] + ")\n");
+		
+		flag = CVodeGetB(cvode_mem, indexB[0], time, yB);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeGetQuadB to get the quadrature solution vector after a
+		// successful return from CVodeB.
+		flag = CVodeGetQuadB(cvode_mem, indexB[0], time, qB);
+		if (flag < 0) {
+			return;
+		}
+		
+		flag = CVodeGetAdjY(cvode_mem, T0, y);
+		if (flag < 0) {
+			return;
+		}
+		
+		System.out.printf("returned t: " + time[0] + "\n");
+		System.out.printf("lambda(t0): " + yB.data[0] + "  " + yB.data[1] + "  " + yB.data[2] + "\n");
+		System.out.printf("y(t0): " + y.data[0] + "  " + y.data[1] + "  " + y.data[2] + "\n");
+		System.out.printf("dG/dp: " + (-qB.data[0]) + "  " + (-qB.data[1]) + "  " + (-qB.data[2]) + "\n");
+		
+		// Free memory
+		System.out.printf("Free memory\n\n");
+		
+		CVodeFree(cvode_mem);
+		N_VDestroy(y);
+		N_VDestroy(q);
+		N_VDestroy(yB);
+		N_VDestroy(qB);
+		SUNLinSolFree_Dense(LS);
+		for (i = 0; i < A.length; i++) {
+			A[i] = null;
+		}
+		A = null;
+		SUNLinSolFree_Dense(LSB);
+		for (i = 0; i < AB.length; i++) {
+			AB[i] = null;
+		}
+		AB = null;
+		
+		if (ckpnt != null) ckpnt = null;
+		data = null;
 	} 
 	
 	/*
@@ -768,7 +847,7 @@ public abstract class CVODES_ASA extends CVODES {
 	  case CV_HERMITE:
 	    
 	    ca_mem.ca_IMmalloc = CVAhermiteMalloc_select;
-	    //ca_mem.ca_IMfree   = CVAhermiteFree;
+	    ca_mem.ca_IMfree   = CVAhermiteFree_select;
 	    ca_mem.ca_IMget    = CVAhermiteGetY_select;
 	    ca_mem.ca_IMstore  = CVAhermiteStorePnt_select;
 
@@ -777,7 +856,7 @@ public abstract class CVODES_ASA extends CVODES {
 	  case CV_POLYNOMIAL:
 	  
 	    ca_mem.ca_IMmalloc = CVApolynomialMalloc_select;
-	    //ca_mem.ca_IMfree   = CVApolynomialFree;
+	    ca_mem.ca_IMfree   = CVApolynomialFree_select;
 	    ca_mem.ca_IMget    = CVApolynomialGetY_select;
 	    ca_mem.ca_IMstore  = CVApolynomialStorePnt_select;
 
@@ -1863,8 +1942,7 @@ public abstract class CVODES_ASA extends CVODES {
 	  new_cvB_mem.cv_user_data  = null;
 
 	  new_cvB_mem.cv_lmem    = null;
-	  //new_cvB_mem.cv_lfree   = null;
-	  new_cvB_mem.cv_lfree_select = -1;
+	  new_cvB_mem.cv_lfree   = -1;
 	  //new_cvB_mem.cv_pmem    = null;
 	  //new_cvB_mem.cv_pfree   = null;
 
@@ -2082,11 +2160,11 @@ public abstract class CVODES_ASA extends CVODES {
 	  cvdlsB_mem = new CVDlsMemRecB();
 
 	  /* free any existing system solver attached to cvB */
-	  //if (cvB_mem.cv_lfree_select > 0)  cvB_mem.cv_lfree(cvB_mem);
+	  //if (cvB_mem.cv_lfree > 0)  cvB_mem.cv_lfree(cvB_mem);
 
 	  /* Attach lmemB data and lfreeB function. */
 	  cvB_mem.cv_lmem  = cvdlsB_mem;
-	  cvB_mem.cv_lfree_select = cvDlsFreeB_select;
+	  cvB_mem.cv_lfree = cvDlsFreeB_select;
 
 	  /* initialize jacB and jacBS pointers */
 	  cvdlsB_mem.jacB  = -1;
@@ -2508,6 +2586,7 @@ public abstract class CVODES_ASA extends CVODES {
 
 	        /* Integrate current backward problem */
 	        CVodeSetStopTime(tmp_cvB_mem.cv_mem, ck_mem.ck_t0);
+	        CVodeSetMaxNumSteps(tmp_cvB_mem.cv_mem, -1);
 	        flag = CVode(tmp_cvB_mem.cv_mem, tBout, tmp_cvB_mem.cv_y, tBret, itaskB);
 
 	        /* Set the time at which we will report solution and/or quadratures */
