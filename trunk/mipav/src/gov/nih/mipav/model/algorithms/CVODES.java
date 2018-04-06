@@ -2414,10 +2414,9 @@ public abstract class CVODES {
 	public int fBTestMode(double t, NVector y, NVector yB, NVector yBdot, UserData user_dataB) {
 		if (problem == cvsRoberts_ASAi_dns) {
 			double p[] = user_dataB.array;
-			double l10,l21,y12;
+			double l10,l21;
 			l10 = yB.data[1] - yB.data[0];
 			l21 = yB.data[2] - yB.data[1];
-			y12 = y.data[1] * y.data[2];
 			yBdot.data[0] = -p[0] * l10;
 			yBdot.data[1] = p[1]*y.data[2]*l10 - 2.0*p[2]*y.data[1]*l21;
 			yBdot.data[2] = p[1]*y.data[1]*l10 - 1.0;
