@@ -1932,7 +1932,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		float xPointArray[] = new float[]{(float)axlim[0], (float)axlim[1], (float)axlim[1], (float)axlim[0], (float)axlim[0]};
 		float yPointArray[] = new float[]{(float)axlim[2], (float)axlim[2], (float)axlim[3], (float)axlim[3], (float)axlim[2]};
-		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray, "title", "lablelX", "labelY", Color.BLUE);
+		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray, "title", "labelX", "labelY", Color.BLUE);
 		pointGraph.setVisible(true);
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);	
@@ -14398,7 +14398,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		
 		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
-				"title", "lablelX", "labelY", Color.BLUE);
+				"title", "labelX", "labelY", Color.BLUE);
 		pointGraph.setVisible(true);
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		if ((axis != null) || (exterRoutine)) {
