@@ -17,7 +17,7 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	// on Mathematical Software, Vol. 24, No. 3, September, 1998, pp. 317-333.
 	// The original FORTRAN code was written by Dr. Chenglie Hu as described in
 	// his article "A Software Package for Computing Schwarz-Christoffel Conformal
-	// Transformation for Doubly Connected Polyhgonal Regions."
+	// Transformation for Doubly Connected Polygonal Regions."
 	
 	//************* DSCPACK *************************************************
 	// THIS IS A COLLECTION OF SUBROUTINES TO SOLVE PARAMETER PROBLEM OF   *
