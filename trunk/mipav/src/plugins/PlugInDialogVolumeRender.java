@@ -1279,9 +1279,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		Vector3f min = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
 		Vector3f max = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
-		int timeCount, maxTimeCount = -1, minTimeCount = Integer.MAX_VALUE;
-		int maxIndex = -1;
+//		int timeCount, maxTimeCount = -1, minTimeCount = Integer.MAX_VALUE;
+//		int maxIndex = -1;
 		int fileIndex = 0;
+		int startTime = -1;
+		int endTime = -1;
 		if (inputFileDir.exists() && inputFileDir.isDirectory()) {
 	        progress.setVisible(true);
 			String[] list = inputFileDir.list();
@@ -1304,9 +1306,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 				//        		System.err.println( annotationName );
 
-				int startTime = -1;
-				int endTime = -1;
-				timeCount = 0;
+//				timeCount = 0;
 				VOI annotation = new VOI( (short)i, annotationName, VOI.ANNOTATION, 0 );
 				Vector<Integer> times = new Vector<Integer>();
 				FileReader fr;
@@ -1345,11 +1345,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 						if ( time != -1 )
 						{
-							if ( startTime == -1 )
+							if ( startTime > time )
 							{
 								startTime = time;
 							}
-							endTime = time;
+							if ( endTime < time )
+							{
+								endTime = time;
+							}
 						}
 						if ( (time != -1) && (z >= 0) && (parsed.length > 3) )
 						{
@@ -1362,11 +1365,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 							annotation.getCurves().add(text);
 
 							times.add( time );
-							timeCount++;
+//							timeCount++;
 
 							min.min( text.elementAt(0) );
 							max.max( text.elementAt(0) );
 
+//							System.err.println( annotationName + "  " + time + "   " + x + "  " + y + "  " + z );
 							//    						if ( text.elementAt(0).Z < 0 )
 							//    						{
 							//    							System.err.println(list[i] );
@@ -1394,16 +1398,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				if ( timeCount < minTimeCount )
-				{
-					minTimeCount = timeCount;
-					maxIndex = fileIndex;
-				}
-				if ( timeCount > maxTimeCount )
-				{
-					maxTimeCount = timeCount;
-					maxIndex = fileIndex;
-				}
+//				if ( timeCount < minTimeCount )
+//				{
+//					minTimeCount = timeCount;
+//					maxIndex = fileIndex;
+//				}
+//				if ( timeCount > maxTimeCount )
+//				{
+//					maxTimeCount = timeCount;
+//					maxIndex = fileIndex;
+//				}
 				fileIndex++;
 				progress.updateValueImmed((int) (100 * (float)fileIndex/(float)list.length));
 			}
@@ -1412,8 +1416,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		//        System.err.println( minTimeCount + " " + maxTimeCount + " " + (minTimeCount == maxTimeCount ) );
 
 		//        System.err.println( timesList.size() + " " + tempList.size() );
-		int[] times = timesList.elementAt( maxIndex );
-		VOI curve = tempList.elementAt( maxIndex );
+//		int[] times = timesList.elementAt( maxIndex );
+//		VOI curve = tempList.elementAt( maxIndex );
 		//		for ( int j = 0; j < times.length; j++ )
 		//		{
 		//			System.err.println( curve.getName() + " " + times[j] );
@@ -1421,10 +1425,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 
 		annotationList = new VOIVector();
-		for ( int i = 0; i < times.length; i++ )
+		for ( int i = startTime; i <= endTime; i++ )
 		{
-			int timeStep = times[i];
-			VOI annotation = new VOI( (short)i, "time" + timeStep, VOI.ANNOTATION, 0 );
+//			int timeStep = times[i];
+			VOI annotation = new VOI( (short)i, "time" + i, VOI.ANNOTATION, 0 );
 
 			//			System.err.print( timeStep );
 			for ( int j = 0; j < timesList.size(); j++ )
@@ -1432,7 +1436,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				int[] currentTimes = timesList.elementAt(j);
 				for ( int k = 0; k < currentTimes.length; k++ )
 				{
-					if ( timeStep == currentTimes[k] )
+					if ( i == currentTimes[k] )
 					{
 						VOIText text = new VOIText(tempList.elementAt(j).getCurves().elementAt(k));
 
