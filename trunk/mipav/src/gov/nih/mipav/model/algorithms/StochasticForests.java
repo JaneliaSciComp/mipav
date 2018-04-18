@@ -129,6 +129,8 @@ public class StochasticForests extends AlgorithmBase {
 	// Threshold for q value split method switch
 	final double Q_THRESHOLD = 0.02;
 	
+	public static int RAND_MAX = 32767;
+	
 	private class Data {
 		protected Vector<String> variable_names;
 		protected int num_rows = 0;
@@ -140,18 +142,18 @@ public class StochasticForests extends AlgorithmBase {
 		protected boolean externalData = true;
 		
 		protected int index_data[] = null;
-		protected Vector<Vector<Double>> unique_data_values = null;
+		protected Vector<Vector<Double>> unique_data_values = new Vector<Vector<Double>>();
 		protected int max_num_unique_values = 0;
 		int i;
 		
 		// Variable to not split at (only dependent_varID for non-survival trees)
-		protected Vector<Integer> no_split_variables = null;
+		protected Vector<Integer> no_split_variables = new Vector<Integer>();
 		
 		// For each varID true if ordered
-	    protected Vector<Boolean> is_ordered_variable = null;
+	    protected Vector<Boolean> is_ordered_variable = new Vector<Boolean>();
 	    
 	    // Permuted samples for corrected impurity importance
-	    protected Vector<Integer> permuted_sampleIDs = null;
+	    protected Vector<Integer> permuted_sampleIDs = new Vector<Integer>();
 	    
 	    public void dispose() {
 	    	index_data = null;
@@ -173,7 +175,7 @@ public class StochasticForests extends AlgorithmBase {
 	    }
 	    
 	    // #nocov start
-	    /*public boolean loadFromFile(String filename) {
+	    public boolean loadFromFile(String filename) {
 	    	boolean result;
 	    	
 	    	// Open input file
@@ -184,7 +186,7 @@ public class StochasticForests extends AlgorithmBase {
 	    	}
 	    	catch (FileNotFoundException e) {
 	    		MipavUtil.displayError("Could not find file " + filename);
-	    		return false;
+	    		return true;
 	    	}
 	    	
 	    	// Count number of rows
@@ -196,7 +198,7 @@ public class StochasticForests extends AlgorithmBase {
 	        	}
 	    		catch (IOException e) {
 	    			MipavUtil.displayError("IO exception on readLine of " + filename);
-	    			return false;
+	    			return true;
 	    		}
 	        	if (line != null) {
 	        		line_count++;
@@ -211,13 +213,14 @@ public class StochasticForests extends AlgorithmBase {
 	        }
 	        catch (IOException e) {
 	        	MipavUtil.displayError("IO exception on close of " + filename);
+	        	return true;
 	        }
 	        try {
 	    	    input_file = new BufferedReader(new FileReader(file));
 	    	}
 	    	catch (FileNotFoundException e) {
 	    		MipavUtil.displayError("Could not find file " + filename);
-	    		return false;
+	    		return true;
 	    	}
 	        
 	        // Check if comma, semicolon, or whitespace separated
@@ -227,7 +230,7 @@ public class StochasticForests extends AlgorithmBase {
 	        }
 	        catch (IOException e) {
 	        	MipavUtil.displayError("IO exception reading header line of " + filename);
-	        	return false;
+	        	return true;
 	        }
 	        
 	        // Find out if comma, semicolon, or whitespace separated and call appropriate method
@@ -238,7 +241,7 @@ public class StochasticForests extends AlgorithmBase {
 	        	result = loadFromFileOther(input_file, header_line, ";");	
 	        }
 	        else {
-	        	result = loadFromFileWhitespace(input_file, header_line);
+	        	result = loadFromFileOther(input_file, header_line, " ");
 	        }
 	        
 	        externalData = false;
@@ -251,10 +254,11 @@ public class StochasticForests extends AlgorithmBase {
 	        return result;
 	    } // loadFromFile
 	    
-	    public boolean loadFromFileWhitespace(BufferedReader input_file, String header_line) {
+	    // Use instead of loadFromFileWhitespace by using separator = " ".
+	    public boolean loadFromFileOther(BufferedReader input_file, String header_line, String separator) {
 	    	// Read header
 	    	String[] header_tokens;
-	    	header_tokens = header_line.split(" ");
+	    	header_tokens = header_line.split(separator);
 	    	for (i = 0; i < header_tokens.length; i++) {
 	    		variable_names.add(header_tokens[i]);
 	    	}
@@ -262,7 +266,8 @@ public class StochasticForests extends AlgorithmBase {
 	    	num_cols_no_snp = num_cols;
 	    	
 	    	// Read body
-	    	boolean error = false;
+	    	reserveMemory();
+	    	boolean error[] = new boolean[]{false};
 	    	String line;
 	    	int row = 0;
 	    	while (true) {
@@ -277,15 +282,298 @@ public class StochasticForests extends AlgorithmBase {
 	    			break;
 	    		}
 	    		String tokens[];
-	    		tokens = line.split(" ");
+	    		int column = 0;
+	    		tokens = line.split(separator);
 	    		for (i = 0; i < tokens.length; i++) {
 	    			double dValue = Double.valueOf(tokens[i]).doubleValue();
+	    			set(column, row, dValue, error);
+                    column++;
 	    		}
+	    		if (separator.equals(" ")) {
+		    		if (column > num_cols) {
+		    			MipavUtil.displayError("Too many columns in a row");
+		    			return false;
+		    		}
+		    		else if (column < num_cols) {
+		    			MipavUtil.displayError("Too few columns in a row.  Are all values numeric?");
+		    			return false;
+		    		}
+	    		} // if (separator.equals(" "))
+	    		row++;
 	    	} // while true
-	    } */
+	    	num_rows = row;
+	    	return error[0];
+	    }
+	    
+	    public void getAllValues(Vector<Double> all_values, Vector<Integer> sampleIDs,
+	    		int varID) {
+	    	// All values for varID (no duplicates) for given sampleIDs
+	    	if (getUnpermutedVarID(varID) < num_cols_no_snp) {
+	    	    if (all_values.size() < sampleIDs.size()) {
+	    	        all_values.setSize(sampleIDs.size());	
+	    	    }
+	    	    for (i = 0; i < sampleIDs.size(); i++) {
+	    	    	all_values.add(get(sampleIDs.get(i),varID));
+	    	    }
+	    	    all_values.sort(null);
+	    	    for (i = all_values.size()-1; i >= 1; i--) {
+	    	    	if (all_values.get(i) == all_values.get(i-1)) {
+	    	    		all_values.removeElementAt(i);
+	    	    	}
+	    	    }
+	    	} // if (getUnpermutedVarID(varID) < num_cols_no_snp)
+	    	else {
+	    		// If GWA data just use 0, 1, 2
+	    		all_values.clear();
+	    		all_values.add(0.0);
+	    		all_values.add(1.0);
+	    		all_values.add(2.0);
+	    	}
+	    }
+	    
+	    public void getMinMaxValues(double min[], double max[], Vector<Integer> sampleIDs, int varID) {
+	        if (sampleIDs.size() > 0) {
+	        	min[0] = get(sampleIDs.get(0), varID);
+	        	max[0] = min[0];
+	        }
+	        for ( i = 1; i < sampleIDs.size(); i++) {
+	        	double value = get(sampleIDs.get(i), varID);
+	        	if (value < min[0]) {
+	        		min[0] = value;
+	        	}
+	        	if (value > max[0]) {
+	        		max[0] = value;
+	        	}
+	        }
+	    }
+	    
+	    public void sort() {
+	    	// Reserve memory
+	    	index_data = new int[num_cols_no_snp * num_rows];
+	    	
+	    	// For all columns, get unique values and save index for each observation
+	    	for (int col = 0; col < num_cols_no_snp; col++) {
+	    		// Get all unique values
+	    		Vector<Double>unique_values = new Vector<Double>();
+	    		if (unique_values.size() < num_rows) {
+	    			unique_values.setSize(num_rows);
+	    		}
+	    		for (int row = 0; row < num_rows; row++) {
+	    			unique_values.add(row,get(row, col));
+	    		}
+	    		unique_values.sort(null);
+	    		for (i = unique_values.size()-1; i >= 1; i--) {
+	    	    	if (unique_values.get(i) == unique_values.get(i-1)) {
+	    	    		unique_values.removeElementAt(i);
+	    	    	}
+	    	    }
+	    		
+	    		// Get index of unique value
+	    		for (int row = 0; row < num_rows; row++) {
+	    			int idx;
+	    			for (idx = 0; idx < unique_values.size(); idx++) {
+	    				if (unique_values.get(idx) >= get(row,col)) {
+	    					break;
+	    				}
+	    			}
+	    			index_data[col * num_rows + row] = idx;
+	    		} // for (int row = 0; row < num_rows; row++)
+	    		
+	    		// Save unique values
+	    	    unique_data_values.add(unique_values);
+	    	    if (unique_values.size() > max_num_unique_values) {
+	    	    	max_num_unique_values = unique_values.size();
+	    	    }
+	    	} // for (int col = 0; col < num_cols_no_snp; col++) {
+	    } // public void sort()
+	    
+	    public void reserveMemory() {
+	    	
+	    };
+	    
+	    public void set(int col, int row, double value, boolean error[]) {
+	    	
+	    }
 	    
 	    
+	    public double get(int row, int col) {
+	    	return 0.0;
+	    }
+	    
+	    public int getUnpermutedVarID(int varID) {
+	        if (varID >= num_cols) {
+	          varID -= num_cols;
+
+	          for (i = 0; i < no_split_variables.size(); i++) {
+	            if (varID >= no_split_variables.get(i)) {
+	              ++varID;
+	            }
+	          }
+	        }
+	        return varID;
+	      }
+	    
+	    public int getPermutedSampleID(int sampleID) {
+	        return permuted_sampleIDs.get(sampleID);
+	    }
+
+	    public int getIndex(int row, int col) {
+	        // Use permuted data for corrected impurity importance
+	        if (col >= num_cols) {
+	          col = getUnpermutedVarID(col);
+	          row = getPermutedSampleID(row);
+	        }
+
+	        if (col < num_cols_no_snp) {
+	          return index_data[col * num_rows + row];
+	        } else {
+	          // Get data out of snp storage. -1 because of GenABEL coding.
+	          int idx = (col - num_cols_no_snp) * num_rows_rounded + row;
+	          int result = (((snp_data[idx / 4] & mask[idx % 4]) >> offset[idx % 4]) - 1);
+
+	          // TODO: Better way to treat missing values?
+	          if (result > 2) {
+	            return 0;
+	          } else {
+	            return result;
+	          }
+	        }
+	      }
+
+	    public double getUniqueDataValue(int varID, int index) {
+	        // Use permuted data for corrected impurity importance
+	        if (varID >= num_cols) {
+	          varID = getUnpermutedVarID(varID);
+	        }
+
+	        if (varID < num_cols_no_snp) {
+	          return unique_data_values.get(varID).get(index);
+	        } else {
+	          // For GWAS data the index is the value
+	          return (index);
+	        }
+	      }
+
+	    public int getNumUniqueDataValues(int varID) {
+	        // Use permuted data for corrected impurity importance
+	        if (varID >= num_cols) {
+	          varID = getUnpermutedVarID(varID);
+	        }
+
+	        if (varID < num_cols_no_snp) {
+	          return unique_data_values.get(varID).size();
+	        } else {
+	          // For GWAS data 0,1,2
+	          return (3);
+	        }
+	      }
+	    
+	    public Vector<String> getVariableNames() {
+	    	return variable_names;
+	    }
+	    
+	    public int getNumCols() {
+	    	return num_cols;
+	    }
+	    
+	    public int getNumRows() {
+	    	return num_rows;
+	    }
+	    
+	    public int getMaxNumUniqueValues() {
+	        if (snp_data == null || max_num_unique_values > 3) {
+	          // If no snp data or one variable with more than 3 unique values, return that value
+	          return max_num_unique_values;
+	        } else {
+	          // If snp data and no variable with more than 3 unique values, return 3
+	          return 3;
+	        }
+	    }
+
+	    public Vector<Integer> getNoSplitVariables() {
+	        return no_split_variables;
+	    }
+	    
+	    public void addNoSplitVariable(int varID) {
+	        no_split_variables.add(varID);
+	        no_split_variables.sort(null);
+	    }
+	    
+	    public Vector<Boolean> getIsOrderedVariable() {
+	        return is_ordered_variable;
+	    }
+
+	    // Original name setIsOrderedVariable
+	    public void setIsOrderedVariableString(Vector<String> unordered_variable_names) {
+	        if (is_ordered_variable.size() > num_cols) {
+	        	for (i = is_ordered_variable.size() - 1; i >= num_cols; i++) {
+	        		is_ordered_variable.remove(i);
+	        	}
+	        }
+	        else if (is_ordered_variable.size() < num_cols) {
+	        	for (i = is_ordered_variable.size(); i < num_cols; i++) {
+	        		is_ordered_variable.add(i, true);
+	        	}
+	        }
+	        for (i = 0; i < unordered_variable_names.size(); i++) {
+	          int varID = getVariableID(unordered_variable_names.get(i));
+	          is_ordered_variable.add(varID, false);
+	        }
+	    }
+	    
+	    public void setIsOrderedVariable(Vector<Boolean> is_ordered_variable) {
+	        this.is_ordered_variable = is_ordered_variable;
+	    }
+
+	    public boolean isOrderedVariable(int varID) {
+	        // Use permuted data for corrected impurity importance
+	        if (varID >= num_cols) {
+	          varID = getUnpermutedVarID(varID);
+	        }
+	        return is_ordered_variable.get(varID);
+	    }
+	    
+	    public void permuteSampleIDs() {
+	        permuted_sampleIDs.clear();
+	        for (i = 0; i < num_rows; i++) {
+	        	permuted_sampleIDs.add(i);
+	        }
+	        shuffle(permuted_sampleIDs);
+	    }
+
+
 	} // private class Data
+	
+	private class DoubleData extends Data {
+	    private double data[] = null;
+	    
+	    public void reserveMemory() {
+	    	data = new double[num_cols * num_rows];
+	    }
+	    
+	    public void set(int col, int row, double value, boolean error[]) {
+	        data[col * num_rows + row] = value;
+	    }
+	    
+	    public double get(int row, int col) {
+	        // Use permuted data for corrected impurity importance
+	        if (col >= num_cols) {
+	          col = getUnpermutedVarID(col);
+	          row = getPermutedSampleID(row);
+	        }
+
+	        if (col < num_cols_no_snp) {
+	          return data[col * num_rows + row];
+	        } else {
+	          // Get data out of snp storage. -1 because of GenABEL coding.
+	          int idx = (col - num_cols_no_snp) * num_rows_rounded + row;
+	          double result = (((snp_data[idx / 4] & mask[idx % 4]) >> offset[idx % 4]) - 1);
+	          return result;
+	        }
+	      }
+
+
+	} // private class DoubleData extends Data
 	
 	private int roundToNextMultiple(int value, int multiple) {
 		if (multiple == 0) {
@@ -297,6 +585,19 @@ public class StochasticForests extends AlgorithmBase {
 			return value;
 		}
 		return value + multiple - remainder;
+	}
+	
+	private void shuffle(Vector<Integer> v)
+	{
+	    int index, temp;
+	    Random random = new Random();
+	    for (int i = v.size() - 1; i > 0; i--)
+	    {
+	        index = random.nextInt(i + 1);
+	        temp = v.get(index);
+	        v.set(index,v.get(i));
+	        v.set(i,temp);
+	    }
 	}
 
 	
