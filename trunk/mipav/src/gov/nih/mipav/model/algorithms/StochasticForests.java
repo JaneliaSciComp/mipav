@@ -155,6 +155,17 @@ public class StochasticForests extends AlgorithmBase {
 	    // Permuted samples for corrected impurity importance
 	    protected Vector<Integer> permuted_sampleIDs = new Vector<Integer>();
 	    
+	    public Data() {
+	    	
+	    }
+	    
+	    public Data(Vector<String>variable_names, int num_rows, int num_cols) {
+	    	this.variable_names = variable_names;
+	    	this.num_rows = num_rows;
+	    	this.num_cols = num_cols;
+	    	this.num_cols_no_snp = num_cols;
+	    }
+	    
 	    public void dispose() {
 	    	index_data = null;
 	    }
@@ -544,8 +555,24 @@ public class StochasticForests extends AlgorithmBase {
 
 	} // private class Data
 	
-	private class DoubleData extends Data {
+	private class DataDouble extends Data {
 	    private double data[] = null;
+	    
+	    public DataDouble() {
+	    	super();
+	    }
+	    
+	    public DataDouble(double data[], Vector<String> variable_names, int num_rows,
+	    		int num_cols) {
+	    	super(variable_names, num_rows, num_cols);
+	    	this.data = data;
+	    }
+	    
+	    public void dispose() {
+	    	if (!externalData) {
+	    		data = null;
+	    	}
+	    }
 	    
 	    public void reserveMemory() {
 	    	data = new double[num_cols * num_rows];
@@ -572,8 +599,222 @@ public class StochasticForests extends AlgorithmBase {
 	        }
 	      }
 
+	} // private class DataDouble extends Data
+	
+	private class DataFloat extends Data {
+	    private float data[] = null;
+	    
+	    public DataFloat() {
+	    	super();
+	    }
+	    
+	    public DataFloat(double data_double[], Vector<String> variable_names, int num_rows,
+	    		int num_cols) {
+	    	super(variable_names, num_rows, num_cols);
+	    	reserveMemory();
+	    	for (int i = 0; i < num_cols; i++) {
+	    		for (int j = 0; j < num_rows; j++) {
+	    			data[i * num_rows + j] = (float) data_double[i * num_rows + j];
+	    		}
+	    	}
+	    }
+	    
+	    public void dispose() {
+	    	if (!externalData) {
+	    		data = null;
+	    	}
+	    }
+	    
+	    public void reserveMemory() {
+	    	data = new float[num_cols * num_rows];
+	    }
+	    
+	    public void set(int col, int row, double value, boolean error[]) {
+	        data[col * num_rows + row] = (float)value;
+	    }
+	    
+	    public double get(int row, int col) {
+	        // Use permuted data for corrected impurity importance
+	        if (col >= num_cols) {
+	          col = getUnpermutedVarID(col);
+	          row = getPermutedSampleID(row);
+	        }
 
-	} // private class DoubleData extends Data
+	        if (col < num_cols_no_snp) {
+	          return data[col * num_rows + row];
+	        } else {
+	          // Get data out of snp storage. -1 because of GenABEL coding.
+	          int idx = (col - num_cols_no_snp) * num_rows_rounded + row;
+	          double result = (((snp_data[idx / 4] & mask[idx % 4]) >> offset[idx % 4]) - 1);
+	          return result;
+	        }
+	      }
+
+	} // private class DataFloat extends Data
+	
+	private class DataChar extends Data {
+	    private char data[] = null;
+	    
+	    public DataChar() {
+	    	super();
+	    }
+	    
+	    public DataChar(double data_double[], Vector<String> variable_names, int num_rows,
+	    		int num_cols, boolean error[]) {
+	    	super(variable_names, num_rows, num_cols);
+	    	reserveMemory();
+	    	
+	    	// Save data and report errors
+	    	for (int i = 0; i < num_cols; i++) {
+	    		for (int j = 0; j < num_rows; j++) {
+	    			double value = data_double[i * num_rows + j];
+	    			if ((value > Character.MAX_VALUE) || (value < Character.MIN_VALUE)) {
+	    				error[0] = true;
+	    			}
+	    			if (Math.floor(value) != Math.ceil(value)) {
+	    				error[0] = true;
+	    			}
+	    			data[i * num_rows + j] = (char)value;
+	    		}
+	    	}
+	    }
+	    
+	    public void dispose() {
+	    	if (!externalData) {
+	    		data = null;
+	    	}
+	    }
+	    
+	    public void reserveMemory() {
+	    	data = new char[num_cols * num_rows];
+	    }
+	    
+	    public void set(int col, int row, double value, boolean error[]) {
+	    	if ((value > Character.MAX_VALUE) || (value < Character.MIN_VALUE)) {
+				error[0] = true;
+			}
+			if (Math.floor(value) != Math.ceil(value)) {
+				error[0] = true;
+			}
+	        data[col * num_rows + row] = (char)value;
+	    }
+	    
+	    public double get(int row, int col) {
+	        // Use permuted data for corrected impurity importance
+	        if (col >= num_cols) {
+	          col = getUnpermutedVarID(col);
+	          row = getPermutedSampleID(row);
+	        }
+
+	        if (col < num_cols_no_snp) {
+	          return data[col * num_rows + row];
+	        } else {
+	          // Get data out of snp storage. -1 because of GenABEL coding.
+	          int idx = (col - num_cols_no_snp) * num_rows_rounded + row;
+	          double result = (((snp_data[idx / 4] & mask[idx % 4]) >> offset[idx % 4]) - 1);
+	          return result;
+	        }
+	      }
+
+	} // private class DataFloat extends Data
+	
+	private class SparseMatrix {
+		int num_rows;
+		int num_cols;
+		int num_nonzero_values;
+		// sparse matrix with 3 rows and num_nonzero_values columns, row, column, and value rows
+		double sm[][];
+		
+		public SparseMatrix() {
+			super();
+		}
+		
+		public SparseMatrix(int num_rows, int num_cols) {
+		    super();
+		    this.num_rows = num_rows;
+		    this.num_cols = num_cols;
+		}
+		
+		public double coeff(int row, int col) {
+			for (int i = 0; i < num_nonzero_values; i++) {
+				if ((sm[0][i] == row) && (sm[1][i] == col)) {
+					return sm[2][i];
+				}
+			}
+			return Double.NaN;
+		}
+		
+		// coeffRef assumes the row and column value already exist.
+		// If they do not, use insert
+		public void insert(int row, int col, double value) {
+			int i, j;
+			for (i = 0; i < num_nonzero_values; i++) {
+				if ((sm[0][i] == row) && (sm[1][i] == col)) {
+					sm[2][i] = value;
+					return;
+				}
+			}
+			double smtemp[][] = new double[3][num_nonzero_values];
+			for (i = 0; i < 3; i++) {
+				for (j = 0; j <num_nonzero_values; j++) {
+					smtemp[i][j] = sm[i][j];
+				}
+			}
+			sm[0] = null;
+			sm[1] = null;
+			sm[2] = null;
+			sm = null;
+			num_nonzero_values = num_nonzero_values + 1;
+			sm = new double[3][num_nonzero_values];
+			for (i = 0; i < 3; i++) {
+			    for (j = 0; j < num_nonzero_values-1; j++) {
+			    	sm[i][j] = smtemp[i][j];
+			    }
+			}
+			sm[0][num_nonzero_values-1] = row;
+			sm[1][num_nonzero_values-1] = col;
+			sm[2][num_nonzero_values-1] = value;
+			smtemp[0] = null;
+			smtemp[1] = null;
+			smtemp[2] = null;
+			smtemp = null;
+		}
+	}
+	
+	private class DataSparse extends Data {
+		private SparseMatrix data = null;
+		
+		public DataSparse() {
+			super();
+		}
+		
+		public DataSparse(SparseMatrix data, Vector<String> variable_names, int num_rows,
+				int num_cols) {
+			super(variable_names, num_rows, num_cols);
+			this.data = data;
+		}
+		
+		public void dispose() {
+		    if (!externalData) {
+		        data = null;
+		    }
+		}
+		
+		public double get(int row, int col) {
+			return data.coeff(row, col);
+		}
+		
+		public void reserveMemory() {
+			data = new SparseMatrix(num_rows, num_cols);
+		}
+		
+		public void set(int col, int row, double value, boolean error[]) {
+			// coeffRef assumes that the (row, col) position already exists
+			// Otherwise use insert
+			//data.coeffRef(row,col,value);
+			data.insert(row,col,value);
+		}
+	} // private class DataSparse
 	
 	private int roundToNextMultiple(int value, int multiple) {
 		if (multiple == 0) {
@@ -599,7 +840,153 @@ public class StochasticForests extends AlgorithmBase {
 	        v.set(i,temp);
 	    }
 	}
+	
+	private void equalSplit(Vector<Integer> result, int start, int end, int num_parts) {
+		if (result.size() < num_parts + 1) {
+			result.setSize(num_parts+1);
+		}
+		
+		// Return range if only 1 part
+		if (num_parts == 1) {
+			result.add(start);
+			result.add(end+1);
+			return;
+		}
+		
+		// Return vector from start to end+1 if more parts than elements
+		if (num_parts > end - start + 1) {
+			for (int i = start; i <= end + 1; i++) {
+				result.add(i);
+			}
+			return;
+		}
+		
+		int length = (end - start + 1);
+	    int part_length_short = length / num_parts;
+		int part_length_long = (int) Math.ceil(length / ((double) num_parts));
+		int cut_pos = length % num_parts;
 
+		// Add long ranges
+		for (int i = start; i < start + cut_pos * part_length_long; i = i + part_length_long) {
+		    result.add(i);
+		}
+
+		// Add short ranges
+		for (int i = start + cut_pos * part_length_long; i <= end + 1; i = i + part_length_short) {
+		    result.add(i);
+		}
+
+	} // private void equalSplit
+	
+	void loadDoubleVectorFromFile(Vector<Double> result, String filename) { // #nocov start
+      String line;
+      int i;
+	  // Open input file
+	  File file = new File(filename);
+  	  BufferedReader input_file;
+  	  try {
+  	      input_file = new BufferedReader(new FileReader(file));
+  	  }
+  	  catch (FileNotFoundException e) {
+  		  MipavUtil.displayError("Could not find file " + filename);
+  		  return;
+  	  }
+
+	  // Read the first line, ignore the rest
+  	  try {
+           line = input_file.readLine();
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on readLine from input_file");
+		  return;
+	  }
+  	  try {
+  		  input_file.close();
+  	  }
+  	  catch (IOException e) {
+  		  MipavUtil.displayError("IO exception on close from input_file");
+  		  return;
+  	  }
+	  if (line == null) {
+		  return;
+	  }
+	  String tokens[];
+	  tokens = line.split(" ");
+	  for (i = 0; i < tokens.length; i++) {
+		  double dValue = Double.valueOf(tokens[i]).doubleValue();
+		  result.add(dValue);
+	  }
+	} // #nocov end
+	
+	private void drawWithoutReplacementSkip(Vector<Integer> result, int max,
+	    Vector<Integer> skip, int num_samples) {
+	  if (num_samples < max / 10) {
+	    drawWithoutReplacementSimple(result, max, skip, num_samples);
+	  } else {
+	    //drawWithoutReplacementKnuth(result, max, skip, num_samples);
+	    drawWithoutReplacementFisherYates(result, max, skip, num_samples);
+	  }
+	}
+
+	
+	private void drawWithoutReplacementSimple(Vector<Integer> result, int max,
+		    Vector<Integer> skip, int num_samples) {
+      int i, j;
+	  if (result.size() < num_samples) {
+		  result.setSize(num_samples);
+	  }
+
+	  // Set all to not selected
+	  Vector<Boolean> temp = new Vector<Boolean>();
+	  for (i = 0; i < max; i++) {
+	      temp.add(i, false);
+	  }
+
+	  Random random = new Random();
+	  for (i = 0; i < num_samples; ++i) {
+	    int draw;
+	    do {
+	      draw = random.nextInt(max - skip.size());
+	      for (j = 0; j < skip.size(); j++) {
+	        if (draw >= skip.get(j)) {
+	          ++draw;
+	        }
+	      }
+	    } while (temp.get(draw));
+	    temp.set(draw,true);
+	    result.add(draw);
+	  }
+	}
+
+	private void drawWithoutReplacementFisherYates(Vector<Integer> result,
+	    int max, Vector<Integer> skip, int num_samples) {
+      int i, j;
+      int temp;
+	  // Create indices
+	  if (result.size() < max) {
+		  result.setSize(max);
+	  }
+	  for (i = 0; i < max; i++) {
+		  result.add(i);
+	  }
+
+	  // Skip indices
+	  for (i = 0; i < skip.size(); ++i) {
+	    result.removeElementAt((skip.get(skip.size() - 1 - i)).intValue());
+	  }
+
+	  // Draw without replacement using Fisher Yates algorithm
+	  Random random = new Random();
+	  for (i = 0; i < num_samples; ++i) {
+	    j = (int)Math.round(i + random.nextDouble() * (max - skip.size() - i));
+	    temp = result.get(i);
+	    result.set(i,result.get(j));
+	    result.set(j,temp);
+	  }
+
+	  result.setSize(num_samples);
+	}
+	
 	
 	public void runAlgorithm() {
 		
