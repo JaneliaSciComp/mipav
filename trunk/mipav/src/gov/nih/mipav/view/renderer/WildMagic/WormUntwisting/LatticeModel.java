@@ -77,7 +77,8 @@ public class LatticeModel {
 					final File lrFile = new File(voiDir + list[i]);
 					lrFile.delete();
 				}
-			} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+			} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { 
+				voiFileDir.delete();
 			} else { // voiFileDir does not exist
 //				System.err.println( "saveAllVOIsTo " + voiDir);
 				voiFileDir.mkdir();
@@ -123,7 +124,7 @@ public class LatticeModel {
 	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations)
 	{
 		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
-		System.err.println("Saving annotations list: " );
+		System.err.println("Saving annotations list: " + dir + "  " + fileName );
 		int numSaved = 0;
 		// check files, create new directories and delete any existing files:
 		final File fileDir = new File(dir);

@@ -11,12 +11,14 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Color;
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class WormData
@@ -230,6 +232,13 @@ public class WormData
 		return lattice;
 	}
 	
+	public VOIVector openStraightSeamCells()
+	{
+		VOIVector lattice = new VOIVector();
+		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + straightenedSeamCells + File.separator, true, lattice, true);
+		return lattice;
+	}
+	
 	public VOIVector[] readAutoLattice()
 	{
 		VOIVector[] latticeList = new VOIVector[5];
@@ -426,7 +435,7 @@ public class WormData
 		return (count == 2) || (count == 0);
 	}
 	
-	public void saveSeamAnnotations()
+	public void saveSeamAnnotations(boolean rename)
 	{		
 		seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
@@ -606,16 +615,20 @@ public class WormData
 		}
 		System.err.println( seamCellPoints.size() + "  allfound? " + allMatch );
 
-		int id = 1;
-		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		if ( rename )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
-			if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
+			int id = 1;
+			for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
 			{
-				text.setText( "" + id++ );
+				VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+				if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
+				{
+					text.setText( "" + id++ );
+				}
 			}
 		}
-		
+		wormImage.unregisterAllVOIs();
+		wormImage.registerVOI(seamAnnotations);
 		seamAnnotations.setName("seam cells");
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editSeamCellOutput + File.separator, wormImage);
 		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editSeamCellOutput + File.separator, "seamCellInfo.csv", seamAnnotations);
@@ -859,6 +872,138 @@ public class WormData
 			LatticeModel.saveAnnotationsAsCSV(seamCellDir, "seamCellInfo.csv", seamAnnotations);
 		}
 		//		System.err.println( "   segmentSeamCells: end " + minSeamCellSegmentationIntensity );
+	}
+	
+	public void segmentSeamFromLattice()
+	{
+		System.err.println("segmentSeamFromLattice");
+		
+		VOI lattice = readFinalLattice();
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		
+		seamAnnotations = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
+		wormImage.unregisterAllVOIs();
+		
+		wormImage.registerVOI(seamAnnotations);
+
+		float[] pairSort = new float[left.size()];
+		// decide which 10 points are seam cells by taking max pair values
+		for ( int i = 0; i < left.size() -1; i++ )
+		{
+			int x = (int)left.elementAt(i).X;
+			int y = (int)left.elementAt(i).Y;
+			int z = (int)left.elementAt(i).Z;
+			float value;
+			if ( wormImage.isColorImage() ) 
+			{
+				value = wormImage.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value = wormImage.getFloat(x,y,z);
+			}
+
+			x = (int)right.elementAt(i).X;
+			y = (int)right.elementAt(i).Y;
+			z = (int)right.elementAt(i).Z;
+			if ( wormImage.isColorImage() ) 
+			{
+				value += wormImage.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value += wormImage.getFloat(x,y,z);
+			}
+			pairSort[i] = value;
+		}
+		Arrays.sort(pairSort);
+		
+		int pairCount = 0;
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			int x = (int)left.elementAt(i).X;
+			int y = (int)left.elementAt(i).Y;
+			int z = (int)left.elementAt(i).Z;
+			float value;
+			if ( wormImage.isColorImage() ) 
+			{
+				value = wormImage.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value = wormImage.getFloat(x,y,z);
+			}
+			x = (int)right.elementAt(i).X;
+			y = (int)right.elementAt(i).Y;
+			z = (int)right.elementAt(i).Z;
+			if ( wormImage.isColorImage() ) 
+			{
+				value += wormImage.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value += wormImage.getFloat(x,y,z);
+			}
+			
+			boolean isSeamPair = (left.size() <= 10) || (i == left.size() -1);
+			if ( !isSeamPair )
+			{
+				// check if this pair has a high enough value to be added to the list of seam cells:
+				for ( int j = 0; j < Math.min(9, pairSort.length); j++ )
+				{
+					if ( value >= pairSort[(pairSort.length -1) - j] )
+					{
+						System.err.println( value + "  " + pairSort[(pairSort.length -1) - j]);
+						isSeamPair = true;
+						break;
+					}
+				}
+			}
+			if ( isSeamPair )
+			{
+				String name = pairCount < 3 ? ("H" + pairCount) : (pairCount < 9) ? ("V" + (pairCount - 2)) : "T";
+				pairCount++;
+				
+				// left seam cell:
+				VOIText text = new VOIText();
+				text.add(left.elementAt(i));
+				text.add(left.elementAt(i));
+				text.setText( name + "L" );
+				text.setUseMarker(false);
+				text.update();
+
+				//			int x = (int)seamCellPoints.elementAt(i).X;
+				//			int y = (int)seamCellPoints.elementAt(i).Y;
+				//			int z = (int)seamCellPoints.elementAt(i).Z;
+				//			if ( (i+1) != seamSegmentation.getFloat(x,y,z) )
+				//			{
+				//				System.err.println( "Seam Cell " + (i+1) + "  " + seamSegmentation.getFloat(x,y,z) );
+				//			}
+				seamAnnotations.getCurves().add(text);
+
+				// right seam cell:
+				// left seam cell:
+				text = new VOIText();
+				text.add(right.elementAt(i));
+				text.add(right.elementAt(i));
+				text.setText( name + "R" );
+				text.setUseMarker(false);
+				text.update();
+				seamAnnotations.getCurves().add(text);
+			}
+		}
+
+		String seamCellDir = outputDirectory + File.separator + autoSeamCellSegmentationOutput + File.separator;
+		File outputFileDir = new File(seamCellDir);
+		if ( !outputFileDir.exists() )
+		{
+			//			System.err.println( "segmentSeamCells " + seamCellDir);
+			outputFileDir.mkdir();
+		}
+		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editSeamCellOutput + File.separator, wormImage);
+		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editSeamCellOutput + File.separator, "seamCellInfo.csv", seamAnnotations);
+
 	}
 	
 	public void segmentSkin()

@@ -104,9 +104,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	public static final int EditNONE = 0;
 	public static final int EditSeamCells = 1;
 	public static final int EditLattice = 2;
-	public static final int EditAnnotations1 = 3;
-	public static final int EditAnnotations2 = 4;
-	public static final int ReviewResults = 5;
+	public static final int CheckSeam = 3;
+	public static final int EditAnnotations1 = 4;
+	public static final int EditAnnotations2 = 5;
+	public static final int ReviewResults = 6;
 	
 	private JPanel algorithmsPanel;
 	private VOIVector annotationList;
@@ -132,6 +133,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JRadioButton editAnnotations1;
 	private JRadioButton editAnnotations2;
 	private JRadioButton editLattice;
+	private JRadioButton checkSeamCells;
 	private int editMode = EditNONE;
 	private JPanel editPanel;
 	private JRadioButton editSeamCells;
@@ -335,6 +337,21 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						openLattice();
 					}
 				}
+				else if ( checkSeamCells.isSelected() )
+				{
+					// start lattice editing:
+					if ( !integratedDisplay )
+					{
+						PlugInDialogVolumeRender editor = new PlugInDialogVolumeRender( this, PlugInDialogVolumeRender.CheckSeam, includeRange, imageIndex, baseFileDir, baseFileNameText.getText() );
+						editor.setLocation( this.getWidth(), this.getY() );
+						editor.checkSeam();
+					}
+					else
+					{
+						editMode = CheckSeam;
+						checkSeam();
+					}
+				}
 				else if ( editAnnotations1.isSelected() )
 				{
 					// start annotation editing:
@@ -421,6 +438,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					openLattice();
 				}
+				else if ( editMode == CheckSeam )
+				{
+					checkSeam();
+				}
 				else if ( editMode == EditAnnotations1 )
 				{
 					openAnnotations(0);
@@ -464,6 +485,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				else if ( editMode == EditLattice )
 				{
 					openLattice();
+				}
+				else if ( editMode == CheckSeam )
+				{
+					checkSeam();
 				}
 				else if ( editMode == EditAnnotations1 )
 				{
@@ -614,14 +639,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 //		System.err.println( "algorithmPerformed" );
 		voiManager = new VOILatticeManagerInterface( null, volumeImage.GetImage(), null, 0, true, null );
 		volumeRenderer.setVOILatticeManager(voiManager);
-		if ( (editMode == EditSeamCells) || (editMode == EditAnnotations1) || (editMode == EditAnnotations2) )
+		if ( (editMode == EditSeamCells) || (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) )
 		{
 			if ( annotations != null )
 			{
 				if ( annotations.size() > 0 )
 				{
 					voiManager.setAnnotations(annotations);
-					if ( editMode == EditAnnotations1 || editMode == EditAnnotations2 )
+					if ( (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) )
 					{
 						if ( finalLattice != null ) {
 							VOIVector latticeVector = new VOIVector();
@@ -745,6 +770,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			buildLattice.setSelected(true);
 		}
 		else if ( mode == EditLattice )
+		{
+			checkSeamCells.setSelected(true);
+		}
+		else if ( mode == CheckSeam )
 		{
 			editAnnotations1.setSelected(true);
 		}
@@ -1248,6 +1277,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					wormData = new WormData(wormImage);
 					wormData.openStraightLattice();
 					wormData.openStraightAnnotations();
+					wormData.openStraightSeamCells();
 					if ( voiFile2 != null )
 					{
 						wormData.openStraightAnnotations(voiFile2.getParentFile().getParent());
@@ -1928,10 +1958,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridy++;
 
 		gbc.gridx = 0;
-		editLattice = gui.buildRadioButton("4). edit lattice", false );
+		editLattice = gui.buildRadioButton("4a). edit lattice", false );
 		editLattice.addActionListener(this);
 		editLattice.setActionCommand("editLattice");
 		panel.add(editLattice.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		checkSeamCells = gui.buildRadioButton("4b). check seam cells", false );
+		checkSeamCells.addActionListener(this);
+		checkSeamCells.setActionCommand("checkSeamCells");
+		panel.add(checkSeamCells.getParent(), gbc);
 		gbc.gridy++;
 
 		gbc.gridx = 0;
@@ -1964,6 +2001,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		group.add(editSeamCells);
 		group.add(editLattice);
+		group.add(checkSeamCells);
 		group.add(editAnnotations1);
 		group.add(editAnnotations2);
 		group.add(createAnimation);
@@ -2048,6 +2086,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			saveLattice();
 		}
+		else if ( editMode == CheckSeam )
+		{
+			saveSeamCells();
+		}
 		else if ( editMode == EditAnnotations1 )
 		{
 			saveAnnotations();
@@ -2098,6 +2140,52 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		String outputDirectory = new String(wormImage.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
 		voiManager.saveLattice( outputDirectory + File.separator, PlugInAlgorithmWormUntwisting.editLatticeOutput );
+
+	}
+	
+	private void checkSeam()
+	{		
+		if ( includeRange != null )
+		{			
+			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
+			{
+				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				if ( openImages( voiFile, null, fileName ) )
+				{
+					wormData = new WormData(wormImage);
+
+					wormData.segmentSeamFromLattice();
+					wormData.saveSeamAnnotations( false );
+
+					finalLattice = wormData.readFinalLattice();
+					if ( (finalLattice != null) && (voiManager != null) ) 
+					{
+						VOIVector latticeVector = new VOIVector();
+						latticeVector.add(finalLattice);
+						voiManager.setLattice( latticeVector );
+					}					
+					
+					wormData.readSeamCells();				
+					
+					if ( annotations != null )
+					{
+						annotations.clear();
+						annotations = null;
+					}
+					annotations = new VOIVector();
+					annotations.add( wormData.getSeamAnnotations() );
+					wormImage.registerVOI( wormData.getSeamAnnotations() );
+
+					if ( (annotations.size() > 0) && (voiManager != null) )
+					{
+						voiManager.setAnnotations(annotations);
+						voiManager.editAnnotations(true);
+						voiManager.colorAnnotations(false);
+					}
+				}
+			}
+		}	
 	}
 
 	/**
@@ -2117,7 +2205,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			return;
 		}
-		wormData.saveSeamAnnotations();
+		wormData.saveSeamAnnotations( editMode != CheckSeam );
 		wormData.dispose();
 	}
 
