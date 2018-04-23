@@ -1,8 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
-
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.*;
@@ -131,7 +128,9 @@ public class StochasticForests extends AlgorithmBase {
 	
 	public static int RAND_MAX = 32767;
 	
-	private class Data {
+	public static double logprop;
+	
+	private abstract class Data {
 		protected Vector<String> variable_names;
 		protected int num_rows = 0;
 		protected int num_rows_rounded = 0;
@@ -169,6 +168,8 @@ public class StochasticForests extends AlgorithmBase {
 	    public void dispose() {
 	    	index_data = null;
 	    }
+	    
+	    public abstract double get(int row, int column);
 	    
 	    public int getVariableID(String variable_name) {
 	         for (i = 0; i < variable_names.size(); i++) {
@@ -398,18 +399,9 @@ public class StochasticForests extends AlgorithmBase {
 	    	} // for (int col = 0; col < num_cols_no_snp; col++) {
 	    } // public void sort()
 	    
-	    public void reserveMemory() {
-	    	
-	    };
+	    public abstract void reserveMemory();
 	    
-	    public void set(int col, int row, double value, boolean error[]) {
-	    	
-	    }
-	    
-	    
-	    public double get(int row, int col) {
-	    	return 0.0;
-	    }
+	    public abstract void set(int col, int row, double value, boolean error[]);
 	    
 	    public int getUnpermutedVarID(int varID) {
 	        if (varID >= num_cols) {
@@ -553,7 +545,7 @@ public class StochasticForests extends AlgorithmBase {
 	    }
 
 
-	} // private class Data
+	}; // private class Data
 	
 	private class DataDouble extends Data {
 	    private double data[] = null;
@@ -987,7 +979,548 @@ public class StochasticForests extends AlgorithmBase {
 	  result.setSize(num_samples);
 	}
 	
+	private void drawWithoutReplacementWeighted(Vector<Integer> result, Vector<Integer> indices,
+			int num_samples, Vector<Double> weights) {
+		int i, j;
+		int draw = 0;
+		double sum_of_weight = 0;
+		double rand;
+		if (result.size() < num_samples) {
+			result.setSize(num_samples);
+		}
+		
+		// Set all to not selected
+		Vector<Boolean> temp = new Vector<Boolean>();
+		for (i = 0; i < indices.size(); i++) {
+			temp.add(false);
+		}
+		
+		Random random = new Random();
+		
+		for (i = 0; i < weights.size(); i++) {
+			sum_of_weight = sum_of_weight + weights.get(i);
+		}
+		
+		for (i = 0; i < num_samples; i++) {
+		    do {
+		        rand = sum_of_weight * random.nextDouble();
+		        for (j = 0; j < weights.size(); j++) {
+		            if (rand < weights.get(j)) {
+		            	draw = j;
+		            	break;
+		            }
+		            else {
+		            	rand = rand - weights.get(j);
+		            }
+		        }
+		    } while(temp.get(draw));
+		    temp.set(draw, true);
+		    result.add(indices.get(draw));
+		}
+	}
 	
+	private void drawWithoutReplacementWeighted(Vector<Integer> result, int max_index, 
+			int num_samples, Vector<Double> weights) {
+		int i, j;
+		int draw = 0;
+		double sum_of_weight = 0;
+		double rand;
+		if (result.size() < num_samples) {
+			result.setSize(num_samples);
+		}
+		
+		// Set all to not selected
+		Vector<Boolean> temp = new Vector<Boolean>();
+		for (i = 0; i < max_index+1; i++) {
+			temp.add(false);
+		}
+		
+		Random random = new Random();
+		
+		for (i = 0; i < weights.size(); i++) {
+			sum_of_weight = sum_of_weight + weights.get(i);
+		}
+		
+		for (i = 0; i < num_samples; i++) {
+		    do {
+		        rand = sum_of_weight * random.nextDouble();
+		        for (j = 0; j < weights.size(); j++) {
+		            if (rand < weights.get(j)) {
+		            	draw = j;
+		            	break;
+		            }
+		            else {
+		            	rand = rand - weights.get(j);
+		            }
+		        }
+		    } while(temp.get(draw));
+		    temp.set(draw, true);
+		    result.add(draw);
+		}	
+	}
+	
+	private double mostFrequentValue(HashMap<Double, Integer> class_count) {
+		int i;
+		int value;
+		double key;
+		int select;
+		Vector<Double> major_classes = new Vector<Double>();
+		// Find maximum count;
+		int max_count = 0;
+		Object keys[] = class_count.keySet().toArray();
+		Object values[] = class_count.values().toArray();
+		for (i = 0; i < class_count.size(); i++) {
+		    value = (int)values[i];	
+		    key = (double)keys[i];
+		    if (value > max_count) {
+		    	max_count = value;
+		    	major_classes.clear();
+		    	major_classes.add(key);
+		    }
+		    else if (value == max_count) {
+		    	major_classes.add(key);
+		    }
+		}
+		
+		if (major_classes.size() == 1) {
+			return major_classes.get(0);
+		}
+		else {
+			// Choose randomly
+			Random random = new Random();
+			select = random.nextInt(major_classes.size());
+			return major_classes.get(select);
+		}
+	}
+	
+	private double computeConcordanceIndex(Data data, Vector<Double> sum_chf, 
+			int dependent_varID, int status_varID, Vector<Integer> sample_IDs) {
+		int i, j;
+	    // Compute concordance index
+		double concordance = 0.0;
+		double permissible = 0.0;
+		for (i = 0; i < sum_chf.size(); i++) {
+			int sample_i = i;
+			if (!sample_IDs.isEmpty()) {
+				sample_i = sample_IDs.get(i);
+			}
+			double time_i = data.get(sample_i, dependent_varID);
+			double status_i = data.get(sample_i,  status_varID);
+		
+			for ( j = i + 1; j < sum_chf.size(); ++j) {
+			      int sample_j = j;
+			      if (!sample_IDs.isEmpty()) {
+			        sample_j = sample_IDs.get(j);
+			      }
+			      double time_j = data.get(sample_j, dependent_varID);
+			      double status_j = data.get(sample_j, status_varID);
+	
+			      if (time_i < time_j && status_i == 0) {
+			        continue;
+			      }
+			      if (time_j < time_i && status_j == 0) {
+			        continue;
+			      }
+			      if (time_i == time_j && status_i == status_j) {
+			        continue;
+			      }
+	
+			      permissible += 1;
+	
+			      if (time_i < time_j && sum_chf.get(i) > sum_chf.get(j)) {
+			        concordance += 1;
+			      } else if (time_j < time_i && sum_chf.get(j) > sum_chf.get(i)) {
+			        concordance += 1;
+			      } else if (sum_chf.get(i) == sum_chf.get(j)) {
+			        concordance += 0.5;
+			      }
+	
+			    }
+		  }
+
+		  return (concordance / permissible);
+
+	}
+	
+	private String uintToString(int number) {
+		return String.valueOf(number);
+	}
+	
+	private String beautifyTime(int seconds) { // #nocov start
+		  String result;
+
+		  // Add seconds, minutes, hours, days if larger than zero
+		  int out_seconds = seconds % 60;
+		  result = uintToString(out_seconds) + " seconds";
+		  int out_minutes = (seconds / 60) % 60;
+		  if (seconds / 60 == 0) {
+		    return result;
+		  } else if (out_minutes == 1) {
+		    result = "1 minute, " + result;
+		  } else {
+		    result = uintToString(out_minutes) + " minutes, " + result;
+		  }
+		  int out_hours = (seconds / 3600) % 24;
+		  if (seconds / 3600 == 0) {
+		    return result;
+		  } else if (out_hours == 1) {
+		    result = "1 hour, " + result;
+		  } else {
+		    result = uintToString(out_hours) + " hours, " + result;
+		  }
+		  int out_days = (seconds / 86400);
+		  if (out_days == 0) {
+		    return result;
+		  } else if (out_days == 1) {
+		    result = "1 day, " + result;
+		  } else {
+		    result = uintToString(out_days) + " days, " + result;
+		  }
+		  return result;
+    } // #nocov end
+	
+	private void splitString(Vector<String> result, String input, String split_string) { // #nocov start
+        int i;
+		if (input == null) {
+			return;
+		}
+		String tokens[];
+        tokens = input.split(split_string);
+        for (i = 0; i < tokens.length; i++) {
+        	result.add(tokens[i]);
+        }
+    } // #nocov end
+
+	private void shuffleAndSplit(Vector<Integer> first_part, Vector<Integer> second_part, 
+			int n_all, int n_first) {
+          int i;
+		  // Reserve space
+		  first_part.setSize(n_all);
+
+		  // Fill with 0..n_all-1 and shuffle
+		  
+		  for (i = 0; i < n_all; i++) {
+			  first_part.set(i, i);
+		  }
+		  shuffle(first_part);
+
+		  // Copy to second part
+		  second_part.setSize(n_all - n_first);
+		  for (i = n_first; i < first_part.size(); i++) {
+			  second_part.set(i - n_first, first_part.get(i));
+		  }
+
+		  // Resize first part
+		  first_part.setSize(n_first);
+	}
+	
+	private void shuffleAndSplitAppend(Vector<Integer> first_part, Vector<Integer> second_part, 
+			int n_all, int n_first, Vector<Integer> mapping) {
+		  int i, j;
+		  // Old end is start position for new data
+		  int first_old_size = first_part.size();
+		  int second_old_size = second_part.size();
+
+		  // Reserve space
+		  first_part.setSize(first_old_size + n_all);
+		  int first_start_pos = first_old_size;
+
+		  // Fill with 0..n_all-1 and shuffle
+		  Vector<Integer>fp2 = new Vector<Integer>();
+		  for (i = first_start_pos; i < first_part.size(); i++) {
+			  fp2.add(i - first_start_pos);
+		  }
+		  shuffle(fp2);
+		  for (i = first_start_pos; i < first_part.size(); i++) {
+			  first_part.set(i, fp2.get(i-first_start_pos));
+		  }
+
+		  // Mapping
+		  for (j = first_start_pos; j != first_part.size(); ++j) {
+		    first_part.set(j, mapping.get(first_part.get(j)));
+		  }
+
+		  // Copy to second part
+		  second_part.setSize(second_part.size() + n_all - n_first);
+		  int second_start_pos = second_old_size;
+		  for (i = first_start_pos + n_first; i < first_part.size(); i++) {
+			  second_part.set(i - first_start_pos - n_first + second_start_pos, 
+					  first_part.get(i));
+		  }
+
+		  // Resize first part
+		  first_part.setSize(first_old_size + n_first);
+    }
+
+	private String checkUnorderedVariables(Data data, Vector<String> unordered_variable_names) { // #nocov start
+		int i;  
+		int num_rows = data.getNumRows();
+		  Vector<Integer> sampleIDs = new Vector<Integer>();
+		  for (i = 0; i < num_rows; i++) {
+			  sampleIDs.add(i);
+		  }
+
+		  // Check for all unordered variables
+		  for (i = 0; i < unordered_variable_names.size(); i++) {
+			String variable_name = unordered_variable_names.get(i);
+		    int varID = data.getVariableID(variable_name);
+		    Vector<Double> all_values = new Vector<Double>();
+		    data.getAllValues(all_values, sampleIDs, varID);
+
+		    // Check level count
+		    int max_level_count = 8 * 4 - 1;
+		    if (all_values.size() > max_level_count) {
+		      return "Too many levels in unordered categorical variable " + variable_name + ". Only "
+		          + uintToString(max_level_count) + " levels allowed on this system.";
+		    }
+
+		    // Check positive integers
+		    if (!checkPositiveIntegers(all_values)) {
+		      return "Not all values in unordered categorical variable " + variable_name + " are positive integers.";
+		    }
+		  }
+		  return "";
+    } // #nocov end
+	
+	private boolean checkPositiveIntegers(Vector<Double> all_values) { // #nocov start
+		  int i;
+		  for (i = 0; i < all_values.size(); i++) {
+			double value = all_values.get(i);
+		    if (value < 1 || !(Math.floor(value) == value)) {
+		      return false;
+		    }
+		  }
+		  return true;
+    } // #nocov end
+	
+	private double maxstatPValueLau92(double b, double minprop, double maxprop) {
+
+		  if (b < 1) {
+		    return 1.0;
+		  }
+
+		  // Compute only once (minprop/maxprop don't change during runtime)
+		  logprop = Math.log((maxprop * (1 - minprop)) / ((1 - maxprop) * minprop));
+
+		  double db = dstdnorm(b);
+		  double p = 4 * db / b + db * (b - 1 / b) * logprop;
+
+		  if (p > 0) {
+		    return p;
+		  } else {
+		    return 0;
+		  }
+    }
+
+	
+	private double maxstatPValueLau94(double b, double minprop, double maxprop, int N, Vector<Integer> m) {
+
+		  double D = 0;
+		  for (int i = 0; i < m.size() - 1; ++i) {
+		    double m1 = m.get(i);
+		    double m2 = m.get(i + 1);
+
+		    double t = Math.sqrt(1.0 - m1 * (N - m2) / ((N - m1) * m2));
+		    D += 1 / Math.PI * Math.exp(-b * b / 2) * (t - (b * b / 4 - 1) * (t * t * t) / 6);
+		  }
+
+		  return 2 * (1 - pstdnorm(b)) + D;
+    }
+	
+	private double maxstatPValueUnadjusted(double b) {
+	  return 2 * pstdnorm(-b);
+	}
+
+	private double dstdnorm(double x) {
+	  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+	}
+
+	private double pstdnorm(double x) {
+	  return 0.5 * (1 + erf(x / Math.sqrt(2.0)));
+	}
+	
+	
+	// Error function erf(x) from Computation of Special Functions by 
+	// Shanjie Zhang and Jianming Jin. pp. 622-623.
+	private double erf(double x) {
+		double eps = 1.0E-15;
+		double x2, er, r, c0, err;
+		int k;
+		x2 = x * x;
+		if (Math.abs(x) < 3.5) {
+			er = 1.0;
+			r = 1.0;
+			for (k = 1; k <= 50; k++) {
+				r = r*x2/(k + 0.5);
+				er = er + r;
+				if (Math.abs(r) <= Math.abs(er)*eps) {
+					break;
+				}
+			} // for (k = 1; k <= 50; k++)
+			c0 = 2.0/Math.sqrt(Math.PI) * x * Math.exp(-x2);
+			err = c0 * er;
+		} // if (Math.abs(x) < 3.5)
+		else {
+			er = 1.0;
+			r = 1.0;
+			for (k = 1; k <= 12; k++) {
+				r = -r*(k - 0.5)/x2;
+				er = er + r;
+			}
+			c0 = Math.exp(-x2)/(Math.abs(x) * Math.sqrt(Math.PI));
+			err = 1.0 - c0 * er;
+			if (x < 0.0) err = -err;
+		} // else
+		return err;
+	}
+
+	private Vector<Double> adjustPvalues(Vector<Double> unadjusted_pvalues) {
+		  int i;
+		  int idx, idx_last;
+		  int num_pvalues = unadjusted_pvalues.size();
+		  Vector<Double>adjusted_pvalues = new Vector<Double>();
+		  for (i = 0; i < num_pvalues; i++) {
+			  adjusted_pvalues.add(0.0);
+		  }
+
+		  // Get order of p-values
+		  ArrayList<indexValueItem> ivList = new ArrayList<indexValueItem>();
+		  for (i = 0; i < unadjusted_pvalues.size(); i++) {
+		      ivList.add(new indexValueItem(i, unadjusted_pvalues.get(i))); 
+		  }
+		  Collections.sort(ivList, new indexValueDescendingComparator());
+		  Vector<Integer> indices = new Vector<Integer>();
+		  for (i = 0; i < unadjusted_pvalues.size(); i++) {
+		      indices.add(ivList.get(i).getIndex());  
+		  }
+
+		  // Compute adjusted p-values
+		  adjusted_pvalues.set(indices.get(0),unadjusted_pvalues.get(indices.get(0)));
+		  for (i = 1; i < indices.size(); ++i) {
+		    idx = indices.get(i);
+		    idx_last = indices.get(i - 1);
+
+		    adjusted_pvalues.set(idx,Math.min(adjusted_pvalues.get(idx_last),
+		        (double) num_pvalues / (double) (num_pvalues - i) * unadjusted_pvalues.get(idx)));
+		  }
+		  return adjusted_pvalues;
+    }
+	
+	private class indexValueComparator implements Comparator<indexValueItem> {
+		 // Sort in ascending order
+		 public int compare(final indexValueItem o1, final indexValueItem o2) {
+	            final double a = o1.getValue();
+	            final double b = o2.getValue();
+
+	            if (a < b) {
+	                return -1;
+	            } else if (a > b) {
+	                return 1;
+	            } else {
+	                return 0;
+	            }
+	        }	
+	}
+	
+	private class indexValueDescendingComparator implements Comparator<indexValueItem> {
+		 // Sort in descending order
+		 public int compare(final indexValueItem o1, final indexValueItem o2) {
+	            final double a = o1.getValue();
+	            final double b = o2.getValue();
+
+	            if (a < b) {
+	                return 1;
+	            } else if (a > b) {
+	                return -1;
+	            } else {
+	                return 0;
+	            }
+	        }	
+	}
+	
+	private class indexValueItem {
+
+        /** DOCUMENT ME! */
+        private final int index;
+
+        /** DOCUMENT ME! */
+        private final double value;
+
+        /**
+         * Creates a new indexValueItem object.
+         * 
+         * @param index
+         * @param value
+         */
+        public indexValueItem(final int index, final double value) {
+            this.index = index;
+            this.value = value;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int getIndex() {
+            return index;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public double getValue() {
+            return value;
+        }
+
+    }
+	
+	
+	private Vector<Double> logrankScores(Vector<Double> time, Vector<Double> status) {
+		  int i, j;
+		  int n = time.size();
+		  Vector<Double>scores = new Vector<Double>();
+		  scores.setSize(n);
+
+		  // Get order of timepoints
+		  ArrayList<indexValueItem> ivList = new ArrayList<indexValueItem>();
+		  for (i = 0; i < n; i++) {
+		      ivList.add(new indexValueItem(i, time.get(i))); 
+		  }
+		  Collections.sort(ivList, new indexValueComparator());
+		  Vector<Integer> indices = new Vector<Integer>();
+		  for (i = 0; i < n; i++) {
+		      indices.add(ivList.get(i).getIndex());  
+		  }
+
+		  // Compute scores
+		  double cumsum = 0;
+		  int last_unique = -1;
+		  for (i = 0; i < n; ++i) {
+
+		    // Continue if next value is the same
+		    if (i < n - 1 && time.get(indices.get(i)) == time.get(indices.get(i + 1))) {
+		      continue;
+		    }
+
+		    // Compute sum and scores for all non-unique values in a row
+		    for (j = last_unique + 1; j <= i; ++j) {
+		      cumsum += status.get(indices.get(j)) / (n - i);
+		    }
+		    for (j = last_unique + 1; j <= i; ++j) {
+		      scores.set(indices.get(j),status.get(indices.get(j)) - cumsum);
+		    }
+
+		    // Save last computed value
+		    last_unique = i;
+		  }
+
+		  return scores;
+    }
+
+
 	public void runAlgorithm() {
 		
 	}
