@@ -130,6 +130,8 @@ public class StochasticForests extends AlgorithmBase {
 	
 	public static double logprop;
 	
+	private boolean testCode = true;
+	
 	private abstract class Data {
 		protected Vector<String> variable_names;
 		protected int num_rows = 0;
@@ -834,9 +836,6 @@ public class StochasticForests extends AlgorithmBase {
 	}
 	
 	private void equalSplit(Vector<Integer> result, int start, int end, int num_parts) {
-		if (result.size() < num_parts + 1) {
-			result.setSize(num_parts+1);
-		}
 		
 		// Return range if only 1 part
 		if (num_parts == 1) {
@@ -924,9 +923,6 @@ public class StochasticForests extends AlgorithmBase {
 	private void drawWithoutReplacementSimple(Vector<Integer> result, int max,
 		    Vector<Integer> skip, int num_samples) {
       int i, j;
-	  if (result.size() < num_samples) {
-		  result.setSize(num_samples);
-	  }
 
 	  // Set all to not selected
 	  Vector<Boolean> temp = new Vector<Boolean>();
@@ -955,9 +951,7 @@ public class StochasticForests extends AlgorithmBase {
       int i, j;
       int temp;
 	  // Create indices
-	  if (result.size() < max) {
-		  result.setSize(max);
-	  }
+	  result.clear();
 	  for (i = 0; i < max; i++) {
 		  result.add(i);
 	  }
@@ -985,9 +979,6 @@ public class StochasticForests extends AlgorithmBase {
 		int draw = 0;
 		double sum_of_weight = 0;
 		double rand;
-		if (result.size() < num_samples) {
-			result.setSize(num_samples);
-		}
 		
 		// Set all to not selected
 		Vector<Boolean> temp = new Vector<Boolean>();
@@ -1025,9 +1016,6 @@ public class StochasticForests extends AlgorithmBase {
 		int draw = 0;
 		double sum_of_weight = 0;
 		double rand;
-		if (result.size() < num_samples) {
-			result.setSize(num_samples);
-		}
 		
 		// Set all to not selected
 		Vector<Boolean> temp = new Vector<Boolean>();
@@ -1520,8 +1508,563 @@ public class StochasticForests extends AlgorithmBase {
 		  return scores;
     }
 
+	private void maxstat(Vector<Double> scores, Vector<Double> x, Vector<Integer> indices,
+			double best_maxstat[], double best_split_value[], double minprop, double maxprop) {
+	  int n = x.size();
+
+	  double sum_all_scores = 0;
+	  for (int i = 0; i < n; ++i) {
+	    sum_all_scores += scores.get(indices.get(i));
+	  }
+
+	  // Compute sum of differences from mean for variance
+	  double mean_scores = sum_all_scores / n;
+	  double sum_mean_diff = 0;
+	  for (int i = 0; i < n; ++i) {
+	    sum_mean_diff += (scores.get(i) - mean_scores) * (scores.get(i) - mean_scores);
+	  }
+
+	  // Get smallest and largest split to consider, -1 for compatibility with R maxstat
+	  int minsplit = 0;
+	  if (n * minprop > 1) {
+	    minsplit = (int)(n * minprop - 1);
+	  }
+	  int maxsplit = (int)(n * maxprop - 1);
+
+	  // For all unique x-values
+	  best_maxstat[0] = -1;
+	  best_split_value[0] = -1;
+	  double sum_scores = 0;
+	  int n_left = 0;
+	  for (int i = 0; i <= maxsplit; ++i) {
+
+	    sum_scores += scores.get(indices.get(i));
+	    n_left++;
+
+	    // Dont consider splits smaller than minsplit for splitting (but count)
+	    if (i < minsplit) {
+	      continue;
+	    }
+
+	    // Consider only unique values
+	    if (i < n - 1 && x.get(indices.get(i)) == x.get(indices.get(i + 1))) {
+	      continue;
+	    }
+
+	    // If value is largest possible value, stop
+	    if (x.get(indices.get(i)) == x.get(indices.get(n - 1))) {
+	      break;
+	    }
+
+	    double S = sum_scores;
+	    double E = (double) n_left / (double) n * sum_all_scores;
+	    double V = (double) n_left * (double) (n - n_left) / (double) (n * (n - 1)) * sum_mean_diff;
+	    double T = Math.abs((S - E) / Math.sqrt(V));
+
+	    if (T > best_maxstat[0]) {
+	      best_maxstat[0] = T;
+
+	      // Use mid-point split if possible
+	      if (i < n - 1) {
+	        best_split_value[0] = (x.get(indices.get(i)) + x.get(indices.get(i + 1))) / 2;
+	      } else {
+	        best_split_value[0] = x.get(indices.get(i));
+	      }
+	    }
+	  }
+	}
+	
+	private Vector<Integer> numSamplesLeftOfCutpoint(Vector<Double> x, Vector<Integer> indices) {
+	  Vector<Integer> num_samples_left = new Vector<Integer>();
+	  num_samples_left.setSize(x.size());
+
+	  for (int i = 0; i < x.size(); ++i) {
+	    if (i == 0) {
+	      num_samples_left.add(1);
+	    } else if (x.get(indices.get(i)) == x.get(indices.get(i - 1))) {
+	    	int value = num_samples_left.lastElement();
+	    	num_samples_left.set(num_samples_left.size() - 1,value+1);
+	    } else {
+	      int value = num_samples_left.lastElement();
+	      num_samples_left.add(value + 1);
+	    }
+	  }
+
+	  return num_samples_left;
+	}
+	
+	/**
+	 * Write a 1d vector to filestream. First the size is written, then all vector elements.
+	 * @param vector Vector of type T to save
+	 * @param file ofstream object to write to.
+	 */
+	private void saveVector1D(Vector<Integer> vector, BufferedWriter bw) {
+	  // Save length
+	  int i;
+	  int length = vector.size();
+	  try {
+	      bw.write(String.valueOf(length)+"\n");
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on bw.write(String.valueOf(length))");
+		  return;
+	  }
+	  for (i = 0; i < length; i++) {
+		  try {
+		      bw.write(String.valueOf(vector.get(i))+"\n");
+		  }
+		  catch (IOException e) {
+			  MipavUtil.displayError("IO exception on bw.write(String.valueOf(vector.get(i)))");
+			  return;
+		  }
+	  }
+	}
+	
+	/**
+	 * Read a 1d vector written by saveVector1D() from filestream.
+	 * @param result Result vector with elements of type T.
+	 * @param file ifstream object to read from.
+	 */
+	private void readVector1D(Vector<Integer> result, BufferedReader br) {
+	  int i;
+	  int value;
+	  // Read length
+	  int length;
+	  String line;
+	  try {
+          line = br.readLine();
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on br.readLine()");
+		  return;
+	  }
+	  length = Integer.valueOf(line).intValue();
+	  for (i = 0; i < length; i++) {
+		  try {
+	          line = br.readLine();
+		  }
+		  catch (IOException e) {
+			  MipavUtil.displayError("IO exception on br.readLine()");
+			  return;
+		  }
+		  value = Integer.valueOf(line).intValue();
+		  result.add(value);
+	  }
+	}
+
+	/**
+	 * Write a 1d vector to filestream. First the size is written, then all vector elements.
+	 * @param vector Vector of type T to save
+	 * @param file ofstream object to write to.
+	 */
+	private void saveDVector1D(Vector<Double> vector, BufferedWriter bw) {
+	  // Save length
+	  int i;
+	  int length = vector.size();
+	  try {
+	      bw.write(String.valueOf(length)+"\n");
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on bw.write(String.valueOf(length))");
+		  return;
+	  }
+	  for (i = 0; i < length; i++) {
+		  try {
+		      bw.write(String.valueOf(vector.get(i))+"\n");
+		  }
+		  catch (IOException e) {
+			  MipavUtil.displayError("IO exception on bw.write(String.valueOf(vector.get(i)))");
+			  return;
+		  }
+	  }
+	}
+	
+	/**
+	 * Read a 1d vector written by saveVector1D() from filestream.
+	 * @param result Result vector with elements of type T.
+	 * @param file ifstream object to read from.
+	 */
+	private void readDVector1D(Vector<Double> result, BufferedReader br) {
+	  int i;
+	  double value;
+	  // Read length
+	  int length;
+	  String line;
+	  try {
+          line = br.readLine();
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on br.readLine()");
+		  return;
+	  }
+	  length = Integer.valueOf(line).intValue();
+	  for (i = 0; i < length; i++) {
+		  try {
+	          line = br.readLine();
+		  }
+		  catch (IOException e) {
+			  MipavUtil.displayError("IO exception on br.readLine()");
+			  return;
+		  }
+		  value = Double.valueOf(line).doubleValue();
+		  result.add(value);
+	  }
+	}
+	
+	/**
+	 * Write a 2d vector to filestream. First the size of the first dim is written as size_t, then for all inner vectors the size and elements.
+	 * @param vector Vector of vectors of type T to write to file.
+	 * @param file ofstream object to write to.
+	 */
+	private void saveVector2D(Vector<Vector<Integer>> vector, BufferedWriter bw) {
+	  int i;
+	  // Save length of first dim
+	  int length = vector.size();
+	  try {
+	      bw.write(String.valueOf(length)+"\n");
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on bw.write(String.valueOf(length))");
+		  return;
+	  }
+
+	  // Save outer vector
+	  Vector<Integer> inner_vector = new Vector<Integer>();
+	  for (i = 0; i < vector.size(); i++) {
+	    // Save inner vector
+		inner_vector = vector.get(i);
+	    saveVector1D(inner_vector, bw);
+	  }
+	}
+	
+	/**
+	 * Read a 2d vector written by saveVector2D() from filestream.
+	 * @param result Result vector of vectors with elements of type T.
+	 * @param file ifstream object to read from.
+	 */
+	private void readVector2D(Vector<Vector<Integer>> result, BufferedReader br) {
+	  int i;
+	  // Read length of first dim
+	  int length;
+	  String line;
+	  try {
+          line = br.readLine();
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on br.readLine()");
+		  return;
+	  }
+	  length = Integer.valueOf(line).intValue();
+	  for (i = 0; i < length; i++) {
+	      result.add(new Vector<Integer>());  
+	  }
+
+	  // Read outer vector
+	  for (i = 0; i < length; ++i) {
+	    // Read inner vector
+	    readVector1D(result.get(i), br);
+	  }
+	}
+
+
+	
+	private boolean equalVectorInteger(Vector<Integer> v1, Vector<Integer> v2, String str) {
+		// v1 is true answer, v2 is test answer
+		int i;
+	    if (v1.size() != v2.size()) {
+	        System.out.println("In " + str + " correct size is " + v1.size());
+	        System.out.println("Test size is " + v2.size());
+	        return false;
+	    }
+	    for (i = 0; i < v1.size(); i++) {
+	    	if (v1.get(i) != v2.get(i)) {
+	    		System.out.println("In " + str + " correct element " + i + " is " + v1.get(i));
+	    		System.out.println("Actual test element at " + i + " is " + v2.get(i));
+	    		return false;
+	    	}
+	    }
+	    System.out.println(str + " passed");
+	    return true;
+	}
+	
+	private boolean equalVectorVectorInteger(Vector<Vector<Integer>> v1, Vector<Vector<Integer>> v2, String str) {
+		// v1 is true answer, v2 is test answer
+		int i, j;
+		Vector<Integer> p1 = new Vector<Integer>();
+		Vector<Integer> p2 = new Vector<Integer>();
+	    if (v1.size() != v2.size()) {
+	        System.out.println("In " + str + " correct size is " + v1.size());
+	        System.out.println("Test size is " + v2.size());
+	        return false;
+	    }
+	    for (i = 0; i < v1.size(); i++) {
+	    	if (v1.get(i).size() != v2.get(i).size()) {
+	    		System.out.println("In " + str + " v1.get("+i+").size() is " + v1.get(i).size());
+	    		System.out.println("Actual test element v2.get("+i+").size() is " + v2.get(i).size());
+	    		return false;
+	    	}
+	    	p1 = v1.get(i);
+	    	p2 = v2.get(i);
+	    	for (j = 0; j < p1.size(); j++) {
+		    	if (p1.get(i) != p2.get(i)) {
+		    		System.out.println("In " + str + " correct element " + i + "," + j + " is " + p1.get(j));
+		    		System.out.println("Actual test element at " + i + "," + j + " is " + p2.get(j));
+		    		return false;
+		    	}
+		    }
+	    }
+	    System.out.println(str + " passed");
+	    return true;
+	}
+	
+	private boolean equalVectorDouble(Vector<Double> v1, Vector<Double> v2, String str) {
+		// v1 is true answer, v2 is test answer
+		int i;
+	    if (v1.size() != v2.size()) {
+	        System.out.println("In " + str + " correct size is " + v1.size());
+	        System.out.println("Test size is " + v2.size());
+	        return false;
+	    }
+	    for (i = 0; i < v1.size(); i++) {
+	    	if (!v1.get(i).equals(v2.get(i))) {
+	    		System.out.println("In " + str + " correct element " + i + " is " + v1.get(i));
+	    		System.out.println("Actual test element at " + i + " is " + v2.get(i));
+	    		return false;
+	    	}
+	    }
+	    System.out.println(str + " passed");
+	    return true;
+	}
+	
+	public StochasticForests() {
+		
+	}
+
 
 	public void runAlgorithm() {
-		
+	   if (testCode) {
+		   Vector<Integer>test = new Vector<Integer>();
+		   // Split 0..9 in 1 part
+		   String str = "Test equalSplit, onePart";
+		   Vector<Integer>answer = new Vector<Integer>();
+		   answer.addAll(Arrays.asList(new Integer[]{0,10}));
+		   equalSplit(test, 0, 9, 1);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 0..7 in 4 parts
+		   str = "Test equalSplit, perfectSplit0";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{0,2,4,6,8}));
+		   equalSplit(test, 0, 7, 4);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 2..7 in 2 parts
+		   str = "Test equalSplit, perfectSplit2";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{2,5,8}));
+		   equalSplit(test, 2, 7, 2);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 13..24 in 3 parts
+		   str = "Test equalSplit, perfectSplit13";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{13,17,21,25}));
+		   equalSplit(test, 13, 24, 3);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 0..6 in 4 parts
+		   str = "Test equalSplit, nonPerfectSplit0";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{0,2,4,6,7}));
+		   equalSplit(test, 0, 6, 4);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 2..12 in 5 parts
+		   str = "Test equalSplit, nonPerfectSplit2";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{2,5,7,9,11,13}));
+		   equalSplit(test, 2, 12, 5);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 15..19 in 2 parts
+		   str = "Test equalSplit, nonPerfectSplit15";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{15,18,20}));
+		   equalSplit(test, 15, 19, 2);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 30..35 in 1 part
+		   str = "Test equalSplit, nonPerfectSplit30";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{30,36}));
+		   equalSplit(test, 30, 35, 1);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 0..2 in 6 parts
+		   // Result should only contain 3 parts
+		   str = "Test equalSplit, moreParts1";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{0,1,2,3}));
+		   equalSplit(test, 0, 2, 6);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 0..2 in 4 parts
+		   // Result should only contain 3 parts
+		   str = "Test equalSplit, moreParts2";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{0,1,2,3}));
+		   equalSplit(test, 0, 2, 4);
+		   equalVectorInteger(answer, test, str);
+		   
+		   // Split 0..2 in 3 parts
+		   // Result should contain only 3 parts
+		   str = "Test equalSplit, moreParts3";
+		   test.clear();
+		   answer.clear();
+		   answer.addAll(Arrays.asList(new Integer[]{0,1,2,3}));
+		   equalSplit(test, 0, 2, 3);
+		   equalVectorInteger(answer, test, str);
+		   
+		   str = "Test readWrite1D, int1";
+		   File outfile = new File("testfile1d");
+		   FileWriter fw;
+		   try {
+		       fw = new FileWriter(outfile);
+		   }
+		   catch (IOException e) {
+			   MipavUtil.displayError("IO exception on fw = new FileWriter(outfile)");
+			   return;
+		   }
+           BufferedWriter bw = new BufferedWriter(fw);
+		   Vector<Integer> expect = new Vector<Integer>();
+		   expect.addAll(Arrays.asList(new Integer[]{1,2,3,4,5,6}));
+		   saveVector1D(expect, bw);
+		   try {
+		       bw.close();
+		   }
+		   catch (IOException e) {
+			   MipavUtil.displayError("IO exception on bw.close()");
+			   return;
+		   }
+		   
+		   File file = new File("testfile1d");
+	  	   BufferedReader infile;
+	  	   try {
+	  	       infile = new BufferedReader(new FileReader(file));
+	  	   }
+	  	   catch (FileNotFoundException e) {
+	  		   MipavUtil.displayError("Could not find file testfile1d");
+	  		   return;
+	  	   }
+	  	   test.clear();
+	  	   readVector1D(test, infile);
+	  	   try {
+	  		   infile.close();
+	  	   }
+	  	   catch (IOException e) {
+	  		   MipavUtil.displayError("IO exception on infile.close()");
+	  		   return;
+	  	   }
+	  	   equalVectorInteger(expect, test, str);
+	  	   
+	  	   str = "Test readWrite1D, double1";
+		   outfile = new File("testfile1d");
+		   try {
+		       fw = new FileWriter(outfile);
+		   }
+		   catch (IOException e) {
+			   MipavUtil.displayError("IO exception on fw = new FileWriter(outfile)");
+			   return;
+		   }
+           bw = new BufferedWriter(fw);
+		   Vector<Double> Dexpect = new Vector<Double>();
+		   Dexpect.addAll(Arrays.asList(new Double[]{1.5,4.5,10.2,0.0,-5.9}));
+		   saveDVector1D(Dexpect, bw);
+		   try {
+		       bw.close();
+		   }
+		   catch (IOException e) {
+			   MipavUtil.displayError("IO exception on bw.close()");
+			   return;
+		   }
+		   
+		   file = new File("testfile1d");
+	  	   try {
+	  	       infile = new BufferedReader(new FileReader(file));
+	  	   }
+	  	   catch (FileNotFoundException e) {
+	  		   MipavUtil.displayError("Could not find file testfile1d");
+	  		   return;
+	  	   }
+	  	   Vector<Double> Dtest = new Vector<Double>();
+	  	   readDVector1D(Dtest, infile);
+	  	   try {
+	  		   infile.close();
+	  	   }
+	  	   catch (IOException e) {
+	  		   MipavUtil.displayError("IO exception on infile.close()");
+	  		   return;
+	  	   }
+	  	   equalVectorDouble(Dexpect, Dtest, str);
+	  	   
+	  	   str = "Test readWrite2D, int1";
+	  	   outfile = new File("testfile2d");
+		   try {
+		       fw = new FileWriter(outfile);
+		   }
+		   catch (IOException e) {
+			   MipavUtil.displayError("IO exception on fw = new FileWriter(outfile)");
+			   return;
+		   }
+           bw = new BufferedWriter(fw);
+           Vector<Integer> expect1 = new Vector<Integer>();
+           expect1.addAll(Arrays.asList(new Integer[]{1,2,3,4,5,6}));
+           Vector<Integer> expect2 = new Vector<Integer>();
+           expect2.addAll(Arrays.asList(new Integer[]{7,8,9,10}));
+           Vector<Integer> expect3 = new Vector<Integer>();
+           expect3.addAll(Arrays.asList(new Integer[]{11,121,3,14,15}));
+           Vector<Vector<Integer>> expectAll = new Vector<Vector<Integer>>();
+           expectAll.add(expect1);
+           expectAll.add(expect2);
+           expectAll.add(expect3);
+           saveVector2D(expectAll, bw);
+           try {
+        	   bw.close();
+           }
+           catch (IOException e) {
+        	   MipavUtil.displayError("IO exception on bw.close()");
+        	   return;
+           }
+           
+
+		   file = new File("testfile2d");
+	  	   try {
+	  	       infile = new BufferedReader(new FileReader(file));
+	  	   }
+	  	   catch (FileNotFoundException e) {
+	  		   MipavUtil.displayError("Could not find file testfile2d");
+	  		   return;
+	  	   }
+	  	   Vector<Vector<Integer>> testAll = new Vector<Vector<Integer>>();
+	  	   readVector2D(testAll, infile);
+	  	   try {
+	  		   infile.close();
+	  	   }
+	  	   catch(IOException e) {
+	  		   MipavUtil.displayError("IO exception on infile.close()");
+	  		   return;
+	  	   }
+	  	   equalVectorVectorInteger(expectAll, testAll, str);
+		   return;
+	   }
 	}
 }
