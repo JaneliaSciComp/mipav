@@ -55,8 +55,6 @@ public class WormData
 	private int minSeamRadius = 8;
 	private int maxSeamRadius = 25;
 	
-	private Vector<Vector3f> markerPoints;
-	private VOI markerAnnotations;
 	
 	private boolean seamEdited = false;
 	
@@ -176,6 +174,7 @@ public class WormData
 	
 	public VOI getMarkerAnnotations()
 	{
+		VOI markerAnnotations = readMarkers();
 		if ( markerAnnotations == null )
 			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
 		return markerAnnotations;
@@ -285,8 +284,9 @@ public class WormData
 		return null;
 	}
 
-	public void readMarkers()
+	private VOI readMarkers()
 	{
+		VOI markerAnnotations = null;
 		VOIVector annotationVector = new VOIVector();
 		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editAnnotationOutput + File.separator, true, annotationVector, false);
 		if ( annotationVector.size() > 0 )
@@ -301,6 +301,7 @@ public class WormData
 				markerAnnotations = annotationVector.elementAt(0);
 			}
 		}
+		return markerAnnotations;
 	}
 	
 	public Vector<Vector3f> readSeamCells()
@@ -368,47 +369,52 @@ public class WormData
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editLatticeOutput + File.separator, wormImage);
 	}
 	
-	public void saveMarkerAnnotations()
+	public String getAnnotationsPath()
+	{
+		return outputDirectory + File.separator + editAnnotationOutput + File.separator;
+	}
+	
+	public void saveMarkerAnnotations(VOI annotations)
 	{		
 		wormImage.unregisterAllVOIs();
-		wormImage.registerVOI(markerAnnotations);
-		markerAnnotations.setName("markers");
+		wormImage.registerVOI(annotations);
+		annotations.setName("markers");
 		System.err.println( outputDirectory + File.separator + editAnnotationOutput + File.separator );
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
-		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editAnnotationOutput + File.separator, "markerInfo.csv", markerAnnotations);
+		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editAnnotationOutput + File.separator, "markerInfo.csv", annotations);
 		wormImage.unregisterAllVOIs();
 	}
 
 	
-	public boolean checkSeamCells()
+	public boolean checkSeamCells(VOI annotations)
 	{
-		if ( seamAnnotations.getCurves().size() == 0 )
+		if ( annotations.getCurves().size() == 0 )
 		{
 			return false;
 		}
 		int count = 0;
-		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
 			if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
 			{
 				count++;
 			}
 		}
-//		System.err.println("checkSeamCells " + count );
+		System.err.println("checkSeamCells " + count );
 		return ((count%2) == 0);
 	}
 	
-	public boolean checkHeadSeamCells()
+	public boolean checkHeadSeamCells(VOI annotations)
 	{
-		if ( seamAnnotations.getCurves().size() == 0 )
+		if ( annotations.getCurves().size() == 0 )
 		{
 			return false;
 		}
 		int count = 0;
-		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
 			if ( LatticeModel.match(text.getColor(), Color.green) )
 			{
 				count++;
@@ -417,16 +423,16 @@ public class WormData
 		return (count == 2) || (count == 0);
 	}
 	
-	public boolean checkTailSeamCells()
+	public boolean checkTailSeamCells(VOI annotations)
 	{
-		if ( seamAnnotations.getCurves().size() == 0 )
+		if ( annotations.getCurves().size() == 0 )
 		{
 			return false;
 		}
 		int count = 0;
-		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
 			if ( LatticeModel.match(text.getColor(), Color.red) )
 			{
 				count++;
@@ -435,12 +441,12 @@ public class WormData
 		return (count == 2) || (count == 0);
 	}
 	
-	public void saveSeamAnnotations(boolean rename)
+	public void saveSeamAnnotations(VOI annotations, boolean rename)
 	{		
-		seamCellPoints = new Vector<Vector3f>();
-		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		Vector<Vector3f> seamCellPoints = new Vector<Vector3f>();
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
 			if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
 			{
 				Vector3f temp = new Vector3f(text.elementAt(0) );
@@ -618,9 +624,9 @@ public class WormData
 		if ( rename )
 		{
 			int id = 1;
-			for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+			for ( int i = 0; i < annotations.getCurves().size(); i++ )
 			{
-				VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+				VOIText text = (VOIText)annotations.getCurves().elementAt(i);
 				if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
 				{
 					text.setText( "" + id++ );
@@ -628,10 +634,10 @@ public class WormData
 			}
 		}
 		wormImage.unregisterAllVOIs();
-		wormImage.registerVOI(seamAnnotations);
-		seamAnnotations.setName("seam cells");
+		wormImage.registerVOI(annotations);
+		annotations.setName("seam cells");
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editSeamCellOutput + File.separator, wormImage);
-		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editSeamCellOutput + File.separator, "seamCellInfo.csv", seamAnnotations);
+		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editSeamCellOutput + File.separator, "seamCellInfo.csv", annotations);
 	}
 	
 	public void segmentSeamCells(int minRadius, int maxRadius)
@@ -882,7 +888,7 @@ public class WormData
 		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
 		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
 		
-		seamAnnotations = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
+		VOI seamAnnotations = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
 		wormImage.unregisterAllVOIs();
 		
 		wormImage.registerVOI(seamAnnotations);
@@ -1004,6 +1010,7 @@ public class WormData
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editSeamCellOutput + File.separator, wormImage);
 		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editSeamCellOutput + File.separator, "seamCellInfo.csv", seamAnnotations);
 
+		wormImage.unregisterAllVOIs();
 	}
 	
 	public void segmentSkin()

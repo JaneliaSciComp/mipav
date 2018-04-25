@@ -51,6 +51,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
@@ -410,17 +411,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				if ( editMode == EditSeamCells )
 				{
-					if ( (wormData != null) && !wormData.checkSeamCells() )
+					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate an even number of seam cells (optional: one nose point; optional: highlight first pair and last pair)");
 						return;
 					}
-					if ( (wormData != null) && !wormData.checkHeadSeamCells() )
+					if ( (wormData != null) && !wormData.checkHeadSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate two seam cells as the first pair");
 						return;
 					}
-					if ( (wormData != null) && !wormData.checkTailSeamCells() )
+					if ( (wormData != null) && !wormData.checkTailSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate two seam cells as the last pair");
 						return;
@@ -459,17 +460,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				if ( editMode == EditSeamCells )
 				{
-					if ( (wormData != null) && !wormData.checkSeamCells() )
+					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate an even number of seam cells (optional: one nose point; optional: highlight first pair and last pair)");
 						return;
 					}
-					if ( (wormData != null) && !wormData.checkHeadSeamCells() )
+					if ( (wormData != null) && !wormData.checkHeadSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate two seam cells as the first pair");
 						return;
 					}
-					if ( (wormData != null) && !wormData.checkTailSeamCells() )
+					if ( (wormData != null) && !wormData.checkTailSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate two seam cells as the last pair");
 						return;
@@ -509,17 +510,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				buttonPanel.remove(displayModel);
 				if ( editMode == EditSeamCells )
 				{
-					if ( (wormData != null) && !wormData.checkSeamCells() )
+					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate an even number of seam cells (optional: one nose point; optional: highlight first pair and last pair)");
 						return;
 					}
-					if ( (wormData != null) && !wormData.checkHeadSeamCells() )
+					if ( (wormData != null) && !wormData.checkHeadSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate two seam cells as the first pair");
 						return;
 					}
-					if ( (wormData != null) && !wormData.checkTailSeamCells() )
+					if ( (wormData != null) && !wormData.checkTailSeamCells(voiManager.getAnnotations()) )
 					{
 						MipavUtil.displayError( "Please designate two seam cells as the last pair");
 						return;
@@ -926,8 +927,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						if ( finalLattice != null ) 
 						{
 							wormImage.registerVOI( finalLattice );
-						}
-						wormData.readMarkers();				
+						}		
 
 						if ( annotations != null )
 						{
@@ -957,7 +957,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						{
 							wormData = new WormData(wormImage);
 							wormImage.registerVOI( finalLattice );
-							wormData.readMarkers();				
 
 							if ( annotations != null )
 							{
@@ -2117,7 +2116,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			return;
 		}
-		wormData.saveMarkerAnnotations();
+		if ( voiManager == null )
+		{
+			return;
+		}
+		
+//		LatticeModel.saveAnnotationsAsCSV( wormData.getAnnotationsPath(), "markerInfo.csv", voiManager.getAnnotations());
+
+		wormData.saveMarkerAnnotations(voiManager.getAnnotations());
 		wormData.dispose();
 	}
 
@@ -2154,18 +2160,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				if ( openImages( voiFile, null, fileName ) )
 				{
 					wormData = new WormData(wormImage);
-
 					wormData.segmentSeamFromLattice();
-					wormData.saveSeamAnnotations( false );
-
-					finalLattice = wormData.readFinalLattice();
-					if ( (finalLattice != null) && (voiManager != null) ) 
-					{
-						VOIVector latticeVector = new VOIVector();
-						latticeVector.add(finalLattice);
-						voiManager.setLattice( latticeVector );
-					}					
-					
 					wormData.readSeamCells();				
 					
 					if ( annotations != null )
@@ -2180,9 +2175,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					if ( (annotations.size() > 0) && (voiManager != null) )
 					{
 						voiManager.setAnnotations(annotations);
-						voiManager.editAnnotations(true);
+						voiManager.editAnnotations(false);
 						voiManager.colorAnnotations(false);
 					}
+					finalLattice = wormData.readFinalLattice();
+					if ( (finalLattice != null) && (voiManager != null) ) 
+					{
+						VOIVector latticeVector = new VOIVector();
+						latticeVector.add(finalLattice);
+						voiManager.setLattice( latticeVector );
+					}					
 				}
 			}
 		}	
@@ -2205,7 +2207,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			return;
 		}
-		wormData.saveSeamAnnotations( editMode != CheckSeam );
+		wormData.saveSeamAnnotations( voiManager.getAnnotations(), editMode != CheckSeam );
 		wormData.dispose();
 	}
 
