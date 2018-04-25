@@ -964,7 +964,7 @@ public class StochasticForests extends AlgorithmBase {
 	  // Draw without replacement using Fisher Yates algorithm
 	  Random random = new Random();
 	  for (i = 0; i < num_samples; ++i) {
-	    j = (int)Math.round(i + random.nextDouble() * (max - skip.size() - i));
+	    j = (int)(i + random.nextDouble() * (max - skip.size() - i));
 	    temp = result.get(i);
 	    result.set(i,result.get(j));
 	    result.set(j,temp);
@@ -1046,6 +1046,40 @@ public class StochasticForests extends AlgorithmBase {
 		    result.add(draw);
 		}	
 	}
+	
+	/**
+	 * Returns the most frequent class index of a vector with counts for the classes. Returns a random class if counts are equal.
+	 * @param class_count Vector with class counts
+	 * @param random_number_generator Random number generator
+	 * @return Most frequent class index. Out of range index if all 0.
+	 */
+	private int mostFrequentClass(Vector<Integer> class_count) {
+	  Vector<Integer> major_classes = new Vector<Integer>();
+
+	// Find maximum count
+	  int max_count = 0;
+	  for (int i = 0; i < class_count.size(); ++i) {
+	    int count = class_count.get(i);
+	    if (count > max_count) {
+	      max_count = count;
+	      major_classes.clear();
+	      major_classes.add(i);
+	    } else if (count == max_count) {
+	      major_classes.add(i);
+	    }
+	  }
+
+	  if (max_count == 0) {
+	    return class_count.size();
+	  } else if (major_classes.size() == 1) {
+	    return major_classes.get(0);
+	  } else {
+	    // Choose randomly
+		Random random = new Random();
+	    return major_classes.get(random.nextInt(major_classes.size()));
+	  }
+	}
+
 	
 	private double mostFrequentValue(HashMap<Double, Integer> class_count) {
 		int i;
@@ -1766,7 +1800,60 @@ public class StochasticForests extends AlgorithmBase {
 	  }
 	}
 
+	/**
+	 * Write a 2d vector to filestream. First the size of the first dim is written as size_t, then for all inner vectors the size and elements.
+	 * @param vector Vector of vectors of type T to write to file.
+	 * @param file ofstream object to write to.
+	 */
+	private void saveDVector2D(Vector<Vector<Double>> vector, BufferedWriter bw) {
+	  int i;
+	  // Save length of first dim
+	  int length = vector.size();
+	  try {
+	      bw.write(String.valueOf(length)+"\n");
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on bw.write(String.valueOf(length))");
+		  return;
+	  }
 
+	  // Save outer vector
+	  Vector<Double> inner_vector = new Vector<Double>();
+	  for (i = 0; i < vector.size(); i++) {
+	    // Save inner vector
+		inner_vector = vector.get(i);
+	    saveDVector1D(inner_vector, bw);
+	  }
+	}
+	
+	/**
+	 * Read a 2d vector written by saveVector2D() from filestream.
+	 * @param result Result vector of vectors with elements of type T.
+	 * @param file ifstream object to read from.
+	 */
+	private void readDVector2D(Vector<Vector<Double>> result, BufferedReader br) {
+	  int i;
+	  // Read length of first dim
+	  int length;
+	  String line;
+	  try {
+          line = br.readLine();
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on br.readLine()");
+		  return;
+	  }
+	  length = Integer.valueOf(line).intValue();
+	  for (i = 0; i < length; i++) {
+	      result.add(new Vector<Double>());  
+	  }
+
+	  // Read outer vector
+	  for (i = 0; i < length; ++i) {
+	    // Read inner vector
+	    readDVector1D(result.get(i), br);
+	  }
+	}
 	
 	private boolean equalVectorInteger(Vector<Integer> v1, Vector<Integer> v2, String str) {
 		// v1 is true answer, v2 is test answer
@@ -1806,7 +1893,7 @@ public class StochasticForests extends AlgorithmBase {
 	    	p1 = v1.get(i);
 	    	p2 = v2.get(i);
 	    	for (j = 0; j < p1.size(); j++) {
-		    	if (p1.get(i) != p2.get(i)) {
+		    	if (p1.get(j) != p2.get(j)) {
 		    		System.out.println("In " + str + " correct element " + i + "," + j + " is " + p1.get(j));
 		    		System.out.println("Actual test element at " + i + "," + j + " is " + p2.get(j));
 		    		return false;
@@ -1836,6 +1923,45 @@ public class StochasticForests extends AlgorithmBase {
 	    return true;
 	}
 	
+	private boolean equalVectorVectorDouble(Vector<Vector<Double>> v1, Vector<Vector<Double>> v2, String str) {
+		// v1 is true answer, v2 is test answer
+		int i, j;
+		Vector<Double> p1 = new Vector<Double>();
+		Vector<Double> p2 = new Vector<Double>();
+	    if (v1.size() != v2.size()) {
+	        System.out.println("In " + str + " correct size is " + v1.size());
+	        System.out.println("Test size is " + v2.size());
+	        return false;
+	    }
+	    for (i = 0; i < v1.size(); i++) {
+	    	if (v1.get(i).size() != v2.get(i).size()) {
+	    		System.out.println("In " + str + " v1.get("+i+").size() is " + v1.get(i).size());
+	    		System.out.println("Actual test element v2.get("+i+").size() is " + v2.get(i).size());
+	    		return false;
+	    	}
+	    	p1 = v1.get(i);
+	    	p2 = v2.get(i);
+	    	for (j = 0; j < p1.size(); j++) {
+		    	if (!p1.get(j).equals(p2.get(j))) {
+		    		System.out.println("In " + str + " correct element " + i + "," + j + " is " + p1.get(j));
+		    		System.out.println("Actual test element at " + i + "," + j + " is " + p2.get(j));
+		    		return false;
+		    	}
+		    }
+	    }
+	    System.out.println(str + " passed");
+	    return true;
+	}
+	
+	private boolean expectNear(double val1, double val2, double error, String str) {
+		if ((val2 < val1 - error) || (val2 > val1 + error)) {
+			System.out.println("In " + str + " " + val2 + " is more than " +
+		                   error + " away from expected " + val1);
+			return false;
+		}
+		return true;
+	}
+	
 	public StochasticForests() {
 		
 	}
@@ -1843,6 +1969,7 @@ public class StochasticForests extends AlgorithmBase {
 
 	public void runAlgorithm() {
 	   if (testCode) {
+		   int i, j;
 		   Vector<Integer>test = new Vector<Integer>();
 		   // Split 0..9 in 1 part
 		   String str = "Test equalSplit, onePart";
@@ -2031,7 +2158,7 @@ public class StochasticForests extends AlgorithmBase {
            Vector<Integer> expect2 = new Vector<Integer>();
            expect2.addAll(Arrays.asList(new Integer[]{7,8,9,10}));
            Vector<Integer> expect3 = new Vector<Integer>();
-           expect3.addAll(Arrays.asList(new Integer[]{11,121,3,14,15}));
+           expect3.addAll(Arrays.asList(new Integer[]{11,12,13,14,15}));
            Vector<Vector<Integer>> expectAll = new Vector<Vector<Integer>>();
            expectAll.add(expect1);
            expectAll.add(expect2);
@@ -2064,7 +2191,459 @@ public class StochasticForests extends AlgorithmBase {
 	  		   return;
 	  	   }
 	  	   equalVectorVectorInteger(expectAll, testAll, str);
-		   return;
+	  	   
+	  	 str = "Test readWrite2D, double1";
+	  	 outfile = new File("testfile2d");
+	     try {
+		     fw = new FileWriter(outfile);
+		 }
+		 catch (IOException e) {
+			 MipavUtil.displayError("IO exception on fw = new FileWriter(outfile)");
+			 return;
+		 }
+         bw = new BufferedWriter(fw);
+         Vector<Double> Dexpect1 = new Vector<Double>();
+         Dexpect1.addAll(Arrays.asList(new Double[]{1.1,2.4,3.0,4.3,5.9,6.7}));
+         Vector<Double> Dexpect2 = new Vector<Double>();
+         Dexpect2.addAll(Arrays.asList(new Double[]{7.2,8.1,9.0,10.1}));
+         Vector<Double> Dexpect3 = new Vector<Double>();
+         Dexpect3.addAll(Arrays.asList(new Double[]{11.3,12.4,13.2,14.7,15.8}));
+         Vector<Vector<Double>> DexpectAll = new Vector<Vector<Double>>();
+         DexpectAll.add(Dexpect1);
+         DexpectAll.add(Dexpect2);
+         DexpectAll.add(Dexpect3);
+         saveDVector2D(DexpectAll, bw);
+         try {
+      	   bw.close();
+         }
+         catch (IOException e) {
+      	   MipavUtil.displayError("IO exception on bw.close()");
+      	   return;
+         }
+         
+
+	     file = new File("testfile2d");
+  	     try {
+  	         infile = new BufferedReader(new FileReader(file));
+  	     }
+  	     catch (FileNotFoundException e) {
+  		     MipavUtil.displayError("Could not find file testfile2d");
+  		     return;
+  	     }
+  	     Vector<Vector<Double>> DtestAll = new Vector<Vector<Double>>();
+  	     readDVector2D(DtestAll, infile);
+  	     try {
+  		     infile.close();
+  	     }
+  	     catch(IOException e) {
+  		     MipavUtil.displayError("IO exception on infile.close()");
+  		     return;
+  	     }
+  	     equalVectorVectorDouble(DexpectAll, DtestAll, str);
+  	     
+  	     str = "Test drawWithoutReplacementSkip, small_small1";
+  	     Vector<Integer>result = new Vector<Integer>();
+  	     Map<Integer, Integer> counts = new HashMap<Integer, Integer>();
+  	     int max = 9;
+  	     Vector<Integer> skip = new Vector<Integer>();
+  	     skip.add(7);
+  	     int num_samples = 4;
+  	     int num_replicates = 10000;
+  	     int expected_count = num_samples * num_replicates / max;
+  	     
+  	     for (i = 0; i < num_replicates; i++) {
+  	    	 result.clear();
+  	    	 drawWithoutReplacementSkip(result, max + 1, skip, num_samples);
+  	    	 for (j = 0; j < result.size(); j++) {
+  	    	     int idx = result.get(j);
+  	    	     if (counts.get(idx) == null) {
+  	    	    	 counts.put(idx, 1);
+  	    	     }
+  	    	     else {
+  	    	         counts.put(idx, counts.get(idx)+1);
+  	    	     }
+  	    	 }
+  	     } 
+  	     
+  	     // Check if counts are expected +-5%
+		Object values[] = counts.values().toArray();
+		boolean success = true;
+		boolean near;
+  	     for (i = 0; i < counts.size(); i++) {
+  	    	 int value = (int)values[i];
+  	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
+  	    	 if (!near) {
+  	    		 success = false;
+  	    	 }
+  	     }
+  	     if (counts.get(skip.get(0)) != null) {
+  	    	 System.out.println("In " + str + " counts.get(skip.get(0)) = " + 
+  	                     counts.get(skip.get(0)) + " instead of null for zero count");
+  	    	 success = false;
+  	     }
+  	     if (success) {
+  	    	 System.out.println(str + " passed");
+  	     }
+  	     
+  	     str = "Test drawWithoutReplacementSkip, small_small2";
+	     result.clear();
+	     counts.clear();
+	     max = 9;
+	     skip.clear();
+	     skip.add(0);
+	     num_samples = 4;
+	     num_replicates = 10000;
+	     expected_count = num_samples * num_replicates / max;
+	     
+	     for (i = 0; i < num_replicates; i++) {
+	    	 result.clear();
+	    	 drawWithoutReplacementSkip(result, max + 1, skip, num_samples);
+	    	 for (j = 0; j < result.size(); j++) {
+	    	     int idx = result.get(j);
+	    	     if (counts.get(idx) == null) {
+	    	    	 counts.put(idx, 1);
+	    	     }
+	    	     else {
+	    	         counts.put(idx, counts.get(idx)+1);
+	    	     }
+	    	 }
+	     } 
+	     
+	     // Check if counts are expected +-5%
+		values = counts.values().toArray();
+		success = true;
+	     for (i = 0; i < counts.size(); i++) {
+	    	 int value = (int)values[i];
+	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
+	    	 if (!near) {
+	    		 success = false;
+	    	 }
+	     }
+	     if (counts.get(skip.get(0)) != null) {
+	    	 System.out.println("In " + str + " counts.get(skip.get(0)) = " + 
+	                     counts.get(skip.get(0)) + " instead of null for zero count");
+	    	 success = false;
+	     }
+	     if (success) {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test drawWithoutReplacementSkip, small_small3";
+	     result.clear();
+	     counts.clear();
+	     max = 9;
+	     skip.clear();
+	     skip.add(9);
+	     num_samples = 4;
+	     num_replicates = 10000;
+	     expected_count = num_samples * num_replicates / max;
+	     
+	     for (i = 0; i < num_replicates; i++) {
+	    	 result.clear();
+	    	 drawWithoutReplacementSkip(result, max + 1, skip, num_samples);
+	    	 for (j = 0; j < result.size(); j++) {
+	    	     int idx = result.get(j);
+	    	     if (counts.get(idx) == null) {
+	    	    	 counts.put(idx, 1);
+	    	     }
+	    	     else {
+	    	         counts.put(idx, counts.get(idx)+1);
+	    	     }
+	    	 }
+	     } 
+	     
+	     // Check if counts are expected +-5%
+		values = counts.values().toArray();
+		success = true;
+	     for (i = 0; i < counts.size(); i++) {
+	    	 int value = (int)values[i];
+	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
+	    	 if (!near) {
+	    		 success = false;
+	    	 }
+	     }
+	     if (counts.get(skip.get(0)) != null) {
+	    	 System.out.println("In " + str + " counts.get(skip.get(0)) = " + 
+	                     counts.get(skip.get(0)) + " instead of null for zero count");
+	    	 success = false;
+	     }
+	     if (success) {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test drawWithoutReplacementSkip, small_large1";
+	     result.clear();
+	     counts.clear();
+	     max = 1000;
+	     skip.clear();
+	     skip.add(7);
+	     num_samples = 50;
+	     num_replicates = 100000;
+	     expected_count = num_samples * num_replicates / max;
+	     
+	     for (i = 0; i < num_replicates; i++) {
+	    	 result.clear();
+	    	 drawWithoutReplacementSkip(result, max + 1, skip, num_samples);
+	    	 for (j = 0; j < result.size(); j++) {
+	    	     int idx = result.get(j);
+	    	     if (counts.get(idx) == null) {
+	    	    	 counts.put(idx, 1);
+	    	     }
+	    	     else {
+	    	         counts.put(idx, counts.get(idx)+1);
+	    	     }
+	    	 }
+	     } 
+	     
+	     // Check if counts are expected +-10%
+		values = counts.values().toArray();
+		success = true;
+	     for (i = 0; i < counts.size(); i++) {
+	    	 int value = (int)values[i];
+	    	 near = expectNear(expected_count, value, expected_count * 0.1, str);
+	    	 if (!near) {
+	    		 success = false;
+	    	 }
+	     }
+	     if (counts.get(skip.get(0)) != null) {
+	    	 System.out.println("In " + str + " counts.get(skip.get(0)) = " + 
+	                     counts.get(skip.get(0)) + " instead of null for zero count");
+	    	 success = false;
+	     }
+	     if (success) {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test drawWithoutReplacementSkip, large_large1";
+	     result.clear();
+	     counts.clear();
+	     max = 1000;
+	     skip.clear();
+	     skip.add(7);
+	     num_samples = 500;
+	     num_replicates = 10000;
+	     expected_count = num_samples * num_replicates / max;
+	     
+	     for (i = 0; i < num_replicates; i++) {
+	    	 result.clear();
+	    	 drawWithoutReplacementSkip(result, max + 1, skip, num_samples);
+	    	 for (j = 0; j < result.size(); j++) {
+	    	     int idx = result.get(j);
+	    	     if (counts.get(idx) == null) {
+	    	    	 counts.put(idx, 1);
+	    	     }
+	    	     else {
+	    	         counts.put(idx, counts.get(idx)+1);
+	    	     }
+	    	 }
+	     } 
+	     
+	     // Check if counts are expected +- 5%
+		values = counts.values().toArray();
+		success = true;
+	     for (i = 0; i < counts.size(); i++) {
+	    	 int value = (int)values[i];
+	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
+	    	 if (!near) {
+	    		 success = false;
+	    	 }
+	     }
+	     if (counts.get(skip.get(0)) != null) {
+	    	 System.out.println("In " + str + " counts.get(skip.get(0)) = " + 
+	                     counts.get(skip.get(0)) + " instead of null for zero count");
+	    	 success = false;
+	     }
+	     if (success) {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentClassCount, notEqual1";
+	     Vector<Integer>class_count = new Vector<Integer>();
+	     class_count.addAll(Arrays.asList(new Integer[]{0,4,7,3,2,1,8}));
+	     int ans = mostFrequentClass(class_count);
+	     if (ans != 6) {
+	    	 System.out.println("In " + str + " answer = " + ans + " instead of the correct 6");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentClassCount, notEqual2";
+	     class_count.clear();
+	     class_count.addAll(Arrays.asList(new Integer[]{5,4,3,2,1}));
+	     ans = mostFrequentClass(class_count);
+	     if (ans != 0) {
+	    	 System.out.println("In " + str + " answer = " + ans + " instead of the correct 0");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentClassCount, equal1";
+	     class_count.clear();
+	     class_count.addAll(Arrays.asList(new Integer[]{5,5,5,5}));
+	     ans = mostFrequentClass(class_count);
+	     if ((ans < 0) || (ans > 3)) {
+	    	 System.out.println("In " + str + " answer = " + ans + " instead of the correct 0 to 3");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentClassCount, equal2";
+	     class_count.clear();
+	     class_count.addAll(Arrays.asList(new Integer[]{4,5,5,4}));
+	     ans = mostFrequentClass(class_count);
+	     if ((ans < 1) || (ans > 2)) {
+	    	 System.out.println("In " + str + " answer = " + ans + " instead of the correct 1 to 2");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentValue, notEqual1";
+	     HashMap <Double, Integer> class_count2 = new HashMap<Double, Integer>();
+	     class_count2.put(1.0,5);
+	     class_count2.put(2.0,7);
+	     class_count2.put(3.0,10);
+	     double dans = mostFrequentValue(class_count2);
+	     if (dans != 3.0) {
+	    	 System.out.println("In " + str + " answer = " + dans + " instead of the correct 3.0");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentValue, notEqual2";
+	     class_count2.clear();
+	     class_count2.put(10.1,15);
+	     class_count2.put(2.5,12);
+	     class_count2.put(30.0,10);
+	     dans = mostFrequentValue(class_count2);
+	     if (dans != 10.1) {
+	    	 System.out.println("In " + str + " answer = " + dans + " instead of the correct 10.1");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentValue, equal1";
+	     class_count2.clear();
+	     class_count2.put(1.0,10);
+	     class_count2.put(2.0,15);
+	     class_count2.put(3.0,15);
+	     dans = mostFrequentValue(class_count2);
+	     if ((dans != 2.0) && (dans != 3.0)) {
+	    	 System.out.println("In " + str + " answer = " + dans + " instead of the correct 2.0 or 3.0");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentValue, equal2";
+	     class_count2.clear();
+	     class_count2.put(10.0,30);
+	     class_count2.put(11.0,30);
+	     class_count2.put(15.0,29);
+	     dans = mostFrequentValue(class_count2);
+	     if ((dans != 10.0) && (dans != 11.0)) {
+	    	 System.out.println("In " + str + " answer = " + dans + " instead of the correct 10.0 or 11.0");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "Test mostFrequentValue, equal3";
+	     class_count2.clear();
+	     class_count2.put(3.0,10);
+	     class_count2.put(5.0,500);
+	     class_count2.put(6.0,500);
+	     dans = mostFrequentValue(class_count2);
+	     if ((dans != 5.0) && (dans != 6.0)) {
+	    	 System.out.println("In " + str + " answer = " + dans + " instead of the correct 5.0 or 6.0");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, seconds1";
+	     String res = beautifyTime(0);
+	     if (!res.equals("0 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + " instead of the correct 0 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, seconds2";
+	     res = beautifyTime(30);
+	     if (!res.equals("30 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + " instead of the correct 30 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, minutes1";
+	     res = beautifyTime(60);
+	     if (!res.equals("1 minute, 0 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + 
+	    			 " instead of the correct 1 minute, 0 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, minutes2";
+	     res = beautifyTime(2317);
+	     if (!res.equals("38 minutes, 37 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + 
+	    			 " instead of the correct 38 minutes, 37 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, hours1";
+	     res = beautifyTime(3600);
+	     if (!res.equals("1 hour, 0 minutes, 0 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + 
+	    			 " instead of the correct 1 hour, 0 minutes, 0 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, hours2";
+	     res = beautifyTime(13498);
+	     if (!res.equals("3 hours, 44 minutes, 58 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + 
+	    			 " instead of the correct 3 hours, 44 minutes, 58 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, days1";
+	     res = beautifyTime(86400);
+	     if (!res.equals("1 day, 0 hours, 0 minutes, 0 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + 
+	    			 " instead of the correct 1 day, 0 hours, 0 minutes, 0 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+	     
+	     str = "test beautifyTime, days2";
+	     res = beautifyTime(287345);
+	     if (!res.equals("3 days, 7 hours, 49 minutes, 5 seconds")) {
+	    	 System.out.println("In " + str + " answer = " + res + 
+	    			 " instead of the correct 3 days, 7 hours, 49 minutes, 5 seconds");
+	     }
+	     else {
+	    	 System.out.println(str + " passed");
+	     }
+		 return;
 	   }
 	}
 }
