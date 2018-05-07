@@ -798,18 +798,40 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                     if (img != null) {
                         if (img.getFileInfo(0) instanceof FileInfoDicom) {
                             String imageType = (String)((FileInfoDicom)img.getFileInfo(0)).getTagTable().getValue("0008,0008");
+                            String seriesDesc = (String)((FileInfoDicom)img.getFileInfo(0)).getTagTable().getValue("0008,103E");
+                            String protocolName = (String)((FileInfoDicom)img.getFileInfo(0)).getTagTable().getValue("0018,1030");
                             
                             for (String val : imageType.split("\\\\")) {
                                 if (val.equalsIgnoreCase("ADC") || val.equalsIgnoreCase("ADC_UNSPECIFIED")) {
-                                    adcPath = file.getAbsolutePath();
-                                    adcImageMultifile = true;
-                                    foundADC = true;
-                                    break;
+                                    // some studies are transmitted with both 'reg' and unmodified versions of the data
+                                    // choose the 'reg' version if we previously found a different ADC series 
+                                    if (foundADC && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
+                                        adcPath = file.getAbsolutePath();
+                                        adcImageMultifile = true;
+                                        foundADC = true;
+                                        break;
+                                    } else if (!foundADC) {
+                                        // new ADC volume, and we hadn't encountered one before
+                                        adcPath = file.getAbsolutePath();
+                                        adcImageMultifile = true;
+                                        foundADC = true;
+                                        break;
+                                    }
                                 } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE") || val.equalsIgnoreCase("TRACEW")) {
-                                    dwiPath = file.getAbsolutePath();
-                                    dwiImageMultifile = true;
-                                    foundDWI = true;
-                                    break;
+                                    // some studies are transmitted with both 'reg' and unmodified versions of the data
+                                    // choose the 'reg' version if we previously found a different ADC series 
+                                    if (foundADC && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
+                                        dwiPath = file.getAbsolutePath();
+                                        dwiImageMultifile = true;
+                                        foundDWI = true;
+                                        break;
+                                    } else if (!foundADC) {
+                                        // new ADC volume, and we hadn't encountered one before
+                                        dwiPath = file.getAbsolutePath();
+                                        dwiImageMultifile = true;
+                                        foundDWI = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
