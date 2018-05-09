@@ -1170,8 +1170,8 @@ public class StochasticForests extends AlgorithmBase {
 		Vector<Double> major_classes = new Vector<Double>();
 		// Find maximum count;
 		int max_count = 0;
-		Object keys[] = class_count.keySet().toArray();
-		Object values[] = class_count.values().toArray();
+		Double keys[] = (Double[])class_count.keySet().toArray();
+		Integer values[] = (Integer[])class_count.values().toArray();
 		for (i = 0; i < class_count.size(); i++) {
 		    value = (int)values[i];	
 		    key = (double)keys[i];
@@ -7055,7 +7055,7 @@ public class StochasticForests extends AlgorithmBase {
   	     } 
   	     
   	     // Check if counts are expected +-5%
-		Object values[] = counts.values().toArray();
+		Integer values[] = (Integer[]) counts.values().toArray();
 		boolean success = true;
 		boolean near;
   	     for (i = 0; i < counts.size(); i++) {
@@ -7099,7 +7099,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-5%
-		values = counts.values().toArray();
+		values = (Integer[]) counts.values().toArray();
 		success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 int value = (int)values[i];
@@ -7142,7 +7142,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-5%
-		values = counts.values().toArray();
+	     values = (Integer[]) counts.values().toArray();
 		success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 int value = (int)values[i];
@@ -7185,7 +7185,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-10%
-		values = counts.values().toArray();
+	     values = (Integer[]) counts.values().toArray();
 		success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 int value = (int)values[i];
@@ -7228,7 +7228,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +- 5%
-		values = counts.values().toArray();
+	     values = (Integer[]) counts.values().toArray();
 		success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 int value = (int)values[i];
@@ -7715,7 +7715,7 @@ public class StochasticForests extends AlgorithmBase {
 	     }
 	     
 	     str = "Test maxstatPValueLau94, test1";
-	     Vector<Integer> m = new Vector<>();
+	     Vector<Integer> m = new Vector<Integer>();
 	     m.addAll(Arrays.asList(new Integer[]{0, 3, 7, 8, 12, 15, 17, 18, 21, 25, 
 	    		 27, 30, 31, 35, 36, 39, 44, 46 }));
 	     p_expect.clear();
