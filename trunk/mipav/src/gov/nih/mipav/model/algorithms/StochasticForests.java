@@ -3,7 +3,15 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.*;
 import java.io.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.sun.corba.se.impl.protocol.giopmsgheaders.LocateReplyMessage_1_0;
 
@@ -1789,6 +1797,38 @@ public class StochasticForests extends AlgorithmBase {
 			  return;
 		  }
 		  value = Integer.valueOf(line).intValue();
+		  result.add(value);
+	  }
+	}
+	
+	/**
+	 * Read a 1d vector written by saveVector1D() from filestream.
+	 * @param result Result vector with elements of type T.
+	 * @param file ifstream object to read from.
+	 */
+	private void readBVector1D(Vector<Boolean> result, BufferedReader br) {
+	  int i;
+	  boolean value;
+	  // Read length
+	  int length;
+	  String line;
+	  try {
+          line = br.readLine();
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IO exception on br.readLine()");
+		  return;
+	  }
+	  length = Integer.valueOf(line).intValue();
+	  for (i = 0; i < length; i++) {
+		  try {
+	          line = br.readLine();
+		  }
+		  catch (IOException e) {
+			  MipavUtil.displayError("IO exception on br.readLine()");
+			  return;
+		  }
+		  value = Boolean.valueOf(line).booleanValue();
 		  result.add(value);
 	  }
 	}
@@ -6207,6 +6247,21 @@ public class StochasticForests extends AlgorithmBase {
 		// Computation progress (finished trees)
 		protected int progress;
 		
+		protected final Lock mutex = new ReentrantLock();
+		private final Condition condition_variable = mutex.newCondition();
+		
+		public abstract void growInternal();
+		// Predict using existing tree from file and data as prediction data
+		public abstract void allocatePredictMemory();
+		public abstract void predictInternal(int sample_idx);
+		public abstract void computePredictionErrorInternal();
+		public abstract void loadFromFileInternal(BufferedReader br);
+		public abstract void initInternal(String status_variable_name);
+		public abstract void writeOutputInternal();
+		public abstract void writeConfusionFile();
+		public abstract void writePredictionFile();
+		public abstract void saveToFileInternal(BufferedWriter bw);
+		
 		public Forest() {
 			verbose_out = false;
 			num_trees = DEFAULT_NUM_TREE;
@@ -6245,7 +6300,7 @@ public class StochasticForests extends AlgorithmBase {
 			}
 		}
 		
-		/*public void initCpp(String dependent_variable_name, MemoryMode memory_mode, String input_file, int mtry,
+		public void initCpp(String dependent_variable_name, MemoryMode memory_mode, String input_file, int mtry,
 			    String output_prefix, int num_trees, boolean verbose_out, int seed, int num_threads,
 			    String load_forest_filename, ImportanceMode importance_mode, int min_node_size,
 			    String split_select_weights_file, Vector<String> always_split_variable_names,
@@ -6443,7 +6498,7 @@ public class StochasticForests extends AlgorithmBase {
 
 			  // Set unordered factor variables
 			  if (!prediction_mode) {
-			    data.setIsOrderedVariable(unordered_variable_names);
+			    data.setIsOrderedVariableString(unordered_variable_names);
 			  }
 
 			  data.addNoSplitVariable(dependent_varID);
@@ -6679,25 +6734,7 @@ public class StochasticForests extends AlgorithmBase {
 				  variable_importance.set(i, 0.0);
 			  }
 
-			// Grow trees in multiple threads
-			//#ifdef OLD_WIN_R_BUILD
-			  //progress = 0;
-			  //clock_t start_time = clock();
-			  //clock_t lap_time = clock();
-			  //for (size_t i = 0; i < num_trees; ++i) {
-			    //trees[i]->grow(&variable_importance);
-			    //progress++;
-			    //showProgress("Growing trees..", start_time, lap_time);
-			  //}
-			//#else
 			  progress = 0;
-			//#ifdef R_BUILD
-			  //aborted = false;
-			  //aborted_threads = 0;
-			//#endif
-
-			  Vector<Thread> threads = new Vector<Thread>();
-			  threads.ensureCapacity(num_threads);
 
 			// Initailize importance per thread
 			  Vector<Vector<Double>> variable_importance_threads = new Vector<Vector<Double>>();
@@ -6713,39 +6750,484 @@ public class StochasticForests extends AlgorithmBase {
 			    	  variable_importance_threads.get(i).set(j, 0.0);
 			      }
 			    }
-			    threads.add(std::thread(&Forest::growTreesInThread, this, i, &(variable_importance_threads[i])));
 			  }
+			  ExecutorService executorService = Executors.newCachedThreadPool();
 			  showProgress("Growing trees..", num_trees);
-			  for (auto &thread : threads) {
-			    thread.join();
+			  for (i = 0; i < num_threads; i++) {
+				  executorService.execute(new growTreesInThread(i, variable_importance_threads.get(i)));
 			  }
-
-			#ifdef R_BUILD
-			  if (aborted_threads > 0) {
-			    throw std::runtime_error("User interrupt.");
+			  executorService.shutdown();
+			  try {
+				  boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+				  if (!tasksEnded) {
+					  MipavUtil.displayError("Timed out waiting for growTreesInThread to finish");
+					  System.exit(-1);
+				  }
 			  }
-			#endif
+			  catch (InterruptedException ex) {
+				  ex.printStackTrace();
+			  }
 
 			  // Sum thread importances
-			  if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED) {
-			    variable_importance.resize(num_independent_variables, 0);
-			    for (size_t i = 0; i < num_independent_variables; ++i) {
-			      for (uint j = 0; j < num_threads; ++j) {
-			        variable_importance[i] += variable_importance_threads[j][i];
+			  if (importance_mode == ImportanceMode.IMP_GINI || importance_mode == ImportanceMode.IMP_GINI_CORRECTED) {
+				insize = variable_importance.size();
+				variable_importance.setSize(num_independent_variables);
+				for (i = insize; i < num_independent_variables; i++) {
+					variable_importance.set(i, 0.0);
+				}
+			    for (i = 0; i < num_independent_variables; ++i) {
+			      for (j = 0; j < num_threads; ++j) {
+			    	double val = variable_importance.get(i);
+			    	variable_importance.set(i, val + variable_importance_threads.get(j).get(i));
 			      }
 			    }
 			    variable_importance_threads.clear();
 			  }
 
-			#endif
-
 			// Divide importance by number of trees
-			  if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED) {
-			    for (auto& v : variable_importance) {
-			      v /= num_trees;
+			  if (importance_mode == ImportanceMode.IMP_GINI || importance_mode == ImportanceMode.IMP_GINI_CORRECTED) {
+			    for (i = 0; i < variable_importance.size(); i++) {
+			     double v = variable_importance.get(i);
+			     variable_importance.set(i, v/num_trees);
 			    }
 			  }
-		} */
+		}
+		
+		public void predict() {
+              int i;
+			  // Predict trees in multiple threads and join the threads with the main thread
+			  progress = 0;
+
+			  // Predict
+			  ExecutorService executorService = Executors.newCachedThreadPool();
+			  showProgress("Predicting..", num_trees);
+			  for (i = 0; i < num_threads; i++) {
+				  executorService.execute(new predictTreesInThread(i, data, false));	  
+			  }
+		
+			  executorService.shutdown();
+			  try {
+				  boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+				  if (!tasksEnded) {
+					  MipavUtil.displayError("Timed out waiting for predictTreesInThread to finish");
+					  System.exit(-1);
+				  }
+			  }
+			  catch (InterruptedException ex) {
+				  ex.printStackTrace();
+			  }
+
+			  // Aggregate predictions
+			  allocatePredictMemory();
+			  progress = 0;
+			  executorService = Executors.newCachedThreadPool();
+			  showProgress("Aggregating predictions..", num_samples);
+			  for (i = 0; i < num_threads; ++i) {
+				  executorService.execute(new predictInternalInThread(i));
+			  }
+			  executorService.shutdown();
+			  try {
+				  boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+				  if (!tasksEnded) {
+					  MipavUtil.displayError("Timed out waiting for predictInternalInThread to finish");
+					  System.exit(-1);
+				  }
+			  }
+			  catch (InterruptedException ex) {
+				  ex.printStackTrace();
+			  }
+
+			
+		}
+
+		public void computePredictionError() {
+
+			 // Predict trees in multiple threads
+			
+			  progress = 0;
+			  ExecutorService executorService = Executors.newCachedThreadPool();
+			  showProgress("Computing prediction error..", num_trees);
+			  for (int i = 0; i < num_threads; ++i) {
+				  executorService.execute(new predictTreesInThread(i, data, true));
+			  }
+			  executorService.shutdown();
+			  try {
+				  boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+				  if (!tasksEnded) {
+					  MipavUtil.displayError("Timed out waiting for predictTreesInThread to finish");
+					  System.exit(-1);
+				  }
+			  }
+			  catch (InterruptedException ex) {
+				  ex.printStackTrace();
+			  }
+			
+			  // Call special function for subclasses
+			  computePredictionErrorInternal();
+		}
+		
+		public void computePermutationImportance() {
+              int i,j;
+              int insize;
+              double val;
+			  // Compute tree permutation importance in multiple threads
+			
+			  progress = 0;
+			
+			// Initialize importance and variance
+			  Vector<Vector<Double>> variable_importance_threads = new Vector<Vector<Double>>();
+			  Vector<Vector<Double>> variance_threads = new Vector<Vector<Double>>();
+			  for (i = 0; i < num_threads; i++) {
+				  variable_importance_threads.add(new Vector<Double>());
+				  variance_threads.add(new Vector<Double>());
+			  }
+
+			// Compute importance
+			  ExecutorService executorService = Executors.newCachedThreadPool();
+			  showProgress("Computing permutation importance..", num_trees);
+			  for (i = 0; i < num_threads; ++i) {
+				for (j = 0; j < num_independent_variables; j++) {
+					variable_importance_threads.get(i).add(0.0);
+				}
+			    if (importance_mode == ImportanceMode.IMP_PERM_BREIMAN || importance_mode == ImportanceMode.IMP_PERM_LIAW) {
+			      for (j = 0; j < num_independent_variables; j++) {
+			    	  variance_threads.get(i).add(0.0);
+			      }
+			    }
+			    executorService.execute(new computeTreePermutationImportanceInThread(i, variable_importance_threads.get(i),
+			    		variance_threads.get(i)));
+			  }
+
+			// Sum thread importances
+			  insize = variable_importance.size();
+			  variable_importance.setSize(num_independent_variables);
+			  for (i = insize; i < num_independent_variables; i++) {
+				  variable_importance.set(i, 0.0);
+			  }
+			  for (i = 0; i < num_independent_variables; ++i) {
+			    for (j = 0; j < num_threads; ++j) {
+			      val = variable_importance.get(i);
+			      variable_importance.set(i, val + variable_importance_threads.get(j).get(i));
+			    }
+			  }
+			  variable_importance_threads.clear();
+
+			// Sum thread variances
+			  Vector<Double> variance = new Vector<Double>();
+			  for (i = 0; i < num_independent_variables; i++) {
+				  variance.add(0.0);
+			  }
+			  if (importance_mode == ImportanceMode.IMP_PERM_BREIMAN || importance_mode == ImportanceMode.IMP_PERM_LIAW) {
+			    for (i = 0; i < num_independent_variables; ++i) {
+			      for (j = 0; j < num_threads; ++j) {
+			    	val = variance.get(i);  
+			        variance.set(i, val + variance_threads.get(j).get(i));
+			      }
+			    }
+			    variance_threads.clear();
+			  }
+
+			  for (i = 0; i < variable_importance.size(); ++i) {
+				val = variable_importance.get(i);
+			    variable_importance.set(i, val/num_trees);
+
+			    // Normalize by variance for scaled permutation importance
+			    if (importance_mode == ImportanceMode.IMP_PERM_BREIMAN || importance_mode == ImportanceMode.IMP_PERM_LIAW) {
+			      if (variance.get(i) != 0) {
+			    	val = variance.get(i) / num_trees - variable_importance.get(i) * variable_importance.get(i);
+			    	variance.set(i, val);
+			        val = variable_importance.get(i);
+			        variable_importance.set(i, val/Math.sqrt(variance.get(i)/num_trees));
+			      }
+			    }
+			  }
+			}
+
+		public class growTreesInThread implements Runnable {
+			  private int thread_idx;
+			  private Vector<Double> variable_importance;
+			  public growTreesInThread(int thread_idx, Vector<Double> variable_importance) {
+			      this.thread_idx = thread_idx;
+			      this.variable_importance = variable_importance;
+			  }
+			  
+			  public void run() {
+				  if (thread_ranges.size() > thread_idx + 1) {
+				    for (int i = thread_ranges.get(thread_idx); i < thread_ranges.get(thread_idx + 1); ++i) {
+				      trees.get(i).grow(variable_importance);
+	
+				      // Check for user interrupt
+	
+				      // Increase progress by 1 tree
+				      mutex.lock();
+				      ++progress;
+				      condition_variable.signal();
+				    }
+				  }
+			  }
+		}
+		
+		public class predictTreesInThread implements Runnable {
+			private int thread_idx;
+			private Data prediction_data;
+			private boolean oob_prediction;
+			public predictTreesInThread(int thread_idx, Data prediction_data, boolean oob_prediction) {
+				this.thread_idx = thread_idx;
+				this.prediction_data = prediction_data;
+				this.oob_prediction = oob_prediction;
+			}
+			
+			public void run() {
+				  if (thread_ranges.size() > thread_idx + 1) {
+				    for (int i = thread_ranges.get(thread_idx); i < thread_ranges.get(thread_idx + 1); ++i) {
+				      trees.get(i).predict(prediction_data, oob_prediction);
+	
+				      // Check for user interrupt
+				
+				      // Increase progress by 1 tree
+				      mutex.lock();
+				      ++progress;
+				      condition_variable.signal();
+				    }
+				  }
+			   }
+		}
+
+		public class predictInternalInThread implements Runnable {
+			private int thread_idx;
+			public predictInternalInThread(int thread_idx) {
+				this.thread_idx = thread_idx;
+			}
+			
+			public void run() {
+			  // Create thread ranges
+			  Vector<Integer> predict_ranges = new Vector<Integer>();
+			  equalSplit(predict_ranges, 0, num_samples - 1, num_threads);
+
+			  if (predict_ranges.size() > thread_idx + 1) {
+			    for (int i = predict_ranges.get(thread_idx); i < predict_ranges.get(thread_idx + 1); ++i) {
+			      predictInternal(i);
+
+			      // Check for user interrupt
+
+			      // Increase progress by 1 tree
+			      mutex.lock();
+			      ++progress;
+			      condition_variable.signal();
+			    }
+			  }
+			}
+		}
+
+		public class computeTreePermutationImportanceInThread implements Runnable {
+			private int thread_idx;
+			private Vector<Double> importance;
+			private Vector<Double> variance;
+			public computeTreePermutationImportanceInThread(int thread_idx, Vector<Double> importance,
+					Vector<Double> variance) {
+				this.thread_idx = thread_idx;
+				this.importance = importance;
+				this.variance = variance;
+			}
+			
+			public void run() {
+			  if (thread_ranges.size() > thread_idx + 1) {
+			    for (int i = thread_ranges.get(thread_idx); i < thread_ranges.get(thread_idx + 1); ++i) {
+			      trees.get(i).computePermutationImportance(importance, variance);
+
+			      // Check for user interrupt
+
+			      // Increase progress by 1 tree
+			      mutex.lock();
+			      ++progress;
+			      condition_variable.signal();
+			    }
+			  }
+			}
+		}
+
+		public void loadFromFile(String filename) {
+			  if (verbose_out) Preferences.debug("Loading forest from file " + filename + ".\n", Preferences.DEBUG_ALGORITHM);
+
+		    // Open input file
+	    	File file = new File(filename);
+	    	BufferedReader input_file;
+	    	try {
+	    	    input_file = new BufferedReader(new FileReader(file));
+	    	}
+	    	catch (FileNotFoundException e) {
+	    		MipavUtil.displayError("Could not find file " + filename);
+	    	  	return;
+	    	}
+			  
+			// Read dependent_varID and num_trees
+	    	String line;
+	  	    try {
+	              line = input_file.readLine();
+	  	    }
+	  	    catch (IOException e) {
+	  		    MipavUtil.displayError("IO exception on input_file.readLine()");
+	  		    return;
+	  	    }
+	  	    dependent_varID = Integer.valueOf(line).intValue();
+	  	    try {
+                line = input_file.readLine();
+  	        }
+  	        catch (IOException e) {
+  		       MipavUtil.displayError("IO exception on input_file.readLine()");
+  		       return;
+  	       }
+  	       num_trees = Integer.valueOf(line).intValue();
+
+			// Read is_ordered_variable
+			  readBVector1D(data.getIsOrderedVariable(), input_file);
+
+			// Read tree data. This is different for tree types -> virtual function
+			  loadFromFileInternal(input_file);
+
+			  try {
+			      input_file.close();
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception on input_file.close() in loadFromFile");
+			  }
+
+			// Create thread ranges
+			  equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
+		}
+		
+		public void setSplitWeightVector(Vector<Vector<Double>> split_select_weights) {
+            int i,j,k;
+            int insize;
+			// Size should be 1 x num_independent_variables or num_trees x num_independent_variables
+			  if (split_select_weights.size() != 1 && split_select_weights.size() != num_trees) {
+			    MipavUtil.displayError("Size of split select weights not equal to 1 or number of trees.");
+			    System.exit(-1);
+			  }
+
+			// Reserve space
+			  if (split_select_weights.size() == 1) {
+			    this.split_select_weights.get(0).setSize(num_independent_variables);
+			  } else {
+			    this.split_select_weights.clear();
+			    for (i = 0; i < num_trees; i++) {
+			        Vector<Double>vec = new Vector<Double>();
+			        for (j = 0; j < num_independent_variables; j++) {
+			        	vec.add(0.0);
+			        }
+			        split_select_weights.add(vec);
+			    }
+			    
+			  }
+			  insize = this.split_select_varIDs.size();
+			  this.split_select_varIDs.setSize(num_independent_variables);
+			  for (i = insize; i < num_independent_variables; i++) {
+				  this.split_select_varIDs.set(i, 0);
+			  }
+			  deterministic_varIDs.ensureCapacity(num_independent_variables);
+
+			// Split up in deterministic and weighted variables, ignore zero weights
+			  for (i = 0; i < split_select_weights.size(); ++i) {
+
+			    // Size should be 1 x num_independent_variables or num_trees x num_independent_variables
+			    if (split_select_weights.get(i).size() != num_independent_variables) {
+			      MipavUtil.displayError("Number of split select weights not equal to number of independent variables.");
+			      System.exit(-1);
+			    }
+
+			    for (j = 0; j < split_select_weights.get(i).size(); ++j) {
+			      double weight = split_select_weights.get(i).get(j);
+
+			      if (i == 0) {
+			        int varID = j;
+			        for (k = 0; k < data.getNoSplitVariables().size(); k++) {
+			          int skip = data.getNoSplitVariables().get(k);
+			          if (varID >= skip) {
+			            ++varID;
+			          }
+			        }
+
+			        if (weight == 1) {
+			          deterministic_varIDs.add(varID);
+			        } else if (weight < 1 && weight > 0) {
+			          this.split_select_varIDs.set(j, varID);
+			          this.split_select_weights.get(i).set(j, weight);
+			        } else if (weight < 0 || weight > 1) {
+			          MipavUtil.displayError("One or more split select weights not in range [0,1].");
+			          System.exit(-1);
+			        }
+
+			      } else {
+			        if (weight < 1 && weight > 0) {
+			          this.split_select_weights.get(i).set(j, weight);
+			        } else if (weight < 0 || weight > 1) {
+			          MipavUtil.displayError("One or more split select weights not in range [0,1].");
+			          System.exit(-1);
+			        }
+			      }
+			    }
+			  }
+
+			  if (deterministic_varIDs.size() > this.mtry) {
+			    MipavUtil.displayError("Number of ones in split select weights cannot be larger than mtry.");
+			    System.exit(-1);
+			  }
+			  if (deterministic_varIDs.size() + split_select_varIDs.size() < mtry) {
+			    MipavUtil.displayError("Too many zeros in split select weights. Need at least mtry variables to split at.");
+			    System.exit(-1);
+			  }
+		}
+
+		public void setAlwaysSplitVariables(Vector<String> always_split_variable_names) {
+
+			  deterministic_varIDs.ensureCapacity(num_independent_variables);
+
+			  for (int i = 0; i < always_split_variable_names.size(); i++) {
+				String variable_name = always_split_variable_names.get(i);
+			    int varID = data.getVariableID(variable_name);
+			    deterministic_varIDs.add(varID);
+			  }
+
+			  if (deterministic_varIDs.size() + this.mtry > num_independent_variables) {
+			    MipavUtil.displayError(
+			        "Number of variables to be always considered for splitting plus mtry cannot be larger than number of independent variables.");
+			    System.exit(-1);
+			  }
+		}
+		
+		public void showProgress(String operation, int max_progress) {
+
+			  Instant start_time = Instant.now();
+			  Instant last_time = Instant.now();
+			  mutex.lock();
+
+			// Wait for message from threads and show output if enough time elapsed
+			  while (progress < max_progress) {
+				try {
+			        condition_variable.await();
+				}
+				catch (InterruptedException exception) {
+					Thread.currentThread().interrupt();
+				}
+			    Instant present_time = Instant.now();
+			    double elapsed_time = Duration.between(last_time, present_time).toMillis()/1000.0;
+
+			    // Check for user interrupt
+
+			    if (progress > 0 && elapsed_time > STATUS_INTERVAL) {
+			      double relative_progress = (double) progress / (double) max_progress;
+			      present_time = Instant.now();
+			      double time_from_start = Duration.between(start_time, present_time).toMillis()/1000.0;
+			      int remaining_time = (int)Math.round((1 / relative_progress - 1) * time_from_start);
+			      if (verbose_out) {
+			        System.out.println(operation + " Progress: " + (int)Math.round(100 * relative_progress)
+			                     + "%. Estimated remaining time: " + beautifyTime(remaining_time) + ".");
+			      }
+			      last_time = Instant.now();
+			    }
+			  }
+		}
+
 
 	} // private abstract Forest
 	
