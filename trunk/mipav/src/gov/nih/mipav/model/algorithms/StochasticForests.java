@@ -4541,6 +4541,15 @@ public class StochasticForests extends AlgorithmBase {
 			sums = null;
 		}
 		
+		public int getPredictionTerminalNodeID(int sampleID) {
+		    return prediction_terminal_nodeIDs.get(sampleID);
+		}
+
+		public double getPrediction(int sampleID) {
+		    int terminal_nodeID = prediction_terminal_nodeIDs.get(sampleID);
+		    return (split_values.get(terminal_nodeID));
+		}
+
 		public void allocateMemory() {
 			// Init counters if not in memory efficient mode
 			  if (!memory_saving_splitting) {
@@ -8175,8 +8184,354 @@ public class StochasticForests extends AlgorithmBase {
 	    	
 	    	}
 
-
 	} // private class ForestProbability
+	
+	private class ForestRegression extends Forest {
+		
+		public ForestRegression() {
+			super();
+		}
+		
+		public void loadForest(int dependent_varID, int num_trees,
+			    Vector<Vector<Vector<Integer>> > forest_child_nodeIDs,
+			    Vector<Vector<Integer>> forest_split_varIDs, Vector<Vector<Double>> forest_split_values,
+			    Vector<Boolean> is_ordered_variable) {
+
+			  this.dependent_varID = dependent_varID;
+			  this.num_trees = num_trees;
+			  data.setIsOrderedVariable(is_ordered_variable);
+
+			  // Create trees
+			  trees.ensureCapacity(num_trees);
+			  for (int i = 0; i < num_trees; ++i) {
+			    Tree tree = new TreeRegression(forest_child_nodeIDs.get(i), forest_split_varIDs.get(i), forest_split_values.get(i));
+			    trees.add(tree);
+			  }
+
+			  // Create thread ranges
+			  equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
+		}
+		
+		public void initInternal(String status_variable_name) {
+
+			  // If mtry not set, use floored square root of number of independent variables
+			  if (mtry == 0) {
+			    int temp = (int)Math.sqrt((double) (num_variables - 1));
+			    mtry = Math.max(1, temp);
+			  }
+
+			  // Set minimal node size
+			  if (min_node_size == 0) {
+			    min_node_size = DEFAULT_MIN_NODE_SIZE_REGRESSION;
+			  }
+
+			  // Sort data if memory saving mode
+			  if (!memory_saving_splitting) {
+			    data.sort();
+			  }
+		}
+
+		public void growInternal() {
+			  trees.ensureCapacity(num_trees);
+			  for (int i = 0; i < num_trees; ++i) {
+			    trees.add(new TreeRegression());
+			  }
+		}
+
+		public void allocatePredictMemory() {
+			  int i, j, k;
+			  int num_prediction_samples = data.getNumRows();
+			  if (predict_all || prediction_type == PredictionType.TERMINALNODES) {
+				  predictions = new Vector<Vector<Vector<Double>>>();
+				  for (i = 0; i < 1; i++) {
+					Vector<Vector<Double>> vec2 = new Vector<Vector<Double>>();
+					for (j = 0; j < num_prediction_samples; j++) {
+						Vector<Double> vec = new Vector<Double>();
+						for (k = 0; k < num_trees; k++) {
+							vec.add(0.0);
+						}
+						vec2.add(vec);
+					}
+					predictions.add(vec2);
+				  }
+			  } else {
+				  predictions = new Vector<Vector<Vector<Double>>>();
+				  for (i = 0; i < 1; i++) {
+					Vector<Vector<Double>> vec2 = new Vector<Vector<Double>>();
+					for (j = 0; j < 1; j++) {
+						Vector<Double> vec = new Vector<Double>();
+						for (k = 0; k < num_prediction_samples; k++) {
+							vec.add(0.0);
+						}
+						vec2.add(vec);
+					}
+					predictions.add(vec2);
+				 }
+			  }
+		}
+
+		public void predictInternal(int sample_idx) {
+			  if (predict_all || prediction_type == PredictionType.TERMINALNODES) {
+			    // Get all tree predictions
+			    for (int tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+			      if (prediction_type == PredictionType.TERMINALNODES) {
+			        predictions.get(0).get(sample_idx).set(tree_idx, (double)
+                      ((TreeRegression) trees.get(tree_idx)).getPredictionTerminalNodeID(sample_idx));
+			      } else {
+			        predictions.get(0).get(sample_idx).set(tree_idx,
+			        		((TreeRegression) trees.get(tree_idx)).getPrediction(sample_idx));
+			        
+			      }
+			    }
+			  } else {
+			    // Mean over trees
+			    double prediction_sum = 0;
+			    for (int tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+			      prediction_sum += ((TreeRegression) trees.get(tree_idx)).getPrediction(sample_idx);
+			    }
+			    predictions.get(0).get(0).set(sample_idx, prediction_sum / num_trees);
+			  }
+		}
+
+		public void computePredictionErrorInternal() {
+            int i, j, k;
+            double var;
+            int intValue;
+			// For each sample sum over trees where sample is OOB
+			  Vector<Integer> samples_oob_count = new Vector<Integer>();
+			  predictions = new Vector<Vector<Vector<Double>>>();
+			  for (i = 0; i < 1; i++) {
+				Vector<Vector<Double>> vec2 = new Vector<Vector<Double>>();
+				for (j = 0; j < 1; j++) {
+					Vector<Double> vec = new Vector<Double>();
+					for (k = 0; k < num_samples; k++) {
+						vec.add(0.0);
+					}
+					vec2.add(vec);
+				}
+				predictions.add(vec2);
+			 }
+			  for (i = 0; i < num_samples; i++) {
+				  samples_oob_count.add(0);
+			  }
+			  for (int tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+			    for (int sample_idx = 0; sample_idx < trees.get(tree_idx).getNumSamplesOob(); ++sample_idx) {
+			      int sampleID = trees.get(tree_idx).getOobSampleIDs().get(sample_idx);
+			      double value = ((TreeRegression) trees.get(tree_idx)).getPrediction(sample_idx);
+
+			      var = predictions.get(0).get(0).get(sampleID);
+			      predictions.get(0).get(0).set(sampleID, var + value);
+			      if (samples_oob_count.get(sampleID) == null) {
+			    	  intValue = 0;
+			      }
+			      else {
+			          intValue = samples_oob_count.get(sampleID);
+			      }
+			      samples_oob_count.set(sampleID, intValue+1);
+			    }
+			  }
+
+			// MSE with predictions and true data
+			  int num_predictions = 0;
+			  for (i = 0; i < predictions.get(0).get(0).size(); ++i) {
+			    if (samples_oob_count.get(i) > 0) {
+			      ++num_predictions;
+			      var = predictions.get(0).get(0).get(i);
+			      predictions.get(0).get(0).set(i, var/ (double) samples_oob_count.get(i));
+			      double predicted_value = predictions.get(0).get(0).get(i);
+			      double real_value = data.get(i, dependent_varID);
+			      overall_prediction_error += (predicted_value - real_value) * (predicted_value - real_value);
+			    } else {
+			      predictions.get(0).get(0).set(i, Double.NaN);
+			    }
+			  }
+
+			  overall_prediction_error /= (double) num_predictions;
+		}
+
+			// #nocov start
+		public void writeOutputInternal() {
+			  if (verbose_out) {
+			    Preferences.debug("Tree type:                         " + "Regression" + "\n",
+			    		Preferences.DEBUG_ALGORITHM);
+			  }
+		}
+		
+		public void writeConfusionFile() {
+			// Open confusion file for writing
+	    	  String filename = output_prefix + ".confusion";
+	    	  File outfile = new File(filename);
+			  FileWriter fw;
+			  try {
+			      fw = new FileWriter(outfile);
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception on fw = new FileWriter(outfile) in writeConfusionFile");
+				  return;
+			  }
+	          BufferedWriter bw = new BufferedWriter(fw);
+	    	  
+
+	    	  // Write confusion to file
+	          try {
+	    	      bw.write("Overall OOB prediction error (MSE): " + String.valueOf(overall_prediction_error) + "\n");
+	          }
+	          catch (IOException e) {
+	        	  MipavUtil.displayError("IO exception in bw.write in writeConfusionFile");
+	        	  System.exit(-1);
+	          }
+
+	    	  try {
+	              bw.close();
+	    	  }
+	    	  catch (IOException e) {
+	        	  MipavUtil.displayError("IO exception in bw.close in writeConfusionFile");
+	        	  System.exit(-1);
+	          }
+	    	  if (verbose_out) {
+	    		  Preferences.debug("Saved prediction error to file " + filename + "." + "\n",
+	    				  Preferences.DEBUG_ALGORITHM);
+	    	  }
+			
+		}
+
+		public void writePredictionFile() {
+			int i, j, k;
+	    	  // Open prediction file for writing
+	    	  String filename = output_prefix + ".prediction";
+	    	  File outfile = new File(filename);
+			  FileWriter fw;
+			  try {
+			      fw = new FileWriter(outfile);
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception on fw = new FileWriter(outfile) in writePredictionFile");
+				  return;
+			  }
+			  BufferedWriter bw = new BufferedWriter(fw);
+
+	    	  // Write
+			  try {
+		    	  bw.write("Predictions: " + "\n");
+		    	  
+		    	  if (predict_all) {
+		    	    for (k = 0; k < num_trees; ++k) {
+		    	      bw.write("Tree " + String.valueOf(k) + ":" + "\n");
+		    	      for (i = 0; i < predictions.size(); ++i) {
+		    	        for (j = 0; j < predictions.get(i).size(); ++j) {
+		    	           bw.write(String.valueOf(predictions.get(i).get(j).get(k)) + "\n");
+		    	        }
+		    	      }
+		    	      bw.write("\n");
+		    	    }
+		    	  } else {
+		    	    for (i = 0; i < predictions.size(); ++i) {
+		    	      for (j = 0; j < predictions.get(i).size(); ++j) {
+		    	        for (k = 0; k < predictions.get(i).get(j).size(); ++k) {
+		    	        	bw.write(String.valueOf(predictions.get(i).get(j).get(k)) + "\n");
+		    	        }
+		    	      }
+		    	    }
+		    	  }
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception in bw.write in writePredictionFile");
+				  System.exit(-1);
+			  }
+	    	  
+	    	  try {
+			      bw.close();
+	    	  }
+	    	  catch (IOException e) {
+				  MipavUtil.displayError("IO exception in bw.close in writePredictionFile");
+				  System.exit(-1);
+			  }
+
+	    	  if (verbose_out) {
+	    		  Preferences.debug("Saved predictions to file " + filename + "." + "\n", Preferences.DEBUG_ALGORITHM);
+	    	  }
+			
+		}
+
+		public void saveToFileInternal(BufferedWriter bw) {
+			// Write num_variables
+	    	 try {
+		    	  bw.write(String.valueOf(num_variables) + "\n");
+	
+		    	  // Write treetype
+		    	  bw.write("TREE_REGRESSION" + "\n");
+	    	  }
+	    	  catch (IOException e) {
+	    		  MipavUtil.displayError("IO exception on bw.write in saveToFileInternal");
+	    		  System.exit(-1);
+	    	  }
+
+		}
+		
+		public void loadFromFileInternal(BufferedReader br) {
+			int i,j;
+            String line = null;
+	    	  // Read number of variables
+	    	  int num_variables_saved = 0;
+	    	  TreeType treetype = null;
+	    	  try {
+		    	  line = br.readLine();
+		    	  num_variables_saved = Integer.valueOf(line).intValue();
+	
+		    	  // Read treetype
+		    	  line = br.readLine();
+	    	  }
+	    	  catch (IOException e) {
+	    		  MipavUtil.displayError("IO exception on br.readLine in loadFromFileInternal");
+	    		  System.exit(-1);
+	    	  }
+	    	  if (line.equals("TREE_CLASSIFICATION")) {
+	    		  treetype = TreeType.TREE_CLASSIFICATION;
+	    	  }
+	    	  else if (line.equals("TREE_REGRESSION")) {
+	    		  treetype = TreeType.TREE_REGRESSION;
+	    	  }
+	    	  else if (line.equals("TREE_SURVIVAL")) {
+	    		  treetype = TreeType.TREE_SURVIVAL;
+	    	  }
+	    	  else if (line.equals("TREE_PROBABILITY")) {
+	    		  treetype = TreeType.TREE_PROBABILITY;
+	    	  }
+	    	  if (treetype != TreeType.TREE_REGRESSION) {
+	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a classification forest.");
+	    	    System.exit(-1);
+	    	  }
+
+
+	    	  for (i = 0; i < num_trees; ++i) {
+
+	    	    // Read data
+	    	    Vector<Vector<Integer>> child_nodeIDs = new Vector<Vector<Integer>>();
+	    	    readVector2D(child_nodeIDs, br);
+	    	    Vector<Integer> split_varIDs = new Vector<Integer>();
+	    	    readVector1D(split_varIDs, br);
+	    	    Vector<Double> split_values = new Vector<Double>();
+	    	    readDVector1D(split_values, br);
+
+	    	    // If dependent variable not in test data, change variable IDs accordingly
+	    	    if (num_variables_saved > num_variables) {
+	    	      for (j = 0; j < split_varIDs.size(); j++) {
+	    	    	int varID = split_varIDs.get(j);
+	    	        if (varID >= dependent_varID) {
+	    	          --varID;
+	    	        }
+	    	      }
+	    	    }
+
+	    	    // Create tree
+	    	    Tree tree = new TreeRegression(child_nodeIDs, split_varIDs, split_values);
+	    	    trees.add(tree);
+	    	  }
+			
+			}
+
+
+	} // private class ForestRegression
 	
 	
 	public StochasticForests() {
