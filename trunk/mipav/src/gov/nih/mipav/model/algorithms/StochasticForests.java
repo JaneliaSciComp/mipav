@@ -8530,8 +8530,486 @@ public class StochasticForests extends AlgorithmBase {
 			
 			}
 
-
 	} // private class ForestRegression
+	
+	private class ForestSurvival extends Forest {
+		  private int status_varID;
+		  private Vector<Double> unique_timepoints;
+		  private Vector<Integer> response_timepointIDs;
+		  
+		  public Vector<Vector<Vector<Double>>>getChf() {
+			    int i;
+			    Vector<Vector<Vector<Double>>> result = new Vector<Vector<Vector<Double>>>();
+			    result.ensureCapacity(num_trees);
+			    for (i = 0; i < trees.size(); i++) {
+			      Tree tree = trees.get(i);
+			      TreeSurvival temp = (TreeSurvival) tree;
+			      result.add(temp.getChf());
+			    }
+			    return result;
+		  }
+		  
+		  public int getStatusVarId() {
+	          return status_varID;
+	      }
+		  
+		  public Vector<Double> getUniqueTimepoints() {
+			    return unique_timepoints;
+		  }
+
+          public ForestSurvival() {
+        	  super();
+        	  status_varID = 0;
+        	  response_timepointIDs = null;
+          }
+          
+          public void loadForest(int dependent_varID, int num_trees,
+        		    Vector<Vector<Vector<Integer>> > forest_child_nodeIDs,
+        		    Vector<Vector<Integer>> forest_split_varIDs, Vector<Vector<Double>> forest_split_values,
+        		    int status_varID, Vector<Vector<Vector<Double>> > forest_chf,
+        		    Vector<Double> unique_timepoints, Vector<Boolean> is_ordered_variable) {
+
+        		  this.dependent_varID = dependent_varID;
+        		  this.status_varID = status_varID;
+        		  this.num_trees = num_trees;
+        		  this.unique_timepoints = unique_timepoints;
+        		  data.setIsOrderedVariable(is_ordered_variable);
+
+        		  // Create trees
+        		  trees.ensureCapacity(num_trees);
+        		  for (int i = 0; i < num_trees; ++i) {
+        		    Tree tree = new TreeSurvival(forest_child_nodeIDs.get(i), forest_split_varIDs.get(i), forest_split_values.get(i),
+        		        forest_chf.get(i), this.unique_timepoints, response_timepointIDs);
+        		    trees.add(tree);
+        		  }
+
+        		  // Create thread ranges
+        		  equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
+          }
+
+          public void initInternal(String status_variable_name) {
+              int i;
+        	  // Convert status variable name to ID
+        	  if (!prediction_mode && !status_variable_name.isEmpty()) {
+        	    status_varID = data.getVariableID(status_variable_name);
+        	  }
+
+        	  data.addNoSplitVariable(status_varID);
+
+        	  // If mtry not set, use floored square root of number of independent variables.
+        	  if (mtry == 0) {
+        	    int temp = (int)Math.ceil(Math.sqrt((double) (num_variables - 2)));
+        	    mtry = Math.max(1, temp);
+        	  }
+
+        	  // Set minimal node size
+        	  if (min_node_size == 0) {
+        	    min_node_size = DEFAULT_MIN_NODE_SIZE_SURVIVAL;
+        	  }
+
+        	  // Create unique timepoints
+        	  HashSet<Double> unique_timepoint_set = new HashSet<Double>();
+        	  for (i = 0; i < num_samples; ++i) {
+        	    unique_timepoint_set.add(data.get(i, dependent_varID));
+        	  }
+        	  unique_timepoints.ensureCapacity(unique_timepoint_set.size());
+        	  Double unique_timepoint_array[] = (Double [])unique_timepoint_set.toArray();
+        	  for (i = 0; i < unique_timepoint_array.length; i++) {
+        		Double t = unique_timepoint_array[i];
+        	    unique_timepoints.add(t);
+        	  }
+
+        	  // Create response_timepointIDs
+        	  if (!prediction_mode) {
+        	    for (i = 0; i < num_samples; ++i) {
+        	      double value = data.get(i, dependent_varID);
+
+        	      // If timepoint is already in unique_timepoints, use ID. Else create a new one.
+        	      int timepointID;
+        	      for (timepointID = 0; timepointID < unique_timepoints.size(); timepointID++) {
+        	    	  if (unique_timepoints.get(timepointID) == value) {
+        	    		  break;
+        	    	  }
+        	      }
+        	      response_timepointIDs.add(timepointID);
+        	    }
+        	  }
+
+        	  // Sort data if extratrees and not memory saving mode
+        	  if (splitrule == SplitRule.EXTRATREES && !memory_saving_splitting) {
+        	    data.sort();
+        	  }
+        }
+          
+         public void growInternal() {
+        	  trees.ensureCapacity(num_trees);
+        	  for (int i = 0; i < num_trees; ++i) {
+        	    trees.add(new TreeSurvival(unique_timepoints, status_varID, response_timepointIDs));
+        	  }
+         }
+
+         public void allocatePredictMemory() {
+        	  int i, j, k;
+        	  int num_prediction_samples = data.getNumRows();
+        	  int num_timepoints = unique_timepoints.size();
+        	  if (predict_all) {
+        		  predictions = new Vector<Vector<Vector<Double>>>();
+				  for (i = 0; i < num_prediction_samples; i++) {
+					Vector<Vector<Double>> vec2 = new Vector<Vector<Double>>();
+					for (j = 0; j < num_timepoints; j++) {
+						Vector<Double> vec = new Vector<Double>();
+						for (k = 0; k < num_trees; k++) {
+							vec.add(0.0);
+						}
+						vec2.add(vec);
+					}
+					predictions.add(vec2);
+				  }
+        	  } else if (prediction_type == PredictionType.TERMINALNODES) {
+        		  predictions = new Vector<Vector<Vector<Double>>>();
+				  for (i = 0; i < 1; i++) {
+					Vector<Vector<Double>> vec2 = new Vector<Vector<Double>>();
+					for (j = 0; j < num_prediction_samples; j++) {
+						Vector<Double> vec = new Vector<Double>();
+						for (k = 0; k < num_trees; k++) {
+							vec.add(0.0);
+						}
+						vec2.add(vec);
+					}
+					predictions.add(vec2);
+				  }
+        	  } else {
+        		  predictions = new Vector<Vector<Vector<Double>>>();
+				  for (i = 0; i < 1; i++) {
+					Vector<Vector<Double>> vec2 = new Vector<Vector<Double>>();
+					for (j = 0; j < num_prediction_samples; j++) {
+						Vector<Double> vec = new Vector<Double>();
+						for (k = 0; k < num_timepoints; k++) {
+							vec.add(0.0);
+						}
+						vec2.add(vec);
+					}
+					predictions.add(vec2);
+				  }
+        	  }
+         }
+
+         public void predictInternal(int sample_idx) {
+        	  // For each timepoint sum over trees
+        	  if (predict_all) {
+        	    for (int j = 0; j < unique_timepoints.size(); ++j) {
+        	      for (int k = 0; k < num_trees; ++k) {
+        	        predictions.get(sample_idx).get(j).set(k, ((TreeSurvival) trees.get(k)).getPrediction(sample_idx).get(j));
+        	      }
+        	    }
+        	  } else if (prediction_type == PredictionType.TERMINALNODES) {
+        	    for (int k = 0; k < num_trees; ++k) {
+        	      predictions.get(0).get(sample_idx).set(k, (double)((TreeSurvival) trees.get(k)).getPredictionTerminalNodeID(sample_idx));
+        	    }
+        	  } else {
+        	    for (int j = 0; j < unique_timepoints.size(); ++j) {
+        	      double sample_time_prediction = 0;
+        	      for (int k = 0; k < num_trees; ++k) {
+        	        sample_time_prediction += ((TreeSurvival) trees.get(k)).getPrediction(sample_idx).get(j);
+        	      }
+        	      predictions.get(0).get(sample_idx).set(j ,sample_time_prediction / num_trees);
+        	    }
+        	  }
+        }
+         
+         public void computePredictionErrorInternal() {
+              int i,j,k;
+              double value;
+              int intValue;
+        	  int num_timepoints = unique_timepoints.size();
+
+        	  // For each sample sum over trees where sample is OOB
+        	  Vector<Integer> samples_oob_count = new Vector<Integer>();
+        	  for (i = 0; i < num_samples; i++) {
+        		  samples_oob_count.add(0);
+        	  }
+        	  
+        	  predictions = new Vector<Vector<Vector<Double>>>();
+			  for (i = 0; i < 1; i++) {
+				Vector<Vector<Double>> vec2 = new Vector<Vector<Double>>();
+				for (j = 0; j < num_samples; j++) {
+					Vector<Double> vec = new Vector<Double>();
+					for (k = 0; k < num_timepoints; k++) {
+						vec.add(0.0);
+					}
+					vec2.add(vec);
+				}
+				predictions.add(vec2);
+			 }
+
+        	  for (int tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+        	    for (int sample_idx = 0; sample_idx < trees.get(tree_idx).getNumSamplesOob(); ++sample_idx) {
+        	      int sampleID = trees.get(tree_idx).getOobSampleIDs().get(sample_idx);
+        	      Vector<Double> tree_sample_chf = ((TreeSurvival) trees.get(tree_idx)).getPrediction(sample_idx);
+
+        	      for (int time_idx = 0; time_idx < tree_sample_chf.size(); ++time_idx) {
+        	    	value = predictions.get(0).get(sampleID).get(time_idx);
+        	        predictions.get(0).get(sampleID).set(time_idx, value + tree_sample_chf.get(time_idx));
+        	      }
+        	      intValue = samples_oob_count.get(sampleID);
+        	      samples_oob_count.set(sampleID, intValue+1);
+        	    }
+        	  }
+
+        	  // Divide sample predictions by number of trees where sample is oob and compute summed chf for samples
+        	  Vector<Double> sum_chf = new Vector<Double>();
+        	  sum_chf.ensureCapacity(predictions.get(0).size());
+        	  Vector<Integer> oob_sampleIDs = new Vector<Integer>();
+        	  oob_sampleIDs.ensureCapacity(predictions.get(0).size());
+        	  for (i = 0; i < predictions.get(0).size(); ++i) {
+        	    if (samples_oob_count.get(i) > 0) {
+        	      double sum = 0;
+        	      for (j = 0; j < predictions.get(0).get(i).size(); ++j) {
+        	    	value = predictions.get(0).get(i).get(j);
+        	        predictions.get(0).get(i).set(j, value/ samples_oob_count.get(i));
+        	        sum += predictions.get(0).get(i).get(j);
+        	      }
+        	      sum_chf.add(sum);
+        	      oob_sampleIDs.add(i);
+        	    }
+        	  }
+
+        	  // Use all samples which are OOB at least once
+        	  overall_prediction_error = 1 - computeConcordanceIndex(data, sum_chf, dependent_varID, status_varID, oob_sampleIDs);
+         }
+
+         public void writeOutputInternal() {
+        	  if (verbose_out) {
+        	    Preferences.debug("Tree type:                         " + "Survival" + "\n", Preferences.DEBUG_ALGORITHM);
+        	    Preferences.debug("Status variable name:              " + data.getVariableNames().get(status_varID) + "\n",
+        	    		Preferences.DEBUG_ALGORITHM);
+        	    Preferences.debug("Status variable ID:                " + status_varID + "\n", Preferences.DEBUG_ALGORITHM);
+        	  }
+         }
+ 
+         public void writeConfusionFile() {
+
+        	  // Open confusion file for writing
+        	  String filename = output_prefix + ".confusion";
+        	  File outfile = new File(filename);
+			  FileWriter fw;
+			  try {
+			      fw = new FileWriter(outfile);
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception on fw = new FileWriter(outfile) in writeConfusionFile");
+				  return;
+			  }
+	          BufferedWriter bw = new BufferedWriter(fw);
+
+        	  // Write confusion to file
+	          try {
+        	      bw.write("Overall OOB prediction error (1 - C): " + String.valueOf(overall_prediction_error) + "\n");
+	          }
+	          catch (IOException e) {
+	        	  MipavUtil.displayError("IO exception on bw.write in writeConfusionFile");
+	        	  System.exit(-1);;
+	          }
+
+        	  try {
+	              bw.close();
+        	  }
+        	  catch (IOException e) {
+	        	  MipavUtil.displayError("IO exception on bw.close() in writeConfusionFile");
+	        	  System.exit(-1);;
+	          }
+        	  
+        	  if (verbose_out) {
+        		  Preferences.debug("Saved prediction error to file " + filename + "." + "\n", Preferences.DEBUG_ALGORITHM);
+        	  }
+
+        }
+
+         public void writePredictionFile() {
+              int i, j, k;
+        	  // Open prediction file for writing
+        	  String filename = output_prefix + ".prediction";
+        	  File outfile = new File(filename);
+			  FileWriter fw;
+			  try {
+			      fw = new FileWriter(outfile);
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception on fw = new FileWriter(outfile) in writePredictionFile");
+				  return;
+			  }
+			  BufferedWriter bw = new BufferedWriter(fw);
+
+        	  // Write
+			  try {
+	        	  bw.write("Unique timepoints: " + "\n");
+	        	  for (i = 0; i < unique_timepoints.size(); i++) {
+	        		double timepoint = unique_timepoints.get(i);
+	        	    bw.write(String.valueOf(timepoint) + " ");
+	        	  }
+	        	  bw.write("\n\n");
+	
+	        	  bw.write("Cumulative hazard function, one row per sample: " + "\n");
+	        	  if (predict_all) {
+	        	    for (k = 0; k < num_trees; ++k) {
+	        	      bw.write("Tree " + String.valueOf(k) + ":" + "\n");
+	        	      for (i = 0; i < predictions.size(); ++i) {
+	        	        for (j = 0; j < predictions.get(i).size(); ++j) {
+	        	          bw.write(String.valueOf(predictions.get(i).get(j).get(k)) + " ");
+	        	        }
+	        	        bw.write("\n");
+	        	      }
+	        	      bw.write("\n");
+	        	    }
+	        	  } else {
+	        	    for (i = 0; i < predictions.size(); ++i) {
+	        	      for (j = 0; j < predictions.get(i).size(); ++j) {
+	        	        for (k = 0; k < predictions.get(i).get(j).size(); ++k) {
+	        	        	 bw.write(String.valueOf(predictions.get(i).get(j).get(k)) + " ");
+	        	        }
+	        	        bw.write("\n");
+	        	      }
+	        	    }
+	        	  }
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception on bw.write in writePredictionFile");
+				  System.exit(-1);
+			  }
+			  
+			  try {
+                  bw.close();
+			  }
+			  catch (IOException e) {
+				  MipavUtil.displayError("IO exception on bw.close() in writePredictionFile");
+				  System.exit(-1);
+			  }
+			  
+        	  if (verbose_out) {
+        		  Preferences.debug("Saved predictions to file " + filename + "." + "\n",Preferences.DEBUG_ALGORITHM);
+        	  }
+        }
+
+        public void saveToFileInternal(BufferedWriter bw) {
+        	// Write num_variables
+	    	 try {
+		    	  bw.write(String.valueOf(num_variables) + "\n");
+	
+		    	  // Write treetype
+		    	  bw.write("TREE_SURVIVAL" + "\n");
+		    	  
+		    	// Write status_varID
+		    	  bw.write(String.valueOf(status_varID) + "\n");
+	    	  }
+	    	  catch (IOException e) {
+	    		  MipavUtil.displayError("IO exception on bw.write in saveToFileInternal");
+	    		  System.exit(-1);
+	    	  }
+        	  
+        	  // Write unique timepoints
+        	  saveDVector1D(unique_timepoints, bw);
+        }
+
+        public void loadFromFileInternal(BufferedReader br) {
+        	  int i,j;
+        	  int varID;
+              String line = null;
+	    	  // Read number of variables
+	    	  int num_variables_saved = 0;
+	    	  TreeType treetype = null;
+	    	  try {
+		    	  line = br.readLine();
+		    	  num_variables_saved = Integer.valueOf(line).intValue();
+	
+		    	  // Read treetype
+		    	  line = br.readLine();
+	    	  }
+	    	  catch (IOException e) {
+	    		  MipavUtil.displayError("IO exception on br.readLine in loadFromFileInternal");
+	    		  System.exit(-1);
+	    	  }
+	    	  if (line.equals("TREE_CLASSIFICATION")) {
+	    		  treetype = TreeType.TREE_CLASSIFICATION;
+	    	  }
+	    	  else if (line.equals("TREE_REGRESSION")) {
+	    		  treetype = TreeType.TREE_REGRESSION;
+	    	  }
+	    	  else if (line.equals("TREE_SURVIVAL")) {
+	    		  treetype = TreeType.TREE_SURVIVAL;
+	    	  }
+	    	  else if (line.equals("TREE_PROBABILITY")) {
+	    		  treetype = TreeType.TREE_PROBABILITY;
+	    	  }
+	    	  if (treetype != TreeType.TREE_SURVIVAL) {
+	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a classification forest.");
+	    	    System.exit(-1);
+	    	  }
+
+        	  // Read status_varID
+	    	  try {
+		    	  line = br.readLine();
+		    	  status_varID = Integer.valueOf(line).intValue();
+	    	  }
+	    	  catch (IOException e) {
+	    		  MipavUtil.displayError("IO exception on br.readLine in loadFromFileInternal");
+	    		  System.exit(-1);
+	    	  }
+
+        	  // Read unique timepoints
+        	  unique_timepoints.clear();
+        	  readDVector1D(unique_timepoints, br);
+
+        	  for (i = 0; i < num_trees; ++i) {
+
+        		// Read data
+  	    	    Vector<Vector<Integer>> child_nodeIDs = new Vector<Vector<Integer>>();
+  	    	    readVector2D(child_nodeIDs, br);
+  	    	    Vector<Integer> split_varIDs = new Vector<Integer>();
+  	    	    readVector1D(split_varIDs, br);
+  	    	    Vector<Double> split_values = new Vector<Double>();
+  	    	    readDVector1D(split_values, br);
+
+        	    // Read chf
+        	    Vector<Integer> terminal_nodes = new Vector<Integer>();
+        	    readVector1D(terminal_nodes, br);
+        	    Vector<Vector<Double>> chf_vector = new Vector<Vector<Double>>();
+        	    readDVector2D(chf_vector, br);
+
+        	    // Convert chf to vector with empty elements for non-terminal nodes
+        	    Vector<Vector<Double>> chf = new Vector<Vector<Double>>();
+        	    for (j = 0; j < child_nodeIDs.get(0).size(); j++) {
+        	    	chf.add(new Vector<Double>());
+        	    }
+        	    for (j = 0; j < terminal_nodes.size(); ++j) {
+        	      chf.set(terminal_nodes.get(j), chf_vector.get(j));
+        	    }
+
+        	    // If dependent variable not in test data, change variable IDs accordingly
+        	    if (num_variables_saved > num_variables) {
+        	      for (j = 0; j < split_varIDs.size(); j++) {
+        	    	varID = split_varIDs.get(j);
+        	        if (varID >= dependent_varID) {
+        	          --varID;
+        	        }
+        	      }
+        	    }
+        	    if (num_variables_saved > num_variables + 1) {
+        	      for (j = 0; j < split_varIDs.size(); j++) {
+        	    	varID = split_varIDs.get(j);
+        	        if (varID >= status_varID) {
+        	          --varID;
+        	        }
+        	      }
+        	    }
+
+        	    // Create tree
+        	    Tree tree = new TreeSurvival(child_nodeIDs, split_varIDs, split_values, chf, unique_timepoints,
+        	        response_timepointIDs);
+        	    trees.add(tree);
+        	  }
+        	}
+
+	} // private class ForestSurvival
 	
 	
 	public StochasticForests() {
