@@ -8580,7 +8580,7 @@ public class StochasticForests extends AlgorithmBase {
           public ForestSurvival() {
         	  super();
         	  status_varID = 0;
-        	  response_timepointIDs = null;
+        	  response_timepointIDs = new Vector<Integer>();
           }
           
           public void loadForest(int dependent_varID, int num_trees,
