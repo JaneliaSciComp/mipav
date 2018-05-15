@@ -6980,9 +6980,14 @@ public class StochasticForests extends AlgorithmBase {
 				      // Check for user interrupt
 	
 				      // Increase progress by 1 tree
-				      mutex.lock();
-				      ++progress;
-				      condition_variable.signal();
+				      try {
+				          mutex.lock();
+				          ++progress;
+				      }
+				      finally {
+				          mutex.unlock();
+				      }
+				      condition_variable.signalAll();
 				    }
 				  }
 			  }
@@ -7006,9 +7011,14 @@ public class StochasticForests extends AlgorithmBase {
 				      // Check for user interrupt
 				
 				      // Increase progress by 1 tree
-				      mutex.lock();
-				      ++progress;
-				      condition_variable.signal();
+				      try {
+				         mutex.lock();
+				         ++progress;
+				      }
+				      finally {
+				          mutex.unlock();
+				      }
+				      condition_variable.signalAll();
 				    }
 				  }
 			   }
@@ -7032,9 +7042,14 @@ public class StochasticForests extends AlgorithmBase {
 			      // Check for user interrupt
 
 			      // Increase progress by 1 tree
-			      mutex.lock();
-			      ++progress;
-			      condition_variable.signal();
+			      try {
+			          mutex.lock();
+			          ++progress;
+			      }
+			      finally {
+			          mutex.unlock();
+			      }
+			      condition_variable.signalAll();
 			    }
 			  }
 			}
@@ -7059,9 +7074,14 @@ public class StochasticForests extends AlgorithmBase {
 			      // Check for user interrupt
 
 			      // Increase progress by 1 tree
-			      mutex.lock();
-			      ++progress;
-			      condition_variable.signal();
+			      try {
+			          mutex.lock();
+			          ++progress;
+			      }
+			      finally {
+			          mutex.unlock();
+			      }
+			      condition_variable.signalAll();
 			    }
 			  }
 			}
