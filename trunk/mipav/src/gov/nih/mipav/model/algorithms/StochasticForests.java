@@ -15,8 +15,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.sun.corba.se.impl.protocol.giopmsgheaders.LocateReplyMessage_1_0;
-
 public class StochasticForests extends AlgorithmBase {
 	// Note that while Random Forests is the name usually applied to this type
 	// of algorithm, Random Forests(tm) is a trademark of Leo Breiman and Adele Cutler and is 
@@ -144,6 +142,66 @@ public class StochasticForests extends AlgorithmBase {
 	public static double logprop;
 	
 	private boolean testUtility = true;
+	
+	private TreeType treetype;
+	
+	private boolean probability = false;
+	
+	private boolean verbose_out = false;
+	
+	private String dependent_variable_name = null;
+	
+	private MemoryMode memory_mode;
+	
+	private String input_file = null;
+	
+	private int mtry;
+	
+	private String output_prefix = null;
+	
+	private int num_trees;
+	
+	private long seed;
+	
+	private int num_threads;
+	
+	private String load_forest_filename = null;
+	
+	private ImportanceMode importance_mode;
+	
+	private int min_node_size;
+	
+	private String split_select_weights_file = null;
+	
+	private Vector<String> always_split_variable_names;
+	
+	private String status_variable_name = null;
+	
+	private boolean sample_with_replacement;
+	
+	private Vector<String> unordered_variable_names;
+	
+	private boolean memory_saving_splitting;
+	
+	private SplitRule splitrule;
+	
+	private String case_weights_file = null;
+	
+	private boolean predict_all;
+	
+	private double sample_fraction;
+	
+	private double alpha;
+	
+	private double minprop;
+	
+	private boolean holdout;
+	
+	private PredictionType prediction_type;
+	
+	private int num_random_splits;
+	
+	private boolean write;
 	
 	private abstract class Data {
 		protected Vector<String> variable_names;
@@ -6220,7 +6278,7 @@ public class StochasticForests extends AlgorithmBase {
 		protected int min_node_size;
 		protected int num_variables;
 		protected int num_independent_variables;
-		protected int seed;
+		protected long seed;
 		protected int dependent_varID;
 		protected int num_samples;
 		protected boolean prediction_mode;
@@ -6322,7 +6380,7 @@ public class StochasticForests extends AlgorithmBase {
 		}
 		
 		public void initCpp(String dependent_variable_name, MemoryMode memory_mode, String input_file, int mtry,
-			    String output_prefix, int num_trees, boolean verbose_out, int seed, int num_threads,
+			    String output_prefix, int num_trees, boolean verbose_out, long seed, int num_threads,
 			    String load_forest_filename, ImportanceMode importance_mode, int min_node_size,
 			    String split_select_weights_file, Vector<String> always_split_variable_names,
 			    String status_variable_name, boolean sample_with_replacement, Vector<String> unordered_variable_names,
@@ -6424,7 +6482,7 @@ public class StochasticForests extends AlgorithmBase {
 		
 
 	public void initR(String dependent_variable_name, Data input_data, int mtry, int num_trees,
-	    boolean verbose_out, int seed, int num_threads, ImportanceMode importance_mode, int min_node_size,
+	    boolean verbose_out, long seed, int num_threads, ImportanceMode importance_mode, int min_node_size,
 	    Vector<Vector<Double>> split_select_weights, Vector<String> always_split_variable_names,
 	    String status_variable_name, boolean prediction_mode, boolean sample_with_replacement,
 	    Vector<String> unordered_variable_names, boolean memory_saving_splitting, SplitRule splitrule,
@@ -6465,7 +6523,7 @@ public class StochasticForests extends AlgorithmBase {
 
 		
 		public void init(String dependent_variable_name, MemoryMode memory_mode, Data input_data, int mtry,
-			    String output_prefix, int num_trees, int seed, int num_threads, ImportanceMode importance_mode,
+			    String output_prefix, int num_trees, long seed, int num_threads, ImportanceMode importance_mode,
 			    int min_node_size, String status_variable_name, boolean prediction_mode, boolean sample_with_replacement,
 			    Vector<String> unordered_variable_names, boolean memory_saving_splitting, SplitRule splitrule,
 			    boolean predict_all, Vector<Double> sample_fraction, double alpha, double minprop, boolean holdout,
@@ -6728,9 +6786,9 @@ public class StochasticForests extends AlgorithmBase {
 
 			  // Init trees, create a seed for each tree, based on main seed
 			  for (i = 0; i < num_trees; ++i) {
-			    int tree_seed;
+			    long tree_seed;
 			    if (seed == 0) {
-			      tree_seed = random.nextInt();
+			      tree_seed = random.nextLong();
 			    } else {
 			      tree_seed = (i + 1) * seed;
 			    }
@@ -9035,6 +9093,45 @@ public class StochasticForests extends AlgorithmBase {
 	public StochasticForests() {
 		
 	}
+	
+	public StochasticForests(TreeType treetype, boolean probability, boolean verbose_out, String dependent_variable_name,
+			MemoryMode memory_mode, String input_file, int mtry, String output_prefix, int num_trees, long seed,
+			int num_threads, String load_forest_filename, ImportanceMode importance_mode, int min_node_size,
+			String split_select_weights_file, Vector<String> always_split_variable_names, String status_variable_name,
+			boolean sample_with_replacement, Vector<String> unordered_variable_names, boolean memory_saving_splitting,
+			SplitRule splitrule, String case_weights_file, boolean predict_all, double sample_fraction, double alpha,
+			double minprop, boolean holdout, PredictionType prediction_type, int num_random_splits, boolean write) {
+		this.treetype = treetype;
+		this.probability = probability;
+		this.verbose_out = verbose_out;
+		this.dependent_variable_name = dependent_variable_name;
+		this.memory_mode = memory_mode;
+		this.input_file = input_file;
+		this.mtry = mtry;
+		this.output_prefix = output_prefix;
+		this.num_trees = num_trees;
+		this.seed = seed;
+		this.num_threads = num_threads;
+		this.load_forest_filename = load_forest_filename;
+		this.importance_mode = importance_mode;
+		this.min_node_size = min_node_size;
+		this.split_select_weights_file = split_select_weights_file;
+		this.always_split_variable_names = always_split_variable_names;
+		this.status_variable_name = status_variable_name;
+		this.sample_with_replacement = sample_with_replacement;
+		this.unordered_variable_names = unordered_variable_names;
+		this.memory_saving_splitting = memory_saving_splitting;
+		this.splitrule = splitrule;
+		this.case_weights_file = case_weights_file;
+		this.predict_all = predict_all;
+		this.sample_fraction = sample_fraction;
+		this.alpha = alpha;
+		this.minprop = minprop;
+		this.holdout = holdout;
+		this.prediction_type = prediction_type;
+		this.num_random_splits = num_random_splits;
+		this.write = write;
+	}
 
 
 	public void runAlgorithm() {
@@ -10702,5 +10799,60 @@ public class StochasticForests extends AlgorithmBase {
 
 		 return;
 	   } // if (testUtility)
+	   
+	   Forest forest = null;
+	   try {
+
+	     // Create forest object
+	     switch (treetype) {
+	     case TREE_CLASSIFICATION:
+	       if (probability) {
+	         forest = new ForestProbability();
+	       } else {
+	         forest = new ForestClassification();
+	       }
+	       break;
+	     case TREE_REGRESSION:
+	       forest = new ForestRegression();
+	       break;
+	     case TREE_SURVIVAL:
+	       forest = new ForestSurvival();
+	       break;
+	     case TREE_PROBABILITY:
+	       forest = new ForestProbability();
+	       break;
+	     }
+
+	     if (verbose_out) {
+	    	 Preferences.debug("Starting Stochastic Forests\n", Preferences.DEBUG_ALGORITHM);
+	     }
+
+	     forest.initCpp(dependent_variable_name, memory_mode, input_file, mtry,
+	         output_prefix, num_trees, verbose_out, seed, num_threads,
+	         load_forest_filename, importance_mode, min_node_size, split_select_weights_file,
+	         always_split_variable_names, status_variable_name, sample_with_replacement, unordered_variable_names,
+	         memory_saving_splitting, splitrule, case_weights_file, predict_all, sample_fraction,
+	         alpha, minprop, holdout, prediction_type, num_random_splits);
+
+	     forest.run(true);
+	     if (write) {
+	       forest.saveToFile();
+	     }
+	     forest.writeOutput();
+	     if (verbose_out) {
+	    	 Preferences.debug("Finished Stochastic Forests\n", Preferences.DEBUG_ALGORITHM);
+	     }
+
+	     forest.dispose();
+	     forest = null;
+	   } catch (Exception e) {
+	     System.err.println("Error: " + e.getMessage() + " Stochastic Forests will EXIT now.\n");
+	     forest.dispose();
+	     setCompleted(false);
+	     return;
+	   }
+
+	   setCompleted(true);
+
 	} // runAlgorithm
 }
