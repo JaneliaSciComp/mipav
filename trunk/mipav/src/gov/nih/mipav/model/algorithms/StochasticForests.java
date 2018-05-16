@@ -2611,7 +2611,7 @@ public class StochasticForests extends AlgorithmBase {
 	    
 	    public void createEmptyNode() {
 	    	split_varIDs.add(0);
-	    	split_varIDs.add(0);
+	    	split_values.add(0.0);
 	    	child_nodeIDs.get(0).add(0);
 	    	child_nodeIDs.get(1).add(0);
 	    	sampleIDs.add(new Vector<Integer>());
