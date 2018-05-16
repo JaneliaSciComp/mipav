@@ -1238,18 +1238,32 @@ public class StochasticForests extends AlgorithmBase {
 		Vector<Double> major_classes = new Vector<Double>();
 		// Find maximum count;
 		int max_count = 0;
-		Double keys[] = (Double[])class_count.keySet().toArray();
-		Integer values[] = (Integer[])class_count.values().toArray();
+		Object keys[] = class_count.keySet().toArray();
+		Object values[] = class_count.values().toArray();
 		for (i = 0; i < class_count.size(); i++) {
-		    value = (int)values[i];	
-		    key = (double)keys[i];
+			if (values[i] == null) {
+				value = 0;
+			}
+			else {
+		        value = (int)values[i];	
+			}
+			if (keys[i] == null) {
+				key = Double.NaN;
+			}
+			else {
+		        key = (double)keys[i];
+			}
 		    if (value > max_count) {
 		    	max_count = value;
 		    	major_classes.clear();
-		    	major_classes.add(key);
+		    	if (!Double.isNaN(key)) {
+		    	    major_classes.add(key);
+		    	}
 		    }
 		    else if (value == max_count) {
-		    	major_classes.add(key);
+		    	if (!Double.isNaN(key)) {
+		    	    major_classes.add(key);
+		    	}
 		    }
 		}
 		
@@ -9411,7 +9425,7 @@ public class StochasticForests extends AlgorithmBase {
   	     
   	     str = "Test drawWithoutReplacementSkip, small_small1";
   	     Vector<Integer>result = new Vector<Integer>();
-  	     Map<Integer, Integer> counts = new HashMap<Integer, Integer>();
+  	     HashMap<Integer, Integer> counts = new HashMap<Integer, Integer>();
   	     int max = 9;
   	     Vector<Integer> skip = new Vector<Integer>();
   	     skip.add(7);
@@ -9434,11 +9448,17 @@ public class StochasticForests extends AlgorithmBase {
   	     } 
   	     
   	     // Check if counts are expected +-5%
-		Integer values[] = (Integer[]) counts.values().toArray();
+  	    Object countsObject[] = counts.values().toArray();
 		boolean success = true;
 		boolean near;
+		int value;
   	     for (i = 0; i < counts.size(); i++) {
-  	    	 int value = (int)values[i];
+  	    	 if (countsObject[i] == null) {
+  	    		 value = 0;
+  	    	 }
+  	    	 else {
+  	    		 value = (int)countsObject[i];
+  	    	 }
   	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
   	    	 if (!near) {
   	    		 success = false;
@@ -9478,10 +9498,15 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-5%
-		values = (Integer[]) counts.values().toArray();
-		success = true;
+	     countsObject = counts.values().toArray();
+		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
-	    	 int value = (int)values[i];
+	    	 if (countsObject[i] == null) {
+  	    		 value = 0;
+  	    	 }
+  	    	 else {
+  	    		 value = (int)countsObject[i];
+  	    	 }
 	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
 	    	 if (!near) {
 	    		 success = false;
@@ -9521,10 +9546,16 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-5%
-	     values = (Integer[]) counts.values().toArray();
-		success = true;
+	     countsObject = counts.values().toArray();
+		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
-	    	 int value = (int)values[i];
+	    	 if (countsObject[i] == null) {
+  	    		 value = 0;
+  	    	 }
+  	    	 else {
+  	    		 value = (int)countsObject[i];
+  	    	 }
+
 	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
 	    	 if (!near) {
 	    		 success = false;
@@ -9564,10 +9595,15 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-10%
-	     values = (Integer[]) counts.values().toArray();
-		success = true;
+	     countsObject = counts.values().toArray();
+		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
-	    	 int value = (int)values[i];
+	    	 if (countsObject[i] == null) {
+  	    		 value = 0;
+  	    	 }
+  	    	 else {
+  	    		 value = (int)countsObject[i];
+  	    	 }
 	    	 near = expectNear(expected_count, value, expected_count * 0.1, str);
 	    	 if (!near) {
 	    		 success = false;
@@ -9607,10 +9643,15 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +- 5%
-	     values = (Integer[]) counts.values().toArray();
-		success = true;
+	     countsObject = counts.values().toArray();
+		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
-	    	 int value = (int)values[i];
+	    	 if (countsObject[i] == null) {
+  	    		 value = 0;
+  	    	 }
+  	    	 else {
+  	    		 value = (int)countsObject[i];
+  	    	 }
 	    	 near = expectNear(expected_count, value, expected_count * 0.05, str);
 	    	 if (!near) {
 	    		 success = false;
