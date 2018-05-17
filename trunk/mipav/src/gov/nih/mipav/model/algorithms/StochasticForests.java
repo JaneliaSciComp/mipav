@@ -3656,7 +3656,7 @@ public class StochasticForests extends AlgorithmBase {
 			  int insize = inbag_counts.size();
 			  inbag_counts.setSize(num_samples);
 			  for (i = insize; i < num_samples; i++) {
-				  inbag_counts.add(0);
+				  inbag_counts.set(i, 0);
 			  }
 
 			  // Draw samples for each class
@@ -3690,13 +3690,13 @@ public class StochasticForests extends AlgorithmBase {
 		public void bootstrapWithoutReplacementClassWise() {
 			  int i;
 			  // Number of samples is sum of sample fraction * number of samples
-			  int num_samples_inbag = 0;
-			  double sum_sample_fraction = 0;
-			  for (i = 0; i < sample_fraction.size(); i++) {
-				double s = sample_fraction.get(i);
-			    num_samples_inbag += (int) (num_samples * s);
-			    sum_sample_fraction += s;
-			  }
+			  //int num_samples_inbag = 0;
+			  //double sum_sample_fraction = 0;
+			  //for (i = 0; i < sample_fraction.size(); i++) {
+				//double s = sample_fraction.get(i);
+			    //num_samples_inbag += (int) (num_samples * s);
+			    //sum_sample_fraction += s;
+			  //}
 
 			  // Draw samples for each class
 			  for (i = 0; i < sample_fraction.size(); ++i) {
@@ -3712,7 +3712,7 @@ public class StochasticForests extends AlgorithmBase {
 				int insize = inbag_counts.size();
 				inbag_counts.setSize(num_samples);
 				for (i = insize; i < num_samples; i++) {
-					inbag_counts.add(1);
+					inbag_counts.set(i, 1);
 				}
 			    for (i = 0; i < oob_sampleIDs.size(); i++) {
 			      inbag_counts.set(oob_sampleIDs.get(i), 0);
@@ -3821,7 +3821,7 @@ public class StochasticForests extends AlgorithmBase {
 			  int insize = terminal_class_counts.get(nodeID).size();
 			  terminal_class_counts.get(nodeID).setSize(class_values.size());
 			  for (i = insize; i < class_values.size(); i++) {
-				  terminal_class_counts.get(nodeID).add(0.0);
+				  terminal_class_counts.get(nodeID).set(i, 0.0);
 			  }
 			  
 
@@ -4531,7 +4531,7 @@ public class StochasticForests extends AlgorithmBase {
 			  int insize = inbag_counts.size();
 			  inbag_counts.setSize(num_samples);
 			  for (i = insize; i < num_samples; i++) {
-				  inbag_counts.add(0);
+				  inbag_counts.set(i, 0);
 			  }
 
 			  // Draw samples for each class
@@ -4587,7 +4587,7 @@ public class StochasticForests extends AlgorithmBase {
 				int insize = inbag_counts.size();
 				inbag_counts.setSize(num_samples);
 				for (i = insize; i < num_samples; i++) {
-					inbag_counts.add(1);
+					inbag_counts.set(i,1);
 				}
 			    for (i = 0; i < oob_sampleIDs.size(); i++) {
 			      inbag_counts.set(oob_sampleIDs.get(i), 0);
@@ -7902,7 +7902,7 @@ public class StochasticForests extends AlgorithmBase {
 	    		insize = sampleIDs_per_class.size();
 	    		sampleIDs_per_class.setSize(sample_fraction.size());
 	    		for ( i = insize; i < sample_fraction.size(); i++) {
-	    			sampleIDs_per_class.add(new Vector<Integer>());
+	    			sampleIDs_per_class.set(i, new Vector<Integer>());
 	    		}
 	    	    for (i = 0; i < sampleIDs_per_class.size(); i++) {
 	    	      sampleIDs_per_class.get(i).ensureCapacity(num_samples);
