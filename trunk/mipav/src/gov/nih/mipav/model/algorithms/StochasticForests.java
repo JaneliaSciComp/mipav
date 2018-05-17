@@ -2917,8 +2917,8 @@ public class StochasticForests extends AlgorithmBase {
 			this.class_values.addAll(class_values);
 			this.response_classIDs = new Vector<Integer>();
 			this.response_classIDs.addAll(response_classIDs);
-			sampleIDs_per_class = null;
-			class_weights = null;
+			sampleIDs_per_class = new Vector<Vector<Integer>>();
+			class_weights = new Vector<Double>();
 			counter = null;
 			counter_per_class = null;
 		}
@@ -3143,7 +3143,7 @@ public class StochasticForests extends AlgorithmBase {
 				for (i = 0; i < num_splits; ++i) {
 					if (value > possible_split_values.get(i)) {
 						++n_right[i];
-						++class_counts[i * num_classes + sample_classID];
+						++class_counts_right[i * num_classes + sample_classID];
 					}
 					else {
 						break;
