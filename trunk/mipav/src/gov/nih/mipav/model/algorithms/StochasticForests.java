@@ -4565,13 +4565,13 @@ public class StochasticForests extends AlgorithmBase {
 		public void bootstrapWithoutReplacementClassWise() {
 			  int i;
 			  // Number of samples is sum of sample fraction * number of samples
-			  int num_samples_inbag = 0;
-			  double sum_sample_fraction = 0;
-			  for (i = 0; i < sample_fraction.size(); i++) {
-				double s = sample_fraction.get(i);
-			    num_samples_inbag += (int) (num_samples * s);
-			    sum_sample_fraction += s;
-			  }
+			  //int num_samples_inbag = 0;
+			  //double sum_sample_fraction = 0;
+			  //for (i = 0; i < sample_fraction.size(); i++) {
+				//double s = sample_fraction.get(i);
+			    //num_samples_inbag += (int) (num_samples * s);
+			    //sum_sample_fraction += s;
+			  //}
 
 			  // Draw samples for each class
 			  for (i = 0; i < sample_fraction.size(); ++i) {
