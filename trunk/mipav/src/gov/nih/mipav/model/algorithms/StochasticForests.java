@@ -3435,7 +3435,7 @@ public class StochasticForests extends AlgorithmBase {
 			    }
 			  }
 
-			  // Count samples in right child per class and possbile split
+			  // Count samples in right child per class and possible split
 		      for (j = 0; j < sampleIDs.get(nodeID).size(); j++) {
 		    	int sampleID = sampleIDs.get(nodeID).get(j);
 			    double value = data.get(sampleID, varID);
@@ -4311,7 +4311,7 @@ public class StochasticForests extends AlgorithmBase {
 			    }
 			  }
 
-			  // Count samples in right child per class and possbile split
+			  // Count samples in right child per class and possible split
 		      for (j = 0; j < sampleIDs.get(nodeID).size(); j++) {
 		    	int sampleID = sampleIDs.get(nodeID).get(j);
 			    double value = data.get(sampleID, varID);
@@ -4797,7 +4797,7 @@ public class StochasticForests extends AlgorithmBase {
         	    }
         	  }
 
-        	  // Sum in right child and possbile split
+        	  // Sum in right child and possible split
         	  for (j = 0; j < sampleIDs.get(nodeID).size(); j++) {
         		int sampleID = sampleIDs.get(nodeID).get(j);
         	    double value = data.get(sampleID, varID);
@@ -5146,7 +5146,7 @@ public class StochasticForests extends AlgorithmBase {
         	    }
         	  }
 
-        	  // Sum in right child and possbile split
+        	  // Sum in right child and possible split
         	  for (j = 0; j < sampleIDs.get(nodeID).size(); j++) {
         		 int sampleID = sampleIDs.get(nodeID).get(j);
         	    double value = data.get(sampleID, varID);
@@ -5334,16 +5334,16 @@ public class StochasticForests extends AlgorithmBase {
 		private int status_varID;
 		
 		// Unique time points for all individuals (not only this bootstrap), sorted
-		Vector<Double> unique_timepoints;
-		int num_timepoints;
-		Vector<Integer> response_timepointIDs;
+		private Vector<Double> unique_timepoints;
+		private int num_timepoints;
+		private Vector<Integer> response_timepointIDs;
 		
 		// For all terminal nodes CHF for all unique timepoints.  For other nodes empty vector.
-		Vector<Vector<Double>> chf;
+		private Vector<Vector<Double>> chf;
 		
 		// Fields to save to while tree growing
-		int num_deaths[];
-		int num_samples_at_risk[];
+		private int num_deaths[];
+		private int num_samples_at_risk[];
 		
 		public TreeSurvival(Vector<Double> unique_timepoints, int status_varID, Vector<Integer> response_timepoints) {
 			super();
@@ -5646,7 +5646,7 @@ public class StochasticForests extends AlgorithmBase {
 			    int num_samples_right_child[], int delta_samples_at_risk_right_child[], int num_deaths_right_child[],
 			    int num_splits) {
               int i,j;
-			  // Count deaths in right child per timepoint and possbile split
+			  // Count deaths in right child per timepoint and possible split
 		      for (j = 0; j < sampleIDs.get(nodeID).size(); j++) {
 		    	int sampleID = sampleIDs.get(nodeID).get(j);
 			    double value = data.get(sampleID, varID);
@@ -6332,10 +6332,10 @@ public class StochasticForests extends AlgorithmBase {
 		protected Vector<Double> case_weights;
 		
 		protected String output_prefix;
-		ImportanceMode importance_mode;
+		protected ImportanceMode importance_mode;
 		
 		// Variable importance for all variables in forest
-		Vector<Double> variable_importance;
+		protected Vector<Double> variable_importance;
 		
 		// Computation progress (finished trees)
 		protected int progress;
@@ -6385,6 +6385,80 @@ public class StochasticForests extends AlgorithmBase {
 			importance_mode = DEFAULT_IMPORTANCE_MODE;
 			progress = 0;
 		}
+		
+		public Vector<Vector<Vector<Integer>>> getChildNodeIDs() {
+		    Vector<Vector<Vector<Integer>>> result = new Vector<Vector<Vector<Integer>>>();
+		    for (int i = 0; i < trees.size(); i++) {
+		      Tree tree = trees.get(i);
+		      result.add(tree.getChildNodeIDs());
+		    }
+		    return result;
+		}
+		
+		public Vector<Vector<Integer>> getSplitVarIDs() {
+		    Vector<Vector<Integer>> result = new Vector<Vector<Integer>>();
+		    for (int i = 0; i < trees.size(); i++) {
+		        Tree tree = trees.get(i);
+		        result.add(tree.getSplitVarIDs());
+		    }
+		    return result;
+		  }
+		
+		
+		  public Vector<Vector<Double>> getSplitValues() {
+		    Vector<Vector<Double>> result = new Vector<Vector<Double>>();
+		    for (int i = 0; i < trees.size(); i++) {
+		        Tree tree = trees.get(i);
+		        result.add(tree.getSplitValues());
+		    }
+		    return result;
+		  }
+		  
+		  public Vector<Double> getVariableImportance() {
+		    return variable_importance;
+		  }
+		  
+		  public double getOverallPredictionError() {
+		    return overall_prediction_error;
+		  }
+		  
+		  public Vector<Vector<Vector<Double>>> getPredictions() {
+		    return predictions;
+		  }
+		  
+		  public int getDependentVarId() {
+		    return dependent_varID;
+		  }
+		  
+		  public int getNumTrees() {
+		    return num_trees;
+		  }
+		  
+		  public int getMtry() {
+		    return mtry;
+		  }
+		  
+		  public int getMinNodeSize() {
+		    return min_node_size;
+		  }
+		  
+		  public int getNumIndependentVariables() {
+		    return num_independent_variables;
+		  }
+
+		  public Vector<Boolean> getIsOrderedVariable() {
+		    return data.getIsOrderedVariable();
+		  }
+
+		  public Vector<Vector<Integer>> getInbagCounts() {
+		    Vector<Vector<Integer>> result = new Vector<Vector<Integer>>();
+		    for (int i = 0; i < trees.size(); i++) {
+		        Tree tree = trees.get(i);
+		        result.add(tree.getInbagCounts());
+		    }
+		    return result;
+		  }
+
 		
 		public void dispose() {
 			for (int i = trees.size()-1; i >- 0; i--) {
