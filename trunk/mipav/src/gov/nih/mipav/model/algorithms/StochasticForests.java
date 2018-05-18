@@ -6461,7 +6461,7 @@ public class StochasticForests extends AlgorithmBase {
 
 		
 		public void dispose() {
-			for (int i = trees.size()-1; i >- 0; i--) {
+			for (int i = trees.size()-1; i >= 0; i--) {
 				Tree tree = trees.get(i);
 				tree = null;
 			}
