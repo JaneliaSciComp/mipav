@@ -8688,7 +8688,7 @@ public class StochasticForests extends AlgorithmBase {
 	    		  treetype = TreeType.TREE_PROBABILITY;
 	    	  }
 	    	  if (treetype != TreeType.TREE_REGRESSION) {
-	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a classification forest.");
+	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a regression forest.");
 	    	    System.exit(-1);
 	    	  }
 
@@ -9136,7 +9136,7 @@ public class StochasticForests extends AlgorithmBase {
 	    		  treetype = TreeType.TREE_PROBABILITY;
 	    	  }
 	    	  if (treetype != TreeType.TREE_SURVIVAL) {
-	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a classification forest.");
+	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a survival forest.");
 	    	    System.exit(-1);
 	    	  }
 
