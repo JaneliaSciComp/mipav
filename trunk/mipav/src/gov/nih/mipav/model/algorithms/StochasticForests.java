@@ -1238,8 +1238,8 @@ public class StochasticForests extends AlgorithmBase {
 		Vector<Double> major_classes = new Vector<Double>();
 		// Find maximum count;
 		int max_count = 0;
-		Object keys[] = class_count.keySet().toArray();
-		Object values[] = class_count.values().toArray();
+		Double keys[] = class_count.keySet().toArray(new Double[0]);
+		Integer values[] = class_count.values().toArray(new Integer[0]);
 		for (i = 0; i < class_count.size(); i++) {
 			if (values[i] == null) {
 				value = 0;
@@ -9541,7 +9541,7 @@ public class StochasticForests extends AlgorithmBase {
   	     } 
   	     
   	     // Check if counts are expected +-5%
-  	    Object countsObject[] = counts.values().toArray();
+  	    Integer countsObject[] = counts.values().toArray(new Integer[0]);
 		boolean success = true;
 		boolean near;
 		int value;
@@ -9591,7 +9591,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-5%
-	     countsObject = counts.values().toArray();
+	     countsObject = counts.values().toArray(new Integer[0]);
 		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 if (countsObject[i] == null) {
@@ -9639,7 +9639,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-5%
-	     countsObject = counts.values().toArray();
+	     countsObject = counts.values().toArray(new Integer[0]);
 		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 if (countsObject[i] == null) {
@@ -9688,7 +9688,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +-10%
-	     countsObject = counts.values().toArray();
+	     countsObject = counts.values().toArray(new Integer[0]);
 		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 if (countsObject[i] == null) {
@@ -9736,7 +9736,7 @@ public class StochasticForests extends AlgorithmBase {
 	     } 
 	     
 	     // Check if counts are expected +- 5%
-	     countsObject = counts.values().toArray();
+	     countsObject = counts.values().toArray(new Integer[0]);
 		 success = true;
 	     for (i = 0; i < counts.size(); i++) {
 	    	 if (countsObject[i] == null) {
