@@ -8135,7 +8135,12 @@ public class StochasticForests extends AlgorithmBase {
 	    	    	value = predictions.get(0).get(sampleID).get(class_idx);
 	    	        predictions.get(0).get(sampleID).set(class_idx, value +  counts.get(class_idx));
 	    	      }
-	    	      intValue = samples_oob_count.get(sampleID);
+	    	      if (samples_oob_count.get(sampleID) == null) {
+	    	    	  intValue = 0;
+	    	      }
+	    	      else {
+	    	          intValue = samples_oob_count.get(sampleID);
+	    	      }
 	    	      samples_oob_count.set(sampleID, intValue+1);
 	    	    }
 	    	  }
@@ -8143,7 +8148,7 @@ public class StochasticForests extends AlgorithmBase {
 	    	// MSE with predicted probability and true data
 	    	  int num_predictions = 0;
 	    	  for (i = 0; i < predictions.get(0).size(); ++i) {
-	    	    if (samples_oob_count.get(i) > 0) {
+	    	    if ((samples_oob_count.get(i) != null) && (samples_oob_count.get(i) > 0)) {
 	    	      ++num_predictions;
 	    	      for (j = 0; j < predictions.get(0).get(i).size(); ++j) {
 	    	    	value = predictions.get(0).get(i).get(j);
@@ -8519,7 +8524,7 @@ public class StochasticForests extends AlgorithmBase {
 			// MSE with predictions and true data
 			  int num_predictions = 0;
 			  for (i = 0; i < predictions.get(0).get(0).size(); ++i) {
-			    if (samples_oob_count.get(i) > 0) {
+			    if ((samples_oob_count.get(i) != null) && (samples_oob_count.get(i) > 0)) {
 			      ++num_predictions;
 			      var = predictions.get(0).get(0).get(i);
 			      predictions.get(0).get(0).set(i, var/ (double) samples_oob_count.get(i));
@@ -8936,7 +8941,12 @@ public class StochasticForests extends AlgorithmBase {
         	    	value = predictions.get(0).get(sampleID).get(time_idx);
         	        predictions.get(0).get(sampleID).set(time_idx, value + tree_sample_chf.get(time_idx));
         	      }
-        	      intValue = samples_oob_count.get(sampleID);
+        	      if (samples_oob_count.get(sampleID) == null) {
+        	    	  intValue = 0;
+        	      }
+        	      else {
+        	          intValue = samples_oob_count.get(sampleID);
+        	      }
         	      samples_oob_count.set(sampleID, intValue+1);
         	    }
         	  }
@@ -8947,7 +8957,7 @@ public class StochasticForests extends AlgorithmBase {
         	  Vector<Integer> oob_sampleIDs = new Vector<Integer>();
         	  oob_sampleIDs.ensureCapacity(predictions.get(0).size());
         	  for (i = 0; i < predictions.get(0).size(); ++i) {
-        	    if (samples_oob_count.get(i) > 0) {
+        	    if ((samples_oob_count.get(i) != null) && (samples_oob_count.get(i) > 0)) {
         	      double sum = 0;
         	      for (j = 0; j < predictions.get(0).get(i).size(); ++j) {
         	    	value = predictions.get(0).get(i).get(j);
