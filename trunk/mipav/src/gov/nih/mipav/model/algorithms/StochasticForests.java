@@ -7718,7 +7718,13 @@ public class StochasticForests extends AlgorithmBase {
 		    	    for (j = 0; j < class_values.size(); j++) {
 		    	      double real_value = class_values.get(j);
 		    	      Pair<Double, Double> pair = new Pair<Double, Double>(real_value, predicted_value);
-		    	      int value = classification_table.get(pair);
+		    	      int value;
+		    	      if (classification_table.get(pair) == null) {
+		    	          value = 0;  
+		    	      }
+		    	      else {
+		    	    	  value =  classification_table.get(pair);
+		    	      }
 		    	      bw.write(String.valueOf(value));
 		    	      if (value < 10) {
 		    	        bw.write("     ");
