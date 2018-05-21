@@ -7425,6 +7425,7 @@ public class StochasticForests extends AlgorithmBase {
 			      last_time = Instant.now();
 			    }
 			  }
+			  mutex.unlock();
 		}
 
 
