@@ -7593,7 +7593,7 @@ public class StochasticForests extends AlgorithmBase {
 			    }
 			  } else {
 			    // Count classes over trees and save class with maximum count
-			    HashMap<Double, Integer> class_count = new HashMap();
+			    HashMap<Double, Integer> class_count = new HashMap<Double,Integer>();
 			    for (int tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
 			      double value = ((TreeClassification) trees.get(tree_idx)).getPrediction(sample_idx);
 			      int map_value;
