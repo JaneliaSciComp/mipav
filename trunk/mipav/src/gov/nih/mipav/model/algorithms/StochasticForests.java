@@ -6679,7 +6679,7 @@ public class StochasticForests extends AlgorithmBase {
 
 			  // Check if mtry is in valid range
 			  if (this.mtry > num_variables - 1) {
-			    MipavUtil.displayError("mtry can not be larger than number of variables in data.");
+			    MipavUtil.displayError("mtry can not be larger than number of variables-1 in data.");
 			    System.exit(-1);
 			  }
 
@@ -7064,8 +7064,20 @@ public class StochasticForests extends AlgorithmBase {
 			    executorService.execute(new computeTreePermutationImportanceInThread(i, variable_importance_threads.get(i),
 			    		variance_threads.get(i)));
 			  }
+			  
+			  executorService.shutdown();
+			  try {
+				  boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+				  if (!tasksEnded) {
+					  MipavUtil.displayError("Timed out waiting for predictTreesInThread to finish");
+					  System.exit(-1);
+				  }
+			  }
+			  catch (InterruptedException ex) {
+				  ex.printStackTrace();
+			  }
 
-			// Sum thread importances
+			  // Sum thread importances
 			  insize = variable_importance.size();
 			  variable_importance.setSize(num_independent_variables);
 			  for (i = insize; i < num_independent_variables; i++) {
