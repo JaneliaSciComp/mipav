@@ -7908,7 +7908,7 @@ public class StochasticForests extends AlgorithmBase {
 		  protected Vector<Double> class_weights;
 
 		  // Table with classifications and true classes
-		  protected HashMap<Pair<Double, Double>, Integer> classification_table;
+		  //protected HashMap<Pair<Double, Double>, Integer> classification_table;
 		  
 		  public Vector<Vector<Vector<Double>>> getTerminalClassCounts() {
 			    int i;
@@ -8319,7 +8319,7 @@ public class StochasticForests extends AlgorithmBase {
 	    		  treetype = TreeType.TREE_PROBABILITY;
 	    	  }
 	    	  if (treetype != TreeType.TREE_PROBABILITY) {
-	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a classification forest.");
+	    	    MipavUtil.displayError("Wrong treetype. Loaded file is not a probability estimation forest.");
 	    	    System.exit(-1);
 	    	  }
 
@@ -8342,7 +8342,7 @@ public class StochasticForests extends AlgorithmBase {
 	    	    Vector<Vector<Double>> terminal_class_counts_vector = new Vector<Vector<Double>>();
 	    	    readDVector2D(terminal_class_counts_vector, br);
 
-	    	    // Convert Terminal node class counts to vector with empty elemtents for non-terminal nodes
+	    	    // Convert Terminal node class counts to vector with empty elements for non-terminal nodes
 	    	    Vector<Vector<Double>> terminal_class_counts = new Vector<Vector<Double>>();
 	    	    for (j = 0; j < child_nodeIDs.get(0).size(); j++) {
 	    	    	terminal_class_counts.add(new Vector<Double>());
