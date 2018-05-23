@@ -8,7 +8,6 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -45,6 +44,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private JCheckBox cerebellumCheckbox;
     private JTextField cerebellumSliceMaxField;
+    
+    private JCheckBox skullRemovalCheckbox;
 
     private boolean adcImageMultifile = false;
     private ModelImage adcImage;
@@ -59,6 +60,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private boolean doCerebellumSkip = true;
     
     private int cerebellumSkipSliceMax = 7;
+    
+    private boolean doSkullRemoval = true;
     
     private PlugInAlgorithmStrokeSegmentation segAlgo = null;
     
@@ -158,6 +161,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         adcThreshold = 620;
         doSymmetryRemoval = true;
         doCerebellumSkip = true;
+        doSkullRemoval = true;
         cerebellumSkipSliceMax = 7;
         
         if (adcImage != null && dwiImage != null) {
@@ -190,9 +194,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                 fileMethodRadio.setSelected(true);
             }
         } else if (command.equals("DirMethod")) {
-            // TODO
+            // nothing to do
         } else if (command.equals("FileMethod")) {
-            // TODO
+            // nothing to do
         } else if (command.equals("Cancel")) {
             this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         } else {
@@ -221,7 +225,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                 resolCC[i] = unit.convertTo(resol[i], Unit.CENTIMETERS);
             }
             
-            double coreVolCC = segAlgo.getLargestObject().size * resolCC[0] * resolCC[1] * resolCC[2];
+            double coreVolCC = segAlgo.getCoreSize() * resolCC[0] * resolCC[1] * resolCC[2];
             
             if (listenerParent != null) {
                 listenerParent.emailReport(adcImage, segAlgo.getTheshLightboxFile(), segAlgo.getCoreLightboxFile(), coreVolCC);
@@ -265,7 +269,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         if (doDirMethod) {
             dirFileString = dirFileField.getText();
             
-            findVolumesInDir(dirFileString);
+             findVolumesInDir(dirFileString);
         } else {
             adcPath = adcImageFileField.getText();
             dwiPath = dwiImageFileField.getText();
@@ -317,6 +321,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         doCerebellumSkip = cerebellumCheckbox.isSelected();
         cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
         
+        doSkullRemoval = skullRemovalCheckbox.isSelected();
+        
         return true;
     }
 
@@ -327,7 +333,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, doSkullRemoval, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -376,6 +382,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         doCerebellumSkip = scriptParameters.getParams().getBoolean("do_cerebellum_skip");
         cerebellumSkipSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_slice_max");
         
+        doSkullRemoval = scriptParameters.getParams().getBoolean("do_skull_removal");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -386,6 +394,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_skull_removal", doSkullRemoval));
     }
     
     /**
@@ -453,6 +462,16 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(cerebellumSliceMaxField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        skullRemovalCheckbox = new JCheckBox("Use DWI volume to mask ADC skull artifacts", doSkullRemoval);
+        skullRemovalCheckbox.setForeground(Color.black);
+        skullRemovalCheckbox.setFont(serif12);
+        mainPanel.add(skullRemovalCheckbox, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
@@ -820,12 +839,12 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                                 } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE") || val.equalsIgnoreCase("TRACEW")) {
                                     // some studies are transmitted with both 'reg' and unmodified versions of the data
                                     // choose the 'reg' version if we previously found a different ADC series 
-                                    if (foundADC && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
+                                    if (foundDWI && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
                                         dwiPath = file.getAbsolutePath();
                                         dwiImageMultifile = true;
                                         foundDWI = true;
                                         break;
-                                    } else if (!foundADC) {
+                                    } else if (!foundDWI) {
                                         // new ADC volume, and we hadn't encountered one before
                                         dwiPath = file.getAbsolutePath();
                                         dwiImageMultifile = true;

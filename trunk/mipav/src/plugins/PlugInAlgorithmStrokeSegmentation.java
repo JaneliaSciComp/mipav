@@ -7,7 +7,10 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogFuzzyCMeans;
 
+import java.awt.Frame;
 import java.io.*;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -31,9 +34,19 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int cerebellumSkipSliceMax;
     
+    private boolean doSkullRemoval;
+    
+    private int skullRemovalMaskTheshold = 70;
+    
     private VOI coreVOI;
     
-    private MaskObject largestObject;
+    private Vector<MaskObject> selectedObjectList;
+    
+    // TODO
+    
+    private float additionalObjectMinimumRatio = 0.2f;
+    
+    private int additionalObjectSearchSize = 1000;
     
     private FileIO fileIO;
     
@@ -59,7 +72,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, boolean removeSkull, String outputDir) {
         super();
         
         dwiImage = dwi;
@@ -68,6 +81,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         doSymmetryRemoval = symmetryRemoval;
         doCerebellumSkip = cerebellumSkip;
         cerebellumSkipSliceMax = cerebellumSkipMax;
+        doSkullRemoval = removeSkull;
         coreOutputDir = outputDir;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
@@ -164,17 +178,84 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
 
         saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_DWI_seg", FileUtility.XML);
         
+        // skull artifact masking
+        ModelImage maskImg = null;
+        if (doSkullRemoval) {
+            maskImg = new ModelImage(ModelStorageBase.BOOLEAN, dwiImage.getExtents(), "dwi_skull_mask");
+            for (int i = 0; i < maskImg.getExtents()[2]; i++) {
+                maskImg.setFileInfo(fileInfo1, i);
+            }
+            
+            for (int i = 0; i < volLength; i++) {
+                if (dwiImage.getInt(i) > skullRemovalMaskTheshold) {
+                    maskImg.set(i, 1);
+                } else {
+                    maskImg.set(i, 0);
+                }
+            }
+            
+            // open - try to disconnect any artifacts from the brain mask
+            open(maskImg);
+            
+            // close
+            close(maskImg);
+            
+            // fill holes
+            fillHoles(maskImg);
+            
+            // select only largest object
+            short[] maskBuffer = new short[volLength];
+            short[] processBuffer = new short[volLength];
+            try {
+                maskImg.exportData(0, volLength, maskBuffer);
+            } catch (IOException error) {
+                maskBuffer = null;
+                displayError("Error on brain mask export: " + maskImg.getImageName());
+                setCompleted(false);
+                return;
+            }
+            
+            MaskObject[] objects = findObjects(maskImg, maskBuffer, processBuffer, 100, 10000000);
+            
+            if (objects.length > 0) {
+                MaskObject largest = objects[objects.length - 1];
+                for (int i = 0; i < processBuffer.length; i++) {
+                    if (processBuffer[i] == largest.id) {
+                        maskBuffer[i] = 1;
+                    } else {
+                        maskBuffer[i] = 0;
+                    }
+                }
+            }
+            
+            try {
+                maskImg.importData(0, maskBuffer, true);
+            } catch (IOException error) {
+                maskBuffer = null;
+                displayError("Error on brain mask importData: " + maskImg.getImageName());
+                setCompleted(false);
+                return;
+            }
+            
+            // dilate object slightly
+            dilate(maskImg);
+            
+            saveImageFile(maskImg, coreOutputDir, outputBasename + "_brain_mask", FileUtility.XML);
+        }
+        
         // get pixels from ADC within mask with intensity < 620
         fireProgressStateChanged("Thresholding ADC ...");
         fireProgressStateChanged(60);
         
         for (int i = 0; i < volLength; i++) {
-            if (dwiSegBuffer[i] != 0) {
+            if (dwiSegBuffer[i] != 0 && (maskImg != null && maskImg.getBoolean(i) == true)) {
                 if (adcImage.getInt(i) < adcThreshold) {
                     dwiSegBuffer[i] = 1;
                 } else {
                     dwiSegBuffer[i] = 0;
                 }
+            } else {
+                dwiSegBuffer[i] = 0;
             }
         }
         
@@ -257,7 +338,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_removed", FileUtility.XML);
         }
         
-        short[] objectBuffer = keepOnlyLargestObject(dwiSeg, dwiSegBuffer);
+        short[] objectBuffer = chooseCoreObjects(dwiSeg, dwiSegBuffer);
         
         try {
             dwiSeg.importData(0, objectBuffer, true);
@@ -293,7 +374,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
 //        }
         
         // save core stats to tab-delmited file
-        if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), outputBasename + "_VOI" + voiExtension, largestObject.size, adcImage.getResolutions(0))) {
+        if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), outputBasename + "_VOI" + voiExtension, selectedObjectList, adcImage.getResolutions(0))) {
             setCompleted(false);
             return;
         }
@@ -349,19 +430,79 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return new File(dir + File.separator + fileBasename + ext);
     }
     
-    public short[] keepOnlyLargestObject(final ModelImage img, final short[] imgBuffer) {
-        final int imageLength = imgBuffer.length;
+    public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer) {
         short[] processBuffer = new short[imgBuffer.length];
+        MaskObject[] sortedObjects = findObjects(img, imgBuffer, processBuffer, minAdcObjectSize, maxAdcObjectSize);
+        
+        // TODO
+        FileInfoBase fileInfo1;
+        ModelImage segImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), "find_objects");
+        fileInfo1 = img.getFileInfo()[0];
+        fileInfo1.setResolutions(img.getResolutions(0));
+        fileInfo1.setUnitsOfMeasure(img.getUnitsOfMeasure());
+        fileInfo1.setAxisOrientation(img.getFileInfo(0).getAxisOrientation());
+        fileInfo1.setImageOrientation(img.getFileInfo(0).getImageOrientation());
+        fileInfo1.setOrigin(img.getFileInfo(0).getOrigin());
+        fileInfo1.setSliceThickness(img.getFileInfo(0).getSliceThickness());
+        for (int i = 0; i < img.getExtents()[2]; i++) {
+            segImg.setFileInfo(fileInfo1, i);
+        }
+        try {
+            segImg.importData(0, processBuffer, true);
+        } catch (IOException error) {
+            processBuffer = null;
+            displayError("Error on importData: " + segImg.getImageName());
+            setCompleted(false);
+            return null;
+        }
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_find_objects", FileUtility.XML);
+        
+        // last object should be the largest
+        selectedObjectList = new Vector<MaskObject>();
+        selectedObjectList.add(sortedObjects[sortedObjects.length - 1]);
+        System.err.println(sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size);
+        
+        // also keep 2nd (maybe 3rd) largest object as well, if first one is small and the second one is >= 50% of its size
+        
+        // if the largest object is small, see if the next one is close in size
+        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
+            int objectMinSize = (int) (selectedObjectList.get(0).size * additionalObjectMinimumRatio);
+            int nextObjectIndex = sortedObjects.length - 2;
+            MaskObject nextObject;
+            while (nextObjectIndex >= 0 && (nextObject = sortedObjects[nextObjectIndex]).size >= objectMinSize) {
+                System.err.println(nextObject.id + "\t" + nextObject.size);
+                selectedObjectList.add(nextObject);
+                nextObjectIndex--;
+            }
+        }
+        
+        // set the mask value for any object that isn't the largest to 0
+        for (int i = 0; i < processBuffer.length; i++) {
+            boolean found = false;
+            for (MaskObject obj : selectedObjectList) {
+                if (processBuffer[i] == obj.id) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                processBuffer[i] = 0;
+            }
+        }
+        
+        return processBuffer;
+    }
+    
+    public MaskObject[] findObjects(final ModelImage img, final short[] imgBuffer, short[] processBuffer, int minSize, int maxSize) {
+        final int imageLength = imgBuffer.length;
         
         Vector<MaskObject> objects = new Vector<MaskObject>();
         
-        final int xDim = img.getExtents()[0];
-        final int yDim = img.getExtents()[1];
-        final int zDim = img.getExtents()[2];
         short floodValue = 1;
         int count = 0;
         
-        deleteObjects(img, objects, imgBuffer, processBuffer, minAdcObjectSize, maxAdcObjectSize, true);
+        deleteObjects(img, objects, imgBuffer, processBuffer, minSize, maxSize, true);
 
         objects.removeAllElements();
         
@@ -372,40 +513,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 floodValue++;
             }
         }
-
-        String mStr;
-        float vol;
-
-        mStr = img.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-        ViewUserInterface.getReference().getMessageFrame().getData().append(
-                " Object \t# of pixels\tVolume(" + mStr + ")\n");
         
-        // default to no size
-        largestObject = new MaskObject(0, (short) 0, 0);
-
-        for (int i = 0; i < objects.size(); i++) {
-            final MaskObject curObj = objects.elementAt(i);
-            
-            if (curObj.size > largestObject.size) {
-                largestObject = curObj;
-            }
-            
-            vol = (curObj.size * img.getFileInfo(0).getResolutions()[0]
-                    * img.getFileInfo(0).getResolutions()[1] * img.getFileInfo(0).getResolutions()[2]);
-
-            // UI.setDataText(
-            ViewUserInterface.getReference().getMessageFrame().getData().append(
-                    "    " + (i + 1) + "\t" + + curObj.size + "\t" + vol + "\n");
-        }
+        MaskObject[] sortedObjects = objects.toArray(new MaskObject[0]);
+        Arrays.sort(sortedObjects, new MaskObjectSizeComparator());
         
-        // set the mask value for any object that isn't the largest to 0
-        for (int i = 0; i < processBuffer.length; i++) {
-            if (processBuffer[i] != largestObject.id) {
-                processBuffer[i] = 0;
-            }
-        }
-        
-        return processBuffer;
+        return sortedObjects;
     }
     
     private void deleteObjects(final ModelImage img, final Vector<MaskObject> objects, short[] imgBuffer, short[] processBuffer, final int min, final int max, final boolean returnFlag) {
@@ -578,6 +690,19 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
     }
     
+    private class MaskObjectSizeComparator implements Comparator<MaskObject> {
+        @Override
+        public int compare(final MaskObject o1, final MaskObject o2) {
+            if (o1.size > o2.size) {
+                return 1;
+            } else if (o1.size < o2.size) {
+                return -1;
+            } else {
+                return 0;
+            }
+        }
+    }
+    
     private VOI maskToVOI(ModelImage img) {
         final AlgorithmVOIExtraction voiAlgo = new AlgorithmVOIExtraction(img);
         voiAlgo.run();
@@ -602,10 +727,16 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return true;
     }
     
-    private boolean saveCoreStats(final String outputDir, final String dwiFile, final String adcFile, final String voiFile, final long numVoxels, final float[] imgResol) {
+    private boolean saveCoreStats(final String outputDir, final String dwiFile, final String adcFile, final String voiFile, final Vector<MaskObject> coreObjects, final float[] imgResol) {
         double voxelSize = imgResol[0] * imgResol[1] * imgResol[2];
-        double coreVol = largestObject.size * voxelSize;
-        System.err.println("Largest Object:\t" + largestObject.size + "\t" + coreVol);
+        
+        int totalCoreSize = 0;
+        for (MaskObject obj : coreObjects) {
+            totalCoreSize += obj.size;
+        }
+        
+        double coreVol = totalCoreSize * voxelSize;
+        System.err.println("Core Size:\t" + totalCoreSize + "\t" + coreVol);
         
         final String statsFile = outputDir + File.separator + outputBasename + "_stats.table";
         
@@ -619,7 +750,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             bw = new BufferedWriter(fw);
             
             csvPrinter = new CSVPrinter(bw, CSVFormat.TDF.withHeader("Base Dir", "DWI File", "ADC File", "Core VOI", "Core Voxel Count", "Core Volume " + volUnitsStr));
-            csvPrinter.printRecord(outputDir, dwiFile, adcFile, voiFile, numVoxels, coreVol);
+            csvPrinter.printRecord(outputDir, dwiFile, adcFile, voiFile, totalCoreSize, coreVol);
         } catch (final IOException e) {
             e.printStackTrace();
             MipavUtil.displayError("Error writing core stats file: " + statsFile);
@@ -705,7 +836,102 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return coreLightboxFile;
     }
     
-    public MaskObject getLargestObject() {
-        return largestObject;
+    public Vector<MaskObject> getCoreObjectList() {
+        return selectedObjectList;
+    }
+    
+    public int getCoreSize() {
+        int totalSize = 0;
+        for (MaskObject obj : getCoreObjectList()) {
+            totalSize += obj.size;
+        }
+        
+        return totalSize;
+    }
+    
+    private void fillHoles(ModelImage img) {
+        int kernel = AlgorithmMorphology3D.SIZED_SPHERE;
+        boolean wholeImg = true;
+
+        try {
+            // No need to make new image space because the user has choosen to replace the source image
+            // Make the algorithm class
+            AlgorithmMorphology25D idObjectsAlgo25D = new AlgorithmMorphology25D(img, kernel, 0, AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0, wholeImg);
+
+            //idObjectsAlgo25D.addListener(this);
+
+            idObjectsAlgo25D.run();
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Fill objects: unable to allocate enough memory");
+
+            return;
+        }
+    }
+    
+    private void open(ModelImage img) {
+        int kernel = AlgorithmMorphology3D.CONNECTED6;
+        float kernelSize = 1f; // mm
+        int itersD = 2;
+        int itersE = 2;
+        boolean wholeImg = true;
+
+        try {
+
+            // Make algorithm
+            AlgorithmMorphology3D closeAlgo3D = new AlgorithmMorphology3D(img, kernel, kernelSize, AlgorithmMorphology3D.OPEN, itersD, itersE, 0, 0, wholeImg);
+
+            // closeAlgo3D.addListener(this);
+
+            closeAlgo3D.run();
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Open: unable to allocate enough memory");
+
+            return;
+        }
+    }
+    
+    private void close(ModelImage img) {
+        int kernel = AlgorithmMorphology3D.SIZED_SPHERE;
+        float kernelSize = 2f; // mm
+        int itersD = 2;
+        int itersE = 2;
+        boolean wholeImg = true;
+        
+        try {
+
+            // Make algorithm
+            AlgorithmMorphology3D closeAlgo3D = new AlgorithmMorphology3D(img, kernel, kernelSize, AlgorithmMorphology3D.CLOSE,
+                                                    itersD, itersE, 0, 0, wholeImg);
+            
+            //closeAlgo3D.addListener(this);
+
+            closeAlgo3D.run();
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Close: unable to allocate enough memory");
+
+            return;
+        }
+    }
+    
+    private void dilate(ModelImage img) {
+        int kernel = AlgorithmMorphology3D.CONNECTED6;
+        float kernelSize = 1f; // mm
+        int itersD = 1;
+        int itersE = 1;
+        boolean wholeImg = true;
+
+        try {
+
+            // Make algorithm
+            AlgorithmMorphology3D closeAlgo3D = new AlgorithmMorphology3D(img, kernel, kernelSize, AlgorithmMorphology3D.DILATE, itersD, itersE, 0, 0, wholeImg);
+
+            // closeAlgo3D.addListener(this);
+
+            closeAlgo3D.run();
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Dilate: unable to allocate enough memory");
+
+            return;
+        }
     }
 }
