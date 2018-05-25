@@ -48,6 +48,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int additionalObjectSearchSize = 1000;
     
+    private int additionalObjectMaxDistance = 4;
+    
     private FileIO fileIO;
     
     private int minAdcObjectSize = 10;
@@ -462,19 +464,50 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         selectedObjectList.add(sortedObjects[sortedObjects.length - 1]);
         System.err.println(sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size);
         
+        // TODO disabled selection of additional objects based on size/distance for now
+        
+//        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
+//            // find distance between largest object and the rest of the image
+//            short largestObjectID = sortedObjects[sortedObjects.length - 1].id;
+//            for (int i = 0; i < processBuffer.length; i++) {
+//                if (segImg.getShort(i) == largestObjectID) {
+//                    segImg.set(i, 1);
+//                } else {
+//                    segImg.set(i, 0);
+//                }
+//            }
+//            distanceMap(segImg);
+//            
+//            // TODO add more objects if distance of object center of mass is below threshold
+//            int nextObjectIndex = sortedObjects.length - 2;
+//            MaskObject nextObject;
+//            while (nextObjectIndex >= 0) {
+//                nextObject = sortedObjects[nextObjectIndex];
+//                float distance = segImg.getFloat(nextObject.index);
+//                
+//                System.err.println(nextObject.id + "\t" + nextObject.index + "\t" + segImg.getFloat(nextObject.index) + "\t" + nextObject.size);
+//                
+//                if (distance <= additionalObjectMaxDistance) {
+//                    selectedObjectList.add(nextObject);
+//                }
+//                
+//                nextObjectIndex--;
+//            }
+//        }
+        
         // also keep 2nd (maybe 3rd) largest object as well, if first one is small and the second one is >= 50% of its size
         
         // if the largest object is small, see if the next one is close in size
-        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
-            int objectMinSize = (int) (selectedObjectList.get(0).size * additionalObjectMinimumRatio);
-            int nextObjectIndex = sortedObjects.length - 2;
-            MaskObject nextObject;
-            while (nextObjectIndex >= 0 && (nextObject = sortedObjects[nextObjectIndex]).size >= objectMinSize) {
-                System.err.println(nextObject.id + "\t" + nextObject.size);
-                selectedObjectList.add(nextObject);
-                nextObjectIndex--;
-            }
-        }
+//        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
+//            int objectMinSize = (int) (selectedObjectList.get(0).size * additionalObjectMinimumRatio);
+//            int nextObjectIndex = sortedObjects.length - 2;
+//            MaskObject nextObject;
+//            while (nextObjectIndex >= 0 && (nextObject = sortedObjects[nextObjectIndex]).size >= objectMinSize) {
+//                System.err.println(nextObject.id + "\t" + nextObject.size);
+//                selectedObjectList.add(nextObject);
+//                nextObjectIndex--;
+//            }
+//        }
         
         // set the mask value for any object that isn't the largest to 0
         for (int i = 0; i < processBuffer.length; i++) {
@@ -931,6 +964,23 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("Dilate: unable to allocate enough memory");
 
+            return;
+        }
+    }
+    
+    private void distanceMap(ModelImage img) {
+        int kernel = AlgorithmMorphology3D.CONNECTED6;
+        boolean wholeImg = true;
+        
+        try {
+            // Make algorithm
+            AlgorithmMorphology3D distanceMapAlgo3D = new AlgorithmMorphology3D(img, kernel, 0,
+                                                          AlgorithmMorphology3D.BG_DISTANCE_MAP, 0, 0, 0, 0,
+                                                          wholeImg);
+
+            distanceMapAlgo3D.run();
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Distance map: unable to allocate enough memory");
             return;
         }
     }
