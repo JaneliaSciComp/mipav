@@ -2311,6 +2311,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 //			volOpacityPanel = new JPanelVolumeOpacity(volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true);
 			volOpacityPanel = new JPanelVolumeOpacity(volumeImage.GetImage(), null, null, null, true);
 			volOpacityPanel.addPropertyChangeListener(this);
+			opacityPanel.removeAll();
 			opacityPanel.add( volOpacityPanel.getMainPanel() );
 		}
 		else
@@ -2323,6 +2324,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			lutHistogramPanel = new JFrameHistogram(this, volumeImage.GetImage(), null, volumeImage.getLUT(), null);
 			lutHistogramPanel.histogramLUT(true, false, true);
+			lutPanel.removeAll();
 			lutPanel.add(lutHistogramPanel.getContainingPanel());
 		}
 		else
@@ -2346,7 +2348,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			clipPanel.removeAll();
 		}
 		clipPanel.add(clipGUI.getMainPanel() );
-        clipGUI.resizePanel(clipPanel.getWidth(), 400);
+//        clipGUI.resizePanel(clipPanel.getWidth(), 400);
 		clipPanel.revalidate();
 	}
 
