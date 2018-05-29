@@ -422,6 +422,60 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         jvmMenuItem.setActionCommand("AboutJava");
         jvmMenuItem.addActionListener(ViewUserInterface.getReference());
         menu.add(jvmMenuItem);
+        
+        // sample CSV in help menu
+        final JMenuItem csvMenuItem = new JMenuItem("Sample CSV");
+        csvMenuItem.setActionCommand("SampCSV");
+        csvMenuItem.addActionListener(new ActionListener() {
+        	 
+        	public void actionPerformed(ActionEvent e) {
+        		// creates hard-coded table of sample CSV
+        			Object[][] data = { { "aderwe5", "Numeric", "1;2;3;5", "High;Low;Lower;Lowest", "This is a title", new Integer(7)},
+        		        { "aderwe6", "Numeric", "1;2;3;5;", "High;Low;Lower;Lowest", "This is a title2",new Integer(14) },
+        		        { "age014x", "Numeric", null, null, "Age of subject",new Integer(21)},
+        		        { "textelement1", "Alphanumeric", "One;Two", "One;Two", "Alphanumica test", new Integer(28)}};
+        		    Object[] columnNames = {"Name", "Type", "PVs","PV Description (Optional)","Title (Optional)"};
+        		    final JTable table = new JTable(data, columnNames);
+        		    TableColumnModel columnModel = table.getColumnModel();
+        		    table.setDefaultEditor(Object.class, null); // table cells not editable
+        		    table.getTableHeader().setReorderingAllowed(false); // make rows set
+        		    JScrollPane sp = new JScrollPane(table);
+        		    columnModel.getColumn(0).setPreferredWidth(50);
+        		    columnModel.getColumn(1).setPreferredWidth(60);
+        		    columnModel.getColumn(2).setPreferredWidth(30);
+        		    columnModel.getColumn(3).setPreferredWidth(115);
+        		    // creates frame to hold sample CSV info
+        		    JFrame jFrame = new JFrame();
+        		    
+        		    // text field for explanation
+        		    JTextField textField = new JTextField("Sample CSV Used for Mapping Data. Note that PV Description and Title are Optional"); // add to message as needed here
+        		    textField.setEditable(false);
+        		    // close button
+        		    JButton close = new JButton("Close");
+        		    close.addActionListener(new ActionListener() {
+        		    	public void actionPerformed(ActionEvent e) {
+        		    		jFrame.dispose();
+        		    	}
+        		    });
+        		    // creating jFrame
+        		    jFrame.add(textField, BorderLayout.PAGE_START);
+        		    jFrame.add(sp, BorderLayout.CENTER);
+        		    jFrame.add(close, BorderLayout.PAGE_END);
+        		    try {
+						jFrame.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+					} catch (FileNotFoundException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+        		    jFrame.setPreferredSize(new Dimension(600,200));
+        		    jFrame.pack();
+        		    jFrame.setVisible(true);
+        		  }
+        	 
+        }); 
+        menu.add(csvMenuItem);
+        
+       
 
         this.setJMenuBar(menuBar);
         
