@@ -407,13 +407,13 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 
                                 if (tempNode instanceof VOIOrientationNode) {
 
-                                    voiNodeEnum = tempNode.children();
+                                    voiNodeEnum = (Enumeration<VOIFrameNode>) tempNode.children();
 
                                     // find the child that matches this selected contour
                                     while (voiNodeEnum.hasMoreElements()) {
                                         
                                         VOIFrameNode currentFrameNode = voiNodeEnum.nextElement();
-                                        Enumeration<VOIContourNode> voiFrameEnum2 = currentFrameNode.children();
+                                        Enumeration<TreeNode> voiFrameEnum2 = currentFrameNode.children();
                                         
                                         // find the child that matches this selected contour
                                         while (voiFrameEnum2.hasMoreElements()) {

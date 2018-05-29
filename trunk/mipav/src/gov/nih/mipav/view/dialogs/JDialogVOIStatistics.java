@@ -1562,7 +1562,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         total.append(newLine);
         
         //get total data
-        Vector<Vector<?>> column = logModel.getDataVector();
+        Vector<Vector> column = logModel.getDataVector();
         Vector<?> row;
         String cellEntry;
         for(int i=0; i<column.size(); i++) {

@@ -1346,18 +1346,18 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             this.children[0] = child;
         }
 
-        public Enumeration<?> children() {
+        public Enumeration<? extends TreeNode> children() {
             final int elementCount = children.length;
-            return new Enumeration<File>() {
+            return new Enumeration<JFileTreeNode>() {
                 int count = 0;
 
                 public boolean hasMoreElements() {
                     return count < elementCount;
                 }
 
-                public File nextElement() {
+                public JFileTreeNode nextElement() {
                     if (this.count < elementCount) {
-                        return JFileTreeNode.this.children[count++];
+                        return new JFileTreeNode(JFileTreeNode.this.children[count++], false, JFileTreeNode.this);
                     }
                     throw new NoSuchElementException("Vector Enumeration");
                 }
