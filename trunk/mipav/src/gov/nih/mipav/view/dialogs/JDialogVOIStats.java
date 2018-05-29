@@ -1744,17 +1744,17 @@ public class JDialogVOIStats extends JDialogScriptableBase
 
                                 if (tempNode instanceof VOIOrientationNode) {
 
-                                    voiNodeEnum = tempNode.children();
+                                    voiNodeEnum = (Enumeration<VOIFrameNode>) tempNode.children();
 
                                     // find the child that matches this selected contour
                                     while (voiNodeEnum.hasMoreElements()) {
                                         
                                         VOIFrameNode currentFrameNode = voiNodeEnum.nextElement();
-                                        Enumeration<VOIContourNode> voiFrameEnum2 = currentFrameNode.children();
+                                        Enumeration<TreeNode> voiFrameEnum2 = currentFrameNode.children();
                                         
                                         // find the child that matches this selected contour
                                         while (voiFrameEnum2.hasMoreElements()) {
-                                            currentVOINode = voiFrameEnum2.nextElement();
+                                            currentVOINode = (VOIContourNode) voiFrameEnum2.nextElement();
 
                                             if (currentVOINode.getVOI().equals(voiBase)) {
                                                 treePaths.addElement(new TreePath(new Object[] {

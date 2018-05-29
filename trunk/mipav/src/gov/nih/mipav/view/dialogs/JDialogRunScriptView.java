@@ -856,7 +856,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
 
         if (node.getChildCount() >= 0) {
 
-            for (Enumeration<TreeNode> e = node.children(); e.hasMoreElements();) {
+            for (Enumeration<? extends TreeNode> e = node.children(); e.hasMoreElements();) {
                 TreeNode n = e.nextElement();
                 TreePath path = parent.pathByAddingChild(n);
                 expandAll(tree, path, expand);
