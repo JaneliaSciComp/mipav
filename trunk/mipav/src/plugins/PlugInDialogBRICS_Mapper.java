@@ -260,11 +260,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	// Gets full list of form structures from the BRICS data dictionary
         	final Thread thread = new FormListRESTThread(this);
             thread.start();
+            // new ChooseFormStructDialog(this); //trying to display table on GetStructs - does on second activation of button?
 
-        } else if (command.equalsIgnoreCase("SelectStruct")) {
+        }  else if (command.equalsIgnoreCase("SelectStruct")) {
         	
         	// GUI that allows the user to select the form structure to map to.
         	new ChooseFormStructDialog(this);  
+        
         	
     	} else if (command.equalsIgnoreCase("LoadSourceElementsAsCSV")) {
 
@@ -424,7 +426,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         menu.add(jvmMenuItem);
         
         // sample CSV in help menu
-        final JMenuItem csvMenuItem = new JMenuItem("Sample CSV");
+        final JMenuItem csvMenuItem = new JMenuItem("Sample Source DE CSV");
         csvMenuItem.setActionCommand("SampCSV");
         csvMenuItem.addActionListener(new ActionListener() {
         	 
@@ -433,7 +435,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         			Object[][] data = { { "aderwe5", "Numeric", "1;2;3;5", "High;Low;Lower;Lowest", "This is a title", new Integer(7)},
         		        { "aderwe6", "Numeric", "1;2;3;5;", "High;Low;Lower;Lowest", "This is a title2",new Integer(14) },
         		        { "age014x", "Numeric", null, null, "Age of subject",new Integer(21)},
-        		        { "textelement1", "Alphanumeric", "One;Two", "One;Two", "Alphanumica test", new Integer(28)}};
+        		        { "textelement1", "Alphanumeric", "One;Two", "One;Two", "Alphanumica test", new Integer(28)},
+        		        { "truefalse1", "Boolean", "0;1","True;False","True/False test", new Integer(35)}};
         		    Object[] columnNames = {"Name", "Type", "PVs","PV Description (Optional)","Title (Optional)"};
         		    final JTable table = new JTable(data, columnNames);
         		    TableColumnModel columnModel = table.getColumnModel();
@@ -464,10 +467,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		    try {
 						jFrame.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
 					} catch (FileNotFoundException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-        		    jFrame.setPreferredSize(new Dimension(600,200));
+        		    jFrame.setPreferredSize(new Dimension(600,190));
         		    jFrame.pack();
         		    jFrame.setVisible(true);
         		  }
@@ -534,7 +536,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
 
-        
+        // setting up get, select and load buttons
         getStructsButton = new JButton("Get Form Structures");
         getStructsButton.setToolTipText("Gets BRICS Form Structures from server. ");
         getStructsButton.addActionListener(this);
@@ -1684,6 +1686,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 		            			break;
 		            		}
 			            	
+			            	
+			            	
 	            		}
             		}
                 }
@@ -2319,8 +2323,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 progressBar.setVisible(false);
                 progressBar.dispose();
                 printlnToLog("Successful retrieval of form structures.");
-
+                
+                
                 selectStructButton.setEnabled(true);
+                new ChooseFormStructDialog(parent);
+                
             } catch (final Exception e) {
                 e.printStackTrace();
                 if (progressBar != null) {
@@ -2336,7 +2343,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
         }
 
-        @Override
+        
+
+		@Override
         public void actionPerformed(final ActionEvent e) {
             if (e.getSource() == progressCancelButton) {
                 dispose();
