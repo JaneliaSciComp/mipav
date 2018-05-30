@@ -1587,7 +1587,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             srcDETable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             srcDETable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             srcDETable.setAutoCreateRowSorter(true);
-            //srcDETable.getColumn("Name").setCellRenderer(new CellRenderer());
+            srcDETable.getColumn("Mapped").setCellRenderer(new CellRenderer()); // for coloring yes red
             
             srcDEPane = new JScrollPane(srcDETable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -1602,7 +1602,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
         
         /**
-         * Not used at this time. Could be used to affect the source data element table as needed.
+         * Makes any mapped items Yes message display in red for clarity
          *
          */
         private class CellRenderer extends DefaultTableCellRenderer {
@@ -1618,7 +1618,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	
  
     	            if (col == 0  ) {
-    	            	setBackground(Color.yellow);
+    	            	setForeground(Color.red);
     	            } 
     	            else {
     	                setBackground(Color.white);
@@ -1663,8 +1663,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
          * 		blank if not.
          */
         private void updateMappedColumn() {
-        	
         	// Clear out mapped column
+        	
         	for(int i = 0; i < srcDETable.getRowCount(); i++) {
         		srcDETableModel.setValueAt("", i, srcDETableModel.getColumnIndex("Mapped"));
         	}
@@ -1683,11 +1683,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 			            	nameDef[k] = nameDef[k].trim();
 			            	if ( nameDef[k].equals(srcName) ) {
 		            			srcDETableModel.setValueAt(" Yes", i, srcDETableModel.getColumnIndex("Mapped"));
+		            			setForeground(Color.red);
 		            			break;
-		            		}
-			            	
-			            	
-			            	
+		            			
+			            	}
+			            
 	            		}
             		}
                 }
