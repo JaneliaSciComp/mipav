@@ -445,7 +445,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		    columnModel.getColumn(2).setPreferredWidth(30);
         		    columnModel.getColumn(3).setPreferredWidth(115);
         		    // creates frame to hold sample CSV info
-        		    JFrame jFrame = new JFrame();
+        		    final JFrame jFrame = new JFrame();
         		    
         		    // text field for explanation
         		    JTextField textField = new JTextField("Sample CSV Used for Mapping Data. Note that PV Description and Title are Optional"); // add to message as needed here
