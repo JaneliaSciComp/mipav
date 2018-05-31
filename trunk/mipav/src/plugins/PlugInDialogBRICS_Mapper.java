@@ -469,7 +469,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 					} catch (FileNotFoundException e1) {
 						e1.printStackTrace();
 					}
-        		    jFrame.setPreferredSize(new Dimension(600,190));
+        		    jFrame.setPreferredSize(new Dimension(600,185));
         		    jFrame.pack();
         		    jFrame.setVisible(true);
         		  }
@@ -661,23 +661,20 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
                 else if(colIndex > deTableModel.getColumnIndex("Required") && colIndex < deTableModel.getColumnIndex("PV Mappings")) {
 	                
-	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
-	                tooltip += " <b> Double click: </b> " + " for manual editting of the DE.  <br/>";	              
+	                tooltip += "<html> <p> <b> Double click: </b> " + " for manual editting of the DE.  <br/>";	              
 	                tooltip += "</p></html>";
 	                return tooltip;
                 }
                 else if(colIndex == deTableModel.getColumnIndex("Source PVs")) {
 	                
-	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
-	                tooltip += " <b> Double click: </b> " + " for manual editting of the DE.  <br/>";
+	                tooltip += "<html> <p> <b> Double click: </b> " + " for manual editting of the DE.  <br/>";
 	                tooltip += " <b>PVs can only contain a-z, A-Z and 0-9 separated by semicolons.</b>  <br/>";              
 	                tooltip += "</p></html>";
 	                return tooltip;
                 }
                 else if(colIndex == deTableModel.getColumnIndex("PV Mappings")) {
 	                
-	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
-	                tooltip += " <b> Double click: </b> " + " for editting of the DE.  <br/>";              
+	                tooltip += "<html> <p> <b> Double click: </b> " + " for editting of the DE.  <br/>";              
 	                tooltip += "</p></html>";
 	                return tooltip;
                 }
@@ -1739,7 +1736,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type"));
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")),  rowRef, deTableModel.getColumnIndex("Source PVs"));
-			        deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));	
+			        deTable.setValueAt("Double Click to Map",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));	
             	}
             	else {
             		displayWarning("Please select both reference and source data elements.");
@@ -1775,11 +1772,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                	}
 	                	else if (refPVStr.isEmpty()) {
 	                		deTable.setValueAt(scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs - works for appending to empty reference PV string 
-	                		deTable.setValueAt("", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
+	                		deTable.setValueAt("Double Click to Map", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
 	                	}
 	                	else {
 	                		deTable.setValueAt(refPVStr +";" + scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs - reference PV is NOT empty - delimit using ";"
-	                		deTable.setValueAt("", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
+	                		deTable.setValueAt("Double Click to Map", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
 	                	}
 	                }
 	                else {
@@ -1801,7 +1798,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 		                			srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
 	                	}
 	                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type")); 
-	                	deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
+	                	deTable.setValueAt("Double Click to Map",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
 	                }
             	}
             	else {
@@ -1954,7 +1951,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.gridx = 0;
             gbc.fill = GridBagConstraints.HORIZONTAL;
         	
-        	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).isEmpty() ){
+        	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).equalsIgnoreCase("double click to map")){
         		// Cell is blank
         		String srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs"));
             	srcPVStrs = srcPVs.split(";");
@@ -1996,7 +1993,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	gbc.gridx = 1;
         	gbc.fill = GridBagConstraints.HORIZONTAL;
         	
-        	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).isEmpty() ){
+        	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).equalsIgnoreCase("double click to map") ){
         	
 	        	String refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
 	        	if (refPVs.isEmpty()) {
@@ -2036,7 +2033,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	else {
         		
         		String refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
-	        	if (refPVs.isEmpty()) {
+	        	if (refPVs.equalsIgnoreCase("double click to map")) {
 	        		//Not sure if this is the right answer.
 	        		displayWarning("Reference PVs are empty.");
 	        		return null;
@@ -2326,7 +2323,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 
                 
                 selectStructButton.setEnabled(true);
-                new ChooseFormStructDialog(parent);
+                new ChooseFormStructDialog(parent); // sets the get button to pull up list of form structures 
                 
             } catch (final Exception e) {
                 e.printStackTrace();
