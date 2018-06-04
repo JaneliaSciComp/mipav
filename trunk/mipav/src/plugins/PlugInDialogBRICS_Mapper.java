@@ -260,7 +260,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	// Gets full list of form structures from the BRICS data dictionary
         	final Thread thread = new FormListRESTThread(this);
             thread.start();
-            // new ChooseFormStructDialog(this); //trying to display table on GetStructs - does on second activation of button?
 
         }  else if (command.equalsIgnoreCase("SelectStruct")) {
         	
@@ -460,7 +459,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		    		jFrame.dispose();
         		    	}
         		    });
-        		    // creating jFrame
+        		    // creating jFrame with border layout
         		    jFrame.add(textField, BorderLayout.PAGE_START);
         		    jFrame.add(sp, BorderLayout.CENTER);
         		    jFrame.add(close, BorderLayout.PAGE_END);
@@ -708,7 +707,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         deTable.getColumn("Reference PVs").setMinWidth(130);
         deTable.getColumn("Reference PVs").setMaxWidth(330);
-        deTable.getColumn("Reference PVs").setPreferredWidth(130);
+        deTable.getColumn("Reference PVs").setPreferredWidth(180);
         
         deTable.getColumn("Required").setMinWidth(115);
         deTable.getColumn("Required").setMaxWidth(115);
@@ -1774,6 +1773,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                		deTable.setValueAt(scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs - works for appending to empty reference PV string 
 	                		deTable.setValueAt("Double Click to Map", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
 	                	}
+	                	else if (refPVStr.contains(scrPVStr)) {
+	                		deTable.setValueAt(refPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs - doesn't allow duplicate PVs 
+	                		deTable.setValueAt("Double Click to Map", rowRef, deTableModel.getColumnIndex("PV Mappings")); // Clear out the mapped PVs since source PVs changed 
+	                	}
+	                	
 	                	else {
 	                		deTable.setValueAt(refPVStr +";" + scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs - reference PV is NOT empty - delimit using ";"
 	                		deTable.setValueAt("Double Click to Map", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
