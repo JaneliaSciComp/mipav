@@ -974,7 +974,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * Allows user to select form structure that should be mapped.
      * 
      */
-    private class ChooseFormStructDialog extends JDialog implements ActionListener {
+    private class ChooseFormStructDialog extends JDialog implements ActionListener, KeyListener {
         private static final long serialVersionUID = 4199199899439094828L;
 
         private final PlugInDialogBRICS_Mapper owner;
@@ -1148,6 +1148,24 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             		searchBar.setText("");
             	}
             });
+            // enter to search as well as search button 
+            searchBar.addKeyListener(new KeyListener() {
+            	public void keyPressed(KeyEvent e) {
+            		if(e.getKeyCode()==KeyEvent.VK_ENTER) {
+            			String text = searchBar.getText();
+                		if(text.length()==0) {
+                			sorter.setRowFilter(null);
+                		}
+                		else {
+                			sorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+                		}
+            		}
+            	}
+				public void keyReleased(KeyEvent arg0) {
+				}
+				public void keyTyped(KeyEvent arg0) {
+				}
+            });
             searchBar.setPreferredSize(new Dimension(200,25));
             searchPanel.add(searchBar);
             searchPanel.add(search);
@@ -1190,7 +1208,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
         }
         
-        
 
         /**
          * This inner class is used to sort the list alphabetically
@@ -1202,6 +1219,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             }
         }
+		public void keyPressed(KeyEvent e) {
+		}
+		public void keyReleased(KeyEvent e) {
+		}
+		public void keyTyped(KeyEvent e) {
+		}
     }
     
     
