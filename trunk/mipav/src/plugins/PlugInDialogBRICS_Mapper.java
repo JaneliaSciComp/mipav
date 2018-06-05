@@ -208,7 +208,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     };
     
-    
+   
     /** Mapper constructor - Primarily setsup  the GUI */
     public PlugInDialogBRICS_Mapper () {
         super();
@@ -980,6 +980,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private final PlugInDialogBRICS_Mapper owner;
         private LocalTableModel structsModel;
         private JTable structsTable;
+        
 
         private final ArrayList<String> descAL 		= new ArrayList<String>();
         private final ArrayList<String> shortNameAL = new ArrayList<String>();
@@ -1022,8 +1023,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 }
             };
-
             structsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            
+            
 
             for (final String element : columnNames) {
                 structsModel.addColumn(element);
@@ -1121,7 +1123,36 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             structsScrollPane.setPreferredSize(new Dimension(800, 300));
-
+            // search bar for form structures - still need to set enter key to same function as search button
+            final JTextField searchBar = new JTextField();
+            final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(structsModel);
+            structsTable.setRowSorter(sorter);
+            final JPanel searchPanel = new JPanel();
+            final JButton search = new JButton("Search");
+            final JButton reset = new JButton("Reset");
+            search.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+            		String text = searchBar.getText();
+            		if(text.length()==0) {
+            			sorter.setRowFilter(null);
+            		}
+            		else {
+            			sorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+            		}
+            	}
+            }); 
+            // reset brings original table back
+            reset.addActionListener(new ActionListener() {
+            	public void actionPerformed(ActionEvent e) {
+            		sorter.setRowFilter(null);
+            		searchBar.setText("");
+            	}
+            });
+            searchBar.setPreferredSize(new Dimension(200,25));
+            searchPanel.add(searchBar);
+            searchPanel.add(search);
+            searchPanel.add(reset);
+            
             final JPanel OKPanel = new JPanel();
             final JButton OKButton = new JButton("Select");
             OKButton.setActionCommand("ChooseStructOK");
@@ -1130,13 +1161,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             OKButton.setPreferredSize(defaultButtonSize);
             OKButton.setFont(serif12B);
             OKPanel.add(OKButton);
-
+            
             getContentPane().add(structsScrollPane, BorderLayout.CENTER);
             getContentPane().add(OKPanel, BorderLayout.SOUTH);
-
+            getContentPane().add(searchPanel, BorderLayout.NORTH);
+            
+            
             pack();
             centerInWindow(owner, this);
             setVisible(true);
+            
+            
         }
 
         /**
@@ -1154,6 +1189,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
             }
         }
+        
+        
 
         /**
          * This inner class is used to sort the list alphabetically
