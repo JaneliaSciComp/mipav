@@ -991,11 +991,20 @@ public class FileIO {
                             isDTISort = false;
                             zInst = prevZInst;
                         }
+                        
+                        // check that all zInst mapping is within image bounds
+                        boolean sortProblem = false;
+                        for (int i = 0; !sortProblem && i < zInst.length; i++) {
+                            if (zInst[i] >= nImages) {
+                                sortProblem = true;
+                            }
+                        }
 
-                        if (dtiSliceCounter == instanceNums.length) {
+                        if (dtiSliceCounter == instanceNums.length || sortProblem) {
                             // all in one 4D gradient/bval bin, load as 3D
                             isDTISort = false;
                             dtiSliceCounter = -1;
+                            zInst = prevZInst;
                         }
                     }
                 }
@@ -2000,6 +2009,9 @@ public class FileIO {
                     final int tVolumeNum = (IndexVolArrayList.get(1) - IndexVolArrayList.get(0));
                     for (int i = 0; i < tVolumeNum; i++) {
                         for (int j = 0; j < IndexVolArrayList.size(); j++) {
+                            // TODO sometimes this reordering fails by going outside the bounds of the image
+                            // may be because of an ADC volume interleaved? added reversion to default ordering in the method calling this sorter
+                            
                             // rint populated by ordering of instance nums based on volume order
                             zInst[rintCounter] = IndexVolArrayList.get(j) + i;
                             rintCounter++;
