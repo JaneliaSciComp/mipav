@@ -44,6 +44,8 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     
     private boolean doEmailReport = false;
     
+    private boolean doAutoStart = false;
+    
     private StrokeSegmentationDicomReceiver dicomReceiver;
     
     private static final String svnVersion = "$Rev$";
@@ -78,6 +80,12 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         readListenerConfig();
         
         init();
+        
+        if (doAutoStart) {
+            if (setVariables()) {
+                callAlgorithm();
+            }
+        }
     }
     
     private void init() {
@@ -339,6 +347,8 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
                 outputDir = prop.getProperty("listenerOutputDir", outputDir);
                 
                 doEmailReport = Boolean.parseBoolean(prop.getProperty("listenerDoEmail", "" + doEmailReport));
+                
+                doAutoStart = Boolean.parseBoolean(prop.getProperty("listenerAutoStart", "" + doAutoStart));
                 
                 if (in != null) {
                     in.close();
