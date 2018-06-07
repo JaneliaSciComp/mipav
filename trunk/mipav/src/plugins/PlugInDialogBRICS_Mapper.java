@@ -73,7 +73,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private List<FormStructure> formStructureList = null;
 
     /** Buttons used to control the work flow */
-    private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, xFormButton, outputXFormDirButton;
+    private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, reloadCSVButton, xFormButton, outputXFormDirButton;
 
     
     /** Used to store the output file of the mapping tool */
@@ -279,7 +279,19 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
+                
+                
             }
+        } else if (command.equalsIgnoreCase("ReloadMapFile")) {
+        	final JFileChooser loadChooser = new JFileChooser();
+        	loadChooser.setCurrentDirectory(new File(csvFileDir));
+        	loadChooser.setDialogTitle("Load CSV for Further Mapping");
+        	loadChooser.setFileFilter(new FileNameExtensionFilter("Comma seperated value files (.csv)","csv"));
+        	final int returnValue = loadChooser.showOpenDialog(this);
+        	if (returnValue == JFileChooser.APPROVE_OPTION) {
+        		
+        	}
+        	
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
         	//validate mapping table.
@@ -292,12 +304,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	            if (returnValue == JFileChooser.APPROVE_OPTION) {
 	            	saveMappingsCSVFile(saveChooser.getSelectedFile());
 	            }
+	            
+	            
+        	} else {
+        			//
         	}
-        	else {
-        		//
-        	}
+        	
             
-        } else if (command.equalsIgnoreCase("HelpWeb")) {
+        }  else if (command.equalsIgnoreCase("HelpWeb")) {
         	// Brings up new BRICS Data Dictionary webpage for the selected data element
             showCDE(null);
 
@@ -793,17 +807,24 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         outputDirButton = buildTextButton("Browse", "Choose Output Directory for mapping result files", "OutputDirBrowse", this);
         outputDirButton.setPreferredSize(defaultButtonSize);
         
+        reloadCSVButton = new JButton("Load");
+        reloadCSVButton.setToolTipText("Reload a Mapped CSV file for Editing");
+        reloadCSVButton.addActionListener(this);
+        reloadCSVButton.setActionCommand("ReloadMapFile");
+        reloadCSVButton.setPreferredSize(defaultButtonSize);
+        
         saveMapButton = new JButton("Save");
         saveMapButton.setToolTipText("Save Mapping File (Source DEs to BRICS DEs");
         saveMapButton.addActionListener(this);
         saveMapButton.setActionCommand("SaveMapFile");
         saveMapButton.setPreferredSize(defaultButtonSize);
         saveMapButton.setEnabled(false);
-
+        
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputDirTextField);
         outputDirPanel.add(outputDirButton);
         outputDirPanel.add(saveMapButton);
+        outputDirPanel.add(reloadCSVButton);
         destPanel.add(outputDirPanel, gbc2);
 
         return destPanel;
@@ -1329,15 +1350,23 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * @return True if file is successfully opened
      */
     private boolean readSourceDEsCSVFile(File csvFile) {
+    	
         BufferedReader br = null;
-
+        
         try {
             String str;
             final FileInputStream fis = new FileInputStream(csvFile);
             br = new BufferedReader(new InputStreamReader(fis));
-
+           
             // first line is data element attributes Name, PVs, PV Descriptions, Type, Title - on the first two are required.
             str = br.readLine();
+            String line = null;
+            // if CSV is empty display an error
+            while((line = br.readLine())==null) {
+            	displayError("Error in Loading: Chosen CSV is Empty");
+            	break;
+            }
+            
             String[] DEHeaders = str.split(CSV_OUTPUT_DELIM);
             for(int i =0; i < DEHeaders.length; i++) {
             	DEHeaders[i] = DEHeaders[i].trim();
@@ -1373,6 +1402,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dataElements.add(deDef);
                 row++;
             }
+            
+            
             //fis.close();
             //Open dialog with and populate with source DEs
             SourceDEsDialog csvDEDialog = new SourceDEsDialog(this, dataElements);
@@ -1388,6 +1419,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
                 return false;
             }
+           
         }
          
         return true;      
