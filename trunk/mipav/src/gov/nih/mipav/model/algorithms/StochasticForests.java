@@ -141,7 +141,9 @@ public class StochasticForests extends AlgorithmBase {
 	
 	public static double logprop;
 	
-	private boolean testUtility = true;
+	private boolean testUtility = false;
+	
+	private boolean testMain = true;
 	
 	private TreeType treetype;
 	
@@ -204,7 +206,7 @@ public class StochasticForests extends AlgorithmBase {
 	private boolean write;
 	
 	private abstract class Data {
-		protected Vector<String> variable_names;
+		protected Vector<String> variable_names = new Vector<String>();
 		protected int num_rows = 0;
 		protected int num_rows_rounded = 0;
 		protected int num_cols = 0;
@@ -264,13 +266,13 @@ public class StochasticForests extends AlgorithmBase {
 	    	boolean result;
 	    	
 	    	// Open input file
-	    	File file = new File(filename);
+	    	File file = new File(filename);	    	
 	    	BufferedReader input_file;
 	    	try {
 	    	    input_file = new BufferedReader(new FileReader(file));
 	    	}
 	    	catch (FileNotFoundException e) {
-	    		MipavUtil.displayError("Could not find file " + filename);
+	    		MipavUtil.displayError(e + " ");
 	    		return true;
 	    	}
 	    	
@@ -344,6 +346,7 @@ public class StochasticForests extends AlgorithmBase {
 	    	// Read header
 	    	String[] header_tokens;
 	    	header_tokens = header_line.split(separator);
+	        
 	    	for (i = 0; i < header_tokens.length; i++) {
 	    		variable_names.add(header_tokens[i]);
 	    	}
@@ -369,7 +372,7 @@ public class StochasticForests extends AlgorithmBase {
 	    		String tokens[];
 	    		int column = 0;
 	    		tokens = line.split(separator);
-	    		for (i = 0; i < tokens.length; i++) {
+	    		for (i = 0; i < Math.min(tokens.length,num_cols); i++) {
 	    			double dValue = Double.valueOf(tokens[i]).doubleValue();
 	    			set(column, row, dValue, error);
                     column++;
@@ -6461,9 +6464,11 @@ public class StochasticForests extends AlgorithmBase {
 
 		
 		public void dispose() {
-			for (int i = trees.size()-1; i >= 0; i--) {
-				Tree tree = trees.get(i);
-				tree = null;
+			if (trees != null) {
+				for (int i = trees.size()-1; i >= 0; i--) {
+					Tree tree = trees.get(i);
+					tree = null;
+				}
 			}
 		}
 		
@@ -6501,7 +6506,7 @@ public class StochasticForests extends AlgorithmBase {
 
 			  // Set prediction mode
 			  boolean prediction_mode = false;
-			  if (!load_forest_filename.isEmpty()) {
+			  if ((load_forest_filename != null) && (!load_forest_filename.isEmpty())) {
 			    prediction_mode = true;
 			  }
 
@@ -6659,7 +6664,7 @@ public class StochasticForests extends AlgorithmBase {
 			  num_variables = data.getNumCols();
 
 			  // Convert dependent variable name to ID
-			  if (!prediction_mode && !dependent_variable_name.isEmpty()) {
+			  if (!prediction_mode && (dependent_variable_name != null) && !dependent_variable_name.isEmpty()) {
 			    dependent_varID = data.getVariableID(dependent_variable_name);
 			  }
 
@@ -10944,6 +10949,22 @@ public class StochasticForests extends AlgorithmBase {
 
 		 return;
 	   } // if (testUtility)
+	   if (testMain) {
+		   treetype = TreeType.TREE_CLASSIFICATION;
+		   memory_mode = MemoryMode.MEM_DOUBLE;
+		   dependent_variable_name = "Species";  
+		   input_file = "C:"+File.separator+"ranger-master"+File.separator+"iris.data.txt";
+		   mtry = 2;
+		   num_trees = 500;
+		   verbose_out = true;
+		   seed = 0L;
+		   num_threads = 1;
+		   unordered_variable_names = new Vector<String>();
+		   unordered_variable_names.add("sepal_length");
+		   unordered_variable_names.add("sepal_width");
+		   unordered_variable_names.add("petal_length");
+		   unordered_variable_names.add("petal_width");
+	   }
 	   
 	   Forest forest = null;
 	   try {
