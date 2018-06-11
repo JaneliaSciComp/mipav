@@ -150,12 +150,12 @@ public class LatticeModel {
 
 			final FileWriter fw = new FileWriter(file);
 			final BufferedWriter bw = new BufferedWriter(fw);
-			bw.write("name" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "\n");
+			bw.write("name" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "," + "R" + "," + "G" + "," + "B" + "\n");
 			for (int i = 0; i < annotations.getCurves().size(); i++) {
 
 				VOIText annotation = (VOIText)annotations.getCurves().elementAt(i);
 				Vector3f position = annotation.elementAt(0);
-				bw.write(annotation.getText() + "," + position.X + "," + position.Y + ","	+ position.Z + "\n");
+				bw.write(annotation.getText() + "," + position.X + "," + position.Y + ","	+ position.Z + "," + annotation.getColorString() + "\n");
 				Preferences.debug(numSaved + "   " + annotation.getText() + "\n", Preferences.DEBUG_ALGORITHM );
 				System.err.println( numSaved++ + "   " + annotation.getText() );
 			}
@@ -287,9 +287,28 @@ public class LatticeModel {
 						VOIText text = new VOIText();
 						text.setUseMarker(false);
 						text.setNote(fileName);
-						float x, y, z, r;
-						if ( parsed.length > 3 )
+						float x, y, z, r, g, b;
+						if ( parsed.length > 6 )
 						{
+							// name, position and color
+							int parsedIndex = 0;
+							String name = String.valueOf( parsed[parsedIndex++] );
+							text.setText(name);
+							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+							r    = (parsed.length > parsedIndex+3) ? (parsed[parsedIndex+3].length() > 0) ? Float.valueOf( parsed[parsedIndex+3] ) : 1 : 1;
+							g    = (parsed.length > parsedIndex+4) ? (parsed[parsedIndex+4].length() > 0) ? Float.valueOf( parsed[parsedIndex+4] ) : 1 : 1;
+							b    = (parsed.length > parsedIndex+5) ? (parsed[parsedIndex+5].length() > 0) ? Float.valueOf( parsed[parsedIndex+5] ) : 1 : 1;
+//							System.err.println( name + " " + x + " " + y + " " + z + " " + r );
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x, y, z ) );
+							text.setColor( new Color(r/255f,g/255f,b/255f) );
+							annotationVOIs.getCurves().add(text);
+						}
+						else if ( parsed.length > 4 )
+						{
+							// name, position and radius:
 							int parsedIndex = 0;
 							String name = String.valueOf( parsed[parsedIndex++] );
 							text.setText(name);
@@ -304,6 +323,7 @@ public class LatticeModel {
 						}
 						else if ( parsed.length == 3 )
 						{
+							// position only
 							z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
 							x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
 							y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
@@ -2516,6 +2536,7 @@ public class LatticeModel {
 	public void colorAnnotations( boolean setColor )
 	{
 		colorAnnotations = setColor;
+		colorAnnotations();
 	}
 	
 	/**

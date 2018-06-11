@@ -664,6 +664,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 			}
 			voiManager.editAnnotations(editMode == EditSeamCells);
+			voiManager.colorAnnotations(editMode == EditSeamCells);
 		}
 		else if ( editMode == EditLattice )
 		{
