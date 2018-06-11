@@ -2120,8 +2120,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			return;
 		}
-		
-//		LatticeModel.saveAnnotationsAsCSV( wormData.getAnnotationsPath(), "markerInfo.csv", voiManager.getAnnotations());
 
 		wormData.saveMarkerAnnotations(voiManager.getAnnotations());
 		wormData.dispose();
@@ -2160,8 +2158,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				if ( openImages( voiFile, null, fileName ) )
 				{
 					wormData = new WormData(wormImage);
-					wormData.segmentSeamFromLattice();
-					wormData.readSeamCells();				
+					wormData.readNamedSeamCells();				
 					
 					if ( annotations != null )
 					{
