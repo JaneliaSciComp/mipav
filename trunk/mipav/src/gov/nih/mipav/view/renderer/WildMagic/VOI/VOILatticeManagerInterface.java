@@ -603,12 +603,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 	
-	public void saveAnnotations( final String voiDir ) {
-		if ( latticeModel != null )
-		{
-			latticeModel.saveAnnotations(voiDir);
-		}
-	}
+//	public void saveAnnotations( final String voiDir ) {
+//		if ( latticeModel != null )
+//		{
+//			latticeModel.saveAnnotations(voiDir);
+//		}
+//	}
 	
 	public void showModel( boolean display ) {
 		if ( latticeModel != null )

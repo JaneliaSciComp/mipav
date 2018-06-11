@@ -443,6 +443,11 @@ public class PlugInAlgorithmWormUntwisting
 					model.interpolateLattice( false, false, false, true );	
 					model.saveAnnotationStraight(wormImage, "straightened_seamcells", "straightened_seamcells.csv" );	
 					
+					wormData.readNamedSeamCells();
+					model.setMarkers( wormData.getSeamAnnotations() );
+					model.interpolateLattice( false, false, false, true );	
+					model.saveAnnotationStraight(wormImage, "straightened_named_seamcells", "straightened_seamcells.csv" );	
+					
 					VOI markers = wormData.getMarkerAnnotations();
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{

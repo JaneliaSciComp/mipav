@@ -285,6 +285,7 @@ public class LatticeModel {
 					if ( parsed.length != 0 )
 					{
 						VOIText text = new VOIText();
+						text.setUseMarker(false);
 						text.setNote(fileName);
 						float x, y, z, r;
 						if ( parsed.length > 3 )
@@ -1109,7 +1110,7 @@ public class LatticeModel {
 		{
 			return false;
 		}
-		//		System.err.println( "modifyAnnotation " + ( pickedPoint != null ) + " " + rightMouse );
+		System.err.println( "modifyAnnotation " + ( pickedPoint != null ) + " " + rightMouse + "  " + annotationVOIs.getCurves().size() );
 		if ( pickedPoint != null )
 		{
 			if ( rightMouse )
@@ -8772,26 +8773,26 @@ public class LatticeModel {
 		}	
 		
 		// Load the straightened image:
-		FileIO fileIO = new FileIO();
-		System.err.println( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
-		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
+//		FileIO fileIO = new FileIO();
+//		System.err.println( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
+//		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
 
 
 		String voiDir;
 		// Save the markers as a VOI file:
-		resultImage.unregisterAllVOIs();
+//		resultImage.unregisterAllVOIs();
 		if ( annotationsStraight.getCurves().size() > 0 )
 		{
-			resultImage.registerVOI(annotationsStraight);
+//			resultImage.registerVOI(annotationsStraight);
 			voiDir = outputDirectory + File.separator + fileDirName + File.separator;
-			saveAllVOIsTo(voiDir, resultImage);
+//			saveAllVOIsTo(voiDir, resultImage);
 
 			LatticeModel.saveAnnotationsAsCSV(voiDir, fileName, annotationsStraight);
-			resultImage.unregisterAllVOIs();
+//			resultImage.unregisterAllVOIs();
 		}
 		
-		resultImage.disposeLocal(false);
-		resultImage = null;
+//		resultImage.disposeLocal(false);
+//		resultImage = null;
 	}
 
 	private void untwistMarkersTarget( ModelImage image, ModelImage resultImage, int[] resultExtents, HashMap<Integer,Vector<Vector2d>> targetSlice )
