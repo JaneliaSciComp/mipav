@@ -9252,6 +9252,7 @@ public class StochasticForests extends AlgorithmBase {
 
 
 	public void runAlgorithm() {
+	   // The higher level .R test files require installation of the GenABEL package.
 	   if (testUtility) {
 		   Random random = new Random();
 		   int i, j;
