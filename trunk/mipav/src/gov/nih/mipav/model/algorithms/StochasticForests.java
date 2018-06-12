@@ -252,6 +252,7 @@ public class StochasticForests extends AlgorithmBase {
 	        		 return i;
 	        	 }
 	         } // for (i = 0; i < variable_names.size(); i++)
+	         MipavUtil.displayError("Variable " + variable_name + " not found");
 	         return -1;
 	    }
 	    
@@ -346,6 +347,10 @@ public class StochasticForests extends AlgorithmBase {
 	    	// Read header
 	    	String[] header_tokens;
 	    	header_tokens = header_line.split(separator);
+	    	// Must use positive integers for categorical variables
+	    	HashMap<String, Double> categoricalMap = new HashMap<String, Double>();
+	    	double cValue = 0.0;
+	    	double storedValue;
 	        
 	    	for (i = 0; i < header_tokens.length; i++) {
 	    		variable_names.add(header_tokens[i]);
@@ -373,8 +378,22 @@ public class StochasticForests extends AlgorithmBase {
 	    		int column = 0;
 	    		tokens = line.split(separator);
 	    		for (i = 0; i < Math.min(tokens.length,num_cols); i++) {
-	    			double dValue = Double.valueOf(tokens[i]).doubleValue();
-	    			set(column, row, dValue, error);
+	    			try {
+	    			    double dValue = Double.valueOf(tokens[i]).doubleValue();
+	    			    set(column, row, dValue, error);
+	    			}
+	    			catch (NumberFormatException e) {
+	    			    if (categoricalMap.get(tokens[i]) != null) {
+	    			        storedValue = categoricalMap.get(tokens[i]);
+	    			        set(column, row, storedValue, error);
+	    			    }
+	    			    else {
+	    			    	cValue = cValue + 1.0;
+	    			    	System.out.println("tokens[i] = " + tokens[i] + " cValue = " + cValue);
+	    			    	categoricalMap.put(tokens[i], cValue);
+	    			    	set(column, row, cValue, error);
+	    			    }
+	    			}
                     column++;
 	    		}
 	    		if (separator.equals(" ")) {
@@ -397,15 +416,13 @@ public class StochasticForests extends AlgorithmBase {
 	    		int varID) {
 	    	// All values for varID (no duplicates) for given sampleIDs
 	    	if (getUnpermutedVarID(varID) < num_cols_no_snp) {
-	    	    if (all_values.size() < sampleIDs.size()) {
-	    	        all_values.setSize(sampleIDs.size());	
-	    	    }
+	    		all_values.ensureCapacity(sampleIDs.size());
 	    	    for (i = 0; i < sampleIDs.size(); i++) {
 	    	    	all_values.add(get(sampleIDs.get(i),varID));
 	    	    }
-	    	    all_values.sort(null);
+	    	    Collections.sort(all_values);
 	    	    for (i = all_values.size()-1; i >= 1; i--) {
-	    	    	if (all_values.get(i) == all_values.get(i-1)) {
+	    	    	if (all_values.get(i).equals(all_values.get(i-1))) {
 	    	    		all_values.removeElementAt(i);
 	    	    	}
 	    	    }
@@ -443,13 +460,11 @@ public class StochasticForests extends AlgorithmBase {
 	    	for (int col = 0; col < num_cols_no_snp; col++) {
 	    		// Get all unique values
 	    		Vector<Double>unique_values = new Vector<Double>();
-	    		if (unique_values.size() < num_rows) {
-	    			unique_values.setSize(num_rows);
-	    		}
+	    		unique_values.ensureCapacity(num_rows);
 	    		for (int row = 0; row < num_rows; row++) {
 	    			unique_values.add(row,get(row, col));
 	    		}
-	    		unique_values.sort(null);
+	    		Collections.sort(unique_values);
 	    		for (i = unique_values.size()-1; i >= 1; i--) {
 	    	    	if (unique_values.get(i) == unique_values.get(i-1)) {
 	    	    		unique_values.removeElementAt(i);
@@ -2353,7 +2368,7 @@ public class StochasticForests extends AlgorithmBase {
 	    	this.variable_importance = variable_importance;
 	    	
 	    	// Bootstrap, dependent if weighted or not and with or without replacement
-	    	if (!case_weights.isEmpty()) {
+	    	if ((case_weights != null) && (!case_weights.isEmpty())) {
 	    		if (sample_with_replacement) {
 	    			bootstrapWeighted();
 	    		}
@@ -2906,9 +2921,13 @@ public class StochasticForests extends AlgorithmBase {
 			this.response_classIDs = new Vector<Integer>();
 			this.response_classIDs.addAll(response_classIDs);
 			this.sampleIDs_per_class = new Vector<Vector<Integer>>();
-			this.sampleIDs_per_class.addAll(sampleIDs_per_class);
+			if ((sampleIDs_per_class != null) && (sampleIDs_per_class.size() > 0)) {
+			    this.sampleIDs_per_class.addAll(sampleIDs_per_class);
+			}
 			this.class_weights = new Vector<Double>();
-			this.class_weights.addAll(class_weights);
+			if ((class_weights != null) && (class_weights.size() > 0)) {
+			    this.class_weights.addAll(class_weights);
+			}
 			counter = null;
 			counter_per_class = null;
 		}
@@ -2920,7 +2939,9 @@ public class StochasticForests extends AlgorithmBase {
 			this.class_values.addAll(class_values);
 			this.response_classIDs = new Vector<Integer>();
 			this.response_classIDs.addAll(response_classIDs);
-			sampleIDs_per_class = new Vector<Vector<Integer>>();
+			if ((sampleIDs_per_class != null) && (sampleIDs_per_class.size() > 0)) {
+			    sampleIDs_per_class = new Vector<Vector<Integer>>();
+			}
 			class_weights = new Vector<Double>();
 			counter = null;
 			counter_per_class = null;
@@ -6316,9 +6337,9 @@ public class StochasticForests extends AlgorithmBase {
 		
 		// Multithreading
 		protected int num_threads;
-		protected Vector<Integer> thread_ranges;
+		protected Vector<Integer> thread_ranges = new Vector<Integer>();
 		
-		protected Vector<Tree> trees;
+		protected Vector<Tree> trees = new Vector<Tree>();
 		protected Data data;
 		
 		protected Vector<Vector<Vector<Double>>> predictions;
@@ -6327,9 +6348,9 @@ public class StochasticForests extends AlgorithmBase {
 		// Weight vector for selecting possible split variables, one weight between 0 (never select)
 		// and 1 (always select) for each variable
 		// Deterministic variables are always selected
-		protected Vector<Integer> deterministic_varIDs;
+		protected Vector<Integer> deterministic_varIDs = new Vector<Integer>();
 		protected Vector<Integer> split_select_varIDs;
-		protected Vector<Vector<Double>> split_select_weights;
+		protected Vector<Vector<Double>> split_select_weights = new Vector<Vector<Double>>();
 		
 		// Bootstrap weights
 		protected Vector<Double> case_weights;
@@ -6338,7 +6359,7 @@ public class StochasticForests extends AlgorithmBase {
 		protected ImportanceMode importance_mode;
 		
 		// Variable importance for all variables in forest
-		protected Vector<Double> variable_importance;
+		protected Vector<Double> variable_importance = new Vector<Double>();
 		
 		// Computation progress (finished trees)
 		protected int progress;
@@ -6524,13 +6545,13 @@ public class StochasticForests extends AlgorithmBase {
 			    loadFromFile(load_forest_filename);
 			  }
 			  // Set variables to be always considered for splitting
-			  if (!always_split_variable_names.isEmpty()) {
+			  if ((always_split_variable_names != null) && (!always_split_variable_names.isEmpty())) {
 			    setAlwaysSplitVariables(always_split_variable_names);
 			  }
 
 			  // TODO: Read 2d weights for tree-wise split select weights
 			  // Load split select weights from file
-			  if (!split_select_weights_file.isEmpty()) {
+			  if ((split_select_weights_file != null) && (!split_select_weights_file.isEmpty())) {
 			    Vector<Vector<Double>>split_select_weights = new Vector<Vector<Double>>();
 			    split_select_weights.add(new Vector<Double>());
 			    loadDoubleVectorFromFile(split_select_weights.get(0), split_select_weights_file);
@@ -6542,7 +6563,7 @@ public class StochasticForests extends AlgorithmBase {
 			  }
 
 			  // Load case weights from file
-			  if (!case_weights_file.isEmpty()) {
+			  if ((case_weights_file != null) && (!case_weights_file.isEmpty())) {
 			    loadDoubleVectorFromFile(case_weights, case_weights_file);
 			    if (case_weights.size() != num_samples - 1) {
 			      MipavUtil.displayError("Number of case weights is not equal to number of samples.");
@@ -6551,7 +6572,7 @@ public class StochasticForests extends AlgorithmBase {
 			  }
 
 			  // Sample from non-zero weights in holdout mode
-			  if (holdout && !case_weights.isEmpty()) {
+			  if (holdout && (case_weights != null) && !case_weights.isEmpty()) {
 			    int nonzero_weights = 0;
 			    for (i = 0; i < case_weights.size(); i++) {
 			      double weight = case_weights.get(i);
@@ -6564,9 +6585,9 @@ public class StochasticForests extends AlgorithmBase {
 			  }
 
 			  // Check if all catvars are coded in integers starting at 1
-			  if (!unordered_variable_names.isEmpty()) {
+			  if ((unordered_variable_names != null) && (!unordered_variable_names.isEmpty())) {
 			    String error_message = checkUnorderedVariables(data, unordered_variable_names);
-			    if (!error_message.isEmpty()) {
+			    if ((error_message != null) && (!error_message.isEmpty())) {
 			      MipavUtil.displayError(error_message);
 			      System.exit(-1);
 			    }
@@ -6676,7 +6697,6 @@ public class StochasticForests extends AlgorithmBase {
 			  data.addNoSplitVariable(dependent_varID);
 
 			  initInternal(status_variable_name);
-
 			  num_independent_variables = num_variables - data.getNoSplitVariables().size();
 
 			  // Init split select weights
@@ -6718,6 +6738,7 @@ public class StochasticForests extends AlgorithmBase {
 			    if (verbose && verbose_out) {
 			      Preferences.debug("Computing prediction error ..\n",Preferences.DEBUG_ALGORITHM);
 			    }
+
 			    computePredictionError();
 
 			    if (importance_mode == ImportanceMode.IMP_PERM_BREIMAN || importance_mode == ImportanceMode.IMP_PERM_LIAW ||
@@ -6888,10 +6909,12 @@ public class StochasticForests extends AlgorithmBase {
 
 			    // Get split select weights for tree
 			    Vector<Double> tree_split_select_weights = new Vector<Double>();
-			    if (split_select_weights.size() > 1) {
-			      tree_split_select_weights = split_select_weights.get(i);
-			    } else {
-			      tree_split_select_weights = split_select_weights.get(0);
+			    if (split_select_weights != null) {
+				    if (split_select_weights.size() > 1) {
+				      tree_split_select_weights = split_select_weights.get(i);
+				    } else if (split_select_weights.size() == 1) {
+				      tree_split_select_weights = split_select_weights.get(0);
+				    }
 			    }
 
 			    trees.get(i).init(data, mtry, dependent_varID, num_samples, tree_seed, deterministic_varIDs, split_select_varIDs,
@@ -6923,8 +6946,9 @@ public class StochasticForests extends AlgorithmBase {
 			      }
 			    }
 			  }
+			
 			  ExecutorService executorService = Executors.newCachedThreadPool();
-			  showProgress("Growing trees..", num_trees);
+			  executorService.execute(new showProgress("Growing trees..", num_trees));
 			  for (i = 0; i < num_threads; i++) {
 				  executorService.execute(new growTreesInThread(i, variable_importance_threads.get(i)));
 			  }
@@ -6972,7 +6996,7 @@ public class StochasticForests extends AlgorithmBase {
 
 			  // Predict
 			  ExecutorService executorService = Executors.newCachedThreadPool();
-			  showProgress("Predicting..", num_trees);
+			  executorService.execute(new showProgress("Predicting..", num_trees));
 			  for (i = 0; i < num_threads; i++) {
 				  executorService.execute(new predictTreesInThread(i, data, false));	  
 			  }
@@ -6993,7 +7017,7 @@ public class StochasticForests extends AlgorithmBase {
 			  allocatePredictMemory();
 			  progress = 0;
 			  executorService = Executors.newCachedThreadPool();
-			  showProgress("Aggregating predictions..", num_samples);
+			  executorService.execute(new showProgress("Aggregating predictions..", num_samples));
 			  for (i = 0; i < num_threads; ++i) {
 				  executorService.execute(new predictInternalInThread(i));
 			  }
@@ -7018,7 +7042,7 @@ public class StochasticForests extends AlgorithmBase {
 			
 			  progress = 0;
 			  ExecutorService executorService = Executors.newCachedThreadPool();
-			  showProgress("Computing prediction error..", num_trees);
+			  executorService.execute(new showProgress("Computing prediction error..", num_trees));
 			  for (int i = 0; i < num_threads; ++i) {
 				  executorService.execute(new predictTreesInThread(i, data, true));
 			  }
@@ -7056,7 +7080,7 @@ public class StochasticForests extends AlgorithmBase {
 
 			// Compute importance
 			  ExecutorService executorService = Executors.newCachedThreadPool();
-			  showProgress("Computing permutation importance..", num_trees);
+			  executorService.execute(new showProgress("Computing permutation importance..", num_trees));
 			  for (i = 0; i < num_threads; ++i) {
 				for (j = 0; j < num_independent_variables; j++) {
 					variable_importance_threads.get(i).add(0.0);
@@ -7148,9 +7172,9 @@ public class StochasticForests extends AlgorithmBase {
 				          ++progress;
 				      }
 				      finally {
+				    	  condition_variable.signalAll();
 				          mutex.unlock();
 				      }
-				      condition_variable.signalAll();
 				    }
 				  }
 			  }
@@ -7179,9 +7203,9 @@ public class StochasticForests extends AlgorithmBase {
 				         ++progress;
 				      }
 				      finally {
+				    	  condition_variable.signalAll();
 				          mutex.unlock();
 				      }
-				      condition_variable.signalAll();
 				    }
 				  }
 			   }
@@ -7210,9 +7234,9 @@ public class StochasticForests extends AlgorithmBase {
 			          ++progress;
 			      }
 			      finally {
+			    	  condition_variable.signalAll();
 			          mutex.unlock();
 			      }
-			      condition_variable.signalAll();
 			    }
 			  }
 			}
@@ -7242,9 +7266,9 @@ public class StochasticForests extends AlgorithmBase {
 			          ++progress;
 			      }
 			      finally {
+			    	  condition_variable.signalAll();
 			          mutex.unlock();
 			      }
-			      condition_variable.signalAll();
 			    }
 			  }
 			}
@@ -7399,8 +7423,14 @@ public class StochasticForests extends AlgorithmBase {
 			  }
 		}
 		
-		public void showProgress(String operation, int max_progress) {
-
+		public class showProgress implements Runnable {
+			  String operation;
+			  int max_progress;
+              public showProgress(String operation, int max_progress) {
+                  this.operation = operation;
+                  this.max_progress =- max_progress;
+              }
+              public void run() {
 			  Instant start_time = Instant.now();
 			  Instant last_time = Instant.now();
 			  mutex.lock();
@@ -7431,6 +7461,7 @@ public class StochasticForests extends AlgorithmBase {
 			    }
 			  }
 			  mutex.unlock();
+              }
 		}
 
 
@@ -7438,15 +7469,15 @@ public class StochasticForests extends AlgorithmBase {
 	
 	private class ForestClassification extends Forest {
 		// Classes of the dependent variable and classIDs for responses
-		  Vector<Double> class_values;
-		  Vector<Integer> response_classIDs;
+		  Vector<Double> class_values = new Vector<Double>();
+		  Vector<Integer> response_classIDs = new Vector<Integer>();
 		  Vector<Vector<Integer>> sampleIDs_per_class;
 
 		  // Splitting weights
 		  Vector<Double> class_weights;
 
 		  // Table with classifications and true classes
-		  Map<Pair<Double, Double>, Integer> classification_table;
+		  HashMap<Pair<Double, Double>, Integer> classification_table = new HashMap<Pair<Double, Double>, Integer>();
 		  
 		  public Vector<Double> getClassValues() {
 			    return class_values;
@@ -10952,18 +10983,18 @@ public class StochasticForests extends AlgorithmBase {
 	   if (testMain) {
 		   treetype = TreeType.TREE_CLASSIFICATION;
 		   memory_mode = MemoryMode.MEM_DOUBLE;
-		   dependent_variable_name = "Species";  
+		   dependent_variable_name = "species";  
 		   input_file = "C:"+File.separator+"ranger-master"+File.separator+"iris.data.txt";
 		   mtry = 2;
+		   output_prefix = "C:"+File.separator+"ranger-master"+File.separator+"output";
 		   num_trees = 500;
 		   verbose_out = true;
 		   seed = 0L;
 		   num_threads = 1;
+		   importance_mode = ImportanceMode.IMP_NONE;
 		   unordered_variable_names = new Vector<String>();
-		   unordered_variable_names.add("sepal_length");
-		   unordered_variable_names.add("sepal_width");
-		   unordered_variable_names.add("petal_length");
-		   unordered_variable_names.add("petal_width");
+		   unordered_variable_names.add("species");
+		   sample_fraction = 0.5;
 	   }
 	   
 	   Forest forest = null;
