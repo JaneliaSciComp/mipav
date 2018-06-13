@@ -9324,6 +9324,10 @@ public class StochasticForests extends AlgorithmBase {
 
 	public void runAlgorithm() {
 	   // The higher level .R test files require installation of the GenABEL package.
+	   // On April 18, 2018 Marvin Wright posted the comment:
+       // I'd like to have a small tutorial on how to use the C++ version, including a test dataset. 
+	   // Since this will take some time, here is the iris data in the correct format:
+	   // I will revisit testing when Marvin Wright's tutorial on the C++ version appears.
 	   if (testUtility) {
 		   Random random = new Random();
 		   int i, j;
