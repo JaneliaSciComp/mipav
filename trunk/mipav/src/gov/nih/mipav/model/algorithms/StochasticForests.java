@@ -147,62 +147,93 @@ public class StochasticForests extends AlgorithmBase {
 	
 	private TreeType treetype;
 	
+	// Grow a probability forest as in Malley et al. (2012).
 	private boolean probability = false;
 	
+	// Show computation status and estimated runtime
 	private boolean verbose_out = false;
 	
+	// Name of dependent variable, needed if no formula given. For survival forests this is the time variable.
 	private String dependent_variable_name = null;
 	
 	private MemoryMode memory_mode;
 	
 	private String input_file = null;
 	
+	// {Number of variables to possibly split at in each node. 
+	// Default is the (rounded down) square root of the number variables.
 	private int mtry;
 	
 	private String output_prefix = null;
 	
+	// Number of trees.
 	private int num_trees;
 	
 	private long seed;
 	
+	// Number of threads. Default is number of CPUs available.
 	private int num_threads;
 	
 	private String load_forest_filename = null;
 	
+	// Variable importance mode, one of 'none', 'impurity', 'impurity_corrected', 'permutation'. 
+	// The 'impurity' measure is the Gini index for classification, the variance of the responses for regression 
+	// and the sum of test statistics (see \code{splitrule}) for survival.
 	private ImportanceMode importance_mode;
 	
+	// Minimal node size. Default 1 for classification, 5 for regression, 
+	// 3 for survival, and 10 for probability.
 	private int min_node_size;
 	
+	// Numeric vector with weights between 0 and 1, representing the probability to select variables for splitting. 
+	// Alternatively, a list of size num.trees, containing split select weight vectors for each tree can be used.}
 	private String split_select_weights_file = null;
 	
+	// {Character vector with variable names to be always selected in addition to the \code{mtry} variables tried for splitting.
 	private Vector<String> always_split_variable_names;
 	
+	// Name of status variable, only applicable to survival data and needed if no formula given. Use 1 for event and 0 for censoring.
 	private String status_variable_name = null;
 	
 	private boolean sample_with_replacement;
 	
 	private Vector<String> unordered_variable_names;
 	
+	// Use memory saving (but slower) splitting mode. No effect for survival and GWAS data. 
+	// Warning: This option slows down the tree growing, use only if you encounter memory problems.
 	private boolean memory_saving_splitting;
 	
+	// Splitting rule. For classification and probability estimation "gini" or "extratrees" with default "gini". 
+	// For regression "variance", "extratrees" or "maxstat" with default "variance". 
+	// For survival "logrank", "extratrees", "C" or "maxstat" with default "logrank".
 	private SplitRule splitrule;
 	
+	// Weights for sampling of training observations. Observations with larger weights will be selected with higher 
+	// probability in the bootstrap (or subsampled) samples for the trees.
 	private String case_weights_file = null;
 	
 	private boolean predict_all;
 	
+	// Fraction of observations to sample. Default is 1 for sampling with replacement 
+	// and 0.632 for sampling without replacement. For classification, this can be a vector of class-specific values.
 	private double sample_fraction;
 	
+	// For "maxstat" splitrule: Significance threshold to allow splitting.
 	private double alpha;
 	
+	// For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting.
 	private double minprop;
 	
+	// Hold-out mode. Hold-out all samples with case weight 0 and use these for variable importance and prediction error.
 	private boolean holdout;
 	
 	private PredictionType prediction_type;
 	
+	// For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.
 	private int num_random_splits;
 	
+	// Save \code{ranger.forest} object, required for prediction. 
+	// Set to \code{FALSE} to reduce memory usage if no prediction intended.
 	private boolean write;
 	
 	private abstract class Data {
@@ -389,7 +420,7 @@ public class StochasticForests extends AlgorithmBase {
 	    			    }
 	    			    else {
 	    			    	cValue = cValue + 1.0;
-	    			    	System.out.println("tokens[i] = " + tokens[i] + " cValue = " + cValue);
+	    			    	System.out.println("tokens["+i+"] = " + tokens[i] + " cValue = " + cValue);
 	    			    	categoricalMap.put(tokens[i], cValue);
 	    			    	set(column, row, cValue, error);
 	    			    }
@@ -2246,6 +2277,7 @@ public class StochasticForests extends AlgorithmBase {
 	    protected boolean holdout;
 	    
 	    // Inbag counts
+	    // Save how often observations are in-bag in each tree.
 	    protected boolean keep_inbag;
 	    protected Vector<Integer> inbag_counts = new Vector<Integer>();
 	    
@@ -3762,7 +3794,7 @@ public class StochasticForests extends AlgorithmBase {
 		Vector<Vector<Integer>> sampleIDs_per_class;
 		
 		// Class counts in terminal nodes.  Empty for non-terminal nodes
-		Vector<Vector<Double>> terminal_class_counts;
+		Vector<Vector<Double>> terminal_class_counts = new Vector<Vector<Double>>();
 		
 		// Splitting weights
 		Vector<Double> class_weights;
@@ -3778,9 +3810,13 @@ public class StochasticForests extends AlgorithmBase {
 			this.response_classIDs = new Vector<Integer>();
 			this.response_classIDs.addAll(response_classIDs);
 			this.sampleIDs_per_class = new Vector<Vector<Integer>>();
-			this.sampleIDs_per_class.addAll(sampleIDs_per_class);
+			if ((sampleIDs_per_class != null) && (sampleIDs_per_class.size() > 0)) {
+			    this.sampleIDs_per_class.addAll(sampleIDs_per_class);
+			}
 			this.class_weights = new Vector<Double>();
-			this.class_weights.addAll(class_weights);
+			if ((class_weights != null) && (class_weights.size() > 0)) {
+			    this.class_weights.addAll(class_weights);
+			}
 			counter = null;
 			counter_per_class = null;
 		}
@@ -3793,7 +3829,9 @@ public class StochasticForests extends AlgorithmBase {
 			this.class_values.addAll(class_values);
 			this.response_classIDs = new Vector<Integer>();
 			this.response_classIDs.addAll(response_classIDs);
-			sampleIDs_per_class = new Vector<Vector<Integer>>();
+			if ((sampleIDs_per_class != null) && (sampleIDs_per_class.size() > 0)) {
+			    sampleIDs_per_class = new Vector<Vector<Integer>>();
+			}
 			this.terminal_class_counts = new Vector<Vector<Double>>();
 			this.terminal_class_counts.addAll(terminal_class_counts);
 			class_weights = new Vector<Double>();
@@ -5363,7 +5401,7 @@ public class StochasticForests extends AlgorithmBase {
 		private Vector<Integer> response_timepointIDs;
 		
 		// For all terminal nodes CHF for all unique timepoints.  For other nodes empty vector.
-		private Vector<Vector<Double>> chf;
+		private Vector<Vector<Double>> chf = new Vector<Vector<Double>>();
 		
 		// Fields to save to while tree growing
 		private int num_deaths[];
@@ -6697,6 +6735,7 @@ public class StochasticForests extends AlgorithmBase {
 			  data.addNoSplitVariable(dependent_varID);
 
 			  initInternal(status_variable_name);
+	
 			  num_independent_variables = num_variables - data.getNoSplitVariables().size();
 
 			  // Init split select weights
@@ -6775,7 +6814,7 @@ public class StochasticForests extends AlgorithmBase {
 			      Preferences.debug("Overall OOB prediction error:      " + overall_prediction_error + "\n\n", Preferences.DEBUG_ALGORITHM);
 			    }
 
-			    if (!split_select_weights.isEmpty() & !split_select_weights.get(0).isEmpty()) {
+			    if ((split_select_weights != null) && !split_select_weights.isEmpty() & !split_select_weights.get(0).isEmpty()) {
 			      if (verbose_out) {
 			          Preferences.debug(
 			          "Warning: Split select weights used. Variable importance measures are only comparable for variables with equal weights.\n",
@@ -7936,8 +7975,8 @@ public class StochasticForests extends AlgorithmBase {
 
 	private class ForestProbability extends Forest {
 		  // Classes of the dependent variable and classIDs for responses
-		  protected Vector<Double> class_values;
-		  protected Vector<Integer> response_classIDs;
+		  protected Vector<Double> class_values = new Vector<Double>();
+		  protected Vector<Integer> response_classIDs = new Vector<Integer>();
 		  protected Vector<Vector<Integer>> sampleIDs_per_class;
 
 		  // Splitting weights
@@ -8760,8 +8799,8 @@ public class StochasticForests extends AlgorithmBase {
 	
 	private class ForestSurvival extends Forest {
 		  private int status_varID;
-		  private Vector<Double> unique_timepoints;
-		  private Vector<Integer> response_timepointIDs;
+		  private Vector<Double> unique_timepoints = new Vector<Double>();
+		  private Vector<Integer> response_timepointIDs = new Vector<Integer>();
 		  
 		  public Vector<Vector<Vector<Double>>>getChf() {
 			    int i;
@@ -8816,7 +8855,7 @@ public class StochasticForests extends AlgorithmBase {
           public void initInternal(String status_variable_name) {
               int i;
         	  // Convert status variable name to ID
-        	  if (!prediction_mode && !status_variable_name.isEmpty()) {
+        	  if (!prediction_mode && (status_variable_name != null) && !status_variable_name.isEmpty()) {
         	    status_varID = data.getVariableID(status_variable_name);
         	  }
 
@@ -8839,11 +8878,7 @@ public class StochasticForests extends AlgorithmBase {
         	    unique_timepoint_set.add(data.get(i, dependent_varID));
         	  }
         	  unique_timepoints.ensureCapacity(unique_timepoint_set.size());
-        	  Double unique_timepoint_array[] = (Double [])unique_timepoint_set.toArray();
-        	  for (i = 0; i < unique_timepoint_array.length; i++) {
-        		Double t = unique_timepoint_array[i];
-        	    unique_timepoints.add(t);
-        	  }
+        	  unique_timepoints.addAll(unique_timepoint_set);
 
         	  // Create response_timepointIDs
         	  if (!prediction_mode) {
@@ -10990,11 +11025,14 @@ public class StochasticForests extends AlgorithmBase {
 		   num_trees = 500;
 		   verbose_out = true;
 		   seed = 0L;
-		   num_threads = 1;
-		   importance_mode = ImportanceMode.IMP_NONE;
+		   num_threads = 4;
+		   importance_mode = ImportanceMode.IMP_GINI;
 		   unordered_variable_names = new Vector<String>();
 		   unordered_variable_names.add("species");
 		   sample_fraction = 0.5;
+		   write = true;
+		   predict_all = true;
+		   load_forest_filename = "C:"+File.separator+"ranger-master"+File.separator+"output.forest";
 	   }
 	   
 	   Forest forest = null;
