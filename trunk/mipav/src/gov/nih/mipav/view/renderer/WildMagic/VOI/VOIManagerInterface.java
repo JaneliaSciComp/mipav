@@ -6664,9 +6664,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 					if ( parsed.length != 0 )
 					{
 						VOIText text = new VOIText();
-						float x, y, z, r;
-						if ( parsed.length > 3 )
+						float x, y, z, r, g, b;
+						if ( parsed.length > 6 )
 						{
+							// name, position and color
 							int parsedIndex = 0;
 							String name = String.valueOf( parsed[parsedIndex++] );
 							text.setText(name);
@@ -6674,7 +6675,25 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
 							r    = (parsed.length > parsedIndex+3) ? (parsed[parsedIndex+3].length() > 0) ? Float.valueOf( parsed[parsedIndex+3] ) : 1 : 1;
-							System.err.println( name + " " + x + " " + y + " " + z + " " + r );
+							g    = (parsed.length > parsedIndex+4) ? (parsed[parsedIndex+4].length() > 0) ? Float.valueOf( parsed[parsedIndex+4] ) : 1 : 1;
+							b    = (parsed.length > parsedIndex+5) ? (parsed[parsedIndex+5].length() > 0) ? Float.valueOf( parsed[parsedIndex+5] ) : 1 : 1;
+//							System.err.println( name + " " + x + " " + y + " " + z + " " + r );
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x+1, y, z ) );
+							text.setColor( new Color(r/255f,g/255f,b/255f) );
+							annotationVOI.getCurves().add(text);
+						}
+						else if ( parsed.length >= 4 )
+						{
+							// name, position and radius:
+							int parsedIndex = 0;
+							String name = String.valueOf( parsed[parsedIndex++] );
+							text.setText(name);
+							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+							r    = (parsed.length > parsedIndex+3) ? (parsed[parsedIndex+3].length() > 0) ? Float.valueOf( parsed[parsedIndex+3] ) : 1 : 1;
+//							System.err.println( name + " " + x + " " + y + " " + z + " " + r );
 							text.add( new Vector3f( x, y, z ) );
 							text.add( new Vector3f( x+r, y, z ) );
 							annotationVOI.getCurves().add(text);

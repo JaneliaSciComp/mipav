@@ -233,13 +233,21 @@ public class WormData
 		if ( voi != null ) wormImage.registerVOI(voi);
 	}
 	
-	public VOIVector openStraightLattice()
+	public void openStraightLattice()
 	{
-		VOIVector lattice = new VOIVector();
-		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + straightenedLattice + File.separator, true, lattice, true);
-		return lattice;
+		
+//		VOIVector lattice = new VOIVector();
+//		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + straightenedLattice + File.separator, true, lattice, true);
+//		return lattice;
 
-//		return LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + straightenedLattice + File.separator + "straightened_annotations.csv");
+		VOIVector voi = LatticeModel.readLatticeCSV(outputDirectory + File.separator + straightenedLattice + File.separator + "straightened_lattice.csv");
+		if ( voi != null ) 
+		{
+			for ( int i = 0; i < voi.size(); i++ )
+			{
+				wormImage.registerVOI(voi.elementAt(i));
+			}
+		}
 	}
 	
 	public void openStraightSeamCells()
@@ -267,8 +275,9 @@ public class WormData
 			File outputFileDir = new File(fileName);
 			if ( outputFileDir.exists() )
 			{
-				latticeList[i] = new VOIVector();
-				LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator, true, latticeList[i], false);
+//				latticeList[i] = new VOIVector();
+//				LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator, true, latticeList[i], false);
+				latticeList[i] = LatticeModel.readLatticeCSV(outputDirectory + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator + "lattice.csv");
 			}
 		}
 		return latticeList;
@@ -281,8 +290,9 @@ public class WormData
 		File outputFileDir = new File(fileName);
 		if ( outputFileDir.exists() )
 		{
-			VOIVector finalLattice = new VOIVector();
-			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
+//			VOIVector finalLattice = new VOIVector();
+//			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
+			VOIVector finalLattice = LatticeModel.readLatticeCSV(outputDirectory + File.separator + editLatticeOutput + File.separator + "lattice.csv");
 			if ( finalLattice.size() > 0 )
 			{
 				return finalLattice.elementAt(0);
@@ -293,8 +303,9 @@ public class WormData
 		outputFileDir = new File(fileName);
 		if ( outputFileDir.exists() )
 		{
-			VOIVector lattice = new VOIVector();
-			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + 1 + File.separator, true, lattice, false);
+//			VOIVector lattice = new VOIVector();
+//			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + 1 + File.separator, true, lattice, false);	
+			VOIVector lattice = LatticeModel.readLatticeCSV(outputDirectory + File.separator + autoLatticeGenerationOutput + +1 + File.separator + "lattice.csv");
 			if ( lattice.size() > 0 )
 			{
 				return lattice.elementAt(0);
@@ -398,10 +409,10 @@ public class WormData
 		return skinSegmentation;
 	}
 	
-	public void saveLattice()
-	{
-		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editLatticeOutput + File.separator, wormImage);
-	}
+//	public void saveLattice()
+//	{
+//		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editLatticeOutput + File.separator, wormImage);
+//	}
 	
 	public String getAnnotationsPath()
 	{

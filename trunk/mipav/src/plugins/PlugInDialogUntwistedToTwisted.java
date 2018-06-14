@@ -237,8 +237,11 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 	private void callAlgorithm()
 	{
-		System.err.println( targetDir );
-		System.err.println( straightenedAnnotationFile );
+//		System.err.println( targetDir );
+//		test(straightenedAnnotationFile);
+//		if ( true ) return;
+//		
+//		System.err.println( straightenedAnnotationFile );
 
 		if ( (targetDir.length() == 0) || (straightenedAnnotationFile.length() == 0) ) {
 			return;
@@ -267,134 +270,45 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			if ( toTwisted != null )
 			{
 				AlgorithmTPSpline spline = null;
+				boolean testSpline = false;
+				Vector<String> commonNames = new Vector<String>();
+				VOI targetPts = null;
+				VOI inputPts = null;
 				if ( targetFile.exists() && inputFile.exists() )
 				{
 					// read registration points and calculate thin-plate spline transform:
-					VOI targetPts = LatticeModel.readAnnotationsCSV(targetPointsFile);
-					VOI inputPts = LatticeModel.readAnnotationsCSV(inputPointsFile);
+					targetPts = LatticeModel.readAnnotationsCSV(targetPointsFile);
+					inputPts = LatticeModel.readAnnotationsCSV(inputPointsFile);
 
-					Vector<String> commonNames = new Vector<String>();
-					for ( int i = 0; i < targetPts.getCurves().size(); i++ )
+					if ( targetPts != null && inputPts != null)
 					{
-						String targetName = ((VOIText)targetPts.getCurves().elementAt(i)).getText();
-						for ( int j = 0; j < inputPts.getCurves().size(); j++ )
-						{
-							String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
-
-							if ( targetName.equals(inputName) )
-							{
-								commonNames.add(inputName);
-								break;
-							}
-						}
-					}
-
-
-					int numTargetPts = commonNames.size();
-					if ( numTargetPts >= 4 ) 
-					{
-						double[] xSource = new double[ numTargetPts ]; 
-						double[] ySource = new double[ numTargetPts ]; 
-						double[] zSource = new double[ numTargetPts ]; 
-						double[] xTarget = new double[ numTargetPts ]; 
-						double[] yTarget = new double[ numTargetPts ]; 
-						double[] zTarget = new double[ numTargetPts ]; 
-						for ( int i = 0; i < commonNames.size(); i++ ) {
-							Vector3f sourcePt = null;
-							Vector3f targetPt = null;
-							for ( int j = 0; j < targetPts.getCurves().size(); j++ )
-							{
-								String targetName = ((VOIText)targetPts.getCurves().elementAt(j)).getText();
-								if ( targetName.equals(commonNames.elementAt(i) ) )
-								{
-									targetPt = targetPts.getCurves().elementAt(j).elementAt(0);
-									break;
-								}
-							}
-							for ( int j = 0; j < inputPts.getCurves().size(); j++ )
-							{
-								String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
-								if ( inputName.equals(commonNames.elementAt(i) ) )
-								{
-									sourcePt = inputPts.getCurves().elementAt(j).elementAt(0);
-									break;
-								}
-							}
-							if ( sourcePt != null && targetPt != null )
-							{
-								System.err.println( commonNames.elementAt(i) );
-								xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
-								xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
-							}
-						}
-
-						ModelImage inputImage = null;
-						if ( inputImageName != null ) {
-							File inputImageFile = new File( inputImageName );
-							if ( inputImageFile.exists() )
-							{
-								fileIO = new FileIO();
-								inputImage = fileIO.readImage(inputImageName);
-							}
-						}
-						boolean writeOutput = true;
-						if ( inputImage == null )
-						{
-							// no input image to warp, use the toTwisted image for dimensions, etc.
-							inputImage = toTwisted;
-							writeOutput = false;
-						}
-						ModelImage targetImage = null;
-						if ( (targetImageName != null) && writeOutput) {
-							File inputImageFile = new File( targetImageName );
-							if ( inputImageFile.exists() )
-							{
-								fileIO = new FileIO();
-								targetImage = fileIO.readImage(targetImageName);
-							}
-						}
-						if ( targetImage == null )
-						{
-							targetImage = inputImage;
-						}
-						spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, targetImage,
-								inputImage, !writeOutput);
-
-						spline.setRunningInSeparateThread(false);
-						spline.run();
-
-						if ( writeOutput )
-						{
-							ModelImage outputImage = spline.getResultImage();
-							outputImage.calcMinMax();
-							new ViewJFrameImage((ModelImage) outputImage.clone());
-							System.err.println( outputImage.getImageName() + "   " + outputImage.getImageDirectory() );
-							ModelImage.saveImage(outputImage);
-							outputImage.disposeLocal(false);
-							outputImage = null;
-							inputImage.disposeLocal(false);
-							inputImage = null;
-
-							if ( targetImage != null )
-							{
-								targetImage.disposeLocal(false);
-								targetImage = null;
-							}
-						}
-
-						for ( int i = 0; i < numTargetPts; i++ ) {
-							Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
-							Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
-							float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
-							if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
-							{
-								System.err.println( sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
-							}
-						}
-					}
-
-					else {
-						MipavUtil.displayError( "Target points and input points must have at least 4 matches" );
+						checkPointMatch(targetPts, inputPts);
+						findPairs(toTwisted, targetPts, inputPts);
+						
+//						for ( int i = 0; i < targetPts.getCurves().size(); i++ )
+//						{
+//							String targetName = ((VOIText)targetPts.getCurves().elementAt(i)).getText();
+//							for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+//							{
+//								String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+//
+//								if ( targetName.equals(inputName) )
+//								{
+//									commonNames.add(inputName);
+//									System.err.println("Match found: " + inputName);
+//									break;
+//								}
+//							}
+//						}
+//
+//						int numTargetPts = commonNames.size();
+//						if ( numTargetPts >= 4 ) 
+//						{
+//							testSpline = true;					
+//						}
+//						else {
+//							MipavUtil.displayError( "Target points and input points must have at least 4 matches" );
+//						}
 					}
 				}
 
@@ -411,20 +325,38 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 					{
 						Vector<String> failedList = new Vector<String>();
 						VOI annotationVOI = new VOI( (short)0, inputFileName + "_" + targetDirName, VOI.ANNOTATION, 0 );
-						for ( int j = 0; j < annotations.getCurves().size(); j++ )
+						for ( int i = 0; i < annotations.getCurves().size(); i++ )
 						{
-							VOIText text = (VOIText) annotations.getCurves().elementAt(j);
+							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
 							Vector3f pos = text.elementAt(0);
 							String name = text.getText();
 
 							// do thin-plane spline registration on input:
 							Vector3f transformedPt = new Vector3f(pos);
-							if ( spline != null )
+							if ( piecewiseSplines != null )
 							{
-								float[] temp = spline.getCorrespondingPoint(pos.X, pos.Y, pos.Z);
-								transformedPt.X = temp[0];
-								transformedPt.Y = temp[1];
-								transformedPt.Z = temp[2];
+								spline = null;
+								for ( int j = splineBoundsL.getCurves().size() - 1; j >= 0; j-- )
+								{
+									Vector3f boundL = splineBoundsL.getCurves().elementAt(j).elementAt(0);
+									Vector3f boundR = splineBoundsL.getCurves().elementAt(j).elementAt(0);
+									if ( pos.Z >= boundL.Z && pos.Z >= boundR.Z )
+									{
+										spline = piecewiseSplines.elementAt(j);
+										
+										System.err.println( "Found spline: " + "  " + name + "   " + ((VOIText)splineBoundsL.getCurves().elementAt(j)).getText() + "   " +
+												((VOIText)splineBoundsR.getCurves().elementAt(j)).getText() );
+										break;
+									}
+								}
+								if ( spline != null )
+								{
+									float[] temp = spline.getCorrespondingPoint(pos.X, pos.Y, pos.Z);
+									transformedPt.X = temp[0];
+									transformedPt.Y = temp[1];
+									transformedPt.Z = temp[2];
+									System.err.println("Spline: " + name + " " + pos + " => " + transformedPt );
+								}
 							}
 
 							if ( ((int)transformedPt.X >= 0) && ((int)transformedPt.X < dimX) && 
@@ -477,191 +409,6 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		{
 			MipavUtil.displayError( "Error reading file: " + toTwistedFile.getName() );
 		}
-
-
-		//		if ( includeRange != null )
-		//		{
-		//			System.err.println("Starting plugin" );
-		//			for ( int i = 0; i < includeRange.size(); i++ )
-		//			{				
-		//				// Build the full image name:
-		//				baseFileName = baseFileNameText.getText();
-		//				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-		//				File imageFile = new File(baseFileDir + File.separator + fileName);
-		//
-		//				if ( imageFile.exists() )
-		//				{	
-		//					System.err.println( "   " + fileName );
-		//					FileIO fileIO = new FileIO();
-		//					if ( wormImage != null )
-		//					{
-		//						wormImage.disposeLocal(false);
-		//						wormImage = null;
-		//					}
-		//					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-		//					WormData wormData = new WormData(wormImage);
-		//
-		////					String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + "_positions.csv";
-		////					System.err.println( "   " + positionsFile );
-		////					File textFile = new File(baseFileDir + File.separator + "Positions" + File.separator + positionsFile);
-		////					if ( textFile.exists() )
-		////					{			
-		////						if ( twistedToUntwisted.isSelected() )
-		////						{
-		////							String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator +
-		////									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 									
-		////									PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
-		////							VOIVector latticeVector = new VOIVector();
-		////							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
-		////							if ( latticeVector.size() != 0 )
-		////							{
-		////								VOIVector vois = readMarkerPositions(positionsFile, textFile, null);
-		////								VOI annotations = vois.elementAt(0);
-		////
-		////								if ( annotations != null )
-		////								{
-		////									if ( annotations.getCurves().size() > 0 )
-		////									{
-		////										LatticeModel model = new LatticeModel(wormImage);
-		////										model.setSeamCellImage( wormData.readSeamSegmentation() );
-		////										model.setLattice(latticeVector.elementAt(0));
-		////										model.setMarkers(annotations);
-		////
-		////										model.interpolateLattice( false, false, false, true );	
-		////
-		////										VOI annotationsStraight = model.getAnnotationsStraight();
-		////
-		////
-		////										String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-		////												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
-		////												"output_images" + File.separator + 
-		////												baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
-		////										File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
-		//////										System.err.println(distanceName + " " + distanceMapFile.exists() );											
-		////										ModelImage distanceMap = null;
-		////										if ( distanceMapFile.exists() )
-		////										{
-		////											distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);
-		////										}
-		////										Vector<Integer> distance = null;
-		////										if ( distanceMap != null )
-		////										{
-		////											distance = new Vector<Integer>();
-		////											for ( int j = 0; j < annotationsStraight.getCurves().size(); j++ )
-		////											{
-		////												VOIText text = (VOIText) annotationsStraight.getCurves().elementAt(j);
-		////												Vector3f pos = text.elementAt(0);
-		////												int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
-		////												distance.add(d);
-		////											}
-		////											
-		////											distanceMap.disposeLocal(false);
-		////											distanceMap = null;
-		////										}
-		////
-		////										String fileBase = baseFileName + "_" + includeRange.elementAt(i) + "_positions_straight.csv";
-		////										saveMarkerPositions(baseFileDir + File.separator + "Positions" + File.separator + fileBase, annotationsStraight, distance);
-		////										model.dispose();
-		////										model = null;
-		////									}
-		////								}
-		////							}
-		////						}
-		////						else if ( untwistedToTwisted.isSelected() )
-		////						{
-		//							String toTwistedName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-		//									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
-		//									"output_images" + File.separator + 
-		//									baseFileName + "_" + includeRange.elementAt(i) + "_toTwisted.xml";
-		//							File toTwistedFile = new File(baseFileDir + File.separator + toTwistedName );
-		////							System.err.println(toTwistedName + " " + toTwistedFile.exists() );
-		//							ModelImage toTwisted = null;
-		//							if ( toTwistedFile.exists() )
-		//							{
-		//								toTwisted = fileIO.readImage(toTwistedName, baseFileDir + File.separator, false, null);  
-		//							}
-		//							String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-		//									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
-		//									"output_images" + File.separator + 
-		//									baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
-		//							File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
-		////							System.err.println(distanceName + " " + distanceMapFile.exists() );
-		//							ModelImage distanceMap = null;
-		//							if ( distanceMapFile.exists() )
-		//							{
-		//								distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);  
-		//							}
-		//							if ( toTwisted != null )
-		//							{
-		//								String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-		//										baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
-		//										"tracked_annotations.csv";
-		//								File textFile = new File(baseFileDir + File.separator + positionsFile);
-		//										
-		//								int[] imageExtents = new int[]{toTwisted.getExtents()[0], toTwisted.getExtents()[1]};
-		//								VOIVector vois = readMarkerPositions(positionsFile, textFile, imageExtents);
-		//								VOI annotations = vois.elementAt(0);
-		//
-		//								if ( annotations != null )
-		//								{
-		//									if ( annotations.getCurves().size() > 0 )
-		//									{
-		//
-		//										VOI annotationVOI = new VOI( (short)0, fileName, VOI.ANNOTATION, 0 );
-		//										Vector<Integer> distance = new Vector<Integer>();
-		//										for ( int j = 0; j < annotations.getCurves().size(); j++ )
-		//										{
-		//											VOIText text = (VOIText) annotations.getCurves().elementAt(j);
-		//											Vector3f pos = text.elementAt(0);
-		//											String name = text.getText();
-		//
-		//											float valid = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 0 );
-		////											if ( valid != 1 )
-		////											{
-		////												System.err.println( name + " invalid position" );
-		////											}
-		//											float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
-		//											float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
-		//											float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
-		//											Vector3f newPos = new Vector3f(x, y, z);
-		//
-		//											VOIText newText = new VOIText();
-		//											newText.setText(name);
-		//											newText.add(newPos);
-		//
-		//											annotationVOI.getCurves().add(newText);
-		//
-		//
-		//											int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
-		//											distance.add(d);
-		//										}
-		//										
-		//										String outputFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-		//												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
-		//												"tracked_annotations_twisted.csv";
-		//										saveMarkerPositions(baseFileDir + File.separator + outputFile, annotationVOI, distance);
-		//										
-		//										toTwisted.disposeLocal(false);
-		//										toTwisted = null;
-		//										if ( distanceMap != null )
-		//										{
-		//											distanceMap.disposeLocal(false);
-		//											distanceMap = null;
-		//										}
-		//									}
-		//								}
-		//							}
-		////						}
-		////					}
-		//				}
-		//				else
-		//				{
-		//					MipavUtil.displayError( "Error in reading image file " + fileName );
-		//				}
-		//
-		//			}
-		//			System.err.println("Done plugin" );
-		//		}
 	}     
 
 
@@ -785,7 +532,105 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		System.gc();
 	}
 
+	private void test(String fileName )
+	{
+		File file = new File(fileName);
+		if ( !file.exists() ) return;
+		String saveFile = fileName.substring(0, fileName.lastIndexOf(".csv") ) + "_test.csv";
+		File outFile = new File(saveFile);
+		if ( outFile.exists() )
+		{
+			outFile.delete();
+		}
+		FileReader fr;
+		FileWriter fw;
+		try {
+			fr = new FileReader(file);
+			fw = new FileWriter(outFile);
+			BufferedReader br = new BufferedReader(fr);
+			String line = br.readLine(); // first line is header
+			StringTokenizer st = new StringTokenizer(line, ",");
+			if (st.hasMoreTokens()) {
+				fw.write(st.nextToken());	// name
+				fw.write(',');
+			}
+			if (st.hasMoreTokens()) {
+				fw.write(st.nextToken());	// visit type
+				fw.write(',');
+			}
+			if (st.hasMoreTokens()) {
+				fw.write(st.nextToken());	// GUID
+				fw.write(',');
+//				st.nextToken();
+//				fw.write("ID");	// GUID -> ID
+//				fw.write(',');
+			}
+			if (st.hasMoreTokens()) {
+				fw.write(st.nextToken());	// Age
+				fw.write(',');
+			}
+			if (st.hasMoreTokens()) {
+				fw.write(st.nextToken());	// Diagnosis
+				fw.write(',');
+			}
+			if (st.hasMoreTokens()) {
+				fw.write(st.nextToken());	// Variable
+				fw.write('\n');
+			}
+			line = br.readLine();
+			Vector<String> guidList = new Vector<String>();
+			while ( line != null )
+			{
+				st = new StringTokenizer(line, ",");
+				if (st.hasMoreTokens()) {
+					fw.write(st.nextToken());	// name
+					fw.write(',');
+				}
+				if (st.hasMoreTokens()) {
+					fw.write(st.nextToken());	// visit type
+					fw.write(',');
+				}
+				if (st.hasMoreTokens()) {
+//					fw.write(st.nextToken());	// GUID
+//					fw.write(',');
+					String guid = st.nextToken();
+					
+					if ( !guidList.contains(guid) )
+					{
+						guidList.add(guid);
+					}
+					int id = guidList.indexOf(guid);
+					fw.write(""+ (id + 55));	// GUID -> ID
+					fw.write(',');
+				}
+				if (st.hasMoreTokens()) {
+//					fw.write(st.nextToken());	// Age
+//					fw.write(',');
+					String ageInYears = st.nextToken();
+					int age = Float.valueOf(ageInYears).intValue() / 10;
+					age *= 10;
+					fw.write("" + age);	// Age in decades
+					fw.write(',');
+				}
+				if (st.hasMoreTokens()) {
+					fw.write(st.nextToken());	// Diagnosis
+					fw.write(',');
+				}
+				if (st.hasMoreTokens()) {
+					fw.write(st.nextToken());	// Variable
+				}
+				fw.write('\n');
+				line = br.readLine();
+			}
 
+			fr.close();
+			fw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	private VOIVector readMarkerPositions( String fileName, File file, int[] imageExtents )
 	{
@@ -926,5 +771,473 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		//		}
 
 		return true;
+	}
+	
+	private Vector<AlgorithmTPSpline> piecewiseSplines = null;
+	private VOI splineBoundsL = null;
+	private VOI splineBoundsR = null;
+	
+	private String pairSet[] = new String[] {"H0", "H1", "H2", "H3", "V0", "V1", "V2", "V3", "V4", "V5", "V6", "T" };
+	private void findPairs(ModelImage image, VOI targetPts, VOI inputPts)
+	{
+		VOI pairListTargetL = new VOI( (short)0, "temp", VOI.ANNOTATION, 0 );
+		VOI pairListTargetR = new VOI( (short)0, "temp", VOI.ANNOTATION, 0 );
+		VOI pairListInputL = new VOI( (short)0, "temp", VOI.ANNOTATION, 0 );
+		VOI pairListInputR = new VOI( (short)0, "temp", VOI.ANNOTATION, 0 );
+		for ( int i = 0; i < pairSet.length; i++ )
+		{
+			boolean foundLeft = false;
+			for ( int j = 0; j < targetPts.getCurves().size(); j++ )
+			{
+				String name = ((VOIText)targetPts.getCurves().elementAt(j)).getText();
+				if ( name.equals( pairSet[i] + "L") )
+				{
+					foundLeft = true;
+					pairListTargetL.getCurves().add(new VOIText(((VOIText)targetPts.getCurves().elementAt(j))));
+					break;
+				}
+			}
+			if ( foundLeft )
+			{
+				foundLeft = false;
+				for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+				{
+					String name = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+					if ( name.equals( pairSet[i] + "L") )
+					{
+						foundLeft = true;
+						pairListInputL.getCurves().add(new VOIText(((VOIText)inputPts.getCurves().elementAt(j))));
+						break;
+					}
+				}
+				if ( !foundLeft )
+				{
+					pairListTargetL.getCurves().remove(pairListTargetL.getCurves().lastElement());
+				}
+				else 
+				{
+					boolean foundRight = false;
+					for ( int j = 0; j < targetPts.getCurves().size(); j++ )
+					{
+						String name = ((VOIText)targetPts.getCurves().elementAt(j)).getText();
+						if ( name.equals( pairSet[i] + "R") )
+						{
+							foundRight = true;
+							pairListTargetR.getCurves().add(new VOIText(((VOIText)targetPts.getCurves().elementAt(j))));
+							break;
+						}
+					}
+					if ( foundRight )
+					{
+						foundRight = false;
+						for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+						{
+							String name = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+							if ( name.equals( pairSet[i] + "R") )
+							{
+								foundRight = true;
+								pairListInputR.getCurves().add(new VOIText(((VOIText)inputPts.getCurves().elementAt(j))));
+								break;
+							}
+						}
+						if ( !foundRight )
+						{
+							// left and right added to target, only left added to input, remove since right for input wasn't found:
+							pairListTargetL.getCurves().remove(pairListTargetL.getCurves().lastElement());
+							pairListTargetR.getCurves().remove(pairListTargetR.getCurves().lastElement());
+							pairListInputL.getCurves().remove(pairListInputL.getCurves().lastElement());
+						}
+//						System.err.println( "Found " + pairSet[i] + "   " + pairListTarget.getCurves().size()  + "   " + pairListInput.getCurves().size() );
+					}
+				}
+			}
+		}
+		
+		if ( pairListTargetL.getCurves().size() + pairListTargetR.getCurves().size() < 4 )
+		{
+			MipavUtil.displayError( "Target points and input points must have at least 4 matches" );
+			return;
+		}
+
+		VOIText previousT[] = new VOIText[] {((VOIText)pairListTargetL.getCurves().elementAt(0)), ((VOIText)pairListTargetR.getCurves().elementAt(0))};
+		VOIText previousI[] = new VOIText[] {((VOIText)pairListInputL.getCurves().elementAt(0)), ((VOIText)pairListInputR.getCurves().elementAt(0))};
+		for ( int i = 0; i < pairListTargetL.getCurves().size() - 1; i++ )
+		{
+//			System.err.println( ((VOIText)pairListInput.getCurves().elementAt(i)).getText() + "   " +  ((VOIText)pairListInput.getCurves().elementAt(i)).getText());
+			int numTargetPts = 4;
+			double[] xSource = new double[ numTargetPts ]; 
+			double[] ySource = new double[ numTargetPts ]; 
+			double[] zSource = new double[ numTargetPts ]; 
+			double[] xTarget = new double[ numTargetPts ]; 
+			double[] yTarget = new double[ numTargetPts ]; 
+			double[] zTarget = new double[ numTargetPts ]; 
+			
+			VOIText target1L = previousT[0];
+			VOIText input1L = previousI[0];
+			xSource[0] = input1L.elementAt(0).X;
+			ySource[0] = input1L.elementAt(0).Y;
+			zSource[0] = input1L.elementAt(0).Z;
+			
+			xTarget[0] = target1L.elementAt(0).X;
+			yTarget[0] = target1L.elementAt(0).Y;
+			zTarget[0] = target1L.elementAt(0).Z;
+			
+			VOIText target1R = previousT[1];
+			VOIText input1R = previousI[1];
+			xSource[1] = input1R.elementAt(0).X;
+			ySource[1] = input1R.elementAt(0).Y;
+			zSource[1] = input1R.elementAt(0).Z;
+			
+			xTarget[1] = target1R.elementAt(0).X;
+			yTarget[1] = target1R.elementAt(0).Y;
+			zTarget[1] = target1R.elementAt(0).Z;
+			
+			VOIText target2L = ((VOIText)pairListInputL.getCurves().elementAt(i+1));
+			VOIText input2L = ((VOIText)pairListInputL.getCurves().elementAt(i+1));
+			xSource[2] = input2L.elementAt(0).X;
+			ySource[2] = input2L.elementAt(0).Y;
+			zSource[2] = input2L.elementAt(0).Z;
+			
+			xTarget[2] = target2L.elementAt(0).X;
+			yTarget[2] = target2L.elementAt(0).Y;
+			zTarget[2] = target2L.elementAt(0).Z;
+			
+			VOIText target2R = ((VOIText)pairListInputR.getCurves().elementAt(i+1));
+			VOIText input2R = ((VOIText)pairListInputR.getCurves().elementAt(i+1));
+			xSource[3] = input2R.elementAt(0).X;
+			ySource[3] = input2R.elementAt(0).Y;
+			zSource[3] = input2R.elementAt(0).Z;
+			
+			xTarget[3] = target2R.elementAt(0).X;
+			yTarget[3] = target2R.elementAt(0).Y;
+			zTarget[3] = target2R.elementAt(0).Z;
+			
+
+			// create spline:
+			AlgorithmTPSpline spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, image,
+					image, true);
+
+			spline.setRunningInSeparateThread(false);
+			boolean splineError = false;
+//			System.err.println( "Creating spline " + i + "\n" + 
+//					target1L.getText() + " " + input1L.getText() + "\n" + 
+//					target1R.getText() + " " + input1R.getText() + "\n" +
+//					target2L.getText() + " " + input2L.getText() + "\n" + 
+//					target2R.getText() + " " + input2R.getText() + "\n" + "\n" );
+			try {
+			spline.run();
+			} catch (Exception e) {
+				System.err.println( "Spline error: " + e.toString() );
+				splineError = true;
+			}
+			if ( !splineError ) {
+//				System.err.println( "Bounds " + input1L.getText() + "   " + input1R.getText() );
+//				System.err.println( "Bounds " + input2L.getText() + "   " + input2R.getText() );
+				previousT[0] = target2L;				previousT[1] = target2R;
+				previousI[0] = input2L;					previousI[1] = input2R;
+				
+				if ( piecewiseSplines == null )
+				{
+					piecewiseSplines = new Vector<AlgorithmTPSpline>();
+				}
+				if ( splineBoundsL == null )
+				{
+					splineBoundsL =  new VOI( (short)0, "spline left", VOI.ANNOTATION, 0 );
+				}
+				if ( splineBoundsR == null )
+				{
+					splineBoundsR =  new VOI( (short)0, "spline right", VOI.ANNOTATION, 0 );
+				}
+				piecewiseSplines.add(spline);
+				splineBoundsL.getCurves().add(input1L);
+				splineBoundsR.getCurves().add(input1R);
+			}
+			else if ( splineError && (i == (pairListTargetL.getCurves().size() - 2) ))
+			{
+				boolean splineFound = false;
+				// failed on the last spline, try this last pair with previous pairs:
+				for ( int j = i -1; j >= 0; j-- )
+				{
+					target1L = (VOIText)pairListTargetL.getCurves().elementAt(j);
+					input1L = (VOIText)pairListInputL.getCurves().elementAt(j);
+					xSource[0] = input1L.elementAt(0).X;
+					ySource[0] = input1L.elementAt(0).Y;
+					zSource[0] = input1L.elementAt(0).Z;
+
+					xTarget[0] = target1L.elementAt(0).X;
+					yTarget[0] = target1L.elementAt(0).Y;
+					zTarget[0] = target1L.elementAt(0).Z;
+
+					target1R = (VOIText)pairListTargetR.getCurves().elementAt(j);
+					input1R = (VOIText)pairListInputR.getCurves().elementAt(j);
+					xSource[1] = input1R.elementAt(0).X;
+					ySource[1] = input1R.elementAt(0).Y;
+					zSource[1] = input1R.elementAt(0).Z;
+
+					xTarget[1] = target1R.elementAt(0).X;
+					yTarget[1] = target1R.elementAt(0).Y;
+					zTarget[1] = target1R.elementAt(0).Z;
+
+					// create spline:
+					spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, image,
+							image, true);
+
+					spline.setRunningInSeparateThread(false);
+					splineError = false;
+//					System.err.println( "Creating spline " + i + "\n" + 
+//							target1L.getText() + " " + input1L.getText() + "\n" + 
+//							target1R.getText() + " " + input1R.getText() + "\n" +
+//							target2L.getText() + " " + input2L.getText() + "\n" + 
+//							target2R.getText() + " " + input2R.getText() + "\n" + "\n" );
+					try {
+						spline.run();
+					} catch (Exception e) {
+						System.err.println( "Spline error: " + e.toString() );
+						splineError = true;
+					}
+					if ( !splineError )
+					{
+//						System.err.println( "Bounds " + input1L.getText() + "   " + input1R.getText() );
+//						System.err.println( "Bounds " + input2L.getText() + "   " + input2R.getText() );
+						splineFound = true;
+						piecewiseSplines.add(spline);
+						splineBoundsL.getCurves().add(input1L);
+						splineBoundsR.getCurves().add(input1R);
+						break;
+					}
+				}
+			}
+			
+		}
+		System.err.println("");
+		System.err.println("");
+		System.err.println("Done piecewise splines " + piecewiseSplines.size() );
+		System.err.println("");
+		System.err.println("");
+	}
+
+	private void checkPointMatch(VOI targetPts, VOI inputPts)
+	{
+		float rightDistance = 0;
+		float leftDistance = 0;
+		float leftSwapDistance = 0;
+		float rightSwapDistance = 0;
+		for ( int i = 0; i < targetPts.getCurves().size(); i++ ) {
+			
+			String name = ((VOIText)targetPts.getCurves().elementAt(i)).getText();
+			boolean isLeft = name.substring(name.length() - 1).equals("L");
+			boolean isRight = name.substring(name.length() - 1).equals("R");
+			Vector3f sourcePt = null;
+			Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
+			
+			for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+			{
+				String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+				if ( inputName.equals( name ) )
+				{
+					sourcePt = inputPts.getCurves().elementAt(j).elementAt(0);
+					break;
+				}
+			}
+			if ( sourcePt != null && targetPt != null )
+			{
+				if ( isLeft )
+				{
+					leftDistance += sourcePt.distance(targetPt);
+				}
+				if ( isRight )
+				{
+					rightDistance += sourcePt.distance(targetPt);
+				}
+			}			
+			
+			String newName = name.substring(0, name.length()-1);
+			boolean isLeftSwap = false;
+			boolean isRightSwap = false;
+			if ( isLeft )
+			{
+				newName = newName + "R";
+				isLeftSwap = true;
+			}
+			if ( isRight )
+			{
+				newName = newName + "L";
+				isRightSwap = true;
+			}
+			sourcePt = null;
+			for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+			{
+				// input point uses the swapped name:
+				String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+				if ( inputName.equals( newName ) )
+				{
+					sourcePt = inputPts.getCurves().elementAt(j).elementAt(0);
+					break;
+				}
+			}
+			if ( sourcePt != null && targetPt != null )
+			{
+				System.err.println( newName + "  vs " + name );
+				if ( isLeftSwap )
+				{
+					leftSwapDistance += sourcePt.distance(targetPt);
+				}
+				if ( isRightSwap )
+				{
+					rightSwapDistance += sourcePt.distance(targetPt);
+				}
+			}			
+		}
+		
+		System.err.println( leftDistance + "   " + rightDistance );
+		System.err.println( leftSwapDistance + "   " + rightSwapDistance );
+		if ( leftDistance > leftSwapDistance && rightDistance > rightSwapDistance )
+		{
+			MipavUtil.displayInfo( "Correspondence points seem to be swapped left-right... applying fix." );
+
+			VOI temp = new VOI( (short)0, "temp", VOI.ANNOTATION, 0 );
+			for ( int i = 0; i < inputPts.getCurves().size(); i++ ) {
+				String name = ((VOIText)inputPts.getCurves().elementAt(i)).getText();
+				boolean isLeft = name.substring(name.length() - 1).equals("L");
+				boolean isRight = name.substring(name.length() - 1).equals("R");
+				
+				String newName = name.substring(0, name.length()-1);
+				if ( isLeft )
+				{
+					newName = newName + "R";
+				}
+				if ( isRight )
+				{
+					newName = newName + "L";
+				}
+				if ( isLeft || isRight )
+				{
+					VOIText text = ((VOIText)inputPts.getCurves().elementAt(i));
+					text.setText(newName);
+					temp.getCurves().add(text);
+				}
+			}
+			inputPts.getCurves().clear();
+			inputPts.getCurves().addAll(temp.getCurves());
+		}
+	}
+	
+	private AlgorithmTPSpline createSpline(ModelImage toTwisted, Vector<String> commonNames, VOI targetPts, VOI inputPts, boolean printTest, boolean useImages ) {
+		ModelImage inputImage = toTwisted;
+		ModelImage targetImage = null;
+		boolean writeOutput = false;
+		if ( useImages ) {
+			FileIO fileIO;
+			if ( inputImageName != null ) {
+				File inputImageFile = new File( inputImageName );
+				if ( inputImageFile.exists() )
+				{
+					fileIO = new FileIO();
+					inputImage = fileIO.readImage(inputImageName);
+				}
+			}
+			if ( inputImage == null )
+			{
+				// no input image to warp, use the toTwisted image for dimensions, etc.
+				inputImage = toTwisted;
+				writeOutput = false;
+			}
+			if ( (targetImageName != null) && writeOutput) {
+				File inputImageFile = new File( targetImageName );
+				if ( inputImageFile.exists() )
+				{
+					fileIO = new FileIO();
+					targetImage = fileIO.readImage(targetImageName);
+				}
+			}
+			if ( targetImage == null )
+			{
+				targetImage = inputImage;
+			}
+		}
+		
+		
+		int numTargetPts = commonNames.size();
+		double[] xSource = new double[ numTargetPts ]; 
+		double[] ySource = new double[ numTargetPts ]; 
+		double[] zSource = new double[ numTargetPts ]; 
+		double[] xTarget = new double[ numTargetPts ]; 
+		double[] yTarget = new double[ numTargetPts ]; 
+		double[] zTarget = new double[ numTargetPts ]; 
+		for ( int i = 0; i < commonNames.size(); i++ ) {
+			Vector3f sourcePt = null;
+			Vector3f targetPt = null;
+			for ( int j = 0; j < targetPts.getCurves().size(); j++ )
+			{
+				String targetName = ((VOIText)targetPts.getCurves().elementAt(j)).getText();
+				if ( targetName.equals(commonNames.elementAt(i) ) )
+				{
+					targetPt = targetPts.getCurves().elementAt(j).elementAt(0);
+					break;
+				}
+			}
+			for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+			{
+				String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+				if ( inputName.equals(commonNames.elementAt(i) ) )
+				{
+					sourcePt = inputPts.getCurves().elementAt(j).elementAt(0);
+					break;
+				}
+			}
+			if ( sourcePt != null && targetPt != null )
+			{
+				System.err.println( commonNames.elementAt(i) );
+				xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
+				xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
+			}
+		}
+
+		// create spline:
+		AlgorithmTPSpline spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, targetImage,
+				inputImage, !writeOutput);
+
+		spline.setRunningInSeparateThread(false);
+		try {
+		spline.run();
+		} catch (Exception e) {
+			System.err.println(e.getStackTrace());
+			return null;
+		}
+		System.err.println("Number of spline points: " + xSource.length );
+
+		if ( writeOutput )
+		{
+			ModelImage outputImage = spline.getResultImage();
+			outputImage.calcMinMax();
+			new ViewJFrameImage((ModelImage) outputImage.clone());
+			System.err.println( outputImage.getImageName() + "   " + outputImage.getImageDirectory() );
+			ModelImage.saveImage(outputImage);
+			outputImage.disposeLocal(false);
+			outputImage = null;
+			inputImage.disposeLocal(false);
+			inputImage = null;
+
+			if ( targetImage != null )
+			{
+				targetImage.disposeLocal(false);
+				targetImage = null;
+			}
+		}
+		if ( printTest )
+		{
+			// test that target points warp to source points:
+			for ( int i = 0; i < numTargetPts; i++ ) {
+				Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
+				Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
+				float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+				if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+				{
+					System.err.println( sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+				}
+			}
+		}
+		
+		return spline;
 	}
 }

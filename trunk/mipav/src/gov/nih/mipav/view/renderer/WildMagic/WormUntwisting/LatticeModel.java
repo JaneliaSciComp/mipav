@@ -306,7 +306,7 @@ public class LatticeModel {
 							text.setColor( new Color(r/255f,g/255f,b/255f) );
 							annotationVOIs.getCurves().add(text);
 						}
-						else if ( parsed.length > 4 )
+						else if ( parsed.length >= 4 )
 						{
 							// name, position and radius:
 							int parsedIndex = 0;
@@ -1463,30 +1463,47 @@ public class LatticeModel {
 
 			clear3DSelection();
 
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(lattice);
-			lattice.setColor(new Color(0, 0, 255));
-			lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
-			lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
-			lattice.getCurves().elementAt(0).setClosed(false);
-			lattice.getCurves().elementAt(1).setClosed(false);
-			for (int j = 0; j < lattice.getCurves().elementAt(0).size(); j++) {
-				final short id = (short) imageA.getVOIs().getUniqueID();
-				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
-				final VOIContour mainAxis = new VOIContour(false);
-				mainAxis.add(lattice.getCurves().elementAt(0).elementAt(j));
-				mainAxis.add(lattice.getCurves().elementAt(1).elementAt(j));
-				marker.getCurves().add(mainAxis);
-				marker.setColor(new Color(255, 255, 0));
-				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-				if (j == 0) {
-					marker.setColor(new Color(0, 255, 0));
-					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-				}
-				imageA.registerVOI(marker);
+//			imageA.unregisterAllVOIs();
+//			imageA.registerVOI(lattice);
+//			lattice.setColor(new Color(0, 0, 255));
+//			lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
+//			lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
+//			lattice.getCurves().elementAt(0).setClosed(false);
+//			lattice.getCurves().elementAt(1).setClosed(false);
+//			for (int j = 0; j < lattice.getCurves().elementAt(0).size(); j++) {
+//				final short id = (short) imageA.getVOIs().getUniqueID();
+//				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
+//				final VOIContour mainAxis = new VOIContour(false);
+//				mainAxis.add(lattice.getCurves().elementAt(0).elementAt(j));
+//				mainAxis.add(lattice.getCurves().elementAt(1).elementAt(j));
+//				marker.getCurves().add(mainAxis);
+//				marker.setColor(new Color(255, 255, 0));
+//				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
+//				if (j == 0) {
+//					marker.setColor(new Color(0, 255, 0));
+//					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
+//				}
+//				imageA.registerVOI(marker);
+//			}
+//
+//			saveAllVOIsTo(voiDir, imageA);
+			
+			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
+			for ( int j = 0; j < left.size(); j++ )
+			{
+				VOIText text = new VOIText();
+				text.setText( "L" + j );
+				text.add(left.elementAt(j));
+				text.add(left.elementAt(j));
+				latticePoints.getCurves().add(text);
+				
+				text = new VOIText();
+				text.setText( "R" + j );
+				text.add(right.elementAt(j));
+				text.add(right.elementAt(j));
+				latticePoints.getCurves().add(text);
 			}
-
-			saveAllVOIsTo(voiDir, imageA);
+			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
 
 			imageA.unregisterAllVOIs();
 			imageA.registerVOI(lattice);
@@ -1534,30 +1551,30 @@ public class LatticeModel {
 
 			clear3DSelection();
 
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(lattice);
-			lattice.setColor(new Color(0, 0, 255));
-			lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
-			lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
-			lattice.getCurves().elementAt(0).setClosed(false);
-			lattice.getCurves().elementAt(1).setClosed(false);
-			for (int j = 0; j < lattice.getCurves().elementAt(0).size(); j++) {
-				final short id = (short) imageA.getVOIs().getUniqueID();
-				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
-				final VOIContour mainAxis = new VOIContour(false);
-				mainAxis.add(lattice.getCurves().elementAt(0).elementAt(j));
-				mainAxis.add(lattice.getCurves().elementAt(1).elementAt(j));
-				marker.getCurves().add(mainAxis);
-				marker.setColor(new Color(255, 255, 0));
-				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-				if (j == 0) {
-					marker.setColor(new Color(0, 255, 0));
-					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-				}
-				imageA.registerVOI(marker);
-			}
-
-			saveAllVOIsTo(voiDir + File.separator, imageA);
+//			imageA.unregisterAllVOIs();
+//			imageA.registerVOI(lattice);
+//			lattice.setColor(new Color(0, 0, 255));
+//			lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
+//			lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
+//			lattice.getCurves().elementAt(0).setClosed(false);
+//			lattice.getCurves().elementAt(1).setClosed(false);
+//			for (int j = 0; j < lattice.getCurves().elementAt(0).size(); j++) {
+//				final short id = (short) imageA.getVOIs().getUniqueID();
+//				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
+//				final VOIContour mainAxis = new VOIContour(false);
+//				mainAxis.add(lattice.getCurves().elementAt(0).elementAt(j));
+//				mainAxis.add(lattice.getCurves().elementAt(1).elementAt(j));
+//				marker.getCurves().add(mainAxis);
+//				marker.setColor(new Color(255, 255, 0));
+//				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
+//				if (j == 0) {
+//					marker.setColor(new Color(0, 255, 0));
+//					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
+//				}
+//				imageA.registerVOI(marker);
+//			}
+//
+//			saveAllVOIsTo(voiDir + File.separator, imageA);
 
 			
 
@@ -6671,7 +6688,7 @@ public class LatticeModel {
 	 * @param resultVector the result VOI Vector containing the loaded VOIs.
 	 * @param registerVOIs when true the VOIs are registered in the input image.
 	 */
-	public static void loadAllVOIsFrom(ModelImage image, final String voiDir, boolean quietMode, VOIVector resultVector, boolean registerVOIs) {
+	private static void loadAllVOIsFrom(ModelImage image, final String voiDir, boolean quietMode, VOIVector resultVector, boolean registerVOIs) {
 
 		int i, j;
 		VOI[] VOIs;
@@ -8552,7 +8569,7 @@ public class LatticeModel {
 		}
 
 		voiDir = outputDirectory + File.separator + "straightened_lattice" + File.separator;
-		saveAllVOIsTo(voiDir, resultImage);
+//		saveAllVOIsTo(voiDir, resultImage);
 		
 
 		VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
