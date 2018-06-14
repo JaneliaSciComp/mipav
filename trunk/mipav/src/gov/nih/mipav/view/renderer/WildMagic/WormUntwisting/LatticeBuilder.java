@@ -246,7 +246,7 @@ public class LatticeBuilder {
 				outputFileDir.mkdir();
 			}
 
-			LatticeModel.saveAllVOIsTo(fileName, image);
+//			LatticeModel.saveAllVOIsTo(fileName, image);
 			
 			VOI latticePoints = new VOI( (short)0, "lattice" + (i+1), VOI.ANNOTATION, 0);
 			VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
