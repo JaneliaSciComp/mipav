@@ -438,11 +438,12 @@ public class PlugInAlgorithmWormUntwisting
 					//							}
 					model.retwist(wormImage);
 					
-					wormData.readSeamCells();
-					model.setMarkers( wormData.getSeamAnnotations() );
-					model.interpolateLattice( false, false, false, true );	
-					model.saveAnnotationStraight(wormImage, "straightened_seamcells", "straightened_seamcells.csv" );	
-					
+					if ( wormData.readSeamCells() != null )
+					{
+						model.setMarkers( wormData.getSeamAnnotations() );
+						model.interpolateLattice( false, false, false, true );	
+						model.saveAnnotationStraight(wormImage, "straightened_seamcells", "straightened_seamcells.csv" );	
+					}
 					wormData.readNamedSeamCells();
 					model.setMarkers( wormData.getSeamAnnotations() );
 					model.interpolateLattice( false, false, false, true );	
