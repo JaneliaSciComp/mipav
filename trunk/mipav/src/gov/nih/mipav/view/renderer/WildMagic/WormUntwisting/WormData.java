@@ -370,7 +370,10 @@ public class WormData
 			seamAnnotations = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + autoSeamCellSegmentationOutput + File.separator + "seam_cells.csv");
 			seamEdited = false;
 		}
-		
+		if ( seamAnnotations == null )
+		{
+			return null;
+		}
 		
 		seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
