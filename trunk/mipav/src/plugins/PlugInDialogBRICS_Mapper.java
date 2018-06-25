@@ -1528,7 +1528,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	try {
     		String str = null;
     		String id = "BRICSMap01";
-    		int i = 0;
     		final FileInputStream fis = new FileInputStream(txtFile);
     		br = new BufferedReader(new InputStreamReader(fis));
     		str = br.readLine();
@@ -1538,23 +1537,25 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		}
     		
     		String[] structure = str.split(": ");
-    		String formStructure = structure[structure.length-1];
-    		listPane.setBorder(buildTitledBorder("  Reference Form Structure:  " + formStructure));
+    		String formStr = structure[structure.length-1];
+    		//uvmuvmformStructure.setValueAt(formStr);
+    		listPane.setBorder(buildTitledBorder("  Reference Form Structure:  " + formStr));
     		
-    		str=br.readLine();
+    		//str=br.readLine();
     		
-    	
-    			String[] des = str.split(TSV_OUTPUT_DELIM);
-    			deTableModel.addRow(des);
-    		
-    		
-        	
-    		
+    		while((str=br.readLine())!= null) {
+    			String[] datas = str.split(TSV_OUTPUT_DELIM);
+    			List<String> list = new ArrayList<String>(Arrays.asList(datas));
+    			list.remove(1);
+    			datas = list.toArray(new String[0]);
+    			deTableModel.addRow(datas);
+    		}
+    		loadCSVButton.setEnabled(true);
     		br.close();
     		
     	}
-    		catch(final Exception e) {
-    			
+    		catch(final IOException e) {
+    			System.err.println("Problem closing txt file handle");
     		}
     	
     	
