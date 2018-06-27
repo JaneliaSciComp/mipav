@@ -270,7 +270,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	// Gets full list of form structures from the BRICS data dictionary
         	final Thread thread = new FormListRESTThread(this);
             thread.start();
-            reloadCSVButton.setEnabled(true);
+            //reloadCSVButton.setEnabled(true);
             
         }  else if (command.equalsIgnoreCase("SelectStruct")) {
         	
@@ -1239,6 +1239,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         public void actionPerformed(final ActionEvent e) {
             final String command = e.getActionCommand();
             if (command.equalsIgnoreCase("ChooseStructOK")) {
+            	deTableModel.setRowCount(0); // resets table in case value are loaded in 
+            	reloadCSVButton.setEnabled(true); // enabled after form selected - not sure how to cast sting to formStructure
                 final int selectedRow = structsTable.getSelectedRow();
                 if (selectedRow != -1) {
                     this.dispose();
@@ -1538,10 +1540,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		
     		String[] structure = str.split(": ");
     		String formStr = structure[structure.length-1];
-    		//uvmuvmformStructure.setValueAt(formStr);
-    		listPane.setBorder(buildTitledBorder("  Reference Form Structure:  " + formStr));
+    		// need a way to cast formStr to the type of FormStrucutre so that all methods will work - as of now reload is activated after form 
+    		// structure is selected so that the plugin still has full functionality
     		
-    		//str=br.readLine();
+    		listPane.setBorder(buildTitledBorder("  Reference Form Structure:  " + formStr));
+    		deTableModel.setRowCount(0); // resets table when load is selected 
     		
     		while((str=br.readLine())!= null) {
     			String[] datas = str.split(TSV_OUTPUT_DELIM);
@@ -1552,6 +1555,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		}
     		loadCSVButton.setEnabled(true);
     		br.close();
+    		
+    		
     		
     	}
     		catch(final IOException e) {
