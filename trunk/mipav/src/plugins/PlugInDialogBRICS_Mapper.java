@@ -74,7 +74,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private List<FormStructure> formStructureList = null;
 
     /** Buttons used to control the work flow */
-    private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, reloadCSVButton, xFormButton, outputXFormDirButton;
+    private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, reloadCSVButton, xFormButton, outputXFormDirButton, transformedFileButton;
 
     
     /** Used to store the output file of the mapping tool */
@@ -953,7 +953,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 chooser.setDialogTitle("Choose mapping file.");
-                chooser.setFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
+                chooser.setFileFilter(new FileNameExtensionFilter("Text files (.txt)", "txt"));
                 final int returnValue = chooser.showOpenDialog(this);
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     // Set table ... with just file name(s) 
@@ -3533,21 +3533,25 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         final JPanel buttonPanel = new JPanel(new GridBagLayout());
 
         final GridBagConstraints gbc = new GridBagConstraints();
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        //gbc.fill = GridBagConstraints.;
         
         removeRowButton = new JButton("Remove Row");
         removeRowButton.setToolTipText("Remove row entry in transform process.");
         removeRowButton.addActionListener(this);
         removeRowButton.setActionCommand("RemoveRow");
-
         removeRowButton.setEnabled(true);
-
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         buttonPanel.add(removeRowButton, gbc);
+        
+        transformedFileButton = new JButton("Load Files");
+        transformedFileButton.setToolTipText("Load in a set of files that were previously transformed.");
+        transformedFileButton.addActionListener(this);
+        transformedFileButton.setActionCommand("LoadFiles");       
+        transformedFileButton.setEnabled(true);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        buttonPanel.add(transformedFileButton, gbc);
+        
 
         return buttonPanel;
     }
