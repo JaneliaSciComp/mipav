@@ -96,6 +96,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     /** Used to store the location of the text file to be saved */
     private String txtFileDir;
+    
+    /**Used to store the location of the text file to be transformed */
+    private String xFormFileDir;
 
     /** Dev data dictionary server. */
     @SuppressWarnings("unused")
@@ -302,6 +305,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	if (returnValue == JFileChooser.APPROVE_OPTION) {
         		reloadSourceDEsTXTFile(loadChooser.getSelectedFile());
         	}
+        	saveMapButton.setEnabled(true);
         	
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
@@ -3496,6 +3500,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             centerInWindow(parent, this);
            
             setVisible(true);
+            
         }
              
         
@@ -3520,7 +3525,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	}
             	dispose();
             
-            } 
+            }
+            if(validateXFormTable()) {
+            	xFormButton.setEnabled(true);
+            }
+            
         }
     }
     
@@ -3552,9 +3561,28 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         buttonPanel.add(transformedFileButton, gbc);
         
-
         return buttonPanel;
     }
 
+    /** Ensures one row is complete before transform button is enabled */
+    private boolean validateXFormTable() {
+    	int numRows = fileXFormTableModel.getRowCount();
+    	int filledRows = 0;
+    	
+    	for(int i=0; i<numRows; i++) {
+    		if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))!=null) {
+    			filledRows+=1;
+    		}
+    	}
+    	for(int i=0; i<filledRows; i++) {
+    		if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))!=null &&
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))!=null &&
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))!=null) {
+    			return true;
+    		}
+    	}
+    	return false;
+    	
+    }
 
 }
