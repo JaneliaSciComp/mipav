@@ -74,7 +74,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private List<FormStructure> formStructureList = null;
 
     /** Buttons used to control the work flow */
-    private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, reloadCSVButton, xFormButton, outputXFormDirButton, transformedFileButton;
+    private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, reloadCSVButton, xFormButton, outputXFormDirButton, transformedFileButton, saveXFormTableButton;
 
     
     /** Used to store the output file of the mapping tool */
@@ -171,6 +171,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     // Might be able to delete
     private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
+
+	private PlugInDialogBRICS_Mapper owner;
 
     /**
      * Text of the privacy notice displayed to the user before the tools can be used.
@@ -273,7 +275,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	// Gets full list of form structures from the BRICS data dictionary
         	final Thread thread = new FormListRESTThread(this);
             thread.start();
-            //reloadCSVButton.setEnabled(true);
+            reloadCSVButton.setEnabled(true);
             
         }  else if (command.equalsIgnoreCase("SelectStruct")) {
         	
@@ -362,6 +364,20 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	    } else if (command.equalsIgnoreCase("XFormFiles")) { 
 	    	//Actual transform code
 	    	
+	    } else if (command.equalsIgnoreCase("SaveXForm")) {
+	    	if(validateXFormTable()) {
+	    		final JFileChooser chooser = new JFileChooser();
+	    		chooser.setCurrentDirectory(new File(csvFileDir));
+	    		chooser.setDialogTitle("Save transform table");
+	    		chooser.setFileFilter(new FileNameExtensionFilter("Comma seperated value files (.csv)", "csv"));
+	    		final int returnValue = chooser.showSaveDialog(this);
+	    		if (returnValue == JFileChooser.APPROVE_OPTION) {
+	    			saveXFormTable(chooser.getSelectedFile());
+	            }
+	    	}
+	    	else {
+	    		displayError("Transform table is incomplete and not ready for saving");
+	    	}
 	    }
         
 	    	
@@ -375,7 +391,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     @Override
     public void windowClosing(final WindowEvent e) {
-
         if (JDialogStandalonePlugin.isExitRequired()) {
             ViewUserInterface.getReference().windowClosing(e);
         }
@@ -1244,7 +1259,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final String command = e.getActionCommand();
             if (command.equalsIgnoreCase("ChooseStructOK")) {
             	deTableModel.setRowCount(0); // resets table in case value are loaded in 
-            	reloadCSVButton.setEnabled(true); // enabled after form selected - not sure how to cast sting to formStructure
+            	
                 final int selectedRow = structsTable.getSelectedRow();
                 if (selectedRow != -1) {
                     this.dispose();
@@ -1281,7 +1296,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      */
     private class populateBRICSStructureTable {
         private static final long serialVersionUID = 859201819000159789L;
- 
+        
         //private FormStructure formStructure;
            
 		/**
@@ -1544,8 +1559,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		
     		String[] structure = str.split(": ");
     		String formStr = structure[structure.length-1];
-    		// need a way to cast formStr to the type of FormStrucutre so that all methods will work - as of now reload is activated after form 
-    		// structure is selected so that the plugin still has full functionality
+    		new populateBRICSStructureTable(owner, formStr);
     		
     		listPane.setBorder(buildTitledBorder("  Reference Form Structure:  " + formStr));
     		deTableModel.setRowCount(0); // resets table when load is selected 
@@ -3552,6 +3566,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         buttonPanel.add(removeRowButton, gbc);
         
+        saveXFormTableButton = new JButton("Save Transform Table");
+        saveXFormTableButton.setToolTipText("Save transform table for later use");
+        saveXFormTableButton.addActionListener(this);
+        saveXFormTableButton.setActionCommand("SaveXForm");
+        saveXFormTableButton.setEnabled(true);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        buttonPanel.add(saveXFormTableButton, gbc);
+        
         transformedFileButton = new JButton("Load Files");
         transformedFileButton.setToolTipText("Load in a set of files that were previously transformed.");
         transformedFileButton.addActionListener(this);
@@ -3584,5 +3607,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	return false;
     	
     }
-
+    
+    private boolean saveXFormTable(File csvFile) {
+    	BufferedWriter bw = null;
+    	return true;
+    }
 }
