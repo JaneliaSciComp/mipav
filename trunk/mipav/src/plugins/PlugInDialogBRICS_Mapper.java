@@ -365,7 +365,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	    	//Actual transform code
 	    	
 	    } else if (command.equalsIgnoreCase("SaveXForm")) {
-	    	if(validateXFormTable()) {
 	    		final JFileChooser chooser = new JFileChooser();
 	    		chooser.setCurrentDirectory(new File(csvFileDir));
 	    		chooser.setDialogTitle("Save transform table");
@@ -374,14 +373,21 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	    		if (returnValue == JFileChooser.APPROVE_OPTION) {
 	    			saveXFormTable(chooser.getSelectedFile());
 	            }
-	    	}
-	    	else {
-	    		displayError("Transform table is incomplete and not ready for saving");
-	    	}
+	    } else if (command.equalsIgnoreCase("LoadFiles")) {
+	    		final JFileChooser chooser = new JFileChooser();
+	    		chooser.setCurrentDirectory(new File(csvFileDir));
+	    		chooser.setDialogTitle("Reload Transform Table");
+	    		chooser.setFileFilter(new FileNameExtensionFilter("Comma seperated value files (.csv)","csv"));
+	    		final int returnValue = chooser.showOpenDialog(this);
+	    		if(returnValue == JFileChooser.APPROVE_OPTION) {
+	    			reloadXFormTable(chooser.getSelectedFile());
+	    		}
+	    }
+	    	
 	    }
         
 	    	
-    }
+    
 
     @Override
     public void windowActivated(final WindowEvent e) {}
@@ -1685,6 +1691,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
 
             final JPanel OKPanel = new JPanel();
+            final JPanel searchPanel = new JPanel();
 
             final JButton closeButton = new JButton("Close");
             closeButton.setActionCommand("srcDEClose");
@@ -1720,6 +1727,28 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             OKPanel.add(pairAButton);
             OKPanel.add(clearButton);
             OKPanel.add(closeButton);
+            
+            final JTextField searchBar = new JTextField();
+            
+            final JButton searchButton = new JButton("Search");
+            searchButton.setActionCommand("searchSRC");
+            searchButton.addActionListener(this);
+            searchButton.setMinimumSize(new Dimension(130,30));
+            searchButton.setPreferredSize(new Dimension(130,30));
+            searchButton.setFont(serif12B);
+            searchButton.setToolTipText("Search source data elements");
+            
+            final JButton resetButton = new JButton("Reset");
+            resetButton.setActionCommand("resetSearch");
+            resetButton.addActionListener(this);
+            resetButton.setMinimumSize(new Dimension(130,30));
+            resetButton.setPreferredSize(new Dimension(130,30));
+            resetButton.setFont(serif12B);
+            resetButton.setToolTipText("Reset search bar");
+            
+            searchPanel.add(searchBar);
+            searchPanel.add(searchButton);
+            searchPanel.add(resetButton);
 
             gbc.weightx = 0;
             gbc.weighty = 0;
@@ -1727,8 +1756,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.gridy = 3;
             gbc.insets = new Insets(10, 5, 10, 5);
             gbc.gridwidth = 1;
+            
+            
             mainPanel.add(OKPanel, gbc);
-
+            
             gbc.gridy = 2;
             gbc.weightx = 1;
             gbc.weighty = 1;
@@ -1738,6 +1769,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             JScrollPane sPane = buildCSVPanel();
             mainPanel.add(sPane, gbc);
             getContentPane().add(mainPanel, BorderLayout.CENTER);
+            // getContentPane().add(searchPanel, BorderLayout.NORTH);
 
             final Dimension dim = getContentPane().getPreferredSize();
             if (dim.height > 500) {
@@ -2006,6 +2038,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             		displayWarning("Please select both reference and source data elements.");
             	}        		
             }
+            
             
             // Update mapping column is source data elements dialog.
             updateMappedColumn();
@@ -3588,6 +3621,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
 
     /** Ensures one row is complete before transform button is enabled */
+    // this needs to be edited a little to ensure that it actually validates the table for each row and instance of file naming for saving
+    // the xformed files
     private boolean validateXFormTable() {
     	int numRows = fileXFormTableModel.getRowCount();
     	int filledRows = 0;
@@ -3610,6 +3645,63 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     private boolean saveXFormTable(File csvFile) {
     	BufferedWriter bw = null;
+    	
+    	try {
+    		String str;
+    		final FileOutputStream fis = new FileOutputStream(csvFile);
+            bw = new BufferedWriter(new OutputStreamWriter(fis));
+            int numRows = fileXFormTableModel.getRowCount();
+            
+            for(int i = 0; i < numRows; i++) {
+            	if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))!=null) {
+            		str = fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")) + "," +
+            				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files")) + "," +
+            				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"));
+            		str = str.replace("null", "");
+            		bw.write(str+"\n");
+            	}
+            }
+            	
+            printlnToLog("Successful saving of Transform table file");
+    	}
+    	
+    	catch (final IOException e){
+    		
+    	}
+    	
+    	finally {
+    		if (bw != null) {
+                try {
+                    bw.close();
+                } catch (IOException e) {
+                    System.err.println("Problem closing CSV file handle.");
+                    e.printStackTrace();
+                }
+                return false;
+            }
+    	}
+    	return true;
+    }
+    
+    private boolean reloadXFormTable(File csvFile) {
+    	BufferedReader br = null;
+    	try {
+    		String str;
+    		final FileInputStream fis= new FileInputStream(csvFile);
+        	br = new BufferedReader(new InputStreamReader(fis));
+            
+        	fileXFormTableModel.setRowCount(0);
+        	
+            while((str=br.readLine())!=null) {
+            	String[] datas = str.split(CSV_OUTPUT_DELIM);
+            	fileXFormTableModel.addRow(datas);
+            	
+            }
+            fileXFormTableModel.setRowCount(100);
+    	}
+    	catch (final Exception e) {
+    		
+    	}
     	return true;
     }
 }
