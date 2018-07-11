@@ -200,7 +200,7 @@ public class StrokeSegmentationDicomReceiver {
         
         setStorageDirectory(new File(outputDir));
         
-        setStorageFilePathFormat("{00080020}.{00080030}/{00200011}.{00200012}.{00200013}.dcm");
+        setStorageFilePathFormat("{00080020}/{00080020}.{00080030}/{00200011}.{00200012}.{00200013}.dcm");
         
         // anon versions don't include study/series uids
         //setStorageFilePathFormat("{00100020}/{0020000D}/{0020000E}/{00080008}/{00080018}.dcm");
@@ -287,18 +287,33 @@ public class StrokeSegmentationDicomReceiver {
             Vector<File> adcFiles = new Vector<File>();
             Vector<File> dwiFiles = new Vector<File>();
             
+            File baseDicomDir = null;
+            String lastnameInitial = null;
+            
             for (File file : receivedFileList) {
                 try {
                     Attributes attr = parse(file);
                     
                     final String[] imageTypes = attr.getStrings(TagUtils.toTag(0x0008, 0x0008));
                     
+                    if (lastnameInitial == null) {
+                        lastnameInitial = getInitialFromName(attr.getString(TagUtils.toTag(0x0010, 0x0010)));
+                    }
+                    
                     for (String val : imageTypes) {
                         if (val.equalsIgnoreCase("ADC") || val.equalsIgnoreCase("ADC_UNSPECIFIED")) {
+                            if (baseDicomDir == null) {
+                                baseDicomDir = file.getParentFile();
+                            }
+                            
                             adcFiles.add(file);
                             foundADC = true;
                             break;
                         } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE") || val.equalsIgnoreCase("TRACEW")) {
+                            if (baseDicomDir == null) {
+                                baseDicomDir = file.getParentFile();
+                            }
+                            
                             dwiFiles.add(file);
                             foundDWI = true;
                             break;
@@ -310,18 +325,12 @@ public class StrokeSegmentationDicomReceiver {
                 }
             }
             
-            String baseDicomDir = null;
-            
             // move ADC and DWI files to their own dir under parent inside outputDir
             if (foundADC) {
                 log("Found ADC volume in completed transfer.");
                 
                 for (File file : adcFiles) {
                     try {
-                        if (baseDicomDir == null) {
-                            baseDicomDir = file.getParent();
-                        }
-                        
                         renameTo(association, file, new File(file.getParent() + File.separator + "ADC" + File.separator + file.getName()));
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
@@ -335,10 +344,6 @@ public class StrokeSegmentationDicomReceiver {
                 
                 for (File file : dwiFiles) {
                     try {
-                        if (baseDicomDir == null) {
-                            baseDicomDir = file.getParent();
-                        }
-                        
                         renameTo(association, file, new File(file.getParent() + File.separator + "DWI" + File.separator + file.getName()));
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
@@ -347,9 +352,17 @@ public class StrokeSegmentationDicomReceiver {
                 }
             }
             
+            if (baseDicomDir != null && lastnameInitial != null) {
+                final File newBaseDir = new File(baseDicomDir.getAbsolutePath() + "_" + lastnameInitial);
+                boolean success = baseDicomDir.renameTo(newBaseDir);
+                if (success) {
+                    baseDicomDir = newBaseDir;
+                }
+            }
+            
             if (foundADC && foundDWI) {
-                log("Running segmentation on datasets in " + baseDicomDir);
-                new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseDicomDir);
+                log("Running segmentation on datasets in " + baseDicomDir.getAbsolutePath());
+                new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseDicomDir.getAbsolutePath());
             }
             
             addedCloseListener = false;
