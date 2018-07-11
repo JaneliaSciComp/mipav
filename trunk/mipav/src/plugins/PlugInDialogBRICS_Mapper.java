@@ -21,6 +21,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -1548,6 +1549,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
          
         return true;      
     }
+    /** Reload txt files that was saved off previously */
     
     private boolean reloadSourceDEsTXTFile(File txtFile) {
     	
@@ -1729,26 +1731,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             OKPanel.add(closeButton);
             
             final JTextField searchBar = new JTextField();
-            
-            final JButton searchButton = new JButton("Search");
-            searchButton.setActionCommand("searchSRC");
-            searchButton.addActionListener(this);
-            searchButton.setMinimumSize(new Dimension(130,30));
-            searchButton.setPreferredSize(new Dimension(130,30));
-            searchButton.setFont(serif12B);
-            searchButton.setToolTipText("Search source data elements");
-            
-            final JButton resetButton = new JButton("Reset");
-            resetButton.setActionCommand("resetSearch");
-            resetButton.addActionListener(this);
-            resetButton.setMinimumSize(new Dimension(130,30));
-            resetButton.setPreferredSize(new Dimension(130,30));
-            resetButton.setFont(serif12B);
-            resetButton.setToolTipText("Reset search bar");
-            
+            searchBar.setPreferredSize(new Dimension(350, 30));
             searchPanel.add(searchBar);
-            searchPanel.add(searchButton);
-            searchPanel.add(resetButton);
+            
 
             gbc.weightx = 0;
             gbc.weighty = 0;
@@ -1767,20 +1752,58 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             
             //Builds main panel 
             JScrollPane sPane = buildCSVPanel();
+            //srcDETable.setRowSorter(sorter);
             mainPanel.add(sPane, gbc);
             getContentPane().add(mainPanel, BorderLayout.CENTER);
-            // getContentPane().add(searchPanel, BorderLayout.NORTH);
+            getContentPane().add(searchPanel, BorderLayout.NORTH);
+            
 
             final Dimension dim = getContentPane().getPreferredSize();
             if (dim.height > 500) {
                 dim.height = 500;
             }
             sPane.setPreferredSize(dim);
-  
+            //srcDETable.setRowSorter(sorter);
             pack();
             centerInWindow(owner, this);
-           
+            
+            final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(srcDETableModel);
+            srcDETable.setRowSorter(sorter);
+            final JButton searchButton = new JButton("Search");
+            searchButton.setActionCommand("searchSRC");
+            searchButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+            		String text = searchBar.getText();
+            		if(text.length()==0) {
+            			sorter.setRowFilter(null);
+            		}
+            		else {
+            			sorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+            		}
+            	}
+            }); 
+            searchButton.setMinimumSize(new Dimension(130,30));
+            searchButton.setPreferredSize(new Dimension(130,30));
+            searchButton.setFont(serif12B);
+            searchButton.setToolTipText("Search source data elements");
+            
+            final JButton resetButton = new JButton("Reset");
+            resetButton.setActionCommand("resetSearch");
+            resetButton.addActionListener(new ActionListener() {
+            	public void actionPerformed(ActionEvent e) {
+            		sorter.setRowFilter(null);
+            		searchBar.setText("");
+            	}
+            });
+            resetButton.setMinimumSize(new Dimension(130,30));
+            resetButton.setPreferredSize(new Dimension(130,30));
+            resetButton.setFont(serif12B);
+            resetButton.setToolTipText("Reset search bar");
+            
+            searchPanel.add(searchButton);
+            searchPanel.add(resetButton);
             setVisible(true);
+            
         }
         
         /**
@@ -1801,12 +1824,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             srcDETable.setPreferredScrollableViewportSize(new Dimension(850, 300));
             srcDETable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             srcDETable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            srcDETable.setAutoCreateRowSorter(true);
             srcDETable.getColumn("Mapped").setCellRenderer(new CellRenderer()); // for coloring yes red
+            srcDETable.setAutoCreateRowSorter(true);
             
             srcDEPane = new JScrollPane(srcDETable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            srcDEPane.setBorder(buildTitledBorder(" Source Data Elements"));  
+            srcDEPane.setBorder(buildTitledBorder(" Source Data Elements")); 
+            
             // Populates the table with source data elements
             populateSrcTable();
             
@@ -1814,6 +1838,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             updateMappedColumn();
             
             return srcDEPane;
+            
         }
         
         /**
@@ -1869,6 +1894,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		srcDETableModel.setValueAt(dataElements.get(i)[4], i-1, srcDETableModel.getColumnIndex("Title"));
 	        	}
         	}
+            
         }
         
         
@@ -1918,7 +1944,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         @Override
         public void actionPerformed(final ActionEvent e) {
             final String command = e.getActionCommand();
-
+            
+            
             if (command.equalsIgnoreCase("srcDEClose")) {
                 dispose();
             } 
@@ -2038,6 +2065,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             		displayWarning("Please select both reference and source data elements.");
             	}        		
             }
+            
             
             
             // Update mapping column is source data elements dialog.
@@ -2249,6 +2277,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        	cbArray = new JComboBox[length];
 	        	for (int i = 0; i < length; i++) {
 	                gbc.gridy = i;
+	                //ListCellRenderer renderer = new ComplexCellRenderer();
 	                JComboBox<String> cb = new JComboBox<String>(refPVStrs);
 	                cbArray[i] = cb;
 	                
@@ -2258,6 +2287,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                else {
 	                	cb.setSelectedIndex(0);
 	                }
+	                //cb.setRenderer(renderer);
 	                cb.setFont(serif12);
 	                cb.setMinimumSize(new Dimension(180, 30));
 	                cb.setPreferredSize(new Dimension(180, 30));
@@ -2311,7 +2341,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	sPane.setBorder(buildTitledBorder(" Map Source PVs to Reference PVs"));
         	return sPane;
         }
-          
+        
+        
         
         /**
          * action performed
