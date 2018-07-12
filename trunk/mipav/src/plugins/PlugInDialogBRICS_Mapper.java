@@ -2113,7 +2113,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private final PlugInDialogBRICS_Mapper owner;
         String[] srcPVStrs = null;
         JComboBox[] cbArray = null;
-        
+        final int rowRef = deTable.getSelectedRow();
+        String srcPVs = null;
+        String mappedPVs = null;
+        String[] pvMapStr = null;
+        String refPVs = null;
+        String[] refPVStrs = null;
+        String[] mappedPVStrs = null;
+        String[] splitMappedPV = null;
 
         public PVMappingDialog(final PlugInDialogBRICS_Mapper owner) {
             super(owner, false);
@@ -2207,7 +2214,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	
         	final GridBagConstraints gbc = new GridBagConstraints();
         	final JPanel pvPanel = new JPanel(new GridBagLayout());
-        	final int rowRef = deTable.getSelectedRow();
+        	//final int rowRef = deTable.getSelectedRow();
         	gbc.weightx = 1;
         	gbc.weighty = 1;
             gbc.gridx = 0;
@@ -2215,7 +2222,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	
         	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).equalsIgnoreCase("double click to map")){
         		// Cell is blank
-        		String srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs"));
+        		srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs"));
             	srcPVStrs = srcPVs.split(";");
             	
             	// Build buttons from source PVs from main mapping dialog
@@ -2230,9 +2237,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	} 
         	else {
         		// Cell is NOT blank
-        		String mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
+        		mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
         		srcPVStrs = mappedPVs.split(";");
-        		String[] pvMapStr = null;
+        		pvMapStr = null;
         		
         		// Build button from mapping cell - parsing form   srcPV1:refPV1;srcPV2:refPV2;.....
         		for (int i = 0; i < srcPVStrs.length; i++) {
@@ -2257,14 +2264,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	
         	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).equalsIgnoreCase("double click to map") ){
         	
-	        	String refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
+	        	refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
 	        	if (refPVs.isEmpty()) {
 	        		//Not sure if this is the right answer.
 	        		displayWarning("Reference PVs are empty.");
 	        		return null;
 	        	}
 	        	refPVs = refPVs.concat("; "); // Adds blank option to the drop down.
-	        	String[] refPVStrs = refPVs.split(";");
+	        	refPVStrs = refPVs.split(";");
 	        	for (int i = 0; i < refPVStrs.length; i++) {
 	        		if (!refPVStrs[i].isEmpty()) { 
 	        			refPVStrs[i]= refPVStrs[i].trim();
@@ -2277,17 +2284,21 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        	cbArray = new JComboBox[length];
 	        	for (int i = 0; i < length; i++) {
 	                gbc.gridy = i;
-	                //ListCellRenderer renderer = new ComplexCellRenderer();
+	                
 	                JComboBox<String> cb = new JComboBox<String>(refPVStrs);
 	                cbArray[i] = cb;
 	                
 	                if (i < refPVStrs.length) {
 	                	cb.setSelectedIndex(i);
+	                	//cb.getRenderer();
+	                	//System.out.println(cb.getSelectedItem().getClass());
 	                }
 	                else {
 	                	cb.setSelectedIndex(0);
 	                }
-	                //cb.setRenderer(renderer);
+	                
+	                ComboBoxRenderer renderer = new ComboBoxRenderer();
+	                cb.setRenderer(renderer);
 	                cb.setFont(serif12);
 	                cb.setMinimumSize(new Dimension(180, 30));
 	                cb.setPreferredSize(new Dimension(180, 30));
@@ -2296,14 +2307,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	}
         	else {
         		
-        		String refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
+        		refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
 	        	if (refPVs.equalsIgnoreCase("double click to map")) {
 	        		//Not sure if this is the right answer.
 	        		displayWarning("Reference PVs are empty.");
 	        		return null;
 	        	}
 	        	refPVs = refPVs.concat("; "); // Adds blank option to drop down
-	        	String[] refPVStrs = refPVs.split(";");
+	        	refPVStrs = refPVs.split(";");
 	        	for (int j = 0; j < refPVStrs.length; j++) {
 	        		if (!refPVStrs[j].isEmpty()) {
 	        			refPVStrs[j]= refPVStrs[j].trim();
@@ -2313,8 +2324,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		}
 	        	}
 	        	
-	        	String mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
-	        	String[] mappedPVStrs = mappedPVs.split(";");
+	        	mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
+	        	mappedPVStrs = mappedPVs.split(";");
 	        	
 	        	cbArray = new JComboBox[srcPVStrs.length];
 	        	for (int i = 0; i < srcPVStrs.length; i++) {
@@ -2322,14 +2333,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                JComboBox<String> cb = new JComboBox<String>(refPVStrs);
 	                cbArray[i] = cb;
 	                
-	                String[] splitMappedPV = mappedPVStrs[i].split(":");
+	                splitMappedPV = mappedPVStrs[i].split(":");
                 	if (splitMappedPV.length == 2) {
                 		cb.setSelectedItem(splitMappedPV[1].trim());
                 	}
                 	else {
                 		cb.setSelectedItem("");
                 	}
-	                
+                	ComboBoxRenderer renderer = new ComboBoxRenderer();
+                	cb.setRenderer(renderer);
 	                cb.setFont(serif12);
 	                cb.setMinimumSize(new Dimension(180, 30));
 	                cb.setPreferredSize(new Dimension(180, 30));
@@ -2341,8 +2353,23 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	sPane.setBorder(buildTitledBorder(" Map Source PVs to Reference PVs"));
         	return sPane;
         }
-        
-        
+        // combo box renderer to get hovered item highlighted in red
+        class ComboBoxRenderer extends javax.swing.plaf.basic.BasicComboBoxRenderer{
+        	public ComboBoxRenderer() {
+        		super();
+        		setOpaque(true);
+        	}
+        	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        		setText(value.toString());
+        		if(isSelected) {
+        			setForeground(Color.red);
+        		}
+        		else {
+        			setForeground(Color.black);
+        		}
+        		return this;
+        	}
+        }
         
         /**
          * action performed
