@@ -168,7 +168,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private static final String svnVersion 		= "$Rev: 15178 $";
     private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
-    private static final String pluginVersion 	= "Beta version 0.1";
+    private static final String pluginVersion 	= "Beta version 0.3";
 
     // Might be able to delete
     private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
@@ -797,7 +797,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             TableCellRenderer refRenderer = table.getCellRenderer(row, col);
             if (refRenderer instanceof CellRenderer) { 
 	
-	            if (col == deTableModel.getColumnIndex("Required") && ((String) value).equalsIgnoreCase("REQUIRED")) { 
+	            if (value!=null && col == deTableModel.getColumnIndex("Required") && ((String) value).equalsIgnoreCase("REQUIRED")) { 
 	                setForeground(Color.red);
 	            } 
 	            else {
@@ -1335,15 +1335,35 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
          */
         private void copyFormStructureToTable() {
         	
-        	deTableModel.setRowCount(formStructure.getDataElements().size());
+        	
         	
         	// Since repeatable groups doesn't provide the groups in order that they are presented in the actual form
         	// we calculate the group position to properly display in the correct order in the table
         	// rowPos will contain indexes to the starting rows in the table for each group
-        	int[] rowPos = new int[formStructure.getRepeatableGroups().size()]; 
-        	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {	
-	        	rowPos[group.getPosition()]= group.getSize();
+        	int[] rowPos = new int[formStructure.getRepeatableGroups().size()+1];
+        	boolean zero = false;
+        	// FITBIRdemographics has main set up as an additional group; this catches the error 
+        	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {
+	        	if(group.getPosition()==0) {
+	        		zero = true;
+	        	}
         	}
+        	if(zero) {
+        		for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {
+        			rowPos[group.getPosition()]= group.getSize();
+        		}
+        	}
+        	else {
+        		for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {
+        			rowPos[group.getPosition()-1]= group.getSize();
+        		}
+        	}
+        	
+        	int totsum = 0;
+        	for (int k = 0; k < rowPos.length; k++  ) {
+    			totsum += rowPos[k];
+    		}
+        	deTableModel.setRowCount(totsum);
         	
         	for (int j = rowPos.length-1; j >= 0; j--) {
         		int sum = 0;
@@ -1352,16 +1372,20 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		}
         		rowPos[j]=sum;
         	}
-        	
-        	
+ 
         	FormStructureData fsInfo = new FormStructureData(formStructure);
+        	int row;
         	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {
         		int i=0;
 	        	for (final MapElement mapde : group.getDataElements()) {
 	        		DataElement de = fsInfo.getDataElement(mapde.getStructuralDataElement());
-	     		
-	        		int row = rowPos[group.getPosition()]+i;
-
+	        		
+	        		if(zero) {
+	        			row = rowPos[group.getPosition()]+i;
+	        		}
+	        		else {
+	        			row = rowPos[group.getPosition()-1]+i;
+	        		}
 	        		deTableModel.setValueAt(group.getName(), row, deTableModel.getColumnIndex("Group"));	
 	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getName(), row, deTableModel.getColumnIndex("Element Name"));			
 	        		deTableModel.setValueAt(de.getTitle(), row, deTableModel.getColumnIndex("Title"));											
@@ -1752,7 +1776,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             
             //Builds main panel 
             JScrollPane sPane = buildCSVPanel();
-            //srcDETable.setRowSorter(sorter);
             mainPanel.add(sPane, gbc);
             getContentPane().add(mainPanel, BorderLayout.CENTER);
             getContentPane().add(searchPanel, BorderLayout.NORTH);
@@ -1763,7 +1786,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dim.height = 500;
             }
             sPane.setPreferredSize(dim);
-            //srcDETable.setRowSorter(sorter);
             pack();
             centerInWindow(owner, this);
             
@@ -2525,11 +2547,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
 
             if (ds.getFileType().equals(SubmissionType.IMAGING)) { // For test purposes since it only 7 secs when clinical takes 30 secs
-            //if (ds.getFileType().equals(SubmissionType.CLINICAL)) {
+          
                 // only include non-archived structures
                 if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
                     filteredList.add(ds);
                 }
+            }
+            // get clinical form structures
+            if(ds.getFileType().equals(SubmissionType.CLINICAL)) {
+            	if(!ds.getStatus().equals(StatusType.ARCHIVED)) {
+            		filteredList.add(ds);
+            	}
             }
         }
 
@@ -2548,9 +2576,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-        // private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL"; ?????
-        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
+        //private static final String ddStructListRequestc = ddRequestBase + "/Published/list?type=CLINICAL"; //?????
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
+        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
 
@@ -2578,7 +2606,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 if (ddUseAuthService) {
                     client = WebClient.create(ddServerURL + ddAuthBase);
                 } else {
-                    client = WebClient.create(ddServerURL + ddStructListRequest);
+                    client = WebClient.create(ddServerURL  + ddStructListRequest);
                 }
 
                 final HTTPConduit conduit = WebClient.getConfig(client).getHttpConduit();
