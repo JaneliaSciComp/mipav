@@ -86,6 +86,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private String outputXFormDirBase;
     private JTextField outputXFormDirTextField;
     
+    private JTextField outputFileName;
+    
     /** Used to store the output file of the transform tool */
     private String outputDataDirBase;
     
@@ -298,7 +300,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
                 
             }
-            // load button command - still need ability to choose file and load in as well as match to previous mapping points
+            
         } else if (command.equalsIgnoreCase("ReloadMapFile")) {
         	final JFileChooser loadChooser = new JFileChooser();
         	loadChooser.setCurrentDirectory(new File(txtFileDir));
@@ -352,18 +354,21 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	        chooser.setDialogTitle("Choose output directory for transform result files");
 	        final int returnValue = chooser.showOpenDialog(this);
+	        outputXFormDirTextField.setText(null);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	            outputXFormDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
 	            outputXFormDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
+	            xFormButton.setEnabled(true); // can only transfomr after directory is selected
 	            //Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
 	        }
+	        
 	    } else if (command.equalsIgnoreCase("RemoveRow")) { 
 	    	//Remove row from transform tabbed pane
 	    	if (fileXFormTable.getSelectedRow() != 1) {
 	    		fileXFormTableModel.removeRow(fileXFormTable.getSelectedRow());
 	    	}
 	    } else if (command.equalsIgnoreCase("XFormFiles")) { 
-	    	//Actual transform code
+	    	xFormFiles();
 	    	
 	    } else if (command.equalsIgnoreCase("SaveXForm")) {
 	    		final JFileChooser chooser = new JFileChooser();
@@ -967,8 +972,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     // Set table ... with just file name(s) 
                 	fileXFormTable.setValueAt(chooser.getSelectedFile(), fileXFormTable.getSelectedRow(), 0);
-                	 
                     outputDataDirBase = chooser.getSelectedFile().getAbsolutePath();
+                    //xFormFiles(chooser.getSelectedFile(), null);
                     //System.out.println("chooser path " + outputDataDirBase);
                     // Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
                 }
@@ -985,6 +990,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     // Set table ... with just file name(s) 
                 	fileXFormTable.setValueAt(chooser.getSelectedFile(), fileXFormTable.getSelectedRow(), 1);
                 	outputDirBase = chooser.getSelectedFile().getAbsolutePath();
+                	//xFormFiles(null, chooser.getSelectedFile());
                 }
             }
             else if (e.getClickCount() == 2 && fileXFormTable.getSelectedColumn() == fileXFormTableModel.getColumnIndex("Output Files") && tabbedPane.getSelectedIndex() == 1) {
@@ -1464,14 +1470,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             Vector<String[]> dataElements = new Vector<String[]>(100);
             dataElements.add(DEHeaders);
             int row = 1; 
-            while ( (str = br.readLine()) != null) {
+            while ((str = br.readLine()) != null) {
                 str = str.trim();
                 String[] deDef = str.split(CSV_OUTPUT_DELIM);
                 for(int i =0; i < deDef.length; i++) {
                 	deDef[i] = deDef[i].trim();
                 }
-                if (!deDef[2].isEmpty()) { 			// PVs not empty
-                	if ( !deDef[2].matches("^[a-zA-Z0-9;]*$") ) {
+                if (!deDef[2].isEmpty()) { 	// PVs not empty
+                	if ( !deDef[2].matches("^[a-zA-Z0-9/\\u0020()-;]*$") ) {
                 		 displayError("PVs can only contain a-z, A-Z and 0-9 separated by semicolons." + "  Row: " + row + " Element: " + deDef[0]);
                 		 fis.close();
                 	}
@@ -1605,15 +1611,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		}
     		loadCSVButton.setEnabled(true);
     		br.close();
-    		
-    		
-    		
     	}
     		catch(final IOException e) {
     			System.err.println("Problem closing txt file handle");
     		}
-    	
-    	
     	return true;
     }
     
@@ -1821,6 +1822,24 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             resetButton.setPreferredSize(new Dimension(130,30));
             resetButton.setFont(serif12B);
             resetButton.setToolTipText("Reset search bar");
+            
+            searchBar.addKeyListener(new KeyListener() {
+            	public void keyPressed(KeyEvent e) {
+            		if(e.getKeyCode()==KeyEvent.VK_ENTER) {
+            			String text = searchBar.getText();
+                		if(text.length()==0) {
+                			sorter.setRowFilter(null);
+                		}
+                		else {
+                			sorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+                		}
+            		}
+            	}
+				public void keyReleased(KeyEvent arg0) {
+				}
+				public void keyTyped(KeyEvent arg0) {
+				}
+            });
             
             searchPanel.add(searchButton);
             searchPanel.add(resetButton);
@@ -3546,6 +3565,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         xFormButton.setActionCommand("XFormFiles");
         xFormButton.setPreferredSize(new Dimension(120, 30));
         xFormButton.setEnabled(false);
+        
+        
 
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputXFormDirTextField);
@@ -3656,12 +3677,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             		str = str.concat(".csv");
             		fileXFormTable.setValueAt(str, fileXFormTable.getSelectedRow(), 2);
             	}
+            	
             	dispose();
             
             }
-            if(validateXFormTable()) {
-            	xFormButton.setEnabled(true);
-            }
+            
             
         }
     }
@@ -3694,7 +3714,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         buttonPanel.add(saveXFormTableButton, gbc);
         
-        transformedFileButton = new JButton("Load Files");
+        transformedFileButton = new JButton("Load Transform Table");
         transformedFileButton.setToolTipText("Load in a set of files that were previously transformed.");
         transformedFileButton.addActionListener(this);
         transformedFileButton.setActionCommand("LoadFiles");       
@@ -3705,30 +3725,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         return buttonPanel;
     }
-
-    /** Ensures one row is complete before transform button is enabled */
-    // this needs to be edited a little to ensure that it actually validates the table for each row and instance of file naming for saving
-    // the xformed files
-    private boolean validateXFormTable() {
-    	int numRows = fileXFormTableModel.getRowCount();
-    	int filledRows = 0;
-    	
-    	for(int i=0; i<numRows; i++) {
-    		if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))!=null) {
-    			filledRows+=1;
-    		}
-    	}
-    	for(int i=0; i<filledRows; i++) {
-    		if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))!=null &&
-    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))!=null &&
-    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))!=null) {
-    			return true;
-    		}
-    	}
-    	return false;
-    	
-    }
-    
     private boolean saveXFormTable(File csvFile) {
     	BufferedWriter bw = null;
     	
@@ -3790,4 +3786,87 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	}
     	return true;
     }
+    
+    /** Transform code */
+    private boolean xFormFiles() {
+    	int numRows = fileXFormTableModel.getRowCount();
+    	validateXFormTable();
+    	String strMap = null;
+    	String strSrc = null;
+    	String[] mapStrucs = null;
+    	String [] srcStrucs = null;
+    	String[] mapVars = null;
+    	String str;
+    	
+    	List<File> sourceFiles = new ArrayList<>();
+    	List<File> mappingFiles = new ArrayList<>();
+    	List<File> outFiles = new ArrayList<>();
+    	
+    	BufferedReader brSrc = null;
+    	BufferedReader brMap = null;
+    	BufferedWriter bw = null;
+    	
+    	FileInputStream fisSrc;
+    	FileInputStream fisMap;
+    	FileOutputStream fos;
+    	
+    	try {
+    	
+    	for(int i = 0; i < numRows; i++) {
+    		sourceFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")));
+    		mappingFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files")));
+    		outFiles.add(new File(outputXFormDirBase + outputFileName));
+    	}
+    	
+    	File [] src = sourceFiles.toArray(new File[sourceFiles.size()]);
+    	File [] map = mappingFiles.toArray(new File[mappingFiles.size()]);
+    	File [] out = outFiles.toArray(new File[mappingFiles.size()]);
+    	int filledRows = src.length;
+    	
+    	for(int i = 0; i < filledRows; i++) {
+    		fisSrc = new FileInputStream(src[i]);
+    		brSrc = new BufferedReader(new InputStreamReader(fisSrc));
+    		fisMap = new FileInputStream(map[i]);
+    		brMap = new BufferedReader(new InputStreamReader(fisMap));
+    		strMap = brMap.readLine();
+    		mapStrucs = strMap.split(": ");
+    		strSrc = brSrc.readLine();
+    		srcStrucs = strSrc.split(CSV_OUTPUT_DELIM);
+    		if(!srcStrucs[0].equalsIgnoreCase(mapStrucs[1])) {
+    			displayError("Error: Form strucutre on mapping file and source file are inconsistent");
+    			brSrc.close();
+    			brMap.close();
+    		}
+    		else {
+    			str = srcStrucs[0] + ",\n"; //putting the form structure in the string to eventually be written to new csv files
+    			while((strMap = brMap.readLine())!=null) {
+    				mapVars = strMap.split(TSV_OUTPUT_DELIM);
+    				str = str + mapVars[0] + "." + mapVars[2] + ",\n";
+    			}
+				System.out.println(str);
+    		}
+    		
+    		}
+    	}
+    	catch(final Exception e) {
+    		
+    	}
+    	return true;
+    }
+    private void validateXFormTable() {
+    	int numRows = fileXFormTableModel.getRowCount();
+    	for(int i = 0; i < numRows; i++) {
+    		if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))!=null ||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))!=null||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))!=null) {
+    			if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))==null ||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))==null||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))==null) {
+    				displayError("Error: All three columns must have a value for each tranform row");
+    			}
+    		}
+    	}
+    	//return true;
+    }
+    
 }
