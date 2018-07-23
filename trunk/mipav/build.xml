@@ -55,12 +55,12 @@
     <property name="debug" value="true" />
     <property name="deprecation" value="true" />
     <property name="optimize" value="false" />
-    <property name="javac.target" value="1.6+" />
+    <property name="javac.target" value="1.7+" />
     <property name="verbose" value="no" />
     <property name="nowarn" value="no" />
     <property name="listfiles" value="no" />
-    <property name="version.target" value="1.6" />
-    <property name="version.source" value="1.6" />
+    <property name="version.target" value="1.7" />
+    <property name="version.source" value="1.7" />
     <property name="java.boot.classpath.dir" value="${user.home}/lib64/jdk-current/jre/lib/" />
     <property name="sysAssert" value="yes" />
 
@@ -70,7 +70,7 @@
         =========
     -->
     <property name="doc.access" value="private"/>
-    <property name="doc.link" value="http://docs.oracle.com/javase/6/docs/api/"/>
+    <property name="doc.link" value="http://docs.oracle.com/javase/7/docs/api/"/>
     <property name="doc.linksource" value="no"/>
     <property name="doc.breakiterator" value="yes"/>
     <property name="doc.failonerror" value="yes"/>
