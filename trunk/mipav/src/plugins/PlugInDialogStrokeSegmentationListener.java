@@ -57,13 +57,6 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     private static final String configFileName = "stroke_seg_listener.properties";
 
     public PlugInDialogStrokeSegmentationListener() {
-        try {
-            ipAddress = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
         if (JDialogStandalonePlugin.isExitRequired()) {
             setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         } else {
@@ -341,6 +334,18 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
                 }
                 
                 ae = prop.getProperty("listenerAETitle", ae);
+                
+                final String prefIP = prop.getProperty("listenerIP");
+                if (prefIP != null && !prefIP.equals("")) {
+                    ipAddress = prefIP;
+                } else {
+                    try {
+                        ipAddress = InetAddress.getLocalHost().getHostAddress();
+                    } catch (UnknownHostException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
                 
                 port = Integer.parseInt(prop.getProperty("listenerPort", "" + port));
                 
