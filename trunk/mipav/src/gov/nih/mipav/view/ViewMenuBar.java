@@ -212,6 +212,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Laws texture", "Laws", 0, null, false),
 								menuBuilder.buildMenuItem("Local normalization", null, 0, null, false),
 								menuBuilder.buildMenuItem("Local variance", "LocalVariance", 0, null, false),
+								menuBuilder.buildMenuItem("Markov smooth", null, 0, null, false),
 								menuBuilder.buildMenuItem("Mean", null, 0, null, false),
 								menuBuilder.buildMenuItem("Median", null, 0, null, false),
 								menuBuilder.buildMenuItem("Mode", null, 0, null, false),
@@ -1700,6 +1701,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Local normalization", false);
 			menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
 			menuBuilder.setMenuItemEnabled("Local variance", false);
+			menuBuilder.setMenuItemEnabled("Markov smooth", false);
 			menuBuilder.setMenuItemEnabled("Mode", false);
 			menuBuilder.setMenuItemEnabled("Morphological", false);
 			menuBuilder.setMenuItemEnabled("MRI combined info", false);
