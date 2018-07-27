@@ -364,7 +364,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
         double maxDistance;
         double intensitySigma;
         if (srcImage.getNDims() >= 3) {
-            tDim = srcImage.getExtents()[2];
+            zDim = srcImage.getExtents()[2];
         }
         if (srcImage.getNDims() >= 4) {
             tDim = srcImage.getExtents()[3];
