@@ -392,6 +392,7 @@ public class StrokeSegmentationDicomReceiver {
      */
     public void log(final String line) {
         logOutputArea.getTextArea().append(line + "\n");
+        System.out.println(line);
     }
     
     public void emailReport(ModelImage adcImage, File threshLightboxFile, File coreLightboxFile, double coreVolCC) {
