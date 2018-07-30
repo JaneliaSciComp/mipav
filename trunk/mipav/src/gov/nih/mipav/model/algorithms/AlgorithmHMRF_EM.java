@@ -287,7 +287,7 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         scale = new double[1];
         scale[0] = 1.0;
         y = new double[sliceSize];
-        // Without rounding in one image 256 unique values become 65458 unique values
+        // Without rounding in one image 256 unique values become 65536 unique values
         // This is too many for kmeans to handle in any reasonable so round to integers
         for (i = 0; i < sliceSize; i++) {
             y[i] = Math.round(blurredBuffer[i]);
