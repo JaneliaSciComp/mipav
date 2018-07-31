@@ -219,6 +219,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 
 	private JComboBox imageList;
 	
+	private JCheckBox followBatchBox;
+	
+	private boolean followBatchWithIncremental = false;
+	
 	
 	public JDialogKMeans() {
 		super(ViewUserInterface.getReference().getMainFrame(), false);
@@ -278,14 +282,17 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    	     if (mahalanobis.isSelected()) {
 	    	    	 mahalanobis.setSelected(false);
 	    	    	 euclideanSquared.setSelected(true);
+	    	    	 followBatchBox.setEnabled(true);
 	    	     }
 	    	     if (SButton.isSelected()) {
 	    	    	 SButton.setSelected(false);
 	    	    	 euclideanSquared.setSelected(true);
+	    	    	 followBatchBox.setEnabled(true);
 	    	     }
 	    	     if (differentSpheresButton.isSelected()) {
 	    	        differentSpheresButton.setSelected(false);
 	    	        euclideanSquared.setSelected(true);
+	    	        followBatchBox.setEnabled(true);
 	    	     }
 	    	     cityBlock.setEnabled(true);
 	    	     mahalanobis.setEnabled(false);
@@ -301,18 +308,22 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    	     if (cityBlock.isSelected()) {
 	    	    	 cityBlock.setSelected(false);
 	    	    	 euclideanSquared.setSelected(true);
+	    	    	 followBatchBox.setEnabled(true);
 	    	     }
 	    	     if (mahalanobis.isSelected()) {
 	    	    	 mahalanobis.setSelected(false);
 	    	    	 euclideanSquared.setSelected(true);
+	    	    	 followBatchBox.setEnabled(true);
 	    	     }
 	    	     if (SButton.isSelected()) {
 	    	    	 SButton.setSelected(false);
 	    	    	 euclideanSquared.setSelected(true);
+	    	    	 followBatchBox.setEnabled(true);
 	    	     }
 	    	     if (differentSpheresButton.isSelected()) {
 	    	        differentSpheresButton.setSelected(false);
 	    	        euclideanSquared.setSelected(true);
+	    	        followBatchBox.setEnabled(true);
 	    	     }
 	    	     cityBlock.setEnabled(false);
 	    	     mahalanobis.setEnabled(false);
@@ -327,6 +338,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 fastGlobalAlgo.setEnabled(true);
 	    		 axesRatioLabel.setEnabled(false);
 	    		 axesRatioText.setEnabled(false);
+	    		 followBatchBox.setEnabled(true);
 	    	 }
 	    	 else if (cityBlock.isSelected()){
 	    		 globalAlgo.setEnabled(true);
@@ -337,6 +349,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 fastGlobalAlgo.setEnabled(false);
 	    		 axesRatioLabel.setEnabled(false);
 	    		 axesRatioText.setEnabled(false);
+	    		 followBatchBox.setEnabled(false);
+	    		 followBatchBox.setSelected(false);
 	    	 }
 	    	 else if (mahalanobis.isSelected()){
 	    		 if (globalAlgo.isSelected()){
@@ -351,6 +365,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 fastGlobalAlgo.setEnabled(false);
 	    		 axesRatioLabel.setEnabled(false);
 	    		 axesRatioText.setEnabled(false);
+	    		 followBatchBox.setEnabled(false);
+	    		 followBatchBox.setSelected(false);
 	    	 }
 	    	 //else if ((SButton.isSelected()) || (SStarButton.isSelected())) {
 	    	 else if (SButton.isSelected()) {
@@ -366,6 +382,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 fastGlobalAlgo.setEnabled(false);
 	    		 axesRatioLabel.setEnabled(true);
 	    		 axesRatioText.setEnabled(true);
+	    		 followBatchBox.setEnabled(false);
+	    		 followBatchBox.setSelected(false);
 	    	 }
 	    	 else {
 	    		 if (globalAlgo.isSelected()){
@@ -379,7 +397,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 globalAlgo.setEnabled(false);
 	    		 fastGlobalAlgo.setEnabled(false);
 	    		 axesRatioLabel.setEnabled(false);
-	    		 axesRatioText.setEnabled(false);	 
+	    		 axesRatioText.setEnabled(false);
+	    		 followBatchBox.setEnabled(false);
+	    		 followBatchBox.setSelected(false);
 	    	 }
 	     } else if (command.equals("PointFile")) {
 
@@ -819,7 +839,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 			 alg = new AlgorithmKMeans(image,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
 					                   useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
-					                   bwSegmentedImage, doubleBuffer, showSegmentedImage);
+					                   bwSegmentedImage, doubleBuffer, showSegmentedImage, followBatchWithIncremental);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -1123,6 +1143,14 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy++;
         mainPanel.add(euclideanSquared, gbc);
+        
+        followBatchBox = new JCheckBox("Follow batch algorithm with incremental algorithm", false);
+        followBatchBox.setFont(serif12);
+        followBatchBox.setForeground(Color.black);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(followBatchBox, gbc);
         
         cityBlock = new JRadioButton("City block distance with median centroids", false);
         cityBlock.setFont(serif12);
@@ -1614,6 +1642,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	else {
     		distanceMeasure = SPHERES_DIFFERENT_SIZES;
     	}
+    	
+    	followBatchWithIncremental = followBatchBox.isSelected();
     	
     	useColorHistogram = colorHistogramBox.isSelected();
     	
