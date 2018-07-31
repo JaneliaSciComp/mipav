@@ -72,7 +72,6 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	    int sliceSize;
 	    double src[];
 	    double src2[];
-	    float fsrc[];
 	    double buffer[][];
 	    int zDim = 1;
 	    int tDim = 1;
@@ -91,7 +90,6 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         boolean followBatchWithIncremental = false;
         boolean bwSegmentedImage = true;
         double scale[] = new double[]{1.0};
-        double rounded[];
         int i;
         int nPoints;
         int groupNum[];
@@ -138,8 +136,6 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         buffer = new double[2][sliceSize];
         src = new double[sliceSize];
         src2 = new double[sliceSize];
-        fsrc = new float[3*sliceSize];
-        rounded = new double[sliceSize];
         segmentedImage = new ModelImage(ModelStorageBase.BYTE, extents,
 	            (srcImage.getImageFileName()+ "_kmeans"));
         segmentedImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
@@ -149,11 +145,13 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         int cf = 1;
         if (srcImage.isColorImage()) {
         	cf = 3;
+        	redBuffer = new float[sliceSize];
+        	greenBuffer = new float[sliceSize];
+        	blueBuffer = new float[sliceSize];
         }
         
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             for (z = 0; (z < zDim) && !threadStopped; z++) {
-            	for (c = 0; c < cf; c++) {
             	s = 1;
             	d = 0;
             	if (cf == 1) {
@@ -184,15 +182,15 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	                pos = new double[1][nPoints];
 	                nval = 0;
 	                weight[nval] = 1.0;
-	                pos[0][nval] = rounded[0];
+	                pos[0][nval] = src2[0];
 	                for (i = 1; i < sliceSize; i++) {
-	                    if (rounded[i] == rounded[i-1]) {
+	                    if (src2[i] == src2[i-1]) {
 	                        weight[nval] += 1.0;
 	                    }
 	                    else {
 	                        nval++;
 	                        weight[nval] = 1.0;
-	                        pos[0][nval] = rounded[i];
+	                        pos[0][nval] = src2[i];
 	                    }
 	                }
 	                for (i = 0; i < sliceSize; i++) {
@@ -210,17 +208,38 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
             	}
             	else {
             	    try {
-            		    srcImage.exportRGBData(c+1, 4*(t * zDim + z) * sliceSize, sliceSize, fsrc);
-            	} catch (IOException error) {
+            		    srcImage.exportRGBData(1, 4*(t * zDim + z) * sliceSize, sliceSize, redBuffer);
+            	    } catch (IOException error) {
                     displayError("Algorithm Markov Segment: Image(s) locked");
                     setCompleted(false);
                     fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
                     srcImage.releaseLock();
 
                     return;
-                }
-            	}
-            	} // for (c = 0; c < cf; c++)   
+                    }
+            	    
+            	    try {
+            		    srcImage.exportRGBData(2, 4*(t * zDim + z) * sliceSize, sliceSize, greenBuffer);
+            	    } catch (IOException error) {
+                    displayError("Algorithm Markov Segment: Image(s) locked");
+                    setCompleted(false);
+                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                    srcImage.releaseLock();
+
+                    return;
+                    }
+            	    
+            	    try {
+            		    srcImage.exportRGBData(3, 4*(t * zDim + z) * sliceSize, sliceSize, blueBuffer);
+            	    } catch (IOException error) {
+                    displayError("Algorithm Markov Segment: Image(s) locked");
+                    setCompleted(false);
+                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                    srcImage.releaseLock();
+
+                    return;
+                    }
+            	}  
                 } // for (z = 0; (z < zDim) && !threadStopped; z++)
             } // for (t = 0; (t < tDim) && !threadStopped; t++)
                 
