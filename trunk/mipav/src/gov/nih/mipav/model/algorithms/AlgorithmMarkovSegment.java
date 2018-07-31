@@ -71,6 +71,8 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	    int yDim;
 	    int sliceSize;
 	    double src[];
+	    double src2[];
+	    float fsrc[];
 	    double buffer[][];
 	    int zDim = 1;
 	    int tDim = 1;
@@ -86,6 +88,7 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
         String kMeansFileName = srcImage.getImageFileName() +  "_kmeans.txt";
         int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
+        boolean followBatchWithIncremental = false;
         boolean bwSegmentedImage = true;
         double scale[] = new double[]{1.0};
         double rounded[];
@@ -134,24 +137,18 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         // source buffer, the other will be the destination buffer.
         buffer = new double[2][sliceSize];
         src = new double[sliceSize];
+        src2 = new double[sliceSize];
+        fsrc = new float[3*sliceSize];
         rounded = new double[sliceSize];
         segmentedImage = new ModelImage(ModelStorageBase.BYTE, extents,
 	            (srcImage.getImageFileName()+ "_kmeans"));
         segmentedImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
-        // Create a 2D array with xDim * yDim positions in the one dimension and
-        // number of colors * zDim * tDim values in the second dimension
+        // For black and white create a 2D array with xDim * yDim positions in the one dimension and
+        // 1 value.
+        // For color create a 2D array with xDim * yDim positions in one dimension and 2 or 3 values.
         int cf = 1;
         if (srcImage.isColorImage()) {
         	cf = 3;
-        }
-        int numSlices = cf * zDim * tDim;
-        double sBuffer[][] = null;
-        if (cf == 1) {
-            sBuffer = new double[numSlices][sliceSize];
-        }
-        float fBuffer[][] = null;
-        if (cf == 3) {
-        	fBuffer = new float[numSlices][sliceSize];
         }
         
         for (t = 0; (t < tDim) && !threadStopped; t++) {
@@ -161,7 +158,7 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
             	d = 0;
             	if (cf == 1) {
 	                try {
-	                    srcImage.exportData((t * zDim + z) * sliceSize, sliceSize, sBuffer[t * zDim + z]); // locks and releases lock
+	                    srcImage.exportData((t * zDim + z) * sliceSize, sliceSize, src); // locks and releases lock
 	                } catch (IOException error) {
 	                    displayError("Algorithm Markov Segment: Image(s) locked");
 	                    setCompleted(false);
@@ -170,10 +167,50 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	
 	                    return;
 	                }
+	                
+	                for (i = 0; i < sliceSize; i++) {
+	                	src2[i] = src[i];
+	                }
+	                Arrays.sort(src2);
+	                nPoints = 1;
+	                for (i = 1; i < sliceSize; i++) {
+	                	if (src2[i] > src2[i-1]) {
+	                		nPoints++;
+	                	}
+	                }
+	                System.out.println("nPoints = " + nPoints);
+	                groupNum = new int[nPoints];
+	                weight = new double[nPoints];
+	                pos = new double[1][nPoints];
+	                nval = 0;
+	                weight[nval] = 1.0;
+	                pos[0][nval] = rounded[0];
+	                for (i = 1; i < sliceSize; i++) {
+	                    if (rounded[i] == rounded[i-1]) {
+	                        weight[nval] += 1.0;
+	                    }
+	                    else {
+	                        nval++;
+	                        weight[nval] = 1.0;
+	                        pos[0][nval] = rounded[i];
+	                    }
+	                }
+	                for (i = 0; i < sliceSize; i++) {
+	                    src2[i] = src[i];
+	                }
+	                algoKMeans = new AlgorithmKMeans(segmentedImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
+	                        initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
+	                        useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
+	                        bwSegmentedImage, src2, showKMeansSegmentedImage, followBatchWithIncremental);
+	                algoKMeans.run();
+	                iter = 0;
+	                while (iter < maxIter) {
+	                	
+	                } // while (iter < maxIter)
             	}
             	else {
             	    try {
-            		    srcImage.exportRGBData(c+1, 4*(t * zDim + z) * sliceSize, sliceSize, fBuffer[cf*(t * zDim + z) + c]);
+            		    srcImage.exportRGBData(c+1, 4*(t * zDim + z) * sliceSize, sliceSize, fsrc);
             	} catch (IOException error) {
                     displayError("Algorithm Markov Segment: Image(s) locked");
                     setCompleted(false);
