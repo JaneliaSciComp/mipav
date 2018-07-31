@@ -138,6 +138,7 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
         String kMeansFileName = srcImage.getImageFileName() +  "_kmeans.txt";
         int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
+        boolean followBatchWithIncremental = false;
         float redBuffer[] = null;
         float greenBuffer[] = null;
         float blueBuffer[] = null;
@@ -325,7 +326,7 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         kMeansAlgo = new AlgorithmKMeans(destImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
                 initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
                 useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
-                bwSegmentedImage, y, showKMeansSegmentedImage);
+                bwSegmentedImage, y, showKMeansSegmentedImage, followBatchWithIncremental);
         kMeansAlgo.run();
         groupMean = kMeansAlgo.getGroupMean();
         mu = groupMean[0];
