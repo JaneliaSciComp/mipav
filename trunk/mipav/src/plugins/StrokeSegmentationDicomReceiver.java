@@ -287,8 +287,13 @@ public class StrokeSegmentationDicomReceiver {
             Vector<File> adcFiles = new Vector<File>();
             Vector<File> dwiFiles = new Vector<File>();
             
+            Vector<Attributes> adcAttrList = new Vector<Attributes>();
+            Vector<Attributes> dwiAttrList = new Vector<Attributes>();
+            
             File baseDicomDir = null;
             String lastnameInitial = null;
+            
+            boolean foundRegSeries = false;
             
             for (File file : receivedFileList) {
                 try {
@@ -300,6 +305,13 @@ public class StrokeSegmentationDicomReceiver {
                         lastnameInitial = getInitialFromName(attr.getString(TagUtils.toTag(0x0010, 0x0010)));
                     }
                     
+                    final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                    final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                    
+                    if (!foundRegSeries && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
+                        foundRegSeries = true;
+                    }
+                    
                     for (String val : imageTypes) {
                         if (val.equalsIgnoreCase("ADC") || val.equalsIgnoreCase("ADC_UNSPECIFIED")) {
                             if (baseDicomDir == null) {
@@ -307,6 +319,7 @@ public class StrokeSegmentationDicomReceiver {
                             }
                             
                             adcFiles.add(file);
+                            adcAttrList.add(attr);
                             foundADC = true;
                             break;
                         } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE") || val.equalsIgnoreCase("TRACEW")) {
@@ -315,6 +328,7 @@ public class StrokeSegmentationDicomReceiver {
                             }
                             
                             dwiFiles.add(file);
+                            dwiAttrList.add(attr);
                             foundDWI = true;
                             break;
                         }
@@ -322,6 +336,42 @@ public class StrokeSegmentationDicomReceiver {
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
+                }
+            }
+            
+            if (foundADC && foundRegSeries) {
+                Vector<File> adcRegFiles = new Vector<File>();
+                
+                for (int i = 0; i < adcFiles.size(); i++) {
+                    final Attributes attr = adcAttrList.get(i);
+                    final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                    final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                    
+                    if (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg")) {
+                        adcRegFiles.add(adcFiles.get(i));
+                    }
+                }
+                
+                if (adcRegFiles.size() > 0) {
+                    adcFiles = adcRegFiles;
+                }
+            }
+            
+            if (foundDWI && foundRegSeries) {
+                Vector<File> dwiRegFiles = new Vector<File>();
+                
+                for (int i = 0; i < dwiFiles.size(); i++) {
+                    final Attributes attr = dwiAttrList.get(i);
+                    final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                    final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                    
+                    if (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg")) {
+                        dwiRegFiles.add(dwiFiles.get(i));
+                    }
+                }
+                
+                if (dwiRegFiles.size() > 0) {
+                    dwiFiles = dwiRegFiles;
                 }
             }
             
@@ -353,7 +403,16 @@ public class StrokeSegmentationDicomReceiver {
             }
             
             if (baseDicomDir != null && lastnameInitial != null) {
-                final File newBaseDir = new File(baseDicomDir.getAbsolutePath() + "_" + lastnameInitial);
+                File newBaseDir = new File(baseDicomDir.getAbsolutePath() + "_" + lastnameInitial);
+                
+                if (newBaseDir.exists()) {
+                    int collisionNum = 1;
+                    while ((new File(newBaseDir.getAbsolutePath() + collisionNum)).exists()) {
+                        collisionNum++;
+                    }
+                    newBaseDir = new File(newBaseDir.getAbsolutePath() + collisionNum);
+                }
+                
                 boolean success = baseDicomDir.renameTo(newBaseDir);
                 if (success) {
                     baseDicomDir = newBaseDir;
