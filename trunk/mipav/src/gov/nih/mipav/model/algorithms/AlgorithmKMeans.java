@@ -292,6 +292,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     private double groupStdDev[][];
     
     private boolean showSegmentedImage = true;
+    
+    private boolean followBatchWithIncremental = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -303,7 +305,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		               double[][] centroidPos, String resultsFileName, int initSelection, float[] redBuffer,
     		               float[] greenBuffer, float[] blueBuffer, double scaleMax, boolean useColorHistogram,
     		               boolean scaleVariablesToUnitVariance, double[] axesRatio, boolean bwSegmentedImage,
-    		               double[] doubleBuffer, boolean showSegmentedImage) {
+    		               double[] doubleBuffer, boolean showSegmentedImage, boolean followBatchWithIncremental) {
 
         this.image = image;
         this.algoSelection = algoSelection;
@@ -325,6 +327,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.bwSegmentedImage = bwSegmentedImage;
         this.doubleBuffer = doubleBuffer;
         this.showSegmentedImage = showSegmentedImage;
+        this.followBatchWithIncremental = followBatchWithIncremental;
     }
 
     
@@ -628,7 +631,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	nPoints = pos[0].length;
     	switch(distanceMeasure) {
     	case EUCLIDEAN_SQUARED:
-        EuclideanSquared();
+            EuclideanSquared();
     	
     	break;
     	
@@ -2551,6 +2554,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	
     	break;
     	} // switch(algoSelection)
+		if (followBatchWithIncremental) {
 		// Follow up the batch algorithm with an incremental algorithm
 		Preferences.debug("Following batch algorithm with incremental algorithm\n");
 		distSquaredArray = new double[numberClusters];
@@ -2578,6 +2582,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			iteration++;
 			changeOccurred = false;
 	        for (pointNum = 0; pointNum < nPoints; pointNum++) {
+	        	System.out.println("pointNum = " + pointNum);
 	        	distSquaredReduced = 0.0;
 	            bestGroup = groupNum[pointNum];
 	            originalDistSquared = distSquaredArray[bestGroup];
@@ -2698,6 +2703,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	}
     	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n", 
     			Preferences.DEBUG_ALGORITHM);
+		} // if (followBatchWithIncremental)
 	}// EuclideanSquared
 	
 	private void cityBlock() {
