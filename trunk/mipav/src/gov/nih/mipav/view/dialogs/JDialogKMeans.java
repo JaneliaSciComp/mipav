@@ -935,7 +935,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-
+        int i;
     	GuiBuilder gui = new GuiBuilder(this);
     	
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -996,16 +996,29 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         Object[] imgList = new Object[ViewUserInterface.getReference().getRegisteredImagesNum()+1];
         imgList[0] = "Load image...";
         Enumeration<String> strEnum = ViewUserInterface.getReference().getRegisteredImageNames();
-        for(int i=1; i<imgList.length; i++) {
+        for(i=1; i<imgList.length; i++) {
         	imgList[i] = strEnum.nextElement();
         }
         imageList = gui.buildComboBox("Choose an image: ", imgList, 0);
         imageList.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	String fileNameBase;
 	            if(imageList.getSelectedIndex() == 0) {
 	            	loadImage();
 	            } else {
 	            	textImage.setText(imageList.getSelectedItem().toString());
+	            	int i = imageList.getSelectedItem().toString().indexOf(".");
+	    			if (i > 0) {
+	    				fileNameBase = imageList.getSelectedItem().toString().substring(0,i);
+	    			}
+	    			else {
+	    				fileNameBase = new String(imageList.getSelectedItem().toString());
+	    			}
+	             	resultsFileName = ViewUserInterface.getReference().getDefaultDirectory() + 
+	             			File.separator + fileNameBase + "_kmeans.txt";
+	             	resultsFileNameLabel.setEnabled(true);
+	             	resultsFileNameText.setEnabled(true);
+	             	resultsFileNameText.setText(resultsFileName);
 	            }
             }
         });
