@@ -147,6 +147,12 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private JRadioButton segmentedImage;
     
+    private ButtonGroup colorSpaceGroup;
+    
+    private JRadioButton RGBSpace;
+    
+    private JRadioButton CIELABSpace;
+    
     private boolean bwSegmentedImage = false;
     
     private boolean showSegmentedImage = true;
@@ -222,6 +228,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	private JCheckBox followBatchBox;
 	
 	private boolean followBatchWithIncremental = false;
+	
+	// If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
+	private boolean colorSegmentInRGB = false;
 	
 	
 	public JDialogKMeans() {
@@ -839,7 +848,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 			 alg = new AlgorithmKMeans(image,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
 					                   useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
-					                   bwSegmentedImage, doubleBuffer, showSegmentedImage, followBatchWithIncremental);
+					                   bwSegmentedImage, doubleBuffer, showSegmentedImage, followBatchWithIncremental,
+					                   colorSegmentInRGB);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -1049,6 +1059,23 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         mainPanel.add(textImage, gbc);
+        
+        colorSpaceGroup = new ButtonGroup();
+        CIELABSpace = new JRadioButton("Segment a color image in two dimensional CIELAB space", true);
+        CIELABSpace.setFont(serif12);
+        CIELABSpace.setForeground(Color.black);
+        colorSpaceGroup.add(CIELABSpace);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(CIELABSpace, gbc);
+        
+        RGBSpace = new JRadioButton("Segment a color image in three dimensional RGB space", false);
+        RGBSpace.setFont(serif12);
+        RGBSpace.setForeground(Color.black);
+        colorSpaceGroup.add(RGBSpace);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(RGBSpace, gbc);
         
         colorHistogramBox = new JCheckBox("Use histogram weighing in color images");
         colorHistogramBox.setSelected(false);
@@ -1330,6 +1357,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	
 		int nval;
 		
+		colorSegmentInRGB = RGBSpace.isSelected();
+		
     	if (!havePoints) {
     		image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
         	
@@ -1345,9 +1374,17 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
            	 length = length * extents[i];
             }
             if (image.isColorImage()) {
-           	 scale = new double[2];
-           	 scale[0] = 1.0;
-           	 scale[1] = 1.0;
+             if (colorSegmentInRGB) {
+            	 scale = new double[3];
+	           	 scale[0] = 1.0;
+	           	 scale[1] = 1.0;
+	           	 scale[2] = 1.0;
+             }
+             else {
+	           	 scale = new double[2];
+	           	 scale[0] = 1.0;
+	           	 scale[1] = 1.0;
+             }
            	 redMin = image.getMinR();
            	 redMax = image.getMaxR();
            	 if (redMin != redMax) {
