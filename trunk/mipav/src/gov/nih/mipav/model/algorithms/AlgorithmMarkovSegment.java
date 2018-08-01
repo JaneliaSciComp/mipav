@@ -109,6 +109,35 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         boolean colorSegmentInRGB = true;
         int cf;
         int iter;
+        float redMin;
+        float redMax;
+        float greenMin;
+        float greenMax;
+        float blueMin;
+        float blueMax;
+        boolean useRed = false;
+        boolean useGreen = false;
+        boolean useBlue = false;
+        int vLength = 0;
+        double mu[][];
+        double sigma[][][];
+        byte segmented[];
+        int v;
+        int v2;
+        Vector<Integer> classVector = new Vector<Integer>();
+        int j;
+        double sum = 0.0;
+        double diff;
+        double diffRed[];
+        double diffGreen[];
+        double diffBlue[];
+        double E[][];
+        double mu_i[];
+        double sigma_i[][];
+        double diff_i[][];
+        double det;
+        double inv[][];
+        double transpose[][];
 	    
 	    if (srcImage == null) {
             displayError("Source Image is null");
@@ -137,6 +166,8 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         buffer = new double[2][sliceSize];
         src = new double[sliceSize];
         src2 = new double[sliceSize];
+        segmented = new byte[sliceSize];
+        E = new double[sliceSize][class_number];
         segmentedImage = new ModelImage(ModelStorageBase.BYTE, extents,
 	            (srcImage.getImageFileName()+ "_kmeans"));
         segmentedImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
@@ -152,11 +183,14 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         	scale[0] = 1.0;
         	scale[1] = 1.0;
         	scale[2] = 1.0;
+        	bwSegmentedImage = false;
         }
         else {
         	cf = 1;
         	scale = new double[1];
         	scale[0] = 1.0;
+        	bwSegmentedImage = true;
+        	vLength = 1;
         }
         
         for (t = 0; (t < tDim) && !threadStopped; t++) {
@@ -206,7 +240,6 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	                for (i = 0; i < sliceSize; i++) {
 	                    src2[i] = src[i];
 	                }
-	                bwSegmentedImage = true;
 	               
             	}
             	else {
@@ -243,7 +276,55 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
                     return;
                     }
             	    
-            	    bwSegmentedImage = false;
+            	    redMin = Float.MAX_VALUE;
+            	    redMax = -Float.MAX_VALUE;
+            	    greenMin = Float.MAX_VALUE;
+            	    greenMax = -Float.MAX_VALUE;
+            	    blueMin = Float.MAX_VALUE;
+            	    blueMax = -Float.MAX_VALUE;
+            	    vLength = 0;
+            	    useRed = false;
+            	    useGreen = false;
+            	    useBlue = false;
+            	    for (i = 0; i < sliceSize; i++) {
+            	    	if (redBuffer != null) {
+    	        	        if (redBuffer[i] < redMin) {
+    	        	        	redMin = redBuffer[i];
+    	        	        }
+    	        	        if (redBuffer[i] > redMax) {
+    	        	        	redMax = redBuffer[i];
+    	        	        }
+            	    	}
+            	    	if (greenBuffer != null) {
+    	        	        if (greenBuffer[i] < greenMin) {
+    	        	        	greenMin = greenBuffer[i];
+    	        	        }
+    	        	        if (greenBuffer[i] > greenMax) {
+    	        	        	greenMax = greenBuffer[i];
+    	        	        }
+            	    	}
+            	    	if (blueBuffer != null) {
+    	        	        if (blueBuffer[i] < blueMin) {
+    	        	        	blueMin = blueBuffer[i];
+    	        	        }
+    	        	        if (blueBuffer[i] > blueMax) {
+    	        	        	blueMax = blueBuffer[i];
+    	        	        }
+            	    	}
+            	    } // for (i = 0; i < length; i++)
+            	    vLength = 0;
+            	    if (redMax > redMin) {
+            	    	useRed = true;
+            	    	vLength++;
+            	    }
+            	    if (greenMax > greenMin) {
+            	    	useGreen = true;
+            	    	vLength++;
+            	    }
+            	    if (blueMax > blueMin) {
+            	    	useBlue = true;
+            	    	vLength++;
+            	    }
             	    
             	} // else
             	algoKMeans = new AlgorithmKMeans(segmentedImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
@@ -251,9 +332,381 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	                        useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
 	                        bwSegmentedImage, src2, showKMeansSegmentedImage, followBatchWithIncremental, colorSegmentInRGB);
                 algoKMeans.run();
+                try {
+                	segmentedImage.exportData(0, sliceSize, segmented);
+                }
+                catch (IOException error) {
+                    displayError("Algorithm Markov Segment: segmentedImage locked");
+                    setCompleted(false);
+                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+
+                    return;
+                }
                 iter = 0;
+                mu = new double[class_number][vLength];
+                sigma = new double[vLength][vLength][class_number];
+                mu_i = new double[vLength];
+                sigma_i = new double[vLength][vLength];
+                diff_i = new double[sliceSize][vLength];
+                transpose = new double[vLength][vLength];
+                inv = new double[vLength][vLength];
                 while (iter < maxIter) {
-                	
+                    for (i = 0; i < class_number; i++) {
+                    	classVector.clear();
+                    	for (j = 0; j < sliceSize; j++) {
+                    	    if (segmented[j] == i) {
+                    	    	classVector.add(j);
+                    	    }
+                    	}
+                        if (classVector.size() == 1) {
+                            if (cf == 1) {
+                            	mu[i][0] = src[classVector.get(0)];
+                            	sigma[0][0][i] = 0.0;
+                            } // if (cf == 1)
+                            else if (vLength == 3) {
+                            	mu[i][0] = redBuffer[classVector.get(0)];
+                            	mu[i][1] = greenBuffer[classVector.get(0)];
+                            	mu[i][2] = blueBuffer[classVector.get(0)];
+                            	for (v = 0; v < 3; v++) {
+                            		for (v2 = 0; v2 < 3; v2++) {
+                            			sigma[v][v2][i] = 0;
+                            		}
+                            	}
+                            } // else if (vLength == 3)
+                            else if (vLength == 2) {
+                            	if (useRed && useGreen) {
+                            	    mu[i][0] = redBuffer[classVector.get(0)];
+                            	    mu[i][1] = greenBuffer[classVector.get(0)];	
+                            	}
+                            	else if (useRed && useBlue) {
+                            		mu[i][0] = redBuffer[classVector.get(0)];
+                             	    mu[i][1] = blueBuffer[classVector.get(0)];		
+                            	}
+                            	else {
+                            		mu[i][0] = greenBuffer[classVector.get(0)];
+                             	    mu[i][1] = blueBuffer[classVector.get(0)];			
+                            	}
+                            	for (v = 0; v < 2; v++) {
+                            		for (v2 = 0; v2 < 3; v2++) {
+                            			sigma[v][v2][i] = 0;
+                            		}
+                            	}
+                            } // else if (vLength == 2)
+                            else if (vLength == 1) {
+                                if (useRed) {
+                                	mu[i][0] = redBuffer[classVector.get(0)];	
+                                }
+                                else if (useGreen) {
+                                	mu[i][0] = greenBuffer[classVector.get(0)];	
+                                }
+                                else {
+                                	mu[i][0] = blueBuffer[classVector.get(0)];
+                                }
+                                sigma[0][0][i] = 0;
+                            } // else if (vLength == 1)
+                        } // if (classVector.size() == 1)
+                        else if (classVector.size() > 1) {
+                        	if (cf == 1) {
+	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                            	sum += src[classVector.get(j)];
+	                            }
+	                            mu[i][0] = sum/classVector.size();
+	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                                diff = src[classVector.get(j)] - mu[i][0];
+	                                sum += (diff * diff);
+	                            }
+	                            sigma[0][0][i] = sum/(classVector.size() - 1);
+                        	} // if (cf == 1)
+                        	else if (vLength == 3) {
+                        		sum = 0.0;
+ 	                            for (j = 0; j < classVector.size(); j++) {
+ 	                            	sum += redBuffer[classVector.get(j)];
+ 	                            }
+ 	                            mu[i][0] = sum/classVector.size();
+ 	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                            	sum += greenBuffer[classVector.get(j)];
+	                            }
+	                            mu[i][1] = sum/classVector.size();
+	                            sum = 0.0;
+ 	                            for (j = 0; j < classVector.size(); j++) {
+ 	                            	sum += blueBuffer[classVector.get(j)];
+ 	                            }
+ 	                            mu[i][2] = sum/classVector.size();
+ 	                            diffRed = new double[classVector.size()];
+ 	                            diffGreen = new double[classVector.size()];
+ 	                            diffBlue = new double[classVector.size()];
+ 	                            for (j = 0; j < classVector.size(); j++) {
+ 	                            	diffRed[j] = redBuffer[classVector.get(j)] - mu[i][0];
+ 	                            	diffGreen[j] = greenBuffer[classVector.get(j)] - mu[i][1];
+ 	                            	diffBlue[j] = blueBuffer[classVector.get(j)] - mu[i][2];
+ 	                            }
+ 	                            sum = 0.0;
+ 	                            for (j = 0; j < classVector.size(); j++) {
+ 	                            	sum += diffRed[j] * diffRed[j];
+ 	                            }
+ 	                            sigma[0][0][i] = sum/(classVector.size() - 1);
+ 	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                            	sum += diffGreen[j] * diffGreen[j];
+	                            }
+	                            sigma[1][1][i] = sum/(classVector.size() - 1);
+	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                            	sum += diffBlue[j] * diffBlue[j];
+	                            }
+	                            sigma[2][2][i] = sum/(classVector.size() - 1);
+	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                            	sum += diffRed[j] * diffGreen[j];
+	                            }
+	                            sigma[0][1][i] = sum/(classVector.size() - 1);
+	                            sigma[1][0][i] = sigma[0][1][i];
+	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                            	sum += diffRed[j] * diffBlue[j];
+	                            }
+	                            sigma[0][2][i] = sum/(classVector.size() - 1);
+	                            sigma[2][0][i] = sigma[0][2][i];
+	                            sum = 0.0;
+	                            for (j = 0; j < classVector.size(); j++) {
+	                            	sum += diffGreen[j] * diffBlue[j];
+	                            }
+	                            sigma[1][2][i] = sum/(classVector.size() - 1);
+	                            sigma[2][1][i] = sigma[1][2][i];
+                        	} // else if (vLength == 3)
+                        	else if (vLength == 2) {
+                        	    if (useRed && useGreen) {
+                        	    	sum = 0.0;
+     	                            for (j = 0; j < classVector.size(); j++) {
+     	                            	sum += redBuffer[classVector.get(j)];
+     	                            }
+     	                            mu[i][0] = sum/classVector.size();
+     	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	sum += greenBuffer[classVector.get(j)];
+    	                            }
+    	                            mu[i][1] = sum/classVector.size();	
+    	                            diffRed = new double[classVector.size()];
+     	                            diffGreen = new double[classVector.size()];
+     	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	diffRed[j] = redBuffer[classVector.get(j)] - mu[i][0];
+    	                            	diffGreen[j] = greenBuffer[classVector.get(j)] - mu[i][1];
+    	                            }
+    	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	sum += diffRed[j] * diffRed[j];
+    	                            }
+    	                            sigma[0][0][i] = sum/(classVector.size() - 1);
+    	                            sum = 0.0;
+   	                                for (j = 0; j < classVector.size(); j++) {
+   	                            	    sum += diffGreen[j] * diffGreen[j];
+   	                                }
+   	                                sigma[1][1][i] = sum/(classVector.size() - 1);
+   	                                sum = 0.0;
+ 	                                for (j = 0; j < classVector.size(); j++) {
+ 	                            	    sum += diffRed[j] * diffGreen[j];
+ 	                                }
+ 	                                sigma[0][1][i] = sum/(classVector.size() - 1);
+ 	                                sigma[1][0][i] = sigma[0][1][i];
+                        	    } // if (useRed && useGreen)
+                        	    else if (useRed && useBlue) {
+                        	    	sum = 0.0;
+     	                            for (j = 0; j < classVector.size(); j++) {
+     	                            	sum += redBuffer[classVector.get(j)];
+     	                            }
+     	                            mu[i][0] = sum/classVector.size();
+     	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	sum += blueBuffer[classVector.get(j)];
+    	                            }
+    	                            mu[i][1] = sum/classVector.size();	
+    	                            diffRed = new double[classVector.size()];
+     	                            diffBlue = new double[classVector.size()];
+     	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	diffRed[j] = redBuffer[classVector.get(j)] - mu[i][0];
+    	                            	diffBlue[j] = blueBuffer[classVector.get(j)] - mu[i][1];
+    	                            }
+    	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	sum += diffRed[j] * diffRed[j];
+    	                            }
+    	                            sigma[0][0][i] = sum/(classVector.size() - 1);
+    	                            sum = 0.0;
+   	                                for (j = 0; j < classVector.size(); j++) {
+   	                            	    sum += diffBlue[j] * diffBlue[j];
+   	                                }
+   	                                sigma[1][1][i] = sum/(classVector.size() - 1);
+   	                                sum = 0.0;
+ 	                                for (j = 0; j < classVector.size(); j++) {
+ 	                            	    sum += diffRed[j] * diffBlue[j];
+ 	                                }
+ 	                                sigma[0][1][i] = sum/(classVector.size() - 1);
+ 	                                sigma[1][0][i] = sigma[0][1][i];	
+                        	    } // else if (useRed && useBlue)
+                        	    else {
+                        	    	sum = 0.0;
+     	                            for (j = 0; j < classVector.size(); j++) {
+     	                            	sum += greenBuffer[classVector.get(j)];
+     	                            }
+     	                            mu[i][0] = sum/classVector.size();
+     	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	sum += blueBuffer[classVector.get(j)];
+    	                            }
+    	                            mu[i][1] = sum/classVector.size();	
+    	                            diffGreen = new double[classVector.size()];
+     	                            diffBlue = new double[classVector.size()];
+     	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	diffGreen[j] = redBuffer[classVector.get(j)] - mu[i][0];
+    	                            	diffBlue[j] = blueBuffer[classVector.get(j)] - mu[i][1];
+    	                            }
+    	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+    	                            	sum += diffGreen[j] * diffGreen[j];
+    	                            }
+    	                            sigma[0][0][i] = sum/(classVector.size() - 1);
+    	                            sum = 0.0;
+   	                                for (j = 0; j < classVector.size(); j++) {
+   	                            	    sum += diffBlue[j] * diffBlue[j];
+   	                                }
+   	                                sigma[1][1][i] = sum/(classVector.size() - 1);
+   	                                sum = 0.0;
+ 	                                for (j = 0; j < classVector.size(); j++) {
+ 	                            	    sum += diffGreen[j] * diffBlue[j];
+ 	                                }
+ 	                                sigma[0][1][i] = sum/(classVector.size() - 1);
+ 	                                sigma[1][0][i] = sigma[0][1][i];		
+                        	    }
+                        	} // else if (vLength == 2)
+                        	else if (vLength == 1) {
+                        		if (useRed) {
+                        			sum = 0.0;
+     	                            for (j = 0; j < classVector.size(); j++) {
+     	                            	sum += redBuffer[classVector.get(j)];
+     	                            }
+     	                            mu[i][0] = sum/classVector.size();	
+     	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+   	                            	    diff = redBuffer[classVector.get(j)] - mu[i][0];
+   	                            	    sum += (diff * diff);
+   	                                }
+    	                            sigma[0][0][i] = sum/(classVector.size() - 1);
+                        		} // if (useRed)
+                        		else if (useGreen) {
+                        			sum = 0.0;
+     	                            for (j = 0; j < classVector.size(); j++) {
+     	                            	sum += greenBuffer[classVector.get(j)];
+     	                            }
+     	                            mu[i][0] = sum/classVector.size();	
+     	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+   	                            	    diff = greenBuffer[classVector.get(j)] - mu[i][0];
+   	                            	    sum += (diff * diff);
+   	                                }
+    	                            sigma[0][0][i] = sum/(classVector.size() - 1);	
+                        		} // else if (useGreen)
+                        		else {
+                        			sum = 0.0;
+     	                            for (j = 0; j < classVector.size(); j++) {
+     	                            	sum += blueBuffer[classVector.get(j)];
+     	                            }
+     	                            mu[i][0] = sum/classVector.size();	
+     	                            sum = 0.0;
+    	                            for (j = 0; j < classVector.size(); j++) {
+   	                            	    diff = blueBuffer[classVector.get(j)] - mu[i][0];
+   	                            	    sum += (diff * diff);
+   	                                }
+    	                            sigma[0][0][i] = sum/(classVector.size() - 1);		
+                        		}
+                        	} // else if (vLength == 1)
+                        } // else if (classVector.size() > 1)
+                    } // for (i = 0; i < class_number; i++)
+                    
+                    for (i = 0; i < class_number; i++) {
+                        for (v = 0; v < vLength; v++) {
+                        	mu_i[v] = mu[i][v];
+                        	for (v2 = 0; v2 < vLength; v2++) {
+                        		sigma_i[v][v2] = sigma[v][v2][i];
+                        	}
+                        }
+                        if (cf == 1) {
+                        	for (j = 0; j < sliceSize; j++) {
+                        		diff_i[j][0] = src[j] - mu_i[0];
+                        	}
+                        } // if (cf == 1)
+                        else if (vLength == 3) {
+                        	for (j = 0; j < sliceSize; j++) {
+                        		diff_i[j][0] = redBuffer[j] - mu_i[0];
+                        		diff_i[j][1] = greenBuffer[j] - mu_i[1];
+                        		diff_i[j][2] = blueBuffer[j] - mu_i[2];
+                        	}
+                        } // else if (vLength == 3)
+                        else if (vLength == 2) {
+                            if (useRed && useGreen) {
+                            	for (j = 0; j < sliceSize; j++) {
+                            		diff_i[j][0] = redBuffer[j] - mu_i[0];
+                            		diff_i[j][1] = greenBuffer[j] - mu_i[1];
+                            	}	
+                            } // if (useRed && useGreen) 
+                            else if (useRed && useBlue) {
+                            	for (j = 0; j < sliceSize; j++) {
+                            		diff_i[j][0] = redBuffer[j] - mu_i[0];
+                            		diff_i[j][1] = blueBuffer[j] - mu_i[1];
+                            	}
+                            } // else if (useRed && useBlue)
+                            else {
+                            	for (j = 0; j < sliceSize; j++) {
+                            		diff_i[j][0] = greenBuffer[j] - mu_i[0];
+                            		diff_i[j][1] = blueBuffer[j] - mu_i[1];
+                            	}	
+                            }
+                        } // else if (vLength == 2)
+                        else if (vLength == 1) {
+                        	if (useRed) {
+	                        	for (j = 0; j < sliceSize; j++) {
+	                        		diff_i[j][0] = redBuffer[j] - mu_i[0];
+	                        	}
+                        	} // if (useRed)
+                        	else if (useGreen) {
+                        		for (j = 0; j < sliceSize; j++) {
+	                        		diff_i[j][0] = greenBuffer[j] - mu_i[0];
+	                        	}	
+                        	} // else if (useGreen)
+                        	else {
+                        		for (j = 0; j < sliceSize; j++) {
+	                        		diff_i[j][0] = blueBuffer[j] - mu_i[0];
+	                        	}		
+                        	} // else 
+                        } // else if (vLength == 1)
+                        if (vLength == 3) {
+                        	det = sigma_i[0][0]*(sigma_i[1][1]*sigma_i[2][2] - sigma_i[1][2]*sigma_i[2][1])
+                        	    -sigma_i[0][1]*(sigma_i[1][0]*sigma_i[2][2] - sigma_i[1][2]*sigma_i[2][0])
+                        	    +sigma_i[0][2]*(sigma_i[1][0]*sigma_i[2][1] - sigma_i[1][1]*sigma_i[2][0]);
+                        	for (v = 0; v < 3; v++) {
+                        		for (v2 = 0; v2 < 3; v2++) {
+                        			transpose[v][v2] = sigma_i[v2][v];
+                        		}
+                        	}
+                        	inv[0][0] = (transpose[1][1]* transpose[2][2] - transpose[2][1]*transpose[1][2])/det;
+                        	inv[0][1] = -(transpose[1][0] * transpose[2][2] - transpose[2][0]*transpose[1][2])/det;
+                            inv[0][2] = (transpose[1][0] * transpose[2][1] - transpose[2][0] * transpose[1][1])/det;
+                            inv[1][0] = -(transpose[0][1] * transpose[2][2] - transpose[2][1] * transpose[0][2])/det;
+                            inv[1][1] = (transpose[0][0] * transpose[2][2] - transpose[2][0] * transpose[0][2])/det;
+                            inv[1][2] = -(transpose[0][0] * transpose[2][1] - transpose[2][0] * transpose[0][1])/det;
+                            inv[2][0] = (transpose[0][1] * transpose[1][2] - transpose[1][1] * transpose[0][2])/det;
+                            inv[2][1] = -(transpose[0][0]* transpose[1][2] - transpose[1][0] * transpose[0][2])/det;
+                            inv[2][2] = (transpose[0][0] * transpose[1][1] - transpose[1][0] * transpose[0][1])/det;
+                        }
+                        else if (vLength == 2) {
+                            det = sigma_i[0][0]* sigma_i[1][1] - sigma_i[0][1]*sigma_i[1][0];	
+                        }
+                        else if (vLength == 1) {
+                        	det = sigma_i[0][0];
+                        }
+                    } // for (i = 0; i < class_number; i++)
                 } // while (iter < maxIter)
                 } // for (z = 0; (z < zDim) && !threadStopped; z++)
             } // for (t = 0; (t < tDim) && !threadStopped; t++)
