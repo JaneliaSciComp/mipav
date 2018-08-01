@@ -101,7 +101,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private String txtFileDir;
     
     /**Used to store the location of the text file to be transformed */
-    private String xFormFileDir;
+    private String outFileName;
 
     /** Dev data dictionary server. */
     @SuppressWarnings("unused")
@@ -516,7 +516,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		    		jFrame.dispose();
         		    	}
         		    });
-        		    // creating jFrame with border layout
         		    jFrame.add(textField, BorderLayout.PAGE_START);
         		    jFrame.add(sp, BorderLayout.CENTER);
         		    jFrame.add(close, BorderLayout.PAGE_END);
@@ -1195,7 +1194,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             structsScrollPane.setPreferredSize(new Dimension(800, 300));
-            // search bar for form structures - still need to set enter key to same function as search button
+            // search bar for form structures
             final JTextField searchBar = new JTextField();
             final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(structsModel);
             structsTable.setRowSorter(sorter);
@@ -1560,7 +1559,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("PV Mappings"));	
         		str = str.replace("null", "");
         		bw.write(str+"\n");
-        		// issue with saving PVs with a comma to a CSV, e.g. "other, specify"  - Need to have a plan.
         		printlnToLog("Successful saving of Mapping file");
         	}	
         } catch (final Exception e) {
@@ -1590,7 +1588,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		final FileInputStream fis = new FileInputStream(txtFile);
     		br = new BufferedReader(new InputStreamReader(fis));
     		str = br.readLine();
-    		
+    		// file must have the BRICSMap01 id
     		if(!str.contains(id)) {
     			displayError("Error: Incorrect txt file selected");
     		}
@@ -1789,7 +1787,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             sPane.setPreferredSize(dim);
             pack();
             centerInWindow(owner, this);
-            
+            // setting up a search bar for the source data elements table
             final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(srcDETableModel);
             srcDETable.setRowSorter(sorter);
             final JButton searchButton = new JButton("Search");
@@ -2106,6 +2104,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             		displayWarning("Please select both reference and source data elements.");
             	}        		
             }
+            
             
             
             
@@ -3669,13 +3668,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dispose();
             } 
             if (command.equalsIgnoreCase("Done")) {
-            	String str = outputFileName.getText();
-            	if (str.endsWith(".csv") ) {
-            		fileXFormTable.setValueAt(str, fileXFormTable.getSelectedRow(), 2);
+            	outFileName = outputFileName.getText();
+            	if (outFileName.endsWith(".csv") ) {
+            		fileXFormTable.setValueAt(outFileName, fileXFormTable.getSelectedRow(), 2);
             	}
             	else {
-            		str = str.concat(".csv");
-            		fileXFormTable.setValueAt(str, fileXFormTable.getSelectedRow(), 2);
+            		outFileName = outFileName.concat(".csv");
+            		fileXFormTable.setValueAt(outFileName, fileXFormTable.getSelectedRow(), 2);
             	}
             	
             	dispose();
@@ -3788,15 +3787,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
     
     /** Transform code */
-    private boolean xFormFiles() {
+    private void xFormFiles() {
     	int numRows = fileXFormTableModel.getRowCount();
     	validateXFormTable();
     	String strMap = null;
     	String strSrc = null;
     	String[] mapStrucs = null;
     	String [] srcStrucs = null;
-    	String[] mapVars = null;
-    	String str;
+    	String str = null;
+    	List<List<String>> mapLines = new ArrayList<>();
     	
     	List<File> sourceFiles = new ArrayList<>();
     	List<File> mappingFiles = new ArrayList<>();
@@ -3805,54 +3804,140 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	BufferedReader brSrc = null;
     	BufferedReader brMap = null;
     	BufferedWriter bw = null;
+    	FileWriter fw = null;
     	
     	FileInputStream fisSrc;
     	FileInputStream fisMap;
     	FileOutputStream fos;
     	
     	try {
-    	
-    	for(int i = 0; i < numRows; i++) {
-    		sourceFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")));
-    		mappingFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files")));
-    		outFiles.add(new File(outputXFormDirBase + outputFileName));
-    	}
-    	
-    	File [] src = sourceFiles.toArray(new File[sourceFiles.size()]);
-    	File [] map = mappingFiles.toArray(new File[mappingFiles.size()]);
-    	File [] out = outFiles.toArray(new File[mappingFiles.size()]);
-    	int filledRows = src.length;
-    	
-    	for(int i = 0; i < filledRows; i++) {
-    		fisSrc = new FileInputStream(src[i]);
-    		brSrc = new BufferedReader(new InputStreamReader(fisSrc));
-    		fisMap = new FileInputStream(map[i]);
-    		brMap = new BufferedReader(new InputStreamReader(fisMap));
-    		strMap = brMap.readLine();
-    		mapStrucs = strMap.split(": ");
-    		strSrc = brSrc.readLine();
-    		srcStrucs = strSrc.split(CSV_OUTPUT_DELIM);
-    		if(!srcStrucs[0].equalsIgnoreCase(mapStrucs[1])) {
-    			displayError("Error: Form strucutre on mapping file and source file are inconsistent");
-    			brSrc.close();
-    			brMap.close();
+    		// adding files from transform table to an array list 
+    		for(int i = 0; i < numRows; i++) {
+    			sourceFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")));
+    			mappingFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files")));
+    			outFiles.add(new File(outputXFormDirBase + outFileName));
     		}
-    		else {
-    			str = srcStrucs[0] + ",\n"; //putting the form structure in the string to eventually be written to new csv files
-    			while((strMap = brMap.readLine())!=null) {
-    				mapVars = strMap.split(TSV_OUTPUT_DELIM);
-    				str = str + mapVars[0] + "." + mapVars[2] + ",\n";
+    		// converting each columns array list to a simple array
+    		File [] src = sourceFiles.toArray(new File[sourceFiles.size()]);
+    		File [] map = mappingFiles.toArray(new File[mappingFiles.size()]);
+    		File [] out = outFiles.toArray(new File[outFiles.size()]);
+    		int filledRows = src.length;
+    	
+    		for(int i = 0; i < filledRows; i++) {
+    			// setting up buffered readers, input streams, as well as splitting the files to an array
+    			fisSrc = new FileInputStream(src[i]);
+    			brSrc = new BufferedReader(new InputStreamReader(fisSrc));
+    			fisMap = new FileInputStream(map[i]);
+    			brMap = new BufferedReader(new InputStreamReader(fisMap));
+    			fos = new FileOutputStream(out[i]);
+    			bw = new BufferedWriter(new OutputStreamWriter(fos));
+    			strMap = brMap.readLine();
+    			mapStrucs = strMap.split(": ");
+    			strSrc = brSrc.readLine();
+    			srcStrucs = strSrc.split(CSV_OUTPUT_DELIM);
+    			// both the mapping file and the source file must be of the same form structure - if not display an error
+    			if(!srcStrucs[0].equalsIgnoreCase(mapStrucs[1])) {
+    				displayError("Error: Form strucutre on mapping file and source file are inconsistent");
+    				brSrc.close();
+    				brMap.close();
     			}
-				System.out.println(str);
-    		}
-    		
+    			else {
+    				// store form structure name to be written to output file
+    				str = srcStrucs[0] + ",\n" + "record,";
+    				// reading through the mapping file - ensuring each mapped line is put into a 2d array list
+    				while((strMap = brMap.readLine())!=null) {
+    					String[] mapDEs = strMap.split(TSV_OUTPUT_DELIM);
+    					if(mapDEs.length > 7) {
+    						mapLines.add(Arrays.asList(mapDEs));
+    					}
+    				}
+    				// converting the 2d array list to an array in the format needed including group name and mappings if necessary
+    				String[][] stri = new String[mapLines.size()][4];
+    				for(int j = 0; j < mapLines.size(); j++) {
+    					stri[j][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);
+    					stri[j][1] = mapLines.get(j).get(7);
+    					str = str + stri[j][0] + ",";
+    					if(mapLines.get(j).size() > 9) {
+    						stri[j][2] = mapLines.get(j).get(10);
+    					}
+    					else {
+    						stri[j][2] = null;
+    					}
+    				}
+    				str = str + "\n";
+    				// reads DEs from the source array and places them in the first column of the 2d array
+    				strSrc = brSrc.readLine();
+    				String[] ordSrcDEs = strSrc.split(CSV_OUTPUT_DELIM);
+    				String[][] matchDEs = new String[ordSrcDEs.length][2];
+    				for(int j = 0; j < stri.length; j++) {
+    					matchDEs[j][0] = ordSrcDEs[j];
+    				}
+    				// finishes 2d array to match source DEs with the order they should appear in the output file
+    				for(int k = 0; k < matchDEs.length; k++) {
+    					String target = matchDEs[k][0];
+    					for(int m = 0; m < stri.length; m++) {
+    						if(stri[m][1].equalsIgnoreCase(target)) {
+    							matchDEs[k][1] = Integer.toString(m);    							
+    						}
+    					}
+    				}
+    				System.out.println(Arrays.deepToString(stri));
+    				System.out.println(Arrays.deepToString(matchDEs));
+    				// reads through the source file, matching DEs in the proper order
+    				while((strSrc = brSrc.readLine()) != null) {
+    					str = str + "x,";
+    					String[] srcDataPV = strSrc.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+    					for(int m = 0; m < srcDataPV.length; m++) {
+    						int refIndex = Integer.parseInt(matchDEs[m][1]);
+    						int srcIndex = Arrays.asList(srcDataPV).indexOf(srcDataPV[m]);
+    						if(refIndex == srcIndex) {
+    							if(stri[m][2] == null) {
+    								stri[m][3] = srcDataPV[m];
+    							}
+    							else { 
+    								stri[m][3] = switchPVs(stri[m][2], srcDataPV[m]);
+    							}
+    						}
+    						else {
+    							if(stri[m][2] == null) {
+    								stri[m][3] = srcDataPV[refIndex];
+    							}
+    							else {
+    								stri[m][3] = switchPVs(stri[m][2], srcDataPV[refIndex]);
+    							}
+    						}
+    					}
+    					for(int n = 0; n < stri.length; n++) {
+    						str = str + stri[n][3] + ",";
+    					}
+    					str = str + "\n";
+    					
+    				}
+    				//System.out.println(str);
+    	    		bw.write(str + "\n");
+    			}
     		}
     	}
     	catch(final Exception e) {
-    		
+    		System.out.println("Error:"+e);
     	}
-    	return true;
     }
+    /** Code to switch the mapped source PV with the correct reference PV when necessary */
+    private String switchPVs(String mappings, String srcElement) {
+    	String finished = null;
+    	String[] mapFind = mappings.split(";");
+    	String[] corMap = new String[2];
+    	for(int i = 0; i < mapFind.length; i++) {
+    		if(mapFind[i].contains(srcElement)) {
+    			corMap = mapFind[i].split(":");
+    			finished = corMap[1];
+    		}
+    		Arrays.fill(corMap, null);
+    	}
+    	return finished;
+    } 
+    
+    /** Validate transform table to ensure all columns are filled for each transformable row */
     private void validateXFormTable() {
     	int numRows = fileXFormTableModel.getRowCount();
     	for(int i = 0; i < numRows; i++) {
@@ -3866,7 +3951,5 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     			}
     		}
     	}
-    	//return true;
     }
-    
 }
