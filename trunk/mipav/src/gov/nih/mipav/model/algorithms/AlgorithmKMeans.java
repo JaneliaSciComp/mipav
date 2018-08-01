@@ -294,6 +294,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
     private boolean showSegmentedImage = true;
     
     private boolean followBatchWithIncremental = false;
+    
+    // If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
+    private boolean colorSegmentInRGB = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -305,7 +308,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		               double[][] centroidPos, String resultsFileName, int initSelection, float[] redBuffer,
     		               float[] greenBuffer, float[] blueBuffer, double scaleMax, boolean useColorHistogram,
     		               boolean scaleVariablesToUnitVariance, double[] axesRatio, boolean bwSegmentedImage,
-    		               double[] doubleBuffer, boolean showSegmentedImage, boolean followBatchWithIncremental) {
+    		               double[] doubleBuffer, boolean showSegmentedImage, boolean followBatchWithIncremental,
+    		               boolean colorSegmentInRGB) {
 
         this.image = image;
         this.algoSelection = algoSelection;
@@ -328,6 +332,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.doubleBuffer = doubleBuffer;
         this.showSegmentedImage = showSegmentedImage;
         this.followBatchWithIncremental = followBatchWithIncremental;
+        this.colorSegmentInRGB = colorSegmentInRGB;
     }
 
     
@@ -370,6 +375,15 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double X, Y, Z;
         double varX, varY, varZ;
         float a, b;
+        float redMin;
+        float redMax;
+        float greenMin;
+        float greenMax;
+        float blueMin;
+        float blueMax;
+        boolean useRed;
+        boolean useGreen;
+        boolean useBlue;
         byte buffer[];
         int instances[] = null;
         int numTimes;
@@ -411,6 +425,137 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	centroidDistances = new double[numberClusters][numberClusters];
         
         if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
+        	if (redBuffer != null) {
+        	    length = redBuffer.length;
+        	}
+        	else {
+        		length = greenBuffer.length;
+        	}
+		    colors = new int[length];
+		    if (useColorHistogram) {
+		    	instances = new int[length];
+		    }
+		    indexTable = new int[length];
+		    for (i = 0; i < length; i++) {
+		    	indexTable[i] = -1;
+		    }
+		    colorsFound = 0;
+        	if (colorSegmentInRGB) {
+        		redMin = Float.MAX_VALUE;
+        	    redMax = -Float.MAX_VALUE;
+        	    greenMin = Float.MAX_VALUE;
+        	    greenMax = -Float.MAX_VALUE;
+        	    blueMin = Float.MAX_VALUE;
+        	    blueMax = -Float.MAX_VALUE;
+        	    nDims = 0;
+        	    useRed = false;
+        	    useGreen = false;
+        	    useBlue = false;
+        	    for (i = 0; i < length; i++) {
+        	    	if (redBuffer != null) {
+	        	        if (redBuffer[i] < redMin) {
+	        	        	redMin = redBuffer[i];
+	        	        }
+	        	        if (redBuffer[i] > redMax) {
+	        	        	redMax = redBuffer[i];
+	        	        }
+        	    	}
+        	    	if (greenBuffer != null) {
+	        	        if (greenBuffer[i] < greenMin) {
+	        	        	greenMin = greenBuffer[i];
+	        	        }
+	        	        if (greenBuffer[i] > greenMax) {
+	        	        	greenMax = greenBuffer[i];
+	        	        }
+        	    	}
+        	    	if (blueBuffer != null) {
+	        	        if (blueBuffer[i] < blueMin) {
+	        	        	blueMin = blueBuffer[i];
+	        	        }
+	        	        if (blueBuffer[i] > blueMax) {
+	        	        	blueMax = blueBuffer[i];
+	        	        }
+        	    	}
+        	    } // for (i = 0; i < length; i++)
+        	    if (redMax > redMin) {
+        	    	useRed = true;
+        	    	nDims++;
+        	    }
+        	    if (greenMax > greenMin) {
+        	    	useGreen = true;
+        	    	nDims++;
+        	    }
+        	    if (blueMax > blueMin) {
+        	    	useBlue = true;
+        	    	nDims++;
+        	    }
+        	    for (i = 0; i < length; i++) {
+    		    	indexTable[i] = -1;
+    		    }
+    		    colorsFound = 0;
+		    	for (i = 0; i < length; i++) {
+				    	if (indexTable[i] == -1) {
+					    	colors[colorsFound] = i;
+					    	indexTable[i] = colorsFound;
+					    	numTimes = 1;
+					    	for (j = i+1; j < length; j++) {
+					    		if (((!useRed) || (redBuffer[j] == redBuffer[i])) && ((!useGreen) || (greenBuffer[j] == greenBuffer[i])) &&
+					    			((!useBlue) || (blueBuffer[j] == blueBuffer[i]))) {
+					    		    indexTable[j] = colorsFound;
+					    		    numTimes++;
+					    		} // if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i])
+					    	} // for (j = i+1; j < length; j++)
+					        instances[colorsFound] = numTimes;
+					    	colorsFound++;
+				    	} // if (indexTable[i] == -1)
+				} // for (i = 0; i < length; i++)
+		    	Preferences.debug("Colors found = " + colorsFound + "\n", Preferences.DEBUG_ALGORITHM);
+			    pos = new double[nDims][colorsFound];
+			    groupNum = new int[colorsFound];
+			    centroidPos = new double[nDims][numberClusters];
+		    	weight = new double[colorsFound];
+		    	totalWeight = new double[numberClusters];
+		    	if (useColorHistogram) {
+			    	for (i = 0; i < colorsFound; i++) {
+			    		weight[i] = ((double)instances[i])/((double)length);
+			    	}
+		    	}
+		    	else {
+		    		for (i = 0; i < colorsFound; i++) {
+		    		    weight[i] = 1.0;
+		    		}
+		    	}
+		    	instances = null;
+		    	for (i = 0; i < colorsFound; i++) {
+		    	    if (useRed && useGreen && useBlue) {
+		    	    	pos[0][i] = redBuffer[colors[i]];
+		    	    	pos[1][i] = greenBuffer[colors[i]];
+		    	    	pos[2][i] = blueBuffer[colors[i]];
+		    	    }
+		    	    else if (useRed && useGreen) {
+		    	    	pos[0][i] = redBuffer[colors[i]];
+		    	    	pos[1][i] = greenBuffer[colors[i]];	
+		    	    }
+		    	    else if (useRed && useBlue) {
+		    	    	pos[0][i] = redBuffer[colors[i]];
+		    	    	pos[1][i] = blueBuffer[colors[i]];
+		    	    }
+		    	    else if (useGreen && useBlue) {
+		    	    	pos[0][i] = greenBuffer[colors[i]];
+		    	    	pos[1][i] = blueBuffer[colors[i]];	
+		    	    }
+		    	    else if (useRed) {
+		    	    	pos[0][i] = redBuffer[colors[i]];	
+		    	    }
+		    	    else if (useGreen) {
+		    	    	pos[0][i] = greenBuffer[colors[i]];	
+		    	    }
+		    	    else if (useBlue) {
+		    	    	pos[0][i] = blueBuffer[colors[i]];	
+		    	    }
+		    	} // for (i = 0; i < colorsFound; i++)	
+        	} // if (colorSegmentInRGB)
+        	else {
         	// Separate on a and b chrominance components in CIELAB space
         	// Ignore the L luminance component
         	// No matter what the dimensionality of the original image,
@@ -607,6 +752,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 pos[1][i] = b;
 		    } // for (i = 0; i < colorsFound; i++)	
 		    colors = null;
+        	} // else segment in CIELAB
         } // if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null))
         
         if (bwSegmentedImage) {
