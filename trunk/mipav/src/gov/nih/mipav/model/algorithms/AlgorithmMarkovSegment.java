@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Vector;
 
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 /** Copyright (c) 2011, lin
@@ -81,33 +82,33 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	    int d;
 	    ModelImage segmentedImage;
 	    int extents[] = new int[2];
-	    double centroidPos[][] = new double[1][class_number];
+	    double centroidPos[][] = null;
 	    AlgorithmKMeans algoKMeans;
 	    int algoSelection = AlgorithmKMeans.K_MEANS;
         int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
         String kMeansFileName = srcImage.getImageFileName() +  "_kmeans.txt";
         int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
         boolean followBatchWithIncremental = false;
-        boolean bwSegmentedImage = true;
-        double scale[] = new double[]{1.0};
+        boolean bwSegmentedImage;
+        double scale[] = null;
         int i;
         int nPoints;
-        int groupNum[];
-        double weight[];
-        double pos[][];
+        int groupNum[] = null;
+        double weight[] = null;
+        double pos[][] = null;
         int nval;
         float redBuffer[] = null;
         float greenBuffer[] = null;
         float blueBuffer[] = null;
         // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
         double scaleMax = 255.0;
-        boolean useColorHistogram = false;
+        boolean useColorHistogram = true;
         boolean scaleVariablesToUnitVariance = false;
         double axesRatio[] = null;
         boolean showKMeansSegmentedImage = false;
+        boolean colorSegmentInRGB = true;
+        int cf;
         int iter;
-        int nDims;
-        int c;
 	    
 	    if (srcImage == null) {
             displayError("Source Image is null");
@@ -142,12 +143,20 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         // For black and white create a 2D array with xDim * yDim positions in the one dimension and
         // 1 value.
         // For color create a 2D array with xDim * yDim positions in one dimension and 2 or 3 values.
-        int cf = 1;
         if (srcImage.isColorImage()) {
         	cf = 3;
         	redBuffer = new float[sliceSize];
         	greenBuffer = new float[sliceSize];
         	blueBuffer = new float[sliceSize];
+        	scale = new double[3];
+        	scale[0] = 1.0;
+        	scale[1] = 1.0;
+        	scale[2] = 1.0;
+        }
+        else {
+        	cf = 1;
+        	scale = new double[1];
+        	scale[0] = 1.0;
         }
         
         for (t = 0; (t < tDim) && !threadStopped; t++) {
@@ -180,6 +189,7 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	                groupNum = new int[nPoints];
 	                weight = new double[nPoints];
 	                pos = new double[1][nPoints];
+	                centroidPos = new double[1][class_number];
 	                nval = 0;
 	                weight[nval] = 1.0;
 	                pos[0][nval] = src2[0];
@@ -196,15 +206,8 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	                for (i = 0; i < sliceSize; i++) {
 	                    src2[i] = src[i];
 	                }
-	                algoKMeans = new AlgorithmKMeans(segmentedImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
-	                        initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
-	                        useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
-	                        bwSegmentedImage, src2, showKMeansSegmentedImage, followBatchWithIncremental);
-	                algoKMeans.run();
-	                iter = 0;
-	                while (iter < maxIter) {
-	                	
-	                } // while (iter < maxIter)
+	                bwSegmentedImage = true;
+	               
             	}
             	else {
             	    try {
@@ -239,52 +242,23 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 
                     return;
                     }
-            	}  
-                } // for (z = 0; (z < zDim) && !threadStopped; z++)
-            } // for (t = 0; (t < tDim) && !threadStopped; t++)
-                
-                /*// black and white image undergoes one dimensional kmeans to produce segmented image
-                // Without rounding in one image 256 unique values become 65536 unique values
-                // This is too many for kmeans to handle in any reasonable so round to integers
-                for (i = 0; i < sliceSize; i++) {
-                    rounded[i] = Math.round(src[i]);
-                }
-                Arrays.sort(rounded);
-                nPoints = 1;
-                for (i = 1; i < sliceSize; i++) {
-                    if (rounded[i] > rounded[i-1]) {
-                        nPoints++;
-                    }
-                }
-                System.out.println("nPoints = " + nPoints);
-                groupNum = new int[nPoints];
-                weight = new double[nPoints];
-                pos = new double[1][nPoints];
-                nval = 0;
-                weight[nval] = 1.0;
-                pos[0][nval] = rounded[0];
-                for (i = 1; i < sliceSize; i++) {
-                    if (rounded[i] == rounded[i-1]) {
-                        weight[nval] += 1.0;
-                    }
-                    else {
-                        nval++;
-                        weight[nval] = 1.0;
-                        pos[0][nval] = rounded[i];
-                    }
-                }
-                for (i = 0; i < sliceSize; i++) {
-                    rounded[i] = Math.round(src[i]);
-                }
-                algoKMeans = new AlgorithmKMeans(segmentedImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
-                        initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
-                        useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
-                        bwSegmentedImage, rounded, showKMeansSegmentedImage);
+            	    
+            	    bwSegmentedImage = false;
+            	    
+            	} // else
+            	algoKMeans = new AlgorithmKMeans(segmentedImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
+	                        initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
+	                        useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
+	                        bwSegmentedImage, src2, showKMeansSegmentedImage, followBatchWithIncremental, colorSegmentInRGB);
                 algoKMeans.run();
                 iter = 0;
                 while (iter < maxIter) {
                 	
                 } // while (iter < maxIter)
+                } // for (z = 0; (z < zDim) && !threadStopped; z++)
+            } // for (t = 0; (t < tDim) && !threadStopped; t++)
+                
+                /*
                 try {
                     destImage.importData((t * zDim + z) * sliceSize, buffer[d], false);
                 } catch (IOException error) {
