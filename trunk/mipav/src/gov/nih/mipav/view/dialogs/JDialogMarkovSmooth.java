@@ -146,7 +146,7 @@ public class JDialogMarkovSmooth extends JDialogScriptableBase implements Algori
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
             MipavUtil.showWebHelp("Filters_(Spatial):_Markov_Smoooth#Applying_the_algorithm");
-        } else { // else if (source == thresholdCheckbox)
+        } else { 
             super.actionPerformed(event);
         }
     }
