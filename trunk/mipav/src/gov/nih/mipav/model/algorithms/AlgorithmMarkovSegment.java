@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Vector;
 
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 /** Copyright (c) 2011, lin
@@ -73,13 +72,10 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	    int sliceSize;
 	    double src[];
 	    double src2[];
-	    double buffer[][];
 	    int zDim = 1;
 	    int tDim = 1;
 	    int z;
 	    int t;
-	    int s;
-	    int d;
 	    ModelImage segmentedImage;
 	    int extents[] = new int[2];
 	    double centroidPos[][] = null;
@@ -131,13 +127,23 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         double diffRed[];
         double diffGreen[];
         double diffBlue[];
-        double E[][];
+        double Ef[][];
         double mu_i[];
         double sigma_i[][];
         double diff_i[][];
-        double det;
+        double det = 0.0;
         double inv[][];
         double transpose[][];
+        double diffInv[][];
+        double diffInvDiff[][];
+        double El[][];
+        int y;
+        int x;
+        int dely;
+        int delx;
+        double E[][];
+        double Emin;
+        int index;
 	    
 	    if (srcImage == null) {
             displayError("Source Image is null");
@@ -160,13 +166,12 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         sliceSize = xDim * yDim;
         extents[0] = xDim;
         extents[1] = yDim;
-        // Maintain two buffer images.
-        // In alternate iterations, one will be the 
-        // source buffer, the other will be the destination buffer.
-        buffer = new double[2][sliceSize];
+     
         src = new double[sliceSize];
         src2 = new double[sliceSize];
         segmented = new byte[sliceSize];
+        Ef = new double[sliceSize][class_number];
+        El = new double[sliceSize][class_number];
         E = new double[sliceSize][class_number];
         segmentedImage = new ModelImage(ModelStorageBase.BYTE, extents,
 	            (srcImage.getImageFileName()+ "_kmeans"));
@@ -195,8 +200,6 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
         
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             for (z = 0; (z < zDim) && !threadStopped; z++) {
-            	s = 1;
-            	d = 0;
             	if (cf == 1) {
 	                try {
 	                    srcImage.exportData((t * zDim + z) * sliceSize, sliceSize, src); // locks and releases lock
@@ -350,6 +353,8 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
                 diff_i = new double[sliceSize][vLength];
                 transpose = new double[vLength][vLength];
                 inv = new double[vLength][vLength];
+                diffInv = new double[sliceSize][vLength];
+                diffInvDiff = new double[sliceSize][vLength];
                 while (iter < maxIter) {
                     for (i = 0; i < class_number; i++) {
                     	classVector.clear();
@@ -701,29 +706,94 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
                             inv[2][2] = (transpose[0][0] * transpose[1][1] - transpose[1][0] * transpose[0][1])/det;
                         }
                         else if (vLength == 2) {
-                            det = sigma_i[0][0]* sigma_i[1][1] - sigma_i[0][1]*sigma_i[1][0];	
+                            det = sigma_i[0][0]* sigma_i[1][1] - sigma_i[0][1]*sigma_i[1][0];
+                            inv[0][0] = sigma_i[1][1]/det;
+                            inv[0][1] = -sigma_i[0][1]/det;
+                            inv[1][0] = -sigma_i[1][0]/det;
+                            inv[1][1] = sigma_i[0][0]/det;
                         }
                         else if (vLength == 1) {
                         	det = sigma_i[0][0];
+                        	inv[0][0] = 1.0/det;
                         }
+                        for (j = 0; j < sliceSize; j++) {
+                        	for (v = 0; v < vLength; v++) {
+                        		diffInv[j][v] = 0.0;
+                        		for (v2 = 0; v2 < vLength; v2++) {
+                        			diffInv[j][v] += (diff_i[j][v2] * inv[v2][v]);
+                        		}
+                        	} 
+                        } // for (j = 0; j < sliceSize; j++)
+                    }
+                    for (j = 0; j < sliceSize; j++) {
+                    	for (v = 0; v < vLength; v++) {
+                    		diffInvDiff[j][v] = diffInv[j][v] * diff_i[j][v];
+                    	} 
+                    } // for (j = 0; j < sliceSize; j++)
+                    for (j = 0; j < sliceSize; j++) {
+                    	sum = 0.0;
+                    	for (v = 0; v < vLength; v++) {
+                    		sum += diffInvDiff[j][v];
+                    	}
+                    	Ef[j][i] = sum + Math.log(det);
                     } // for (i = 0; i < class_number; i++)
+                    for (i = 0; i < class_number; i++) {
+                        for (y = 0; y < yDim; y++) {
+                        	for (x = 0; x < xDim; x++) {
+                        		sum = 0;
+                        		for (dely = -1; dely <= 1; dely++) {
+                        			for (delx = -1; delx <= 1; delx++) {
+                        				if ((delx == 0) && (dely == 0)) {
+                        					continue;
+                        				}
+                        				if (((x + delx) < 0) || ((x + delx) > xDim-1) ||
+                        				   ((y + dely) < 0) || ((y + dely) > yDim-1)) {
+                        					// If out of bounds add to sum
+                        					sum = sum + 1;
+                        				}
+                        				else if (segmented[(x+delx) + xDim*(y+dely)] != i) {
+                        					sum = sum + 1;
+                        				}
+                        			}
+                        		}
+                        		El[x+xDim*y][i] = sum*potential;
+                        	} // for (x = 0; x < xDim; x++)
+                        } // for (y = 0; y < yDim; y++)
+                    } // for (i = 0; i < class_number; i++)
+                    
+                    for (i = 0; i < sliceSize; i++) {
+                    	for (j = 0; j < class_number; j++) {
+                    		E[i][j] = Ef[i][j] + El[i][j];
+                    	}
+                    } // for (i = 0; i < sliceSize; i++)
+                    
+                    for (i = 0; i < sliceSize; i++) {
+                        Emin = Double.MAX_VALUE;
+                        index = -1;
+                        for (j = 0; j < class_number; j++) {
+                        	if (E[i][j] < Emin) {
+                        		Emin = E[i][j];
+                        		index = j;
+                        	}
+                        } // for (j = 0; j < class_number; j++)
+                        segmented[i] = (byte)index;
+                    } // for (i = 0; i < sliceSize; i++)
+                    
+                    iter = iter + 1;
                 } // while (iter < maxIter)
-                } // for (z = 0; (z < zDim) && !threadStopped; z++)
-            } // for (t = 0; (t < tDim) && !threadStopped; t++)
                 
-                /*
                 try {
-                    destImage.importData((t * zDim + z) * sliceSize, buffer[d], false);
+                    destImage.importData((t * zDim + z) * sliceSize, segmented, false);
                 } catch (IOException error) {
                     errorCleanUp("Algorithm Markov Segment: Image(s) locked", false);
 
                     return;
-                } */
-               
-            	
-        
-        destImage.calcMinMax();
-        setCompleted(true);
-        return;
+                } 
+                } // for (z = 0; (z < zDim) && !threadStopped; z++)
+            } // for (t = 0; (t < tDim) && !threadStopped; t++)
+                
+            destImage.calcMinMax();
+            setCompleted(true);
+            return;
 	}
 }
