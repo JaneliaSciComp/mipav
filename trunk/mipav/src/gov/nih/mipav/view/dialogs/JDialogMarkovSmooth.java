@@ -85,11 +85,6 @@ public class JDialogMarkovSmooth extends JDialogScriptableBase implements Algori
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
-    /**
-     * discriminate between noise and the underlying image. Ideally, the value should be set greater than the noise
-     * level and less than the contrast of the underlying image. Edges of contrast smaller than this threshold will tend
-     * to be blurred whereas those of greater contrast will not be.
-     */
     private JTextField textMaxDiff;
     
     private JTextField textWeightDiff;
