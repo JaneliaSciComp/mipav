@@ -196,10 +196,8 @@ public class JDialogMarkovSegment extends JDialogScriptableBase implements Algor
 
                 try {
 
-                    // Make result image of float type
-                    // resultImage= new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
+                    // Make result image of float BYTE
+                    resultImage= new ModelImage(ModelImage.BYTE, image.getExtents(), name);
 
                     /* if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
                      *   ((FileInfoDicom)(resultImage.getFileInfo(0))).setSecondaryCaptureTags();
