@@ -396,7 +396,8 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
 								menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
 								menuBuilder.buildMenuItem("Lower completion", "LowerCompletion", 0, null, false),
-								menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
+								menuBuilder.buildMenuItem("Markov random field", "MarkovSegment", 0, null, false),
+								menuBuilder.buildMenuItem("Markov random field with EM", "HMRF_EM", 0, null, false),
 								menuBuilder.buildMenuItem("Mean shift", "MeanShiftSegmentation", 0, null, false),
 								menuBuilder.buildMenuItem("Power Watershed", "PowerWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Regions from Partial Borders", "RegionsFromPartial", 0, null, false),
@@ -1483,7 +1484,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Levelset", false);
 			menuBuilder.setMenuItemEnabled("ActiveContours", false);
 			menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
-			menuBuilder.setMenuItemEnabled("Markov random field", false);
+			menuBuilder.setMenuItemEnabled("Markov random field with EM", false);
 			menuBuilder.setMenuItemEnabled("Morphological", false);
 			menuBuilder.setMenuItemEnabled("MRI combined info", false);
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
@@ -1598,7 +1599,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Auto Seed Watershed", false);
 
 			menuBuilder.setMenuItemEnabled("Thinning", false);
-			menuBuilder.setMenuItemEnabled("Markov random field", false);
+			menuBuilder.setMenuItemEnabled("Markov random field with EM", false);
 			menuBuilder.setMenuItemEnabled("Convergence field", false);
 			menuBuilder.setMenuItemEnabled("BRISK", false);
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
