@@ -19,7 +19,7 @@ import javax.swing.*;
  * The program does slice by slice Markov segmentation on black and white or color images.
  *Algorithms are executed in their own thread.
  *
- * @see  AlgorithmMrkovSmooth
+ * @see  AlgorithmMarkovSegment
  */
 public class JDialogMarkovSegment extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
