@@ -54,16 +54,16 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
 	
 	private double potential = 0.5;
 	
-	private int maxIter = 30;
+	private int iterations = 30;
 	
 	 //~ Constructors ---------------------------------------------------------------------------------------------------
 	
 	public AlgorithmMarkovSegment(ModelImage destImg, ModelImage srcImg, int class_number, 
-			double potential, int maxIter) {
+			double potential, int iterations) {
 		super(destImg, srcImg);
 		this.class_number = class_number;
 		this.potential = potential;
-		this.maxIter = maxIter;
+		this.iterations = iterations;
 	}
 	
 	public void runAlgorithm() {
@@ -355,7 +355,7 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
                 inv = new double[vLength][vLength];
                 diffInv = new double[sliceSize][vLength];
                 diffInvDiff = new double[sliceSize][vLength];
-                while (iter < maxIter) {
+                while (iter < iterations) {
                     for (i = 0; i < class_number; i++) {
                     	classVector.clear();
                     	for (j = 0; j < sliceSize; j++) {
@@ -780,7 +780,7 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
                     } // for (i = 0; i < sliceSize; i++)
                     
                     iter = iter + 1;
-                } // while (iter < maxIter)
+                } // while (iter < iterations)
                 
                 try {
                     destImage.importData((t * zDim + z) * sliceSize, segmented, false);
