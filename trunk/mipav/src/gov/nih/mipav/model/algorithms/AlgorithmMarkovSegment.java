@@ -328,6 +328,7 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
             	    	useBlue = true;
             	    	vLength++;
             	    }
+            	    centroidPos = new double[vLength][class_number];
             	    
             	} // else
             	algoKMeans = new AlgorithmKMeans(segmentedImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
@@ -724,18 +725,18 @@ public class AlgorithmMarkovSegment extends AlgorithmBase {
                         		}
                         	} 
                         } // for (j = 0; j < sliceSize; j++)
-                    }
-                    for (j = 0; j < sliceSize; j++) {
-                    	for (v = 0; v < vLength; v++) {
-                    		diffInvDiff[j][v] = diffInv[j][v] * diff_i[j][v];
-                    	} 
-                    } // for (j = 0; j < sliceSize; j++)
-                    for (j = 0; j < sliceSize; j++) {
-                    	sum = 0.0;
-                    	for (v = 0; v < vLength; v++) {
-                    		sum += diffInvDiff[j][v];
-                    	}
-                    	Ef[j][i] = sum + Math.log(det);
+	                    for (j = 0; j < sliceSize; j++) {
+	                    	for (v = 0; v < vLength; v++) {
+	                    		diffInvDiff[j][v] = diffInv[j][v] * diff_i[j][v];
+	                    	} 
+	                    } // for (j = 0; j < sliceSize; j++)
+	                    for (j = 0; j < sliceSize; j++) {
+	                    	sum = 0.0;
+	                    	for (v = 0; v < vLength; v++) {
+	                    		sum += diffInvDiff[j][v];
+	                    	}
+	                    	Ef[j][i] = sum + Math.log(det);
+	                    } // for (j = 0; j < sliceSize; j++)
                     } // for (i = 0; i < class_number; i++)
                     for (i = 0; i < class_number; i++) {
                         for (y = 0; y < yDim; y++) {
