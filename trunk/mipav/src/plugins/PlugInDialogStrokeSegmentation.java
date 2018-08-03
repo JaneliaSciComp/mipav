@@ -821,10 +821,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                             String protocolName = (String)((FileInfoDicom)img.getFileInfo(0)).getTagTable().getValue("0018,1030");
                             
                             for (String val : imageType.split("\\\\")) {
-                                if (val.equalsIgnoreCase("ADC") || val.equalsIgnoreCase("ADC_UNSPECIFIED")) {
+                                if (isADC(val)) {
                                     // some studies are transmitted with both 'reg' and unmodified versions of the data
                                     // choose the 'reg' version if we previously found a different ADC series 
-                                    if (foundADC && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
+                                    if (foundADC && isRegisteredVol(seriesDesc, protocolName)) {
                                         adcPath = file.getAbsolutePath();
                                         adcImageMultifile = true;
                                         foundADC = true;
@@ -836,10 +836,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                                         foundADC = true;
                                         break;
                                     }
-                                } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE") || val.equalsIgnoreCase("TRACEW")) {
+                                } else if (isDWI(val)) {
                                     // some studies are transmitted with both 'reg' and unmodified versions of the data
                                     // choose the 'reg' version if we previously found a different ADC series 
-                                    if (foundDWI && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
+                                    if (foundDWI && isRegisteredVol(seriesDesc, protocolName)) {
                                         dwiPath = file.getAbsolutePath();
                                         dwiImageMultifile = true;
                                         foundDWI = true;
@@ -871,5 +871,17 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         if (listenerParent != null) {
             listenerParent.log(line);
         }
+    }
+    
+    public static final boolean isRegisteredVol(final String seriesDesc, final String protocolName) {
+        return (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"));
+    }
+    
+    public static final boolean isADC(final String imgType) {
+        return (imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED"));
+    }
+    
+    public static final boolean isDWI(final String imgType) {
+        return (imgType.equalsIgnoreCase("SE") || imgType.equalsIgnoreCase("M_SE") || imgType.equalsIgnoreCase("TRACEW"));
     }
 }
