@@ -51,6 +51,32 @@ import java.util.Arrays;
  * Alan Julian Izenman, Journal of the American Statistical Association, March, 1991, Vol. 86, No. 413, pp. 205 - 224:
  * The ideal histogram bin width W is given by W = 2(IQR)pow(N,-1/3) where IQR is the inrterquartile range(the 75
  * percentile minus the 25th percentile) and N is the number of available samples.</p>
+ * 
+ * The three coordinates of CIELAB represent the lightness of the color(L* = 0 yields black and L* = 100 indicates diffuse 
+ * white; specular white may be higher), its position between red/magenta and green(a*, negative values indicate green
+ * while positive values indicate magenta) and its position between yellow and blue(b*, negative values indicate blue 
+ * and positive values indicate yellow).  The asterisk(*) after L, a, and b are part of the full name, since they represent 
+ * L*, a*, and b*, to distinguish them from Hunter's L, a, and b.
+ * 
+ * The L* coordinate ranges from 0 to 100.  The possible range of a* and b* coordinates depends on the color space that one
+ * is converting from.  
+ * R = 0, G = 0, B = 0 => L* = 0, a* = 0, b* = 0
+ * R = 255, G = 0, B = 0 => L* = 53.2, a* = 80.1, b* = 67.22
+ * R = 0, G = 255, B = 0 => L* = 87.7, a* = -86.2, b* = 83.2
+ * R = 0, G = 0, B = 255 => L* = 32.3, a* = 79.2, b* = -107.9
+ * R = 255, G = 255, B = 0 => L* = 97.1, a* = -21.6, b* = 94.5
+ * R = 255, G = 0, B = 255 => L* = 60.3, a* = 98.3, b* = -60.8
+ * R = 0, G = 255, B = 255 => L* = 91.1, a* = -48.1, b* = -14.1
+ * R = 255, G = 255, B = 255 => L* = 100.0, a* = 0.00525, b* = -0.0104
+ * so the range of a* equals about the range of b* and the range of a* equals about twice the range of L*.
+ * The simplest distance metric delta E is CIE76 = sqrt((L2* - L1*)**2 + (a2* - a1*)**2 + (b2* - b1*)**2)
+ * 
+ * XW, YW, and ZW (also called XN, YN, ZN or X0, Y0, Z0) are reference white tristimulus values - typically the white
+ * of a perfectly reflecting diffuser under CIE standard D65 illumination(defined by x = 0.3127 and y = 0.3291 in the
+ * CIE chromatcity diagram).  The 2 degrees, D65 reference tristimulus values are: XN = 95.047, YN = 100.000, and ZN = 1
+ * 
+ *  http://www.easyrgb.com has XYZ -> RGB, RGB -> XYZ, XYZ -> CIEL*ab, CIEL*ab -> XYZ, and
+ *     XYZ(Tristimulus) Reference values of a perfect reflecting diffuser.
  *
  * @version  1.01; 20 Sep 2001
  * @author   David Parsons (parsonsd)
@@ -92,6 +118,8 @@ public class AlgorithmAHE extends AlgorithmBase {
 
     /** If true filter the red channel. */
     private boolean rChannel = true;
+    
+    private boolean useCIELab = false;
 
     /** DOCUMENT ME! */
     private float[] sortBuffer;
@@ -101,6 +129,11 @@ public class AlgorithmAHE extends AlgorithmBase {
 
     /** number of divisions to make in the width. */
     private int wDivisions;
+    
+    private double imageMax;
+    
+ // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
+    private double scaleMax = 255.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -110,17 +143,22 @@ public class AlgorithmAHE extends AlgorithmBase {
      * @param  srcImg  source image model
      * @param  hd      number of divisions to make of the image height
      * @param  wd      number of divisions to make of the image width
+     * @param useCIELab If color, only equalize on L in CIELab space
      */
-    public AlgorithmAHE(ModelImage srcImg, int hd, int wd) {
+    public AlgorithmAHE(ModelImage srcImg, int hd, int wd, boolean useCIELab) {
         super(null, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
             valuesPerPixel = 4;
+            srcImage.calcMinMax();
+            imageMax = srcImage.getMax();
+            scaleMax = Math.max(255.0, imageMax);
         }
 
         hDivisions = hd;
         wDivisions = wd;
+        this.useCIELab = useCIELab;
 
         try { // slower if this must be done every slice.
             sortBuffer = new float[srcImage.getExtents()[0] * srcImage.getExtents()[1]];
@@ -137,18 +175,23 @@ public class AlgorithmAHE extends AlgorithmBase {
      * @param  srcImg   source image model
      * @param  hd       number of divisions to make of the image height
      * @param  wd       number of divisions to make of the image width
+     * @param  useCIELab If color, only equalize on L in CIELab space
      */
-    public AlgorithmAHE(ModelImage destImg, ModelImage srcImg, int hd, int wd) {
+    public AlgorithmAHE(ModelImage destImg, ModelImage srcImg, int hd, int wd, boolean useCIELab) {
 
         super(destImg, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
             valuesPerPixel = 4;
+            srcImage.calcMinMax();
+            imageMax = srcImage.getMax();
+            scaleMax = Math.max(255.0, imageMax);
         }
 
         hDivisions = hd;
         wDivisions = wd;
+        this.useCIELab = useCIELab;
 
         try { // slower if this must be done every slice.
             sortBuffer = new float[srcImage.getExtents()[0] * srcImage.getExtents()[1]];
@@ -296,12 +339,27 @@ public class AlgorithmAHE extends AlgorithmBase {
 
         float[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
         float[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
 
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
+       
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -336,6 +394,24 @@ public class AlgorithmAHE extends AlgorithmBase {
                     return;
                 }
 
+                srcImage.importData(0, resultBuffer, true);
+            } else if (useCIELab) {
+            	srcImage.exportData(0, 4*length, buffer); // locks and releases lock
+
+                try {
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // not quite midway
+                } catch (NullPointerException npe) {
+
+                    if (threadStopped) {
+                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                          Preferences.DEBUG_ALGORITHM);
+                    }
+                }
+                
+                convertRGBtoCIELab(buffer, L, a, b);
+                monoSliceFilter(L, Leq);
+                convertCIELabtoRGB(Leq, a, b, resultBuffer);
                 srcImage.importData(0, resultBuffer, true);
             } else { // if (isColorImage) {
 
@@ -399,6 +475,10 @@ public class AlgorithmAHE extends AlgorithmBase {
         int nSlices = srcImage.getExtents()[2];
         float[] buffer;
         float[] resultBuffer;
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
 
         int numColors = 0;
 
@@ -420,8 +500,18 @@ public class AlgorithmAHE extends AlgorithmBase {
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -456,6 +546,29 @@ public class AlgorithmAHE extends AlgorithmBase {
                     srcImage.importData(length * i, resultBuffer, false);
                 } // for (i = 0; i < nSlices  && !threadStopped; i++)
             } // if (!isColorImage)
+            else if (useCIELab) {
+            	// image length is length in 3 dims
+                for (i = 0; (i < nSlices) && !threadStopped; i++) {
+
+                 
+                	fireProgressStateChanged((int) (((float) (i) / nSlices) * 100));
+                	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+                   
+
+                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    convertRGBtoCIELab(buffer, L, a, b);
+                    monoSliceFilter(L, Leq);
+                    convertCIELabtoRGB(Leq, a, b, resultBuffer);
+
+                    if (threadStopped) { // do BEFORE buffer has been exported to Image
+                        finalize();
+
+                        return;
+                    }
+
+                    srcImage.importData(4 * length * i, resultBuffer, false);
+                } // for (i = 0; i < nSlices  && !threadStopped; i++)	
+            } // else if (useCIELab)
             else { // if (isColorImage) {
 
                 for (color = 1; (color < valuesPerPixel) && !threadStopped; color++) {
@@ -529,10 +642,24 @@ public class AlgorithmAHE extends AlgorithmBase {
 
         float[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
         float[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -562,6 +689,32 @@ public class AlgorithmAHE extends AlgorithmBase {
                 }
 
                 this.monoSliceFilter(buffer, resultBuffer);
+
+                if (threadStopped) { // do before copying back into image
+                    finalize();
+
+                    return;
+                }
+
+                destImage.importData(0, resultBuffer, true);
+            }
+            else if (useCIELab) {
+            	srcImage.exportData(0, 4 * length, buffer); // locks and releases lock
+
+                try {
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // a little less than midway
+                } catch (NullPointerException npe) {
+
+                    if (threadStopped) {
+                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                          Preferences.DEBUG_ALGORITHM);
+                    }
+                }
+
+                convertRGBtoCIELab(buffer, L, a, b);
+                monoSliceFilter(L, Leq);
+                convertCIELabtoRGB(Leq, a, b, resultBuffer);
 
                 if (threadStopped) { // do before copying back into image
                     finalize();
@@ -633,6 +786,10 @@ public class AlgorithmAHE extends AlgorithmBase {
         int nSlices = srcImage.getExtents()[2];
         float[] buffer;
         float[] resultBuffer;
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
 
         int numColors = 0;
 
@@ -652,8 +809,18 @@ public class AlgorithmAHE extends AlgorithmBase {
 
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -687,6 +854,28 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                     destImage.importData(length * i, resultBuffer, false);
                 }
+            }
+            else if (useCIELab) {
+            	for (i = 0; (i < nSlices) && !threadStopped; i++) { // process for all slices
+
+                    
+                	fireProgressStateChanged((int) ((float) (i) / nSlices * 100));
+                	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+   	                         
+
+                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    convertRGBtoCIELab(buffer, L, a, b);
+                    monoSliceFilter(L, Leq);
+                    convertCIELabtoRGB(Leq, a, b, resultBuffer);
+
+                    if (threadStopped) { // do before copying back into image
+                        finalize();
+
+                        return;
+                    }
+
+                    destImage.importData(4 * length * i, resultBuffer, false);
+                }	
             } else { // if (isColorImage) {
 
                 for (color = 1; (color < valuesPerPixel) && !threadStopped; color++) {
@@ -977,7 +1166,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                     }
                 }
 
-                if (!isColorImage) {
+                if ((!isColorImage) || useCIELab){
                     maxScale = maxScale - bufMin;
                 }
 
@@ -1216,7 +1405,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         // restores the offset back to the buffer minimum
-        if (!isColorImage) {
+        if ((!isColorImage) || useCIELab) {
 
             for (x = 0; x < destBuffer.length; x++) {
                 destBuffer[x] += bufMin;
@@ -1237,6 +1426,182 @@ public class AlgorithmAHE extends AlgorithmBase {
             Preferences.debug("hist[" + i + "] = " + histo[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
     }
+    
+    private void convertRGBtoCIELab(float buffer[], float L[], float a[], float b[]) {
+        // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        int i;
+        int j;
+        double varR, varG, varB;
+        double X, Y, Z;
+        double varX, varY, varZ;
+        
+        for (i = 0, j = 0; i < buffer.length; i += 4) {
+            varR = buffer[i+1]/scaleMax;
+            varG = buffer[i+2]/scaleMax;
+            varB = buffer[i+3]/scaleMax;
+            
+            if (varR <= 0.04045) {
+                varR = varR/12.92;
+            }
+            else {
+                varR = Math.pow((varR + 0.055)/1.055, 2.4);
+            }
+            if (varG <= 0.04045) {
+                varG = varG/12.92;
+            }
+            else {
+                varG = Math.pow((varG + 0.055)/1.055, 2.4);
+            }
+            if (varB <= 0.04045) {
+                varB = varB/12.92;
+            }
+            else {
+                varB = Math.pow((varB + 0.055)/1.055, 2.4);
+            }
+            
+            varR = 100.0 * varR;
+            varG = 100.0 * varG;
+            varB = 100.0 * varB;
+            
+            // Observer = 2 degrees, Illuminant = D65
+            X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+            Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+            Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+            
+            varX = X/ XN;
+            varY = Y/ YN;
+            varZ = Z/ ZN;
+            
+            if (varX > 0.008856) {
+                varX = Math.pow(varX, 1.0/3.0);
+            }
+            else {
+                varX = (7.787 * varX) + (16.0/116.0);
+            }
+            if (varY > 0.008856) {
+                varY = Math.pow(varY, 1.0/3.0);
+            }
+            else {
+                varY = (7.787 * varY) + (16.0/116.0);
+            }
+            if (varZ > 0.008856) {
+                varZ = Math.pow(varZ, 1.0/3.0);
+            }
+            else {
+                varZ = (7.787 * varZ) + (16.0/116.0);
+            }
+            
+            L[j] = (float)((116.0 * varY) - 16.0);
+            a[j] = (float)(500.0 * (varX - varY));
+            b[j++] = (float)(200.0 * (varY - varZ));
+            
+        } // for (i = 0; i < buffer.length; i += 4)
+                
+        
+    } // private void convertRGBtoCIELab()
+    
+    private void convertCIELabtoRGB(float L[], float a[], float b[], float buffer[]) {
+        // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        int i;
+        int j;
+        double varX, varY, varZ;
+        double varX3, varY3, varZ3;
+        double X, Y, Z;
+        double varR, varG, varB;
+        double R, G, B;
+        for (i = 0, j = 0; i < buffer.length; i += 4) {   
+            
+            varY = (L[j] + 16.0)/116.0;
+            varX = a[j]/500.0 + varY;
+            varZ = varY - b[j]/200.0;
+            j++;
+            
+            varX3 = Math.pow(varX, 3.0);
+            if (varX3 > 0.008856) {
+                varX = varX3;
+            }
+            else {
+                varX = (varX - 16.0/116.0)/7.787;
+            }
+            varY3 = Math.pow(varY, 3.0);
+            if (varY3 > 0.008856) {
+                varY = varY3;
+            }
+            else {
+                varY = (varY - 16.0/116.0)/7.787;
+            }
+            varZ3 = Math.pow(varZ, 3.0);
+            if (varZ3 > 0.008856) {
+                varZ = varZ3;
+            }
+            else {
+                varZ = (varZ - 16.0/116.0)/7.787;
+            }
+            
+            X = XN * varX;
+            Y = YN * varY;
+            Z = ZN * varZ;
+            
+            varX = X / 100.0;
+            varY = Y / 100.0;
+            varZ = Z / 100.0;
+            
+            varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
+            varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
+            varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
+            
+            if (varR > 0.0031308) {
+                varR = 1.055 * (Math.pow(varR, 1.0/2.4)) - 0.055;
+            }
+            else {
+                varR = 12.92 * varR;
+            }
+            if (varG > 0.0031308) {
+                varG = 1.055 * (Math.pow(varG, 1.0/2.4)) - 0.055;
+            }
+            else {
+                varG = 12.92 * varG;
+            }
+            if (varB > 0.0031308) {
+                varB = 1.055 * (Math.pow(varB, 1.0/2.4)) - 0.055;
+            }
+            else {
+                varB = 12.92 * varB;
+            }
+            
+            R = scaleMax * varR;
+            if (R < 0) {
+            	R = 0;
+            }
+            if (R > scaleMax) {
+            	R = scaleMax;
+            }
+            G = scaleMax * varG;
+            if (G < 0) {
+            	G = 0;
+            }
+            if (G > scaleMax) {
+            	G = scaleMax;
+            }
+            B = scaleMax * varB;
+            if (B < 0) {
+            	B = 0;
+            }
+            if (B > scaleMax) {
+            	B = scaleMax;
+            }
+            
+            buffer[i+1] = (float)R;
+            buffer[i+2] = (float)G;
+            buffer[i+3] = (float)B;
+        } // for (i = 0; i < buffer.length; i += 4)
+    } // private void convertCIELabtoRGB(float buffer[])
 
    
 }
