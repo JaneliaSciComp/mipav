@@ -3881,8 +3881,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     						}
     					}
     				}
-    				System.out.println(Arrays.deepToString(stri));
-    				System.out.println(Arrays.deepToString(matchDEs));
     				// reads through the source file, matching DEs in the proper order
     				while((strSrc = brSrc.readLine()) != null) {
     					str = str + "x,";
@@ -3908,12 +3906,28 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     						}
     					}
     					for(int n = 0; n < stri.length; n++) {
-    						str = str + stri[n][3] + ",";
+    						if(stri[n][3]!=null && !stri[n][3].isEmpty()) {
+    							if(!stri[n][3].contains(",")) {
+    								str = str + stri[n][3] + ",";
+    							}
+    							else{
+    								if(stri[n][3].contains("\"")) {
+    									str = str + stri[n][3] + ",";
+    								}
+    								else {
+    									str = str + "\"" + stri[n][3] + "\"" + ",";
+    								}
+    							} 
+    						}
+    						else {
+    							str = str + ",";
+    						}
     					}
-    					str = str + "\n";
+    					str = str + "\n"; 
+    					System.out.println(str);
     					
     				}
-    				//System.out.println(str);
+    				str = str.replace("null", "");
     	    		bw.write(str + "\n");
     			}
     		}
@@ -3928,8 +3942,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	String[] mapFind = mappings.split(";");
     	String[] corMap = new String[2];
     	for(int i = 0; i < mapFind.length; i++) {
-    		if(mapFind[i].contains(srcElement)) {
-    			corMap = mapFind[i].split(":");
+    		corMap = mapFind[i].split(":");
+    		if(corMap[0].equalsIgnoreCase(srcElement)) {
     			finished = corMap[1];
     		}
     		Arrays.fill(corMap, null);
