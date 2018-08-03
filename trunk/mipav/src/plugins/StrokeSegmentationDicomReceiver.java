@@ -60,6 +60,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 import org.dcm4che3.data.Tag;
+import org.apache.commons.io.FileUtils;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.io.DicomInputStream;
@@ -85,8 +86,7 @@ public class StrokeSegmentationDicomReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(StrokeSegmentationDicomReceiver.class);
 
-    private static ResourceBundle rb =
-        ResourceBundle.getBundle("org.dcm4che3.tool.storescp.messages");
+    private static ResourceBundle rb = ResourceBundle.getBundle("org.dcm4che3.tool.storescp.messages");
     private static final String PART_EXT = ".part";
 
     private final Device device = new Device("storescp");
@@ -149,13 +149,21 @@ public class StrokeSegmentationDicomReceiver {
     
     private static final String configFileName = "stroke_seg_listener.properties";
     
-    String emailFrom;
-    String emailTo;
-    String emailUsername;
-    String emailPassword;
-    String emailHost;
-    String emailPort;
+    private String emailFrom;
+    private String emailTo;
+    private String emailUsername;
+    private String emailPassword;
+    private String emailHost;
+    private String emailPort;
 
+    // TODO new storage format
+    
+    private String storageFilePathFormat = "incoming/{00080020}/{00080020}.{00080030}/{00080021}.{00080031}/{00200011}.{00200012}.{00200013}.dcm";
+    
+//    private String storageFilePathFormat = "{00080020}/{00080020}.{00080030}/{00200011}.{00200012}.{00200013}.dcm";
+    
+//    private String storageFilePathFormat = "{0020000D}/{0020000E}/{00080008}/{00080018}.dcm";
+    
     public StrokeSegmentationDicomReceiver(final String ip, final int port, final String curAE, final String outputDir, final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
         serverIP = ip;
         serverPort = port;
@@ -200,10 +208,7 @@ public class StrokeSegmentationDicomReceiver {
         
         setStorageDirectory(new File(outputDir));
         
-        setStorageFilePathFormat("{00080020}/{00080020}.{00080030}/{00200011}.{00200012}.{00200013}.dcm");
-        
-        // anon versions don't include study/series uids
-        //setStorageFilePathFormat("{00100020}/{0020000D}/{0020000E}/{00080008}/{00080018}.dcm");
+        setStorageFilePathFormat(storageFilePathFormat);
         
         ExecutorService executorService = Executors.newCachedThreadPool();
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -284,14 +289,22 @@ public class StrokeSegmentationDicomReceiver {
             boolean foundADC = false;
             boolean foundDWI = false;
             
+            boolean foundOutputDirADC = false;
+            boolean foundOutputDirDWI = false;
+            
+            boolean usePrevADC = false;
+            boolean usePrevDWI = false;
+            
             Vector<File> adcFiles = new Vector<File>();
             Vector<File> dwiFiles = new Vector<File>();
             
             Vector<Attributes> adcAttrList = new Vector<Attributes>();
             Vector<Attributes> dwiAttrList = new Vector<Attributes>();
             
-            File baseDicomDir = null;
+            File baseOutputDir = null;
             String lastnameInitial = null;
+            String studyDate = null;
+            String studyTime = null;
             
             boolean foundRegSeries = false;
             
@@ -305,28 +318,31 @@ public class StrokeSegmentationDicomReceiver {
                         lastnameInitial = getInitialFromName(attr.getString(TagUtils.toTag(0x0010, 0x0010)));
                     }
                     
+                    if (baseOutputDir == null) {
+                        studyDate = attr.getString(TagUtils.toTag(0x0008, 0x0020));
+                        studyTime = attr.getString(TagUtils.toTag(0x0008, 0x0030));
+                        
+                        baseOutputDir = new File(storageDir + File.separator + studyDate + File.separator + studyDate + "." + studyTime + "_" + lastnameInitial + File.separator);
+                        if (!baseOutputDir.exists()) {
+                            log("Creating output directory: " + baseOutputDir);
+                            baseOutputDir.mkdirs();
+                        }
+                    }
+                    
                     final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
                     final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
                     
-                    if (!foundRegSeries && (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"))) {
+                    if (!foundRegSeries && PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
                         foundRegSeries = true;
                     }
                     
                     for (String val : imageTypes) {
-                        if (val.equalsIgnoreCase("ADC") || val.equalsIgnoreCase("ADC_UNSPECIFIED")) {
-                            if (baseDicomDir == null) {
-                                baseDicomDir = file.getParentFile();
-                            }
-                            
+                        if (PlugInDialogStrokeSegmentation.isADC(val)) {
                             adcFiles.add(file);
                             adcAttrList.add(attr);
                             foundADC = true;
                             break;
-                        } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE") || val.equalsIgnoreCase("TRACEW")) {
-                            if (baseDicomDir == null) {
-                                baseDicomDir = file.getParentFile();
-                            }
-                            
+                        } else if (PlugInDialogStrokeSegmentation.isDWI(val)) {
                             dwiFiles.add(file);
                             dwiAttrList.add(attr);
                             foundDWI = true;
@@ -339,6 +355,7 @@ public class StrokeSegmentationDicomReceiver {
                 }
             }
             
+            // if we saw series with 'Reg' in series or protocol names, prefer them
             if (foundADC && foundRegSeries) {
                 Vector<File> adcRegFiles = new Vector<File>();
                 
@@ -347,7 +364,7 @@ public class StrokeSegmentationDicomReceiver {
                     final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
                     final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
                     
-                    if (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg")) {
+                    if (PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
                         adcRegFiles.add(adcFiles.get(i));
                     }
                 }
@@ -357,6 +374,7 @@ public class StrokeSegmentationDicomReceiver {
                 }
             }
             
+            // if we saw series with 'Reg' in series or protocol names, prefer them
             if (foundDWI && foundRegSeries) {
                 Vector<File> dwiRegFiles = new Vector<File>();
                 
@@ -365,7 +383,7 @@ public class StrokeSegmentationDicomReceiver {
                     final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
                     final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
                     
-                    if (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg")) {
+                    if (PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
                         dwiRegFiles.add(dwiFiles.get(i));
                     }
                 }
@@ -375,13 +393,102 @@ public class StrokeSegmentationDicomReceiver {
                 }
             }
             
+            // if we didn't find both ADC and DWI, check for previous transfer in output dir
+            if (baseOutputDir != null && !foundADC || !foundDWI) {
+                File[] outputDirFiles = baseOutputDir.listFiles();
+                for (File file : outputDirFiles) {
+                    if (file.isDirectory()) { 
+                        if (file.getName().equalsIgnoreCase("ADC")) {
+                            foundOutputDirADC = true;
+                        } else if (file.getName().equalsIgnoreCase("DWI")) {
+                            foundOutputDirDWI = true;
+                        }
+                    }
+                }
+                
+                if (foundADC && foundOutputDirADC) {
+                    log("Found previously received ADC volume in output directory, but also received new ADC volume.");
+                    
+                    File prevFile = new File(baseOutputDir + File.separator + "ADC").listFiles()[0];
+                    Attributes prevAttr = null;
+                    try {
+                        prevAttr = parse(prevFile);
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    Attributes newAttr = adcAttrList.get(0);
+                    
+                    boolean isPrevReg = isRegisteredVol(prevAttr);
+                    boolean isNewReg = isRegisteredVol(newAttr);
+                    
+                    // prefer series marked as 'reg', but otherwise go with the new one
+                    if (!isNewReg && isPrevReg) {
+                        log("Preferring previously received ADC volume.");
+                        usePrevADC = true;
+                    } else if (isNewReg && !isPrevReg) {
+                        log("Preferring newly received ADC volume.");
+                        usePrevADC = false;
+                    } else {
+                        log("Preferring newly received ADC volume.");
+                        usePrevADC = false;
+                    }
+                } else if (!foundADC && foundOutputDirADC) {
+                    log("Found previously received ADC volume in output directory.");
+                    usePrevADC = true;
+                }
+                
+                if (foundDWI && foundOutputDirDWI) {
+                    log("Found previously received DWI volume in output directory, but also received new DWI volume.");
+                    
+                    File prevFile = new File(baseOutputDir + File.separator + "DWI").listFiles()[0];
+                    Attributes prevAttr = null;
+                    try {
+                        prevAttr = parse(prevFile);
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    Attributes newAttr = adcAttrList.get(0);
+                    
+                    boolean isPrevReg = isRegisteredVol(prevAttr);
+                    boolean isNewReg = isRegisteredVol(newAttr);
+                    
+                    // prefer series marked as 'reg', but otherwise go with the new one
+                    if (!isNewReg && isPrevReg) {
+                        log("Preferring previously received DWI volume.");
+                        usePrevDWI = true;
+                    } else if (isNewReg && !isPrevReg) {
+                        log("Preferring newly received DWI volume.");
+                        usePrevDWI = false;
+                    } else {
+                        log("Preferring newly received DWI volume.");
+                        usePrevDWI = false;
+                    }
+                } else if (!foundDWI && foundOutputDirDWI) {
+                    log("Found previously received DWI volume in output directory.");
+                    usePrevDWI = true;
+                }
+            }
+            
             // move ADC and DWI files to their own dir under parent inside outputDir
-            if (foundADC) {
-                log("Found ADC volume in completed transfer.");
+            if (foundADC && !usePrevADC) {
+                log("Found ADC volume in completed transfer. Moving to " + baseOutputDir);
+                
+                File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+                
+                // clean-up prev ADC dir
+                if (foundOutputDirADC) {
+                    File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                    boolean success = adcDirFile.renameTo(backupDir);
+                    if (success) {
+                        log("Failed to move previous ADC data to : " + backupDir);
+                    }
+                }
                 
                 for (File file : adcFiles) {
                     try {
-                        renameTo(association, file, new File(file.getParent() + File.separator + "ADC" + File.separator + file.getName()));
+                        renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -389,12 +496,23 @@ public class StrokeSegmentationDicomReceiver {
                 }
             }
             
-            if (foundDWI) {
-                log("Found DWI volume in completed transfer.");
+            if (foundDWI && !usePrevDWI) {
+                log("Found DWI volume in completed transfer. Moving to " + baseOutputDir);
+                
+                File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+                
+                // clean-up prev DWI dir
+                if (foundOutputDirDWI) {
+                    File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                    boolean success = dwiDirFile.renameTo(backupDir);
+                    if (success) {
+                        log("Failed to move previous DWI data to : " + backupDir);
+                    }
+                }
                 
                 for (File file : dwiFiles) {
                     try {
-                        renameTo(association, file, new File(file.getParent() + File.separator + "DWI" + File.separator + file.getName()));
+                        renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -402,26 +520,40 @@ public class StrokeSegmentationDicomReceiver {
                 }
             }
             
-            if (baseDicomDir != null && lastnameInitial != null) {
-                File newBaseDir = new File(baseDicomDir.getAbsolutePath() + "_" + lastnameInitial);
-                
-                if (newBaseDir.exists()) {
-                    int collisionNum = 1;
-                    while ((new File(newBaseDir.getAbsolutePath() + collisionNum)).exists()) {
-                        collisionNum++;
-                    }
-                    newBaseDir = new File(newBaseDir.getAbsolutePath() + collisionNum);
-                }
-                
-                boolean success = baseDicomDir.renameTo(newBaseDir);
-                if (success) {
-                    baseDicomDir = newBaseDir;
-                }
+            if ((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI)) {
+                log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+                new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseOutputDir.getAbsolutePath());
+            } else {
+                log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + ").");
             }
             
-            if (foundADC && foundDWI) {
-                log("Running segmentation on datasets in " + baseDicomDir.getAbsolutePath());
-                new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseDicomDir.getAbsolutePath());
+            // check if incoming dicom dir is empty and remove if it is
+            try {
+                File incomingDir = new File(storageDir + File.separator + "incoming" + File.separator + studyDate);
+                
+                if (isDirectoryEmpty(incomingDir)) {
+                    FileUtils.deleteDirectory(incomingDir);
+                } else {
+                    File[] incomingSubDirs = incomingDir.listFiles();
+                    for (File file : incomingSubDirs) {
+                        if (file.isDirectory()) {
+                            if (isDirectoryEmpty(file)) {
+                                FileUtils.deleteDirectory(file);
+                            } else {
+                                File[] newList = file.listFiles();
+                                for (File newFile : newList) {
+                                    if (newFile.isDirectory()) {
+                                        if (isDirectoryEmpty(newFile)) {
+                                            FileUtils.deleteDirectory(newFile);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             
             addedCloseListener = false;
@@ -641,6 +773,37 @@ public class StrokeSegmentationDicomReceiver {
         return dicomName.substring(0, 1);
     }
     
+    private boolean isRegisteredVol(final Attributes dicomAttr) {
+        final String series = dicomAttr.getString(TagUtils.toTag(0x0008, 0x103E));
+        final String protocol = dicomAttr.getString(TagUtils.toTag(0x0018, 0x1030));
+        
+        return PlugInDialogStrokeSegmentation.isRegisteredVol(series, protocol);
+    }
+    
+    private boolean isDirectoryEmpty(final File dir) {
+        if (dir.isFile()) {
+            return false;
+        }
+        
+        File[] list = dir.listFiles();
+        if (list.length == 0) {
+            return true;
+        } else {
+            for (File file : list) {
+                if (file.isDirectory()) {
+                    boolean subdirEmpty = isDirectoryEmpty(file);
+                    if (!subdirEmpty) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
     private boolean readEmailConfig() {
         try {
             final InputStream in = getClass().getResourceAsStream(configFileName);
@@ -658,51 +821,20 @@ public class StrokeSegmentationDicomReceiver {
                 }
                 
                 emailFrom = prop.getProperty("emailFrom");
-                if (emailFrom == null || emailFrom.equals("")) {
-                    if (in != null) {
-                        in.close();
-                    }
-                    return false;
-                }
                 
                 emailTo = prop.getProperty("emailTo");
-                if (emailTo == null || emailTo.equals("")) {
-                    if (in != null) {
-                        in.close();
-                    }
-                    return false;
-                }
                 
                 emailUsername = prop.getProperty("emailUsername");
-                if (emailUsername == null || emailUsername.equals("")) {
-                    if (in != null) {
-                        in.close();
-                    }
-                    return false;
-                }
                 
                 emailPassword = prop.getProperty("emailPassword");
-                if (emailPassword == null || emailPassword.equals("")) {
-                    if (in != null) {
-                        in.close();
-                    }
-                    return false;
-                }
                 
                 emailHost = prop.getProperty("emailHost");
-                if (emailHost == null || emailHost.equals("")) {
-                    if (in != null) {
-                        in.close();
-                    }
-                    return false;
-                }
-                
+
                 emailPort = prop.getProperty("emailPort");
-                if (emailPort == null || emailPort.equals("")) {
-                    if (in != null) {
-                        in.close();
-                    }
-                    return false;
+
+                String format = prop.getProperty("listenerInitStorageFormat");
+                if (format != null && !format.equals("")) {
+                    storageFilePathFormat = format;
                 }
                 
                 if (in != null) {
