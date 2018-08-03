@@ -441,8 +441,9 @@ public class JDialogProstateSPIEcancerChallengeNIH_train_ced_ext extends JDialog
 		   // Make algorithm
 		int heightDivisions = 1;
 		int widthDivisions = 1;
+		boolean useCIELab = false;
 		
-		AlgorithmAHE aheAlgo = new AlgorithmAHE(resultImage, image, heightDivisions, widthDivisions);
+		AlgorithmAHE aheAlgo = new AlgorithmAHE(resultImage, image, heightDivisions, widthDivisions, useCIELab);
         aheAlgo.setRGBChannelFilter(false, false, false);                        
         aheAlgo.setContrastLimited(true);
         aheAlgo.setClipLevel(75);
