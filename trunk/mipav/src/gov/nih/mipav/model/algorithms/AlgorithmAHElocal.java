@@ -77,6 +77,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
     public static final int scaleOnSlice = 1;
 
     /** DOCUMENT ME! */
+    // No scaleOnImage for useCIELab
     public static final int scaleOnImage = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -167,6 +168,8 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
     /** if T, filter the red channel. */
     protected boolean rChannel = true;
+    
+    private boolean useCIELab = false;
 
     /** here for memory/speed concerns. */
     protected float[] sortBuffer;
@@ -186,6 +189,11 @@ public class AlgorithmAHElocal extends AlgorithmBase {
     int numColors;
     
     int colorUsed;
+    
+    private double imageMax;
+    
+    // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
+    private double scaleMaxCIELab = 255.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -196,14 +204,19 @@ public class AlgorithmAHElocal extends AlgorithmBase {
      * @param  kSize       size of kernel
      * @param  kShape      shape of kernel
      * @param  wholeImage  If true whole image used
+     * @param  useCIELab   If color, use intensity L in CIELab space
      */
-    public AlgorithmAHElocal(ModelImage srcImg, int kSize, int kShape, boolean wholeImage) {
+    public AlgorithmAHElocal(ModelImage srcImg, int kSize, int kShape, boolean wholeImage, boolean useCIELab) {
         super(null, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
             valuesPerPixel = 4;
+            srcImage.calcMinMax();
+            imageMax = srcImage.getMax();
+            scaleMaxCIELab = Math.max(255.0, imageMax);
         }
+        this.useCIELab = useCIELab;
 
         kernelSize = kSize;
         kernelShape = kShape;
@@ -233,15 +246,21 @@ public class AlgorithmAHElocal extends AlgorithmBase {
      * @param  kSize       size of kernel
      * @param  kShape      shape of kernel
      * @param  wholeImage  If true whole image used
+     * @param  useCIELab   If color, use intensity L in CIELab space
      */
-    public AlgorithmAHElocal(ModelImage destImg, ModelImage srcImg, int kSize, int kShape, boolean wholeImage) {
+    public AlgorithmAHElocal(ModelImage destImg, ModelImage srcImg, int kSize, int kShape, boolean wholeImage,
+    		boolean useCIELab) {
 
         super(destImg, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
             valuesPerPixel = 4;
+            srcImage.calcMinMax();
+            imageMax = srcImage.getMax();
+            scaleMaxCIELab = Math.max(255.0, imageMax);
         }
+        this.useCIELab = useCIELab;
 
         kernelSize = kSize;
         kernelShape = kShape;
@@ -508,7 +527,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         if (maxScaleRule == scaleOnLocal) {
 
-            if (isColorImage) {
+            if (isColorImage  && (!useCIELab)) {
                 maxScale = maxValue;
             } else {
                 maxScale = maxValue - minValue;
@@ -529,6 +548,10 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         float[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
         float[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
 
         length = srcImage.getSliceSize();
         
@@ -549,8 +572,18 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         colorUsed = 0;
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -591,6 +624,32 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                 }
 
                 srcImage.importData(0, resultBuffer, true);
+            }
+            else if (useCIELab) {
+            	srcImage.exportData(0, 4 * length, buffer); // locks and releases lock
+
+                try {
+                    fireProgressStateChanged("Processing Image");
+                } catch (NullPointerException npe) {
+
+                    if (threadStopped) {
+                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                          Preferences.DEBUG_ALGORITHM);
+                    }
+                }
+
+                convertRGBtoCIELab(buffer, L, a, b);
+                monoSliceEqualizer(L, Leq);
+                convertCIELabtoRGB(Leq, a, b, resultBuffer);
+
+                // check for threadstopping BEFORE importing data back into the sourceImage
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                srcImage.importData(0, resultBuffer, true);	
             } else { // if (isColorImage) {
 
                 for (color = 1; (color < valuesPerPixel) && !threadStopped; color++) { // for each color
@@ -655,6 +714,10 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         float[] buffer;
         float[] resultBuffer;
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
 
         numColors = 0;
 
@@ -676,8 +739,18 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -715,6 +788,29 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                     // then store the channel back into the destination image
                     srcImage.importData(length * i, resultBuffer, false);
+                }
+            }
+            else if (useCIELab) {
+            	 // image length is length in 3 dims
+                for (i = 0; (i < numberOfSlices) && !threadStopped; i++) {
+
+                    fireProgressStateChanged((int) (((float) (i) / numberOfSlices) * 100));
+                    fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+
+                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    convertRGBtoCIELab(buffer, L, a, b);
+                    monoSliceEqualizer(L, Leq);
+                    convertCIELabtoRGB(Leq, a, b, resultBuffer);
+
+                    // check for threadstopping BEFORE importing data back into the sourceImage
+                    if (threadStopped) {
+                        finalize();
+
+                        return;
+                    }
+
+                    // then store the channel back into the destination image
+                    srcImage.importData(4 * length * i, resultBuffer, false);
                 }
             } else { // if (isColorImage) {
 
@@ -796,7 +892,10 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         float[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
         float[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
-
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
         
         numColors = 0;
@@ -816,8 +915,18 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         colorUsed = 0;
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -843,13 +952,39 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                                           Preferences.DEBUG_ALGORITHM);
                     }
                 }
-
+                
                 if (maxScaleRule == scaleOnImage) {
                     maxScale = (float) (srcImage.getMax() - srcImage.getMin());
                     minValue = (float) srcImage.getMin();
                 }
 
                 this.monoSliceEqualizer(buffer, resultBuffer);
+
+                // check for threadstopping BEFORE importing data back into the Image
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                destImage.importData(0, resultBuffer, true);
+            }
+            else if (useCIELab) {
+            	srcImage.exportData(0, 4 * length, buffer); // locks and releases lock
+
+                try {
+                    fireProgressStateChanged("Processing Image");
+                } catch (NullPointerException npe) {
+
+                    if (threadStopped) {
+                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                          Preferences.DEBUG_ALGORITHM);
+                    }
+                }
+                
+                convertRGBtoCIELab(buffer, L, a, b);
+                monoSliceEqualizer(L, Leq);
+                convertCIELabtoRGB(Leq, a, b, resultBuffer);
 
                 // check for threadstopping BEFORE importing data back into the Image
                 if (threadStopped) {
@@ -926,6 +1061,11 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         float[] buffer;
         float[] resultBuffer;
+        float[] L = null;
+        float[] a = null;
+        float[] b = null;
+        float[] Leq = null;
+        length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
         numColors = 0;
 
         if (rChannel) {
@@ -945,8 +1085,18 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
 
         try {
-            buffer = new float[length];
-            resultBuffer = new float[length];
+        	if (useCIELab) {
+        		buffer = new float[4*length];
+        		L = new float[length];
+        		a = new float[length];
+        		b = new float[length];
+        		Leq = new float[length];
+        		resultBuffer = new float[4*length];
+        	}
+        	else {
+                buffer = new float[length];
+                resultBuffer = new float[length];
+        	}
         } catch (OutOfMemoryError oome) {
             buffer = null;
             resultBuffer = null;
@@ -984,6 +1134,28 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                     destImage.importData(length * i, resultBuffer, true);
                 }
+            }
+            else if (useCIELab) {
+            	for (i = 0; (i < numberOfSlices) && !threadStopped; i++) { // process for all slices
+
+
+                    fireProgressStateChanged((int) ((float) (i) / numberOfSlices * 100));
+                    fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+
+                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    convertRGBtoCIELab(buffer, L, a, b);
+                    monoSliceEqualizer(L, Leq);
+                    convertCIELabtoRGB(Leq, a, b, resultBuffer);
+
+                    // check for threadstopping BEFORE importing data back into the Image
+                    if (threadStopped) {
+                        finalize();
+
+                        return;
+                    }
+
+                    destImage.importData(4 * length * i, resultBuffer, true);	
+            	}
             } else { // if (isColorImage) {
 
                 for (color = 1; (color < valuesPerPixel) && !threadStopped; color++) {
@@ -1174,7 +1346,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
     protected final void findImageOffset(int type) {
         imageOffset = bufMin;
 
-        if (isColorImage) { // color
+        if (isColorImage  && (!useCIELab)) { // color
             imageOffset = 0.0f;
         }
 
@@ -1449,7 +1621,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                 }
             }
 
-            if (isColorImage) {
+            if (isColorImage && (!useCIELab)) {
                 maxScale = maxValue;
             } else {
                 maxScale = maxValue - minValue;
@@ -1549,7 +1721,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         try { // if (brightnessLevel < totalBins) {
 
-            if (isColorImage) {
+            if (isColorImage && (!useCIELab)) {
                 return histomap[brightnessLevel];
             } else {
                 return (histomap[brightnessLevel] + minValue);
@@ -1636,7 +1808,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
             try { // if (brightnessLevel < totalBins) {
 
-                if (isColorImage) {
+                if (isColorImage && (!useCIELab)) {
                     return histomap[brightnessLevel];
                 } else {
                     return (histomap[brightnessLevel] + minValue);
@@ -1662,5 +1834,181 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         fireProgressStateChanged("Copying all " + colorText + " values ... ");
 
     }
+    
+    private void convertRGBtoCIELab(float buffer[], float L[], float a[], float b[]) {
+        // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        int i;
+        int j;
+        double varR, varG, varB;
+        double X, Y, Z;
+        double varX, varY, varZ;
+        
+        for (i = 0, j = 0; i < buffer.length; i += 4) {
+            varR = buffer[i+1]/scaleMaxCIELab;
+            varG = buffer[i+2]/scaleMaxCIELab;
+            varB = buffer[i+3]/scaleMaxCIELab;
+            
+            if (varR <= 0.04045) {
+                varR = varR/12.92;
+            }
+            else {
+                varR = Math.pow((varR + 0.055)/1.055, 2.4);
+            }
+            if (varG <= 0.04045) {
+                varG = varG/12.92;
+            }
+            else {
+                varG = Math.pow((varG + 0.055)/1.055, 2.4);
+            }
+            if (varB <= 0.04045) {
+                varB = varB/12.92;
+            }
+            else {
+                varB = Math.pow((varB + 0.055)/1.055, 2.4);
+            }
+            
+            varR = 100.0 * varR;
+            varG = 100.0 * varG;
+            varB = 100.0 * varB;
+            
+            // Observer = 2 degrees, Illuminant = D65
+            X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+            Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+            Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+            
+            varX = X/ XN;
+            varY = Y/ YN;
+            varZ = Z/ ZN;
+            
+            if (varX > 0.008856) {
+                varX = Math.pow(varX, 1.0/3.0);
+            }
+            else {
+                varX = (7.787 * varX) + (16.0/116.0);
+            }
+            if (varY > 0.008856) {
+                varY = Math.pow(varY, 1.0/3.0);
+            }
+            else {
+                varY = (7.787 * varY) + (16.0/116.0);
+            }
+            if (varZ > 0.008856) {
+                varZ = Math.pow(varZ, 1.0/3.0);
+            }
+            else {
+                varZ = (7.787 * varZ) + (16.0/116.0);
+            }
+            
+            L[j] = (float)((116.0 * varY) - 16.0);
+            a[j] = (float)(500.0 * (varX - varY));
+            b[j++] = (float)(200.0 * (varY - varZ));
+            
+        } // for (i = 0; i < buffer.length; i += 4)
+                
+        
+    } // private void convertRGBtoCIELab()
+    
+    private void convertCIELabtoRGB(float L[], float a[], float b[], float buffer[]) {
+        // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        int i;
+        int j;
+        double varX, varY, varZ;
+        double varX3, varY3, varZ3;
+        double X, Y, Z;
+        double varR, varG, varB;
+        double R, G, B;
+        for (i = 0, j = 0; i < buffer.length; i += 4) {
+            
+            varY = (L[j] + 16.0)/116.0;
+            varX = a[j]/500.0 + varY;
+            varZ = varY - b[j]/200.0;
+            j++;
+            
+            varX3 = Math.pow(varX, 3.0);
+            if (varX3 > 0.008856) {
+                varX = varX3;
+            }
+            else {
+                varX = (varX - 16.0/116.0)/7.787;
+            }
+            varY3 = Math.pow(varY, 3.0);
+            if (varY3 > 0.008856) {
+                varY = varY3;
+            }
+            else {
+                varY = (varY - 16.0/116.0)/7.787;
+            }
+            varZ3 = Math.pow(varZ, 3.0);
+            if (varZ3 > 0.008856) {
+                varZ = varZ3;
+            }
+            else {
+                varZ = (varZ - 16.0/116.0)/7.787;
+            }
+            
+            X = XN * varX;
+            Y = YN * varY;
+            Z = ZN * varZ;
+            
+            varX = X / 100.0;
+            varY = Y / 100.0;
+            varZ = Z / 100.0;
+            
+            varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
+            varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
+            varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
+            
+            if (varR > 0.0031308) {
+                varR = 1.055 * (Math.pow(varR, 1.0/2.4)) - 0.055;
+            }
+            else {
+                varR = 12.92 * varR;
+            }
+            if (varG > 0.0031308) {
+                varG = 1.055 * (Math.pow(varG, 1.0/2.4)) - 0.055;
+            }
+            else {
+                varG = 12.92 * varG;
+            }
+            if (varB > 0.0031308) {
+                varB = 1.055 * (Math.pow(varB, 1.0/2.4)) - 0.055;
+            }
+            else {
+                varB = 12.92 * varB;
+            }
+            
+            R = scaleMaxCIELab * varR;
+            if (R < 0) {
+            	R = 0;
+            }
+            if (R > scaleMaxCIELab) {
+            	R = scaleMaxCIELab;
+            }
+            G = scaleMaxCIELab * varG;
+            if (G < 0) {
+            	G = 0;
+            }
+            if (G > scaleMaxCIELab) {
+            	G = scaleMaxCIELab;
+            }
+            B = scaleMaxCIELab * varB;
+            if (B < 0) {
+            	B = 0;
+            }
+            if (B > scaleMaxCIELab) {
+            	B = scaleMaxCIELab;
+            }
+            
+            buffer[i+1] = (float)R;
+            buffer[i+2] = (float)G;
+            buffer[i+3] = (float)B;
+        } // for (i = 0; i < buffer.length; i += 4)
+    } // private void convertCIELabtoRGB(float buffer[])
 
 }
