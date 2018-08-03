@@ -58,9 +58,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
     private JLabel clampValueLabel;
 
     /** DOCUMENT ME! */
-    private JPanelColorChannels colorPanel;
-
-    /** DOCUMENT ME! */
     private JComboBox comboBoxHeightDiv;
 
     /** DOCUMENT ME! */
@@ -95,6 +92,26 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private int widthDivisions;
+    
+    private boolean useCIELab = false;
+    
+    private ButtonGroup colorGroup;
+    
+    private JRadioButton CIELabButton;
+    
+    private JRadioButton RGBButton;
+    
+    private JCheckBox redBox;
+    
+    private JCheckBox greenBox;
+    
+    private JCheckBox blueBox;
+    
+    private boolean useRed = false;
+    
+    private boolean useGreen = false;
+    
+    private boolean useBlue = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -163,6 +180,17 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         } else if (source == comboBoxWidthDiv) {
             String s = (String) comboBoxWidthDiv.getSelectedItem();
             comboBoxHeightDiv.setSelectedItem(s);
+        } else if ((source  == CIELabButton) || (source == RGBButton)) {
+        	if (CIELabButton.isSelected()) {
+        	    redBox.setEnabled(false);
+        	    greenBox.setEnabled(false);
+        	    blueBox.setEnabled(false);
+        	}
+        	else {
+        		redBox.setEnabled(true);
+        	    greenBox.setEnabled(true);
+        	    blueBox.setEnabled(true);
+        	}
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -335,10 +363,8 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
                 }
 
                 // Make algorithm
-                aheAlgo = new AlgorithmAHE(resultImage, image, heightDivisions, widthDivisions);
-                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
-                                            colorPanel.isGreenProcessingRequested(),
-                                            colorPanel.isBlueProcessingRequested());
+                aheAlgo = new AlgorithmAHE(resultImage, image, heightDivisions, widthDivisions, useCIELab);
+                aheAlgo.setRGBChannelFilter(useRed, useGreen, useBlue);
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -379,10 +405,8 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                aheAlgo = new AlgorithmAHE(image, heightDivisions, widthDivisions);
-                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
-                                            colorPanel.isGreenProcessingRequested(),
-                                            colorPanel.isBlueProcessingRequested());
+                aheAlgo = new AlgorithmAHE(image, heightDivisions, widthDivisions, useCIELab);
+                aheAlgo.setRGBChannelFilter(useRed, useGreen, useBlue);
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -476,9 +500,10 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
             setDisplayLocReplace();
         }
 
-        colorPanel = new JPanelColorChannels(image);
-        scriptParameters.setColorOptionsGUI(colorPanel);
-
+        useCIELab = scriptParameters.getParams().getBoolean("use_cielab");
+        useRed = scriptParameters.getParams().getBoolean("use_red");
+        useGreen = scriptParameters.getParams().getBoolean("use_green");
+        useBlue = scriptParameters.getParams().getBoolean("use_blue");
         clamp = scriptParameters.getParams().getBoolean("do_clamping");
         clampValue = scriptParameters.getParams().getInt("clamp_value");
         heightDivisions = scriptParameters.getParams().getInt("height_divisions");
@@ -492,8 +517,10 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
 
-        scriptParameters.storeColorOptions(colorPanel);
-
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_cielab", useCIELab));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_red", useRed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_green", useGreen));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_blue", useBlue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_clamping", clamp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("clamp_value", clampValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("height_divisions", heightDivisions));
@@ -641,7 +668,57 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         setupBox.add(paramPanel);
 
         // color channel selection goes here...
-        colorPanel = new JPanelColorChannels(image);
+        JPanel colorPanel = new JPanel();
+        GridBagLayout gbl2 = new GridBagLayout();
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.insets = new Insets(2, 0, 2, 0); // component width = minwidth + (2ipadx)
+        colorPanel.setLayout(gbl2);
+        colorPanel.setForeground(Color.black);
+        colorPanel.setBorder(buildTitledBorder("Color settings"));
+        
+        colorGroup = new ButtonGroup();
+        CIELabButton = new JRadioButton("Only change intensity L in CIELab space", true);
+        CIELabButton.setFont(serif12);
+        CIELabButton.setEnabled(true);
+        colorGroup.add(CIELabButton);
+        CIELabButton.addActionListener(this);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        colorPanel.add(CIELabButton, gbc2);
+        
+        RGBButton = new JRadioButton("Change selected components in RGB space", false);
+        RGBButton.setFont(serif12);
+        RGBButton.setEnabled(true);
+        colorGroup.add(RGBButton);
+        RGBButton.addActionListener(this);
+        gbc2.gridy++;
+        colorPanel.add(RGBButton, gbc2);
+        
+        redBox = new JCheckBox("Red");
+        redBox.setFont(serif12);
+        redBox.setForeground(Color.black);
+        redBox.setSelected(true);
+        redBox.setEnabled(false);
+        gbc2.gridy++;
+        colorPanel.add(redBox, gbc2);
+        
+        greenBox = new JCheckBox("Green");
+        greenBox.setFont(serif12);
+        greenBox.setForeground(Color.black);
+        greenBox.setSelected(true);
+        greenBox.setEnabled(false);
+        gbc2.gridy++;
+        colorPanel.add(greenBox, gbc2);
+        
+        blueBox = new JCheckBox("Blue");
+        blueBox.setFont(serif12);
+        blueBox.setForeground(Color.black);
+        blueBox.setSelected(true);
+        blueBox.setEnabled(false);
+        gbc2.gridy++;
+        colorPanel.add(blueBox, gbc2);
+        
         setupBox.add(colorPanel);
 
         Box lowerBox = new Box(BoxLayout.X_AXIS);
@@ -708,6 +785,25 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
             displayLoc = REPLACE;
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
+        }
+        
+        if (!image.isColorImage()) {
+        	useCIELab = false;
+        	useRed = false;
+        	useGreen = false;
+        	useBlue = false;
+        }
+        else if (CIELabButton.isSelected()) {
+        	useCIELab = true;
+        	useRed = false;
+        	useGreen = false;
+        	useBlue = false;
+        }
+        else {
+        	useCIELab = false;
+        	useRed = redBox.isSelected();
+        	useGreen = greenBox.isSelected();
+        	useBlue = blueBox.isSelected();
         }
 
         if (clampImage.isSelected()) {
@@ -812,7 +908,10 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
-            table.put(new ParameterList(AlgorithmParameters.DO_PROCESS_RGB, Parameter.PARAM_BOOLEAN, "true,true,true"));
+            table.put(new ParameterBoolean("use_cielab", false));
+            table.put(new ParameterBoolean("use_red", false));
+            table.put(new ParameterBoolean("use_green", false));
+            table.put(new ParameterBoolean("use_blue", false));
             table.put(new ParameterBoolean("do_clamping", false));
             table.put(new ParameterInt("clamp_value", 75));
             table.put(new ParameterInt("height_divisions", 1));
