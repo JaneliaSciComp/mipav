@@ -28,6 +28,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     private JTextField aeField;
     private JTextField portField;
     private JTextField outputDirField;
+    private JTextField reportDirField;
 //    private JTextField emailField;
     
     private JCheckBox emailCheckbox;
@@ -41,6 +42,8 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     private int port = 11115;
 
     private String outputDir = new String(System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dicom_catcher" + File.separator);
+    
+    private String reportDir = outputDir;
     
     private boolean doEmailReport = false;
     
@@ -155,6 +158,28 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         gbc.gridy++;
         gbc.gridx = 0;
         
+        JLabel labelReport = new JLabel("HTML report dir");
+        labelReport.setForeground(Color.black);
+        labelReport.setFont(MipavUtil.font12);
+        mainPanel.add(labelReport, gbc);
+        
+        reportDirField = new JTextField(40);
+        reportDirField.setText("" + reportDir);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(reportDirField, gbc);
+        
+        JButton reportFileButton = new JButton("Browse");
+        reportFileButton.setActionCommand("BrowseDirReport");
+        reportFileButton.addActionListener(this);
+        reportFileButton.setForeground(Color.black);
+        reportFileButton.setFont(MipavUtil.font12B);
+        gbc.gridx++;
+        mainPanel.add(reportFileButton, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
         emailCheckbox = new JCheckBox("Email report to pre-defined address", doEmailReport);
         emailCheckbox.setForeground(Color.black);
         emailCheckbox.setFont(MipavUtil.font12);
@@ -224,7 +249,9 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         } else if (event.getActionCommand().equalsIgnoreCase("Exit")) {
             this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         } else if (event.getActionCommand().equalsIgnoreCase("BrowseDir")) {
-            browseDir();
+            browseOutputDir();
+        } else if (event.getActionCommand().equalsIgnoreCase("BrowseDirReport")) {
+            browseReportDir();
         }
     }
 
@@ -232,6 +259,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         ae = aeField.getText();
         port = Integer.parseInt(portField.getText());
         outputDir = outputDirField.getText();
+        reportDir = reportDirField.getText();
         doEmailReport = emailCheckbox.isSelected();
 //        emailAddress = emailField.getText();
         
@@ -242,7 +270,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         try {
             log("Starting DICOM receiver: " + ae + " @ " + ipAddress + ":" + port);
             
-            dicomReceiver = new StrokeSegmentationDicomReceiver(ipAddress, port, ae, outputDir, doEmailReport, logOutputArea);
+            dicomReceiver = new StrokeSegmentationDicomReceiver(ipAddress, port, ae, outputDir, reportDir, doEmailReport, logOutputArea);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -286,7 +314,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     @Override
     public void windowOpened(WindowEvent arg0) {}
     
-    private boolean browseDir() {
+    private boolean browseOutputDir() {
         String initDir = outputDirField.getText();
         if (initDir.equals("") || !(new File(initDir).exists())) {
             initDir = ViewUserInterface.getReference().getDefaultDirectory();
@@ -295,12 +323,34 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         final JFileChooser chooser = new JFileChooser(initDir);
 
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle("Choose directory containing ADC and DWI volumes");
+        chooser.setDialogTitle("Choose directory to output received DICOM files");
         final int returnValue = chooser.showOpenDialog(this);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             outputDirField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
 
             outputDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private boolean browseReportDir() {
+        String initDir = reportDirField.getText();
+        if (initDir.equals("") || !(new File(initDir).exists())) {
+            initDir = ViewUserInterface.getReference().getDefaultDirectory();
+        }
+        
+        final JFileChooser chooser = new JFileChooser(initDir);
+
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setDialogTitle("Choose directory to output HTML report");
+        final int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            reportDirField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
+
+            reportDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
             
             return true;
         }
@@ -351,6 +401,8 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
                 port = Integer.parseInt(prop.getProperty("listenerPort", "" + port));
                 
                 outputDir = prop.getProperty("listenerOutputDir", outputDir);
+                
+                reportDir = prop.getProperty("listenerReportDir", outputDir);
                 
                 doEmailReport = Boolean.parseBoolean(prop.getProperty("listenerDoEmail", "" + doEmailReport));
                 
