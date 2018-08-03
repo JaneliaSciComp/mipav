@@ -140,6 +140,8 @@ public class StrokeSegmentationDicomReceiver {
     private int serverPort;
     private String serverAE;
     
+    private String reportDir;
+    
     private boolean doEmailReport;
     
     private static final String reportCoreCid = "cid:core-image";
@@ -164,7 +166,7 @@ public class StrokeSegmentationDicomReceiver {
     
 //    private String storageFilePathFormat = "{0020000D}/{0020000E}/{00080008}/{00080018}.dcm";
     
-    public StrokeSegmentationDicomReceiver(final String ip, final int port, final String curAE, final String outputDir, final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
+    public StrokeSegmentationDicomReceiver(final String ip, final int port, final String curAE, final String outputDir, final String reportDir, final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
         serverIP = ip;
         serverPort = port;
         serverAE = curAE;
@@ -207,6 +209,8 @@ public class StrokeSegmentationDicomReceiver {
         ae.addTransferCapability(new TransferCapability(null, "*", TransferCapability.Role.SCP, "*"));
         
         setStorageDirectory(new File(outputDir));
+        
+        this.reportDir = reportDir;
         
         setStorageFilePathFormat(storageFilePathFormat);
         
@@ -606,9 +610,24 @@ public class StrokeSegmentationDicomReceiver {
             out.print(fileTxt);
             out.println("</html>");
             out.close();
+            out = null;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         	MipavUtil.displayError("Unable to write core segmentation report: " + e.getMessage());
+        }
+        
+        if (reportDir != null && (new File(reportDir).exists())) {
+            try {
+                File reportSubDir = new File(reportDir + File.separator + threshLightboxFile.getParentFile().getParentFile().getName() + File.separator + threshLightboxFile.getParentFile().getName());
+                reportSubDir.mkdirs();
+                
+                FileUtils.copyFileToDirectory(threshLightboxFile, reportSubDir);
+                FileUtils.copyFileToDirectory(coreLightboxFile, reportSubDir);
+                FileUtils.copyFileToDirectory(new File(htmlReportPath), reportSubDir);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
         
         if (doEmailReport && readEmailConfig()) {
