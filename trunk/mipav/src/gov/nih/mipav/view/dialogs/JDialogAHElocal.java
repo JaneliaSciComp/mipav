@@ -105,6 +105,26 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private boolean useCIELab = false;
+    
+    private ButtonGroup colorGroup;
+    
+    private JRadioButton CIELabButton;
+    
+    private JRadioButton RGBButton;
+    
+    private JCheckBox redBox;
+    
+    private JCheckBox greenBox;
+    
+    private JCheckBox blueBox;
+    
+    private boolean useRed = false;
+    
+    private boolean useGreen = false;
+    
+    private boolean useBlue = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -179,6 +199,31 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 minThresholdText.setEnabled(false);
                 minThresholdLabel.setForeground(Color.gray);
             }
+        } else if ((source  == CIELabButton) || (source == RGBButton)) {
+        	if (CIELabButton.isSelected()) {
+        	    redBox.setEnabled(false);
+        	    greenBox.setEnabled(false);
+        	    blueBox.setEnabled(false);
+        	    if (comboBoxScaleMax.getItemCount() == 3) {
+        	    	comboBoxScaleMax.removeAllItems();
+        	    	comboBoxScaleMax.addItem("Local");
+        	        comboBoxScaleMax.addItem("Slice");
+        	    	comboBoxScaleMax.validate();
+        	    }
+        	    comboBoxScaleMax.setSelectedIndex(1);
+                scaleMaxValue = 1;
+        	}
+        	else {
+        		redBox.setEnabled(true);
+        	    greenBox.setEnabled(true);
+        	    blueBox.setEnabled(true);
+        	    if (comboBoxScaleMax.getItemCount() == 2) {
+        	    	comboBoxScaleMax.addItem("Image");
+        	    	comboBoxScaleMax.validate();
+        	    }
+        	    comboBoxScaleMax.setSelectedIndex(2);
+                scaleMaxValue = 2;
+        	}
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -515,15 +560,13 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         // ITEMS
         comboBoxScaleMax.addItem("Local");
         comboBoxScaleMax.addItem("Slice");
-        comboBoxScaleMax.addItem("Image");
-
-        if (image.isColorImage()) {
-            comboBoxScaleMax.setSelectedIndex(2);
-            scaleMaxValue = 2;
-        } else {
-            comboBoxScaleMax.setSelectedIndex(1);
-            scaleMaxValue = 1;
+        if (!image.isColorImage()) {
+            comboBoxScaleMax.addItem("Image");
         }
+
+        
+        comboBoxScaleMax.setSelectedIndex(1);
+        scaleMaxValue = 1;
 
         holder.add(comboBoxScaleMax);
     }
@@ -618,10 +661,8 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
                 // Make algorithm
                 aheAlgo = new AlgorithmAHElocal(resultImage, image, kernelSize, kernelShape,
-                                                outputPanel.isProcessWholeImageSet());
-                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
-                                            colorPanel.isGreenProcessingRequested(),
-                                            colorPanel.isBlueProcessingRequested());
+                                                outputPanel.isProcessWholeImageSet(), useCIELab);
+                aheAlgo.setRGBChannelFilter(useRed, useGreen, useBlue);
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -671,10 +712,9 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                aheAlgo = new AlgorithmAHElocal(image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
-                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
-                                            colorPanel.isGreenProcessingRequested(),
-                                            colorPanel.isBlueProcessingRequested());
+                aheAlgo = new AlgorithmAHElocal(image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet(),
+                		useCIELab);
+                aheAlgo.setRGBChannelFilter(useRed, useGreen, useBlue);
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -823,9 +863,10 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         scriptParameters.setOutputOptionsGUI(outputPanel);
 
-        colorPanel = new JPanelColorChannels(image);
-        scriptParameters.setColorOptionsGUI(colorPanel);
-
+        useCIELab = scriptParameters.getParams().getBoolean("use_cielab");
+        useRed = scriptParameters.getParams().getBoolean("use_red");
+        useGreen = scriptParameters.getParams().getBoolean("use_green");
+        useBlue = scriptParameters.getParams().getBoolean("use_blue");
         clamp = scriptParameters.getParams().getBoolean("do_clamping");
         clampValue = scriptParameters.getParams().getInt("clamp_value");
         kernelShape = scriptParameters.getParams().getInt("kernel_type");
@@ -850,8 +891,10 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
         scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
 
-        scriptParameters.storeColorOptions(colorPanel);
-
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_cielab", useCIELab));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_red", useRed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_green", useGreen));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_blue", useBlue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_clamping", clamp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("clamp_value", clampValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernelShape));
@@ -908,7 +951,57 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
         setupBox.add(buildKernelPanel(gbc, gbl));
 
-        colorPanel = new JPanelColorChannels(image);
+        // color channel selection goes here...
+        JPanel colorPanel = new JPanel();
+        GridBagLayout gbl2 = new GridBagLayout();
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.insets = new Insets(2, 0, 2, 0); // component width = minwidth + (2ipadx)
+        colorPanel.setLayout(gbl2);
+        colorPanel.setForeground(Color.black);
+        colorPanel.setBorder(buildTitledBorder("Color settings"));
+        
+        colorGroup = new ButtonGroup();
+        CIELabButton = new JRadioButton("Only change intensity L in CIELab space", true);
+        CIELabButton.setFont(serif12);
+        CIELabButton.setEnabled(true);
+        colorGroup.add(CIELabButton);
+        CIELabButton.addActionListener(this);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        colorPanel.add(CIELabButton, gbc2);
+        
+        RGBButton = new JRadioButton("Change selected components in RGB space", false);
+        RGBButton.setFont(serif12);
+        RGBButton.setEnabled(true);
+        colorGroup.add(RGBButton);
+        RGBButton.addActionListener(this);
+        gbc2.gridy++;
+        colorPanel.add(RGBButton, gbc2);
+        
+        redBox = new JCheckBox("Red");
+        redBox.setFont(serif12);
+        redBox.setForeground(Color.black);
+        redBox.setSelected(true);
+        redBox.setEnabled(false);
+        gbc2.gridy++;
+        colorPanel.add(redBox, gbc2);
+        
+        greenBox = new JCheckBox("Green");
+        greenBox.setFont(serif12);
+        greenBox.setForeground(Color.black);
+        greenBox.setSelected(true);
+        greenBox.setEnabled(false);
+        gbc2.gridy++;
+        colorPanel.add(greenBox, gbc2);
+        
+        blueBox = new JCheckBox("Blue");
+        blueBox.setFont(serif12);
+        blueBox.setForeground(Color.black);
+        blueBox.setSelected(true);
+        blueBox.setEnabled(false);
+        gbc2.gridy++;
+        colorPanel.add(blueBox, gbc2);
         setupBox.add(colorPanel);
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
@@ -934,6 +1027,25 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      */
     private boolean setVariables() {
         JTextField fld;
+        
+        if (!image.isColorImage()) {
+        	useCIELab = false;
+        	useRed = false;
+        	useGreen = false;
+        	useBlue = false;
+        }
+        else if (CIELabButton.isSelected()) {
+        	useCIELab = true;
+        	useRed = false;
+        	useGreen = false;
+        	useBlue = false;
+        }
+        else {
+        	useCIELab = false;
+        	useRed = redBox.isSelected();
+        	useGreen = greenBox.isSelected();
+        	useBlue = blueBox.isSelected();
+        }
 
         if (clampCheckBox.isSelected()) {
 
@@ -1058,7 +1170,10 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
-            table.put(new ParameterList(AlgorithmParameters.DO_PROCESS_RGB, Parameter.PARAM_BOOLEAN, "true,true,true"));
+            table.put(new ParameterBoolean("use_cielab", false));
+            table.put(new ParameterBoolean("use_red", false));
+            table.put(new ParameterBoolean("use_green", false));
+            table.put(new ParameterBoolean("use_blue", false));
             table.put(new ParameterBoolean("do_clamping", false));
             table.put(new ParameterInt("clamp_value", 75));
             table.put(new ParameterInt("kernel_type", 0));
