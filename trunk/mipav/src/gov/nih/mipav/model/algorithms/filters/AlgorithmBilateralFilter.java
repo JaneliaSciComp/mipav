@@ -557,8 +557,26 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
             }
             
             R = scaleMax * varR;
+            if (R < 0) {
+            	R = 0;
+            }
+            if (R > scaleMax) {
+            	R = scaleMax;
+            }
             G = scaleMax * varG;
+            if (G < 0) {
+            	G = 0;
+            }
+            if (G > scaleMax) {
+            	G = scaleMax;
+            }
             B = scaleMax * varB;
+            if (B < 0) {
+            	B = 0;
+            }
+            if (B > scaleMax) {
+            	B = scaleMax;
+            }
             
             buffer[i+1] = (float)R;
             buffer[i+2] = (float)G;
