@@ -77,6 +77,15 @@ import java.util.Arrays;
  * 
  *  http://www.easyrgb.com has XYZ -> RGB, RGB -> XYZ, XYZ -> CIEL*ab, CIEL*ab -> XYZ, and
  *     XYZ(Tristimulus) Reference values of a perfect reflecting diffuser.
+ *     
+ *     
+ *  Smoothing vs. sharpening of color images - Together or separated by Cristina Perez, Samuel Morillas, and Alberto Conejero,
+ *  June, 2017.  "Histogram equalization is a non-linear process and involves intensity values of the image and not the color
+ *  components  For these reasons, channel splitting and equalizing each channel separately is not the proper way for
+ *  equalization of contrast.  So, the first step is to convert the color space of the image from RGB into other color
+ *  space which separates intensity values from color components such as HSV, YCbCr, or Lab, and apply equalization over the
+ *  H, Y, or L channel respectively."
+ *  
  *
  * @version  1.01; 20 Sep 2001
  * @author   David Parsons (parsonsd)
@@ -132,7 +141,7 @@ public class AlgorithmAHE extends AlgorithmBase {
     
     private double imageMax;
     
- // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
+    // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
     private double scaleMax = 255.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -555,7 +564,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                 	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
                    
 
-                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    srcImage.exportData(4 * length * i, 4 * length, buffer); // locks and releases lock
                     convertRGBtoCIELab(buffer, L, a, b);
                     monoSliceFilter(L, Leq);
                     convertCIELabtoRGB(Leq, a, b, resultBuffer);
@@ -863,7 +872,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                 	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
    	                         
 
-                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    srcImage.exportData(4 * length * i, 4 * length, buffer); // locks and releases lock
                     convertRGBtoCIELab(buffer, L, a, b);
                     monoSliceFilter(L, Leq);
                     convertCIELabtoRGB(Leq, a, b, resultBuffer);
