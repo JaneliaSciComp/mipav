@@ -1,13 +1,14 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.*;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.BitSet;
 
-import gov.nih.mipav.view.*;
-
-import java.io.*;
-
-import java.util.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 
 /**
@@ -51,6 +52,40 @@ import java.util.*;
  * Alan Julian Izenman, Journal of the American Statistical Association, March, 1991, Vol. 86, No. 413, pp. 205 - 224:
  * The ideal histogram bin width W is given by W = 2(IQR)pow(N,-1/3) where IQR is the interquartile range(the 75
  * percentile minus the 25th percentile) and N is the number of available samples.</p>
+ * 
+ * The three coordinates of CIELAB represent the lightness of the color(L* = 0 yields black and L* = 100 indicates diffuse 
+ * white; specular white may be higher), its position between red/magenta and green(a*, negative values indicate green
+ * while positive values indicate magenta) and its position between yellow and blue(b*, negative values indicate blue 
+ * and positive values indicate yellow).  The asterisk(*) after L, a, and b are part of the full name, since they represent 
+ * L*, a*, and b*, to distinguish them from Hunter's L, a, and b.
+ * 
+ * The L* coordinate ranges from 0 to 100.  The possible range of a* and b* coordinates depends on the color space that one
+ * is converting from.  
+ * R = 0, G = 0, B = 0 => L* = 0, a* = 0, b* = 0
+ * R = 255, G = 0, B = 0 => L* = 53.2, a* = 80.1, b* = 67.22
+ * R = 0, G = 255, B = 0 => L* = 87.7, a* = -86.2, b* = 83.2
+ * R = 0, G = 0, B = 255 => L* = 32.3, a* = 79.2, b* = -107.9
+ * R = 255, G = 255, B = 0 => L* = 97.1, a* = -21.6, b* = 94.5
+ * R = 255, G = 0, B = 255 => L* = 60.3, a* = 98.3, b* = -60.8
+ * R = 0, G = 255, B = 255 => L* = 91.1, a* = -48.1, b* = -14.1
+ * R = 255, G = 255, B = 255 => L* = 100.0, a* = 0.00525, b* = -0.0104
+ * so the range of a* equals about the range of b* and the range of a* equals about twice the range of L*.
+ * The simplest distance metric delta E is CIE76 = sqrt((L2* - L1*)**2 + (a2* - a1*)**2 + (b2* - b1*)**2)
+ * 
+ * XW, YW, and ZW (also called XN, YN, ZN or X0, Y0, Z0) are reference white tristimulus values - typically the white
+ * of a perfectly reflecting diffuser under CIE standard D65 illumination(defined by x = 0.3127 and y = 0.3291 in the
+ * CIE chromatcity diagram).  The 2 degrees, D65 reference tristimulus values are: XN = 95.047, YN = 100.000, and ZN = 1
+ * 
+ *  http://www.easyrgb.com has XYZ -> RGB, RGB -> XYZ, XYZ -> CIEL*ab, CIEL*ab -> XYZ, and
+ *     XYZ(Tristimulus) Reference values of a perfect reflecting diffuser.
+ *     
+ *     
+ *  Smoothing vs. sharpening of color images - Together or separated by Cristina Perez, Samuel Morillas, and Alberto Conejero,
+ *  June, 2017.  "Histogram equalization is a non-linear process and involves intensity values of the image and not the color
+ *  components  For these reasons, channel splitting and equalizing each channel separately is not the proper way for
+ *  equalization of contrast.  So, the first step is to convert the color space of the image from RGB into other color
+ *  space which separates intensity values from color components such as HSV, YCbCr, or Lab, and apply equalization over the
+ *  H, Y, or L channel respectively."
  *
  * @version  1.00; 24 Sep 2001
  * @author   David Parsons (parsonsd)
@@ -77,7 +112,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
     public static final int scaleOnSlice = 1;
 
     /** DOCUMENT ME! */
-    // No scaleOnImage for useCIELab
     public static final int scaleOnImage = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -194,6 +228,9 @@ public class AlgorithmAHElocal extends AlgorithmBase {
     
     // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
     private double scaleMaxCIELab = 255.0;
+    
+    float Lmin[] = new float[]{Float.MAX_VALUE};
+    float Lmax[] = new float[]{-Float.MAX_VALUE};
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -205,8 +242,11 @@ public class AlgorithmAHElocal extends AlgorithmBase {
      * @param  kShape      shape of kernel
      * @param  wholeImage  If true whole image used
      * @param  useCIELab   If color, use intensity L in CIELab space
+     * @param  Lmin[0] is lowest color image L value in CIELab space
+     * @param  Lmax[0] is highest color image L value in CIELab space
      */
-    public AlgorithmAHElocal(ModelImage srcImg, int kSize, int kShape, boolean wholeImage, boolean useCIELab) {
+    public AlgorithmAHElocal(ModelImage srcImg, int kSize, int kShape, boolean wholeImage, boolean useCIELab,
+    		float Lmin[], float Lmax[]) {
         super(null, srcImg);
 
         if (srcImg.isColorImage()) {
@@ -217,6 +257,8 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             scaleMaxCIELab = Math.max(255.0, imageMax);
         }
         this.useCIELab = useCIELab;
+        this.Lmin = Lmin;
+        this.Lmax = Lmax;
 
         kernelSize = kSize;
         kernelShape = kShape;
@@ -247,9 +289,11 @@ public class AlgorithmAHElocal extends AlgorithmBase {
      * @param  kShape      shape of kernel
      * @param  wholeImage  If true whole image used
      * @param  useCIELab   If color, use intensity L in CIELab space
+     * @param  Lmin[0] is lowest color image L value in CIELab space
+     * @param  Lmax[0] is highest color image L value in CIELab space
      */
     public AlgorithmAHElocal(ModelImage destImg, ModelImage srcImg, int kSize, int kShape, boolean wholeImage,
-    		boolean useCIELab) {
+    		boolean useCIELab, float Lmin[], float Lmax[]) {
 
         super(destImg, srcImg);
 
@@ -261,6 +305,8 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             scaleMaxCIELab = Math.max(255.0, imageMax);
         }
         this.useCIELab = useCIELab;
+        this.Lmin = Lmin;
+        this.Lmax = Lmax;
 
         kernelSize = kSize;
         kernelShape = kShape;
@@ -638,6 +684,11 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     }
                 }
 
+                if (maxScaleRule == scaleOnImage) {
+                    maxScale = (Lmax[0] - Lmin[0]);
+                    minValue = Lmin[0];
+                }
+
                 convertRGBtoCIELab(buffer, L, a, b);
                 monoSliceEqualizer(L, Leq);
                 convertCIELabtoRGB(Leq, a, b, resultBuffer);
@@ -792,12 +843,16 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             }
             else if (useCIELab) {
             	 // image length is length in 3 dims
+            	if (maxScaleRule == scaleOnImage) {
+            	    maxScale = Lmax[0] - Lmin[0];
+            	    minValue = Lmin[0];
+            	} // if (maxScaleRule == scaleOnImage)
                 for (i = 0; (i < numberOfSlices) && !threadStopped; i++) {
 
                     fireProgressStateChanged((int) (((float) (i) / numberOfSlices) * 100));
                     fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
 
-                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    srcImage.exportData(4 * length * i, 4 * length, buffer); // locks and releases lock
                     convertRGBtoCIELab(buffer, L, a, b);
                     monoSliceEqualizer(L, Leq);
                     convertCIELabtoRGB(Leq, a, b, resultBuffer);
@@ -982,6 +1037,10 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     }
                 }
                 
+                if (maxScaleRule == scaleOnImage) {
+                	maxScale = Lmax[0] - Lmin[0];
+                	minValue = Lmin[0];
+                }
                 convertRGBtoCIELab(buffer, L, a, b);
                 monoSliceEqualizer(L, Leq);
                 convertCIELabtoRGB(Leq, a, b, resultBuffer);
@@ -1136,13 +1195,17 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                 }
             }
             else if (useCIELab) {
+            	if (maxScaleRule == scaleOnImage) {
+            	    maxScale = Lmax[0] - Lmin[0];
+            	    minValue = Lmin[0];
+            	} // if (maxScaleRule == scaleOnImage)
             	for (i = 0; (i < numberOfSlices) && !threadStopped; i++) { // process for all slices
 
 
                     fireProgressStateChanged((int) ((float) (i) / numberOfSlices * 100));
                     fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
 
-                    srcImage.exportData(4 * length * i, length, buffer); // locks and releases lock
+                    srcImage.exportData(4 * length * i, 4 * length, buffer); // locks and releases lock
                     convertRGBtoCIELab(buffer, L, a, b);
                     monoSliceEqualizer(L, Leq);
                     convertCIELabtoRGB(Leq, a, b, resultBuffer);
