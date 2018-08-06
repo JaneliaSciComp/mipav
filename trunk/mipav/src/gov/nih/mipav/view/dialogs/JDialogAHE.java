@@ -680,7 +680,12 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         colorGroup = new ButtonGroup();
         CIELabButton = new JRadioButton("Only change intensity L in CIELab space", true);
         CIELabButton.setFont(serif12);
-        CIELabButton.setEnabled(true);
+        if (image.isColorImage()) {
+            CIELabButton.setEnabled(true);
+        }
+        else {
+        	CIELabButton.setEnabled(false);
+        }
         colorGroup.add(CIELabButton);
         CIELabButton.addActionListener(this);
         gbc2.gridx = 0;
@@ -689,7 +694,12 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         
         RGBButton = new JRadioButton("Change selected components in RGB space", false);
         RGBButton.setFont(serif12);
-        RGBButton.setEnabled(true);
+        if (image.isColorImage()) {
+            RGBButton.setEnabled(true);
+        }
+        else {
+        	RGBButton.setEnabled(false);
+        }
         colorGroup.add(RGBButton);
         RGBButton.addActionListener(this);
         gbc2.gridy++;
