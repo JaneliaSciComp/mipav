@@ -12,7 +12,7 @@ import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
@@ -81,6 +81,10 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private JTextField minThresholdText;
+    
+    private float minThresholdValueL;
+    
+    private float minThresholdValueRGB;
 
     /** DOCUMENT ME! */
     private float minThresholdValue;
@@ -125,6 +129,10 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     private boolean useGreen = false;
     
     private boolean useBlue = false;
+    
+    private float Lmin[] = new float[]{Float.MAX_VALUE};
+    
+    private float Lmax[] = new float[]{-Float.MAX_VALUE};
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -204,25 +212,19 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         	    redBox.setEnabled(false);
         	    greenBox.setEnabled(false);
         	    blueBox.setEnabled(false);
-        	    if (comboBoxScaleMax.getItemCount() == 3) {
-        	    	comboBoxScaleMax.removeAllItems();
-        	    	comboBoxScaleMax.addItem("Local");
-        	        comboBoxScaleMax.addItem("Slice");
-        	    	comboBoxScaleMax.validate();
-        	    }
-        	    comboBoxScaleMax.setSelectedIndex(1);
+                comboBoxScaleMax.setSelectedIndex(1);
                 scaleMaxValue = 1;
+                minThresholdValue = minThresholdValueL;
+                minThresholdText.setText(String.valueOf(minThresholdValueL));
         	}
         	else {
         		redBox.setEnabled(true);
         	    greenBox.setEnabled(true);
         	    blueBox.setEnabled(true);
-        	    if (comboBoxScaleMax.getItemCount() == 2) {
-        	    	comboBoxScaleMax.addItem("Image");
-        	    	comboBoxScaleMax.validate();
-        	    }
         	    comboBoxScaleMax.setSelectedIndex(2);
                 scaleMaxValue = 2;
+                minThresholdValue = minThresholdValueRGB ;
+                minThresholdText.setText(String.valueOf(minThresholdValueRGB));
         	}
         } else if (command.equals("Cancel")) {
             dispose();
@@ -560,11 +562,8 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         // ITEMS
         comboBoxScaleMax.addItem("Local");
         comboBoxScaleMax.addItem("Slice");
-        if (!image.isColorImage()) {
-            comboBoxScaleMax.addItem("Image");
-        }
+        comboBoxScaleMax.addItem("Image");
 
-        
         comboBoxScaleMax.setSelectedIndex(1);
         scaleMaxValue = 1;
 
@@ -582,7 +581,26 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     protected void buildThreshold(JPanel holder, GridBagConstraints gbc, GridBagLayout gbl) {
 
         if (image.isColorImage()) {
-            minThresholdValue = (float) Math.min(image.getMinR(), Math.min(image.getMinG(), image.getMinB()));
+            minThresholdValueRGB = (float) Math.min(image.getMinR(), Math.min(image.getMinG(), image.getMinB()));
+            int length = image.getExtents()[0] * image.getExtents()[1];
+            int numberOfSlices = 1;
+            if (image.getNDims() > 2) {
+            	numberOfSlices = image.getExtents()[2];
+            }
+            float imageBuffer[] = new float[4 * length * numberOfSlices];
+    	    float imageL[] = new float[length * numberOfSlices];
+    	    float imagea[] = new float[length * numberOfSlices];
+    	    float imageb[] = new float[length * numberOfSlices];
+    	    try {
+    	        image.exportData(0, 4 * length * numberOfSlices, imageBuffer); // locks and releases lock
+    	    }
+    	    catch(IOException e) {
+    	        MipavUtil.displayError("IOExcdetion "+ e);
+    	        return;
+    	    }
+    	    convertRGBtoCIELab(imageBuffer, imageL, imagea, imageb, Lmin, Lmax);
+    	    minThresholdValueL = Lmin[0];
+    	    minThresholdValue = minThresholdValueL;
         } else {
             minThresholdValue = (float) image.getMin();
         }
@@ -620,6 +638,89 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         makeFloatingPointOnly(minThresholdText);
         holder.add(minThresholdText);
     }
+    
+    private void convertRGBtoCIELab(float buffer[], float L[], float a[], float b[], float Lmin[], float Lmax[]) {
+        // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        int i;
+        int j;
+        double varR, varG, varB;
+        double X, Y, Z;
+        double varX, varY, varZ;
+        double scaleMaxCIELab = Math.max(255.0, image.getMax());
+        
+        for (i = 0, j = 0; i < buffer.length; i += 4) {
+            varR = buffer[i+1]/scaleMaxCIELab;
+            varG = buffer[i+2]/scaleMaxCIELab;
+            varB = buffer[i+3]/scaleMaxCIELab;
+            
+            if (varR <= 0.04045) {
+                varR = varR/12.92;
+            }
+            else {
+                varR = Math.pow((varR + 0.055)/1.055, 2.4);
+            }
+            if (varG <= 0.04045) {
+                varG = varG/12.92;
+            }
+            else {
+                varG = Math.pow((varG + 0.055)/1.055, 2.4);
+            }
+            if (varB <= 0.04045) {
+                varB = varB/12.92;
+            }
+            else {
+                varB = Math.pow((varB + 0.055)/1.055, 2.4);
+            }
+            
+            varR = 100.0 * varR;
+            varG = 100.0 * varG;
+            varB = 100.0 * varB;
+            
+            // Observer = 2 degrees, Illuminant = D65
+            X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+            Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+            Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+            
+            varX = X/ XN;
+            varY = Y/ YN;
+            varZ = Z/ ZN;
+            
+            if (varX > 0.008856) {
+                varX = Math.pow(varX, 1.0/3.0);
+            }
+            else {
+                varX = (7.787 * varX) + (16.0/116.0);
+            }
+            if (varY > 0.008856) {
+                varY = Math.pow(varY, 1.0/3.0);
+            }
+            else {
+                varY = (7.787 * varY) + (16.0/116.0);
+            }
+            if (varZ > 0.008856) {
+                varZ = Math.pow(varZ, 1.0/3.0);
+            }
+            else {
+                varZ = (7.787 * varZ) + (16.0/116.0);
+            }
+            
+            L[j] = (float)((116.0 * varY) - 16.0);
+            if (L[j] < Lmin[0]) {
+            	Lmin[0] = L[j];
+            }
+            if (L[j] > Lmax[0]) {
+            	Lmax[0] = L[j];
+            }
+            a[j] = (float)(500.0 * (varX - varY));
+            b[j++] = (float)(200.0 * (varY - varZ));
+            
+        } // for (i = 0; i < buffer.length; i += 4)
+                
+        
+    } // private void convertRGBtoCIELab()
 
     /**
      * Once all the necessary variables are set, call the local AHE algorithm based on what type of image this is and
@@ -661,7 +762,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
                 // Make algorithm
                 aheAlgo = new AlgorithmAHElocal(resultImage, image, kernelSize, kernelShape,
-                                                outputPanel.isProcessWholeImageSet(), useCIELab);
+                                                outputPanel.isProcessWholeImageSet(), useCIELab, Lmin, Lmax);
                 aheAlgo.setRGBChannelFilter(useRed, useGreen, useBlue);
 
                 if (clamp) {
@@ -713,7 +814,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 aheAlgo = new AlgorithmAHElocal(image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet(),
-                		useCIELab);
+                		useCIELab, Lmin, Lmax);
                 aheAlgo.setRGBChannelFilter(useRed, useGreen, useBlue);
 
                 if (clamp) {
@@ -964,7 +1065,12 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         colorGroup = new ButtonGroup();
         CIELabButton = new JRadioButton("Only change intensity L in CIELab space", true);
         CIELabButton.setFont(serif12);
-        CIELabButton.setEnabled(true);
+        if (image.isColorImage()) {
+            CIELabButton.setEnabled(true);
+        }
+        else {
+        	CIELabButton.setEnabled(false);	
+        }
         colorGroup.add(CIELabButton);
         CIELabButton.addActionListener(this);
         gbc2.gridx = 0;
@@ -973,7 +1079,12 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         
         RGBButton = new JRadioButton("Change selected components in RGB space", false);
         RGBButton.setFont(serif12);
-        RGBButton.setEnabled(true);
+        if (image.isColorImage()) {
+            RGBButton.setEnabled(true);
+        }
+        else {
+        	RGBButton.setEnabled(false);
+        }
         colorGroup.add(RGBButton);
         RGBButton.addActionListener(this);
         gbc2.gridy++;
