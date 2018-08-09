@@ -63,10 +63,10 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
     public static final float UNSHARP_MAX = (float) 5.0;
 
     /** minimum value for unsharpening weighting, at 0.0. */
-    public static final float UNSHARP_WEIGHT_MIN = (float) 0.0;
+    public static final double UNSHARP_WEIGHT_MIN = 0.0;
 
     /** maximum value for unsharpening weighting, at 1.0. */
-    public static final float UNSHARP_WEIGHT_MAX = (float) 1.0;
+    public static final double UNSHARP_WEIGHT_MAX = 1.0;
 
     /** minimum frequency value for blurring frequency, at 0.0. */
     public static final float FREQ_MIN = (float) 0.0;
@@ -124,7 +124,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
     private float[] unsharp = { (float) 1.0, (float) 1.0 }; // for smooth filter of mean of f(x,y)
 
     /** DOCUMENT ME! */
-    private float unsharpWeight = (float) 0.75;
+    private double unsharpWeight = 0.75;
 
     /** DOCUMENT ME! */
     private JTextField unsharpWeightText;
@@ -297,7 +297,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
             try {
                 unsharpXtext.setText("" + MipavUtil.getFloat(st));
                 unsharpYtext.setText("" + MipavUtil.getFloat(st));
-                unsharpWeightText.setText("" + MipavUtil.getFloat(st));
+                unsharpWeightText.setText("" + MipavUtil.getDouble(st));
                 blurringFreqText.setText("" + MipavUtil.getFloat(st));
                 blurringDiameterText.setText("" + MipavUtil.getInt(st));
                 colorPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
@@ -450,7 +450,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
      *
      * @param  weight  Value to set the unsharp weight to (should be between 0.0 and 1.0).
      */
-    public void setUnsharpWeight(float weight) {
+    public void setUnsharpWeight(double weight) {
 
         // make sure that value is valid
         if (weight < UNSHARP_WEIGHT_MIN) {
@@ -670,7 +670,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
         }
 
         setUnsharp(scriptParameters.getParams().getList("unsharp_scale").getAsFloatArray());
-        setUnsharpWeight(scriptParameters.getParams().getFloat("unsharp_weight"));
+        setUnsharpWeight(scriptParameters.getParams().getDouble("unsharp_weight"));
         setBlurringFreq(scriptParameters.getParams().getFloat("blurring_freq"));
         setBlurringDiameter(scriptParameters.getParams().getInt("blurring_diameter"));
 
@@ -950,6 +950,53 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
 
         try {
             val = Float.parseFloat(number);
+        } catch (ClassCastException cce) {
+            errorComponent = jtf;
+            throw new IllegalArgumentException("Value is not a number!");
+        }
+
+        if ((val < a) || (val > b)) {
+            errorComponent = jtf;
+            throw new IllegalArgumentException("Value is out of bounds!");
+        }
+
+        // else
+        return val;
+    }
+    
+    /**
+     * verify that the numeric value of the text of the submitted JTextField is between a and b.
+     *
+     * @param   jtf  The text field to check.
+     * @param   a    The minimum allowable value for the text field.
+     * @param   b    The maximum allowable value for the text field.
+     *
+     * @return  The value contained within the text field.
+     *
+     * @throws  NullPointerException      if jtf is empty.
+     * @throws  IllegalArgumentException  when the String is either not translatable to a float (ie., when <code>
+     *                                    Float.parseFloat(jtf.getText())</code> throws a ClassCastException), or when
+     *                                    the number is out-of-bounds. Note: a JTextField properly implementing <code>
+     *                                    makeNumericsOnly(JTextField)</code> should <i>always</i> translate into a
+     *                                    float in the example above.
+     *
+     * @see     MipavUtil#makeNumericsOnly(JTextField, boolean)
+     * @see     NullPointerException
+     * @see     IllegalArgumentException
+     */
+    private double checkText(JTextField jtf, double a, double b) {
+        String number;
+        double val;
+
+        try {
+            number = jtf.getText();
+        } catch (NullPointerException npe) {
+            errorComponent = jtf;
+            throw new NullPointerException("No value!");
+        }
+
+        try {
+            val = Double.parseDouble(number);
         } catch (ClassCastException cce) {
             errorComponent = jtf;
             throw new IllegalArgumentException("Value is not a number!");
