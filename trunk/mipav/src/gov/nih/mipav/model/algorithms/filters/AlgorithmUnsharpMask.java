@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.*;
 
@@ -30,11 +31,22 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
     /** DOCUMENT ME! */
     private float[] sigmas;
 
-    /** DOCUMENT ME! */
-    private float weightA = 0.75f;
+    // Ramponi paper uses weight = 6.0E-4 and 1.5E-3 for cubic algorithm
+    private double weightA = 0.75;
     
     //  Buffer to receive result of convolution operation
     private float[] outputBuffer;
+    
+    // If true, use nonlinear cubic filter
+    // Used only for 2D and 25D processing
+    private boolean cubic = false;
+    
+    // Absolute value of maximum correction allowed in cubic algorithm
+    private double maximumCorrection = 50.0;
+    
+    /** Reference: "A cubic unsharp masking technique for contrast enhancement" by Giovanni Ramponi,
+     * Signal Processing, 67, 1998, pp.211-222.
+     */
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -48,14 +60,19 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
      *                   true
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
+     * @param  cubic     If true use nonlinear cubic filter
+     * @param  maximumCorrection  absolute value of maximum correction allowed in cubic algorithm
      */
-    public AlgorithmUnsharpMask(ModelImage srcImg, float[] sigmas, float weight, boolean maskFlag, boolean img25D) {
+    public AlgorithmUnsharpMask(ModelImage srcImg, float[] sigmas, double weight, boolean maskFlag, boolean img25D,
+    		boolean cubic, double maximumCorrection) {
 
         super(null, srcImg);
         this.sigmas = sigmas;
         entireImage = maskFlag;
         weightA = weight;
         image25D = img25D;
+        this.cubic = cubic;
+        this.maximumCorrection = maximumCorrection;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -73,16 +90,20 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
      *                   true
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
+     * @param  cubic     If true use nonlinear cubic filter
+     * @param  maximumCorrection  absolute value of maximum correction allowed in cubic algorithm
      */
-    public AlgorithmUnsharpMask(ModelImage destImg, ModelImage srcImg, float[] sigmas, float weight, boolean maskFlag,
-                                boolean img25D) {
+    public AlgorithmUnsharpMask(ModelImage destImg, ModelImage srcImg, float[] sigmas, double weight, boolean maskFlag,
+                                boolean img25D, boolean cubic, double maximumCorrection) {
 
         super(destImg, srcImg);
         this.sigmas = sigmas;
         weightA = weight;
         entireImage = maskFlag;
         image25D = img25D;
-
+        this.cubic = cubic;
+        this.maximumCorrection = maximumCorrection;
+        
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
         }
@@ -112,6 +133,11 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
             displayError("Source Image is null");
 
             return;
+        }
+        
+        if (cubic) {
+        	runCubicAlgorithm();
+        	return;
         }
 
         if (srcImage.getNDims() == 2) {
@@ -160,6 +186,101 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
             }
         }
     }
+    
+    private  void runCubicAlgorithm() {
+    	 /* Assigned to srcImage if replace image, assigned to destImage if new image */
+	    ModelImage targetImage = null;
+	    int xDim;
+	    int yDim;
+	    int sliceSize;
+	    int zDim = 1;
+	    int tDim = 1;
+	    int z;
+	    int t;
+	    int x;
+	    int y;
+	    double src[];
+	    double buffer[];
+	    int index;
+	    double diffX;
+	    double diffY;
+	    double laplacianX;
+	    double laplacianY;
+	    double correction;
+	    
+	    fireProgressStateChanged(0, null, "Unsharp mask image ...");
+	    
+	    if (destImage == null) {
+            targetImage = srcImage;
+        }
+        else {
+            targetImage = destImage;
+        }
+        
+        if (srcImage.getNDims() >= 3) {
+            zDim = srcImage.getExtents()[2];
+        }
+        if (srcImage.getNDims() >= 4) {
+            tDim = srcImage.getExtents()[3];
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        src = new double[sliceSize];
+        buffer = new double[sliceSize];
+	    
+	    for (t = 0; (t < tDim) && !threadStopped; t++) {
+            for (z = 0; (z < zDim) && !threadStopped; z++) {
+                try {
+                    srcImage.exportData((t * zDim + z) * sliceSize, sliceSize, src); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm Unsharp Mask: Image(s) locked");
+                    setCompleted(false);
+                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                    srcImage.releaseLock();
+
+                    return;
+                }
+                
+                for (y = 0; y < yDim; y++) {
+                	for (x = 0; x < xDim; x++) {
+                	    index = x + y * xDim;
+                	    if ((x == 0) || (x == xDim-1) || (y == 0) || (y == yDim-1) || ((!entireImage) && (!mask.get(index)))) {
+                	    	buffer[index] = src[index];
+                	    }
+                	    else {
+                	        diffX = src[x-1 + y*xDim] - src[x+1 + y*xDim];
+                	        diffY = src[x + (y-1)*xDim] - src[x + (y+1)*xDim];
+                	        laplacianX = 2*src[index] - src[x-1 + y*xDim ]- src[x+1 + y*xDim];
+                	        laplacianY = 2*src[index] - src[x + (y-1)*xDim] - src[x + (y+1)*xDim];
+                	        correction = weightA*(diffX*diffX*laplacianX + diffY*diffY*laplacianY);
+                	        if (correction > maximumCorrection) {
+                	        	correction = maximumCorrection;
+                	        }
+                	        if (correction < -maximumCorrection) {
+                	        	correction = -maximumCorrection;
+                	        }
+                	        buffer[index] = src[index] + correction;
+                	    } // else
+                	} // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+                
+                try {
+                    targetImage.importData((t * zDim + z) * sliceSize, buffer, false);
+                } catch (IOException error) {
+                    errorCleanUp("Algorithm Unsharp Mask: Image(s) locked", false);
+
+                    return;
+                }
+                
+            } // for (z = 0; (z < zDim) && !threadStopped; z++)
+        } // for (t = 0; (t < tDim) && !threadStopped; t++)
+	    
+	    targetImage.calcMinMax();
+        setCompleted(true);
+        return;
+    }
 
 
     /**
@@ -173,15 +294,15 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
         int i, s;
         int length, totalLength;
         int start;
-        float blur;
-        float[] buffer;
-        float[] resultBuffer;
+        double blur;
+        double[] buffer;
+        double[] resultBuffer;
 
         try {
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
-            buffer = new float[length];
-            resultBuffer = new float[totalLength];
+            buffer = new double[length];
+            resultBuffer = new double[totalLength];
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -231,8 +352,8 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
         try {
 
             // Will not work for UBYTE and USHORT
-            if (srcImage.getType() != ModelImage.FLOAT) {
-                srcImage.reallocate(ModelImage.FLOAT);
+            if (srcImage.getType() != ModelImage.DOUBLE) {
+                srcImage.reallocate(ModelImage.DOUBLE);
             }
 
             srcImage.importData(0, resultBuffer, true);
@@ -256,14 +377,14 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
 
         int i;
         int length;
-        float[] buffer;
-        float[] resultBuffer;
-        float blur;
+        double[] buffer;
+        double[] resultBuffer;
+        double blur;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
-            buffer = new float[length];
-            resultBuffer = new float[length];
+            buffer = new double[length];
+            resultBuffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
         } catch (IOException error) {
             buffer = null;
@@ -311,8 +432,8 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
         try {
 
             // Will not work for UBYTE and USHORT
-            if (srcImage.getType() != ModelImage.FLOAT) {
-                srcImage.reallocate(ModelImage.FLOAT);
+            if (srcImage.getType() != ModelImage.DOUBLE) {
+                srcImage.reallocate(ModelImage.DOUBLE);
             }
 
             srcImage.importData(0, resultBuffer, true);
@@ -339,8 +460,8 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
         int i, s, idx;
         int length, totalLength;
         int start;
-        float blur;
-        float[] buffer;
+        double blur;
+        double[] buffer;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -353,7 +474,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
         try {
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
-            buffer = new float[length];
+            buffer = new double[length];
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Unsharp Mask:  Out of memory", true);
@@ -413,8 +534,8 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
 
         int i;
         int length;
-        float[] buffer;
-        float blur;
+        double[] buffer;
+        double blur;
 
         try {
             destImage.setLock();
@@ -426,7 +547,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
-            buffer = new float[length];
+            buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
         } catch (IOException error) {
             buffer = null;
