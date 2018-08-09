@@ -68,7 +68,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
     private AlgorithmUnsharpMask unsharper;
 
     /** UnsharpMask weighting factor. */
-    private float weightingFactor;
+    private double weightingFactor;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
      */
     public AlgorithmLocalNormalization(ModelImage dest, ModelImage src, float[] sigmas, /* Gaussian's standard deviation
                                                                                          * in each dimension */
-                                       float weight, /* weighting factor for gaussian */
+                                       double weight, /* weighting factor for gaussian */
                                        int kernSize, /* width of gaussian kernel */
                                        float freq) /* bounding frequency for FFT-filter */
                                        {
@@ -218,7 +218,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
         if (tempImage[0] == null) {
             tempImage[0] = (ModelImage) srcImage.clone();
-            tempImage[0].reallocate(ModelStorageBase.FLOAT);
+            tempImage[0].reallocate(ModelStorageBase.DOUBLE);
 
             try {
                 tempImage[0].importData(0, imageData, true);
@@ -234,7 +234,9 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
             tempImage[1] = (ModelImage) tempImage[0].clone();
         }
 
-        unsharper = new AlgorithmUnsharpMask(tempImage[0], sigmas, weightingFactor, true, true);
+        boolean cubic = false;
+        double maximumCorrection = 0.0;
+        unsharper = new AlgorithmUnsharpMask(tempImage[0], sigmas, weightingFactor, true, true, cubic, maximumCorrection);
 
         // don't set to a new Thread just yet.  let run serially.
         // (ie., in current Thread):
