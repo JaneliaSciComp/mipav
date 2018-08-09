@@ -30,6 +30,10 @@ public class JPanelSigmas extends JPanel implements FocusListener, ItemListener 
 
     /** label */
     private JLabel correctionFactorLabel;
+    
+    private JLabel labelGaussX;
+    
+    private JLabel labelGaussY;
 
     /** label */
     private JLabel labelGaussZ;
@@ -84,6 +88,22 @@ public class JPanelSigmas extends JPanel implements FocusListener, ItemListener 
      */
     public void enableResolutionCorrection(boolean enableCorrection) {
         correctionFactorCheckbox.setSelected(enableCorrection);
+    }
+    
+    public void enableLabelGaussX(boolean enable) {
+        labelGaussX.setEnabled(enable);
+    }
+    
+    public void enableLabelGaussY(boolean enable) {
+        labelGaussY.setEnabled(enable);
+    }
+    
+    public void enableTextGaussX(boolean enable) {
+        textGaussX.setEnabled(enable);
+    }
+    
+    public void enableTextGaussY(boolean enable) {
+        textGaussY.setEnabled(enable);
     }
 
     /**
@@ -272,9 +292,11 @@ public class JPanelSigmas extends JPanel implements FocusListener, ItemListener 
         textGaussZ.setColumns(5);
         correctionFactorCheckbox = WidgetFactory.buildCheckBox("Use image resolutions to normalize Z scale", true);
 
-        scalePanelManager.add(WidgetFactory.buildLabel("X dimension (0.0 - 10.0) "));
+        labelGaussX = WidgetFactory.buildLabel("X dimension (0.0 - 10.0) ");
+        scalePanelManager.add(labelGaussX);
         scalePanelManager.add(textGaussX);
-        scalePanelManager.addOnNextLine(WidgetFactory.buildLabel("Y dimension (0.0 - 10.0) "));
+        labelGaussY = WidgetFactory.buildLabel("Y dimension (0.0 - 10.0) ");
+        scalePanelManager.addOnNextLine(labelGaussY);
         scalePanelManager.add(textGaussY);
         scalePanelManager.addOnNextLine(labelGaussZ);
         scalePanelManager.add(textGaussZ);
