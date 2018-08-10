@@ -207,6 +207,8 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
 	    double laplacianX;
 	    double laplacianY;
 	    double correction;
+	    boolean doReallocate = false;
+	    int start;
 	    
 	    fireProgressStateChanged(0, null, "Unsharp mask image ...");
 	    
@@ -228,12 +230,20 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
         src = new double[sliceSize];
-        buffer = new double[sliceSize];
+        if ((destImage != null) || (srcImage.getType() == ModelStorageBase.DOUBLE)) {
+            doReallocate = false;	
+            buffer = new double[sliceSize];
+        }
+        else {
+        	doReallocate = true;
+        	buffer = new double[tDim * zDim * sliceSize];
+        }
 	    
 	    for (t = 0; (t < tDim) && !threadStopped; t++) {
             for (z = 0; (z < zDim) && !threadStopped; z++) {
+            	start = (t * zDim + z) * sliceSize;
                 try {
-                    srcImage.exportData((t * zDim + z) * sliceSize, sliceSize, src); // locks and releases lock
+                    srcImage.exportData(start, sliceSize, src); // locks and releases lock
                 } catch (IOException error) {
                     displayError("Algorithm Unsharp Mask: Image(s) locked");
                     setCompleted(false);
@@ -247,7 +257,12 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
                 	for (x = 0; x < xDim; x++) {
                 	    index = x + y * xDim;
                 	    if ((x == 0) || (x == xDim-1) || (y == 0) || (y == yDim-1) || ((!entireImage) && (!mask.get(index)))) {
-                	    	buffer[index] = src[index];
+                	    	if (doReallocate) {
+                	    		buffer[start + index] = src[index];
+                	    	}
+                	    	else {
+                	    	    buffer[index] = src[index];
+                	    	}
                 	    }
                 	    else {
                 	        diffX = src[x-1 + y*xDim] - src[x+1 + y*xDim];
@@ -261,23 +276,41 @@ public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInte
                 	        if (correction < -maximumCorrection) {
                 	        	correction = -maximumCorrection;
                 	        }
-                	        buffer[index] = src[index] + correction;
+                	        if (doReallocate) {
+                	        	buffer[start + index] = src[index] + correction;	
+                	        }
+                	        else {
+                	            buffer[index] = src[index] + correction;
+                	        }
                 	    } // else
                 	} // for (x = 0; x < xDim; x++)
                 } // for (y = 0; y < yDim; y++)
                 
-                try {
-                    targetImage.importData((t * zDim + z) * sliceSize, buffer, false);
-                } catch (IOException error) {
-                    errorCleanUp("Algorithm Unsharp Mask: Image(s) locked", false);
-
-                    return;
-                }
+                if (!doReallocate) {
+	                try {
+	                    targetImage.importData(start, buffer, false);
+	                } catch (IOException error) {
+	                    errorCleanUp("Algorithm Unsharp Mask: Image(s) locked", false);
+	
+	                    return;
+	                }
+                } // if (!doReallocate)
                 
             } // for (z = 0; (z < zDim) && !threadStopped; z++)
         } // for (t = 0; (t < tDim) && !threadStopped; t++)
-	    
-	    targetImage.calcMinMax();
+	    if (doReallocate) {
+	    	 srcImage.reallocate(ModelImage.DOUBLE);	
+	    	 try {
+                 srcImage.importData(0, buffer, true);
+             } catch (IOException error) {
+                 errorCleanUp("Algorithm Unsharp Mask: Image(s) locked", false);
+
+                 return;
+             }
+	    } // if (doReallocate)
+	    else {
+	        targetImage.calcMinMax();
+	    }
         setCompleted(true);
         return;
     }
