@@ -6260,6 +6260,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	char roiCharName[];
     	int xCenter = -1;
     	int yCenter = -1;
+    	String sliceNumber;
     	if (!fileName.endsWith(".roi")) {
     		MipavUtil.displayError("This is not an ImageJ ROI file");
     		return;
@@ -6307,7 +6308,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             	total += is.read(data, total, size - total);
             }
             is.close();
-            file.delete();
             // Look for "Iout in first 4 bytes"
             if ((data[0] != 73) || (data[1] != 111) || (data[2] != 117) || (data[3] != 116)) {
                 MipavUtil.displayError("First 4 bytes do not have required Iout for an ImageJ ROI file");
@@ -6457,14 +6457,23 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             } // if ((hdr2Offset > 0) && (hdr2Offset + IMAGE_SIZE + 4 <= size))
             else {
             	// Must obtain slice from fileName
+            	boolean isDigit = true;
             	int index = fileName.indexOf("-");
-            	if ((index >= 1) && (index <= 4)) {
-            		String sliceNumber = fileName.substring(0, index);
+            	for (i = 0; i < index; i++) {
+            	    char num = fileName.charAt(i);
+                    if ((num < '0') || (num > '9')) {
+                        isDigit = false;	
+                    }
+            	}
+            	
+            	if ((index >= 1) && (index <= 4) && isDigit) {
+            		sliceNumber = fileName.substring(0, index);
             		try {
             	        slice = Integer.valueOf(sliceNumber).intValue();
+            	        Preferences.debug("Slice = " + slice + " obtained from first number in file name\n", Preferences.DEBUG_FILEIO);
             		}
             		catch (NumberFormatException e) {
-            			Preferences.debug("NumberFormatException in trying to obtain slice from roi file name\n",
+            			Preferences.debug("NumberFormatException in trying to obtain slice from roi file name first characters\n",
             					Preferences.DEBUG_FILEIO);
             			slice = -1;
             		}
@@ -6479,7 +6488,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             			slice = 0;
             		}
             		else {
-            			Preferences.debug("Slice = " + slice + " obtained from first number in file name\n", Preferences.DEBUG_FILEIO);
+            			
             		}
             		int index2 = fileName.indexOf("-", index+1);
             		if ((index2 >= index + 2) && (index2 <= index + 5)) {
@@ -6517,7 +6526,48 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             		else {
             			xCenter = -1;
             		}
-            	} // if ((index >= 1) && (index <= 4))
+            	} // if ((index >= 1) && (index <= 4) && isDigit)
+            	else {
+            		index = -1;
+        			for (i = 0; (i < fileName.length()-2) && (index == -1); i++) {
+        				if ((fileName.substring(i,i+1).equals("-")) && (fileName.substring(i+1,i+2).equalsIgnoreCase("S"))) {
+        					index = i+2;
+        				}
+        			}
+        			if (index == -1) {
+        				for (i = 0; (i < fileName.length()-2) && (index == -1); i++) {
+            				if ((fileName.substring(i,i+1).equals("-")) && (fileName.substring(i+1,i+2).equals(" ")) &&
+            								(fileName.substring(i+2, i+3).equalsIgnoreCase("S"))) {
+            					index = i+3;
+            				}
+            			}	
+        			}
+        			int index2 = -1;
+        			for (i = index; i < fileName.length() && (index2 == -1); i++) {
+        				if ((fileName.substring(i,i+1).equals("-")) || (fileName.substring(i,i+1).equals("."))) {
+        					index2 = i;
+        				}
+        			}
+        			isDigit = true;
+        			for (i = index; i < index2; i++) {
+        				char num = fileName.charAt(i);
+        				if ((num < '0') || (num > '9')) {
+        					isDigit = false;
+        				}
+        			}
+        			if (isDigit) {
+        			    sliceNumber = fileName.substring(index, index2);
+	        			try {
+	        				slice = Integer.valueOf(sliceNumber).intValue();	
+	        				Preferences.debug("Slice = " + slice + " obtained from numbers after -S or - S in file name\n", 
+	        						Preferences.DEBUG_FILEIO);
+	        			}
+	        			catch (NumberFormatException er) {
+	            			Preferences.debug("NumberFormatException in trying to obtain slice from roi file name after -s\n",
+	            					Preferences.DEBUG_FILEIO);
+	        			}
+        			}
+            	}
             }
             
             boolean isComposite = (getBufferInt(data, SHAPE_ROI_SIZE, bigEndian) > 0);
@@ -6544,7 +6594,94 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             		currentManager.createOvalVOI(left, top, width, height, slice);
             	}
             	break;
+            case polygon: case freehand: case traced: case polyline: case freeline: case angle: case point:
+				//IJ.log("type: "+type);
+				//IJ.log("n: "+n);
+				//IJ.log("rect: "+left+","+top+" "+width+" "+height);
+				if (n==0 || n<0) break;
+				int[] x = new int[n];
+				int[] y = new int[n];
+				float[] xf = null;
+				float[] yf = null;
+				int base1 = COORDINATES;
+				int base2 = base1+2*n;
+				int xtmp, ytmp;
+				for (i=0; i<n; i++) {
+					xtmp = getBufferShort(data,base1+i*2,bigEndian);
+					if (xtmp<0) xtmp = 0;
+					ytmp = getBufferShort(data,base2+i*2,bigEndian);
+					if (ytmp<0) ytmp = 0;
+					x[i] = left+xtmp;
+					y[i] = top+ytmp;
+				}
+				if (subPixelResolution) {
+					xf = new float[n];
+					yf = new float[n];
+					base1 = COORDINATES+4*n;
+					base2 = base1+4*n;
+					for (i=0; i<n; i++) {
+						xf[i] = getBufferFloat(data,base1+i*4,bigEndian);
+						yf[i] = getBufferFloat(data,base2+i*4,bigEndian);
+					}
+				}
+				if (type==point) {
+					//if (subPixelResolution)
+						//roi = new PointRoi(xf, yf, n);
+					//else
+						//roi = new PointRoi(x, y, n);
+					//if (version>=226) {
+						//((PointRoi)roi).setPointType(getByte(POINT_TYPE));
+						//((PointRoi)roi).setSize(getShort(STROKE_WIDTH));
+					//}
+					//((PointRoi)roi).setShowLabels(!ij.Prefs.noPointLabels);
+					break;
+				}
+				int roiType;
+				if (type==polygon) {
+					//roiType = Roi.POLYGON;
+				}
+				else if (type==freehand) {
+					//roiType = Roi.FREEROI;
+					if (subtype==ELLIPSE || subtype==ROTATED_RECT) {
+						double ex1 = getBufferFloat(data,X1,bigEndian);		
+						double ey1 = getBufferFloat(data,Y1,bigEndian);		
+						double ex2 = getBufferFloat(data,X2,bigEndian);		
+						double ey2 = getBufferFloat(data,Y2,bigEndian);
+						double param = getBufferFloat(data,FLOAT_PARAM,bigEndian);
+						if (subtype==ROTATED_RECT) {
+							//roi = new RotatedRectRoi(ex1,ey1,ex2,ey2,param);
+						}
+						else {
+							//roi = new EllipseRoi(ex1,ey1,ex2,ey2,param);
+						}
+						break;
+					}
+				} else if (type==traced) {
+					//roiType = Roi.TRACED_ROI;
+				}
+				else if (type==polyline) {
+					//roiType = Roi.POLYLINE;
+				}
+				else if (type==freeline) {
+					//roiType = Roi.FREELINE;
+				}
+				else if (type==angle) {
+					//roiType = Roi.ANGLE;
+				}
+				else {
+					//roiType = Roi.FREEROI;
+				}
+				if (subPixelResolution) {
+					//roi = new PolygonRoi(xf, yf, n, roiType);
+					//roi.setDrawOffset(drawOffset);
+				} else
+					//roi = new PolygonRoi(x, y, n, roiType);
+				    currentManager.createPolygonVOI(x, y, n, slice);
+				break;
+		default:
+			throw new IOException("Unrecognized ROI type: "+type);
             }
+            	
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
