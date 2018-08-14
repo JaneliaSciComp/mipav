@@ -6625,14 +6625,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 					}
 				}
 				if (type==point) {
-					//if (subPixelResolution)
+					if (subPixelResolution) {
 						//roi = new PointRoi(xf, yf, n);
-					//else
+					}
+					else {
 						//roi = new PointRoi(x, y, n);
-					//if (version>=226) {
+					    currentManager.createPointVOI(x, y, n, slice);
+					}
+					if (version>=226) {
 						//((PointRoi)roi).setPointType(getByte(POINT_TYPE));
 						//((PointRoi)roi).setSize(getShort(STROKE_WIDTH));
-					//}
+					}
 					//((PointRoi)roi).setShowLabels(!ij.Prefs.noPointLabels);
 					break;
 				}
