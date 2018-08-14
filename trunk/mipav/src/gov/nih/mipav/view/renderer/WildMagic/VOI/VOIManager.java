@@ -2604,6 +2604,22 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return kVOI;
 	}
 	
+	public void createPointVOI(int x[], int y[], int n, int slice) {
+		float zoomX = m_kDrawingContext.getZoomX();
+		Vector<Vector3f> kPositions = new Vector<Vector3f>();
+		for ( int i = 0; i < n; i++ )
+		{
+			Vector3f fileCoord  = new Vector3f(x[i],y[i],slice);
+			Vector3f screenCoord =  m_kDrawingContext.fileToScreenVOI(fileCoord);
+			
+			kPositions.add( new Vector3f ((float)(zoomX * screenCoord.X),
+					(float)(zoomX * screenCoord.Y), slice));
+		}
+		m_kCurrentVOI = createVOI(POLYPOINT, true, false, kPositions );	
+		m_kParent.addVOI( m_kCurrentVOI, false, true, true);
+	
+	}
+	
 	public void createPolygonVOI(int x[], int y[], int n, int slice) {
 		float zoomX = m_kDrawingContext.getZoomX();
 		Vector<Vector3f> kPositions = new Vector<Vector3f>();
