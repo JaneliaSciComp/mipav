@@ -1292,7 +1292,7 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
-            if (slices * frames == imageSlice) {
+            if ((slices > 0) && (frames > 0) && (slices * frames == imageSlice)) {
             	imgExtents = new int[4];
                 imgExtents[0] = xDim;
                 imgExtents[1] = yDim;
