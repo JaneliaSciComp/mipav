@@ -968,6 +968,14 @@ public class FileTiff extends FileBase {
     private boolean haveResolutionUnit = false;
     
     private boolean haveZResolution = false;
+    
+    // In IMAGE_DESCRiPTION tag 270 Look for lines of the type:
+    // images = 200
+    // slices = 20
+    // frames = 10;
+    private int slices = -1;
+    
+    private int frames = -1;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1284,7 +1292,14 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
-            if (haveMultiSpectraImage && (imageSlice > 1)) {
+            if (slices * frames == imageSlice) {
+            	imgExtents = new int[4];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = slices;
+                imgExtents[3] = frames;	
+            }
+            else if (haveMultiSpectraImage && (imageSlice > 1)) {
                 imgExtents = new int[4];
                 imgExtents[0] = xDim;
                 imgExtents[1] = yDim;
@@ -7944,6 +7959,79 @@ public class FileTiff extends FileBase {
                         Preferences.debug("FileTiff.openIFD: imageDescription = " + str.trim() + "\n",
                                 Preferences.DEBUG_FILEIO);
                     }
+                   
+                    int index1 = str.indexOf("slices");
+                    int index2 = str.indexOf("frames");
+                    int fd = -1;
+                    int fd2 = -1;
+                    if ((index1 >= 0) && (index2 >= 0)) {
+                    	char num;
+                    	boolean foundFirstDigit = false;
+                    	for (i1 = index1+6; (i1 < str.length()) && (!foundFirstDigit); i1++) {
+                    	    num = str.charAt(i1);
+                    	    if ((num >= '0') && (num <= '9')) {
+                    	    	foundFirstDigit = true;
+                    	    	fd = i1;
+                    	    }
+                    	}
+                    	if (fd >= index1+6) {
+                    		boolean foundLastDigit = false;
+                    		char ch;
+                    		for (i1 = fd; (i1 < str.length()) && (!foundLastDigit); i1++) {
+                    		    ch = str.charAt(i1);
+                    		    if ((ch < '0') || (ch > '9')) {
+                    		    	foundLastDigit = true;
+                    		    	fd2 = i1-1;
+                    		    }
+                    		    else if (i1 == str.length()-1) {
+                    		    	fd2 = i1;
+                    		    }
+                    		}
+                    	}
+                    	if (fd2 > 0) {
+                    		String slicesNumber = str.substring(fd, fd2+1);
+                    		try {
+                    			slices = Integer.valueOf(slicesNumber).intValue();
+                    		}
+                    		catch (NumberFormatException e) {
+                    			Preferences.debug("Number Format exception trying to find slices");
+                    		}
+                    	}
+                    	
+                    	foundFirstDigit = false;
+                    	fd = -1;
+                    	fd2 = -1;
+                    	for (i1 = index2+6; (i1 < str.length()) && (!foundFirstDigit); i1++) {
+                    	    num = str.charAt(i1);
+                    	    if ((num >= '0') && (num <= '9')) {
+                    	    	foundFirstDigit = true;
+                    	    	fd = i1;
+                    	    }
+                    	}
+                    	if (fd >= index2+6) {
+                    		boolean foundLastDigit = false;
+                    		char ch;
+                    		for (i1 = fd; (i1 < str.length()) && (!foundLastDigit); i1++) {
+                    		    ch = str.charAt(i1);
+                    		    if ((ch < '0') || (ch > '9')) {
+                    		    	foundLastDigit = true;
+                    		    	fd2 = i1-1;
+                    		    }
+                    		    else if (i1 == str.length()-1) {
+                    		    	fd2 = i1;
+                    		    }
+                    		}
+                    	}
+                    	if (fd2 > 0) {
+                    		String framesNumber = str.substring(fd, fd2+1);
+                    		try {
+                    			frames = Integer.valueOf(framesNumber).intValue();
+                    		}
+                    		catch (NumberFormatException e) {
+                    			Preferences.debug("Number Format exception trying to find frames");
+                    		}
+                    	}
+                    } // if ((index1 >= 0) && (index2 >= 0))
 
                     break;
 
