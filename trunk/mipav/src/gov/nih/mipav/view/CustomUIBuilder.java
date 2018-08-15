@@ -83,6 +83,8 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_OPEN_VOI_ALL = new UIParams("Open all VOIs", "Open all VOIs", UIParams.INVALID_MNEMONIC, null, "open");
     public static final UIParams PARAM_OPEN_VOI_ALL_FROM = new UIParams("Open all VOIs from...", "Open all VOIs from...", UIParams.INVALID_MNEMONIC, null, "open" );
     public static final UIParams PARAM_OPEN_VOI_IMAGEJ = new UIParams("Open ImageJ VOI", "Open ImageJ VOI", UIParams.INVALID_MNEMONIC, null, "open");
+    public static final UIParams PARAM_OPEN_VOI_IMAGEJ_ALL_FROM = new UIParams("Open all ImageJ VOIs from...", "Open all ImageJ VOIs from...", 
+    		UIParams.INVALID_MNEMONIC, null, "open" );
     public static final UIParams PARAM_OPEN_VOI_LABEL = new UIParams("Open label(s)...", "Open labels", UIParams.INVALID_MNEMONIC, null, "open");
     public static final UIParams PARAM_OPEN_VOI_CSV = new UIParams("Open csv file...", "Open csv file", UIParams.INVALID_MNEMONIC, null, "open");
     
