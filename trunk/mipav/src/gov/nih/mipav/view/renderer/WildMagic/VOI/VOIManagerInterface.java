@@ -510,6 +510,36 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 loadAllVOIsFrom(voiDir, false);
             }
         } 
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_IMAGEJ_ALL_FROM.getActionCommand())) {
+
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String voiDir = null;
+
+            final JFileChooser chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            }
+
+            if (fileName != null) {
+                voiDir = new String(directory + fileName + File.separator);
+                loadAllImageJVOIsFrom(voiDir, false, null, true);
+            }
+        } 
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_LABEL.getActionCommand())) {
             openVOI(false, true);
         } 
@@ -4052,6 +4082,65 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
 
     } // end loadAllVOIsFrom()
+    
+    /**
+     * This method loads all ImageJ VOIs to the active image from a given directory.
+     * @param voiDir the directory to load voi's from
+     * @param quietMode if true indicates that warnings should not be displayed.
+     */
+    protected void loadAllImageJVOIsFrom(final String voiDir, boolean quietMode, VOIVector resultVector, boolean registerVOIs) {
+
+        int i;
+        ModelImage currentImage = getActiveImage();
+
+        try {
+
+            // if voiDir does not exist, then return
+            // if voiDir exists, then get list of voi's from directory (*.roi)
+            final File voiFileDir = new File(voiDir);
+            final Vector<String> filenames = new Vector<String>();
+
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+
+                // get list of files
+                final File[] files = voiFileDir.listFiles();
+
+                for (final File element : files) {
+
+                    if (element.getName().endsWith(".roi")) {
+                        filenames.add(element.getName());
+                    }
+                }
+            } else { // voiFileDir either doesn't exist, or isn't a directory
+
+                if ( !quietMode) {
+                    MipavUtil.displayError("No VOIs are found in directory: " + voiDir);
+                }
+
+                return;
+            }
+
+            // open each voi array, then register voi array to this image
+            for (i = 0; i < filenames.size(); i++) {
+                
+                readImageJ(voiDir+filenames.elementAt(i), filenames.elementAt(i), currentImage);
+            	
+            }
+            
+            // when everything's done, notify the image listeners
+            if ( registerVOIs )
+            {   	
+            	currentImage.notifyImageDisplayListeners();
+            }
+
+        } catch (final Exception error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Error loading all ImageJ VOIs from " + voiDir + ": " + error);
+            }
+        }
+
+    } // end loadAllVOIsFrom()
 
     private boolean make3DVOI( boolean bIntersection, ModelImage kSrc, ModelImage kVolume, BitSet kMask, 
     		VOIManager kManager, int iValue )
@@ -6169,7 +6258,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
     
-    private void readImageJ( String pathName, String fileName, ModelImage image )
+    private void readImageJ( String pathName, String fileName, ModelImage image)
 	{
     	// header offsets
     	final int VERSION_OFFSET = 4;
@@ -6393,12 +6482,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             int hdr2Offset = getBufferShort(data, HEADER2_OFFSET, bigEndian);
             Preferences.debug("Header 2 offset = " + hdr2Offset + "\n", Preferences.DEBUG_FILEIO);
             int channel = 0;
-            int slice = 0;
+            int slice;
             int frame = 0;
             int overlayLabelColor = 0;
             int overlayFontSize = 0;
             int imageOpacity = 0;
             int imageSize = 0;
+            if (nDims > 2) {
+            	slice = -1;
+            }
+            else {
+            	slice = 0;
+            }
             boolean subPixelResolution = ((options & SUB_PIXEL_RESOLUTION) != 0) && version >= 222;
             if (subPixelResolution) {
             	Preferences.debug("Subpixel resolution present\n", Preferences.DEBUG_FILEIO);
@@ -6535,39 +6630,44 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         				}
         			}
         			if (index == -1) {
-        				for (i = 0; (i < fileName.length()-2) && (index == -1); i++) {
+        				for (i = 0; (i < fileName.length()-3) && (index == -1); i++) {
             				if ((fileName.substring(i,i+1).equals("-")) && (fileName.substring(i+1,i+2).equals(" ")) &&
             								(fileName.substring(i+2, i+3).equalsIgnoreCase("S"))) {
             					index = i+3;
             				}
             			}	
         			}
-        			int index2 = -1;
-        			for (i = index; i < fileName.length() && (index2 == -1); i++) {
-        				if ((fileName.substring(i,i+1).equals("-")) || (fileName.substring(i,i+1).equals("."))) {
-        					index2 = i;
-        				}
-        			}
-        			isDigit = true;
-        			for (i = index; i < index2; i++) {
-        				char num = fileName.charAt(i);
-        				if ((num < '0') || (num > '9')) {
-        					isDigit = false;
-        				}
-        			}
-        			if (isDigit) {
-        			    sliceNumber = fileName.substring(index, index2);
-	        			try {
-	        				slice = Integer.valueOf(sliceNumber).intValue();	
-	        				Preferences.debug("Slice = " + slice + " obtained from numbers after -S or - S in file name\n", 
-	        						Preferences.DEBUG_FILEIO);
+        			if (index != -1) {
+	        			int index2 = -1;
+	        			for (i = index; i < fileName.length() && (index2 == -1); i++) {
+	        				if ((fileName.substring(i,i+1).equals("-")) || (fileName.substring(i,i+1).equals("."))) {
+	        					index2 = i;
+	        				}
 	        			}
-	        			catch (NumberFormatException er) {
-	            			Preferences.debug("NumberFormatException in trying to obtain slice from roi file name after -s\n",
-	            					Preferences.DEBUG_FILEIO);
+	        			isDigit = true;
+	        			for (i = index; i < index2; i++) {
+	        				char num = fileName.charAt(i);
+	        				if ((num < '0') || (num > '9')) {
+	        					isDigit = false;
+	        				}
 	        			}
-        			}
+	        			if (isDigit) {
+	        			    sliceNumber = fileName.substring(index, index2);
+		        			try {
+		        				slice = Integer.valueOf(sliceNumber).intValue();	
+		        				Preferences.debug("Slice = " + slice + " obtained from numbers after -S or - S in file name\n", 
+		        						Preferences.DEBUG_FILEIO);
+		        			}
+		        			catch (NumberFormatException er) {
+		            			Preferences.debug("NumberFormatException in trying to obtain slice from roi file name after -s\n",
+		            					Preferences.DEBUG_FILEIO);
+		        			}
+	        			}
+        			} // if (index != -1)
             	}
+            }
+            if (slice == -1) {
+            	return;
             }
             
             boolean isComposite = (getBufferInt(data, SHAPE_ROI_SIZE, bigEndian) > 0);
@@ -6682,7 +6782,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 				    currentManager.createPolygonVOI(x, y, n, slice);
 				break;
 		default:
-			throw new IOException("Unrecognized ROI type: "+type);
+			Preferences.debug("Unrecognized ROI type: "+type + "\n", Preferences.DEBUG_FILEIO);
             }
             	
 		} catch (IOException e) {
