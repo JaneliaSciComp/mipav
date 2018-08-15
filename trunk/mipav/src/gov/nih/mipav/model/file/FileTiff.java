@@ -973,9 +973,18 @@ public class FileTiff extends FileBase {
     // images = 200
     // slices = 20
     // frames = 10;
+    // OR
+    // images = 336
+    // channels = 2
+    // slices = 24
+    // frames = 7
+    private int channels = -1;
+    
     private int slices = -1;
     
     private int frames = -1;
+    
+    private boolean have4DColor = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1292,7 +1301,17 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
-            if ((slices > 0) && (frames > 0) && (slices * frames == imageSlice)) {
+            if (((channels == 2) || (channels == 3)) && (slices > 0) && (frames > 0) && 
+            		(channels * slices * frames == imageSlice) && (bitsPerSample[0] == 8)) {
+            	imgExtents = new int[4];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = slices;
+                imgExtents[3] = frames;	
+                have4DColor = true;
+                fileInfo.setDataType(ModelStorageBase.ARGB);
+            }
+            else if ((slices > 0) && (frames > 0) && (slices * frames == imageSlice)) {
             	imgExtents = new int[4];
                 imgExtents[0] = xDim;
                 imgExtents[1] = yDim;
@@ -1349,9 +1368,16 @@ public class FileTiff extends FileBase {
             if ( !foundTag43314) {
                 fileInfo.setResolutions(imgResols);
                 if ( (multiFile == false) && (one == false)) {
-                    for (i = 0; i < imageSlice; i++) {
-                        image.setFileInfo((FileInfoTiff) fileInfo.clone(), i);
-                    }
+                	if (have4DColor) {
+                		for (i = 0; i < imageSlice/channels; i++) {
+	                        image.setFileInfo((FileInfoTiff) fileInfo.clone(), i);
+	                    }	
+                	} // if (have4DColor)
+                	else {
+	                    for (i = 0; i < imageSlice; i++) {
+	                        image.setFileInfo((FileInfoTiff) fileInfo.clone(), i);
+	                    }
+                	}
                 }
             } // if (!foundTag43314)
             else { // foundTag43314
@@ -1403,7 +1429,7 @@ public class FileTiff extends FileBase {
                 bufferSize = imgExtents[0] * imgExtents[1];
             }
 
-            if (ModelImage.isColorImage(fileInfo.getDataType())) {
+            if (ModelImage.isColorImage(fileInfo.getDataType()) && !have4DColor) {
                 bufferSize *= 4;
                 sliceSize *= 4;
             }
@@ -1501,7 +1527,30 @@ public class FileTiff extends FileBase {
                     }
 
                     if (multiFile == false) {
-                        image.importData(i * sliceSize, sliceBufferFloat, false);
+                    	if (have4DColor) {
+                    	    if (channels == 2) {
+                    	    	if ((i % 2) == 0) {
+                    	    	   image.importRGBData(1, (4 * (i/2)) * sliceSize, sliceBufferFloat, false);	
+                    	    	}
+                    	    	else {
+                    	    		image.importRGBData(2, (4 * (i/2)) * sliceSize, sliceBufferFloat, false);	
+                    	    	}
+                    	    } // if (channels == 2)
+                    	    else if (channels == 3) {
+                    	        if ((i % 3) == 0) {
+                    	        	image.importRGBData(1, (4 * (i/3)) * sliceSize, sliceBufferFloat, false);		
+                    	        }
+                    	        else if ((i % 3) == 1) {
+                    	        	image.importRGBData(2, (4 * (i/3)) * sliceSize, sliceBufferFloat, false);		
+                    	        }
+                    	        else {
+                    	        	image.importRGBData(3, (4 * (i/3)) * sliceSize, sliceBufferFloat, false);		
+                    	        }
+                    	    } // else if (channels == 3)
+                    	} // if (have4DColor)
+                    	else {
+                            image.importData(i * sliceSize, sliceBufferFloat, false);
+                    	}
                         // System.err.println("Imported image data");
                     }
                 }
@@ -7962,6 +8011,7 @@ public class FileTiff extends FileBase {
                    
                     int index1 = str.indexOf("slices");
                     int index2 = str.indexOf("frames");
+                    int index3 = str.indexOf("channels");
                     int fd = -1;
                     int fd2 = -1;
                     if ((index1 >= 0) && (index2 >= 0)) {
@@ -8031,6 +8081,42 @@ public class FileTiff extends FileBase {
                     			Preferences.debug("Number Format exception trying to find frames");
                     		}
                     	}
+                    	
+                    	if (index3 >= 0) {
+                    		foundFirstDigit = false;
+                        	fd = -1;
+                        	fd2 = -1;
+                        	for (i1 = index3+8; (i1 < str.length()) && (!foundFirstDigit); i1++) {
+                        	    num = str.charAt(i1);
+                        	    if ((num >= '0') && (num <= '9')) {
+                        	    	foundFirstDigit = true;
+                        	    	fd = i1;
+                        	    }
+                        	}
+                        	if (fd >= index3+8) {
+                        		boolean foundLastDigit = false;
+                        		char ch;
+                        		for (i1 = fd; (i1 < str.length()) && (!foundLastDigit); i1++) {
+                        		    ch = str.charAt(i1);
+                        		    if ((ch < '0') || (ch > '9')) {
+                        		    	foundLastDigit = true;
+                        		    	fd2 = i1-1;
+                        		    }
+                        		    else if (i1 == str.length()-1) {
+                        		    	fd2 = i1;
+                        		    }
+                        		}
+                        	}
+                        	if (fd2 > 0) {
+                        		String channelsNumber = str.substring(fd, fd2+1);
+                        		try {
+                        			channels = Integer.valueOf(channelsNumber).intValue();
+                        		}
+                        		catch (NumberFormatException e) {
+                        			Preferences.debug("Number Format exception trying to find channels");
+                        		}
+                        	}	
+                    	} // if (index3 >= 0)
                     } // if ((index1 >= 0) && (index2 >= 0))
 
                     break;
@@ -13160,7 +13246,35 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB:
-                        if (isYCbCr) {
+                        if (have4DColor) {
+                        	progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 100;
+                            jSkip = 0;
+                            if ( (totalLength > xDim * yDim * bitsPerSample.length) && haveRowsPerStrip
+                                    && ( (yDim % rowsPerStrip) != 0)) {
+                                jSkip = xDim * (rowsPerStrip - yDim % rowsPerStrip);
+                            }
+                            if (fileInfo.getPhotometric() == 0) {
+                                haveChangedPhotometricTo1 = true;
+                            }
+                            for (j = 0; j < nBytes; j++, i++) {
+
+                                if ( ( !suppressProgressBar) && ( ( (i + progress) % mod) == 0)) {
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength
+                                            * 100));
+                                }
+
+                                buffer[i] = byteBuffer[j + currentIndex] & 0xff;
+                                if (fileInfo.getPhotometric() == 0) {
+                                    // White is zero in original readin
+                                    // Convert to black is zero for usual display
+                                    buffer[i] = 255 - buffer[i];
+                                }
+
+                            }
+                        }
+                        else if (isYCbCr) {
                             if (chunky == true) {
 
                                 if ( (YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 2)) {
