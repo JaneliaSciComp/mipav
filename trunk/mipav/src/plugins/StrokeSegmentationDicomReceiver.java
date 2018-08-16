@@ -293,6 +293,9 @@ public class StrokeSegmentationDicomReceiver {
             boolean foundADC = false;
             boolean foundDWI = false;
             
+            boolean mergeADC = false;
+            boolean mergeDWI = false;
+            
             boolean foundOutputDirADC = false;
             boolean foundOutputDirDWI = false;
             
@@ -426,6 +429,9 @@ public class StrokeSegmentationDicomReceiver {
                     boolean isPrevReg = isRegisteredVol(prevAttr);
                     boolean isNewReg = isRegisteredVol(newAttr);
                     
+                    final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                    final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                    
                     // prefer series marked as 'reg', but otherwise go with the new one
                     if (!isNewReg && isPrevReg) {
                         log("Preferring previously received ADC volume.");
@@ -433,6 +439,9 @@ public class StrokeSegmentationDicomReceiver {
                     } else if (isNewReg && !isPrevReg) {
                         log("Preferring newly received ADC volume.");
                         usePrevADC = false;
+                    } else if (prevStudyNum.equals(newStudyNum)) {
+                        log("Merging new ADC files with previously received volume.");
+                        mergeADC = true;
                     } else {
                         log("Preferring newly received ADC volume.");
                         usePrevADC = false;
@@ -453,10 +462,13 @@ public class StrokeSegmentationDicomReceiver {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                    Attributes newAttr = adcAttrList.get(0);
+                    Attributes newAttr = dwiAttrList.get(0);
                     
                     boolean isPrevReg = isRegisteredVol(prevAttr);
                     boolean isNewReg = isRegisteredVol(newAttr);
+                    
+                    final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                    final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
                     
                     // prefer series marked as 'reg', but otherwise go with the new one
                     if (!isNewReg && isPrevReg) {
@@ -465,6 +477,9 @@ public class StrokeSegmentationDicomReceiver {
                     } else if (isNewReg && !isPrevReg) {
                         log("Preferring newly received DWI volume.");
                         usePrevDWI = false;
+                    } else if (prevStudyNum.equals(newStudyNum)) {
+                        log("Merging new DWI files with previously received volume.");
+                        mergeDWI = true;
                     } else {
                         log("Preferring newly received DWI volume.");
                         usePrevDWI = false;
@@ -482,7 +497,7 @@ public class StrokeSegmentationDicomReceiver {
                 File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
                 
                 // clean-up prev ADC dir
-                if (foundOutputDirADC) {
+                if (foundOutputDirADC && !mergeADC) {
                     File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
                     boolean success = adcDirFile.renameTo(backupDir);
                     if (success) {
@@ -506,7 +521,7 @@ public class StrokeSegmentationDicomReceiver {
                 File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
                 
                 // clean-up prev DWI dir
-                if (foundOutputDirDWI) {
+                if (foundOutputDirDWI && !mergeDWI) {
                     File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
                     boolean success = dwiDirFile.renameTo(backupDir);
                     if (success) {
@@ -525,8 +540,18 @@ public class StrokeSegmentationDicomReceiver {
             }
             
             if ((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI)) {
-                log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
-                new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseOutputDir.getAbsolutePath());
+                // check that the number of files in the ADC and DWI directories are the same
+                File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+                int numAdcFiles = adcDirFile.listFiles().length;
+                File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+                int numDwiFiles = dwiDirFile.listFiles().length;
+                
+                if (numAdcFiles == numDwiFiles) {
+                    log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+                    new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseOutputDir.getAbsolutePath());
+                } else {
+                    log("Found different number of ADC and DWI files. Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+                }
             } else {
                 log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + ").");
             }
@@ -587,7 +612,7 @@ public class StrokeSegmentationDicomReceiver {
      */
     public void log(final String line) {
         logOutputArea.getTextArea().append(line + "\n");
-        System.out.println(line);
+        System.out.println("*****\t" + line);
     }
     
     public void emailReport(ModelImage adcImage, File threshLightboxFile, File coreLightboxFile, double coreVolCC) {
@@ -619,11 +644,15 @@ public class StrokeSegmentationDicomReceiver {
         if (reportDir != null && (new File(reportDir).exists())) {
             try {
                 File reportSubDir = new File(reportDir + File.separator + threshLightboxFile.getParentFile().getParentFile().getName() + File.separator + threshLightboxFile.getParentFile().getName());
-                reportSubDir.mkdirs();
                 
-                FileUtils.copyFileToDirectory(threshLightboxFile, reportSubDir);
-                FileUtils.copyFileToDirectory(coreLightboxFile, reportSubDir);
-                FileUtils.copyFileToDirectory(new File(htmlReportPath), reportSubDir);
+                // check to make sure the report/output dirs aren't the same before moving the report
+                if (!outputDir.equals(reportSubDir.getAbsolutePath())) {
+                    reportSubDir.mkdirs();
+                    
+                    FileUtils.copyFileToDirectory(threshLightboxFile, reportSubDir);
+                    FileUtils.copyFileToDirectory(coreLightboxFile, reportSubDir);
+                    FileUtils.copyFileToDirectory(new File(htmlReportPath), reportSubDir);
+                }
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
