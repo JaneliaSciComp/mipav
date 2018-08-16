@@ -461,8 +461,13 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         // last object should be the largest
         selectedObjectList = new Vector<MaskObject>();
-        selectedObjectList.add(sortedObjects[sortedObjects.length - 1]);
-        System.err.println(sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size);
+        
+        if (sortedObjects.length > 0) {
+            selectedObjectList.add(sortedObjects[sortedObjects.length - 1]);
+            System.err.println(sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size);
+        } else {
+            System.err.println("No qualifying object found in volume.");
+        }
         
         // TODO disabled selection of additional objects based on size/distance for now
         
