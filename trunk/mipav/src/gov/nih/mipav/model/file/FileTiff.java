@@ -12320,7 +12320,7 @@ public class FileTiff extends FileBase {
         // green strips, followed by a stripsPerImage number of blue strips.
         // System.err.println("doing readBuffer()");
         final int nIndex = dataOffsets[slice].size();
-        final int stripsPerImage = (nIndex + 1) / 3; // used for planar RGB
+        final int stripsPerImage = Math.max(1,(nIndex + 1) / 3); // used for planar RGB
         int tmpInt;
 
         // System.err.println("Datatype is: " + fileInfo.getDataType());
@@ -14096,57 +14096,99 @@ public class FileTiff extends FileBase {
                             } // end of while (j < nBytes)
                         } // else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 4))
                         else if (packBit == false) { // planar RGB configuration
-                            if (planarRGB < stripsPerImage) {
+                        	if (nIndex == 1) {
+                        	    // Only 1 strip for all RRRRRGGGGGBBBBB	
+                        		 progress = slice * buffer.length;
+	                                progressLength = buffer.length * imageSlice;
+	                                mod = progressLength / 10;
+	                                for (j = 0; j < nBytes; j++, i += 4) {
+	                                    if (i == buffer.length) {
+	                                    	i = 0;
+	                                    }
+	                                    
+	                                    if (j < nBytes/3) {
+	                                    	if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
+		                                        fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
+		                                                / progressLength * 100));
+		                                    }
+		
+		                                    buffer[i] = 255;
+		                                    buffer[i + 1] = getUnsignedByte(byteBuffer, j + currentIndex);	
+	                                    } // if (j < nBytes/3)
+	                                    else if (j < 2*nBytes/3) {
+	                                    	 if ( ( !suppressProgressBar)
+	 	                                            && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
+	 	                                        fireProgressStateChanged(Math
+	 	                                                .round((float) ( (i / 3) + (buffer.length / 3) + progress)
+	 	                                                        / progressLength * 100));
+	 	                                    }
+	 	
+	 	                                    buffer[i + 2] = getUnsignedByte(byteBuffer, j + currentIndex);	
+	                                    } // else if (j < 2*nBytes/3)
+	                                    else {
+	                                    	if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math
+	                                                    .round((float) ( (i / 3) + (2 * buffer.length / 3) + progress)
+	                                                            / progressLength * 100));
+	                                        }
 
-                                // if (byteBuffer == null)
-                                // byteBuffer = new byte[buffer.length];
-                                // raFile.read(byteBuffer, 0, nBytes);
-                                progress = slice * buffer.length;
-                                progressLength = buffer.length * imageSlice;
-                                mod = progressLength / 10;
-
-                                // For the moment I compress RGB images to unsigned bytes
-                                for (j = 0; j < nBytes; j++, i += 4) {
-
-                                    if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
-                                        fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
-                                                / progressLength * 100));
-                                    }
-
-                                    buffer[i] = 255;
-                                    buffer[i + 1] = getUnsignedByte(byteBuffer, j + currentIndex);
-                                }
-
-                                planarRGB++;
-
-                                if (planarRGB == stripsPerImage) {
-                                    i = 0;
-                                }
-                            } // end of if (planarRGB < stripsPerImage)
-                            else if (planarRGB < (2 * stripsPerImage)) {
-
-                                // raFile.read(byteBuffer, 0, nBytes);
-                                progress = slice * buffer.length;
-                                progressLength = buffer.length * imageSlice;
-                                mod = progressLength / 10;
-
-                                for (j = 0; j < nBytes; j++, i += 4) {
-
-                                    if ( ( !suppressProgressBar)
-                                            && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
-                                        fireProgressStateChanged(Math
-                                                .round((float) ( (i / 3) + (buffer.length / 3) + progress)
-                                                        / progressLength * 100));
-                                    }
-
-                                    buffer[i + 2] = getUnsignedByte(byteBuffer, j + currentIndex);
-                                }
-
-                                planarRGB++;
-
-                                if (planarRGB == (2 * stripsPerImage)) {
-                                    i = 0;
-                                }
+	                                        buffer[i + 3] = getUnsignedByte(byteBuffer, j + currentIndex);	
+	                                    }
+	                                } // for (j = 0; j < nBytes; j++, i += 4)
+                        	} // if (nIndex == 1)
+                        	else { // more than 1 strip
+	                            if (planarRGB < stripsPerImage) {
+	
+	                                // if (byteBuffer == null)
+	                                // byteBuffer = new byte[buffer.length];
+	                                // raFile.read(byteBuffer, 0, nBytes);
+	                                progress = slice * buffer.length;
+	                                progressLength = buffer.length * imageSlice;
+	                                mod = progressLength / 10;
+	
+	                                // For the moment I compress RGB images to unsigned bytes
+	                                for (j = 0; j < nBytes; j++, i += 4) {
+	
+	                                    if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
+	                                        fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
+	                                                / progressLength * 100));
+	                                    }
+	
+	                                    buffer[i] = 255;
+	                                    buffer[i + 1] = getUnsignedByte(byteBuffer, j + currentIndex);
+	                                }
+	
+	                                planarRGB++;
+	
+	                                if (planarRGB == stripsPerImage) {
+	                                    i = 0;
+	                                }
+	                            } // end of if (planarRGB < stripsPerImage)
+	                            else if (planarRGB < (2 * stripsPerImage)) {
+	
+	                                // raFile.read(byteBuffer, 0, nBytes);
+	                                progress = slice * buffer.length;
+	                                progressLength = buffer.length * imageSlice;
+	                                mod = progressLength / 10;
+	
+	                                for (j = 0; j < nBytes; j++, i += 4) {
+	
+	                                    if ( ( !suppressProgressBar)
+	                                            && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
+	                                        fireProgressStateChanged(Math
+	                                                .round((float) ( (i / 3) + (buffer.length / 3) + progress)
+	                                                        / progressLength * 100));
+	                                    }
+	
+	                                    buffer[i + 2] = getUnsignedByte(byteBuffer, j + currentIndex);
+	                                }
+	
+	                                planarRGB++;
+	
+	                                if (planarRGB == (2 * stripsPerImage)) {
+	                                    i = 0;
+	                                }
                             } // end of else if (planarRGB < 2*stripsPerImage)
                             else { // planarRGB >= 2*stripsPerImage
 
@@ -14169,6 +14211,7 @@ public class FileTiff extends FileBase {
 
                                 planarRGB++;
                             } // end of else for planarRGB >= 2*StripsPerImage
+                        	} // else more than 1 strip
                         } // else for planar RGB configuration with packedBit == false
 
                         break;
@@ -15166,7 +15209,66 @@ public class FileTiff extends FileBase {
                             }
                         } // if (chunky == true)
                         else { // planar RGB configuration
+                            if (nIndex == 1) {
+                            	// Only 1 strip for all RRRRRGGGGGBBBBB
+                            	progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
 
+                                // For the moment I compress RGB images to unsigned bytes
+                                for (j = 0; j < nBytes; j += 2, i += 4) {
+                                     if (i == buffer.length) {
+                                    	 i = 0;
+                                     }
+                                     
+                                     b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                     b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                     
+                                     if (j < nBytes/3) {
+	                                	 if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
+	                                         fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
+	                                                 / progressLength * 100));
+	                                     }
+	                                	 
+	                                	 buffer[i] = 65535;
+		                                    if (endianess) {
+		                                        buffer[i + 1] = ( (b1 << 8) + b2);
+		                                    } else {
+		                                        buffer[i + 1] = ( (b2 << 8) + b1);
+		                                    }
+                                     } // if (j < nBytes/3)
+                                     else if (j < 2*nBytes/3) {
+                                    	 if ( ( !suppressProgressBar)
+                                                 && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
+                                             fireProgressStateChanged(Math
+                                                     .round((float) ( (i / 3) + (buffer.length / 3) + progress)
+                                                             / progressLength * 100));
+                                         }	
+                                    	 
+                                    	 if (endianess) {
+                                             buffer[i + 2] = ( (b1 << 8) + b2);
+                                         } else {
+                                             buffer[i + 2] = ( (b2 << 8) + b1);
+                                         }
+                                     } // else if (j < 2*nBytes/3)
+                                     else {
+                                    	 if ( ( !suppressProgressBar)
+                                                 && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
+                                             fireProgressStateChanged(Math
+                                                     .round((float) ( (i / 3) + (2 * buffer.length / 3) + progress)
+                                                             / progressLength * 100));
+                                         }
+                                    	 
+                                    	 if (endianess) {
+                                             buffer[i + 3] = ( (b1 << 8) + b2);
+                                         } else {
+                                             buffer[i + 3] = ( (b2 << 8) + b1);
+                                         }
+                                     }
+                                    
+                                } // for (j = 0; j < nBytes; j += 2, i += 4) 
+                            } // if (nIndex == 1)
+                            else { // more than 1 strip for all RRRRRGGGGGBBBBB
                             if (planarRGB < stripsPerImage) {
 
                                 // if (byteBuffer == null)
@@ -15234,7 +15336,6 @@ public class FileTiff extends FileBase {
                                 }
                             } // end of else if (planarRGB < 2*stripsPerImage)
                             else { // planarRGB >= 2*stripsPerImage
-
                                 // raFile.read(byteBuffer, 0, nBytes);
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
@@ -15261,6 +15362,7 @@ public class FileTiff extends FileBase {
 
                                 planarRGB++;
                             } // end of else for planarRGB >= 2*StripsPerImage
+                            } // else more than 1 strip for all RRRRRGGGGGBBBBB
                         } // end of else for planar RGB configuration
 
                         break;
@@ -15419,203 +15521,325 @@ public class FileTiff extends FileBase {
                         } // if (chunky)
                         else { // planar
                             if (isRGB24UINTtoFLOAT) { // cast UINTEGER to FLOAT
-                                if (planarRGB < stripsPerImage) {
-
-                                    // if (byteBuffer == null)
-                                    // byteBuffer = new byte[3 * buffer.length];
-                                    // raFile.read(byteBuffer, 0, nBytes);
-                                    progress = slice * buffer.length;
+                            	if (nIndex == 1) {
+                            		// Only 1 strip for all RRRRRGGGGGBBBBB
+                            		progress = slice * buffer.length;
                                     progressLength = buffer.length * imageSlice;
                                     mod = progressLength / 10;
 
                                     for (j = 0; j < nBytes; j += 3, i += 4) {
-
-                                        if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
-                                            fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
-                                                    / progressLength * 100));
+                                        if (i == buffer.length) {
+                                        	i = 0;
                                         }
-
-                                        buffer[i] = 255.0f;
+                                        
                                         b1 = getUnsignedByte(byteBuffer, j + currentIndex);
                                         b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
                                         b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
-
-                                        if (endianess) {
-                                            buffer[i + 1] = (b1 << 16) | (b2 << 8) | b3;
-                                        } else {
-                                            buffer[i + 1] = (b3 << 16) | (b2 << 8) | b1;
+                                        
+                                        if (j < nBytes/3) {
+                                        	if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
+	                                                    / progressLength * 100));
+	                                        }
+	
+	                                        buffer[i] = 255.0f;	
+	                                        if (endianess) {
+	                                            buffer[i + 1] = (b1 << 16) | (b2 << 8) | b3;
+	                                        } else {
+	                                            buffer[i + 1] = (b3 << 16) | (b2 << 8) | b1;
+	                                        }
+                                        } // if (j < nBytes/3)
+                                        else if (j < 2*nBytes/3) {
+                                        	if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math
+	                                                    .round((float) ( (i / 3) + (buffer.length / 3) + progress)
+	                                                            / progressLength * 100));
+	                                        }	
+                                        	
+                                        	if (endianess) {
+	                                            buffer[i + 2] = (b1 << 16) | (b2 << 8) | b3;
+	                                        } else {
+	                                            buffer[i + 2] = (b3 << 16) | (b2 << 8) | b1;
+	                                        }
+                                        } // else if (j < 2*nBytes/3)
+                                        else {
+                                        	if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math.round((float) ( (i / 3)
+	                                                    + (2 * buffer.length / 3) + progress)
+	                                                    / progressLength * 100));
+	                                        }	
+                                        	
+                                        	if (endianess) {
+	                                            buffer[i + 3] = (b1 << 16) | (b2 << 8) | b3;
+	                                        } else {
+	                                            buffer[i + 3] = (b3 << 16) | (b2 << 8) | b1;
+	                                        }
                                         }
-                                    }
-
-                                    planarRGB++;
-
-                                    if (planarRGB == stripsPerImage) {
-                                        i = 0;
-                                    }
-                                } // end of if (planarRGB < stripsPerImage)
-                                else if (planarRGB < (2 * stripsPerImage)) {
-
-                                    // raFile.read(byteBuffer, 0, nBytes);
-                                    progress = slice * buffer.length;
-                                    progressLength = buffer.length * imageSlice;
-                                    mod = progressLength / 10;
-
-                                    for (j = 0; j < nBytes; j += 3, i += 4) {
-
-                                        if ( ( !suppressProgressBar)
-                                                && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
-                                            fireProgressStateChanged(Math
-                                                    .round((float) ( (i / 3) + (buffer.length / 3) + progress)
-                                                            / progressLength * 100));
-                                        }
-
-                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
-                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
-                                        b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
-
-                                        if (endianess) {
-                                            buffer[i + 2] = (b1 << 16) | (b2 << 8) | b3;
-                                        } else {
-                                            buffer[i + 2] = (b3 << 16) | (b2 << 8) | b1;
-                                        }
-                                    }
-
-                                    planarRGB++;
-
-                                    if (planarRGB == (2 * stripsPerImage)) {
-                                        i = 0;
-                                    }
-                                } // end of else if (planarRGB < 2*stripsPerImage)
-                                else { // planarRGB >= 2*stripsPerImage
-
-                                    // raFile.read(byteBuffer, 0, nBytes);
-                                    progress = slice * buffer.length;
-                                    progressLength = buffer.length * imageSlice;
-                                    mod = progressLength / 10;
-
-                                    for (j = 0; j < nBytes; j += 3, i += 4) {
-
-                                        if ( ( !suppressProgressBar)
-                                                && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
-                                            fireProgressStateChanged(Math.round((float) ( (i / 3)
-                                                    + (2 * buffer.length / 3) + progress)
-                                                    / progressLength * 100));
-                                        }
-
-                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
-                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
-                                        b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
-
-                                        if (endianess) {
-                                            buffer[i + 3] = (b1 << 16) | (b2 << 8) | b3;
-                                        } else {
-                                            buffer[i + 3] = (b3 << 16) | (b2 << 8) | b1;
-                                        }
-                                    }
-
-                                    planarRGB++;
-                                } // end of else for planarRGB >= 2*StripsPerImage
+                                    } // for (j = 0; j < nBytes; j += 3, i += 4)
+                            	} // if (nIndex == 1)
+                            	else { // more than 1 strip
+	                                if (planarRGB < stripsPerImage) {
+	
+	                                    // if (byteBuffer == null)
+	                                    // byteBuffer = new byte[3 * buffer.length];
+	                                    // raFile.read(byteBuffer, 0, nBytes);
+	                                    progress = slice * buffer.length;
+	                                    progressLength = buffer.length * imageSlice;
+	                                    mod = progressLength / 10;
+	
+	                                    for (j = 0; j < nBytes; j += 3, i += 4) {
+	
+	                                        if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
+	                                                    / progressLength * 100));
+	                                        }
+	
+	                                        buffer[i] = 255.0f;
+	                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+	                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+	                                        b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+	
+	                                        if (endianess) {
+	                                            buffer[i + 1] = (b1 << 16) | (b2 << 8) | b3;
+	                                        } else {
+	                                            buffer[i + 1] = (b3 << 16) | (b2 << 8) | b1;
+	                                        }
+	                                    }
+	
+	                                    planarRGB++;
+	
+	                                    if (planarRGB == stripsPerImage) {
+	                                        i = 0;
+	                                    }
+	                                } // end of if (planarRGB < stripsPerImage)
+	                                else if (planarRGB < (2 * stripsPerImage)) {
+	
+	                                    // raFile.read(byteBuffer, 0, nBytes);
+	                                    progress = slice * buffer.length;
+	                                    progressLength = buffer.length * imageSlice;
+	                                    mod = progressLength / 10;
+	
+	                                    for (j = 0; j < nBytes; j += 3, i += 4) {
+	
+	                                        if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math
+	                                                    .round((float) ( (i / 3) + (buffer.length / 3) + progress)
+	                                                            / progressLength * 100));
+	                                        }
+	
+	                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+	                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+	                                        b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+	
+	                                        if (endianess) {
+	                                            buffer[i + 2] = (b1 << 16) | (b2 << 8) | b3;
+	                                        } else {
+	                                            buffer[i + 2] = (b3 << 16) | (b2 << 8) | b1;
+	                                        }
+	                                    }
+	
+	                                    planarRGB++;
+	
+	                                    if (planarRGB == (2 * stripsPerImage)) {
+	                                        i = 0;
+	                                    }
+	                                } // end of else if (planarRGB < 2*stripsPerImage)
+	                                else { // planarRGB >= 2*stripsPerImage
+	
+	                                    // raFile.read(byteBuffer, 0, nBytes);
+	                                    progress = slice * buffer.length;
+	                                    progressLength = buffer.length * imageSlice;
+	                                    mod = progressLength / 10;
+	
+	                                    for (j = 0; j < nBytes; j += 3, i += 4) {
+	
+	                                        if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math.round((float) ( (i / 3)
+	                                                    + (2 * buffer.length / 3) + progress)
+	                                                    / progressLength * 100));
+	                                        }
+	
+	                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+	                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+	                                        b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+	
+	                                        if (endianess) {
+	                                            buffer[i + 3] = (b1 << 16) | (b2 << 8) | b3;
+	                                        } else {
+	                                            buffer[i + 3] = (b3 << 16) | (b2 << 8) | b1;
+	                                        }
+	                                    }
+	
+	                                    planarRGB++;
+	                                } // end of else for planarRGB >= 2*StripsPerImage
+                            	} // else more than 1 strip
                             } // if (isRGB24UINTtoFLOAT)
                             else if (isRGB32UINTtoFLOAT) { // cast UINTEGER to FLOAT
-                                if (planarRGB < stripsPerImage) {
-
-                                    // if (byteBuffer == null)
-                                    // byteBuffer = new byte[3 * buffer.length];
-                                    // raFile.read(byteBuffer, 0, nBytes);
-                                    progress = slice * buffer.length;
+                            	if (nIndex == 1) {
+                            		// Only 1 strip for all RRRRRGGGGGBBBBB
+                            		progress = slice * buffer.length;
                                     progressLength = buffer.length * imageSlice;
                                     mod = progressLength / 10;
 
                                     for (j = 0; j < nBytes; j += 4, i += 4) {
-
-                                        if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
-                                            fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
-                                                    / progressLength * 100));
+                                        if (i == buffer.length) {
+                                        	i = 0;
                                         }
-
-                                        buffer[i] = 255.0f;
+                                        
                                         b1L = (getUnsignedByte(byteBuffer, j + currentIndex) & 0xffL);
                                         b2L = (getUnsignedByte(byteBuffer, j + currentIndex + 1) & 0xffL);
                                         b3L = (getUnsignedByte(byteBuffer, j + currentIndex + 2) & 0xffL);
                                         b4L = (getUnsignedByte(byteBuffer, j + currentIndex + 3) & 0xffL);
-
-                                        if (endianess) {
-                                            buffer[i + 1] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
-                                        } else {
-                                            buffer[i + 1] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
+                                        
+                                        if (j < nBytes/3) {
+                                            if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
+ 	                                            fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
+ 	                                                    / progressLength * 100));
+ 	                                        }
+                                            
+                                            buffer[i] = 255.0f;
+                                            
+                                            if (endianess) {
+	                                            buffer[i + 1] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
+	                                        } else {
+	                                            buffer[i + 1] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
+	                                        }
+                                        } // if (j < nBytes/3)
+                                        else if (j < 2*nBytes/3) {
+                                        	if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math
+	                                                    .round((float) ( (i / 3) + (buffer.length / 3) + progress)
+	                                                            / progressLength * 100));
+	                                        }
+                                        	
+                                        	 if (endianess) {
+ 	                                            buffer[i + 2] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
+ 	                                        } else {
+ 	                                            buffer[i + 2] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
+ 	                                        }
+                                        } // else if (j < 2*nBytes/3)
+                                        else {
+                                        	if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math.round((float) ( (i / 3)
+	                                                    + (2 * buffer.length / 3) + progress)
+	                                                    / progressLength * 100));
+	                                            
+	                                            if (endianess) {
+		                                            buffer[i + 3] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
+		                                        } else {
+		                                            buffer[i + 3] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
+		                                        }
+	                                        }	
                                         }
-                                    }
-
-                                    planarRGB++;
-
-                                    if (planarRGB == stripsPerImage) {
-                                        i = 0;
-                                    }
-                                } // end of if (planarRGB < stripsPerImage)
-                                else if (planarRGB < (2 * stripsPerImage)) {
-
-                                    // raFile.read(byteBuffer, 0, nBytes);
-                                    progress = slice * buffer.length;
-                                    progressLength = buffer.length * imageSlice;
-                                    mod = progressLength / 10;
-
-                                    for (j = 0; j < nBytes; j += 4, i += 4) {
-
-                                        if ( ( !suppressProgressBar)
-                                                && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
-                                            fireProgressStateChanged(Math
-                                                    .round((float) ( (i / 3) + (buffer.length / 3) + progress)
-                                                            / progressLength * 100));
-                                        }
-
-                                        b1L = (getUnsignedByte(byteBuffer, j + currentIndex) & 0xffL);
-                                        b2L = (getUnsignedByte(byteBuffer, j + currentIndex + 1) & 0xffL);
-                                        b3L = (getUnsignedByte(byteBuffer, j + currentIndex + 2) & 0xffL);
-                                        b4L = (getUnsignedByte(byteBuffer, j + currentIndex + 3) & 0xffL);
-
-                                        if (endianess) {
-                                            buffer[i + 2] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
-                                        } else {
-                                            buffer[i + 2] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
-                                        }
-                                    }
-
-                                    planarRGB++;
-
-                                    if (planarRGB == (2 * stripsPerImage)) {
-                                        i = 0;
-                                    }
-                                } // end of else if (planarRGB < 2*stripsPerImage)
-                                else { // planarRGB >= 2*stripsPerImage
-
-                                    // raFile.read(byteBuffer, 0, nBytes);
-                                    progress = slice * buffer.length;
-                                    progressLength = buffer.length * imageSlice;
-                                    mod = progressLength / 10;
-
-                                    for (j = 0; j < nBytes; j += 4, i += 4) {
-
-                                        if ( ( !suppressProgressBar)
-                                                && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
-                                            fireProgressStateChanged(Math.round((float) ( (i / 3)
-                                                    + (2 * buffer.length / 3) + progress)
-                                                    / progressLength * 100));
-                                        }
-
-                                        b1L = (getUnsignedByte(byteBuffer, j + currentIndex) & 0xffL);
-                                        b2L = (getUnsignedByte(byteBuffer, j + currentIndex + 1) & 0xffL);
-                                        b3L = (getUnsignedByte(byteBuffer, j + currentIndex + 2) & 0xffL);
-                                        b4L = (getUnsignedByte(byteBuffer, j + currentIndex + 3) & 0xffL);
-
-                                        if (endianess) {
-                                            buffer[i + 3] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
-                                        } else {
-                                            buffer[i + 3] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
-                                        }
-                                    }
-
-                                    planarRGB++;
-                                } // end of else for planarRGB >= 2*StripsPerImage
+                                    } // for (j = 0; j < nBytes; j += 4, i += 4)
+                            	}
+                            	else { // more than 1 strip
+	                                if (planarRGB < stripsPerImage) {
+	
+	                                    // if (byteBuffer == null)
+	                                    // byteBuffer = new byte[3 * buffer.length];
+	                                    // raFile.read(byteBuffer, 0, nBytes);
+	                                    progress = slice * buffer.length;
+	                                    progressLength = buffer.length * imageSlice;
+	                                    mod = progressLength / 10;
+	
+	                                    for (j = 0; j < nBytes; j += 4, i += 4) {
+	
+	                                        if ( ( !suppressProgressBar) && ( ( ( (i / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math.round((float) ( (i / 3) + progress)
+	                                                    / progressLength * 100));
+	                                        }
+	
+	                                        buffer[i] = 255.0f;
+	                                        b1L = (getUnsignedByte(byteBuffer, j + currentIndex) & 0xffL);
+	                                        b2L = (getUnsignedByte(byteBuffer, j + currentIndex + 1) & 0xffL);
+	                                        b3L = (getUnsignedByte(byteBuffer, j + currentIndex + 2) & 0xffL);
+	                                        b4L = (getUnsignedByte(byteBuffer, j + currentIndex + 3) & 0xffL);
+	
+	                                        if (endianess) {
+	                                            buffer[i + 1] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
+	                                        } else {
+	                                            buffer[i + 1] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
+	                                        }
+	                                    }
+	
+	                                    planarRGB++;
+	
+	                                    if (planarRGB == stripsPerImage) {
+	                                        i = 0;
+	                                    }
+	                                } // end of if (planarRGB < stripsPerImage)
+	                                else if (planarRGB < (2 * stripsPerImage)) {
+	
+	                                    // raFile.read(byteBuffer, 0, nBytes);
+	                                    progress = slice * buffer.length;
+	                                    progressLength = buffer.length * imageSlice;
+	                                    mod = progressLength / 10;
+	
+	                                    for (j = 0; j < nBytes; j += 4, i += 4) {
+	
+	                                        if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math
+	                                                    .round((float) ( (i / 3) + (buffer.length / 3) + progress)
+	                                                            / progressLength * 100));
+	                                        }
+	
+	                                        b1L = (getUnsignedByte(byteBuffer, j + currentIndex) & 0xffL);
+	                                        b2L = (getUnsignedByte(byteBuffer, j + currentIndex + 1) & 0xffL);
+	                                        b3L = (getUnsignedByte(byteBuffer, j + currentIndex + 2) & 0xffL);
+	                                        b4L = (getUnsignedByte(byteBuffer, j + currentIndex + 3) & 0xffL);
+	
+	                                        if (endianess) {
+	                                            buffer[i + 2] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
+	                                        } else {
+	                                            buffer[i + 2] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
+	                                        }
+	                                    }
+	
+	                                    planarRGB++;
+	
+	                                    if (planarRGB == (2 * stripsPerImage)) {
+	                                        i = 0;
+	                                    }
+	                                } // end of else if (planarRGB < 2*stripsPerImage)
+	                                else { // planarRGB >= 2*stripsPerImage
+	
+	                                    // raFile.read(byteBuffer, 0, nBytes);
+	                                    progress = slice * buffer.length;
+	                                    progressLength = buffer.length * imageSlice;
+	                                    mod = progressLength / 10;
+	
+	                                    for (j = 0; j < nBytes; j += 4, i += 4) {
+	
+	                                        if ( ( !suppressProgressBar)
+	                                                && ( ( ( (i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
+	                                            fireProgressStateChanged(Math.round((float) ( (i / 3)
+	                                                    + (2 * buffer.length / 3) + progress)
+	                                                    / progressLength * 100));
+	                                        }
+	
+	                                        b1L = (getUnsignedByte(byteBuffer, j + currentIndex) & 0xffL);
+	                                        b2L = (getUnsignedByte(byteBuffer, j + currentIndex + 1) & 0xffL);
+	                                        b3L = (getUnsignedByte(byteBuffer, j + currentIndex + 2) & 0xffL);
+	                                        b4L = (getUnsignedByte(byteBuffer, j + currentIndex + 3) & 0xffL);
+	
+	                                        if (endianess) {
+	                                            buffer[i + 3] = (b1L << 24) | (b2L << 16) | (b3L << 8) | b4L;
+	                                        } else {
+	                                            buffer[i + 3] = (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L;
+	                                        }
+	                                    }
+	
+	                                    planarRGB++;
+	                                } // end of else for planarRGB >= 2*StripsPerImage
+	                            } // else more than 1 strip
                             } // else if (isRGB32UINTtoFLOAT)
                         } // else planar
                         break;
