@@ -1311,6 +1311,13 @@ public class FileTiff extends FileBase {
                 have4DColor = true;
                 fileInfo.setDataType(ModelStorageBase.ARGB);
             }
+            else if ((channels >= 4) && (slices > 0) && (channels * slices == imageSlice)) {
+            	imgExtents = new int[4];
+            	imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = channels;
+                imgExtents[3] = slices;	
+            }
             else if ((slices > 0) && (frames > 0) && (slices * frames == imageSlice)) {
             	imgExtents = new int[4];
                 imgExtents[0] = xDim;
@@ -8014,7 +8021,7 @@ public class FileTiff extends FileBase {
                     int index3 = str.indexOf("channels");
                     int fd = -1;
                     int fd2 = -1;
-                    if ((index1 >= 0) && (index2 >= 0)) {
+                    if (index1 >= 0) {
                     	char num;
                     	boolean foundFirstDigit = false;
                     	for (i1 = index1+6; (i1 < str.length()) && (!foundFirstDigit); i1++) {
@@ -8048,39 +8055,41 @@ public class FileTiff extends FileBase {
                     		}
                     	}
                     	
-                    	foundFirstDigit = false;
-                    	fd = -1;
-                    	fd2 = -1;
-                    	for (i1 = index2+6; (i1 < str.length()) && (!foundFirstDigit); i1++) {
-                    	    num = str.charAt(i1);
-                    	    if ((num >= '0') && (num <= '9')) {
-                    	    	foundFirstDigit = true;
-                    	    	fd = i1;
-                    	    }
-                    	}
-                    	if (fd >= index2+6) {
-                    		boolean foundLastDigit = false;
-                    		char ch;
-                    		for (i1 = fd; (i1 < str.length()) && (!foundLastDigit); i1++) {
-                    		    ch = str.charAt(i1);
-                    		    if ((ch < '0') || (ch > '9')) {
-                    		    	foundLastDigit = true;
-                    		    	fd2 = i1-1;
-                    		    }
-                    		    else if (i1 == str.length()-1) {
-                    		    	fd2 = i1;
-                    		    }
-                    		}
-                    	}
-                    	if (fd2 > 0) {
-                    		String framesNumber = str.substring(fd, fd2+1);
-                    		try {
-                    			frames = Integer.valueOf(framesNumber).intValue();
-                    		}
-                    		catch (NumberFormatException e) {
-                    			Preferences.debug("Number Format exception trying to find frames");
-                    		}
-                    	}
+                    	if (index2 >= 0) {
+	                    	foundFirstDigit = false;
+	                    	fd = -1;
+	                    	fd2 = -1;
+	                    	for (i1 = index2+6; (i1 < str.length()) && (!foundFirstDigit); i1++) {
+	                    	    num = str.charAt(i1);
+	                    	    if ((num >= '0') && (num <= '9')) {
+	                    	    	foundFirstDigit = true;
+	                    	    	fd = i1;
+	                    	    }
+	                    	}
+	                    	if (fd >= index2+6) {
+	                    		boolean foundLastDigit = false;
+	                    		char ch;
+	                    		for (i1 = fd; (i1 < str.length()) && (!foundLastDigit); i1++) {
+	                    		    ch = str.charAt(i1);
+	                    		    if ((ch < '0') || (ch > '9')) {
+	                    		    	foundLastDigit = true;
+	                    		    	fd2 = i1-1;
+	                    		    }
+	                    		    else if (i1 == str.length()-1) {
+	                    		    	fd2 = i1;
+	                    		    }
+	                    		}
+	                    	}
+	                    	if (fd2 > 0) {
+	                    		String framesNumber = str.substring(fd, fd2+1);
+	                    		try {
+	                    			frames = Integer.valueOf(framesNumber).intValue();
+	                    		}
+	                    		catch (NumberFormatException e) {
+	                    			Preferences.debug("Number Format exception trying to find frames");
+	                    		}
+	                    	}
+                    	} // if (index2 >= 0)
                     	
                     	if (index3 >= 0) {
                     		foundFirstDigit = false;
@@ -8117,7 +8126,7 @@ public class FileTiff extends FileBase {
                         		}
                         	}	
                     	} // if (index3 >= 0)
-                    } // if ((index1 >= 0) && (index2 >= 0))
+                    } // if (index1 >= 0)
 
                     break;
 
