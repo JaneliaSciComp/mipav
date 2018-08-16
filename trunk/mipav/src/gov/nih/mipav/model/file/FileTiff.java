@@ -1311,6 +1311,16 @@ public class FileTiff extends FileBase {
                 have4DColor = true;
                 fileInfo.setDataType(ModelStorageBase.ARGB);
             }
+            else if (((channels == 2) || (channels == 3)) && (slices > 0) && (frames > 0) && 
+            		(channels * slices * frames == imageSlice) && (bitsPerSample[0] == 16)) {
+            	imgExtents = new int[4];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = slices;
+                imgExtents[3] = frames;	
+                have4DColor = true;
+                fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
+            }
             else if ((channels >= 4) && (slices > 0) && (channels * slices == imageSlice)) {
             	imgExtents = new int[4];
             	imgExtents[0] = xDim;
@@ -14217,7 +14227,28 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB_USHORT:
-                        if (isCMYK) {
+                    	if (have4DColor) {
+                    		progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 10;	
+                            
+                            for (j = 0; j < nBytes; j += 2, i++) {
+
+                                if ( ( !suppressProgressBar) && ( ( (i + progress) % mod) == 0)) {
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                }
+
+                                b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+
+                                if (endianess) {
+                                    buffer[i] = ( (b1 << 8) + b2);
+                                } else {
+                                    buffer[i] = ( (b2 << 8) + b1);
+                                }
+                            }
+                    	} // if (have4DColor)
+                        else if (isCMYK) {
                             if (chunky) {
                                 // if (byteBuffer == null)
                                 // byteBuffer = new byte[2 * buffer.length];
