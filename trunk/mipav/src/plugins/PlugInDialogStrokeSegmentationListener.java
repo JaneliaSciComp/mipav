@@ -365,7 +365,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
      */
     public void log(final String line) {
         logOutputArea.getTextArea().append(line + "\n");
-        System.out.println(line);
+        System.out.println("*****\t" + line);
     }
     
     private boolean readListenerConfig() {
