@@ -1333,6 +1333,16 @@ public class FileTiff extends FileBase {
                 have3DColor = true;
                 fileInfo.setDataType(ModelStorageBase.ARGB);
             }
+            else if (((channels == 2) || (channels == 3)) && (slices > 0) && 
+            		(channels * slices == imageSlice) && (bitsPerSample[0] == 16)
+            		&& (samplesPerPixel == 1)) {
+            	imgExtents = new int[3];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = slices;	
+                have3DColor = true;
+                fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
+            }
             else if ((channels >= 4) && (slices > 0) && (channels * slices == imageSlice)) {
             	imgExtents = new int[4];
             	imgExtents[0] = xDim;
