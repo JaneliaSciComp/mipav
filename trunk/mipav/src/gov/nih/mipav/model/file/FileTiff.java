@@ -985,6 +985,8 @@ public class FileTiff extends FileBase {
     private int frames = -1;
     
     private boolean have4DColor = false;
+    
+    private boolean have3DColor = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1321,6 +1323,16 @@ public class FileTiff extends FileBase {
                 have4DColor = true;
                 fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
             }
+            else if (((channels == 2) || (channels == 3)) && (slices > 0) && 
+            		(channels * slices == imageSlice) && (bitsPerSample[0] == 8)
+            		&& (samplesPerPixel == 1)) {
+            	imgExtents = new int[3];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = slices;	
+                have3DColor = true;
+                fileInfo.setDataType(ModelStorageBase.ARGB);
+            }
             else if ((channels >= 4) && (slices > 0) && (channels * slices == imageSlice)) {
             	imgExtents = new int[4];
             	imgExtents[0] = xDim;
@@ -1385,11 +1397,11 @@ public class FileTiff extends FileBase {
             if ( !foundTag43314) {
                 fileInfo.setResolutions(imgResols);
                 if ( (multiFile == false) && (one == false)) {
-                	if (have4DColor) {
+                	if (have3DColor || have4DColor) {
                 		for (i = 0; i < imageSlice/channels; i++) {
 	                        image.setFileInfo((FileInfoTiff) fileInfo.clone(), i);
 	                    }	
-                	} // if (have4DColor)
+                	} // if (have3DColor || have4DColor)
                 	else {
 	                    for (i = 0; i < imageSlice; i++) {
 	                        image.setFileInfo((FileInfoTiff) fileInfo.clone(), i);
@@ -1446,7 +1458,7 @@ public class FileTiff extends FileBase {
                 bufferSize = imgExtents[0] * imgExtents[1];
             }
 
-            if (ModelImage.isColorImage(fileInfo.getDataType()) && !have4DColor) {
+            if (ModelImage.isColorImage(fileInfo.getDataType()) && (!have3DColor) && (!have4DColor)) {
                 bufferSize *= 4;
                 sliceSize *= 4;
             }
@@ -1544,7 +1556,7 @@ public class FileTiff extends FileBase {
                     }
 
                     if (multiFile == false) {
-                    	if (have4DColor) {
+                    	if (have3DColor || have4DColor) {
                     	    if (channels == 2) {
                     	    	if ((i % 2) == 0) {
                     	    	   image.importRGBData(1, (4 * (i/2)) * sliceSize, sliceBufferFloat, false);	
@@ -1564,7 +1576,7 @@ public class FileTiff extends FileBase {
                     	        	image.importRGBData(3, (4 * (i/3)) * sliceSize, sliceBufferFloat, false);		
                     	        }
                     	    } // else if (channels == 3)
-                    	} // if (have4DColor)
+                    	} // if (have3DColor || have4DColor)
                     	else {
                             image.importData(i * sliceSize, sliceBufferFloat, false);
                     	}
@@ -13265,7 +13277,7 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB:
-                        if (have4DColor) {
+                        if (have3DColor || have4DColor) {
                         	progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
@@ -14227,7 +14239,7 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB_USHORT:
-                    	if (have4DColor) {
+                    	if (have3DColor || have4DColor) {
                     		progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;	
@@ -14247,7 +14259,7 @@ public class FileTiff extends FileBase {
                                     buffer[i] = ( (b2 << 8) + b1);
                                 }
                             }
-                    	} // if (have4DColor)
+                    	} // if (have3DColor || have4DColor)
                         else if (isCMYK) {
                             if (chunky) {
                                 // if (byteBuffer == null)
