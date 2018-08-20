@@ -200,7 +200,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             open(maskImg);
             
             // close
-            close(maskImg);
+            close(maskImg, 2, 2f);
             
             // fill holes
             fillHoles(maskImg);
@@ -340,7 +340,43 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_removed", FileUtility.XML);
         }
         
+        try {
+            dwiSeg.importData(0, dwiSegBuffer, true);
+        } catch (IOException error) {
+            dwiSegBuffer = null;
+            displayError("Error on cleaned segmentation importData: " + dwiImage.getImageName());
+            setCompleted(false);
+            return;
+        }
+        
+        // perform closing on threshold mask
+        close(dwiSeg, 3, 2f);
+        
+        try {
+            dwiSeg.exportData(0, volLength, dwiSegBuffer);
+        } catch (IOException error) {
+            dwiSegBuffer = null;
+            displayError("Error on closed ADC threshold export: " + maskImg.getImageName());
+            setCompleted(false);
+            return;
+        }
+        
+        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_close", FileUtility.XML);
+        
         short[] objectBuffer = chooseCoreObjects(dwiSeg, dwiSegBuffer);
+        
+        // get pixels from ADC within closed object mask with intensity < 620, again
+        for (int i = 0; i < volLength; i++) {
+            if (objectBuffer[i] != 0) {
+                if (adcImage.getInt(i) < adcThreshold) {
+                    objectBuffer[i] = 1;
+                } else {
+                    objectBuffer[i] = 0;
+                }
+            } else {
+                objectBuffer[i] = 0;
+            }
+        }
         
         try {
             dwiSeg.importData(0, objectBuffer, true);
@@ -928,11 +964,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
     }
     
-    private void close(ModelImage img) {
+    private void close(ModelImage img, int iters, float size) {
         int kernel = AlgorithmMorphology3D.SIZED_SPHERE;
-        float kernelSize = 2f; // mm
-        int itersD = 2;
-        int itersE = 2;
+        float kernelSize = size; // mm
+        int itersD = iters;
+        int itersE = iters;
         boolean wholeImg = true;
         
         try {
