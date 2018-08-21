@@ -1634,8 +1634,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         if (doComplex) {
             destImage.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
             destImage.setOriginalExtents(srcImageA.getOriginalExtents());
-            destImage.setOriginalMinimum(srcImageA.getOriginalMinimum());
-            destImage.setOriginalMaximum(srcImageA.getOriginalMaximum());
             destImage.setOriginalDoCrop(srcImageA.getOriginalDoCrop());
 
             if (srcImageA.getOriginalDoCrop()) {
@@ -2485,8 +2483,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         if (doComplex) {
             destImage.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
             destImage.setOriginalExtents(srcImageA.getOriginalExtents());
-            destImage.setOriginalMinimum(srcImageA.getOriginalMinimum());
-            destImage.setOriginalMaximum(srcImageA.getOriginalMaximum());
             destImage.setOriginalDoCrop(srcImageA.getOriginalDoCrop());
 
             if (srcImageA.getOriginalDoCrop()) {
