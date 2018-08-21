@@ -387,12 +387,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private int originalKernelDimension;
 
     /** DOCUMENT ME! - TO BE MOVED - redesigned */
-    private float originalMaximum;
-
-    /** DOCUMENT ME! - TO BE MOVED - redesigned */
-    private float originalMinimum;
-
-    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private int[] originalStart;
 
     /** DOCUMENT ME! - TO BE MOVED - redesigned */
@@ -4665,24 +4659,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * DOCUMENT ME! - TO BE MOVED
      * 
-     * @return DOCUMENT ME! - to be moved
-     */
-    public final float getOriginalMaximum() {
-        return originalMaximum;
-    }
-
-    /**
-     * DOCUMENT ME! - TO BE MOVED
-     * 
-     * @return DOCUMENT ME!
-     */
-    public final float getOriginalMinimum() {
-        return originalMinimum;
-    }
-
-    /**
-     * DOCUMENT ME! - TO BE MOVED
-     * 
      * @return DOCUMENT ME!
      */
     public final int[] getOriginalStart() {
@@ -7615,24 +7591,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public void setOriginalKernelDimension(final int kDim) {
         originalKernelDimension = kDim;
-    }
-
-    /**
-     * DOCUMENT ME! TO BE MOVED
-     * 
-     * @param maximum float
-     */
-    public void setOriginalMaximum(final float maximum) {
-        originalMaximum = maximum;
-    }
-
-    /**
-     * DOCUMENT ME! TO BE MOVED
-     * 
-     * @param minimum float
-     */
-    public void setOriginalMinimum(final float minimum) {
-        originalMinimum = minimum;
     }
 
     /**
