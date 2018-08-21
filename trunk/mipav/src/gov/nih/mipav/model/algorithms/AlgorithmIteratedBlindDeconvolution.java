@@ -331,8 +331,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             }
 
             psfImageSpectrum.calcMinMax();
-            psfImageSpectrum.setOriginalMinimum((float) psfImageSpectrum.getMin());
-            psfImageSpectrum.setOriginalMaximum((float) psfImageSpectrum.getMax());
             psfIFFT.run();
 
             // fill the psf arrays with values from the psfImage
@@ -385,8 +383,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             }
 
             psfImage.calcMinMax();
-            psfImage.setOriginalMinimum((float) psfImage.getMin());
-            psfImage.setOriginalMaximum((float) psfImage.getMax());
             psfFFT.run();
 
             try {
@@ -466,8 +462,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             }
 
             estimatedImageSpectrum.calcMinMax();
-            estimatedImageSpectrum.setOriginalMinimum((float) estimatedImageSpectrum.getMin());
-            estimatedImageSpectrum.setOriginalMaximum((float) estimatedImageSpectrum.getMax());
 
             estimatedIFFT.run();
 
@@ -519,8 +513,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             }
 
             estimatedImage.calcMinMax();
-            estimatedImage.setOriginalMinimum((float) estimatedImage.getMin());
-            estimatedImage.setOriginalMaximum((float) estimatedImage.getMax());
 
             fireProgressStateChanged(startPercent + (percentChange * (iteration / 200f)), 
                     null, null);
