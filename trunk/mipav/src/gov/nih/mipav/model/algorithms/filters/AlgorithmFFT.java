@@ -131,9 +131,6 @@ public class AlgorithmFFT extends AlgorithmBase {
     /** If true display log10 of 1 + magnitude. */
     private final boolean logMagDisplay;
 
-    /** DOCUMENT ME! */
-    private float minimum, maximum;
-
     /** Number of dimensions. */
     private int ndim; //
 
@@ -695,11 +692,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             return;
         }
 
-        if (transformDir == AlgorithmFFT.FORWARD) {
-            maximum = MipavMath.max(realData);
-            minimum = MipavMath.min(realData);
-        }
-
         if (zeroPad) {
 
             // zero pad the data so that all dimensions are powers of 2
@@ -1048,12 +1040,8 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
             if (destImage == null) {
                 srcImage.setOriginalExtents(dimLengths);
-                srcImage.setOriginalMinimum(minimum);
-                srcImage.setOriginalMaximum(maximum);
             } else {
                 destImage.setOriginalExtents(dimLengths);
-                destImage.setOriginalMinimum(minimum);
-                destImage.setOriginalMaximum(maximum);
             }
         } else if (transformDir == AlgorithmFFT.INVERSE) {
             fireProgressStateChanged( -1, null, "Storing inverse FFT in source image ...");
