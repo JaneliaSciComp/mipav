@@ -248,8 +248,8 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 		AlgorithmFFT2 ifft = new AlgorithmFFT2(complex, AlgorithmFFT2.INVERSE, false, false, false, true);
 		ifft.run();
 		
-		float[] realCorr = ifft.getRealData();
-		float[] imagCorr = ifft.getImaginaryData();
+		double[] realCorr = ifft.getRealData();
+		double[] imagCorr = ifft.getImaginaryData();
 		corrBuffer = new float[realCorr.length];
 		
 		for(int i=0;i<realCorr.length;i++){
@@ -445,18 +445,18 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 				//float dX1 = ((corrBuffer[xpp + jp]*xpp + corrBuffer[xp + jp]*xp) / (corrBuffer[xpp+jp] + corrBuffer[xp + jp]));
 				//float dY1 = ((corrBuffer[xp+jpp]*ypp + corrBuffer[xp+jp]*yp)/(corrBuffer[xp+jpp] + corrBuffer[xp + jp]));
 				
-				float c00r = realCorr[xp + jp];
-				float c00i = imagCorr[xp + jp];
+				float c00r = (float)realCorr[xp + jp];
+				float c00i = (float)imagCorr[xp + jp];
 				
-				float c10r = realCorr[xpp + jp];
-				float c10i = imagCorr[xpp + jp];
-				float c01r = realCorr[xp + jpp];
-				float c01i = imagCorr[xp + jpp];
+				float c10r = (float)realCorr[xpp + jp];
+				float c10i = (float)imagCorr[xpp + jp];
+				float c01r = (float)realCorr[xp + jpp];
+				float c01i = (float)imagCorr[xp + jpp];
 				
-				float c10rn = realCorr[xn + jp];
-				float c10in = imagCorr[xn + jp];
-				float c01rn = realCorr[xp + jn];
-				float c01in = imagCorr[xp + jn];
+				float c10rn = (float)realCorr[xn + jp];
+				float c10in = (float)imagCorr[xn + jp];
+				float c01rn = (float)realCorr[xp + jn];
+				float c01in = (float)imagCorr[xp + jn];
 				
 				float xpMag = c10r*c10r + c10i*c10i;
 				float xnMag = c10rn*c10rn + c10in*c10in;
