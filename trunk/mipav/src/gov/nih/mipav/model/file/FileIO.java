@@ -2200,6 +2200,18 @@ public class FileIO {
      * @return ModelImage
      */
     public FileInfoBase readHeader(final String absoluteFilename) {
+        return readHeader(absoluteFilename, false);
+    }
+    
+    /**
+     * Reads generic file from an absolute filename.
+     * 
+     * @param absoluteFilename String - the absolute filename, including the path
+     * @param multiFile Flag indicating multi file.
+     * 
+     * @return ModelImage
+     */
+    public FileInfoBase readHeader(final String absoluteFilename, final boolean multiFile) {
 
         if (absoluteFilename == null) {
             return null;
@@ -2216,7 +2228,7 @@ public class FileIO {
         final String path = absoluteFilename.substring(0, lastIndex);
         final String filename = absoluteFilename.substring(lastIndex);
 
-        return readHeader(filename, path);
+        return readHeader(filename, path, multiFile);
     }
 
     /**
@@ -2240,8 +2252,6 @@ public class FileIO {
      * @param fileName File name where image is located.
      * @param fileDir File directory where image is located.
      * @param multiFile Flag indicating multi file.
-     * @param fileInfo File info already known; will usually be null, but valid if called from script parser.
-     * @param secondAddress Address of second TIFF header
      * 
      * @return The image that was read in from the file.
      */

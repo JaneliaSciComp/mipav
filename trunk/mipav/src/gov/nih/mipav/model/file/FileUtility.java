@@ -1768,13 +1768,23 @@ public class FileUtility {
      * @return the actual file name list.
      */
     public static final List<String> getFileNameList(final ModelImage image) {
-
         if (image == null) {
             return null;
         }
 
         final FileInfoBase[] fileInfoList = image.getFileInfo();
 
+        return getFileNameList(fileInfoList);
+    }
+    
+    /**
+     * Gets the file name list from which this ModelImage is opened.
+     * 
+     * @param image the ModelImage object.
+     * 
+     * @return the actual file name list.
+     */
+    public static final List<String> getFileNameList(final FileInfoBase[] fileInfoList) {
         if ( (fileInfoList == null) || (fileInfoList.length == 0)) {
             return null;
         }
