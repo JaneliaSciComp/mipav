@@ -233,6 +233,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final String ELEM_YES_SPECIFY_SUFFIX = "ST";
 
     private static final String GUID_ELEMENT_NAME = "GUID";
+    
+    private static final String SPECTROSCOPY_FS_SUFFIX = "spectroscopy";
+    
+    private static final String FMRI_FS_SUFFIX = "functionalmr";
+    
+    private static final String DTI_FS_SUFFIX = "diffusion";
 
     private static final String IMG_IMAGE_INFO_GROUP = "Image Information";
 
@@ -2223,10 +2229,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private boolean readCSVFile() {
         BufferedReader br = null;
+        FileInputStream fis = null;
 
         try {
             String str;
-            final FileInputStream fis = new FileInputStream(csvFile);
+            fis = new FileInputStream(csvFile);
             br = new BufferedReader(new InputStreamReader(fis));
 
             // first line is data structure name and version
@@ -2367,11 +2374,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             progressBar.dispose();
 
-            fis.close();
+            
         } catch (final Exception e) {
             e.printStackTrace();
             return false;
         } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    System.err.println("Problem closing CSV file handle.");
+                    e.printStackTrace();
+                }
+            }
+            
             if (br != null) {
                 try {
                     br.close();
@@ -4170,6 +4186,42 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
         return newModality;
     }
+    
+    private static final String getModalityString(final FileInfoBase fInfo, final String structName) {
+        int modality = fInfo.getModality();
+        
+        modality = determineModality(modality, structName);
+        
+        return FileInfoBase.getModalityStr(modality);
+    }
+    
+    private static final boolean isMRModality(final FileInfoBase fInfo, final String structName) {
+        return getModalityString(fInfo, structName).equalsIgnoreCase("magnetic resonance");
+    }
+    
+    private static final boolean isCTModality(final FileInfoBase fInfo, final String structName) {
+        return getModalityString(fInfo, structName).equalsIgnoreCase("computed tomography");
+    }
+    
+    private static final String getFileFormatString(final FileInfoBase fInfo) {
+        final int fileFormatInt = fInfo.getFileFormat();
+        String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
+        if (fileFormatString.equalsIgnoreCase("xml")) {
+            fileFormatString = "mipav xml";
+        } else if (fileFormatString.equalsIgnoreCase("mat")) {
+            fileFormatString = "matlab";
+        }
+        
+        return fileFormatString;
+    }
+    
+    private static final boolean isDicomFormat(final FileInfoBase fInfo) {
+        return getFileFormatString(fInfo).equalsIgnoreCase("dicom");
+    }
+    
+    private static final boolean isNiftiFormat(final FileInfoBase fInfo) {
+        return getFileFormatString(fInfo).equalsIgnoreCase("nifti");
+    }
 
     /**
      * Converts a magnetic field strength number to the format used by BRICS (for example 3.0T or 1.5T).
@@ -4251,6 +4303,36 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         return model;
+    }
+    
+    /**
+     * Attempts to convert from the DICOM body part to BRICS anatomic site permissible values. If nothing matches,
+     * return the original name.
+     * 
+     * @param bodyPart The DICOM model name.
+     * @return The DICOM model name to BRICS scanner model permissible values. If nothing matches, return the original
+     *         name.
+     */
+    private static final String convertDicomBodyPartToBRICS(final String bodyPart) {
+        if (bodyPart == null || bodyPart.equals("")) {
+            return bodyPart;
+        }
+
+        if (bodyPart.equalsIgnoreCase("HEAD") || bodyPart.equalsIgnoreCase("SKULL")) {
+            return "Brain";
+        } else if (bodyPart.equalsIgnoreCase("CSPINE")) {
+            return "Cervical spine";
+        } else if (bodyPart.equalsIgnoreCase("LSPINE")) {
+            return "Lumbar spine";
+        } else if (bodyPart.equalsIgnoreCase("TSPINE")) {
+            return "Thoracic spine";
+        }
+        
+        // DICOM: SKULL, CSPINE, TSPINE, LSPINE, SSPINE, COCCYX, CHEST, CLAVICLE, BREAST, ABDOMEN, PELVIS, HIP, SHOULDER, ELBOW, KNEE, ANKLE, HAND, FOOT, EXTREMITY, HEAD, HEART, NECK, LEG, ARM, JAW
+        
+        // BRICS: Brain, Calf, Cervical spine, Lumbar spine, Thigh, Thoracic spine
+
+        return bodyPart;
     }
 
     /**
@@ -4505,6 +4587,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (csvValue != null) {
             csvValue = csvValue.trim();
         }
+        
+        // TODO why tie checks to field names
 
         if (headerValue != null && !headerValue.trim().equals("")) {
             headerValue = headerValue.trim();
@@ -4732,6 +4816,30 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return false;
     }
+    
+    private static final boolean isSpectroscopyImagingStructure(final String structureName) {
+        if (!isImagingStructure(structureName)) {
+            return false;
+        }
+        
+        return structureName.toLowerCase().endsWith(SPECTROSCOPY_FS_SUFFIX);
+    }
+    
+    private static final boolean isFMRIImagingStructure(final String structureName) {
+        if (!isImagingStructure(structureName)) {
+            return false;
+        }
+        
+        return structureName.toLowerCase().endsWith(FMRI_FS_SUFFIX);
+    }
+    
+    private static final boolean isDtiImagingStructure(final String structureName) {
+        if (!isImagingStructure(structureName)) {
+            return false;
+        }
+        
+        return structureName.toLowerCase().endsWith(DTI_FS_SUFFIX);
+    }
 
     private static final String[] splitFieldString(final String deNameAndGroup) {
         return deNameAndGroup.split("\\.");
@@ -4832,11 +4940,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
     }
 
-    /**
-     * Inner class Right Renderer
-     * 
-     * @author pandyan
-     */
     private class MyRightCellRenderer extends DefaultTableCellRenderer {
         private static final long serialVersionUID = -7905716122046419275L;
 
@@ -5340,7 +5443,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         if (srcImage != null) {
                             // basic check that image data is de-identified
-                            problemTags = deidentificationCheckDicomTags(srcImage);
+                            problemTags = deidentificationCheckDicomTags(srcImage.getFileInfo());
                             problemTagsFileDir = srcImage.getFileInfo(0).getFileDirectory();
                             problemTagsFileName = srcImage.getFileInfo(0).getFileName();
 
@@ -5366,7 +5469,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
 
                     if (resolveConflictsUsing == RESOLVE_CONFLICT_CSV && srcImage != null) {
-                        populateFields(fsData, srcImage);
+                        populateFields(fsData, srcImage, srcImage.getFileInfo(0));
                     }
 
                     for (int i = 0; i < csvFieldNames.size(); i++) {
@@ -5471,7 +5574,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
 
                     if ( (resolveConflictsUsing == RESOLVE_CONFLICT_ASK || resolveConflictsUsing == RESOLVE_CONFLICT_IMG) && srcImage != null) {
-                        populateFields(fsData, srcImage);
+                        populateFields(fsData, srcImage, srcImage.getFileInfo(0));
                     }
 
                     // if the image was read in, clean it up
@@ -5627,6 +5730,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             ModelImage srcImage = null;
             validFile = true;
             File origSrcFile;
+            
+            boolean isSpectroscopy = isSpectroscopyImagingStructure(dataStructureName);
+            FileInfoBase[] spectroscopyHeaderList = null;
 
             try {
                 if (imageFile.endsWith(".zip")) {
@@ -5809,58 +5915,145 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         isMultifile = false;
                     }
                 }
+                
+                if (!isSpectroscopy) {
+                    final File file = new File(filePath);
+                    System.out.println(file);
+                    srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
 
-                final File file = new File(filePath);
-                System.out.println(file);
-                srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
+                    if (srcImage == null) {
+                        MipavUtil.displayError("Unable to open image file specified: " + imageFile);
+                        validFile = false;
+                        return null;
+                    }
 
-                if (srcImage == null) {
-                    MipavUtil.displayError("Unable to open image file specified: " + imageFile);
-                    validFile = false;
-                    return null;
-                }
+                    final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
 
-                final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
+                    previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
+                    int slice = 0;
+                    if ( !srcImage.is2DImage()) {
+                        slice = (srcImage.getExtents()[2] / 2);
+                    }
+                    previewImg.createImg(slice);
 
-                previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
-                int slice = 0;
-                if ( !srcImage.is2DImage()) {
-                    slice = (srcImage.getExtents()[2] / 2);
-                }
-                previewImg.createImg(slice);
+                    previewImgPanel.removeAll();
+                    previewImgPanel.repaint();
 
-                previewImgPanel.removeAll();
-                previewImgPanel.repaint();
+                    previewImgPanel.add(previewImg);
 
-                previewImgPanel.add(previewImg);
+                    addedPreviewImage = true;
 
-                addedPreviewImage = true;
+                    ModelImage thumbnailImage = createThumbnailImage(srcImage);
 
-                ModelImage thumbnailImage = createThumbnailImage(srcImage);
+                    if (launchedFromInProcessState) {
+                        final int selectedRow = structTable.getSelectedRow();
+                        previewImages.set(selectedRow, previewImg);
+                        previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
+                        structRowImgFileInfoList.set(selectedRow, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile,
+                                FileUtility.getFileNameList(srcImage), srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
+                    } else {
+                        final int size = previewImages.size();
+                        previewImages.set(size - 1, previewImg);
+                        previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
+                        structRowImgFileInfoList.set(size - 1, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(srcImage),
+                                srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
+                    }
 
-                if (launchedFromInProcessState) {
-                    final int selectedRow = structTable.getSelectedRow();
-                    previewImages.set(selectedRow, previewImg);
-                    previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                    structRowImgFileInfoList.set(selectedRow, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile,
-                            FileUtility.getFileNameList(srcImage), srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
+                    // cleanup thumbnail modelimage
+                    if (thumbnailImage != null) {
+                        thumbnailImage.disposeLocal();
+                        thumbnailImage = null;
+                    }
+
+                    previewImgPanel.validate();
+                    previewImgPanel.repaint();
                 } else {
-                    final int size = previewImages.size();
-                    previewImages.set(size - 1, previewImg);
-                    previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                    structRowImgFileInfoList.set(size - 1, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(srcImage),
-                            srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
+                    // TODO: if spectroscopy, only read image header, not the data and skip preview image
+                    final File file = new File(filePath);
+                    System.out.println(file);
+                    
+                    int[] extents = new int[] {256, 256};
+                    
+                    if (isMultifile) {
+                        String[] fileList = FileUtility.getFileList(file.getParent() + File.separator, file.getName(), false);
+                        
+                        spectroscopyHeaderList = new FileInfoBase[fileList.length];
+                        
+                        for (int i = 0; i < fileList.length; i++) {
+                            spectroscopyHeaderList[i] = fileIO.readHeader(file.getParent() + File.separator + fileList[i], isMultifile);
+                            
+                            if (spectroscopyHeaderList[i] instanceof FileInfoDicom) {
+                                ((FileInfoDicom) spectroscopyHeaderList[i]).setInfoFromTags();
+                                
+                                String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0010");
+                                String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0011");
+                                if (rowStr != null && colStr != null) {
+                                    int rows = Integer.parseInt(rowStr);
+                                    int cols = Integer.parseInt(colStr);
+                                    extents = new int[] {cols, rows, fileList.length};
+                                    spectroscopyHeaderList[i].setExtents(extents);
+                                }
+                            }
+                        }
+                    } else {
+                        spectroscopyHeaderList = new FileInfoBase[1];
+                        spectroscopyHeaderList[0] = fileIO.readHeader(file.getAbsolutePath(), isMultifile);
+                        
+                        if (spectroscopyHeaderList[0] instanceof FileInfoDicom) {
+                            ((FileInfoDicom) spectroscopyHeaderList[0]).setInfoFromTags();
+                            
+                            String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0010");
+                            String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0011");
+                            if (rowStr != null && colStr != null) {
+                                int rows = Integer.parseInt(rowStr);
+                                int cols = Integer.parseInt(colStr);
+                                extents = new int[] {cols, rows};
+                                spectroscopyHeaderList[0].setExtents(extents);
+                            }
+                        }
+                    }
+                    
+                    srcImage = new ModelImage(spectroscopyHeaderList[0].getDataType(), extents, file.getName());
+                    srcImage.setFileInfo(spectroscopyHeaderList);
+                    
+                    ModelImage blankImg = ViewUserInterface.getReference().createBlankImage(spectroscopyHeaderList[0], false, false);
+
+                    previewImg = new ViewJComponentPreviewImage(blankImg, extents, owner);
+                    int slice = 0;
+                    previewImg.createImg(slice);
+
+                    previewImgPanel.removeAll();
+                    previewImgPanel.repaint();
+
+                    previewImgPanel.add(previewImg);
+
+                    addedPreviewImage = true;
+
+//                    ModelImage thumbnailImage = createThumbnailImage(srcImage);
+
+                    if (launchedFromInProcessState) {
+                        final int selectedRow = structTable.getSelectedRow();
+                        previewImages.set(selectedRow, previewImg);
+                        previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
+
+                        ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(spectroscopyHeaderList),
+                                spectroscopyHeaderList[0].getFileFormat(), null);
+
+                        structRowImgFileInfoList.set(selectedRow, imgInfo);
+                    } else {
+                        final int size = previewImages.size();
+                        previewImages.set(size - 1, previewImg);
+                        previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
+
+                        ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(spectroscopyHeaderList),
+                                spectroscopyHeaderList[0].getFileFormat(), null);
+
+                        structRowImgFileInfoList.set(size - 1, imgInfo);
+                    }
+
+                    previewImgPanel.validate();
+                    previewImgPanel.repaint();
                 }
-
-                // cleanup thumbnail modelimage
-                if (thumbnailImage != null) {
-                    thumbnailImage.disposeLocal();
-                    thumbnailImage = null;
-                }
-
-                previewImgPanel.validate();
-                previewImgPanel.repaint();
-
             } catch (final FileNotFoundException e) {
                 MipavUtil.displayError("The system cannot find the file specified: " + imageFile);
                 e.printStackTrace();
@@ -6354,562 +6547,41 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         public int determineImageHeaderDescrepencies(final ModelImage img, final ArrayList<String> repeatValues) {
-            final float[] res = img.getResolutions(0);
-            final int[] units = img.getUnitsOfMeasure();
-            final int exts[] = img.getExtents();
-            final int nDims = img.getNDims();
-            int modality = img.getFileInfo(0).getModality();
-            String modalityString = FileInfoBase.getModalityStr(modality);
-            final float sliceThickness = img.getFileInfo(0).getSliceThickness();
-            final int orient = img.getFileInfo(0).getImageOrientation();
-            final String orientation = FileInfoBase.getImageOrientationStr(orient);
-
-            final int fileFormatInt = img.getFileInfo(0).getFileFormat();
-            final String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
-            
-            modality = determineModality(modality, dataStructureName);
-            modalityString = FileInfoBase.getModalityStr(modality);
+            HashMap<String, String> extractedFields = extractHeaderInfo(img, img.getFileInfo(0));
 
             final ArrayList<String> csvFList = new ArrayList<String>();
             final ArrayList<String> csvPList = new ArrayList<String>();
             final ArrayList<String> headerList = new ArrayList<String>();
 
-            String ageVal = null;
-            String siteName = null;
-            String visitDate = null;
-            String visitTime = null;
-            String sliceOversample = null;
-            String gap = null;
-            String bodyPart = null;
-
-            String fieldOfView = null;
-            String manufacturer = null;
-            String softwareVersion = null;
-            String patientPosition = null;
-
-            String scannerModel = null;
-            String bandwidth = null;
-
-            String scanOptions = null;
-            String flowCompensation = null;
-
-            String patientName = null;
-            String patientID = null;
-
-            String echoTime = null;
-            String repetitionTime = null;
-            String magneticFieldStrength = null;
-            String flipAngle = null;
-
-            String mriT1T2Name = null;
-            String inversionTime = null;
-            String echoTrainMeas = null;
-            String phaseEncode = null;
-            String numAverages = null;
-            String receiveCoilName = null;
-
-            String manuf = null;
-            String model = null;
-            String scannerVer = null;
-
-            String contrastAgent = null;
-            String contrastMethod = null;
-            String contrastTime = null;
-            String contrastDose = null;
-            String contrastRate = null;
-            String contrastUsedInd = null;
-            boolean contrastUsed = false;
-
-            String ctKVP = null;
-            String ctMA = null;
-
-            String seriesDescription = null;
-            boolean isRestingFMRI = false;
-
-            String unit4DType = null;
-            if (units.length > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
-                unit4DType = "Time";
-            }
-
-            if (fileFormatString.equalsIgnoreCase("dicom")) {
-                final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
-
-                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
-                // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
-                if (isValueSet(ageVal) && ageVal.equalsIgnoreCase("135Y")) {
-                    ageVal = null;
-                }
-                siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
-                if (isValueSet(siteName) && siteName.trim().equalsIgnoreCase("Institution")) {
-                    siteName = "";
-                }
-                visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
-                visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
-                sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
-                gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
-                bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
-
-                fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-                manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
-                softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
-                patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
-
-                scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
-                bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
-
-                patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
-                patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
-
-                contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
-                contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
-                if (isValueSet(contrastMethod)) {
-                    System.err.println(patientName + "\tContrast route: " + contrastMethod);
-                    if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
-                        contrastMethod = "Infusion";
-                    }
-                }
-                contrastTime = (String) (fileInfoDicom.getTagTable().getValue("0018,1042"));
-                if (isValueSet(contrastTime) && isValueSet(visitDate)) {
-                    contrastTime = convertDateTimeToISOFormat(visitDate, contrastTime);
-                }
-                contrastDose = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
-                contrastRate = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
-
-                if (isValueSet(contrastAgent) || isValueSet(contrastMethod) || isValueSet(contrastTime) || isValueSet(contrastDose) || isValueSet(contrastRate)) {
-                    contrastUsedInd = "Yes";
-                    contrastUsed = true;
-                }
-
-                if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-                    seriesDescription = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
-                    if (isValueSet(seriesDescription) && seriesDescription.toLowerCase().contains("rest")) {
-                        isRestingFMRI = true;
-                    }
-
-                    echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
-                    repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
-                    magneticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
-                    flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
-
-                    mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
-                    inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
-                    echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
-                    phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
-                    numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
-                    receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
-
-                    scanOptions = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
-                    // FC ==> flow compensation
-                    if (isValueSet(scanOptions) && scanOptions.contains("FC")) {
-                        flowCompensation = "Yes";
-                    }
-                } else if (modalityString.equalsIgnoreCase("computed tomography")) {
-                    ctKVP = (String) (fileInfoDicom.getTagTable().getValue("0018,0060"));
-                    ctMA = (String) (fileInfoDicom.getTagTable().getValue("0018,1151"));
-                }
-            } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
-                final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
-
-                final String description = fileInfoNifti.getDescription();
-
-                manuf = convertNiftiDescToBRICSManuf(description);
-                model = convertNiftiDescToBRICSModel(description);
-                scannerVer = convertNiftiDescToBRICSVer(description);
-            }
-
             for (int i = 0; i < csvFieldNames.size(); i++) {
+                String fieldNameWithGroup = csvFieldNames.get(i);
+                String csvVal = repeatValues.get(i).trim();
+                
+                String groupName = getFieldGroup(fieldNameWithGroup);
+                String fieldName = getFieldName(fieldNameWithGroup);
 
-                if ( !repeatValues.get(i).trim().equals("")) {
-                    // TODO: switch to helper method - checkElementDescrepancy
-                    if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDimensionTyp")) {
-                        if ( !repeatValues.get(i).trim().equals(String.valueOf(nDims) + "D") && String.valueOf(nDims) != null) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(nDims));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ExtentVal") && exts.length > 0
-                            && String.valueOf(exts[0]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[0])) {
-
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(exts[0]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ExtentVal") && exts.length > 1
-                            && String.valueOf(exts[1]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[1])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(exts[1]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ExtentVal") && exts.length > 2
-                            && String.valueOf(exts[2]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[2])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(exts[2]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ExtentVal") && exts.length > 3
-                            && String.valueOf(exts[3]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[3])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(exts[3]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ExtentVal") && exts.length > 4
-                            && String.valueOf(exts[4]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[4])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(exts[4]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ExtentTyp") && units.length > 3
-                            && unit4DType != null) {
-                        if ( !repeatValues.get(i).trim().equals(unit4DType)) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(unit4DType);
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1UoMVal") && units.length > 0
-                            && Unit.getUnitFromLegacyNum(units[0]) != null) {
-                        if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[0]).toString())) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(Unit.getUnitFromLegacyNum(units[0]).toString());
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2UoMVal") && units.length > 1
-                            && Unit.getUnitFromLegacyNum(units[1]) != null) {
-                        if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[1]).toString())) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(Unit.getUnitFromLegacyNum(units[1]).toString());
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3UoMVal") && units.length > 2
-                            && Unit.getUnitFromLegacyNum(units[2]) != null) {
-                        if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[2]).toString())) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(Unit.getUnitFromLegacyNum(units[2]).toString());
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4UoMVal") && units.length > 3
-                            && Unit.getUnitFromLegacyNum(units[3]) != null) {
-                        if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[3]).toString())) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(Unit.getUnitFromLegacyNum(units[3]).toString());
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5UoMVal") && units.length > 4
-                            && Unit.getUnitFromLegacyNum(units[4]) != null) {
-                        if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[4]).toString())) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(Unit.getUnitFromLegacyNum(units[4]).toString());
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ResolVal") && res.length > 0
-                            && String.valueOf(res[0]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[0])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(res[0]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ResolVal") && res.length > 1
-                            && String.valueOf(res[1]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[1])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(res[1]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ResolVal") && res.length > 2
-                            && String.valueOf(res[2]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[2])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(res[2]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ResolVal") && res.length > 3
-                            && String.valueOf(res[3]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[3])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(res[3]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ResolVal") && res.length > 4
-                            && String.valueOf(res[4]) != null) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[4])) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(res[4]));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgModltyTyp") && isValueSet(modalityString)) {
-                        if ( !repeatValues.get(i).trim().equals(convertModalityToBRICS(modalityString, contrastUsed))) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(convertModalityToBRICS(modalityString, contrastUsed));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgSliceThicknessVal")
-                            && String.valueOf(sliceThickness) != null && sliceThickness != 0) {
-                        if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == sliceThickness)) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(String.valueOf(sliceThickness));
-                        }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgSliceOrientTyp") && isValueSet(orientation)) {
-                        if ( !repeatValues.get(i).trim().equals(orientation)) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(orientation);
-                        }
-                    }
-
-                    if (fileFormatString.equalsIgnoreCase("dicom")) {
-                        if (csvFieldNames.get(i).equalsIgnoreCase("Main.AgeVal") && isValueSet(ageVal)) {
-                            final String ageInMonths = convertDicomAgeToBRICS(ageVal);
-
-                            if ( !repeatValues.get(i).trim().equals(ageInMonths)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(ageInMonths);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.AgeYrs") && isValueSet(ageVal)) {
-                            final String ageInYears = String.valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
-                            if ( !repeatValues.get(i).trim().equals(ageInYears)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(ageInYears);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.VisitDate") && isValueSet(visitDate)) {
-                            if ( !repeatValues.get(i).trim().equals(visitDate)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(visitDate);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.SiteName") && isValueSet(siteName)) {
-                            if ( !repeatValues.get(i).trim().equals(siteName)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(siteName);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgStdyDateTime")
-                                && (isValueSet(visitDate) || isValueSet(visitTime))) {
-                            if ( !repeatValues.get(i).trim().equals(convertDateTimeToISOFormat(visitDate, visitTime))) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(convertDateTimeToISOFormat(visitDate, visitTime));
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgSliceOverSampVal")
-                                && isValueSet(sliceOversample)) {
-                            if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(sliceOversample)))) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(sliceOversample);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgGapBetwnSlicesMeasr") && isValueSet(gap)) {
-                            if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(gap)))) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(gap);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgAntmicSite") && isValueSet(bodyPart)) {
-                            if ( !repeatValues.get(i).trim().equals(bodyPart)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(bodyPart);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgFOVMeasrDescTxt")
-                                && isValueSet(fieldOfView)) {
-                            if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(fieldOfView)))) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(fieldOfView);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerManufName") && isValueSet(manufacturer)) {
-                            if ( !convertManufNameToBRICS(manufacturer).equals(repeatValues.get(i).trim())) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(convertManufNameToBRICS(manufacturer));
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerSftwrVrsnNum") && isValueSet(softwareVersion)) {
-                            if ( !repeatValues.get(i).trim().equals(softwareVersion)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(softwareVersion);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgHeadPostnTxt") && isValueSet(patientPosition)) {
-                            if ( !repeatValues.get(i).trim().equals(patientPosition)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(patientPosition);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerModelName") && isValueSet(scannerModel)) {
-                            if ( !repeatValues.get(i).trim().equals(convertModelNameToBRICS(scannerModel))) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(convertModelNameToBRICS(scannerModel));
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgBandwidthVal") && isValueSet(bandwidth)) {
-                            if ( !repeatValues.get(i).trim().equals(bandwidth)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(bandwidth);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.GUID")) {
-                            if (isValueSet(patientID) && isGuid(patientID)) {
-                                if ( !repeatValues.get(i).trim().equals(patientID)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(patientID);
-                                }
-                            } else if (isValueSet(patientName) && isGuid(patientName)) {
-                                if ( !repeatValues.get(i).trim().equals(patientID)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(patientID);
+                if ( !csvVal.equals("")) {
+                    if (extractedFields.containsKey(fieldName)) {
+                        String extractedVal = extractedFields.get(fieldName);
+                        
+                        if (isValueSet(extractedVal)) {
+                            if (!csvVal.equalsIgnoreCase(extractedVal)) {
+                                // some float fields entered as ints need to be parsed
+                                try {
+                                    float val = Float.parseFloat(csvVal);
+                                    if (!String.valueOf(val).equalsIgnoreCase(extractedVal)) {
+                                        // mismatched numbers, add to conflict list
+                                        csvFList.add(fieldName);
+                                        csvPList.add(csvVal);
+                                        headerList.add(extractedVal);
+                                    }
+                                } catch (NumberFormatException e) {
+                                    // not a number, so add to conflict list
+                                    csvFList.add(fieldName);
+                                    csvPList.add(csvVal);
+                                    headerList.add(extractedVal);
                                 }
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentUsedInd") && isValueSet(contrastUsedInd)) {
-                            if ( !repeatValues.get(i).trim().equals(contrastUsedInd)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(contrastUsedInd);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentName") && isValueSet(contrastAgent)) {
-                            if ( !repeatValues.get(i).trim().equals(contrastAgent)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(contrastAgent);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentMethodTyp") && isValueSet(contrastAgent)) {
-                            if ( !repeatValues.get(i).trim().equals(contrastAgent)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(contrastAgent);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentInjctnTime") && isValueSet(contrastTime)) {
-                            if ( !repeatValues.get(i).trim().equals(contrastTime)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(contrastTime);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentDose") && isValueSet(contrastDose)) {
-                            if ( !repeatValues.get(i).trim().equals(contrastDose)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(contrastDose);
-                            }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentRate") && isValueSet(contrastRate)) {
-                            if ( !repeatValues.get(i).trim().equals(contrastRate)) {
-                                csvFList.add(csvFieldNames.get(i));
-                                csvPList.add(repeatValues.get(i));
-                                headerList.add(contrastRate);
-                            }
-                        }
-
-                        if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-                            if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgEchoDur") && isValueSet(echoTime)) {
-                                if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(echoTime)))) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(echoTime);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgRepetitionGapVal")
-                                    && isValueSet(repetitionTime)) {
-
-                                if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(repetitionTime)))) {
-
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(repetitionTime);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgScannerStrgthVal")
-                                    && isValueSet(magneticFieldStrength)) {
-                                if ( !repeatValues.get(i).trim().equals(convertMagFieldStrengthToBRICS(magneticFieldStrength))) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(convertMagFieldStrengthToBRICS(magneticFieldStrength));
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgFlipAngleMeasr") && isValueSet(flipAngle)) {
-                                if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(flipAngle)))) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(flipAngle);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgMRIT1T2SeqName") && isValueSet(mriT1T2Name)) {
-                                if ( !repeatValues.get(i).trim().equals(mriT1T2Name)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(mriT1T2Name);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgInversionTime") && isValueSet(inversionTime)) {
-                                if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(inversionTime)))) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(inversionTime);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgEchoTrainLngthMeasr")
-                                    && isValueSet(echoTrainMeas)) {
-                                if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(echoTrainMeas)))) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(echoTrainMeas);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgPhasEncdeDirctTxt") && isValueSet(phaseEncode)) {
-                                if ( !repeatValues.get(i).trim().equals(phaseEncode)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(phaseEncode);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgSignalAvgNum") && isValueSet(numAverages)) {
-                                if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(numAverages)))) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(numAverages);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance RF Coil.ImgRFCoilName") && isValueSet(receiveCoilName)) {
-                                if ( !repeatValues.get(i).trim().equals(receiveCoilName)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(receiveCoilName);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgFlowCompnsatnInd")
-                                    && isValueSet(flowCompensation)) {
-                                if ( !repeatValues.get(i).trim().equals(flowCompensation)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(flowCompensation);
-                                }
-                            }
-
-                            // TODO add in handling of FMRI pulse seq and Resting state task type
-                        } else if (modalityString.equalsIgnoreCase("computed tomography")) {
-                            if (csvFieldNames.get(i).equalsIgnoreCase("CT Information.ImgCTkVp") && isValueSet(ctKVP)) {
-                                if ( !repeatValues.get(i).trim().equals(ctKVP)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(ctKVP);
-                                }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("CT Information.ImgCTmA") && isValueSet(ctMA)) {
-                                if ( !repeatValues.get(i).trim().equals(ctMA)) {
-                                    csvFList.add(csvFieldNames.get(i));
-                                    csvPList.add(repeatValues.get(i));
-                                    headerList.add(ctMA);
-                                }
-                            }
-                        }
-                    } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                        if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerManufName") && isValueSet(manuf)) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(manuf);
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerModelName") && isValueSet(model)) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(model);
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerSftwrVrsnNum") && isValueSet(scannerVer)) {
-                            csvFList.add(csvFieldNames.get(i));
-                            csvPList.add(repeatValues.get(i));
-                            headerList.add(scannerVer);
                         }
                     }
                 }
@@ -6958,349 +6630,291 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         /**
-         * prepopulates some of the fields with info from image header
+         * Populates some of the fields with info from image header
          */
-        public void populateFields(final FormStructureData fsData, final ModelImage img) {
-            final float[] res = img.getResolutions(0);
-            final int[] units = img.getUnitsOfMeasure();
-            final int exts[] = img.getExtents();
-            int modality = img.getFileInfo(0).getModality();
-            String modalityString = FileInfoBase.getModalityStr(modality);
-            final int fileFormatInt = img.getFileInfo(0).getFileFormat();
-
-            String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
-            if (fileFormatString.equalsIgnoreCase("xml")) {
-                fileFormatString = "mipav xml";
-            } else if (fileFormatString.equalsIgnoreCase("mat")) {
-                fileFormatString = "matlab";
-            }
+        public void populateFields(final FormStructureData fsData, final ModelImage img, final FileInfoBase fInfo) {
+            HashMap<String, String> extractedFields = extractHeaderInfo(img, fInfo);
             
-            modality = determineModality(modality, dataStructureName);
-            modalityString = FileInfoBase.getModalityStr(modality);
-
-            final float sliceThickness = img.getFileInfo(0).getSliceThickness();
-            final int orient = img.getFileInfo(0).getImageOrientation();
-            final String orientation = FileInfoBase.getImageOrientationStr(orient);
-
-            String ageVal = null;
-            String siteName = null;
-            String visitDate = null;
-            String visitTime = null;
-            String sliceOversample = null;
-            String gap = null;
-            String bodyPart = null;
-
-            String fieldOfView = null;
-            String manufacturer = null;
-            String softwareVersion = null;
-            String patientPosition = null;
-
-            String scannerModel = null;
-            String bandwidth = null;
-
-            String scanOptions = null;
-            String flowCompensation = null;
-
-            String patientName = null;
-            String patientID = null;
-
-            String echoTime = null;
-            String repetitionTime = null;
-            String magnaticFieldStrength = null;
-            String flipAngle = null;
-
-            String mriT1T2Name = null;
-            String inversionTime = null;
-            String echoTrainMeas = null;
-            String phaseEncode = null;
-            String numAverages = null;
-            String receiveCoilName = null;
-
-            String manuf = null;
-            String model = null;
-            String scannerVer = null;
-
-            String contrastAgent = null;
-            String contrastMethod = null;
-            String contrastTime = null;
-            String contrastDose = null;
-            String contrastRate = null;
-            String contrastUsedInd = null;
-            boolean contrastUsed = false;
-
-            String ctKVP = null;
-            String ctMA = null;
-
-            String seriesDescription = null;
-            boolean isRestingFMRI = false;
-
-            if (fileFormatString.equalsIgnoreCase("dicom")) {
-                final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
-
-                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
-                // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
-                if (isValueSet(ageVal) && ageVal.equalsIgnoreCase("135Y")) {
-                    ageVal = null;
-                }
-                siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
-                if (isValueSet(siteName) && siteName.trim().equalsIgnoreCase("Institution")) {
-                    siteName = "";
-                }
-                visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
-                visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
-                sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
-                gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
-                bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
-
-                fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-                manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
-                softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
-                patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
-
-                scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
-                bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
-
-                patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
-                patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
-
-                contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
-                contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
-                if (isValueSet(contrastMethod)) {
-                    System.err.println(patientName + "\tContrast route: " + contrastMethod);
-                    if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
-                        contrastMethod = "Infusion";
-                    }
-                }
-                contrastTime = (String) (fileInfoDicom.getTagTable().getValue("0018,1042"));
-                if (isValueSet(contrastTime) && isValueSet(visitDate)) {
-                    contrastTime = convertDateTimeToISOFormat(visitDate, contrastTime);
-                }
-                contrastDose = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
-                contrastRate = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
-
-                if (isValueSet(contrastAgent) || isValueSet(contrastMethod) || isValueSet(contrastTime) || isValueSet(contrastDose) || isValueSet(contrastRate)) {
-                    contrastUsedInd = "Yes";
-                    contrastUsed = true;
-                }
-
-                if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-                    seriesDescription = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
-                    if (isValueSet(seriesDescription) && seriesDescription.toLowerCase().contains("rest")) {
-                        isRestingFMRI = true;
-                    }
-
-                    echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
-                    repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
-                    magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
-                    flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
-
-                    mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
-                    inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
-                    echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
-                    phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
-                    numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
-                    receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
-
-                    scanOptions = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
-                    // FC ==> flow compensation
-                    if (isValueSet(scanOptions) && scanOptions.contains("FC")) {
-                        flowCompensation = "Yes";
-                    }
-                } else if (modalityString.equalsIgnoreCase("computed tomography")) {
-                    ctKVP = (String) (fileInfoDicom.getTagTable().getValue("0018,0060"));
-                    ctMA = (String) (fileInfoDicom.getTagTable().getValue("0018,1151"));
-                }
-            } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
-                final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
-                final String description = fileInfoNifti.getDescription();
-
-                manuf = convertNiftiDescToBRICSManuf(description);
-                model = convertNiftiDescToBRICSModel(description);
-                scannerVer = convertNiftiDescToBRICSVer(description);
-            }
-
             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                 for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
                     for (final DataElementValue deVal : repeat.getDataElements()) {
                         final String deName = deVal.getName();
 
-                        if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
-                            setElementComponentValue(deVal, exts.length + "D");
-                        } else if (deName.equalsIgnoreCase("ImgDim1ExtentVal")) {
-                            setElementComponentValue(deVal, String.valueOf(exts[0]));
-                        } else if (deName.equalsIgnoreCase("ImgDim2ExtentVal")) {
-                            setElementComponentValue(deVal, String.valueOf(exts[1]));
-                        } else if (deName.equalsIgnoreCase("ImgDim3ExtentVal")) {
-                            if (img.getNDims() > 2) {
-                                setElementComponentValue(deVal, String.valueOf(exts[2]));
-                            }
-                        } else if (deName.equalsIgnoreCase("ImgDim4ExtentVal")) {
-                            if (img.getNDims() > 3) {
-                                setElementComponentValue(deVal, String.valueOf(exts[3]));
-                            }
-                        } else if (deName.equalsIgnoreCase("ImgDim5ExtentVal")) {
-                            // for now...nothing
-                        } else if (deName.equalsIgnoreCase("ImgDim1UoMVal")) {
-                            setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[0]).toString());
-                        } else if (deName.equalsIgnoreCase("ImgDim2UoMVal")) {
-                            setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[1]).toString());
-                        } else if (deName.equalsIgnoreCase("ImgDim3UoMVal")) {
-                            if (img.getNDims() > 2) {
-                                setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[2]).toString());
-                            }
-                        } else if (deName.equalsIgnoreCase("ImgDim4UoMVal")) {
-                            if (img.getNDims() > 3) {
-                                setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[3]).toString());
-                            }
-                        } else if (deName.equalsIgnoreCase("ImgDim5UoMVal")) {
-                            // for now...nothing
-                        } else if (deName.equalsIgnoreCase("ImgDim4ExtentTyp")) {
-                            if (img.getNDims() > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
-                                setElementComponentValue(deVal, "Time");
-                            }
-                        } else if (deName.equalsIgnoreCase("ImgDim1ResolVal")) {
-                            setElementComponentValue(deVal, String.valueOf(res[0]));
-                        } else if (deName.equalsIgnoreCase("ImgDim2ResolVal")) {
-                            setElementComponentValue(deVal, String.valueOf(res[1]));
-                        } else if (deName.equalsIgnoreCase("ImgDim3ResolVal")) {
-                            if (img.getNDims() > 2) {
-                                setElementComponentValue(deVal, String.valueOf(res[2]));
-                            }
-                        } else if (deName.equalsIgnoreCase("ImgDim4ResolVal")) {
-                            if (img.getNDims() > 3) {
-                                setElementComponentValue(deVal, String.valueOf(res[3]));
-                            }
-                        } else if (deName.equalsIgnoreCase("ImgDim5ResolVal")) {
-                            // for now...nothing
-                        } else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
-                            setElementComponentValue(deVal, convertModalityToBRICS(modalityString, contrastUsed));
-                        } else if (deName.equalsIgnoreCase("ImgFileFormatTyp")) {
-                            setElementComponentValue(deVal, fileFormatString);
-                        } else if (deName.equalsIgnoreCase("ImgSliceThicknessVal")) {
-                            String thicknessStr = "";
-                            if (sliceThickness > 0) {
-                                thicknessStr = String.valueOf(sliceThickness);
-                            }
-                            setElementComponentValue(deVal, thicknessStr);
-                        } else if (deName.equalsIgnoreCase("ImgSliceOrientTyp")) {
-                            setElementComponentValue(deVal, orientation);
-                        }
-
-                        if (fileFormatString.equalsIgnoreCase("dicom")) {
-                            if (deName.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
-                                final String ageInMonths = convertDicomAgeToBRICS(ageVal);
-                                if (Float.parseFloat(ageInMonths) != 0) {
-                                    setElementComponentValue(deVal, ageInMonths);
-                                }
-                            } else if (deName.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
-                                final String ageMonthsStr = convertDicomAgeToBRICS(ageVal);
-                                if (ageMonthsStr != null && !ageMonthsStr.trim().equals("")) {
-                                    final Integer ageInMonths = Integer.valueOf(ageMonthsStr);
-                                    if (ageInMonths != 0) {
-                                        final String ageInYears = String.valueOf(ageInMonths / 12);
-                                        setElementComponentValue(deVal, ageInYears);
-                                    }
-                                }
-                            } else if (deName.equalsIgnoreCase("SiteName")) {
-                                setElementComponentValue(deVal, siteName);
-                            } else if (deName.equalsIgnoreCase("VisitDate")) {
-                                setElementComponentValue(deVal, convertDateToISOFormat(visitDate));
-                            } else if (deName.equalsIgnoreCase("ImgAntmicSite")) {
-                                setElementComponentValue(deVal, bodyPart);
-                            } else if (deName.equalsIgnoreCase("ImgStdyDateTime")) {
-                                setElementComponentValue(deVal, convertDateTimeToISOFormat(visitDate, visitTime));
-                            } else if (deName.equalsIgnoreCase("ImgSliceOverSampVal")) {
-                                setElementComponentValue(deVal, sliceOversample);
-                            } else if (deName.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) {
-                                setElementComponentValue(deVal, gap);
-                            } else if (deName.equalsIgnoreCase("ImgFOVMeasrDescTxt")) {
-                                setElementComponentValue(deVal, fieldOfView);
-                            } else if (deName.equalsIgnoreCase("ImgScannerManufName")) {
-                                setElementComponentValue(deVal, convertManufNameToBRICS(manufacturer));
-                            } else if (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
-                                setElementComponentValue(deVal, softwareVersion);
-                            } else if (deName.equalsIgnoreCase("ImgHeadPostnTxt")) {
-                                setElementComponentValue(deVal, patientPosition);
-                            } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
-                                setElementComponentValue(deVal, convertModelNameToBRICS(scannerModel));
-                            } else if (deName.equalsIgnoreCase("ImgBandwidthVal")) {
-                                setElementComponentValue(deVal, bandwidth);
-                            } else if (deName.equalsIgnoreCase("GUID")) {
-                                if (isGuid(patientID)) {
-                                    setElementComponentValue(deVal, patientID);
-                                } else if (isGuid(patientName)) {
-                                    setElementComponentValue(deVal, patientName);
-                                }
-                            } else if (deName.equalsIgnoreCase("ImgContrastAgentUsedInd")) {
-                                setElementComponentValue(deVal, contrastUsedInd);
-                            } else if (deName.equalsIgnoreCase("ImgContrastAgentName")) {
-                                setElementComponentValue(deVal, contrastAgent);
-                            } else if (deName.equalsIgnoreCase("ImgContrastAgentMethodTyp")) {
-                                setElementComponentValue(deVal, contrastMethod);
-                            } else if (deName.equalsIgnoreCase("ImgContrastAgentInjctnTime")) {
-                                setElementComponentValue(deVal, contrastTime);
-                            } else if (deName.equalsIgnoreCase("ImgContrastAgentDose")) {
-                                setElementComponentValue(deVal, contrastDose);
-                            } else if (deName.equalsIgnoreCase("ImgContrastAgentRate")) {
-                                setElementComponentValue(deVal, contrastRate);
-                            }
-
-                            if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-                                if (deName.equalsIgnoreCase("ImgEchoDur")) {
-                                    setElementComponentValue(deVal, echoTime);
-                                } else if (deName.equalsIgnoreCase("ImgRepetitionGapVal")) {
-                                    setElementComponentValue(deVal, repetitionTime);
-                                } else if (deName.equalsIgnoreCase("ImgScannerStrgthVal")) {
-                                    setElementComponentValue(deVal, convertMagFieldStrengthToBRICS(magnaticFieldStrength));
-                                } else if (deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) {
-                                    setElementComponentValue(deVal, mriT1T2Name);
-                                } else if (deName.equalsIgnoreCase("ImgSignalAvgNum")) {
-                                    setElementComponentValue(deVal, numAverages);
-                                } else if (deName.equalsIgnoreCase("ImgFlipAngleMeasr")) {
-                                    setElementComponentValue(deVal, flipAngle);
-                                } else if (deName.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) {
-                                    setElementComponentValue(deVal, echoTrainMeas);
-                                } else if (deName.equalsIgnoreCase("ImgInversionTime")) {
-                                    setElementComponentValue(deVal, inversionTime);
-                                } else if (deName.equalsIgnoreCase("ImgRFCoilName")) {
-                                    setElementComponentValue(deVal, receiveCoilName);
-                                } else if (deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
-                                    setElementComponentValue(deVal, phaseEncode);
-                                } else if (deName.equalsIgnoreCase("ImgFlowCompnsatnInd")) {
-                                    setElementComponentValue(deVal, flowCompensation);
-                                }
-
-                                // ImagingFunctionalMR FS
-                                if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
-                                    if (fsData.getStructInfo().getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
-                                        setElementComponentValue(deVal, "fMRI");
-                                    }
-                                } else if (deName.equalsIgnoreCase("ImgFMRITaskTyp")) {
-                                    if (isRestingFMRI) {
-                                        setElementComponentValue(deVal, "Rest");
-                                    }
-                                }
-                            } else if (modalityString.equalsIgnoreCase("computed tomography")) {
-                                if (deName.equalsIgnoreCase("ImgCTkVp")) {
-                                    setElementComponentValue(deVal, ctKVP);
-                                } else if (deName.equalsIgnoreCase("ImgCTmA")) {
-                                    setElementComponentValue(deVal, ctMA);
-                                }
-                            }
-                        } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                            if (deName.equalsIgnoreCase("ImgScannerManufName")) {
-                                setElementComponentValue(deVal, manuf);
-                            } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
-                                setElementComponentValue(deVal, model);
-                            } else if (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
-                                setElementComponentValue(deVal, scannerVer);
+                        // if any format-specific field values were found, map them onto the given data element
+                        if (extractedFields != null && extractedFields.containsKey(deName)) {
+                            String extVal = extractedFields.get(deName);
+                            if (isValueSet(extVal)) {
+                                setElementComponentValue(deVal, extVal);
                             }
                         }
                     }
                 }
             }
+        }
+        
+        private HashMap<String, String> extractHeaderInfo(ModelImage img, FileInfoBase fInfo) {
+            HashMap<String, String> extractedFields = new HashMap<String, String>();
+            
+            if (isDicomFormat(fInfo)) {
+                FileInfoDicom fileInfoDicom = (FileInfoDicom) fInfo;
+                
+                extractDicomHeaderInfo(extractedFields, fileInfoDicom);
+                
+                extractDicomMRHeaderInfo(extractedFields, fileInfoDicom);
+                
+                extractDicomCTHeaderInfo(extractedFields, fileInfoDicom);
+            } else if (isNiftiFormat(fInfo)) {
+                extractNiftiHeaderInfo(extractedFields, (FileInfoNIFTI) fInfo);
+            }
+            
+            // extract basic info after formats so that contrast info can be used for modality options
+            extractBasicHeaderInfo(extractedFields, img, fInfo);
+            
+            return extractedFields;
+        }
+        
+        private void extractBasicHeaderInfo(HashMap<String, String> extractedFields, ModelImage img, FileInfoBase fInfo) {
+            int[] exts = null;
+            if (img != null) {
+                exts = img.getExtents();
+            } else {
+                exts = fInfo.getExtents();
+            }
+            
+            final float[] res = fInfo.getResolutions();
+            final int[] units = fInfo.getUnitsOfMeasure();
+
+            final float sliceThickness = fInfo.getSliceThickness();
+            final int orient = fInfo.getImageOrientation();
+            final String orientStr = FileInfoBase.getImageOrientationStr(orient);
+            
+            String fileFormatString = getFileFormatString(fInfo);
+            String modalityString = getModalityString(fInfo, dataStructureName);
+            
+            boolean contrastUsed = false;
+            if (extractedFields != null && extractedFields.containsKey("ImgContrastAgentUsedInd")) {
+                contrastUsed = extractedFields.get("ImgContrastAgentUsedInd").equalsIgnoreCase("Yes");
+            }
+            
+            if (exts != null) {
+                extractedFields.put("ImgDimensionTyp", exts.length + "D");
+                extractedFields.put("ImgDim1ExtentVal", String.valueOf(exts[0]));
+                extractedFields.put("ImgDim2ExtentVal", String.valueOf(exts[1]));
+                if (exts.length > 2) {
+                    extractedFields.put("ImgDim3ExtentVal", String.valueOf(exts[2]));
+                }
+                if (exts.length > 3) {
+                    extractedFields.put("ImgDim4ExtentVal", String.valueOf(exts[3]));
+                }
+//                extractedFields.put("ImgDim5ExtentVal", String.valueOf(exts[4]));
+            }
+            
+            if (exts != null && units != null) {
+                extractedFields.put("ImgDim1UoMVal", Unit.getUnitFromLegacyNum(units[0]).toString());
+                extractedFields.put("ImgDim2UoMVal", Unit.getUnitFromLegacyNum(units[1]).toString());
+                if (exts.length > 2) {
+                    extractedFields.put("ImgDim3UoMVal", Unit.getUnitFromLegacyNum(units[2]).toString());
+                }
+                if (exts.length > 3) {
+                    extractedFields.put("ImgDim4UoMVal", Unit.getUnitFromLegacyNum(units[3]).toString());
+                }
+//                extractedFields.put("ImgDim5UoMVal", Unit.getUnitFromLegacyNum(units[4]).toString());
+                if (exts.length > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
+                    extractedFields.put("ImgDim4ExtentTyp", "Time");
+                }
+            }
+            
+            if (exts != null && res != null) {
+                extractedFields.put("ImgDim1ResolVal", String.valueOf(res[0]));
+                extractedFields.put("ImgDim2ResolVal", String.valueOf(res[1]));
+                if (exts.length > 2) {
+                    extractedFields.put("ImgDim3ResolVal", String.valueOf(res[2]));
+                }
+                if (exts.length > 3) {
+                    extractedFields.put("ImgDim4ResolVal", String.valueOf(res[3]));
+                }
+//                extractedFields.put("ImgDim5ResolVal", String.valueOf(res[4]));
+            }
+            
+            extractedFields.put("ImgModltyTyp", convertModalityToBRICS(modalityString, contrastUsed));
+            extractedFields.put("ImgFileFormatTyp", fileFormatString);
+            
+            if (sliceThickness > 0) {
+                extractedFields.put("ImgSliceThicknessVal", String.valueOf(sliceThickness));
+            }
+            
+            if (orient != FileInfoBase.UNKNOWN_ORIENT) {
+                extractedFields.put("ImgSliceOrientTyp", orientStr);
+            }
+        }
+        
+        private void extractDicomHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fInfo) {
+            final FileInfoDicom fileInfoDicom = (FileInfoDicom) fInfo;
+
+            String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
+            // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
+            if (isValueSet(ageVal) && ageVal.equalsIgnoreCase("135Y")) {
+                ageVal = null;
+            }
+            if (isValueSet(ageVal)) {
+                final float ageInMonths = Float.parseFloat(convertDicomAgeToBRICS(ageVal));
+                if (ageInMonths != 0) {
+                    final String ageInYears = String.valueOf(ageInMonths / 12);
+                    
+                    extractedFields.put("AgeVal", String.valueOf(ageInMonths));
+                    extractedFields.put("AgeYrs", ageInYears);
+                }
+            }
+            
+            String siteName = getTagValue(fileInfoDicom, "0008,0080");
+            // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
+            if (isValueSet(siteName) && siteName.trim().equalsIgnoreCase("Institution")) {
+                siteName = "";
+            }
+            extractedFields.put("SiteName", siteName);
+            
+            String visitDate = getTagValue(fileInfoDicom, "0008,0020");
+            extractedFields.put("VisitDate", convertDateToISOFormat(visitDate));
+            extractedFields.put("ImgStdyDateTime", convertDateTimeToISOFormat(visitDate, getTagValue(fileInfoDicom, "0008,0030")));
+            extractedFields.put("ImgSliceOverSampVal", getTagValue(fileInfoDicom, "0018,0093"));
+            extractedFields.put("ImgGapBetwnSlicesMeasr", getTagValue(fileInfoDicom, "0018,0088"));
+            extractedFields.put("ImgAntmicSite", convertDicomBodyPartToBRICS(getTagValue(fileInfoDicom, "0018,0015")));
+            
+            extractedFields.put("ImgFOVMeasrDescTxt", getTagValue(fileInfoDicom, "0018,1100"));
+            extractedFields.put("ImgScannerManufName", convertManufNameToBRICS(getTagValue(fileInfoDicom, "0008,0070")));
+            extractedFields.put("ImgScannerSftwrVrsnNum", getTagValue(fileInfoDicom, "0018,1020"));
+            extractedFields.put("ImgHeadPostnTxt", getTagValue(fileInfoDicom, "0018,5100"));
+            
+            extractedFields.put("ImgScannerModelName", convertModelNameToBRICS(getTagValue(fileInfoDicom, "0008,1090")));
+            extractedFields.put("ImgBandwidthVal", getTagValue(fileInfoDicom, "0018,0095"));
+            
+            String patientName = getTagValue(fileInfoDicom, "0010,0010");
+            String patientID = getTagValue(fileInfoDicom, "0010,0020");
+            if (isGuid(patientID)) {
+                extractedFields.put("GUID", patientID);
+            } else if (isGuid(patientName)) {
+                extractedFields.put("GUID", patientName);
+            }
+
+            String contrastAgent = getTagValue(fileInfoDicom, "0018,0010");
+            String contrastMethod = getTagValue(fileInfoDicom, "0018,1040");
+            if (isValueSet(contrastMethod)) {
+                //System.err.println(patientName + "\tContrast route: " + contrastMethod);
+                if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
+                    contrastMethod = "Infusion";
+                }
+            }
+            String contrastTime = getTagValue(fileInfoDicom, "0018,1042");
+            if (isValueSet(contrastTime) && isValueSet(visitDate)) {
+                contrastTime = convertDateTimeToISOFormat(visitDate, contrastTime);
+            }
+            String contrastDose = getTagValue(fileInfoDicom, "0018,1044");
+            String contrastRate = getTagValue(fileInfoDicom, "0018,1046");
+
+            if (isValueSet(contrastAgent) || isValueSet(contrastMethod) || isValueSet(contrastTime) || isValueSet(contrastDose) || isValueSet(contrastRate)) {
+                extractedFields.put("ImgContrastAgentUsedInd", "Yes");
+                extractedFields.put("ImgContrastAgentName", contrastAgent);
+                extractedFields.put("ImgContrastAgentMethodTyp", contrastMethod);
+                extractedFields.put("ImgContrastAgentInjctnTime", contrastTime);
+                extractedFields.put("ImgContrastAgentDose", contrastDose);
+                extractedFields.put("ImgContrastAgentRate", contrastRate);
+            }
+        }
+
+        private void extractDicomMRHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
+            if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName())) {
+                extractedFields.put("ImgEchoDur", getTagValue(fileInfoDicom, "0018,0081"));
+                extractedFields.put("ImgRepetitionGapVal", getTagValue(fileInfoDicom, "0018,0080"));
+                extractedFields.put("ImgScannerStrgthVal", convertMagFieldStrengthToBRICS(getTagValue(fileInfoDicom, "0018,0087")));
+                extractedFields.put("ImgFlipAngleMeasr", getTagValue(fileInfoDicom, "0018,1314"));
+                
+                extractedFields.put("ImgMRIT1T2SeqName", getTagValue(fileInfoDicom, "0018,0024"));
+                extractedFields.put("ImgInversionTime", getTagValue(fileInfoDicom, "0018,0082"));
+                extractedFields.put("ImgEchoTrainLngthMeasr", getTagValue(fileInfoDicom, "0018,0091"));
+                extractedFields.put("ImgPhasEncdeDirctTxt", getTagValue(fileInfoDicom, "0018,1312"));
+                extractedFields.put("ImgSignalAvgNum", getTagValue(fileInfoDicom, "0018,0083"));
+                extractedFields.put("ImgRFCoilName", getTagValue(fileInfoDicom, "0018,1250"));
+
+                String scanOptions = getTagValue(fileInfoDicom, "0018,0022");
+                // FC ==> flow compensation
+                if (isValueSet(scanOptions) && scanOptions.contains("FC")) {
+                    extractedFields.put("ImgFlowCompnsatnInd", "Yes");
+                }
+                
+                extractDicomDtiHeaderInfo(extractedFields, fileInfoDicom);
+                
+                extractDicomFMRIHeaderInfo(extractedFields, fileInfoDicom);
+                
+                extractDicomSpectroscopyHeaderInfo(extractedFields, fileInfoDicom);
+            }
+        }
+        
+        private void extractDicomSpectroscopyHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
+            if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isSpectroscopyImagingStructure(fsData.getStructInfo().getShortName())) {
+                // TODO
+                
+                String seriesDesc = getTagValue(fileInfoDicom, "0008,103E");
+                String protocolName = getTagValue(fileInfoDicom, "0018,1030");
+                
+                if ((isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("PRESS")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("PRESS"))) {
+                    extractedFields.put("ImgPulseSeqTyp", "PRESS");
+                } else if ((isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("ISIS")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("ISIS"))) {
+                    extractedFields.put("ImgPulseSeqTyp", "ISIS");
+                } else if ((isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("STEAM")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("STEAM"))) {
+                    extractedFields.put("ImgPulseSeqTyp", "STEAM");
+                }
+                
+                String baselineCorrection = getTagValue(fileInfoDicom, "0018,9067");
+                if (isValueSet(baselineCorrection)) {
+                    if (baselineCorrection.equalsIgnoreCase("yes")) {
+                        extractedFields.put("ImgB0SuscDistortCorrInd", "Yes");
+                    } else if (baselineCorrection.equalsIgnoreCase("none")) {
+                        extractedFields.put("ImgB0SuscDistortCorrInd", "No");
+                    }
+                }
+                
+                String waterRefPhaseCor = getTagValue(fileInfoDicom, "0018,9199");
+                String spectSelectedSuppr = getTagValue(fileInfoDicom, "0018,9025");
+                if ((isValueSet(waterRefPhaseCor) && waterRefPhaseCor.equalsIgnoreCase("yes")) || (isValueSet(spectSelectedSuppr) && spectSelectedSuppr.equalsIgnoreCase("water"))) {
+                    extractedFields.put("SpectroscopyPostPrResidWRemInd", "Yes");
+                }
+            }
+        }
+        
+        private void extractDicomDtiHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
+            if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
+                extractedFields.put("ImgPulseSeqTyp", "DTI");
+            
+                // TODO
+            }
+        }
+        
+        private void extractDicomFMRIHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
+            if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
+                extractedFields.put("ImgPulseSeqTyp", "fMRI");
+            
+                String seriesDescription = getTagValue(fileInfoDicom, "0008,103E");
+                if (isValueSet(seriesDescription) && seriesDescription.toLowerCase().contains("rest")) {
+                    extractedFields.put("ImgFMRITaskTyp", "Rest");
+                }
+            }
+        }
+        
+        private void extractDicomCTHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
+            if (isCTModality(fileInfoDicom, fsData.getStructInfo().getShortName())) {
+                extractedFields.put("ImgCTkVp", getTagValue(fileInfoDicom, "0018,0060"));
+                extractedFields.put("ImgCTmA", getTagValue(fileInfoDicom, "0018,1151"));
+            }
+        }
+        
+        private void extractNiftiHeaderInfo(HashMap<String, String> extractedFields, FileInfoNIFTI fInfo) {
+            // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
+            final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) fInfo;
+            final String description = fileInfoNifti.getDescription();
+
+            extractedFields.put("ImgScannerManufName", convertNiftiDescToBRICSManuf(description));
+            extractedFields.put("ImgScannerModelName", convertNiftiDescToBRICSModel(description));
+            extractedFields.put("ImgScannerSftwrVrsnNum", convertNiftiDescToBRICSVer(description));
         }
 
         /**
@@ -7433,6 +7047,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         ModelImage srcImage = null;
                         boolean isDeidentified = false;
+                        
+                        boolean isSpectroscopy = isSpectroscopyImagingStructure(dataStructureName);
+                        FileInfoBase[] spectroscopyHeaderList = null;
+                        
                         if (file.getName().endsWith(".zip") || file.getName().endsWith(".tar.gz") || file.getName().endsWith(".tgz")) {
                             // if the user selects a zip file containing a dataset, try to open it as if pointed to from
                             // CSV
@@ -7441,59 +7059,141 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             final FileIO fileIO = new FileIO();
                             fileIO.setQuiet(true);
 
-                            srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultiFile, null);
+                            if (!isSpectroscopy) {
+                                srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultiFile, null);
 
-                            final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
-
-                            previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
-                            int slice = 0;
-                            if ( !srcImage.is2DImage()) {
-                                slice = (srcImage.getExtents()[2] / 2);
-                            }
-                            previewImg.createImg(slice);
-
-                            previewImgPanel.removeAll();
-                            previewImgPanel.repaint();
-
-                            previewImgPanel.add(previewImg);
-
-                            addedPreviewImage = true;
-
-                            ModelImage thumbnailImage = createThumbnailImage(srcImage);
-
-                            if (launchedFromInProcessState) {
-                                final int selectedRow = structTable.getSelectedRow();
-                                previewImages.set(selectedRow, previewImg);
-                                previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-
-                                ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
-                                        srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
-
-                                structRowImgFileInfoList.set(selectedRow, imgInfo);
+                                final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
+    
+                                previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
+                                int slice = 0;
+                                if ( !srcImage.is2DImage()) {
+                                    slice = (srcImage.getExtents()[2] / 2);
+                                }
+                                previewImg.createImg(slice);
+    
+                                previewImgPanel.removeAll();
+                                previewImgPanel.repaint();
+    
+                                previewImgPanel.add(previewImg);
+    
+                                addedPreviewImage = true;
+    
+                                ModelImage thumbnailImage = createThumbnailImage(srcImage);
+    
+                                if (launchedFromInProcessState) {
+                                    final int selectedRow = structTable.getSelectedRow();
+                                    previewImages.set(selectedRow, previewImg);
+                                    previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
+    
+                                    ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
+                                            srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
+    
+                                    structRowImgFileInfoList.set(selectedRow, imgInfo);
+                                } else {
+                                    final int size = previewImages.size();
+                                    previewImages.set(size - 1, previewImg);
+                                    previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
+    
+                                    ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
+                                            srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
+    
+                                    structRowImgFileInfoList.set(size - 1, imgInfo);
+                                }
+    
+                                // cleanup thumbnail modelimage
+                                if (thumbnailImage != null) {
+                                    thumbnailImage.disposeLocal();
+                                    thumbnailImage = null;
+                                }
+    
+                                previewImgPanel.validate();
+                                previewImgPanel.repaint();
                             } else {
-                                final int size = previewImages.size();
-                                previewImages.set(size - 1, previewImg);
-                                previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
-
-                                ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
-                                        srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
-
-                                structRowImgFileInfoList.set(size - 1, imgInfo);
+                                // TODO: read spect header, map onto data elements
+                                int[] extents = new int[] {256, 256};
+                                
+                                if (isMultiFile) {
+                                    String[] fileList = FileUtility.getFileList(file.getParent() + File.separator, file.getName(), false);
+                                    
+                                    spectroscopyHeaderList = new FileInfoBase[fileList.length];
+                                    
+                                    for (int i = 0; i < fileList.length; i++) {
+                                        spectroscopyHeaderList[i] = fileIO.readHeader(file.getParent() + File.separator + fileList[i], isMultiFile);
+                                        
+                                        if (spectroscopyHeaderList[i] instanceof FileInfoDicom) {
+                                            ((FileInfoDicom) spectroscopyHeaderList[i]).setInfoFromTags();
+                                            
+                                            String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0010");
+                                            String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0011");
+                                            if (rowStr != null && colStr != null) {
+                                                int rows = Integer.parseInt(rowStr);
+                                                int cols = Integer.parseInt(colStr);
+                                                extents = new int[] {cols, rows, fileList.length};
+                                                spectroscopyHeaderList[i].setExtents(extents);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    spectroscopyHeaderList = new FileInfoBase[1];
+                                    spectroscopyHeaderList[0] = fileIO.readHeader(file.getAbsolutePath(), isMultiFile);
+                                    
+                                    if (spectroscopyHeaderList[0] instanceof FileInfoDicom) {
+                                        ((FileInfoDicom) spectroscopyHeaderList[0]).setInfoFromTags();
+                                        
+                                        String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0010");
+                                        String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0011");
+                                        if (rowStr != null && colStr != null) {
+                                            int rows = Integer.parseInt(rowStr);
+                                            int cols = Integer.parseInt(colStr);
+                                            extents = new int[] {cols, rows};
+                                            spectroscopyHeaderList[0].setExtents(extents);
+                                        }
+                                    }
+                                }
+                                
+                                ModelImage blankImg = ViewUserInterface.getReference().createBlankImage(spectroscopyHeaderList[0], false, false);
+    
+                                previewImg = new ViewJComponentPreviewImage(blankImg, extents, owner);
+                                int slice = 0;
+                                previewImg.createImg(slice);
+    
+                                previewImgPanel.removeAll();
+                                previewImgPanel.repaint();
+    
+                                previewImgPanel.add(previewImg);
+    
+                                addedPreviewImage = true;
+    
+//                                ModelImage thumbnailImage = createThumbnailImage(srcImage);
+    
+                                if (launchedFromInProcessState) {
+                                    final int selectedRow = structTable.getSelectedRow();
+                                    previewImages.set(selectedRow, previewImg);
+                                    previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
+    
+                                    ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(spectroscopyHeaderList),
+                                            spectroscopyHeaderList[0].getFileFormat(), null);
+    
+                                    structRowImgFileInfoList.set(selectedRow, imgInfo);
+                                } else {
+                                    final int size = previewImages.size();
+                                    previewImages.set(size - 1, previewImg);
+                                    previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
+    
+                                    ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(spectroscopyHeaderList),
+                                            spectroscopyHeaderList[0].getFileFormat(), null);
+    
+                                    structRowImgFileInfoList.set(size - 1, imgInfo);
+                                }
+    
+                                previewImgPanel.validate();
+                                previewImgPanel.repaint();
                             }
-
-                            // cleanup thumbnail modelimage
-                            if (thumbnailImage != null) {
-                                thumbnailImage.disposeLocal();
-                                thumbnailImage = null;
-                            }
-
-                            previewImgPanel.validate();
-                            previewImgPanel.repaint();
                         }
 
                         if (srcImage != null) {
                             // basic check that image data is de-identified
-                            Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(srcImage);
+                            Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(srcImage.getFileInfo());
                             if (problemTags != null) {
                                 isDeidentified = deidentificationDialogDicom(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getFileInfo(0).getFileName(),
                                         problemTags);
@@ -7518,11 +7218,41 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 if ( !currFile.equals(tempName) && !currFile.equals("")) {
                                     clearFields(fsData);
                                 }
-                                populateFields(fsData, srcImage);
+                                populateFields(fsData, srcImage, srcImage.getFileInfo(0));
                             }
 
                             srcImage.disposeLocal();
                             srcImage = null;
+                        } else if (isSpectroscopy) {
+                            // TODO
+                            // basic check that image data is de-identified
+                            Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(spectroscopyHeaderList);
+                            if (problemTags != null) {
+                                isDeidentified = deidentificationDialogDicom(spectroscopyHeaderList[0].getFileDirectory(), spectroscopyHeaderList[0].getFileName(),
+                                        problemTags);
+                            }
+
+                            if (isDeidentified) {
+                                String tempName = currFile;
+
+                                for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
+                                    final String curDeName = deVal.getName();
+                                    if (curDeName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                                        final JTextField tf = (JTextField) deVal.getComp();
+                                        tf.setText("Automatically generated from selected image files.");
+                                    } else if (curDeName.equalsIgnoreCase(deName)) {
+                                        final JTextField tf = (JTextField) deVal.getComp();
+                                        tf.setText(file.getName());
+                                        tempName = file.getName();
+                                        tf.setEnabled(false);
+                                    }
+                                }
+
+                                if ( !currFile.equals(tempName) && !currFile.equals("")) {
+                                    clearFields(fsData);
+                                }
+                                populateFields(fsData, null, spectroscopyHeaderList[0]);
+                            }
                         }
                     }
                 } else {
@@ -7878,13 +7608,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         return filteredList;
     }
 
-    private Vector<FileDicomTag> deidentificationCheckDicomTags(ModelImage img) {
-        final String fileFormatString = FileUtility.getFileTypeStr(img.getFileInfo(0).getFileFormat());
-
-        if (fileFormatString.equalsIgnoreCase("dicom")) {
+    private static final Vector<FileDicomTag> deidentificationCheckDicomTags(FileInfoBase[] fInfoList) {
+        FileInfoBase fInfo = fInfoList[0];
+        
+        if (fInfo instanceof FileInfoDicom) {
             Vector<FileDicomTag> problemTags = new Vector<FileDicomTag>();
             // for (FileInfoBase fInfo : img.getFileInfo()) {
-            FileInfoBase fInfo = img.getFileInfo(0);
             FileInfoDicom dicomInfo = (FileInfoDicom) fInfo;
 
             FileDicomTagTable tagTable = dicomInfo.getTagTable();
@@ -7992,6 +7721,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         return true;
+    }
+    
+    private static final String getTagValue(FileInfoDicom fInfo, String tag) {
+        return (String) (fInfo.getTagTable().getValue(tag));
     }
 
     private class TagTableModel extends AbstractTableModel {
