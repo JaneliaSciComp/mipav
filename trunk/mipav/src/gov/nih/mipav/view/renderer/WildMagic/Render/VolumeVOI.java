@@ -62,6 +62,8 @@ public class VolumeVOI extends VolumeObject
 	private byte[][] annotationTexture = null;
 	private int annotationWidth;
 	private int annotationHeight;
+	private boolean volumeClip = false;
+	private float volumeClipRadius = 0;
 
 	/**
 	 * Constructor for the VolumeVOI object.
@@ -369,6 +371,26 @@ public class VolumeVOI extends VolumeObject
 			System.err.println( m_kClip );
 			System.err.println( m_kClipInv );
     	}
+    }
+    
+    public void setVolumeClip(boolean clip)
+    {
+    	volumeClip = clip;
+    }
+    
+    public boolean GetClipped()
+    {
+    	return volumeClip;
+    }
+    
+    public void setVolumeClipRadius(float radius)
+    {
+    	volumeClipRadius = radius;
+    }
+    
+    public float GetClipRadius()
+    {
+    	return volumeClipRadius;
     }
     
 	/**

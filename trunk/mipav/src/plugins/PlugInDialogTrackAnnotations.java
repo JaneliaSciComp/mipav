@@ -47,6 +47,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelAnnotations;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 
@@ -89,7 +90,7 @@ import org.jocl.Sizeof;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener, AnnotationListener, TableModelListener, ListSelectionListener, KeyListener {
+public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -125,14 +126,16 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 	// on 'start' the images are loaded and the VolumeTriPlanarInterface is created:
 	private VolumeTriPlanarInterface triVolume;
-	// annotation panel displayed in the VolumeTriPlanarInterface:
-	private JPanel annotationPanel;
-	// turns on/off displaying individual annotations
-	private JCheckBox displayLabel;
-	// table user-interface for editing the positions of the annotations:
-	private ListSelectionModel annotationList;
-	private JTable annotationTable;
-	private DefaultTableModel annotationTableModel;
+	private JPanelAnnotations annotationPanelUI;
+//	// annotation panel displayed in the VolumeTriPlanarInterface:
+//	private JPanel annotationPanel;
+//	// turns on/off displaying individual annotations
+//	private JCheckBox volumeClip;
+//	private JCheckBox displayLabel;
+//	// table user-interface for editing the positions of the annotations:
+//	private ListSelectionModel annotationList;
+//	private JTable annotationTable;
+//	private DefaultTableModel annotationTableModel;
 	
 	// Images
 	private ModelImage imageA;
@@ -195,52 +198,76 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			imageIndex--;
 			openStraightened(true);
 		}
-		else if ( command.equals("displayAll") )
-		{
-			// display all annotations in the list:
-			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-			if ( (annotations != null) ) {
-				if ( annotations.getCurves().size() > 0 ) {
-					for ( int i = 0; i < annotations.getCurves().size(); i++ )
-					{
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-						text.display(true);
-					}
-				}
-			}
-			displayLabel.setSelected(true);
-		}
-		else if ( command.equals("displayNone") )
-		{
-			// display none of the annotations in the list:
-			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-			if ( (annotations != null) ) {
-				if ( annotations.getCurves().size() > 0 ) {
-					for ( int i = 0; i < annotations.getCurves().size(); i++ )
-					{
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-						text.display(false);
-					}
-				}
-			}
-			displayLabel.setSelected(false);
-		}
-		else if ( source == displayLabel )
-		{	
-			// find the selected annotation and turn it's display on/off:
-			if ( triVolume != null && triVolume.getVOIManager() != null )
-			{
-				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-				// selected row:
-				int row = annotationTable.getSelectedRow();		        
-				if ( (annotations != null) && (row >= 0) ) {
-					if ( row < annotations.getCurves().size() ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
-						text.display(((JCheckBox)source).isSelected());
-					}
-				}
-			}
-		}
+//		else if ( command.equals("displayAll") )
+//		{
+//			// display all annotations in the list:
+//			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//			if ( (annotations != null) ) {
+//				if ( annotations.getCurves().size() > 0 ) {
+//					for ( int i = 0; i < annotations.getCurves().size(); i++ )
+//					{
+//						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+//						text.display(true);
+//					}
+//				}
+//			}
+//			displayLabel.setSelected(true);
+//		}
+//		else if ( command.equals("displayNone") )
+//		{
+//			// display none of the annotations in the list:
+//			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//			if ( (annotations != null) ) {
+//				if ( annotations.getCurves().size() > 0 ) {
+//					for ( int i = 0; i < annotations.getCurves().size(); i++ )
+//					{
+//						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+//						text.display(false);
+//					}
+//				}
+//			}
+//			displayLabel.setSelected(false);
+//		}
+//		else if ( source == displayLabel )
+//		{	
+//			// find the selected annotation and turn it's display on/off:
+//			if ( triVolume != null && triVolume.getVOIManager() != null )
+//			{
+//				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//				// selected row:
+//				int row = annotationTable.getSelectedRow();		        
+//				if ( (annotations != null) && (row >= 0) ) {
+//					if ( row < annotations.getCurves().size() ) {
+//						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+//						text.display(((JCheckBox)source).isSelected());
+//					}
+//				}
+//			}
+//		}
+//		else if ( source == volumeClip )
+//		{
+//			boolean clip = volumeClip.isSelected();
+//			System.err.println("Clip annotation " + clip );
+//			// find the selected annotation and turn it's display on/off:
+//			if ( triVolume != null && triVolume.getVOIManager() != null )
+//			{
+//				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//				// turn off clipping for all rows:
+//				for ( int i = 0; i < annotations.getCurves().size(); i++ ) 
+//				{
+//					VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+//					text.getVolumeVOI().setVolumeClip(false);					
+//				}
+//				// selected row:
+//				int row = annotationTable.getSelectedRow();		        
+//				if ( (annotations != null) && (row >= 0) ) {
+//					if ( row < annotations.getCurves().size() ) {
+//						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+//						text.getVolumeVOI().setVolumeClip(clip);
+//					}
+//				}
+//			}
+//		}
 		else if (command.equals("done"))
 		{			
 			// save
@@ -334,8 +361,9 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		// initialize the display panel for editing / displaying annotations:
 		initDisplayAnnotationsPanel();
+		
 		((VOILatticeManagerInterface)triVolume.getVOIManager()).editAnnotations(false);
-		((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotationListener(this);
+//		((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotationListener(this);
 		
 		// save the luts for hyperstacks:
 		if ( useHyperstack.isSelected() )
@@ -344,35 +372,35 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			lutStackB[imageIndex] = triVolume.getVolumeImageB().GetLUT();
 		}
 	}
-
-	/* (non-Javadoc)
-	 * Called from the LatticeModel when any annotations are changed.
-	 * Updates the annotation table with the current annotations.
-	 */
-	public void annotationChanged() {
-
-		if ( triVolume != null && triVolume.getVOIManager() != null )
-		{
-			// get current annotations and update table:
-			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-			// remove table listener durning updates:
-			annotationTableModel.removeTableModelListener(this);
-			int numRows = annotationTableModel.getRowCount();
-			for ( int i = numRows -1; i >= 0; i-- ) {
-				annotationTableModel.removeRow(i);
-			}		
-			if ( annotations != null ) {
-				if ( annotations.getCurves().size() > 0 ) {
-					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-						annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
-					}
-				}
-			}
-			// restore table listener:
-			annotationTableModel.addTableModelListener(this);
-		}		
-	}
+//
+//	/* (non-Javadoc)
+//	 * Called from the LatticeModel when any annotations are changed.
+//	 * Updates the annotation table with the current annotations.
+//	 */
+//	public void annotationChanged() {
+//
+//		if ( triVolume != null && triVolume.getVOIManager() != null )
+//		{
+//			// get current annotations and update table:
+//			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//			// remove table listener durning updates:
+//			annotationTableModel.removeTableModelListener(this);
+//			int numRows = annotationTableModel.getRowCount();
+//			for ( int i = numRows -1; i >= 0; i-- ) {
+//				annotationTableModel.removeRow(i);
+//			}		
+//			if ( annotations != null ) {
+//				if ( annotations.getCurves().size() > 0 ) {
+//					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+//						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+//						annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+//					}
+//				}
+//			}
+//			// restore table listener:
+//			annotationTableModel.addTableModelListener(this);
+//		}		
+//	}
 
 	/* (non-Javadoc)
 	 * @see java.awt.Window#dispose()
@@ -413,77 +441,83 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			imageB = null;
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
-	 */
-	public void tableChanged(TableModelEvent e) {
-		System.err.println("tableChanged");
-		// Track updates to the table and update the corresponding annotation.
-		// The user can change the annotation name and position (x,y,z) with table edits.
-		// Does not currently check type.
-		int column = e.getColumn();
-		boolean isChecked = false;
-		if ( triVolume != null && triVolume.getVOIManager() != null )
-		{
-			int row = e.getFirstRow();
-			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-			if ( (row >= 0) && (row < annotations.getCurves().size()) )
-			{
-				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
-				if ( column == 0 )
-				{
-					text.setText( annotationTableModel.getValueAt(row, column).toString() );
-					text.updateText();
-				}
-				else
-				{
-					float value = Float.valueOf(annotationTableModel.getValueAt(row, column).toString());
-					if ( value >= 0 ) {
-						if ( column == 1 ) {
-							text.elementAt(0).X = value;
-							text.elementAt(1).X = value;
-						}
-						else if ( column == 2 ) {
-							text.elementAt(0).Y = value;
-							text.elementAt(1).Y = value;
-						}
-						else if ( column == 3 ) {
-							text.elementAt(0).Z = value;
-							text.elementAt(1).Z = value;
-						}
-					}
-				}
-				text.update();
-				isChecked = text.getVolumeVOI().GetDisplay();
-			}
-		}
-		displayLabel.setSelected(isChecked);
-	}
-
-	/* (non-Javadoc)
-	 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
-	 */
-	public void valueChanged(ListSelectionEvent e) {
-		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
-			return;
-		
-		// Updates the displayLabel checkbox based on which row of the table is current:
-		VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-
-		int row = annotationTable.getSelectedRow();
-		boolean isChecked = true;
-		if ( (annotations != null) && (row >= 0) ) {
-			if ( row < annotations.getCurves().size() ) {
-				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
-				if ( text.getVolumeVOI() != null )
-				{
-					isChecked = text.getVolumeVOI().GetDisplay();
-				}
-			}
-		}
-		displayLabel.setSelected(isChecked);
-	}
+//
+//	/* (non-Javadoc)
+//	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
+//	 */
+//	public void tableChanged(TableModelEvent e) {
+//		System.err.println("tableChanged");
+//		// Track updates to the table and update the corresponding annotation.
+//		// The user can change the annotation name and position (x,y,z) with table edits.
+//		// Does not currently check type.
+//		int column = e.getColumn();
+//		boolean isChecked = false;
+//		boolean isClipped = false;
+//		if ( triVolume != null && triVolume.getVOIManager() != null )
+//		{
+//			int row = e.getFirstRow();
+//			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//			if ( (row >= 0) && (row < annotations.getCurves().size()) )
+//			{
+//				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+//				if ( column == 0 )
+//				{
+//					text.setText( annotationTableModel.getValueAt(row, column).toString() );
+//					text.updateText();
+//				}
+//				else
+//				{
+//					float value = Float.valueOf(annotationTableModel.getValueAt(row, column).toString());
+//					if ( value >= 0 ) {
+//						if ( column == 1 ) {
+//							text.elementAt(0).X = value;
+//							text.elementAt(1).X = value;
+//						}
+//						else if ( column == 2 ) {
+//							text.elementAt(0).Y = value;
+//							text.elementAt(1).Y = value;
+//						}
+//						else if ( column == 3 ) {
+//							text.elementAt(0).Z = value;
+//							text.elementAt(1).Z = value;
+//						}
+//					}
+//				}
+//				text.update();
+//				isChecked = text.getVolumeVOI().GetDisplay();
+//				isClipped = text.getVolumeVOI().GetClipped();
+//			}
+//		}
+//		displayLabel.setSelected(isChecked);
+//		volumeClip.setSelected(isClipped);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
+//	 */
+//	public void valueChanged(ListSelectionEvent e) {
+//		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
+//			return;
+//		
+//		// Updates the displayLabel checkbox based on which row of the table is current:
+//		VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//
+//		int row = annotationTable.getSelectedRow();
+//		boolean isChecked = true;
+//		boolean isClipped = true;
+//		if ( (annotations != null) && (row >= 0) ) {
+//			if ( row < annotations.getCurves().size() ) {
+//				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+//				if ( text.getVolumeVOI() != null )
+//				{
+//					isChecked = text.getVolumeVOI().GetDisplay();
+//					isClipped = text.getVolumeVOI().GetClipped();
+//				}
+//			}
+//		}
+//		displayLabel.setSelected(isChecked);
+//		volumeClip.setSelected(isClipped);
+//	}
 
 	@Override
 	public void windowActivated(WindowEvent e) {}
@@ -515,31 +549,31 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	@Override
 	public void windowOpened(WindowEvent e) {}
 	
-	/**
-	 * Creates the table that displays the annotation information.
-	 * The user can edit the annotations directly in the table.
-	 */
-	private void buildAnnotationTable() {
-		if ( annotationTable == null )
-		{
-			annotationTableModel = new DefaultTableModel();
-			annotationTableModel.addColumn("Name");
-			annotationTableModel.addColumn("x");
-			annotationTableModel.addColumn("y");
-			annotationTableModel.addColumn("z");
-			annotationTableModel.addTableModelListener(this);
-
-			annotationTable = new JTable(annotationTableModel);
-			annotationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-			annotationTable.addKeyListener(this);
-
-			annotationTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-			annotationTable.getColumn("Name").setMinWidth(100);
-			annotationTable.getColumn("Name").setMaxWidth(100);
-			annotationList = annotationTable.getSelectionModel();
-			annotationList.addListSelectionListener(this);
-		}
-	}
+//	/**
+//	 * Creates the table that displays the annotation information.
+//	 * The user can edit the annotations directly in the table.
+//	 */
+//	private void buildAnnotationTable() {
+//		if ( annotationTable == null )
+//		{
+//			annotationTableModel = new DefaultTableModel();
+//			annotationTableModel.addColumn("Name");
+//			annotationTableModel.addColumn("x");
+//			annotationTableModel.addColumn("y");
+//			annotationTableModel.addColumn("z");
+//			annotationTableModel.addTableModelListener(this);
+//
+//			annotationTable = new JTable(annotationTableModel);
+//			annotationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+//			annotationTable.addKeyListener(this);
+//
+//			annotationTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+//			annotationTable.getColumn("Name").setMinWidth(100);
+//			annotationTable.getColumn("Name").setMaxWidth(100);
+//			annotationList = annotationTable.getSelectionModel();
+//			annotationList.addListSelectionListener(this);
+//		}
+//	}
 	
 	/**
 	 * User-interface initialization.
@@ -651,51 +685,62 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	 */
 	private void initDisplayAnnotationsPanel( )
 	{		
-		if ( annotationPanel == null )
+		if ( annotationPanelUI == null )
 		{
 			JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
 			GuiBuilder gui = new GuiBuilder(dialogGUI);
+//			
+//			annotationPanel = new JPanel();
+//			annotationPanel.setLayout(new BorderLayout());
+//
+//			// Scroll panel that hold the control panel layout in order to use JScrollPane
+//			JScrollPane scroller = new JScrollPane(annotationPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+//					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+//
+//			JPanel mainPanel = new JPanel(new BorderLayout());
+//			JPanel labelPanel = new JPanel();
+//			// Display checkbox for displaying individual annotations:
+//			displayLabel = new JCheckBox("display", true);
+//			displayLabel.addActionListener(this);
+//			displayLabel.setActionCommand("displayLabel");
+//
+//			labelPanel.add( new JLabel("Annotation: " ) );
+//			labelPanel.add(displayLabel);
+//			
+//			// Display all button:
+//			JButton displayAll = new JButton("Display all" );
+//			displayAll.addActionListener(this);
+//			displayAll.setActionCommand("displayAll");
+//			labelPanel.add( displayAll );
+//			
+//			// Display none button:
+//			JButton displayNone = new JButton("Display none" );
+//			displayNone.addActionListener(this);
+//			displayNone.setActionCommand("displayNone");
+//			labelPanel.add( displayNone );
+//			
+//			// volume clip checkbox for clipping around individual annotations:
+//			volumeClip = new JCheckBox("volume clip", true);
+//			volumeClip.addActionListener(this);
+//			volumeClip.setActionCommand("volumeClip");
+//			labelPanel.add( volumeClip );
+//
+//			JPanel displayOptions = new JPanel(new BorderLayout());
+//			displayOptions.add( labelPanel, BorderLayout.NORTH );
+//
+//			// build the annotation table for the list of annotations:
+//			buildAnnotationTable();			
 			
-			annotationPanel = new JPanel();
-			annotationPanel.setLayout(new BorderLayout());
-
-			// Scroll panel that hold the control panel layout in order to use JScrollPane
-			JScrollPane scroller = new JScrollPane(annotationPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-			JPanel mainPanel = new JPanel(new BorderLayout());
-			JPanel labelPanel = new JPanel();
-			// Display checkbox for displaying individual annotations:
-			displayLabel = new JCheckBox("display", true);
-			displayLabel.addActionListener(this);
-			displayLabel.setActionCommand("displayLabel");
-
-			labelPanel.add( new JLabel("Annotation: " ) );
-			labelPanel.add(displayLabel);
+//			// add annotation table to a scroll pane:
+//			JScrollPane kScrollPane = new JScrollPane(annotationTable);
+//			JPanel scrollPanel = new JPanel();
+//			scrollPanel.setLayout(new BorderLayout());
+//			scrollPanel.add(kScrollPane);
+//			scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 			
-			// Display all button:
-			JButton displayAll = new JButton("Display all" );
-			displayAll.addActionListener(this);
-			displayAll.setActionCommand("displayAll");
-			labelPanel.add( displayAll );
-			
-			// Display none button:
-			JButton displayNone = new JButton("Display none" );
-			displayNone.addActionListener(this);
-			displayNone.setActionCommand("displayNone");
-			labelPanel.add( displayNone );
 
-			JPanel displayOptions = new JPanel(new BorderLayout());
-			displayOptions.add( labelPanel, BorderLayout.NORTH );
-
-			// build the annotation table for the list of annotations:
-			buildAnnotationTable();
-			// add annotation table to a scroll pane:
-			JScrollPane kScrollPane = new JScrollPane(annotationTable);
-			JPanel scrollPanel = new JPanel();
-			scrollPanel.setLayout(new BorderLayout());
-			scrollPanel.add(kScrollPane);
-			scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+			annotationPanelUI = new JPanelAnnotations(((VOILatticeManagerInterface)triVolume.getVOIManager()), imageA);
+			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, savedAnnotations);
 
 			// back button:
 			buttonPanel = new JPanel();
@@ -723,34 +768,36 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			buttonPanel.add( doneButton );
 
 
-			JPanel listPanel = new JPanel();
-			listPanel.setLayout(new BorderLayout());
-			listPanel.add(scrollPanel, BorderLayout.NORTH);
-			listPanel.add(displayOptions, BorderLayout.CENTER);
-			listPanel.add(buttonPanel, BorderLayout.SOUTH);
-			listPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+//			JPanel listPanel = new JPanel();
+//			listPanel.setLayout(new BorderLayout());
+//			listPanel.add(scrollPanel, BorderLayout.NORTH);
+//			listPanel.add(displayOptions, BorderLayout.CENTER);
+//			listPanel.add(buttonPanel, BorderLayout.SOUTH);
+//			listPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+//
+//			annotationPanel.add(listPanel, BorderLayout.NORTH);
+//			mainPanel.add(scroller, BorderLayout.CENTER);
 
-			annotationPanel.add(listPanel, BorderLayout.NORTH);
-			mainPanel.add(scroller, BorderLayout.CENTER);
-			
+			annotationPanel.add(buttonPanel, BorderLayout.SOUTH);
 			triVolume.insertTab( "Track Annotation", annotationPanel );
 		}
 
-		// Add the list of annotations to the table:
-		annotationTableModel.removeTableModelListener(this);
-		int numRows = annotationTableModel.getRowCount();
-		for ( int i = numRows -1; i >= 0; i-- ) {
-			annotationTableModel.removeRow(i);
-		}		
-		if ( savedAnnotations != null ) {
-			if ( savedAnnotations.getCurves().size() > 0 ) {
-				for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
-					VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
-					annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
-				}
-			}
-		}
-		annotationTableModel.addTableModelListener(this);
+//		// Add the list of annotations to the table:
+//		annotationTableModel.removeTableModelListener(this);
+//		int numRows = annotationTableModel.getRowCount();
+//		for ( int i = numRows -1; i >= 0; i-- ) {
+//			annotationTableModel.removeRow(i);
+//		}		
+//		if ( savedAnnotations != null ) {
+//			if ( savedAnnotations.getCurves().size() > 0 ) {
+//				for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
+//					VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
+//					annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+//				}
+//			}
+//		}
+//		annotationTableModel.addTableModelListener(this);
+		annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, savedAnnotations);
 	}
 
 	/**
@@ -1585,62 +1632,62 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			}
 		}
 	}
-	
-	public void keyTyped(KeyEvent e) {
-		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
-			int row = annotationTable.getSelectedRow();
-			int col = annotationTable.getSelectedColumn();
-			if ( triVolume != null && triVolume.getVOIManager() != null )
-			{
-				if ( (row == 0)  && (col == 0) ) {
-					
-					VOIText text = new VOIText();
-					text.setText("center" );
-					int dimX = imageA.getExtents()[0];
-					int dimY = imageA.getExtents()[1];
-					int dimZ = imageA.getExtents()[2];
-					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-					
-					short id = (short) imageA.getVOIs().getUniqueID();
-					int colorID = 0;
-					VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-					newTextVOI.getCurves().add(text);
-					
-					((VOILatticeManagerInterface)triVolume.getVOIManager()).clear3DSelection();
-					((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
-					((VOILatticeManagerInterface)triVolume.getVOIManager()).clear3DSelection();
-					int nRows = annotationTable.getRowCount();
-					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
-				}
-			}
-		}
-		if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
-			int row = annotationTable.getSelectedRow();
-			int col = annotationTable.getSelectedColumn();
-			if ( col == 0 && row >= 0 )
-			{
-				TableCellEditor editor = annotationTable.getCellEditor();
-				if ( editor != null )
-					editor.stopCellEditing();
-				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-				annotations.getCurves().remove(row);
-				annotationChanged();
-				int nRows = annotationTable.getRowCount();
-				if ( row < nRows ) {
-					annotationTable.setRowSelectionInterval(row, row);
-				}
-				else {
-					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
-				}
-			}
-		}
-	}
-
-	@Override
-	public void keyPressed(KeyEvent e) {
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {}
+//	
+//	public void keyTyped(KeyEvent e) {
+//		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
+//			int row = annotationTable.getSelectedRow();
+//			int col = annotationTable.getSelectedColumn();
+//			if ( triVolume != null && triVolume.getVOIManager() != null )
+//			{
+//				if ( (row == 0)  && (col == 0) ) {
+//					
+//					VOIText text = new VOIText();
+//					text.setText("center" );
+//					int dimX = imageA.getExtents()[0];
+//					int dimY = imageA.getExtents()[1];
+//					int dimZ = imageA.getExtents()[2];
+//					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+//					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+//					
+//					short id = (short) imageA.getVOIs().getUniqueID();
+//					int colorID = 0;
+//					VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+//					newTextVOI.getCurves().add(text);
+//					
+//					((VOILatticeManagerInterface)triVolume.getVOIManager()).clear3DSelection();
+//					((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
+//					((VOILatticeManagerInterface)triVolume.getVOIManager()).clear3DSelection();
+//					int nRows = annotationTable.getRowCount();
+//					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+//				}
+//			}
+//		}
+//		if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
+//			int row = annotationTable.getSelectedRow();
+//			int col = annotationTable.getSelectedColumn();
+//			if ( col == 0 && row >= 0 )
+//			{
+//				TableCellEditor editor = annotationTable.getCellEditor();
+//				if ( editor != null )
+//					editor.stopCellEditing();
+//				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//				annotations.getCurves().remove(row);
+//				annotationChanged();
+//				int nRows = annotationTable.getRowCount();
+//				if ( row < nRows ) {
+//					annotationTable.setRowSelectionInterval(row, row);
+//				}
+//				else {
+//					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+//				}
+//			}
+//		}
+//	}
+//
+//	@Override
+//	public void keyPressed(KeyEvent e) {
+//	}
+//
+//	@Override
+//	public void keyReleased(KeyEvent e) {}
 }

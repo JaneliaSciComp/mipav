@@ -50,6 +50,10 @@ public abstract class VolumeClipEffect extends ShaderEffect
 
 
     protected float[] m_afVolumeMatrix = { 1f, 0f, 0f, 0f,  0f, 1f, 0f, 0f,  0f, 0f, 1f, 0f,  0f, 0f, 0f, 1f };
+
+    protected boolean m_bClipSphere = false;
+    protected float[] m_afClipSphereCenter = {0,0,0,0};
+    protected float[] m_afClipSphereScale = {0,0,0,0};
     
     protected boolean m_bClipEllipsoid = false;
     protected float[] m_afClipEllipsoidCenter = {0,0,0,0};
@@ -121,6 +125,14 @@ public abstract class VolumeClipEffect extends ShaderEffect
         if ( pkCProgram.GetUC("ellipsoidExtent") != null ) 
         {
             pkCProgram.GetUC("ellipsoidExtent").SetDataSource(m_afClipEllipsoidExtent);
+        }
+        if ( pkCProgram.GetUC("sphereCenter") != null ) 
+        {
+            pkCProgram.GetUC("sphereCenter").SetDataSource(m_afClipSphereCenter);
+        }
+        if ( pkCProgram.GetUC("sphereScale") != null ) 
+        {
+            pkCProgram.GetUC("sphereScale").SetDataSource(m_afClipSphereScale);
         }
         super.OnLoadPrograms( iPass, pkVProgram, pkPProgram, pkCProgram );
     }
@@ -202,7 +214,29 @@ public abstract class VolumeClipEffect extends ShaderEffect
         EnableClip();
     }
     
+    public void SetClipSphere( Vector3f center, Vector3f scale, float radius, boolean bEnable ) {
+    	if ( center == null || !bEnable )
+    	{
+    		m_bClipSphere = false;
+            m_afDoClip[0] = (bEnable) ? 1 : m_afDoClip[0];
+            return;
+    	}
+    	
+    	m_bClipSphere = true;
+    	m_afClipSphereCenter[0] = center.X;    	m_afClipSphereCenter[1] = center.Y;    	m_afClipSphereCenter[2] = center.Z;    	m_afClipSphereCenter[3] = (radius*radius);
+    	m_afClipSphereScale[0] = scale.X;    	m_afClipSphereScale[1] = scale.Y;    	m_afClipSphereScale[2] = scale.Z;
+
+        m_afDoClip[0] = (bEnable) ? 1 : m_afDoClip[0];
+    	
+    }
+    
     public void SetClipEllipsoid(Ellipsoid3f ellipsoid, boolean bEnable ) {
+    	if ( ellipsoid == null || !bEnable )
+    	{
+    		m_bClipEllipsoid = false;
+            m_afDoClip[0] = (bEnable) ? 1 : m_afDoClip[0];
+            return;
+    	}
     	m_bClipEllipsoid = true;
     	m_afClipEllipsoidCenter[0] = ellipsoid.Center.X;    	m_afClipEllipsoidCenter[1] = ellipsoid.Center.Y;    	m_afClipEllipsoidCenter[2] = ellipsoid.Center.Z;
     	m_afClipEllipsoidAxis0[0] = ellipsoid.Axis[0].X;    	m_afClipEllipsoidAxis0[1] = ellipsoid.Axis[0].Y;    	m_afClipEllipsoidAxis0[2] = ellipsoid.Axis[0].Z;
@@ -240,6 +274,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
     public boolean isClipEllipsoid()
     {
     	return m_bClipEllipsoid;
+    }
+    
+    public boolean isClipSphere()
+    {
+    	return m_bClipSphere;
     }
     
     public Vector3f getClip()

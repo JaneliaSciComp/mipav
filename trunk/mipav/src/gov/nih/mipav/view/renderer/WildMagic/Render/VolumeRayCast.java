@@ -584,6 +584,11 @@ public class VolumeRayCast extends VolumeObject
     {
     	m_kVolumeShaderEffect.SetClipEllipsoid(ellipsoid, bEnable);
     }
+    
+    public void SetClipSphere( Vector3f center, Vector3f scale, float radius, boolean bEnable )
+    {
+    	m_kVolumeShaderEffect.SetClipSphere(center, scale, radius, bEnable);
+    }
 
     public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
     {
