@@ -1512,6 +1512,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									}
 									
 								}
+								if ( sphereClip != null )
+								{
+									test.copy( p0 );
+									m_kVolumeRayCast.volumeToLocalCoords( test );
+//									System.err.println( "Pick " + test + "     " + sphereClipLocal );
+//									if ( !ellipsoidClipLocal.Contains(test) ) {
+//										continue;
+//									}
+								}
 								if ( ellipsoidClip != null ) {
 									test.copy( p0 );
 									m_kVolumeRayCast.volumeToLocalCoords( test );
@@ -1693,10 +1702,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			return;
 		}
 		boolean bUpdateVOIs = false;
+		boolean clipVOI = false;
 		for ( int i = 0; i < m_kDisplayList.size(); i++ )
 		{
 			if ( m_kDisplayList.get(i) instanceof VolumeVOI )
 			{
+				VolumeVOI volVOI = (VolumeVOI)m_kDisplayList.elementAt(i);
+				if ( volVOI.GetClipped() )
+				{
+					clipVOI = true;
+				}
 				m_kDisplayList.remove(i);
 				i--;
 			}
@@ -1723,6 +1738,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							m_kTranslate);
 				}
 			}
+		}
+		if ( clipVOI ) {
+			applyClipFilter(true);
+		}
+		else {
+			applyClipFilter(false);
 		}
 		if ( bUpdateVOIs )
 		{

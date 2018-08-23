@@ -51,6 +51,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelAnnotations;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
@@ -191,6 +192,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 
 	private VolumeTriPlanarInterface triVolume;
+	private JPanelAnnotations annotationPanelUI;
 
 	private VOILatticeManagerInterface voiManager;
 
@@ -665,6 +667,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			voiManager.editAnnotations(editMode == EditSeamCells);
 			voiManager.colorAnnotations(editMode == EditSeamCells);
+			// initialize the display panel for editing / displaying annotations:
+			initDisplayAnnotationsPanel();
 		}
 		else if ( editMode == EditLattice )
 		{
@@ -1130,6 +1134,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					tabbedPane.setVisible(true);
 					volumePanel.setVisible(true);
 					pack();									
+				}
+
+				if ( voiManager != null )
+				{
+					initDisplayAnnotationsPanel();
 				}
 			}
 			
@@ -1856,6 +1865,25 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
 		return dialogGUI.getContentPane();
+	}
+	
+	
+
+	/**
+	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
+	 */
+	private void initDisplayAnnotationsPanel( )
+	{		
+		if ( annotationPanelUI == null )
+		{
+			annotationPanelUI = new JPanelAnnotations(voiManager, volumeImage.GetImage());
+			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), annotations.elementAt(0));
+
+			annotationPanel.add(buttonPanel, BorderLayout.SOUTH);
+			tabbedPane.addTab("Annotation", null, annotationPanel);
+			pack();
+		}
+		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), annotations.elementAt(0));
 	}
 
 	/**
