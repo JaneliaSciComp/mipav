@@ -2586,7 +2586,7 @@ public class FileMATLAB extends FileBase {
 	                                            	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
 			                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
 	                                            }
-	                                            floatBuffer[j++] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
+	                                            floatBuffer[j++] = (float)(Double.longBitsToDouble(tmpLong));
 				                    		}
 				                    	}
 			                    	}
@@ -4548,7 +4548,7 @@ public class FileMATLAB extends FileBase {
     	                                            	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
     			                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
     	                                            }
-    	                                            floatBuffer[j++] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
+    	                                            floatBuffer[j++] = (float)(Double.longBitsToDouble(tmpLong));
     				                    		}
     				                    	}
     			                    	}
