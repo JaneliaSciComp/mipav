@@ -5402,6 +5402,14 @@ public class FileMATLAB extends FileBase {
                         	fileInfo.setExtents(newExtents);
                         } // if (logicalFields >= 1)
                     	image.calcMinMax();
+                    	if (image.isColorImage()) {
+                    		fileInfo.setMinR(image.getMinR());
+                        	fileInfo.setMaxR(image.getMaxR());
+                        	fileInfo.setMinG(image.getMinG());
+                        	fileInfo.setMaxG(image.getMaxG());	
+                        	fileInfo.setMinB(image.getMinB());
+                        	fileInfo.setMaxB(image.getMaxB());	
+                    	}
                     	fileInfo.setMin(image.getMin());
                     	fileInfo.setMax(image.getMax());	
                     }
@@ -5625,6 +5633,14 @@ public class FileMATLAB extends FileBase {
                     	    fileInfo2.setExtents(newExtents);	
                     	}
                     	image2.calcMinMax();
+                    	if (image2.isColorImage()) {
+                    		fileInfo2.setMinR(image2.getMinR());
+                    	    fileInfo2.setMaxR(image2.getMaxR());
+                    	    fileInfo2.setMinG(image2.getMinG());
+                    	    fileInfo2.setMaxG(image2.getMaxG());
+                    	    fileInfo2.setMinB(image2.getMinB());
+                    	    fileInfo2.setMaxB(image2.getMaxB());
+                    	}
                         fileInfo2.setMin(image2.getMin());
                 	    fileInfo2.setMax(image2.getMax());
                     }
