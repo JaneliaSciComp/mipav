@@ -428,12 +428,12 @@ public class FileMATLAB extends FileBase {
                 if ((dataType & 0xffff0000) != 0) {
                 	// Small Data Element Format
                 	raFile.seek(nextElementAddress);
+                	dataType = readShort(endianess);
                 	elementBytes = readShort(endianess);
                 	if ((elementBytes < 1) || (elementBytes > 4)) {
                 		Preferences.debug("In small data element format elementBytes is an illegal " + elementBytes +
                 				" instead of the expected 1 to 4\n");
                 	}
-                	dataType = readShort(endianess);
                 	nextElementAddress = nextElementAddress + 8;
                 }
                 else {
@@ -525,8 +525,8 @@ public class FileMATLAB extends FileBase {
                     if ((dataType & 0xffff0000) != 0) {
                     	// Small Data Element Format
                     	raFile.seek(0L);
-                    	elementBytes = readShort(endianess);
                     	dataType = readShort(endianess);
+                    	elementBytes = readShort(endianess);
                     }
                     else {
                         elementBytes = getInt(endianess);
@@ -810,8 +810,8 @@ public class FileMATLAB extends FileBase {
                     if ((arrayNameDataType & 0xffff0000) != 0) {
                         // Small data element format   
                     	raFile.seek(filePointer);
-                    	arrayNameBytes = readShort(endianess);
                     	arrayNameDataType = readShort(endianess);
+                    	arrayNameBytes = readShort(endianess);
                     	arrayName = getString(arrayNameBytes);
                     	if (arrayNameBytes < 4) {
                     		for (i = 0; i < 4 - arrayNameBytes; i++) {
@@ -1173,8 +1173,8 @@ public class FileMATLAB extends FileBase {
 	                    if ((numericArrayNameDataType & 0xffff0000) != 0) {
 	                        // Small data element format 
 	                    	raFile.seek(filePointer);
-	                    	numericArrayNameBytes = readShort(endianess);
 	                    	numericArrayNameDataType = readShort(endianess);
+	                    	numericArrayNameBytes = readShort(endianess);
 	                    	numericArrayName = getString(numericArrayNameBytes);
 	                    	if (numericArrayNameBytes < 4) {
 	                    		for (i = 0; i < 4 - numericArrayNameBytes; i++) {
@@ -1201,8 +1201,8 @@ public class FileMATLAB extends FileBase {
                     if ((realDataType & 0xffff0000) != 0) {
                         // Small data element format    
                     	raFile.seek(filePointer);
-                    	realDataBytes = readShort(endianess);
                     	realDataType = readShort(endianess);
+                    	realDataBytes = readShort(endianess);
                     	haveSmallRealData = true;
                     }
                     else {
@@ -1354,8 +1354,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format 
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -1582,8 +1582,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -1740,8 +1740,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format 
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -1963,8 +1963,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format 
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -2133,8 +2133,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -2305,8 +2305,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format  
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -2479,8 +2479,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format 
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -2732,8 +2732,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format   
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -2923,8 +2923,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format   
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -3113,8 +3113,8 @@ public class FileMATLAB extends FileBase {
                     	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                 // Small data element format
                     	    	raFile.seek(filePointer);
+                    	    	imaginaryDataType = readShort(endianess);
                             	imaginaryDataBytes = readShort(endianess);
-                            	imaginaryDataType = readShort(endianess);
                             	haveSmallImaginaryData = true;
                             }
                             else {
@@ -3316,8 +3316,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format   
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -3544,8 +3544,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format 
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -3702,8 +3702,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format 
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -3925,8 +3925,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format   
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -4095,8 +4095,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format  
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -4267,8 +4267,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format 
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -4441,8 +4441,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format 
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -4694,8 +4694,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format 
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -4885,8 +4885,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format   
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
@@ -5075,8 +5075,8 @@ public class FileMATLAB extends FileBase {
                         	    if ((imaginaryDataType & 0xffff0000) != 0) {
                                     // Small data element format 
                         	    	raFile.seek(filePointer);
+                        	    	imaginaryDataType = readShort(endianess);
                                 	imaginaryDataBytes = readShort(endianess);
-                                	imaginaryDataType = readShort(endianess);
                                 	haveSmallImaginaryData = true;
                                 }
                                 else {
