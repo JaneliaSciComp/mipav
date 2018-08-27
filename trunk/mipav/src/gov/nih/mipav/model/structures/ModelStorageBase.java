@@ -557,7 +557,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     min = value;
                 }
             }
-            // }
+            // Handle case where all values in image are Double.NaN or Float.NaN
+            if ((max == Double.NEGATIVE_INFINITY) && (min == Double.POSITIVE_INFINITY)) {
+            	min = Double.NaN;
+            	max = Double.NaN;
+            }
         } else { // color
             minA = Double.POSITIVE_INFINITY;
             maxA = Double.NEGATIVE_INFINITY;
@@ -609,7 +613,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     minB = value;
                 }
             } // for(i= 0; i < dataSize; i+=4)
-
+            
+            // Check for case where all values in buffer are Double.NaN or Float.NaN
+            if ((maxA == Double.NEGATIVE_INFINITY) && (minA == Double.POSITIVE_INFINITY)) {
+            	minA = Double.NaN;
+            	maxA = Double.NaN;
+            }
+            if ((maxR == Double.NEGATIVE_INFINITY) && (minR == Double.POSITIVE_INFINITY)) {
+            	minR = Double.NaN;
+            	maxR = Double.NaN;
+            }
+            if ((maxG == Double.NEGATIVE_INFINITY) && (minG == Double.POSITIVE_INFINITY)) {
+            	minG = Double.NaN;
+            	maxG = Double.NaN;
+            }
+            if ((maxB == Double.NEGATIVE_INFINITY) && (minB == Double.POSITIVE_INFINITY)) {
+            	minB = Double.NaN;
+            	maxB = Double.NaN;
+            }
             min = Math.min(minR, Math.min(minG, minB));
             max = Math.max(maxR, Math.max(maxG, maxB));
         } // else color
