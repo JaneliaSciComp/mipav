@@ -656,20 +656,8 @@ public class FileMATLAB extends FileBase {
                     default:
                     	Preferences.debug("Array type is an illegal = " + arrayClass + "\n", Preferences.DEBUG_FILEIO);
                     }
-                    if (arrayClass == mxCHAR_CLASS) {
-                    	imagesFound--;
-                    	if (isCompressed) {
-                        	raFile.close();
-        	                try {
-        	                    ufile.delete();
-        	                } catch (final SecurityException sc) {
-        	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
-        	                }
-                        	raFile = new RandomAccessFile(file, "r");
-                        }
-                    	continue;
-                    }
-                    if (imagesFound == 2) {
+                    
+                    if ((imagesFound == 2) && (arrayClass != mxCHAR_CLASS)) {
                     	fileInfo2 = new FileInfoMATLAB(fileName + "_2", fileDir, FileUtility.MATLAB); // dummy fileInfo
                         fileInfo2.setEndianess(endianess);
                         fileInfo2.setLevel5Format(level5Format);
@@ -721,7 +709,7 @@ public class FileMATLAB extends FileBase {
                 	}
                 	nDim = dimensionsArrayBytes/4;
                 	Preferences.debug("Number of dimensions = " + nDim + "\n", Preferences.DEBUG_FILEIO);
-                	if (nDim < 2) {
+                	if ((nDim < 2) && (arrayClass != mxCHAR_CLASS)) {
                 		Preferences.debug("Error! All numeric arrays should have at least 2 dimensions\n",
                 				Preferences.DEBUG_FILEIO);
                 	}
@@ -734,7 +722,70 @@ public class FileMATLAB extends FileBase {
                 	    			Preferences.DEBUG_FILEIO);
                 	    }
                 	}
-                	else { // arrayClass != mxSTRUCT_CLASS
+                	else if (arrayClass == mxCHAR_CLASS) {
+                    	imagesFound--;
+                    	int characterDimensions[] = new int[nDim];
+                	    for (i = 0; i < nDim; i++) {
+                	    	characterDimensions[i] = getInt(endianess);
+                	    	Preferences.debug("Character dimensions[" + i + " ] = " + characterDimensions[i] + "\n", 
+                	    			Preferences.DEBUG_FILEIO);
+                	    }
+                	    if ((dimensionsArrayBytes % 8) != 0) {
+                    		// Skip over padding bytes
+                    		padBytes = 8 - (dimensionsArrayBytes % 8);
+                    		for (i = 0; i < padBytes; i++) {
+                    		    raFile.readByte();
+                    		}
+                    	} // if ((dimensionsArrayBytes % 8) != 0)
+                    	filePointer = raFile.getFilePointer();
+                    	arrayNameDataType = getInt(endianess);
+                        if ((arrayNameDataType & 0xffff0000) != 0) {
+                            // Small data element format   
+                        	raFile.seek(filePointer);
+                        	arrayNameDataType = readShort(endianess);
+                        	arrayNameBytes = readShort(endianess);
+                        	arrayName = getString(arrayNameBytes);
+                        	if (arrayNameBytes < 4) {
+                        		for (i = 0; i < 4 - arrayNameBytes; i++) {
+                        			// Skip over padding bytes
+                        			raFile.readByte();
+                        		}
+                        	}
+                        }
+                        else {
+                        	arrayNameBytes = getInt(endianess);
+                        	arrayName = getString(arrayNameBytes);
+                        	// Skip over padding bytes
+                        	if ((arrayNameBytes % 8) != 0) {
+    	                		padBytes = 8 - (arrayNameBytes % 8);
+    	                		for (i = 0; i < padBytes; i++) {
+    	                		    raFile.readByte();
+    	                		}
+                        	}
+                        }
+                        Preferences.debug("Array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
+                         // The field name length subelement always uses the compressed data element format
+                    	int characterDataType = getInt(endianess);
+                    	if (characterDataType == 16) {
+                      	    Preferences.debug("Character data type = Unicode UTF_8\n",Preferences.DEBUG_FILEIO);
+                      	    int charBytes = getInt(endianess);
+                      	    Preferences.debug("Character bytes = " + charBytes + "\n", Preferences.DEBUG_FILEIO);
+                      	    String charString = getString(charBytes);
+                      	    Preferences.debug(arrayName + " contains: \n", Preferences.DEBUG_FILEIO);
+                      	    Preferences.debug(charString + "\n", Preferences.DEBUG_FILEIO);
+                    	}
+                    	if (isCompressed) {
+                        	raFile.close();
+        	                try {
+        	                    ufile.delete();
+        	                } catch (final SecurityException sc) {
+        	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
+        	                }
+                        	raFile = new RandomAccessFile(file, "r");
+                        }
+                    	continue;
+                    } // else if (arrayClass == mxCHAR_CLASS) 
+                	else { // arrayClass != mxSTRUCT_CLASS && arrayClass != mxCHAR_CLASS
 	                	imageExtents = new int[nDim];
 	                	imageLength = 1;
 	                	if (imagesFound == 1) {
