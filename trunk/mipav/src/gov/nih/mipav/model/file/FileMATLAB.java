@@ -847,6 +847,116 @@ public class FileMATLAB extends FileBase {
 	                	}
 	                	if ((imageExtents[0] == 1) || (imageExtents[1] == 1)) {
 	                		imagesFound--;
+	                		if ((dimensionsArrayBytes % 8) != 0) {
+	                    		// Skip over padding bytes
+	                    		padBytes = 8 - (dimensionsArrayBytes % 8);
+	                    		for (i = 0; i < padBytes; i++) {
+	                    		    raFile.readByte();
+	                    		}
+	                    	} // if ((dimensionsArrayBytes % 8) != 0)
+	                    	filePointer = raFile.getFilePointer();
+	                    	arrayNameDataType = getInt(endianess);
+	                        if ((arrayNameDataType & 0xffff0000) != 0) {
+	                            // Small data element format   
+	                        	raFile.seek(filePointer);
+	                        	arrayNameDataType = readShort(endianess);
+	                        	arrayNameBytes = readShort(endianess);
+	                        	arrayName = getString(arrayNameBytes);
+	                        	if (arrayNameBytes < 4) {
+	                        		for (i = 0; i < 4 - arrayNameBytes; i++) {
+	                        			// Skip over padding bytes
+	                        			raFile.readByte();
+	                        		}
+	                        	}
+	                        }
+	                        else {
+	                        	arrayNameBytes = getInt(endianess);
+	                        	arrayName = getString(arrayNameBytes);
+	                        	// Skip over padding bytes
+	                        	if ((arrayNameBytes % 8) != 0) {
+	    	                		padBytes = 8 - (arrayNameBytes % 8);
+	    	                		for (i = 0; i < padBytes; i++) {
+	    	                		    raFile.readByte();
+	    	                		}
+	                        	}
+	                        }
+	                        Preferences.debug("Array name bytes = " + arrayNameBytes + "\n", Preferences.DEBUG_FILEIO);
+	                        Preferences.debug("Array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
+	                        int arrayType = getInt(endianess);
+	                        int arrayBytes = getInt(endianess);
+	                        Preferences.debug("Array bytes = " + arrayBytes + "\n", Preferences.DEBUG_FILEIO);
+	                        switch (arrayType) {
+	                        case miINT8:
+	                        	Preferences.debug("Array type = miINT8 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(raFile.readByte() + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miUINT8:
+	                        	Preferences.debug("Array type = miUINT8 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(raFile.readUnsignedByte() + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miINT16:
+	                        	Preferences.debug("Array type = miINT16 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getSignedShort(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miUINT16:
+	                        	Preferences.debug("Array type = miUINT16 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getUnsignedShort(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miINT32:
+	                        	Preferences.debug("Array type = miINT32 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getInt(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miUINT32:
+	                        	Preferences.debug("Array type = miUINT32 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getUInt(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miINT64:
+	                        	Preferences.debug("Array type = miINT64 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getLong(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miUINT64:
+	                        	Preferences.debug("Array type = miUIN64 \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getLong(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	break;
+	                        case miSINGLE:
+	                        	 Preferences.debug("Array type = miSINGLE \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getFloat(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	 break;
+	                        case miDOUBLE:
+	                        	 Preferences.debug("Array type = miDOUBLE \n", Preferences.DEBUG_FILEIO);
+	                        	 Preferences.debug(arrayName + " contains:\n", Preferences.DEBUG_FILEIO);
+	                        	 for (i = 0; i < imageExtents[0]*imageExtents[1]; i++) {
+	                        		 Preferences.debug(getDouble(endianess) + "\n", Preferences.DEBUG_FILEIO);
+	                        	 }
+	                        	 break;
+	                        }
 	                    	if (isCompressed) {
 	                        	raFile.close();
 	        	                try {
@@ -857,7 +967,7 @@ public class FileMATLAB extends FileBase {
 	                        	raFile = new RandomAccessFile(file, "r");
 	                        }
 	                    	continue;	
-	                	}
+	                	} // if ((imageExtents[0] == 1) || (imageExtents[1] == 1))
 	                	if ((nDim == 4) && (imageExtents[2] == 1)) {
 	                		nDim = 3;
 	                		newExtents = new int[3];
