@@ -793,6 +793,13 @@ public class FileMATLAB extends FileBase {
                       	    		Preferences.debug(lineString[i] + "\n", Preferences.DEBUG_FILEIO);	
                       	    	}
                       	    }
+                    	} // if (characterDataType == miUTF8)
+                    	else {
+                    		Preferences.debug("characterDataType = " + characterDataType + "\n", Preferences.DEBUG_FILEIO);	
+                    		int charBytes = getInt(endianess);
+                      	    Preferences.debug("Character bytes = " + charBytes + "\n", Preferences.DEBUG_FILEIO);
+                      	    buffer = new byte[charBytes];
+                      	    raFile.read(buffer);
                     	}
                     	if (isCompressed) {
                         	raFile.close();
