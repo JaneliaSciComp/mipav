@@ -766,13 +766,33 @@ public class FileMATLAB extends FileBase {
                         Preferences.debug("Array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
                          // The field name length subelement always uses the compressed data element format
                     	int characterDataType = getInt(endianess);
-                    	if (characterDataType == 16) {
+                    	if (characterDataType == miUTF8) {
                       	    Preferences.debug("Character data type = Unicode UTF_8\n",Preferences.DEBUG_FILEIO);
                       	    int charBytes = getInt(endianess);
                       	    Preferences.debug("Character bytes = " + charBytes + "\n", Preferences.DEBUG_FILEIO);
                       	    String charString = getString(charBytes);
                       	    Preferences.debug(arrayName + " contains: \n", Preferences.DEBUG_FILEIO);
-                      	    Preferences.debug(charString + "\n", Preferences.DEBUG_FILEIO);
+                      	    if ((nDim == 1) || (characterDimensions[0] == 1) || (characterDimensions[1] == 1)) {
+                      	        Preferences.debug(charString + "\n", Preferences.DEBUG_FILEIO);
+                      	    }
+                      	    else {
+                      	    	String lineString[] = new String[characterDimensions[0]];
+                      	    	int jinit = 0;
+                      	    	for (i = 0; i < characterDimensions[0]; i++) {
+                      	    		for (j = jinit; j < characterDimensions[0]*characterDimensions[1]; j += characterDimensions[0]) {
+                      	    			if (j == jinit) {
+                      	    				lineString[i] = charString.substring(j,j+1);
+                      	    			}
+                      	    			else {
+                      	    			    lineString[i] += charString.substring(j,j+1);
+                      	    			}
+                      	    		}
+                      	    		jinit++;
+                      	    	}
+                      	    	for (i = 0; i < characterDimensions[0]; i++) {
+                      	    		Preferences.debug(lineString[i] + "\n", Preferences.DEBUG_FILEIO);	
+                      	    	}
+                      	    }
                     	}
                     	if (isCompressed) {
                         	raFile.close();
