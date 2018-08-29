@@ -765,12 +765,29 @@ public class FileMATLAB extends FileBase {
                         }
                         Preferences.debug("Array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
                          // The field name length subelement always uses the compressed data element format
+                        filePointer = raFile.getFilePointer();
                     	int characterDataType = getInt(endianess);
+                    	int charBytes;
+                    	String charString;
+                    	if ((characterDataType & 0xffff0000) != 0) {
+                    		raFile.seek(filePointer);
+                        	characterDataType = readShort(endianess); 
+                        	charBytes = readShort(endianess);
+                        	charString = getString(charBytes);
+                        	if (charBytes < 4) {
+                        		for (i = 0; i < 4 - charBytes; i++) {
+                        			// Skip over padding bytes
+                        			raFile.readByte();
+                        		}
+                        	}	
+                    	}
+                    	else {
+                    		charBytes = getInt(endianess);
+                    		charString = getString(charBytes);
+                    	}
                     	if (characterDataType == miUTF8) {
                       	    Preferences.debug("Character data type = Unicode UTF_8\n",Preferences.DEBUG_FILEIO);
-                      	    int charBytes = getInt(endianess);
                       	    Preferences.debug("Character bytes = " + charBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	    String charString = getString(charBytes);
                       	    Preferences.debug(arrayName + " contains: \n", Preferences.DEBUG_FILEIO);
                       	    if ((nDim == 1) || (characterDimensions[0] == 1) || (characterDimensions[1] == 1)) {
                       	        Preferences.debug(charString + "\n", Preferences.DEBUG_FILEIO);
@@ -796,7 +813,6 @@ public class FileMATLAB extends FileBase {
                     	} // if (characterDataType == miUTF8)
                     	else {
                     		Preferences.debug("characterDataType = " + characterDataType + "\n", Preferences.DEBUG_FILEIO);	
-                    		int charBytes = getInt(endianess);
                       	    Preferences.debug("Character bytes = " + charBytes + "\n", Preferences.DEBUG_FILEIO);
                       	    buffer = new byte[charBytes];
                       	    raFile.read(buffer);
