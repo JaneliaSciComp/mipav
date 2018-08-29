@@ -882,8 +882,17 @@ public class FileMATLAB extends FileBase {
 	                        }
 	                        Preferences.debug("Array name bytes = " + arrayNameBytes + "\n", Preferences.DEBUG_FILEIO);
 	                        Preferences.debug("Array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
+	                        filePointer = raFile.getFilePointer();
 	                        int arrayType = getInt(endianess);
-	                        int arrayBytes = getInt(endianess);
+	                        int arrayBytes;
+	                        if ((arrayType & 0xffff0000) != 0) {
+	                        	raFile.seek(filePointer);
+	                        	arrayType = readShort(endianess);
+	                        	arrayBytes = readShort(endianess);
+	                        }
+	                        else {
+	                            arrayBytes = getInt(endianess);
+	                        }
 	                        Preferences.debug("Array bytes = " + arrayBytes + "\n", Preferences.DEBUG_FILEIO);
 	                        switch (arrayType) {
 	                        case miINT8:
@@ -956,6 +965,8 @@ public class FileMATLAB extends FileBase {
 	                        		 Preferences.debug(getDouble(endianess) + "\n", Preferences.DEBUG_FILEIO);
 	                        	 }
 	                        	 break;
+	                        default:
+	                        	Preferences.debug("Array type = " + arrayType +  "\n", Preferences.DEBUG_FILEIO);	
 	                        }
 	                    	if (isCompressed) {
 	                        	raFile.close();
