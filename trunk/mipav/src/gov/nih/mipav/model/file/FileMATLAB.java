@@ -134,6 +134,9 @@ public class FileMATLAB extends FileBase {
     private ViewJFrameImage vmFrame2 = null;
     
     private long filePointer;
+    
+    // Used in sparse arrays
+    private int maximumNonZeroElements = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -688,8 +691,12 @@ public class FileMATLAB extends FileBase {
                     	logicalFlag = false;
                     	Preferences.debug("Logical flag is not set\n", Preferences.DEBUG_FILEIO);
                     }
-                    // 4 undefined bytes
-                	getInt(endianess);
+                    // 4 undefined bytes unless arrayClass == mxSparseClass
+                	maximumNonZeroElements = getInt(endianess);
+                	if (arrayClass == mxSPARSE_CLASS) {
+                		Preferences.debug("Maximum number of nonzero elements in the matrix = " + 
+                	          maximumNonZeroElements + "\n", Preferences.DEBUG_FILEIO);
+                	}
                 	dimensionsArrayDataType = getInt(endianess);
                 	if (dimensionsArrayDataType == miINT32) {
                 		Preferences.debug("Dimensions array data type is the expected miINT32\n", Preferences.DEBUG_FILEIO);
@@ -2254,44 +2261,86 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.INTEGER);
                     		}
-                    		buffer = new byte[realDataBytes];
-                    		raFile.read(buffer);
-                    		intNumber = realDataBytes/4;
-                    		intBuffer = new int[intNumber];
-                    		numberSlices = intNumber/sliceSize;
-                    		j = 0;
-	                    	for (s = 0; s < numberSlices; s++) {
-		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = 0; y < imageExtents[0]; y++) {
-		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                        b1 = buffer[index] & 0xff;
-                                        b2 = buffer[index+1] & 0xff;
-                                        b3 = buffer[index+2] & 0xff;
-                                        b4 = buffer[index+3] & 0xff;
-                                        if (endianess == BIG_ENDIAN) {
-                                        	intBuffer[j++] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                        }
-                                        else {
-                                        	intBuffer[j++] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                        }
-		                    		}
-		                    	}
-	                    	}
-                    		
-                    		if (haveSmallRealData) {
-                    		    if (realDataBytes < 4) {
-                    		    	padBytes = 4 - realDataBytes;
-                    		    	for (i = 0; i < padBytes; i++) {
-                    		    		raFile.readByte();
+                    		if (arrayClass == mxSPARSE_CLASS) {	
+                    		    intBuffer = new int[imageExtents[0]*imageExtents[1]];
+                    		    int rcIndex[][] = new int[maximumNonZeroElements][2];
+                    		    int columnIndex[] = new int[imageExtents[0]+1];
+                    		    for (i = 0; i < maximumNonZeroElements; i++) {
+                    		    	rcIndex[i][0] = getInt(endianess)-1;	
+                    		    }
+                    		    for (i = 0; i < imageExtents[0]+1; i++) {
+                    		    	columnIndex[i] = getInt(endianess)-1;
+                    		    }
+                    		    int nnz = columnIndex[imageExtents[0]]+1;
+                    		    Preferences.debug("Number of nonzero entries in matrix = " + nnz + "\n",
+                    		    		Preferences.DEBUG_FILEIO);
+                    		    loop: for (i = 0; i < imageExtents[0]; i++) {
+                    		    	if (columnIndex[i] >= 0) {
+                    		    		int firstElement = columnIndex[i];
+                    		    		if (firstElement == nnz-1) {
+                    		    			rcIndex[nnz-1][1] = i;
+                    		    			break;
+                    		    		}
+                    		    		int lastElement = columnIndex[i+1]-1;
+                    		    		for (j = firstElement; j <= lastElement; j++) {
+                    		    			if (j >= nnz) {
+                    		    				break loop;
+                    		    			}
+                    		    			rcIndex[j][1] = i;
+                    		    		}
+                    		    		
                     		    	}
                     		    }
-                    		}
-                    		else if ((realDataBytes % 8) != 0) {
-                    	    	padBytes = 8 - (realDataBytes % 8);
-                    	    	for (i = 0; i < padBytes; i++) {
-                        	    	raFile.readByte();
-                        	    }
-                    	    }  
+                    		    int realPart[] = new int[nnz];
+                    		    for (i = 0; i < nnz; i++) {
+                    		    	realPart[i] = getInt(endianess);
+                    		    }
+                    		    for (i = 0; i < nnz; i++) {
+                    		    	if (rcIndex[i][0] >= 0) {
+                    		    	    intBuffer[rcIndex[i][1] + imageExtents[0]*rcIndex[i][0]] = realPart[i];
+                    		    	}
+                    		    }
+                    		} // if (arrayClass == mxSPARSE_CLASS)
+                    		else {
+	                    		buffer = new byte[realDataBytes];
+	                    		raFile.read(buffer);
+	                    		intNumber = realDataBytes/4;
+	                    		intBuffer = new int[intNumber];
+	                    		numberSlices = intNumber/sliceSize;
+	                    		j = 0;
+		                    	for (s = 0; s < numberSlices; s++) {
+			                    	for (x = 0; x < imageExtents[1]; x++) {
+			                    		for (y = 0; y < imageExtents[0]; y++) {
+			                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
+	                                        b1 = buffer[index] & 0xff;
+	                                        b2 = buffer[index+1] & 0xff;
+	                                        b3 = buffer[index+2] & 0xff;
+	                                        b4 = buffer[index+3] & 0xff;
+	                                        if (endianess == BIG_ENDIAN) {
+	                                        	intBuffer[j++] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+	                                        }
+	                                        else {
+	                                        	intBuffer[j++] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+	                                        }
+			                    		}
+			                    	}
+		                    	}
+	                    		
+	                    		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
+                    		} // else not mxSPARSE_CLASS
                     		try {
                     			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
                     		}
