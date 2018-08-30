@@ -330,9 +330,9 @@ public class FileMATLAB extends FileBase {
         int st;
         int elementNumber = 0;
         int totalNumber2;
-        int shortMin;
-        int shortMax;
-        int shortRange;
+        int intMin;
+        int intMax;
+        int intRange;
         int maxColorIndex;
         double scale;
         double scaledIndex;
@@ -5924,34 +5924,42 @@ public class FileMATLAB extends FileBase {
                 image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), i);
             }
             
-            if (((image.getType() == ModelStorageBase.UBYTE)|| (image.getType() == ModelStorageBase.SHORT)) &&
+            if (((image.getType() == ModelStorageBase.UBYTE)|| (image.getType() == ModelStorageBase.SHORT) ||
+            		(image.getType() == ModelStorageBase.USHORT)) &&
             	(image2 != null) && (image2.getType() == ModelStorageBase.DOUBLE) &&
-            	(image2.getExtents()[0]  == 3)  && (image2.getExtents()[1] <= 256)) {
+            	(image2.getExtents()[0]  == 3)) {
             	// image2 is really a lookup table for image
             	totalNumber = 1;
             	for (i = 0; i < image.getNDims(); i++) {
             		totalNumber = totalNumber * image.getExtents()[i];
             	}
-            	shortBuffer = new short[totalNumber];
+            	intBuffer = new int[totalNumber];
         		try {
-        			image.exportData(0, totalNumber, shortBuffer);
+        			image.exportData(0, totalNumber, intBuffer);
         		}
         		catch(IOException e) {
-        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
+        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, intBuffer)");
         		   throw e;
         		}
-        		shortMin = 65535;
-        		shortMax = -32768;
+        		intMin = Integer.MAX_VALUE;
+        		intMax = Integer.MIN_VALUE;
         		for (i = 0; i < totalNumber; i++) {
-        			if (shortBuffer[i] < shortMin) {
-        				shortMin = shortBuffer[i];
+        			if (intBuffer[i] < intMin) {
+        				intMin = intBuffer[i];
         			}
-        			if (shortBuffer[i] > shortMax) {
-        				shortMax = shortBuffer[i];
+        			if (intBuffer[i] > intMax) {
+        				intMax = intBuffer[i];
         			}
         		}
         		
-        		shortRange = shortMax - shortMin;
+        		if ((intMin == 1) && (intMax == image2.getExtents()[1])) {
+        		    Preferences.debug("Image minimum value = 1 and image maximum value = " + image2.getExtents()[1] + "\n",
+        		    		Preferences.DEBUG_FILEIO);	
+        		    Preferences.debug("This fits with the 3 by " + image2.getExtents()[1] + " image2 being a lookup table\n",
+        		    		Preferences.DEBUG_FILEIO);
+        		} // if ((intMin == 1) && (intMin == image2.getExtents()[1]))
+        		
+        		intRange = intMax - intMin;
         		image = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), image.getImageFileName());
     			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
     			floatBuffer = new float[4 * totalNumber];
@@ -5961,7 +5969,7 @@ public class FileMATLAB extends FileBase {
     			}
     			doubleBuffer = new double[totalNumber2];
     			maxColorIndex = (totalNumber2/3) - 1;
-    			scale = (double)maxColorIndex/(double)shortRange;
+    			scale = (double)maxColorIndex/(double)intRange;
     			try {
     				image2.exportData(0, totalNumber2, doubleBuffer);
     			}
@@ -5974,8 +5982,8 @@ public class FileMATLAB extends FileBase {
     			image2 = null;
     			for (i = 0; i < totalNumber; i++) {
     				floatBuffer[4*i] = 0.0f;
-    				scaledIndex = (scale*(shortBuffer[i] - shortMin));
-    				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
+    				scaledIndex = (scale*(intBuffer[i] - intMin));
+    				lowIndex = Math.max(0,(int)scaledIndex);
     				highIndex = Math.min(maxColorIndex,lowIndex+1);
     				if (lowIndex == highIndex) {
     					lowFraction = 1.0;
@@ -5985,9 +5993,9 @@ public class FileMATLAB extends FileBase {
     				    lowFraction = Math.min(1.0, highIndex - scaledIndex);
     				    highFraction = Math.min(1.0, scaledIndex - lowIndex);
     				}
-    				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
-    				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
-    				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
+    				floatBuffer[4*i+1] = (float)(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]);
+    				floatBuffer[4*i+2] = (float)(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]);
+    				floatBuffer[4*i+3] = (float)(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]);
     			}
     			try {
     				image.importData(0, floatBuffer, true);
@@ -5997,32 +6005,39 @@ public class FileMATLAB extends FileBase {
     				throw e;
     			}
             }
-            else if ((image.getType() == ModelStorageBase.DOUBLE) && (image.getExtents()[0]  == 3)  && (image.getExtents()[1] <= 256) &&
-            		 (image2 != null) && ((image2.getType() == ModelStorageBase.UBYTE) || (image2.getType() == ModelStorageBase.SHORT))) {
-                	// image2 is really a lookup table for image
+            else if ((image.getType() == ModelStorageBase.DOUBLE) && (image.getExtents()[0]  == 3) &&
+            		 (image2 != null) && ((image2.getType() == ModelStorageBase.UBYTE) || (image2.getType() == ModelStorageBase.SHORT) ||
+            				 (image2.getType() == ModelStorageBase.USHORT))) {
+                	// image is really a lookup table for image2
                 	totalNumber = 1;
                 	for (i = 0; i < image2.getNDims(); i++) {
                 		totalNumber = totalNumber * image2.getExtents()[i];
                 	}
-                	shortBuffer = new short[totalNumber];
+                	intBuffer = new int[totalNumber];
             		try {
-            			image2.exportData(0, totalNumber, shortBuffer);
+            			image2.exportData(0, totalNumber, intBuffer);
             		}
             		catch(IOException e) {
-            		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
+            		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, intBuffer)");
             		   throw e;
             		}
-            		shortMin = 65535;
-            		shortMax = -32768;
+            		intMin = Integer.MAX_VALUE;
+            		intMax = Integer.MIN_VALUE;
             		for (i = 0; i < totalNumber; i++) {
-            			if (shortBuffer[i] < shortMin) {
-            				shortMin = shortBuffer[i];
+            			if (intBuffer[i] < intMin) {
+            			    intMin = intBuffer[i];
             			}
-            			if (shortBuffer[i] > shortMax) {
-            				shortMax = shortBuffer[i];
+            			if (intBuffer[i] > intMax) {
+            				intMax = intBuffer[i];
             			}
             		}
-            		shortRange = shortMax - shortMin;
+            		if ((intMin == 1) && (intMax == image.getExtents()[1])) {
+            		    Preferences.debug("Image2 minimum value = 1 and image2 maximum value = " + image.getExtents()[1] + "\n",
+            		    		Preferences.DEBUG_FILEIO);	
+            		    Preferences.debug("This fits with the 3 by " + image.getExtents()[1] + " image being a lookup table\n",
+            		    		Preferences.DEBUG_FILEIO);
+            		} // if ((intMin == 1) && (intMin == image2.getExtents()[1]))
+            		intRange = intMax - intMin;
         			floatBuffer = new float[4 * totalNumber];
         			totalNumber2 = 1;
         			for (i = 0; i < image.getNDims(); i++) {
@@ -6030,7 +6045,7 @@ public class FileMATLAB extends FileBase {
         			}
         			doubleBuffer = new double[totalNumber2];
         			maxColorIndex = (totalNumber2/3) - 1;
-        			scale = (double)maxColorIndex/(double)shortRange;
+        			scale = (double)maxColorIndex/(double)intRange;
         			try {
         				image.exportData(0, totalNumber2, doubleBuffer);
         			}
@@ -6046,8 +6061,8 @@ public class FileMATLAB extends FileBase {
         			image2 = null;
         			for (i = 0; i < totalNumber; i++) {
         				floatBuffer[4*i] = 0.0f;
-        				scaledIndex = (scale*(shortBuffer[i] - shortMin));
-        				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
+        				scaledIndex = (scale*(intBuffer[i] - intMin));
+        				lowIndex = Math.max(0,(int)scaledIndex);
         				highIndex = Math.min(maxColorIndex,lowIndex+1);
         				if (lowIndex == highIndex) {
         					lowFraction = 1.0;
@@ -6057,9 +6072,9 @@ public class FileMATLAB extends FileBase {
         				    lowFraction = Math.min(1.0, highIndex - scaledIndex);
         				    highFraction = Math.min(1.0, scaledIndex - lowIndex);
         				}
-        				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
-        				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
-        				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
+        				floatBuffer[4*i+1] = (float)(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]);
+        				floatBuffer[4*i+2] = (float)(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]);
+        				floatBuffer[4*i+3] = (float)(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]);
         			}
         			try {
         				image.importData(0, floatBuffer, true);
