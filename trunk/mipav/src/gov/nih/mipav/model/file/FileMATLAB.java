@@ -2257,21 +2257,35 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miINT32\n", Preferences.DEBUG_FILEIO);
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
-                    		if (nonLogicalField == 0) {
-                    		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
-                    		    fileInfo.setDataType(ModelStorageBase.INTEGER);
-                    		}
+                    		
                     		if (arrayClass == mxSPARSE_CLASS) {	
-                    		    intBuffer = new int[imageExtents[0]*imageExtents[1]];
+                    			// int32 for row index and column index
+                    			// followed by double for real and imaginary parts
+                    			if (nonLogicalField == 0) {
+                        		    image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName);
+                        		    fileInfo.setDataType(ModelStorageBase.DOUBLE);
+                        		}
+                    		    doubleBuffer = new double[imageExtents[0]*imageExtents[1]];
                     		    int rcIndex[][] = new int[maximumNonZeroElements][2];
                     		    int columnIndex[] = new int[imageExtents[0]+1];
                     		    for (i = 0; i < maximumNonZeroElements; i++) {
-                    		    	rcIndex[i][0] = getInt(endianess)-1;	
+                    		    	// Already zero indexed, so don't subtract one
+                    		    	rcIndex[i][0] = getInt(endianess);	
                     		    }
+                    		    if (((4*maximumNonZeroElements) % 8) != 0) {
+	                    	    	padBytes = 8 - ((4*maximumNonZeroElements) % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    } 
+                    		    // These necessary 8 bytes not in MAT-file format manual.
+                    		    getInt(endianess);
+                    		    getInt(endianess);
                     		    for (i = 0; i < imageExtents[0]+1; i++) {
-                    		    	columnIndex[i] = getInt(endianess)-1;
+                    		    	// Alreay zero indexed so don't subtract one
+                    		    	columnIndex[i] = getInt(endianess);
                     		    }
-                    		    int nnz = columnIndex[imageExtents[0]]+1;
+                    		    int nnz = columnIndex[imageExtents[0]];
                     		    Preferences.debug("Number of nonzero entries in matrix = " + nnz + "\n",
                     		    		Preferences.DEBUG_FILEIO);
                     		    loop: for (i = 0; i < imageExtents[0]; i++) {
@@ -2291,17 +2305,37 @@ public class FileMATLAB extends FileBase {
                     		    		
                     		    	}
                     		    }
-                    		    int realPart[] = new int[nnz];
+                    		    if (((4*(imageExtents[0]+1)) % 8) != 0) {
+	                    	    	padBytes = 8 - ((4*(imageExtents[0]+1)) % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    } 
+                    		    // These necessary 8 bytes not in MAT-file format manual.
+                    		    getInt(endianess);
+                    		    getInt(endianess);
+                    		    double realPart[] = new double[nnz];
                     		    for (i = 0; i < nnz; i++) {
-                    		    	realPart[i] = getInt(endianess);
+                    		    	realPart[i] = getDouble(endianess);
                     		    }
                     		    for (i = 0; i < nnz; i++) {
                     		    	if (rcIndex[i][0] >= 0) {
-                    		    	    intBuffer[rcIndex[i][1] + imageExtents[0]*rcIndex[i][0]] = realPart[i];
+                    		    	    doubleBuffer[rcIndex[i][1] + imageExtents[0]*rcIndex[i][0]] = realPart[i];
                     		    	}
                     		    }
+                    		    try {
+	                    			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		} // if (arrayClass == mxSPARSE_CLASS)
                     		else {
+                    			if (nonLogicalField == 0) {
+                        		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
+                        		    fileInfo.setDataType(ModelStorageBase.INTEGER);
+                        		}
 	                    		buffer = new byte[realDataBytes];
 	                    		raFile.read(buffer);
 	                    		intNumber = realDataBytes/4;
@@ -2340,15 +2374,16 @@ public class FileMATLAB extends FileBase {
 	                        	    	raFile.readByte();
 	                        	    }
 	                    	    }  
+                    		
+	                    		try {
+	                    			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		} // else not mxSPARSE_CLASS
-                    		try {
-                    			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
-                    		   throw e;
-                    		}
-                    	}
+                    	} // if (!complexFlag)
                     	else {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
