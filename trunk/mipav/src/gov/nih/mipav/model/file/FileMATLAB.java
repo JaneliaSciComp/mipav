@@ -137,6 +137,10 @@ public class FileMATLAB extends FileBase {
     
     // Used in sparse arrays
     private int maximumNonZeroElements = 0;
+    
+    private boolean haveNumericArrayCharacter = false;
+    
+    private int numberCharacterClasses = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -290,10 +294,10 @@ public class FileMATLAB extends FileBase {
         int numericArrayFlagsDataType;
         int numericArrayFlagsBytes;
         int numericArrayFlags;
-        int numericArrayClass;
+        int numericArrayClass = -1;
         int numericArrayNameDataType;
         int numericArrayNameBytes;
-        String numericArrayName;
+        String numericArrayName = null;
         int logicalFields = 0;
         boolean isVOI = false;
         boolean isVOI2 = false;
@@ -1174,9 +1178,10 @@ public class FileMATLAB extends FileBase {
                         	break;
                         case mxCHAR_CLASS:
                         	Preferences.debug("Numeric array type is character\n", Preferences.DEBUG_FILEIO);
+                        	haveNumericArrayCharacter = true;
                         	break;
                         case mxSPARSE_CLASS:
-                        	Preferences.debug("Numereic array type is sparse\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Numeric array type is sparse\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxDOUBLE_CLASS:
                         	Preferences.debug("Numeric array type is 8 byte float\n", Preferences.DEBUG_FILEIO);
@@ -1244,7 +1249,10 @@ public class FileMATLAB extends FileBase {
                         		isVOI2 = false;
                         	}
                         }
-                        nonLogicalField = field - logicalFields;
+                        if (numericArrayClass == mxCHAR_CLASS) {
+                        	numberCharacterClasses++;
+                        }
+                        nonLogicalField = field - logicalFields - numberCharacterClasses;
                         if ((imagesFound == 1) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
                         	if (field == 0) {
                         		voiFieldName = fieldNames[0];
@@ -1262,8 +1270,12 @@ public class FileMATLAB extends FileBase {
                         	}
                         }
                         
-                        // 4 undefined bytes
-                    	getInt(endianess);
+                    	// 4 undefined bytes unless numericArrayClass == mxSparseClass
+                    	maximumNonZeroElements = getInt(endianess);
+                    	if (numericArrayClass == mxSPARSE_CLASS) {
+                    		Preferences.debug("Maximum number of nonzero elements in the matrix = " + 
+                    	          maximumNonZeroElements + "\n", Preferences.DEBUG_FILEIO);
+                    	}
                     	dimensionsArrayDataType = getInt(endianess);
                     	if (dimensionsArrayDataType == miINT32) {
                     		Preferences.debug("Dimensions array data type is the expected miINT32\n", Preferences.DEBUG_FILEIO);
@@ -1326,7 +1338,54 @@ public class FileMATLAB extends FileBase {
                                 maskFileInfo2.setArrayName(arrayName);	
                     		}
                     	} // if (logicalFlag)
-                    	else { // !logicalFlag
+                    	else if (haveNumericArrayCharacter) {
+                    		imageExtents = new int[nDim];
+                    		if (numericArrayClass != mxCHAR_CLASS) {
+                    			imageLength = 1;
+    		                	if (imagesFound == 1) {
+    		                		imageSlices = 1;
+    		                	}
+    		                	else {
+    		                		imageSlices2 = 1;
+    		                	}	
+                    		}
+                    		for (i = 0; i < nDim; i++) {
+		                		if (i == 0) {
+		                			imageExtents[1] = getInt(endianess);
+		                			Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
+		                		}
+		                		else if (i == 1) {
+		                			imageExtents[0] = getInt(endianess);
+		                			Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n", Preferences.DEBUG_FILEIO);
+		                		}
+		                		else {
+		                		    imageExtents[i] = getInt(endianess);
+		                		    Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n", 
+		                		    		Preferences.DEBUG_FILEIO);
+		                		}
+		                		if (numericArrayClass != mxCHAR_CLASS) {
+			                		imageLength = imageLength * imageExtents[i];
+			                		if (i > 1) {
+			                			if (imagesFound == 1) {
+			                				imageSlices = imageSlices * imageExtents[i];
+			                			}
+			                			else {
+			                				imageSlices2 = imageSlices2 * imageExtents[i];
+			                			}
+			                		}
+		                		}
+		                	} // for (i = 0; i < nDim; i++)
+                    		
+                    		if (numericArrayClass != mxCHAR_CLASS) {
+                    			if (imagesFound == 1) {
+    		                		fileInfo.setExtents(imageExtents);
+    		                	}
+    		                	else {
+    		                		fileInfo2.setExtents(imageExtents);
+    		                	}
+                    		} // if (numericArrayClass != mxCHAR_CLASS)
+                    	} // else if (haveNumericArrayCharacter)
+                    	else { // !logicalFlag && !haveNumericArrayCharacter
 	                    	imageExtents = new int[nDim+1];
 		                	imageLength = 1;
 		                	if (imagesFound == 1) {
@@ -1361,7 +1420,6 @@ public class FileMATLAB extends FileBase {
 		                		}
 		                	}
 		                	
-		                	
 		                	// Note that imageLength only includes slices in one field of a structure
 		                	imageExtents[nDim] = fieldNumber;
 		                	Preferences.debug("imageExtents[" + nDim + "] = " + imageExtents[nDim] + "\n", 
@@ -1380,7 +1438,7 @@ public class FileMATLAB extends FileBase {
 		                	else {
 		                		fileInfo2.setExtents(imageExtents);
 		                	}
-                    	} // else !logicalFlag
+                    	} // else !logicalFlag && !haveNumericArrayCharacter
 	                	
 	                	if ((dimensionsArrayBytes % 8) != 0) {
 	                		// Skip over padding bytes
@@ -1407,16 +1465,21 @@ public class FileMATLAB extends FileBase {
 	                    }
 	                    else {
 	                    	numericArrayNameBytes = getInt(endianess);
-	                    	numericArrayName = getString(numericArrayNameBytes);
-	                    	// Skip over padding bytes
 	                    	if (numericArrayNameBytes > 0) {
+	                    	     numericArrayName = getString(numericArrayNameBytes);
+	                    	    // Skip over padding bytes
 	                		    padBytes = 8 - (numericArrayNameBytes % 8);
 	                		    for (i = 0; i < padBytes; i++) {
 	                		       raFile.readByte();
 	                		    }
 	                    	}
 	                    }
-	                    Preferences.debug("Numeric array name = " + numericArrayName + "\n", Preferences.DEBUG_FILEIO);
+	                    Preferences.debug("Numeric array name data type = " + numericArrayNameDataType + "\n",
+	                    		Preferences.DEBUG_FILEIO);
+	                    Preferences.debug("Numeric array name bytes = " + numericArrayNameBytes + "\n", Preferences.DEBUG_FILEIO);
+	                    if (numericArrayNameBytes > 0) {
+	                        Preferences.debug("Numeric array name = " + numericArrayName + "\n", Preferences.DEBUG_FILEIO);
+	                    }
                     } // if (arrayClass == mxSTRUCT_CLASS)
                     filePointer = raFile.getFilePointer();
                     realDataType = getInt(endianess);
@@ -2258,7 +2321,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
                     		
-                    		if (arrayClass == mxSPARSE_CLASS) {	
+                    		if ((numericArrayClass == mxSPARSE_CLASS) || (arrayClass == mxSPARSE_CLASS)) {	
                     			// int32 for row index and column index
                     			// followed by double for real and imaginary parts
                     			if (nonLogicalField == 0) {
@@ -2330,7 +2393,7 @@ public class FileMATLAB extends FileBase {
 	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
 	                    		   throw e;
 	                    		}
-                    		} // if (arrayClass == mxSPARSE_CLASS)
+                    		} // if ((numericArrayClass == mxSPARSE_CLASS) || (arrayClass == mxSPARSE_CLASS))
                     		else {
                     			if (nonLogicalField == 0) {
                         		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
@@ -3489,8 +3552,28 @@ public class FileMATLAB extends FileBase {
                     		}
                     	}
                     	break;
+                    case miUTF8:
+                    	Preferences.debug("Real data type = miUITF8\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Character data:\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug(getString(realDataBytes)+"\n", Preferences.DEBUG_FILEIO);
+                    	if (haveSmallRealData) {
+                		    if (realDataBytes < 4) {
+                		    	padBytes = 4 - realDataBytes;
+                		    	for (i = 0; i < padBytes; i++) {
+                		    		raFile.readByte();
+                		    	}
+                		    }
+                		}
+                		else if ((realDataBytes % 8) != 0) {
+                	    	padBytes = 8 - (realDataBytes % 8);
+                	    	for (i = 0; i < padBytes; i++) {
+                    	    	raFile.readByte();
+                    	    }
+                	    }  
+                    	break;
                     default:
-                    	Preferences.debug("Illegal data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Illegal real data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     }
                     
@@ -5449,6 +5532,26 @@ public class FileMATLAB extends FileBase {
                         		   throw e;
                         		}
                         	}
+                        	break;
+                        case miUTF8:
+                        	Preferences.debug("Real data type = miUITF8\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Character data:\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug(getString(realDataBytes)+"\n", Preferences.DEBUG_FILEIO);
+                        	if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                         	break;
                         default:
                         	Preferences.debug("Illegal data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
