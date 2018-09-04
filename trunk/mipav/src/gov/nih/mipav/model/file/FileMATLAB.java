@@ -2415,8 +2415,8 @@ public class FileMATLAB extends FileBase {
 		                    		   MipavUtil.displayError("IOException on image2.importData(0, doubleBuffer, true)");
 		                    		   throw e;
 		                    		}
-                    		    	fileInfo2.setMin(image.getMin());
-                    		    	fileInfo2.setMax(image.getMax());
+                    		    	fileInfo2.setMin(image2.getMin());
+                    		    	fileInfo2.setMax(image2.getMax());
                     		    }
                     		} // if ((numericArrayClass == mxSPARSE_CLASS) || (arrayClass == mxSPARSE_CLASS))
                     		else {
