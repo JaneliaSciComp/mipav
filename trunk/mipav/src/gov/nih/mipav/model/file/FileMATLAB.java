@@ -1017,10 +1017,10 @@ public class FileMATLAB extends FileBase {
 	                		imageExtents[1] = newExtents[1];
 	                		imageExtents[2] = newExtents[2];
 	                	}
-	                	if (imagesFound == 1) {
+	                	if ((imagesFound == 1) && (imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                		fileInfo.setExtents(imageExtents);
 	                	}
-	                	else {
+	                	else if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                		fileInfo2.setExtents(imageExtents);
 	                	}
                 	} // else arrayClass != mxSTRUCT_CLASS
@@ -1377,10 +1377,10 @@ public class FileMATLAB extends FileBase {
 		                	} // for (i = 0; i < nDim; i++)
                     		
                     		if (numericArrayClass != mxCHAR_CLASS) {
-                    			if (imagesFound == 1) {
+                    			if ((imagesFound == 1) && (imageExtents[0] != 1) && (imageExtents[1] != 1)) {
     		                		fileInfo.setExtents(imageExtents);
     		                	}
-    		                	else {
+    		                	else if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
     		                		fileInfo2.setExtents(imageExtents);
     		                	}
                     		} // if (numericArrayClass != mxCHAR_CLASS)
@@ -1432,10 +1432,10 @@ public class FileMATLAB extends FileBase {
 		                			imageSlices2 = imageSlices2 * fieldNumber;
 		                		}
 		                	}
-		                	if (imagesFound == 1) {
+		                	if ((imagesFound == 1) && (imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 		                		fileInfo.setExtents(imageExtents);
 		                	}
-		                	else {
+		                	else if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 		                		fileInfo2.setExtents(imageExtents);
 		                	}
                     	} // else !logicalFlag && !haveNumericArrayCharacter
@@ -1505,11 +1505,11 @@ public class FileMATLAB extends FileBase {
                     	for (i = 0; i < nDim-1; i++) {
                     		imageExtents[i] = newExtents[i];
                     	}
-                    	if (imagesFound == 1) {
+                    	if ((imagesFound == 1) && (imageExtents[0] != 1) && (imageExtents[1] != 1)) {
                 			imageSlices = imageSlices/3;
                 			fileInfo.setExtents(imageExtents);
                 		}
-                		else {
+                		else if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
                 			imageSlices2 = imageSlices2/3;
                 			fileInfo2.setExtents(imageExtents);
                 		}
@@ -5823,7 +5823,9 @@ public class FileMATLAB extends FileBase {
                         		}		
                         		break;
                         	} // switch(image.getType())
-                        	fileInfo.setExtents(newExtents);
+                        	if ((newExtents[0] != 1) && (newExtents[1] != 1)) {
+                        	    fileInfo.setExtents(newExtents);
+                        	}
                         } // if (logicalFields >= 1)
                     	image.calcMinMax();
                     	if (image.isColorImage()) {
