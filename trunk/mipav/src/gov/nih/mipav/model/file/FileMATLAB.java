@@ -2338,6 +2338,7 @@ public class FileMATLAB extends FileBase {
                                         fileInfo2.setVersion(version);
                                     }
                         		    fileInfo2.setDataType(ModelStorageBase.DOUBLE);	
+                        		    fileInfo2.setExtents(imageExtents);
                     			}
                     		    doubleBuffer = new double[imageExtents[0]*imageExtents[1]];
                     		    int rcIndex[][] = new int[maximumNonZeroElements][2];
@@ -2413,7 +2414,9 @@ public class FileMATLAB extends FileBase {
 		                    		catch(IOException e) {
 		                    		   MipavUtil.displayError("IOException on image2.importData(0, doubleBuffer, true)");
 		                    		   throw e;
-		                    		}	
+		                    		}
+                    		    	fileInfo2.setMin(image.getMin());
+                    		    	fileInfo2.setMax(image.getMax());
                     		    }
                     		} // if ((numericArrayClass == mxSPARSE_CLASS) || (arrayClass == mxSPARSE_CLASS))
                     		else {
@@ -6056,7 +6059,9 @@ public class FileMATLAB extends FileBase {
                         		}		
                         		break;
                         	} // switch(image.getType())
-                    	    fileInfo2.setExtents(newExtents);	
+                    		if ((newExtents[0] != 1) && (newExtents[1] != 1)) {
+                    	        fileInfo2.setExtents(newExtents);	
+                    		}
                     	}
                     	image2.calcMinMax();
                     	if (image2.isColorImage()) {
