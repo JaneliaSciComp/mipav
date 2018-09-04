@@ -2328,6 +2328,17 @@ public class FileMATLAB extends FileBase {
                         		    image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName);
                         		    fileInfo.setDataType(ModelStorageBase.DOUBLE);
                         		}
+                    			else if (nonLogicalField == 1) {
+                    				image2 = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName);
+                    				if (fileInfo2 == null) {
+                                    	fileInfo2 = new FileInfoMATLAB(fileName + "_2", fileDir, FileUtility.MATLAB); // dummy fileInfo
+                                        fileInfo2.setEndianess(endianess);
+                                        fileInfo2.setLevel5Format(level5Format);
+                                        fileInfo2.setHeaderTextField(headerTextField);
+                                        fileInfo2.setVersion(version);
+                                    }
+                        		    fileInfo2.setDataType(ModelStorageBase.DOUBLE);	
+                    			}
                     		    doubleBuffer = new double[imageExtents[0]*imageExtents[1]];
                     		    int rcIndex[][] = new int[maximumNonZeroElements][2];
                     		    int columnIndex[] = new int[imageExtents[0]+1];
@@ -2386,13 +2397,24 @@ public class FileMATLAB extends FileBase {
                     		    	    doubleBuffer[rcIndex[i][1] + imageExtents[0]*rcIndex[i][0]] = realPart[i];
                     		    	}
                     		    }
-                    		    try {
-	                    			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
-	                    		}
-	                    		catch(IOException e) {
-	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
-	                    		   throw e;
-	                    		}
+                    		    if (nonLogicalField == 0) {
+	                    		    try {
+		                    			image.importData(0, doubleBuffer, true);
+		                    		}
+		                    		catch(IOException e) {
+		                    		   MipavUtil.displayError("IOException on image.importData(0, doubleBuffer, true)");
+		                    		   throw e;
+		                    		}
+                    		    }
+                    		    else if (nonLogicalField == 1) {
+                    		    	try {
+		                    			image2.importData(0, doubleBuffer, true);
+		                    		}
+		                    		catch(IOException e) {
+		                    		   MipavUtil.displayError("IOException on image2.importData(0, doubleBuffer, true)");
+		                    		   throw e;
+		                    		}	
+                    		    }
                     		} // if ((numericArrayClass == mxSPARSE_CLASS) || (arrayClass == mxSPARSE_CLASS))
                     		else {
                     			if (nonLogicalField == 0) {
