@@ -2069,7 +2069,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 }
             }
 
-            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 20,
+            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 30,
                          graphBounds.y + graphBounds.height + 20);
         }
 
@@ -2087,7 +2087,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 }    
             }
 
-            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 20,
+            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 30,
                          graphBounds.y + graphBounds.height + 30);
         }
 
@@ -2417,7 +2417,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 tmpString = tmpString.substring(0, index + 3);
             }
 
-            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 20,
+            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 30,
                          graphBounds.y + graphBounds.height + 20);
         }
 
@@ -2430,7 +2430,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 tmpString = tmpString.substring(0, index + 3);
             }
 
-            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 20,
+            g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 30,
                          graphBounds.y + graphBounds.height + 30);
         }
 
