@@ -261,13 +261,17 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		File targetFile = new File( targetPointsFile );
 		File inputFile = new File( inputPointsFile );
 		System.err.println(toTwistedName + " " + toTwistedFile.exists() );
+		String toTwistedRaw = targetDir + File.separator + targetDirName + "_results" + File.separator + 
+				"output_images" + File.separator + targetDirName + "_toTwisted.raw";
+		File toTwistedFileRaw = new File( toTwistedRaw );
+		System.err.println(toTwistedRaw + "  " + toTwistedFileRaw.exists() );
 		ModelImage toTwisted = null;
-		if ( toTwistedFile.exists() && annotationFile.exists()  )
+		if ( toTwistedFile.exists() && annotationFile.exists() && toTwistedFileRaw.exists() )
 		{
 			System.err.println("opening image...");
 			FileIO fileIO = new FileIO();
 			toTwisted = fileIO.readImage(toTwistedName);  
-			if ( toTwisted != null )
+			if ( toTwisted != null && (toTwisted.getMaxR() != 0) && (toTwisted.getMaxG() != 0) && (toTwisted.getMaxB() != 0) )
 			{
 				AlgorithmTPSpline spline = null;
 				boolean testSpline = false;
@@ -325,6 +329,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 					{
 						Vector<String> failedList = new Vector<String>();
 						VOI annotationVOI = new VOI( (short)0, inputFileName + "_" + targetDirName, VOI.ANNOTATION, 0 );
+						VOI annotationVOISpline = new VOI( (short)0, inputFileName + "_" + targetDirName + "_spline", VOI.ANNOTATION, 0 );
 						for ( int i = 0; i < annotations.getCurves().size(); i++ )
 						{
 							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
@@ -339,7 +344,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 								for ( int j = splineBoundsL.getCurves().size() - 1; j >= 0; j-- )
 								{
 									Vector3f boundL = splineBoundsL.getCurves().elementAt(j).elementAt(0);
-									Vector3f boundR = splineBoundsL.getCurves().elementAt(j).elementAt(0);
+									Vector3f boundR = splineBoundsR.getCurves().elementAt(j).elementAt(0);
 									if ( pos.Z >= boundL.Z && pos.Z >= boundR.Z )
 									{
 										spline = piecewiseSplines.elementAt(j);
@@ -356,6 +361,11 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 									transformedPt.Y = temp[1];
 									transformedPt.Z = temp[2];
 									System.err.println("Spline: " + name + " " + pos + " => " + transformedPt );
+									
+									VOIText newText = new VOIText();
+									newText.setText(name);
+									newText.add(transformedPt);
+									annotationVOISpline.getCurves().add(newText);
 								}
 							}
 
@@ -386,6 +396,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 								failedList.add(name);
 							}
 						}
+						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + "_spline.csv", annotationVOISpline);
 						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + "_retwist.csv", annotationVOI);
 						String msg = "Retwisted " + annotationVOI.getCurves().size() + " out of " + annotations.getCurves().size() + " annotations" + "\n";
 						for ( int j = 0; j < failedList.size(); j++ )
@@ -398,12 +409,19 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 				toTwisted.disposeLocal(false);
 				toTwisted = null;
 			}
+			else if ((toTwisted.getMaxR() == 0) && (toTwisted.getMaxG() == 0) && (toTwisted.getMaxB() == 0)) {
+				MipavUtil.displayError( "Error reading file: " + toTwistedFile.getName() );
+			}
 			else
 			{
 				MipavUtil.displayError( "Error reading file: " + 
 						toTwistedFile.getName() + " " +  annotationFile.getName() + " " + targetFile.getName() + " " + inputFile.getName() );
 				System.err.println("image open failed");
 			}
+		}
+		else if ( !toTwistedFileRaw.exists() )
+		{
+			MipavUtil.displayError( "Error reading file: " + toTwistedFileRaw.getName() );
 		}
 		else
 		{
@@ -892,7 +910,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			yTarget[1] = target1R.elementAt(0).Y;
 			zTarget[1] = target1R.elementAt(0).Z;
 			
-			VOIText target2L = ((VOIText)pairListInputL.getCurves().elementAt(i+1));
+			VOIText target2L = ((VOIText)pairListTargetL.getCurves().elementAt(i+1));
 			VOIText input2L = ((VOIText)pairListInputL.getCurves().elementAt(i+1));
 			xSource[2] = input2L.elementAt(0).X;
 			ySource[2] = input2L.elementAt(0).Y;
@@ -902,7 +920,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			yTarget[2] = target2L.elementAt(0).Y;
 			zTarget[2] = target2L.elementAt(0).Z;
 			
-			VOIText target2R = ((VOIText)pairListInputR.getCurves().elementAt(i+1));
+			VOIText target2R = ((VOIText)pairListTargetR.getCurves().elementAt(i+1));
 			VOIText input2R = ((VOIText)pairListInputR.getCurves().elementAt(i+1));
 			xSource[3] = input2R.elementAt(0).X;
 			ySource[3] = input2R.elementAt(0).Y;
@@ -911,7 +929,9 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			xTarget[3] = target2R.elementAt(0).X;
 			yTarget[3] = target2R.elementAt(0).Y;
 			zTarget[3] = target2R.elementAt(0).Z;
-			
+
+			System.err.println(input1L.elementAt(0) + "  " + input1R.elementAt(0) + "  " + input2L.elementAt(0) + " " + input2R.elementAt(0) );
+			System.err.println(target1L.elementAt(0) + "  " + target1R.elementAt(0) + "  " + target2L.elementAt(0) + " " + target2R.elementAt(0) );
 
 			// create spline:
 			AlgorithmTPSpline spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, image,
@@ -951,6 +971,55 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 				piecewiseSplines.add(spline);
 				splineBoundsL.getCurves().add(input1L);
 				splineBoundsR.getCurves().add(input1R);
+				
+				
+				int testCount = 0;
+
+				// test that target points warp to source points:
+				Vector3f sourcePt = input1L.elementAt(0);
+				Vector3f targetPt = target1L.elementAt(0);
+				float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+				System.err.println( "test: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+				if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+				{
+					System.err.println( "error" );
+					testCount++;
+				}
+
+				// test that target points warp to source points:
+				sourcePt = input1R.elementAt(0);
+				targetPt = target1R.elementAt(0);
+				transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+				System.err.println( "test: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+				if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+				{
+					System.err.println( "error" );
+					testCount++;
+				}
+
+				// test that target points warp to source points:
+				sourcePt = input2L.elementAt(0);
+				targetPt = target2L.elementAt(0);
+				transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+				System.err.println( "test: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+				if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+				{
+					System.err.println( "error" );
+					testCount++;
+				}
+
+				// test that target points warp to source points:
+				sourcePt = input2R.elementAt(0);
+				targetPt = target2R.elementAt(0);
+				transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+				System.err.println( "test: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+				if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+				{
+					System.err.println( "error" );
+					testCount++;
+				}
+				System.err.println(testCount);
+				
 			}
 			else if ( splineError && (i == (pairListTargetL.getCurves().size() - 2) ))
 			{
@@ -1003,6 +1072,60 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 						piecewiseSplines.add(spline);
 						splineBoundsL.getCurves().add(input1L);
 						splineBoundsR.getCurves().add(input1R);
+						
+						
+						
+						
+						
+						
+
+						
+						int testCount = 0;
+
+						// test that target points warp to source points:
+						Vector3f sourcePt = input1L.elementAt(0);
+						Vector3f targetPt = target1L.elementAt(0);
+						float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+						System.err.println( "test2: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+						if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+						{
+							System.err.println( "error" );
+							testCount++;
+						}
+
+						// test that target points warp to source points:
+						sourcePt = input1R.elementAt(0);
+						targetPt = target1R.elementAt(0);
+						transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+						System.err.println( "test2: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+						if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+						{
+							System.err.println( "error" );
+							testCount++;
+						}
+
+						// test that target points warp to source points:
+						sourcePt = input2L.elementAt(0);
+						targetPt = target2L.elementAt(0);
+						transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+						System.err.println( "test2: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+						if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+						{
+							System.err.println( "error" );
+							testCount++;
+						}
+
+						// test that target points warp to source points:
+						sourcePt = input2R.elementAt(0);
+						targetPt = target2R.elementAt(0);
+						transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+						System.err.println( "test2: " + sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+						if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+						{
+							System.err.println( "error" );
+							testCount++;
+						}
+						System.err.println(testCount);
 						break;
 					}
 				}
