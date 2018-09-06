@@ -1593,14 +1593,16 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-	                    	try {
-	                			image.importData(nonLogicalField * tBuffer.length, tBuffer, true);
-	                		}
-	                		catch(IOException e) {
-	                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField* tBuffer.length, tBuffer, true)");
-	                		   throw e;
-	                		}
+                    	    } 
+	                    	if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+		                    	try {
+		                			image.importData(nonLogicalField * tBuffer.length, tBuffer, true);
+		                		}
+		                		catch(IOException e) {
+		                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField* tBuffer.length, tBuffer, true)");
+		                		   throw e;
+		                		}
+	                    	}
                     	}
                     	else {
                     		if (nonLogicalField == 0) {
@@ -1821,14 +1823,16 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-	                    	try {
-	                			image.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
-	                		}
-	                		catch(IOException e) {
-	                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
-	                		   throw e;
-	                		}
+                    	    }
+	                    	if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+		                    	try {
+		                			image.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
+		                		}
+		                		catch(IOException e) {
+		                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
+		                		   throw e;
+		                		}
+	                    	}
                     	}
                     	else {
                     		if (nonLogicalField == 0) {
@@ -1970,13 +1974,15 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-                    		try {
-                    			image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
-                    		   throw e;
+                    	    }
+                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+	                    		try {
+	                    			image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		}
                     	}
                     	else {
@@ -2193,13 +2199,15 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-                    		try {
-                    			image.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * intBuffer.length, intBuffer, true)");
-                    		   throw e;
+                    	    } 
+                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+	                    		try {
+	                    			image.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * intBuffer.length, intBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		}
                     	}
                     	else {
@@ -2393,11 +2401,13 @@ public class FileMATLAB extends FileBase {
                     		    for (i = 0; i < nnz; i++) {
                     		    	realPart[i] = getDouble(endianess);
                     		    }
+                    		   
                     		    for (i = 0; i < nnz; i++) {
                     		    	if (rcIndex[i][0] >= 0) {
                     		    	    doubleBuffer[rcIndex[i][1] + imageExtents[0]*rcIndex[i][0]] = realPart[i];
                     		    	}
                     		    }
+                    		    
                     		    if (nonLogicalField == 0) {
 	                    		    try {
 		                    			image.importData(0, doubleBuffer, true);
@@ -2462,13 +2472,14 @@ public class FileMATLAB extends FileBase {
 	                        	    	raFile.readByte();
 	                        	    }
 	                    	    }  
-                    		
-	                    		try {
-	                    			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
-	                    		}
-	                    		catch(IOException e) {
-	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
-	                    		   throw e;
+	                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+		                    		try {
+		                    			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
+		                    		}
+		                    		catch(IOException e) {
+		                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
+		                    		   throw e;
+		                    		}
 	                    		}
                     		} // else not mxSPARSE_CLASS
                     	} // if (!complexFlag)
@@ -2635,13 +2646,15 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-                    		try {
-                    			image.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                    		   throw e;
+                    	    }
+                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+	                    		try {
+	                    			image.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * longBuffer.length, longBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		}
                     	}
                     	else {
@@ -2808,13 +2821,15 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-                    		try {
-                    			image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true)");
-                    		   throw e;
+                    	    } 
+                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+	                    		try {
+	                    			image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		}
                     	}
                     	else {
@@ -3055,13 +3070,15 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-                    		try {
-                    			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
-                    		   throw e;
+                    	    } 
+                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+	                    		try {
+	                    			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		}
                     	}
                     	else {
@@ -3248,12 +3265,14 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }  
-                    		try {
-                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                    		   throw e;
+                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+	                    		try {
+	                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		}
                     	}
                     	else {
@@ -3437,13 +3456,15 @@ public class FileMATLAB extends FileBase {
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
-                    		try {
-                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
-                    		}
-                    		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                    		   throw e;
+                    	    }
+                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
+	                    		try {
+	                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
+	                    		}
+	                    		catch(IOException e) {
+	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
+	                    		   throw e;
+	                    		}
                     		}
                     	}
                     	else {
