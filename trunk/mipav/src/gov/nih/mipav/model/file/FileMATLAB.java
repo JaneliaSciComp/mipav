@@ -141,6 +141,8 @@ public class FileMATLAB extends FileBase {
     private boolean haveNumericArrayCharacter = false;
     
     private int numberCharacterClasses = 0;
+    
+    private boolean haveImported = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -594,7 +596,9 @@ public class FileMATLAB extends FileBase {
                 	Preferences.debug("Data type = miMATRIX\n", Preferences.DEBUG_FILEIO);
                 	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	imageExtents = null;
-                	imagesFound++;
+                	if ((imagesFound == 0) || (haveImported)) {
+                	    imagesFound++;
+                	}
                 	logicalFields = 0;
                 	arrayFlagsDataType = getInt(endianess);
                 	if (arrayFlagsDataType == miUINT32) {
@@ -1134,6 +1138,10 @@ public class FileMATLAB extends FileBase {
                     	    }
                     	}
                     } // if (arrayClass == mxSTRUCT_CLASS)
+                    else {
+                    	fieldNumber = 1;
+                    	nonLogicalField = 0;
+                    }
                     for (field = 0; field < fieldNumber; field++) {
                     if (arrayClass == mxSTRUCT_CLASS) {
                     	Preferences.debug("Reading numeric array number " + field + "\n", Preferences.DEBUG_FILEIO);
@@ -1556,6 +1564,7 @@ public class FileMATLAB extends FileBase {
 	                    	    }  
 		                    	try {
 		                			maskImage.importData(0, tBuffer, true);
+		                			haveImported = true;
 		                		}
 		                		catch(IOException e) {
 		                		   MipavUtil.displayError("IOException on maskImage.importData(0, tBuffer, true)");
@@ -1597,6 +1606,7 @@ public class FileMATLAB extends FileBase {
 	                    	if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 		                    	try {
 		                			image.importData(nonLogicalField * tBuffer.length, tBuffer, true);
+		                			haveImported = true;
 		                		}
 		                		catch(IOException e) {
 		                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField* tBuffer.length, tBuffer, true)");
@@ -1693,6 +1703,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importComplexData(2 * nonLogicalField* realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
@@ -1737,6 +1748,7 @@ public class FileMATLAB extends FileBase {
 	                    	    }  
 		                    	try {
 		                			maskImage.importUData(0, shortBuffer, true);
+		                			haveImported = true;
 		                		}
 		                		catch(IOException e) {
 		                		   MipavUtil.displayError("IOException on maskImage.importUData(0, shortBuffer, true)");
@@ -1766,6 +1778,7 @@ public class FileMATLAB extends FileBase {
 			                    	
 			                    	try {
 			                			image.importRGBData(i+1, nonLogicalField * tBuffer.length, tBuffer, true);
+			                			haveImported = true;
 			                		}
 			                		catch(IOException e) {
 			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
@@ -1827,6 +1840,7 @@ public class FileMATLAB extends FileBase {
 	                    	if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 		                    	try {
 		                			image.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
+		                			haveImported = true;
 		                		}
 		                		catch(IOException e) {
 		                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
@@ -1923,6 +1937,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
@@ -1978,6 +1993,7 @@ public class FileMATLAB extends FileBase {
                     		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                    		try {
 	                    			image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
+	                    			haveImported = true;
 	                    		}
 	                    		catch(IOException e) {
 	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
@@ -2091,6 +2107,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
@@ -2133,6 +2150,7 @@ public class FileMATLAB extends FileBase {
 			                    	
 			                    	try {
 			                			image.importRGBData(i+1, nonLogicalField * shortBuffer.length, shortBuffer, true);
+			                			haveImported = true;
 			                		}
 			                		catch(IOException e) {
 			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
@@ -2203,6 +2221,7 @@ public class FileMATLAB extends FileBase {
                     		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                    		try {
 	                    			image.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
+	                    			haveImported = true;
 	                    		}
 	                    		catch(IOException e) {
 	                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * intBuffer.length, intBuffer, true)");
@@ -2316,6 +2335,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
@@ -2411,6 +2431,7 @@ public class FileMATLAB extends FileBase {
                     		    if (nonLogicalField == 0) {
 	                    		    try {
 		                    			image.importData(0, doubleBuffer, true);
+		                    			haveImported = true;
 		                    		}
 		                    		catch(IOException e) {
 		                    		   MipavUtil.displayError("IOException on image.importData(0, doubleBuffer, true)");
@@ -2475,6 +2496,7 @@ public class FileMATLAB extends FileBase {
 	                    		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 		                    		try {
 		                    			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
+		                    			haveImported = true;
 		                    		}
 		                    		catch(IOException e) {
 		                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
@@ -2593,6 +2615,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
@@ -2650,6 +2673,7 @@ public class FileMATLAB extends FileBase {
                     		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                    		try {
 	                    			image.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
+	                    			haveImported = true;
 	                    		}
 	                    		catch(IOException e) {
 	                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * longBuffer.length, longBuffer, true)");
@@ -2767,6 +2791,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
@@ -2825,6 +2850,7 @@ public class FileMATLAB extends FileBase {
                     		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                    		try {
 	                    			image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
+	                    			haveImported = true;
 	                    		}
 	                    		catch(IOException e) {
 	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true)");
@@ -2944,6 +2970,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
@@ -2995,6 +3022,7 @@ public class FileMATLAB extends FileBase {
 			                    	
 			                    	try {
 			                			image.importRGBData(i+1, nonLogicalField * floatBuffer.length, floatBuffer, true);
+			                			haveImported = true;
 			                		}
 			                		catch(IOException e) {
 			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
@@ -3074,6 +3102,7 @@ public class FileMATLAB extends FileBase {
                     		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                    		try {
 	                    			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
+	                    			haveImported = true;
 	                    		}
 	                    		catch(IOException e) {
 	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
@@ -3205,6 +3234,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
@@ -3268,6 +3298,7 @@ public class FileMATLAB extends FileBase {
                     		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                    		try {
 	                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
+	                    			haveImported = true;
 	                    		}
 	                    		catch(IOException e) {
 	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
@@ -3397,6 +3428,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
@@ -3460,6 +3492,7 @@ public class FileMATLAB extends FileBase {
                     		if ((imageExtents[0] != 1) && (imageExtents[1] != 1)) {
 	                    		try {
 	                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
+	                    			haveImported = true;
 	                    		}
 	                    		catch(IOException e) {
 	                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
@@ -3590,6 +3623,7 @@ public class FileMATLAB extends FileBase {
                             
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			haveImported = true;
                     		}
                     		catch(IOException e) {
                     		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
