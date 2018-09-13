@@ -173,7 +173,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private static final String pluginVersion 	= "Beta version 0.3";
 
     // Might be able to delete
-    private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
+    //private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
 
 	private PlugInDialogBRICS_Mapper owner;
 
@@ -192,7 +192,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
 
-    private static final Comparator<DataElementValue> dataElementCompare = new Comparator<DataElementValue>() {
+  /*  private static final Comparator<DataElementValue> dataElementCompare = new Comparator<DataElementValue>() {
         @Override
         public int compare(final DataElementValue o1, final DataElementValue o2) {
             return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
@@ -220,12 +220,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     };
     
-   
+   */
+    
     /** Mapper constructor - Primarily setsup  the GUI */
     public PlugInDialogBRICS_Mapper () {
         super();
 
-        	// TODO - MIPAV centric
+        // TODO - MIPAV centric
         outputDirBase = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR);
         if (outputDirBase == null) {
             outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "BRICS_Mapping" + File.separator;
@@ -364,7 +365,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        
 	    } else if (command.equalsIgnoreCase("RemoveRow")) { 
 	    	//Remove row from transform tabbed pane
-	    	if (fileXFormTable.getSelectedRow() != 1) {
+	    	if (fileXFormTable.getSelectedRow() != 1 && fileXFormTable.getSelectedRow() != -1) {
 	    		fileXFormTableModel.removeRow(fileXFormTable.getSelectedRow());
 	    	}
 	    } else if (command.equalsIgnoreCase("XFormFiles")) { 
@@ -1372,7 +1373,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	
         	for (int j = rowPos.length-1; j >= 0; j--) {
         		int sum = 0;
-        		for (int i =0; i < j; i++) {
+        		for (int i = 0; i < j; i++) {
         			sum = sum + rowPos[i];
         		}
         		rowPos[j]=sum;
@@ -2538,7 +2539,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             			 str = str.substring(0, str.length()-1);
                  	 }
             		 deTableModel.setValueAt(str, deTable.getSelectedRow(), deTableModel.getColumnIndex("Source PVs"));
-            		 deTableModel.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
+            		 deTableModel.setValueAt("Double Click to Map", deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
             		 
             		 dispose();
             	 }
@@ -3788,123 +3789,185 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     /** Transform code */
     private void xFormFiles() {
-    	int numRows = fileXFormTableModel.getRowCount();
-    	validateXFormTable();
-    	String strMap = null;
-    	String strSrc = null;
+    	int numRows = 0; // fileXFormTableModel.getRowCount();
+    	String mapStr = null;
+    	String srcStr = null;
     	String[] mapStrucs = null;
     	String [] srcStrucs = null;
     	String str = null;
     	List<List<String>> mapLines = new ArrayList<>();
     	
-    	List<File> sourceFiles = new ArrayList<>();
+    	List<File> sourceFiles  = new ArrayList<>();
     	List<File> mappingFiles = new ArrayList<>();
-    	List<File> outFiles = new ArrayList<>();
+    	List<File> outFiles     = new ArrayList<>();
     	
-    	BufferedReader brSrc = null;
-    	BufferedReader brMap = null;
-    	BufferedWriter bw = null;
-    	FileWriter fw = null;
-    	
-    	FileInputStream fisSrc;
-    	FileInputStream fisMap;
-    	FileOutputStream fos;
+    	BufferedReader srcDataBR = null;
+    	BufferedReader mappingBR = null;
+    	BufferedWriter outputBW  = null;
     	
     	try {
+    		
+    		numRows = validateXFormTable();
+    		if (numRows == -1) return;
+    		
     		// adding files from transform table to an array list 
     		for(int i = 0; i < numRows; i++) {
     			sourceFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")));
     			mappingFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files")));
-    			outFiles.add(new File(outputXFormDirBase + outFileName));
+    			//outFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files")));
+    			outFiles.add(new File(outputXFormDirBase + fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))));
+    			//System.out.println(" i = " + i + "  source file: " + sourceFiles.get(i));
     		}
     		// converting each columns array list to a simple array
     		File [] src = sourceFiles.toArray(new File[sourceFiles.size()]);
     		File [] map = mappingFiles.toArray(new File[mappingFiles.size()]);
     		File [] out = outFiles.toArray(new File[outFiles.size()]);
-    		int filledRows = src.length;
+    		int numFilesToXForm = src.length;
+    		System.out.println("numFilesToXForm:  " + numFilesToXForm);
+    		
+    		for(int i = 0; i < numRows; i++) {
+    			System.out.println(" iiiiiii = " + i + "  source file: " + src[i]);
+    			System.out.println(" iiiiiii = " + i + "  map file: " + map[i]);
+    			System.out.println(" iiiiiii = " + i + "  out file: " + out[i]);
+    		}
     	
-    		for(int i = 0; i < filledRows; i++) {
+    		for(int i = 0; i < numFilesToXForm; i++) {
     			// setting up buffered readers, input streams, as well as splitting the files to an array
-    			fisSrc = new FileInputStream(src[i]);
-    			brSrc = new BufferedReader(new InputStreamReader(fisSrc));
-    			fisMap = new FileInputStream(map[i]);
-    			brMap = new BufferedReader(new InputStreamReader(fisMap));
-    			fos = new FileOutputStream(out[i]);
-    			bw = new BufferedWriter(new OutputStreamWriter(fos));
-    			strMap = brMap.readLine();
-    			mapStrucs = strMap.split(": ");
-    			strSrc = brSrc.readLine();
-    			srcStrucs = strSrc.split(CSV_OUTPUT_DELIM);
+    			
+    			System.out.println(" File number = " + (i+1));
+    			srcDataBR   = new BufferedReader(new FileReader(src[i]));
+    			mappingBR   = new BufferedReader(new FileReader(map[i]));
+    			outputBW   	= new BufferedWriter(new FileWriter(out[i]));
+    			
+    			mapStr    = mappingBR.readLine();
+    			mapStrucs = mapStr.split(": ");
+    			srcStr    = srcDataBR.readLine();
+    			srcStrucs = srcStr.split(CSV_OUTPUT_DELIM);
+    			
     			// both the mapping file and the source file must be of the same form structure - if not display an error
     			if(!srcStrucs[0].equalsIgnoreCase(mapStrucs[1])) {
-    				displayError("Error: Form strucutre on mapping file and source file are inconsistent");
-    				brSrc.close();
-    				brMap.close();
+    				displayError("Error: Form strucutre on mapping file and source file are inconsistent. Form structures do not match.");
+    				printlnToLog("File: " + src[i] + " ----  Form strucutre on mapping file and source file are inconsistent.");
+    				srcDataBR.close();
+    				mappingBR.close();
+    				outputBW.close();
+    				return;
     			}
     			else {
-    				// store form structure name to be written to output file
-    				str = srcStrucs[0] + ",\n" + "record,";
+    				
+    				str = srcStrucs[0] + "\n";	// store form structure name to be written to output file
+    				outputBW.write(str); 		// Writes out the Form Structure name
+    				str = "record,";  			// second row starts with "record"
+    				
     				// reading through the mapping file - ensuring each mapped line is put into a 2d array list
-    				while((strMap = brMap.readLine())!=null) {
-    					String[] mapDEs = strMap.split(TSV_OUTPUT_DELIM);
-    					if(mapDEs.length > 7) {
-    						mapLines.add(Arrays.asList(mapDEs));
+    				mapLines.clear();
+    				while((mapStr = mappingBR.readLine()) != null) {
+    					//System.out.println("Source mapping file " + srcStr);
+    					String[] mapDEs = mapStr.split(TSV_OUTPUT_DELIM);
+    					if(mapDEs.length > 7) { 						// means that the DE has been mapped at another DE
+    						mapLines.add(Arrays.asList(mapDEs));  		// Only adds DEs that have been mapped go into the list
     					}
     				}
-    				// converting the 2d array list to an array in the format needed including group name and mappings if necessary
+    				
+    				// Converting the 2d array list to an array in the format needed including group name and mappings if necessary
     				String[][] stri = new String[mapLines.size()][4];
-    				for(int j = 0; j < mapLines.size(); j++) {
-    					stri[j][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);
-    					stri[j][1] = mapLines.get(j).get(7);
-    					str = str + stri[j][0] + ",";
+    				for (int j = 0; j < mapLines.size(); j++) {
+    					stri[j][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);  // Builds Reference Group.DE
+    					str = str + stri[j][0] + ",";										 // Builds column header DE string (second row of output file)
+    					
+    					stri[j][1] = mapLines.get(j).get(7);								 // The source DE
     					if(mapLines.get(j).size() > 9) {
-    						stri[j][2] = mapLines.get(j).get(10);
+    						stri[j][2] = mapLines.get(j).get(10);							 // Gets PV mappings 
     					}
     					else {
-    						stri[j][2] = null;
+    						stri[j][2] = null;												 // No PV mappings - likely free-form (alpha numeric) DE
     					}
     				}
     				str = str + "\n";
-    				// reads DEs from the source array and places them in the first column of the 2d array
-    				strSrc = brSrc.readLine();
-    				String[] ordSrcDEs = strSrc.split(CSV_OUTPUT_DELIM);
+    				outputBW.write(str); // Writes out the Form Structure record + groupname.de  columns  --- second row of output file
+    				
+    				// reads DEs (second row) from the source data array and places them in the first column of the 2d array
+    				// First step in building lookup table for mapping  source DE to reference DE
+    				srcStr = srcDataBR.readLine();
+    				String[] ordSrcDEs = srcStr.split(CSV_OUTPUT_DELIM);
+    				
+    				// Check to make sure all source data file DEs have been mapped! - else display error
+    				boolean error 		= true;
+    				boolean errorCont 	= false;
+    				for (int s = 0; s < ordSrcDEs.length; s++) {
+    					error 		= true;
+    					for (int t = 0; t < mapLines.size(); t++) {
+    						//System.out.println("Source DE " + ordSrcDEs[s] + "  Mapped DE " + stri[t][1]);
+	    					if( ordSrcDEs[s].equals(stri[t][1]) ) {
+	    						error = false;		
+	    					}
+    					}
+    					if (error == true) {
+    						displayError("Source DE(" + ordSrcDEs[s] +") has NOT been mapped. Please add mapping or delete source data column.");
+    						printlnToLog("File: " + src[i] + " ----  Source Data Element ( " + ordSrcDEs[s] + " ) has NOT been mapped. Please add mapping or delete source data column.");
+    						errorCont 	= true;
+    					}
+    				}
+    				if (errorCont == true) {
+    					outputBW.flush();
+    					outputBW.close();
+    					srcDataBR.close();
+    	    			mappingBR.close();
+    					continue;
+    				}
+    				
+    				// Building table lookup for mapping DE to DE
     				String[][] matchDEs = new String[ordSrcDEs.length][2];
     				for(int j = 0; j < stri.length; j++) {
     					matchDEs[j][0] = ordSrcDEs[j];
+    					//System.out.println(" ordSrcDEs[j] = " + ordSrcDEs[j] + "  size = " + stri.length);
     				}
+    				
     				// finishes 2d array to match source DEs with the order they should appear in the output file
     				for(int k = 0; k < matchDEs.length; k++) {
-    					String target = matchDEs[k][0];
     					for(int m = 0; m < stri.length; m++) {
-    						if(stri[m][1].equalsIgnoreCase(target)) {
-    							matchDEs[k][1] = Integer.toString(m);    							
+    						if(stri[m][1].equalsIgnoreCase(matchDEs[k][0])) {
+    							matchDEs[k][1] = Integer.toString(m);
     						}
     					}
     				}
+    				
     				// reads through the source file, matching DEs in the proper order
-    				while((strSrc = brSrc.readLine()) != null) {
-    					str = str + "x,";
-    					String[] srcDataPV = strSrc.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
-    					for(int m = 0; m < srcDataPV.length; m++) {
-    						int refIndex = Integer.parseInt(matchDEs[m][1]);
-    						int srcIndex = Arrays.asList(srcDataPV).indexOf(srcDataPV[m]);
-    						if(refIndex == srcIndex) {
-    							if(stri[m][2] == null) {
-    								stri[m][3] = srcDataPV[m];
-    							}
-    							else { 
-    								stri[m][3] = switchPVs(stri[m][2], srcDataPV[m]);
-    							}
-    						}
-    						else {
-    							if(stri[m][2] == null) {
-    								stri[m][3] = srcDataPV[refIndex];
-    							}
-    							else {
-    								stri[m][3] = switchPVs(stri[m][2], srcDataPV[refIndex]);
-    							}
+    				while((srcStr = srcDataBR.readLine()) != null) {
+    					str = new String("x,");
+    					String[] srcDataRow = srcStr.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    					
+    					//if (p == 0) {
+    					//	System.out.println("Source string  " + strSrc  + " length " + srcDataRow.length);
+    					//	for(int r = 0; r < srcDataRow.length; r++) {
+    					//		System.out.println("R = " + r + "  Value =  " + srcDataRow[r]); 
+    					//		p++;
+    					//	}
+    					//}
+    					
+    					for(int m = 0; m < srcDataRow.length; m++) {
+    						if (matchDEs[m][1] != null) {
+    							int refIndex = Integer.parseInt(matchDEs[m][1]);
+	    						int srcIndex = Arrays.asList(srcDataRow).indexOf(srcDataRow[m]);
+	    						if(refIndex == srcIndex) {
+	    							if(stri[m][2] == null) {
+	    								stri[m][3] = srcDataRow[m];
+	    							}
+	    							else { 
+	    								stri[m][3] = switchPVs(stri[m][2], srcDataRow[m]);
+	    							}
+	    						}
+	    						else {
+	    							if(stri[m][2] == null) {
+	    								stri[m][3] = srcDataRow[refIndex];
+	    							}
+	    							else {
+	    								stri[m][3] = switchPVs( stri[m][2], srcDataRow[refIndex] );
+	    							}
+	    						}
     						}
     					}
+    					
     					for(int n = 0; n < stri.length; n++) {
     						if(stri[n][3]!=null && !stri[n][3].isEmpty()) {
     							if(!stri[n][3].contains(",")) {
@@ -3924,19 +3987,30 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     						}
     					}
     					str = str + "\n"; 
-    					System.out.println(str);
-    					
+    					str = str.replace("null", "");
+    					outputBW.write(str);
+    					outputBW.flush();
     				}
-    				str = str.replace("null", "");
-    	    		bw.write(str + "\n");
     			}
+    			srcDataBR.close();
+    			mappingBR.close();
+    			
+    			outputBW.flush();
+    			outputBW.close();
+    			printlnToLog((i+1) + "." + "  File: " + src[i] + " Transform completed.");
     		}
     	}
     	catch(final Exception e) {
-    		System.out.println("Error:"+e);
+    		System.out.println("Error: "+ e);
+    		e.printStackTrace();
     	}
     }
-    /** Code to switch the mapped source PV with the correct reference PV when necessary */
+    
+    
+    /** Code to switch the mapped source PV with the correct reference PV when necessary 
+     *  @return newly mapped PV string
+     * 
+     * */
     private String switchPVs(String mappings, String srcElement) {
     	String finished = null;
     	String[] mapFind = mappings.split(";");
@@ -3951,19 +4025,28 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	return finished;
     } 
     
-    /** Validate transform table to ensure all columns are filled for each transformable row */
-    private void validateXFormTable() {
+    /** Validate transform table to ensure all columns are filled for each transformable row 
+     *  @return -1 if there is an error (one or more columns is blank) or returns a positive number indicating the number of rows (file combos) to validate
+     * 
+     * */
+    private int validateXFormTable() {
     	int numRows = fileXFormTableModel.getRowCount();
+    	int nRows = 0; //number of rows with all columns completed 
+
     	for(int i = 0; i < numRows; i++) {
-    		if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))!=null ||
-    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))!=null||
-    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))!=null) {
-    			if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files"))==null ||
-    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))==null||
-    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))==null) {
+    		
+    		if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")) != null  ||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))!= null  ||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files")) != null) {
+    			if(fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")) == null  ||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files"))    == null  ||
+    				fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))     == null) {
     				displayError("Error: All three columns must have a value for each tranform row");
+    				return -1;
     			}
+    			nRows++;
     		}
     	}
+    	return nRows;
     }
 }
