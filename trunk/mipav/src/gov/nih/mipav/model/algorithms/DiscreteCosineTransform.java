@@ -53,9 +53,9 @@ public class DiscreteCosineTransform {
 
     private int transformLength;
     
-    private final int randomData = 1;
+    public final static int randomData = 1;
     
-    private final int sinusoidalData = 2;
+    public final static int sinusoidalData = 2;
     
     // testDataType must be either randomData or sinusoidalData
     private int testDataType;
@@ -63,6 +63,18 @@ public class DiscreteCosineTransform {
     private boolean printData;
     
     private boolean doTest = false;
+    
+    private final int MAXPOW = 20; // Parameter which determines the maximum transform length
+    // permitted.  Maximum length = 2**MAXPOW.
+    
+    private final double RT2INV = 1.0/Math.sqrt(2.0);
+    
+    // In COMMON FCTLEN
+    private int LENGTH = 0; // The transform length for which the array C of cosine coefficients
+                            // is currently set up.  Used by FCT and IFCT to determine whether 
+                            // transformLength has changed.
+    private int IPOW = 0;   // The base-2 logarithm of LENGTH.  Used in FCT and IFCT to determine
+                            // the number of stages of butterflies or summations.
 
     public DiscreteCosineTransform(int transformLength, int testDataType, boolean printData) {
         this.transformLength = transformLength;
@@ -79,23 +91,29 @@ public class DiscreteCosineTransform {
     }
     
     public void runTest() {
-    	int i;
-    	double F[];
-    	double C[];
-    	double FSAVE[];
-    	double DCTSAV[];
-    	int IX;
-    	int IY;
-    	int IZ;
+    	int I; // For counter used to address each array element in turn.
+    	double F[]; // Data array passed to the subroutines FCT and IFCT
+    	double C[]; // Array of cosine coefficients passed to FCT and IFCT.
+    	double FSAVE[]; // Array to save the original data so it can be compared to the recovered data.
+    	double DCTSAV[]; // Array to save the DCT coefficients so that they can be printed out later.
+    	int IX[] = new int [1]; // The three seeds for the random number generator.
+    	int IY[] = new int[1];
+    	int IZ[] = new int[1];
+    	int IFAULT[] = new int[1]; // Fault indicator set by subroutines FCT and IFCT.
+    	double SUM; // Temporary variable to hold running sum during ms error
+    	            // calculation
+    	double TEMP; // Temporary variable used during ms error calculation to
+    	             // hold error between original and recovered data point.
+    	double TMSERR; // Mean square error between original and recovered data.
     	if ((testDataType != randomData) && (testDataType != sinusoidalData)) {
     		MipavUtil.displayError("testDataType must be randomData or sinusoidalData");
     		return;	
     	}
     	
     	// Initialize seeds for random number generator
-    	IX = 1234;
-    	IY = 42;
-    	IZ = 1000;
+    	IX [0]= 1234;
+    	IY[0] = 42;
+    	IZ[0] = 1000;
     	
     	// Initialize data and save it for later
     	F = new double[transformLength];
@@ -103,36 +121,512 @@ public class DiscreteCosineTransform {
     	FSAVE = new double[transformLength];
     	DCTSAV = new double[transformLength];
     	
-    	for (i = 0; i < transformLength; i++) {
+    	for (I = 0; I < transformLength; I++) {
     	    if (testDataType == randomData) {
-    	        F[i] = RANDOM(IX, IY, IZ);	
+    	        F[I] = RANDOM(IX, IY, IZ);	
     	    }
     	    else if (testDataType == sinusoidalData) {
-    	        F[i] = 10.0*Math.sin(2.0*Math.PI*i/(double)transformLength);	
+    	        F[I] = 10.0*Math.sin(2.0*Math.PI*(I+1)/(double)transformLength);	
     	    }
-    	    FSAVE[i] = F[i];
-    	} // for (i = 0; i < transformLength; i++)
-    }
+    	    FSAVE[I] = F[I];
+    	} // for (I = 0; I < transformLength; I++)
+    	
+    	// Perform the forward cosine transform
+    	System.out.println("Calling FCT");
+    	Preferences.debug("Calling FCT\n", Preferences.DEBUG_ALGORITHM);
+    	FCT(F, C, transformLength, IFAULT);
+    	
+    	// Save transformed data for later
+    	
+    	for (I = 0; I < transformLength; I++) {
+    		DCTSAV[I] = F[I];
+    	}
+    	
+    	System.out.println("FCT has been set. IFAULT[0] = " + IFAULT[0]);
+    	Preferences.debug("FCT has been set. IFAULT[0] = " + IFAULT[0] + "\n", Preferences.DEBUG_ALGORITHM);
+    	if (IFAULT[0] == 0) {
+    		System.out.println("Succesful completion of FCT");
+    		Preferences.debug("Succesful completion of FCT\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	else if (IFAULT[0] == 1) {
+    		System.out.println("Error -- transformLength is <= 1");
+    		Preferences.debug("Error -- transformLength is <= 1\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	else if (IFAULT[0] == 2) {
+    		System.out.println("Error -- transformLength = " + transformLength + " is greater than 2**MAXPOW = " + 
+    	                         Math.pow(2, MAXPOW));
+    		Preferences.debug("Error -- transformLength = " + transformLength + " is greater than 2**MAXPOW = " + 
+    	                         Math.pow(2, MAXPOW) + "\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	else if (IFAULT[0] == 3) {
+    		System.out.println("Error -- transformLength is not a power of two.");
+    		Preferences.debug("Error -- transformLength is not a power of two.\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	
+    	// Perform the inverse cosine transform
+    	
+    	System.out.println("Calling IFCT");
+    	Preferences.debug("Calling IFCT\n", Preferences.DEBUG_ALGORITHM);
+    	IFCT(F, C, transformLength, IFAULT);
+    	System.out.println("IFCT has been set. IFAULT[0] = " + IFAULT[0]);
+    	Preferences.debug("IFCT has been set. IFAULT[0] = " + IFAULT[0] + "\n", Preferences.DEBUG_ALGORITHM);
+    	if (IFAULT[0] == 0) {
+    		System.out.println("Succesful completion of IFCT");
+    		Preferences.debug("Succesful completion of IFCT\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	else if (IFAULT[0] == 1) {
+    		System.out.println("Error -- transformLength is <= 1");
+    		Preferences.debug("Error -- transformLength is <= 1\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	else if (IFAULT[0] == 2) {
+    		System.out.println("Error -- transformLength = " + transformLength + " is greater than 2**MAXPOW = " + 
+    	                         Math.pow(2, MAXPOW));
+    		Preferences.debug("Error -- transformLength = " + transformLength + " is greater than 2**MAXPOW = " + 
+    	                         Math.pow(2, MAXPOW) + "\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	else if (IFAULT[0] == 3) {
+    		System.out.println("Error -- transformLength is not a power of two.");
+    		Preferences.debug("Error -- transformLength is not a power of two.\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	
+    	// Calculate mean-square error between original and recovered data
+    	SUM = 0.0;
+    	for (I = 0; I < transformLength; I++) {
+    		TEMP = F[I] - FSAVE[I];
+    		SUM = SUM + TEMP*TEMP;
+    	}
+    	TMSERR = SUM/(double)(transformLength-1);
+    	System.out.println("Mean square error = " + TMSERR);
+    	Preferences.debug("Mean square error = " + TMSERR + "\n", Preferences.DEBUG_ALGORITHM);
+    	
+    	if (printData) {
+    		for (I = 0; I < transformLength; I++) {
+    			System.out.println("I = " + (I+1) + "  Original data " + FSAVE[I] + 
+    					"  After FCT " + DCTSAV[I] + "  After IFCT = " + F[I]);
+    			Preferences.debug("I = " + (I+1) + "  Original data " + FSAVE[I] + 
+    					"  After FCT " + DCTSAV[I] + "  After IFCT = " + F[I] + "\n", Preferences.DEBUG_ALGORITHM);
+    		}
+    	}
+    } 
     
-    public double RANDOM(int IX,int IY, int IZ) {
+    public double RANDOM(int IX[],int IY[], int IZ[]) {
            double r;
            double rfloor;
            double ans;
     //     THIS IS THE WICHMANN & HILL RANDOM NUMBER GENERATOR
     //     ALGORITHM AS-183, APPLIED STATISTICS VOL 31 NO 2, PP 188-190
     
-          IX = 171 * (IX % 177) - 2  * (IX /177);
-          IY = 172 * (IY % 176) - 35 * (IY/176);
-          IZ = 170 * (IZ % 178) - 63 * (IZ/178);
+          IX[0] = 171 * (IX[0] % 177) - 2  * (IX[0] /177);
+          IY[0] = 172 * (IY[0] % 176) - 35 * (IY[0]/176);
+          IZ[0] = 170 * (IZ[0] % 178) - 63 * (IZ[0]/178);
     
-          if (IX < 0) IX = IX + 30269;
-          if (IY < 0) IY = IY + 30307;
-          if (IZ < 0) IZ = IZ + 30323;
+          if (IX[0] < 0) IX[0] = IX[0] + 30269;
+          if (IY[0] < 0) IY[0] = IY[0] + 30307;
+          if (IZ[0] < 0) IZ[0] = IZ[0] + 30323;
     
-          r = (double)IX/ 30269.0 + (double)IY / 30307.0 + (double)IZ / 30323.0;
+          r = (double)IX[0]/ 30269.0 + (double)IY[0] / 30307.0 + (double)IZ[0] / 30323.0;
           rfloor = Math.floor(r);
           ans = r - rfloor;
           return ans;
+    }
+    
+    private void FCT(double F[], double C[], int transformLength, int IFAULT[]) {
+    	// Fast discrete cosine transform
+    	// Arguments:
+    	// F      Array containing the data to be transformed.  On exit, it contains
+    	//        the transformed sequence.
+    	// C      Array containing cosine coefficients as previously calculated by a 
+    	//        call to INIFCT.  When this is the first call to FCT or IFCT for the
+    	//        current value of transformLength, this array will be initialized by a 
+    	//        call to INIFCT.
+    	// transformLength  Length the the array F.  transformLength must be a power of two.
+    	// IFAULT on exit:
+    	//        = 0, if there are no faults.
+    	//        = 1, if transformLength <= 1.
+    	//        = 2, if N > 2**MAXPOW.  (See subroutine INIFCT below).
+    	//        = 3, if 2 <= tranformLength <= 2**MAXPOW but transformLength is not a power of two.
+    	// Internal variables:
+    	double CFAC; // Cosine multiplicative factor used in butterfly.
+    	int I;
+    	int IBASE; // Index of base of butterfly.
+    	int IBUTFY; // Butterfly counter
+    	int IGROUP; // Loop counter for groups of butterflies.
+    	int II1; // Index to first element of butterfly.
+    	int II2; // Index to second element of butterfly.
+        int INCR; // Index increment to move from one group of butterflies to the next.
+        int INDEX;
+        int ISTAGE; // Counter for stages during butterfly or summation processing.
+        int ISTEP; // Counter for steps within a thread during summation processing.
+        int ISTPSZ; // Size of step within a thread during summation processing.
+    	int IWNGSP; // Width (wingspan) of butterfly.
+    	int NGRPS; // Number of groups of butterflies in current stage.
+    	int NSTEPS; // Number of steps in current thread during summation processing.
+    	int NTHRDS; // Number of summation threads in current summation stage.
+    	int NV2; // Set to transformLength/2.
+    	double TEMP; // Temporary variable used during butterfly processing.
+    	int THREAD;
+    	double TWOVN; // Set to 2.0/transformLength.
+    	
+    	// Check for valid transform size
+    	IFAULT[0] = 0;
+    	if ((transformLength != LENGTH) || (transformLength <= 1)) {
+    		INIFCT(C, transformLength, IFAULT);
+    	}
+    	if (IFAULT[0] != 0) return;
+    	
+    	NV2 = transformLength/2;
+    	
+    	// Scramble the data in F into odd-even ordering
+    	SCRAMB(F,transformLength);
+    	
+    	// Do the butterflies
+    	
+    	NGRPS = 1;
+    	IWNGSP = NV2;
+    	INCR = transformLength;
+    	for (ISTAGE = IPOW; ISTAGE >= 1; ISTAGE--) {
+    	    for (IBUTFY = 1; IBUTFY <= IWNGSP; IBUTFY++) {
+    	        CFAC = C[IWNGSP + IBUTFY - 1];
+    	        IBASE = 0;
+    	        for (IGROUP = 1; IGROUP <= NGRPS; IGROUP++) {
+    	            II1 = IBASE + IBUTFY;
+    	            II2 = II1 + IWNGSP;
+    	            TEMP = F[II2-1];
+    	            F[II2-1] = CFAC * (F[II1-1] - TEMP);
+    	            F[II1-1] = F[II1-1] + TEMP;
+    	            IBASE = IBASE + INCR;
+    	        } // for (IGROUP = 1; IGROUP <= NGRPS; IGROUP++)
+    	    } // for (IBUTFY = 1; IBUTFY <= IWNGSP; IBUTFY++)
+    	    INCR = INCR/2;
+    	    IWNGSP = IWNGSP / 2;
+    	    NGRPS = NGRPS + NGRPS;
+    	} // for (ISTAGE = IPOW; ISTAGE >= 1; ISTAGE--)
+    	
+    	// Bit-reverse order array F
+    	BITREV(F, transformLength);
+    	
+    	// Do the sums
+    	NTHRDS = transformLength/4;
+    	ISTPSZ = NV2;
+    	NSTEPS = 2;
+    	for (ISTAGE = IPOW-1; ISTAGE >= 1; ISTAGE--) {
+    	    for (THREAD = 1; THREAD <= NTHRDS; THREAD++) {
+    	        INDEX = NTHRDS + THREAD;
+    	        for (ISTEP = 1; ISTEP <= NSTEPS-1; ISTEP++) {
+    	            F[INDEX-1] = F[INDEX-1] + F[INDEX + ISTPSZ - 1]	;
+    	            INDEX = INDEX + ISTPSZ;
+    	        } // for (ISTEP = 1; ISTEP <= NSTEPS-1; ISTEP++)
+    	    } // for (THREAD = 1; THREAD <= NTHRDS; THREAD++)
+    	    NSTEPS = NSTEPS + NSTEPS;
+    	    NTHRDS = NTHRDS/2;
+    	    ISTPSZ = ISTPSZ/2;
+    	} // for (ISTAGE = IPOW-1; ISTAGE >= 1; ISTAGE--)
+    	
+    	// Scale the result
+    	TWOVN = 2.0/(double)transformLength;
+    	for (I = 0; I < transformLength; I++) {
+    		F[I] = F[I] * TWOVN;
+    	}
+    	F[0] = F[0] * RT2INV;
+    	return;
+    }
+    
+    private void IFCT(double F[], double C[], int transformLength, int IFAULT[]) {
+    	// Fast inverse discrete transform
+    	
+    	// Arguments:
+    	// F  Array containing the data that is to be inverse transformed.
+    	//    On exit, it contains the inverse transformed data.
+    	// C, transformLength, IFAULT  As for subroutine FCT.
+    	
+    	// Internal variables:
+    	// As for subroutine FCT.
+    	double TEMP;
+    	double CFAC;
+    	int NV2;
+    	int NTHRDS;
+    	int ISTPSZ;
+    	int NSTEPS;
+    	int ISTAGE;
+    	int THREAD;
+    	int INDEX;
+    	int NGRPS;
+    	int IWNGSP;
+    	int INCR;
+    	int IBUTFY;
+    	int IBASE;
+    	int IGROUP;
+    	int II1;
+    	int II2;
+    	int ISTEP;
+    	
+    	// Check transform length and initialize if necessary
+    	
+    	IFAULT[0] = 0;
+    	if ((transformLength != LENGTH) || (transformLength <= 1)) {
+    		INIFCT(C, transformLength, IFAULT);
+    	}
+    	if (IFAULT[0] != 0) {
+    		return;
+    	}
+    	
+    	NV2 = transformLength/2;
+    	
+    	F[0] = F[0] * RT2INV;
+    	
+    	// Do the sums
+    	NTHRDS = 1;
+    	ISTPSZ = 2;
+    	NSTEPS = NV2;
+    	for (ISTAGE = 1; ISTAGE <= IPOW-1; ISTAGE++) {
+    	    for (THREAD = 1; THREAD <= NTHRDS; THREAD++) {
+    	        INDEX = transformLength - THREAD + 1;	
+    	        for (ISTEP = 1; ISTEP <= NSTEPS-1; ISTEP++) {
+    	        	F[INDEX-1] = F[INDEX-1] + F[INDEX - ISTPSZ-1];
+    	        	INDEX = INDEX - ISTPSZ;
+    	        } // for (ISTEP = 1; ISTEP <= NSTEPS-1; ISTEP++)
+    	    } // for (THREAD = 1; THREAD <= NTHRDS; THREAD++)
+    	    NSTEPS = NSTEPS/2;
+    	    NTHRDS = NTHRDS + NTHRDS;
+    	    ISTPSZ = ISTPSZ + ISTPSZ;
+    	} // for (ISTAGE = 1; ISTAGE <= IPOW-1; ISTAGE++)
+    	
+    	// Bit-reverse order array F
+    	
+    	BITREV(F, transformLength);
+    	
+    	// Do the butterflies
+    	NGRPS = NV2;
+    	IWNGSP = 1;
+    	INCR = 2;
+    	for (ISTAGE = 1; ISTAGE <= IPOW; ISTAGE++) {
+    	    for (IBUTFY = 1; IBUTFY <= IWNGSP; IBUTFY++) {
+    	        CFAC = C[IWNGSP + IBUTFY - 1];
+    	        IBASE = 0;
+    	        for (IGROUP = 1; IGROUP <= NGRPS; IGROUP++) {
+    	        	II1 = IBASE + IBUTFY;
+    	        	II2 = II1 + IWNGSP;
+    	        	TEMP = CFAC * F[II2-1];
+    	        	F[II2-1] = F[II1-1] - TEMP;
+    	        	F[II1-1] = F[II1-1] + TEMP;
+    	        	IBASE = IBASE + INCR;
+    	        } // for (IGROUP = 1; IGROUP <= NGRPS; IGROUP++)
+    	    } // for (IBUTFY = 1; IBUTFY <= IWNGSP; IBUTFY++)
+    	    INCR = INCR + INCR;
+    	    IWNGSP = IWNGSP + IWNGSP;
+    	    NGRPS = NGRPS/2;
+    	} // for (ISTAGE = 1; ISTAGE <= IPOW; ISTAGE++)
+    	
+    	// Unscramble from odd-even ordering to natural ordering
+    	USCRAM(F, transformLength);
+    	return;
+    	
+    }
+    
+    private void BITREV(double F[], int transformLength) {
+    	// Rearranges the data in the array F into bit-reverse order.
+    	
+    	// Arguments:
+    	// F  Array containing the data to be rearranged into bit-reversed
+    	//    order.
+    	// transformLength Length of the array F.  N must be a power of two.
+    	
+    	// Internal variables:
+    	int I;
+    	int J;
+    	int NV2;
+    	int M;
+    	double TEMP;
+    	
+    	if (transformLength <= 2) {
+    		return;
+    	}
+    	NV2 = transformLength/2;
+    	J = 1;
+    	for (I = 1; I <= transformLength; I++) {
+    	    if (I < J) {
+    	    	TEMP = F[J-1];
+    	    	F[J-1] = F[I-1];
+    	    	F[I-1] = TEMP;
+    	    }
+    	    M = NV2;
+    	    while( J > M) {
+    	    	J = J - M;
+    	    	M = (M + 1)/2;
+    	    }
+    	    J = J + M;
+    	} // for (I = 1; I <= transformLength; I++)
+    	return;
+    }
+    
+    private void SCRAMB(double F[], int transformLength) {
+    	// Scrambles the data in the array F into odd-even order, i.e.
+    	// with the odd-indexed elements in the first half of the array
+    	// (in natural order), and the even elements in the second half
+    	// (in reverse order).
+    	
+    	// Arguments:
+    	// F Array containing the data to be rearranged into odd-even order.
+    	// transformLength Length of array F.  transfomrLength must be a power of 2.
+    	
+    	// Internal variables:
+    	int I; // Loop counter for swaps in top half of array.
+    	int II1; // Index to first array element in swap.
+    	int II2; // Index to second array element in swap.
+    	int NV2; // Set equal to transformLength/2.
+    	int NV4; // Set equal to transformLength/4.
+    	double TEMP; // Temporary variable used while swapping array elements
+    	double F2[];
+    	
+    	NV2 = transformLength/2;
+    	NV4 = transformLength/4;
+    	BITREV(F, transformLength);
+    	BITREV(F, NV2);
+    	F2 = new double[NV2];
+    	for (I = 0; I < NV2; I++) {
+    	    F2[I] = F[NV2+I];	
+    	}
+    	BITREV(F2, NV2);
+    	for (I = 0; I < NV2; I++) {
+    	    F[NV2+I] = F2[I];	
+    	}
+    	
+    	II1 = transformLength - 1;
+    	II2 = NV2;
+    	for (I = 0; I < NV4; I++) {
+    		TEMP = F[II1];
+    		F[II1] = F[II2];
+    		F[II2] = TEMP;
+    		II1 = II1-1;
+    		II2 = II2 + 1;
+    	} // for (I = 0; I < NV4; I++)
+    	return;
+    }
+    
+    private void USCRAM(double F[], int transformLength) {
+        // Unscrambles the data in array F from odd-even to natural order,
+    	// i.e. performs the inverse of the operation performed by 
+    	// subroutine SCRAMB.
+    	
+    	// Arguments:
+    	// F  AZrray containing the data to be unscrambled.
+    	// transformLength Length of the array F.  transformLength must be a power of 2.
+    	
+    	// Internal variables:
+    	// As for subroutine SCRAMB.
+    	int I; // Loop counter for swaps in top half of array.
+    	int II1; // Index to first array element in swap.
+    	int II2; // Index to second array element in swap.
+    	int NV2; // Set equal to transformLength/2.
+    	int NV4; // Set equal to transformLength/4.
+    	double TEMP; // Temporary variable used while swapping array elements
+    	double F2[];
+    	
+    	NV2 = transformLength/2;
+    	NV4 = transformLength/4;
+    	II1 = transformLength-1;
+    	II2 = NV2;
+    	for (I = 0; I < NV4; I++) {
+    	    TEMP = F[II1];	
+    	    F[II1] = F[II2];
+    	    F[II2] = TEMP;
+    	    II1 = II1-1;
+    	    II2 = II2+1;
+    	} // for (I = 0; I < NV4; I++)
+    	BITREV(F,NV2);
+    	F2 = new double[NV2];
+    	for (I = 0; I < NV2; I++) {
+    	    F2[I] = F[NV2+I];	
+    	}
+    	BITREV(F2, NV2);
+    	for (I = 0; I < NV2; I++) {
+    	    F[NV2+I] = F2[I];	
+    	}
+    	BITREV(F,transformLength);
+    	return;
+    }
+    
+    private void INIFCT(double C[], int transformLength, int IFAULT[]) {
+        // Initializes the array C of cosine coefficients as required for
+    	// calls to subroutines FCT and IFCT.  Also checks the validity of
+    	// the transform size transformLength.  Called whenever subroutines
+    	// FCT or IFCT receive a new transform size.  Never called explicitly
+    	// by the user.
+    	
+    	// Arguments:
+    	// C     Array to hold the cosine coefficients.
+    	// transformLength Length of the array C, i.e. size of transform desired.
+    	// IFAULT As described in subroutine FCT.
+    	
+    	// Internal variables:
+    	int I; // Loop counter to index array elements while loading top 
+    	       // half of C array, and while taking cosines of the array
+    	       // values.
+    	int IFAC; // Multiplication factor used while filling bottom half of
+    	          // C array.
+    	int IGROUP; // Loop counter for groups of C array coefficients in
+    	            // bottom half.
+    	int II; // Temporary variable to hold powers of two while the 
+    	        // transform length is being checked.
+    	int ITEM; // Loop counter to count items withina group of C array
+    	          // coefficients.
+    	int K; // Loop counter counting successive powers of two during
+    	       // transform length checking.
+    	int NITEMS; // Number of times within current group of C array coefficients.
+    	int NV2; // Set to transformLength/2.
+    	
+    	// Check for valid transform size
+    	Preferences.debug("INIFCT tranformLength = " + transformLength + "\n", Preferences.DEBUG_ALGORITHM);
+    	IFAULT[0] = 0;
+    	if (transformLength <= 1) {
+    		IFAULT[0] = 1;
+    		return;
+    	}
+    	II = 1;
+    	L1:
+    	{
+    		for (K = 1; K <= MAXPOW; K++) {
+    			II = II + II;
+    			if (II == transformLength) {
+    				break L1;
+    			}
+    			if (II > transformLength) {
+    				IFAULT[0] = 3;
+    				return;
+    			}
+    		} // for (K = 1; K <= MAXPOW; K++)
+    		IFAULT[0] = 2;
+    		return;
+    	} // L1
+    	
+    	// If we reach this point, transform length is valid
+    	IPOW = K;
+    	LENGTH = transformLength;
+    	NV2 = transformLength/2;
+    	
+    	// Put values into top half of C array
+    	for (I = 0; I < NV2; I++) {
+    		C[NV2+I] = (double)(4*I+1);
+    	}
+    	
+    	// Copy scaled values from top half of C array to bottom half.
+    	
+    	NITEMS = 1;
+    	IFAC = NV2;
+    	for (IGROUP = 1; IGROUP <= IPOW - 1; IGROUP++) {
+    		for (ITEM = 1; ITEM <= NITEMS; ITEM++) {
+    	        C[NITEMS + ITEM - 1] = (double)IFAC * C[NV2 + ITEM - 1];
+    		}
+    		NITEMS = NITEMS + NITEMS;
+    		IFAC = IFAC/2;
+    	}
+    	
+    	// Take cosine of each element of C array
+    	
+    	for (I = 1; I < transformLength; I++) {
+    		C[I] = 1.0/(2.0*Math.cos(C[I] * Math.PI/(double)(transformLength+transformLength)));
+    	}
+    	return;
     }
 
 }
