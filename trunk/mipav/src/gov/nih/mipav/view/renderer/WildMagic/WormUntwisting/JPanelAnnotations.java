@@ -309,6 +309,10 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		}
 	}
 
+	public JPanel getAnnotationsPanel() {
+		return annotationPanel;
+	}
+	
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */

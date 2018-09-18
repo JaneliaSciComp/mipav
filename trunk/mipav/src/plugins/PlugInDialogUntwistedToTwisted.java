@@ -947,12 +947,12 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			try {
 			spline.run();
 			} catch (Exception e) {
-				System.err.println( "Spline error: " + e.toString() );
+//				System.err.println( "Spline error: " + e.toString() );
 				splineError = true;
 			}
 			if ( !splineError ) {
-//				System.err.println( "Bounds " + input1L.getText() + "   " + input1R.getText() );
-//				System.err.println( "Bounds " + input2L.getText() + "   " + input2R.getText() );
+				System.err.println( "Bounds " + input1L.getText() + "   " + input1R.getText() );
+				System.err.println( "Bounds " + input2L.getText() + "   " + input2R.getText() );
 				previousT[0] = target2L;				previousT[1] = target2R;
 				previousI[0] = input2L;					previousI[1] = input2R;
 				

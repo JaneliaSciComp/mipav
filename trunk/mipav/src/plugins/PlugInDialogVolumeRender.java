@@ -124,7 +124,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JTextField  baseFileNameText;
 	private JProgressBar batchProgress;
 	private JRadioButton buildLattice;
-	private JPanel buttonPanel;
+	private JPanel backNextPanel;
 	private JRadioButton calcMaxProjection;
 	private JRadioButton resliceRotate;
 	private JPanel choicePanel;
@@ -509,7 +509,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			// Closes the editing:
 			else if (command.equals("done"))
 			{			
-				buttonPanel.remove(displayModel);
+				backNextPanel.remove(displayModel);
 				if ( editMode == EditSeamCells )
 				{
 					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
@@ -542,6 +542,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				else
 				{
 					enableNext(editMode);
+				}		
+				if ( annotationPanelUI != null ) {
+					tabbedPane.remove(annotationPanelUI.getAnnotationsPanel());
 				}
 			}
 			// Enables user to generate a new lattice (when none of the automatic ones match well)
@@ -914,8 +917,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{			
 			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
-				buttonPanel.remove(displayModel);
-				buttonPanel.add(displayModel);
+				backNextPanel.remove(displayModel);
+				backNextPanel.add(displayModel);
 				displayModel.setSelected(false);
 				
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
@@ -948,6 +951,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						}
 						if ( (annotations.size() > 0) && (voiManager != null) )
 						{
+							initDisplayAnnotationsPanel();
+							
 							voiManager.setAnnotations(annotations);
 							voiManager.editAnnotations(false);
 							VOIVector latticeVector = new VOIVector();
@@ -977,6 +982,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 							}
 							if ( (annotations.size() > 0) && (voiManager != null) )
 							{
+								initDisplayAnnotationsPanel();
+								
 								voiManager.setAnnotations(annotations);
 								voiManager.editAnnotations(false);
 								VOIVector latticeVector = new VOIVector();
@@ -1135,11 +1142,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					volumePanel.setVisible(true);
 					pack();									
 				}
-
-				if ( voiManager != null )
-				{
-					initDisplayAnnotationsPanel();
-				}
 			}
 			
 			
@@ -1258,6 +1260,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 					if ( (annotations.size() > 0) && (voiManager != null) )
 					{
+						initDisplayAnnotationsPanel();
+						
 						voiManager.setAnnotations(annotations);
 						voiManager.editAnnotations(true);
 						voiManager.colorAnnotations(true);
@@ -1595,14 +1599,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
 		gbc.gridy++;
 
-		buttonPanel = new JPanel();
+		JPanel startPanel = new JPanel();
 		startButton = gui.buildButton("start");
 		startButton.addActionListener(this);
-		buttonPanel.add( startButton );
+		startPanel.add( startButton );
 		closeButton = gui.buildButton("close");
 		closeButton.addActionListener(this);
-		buttonPanel.add( closeButton );
-		buttonPanel.add(new JPanel());
+		startPanel.add( closeButton );
+		startPanel.add(new JPanel());
 		//		panel.add(buttonPanel, gbc);
 
 		JPanel optionsPanel = makeOptionsPanel(gui);
@@ -1622,7 +1626,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		JPanel panel2 = new JPanel(new BorderLayout());
 		panel2.add(choicePanel, BorderLayout.NORTH);
-		panel2.add(buttonPanel, BorderLayout.SOUTH);
+		panel2.add(startPanel, BorderLayout.SOUTH);
 		
 		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
 		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
@@ -1697,14 +1701,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
 		gbc.gridy++;
 
-		buttonPanel = new JPanel();
+		JPanel startPanel = new JPanel();
 		startButton = gui.buildButton("start");
 		startButton.addActionListener(this);
-		buttonPanel.add( startButton );
+		startPanel.add( startButton );
 		closeButton = gui.buildButton("close");
 		closeButton.addActionListener(this);
-		buttonPanel.add( closeButton );
-		buttonPanel.add(new JPanel());
+		startPanel.add( closeButton );
+		startPanel.add(new JPanel());
 
 		JPanel optionsPanel = makeOptionsPanel(gui);
 		
@@ -1722,7 +1726,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		JPanel panel2 = new JPanel(new BorderLayout());
 		panel2.add(choicePanel, BorderLayout.NORTH);
-		panel2.add(buttonPanel, BorderLayout.SOUTH);
+		panel2.add(startPanel, BorderLayout.SOUTH);
 		
 		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
 		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
@@ -1744,10 +1748,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.add( dialogGUI.getContentPane(), BorderLayout.NORTH );
-		leftPanel.add( tabbedPane, BorderLayout.SOUTH );
-		
+		leftPanel.add( tabbedPane, BorderLayout.CENTER );
+
+
 		volumePanel = initGPUPanel(EditNONE);
 		volumePanel.setVisible(false);
+		
+		
 		JPanel integratedPanel = new JPanel( new BorderLayout() );
 		integratedPanel.add( leftPanel, BorderLayout.WEST );
 		integratedPanel.add( volumePanel, BorderLayout.EAST );
@@ -1797,27 +1804,27 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		dialogGUI = new JDialogStandalonePlugin();
 		GuiBuilder gui = new GuiBuilder(dialogGUI);
 
-		buttonPanel = new JPanel();
+		backNextPanel = new JPanel();
 		backButton = gui.buildButton("back");
 		backButton.addActionListener(this);
 		backButton.setActionCommand("back");
 		backButton.setVisible(true);
 		backButton.setEnabled(false);
-		buttonPanel.add( backButton );
+		backNextPanel.add( backButton );
 
 		nextButton = gui.buildButton("next");
 		nextButton.addActionListener(this);
 		nextButton.setActionCommand("next");
 		nextButton.setVisible(true);
 		nextButton.setEnabled(true);
-		buttonPanel.add( nextButton );
+		backNextPanel.add( nextButton );
 
 		doneButton = gui.buildButton("done");
 		doneButton.addActionListener(this);
 		doneButton.setActionCommand("done");
 		doneButton.setVisible(true);
 		doneButton.setEnabled(true);
-		buttonPanel.add( doneButton );
+		backNextPanel.add( doneButton );
 
 		ButtonGroup latticeGroup = new ButtonGroup();
 		latticeSelectionPanel = new JPanel();
@@ -1849,7 +1856,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		displayModel.setEnabled(true);
 		latticeSelectionPanel.add(displayModel);
 		
-		buttonPanel.add( latticeSelectionPanel );
+		backNextPanel.add( latticeSelectionPanel );
 		latticeSelectionPanel.setVisible(false);
 
 
@@ -1862,7 +1869,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gpuPanel.setBorder(JDialogBase.buildTitledBorder("Volume Display"));
 
 		dialogGUI.getContentPane().add(gpuPanel, BorderLayout.CENTER);
-		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+		dialogGUI.getContentPane().add(backNextPanel, BorderLayout.SOUTH);
 
 		return dialogGUI.getContentPane();
 	}
@@ -1877,13 +1884,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		if ( annotationPanelUI == null )
 		{
 			annotationPanelUI = new JPanelAnnotations(voiManager, volumeImage.GetImage());
-			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), annotations.elementAt(0));
-
-			annotationPanel.add(buttonPanel, BorderLayout.SOUTH);
-			tabbedPane.addTab("Annotation", null, annotationPanel);
-			pack();
 		}
 		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), annotations.elementAt(0));
+		tabbedPane.addTab("Annotation", null, annotationPanelUI.getAnnotationsPanel());
+		pack();
 	}
 
 	/**

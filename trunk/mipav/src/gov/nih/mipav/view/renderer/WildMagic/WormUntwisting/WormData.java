@@ -436,6 +436,9 @@ public class WormData
 	
 	public boolean checkSeamCells(VOI annotations)
 	{
+		if ( annotations == null ) {
+			return false;
+		}
 		if ( annotations.getCurves().size() == 0 )
 		{
 			return false;
