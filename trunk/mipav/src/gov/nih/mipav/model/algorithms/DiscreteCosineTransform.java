@@ -69,17 +69,35 @@ public class DiscreteCosineTransform {
     
     private final double RT2INV = 1.0/Math.sqrt(2.0);
     
+    // Can only use a fast algorithm with a power of 2
+    // Otherwise use a slow version using the basic formula.
+    private boolean fastAlgorithm = true;
+    
     // In COMMON FCTLEN
     private int LENGTH = 0; // The transform length for which the array C of cosine coefficients
                             // is currently set up.  Used by FCT and IFCT to determine whether 
                             // transformLength has changed.
     private int IPOW = 0;   // The base-2 logarithm of LENGTH.  Used in FCT and IFCT to determine
                             // the number of stages of butterflies or summations.
+    private int dims[];
+    
+    private int xDim;
+    
+    private int yDim;
 
-    public DiscreteCosineTransform(int transformLength, int testDataType, boolean printData) {
-        this.transformLength = transformLength;
+    public DiscreteCosineTransform(boolean fastAlgorithm, int dims[], int testDataType, boolean printData) {
+    	this.dims = dims;
+    	this.fastAlgorithm = fastAlgorithm;
         this.testDataType = testDataType;
         this.printData = printData;
+        if (dims.length == 1) {
+        	transformLength = dims[0];
+        }
+        else {
+        	xDim = dims[0];
+        	yDim = dims[1];
+        	transformLength = xDim * yDim;
+        }
         doTest = true;
     }
     
@@ -134,7 +152,15 @@ public class DiscreteCosineTransform {
     	// Perform the forward cosine transform
     	System.out.println("Calling FCT");
     	Preferences.debug("Calling FCT\n", Preferences.DEBUG_ALGORITHM);
-    	FCT(F, C, transformLength, IFAULT);
+    	if (fastAlgorithm) {
+    	   FCT(F, C, transformLength, IFAULT);
+    	}
+    	else if (dims.length == 2) {
+    		SLOW2DFCT(F, xDim, yDim);
+    	}
+    	else {
+    		SLOWFCT(F, transformLength);
+    	}
     	
     	// Save transformed data for later
     	
@@ -167,7 +193,15 @@ public class DiscreteCosineTransform {
     	
     	System.out.println("Calling IFCT");
     	Preferences.debug("Calling IFCT\n", Preferences.DEBUG_ALGORITHM);
-    	IFCT(F, C, transformLength, IFAULT);
+    	if (fastAlgorithm) {
+    	    IFCT(F, C, transformLength, IFAULT);
+    	}
+    	else if (dims.length == 2) {
+    		SLOW2DIFCT(F, xDim, yDim);
+    	}
+    	else {
+    		SLOWIFCT(F, transformLength);
+    	}
     	System.out.println("IFCT has been set. IFAULT[0] = " + IFAULT[0]);
     	Preferences.debug("IFCT has been set. IFAULT[0] = " + IFAULT[0] + "\n", Preferences.DEBUG_ALGORITHM);
     	if (IFAULT[0] == 0) {
@@ -627,6 +661,133 @@ public class DiscreteCosineTransform {
     		C[I] = 1.0/(2.0*Math.cos(C[I] * Math.PI/(double)(transformLength+transformLength)));
     	}
     	return;
+    }
+    
+    private void SLOWFCT(double F[], int transformLength) {
+    	int i;
+    	int j;
+    	double tmult = Math.PI/(2.0 * transformLength);
+    	double onert = 1.0/Math.sqrt(transformLength);
+    	double twort = Math.sqrt(2.0) * onert;
+    	double sum[] = new double[transformLength];
+    	for (j = 0; j < transformLength; j++) {
+    		sum[0] += F[j];
+    	}
+    	for (i = 1; i < transformLength; i++) {
+    		for (j = 0; j < transformLength; j++) {
+    			sum[i] += F[j] * Math.cos((2*j + 1)*i*tmult);
+    		}
+    	}
+    	F[0] = onert*sum[0];
+    	for (i = 1; i < transformLength; i++) {
+    		F[i] = twort * sum[i];
+    	}
+    }
+    
+    private void SLOW2DFCT(double F[], int xDim, int yDim) {
+    	double xmult = Math.PI/(2.0 * xDim);
+    	double ymult = Math.PI/(2.0 * yDim);
+    	int x;
+    	int y;
+    	int u;
+    	int v;
+    	int uv = 0;
+    	int xy;
+    	double sum[] = new double[xDim * yDim];
+    	double cy;
+    	double scale = 2.0/Math.sqrt(xDim * yDim);
+    	for (v = 0; v < yDim; v++) {
+    		for (u = 0; u < xDim; u++) {
+    			uv = u + v * xDim;
+    			for (y = 0; y < yDim; y++) {
+    				cy = Math.cos((2*y+1)*v*ymult);
+    				for (x = 0; x < xDim; x++) {
+    				    xy = x + y * xDim;
+    				    sum[uv] += F[xy] * Math.cos((2*x+1)*u*xmult)*cy;
+    				}
+    			}
+    			if (u == 0) {
+    				sum[uv] *= RT2INV;
+    			}
+    			sum[uv] *= scale;
+    		} // for (u = 0; u < xDim; u++)
+    		if (v == 0) {
+				sum[uv] *= RT2INV;
+			}
+    	} // for (v = 0; v < yDim; v++)
+    	
+    	for (v = 0; v < yDim; v++) {
+    		for (u = 0; u < xDim; u++) {
+    			uv = u + v * xDim;
+    			F[uv] = sum[uv];
+    		}
+    	}
+    }
+    
+    private void SLOWIFCT(double F[], int transformLength) {
+    	int i;
+    	int j;
+    	double tmult = Math.PI/(2.0 * transformLength);
+    	double onert = 1.0/Math.sqrt(transformLength);
+    	double twort = Math.sqrt(2.0) * onert;
+    	double sum[] = new double[transformLength];
+    	for (i = 0; i < transformLength; i++) {
+    		sum[i] = F[0]*RT2INV;
+    	}
+    	for (i = 0; i < transformLength; i++) {
+    		for (j = 1; j < transformLength; j++) {
+    			sum[i] += F[j] * Math.cos((2*i+1)*j*tmult);
+    		}
+    	}
+    	
+    	for (i = 0; i < transformLength; i++) {
+    		F[i] = twort * sum[i];
+    	}
+    	
+    }
+    
+    private void SLOW2DIFCT(double F[], int xDim, int yDim) {
+    	double umult = Math.PI/(2.0 * xDim);
+    	double vmult = Math.PI/(2.0 * yDim);
+    	int x;
+    	int y;
+    	int u;
+    	int v;
+    	int uv;
+    	int xy;
+    	double sum[] = new double[xDim * yDim];
+    	double cv;
+    	double scale = 2.0/Math.sqrt(xDim * yDim);
+    	double prod;
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			xy = x + y * xDim;
+    			for (v = 0; v < yDim; v++) {
+    				cv = Math.cos((2*y+1)*v*vmult);
+    				for (u = 0; u < xDim; u++) {
+    					uv = u + v * xDim;
+    				    prod = F[uv]*Math.cos((2*x+1)*u*umult)*cv;	
+    				    if ((u == 0) && (v == 0)) {
+    				    	sum[xy] += 0.5 * prod;
+    				    }
+    				    else if ((u == 0) || (v == 0)) {
+    				    	sum[xy] += RT2INV * prod;
+    				    }
+    				    else {
+    				    	sum[xy] += prod;
+    				    }
+    				} // for (u = 0; u < xDim; u++) 
+    			} // for (v = 0; v < yDim; v++)
+    			sum[xy] *= scale;
+    		} // for (x = 0; x < xDim; x++)
+    	}
+    	
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			xy = x + y * xDim;
+    			F[xy] = sum[xy];
+    		}
+    	}
     }
 
 }
