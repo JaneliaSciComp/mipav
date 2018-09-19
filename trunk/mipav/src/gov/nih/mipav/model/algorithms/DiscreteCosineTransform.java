@@ -152,7 +152,10 @@ public class DiscreteCosineTransform {
     	// Perform the forward cosine transform
     	System.out.println("Calling FCT");
     	Preferences.debug("Calling FCT\n", Preferences.DEBUG_ALGORITHM);
-    	if (fastAlgorithm) {
+    	if (fastAlgorithm && (dims.length == 2)) {
+    		FCT2D(F, xDim, yDim);
+    	}
+    	else if (fastAlgorithm) {
     	   FCT(F, C, transformLength, IFAULT);
     	}
     	else if (dims.length == 2) {
@@ -193,7 +196,10 @@ public class DiscreteCosineTransform {
     	
     	System.out.println("Calling IFCT");
     	Preferences.debug("Calling IFCT\n", Preferences.DEBUG_ALGORITHM);
-    	if (fastAlgorithm) {
+    	if (fastAlgorithm && (dims.length == 2)) {
+    		IFCT2D(F, xDim, yDim);
+    	}
+    	else if (fastAlgorithm) {
     	    IFCT(F, C, transformLength, IFAULT);
     	}
     	else if (dims.length == 2) {
@@ -262,6 +268,77 @@ public class DiscreteCosineTransform {
           rfloor = Math.floor(r);
           ans = r - rfloor;
           return ans;
+    }
+    
+    private void FCT2D(double F[], int xDim, int yDim) {
+    	int x;
+    	int y;
+    	int IFAULT[] = new int[1];
+        // F Array containing data to be transformed.  On exit, it contains
+        // the transformed elements.
+    	double FROW[] = new double[xDim];
+    	double CROW[] = new double[xDim];
+    	
+    	// Transform on rows
+    	for (y = 0; y < yDim; y++) {
+    	    for (x = 0; x < xDim; x++) {
+    	    	FROW[x] = F[x + y * xDim];
+    	    }
+    	    FCT(FROW, CROW, xDim, IFAULT);
+    	    for (x = 0; x < xDim; x++) {
+    	    	F[x + y * xDim] = FROW[x];
+    	    }
+    	}
+    	
+    	
+    	double FCOL[] = new double[yDim];
+    	double CCOL[] = new double[yDim];
+    	// Transform on columns
+    	for (x = 0; x < xDim; x++) {
+    	    for (y = 0; y < yDim; y++) {
+    	    	FCOL[y] = F[x + y * xDim];
+    	    }
+    	    FCT(FCOL, CCOL, yDim, IFAULT);
+    	    for (y = 0; y < yDim; y++) {
+    	    	F[x + y * xDim] = FCOL[y];
+    	    }
+    	}
+    	
+    	
+    }
+    
+    private void IFCT2D(double F[], int xDim, int yDim) {
+    	int x;
+    	int y;
+    	int IFAULT[] = new int[1];
+        // F Array containing data to be transformed.  On exit, it contains
+        // the transformed elements.
+    	
+    	double FROW[] = new double[xDim];
+    	double CROW[] = new double[xDim];
+    	// Transform on rows
+    	for (y = 0; y < yDim; y++) {
+    	    for (x = 0; x < xDim; x++) {
+    	    	FROW[x] = F[x + y * xDim];
+    	    }
+    	    IFCT(FROW, CROW, xDim, IFAULT);
+    	    for (x = 0; x < xDim; x++) {
+    	    	F[x + y * xDim] = FROW[x];
+    	    }
+    	}
+    	
+    	double FCOL[] = new double[yDim];
+    	double CCOL[] = new double[yDim];
+    	// Transform on columns
+    	for (x = 0; x < xDim; x++) {
+    	    for (y = 0; y < yDim; y++) {
+    	    	FCOL[y] = F[x + y * xDim];
+    	    }
+    	    IFCT(FCOL, CCOL, yDim, IFAULT);
+    	    for (y = 0; y < yDim; y++) {
+    	    	F[x + y * xDim] = FCOL[y];
+    	    }
+    	}
     }
     
     private void FCT(double F[], double C[], int transformLength, int IFAULT[]) {
