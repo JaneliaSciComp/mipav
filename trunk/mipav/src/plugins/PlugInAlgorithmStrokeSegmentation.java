@@ -20,8 +20,6 @@ import org.apache.commons.csv.*;
 public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     private ModelImage dwiImage;
     
-    private ModelImage dwiSeg;
-    
     private ModelImage adcImage;
     
     private int adcThreshold;
@@ -93,99 +91,42 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-    	// DWI -> fuzzy c means 4 class
-        fireProgressStateChanged("Segmenting DWI image ...");
+    	
+        fireProgressStateChanged("Segmenting image ...");
         fireProgressStateChanged(5);
-
-        final int nClasses = 4;
-        final int nPyramid = 4;
-        final int oneJacobiIter = 1;
-        final int twoJacobiIter = 2;
-        final float q = 2.0f;
-        final float oneSmooth = 2e4f;
-        final float twoSmooth = 2e5f;
-        final boolean outputGainField = false;
-        final int segmentation = AlgorithmFuzzyCMeans.HARD_ONLY;
-        final boolean cropBackground = false;
-        final float threshold = 0.0f;
-        final int maxIter = 200;
-        final float endTolerance = 0.01f;
-        final boolean wholeImage = true;
         
-        ModelImage[] dwiSegArray = new ModelImage[1];
-        FileInfoBase fileInfo1;
-        dwiSegArray[0] = new ModelImage(ModelStorageBase.UBYTE, dwiImage.getExtents(), "dwi_hardSeg");
-        fileInfo1 = dwiSegArray[0].getFileInfo()[0];
-        fileInfo1.setResolutions(dwiImage.getResolutions(0));
-        fileInfo1.setUnitsOfMeasure(dwiImage.getUnitsOfMeasure());
-        fileInfo1.setAxisOrientation(dwiImage.getFileInfo(0).getAxisOrientation());
-        fileInfo1.setImageOrientation(dwiImage.getFileInfo(0).getImageOrientation());
-        fileInfo1.setOrigin(dwiImage.getFileInfo(0).getOrigin());
-        fileInfo1.setSliceThickness(dwiImage.getFileInfo(0).getSliceThickness());
-        for (int i = 0; i < dwiImage.getExtents()[2]; i++) {
-            dwiSegArray[0].setFileInfo(fileInfo1, i);
-        }
-
-        AlgorithmFuzzyCMeans fcmAlgo = new AlgorithmFuzzyCMeans(dwiSegArray, dwiImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
-                                           twoSmooth, outputGainField, segmentation, cropBackground, threshold, maxIter,
-                                           endTolerance, wholeImage);
+     // DWI -> fuzzy c means 4 class
+//        ModelImage segImg = fuzzyCMeans(dwiImage, 4, 4);
         
-        //final float[] centroids = getCentroid(dwiImage, nClasses);
-        final float[] centroids = JDialogFuzzyCMeans.getDefaultCentroids(dwiImage, nClasses, wholeImage, null, cropBackground, threshold);
-        fcmAlgo.setCentroids(centroids);
-        fcmAlgo.run();
-        fcmAlgo.finalize();
-        fcmAlgo = null;
+        ModelImage segImg = fuzzyCMeans(adcImage, 3, 1);
         
-        dwiSeg = dwiSegArray[0];
-        
-        fireProgressStateChanged(40);
-        
-        // extract class 4 as mask
-        fireProgressStateChanged("Extracting DWI mask ...");
-        fireProgressStateChanged(45);
-        
-        final int[] extents = dwiImage.getExtents();
+        final int[] extents = segImg.getExtents();
         final int sliceLength = extents[0] * extents[1];
         final int volLength = sliceLength * extents[2];
-        short[] dwiSegBuffer = new short[volLength];
-        try {
-            dwiSeg.exportData(0, volLength, dwiSegBuffer);
-        } catch (IOException error) {
-            dwiSegBuffer = null;
-            displayError("Error on dwi segmentation export: " + dwiImage.getImageName());
-            setCompleted(false);
-            return;
-        }
+        final FileInfoBase fInfo = segImg.getFileInfo(0);
         
-        // clear all values not in class 4 (lesion/gray)
-        for (int i = 0; i < volLength; i++) {
-            if (dwiSegBuffer[i] != 4) {
-                dwiSegBuffer[i] = 0;
-            }
-        }
-        
+        short[] segBuffer = new short[volLength];
         try {
-            dwiSeg.importData(0, dwiSegBuffer, true);
+            segImg.exportData(0, volLength, segBuffer);
         } catch (IOException error) {
-            dwiSegBuffer = null;
-            displayError("Error on dwi segementation importData: " + dwiImage.getImageName());
+            segBuffer = null;
+            displayError("Error on segmentation export: " + segImg.getImageName());
             setCompleted(false);
             return;
         }
         
         // output mask to disk
-        fireProgressStateChanged("Saving DWI mask ...");
+        fireProgressStateChanged("Saving segmentation mask ...");
         fireProgressStateChanged(50);
 
-        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_DWI_seg", FileUtility.XML);
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg", FileUtility.XML);
         
         // skull artifact masking
         ModelImage maskImg = null;
         if (doSkullRemoval) {
             maskImg = new ModelImage(ModelStorageBase.BOOLEAN, dwiImage.getExtents(), "dwi_skull_mask");
             for (int i = 0; i < maskImg.getExtents()[2]; i++) {
-                maskImg.setFileInfo(fileInfo1, i);
+                maskImg.setFileInfo(fInfo, i);
             }
             
             for (int i = 0; i < volLength; i++) {
@@ -200,7 +141,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             open(maskImg);
             
             // close
-            close(maskImg, 2, 2f);
+            close(maskImg, 2, 2f, false);
             
             // fill holes
             fillHoles(maskImg);
@@ -211,6 +152,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             try {
                 maskImg.exportData(0, volLength, maskBuffer);
             } catch (IOException error) {
+                if (segImg != null) {
+                    segImg.disposeLocal();
+                }
+                
                 maskBuffer = null;
                 displayError("Error on brain mask export: " + maskImg.getImageName());
                 setCompleted(false);
@@ -233,6 +178,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             try {
                 maskImg.importData(0, maskBuffer, true);
             } catch (IOException error) {
+                if (segImg != null) {
+                    segImg.disposeLocal();
+                }
+                
                 maskBuffer = null;
                 displayError("Error on brain mask importData: " + maskImg.getImageName());
                 setCompleted(false);
@@ -250,30 +199,34 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged(60);
         
         for (int i = 0; i < volLength; i++) {
-            if (dwiSegBuffer[i] != 0 && (maskImg != null && maskImg.getBoolean(i) == true)) {
+            if (segBuffer[i] != 0 && (maskImg != null && maskImg.getBoolean(i) == true)) {
                 if (adcImage.getInt(i) < adcThreshold) {
-                    dwiSegBuffer[i] = 1;
+                    segBuffer[i] = 1;
                 } else {
-                    dwiSegBuffer[i] = 0;
+                    segBuffer[i] = 0;
                 }
             } else {
-                dwiSegBuffer[i] = 0;
+                segBuffer[i] = 0;
             }
         }
         
         try {
-            dwiSeg.importData(0, dwiSegBuffer, true);
+            segImg.importData(0, segBuffer, true);
         } catch (IOException error) {
-            dwiSegBuffer = null;
-            displayError("Error on adc threshold importData: " + dwiImage.getImageName());
+            if (segImg != null) {
+                segImg.disposeLocal();
+            }
+            
+            segBuffer = null;
+            displayError("Error on adc threshold importData: " + adcImage.getImageName());
             setCompleted(false);
             return;
         }
         
-        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh", FileUtility.XML);
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh", FileUtility.XML);
         
         // combine threshold with ADC and save lightbox
-        ModelImage adcLightbox = generateLightbox(adcImage, dwiSeg, lightboxOpacity);
+        ModelImage adcLightbox = generateLightbox(adcImage, segImg, lightboxOpacity);
 
         threshLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
         
@@ -295,8 +248,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                     for (int iX = 0; iX < extents[0]; iX++) {
                         int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
                         
-                        if (dwiSegBuffer[index] > 0) {
-                            dwiSegBuffer[index] = 0;
+                        if (segBuffer[index] > 0) {
+                            segBuffer[index] = 0;
                             
                             removedBuffer[index] = 1;
                         }
@@ -317,9 +270,9 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                         int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
                         int mirroredIndex = (iZ * sliceLength) + (iY * extents[0]) + (extents[0] - iX - 1);
                         
-                        if (dwiSegBuffer[index] > 0 && dwiSegBuffer[mirroredIndex] > 0) {
-                            dwiSegBuffer[index] = 0;
-                            dwiSegBuffer[mirroredIndex] = 0;
+                        if (segBuffer[index] > 0 && segBuffer[mirroredIndex] > 0) {
+                            segBuffer[index] = 0;
+                            segBuffer[mirroredIndex] = 0;
                             
                             removedBuffer[index] = 1;
                             removedBuffer[mirroredIndex] = 1;
@@ -329,41 +282,53 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             }
             
             try {
-                dwiSeg.importData(0, removedBuffer, true);
+                segImg.importData(0, removedBuffer, true);
             } catch (IOException error) {
-                dwiSegBuffer = null;
-                displayError("Error on mirrored removed data importData: " + dwiImage.getImageName());
+                if (segImg != null) {
+                    segImg.disposeLocal();
+                }
+                
+                segBuffer = null;
+                displayError("Error on mirrored removed data importData: " + adcImage.getImageName());
                 setCompleted(false);
                 return;
             }
             
-            saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_removed", FileUtility.XML);
+            saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_removed", FileUtility.XML);
         }
         
         try {
-            dwiSeg.importData(0, dwiSegBuffer, true);
+            segImg.importData(0, segBuffer, true);
         } catch (IOException error) {
-            dwiSegBuffer = null;
-            displayError("Error on cleaned segmentation importData: " + dwiImage.getImageName());
+            if (segImg != null) {
+                segImg.disposeLocal();
+            }
+            
+            segBuffer = null;
+            displayError("Error on cleaned segmentation importData: " + adcImage.getImageName());
             setCompleted(false);
             return;
         }
         
         // perform closing on threshold mask
-        close(dwiSeg, 3, 2f);
+        close(segImg, 3, 2f, true);
         
         try {
-            dwiSeg.exportData(0, volLength, dwiSegBuffer);
+            segImg.exportData(0, volLength, segBuffer);
         } catch (IOException error) {
-            dwiSegBuffer = null;
+            if (segImg != null) {
+                segImg.disposeLocal();
+            }
+            
+            segBuffer = null;
             displayError("Error on closed ADC threshold export: " + maskImg.getImageName());
             setCompleted(false);
             return;
         }
         
-        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_close", FileUtility.XML);
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_close", FileUtility.XML);
         
-        short[] objectBuffer = chooseCoreObjects(dwiSeg, dwiSegBuffer);
+        short[] objectBuffer = chooseCoreObjects(segImg, segBuffer);
         
         // get pixels from ADC within closed object mask with intensity < 620, again
         for (int i = 0; i < volLength; i++) {
@@ -379,19 +344,23 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
         
         try {
-            dwiSeg.importData(0, objectBuffer, true);
+            segImg.importData(0, objectBuffer, true);
         } catch (IOException error) {
-            dwiSegBuffer = null;
+            if (segImg != null) {
+                segImg.disposeLocal();
+            }
+            
+            segBuffer = null;
             objectBuffer = null;
-            displayError("Error on adc threshold importData: " + dwiImage.getImageName());
+            displayError("Error on adc threshold importData: " + adcImage.getImageName());
             setCompleted(false);
             return;
         }
         
-        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest", FileUtility.XML);
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest", FileUtility.XML);
         
         // combine core mask with ADC and save lightbox
-        ModelImage coreLightbox = generateLightbox(adcImage, dwiSeg, lightboxOpacity);
+        ModelImage coreLightbox = generateLightbox(adcImage, segImg, lightboxOpacity);
         
         coreLightboxFile = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_ADC_core_lightbox", FileUtility.PNG);
         
@@ -403,8 +372,12 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
 //        fireProgressStateChanged("Saving core VOI ...");
 //        fireProgressStateChanged(80);
 //        
-//        coreVOI = maskToVOI(dwiSeg);
-//        if (!saveVOI(dwiSeg, coreVOI, coreOutputDir, outputBasename + "_VOI")) {
+//        coreVOI = maskToVOI(segImg);
+//        if (!saveVOI(segImg, coreVOI, coreOutputDir, outputBasename + "_VOI")) {
+//            if (segImg != null) {
+//                segImg.disposeLocal();
+//            }
+//        
 //            // problem saving voi
 //            displayError("Error saving core VOI");
 //            setCompleted(false);
@@ -413,8 +386,16 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         // save core stats to tab-delmited file
         if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), outputBasename + "_VOI" + voiExtension, selectedObjectList, adcImage.getResolutions(0))) {
+            if (segImg != null) {
+                segImg.disposeLocal();
+            }
+            
             setCompleted(false);
             return;
+        }
+        
+        if (segImg != null) {
+            segImg.disposeLocal();
         }
         
         setCompleted(true);
@@ -426,10 +407,6 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     public void finalize() {
         dwiImage = null;
         adcImage = null;
-        if (dwiSeg != null) {
-            dwiSeg.disposeLocal();
-            dwiSeg = null;
-        }
         super.finalize();
     }
     
@@ -964,22 +941,34 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
     }
     
-    private void close(ModelImage img, int iters, float size) {
-        int kernel = AlgorithmMorphology3D.SIZED_SPHERE;
+    private void close(ModelImage img, int iters, float size, boolean do25D) {
         float kernelSize = size; // mm
         int itersD = iters;
         int itersE = iters;
         boolean wholeImg = true;
         
         try {
+            if (do25D) {
+                int kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
+                
+                // Make algorithm
+                AlgorithmMorphology25D closeAlgo = new AlgorithmMorphology25D(img, kernel, kernelSize, AlgorithmMorphology25D.CLOSE,
+                                                        itersD, itersE, 0, 0, wholeImg);
+                
+                //closeAlgo.addListener(this);
 
-            // Make algorithm
-            AlgorithmMorphology3D closeAlgo3D = new AlgorithmMorphology3D(img, kernel, kernelSize, AlgorithmMorphology3D.CLOSE,
-                                                    itersD, itersE, 0, 0, wholeImg);
-            
-            //closeAlgo3D.addListener(this);
+                closeAlgo.run();
+            } else {
+                int kernel = AlgorithmMorphology3D.SIZED_SPHERE;
+                
+                // Make algorithm
+                AlgorithmMorphology3D closeAlgo = new AlgorithmMorphology3D(img, kernel, kernelSize, AlgorithmMorphology3D.CLOSE,
+                                                        itersD, itersE, 0, 0, wholeImg);
+                
+                //closeAlgo.addListener(this);
 
-            closeAlgo3D.run();
+                closeAlgo.run();
+            }
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("Close: unable to allocate enough memory");
 
@@ -1024,5 +1013,70 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             MipavUtil.displayError("Distance map: unable to allocate enough memory");
             return;
         }
+    }
+    
+    private ModelImage fuzzyCMeans(ModelImage srcImg, int numClasses, int segClass) {
+        ModelImage segImg;
+        
+        final int nClasses = numClasses;
+        final int nPyramid = 4;
+        final int oneJacobiIter = 1;
+        final int twoJacobiIter = 2;
+        final float q = 2.0f;
+        final float oneSmooth = 2e4f;
+        final float twoSmooth = 2e5f;
+        final boolean outputGainField = false;
+        final int segmentation = AlgorithmFuzzyCMeans.HARD_ONLY;
+        final boolean cropBackground = false;
+        final float threshold = 0.0f;
+        final int maxIter = 200;
+        final float endTolerance = 0.01f;
+        final boolean wholeImage = true;
+        
+        ModelImage[] segArray = new ModelImage[1];
+        FileInfoBase fileInfo1;
+        segArray[0] = new ModelImage(ModelStorageBase.UBYTE, srcImg.getExtents(), "_hardSeg");
+        fileInfo1 = segArray[0].getFileInfo()[0];
+        fileInfo1.setResolutions(srcImg.getResolutions(0));
+        fileInfo1.setUnitsOfMeasure(srcImg.getUnitsOfMeasure());
+        fileInfo1.setAxisOrientation(srcImg.getFileInfo(0).getAxisOrientation());
+        fileInfo1.setImageOrientation(srcImg.getFileInfo(0).getImageOrientation());
+        fileInfo1.setOrigin(srcImg.getFileInfo(0).getOrigin());
+        fileInfo1.setSliceThickness(srcImg.getFileInfo(0).getSliceThickness());
+        for (int i = 0; i < srcImg.getExtents()[2]; i++) {
+            segArray[0].setFileInfo(fileInfo1, i);
+        }
+
+        AlgorithmFuzzyCMeans fcmAlgo = new AlgorithmFuzzyCMeans(segArray, srcImg, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
+                                           twoSmooth, outputGainField, segmentation, cropBackground, threshold, maxIter,
+                                           endTolerance, wholeImage);
+        
+        //final float[] centroids = getCentroid(srcImg, nClasses);
+        final float[] centroids = JDialogFuzzyCMeans.getDefaultCentroids(srcImg, nClasses, wholeImage, null, cropBackground, threshold);
+        fcmAlgo.setCentroids(centroids);
+        fcmAlgo.run();
+        fcmAlgo.finalize();
+        fcmAlgo = null;
+        
+        segImg = segArray[0];
+        
+        fireProgressStateChanged(40);
+        
+        // extract class 4 as mask
+        fireProgressStateChanged("Extracting segmentation mask ...");
+        fireProgressStateChanged(45);
+        
+        final int[] extents = srcImg.getExtents();
+        final int sliceLength = extents[0] * extents[1];
+        final int volLength = sliceLength * extents[2];
+        
+        // clear all values not in the selected class (lesion)
+        for (int i = 0; i < volLength; i++) {
+            if (segImg.getInt(i) != segClass) {
+                segImg.set(i, 0);
+            }
+        }
+        
+        return segImg;
     }
 }
