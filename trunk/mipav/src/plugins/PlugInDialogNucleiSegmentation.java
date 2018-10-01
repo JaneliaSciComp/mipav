@@ -122,9 +122,9 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
     
     private int splitImgSizeThreshMB = 50;
     
-    private static final String svnVersion = "$Rev: $";
+    private static final String svnVersion = "$Rev$";
 
-    private static final String svnLastUpdate = "$Date: $";
+    private static final String svnLastUpdate = "$Date$";
     
     private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
 
