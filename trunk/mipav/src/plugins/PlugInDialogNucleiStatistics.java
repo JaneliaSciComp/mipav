@@ -83,6 +83,12 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
     private double forceResolutionValue = 0.214; // old microscope = 0.279;
 
     private static final ViewImageFileFilter tiffFilter = new ViewImageFileFilter(new String[] {".tiff", ".tif"});
+    
+    private static final String svnVersion = "$Rev$";
+
+    private static final String svnLastUpdate = "$Date$";
+    
+    private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -396,7 +402,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Nuclei Statistics 2014-01-08");
+        setTitle("Nuclei Statistics  - " + pluginVersion);
         // int length = image.getExtents()[0] * image.getExtents()[1];
 
         final GridBagConstraints gbc = new GridBagConstraints();
