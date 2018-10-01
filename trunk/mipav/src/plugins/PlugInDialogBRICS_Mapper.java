@@ -86,8 +86,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private String outputXFormDirBase;
     private JTextField outputXFormDirTextField;
     
-    private JTextField outputFileName;
-    
     /** Used to store the output file of the transform tool */
     private String outputDataDirBase;
     
@@ -105,27 +103,27 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     /** Dev data dictionary server. */
     @SuppressWarnings("unused")
-    private static final String ddDevServer = "http://fitbir-dd-dev.cit.nih.gov/";
+    private static final String ddDevServer = "https://fitbir-dd-dev.cit.nih.gov/";
 
     /** Dev portal auth server. */
     @SuppressWarnings("unused")
-    private static final String authDevServer = "http://fitbir-portal-dev.cit.nih.gov/";
+    private static final String authDevServer = "https://fitbir-portal-dev.cit.nih.gov/";
 
     /** Stage data dictionary server. */
     @SuppressWarnings("unused")
-    private static final String ddStageServer = "http://fitbir-dd-stage.cit.nih.gov/";
+    private static final String ddStageServer = "https://fitbir-dd-stage.cit.nih.gov/";
 
     /** Stage portal auth server. */
     @SuppressWarnings("unused")
-    private static final String authStageServer = "http://fitbir-portal-stage.cit.nih.gov/";
+    private static final String authStageServer = "https://fitbir-portal-stage.cit.nih.gov/";
 
     /** Demo data dictionary server. */
     @SuppressWarnings("unused")
-    private static final String ddDemoServer = "http://fitbir-dd-demo.cit.nih.gov/";
+    private static final String ddDemoServer = "https://fitbir-dd-demo.cit.nih.gov/";
 
     /** Demo portal auth server. */
     @SuppressWarnings("unused")
-    private static final String authDemoServer = "http://fitbir-portal-demo.cit.nih.gov/";
+    private static final String authDemoServer = "https://fitbir-portal-demo.cit.nih.gov/";
 
     /** Prod data dictionary server. */
     private static final String ddProdServer = "https://dictionary.fitbir.nih.gov/";
@@ -170,7 +168,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private static final String svnVersion 		= "$Rev: 15178 $";
     private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
-    private static final String pluginVersion 	= "Beta version 0.3";
+    private static final String pluginVersion 	= "Beta version 0.4";
 
     // Might be able to delete
     //private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
@@ -259,12 +257,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         // if user chooses no to the privacy tool - then close the tools
         if (response == JOptionPane.NO_OPTION) {
-            if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
+            //if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
                 System.gc();
                 System.exit(0);
-            } else {
-                return;
-            }
+            //} else {
+            //    return;
+            //}
         }
        
     }
@@ -404,9 +402,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     @Override
     public void windowClosing(final WindowEvent e) {
-        if (JDialogStandalonePlugin.isExitRequired()) {
-            ViewUserInterface.getReference().windowClosing(e);
-        }
+        //if (JDialogStandalonePlugin.isExitRequired()) {
+        //    ViewUserInterface.getReference().windowClosing(e);
+        //}
     }
 
     @Override
@@ -715,7 +713,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 	tooltip += "</p></html>";
                 	return tooltip;
                 }
-                else if(colIndex > deTableModel.getColumnIndex("Required") && colIndex < deTableModel.getColumnIndex("PV Mappings")) {
+                else if(colIndex > deTableModel.getColumnIndex("Source Name") && colIndex < deTableModel.getColumnIndex("PV Mappings")) {
 	                
 	                tooltip += "<html> <p> <b> Double click: </b> " + " for manual editting of the DE.  <br/>";	              
 	                tooltip += "</p></html>";
@@ -1027,17 +1025,24 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
             // use pre-set, hardcoded values as defaults if properties are not found
             ddEnvName = prop.getProperty(ddEnvNameProp, ddEnvName);
-            System.out.println("ddEnvName:\t" + ddEnvName);
+            //System.out.println("ddEnvName:\t" + ddEnvName);
+            
             authServerURL = prop.getProperty(authServerURLProp, authServerURL);
             System.out.println("authServer:\t" + authServerURL);
+            
             ddServerURL = prop.getProperty(ddServerURLProp, ddServerURL);
             System.out.println("ddServer:\t" + ddServerURL);
-            ddAuthUser = prop.getProperty(ddAuthUserProp, ddAuthUser);
-            System.out.println("ddAuthUser:\t" + ddAuthUser);
-            ddAuthPass = prop.getProperty(ddAuthPassProp, ddAuthPass);
-            System.out.println("ddAuthPass:\t" + ddAuthPass);
-            ddUseAuthService = Boolean.parseBoolean(prop.getProperty(ddUseAuthServiceProp, "" + ddUseAuthService));
-            System.out.println("ddUseAuthService:\t" + ddUseAuthService);
+            
+            //System.exit(0);
+            
+            //ddAuthUser = prop.getProperty(ddAuthUserProp, ddAuthUser);
+            //System.out.println("ddAuthUser:\t" + ddAuthUser);
+            
+            //ddAuthPass = prop.getProperty(ddAuthPassProp, ddAuthPass);
+            //System.out.println("ddAuthPass:\t" + ddAuthPass);
+            
+            //ddUseAuthService = Boolean.parseBoolean(prop.getProperty(ddUseAuthServiceProp, "" + ddUseAuthService));
+            //System.out.println("ddUseAuthService:\t" + ddUseAuthService);
         }
     }
 
@@ -1472,11 +1477,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             int row = 1; 
             while ((str = br.readLine()) != null) {
                 str = str.trim();
+                //printlnToLog("Source string = " + str);
                 String[] deDef = str.split(CSV_OUTPUT_DELIM);
                 for(int i =0; i < deDef.length; i++) {
                 	deDef[i] = deDef[i].trim();
                 }
-                if (!deDef[2].isEmpty()) { 	// PVs not empty
+                if (deDef.length > 3 && !deDef[2].isEmpty()) { 	// PVs not empty
                 	if ( !deDef[2].matches("^[a-zA-Z0-9/\\u0020()-;]*$") ) {
                 		 displayError("PVs can only contain a-z, A-Z and 0-9 separated by semicolons." + "  Row: " + row + " Element: " + deDef[0]);
                 		 fis.close();
@@ -1484,23 +1490,19 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 	else if (deDef[2].endsWith(";")) {
                 		deDef[2] = deDef[2].substring(0, deDef[2].length()-1);
                 	}
+                	dataElements.add(deDef);
+                	row++;
                 }
-                
-                
-                dataElements.add(deDef);
-                row++;
+                else if (deDef.length >= 2 ) {
+                	dataElements.add(deDef);
+                	row++;
+                }    	
             }
-            
-            
-            
             //fis.close();
             //Open dialog with and populate with source DEs
-            SourceDEsDialog csvDEDialog = new SourceDEsDialog(this, dataElements);
-        
-             
-            
+            SourceDEsDialog csvDEDialog = new SourceDEsDialog(this, dataElements);                 
         } catch (final Exception e) {
-        	//e.printStackTrace();
+        	e.printStackTrace();
         } finally {
             if (br != null) {
                 try {
@@ -2596,8 +2598,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
         //private static final String ddStructListRequestc = ddRequestBase + "/Published/list?type=CLINICAL"; //?????
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
-        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
+        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
 
@@ -2658,7 +2660,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 progressBar.updateValue(100);
                 progressBar.setVisible(false);
                 progressBar.dispose();
-                printlnToLog("Successful retrieval of form structures.");
+                printlnToLog("Successful retrieval of form structures from " + ddEnvName + " environment.");
                 
                 
                 selectStructButton.setEnabled(true);
@@ -2671,10 +2673,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     progressBar.dispose();
                     displayError("Error in connecting to web service");
                     parent.dispose();
-                    if (JDialogStandalonePlugin.isExitRequired()) {
-                        System.gc();
-                        System.exit(0);
-                    }
+                    //if (JDialogStandalonePlugin.isExitRequired()) {
+                    //    System.gc();
+                    //    System.exit(0);
+                    //}
                 }
             }
         }
@@ -2684,11 +2686,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 		@Override
         public void actionPerformed(final ActionEvent e) {
             if (e.getSource() == progressCancelButton) {
-                dispose();
-                if (JDialogStandalonePlugin.isExitRequired()) {
-                    System.gc();
-                    System.exit(0);
-                }
+                //dispose();
+                //if (JDialogStandalonePlugin.isExitRequired()) {
+                //    System.gc();
+                //    System.exit(0);
+                //}
             }
         }
     }
@@ -2778,10 +2780,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     progressBar.dispose();
                     displayError("Error in connecting to web service");
                     parent.dispose();
-                    if (JDialogStandalonePlugin.isExitRequired()) {
-                        System.gc();
-                        System.exit(0);
-                    }
+                    //if (JDialogStandalonePlugin.isExitRequired()) {
+                    //    System.gc();
+                    //    System.exit(0);
+                    //}
                 }
             }
         }
@@ -2790,10 +2792,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         public void actionPerformed(final ActionEvent e) {
             if (e.getSource() == progressCancelButton) {
                 dispose();
-                if (JDialogStandalonePlugin.isExitRequired()) {
-                    System.gc();
-                    System.exit(0);
-                }
+                //if (JDialogStandalonePlugin.isExitRequired()) {
+                //    System.gc();
+                //    System.exit(0);
+                //}
             }
         }
 
@@ -3725,6 +3727,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         return buttonPanel;
     }
+    
+    
     private boolean saveXFormTable(File csvFile) {
     	BufferedWriter bw = null;
     	
@@ -3814,31 +3818,21 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		for(int i = 0; i < numRows; i++) {
     			sourceFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Source Data Files")));
     			mappingFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Mapping Files")));
-    			//outFiles.add((File) fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files")));
     			outFiles.add(new File(outputXFormDirBase + fileXFormTableModel.getValueAt(i, fileXFormTableModel.getColumnIndex("Output Files"))));
-    			//System.out.println(" i = " + i + "  source file: " + sourceFiles.get(i));
     		}
     		// converting each columns array list to a simple array
     		File [] src = sourceFiles.toArray(new File[sourceFiles.size()]);
     		File [] map = mappingFiles.toArray(new File[mappingFiles.size()]);
     		File [] out = outFiles.toArray(new File[outFiles.size()]);
     		int numFilesToXForm = src.length;
-    		System.out.println("numFilesToXForm:  " + numFilesToXForm);
     		
-    		for(int i = 0; i < numRows; i++) {
-    			System.out.println(" iiiiiii = " + i + "  source file: " + src[i]);
-    			System.out.println(" iiiiiii = " + i + "  map file: " + map[i]);
-    			System.out.println(" iiiiiii = " + i + "  out file: " + out[i]);
-    		}
-    	
     		for(int i = 0; i < numFilesToXForm; i++) {
     			// setting up buffered readers, input streams, as well as splitting the files to an array
     			
-    			System.out.println(" File number = " + (i+1));
     			srcDataBR   = new BufferedReader(new FileReader(src[i]));
     			mappingBR   = new BufferedReader(new FileReader(map[i]));
     			outputBW   	= new BufferedWriter(new FileWriter(out[i]));
-    			
+
     			mapStr    = mappingBR.readLine();
     			mapStrucs = mapStr.split(": ");
     			srcStr    = srcDataBR.readLine();
@@ -3870,17 +3864,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				}
     				
     				// Converting the 2d array list to an array in the format needed including group name and mappings if necessary
-    				String[][] stri = new String[mapLines.size()][4];
+    				String[][][] stri = new String[mapLines.size()][4][30];   // last index used for repeatability
     				for (int j = 0; j < mapLines.size(); j++) {
-    					stri[j][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);  // Builds Reference Group.DE
-    					str = str + stri[j][0] + ",";										 // Builds column header DE string (second row of output file)
+    					stri[j][0][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);  // Builds Reference Group.DE
+    					str = str + stri[j][0][0] + ",";										 // Builds column header DE string (second row of output file)
     					
-    					stri[j][1] = mapLines.get(j).get(7);								 // The source DE
-    					if(mapLines.get(j).size() > 9) {
-    						stri[j][2] = mapLines.get(j).get(10);							 // Gets PV mappings 
+    					stri[j][1][0] = mapLines.get(j).get(7);								 // The source DE(s)
+    					if(mapLines.get(j).size() >= 11) {
+    						stri[j][2][0] = mapLines.get(j).get(10);							 // Gets PV mappings 
     					}
     					else {
-    						stri[j][2] = null;												 // No PV mappings - likely free-form (alpha numeric) DE
+    						stri[j][2][0] = null;												 // No PV mappings - likely free-form (alpha numeric) DE
     					}
     				}
     				str = str + "\n";
@@ -3897,10 +3891,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				for (int s = 0; s < ordSrcDEs.length; s++) {
     					error 		= true;
     					for (int t = 0; t < mapLines.size(); t++) {
-    						//System.out.println("Source DE " + ordSrcDEs[s] + "  Mapped DE " + stri[t][1]);
-	    					if( ordSrcDEs[s].equals(stri[t][1]) ) {
-	    						error = false;		
-	    					}
+    						String[] deStrVarNameArr  = stri[t][1][0].split(";");
+    						for (int v = 0; v < deStrVarNameArr.length; v++) {
+		    					if( ordSrcDEs[s].equals(deStrVarNameArr[v].trim()) ) {   
+		    						error = false;		
+		    					}
+    						}
     					}
     					if (error == true) {
     						displayError("Source DE(" + ordSrcDEs[s] +") has NOT been mapped. Please add mapping or delete source data column.");
@@ -3918,86 +3914,90 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				
     				// Building table lookup for mapping DE to DE
     				String[][] matchDEs = new String[ordSrcDEs.length][2];
-    				for(int j = 0; j < stri.length; j++) {
-    					matchDEs[j][0] = ordSrcDEs[j];
+    				for(int j = 0; j < ordSrcDEs.length; j++) {
+    					matchDEs[j][0] = ordSrcDEs[j].trim();					// matchDEsj[][0] = source DEs name
     					//System.out.println(" ordSrcDEs[j] = " + ordSrcDEs[j] + "  size = " + stri.length);
     				}
     				
     				// finishes 2d array to match source DEs with the order they should appear in the output file
     				for(int k = 0; k < matchDEs.length; k++) {
     					for(int m = 0; m < stri.length; m++) {
-    						if(stri[m][1].equalsIgnoreCase(matchDEs[k][0])) {
-    							matchDEs[k][1] = Integer.toString(m);
+    						String[] deStrVarNameArr  = stri[m][1][0].split(";");
+    
+    						for (int v = 0; v < deStrVarNameArr.length; v++) {
+    							deStrVarNameArr[v].trim();
+	    						if(deStrVarNameArr[v].equalsIgnoreCase(matchDEs[k][0])) {  
+	    							matchDEs[k][1] = Integer.toString(m);   // Index to refDE
+	    							//System.out.println("matchDEs[k][0] = " + matchDEs[k][0] + "  matchDEs[k][1] = " + matchDEs[k][1]);
+	    						}
     						}
     					}
     				}
     				
     				// reads through the source file, matching DEs in the proper order
+    				// writes a row at a time
     				while((srcStr = srcDataBR.readLine()) != null) {
-    					str = new String("x,");
+    					str = new String("x" + CSV_OUTPUT_DELIM);
     					String[] srcDataRow = srcStr.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
     					
-    					//if (p == 0) {
-    					//	System.out.println("Source string  " + strSrc  + " length " + srcDataRow.length);
-    					//	for(int r = 0; r < srcDataRow.length; r++) {
-    					//		System.out.println("R = " + r + "  Value =  " + srcDataRow[r]); 
-    					//		p++;
-    					//	}
-    					//}
-    					
     					for(int m = 0; m < srcDataRow.length; m++) {
+    						int reps =  0;	
     						if (matchDEs[m][1] != null) {
     							int refIndex = Integer.parseInt(matchDEs[m][1]);
 	    						int srcIndex = Arrays.asList(srcDataRow).indexOf(srcDataRow[m]);
-	    						if(refIndex == srcIndex) {
-	    							if(stri[m][2] == null) {
-	    								stri[m][3] = srcDataRow[m];
-	    							}
-	    							else { 
-	    								stri[m][3] = switchPVs(stri[m][2], srcDataRow[m]);
-	    							}
-	    						}
-	    						else {
-	    							if(stri[m][2] == null) {
-	    								stri[m][3] = srcDataRow[refIndex];
-	    							}
-	    							else {
-	    								stri[m][3] = switchPVs( stri[m][2], srcDataRow[refIndex] );
-	    							}
-	    						}
+    							for (reps = 0; reps < 30; reps++) {
+    									if (stri[refIndex][3][reps] == null || stri[refIndex][3][reps].isEmpty()) {
+    										break;
+    									}
+    							}					
+    							if(stri[refIndex][2][0] == null) {  								
+    								stri[refIndex][3][reps] = srcDataRow[srcIndex];
+    							}
+    							else { 
+    								stri[refIndex][3][reps] = switchPVs(stri[refIndex][2][0], srcDataRow[srcIndex]);
+    							}
     						}
     					}
     					
-    					for(int n = 0; n < stri.length; n++) {
-    						if(stri[n][3]!=null && !stri[n][3].isEmpty()) {
-    							if(!stri[n][3].contains(",")) {
-    								str = str + stri[n][3] + ",";
-    							}
-    							else{
-    								if(stri[n][3].contains("\"")) {
-    									str = str + stri[n][3] + ",";
-    								}
-    								else {
-    									str = str + "\"" + stri[n][3] + "\"" + ",";
-    								}
-    							} 
-    						}
-    						else {
-    							str = str + ",";
-    						}
+    					// Build output string
+    					str = new String("x" + CSV_OUTPUT_DELIM);			// start of each new record
+    					for (int r = 0; r < 30; r++) {						// to support repeatability
+    						boolean strEmpty = true;
+	    					for(int n = 0; n < stri.length; n++) {
+	    						if(stri[n][3][r] != null && !stri[n][3][r].isEmpty()) {
+	    							if(!stri[n][3][r].contains(CSV_OUTPUT_DELIM)) {
+	    								str = str + stri[n][3][r] + CSV_OUTPUT_DELIM;
+	    							}
+	    							else{
+	    								if(stri[n][3][r].contains("\"")) {
+	    									str = str + stri[n][3][r] + CSV_OUTPUT_DELIM;
+	    								}
+	    								else {
+	    									str = str + "\"" + stri[n][3][r] + "\"" + CSV_OUTPUT_DELIM;
+	    								}
+	    							}
+	    							stri[n][3][r] = "";  // Clear string
+	    							strEmpty = false;
+	    						}
+	    						else {
+	    							str = str + CSV_OUTPUT_DELIM;
+	    						}
+	    					}
+	    					if (strEmpty == false) {
+		    					str = str + "\n"; 
+		    					str = str.replace("null", "");
+		    					outputBW.write(str);
+	    					}
+	    					str = ",";
     					}
-    					str = str + "\n"; 
-    					str = str.replace("null", "");
-    					outputBW.write(str);
     					outputBW.flush();
     				}
     			}
     			srcDataBR.close();
     			mappingBR.close();
-    			
     			outputBW.flush();
     			outputBW.close();
-    			printlnToLog((i+1) + "." + "  File: " + src[i] + " Transform completed.");
+    			printlnToLog((i+1) + "." + "  File: " + src[i] + "  -------> " +  out[i]  + "  ***** Transform completed.");
     		}
     	}
     	catch(final Exception e) {
