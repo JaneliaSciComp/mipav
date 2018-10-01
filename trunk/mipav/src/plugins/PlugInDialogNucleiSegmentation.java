@@ -2,7 +2,8 @@ import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.FileVOI;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -77,7 +78,7 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
 
     private String inputDir;
 
-    private final Vector<File> inputFiles = new Vector<File>();
+    private Vector<File> inputFiles = new Vector<File>();
 
     private JCheckBox onlyProcessTiffCheckbox;
 
@@ -104,6 +105,28 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
     private JCheckBox interactiveVOIReviewCheckbox;
 
     private boolean doInteractiveVOIReview = true;
+    
+    private JCheckBox splitCheckbox;
+    
+    private boolean splitImgFlag = true;
+    
+    private JLabel splitNumLabel;
+    
+    private JTextField splitNumText;
+    
+    private JLabel splitSizeLabel;
+    
+    private JTextField splitSizeText;
+    
+    private int splitImgNum = 2;
+    
+    private int splitImgSizeThreshMB = 50;
+    
+    private static final String svnVersion = "$Rev: $";
+
+    private static final String svnLastUpdate = "$Date: $";
+    
+    private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -226,6 +249,15 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             super.actionPerformed(event);
         }
     }
+    
+    public void itemStateChanged(ItemEvent e) {
+        if (e.getSource() == splitCheckbox) {
+            splitNumLabel.setEnabled(splitCheckbox.isSelected());
+            splitNumText.setEnabled(splitCheckbox.isSelected());
+            splitSizeLabel.setEnabled(splitCheckbox.isSelected());
+            splitSizeText.setEnabled(splitCheckbox.isSelected());
+        }
+    }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -249,9 +281,10 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
 
                         // display the image and it's VOIs
                         final ViewJFrameImage frame = new ViewJFrameImage(img);
-                        frame.setVisible(true);
 
                         final InteractiveReviewDialog dialog = new InteractiveReviewDialog(frame, img);
+                        
+                        frame.setVisible(true);
 
                         // keep waiting until the user closes the dialog
                         while ( !dialog.isDoneWithReview()) {
@@ -360,9 +393,46 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             inputFiles.add(file);
         }
     }
+    
+    public void splitInputFiles(boolean splitFlag, int splitTiles, int splitThreshMB) {
+        setSplitImgFlag(splitFlag);
+        setSplitImgNum(splitTiles);
+        setSplitImgSizeThresholdMB(splitThreshMB);
+        
+        if (splitImgFlag) {
+            Vector<File> newFileList = new Vector<File>(inputFiles.size() * splitImgNum * 2);
+            for (File origFile : inputFiles) {
+                long sizeMB = origFile.length() / 1024 / 1024;
+                
+                if (sizeMB > this.splitImgSizeThreshMB) {
+                    File[] splitFiles = splitFile(origFile, splitImgNum);
+                    
+                    for (File file : splitFiles) {
+                        newFileList.add(file);
+                    }
+                } else {
+                    newFileList.add(origFile);
+                }
+            }
+            
+            inputFiles = newFileList;
+        }
+    }
 
     public void setDoInteractiveVOIReview(final boolean b) {
         doInteractiveVOIReview = b;
+    }
+    
+    public void setSplitImgFlag(boolean splitFlag) {
+        splitImgFlag = splitFlag;
+    }
+    
+    public void setSplitImgNum(int numTiles) {
+        splitImgNum = numTiles;
+    }
+    
+    public void setSplitImgSizeThresholdMB(int splitThreshMB) {
+        splitImgSizeThreshMB = splitThreshMB;
     }
 
     /**
@@ -436,6 +506,9 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         }
         setMinSize(scriptParameters.getParams().getInt("min_size"));
         setMaxSize(scriptParameters.getParams().getInt("max_size"));
+        
+        splitInputFiles(scriptParameters.getParams().getBoolean("split_img"), scriptParameters.getParams().getInt("split_img_tiles"), scriptParameters.getParams().getInt("split_img_thresh_mb"));
+        
         // no interactive review while in script
         setDoInteractiveVOIReview(false);
     }
@@ -453,6 +526,10 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.getParams().put(ParameterFactory.newParameter("only_tiff", onlyProcessTiff));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_size", minSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_size", maxSize));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("split_img", splitImgFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("split_img_tiles", splitImgNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("split_img_thresh_mb", splitImgSizeThreshMB));
     }
 
     /**
@@ -462,7 +539,7 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         JLabel minSizeLabel;
         JLabel maxSizeLabel;
         setForeground(Color.black);
-        setTitle("Nuclei Segmentation 2014-01-08");
+        setTitle("Nuclei Segmentation - " + pluginVersion);
         // int length = image.getExtents()[0] * image.getExtents()[1];
 
         final GridBagConstraints gbc = new GridBagConstraints();
@@ -546,6 +623,49 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         gbc.gridy++;
         gbc.gridwidth = 3;
         mainPanel.add(onlyProcessTiffCheckbox, gbc);
+        
+        splitCheckbox = new JCheckBox("Split large images into smaller tiles", splitImgFlag);
+        splitCheckbox.setForeground(Color.black);
+        splitCheckbox.setFont(serif12);
+        splitCheckbox.addItemListener(this);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        mainPanel.add(splitCheckbox, gbc);
+        
+        splitNumLabel = new JLabel("Number of tiles in each dimension (e.g., 2x2)");
+        splitNumLabel.setForeground(Color.black);
+        splitNumLabel.setFont(serif12);
+        splitNumLabel.setEnabled(splitImgFlag);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        mainPanel.add(splitNumLabel, gbc);
+
+        splitNumText = new JTextField(8);
+        splitNumText.setText(String.valueOf(splitImgNum));
+        splitNumText.setFont(serif12);
+        splitNumText.setEnabled(splitImgFlag);
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        mainPanel.add(splitNumText, gbc);
+        
+        splitSizeLabel = new JLabel("Image file size threshold for splitting (in MB)");
+        splitSizeLabel.setForeground(Color.black);
+        splitSizeLabel.setFont(serif12);
+        splitSizeLabel.setEnabled(splitImgFlag);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        mainPanel.add(splitSizeLabel, gbc);
+
+        splitSizeText = new JTextField(8);
+        splitSizeText.setText(String.valueOf(splitImgSizeThreshMB));
+        splitSizeText.setFont(serif12);
+        splitSizeText.setEnabled(splitImgFlag);
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        mainPanel.add(splitSizeText, gbc);
 
         interactiveVOIReviewCheckbox = new JCheckBox("Interactively review/delete nuclei segmentations",
                 doInteractiveVOIReview);
@@ -656,6 +776,8 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
                 inputFiles.add(file);
             }
         }
+        
+        splitInputFiles(splitCheckbox.isSelected(), Integer.parseInt(splitNumText.getText()), Integer.parseInt(splitSizeText.getText()));
 
         tmpStr = minSizeText.getText();
         minSize = Integer.parseInt(tmpStr);
@@ -788,6 +910,124 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
         }
     }
+    
+    private File[] splitFile(File origFile, int numTiles) {
+        File[] splitFiles = new File[numTiles * 2];
+        
+        ModelImage origImg = openFile(origFile);
+        
+        String tileFileBase = FileUtility.stripExtension(origFile.getName());
+        
+        int tileXSize = origImg.getExtents()[0] / numTiles;
+        int tileYSize = origImg.getExtents()[1] / numTiles;
+        
+        int tileXLeftover = origImg.getExtents()[0] - (tileXSize * numTiles);
+        int tileYLeftover = origImg.getExtents()[0] - (tileYSize * numTiles);
+        
+        int tileIndex = 0;
+        for (int x = 0; x < numTiles; x++) {
+            for (int y = 0; y < numTiles; y++) {
+                int xLoc = x * tileXSize;
+                int yLoc = y * tileYSize;
+                
+                ModelImage tileImg = cropImage(origImg, xLoc, yLoc, tileXSize, tileYSize);
+                
+                splitFiles[tileIndex] = saveImageFile(tileImg, origFile.getParent(), tileFileBase + "_" + (x+1) + "x" + (y+1), FileUtility.TIFF);
+                
+                if (tileImg != null) {
+                    // don't garbage collect until we clean up the original img
+                    tileImg.disposeLocal(false);
+                }
+                
+                tileIndex++;
+            }
+        }
+        
+        if (origImg != null) {
+            origImg.disposeLocal();
+        }
+        
+        return splitFiles;
+    }
+    
+    private ModelImage cropImage(ModelImage origImg, int x, int y, int xSize, int ySize) {
+        int[] destExtents = null;
+        
+        int[] xBounds = new int[2];
+        int[] yBounds = new int[2];
+        
+        xBounds[0] = x;
+        xBounds[1] = x + xSize;
+        yBounds[0] = y;
+        yBounds[1] = y + ySize;
+
+        destExtents = new int[2];
+        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
+        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
+
+        // Make result image
+        ModelImage resultImage = new ModelImage(origImg.getType(), destExtents, makeImageName(origImg.getImageName(), "_crop"));
+        xBounds[0] *= -1;
+        xBounds[1] = resultImage.getExtents()[0] - origImg.getExtents()[0];
+        yBounds[0] *= -1;
+        yBounds[1] = resultImage.getExtents()[1] - origImg.getExtents()[1];
+        AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(origImg, resultImage, xBounds, yBounds, new int[] {0,0});
+
+        cropAlgo.run();
+        
+        return resultImage;
+    }
+    
+    /**
+     * Try to open an image file.
+     * @param file The file to try to open.
+     * @return The ModelImage of the specified file, or null if there was an error.
+     */
+    private static final ModelImage openFile(File file) {
+        ModelImage img = null;
+        
+        System.err.println("Trying to open file:\t" + file.getName());
+        
+        FileIO io = new FileIO();
+        try {
+            img = io.readImage(file.getAbsolutePath());
+        } catch (Exception e) {
+            System.err.println("Failed to open file:\t" + file.getName());
+            e.printStackTrace();
+            img = null;
+        }
+        
+        return img;
+    }
+    
+    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
+        FileIO fileIO = new FileIO();
+        fileIO.setQuiet(true);
+        
+        FileWriteOptions opts = new FileWriteOptions(true);
+        opts.setFileDirectory(dir + File.separator);
+
+        if (img.getNDims() == 3) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(img.getExtents()[2] - 1);
+        } else if (img.getNDims() == 4) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(img.getExtents()[2] - 1);
+            opts.setBeginTime(0);
+            opts.setEndTime(img.getExtents()[3] - 1);
+        }
+
+        opts.setFileType(fileType);
+        final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
+        opts.setFileName(fileBasename + ext);
+
+        opts.setOptionsSet(true);
+        opts.setMultiFile(false);
+
+        fileIO.writeImage(img, opts, false, false);
+        
+        return new File(dir + File.separator + fileBasename + ext);
+    }
 
     protected class InteractiveReviewDialog extends JDialog implements ActionListener, ItemListener {
         private final ModelImage img;
@@ -836,11 +1076,11 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             gbc.gridx = 0;
             gbc.gridy = 0;
             mainPanel.add(showVoiButton, gbc);
-
+            
             final JPanel voiPanel = new JPanel(new GridLayout(0, 1));
             voiPanel.setForeground(Color.black);
             voiPanel.setBackground(Color.darkGray);
-            final JScrollPane scrollPane = new JScrollPane(voiPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            final JScrollPane scrollPane = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             for (final VOI voi : img.getVOIs()) {
                 final JCheckBox checkbox = new JCheckBox(voi.getName(), true);
@@ -850,6 +1090,13 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
                 voiCheckboxList.add(checkbox);
                 voiPanel.add(checkbox);
             }
+            
+            scrollPane.setViewportView(voiPanel);
+            Dimension panelSize = voiPanel.getPreferredSize();
+            if (panelSize.height > 700) {
+                scrollPane.setPreferredSize(new Dimension(panelSize.width, 700));
+            }
+            
             gbc.gridy++;
             mainPanel.add(new JLabel("Uncheck the box next to any nucleus segmentations that should be removed."), gbc);
             gbc.gridy++;
@@ -912,14 +1159,24 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             });
 
             pack();
+            
             // MipavUtil.centerOnScreen(this);
             final Dimension size = getSize();
-            size.height += 20;
+            //size.height += 20;
+            if (size.height > 1000) {
+                size.height = 1000;
+            }
             size.width += 20;
-            setSize(size);
-            final Point loc = this.getParent().getLocationOnScreen();
-            loc.x = loc.x - getSize().width;
-            setLocation(loc);
+//            setSize(size);
+            this.setPreferredSize(size);
+            
+            setLocation(new Point(0,0));
+            this.getParent().setLocation(new Point(getSize().width, 0));
+            
+//            final Point loc = this.getParent().getLocationOnScreen();
+//            loc.x = loc.x - getSize().width;
+//            setLocation(loc);
+            
             setVisible(true);
             setResizable(true);
             System.gc();
