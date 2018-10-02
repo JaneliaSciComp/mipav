@@ -54,6 +54,22 @@ public  class BiorthogonalWavelets {
 	/** D1MACH(4). */
     private double epsilon = Double.NaN;
     
+    private double h[];
+    
+    private double ht[];
+    
+    private int inds_h[];
+    
+    private int inds_ht[];
+    
+    private double g[];
+    
+    private double gt[];
+    
+    private int inds_g[];
+    
+    private int inds_gt[];
+    
     private void computeEpsilon() {
     	// epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
@@ -79,6 +95,7 @@ public  class BiorthogonalWavelets {
 		int N;
 		double h1[];
 		int i;
+		int j;
 		double sqrt2;
 		double val;
 		int kk;
@@ -95,9 +112,25 @@ public  class BiorthogonalWavelets {
 		double Ct;
 		double prod;
 		double A;
-		double h2;
+		double h2[];
 		double a;
 		double b;
+		double u[];
+		double ht2[];
+		int lower;
+		int upper;
+		int res;
+		double w[];
+		double spacing;
+		double HwReal[];
+		double HwImag[];
+		double HtwReal[];
+		double HtwImag[];
+		double GwReal[];
+		double GwImag[];
+		double GtwReal[];
+		double GtwImag[];
+		int ind;
 		if (Double.isNaN(epsilon)) {
 			computeEpsilon();
 		}
@@ -184,11 +217,106 @@ public  class BiorthogonalWavelets {
 			Ct = A;
 		}
 		
-		h2 = C;
+		h2 = new double[]{C};
 		for (jj = 0; jj < complexRoots.length; jj += 2) {
 		    a = complexRoots[jj][0];
 		    b = -complexRoots[jj][1];
+		    u = new double[]{0.0625,a/2-0.25,a*a+b*b-a+0.375,a/2-0.25,0.0625};
+		    h2 = conv(u,h2);
 		}
+		
+		ht2 = new double[]{Ct};
+		for (jj = 0; jj < realRoots.length; jj++) {
+			u = new double[]{-0.25,0.5-realRoots[jj],-0.25};
+			ht2 = conv(u,ht2);
+		}
+		
+		// Compute h and ht via convolution
+		h = conv(h1,h2);
+		ht = conv(ht1,ht2);
+		
+		lower = -(h.length - 1)/2;
+		upper = (h.length - 1)/2;
+		inds_h = new int[upper - lower + 1];
+		for (i = 0; i < upper - lower + 1; i++) {
+			inds_h[i] = lower + i;
+		}
+		
+		lower = -(ht.length - 1)/2;
+		upper = (ht.length - 1)/2;
+		inds_ht = new int[upper - lower + 1];
+		for (i = 0; i < upper - lower + 1; i++) {
+			inds_ht[i] = lower + i;
+		}
+		
+		// Compute g and gt
+		inds_g = new int[inds_ht.length];
+		for (i = 0; i < inds_ht.length; i++) {
+			inds_g[i] = 1 - inds_ht[inds_ht.length-1-i];
+		}
+		
+		inds_gt = new int[inds_h.length];
+		for (i = 0; i < inds_h.length; i++) {
+			inds_gt[i] = 1 - inds_h[inds_h.length-1-i];
+		}
+		
+		g = new double[ht.length];
+		for (i = 0; i < ht.length; i++) {
+			g[i] = ht[ht.length-1-i] * (2 * (inds_ht[inds_ht.length-1-i] % 2) - 1);
+		}
+		
+		gt = new double[h.length];
+		for (i = 0; i < h.length; i++) {
+			gt[i] = h[h.length-1-i] * (2 * (inds_h[inds_h.length-1-i] % 2) - 1);
+		}
+		
+		// Plot the frequency responses if desired
+		if (display) {
+			Preferences.debug(realRoots.length + " real zeros\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug(complexRoots.length + " complex zeros\n", Preferences.DEBUG_ALGORITHM);
+			
+			res = 1000;
+			w = new double[res];
+			spacing = Math.PI/(res - 1.0);
+			for (i = 0; i < res; i++) {
+			    w[i] = i * spacing;	
+			}
+			
+			HwReal = new double[res];
+			HwImag = new double[res];
+			for (i = 0; i < inds_h.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        HwReal[j] = HwReal[j] + h[i]*Math.cos(inds_h[i] * w[j]);
+			        HwImag[j] = HwImag[j] + h[i]*Math.sin(inds_h[i] * w[j]);
+			    }
+			}
+			
+			HtwReal = new double[res];
+			HtwImag = new double[res];
+			for (i = 0; i < inds_ht.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        HtwReal[j] = HtwReal[j] + ht[i]*Math.cos(inds_ht[i] * w[j]);
+			        HtwImag[j] = HtwImag[j] + ht[i]*Math.sin(inds_ht[i] * w[j]);
+			    }
+			}
+		} // if (display)
+	}
+	
+	private double[] conv(double u[], double v[]) {
+	    int m = u.length;
+	    int n = v.length;
+	    double w[] = new double[m+n-1];
+	    int j,k;
+	    int lower;
+	    int upper;
+	    for (k = 0; k < m+n-1; k++) {
+	        lower = Math.max(0,k-n+1);
+	        upper = Math.min(k, m-1);
+	        for (j = lower; j <= upper; j++) {
+	        	w[k] += (u[j] * v[k-j]);
+	        }
+	    }
+	    return w;
 	}
 	
 	private double[][] roots(double p[]) {
