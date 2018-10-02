@@ -95,15 +95,28 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged("Segmenting image ...");
         fireProgressStateChanged(5);
         
-     // DWI -> fuzzy c means 4 class
-//        ModelImage segImg = fuzzyCMeans(dwiImage, 4, 4);
+        // DWI -> fuzzy c means 4 class
+        ModelImage segImg = fuzzyCMeans(dwiImage, 4, 4);
         
-        ModelImage segImg = fuzzyCMeans(adcImage, 3, 1);
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_dwi", FileUtility.XML);
         
         final int[] extents = segImg.getExtents();
         final int sliceLength = extents[0] * extents[1];
         final int volLength = sliceLength * extents[2];
         final FileInfoBase fInfo = segImg.getFileInfo(0);
+        
+        // add in lesion segmentation from ADC
+        ModelImage adcSegImg = fuzzyCMeans(adcImage, 3, 1);
+        
+        saveImageFile(adcSegImg, coreOutputDir, outputBasename + "_seg_adc", FileUtility.XML);
+        
+        for (int i = 0; i < volLength; i++) {
+            if (adcSegImg.getUByte(i) != 0) {
+                segImg.set(i, 1);
+            }
+        }
+        
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_both", FileUtility.XML);
         
         short[] segBuffer = new short[volLength];
         try {
@@ -114,12 +127,6 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             setCompleted(false);
             return;
         }
-        
-        // output mask to disk
-        fireProgressStateChanged("Saving segmentation mask ...");
-        fireProgressStateChanged(50);
-
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg", FileUtility.XML);
         
         // skull artifact masking
         ModelImage maskImg = null;
@@ -484,6 +491,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         // TODO disabled selection of additional objects based on size/distance for now
         
+        // disabled size limit - just search based on distance
 //        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
 //            // find distance between largest object and the rest of the image
 //            short largestObjectID = sortedObjects[sortedObjects.length - 1].id;
@@ -1074,6 +1082,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         for (int i = 0; i < volLength; i++) {
             if (segImg.getInt(i) != segClass) {
                 segImg.set(i, 0);
+            } else {
+                segImg.set(i, 1);
             }
         }
         
