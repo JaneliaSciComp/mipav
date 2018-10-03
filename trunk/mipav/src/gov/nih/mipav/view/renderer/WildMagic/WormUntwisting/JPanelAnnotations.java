@@ -87,7 +87,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private ListSelectionModel annotationList;
 	private JTable annotationTable;
 	private DefaultTableModel annotationTableModel;
-	
+	private boolean useLatticeMarkers = false;
 	
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image ) {
 		voiManager = voiInterface;
@@ -196,7 +196,25 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				if ( annotations.getCurves().size() > 0 ) {
 					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-						annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+
+						if ( useLatticeMarkers ) {
+							String note = new String(text.getNote());
+							System.err.println(i + "  " + note);
+							if ( note.contains("lattice segment:") ) {
+								int index = note.indexOf("lattice segment:");
+								note = note.substring(index + 17, note.length() );
+								int value = Integer.valueOf(note);
+								System.err.println(note + "   " + value );
+								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z, value } );
+							}
+							else {
+								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+							}
+						}
+						else
+						{
+							annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+						}
 					}
 				}
 			}
@@ -229,7 +247,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					text.setText( annotationTableModel.getValueAt(row, column).toString() );
 					text.updateText();
 				}
-				else
+				else if ( column < 4 )
 				{
 					float value = Float.valueOf(annotationTableModel.getValueAt(row, column).toString());
 					if ( value >= 0 ) {
@@ -246,6 +264,18 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 							text.elementAt(1).Z = value;
 						}
 					}
+				}
+				else
+				{
+					int value = Integer.valueOf(annotationTableModel.getValueAt(row, column).toString());
+					String note = text.getNote();
+					if ( note.contains("lattice segment:") ) {
+						int index = note.indexOf("lattice segment:");
+						note = note.substring(0, index);
+					}
+					note = note + "\n" + "lattice segment: " + value;
+					System.err.println(text.getText() + " " + note);
+					text.setNote(note);
 				}
 				text.update();
 				isChecked = text.getVolumeVOI().GetDisplay();
@@ -287,7 +317,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Creates the table that displays the annotation information.
 	 * The user can edit the annotations directly in the table.
 	 */
-	private void buildAnnotationTable() {
+	private void buildAnnotationTable(boolean latticeMarkers) {
 		if ( annotationTable == null )
 		{
 			annotationTableModel = new DefaultTableModel();
@@ -295,6 +325,10 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationTableModel.addColumn("x");
 			annotationTableModel.addColumn("y");
 			annotationTableModel.addColumn("z");
+			if ( latticeMarkers ) {
+				annotationTableModel.addColumn("lattice segment");
+				useLatticeMarkers = true;
+			}
 			annotationTableModel.addTableModelListener(this);
 
 			annotationTable = new JTable(annotationTableModel);
@@ -316,7 +350,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
-	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, ModelImage image, VOI annotations )
+	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, ModelImage image, VOI annotations, boolean latticeMarkers )
 	{		
 		voiManager = voiInterface;
 		imageA = image;
@@ -367,7 +401,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			labelPanel.add( volumeRadius, gbcC );
 			
 			// build the annotation table for the list of annotations:
-			buildAnnotationTable();
+			buildAnnotationTable(latticeMarkers);
 			// add annotation table to a scroll pane:
 			JScrollPane kScrollPane = new JScrollPane(annotationTable);
 			Dimension size = kScrollPane.getPreferredSize();
@@ -380,21 +414,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		}
 
 		// Add the list of annotations to the table:
-		annotationTableModel.removeTableModelListener(this);
-		int numRows = annotationTableModel.getRowCount();
-		for ( int i = numRows -1; i >= 0; i-- ) {
-			annotationTableModel.removeRow(i);
-		}		
-		if ( annotations != null ) {
-			if ( annotations.getCurves().size() > 0 ) {
-				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-					VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-					annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
-				}
-			}
-		}
-		annotationTableModel.addTableModelListener(this);
-		voiManager.addAnnotationListener(this);
+		annotationChanged();
 
 		return annotationPanel;
 	}
@@ -443,7 +463,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				if ( row < nRows ) {
 					annotationTable.setRowSelectionInterval(row, row);
 				}
-				else {
+				else if ( nRows > 0 ) {
 					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
 				}
 			}

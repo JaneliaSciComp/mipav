@@ -1885,7 +1885,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			annotationPanelUI = new JPanelAnnotations(voiManager, volumeImage.GetImage());
 		}
-		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), annotations.elementAt(0));
+		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), annotations.elementAt(0), true);
 		tabbedPane.addTab("Annotation", null, annotationPanelUI.getAnnotationsPanel());
 		pack();
 	}
