@@ -161,17 +161,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private static String ddServerURL = ddProdServer;
 
     /** Full authentication server url */
-    private static String authServerURL = authProdServer;
-    private static String ddAuthUser = "";
-    private static String ddAuthPass = "";
+    private static String authServerURL     = authProdServer;
+    private static String ddAuthUser        = "";
+    private static String ddAuthPass        = "";
     private static boolean ddUseAuthService = false;   
 
     private static final String svnVersion 		= "$Rev: 15178 $";
     private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
-    private static final String pluginVersion 	= "Beta version 0.4";
-
-    // Might be able to delete
-    //private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
+    private static final String pluginVersion 	= "Beta version 0.5";
 
 	private PlugInDialogBRICS_Mapper owner;
 
@@ -190,35 +187,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
 
-  /*  private static final Comparator<DataElementValue> dataElementCompare = new Comparator<DataElementValue>() {
-        @Override
-        public int compare(final DataElementValue o1, final DataElementValue o2) {
-            return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
-        }
-    };
-
-    private static final Comparator<MapElement> mapElementCompare = new Comparator<MapElement>() {
-        @Override
-        public int compare(final MapElement o1, final MapElement o2) {
-            return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
-        }
-    };
-
-    private static final Comparator<RepeatableGroup> groupCompare = new Comparator<RepeatableGroup>() {
-        @Override
-        public int compare(final RepeatableGroup o1, final RepeatableGroup o2) {
-            return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
-        }
-    };
-
-    private static final Comparator<ValueRange> valueRangeCompare = new Comparator<ValueRange>() {
-        @Override
-        public int compare(final ValueRange o1, final ValueRange o2) {
-            return o1.compareTo(o2);
-        }
-    };
-    
-   */
     
     /** Mapper constructor - Primarily setsup  the GUI */
     public PlugInDialogBRICS_Mapper () {
@@ -1205,9 +1173,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(structsModel);
             structsTable.setRowSorter(sorter);
             final JPanel searchPanel = new JPanel();
-            final JButton search = new JButton("Search");
-            final JButton reset = new JButton("Reset");
-            search.addActionListener(new ActionListener() {
+            final JButton searchButton = new JButton("Search");
+            final JButton resetButton  = new JButton("Reset");
+            
+            searchButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
             		String text = searchBar.getText();
             		if(text.length()==0) {
@@ -1218,13 +1187,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             		}
             	}
             }); 
+            
             // reset brings original table back
-            reset.addActionListener(new ActionListener() {
+            resetButton.addActionListener(new ActionListener() {
             	public void actionPerformed(ActionEvent e) {
             		sorter.setRowFilter(null);
             		searchBar.setText("");
             	}
             });
+            
             // enter to search as well as search button 
             searchBar.addKeyListener(new KeyListener() {
             	public void keyPressed(KeyEvent e) {
@@ -1243,10 +1214,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 				public void keyTyped(KeyEvent arg0) {
 				}
             });
+            
             searchBar.setPreferredSize(new Dimension(200,25));
             searchPanel.add(searchBar);
-            searchPanel.add(search);
-            searchPanel.add(reset);
+            searchPanel.add(searchButton);
+            searchPanel.add(resetButton);
             
             final JPanel OKPanel = new JPanel();
             final JButton OKButton = new JButton("Select");
@@ -2593,16 +2565,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * structures (without their attached data elements).
      */
     public class FormListRESTThread extends Thread implements ActionListener {
-        private static final String ddAuthBase = "/portal/ws/webstart/dictionary/formStructure/details";
-
+        private static final String ddAuthBase    = "/portal/ws/webstart/dictionary/formStructure/details";
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-        //private static final String ddStructListRequestc = ddRequestBase + "/Published/list?type=CLINICAL"; //?????
-        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
+        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
-
         private final PlugInDialogBRICS_Mapper parent;
 
         public FormListRESTThread(final PlugInDialogBRICS_Mapper parent) {
@@ -2681,8 +2650,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
         }
 
-        
-
 		@Override
         public void actionPerformed(final ActionEvent e) {
             if (e.getSource() == progressCancelButton) {
@@ -2702,15 +2669,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private class FormDataElementsRESTThread extends Thread implements ActionListener {
 
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
-
         private JButton progressCancelButton;
-
         private final PlugInDialogBRICS_Mapper parent;
-
         private final String formStructName;
-
         private FormStructure fullFormStructure;
-
         private final boolean addProgressBar;
         
         /**
