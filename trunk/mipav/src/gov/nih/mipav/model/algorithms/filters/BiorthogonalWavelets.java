@@ -7,9 +7,12 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJComponentGraph;
+import gov.nih.mipav.view.ViewJFrameGraph;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -92,6 +95,23 @@ public  class BiorthogonalWavelets {
     }
 	
 	public void CDFWavelets(int l, int lt, boolean display) {
+		 // Inputs:   disp can be 'true' or 'false' and controls whether or not to
+		 //           display H(w), Ht(w), G(w), and Gt(w). The default is 'true'.
+		 
+		 // Outputs:  Computes the Cohen, Daubechies, and Feauveau (CDF) lowpass 
+		 //           biorthogonal wavelet filters, h and ht, of length 2*(l+R)+1 and
+		 //           2*(lt+C)+1, where R and C are the number of real and complex
+		 //           zeros of P(t), deg(P)=l+lt-1, along with the corresponding
+		 //           indices of the filter coefficients in inds_h and inds_ht,
+		 //           respectively. The highpass filters, g and gt, are also returned
+		 //           along with the filter indices, inds_g and inds_gt, respectively
+		 
+		 // Note:     As per CDF, the real zeros of P(t) are placed in ht, and the
+		 //           complex zeros of P(t) are placed in h.
+		 
+		 // Author:   Brian Moore
+		 //           brimoor@umich.edu
+
 		int N;
 		double h1[];
 		int i;
@@ -121,16 +141,21 @@ public  class BiorthogonalWavelets {
 		int upper;
 		int res;
 		double w[];
+		float wfloat[];
 		double spacing;
 		double HwReal[];
 		double HwImag[];
+		float absHw[];
 		double HtwReal[];
 		double HtwImag[];
+		float absHtw[];
 		double GwReal[];
 		double GwImag[];
+		float absGw[];
 		double GtwReal[];
 		double GtwImag[];
-		int ind;
+		float absGtw[];
+		
 		if (Double.isNaN(epsilon)) {
 			computeEpsilon();
 		}
@@ -277,29 +302,389 @@ public  class BiorthogonalWavelets {
 			
 			res = 1000;
 			w = new double[res];
+			wfloat = new float[res];
 			spacing = Math.PI/(res - 1.0);
 			for (i = 0; i < res; i++) {
 			    w[i] = i * spacing;	
+			    wfloat[i] = (float)w[i];
 			}
 			
 			HwReal = new double[res];
 			HwImag = new double[res];
+			absHw = new float[res];
 			for (i = 0; i < inds_h.length; i++) {
 			    for (j = 0; j < res; j++) {
 			        HwReal[j] = HwReal[j] + h[i]*Math.cos(inds_h[i] * w[j]);
 			        HwImag[j] = HwImag[j] + h[i]*Math.sin(inds_h[i] * w[j]);
 			    }
 			}
+			for (i = 0; i < res; i++) {
+				absHw[i] = (float)Math.sqrt(HwReal[i]*HwReal[i] + HwImag[i]*HwImag[i]);
+			}
+			String HwTitle = "Frequency response of " + h.length + " / " + ht.length + " Hw CDF Wavelet";
+			ViewJFrameGraph HwGraph = new ViewJFrameGraph(wfloat, absHw, HwTitle, "Frequency", "abs(Hw)");
+			HwGraph.setVisible(true);
+			ViewJComponentGraph HwVGraph = HwGraph.getGraph();
+			HwVGraph.setDomain(0.0f,(float)Math.PI);
+			HwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
 			
 			HtwReal = new double[res];
 			HtwImag = new double[res];
+			absHtw = new float[res];
 			for (i = 0; i < inds_ht.length; i++) {
 			    for (j = 0; j < res; j++) {
 			        HtwReal[j] = HtwReal[j] + ht[i]*Math.cos(inds_ht[i] * w[j]);
 			        HtwImag[j] = HtwImag[j] + ht[i]*Math.sin(inds_ht[i] * w[j]);
 			    }
 			}
+			for (i = 0; i < res; i++) {
+				absHtw[i] = (float)Math.sqrt(HtwReal[i]*HtwReal[i] + HtwImag[i]*HtwImag[i]);
+			}
+			String HtwTitle = "Frequency response of " + h.length + " / " + ht.length + " Htw CDF Wavelet";
+			ViewJFrameGraph HtwGraph = new ViewJFrameGraph(wfloat, absHtw, HtwTitle, "Frequency", "abs(Htw)");
+			HtwGraph.setVisible(true);
+			ViewJComponentGraph HtwVGraph = HtwGraph.getGraph();
+			HtwVGraph.setDomain(0.0f,(float)Math.PI);
+			HtwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
+			
+			GwReal = new double[res];
+			GwImag = new double[res];
+			absGw = new float[res];
+			for (i = 0; i < inds_g.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        GwReal[j] = GwReal[j] + g[i]*Math.cos(inds_g[i] * w[j]);
+			        GwImag[j] = GwImag[j] + g[i]*Math.sin(inds_g[i] * w[j]);
+			    }
+			}
+			for (i = 0; i < res; i++) {
+				absGw[i] = (float)Math.sqrt(GwReal[i]*GwReal[i] + GwImag[i]*GwImag[i]);
+			}
+			String GwTitle = "Frequency response of " + h.length + " / " + ht.length + " Gw CDF Wavelet";
+			ViewJFrameGraph GwGraph = new ViewJFrameGraph(wfloat, absGw, GwTitle, "Frequency", "abs(Gw)");
+			GwGraph.setVisible(true);
+			ViewJComponentGraph GwVGraph = GwGraph.getGraph();
+			GwVGraph.setDomain(0.0f,(float)Math.PI);
+			GwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
+			
+			GtwReal = new double[res];
+			GtwImag = new double[res];
+			absGtw = new float[res];
+			for (i = 0; i < inds_gt.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        GtwReal[j] = GtwReal[j] + gt[i]*Math.cos(inds_gt[i] * w[j]);
+			        GtwImag[j] = GtwImag[j] + gt[i]*Math.sin(inds_gt[i] * w[j]);
+			    }
+			}
+			for (i = 0; i < res; i++) {
+				absGtw[i] = (float)Math.sqrt(GtwReal[i]*GtwReal[i] + GtwImag[i]*GtwImag[i]);
+			}
+			String GtwTitle = "Frequency response of " + h.length + " / " + ht.length + " Gtw CDF Wavelet";
+			ViewJFrameGraph GtwGraph = new ViewJFrameGraph(wfloat, absGtw, GtwTitle, "Frequency", "abs(Gtw)");
+			GtwGraph.setVisible(true);
+			ViewJComponentGraph GtwVGraph = GtwGraph.getGraph();
+			GtwVGraph.setDomain(0.0f,(float)Math.PI);
+			GtwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
 		} // if (display)
+	}
+	
+	public void SplineWavelets(int N, int Nt, boolean display) {
+		// Inputs:   disp can be 'true' or 'false' and controls whether or not to
+		//           display H(w), Ht(w), G(w), and Gt(w). The default is 'true'.
+		
+		// Outputs:  Computes the biorthogonal spline lowpass filters, h and ht, of
+		//           length Nt+1 and 2*N+Nt-1, along with the corresponding
+		//           indices of each filter coefficient in inds_h and inds_ht,
+		//           respectively. The highpass filters, g and gt, are also returned
+		//           along with the filter indices, inds_g and inds_gt, respectively
+		
+		// Author:   Brian Moore
+		//           brimoor@umich.edu
+		int i;
+		int lt;
+		double sqrt2;
+		double val;
+		int kk;
+		int l;
+		int len;
+		int max;
+		double h1[];
+		double h2[][];
+	
+		if ((Nt % 2) != (N % 2)) {
+			MipavUtil.displayError("N and Nt must have the same parity");
+			return;
+		}
+		
+		// Compute ht
+		if ((Nt % 2) == 1) {
+			// odd case
+			lt = (Nt - 1)/2;
+			inds_ht = new int[2*lt + 2];
+			for ( i = 0; i < 2*lt+2; i++) {
+				inds_ht[i] = -lt + i;
+			}
+		}
+		else {
+			// even case
+			lt = Nt/2;
+			inds_ht = new int[2*lt + 1];
+			for (i = 0; i < 2*lt+1; i++) {
+				inds_ht[i] = -lt + i;
+			}
+		}
+		
+		sqrt2 = Math.sqrt(2.0);
+		val = sqrt2/Math.pow(2.0, Nt);
+		ht = new double[Nt + 1];
+	    for (kk = 0; kk <= Nt; kk++) {
+	        ht[kk] = val * nchoosek(Nt, kk);	
+	    }
+	    
+	    // Compute h
+	    if ((N % 2) == 1) {
+	    	// odd case
+	    	l = (N - 1)/2;
+	    	len = 2*N+Nt - 1; // will be even
+	    	inds_h = new int[len];
+	    	for (i = 0; i < len; i++) {
+	    		inds_h[i] = -len/2+1+i;
+	    	}
+	    	max = l + lt;
+	    }
+	    else {
+	    	// even case
+	    	l = N/2;
+	    	len = 2*N+Nt - 1; // will be odd
+	    	inds_h = new int[len];
+	    	for (i = 0; i < len; i++) {
+	    		inds_h[i] = -(len-1)/2 + i;
+	    	}
+	    	max = l + lt - 1;
+	    }
+	    
+	    // Compute the left half
+	    h1 = new double[N+1];
+	    val = sqrt2/Math.pow(2.0, N);
+	    for (kk = 0; kk <= N; kk++) {
+	    	h1[kk] = val * nchoosek(N, kk);
+	    }
+	    
+	    // Compute the right half
+	    h2 = new double[max+1][2*max+1];
+	}
+	
+	private double[][] FastConvWaveletMult(double mat[][], double h[], double g[], int inds_h[], int inds_g[]) {
+		// For now assume mat and mat2 are real
+		// Returns mat2 = WM * mat , where size(WM) = [size(mat,1),size(mat,1)]
+        // IMt = WMt * IM * WN' can be computed by calling
+	    // IMt = FastConvWaveletMult(FastConvWaveletMult(IM,ht,gt,inds_ht,inds_gt)',h,g,inds_h,inds_g)';
+		int i, j;
+		FFTUtility fft;
+        int M = mat.length; // rows
+        int N = mat[0].length; // columns
+        double mat2[][] = new double[M][N];
+        double mat2I[][] = new double[M][N];
+        int numinds_hgezero = 0;
+        for (i = 0; i < inds_h.length; i++) {
+        	if (inds_h[i] >= 0) {
+        		numinds_hgezero++;
+        	}
+        }
+        int inds[] = new int[numinds_hgezero];
+        for (i = 0, j = 0; i < inds_h.length; i++) {
+        	if (inds_h[i] >= 0) {
+        		inds[j++] = i;
+        	}
+        }
+        double vec[] = new double[numinds_hgezero + M - h.length + inds[0]];
+        for (i = 0; i < numinds_hgezero; i++) {
+        	vec[i] = h[inds[i]];
+        }
+        for (i = 0; i < M - h.length; i++) {
+        	vec[i + numinds_hgezero] = 0.0;
+        }
+        for (i = 0; i < inds[0]; i++) {
+        	vec[i + numinds_hgezero + M - h.length] = h[i];
+        }
+        double vecReverse[] = new double[vec.length];
+        for (i = 0; i < vec.length; i++) {
+        	vecReverse[i] = vec[vec.length - 1 - i];
+        }
+        int numinds_ggezero = 0;
+        for (i = 0; i < inds_g.length; i++) {
+        	if (inds_g[i] >= 0) {
+        		numinds_ggezero++;
+        	}
+        }
+        int inds2[] = new int[numinds_ggezero];
+        for (i = 0, j = 0; i < inds_g.length; i++) {
+        	if (inds_g[i] >= 0) {
+        		inds2[j++] = i;
+        	}
+        }
+        double vec2[] = new double[numinds_ggezero + M - g.length + inds2[0]];
+        for (i = 0; i < numinds_ggezero; i++) {
+        	vec2[i] = g[inds2[i]];
+        }
+        for (i = 0; i < M - g.length; i++) {
+        	vec2[i + numinds_ggezero] = 0.0;
+        }
+        for (i = 0; i < inds2[0]; i++) {
+        	vec2[i + numinds_ggezero + M - g.length] = g[i];
+        }
+        double vec2Reverse[] = new double[vec2.length];
+        for (i = 0; i < vec2.length; i++) {
+        	vec2Reverse[i] = vec2[vec2.length - 1 - i];
+        }
+        
+        // Instantiate the 1d FFT routine
+ 		// -1 for forward transform
+        double vecReverseI[] = new double[vecReverse.length];
+ 		fft = new FFTUtility(vecReverse, vecReverseI, 1, vecReverse.length, 1, -1,
+ 				FFTUtility.FFT);
+ 		fft.setShowProgress(false);
+ 		fft.run();
+ 		fft.finalize();
+ 		fft = null;
+ 		
+	 	// Instantiate the 1d FFT routine
+		// -1 for forward transform
+	    double vec2ReverseI[] = new double[vec2Reverse.length];
+		fft = new FFTUtility(vec2Reverse, vec2ReverseI, 1, vec2Reverse.length, 1, -1,
+				FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+        
+        // fft along m-point FFT of each column
+		// M The dimension of the current variable
+		// N  The spacing of the current variable
+		double matvec[] = new double[M*N];
+        for (i = 0; i < M; i++) {
+        	for (j = 0; j < N; j++) {
+        		matvec[j + i * N] = mat[i][j];
+        	}
+        }
+        double matvecI[] = new double[M*N];
+        fft = new FFTUtility(matvec, matvecI, 1, M, N, -1, FFTUtility.FFT);
+        fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		
+		double vals[] = new double[M];
+		double valsI[] = new double[M];
+		double vals2[] = new double[M];
+		double vals2I[] = new double[M];
+		for (i = 0; i < N; i++) {
+		    for (j = 0; j < M; j++) {
+		    	vals[j] = matvec[i + j * N] * vecReverse[j] - matvecI[i + j * N] * vecReverseI[j];
+		    	valsI[j] = matvec[i + j * N] * vecReverseI[j] + matvecI[i + j * N] * vecReverse[j];
+		    }
+	    	// 1 for inverse transform
+	    	fft = new FFTUtility(vals, valsI, 1, M, 1, 1, FFTUtility.FFT);
+	    	fft.setShowProgress(false);
+			fft.run();
+			fft.finalize();
+			fft = null;
+			mat2[0][i] = vals[vals.length-1];
+			mat2I[0][i] = valsI[valsI.length-1];
+			for (j = 1; j < M/2; j++) {
+				mat2[j][i] = vals[2*j-1];
+				mat2I[j][i] = valsI[2*j-1];
+			}
+			
+			for (j = 0; j < M; j++) {
+		    	vals2[j] = matvec[i + j * N] * vec2Reverse[j] - matvecI[i + j * N] * vec2ReverseI[j];
+		    	vals2I[j] = matvec[i + j * N] * vec2ReverseI[j] + matvecI[i + j * N] * vec2Reverse[j];
+		    }
+	    	// 1 for inverse transform
+	    	fft = new FFTUtility(vals2, vals2I, 1, M, 1, 1, FFTUtility.FFT);
+	    	fft.setShowProgress(false);
+			fft.run();
+			fft.finalize();
+			fft = null;
+			mat2[M/2][i] = vals2[vals2.length-1];
+			mat2I[M/2][i] = vals2I[vals2I.length-1];
+			for (j = 1; j < M/2; j++) {
+				mat2[M/2+j][i] = vals2[2*j-1];
+				mat2I[M/2+j][i] = vals2I[2*j-1];
+			}
+		} // for (i = 0; i < N; i++)
+        return mat2;
+	}
+	
+	private double[][] WaveletMatrix(int M, double h[], double g[], int inds_h[], int inds_g[]) {
+		// Computes the the M x M biorthogonal wavelet matrix defined by h and g
+		int i, j, jj;
+        double W[][] = new double[M][M];
+        
+        int numinds_hgezero = 0;
+        for (i = 0; i < inds_h.length; i++) {
+        	if (inds_h[i] >= 0) {
+        		numinds_hgezero++;
+        	}
+        }
+        int inds[] = new int[numinds_hgezero];
+        for (i = 0, j = 0; i < inds_h.length; i++) {
+        	if (inds_h[i] >= 0) {
+        		inds[j++] = i;
+        	}
+        }
+        double vec[] = new double[numinds_hgezero + M - h.length + inds[0]];
+        for (i = 0; i < numinds_hgezero; i++) {
+        	vec[i] = h[inds[i]];
+        }
+        for (i = 0; i < M - h.length; i++) {
+        	vec[i + numinds_hgezero] = 0.0;
+        }
+        for (i = 0; i < inds[0]; i++) {
+        	vec[i + numinds_hgezero + M - h.length] = h[i];
+        }
+        
+        for (jj = 1; jj <= M/2; jj++) {
+             W[jj-1] = circshift(vec, 2*(jj-1));	
+        } // for (jj = 1; jj <= M/2; jj++)
+        
+        int numinds_ggezero = 0;
+        for (i = 0; i < inds_g.length; i++) {
+        	if (inds_g[i] >= 0) {
+        		numinds_ggezero++;
+        	}
+        }
+        inds = new int[numinds_ggezero];
+        for (i = 0, j = 0; i < inds_g.length; i++) {
+        	if (inds_g[i] >= 0) {
+        		inds[j++] = i;
+        	}
+        }
+        vec = new double[numinds_ggezero + M - g.length + inds[0]];
+        for (i = 0; i < numinds_ggezero; i++) {
+        	vec[i] = g[inds[i]];
+        }
+        for (i = 0; i < M - g.length; i++) {
+        	vec[i + numinds_ggezero] = 0.0;
+        }
+        for (i = 0; i < inds[0]; i++) {
+        	vec[i + numinds_ggezero + M - g.length] = g[i];
+        }
+        for (jj = 1; jj <= M/2; jj++) {
+            W[M/2+jj-1] = circshift(vec, 2*(jj-1));	
+       } // for (jj = 1; jj <= M/2; jj++)
+        return W;
+	}
+	
+	private double[] circshift(double vec[], int shift) {
+		int i;
+		double vecshift[] = new double[vec.length];
+		for (i = 0; i < shift; i++) {
+			vecshift[i] = vec[vec.length - shift + i];
+		}
+		for (i = shift; i < vec.length; i++) {
+			vecshift[i] = vec[i - shift];
+		}
+		return vecshift;
 	}
 	
 	private double[] conv(double u[], double v[]) {
