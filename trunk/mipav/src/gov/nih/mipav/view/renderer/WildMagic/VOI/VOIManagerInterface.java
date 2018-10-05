@@ -4104,7 +4104,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
                 // get list of files
                 final File[] files = voiFileDir.listFiles();
-
                 for (final File element : files) {
 
                     if (element.getName().endsWith(".roi")) {
@@ -4122,9 +4121,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             // open each voi array, then register voi array to this image
             for (i = 0; i < filenames.size(); i++) {
-                
                 readImageJ(voiDir+filenames.elementAt(i), filenames.elementAt(i), currentImage);
-            	
             }
             
             // when everything's done, notify the image listeners
@@ -6605,7 +6602,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             		}
             		int index3 = fileName.indexOf(".",index2+1);
             		if ((index3 >= index2 + 2) && (index2 <= index2 + 5)) {
-            			String xCenterString = fileName.substring(index2+1, index3);
+            			String xCenterString = extractNumber(fileName.substring(index2+1, index3));
             			try {
             			    xCenter = Integer.valueOf(xCenterString).intValue();    	
             			}
@@ -6790,6 +6787,25 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 			e.printStackTrace();
 		}
 	}
+    
+    public String extractNumber(final String str) {                
+
+        if(str == null || str.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+        boolean found = false;
+        for(char c : str.toCharArray()){
+            if(Character.isDigit(c)){
+                sb.append(c);
+                found = true;
+            } else if(found){
+                // If we already found a digit before and this char is not a digit, stop looping
+                break;                
+            }
+        }
+
+        return sb.toString();
+    }
     
     
     /**
