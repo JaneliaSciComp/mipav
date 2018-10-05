@@ -399,7 +399,7 @@ public  class BiorthogonalWavelets {
 		
 		// Author:   Brian Moore
 		//           brimoor@umich.edu
-		int i;
+		int i, j;
 		int lt;
 		double sqrt2;
 		double val;
@@ -409,6 +409,25 @@ public  class BiorthogonalWavelets {
 		int max;
 		double h1[];
 		double h2[][];
+		int jj;
+		double dB[];
+		double h2sum[];
+		int res;
+		double w[];
+		float wfloat[];
+		double spacing;
+		double HwReal[];
+		double HwImag[];
+		float absHw[];
+		double HtwReal[];
+		double HtwImag[];
+		float absHtw[];
+		double GwReal[];
+		double GwImag[];
+		float absGw[];
+		double GtwReal[];
+		double GtwImag[];
+		float absGtw[];
 	
 		if ((Nt % 2) != (N % 2)) {
 			MipavUtil.displayError("N and Nt must have the same parity");
@@ -471,6 +490,142 @@ public  class BiorthogonalWavelets {
 	    
 	    // Compute the right half
 	    h2 = new double[max+1][2*max+1];
+	    for (jj = 0; jj <= max; jj++) {
+	    	dB = diffBinomial(2*jj); // dB has length 2*jj+1
+	    	for (kk = 0; kk < 2*jj+1; kk++) {
+	    		h2[jj][max-jj+kk] = nchoosek(max+jj, jj)/(Math.pow(2.0,(2*jj)))*
+	    				(-1 + 2*((jj+1)%2))*dB[kk];
+	    	}
+	    }
+	    h2sum =  new double[2*max+1];
+	    for (i = 0; i < 2*max+1; i++) {
+	    	for (j = 0; j < max + 1; j++) {
+	    	    h2sum[i] = h2sum[i] + h2[j][i];	
+	    	}
+	    }
+	    
+	    // Convolve the left and right halves to get the product
+	    h = conv(h1, h2sum);
+	    
+	    // Compute g and gt
+	    inds_g = new int[inds_ht.length];
+		for (i = 0; i < inds_ht.length; i++) {
+			inds_g[i] = 1 - inds_ht[inds_ht.length-1-i];
+		}
+		
+		inds_gt = new int[inds_h.length];
+		for (i = 0; i < inds_h.length; i++) {
+			inds_gt[i] = 1 - inds_h[inds_h.length-1-i];
+		}
+		
+		g = new double[ht.length];
+		for (i = 0; i < ht.length; i++) {
+			g[i] = ht[ht.length-1-i] * (2 * (inds_ht[inds_ht.length-1-i] % 2) - 1);
+		}
+		
+		gt = new double[h.length];
+		for (i = 0; i < h.length; i++) {
+			gt[i] = h[h.length-1-i] * (2 * (inds_h[inds_h.length-1-i] % 2) - 1);
+		}
+		
+		// Plot the frequency responses if desired
+		if (display) {
+			
+			res = 1000;
+			w = new double[res];
+			wfloat = new float[res];
+			spacing = Math.PI/(res - 1.0);
+			for (i = 0; i < res; i++) {
+			    w[i] = i * spacing;	
+			    wfloat[i] = (float)w[i];
+			}
+			
+			HwReal = new double[res];
+			HwImag = new double[res];
+			absHw = new float[res];
+			for (i = 0; i < inds_h.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        HwReal[j] = HwReal[j] + h[i]*Math.cos(inds_h[i] * w[j]);
+			        HwImag[j] = HwImag[j] + h[i]*Math.sin(inds_h[i] * w[j]);
+			    }
+			}
+			for (i = 0; i < res; i++) {
+				absHw[i] = (float)Math.sqrt(HwReal[i]*HwReal[i] + HwImag[i]*HwImag[i]);
+			}
+			String HwTitle = "Frequency response of " + h.length + " / " + ht.length + " Hw Spline Wavelet";
+			ViewJFrameGraph HwGraph = new ViewJFrameGraph(wfloat, absHw, HwTitle, "Frequency", "abs(Hw)");
+			HwGraph.setVisible(true);
+			ViewJComponentGraph HwVGraph = HwGraph.getGraph();
+			HwVGraph.setDomain(0.0f,(float)Math.PI);
+			HwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
+			
+			HtwReal = new double[res];
+			HtwImag = new double[res];
+			absHtw = new float[res];
+			for (i = 0; i < inds_ht.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        HtwReal[j] = HtwReal[j] + ht[i]*Math.cos(inds_ht[i] * w[j]);
+			        HtwImag[j] = HtwImag[j] + ht[i]*Math.sin(inds_ht[i] * w[j]);
+			    }
+			}
+			for (i = 0; i < res; i++) {
+				absHtw[i] = (float)Math.sqrt(HtwReal[i]*HtwReal[i] + HtwImag[i]*HtwImag[i]);
+			}
+			String HtwTitle = "Frequency response of " + h.length + " / " + ht.length + " Htw Spline Wavelet";
+			ViewJFrameGraph HtwGraph = new ViewJFrameGraph(wfloat, absHtw, HtwTitle, "Frequency", "abs(Htw)");
+			HtwGraph.setVisible(true);
+			ViewJComponentGraph HtwVGraph = HtwGraph.getGraph();
+			HtwVGraph.setDomain(0.0f,(float)Math.PI);
+			HtwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
+			
+			GwReal = new double[res];
+			GwImag = new double[res];
+			absGw = new float[res];
+			for (i = 0; i < inds_g.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        GwReal[j] = GwReal[j] + g[i]*Math.cos(inds_g[i] * w[j]);
+			        GwImag[j] = GwImag[j] + g[i]*Math.sin(inds_g[i] * w[j]);
+			    }
+			}
+			for (i = 0; i < res; i++) {
+				absGw[i] = (float)Math.sqrt(GwReal[i]*GwReal[i] + GwImag[i]*GwImag[i]);
+			}
+			String GwTitle = "Frequency response of " + h.length + " / " + ht.length + " Gw Spline Wavelet";
+			ViewJFrameGraph GwGraph = new ViewJFrameGraph(wfloat, absGw, GwTitle, "Frequency", "abs(Gw)");
+			GwGraph.setVisible(true);
+			ViewJComponentGraph GwVGraph = GwGraph.getGraph();
+			GwVGraph.setDomain(0.0f,(float)Math.PI);
+			GwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
+			
+			GtwReal = new double[res];
+			GtwImag = new double[res];
+			absGtw = new float[res];
+			for (i = 0; i < inds_gt.length; i++) {
+			    for (j = 0; j < res; j++) {
+			        GtwReal[j] = GtwReal[j] + gt[i]*Math.cos(inds_gt[i] * w[j]);
+			        GtwImag[j] = GtwImag[j] + gt[i]*Math.sin(inds_gt[i] * w[j]);
+			    }
+			}
+			for (i = 0; i < res; i++) {
+				absGtw[i] = (float)Math.sqrt(GtwReal[i]*GtwReal[i] + GtwImag[i]*GtwImag[i]);
+			}
+			String GtwTitle = "Frequency response of " + h.length + " / " + ht.length + " Gtw Spline Wavelet";
+			ViewJFrameGraph GtwGraph = new ViewJFrameGraph(wfloat, absGtw, GtwTitle, "Frequency", "abs(Gtw)");
+			GtwGraph.setVisible(true);
+			ViewJComponentGraph GtwVGraph = GtwGraph.getGraph();
+			GtwVGraph.setDomain(0.0f,(float)Math.PI);
+			GtwVGraph.setRange(0.0f,(float)Math.sqrt(2.0));
+		} // if (display)
+	}
+	
+	private double[] diffBinomial(int n) {
+		// Return: Binomial coefficients of (x-y)^n in descending powers of x
+		int j;
+		double vect[] = new double[n+1];
+		for (j = 0; j <= n; j++) {
+		    vect[j]	= nchoosek(n,j) * (-1 + 2*(j+1%2));
+		}
+		return vect;
 	}
 	
 	private double[][] FastConvWaveletMult(double mat[][], double h[], double g[], int inds_h[], int inds_g[]) {
