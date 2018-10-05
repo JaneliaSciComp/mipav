@@ -99,9 +99,13 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Polygon;
+import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -115,7 +119,9 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -6335,7 +6341,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	int size;
     	int ns;
     	float shapeArray[];
-    	int i;
+    	int i, j;
     	boolean bigEndian = true;
     	File file = null;
     	FileInputStream is = null;
@@ -6676,10 +6682,25 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             	}
             	ns = getBufferInt(data, SHAPE_ROI_SIZE, bigEndian);
             	shapeArray = new float[ns];
+            	// handle the actual data: data are stored segment-wise, i.e.,
+        		// the type of the segment followed by 0-6 control point coordinates.
             	for (i = 0; i < ns; i++) {
             		shapeArray[i] = getBufferFloat(data, COORDINATES + 4*i, bigEndian);
             	}
-            } // if (isCompoiste)
+            	Vector<Vector<Integer>>xVector = new Vector<Vector<Integer>>();
+            	Vector<Vector<Integer>>yVector = new Vector<Vector<Integer>>();
+            	makeShapeFromArray(shapeArray, xVector, yVector);
+            	for (i = 0; i < xVector.size(); i++) {
+	            	int x[] = new int[xVector.get(i).size()];
+	            	int y[] = new int[yVector.get(i).size()];
+	            	for (j = 0; j < xVector.get(i).size(); j++) {
+	            		x[j] = xVector.get(i).get(j);
+	            		y[j] = yVector.get(i).get(j);
+	            	}
+	            	currentManager.createPolygonVOI(x, y, xVector.get(i).size(), slice);
+            	} // for (i = 0; i < xVector.size(); i++)
+            	return;
+            } // if (isComposite)
             
             switch(type) {
             case oval:
@@ -6786,6 +6807,86 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+    
+    
+   
+	
+	private void makeShapeFromArray(float array[], Vector<Vector<Integer>> xVector, Vector<Vector<Integer>> yVector) {
+		if (array == null) return;
+		Shape s = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
+		int index=0, type, len;
+		float[] seg = new float[7];
+		int moveToX = 0;
+		int moveToY = 0;
+		int vecIndex = -1;
+		while (true) {
+			len = getSegment(array, seg, index);
+			if (len<0) break;
+			index += len;
+			type = (int)seg[0];
+			switch(type) {
+				case PathIterator.SEG_MOVETO:
+					((GeneralPath)s).moveTo(seg[1], seg[2]);
+					moveToX = (int)Math.round(seg[1]);
+					moveToY = (int)Math.round(seg[2]);
+					vecIndex++;
+					xVector.add(new Vector<Integer>());
+					yVector.add(new Vector<Integer>());
+					xVector.get(vecIndex).add(moveToX);
+					yVector.get(vecIndex).add(moveToY);
+					break;
+				case PathIterator.SEG_LINETO:
+					((GeneralPath)s).lineTo(seg[1], seg[2]);
+					xVector.get(vecIndex).add((int)Math.round(seg[1]));
+					yVector.get(vecIndex).add((int)Math.round(seg[2]));
+					break;
+				case PathIterator.SEG_QUADTO:
+					((GeneralPath)s).quadTo(seg[1], seg[2],seg[3], seg[4]);
+					//P(t) = B(2,0)*CP + B(2,1)*P1 + B(2,2)*P2
+					//0 <= t <= 1
+
+				    //B(n,m) = mth coefficient of nth degree Bernstein polynomial
+					//       = C(n,m) * t^(m) * (1 - t)^(n-m)
+					// C(n,m) = Combinations of n things, taken m at a time
+					// = n! / (m! * (n-m)!)
+					break;
+				case PathIterator.SEG_CUBICTO:
+					((GeneralPath)s).curveTo(seg[1], seg[2], seg[3], seg[4], seg[5], seg[6]);
+					// P(t) = B(3,0)*CP + B(3,1)*P1 + B(3,2)*P2 + B(3,3)*P3
+					// 0 <= t <= 1
+
+				    // B(n,m) = mth coefficient of nth degree Bernstein polynomial
+					//        = C(n,m) * t^(m) * (1 - t)^(n-m)
+				    // C(n,m) = Combinations of n things, taken m at a time
+					//        = n! / (m! * (n-m)!)
+					break;
+				case PathIterator.SEG_CLOSE:
+					((GeneralPath)s).closePath();
+					xVector.get(vecIndex).add(moveToX);
+					yVector.get(vecIndex).add(moveToY);
+					break;
+				default: break;
+			}
+		}
+		return;
+	}
+    
+    private int getSegment(float[] array, float[] seg, int index) {
+		int len = array.length;
+		if (index>=len) return -1; seg[0]=array[index++];
+		int type = (int)seg[0];
+		if (type==PathIterator.SEG_CLOSE) return 1;
+		if (index>=len) return -1; seg[1]=array[index++];
+		if (index>=len) return -1; seg[2]=array[index++];
+		if (type==PathIterator.SEG_MOVETO||type==PathIterator.SEG_LINETO) return 3;
+		if (index>=len) return -1; seg[3]=array[index++];
+		if (index>=len) return -1; seg[4]=array[index++];
+		if (type==PathIterator.SEG_QUADTO) return 5;
+		if (index>=len) return -1; seg[5]=array[index++];
+		if (index>=len) return -1; seg[6]=array[index++];
+		if (type==PathIterator.SEG_CUBICTO) return 7;
+		return -1;
 	}
     
     public String extractNumber(final String str) {                
