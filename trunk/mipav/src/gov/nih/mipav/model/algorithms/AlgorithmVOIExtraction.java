@@ -1221,9 +1221,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         }
 
 
-
         for (z = 0; z < zDim; z++) {
-
             try {
                 srcImage.exportDataNoLock(z * xDim * yDim, xDim * yDim, imgBuffer);
             } catch (IOException error) {
@@ -1236,7 +1234,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             }
 
             for (short obj = 1; obj < (srcImage.getMax() + 1); obj++) {
-
+                
                 for (int m = 0; m < imgBuffer.length; m++) {
 
                     if (imgBuffer[m] == obj) {
@@ -1513,8 +1511,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     } // end of for (x = 0; x < xDimE; x++)
                 } // end of for (y = 0; y < yDimE; y++)
 
-                
-                
+                 
             } // for (short obj = 1; obj < (srcImage.getMax() + 1); obj++)
             fireProgressStateChanged(Math.round((z + 1) * 100.0f / zDim));
         } // end of for (z = 0; z < zDim; z++)
