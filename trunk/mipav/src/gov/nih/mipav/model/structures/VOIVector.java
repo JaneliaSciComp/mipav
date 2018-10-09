@@ -74,13 +74,7 @@ public class VOIVector extends ViewVOIVector {
         {
             add ( new VOI( voiVector.get(i) ) );
         }
-        if ( voiVector.listenerList != null) {
-            voiVector.listenerList.getListenerCount(VOIVectorListener.class);
-            VOIVectorListener [] voiList = voiVector.listenerList.getListeners(VOIVectorListener.class);
-            for (int i = 0; i < voiList.length; i++) {
-                this.addVectorListener(voiList[i]);
-            }
-        }
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
