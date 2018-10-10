@@ -69,7 +69,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private JTextField threshCloseSizeField;
     
-    private float threshCloseSize = 5f;
+    private float threshCloseSize = 4f;
     
     private PlugInAlgorithmStrokeSegmentation segAlgo = null;
     
