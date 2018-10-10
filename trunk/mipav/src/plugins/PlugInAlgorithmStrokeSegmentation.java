@@ -34,7 +34,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private boolean doSkullRemoval;
     
-    private int skullRemovalMaskTheshold = 70;
+    private int skullRemovalMaskThreshold = 70;
+    
+    private int threshCloseIter;
+    
+    private float threshCloseSize;
     
     private VOI coreVOI;
     
@@ -72,7 +76,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, boolean removeSkull, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, boolean removeSkull, int closeIter, float closeSize, String outputDir) {
         super();
         
         dwiImage = dwi;
@@ -82,6 +86,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         doCerebellumSkip = cerebellumSkip;
         cerebellumSkipSliceMax = cerebellumSkipMax;
         doSkullRemoval = removeSkull;
+        threshCloseIter = closeIter;
+        threshCloseSize = closeSize;
         coreOutputDir = outputDir;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
@@ -105,18 +111,18 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         final int volLength = sliceLength * extents[2];
         final FileInfoBase fInfo = segImg.getFileInfo(0);
         
-        // add in lesion segmentation from ADC
-        ModelImage adcSegImg = fuzzyCMeans(adcImage, 3, 1);
-        
-        saveImageFile(adcSegImg, coreOutputDir, outputBasename + "_seg_adc", FileUtility.XML);
-        
-        for (int i = 0; i < volLength; i++) {
-            if (adcSegImg.getUByte(i) != 0) {
-                segImg.set(i, 1);
-            }
-        }
-        
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_both", FileUtility.XML);
+//        // add in lesion segmentation from ADC
+//        ModelImage adcSegImg = fuzzyCMeans(adcImage, 3, 1);
+//        
+//        saveImageFile(adcSegImg, coreOutputDir, outputBasename + "_seg_adc", FileUtility.XML);
+//        
+//        for (int i = 0; i < volLength; i++) {
+//            if (adcSegImg.getUByte(i) != 0) {
+//                segImg.set(i, 1);
+//            }
+//        }
+//        
+//        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_both", FileUtility.XML);
         
         short[] segBuffer = new short[volLength];
         try {
@@ -137,7 +143,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             }
             
             for (int i = 0; i < volLength; i++) {
-                if (dwiImage.getInt(i) > skullRemovalMaskTheshold) {
+                if (dwiImage.getInt(i) > skullRemovalMaskThreshold) {
                     maskImg.set(i, 1);
                 } else {
                     maskImg.set(i, 0);
@@ -318,7 +324,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
         
         // perform closing on threshold mask
-        close(segImg, 3, 2f, true);
+        close(segImg, threshCloseIter, threshCloseSize, true);
         
         try {
             segImg.exportData(0, volLength, segBuffer);
@@ -887,7 +893,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return lightbox;
     }
     
-    public File getTheshLightboxFile() {
+    public File getThreshLightboxFile() {
         return threshLightboxFile;
     }
     
