@@ -63,6 +63,14 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private boolean doSkullRemoval = true;
     
+    private JTextField threshCloseIterField;
+    
+    private int threshCloseIter = 1;
+    
+    private JTextField threshCloseSizeField;
+    
+    private float threshCloseSize = 5f;
+    
     private PlugInAlgorithmStrokeSegmentation segAlgo = null;
     
     private boolean isDicomListenerRun = false;
@@ -228,7 +236,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
             double coreVolCC = segAlgo.getCoreSize() * resolCC[0] * resolCC[1] * resolCC[2];
             
             if (listenerParent != null) {
-                listenerParent.emailReport(adcImage, segAlgo.getTheshLightboxFile(), segAlgo.getCoreLightboxFile(), coreVolCC);
+                listenerParent.emailReport(adcImage, segAlgo.getThreshLightboxFile(), segAlgo.getCoreLightboxFile(), coreVolCC);
             }
 
             if (segAlgo.isCompleted()) {
@@ -321,6 +329,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         doCerebellumSkip = cerebellumCheckbox.isSelected();
         cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
         
+        threshCloseIter = Integer.parseInt(threshCloseIterField.getText());
+        threshCloseSize = Float.parseFloat(threshCloseSizeField.getText());
+        
         doSkullRemoval = skullRemovalCheckbox.isSelected();
         
         return true;
@@ -333,7 +344,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, doSkullRemoval, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, doSkullRemoval, threshCloseIter, threshCloseSize, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -384,6 +395,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         doSkullRemoval = scriptParameters.getParams().getBoolean("do_skull_removal");
         
+        threshCloseIter = scriptParameters.getParams().getInt("threshold_close_iter_num");
+        threshCloseSize = scriptParameters.getParams().getInt("threshold_close_kernel_size");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -395,6 +409,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_skull_removal", doSkullRemoval));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_close_iter_num", threshCloseIter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_close_kernel_size", threshCloseSize));
     }
     
     /**
@@ -472,6 +488,36 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         skullRemovalCheckbox.setForeground(Color.black);
         skullRemovalCheckbox.setFont(serif12);
         mainPanel.add(skullRemovalCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        JLabel labelThreshCloseIter = new JLabel("ADC threshold mask close iterations");
+        labelThreshCloseIter.setForeground(Color.black);
+        labelThreshCloseIter.setFont(serif12);
+        mainPanel.add(labelThreshCloseIter, gbc);
+        
+        threshCloseIterField = new JTextField(10);
+        threshCloseIterField.setText("" + threshCloseIter);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(threshCloseIterField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        JLabel labelThreshCloseSize = new JLabel("ADC threshold mask close circle diameter (mm)");
+        labelThreshCloseSize.setForeground(Color.black);
+        labelThreshCloseSize.setFont(serif12);
+        mainPanel.add(labelThreshCloseSize, gbc);
+        
+        threshCloseSizeField = new JTextField(10);
+        threshCloseSizeField.setText("" + threshCloseSize);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(threshCloseSizeField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
