@@ -8,6 +8,8 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
+import javax.swing.WindowConstants;
+
 
 /**
  * Takes in an image and subsamples it to a new set of dimensions. The subsample image is a Gaussian weighted average of
@@ -261,7 +263,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             } else if ((srcImage.getNDims() == 3) && (processIndep)) {
                 transform25DVOI(srcImage, imgBuf, xfrm);
             }
-
+            
         } // if (transformVOI)
 
         setCompleted(true);
@@ -1820,6 +1822,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
         VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
         VOIExtAlgo.run();
+        VOIExtAlgo.finalize();
+        VOIExtAlgo = null;
 
         VOIVector resultVOIs = tmpMask.getVOIs();
         VOIVector srcVOIs = image.getVOIs();
@@ -1835,7 +1839,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             }
         }
 
-        resultImage.setVOIs(tmpMask.getVOIs());
+        resultImage.setVOIs(resultVOIs);
         tmpMask.disposeLocal();
         maskImage.disposeLocal();
     }
