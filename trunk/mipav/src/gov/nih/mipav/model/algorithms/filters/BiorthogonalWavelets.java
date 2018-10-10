@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmRiceWaveletTools.EigenvalueComplex;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmRiceWaveletTools.EigenvalueComplexComparator;
 import gov.nih.mipav.model.structures.*;
@@ -52,11 +53,16 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.\
 */
 
-public  class BiorthogonalWavelets {
+public  class BiorthogonalWavelets extends AlgorithmBase {
+	// Syntax defaults to the CDF 9/7 wavelets used in JPEG2000
+	// Author of original code: Brian Moore
+	// brimoor@umich.edu
 	
 	/** D1MACH(4). */
     private double epsilon = Double.NaN;
     
+    // If you used BWDesignTool to generate a biorthogonal wavelet filter and saved the output variables
+    // [h, ht, g, gt, inds_h, inds_ht, inds_g, inds_gt] you may pass them directly into BiorthogonalWavellets.
     private double h[];
     
     private double ht[];
@@ -72,6 +78,68 @@ public  class BiorthogonalWavelets {
     private int inds_g[];
     
     private int inds_gt[];
+    
+    private ModelImage transformImage;
+    
+    private ModelImage compressedTransformImage;
+    
+    private ModelImage reconstructedImage;
+    
+    private int iterations;
+    
+    // 0 <= compressionFactor <= 1.
+    // Alternatively, when compressionFactor == -1, the lowest frequency approximation is retained.
+    private double compressionFactor;
+    
+    // Type can be "spline" or "CDF" and controls the type of biorthogonal wavelet filter used.
+    String type;
+    
+    // 2*(l+R) + 1 and 2*(lt + C) + 1 are the lengths of the lowpass biorthogonal filters h and ht,
+    // where R and C are the number of real and complex zeros of P(t), deg(P) = l + lt - 1,
+    // respectively when type == "CDF".
+    private int l;
+    
+    private int lt;
+    
+    // N+1 and Nt+1 are the lengths of the lowpass biorthogonal spline filters h and ht,
+    // respectively when type == "spline".
+    private int N;
+    
+    private int Nt;
+    
+    // Plot result or not
+    private boolean display = true;
+    
+    // Forward transform computation method
+    // "conv" or "matrix"
+    String method = "conv";
+    
+    public BiorthogonalWavelets(ModelImage transformImage, ModelImage compressedTransformImage, 
+    		ModelImage reconstructedImage, ModelImage srcImg, int iterations, double compressionFactor,
+    		boolean display, String method,
+    		String type, int len, int lent) {
+    	super(null, srcImg);
+    	this.transformImage = transformImage;
+    	this.compressedTransformImage = compressedTransformImage;
+    	this.reconstructedImage = reconstructedImage;
+    	this.iterations = iterations;
+    	this.compressionFactor = compressionFactor;
+    	this.display = display;
+    	this.method = method;
+    	this.type = type;
+    	if (type.equalsIgnoreCase("CDF")) {
+    		l = len;
+    		lt = lent;
+    	}
+    	else if (type.equalsIgnoreCase("spline")) {
+    		N = len;
+    		Nt = lent;
+    	}
+    }
+    
+    public void runAlgorithm() {
+    	
+    }
     
     private void computeEpsilon() {
     	// epsilon = D1MACH(4)
