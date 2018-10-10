@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Random;
 import java.util.Vector;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.event.EventListenerList;
 
@@ -2994,11 +2996,6 @@ public class VOI extends ModelSerialCloneable {
 	 */
 	protected void fireVOIBaseRemoved(VOIBase curve) {
 		//System.err.println( "fireVOIBaseRemoved" );
-
-		for ( int i = 0; i < curves.size(); i++ )
-		{
-			curves.elementAt(i).getLabel();
-		}
 
 		try {
 
