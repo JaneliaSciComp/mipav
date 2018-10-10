@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -20,6 +21,7 @@ import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeBuilder.SequenceList;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -34,6 +36,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JFileChooser;
 
@@ -331,7 +334,7 @@ public class LatticeModel {
 							if ( (parsedIndex + 6) < parsed.length ) {
 								// read the lattice segment:
 								int segment = (parsed.length > parsedIndex+6) ? (parsed[parsedIndex+6].length() > 0) ? Integer.valueOf( parsed[parsedIndex+6] ) : 1 : 1;
-								System.err.println( name + "  " + segment );
+//								System.err.println( name + "  " + segment );
 								text.setNote(fileName + "\n" + "lattice segment: " + segment);
 							}
 							text.add( new Vector3f( x, y, z ) );
@@ -440,6 +443,8 @@ public class LatticeModel {
 	protected Vector<Box3f> boxBounds;
 
 	protected Vector<Ellipsoid3f> ellipseBounds;
+	
+	private boolean latticeInterpolationInit = false;
 
 	protected VOI samplingPlanes;
 
@@ -1065,23 +1070,9 @@ public class LatticeModel {
 		return pickedPoint;
 	}
 
-	/**
-	 * Entry point in the lattice-based straightening algorithm. At this point a lattice must be defined, outlining how
-	 * the worm curves in 3D. A lattice is defined ad a VOI with two curves of equal length marking the left-hand and
-	 * right-hand sides or the worm.
-	 * 
-	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straighened
-	 *            image.
-	 */
-	public void interpolateLattice(final boolean displayResult, final boolean useModel, final boolean untwistImage, final boolean untwistMarkers) {
-
-		// save the lattice statistics -- distance between pairs and distances between
-		// lattice points along the curves
-		String imageName = imageA.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-
+	public void initializeInterpolation() {
+		latticeInterpolationInit = true;
+		
 		// The algorithm interpolates between the lattice points, creating two smooth curves from head to tail along
 		// the left and right-hand sides of the worm body. A third curve down the center-line of the worm body is
 		// also generated. Eventually, the center-line curve will be used to determine the number of sample points
@@ -1089,14 +1080,83 @@ public class LatticeModel {
 		generateCurves(1);
 		generateEllipses();
 		saveLatticeStatistics();
+	}
+
+	/**
+	 * Entry point in the lattice-based straightening algorithm. At this point a lattice must be defined, outlining how
+	 * the worm curves in 3D. A lattice is defined ad a VOI with two curves of equal length marking the left-hand and
+	 * right-hand sides or the worm.
+	 * 
+	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straightened
+	 *            image.
+	 */
+	public void untwistImage( final boolean mainImage ) {
+
+		if ( !latticeInterpolationInit ) {
+			initializeInterpolation();
+		}
+
+		final int[] resultExtents = new int[] {(int) ((2 * extent)), (int) ((2 * extent)), samplingPlanes.getCurves().size()};
+		long time = System.currentTimeMillis();
+		untwist(imageA, resultExtents, mainImage, true);
+		System.err.println( "untwist elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
+		if ( seamCellImage != null )
+		{
+			untwist(seamCellImage, resultExtents, false, false);
+			System.err.println( "untwist seamCellImage elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
+		}
+		if ( mainImage ) {
+			time = System.currentTimeMillis();
+			untwistLattice(imageA, resultExtents);
+			System.err.println( "untwistLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
+		}
+	}
+	
+	/**
+	 * Entry point in the lattice-based straightening algorithm. At this point a lattice must be defined, outlining how
+	 * the worm curves in 3D. A lattice is defined ad a VOI with two curves of equal length marking the left-hand and
+	 * right-hand sides or the worm.
+	 * 
+	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straightened
+	 *            image.
+	 */
+	public void untwistMarkers() {
+		if ( markerCenters == null ) {
+			return;
+		}
+		
+		if ( !latticeInterpolationInit ) {
+			initializeInterpolation();
+		}
+
+		final int[] resultExtents = new int[] {(int) ((2 * extent)), (int) ((2 * extent)), samplingPlanes.getCurves().size()};
+		//			untwistMarkers(imageA);
+		untwistMarkers(imageA, resultExtents, true);
+	}
+
+	
+	/**
+	 * Entry point in the lattice-based straightening algorithm. At this point a lattice must be defined, outlining how
+	 * the worm curves in 3D. A lattice is defined ad a VOI with two curves of equal length marking the left-hand and
+	 * right-hand sides or the worm.
+	 * 
+	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straightened
+	 *            image.
+	 */
+	public void interpolateLattice(final boolean displayResult, final boolean useModel, final boolean untwistImage, final boolean untwistMarkers) {
+
+		if ( !latticeInterpolationInit ) {
+			initializeInterpolation();
+		}
 
 		final int[] resultExtents = new int[] {(int) ((2 * extent)), (int) ((2 * extent)), samplingPlanes.getCurves().size()};
 		if ( untwistImage )
 		{
-			untwist(imageA, resultExtents, true);
+			untwist(imageA, resultExtents, true, true);
 			if ( seamCellImage != null )
 			{
-				untwist(seamCellImage, resultExtents, false);
+				untwist(seamCellImage, resultExtents, false, false);
 			}
 			untwistLattice(imageA, resultExtents);
 		}
@@ -4797,9 +4857,13 @@ public class LatticeModel {
 		}
 		// System.err.println( voiDir );
 		// System.err.println( image.getImageName() + ".xml" );
+//		long time = System.currentTimeMillis();
 		ModelImage.saveImage(image, image.getImageName() + ".xml", voiDir, false);
+//		System.err.println( "                saveImage XML " + AlgorithmBase.computeElapsedTime(time) );
 		if (saveAsTif) {
+//			time = System.currentTimeMillis();
 			ModelImage.saveImage(image, image.getImageName() + ".tif", voiDir, false);
+//			System.err.println( "               saveImage TIF " + AlgorithmBase.computeElapsedTime(time) );
 		}
 	}
 
@@ -6142,7 +6206,7 @@ public class LatticeModel {
 	}
 
 
-	protected void writeDiagonal(final ModelImage image, ModelImage result, final ModelImage straightToTwisted, final ModelImage overlapImage, final int tSlice, final int slice,
+	protected void writeDiagonal(final ModelImage image, final ModelImage result, final ModelImage straightToTwisted, final ModelImage overlapImage, final int tSlice, final int slice,
 			final int[] extents, final Vector3f[] verts) {
 		final int iBound = extents[0];
 		final int jBound = extents[1];
@@ -7729,8 +7793,50 @@ public class LatticeModel {
 		return contourImageBlur;
 	}
 
+	public void segmentLattice(final ModelImage image, final ModelImage contourImageBlur) {
 
-	public void segmentLattice(final ModelImage image, boolean saveContourImage, int paddingFactor )
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		
+		FileIO fileIO = new FileIO();
+		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
+		int dimX = resultImage.getExtents().length > 0 ? resultImage.getExtents()[0] : 1;
+		int dimY = resultImage.getExtents().length > 1 ? resultImage.getExtents()[1] : 1;
+		int dimZ = resultImage.getExtents().length > 2 ? resultImage.getExtents()[2] : 1;
+
+		for (int z = 0; z < dimZ; z++)
+		{			
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					if ( contourImageBlur.getFloat(x,y,z) <= 1 )
+					{
+						if ( resultImage.isColorImage() )
+						{
+							resultImage.setC(x, y, z, 0, 0);	
+							resultImage.setC(x, y, z, 1, 0);	
+							resultImage.setC(x, y, z, 2, 0);	
+							resultImage.setC(x, y, z, 3, 0);							
+						}
+						else
+						{
+							resultImage.set(x, y, z, 0);
+						}
+					}
+				}
+			}			
+		}
+		resultImage.setImageName( imageName + "_straight.xml" );
+		saveImage(imageName, resultImage, true);
+		resultImage.disposeLocal(false);
+		resultImage = null;		
+	}
+
+	private VOI latticeContours = null;
+	public ModelImage segmentLattice(final ModelImage image, boolean saveContourImage, int paddingFactor )
 	{
 		String imageName = image.getImageName();
 		if (imageName.contains("_clone")) {
@@ -7755,6 +7861,7 @@ public class LatticeModel {
 		final int numPts = 360;
 
 		System.err.println( "Segment Lattice " + paddingFactor );
+		long time = System.currentTimeMillis();
 
 		FileIO fileIO = new FileIO();
 
@@ -7763,6 +7870,8 @@ public class LatticeModel {
 
 		ModelImage contourImage = new ModelImage( ModelStorageBase.FLOAT, resultImage.getExtents(), imageName + "_straight_contour.xml" );
 		contourImage.setResolutions( resultImage.getResolutions(0) );
+		System.err.println( "   new images " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
 
 		int dimX = (int) (resultImage.getExtents()[0]);
 		int dimY = (int) (resultImage.getExtents()[1]);
@@ -7770,8 +7879,8 @@ public class LatticeModel {
 
 		//		System.err.println( dimX + " " + dimY + " " + dimZ );
 
-		VOI outputContour = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
-		resultImage.registerVOI( outputContour );
+		latticeContours = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
+		resultImage.registerVOI( latticeContours );
 		for (int i = 0; i < dimZ; i++)
 		{			
 			VOIContour contour = new VOIContour(true);
@@ -7779,21 +7888,21 @@ public class LatticeModel {
 
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += paddingFactor;
-			//			System.err.println( dimX + " " + dimY + " " + diameter );
 
 			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour, numPts);			
 			for ( int j = 0; j < contour.size(); j++ )
 			{
 				contour.elementAt(j).Z = i;
 			}
-			outputContour.getCurves().add( contour );
+			latticeContours.getCurves().add( contour );
 
-			for ( int y = 0; y < dimY; y++ )
+			float radiusSq = radius*radius;
+			for ( int y = (int)Math.max(0, center.Y - radius); y < Math.min(dimY, center.Y + radius + 1); y++ )
 			{
-				for ( int x = 0; x < dimX; x++ )
+				for ( int x = (int)Math.max(0, center.X - radius); x < Math.min(dimX, center.X + radius + 1); x++ )
 				{
-					contourImage.set(x,  y, i, 0 );
-					if ( contour.contains(x, y) )
+					float dist = (x - center.X) * (x - center.X) + (y - center.Y) * (y - center.Y); 
+					if ( dist <= radiusSq )
 					{
 						contourImage.set(x,  y, i, 10 );
 					}
@@ -7801,11 +7910,15 @@ public class LatticeModel {
 			}
 		}
 
+		System.err.println( "   contours " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
 
 		ModelImage sourceImage = null;//fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_toTwisted.xml" );
 
 		// Optional VOI interpolation & smoothing:
 		ModelImage contourImageBlur = WormSegmentation.blur(contourImage, 3);
+		System.err.println( "   blur " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
 		contourImage.disposeLocal(false);
 		contourImage = null;
 
@@ -7845,6 +7958,9 @@ public class LatticeModel {
 				}
 			}			
 		}
+		System.err.println( "   clip images " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
+		
 		resultImage.setImageName( imageName + "_straight.xml" );
 		saveImage(imageName, resultImage, true);
 		if ( sourceImage != null ) {
@@ -7857,14 +7973,22 @@ public class LatticeModel {
 		voiDir = outputDirectory + File.separator + "contours" + File.separator;
 		saveAllVOIsTo(voiDir, resultImage);
 		resultImage.unregisterAllVOIs();
+		System.err.println( "   save vois " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
 
 		resultImage.disposeLocal(false);
 		resultImage = null;
 
-		contourImageBlur.setImageName( imageName + "_contours.xml" );
-		saveImage(imageName, contourImageBlur, true);
+		if ( saveContourImage ) {
+			contourImageBlur.setImageName( imageName + "_contours.xml" );
+			saveImage(imageName, contourImageBlur, false);
+			System.err.println( "   save image " + AlgorithmBase.computeElapsedTime(time) );
+			time = System.currentTimeMillis();
+			return contourImageBlur;
+		}
 		contourImageBlur.disposeLocal(false);
 		contourImageBlur = null;
+		return null;
 	}
 
 	/**
@@ -7873,7 +7997,7 @@ public class LatticeModel {
 	 * @param image
 	 * @param resultExtents
 	 */
-	private void untwist(final ModelImage image, final int[] resultExtents, boolean saveSource)
+	private void untwist(final ModelImage image, final int[] resultExtents, boolean saveSource, boolean saveTif)
 	{
 		long time = System.currentTimeMillis();
 		int size = samplingPlanes.getCurves().size();
@@ -7925,104 +8049,196 @@ public class LatticeModel {
 		}
 
 		System.err.println( "saving image " + imageName + " " + resultImage.getImageName() );
-		saveImage(imageName, resultImage, true);
+		saveImage(imageName, resultImage, saveTif);
 		resultImage.disposeLocal(false);
 		resultImage = null;
 
-		if ( overlapImage != null ) {
-			for ( int i = 0; i < overlapImage.getDataSize(); i++ ) {
-				float count = overlapImage.getFloat(i);
-				if ( count == 1 ) overlapImage.set(i, 0);
-			}
-			saveImage(imageName, overlapImage, false);
-			
-			// straighten the overlap image:
-			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_overlap_straight.xml");
-			resultImage.setResolutions(new float[] {1, 1, 1});
-			
-			// this is the untwisting code:
-			for (int i = 0; i < size; i++)
-			{			
-				VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
-				for (int j = 0; j < 4; j++) {
-					corners[j] = kBox.elementAt(j);
-				}
-
-				writeDiagonal(overlapImage, resultImage, null, null, 0, i, resultExtents, corners);
-			}
-			saveImage(imageName, resultImage, false);
-			resultImage.disposeLocal(false);
-			resultImage = null;
-			
-			overlapImage.disposeLocal(false);
-			overlapImage = null;
-		}
+//		if ( overlapImage != null ) {
+//			for ( int i = 0; i < overlapImage.getDataSize(); i++ ) {
+//				float count = overlapImage.getFloat(i);
+//				if ( count == 1 ) overlapImage.set(i, 0);
+//			}
+//			saveImage(imageName, overlapImage, false);
+//			
+//			// straighten the overlap image:
+//			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_overlap_straight.xml");
+//			resultImage.setResolutions(new float[] {1, 1, 1});
+//			
+//			// this is the untwisting code:
+//			for (int i = 0; i < size; i++)
+//			{			
+//				VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+//				for (int j = 0; j < 4; j++) {
+//					corners[j] = kBox.elementAt(j);
+//				}
+//
+//				writeDiagonal(overlapImage, resultImage, null, null, 0, i, resultExtents, corners);
+//			}
+//			saveImage(imageName, resultImage, false);
+//			resultImage.disposeLocal(false);
+//			resultImage = null;
+//			
+//			overlapImage.disposeLocal(false);
+//			overlapImage = null;
+//		}
 
 		if ( sourceImage != null )
 		{
-			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_sweep_straight.xml");
-			resultImage.setResolutions(new float[] {1, 1, 1});
-
-			Vector3f[][] directions = new Vector3f[dimY][dimX];
-			int[][] prevDir = new int[dimY][dimX];
-			for ( int z = 0; z < dimZ - 1; z++ ) {
-				Vector3f dir = new Vector3f();
-				for ( int y = 0; y < dimY; y++ ) {
-					for ( int x = 0; x < dimX; x++ ) {
-
-						float dx = sourceImage.getFloatC(x, y, z+1, 1) - sourceImage.getFloatC(x, y, z, 1);
-						float dy = sourceImage.getFloatC(x, y, z+1, 2) - sourceImage.getFloatC(x, y, z, 2);
-						float dz = sourceImage.getFloatC(x, y, z+1, 3) - sourceImage.getFloatC(x, y, z, 3);
-						dir.set(dx, dy, dz);
-						float length = dir.normalize();
-						float angle = -1;
-						
-						if ( directions[y][x] == null && length > 0 ) {
-							directions[y][x] = new Vector3f(dir);
-							prevDir[y][x] = z;
-						}
-						else if ( directions[y][x] != null ) {
-							if ( length <= 0 ) {
-								int index = prevDir[y][x];
-
-								dx = sourceImage.getFloatC(x, y, index, 1) - sourceImage.getFloatC(x, y, z, 1);
-								dy = sourceImage.getFloatC(x, y, index, 2) - sourceImage.getFloatC(x, y, z, 2);
-								dz = sourceImage.getFloatC(x, y, index, 3) - sourceImage.getFloatC(x, y, z, 3);
-								dir.set(dx, dy, dz);
-								length = dir.normalize();
-								if ( length > 0 ) {
-									angle = dir.angle(directions[y][x]);
-								}
-							}
-							else {
-								angle = dir.angle(directions[y][x]);
-							}
-						}
-							
-						if ( (angle != -1) && (angle < (Math.PI/2.0) )) {
-							
-							directions[y][x].copy(dir);
-							prevDir[y][x] = z;
-							
-							resultImage.set(x, y, z, 1);
-							if ( z == 1 ) {
-								resultImage.set(x, y, z-1, 1);
-							}
-							if ( z == dimZ - 2 ) {
-								resultImage.set(x, y, z+1, 1);
-							}
-						}
-					}
-				}
-			}
-
-			saveImage(imageName, resultImage, false);
-			resultImage.disposeLocal(false);
-			resultImage = null;
-			
-			saveImage(imageName, sourceImage, true);
+//			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_sweep_straight.xml");
+//			resultImage.setResolutions(new float[] {1, 1, 1});
+//
+//			Vector3f[][] directions = new Vector3f[dimY][dimX];
+//			int[][] prevDir = new int[dimY][dimX];
+//			for ( int z = 0; z < dimZ - 1; z++ ) {
+//				Vector3f dir = new Vector3f();
+//				for ( int y = 0; y < dimY; y++ ) {
+//					for ( int x = 0; x < dimX; x++ ) {
+//
+//						float dx = sourceImage.getFloatC(x, y, z+1, 1) - sourceImage.getFloatC(x, y, z, 1);
+//						float dy = sourceImage.getFloatC(x, y, z+1, 2) - sourceImage.getFloatC(x, y, z, 2);
+//						float dz = sourceImage.getFloatC(x, y, z+1, 3) - sourceImage.getFloatC(x, y, z, 3);
+//						dir.set(dx, dy, dz);
+//						float length = dir.normalize();
+//						float angle = -1;
+//						
+//						if ( directions[y][x] == null && length > 0 ) {
+//							directions[y][x] = new Vector3f(dir);
+//							prevDir[y][x] = z;
+//						}
+//						else if ( directions[y][x] != null ) {
+//							if ( length <= 0 ) {
+//								int index = prevDir[y][x];
+//
+//								dx = sourceImage.getFloatC(x, y, index, 1) - sourceImage.getFloatC(x, y, z, 1);
+//								dy = sourceImage.getFloatC(x, y, index, 2) - sourceImage.getFloatC(x, y, z, 2);
+//								dz = sourceImage.getFloatC(x, y, index, 3) - sourceImage.getFloatC(x, y, z, 3);
+//								dir.set(dx, dy, dz);
+//								length = dir.normalize();
+//								if ( length > 0 ) {
+//									angle = dir.angle(directions[y][x]);
+//								}
+//							}
+//							else {
+//								angle = dir.angle(directions[y][x]);
+//							}
+//						}
+//							
+//						if ( (angle != -1) && (angle < (Math.PI/2.0) )) {
+//							
+//							directions[y][x].copy(dir);
+//							prevDir[y][x] = z;
+//							
+//							resultImage.set(x, y, z, 1);
+//							if ( z == 1 ) {
+//								resultImage.set(x, y, z-1, 1);
+//							}
+//							if ( z == dimZ - 2 ) {
+//								resultImage.set(x, y, z+1, 1);
+//							}
+//						}
+//					}
+//				}
+//			}
+//
+//			saveImage(imageName, resultImage, false);
+//			resultImage.disposeLocal(false);
+//			resultImage = null;
+//			
+			saveImage(imageName, sourceImage, false);
 			sourceImage.disposeLocal(false);
 			sourceImage = null;
+		}
+
+		System.err.println( "writeDiagonal " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
+	}
+
+	/**
+	 * Straightens the worm image based on the input lattice positions. The image is straightened without first building a worm model.
+	 * The image is segmented after clipping based on surface markers or the lattice shape.
+	 * @param image
+	 * @param resultExtents
+	 */
+	private void untwistMT(final ModelImage image, final int[] resultExtents, boolean saveSource, boolean saveTif)
+	{
+		long time = System.currentTimeMillis();
+		int size = samplingPlanes.getCurves().size();
+
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		final ModelImage resultImage;
+		if ( image.isColorImage() )
+		{
+			resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_unmasked.xml");
+		}
+		else
+		{
+			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_unmasked.xml");
+		}	
+		resultImage.setResolutions(new float[] {1, 1, 1});
+
+		final ModelImage sourceImage;
+		if ( saveSource )
+		{
+			sourceImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toTwisted.xml");
+			sourceImage.setResolutions(new float[] {1, 1, 1});
+		}
+		else
+		{
+			sourceImage = null;
+		}
+		
+
+		System.err.println( "starting untwist..." );
+
+		int dimX = (int) (resultImage.getExtents()[0]);
+		int dimY = (int) (resultImage.getExtents()[1]);
+		int dimZ = size;
+		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
+
+		// this is the untwisting code:
+		int nthreads = ThreadUtil.getAvailableCores();
+		final CountDownLatch doneSignalx = new CountDownLatch(nthreads);
+		final float step2 = size / nthreads;
+
+		for (int i = 0; i < nthreads; i++) {
+			final int start2 = (int) (step2 * i);
+			final int end2 = (int) (step2 * (i + 1));
+			final Runnable task = new Runnable() {
+				public void run() {
+					final Vector3f[] corners = new Vector3f[4];
+					for ( int j = start2; j < end2; j++ )
+					{
+						VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+						for (int k = 0; k < 4; k++) {
+							corners[k] = kBox.elementAt(k);
+						}
+						writeDiagonal(image, resultImage, sourceImage, null, 0, j, resultExtents, corners);
+					}
+					doneSignalx.countDown();
+				}
+			};
+			ThreadUtil.mipavThreadPool.execute(task);
+		}
+		try {
+			doneSignalx.await();
+		} catch (final InterruptedException e) {
+			gov.nih.mipav.view.MipavUtil.displayError(e.getMessage());
+			return;
+		}
+		
+
+		System.err.println( "saving image " + imageName + " " + resultImage.getImageName() );
+		saveImage(imageName, resultImage, saveTif);
+		resultImage.disposeLocal(false);
+
+
+		if ( sourceImage != null )
+		{
+			saveImage(imageName, sourceImage, false);
+			sourceImage.disposeLocal(false);
 		}
 
 		System.err.println( "writeDiagonal " + AlgorithmBase.computeElapsedTime(time) );
@@ -8142,10 +8358,10 @@ public class LatticeModel {
 					}
 				}
 			}			
-			saveImage(imageName, distanceStart, true);
+//			saveImage(imageName, distanceStart, false);
 			distanceStart.disposeLocal(false);
 			distanceStart = null;
-			saveImage(imageName, distanceEnd, true);
+//			saveImage(imageName, distanceEnd, false);
 			distanceEnd.disposeLocal(false);
 			distanceEnd = null;
 
@@ -8961,7 +9177,12 @@ public class LatticeModel {
 
 		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
 		VOIVector contourVector = new VOIVector();
-		loadAllVOIsFrom(resultImage, voiDir, true, contourVector, false);
+		if ( latticeContours != null ) {
+			contourVector.add(latticeContours);
+		}
+		else {
+			loadAllVOIsFrom(resultImage, voiDir, true, contourVector, false);
+		}
 		if ( contourVector.size() == 0 )
 		{
 			// Fall back to default untwisting version:
@@ -8991,7 +9212,7 @@ public class LatticeModel {
 				startIndex = splineRangeIndex[latticeSegment-1];
 				endIndex = splineRangeIndex[latticeSegment];
 			}
-			System.err.println( i + "  " + markerNames.elementAt(i) + "  " + latticeSegment + "  " + startIndex + "  " + endIndex + "  " + size + "  " + splineRangeIndex.length);
+//			System.err.println( i + "  " + markerNames.elementAt(i) + "  " + latticeSegment + "  " + startIndex + "  " + endIndex + "  " + size + "  " + splineRangeIndex.length);
 			int closeCount = 0;
 			for ( int j = startIndex; j < endIndex; j++ )
 			{			

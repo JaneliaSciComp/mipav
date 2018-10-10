@@ -23,6 +23,7 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************
  ******************************************************************/
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmConstrainedOAR3D;
@@ -389,6 +390,7 @@ public class PlugInAlgorithmWormUntwisting
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, 
 			final String baseFileDir, final String baseFileDir2, final String baseFileName, final int paddingFactor )
 	{
+		long time = System.currentTimeMillis();
 		ModelImage wormImage = null;
 		ModelImage nucleiImage = null;
 		if ( includeRange != null )
@@ -426,7 +428,12 @@ public class PlugInAlgorithmWormUntwisting
 						nucleiFile = new File(baseFileDir2 + File.separator + fileName);
 					}
 
-					model.interpolateLattice( false, false, true, false );
+
+					long timeInterpolateLattice = System.currentTimeMillis();
+					model.initializeInterpolation();
+					model.untwistImage( true );
+					System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
+					
 					ModelImage contourImage = null;
 					//							if ( segmentSkinSurface.isSelected() )
 //					{
@@ -434,28 +441,34 @@ public class PlugInAlgorithmWormUntwisting
 //					}
 					//							else if ( segmentLattice.isSelected() )
 					//							{
-					model.segmentLattice(wormImage, false, paddingFactor);
+					long timeSegmentLattice = System.currentTimeMillis();
+					contourImage = model.segmentLattice(wormImage, true, paddingFactor);
+					System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
 					//							}
+					long timeRetwist = System.currentTimeMillis();
 					model.retwist(wormImage);
-					
+					System.err.println( "retwist elapsed time =  " + AlgorithmBase.computeElapsedTime(timeRetwist) );
+
+					long timeAnnotation = System.currentTimeMillis();
 					if ( wormData.readSeamCells() != null )
 					{
 						model.setMarkers( wormData.getSeamAnnotations() );
-						model.interpolateLattice( false, false, false, true );	
+						model.untwistMarkers();	
 						model.saveAnnotationStraight(wormImage, "straightened_seamcells", "straightened_seamcells.csv" );	
 					}
 					wormData.readNamedSeamCells();
 					model.setMarkers( wormData.getSeamAnnotations() );
-					model.interpolateLattice( false, false, false, true );	
+					model.untwistMarkers();	
 					model.saveAnnotationStraight(wormImage, "straightened_named_seamcells", "straightened_seamcells.csv" );	
 					
 					VOI markers = wormData.getMarkerAnnotations();
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
-						model.interpolateLattice( false, false, false, true );	
+						model.untwistMarkers();	
 						model.saveAnnotationStraight(wormImage, "straightened_annotations", "straightened_annotations.csv" );	
 					}
+					System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
 
 					if ( (nucleiFile != null) && nucleiFile.exists() )
 					{			
@@ -475,28 +488,43 @@ public class PlugInAlgorithmWormUntwisting
 						nucleiImage = fileIO2.readImage(nucleiFileName, baseFileDir2 + File.separator, false, null); 
 						nucleiImage.setImageName(baseFileName + "_" + includeRange.elementAt(i) + ".tif");
 						
-						
+
+						timeInterpolateLattice = System.currentTimeMillis();
 						model.setImage(nucleiImage);
 						model.setSeamCellImage(null);
-						model.interpolateLattice( false, false, true, false );
+						model.untwistImage( false );
+						System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
 
+						timeSegmentLattice = System.currentTimeMillis();
 //						if ( segmentSkinSurface.isSelected() )
 //						{
 //							contourImage = model.segmentSkin(nucleiImage, contourImage, paddingFactor);
 //						}
 //						else if ( segmentLattice.isSelected() )
 //						{
-							model.segmentLattice(nucleiImage, false, paddingFactor);
+//							model.segmentLattice(nucleiImage, false, paddingFactor);
 //						}
+						if ( contourImage != null )
+						{
+							model.segmentLattice(nucleiImage, contourImage);
+						}
+						else
+						{
+							model.segmentLattice(nucleiImage, false, paddingFactor);
+						}
+						
+						System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
 
+						timeAnnotation = System.currentTimeMillis();
 						wormData = new WormData(nucleiImage);
 						markers = wormData.getMarkerAnnotations();
 						if ( (markers != null) && (markers.getCurves().size() > 0) )
 						{
 							model.setMarkers(markers);
-							model.interpolateLattice( false, false, false, true );	
+							model.untwistMarkers();	
 							model.saveAnnotationStraight(nucleiImage, "straightened_annotations", "straightened_annotations.csv" );	
 						}
+						System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
 						model.dispose();
 						model = null;
 
@@ -538,6 +566,7 @@ public class PlugInAlgorithmWormUntwisting
 			wormImage.disposeLocal(false);
 		}
 
+		System.err.println( "straignten elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
 		MipavUtil.displayInfo( "Lattice straightening complete." );
 	}
 	
