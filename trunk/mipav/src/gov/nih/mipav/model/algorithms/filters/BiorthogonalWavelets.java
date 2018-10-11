@@ -138,7 +138,293 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     }
     
     public void runAlgorithm() {
+    	int xDim;
+    	int yDim;
+    	int zDim;
+    	int bound;
+    	int maxIters;
+    	int factor2inXDim;
+    	int factor2inYDim;
+    	int xTest;
+    	int yTest;
+    	int z;
+    	int ii;
+    	double WMt[][];
+    	double WN[][];
+    	int length;
+    	double buffer[];
+    	double IM[][];
+    	double IMt[][];
+    	int x;
+    	int y;
+    	int yLim;
+    	int xLim;
+    	int i;
+    	double prod[][];
+    	double IMtInput[][];
+    	double output[][];
+    	double IMtc[][][];
+    	double IMtz[][][];
+    	double IMhat[][][];
+    	double coeffs[];
+    	double thresh;
+    	double WM[][];
+    	double WNt[][];
     	
+        if (type.equalsIgnoreCase("spline")) {
+        	SplineWavelets();
+        }
+        else if (type.equalsIgnoreCase("CDF")) {
+        	CDFWavelets();
+        }
+        else {
+        	MipavUtil.displayError("Incorrect type = " + type);
+        	setCompleted(false);
+        	return;
+        }
+        
+        // Make sure transforms will be well-defined.
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        length = xDim * yDim;
+        buffer = new double[length];
+        IM = new double[yDim][xDim];
+        IMt = new double[yDim][xDim];
+        zDim = 1;
+        if (srcImage.getNDims() > 2) {
+        	zDim = srcImage.getExtents()[2];
+        }
+        IMtc = new double[yDim][xDim][zDim];
+        IMtz = new double[yDim][xDim][zDim];
+        IMhat = new double[yDim][xDim][zDim];
+        
+        // Image must have even dimensions
+        if (((xDim % 2) == 1) || ((yDim % 2) == 1)) {
+        	MipavUtil.displayError("Image must have even dimensions");
+        	setCompleted(false);
+        	return;
+        }
+        
+        // Determine the maximum number of iterations possible
+        bound = Math.max(Math.max(h.length,ht.length),Math.max(g.length,gt.length));
+        maxIters = 1;
+        while (Math.min(xDim,yDim)/Math.pow(2.0, maxIters) >= bound) {
+        	maxIters = maxIters + 1;
+        }
+        factor2inXDim = 0;
+        xTest = xDim;
+        while ((xTest % 2) == 0) {
+        	factor2inXDim++;
+        	xTest = xTest/2;
+        }
+        factor2inYDim = 0;
+        yTest = yDim;
+        while ((yTest % 2) == 0) {
+        	factor2inYDim++;
+        	yTest = yTest/2;
+        }
+        maxIters = Math.min(maxIters, Math.min(factor2inXDim, factor2inYDim));
+        
+        // Must have iterations <= maxIters
+        if (iterations > maxIters) {
+        	MipavUtil.displayError("For that image and those wavelets, you must have iterations <= " + maxIters);
+        	setCompleted(false);
+        	return;
+        }
+        
+        // Compute iterated wavelet transform
+        for (z = 0; z < zDim; z++) {
+        	try {
+                srcImage.exportData(z * length, length, buffer); // locks and releases lock
+            } catch (IOException error) {
+                buffer = null;
+                errorCleanUp("Biorthogonal wavelets: Image(s) locked", true);
+
+                return;
+            }
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			IM[y][x] = buffer[x + y * xDim];
+        			IMt[y][x] = IM[y][x];
+        		}
+        	}
+            for (ii = 1; ii <= iterations; ii++) {
+            	xLim = (int)Math.round(xDim/Math.pow(2.0, (ii-1)));
+            	yLim = (int)Math.round(yDim/Math.pow(2.0, (ii-1)));
+                if (method.equalsIgnoreCase("matrix")) {
+                    WMt = WaveletMatrix(yLim,ht,gt,inds_ht,inds_gt);
+                    WN = WaveletMatrix(xLim,h,g,inds_h,inds_g);
+                    prod = new double[yLim][xLim];
+                    for (y = 0; y < yLim; y++) {
+                    	for (x = 0; x < xLim; x++) {
+                    	    for (i = 0; i < yLim; i++) {
+                    	    	prod[y][x] += WMt[y][i] * IMt[i][x];
+                    	    }
+                    	}
+                    }
+                    for (y = 0; y < yLim; y++) {
+                    	for (x = 0; x < xLim; x++) {
+                    		for (i = 0; i < xLim; x++) {
+                    			IMt[y][x] += prod[y][i] * WN[x][i];
+                    		}
+                    	}
+                    }
+                } // if (method.equalsIgnoreCase("matrix"))
+                else if (method.equalsIgnoreCase("conv")) {
+                    IMtInput = new double[yLim][xLim];
+                    for (y = 0; y < yLim; y++) {
+                    	for (x = 0; x < xLim; x++) {
+                    	    IMtInput[y][x] = IMt[y][x];	
+                    	}
+                    }
+                    output = FastConvWaveletMult(IMtInput,ht,gt,inds_ht,inds_gt);
+                    IMtInput = new double[xLim][yLim];
+                    for (y = 0; y < yLim; y++ ) {
+                    	for (x = 0; x < xLim; x++) {
+                    		IMtInput[x][y] = output[y][x];
+                    	}
+                    }
+                    output = FastConvWaveletMult(IMtInput, h, g, inds_h, inds_g);
+                    for (y = 0; y < yLim; y++) {
+                    	for (x = 0; x < xLim; x++) {
+                    		IMt[y][x] = output[x][y];
+                    	}
+                    }
+                } // else if (method.equalsIgnoreCase("conv"))
+                else {
+                	MipavUtil.displayError("Method must be matrix or conv");
+                	setCompleted(false);
+                	return;
+                }
+            } // for (ii = 1; ii <= iterations; ii++)
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			buffer[x + y * xDim] = IMt[y][x];
+        			IMtc[y][x][z] = IMt[y][x];
+        			IMtz[y][x][z] = IMt[y][x];
+         		}
+        	}
+            try {
+                transformImage.importData(z*length, buffer, false);
+            } catch (IOException error) {
+                buffer = null;
+                errorCleanUp("Biorthogonal wavelets: Image(s) locked", true);
+
+                return;
+            }
+        } // for (z = 0; z < zDim; z++)
+        transformImage.calcMinMax();
+        
+        // Compress image by throwing away compressionFactor % of the wavelet coefficients;
+        if (compressionFactor > 0) {
+            coeffs = new double[length * zDim];
+            for (z = 0; z < zDim; z++) {
+            	for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            		    coeffs[length*z + y*xDim + x] = Math.abs(IMtz[y][x][z]);
+            		}
+            	}
+            }
+            Arrays.sort(coeffs);
+            thresh = coeffs[(int)Math.ceil(compressionFactor*length*zDim)-1];
+            for (z = 0; z < zDim; z++) {
+            	for (i = 0; i < length; i++) {
+     	    		buffer[i] = 0;
+     	    	}
+                for (y = 0; y < yDim; y++) {
+            	    for (x = 0; x < xDim; x++) {
+            			if (Math.abs(IMtz[y][x][z]) <= thresh) {
+            				IMtc[y][x][z] = 0;
+            			}
+            			buffer[x + y * xDim] = IMtc[y][x][z];
+            		}
+                 }
+                 try {
+                    compressedTransformImage.importData(z*length, buffer, false);
+                 } catch (IOException error) {
+                    buffer = null;
+                    errorCleanUp("Biorthogonal wavelets: Image(s) locked", true);
+
+                    return;
+                 }
+            } // for (z = 0; z < zDim; z++)
+        } // if (compressionFactor > 0)
+        else if (compressionFactor == -1) {
+       	    IMtc = new double[yDim][xDim][zDim];
+       	    xLim = (int)Math.round(xDim/Math.pow(2.0, iterations));
+     	    yLim = (int)Math.round(yDim/Math.pow(2.0, iterations));
+     	    for (z = 0; z < zDim; z++) {
+     	    	for (i = 0; i < length; i++) {
+     	    		buffer[i] = 0;
+     	    	}
+     	    	for (y = 0; y < yLim; y++) {
+     	    		for (x = 0; x < xLim; x++) {
+     	    			IMtc[y][x][z] = IMtz[y][x][z];
+     	    			buffer[x + y * xDim] = IMtz[y][x][z];
+     	    		}
+     	    	}
+     	    	try {
+                    compressedTransformImage.importData(z*length, buffer, false);
+                 } catch (IOException error) {
+                    buffer = null;
+                    errorCleanUp("Biorthogonal wavelets: Image(s) locked", true);
+
+                    return;
+                 }
+     	    }
+        } // else if (compressionFactor == -1)
+        compressedTransformImage.calcMinMax();
+        
+        // Iteratively reconstruct the image
+        for (z = 0; z < zDim; z++) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    IMhat[y][x][z] = IMtc[y][x][z];	
+        		}
+        	}
+        }
+        
+        for (z = 0; z < zDim; z++) {
+        	for (i = 0; i < length; i++) {
+        		buffer[i] = 0;
+        	}
+        	for (ii = iterations; ii >= 1; ii--) {
+        		xLim = (int)Math.round(xDim/Math.pow(2.0, (ii-1)));
+            	yLim = (int)Math.round(yDim/Math.pow(2.0, (ii-1)));
+            	WM = WaveletMatrix(yLim, h, g, inds_h, inds_g);
+            	WNt = WaveletMatrix(xLim, ht, gt, inds_ht, inds_gt);
+            	prod = new double[yLim][xLim];
+            	for (y = 0; y < yLim; y++) {
+            		for (x = 0; x < xLim; x++) {
+            			for (i = 0; i < yLim; i++) {
+            				prod[y][x] += WM[i][y] * IMhat[i][x][z];
+            			}
+            		}
+            	}
+            	for (y = 0; y < yLim; y++) {
+            		for (x = 0; x < xLim; x++) {
+            			for (i = 0; i < xLim; i++) {
+            				IMhat[y][x][z] += prod[y][i] * WNt[i][x];
+            			}
+            		}
+            	}
+        	} // for (ii = iterations; ii >= 1; ii--)
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			buffer[x + y * xDim] = IMhat[y][x][z];
+         		}
+        	}
+            try {
+                reconstructedImage.importData(z*length, buffer, false);
+            } catch (IOException error) {
+                buffer = null;
+                errorCleanUp("Biorthogonal wavelets: Image(s) locked", true);
+
+                return;
+            }
+
+        } // for (z = 0; z < zDim; z++)
+        reconstructedImage.calcMinMax();
     }
     
     private void computeEpsilon() {
@@ -162,7 +448,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
         } // while(true)	
     }
 	
-	public void CDFWavelets(int l, int lt, boolean display) {
+	public void CDFWavelets() {
 		 // Inputs:   disp can be 'true' or 'false' and controls whether or not to
 		 //           display H(w), Ht(w), G(w), and Gt(w). The default is 'true'.
 		 
@@ -455,7 +741,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 		} // if (display)
 	}
 	
-	public void SplineWavelets(int N, int Nt, boolean display) {
+	public void SplineWavelets() {
 		// Inputs:   disp can be 'true' or 'false' and controls whether or not to
 		//           display H(w), Ht(w), G(w), and Gt(w). The default is 'true'.
 		
