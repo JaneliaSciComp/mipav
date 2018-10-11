@@ -15,6 +15,7 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -1276,18 +1277,54 @@ public class MipavUtil extends JComponent {
      */
     public static void showWebHelp(final String wikiPage) {
         final String wikiBase = "https://mipav.cit.nih.gov/pubwiki/index.php/";
+        openURLInBrowser(wikiBase + wikiPage);
+    }
+    
+    /**
+     * Opens a URL in the user's default browser
+     * 
+     * @param URLString The full URL of the web page to open.
+     */
+    public static void openURLInBrowser(final String URLString) {
         try {
-            final URI wikiURI = new URI(wikiBase + wikiPage);
+            final URI wikiURI = new URI(URLString);
             Desktop.getDesktop().browse(wikiURI);
         } catch (final URISyntaxException e) {
             e.printStackTrace();
-            MipavUtil.displayError("Unable to display MIPAV wiki help: " + wikiPage);
+            MipavUtil.displayError("Web page URL syntax error: " + URLString);
             return;
         } catch (final IOException e) {
             e.printStackTrace();
-            MipavUtil.displayError("Unable to display MIPAV wiki help: " + wikiPage);
+            MipavUtil.displayError("Error opening web page in browser: " + URLString);
             return;
         }
+        
+        // old method of opening something from the web that was replicated in various locations
+//        final String osName = System.getProperty("os.name");
+//        try {
+//            if (osName.startsWith("Mac OS")) {
+//                final Class fileMgr = Class.forName("com.apple.eio.FileManager");
+//                final Method openURL = fileMgr.getDeclaredMethod("openURL", new Class[] {String.class});
+//                openURL.invoke(null, new Object[] {url});
+//            } else if (osName.startsWith("Windows")) {
+//                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
+//            } else { // assume Unix or Linux
+//                final String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape"};
+//                String browser = null;
+//                for (int count = 0; count < browsers.length && browser == null; count++) {
+//                    if (Runtime.getRuntime().exec(new String[] {"which", browsers[count]}).waitFor() == 0) {
+//                        browser = browsers[count];
+//                    }
+//                }
+//                if (browser == null) {
+//                    System.out.println("Can not find web browser");
+//                } else {
+//                    Runtime.getRuntime().exec(new String[] {browser, url});
+//                }
+//            }
+//        } catch (final Exception e) {
+//            System.out.println("Can not find web browser");
+//        }
     }
 
     /**
