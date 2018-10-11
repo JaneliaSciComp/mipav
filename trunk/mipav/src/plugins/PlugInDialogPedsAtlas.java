@@ -4548,48 +4548,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         if (source == helpLabel) {
             if (e.getButton() == MouseEvent.BUTTON1) {
 
-                openURL(pedsHome + File.separator + "config" + File.separator + "PedsAltasHelp.html");
+                MipavUtil.openURLInBrowser(pedsHome + File.separator + "config" + File.separator + "PedsAltasHelp.html");
 
             }
         }
 
     }
-
-    /**
-     * Launches browser...code obtained from: Bare Bones Browser Launch by Dem Pilafian Web Page Copyright (c) 2007
-     * Center Key Software Source Code and Javadoc are Public Domain http://www.centerkey.com/java/browser
-     * 
-     * @param url
-     */
-    public void openURL(final String url) {
-
-        final String osName = System.getProperty("os.name");
-        try {
-            if (osName.startsWith("Mac OS")) {
-                final Class fileMgr = Class.forName("com.apple.eio.FileManager");
-                final Method openURL = fileMgr.getDeclaredMethod("openURL", new Class[] {String.class});
-                openURL.invoke(null, new Object[] {url});
-            } else if (osName.startsWith("Windows")) {
-                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
-            } else { // assume Unix or Linux
-                final String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape"};
-                String browser = null;
-                for (int count = 0; count < browsers.length && browser == null; count++) {
-                    if (Runtime.getRuntime().exec(new String[] {"which", browsers[count]}).waitFor() == 0) {
-                        browser = browsers[count];
-                    }
-                }
-                if (browser == null) {
-                    System.out.println("Can not find web browser");
-                } else {
-                    Runtime.getRuntime().exec(new String[] {browser, url});
-                }
-            }
-        } catch (final Exception e) {
-            System.out.println("Can not find web browser");
-        }
-    }
-
+    
     /**
      * mouse entered
      */
