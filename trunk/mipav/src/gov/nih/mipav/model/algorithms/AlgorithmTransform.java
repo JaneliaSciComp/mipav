@@ -6400,6 +6400,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index;
         int index2;
         int indexC;
+        int destIndex = 0;
+        int numVOIs = 0;
         final int sliceSize = iXdim * iYdim;
         final int length = sliceSize * iZdim;
         int index2Size;
@@ -6576,8 +6578,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                     VOIExtAlgo.run();
                     VOIExtAlgo.finalize();
                     VOIExtAlgo = null;
-                    destImage.addVOIs(tmpMask.getVOIs());
-                    tmpMask.resetVOIs();
+                    
+                    numVOIs = tmpMask.getVOIs().size();
+                    if (numVOIs > 0) {
+	                    destImage.addVOIs(tmpMask.getVOIs());
+	                    tmpMask.resetVOIs();
+                    }
                     for (z = 0; z < oZdim; z++) {
                         for (j = 0; j < oYdim; j++) {
                             for (i = 0; i < oXdim; i++) {
@@ -6587,27 +6593,29 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                 }
             } // for (index2 = 0; index2 < curves.size(); index2++)
-            numDestVOIs[index] = destImage.getVOIs().size();
-        	if (index == 0) {
-        		for (i = 0; i < numDestVOIs[0]; i++) {
-        			currentVOI = destImage.getVOIs().get(i);
-        			currentVOI.setAllActive(true);
-        		}
-        	}
-        	else {
-        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
-        	    	currentVOI = destImage.getVOIs().get(i);
-        	    	currentVOI.setAllActive(false);
-        	    }
-        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
-        	    	currentVOI = destImage.getVOIs().get(i);
-        	    	currentVOI.setAllActive(true);
-        	    }
-        	}
-        	destImage.groupVOIs();
-    	    numDestVOIs[index] = destImage.getVOIs().size();
-    	    destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
-    	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
+            if (numVOIs > 0) {
+	            numDestVOIs[destIndex] = destImage.getVOIs().size();
+	        	if (destIndex == 0) {
+	        		for (i = 0; i < numDestVOIs[0]; i++) {
+	        			currentVOI = destImage.getVOIs().get(i);
+	        			currentVOI.setAllActive(true);
+	        		}
+	        	}
+	        	else {
+	        	    for (i = 0; i < numDestVOIs[destIndex-1]; i++) {
+	        	    	currentVOI = destImage.getVOIs().get(i);
+	        	    	currentVOI.setAllActive(false);
+	        	    }
+	        	    for (i = numDestVOIs[destIndex-1]; i < numDestVOIs[destIndex]; i++) {
+	        	    	currentVOI = destImage.getVOIs().get(i);
+	        	    	currentVOI.setAllActive(true);
+	        	    }
+	        	}
+	        	destImage.groupVOIs();
+	    	    numDestVOIs[destIndex] = destImage.getVOIs().size();
+	    	    destImage.getVOIs().get(destIndex).setName(image.getVOIs().get(index).getName());
+	    	    destImage.getVOIs().get(destIndex++).setColor(image.getVOIs().get(index).getColor());
+            } // if (numVOIs > 0)
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
