@@ -59,7 +59,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private boolean doCerebellumSkip = true;
     
-    private int cerebellumSkipSliceMax = 7;
+    private int cerebellumSkipSliceMax = 9;
     
     private boolean doSkullRemoval = true;
     
@@ -164,13 +164,6 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
             System.err.println("No DWI volume selected.");
             return;
         }
-        
-        // default values
-        adcThreshold = 620;
-        doSymmetryRemoval = true;
-        doCerebellumSkip = true;
-        doSkullRemoval = true;
-        cerebellumSkipSliceMax = 7;
         
         if (adcImage != null && dwiImage != null) {
             callAlgorithm();
