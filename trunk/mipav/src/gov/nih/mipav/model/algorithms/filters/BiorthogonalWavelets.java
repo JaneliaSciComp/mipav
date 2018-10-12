@@ -153,8 +153,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     	double WN[][];
     	int length;
     	double buffer[];
-    	double IM[][];
-    	double IMt[][];
+    	double IM[][][];
+    	double IMt[][][];
     	int x;
     	int y;
     	int yLim;
@@ -164,12 +164,13 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     	double IMtInput[][];
     	double output[][];
     	double IMtc[][][];
-    	double IMtz[][][];
     	double IMhat[][][];
     	double coeffs[];
     	double thresh;
     	double WM[][];
     	double WNt[][];
+    	double diff;
+    	double MSE;
     	
         if (type.equalsIgnoreCase("spline")) {
         	SplineWavelets();
@@ -188,14 +189,13 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
         buffer = new double[length];
-        IM = new double[yDim][xDim];
-        IMt = new double[yDim][xDim];
         zDim = 1;
         if (srcImage.getNDims() > 2) {
         	zDim = srcImage.getExtents()[2];
         }
+        IM = new double[yDim][xDim][zDim];
+        IMt = new double[yDim][xDim][zDim];
         IMtc = new double[yDim][xDim][zDim];
-        IMtz = new double[yDim][xDim][zDim];
         IMhat = new double[yDim][xDim][zDim];
         
         // Image must have even dimensions
@@ -244,8 +244,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
             }
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			IM[y][x] = buffer[x + y * xDim];
-        			IMt[y][x] = IM[y][x];
+        			IM[y][x][z] = buffer[x + y * xDim];
+        			IMt[y][x][z] = IM[y][x][z];
         		}
         	}
             for (ii = 1; ii <= iterations; ii++) {
@@ -258,14 +258,14 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
                     	    for (i = 0; i < yLim; i++) {
-                    	    	prod[y][x] += WMt[y][i] * IMt[i][x];
+                    	    	prod[y][x] += WMt[y][i] * IMt[i][x][z];
                     	    }
                     	}
                     }
                     for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
                     		for (i = 0; i < xLim; x++) {
-                    			IMt[y][x] += prod[y][i] * WN[x][i];
+                    			IMt[y][x][z] += prod[y][i] * WN[x][i];
                     		}
                     	}
                     }
@@ -274,7 +274,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     IMtInput = new double[yLim][xLim];
                     for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
-                    	    IMtInput[y][x] = IMt[y][x];	
+                    	    IMtInput[y][x] = IMt[y][x][z];	
                     	}
                     }
                     output = FastConvWaveletMult(IMtInput,ht,gt,inds_ht,inds_gt);
@@ -287,7 +287,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     output = FastConvWaveletMult(IMtInput, h, g, inds_h, inds_g);
                     for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
-                    		IMt[y][x] = output[x][y];
+                    		IMt[y][x][z] = output[x][y];
                     	}
                     }
                 } // else if (method.equalsIgnoreCase("conv"))
@@ -299,9 +299,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
             } // for (ii = 1; ii <= iterations; ii++)
             for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			buffer[x + y * xDim] = IMt[y][x];
-        			IMtc[y][x][z] = IMt[y][x];
-        			IMtz[y][x][z] = IMt[y][x];
+        			buffer[x + y * xDim] = IMt[y][x][z];
+        			IMtc[y][x][z] = IMt[y][x][z];
          		}
         	}
             try {
@@ -321,7 +320,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
             for (z = 0; z < zDim; z++) {
             	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
-            		    coeffs[length*z + y*xDim + x] = Math.abs(IMtz[y][x][z]);
+            		    coeffs[length*z + y*xDim + x] = Math.abs(IMt[y][x][z]);
             		}
             	}
             }
@@ -333,7 +332,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
      	    	}
                 for (y = 0; y < yDim; y++) {
             	    for (x = 0; x < xDim; x++) {
-            			if (Math.abs(IMtz[y][x][z]) <= thresh) {
+            			if (Math.abs(IMt[y][x][z]) <= thresh) {
             				IMtc[y][x][z] = 0;
             			}
             			buffer[x + y * xDim] = IMtc[y][x][z];
@@ -359,8 +358,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
      	    	}
      	    	for (y = 0; y < yLim; y++) {
      	    		for (x = 0; x < xLim; x++) {
-     	    			IMtc[y][x][z] = IMtz[y][x][z];
-     	    			buffer[x + y * xDim] = IMtz[y][x][z];
+     	    			IMtc[y][x][z] = IMt[y][x][z];
+     	    			buffer[x + y * xDim] = IMt[y][x][z];
      	    		}
      	    	}
      	    	try {
@@ -425,6 +424,22 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 
         } // for (z = 0; z < zDim; z++)
         reconstructedImage.calcMinMax();
+        
+        // Compute mean square reconstruction error
+        MSE = 0.0;
+        for (z = 0; z < zDim; z++) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    diff = IM[y][x][z] - IMhat[y][x][z];
+        		    MSE += (diff * diff);
+        		}
+        	}
+        }
+        MSE = MSE/(zDim * length);
+        System.out.println("Mean square reconstruction error = " + MSE);
+        Preferences.debug("Mean square reconstruction error = " + MSE + "\n", Preferences.DEBUG_ALGORITHM);
+        setCompleted(true);
+        return;
     }
     
     private void computeEpsilon() {
