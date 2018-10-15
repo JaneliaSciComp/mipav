@@ -1359,7 +1359,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
         }
         meanCurvature[0] = totalCurvLength/totalLength[0];
-        meanNegativeCurvature[0] = Math.abs(totalNegCurvLength/totalNegLength);
+        
+        // catch when neg length is 0, so we don't return a NaN
+        if (totalNegLength != 0) {
+            meanNegativeCurvature[0] = Math.abs(totalNegCurvLength/totalNegLength);
+        } else {
+            meanNegativeCurvature[0] = 0;
+        }
+        
         maxMagCurvature = Math.max(maxCurvature, Math.abs(minCurvature));
         sumSquared = 0.0;
         for (i = 0; i < graphPoints; i++) {
