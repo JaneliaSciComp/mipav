@@ -45,6 +45,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private JCheckBox cerebellumCheckbox;
     private JTextField cerebellumSliceMaxField;
     
+    private JCheckBox cerebellumAggressiveCheckbox;
+    private JTextField cerebellumAggressiveSliceMaxField;
+    
     private JCheckBox skullRemovalCheckbox;
 
     private boolean adcImageMultifile = false;
@@ -60,6 +63,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private boolean doCerebellumSkip = true;
     
     private int cerebellumSkipSliceMax = 9;
+    
+    private boolean doCerebellumSkipAggressive = true;
+    
+    private int cerebellumSkipAggressiveSliceMax = 15;
     
     private boolean doSkullRemoval = true;
     
@@ -226,10 +233,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                 resolCC[i] = unit.convertTo(resol[i], Unit.CENTIMETERS);
             }
             
-            double coreVolCC = segAlgo.getCoreSize() * resolCC[0] * resolCC[1] * resolCC[2];
+            double resFactorCC = resolCC[0] * resolCC[1] * resolCC[2];
             
             if (listenerParent != null) {
-                listenerParent.emailReport(adcImage, segAlgo.getThreshLightboxFile(), segAlgo.getCoreLightboxFile(), coreVolCC);
+                listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), resFactorCC);
             }
 
             if (segAlgo.isCompleted()) {
@@ -322,6 +329,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         doCerebellumSkip = cerebellumCheckbox.isSelected();
         cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
         
+        doCerebellumSkipAggressive = cerebellumAggressiveCheckbox.isSelected();
+        cerebellumSkipAggressiveSliceMax = Integer.parseInt(cerebellumAggressiveSliceMaxField.getText());
+        
         threshCloseIter = Integer.parseInt(threshCloseIterField.getText());
         threshCloseSize = Float.parseFloat(threshCloseSizeField.getText());
         
@@ -337,7 +347,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, doSkullRemoval, threshCloseIter, threshCloseSize, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, doSkullRemoval, threshCloseIter, threshCloseSize, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -386,6 +396,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         doCerebellumSkip = scriptParameters.getParams().getBoolean("do_cerebellum_skip");
         cerebellumSkipSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_slice_max");
         
+        doCerebellumSkipAggressive = scriptParameters.getParams().getBoolean("do_cerebellum_skip_aggressive");
+        cerebellumSkipAggressiveSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_aggressive_slice_max");
+        
         doSkullRemoval = scriptParameters.getParams().getBoolean("do_skull_removal");
         
         threshCloseIter = scriptParameters.getParams().getInt("threshold_close_iter_num");
@@ -401,6 +414,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip_aggressive", doCerebellumSkipAggressive));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_aggressive_slice_max", cerebellumSkipAggressiveSliceMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_skull_removal", doSkullRemoval));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_close_iter_num", threshCloseIter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_close_kernel_size", threshCloseSize));
@@ -471,6 +486,24 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(cerebellumSliceMaxField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        cerebellumAggressiveCheckbox = new JCheckBox("Perform second removal of threholded ADC values up to slice", doCerebellumSkipAggressive);
+        cerebellumAggressiveCheckbox.setForeground(Color.black);
+        cerebellumAggressiveCheckbox.setFont(serif12);
+        mainPanel.add(cerebellumAggressiveCheckbox, gbc);
+        
+        gbc.gridwidth = 1;
+        
+        cerebellumAggressiveSliceMaxField = new JTextField(10);
+        cerebellumAggressiveSliceMaxField.setText("" + cerebellumSkipAggressiveSliceMax);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(cerebellumAggressiveSliceMaxField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;

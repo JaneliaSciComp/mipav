@@ -9,10 +9,7 @@ import gov.nih.mipav.view.dialogs.JDialogFuzzyCMeans;
 
 import java.awt.Frame;
 import java.io.*;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Stack;
-import java.util.Vector;
+import java.util.*;
 
 import org.apache.commons.csv.*;
 
@@ -32,6 +29,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int cerebellumSkipSliceMax;
     
+    private boolean doCerebellumSkipAggressive;
+    
+    private int cerebellumSkipAggressiveSliceMax;
+    
     private boolean doSkullRemoval;
     
     private int skullRemovalMaskThreshold = 70;
@@ -41,8 +42,6 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     private float threshCloseSize;
     
     private VOI coreVOI;
-    
-    private Vector<MaskObject> selectedObjectList;
     
     // TODO
     
@@ -67,8 +66,12 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private float lightboxOpacity = 0.5f;
     
-    private File threshLightboxFile;
-    private File coreLightboxFile;
+//    private File threshLightboxFile;
+//    private File coreLightboxFile;
+    
+    private Hashtable<File, Vector<MaskObject>> selectedObjectTable = new Hashtable<File, Vector<MaskObject>>();
+    
+    private Vector<File> lightboxFileList = new Vector<File>();
     
     /**
      * Constructor.
@@ -76,7 +79,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, boolean removeSkull, int closeIter, float closeSize, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, boolean cerebellumSkipAggressive, int cerebellumSkipAggressiveMax, boolean removeSkull, int closeIter, float closeSize, String outputDir) {
         super();
         
         dwiImage = dwi;
@@ -85,6 +88,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         doSymmetryRemoval = symmetryRemoval;
         doCerebellumSkip = cerebellumSkip;
         cerebellumSkipSliceMax = cerebellumSkipMax;
+        doCerebellumSkipAggressive = cerebellumSkipAggressive;
+        cerebellumSkipAggressiveSliceMax = cerebellumSkipAggressiveMax;
         doSkullRemoval = removeSkull;
         threshCloseIter = closeIter;
         threshCloseSize = closeSize;
@@ -238,146 +243,30 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh", FileUtility.XML);
         
-        // combine threshold with ADC and save lightbox
-        ModelImage adcLightbox = generateLightbox(adcImage, segImg, lightboxOpacity);
-
-        threshLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
-        
-        adcLightbox.disposeLocal();
+//        // combine threshold with ADC and save lightbox
+//        ModelImage adcLightbox = generateLightbox(adcImage, segImg, lightboxOpacity);
+//
+//        threshLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
+//        
+//        adcLightbox.disposeLocal();
         
         // select largest object
         fireProgressStateChanged("Finding core lesion ...");
         fireProgressStateChanged(70);
         
-        short[] removedBuffer = null;
-        if (doCerebellumSkip) {
-            if (removedBuffer == null) {
-                removedBuffer = new short[volLength];
-            }
-            
-            // if values are mirrored across the the l->r of the image, cancel them out.  core values should only be on one side, while the cerebelum will have values on both sides
-            for (int iZ = 0; iZ < cerebellumSkipSliceMax && iZ < extents[2]; iZ++) {
-                for (int iY = 0; iY < extents[1]; iY++) {
-                    for (int iX = 0; iX < extents[0]; iX++) {
-                        int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
-                        
-                        if (segBuffer[index] > 0) {
-                            segBuffer[index] = 0;
-                            
-                            removedBuffer[index] = 1;
-                        }
-                    }
-                }
-            }
+        // TODO report lightbox files to dialog
+        
+        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax);
+        
+        if (lightboxPass1 != null) {
+            lightboxFileList.add(lightboxPass1);
         }
         
-        if (doSymmetryRemoval) {
-            if (removedBuffer == null) {
-                removedBuffer = new short[volLength];
-            }
-            
-            // if values are mirrored across the the l->r of the image, cancel them out.  core values should only be on one side, while the cerebelum will have values on both sides
-            for (int iZ = 0; iZ < maxSymmetryRemovalSlice && iZ < extents[2]; iZ++) {
-                for (int iY = 0; iY < extents[1]; iY++) {
-                    for (int iX = 0; iX < extents[0] / 2; iX++) {
-                        int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
-                        int mirroredIndex = (iZ * sliceLength) + (iY * extents[0]) + (extents[0] - iX - 1);
-                        
-                        if (segBuffer[index] > 0 && segBuffer[mirroredIndex] > 0) {
-                            segBuffer[index] = 0;
-                            segBuffer[mirroredIndex] = 0;
-                            
-                            removedBuffer[index] = 1;
-                            removedBuffer[mirroredIndex] = 1;
-                        }
-                    }
-                }
-            }
-            
-            try {
-                segImg.importData(0, removedBuffer, true);
-            } catch (IOException error) {
-                if (segImg != null) {
-                    segImg.disposeLocal();
-                }
-                
-                segBuffer = null;
-                displayError("Error on mirrored removed data importData: " + adcImage.getImageName());
-                setCompleted(false);
-                return;
-            }
-            
-            saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_removed", FileUtility.XML);
+        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax);
+        
+        if (lightboxPass2 != null) {
+            lightboxFileList.add(lightboxPass2);
         }
-        
-        try {
-            segImg.importData(0, segBuffer, true);
-        } catch (IOException error) {
-            if (segImg != null) {
-                segImg.disposeLocal();
-            }
-            
-            segBuffer = null;
-            displayError("Error on cleaned segmentation importData: " + adcImage.getImageName());
-            setCompleted(false);
-            return;
-        }
-        
-        // perform closing on threshold mask
-        close(segImg, threshCloseIter, threshCloseSize, true);
-        
-        try {
-            segImg.exportData(0, volLength, segBuffer);
-        } catch (IOException error) {
-            if (segImg != null) {
-                segImg.disposeLocal();
-            }
-            
-            segBuffer = null;
-            displayError("Error on closed ADC threshold export: " + maskImg.getImageName());
-            setCompleted(false);
-            return;
-        }
-        
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_close", FileUtility.XML);
-        
-        short[] objectBuffer = chooseCoreObjects(segImg, segBuffer);
-        
-        // get pixels from ADC within closed object mask with intensity < 620, again
-        for (int i = 0; i < volLength; i++) {
-            if (objectBuffer[i] != 0) {
-                if (adcImage.getInt(i) < adcThreshold) {
-                    objectBuffer[i] = 1;
-                } else {
-                    objectBuffer[i] = 0;
-                }
-            } else {
-                objectBuffer[i] = 0;
-            }
-        }
-        
-        try {
-            segImg.importData(0, objectBuffer, true);
-        } catch (IOException error) {
-            if (segImg != null) {
-                segImg.disposeLocal();
-            }
-            
-            segBuffer = null;
-            objectBuffer = null;
-            displayError("Error on adc threshold importData: " + adcImage.getImageName());
-            setCompleted(false);
-            return;
-        }
-        
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest", FileUtility.XML);
-        
-        // combine core mask with ADC and save lightbox
-        ModelImage coreLightbox = generateLightbox(adcImage, segImg, lightboxOpacity);
-        
-        coreLightboxFile = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_ADC_core_lightbox", FileUtility.PNG);
-        
-        coreLightbox.disposeLocal();
         
         // commented out because masks seem just as useful to users
         
@@ -397,8 +286,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
 //            return;
 //        }
         
+        // TODO change stats to handle multiple passes
+        
         // save core stats to tab-delmited file
-        if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), outputBasename + "_VOI" + voiExtension, selectedObjectList, adcImage.getResolutions(0))) {
+        if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), adcImage.getResolutions(0))) {
             if (segImg != null) {
                 segImg.disposeLocal();
             }
@@ -458,7 +349,158 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return new File(dir + File.separator + fileBasename + ext);
     }
     
-    public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer) {
+    private File processThresholdedImg(ModelImage segImg, short[] segBuffer, int[] extents, int passNum, boolean doSkip, int skipSliceMax) {
+        File lightboxFile = null;
+        
+        final int sliceLength = extents[0] * extents[1];
+        final int volLength = sliceLength * extents[2];
+        
+        short[] threshBuffer = Arrays.copyOf(segBuffer, segBuffer.length);
+        ModelImage threshImg = (ModelImage) segImg.clone();
+        
+        short[] removedBuffer = null;
+        if (doSkip) {
+            if (removedBuffer == null) {
+                removedBuffer = new short[volLength];
+            }
+            
+            for (int iZ = 0; iZ < skipSliceMax && iZ < extents[2]; iZ++) {
+                for (int iY = 0; iY < extents[1]; iY++) {
+                    for (int iX = 0; iX < extents[0]; iX++) {
+                        int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
+                        
+                        if (threshBuffer[index] > 0) {
+                            threshBuffer[index] = 0;
+                            
+                            removedBuffer[index] = 1;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (doSymmetryRemoval) {
+            if (removedBuffer == null) {
+                removedBuffer = new short[volLength];
+            }
+            
+            // if values are mirrored across the the l->r of the image, cancel them out.  core values should only be on one side, while the cerebelum will have values on both sides
+            for (int iZ = 0; iZ < maxSymmetryRemovalSlice && iZ < extents[2]; iZ++) {
+                for (int iY = 0; iY < extents[1]; iY++) {
+                    for (int iX = 0; iX < extents[0] / 2; iX++) {
+                        int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
+                        int mirroredIndex = (iZ * sliceLength) + (iY * extents[0]) + (extents[0] - iX - 1);
+                        
+                        if (threshBuffer[index] > 0 && threshBuffer[mirroredIndex] > 0) {
+                            threshBuffer[index] = 0;
+                            threshBuffer[mirroredIndex] = 0;
+                            
+                            removedBuffer[index] = 1;
+                            removedBuffer[mirroredIndex] = 1;
+                        }
+                    }
+                }
+            }
+            
+            try {
+                threshImg.importData(0, removedBuffer, true);
+            } catch (IOException error) {
+                if (threshImg != null) {
+                    threshImg.disposeLocal();
+                }
+                
+                threshBuffer = null;
+                displayError("Error on mirrored removed data importData: " + adcImage.getImageName());
+                setCompleted(false);
+                return null;
+            }
+            
+            saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_pass" + passNum, FileUtility.XML);
+        }
+        
+        try {
+            threshImg.importData(0, threshBuffer, true);
+        } catch (IOException error) {
+            if (threshImg != null) {
+                threshImg.disposeLocal();
+            }
+            
+            threshBuffer = null;
+            displayError("Error on cleaned segmentation importData: " + adcImage.getImageName());
+            setCompleted(false);
+            return null;
+        }
+        
+        // perform closing on threshold mask
+        close(threshImg, threshCloseIter, threshCloseSize, true);
+        
+        try {
+            threshImg.exportData(0, volLength, threshBuffer);
+        } catch (IOException error) {
+            if (threshImg != null) {
+                threshImg.disposeLocal();
+            }
+            
+            threshBuffer = null;
+            displayError("Error on closed ADC threshold export: " + adcImage.getImageName());
+            setCompleted(false);
+            return null;
+        }
+        
+        saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_close_pass" + passNum, FileUtility.XML);
+        
+        Vector<MaskObject> selectedObjectList = new Vector<MaskObject>();
+        
+        short[] objectBuffer = chooseCoreObjects(threshImg, threshBuffer, passNum, selectedObjectList);
+        
+        // get pixels from ADC within closed object mask with intensity < 620, again
+        for (int i = 0; i < volLength; i++) {
+            if (objectBuffer[i] != 0) {
+                if (adcImage.getInt(i) < adcThreshold) {
+                    objectBuffer[i] = 1;
+                } else {
+                    objectBuffer[i] = 0;
+                }
+            } else {
+                objectBuffer[i] = 0;
+            }
+        }
+        
+        try {
+            threshImg.importData(0, objectBuffer, true);
+        } catch (IOException error) {
+            if (threshImg != null) {
+                threshImg.disposeLocal();
+            }
+            
+            threshBuffer = null;
+            objectBuffer = null;
+            displayError("Error on adc threshold importData: " + adcImage.getImageName());
+            setCompleted(false);
+            return null;
+        }
+        
+        saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest_pass" + passNum, FileUtility.XML);
+        
+        // combine core mask with ADC and save lightbox
+        ModelImage coreLightbox = generateLightbox(adcImage, threshImg, lightboxOpacity);
+        
+        lightboxFile = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_ADC_core_lightbox_pass" + passNum, FileUtility.PNG);
+        
+        if (lightboxFile != null) {
+            selectedObjectTable.put(lightboxFile, selectedObjectList);
+        }
+        
+        coreLightbox.disposeLocal();
+        
+        if (threshImg != null) {
+            threshImg.disposeLocal();
+        }
+        
+        return lightboxFile;
+    }
+    
+    public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer, int passNum, Vector<MaskObject> selectedObjectList) {
         short[] processBuffer = new short[imgBuffer.length];
         MaskObject[] sortedObjects = findObjects(img, imgBuffer, processBuffer, minAdcObjectSize, maxAdcObjectSize);
         
@@ -483,11 +525,9 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             setCompleted(false);
             return null;
         }
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_find_objects", FileUtility.XML);
+        saveImageFile(segImg, coreOutputDir, outputBasename + "_find_objects_pass" + passNum, FileUtility.XML);
         
         // last object should be the largest
-        selectedObjectList = new Vector<MaskObject>();
-        
         if (sortedObjects.length > 0) {
             selectedObjectList.add(sortedObjects[sortedObjects.length - 1]);
             System.err.println(sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size);
@@ -792,16 +832,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return true;
     }
     
-    private boolean saveCoreStats(final String outputDir, final String dwiFile, final String adcFile, final String voiFile, final Vector<MaskObject> coreObjects, final float[] imgResol) {
+    private boolean saveCoreStats(final String outputDir, final String dwiFile, final String adcFile, final float[] imgResol) {
         double voxelSize = imgResol[0] * imgResol[1] * imgResol[2];
-        
-        int totalCoreSize = 0;
-        for (MaskObject obj : coreObjects) {
-            totalCoreSize += obj.size;
-        }
-        
-        double coreVol = totalCoreSize * voxelSize;
-        System.err.println("Core Size:\t" + totalCoreSize + "\t" + coreVol);
         
         final String statsFile = outputDir + File.separator + outputBasename + "_stats.table";
         
@@ -814,8 +846,17 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             fw = new FileWriter(statsFile);
             bw = new BufferedWriter(fw);
             
-            csvPrinter = new CSVPrinter(bw, CSVFormat.TDF.withHeader("Base Dir", "DWI File", "ADC File", "Core VOI", "Core Voxel Count", "Core Volume " + volUnitsStr));
-            csvPrinter.printRecord(outputDir, dwiFile, adcFile, voiFile, totalCoreSize, coreVol);
+            csvPrinter = new CSVPrinter(bw, CSVFormat.TDF.withHeader("Base Dir", "DWI File", "ADC File", "Pass number", "Core Voxel Count", "Core Volume " + volUnitsStr));
+            
+            for (int i = 0; i < getLightboxFileList().size(); i++) {
+                int passNum = i + 1;
+                
+                int coreSize = getCoreSize(getLightboxFileList().get(i));
+                double coreVol = coreSize * voxelSize;
+                System.err.println("Core Size (pass " + passNum + "):\t" + coreSize + "\t" + coreVol);
+                
+                csvPrinter.printRecord(outputDir, dwiFile, adcFile, passNum, coreSize, coreVol);
+            }
         } catch (final IOException e) {
             e.printStackTrace();
             MipavUtil.displayError("Error writing core stats file: " + statsFile);
@@ -893,21 +934,22 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return lightbox;
     }
     
-    public File getThreshLightboxFile() {
-        return threshLightboxFile;
+    public Vector<File> getLightboxFileList() {
+        return lightboxFileList;
     }
     
-    public File getCoreLightboxFile() {
-        return coreLightboxFile;
+    public Hashtable<File, Double> getCoreObjectSizeTable() {
+        Hashtable<File, Double> sizeTable = new Hashtable<File, Double>();
+        for (File file : selectedObjectTable.keySet()) {
+            sizeTable.put(file, new Double(getCoreSize(file)));
+        }
+        
+        return sizeTable;
     }
     
-    public Vector<MaskObject> getCoreObjectList() {
-        return selectedObjectList;
-    }
-    
-    public int getCoreSize() {
+    public int getCoreSize(File lightboxFile) {
         int totalSize = 0;
-        for (MaskObject obj : getCoreObjectList()) {
+        for (MaskObject obj : selectedObjectTable.get(lightboxFile)) {
             totalSize += obj.size;
         }
         
