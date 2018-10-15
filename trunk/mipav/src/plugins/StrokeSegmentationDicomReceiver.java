@@ -144,8 +144,8 @@ public class StrokeSegmentationDicomReceiver {
     
     private boolean doEmailReport;
     
-    private static final String reportCoreCid = "cid:core-image";
-    private static final String reportThreshCid = "cid:thresh-image";
+    private static final String reportCidImgName = "core-image-";
+    private static final String reportCidBase = "cid:" + reportCidImgName;
     
     private WidgetFactory.ScrollTextArea logOutputArea;
     
@@ -615,20 +615,25 @@ public class StrokeSegmentationDicomReceiver {
         System.out.println("*****\t" + line);
     }
     
-    public void emailReport(ModelImage adcImage, File threshLightboxFile, File coreLightboxFile, double coreVolCC) {
-        String reportTxt = generateReport(adcImage, threshLightboxFile, coreLightboxFile, coreVolCC);
+    public void emailReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, double resFactorCC) {
+        String reportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, resFactorCC);
         
         if (reportTxt == null) {
         	return;
         }
         
-        String outputDir = threshLightboxFile.getParent();
+        File firstLightboxFile = lightboxFileList.get(0);
+        
+        String outputDir = firstLightboxFile.getParent();
         final String htmlReportPath = outputDir + File.separator + "core_seg_report.html";
         
         PrintWriter out;
         try {
-            String fileTxt = reportTxt.replaceAll(reportCoreCid, coreLightboxFile.getName());
-            fileTxt = fileTxt.replaceAll(reportThreshCid, threshLightboxFile.getName());
+            String fileTxt = reportTxt;
+            
+            for (int i = 0; i < lightboxFileList.size(); i++) {
+                fileTxt = fileTxt.replaceAll(reportCidBase + (i + 1), lightboxFileList.get(i).getName());
+            }
             
             out = new PrintWriter(htmlReportPath);
             out.println("<html>");
@@ -643,14 +648,16 @@ public class StrokeSegmentationDicomReceiver {
         
         if (reportDir != null && (new File(reportDir).exists())) {
             try {
-                File reportSubDir = new File(reportDir + File.separator + threshLightboxFile.getParentFile().getParentFile().getName() + File.separator + threshLightboxFile.getParentFile().getName());
+                File reportSubDir = new File(reportDir + File.separator + firstLightboxFile.getParentFile().getParentFile().getName() + File.separator + firstLightboxFile.getParentFile().getName());
                 
                 // check to make sure the report/output dirs aren't the same before moving the report
                 if (!outputDir.equals(reportSubDir.getAbsolutePath())) {
                     reportSubDir.mkdirs();
                     
-                    FileUtils.copyFileToDirectory(threshLightboxFile, reportSubDir);
-                    FileUtils.copyFileToDirectory(coreLightboxFile, reportSubDir);
+                    for (File file : lightboxFileList) {
+                        FileUtils.copyFileToDirectory(file, reportSubDir);
+                    }
+                    
                     FileUtils.copyFileToDirectory(new File(htmlReportPath), reportSubDir);
                 }
             } catch (IOException e) {
@@ -681,17 +688,13 @@ public class StrokeSegmentationDicomReceiver {
     			messageBody.setContent(reportTxt, "text/html");
     			multipartContent.addBodyPart(messageBody);
     			
-    			messageBody = new MimeBodyPart();
-    			DataSource imgDS = new FileDataSource(threshLightboxFile);
-    			messageBody.setDataHandler(new DataHandler(imgDS));
-    			messageBody.setHeader("Content-ID", "<core-image>");
-    			multipartContent.addBodyPart(messageBody);
-    			
-    			messageBody = new MimeBodyPart();
-    			imgDS = new FileDataSource(coreLightboxFile);
-    			messageBody.setDataHandler(new DataHandler(imgDS));
-    			messageBody.setHeader("Content-ID", "<thresh-image>");
-    			multipartContent.addBodyPart(messageBody);
+    			for (int i = 0; i < lightboxFileList.size(); i++) {
+    			    messageBody = new MimeBodyPart();
+                    DataSource imgDS = new FileDataSource(lightboxFileList.get(i));
+                    messageBody.setDataHandler(new DataHandler(imgDS));
+                    messageBody.setHeader("Content-ID", "<" + reportCidImgName + (i + 1) + ">");
+                    multipartContent.addBodyPart(messageBody);
+    			}
     			
     			Message message = new MimeMessage(session);
     
@@ -716,7 +719,7 @@ public class StrokeSegmentationDicomReceiver {
         }
     }
     
-    private String generateReport(ModelImage adcImage, File threshLightboxFile, File coreLightboxFile, double coreVolCC) {
+    private String generateReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, double resFactorCC) {
         final DecimalFormat format = new DecimalFormat("#######.#");
         
         FileInfoDicom fileInfoDicom = (FileInfoDicom) adcImage.getFileInfo(0);
@@ -726,7 +729,6 @@ public class StrokeSegmentationDicomReceiver {
         String studyDateStr = (String) fileInfoDicom.getTagTable().getValue("0008,0020");
         String studyTimeStr = (String) fileInfoDicom.getTagTable().getValue("0008,0030");
         String patientName = (String) fileInfoDicom.getTagTable().getValue("0010,0010");
-        String coreSegVol = format.format(coreVolCC);
         
         //String reportTxt = "<html>\n";
         String reportTxt = "";
@@ -735,15 +737,26 @@ public class StrokeSegmentationDicomReceiver {
         reportTxt += "<li>" + "<b>" + "Time of segmentation run: " + "</b>" + curDateTimeStr + "</li>\n";
         reportTxt += "<li>" + "<b>" + "Study date and time: " + "</b>" + convertDateTimeToISOFormat(studyDateStr, studyTimeStr) + "</li>\n";
         reportTxt += "<li>" + "<b>" + "Patient last name initial: " + "</b>" + getInitialFromName(patientName) + "</li>\n";
-        reportTxt += "<li>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</li>\n";
         //reportTxt += "<li>" + "<b>" + "" + "</b>" + "" + "</li>";
         reportTxt += "</ul>\n";
-        reportTxt += "<h3>" + "ADC image with core segmentation" + "</h3>\n";
-        //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='ADC volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
-        reportTxt += "<img src='" + reportCoreCid + "' alt='ADC image with core segmentation'/>\n";
-        reportTxt += "<h3>" + "ADC image with thresholded regions prior to core volume calculation" + "</h3>\n";
-        //reportTxt += "<a href='" + adcPdfImage + "'><img src='" + adcPdfImage + "' alt='ADC volume with thresholded regions' width='" + imgDisplay + "'/></a>\n";
-        reportTxt += "<img src='" + reportThreshCid + "' alt='ADC image with thresholded regions prior to core volume calculation'/>\n";
+        
+        for (int i = 0; i < lightboxFileList.size(); i++) {
+            int passNum = i + 1;
+            
+            reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + "</h3>\n";
+            
+            // TODO vol
+            String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
+            reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
+            
+            //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='ADC volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
+            reportTxt += "<img src='" + reportCidBase + passNum + "' alt='ADC image with core segmentation pass " + passNum + "'/>\n";
+        }
+        
+//        reportTxt += "<h3>" + "ADC image with thresholded regions prior to core volume calculation" + "</h3>\n";
+//        //reportTxt += "<a href='" + adcPdfImage + "'><img src='" + adcPdfImage + "' alt='ADC volume with thresholded regions' width='" + imgDisplay + "'/></a>\n";
+//        reportTxt += "<img src='" + reportThreshCid + "' alt='ADC image with thresholded regions prior to core volume calculation'/>\n";
+        
         //reportTxt += "</html>\n";
         
         return reportTxt;
