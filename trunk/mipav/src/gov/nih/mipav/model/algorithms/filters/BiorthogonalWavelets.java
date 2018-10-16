@@ -114,6 +114,38 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     // "conv" or "matrix"
     String method = "conv";
     
+    private double hRealRoots[];
+    
+    private double hComplexRoots[][];
+    
+    private double htRealRoots[];
+    
+    private double htComplexRoots[][];
+    
+    private double P[];
+    
+    private double h1[];
+    
+    private double ht1[];
+    
+    private String str;
+    
+    private double HwReal[];
+    private double HwImag[];
+    private float absHw[];
+    
+    private double HtwReal[];
+    private double HtwImag[];
+    private float absHtw[];
+    
+    private double GwReal[];
+    private double GwImag[];
+    private float absGw[];
+    
+    private double GtwReal[];
+    private double GtwImag[];
+    private float absGtw[];
+    
     public BiorthogonalWavelets(ModelImage transformImage, ModelImage compressedTransformImage, 
     		ModelImage reconstructedImage, ModelImage srcImg, int iterations, double compressionFactor,
     		boolean display, String method,
@@ -1480,5 +1512,291 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 
             return j;
         }
+    }
+    
+    private void ComputeFilters() {
+    	double C;
+    	double h2[];
+    	int jjj;
+    	double a;
+    	double b;
+    	double ht2[];
+    	double convInput[];
+    	int i;
+    	int lower;
+    	int upper;
+    	
+        // Compute right halves of h and ht
+    	C = 1;
+    	h2 = new double[]{1.0};
+    	for (jjj = 0; jjj < hRealRoots.length; jjj++) {
+    		C = C/(-hRealRoots[jjj]);
+    		convInput = new double[]{-0.25,0.5-hRealRoots[jjj],-0.25};
+    		h2 = conv(convInput,h2);
+    	}
+    	for (jjj = 0; jjj < hComplexRoots.length; jjj += 2) {
+    		a = hComplexRoots[jjj][0];
+    		b = -hComplexRoots[jjj][1];
+    		C = C/(a*a + b*b);
+    		convInput = new double[]{0.0625,a/2-0.25,a*a+b*b-a+0.375,a/2-0.25,0.0625};
+    		h2 = conv(convInput,h2);
+    	}
+    	for (i = 0; i < h2.length; i++) {
+    		h2[i] = h2[i] * C;
+    	}
+    	
+    	ht2 = new double[]{P[0]/C};
+    	for (jjj = 0; jjj < htRealRoots.length; jjj++) {
+    		convInput = new double[]{-0.25,0.5-htRealRoots[jjj],-0.25};
+    		ht2 = conv(convInput, ht2);
+    	}
+    	for (jjj = 0; jjj < htComplexRoots.length; jjj += 2) {
+    		a = htComplexRoots[jjj][0];
+    		b = -htComplexRoots[jjj][1];
+    		C = C/(a*a + b*b);
+    		convInput = new double[]{0.0625,a/2-0.25,a*a+b*b-a+0.375,a/2-0.25,0.0625};
+    		ht2 = conv(convInput,ht2);
+    	}
+    	
+    	// Compute h and ht via convolution
+    	h = conv(h1,h2);
+    	ht = conv(ht1,ht2);
+    	
+    	lower = -(h.length - 1)/2;
+		upper = (h.length - 1)/2;
+		inds_h = new int[upper - lower + 1];
+		for (i = 0; i < upper - lower + 1; i++) {
+			inds_h[i] = lower + i;
+		}
+		
+		lower = -(ht.length - 1)/2;
+		upper = (ht.length - 1)/2;
+		inds_ht = new int[upper - lower + 1];
+		for (i = 0; i < upper - lower + 1; i++) {
+			inds_ht[i] = lower + i;
+		}
+		
+		// Compute g and gt
+		inds_g = new int[inds_ht.length];
+		for (i = 0; i < inds_ht.length; i++) {
+			inds_g[i] = 1 - inds_ht[inds_ht.length-1-i];
+		}
+		
+		inds_gt = new int[inds_h.length];
+		for (i = 0; i < inds_h.length; i++) {
+			inds_gt[i] = 1 - inds_h[inds_h.length-1-i];
+		}
+		
+		g = new double[ht.length];
+		for (i = 0; i < ht.length; i++) {
+			g[i] = ht[ht.length-1-i] * (2 * (inds_ht[inds_ht.length-1-i] % 2) - 1);
+		}
+		
+		gt = new double[h.length];
+		for (i = 0; i < h.length; i++) {
+			gt[i] = h[h.length-1-i] * (2 * (inds_h[inds_h.length-1-i] % 2) - 1);
+		}
+		
+		// Print out the current filters
+		System.out.println("Extra Zeros of Current " + h.length + "/" + ht.length + "  " + str + " Wavelets");
+		Preferences.debug("Extra Zeros of Current " + h.length + "/" + ht.length + "  " + str + " Wavelets\n",
+				Preferences.DEBUG_ALGORITHM);
+		System.out.println("hZeros");
+		Preferences.debug("hZeros\n", Preferences.DEBUG_ALGORITHM);
+		System.out.println("hRealRoots");
+		Preferences.debug("hRealRoots\n", Preferences.DEBUG_ALGORITHM);
+		for (i = 0; i < hRealRoots.length; i++) {
+			System.out.println("hReal["+i+"] = " + hRealRoots[i]);
+			Preferences.debug("hReal["+i+"] = " + hRealRoots[i] + "\n");
+		}
+		System.out.println("hComplexRoots");
+		Preferences.debug("hComplexRoots\n", Preferences.DEBUG_ALGORITHM);
+		for (i = 0; i < hComplexRoots.length; i++) {
+			System.out.println("hComplex["+i+"] = " + hComplexRoots[i][0] + "  " + hComplexRoots[i][1] + " * i");
+			Preferences.debug("hComplex["+i+"] = " + hComplexRoots[i][0] + "  " + hComplexRoots[i][1] + " * i\n",
+					Preferences.DEBUG_ALGORITHM);
+		}
+		System.out.println("htZeros");
+		Preferences.debug("htZeros\n", Preferences.DEBUG_ALGORITHM);
+		System.out.println("htRealRoots");
+		Preferences.debug("htRealRoots\n", Preferences.DEBUG_ALGORITHM);
+		for (i = 0; i < htRealRoots.length; i++) {
+			System.out.println("htReal["+i+"] = " + htRealRoots[i]);
+			Preferences.debug("htReal["+i+"] = " + htRealRoots[i] + "\n");
+		}
+		System.out.println("htComplexRoots");
+		Preferences.debug("htComplexRoots\n", Preferences.DEBUG_ALGORITHM);
+		for (i = 0; i < htComplexRoots.length; i++) {
+			System.out.println("htComplex["+i+"] = " + htComplexRoots[i][0] + "  " + htComplexRoots[i][1] + " * i");
+			Preferences.debug("htComplex["+i+"] = " + htComplexRoots[i][0] + "  " + htComplexRoots[i][1] + " * i\n",
+					Preferences.DEBUG_ALGORITHM);
+		}
+    }
+    
+    private void ComputeFrequencyResponse() {
+    	int res;
+    	double w[];
+    	float wfloat[];
+    	double spacing;
+    	int i;
+    	int j;
+    	// Compute the frequency responses of the candidate filters
+    	res = 1000;
+		w = new double[res];
+		wfloat = new float[res];
+		spacing = Math.PI/(res - 1.0);
+		for (i = 0; i < res; i++) {
+		    w[i] = i * spacing;	
+		    wfloat[i] = (float)w[i];
+		}
+		
+		HwReal = new double[res];
+		HwImag = new double[res];
+		absHw = new float[res];
+		for (i = 0; i < inds_h.length; i++) {
+		    for (j = 0; j < res; j++) {
+		        HwReal[j] = HwReal[j] + h[i]*Math.cos(inds_h[i] * w[j]);
+		        HwImag[j] = HwImag[j] + h[i]*Math.sin(inds_h[i] * w[j]);
+		    }
+		}
+		for (i = 0; i < res; i++) {
+			absHw[i] = (float)Math.sqrt(HwReal[i]*HwReal[i] + HwImag[i]*HwImag[i]);
+		}
+		
+		HtwReal = new double[res];
+		HtwImag = new double[res];
+		absHtw = new float[res];
+		for (i = 0; i < inds_ht.length; i++) {
+		    for (j = 0; j < res; j++) {
+		        HtwReal[j] = HtwReal[j] + ht[i]*Math.cos(inds_ht[i] * w[j]);
+		        HtwImag[j] = HtwImag[j] + ht[i]*Math.sin(inds_ht[i] * w[j]);
+		    }
+		}
+		for (i = 0; i < res; i++) {
+			absHtw[i] = (float)Math.sqrt(HtwReal[i]*HtwReal[i] + HtwImag[i]*HtwImag[i]);
+		}
+		
+		GwReal = new double[res];
+		GwImag = new double[res];
+		absGw = new float[res];
+		for (i = 0; i < inds_g.length; i++) {
+		    for (j = 0; j < res; j++) {
+		        GwReal[j] = GwReal[j] + g[i]*Math.cos(inds_g[i] * w[j]);
+		        GwImag[j] = GwImag[j] + g[i]*Math.sin(inds_g[i] * w[j]);
+		    }
+		}
+		for (i = 0; i < res; i++) {
+			absGw[i] = (float)Math.sqrt(GwReal[i]*GwReal[i] + GwImag[i]*GwImag[i]);
+		}
+		
+		GtwReal = new double[res];
+		GtwImag = new double[res];
+		absGtw = new float[res];
+		for (i = 0; i < inds_gt.length; i++) {
+		    for (j = 0; j < res; j++) {
+		        GtwReal[j] = GtwReal[j] + gt[i]*Math.cos(inds_gt[i] * w[j]);
+		        GtwImag[j] = GtwImag[j] + gt[i]*Math.sin(inds_gt[i] * w[j]);
+		    }
+		}
+		for (i = 0; i < res; i++) {
+			absGtw[i] = (float)Math.sqrt(GtwReal[i]*GtwReal[i] + GtwImag[i]*GtwImag[i]);
+		}
+    }
+    
+    private void computeRoots() {
+    	double sqrt2;
+    	double val;
+    	int i;
+    	int kk;
+    	double val1;
+    	int K;
+    	int jj;
+    	double r[][];
+    	double realRoots[];
+    	double complexRoots[][];
+    	
+    	// Compute left half of h
+		N = 2 * l;
+		h1 = new double[N+1];
+		sqrt2 = Math.sqrt(2.0);
+		val = sqrt2/Math.pow(2.0, N);
+		for (i = 0; i < h1.length; i++) {
+		    h1[i] = val;
+		}
+		for (kk = 0; kk <= N; kk++) {
+			h1[kk] = h1[kk] * nchoosek(N, kk);
+		}
+		
+		// Compute left half of ht
+		Nt = 2 * lt;
+		ht1 = new double[Nt+1];
+		val1 = sqrt2/Math.pow(2.0, Nt);
+		for (i = 0; i < ht1.length; i++) {
+			ht1[i] = val1;
+		}
+		for (kk = 0; kk <= Nt; kk++) {
+			ht1[kk] = ht1[kk] * nchoosek(Nt, kk);
+		}
+		
+		// Factor P(t) and compute h and ht as per CDF
+		// Compute right halves of h and ht
+		K = l + lt;
+		P = new double[K];
+		for (jj = 0; jj <= K-1; jj++) {
+			P[K-jj-1] = nchoosek(K-1+jj,jj);
+		}
+		r = cplxpair(roots(P));
+		jj = 0;
+		while (jj < r.length) {
+			if (r[jj][1] == 0.0) {
+				break;
+			}
+			jj = jj + 1;
+		} // while (jj < r.length)
+		
+		if ((jj % 2) == 1) {
+			MipavUtil.displayError("All complex roots were not conjugates");
+		    return;
+		}
+		else if (jj == 0) {
+			// All real roots
+			realRoots = new double[r.length];
+			for (i = 0; i < r.length; i++) {
+				realRoots[i] = r[i][0];
+			}
+			complexRoots = null;
+		}
+		else if (jj == r.length) {
+			// All complex roots
+			realRoots = null;
+			complexRoots = new double[r.length][2];
+			for (i = 0; i < r.length; i++) {
+				complexRoots[i][0] = r[i][0];
+				complexRoots[i][1] = r[i][1];
+			}
+		}
+		else {
+			// Mix of real and complex roots
+			realRoots = new double[r.length - jj];
+			for (i = 0; i < r.length - jj; i++) {
+				realRoots[i] = r[i + jj][0];
+			}
+			complexRoots = new double[jj][2];
+			for (i = 0; i < jj; i++) {
+				complexRoots[i][0] = r[i][0];
+				complexRoots[i][1] = r[i][1];
+			}
+		} 
+		
+		// Default filters are the CDF filters
+		hComplexRoots = complexRoots;
+		hRealRoots = null;
+		htComplexRoots = null;
+		htRealRoots = realRoots;
+		str = "CDF";
+		
+		// Compute the initial filters and their frequency response
+		ComputeFilters();
+		ComputeFrequencyResponse();
     }
 }
