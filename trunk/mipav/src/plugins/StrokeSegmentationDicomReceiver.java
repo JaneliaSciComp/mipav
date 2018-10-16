@@ -743,7 +743,14 @@ public class StrokeSegmentationDicomReceiver {
         for (int i = 0; i < lightboxFileList.size(); i++) {
             int passNum = i + 1;
             
-            reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + "</h3>\n";
+            String passDetails = "";
+            if (passNum == 1) {
+                passDetails = " -- first 9 slices excluded";
+            } else if (passNum == 2) {
+                passDetails = " -- first 15 slices excluded";
+            }
+            
+            reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
             
             // TODO vol
             String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);

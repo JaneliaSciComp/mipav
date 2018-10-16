@@ -529,8 +529,33 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         // last object should be the largest
         if (sortedObjects.length > 0) {
-            selectedObjectList.add(sortedObjects[sortedObjects.length - 1]);
-            System.err.println(sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size);
+            // check the number of core pixels in the top 3 objects and select the one with the most
+            int numObjectsToCheckCore = 3;
+            int[] coreSizeList = new int[numObjectsToCheckCore];
+            
+            for (int i = 0; i < processBuffer.length; i++) {
+                for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
+                    if (processBuffer[i] == sortedObjects[sortedObjects.length - 1 - objNum].id) {
+                        if (adcImage.getInt(i) < adcThreshold) {
+                            coreSizeList[objNum]++;
+                        }
+                    }
+                }
+            }
+            
+            int selectedObjectIndex = 0;
+            MaskObject selectedObject = sortedObjects[sortedObjects.length - 1];
+            System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size + "\t" + coreSizeList[0]);
+            for (int objNum = 1; objNum < numObjectsToCheckCore; objNum++) {
+                System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + sortedObjects[sortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum]);
+                if (coreSizeList[objNum] > coreSizeList[selectedObjectIndex]) {
+                    selectedObjectIndex = objNum;
+                    selectedObject = sortedObjects[sortedObjects.length - 1 - objNum];
+                }
+            }
+            
+            selectedObjectList.add(selectedObject);
+            System.err.println("Selected object: " + selectedObject.id + "\t" + selectedObject.size);
         } else {
             System.err.println("No qualifying object found in volume.");
         }
@@ -998,6 +1023,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     }
     
     private void close(ModelImage img, int iters, float size, boolean do25D) {
+        // allow for closing to be skipped
+        if (iters == 0) {
+            return;
+        }
+        
         float kernelSize = size; // mm
         int itersD = iters;
         int itersE = iters;
