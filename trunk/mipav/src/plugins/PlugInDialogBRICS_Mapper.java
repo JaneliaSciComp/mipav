@@ -4,8 +4,10 @@ import gov.nih.mipav.view.*;
 
 import gov.nih.tbi.commons.model.*;
 import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
+import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.SemanticFormStructureList;
 import gov.nih.tbi.dictionary.model.hibernate.*;
 import gov.nih.tbi.repository.model.SubmissionType;
+import gov.nih.tbi.dictionary.model.rdf.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -21,7 +23,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
+
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -72,7 +74,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private FormStructure formStructure;
     
     /** List of form structures read from BRICS data dictionary tool */
-    private List<FormStructure> formStructureList = null;
+    private List<SemanticFormStructure> formStructureList = null;
 
     /** Buttons used to control the work flow */
     private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, reloadCSVButton, xFormButton, outputXFormDirButton, transformedFileButton, saveXFormTableButton;
@@ -168,7 +170,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private static final String svnVersion 		= "$Rev: 15178 $";
     private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
-    private static final String pluginVersion 	= "Beta version 0.5";
+    private static final String pluginVersion 	= "Beta version 0.6";
 
 	private PlugInDialogBRICS_Mapper owner;
 
@@ -188,7 +190,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
 
     
-    /** Mapper constructor - Primarily setsup  the GUI */
+    /** Mapper constructor - Primarily sets up  the GUI */
     public PlugInDialogBRICS_Mapper () {
         super();
 
@@ -370,9 +372,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     @Override
     public void windowClosing(final WindowEvent e) {
-        //if (JDialogStandalonePlugin.isExitRequired()) {
-        //    ViewUserInterface.getReference().windowClosing(e);
-        //}
+        if (JDialogStandalonePlugin.isExitRequired()) {
+            ViewUserInterface.getReference().windowClosing(e);
+        }
+        //System.exit(0);
     }
 
     @Override
@@ -1027,11 +1030,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private JTable structsTable;
         
 
-        private final ArrayList<String> descAL 		= new ArrayList<String>();
+        private final ArrayList<String> titleAL 	= new ArrayList<String>();
         private final ArrayList<String> shortNameAL = new ArrayList<String>();
         private final ArrayList<String> versionAL 	= new ArrayList<String>();
         private final ArrayList<String> statusAL 	= new ArrayList<String>();
-        private final ArrayList<String> diseaseAL 	= new ArrayList<String>();
 
         private JScrollPane structsScrollPane;
 
@@ -1043,13 +1045,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
 
         /**
-         * Setups GUID so that the user can select a form structure to be mapped.
+         * Setups GUI so that the user can select a form structure to be mapped.
          */
         private void init() {
             
         	setTitle("Choose Form Structure");
-            final int numColumns = 5;
-            final String[] columnNames = {"Name", "Description", "Version", "Status", "Disease"};
+            final int numColumns = 4;
+            final String[] columnNames = {"Name", "Title", "Version", "Status"};
             structsModel = new LocalTableModel();
             
             structsTable = new JTable(structsModel) {
@@ -1063,47 +1065,46 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     final int rowIndex = rowAtPoint(p);
                     final int colIndex = columnAtPoint(p);
 
-                    tip = (String) structsModel.getValueAt(rowIndex, colIndex);
+                    tip = (String) structsTable.getValueAt(rowIndex, colIndex);
+                    
+                    if (tip.length() > 60 ) 
+                    	tip = tip.substring(0, 60);
                     return tip;
-
                 }
             };
-            structsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            
-            
+            structsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);  
 
             for (final String element : columnNames) {
                 structsModel.addColumn(element);
             }
 
-            structsTable.getColumn("Name").setMinWidth(150);
-            structsTable.getColumn("Description").setMinWidth(300);
+            structsTable.getColumn("Name").setMinWidth(175);
+            structsTable.getColumn("Name").setMaxWidth(175);
+            structsTable.getColumn("Title").setMinWidth(400);
             
             structsTable.getColumn("Version").setMinWidth(35);
             structsTable.getColumn("Version").setMaxWidth(55);
             structsTable.getColumn("Version").setPreferredWidth(50);
             
-            structsTable.getColumn("Status").setMinWidth(35);
-            structsTable.getColumn("Status").setMaxWidth(85);
-            structsTable.getColumn("Status").setPreferredWidth(110);
+            structsTable.getColumn("Status").setMinWidth(165);
+            structsTable.getColumn("Status").setMaxWidth(165);
+            structsTable.getColumn("Status").setPreferredWidth(165);
 
             // new way of doing web service
-            for (final FormStructure fs : formStructureList) {
+            for (final SemanticFormStructure fs : formStructureList) {
                 if (fs.getShortName().equals("")) {
                     // something is wrong. a shortname is required. this is to work around an apparent stage DDT problem
                     continue;
                 }
-                final String desc 		= fs.getDescription();
+                final String title 		= fs.getTitle();
                 final String shortname 	= fs.getShortName();
                 final String version 	= fs.getVersion().toString();
                 final String status 	= fs.getStatus().toString();
-                final String disease 	= fs.getDiseaseStructureString();
 
-                descAL.add(desc);
+                titleAL.add(title);
                 shortNameAL.add(shortname);
                 versionAL.add(version);
                 statusAL.add(status);
-                diseaseAL.add(disease);
             }
 
             // make sure we found a structure for imaging
@@ -1120,16 +1121,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                         // remove any later struct with a lower version number
                         if (Integer.parseInt(versionAL.get(i)) > Integer.parseInt(versionAL.get(j))) {
                             shortNameAL.remove(j);
-                            descAL.remove(j);
+                            titleAL.remove(j);
                             versionAL.remove(j);
                             statusAL.remove(j);
-                            diseaseAL.remove(j);
                         } else {
                             shortNameAL.remove(i);
-                            descAL.remove(i);
+                            titleAL.remove(i);
                             versionAL.remove(i);
                             statusAL.remove(i);
-                            diseaseAL.remove(i);
                         }
                     }
                 }
@@ -1149,10 +1148,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 for (int i = 0; i < shortNameAL.size(); i++) {
                     if (name.equals(shortNameAL.get(i))) {
                         rowData[0] = shortNameAL.get(i);
-                        rowData[1] = descAL.get(i);
+                        rowData[1] = titleAL.get(i);
                         rowData[2] = versionAL.get(i);
                         rowData[3] = statusAL.get(i);
-                        rowData[4] = diseaseAL.get(i);
                         structsModel.addRow(rowData);
 
                         break;
@@ -1220,25 +1218,23 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             searchPanel.add(searchButton);
             searchPanel.add(resetButton);
             
-            final JPanel OKPanel = new JPanel();
-            final JButton OKButton = new JButton("Select");
-            OKButton.setActionCommand("ChooseStructOK");
-            OKButton.addActionListener(this);
-            OKButton.setMinimumSize(defaultButtonSize);
-            OKButton.setPreferredSize(defaultButtonSize);
-            OKButton.setFont(serif12B);
-            OKPanel.add(OKButton);
+            final JPanel selectPanel = new JPanel();
+            final JButton selectButton = new JButton("Select");
+            selectButton.setActionCommand("ChooseStructSelect");
+            selectButton.addActionListener(this);
+            selectButton.setMinimumSize(defaultButtonSize);
+            selectButton.setPreferredSize(defaultButtonSize);
+            selectButton.setFont(serif12B);
+            selectPanel.add(selectButton);
             
             getContentPane().add(structsScrollPane, BorderLayout.CENTER);
-            getContentPane().add(OKPanel, BorderLayout.SOUTH);
+            getContentPane().add(selectPanel, BorderLayout.SOUTH);
             getContentPane().add(searchPanel, BorderLayout.NORTH);
             
             
             pack();
             centerInWindow(owner, this);
             setVisible(true);
-            
-            
         }
 
         /**
@@ -1247,15 +1243,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         @Override
         public void actionPerformed(final ActionEvent e) {
             final String command = e.getActionCommand();
-            if (command.equalsIgnoreCase("ChooseStructOK")) {
-            	deTableModel.setRowCount(0); // resets table in case value are loaded in 
+            if (command.equalsIgnoreCase("ChooseStructSelect")) {
+            	//???deTableModel.setRowCount(0); // resets table in case value are loaded in 
             	
-                final int selectedRow = structsTable.getSelectedRow();
+                final int selectedRow = structsTable.getSelectedRow();  // TODO   Not correct when search changes table.
+                //final int selectedRowNum = structsTable.g
+                //System.out.println("row count = " + selectedRowNum);
                 if (selectedRow != -1) {
                     this.dispose();
-                    final String fsName = (String) structsModel.getValueAt(selectedRow, 0); // gets the name of the form structure.
-                    new populateBRICSStructureTable(owner, fsName);
                     
+                    final String fsName = (String) structsTable.getValueAt(selectedRow, 0); // gets the name of the form structure.
+                    new populateBRICSStructureTable(owner, fsName);
                 }
             }
         }
@@ -2530,16 +2528,16 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * @param fullList
      * @return
      */
-    private List<FormStructure> filterDataStructures(final List<FormStructure> fullList) {
-        final List<FormStructure> filteredList = new ArrayList<FormStructure>();
+    private List<SemanticFormStructure> filterDataStructures(final List<SemanticFormStructure> fullList) {
+        final List<SemanticFormStructure> filteredList = new ArrayList<SemanticFormStructure>();
 
-        for (final FormStructure ds : fullList) {
+        for (final SemanticFormStructure ds : fullList) {
             if (ds.getShortName().equals("")) {
                 // something is wrong. a shortname is required. this is to work around an apparent stage DDT problem
                 continue;
             }
 
-            if (ds.getFileType().equals(SubmissionType.IMAGING)) { // For test purposes since it only 7 secs when clinical takes 30 secs
+            if (ds.getSubmissionType().equals(SubmissionType.IMAGING)) { // For test purposes since it only 7 secs when clinical takes 30 secs
           
                 // only include non-archived structures
                 if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
@@ -2547,7 +2545,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
             }
             // get clinical form structures
-            if(ds.getFileType().equals(SubmissionType.CLINICAL)) {
+            if(ds.getSubmissionType().equals(SubmissionType.CLINICAL)) {
             	if(!ds.getStatus().equals(StatusType.ARCHIVED)) {
             		filteredList.add(ds);
             	}
@@ -2568,8 +2566,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private static final String ddAuthBase    = "/portal/ws/webstart/dictionary/formStructure/details";
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
-        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
+        private static final String ddStructListRequest = ddRequestBase + "/byStatus?status=Published,Awaiting%20Publication&listAll?type=CLINICAL&incDEs=false";
+        //private static final String ddStructListRequest = ddRequestBase + "/Published/listAll?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
         private final PlugInDialogBRICS_Mapper parent;
@@ -2608,22 +2606,20 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
 
                 final long startTime = System.currentTimeMillis();
-                List<FormStructure> fullList;
+                List<SemanticFormStructure> fullList = null;
                 if (ddUseAuthService) {
-                    fullList = (List<FormStructure>) client.accept("text/xml").getCollection(FormStructure.class);
+                    //fullList = (List<SemanticFormStructureList>) client.accept("text/xml").getCollection(SemanticFormStructureList.class);
                 } else {
-                    final DataStructureList dsl = client.accept("text/xml").get(DataStructureList.class);
+                	final SemanticFormStructureList dsl = client.accept("text/xml").get(SemanticFormStructureList.class);
                     fullList = dsl.getList();
                 }
                 final long endTime = System.currentTimeMillis();
 
                 System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
-
                 formStructureList = filterDataStructures(fullList);
 
                 // for (final FormStructure ds : dataStructureList) {
-                // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" +
-                // ds.getStatus());
+                //      System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" + ds.getStatus());
                 // }
 
                 progressBar.updateValue(100);
@@ -2715,18 +2711,16 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
 
-                for (int i = 0; i < formStructureList.size(); i++) {
-                    final FormStructure curFS = formStructureList.get(i);
-                    if (curFS.getShortName().equals(fullFormStructure.getShortName())) {
-                    	formStructureList.set(i, fullFormStructure);
-                        break;
-                    }
-                }
+                //for (int i = 0; i < formStructureList.size(); i++) {
+                //    final FormStructure curFS = formStructureList.get(i);
+                //    if (curFS.getShortName().equals(fullFormStructure.getShortName())) {
+                //    	formStructureList.set(i, fullFormStructure);
+                //        break;
+                //    }
+                //}
 
                 // for (final FormStructure ds : dataStructureList) {
-                // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t"
-                // +
-                // ds.getStatus());
+                //     System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" + ds.getStatus());
                 // }
 
                 if (addProgressBar) {
