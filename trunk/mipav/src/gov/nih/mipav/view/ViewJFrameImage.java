@@ -1198,6 +1198,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("waveletMultiscaleProducts")) {
             new JDialogWaveletMultiscaleProducts(this, getActiveImage());
+        } else if (command.equals("biorthogonalWavelets")) {
+            new JDialogBiorthogonalWavelets(this, getActiveImage());
         } else if (command.equals("LLE")) {
             new JDialogLLE(this, getActiveImage());
         } else if (command.equals("fuzzyMin")) {
@@ -2920,11 +2922,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final Vector<ViewImageUpdateInterface> frameListA = imageA.getImageFrameVector();
 
             if (frameListA != null) {
-
                 for (int i = 0; i < frameListA.size(); i++) {
-
                     if (frameListA.elementAt(i) instanceof ViewJFrameBase) {
-
                         if ( ((ViewJFrameBase) frameListA.elementAt(i)) != this && ! ((ViewJFrameBase) frameListA.elementAt(i)).isClosing) {
                             ((ViewJFrameBase) frameListA.elementAt(i)).setVisible(false);
                             ((ViewJFrameBase) frameListA.elementAt(i)).close();
