@@ -24,8 +24,7 @@ public class ManifestFile {
 	
 	// ~ Static fields/initializers-----------------------------------------------------------
 	
-	public static final String MANIFEST_LOC = System.getProperty("user.home") + File.separator + "mipav" + 
-												File.separator + "plugins" + File.separator + "MANIFEST" + File.separator;
+	public static final String MANIFEST_LOC = PluginUtil.getDefaultPluginDirectory() + "MANIFEST" + File.separator;
 
 	/** Signifies manifest file lists a plugin after delimiter. */
 	private static final String PLUGIN_ENTRY = "plugin-name";
@@ -119,13 +118,14 @@ public class ManifestFile {
 				Class pluginClass = null, dependentClass = null;
 				while((nextLine = in.readLine()) != null) {
 					if(!inPlugin && (beginIndex = nextLine.indexOf(PLUGIN_ENTRY+DELIMITER)) != -1) { //line-delim has been stripped
-						try {
-							pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
+//						try {
+							//pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
+						    pluginClass = PluginUtil.loadPluginClass(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
 							inPlugin = true;
-						} catch (ClassNotFoundException e) {
-							MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
-							e.printStackTrace();
-						}
+//						} catch (ClassNotFoundException e) {
+//							MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
+//							e.printStackTrace();
+//						}
 					} else if(inPlugin) {
 						if(nextLine.contains(PLUGIN_ENTRY)) {
 							manifestInfo.put(pluginClass, currentPlugin);
@@ -134,23 +134,25 @@ public class ManifestFile {
 							inPlugin = false;
 							
 							if((beginIndex = nextLine.indexOf(PLUGIN_ENTRY+DELIMITER)) != -1) { //line-delim has been stripped
-								try {
-									pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
+//								try {
+//									pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
+							        pluginClass = PluginUtil.loadPluginClass(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
 									inPlugin = true;
-								} catch (ClassNotFoundException e) {
-									MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
-									e.printStackTrace();
-								}
+//								} catch (ClassNotFoundException e) {
+//									MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
+//									e.printStackTrace();
+//								}
 							} 
 						} else if (nextLine.contains(DEPENDENT_ENTRY)){
 							beginIndex = nextLine.indexOf(DEPENDENT_ENTRY);
-							try {
-								dependentClass = Class.forName(nextLine.substring(beginIndex + DEPENDENT_ENTRY.length() + DELIMITER.length()));
+//							try {
+//								dependentClass = Class.forName(nextLine.substring(beginIndex + DEPENDENT_ENTRY.length() + DELIMITER.length()));
+								dependentClass = PluginUtil.loadPluginClass(nextLine.substring(beginIndex + DEPENDENT_ENTRY.length() + DELIMITER.length()));
 								currentPlugin.add(dependentClass);
-							} catch (ClassNotFoundException e) {
-								MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
-								e.printStackTrace();
-							}
+//							} catch (ClassNotFoundException e) {
+//								MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
+//								e.printStackTrace();
+//							}
 						}
 					} 
 				}

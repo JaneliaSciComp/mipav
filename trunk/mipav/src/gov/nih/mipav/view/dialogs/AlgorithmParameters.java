@@ -50,9 +50,6 @@ public class AlgorithmParameters {
     /** Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used. */
     public static final String SIGMAS = "gauss_std_dev";
 
-    /** Label used for the parameter indicating the WaterShed ITK parameters to be used. */
-    public static final String WATERSHED = "watershed_itk";
-
     /**
      * Label used for the parameter indicating whether to correct the gaussian's standard deviation Z dimension using
      * the ratio of the X and Z resolutions.
@@ -67,9 +64,6 @@ public class AlgorithmParameters {
 
     /** Label used for the parameter indicating the number of iterations to perform in a script action. */
     public static final String NUM_ITERATIONS = "num_iterations";
-
-    /** Label used for itk filters */
-    public static final String ITK_FILTER_NAME = "itk_filter_name";
 
     /** Label used in ActionDiscovery system for main result image of an algorithm. */
     public static final String RESULT_IMAGE = "result_image";
@@ -215,16 +209,6 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Retrieve the Itk filter's name.
-     * 
-     * @return name The filter's base name.
-     * 
-     */
-    public String getItkFilterName() {
-        return params.getString(AlgorithmParameters.ITK_FILTER_NAME);
-    }
-
-    /**
      * Retrieves the list of parameters to either be used to run the script or store settings for future executions of
      * the algorithm in a script.
      * 
@@ -312,30 +296,6 @@ public class AlgorithmParameters {
         sigmaPanel.setSigmaY(sigmas[1]);
         sigmaPanel.setSigmaZ(sigmas[2]);
         sigmaPanel.enableResolutionCorrection(params.getBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION));
-    }
-
-    /**
-     * Sets up the GUI containing the sigmas used in an algorithm WaterShedITK, based on the script action's parameters.
-     * This is a helper function used to handle parameters common to many algorithms.
-     * 
-     * @param waterShedPanel The sigmas panel to set up based on the parameters.
-     */
-    public void setSigmasGUI(final JPanelWaterShedITK waterShedPanel) {
-        final float[] waterShedParams = params.getList(AlgorithmParameters.WATERSHED).getAsFloatArray();
-        waterShedPanel.setConductance(waterShedParams[0]);
-        waterShedPanel.setIterations(waterShedParams[1]);
-        waterShedPanel.setThreshold(waterShedParams[2]);
-        waterShedPanel.setLevel(waterShedParams[3]);
-        waterShedPanel.setTimeStep(waterShedParams[4]);
-    }
-
-    /**
-     * Call set method for Itk filter based on values in params table.
-     * 
-     * @param itkPanel panel to set up.
-     */
-    public void setItkFilterParamGUI(final JPanelItkFilterParams itkPanel) {
-        itkPanel.runFromScript(this);
     }
 
     /**
@@ -503,18 +463,6 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Stores an algorithm's parameters in the parameter table. This function is used when recording a script. This is
-     * for the WaterShed algorithm.
-     * 
-     * @param waterShedPanel The WaterShed ITK panel to extract the parameters from.
-     * 
-     * @throws ParserException If there is a problem creating one of the new parameters.
-     */
-    public void storeWaterShed(final JPanelWaterShedITK waterShedPanel) throws ParserException {
-        params.put(ParameterFactory.newParameter(AlgorithmParameters.WATERSHED, waterShedPanel.getParameters()));
-    }
-
-    /**
      * Stores an algorithm's sigmas in the parameter table. This function is used when recording a script. This is a
      * helper function used to handle parameters common to many algorithms.
      * 
@@ -542,29 +490,6 @@ public class AlgorithmParameters {
     public void storeWaterShed(final float[] sigmas, final boolean isZCorrectionEnabled) throws ParserException {
         params.put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, sigmas));
         params.put(ParameterFactory.newBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION, isZCorrectionEnabled));
-    }
-
-    /**
-     * Stores an Itk filter's name.
-     * 
-     * @param name The filter's base name.
-     * 
-     * @throws ParserException If there is a problem creating one of the new parameters.
-     */
-    public void storeItkFilterName(final String name) throws ParserException {
-        params.put(ParameterFactory.newParameter(AlgorithmParameters.ITK_FILTER_NAME, name));
-    }
-
-    /**
-     * Stores an algorithm's parameters in the parameter table. This function is used when recording a script. This is
-     * for ITK filter algorithms.
-     * 
-     * @param itkFilterPanel The panel to extract the parameters from.
-     * 
-     * @throws ParserException If there is a problem creating one of the new parameters.
-     */
-    public void storeItkMethods(final JPanelItkFilterParams itkFilterPanel) throws ParserException {
-        itkFilterPanel.putScriptParams(this);
     }
 
     /**
