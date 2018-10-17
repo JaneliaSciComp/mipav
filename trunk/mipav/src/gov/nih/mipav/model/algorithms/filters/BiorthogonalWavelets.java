@@ -386,6 +386,26 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                  }
             } // for (z = 0; z < zDim; z++)
         } // if (compressionFactor > 0)
+        else if (compressionFactor == 0) {
+        	for (z = 0; z < zDim; z++) {
+            	for (i = 0; i < length; i++) {
+     	    		buffer[i] = 0;
+     	    	}
+                for (y = 0; y < yDim; y++) {
+            	    for (x = 0; x < xDim; x++) {
+            			buffer[x + y * xDim] = IMtc[y][x][z];
+            		}
+                 }
+                 try {
+                    compressedTransformImage.importData(z*length, buffer, false);
+                 } catch (IOException error) {
+                    buffer = null;
+                    errorCleanUp("Biorthogonal wavelets: Image(s) locked", true);
+
+                    return;
+                 }
+            } // for (z = 0; z < zDim; z++)
+        }
         else if (compressionFactor == -1) {
        	    IMtc = new double[yDim][xDim][zDim];
        	    xLim = (int)Math.round(xDim/Math.pow(2.0, iterations));
