@@ -166,7 +166,7 @@ public class JDialogBiorthogonalWavelets extends JDialogScriptableBase implement
         gbc.gridy = 0;
         paramsPanel.add(iterationsText, gbc);
         
-        JLabel compressionLabel = new JLabel("Compression factor (0.0 to 1.0)");
+        JLabel compressionLabel = new JLabel("Compression factor (0.0 to 1.0) thrown away");
         compressionLabel.setForeground(Color.black);
         compressionLabel.setFont(serif12);
         compressionLabel.setEnabled(true);
