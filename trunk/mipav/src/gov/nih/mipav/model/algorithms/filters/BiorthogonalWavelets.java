@@ -2,8 +2,6 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmRiceWaveletTools.EigenvalueComplex;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmRiceWaveletTools.EigenvalueComplexComparator;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.MipavUtil;
@@ -58,6 +56,14 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 	// Author of original code: Brian Moore
 	// brimoor@umich.edu
 	
+	private final int CDF_type = 1;
+	
+	private final int spline_type = 2;
+	
+	private final int waveletMatrix_method = 1;
+	
+	private final int convolution_method = 2;
+	
 	/** D1MACH(4). */
     private double epsilon = Double.NaN;
     
@@ -92,7 +98,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     private double compressionFactor;
     
     // Type can be "spline" or "CDF" and controls the type of biorthogonal wavelet filter used.
-    String type;
+    private int type;
     
     // 2*(l+R) + 1 and 2*(lt + C) + 1 are the lengths of the lowpass biorthogonal filters h and ht,
     // where R and C are the number of real and complex zeros of P(t), deg(P) = l + lt - 1,
@@ -101,7 +107,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     
     private int lt;
     
-    // N+1 and Nt+1 are the lengths of the lowpass biorthogonal spline filters h and ht,
+    // 2*N+Nt-1 and Nt+1 are the lengths of the lowpass biorthogonal spline filters h and ht,
     // respectively when type == "spline".
     private int N;
     
@@ -111,8 +117,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     private boolean display = true;
     
     // Forward transform computation method
-    // "conv" or "matrix"
-    String method = "conv";
+    // convolution_method or waveletMatrix_method
+    private int method = convolution_method;
     
     private double hRealRoots[];
     
@@ -148,8 +154,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     
     public BiorthogonalWavelets(ModelImage transformImage, ModelImage compressedTransformImage, 
     		ModelImage reconstructedImage, ModelImage srcImg, int iterations, double compressionFactor,
-    		boolean display, String method,
-    		String type, int len, int lent) {
+    		boolean display, int method,
+    		int type, int len, int lent) {
     	super(null, srcImg);
     	this.transformImage = transformImage;
     	this.compressedTransformImage = compressedTransformImage;
@@ -159,11 +165,11 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     	this.display = display;
     	this.method = method;
     	this.type = type;
-    	if (type.equalsIgnoreCase("CDF")) {
+    	if (type == CDF_type) {
     		l = len;
     		lt = lent;
     	}
-    	else if (type.equalsIgnoreCase("spline")) {
+    	else if (type == spline_type) {
     		N = len;
     		Nt = lent;
     	}
@@ -204,10 +210,10 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
     	double diff;
     	double MSE;
     	
-        if (type.equalsIgnoreCase("spline")) {
+        if (type == spline_type) {
         	SplineWavelets();
         }
-        else if (type.equalsIgnoreCase("CDF")) {
+        else if (type == CDF_type) {
         	CDFWavelets();
         }
         else {
@@ -283,7 +289,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
             for (ii = 1; ii <= iterations; ii++) {
             	xLim = (int)Math.round(xDim/Math.pow(2.0, (ii-1)));
             	yLim = (int)Math.round(yDim/Math.pow(2.0, (ii-1)));
-                if (method.equalsIgnoreCase("matrix")) {
+                if (method == waveletMatrix_method) {
                     WMt = WaveletMatrix(yLim,ht,gt,inds_ht,inds_gt);
                     WN = WaveletMatrix(xLim,h,g,inds_h,inds_g);
                     prod = new double[yLim][xLim];
@@ -301,8 +307,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     		}
                     	}
                     }
-                } // if (method.equalsIgnoreCase("matrix"))
-                else if (method.equalsIgnoreCase("conv")) {
+                } // if (method == waveletMatrix_method)
+                else if (method == convolution_method) {
                     IMtInput = new double[yLim][xLim];
                     for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
@@ -322,9 +328,9 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     		IMt[y][x][z] = output[x][y];
                     	}
                     }
-                } // else if (method.equalsIgnoreCase("conv"))
+                } // else if (method == convolution_method)
                 else {
-                	MipavUtil.displayError("Method must be matrix or conv");
+                	MipavUtil.displayError("Method must be wavelet matrix or convolution");
                 	setCompleted(false);
                 	return;
                 }
@@ -792,8 +798,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 		// Inputs:   disp can be 'true' or 'false' and controls whether or not to
 		//           display H(w), Ht(w), G(w), and Gt(w). The default is 'true'.
 		
-		// Outputs:  Computes the biorthogonal spline lowpass filters, h and ht, of
-		//           length Nt+1 and 2*N+Nt-1, along with the corresponding
+		// Outputs:  Computes the biorthogonal spline lowpass filters, h with length 2*N+Nt-1 and ht
+		//           with length length Nt+1, along with the corresponding
 		//           indices of each filter coefficient in inds_h and inds_ht,
 		//           respectively. The highpass filters, g and gt, are also returned
 		//           along with the filter indices, inds_g and inds_gt, respectively
