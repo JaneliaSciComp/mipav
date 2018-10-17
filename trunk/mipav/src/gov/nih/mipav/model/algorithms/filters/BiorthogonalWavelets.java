@@ -1355,7 +1355,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
         	    } // for (j = i+1; j < complexList.size(); j++)
         	    if (minDist < tolerance) {
         	    	complexPaired[i] = true;
-        	    	complexPaired[j] = true;
+        	    	complexPaired[conjugateIndex] = true;
         	    	realPart2 = complexList.get(conjugateIndex).getReal();
         	        imagPart2 = complexList.get(conjugateIndex).getImaginary();
         	    	if (imagPart < 0.0) {
