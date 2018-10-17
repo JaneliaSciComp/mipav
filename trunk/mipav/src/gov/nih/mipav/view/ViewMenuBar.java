@@ -1562,7 +1562,6 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 		} else if (numberOfDimensions == 3) {
-			menuBuilder.setMenuItemEnabled("Biorthogonal wavelets", false);
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
