@@ -440,6 +440,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
             	}
             	for (y = 0; y < yLim; y++) {
             		for (x = 0; x < xLim; x++) {
+            			IMhat[y][x][z] = 0.0;
             			for (i = 0; i < xLim; i++) {
             				IMhat[y][x][z] += prod[y][i] * WNt[i][x];
             			}
