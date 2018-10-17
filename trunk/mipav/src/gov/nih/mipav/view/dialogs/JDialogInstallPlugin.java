@@ -1,12 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.plugins.ManifestFile;
-import gov.nih.mipav.plugins.PlugIn;
-import gov.nih.mipav.plugins.PlugInAlgorithm;
-import gov.nih.mipav.plugins.PlugInFile;
-import gov.nih.mipav.plugins.PlugInGeneric;
-import gov.nih.mipav.plugins.PlugInView;
+import gov.nih.mipav.plugins.*;
 import gov.nih.mipav.view.*;
 
 import com.ice.tar.*;
@@ -55,11 +50,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
     /** The results of working with the <code>files</code> in a temporary class environment */
     private Vector<Color> filesColor = new Vector<Color>();
-
-    /** The default storage location of plugins */
-    private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
-            + File.separator;
-
+    
     /** The default user interface */
     private ViewUserInterface ui;
 
@@ -79,7 +70,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      */
     public JDialogInstallPlugin(JFrame theParentFrame) {
         super(theParentFrame, false);
-        File f = new File(pluginDir);
+        File f = new File(PluginUtil.getDefaultPluginDirectory());
         if ( !f.exists()) {
             f.mkdirs();
             MipavUtil
@@ -92,7 +83,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
-
+    
     /**
      * DOCUMENT ME!
      * 
@@ -189,7 +180,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             if(name.contains(".class")) {
 	            name = name.substring(0, name.indexOf(".class"));
 	            try {
-	                Class c = Class.forName(name);
+	                //Class c = Class.forName(name);
+	                Class c = PluginUtil.loadPluginClass(name);
 	                boolean isPlugin = isPluginClass(c);
 	
 	                if (isPlugin) {
@@ -213,9 +205,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	                        mf.addEntry(c, dep); // if exists will only modi
 	                    }
 	                }
-	            } catch (ClassNotFoundException e) {
-	                System.out.println(name + " plugin file was not found.");
-	                // name could not likely be resolved given the current classpath
+//	            } catch (ClassNotFoundException e) {
+//	                System.out.println(name + " plugin file was not found.");
+//	                // name could not likely be resolved given the current classpath
 	            } catch (NoClassDefFoundError e) {
 	            	System.err.println(name + "plugin could not be loaded.");
 	            }
@@ -241,7 +233,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         if (installSimpleName.size() == 0) {
             install = "No plugins were installed, please select valid MIPAV plugin files.";
         } else {
-            install = "<html>The following plugins were successfully installed <br>to " + pluginDir + ":<br>";
+            install = "<html>The following plugins were successfully installed <br>to " + PluginUtil.getDefaultPluginDirectory() + ":<br>";
             for (int i = 0; i < installSimpleName.size(); i++) {
                 install += installSimpleName.get(i) + "<br>";
             }
@@ -265,14 +257,15 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         ArrayList<Class> dep = new ArrayList<Class>();
         String simpleName = c.getName().substring("PlugIn".length());
 
-        File[] allPluginFiles = new File(pluginDir).listFiles();
+        File[] allPluginFiles = new File(PluginUtil.getDefaultPluginDirectory()).listFiles();
         for (int i = 0; i < allPluginFiles.length; i++) {
             if (allPluginFiles[i].getName().indexOf(".class") != -1) {
                 String simpleFileName = allPluginFiles[i].getName().substring(0,
                         allPluginFiles[i].getName().indexOf(".class"));
                 if ( !simpleFileName.equals("PlugIn" + simpleName) && simpleFileName.contains(simpleName)) {
-                    try {
-                        Class initDep = Class.forName(simpleFileName);
+//                    try {
+//                        Class initDep = Class.forName(simpleFileName);
+                        Class initDep = PluginUtil.loadPluginClass(simpleFileName);
                         if ( !dep.contains(initDep)) {
                             dep.add(initDep);
                         }
@@ -283,9 +276,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                                 dep.add(subDep.get(k));
                             }
                         }
-                    } catch (ClassNotFoundException e) {
-                        // name could not be resolved given current classpath
-                    }
+//                    } catch (ClassNotFoundException e) {
+//                        // name could not be resolved given current classpath
+//                    }
                 }
             }
         }
@@ -743,8 +736,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         }
 
         // make the plugins directory if it does not exist
-        if ( !new File(pluginDir).isDirectory()) {
-            new File(pluginDir).mkdirs();
+        if ( !new File(PluginUtil.getDefaultPluginDirectory()).isDirectory()) {
+            new File(PluginUtil.getDefaultPluginDirectory()).mkdirs();
             MipavUtil
                     .displayError("The MIPAV plugin directory was just created, please restart MIPAV before installing plugins.");
         }
@@ -787,7 +780,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                     return null;
                 } catch (IOException ioe) {
                     MipavUtil.displayError("Error reading plugin files.  Try manually copying .class files to "
-                            + pluginDir);
+                            + PluginUtil.getDefaultPluginDirectory());
                     dispose();
 
                     return null;
@@ -806,8 +799,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                 if (readStatus != -1) {
                     try {
                         // TODO: Populate files here based on derived class name (found by searching clas file).
-                        allFiles.add(new File(pluginDir + File.separatorChar + currentFile.getName()));
-                        fw = new FileOutputStream(pluginDir + File.separatorChar + currentFile.getName()); // the
+                        allFiles.add(new File(PluginUtil.getDefaultPluginDirectory() + File.separatorChar + currentFile.getName()));
+                        fw = new FileOutputStream(PluginUtil.getDefaultPluginDirectory() + File.separatorChar + currentFile.getName()); // the
                                                                                                             // location
                                                                                                             // to be
                                                                                                             // copied is
@@ -818,7 +811,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                         bw.write(byteBuff, 0, fileLength);
                     } catch (IOException ioe) {
                         MipavUtil.displayError("Error writing plugin files.  Try manually copying .class files to "
-                                + pluginDir);
+                                + PluginUtil.getDefaultPluginDirectory());
                         dispose();
 
                         return null;
@@ -845,14 +838,14 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
                         if (entry.isDirectory()) {
 
-                            String dirname = pluginDir + File.separator
+                            String dirname = PluginUtil.getDefaultPluginDirectory() + File.separator
                                     + entry.getName().substring(0, entry.getName().length() - 1);
                             new File(dirname).mkdir();
                         } else {
 
                             File f = null;
                             try {
-                                (f = new File(pluginDir + File.separator + entry.getName())).getParentFile().mkdirs();
+                                (f = new File(PluginUtil.getDefaultPluginDirectory() + File.separator + entry.getName())).getParentFile().mkdirs();
                                 if (f.getName().contains(".class")) {
                                     allFiles.add(f);
                                 }
@@ -861,9 +854,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                             }
 
                             try {
-                                fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
+                                fw = new FileOutputStream(PluginUtil.getDefaultPluginDirectory() + File.separator + entry.getName());
                             } catch (FileNotFoundException fe) {
-                                System.err.println("Warning: could not create the file " + pluginDir + File.separator
+                                System.err.println("Warning: could not create the file " + PluginUtil.getDefaultPluginDirectory() + File.separator
                                         + entry.getName());
                             }
 
@@ -903,7 +896,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             } else if (currentFile.getName().endsWith(".tar") || currentFile.getName().endsWith(".tar.gz")) {
 
                 try {
-                    ArrayList<File> tarFiles = readTar(getInputStream(currentFile.getPath()), pluginDir);
+                    ArrayList<File> tarFiles = readTar(getInputStream(currentFile.getPath()), PluginUtil.getDefaultPluginDirectory());
                     for (int j = 0; j < tarFiles.size(); j++) {
                         if (tarFiles.get(j).getName().contains(".class")) {
                             allFiles.add(tarFiles.get(j));
@@ -951,123 +944,59 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         return;
     }
 
-    private boolean helpPluginSearch(File f, String className) {
-        boolean found = false;
-        File[] fList = f.listFiles();
-        String fileName;
-        for (int i = 0; i < fList.length; i++) {
-            if (fList[i].isDirectory()) {
-                found = helpPluginSearch(fList[i], className);
-            } else if (fList[i].getName().contains(".class")) {
-                fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
-                found = fileName.equals(className);
-            }
-
-            if (found) {
-                return found; // true
-            }
-        }
-        return found; // false
-    }
-
     /**
      * Determines whether the <code>className</code> is in the plugin folder.
-     * 
+     * @deprecated Use PluginUtil method.
      * @param className
      * @return
      */
+    @Deprecated
     private boolean isInPluginFolder(String className) {
-        boolean found = false;
-        File plugin = new File(pluginDir);
-        File[] fList = plugin.listFiles();
-        String fileName;
-        for (int i = 0; i < fList.length; i++) {
-            if (fList[i].isDirectory()) {
-                found = helpPluginSearch(fList[i], className);
-            } else if (fList[i].getName().contains(".class")) {
-                fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
-                found = fileName.equals(className);
-            }
-
-            if (found) {
-                return found; // true
-            }
-        }
-        return found; // false
+        return PluginUtil.isInPluginFolder(className);
     }
 
     /**
      * Determines whether <code>c</code> is in the current plugin folder.
-     * 
+     * @deprecated Use PluginUtil method.
      * @param c
      * @return
      */
+    @Deprecated
     private boolean isInPluginFolder(Class c) {
-        boolean found = isInPluginFolder(c.getSimpleName());
-
-        if (found) {
-            return found; // true
-        }
-
-        File plugin = new File(pluginDir);
-        URL fileLoc = null;
-        try {
-            fileLoc = c.getProtectionDomain().getCodeSource().getLocation();
-        } catch (NullPointerException e) {
-            return false;
-        }
-
-        try {
-            if (fileLoc.toString().contains(plugin.toURI().toURL().toString())) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (MalformedURLException e) {
-            // pluginDir needs to specify a valid location
-            e.printStackTrace();
-            return false;
-        }
+        return PluginUtil.isInPluginFolder(c);
     }
 
     /**
      * Returns whether the given class is a MIPAV/ImageJ plugin.
+     * @deprecated Use PluginUtil methods.
      * @param c A class.
      * @return True, if the given class is a MIPAV/ImageJ plugin.
      */
+    @Deprecated
     public static final boolean isPluginClass(Class c) {
-        return isMipavPluginClass(c) || isImageJPluginClass(c);
+        return PluginUtil.isPluginClass(c);
     }
     
     /**
      * Returns whether the given class is a MIPAV plugin.
+     * @deprecated Use PluginUtil methods.
      * @param c A class.
      * @return True, if the given class is a MIPAV plugin.
      */
+    @Deprecated
     public static final boolean isMipavPluginClass(Class c) {
-        for (Class inter : c.getInterfaces()) {
-            if (inter.equals(PlugInAlgorithm.class) || inter.equals(PlugInGeneric.class) || inter.equals(PlugInFile.class)
-                    || inter.equals(PlugIn.class) || inter.equals(PlugInView.class)) {
-                return true;
-            }
-        }
-        
-        return false;
+        return PluginUtil.isMipavPluginClass(c);
     }
     
     /**
      * Returns whether the given class is an ImageJ plugin.
+     * @deprecated Use PluginUtil methods.
      * @param c A class.
      * @return True, if the given class is an ImageJ plugin.
      */
+    @Deprecated
     public static final boolean isImageJPluginClass(Class c) {
-        for (Class inter : c.getInterfaces()) {
-            if (inter.equals(ij.plugin.PlugIn.class) || inter.equals(ij.plugin.filter.PlugInFilter.class) || c.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class)) {
-                return true;
-            }
-        }
-        
-        return false;
+        return PluginUtil.isImageJPluginClass(c);
     }
 
     private boolean examineClass(Class c) {
@@ -1119,10 +1048,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             if (name.indexOf(".class") != -1) {
                 Class c = null;
                 try {
-                    c = Class.forName(name.substring(0, name.indexOf(".class")));
-                } catch (ClassNotFoundException e) { // likely class issue
-                    e.printStackTrace();
-                    vectorColors.set(i, Color.red);
+//                    c = Class.forName(name.substring(0, name.indexOf(".class")));
+                    c = PluginUtil.loadPluginClass(name.substring(0, name.indexOf(".class")));
+//                } catch (ClassNotFoundException e) { // likely class issue
+//                    e.printStackTrace();
+//                    vectorColors.set(i, Color.red);
                 } catch (NoClassDefFoundError e) { // likely class issue
                     e.printStackTrace();
                     vectorColors.set(i, Color.red);

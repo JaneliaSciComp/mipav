@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.plugins.PluginUtil;
 import gov.nih.mipav.util.*;
 
 import gov.nih.mipav.model.algorithms.*;
@@ -4494,7 +4495,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 String filename = selectedFile.getName();
                 filename = filename.substring(0, filename.lastIndexOf('.'));
 
-                final Class pluginClass = Class.forName(filename);
+//                final Class pluginClass = Class.forName(filename);
+                final Class pluginClass = PluginUtil.loadPluginClass(filename);
 
                 final Constructor pluginConstructor = pluginClass.getConstructor(new Class[] {getClass()});
                 pluginPanel = (Component) pluginConstructor.newInstance(new Object[] {this});

@@ -3,6 +3,8 @@ import java.util.Vector;
 import gov.nih.mipav.plugins.BundledPlugInInfo;
 import gov.nih.mipav.plugins.PlugInBundle;
 import gov.nih.mipav.plugins.PlugInGeneric;
+import gov.nih.mipav.plugins.PluginUtil;
+
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -73,7 +75,7 @@ public class TreBundle extends PlugInBundle {
         
         String plugInName = new String();
         try{
-            Object thePlugIn = Class.forName("tre.PlugIn"+trePlugIns.get(pluginIndex)).newInstance();
+            Object thePlugIn = PluginUtil.loadPluginClass("tre.PlugIn"+trePlugIns.get(pluginIndex));
             if (thePlugIn instanceof PlugInGeneric) {
                 ((PlugInGeneric) thePlugIn).run();
             } else {
@@ -88,12 +90,12 @@ public class TreBundle extends PlugInBundle {
                                     + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
                             Preferences.DEBUG_MINOR);
             ucve.printStackTrace();
-        } catch (final ClassNotFoundException e) {
-            MipavUtil.displayError("PlugIn not found: " + plugInName);
-        } catch (final InstantiationException e) {
-            MipavUtil.displayError("Unable to load plugin (ins)");
-        } catch (final IllegalAccessException e) {
-            MipavUtil.displayError("Unable to load plugin (acc)");
+//        } catch (final ClassNotFoundException e) {
+//            MipavUtil.displayError("PlugIn not found: " + plugInName);
+//        } catch (final InstantiationException e) {
+//            MipavUtil.displayError("Unable to load plugin (ins)");
+//        } catch (final IllegalAccessException e) {
+//            MipavUtil.displayError("Unable to load plugin (acc)");
         }
     }
 }

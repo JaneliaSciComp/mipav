@@ -1,11 +1,7 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.plugins.JarClassLoader;
-
-import gov.nih.mipav.plugins.PlugInFile;
-import gov.nih.mipav.plugins.PlugInFileTransfer;
-import gov.nih.mipav.plugins.PlugInGeneric;
+import gov.nih.mipav.plugins.*;
 import gov.nih.mipav.util.NativeLibraryLoader;
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
@@ -105,9 +101,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** This is the outputDir path that the user entered as a command line argument when running a script * */
     private static String outputDir = "";
-
-    /** Mipav's optional secondary directory for plugins */
-    private static File secondaryPluginsDir;
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -598,7 +591,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = generatePlugin(plugInName, source, command);
+                thePlugIn = PluginUtil.loadPlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFile) {
 
@@ -622,7 +615,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = generatePlugin(plugInName, source, command);
+                thePlugIn = PluginUtil.loadPlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFile) {
 
@@ -645,7 +638,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = generatePlugin(plugInName, source, command);
+                thePlugIn = PluginUtil.loadPlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFileTransfer) {
                     ((PlugInFileTransfer) thePlugIn).transferFiles();
@@ -664,7 +657,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = generatePlugin(plugInName, source, command);
+                thePlugIn = PluginUtil.loadPlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFile) {
 
@@ -709,7 +702,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = generatePlugin(plugInName, source, command);
+                thePlugIn = PluginUtil.loadPlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInGeneric) {
                     ((PlugInGeneric) thePlugIn).run();
@@ -729,11 +722,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             final String plugInName = command.substring(12);
 
             try {
-                thePlugInClass = Class.forName(plugInName);
+//                thePlugInClass = Class.forName(plugInName);
+                thePlugInClass = PluginUtil.loadPluginClass(plugInName);
 
                 for (final Class c : thePlugInClass.getInterfaces()) {
                     if ( (c.equals(ij.plugin.PlugIn.class)) || (thePlugInClass.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
-                        thePlugInInstance = generatePlugin(plugInName, source, command);
+                        thePlugInInstance = PluginUtil.loadPlugin(plugInName, source, command);
                         final String args = "";
                         ((ij.plugin.PlugIn) thePlugInInstance).run(args);
                         break;
@@ -745,7 +739,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             if (img.is2DImage()) {
 
                                 final ImageProcessor ip = ModelImageToImageJConversion.convert2D(img);
-                                thePlugInInstance = generatePlugin(plugInName, source, command);
+                                thePlugInInstance = PluginUtil.loadPlugin(plugInName, source, command);
                                 ((ij.plugin.filter.PlugInFilter) thePlugInInstance).run(ip);
 
                             } else {
@@ -805,7 +799,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
                 }
 
-                final String userPluginsDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" + File.separator;
+                final String userPluginsDir = PluginUtil.getDefaultPluginDirectory();
                 final com.sun.tools.javac.Main javac = new com.sun.tools.javac.Main();
 
                 final Vector<String> v = new Vector<String>();
@@ -836,9 +830,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                         Class<?> plugin = null;
                         try {
-                            plugin = Class.forName(name);
+//                            plugin = Class.forName(name);
+                            plugin = PluginUtil.loadPluginClass(name);
 
-                            if (JDialogInstallPlugin.isImageJPluginClass(plugin)) {
+                            if (PluginUtil.isImageJPluginClass(plugin)) {
                                 final Component[] comps = pluginsMenu.getMenuComponents();
                                 for (int m = 0; m < comps.length; m++) {
                                     final Component comp = comps[m];
@@ -1180,15 +1175,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @return the new plugin menu
      */
     public JMenu buildPlugInsMenu(final ActionListener al) {
-        final String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" + File.separator;
+        final String userPlugins = PluginUtil.getDefaultPluginDirectory();
+        
+        final Vector<String> additionalPluginDirList = PluginUtil.getAdditionalPluginDirectories();
+        
 
         final JMenu menu = menuBuilder.makeMenu("Plugins", 'P', false, new JComponent[] {});
 
         final File pluginsDir = new File(userPlugins);
-        File[] allFiles = new File[0];
-        if (pluginsDir.isDirectory() || (secondaryPluginsDir != null && secondaryPluginsDir.isDirectory())) {
+        ArrayList<File> allFilesList = new ArrayList<File>();
+        if (pluginsDir.isDirectory() || additionalPluginDirList.size() > 0) {
             if (pluginsDir.isDirectory()) {
-                allFiles = pluginsDir.listFiles(new FileFilter() {
+                File[] allFiles = pluginsDir.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(final File f) {
 
@@ -1198,10 +1196,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         return false;
                     }
                 });
+                
+                allFilesList.addAll(Arrays.asList(allFiles));
             }
 
-            if (secondaryPluginsDir != null) {
-                final File[] secondaryFiles = secondaryPluginsDir.listFiles(new FileFilter() {
+            for (String dirString : additionalPluginDirList) {
+                final File dirFile = new File(dirString);
+                
+                final File[] dirContents = dirFile.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(final File f) {
 
@@ -1211,16 +1213,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         return false;
                     }
                 });
-
-                final File[] allFilesInterm = new File[allFiles.length + secondaryFiles.length];
-                int counter = 0;
-                for (int i = 0; i < allFiles.length; i++, counter++) {
-                    allFilesInterm[counter] = allFiles[i];
-                }
-                for (int i = 0; i < secondaryFiles.length; i++, counter++) {
-                    allFilesInterm[counter] = secondaryFiles[i];
-                }
-                allFiles = allFilesInterm;
+                
+                allFilesList.addAll(Arrays.asList(dirContents));
             }
 
             String name, pluginName;
@@ -1229,9 +1223,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             final String CLASS_EXT = ".class";
 
             final JMenu currentMenu = menu;
-            for (final File allFile : allFiles) {
+            for (final File curFile : allFilesList) {
 
-                name = allFile.getName();
+                name = curFile.getName();
                 final String quickExtSub = name.substring(name.lastIndexOf('.'));
 
                 if (quickExtSub.contains(CLASS_EXT)) {
@@ -1249,10 +1243,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                     Class plugin = null;
                     try {
-                        plugin = Class.forName(name);
-                    } catch (final ClassNotFoundException e1) {
-                        System.err.println("Unable to find class file(s) for plugin: " + e1.getMessage());
-                        // e1.printStackTrace();
+//                        plugin = Class.forName(name);
+                        plugin = PluginUtil.loadPluginClass(name);
+//                    } catch (final ClassNotFoundException e1) {
+//                        System.err.println("Unable to find class file(s) for plugin: " + e1.getMessage());
+//                        // e1.printStackTrace();
                     } catch (final Exception e2) {
                         e2.printStackTrace();
                     } catch (final Error e3) {
@@ -1262,9 +1257,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     addPluginToMenu(plugin, pluginName, name, currentMenu, al, null);
                 } else if (quickExtSub.contains(JAR_EXT)) {
                     try {
-                        final JarFile jar = new JarFile(allFile.getAbsolutePath());
+                        final JarFile jar = new JarFile(curFile.getAbsolutePath());
                         final Enumeration<JarEntry> e = jar.entries();
-                        final URL[] url = new URL[] {new URL("jar:file:" + allFile.getAbsolutePath() + "!/")};
+                        final URL[] url = new URL[] {new URL("jar:file:" + curFile.getAbsolutePath() + "!/")};
                         final URLClassLoader classLoader = URLClassLoader.newInstance(url);
 
                         while (e.hasMoreElements()) {
@@ -1288,13 +1283,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                             e3.printStackTrace();
                                         }
 
-                                        addPluginToMenu(plugin, pluginName, className, currentMenu, al, allFile.getAbsolutePath());
+                                        addPluginToMenu(plugin, pluginName, className, currentMenu, al, curFile.getAbsolutePath());
                                     }
                                 }
                             }
                         }
                     } catch (final IOException e) {
-                        System.err.println("Jar file not readable: " + allFile.getAbsolutePath());
+                        System.err.println("Jar file not readable: " + curFile.getAbsolutePath());
                     }
                 }
             }
@@ -1361,7 +1356,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 catField = plugin.getField(catName);
                 hier = (String[]) catField.get(plugin);
             } catch (final NoSuchFieldException e1) {
-                if (JDialogInstallPlugin.isImageJPluginClass(plugin)) {
+                if (PluginUtil.isImageJPluginClass(plugin)) {
                     isImageJPlugin = true;
                     hier = new String[] {"ImageJ"};
                 }
@@ -1399,7 +1394,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
 
                 if (interName.length() == 0 && plugin.getSuperclass() != null) {
-                    interName = getSuperInterfaces(plugin.getSuperclass());
+                    interName = PluginUtil.getPluginInterfaces(plugin.getSuperclass());
                 }
 
             } else {
@@ -1423,55 +1418,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             currentMenu.add(pluginMenuItem);
         } catch (final Exception e) {
             return;
-        }
-
-    }
-
-    private Object generatePlugin(final String plugInName, final Object source, final String command) {
-        Object thePlugIn = null;
-
-        try {
-            ClassLoader cl = null;
-
-            if (source instanceof JMenuItem) {
-                final Container parent = ((JMenuItem) source).getParent();
-                if ( ((JMenuItem) source).getToolTipText() != null && ((JMenuItem) source).getToolTipText().contains(".jar")) {
-                    final URL[] url = new URL[] {new URL("jar:file:" + ((JMenuItem) source).getToolTipText() + "!/")}; // should
-                                                                                                                       // really
-                                                                                                                       // be
-                                                                                                                       // full
-                                                                                                                       // path
-                    cl = URLClassLoader.newInstance(url);
-                }
-            }
-
-            if (cl == null) {
-                thePlugIn = Class.forName(plugInName).newInstance();
-            } else {
-                final Class<?> plugin = cl.loadClass(plugInName);
-                thePlugIn = plugin.newInstance();
-            }
-
-            return thePlugIn;
-        } catch (final Exception e) {
-            MipavUtil.displayError("Unable to execute plugin: " + command);
-            return null;
-        }
-    }
-
-    private String getSuperInterfaces(final Class<?> plugin) {
-        String interName = new String();
-        final Class<?>[] interList = plugin.getInterfaces();
-        for (final Class<?> element : interList) {
-            if (element.getName().contains("PlugIn")) {
-                interName = element.getName().substring(element.getName().indexOf("PlugIn"));
-            }
-        }
-
-        if (interName.length() == 0 && plugin.getSuperclass() != null) {
-            return getSuperInterfaces(plugin.getSuperclass());
-        } else {
-            return interName;
         }
 
     }
@@ -2980,8 +2926,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         final String plugInName = args[ ++i];
                         // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
-                        try {
-                            thePlugIn = Class.forName(plugInName).newInstance();
+//                        try {
+//                            thePlugIn = Class.forName(plugInName).newInstance();
+                            thePlugIn = PluginUtil.loadPlugin(plugInName);
 
                             // some plugins can now process command line arguments, can also control next command to be
                             // read
@@ -3001,16 +2948,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 MipavUtil.displayError("Plugin " + plugInName
                                         + " must implement the PlugInGeneric interface in order to be run from the command line.");
                             }
-                        } catch (final ClassNotFoundException e) {
-                            MipavUtil.displayError("PlugIn not found: " + plugInName);
-                            printUsageAndExit(c);
-                        } catch (final InstantiationException e) {
-                            MipavUtil.displayError("Unable to load plugin (ins)");
-                            printUsageAndExit(c);
-                        } catch (final IllegalAccessException e) {
-                            MipavUtil.displayError("Unable to load plugin (acc)");
-                            printUsageAndExit(c);
-                        }
+//                        } catch (final ClassNotFoundException e) {
+//                            MipavUtil.displayError("PlugIn not found: " + plugInName);
+//                            printUsageAndExit(c);
+//                        } catch (final InstantiationException e) {
+//                            MipavUtil.displayError("Unable to load plugin (ins)");
+//                            printUsageAndExit(c);
+//                        } catch (final IllegalAccessException e) {
+//                            MipavUtil.displayError("Unable to load plugin (acc)");
+//                            printUsageAndExit(c);
+//                        }
                         break;
                 }
             }
@@ -4663,7 +4610,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     public static File getSecondaryPluginsDir() {
-        return secondaryPluginsDir;
+        if (PluginUtil.getAdditionalPluginDirectories().size() > 0) {
+            return new File(PluginUtil.getAdditionalPluginDirectories().elementAt(0));
+        } else {
+            return null;
+        }
     }
 
     public static String getUserDefaultDir() {
@@ -4683,7 +4634,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     public static void setSecondaryPluginsDir(final File secondaryPluginsDir) {
-        ViewUserInterface.secondaryPluginsDir = secondaryPluginsDir;
+        PluginUtil.addPluginDirectory(secondaryPluginsDir.getAbsolutePath());
     }
 
     public static void setUserDefaultDir(final String userDefaultDir) {
