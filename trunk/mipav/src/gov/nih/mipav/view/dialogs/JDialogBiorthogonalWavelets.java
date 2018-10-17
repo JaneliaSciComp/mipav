@@ -157,7 +157,7 @@ public class JDialogBiorthogonalWavelets extends JDialogScriptableBase implement
         paramsPanel.add(iterationsLabel, gbc);
         
         iterationsText = new JTextField(10);
-        iterationsText.setText("10");
+        iterationsText.setText("5");
         iterationsText.setFont(serif12);
         iterationsText.setForeground(Color.black);
         iterationsText.setEnabled(true);
