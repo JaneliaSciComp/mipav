@@ -1051,7 +1051,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 		int j;
 		double vect[] = new double[n+1];
 		for (j = 0; j <= n; j++) {
-		    vect[j]	= nchoosek(n,j) * (-1 + 2*(j+1%2));
+		    vect[j]	= nchoosek(n,j) * (-1 + 2*((j+1)%2));
 		}
 		return vect;
 	}
