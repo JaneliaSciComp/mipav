@@ -1140,21 +1140,26 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 		fft.finalize();
 		fft = null;
         
-        // fft along m-point FFT of each column
-		// M The dimension of the current variable
-		// N  The spacing of the current variable
-		double matvec[] = new double[M*N];
-        for (i = 0; i < M; i++) {
-        	for (j = 0; j < N; j++) {
-        		matvec[j + i * N] = mat[i][j];
-        	}
-        }
-        double matvecI[] = new double[M*N];
-        fft = new FFTUtility(matvec, matvecI, 1, M, N, -1, FFTUtility.FFT);
-        fft.setShowProgress(false);
-		fft.run();
-		fft.finalize();
-		fft = null;
+        double fftMat[][] = new double[M][N];
+        double fftMatI[][] = new double[M][N];
+        double matvec[] = new double[M];
+        double matvecI[] = new double[M];
+		for (i = 0; i < N; i++) {
+            for (j = 0; j < M; j++) {
+            	matvec[j] = mat[j][i];
+            	matvecI[j] = 0;
+            }
+            fft = new FFTUtility(matvec, matvecI, 1, M, 1, -1,
+     				FFTUtility.FFT);
+     		fft.setShowProgress(false);
+     		fft.run();
+     		fft.finalize();
+     		fft = null;
+     		for (j = 0; j < M; j++) {
+     			fftMat[j][i] = matvec[j];
+     			fftMatI[j][i] = matvecI[j];
+     		}
+        } // for (i = 0; i < N; i++)
 		
 		double vals[] = new double[M];
 		double valsI[] = new double[M];
@@ -1162,8 +1167,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 		double vals2I[] = new double[M];
 		for (i = 0; i < N; i++) {
 		    for (j = 0; j < M; j++) {
-		    	vals[j] = matvec[i + j * N] * vecReverse[j] - matvecI[i + j * N] * vecReverseI[j];
-		    	valsI[j] = matvec[i + j * N] * vecReverseI[j] + matvecI[i + j * N] * vecReverse[j];
+		    	vals[j] = fftMat[j][i] * vecReverse[j] - fftMatI[j][i] * vecReverseI[j];
+		    	valsI[j] = fftMat[j][i] * vecReverseI[j] + fftMatI[j][i] * vecReverse[j];
 		    }
 	    	// 1 for inverse transform
 	    	fft = new FFTUtility(vals, valsI, 1, M, 1, 1, FFTUtility.FFT);
@@ -1179,8 +1184,8 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 			}
 			
 			for (j = 0; j < M; j++) {
-		    	vals2[j] = matvec[i + j * N] * vec2Reverse[j] - matvecI[i + j * N] * vec2ReverseI[j];
-		    	vals2I[j] = matvec[i + j * N] * vec2ReverseI[j] + matvecI[i + j * N] * vec2Reverse[j];
+		    	vals2[j] =  fftMat[j][i] * vec2Reverse[j] - fftMatI[j][i] * vec2ReverseI[j];
+		    	vals2I[j] = fftMat[j][i] * vec2ReverseI[j] + fftMatI[j][i] * vec2Reverse[j];
 		    }
 	    	// 1 for inverse transform
 	    	fft = new FFTUtility(vals2, vals2I, 1, M, 1, 1, FFTUtility.FFT);
