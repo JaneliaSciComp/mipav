@@ -302,7 +302,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     }
                     for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
-                    		for (i = 0; i < xLim; x++) {
+                    		for (i = 0; i < xLim; i++) {
                     			IMt[y][x][z] += prod[y][i] * WN[x][i];
                     		}
                     	}
