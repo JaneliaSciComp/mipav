@@ -302,6 +302,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     }
                     for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
+                    		IMt[y][x][z] = 0.0;
                     		for (i = 0; i < xLim; i++) {
                     			IMt[y][x][z] += prod[y][i] * WN[x][i];
                     		}
@@ -859,6 +860,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 	
 		if ((Nt % 2) != (N % 2)) {
 			MipavUtil.displayError("N and Nt must have the same parity");
+			setCompleted(false);
 			return;
 		}
 		
