@@ -318,7 +318,7 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
                     }
                     output = FastConvWaveletMult(IMtInput,ht,gt,inds_ht,inds_gt);
                     IMtInput = new double[xLim][yLim];
-                    for (y = 0; y < yLim; y++ ) {
+                    for (y = 0; y < yLim; y++) {
                     	for (x = 0; x < xLim; x++) {
                     		IMtInput[x][y] = output[y][x];
                     	}
@@ -716,12 +716,12 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 		
 		g = new double[ht.length];
 		for (i = 0; i < ht.length; i++) {
-			g[i] = ht[ht.length-1-i] * (2 * (inds_ht[inds_ht.length-1-i] % 2) - 1);
+			g[i] = ht[ht.length-1-i] * (2 * Math.abs(inds_ht[inds_ht.length-1-i] % 2) - 1);
 		}
 		
 		gt = new double[h.length];
 		for (i = 0; i < h.length; i++) {
-			gt[i] = h[h.length-1-i] * (2 * (inds_h[inds_h.length-1-i] % 2) - 1);
+			gt[i] = h[h.length-1-i] * (2 * Math.abs(inds_h[inds_h.length-1-i] % 2) - 1);
 		}
 		
 		// Plot the frequency responses if desired
@@ -950,12 +950,12 @@ public  class BiorthogonalWavelets extends AlgorithmBase {
 		
 		g = new double[ht.length];
 		for (i = 0; i < ht.length; i++) {
-			g[i] = ht[ht.length-1-i] * (2 * (inds_ht[inds_ht.length-1-i] % 2) - 1);
+			g[i] = ht[ht.length-1-i] * (2 * Math.abs(inds_ht[inds_ht.length-1-i] % 2) - 1);
 		}
 		
 		gt = new double[h.length];
 		for (i = 0; i < h.length; i++) {
-			gt[i] = h[h.length-1-i] * (2 * (inds_h[inds_h.length-1-i] % 2) - 1);
+			gt[i] = h[h.length-1-i] * (2 * Math.abs(inds_h[inds_h.length-1-i] % 2) - 1);
 		}
 		
 		// Plot the frequency responses if desired
