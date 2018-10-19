@@ -92,6 +92,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image ) {
 		voiManager = voiInterface;
 		imageA = image;
+		voiManager.addAnnotationListener(this);
 	}
 
 	/* (non-Javadoc)
@@ -354,6 +355,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	{		
 		voiManager = voiInterface;
 		imageA = image;
+		voiManager.addAnnotationListener(this);
 		if ( annotationPanel == null )
 		{			
 			annotationPanel = new JPanel();

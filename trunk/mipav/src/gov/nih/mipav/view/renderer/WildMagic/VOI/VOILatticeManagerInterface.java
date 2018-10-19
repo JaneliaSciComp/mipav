@@ -375,6 +375,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 //		latticeModel.expandLattice();
 	}
 	
+	public void untwistTest()
+	{
+		if ( latticeModel == null ) return;
+		latticeModel.untwistTest();
+	}
+	
 	public void openAnnotations( String directory, String fileName )
 	{
 		if (fileName != null)

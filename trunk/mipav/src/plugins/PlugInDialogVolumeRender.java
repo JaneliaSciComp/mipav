@@ -411,6 +411,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
 			{
+				if ( editMode == EditAnnotations2 ) 
+				{
+					// test untwisting w/out opening images / saving, etc. to give time estimate:
+//					untwistingTest();
+				}
 				if ( editMode == EditSeamCells )
 				{
 					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
@@ -995,6 +1000,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 			}
 		}
+	}
+	
+	private void untwistingTest()
+	{
+		voiManager.untwistTest();
 	}
 
 
