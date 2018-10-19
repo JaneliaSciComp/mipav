@@ -29,6 +29,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
@@ -67,6 +68,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
+import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -338,36 +340,44 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 							// do thin-plane spline registration on input:
 							Vector3f transformedPt = new Vector3f(pos);
-							if ( piecewiseSplines != null )
+							if ( inputSplineL != null )
 							{
-								spline = null;
-								for ( int j = splineBoundsL.getCurves().size() - 1; j >= 0; j-- )
-								{
-									Vector3f boundL = splineBoundsL.getCurves().elementAt(j).elementAt(0);
-									Vector3f boundR = splineBoundsR.getCurves().elementAt(j).elementAt(0);
-									if ( pos.Z >= boundL.Z && pos.Z >= boundR.Z )
-									{
-										spline = piecewiseSplines.elementAt(j);
-										
-										System.err.println( "Found spline: " + "  " + name + "   " + ((VOIText)splineBoundsL.getCurves().elementAt(j)).getText() + "   " +
-												((VOIText)splineBoundsR.getCurves().elementAt(j)).getText() );
-										break;
-									}
-								}
-								if ( spline != null )
-								{
-									float[] temp = spline.getCorrespondingPoint(pos.X, pos.Y, pos.Z);
-									transformedPt.X = temp[0];
-									transformedPt.Y = temp[1];
-									transformedPt.Z = temp[2];
-									System.err.println("Spline: " + name + " " + pos + " => " + transformedPt );
-									
-									VOIText newText = new VOIText();
-									newText.setText(name);
-									newText.add(transformedPt);
-									annotationVOISpline.getCurves().add(newText);
-								}
+								transformedPt = findSplineTime(pos);
+								VOIText newText = new VOIText();
+								newText.setText(name);
+								newText.add(transformedPt);
+								annotationVOISpline.getCurves().add(newText);
 							}
+//							if ( piecewiseSplines != null )
+//							{
+//								spline = null;
+//								for ( int j = splineBoundsL.getCurves().size() - 1; j >= 0; j-- )
+//								{
+//									Vector3f boundL = splineBoundsL.getCurves().elementAt(j).elementAt(0);
+//									Vector3f boundR = splineBoundsR.getCurves().elementAt(j).elementAt(0);
+//									if ( pos.Z >= boundL.Z && pos.Z >= boundR.Z )
+//									{
+//										spline = piecewiseSplines.elementAt(j);
+//										
+//										System.err.println( "Found spline: " + "  " + name + "   " + ((VOIText)splineBoundsL.getCurves().elementAt(j)).getText() + "   " +
+//												((VOIText)splineBoundsR.getCurves().elementAt(j)).getText() );
+//										break;
+//									}
+//								}
+//								if ( spline != null )
+//								{
+//									float[] temp = spline.getCorrespondingPoint(pos.X, pos.Y, pos.Z);
+//									transformedPt.X = temp[0];
+//									transformedPt.Y = temp[1];
+//									transformedPt.Z = temp[2];
+//									System.err.println("Spline: " + name + " " + pos + " => " + transformedPt );
+//									
+//									VOIText newText = new VOIText();
+//									newText.setText(name);
+//									newText.add(transformedPt);
+//									annotationVOISpline.getCurves().add(newText);
+//								}
+//							}
 
 							if ( ((int)transformedPt.X >= 0) && ((int)transformedPt.X < dimX) && 
 									((int)transformedPt.Y >= 0) && ((int)transformedPt.Y < dimY) &&
@@ -796,6 +806,18 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	private VOI splineBoundsR = null;
 	
 	private String pairSet[] = new String[] {"H0", "H1", "H2", "H3", "V0", "V1", "V2", "V3", "V4", "V5", "V6", "T" };
+	private VOIContour inputPositionsL;
+	private VOIContour inputPositionsR;
+	private VOIContour targetPositionsL;
+	private VOIContour targetPositionsR;
+	private float[] inputTimesL;
+	private float[] inputTimesR;
+	private float[] targetTimesL;
+	private float[] targetTimesR;
+	private NaturalSpline3 inputSplineL;
+	private NaturalSpline3 inputSplineR;
+	private NaturalSpline3 targetSplineL;
+	private NaturalSpline3 targetSplineR;
 	private void findPairs(ModelImage image, VOI targetPts, VOI inputPts)
 	{
 		VOI pairListTargetL = new VOI( (short)0, "temp", VOI.ANNOTATION, 0 );
@@ -877,6 +899,145 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			return;
 		}
 
+
+		VOIContour center = new VOIContour(false);	
+		for ( int i = 0; i < pairListTargetL.getCurves().size(); i++ )
+		{	
+			Vector3f pt = new Vector3f(pairListTargetL.getCurves().elementAt(i).elementAt(0));
+//			pt.add(pairListTargetR.getCurves().elementAt(i).elementAt(0));
+//			pt.scale(0.5f);
+//			pt.X = 0;
+//			pt.Y = 0;
+			center.add(pt);
+		}
+		float[] afTimeC = new float[center.size()];
+		targetSplineL = smoothCurve(center, afTimeC);
+		float length = targetSplineL.GetLength(0, 1);
+		//		System.err.println( "Generate Curves " + length );
+		int maxLength = (int)Math.ceil(length);
+		float step = 1;
+		if ( maxLength != length )
+		{
+			step = (length / maxLength);
+		}
+		targetPositionsL = new VOIContour(false);
+		targetTimesL = new float[maxLength + 1];
+		for (int i = 0; i <= maxLength; i++) {
+			final float t = targetSplineL.GetTime(i*step);
+			targetPositionsL.add(targetSplineL.GetPosition(t));
+			targetTimesL[i] = t;
+		}
+		
+
+		center = new VOIContour(false);	
+		for ( int i = 0; i < pairListTargetR.getCurves().size(); i++ )
+		{	
+			Vector3f pt = new Vector3f(pairListTargetR.getCurves().elementAt(i).elementAt(0));
+//			pt.add(pairListTargetR.getCurves().elementAt(i).elementAt(0));
+//			pt.scale(0.5f);
+//			pt.X = 0;
+//			pt.Y = 0;
+			center.add(pt);
+		}
+		afTimeC = new float[center.size()];
+		targetSplineR = smoothCurve(center, afTimeC);
+		length = targetSplineL.GetLength(0, 1);
+		//		System.err.println( "Generate Curves " + length );
+		maxLength = (int)Math.ceil(length);
+		step = 1;
+		if ( maxLength != length )
+		{
+			step = (length / maxLength);
+		}
+		targetPositionsR = new VOIContour(false);
+		targetTimesR = new float[maxLength + 1];
+		for (int i = 0; i <= maxLength; i++) {
+			final float t = targetSplineR.GetTime(i*step);
+			targetPositionsR.add(targetSplineR.GetPosition(t));
+			targetTimesR[i] = t;
+		}
+		
+		
+		
+
+		center = new VOIContour(false);	
+		for ( int i = 0; i < pairListInputL.getCurves().size(); i++ )
+		{	
+			Vector3f pt = new Vector3f(pairListInputL.getCurves().elementAt(i).elementAt(0));
+//			pt.add(pairListInputR.getCurves().elementAt(i).elementAt(0));
+//			pt.scale(0.5f);
+//			pt.X = 0;
+//			pt.Y = 0;
+			center.add(pt);
+		}
+		afTimeC = new float[center.size()];
+		inputSplineL = smoothCurve(center, afTimeC);
+		length = inputSplineL.GetLength(0, 1);
+		//		System.err.println( "Generate Curves " + length );
+		maxLength = (int)Math.ceil(length);
+		step = 1;
+		if ( maxLength != length )
+		{
+			step = (length / maxLength);
+		}
+		inputTimesL = new float[maxLength + 1];
+		inputPositionsL = new VOIContour(false);
+		for (int i = 0; i <= maxLength; i++) {
+			final float t = inputSplineL.GetTime(i*step);
+			inputPositionsL.add(inputSplineL.GetPosition(t));
+			inputTimesL[i] = t;
+		}
+		
+		
+		
+
+		center = new VOIContour(false);	
+		for ( int i = 0; i < pairListInputR.getCurves().size(); i++ )
+		{	
+			Vector3f pt = new Vector3f(pairListInputR.getCurves().elementAt(i).elementAt(0));
+//			pt.add(pairListInputR.getCurves().elementAt(i).elementAt(0));
+//			pt.scale(0.5f);
+//			pt.X = 0;
+//			pt.Y = 0;
+			center.add(pt);
+		}
+		afTimeC = new float[center.size()];
+		inputSplineR = smoothCurve(center, afTimeC);
+		length = inputSplineR.GetLength(0, 1);
+		//		System.err.println( "Generate Curves " + length );
+		maxLength = (int)Math.ceil(length);
+		step = 1;
+		if ( maxLength != length )
+		{
+			step = (length / maxLength);
+		}
+		inputTimesR = new float[maxLength + 1];
+		inputPositionsR = new VOIContour(false);
+		for (int i = 0; i <= maxLength; i++) {
+			final float t = inputSplineR.GetTime(i*step);
+			inputPositionsR.add(inputSplineR.GetPosition(t));
+			inputTimesR[i] = t;
+		}
+		System.err.println( "Times " + targetTimesL.length + "   " + targetTimesR.length + "   " + inputTimesL.length + "   " + inputTimesR.length );
+//		for ( int i = 0; i < inputTimes.length; i++ ) {
+//			System.err.println(i + "    " + targetTimes[i] + "     " + inputTimes[i] );
+//		}
+		
+//		System.err.println("1D Splines:");
+//		for ( int i = 0; i < pairListInputL.getCurves().size(); i++ )
+//		{	
+//			VOIText leftI = (VOIText) pairListInputL.getCurves().elementAt(i);
+//			VOIText rightI = (VOIText) pairListInputR.getCurves().elementAt(i);
+//			VOIText leftT = (VOIText) pairListTargetL.getCurves().elementAt(i);
+//			VOIText rightT = (VOIText) pairListTargetR.getCurves().elementAt(i);
+//			
+//			System.err.println(leftI.getText() + "  " + rightI.getText() );
+//			float time = inputSpline.GetTime((leftI.elementAt(0).Z + rightI.elementAt(0).Z)/2f);
+//			Vector3f targetP = targetSpline.GetPosition(time);
+//			System.err.println( targetP.Z + "  " + (leftT.elementAt(0).Z + rightT.elementAt(0).Z)/2f);
+//		}
+		
+
 		VOIText previousT[] = new VOIText[] {((VOIText)pairListTargetL.getCurves().elementAt(0)), ((VOIText)pairListTargetR.getCurves().elementAt(0))};
 		VOIText previousI[] = new VOIText[] {((VOIText)pairListInputL.getCurves().elementAt(0)), ((VOIText)pairListInputR.getCurves().elementAt(0))};
 		for ( int i = 0; i < pairListTargetL.getCurves().size() - 1; i++ )
@@ -930,6 +1091,9 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			yTarget[3] = target2R.elementAt(0).Y;
 			zTarget[3] = target2R.elementAt(0).Z;
 
+			System.err.println("");
+			System.err.println("");
+			System.err.println("Set of Four: ");
 			System.err.println(input1L.elementAt(0) + "  " + input1R.elementAt(0) + "  " + input2L.elementAt(0) + " " + input2R.elementAt(0) );
 			System.err.println(target1L.elementAt(0) + "  " + target1R.elementAt(0) + "  " + target2L.elementAt(0) + " " + target2R.elementAt(0) );
 
@@ -1137,6 +1301,95 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		System.err.println("Done piecewise splines " + piecewiseSplines.size() );
 		System.err.println("");
 		System.err.println("");
+	}
+	
+	private Vector3f findSplineTime(Vector3f pt) {
+		Vector3f inputPt = new Vector3f();
+		Vector3f targetPt;
+		float zDistL = Float.MAX_VALUE;
+		int indexL = -1;
+		for (int i = 0; i < inputPositionsL.size(); i++) {
+			float dist = Math.abs(pt.Z - inputPositionsL.elementAt(i).Z);
+			if ( dist < zDistL )
+			{
+				zDistL = dist;
+				indexL = i;
+			}
+		}
+		float zDistR = Float.MAX_VALUE;
+		int indexR = -1;
+		for (int i = 0; i < inputPositionsR.size(); i++) {
+			float dist = Math.abs(pt.Z - inputPositionsR.elementAt(i).Z);
+			if ( dist < zDistR )
+			{
+				zDistR = dist;
+				indexR = i;
+			}
+		}
+		float time;
+		float distL = inputPositionsL.elementAt(indexL).distance(pt);
+		float distR = inputPositionsR.elementAt(indexR).distance(pt);
+		if ( distL < distR )
+		{
+			inputPt.copy(inputPositionsL.elementAt(indexL));
+			time = inputTimesL[indexL];
+			targetPt = targetSplineL.GetPosition(time);
+		}
+		else
+		{
+			inputPt.copy(inputPositionsR.elementAt(indexR));
+			time = inputTimesR[indexR];
+			targetPt = targetSplineR.GetPosition(time);
+		}
+
+		float scaleX = targetPt.X / inputPt.X;
+		float scaleY = targetPt.Y / inputPt.Y;
+		float z = targetPt.Z;
+		
+		Vector3f transformedPt = new Vector3f(pt);
+		transformedPt.X *= scaleX;
+		transformedPt.Y *= scaleY;
+		transformedPt.Z = z;
+		transformedPt.X = Math.round(transformedPt.X);
+		transformedPt.Y = Math.round(transformedPt.Y);
+		transformedPt.Z = Math.round(transformedPt.Z);
+		return transformedPt;
+	}
+	
+	private NaturalSpline3 smoothCurve(final VOIContour curve, final float[] time) {
+//		float totalDistance = 0;
+//		for (int i = 0; i < curve.size() - 1; i++) {
+//			totalDistance += curve.elementAt(i).distance(curve.elementAt(i + 1));
+//		}
+//
+//		final Vector3f[] akPoints = new Vector3f[curve.size()];
+//		float distance = 0;
+//		for (int i = 0; i < curve.size(); i++) {
+//			if (i > 0) {
+//				distance += curve.elementAt(i).distance(curve.elementAt(i - 1));
+//				time[i] = distance / totalDistance;
+//				akPoints[i] = new Vector3f(curve.elementAt(i));
+//			} else {
+//				time[i] = 0;
+//				akPoints[i] = new Vector3f(curve.elementAt(i));
+//			}
+//		}
+
+		final Vector3f[] akPoints = new Vector3f[curve.size()];
+		for (int i = 0; i < curve.size(); i++) {
+			time[i] = i / (float)(curve.size() - 1);
+			akPoints[i] = new Vector3f(curve.elementAt(i));
+		}
+		
+		NaturalSpline3 spline = new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, curve.size() - 1, time, akPoints);
+		System.err.println("");
+		System.err.println("");
+		System.err.println("");
+		System.err.println("Time");
+		for (int i = 0; i < curve.size(); i++) {
+			System.err.println(akPoints[i].Z + "   " + spline.GetPosition(time[i]) + "   " + time[i] );
+		}
+		return spline;
 	}
 
 	private void checkPointMatch(VOI targetPts, VOI inputPts)
