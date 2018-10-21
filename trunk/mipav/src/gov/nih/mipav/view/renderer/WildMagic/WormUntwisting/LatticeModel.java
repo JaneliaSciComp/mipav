@@ -1115,13 +1115,13 @@ public class LatticeModel {
 		}
 	}
 	
-	public void untwistTest()
+	public ModelImage untwistTest()
 	{
-		if ( !latticeInterpolationInit ) {
+//		if ( !latticeInterpolationInit ) {
 			initializeInterpolation();
-		}
+//		}
 		final int[] resultExtents = new int[] {(int) ((2 * extent)), (int) ((2 * extent)), samplingPlanes.getCurves().size()};
-		untwistTest(imageA, resultExtents);
+		return untwistTest(imageA, resultExtents);
 		
 	}
 	
@@ -6417,6 +6417,12 @@ public class LatticeModel {
 		float y = y0;
 		float z = z0;
 
+		float fMin = Float.MAX_VALUE;
+		float fMax = -Float.MAX_VALUE;
+		float fMinG = Float.MAX_VALUE;
+		float fMaxG = -Float.MAX_VALUE;
+		float fMinB = Float.MAX_VALUE;
+		float fMaxB = -Float.MAX_VALUE;
 		for (int j = 0; j < jBound; j++) {
 
 			/* Initialize the first diagonal point(x,y,z): */
@@ -6455,14 +6461,26 @@ public class LatticeModel {
 					{
 						/* if color: */
 						if (buffFactor == 4) {						
+							float value = image.getFloatC(iIndex, jIndex, kIndex, 1);
+							float valueG = image.getFloatC(iIndex, jIndex, kIndex, 2);
+							float valueB = image.getFloatC(iIndex, jIndex, kIndex, 3);
 							result.setC(i, j, slice, 0, image.getFloatC(iIndex, jIndex, kIndex, 0) );
-							result.setC(i, j, slice, 1, image.getFloatC(iIndex, jIndex, kIndex, 1) );
-							result.setC(i, j, slice, 2, image.getFloatC(iIndex, jIndex, kIndex, 2) );
-							result.setC(i, j, slice, 3, image.getFloatC(iIndex, jIndex, kIndex, 3) );
+							result.setC(i, j, slice, 1, value );
+							result.setC(i, j, slice, 2, valueG );
+							result.setC(i, j, slice, 3, valueB );
+							if ( value < fMin ) fMin = value;
+							if ( value > fMax ) fMax = value;
+							if ( valueG < fMinG ) fMinG = valueG;
+							if ( valueG > fMaxG ) fMaxG = valueG;
+							if ( valueB < fMinB ) fMinB = valueB;
+							if ( valueB > fMaxB ) fMaxB = valueB;
 						}
 						/* not color: */
 						else {
-							result.set(i, j, slice, image.getFloat(iIndex, jIndex, kIndex));
+							float value = image.getFloat(iIndex, jIndex, kIndex);
+							result.set(i, j, slice, value);
+							if ( value < fMin ) fMin = value;
+							if ( value > fMax ) fMax = value;
 						}					
 					}
 				}
@@ -6489,6 +6507,17 @@ public class LatticeModel {
 		//			System.err.println("writeDiagonal " + xSlopeX + " " + ySlopeX + " " + zSlopeX);
 		//			System.err.println("writeDiagonal " + xSlopeY + " " + ySlopeY + " " + zSlopeY);
 		//		}
+
+		result.setMax( Math.max(fMax, result.getMax()) );
+		result.setMin( Math.min(fMin, result.getMin()) );
+		if (buffFactor == 4) {	
+			result.setMaxR(Math.max(fMax, result.getMaxR()));
+			result.setMinR(Math.min(fMin, result.getMinR()));
+			result.setMaxG(Math.max(fMaxG, result.getMaxG()));
+			result.setMinG(Math.min(fMinG, result.getMinG()));
+			result.setMaxB(Math.max(fMaxB, result.getMaxB()));
+			result.setMinB(Math.min(fMinB, result.getMinB()));
+		}
 	}
 
 	
@@ -8306,7 +8335,7 @@ public class LatticeModel {
 	 * @param image
 	 * @param resultExtents
 	 */
-	private void untwistTest(final ModelImage image, final int[] resultExtents)
+	private ModelImage untwistTest(final ModelImage image, final int[] resultExtents)
 	{
 		long time = System.currentTimeMillis();
 		int size = samplingPlanes.getCurves().size();
@@ -8358,7 +8387,9 @@ public class LatticeModel {
 
 			writeDiagonalTest(image, resultImage, 0, i, resultExtents, corners, radiusSq);
 		}
-		
+		if ( resultImage.getMin() > 0 ) {
+			resultImage.setMin(0);
+		}
 		// straighten lattice:
 		short id = (short) image.getVOIs().getUniqueID();
 		final VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
@@ -8403,48 +8434,85 @@ public class LatticeModel {
 		}
 				
 		// straighten markers:
-		setMarkers(annotationVOIs);
-		VOIContour[] contours = new VOIContour[size];
-		for ( int i = 0; i < latticeContours.getCurves().size(); i++ )
-		{	
-			VOIContour contour = (VOIContour)latticeContours.getCurves().elementAt(i);
-			int index = (int) contour.elementAt(0).Z;
-			contours[index] =  contour;
-		}
-	
-		HashMap<Integer,Vector<Vector2d>> targetSlice = new HashMap<Integer,Vector<Vector2d>>();
-		for ( int i = 0; i < markerCenters.size(); i++ )
-		{
-//			System.err.println( markerNames.elementAt(i) );
-			int latticeSegment = markerLatticeSegments.elementAt(i);
-			int startIndex = 0;
-			int endIndex = size;
-			if ( (latticeSegment > 0) && (latticeSegment < splineRangeIndex.length) ) {
-				startIndex = splineRangeIndex[latticeSegment-1];
-				endIndex = splineRangeIndex[latticeSegment];
+		if ( annotationVOIs != null ) {
+			setMarkers(annotationVOIs);
+			VOIContour[] contours = new VOIContour[size];
+			for ( int i = 0; i < latticeContours.getCurves().size(); i++ )
+			{	
+				VOIContour contour = (VOIContour)latticeContours.getCurves().elementAt(i);
+				int index = (int) contour.elementAt(0).Z;
+				contours[index] =  contour;
 			}
-//			System.err.println( i + "  " + markerNames.elementAt(i) + "  " + latticeSegment + "  " + startIndex + "  " + endIndex + "  " + size + "  " + splineRangeIndex.length);
-			int closeCount = 0;
-			for ( int j = startIndex; j < endIndex; j++ )
-			{			
-				float distance = centerPositions.elementAt(j).distance( markerCenters.elementAt(i) );
-				float radius = leftPositions.elementAt(j).distance(rightPositions.elementAt(j))/2f;
-				//				System.err.println( markerNames.elementAt(i) + " " + distance + " " + radius + " " + (distance <= radius) );
 
-				// If the marker is within the radius of the current lattice position:
-				if ( (distance <= (1.25 * radius)) )
-				{
-					// Calculate the straightened marker location:
-					VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
-					for (int k = 0; k < 4; k++) {
-						corners[k] = kBox.elementAt(k);
-					}
-					Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i) );
+			HashMap<Integer,Vector<Vector2d>> targetSlice = new HashMap<Integer,Vector<Vector2d>>();
+			for ( int i = 0; i < markerCenters.size(); i++ )
+			{
+				//			System.err.println( markerNames.elementAt(i) );
+				int latticeSegment = markerLatticeSegments.elementAt(i);
+				int startIndex = 0;
+				int endIndex = size;
+				if ( (latticeSegment > 0) && (latticeSegment < splineRangeIndex.length) ) {
+					startIndex = splineRangeIndex[latticeSegment-1];
+					endIndex = splineRangeIndex[latticeSegment];
+				}
+				//			System.err.println( i + "  " + markerNames.elementAt(i) + "  " + latticeSegment + "  " + startIndex + "  " + endIndex + "  " + size + "  " + splineRangeIndex.length);
+				int closeCount = 0;
+				for ( int j = startIndex; j < endIndex; j++ )
+				{			
+					float distance = centerPositions.elementAt(j).distance( markerCenters.elementAt(i) );
+					float radius = leftPositions.elementAt(j).distance(rightPositions.elementAt(j))/2f;
+					//				System.err.println( markerNames.elementAt(i) + " " + distance + " " + radius + " " + (distance <= radius) );
 
-					if ( markerPt.X != Float.MAX_VALUE )
+					// If the marker is within the radius of the current lattice position:
+					if ( (distance <= (1.25 * radius)) )
 					{
-						// If it is inside the skin marker contour:
-						if ( (contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y ) )
+						// Calculate the straightened marker location:
+						VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+						for (int k = 0; k < 4; k++) {
+							corners[k] = kBox.elementAt(k);
+						}
+						Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i) );
+
+						if ( markerPt.X != Float.MAX_VALUE )
+						{
+							// If it is inside the skin marker contour:
+							if ( (contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y ) )
+							{
+								// Calculate the distance of the marker to the sampling plane:
+								Plane3f plane = new Plane3f(normalVectors.elementAt(j), centerPositions.elementAt(j) );
+								DistanceVector3Plane3 dist = new DistanceVector3Plane3(markerCenters.elementAt(i), plane);
+
+								double eDistance = dist.Get();
+
+								closeCount++;
+								Vector<Vector2d> list;
+								if ( !targetSlice.containsKey(i) )
+								{
+									list = new Vector<Vector2d>();
+									targetSlice.put(i, list);
+								}
+								else
+								{
+									list = targetSlice.get(i);						
+								}
+								Vector2d newPt = new Vector2d(eDistance, j);
+								list.add(newPt);
+							}
+						}
+					}
+				}
+				if ( !targetSlice.containsKey(i) && ((startIndex != 0) || (endIndex != size)) ) {
+					// no target slice - ignore contour:	
+					for ( int j = startIndex; j < endIndex; j++ )
+					{			
+						// Calculate the straightened marker location:
+						VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+						for (int k = 0; k < 4; k++) {
+							corners[k] = kBox.elementAt(k);
+						}
+						Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i) );
+
+						if ( markerPt.X != Float.MAX_VALUE )
 						{
 							// Calculate the distance of the marker to the sampling plane:
 							Plane3f plane = new Plane3f(normalVectors.elementAt(j), centerPositions.elementAt(j) );
@@ -8467,57 +8535,24 @@ public class LatticeModel {
 							list.add(newPt);
 						}
 					}
+
 				}
-			}
-			if ( !targetSlice.containsKey(i) && ((startIndex != 0) || (endIndex != size)) ) {
-				// no target slice - ignore contour:	
-				for ( int j = startIndex; j < endIndex; j++ )
-				{			
-					// Calculate the straightened marker location:
-					VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
-					for (int k = 0; k < 4; k++) {
-						corners[k] = kBox.elementAt(k);
-					}
-					Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i) );
-
-					if ( markerPt.X != Float.MAX_VALUE )
-					{
-						// Calculate the distance of the marker to the sampling plane:
-						Plane3f plane = new Plane3f(normalVectors.elementAt(j), centerPositions.elementAt(j) );
-						DistanceVector3Plane3 dist = new DistanceVector3Plane3(markerCenters.elementAt(i), plane);
-
-						double eDistance = dist.Get();
-
-						closeCount++;
-						Vector<Vector2d> list;
-						if ( !targetSlice.containsKey(i) )
-						{
-							list = new Vector<Vector2d>();
-							targetSlice.put(i, list);
-						}
-						else
-						{
-							list = targetSlice.get(i);						
-						}
-						Vector2d newPt = new Vector2d(eDistance, j);
-						list.add(newPt);
-					}
+				if ( !targetSlice.containsKey(i) ) {
+					System.err.println( i + "  " + markerNames.elementAt(i) + "  " + targetSlice.containsKey(i) );
 				}
-				
+				//			System.err.println( markerNames.elementAt(i) + " " + closeCount );
 			}
-			if ( !targetSlice.containsKey(i) ) {
-				System.err.println( i + "  " + markerNames.elementAt(i) + "  " + targetSlice.containsKey(i) );
-			}
-//			System.err.println( markerNames.elementAt(i) + " " + closeCount );
+
+			untwistMarkersTarget( image, resultImage, resultExtents, targetSlice );
+			resultImage.registerVOI(annotationsStraight);
 		}
-
-		untwistMarkersTarget( image, resultImage, resultExtents, targetSlice );
-		resultImage.registerVOI(annotationsStraight);
 		System.err.println( "Untwisting TSET elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
-		resultImage.calcMinMax();
-		new ViewJFrameImage((ModelImage)resultImage.clone());
-		resultImage.disposeLocal(false);
-		resultImage = null;
+//		resultImage.calcMinMax();
+//		new ViewJFrameImage((ModelImage)resultImage.clone());
+//		resultImage.disposeLocal(false);
+//		resultImage = null;
+		
+		return resultImage;
 	}
 
 	

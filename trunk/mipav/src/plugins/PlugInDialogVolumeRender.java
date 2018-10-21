@@ -169,6 +169,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 	private JButton newLatticeButton; 
 	private JButton flipLatticeButton; 
+	private JButton previewUntwisting;
 	private JCheckBox displayModel;
 
 	private JButton nextButton;
@@ -201,6 +202,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private Container volumePanel;
 	private VolumeTriPlanarRender volumeRenderer;
 	private ModelImage wormImage;
+	private ModelImage previewImage;
 	private WormData wormData;
 	
 	
@@ -515,6 +517,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			else if (command.equals("done"))
 			{			
 				backNextPanel.remove(displayModel);
+				backNextPanel.remove(previewUntwisting);
 				if ( editMode == EditSeamCells )
 				{
 					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
@@ -566,6 +569,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				latticeSelectionPanel.add(flipLatticeButton);
 				latticeSelectionPanel.add(displayModel);
 				displayModel.setSelected(false);
+				latticeSelectionPanel.add(previewUntwisting);
 				this.validate();
 			}
 			else if ( command.equals("flipLattice" ) )
@@ -581,6 +585,75 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					voiManager.showModel( displayModel.isSelected() );
 					volumeRenderer.updateVOIs();
+				}
+			}
+			else if ( command.equals("preview") )
+			{
+				TransferFunction fn = null;
+				TransferFunction blueFn = null;
+				TransferFunction greenFn = null;
+				if ( !wormImage.isColorImage() ) {
+					fn = new TransferFunction(((ModelLUT)volumeImage.getLUT()).getTransferFunction());
+				}
+				else {
+					fn = new TransferFunction(((ModelRGB)volumeImage.getLUT()).getRedFunction());
+					blueFn = new TransferFunction(((ModelRGB)volumeImage.getLUT()).getBlueFunction());
+					greenFn = new TransferFunction(((ModelRGB)volumeImage.getLUT()).getGreenFunction());
+				}
+				if ( previewUntwisting.getText().equals("preview") ) {
+					if ( previewImage != null ) previewImage.disposeLocal(false);
+					previewImage = untwistingTest();	
+					voiManager.setImage(previewImage, null);	
+					volumeImage.UpdateData(previewImage, true);
+					volumeRenderer.resetAxis();
+					volumeRenderer.reCreateScene(volumeImage);
+					updateClipPanel();
+					volumeRenderer.resetAxisX();
+					if ( !wormImage.isColorImage() ) {
+						System.err.println(wormImage.getMin() + "  " + wormImage.getMax() );
+					}
+					else {
+						System.err.println(wormImage.getMinR() + "  " + wormImage.getMaxR() );
+						System.err.println(wormImage.getMinG() + "  " + wormImage.getMaxG() );
+						System.err.println(wormImage.getMinB() + "  " + wormImage.getMaxB() );
+					}
+					if ( !previewImage.isColorImage() ) {
+						System.err.println(previewImage.getMin() + "  " + previewImage.getMax() );
+					}
+					else {
+						System.err.println(previewImage.getMinR() + "  " + previewImage.getMaxR() );
+						System.err.println(previewImage.getMinG() + "  " + previewImage.getMaxG() );
+						System.err.println(previewImage.getMinB() + "  " + previewImage.getMaxB() );
+					}
+					updateHistoLUTPanels(false);
+					if ( !wormImage.isColorImage() ) {
+						((ModelLUT)volumeImage.getLUT()).setTransferFunction(fn);
+					}
+					else {
+						((ModelRGB)volumeImage.getLUT()).setRedFunction(fn);
+						((ModelRGB)volumeImage.getLUT()).setBlueFunction(blueFn);
+						((ModelRGB)volumeImage.getLUT()).setGreenFunction(greenFn);						
+					}
+					volumeImage.UpdateImages(volumeImage.getLUT());
+					previewUntwisting.setText("return");
+				}
+				else {
+					previewUntwisting.setText("preview");		
+					voiManager.setImage(wormImage, null);	
+					volumeImage.UpdateData(wormImage, true);
+					volumeRenderer.resetAxis();
+					volumeRenderer.reCreateScene(volumeImage);
+					updateClipPanel();
+					updateHistoLUTPanels(false);
+					if ( !wormImage.isColorImage() ) {
+						((ModelLUT)volumeImage.getLUT()).setTransferFunction(fn);
+					}
+					else {
+						((ModelRGB)volumeImage.getLUT()).setRedFunction(fn);
+						((ModelRGB)volumeImage.getLUT()).setBlueFunction(blueFn);
+						((ModelRGB)volumeImage.getLUT()).setGreenFunction(greenFn);						
+					}
+					volumeImage.UpdateImages(volumeImage.getLUT());
 				}
 			}
 			if ( includeRange != null )
@@ -742,9 +815,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		if ( wormImage != null )
 		{
-			wormImage.disposeLocal();
+			wormImage.disposeLocal(false);
 			wormImage = null;
 		}		
+		if ( previewImage != null ) 
+		{
+			previewImage.disposeLocal(false);
+			previewImage = null;
+		}
 	}
 	
 	/**
@@ -773,6 +851,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			wormImage.disposeLocal();
 			wormImage = null;
+		}
+		if ( previewImage != null ) 
+		{
+			previewImage.disposeLocal(false);
+			previewImage = null;
 		}
 		if ( wormData != null )
 		{
@@ -925,6 +1008,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				backNextPanel.remove(displayModel);
 				backNextPanel.add(displayModel);
 				displayModel.setSelected(false);
+				backNextPanel.remove(previewUntwisting);
+				backNextPanel.add(previewUntwisting);
 				
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
@@ -1002,9 +1087,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 	
-	private void untwistingTest()
+	private ModelImage untwistingTest()
 	{
-		voiManager.untwistTest();
+		return voiManager.untwistTest();
 	}
 
 
@@ -1027,6 +1112,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				previousExtents = new int[]{wormImage.getExtents()[0], wormImage.getExtents()[1], wormImage.getExtents()[2]};
 				wormImage.disposeLocal();
 				wormImage = null;
+			}
+			if ( previewImage != null ) 
+			{
+				previewImage.disposeLocal(false);
+				previewImage = null;
 			}
 			wormImage = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
 			wormImage.calcMinMax();     
@@ -1112,7 +1202,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			if ( previousExtents == null )
 			{
 				volumeImage = new VolumeImage(false, wormImage, "", null, 0, false);
-				updateHistoLUTPanels();
+				updateHistoLUTPanels(true);
 
 				volumeRenderer = new VolumeTriPlanarRender(volumeImage);
 				volumeRenderer.addConfiguredListener(this);
@@ -1134,7 +1224,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						(wormImage.getExtents()[2] != previousExtents[2]);
 
 				volumeImage.UpdateData(wormImage, updateRenderer);
-				updateHistoLUTPanels();
+				updateHistoLUTPanels(true);
 
 				if ( updateRenderer )
 				{
@@ -1228,6 +1318,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					latticeSelectionPanel.add(flipLatticeButton);
 					latticeSelectionPanel.add(displayModel);
 					displayModel.setSelected(false);
+					latticeSelectionPanel.remove(previewUntwisting);
+					latticeSelectionPanel.add(previewUntwisting);
 					latticeSelectionPanel.setVisible(true);
 					if ( voiManager != null )
 					{
@@ -1866,6 +1958,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		displayModel.setEnabled(true);
 		latticeSelectionPanel.add(displayModel);
 		
+		previewUntwisting = gui.buildButton("preview");
+		previewUntwisting.addActionListener(this);
+		previewUntwisting.setActionCommand("preview");
+		previewUntwisting.setVisible(true);
+		previewUntwisting.setEnabled(true);
+		latticeSelectionPanel.add(previewUntwisting);
+		
 		backNextPanel.add( latticeSelectionPanel );
 		latticeSelectionPanel.setVisible(false);
 
@@ -2344,7 +2443,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	/**
 	 * Creates or updates the histogram / LUT panel and opacity panels when a new image is loaded.
 	 */
-	private void updateHistoLUTPanels()
+	private void updateHistoLUTPanels( boolean recalculateHistogram )
 	{
 		if ( volOpacityPanel == null )
 		{
@@ -2360,6 +2459,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			volOpacityPanel.setImages( volumeImage.GetImage(), null, null, null, true );
 			opacityPanel.validate();
 		}
+		
 		if ( lutHistogramPanel == null )
 		{
 			lutHistogramPanel = new JFrameHistogram(this, volumeImage.GetImage(), null, volumeImage.getLUT(), null);
@@ -2370,8 +2470,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		else
 		{
 			lutHistogramPanel.setImages(volumeImage.GetImage(), null, volumeImage.getLUT(), null);
-			lutHistogramPanel.histogramLUT(true, false, true);
-			lutHistogramPanel.redrawFrames();
+			if ( recalculateHistogram )
+			{
+				lutHistogramPanel.histogramLUT(true, false, true);
+				lutHistogramPanel.redrawFrames();
+			}
 		}
 		volumeImage.GetImage().addImageDisplayListener(this);
 	}

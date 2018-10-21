@@ -7544,6 +7544,60 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Accessor that sets the maximum value in the dataArray.
+     * 
+     * @param _max Indicates the maximum value in the data array
+     */
+    public void setMaxR(final double _max) {
+        maxR = _max;
+    }
+
+    /**
+     * Accessor that sets the minimum value in the dataArray.
+     * 
+     * @param _min Indicates the minimum value in the data array
+     */
+    public void setMinR(final double _min) {
+        minR = _min;
+    }
+
+    /**
+     * Accessor that sets the maximum value in the dataArray.
+     * 
+     * @param _max Indicates the maximum value in the data array
+     */
+    public void setMaxG(final double _max) {
+        maxG = _max;
+    }
+
+    /**
+     * Accessor that sets the minimum value in the dataArray.
+     * 
+     * @param _min Indicates the minimum value in the data array
+     */
+    public void setMinG(final double _min) {
+        minG = _min;
+    }
+
+    /**
+     * Accessor that sets the maximum value in the dataArray.
+     * 
+     * @param _max Indicates the maximum value in the data array
+     */
+    public void setMaxB(final double _max) {
+        maxB = _max;
+    }
+
+    /**
+     * Accessor that sets the minimum value in the dataArray.
+     * 
+     * @param _min Indicates the minimum value in the data array
+     */
+    public void setMinB(final double _min) {
+        minB = _min;
+    }
+
+    /**
      * DOCUMENT ME! TO BE MOVED
      * 
      * @param filterOrder DOCUMENT ME!
