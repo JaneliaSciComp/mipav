@@ -382,6 +382,11 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		{
 			imageB.addImageDisplayListener( this );
 		}
+		if ( panelA != null )
+		{
+			panelA.setLUT(LUTa);
+			panelA.setImage(imageA);
+		}
 	}
 	/**
 	 * Creates the user interface for LUT changes. The entieFlag indicates if the entire image

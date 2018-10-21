@@ -991,6 +991,10 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 	}
 	
+	public void setImage(ModelImage newImage) {
+		image = newImage;
+	}
+	
 	/**
 	 * Sets the LUT and updates the histogram panel.
 	 * @param newLUT
