@@ -734,7 +734,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                     } else if (vr.equals(VR.FD) || vr.equals(VR.FL) || vr.equals(VR.DS)) {
 
                                         try {
-                                            Double doubleObj = new Double(Double.parseDouble(value));
+                                            Double doubleObj = Double.valueOf(value);
                                             imageTableModel.setColumnClass(doubleObj.getClass(), j); // set numerical
                                             // sorting
                                             newRow.addElement(doubleObj);
@@ -1500,7 +1500,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         imageTableSorter.setTableHeader(imageTable.getTableHeader());
 
         imageTableSorter.setColumnComparator(new Integer(0).getClass(), TableSorter.COMPARABLE_COMPARATOR);
-        imageTableSorter.setColumnComparator(new Double("0.0").getClass(), TableSorter.COMPARABLE_COMPARATOR);
+        imageTableSorter.setColumnComparator(Double.valueOf("0.0").getClass(), TableSorter.COMPARABLE_COMPARATOR);
         imageTableSorter.setColumnComparator(new Float("0.0").getClass(), TableSorter.COMPARABLE_COMPARATOR);
         imageTableSorter.setColumnComparator(new String().getClass(), TableSorter.LEXICAL_COMPARATOR);
 

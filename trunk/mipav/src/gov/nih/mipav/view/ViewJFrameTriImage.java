@@ -1192,10 +1192,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 setImageActiveInTriComponents(ViewJComponentBase.IMAGE_B);
             }
 
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMinimum(new Double(spinnerMin));
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMaximum(new Double(spinnerMax));
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(new Double(spinnerStep));
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setValue(new Double(spinnerDefaultValue));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMinimum(Double.valueOf(spinnerMin));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMaximum(Double.valueOf(spinnerMax));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(Double.valueOf(spinnerStep));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setValue(Double.valueOf(spinnerDefaultValue));
 
             /**
              * updateImages(false) was commented to facilitate placement of VOI points during image registration. This
@@ -2562,7 +2562,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @param intensityDropper the paint button intensity value to show
      */
     public void setIntensityPaintName(final float intensityDropper) {
-        final Double doubleValue = new Double(intensityDropper);
+        final Double doubleValue = Double.valueOf(intensityDropper);
         ((SpinnerNumberModel) intensitySpinner.getModel()).setValue(doubleValue);
     }
 

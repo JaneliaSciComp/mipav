@@ -681,7 +681,7 @@ public class LUSOL implements java.io.Serializable {
 					while (Character.isWhitespace(line.charAt(i))) {
 						i++;
 					}
-					a[k-1] = new Double(line.substring(i).trim()).doubleValue();
+					a[k-1] = Double.parseDouble(line.substring(i).trim());
 				}
 			}
 			raFile.close();

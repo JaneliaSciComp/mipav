@@ -915,9 +915,9 @@ public class JDialogRawIO extends JDialogBase {
             extractUnitIndeces(Preferences.getProperty(Preferences.PREF_RAW_UNITS));
         } else { // we'll tell the properties that we want to remember these preferences. (use defaults or flag values
                  // here!)
-            Preferences.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, new Boolean(DEFAULT_BIG_ENDIAN_BYTE_ORDER).toString());
-            Preferences.setProperty(Preferences.PREF_RAW_DATA_OFFSET, new Integer(DEFAULT_DATA_OFFSET).toString());
-            Preferences.setProperty(Preferences.PREF_RAW_TYPE, new Integer(DEFAULT_IMAGE_TYPE).toString());
+            Preferences.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, Boolean.toString(DEFAULT_BIG_ENDIAN_BYTE_ORDER));
+            Preferences.setProperty(Preferences.PREF_RAW_DATA_OFFSET, Integer.toString(DEFAULT_DATA_OFFSET));
+            Preferences.setProperty(Preferences.PREF_RAW_TYPE, Integer.toString(DEFAULT_IMAGE_TYPE));
             Preferences.setProperty(Preferences.PREF_RAW_EXTENTS, DEFAULT_EXTENTS);
             Preferences.setProperty(Preferences.PREF_RAW_RESOLUTIONS, DEFAULT_RES);
             Preferences.setProperty(Preferences.PREF_RAW_UNITS, DEFAULT_UNIT_INDEX);

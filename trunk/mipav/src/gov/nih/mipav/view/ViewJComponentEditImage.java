@@ -6429,11 +6429,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             final String intensity;
             if(imageActive.isComplexImage() && Preferences.getComplexDisplay() != ComplexDisplay.MAGNITUDE) {
                 int loc = ((yS * imageActive.getExtents()[0]) + xS)*2;
-                intensity = df.format(new Double(Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + 
+                intensity = df.format(Double.valueOf(Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + 
                                                             imageBufferActive[loc+1]*imageBufferActive[loc+1])).doubleValue());
             } else {
-                intensity = df.format(new Float(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS])
-                .doubleValue());
+                intensity = df.format(Float.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]).doubleValue());
             }
             
             if ( ( (wC - xC) > 100) && ( (hC - yC) > 50)) {

@@ -66,7 +66,7 @@ public class JPanelEditRace extends JPanelEdit {
      * @return  DOCUMENT ME!
      */
     public Object getCodedValue() {
-        return new Byte((byte) (raceBox.getSelectedIndex() - 1));
+        return Byte.valueOf((byte) (raceBox.getSelectedIndex() - 1));
     }
 
     /**

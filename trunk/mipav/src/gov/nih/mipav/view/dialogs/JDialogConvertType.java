@@ -491,14 +491,14 @@ public class JDialogConvertType extends JDialogScriptableBase
                 //textOutStart.setText("0");
                 //textOutEnd.setText("1023");
                 
-                //Double d1 = new Double((double)image.getMin());
+                //Double d1 = Double.valueOf((double)image.getMin());
                 //textOutStart.setText(d1.toString());
 
                      
                 if(image.getMax() > Double.MAX_VALUE) {
                 	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
                 }else {
-                	Double d2 = new Double((double)image.getMax());
+                	Double d2 = Double.valueOf((double)image.getMax());
                 	textOutEnd.setText(d2.toString());
                 }
                 inMin = 0.0;
@@ -529,7 +529,7 @@ public class JDialogConvertType extends JDialogScriptableBase
                 if(image.getMin() > 127) {
                 	textOutStart.setText("0");
                 }else {
-                	Byte b1 = new Byte((byte)image.getMin());
+                	Byte b1 = Byte.valueOf((byte)image.getMin());
                 	textOutStart.setText(b1.toString());
                 }
 
@@ -537,7 +537,7 @@ public class JDialogConvertType extends JDialogScriptableBase
                 if(image.getMax() > Byte.MAX_VALUE) {
                 	textOutEnd.setText(String.valueOf(Byte.MAX_VALUE));
                 }else {
-                	Byte b2 = new Byte((byte)image.getMax());
+                	Byte b2 = Byte.valueOf((byte)image.getMax());
                 	textOutEnd.setText(b2.toString());
                 }
                 
@@ -701,14 +701,14 @@ public class JDialogConvertType extends JDialogScriptableBase
                 //textOutStart.setText("0");
                 //textOutEnd.setText("1023");
                 
-                Double d1 = new Double((double)image.getMin());
+                Double d1 = Double.valueOf((double)image.getMin());
                 textOutStart.setText(d1.toString());
 
                      
                 if(image.getMax() > Double.MAX_VALUE) {
                 	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
                 }else {
-                	Double d2 = new Double((double)image.getMax());
+                	Double d2 = Double.valueOf((double)image.getMax());
                 	textOutEnd.setText(d2.toString());
                 }
                 inMin = -Double.MAX_VALUE;
@@ -755,7 +755,7 @@ public class JDialogConvertType extends JDialogScriptableBase
                     userRangeRadio.setSelected(true);
                 }
 
-                if (new Boolean(st.nextToken()).booleanValue()) {
+                if (Boolean.parseBoolean(st.nextToken())) {
                     newImage.setSelected(true);
                 } else {
                     replaceImage.setSelected(true);
@@ -1684,14 +1684,14 @@ public class JDialogConvertType extends JDialogScriptableBase
             if(image.getMin() > 127) {
             	textOutStart.setText("0");
             }else {
-            	Byte b1 = new Byte((byte)image.getMin());
+            	Byte b1 = Byte.valueOf((byte)image.getMin());
             	textOutStart.setText(b1.toString());
             }
             
             if(image.getMax() > Byte.MAX_VALUE) {
             	textOutEnd.setText(String.valueOf(Byte.MAX_VALUE));
             }else {
-            	Byte b2 = new Byte((byte)image.getMax());
+            	Byte b2 = Byte.valueOf((byte)image.getMax());
             	textOutEnd.setText(b2.toString());
             }
             inMin = -128;
@@ -1850,14 +1850,14 @@ public class JDialogConvertType extends JDialogScriptableBase
             outEnd.setText("Ending range (-1.8 E+308 to 1.8 E+308).");
             //textOutStart.setText("0");
             //textOutEnd.setText("1023");
-            Double d1 = new Double((double)image.getMin());
+            Double d1 = Double.valueOf((double)image.getMin());
             textOutStart.setText(d1.toString());
 
                  
             if(image.getMax() > Double.MAX_VALUE) {
             	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
             }else {
-            	Double d2 = new Double((double)image.getMax());
+            	Double d2 = Double.valueOf((double)image.getMax());
             	textOutEnd.setText(d2.toString());
             }
             inMin = -Double.MAX_VALUE;
@@ -1956,14 +1956,14 @@ public class JDialogConvertType extends JDialogScriptableBase
             outEnd.setText("Ending maximum magnitude (0.0 to 1.8 E+308).");
             //textOutStart.setText("0");
             //textOutEnd.setText("1023");
-            //Double d1 = new Double((double)image.getMin());
+            //Double d1 = Double.valueOf((double)image.getMin());
             //textOutStart.setText(d1.toString());
 
                  
             if(image.getMax() > Double.MAX_VALUE) {
             	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
             }else {
-            	Double d2 = new Double((double)image.getMax());
+            	Double d2 = Double.valueOf((double)image.getMax());
             	textOutEnd.setText(d2.toString());
             }
             inMin = 0.0;

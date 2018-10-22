@@ -3130,7 +3130,7 @@ public class FileDicom extends FileDicomBase {
             final Byte[] array = new Byte[length];
 
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Byte((byte) getByte());
+                array[i] = Byte.valueOf((byte) getByte());
                 len -= 1;
                 i++;
             }
@@ -3144,7 +3144,7 @@ public class FileDicom extends FileDicomBase {
             final Byte[] array = new Byte[length];
 
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Byte((byte) getByte());
+                array[i] = Byte.valueOf((byte) getByte());
                 len -= 1;
                 i++;
             }
@@ -3154,7 +3154,7 @@ public class FileDicom extends FileDicomBase {
             final Byte[] array = new Byte[length];
 
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Byte((byte) getByte());
+                array[i] = Byte.valueOf((byte) getByte());
                 len -= 1;
                 i++;
             }
@@ -3295,7 +3295,7 @@ public class FileDicom extends FileDicomBase {
             final Double[] array = new Double[length / 8];
 
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Double(getDouble(endianess));
+                array[i] = Double.valueOf(getDouble(endianess));
                 len -= 8;
                 i++;
             }
@@ -3309,7 +3309,7 @@ public class FileDicom extends FileDicomBase {
             final Double[] array = new Double[length / 8];
 
             while (len > 0) {
-                array[i] = new Double(getDouble(endianess));
+                array[i] = Double.valueOf(getDouble(endianess));
                 len -= 8;
                 i++;
             }
@@ -3320,7 +3320,7 @@ public class FileDicom extends FileDicomBase {
             // not a valid VM, but we don't initialise the VM to 1,
             // so we will use this fact to guess at valid data.
             // we actually do it as above.
-            readObject = new Double(getDouble(endianess));
+            readObject = Double.valueOf(getDouble(endianess));
             len -= 8;
 
             while (len > 0) { // we should validate with VM here too
@@ -3329,7 +3329,7 @@ public class FileDicom extends FileDicomBase {
                 i++;
             }
         } else if (length == 8) {
-            readObject = new Double(getDouble(endianess));
+            readObject = Double.valueOf(getDouble(endianess));
         }
 
         return readObject;
@@ -3788,7 +3788,7 @@ public class FileDicom extends FileDicomBase {
         bytesV = new Byte[elementLength];
 
         for (int k = 0; k < bytesValue.length; k++) {
-            bytesV[k] = new Byte(bytesValue[k]);
+            bytesV[k] = Byte.valueOf(bytesValue[k]);
         }
 
         return bytesV;

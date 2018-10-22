@@ -154,7 +154,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         String name;
         FileDicomKey key;
         String[] tags = null;
-        final Object[] rowData = {new Boolean(false), "", "", ""};
+        final Object[] rowData = {Boolean.FALSE, "", "", ""};
         final Hashtable<FileDicomKey,FileDicomTag> tagsList = DicomInfo.getTagTable().getTagList();
 
         // check preferences to see if any dicom tags were selected for saving
@@ -176,10 +176,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             if (tags != null) {
                 for (final String element : tags) {
                     if (tagName.equals(element)) {
-                        rowData[0] = new Boolean(true);
+                        rowData[0] = Boolean.TRUE;
                         break;
                     } else {
-                        rowData[0] = new Boolean(false);
+                        rowData[0] = Boolean.FALSE;
                     }
                 }
             }
@@ -1718,13 +1718,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         } else if (e.getActionCommand().equals("CheckAll")) {
             for (int i = 0; i < tagsModel.getRowCount(); i++) {
                 if (tagsModel.getValueAt(i, 0) != null) {
-                    tagsModel.setValueAt(new Boolean(true), i, 0);
+                    tagsModel.setValueAt(Boolean.TRUE, i, 0);
                 }
             }
         } else if (e.getActionCommand().equals("UncheckAll")) {
             for (int i = 0; i < tagsModel.getRowCount(); i++) {
                 if (tagsModel.getValueAt(i, 0) != null) {
-                    tagsModel.setValueAt(new Boolean(false), i, 0);
+                    tagsModel.setValueAt(Boolean.FALSE, i, 0);
                 }
             }
         } else {
@@ -1745,7 +1745,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         imageA = _image; // set the input var
         sliceIndex = sIndex;
 
-        final Object[] rowData = {new Boolean(false), "", "", ""};
+        final Object[] rowData = {Boolean.FALSE, "", "", ""};
         final String[] columnNames = {" ", "Tag", "Name", "Value"};
 
         try {
@@ -1858,37 +1858,37 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         tagsModel.setValueAt(null, i, 0);
         if (imageA != null && imageA.isColorImage()) {
             tagsModel.setValueAt("Min red", i, 2);
-            tagsModel.setValueAt(new Double(DicomInfo.getMinR()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMinR()), i, 3);
             tagsModel.addRow(rowData);
             tagsModel.setValueAt("Max red", ++i, 2);
             tagsModel.setValueAt(null, i, 0);
-            tagsModel.setValueAt(new Double(DicomInfo.getMaxR()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMaxR()), i, 3);
             
             tagsModel.addRow(rowData);
             tagsModel.setValueAt("Min green", ++i, 2);
             tagsModel.setValueAt(null, i, 0);
-            tagsModel.setValueAt(new Double(DicomInfo.getMinG()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMinG()), i, 3);
             tagsModel.addRow(rowData);
             tagsModel.setValueAt("Max green", ++i, 2);
             tagsModel.setValueAt(null, i, 0);
-            tagsModel.setValueAt(new Double(DicomInfo.getMaxG()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMaxG()), i, 3);
             
             tagsModel.addRow(rowData);
             tagsModel.setValueAt("Min blue", ++i, 2);
             tagsModel.setValueAt(null, i, 0);
-            tagsModel.setValueAt(new Double(DicomInfo.getMinB()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMinB()), i, 3);
             tagsModel.addRow(rowData);
             tagsModel.setValueAt("Max blue", ++i, 2);
             tagsModel.setValueAt(null, i, 0);
-            tagsModel.setValueAt(new Double(DicomInfo.getMaxB()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMaxB()), i, 3);
         }
         else {
             tagsModel.setValueAt("Min", i, 2);
-            tagsModel.setValueAt(new Double(DicomInfo.getMin()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMin()), i, 3);
             tagsModel.addRow(rowData);
             tagsModel.setValueAt("Max", ++i, 2);
             tagsModel.setValueAt(null, i, 0);
-            tagsModel.setValueAt(new Double(DicomInfo.getMax()), i, 3);
+            tagsModel.setValueAt(Double.valueOf(DicomInfo.getMax()), i, 3);
         }
         tagsModel.addRow(rowData);
         tagsModel.setValueAt("X origin", ++i, 2);

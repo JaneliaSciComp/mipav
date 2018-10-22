@@ -1222,7 +1222,7 @@ public class FileMinc extends FileBase {
                             raFile.seek(fileInfoMinc.getVarElem(i).begin);
     
                             for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                                writeNextElem(new Double(mins[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
+                                writeNextElem(Double.valueOf(mins[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
                                         .getEndianess());
                             }
     
@@ -1237,7 +1237,7 @@ public class FileMinc extends FileBase {
                             raFile.seek(fileInfoMinc.getVarElem(i).begin);
     
                             for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                                writeNextElem(new Double(maxs[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
+                                writeNextElem(Double.valueOf(maxs[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
                                         .getEndianess());
                             }
     
@@ -1641,32 +1641,32 @@ public class FileMinc extends FileBase {
         switch (type) {
 
             case FileInfoMinc.NC_BYTE:
-                value = new Byte(raFile.readByte());
+                value = Byte.valueOf(raFile.readByte());
                 location++;
                 break;
 
             case FileInfoMinc.NC_CHAR:
-                value = new Character((char) raFile.readByte());
+                value = Character.valueOf((char) raFile.readByte());
                 location++;
                 break;
 
             case FileInfoMinc.NC_SHORT:
-                value = new Short((short) getUnsignedShort(endianess));
+                value = Short.valueOf((short) getUnsignedShort(endianess));
                 location += 2;
                 break;
 
             case FileInfoMinc.NC_INT:
-                value = new Integer(getInt(endianess));
+                value = Integer.valueOf(getInt(endianess));
                 location += 4;
                 break;
 
             case FileInfoMinc.NC_FLOAT:
-                value = new Float(getFloat(endianess));
+                value = Float.valueOf(getFloat(endianess));
                 location += 4;
                 break;
 
             case FileInfoMinc.NC_DOUBLE:
-                value = new Double(getDouble(endianess));
+                value = Double.valueOf(getDouble(endianess));
                 location += 8;
                 break;
 

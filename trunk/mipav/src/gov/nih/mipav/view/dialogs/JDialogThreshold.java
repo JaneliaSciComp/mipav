@@ -348,11 +348,11 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             	double thresVal = ((maxBin * factor) + image.getMin());
                 
                 if (inverseCheckbox.isSelected()) {
-                    textThres1.setText(new Double(thresVal).toString());
-                    textThres2.setText(new Double(image.getMax()).toString());
+                    textThres1.setText(Double.toString(thresVal));
+                    textThres2.setText(Double.toString(image.getMax()));
                 } else {
-                    textThres1.setText(new Double(image.getMin()).toString());
-                    textThres2.setText(new Double(thresVal).toString());
+                    textThres1.setText(Double.toString(image.getMin()));
+                    textThres2.setText(Double.toString(thresVal));
                 }
 
                 textThres1.setEnabled(false);

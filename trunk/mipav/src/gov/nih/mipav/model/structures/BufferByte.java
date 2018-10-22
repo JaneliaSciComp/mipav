@@ -74,7 +74,7 @@ public class BufferByte extends BufferBase {
      * @return  Number object of the data
      */
     protected final Number get(int position) {
-        return (new Byte((byte) dataArray[position]));
+        return (Byte.valueOf((byte) dataArray[position]));
     }
 
     /**

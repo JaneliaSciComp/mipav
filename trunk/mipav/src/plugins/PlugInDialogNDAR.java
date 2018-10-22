@@ -1992,7 +1992,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             } else {
                 previewImages.add(null);
                 imageFiles.add(null);
-                multifiles.add(new Boolean(false));
+                multifiles.add(Boolean.FALSE);
                 infoList.add(null);
                 allOtherFilesAL.add(null);
                 this.dataStructureName = name;
@@ -2294,14 +2294,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             previewImages.set(selectedRow, previewImg);
                             previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
                             imageFiles.set(selectedRow, file);
-                            multifiles.set(selectedRow, new Boolean(isMultifile));
+                            multifiles.set(selectedRow, Boolean.valueOf(isMultifile));
 
                         } else {
                             final int size = previewImages.size();
                             previewImages.set(size - 1, previewImg);
                             previewImages.get(size - 1).setSliceBrightness(brightness, contrast);
                             imageFiles.set(size - 1, file);
-                            multifiles.set(size - 1, new Boolean(isMultifile));
+                            multifiles.set(size - 1, Boolean.valueOf(isMultifile));
                         }
 
                         previewPanel.validate();
@@ -3276,14 +3276,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 previewImages.set(selectedRow, previewImg);
                                 previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
                                 imageFiles.set(selectedRow, file);
-                                multifiles.set(selectedRow, new Boolean(isMultiFile));
+                                multifiles.set(selectedRow, Boolean.valueOf(isMultiFile));
 
                             } else {
                                 final int size = previewImages.size();
                                 previewImages.set(size - 1, previewImg);
                                 previewImages.get(size - 1).setSliceBrightness(brightness, contrast);
                                 imageFiles.set(size - 1, file);
-                                multifiles.set(size - 1, new Boolean(isMultiFile));
+                                multifiles.set(size - 1, Boolean.valueOf(isMultiFile));
                             }
 
                             previewPanel.validate();

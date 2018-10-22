@@ -2,7 +2,6 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.*;
-import javafx.util.Pair;
 
 import java.io.*;
 import java.time.Duration;
@@ -7516,7 +7515,7 @@ public class StochasticForests extends AlgorithmBase {
 		  Vector<Double> class_weights;
 
 		  // Table with classifications and true classes
-		  HashMap<Pair<Double, Double>, Integer> classification_table = new HashMap<Pair<Double, Double>, Integer>();
+		  HashMap<ValuePair<Double, Double>, Integer> classification_table = new HashMap<ValuePair<Double, Double>, Integer>();
 		  
 		  public Vector<Double> getClassValues() {
 			    return class_values;
@@ -7741,7 +7740,7 @@ public class StochasticForests extends AlgorithmBase {
 			      if (predicted_value != real_value) {
 			        ++num_missclassifications;
 			      }
-			      Pair<Double, Double> pair = new Pair<Double, Double>(real_value, predicted_value);
+			      ValuePair<Double, Double> pair = new ValuePair<Double, Double>(real_value, predicted_value);
 			      if (classification_table.get(pair) == null) {
 			    	  intValue = 0;
 			      }
@@ -7792,7 +7791,7 @@ public class StochasticForests extends AlgorithmBase {
 		    	    bw.write("predicted " + String.valueOf(predicted_value) + "     ");
 		    	    for (j = 0; j < class_values.size(); j++) {
 		    	      double real_value = class_values.get(j);
-		    	      Pair<Double, Double> pair = new Pair<Double, Double>(real_value, predicted_value);
+		    	      ValuePair<Double, Double> pair = new ValuePair<Double, Double>(real_value, predicted_value);
 		    	      int value;
 		    	      if (classification_table.get(pair) == null) {
 		    	          value = 0;  
@@ -11094,4 +11093,16 @@ public class StochasticForests extends AlgorithmBase {
 	   setCompleted(true);
 
 	} // runAlgorithm
+	
+	private class ValuePair<K, V> {
+	    private K key;
+	    private V val;
+	    
+	    public ValuePair(K key, V val) {
+	        this.key = key;
+	        this.val = val;
+	    }
+	    
+	    
+	}
 }

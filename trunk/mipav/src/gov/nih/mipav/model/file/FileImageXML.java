@@ -1709,7 +1709,7 @@ public class FileImageXML extends FileXML {
                 for (i = 0; i < tMatrix.getDim(); i++) {
 
                     for (j = 0; j < tMatrix.getDim(); j++) {
-                        closedTag("Data", new Double(tMatrix.get(i, j)).toString());
+                        closedTag("Data", Double.toString(tMatrix.get(i, j)));
                     }
                 }
 

@@ -761,7 +761,7 @@ public class FileInfoOME extends FileInfoBase {
              * @param  first  DOCUMENT ME!
              */
             public void setContactFirstName(String first) {
-                this.contactIsPerson = new Boolean("true");
+                this.contactIsPerson = Boolean.TRUE;
                 this.contactFirstName = first;
             }
 
@@ -808,7 +808,7 @@ public class FileInfoOME extends FileInfoBase {
              * @param  first  DOCUMENT ME!
              */
             public void setLeaderFirstName(String first) {
-                leaderIsPerson = new Boolean("true");
+                leaderIsPerson = Boolean.TRUE;
                 this.leaderFirstName = first;
             }
 

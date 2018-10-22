@@ -179,7 +179,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                     if (newTagTable.getValue("0018,0088") != null) {
                         String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[j]).getTagTable().getValue(
                                 "0018,0088")).trim();
-                        sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                        sliceResolution = Double.parseDouble(sliceGapString.trim());
                     }
                     fireProgressStateChanged( ( ( (100 * (t * 2))) / (destImage.getExtents()[2] + 1)));
                     resols[0] = srcImage.getFileInfo(0).getResolutions()[0];

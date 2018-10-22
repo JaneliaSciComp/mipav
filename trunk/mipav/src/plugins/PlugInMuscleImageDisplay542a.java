@@ -5716,14 +5716,14 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 		    if(meanFatH > 0) {
 		    	meanFatH = -meanFatH;
 		    	meanTotalH = -meanTotalH;
-		    } else if(new Double(meanFatH).equals(Double.NaN)) 
+		    } else if(Double.valueOf(meanFatH).equals(Double.NaN)) 
 		    	meanFatH = 0;
 		    if(meanLeanH < 0) {
 		    	meanLeanH = -meanLeanH;
-		    } else if(new Double(meanLeanH).equals(Double.NaN)) {
+		    } else if(Double.valueOf(meanLeanH).equals(Double.NaN)) {
 		    	meanLeanH = 0;
 		    }
-		    if(new Double(meanTotalH).equals(Double.NaN)) {
+		    if(Double.valueOf(meanTotalH).equals(Double.NaN)) {
 		    	meanTotalH = 0;
 		    }
 		    
@@ -5749,7 +5749,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 				}
 			}
 			meanH /= area;
-			if(new Double(meanH).equals(Double.NaN)) {
+			if(Double.valueOf(meanH).equals(Double.NaN)) {
 				meanH = 0;
 			}
 			return meanH;

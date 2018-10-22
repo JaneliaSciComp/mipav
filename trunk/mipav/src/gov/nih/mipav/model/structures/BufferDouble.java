@@ -72,7 +72,7 @@ public class BufferDouble extends BufferBase {
      * @return  Number object of the data
      */
     protected final Number get(int position) {
-        return (new Double((double) dataArray[position]));
+        return (Double.valueOf((double) dataArray[position]));
     }
 
 

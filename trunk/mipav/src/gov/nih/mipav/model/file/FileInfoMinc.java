@@ -270,7 +270,7 @@ public class FileInfoMinc extends FileInfoBase {
                                     // System.out.println("want to erase " + FileInfoDicom.anonymizeTagIDs[i] + " -- "
                                     // + getVarElem(varIndex).getVattElem(attIndex).toString());
                                     getVarElem(varIndex).getVattElem(attIndex).nelems = 1;
-                                    getVarElem(varIndex).getVattElem(attIndex).values = new Object[] {new Character(' ')};
+                                    getVarElem(varIndex).getVattElem(attIndex).values = new Object[] {Character.valueOf(' ')};
                                     // System.out.println("value now " + FileInfoDicom.anonymizeTagIDs[i] + " -- " +
                                     // getVarElem(varIndex).getVattElem(attIndex).toString());
                                 }

@@ -301,8 +301,8 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 
         tableModel.addRow(new Object[] {"", "Type", ModelStorageBase.getBufferTypeStr(dataType)});
 
-        tableModel.addRow(new Object[] {"", "Min", new Double(mincInfo.getMin())});
-        tableModel.addRow(new Object[] {"", "Max", new Double(mincInfo.getMax())});
+        tableModel.addRow(new Object[] {"", "Min", Double.valueOf(mincInfo.getMin())});
+        tableModel.addRow(new Object[] {"", "Max", Double.valueOf(mincInfo.getMax())});
 
         tableModel.addRow(new Object[] {"", "Orientation",
                 FileInfoBase.getImageOrientationStr(mincInfo.getImageOrientation())});

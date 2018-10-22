@@ -850,7 +850,7 @@ public class FileRawChunk extends FileBase {
                         }
                     }
 
-                    // Double tmpDouble = new Double(0);
+                    // Double tmpDouble = Double.valueOf(0);
                     long tmpLong;
 
                     if (endianess == BIG_ENDIAN) {

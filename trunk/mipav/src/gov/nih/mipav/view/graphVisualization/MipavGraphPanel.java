@@ -727,7 +727,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		float[] defaults = new float[]{12,10,8,0};
 		for ( int i = 0; i < 4; i++ )
 		{			
-			float size = (float)getPropertyManager().getDouble("hypergraph.hyperbolic.text.size" + (i+1), new Double(defaults[i])).doubleValue();
+			float size = (float)getPropertyManager().getDouble("hypergraph.hyperbolic.text.size" + (i+1), Double.valueOf(defaults[i])).doubleValue();
 			size *= bBigger ? 1.1 : .9;
 			getPropertyManager().setProperty( "hypergraph.hyperbolic.text.size" + (i+1), String.valueOf(size) );
 		}

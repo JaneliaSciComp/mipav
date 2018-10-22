@@ -97,7 +97,7 @@ public class RawImageInfo {
             units[n] = Integer.parseInt(tokens.nextToken());
         }
 
-        bigEndian = new Boolean(endianStr).booleanValue();
+        bigEndian = Boolean.parseBoolean(endianStr);
 
         offset = Integer.parseInt(offsetStr);
     }

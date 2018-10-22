@@ -90,7 +90,7 @@ public class JPanelEditModality extends JPanelEdit {
      * @return  a Byte. returned by getPanelValue().
      */
     public Object getCodedValue() {
-        return new Byte((byte) (modalityBox.getSelectedIndex() - 1));
+        return Byte.valueOf((byte) (modalityBox.getSelectedIndex() - 1));
     }
 
     /**

@@ -1893,11 +1893,11 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         tipLengthLabel.setBackground(Color.black);
 
         tipLengthCB = new JComboBox();
-        tipLengthCB.addItem(new Float(2.0));
-        tipLengthCB.addItem(new Float(2.5));
-        tipLengthCB.addItem(new Float(3.0));
-        tipLengthCB.addItem(new Float(5.0));
-        tipLengthCB.addItem(new Float(7.0));
+        tipLengthCB.addItem(Float.valueOf(2.0f));
+        tipLengthCB.addItem(Float.valueOf(2.5f));
+        tipLengthCB.addItem(Float.valueOf(3.0f));
+        tipLengthCB.addItem(Float.valueOf(5.0f));
+        tipLengthCB.addItem(Float.valueOf(7.0f));
         tipLengthCB.setFont(MipavUtil.font12);
         tipLengthCB.setForeground(Color.black);
 

@@ -316,7 +316,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                               FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[j]).getTagTable();
                               if (newTagTable.getValue("0018,0088") != null) {
                                   String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[j]).getTagTable().getValue("0018,0088")).trim();
-                                  sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                                  sliceResolution = Double.parseDouble(sliceGapString.trim());
                               }                    
                                   fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                                   resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
@@ -350,7 +350,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                       FileDicomTagTable tagTable = dicomInfo.getTagTable();
                       if (tagTable.getValue("0018,0088") != null) {
                           String sliceGapString = ((String) (dicomInfo.getTagTable().getValue("0018,0088"))).trim();
-                          sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                          sliceResolution = Double.parseDouble(sliceGapString.trim());
                       }
                       resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
                       resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
@@ -669,7 +669,7 @@ if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
             FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[t]).getTagTable();
             if (newTagTable.getValue("0018,0088") != null) {
                 String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[t]).getTagTable().getValue("0018,0088")).trim();
-                sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                sliceResolution = Double.parseDouble(sliceGapString.trim());
             }
 
                       
