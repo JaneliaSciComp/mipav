@@ -68,7 +68,7 @@ public class JPanelEditValueType extends JPanelEdit {
      * @return  DOCUMENT ME!
      */
     public Object getCodedValue() {
-        return new Byte((byte) (valueTypeBox.getSelectedIndex() - 1));
+        return Byte.valueOf((byte) (valueTypeBox.getSelectedIndex() - 1));
     }
 
     /**

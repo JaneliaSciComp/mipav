@@ -407,7 +407,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         String singleTString = Preferences.getProperty("LightBoxIndividualTSlice");
 
         if ((singleTString != null) && (imageA.getNDims() > 3)) {
-            singleTSlice = new Boolean(singleTString).booleanValue();
+            singleTSlice = Boolean.parseBoolean(singleTString);
         }
 
 
@@ -2024,23 +2024,23 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      * <p>into the MipavPreferences file.</p>
      */
     public void storeToDefaults() {
-        Preferences.setProperty(Preferences.PREF_LB_ROW_DEPENDENT, new Boolean(row_dependent).toString());
-        Preferences.setProperty(Preferences.PREF_LB_GRID_ROW, new Integer(gridRow).toString());
-        Preferences.setProperty(Preferences.PREF_LB_GRID_COL, new Integer(gridColumn).toString());
-        Preferences.setProperty(Preferences.PREF_LB_GRID_SIZE, new Integer(gridSpacing).toString());
-        Preferences.setProperty(Preferences.PREF_LB_INCREMENT, new Integer(increment).toString());
+        Preferences.setProperty(Preferences.PREF_LB_ROW_DEPENDENT, Boolean.toString(row_dependent));
+        Preferences.setProperty(Preferences.PREF_LB_GRID_ROW, Integer.toString(gridRow));
+        Preferences.setProperty(Preferences.PREF_LB_GRID_COL, Integer.toString(gridColumn));
+        Preferences.setProperty(Preferences.PREF_LB_GRID_SIZE, Integer.toString(gridSpacing));
+        Preferences.setProperty(Preferences.PREF_LB_INCREMENT, Integer.toString(increment));
         Preferences.setProperty(Preferences.PREF_LB_GRID_COLOR, this.makeColorString(gridColor));
-        Preferences.setProperty(Preferences.PREF_LB_BORDER_SIZE, new Integer(borderSize).toString());
-        Preferences.setProperty(Preferences.PREF_LB_BORDER_COLOR, this.makeColorString(borderColor));
+        Preferences.setProperty(Preferences.PREF_LB_BORDER_SIZE, Integer.toString(borderSize));
+        Preferences.setProperty(Preferences.PREF_LB_BORDER_COLOR, makeColorString(borderColor));
         Preferences.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, this.makeColorString(selectedBorderColor));
-        Preferences.setProperty(Preferences.PREF_LB_MAG, new Float(magnification).toString());
-        Preferences.setProperty(Preferences.PREF_LB_CUPDATE, new Boolean(updatePaint.getState()).toString());
+        Preferences.setProperty(Preferences.PREF_LB_MAG, Float.toString(magnification));
+        Preferences.setProperty(Preferences.PREF_LB_CUPDATE, Boolean.toString(updatePaint.getState()));
 
         // location: a bad location will be trapped when loading the preferences, so store it anyway:
         Preferences.setProperty(Preferences.PREF_LB_LOCATION, this.getLocation().x + "," + this.getLocation().y);
 
         if (selectIndividualTSlices != null) {
-            Preferences.setProperty(Preferences.PREF_LB_TSLICE, new Boolean(singleTSlice).toString());
+            Preferences.setProperty(Preferences.PREF_LB_TSLICE, Boolean.toString(singleTSlice));
         }
 
     }

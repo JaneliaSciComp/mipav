@@ -14785,9 +14785,9 @@ public class FileIO {
                 }
                 if (set) {
                     if (i == 0) {
-                        fileDicom.getTagTable().setValue("0018,602C", new Double(resols[0]), 8);
+                        fileDicom.getTagTable().setValue("0018,602C", Double.valueOf(resols[0]), 8);
                     } else if (i == 1) {
-                        fileDicom.getTagTable().setValue("0018,602E", new Double(resols[1]), 8);
+                        fileDicom.getTagTable().setValue("0018,602E", Double.valueOf(resols[1]), 8);
                     }
                 }
             } // for (i = 0; i < 2; i++)
@@ -14826,7 +14826,7 @@ public class FileIO {
                     set = false;
                 }
                 if (set) {
-                    fileDicom.getTagTable().setValue("0018,0088", new Double(resols[2]), 8);
+                    fileDicom.getTagTable().setValue("0018,0088", Double.valueOf(resols[2]), 8);
                     originalFileInfo.setResolutions(resols[2], 2);
                 }
             } // if (image.getNDims() >= 3)
@@ -15750,9 +15750,9 @@ public class FileIO {
                 }
                 if (set) {
                     if (i == 0) {
-                        myFileInfo.getTagTable().setValue("0018,602C", new Double(resols[0]), 8);
+                        myFileInfo.getTagTable().setValue("0018,602C", Double.valueOf(resols[0]), 8);
                     } else if (i == 1) {
-                        myFileInfo.getTagTable().setValue("0018,602E", new Double(resols[1]), 8);
+                        myFileInfo.getTagTable().setValue("0018,602E", Double.valueOf(resols[1]), 8);
                     }
                 }
             } // for (i = 0; i < 2; i++)
@@ -15791,7 +15791,7 @@ public class FileIO {
                     set = false;
                 }
                 if (set) {
-                    myFileInfo.getTagTable().setValue("0018,0088", new Double(resols[2]), 8);
+                    myFileInfo.getTagTable().setValue("0018,0088", Double.valueOf(resols[2]), 8);
                     myFileInfo.setResolutions(resols[2], 2);
                 }
             } // if (image.getNDims() >= 3)

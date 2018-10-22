@@ -229,7 +229,7 @@ public class AlgorithmSubset extends AlgorithmBase {
                 final FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[z]).getTagTable();
                 if (newTagTable.getValue("0018,0088") != null) {
                     final String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[z]).getTagTable().getValue("0018,0088")).trim();
-                    sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                    sliceResolution = Double.parseDouble(sliceGapString.trim());
                 }
                 // fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                 destFileInfo[z].setResolutions(srcImage.getFileInfo(0).getResolutions());

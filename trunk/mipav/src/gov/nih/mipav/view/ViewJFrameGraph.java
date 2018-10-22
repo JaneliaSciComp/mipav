@@ -1695,7 +1695,7 @@ public class ViewJFrameGraph extends JFrame
         } else if (command.equals("ApplyModifyGraph")) {
             if (image != null) {
                 try {
-                    userMin = new Double(minField.getText()).doubleValue();
+                    userMin = Double.parseDouble(minField.getText());
                 } catch (Exception ex) {
                     MipavUtil.displayError("minValue must be a double value");
 
@@ -1707,7 +1707,7 @@ public class ViewJFrameGraph extends JFrame
                 }
                 
                 try {
-                    userMax = new Double(maxField.getText()).doubleValue();
+                    userMax = Double.parseDouble(maxField.getText());
                 } catch (Exception ex) {
                     MipavUtil.displayError("maxValue must be a double value");
 
@@ -4339,7 +4339,7 @@ public class ViewJFrameGraph extends JFrame
         double tmp;
 
         try {
-            new Double(0);
+            Double.valueOf(0);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.testMaxParameter");
 
@@ -4374,7 +4374,7 @@ public class ViewJFrameGraph extends JFrame
         double tmp;
 
         try {
-            new Double(0);
+            Double.valueOf(0);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.testMinParameter");
             return false;
@@ -4411,7 +4411,7 @@ public class ViewJFrameGraph extends JFrame
         Double stringConv;
 
         try {
-            stringConv = new Double(0);
+            stringConv = Double.valueOf(0);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.testParameter");
             return false;

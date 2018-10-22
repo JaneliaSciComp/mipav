@@ -344,7 +344,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	        	Fi[idx.get(j)] = 1;
     	        	for (k = 0; k < index1s.size(); k++) {
     	        		if ((index1s.get(k) == idx.get(j)) || (index2s.get(k) == idx.get(j))) {
-    	        			affinitys.set(k, new Double(0.0)); // no affinity for W inside fs
+    	        			affinitys.set(k, Double.valueOf(0.0)); // no affinity for W inside fs
     	        		}
     	        	}
     	        } // for (j = 0; j < idx.size(); j++)

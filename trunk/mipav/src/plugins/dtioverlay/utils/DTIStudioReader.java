@@ -312,7 +312,7 @@ public class DTIStudioReader {
             if(markers==null) {
                 markers = new HashMap<Integer,Double>();
             }
-            markers.put(new Integer(pt),new Double(marker));
+            markers.put(new Integer(pt),Double.valueOf(marker));
         }
 
         public double getMarker(int pt) {

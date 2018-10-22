@@ -215,11 +215,11 @@ public class PlugInAlgorithmCreateSpheres701a extends AlgorithmBase {
         setBasicInfo(fileInfoImage1TumorOnly, DataType.FLOAT);
         setBasicInfo(fileInfoImage2TumorOnly, DataType.FLOAT);
 
-        ModelImage image1a = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image1a", null);
-        ModelImage image2a = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image2a", null);
+        ModelImage image1a = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image1a");
+        ModelImage image2a = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image2a");
 
-        ModelImage image1aTumor = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image1a_tumor", null);
-        ModelImage image2aTumor = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image2a_tumor", null);
+        ModelImage image1aTumor = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image1a_tumor");
+        ModelImage image2aTumor = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[] {xyDim, xyDim, zDim}, "image2a_tumor");
 
         if (iter != -1) {
             image1a.setImageName(image1a.getImageName() + "_iter" + iter);
@@ -393,7 +393,7 @@ public class PlugInAlgorithmCreateSpheres701a extends AlgorithmBase {
         final FileInfoImageXML fileInfo = (FileInfoImageXML) image.getFileInfo()[0].clone();
         fileInfo.setDataType(DataType.BOOLEAN.getLegacyNum());
 
-        final ModelImage imageBin = new ModelImage(DataType.BOOLEAN.getLegacyNum(), image.getFileInfo()[0].getExtents(), "image1a_tumor", null);
+        final ModelImage imageBin = new ModelImage(DataType.BOOLEAN.getLegacyNum(), image.getFileInfo()[0].getExtents(), "image1a_tumor");
         // imageBin.getParentFrame().setVisible(false);
 
         double intensityValue = 0.0;

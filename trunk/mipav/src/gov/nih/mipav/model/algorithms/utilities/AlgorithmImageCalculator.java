@@ -2903,7 +2903,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					Double operand2 = rpnStack.pop();
 					Double operand1 = rpnStack.pop();
 
-					result = new Double(0);
+					result = Double.valueOf(0);
 					double d = 0;
 					if(token.equals("+")) {
 						d = operand1.doubleValue() + operand2.doubleValue();
@@ -2916,7 +2916,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					}else if(token.equals("mod")) {
 						d = operand1.doubleValue()%operand2.doubleValue();
 					}
-					result = new Double(d);
+					result = Double.valueOf(d);
 					
 					//push answer on stack
 					rpnStack.push(result);
@@ -2926,10 +2926,10 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						Double operand2 = rpnStack.pop();
 						Double operand1 = rpnStack.pop();
 						
-						result = new Double(0);
+						result = Double.valueOf(0);
 						double d = 0;
 						d = Math.pow(operand1.doubleValue(), operand2.doubleValue());
-						result = new Double(d);
+						result = Double.valueOf(d);
 						
 						//push answer on stack
 						rpnStack.push(result);
@@ -2937,7 +2937,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						//pop 1 item from stack
 						Double operand1 = rpnStack.pop();
 						
-						result = new Double(0);
+						result = Double.valueOf(0);
 						double d = 0;
 						if(token.equals("abs")) {
 							d = Math.abs(operand1);
@@ -2954,23 +2954,23 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						}else if(token.equals("tan")) {
 							d = Math.tan(operand1);
             }
-						result = new Double(d);
+						result = Double.valueOf(d);
 						
 						//push answer on stack
 						rpnStack.push(result);
         }
 				}else {
 					if(token.equals("A")) {
-						Double doubleA = new Double(this.aVal);
+						Double doubleA = Double.valueOf(this.aVal);
 						rpnStack.push(doubleA);
 					}else if(token.equals("B")) {
-						Double doubleB = new Double(this.bVal);
+						Double doubleB = Double.valueOf(this.bVal);
 						rpnStack.push(doubleB);
 					}else if(token.equals("pi")) {
-						Double doublePi = new Double(Math.PI);
+						Double doublePi = Double.valueOf(Math.PI);
 						rpnStack.push(doublePi);
 					}else {
-						Double operandValue = new Double(token);
+						Double operandValue = Double.valueOf(token);
 						rpnStack.push(operandValue);
 					}
     }

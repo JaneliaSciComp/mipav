@@ -154,7 +154,7 @@ public class TableSorter extends AbstractTableModel {
             for (int i = 0; i < s1.length(); i++) {
                 final char c = s1.charAt(i);
                 if (Character.isDigit(c)) {
-                    numChars.add(new Character(c));
+                    numChars.add(Character.valueOf(c));
                 } else {
                     break;
                 }
@@ -171,7 +171,7 @@ public class TableSorter extends AbstractTableModel {
             for (int i = 0; i < s2.length(); i++) {
                 final char c = s2.charAt(i);
                 if (Character.isDigit(c)) {
-                    numChars.add(new Character(c));
+                    numChars.add(Character.valueOf(c));
                 } else {
                     break;
                 }

@@ -1267,7 +1267,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     public void setIntensityPaintName(String stringValue) {
 
         try {
-            Double doubleValue = new Double(stringValue);
+            Double doubleValue = Double.valueOf(stringValue);
             ((SpinnerNumberModel) intensitySpinner.getModel()).setValue(doubleValue);
         } catch (Exception e) {
             // parameter was illegal
@@ -1400,10 +1400,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
         }
 
         if (intensitySpinner != null) {
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMinimum(new Double(minIntensity));
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMaximum(new Double(maxIntensity));
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(new Double(intensityStep));
-            ((SpinnerNumberModel) (intensitySpinner.getModel())).setValue(new Double(intensityValue));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMinimum(Double.valueOf(minIntensity));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setMaximum(Double.valueOf(maxIntensity));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(Double.valueOf(intensityStep));
+            ((SpinnerNumberModel) (intensitySpinner.getModel())).setValue(Double.valueOf(intensityValue));
         }
     }
 

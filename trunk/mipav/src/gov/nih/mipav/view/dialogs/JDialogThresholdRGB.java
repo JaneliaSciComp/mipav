@@ -278,7 +278,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         /*
          * String text = field.getText(); String tempStr;
          *
-         * Double stringConv = new Double(0);
+         * Double stringConv = Double.valueOf(0);
          *
          * field.removeFocusListener(this);
          *

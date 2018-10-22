@@ -966,7 +966,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     public Hashtable<File, Double> getCoreObjectSizeTable() {
         Hashtable<File, Double> sizeTable = new Hashtable<File, Double>();
         for (File file : selectedObjectTable.keySet()) {
-            sizeTable.put(file, new Double(getCoreSize(file)));
+            sizeTable.put(file, Double.valueOf(getCoreSize(file)));
         }
         
         return sizeTable;

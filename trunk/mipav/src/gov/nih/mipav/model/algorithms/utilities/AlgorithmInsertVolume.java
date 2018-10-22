@@ -336,7 +336,7 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
                         FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[j]).getTagTable();
                         if (newTagTable.getValue("0018,0088") != null) {
                             String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[j]).getTagTable().getValue("0018,0088")).trim();
-                            sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                            sliceResolution = Double.parseDouble(sliceGapString.trim());
                         }                    
                             //fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                             destFileInfo[j].setResolutions(srcImage.getFileInfo(0).getResolutions());

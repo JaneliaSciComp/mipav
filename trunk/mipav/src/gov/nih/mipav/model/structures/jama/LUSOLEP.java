@@ -411,7 +411,7 @@ public class LUSOLEP implements java.io.Serializable {
 					while (Character.isWhitespace(line.charAt(i))) {
 						i++;
 					}
-					a[k-1] = DoubleDouble.valueOf(new Double(line.substring(i).trim()).doubleValue());
+					a[k-1] = DoubleDouble.valueOf(Double.parseDouble(line.substring(i).trim()));
 				}
 			}
 			raFile.close();

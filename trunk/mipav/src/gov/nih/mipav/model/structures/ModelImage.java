@@ -1806,27 +1806,27 @@ public class ModelImage extends ModelStorageBase {
             iGreen = this.getC(iIndex, 2).byteValue();
             iBlue = this.getC(iIndex, 3).byteValue();
         } else if (this.getType() == ModelStorageBase.ARGB_USHORT) {
-            final Number kRed = new Double(255 * (this.getC(iIndex, 1).shortValue() - this.getMin())
+            final Number kRed = Double.valueOf(255 * (this.getC(iIndex, 1).shortValue() - this.getMin())
                     / (this.getMax() - this.getMin()));
             iRed = kRed.byteValue();
-            final Number kGreen = new Double(255 * (this.getC(iIndex, 2).shortValue() - this.getMin())
+            final Number kGreen = Double.valueOf(255 * (this.getC(iIndex, 2).shortValue() - this.getMin())
                     / (this.getMax() - this.getMin()));
             iGreen = kGreen.byteValue();
-            final Number kBlue = new Double(255 * (this.getC(iIndex, 3).shortValue() - this.getMin())
+            final Number kBlue = Double.valueOf(255 * (this.getC(iIndex, 3).shortValue() - this.getMin())
                     / (this.getMax() - this.getMin()));
             iBlue = kBlue.byteValue();
         } else if (this.getType() == ModelStorageBase.ARGB_FLOAT) {
-            final Number kRed = new Double(255 * (this.getC(iIndex, 1).floatValue() - this.getMin())
+            final Number kRed = Double.valueOf(255 * (this.getC(iIndex, 1).floatValue() - this.getMin())
                     / (this.getMax() - this.getMin()));
             iRed = kRed.byteValue();
-            final Number kGreen = new Double(255 * (this.getC(iIndex, 2).floatValue() - this.getMin())
+            final Number kGreen = Double.valueOf(255 * (this.getC(iIndex, 2).floatValue() - this.getMin())
                     / (this.getMax() - this.getMin()));
             iGreen = kGreen.byteValue();
-            final Number kBlue = new Double(255 * (this.getC(iIndex, 3).floatValue() - this.getMin())
+            final Number kBlue = Double.valueOf(255 * (this.getC(iIndex, 3).floatValue() - this.getMin())
                     / (this.getMax() - this.getMin()));
             iBlue = kBlue.byteValue();
         } else {
-            final Number kGray = new Double(255 * (this.getFloat(iIndex) - this.getMin())
+            final Number kGray = Double.valueOf(255 * (this.getFloat(iIndex) - this.getMin())
                     / (this.getMax() - this.getMin()));
             iRed = kGray.byteValue();
             iGreen = iRed;

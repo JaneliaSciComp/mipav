@@ -2972,7 +2972,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return (data.get(position));
         }
 
-        return (new Byte((byte) 0));
+        return (Byte.valueOf((byte) 0));
     }
 
     /**
@@ -2999,10 +2999,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 return data.get(location);
             }
 
-            return (new Byte((byte) 0));
+            return (Byte.valueOf((byte) 0));
         }
 
-        return (new Byte((byte) 0));
+        return (Byte.valueOf((byte) 0));
     }
 
     /**
@@ -3023,10 +3023,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 return data.get(position);
             }
 
-            return (new Byte((byte) 0));
+            return (Byte.valueOf((byte) 0));
         }
 
-        return (new Byte((byte) 0));
+        return (Byte.valueOf((byte) 0));
     }
 
     /**
@@ -3048,10 +3048,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 return data.get(position);
             }
 
-            return (new Byte((byte) 0));
+            return (Byte.valueOf((byte) 0));
         }
 
-        return (new Byte((byte) 0));
+        return (Byte.valueOf((byte) 0));
     }
 
     /**
@@ -3075,10 +3075,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 return data.get(position);
             }
 
-            return (new Byte((byte) 0));
+            return (Byte.valueOf((byte) 0));
         }
 
-        return (new Byte((byte) 0));
+        return (Byte.valueOf((byte) 0));
     }
 
     /**
@@ -3126,7 +3126,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             return (new Float( ( (1 - dy) * x1) + (dy * x2)));
         } else {
-            return (new Byte((byte) 0));
+            return (Byte.valueOf((byte) 0));
         }
     }
 
@@ -3362,7 +3362,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return data.get((4 * position) + color);
         }
 
-        return (new Byte((byte) 0));
+        return (Byte.valueOf((byte) 0));
     }
 
     /**
@@ -5116,7 +5116,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             return (new Float( ( (1 - dz) * b1) + (dz * b2)));
         } else {
-            return (new Byte((byte) 0));
+            return (Byte.valueOf((byte) 0));
         }
     }
 

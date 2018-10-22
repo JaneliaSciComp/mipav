@@ -76,9 +76,9 @@ public class BufferBoolean extends BufferBase {
     protected final Number get(int position) {
 
         if (dataArray.get(position)) {
-            return (new Byte((byte) 1));
+            return (Byte.valueOf((byte) 1));
         } else {
-            return (new Byte((byte) 0));
+            return (Byte.valueOf((byte) 0));
         }
     }
 

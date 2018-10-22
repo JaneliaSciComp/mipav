@@ -627,7 +627,7 @@ public class MipavUtil extends JComponent {
         }
 
         // returns true if str.equalsIgnoreCase( "true" )
-        return new Boolean(str).booleanValue();
+        return Boolean.parseBoolean(str);
     }
 
     /**

@@ -88,7 +88,7 @@ public class JDialogIntensityHistogram extends JDialogBase {
             minValue = imageMin;
 
             try {
-                minValue = new Double(minField.getText()).doubleValue();
+                minValue = Double.parseDouble(minField.getText());
             } catch (Exception ex) {
                 MipavUtil.displayError("minValue must be a double value");
 
@@ -100,7 +100,7 @@ public class JDialogIntensityHistogram extends JDialogBase {
             }
             
             try {
-                maxValue = new Double(maxField.getText()).doubleValue();
+                maxValue = Double.parseDouble(maxField.getText());
             } catch (Exception ex) {
                 MipavUtil.displayError("maxValue must be a double value");
 

@@ -349,7 +349,7 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("CreationDate")) {
                 fileInfo.getOME().getCurrentImage().setCreationDate(elementBuffer);
             } else if (currentKey.equals("Sample")) {
-                fileInfo.getOME().getCurrentImage().getPlateInfo().setSampleNumber(new Integer(elementBuffer));
+                fileInfo.getOME().getCurrentImage().getPlateInfo().setSampleNumber(Integer.valueOf(elementBuffer));
             } else if (currentKey.equals("Well")) {
                 fileInfo.getOME().getCurrentImage().getPlateInfo().setWellString(elementBuffer);
             }
@@ -389,7 +389,7 @@ public class FileOME extends FileBase {
                 String sha1;
                 URI href = null;
 
-                documentID = new Integer(atts.getValue("DocumentID"));
+                documentID = Integer.valueOf(atts.getValue("DocumentID"));
 
                 try {
                     href = new URI(atts.getValue("href"));
@@ -405,7 +405,7 @@ public class FileOME extends FileBase {
                 Integer id;
 
                 name = atts.getValue("Name");
-                id = new Integer(atts.getValue("ProjectID"));
+                id = Integer.valueOf(atts.getValue("ProjectID"));
 
                 fileInfo.getOME().addProject(name, id);
 
@@ -413,8 +413,8 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("ExperimenterRef")) {
                 Integer documentRef, experimenterID;
 
-                documentRef = new Integer(atts.getValue("DocumentRef"));
-                experimenterID = new Integer(atts.getValue("ExperimenterID"));
+                documentRef = Integer.valueOf(atts.getValue("DocumentRef"));
+                experimenterID = Integer.valueOf(atts.getValue("ExperimenterID"));
 
                 if (superKey.equals("Project")) {
                     fileInfo.getOME().getCurrentProject().setExperimenterRef(documentRef, experimenterID);
@@ -430,7 +430,7 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("GroupRef")) {
                 Integer groupID;
 
-                groupID = new Integer(atts.getValue("GroupID"));
+                groupID = Integer.valueOf(atts.getValue("GroupID"));
 
                 if (superKey.equals("Project")) {
                     fileInfo.getOME().getCurrentProject().setGroupRef(groupID);
@@ -447,12 +447,12 @@ public class FileOME extends FileBase {
                 Boolean locked;
 
                 name = atts.getValue("Name");
-                datasetID = new Integer(atts.getValue("DatasetID"));
+                datasetID = Integer.valueOf(atts.getValue("DatasetID"));
 
                 try {
-                    locked = new Boolean(atts.getValue("Locked"));
+                    locked = Boolean.valueOf(atts.getValue("Locked"));
                 } catch (NullPointerException e) {
-                    locked = new Boolean("false");
+                    locked = Boolean.FALSE;
                 }
 
                 fileInfo.getOME().addDataset(name, datasetID, locked);
@@ -460,7 +460,7 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("Experiment")) {
                 Integer experimentID;
 
-                experimentID = new Integer(atts.getValue("ExperimentID"));
+                experimentID = Integer.valueOf(atts.getValue("ExperimentID"));
 
                 fileInfo.getOME().addExperiment(experimentID);
                 superKey = currentKey;
@@ -468,7 +468,7 @@ public class FileOME extends FileBase {
                 Integer plateID;
                 String name, ref;
 
-                plateID = new Integer(atts.getValue("PlateID"));
+                plateID = Integer.valueOf(atts.getValue("PlateID"));
                 name = atts.getValue("Name");
                 ref = atts.getValue("ExternRef");
 
@@ -477,15 +477,15 @@ public class FileOME extends FileBase {
                 Integer docRef;
                 Integer screenID;
 
-                docRef = new Integer(atts.getValue("DocumentRef"));
-                screenID = new Integer(atts.getValue("ScreenID"));
+                docRef = Integer.valueOf(atts.getValue("DocumentRef"));
+                screenID = Integer.valueOf(atts.getValue("ScreenID"));
 
                 fileInfo.getOME().getCurrentPlate().addScreenRef(docRef, screenID);
             } else if (currentKey.equals("Screen")) {
                 Integer screenID;
                 String name, externRef;
 
-                screenID = new Integer(atts.getValue("ScreenID"));
+                screenID = Integer.valueOf(atts.getValue("ScreenID"));
                 name = atts.getValue("Name");
                 externRef = atts.getValue("ExternRef");
 
@@ -494,7 +494,7 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("Experimenter")) {
                 Integer id;
 
-                id = new Integer(atts.getValue("ExperimenterID"));
+                id = Integer.valueOf(atts.getValue("ExperimenterID"));
 
                 fileInfo.getOME().addExperimenter(id);
                 superKey = currentKey;
@@ -503,7 +503,7 @@ public class FileOME extends FileBase {
                 Integer id;
 
                 name = atts.getValue("Name");
-                id = new Integer(atts.getValue("GroupID"));
+                id = Integer.valueOf(atts.getValue("GroupID"));
 
                 fileInfo.getOME().addGroup(name, id);
             } else if (currentKey.equals("Leader")) {
@@ -513,7 +513,7 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("Instrument")) {
                 Integer id;
 
-                id = new Integer(atts.getValue("InstrumentID"));
+                id = Integer.valueOf(atts.getValue("InstrumentID"));
 
                 fileInfo.getOME().addInstrument(id);
             } else if (currentKey.equals("Microscrope")) {
@@ -532,7 +532,7 @@ public class FileOME extends FileBase {
                 man = atts.getValue("Manufacturer");
                 mod = atts.getValue("Model");
                 sn = atts.getValue("SerialNumber");
-                id = new Integer(atts.getValue("LightSourceID"));
+                id = Integer.valueOf(atts.getValue("LightSourceID"));
 
                 fileInfo.getOME().getCurrentInstrument().addLightSource(man, mod, sn, id);
             } else if (currentKey.equals("Laser")) {
@@ -548,21 +548,21 @@ public class FileOME extends FileBase {
                 temp = atts.getValue("Wavelength");
 
                 if (temp != null) {
-                    wavelength = new Integer(temp);
+                    wavelength = Integer.valueOf(temp);
                     temp = null;
                 }
 
                 temp = atts.getValue("FrequencyDoubled");
 
                 if (temp != null) {
-                    fd = new Boolean(temp);
+                    fd = Boolean.valueOf(temp);
                     temp = null;
                 }
 
                 temp = atts.getValue("Tunable");
 
                 if (temp != null) {
-                    tunable = new Boolean(temp);
+                    tunable = Boolean.valueOf(temp);
                     temp = null;
                 }
 
@@ -582,10 +582,10 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("DocumentRef");
 
                 if (temp != null) {
-                    ref = new Integer(temp);
+                    ref = Integer.valueOf(temp);
                 }
 
-                id = new Integer(atts.getValue("LightSourceID"));
+                id = Integer.valueOf(atts.getValue("LightSourceID"));
 
                 fileInfo.getOME().getCurrentInstrument().getCurrentLightSource().getLaser().setPump(ref, id);
             } else if (currentKey.equals("Filament")) {
@@ -643,7 +643,7 @@ public class FileOME extends FileBase {
                     offset = new Float(temp);
                 }
 
-                id = new Integer(atts.getValue("DetectorID"));
+                id = Integer.valueOf(atts.getValue("DetectorID"));
                 type = atts.getValue("Type");
 
                 fileInfo.getOME().getCurrentInstrument().addDetector(man, mod, sn, gain, voltage, offset, id, type);
@@ -654,13 +654,13 @@ public class FileOME extends FileBase {
                 man = atts.getValue("Manufacturer");
                 mod = atts.getValue("Model");
                 sn = atts.getValue("SerialNumber");
-                id = new Integer(atts.getValue("ObjectiveID"));
+                id = Integer.valueOf(atts.getValue("ObjectiveID"));
 
                 fileInfo.getOME().getCurrentInstrument().addObjective(man, mod, sn, id);
             } else if (currentKey.equals("Filter")) {
                 Integer id;
 
-                id = new Integer(atts.getValue("FilterID"));
+                id = Integer.valueOf(atts.getValue("FilterID"));
 
                 fileInfo.getOME().getCurrentInstrument().addFilter(id);
             } else if (currentKey.equals("ExFilter")) {
@@ -703,13 +703,13 @@ public class FileOME extends FileBase {
                 String pt;
                 Boolean oaa;
 
-                otfid = new Integer(atts.getValue("OTFID"));
-                objid = new Integer(atts.getValue("ObjectiveID"));
-                fid = new Integer(atts.getValue("FilterID"));
+                otfid = Integer.valueOf(atts.getValue("OTFID"));
+                objid = Integer.valueOf(atts.getValue("ObjectiveID"));
+                fid = Integer.valueOf(atts.getValue("FilterID"));
                 pt = atts.getValue("PixelType");
-                oaa = new Boolean(atts.getValue("OpticalAxisAvrg"));
-                sizex = new Integer(atts.getValue("SizeX"));
-                sizey = new Integer(atts.getValue("SizeY"));
+                oaa = Boolean.valueOf(atts.getValue("OpticalAxisAvrg"));
+                sizex = Integer.valueOf(atts.getValue("SizeX"));
+                sizey = Integer.valueOf(atts.getValue("SizeY"));
 
                 fileInfo.getOME().getCurrentInstrument().addOTF(otfid, objid, fid, pt, oaa, sizex, sizey);
                 superKey = currentKey;
@@ -724,7 +724,7 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("Offset");
 
                 if (temp != null) {
-                    offset = new Integer(temp);
+                    offset = Integer.valueOf(temp);
                 }
 
                 try {
@@ -751,11 +751,11 @@ public class FileOME extends FileBase {
                 guid = atts.getValue("GUID"); // optional
                 imageType = atts.getValue("ImageType");
                 name = atts.getValue("Name");
-                sizeX = new Integer(atts.getValue("SizeX"));
-                sizeY = new Integer(atts.getValue("SizeY"));
-                sizeZ = new Integer(atts.getValue("SizeZ"));
-                numChannels = new Integer(atts.getValue("NumChannels"));
-                numTimes = new Integer(atts.getValue("NumTimes"));
+                sizeX = Integer.valueOf(atts.getValue("SizeX"));
+                sizeY = Integer.valueOf(atts.getValue("SizeY"));
+                sizeZ = Integer.valueOf(atts.getValue("SizeZ"));
+                numChannels = Integer.valueOf(atts.getValue("NumChannels"));
+                numTimes = Integer.valueOf(atts.getValue("NumTimes"));
                 pixelSizeX = new Float(atts.getValue("PixelSizeX"));
                 pixelSizeY = new Float(atts.getValue("PixelSizeY"));
 
@@ -777,14 +777,14 @@ public class FileOME extends FileBase {
                 temp = atts.getValue("WaveStart");
 
                 if (temp != null) {
-                    waveStart = new Integer(atts.getValue(temp));
+                    waveStart = Integer.valueOf(atts.getValue(temp));
                     temp = null;
                 }
 
                 temp = atts.getValue("WaveIncrement");
 
                 if (temp != null) {
-                    waveIncrement = new Integer(temp);
+                    waveIncrement = Integer.valueOf(temp);
                 }
 
                 // Create the image object
@@ -798,7 +798,7 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("DocumentRef");
 
                 if (temp != null) {
-                    docRef = new Integer(atts.getValue(temp));
+                    docRef = Integer.valueOf(atts.getValue(temp));
                 }
 
                 expID = atts.getValue("ExperimentID");
@@ -813,7 +813,7 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("DatasetRef")) {
                 Integer datasetID;
 
-                datasetID = new Integer(atts.getValue("DatasetID"));
+                datasetID = Integer.valueOf(atts.getValue("DatasetID"));
 
                 fileInfo.getOME().getCurrentImage().addDatasetRef(datasetID);
             } else if (currentKey.equals("InstrumentRef")) {
@@ -823,11 +823,11 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("DocumentRef");
 
                 if (temp != null) {
-                    docRef = new Integer(temp);
+                    docRef = Integer.valueOf(temp);
                 }
 
-                instID = new Integer(atts.getValue("InstrumentID"));
-                objID = new Integer(atts.getValue("ObjectiveID"));
+                instID = Integer.valueOf(atts.getValue("InstrumentID"));
+                objID = Integer.valueOf(atts.getValue("ObjectiveID"));
             } else if (currentKey.equals("ImagingEnvironment")) {
                 Float temperature = null, ap = null, hum = null, CO2 = null;
 
@@ -888,7 +888,7 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("SamplesPerPixel");
 
                 if (temp != null) {
-                    spp = new Integer(temp);
+                    spp = Integer.valueOf(temp);
                     temp = null;
                 }
 
@@ -896,7 +896,7 @@ public class FileOME extends FileBase {
                 temp = atts.getValue("PinHoleSize");
 
                 if (temp != null) {
-                    phs = new Integer(temp);
+                    phs = Integer.valueOf(temp);
                     temp = null;
                 }
 
@@ -906,14 +906,14 @@ public class FileOME extends FileBase {
                 temp = atts.getValue("ExWave");
 
                 if (temp != null) {
-                    exWave = new Integer(temp);
+                    exWave = Integer.valueOf(temp);
                     temp = null;
                 }
 
                 temp = atts.getValue("EmWave");
 
                 if (temp != null) {
-                    emWave = new Integer(temp);
+                    emWave = Integer.valueOf(temp);
                     temp = null;
                 }
 
@@ -934,11 +934,11 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("DocumentRef");
 
                 if (temp != null) {
-                    docRef = new Integer(temp);
+                    docRef = Integer.valueOf(temp);
                     temp = null;
                 }
 
-                lightSourceID = new Integer(atts.getValue("LightSourceID"));
+                lightSourceID = Integer.valueOf(atts.getValue("LightSourceID"));
                 auxTech = atts.getValue("AuxTechnique");
                 temp = atts.getValue("Attenuation");
 
@@ -950,7 +950,7 @@ public class FileOME extends FileBase {
                 temp = atts.getValue("Wavelength");
 
                 if (temp != null) {
-                    wavelength = new Integer(temp);
+                    wavelength = Integer.valueOf(temp);
                 }
 
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().addLightSourceRef(docRef, lightSourceID,
@@ -962,10 +962,10 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("DocumentRef");
 
                 if (temp != null) {
-                    docRef = new Integer(temp);
+                    docRef = Integer.valueOf(temp);
                 }
 
-                otfID = new Integer(atts.getValue("OTFID"));
+                otfID = Integer.valueOf(atts.getValue("OTFID"));
 
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setOTFRefDocumentRef(docRef);
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setOTFRefOTFID(otfID);
@@ -976,11 +976,11 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("DocumentRef");
 
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefDocumentRef(new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefDocumentRef(Integer.valueOf(temp));
                     temp = null;
                 }
 
-                id = new Integer(atts.getValue("DetectorID"));
+                id = Integer.valueOf(atts.getValue("DetectorID"));
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefDetectorID(id);
                 temp = atts.getValue("Offset");
 
@@ -1000,17 +1000,17 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("DocumentRef");
 
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setFilterRefDocumentRef(new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setFilterRefDocumentRef(Integer.valueOf(temp));
                 }
 
-                filterID = new Integer(atts.getValue("FilterID"));
+                filterID = Integer.valueOf(atts.getValue("FilterID"));
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setFilterRefFilterID(filterID);
             } else if (currentKey.equals("ChannelComponent")) {
                 String cd = null;
                 Integer ccn;
 
                 cd = atts.getValue("ColorDomain");
-                ccn = new Integer(atts.getValue("ChannelComponentNumber"));
+                ccn = Integer.valueOf(atts.getValue("ChannelComponentNumber"));
 
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().addChannelComponent(cd, ccn);
             } else if (currentKey.equals("DisplayOptions")) {
@@ -1027,9 +1027,9 @@ public class FileOME extends FileBase {
                 Integer cn, bl, wl;
                 Float gamma = null;
 
-                cn = new Integer(atts.getValue("ChannelNumber"));
-                bl = new Integer(atts.getValue("BlackLevel"));
-                wl = new Integer(atts.getValue("WhiteLevel"));
+                cn = Integer.valueOf(atts.getValue("ChannelNumber"));
+                bl = Integer.valueOf(atts.getValue("BlackLevel"));
+                wl = Integer.valueOf(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
 
@@ -1045,9 +1045,9 @@ public class FileOME extends FileBase {
                 Integer cn, bl, wl;
                 Float gamma = null;
 
-                cn = new Integer(atts.getValue("ChannelNumber"));
-                bl = new Integer(atts.getValue("BlackLevel"));
-                wl = new Integer(atts.getValue("WhiteLevel"));
+                cn = Integer.valueOf(atts.getValue("ChannelNumber"));
+                bl = Integer.valueOf(atts.getValue("BlackLevel"));
+                wl = Integer.valueOf(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
 
@@ -1063,9 +1063,9 @@ public class FileOME extends FileBase {
                 Integer cn, bl, wl;
                 Float gamma = null;
 
-                cn = new Integer(atts.getValue("ChannelNumber"));
-                bl = new Integer(atts.getValue("BlackLevel"));
-                wl = new Integer(atts.getValue("WhiteLevel"));
+                cn = Integer.valueOf(atts.getValue("ChannelNumber"));
+                bl = Integer.valueOf(atts.getValue("BlackLevel"));
+                wl = Integer.valueOf(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
 
@@ -1082,9 +1082,9 @@ public class FileOME extends FileBase {
                 Float gamma = null;
                 String cm;
 
-                cn = new Integer(atts.getValue("ChannelNumber"));
-                bl = new Integer(atts.getValue("BlackLevel"));
-                wl = new Integer(atts.getValue("WhiteLevel"));
+                cn = Integer.valueOf(atts.getValue("ChannelNumber"));
+                bl = Integer.valueOf(atts.getValue("BlackLevel"));
+                wl = Integer.valueOf(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
 
@@ -1103,48 +1103,48 @@ public class FileOME extends FileBase {
                 String temp = atts.getValue("Zstart");
 
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setZStart(new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setZStart(Integer.valueOf(temp));
                     temp = null;
                 }
 
                 temp = atts.getValue("Zstop");
 
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setZStop(new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setZStop(Integer.valueOf(temp));
                 }
             } else if (currentKey.equals("Time")) {
                 String temp = atts.getValue("Tstart");
 
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setTStart(new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setTStart(Integer.valueOf(temp));
                     temp = null;
                 }
 
                 temp = atts.getValue("Tstop");
 
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setTStop(new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getDisplayOptions().setTStop(Integer.valueOf(temp));
                 }
             } else if (currentKey.equals("ROI")) {
                 Integer x0, y0, z0 = null, x1, y1, z1 = null;
                 String t0, t1;
 
-                x0 = new Integer(atts.getValue("X0"));
-                y0 = new Integer(atts.getValue("Y0"));
+                x0 = Integer.valueOf(atts.getValue("X0"));
+                y0 = Integer.valueOf(atts.getValue("Y0"));
 
                 String temp = atts.getValue("Z0");
 
                 if (temp != null) {
-                    z0 = new Integer(temp);
+                    z0 = Integer.valueOf(temp);
                     temp = null;
                 }
 
-                x1 = new Integer(atts.getValue("X1"));
-                y1 = new Integer(atts.getValue("Y1"));
+                x1 = Integer.valueOf(atts.getValue("X1"));
+                y1 = Integer.valueOf(atts.getValue("Y1"));
                 temp = atts.getValue("Z1");
 
                 if (temp != null) {
-                    z1 = new Integer(temp);
+                    z1 = Integer.valueOf(temp);
                 }
 
                 t0 = atts.getValue("T0");
@@ -1181,7 +1181,7 @@ public class FileOME extends FileBase {
             } else if (currentKey.equals("PlateInfo")) {
                 Integer id;
 
-                id = new Integer(atts.getValue("PlateID"));
+                id = Integer.valueOf(atts.getValue("PlateID"));
 
                 fileInfo.getOME().getCurrentImage().setPlateInfo(id);
             } else if (currentKey.equals("Sample")) {
@@ -1203,7 +1203,7 @@ public class FileOME extends FileBase {
 
                 dimOrd = atts.getValue("DimensionOrder");
                 pt = atts.getValue("PixelType");
-                bigEndian = new Boolean(atts.getValue("BigEndian"));
+                bigEndian = Boolean.valueOf(atts.getValue("BigEndian"));
 
                 fileInfo.getOME().getCurrentImage().setData(dimOrd, pt, bigEndian);
             }

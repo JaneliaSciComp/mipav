@@ -139,7 +139,7 @@ public class JPanelEditOrientation extends JPanelEdit {
      * @return  a Byte. returned by getPanelValue().
      */
     public Object getCodedValue() {
-        return new Byte((byte) (orientationBox.getSelectedIndex() - 1));
+        return Byte.valueOf((byte) (orientationBox.getSelectedIndex() - 1));
     }
 
     /**
