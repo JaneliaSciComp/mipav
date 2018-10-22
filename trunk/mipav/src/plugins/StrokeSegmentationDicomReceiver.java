@@ -52,6 +52,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.locks.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,6 +96,9 @@ public class StrokeSegmentationDicomReceiver {
     private File storageDir;
     private AttributesFormat filePathFormat;
     private int status;
+    
+    private final Lock fileListLock = new ReentrantLock();
+    
     private final BasicCStoreSCP cstoreSCP = new BasicCStoreSCP("*") {
 
         @Override
@@ -105,28 +109,33 @@ public class StrokeSegmentationDicomReceiver {
             if (storageDir == null)
                 return;
             
-            if (!addedCloseListener) {
-                as.addAssociationListener(new AssociationClose());
-                receivedFileList = new Vector<File>();
-                addedCloseListener = true;
-            }
-
-            String cuid = rq.getString(Tag.AffectedSOPClassUID);
-            String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
-            String tsuid = pc.getTransferSyntax();
-            File file = new File(storageDir, iuid + PART_EXT);
+            fileListLock.lock();
             try {
-                storeTo(as, as.createFileMetaInformation(iuid, cuid, tsuid),
-                        data, file);
-                final String outFileName = new String(filePathFormat == null ? iuid : filePathFormat.format(parse(file)));
-                final File outFile = new File(storageDir, outFileName);
-                renameTo(as, file, outFile);
-                log("Received file: " + outFileName);
-                receivedFileList.add(outFile);
-                
-            } catch (Exception e) {
-                deleteFile(as, file);
-                throw new DicomServiceException(Status.ProcessingFailure, e);
+                if (!addedCloseListener) {
+                    as.addAssociationListener(new AssociationClose());
+                    receivedFileList = new Vector<File>();
+                    addedCloseListener = true;
+                }
+    
+                String cuid = rq.getString(Tag.AffectedSOPClassUID);
+                String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
+                String tsuid = pc.getTransferSyntax();
+                File file = new File(storageDir, iuid + PART_EXT);
+                try {
+                    storeTo(as, as.createFileMetaInformation(iuid, cuid, tsuid),
+                            data, file);
+                    final String outFileName = new String(filePathFormat == null ? iuid : filePathFormat.format(parse(file)));
+                    final File outFile = new File(storageDir, outFileName);
+                    renameTo(as, file, outFile);
+                    
+                    log("Received file: " + outFileName);
+                    receivedFileList.add(outFile);
+                } catch (Exception e) {
+                    deleteFile(as, file);
+                    throw new DicomServiceException(Status.ProcessingFailure, e);
+                }
+            } finally {
+                fileListLock.unlock();
             }
         }
 
@@ -288,306 +297,311 @@ public class StrokeSegmentationDicomReceiver {
 
     private class AssociationClose implements AssociationListener {
         public void onClose(Association association) {
-            log("Received association close request");
-            
-            boolean foundADC = false;
-            boolean foundDWI = false;
-            
-            boolean mergeADC = false;
-            boolean mergeDWI = false;
-            
-            boolean foundOutputDirADC = false;
-            boolean foundOutputDirDWI = false;
-            
-            boolean usePrevADC = false;
-            boolean usePrevDWI = false;
-            
-            Vector<File> adcFiles = new Vector<File>();
-            Vector<File> dwiFiles = new Vector<File>();
-            
-            Vector<Attributes> adcAttrList = new Vector<Attributes>();
-            Vector<Attributes> dwiAttrList = new Vector<Attributes>();
-            
-            File baseOutputDir = null;
-            String lastnameInitial = null;
-            String studyDate = null;
-            String studyTime = null;
-            
-            boolean foundRegSeries = false;
-            
-            for (File file : receivedFileList) {
-                try {
-                    Attributes attr = parse(file);
-                    
-                    final String[] imageTypes = attr.getStrings(TagUtils.toTag(0x0008, 0x0008));
-                    
-                    if (lastnameInitial == null) {
-                        lastnameInitial = getInitialFromName(attr.getString(TagUtils.toTag(0x0010, 0x0010)));
-                    }
-                    
-                    if (baseOutputDir == null) {
-                        studyDate = attr.getString(TagUtils.toTag(0x0008, 0x0020));
-                        studyTime = attr.getString(TagUtils.toTag(0x0008, 0x0030));
-                        
-                        baseOutputDir = new File(storageDir + File.separator + studyDate + File.separator + studyDate + "." + studyTime + "_" + lastnameInitial + File.separator);
-                        if (!baseOutputDir.exists()) {
-                            log("Creating output directory: " + baseOutputDir);
-                            baseOutputDir.mkdirs();
-                        }
-                    }
-                    
-                    final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
-                    final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
-                    
-                    if (!foundRegSeries && PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
-                        foundRegSeries = true;
-                    }
-                    
-                    for (String val : imageTypes) {
-                        if (PlugInDialogStrokeSegmentation.isADC(val)) {
-                            adcFiles.add(file);
-                            adcAttrList.add(attr);
-                            foundADC = true;
-                            break;
-                        } else if (PlugInDialogStrokeSegmentation.isDWI(val)) {
-                            dwiFiles.add(file);
-                            dwiAttrList.add(attr);
-                            foundDWI = true;
-                            break;
-                        }
-                    }
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            
-            // if we saw series with 'Reg' in series or protocol names, prefer them
-            if (foundADC && foundRegSeries) {
-                Vector<File> adcRegFiles = new Vector<File>();
-                
-                for (int i = 0; i < adcFiles.size(); i++) {
-                    final Attributes attr = adcAttrList.get(i);
-                    final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
-                    final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
-                    
-                    if (PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
-                        adcRegFiles.add(adcFiles.get(i));
-                    }
-                }
-                
-                if (adcRegFiles.size() > 0) {
-                    adcFiles = adcRegFiles;
-                }
-            }
-            
-            // if we saw series with 'Reg' in series or protocol names, prefer them
-            if (foundDWI && foundRegSeries) {
-                Vector<File> dwiRegFiles = new Vector<File>();
-                
-                for (int i = 0; i < dwiFiles.size(); i++) {
-                    final Attributes attr = dwiAttrList.get(i);
-                    final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
-                    final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
-                    
-                    if (PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
-                        dwiRegFiles.add(dwiFiles.get(i));
-                    }
-                }
-                
-                if (dwiRegFiles.size() > 0) {
-                    dwiFiles = dwiRegFiles;
-                }
-            }
-            
-            // if we didn't find both ADC and DWI, check for previous transfer in output dir
-            if (baseOutputDir != null && !foundADC || !foundDWI) {
-                File[] outputDirFiles = baseOutputDir.listFiles();
-                for (File file : outputDirFiles) {
-                    if (file.isDirectory()) { 
-                        if (file.getName().equalsIgnoreCase("ADC")) {
-                            foundOutputDirADC = true;
-                        } else if (file.getName().equalsIgnoreCase("DWI")) {
-                            foundOutputDirDWI = true;
-                        }
-                    }
-                }
-                
-                if (foundADC && foundOutputDirADC) {
-                    log("Found previously received ADC volume in output directory, but also received new ADC volume.");
-                    
-                    File prevFile = new File(baseOutputDir + File.separator + "ADC").listFiles()[0];
-                    Attributes prevAttr = null;
-                    try {
-                        prevAttr = parse(prevFile);
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    Attributes newAttr = adcAttrList.get(0);
-                    
-                    boolean isPrevReg = isRegisteredVol(prevAttr);
-                    boolean isNewReg = isRegisteredVol(newAttr);
-                    
-                    final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                    final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                    
-                    // prefer series marked as 'reg', but otherwise go with the new one
-                    if (!isNewReg && isPrevReg) {
-                        log("Preferring previously received ADC volume.");
-                        usePrevADC = true;
-                    } else if (isNewReg && !isPrevReg) {
-                        log("Preferring newly received ADC volume.");
-                        usePrevADC = false;
-                    } else if (prevStudyNum.equals(newStudyNum)) {
-                        log("Merging new ADC files with previously received volume.");
-                        mergeADC = true;
-                    } else {
-                        log("Preferring newly received ADC volume.");
-                        usePrevADC = false;
-                    }
-                } else if (!foundADC && foundOutputDirADC) {
-                    log("Found previously received ADC volume in output directory.");
-                    usePrevADC = true;
-                }
-                
-                if (foundDWI && foundOutputDirDWI) {
-                    log("Found previously received DWI volume in output directory, but also received new DWI volume.");
-                    
-                    File prevFile = new File(baseOutputDir + File.separator + "DWI").listFiles()[0];
-                    Attributes prevAttr = null;
-                    try {
-                        prevAttr = parse(prevFile);
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    Attributes newAttr = dwiAttrList.get(0);
-                    
-                    boolean isPrevReg = isRegisteredVol(prevAttr);
-                    boolean isNewReg = isRegisteredVol(newAttr);
-                    
-                    final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                    final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                    
-                    // prefer series marked as 'reg', but otherwise go with the new one
-                    if (!isNewReg && isPrevReg) {
-                        log("Preferring previously received DWI volume.");
-                        usePrevDWI = true;
-                    } else if (isNewReg && !isPrevReg) {
-                        log("Preferring newly received DWI volume.");
-                        usePrevDWI = false;
-                    } else if (prevStudyNum.equals(newStudyNum)) {
-                        log("Merging new DWI files with previously received volume.");
-                        mergeDWI = true;
-                    } else {
-                        log("Preferring newly received DWI volume.");
-                        usePrevDWI = false;
-                    }
-                } else if (!foundDWI && foundOutputDirDWI) {
-                    log("Found previously received DWI volume in output directory.");
-                    usePrevDWI = true;
-                }
-            }
-            
-            // move ADC and DWI files to their own dir under parent inside outputDir
-            if (foundADC && !usePrevADC) {
-                log("Found ADC volume in completed transfer. Moving to " + baseOutputDir);
-                
-                File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
-                
-                // clean-up prev ADC dir
-                if (foundOutputDirADC && !mergeADC) {
-                    File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-                    boolean success = adcDirFile.renameTo(backupDir);
-                    if (success) {
-                        log("Failed to move previous ADC data to : " + backupDir);
-                    }
-                }
-                
-                for (File file : adcFiles) {
-                    try {
-                        renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-            
-            if (foundDWI && !usePrevDWI) {
-                log("Found DWI volume in completed transfer. Moving to " + baseOutputDir);
-                
-                File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
-                
-                // clean-up prev DWI dir
-                if (foundOutputDirDWI && !mergeDWI) {
-                    File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-                    boolean success = dwiDirFile.renameTo(backupDir);
-                    if (success) {
-                        log("Failed to move previous DWI data to : " + backupDir);
-                    }
-                }
-                
-                for (File file : dwiFiles) {
-                    try {
-                        renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-            
-            if ((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI)) {
-                // check that the number of files in the ADC and DWI directories are the same
-                File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
-                int numAdcFiles = adcDirFile.listFiles().length;
-                File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
-                int numDwiFiles = dwiDirFile.listFiles().length;
-                
-                if (numAdcFiles == numDwiFiles) {
-                    log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
-                    new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseOutputDir.getAbsolutePath());
-                } else {
-                    log("Found different number of ADC and DWI files. Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
-                }
-            } else {
-                log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + ").");
-            }
-            
-            // check if incoming dicom dir is empty and remove if it is
+            fileListLock.lock();
             try {
-                File incomingDir = new File(storageDir + File.separator + "incoming" + File.separator + studyDate);
+                log("Received association close request");
                 
-                if (isDirectoryEmpty(incomingDir)) {
-                    FileUtils.deleteDirectory(incomingDir);
+                boolean foundADC = false;
+                boolean foundDWI = false;
+                
+                boolean mergeADC = false;
+                boolean mergeDWI = false;
+                
+                boolean foundOutputDirADC = false;
+                boolean foundOutputDirDWI = false;
+                
+                boolean usePrevADC = false;
+                boolean usePrevDWI = false;
+                
+                Vector<File> adcFiles = new Vector<File>();
+                Vector<File> dwiFiles = new Vector<File>();
+                
+                Vector<Attributes> adcAttrList = new Vector<Attributes>();
+                Vector<Attributes> dwiAttrList = new Vector<Attributes>();
+                
+                File baseOutputDir = null;
+                String lastnameInitial = null;
+                String studyDate = null;
+                String studyTime = null;
+                
+                boolean foundRegSeries = false;
+                
+                for (File file : receivedFileList) {
+                    try {
+                        Attributes attr = parse(file);
+                        
+                        final String[] imageTypes = attr.getStrings(TagUtils.toTag(0x0008, 0x0008));
+                        
+                        if (lastnameInitial == null) {
+                            lastnameInitial = getInitialFromName(attr.getString(TagUtils.toTag(0x0010, 0x0010)));
+                        }
+                        
+                        if (baseOutputDir == null) {
+                            studyDate = attr.getString(TagUtils.toTag(0x0008, 0x0020));
+                            studyTime = attr.getString(TagUtils.toTag(0x0008, 0x0030));
+                            
+                            baseOutputDir = new File(storageDir + File.separator + studyDate + File.separator + studyDate + "." + studyTime + "_" + lastnameInitial + File.separator);
+                            if (!baseOutputDir.exists()) {
+                                log("Creating output directory: " + baseOutputDir);
+                                baseOutputDir.mkdirs();
+                            }
+                        }
+                        
+                        final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                        final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                        
+                        if (!foundRegSeries && PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
+                            foundRegSeries = true;
+                        }
+                        
+                        for (String val : imageTypes) {
+                            if (PlugInDialogStrokeSegmentation.isADC(val)) {
+                                adcFiles.add(file);
+                                adcAttrList.add(attr);
+                                foundADC = true;
+                                break;
+                            } else if (PlugInDialogStrokeSegmentation.isDWI(val)) {
+                                dwiFiles.add(file);
+                                dwiAttrList.add(attr);
+                                foundDWI = true;
+                                break;
+                            }
+                        }
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+                
+                // if we saw series with 'Reg' in series or protocol names, prefer them
+                if (foundADC && foundRegSeries) {
+                    Vector<File> adcRegFiles = new Vector<File>();
+                    
+                    for (int i = 0; i < adcFiles.size(); i++) {
+                        final Attributes attr = adcAttrList.get(i);
+                        final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                        final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                        
+                        if (PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
+                            adcRegFiles.add(adcFiles.get(i));
+                        }
+                    }
+                    
+                    if (adcRegFiles.size() > 0) {
+                        adcFiles = adcRegFiles;
+                    }
+                }
+                
+                // if we saw series with 'Reg' in series or protocol names, prefer them
+                if (foundDWI && foundRegSeries) {
+                    Vector<File> dwiRegFiles = new Vector<File>();
+                    
+                    for (int i = 0; i < dwiFiles.size(); i++) {
+                        final Attributes attr = dwiAttrList.get(i);
+                        final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                        final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                        
+                        if (PlugInDialogStrokeSegmentation.isRegisteredVol(seriesDesc, protocolName)) {
+                            dwiRegFiles.add(dwiFiles.get(i));
+                        }
+                    }
+                    
+                    if (dwiRegFiles.size() > 0) {
+                        dwiFiles = dwiRegFiles;
+                    }
+                }
+                
+                // if we didn't find both ADC and DWI, check for previous transfer in output dir
+                if (baseOutputDir != null && !foundADC || !foundDWI) {
+                    File[] outputDirFiles = baseOutputDir.listFiles();
+                    for (File file : outputDirFiles) {
+                        if (file.isDirectory()) { 
+                            if (file.getName().equalsIgnoreCase("ADC")) {
+                                foundOutputDirADC = true;
+                            } else if (file.getName().equalsIgnoreCase("DWI")) {
+                                foundOutputDirDWI = true;
+                            }
+                        }
+                    }
+                    
+                    if (foundADC && foundOutputDirADC) {
+                        log("Found previously received ADC volume in output directory, but also received new ADC volume.");
+                        
+                        File prevFile = new File(baseOutputDir + File.separator + "ADC").listFiles()[0];
+                        Attributes prevAttr = null;
+                        try {
+                            prevAttr = parse(prevFile);
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        Attributes newAttr = adcAttrList.get(0);
+                        
+                        boolean isPrevReg = isRegisteredVol(prevAttr);
+                        boolean isNewReg = isRegisteredVol(newAttr);
+                        
+                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                        
+                        // prefer series marked as 'reg', but otherwise go with the new one
+                        if (!isNewReg && isPrevReg) {
+                            log("Preferring previously received ADC volume.");
+                            usePrevADC = true;
+                        } else if (isNewReg && !isPrevReg) {
+                            log("Preferring newly received ADC volume.");
+                            usePrevADC = false;
+                        } else if (prevStudyNum.equals(newStudyNum)) {
+                            log("Merging new ADC files with previously received volume.");
+                            mergeADC = true;
+                        } else {
+                            log("Preferring newly received ADC volume.");
+                            usePrevADC = false;
+                        }
+                    } else if (!foundADC && foundOutputDirADC) {
+                        log("Found previously received ADC volume in output directory.");
+                        usePrevADC = true;
+                    }
+                    
+                    if (foundDWI && foundOutputDirDWI) {
+                        log("Found previously received DWI volume in output directory, but also received new DWI volume.");
+                        
+                        File prevFile = new File(baseOutputDir + File.separator + "DWI").listFiles()[0];
+                        Attributes prevAttr = null;
+                        try {
+                            prevAttr = parse(prevFile);
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        Attributes newAttr = dwiAttrList.get(0);
+                        
+                        boolean isPrevReg = isRegisteredVol(prevAttr);
+                        boolean isNewReg = isRegisteredVol(newAttr);
+                        
+                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                        
+                        // prefer series marked as 'reg', but otherwise go with the new one
+                        if (!isNewReg && isPrevReg) {
+                            log("Preferring previously received DWI volume.");
+                            usePrevDWI = true;
+                        } else if (isNewReg && !isPrevReg) {
+                            log("Preferring newly received DWI volume.");
+                            usePrevDWI = false;
+                        } else if (prevStudyNum.equals(newStudyNum)) {
+                            log("Merging new DWI files with previously received volume.");
+                            mergeDWI = true;
+                        } else {
+                            log("Preferring newly received DWI volume.");
+                            usePrevDWI = false;
+                        }
+                    } else if (!foundDWI && foundOutputDirDWI) {
+                        log("Found previously received DWI volume in output directory.");
+                        usePrevDWI = true;
+                    }
+                }
+                
+                // move ADC and DWI files to their own dir under parent inside outputDir
+                if (foundADC && !usePrevADC) {
+                    log("Found ADC volume in completed transfer. Moving to " + baseOutputDir);
+                    
+                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+                    
+                    // clean-up prev ADC dir
+                    if (foundOutputDirADC && !mergeADC) {
+                        File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                        boolean success = adcDirFile.renameTo(backupDir);
+                        if (success) {
+                            log("Failed to move previous ADC data to : " + backupDir);
+                        }
+                    }
+                    
+                    for (File file : adcFiles) {
+                        try {
+                            renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                
+                if (foundDWI && !usePrevDWI) {
+                    log("Found DWI volume in completed transfer. Moving to " + baseOutputDir);
+                    
+                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+                    
+                    // clean-up prev DWI dir
+                    if (foundOutputDirDWI && !mergeDWI) {
+                        File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                        boolean success = dwiDirFile.renameTo(backupDir);
+                        if (success) {
+                            log("Failed to move previous DWI data to : " + backupDir);
+                        }
+                    }
+                    
+                    for (File file : dwiFiles) {
+                        try {
+                            renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                
+                if ((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI)) {
+                    // check that the number of files in the ADC and DWI directories are the same
+                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+                    int numAdcFiles = adcDirFile.listFiles().length;
+                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+                    int numDwiFiles = dwiDirFile.listFiles().length;
+                    
+                    if (numAdcFiles == numDwiFiles) {
+                        log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+                        new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseOutputDir.getAbsolutePath());
+                    } else {
+                        log("Found different number of ADC and DWI files. Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+                    }
                 } else {
-                    File[] incomingSubDirs = incomingDir.listFiles();
-                    for (File file : incomingSubDirs) {
-                        if (file.isDirectory()) {
-                            if (isDirectoryEmpty(file)) {
-                                FileUtils.deleteDirectory(file);
-                            } else {
-                                File[] newList = file.listFiles();
-                                for (File newFile : newList) {
-                                    if (newFile.isDirectory()) {
-                                        if (isDirectoryEmpty(newFile)) {
-                                            FileUtils.deleteDirectory(newFile);
+                    log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + ").");
+                }
+                
+                // check if incoming dicom dir is empty and remove if it is
+                try {
+                    File incomingDir = new File(storageDir + File.separator + "incoming" + File.separator + studyDate);
+                    
+                    if (isDirectoryEmpty(incomingDir)) {
+                        FileUtils.deleteDirectory(incomingDir);
+                    } else {
+                        File[] incomingSubDirs = incomingDir.listFiles();
+                        for (File file : incomingSubDirs) {
+                            if (file.isDirectory()) {
+                                if (isDirectoryEmpty(file)) {
+                                    FileUtils.deleteDirectory(file);
+                                } else {
+                                    File[] newList = file.listFiles();
+                                    for (File newFile : newList) {
+                                        if (newFile.isDirectory()) {
+                                            if (isDirectoryEmpty(newFile)) {
+                                                FileUtils.deleteDirectory(newFile);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+                
+                addedCloseListener = false;
+                receivedFileList.removeAllElements();
+                receivedFileList = null;
+            } finally {
+                fileListLock.unlock();
             }
-            
-            addedCloseListener = false;
-            receivedFileList.removeAllElements();
-            receivedFileList = null;
         }
     }
     
