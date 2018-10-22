@@ -111,7 +111,7 @@ public class PluginUtil {
                 e.printStackTrace();
             }
             
-            pluginDirClassLoader = new URLClassLoader(urlList.toArray(new URL[urlList.size()]), ClassLoader.getSystemClassLoader());
+            pluginDirClassLoader = new URLClassLoader(urlList.toArray(new URL[urlList.size()]), PluginUtil.class.getClassLoader());
         }
         
         return pluginDirClassLoader;
