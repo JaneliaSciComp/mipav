@@ -215,7 +215,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         // try to read the server config from disk, if it is there.
         // otherwise the value set above at initialization is used.
-        readConfig();
+        //readConfig();
 
         // Sets up GUI for the Mapping tool and the Translation tool
         init();
@@ -984,7 +984,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     /**
      * Tries to read server configuration from BRICS config file on local disk.
      */
-    private void readConfig() {
+    private void readConfigOld() {
         final InputStream in = getClass().getResourceAsStream(configFileName);
         if (in != null) {
             final Properties prop = new Properties();
