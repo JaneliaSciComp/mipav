@@ -62,14 +62,14 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     @Before
     protected void setUp() throws Exception {
         toOrigin = new TransMatrixd(4);
-        toOrigin.Set(1.0f, 0.0f, 0.0f, 17.314208192569254f,
+        toOrigin.set(1.0f, 0.0f, 0.0f, 17.314208192569254f,
                      0.0f, 1.0f, 0.0f, 21.140626155237523f,
                      0.0f, 0.0f, 1.0f, 11.527512442322395f,
                      0.0f, 0.0f, 0.0f, 1.0f);
         fromOrigin = new TransMatrixd(toOrigin);
-        fromOrigin.Set(0, 3, -toOrigin.Get(0,3));
-        fromOrigin.Set(1, 3, -toOrigin.Get(1,3));
-        fromOrigin.Set(2, 3, -toOrigin.Get(2,3));
+        fromOrigin.set(0, 3, -toOrigin.get(0,3));
+        fromOrigin.set(1, 3, -toOrigin.get(1,3));
+        fromOrigin.set(2, 3, -toOrigin.get(2,3));
 
         short[] data = TestingFileUtil.readRawFileShort(refImageFileName, false);
         refImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 198}, "33175_3_concat_with_same_resolution");
@@ -98,7 +98,7 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     public void testConvertToMatrix(){
         double[] point = {-30.0, -30.0, -30.0, 2.1839247649369415, 3.0813184180912216, -0.1371298864664574, 1.05, 1.05, 1.05, 0.0, 0.0, 0.0};
         TransMatrixd refMatrix = new TransMatrixd(4);
-        refMatrix.Set(0.7875000000000002f, 0.45466333698683026f, -0.5249999999999999f, 2.303270404345806f, 
+        refMatrix.set(0.7875000000000002f, 0.45466333698683026f, -0.5249999999999999f, 2.303270404345806f, 
                       -0.22733166849341516f, 0.9187500000000002f, 0.45466333698683026f, 3.4939248560798895f, 
                       0.65625f, -0.22733166849341516f, 0.7875000000000002f, -4.2440488019808456f, 
                       0.0f, 0.0f, 0.0f, 1.0f);

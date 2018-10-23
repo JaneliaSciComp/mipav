@@ -845,7 +845,7 @@ public class TransMatrix extends Matrix4f
     	Matrix3f transform = uMat.mult(dMat).mult(sMat);
     	
     	TransMatrix transTry = new TransMatrix(4);
-    	transTry.MakeIdentity();
+    	transTry.identity();
     	transTry.M03 = d.get(0);
     	transTry.M13 = d.get(1);
     	transTry.M23 = d.get(2);

@@ -313,6 +313,7 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
      * 
      * @param event event that triggered function
      */
+    @SuppressWarnings("deprecation")
     public void actionPerformed(final ActionEvent event) {
 
         // Object source = event.getSource();
@@ -923,6 +924,7 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
      * 
      * @return DOCUMENT ME!
      */
+    @SuppressWarnings("deprecation")
     public boolean cancelPendingMoves() {
         int i, nRows;
         DICOM_Move dm;

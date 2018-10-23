@@ -3,6 +3,7 @@ import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -2800,34 +2801,34 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             headerList.add(String.valueOf(exts[4]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("image_unit1")) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[0]))) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[0]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[0]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[0]).toString());
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("image_unit2")) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[1]))) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[1]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[1]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[1]).toString());
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("image_unit3")) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[2]))) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[2]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[2]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[2]).toString());
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("image_unit4")) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[3]))) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[3]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[3]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[3]).toString());
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("image_unit5")) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[4]))) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[4]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[4]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[4]).toString());
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("image_resolution1")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(res[0]))) {
@@ -2984,7 +2985,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equalsIgnoreCase(item)) {
+                        if (Unit.getUnitFromLegacyNum(units[0]).toString().equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
@@ -2993,7 +2994,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equalsIgnoreCase(item)) {
+                        if (Unit.getUnitFromLegacyNum(units[1]).toString().equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
@@ -3003,7 +3004,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
                             final String item = (String) jc.getItemAt(k);
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equalsIgnoreCase(item)) {
+                            if (Unit.getUnitFromLegacyNum(units[2]).toString().equalsIgnoreCase(item)) {
                                 jc.setSelectedIndex(k);
                             }
                         }
@@ -3014,7 +3015,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
                             final String item = (String) jc.getItemAt(k);
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equalsIgnoreCase(item)) {
+                            if (Unit.getUnitFromLegacyNum(units[3]).toString().equalsIgnoreCase(item)) {
                                 jc.setSelectedIndex(k);
                             }
                         }
