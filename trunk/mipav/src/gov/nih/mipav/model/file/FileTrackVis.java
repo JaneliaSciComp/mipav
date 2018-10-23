@@ -118,7 +118,7 @@ public class FileTrackVis extends FileBase {
 				}
 			}
 			if(transMatrix[3][3] == 0) {  //transmatrix not set
-				trans.MakeIdentity();
+				trans.identity();
 			}
 			
 			String reserved = this.readString(444);

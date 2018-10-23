@@ -527,7 +527,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         
         xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
         if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-            unitStr = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitStr = Unit.getUnitFromLegacyNum(xUnits).toString();
             greenMergingLabel = new JLabel("Green merging radius around peak (" + unitStr + ")");
         }
         else {

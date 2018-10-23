@@ -432,7 +432,7 @@ public class GelatinBlob extends DemoBase implements GLEventListener, KeyListene
 	    for (i = 0; i < 12; ++i)
 	    {
 	        diff = Vector3f.sub( mModule.GetPosition(i + 12), mModule.GetPosition(i) );
-	        mModule.SetSpring(spring, i, i + 12, constant, diff.Length());
+	        mModule.SetSpring(spring, i, i + 12, constant, diff.length());
 	        ++spring;
 	    }
 	}
