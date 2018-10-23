@@ -158,7 +158,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
 
     public void valueChanged(ListSelectionEvent e) {
     	int numSel = imageList.getSelectedIndices().length;
-    	Object [] sel = imageList.getSelectedValues();
+    	Object [] sel = imageList.getSelectedValuesList().toArray();
     	int numOpenedByScript = 0;
     	for (int i = 0; i < numSel; i++) {
     		if (((ScriptImage)sel[i]).isOpenedByScript()) {
@@ -1118,7 +1118,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
             if (c instanceof JList) {
                 source = (JList) c;
 
-                Object[] values = source.getSelectedValues();
+                Object[] values = source.getSelectedValuesList().toArray();
 
                 if ((values == null) || (values.length == 0)) {
                     return null;

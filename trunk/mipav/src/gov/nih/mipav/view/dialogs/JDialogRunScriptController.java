@@ -204,7 +204,7 @@ public class JDialogRunScriptController implements ActionListener {
         	
         	JList imageList = view.getImageList();
         	int numSel = imageList.getSelectedIndices().length;
-        	Object [] sel = imageList.getSelectedValues();
+        	Object [] sel = imageList.getSelectedValuesList().toArray();
         	
         	JDialogRawIO rawIODialog = new JDialogRawIO(view.getFrame(), "Raw");
 

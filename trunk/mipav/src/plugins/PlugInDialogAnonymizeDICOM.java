@@ -351,7 +351,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
         	fileList.removeAllElements();
         	inputFileList.updateUI();
         } else if(command.equals("Remove")) {
-        	Object[] objAr = inputFileList.getSelectedValues();
+        	Object[] objAr = inputFileList.getSelectedValuesList().toArray();
         	for(Object obj : objAr) {
         		fileList.remove(obj);
         	}

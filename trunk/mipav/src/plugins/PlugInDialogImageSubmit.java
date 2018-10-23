@@ -635,7 +635,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         	clearEntries();
         	imagePanel.updateUI();
         } else if(command.equals(REMOVE)) {
-        	Object[] objAr = inputFileList.getSelectedValues();
+        	Object[] objAr = inputFileList.getSelectedValuesList().toArray();
         	for(Object obj : objAr) {
         		fileList.remove(obj);
         	}

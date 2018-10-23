@@ -924,7 +924,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * Internal constructor for clone usage.
      */
     protected FileInfoBase(FileInfoBase copy) {
-       Class c = copy.getClass();
+       Class<?> c = copy.getClass();
        Field[] f = c.getDeclaredFields();
        for(int i=0; i<f.length; i++) {
            try {

@@ -882,7 +882,7 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 				pack();
 			}
 			elementText.getDocument().removeDocumentListener(k2);
-			elementText.setText(elementList.getSelectedValues()[0].toString());
+			elementText.setText(elementList.getSelectedValuesList().get(0).toString());
 			elementText.getDocument().addDocumentListener(k2);
 			nameValue.updateUI();
 			tagInformationPanel.updateUI();
@@ -938,7 +938,7 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 					int i=0;
 					Integer c1 = Integer.valueOf(tag, 16);
 					for(i=0; i<updateBox.getModel().getSize(); i++) {
-						Integer c2 = Integer.valueOf(updateBox.getSelectedValues()[0].toString(), 16);
+						Integer c2 = Integer.valueOf(updateBox.getSelectedValuesList().get(0).toString(), 16);
 						if(c1 >= c2) {
 							break;
 						}

@@ -741,7 +741,7 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
      */
     public void valueChanged(ListSelectionEvent kEvent) {
         JList kList = (JList) kEvent.getSource();
-        Object[] akValues = kList.getSelectedValues();
+        Object[] akValues = kList.getSelectedValuesList().toArray();
 
         if (akValues.length > 0) {
             iSelect = kList.getMinSelectionIndex();

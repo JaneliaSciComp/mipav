@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -1776,7 +1777,7 @@ implements GLEventListener, ScreenCoordinateListener
 			 tmpString = tmpString.substring(0, i + 3);
 		 }
 
-		 tmpString = tmpString + " " + FileInfoBase.getUnitsOfMeasureAbbrevStr(aiUnits[0]);
+		 tmpString = tmpString + " " + Unit.getUnitFromLegacyNum(aiUnits[0]).getAbbrev();
 
 		 Vector3f kCenter = getLocalCenter(kVOI);
 		 int stringX = (int) kCenter.X;
@@ -2092,7 +2093,7 @@ implements GLEventListener, ScreenCoordinateListener
 			 tmpString = tmpString.substring(0, i + 3);
 		 }
 
-		 tmpString = tmpString + " " + FileInfoBase.getUnitsOfMeasureAbbrevStr(aiUnits[0]);
+		 tmpString = tmpString + " " + Unit.getUnitFromLegacyNum(aiUnits[0]).getAbbrev();
 
 		 Vector3f kCenter = fileToScreen( kVOI.get(1) );
 		 kCenter.add( fileToScreen( kVOI.get(2) ) ).scale(0.5f);

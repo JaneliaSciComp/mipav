@@ -695,7 +695,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                 // filesColor = buildColorTable(files);
                 // removeFiles(allFiles);
             } else if (e.getActionCommand().equals(DELETE)) {
-                Object[] numSelected = selected.getSelectedValues();
+                Object[] numSelected = selected.getSelectedValuesList().toArray();
                 int[] selectedIndex = selected.getSelectedIndices();
                 for (int i = 0; i < numSelected.length; i++) {
                     ((DefaultListModel) selected.getModel()).removeElement(numSelected[i]);
