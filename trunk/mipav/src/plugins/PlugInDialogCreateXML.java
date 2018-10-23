@@ -464,7 +464,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         	fileList.removeAllElements();
         	inputFileList.updateUI();
         } else if(command.equals(REMOVE)) {
-        	Object[] objAr = inputFileList.getSelectedValues();
+        	Object[] objAr = inputFileList.getSelectedValuesList().toArray();
         	for(Object obj : objAr) {
         		fileList.remove(obj);
         	}

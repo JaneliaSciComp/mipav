@@ -543,7 +543,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
         }
 
         // Next, copy in the selected values at the bottom.
-        Object[] selectedValues = a.getSelectedValues();
+        Object[] selectedValues = a.getSelectedValuesList().toArray();
 
         for (i = 0; i < selectedValues.length; i++) {
             totalList.add(selectedValues[i]);

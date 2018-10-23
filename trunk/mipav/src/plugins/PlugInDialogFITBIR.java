@@ -375,28 +375,28 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
 
-    private static final Comparator dataElementCompare = new Comparator<DataElementValue>() {
+    private static final Comparator<DataElementValue> dataElementCompare = new Comparator<DataElementValue>() {
         @Override
         public int compare(final DataElementValue o1, final DataElementValue o2) {
             return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
         }
     };
 
-    private static final Comparator mapElementCompare = new Comparator<MapElement>() {
+    private static final Comparator<MapElement> mapElementCompare = new Comparator<MapElement>() {
         @Override
         public int compare(final MapElement o1, final MapElement o2) {
             return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
         }
     };
 
-    private static final Comparator groupCompare = new Comparator<RepeatableGroup>() {
+    private static final Comparator<RepeatableGroup> groupCompare = new Comparator<RepeatableGroup>() {
         @Override
         public int compare(final RepeatableGroup o1, final RepeatableGroup o2) {
             return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
         }
     };
 
-    private static final Comparator valueRangeCompare = new Comparator<ValueRange>() {
+    private static final Comparator<ValueRange> valueRangeCompare = new Comparator<ValueRange>() {
         @Override
         public int compare(final ValueRange o1, final ValueRange o2) {
             return o1.compareTo(o2);
@@ -2777,12 +2777,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 // make sure the ordering respects the proper positions of the groups/elements
-                final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList(dsInfo.getRepeatableGroups());
+                final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList<RepeatableGroup>(dsInfo.getRepeatableGroups());
                 Collections.sort(orderedGroupList, groupCompare);
 
                 final ArrayList<ArrayList<MapElement>> orderedElementListsByGroup = new ArrayList<ArrayList<MapElement>>();
                 for (final RepeatableGroup g : orderedGroupList) {
-                    final ArrayList<MapElement> elemList = new ArrayList(g.getDataElements());
+                    final ArrayList<MapElement> elemList = new ArrayList<MapElement>(g.getDataElements());
                     Collections.sort(elemList, mapElementCompare);
                     orderedElementListsByGroup.add(elemList);
                 }
@@ -3313,7 +3313,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return csvRow;
         }
 
-        final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList(fsData.getStructInfo().getRepeatableGroups());
+        final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList<RepeatableGroup>(fsData.getStructInfo().getRepeatableGroups());
         Collections.sort(orderedGroupList, groupCompare);
 
         for (final RepeatableGroup group : orderedGroupList) {

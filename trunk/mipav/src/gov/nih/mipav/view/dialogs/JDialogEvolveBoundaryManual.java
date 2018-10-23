@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
@@ -305,7 +306,7 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
         scalePanel.setBorder(buildTitledBorder("Contour Change"));
 
         int[] aiUnits = image.getUnitsOfMeasure();
-        JLabel labelChangeX = new JLabel("Enter size change in " + FileInfoBase.getUnitsOfMeasureAbbrevStr(aiUnits[0]) + " units ");
+        JLabel labelChangeX = new JLabel("Enter size change in " + Unit.getUnitFromLegacyNum(aiUnits[0]).getAbbrev() + " units ");
         labelChangeX.setForeground(Color.black);
         labelChangeX.setFont(serif12);
         scalePanel.add(labelChangeX);
