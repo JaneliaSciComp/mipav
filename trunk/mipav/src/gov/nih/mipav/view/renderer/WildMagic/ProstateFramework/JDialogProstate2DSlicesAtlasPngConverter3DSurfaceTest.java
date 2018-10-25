@@ -295,7 +295,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 			String[] children = dir.list();
 			for ( int i = 0; i < children.length; i++ ) {
 				
-		        String decodeChildName = URLDecoder.decode(children[i]);
+		        String decodeChildName = MipavUtil.decodeStr(children[i]);
 		        if ( decodeChildName.toLowerCase().contains("ax")) {
 		        	imageNameHashtableExtra.get(hashID).put("axial", new Vector<String>());
 		        	traverse_serial(new File(dir + File.separator + decodeChildName), hashID, "axial");
@@ -318,7 +318,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 			int min = Integer.MAX_VALUE;
 			int serialNum;
 			for ( int i = 0; i < children.length; i++ ) {
-				// String decodedPathChild = URLDecoder.decode(dir + File.separator + children[i]+ File.separator);	
+				// String decodedPathChild = MipavUtil.decodeStr(dir + File.separator + children[i]+ File.separator);	
 				// System.err.println(decodedPathChild);
 				// imageNameHashtableExtra.get(hashID).get(orientation).add(decodedPathChild);
 				serialNum = Integer.valueOf(children[i]);
@@ -329,7 +329,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 				
 			}
 			
-			String decodedPathChild = URLDecoder.decode(dir + File.separator + min+ File.separator);	
+			String decodedPathChild = MipavUtil.decodeStr(dir + File.separator + min+ File.separator);	
 			traverse_dicom(new File(decodedPathChild), hashID, orientation );
 			System.err.println();
 			// System.err.println(decodedPathChild);
@@ -342,7 +342,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 		if ( dir.isDirectory() ) {
 			String[] children = dir.list();
 			for (int i = 0; i < children.length; i++ ) {
-				String decodedPathChild = URLDecoder.decode(dir + File.separator + children[i]);	
+				String decodedPathChild = MipavUtil.decodeStr(dir + File.separator + children[i]);	
 				System.err.println(decodedPathChild);
 				imageNameHashtableExtra.get(hashID).get(orientation).add(decodedPathChild);
 			}
@@ -435,7 +435,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 
 	private void traverse_special(File layer, String hashID, String orientationLabel) {
 		String[] children = layer.list();
-		String decodedPathChild = URLDecoder.decode(layer + File.separator + children[0]+ File.separator);
+		String decodedPathChild = MipavUtil.decodeStr(layer + File.separator + children[0]+ File.separator);
 		File layerDeeper = new File(decodedPathChild);
 		
 		if ( imageNameHashtable.get(hashID) == null ) {
@@ -445,7 +445,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 		String[] files = layerDeeper.list();
 		imageNameHashtable.get(hashID).put(orientationLabel, new Vector<String>());
 		for ( int i = 0; i < files.length; i++ ) {
-			String decodedPath = URLDecoder.decode(layerDeeper + File.separator + files[i]);
+			String decodedPath = MipavUtil.decodeStr(layerDeeper + File.separator + files[i]);
 			imageNameHashtable.get(hashID).get(orientationLabel).add(decodedPath);
 			// System.err.println(decodedPath);
 		}
@@ -501,7 +501,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 		for (int i = 0; i < children.length; i++) {
 			// System.err.println("image: " + secondLayer + File.separator +
 			// children[i]);
-			String decodedPath = URLDecoder.decode(secondLayer + File.separator + children[i]);
+			String decodedPath = MipavUtil.decodeStr(secondLayer + File.separator + children[i]);
 			// System.err.println("decodedPath = " + decodedPath);
 			File file = new File(decodedPath);
 			if (file.isDirectory()) {
@@ -528,7 +528,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 		} else {
 
 			for (int i = 0; i < children.length; i++) {
-				String decodedPath = URLDecoder.decode(T2Layer + File.separator + children[i]);
+				String decodedPath = MipavUtil.decodeStr(T2Layer + File.separator + children[i]);
 				File file = new File(decodedPath);
 				if (file.isDirectory()) {
 					traverse_T2Layer_deeper(new File(decodedPath), hashID, children[i]);
@@ -580,18 +580,18 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTest extends JDial
 			 */
 			// System.err.println(voiString);
 			/*
-			 * String decodedVOI = URLDecoder.decode(voiName);
+			 * String decodedVOI = MipavUtil.decodeStr(voiName);
 			 * 
 			 * if ( !decodedVOI.contains("manuel") &&
 			 * !decodedVOI.contains("manual") && decodedVOI.startsWith("cg") &&
 			 * decodedVOI.endsWith("voi")) { // System.err.println("voi: " +
 			 * secondLayer + File.separator + children[i]);
-			 * voiNameHashtable.get(hashID).add(URLDecoder.decode(voiString));
+			 * voiNameHashtable.get(hashID).add(MipavUtil.decodeStr(voiString));
 			 * count++; } if ( !decodedVOI.contains("manuel") &&
 			 * !decodedVOI.contains("manual") && decodedVOI.startsWith("wp") &&
 			 * decodedVOI.endsWith("voi")) { // System.err.println("voi: " +
 			 * secondLayer + File.separator + children[i]); //
-			 * voiNameHashtable.get(hashID).add(URLDecoder.decode(voiString));
+			 * voiNameHashtable.get(hashID).add(MipavUtil.decodeStr(voiString));
 			 * count++; }
 			 */
 

@@ -226,7 +226,7 @@ public class JDialogProstateXReRunWholeProstate extends JDialogBase
 	    		if ( children[i].equals("cg.voi")) {
 	    			String voiString = firstLayer + File.separator+ children[i];
 	    			System.err.println("voiString = " + voiString);
-	    			voiNameHashtableCg.get(hashID).add(URLDecoder.decode(voiString));
+	    			voiNameHashtableCg.get(hashID).add(MipavUtil.decodeStr(voiString));
 	    		}
 	    		
 	    		if ( children[i].equals("T2WI")) {

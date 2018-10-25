@@ -240,7 +240,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTrainAndTest exten
 			String[] children = dir.list();
 			for ( int i = 0; i < children.length; i++ ) {
 				
-		        String decodeChildName = URLDecoder.decode(children[i]);
+		        String decodeChildName = MipavUtil.decodeStr(children[i]);
 		        if ( decodeChildName.toLowerCase().contains("ax")) {
 		        	imageNameHashtableExtra.get(hashID).put("axial", new Vector<String>());
 		        	traverse_serial(new File(dir + File.separator + decodeChildName), hashID, "axial");
@@ -272,7 +272,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTrainAndTest exten
 				
 			}
 			
-			String decodedPathChild = URLDecoder.decode(dir + File.separator + min+ File.separator);	
+			String decodedPathChild = MipavUtil.decodeStr(dir + File.separator + min+ File.separator);	
 			traverse_dicom(new File(decodedPathChild), hashID, orientation );
 			System.err.println();
 			
@@ -284,7 +284,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTrainAndTest exten
 		if ( dir.isDirectory() ) {
 			String[] children = dir.list();
 			for (int i = 0; i < children.length; i++ ) {
-				String decodedPathChild = URLDecoder.decode(dir + File.separator + children[i]);	
+				String decodedPathChild = MipavUtil.decodeStr(dir + File.separator + children[i]);	
 				System.err.println(decodedPathChild);
 				imageNameHashtableExtra.get(hashID).get(orientation).add(decodedPathChild);
 			}
