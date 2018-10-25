@@ -1431,7 +1431,7 @@ public class JDialogPromise12Train3DCnns extends JDialogBase implements
 	
 	public void TestH5WriteFloats(final String filename) throws Exception {
 		FileFormat fileFormat = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
-		H5File file = (H5File) fileFormat.create(filename);
+		H5File file = (H5File) fileFormat.createFile(filename, FileFormat.FILE_CREATE_DELETE);
 		file.open();
 		Group root = (Group) ((javax.swing.tree.DefaultMutableTreeNode) file.getRootNode()).getUserObject();
 		Group group1 = file.createGroup("a", root);
