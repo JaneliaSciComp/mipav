@@ -217,37 +217,6 @@ public class JDialogIsophoteCurvature extends JDialogScriptableBase implements A
     }
 
     /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (outputPanel != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-
-                sigmasPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmasPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmasPanel.setSigmaZ(MipavUtil.getFloat(st));
-                sigmasPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-
-    } 
-
-    /**
      * Accessor that sets the slicing flag.
      *
      * @param  flag  <code>true</code> indicates slices should be blurred independently.

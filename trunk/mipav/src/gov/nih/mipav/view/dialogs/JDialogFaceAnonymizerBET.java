@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author  mccreedy
  */
 public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
-        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -187,62 +187,6 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
             defaceAlgo.finalize();
             defaceAlgo = null;
         }
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += faceOrientation + delim;
-        str += extraMMsToPad + delim;
-
-        // str += verticalDeletionLimit + delim;
-        str += estimateWithSphereBET + delim;
-        str += imageInfluenceBET + delim;
-        str += stiffnessBET;
-
-        return str;
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                faceOrientation = MipavUtil.getInt(st);
-                extraMMsToPad = MipavUtil.getInt(st);
-                estimateWithSphereBET = MipavUtil.getBoolean(st);
-                imageInfluenceBET = MipavUtil.getFloat(st);
-                stiffnessBET = MipavUtil.getFloat(st);
-            } catch (Exception ex) {
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void legacySaveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

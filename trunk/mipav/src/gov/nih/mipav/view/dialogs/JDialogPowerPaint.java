@@ -3015,7 +3015,7 @@ public class JDialogPowerPaint extends JDialogBase
         image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "PaintMask"));
 
         // remove the VOI
-        image.getParentFrame().getComponentImage().getVOIHandler().deleteSelectedVOI(true);
+        image.getParentFrame().getComponentImage().getVOIHandler().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, CustomUIBuilder.PARAM_VOI_DELETE.getActionCommand()));
     }
 
     /**

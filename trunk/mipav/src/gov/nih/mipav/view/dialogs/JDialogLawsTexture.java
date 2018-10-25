@@ -23,7 +23,7 @@ import javax.swing.*;
  * @see      AlgorithmLawsTexture
  */
 public class JDialogLawsTexture extends JDialogScriptableBase
-        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -201,29 +201,6 @@ public class JDialogLawsTexture extends JDialogScriptableBase
     }
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        if (image.isColorImage()) {
-            str += RGBOffset + delim;
-        }
-        str += windowSize;
-        
-
-        return str;
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
@@ -232,50 +209,6 @@ public class JDialogLawsTexture extends JDialogScriptableBase
         return resultImage;
     }
 
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                windowSize =  MipavUtil.getInt(st);
-                if (windowSize == 3) {
-                	threeButton.setSelected(true);
-                	fiveButton.setSelected(false);
-                	sevenButton.setSelected(false);
-                }
-                else if (windowSize == 5) {
-                	threeButton.setSelected(false);
-                	fiveButton.setSelected(true);
-                	sevenButton.setSelected(false);	
-                }
-                else {
-                	threeButton.setSelected(false);
-                	fiveButton.setSelected(false);
-                	sevenButton.setSelected(true);		
-                }
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void legacySaveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    
     /**
      * Accessor that sets the window size.
      *

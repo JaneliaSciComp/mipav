@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see      AlgorithmBrainSurfaceExtractor
  */
 public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
-        implements AlgorithmInterface, ActionDiscovery, LegacyDialogDefaultsInterface {
+        implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -280,77 +280,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
 
             return;
         }
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += filterIterations + delim;
-        str += filterGaussianStdDev + delim;
-        str += edgeKernelSize + delim;
-        str += erosionIterations + delim;
-        str += closeKernelSize + delim;
-        str += closeIterations + delim;
-        str += showIntermediateImages + delim;
-        str += useSeparable + delim;
-        str += 1 + delim;
-        str += erosion25D + delim;
-        str += fillHoles + delim;
-        str += extractPaint;
-
-        return str;
-    }
-
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                filterIterationsTF.setText("" + MipavUtil.getInt(st));
-                filterGaussianStdDevTF.setText("" + MipavUtil.getFloat(st));
-                edgeKernelSizeTF.setText("" + MipavUtil.getFloat(st));
-                erosionIterationsTF.setText("" + MipavUtil.getInt(st));
-                closeKernelSizeTF.setText("" + MipavUtil.getFloat(st));
-                st.nextToken(); // placeholder for close iterations
-                showIntermediateImagesCB.setSelected(MipavUtil.getBoolean(st));
-                useSeparableCB.setSelected(MipavUtil.getBoolean(st));
-                st.nextToken(); // placeholder for erosion kernel size
-                erosion25DCB.setSelected(MipavUtil.getBoolean(st));
-                fillHolesCB.setSelected(MipavUtil.getBoolean(st));
-                extractPaintCheckBox.setSelected(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void legacySaveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

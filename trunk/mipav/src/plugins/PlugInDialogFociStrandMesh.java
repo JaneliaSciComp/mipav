@@ -157,28 +157,6 @@ public class PlugInDialogFociStrandMesh extends JDialogScriptableBase implements
     } // end AlgorithmPerformed()
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += redMin + delim;
-        str += redFraction + delim;
-        str += greenFraction + delim;
-        str += radius + delim;
-
-        return str;
-    }
-    
-    /**
      * Accessor that sets the redMin variable, for minimum pixel number in a red voi.
      *
      * @param  redMin  minimum number of pixels in a red voi

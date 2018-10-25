@@ -241,37 +241,6 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     } // end AlgorithmPerformed()
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += blueMin + delim;
-        str += redMin + delim;
-        str += redFraction + delim;
-        str += mergingDistance + delim;
-        str += greenMin + delim;
-        str += greenFraction + delim;
-        str += greenRegionNumber + delim;
-        str += twoGreenLevels + delim;
-        str += blueExpand + delim;
-        str += minBoundsRatio + delim;
-        str += minIntensityFraction + delim;
-        str += blueSmooth + delim;
-        str += interpolationDivisor + delim;
-
-        return str;
-    }
-
-    /**
      * Accessor that sets the mergingDistance variable, for green merging radius around green peak spot.
      *
      * @param  mergingDistance float

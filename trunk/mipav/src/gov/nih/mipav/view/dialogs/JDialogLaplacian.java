@@ -22,7 +22,6 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 
-import gov.nih.mipav.view.LegacyDialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
@@ -65,7 +64,7 @@ import javax.swing.JTextField;
  * @see AlgorithmLaplacian
  */
 public class JDialogLaplacian extends JDialogScriptableBase implements AlgorithmInterface,
-        LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        ActionDiscovery, ScriptableActionInterface {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -351,65 +350,6 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
             sepCheckbox.addItemListener(this);
             useOCLCheckbox.addItemListener(this);
         }
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    @Override
-    public void legacyLoadDefaults() {
-        final String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ( (defaultsString != null) && (outputPanel != null)) {
-
-            try {
-                final StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-
-                nonLinearCheckBox.setSelected(MipavUtil.getBoolean(st));
-                comboBoxKernelSize.setSelectedIndex( (MipavUtil.getInt(st) - 1) / 2);
-
-                sepCheckbox.setSelected(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-
-                sigmasPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmasPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmasPanel.setSigmaZ(MipavUtil.getFloat(st));
-                sigmasPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-
-                textAmpFact.setText(st.nextToken());
-            } catch (final Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    @Override
-    public void legacySaveDefaults() {
-        final String delim = ",";
-
-        String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
-        defaultsString += outputPanel.isOutputNewImageSet() + delim;
-        defaultsString += nonLinear + delim;
-        defaultsString += kernelSize + delim;
-        defaultsString += image25D + delim;
-        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[0] + delim;
-        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[1] + delim;
-        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[2] + delim;
-        defaultsString += sigmasPanel.isResolutionCorrectionEnabled() + delim;
-        defaultsString += ampFactor;
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

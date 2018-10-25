@@ -192,32 +192,6 @@ public class PlugInDialogRegionDistance extends JDialogScriptableBase implements
     } // end AlgorithmPerformed()
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += redMin + delim;
-        str += redFraction + delim;
-        str += redNumber + delim;
-        str += greenMin + delim;
-        str += greenFraction + delim;
-        str += greenNumber + delim;
-        str += blueMin + delim;
-        str += iters;
-
-        return str;
-    }
-
-    /**
      * Accessor that sets the blueMin variable, for minimum pixel number in a nucleus.
      *
      * @param  blueMin  the minimum number of pixels in a nucleus

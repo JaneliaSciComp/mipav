@@ -167,29 +167,6 @@ public class JDialogUnionFindComponentLabelling extends JDialogScriptableBase
         dispose();
     }
 
-    
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        
-        str += numNeighbor;
-        
-
-        return str;
-    }
-
     /**
      * Accessor that returns the image.
      *
@@ -199,104 +176,6 @@ public class JDialogUnionFindComponentLabelling extends JDialogScriptableBase
         return resultImage;
     }
 
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                numNeighbor =  MipavUtil.getInt(st);
-                if (numNeighbor == 4) {
-                	fourButton.setSelected(true);
-                	eightButton.setSelected(false);
-                	if (sixButton != null) {
-                	    sixButton.setSelected(false);
-                	}
-                	if (eighteenButton != null) {
-                	    eighteenButton.setSelected(false);
-                	}
-                	if (twentySixButton != null) {
-                	    twentySixButton.setSelected(false);
-                	}
-                }
-                else if (numNeighbor == 8) {
-                	fourButton.setSelected(false);
-                	eightButton.setSelected(true);
-                	if (sixButton != null) {
-                	    sixButton.setSelected(false);
-                	}
-                	if (eighteenButton != null) {
-                	    eighteenButton.setSelected(false);
-                	}
-                	if (twentySixButton != null) {
-                	    twentySixButton.setSelected(false);
-                	}
-                }
-                else if (numNeighbor == 6) {
-                	fourButton.setSelected(false);
-                	eightButton.setSelected(false);	
-                	if (sixButton != null) {
-                	    sixButton.setSelected(true);
-                	}
-                	if (eighteenButton != null) {
-                	    eighteenButton.setSelected(false);
-                	}
-                	if (twentySixButton != null) {
-                	    twentySixButton.setSelected(false);
-                	}	
-                }
-                else if (numNeighbor == 18) {
-                	fourButton.setSelected(false);
-                	eightButton.setSelected(false);	
-                	if (sixButton != null) {
-                	    sixButton.setSelected(false);
-                	}
-                	if (eighteenButton != null) {
-                	    eighteenButton.setSelected(true);
-                	}
-                	if (twentySixButton != null) {
-                	    twentySixButton.setSelected(false);
-                	}		
-                }
-                else {
-                	fourButton.setSelected(false);
-                	eightButton.setSelected(false);	
-                	if (sixButton != null) {
-                	    sixButton.setSelected(false);
-                	}
-                	if (eighteenButton != null) {
-                	    eighteenButton.setSelected(false);
-                	}
-                	if (twentySixButton != null) {
-                	    twentySixButton.setSelected(true);
-                	}			
-                }
-                limitBins = MipavUtil.getBoolean(st);
-                if (limitBins) {
-                	binCheckBox.setSelected(true);
-                	labelBins.setEnabled(true);
-                	textBins.setEnabled(true);
-                }
-                else {
-                	binCheckBox.setSelected(false);
-                	labelBins.setEnabled(false);
-                	textBins.setEnabled(false);
-                }
-                binNumber = MipavUtil.getInt(st);
-                textBins.setText(String.valueOf(binNumber));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-    
     /**
      * Accessor that sets numNeighbor.
      *

@@ -18,7 +18,6 @@ import gov.nih.mipav.model.structures.MatrixHolder;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
-import gov.nih.mipav.view.LegacyDialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -54,7 +53,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 *
 */  
 public class JDialogReorient extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery, LegacyDialogDefaultsInterface  {
+	implements AlgorithmInterface, ActionDiscovery {
     
     private     AlgorithmTransform 		algoTrans = null;
     private     ModelImage              image;                // source image
@@ -453,63 +452,6 @@ public class JDialogReorient extends JDialogScriptableBase
     */
     public void setParameters() {
 	}
-	
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     * @param delim  the parameter delimiter (defaults to " " if empty)
-     * @return       the parameter string
-     */
-	public String getParameterString( String delim ) {
-        if ( delim.equals( "" ) ) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += Integer.toString(newOr[0]) + delim;
-        str += Integer.toString(newOr[1]) + delim;
-        str += Integer.toString(newOr[2]) + delim;
-        str += Integer.toString(resolutionIndex) + delim;
-        str += interpType;
-
-        return str;
-    }
-	
- 	/**
-     *  Loads the default settings from Preferences to set up the dialog
-     */
-	public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                //System.out.println(defaultsString);
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-				newOr[0] = new Integer(st.nextToken()).intValue();
-                newOr[1] = new Integer(st.nextToken()).intValue();
-                newOr[2] = new Integer(st.nextToken()).intValue();
-				resolutionIndex = new Integer(st.nextToken()).intValue();
-				interpType = st.nextToken();
-			}
-            catch (Exception ex) {
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                //System.out.println( "Resetting defaults for dialog: " + getDialogName() );
-                Preferences.removeProperty( getDialogName() );
-            }
-        } else {
-			System.out.println( "no saved dialogs for "+getDialogName() );
-		}
-    }
-		
-    /**
-     * Saves the default settings into the Preferences file
-     */
-	
-    public void legacySaveDefaults() {
-        String defaultsString = new String( getParameterString(",") );
-        //System.out.println(defaultsString);
-        Preferences.saveDialogDefaults(getDialogName(),defaultsString);
-    }
 	 
     //************************************************************************
     //************************** Event Processing ****************************
@@ -851,9 +793,7 @@ public class JDialogReorient extends JDialogScriptableBase
 		
 		String name = (String)comboTemplate.getSelectedItem();
 		template = ViewUserInterface.getReference().getRegisteredImageByName(name);
-		
-		//System.out.println(getParameterString("|"));
-        
+
     	return true;  	
     }   // end setVariables()
     

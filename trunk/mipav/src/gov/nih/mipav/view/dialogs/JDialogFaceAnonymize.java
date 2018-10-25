@@ -227,25 +227,6 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
     }
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += faceOrientation + delim;
-        return str;
-    }
-
-
-    /**
      * {@inheritDoc}
      */
     public void setGUIFromParams() {

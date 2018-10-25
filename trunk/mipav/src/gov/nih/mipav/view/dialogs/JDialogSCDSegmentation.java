@@ -240,55 +240,6 @@ public class JDialogSCDSegmentation extends JDialogScriptableBase implements Alg
     }
 
     /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && destinationPanel != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                displayLoc = MipavUtil.getInt(st);
-                if (displayLoc == REPLACE) {
-                    replaceImage.setSelected(true);
-                    newImage.setSelected(false);
-                }
-                else {
-                    replaceImage.setSelected(false);
-                    newImage.setSelected(true);
-                }
-
-                initialSideLength = MipavUtil.getInt(st);
-                lengthText.setText(String.valueOf(initialSideLength));
-                
-                numClasses = MipavUtil.getInt(st);
-                classText.setText(String.valueOf(numClasses));
-                
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void legacySaveDefaults() {
-        String delim = ",";
-        String defaultsString = displayLoc + delim;
-        defaultsString += initialSideLength + delim;
-        defaultsString += numClasses;
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    
-
-    /**
      * Once all the necessary variables are set, call the Bilateral Filter algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
