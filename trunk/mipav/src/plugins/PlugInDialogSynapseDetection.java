@@ -216,39 +216,6 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     } // end AlgorithmPerformed()
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += redMin + delim;
-        str += redMax + delim;
-        str += greenMin + delim;
-        str += greenMax + delim;
-        str += blueMinXY + delim;
-        str += blueMaxXY + delim;
-        str += blueMinZ + delim;
-        str += blueMaxZ + delim;
-        str += redIntensity + delim;
-        str += redBrightIntensity + delim;
-        str += greenIntensity + delim;
-        str += greenBrightIntensity + delim;
-        str += blueIntensity + delim;
-        str += blueBrightIntensity + delim;
-        str += histoInfo;
-        
-        return str;
-    }
-    
-    /**
      * Accessor that sets the redMin variable, for minimum red pixel width.
      *
      * @param  redMin  minimum number of red pixels

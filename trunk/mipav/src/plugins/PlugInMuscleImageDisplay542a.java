@@ -2181,15 +2181,20 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                 	}
                 	
                 } else if (command.equals("PropVOIUp")) {
-                	if (componentImage.getVOIHandler().propVOI(1, false) == true) {
-                        incSlice();
-                    }
+                    componentImage.getVOIHandler().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, CustomUIBuilder.PARAM_VOI_PROPAGATE_UP.getActionCommand()));
+                    incSlice();
+//                	if (componentImage.getVOIHandler().propVOI(1, false) == true) {
+//                        incSlice();
+//                    }
                 } else if (command.equals("PropVOIDown")) {
-                	if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
-                        decSlice();
-                    }
+                    componentImage.getVOIHandler().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand()));
+                    decSlice();
+//                	if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
+//                        decSlice();
+//                    }
                 } else if (command.equals("PropVOIAll")) {
-                	componentImage.getVOIHandler().propVOIAll();
+                    componentImage.getVOIHandler().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand()));
+//                	componentImage.getVOIHandler().propVOIAll();
                 } 
             }
             

@@ -15,7 +15,6 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.LegacyDialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
@@ -52,7 +51,7 @@ import javax.swing.JCheckBox;
  * @see      AlgorithmGradientMagnitude
  */
 public class JDialogGradientMagnitude extends JDialogScriptableBase
-        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -381,34 +380,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     }
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += outputOptionsPanel.isProcessWholeImageSet() + delim;
-        str += separable + delim;
-        str += image25D + delim;
-        str += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
-        str += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
-        str += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
-        str += sigmaPanel.isResolutionCorrectionEnabled() + delim;
-        str += colorChannelPanel.isRedProcessingRequested() + delim;
-        str += colorChannelPanel.isGreenProcessingRequested() + delim;
-        str += colorChannelPanel.isBlueProcessingRequested();
-
-        return str;
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
@@ -432,43 +403,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());    
         }
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (outputOptionsPanel != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                sepCheckbox.setSelected(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-                colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
-                colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
-                colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
-                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void legacySaveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + outputOptionsPanel.isOutputNewImageSet());
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

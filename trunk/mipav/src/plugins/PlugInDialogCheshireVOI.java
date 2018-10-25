@@ -121,26 +121,6 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
         }
     }
 
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += textName.getName();    //necessry parameter?
-
-        return str;
-    }
-    
     /**
      * Accessor that gets all cheshireFiles that have been extracted from the working directory as a Vector.
      */
@@ -155,8 +135,6 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
     public boolean isSuccessfulExit() {
         return successfulExit;
     }
-    
-
     
     /**
      * Once all the necessary variables are set, call the cheshire to voi plugin

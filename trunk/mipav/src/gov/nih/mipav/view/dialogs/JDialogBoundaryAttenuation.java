@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author  Evan McCreedy
  */
 public class JDialogBoundaryAttenuation extends JDialogScriptableBase
-        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
+        implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -136,57 +136,7 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
         srcImage.clearMask();
         attenuationAlgo.finalize();
     }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += numErosions + delim;
-        str += maxAttenuation;
-
-        return str;
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                numErosionsTF.setText("" + MipavUtil.getInt(st));
-                maxAttenuationTF.setText("" + MipavUtil.getFloat(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void legacySaveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
+    
     /**
      * Construct and run the algorithm.
      */

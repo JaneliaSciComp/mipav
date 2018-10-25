@@ -20,7 +20,7 @@ import java.util.*;
 import javax.swing.*;
 
 public class JDialogProstateSaveFeatures extends JDialogScriptableBase
-		implements AlgorithmInterface, LegacyDialogDefaultsInterface {
+		implements AlgorithmInterface {
 
 	// ~ Static fields/initializers
 	// -------------------------------------------------------------------------------------
@@ -752,51 +752,6 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	}
 
 	/**
-	 * Construct a delimited string that contains the parameters to this
-	 * algorithm.
-	 * 
-	 * @param delim
-	 *            the parameter delimiter (defaults to " " if empty)
-	 * 
-	 * @return the parameter string
-	 */
-	public String getParameterString(String delim) {
-
-		if (delim.equals("")) {
-			delim = " ";
-		}
-
-		String str = new String();
-		if (image.isColorImage()) {
-			str += RGBOffset + delim;
-		}
-		str += windowSize + delim;
-		str += offsetDistance + delim;
-		str += greyLevels + delim;
-		str += ns + delim;
-		str += nesw + delim;
-		str += ew + delim;
-		str += senw + delim;
-		str += invariantDir + delim;
-		str += contrast + delim;
-		str += dissimilarity + delim;
-		str += homogeneity + delim;
-		str += inverseOrder1 + delim;
-		str += asm + delim;
-		str += energy + delim;
-		str += maxProbability + delim;
-		str += entropy + delim;
-		str += mean + delim;
-		str += variance + delim;
-		str += standardDeviation + delim;
-		str += correlation + delim;
-		str += shade + delim;
-		str += promenance;
-
-		return str;
-	}
-
-	/**
 	 * Accessor that returns the image.
 	 * 
 	 * @return The result image.
@@ -812,58 +767,6 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	 */
 	public ModelImage[] getClassificationImage() {
 		return classificationImage;
-	}
-	
-	
-	/**
-	 * Loads the default settings from Preferences to set up the dialog.
-	 */
-	public void legacyLoadDefaults() {
-		String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-		if (defaultsString != null) {
-
-			try {
-				StringTokenizer st = new StringTokenizer(defaultsString, ",");
-				textWindowSize.setText("" + MipavUtil.getInt(st));
-				textOffsetDistance.setText("" + MipavUtil.getInt(st));
-				textRescaling.setText("" + MipavUtil.getInt(st));
-				nsCheckBox.setSelected(MipavUtil.getBoolean(st));
-				neswCheckBox.setSelected(MipavUtil.getBoolean(st));
-				ewCheckBox.setSelected(MipavUtil.getBoolean(st));
-				senwCheckBox.setSelected(MipavUtil.getBoolean(st));
-				invariantCheckBox.setSelected(MipavUtil.getBoolean(st));
-				contrastCheckBox.setSelected(MipavUtil.getBoolean(st));
-				dissimilarityCheckBox.setSelected(MipavUtil.getBoolean(st));
-				homogeneityCheckBox.setSelected(MipavUtil.getBoolean(st));
-				inverseOrder1CheckBox.setSelected(MipavUtil.getBoolean(st));
-				asmCheckBox.setSelected(MipavUtil.getBoolean(st));
-				energyCheckBox.setSelected(MipavUtil.getBoolean(st));
-				maxProbabilityCheckBox.setSelected(MipavUtil.getBoolean(st));
-				entropyCheckBox.setSelected(MipavUtil.getBoolean(st));
-				meanCheckBox.setSelected(MipavUtil.getBoolean(st));
-				varianceCheckBox.setSelected(MipavUtil.getBoolean(st));
-				standardDeviationCheckBox.setSelected(MipavUtil.getBoolean(st));
-				correlationCheckBox.setSelected(MipavUtil.getBoolean(st));
-				shadeCheckBox.setSelected(MipavUtil.getBoolean(st));
-				promenanceCheckBox.setSelected(MipavUtil.getBoolean(st));
-			} catch (Exception ex) {
-
-				// since there was a problem parsing the defaults string, start
-				// over with the original defaults
-				Preferences.debug("Resetting defaults for dialog: "
-						+ getDialogName());
-				Preferences.removeProperty(getDialogName());
-			}
-		}
-	}
-
-	/**
-	 * Saves the default settings into the Preferences file.
-	 */
-	public void legacySaveDefaults() {
-		String defaultsString = new String(getParameterString(","));
-		Preferences.saveDialogDefaults(getDialogName(), defaultsString);
 	}
 
 	/**

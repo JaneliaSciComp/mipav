@@ -170,9 +170,7 @@ public class ImageReorientation implements AlgorithmInterface {
             MipavUtil.displayError("Error! New orientation must have one RL, one AP, and one IS axis");
             return false;
         }
-		
-		//System.out.println(getParameterString("|"));
-        
+
     	return true;  	
     }   // end setVariables()
     

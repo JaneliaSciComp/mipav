@@ -165,27 +165,6 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
     } // end AlgorithmPerformed()
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += middleSlice;
-        str += iters;
-        str += areaCorrect;
-
-        return str;
-    }
-
-    /**
      * Accessor that sets the slice containing the middle of the kidneys
      * @param middleSlice
      */

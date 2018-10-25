@@ -1335,22 +1335,6 @@ public class Preferences {
     }
 
     /**
-     * Return the default settings for a given dialog.
-     * 
-     * @param dialogName String name of dialog
-     * 
-     * @return String space separated default parameters for dialog
-     */
-    public static final String getDialogDefaults(final String dialogName) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS)) {
-            return Preferences.getProperty(dialogName);
-        }
-
-        return null;
-    }
-
-    /**
      * Gets the user-configured columns that indicate the DICOM tags that are displayed in the DICOM browser table.
      * 
      * @return Vector List of strings that identify the columns.
@@ -2597,18 +2581,6 @@ public class Preferences {
         }
 
         return true;
-    }
-
-    /**
-     * Saves the last used parameters for the given dialog.
-     * 
-     * @deprecated This string should be created using JDialogBase.saveDefaults();
-     * @param dialogName String the name of the dialog
-     * @param defaultsString String the String to save for this dialog
-     */
-    @Deprecated
-    public static final void saveDialogDefaults(final String dialogName, final String defaultsString) {
-        Preferences.setProperty(dialogName, defaultsString);
     }
 
     /**

@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
@@ -21,6 +22,7 @@ import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+
 
 /**
  * This class is the base for all the other dialogs. It has two important functions that are used by almost all the
@@ -294,6 +296,8 @@ public abstract class JDialogBase extends JDialog
         Window w = SwingUtilities.getWindowAncestor(getContentPane());
         if(w instanceof JFrame) {
             ((JFrame) w).setJMenuBar(bar);
+        } else if (w instanceof JDialog) {
+            ((JDialog) w).setJMenuBar(bar);
         } else {
             getContentPane().add(bar, BorderLayout.NORTH);
         }
@@ -550,24 +554,33 @@ public abstract class JDialogBase extends JDialog
      * @param  event FocusEvent
      */
     public void focusLost(FocusEvent event) { }
-
+    
     private String getComponentName(Component comp, String longName, String profile) {
+        return JDialogBase.getComponentName(this, comp, longName, profile);
+    }
+
+    private static String getComponentName(Object parentClassObject, Component comp, String longName, String profile) {
         String name = null;
         
-        try {
+        // skip looking for some common containers that wouldn't be saved
+        if (comp instanceof JLabel || comp instanceof JPanel || comp instanceof JRootPane || comp instanceof JLayeredPane 
+                || comp instanceof CellRendererPane || comp instanceof JMenuBar || comp instanceof JMenu || comp instanceof JButton) {
+            return longName;
+        }
         
-            Field[] f = this.getClass().getDeclaredFields();
+        try {
+            Field[] f = parentClassObject.getClass().getDeclaredFields();
             
-            Class c = comp.getClass();
+            Class<?> c = comp.getClass();
             
             for(int i=0; i<f.length; i++) {
                 
                 java.lang.reflect.Type t = f[i].getType();
-                if(t instanceof Class && c.equals(((Class)t))) {  
+                if(t instanceof Class && c.equals(((Class<?>)t))) {  
                     if(!f[i].isAccessible()) {
                         f[i].setAccessible(true);
                     }
-                    Object obj = f[i].get(this);
+                    Object obj = f[i].get(parentClassObject);
                     if(obj.equals(comp)) {
                         name = f[i].getName();
                         break;
@@ -579,8 +592,14 @@ public abstract class JDialogBase extends JDialog
         }
         
         if(name != null) {
-            return getClass().getName()+profile+"."+name;
+            // saving some fields in a sub class under the dialog
+            if (!longName.equals(parentClassObject.getClass().getName() + profile)) {
+                return longName + "." + parentClassObject.getClass().getSimpleName() + "." + name;
+            } else {
+                return longName + "." + name;
+            }
         } else {
+            Preferences.debug("GetName:\tUnable to find field name:\t" + comp + "\n", Preferences.DEBUG_ALGORITHM);
             return longName;
         }
     }
@@ -615,21 +634,50 @@ public abstract class JDialogBase extends JDialog
         
         String prop = null;
         if(!(comp instanceof JTable)) {    //jtable uses custom naming scheme
-            prop = Preferences.getProperty(getComponentName(comp, name, profile));
+            prop = Preferences.getProperty(name);
+            
+            if (prop == null) {
+                prop = Preferences.getProperty(getComponentName(comp, name, profile));
+            }
         }
         
-        boolean load = true;        
+        boolean load = true;
         
         if((prop == null || prop.toString().equals(SAVE_DEFAULT)) && comp instanceof Container) {
+            
             Component[] compAr = ((Container)comp).getComponents();
             for(int i=0; i<compAr.length; i++) {
-                String subName = compAr[i].getName();
-                try {
-                    if(subName == null || subName.length() == 0) {
-                        subName = String.valueOf(i);
+                //String subName = compAr[i].getName();
+                String subName = name;
+
+                if (comp instanceof JPanelAlgorithmOutputOptions) {
+                    // special handling of output options panel since it contains subpanels
+                    if (comp instanceof JPanel) {
+                        Component[] panelContents = ((Container) compAr[i]).getComponents();
+                        for (Component panelItem : panelContents) {
+                            subName = getComponentName(comp, panelItem, name, profile);
+                            try {
+                                load &= loadComponents(panelItem, subName, profile);
+                            } catch (Exception e) {
+                                Preferences.debug(name+"."+subName+" property could not be loaded", Preferences.DEBUG_MINOR);
+                                e.printStackTrace();
+                                
+                                return false;
+                            }
+                        }
                     }
-                    load &= loadComponents(compAr[i], name+"."+subName, profile);
+                    // already loaded sub components, move to next panel
+                    continue;
+                } else if (comp instanceof JPanelSigmas) {
+                    subName = getComponentName(comp, compAr[i], name, profile);
+                } else if (comp instanceof JPanelColorChannels) {
+                    subName = getComponentName(comp, compAr[i], name, profile);
+                } else {
+                    subName = getComponentName(compAr[i], name, profile);
+                }
                 
+                try {
+                    load &= loadComponents(compAr[i], subName, profile);
                 } catch (Exception e) {
                     Preferences.debug(name+"."+subName+" property could not be loaded", Preferences.DEBUG_MINOR);
                     e.printStackTrace();
@@ -704,7 +752,48 @@ public abstract class JDialogBase extends JDialog
                 rows[i] = Integer.valueOf(split[i].trim());
             }
             list.setSelectedIndices(rows);
-        } 
+        }
+        
+        // TODO add loading of sub panel classes
+        
+//    } else if (comp instanceof JPanelAlgorithmOutputOptions) {
+//        // need to handle these separately, since the custom panel classes contain the fields that need saving, not the dialog class
+//        Component[] panels = ((Container)comp).getComponents();
+//        for (Component c : panels) {
+//            if (c instanceof JPanel) {
+//                Component[] compAr = ((JPanel)c).getComponents();
+//                for(int i=0; i<compAr.length; i++) {
+//                    if(compAr[i] instanceof JToggleButton) { //checkbox and radio buttons
+//                        JToggleButton button = (JToggleButton)compAr[i];
+//                        Preferences.setProperty(getComponentName(comp, button, name, profile), String.valueOf(button.isSelected()));
+//                    }
+//                }
+//            }
+//        }
+//        
+//    } else if (comp instanceof JPanelSigmas) {
+//        // need to handle these separately, since the custom panel classes contain the fields that need saving, not the dialog class
+//        Component[] compAr = ((Container)comp).getComponents();
+//        for(int i=0; i<compAr.length; i++) {
+//            if(compAr[i] instanceof JToggleButton) { // checkbox and radio buttons
+//                JToggleButton button = (JToggleButton) compAr[i];
+//                Preferences.setProperty(getComponentName(comp, button, name, profile), String.valueOf(button.isSelected()));
+//            } else if(compAr[i] instanceof JTextComponent) { // textfield, editorpane, textarea, textpane, and passwordfield
+//                JTextComponent text = (JTextComponent) compAr[i];
+//                if(text.getText().trim().length() > 0) {
+//                    Preferences.setProperty(getComponentName(comp, text, name, profile), text.getText());
+//                }
+//            }
+//        }
+//    } else if (comp instanceof JPanelColorChannels) {
+//        // need to handle these separately, since the custom panel classes contain the fields that need saving, not the dialog class
+//        Component[] compAr = ((Container)comp).getComponents();
+//        for(int i=0; i<compAr.length; i++) {
+//            if(compAr[i] instanceof JToggleButton) { //checkbox and radio buttons
+//                JToggleButton button = (JToggleButton)compAr[i];
+//                Preferences.setProperty(getComponentName(comp, button, name, profile), String.valueOf(button.isSelected()));
+//            }
+//        }
         
         
         return load;
@@ -787,7 +876,6 @@ public abstract class JDialogBase extends JDialog
             return;
         }
         
-        
         if(comp instanceof JToggleButton) { //checkbox and radio buttons
             JToggleButton button = (JToggleButton)comp;
             Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(button.isSelected()));
@@ -852,6 +940,44 @@ public abstract class JDialogBase extends JDialog
                 buffer.deleteCharAt(buffer.length()-1);
             }
             Preferences.setProperty(getComponentName(comp, name, profile), buffer.toString());
+        } else if (comp instanceof JPanelAlgorithmOutputOptions) {
+            // need to handle these separately, since the custom panel classes contain the fields that need saving, not the dialog class
+            Component[] panels = ((Container)comp).getComponents();
+            for (Component c : panels) {
+                if (c instanceof JPanel) {
+                    Component[] compAr = ((JPanel)c).getComponents();
+                    for(int i=0; i<compAr.length; i++) {
+                        if(compAr[i] instanceof JToggleButton) { //checkbox and radio buttons
+                            JToggleButton button = (JToggleButton)compAr[i];
+                            Preferences.setProperty(getComponentName(comp, button, name, profile), String.valueOf(button.isSelected()));
+                        }
+                    }
+                }
+            }
+            
+        } else if (comp instanceof JPanelSigmas) {
+            // need to handle these separately, since the custom panel classes contain the fields that need saving, not the dialog class
+            Component[] compAr = ((Container)comp).getComponents();
+            for(int i=0; i<compAr.length; i++) {
+                if(compAr[i] instanceof JToggleButton) { // checkbox and radio buttons
+                    JToggleButton button = (JToggleButton) compAr[i];
+                    Preferences.setProperty(getComponentName(comp, button, name, profile), String.valueOf(button.isSelected()));
+                } else if(compAr[i] instanceof JTextComponent) { // textfield, editorpane, textarea, textpane, and passwordfield
+                    JTextComponent text = (JTextComponent) compAr[i];
+                    if(text.getText().trim().length() > 0) {
+                        Preferences.setProperty(getComponentName(comp, text, name, profile), text.getText());
+                    }
+                }
+            }
+        } else if (comp instanceof JPanelColorChannels) {
+            // need to handle these separately, since the custom panel classes contain the fields that need saving, not the dialog class
+            Component[] compAr = ((Container)comp).getComponents();
+            for(int i=0; i<compAr.length; i++) {
+                if(compAr[i] instanceof JToggleButton) { //checkbox and radio buttons
+                    JToggleButton button = (JToggleButton)compAr[i];
+                    Preferences.setProperty(getComponentName(comp, button, name, profile), String.valueOf(button.isSelected()));
+                }
+            }
         } else if(comp instanceof Container) {
             Component[] compAr = ((Container)comp).getComponents();
             for(int i=0; i<compAr.length; i++) {

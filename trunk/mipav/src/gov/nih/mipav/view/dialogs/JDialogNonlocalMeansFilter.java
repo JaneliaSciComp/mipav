@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see  AlgorithmNonlocalMeansFilter
  */
 public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
-        implements AlgorithmInterface, ScriptableActionInterface, LegacyDialogDefaultsInterface, ActionDiscovery {
+        implements AlgorithmInterface, ScriptableActionInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -233,30 +233,6 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     }
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += searchWindowSide + delim;
-        str += similarityWindowSide + delim;
-        str += noiseStandardDeviation + delim;
-        str += degreeOfFiltering + delim;
-        str += doRician + delim;
-        str += image25D;
-
-        return str;
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
@@ -264,52 +240,6 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void legacyLoadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (newImage != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                textSearchWindowSide.setText("" + MipavUtil.getInt(st));
-                textSimilarityWindowSide.setText("" + MipavUtil.getInt(st));
-                textNoiseStandardDeviation.setText("" +  MipavUtil.getFloat(st));
-                textDegree.setText("" + MipavUtil.getFloat(st));
-                doRician = MipavUtil.getBoolean(st);
-                doRicianCheckBox.setSelected(doRician);
-                textDegree.setEnabled(doRician);
-                labelDegree.setEnabled(doRician);
-                image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
-
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
-
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void legacySaveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
