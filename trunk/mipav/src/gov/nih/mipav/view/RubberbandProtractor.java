@@ -118,92 +118,27 @@ public class RubberbandProtractor extends Rubberband {
                 z[2] = slice;
             }
 
-            // check to see if this is a *new* VOI
-            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.PROTRACTOR)) {
+            // get selected protractor
+            VOIs = image.getVOIs();
+            nVOI = VOIs.size();
 
-                try {
-                    VOIs = image.getVOIs();
-                    index = VOIs.size();
-                    colorID = 0;
+            for (i = 0; i < nVOI; i++) {
 
-                    if (image.getVOIs().size() > 0) {
-                        colorID = ((VOI) (image.getVOIs().lastElement())).getID() + 1;
-                    }
+                if (VOIs.VOIAt(i).getID() == 0) {
 
-                    nVOI = VOIs.size();
-                    name = "protractor" + (index + 1);
-
-                    int test;
-
-                    do {
-                        test = 0;
-
-                        for (i = 0; i < nVOI; i++) {
-
-                            if (name.equals(VOIs.VOIAt(i).getName())) {
-                                index++;
-                                name = "protractor" + (index + 1);
-                                test = 1;
-                            }
-                        }
-                    } while (test == 1);
-
-                    /*
-                     * do{     test =0;     for(i=0; i <nVOI; i++) {             if (colorID
-                     * ==((int)VOIs.VOIAt(i).getID())) {                 colorID++;                 test=1;
-                     * }     } } while(test==1);
-                     */
-                    newVOI = new VOI((short) colorID, name, VOI.PROTRACTOR, presetHue);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to form new protractor VOI.");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
-                }
-
-                if ((Math.abs(x[2] - x[0]) > 1) || (Math.abs(y[2] - y[0]) > 1)) {
-                    newVOI.importCurve(x, y, z);
-                    image.registerVOI(newVOI);
-                }
-
-                image.notifyImageDisplayListeners();
-
-                if (mouseEvent.isShiftDown() != true) {
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                }
-
-                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
-
-            } // end if this is a *new* VOI
-            else { // this is not a *new* VOI ... add to existing VOI
-
-                // get selected protractor
-                VOIs = image.getVOIs();
-                nVOI = VOIs.size();
-
-                for (i = 0; i < nVOI; i++) {
-
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
-
-                        if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
-                            VOIs.VOIAt(i).importCurve(x, y, z);
-                        } else {
-                            MipavUtil.displayError("Can't add Protractor VOI to other VOI structure.");
-                        }
+                    if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
+                        VOIs.VOIAt(i).importCurve(x, y, z);
+                    } else {
+                        MipavUtil.displayError("Can't add Protractor VOI to other VOI structure.");
                     }
                 }
+            }
 
-                image.notifyImageDisplayListeners();
+            image.notifyImageDisplayListeners();
 
-                if (mouseEvent.isShiftDown() != true) {
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                }
-
-                return;
-
-            } // end if not a *new* VOI
-
+            if (mouseEvent.isShiftDown() != true) {
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
+            }
         }
     }
 }

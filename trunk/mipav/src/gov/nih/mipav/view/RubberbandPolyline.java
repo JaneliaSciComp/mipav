@@ -305,123 +305,41 @@ public class RubberbandPolyline extends Rubberband {
                 contour.setClosed(true);
                 constant = VOI.CONTOUR;
             }
+            
+            // get selected contour
+            VOIs = image.getVOIs();
+            nVOI = VOIs.size();
 
-            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(constant)) {
+            for (i = 0; i < nVOI; i++) {
 
-                try {
-                    VOIs = image.getVOIs();
-                    index = VOIs.size();
-                    colorID = 0;
+                if (VOIs.VOIAt(i).getID() == 0) {
 
-                    if (image.getVOIs().size() > 0) {
-                        colorID = ((VOI) (image.getVOIs().lastElement())).getID() + 1;
-                    }
+                    if (VOIs.VOIAt(i).getCurveType() == constant) {
+                        // System.err.println("adding element");
+                        // VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
 
-                    nVOI = VOIs.size();
-
-                    if (open == true) {
-                        name = "polyline" + (index + 1);
+                        VOIs.VOIAt(i).importCurve(contour);
                     } else {
-                        name = "polygon" + (index + 1);
-                    }
-
-                    int test;
-
-                    do {
-                        test = 0;
-
-                        for (i = 0; i < nVOI; i++) {
-
-                            if (name.equals(VOIs.VOIAt(i).getName())) {
-                                index++;
-
-                                if (open == true) {
-                                    name = "polyline" + (index + 1);
-                                } else {
-                                    name = "polygon" + (index + 1);
-                                }
-
-                                test = 1;
-                            }
-                        }
-                    } while (test == 1);
-
-                    /*
-                     * do { test = 0; for (i = 0; i < nVOI; i++) {     if (colorID ==((int)VOIs.VOIAt(i).getID())) {
-                     *     colorID++;         test = 1;     } } } while (test == 1);
-                     */
-
-                    newVOI = new VOI((short) colorID, name, constant, presetHue);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to form new polyline");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
-                }
-
-                contour.setClosed(!open);
-                newVOI.importCurve(contour);
-                image.registerVOI(newVOI);
-                image.notifyImageDisplayListeners();
-
-                if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                }
-
-                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
-
-                // setup for next time this class is used
-                firstPoint = true;
-
-                try {
-                    contour = new VOIContour(false);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to form new polyline");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
-                }
-            } else {
-
-                // get selected contour
-                VOIs = image.getVOIs();
-                nVOI = VOIs.size();
-
-                for (i = 0; i < nVOI; i++) {
-
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
-
-                        if (VOIs.VOIAt(i).getCurveType() == constant) {
-                            // System.err.println("adding element");
-                            // VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
-
-                            VOIs.VOIAt(i).importCurve(contour);
-                        } else {
-                            MipavUtil.displayError("Can't add this VOI to other VOI structure.");
-                        }
+                        MipavUtil.displayError("Can't add this VOI to other VOI structure.");
                     }
                 }
+            }
 
-                image.notifyImageDisplayListeners();
+            image.notifyImageDisplayListeners();
 
-                if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                }
+            if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
+            }
 
 
-                // setup for next time this class is used
-                firstPoint = true;
+            // setup for next time this class is used
+            firstPoint = true;
 
-                try {
-                    contour = new VOIContour(false);
-                } catch (OutOfMemoryError error) {
-                    MipavUtil.displayError("Out of memory: unable to form new polygon");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
-                }
+            try {
+                contour = new VOIContour(false);
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: unable to form new polygon");
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                 return;
             }

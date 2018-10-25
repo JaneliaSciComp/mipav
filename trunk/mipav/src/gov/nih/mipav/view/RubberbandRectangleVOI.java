@@ -145,186 +145,86 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
 
             ModelImage image = ((ViewJComponentEditImage) (component)).getActiveImage();
 
-            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.CONTOUR)) {
+            // get selected contour
+            VOIs = image.getVOIs();
+            nVOI = VOIs.size();
 
-                try {
-                    VOIs = image.getVOIs();
-                    index = VOIs.size();
-                    colorID = 0;
+            try {
+                x = new int[4];
+                y = new int[4];
+                z = new int[4];
 
-                    if (image.getVOIs().size() > 0) {
-                        colorID = ((VOI) (image.getVOIs().lastElement())).getID() + 1;
+                Rectangle rect = getBounds();
+
+                if (mouseEvent.isControlDown() == true) {
+
+                    if (rect.width > rect.height) {
+                        rect.width = rect.height;
+                    } else {
+                        rect.height = rect.width;
                     }
-
-                    nVOI = VOIs.size();
-                    name = "rect" + (index + 1);
-
-                    int test;
-
-                    do {
-                        test = 0;
-
-                        for (i = 0; i < nVOI; i++) {
-
-                            if (name.equals(VOIs.VOIAt(i).getName())) {
-                                index++;
-                                name = "rect" + (index + 1);
-                                test = 1;
-                            }
-                        }
-                    } while (test == 1);
-                    /*
-                     * do{ test =0; for(i=0; i <nVOI; i++) {         if (colorID ==((int)VOIs.VOIAt(i).getID())) {
-                     *       colorID++;             test=1;         } } } while(test==1);
-                     */
-
-
-                    newVOI = new VOI((short) colorID, name, VOI.CONTOUR, presetHue);
-
-                    x = new int[4];
-                    y = new int[4];
-                    z = new int[4];
-
-                    Rectangle rect = getBounds();
-
-                    if (mouseEvent.isControlDown() == true) {
-
-                        if (rect.width > rect.height) {
-                            rect.width = rect.height;
-                        } else {
-                            rect.height = rect.width;
-                        }
-                    }
-
-                    int ptx = Math.round(rect.x / (zoomX * resolutionX));
-                    int pty = Math.round(rect.y / (zoomY * resolutionY));
-                    int width = Math.round(rect.width / (zoomX * resolutionX));
-                    int height = Math.round(rect.height / (zoomY * resolutionY));
-
-                    x[0] = ptx;
-                    y[0] = pty;
-                    x[1] = ptx + width;
-                    y[1] = pty;
-                    x[2] = ptx + width;
-                    y[2] = pty + height;
-                    x[3] = ptx;
-                    y[3] = pty + height;
-
-                    if ((Math.abs(x[2] - x[0]) > 1) && (Math.abs(y[2] - y[0]) > 1)) {
-
-                        if ((image.getNDims() > 2) &&
-                                (((ViewJComponentEditImage) (component)).getCursorMode() ==
-                                     ViewJComponentBase.RECTANGLE3D)) {
-
-                            for (i = 0; i < image.getExtents()[2]; i++) {
-                                z[0] = z[1] = z[2] = z[3] = i;
-                                newVOI.importCurve(x, y, z);
-                            }
-                        } else {
-                        	int curSlice = ((ViewJComponentEditImage) (component)).getSlice();
-                        	for (i = 0; i < z.length; i++) {
-                        		z[i] = curSlice;
-                        	}
-                            newVOI.importCurve(x, y, z);
-                        }
-
-                        image.registerVOI(newVOI);
-                        ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
-                    }
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                    MipavUtil.displayError("Out of memory: RubberbandRectangle.mouseReleased");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
                 }
 
-                image.notifyImageDisplayListeners();
-            } else {
+                int ptx = Math.round(rect.x / (zoomX * resolutionX));
+                int pty = Math.round(rect.y / (zoomY * resolutionY));
+                int width = Math.round(rect.width / (zoomX * resolutionX));
+                int height = Math.round(rect.height / (zoomY * resolutionY));
 
-                // get selected contour
-                VOIs = image.getVOIs();
-                nVOI = VOIs.size();
+                x[0] = ptx;
+                y[0] = pty;
+                x[1] = ptx + width;
+                y[1] = pty;
+                x[2] = ptx + width;
+                y[2] = pty + height;
+                x[3] = ptx;
+                y[3] = pty + height;
 
-                try {
-                    x = new int[4];
-                    y = new int[4];
-                    z = new int[4];
+                for (i = 0; i < nVOI; i++) {
 
-                    Rectangle rect = getBounds();
+                    if (VOIs.VOIAt(i).getID() == 0) {
 
-                    if (mouseEvent.isControlDown() == true) {
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
 
-                        if (rect.width > rect.height) {
-                            rect.width = rect.height;
-                        } else {
-                            rect.height = rect.width;
-                        }
-                    }
+                            if ((Math.abs(x[2] - x[0]) > 1) && (Math.abs(y[2] - y[0]) > 1)) {
 
-                    int ptx = Math.round(rect.x / (zoomX * resolutionX));
-                    int pty = Math.round(rect.y / (zoomY * resolutionY));
-                    int width = Math.round(rect.width / (zoomX * resolutionX));
-                    int height = Math.round(rect.height / (zoomY * resolutionY));
+                                if ((image.getNDims() > 2) &&
+                                        (((ViewJComponentEditImage) (component)).getCursorMode() ==
+                                             ViewJComponentBase.RECTANGLE3D)) {
 
-                    x[0] = ptx;
-                    y[0] = pty;
-                    x[1] = ptx + width;
-                    y[1] = pty;
-                    x[2] = ptx + width;
-                    y[2] = pty + height;
-                    x[3] = ptx;
-                    y[3] = pty + height;
-
-                    for (i = 0; i < nVOI; i++) {
-
-                        if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
-
-                            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-
-                                if ((Math.abs(x[2] - x[0]) > 1) && (Math.abs(y[2] - y[0]) > 1)) {
-
-                                    if ((image.getNDims() > 2) &&
-                                            (((ViewJComponentEditImage) (component)).getCursorMode() ==
-                                                 ViewJComponentBase.RECTANGLE3D)) {
-
-                                        for (j = 0; j < image.getExtents()[2]; j++) {
-                                            z[0] = z[1] = z[2] = z[3] = j;
-                                            VOIs.VOIAt(i).importCurve(x, y, z);
-                                        }
-                                    } else {
-                                        z[0] = ((ViewJComponentEditImage) (component)).getSlice();
+                                    for (j = 0; j < image.getExtents()[2]; j++) {
+                                        z[0] = z[1] = z[2] = z[3] = j;
                                         VOIs.VOIAt(i).importCurve(x, y, z);
                                     }
+                                } else {
+                                    z[0] = ((ViewJComponentEditImage) (component)).getSlice();
+                                    VOIs.VOIAt(i).importCurve(x, y, z);
                                 }
-                            } else {
-                                MipavUtil.displayError("Can't add Polygon VOI to other VOI structure.");
                             }
+                        } else {
+                            MipavUtil.displayError("Can't add Polygon VOI to other VOI structure.");
                         }
                     }
-
-
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                    MipavUtil.displayError("Out of memory: RubberbandRectangle.mouseReleased");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
                 }
 
-                image.notifyImageDisplayListeners();
-            }
 
-            if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-
-                // System.err.println("Rect Shift down is NOT true");
+            } catch (OutOfMemoryError error) {
+                System.gc();
                 ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-            } else {
-                // System.err.println("Rect shift is down");
+                MipavUtil.displayError("Out of memory: RubberbandRectangle.mouseReleased");
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
+
+                return;
             }
+
+            image.notifyImageDisplayListeners();
         }
 
+        if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
+
+            // System.err.println("Rect Shift down is NOT true");
+            ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
+        } else {
+            // System.err.println("Rect shift is down");
+        }
     }
 }

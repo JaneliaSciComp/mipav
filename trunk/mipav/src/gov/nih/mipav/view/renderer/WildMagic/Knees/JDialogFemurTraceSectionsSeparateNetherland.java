@@ -1990,7 +1990,10 @@ public class JDialogFemurTraceSectionsSeparateNetherland extends JDialogBase imp
 		// new ViewJFrameImage(testImage);
 
 		VOIBaseVector current_va = greImageSlice.getVOIs().VOIAt(0).getCurves();
-		voiNewFinal.removeCurves(sliceNumber);
+		Vector<VOIBase> curveList = voiNewFinal.getSliceCurves(sliceNumber);
+        for (VOIBase curve : curveList) {
+            voiNewFinal.removeCurve(curve);
+        }
 
 		endVOI.removeCurves();
 
@@ -2968,7 +2971,10 @@ public class JDialogFemurTraceSectionsSeparateNetherland extends JDialogBase imp
 
 			vTemp.removeAllElements();
 			vTemp.importArrays(xPtsCurrent, yPtsCurrent, zPtsCurrent, nPtsCurrent);
-			voiNewFinal.removeCurves(sliceNumber);
+			Vector<VOIBase> curveList = voiNewFinal.getSliceCurves(sliceNumber);
+	        for (VOIBase curve : curveList) {
+	            voiNewFinal.removeCurve(curve);
+	        }
 			voiNewFinal.importCurve(vTemp);
 			vTemp = null;
 		}

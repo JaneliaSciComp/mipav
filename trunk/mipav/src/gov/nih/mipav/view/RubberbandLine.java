@@ -127,77 +127,13 @@ public class RubberbandLine extends Rubberband {
             }
         	
         	if (!doSplit) {
-        	
-            
-
-            // check to see if this is a *new* VOI
-            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.LINE)) {
-
-                try {
-                    VOIs = image.getVOIs();
-                    index = VOIs.size();
-                    colorID = 0;
-
-                    if (image.getVOIs().size() > 0) {
-                        colorID = ((VOI) (image.getVOIs().lastElement())).getID() + 1;
-                    }
-
-                    nVOI = VOIs.size();
-                    name = "line" + (index + 1);
-
-                    int test;
-
-
-                    do {
-                        test = 0;
-
-                        for (i = 0; i < nVOI; i++) {
-
-                            if (name.equals(VOIs.VOIAt(i).getName())) {
-                                index++;
-                                name = "line" + (index + 1);
-                                test = 1;
-                            }
-                        }
-                    } while (test == 1);
-
-                    /*
-                     * do{     test =0;     for(i=0; i <nVOI; i++) {             if (colorID
-                     * ==((int)VOIs.VOIAt(i).getID())) {                 colorID++;                 test=1;
-                     * }     } } while(test==1);
-                     */
-                    newVOI = new VOI((short) colorID, name, VOI.LINE, presetHue);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to form new line VOI.");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
-                }
- 
-                if ((Math.abs(x[1] - x[0]) > 1) || (Math.abs(y[1] - y[0]) > 1)) {
-                    newVOI.importCurve(x, y, z);
-                    image.registerVOI(newVOI);
-                }
-
-                image.notifyImageDisplayListeners();
-
-                if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                }
-
-                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
-
-            } // end if this is a *new* VOI
-            else { // this is not a *new* VOI ... add to existing VOI
-
                 // get selected line
                 VOIs = image.getVOIs();
                 nVOI = VOIs.size();
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == 0) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
                             VOIs.VOIAt(i).importCurve(x, y, z);
@@ -214,9 +150,6 @@ public class RubberbandLine extends Rubberband {
                 }
 
                 return;
-
-            } // end if not a *new* VOI
-
         } else {
         	new JDialogVOISplitter(image.getParentFrame(), image, new Vector3f(x[0],y[0],z[0]), new Vector3f(x[1],y[1],z[1])) ;
         }

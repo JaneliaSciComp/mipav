@@ -212,7 +212,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 }
 
                 if (image.isColorImage()) {
-                    image.notifyImageDisplayListeners(true, 0, null);    
+                    image.notifyImageDisplayListeners(true, null);    
                 }
                 else {
                     image.notifyImageDisplayListeners(null, true);

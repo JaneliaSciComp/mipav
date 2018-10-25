@@ -502,8 +502,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             if ( m_kActiveImage.isColorImage() )
             {
                 m_kActiveImage.
-                    notifyImageDisplayListeners(false, 0,
-                                                (ModelRGB)m_kActiveLookupTable);
+                    notifyImageDisplayListeners(false, (ModelRGB)m_kActiveLookupTable);
             }
             else
             {

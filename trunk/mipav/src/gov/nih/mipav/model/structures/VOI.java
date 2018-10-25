@@ -3111,7 +3111,10 @@ public class VOI extends ModelSerialCloneable {
     }
 	 */
 
-
+    /**
+     * 
+     * @param color
+     */
 	protected void fireVOIColorChange(Color color)
 	{
 		if (listenerList != null) {
