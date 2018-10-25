@@ -360,12 +360,12 @@ public class JDialogCopyFiles extends JDialogBase
 	    		int index = voiString.lastIndexOf(File.separator);
 	    		String voiName = voiString.substring(index+1, voiString.length());
 	    		
-	    		String decodedVOI = URLDecoder.decode(voiName);
+	    		String decodedVOI = MipavUtil.decodeStr(voiName);
 	    		
 	    		if ( !decodedVOI.contains("manuel") && !decodedVOI.contains("manual") && 
 	    				decodedVOI.startsWith("cg") && decodedVOI.endsWith("voi")) {
 	    			// System.err.println("voi: " + secondLayer + File.separator + children[i]);
-	    			voiNameHashtableNathan.get(hashID).add(URLDecoder.decode(voiString));
+	    			voiNameHashtableNathan.get(hashID).add(MipavUtil.decodeStr(voiString));
 	    			// System.err.println("voiLayer: " + voiNameHashtableNathan.get(hashID));
 	    			count++;
 	    		}
@@ -444,7 +444,7 @@ public class JDialogCopyFiles extends JDialogBase
     			voiNameHashtable.get(hashID).add(voiString);
     		}
     		*/
-    		/// String decodedVOI = URLDecoder.decode(voiName);
+    		/// String decodedVOI = MipavUtil.decodeStr(voiName);
     		
     		if ( voiName.startsWith("result") && voiName.endsWith("voi")) {
     			System.err.println("voi: " + secondLayer + File.separator + children[i]);

@@ -225,7 +225,7 @@ public class JDialogProstate2DSlicesAtlasPngConverterCentralGland_miccai extends
     	String[] children = secondLayer.list();
     	for ( int i = 0; i < children.length; i++ ) {
     			// System.err.println("image: " + secondLayer + File.separator + children[i]);
-    			String decodedPath = URLDecoder.decode(secondLayer + File.separator + children[i]);
+    			String decodedPath = MipavUtil.decodeStr(secondLayer + File.separator + children[i]);
     			System.err.println("decodedPath = " + decodedPath);
     		    File file = new File(decodedPath);
     		    if ( file.isDirectory() ) {
@@ -275,18 +275,18 @@ public class JDialogProstate2DSlicesAtlasPngConverterCentralGland_miccai extends
     		int index = voiString.lastIndexOf(File.separator);
     		String voiName = voiString.substring(index+1, voiString.length());
     		
-    		String decodedVOI = URLDecoder.decode(voiName);
+    		String decodedVOI = MipavUtil.decodeStr(voiName);
     		
     		if ( !decodedVOI.contains("manuel") && !decodedVOI.contains("manual") && 
     				decodedVOI.startsWith("cg") && decodedVOI.endsWith("voi")) {
     			// System.err.println("voi: " + secondLayer + File.separator + children[i]);
-    			voiNameHashtable.get(hashID).add(URLDecoder.decode(voiString));
+    			voiNameHashtable.get(hashID).add(MipavUtil.decodeStr(voiString));
     			count++;
     		}
     		if ( !decodedVOI.contains("manuel") && !decodedVOI.contains("manual") && 
     				decodedVOI.startsWith("wp") && decodedVOI.endsWith("voi")) {
     			// System.err.println("voi: " + secondLayer + File.separator + children[i]);
-    			// voiNameHashtable.get(hashID).add(URLDecoder.decode(voiString));
+    			// voiNameHashtable.get(hashID).add(MipavUtil.decodeStr(voiString));
     			count++;
     		}
 

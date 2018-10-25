@@ -192,7 +192,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurface extends JDialogBa
 		String[] children = secondLayer.list();
 
 		for (int i = 0; i < children.length; i++) {
-			String decodedPath = URLDecoder.decode(secondLayer + File.separator + children[i]);
+			String decodedPath = MipavUtil.decodeStr(secondLayer + File.separator + children[i]);
 			// System.err.println("decodedPath = " + decodedPath);
 			File file = new File(decodedPath);
 			if (file.isDirectory()) {
@@ -219,7 +219,7 @@ public class JDialogProstate2DSlicesAtlasPngConverter3DSurface extends JDialogBa
 		} else {
 
 			for (int i = 0; i < children.length; i++) {
-				String decodedPath = URLDecoder.decode(T2Layer + File.separator + children[i]);
+				String decodedPath = MipavUtil.decodeStr(T2Layer + File.separator + children[i]);
 				File file = new File(decodedPath);
 				if (file.isDirectory()) {
 					traverse_T2Layer_deeper(new File(decodedPath), hashID, children[i]);

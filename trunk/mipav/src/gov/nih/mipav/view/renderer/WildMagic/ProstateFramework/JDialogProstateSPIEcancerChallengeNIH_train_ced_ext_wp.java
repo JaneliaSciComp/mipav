@@ -230,12 +230,12 @@ public class JDialogProstateSPIEcancerChallengeNIH_train_ced_ext_wp extends JDia
     		System.err.println(firstLayer + File.separator+ children[i]);
     		if ( children[i].startsWith("image") && children[i].endsWith(".xml")) {
     			String imgString = firstLayer + File.separator+ children[i];
-    			imageNameHashtable_ext.get(hashID).add(URLDecoder.decode(imgString));
+    			imageNameHashtable_ext.get(hashID).add(MipavUtil.decodeStr(imgString));
     		}
     		
     		if ( children[i].startsWith("voi") && children[i].endsWith(".voi")) {
     			String voiString = firstLayer + File.separator+ children[i];
-    			voiNameHashtableWp_ext.get(hashID).add(URLDecoder.decode(voiString));
+    			voiNameHashtableWp_ext.get(hashID).add(MipavUtil.decodeStr(voiString));
     		}
     		
     	}
@@ -250,12 +250,12 @@ public class JDialogProstateSPIEcancerChallengeNIH_train_ced_ext_wp extends JDia
 	    		
 	    		if ( children[i].equals("wp.voi")) {
 	    			String voiString = firstLayer + File.separator+ children[i];
-	    			voiNameHashtableWp.get(hashID).add(URLDecoder.decode(voiString));
+	    			voiNameHashtableWp.get(hashID).add(MipavUtil.decodeStr(voiString));
 	    		}
 	    		
 	    		if ( children[i].equals("cg.voi")) {
 	    			String voiString = firstLayer + File.separator+ children[i];
-	    			voiNameHashtableCg.get(hashID).add(URLDecoder.decode(voiString));
+	    			voiNameHashtableCg.get(hashID).add(MipavUtil.decodeStr(voiString));
 	    		}
 	    		
 	    		if ( children[i].equals("T2WI")) {

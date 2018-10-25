@@ -228,7 +228,7 @@ public class JDialogProstate2DSlicesAtlasCopyGTstl extends JDialogBase implement
 
 		for (int i = 0; i < children.length; i++) {
 			
-			String decodedPath = URLDecoder.decode(secondLayer + File.separator + children[i]);
+			String decodedPath = MipavUtil.decodeStr(secondLayer + File.separator + children[i]);
 			File file = new File(decodedPath);
 			if (file.isDirectory()) {
 				imageNameHashtable.get(hashID).put(children[i], new Vector<String>());
@@ -252,7 +252,7 @@ public class JDialogProstate2DSlicesAtlasCopyGTstl extends JDialogBase implement
 		} else {
 
 			for (int i = 0; i < children.length; i++) {
-				String decodedPath = URLDecoder.decode(T2Layer + File.separator + children[i]);
+				String decodedPath = MipavUtil.decodeStr(T2Layer + File.separator + children[i]);
 				File file = new File(decodedPath);
 				if (file.isDirectory()) {
 					traverse_T2Layer_deeper(new File(decodedPath), hashID, children[i]);

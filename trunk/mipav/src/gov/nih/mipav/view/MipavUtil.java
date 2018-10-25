@@ -16,10 +16,7 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.StringTokenizer;
@@ -1579,6 +1576,21 @@ public class MipavUtil extends JComponent {
         if (m.find() && m.groupCount() > 0) {
             return m.group(1);
         } else {
+            return "";
+        }
+    }
+    
+    /**
+     * Decode a URL string using UTF-8 character encoding.
+     * @param urlStr The URL string to decode.
+     * @return Decoded URL string or empty string if there was a decoding error.
+     */
+    public static final String decodeStr(String urlStr) {
+        try {
+            return URLDecoder.decode(urlStr, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
             return "";
         }
     }

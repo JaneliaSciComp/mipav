@@ -237,7 +237,7 @@ public class JDialogProstateSPIEcancerChallenge extends JDialogBase
     	/*
     	for ( int i = 0; i < children.length; i++ ) {
     			// System.err.println("image: " + secondLayer + File.separator + children[i]);
-    			String decodedPath = URLDecoder.decode(secondLayer + File.separator + children[i]);
+    			String decodedPath = MipavUtil.decodeStr(secondLayer + File.separator + children[i]);
     			System.err.println("decodedPath = " + decodedPath);
     		    File file = new File(decodedPath);
     		    if ( file.isDirectory() ) {

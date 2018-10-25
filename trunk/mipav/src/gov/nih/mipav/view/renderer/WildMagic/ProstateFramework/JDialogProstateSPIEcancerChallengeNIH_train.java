@@ -188,12 +188,12 @@ public class JDialogProstateSPIEcancerChallengeNIH_train extends JDialogBase
 	    		
 	    		if ( children[i].equals("wp.voi")) {
 	    			String voiString = firstLayer + File.separator+ children[i];
-	    			voiNameHashtableWp.get(hashID).add(URLDecoder.decode(voiString));
+	    			voiNameHashtableWp.get(hashID).add(MipavUtil.decodeStr(voiString));
 	    		}
 	    		
 	    		if ( children[i].equals("cg.voi")) {
 	    			String voiString = firstLayer + File.separator+ children[i];
-	    			voiNameHashtableCg.get(hashID).add(URLDecoder.decode(voiString));
+	    			voiNameHashtableCg.get(hashID).add(MipavUtil.decodeStr(voiString));
 	    		}
 	    		
 	    		if ( children[i].equals("T2WI")) {
