@@ -284,67 +284,17 @@ public class RubberbandEllipse extends Rubberband {
                 return;
             }
 
-            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.CONTOUR)) {
-                try {
-                    VOIs = (ViewVOIVector) image.getVOIs();
-                    index = VOIs.size();
-                    colorID = 0;
+            VOIs = image.getVOIs();
+            nVOI = VOIs.size();
 
-                    if (image.getVOIs().size() > 0) {
-                        colorID = ((VOI) (image.getVOIs().lastElement())).getID() + 1;
-                    }
+            for (i = 0; i < nVOI; i++) {
 
-                    nVOI = VOIs.size();
-                    name = "ellipse" + (index + 1);
+                if (VOIs.VOIAt(i).getID() == 0) {
 
-                    int test;
-                    /*
-                     * do{ test =0; for(i=0; i <nVOI; i++) {     if (colorID ==((int)VOIs.VOIAt(i).getID())) {
-                     * colorID++;         test=1;     } } } while(test==1);
-                     *
-                     */
-
-                    do {
-                        test = 0;
-
-                        for (i = 0; i < nVOI; i++) {
-
-                            if (name.equals(VOIs.VOIAt(i).getName())) {
-                                index++;
-                                name = "ellipse" + (index + 1);
-                                test = 1;
-                            }
-                        }
-                    } while (test == 1);
-
-                    newVOI = new VOI((short) colorID, name, VOI.CONTOUR, presetHue);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to form new ellipse VOI.");
-
-                    return;
-                }
-
-                newVOI.importCurve(xFinal, yFinal, zFinal);
-                image.registerVOI(newVOI);
-                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
-
-            } // end if need to create a new voi
-
-            // else add to the current voi
-            else {
-                VOIs = image.getVOIs();
-                nVOI = VOIs.size();
-
-                for (i = 0; i < nVOI; i++) {
-
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
-
-                        if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                            VOIs.VOIAt(i).importCurve(xFinal, yFinal, zFinal);
-                        } else {
-                            MipavUtil.displayError("Can't add Ellipse VOI to other VOI structure.");
-                        }
+                    if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                        VOIs.VOIAt(i).importCurve(xFinal, yFinal, zFinal);
+                    } else {
+                        MipavUtil.displayError("Can't add Ellipse VOI to other VOI structure.");
                     }
                 }
             }

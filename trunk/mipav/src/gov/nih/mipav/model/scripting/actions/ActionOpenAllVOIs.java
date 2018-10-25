@@ -57,7 +57,6 @@ public class ActionOpenAllVOIs extends ActionImageProcessorBase {
         VOI loadedVOI = inputImage.getVOIs().VOIAt(0);
         
         loadedVOI.setAllActive(true);
-        component.getVOIHandler().setVOI_IDs(loadedVOI.getID(), loadedVOI.getUID());
         component.getVOIHandler().fireVOISelectionChange(loadedVOI);
     }
 }

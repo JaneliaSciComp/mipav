@@ -308,7 +308,7 @@ public class JDialogConvertType extends JDialogScriptableBase
                 }
 
                 if (image.isColorImage()) {
-                    image.notifyImageDisplayListeners(true, 0, image.getParentFrame().getComponentImage().getRGBTA());    
+                    image.notifyImageDisplayListeners(true, image.getParentFrame().getComponentImage().getRGBTA());    
                 }
                 else {
                     image.notifyImageDisplayListeners(null, true);

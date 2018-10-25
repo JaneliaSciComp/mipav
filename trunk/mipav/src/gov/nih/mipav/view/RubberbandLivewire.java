@@ -1297,201 +1297,76 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 constant = VOI.CONTOUR;
             }
 
-            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(constant)) {
+            // get selected VOI
+            VOIs = image.getVOIs();
+            nVOI = VOIs.size();
 
-                try {
-                    VOIs = image.getVOIs();
-                    index = VOIs.size();
-                    colorID = 0;
+            for (i = 0; i < nVOI; i++) {
 
-                    if (image.getVOIs().size() > 0) {
-                        colorID = ((VOI) (image.getVOIs().lastElement())).getID() + 1;
-                    }
+                if (VOIs.VOIAt(i).getID() == 0) {
 
-                    nVOI = VOIs.size();
-                    name = "livewire" + (index + 1);
+                    if (VOIs.VOIAt(i).getCurveType() == constant) {
 
-                    int test;
+                        if (smoothVOIFlag) {
+                            AlgorithmBSmooth smoothAlgo;
+                            float[] xPts = null;
+                            float[] yPts = null;
+                            Polygon gon = contour.exportPolygon();
+                            int nPts;
 
+                            xPts = new float[gon.npoints + 5];
+                            yPts = new float[gon.npoints + 5];
 
-                    do {
-                        test = 0;
+                            xPts[0] = gon.xpoints[gon.npoints - 2];
+                            yPts[0] = gon.ypoints[gon.npoints - 2];
 
-                        for (i = 0; i < nVOI; i++) {
+                            xPts[1] = gon.xpoints[gon.npoints - 1];
+                            yPts[1] = gon.ypoints[gon.npoints - 1];
 
-                            if (name.equals(VOIs.VOIAt(i).getName())) {
-                                index++;
-                                name = "livewire" + (index + 1);
-                                test = 1;
+                            for (int j = 0; j < gon.npoints; j++) {
+                                xPts[j + 2] = gon.xpoints[j];
+                                yPts[j + 2] = gon.ypoints[j];
                             }
-                        }
-                    } while (test == 1);
 
-                    /*
-                     * do{ test = 0; for (i = 0; i < nVOI; i++) {  if (colorID ==((int)VOIs.VOIAt(i).getID())) {
-                     * colorID++;      test=1;  } } } while(test==1);
-                     */
-                    newVOI = new VOI((short) colorID, name, constant, presetHue);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to form new livewire");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
+                            xPts[gon.npoints + 2] = gon.xpoints[0];
+                            yPts[gon.npoints + 2] = gon.ypoints[0];
 
-                    return;
-                }
+                            xPts[gon.npoints + 3] = gon.xpoints[1];
+                            yPts[gon.npoints + 3] = gon.ypoints[1];
 
-                if (smoothVOIFlag) {
-                    AlgorithmBSmooth smoothAlgo;
-                    float[] xPts = null;
-                    float[] yPts = null;
-                    Polygon gon = contour.exportPolygon();
-                    int nPts;
+                            xPts[gon.npoints + 4] = gon.xpoints[2];
+                            yPts[gon.npoints + 4] = gon.ypoints[2];
 
-                    xPts = new float[gon.npoints + 5];
-                    yPts = new float[gon.npoints + 5];
+                            AlgorithmArcLength arcLenAlgo = new AlgorithmArcLength(xPts, yPts);
+                            nPts = Math.round(arcLenAlgo.getTotalArcLength() / 3);
 
-                    xPts[0] = gon.xpoints[gon.npoints - 2];
-                    yPts[0] = gon.ypoints[gon.npoints - 2];
+                            contour.setClosed(!open);
+                            contour.setActive(true);
 
-                    xPts[1] = gon.xpoints[gon.npoints - 1];
-                    yPts[1] = gon.ypoints[gon.npoints - 1];
+                            // VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
+                            VOIs.VOIAt(i).importCurve(contour);
 
-                    for (i = 0; i < gon.npoints; i++) {
-                        xPts[i + 2] = gon.xpoints[i];
-                        yPts[i + 2] = gon.ypoints[i];
-                    }
+                            try {
+                                smoothAlgo = new AlgorithmBSmooth(image, VOIs.VOIAt(i), nPts, true);
+                                smoothAlgo.run();
+                            } catch (OutOfMemoryError x) {
+                                MipavUtil.displayError("Smooth: unable to allocate enough memory");
 
-                    xPts[gon.npoints + 2] = gon.xpoints[0];
-                    yPts[gon.npoints + 2] = gon.ypoints[0];
-
-                    xPts[gon.npoints + 3] = gon.xpoints[1];
-                    yPts[gon.npoints + 3] = gon.ypoints[1];
-
-                    xPts[gon.npoints + 4] = gon.xpoints[2];
-                    yPts[gon.npoints + 4] = gon.ypoints[2];
-
-                    AlgorithmArcLength arcLenAlgo = new AlgorithmArcLength(xPts, yPts);
-                    nPts = Math.round(arcLenAlgo.getTotalArcLength() / 3);
-
-                    contour.setClosed(!open);
-                    contour.setActive(true);
-                    newVOI.importCurve(contour);
-
-                    try {
-                        smoothAlgo = new AlgorithmBSmooth(image, newVOI, nPts, true);
-                        smoothAlgo.run();
-                    } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Smooth: unable to allocate enough memory");
-
-                        return;
-                    }
-
-                    Color voiColor = newVOI.getColor();
-                    newVOI = smoothAlgo.getResultVOI();
-                    newVOI.setColor(voiColor);
-                } else {
-                    contour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
-                    contour.setClosed(!open);
-                    newVOI.importCurve(contour);
-                }
-
-                image.registerVOI(newVOI);
-                image.notifyImageDisplayListeners();
-
-                if (mouseEvent.isShiftDown() != true) {
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-                }
-
-                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
-
-                // setup for next time this class is used
-                firstPoint = true;
-                xPoints = null;
-                yPoints = null;
-
-                try {
-                    contour = new VOIContour(false);
-                    clickPoints = new Vector<Vector3f>();
-                } catch (OutOfMemoryError error) {
-                    MipavUtil.displayError("Out of memory: unable to form new livewire");
-                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
-
-                    return;
-                }
-            } // if (((ViewJComponentEditImage)(component)).isNewVoiNeeded(constant))
-            else {
-
-                // get selected VOI
-                VOIs = image.getVOIs();
-                nVOI = VOIs.size();
-
-                for (i = 0; i < nVOI; i++) {
-
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
-
-                        if (VOIs.VOIAt(i).getCurveType() == constant) {
-
-                            if (smoothVOIFlag) {
-                                AlgorithmBSmooth smoothAlgo;
-                                float[] xPts = null;
-                                float[] yPts = null;
-                                Polygon gon = contour.exportPolygon();
-                                int nPts;
-
-                                xPts = new float[gon.npoints + 5];
-                                yPts = new float[gon.npoints + 5];
-
-                                xPts[0] = gon.xpoints[gon.npoints - 2];
-                                yPts[0] = gon.ypoints[gon.npoints - 2];
-
-                                xPts[1] = gon.xpoints[gon.npoints - 1];
-                                yPts[1] = gon.ypoints[gon.npoints - 1];
-
-                                for (int j = 0; j < gon.npoints; j++) {
-                                    xPts[j + 2] = gon.xpoints[j];
-                                    yPts[j + 2] = gon.ypoints[j];
-                                }
-
-                                xPts[gon.npoints + 2] = gon.xpoints[0];
-                                yPts[gon.npoints + 2] = gon.ypoints[0];
-
-                                xPts[gon.npoints + 3] = gon.xpoints[1];
-                                yPts[gon.npoints + 3] = gon.ypoints[1];
-
-                                xPts[gon.npoints + 4] = gon.xpoints[2];
-                                yPts[gon.npoints + 4] = gon.ypoints[2];
-
-                                AlgorithmArcLength arcLenAlgo = new AlgorithmArcLength(xPts, yPts);
-                                nPts = Math.round(arcLenAlgo.getTotalArcLength() / 3);
-
-                                contour.setClosed(!open);
-                                contour.setActive(true);
-
-                                // VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
-                                VOIs.VOIAt(i).importCurve(contour);
-
-                                try {
-                                    smoothAlgo = new AlgorithmBSmooth(image, VOIs.VOIAt(i), nPts, true);
-                                    smoothAlgo.run();
-                                } catch (OutOfMemoryError x) {
-                                    MipavUtil.displayError("Smooth: unable to allocate enough memory");
-
-                                    return;
-                                }
-
-                                VOIs.VOIAt(i).getCurves().removeElement(contour);
-                                VOIs.VOIAt(i).getCurves().addElement((VOIContour)
-                                                                                smoothAlgo.getResultVOI().getCurves().lastElement());
-                            } else {
-                                contour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
-                                contour.setClosed(!open);
-                                //                                VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
-
-                                VOIs.VOIAt(i).importCurve(contour);
+                                return;
                             }
+
+                            VOIs.VOIAt(i).getCurves().removeElement(contour);
+                            VOIs.VOIAt(i).getCurves().addElement((VOIContour)
+                                                                            smoothAlgo.getResultVOI().getCurves().lastElement());
                         } else {
-                            MipavUtil.displayError("Can't add Livewire VOI to other VOI structure.");
+                            contour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
+                            contour.setClosed(!open);
+                            //                                VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
+
+                            VOIs.VOIAt(i).importCurve(contour);
                         }
+                    } else {
+                        MipavUtil.displayError("Can't add Livewire VOI to other VOI structure.");
                     }
                 }
 

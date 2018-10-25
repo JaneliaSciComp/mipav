@@ -3100,9 +3100,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             } else { // RGB image
 
-                imageA.notifyImageDisplayListeners(true, 1, RGBTA);
+                imageA.notifyImageDisplayListeners(true, RGBTA);
                 if (imageB != null) {
-                    imageB.notifyImageDisplayListeners(true, 1, RGBTB);
+                    imageB.notifyImageDisplayListeners(true, RGBTB);
                 }
             }
 
@@ -4124,9 +4124,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 } else if ( (imageB != null) && (imageB == imageActive)) {
                     this.resetRGB(RGBTB);
                 }
-                imageA.notifyImageDisplayListeners(true, 1, RGBTA);
+                imageA.notifyImageDisplayListeners(true, RGBTA);
                 if (imageB != null) {
-                    imageB.notifyImageDisplayListeners(true, 1, RGBTB);
+                    imageB.notifyImageDisplayListeners(true, RGBTB);
                 }
             }
 
