@@ -162,7 +162,7 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof BiorthogonalWavelets) {
+        if (algorithm instanceof WalshHadamardTransform) {
         	
         	if (whAlgo.isCompleted()) {
         		if (transformImage != null) {
@@ -187,8 +187,8 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
                         JOptionPane.showMessageDialog(null, "Out of memory: unable to open new inverseImage frame",
                                                       "Error", JOptionPane.ERROR_MESSAGE);
                     }
-        		} // if (reconstructedImage != null)
-        	} // if (bwAlgo.isCompleted())
+        		} // if (inverseImage != null)
+        	} // if (whAlgo.isCompleted())
         	else {
         		if (transformImage != null) {
     	    		transformImage.disposeLocal();
