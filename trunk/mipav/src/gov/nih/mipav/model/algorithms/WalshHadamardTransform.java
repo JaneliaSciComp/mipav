@@ -43,59 +43,69 @@ public class WalshHadamardTransform extends AlgorithmBase {
  // Please choose small images, large images take too long time for execution
  // Image size M=N square image
  // M=N=2 power of m
+	ModelImage transformImage;
+	ModelImage inverseImage;
 	
 	public WalshHadamardTransform(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg) {
 		super(null, srcImg);
+		this.transformImage = transformImage;
+		this.inverseImage = inverseImage;
 	}
 	
 	public void runAlgorithm() {
-		int xDim;
+		int xDim; // n
     	int yDim;
     	int zDim;
     	int length;
-    	int maxIters;
-    	int X2;
-    	int Y2;
+    	int m; // log2(n)
     	int xTest;
-    	int yTest;
-    	int buffer[];
+    	double buffer[];
+    	int intBuffer[];
     	int z;
+    	int n;
+    	int u;
+    	int v;
+    	int x;
+    	int y;
+    	int i;
+    	int pu;
+    	int pv;
+    	int sel;
+    	int pu2;
+    	int pv2;
+    	int c;
+    	int c1;
+    	double g[][][];
+    	int in;
+    	double t[][];
+    	double zb[][];
     	
     	xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
-        buffer = new int[length];
+        buffer = new double[length];
+        intBuffer = new int[length];
         zDim = 1;
         if (srcImage.getNDims() > 2) {
         	zDim = srcImage.getExtents()[2];
         }
         
-     // Image must have even dimensions
-        if (((xDim % 2) == 1) || ((yDim % 2) == 1)) {
-        	MipavUtil.displayError("Image must have even dimensions");
+        // Image must be square
+        if (xDim != yDim) {
+        	MipavUtil.displayError("Must have xDim == yDim");
         	setCompleted(false);
         	return;
         }
+        n = xDim;
         
-        X2 = 0;
+        m = 0;
         xTest = xDim;
         while ((xTest % 2) == 0) {
-        	X2++;
+        	m++;
         	xTest = xTest/2;
         }
         if (xTest != 1) {
         	MipavUtil.displayError("X dimension not a power of 2");
-        	setCompleted(false);
-        	return;	
-        }
-        Y2 = 0;
-        yTest = yDim;
-        while ((yTest % 2) == 0) {
-        	Y2++;
-        	yTest = yTest/2;
-        }
-        if (yTest != 1) {
-        	MipavUtil.displayError("Y dimension not a power of 2");
         	setCompleted(false);
         	return;	
         }
@@ -109,6 +119,100 @@ public class WalshHadamardTransform extends AlgorithmBase {
 
                 return;
             }
+        	g = new double[n][n][n*n];
+            t = new double[n][n];
+            zb = new double[n][n];
+            c1 = 0;
+            in = 0;
+        	for (u = 0; u <= n-1; u++) {
+        	    for (v = 0; v <= n-1; v++) {
+        	        for (x = 0; x <= n-1; x++) {
+        	            for (y = 0; y <= n-1; y++) {
+        	                for (i = 1; i <= m; i++) {
+        	                    if (i == 1) {
+        	                    	sel = (1 << (m-1));
+        	                    	pu = ((u & sel) >>> (m-1));
+        	                    	pv = ((v & sel) >>> (m-1));
+        	                    }
+        	                    else {
+        	                        sel = (1 << (m-i+1));
+        	                        pu = ((u & sel) >>> (m-i+1));
+        	                        pv = ((v & sel) >>> (m-i+1));
+        	                        sel = (1 << (m-i));
+        	                        pu2 = ((u & sel) >>> (m-i));
+        	                        pv2 = ((v & sel) >>> (m-i));
+        	                        pu = (pu + pu2)%2;
+        	                        pv = (pv + pv2)%2;
+        	                    }
+        	                    sel = (1 << (i-1));
+        	                    pu2 = ((x & sel) >>> (i-1));
+        	                    pu = pu * pu2;
+        	                    pv2 = ((y & sel) >>> (i-1));
+        	                    pv= pv * pv2;
+        	                    c = (pu + pv)%2;
+        	                    c1 = (c1+c)%2;
+        	                } // for (i = 1; i <= m; i++)
+        	                if (c1 == 0) {
+        	                	g[x][y][in] = 1.0/n;
+        	                }
+        	                else {
+        	                	g[x][y][in] = -1.0/n;
+        	                }
+        	                c1 = 0;
+        	            } // for (y = 0; y <= n-1; y++)
+        	        } // for (x = 0; x <= n-1; x++)
+        	        for (y = 0; y < yDim; y++) {
+        	        	for (x = 0; x < xDim; x++) {
+        	        	    t[u][v] = t[u][v] + g[x][y][in]	* buffer[x + y * xDim];
+        	        	}
+        	        }
+        	        in = in+1;
+        	    } // for (v = 0; v <= n-1; v++)
+        	} // for (u = 0; u <= n-1; u++)
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			buffer[x + y* xDim] = t[x][y];
+        		}
+        	}
+        	try {
+                transformImage.importData(z*length, buffer, false);
+             } catch (IOException error) {
+                buffer = null;
+                errorCleanUp("Walsh Hadamard Transform: Image(s) locked", true);
+
+                return;
+             }
+        	
+        	// Inverse Transform
+        	in = 0;
+        	for (u = 0; u <= n-1; u++) {
+        		for (v = 0; v <= n-1; v++) {
+        			for (y = 0; y < yDim; y++) {
+        				for (x = 0; x < xDim; x++) {
+        			        zb[u][v] = zb[u][v] + g[x][y][in] * t[x][y];
+        				}
+        			}
+        			in = in+1;
+        		}
+        	}
+        	
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			intBuffer[x + y* xDim] = (int)Math.round(zb[x][y]);
+        		}
+        	}
+        	try {
+                transformImage.importData(z*length, intBuffer, false);
+             } catch (IOException error) {
+                buffer = null;
+                errorCleanUp("Walsh Hadamard Transform: Image(s) locked", true);
+
+                return;
+             }
         } // for (z = 0; z < zDim; z++)
+        transformImage.calcMinMax();
+        inverseImage.calcMinMax();
+        setCompleted(true);
+        return;
 	}
 }
