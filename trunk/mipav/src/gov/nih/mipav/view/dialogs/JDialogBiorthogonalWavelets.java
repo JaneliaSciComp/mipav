@@ -468,8 +468,6 @@ public class JDialogBiorthogonalWavelets extends JDialogScriptableBase implement
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-    	
-        int i = 0;
 
         if (algorithm instanceof BiorthogonalWavelets) {
         	
@@ -478,8 +476,7 @@ public class JDialogBiorthogonalWavelets extends JDialogScriptableBase implement
         			updateFileInfo(srcImage, transformImage);
         			
         			try {
-                        new ViewJFrameImage(transformImage, null, new Dimension(610, 200 + (i * 20)));
-                        i++;
+                        new ViewJFrameImage(transformImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         JOptionPane.showMessageDialog(null, "Out of memory: unable to open new transformImage frame",
@@ -491,8 +488,7 @@ public class JDialogBiorthogonalWavelets extends JDialogScriptableBase implement
         			updateFileInfo(srcImage, compressedTransformImage);
         			
         			try {
-                        new ViewJFrameImage(compressedTransformImage, null, new Dimension(610, 200 + (i * 20)));
-                        i++;
+                        new ViewJFrameImage(compressedTransformImage, null, new Dimension(610, 220));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         JOptionPane.showMessageDialog(null, "Out of memory: unable to open new compressedTransformImage frame",
@@ -504,8 +500,7 @@ public class JDialogBiorthogonalWavelets extends JDialogScriptableBase implement
         			updateFileInfo(srcImage, reconstructedImage);
         			
         			try {
-                        new ViewJFrameImage(reconstructedImage, null, new Dimension(610, 200 + (i * 20)));
-                        i++;
+                        new ViewJFrameImage(reconstructedImage, null, new Dimension(610, 240));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         JOptionPane.showMessageDialog(null, "Out of memory: unable to open new reconstructedImage frame",
