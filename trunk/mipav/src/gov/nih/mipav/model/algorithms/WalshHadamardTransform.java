@@ -202,7 +202,7 @@ public class WalshHadamardTransform extends AlgorithmBase {
         		}
         	}
         	try {
-                transformImage.importData(z*length, intBuffer, false);
+                inverseImage.importData(z*length, intBuffer, false);
              } catch (IOException error) {
                 buffer = null;
                 errorCleanUp("Walsh Hadamard Transform: Image(s) locked", true);
