@@ -577,7 +577,8 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Subsample", "subsample", 0, null, false),
 								menuBuilder.buildMenuItem("Transform", null, 0, null, false),
 								menuBuilder.buildMenuItem("Transform nonlinear", "TransformNL", 0, null, false),
-								menuBuilder.buildMenuItem("Transform to power of 2", null, 0, null, false), }), });
+								menuBuilder.buildMenuItem("Transform to power of 2", null, 0, null, false), }),
+		                menuBuilder.buildMenuItem("Walsh-Hadamard Transform", "walsh", 0, null, false), });
 	}
 
 	/**
@@ -1561,6 +1562,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("BRISK", false);
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
+			menuBuilder.setMenuItemEnabled("Walsh-Hadamard Transform", false);
 		} else if (numberOfDimensions == 3) {
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1747,6 +1749,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Symmetric Nearest Neighbor", false);
 			menuBuilder.setMenuItemEnabled("Facet Model",false);
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
+			menuBuilder.setMenuItemEnabled("Walsh-Hadamard Transform", false);
 		} else {
 			menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
