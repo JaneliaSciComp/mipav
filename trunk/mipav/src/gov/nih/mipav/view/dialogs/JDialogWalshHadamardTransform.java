@@ -33,7 +33,12 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
     
     private WalshHadamardTransform whAlgo;
     
+    private WalshHadamardTransform2 wh2Algo;
     
+    private ButtonGroup algoGroup;
+    private JRadioButton twoDButton;
+    private JRadioButton oneDButton;
+    private boolean twoD = false;
 	
 	/**
      * Empty constructor needed for dynamic instantiation.
@@ -88,6 +93,29 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
         JPanel paramsPanel = new JPanel(new GridBagLayout());
         paramsPanel.setBorder(buildTitledBorder("Transform parameters"));
         
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        
+        algoGroup = new ButtonGroup();
+        oneDButton = new JRadioButton("Separate 1D row and column transforms", true);
+        oneDButton.setFont(serif12);
+        algoGroup.add(oneDButton);
+        paramsPanel.add(oneDButton, gbc);
+
+        
+        twoDButton = new JRadioButton("Unified 2D transform", false);
+        twoDButton.setFont(serif12);
+        algoGroup.add(twoDButton);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        paramsPanel.add(twoDButton, gbc);
+        
         getContentPane().add(paramsPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -98,37 +126,71 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
     
     private boolean setVariables() {
     	
-        
+        twoD = twoDButton.isSelected();    
     	return true;
     }
 	
 	protected void callAlgorithm() {
 		try {
-		    transformImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_transform");
+			if (twoD) {
+		        transformImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_transform");
+			}
+			else {
+				transformImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), srcImage.getImageName() + "_transform");	
+			}
 		    inverseImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), srcImage.getImageName() + "_inverse");
 		    
-		    whAlgo = new WalshHadamardTransform(transformImage, inverseImage, srcImage);
-		    
-		   // This is very important. Adding this object as a listener allows the algorithm to
-		    // notify this object when it has completed of failed. See algorithm performed event.
-		    // This is made possible by implementing AlgorithmedPerformed interface
-		    whAlgo.addListener(this);
-		
-		
-		    createProgressBar(srcImage.getImageName(), whAlgo);
-		
-		    // Hide dialog
-		    setVisible(false);
-		
-		    if (isRunInSeparateThread()) {
-		
-		        // Start the thread as a low priority because we wish to still have user interface work fast.
-		        if (whAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-		            MipavUtil.displayError("A thread is already running on this object");
-		        }
-		    } else {
-		
-		        whAlgo.run();
+		    if (twoD) {
+		    	// Unified two dimensional transform
+			    whAlgo = new WalshHadamardTransform(transformImage, inverseImage, srcImage);
+			    
+			    // This is very important. Adding this object as a listener allows the algorithm to
+			    // notify this object when it has completed of failed. See algorithm performed event.
+			    // This is made possible by implementing AlgorithmedPerformed interface
+			    whAlgo.addListener(this);
+			
+			
+			    createProgressBar(srcImage.getImageName(), whAlgo);
+			
+			    // Hide dialog
+			    setVisible(false);
+			
+			    if (isRunInSeparateThread()) {
+			
+			        // Start the thread as a low priority because we wish to still have user interface work fast.
+			        if (whAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+			            MipavUtil.displayError("A thread is already running on this object");
+			        }
+			    } else {
+			
+			        whAlgo.run();
+			    }
+		    }
+		    else {
+		    	// Separate 1D row and column transforms
+                wh2Algo = new WalshHadamardTransform2(transformImage, inverseImage, srcImage);
+			    
+			    // This is very important. Adding this object as a listener allows the algorithm to
+			    // notify this object when it has completed of failed. See algorithm performed event.
+			    // This is made possible by implementing AlgorithmedPerformed interface
+			    wh2Algo.addListener(this);
+			
+			
+			    createProgressBar(srcImage.getImageName(), wh2Algo);
+			
+			    // Hide dialog
+			    setVisible(false);
+			
+			    if (isRunInSeparateThread()) {
+			
+			        // Start the thread as a low priority because we wish to still have user interface work fast.
+			        if (wh2Algo.startMethod(Thread.MIN_PRIORITY) == false) {
+			            MipavUtil.displayError("A thread is already running on this object");
+			        }
+			    } else {
+			
+			        wh2Algo.run();
+			    }  
 		    }
 	    } catch (OutOfMemoryError x) {
 	    	
@@ -203,6 +265,47 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
                 System.gc();
         	}
         }
+        else if (algorithm instanceof WalshHadamardTransform2) {
+        	
+        	if (wh2Algo.isCompleted()) {
+        		if (transformImage != null) {
+        			updateFileInfo(srcImage, transformImage);
+        			
+        			try {
+                        new ViewJFrameImage(transformImage, null, new Dimension(610, 200));
+                    } catch (OutOfMemoryError error) {
+                        System.gc();
+                        JOptionPane.showMessageDialog(null, "Out of memory: unable to open new transformImage frame",
+                                                      "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+        		} // if (transformImage != null)
+        		
+        		if (inverseImage != null) {
+        			updateFileInfo(srcImage, inverseImage);
+        			
+        			try {
+                        new ViewJFrameImage(inverseImage, null, new Dimension(610, 220));
+                    } catch (OutOfMemoryError error) {
+                        System.gc();
+                        JOptionPane.showMessageDialog(null, "Out of memory: unable to open new inverseImage frame",
+                                                      "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+        		} // if (inverseImage != null)
+        	} // if (wh2Algo.isCompleted())
+        	else {
+        		if (transformImage != null) {
+    	    		transformImage.disposeLocal();
+    	    		transformImage = null;
+    	    	}
+    	    	
+    	    	if (inverseImage != null) {
+    	    		inverseImage.disposeLocal();
+    	    		inverseImage = null;
+    	    	}	
+
+                System.gc();
+        	}
+        }
 
         if (algorithm.isCompleted()) {
             insertScriptLine();
@@ -213,11 +316,13 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
 	
 	protected void setGUIFromParams() {
 		srcImage = scriptParameters.retrieveInputImage();
+		twoD = scriptParameters.getParams().getBoolean("two_D");
 	}
 	
 	protected void storeParamsFromGUI() throws ParserException {
 		scriptParameters.storeInputImage(srcImage);	
 		scriptParameters.storeImageInRecorder(transformImage);
 		scriptParameters.storeImageInRecorder(inverseImage);
+		scriptParameters.getParams().put(ParameterFactory.newParameter("two_D", twoD));
 	}
 }
