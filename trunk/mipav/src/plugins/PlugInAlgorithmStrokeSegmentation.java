@@ -1,17 +1,20 @@
+import gov.nih.mipav.util.MipavMath;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.*;
-
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogFuzzyCMeans;
 
-import java.awt.Frame;
 import java.io.*;
 import java.util.*;
 
 import org.apache.commons.csv.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
@@ -43,8 +46,6 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private VOI coreVOI;
     
-    // TODO
-    
     private float additionalObjectMinimumRatio = 0.2f;
     
     private int additionalObjectSearchSize = 1000;
@@ -72,6 +73,13 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     private Hashtable<File, Vector<MaskObject>> selectedObjectTable = new Hashtable<File, Vector<MaskObject>>();
     
     private Vector<File> lightboxFileList = new Vector<File>();
+
+    // core size threshold for using distance-based selection 
+    private int coreSizeDistSelectionThreshold = 5;
+    
+    // weights for selection of core object when no objects are above 5cc in size
+    private float coreSelectionDistWeight = 1f;
+    private float coreSelectionSizeWeight = 1 - coreSelectionDistWeight;
     
     /**
      * Constructor.
@@ -254,19 +262,25 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged("Finding core lesion ...");
         fireProgressStateChanged(70);
         
-        // TODO report lightbox files to dialog
-        
-        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax);
+        // do first two results with selection only based on core size
+        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, true);
         
         if (lightboxPass1 != null) {
             lightboxFileList.add(lightboxPass1);
         }
         
-        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax);
+        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, true);
         
         if (lightboxPass2 != null) {
             lightboxFileList.add(lightboxPass2);
         }
+        
+//        // distance-based selection (if small core)
+//        File lightboxPass3 = processThresholdedImg(segImg, segBuffer, extents, 3, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, true);
+//        
+//        if (lightboxPass3 != null) {
+//            lightboxFileList.add(lightboxPass3);
+//        }
         
         // commented out because masks seem just as useful to users
         
@@ -285,8 +299,6 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
 //            setCompleted(false);
 //            return;
 //        }
-        
-        // TODO change stats to handle multiple passes
         
         // save core stats to tab-delmited file
         if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), adcImage.getResolutions(0))) {
@@ -349,7 +361,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return new File(dir + File.separator + fileBasename + ext);
     }
     
-    private File processThresholdedImg(ModelImage segImg, short[] segBuffer, int[] extents, int passNum, boolean doSkip, int skipSliceMax) {
+    private File processThresholdedImg(ModelImage segImg, short[] segBuffer, int[] extents, int passNum, boolean doSkip, int skipSliceMax, boolean useDistanceSelection) {
         File lightboxFile = null;
         
         final int sliceLength = extents[0] * extents[1];
@@ -451,7 +463,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         Vector<MaskObject> selectedObjectList = new Vector<MaskObject>();
         
-        short[] objectBuffer = chooseCoreObjects(threshImg, threshBuffer, passNum, selectedObjectList);
+        short[] objectBuffer = chooseCoreObjects(threshImg, threshBuffer, passNum, useDistanceSelection, selectedObjectList);
         
         // get pixels from ADC within closed object mask with intensity < 620, again
         for (int i = 0; i < volLength; i++) {
@@ -500,11 +512,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return lightboxFile;
     }
     
-    public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer, int passNum, Vector<MaskObject> selectedObjectList) {
+    public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer, int passNum, boolean useDistanceSelection, Vector<MaskObject> selectedObjectList) {
         short[] processBuffer = new short[imgBuffer.length];
         MaskObject[] sortedObjects = findObjects(img, imgBuffer, processBuffer, minAdcObjectSize, maxAdcObjectSize);
         
-        // TODO
         FileInfoBase fileInfo1;
         ModelImage segImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), "find_objects");
         fileInfo1 = img.getFileInfo()[0];
@@ -529,8 +540,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         // last object should be the largest
         if (sortedObjects.length > 0) {
-            // check the number of core pixels in the top 3 objects and select the one with the most
-            int numObjectsToCheckCore = 3;
+            // check the number of core pixels in the top 5 objects and select the one with the most
+            int numObjectsToCheckCore = sortedObjects.length;
             int[] coreSizeList = new int[numObjectsToCheckCore];
             
             for (int i = 0; i < processBuffer.length; i++) {
@@ -543,19 +554,79 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 }
             }
             
-            int selectedObjectIndex = 0;
-            MaskObject selectedObject = sortedObjects[sortedObjects.length - 1];
-            System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size + "\t" + coreSizeList[0]);
-            for (int objNum = 1; objNum < numObjectsToCheckCore; objNum++) {
-                System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + sortedObjects[sortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum]);
-                if (coreSizeList[objNum] > coreSizeList[selectedObjectIndex]) {
-                    selectedObjectIndex = objNum;
-                    selectedObject = sortedObjects[sortedObjects.length - 1 - objNum];
+            boolean allCoreSmallFlag = true;
+            double resFactorCC = getResolutionFactorCC(adcImage);
+            for (int coreSize : coreSizeList) {
+                if ((coreSize * resFactorCC) > coreSizeDistSelectionThreshold) {
+                    allCoreSmallFlag = false;
                 }
             }
             
-            selectedObjectList.add(selectedObject);
-            System.err.println("Selected object: " + selectedObject.id + "\t" + selectedObject.size);
+            if (allCoreSmallFlag && useDistanceSelection) {
+//                    if (!prevBrainDistMapFlag) {
+//                        distanceMapFG(maskImg);
+//                        prevBrainDistMapFlag = true;
+//                    }
+                
+                float[] coreDistList = new float[numObjectsToCheckCore];
+                for (int i = 0; i < numObjectsToCheckCore; i++) {
+                    coreDistList[i] = Float.MAX_VALUE;
+                }
+                int[] extents = img.getExtents();
+                int sliceSize = extents[0] * extents[1];
+                Vector3f centerPt = new Vector3f(extents[0]/2, extents[1]/2, extents[2]/2);
+                for (int x = 0; x < extents[0]; x++) {
+                    for (int y = 0; y < extents[1]; y++) {
+                        for (int z = 0; z < extents[2]; z++) {
+                            for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
+                                if (processBuffer[x + (y * extents[0]) + (z * sliceSize)] == sortedObjects[sortedObjects.length - 1 - objNum].id) {
+                                    Vector3f curPt = new Vector3f(x, y, z);
+                                    double dist = MipavMath.distance(centerPt, curPt, adcImage.getResolutions(0));
+                                    if (dist < coreDistList[objNum]) {
+                                        coreDistList[objNum] = (float) dist;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+//                    float[] coreDistList = new float[numObjectsToCheckCore];
+                for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
+                    System.err.println("Object distance: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + coreDistList[objNum]);
+//                        coreDistList[objNum] = maskImg.getFloat(sortedObjects[sortedObjects.length -1 - objNum].index);
+                }
+                
+                int selectedObjectIndex = 0;
+                MaskObject selectedObject = sortedObjects[sortedObjects.length - 1];
+                System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size + "\t" + coreSizeList[0] + "\t" + coreDistList[0]);
+                for (int objNum = 1; objNum < numObjectsToCheckCore; objNum++) {
+                    System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + sortedObjects[sortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum] + "\t" + coreDistList[objNum]);
+                    if ((coreSizeList[objNum] * coreSelectionSizeWeight - coreDistList[objNum] * coreSelectionDistWeight) > (coreSizeList[selectedObjectIndex] * coreSelectionSizeWeight - coreDistList[selectedObjectIndex] * coreSelectionDistWeight)) {
+                        selectedObjectIndex = objNum;
+                        selectedObject = sortedObjects[sortedObjects.length - 1 - objNum];
+                    }
+                }
+                
+                selectedObjectList.add(selectedObject);
+                System.err.println("Selected object: " + selectedObject.id + "\t" + selectedObject.size + "\t" + coreDistList[selectedObjectIndex]);
+            }
+            
+            if (!allCoreSmallFlag) {
+                int selectedObjectIndex = 0;
+                MaskObject selectedObject = sortedObjects[sortedObjects.length - 1];
+                System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size + "\t" + coreSizeList[0]);
+                for (int objNum = 1; objNum < numObjectsToCheckCore; objNum++) {
+                    System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + sortedObjects[sortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum]);
+                    if (coreSizeList[objNum] > coreSizeList[selectedObjectIndex]) {
+                        selectedObjectIndex = objNum;
+                        selectedObject = sortedObjects[sortedObjects.length - 1 - objNum];
+                    }
+                }
+                
+                selectedObjectList.add(selectedObject);
+                System.err.println("Selected object: " + selectedObject.id + "\t" + selectedObject.size);
+            }
         } else {
             System.err.println("No qualifying object found in volume.");
         }
@@ -1084,7 +1155,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
     }
     
-    private void distanceMap(ModelImage img) {
+    private void distanceMapBG(ModelImage img) {
         int kernel = AlgorithmMorphology3D.CONNECTED6;
         boolean wholeImg = true;
         
@@ -1092,6 +1163,23 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             // Make algorithm
             AlgorithmMorphology3D distanceMapAlgo3D = new AlgorithmMorphology3D(img, kernel, 0,
                                                           AlgorithmMorphology3D.BG_DISTANCE_MAP, 0, 0, 0, 0,
+                                                          wholeImg);
+
+            distanceMapAlgo3D.run();
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Distance map: unable to allocate enough memory");
+            return;
+        }
+    }
+    
+    private void distanceMapFG(ModelImage img) {
+        int kernel = AlgorithmMorphology3D.CONNECTED6;
+        boolean wholeImg = true;
+        
+        try {
+            // Make algorithm
+            AlgorithmMorphology3D distanceMapAlgo3D = new AlgorithmMorphology3D(img, kernel, 0,
+                                                          AlgorithmMorphology3D.DISTANCE_MAP, 0, 0, 0, 0,
                                                           wholeImg);
 
             distanceMapAlgo3D.run();
@@ -1166,5 +1254,18 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
         
         return segImg;
+    }
+    
+    public static final double getResolutionFactorCC(ModelImage img) {
+        float[] resol = img.getResolutions(0);
+        int[] units = img.getUnitsOfMeasure();
+        
+        Unit unit = Unit.getUnitFromLegacyNum(units[0]);
+        double[] resolCC = new double[resol.length];
+        for (int i = 0; i < resol.length; i++) {
+            resolCC[i] = unit.convertTo(resol[i], Unit.CENTIMETERS);
+        }
+        
+        return resolCC[0] * resolCC[1] * resolCC[2];
     }
 }

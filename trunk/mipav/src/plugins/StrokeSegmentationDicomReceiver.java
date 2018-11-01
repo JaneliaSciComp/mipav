@@ -166,6 +166,8 @@ public class StrokeSegmentationDicomReceiver {
     private String emailPassword;
     private String emailHost;
     private String emailPort;
+    
+    private int numExpectedSlices;
 
     // TODO new storage format
     
@@ -175,7 +177,7 @@ public class StrokeSegmentationDicomReceiver {
     
 //    private String storageFilePathFormat = "{0020000D}/{0020000E}/{00080008}/{00080018}.dcm";
     
-    public StrokeSegmentationDicomReceiver(final String ip, final int port, final String curAE, final String outputDir, final String reportDir, final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
+    public StrokeSegmentationDicomReceiver(final String ip, final int port, final String curAE, final String outputDir, final String reportDir, final int numSlices, final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
         serverIP = ip;
         serverPort = port;
         serverAE = curAE;
@@ -183,6 +185,8 @@ public class StrokeSegmentationDicomReceiver {
         doEmailReport = doEmail;
         
         logOutputArea = area;
+        
+        numExpectedSlices = numSlices;
         
         conn.setBindAddress(serverIP);
         conn.setPort(serverPort);
@@ -557,11 +561,11 @@ public class StrokeSegmentationDicomReceiver {
                     File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
                     int numDwiFiles = dwiDirFile.listFiles().length;
                     
-                    if (numAdcFiles == numDwiFiles) {
+                    if (numAdcFiles == numDwiFiles && numAdcFiles == numExpectedSlices) {
                         log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
                         new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseOutputDir.getAbsolutePath());
                     } else {
-                        log("Found different number of ADC and DWI files. Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+                        log("Expected number of DWI or ADC files not reached " + numExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
                     }
                 } else {
                     log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + ").");
@@ -762,6 +766,8 @@ public class StrokeSegmentationDicomReceiver {
                 passDetails = " -- first 9 slices excluded";
             } else if (passNum == 2) {
                 passDetails = " -- first 15 slices excluded";
+            } else if (passNum == 3) {
+                passDetails = " -- core selection based on distance from image center (if no object above 5cc)";
             }
             
             reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
