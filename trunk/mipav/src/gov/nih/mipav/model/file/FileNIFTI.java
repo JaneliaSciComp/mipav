@@ -8757,9 +8757,12 @@ public class FileNIFTI extends FileBase {
                     MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
                     return null;
                 }
+                
+                fireProgressStateChanged("Reading header");
                 if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(),true, noReadPrivateTags)) {
                     throw (new IOException(" NIFTI header file error"));
                 }
+                fireProgressStateChanged(20);
         	}else if(ext.equalsIgnoreCase("bz2")) {
         		try {
                     fis = new FileInputStream(file);
@@ -8941,8 +8944,13 @@ public class FileNIFTI extends FileBase {
             	}else {
             		buffer = new byte[256];
             		
-            	}	
+            	}
             	
+                long fileSize = file.length();
+                long bytesDecomp = 0;
+                int totalProg = 40;
+                long bytesPerPercent = Math.round(fileSize / totalProg);
+                int curProg = 21;
             	
             	int bytesRead;
             	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
@@ -8979,7 +8987,13 @@ public class FileNIFTI extends FileBase {
                                  	 buffer = getFullBuffer(zin,buffer,bytesRead,256); 
                                  }
                         	}
-
+                            
+                            bytesDecomp += bytesRead;
+                            if (bytesDecomp > bytesPerPercent) {
+                                fireProgressStateChanged(curProg);
+                                curProg++;
+                                bytesDecomp = 0;
+                            }
 
                         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE || type == ModelStorageBase.BOOLEAN) {
                         		image.importData(start, buffer, false);
@@ -9076,7 +9090,7 @@ public class FileNIFTI extends FileBase {
                         } 
                     }
             	}else if(ext.equalsIgnoreCase("gz")) {
-            		
+            	    fireProgressStateChanged("Reading gzip archive");
 
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
@@ -9104,9 +9118,13 @@ public class FileNIFTI extends FileBase {
                                  	 buffer = getFullBuffer(gzin,buffer,bytesRead,256); 
                                  }
                         	}
-
                             
-
+                            bytesDecomp += bytesRead;
+                            if (bytesDecomp > bytesPerPercent) {
+                                fireProgressStateChanged(curProg);
+                                curProg++;
+                                bytesDecomp = 0;
+                            }
 
                         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE  || type == ModelStorageBase.BOOLEAN) {
                         		if(start < image.getDataSize()) {
@@ -9232,6 +9250,13 @@ public class FileNIFTI extends FileBase {
                                  	 buffer = getFullBuffer(bz2in,buffer,bytesRead,256); 
                                  }
                         	}
+                            
+                            bytesDecomp += bytesRead;
+                            if (bytesDecomp > bytesPerPercent) {
+                                fireProgressStateChanged(curProg);
+                                curProg++;
+                                bytesDecomp = 0;
+                            }
 
 
                         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE  || type == ModelStorageBase.BOOLEAN) {
