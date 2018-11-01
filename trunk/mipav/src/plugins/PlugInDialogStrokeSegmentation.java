@@ -224,16 +224,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         if (segAlgo instanceof PlugInAlgorithmStrokeSegmentation) {
             Preferences.debug("Stroke segmentation Elapsed: " + segAlgo.getElapsedTime());
             
-            float[] resol = adcImage.getResolutions(0);
-            int[] units = adcImage.getUnitsOfMeasure();
-            
-            Unit unit = Unit.getUnitFromLegacyNum(units[0]);
-            double[] resolCC = new double[resol.length];
-            for (int i = 0; i < resol.length; i++) {
-                resolCC[i] = unit.convertTo(resol[i], Unit.CENTIMETERS);
-            }
-            
-            double resFactorCC = resolCC[0] * resolCC[1] * resolCC[2];
+            double resFactorCC = PlugInAlgorithmStrokeSegmentation.getResolutionFactorCC(adcImage);
             
             if (listenerParent != null) {
                 listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), resFactorCC);
