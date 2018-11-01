@@ -204,15 +204,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private JPanel leftPanel, rightPanel, leftRightPanel;
 
-    /** The mask size in the x dimension. */
-    private int xDim;
-
-    /** The mask size in the y dimension. */
-    private int yDim;
-
-    /** The mask size in the z dimension. */
-    private int zDim;
-
     /** lock all masks checkbox * */
     private JButton lockAllButton;
 
@@ -994,7 +985,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      */
     public void mouseClicked(MouseEvent e) {
 
-        if (e.getButton() == MouseEvent.BUTTON3) {
+        if (SwingUtilities.isRightMouseButton(e) || e.isControlDown()) {
 
             if (e.getSource() instanceof JButton) {
                 JPanel correspondingPanel = null;
@@ -1438,16 +1429,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private TreeSet<Integer> getMaskTreeSet(ModelImage imgB) {
         TreeSet<Integer> vals = new TreeSet<Integer>();
 
-        xDim = imgB.getExtents()[0];
-        yDim = imgB.getExtents()[1];
-
         int numDims = imgB.getNDims();
 
         if (numDims == 2) {
-            imgBSize = xDim * yDim;
+            imgBSize = imgB.getExtents()[0] * imgB.getExtents()[1];
+        } else if (numDims == 3){
+            imgBSize = imgB.getExtents()[0] * imgB.getExtents()[1] * imgB.getExtents()[2];
         } else {
-            zDim = imgB.getExtents()[2];
-            imgBSize = xDim * yDim * zDim;
+            imgBSize = imgB.getExtents()[0] * imgB.getExtents()[1] * imgB.getExtents()[2] * imgB.getExtents()[3];
         }
 
         if ( !image.isColorImage()) {
@@ -1456,7 +1445,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
                 if (imgB.getUByte(i) != 0) {
 
-                    // there is at least some mask...so set blank image to flase
+                    // there is at least some mask...so set blank image to false
 
                     int val = imgB.getUByte(i);
                     vals.add(new Integer(val));
@@ -2807,18 +2796,23 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         try {
             ModelImage tmp = image.getParentFrame().getImageB();
 
-            FileImageXML file = new FileImageXML("multipaint_mask_autosave", image.getFileInfo(0).getFileDirectory());
+            FileImageXML file = new FileImageXML(image.getImageName() + "_mask_autosave", image.getFileInfo(0).getFileDirectory());
 
             FileWriteOptions opt = new FileWriteOptions(true);
             opt.setBeginSlice(0);
+            opt.setBeginTime(0);
 
-            if (image.getNDims() > 2) {
+            if (image.getNDims() > 3) {
+                opt.setEndTime(image.getExtents()[3] - 1);
+                opt.setEndSlice(image.getExtents()[2] - 1);
+            } else if (image.getNDims() > 2) {
                 opt.setEndSlice(image.getExtents()[2] - 1);
             } else {
                 opt.setEndSlice(0);
+                opt.setEndTime(0);
             }
 
-            file.writeHeader(tmp, opt, "multipaint_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
+            file.writeHeader(tmp, opt, image.getImageName() + "_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
             file.writeImage(tmp, opt);
 
             file = null;
@@ -2863,23 +2857,28 @@ class MultiPaintAutoSave extends TimerTask {
         // transfer the paint to a ModelImage
         //System.out.println("saving the paint");
 
-        ModelImage tmp = new ModelImage(ModelImage.BOOLEAN, image.getExtents(), "active_mask_autosave");
+        ModelImage tmp = new ModelImage(ModelImage.BOOLEAN, image.getExtents(), image.getImageName() + "_timed_paint_autosave");
 
         try {
             tmp.importData(0, image.getParentFrame().getComponentImage().getPaintMask(), true);
 
-            FileImageXML file = new FileImageXML("active_mask_autosave", image.getFileInfo(0).getFileDirectory());
+            FileImageXML file = new FileImageXML(image.getImageName() + "_timed_paint_autosave", image.getFileInfo(0).getFileDirectory());
 
             FileWriteOptions opt = new FileWriteOptions(true);
             opt.setBeginSlice(0);
+            opt.setBeginTime(0);
 
-            if (image.getNDims() > 2) {
+            if (image.getNDims() > 3) {
+                opt.setEndTime(image.getExtents()[3] - 1);
+                opt.setEndSlice(image.getExtents()[2] - 1);
+            } else if (image.getNDims() > 2) {
                 opt.setEndSlice(image.getExtents()[2] - 1);
             } else {
                 opt.setEndSlice(0);
+                opt.setEndTime(0);
             }
 
-            file.writeHeader(tmp, opt, "active_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
+            file.writeHeader(tmp, opt, image.getImageName() + "_timed_paint_autosave", image.getFileInfo(0).getFileDirectory(), true);
             file.writeImage(tmp, opt);
             file = null;
         } catch (IOException io) {}
