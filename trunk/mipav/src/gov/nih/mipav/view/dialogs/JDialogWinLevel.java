@@ -626,8 +626,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         final Object source = e.getSource();
         if (source == levelSlider || source == windowSlider) {
             calcMinMax();
-                System.err.println("levelSlider.getValue() = " + levelSlider.getValue());
-                System.err.println("windowSlider.getValue() = " +windowSlider.getValue());
+//                System.err.println("levelSlider.getValue() = " + levelSlider.getValue());
+//                System.err.println("windowSlider.getValue() = " +windowSlider.getValue());
 
                 level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
                 window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
