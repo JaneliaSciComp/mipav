@@ -80,6 +80,7 @@ public class WalshHadamardTransform2 extends AlgorithmBase {
 		int length;
 		int intBuffer[];
 		int xTest;
+		int yTest;
 		int z;
 		int src[][];
         int dst[][];
@@ -94,12 +95,6 @@ public class WalshHadamardTransform2 extends AlgorithmBase {
         	zDim = srcImage.getExtents()[2];
         }
         
-        // Image must be square
-        if (xDim != yDim) {
-        	MipavUtil.displayError("Must have xDim == yDim");
-        	setCompleted(false);
-        	return;
-        }
         
         xTest = xDim;
         while ((xTest % 2) == 0) {
@@ -110,8 +105,17 @@ public class WalshHadamardTransform2 extends AlgorithmBase {
         	setCompleted(false);
         	return;	
         }
-        src = new int[xDim][xDim];
-        dst = new int[xDim][xDim];
+        yTest = yDim;
+        while ((yTest % 2) == 0) {
+        	yTest = yTest/2;
+        }
+        if (yTest != 1) {
+        	MipavUtil.displayError("Y dimension not a power of 2");
+        	setCompleted(false);
+        	return;	
+        }
+        src = new int[yDim][xDim];
+        dst = new int[yDim][xDim];
         for (z = 0; z < zDim; z++) {
         	try {
                 srcImage.exportData(z * length, length, intBuffer); // locks and releases lock
@@ -127,7 +131,7 @@ public class WalshHadamardTransform2 extends AlgorithmBase {
         			dst[y][x] = 0;
         		}
         	}
-        	fwht_transform2D(xDim, src, dst);
+        	fwht_transform2D(yDim, xDim, src, dst);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			intBuffer[x + y * xDim] = dst[y][x];
@@ -143,7 +147,7 @@ public class WalshHadamardTransform2 extends AlgorithmBase {
                 return;
              }
         	// Inverse transform
-        	fwht_transform2D(xDim, dst, src);
+        	fwht_transform2D(yDim, xDim, dst, src);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			intBuffer[x + y * xDim] = src[y][x]/length;
@@ -164,23 +168,23 @@ public class WalshHadamardTransform2 extends AlgorithmBase {
         return;
 	}
 	
-	public void fwht_transform2D(int n, int src[][], int dst[][]) {
+	public void fwht_transform2D(int yDim, int xDim, int src[][], int dst[][]) {
 		int i, j;
-		int transT[][] = new int[n][n];
-		int dstT[][] = new int[n][n];
-		for (i = 0; i < n; i++) {
-		    fwht_transform(n, src[i], dst[i]);	
+		int transT[][] = new int[xDim][yDim];
+		int dstT[][] = new int[xDim][yDim];
+		for (i = 0; i < yDim; i++) {
+		    fwht_transform(xDim, src[i], dst[i]);	
 		}
-		for (i = 0; i < n; i++) {
-			for (j = 0; j < n; j++) {
+		for (i = 0; i < xDim; i++) {
+			for (j = 0; j < yDim; j++) {
 				transT[i][j] = dst[j][i];
 			}
 		}
-		for (i = 0; i < n; i++) {
-			fwht_transform(n, transT[i], dstT[i]);
+		for (i = 0; i < xDim; i++) {
+			fwht_transform(yDim, transT[i], dstT[i]);
 		}
-		for (i  = 0; i < n; i++) {
-			for (j = 0; j < n; j++) {
+		for (i  = 0; i < yDim; i++) {
+			for (j = 0; j < xDim; j++) {
 				dst[i][j] = dstT[j][i];
 			}
 		}
