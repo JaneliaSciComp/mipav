@@ -45,7 +45,6 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
     private JRadioButton sequencyButton;
     private JRadioButton dyadicButton;
     private JRadioButton naturalButton;
-    private boolean twoD = false;
 	
 	/**
      * Empty constructor needed for dynamic instantiation.
