@@ -135,7 +135,7 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
         gbc.gridy = 3;
         paramsPanel.add(naturalButton, gbc);
         
-        JLabel unifiedLabel = new JLabel("Unifed 2D transform:");
+        JLabel unifiedLabel = new JLabel("Unified 2D transform:");
         unifiedLabel.setForeground(Color.black);
         unifiedLabel.setFont(serif12);
         gbc.gridx = 0;
