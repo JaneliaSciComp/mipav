@@ -24,6 +24,11 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
 
     /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
+	public final static int SEQUENCY = 1;
+	public final static int DYADIC = 2;
+	public final static int NATURAL = 3;
+	public final static int UNIFIED2D = 4;
+	int type;
 		
 	private ModelImage srcImage;
 	
@@ -33,11 +38,13 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
     
     private WalshHadamardTransform whAlgo;
     
-    private WalshHadamardTransform2 wh2Algo;
+    private WalshHadamardTransform3 wh3Algo;
     
-    private ButtonGroup algoGroup;
+    private ButtonGroup typeGroup;
     private JRadioButton twoDButton;
-    private JRadioButton oneDButton;
+    private JRadioButton sequencyButton;
+    private JRadioButton dyadicButton;
+    private JRadioButton naturalButton;
     private boolean twoD = false;
 	
 	/**
@@ -88,7 +95,7 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
     private void init() {
         setForeground(Color.black);
 
-        setTitle("Walsh Hadamard Trqansform");
+        setTitle("Walsh Hadamard Transform");
         getContentPane().setLayout(new BorderLayout());
         JPanel paramsPanel = new JPanel(new GridBagLayout());
         paramsPanel.setBorder(buildTitledBorder("Transform parameters"));
@@ -101,19 +108,46 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
         gbc.gridx = 0;
         gbc.gridy = 0;
         
-        algoGroup = new ButtonGroup();
-        oneDButton = new JRadioButton("Separate 1D row and column transforms", true);
-        oneDButton.setFont(serif12);
-        algoGroup.add(oneDButton);
-        paramsPanel.add(oneDButton, gbc);
-
+        JLabel separateLabel = new JLabel("Separate 1D row and column transforms:");
+        separateLabel.setForeground(Color.black);
+        separateLabel.setFont(serif12);
+        paramsPanel.add(separateLabel, gbc);
         
-        twoDButton = new JRadioButton("Unified 2D transform", false);
-        twoDButton.setFont(serif12);
-        algoGroup.add(twoDButton);
-
+        typeGroup = new ButtonGroup();
+        sequencyButton = new JRadioButton("Sequency (Walsh)", true);
+        sequencyButton.setFont(serif12);
+        typeGroup.add(sequencyButton);
         gbc.gridx = 0;
         gbc.gridy = 1;
+        paramsPanel.add(sequencyButton, gbc);
+        
+        dyadicButton = new JRadioButton("Dyadic (Paley)", false);
+        dyadicButton.setFont(serif12);
+        typeGroup.add(dyadicButton);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        paramsPanel.add(dyadicButton, gbc);
+        
+        naturalButton = new JRadioButton("Natural (Hadamard)", false);
+        naturalButton.setFont(serif12);
+        typeGroup.add(naturalButton);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        paramsPanel.add(naturalButton, gbc);
+        
+        JLabel unifiedLabel = new JLabel("Unifed 2D transform:");
+        unifiedLabel.setForeground(Color.black);
+        unifiedLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        paramsPanel.add(unifiedLabel, gbc);
+        
+        twoDButton = new JRadioButton("Unified 2D", false);
+        twoDButton.setFont(serif12);
+        typeGroup.add(twoDButton);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         paramsPanel.add(twoDButton, gbc);
         
         getContentPane().add(paramsPanel, BorderLayout.CENTER);
@@ -126,21 +160,33 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
     
     private boolean setVariables() {
     	
-        twoD = twoDButton.isSelected();    
+        if (sequencyButton.isSelected()) {
+        	type = SEQUENCY;
+        }
+        else if (dyadicButton.isSelected()) {
+        	type = DYADIC;
+        }
+        else if (naturalButton.isSelected()) {
+        	type = NATURAL;
+        }
+        else if (twoDButton.isSelected()) {
+        	type = UNIFIED2D;
+        }
     	return true;
     }
 	
 	protected void callAlgorithm() {
 		try {
-			if (twoD) {
-		        transformImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_transform");
+			
+		    transformImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_transform");
+			if (type == UNIFIED2D) {
+		        inverseImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), srcImage.getImageName() + "_inverse");
 			}
 			else {
-				transformImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), srcImage.getImageName() + "_transform");	
+				inverseImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_inverse");	
 			}
-		    inverseImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), srcImage.getImageName() + "_inverse");
 		    
-		    if (twoD) {
+		    if (type == UNIFIED2D) {
 		    	// Unified two dimensional transform
 			    whAlgo = new WalshHadamardTransform(transformImage, inverseImage, srcImage);
 			    
@@ -168,15 +214,15 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
 		    }
 		    else {
 		    	// Separate 1D row and column transforms
-                wh2Algo = new WalshHadamardTransform2(transformImage, inverseImage, srcImage);
+                wh3Algo = new WalshHadamardTransform3(transformImage, inverseImage, srcImage, type);
 			    
 			    // This is very important. Adding this object as a listener allows the algorithm to
 			    // notify this object when it has completed of failed. See algorithm performed event.
 			    // This is made possible by implementing AlgorithmedPerformed interface
-			    wh2Algo.addListener(this);
+			    wh3Algo.addListener(this);
 			
 			
-			    createProgressBar(srcImage.getImageName(), wh2Algo);
+			    createProgressBar(srcImage.getImageName(), wh3Algo);
 			
 			    // Hide dialog
 			    setVisible(false);
@@ -184,12 +230,12 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
 			    if (isRunInSeparateThread()) {
 			
 			        // Start the thread as a low priority because we wish to still have user interface work fast.
-			        if (wh2Algo.startMethod(Thread.MIN_PRIORITY) == false) {
+			        if (wh3Algo.startMethod(Thread.MIN_PRIORITY) == false) {
 			            MipavUtil.displayError("A thread is already running on this object");
 			        }
 			    } else {
 			
-			        wh2Algo.run();
+			        wh3Algo.run();
 			    }  
 		    }
 	    } catch (OutOfMemoryError x) {
@@ -265,9 +311,9 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
                 System.gc();
         	}
         }
-        else if (algorithm instanceof WalshHadamardTransform2) {
+        else if (algorithm instanceof WalshHadamardTransform3) {
         	
-        	if (wh2Algo.isCompleted()) {
+        	if (wh3Algo.isCompleted()) {
         		if (transformImage != null) {
         			updateFileInfo(srcImage, transformImage);
         			
@@ -291,7 +337,7 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
                                                       "Error", JOptionPane.ERROR_MESSAGE);
                     }
         		} // if (inverseImage != null)
-        	} // if (wh2Algo.isCompleted())
+        	} // if (wh3Algo.isCompleted())
         	else {
         		if (transformImage != null) {
     	    		transformImage.disposeLocal();
@@ -316,13 +362,13 @@ public class JDialogWalshHadamardTransform extends JDialogScriptableBase impleme
 	
 	protected void setGUIFromParams() {
 		srcImage = scriptParameters.retrieveInputImage();
-		twoD = scriptParameters.getParams().getBoolean("two_D");
+		type = scriptParameters.getParams().getInt("typ");
 	}
 	
 	protected void storeParamsFromGUI() throws ParserException {
 		scriptParameters.storeInputImage(srcImage);	
 		scriptParameters.storeImageInRecorder(transformImage);
 		scriptParameters.storeImageInRecorder(inverseImage);
-		scriptParameters.getParams().put(ParameterFactory.newParameter("two_D", twoD));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("typ", type));
 	}
 }
