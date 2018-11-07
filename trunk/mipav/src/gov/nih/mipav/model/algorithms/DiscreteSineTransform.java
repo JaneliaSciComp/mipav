@@ -1963,9 +1963,6 @@ public class DiscreteSineTransform {
 	        for (i = 0; i < a.length - (n - m); i++) {
 	        	a[i + n - m] = am[i];
 	        }
-	        for (i = 0; i < w.length - (nw - (m >> 1)); i++) {
-	        	w[i + nw - (m >> 1)] = wnw[i];
-	        }
 	    }
 	    am = new double[a.length - (n - m)];
         for (i = 0; i < a.length - (n - m); i++) {
