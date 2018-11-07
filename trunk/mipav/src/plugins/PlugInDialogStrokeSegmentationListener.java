@@ -50,7 +50,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     
     private boolean doAutoStart = false;
     
-    private int minExpectedSlices = 40;
+    private int minExpectedSlices = 30;
     
     private StrokeSegmentationDicomReceiver dicomReceiver;
     

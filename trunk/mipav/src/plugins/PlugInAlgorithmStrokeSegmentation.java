@@ -274,12 +274,14 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         // do first two results with selection only based on core size
         File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
+//        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, cerebellumSkipSliceMax, false);
         
         if (lightboxPass1 != null) {
             lightboxFileList.add(lightboxPass1);
         }
         
         File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, false);
+//        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, false, cerebellumSkipAggressiveSliceMax, false);
         
         if (lightboxPass2 != null) {
             lightboxFileList.add(lightboxPass2);
@@ -669,9 +671,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 
                 selectedObjectList.add(selectedObject);
                 System.err.println("Selected object: " + selectedObject.id + "\t" + selectedObject.size + "\t" + coreDistList[selectedObjectIndex]);
-            }
-            
-            if (!allCoreSmallFlag) {
+            } else {
                 int selectedObjectIndex = 0;
                 MaskObject selectedObject = sortedObjects[sortedObjects.length - 1];
                 System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size + "\t" + coreSizeList[0]);
