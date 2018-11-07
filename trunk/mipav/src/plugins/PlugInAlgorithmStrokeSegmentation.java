@@ -122,7 +122,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         final int[] extents = segImg.getExtents();
         final int sliceLength = extents[0] * extents[1];
         final int volLength = sliceLength * extents[2];
-        final FileInfoBase fInfo = segImg.getFileInfo(0);
+        final FileInfoBase fInfo = (FileInfoBase) segImg.getFileInfo(0).clone();
         
 //        // add in lesion segmentation from ADC
 //        ModelImage adcSegImg = fuzzyCMeans(adcImage, 3, 1);
@@ -208,8 +208,13 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                     segImg.disposeLocal();
                 }
                 
+                if (maskImg != null) {
+                    maskImg.disposeLocal();
+                    maskImg = null;
+                }
+                
                 maskBuffer = null;
-                displayError("Error on brain mask importData: " + maskImg.getImageName());
+                displayError("Error on brain mask importData");
                 setCompleted(false);
                 return;
             }
@@ -234,6 +239,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             } else {
                 segBuffer[i] = 0;
             }
+        }
+        
+        if (maskImg != null) {
+            maskImg.disposeLocal();
+            maskImg = null;
         }
         
         try {
@@ -263,17 +273,29 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged(70);
         
         // do first two results with selection only based on core size
-        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, true);
+        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
         
         if (lightboxPass1 != null) {
             lightboxFileList.add(lightboxPass1);
         }
         
-        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, true);
+        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, false);
         
         if (lightboxPass2 != null) {
             lightboxFileList.add(lightboxPass2);
         }
+        
+        // generate lightbox of DWI volume with custom transfer function
+        ModelImage coreLightbox = generateLightbox(dwiImage, null, lightboxOpacity);
+        
+        File lightboxDWI = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_DWI_lightbox", FileUtility.PNG, true);
+        
+        if (lightboxDWI != null) {
+            lightboxFileList.add(lightboxDWI);
+            selectedObjectTable.put(lightboxDWI, new Vector<MaskObject>());
+        }
+        
+        coreLightbox.disposeLocal();
         
 //        // distance-based selection (if small core)
 //        File lightboxPass3 = processThresholdedImg(segImg, segBuffer, extents, 3, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, true);
@@ -331,6 +353,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     }
     
     private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
+        return saveImageFile(img, dir, fileBasename, fileType, false);
+    }
+    
+    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType, boolean useDwiLUT) {
         if (fileIO == null) {
             fileIO = new FileIO();
             fileIO.setQuiet(true);
@@ -355,8 +381,41 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
 
         opts.setOptionsSet(true);
         opts.setMultiFile(false);
+        
+        // TODO set lut/rgb transfer func
+        if (useDwiLUT) {
+            int dwiMaxLUT = 150;
+            
+            ModelLUT dwiLUT = new ModelLUT();
+            TransferFunction tf = new TransferFunction();
+            float[] tfX = new float[] {0, dwiMaxLUT, 255};
+            float[] tfY = new float[] {255, 0, 0};
+            tf.importArrays(tfX, tfY, tfX.length);
+            dwiLUT.setTransferFunction(tf); 
+            int[] indexedLUT = dwiLUT.exportIndexedLUT();
+            
+            ModelImage newRGB = new ModelImage(ModelImage.ARGB, img.getExtents(), img.getImageName() + "_rgb");
+            
+            for (int i = 1; i < img.getSize(); i += 4) {
+                int indexA = (int) (tf.getRemappedValue(img.getInt(i), 255) + 0.5f);   
+                int remappedA = indexedLUT[indexA];
+                int red = (int)((remappedA & 0x00ff0000) >> 16);
+                int green = (int)((remappedA & 0x0000ff00) >> 8);
+                int blue = (int)(remappedA & 0x000000ff);
+//                int pixValue = 0xff000000 | (red << 16) | (green << 8) | (blue);
+                newRGB.setC((i - 1) / 4, 0, 255.0f);
+                newRGB.setC((i - 1) / 4, 1, red);
+                newRGB.setC((i - 1) / 4, 2, green);
+                newRGB.setC((i - 1) / 4, 3, blue);
+            }
 
-        fileIO.writeImage(img, opts, false, false);
+//            ViewJFrameImage frame = new ViewJFrameImage(newRGB);
+//            frame.setActiveImage(ViewJFrameImage.IMAGE_A);
+            
+            fileIO.writeImage(newRGB, opts, false, false);
+        } else {
+            fileIO.writeImage(img, opts, false, false);
+        }
         
         return new File(dir + File.separator + fileBasename + ext);
     }
@@ -518,12 +577,12 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         FileInfoBase fileInfo1;
         ModelImage segImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), "find_objects");
-        fileInfo1 = img.getFileInfo()[0];
-        fileInfo1.setResolutions(img.getResolutions(0));
-        fileInfo1.setUnitsOfMeasure(img.getUnitsOfMeasure());
-        fileInfo1.setAxisOrientation(img.getFileInfo(0).getAxisOrientation());
+        fileInfo1 = (FileInfoBase) img.getFileInfo()[0].clone();
+        fileInfo1.setResolutions(img.getResolutions(0).clone());
+        fileInfo1.setUnitsOfMeasure(img.getUnitsOfMeasure().clone());
+        fileInfo1.setAxisOrientation(img.getFileInfo(0).getAxisOrientation().clone());
         fileInfo1.setImageOrientation(img.getFileInfo(0).getImageOrientation());
-        fileInfo1.setOrigin(img.getFileInfo(0).getOrigin());
+        fileInfo1.setOrigin(img.getFileInfo(0).getOrigin().clone());
         fileInfo1.setSliceThickness(img.getFileInfo(0).getSliceThickness());
         for (int i = 0; i < img.getExtents()[2]; i++) {
             segImg.setFileInfo(fileInfo1, i);
@@ -690,6 +749,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             if (!found) {
                 processBuffer[i] = 0;
             }
+        }
+        
+        if (segImg != null) {
+            segImg.disposeLocal(false);
+            segImg = null;
         }
         
         return processBuffer;
@@ -948,10 +1012,12 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 int passNum = i + 1;
                 
                 int coreSize = getCoreSize(getLightboxFileList().get(i));
-                double coreVol = coreSize * voxelSize;
-                System.err.println("Core Size (pass " + passNum + "):\t" + coreSize + "\t" + coreVol);
-                
-                csvPrinter.printRecord(outputDir, dwiFile, adcFile, passNum, coreSize, coreVol);
+                if (coreSize > 0) {
+                    double coreVol = coreSize * voxelSize;
+                    System.err.println("Core Size (pass " + passNum + "):\t" + coreSize + "\t" + coreVol);
+                    
+                    csvPrinter.printRecord(outputDir, dwiFile, adcFile, passNum, coreSize, coreVol);
+                }
             }
         } catch (final IOException e) {
             e.printStackTrace();
@@ -989,14 +1055,16 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             mathAlgo.run();
         }
         
-        // set any values to fully red if set in the mask
-        for (int i = 0; i < mask.getDataSize(); i++) {
-            if (mask.getBoolean(i) == true) {
-                // TODO set value with opacity blending
-                
-                newRGB.setC(i, 1, 255.0f);
-                newRGB.setC(i, 2, 0f);
-                newRGB.setC(i, 3, 0f);
+        if (mask != null) {
+            // set any values to fully red if set in the mask
+            for (int i = 0; i < mask.getDataSize(); i++) {
+                if (mask.getBoolean(i) == true) {
+                    // TODO set value with opacity blending
+                    
+                    newRGB.setC(i, 1, 255.0f);
+                    newRGB.setC(i, 2, 0f);
+                    newRGB.setC(i, 3, 0f);
+                }
             }
         }
         
@@ -1020,6 +1088,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             lightGen = new LightboxGenerator(newRGB, startSlice, endSlice, zoomPercent, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
             lightGen.run();
             lightbox = lightGen.getImage();
+            
             lightbox.calcMinMax();
         } catch (final Exception e) {
             e.printStackTrace();

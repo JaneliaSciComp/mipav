@@ -941,7 +941,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     }
     
     public static final boolean isADC(final String imgType) {
-        return (imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED"));
+        return (imgType.equalsIgnoreCase("Average DC") || imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED"));
     }
     
     public static final boolean isDWI(final String imgType) {
