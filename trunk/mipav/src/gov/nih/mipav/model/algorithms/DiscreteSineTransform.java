@@ -1159,9 +1159,6 @@ public class DiscreteSineTransform {
 	        		wnw[i] = w[i + nw - 8];
 	        	}
 	            cftf161(a, wnw);
-	            for (i = 0; i < w.length - (nw - 8); i++) {
-	        		w[i + nw - 8] = wnw[i];
-	        	}
 	            bitrv216neg(a);
 	        } else {
 	            cftf081(a, w);
