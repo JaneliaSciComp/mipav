@@ -2345,9 +2345,6 @@ public class DiscreteSineTransform {
 	        for (i = 0; i < 32; i++) {
 	        	a32[i] = a[64 + i];
 	        }
-	        for (i = 0; i < 4; i++) {
-	        	w4[i] = w[nw - 8 + i];
-	        }
 	        cftf161(a32, w4);
 	        for (i = 0; i < 32; i++) {
 	        	a[64 + i] = a32[i];
