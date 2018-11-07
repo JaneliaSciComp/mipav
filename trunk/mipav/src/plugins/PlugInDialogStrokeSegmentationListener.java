@@ -30,7 +30,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     private JTextField outputDirField;
     private JTextField reportDirField;
 //    private JTextField emailField;
-    private JTextField numExpectedSlicesField;
+    private JTextField minExpectedSlicesField;
     
     private JCheckBox emailCheckbox;
     
@@ -50,7 +50,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     
     private boolean doAutoStart = false;
     
-    private int numExpectedSlices = 40;
+    private int minExpectedSlices = 40;
     
     private StrokeSegmentationDicomReceiver dicomReceiver;
     
@@ -191,16 +191,16 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         gbc.gridy++;
         gbc.gridx = 0;
         
-        JLabel labelNumSlices = new JLabel("Number of expected slices per ADC/DWI volume");
+        JLabel labelNumSlices = new JLabel("Minimum number of expected slices per ADC/DWI volume");
         labelNumSlices.setForeground(Color.black);
         labelNumSlices.setFont(MipavUtil.font12);
         mainPanel.add(labelNumSlices, gbc);
         
-        numExpectedSlicesField = new JTextField(20);
-        numExpectedSlicesField.setText("" + numExpectedSlices);
+        minExpectedSlicesField = new JTextField(20);
+        minExpectedSlicesField.setText("" + minExpectedSlices);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
-        mainPanel.add(numExpectedSlicesField, gbc);
+        mainPanel.add(minExpectedSlicesField, gbc);
         
 //        
 //        JLabel labelEmail = new JLabel("Send email report to");
@@ -279,7 +279,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         reportDir = reportDirField.getText();
         doEmailReport = emailCheckbox.isSelected();
 //        emailAddress = emailField.getText();
-        numExpectedSlices = Integer.parseInt(numExpectedSlicesField.getText());
+        minExpectedSlices = Integer.parseInt(minExpectedSlicesField.getText());
         
         return true;
     }
@@ -288,7 +288,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
         try {
             log("Starting DICOM receiver: " + ae + " @ " + ipAddress + ":" + port);
             
-            dicomReceiver = new StrokeSegmentationDicomReceiver(ipAddress, port, ae, outputDir, reportDir, numExpectedSlices, doEmailReport, logOutputArea);
+            dicomReceiver = new StrokeSegmentationDicomReceiver(ipAddress, port, ae, outputDir, reportDir, minExpectedSlices, doEmailReport, logOutputArea);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -426,7 +426,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
                 
                 doAutoStart = Boolean.parseBoolean(prop.getProperty("listenerAutoStart", "" + doAutoStart));
                 
-                numExpectedSlices = Integer.parseInt(prop.getProperty("listenerNumExpectedSlices", "" + numExpectedSlices));
+                minExpectedSlices = Integer.parseInt(prop.getProperty("listenerMinExpectedSlices", "" + minExpectedSlices));
                 
                 if (in != null) {
                     in.close();

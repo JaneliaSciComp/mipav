@@ -167,7 +167,7 @@ public class StrokeSegmentationDicomReceiver {
     private String emailHost;
     private String emailPort;
     
-    private int numExpectedSlices;
+    private int minExpectedSlices;
 
     // TODO new storage format
     
@@ -186,7 +186,7 @@ public class StrokeSegmentationDicomReceiver {
         
         logOutputArea = area;
         
-        numExpectedSlices = numSlices;
+        minExpectedSlices = numSlices;
         
         conn.setBindAddress(serverIP);
         conn.setPort(serverPort);
@@ -561,11 +561,11 @@ public class StrokeSegmentationDicomReceiver {
                     File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
                     int numDwiFiles = dwiDirFile.listFiles().length;
                     
-                    if (numAdcFiles == numDwiFiles && numAdcFiles == numExpectedSlices) {
+                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
                         log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
                         new PlugInDialogStrokeSegmentation(StrokeSegmentationDicomReceiver.this, baseOutputDir.getAbsolutePath());
                     } else {
-                        log("Expected number of DWI or ADC files not reached " + numExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
                     }
                 } else {
                     log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + ").");
@@ -764,17 +764,18 @@ public class StrokeSegmentationDicomReceiver {
             String passDetails = "";
             if (passNum == 1) {
                 passDetails = " -- first 9 slices excluded";
+                reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
             } else if (passNum == 2) {
                 passDetails = " -- first 15 slices excluded";
+                reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
             } else if (passNum == 3) {
-                passDetails = " -- core selection based on distance from image center (if no object above 5cc)";
+                reportTxt += "<h3>" + "DWI image" + "</h3>\n";
             }
             
-            reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
-            
-            // TODO vol
-            String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
-            reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
+            if (coreObjectTable.get(lightboxFileList.get(i)) > 0) {
+                String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
+                reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
+            }
             
             //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='ADC volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
             reportTxt += "<img src='" + reportCidBase + passNum + "' alt='ADC image with core segmentation pass " + passNum + "'/>\n";
