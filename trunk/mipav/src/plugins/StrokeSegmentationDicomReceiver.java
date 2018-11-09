@@ -763,12 +763,12 @@ public class StrokeSegmentationDicomReceiver {
             
             String passDetails = "";
             if (passNum == 1) {
-                passDetails = " -- first 9 slices excluded";
+//                passDetails = " -- first 9 slices excluded";
                 reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
             } else if (passNum == 2) {
-                passDetails = " -- first 15 slices excluded";
-                reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
-            } else if (passNum == 3) {
+//                passDetails = " -- first 15 slices excluded";
+//                reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
+//            } else if (passNum == 3) {
                 reportTxt += "<h3>" + "DWI image" + "</h3>\n";
             }
             
