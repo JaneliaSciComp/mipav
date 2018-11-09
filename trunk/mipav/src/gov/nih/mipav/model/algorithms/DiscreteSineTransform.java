@@ -1,6 +1,10 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import gov.nih.mipav.view.*;
 
 public class DiscreteSineTransform {
@@ -88,30 +92,56 @@ public class DiscreteSineTransform {
 	      http://www-dsp.rice.edu/research/fft/fftnote.asc
     */
 	
-	//private final static int CDFT_THREADS_BEGIN_N = 32768;
+	private final static int CDFT_THREADS_BEGIN_N = 32768;
+	private final static int CDFT_4THREADS_BEGIN_N = 65536;
+
 	// Original values NMAX = 8192 and NMAXSQRT = 64;
 	private final static int NMAX = 131072;
 	private final static int NMAXSQRT = 256; 
     private int seed;
+    boolean multiProcessor = false;
+    
+    public DiscreteSineTransform() {
+		
+	}
+    
+    public DiscreteSineTransform(boolean multiProcessor) {
+        this.multiProcessor = multiProcessor;
+    }
 	
-	
-	// n = 2 gave ddst err = 2.7755575615628914E-17
-    // n = 4 gave ddst err = 1.1102230246251565E-16
-    // n = 8 gave ddst err = 1.1102230246251565E-16
-    // n = 16 gave ddst err = 1.1102230246251565E-16
-    // n = 32 gave ddst err = 2.220446049250313E-16
-    // n = 64 gave ddst err = 4.440892098500626E-16
-    // n = 128 gave ddst err = 4.440892098500626E-16
-    // n = 256 gave ddst err = 4.440892098500626E-16
-    // n = 512 gave ddst err = 5.551115123125783E-16
-    // n = 1024 gave ddst err = 5.551115123125783E-16
-    // n = 2048 gave ddst err = 6.661338147750939E-16
-    // n = 4096 gave ddst err = 7.771561172376096E-16
-    // n = 8192 gave ddst err = 7.771561172376096E-16
-    // n = 16384 gave ddst err = 8.881784197001252E-16
-    // n = 32768 gave ddst err = 9.992007221626409E-16
-    // n = 65536 gave ddst err = 9.992007221626409E-16
-    // n = 131072 gave ddst err = 9.992007221626409E-16
+	/*
+    int n;
+    for (n = 2; n <= 131072; n = 2*n) {
+	    DiscreteSineTransform dst = new DiscreteSineTransform(false);
+	    dst.testddst(n);
+    }
+    for (n = 32768; n <= 131072; n = 2*n) {
+    	DiscreteSineTransform dst = new DiscreteSineTransform(true);
+    	dst.testddst(n);
+    }
+	return;
+    ddst n = 2 multiProcessor = false err = 2.7755575615628914E-17
+	ddst n = 4 multiProcessor = false err = 1.1102230246251565E-16
+	ddst n = 8 multiProcessor = false err = 1.1102230246251565E-16
+	ddst n = 16 multiProcessor = false err = 1.1102230246251565E-16
+	ddst n = 32 multiProcessor = false err = 2.220446049250313E-16
+	ddst n = 64 multiProcessor = false err = 4.440892098500626E-16
+	ddst n = 128 multiProcessor = false err = 4.440892098500626E-16
+	ddst n = 256 multiProcessor = false err = 4.440892098500626E-16
+	ddst n = 512 multiProcessor = false err = 5.551115123125783E-16
+	ddst n = 1024 multiProcessor = false err = 5.551115123125783E-16
+	ddst n = 2048 multiProcessor = false err = 6.661338147750939E-16
+	ddst n = 4096 multiProcessor = false err = 7.771561172376096E-16
+	ddst n = 8192 multiProcessor = false err = 7.771561172376096E-16
+	ddst n = 16384 multiProcessor = false err = 8.881784197001252E-16
+	ddst n = 32768 multiProcessor = false err = 9.992007221626409E-16
+	ddst n = 65536 multiProcessor = false err = 9.992007221626409E-16
+	ddst n = 131072 multiProcessor = false err = 9.992007221626409E-16
+	ddst n = 32768 multiProcessor = true err = 9.992007221626409E-16
+	ddst n = 65536 multiProcessor = true err = 9.992007221626409E-16
+	ddst n = 131072 multiProcessor = true err = 9.992007221626409E-16
+	*/
+
     public void testddst(int n) {
 		// n is the data length must be a power of 2
 		int ip[] = new int[NMAXSQRT + 2];
@@ -121,14 +151,13 @@ public class DiscreteSineTransform {
 
 	    ip[0] = 0;
 
-		
 		/* check of DDST */
 	    putdata(0, n - 1, a);
 	    ddst(n, 1, a, ip, w);
 	    ddst(n, -1, a, ip, w);
 	    a[0] *= 0.5;
 	    err = errorcheck(0, n - 1, 2.0 / n, a);
-	    System.out.println("ddst err = " + err);
+	    System.out.println("ddst n = " + n + " multiProcessor = " + multiProcessor + " err = " + err);
 
 	}
 	
@@ -288,12 +317,9 @@ public class DiscreteSineTransform {
 	        		wnw[i] = w[nw - (n >> 2) + i];
 	        	}
 	            cftf1st(n, a, wnw);
-	//#ifdef USE_CDFT_THREADS
-	            //if (n > CDFT_THREADS_BEGIN_N) {
-	                //cftrec4_th(n, a, nw, w);
-	            //} else 
-	//#endif /* USE_CDFT_THREADS */
-	            if (n > 512) {
+	            if (multiProcessor && n > CDFT_THREADS_BEGIN_N) {
+	                cftrec4_th(n, a, nw, w);
+	            } else if (n > 512) {
 	                cftrec4(n, a, nw, w);
 	            } else if (n > 128) {
 	                cftleaf(n, 1, a, nw, w);
@@ -1140,12 +1166,9 @@ public class DiscreteSineTransform {
 	            for (i = 0; i < w.length - (nw - (n >> 2)); i++) {
 	        		w[i + nw - (n >> 2)] = wnw[i];
 	        	}
-	//#ifdef USE_CDFT_THREADS
-	            //if (n > CDFT_THREADS_BEGIN_N) {
-	               // cftrec4_th(n, a, nw, w);
-	            //} else 
-	//#endif /* USE_CDFT_THREADS */
-	            if (n > 512) {
+	            if (multiProcessor && n > CDFT_THREADS_BEGIN_N) {
+	               cftrec4_th(n, a, nw, w);
+	            } else if (n > 512) {
 	                cftrec4(n, a, nw, w);
 	            } else if (n > 128) {
 	                cftleaf(n, 1, a, nw, w);
@@ -1951,8 +1974,8 @@ public class DiscreteSineTransform {
 	    m = n;
 	    while (m > 512) {
 	        m >>= 2;
-	        am = new double[a.length - (n - m)];
-	        for (i = 0; i < a.length - (n - m); i++) {
+	        am = new double[m];
+	        for (i = 0; i < m; i++) {
 	        	am[i] = a[i + n - m];
 	        }
 	        wnw = new double[w.length - (nw - (m >> 1))];
@@ -1960,28 +1983,28 @@ public class DiscreteSineTransform {
 	        	wnw[i] = w[i + nw - (m >> 1)];
 	        }
 	        cftmdl1(m, am, wnw);
-	        for (i = 0; i < a.length - (n - m); i++) {
+	        for (i = 0; i < m; i++) {
 	        	a[i + n - m] = am[i];
 	        }
 	    }
-	    am = new double[a.length - (n - m)];
-        for (i = 0; i < a.length - (n - m); i++) {
+	    am = new double[m];
+        for (i = 0; i < m; i++) {
         	am[i] = a[i + n - m];
         }
 	    cftleaf(m, 1, am, nw, w);
-	    for (i = 0; i < a.length - (n - m); i++) {
+	    for (i = 0; i < m; i++) {
         	a[i + n - m] = am[i];
         }
 	    k = 0;
 	    for (j = n - m; j > 0; j -= m) {
 	        k++;
 	        isplt = cfttree(m, j, k, a, nw, w);
-	        am = new double[a.length - (j - m)];
-	        for (i = 0; i < a.length - (j - m); i++) {
+	        am = new double[m];
+	        for (i = 0; i < m; i++) {
 	        	am[i] = a[i + j - m];
 	        }
 	        cftleaf(m, isplt, am, nw, w);
-	        for (i = 0; i < a.length - (j - m); i++) {
+	        for (i = 0; i < m; i++) {
 	        	a[i + j - m] = am[i];
 	        }
 	    }
@@ -1998,8 +2021,8 @@ public class DiscreteSineTransform {
 	    
 	    if ((k & 3) != 0) {
 	        isplt = k & 1;
-	        aa = new double[a.length - (j - n)];
-	        for (p = 0; p < a.length - (j-n); p++) {
+	        aa = new double[n];
+	        for (p = 0; p < n; p++) {
 	        	aa[p] = a[j - n + p];
 	        }
 	        if (isplt != 0) {
@@ -2015,7 +2038,7 @@ public class DiscreteSineTransform {
 	        	}
 	            cftmdl2(n, aa, wnw);
 	        }
-	        for (p = 0; p < a.length - (j-n); p++) {
+	        for (p = 0; p < n; p++) {
 	        	a[j - n + p] = aa[p];
 	        }
 	    } else {
@@ -2026,8 +2049,8 @@ public class DiscreteSineTransform {
 	        isplt = i & 1;
 	        if (isplt != 0) {
 	            while (m > 128) {
-	            	aa = new double[a.length - (j - m)];
-	    	        for (p = 0; p < a.length - (j-m); p++) {
+	            	aa = new double[m];
+	    	        for (p = 0; p < m; p++) {
 	    	        	aa[p] = a[j - m + p];
 	    	        }
 	    	        wnw = new double[w.length - (nw - (m >> 1))];
@@ -2035,15 +2058,15 @@ public class DiscreteSineTransform {
 		        		wnw[p] = w[nw - (m >> 1) + p];
 		        	}
 	                cftmdl1(m, aa, wnw);
-	                for (p = 0; p < a.length - (j-m); p++) {
+	                for (p = 0; p < m; p++) {
 	    	        	a[j - m + p] = aa[p];
 	    	        }
 	                m >>= 2;
 	            }
 	        } else {
 	            while (m > 128) {
-	            	aa = new double[a.length - (j - m)];
-	    	        for (p = 0; p < a.length - (j-m); p++) {
+	            	aa = new double[m];
+	    	        for (p = 0; p < m; p++) {
 	    	        	aa[p] = a[j - m + p];
 	    	        }
 	    	        wnw = new double[w.length - (nw - m)];
@@ -2051,7 +2074,7 @@ public class DiscreteSineTransform {
 		        		wnw[p] = w[nw - m + p];
 		        	}
 	                cftmdl2(m, aa, wnw);
-	                for (p = 0; p < a.length - (j-m); p++) {
+	                for (p = 0; p < m; p++) {
 	    	        	a[j - m + p] = aa[p];
 	    	        }
 	                m >>= 2;
@@ -2360,12 +2383,12 @@ public class DiscreteSineTransform {
 	    	for (i = 0; i < w.length - (nw - 128); i++) {
 	    		wnw[i] = w[i + nw - 128];
 	    	}
-	    	aa = new double[a.length - 128];
-	    	for (i = 0; i < a.length - 128; i++) {
+	    	aa = new double[128];
+	    	for (i = 0; i < 128; i++) {
 	    		aa[i] = a[i+128];
 	    	}
 	        cftmdl2(128, aa, wnw);
-	        for (i = 0; i < a.length - 128; i++) {
+	        for (i = 0; i < 128; i++) {
 	    		a[i+128] = aa[i];
 	    	}
 	        for (i = 0; i < 32; i++) {
@@ -2412,17 +2435,23 @@ public class DiscreteSineTransform {
 	    	for (i = 0; i < w.length - (nw - 64); i++) {
 	    		wnw[i] = w[i + nw - 64];
 	    	}
-	    	aa = new double[a.length - 256];
-	    	for (i = 0; i < a.length - 256; i++) {
+	    	aa = new double[128];
+	    	for (i = 0; i < 128; i++) {
 	    		aa[i] = a[i+256];
 	    	}
 	        cftmdl1(128, aa, wnw);
+	        for (i = 0; i < 128; i++) {
+	    		a[i+256] = aa[i];
+	    	}
 	        for (i = 0; i < 4; i++) {
 	        	w4[i] = w[nw - 8 + i];
 	        }
-	        cftf161(aa, w4);
-	        for (i = 0; i < a.length - 256; i++) {
-	    		a[i+256] = aa[i];
+	        for (i = 0; i < 32; i++) {
+	    		a32[i] = a[i+256];
+	    	}
+	        cftf161(a32, w4);
+	        for (i = 0; i < 32; i++) {
+	    		a[i+256] = a32[i];
 	    	}
 	        for (i = 0; i < 32; i++) {
 	        	a32[i] = a[288+i];
@@ -2456,12 +2485,12 @@ public class DiscreteSineTransform {
 	 	    	for (i = 0; i < w.length - (nw - 64); i++) {
 	 	    		wnw[i] = w[i + nw - 64];
 	 	    	}
-	        	aa = new double[a.length - 384];
-	        	for (i = 0; i < a.length - 384; i++) {
+	        	aa = new double[128];
+	        	for (i = 0; i < 128; i++) {
 		    		aa[i] = a[i+384];
 		    	}
 	            cftmdl1(128, aa, wnw);
-	            for (i = 0; i < a.length - 384; i++) {
+	            for (i = 0; i < 128; i++) {
 		    		a[i+384] = aa[i];
 		    	}
 	            for (i = 0; i < 32; i++) {
@@ -2479,12 +2508,12 @@ public class DiscreteSineTransform {
 		    	for (i = 0; i < w.length - (nw - 128); i++) {
 		    		wnw[i] = w[i + nw - 128];
 		    	}
-	        	aa = new double[a.length - 384];
-	        	for (i = 0; i < a.length - 384; i++) {
+	        	aa = new double[128];
+	        	for (i = 0; i < 128; i++) {
 		    		aa[i] = a[i+384];
 		    	}
 	            cftmdl2(128, aa, wnw);
-	            for (i = 0; i < a.length - 384; i++) {
+	            for (i = 0; i < 128; i++) {
 		    		a[i+384] = aa[i];
 		    	}
 	            for (i = 0; i < 32; i++) {
@@ -2563,12 +2592,12 @@ public class DiscreteSineTransform {
  	    	for (i = 0; i < w.length - (nw - 64); i++) {
  	    		wnw[i] = w[i + nw - 64];
  	    	}
-	        aa = new double[a.length - 64];
-        	for (i = 0; i < a.length - 64; i++) {
+	        aa = new double[64];
+        	for (i = 0; i < 64; i++) {
 	    		aa[i] = a[i+64];
 	    	}
 	        cftmdl2(64, aa, wnw);
-	        for (i = 0; i < a.length - 64; i++) {
+	        for (i = 0; i < 64; i++) {
 	    		a[i+64] = aa[i];
 	    	}
 	        for (i = 0; i < 4; i++) {
@@ -2606,18 +2635,24 @@ public class DiscreteSineTransform {
  	    	for (i = 0; i < w.length - (nw - 32); i++) {
  	    		wnw[i] = w[i + nw - 32];
  	    	}
- 	    	aa = new double[a.length - 128];
-        	for (i = 0; i < a.length - 128; i++) {
+ 	    	aa = new double[64];
+        	for (i = 0; i < 64; i++) {
 	    		aa[i] = a[i+128];
 	    	}
 	        cftmdl1(64, aa, wnw);
+	        for (i = 0; i < 64; i++) {
+	    		a[i+128] = aa[i];
+	    	}
 	        for (i = 0; i < 4; i++) {
 	        	w4[i] = w[nw - 8 + i];
 	        }
-	        cftf081(aa, w4);
-	        for (i = 0; i < a.length - 128; i++) {
-	    		a[i+128] = aa[i];
-	    	}
+	        for (i = 0; i < 16; i++) {
+	        	a16[i] = a[128 + i];
+	        }
+	        cftf081(a16, w4);
+	        for (i = 0; i < 16; i++) {
+	        	a[128 + i] = a16[i];
+	        }
 	        for (i = 0; i < 16; i++) {
 	        	a16[i] = a[144 + i];
 	        }
@@ -2644,12 +2679,12 @@ public class DiscreteSineTransform {
 	 	    	for (i = 0; i < w.length - (nw - 32); i++) {
 	 	    		wnw[i] = w[i + nw - 32];
 	 	    	}
-	 	    	aa = new double[a.length - 192];
-	        	for (i = 0; i < a.length - 192; i++) {
+	 	    	aa = new double[64];
+	        	for (i = 0; i < 64; i++) {
 		    		aa[i] = a[i+192];
 		    	}
 	            cftmdl1(64, aa, wnw);
-	            for (i = 0; i < a.length - 192; i++) {
+	            for (i = 0; i < 64; i++) {
 		    		a[i+192] = aa[i];
 		    	}
 	            for (i = 0; i < 2; i++) {
@@ -2667,12 +2702,12 @@ public class DiscreteSineTransform {
 	 	    	for (i = 0; i < w.length - (nw - 64); i++) {
 	 	    		wnw[i] = w[i + nw - 64];
 	 	    	}
-	 	    	aa = new double[a.length - 192];
-	        	for (i = 0; i < a.length - 192; i++) {
+	 	    	aa = new double[64];
+	        	for (i = 0; i < 64; i++) {
 		    		aa[i] = a[i+192];
 		    	}
 	            cftmdl2(64, aa, wnw);
-	            for (i = 0; i < a.length - 192; i++) {
+	            for (i = 0; i < 64; i++) {
 		    		a[i+192] = aa[i];
 		    	}
 	            for (i = 0; i < 4; i++) {
@@ -3211,5 +3246,230 @@ public class DiscreteSineTransform {
 	        a[k + 1] -= yi;
 	    }
 	}
+	
+	/*#define cdft_thread_create(thp,func,argp) { \
+	    DWORD thid; \
+	    *(thp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) func, (LPVOID) argp, 0, &thid); \
+	    if (*(thp) == 0) { \
+	        fprintf(stderr, "cdft thread error\n"); \
+	        exit(1); \
+	    } \
+	}
+	#define cdft_thread_wait(th) { \
+	    WaitForSingleObject(th, INFINITE); \
+	    CloseHandle(th); \
+	}*/
+
+	
+	class cdft_arg_t {
+	    int n0;
+	    int n;
+	    int a_offset;
+	    double a[];
+	    int nw;
+	    double w[];
+	}
+	
+	private void cftrec4_th(int n, double a[], int nw, double w[])
+	{
+	    //void *cftrec1_th(void *p);
+	    //void *cftrec2_th(void *p);
+	    int i, idiv4, m, nthread;
+	    cdft_arg_t ag[] = new cdft_arg_t[4];
+	    for (i = 0; i < 4; i++) {
+	    	ag[i] = new cdft_arg_t();
+	    }
+	    
+	    nthread = 2;
+	    idiv4 = 0;
+	    m = n >> 1;
+	    if (n > CDFT_4THREADS_BEGIN_N) {
+	        nthread = 4;
+	        idiv4 = 1;
+	        m >>= 1;
+	    }
+	    ExecutorService executorService = Executors.newCachedThreadPool();
+	    for (i = 0; i < nthread; i++) {
+	        ag[i].n0 = n;
+	        ag[i].n = m;
+	        //ag[i].a = &a[i * m];
+	        ag[i].a = a;
+	        ag[i].a_offset = i * m;
+	        ag[i].nw = nw;
+	        ag[i].w = w;
+	        if (i != idiv4) {
+	        	executorService.execute(new cftrec1_th(ag[i]));
+	        } else {
+	        	executorService.execute(new cftrec2_th(ag[i]));
+	        }
+	    }
+	
+		  executorService.shutdown();
+		  try {
+			  boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+			  if (!tasksEnded) {
+				  MipavUtil.displayError("Timed out waiting for cftrec1_th and cftrec2_th to finish");
+				  System.exit(-1);
+			  }
+		  }
+		  catch (InterruptedException ex) {
+			  ex.printStackTrace();
+		  }
+	}
+
+	public class cftrec1_th implements Runnable {
+	    //int cfttree(int n, int j, int k, double *a, int nw, double *w);
+	    //void cftleaf(int n, int isplt, double *a, int nw, double *w);
+	    //void cftmdl1(int n, double *a, double *w);
+		private cdft_arg_t p;
+		public cftrec1_th(cdft_arg_t p) {
+			this.p = p;
+		}
+		public void run() {
+		    int isplt, j, k, m, n, n0, nw;
+		    double a[];
+		    int a_offset;
+		    double w[];
+		    double aa[];
+		    int i;
+		    double wnw[];
+		    
+		    n0 = p.n0;
+		    n = p.n;
+		    a = p.a;
+		    a_offset = p.a_offset;
+		    nw = p.nw;
+		    w = p.w;
+		    m = n0;
+		    while (m > 512) {
+		        m >>= 2;
+	            // &a[n] is the address or the next thread's array start
+		        //cftmdl1(m, &a[n - m], &w[nw - (m >> 1)]);
+	            aa = new double[m];
+	            for (i = 0; i < m; i++) {
+	            	aa[i] = a[a_offset + n - m + i];
+	            }
+	            wnw = new double[w.length - (nw - (m >> 1))];
+	            for (i = 0; i < w.length - (nw - (m >> 1)); i++) {
+	            	wnw[i] = w[nw - (m >> 1) + i];
+	            }
+	            cftmdl1(m, aa, wnw);
+	            for (i = 0; i < m; i++) {
+	            	a[a_offset + n - m + i] = aa[i];
+	            }
+		    }
+		    //cftleaf(m, 1, &a[n - m], nw, w);
+		    aa = new double[m];
+            for (i = 0; i < m; i++) {
+            	aa[i] = a[a_offset + n - m + i];
+            }
+            cftleaf(m, 1, aa, nw, w);
+            for (i = 0; i < m; i++) {
+            	a[a_offset + n - m + i] = aa[i];
+            }
+		    k = 0;
+		    for (j = n - m; j > 0; j -= m) {
+		        k++;
+		        //isplt = cfttree(m, j, k, a, nw, w);
+		        aa = new double[n];
+		        for (i = 0; i < n; i++) {
+		        	aa[i] = a[a_offset + i];
+		        }
+		        isplt = cfttree(m, j, k, aa, nw, w);
+		        for (i = 0; i < n; i++) {
+		        	a[a_offset + i] = aa[i];
+		        }
+		        //cftleaf(m, isplt, &a[j - m], nw, w);
+		        aa = new double[n - (j - m)];
+		        for (i = 0; i < n - (j - m); i++) {
+		        	aa[i] = a[a_offset + j - m + i];
+		        }
+		        cftleaf(m, isplt, aa, nw, w);
+		        for (i = 0; i < n - (j - m); i++) {
+		        	a[a_offset + j - m + i] = aa[i];
+		        }
+		    }
+		    return;
+		}
+	}
+
+
+	public class cftrec2_th implements Runnable {
+	    //int cfttree(int n, int j, int k, double *a, int nw, double *w);
+	    //void cftleaf(int n, int isplt, double *a, int nw, double *w);
+	    //void cftmdl2(int n, double *a, double *w);
+		private cdft_arg_t p;
+		public cftrec2_th(cdft_arg_t p) {
+			this.p = p;
+		}
+		public void run() {
+		    int isplt, j, k, m, n, n0, nw;
+		    double a[];
+		    int a_offset;
+		    double w[];
+		    double aa[];
+		    int i;
+		    double wnw[];
+		    
+		    n0 = p.n0;
+		    n = p.n;
+		    a = p.a;
+		    a_offset = p.a_offset;
+		    nw = p.nw;
+		    w = p.w;
+		    k = 1;
+		    m = n0;
+		    while (m > 512) {
+		        m >>= 2;
+		        k <<= 2;
+		        //cftmdl2(m, &a[n - m], &w[nw - m]);
+		        aa = new double[m];
+	            for (i = 0; i < m; i++) {
+	            	aa[i] = a[a_offset + n - m + i];
+	            }
+	            wnw = new double[w.length - (nw - m)];
+	            for (i = 0; i < w.length - (nw - m); i++) {
+	            	wnw[i] = w[nw - m + i];
+	            }
+	            cftmdl2(m, aa, wnw);
+	            for (i = 0; i < m; i++) {
+	            	a[a_offset + n - m + i] = aa[i];
+	            }
+		    }
+		    //cftleaf(m, 0, &a[n - m], nw, w);
+		    aa = new double[m];
+            for (i = 0; i < m; i++) {
+            	aa[i] = a[a_offset + n - m + i];
+            }
+            cftleaf(m, 0, aa, nw, w);
+            for (i = 0; i < m; i++) {
+            	a[a_offset + n - m + i] = aa[i];
+            }
+		    k >>= 1;
+		    for (j = n - m; j > 0; j -= m) {
+		        k++;
+		        //isplt = cfttree(m, j, k, a, nw, w);
+		        aa = new double[n];
+		        for (i = 0; i < n; i++) {
+		        	aa[i] = a[a_offset + i];
+		        }
+		        isplt = cfttree(m, j, k, aa, nw, w);
+		        for (i = 0; i < n; i++) {
+		        	a[a_offset + i] = aa[i];
+		        }
+		        //cftleaf(m, isplt, &a[j - m], nw, w);
+		        aa = new double[n - (j - m)];
+		        for (i = 0; i < n - (j - m); i++) {
+		        	aa[i] = a[a_offset + j - m + i];
+		        }
+		        cftleaf(m, isplt, aa, nw, w);
+		        for (i = 0; i < n - (j - m); i++) {
+		        	a[a_offset + j - m + i] = aa[i];
+		        }
+		    }
+		    return;
+		}
+	}
+
 }
 
