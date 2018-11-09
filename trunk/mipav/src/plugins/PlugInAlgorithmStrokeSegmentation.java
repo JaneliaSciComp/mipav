@@ -28,6 +28,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int maxSymmetryRemovalSlice = 10;
     
+    private int maxSymmetryGrowthSlice = 15;
+    
     private boolean doCerebellumSkip;
     
     private int cerebellumSkipSliceMax;
@@ -273,19 +275,19 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged(70);
         
         // do first two results with selection only based on core size
-        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
-//        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, cerebellumSkipSliceMax, false);
+//        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
+        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, cerebellumSkipSliceMax, false);
         
         if (lightboxPass1 != null) {
             lightboxFileList.add(lightboxPass1);
         }
         
-        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, false);
+//        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, false);
 //        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, false, cerebellumSkipAggressiveSliceMax, false);
-        
-        if (lightboxPass2 != null) {
-            lightboxFileList.add(lightboxPass2);
-        }
+//        
+//        if (lightboxPass2 != null) {
+//            lightboxFileList.add(lightboxPass2);
+//        }
         
         // generate lightbox of DWI volume with custom transfer function
         ModelImage coreLightbox = generateLightbox(dwiImage, null, lightboxOpacity);
@@ -465,8 +467,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                         int mirroredIndex = (iZ * sliceLength) + (iY * extents[0]) + (extents[0] - iX - 1);
                         
                         if (threshBuffer[index] > 0 && threshBuffer[mirroredIndex] > 0) {
-                            threshBuffer[index] = 0;
-                            threshBuffer[mirroredIndex] = 0;
+//                            threshBuffer[index] = 0;
+//                            threshBuffer[mirroredIndex] = 0;
                             
                             removedBuffer[index] = 1;
                             removedBuffer[mirroredIndex] = 1;
@@ -488,7 +490,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 return null;
             }
             
-            saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_pass" + passNum, FileUtility.XML);
+            saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_init_pass" + passNum, FileUtility.XML);
         }
         
         try {
@@ -524,7 +526,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         Vector<MaskObject> selectedObjectList = new Vector<MaskObject>();
         
-        short[] objectBuffer = chooseCoreObjects(threshImg, threshBuffer, passNum, useDistanceSelection, selectedObjectList);
+        short[] objectBuffer = chooseCoreObjects(threshImg, threshBuffer, removedBuffer, passNum, useDistanceSelection, selectedObjectList);
         
         // get pixels from ADC within closed object mask with intensity < 620, again
         for (int i = 0; i < volLength; i++) {
@@ -573,7 +575,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return lightboxFile;
     }
     
-    public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer, int passNum, boolean useDistanceSelection, Vector<MaskObject> selectedObjectList) {
+    public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer, final short[] removedBuffer, int passNum, boolean useDistanceSelection, Vector<MaskObject> selectedObjectList) {
         short[] processBuffer = new short[imgBuffer.length];
         MaskObject[] sortedObjects = findObjects(img, imgBuffer, processBuffer, minAdcObjectSize, maxAdcObjectSize);
         
@@ -589,6 +591,40 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         for (int i = 0; i < img.getExtents()[2]; i++) {
             segImg.setFileInfo(fileInfo1, i);
         }
+        
+        // if we removed some cerebellum due to symmetry, remove attached objects
+        if (removedBuffer != null) {
+            Vector<Short> removedMaskIdList = new Vector<Short>();
+            for (int i = 0; i < removedBuffer.length; i++) {
+                if (removedBuffer[i] != 0 && !removedMaskIdList.contains(processBuffer[i]) && processBuffer[i] != 0) {
+                    removedMaskIdList.add(processBuffer[i]);
+                }
+            }
+            
+            int maxIndex = Math.min(processBuffer.length, maxSymmetryGrowthSlice * img.getExtents()[0] * img.getExtents()[1]);
+            for (int i = 0; i < maxIndex; i++) {
+                if (removedMaskIdList.contains(processBuffer[i])) {
+                    processBuffer[i] = 0;
+                    removedBuffer[i] = 1;
+                }
+            }
+            
+            try {
+                segImg.importData(0, removedBuffer, true);
+            } catch (IOException error) {
+                if (segImg != null) {
+                    segImg.disposeLocal();
+                }
+                
+                segImg = null;
+                displayError("Error on mirrored removed data importData: " + adcImage.getImageName());
+                setCompleted(false);
+                return null;
+            }
+            
+            saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_pass" + passNum, FileUtility.XML);
+        }
+        
         try {
             segImg.importData(0, processBuffer, true);
         } catch (IOException error) {
@@ -597,6 +633,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             setCompleted(false);
             return null;
         }
+        
         saveImageFile(segImg, coreOutputDir, outputBasename + "_find_objects_pass" + passNum, FileUtility.XML);
         
         // last object should be the largest
