@@ -1,13 +1,15 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 
-public class DiscreteSineTransform {
+public class DiscreteSineTransform extends AlgorithmBase {
 	/** Copyright:
 	    Copyright(C) 1996-2001 Takuya OOURA
 	    email: ooura@mmm.t.u-tokyo.ac.jp
@@ -99,7 +101,9 @@ public class DiscreteSineTransform {
 	private final static int NMAX = 131072;
 	private final static int NMAXSQRT = 256; 
     private int seed;
-    boolean multiProcessor = false;
+    private boolean multiProcessor = false;
+    private ModelImage transformImage;
+    private ModelImage inverseImage;
     
     public DiscreteSineTransform() {
 		
@@ -108,6 +112,13 @@ public class DiscreteSineTransform {
     public DiscreteSineTransform(boolean multiProcessor) {
         this.multiProcessor = multiProcessor;
     }
+    
+    public DiscreteSineTransform(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg, boolean multiProcessor) {
+		super(null, srcImg);
+		this.transformImage = transformImage;
+		this.inverseImage = inverseImage;
+		this.multiProcessor = multiProcessor;
+	}
 	
 	/*
     int n;
@@ -202,8 +213,144 @@ public class DiscreteSineTransform {
     		System.out.println("seed = " + seed);
     	}
     }
+    
+    public void ddst2D(int yDim, int xDim, double src[][], double dst[][], int isgn) {
+    	// isgn = -1 for forward
+    	int i, j;
+    	// xDim and yDim must be <= NMAX+1
+    	int ip[] = new int[NMAXSQRT + 2];
+	    //double a[]= new double[NMAX + 1];
+	    double w[] = new double[NMAX * 5 / 4];
+	    double transT[][] = new double[xDim][yDim];
+
+	    for (i = 0; i < yDim; i++) {
+	    	if (isgn == 1) {
+	    		src[i][0] *= 0.5;
+	    	}
+	        ddst(xDim, isgn, src[i], ip, w);
+	        if (isgn == 1) {
+	            for (j = 0; j < xDim-1; j++) {
+	            	src[i][j] *= 2.0/xDim;
+	            }
+	        }
+	    }
+	    for (i = 0; i < xDim; i++) {
+			for (j = 0; j < yDim; j++) {
+				transT[i][j] = src[j][i];
+			}
+		}
+	    ip[0] = 0;
+	    for (i = 0; i < xDim; i++) {
+	    	if (isgn == 1) {
+	    		transT[i][0] *= 0.5;
+	    	}
+			ddst(yDim, isgn, transT[i], ip, w);
+			if (isgn == 1) {
+	            for (j = 0; j < yDim-1; j++) {
+	            	transT[i][j] *= 2.0/yDim;
+	            }
+	        }
+		}
+	    for (i  = 0; i < yDim; i++) {
+			for (j = 0; j < xDim; j++) {
+				dst[i][j] = transT[j][i];
+			}
+		}
+    }
 	
-	
+	public void runAlgorithm() {
+		int xDim;
+		int yDim;
+		int zDim;
+		int length;
+		double doubleBuffer[];
+		int xTest;
+		int yTest;
+		int z;
+		double src[][];
+        double dst[][];
+        int x;
+        int y;
+		xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        length = xDim * yDim;
+        doubleBuffer = new double[length];
+        zDim = 1;
+        if (srcImage.getNDims() > 2) {
+        	zDim = srcImage.getExtents()[2];
+        }
+         
+        xTest = xDim;
+        while ((xTest % 2) == 0) {
+        	xTest = xTest/2;
+        }
+        if (xTest != 1) {
+        	MipavUtil.displayError("X dimension not a power of 2");
+        	setCompleted(false);
+        	return;	
+        }
+        yTest = yDim;
+        while ((yTest % 2) == 0) {
+        	yTest = yTest/2;
+        }
+        if (yTest != 1) {
+        	MipavUtil.displayError("Y dimension not a power of 2");
+        	setCompleted(false);
+        	return;	
+        }
+        src = new double[yDim][xDim];
+        dst = new double[yDim][xDim];
+        for (z = 0; z < zDim; z++) {
+        	try {
+                srcImage.exportData(z * length, length, doubleBuffer); // locks and releases lock
+            } catch (IOException error) {
+                doubleBuffer = null;
+                errorCleanUp("Discrete Sine Transform: Image(s) locked", true);
+
+                return;
+            }
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			src[y][x] = doubleBuffer[x + y * xDim];
+        			dst[y][x] = 0;
+        		}
+        	}
+        	ddst2D(yDim, xDim, src, dst, -1);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			doubleBuffer[x + y * xDim] = dst[y][x];
+        			src[y][x] = 0;
+        		}
+        	}
+        	try {
+                transformImage.importData(z*length, doubleBuffer, false);
+             } catch (IOException error) {
+                doubleBuffer = null;
+                errorCleanUp("Discrete Sine Transform: Image(s) locked", true);
+
+                return;
+             }
+        	// Inverse transform
+        	ddst2D(yDim, xDim, dst, src, 1);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			doubleBuffer[x + y * xDim] = src[y][x];
+        		}
+        	}
+        	try {
+                inverseImage.importData(z*length, doubleBuffer, false);
+             } catch (IOException error) {
+                doubleBuffer = null;
+                errorCleanUp("Discrete Sine Transform: Image(s) locked", true);
+
+                return;
+             }
+        }
+        transformImage.calcMinMax();
+        inverseImage.calcMinMax();
+        setCompleted(true);
+        return;
+	}
 	
 	public void ddst(int n, int isgn, double a[], int ip[], double w[])
 	{
