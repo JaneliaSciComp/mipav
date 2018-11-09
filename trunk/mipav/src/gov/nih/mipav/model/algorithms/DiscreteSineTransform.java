@@ -229,7 +229,7 @@ public class DiscreteSineTransform extends AlgorithmBase {
 	    	}
 	        ddst(xDim, isgn, src[i], ip, w);
 	        if (isgn == 1) {
-	            for (j = 0; j < xDim-1; j++) {
+	            for (j = 0; j <= xDim-1; j++) {
 	            	src[i][j] *= 2.0/xDim;
 	            }
 	        }
@@ -246,7 +246,7 @@ public class DiscreteSineTransform extends AlgorithmBase {
 	    	}
 			ddst(yDim, isgn, transT[i], ip, w);
 			if (isgn == 1) {
-	            for (j = 0; j < yDim-1; j++) {
+	            for (j = 0; j <= yDim-1; j++) {
 	            	transT[i][j] *= 2.0/yDim;
 	            }
 	        }
