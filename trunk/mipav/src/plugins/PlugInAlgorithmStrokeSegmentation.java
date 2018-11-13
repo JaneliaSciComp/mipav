@@ -28,7 +28,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int maxSymmetryRemovalSlice = 10;
     
-    private int maxSymmetryGrowthSlice = 15;
+    private int maxSymmetryGrowthSlice = 10;
     
     private boolean doCerebellumSkip;
     
