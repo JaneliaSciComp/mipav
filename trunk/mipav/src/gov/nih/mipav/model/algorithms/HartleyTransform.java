@@ -148,27 +148,31 @@ public class HartleyTransform extends AlgorithmBase {
 			System.out.println(" i = " + i + "  " + Math.floor(data[i]*1000.+.5)/1000.);
 	}
 	
-	private void testHartley()
+	public void testHartley()
 	{
 		double fir[]= {11,22,33,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0};
 		double data[]={1,0,1,0,0,0,3,0,    0,0,0,0,0,0,0,0, 10,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0};
 
 		int size = 32;
 		HartleyTransform fht = new HartleyTransform(size);
-		HartleyTransform fht2 = new HartleyTransform(size);
-		HartleyTransform fht3 = new HartleyTransform(size/2);
+		//HartleyTransform fht2 = new HartleyTransform(size);
+		//HartleyTransform fht3 = new HartleyTransform(size/2);
 		//std::cout.precision(3);
 		
 		// convolution
-		System.out.println("Convolution test using FHT.");
-		System.out.println("fir:");
-		show(fir, size);
-		System.out.println("source");
-		show(data, size);
+		//System.out.println("Convolution test using FHT.");
+		//System.out.println("fir:");
+		//show(fir, size);
+		//System.out.println("source");
+		//show(data, size);
 		//	
-		fht.transform(fir, false);
-		fht.transform(data, false);		
-		fht.hartley_multiply(data, fir, false);
+		//fht.transform(fir, false);
+		fht.transform(data, true);	
+		fht.back_transform(data);
+		for (int i = 0; i < 32; i++) {
+			System.out.println("data["+i+"] = " + data[i]);
+		}
+		/*fht.hartley_multiply(data, fir, false);
 		fht.back_transform(data);
 		//
 		System.out.println("result of convolution:");
@@ -180,7 +184,7 @@ public class HartleyTransform extends AlgorithmBase {
 			double com[] = (fht.get_frequency(fir, i));
 			double ans = zabs(com[0], com[1]);
 			System.out.println("i = " + i + "  " + ans);
-		}
+		}*/
 
 		return;
 	}
@@ -375,19 +379,19 @@ public class HartleyTransform extends AlgorithmBase {
 		// recursion calls
 		step_addsub(data,    ldn-2);
 		datan = new double[data.length - nh];
-		for (j = 0; j < data.length - nh - 1; j++) {
+		for (j = 0; j < data.length - nh; j++) {
 			datan[j] = data[nh + j];
 		}
 		step_rotate(datan, ldn-2);
-		for (j = 0; j < data.length - nh - 1; j++) {
+		for (j = 0; j < data.length - nh; j++) {
 			data[nh + j] = datan[j];
 		}
 		datan = new double[data.length - n];
-		for (j = 0; j < data.length - n - 1; j++) {
+		for (j = 0; j < data.length - n; j++) {
 			datan[j] = data[n + j];
 		}
 		step_rotate(datan,  ldn-1);
-		for (j = 0; j < data.length - n - 1; j++) {
+		for (j = 0; j < data.length - n; j++) {
 			data[n + j] = datan[j];
 		}
 	}
@@ -436,11 +440,11 @@ public class HartleyTransform extends AlgorithmBase {
 		// recursion calls
 		step_addsub(data,   ldn-1);
 		datan = new double[data.length - n];
-		for (j = 0; j < data.length - n - 1; j++) {
+		for (j = 0; j < data.length - n; j++) {
 			datan[j] = data[n + j];
 		}
 		step_addsub(datan, ldn-1);
-		for (j = 0; j < data.length - n - 1; j++) {
+		for (j = 0; j < data.length - n; j++) {
 			data[n + j] = datan[j];
 		}
 	}
