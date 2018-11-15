@@ -150,8 +150,8 @@ public class HartleyTransform extends AlgorithmBase {
 	
 	public void testHartley()
 	{
-		double fir[]= {11,22,33,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0};
-		double data[]={1,0,1,0,0,0,3,0,    0,0,0,0,0,0,0,0, 10,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0};
+		double fir[]= new double[]{11,22,33,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0};
+		double data[]= new double[]{1,0,1,0,0,0,3,0,    0,0,0,0,0,0,0,0, 10,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0};
 
 		int size = 32;
 		HartleyTransform fht = new HartleyTransform(size);
@@ -272,6 +272,10 @@ public class HartleyTransform extends AlgorithmBase {
 		int j;
 		double data4[] = new double[4];
 		double data8[] = new double[8];
+		double data5[] = new double[1];
+		double data7[] = new double[1];
+		double data0[] = new double[1];
+		double data1[] = new double[1];
 		if(ldn==4)
 		{
 			for(int i=0;i<4;i++) 
@@ -292,7 +296,11 @@ public class HartleyTransform extends AlgorithmBase {
 				data[i+12] =bmd;		
 			}
 
-			addsub(data[5],data[7],cos45);
+			data5[0] = data[5];
+			data7[0] = data[7];
+			addsub(data5,data7,cos45);
+			data[5] = data5[0];
+			data[7] = data7[0];
 
 			step_addsub4(data);
 			for (j = 0; j < 4; j++) {
@@ -351,7 +359,11 @@ public class HartleyTransform extends AlgorithmBase {
 
 		if(ldn==1)
 		{
-			addsub(data[0],data[1]);
+			data0[0] = data[0];
+			data1[0] = data[1];
+			addsub(data0,data1);
+			data[0] = data0[0];
+			data[1] = data1[0];
 			return;
 		}
 
@@ -399,15 +411,21 @@ public class HartleyTransform extends AlgorithmBase {
 	
 	private void step_rotate(double data[], int ldn)
 	{
+		double data0[] = new double[1];
 		double datan[];
 		int j;
 		int n = (int)Math.round(Math.pow(2,ldn-1));
 		int nh = n/2;
 
-		addsub(data[0], data[n]);
+		data0[0] = data[0];
+		datan = new double[1];
+		datan[0] = data[n];
+		addsub(data0, datan);
+		data[0] = data0[0];
+		data[n] = datan[0];
 		data[nh]*= sqrt2;
 		data[n+nh]*= sqrt2;
-        int tables_offset = 0;
+        int offset = 0;
 
 		int index = 1;
 		int step = n-2;
@@ -423,17 +441,17 @@ public class HartleyTransform extends AlgorithmBase {
 			double cd = c+d;
 			double cmd = c-d;
 
-			double ss = fht_trig_tables[ldn][tables_offset];
-			double cc = fht_trig_tables[ldn][tables_offset+1];
+			double ss = fht_trig_tables[ldn][offset];
+			double cc = fht_trig_tables[ldn][offset+1];
 			data[index] =      ab * cc - cmd * ss;
 			data[index+step] = ab * ss + cmd * cc;
 
-			double ss3 = fht_trig_tables[ldn][tables_offset+2];
-			double cc3 = fht_trig_tables[ldn][tables_offset+3];
+			double ss3 = fht_trig_tables[ldn][offset+2];
+			double cc3 = fht_trig_tables[ldn][offset+3];
 			data[index+n] =      amb * cc3 + cd * ss3;
 			data[index+n+step] = amb * ss3 - cd * cc3;
 
-			tables_offset+=4;
+			offset+=4;
 			index++;
 			step-=2;
 		}
@@ -451,16 +469,42 @@ public class HartleyTransform extends AlgorithmBase {
 
 	private void step_addsub8(double data[])
 	{
-		addsub(data[0],data[4]);
-		addsub(data[1],data[5]);
-		addsub(data[2],data[6]);
-		addsub(data[3],data[7]);
-		addsub(data[5],data[7],cos45);
+		double dataa[] = new double[1];
+		double datab[] = new double[1];
+		dataa[0] = data[0];
+		datab[0] = data[4];
+		addsub(dataa,datab);
+		data[0] = dataa[0];
+		data[4] = datab[0];
+		dataa[0] = data[1];
+		datab[0] = data[5];
+		addsub(dataa,datab);
+		data[1] = dataa[0];
+		data[5] = datab[0];
+		dataa[0] = data[2];
+		datab[0] = data[6];
+		addsub(dataa,datab);
+		data[2] = dataa[0];
+		data[6] = datab[0];
+		dataa[0] = data[3];
+		datab[0] = data[7];
+		addsub(dataa,datab);
+		data[3] = dataa[0];
+		dataa[0] = data[5];
+		addsub(dataa,datab,cos45);
+		data[5] = dataa[0];
+		data[7] = datab[0];
 	}
 
 	private void step_rotate8(double data[])
-	{
-		addsub(data[0], data[4]);
+	{   
+		double data0[] = new double[1];
+		double data4[] = new double[1];
+		data0[0] = data[0];
+		data4[0] = data[4];
+		addsub(data0, data4);
+		data[0] = data0[0];
+		data[4] = data4[0];
 		data[2]*= sqrt2;
 		data[6]*= sqrt2;
 
@@ -492,25 +536,25 @@ public class HartleyTransform extends AlgorithmBase {
 		data[3]=v02m-v13m;
 	}
 	
-	private void addsub(double u, double v)
+	private void addsub(double u[], double v[])
 	{
-		double tempu = u;
-		u = u + v;
-		v = tempu - v;
+		double tempu = u[0];
+		u[0] = u[0] + v[0];
+		v[0] = tempu - v[0];
 	}
 
-	private void addsub(double u, double v, double scale)
+	private void addsub(double u[], double v[], double scale)
 	{
-		double tempu = u;
-		u = (u + v)*scale;
-		v = (tempu - v)*scale;
+		double tempu = u[0];
+		u[0] = (u[0] + v[0])*scale;
+		v[0] = (tempu - v[0])*scale;
 	}
 	
-	private void rotate(double u, double v, double c, double s)
+	private void rotate(double u[], double v[], double c, double s)
 	{
-		double tempu = u;
-		u = u*c + v*s;
-		v = tempu*s - v*c;
+		double tempu = u[0];
+		u[0] = u[0]*c + v[0]*s;
+		v[0] = tempu*s - v[0]*c;
 	}
 
     /**
