@@ -43,7 +43,7 @@ public class HartleyTransform extends AlgorithmBase {
     
     private int fht_instance_count[]=  new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     private double fht_trig_tables[][] = new double[32][];
-    private int fht_revbin_tables[][] = new int[32][0];
+    private int fht_revbin_tables[][] = new int[32][];
     private int fht_revbin_counts[]=  new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
     private int size;
@@ -167,7 +167,7 @@ public class HartleyTransform extends AlgorithmBase {
 		//show(data, size);
 		//	
 		//fht.transform(fir, false);
-		fht.transform(data, true);	
+		fht.transform(data, true);
 		fht.back_transform(data);
 		for (int i = 0; i < 32; i++) {
 			System.out.println("data["+i+"] = " + data[i]);
