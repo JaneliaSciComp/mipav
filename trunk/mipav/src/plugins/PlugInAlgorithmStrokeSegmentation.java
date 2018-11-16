@@ -112,235 +112,264 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-    	
-        fireProgressStateChanged("Segmenting image ...");
-        fireProgressStateChanged(5);
-        
-        // DWI -> fuzzy c means 4 class
-        ModelImage segImg = fuzzyCMeans(dwiImage, 4, 4);
-        
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_dwi", FileUtility.XML);
-        
-        final int[] extents = segImg.getExtents();
-        final int sliceLength = extents[0] * extents[1];
-        final int volLength = sliceLength * extents[2];
-        final FileInfoBase fInfo = (FileInfoBase) segImg.getFileInfo(0).clone();
-        
-//        // add in lesion segmentation from ADC
-//        ModelImage adcSegImg = fuzzyCMeans(adcImage, 3, 1);
-//        
-//        saveImageFile(adcSegImg, coreOutputDir, outputBasename + "_seg_adc", FileUtility.XML);
-//        
-//        for (int i = 0; i < volLength; i++) {
-//            if (adcSegImg.getUByte(i) != 0) {
-//                segImg.set(i, 1);
-//            }
-//        }
-//        
-//        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_both", FileUtility.XML);
-        
-        short[] segBuffer = new short[volLength];
-        try {
-            segImg.exportData(0, volLength, segBuffer);
-        } catch (IOException error) {
-            segBuffer = null;
-            displayError("Error on segmentation export: " + segImg.getImageName());
-            setCompleted(false);
-            return;
-        }
-        
-        // skull artifact masking
+        ModelImage segImg = null;
         ModelImage maskImg = null;
-        if (doSkullRemoval) {
-            maskImg = new ModelImage(ModelStorageBase.BOOLEAN, dwiImage.getExtents(), "dwi_skull_mask");
-            for (int i = 0; i < maskImg.getExtents()[2]; i++) {
-                maskImg.setFileInfo(fInfo, i);
-            }
+        ModelImage dwiLightbox = null;
+        
+        try {
+            fireProgressStateChanged("Segmenting image ...");
+            fireProgressStateChanged(5);
             
-            for (int i = 0; i < volLength; i++) {
-                if (dwiImage.getInt(i) > skullRemovalMaskThreshold) {
-                    maskImg.set(i, 1);
-                } else {
-                    maskImg.set(i, 0);
-                }
-            }
+            // DWI -> fuzzy c means 4 class
+            segImg = fuzzyCMeans(dwiImage, 4, 4);
             
-            // open - try to disconnect any artifacts from the brain mask
-            open(maskImg);
+            saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_dwi", FileUtility.XML);
             
-            // close
-            close(maskImg, 2, 2f, false);
+            final int[] extents = segImg.getExtents();
+            final int sliceLength = extents[0] * extents[1];
+            final int volLength = sliceLength * extents[2];
+            final FileInfoBase fInfo = (FileInfoBase) segImg.getFileInfo(0).clone();
             
-            // fill holes
-            fillHoles(maskImg);
+    //        // add in lesion segmentation from ADC
+    //        ModelImage adcSegImg = fuzzyCMeans(adcImage, 3, 1);
+    //        
+    //        saveImageFile(adcSegImg, coreOutputDir, outputBasename + "_seg_adc", FileUtility.XML);
+    //        
+    //        for (int i = 0; i < volLength; i++) {
+    //            if (adcSegImg.getUByte(i) != 0) {
+    //                segImg.set(i, 1);
+    //            }
+    //        }
+    //        
+    //        saveImageFile(segImg, coreOutputDir, outputBasename + "_seg_both", FileUtility.XML);
             
-            // select only largest object
-            short[] maskBuffer = new short[volLength];
-            short[] processBuffer = new short[volLength];
+            short[] segBuffer = new short[volLength];
             try {
-                maskImg.exportData(0, volLength, maskBuffer);
+                segImg.exportData(0, volLength, segBuffer);
             } catch (IOException error) {
-                if (segImg != null) {
-                    segImg.disposeLocal();
-                }
-                
-                maskBuffer = null;
-                displayError("Error on brain mask export: " + maskImg.getImageName());
+                segBuffer = null;
+                displayError("Error on segmentation export: " + segImg.getImageName());
                 setCompleted(false);
                 return;
             }
             
-            MaskObject[] objects = findObjects(maskImg, maskBuffer, processBuffer, 100, 10000000);
-            
-            if (objects.length > 0) {
-                MaskObject largest = objects[objects.length - 1];
-                for (int i = 0; i < processBuffer.length; i++) {
-                    if (processBuffer[i] == largest.id) {
-                        maskBuffer[i] = 1;
+            // skull artifact masking
+            if (doSkullRemoval) {
+                maskImg = new ModelImage(ModelStorageBase.BOOLEAN, dwiImage.getExtents(), "dwi_skull_mask");
+                for (int i = 0; i < maskImg.getExtents()[2]; i++) {
+                    maskImg.setFileInfo(fInfo, i);
+                }
+                
+                for (int i = 0; i < volLength; i++) {
+                    if (dwiImage.getInt(i) > skullRemovalMaskThreshold) {
+                        maskImg.set(i, 1);
                     } else {
-                        maskBuffer[i] = 0;
+                        maskImg.set(i, 0);
                     }
                 }
-            }
-            
-            try {
-                maskImg.importData(0, maskBuffer, true);
-            } catch (IOException error) {
-                if (segImg != null) {
-                    segImg.disposeLocal();
+                
+                // open - try to disconnect any artifacts from the brain mask
+                open(maskImg);
+                
+                // close
+                close(maskImg, 2, 2f, false);
+                
+                // fill holes
+                fillHoles(maskImg);
+                
+                // select only largest object
+                short[] maskBuffer = new short[volLength];
+                short[] processBuffer = new short[volLength];
+                try {
+                    maskImg.exportData(0, volLength, maskBuffer);
+                } catch (IOException error) {
+                    if (segImg != null) {
+                        segImg.disposeLocal();
+                        segImg = null;
+                    }
+                    
+                    maskBuffer = null;
+                    displayError("Error on brain mask export: " + maskImg.getImageName());
+                    setCompleted(false);
+                    return;
                 }
                 
-                if (maskImg != null) {
-                    maskImg.disposeLocal();
-                    maskImg = null;
+                MaskObject[] objects = findObjects(maskImg, maskBuffer, processBuffer, 100, 10000000);
+                
+                if (objects.length > 0) {
+                    MaskObject largest = objects[objects.length - 1];
+                    for (int i = 0; i < processBuffer.length; i++) {
+                        if (processBuffer[i] == largest.id) {
+                            maskBuffer[i] = 1;
+                        } else {
+                            maskBuffer[i] = 0;
+                        }
+                    }
                 }
                 
-                maskBuffer = null;
-                displayError("Error on brain mask importData");
-                setCompleted(false);
-                return;
+                try {
+                    maskImg.importData(0, maskBuffer, true);
+                } catch (IOException error) {
+                    if (segImg != null) {
+                        segImg.disposeLocal();
+                        segImg = null;
+                    }
+                    
+                    if (maskImg != null) {
+                        maskImg.disposeLocal();
+                        maskImg = null;
+                    }
+                    
+                    maskBuffer = null;
+                    displayError("Error on brain mask importData");
+                    setCompleted(false);
+                    return;
+                }
+                
+                // dilate object slightly
+                dilate(maskImg);
+                
+                saveImageFile(maskImg, coreOutputDir, outputBasename + "_brain_mask", FileUtility.XML);
             }
             
-            // dilate object slightly
-            dilate(maskImg);
+            // get pixels from ADC within mask with intensity < 620
+            fireProgressStateChanged("Thresholding ADC ...");
+            fireProgressStateChanged(60);
             
-            saveImageFile(maskImg, coreOutputDir, outputBasename + "_brain_mask", FileUtility.XML);
-        }
-        
-        // get pixels from ADC within mask with intensity < 620
-        fireProgressStateChanged("Thresholding ADC ...");
-        fireProgressStateChanged(60);
-        
-        for (int i = 0; i < volLength; i++) {
-            if (segBuffer[i] != 0 && (maskImg != null && maskImg.getBoolean(i) == true)) {
-                if (adcImage.getInt(i) < adcThreshold) {
-                    segBuffer[i] = 1;
+            for (int i = 0; i < volLength; i++) {
+                if (segBuffer[i] != 0 && (maskImg != null && maskImg.getBoolean(i) == true)) {
+                    if (adcImage.getInt(i) < adcThreshold) {
+                        segBuffer[i] = 1;
+                    } else {
+                        segBuffer[i] = 0;
+                    }
                 } else {
                     segBuffer[i] = 0;
                 }
-            } else {
-                segBuffer[i] = 0;
             }
-        }
-        
-        if (maskImg != null) {
-            maskImg.disposeLocal();
-            maskImg = null;
-        }
-        
-        try {
-            segImg.importData(0, segBuffer, true);
-        } catch (IOException error) {
+            
+            if (maskImg != null) {
+                maskImg.disposeLocal();
+                maskImg = null;
+            }
+            
+            try {
+                segImg.importData(0, segBuffer, true);
+            } catch (IOException error) {
+                if (segImg != null) {
+                    segImg.disposeLocal();
+                    segImg = null;
+                }
+                
+                segBuffer = null;
+                displayError("Error on adc threshold importData: " + adcImage.getImageName());
+                setCompleted(false);
+                return;
+            }
+            
+            saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh", FileUtility.XML);
+            
+    //        // combine threshold with ADC and save lightbox
+    //        ModelImage adcLightbox = generateLightbox(adcImage, segImg, lightboxOpacity);
+    //
+    //        threshLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
+    //        
+    //        adcLightbox.disposeLocal();
+            
+            // select largest object
+            fireProgressStateChanged("Finding core lesion ...");
+            fireProgressStateChanged(70);
+            
+            // do first two results with selection only based on core size
+    //        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
+            File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, cerebellumSkipSliceMax, false);
+            
+            if (lightboxPass1 != null) {
+                lightboxFileList.add(lightboxPass1);
+            }
+            
+    //        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, false);
+    //        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, false, cerebellumSkipAggressiveSliceMax, false);
+    //        
+    //        if (lightboxPass2 != null) {
+    //            lightboxFileList.add(lightboxPass2);
+    //        }
+            
+            // generate lightbox of DWI volume with custom transfer function
+            dwiLightbox = generateLightbox(dwiImage, null, lightboxOpacity);
+            
+            File lightboxDWI = saveImageFile(dwiLightbox, coreOutputDir, outputBasename + "_DWI_lightbox", FileUtility.PNG, true);
+            
+            if (lightboxDWI != null) {
+                lightboxFileList.add(lightboxDWI);
+                selectedObjectTable.put(lightboxDWI, new Vector<MaskObject>());
+            }
+            
+            dwiLightbox.disposeLocal();
+            dwiLightbox = null;
+            
+    //        // distance-based selection (if small core)
+    //        File lightboxPass3 = processThresholdedImg(segImg, segBuffer, extents, 3, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, true);
+    //        
+    //        if (lightboxPass3 != null) {
+    //            lightboxFileList.add(lightboxPass3);
+    //        }
+            
+            // commented out because masks seem just as useful to users
+            
+    //        // output core object to VOI on disk
+    //        fireProgressStateChanged("Saving core VOI ...");
+    //        fireProgressStateChanged(80);
+    //        
+    //        coreVOI = maskToVOI(segImg);
+    //        if (!saveVOI(segImg, coreVOI, coreOutputDir, outputBasename + "_VOI")) {
+    //            if (segImg != null) {
+    //                segImg.disposeLocal();
+    //            }
+    //        
+    //            // problem saving voi
+    //            displayError("Error saving core VOI");
+    //            setCompleted(false);
+    //            return;
+    //        }
+            
+            // save core stats to tab-delmited file
+            if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), adcImage.getResolutions(0))) {
+                if (segImg != null) {
+                    segImg.disposeLocal();
+                    segImg = null;
+                }
+                
+                setCompleted(false);
+                return;
+            }
+            
             if (segImg != null) {
                 segImg.disposeLocal();
             }
             
-            segBuffer = null;
-            displayError("Error on adc threshold importData: " + adcImage.getImageName());
-            setCompleted(false);
-            return;
-        }
-        
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh", FileUtility.XML);
-        
-//        // combine threshold with ADC and save lightbox
-//        ModelImage adcLightbox = generateLightbox(adcImage, segImg, lightboxOpacity);
-//
-//        threshLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
-//        
-//        adcLightbox.disposeLocal();
-        
-        // select largest object
-        fireProgressStateChanged("Finding core lesion ...");
-        fireProgressStateChanged(70);
-        
-        // do first two results with selection only based on core size
-//        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
-        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, cerebellumSkipSliceMax, false);
-        
-        if (lightboxPass1 != null) {
-            lightboxFileList.add(lightboxPass1);
-        }
-        
-//        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, false);
-//        File lightboxPass2 = processThresholdedImg(segImg, segBuffer, extents, 2, false, cerebellumSkipAggressiveSliceMax, false);
-//        
-//        if (lightboxPass2 != null) {
-//            lightboxFileList.add(lightboxPass2);
-//        }
-        
-        // generate lightbox of DWI volume with custom transfer function
-        ModelImage coreLightbox = generateLightbox(dwiImage, null, lightboxOpacity);
-        
-        File lightboxDWI = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_DWI_lightbox", FileUtility.PNG, true);
-        
-        if (lightboxDWI != null) {
-            lightboxFileList.add(lightboxDWI);
-            selectedObjectTable.put(lightboxDWI, new Vector<MaskObject>());
-        }
-        
-        coreLightbox.disposeLocal();
-        
-//        // distance-based selection (if small core)
-//        File lightboxPass3 = processThresholdedImg(segImg, segBuffer, extents, 3, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, true);
-//        
-//        if (lightboxPass3 != null) {
-//            lightboxFileList.add(lightboxPass3);
-//        }
-        
-        // commented out because masks seem just as useful to users
-        
-//        // output core object to VOI on disk
-//        fireProgressStateChanged("Saving core VOI ...");
-//        fireProgressStateChanged(80);
-//        
-//        coreVOI = maskToVOI(segImg);
-//        if (!saveVOI(segImg, coreVOI, coreOutputDir, outputBasename + "_VOI")) {
-//            if (segImg != null) {
-//                segImg.disposeLocal();
-//            }
-//        
-//            // problem saving voi
-//            displayError("Error saving core VOI");
-//            setCompleted(false);
-//            return;
-//        }
-        
-        // save core stats to tab-delmited file
-        if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), adcImage.getResolutions(0))) {
+            setCompleted(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            
             if (segImg != null) {
                 segImg.disposeLocal();
+                segImg = null;
+            }
+            
+            if (maskImg != null) {
+                maskImg.disposeLocal();
+                maskImg = null;
+            }
+            
+            if (dwiLightbox != null) {
+                dwiLightbox.disposeLocal();
+                dwiLightbox = null;
             }
             
             setCompleted(false);
             return;
         }
-        
-        if (segImg != null) {
-            segImg.disposeLocal();
-        }
-        
-        setCompleted(true);
     }
     
     /**
