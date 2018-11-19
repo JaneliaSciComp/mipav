@@ -1010,6 +1010,11 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			histoPanel.getLUTComponent().show((ModelLUT)LUT);
 			histoPanel.getHistoLUTComponent().showHistogram((ModelLUT)LUT);
 		}
+		else
+		{
+			histoPanel.getHistoLUTComponent().setLUT(LUT);
+			histoPanel.getHistoLUTComponent().showHistogram(null);			
+		}
 		if ( panelParent != null )
 		{
 			panelParent.setLUT(this, LUT);

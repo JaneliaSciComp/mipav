@@ -1268,8 +1268,8 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
      *
      * @param  newLUT  the new lut
      */
-    public void setLUT(ModelLUT newLUT) {
-        lut = newLUT;
+    public void setLUT(ModelStorageBase newLUT) {
+        lut = (ModelLUT)newLUT;
     }
 
     /**

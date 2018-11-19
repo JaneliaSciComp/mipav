@@ -227,6 +227,8 @@ public abstract class ViewJComponentHLUTBase extends JComponent {
      * @param  LUT  LUT to filter with
      */
     public abstract void showHistogram(ModelLUT LUT);
+    
+    public abstract void setLUT(ModelStorageBase LUT);
 
     /**
      * Abstract method to force extended classes to implement a disposal method to clean up memory.

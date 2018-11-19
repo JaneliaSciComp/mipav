@@ -911,6 +911,16 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
     public void removeClickedFunctionPoint() { }
 
     /**
+     * Change the lookup table associated with the image and histogram.
+     *
+     * @param  newLUT  the new lut
+     */
+    public void setLUT(ModelStorageBase newLUT) {
+    	RGBT = (ModelRGB)newLUT;
+    }
+    
+    
+    /**
      * {@inheritDoc}
      */
     public void showHistogram(ModelLUT lut) {

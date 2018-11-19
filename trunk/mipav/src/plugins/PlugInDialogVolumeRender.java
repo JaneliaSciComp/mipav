@@ -554,6 +554,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				if ( annotationPanelUI != null ) {
 					tabbedPane.remove(annotationPanelUI.getAnnotationsPanel());
 				}
+				volOpacityPanel = null;
+				lutHistogramPanel = null;
 			}
 			// Enables user to generate a new lattice (when none of the automatic ones match well)
 			else if (command.equals("newLattice") )
@@ -2443,7 +2445,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	/**
 	 * Creates or updates the histogram / LUT panel and opacity panels when a new image is loaded.
 	 */
-	private void updateHistoLUTPanels( boolean recalculateHistogram )
+	private void updateHistoLUTPanels(boolean recalculateHistogram )
 	{
 		if ( volOpacityPanel == null )
 		{
