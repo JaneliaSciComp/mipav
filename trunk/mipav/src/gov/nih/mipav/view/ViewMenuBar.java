@@ -170,6 +170,7 @@ public class ViewMenuBar {
 						menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false), }),
 				menuBuilder.buildMenuItem("BRISK", "BRISK", 0, null, false),
 				menuBuilder.buildMenuItem("Convergence field", "CONVERGENCE", 0, null, false),
+				menuBuilder.buildMenuItem("Discrete Cosine Transform", "discreteCosine", 0, null, false),
 				menuBuilder.buildMenuItem("Discrete Sine Transform", "discreteSine", 0, null, false),
 				menuBuilder.makeMenu("Edge detection", false,
 						new JMenuItem[] { menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
@@ -1565,6 +1566,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 			menuBuilder.setMenuItemEnabled("Walsh-Hadamard Transform", false);
+			menuBuilder.setMenuItemEnabled("Discrete Cosine Transform", false);
 			menuBuilder.setMenuItemEnabled("Discrete Sine Transform", false);
 			menuBuilder.setMenuItemEnabled("Hartley Transform", false);
 		} else if (numberOfDimensions == 3) {
@@ -1754,6 +1756,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Facet Model",false);
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 			menuBuilder.setMenuItemEnabled("Walsh-Hadamard Transform", false);
+			menuBuilder.setMenuItemEnabled("Discrete Cosine Transform", false);
 			menuBuilder.setMenuItemEnabled("Discrete Sine Transform", false);
 			menuBuilder.setMenuItemEnabled("Hartley Transform", false);
 		} else {
