@@ -7,7 +7,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 
 /**
- * This is a port from FORTRAN to Java of:
+ * This routines except the SLOW routines are ported from FORTRAN to Java from:
  *     ALGORITHM 749, COLLECTED ALGORITHMS FROM ACM.
 *      THIS WORK PUBLISHED IN TRANSACTIONS ON MATHEMATICAL SOFTWARE,
 *      VOL. 21, NO. 4, December, 1995, P.  372--378.
@@ -46,8 +46,16 @@ import gov.nih.mipav.view.*;
 *  Revised 6/98
 * </pre>
 * 
-* </p>
-*/
+* 
+* SLOW routines adapted from:
+* DCT and IDCT - listing 1
+ * Copyright (c) 2001 Emil Mikulic.
+ * http://unix4lyfe.org/dct/
+ *
+ * Feel free to do whatever you like with this code.
+ * Feel free to credit me.
+ */
+ 
 
 public class DiscreteCosineTransform extends AlgorithmBase {
 
@@ -874,11 +882,11 @@ public class DiscreteCosineTransform extends AlgorithmBase {
     			if (u == 0) {
     				sum[uv] *= RT2INV;
     			}
+    			if (v == 0) {
+    				sum[uv] *= RT2INV;
+    			}
     			sum[uv] *= scale;
     		} // for (u = 0; u < xDim; u++)
-    		if (v == 0) {
-				sum[uv] *= RT2INV;
-			}
     	} // for (v = 0; v < yDim; v++)
     	
     	for (v = 0; v < yDim; v++) {
