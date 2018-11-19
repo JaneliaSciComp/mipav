@@ -268,15 +268,26 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 				else
 				{
-					int value = Integer.valueOf(annotationTableModel.getValueAt(row, column).toString());
-					String note = text.getNote();
-					if ( note.contains("lattice segment:") ) {
-						int index = note.indexOf("lattice segment:");
-						note = note.substring(0, index);
+					try {
+						int value = Integer.valueOf(annotationTableModel.getValueAt(row, column).toString());
+						String note = text.getNote();
+						if ( note.contains("lattice segment:") ) {
+							int index = note.indexOf("lattice segment:");
+							note = note.substring(0, index);
+						}
+						note = note + "\n" + "lattice segment: " + value;
+						System.err.println(text.getText() + " " + note);
+						text.setNote(note);
+					} catch ( java.lang.NumberFormatException error ) {
+						// value erased:
+						String note = text.getNote();
+						if ( note.contains("lattice segment:") ) {
+							int index = note.indexOf("lattice segment:");
+							note = note.substring(0, index);
+						}
+						System.err.println(text.getText() + " " + note);
+						text.setNote(note);
 					}
-					note = note + "\n" + "lattice segment: " + value;
-					System.err.println(text.getText() + " " + note);
-					text.setNote(note);
 				}
 				text.update();
 				isChecked = text.getVolumeVOI().GetDisplay();
