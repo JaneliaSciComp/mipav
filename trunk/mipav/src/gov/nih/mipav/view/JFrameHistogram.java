@@ -384,8 +384,8 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 		if ( panelA != null )
 		{
-			panelA.setLUT(LUTa);
 			panelA.setImage(imageA);
+			panelA.setLUT(LUTa);
 		}
 	}
 	/**
