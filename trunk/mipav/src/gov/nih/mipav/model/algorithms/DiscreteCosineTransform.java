@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.io.IOException;
+
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 
 /**
@@ -46,7 +49,7 @@ import gov.nih.mipav.view.*;
 * </p>
 */
 
-public class DiscreteCosineTransform {
+public class DiscreteCosineTransform extends AlgorithmBase {
 
     // ~ Static fields/initializers
     // -----------------------
@@ -61,8 +64,6 @@ public class DiscreteCosineTransform {
     private int testDataType;
     
     private boolean printData;
-    
-    private boolean doTest = false;
     
     private final int MAXPOW = 20; // Parameter which determines the maximum transform length
     // permitted.  Maximum length = 2**MAXPOW.
@@ -84,6 +85,19 @@ public class DiscreteCosineTransform {
     private int xDim;
     
     private int yDim;
+    
+    private ModelImage transformImage;
+    private ModelImage inverseImage;
+    
+    public DiscreteCosineTransform() {
+		
+	}
+    
+    public DiscreteCosineTransform(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg) {
+		super(null, srcImg);
+		this.transformImage = transformImage;
+		this.inverseImage = inverseImage;
+	}
 
     public DiscreteCosineTransform(boolean fastAlgorithm, int dims[], int testDataType, boolean printData) {
     	this.dims = dims;
@@ -98,15 +112,85 @@ public class DiscreteCosineTransform {
         	yDim = dims[1];
         	transformLength = xDim * yDim;
         }
-        doTest = true;
     }
     
-    public void run() {
-    	if (doTest) {
-    		runTest();
-    		return;
-    	}
-    }
+    public void runAlgorithm() {
+		int zDim;
+		double doubleBuffer[];
+		int xTest;
+		int yTest;
+		int length;
+		int z;
+		xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        dims = new int[2];
+        dims[0] = xDim;
+        dims[1] = yDim;
+        length = xDim * yDim;
+        doubleBuffer = new double[length];
+        zDim = 1;
+        if (srcImage.getNDims() > 2) {
+        	zDim = srcImage.getExtents()[2];
+        }
+         
+        xTest = xDim;
+        while ((xTest % 2) == 0) {
+        	xTest = xTest/2;
+        }
+        if (xTest != 1) {
+        	fastAlgorithm = false;
+        }
+        yTest = yDim;
+        while ((yTest % 2) == 0) {
+        	yTest = yTest/2;
+        }
+        if (yTest != 1) {
+        	fastAlgorithm = false;
+        }
+        for (z = 0; z < zDim; z++) {
+        	try {
+                srcImage.exportData(z * length, length, doubleBuffer); // locks and releases lock
+            } catch (IOException error) {
+                doubleBuffer = null;
+                errorCleanUp("Discrete Cosine Transform: Image(s) locked", true);
+
+                return;
+            }
+        	if (fastAlgorithm) {
+        		FCT2D(doubleBuffer, xDim, yDim);
+        	}
+        	else {
+        		SLOW2DFCT(doubleBuffer, xDim, yDim);
+        	}
+        	try {
+                transformImage.importData(z*length, doubleBuffer, false);
+             } catch (IOException error) {
+                doubleBuffer = null;
+                errorCleanUp("Discrete Cosine Transform: Image(s) locked", true);
+
+                return;
+             }
+        	// Inverse transform
+        	if (fastAlgorithm) {
+        		IFCT2D(doubleBuffer, xDim, yDim);
+        	}
+        	else {
+        		SLOW2DIFCT(doubleBuffer, xDim, yDim);
+        	}
+        	try {
+                inverseImage.importData(z*length, doubleBuffer, false);
+             } catch (IOException error) {
+                doubleBuffer = null;
+                errorCleanUp("Discrete Cosine Transform: Image(s) locked", true);
+
+                return;
+             }
+        }
+        transformImage.calcMinMax();
+        inverseImage.calcMinMax();
+        setCompleted(true);
+        return;
+	}
     
     public void runTest() {
     	int I; // For counter used to address each array element in turn.
@@ -284,6 +368,7 @@ public class DiscreteCosineTransform {
     	    for (x = 0; x < xDim; x++) {
     	    	FROW[x] = F[x + y * xDim];
     	    }
+            LENGTH = 0;
     	    FCT(FROW, CROW, xDim, IFAULT);
     	    for (x = 0; x < xDim; x++) {
     	    	F[x + y * xDim] = FROW[x];
@@ -298,6 +383,7 @@ public class DiscreteCosineTransform {
     	    for (y = 0; y < yDim; y++) {
     	    	FCOL[y] = F[x + y * xDim];
     	    }
+    	    LENGTH = 0;
     	    FCT(FCOL, CCOL, yDim, IFAULT);
     	    for (y = 0; y < yDim; y++) {
     	    	F[x + y * xDim] = FCOL[y];
@@ -321,6 +407,7 @@ public class DiscreteCosineTransform {
     	    for (x = 0; x < xDim; x++) {
     	    	FROW[x] = F[x + y * xDim];
     	    }
+    	    LENGTH = 0;
     	    IFCT(FROW, CROW, xDim, IFAULT);
     	    for (x = 0; x < xDim; x++) {
     	    	F[x + y * xDim] = FROW[x];
@@ -334,6 +421,7 @@ public class DiscreteCosineTransform {
     	    for (y = 0; y < yDim; y++) {
     	    	FCOL[y] = F[x + y * xDim];
     	    }
+    	    LENGTH = 0;
     	    IFCT(FCOL, CCOL, yDim, IFAULT);
     	    for (y = 0; y < yDim; y++) {
     	    	F[x + y * xDim] = FCOL[y];
