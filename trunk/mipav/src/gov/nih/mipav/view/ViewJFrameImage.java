@@ -1207,6 +1207,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	new JDialogDiscreteCosineTransform(this, getActiveImage());
         } else if (command.equals("hartley")) {
         	new JDialogHartleyTransform(this, getActiveImage());
+        } else if (command.equals("slant")) {
+        	new JDialogSlantTransform(this, getActiveImage());
         } else if (command.equals("LLE")) {
             new JDialogLLE(this, getActiveImage());
         } else if (command.equals("fuzzyMin")) {
