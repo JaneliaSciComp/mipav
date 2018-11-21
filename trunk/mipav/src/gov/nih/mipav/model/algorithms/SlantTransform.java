@@ -21,19 +21,22 @@ public class SlantTransform extends AlgorithmBase {
     // ~ Static fields/initializers
     // -----------------------
 
-   
+   private static final int TRANSFORM_COLUMNS = 1;
+   private static final int TRANSFORM_ROWS = 2;
     
     private ModelImage transformImage;
     private ModelImage inverseImage;
+    private int transform;
     
     public SlantTransform() {
 		
 	}
     
-    public SlantTransform(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg) {
+    public SlantTransform(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg, int transform) {
 		super(null, srcImg);
 		this.transformImage = transformImage;
 		this.inverseImage = inverseImage;
+		this.transform = transform;
 	}
     
     public void forward1D(int N, double C[][]) {
@@ -104,7 +107,7 @@ public class SlantTransform extends AlgorithmBase {
 	    		KK = K/2;
 	    		K2 = N/K;
 	    		LL = L-1;
-	    		SUM1 = 1.0;
+	    		SUM1 = 0.0;
 	    		for (I = 1; I <= LL; I++) {
 	    		    SUM1 = SUM1 + Math.pow(2,2*(I-1));	
 	    		} // for (I = 1; I <= LL; I++) 
@@ -196,6 +199,7 @@ public class SlantTransform extends AlgorithmBase {
 	   int JKK;
 	   int IJ;
 	   int L2;
+	   int I2;
 	   double T;
 	   int L3;
 	   int I1;
@@ -215,44 +219,90 @@ public class SlantTransform extends AlgorithmBase {
 	    	   KTEST = KTEST/2;
 	    	   L++;
 	       }
-	       
-	       KK = K/2;
-	       K2 = N/K;
-	       LL = L-1;
-	       SUM1 = 0.0;
-	       for (I = 1; I <= LL; I++) {
-	    	   SUM1 = SUM1 + Math.pow(2,2*(I-1));   
-	       } // for (I = 1; I <= LL; I++)
-	       SUM2 = SUM1 + Math.pow(2,2*LL);
-	       A2 = (double)KK/Math.sqrt(SUM2);
-	       B2 = Math.sqrt(SUM1)/Math.sqrt(SUM2);
-	       for (II = 1; II <= K2; II++) {
-	    	   IIQ = K*(II-1);
-	    	   for (I = 1; I <= K; I++) {
-	    	       J = I + IIQ;
-	    	       B[I-1] = C[M-1][J-1];
-	    	   } // for (I = 1; I <= K; I++)
-	    	   
-	    	   E2 = B2*B[1] + A2*B[3];
-	    	   F2 = A2*B[1] - B2*B[3];
-	    	   B[1] = E2;
-	    	   B[3] = B[2];
-	    	   B[2] = F2;
-	    	   JK = KK + 1;
-	    	   JKK = JK + 1;
+	       while (K >= 8) {
+		       KK = K/2;
+		       K2 = N/K;
+		       LL = L-1;
+		       SUM1 = 0.0;
+		       for (I = 1; I <= LL; I++) {
+		    	   SUM1 = SUM1 + Math.pow(2,2*(I-1));   
+		       } // for (I = 1; I <= LL; I++)
+		       SUM2 = SUM1 + Math.pow(2,2*LL);
+		       A2 = (double)KK/Math.sqrt(SUM2);
+		       B2 = Math.sqrt(SUM1)/Math.sqrt(SUM2);
+		       for (II = 1; II <= K2; II++) {
+		    	   IIQ = K*(II-1);
+		    	   for (I = 1; I <= K; I++) {
+		    	       J = I + IIQ;
+		    	       B[I-1] = C[M-1][J-1];
+		    	   } // for (I = 1; I <= K; I++)
+		    	   
+		    	   E2 = B2*B[1] + A2*B[3];
+		    	   F2 = A2*B[1] - B2*B[3];
+		    	   B[1] = E2;
+		    	   B[3] = B[2];
+		    	   B[2] = F2;
+		    	   JK = KK + 1;
+		    	   JKK = JK + 1;
+		    	   A[0] = B[0] + B[2];
+		    	   A[1] = B[1] + B[3];
+		    	   A[JK-1] = B[0] - B[2];
+		    	   A[JKK-1] = B[1] - B[3];
+		    	   for (I = 3; I <= KK; I++) {
+		    		   IJ = 2*I - 1;
+		    		   for (L2 = 1; L2 <= 2; L2++) {
+		    		       T = 0.0;
+		    		       for (L3 = 1; L3 <= 2; L3++) {
+		    		    	   I1 = L3 - 1 + IJ;
+		    		    	   if ((L2 + L3 - 4) == 0) {
+		    		    		   T = T - B[I1-1];
+		    		    	   }
+		    		    	   else {
+		    		    		   T = T + B[I1-1];
+		    		    	   }
+		    		       } // for (L3 = 1; L3 <= 2; L3++)
+		    		       I2 = KK*(L2-1) + I;
+		    		       A[I2-1] = T;
+		    		   } // for (L2 = 1; L2 <= 2; L2++)
+		    	   } // for (I = 3; I <= KK; I++)
+		    	   
+		    	   JJK = KK + 4;
+		    	   for (IC = JJK; IC <= K; IC += 2) {
+		    		   A[IC-1] = -A[IC-1];   
+		    	   } // for (IC = JJK; IC <= K; IC += 2)
+		    	   
+		    	   for (I = 1; I <= K; I++) {
+		    		   J = I + IIQ;
+		    		   C[M-1][J-1] = A[I-1];
+		    	   } // for (I = 1; I <= K; I++)
+		       } // for (II = 1; II <= K2; II++) 
+	           K = K/2;
+	           L--;
+	       } // while (K >= 8)
+	       K1 = N/4;
+	       for (II = 1; II <= K1; II++) {
+	    	   IIQ = 4*(II-1);
+	    	   for (I = 1; I <= 4; I++) {
+	    		   J = I + IIQ;
+	    		   B[I-1] = C[M-1][J-1];
+	    	   } // for (I = 1; I <= 4; I++)
 	    	   A[0] = B[0] + B[2];
-	    	   A[1] = B[1] + B[3];
-	    	   A[JK-1] = B[0] - B[2];
-	    	   A[JKK-1] = B[1] - B[3];
-	    	   for (I = 3; I <= KK; I++) {
-	    		   IJ = 2*I - 1;
-	    		   for (L2 = 1; L2 <= 2; L2++) {
-	    			   
-	    		   } // for (L2 = 1; L2 <= 2; L2++)
-	    	   } // for (I = 3; I <= KK; I++)
-	       } // for (II = 1; II <= K2; II++) 
+	    	   A[1] = B[0] - B[2];
+	    	   A[2] = A1 * B[1] + B1 * B[3];
+	    	   A[3] = B1 * B[1] - A1 * B[3];
+	    	   B[0] = A[0] + A[2];
+	    	   B[1] = A[1] + A[3];
+	    	   B[2] = A[1] - A[3];
+	    	   B[3] = A[0] - A[2];
+	    	   for (I = 1; I <= 4; I++) {
+	    		   J = I + IIQ;
+	    		   C[M-1][J-1] = B[I-1]/S;
+	    	   } // for (I = 1; I <= 4; I++)
+	       } // for (II = 1; II <= K1; II++)
 	   } // for (M = 1; M <= N; M++)
+	   return;
    }
+   
     public void runAlgorithm() {
 		int xDim;
 		int yDim;
@@ -260,9 +310,7 @@ public class SlantTransform extends AlgorithmBase {
 		int length;
 		double doubleBuffer[];
 		int xTest;
-		int yTest;
 		int z;
-		double src[][];
         double dst[][];
         int x;
         int y;
@@ -274,6 +322,12 @@ public class SlantTransform extends AlgorithmBase {
         if (srcImage.getNDims() > 2) {
         	zDim = srcImage.getExtents()[2];
         }
+        
+        if (xDim != yDim) {
+        	MipavUtil.displayError("Must have X dimension = Y Dimension");
+        	setCompleted(false);
+        	return;
+        }
          
         xTest = xDim;
         while ((xTest % 2) == 0) {
@@ -284,16 +338,6 @@ public class SlantTransform extends AlgorithmBase {
         	setCompleted(false);
         	return;	
         }
-        yTest = yDim;
-        while ((yTest % 2) == 0) {
-        	yTest = yTest/2;
-        }
-        if (yTest != 1) {
-        	MipavUtil.displayError("Y dimension not a power of 2");
-        	setCompleted(false);
-        	return;	
-        }
-        src = new double[yDim][xDim];
         dst = new double[yDim][xDim];
         for (z = 0; z < zDim; z++) {
         	try {
@@ -304,33 +348,57 @@ public class SlantTransform extends AlgorithmBase {
 
                 return;
             }
-        	for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
-        			src[y][x] = doubleBuffer[x + y * xDim];
-        			dst[y][x] = 0;
-        		}
+        	if (transform == TRANSFORM_ROWS) {
+	        	for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			dst[y][x] = doubleBuffer[x + y * xDim];
+	        		}
+	        	}
         	}
-        	//ddst2D(yDim, xDim, src, dst, -1);
-        	for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
-        			doubleBuffer[x + y * xDim] = dst[y][x];
-        			src[y][x] = 0;
-        		}
+        	else {
+        		for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			dst[x][y] = doubleBuffer[x + y * xDim];
+	        		}
+	        	}
+        	}
+        	forward1D(xDim, dst);
+        	if (transform == TRANSFORM_ROWS) {
+	        	for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			doubleBuffer[x + y * xDim] = dst[y][x];
+	        		}
+	        	}
+        	}
+        	else {
+        		for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			doubleBuffer[x + y * xDim] = dst[x][y];
+	        		}
+	        	}	
         	}
         	try {
                 transformImage.importData(z*length, doubleBuffer, false);
-             } catch (IOException error) {
+            } catch (IOException error) {
                 doubleBuffer = null;
                 errorCleanUp("Slant Transform: Image(s) locked", true);
 
                 return;
-             }
-        	// Inverse transform
-        	//ddst2D(yDim, xDim, dst, src, 1);
-        	for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
-        			doubleBuffer[x + y * xDim] = src[y][x];
-        		}
+            }
+        	inverse1D(xDim, dst);
+        	if (transform == TRANSFORM_ROWS) {
+	        	for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			doubleBuffer[x + y * xDim] = dst[y][x];
+	        		}
+	        	}
+        	}
+        	else {
+        		for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			doubleBuffer[x + y * xDim] = dst[x][y];
+	        		}
+	        	}	
         	}
         	try {
                 inverseImage.importData(z*length, doubleBuffer, false);
