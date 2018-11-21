@@ -548,6 +548,7 @@ public class ViewMenuBar {
 										false) }),
 						// menuBuilder.buildMenuItem("MRI combined info",
 						// "MRICorrection", 0, null, false)}),
+						menuBuilder.buildMenuItem("Slant Transform", "slant", 0, null, false),
 						menuBuilder
 								.makeMenu("SNR", false,
 										new JMenuItem[] {
@@ -1569,6 +1570,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Discrete Cosine Transform", false);
 			menuBuilder.setMenuItemEnabled("Discrete Sine Transform", false);
 			menuBuilder.setMenuItemEnabled("Hartley Transform", false);
+			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 		} else if (numberOfDimensions == 3) {
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1759,6 +1761,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Discrete Cosine Transform", false);
 			menuBuilder.setMenuItemEnabled("Discrete Sine Transform", false);
 			menuBuilder.setMenuItemEnabled("Hartley Transform", false);
+			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 		} else {
 			menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
