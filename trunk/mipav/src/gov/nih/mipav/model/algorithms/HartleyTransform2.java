@@ -80,7 +80,7 @@ public class HartleyTransform2 extends AlgorithmBase {
     private ModelImage inverseImage;
     private static final int FHT_UNIT_STRIDE = 0;
     // L1 cache is closest to the core (each core has its own cache) and typically 
-    // there are one for data and one for instructions, sizes are 8–64KB.
+    // there are one for data and one for instructions, sizes are 8-64KB.
     private static final int L1_CACHE_BYTES = 8192;
     
     
