@@ -248,6 +248,7 @@ public class ViewMenuBar {
 								null, false),
 						menuBuilder.buildMenuItem("Rule based contrast enhancement", "rbcEnhancement", 0, null,
 								false), }),
+				menuBuilder.buildMenuItem("Haar Transform", "haar", 0, null, false),
 				menuBuilder.buildMenuItem("Harris corner detector", "HARRIS", 0, null, false),
 				menuBuilder.buildMenuItem("Harris Laplace", "HARRIS_LAPLACE", 0, null, false),
 				menuBuilder.buildMenuItem("Hartley Transform", "hartley", 0, null, false),
@@ -1571,6 +1572,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Discrete Sine Transform", false);
 			menuBuilder.setMenuItemEnabled("Hartley Transform", false);
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
+			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1762,6 +1764,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Discrete Sine Transform", false);
 			menuBuilder.setMenuItemEnabled("Hartley Transform", false);
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
+			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else {
 			menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
