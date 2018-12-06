@@ -454,6 +454,31 @@ public abstract class FileBase {
             return (Float.intBitsToFloat(tmpInt));
         }
     }
+    
+    /**
+     * Converts byte data to int data.
+     * 
+     * @param buffer Array of byte data.
+     * @param index Index into array data.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return Long value extracted from byte array.
+     */
+    public final long getBufferLong(final byte[] buffer, final int index, final boolean bigEndian) {
+
+        if (bigEndian) {
+            return ( ( (buffer[index] & 0xffL) << 56) | ( (buffer[index + 1] & 0xffL) << 48)
+                    | ( (buffer[index + 2] & 0xffL) << 40) | ((buffer[index + 3] & 0xffL) << 32)
+                    | ((buffer[index + 4] & 0xffL) << 24) | ((buffer[index + 5] & 0xffL) << 16)
+                    | ((buffer[index + 6] & 0xffL) << 8) | (buffer[index + 7] & 0xffL));
+        } else {
+            return ( ( (buffer[index + 7] & 0xffL) << 56) | ( (buffer[index + 6] & 0xffL) << 48)
+                    | ( (buffer[index + 5] & 0xffL) << 40) | ((buffer[index + 4] & 0xffL) << 32)
+            		| ((buffer[index + 3] & 0xffL) << 24) | ((buffer[index + 2] & 0xffL) << 16)
+            		| ((buffer[index + 1] & 0xffL) << 8) | (buffer[index] & 0xffL));
+        }
+    }
 
     /**
      * Converts byte data to int data.
