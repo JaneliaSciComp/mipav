@@ -483,13 +483,13 @@ public class FileInfoNIFTI extends FileInfoBase {
     /**
      * If present, first auxiliary parameter used with intentCode
      */
-    private float intentP1;
+    private double intentP1;
 
     /** If present, second auxiliary parameter used with intentCode */
-    private float intentP2;
+    private double intentP2;
 
     /** If present, third auxiliary parameter used with intentCode */
-    private float intentP3;
+    private double intentP3;
 
     /**
      * Bits 2 and 3 of the dim_info character contain the phase_dim information. 0 for
@@ -560,7 +560,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * default value for vox_offset is 0. * vox_offset should be an integer multiple of 16; otherwise, some programs may
      * not work properly (e.g., SPM). This is to allow memory-mapped input to be properly byte-aligned.
      */
-    private float vox_offset = -1;
+    private long vox_offset = -1;
 
     // The number of bytes in the header extension including esize and ecode themselves
     // esize must be a positive integral multiple of 16
@@ -1843,9 +1843,9 @@ public class FileInfoNIFTI extends FileInfoBase {
 
         if (vox_offset != -1) { // vox offset
 
-            dialog.append("Voxel Offset = " + Float.toString(vox_offset) + "\n");
+            dialog.append("Voxel Offset = " + Long.toString(vox_offset) + "\n");
         }
-
+        
         switch (intentCode) {
 
             case FileInfoNIFTI.NIFTI_INTENT_NONE:
@@ -1854,18 +1854,18 @@ public class FileInfoNIFTI extends FileInfoBase {
 
             case FileInfoNIFTI.NIFTI_INTENT_CORREL:
                 dialog.append("Statistics code = Correlation coefficient R\n");
-                dialog.append("Degrees of freedom = " + Integer.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Degrees of freedom = " + Long.toString(Math.round(intentP1)) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_TTEST:
                 dialog.append("Statistics code = Student t test\n");
-                dialog.append("Degrees of freedom = " + Integer.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Degrees of freedom = " + Long.toString(Math.round(intentP1)) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_FTEST:
                 dialog.append("Statistics code = Fisher F statistic\n");
-                dialog.append("Numerator degrees of freedom = " + Integer.toString(Math.round(intentP1)) + "\n");
-                dialog.append("Denominator degrees of freedom = " + Integer.toString(Math.round(intentP2)) + "\n");
+                dialog.append("Numerator degrees of freedom = " + Long.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Denominator degrees of freedom = " + Long.toString(Math.round(intentP2)) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_ZSCORE:
@@ -1874,86 +1874,86 @@ public class FileInfoNIFTI extends FileInfoBase {
 
             case FileInfoNIFTI.NIFTI_INTENT_CHISQ:
                 dialog.append("Statistics code = Chi - squared\n");
-                dialog.append("Degrees of freedom = " + Integer.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Degrees of freedom = " + Long.toString(Math.round(intentP1)) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_BETA:
                 dialog.append("Statistics code = Beta distribution\n");
-                dialog.append("a parameter = " + Float.toString(intentP1) + "\n");
-                dialog.append("b parameter = " + Float.toString(intentP2) + "\n");
+                dialog.append("a parameter = " + Double.toString(intentP1) + "\n");
+                dialog.append("b parameter = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_BINOM:
                 dialog.append("Statistics code = Binomial distribution\n");
-                dialog.append("Number of trials = " + Integer.toString(Math.round(intentP1)) + "\n");
-                dialog.append("Probability per trial = " + Float.toString(intentP2) + "\n");
+                dialog.append("Number of trials = " + Long.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Probability per trial = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_GAMMA:
                 dialog.append("Statistics code = Gamma with PDF = x**(shape-1) * exp(-Scale*x)\n");
-                dialog.append("Shape = " + Float.toString(intentP1) + "\n");
-                dialog.append("Scale = " + Float.toString(intentP2) + "\n");
+                dialog.append("Shape = " + Double.toString(intentP1) + "\n");
+                dialog.append("Scale = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_POISSON:
                 dialog.append("Statistics code = Poisson distribution\n");
-                dialog.append("Mean = " + Float.toString(intentP1) + "\n");
+                dialog.append("Mean = " + Double.toString(intentP1) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_NORMAL:
                 dialog.append("Statistics code = Normal distribution\n");
-                dialog.append("Mean = " + Float.toString(intentP1) + "\n");
-                dialog.append("Standard deviation = " + Float.toString(intentP2) + "\n");
+                dialog.append("Mean = " + Double.toString(intentP1) + "\n");
+                dialog.append("Standard deviation = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_FTEST_NONC:
                 dialog.append("Statistics code = Nocentral F statistic\n");
-                dialog.append("Numerator degrees of freedom = " + Integer.toString(Math.round(intentP1)) + "\n");
-                dialog.append("Denominator degrees of freedom = " + Integer.toString(Math.round(intentP2)) + "\n");
-                dialog.append("Numerator noncentrality parameter = " + Float.toString(intentP3) + "\n");
+                dialog.append("Numerator degrees of freedom = " + Long.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Denominator degrees of freedom = " + Long.toString(Math.round(intentP2)) + "\n");
+                dialog.append("Numerator noncentrality parameter = " + Double.toString(intentP3) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_CHISQ_NONC:
                 dialog.append("Statistics code = Nocentral chi-squared statistic\n");
-                dialog.append("Degrees of freedom = " + Integer.toString(Math.round(intentP1)) + "\n");
-                dialog.append("Noncentrality parameter = " + Float.toString(intentP2) + "\n");
+                dialog.append("Degrees of freedom = " + Long.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Noncentrality parameter = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_LOGISTIC:
                 dialog.append("Statistics code = Logistic distribution\n");
-                dialog.append("Location = " + Float.toString(intentP1) + "\n");
-                dialog.append("Scale = " + Float.toString(intentP2) + "\n");
+                dialog.append("Location = " + Double.toString(intentP1) + "\n");
+                dialog.append("Scale = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_LAPLACE:
                 dialog.append("Statistics code = Laplace distribution\n");
-                dialog.append("Location = " + Float.toString(intentP1) + "\n");
-                dialog.append("Scale = " + Float.toString(intentP2) + "\n");
+                dialog.append("Location = " + Double.toString(intentP1) + "\n");
+                dialog.append("Scale = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_UNIFORM:
                 dialog.append("Statistics code = Uniform distribution\n");
-                dialog.append("Start = " + Float.toString(intentP1) + "\n");
-                dialog.append("End = " + Float.toString(intentP2) + "\n");
+                dialog.append("Start = " + Double.toString(intentP1) + "\n");
+                dialog.append("End = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_TTEST_NONC:
                 dialog.append("Statistics code = Nocentral t statistic\n");
-                dialog.append("Degrees of freedom = " + Integer.toString(Math.round(intentP1)) + "\n");
-                dialog.append("Noncentrality parameter = " + Float.toString(intentP2) + "\n");
+                dialog.append("Degrees of freedom = " + Long.toString(Math.round(intentP1)) + "\n");
+                dialog.append("Noncentrality parameter = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_WEIBULL:
                 dialog.append("Statistics code = Weibull distribution\n");
-                dialog.append("Location = " + Float.toString(intentP1) + "\n");
-                dialog.append("Scale = " + Float.toString(intentP2) + "\n");
-                dialog.append("Power = " + Float.toString(intentP3) + "\n");
+                dialog.append("Location = " + Double.toString(intentP1) + "\n");
+                dialog.append("Scale = " + Double.toString(intentP2) + "\n");
+                dialog.append("Power = " + Double.toString(intentP3) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_CHI:
                 dialog.append("Statistics code = Chi distribution\n");
 
-                final int p1 = Math.round(intentP1);
+                final int p1 = (int)Math.round(intentP1);
                 dialog.append("Degrees of freedom = " + Integer.toString(p1) + "\n");
                 if (p1 == 1) {
                     dialog.append("DOF = 1  Half normal distribution\n");
@@ -1967,14 +1967,14 @@ public class FileInfoNIFTI extends FileInfoBase {
 
             case FileInfoNIFTI.NIFTI_INTENT_INVGAUSS:
                 dialog.append("Statistics code = Inverse Gaussian\n");
-                dialog.append("Mu = " + Float.toString(intentP1) + "\n");
-                dialog.append("Lambda = " + Float.toString(intentP2) + "\n");
+                dialog.append("Mu = " + Double.toString(intentP1) + "\n");
+                dialog.append("Lambda = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_EXTVAL:
                 dialog.append("Statistics code = Extreme value type 1\n");
-                dialog.append("Location = " + Float.toString(intentP1) + "\n");
-                dialog.append("Scale = " + Float.toString(intentP2) + "\n");
+                dialog.append("Location = " + Double.toString(intentP1) + "\n");
+                dialog.append("Scale = " + Double.toString(intentP2) + "\n");
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_PVAL:
@@ -4575,7 +4575,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return intentP1
      */
-    public float getIntentP1() {
+    public double getIntentP1() {
         return intentP1;
     }
 
@@ -4584,7 +4584,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return intentP2
      */
-    public float getIntentP2() {
+    public double getIntentP2() {
         return intentP2;
     }
 
@@ -4593,7 +4593,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return intentP3
      */
-    public float getIntentP3() {
+    public double getIntentP3() {
         return intentP3;
     }
 
@@ -4701,7 +4701,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return float vox_offset
      */
-    public float getVoxOffset() {
+    public long getVoxOffset() {
         return vox_offset;
     }
 
@@ -4824,7 +4824,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param intentP1 DOCUMENT ME!
      */
-    public void setIntentP1(final float intentP1) {
+    public void setIntentP1(final double intentP1) {
         this.intentP1 = intentP1;
     }
 
@@ -4833,7 +4833,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param intentP2 DOCUMENT ME!
      */
-    public void setIntentP2(final float intentP2) {
+    public void setIntentP2(final double intentP2) {
         this.intentP2 = intentP2;
     }
 
@@ -4842,7 +4842,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param intentP3 DOCUMENT ME!
      */
-    public void setIntentP3(final float intentP3) {
+    public void setIntentP3(final double intentP3) {
         this.intentP3 = intentP3;
     }
 
@@ -4956,7 +4956,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param vox DOCUMENT ME!
      */
-    public void setVoxOffset(final float vox) {
+    public void setVoxOffset(final long vox) {
         vox_offset = vox;
     }
 
@@ -5129,7 +5129,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         if (tname.equalsIgnoreCase("Description")) {
             setDescription(tvalue);
         } else if (tname.equalsIgnoreCase("voxel offset")) {
-            setVoxOffset(Float.parseFloat((String) tcvalue.elementAt(0)));
+            setVoxOffset(((Long) tcvalue.elementAt(0)).longValue());
         } else if (tname.equalsIgnoreCase("cal_min")) {
             setCalMin(Float.parseFloat((String) tcvalue.elementAt(0)));
         } else if (tname.equalsIgnoreCase("cal_max")) {
