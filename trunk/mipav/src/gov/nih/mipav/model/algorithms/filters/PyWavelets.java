@@ -6252,7 +6252,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    -1.0099999569414229e-012, 0.0
 	};
 	
-	/*static final float db_float[][] = new float[][] {
+	static final float db_float[][] = new float[][] {
 	  db1_float,
 	  db2_float,
 	  db3_float,
@@ -6263,77 +6263,257 @@ public  class PyWavelets extends AlgorithmBase {
 	  db8_float,
 	  db9_float,
 	  db10_float,
-	  CAT(db11_, TYPE),
-	  CAT(db12_, TYPE),
-	  CAT(db13_, TYPE),
-	  CAT(db14_, TYPE),
-	  CAT(db15_, TYPE),
-	  CAT(db16_, TYPE),
-	  CAT(db17_, TYPE),
-	  CAT(db18_, TYPE),
-	  CAT(db19_, TYPE),
-	  CAT(db20_, TYPE),
-	  CAT(db21_, TYPE),
-	  CAT(db22_, TYPE),
-	  CAT(db23_, TYPE),
-	  CAT(db24_, TYPE),
-	  CAT(db25_, TYPE),
-	  CAT(db26_, TYPE),
-	  CAT(db27_, TYPE),
-	  CAT(db28_, TYPE),
-	  CAT(db29_, TYPE),
-	  CAT(db30_, TYPE),
-	  CAT(db31_, TYPE),
-	  CAT(db32_, TYPE),
-	  CAT(db33_, TYPE),
-	  CAT(db34_, TYPE),
-	  CAT(db35_, TYPE),
-	  CAT(db36_, TYPE),
-	  CAT(db37_, TYPE),
-	  CAT(db38_, TYPE),
+	  db11_float,
+	  db12_float,
+	  db13_float,
+	  db14_float,
+	  db15_float,
+	  db16_float,
+      db17_float,
+	  db18_float,
+	  db19_float,
+	  db20_float,
+	  db21_float,
+	  db22_float,
+	  db23_float,
+	  db24_float,
+	  db25_float,
+	  db26_float,
+	  db27_float,
+	  db28_float,
+	  db29_float,
+	  db30_float,
+	  db31_float,
+	  db32_float,
+	  db33_float,
+	  db34_float,
+	  db35_float,
+	  db36_float,
+	  db37_float,
+	  db38_float,
 	};
 	
 	static final double db_double[][] = new double[][] {
-	  CAT(db1_, TYPE),
-	  CAT(db2_, TYPE),
-	  CAT(db3_, TYPE),
-	  CAT(db4_, TYPE),
-	  CAT(db5_, TYPE),
-	  CAT(db6_, TYPE),
-	  CAT(db7_, TYPE),
-	  CAT(db8_, TYPE),
-	  CAT(db9_, TYPE),
-	  CAT(db10_, TYPE),
-	  CAT(db11_, TYPE),
-	  CAT(db12_, TYPE),
-	  CAT(db13_, TYPE),
-	  CAT(db14_, TYPE),
-	  CAT(db15_, TYPE),
-	  CAT(db16_, TYPE),
-	  CAT(db17_, TYPE),
-	  CAT(db18_, TYPE),
-	  CAT(db19_, TYPE),
-	  CAT(db20_, TYPE),
-	  CAT(db21_, TYPE),
-	  CAT(db22_, TYPE),
-	  CAT(db23_, TYPE),
-	  CAT(db24_, TYPE),
-	  CAT(db25_, TYPE),
-	  CAT(db26_, TYPE),
-	  CAT(db27_, TYPE),
-	  CAT(db28_, TYPE),
-	  CAT(db29_, TYPE),
-	  CAT(db30_, TYPE),
-	  CAT(db31_, TYPE),
-	  CAT(db32_, TYPE),
-	  CAT(db33_, TYPE),
-	  CAT(db34_, TYPE),
-	  CAT(db35_, TYPE),
-	  CAT(db36_, TYPE),
-	  CAT(db37_, TYPE),
-	  CAT(db38_, TYPE),
-	};*/
+	  db1_double,
+	  db2_double,
+	  db3_double,
+	  db4_double,
+	  db5_double,
+	  db6_double,
+	  db7_double,
+	  db8_double,
+	  db9_double,
+	  db10_double,
+	  db11_double,
+	  db12_double,
+	  db13_double,
+	  db14_double,
+	  db15_double,
+	  db16_double,
+	  db17_double,
+	  db18_double,
+	  db19_double,
+	  db20_double,
+	  db21_double,
+	  db22_double,
+	  db23_double,
+	  db24_double,
+	  db25_double,
+	  db26_double,
+	  db27_double,
+	  db28_double,
+	  db29_double,
+	  db30_double,
+	  db31_double,
+	  db32_double,
+	  db33_double,
+	  db34_double,
+	  db35_double,
+	  db36_double,
+	  db37_double,
+	  db38_double,
+	};
+	
+	static final float sym_float[][] = new float[][] {
+	  sym2_float,
+	  sym3_float,
+	  sym4_float,
+	  sym5_float,
+	  sym6_float,
+	  sym7_float,
+	  sym8_float,
+	  sym9_float,
+	  sym10_float,
+	  sym11_float,
+	  sym12_float,
+	  sym13_float,
+	  sym14_float,
+	  sym15_float,
+	  sym16_float,
+	  sym17_float,
+	  sym18_float,
+	  sym19_float,
+	  sym20_float,
+	};
+	
+	static final double sym_double[][] = new double[][] {
+	  sym2_double,
+	  sym3_double,
+	  sym4_double,
+	  sym5_double,
+	  sym6_double,
+	  sym7_double,
+	  sym8_double,
+	  sym9_double,
+	  sym10_double,
+	  sym11_double,
+	  sym12_double,
+	  sym13_double,
+	  sym14_double,
+	  sym15_double,
+	  sym16_double,
+	  sym17_double,
+	  sym18_double,
+	  sym19_double,
+	  sym20_double,
+	};
+	
+	static final float coif_float[][] = new float[][] {
+	  coif1_float,
+	  coif2_float,
+	  coif3_float,
+	  coif4_float,
+	  coif5_float,
+	  coif6_float,
+	  coif7_float,
+	  coif8_float,
+	  coif9_float,
+	  coif10_float,
+	  coif11_float,
+	  coif12_float,
+	  coif13_float,
+	  coif14_float,
+	  coif15_float,
+	  coif16_float,
+	  coif17_float,
+	};
+	
+	static final double coif_double[][] = new double[][] {
+	  coif1_double,
+	  coif2_double,
+	  coif3_double,
+	  coif4_double,
+	  coif5_double,
+	  coif6_double,
+	  coif7_double,
+	  coif8_double,
+	  coif9_double,
+	  coif10_double,
+	  coif11_double,
+	  coif12_double,
+	  coif13_double,
+	  coif14_double,
+	  coif15_double,
+	  coif16_double,
+	  coif17_double,
+	};
+	
+	static final float bior1_float[][] = new float[][] {
+	  bior1_0_float,
+	  bior1_1_float,
+	  bior1_3_float,
+	  bior1_5_float,
+	};
+	
+	static final double bior1_double[][] = new double[][] {
+	  bior1_0_double,
+	  bior1_1_double,
+	  bior1_3_double,
+	  bior1_5_double,
+	};
+	
+	static final float bior2_float[][] = new float[][] {
+	  bior2_0_float,
+	  bior2_2_float,
+	  bior2_4_float,
+	  bior2_6_float,
+	  bior2_8_float,
+	};
+	
+	static final double bior2_double[][] = new double[][] {
+	  bior2_0_double,
+	  bior2_2_double,
+	  bior2_4_double,
+	  bior2_6_double,
+	  bior2_8_double,
+	};
 
+	static final float bior3_float[][] = new float[][] {
+	  bior3_0_float,
+	  bior3_1_float,
+	  bior3_3_float,
+	  bior3_5_float,
+	  bior3_7_float,
+	  bior3_9_float,
+	};
+	
+	static final double bior3_double[][] = new double[][] {
+	  bior3_0_double,
+	  bior3_1_double,
+	  bior3_3_double,
+	  bior3_5_double,
+	  bior3_7_double,
+	  bior3_9_double,
+	};
+	
+	static final float bior4_float[][] = new float[][] {
+	  bior4_0_float,
+	  bior4_4_float,
+	};
+	
+	static final double bior4_double[][] = new double[][] {
+	  bior4_0_double,
+	  bior4_4_double,
+	};
+	
+	static final float bior5_float[][] = new float[][] {
+	  bior5_0_float,
+	  bior5_5_float,
+	};
+	
+	static final double bior5_double[][] = new double[][] {
+	  bior5_0_double,
+	  bior5_5_double,
+	};
+	
+	static final float bior6_float[][] = new float[][] {
+	  bior6_0_float,
+	  bior6_8_float,
+	};
+	
+	static final double bior6_double[][] = new double[][] {
+	  bior6_0_double,
+	  bior6_8_double,
+	};
+	
+	// Array of 6 pointers to array of 4 pointers to float
+	static final float bior_float[][][] = new float[][][] {
+	  bior1_float,
+	  bior2_float,
+	  bior3_float,
+	  bior4_float,
+	  bior5_float,
+	  bior6_float,
+	};
+	
+	static final double bior_double[][][] = new double[][][] {
+	  bior1_double,
+	  bior2_double,
+	  bior3_double,
+	  bior4_double,
+	  bior5_double,
+	  bior6_double,
+	};
     /*DiscreteWavelet discrete_wavelet(WAVELET_NAME name, int order)
     {
     	int tmpInt;
