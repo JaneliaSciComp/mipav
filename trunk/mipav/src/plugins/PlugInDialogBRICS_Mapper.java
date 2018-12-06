@@ -134,7 +134,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private static final String authProdServer = "https://fitbir.nih.gov/";
 
     /** File name of server configuration. */
-    private static final String configFileName = "brics_config.properties";
+    private static final String configFileName = "brics_mapper_config.properties";    // TODO - new config needed.
 
     /** Property for reading the dd environment name from the BRICS config file. */
     private static final String ddEnvNameProp = "ddEnvName";
@@ -170,7 +170,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private static final String svnVersion 		= "$Rev: 15178 $";
     private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
-    private static final String pluginVersion 	= "Beta version 0.6";
+    private static final String pluginVersion 	= "Beta version 0.7";
 
 	private PlugInDialogBRICS_Mapper owner;
 
@@ -215,7 +215,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         // try to read the server config from disk, if it is there.
         // otherwise the value set above at initialization is used.
-        //readConfig();
+        readConfig();
 
         // Sets up GUI for the Mapping tool and the Translation tool
         init();
@@ -359,7 +359,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	    		}
 	    }
 	    	
-	    }
+    }
         
 	    	
     
@@ -390,15 +390,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     @Override
     public void windowOpened(final WindowEvent e) {}
 
-    
-
-    /**
-     * TODO:  Delete - Called after validation is done - Not us
-     */
-    public void complete(final FormStructureData fsData, final boolean isComplete) {
-        String value = "true"; 
-    }
-
 
     @Override
     public void focusGained(final FocusEvent e) {
@@ -418,7 +409,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     @Override
     public void stateChanged(final ChangeEvent e) {
         final Object source = e.getSource();
-      
     }
 
     
@@ -475,9 +465,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		    final JFrame jFrame = new JFrame();
         		    
         		    // text field for explanation
-        		    JTextArea textField = new JTextArea("Sample CSV Used for Mapping Data. Note that PV Description and Title are Optional\n"+
-        		    		"BRICSMap01 ID is needed in first cell in order to map files (shown above table)\n"+
-        		    		"BRICSMap01"); // edit message as needed - could have better clarity
+        		    JTextArea textField = new JTextArea("  Sample CSV Used for Mapping Data. Note that PV Description and Title are Optional\n"+
+        		    		"  BRICSMap01 ID is needed in first cell in order to map files (shown above table)\n"+
+        		    		"  Column headings are in the second row and should be exactly as shown\n\n" +
+        		    		"  BRICSMap01"); // edit message as needed - could have better clarity
         		    textField.setEditable(false);
         		    // close button
         		    JButton close = new JButton("Close");
@@ -489,13 +480,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		    jFrame.add(textField, BorderLayout.PAGE_START);
         		    jFrame.add(sp, BorderLayout.CENTER);
         		    jFrame.add(close, BorderLayout.PAGE_END);
+        		    jFrame.setTitle("Help - source DE format");
         		    try {
 						jFrame.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
 					} catch (FileNotFoundException e1) {
 						e1.printStackTrace();
 					}
-        		    jFrame.setPreferredSize(new Dimension(600,215));
+        		    jFrame.setPreferredSize(new Dimension(600,260));
         		    jFrame.pack();
+        		    jFrame.setLocation(100, 100);
         		    jFrame.setVisible(true);
         		  }
         	 
@@ -984,7 +977,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     /**
      * Tries to read server configuration from BRICS config file on local disk.
      */
-    private void readConfigOld() {
+    private void readConfig() {
         final InputStream in = getClass().getResourceAsStream(configFileName);
         if (in != null) {
             final Properties prop = new Properties();
@@ -1922,8 +1915,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		srcDETableModel.setValueAt("", i, srcDETableModel.getColumnIndex("Mapped"));
         	}
         	
-            for(int i = 0; i < srcDETable.getRowCount(); i++) {
-            	String srcName = (String)srcDETable.getValueAt(i, srcDETableModel.getColumnIndex("Name"));
+            //for(int i = 0; i < srcDETable.getRowCount(); i++) {
+            for(int i = 0; i < srcDETableModel.getRowCount(); i++) {
+            	String srcName = (String)srcDETableModel.getValueAt(i, srcDETableModel.getColumnIndex("Name"));
 
             	for (int j=0; j < deTable.getRowCount();  j++) {
             		
@@ -1981,7 +1975,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             				return;
             			}
             		}
-
+            		
+            		//System.out.println(" Selected Row  = " + rowRef);
             		// If source PVs is empty and reference PVs are not empty then show error message and return
             		if (  !((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() &&
             			   ((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")))).isEmpty() ) {
