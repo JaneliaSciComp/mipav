@@ -127,7 +127,7 @@ public class FileNIFTI extends FileBase {
      *  coord_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
      *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
      *  "MNI 152 normalized X,Y,Z coordinates".   */
-    private short coord_code;
+    private int coord_code;
 
     /** DOCUMENT ME! */
     private String fileDir;
@@ -147,10 +147,8 @@ public class FileNIFTI extends FileBase {
     private int freq_dim = 0;
 
     /** The size of the NIFTI-1 header must be set to 348 bytes. */
-    private int headerSize = 348;
-    
     /** The size of the NIFTI-2 header must be set to 540 bytes. */
-    private int headerSize2 = 540;
+    private int headerSize = 348;
 
     /** DOCUMENT ME! */
     private ModelImage image;
@@ -182,20 +180,20 @@ public class FileNIFTI extends FileBase {
      *  when qform_code > 0 or from srow_x[3], srow_y[3], and srow_z[3] when sform_code > 0.
      *  The MIPAV value will equal the NIFTI value or the negative of the NIFTI value.
      *  The MIPAV value is stored using fileInfo.setOrigin(LPSOrigin) and  
-     *  matrix.setMatrix((double) LPSOrigin[0], 0, 3);
-        matrix.setMatrix((double) LPSOrigin[1], 1, 3);
-        matrix.setMatrix((double) LPSOrigin[2], 2, 3);*/
-    private float[] LPSOrigin;
+     *  matrix.setMatrix(LPSOrigin[0], 0, 3);
+        matrix.setMatrix(LPSOrigin[1], 1, 3);
+        matrix.setMatrix(LPSOrigin[2], 2, 3);*/
+    private double[] LPSOrigin;
 
     /** When qform_code > 0 and sform_code > 0, LPSOrigin derives the MIPAV origin from 
      *  the qform information and LPSOrigin2 derives MIPAV origin from the sform 
      *  information.  LPSOrigin2 is derived from srow_x[3], srow_y[3], and srow_z[3].
      *  The MIPAV value will equal the NIFTI value or the negative of the NIFTI value.
      *  MIPAV information is stored using
-     *  matrix2.setMatrix((double) LPSOrigin2[0], 0, 3);
-        matrix2.setMatrix((double) LPSOrigin2[1], 1, 3);
-        matrix2.setMatrix((double) LPSOrigin2[2], 2, 3); */
-    private float[] LPSOrigin2;
+     *  matrix2.setMatrix(LPSOrigin2[0], 0, 3);
+        matrix2.setMatrix(LPSOrigin2[1], 1, 3);
+        matrix2.setMatrix(LPSOrigin2[2], 2, 3); */
+    private double[] LPSOrigin2;
 
     /** MIPAV matrix used for storing qform or sform transformation information. */
     private TransMatrix matrix = new TransMatrix(4);
@@ -236,7 +234,7 @@ public class FileNIFTI extends FileBase {
     /** qfac is stored in the otherwise unused pixdim[0].
      *  pixdim[i] = voxel width along dimension #i, i=1..dim[0] (positive)
      *  the units of pixdim can be specified with the xyzt_units field */
-    private float[] pixdim;
+    private double[] pixdim;
 
     /**  The scaling factor qfac is either 1 or -1. The rotation matrix R
          defined by the quaternion parameters is "proper" (has determinant 1).
@@ -269,31 +267,31 @@ public class FileNIFTI extends FileBase {
         qform_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
      *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
      *  "MNI 152 normalized X,Y,Z coordinates".   */
-    private short qform_code;
+    private int qform_code;
 
     /** Quaternion x shift */
-    private float qoffset_x;
+    private double qoffset_x;
 
     /** Quaternion y shift */
-    private float qoffset_y;
+    private double qoffset_y;
 
     /** Quaternion z shift */
-    private float qoffset_z;
+    private double qoffset_z;
 
     /** The orientation of the (x,y,z) axes relative to the (i,j,k) axes
    in 3D space is specified using a unit quaternion [a,b,c,d], where
    a*a+b*b+c*c+d*d=1.  The (b,c,d) values are all that is needed, since
    we require that a = sqrt(1.0-(b*b+c*c+d*d)) be nonnegative. */
-    private float quatern_a;
+    private double quatern_a;
 
     /** Quaternion b parameter */
-    private float quatern_b;
+    private double quatern_b;
 
     /** Quaternion c parameter */
-    private float quatern_c;
+    private double quatern_c;
 
     /** Quaternion d parameter */
-    private float quatern_d;
+    private double quatern_d;
 
     /** The (proper) 3x3 rotation matrix that
         corresponds to quaternion [a,b,c,d] is
@@ -324,8 +322,8 @@ public class FileNIFTI extends FileBase {
         - However, the scaling is to be ignored if datatype is DT_RGB24.
         - If datatype is a complex type, then the scaling is to be
         applied to both the real and imaginary parts. */
-    private float scl_slope;
-    private float scl_inter;   
+    private double scl_slope;
+    private double scl_inter;   
 
     /** When sform_code > 0,
      *  The (x,y,z) coordinates are given by a general affine transformation
@@ -337,7 +335,7 @@ public class FileNIFTI extends FileBase {
         sform_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
      *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
      *  "MNI 152 normalized X,Y,Z coordinates".   */
-    private short sform_code;
+    private int sform_code;
 
     /** Bits 4 and 5 of the dim_info character contain the slice_dim information.
      *  0 for "No slice acquisition direction is present", 1 for "Slice acquisition in the x direction",
@@ -354,16 +352,16 @@ public class FileNIFTI extends FileBase {
         "Slice timing order is alternately decreasing",
         "Slice timing order is alternately increasing #2",
         "Slice timing order is alternately decreasing #2". */
-    private byte sliceCode;
+    private int sliceCode;
 
     /** Time used to acquire 1 slice. */
-    private float sliceDuration;
+    private double sliceDuration;
 
     /** Slice timing pattern ends with slice = (sliceEnd + 1) */
-    private short sliceEnd;
+    private long sliceEnd;
 
     /** Slice timing pattern starts with slice = (sliceStart + 1) */
-    private short sliceStart;
+    private long sliceStart;
 
     /** Source bits per pixel = sourceBitPix */
     private short sourceBitPix;
@@ -380,13 +378,13 @@ public class FileNIFTI extends FileBase {
     private int spaceUnits = FileInfoNIFTI.NIFTI_UNITS_UNKNOWN;
 
     /** 1st row affine transform */
-    private float[] srow_x;
+    private double[] srow_x;
 
     /** 2nd row affine transform */
-    private float[] srow_y;
+    private double[] srow_y;
 
     /** 3rd row affine transform */
-    private float[] srow_z;
+    private double[] srow_z;
 
     /** Bits 3, 4, and 5 of xyzt_units specify the units of pixdim[4],
      *  that is the temporal units of the nifti time axis.
@@ -403,7 +401,7 @@ public class FileNIFTI extends FileBase {
     /** The toffset field can be used to indicate a nonzero start point for
         the time axis.  That is, time point #m is at t=toffset+m*pixdim[4]
         for m=0..dim[4]-1. */
-    private float tOffset;
+    private double tOffset;
 
     /** If the magic field is "n+1", then the voxel data is stored in the same file as the header.
      *  In this case, the voxel data starts at offset (int)vox_offset into the header file. Thus,
@@ -893,7 +891,6 @@ public class FileNIFTI extends FileBase {
         int i, j;
         int index;
         String fileHeaderName;
-        // headerSize = 348 in NIFTI-1, 540 in NIFTI-2
         long fileLength = 348;
         boolean endianess = BIG_ENDIAN;
         int[] niftiExtents = new int[5];
@@ -902,7 +899,7 @@ public class FileNIFTI extends FileBase {
         double intentP1;
         double intentP2;
         double intentP3;
-        short intentCode;
+        int intentCode;
         int unitMeasure;
         int spatialDims;
         double a, b, c, d;
@@ -938,13 +935,12 @@ public class FileNIFTI extends FileBase {
         
         if(niftiCompressed) {
         	oneFile = true;
-        	byte[] buffer = new byte[headerSize2];
+        	byte[] buffer = new byte[540];
         	byte[] headerSizeBuffer = new byte[4];
         	int bytesRead;
         	int dataStart;
         	byte[] buffer2 = null;
         	int bytesRead2 = 0;
-        	int hSize;
         	if (fileName.endsWith("zip")) {
         		zin.getNextEntry();
         		bytesRead = zin.read(headerSizeBuffer);
@@ -953,23 +949,23 @@ public class FileNIFTI extends FileBase {
         		}
         		// Set the endianess based on header size = 348 or 540 Big Endian or 1,543,569,408 Little endian
      	        endianess = BIG_ENDIAN;
-     	        hSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
-     	        if (hSize == 348) {
+     	        headerSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
+     	        if (headerSize == 348) {
      	        	isNIFTI2 = false;
      	        	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
      	        }
-     	        else if (hSize == 540) {
+     	        else if (headerSize == 540) {
      	        	isNIFTI2 = true;
      	        	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
      	        }
      	        else {
                 	    endianess = LITTLE_ENDIAN;
-                	    hSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
-                	    if (hSize == 348) {
+                	    headerSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
+                	    if (headerSize == 348) {
                 	    	isNIFTI2 = false;
                 	    	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
                 	    }
-                	    else if (hSize == 540) {
+                	    else if (headerSize == 540) {
                 	    	isNIFTI2 = true;
                 	    	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
                 	    }
@@ -981,11 +977,11 @@ public class FileNIFTI extends FileBase {
                  }
                  
                  fileInfo.setEndianess(endianess);
-                 fileInfo.setSizeOfHeader(hSize);
-                 buffer = new byte[hSize-4];
+                 fileInfo.setSizeOfHeader(headerSize);
+                 buffer = new byte[headerSize-4];
         		 bytesRead = zin.read(buffer);
-                 if(bytesRead != hSize-4) {
-                	 buffer = getFullBuffer(zin,buffer,bytesRead,hSize-4); 
+                 if(bytesRead != headerSize-4) {
+                	 buffer = getFullBuffer(zin,buffer,bytesRead,headerSize-4); 
                  }
                  if (!isNIFTI2) {
 	                 vox_offset = getBufferFloat(buffer, 108-4, endianess);
@@ -999,25 +995,25 @@ public class FileNIFTI extends FileBase {
 	                 Preferences.debug("vox_offset = " + vox_offset2 + "\n", Preferences.DEBUG_FILEIO);
 	                 dataStart = (int)vox_offset2;
                  }
-                 if (dataStart > hSize) {
-                	 buffer2 = new byte[dataStart-hSize];
+                 if (dataStart > headerSize) {
+                	 buffer2 = new byte[dataStart-headerSize];
                 	 bytesRead2 = zin.read(buffer2);
-                	 if (bytesRead2 != dataStart - hSize) {
-                		 buffer2 = getFullBuffer(zin, buffer2, bytesRead2, dataStart - hSize);
+                	 if (bytesRead2 != dataStart - headerSize) {
+                		 buffer2 = getFullBuffer(zin, buffer2, bytesRead2, dataStart - headerSize);
                 	 }
                  }
                  else {
-                	 dataStart = hSize;
+                	 dataStart = headerSize;
                  }
                  bufferByte = new byte[dataStart];
                  for (i = 0; i < 4; i++) {
                 	 bufferByte[i] = headerSizeBuffer[i];
                  }
-                 for (i = 0; i < hSize-4; i++) {
+                 for (i = 0; i < headerSize-4; i++) {
                      bufferByte[i+4] = buffer[i];
                  }
-                 for (i = 0; i < dataStart-hSize; i++) {
-                	 bufferByte[i+hSize] = buffer2[i];
+                 for (i = 0; i < dataStart-headerSize; i++) {
+                	 bufferByte[i+headerSize] = buffer2[i];
                  }
         	}else if(fileName.endsWith("gz")) {
         		bytesRead = gzin.read(headerSizeBuffer);
@@ -1026,23 +1022,23 @@ public class FileNIFTI extends FileBase {
         		}
         		// Set the endianess based on header size = 348 or 540 Big Endian or 1,543,569,408 Little endian
      	        endianess = BIG_ENDIAN;
-     	        hSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
-     	        if (hSize == 348) {
+     	        headerSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
+     	        if (headerSize == 348) {
      	        	isNIFTI2 = false;
      	        	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
      	        }
-     	        else if (hSize == 540) {
+     	        else if (headerSize == 540) {
      	        	isNIFTI2 = true;
      	        	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
      	        }
      	        else {
                 	    endianess = LITTLE_ENDIAN;
-                	    hSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
-                	    if (hSize == 348) {
+                	    headerSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
+                	    if (headerSize == 348) {
                 	    	isNIFTI2 = false;
                 	    	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
                 	    }
-                	    else if (hSize == 540) {
+                	    else if (headerSize == 540) {
                 	    	isNIFTI2 = true;
                 	    	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
                 	    }
@@ -1054,11 +1050,11 @@ public class FileNIFTI extends FileBase {
                  }
                  
                  fileInfo.setEndianess(endianess);
-                 fileInfo.setSizeOfHeader(hSize);
-                 buffer = new byte[hSize-4];
+                 fileInfo.setSizeOfHeader(headerSize);
+                 buffer = new byte[headerSize-4];
         		 bytesRead = gzin.read(buffer);
-                if(bytesRead != hSize-4) {
-               	 buffer = getFullBuffer(gzin,buffer,bytesRead,hSize-4); 
+                if(bytesRead != headerSize-4) {
+               	 buffer = getFullBuffer(gzin,buffer,bytesRead,headerSize-4); 
                 }
                 if (!isNIFTI2) {
 	                 vox_offset = getBufferFloat(buffer, 108-4, endianess);
@@ -1072,25 +1068,25 @@ public class FileNIFTI extends FileBase {
 	                 Preferences.debug("vox_offset = " + vox_offset2 + "\n", Preferences.DEBUG_FILEIO);
 	                 dataStart = (int)vox_offset2;
                 }
-                if (dataStart > hSize) {
-               	 buffer2 = new byte[dataStart-hSize];
+                if (dataStart > headerSize) {
+               	 buffer2 = new byte[dataStart-headerSize];
                	 bytesRead2 = gzin.read(buffer2);
-               	 if (bytesRead2 != dataStart - hSize) {
-               		 buffer2 = getFullBuffer(gzin, buffer2, bytesRead2, dataStart - hSize);
+               	 if (bytesRead2 != dataStart - headerSize) {
+               		 buffer2 = getFullBuffer(gzin, buffer2, bytesRead2, dataStart - headerSize);
                	 }
                 }
                 else {
-               	 dataStart = hSize;
+               	 dataStart = headerSize;
                 }
                 bufferByte = new byte[dataStart];
                 for (i = 0; i < 4; i++) {
                	 bufferByte[i] = headerSizeBuffer[i];
                 }
-                for (i = 0; i < hSize-4; i++) {
+                for (i = 0; i < headerSize-4; i++) {
                     bufferByte[i+4] = buffer[i];
                 }
-                for (i = 0; i < dataStart-hSize; i++) {
-               	 bufferByte[i+hSize] = buffer2[i];
+                for (i = 0; i < dataStart-headerSize; i++) {
+               	 bufferByte[i+headerSize] = buffer2[i];
                 }
         	}else if(fileName.endsWith("bz2")) {
         		bytesRead = bz2in.read(headerSizeBuffer);
@@ -1099,23 +1095,23 @@ public class FileNIFTI extends FileBase {
         		}
         		// Set the endianess based on header size = 348 or 540 Big Endian or 1,543,569,408 Little endian
      	        endianess = BIG_ENDIAN;
-     	        hSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
-     	        if (hSize == 348) {
+     	        headerSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
+     	        if (headerSize == 348) {
      	        	isNIFTI2 = false;
      	        	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
      	        }
-     	        else if (hSize == 540) {
+     	        else if (headerSize == 540) {
      	        	isNIFTI2 = true;
      	        	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
      	        }
      	        else {
                 	    endianess = LITTLE_ENDIAN;
-                	    hSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
-                	    if (hSize == 348) {
+                	    headerSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
+                	    if (headerSize == 348) {
                 	    	isNIFTI2 = false;
                 	    	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
                 	    }
-                	    else if (hSize == 540) {
+                	    else if (headerSize == 540) {
                 	    	isNIFTI2 = true;
                 	    	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
                 	    }
@@ -1127,11 +1123,11 @@ public class FileNIFTI extends FileBase {
                  }
                  
                  fileInfo.setEndianess(endianess);
-                 fileInfo.setSizeOfHeader(hSize);
-                 buffer = new byte[hSize-4];
+                 fileInfo.setSizeOfHeader(headerSize);
+                 buffer = new byte[headerSize-4];
         		 bytesRead = bz2in.read(buffer);
-                if(bytesRead != hSize-4) {
-               	 buffer = getFullBuffer(bz2in,buffer,bytesRead,hSize-4); 
+                if(bytesRead != headerSize-4) {
+               	 buffer = getFullBuffer(bz2in,buffer,bytesRead,headerSize-4); 
                 }
                 if (!isNIFTI2) {
 	                 vox_offset = getBufferFloat(buffer, 108-4, endianess);
@@ -1145,25 +1141,25 @@ public class FileNIFTI extends FileBase {
 	                 Preferences.debug("vox_offset = " + vox_offset2 + "\n", Preferences.DEBUG_FILEIO);
 	                 dataStart = (int)vox_offset2;
                 }
-                if (dataStart > hSize) {
-               	 buffer2 = new byte[dataStart-hSize];
+                if (dataStart > headerSize) {
+               	 buffer2 = new byte[dataStart-headerSize];
                	 bytesRead2 = bz2in.read(buffer2);
-               	 if (bytesRead2 != dataStart - hSize) {
-               		 buffer2 = getFullBuffer(bz2in, buffer2, bytesRead2, dataStart - hSize);
+               	 if (bytesRead2 != dataStart - headerSize) {
+               		 buffer2 = getFullBuffer(bz2in, buffer2, bytesRead2, dataStart - headerSize);
                	 }
                 }
                 else {
-               	 dataStart = hSize;
+               	 dataStart = headerSize;
                 }
                 bufferByte = new byte[dataStart];
                 for (i = 0; i < 4; i++) {
                	 bufferByte[i] = headerSizeBuffer[i];
                 }
-                for (i = 0; i < hSize-4; i++) {
+                for (i = 0; i < headerSize-4; i++) {
                     bufferByte[i+4] = buffer[i];
                 }
-                for (i = 0; i < dataStart-hSize; i++) {
-               	 bufferByte[i+hSize] = buffer2[i];
+                for (i = 0; i < dataStart-headerSize; i++) {
+               	 bufferByte[i+headerSize] = buffer2[i];
                 }
         		
         	}
@@ -1222,23 +1218,23 @@ public class FileNIFTI extends FileBase {
 	        raFile.read(headerSizeBuffer);
 	        // Set the endianess based on header size = 348 or 540 Big Endian or 1,543,569,408 Little endian
  	        endianess = BIG_ENDIAN;
- 	        int hSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
- 	        if (hSize == 348) {
+ 	        headerSize = getBufferInt(headerSizeBuffer, 0, BIG_ENDIAN);
+ 	        if (headerSize == 348) {
  	        	isNIFTI2 = false;
  	        	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
  	        }
- 	        else if (hSize == 540) {
+ 	        else if (headerSize == 540) {
  	        	isNIFTI2 = true;
  	        	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
  	        }
  	        else {
             	    endianess = LITTLE_ENDIAN;
-            	    hSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
-            	    if (hSize == 348) {
+            	    headerSize = getBufferInt(headerSizeBuffer, 0, LITTLE_ENDIAN);
+            	    if (headerSize == 348) {
             	    	isNIFTI2 = false;
             	    	Preferences.debug("FileNIFTI:readHeader NIFTI-1 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
             	    }
-            	    else if (hSize == 540) {
+            	    else if (headerSize == 540) {
             	    	isNIFTI2 = true;
             	    	Preferences.debug("FileNIFTI:readHeader NIFTI-2 Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);	
             	    }
@@ -1250,8 +1246,8 @@ public class FileNIFTI extends FileBase {
              }
              
              fileInfo.setEndianess(endianess);
-             fileInfo.setSizeOfHeader(hSize);
-             byte buffer[] = new byte[hSize-4];
+             fileInfo.setSizeOfHeader(headerSize);
+             byte buffer[] = new byte[headerSize-4];
 	         raFile.read(buffer);
 	         if (!isNIFTI2) {
                  vox_offset = getBufferFloat(buffer, 108-4, endianess);
@@ -1265,8 +1261,8 @@ public class FileNIFTI extends FileBase {
                  Preferences.debug("vox_offset = " + vox_offset2 + "\n", Preferences.DEBUG_FILEIO);
                  dataStart = (int)vox_offset2;
             }
-            if (dataStart < hSize) {
-            	dataStart = hSize;
+            if (dataStart < headerSize) {
+            	dataStart = headerSize;
             }
             bufferByte = new byte[dataStart];
             raFile.seek(0L);
@@ -1422,7 +1418,12 @@ public class FileNIFTI extends FileBase {
         }
         fileInfo.setIntentP3(intentP3);
         Preferences.debug("FileNIFTI:readHeader. intentP3 = " + fileInfo.getIntentP3() + "\n", Preferences.DEBUG_FILEIO);
-        intentCode = getBufferShort(bufferByte, 68, endianess);
+        if (!isNIFTI2) {
+            intentCode = (int)getBufferShort(bufferByte, 68, endianess);
+        }
+        else {
+        	intentCode = getBufferInt(bufferByte, 504, endianess);
+        }
         fileInfo.setIntentCode(intentCode);
         Preferences.debug("FileNIFTI:readHeader. intentCode = " + intentCode + "\n", Preferences.DEBUG_FILEIO);
 
@@ -1750,7 +1751,12 @@ public class FileNIFTI extends FileBase {
                 Preferences.debug("intentCode = " + intentCode + " is not a recognized value\n", Preferences.DEBUG_FILEIO);
         }
 
-        sourceType = getBufferShort(bufferByte, 70, endianess);
+        if (!isNIFTI2) {
+            sourceType = getBufferShort(bufferByte, 70, endianess);
+        }
+        else {
+        	sourceType = getBufferShort(bufferByte, 12, endianess);
+        }
         fileInfo.setSourceType(sourceType);
         Preferences.debug("Original unscaled source data type:\n", Preferences.DEBUG_FILEIO);
 
@@ -1837,20 +1843,35 @@ public class FileNIFTI extends FileBase {
                 return false;
         }
 
-        sourceBitPix = getBufferShort(bufferByte, 72, endianess);
+        if (!isNIFTI2) {
+            sourceBitPix = getBufferShort(bufferByte, 72, endianess);
+        }
+        else {
+        	sourceBitPix = getBufferShort(bufferByte, 14, endianess);
+        }
         fileInfo.setSourceBitPix(sourceBitPix);
         Preferences.debug("FileNIFTI:readHeader. source bits per pixel = " + sourceBitPix + "\n", Preferences.DEBUG_FILEIO);
 
-        sliceStart = getBufferShort(bufferByte, 74, endianess);
+        if (!isNIFTI2) {
+            sliceStart = (long)getBufferShort(bufferByte, 74, endianess);
+        }
+        else {
+        	sliceStart = getBufferLong(bufferByte, 224, endianess);
+        }
 
-        pixdim = new float[dims + 1];
+        pixdim = new double[dims + 1];
         resolutions = new float[Math.max(3, numDims)];
 
         for (i = 0, j = 0; i < (dims + 1); i++) {
-            pixdim[i] = getBufferFloat(bufferByte, 76 + (4 * i), endianess);
+        	if (!isNIFTI2) {
+                pixdim[i] = (double)getBufferFloat(bufferByte, 76 + (4 * i), endianess);
+        	}
+        	else {
+        		pixdim[i] = getBufferDouble(bufferByte, 104 + (8 * i), endianess);
+        	}
 
             if ((i >= 1) && (niftiExtents[i - 1] > 1)) {
-                resolutions[j] = Math.abs(pixdim[i]);
+                resolutions[j] = Math.abs((float)pixdim[i]);
                 Preferences.debug("FileNIFTI:readHeader. Resolutions " + (j + 1) + " = " + resolutions[j] + "\n", 
                 		Preferences.DEBUG_FILEIO);
                 j++;
@@ -1859,22 +1880,35 @@ public class FileNIFTI extends FileBase {
 
         fileInfo.setResolutions(resolutions);
 
-        scl_slope = getBufferFloat(bufferByte, 112, endianess);
+        if (!isNIFTI2) {
+            scl_slope = (double)getBufferFloat(bufferByte, 112, endianess);
+        }
+        else {
+        	scl_slope = getBufferDouble(bufferByte, 176, endianess);
+        }
         fileInfo.setSclSlope(scl_slope);
         Preferences.debug("Data scaling slope = " + scl_slope + "\n", Preferences.DEBUG_FILEIO);
-        scl_inter = getBufferFloat(bufferByte, 116, endianess);
+        if (!isNIFTI2) {
+            scl_inter = (double)getBufferFloat(bufferByte, 116, endianess);
+        }
+        else {
+        	scl_inter = getBufferDouble(bufferByte, 184, endianess);
+        }
         fileInfo.setSclInter(scl_inter);
         Preferences.debug("Data offset = " + scl_inter + "\n", Preferences.DEBUG_FILEIO);
 
-        sliceEnd = getBufferShort(bufferByte, 120, endianess);
-
-        sliceCode = bufferByte[122];
-
-        if ((sliceCode > 0) && (sliceStart > 0)) {
-            fileInfo.setSliceStart(sliceStart);
-            Preferences.debug("Slice timing pattern starts with slice = " + (sliceStart + 1) + "\n", Preferences.DEBUG_FILEIO);
+        if (!isNIFTI2) {
+            sliceEnd = (long)getBufferShort(bufferByte, 120, endianess);
         }
-
+        else {
+        	sliceEnd = getBufferLong(bufferByte, 232, endianess);
+        }
+        if (!isNIFTI2) {
+            sliceCode = (int)bufferByte[122];
+        }
+        else {
+        	sliceCode = getBufferInt(bufferByte, 496, endianess);
+        }
         if ((sliceCode > 0) && (sliceEnd > sliceStart)) {
             fileInfo.setSliceEnd(sliceEnd);
             Preferences.debug("Slice timing pattern ends with slice = " + (sliceEnd + 1) + "\n", Preferences.DEBUG_FILEIO);
@@ -1883,7 +1917,12 @@ public class FileNIFTI extends FileBase {
         if (spatialDims == 0) {
             Preferences.debug("No x, y, or z dimensions are present\n", Preferences.DEBUG_FILEIO);
         } else {
-            spaceUnits = (int) (bufferByte[123] & 0x07);
+        	if (!isNIFTI2) {
+                spaceUnits = (bufferByte[123] & 0x07);
+        	}
+        	else {
+        		spaceUnits = getBufferInt(bufferByte, 500, endianess) & 0x07;
+        	}
 
             switch (spaceUnits) {
 
@@ -1919,7 +1958,12 @@ public class FileNIFTI extends FileBase {
         }
 
         if ((dims >= 4) && (niftiExtents[3] > 1)) {
-            timeUnits = bufferByte[123] & 0x38;
+        	if (!isNIFTI2) {
+                timeUnits = bufferByte[123] & 0x38;
+        	}
+        	else {
+        		timeUnits = getBufferInt(bufferByte, 500, endianess) & 0x38;
+        	}
 
             switch (timeUnits) {
 
@@ -1966,9 +2010,24 @@ public class FileNIFTI extends FileBase {
             fileInfo.setUnitsOfMeasure(unitMeasure, spatialDims);
         }
 
-        fileInfo.setCalMax(getBufferFloat(bufferByte, 124, endianess));
-        fileInfo.setCalMin(getBufferFloat(bufferByte, 128, endianess));
-        sliceDuration = getBufferFloat(bufferByte, 132, endianess);
+        if (!isNIFTI2) {
+            fileInfo.setCalMax((double)getBufferFloat(bufferByte, 124, endianess));
+        }
+        else {
+        	fileInfo.setCalMax(getBufferDouble(bufferByte, 192, endianess));
+        }
+        if (!isNIFTI2) {
+            fileInfo.setCalMin((double)getBufferFloat(bufferByte, 128, endianess));
+        }
+        else {
+        	fileInfo.setCalMin(getBufferDouble(bufferByte, 200, endianess));
+        }
+        if (!isNIFTI2) {
+            sliceDuration = (double)getBufferFloat(bufferByte, 132, endianess);
+        }
+        else {
+        	sliceDuration = getBufferDouble(bufferByte, 208, endianess);
+        }
 
         if ((sliceDuration > 0) && (slice_dim > 0)) {
             fileInfo.setSliceDuration(sliceDuration);
@@ -1996,8 +2055,13 @@ public class FileNIFTI extends FileBase {
             Preferences.debug("Slice timing order is not specified\n", Preferences.DEBUG_FILEIO);
         }
 
-        tOffset = getBufferFloat(bufferByte, 136, endianess);
-        fileInfo.setOrigin(tOffset, 3);
+        if (!isNIFTI2) {
+            tOffset = (double)getBufferFloat(bufferByte, 136, endianess);
+        }
+        else {
+        	tOffset = getBufferDouble(bufferByte, 216, endianess);
+        }
+        fileInfo.setOrigin((float)tOffset, 3);
         Preferences.debug("tOffset = " + tOffset + "\n", Preferences.DEBUG_FILEIO);
 
 
@@ -2080,17 +2144,37 @@ public class FileNIFTI extends FileBase {
                 return false;
         }
 
-        fileInfo.setDescription(new String(bufferByte, 148, 80));
+        if (!isNIFTI2) {
+            fileInfo.setDescription(new String(bufferByte, 148, 80));
+        }
+        else {
+        	fileInfo.setDescription(new String(bufferByte, 240, 80));
+        }
 
         // update the fileInfo modality based on the description
         // if the description contains something other than modality, then
         // the modality will be set to unknown.
         fileInfo.setModality(FileInfoBase.getModalityFromStr(fileInfo.getDescription()));
 
-        fileInfo.setAuxFile(new String(bufferByte, 228, 24));
+        if (!isNIFTI2) {
+            fileInfo.setAuxFile(new String(bufferByte, 228, 24));
+        }
+        else {
+        	fileInfo.setAuxFile(new String(bufferByte, 320, 24));	
+        }
 
-        qform_code = getBufferShort(bufferByte, 252, endianess);
-        sform_code = getBufferShort(bufferByte, 254, endianess);
+        if (!isNIFTI2) {
+            qform_code = (int)getBufferShort(bufferByte, 252, endianess);
+        }
+        else {
+        	qform_code = getBufferInt(bufferByte, 344, endianess);
+        }
+        if (!isNIFTI2) {
+            sform_code = (int)getBufferShort(bufferByte, 254, endianess);
+        }
+        else {
+        	sform_code = getBufferInt(bufferByte, 348, endianess);
+        }
 
         if (pixdim[0] >= 0.0f) {
             qfac = 1.0f;
@@ -2211,11 +2295,26 @@ public class FileNIFTI extends FileBase {
         }
 
         if (qform_code > 0) {
-            quatern_b = getBufferFloat(bufferByte, 256, endianess);
+        	if (!isNIFTI2) {
+                quatern_b = (double)getBufferFloat(bufferByte, 256, endianess);
+        	}
+        	else {
+        		quatern_b = getBufferDouble(bufferByte, 352, endianess);
+        	}
             b = quatern_b;
-            quatern_c = getBufferFloat(bufferByte, 260, endianess);
+            if (!isNIFTI2) {
+                quatern_c = (double)getBufferFloat(bufferByte, 260, endianess);
+            }
+            else {
+            	quatern_c = getBufferDouble(bufferByte, 360, endianess);
+            }
             c = quatern_c;
-            quatern_d = getBufferFloat(bufferByte, 264, endianess);
+            if (!isNIFTI2) {
+                quatern_d = (double)getBufferFloat(bufferByte, 264, endianess);
+            }
+            else {
+            	quatern_d = getBufferDouble(bufferByte, 368, endianess);
+            }
             d = quatern_d;
             a = 1.0 - (b * b) - (c * c) - (d * d);
 
@@ -2257,10 +2356,17 @@ public class FileNIFTI extends FileBase {
                         "\\" + nf.format(-r01) + "\\" + nf.format(-r11) + "\\" + nf.format(r21);
             fileInfo.setPatientOrientationString(patientOrientationString);
             matrix.set(1, 2, -r12 * qfac * resolutions[2]);
-            qoffset_x = getBufferFloat(bufferByte, 268, endianess);
-            qoffset_y = getBufferFloat(bufferByte, 272, endianess);
-            qoffset_z = getBufferFloat(bufferByte, 276, endianess);
-            LPSOrigin = new float[3];
+            if (!isNIFTI2) {
+                qoffset_x = (double)getBufferFloat(bufferByte, 268, endianess);
+                qoffset_y = (double)getBufferFloat(bufferByte, 272, endianess);
+                qoffset_z = (double)getBufferFloat(bufferByte, 276, endianess);
+            }
+            else {
+            	qoffset_x = getBufferDouble(bufferByte, 376, endianess);
+            	qoffset_y = getBufferDouble(bufferByte, 384, endianess);
+            	qoffset_z = getBufferDouble(bufferByte, 392, endianess);
+            }
+            LPSOrigin = new double[3];
 
             axisOrientation = getAxisOrientation(matrix);
             Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
@@ -2285,12 +2391,12 @@ public class FileNIFTI extends FileBase {
             }
 
             //fileInfo.setOrigin(LPSOrigin);
-            fileInfo.setOrigin(LPSOrigin[0], 0);
-            fileInfo.setOrigin(LPSOrigin[1], 1);
-            fileInfo.setOrigin(LPSOrigin[2], 2);
-            matrix.set(0, 3, (double) LPSOrigin[0]);
-            matrix.set(1, 3, (double) LPSOrigin[1]);
-            matrix.set(2, 3, (double) LPSOrigin[2]);
+            fileInfo.setOrigin((float)LPSOrigin[0], 0);
+            fileInfo.setOrigin((float)LPSOrigin[1], 1);
+            fileInfo.setOrigin((float)LPSOrigin[2], 2);
+            matrix.set(0, 3, LPSOrigin[0]);
+            matrix.set(1, 3, LPSOrigin[1]);
+            matrix.set(2, 3, LPSOrigin[2]);
 
             if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
                     (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
@@ -2323,30 +2429,46 @@ public class FileNIFTI extends FileBase {
             Preferences.debug("r22 = " + r22 + "\n", Preferences.DEBUG_FILEIO);
         } // if (qform_code > 0)
         else if (sform_code > 0) { // qform_code = 0, so only 1 matrix
-            srow_x = new float[4];
-            srow_y = new float[4];
-            srow_z = new float[4];
-            srow_x[0] = getBufferFloat(bufferByte, 280, endianess);
-            srow_x[1] = getBufferFloat(bufferByte, 284, endianess);
-            srow_x[2] = getBufferFloat(bufferByte, 288, endianess);
-            srow_x[3] = getBufferFloat(bufferByte, 292, endianess);
-            srow_y[0] = getBufferFloat(bufferByte, 296, endianess);
-            srow_y[1] = getBufferFloat(bufferByte, 300, endianess);
-            srow_y[2] = getBufferFloat(bufferByte, 304, endianess);
-            srow_y[3] = getBufferFloat(bufferByte, 308, endianess);
-            srow_z[0] = getBufferFloat(bufferByte, 312, endianess);
-            srow_z[1] = getBufferFloat(bufferByte, 316, endianess);
-            srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
-            srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
-            matrix.set(0, 0, (double) -srow_x[0]);
-            matrix.set(0, 1, (double) -srow_x[1]);
-            matrix.set(0, 2, (double) -srow_x[2]);
-            matrix.set(1, 0, (double) -srow_y[0]);
-            matrix.set(1, 1, (double) -srow_y[1]);
-            matrix.set(1, 2, (double) -srow_y[2]);
-            matrix.set(2, 0, (double) srow_z[0]);
-            matrix.set(2, 1, (double) srow_z[1]);
-            matrix.set(2, 2, (double) srow_z[2]);
+            srow_x = new double[4];
+            srow_y = new double[4];
+            srow_z = new double[4];
+            if (!isNIFTI2) {
+	            srow_x[0] = (double)getBufferFloat(bufferByte, 280, endianess);
+	            srow_x[1] = (double)getBufferFloat(bufferByte, 284, endianess);
+	            srow_x[2] = (double)getBufferFloat(bufferByte, 288, endianess);
+	            srow_x[3] = (double)getBufferFloat(bufferByte, 292, endianess);
+	            srow_y[0] = (double)getBufferFloat(bufferByte, 296, endianess);
+	            srow_y[1] = (double)getBufferFloat(bufferByte, 300, endianess);
+	            srow_y[2] = (double)getBufferFloat(bufferByte, 304, endianess);
+	            srow_y[3] = (double)getBufferFloat(bufferByte, 308, endianess);
+	            srow_z[0] = (double)getBufferFloat(bufferByte, 312, endianess);
+	            srow_z[1] = (double)getBufferFloat(bufferByte, 316, endianess);
+	            srow_z[2] = (double)getBufferFloat(bufferByte, 320, endianess);
+	            srow_z[3] = (double)getBufferFloat(bufferByte, 324, endianess);
+            }
+            else {
+            	srow_x[0] = getBufferDouble(bufferByte, 400, endianess);
+            	srow_x[1] = getBufferDouble(bufferByte, 408, endianess);
+            	srow_x[2] = getBufferDouble(bufferByte, 416, endianess);
+            	srow_x[3] = getBufferDouble(bufferByte, 424, endianess);
+            	srow_y[0] = getBufferDouble(bufferByte, 432, endianess);
+            	srow_y[1] = getBufferDouble(bufferByte, 440, endianess);
+            	srow_y[2] = getBufferDouble(bufferByte, 448, endianess);
+            	srow_y[3] = getBufferDouble(bufferByte, 456, endianess);
+            	srow_z[0] = getBufferDouble(bufferByte, 464, endianess);
+            	srow_z[1] = getBufferDouble(bufferByte, 472, endianess);
+            	srow_z[2] = getBufferDouble(bufferByte, 480, endianess);
+            	srow_z[3] = getBufferDouble(bufferByte, 488, endianess);
+            }
+            matrix.set(0, 0, -srow_x[0]);
+            matrix.set(0, 1, -srow_x[1]);
+            matrix.set(0, 2, -srow_x[2]);
+            matrix.set(1, 0, -srow_y[0]);
+            matrix.set(1, 1, -srow_y[1]);
+            matrix.set(1, 2, -srow_y[2]);
+            matrix.set(2, 0, srow_z[0]);
+            matrix.set(2, 1, srow_z[1]);
+            matrix.set(2, 2, srow_z[2]);
             r00 = -matrix.get(0,0)/resolutions[0];
             r10 = -matrix.get(1,0)/resolutions[0];
             r20 = matrix.get(2,0)/resolutions[0];
@@ -2360,7 +2482,7 @@ public class FileNIFTI extends FileBase {
                         "\\" + nf.format(-r01) + "\\" + nf.format(-r11) + "\\" + nf.format(r21);
             fileInfo.setPatientOrientationString(patientOrientationString);
             
-            LPSOrigin = new float[3];
+            LPSOrigin = new double[3];
 
             axisOrientation = getAxisOrientation(matrix);
             Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
@@ -2385,12 +2507,12 @@ public class FileNIFTI extends FileBase {
             }
 
             //fileInfo.setOrigin(LPSOrigin);
-            fileInfo.setOrigin(LPSOrigin[0], 0);
-            fileInfo.setOrigin(LPSOrigin[1], 1);
-            fileInfo.setOrigin(LPSOrigin[2], 2);
-            matrix.set(0, 3, (double) LPSOrigin[0]);
-            matrix.set(1, 3, (double) LPSOrigin[1]);
-            matrix.set(2, 3, (double) LPSOrigin[2]);
+            fileInfo.setOrigin((float)LPSOrigin[0], 0);
+            fileInfo.setOrigin((float)LPSOrigin[1], 1);
+            fileInfo.setOrigin((float)LPSOrigin[2], 2);
+            matrix.set(0, 3, LPSOrigin[0]);
+            matrix.set(1, 3, LPSOrigin[1]);
+            matrix.set(2, 3, LPSOrigin[2]);
 
             if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
                     (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
@@ -2413,31 +2535,47 @@ public class FileNIFTI extends FileBase {
         } // else if (sform_code > 0)
 
         if (matrix2 != null) { // sform_code > 0 and 2 matrices
-            srow_x = new float[4];
-            srow_y = new float[4];
-            srow_z = new float[4];
-            srow_x[0] = getBufferFloat(bufferByte, 280, endianess);
-            srow_x[1] = getBufferFloat(bufferByte, 284, endianess);
-            srow_x[2] = getBufferFloat(bufferByte, 288, endianess);
-            srow_x[3] = getBufferFloat(bufferByte, 292, endianess);
-            srow_y[0] = getBufferFloat(bufferByte, 296, endianess);
-            srow_y[1] = getBufferFloat(bufferByte, 300, endianess);
-            srow_y[2] = getBufferFloat(bufferByte, 304, endianess);
-            srow_y[3] = getBufferFloat(bufferByte, 308, endianess);
-            srow_z[0] = getBufferFloat(bufferByte, 312, endianess);
-            srow_z[1] = getBufferFloat(bufferByte, 316, endianess);
-            srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
-            srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
-            matrix2.set(0, 0, (double) -srow_x[0]);
-            matrix2.set(0, 1, (double) -srow_x[1]);
-            matrix2.set(0, 2, (double) -srow_x[2]);
-            matrix2.set(1, 0, (double) -srow_y[0]);
-            matrix2.set(1, 1, (double) -srow_y[1]);
-            matrix2.set(1, 2, (double) -srow_y[2]);
-            matrix2.set(2, 0, (double) srow_z[0]);
-            matrix2.set(2, 1, (double) srow_z[1]);
-            matrix2.set(2, 2, (double) srow_z[2]);
-            LPSOrigin2 = new float[3];
+            srow_x = new double[4];
+            srow_y = new double[4];
+            srow_z = new double[4];
+            if (!isNIFTI2) {
+	            srow_x[0] = (double)getBufferFloat(bufferByte, 280, endianess);
+	            srow_x[1] = (double)getBufferFloat(bufferByte, 284, endianess);
+	            srow_x[2] = (double)getBufferFloat(bufferByte, 288, endianess);
+	            srow_x[3] = (double)getBufferFloat(bufferByte, 292, endianess);
+	            srow_y[0] = (double)getBufferFloat(bufferByte, 296, endianess);
+	            srow_y[1] = (double)getBufferFloat(bufferByte, 300, endianess);
+	            srow_y[2] = (double)getBufferFloat(bufferByte, 304, endianess);
+	            srow_y[3] = (double)getBufferFloat(bufferByte, 308, endianess);
+	            srow_z[0] = (double)getBufferFloat(bufferByte, 312, endianess);
+	            srow_z[1] = (double)getBufferFloat(bufferByte, 316, endianess);
+	            srow_z[2] = (double)getBufferFloat(bufferByte, 320, endianess);
+	            srow_z[3] = (double)getBufferFloat(bufferByte, 324, endianess);
+            }
+            else {
+            	srow_x[0] = getBufferDouble(bufferByte, 400, endianess);
+            	srow_x[1] = getBufferDouble(bufferByte, 408, endianess);
+            	srow_x[2] = getBufferDouble(bufferByte, 416, endianess);
+            	srow_x[3] = getBufferDouble(bufferByte, 424, endianess);
+            	srow_y[0] = getBufferDouble(bufferByte, 432, endianess);
+            	srow_y[1] = getBufferDouble(bufferByte, 440, endianess);
+            	srow_y[2] = getBufferDouble(bufferByte, 448, endianess);
+            	srow_y[3] = getBufferDouble(bufferByte, 456, endianess);
+            	srow_z[0] = getBufferDouble(bufferByte, 464, endianess);
+            	srow_z[1] = getBufferDouble(bufferByte, 472, endianess);
+            	srow_z[2] = getBufferDouble(bufferByte, 480, endianess);
+            	srow_z[3] = getBufferDouble(bufferByte, 488, endianess);
+            }
+            matrix2.set(0, 0, -srow_x[0]);
+            matrix2.set(0, 1, -srow_x[1]);
+            matrix2.set(0, 2, -srow_x[2]);
+            matrix2.set(1, 0, -srow_y[0]);
+            matrix2.set(1, 1, -srow_y[1]);
+            matrix2.set(1, 2, -srow_y[2]);
+            matrix2.set(2, 0, srow_z[0]);
+            matrix2.set(2, 1, srow_z[1]);
+            matrix2.set(2, 2, srow_z[2]);
+            LPSOrigin2 = new double[3];
 
             axisOrientation2 = getAxisOrientation(matrix2);
             Preferences.debug("axisOrientation2 = " + axisOrientation2[0] + "  " + axisOrientation2[1] + "  " +
@@ -2459,9 +2597,9 @@ public class FileNIFTI extends FileBase {
                 }
             }
 
-            matrix2.set(0, 3, (double) LPSOrigin2[0]);
-            matrix2.set(1, 3, (double) LPSOrigin2[1]);
-            matrix2.set(2, 3, (double) LPSOrigin2[2]);
+            matrix2.set(0, 3, LPSOrigin2[0]);
+            matrix2.set(1, 3, LPSOrigin2[1]);
+            matrix2.set(2, 3, LPSOrigin2[2]);
 
 
             Preferences.debug("matrix2 = \n" + matrix2 + "\n", Preferences.DEBUG_FILEIO);
@@ -2492,8 +2630,8 @@ public class FileNIFTI extends FileBase {
                 matrixTwoDim.set(1, 1, (double)resolutions[1]);
             }
             if (LPSOrigin != null) {
-                matrixTwoDim.set(0, 2, (double)LPSOrigin[0]);
-                matrixTwoDim.set(1, 2, (double)LPSOrigin[1]);
+                matrixTwoDim.set(0, 2, LPSOrigin[0]);
+                matrixTwoDim.set(1, 2, LPSOrigin[1]);
             }
         } // if (numDims == 2)
         
@@ -2509,14 +2647,19 @@ public class FileNIFTI extends FileBase {
         }
         
 
-        intentName = (new String(bufferByte, 328, 16));
+        if (!isNIFTI2) {
+            intentName = (new String(bufferByte, 328, 16));
+        }
+        else {
+        	intentName = (new String(bufferByte, 508, 16));	
+        }
         Preferences.debug("Name or meaning of data = " + intentName + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setIntentName(intentName.trim());
-        if ((bufferByte.length > 348) && (vox_offset > 352)) {
+        if ((bufferByte.length > headerSize) && (vox_offset > (headerSize+4))) {
             // 4 byte extension array is present with only the first byte extension[0] defined
             // If extension[0] is nonzero, it indicates that extended header information is
             // present in the bytes following the extension array.
-            extension0 = bufferByte[348];
+            extension0 = bufferByte[headerSize];
             Preferences.debug("First byte in extension array = " + extension0 + "\n", Preferences.DEBUG_FILEIO);
         }
         if (extension0 == 0) {
@@ -2527,7 +2670,7 @@ public class FileNIFTI extends FileBase {
             // Read past the 3 unused bytes in the extension array
             // The size of the extended header in bytes including the 8 bytes for esize and ecode
             // esize must be a positive integral multiple of 16
-            extendedHeaderStart = 352;
+            extendedHeaderStart = headerSize+4;
             currentAddress = extendedHeaderStart;
             esize = 8;
             while ((bufferByte.length >= currentAddress + esize) && ((!oneFile) || (vox_offset >= currentAddress + esize))) {
@@ -9013,7 +9156,9 @@ public class FileNIFTI extends FileBase {
                 axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
             }
             fileInfo.setAxisOrientation(axisOrientation);
-            LPSOrigin = fileInfo.getOrigin();
+            for (i = 0; i < fileInfo.getOrigin().length; i++) {
+                LPSOrigin[i] = (double)fileInfo.getOrigin()[i];
+            }
 
                 if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
                         (orient == FileInfoBase.ORI_A2P_TYPE) || 
@@ -9022,7 +9167,9 @@ public class FileNIFTI extends FileBase {
                 } else {
                     LPSOrigin[1] = LPSOrigin[1] - ((fileInfo.getExtents()[1] - 1) * fileInfo.getResolutions()[1]);
                 }
-            fileInfo.setOrigin(LPSOrigin);
+            for (i = 0; i < LPSOrigin.length; i++) {
+                fileInfo.setOrigin((float)LPSOrigin[i],i);
+            }
             
             matrix.set(0, 1, -matrix.get(0, 1));
             matrix.set(1, 1, -matrix.get(1, 1));
@@ -9770,7 +9917,7 @@ public class FileNIFTI extends FileBase {
             if ((scl_slope != 0.0) && ((scl_slope != 1.0f) || (scl_inter != 0.0f))) {
 
                 for (i = 0; i < buffer.length; i++) {
-                    buffer[i] = (buffer[i] * scl_slope) + scl_inter;
+                    buffer[i] = (float)((buffer[i] * scl_slope) + scl_inter);
                 }
             } // if ((scl_slope != 0.0) && ((scl_slope != 1.0f) || (scl_inter != 0.0f)))
             axisOrientation = fileInfo.getAxisOrientation();
@@ -9784,7 +9931,9 @@ public class FileNIFTI extends FileBase {
                     axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
                 }
                 fileInfo.setAxisOrientation(axisOrientation);
-                LPSOrigin = fileInfo.getOrigin();
+                for (i = 0; i < fileInfo.getOrigin().length; i++) {
+                    LPSOrigin[i] = (double)fileInfo.getOrigin()[i];
+                }
 
                     if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
                             (orient == FileInfoBase.ORI_A2P_TYPE) || 
@@ -9793,7 +9942,9 @@ public class FileNIFTI extends FileBase {
                     } else {
                         LPSOrigin[1] = LPSOrigin[1] - ((fileInfo.getExtents()[1] - 1) * fileInfo.getResolutions()[1]);
                     }
-                fileInfo.setOrigin(LPSOrigin);
+                for (i = 0; i < LPSOrigin.length; i++) {
+                    fileInfo.setOrigin((float)LPSOrigin[i],i);
+                }
                 
                 
                 matrix.set(0, 1, -matrix.get(0, 1));
@@ -9875,9 +10026,9 @@ public class FileNIFTI extends FileBase {
 
                         for (i = 0; i < xDim; i += 4) {
                             buffer[(j * xDim) + i] = 255;
-                            buffer[(j * xDim) + i + 1] = (scl_slope * buffer[(j * xDim) + i + 1]) + scl_inter;
-                            buffer[(j * xDim) + i + 2] = (scl_slope * buffer[(j * xDim) + i + 2]) + scl_inter;
-                            buffer[(j * xDim) + i + 3] = (scl_slope * buffer[(j * xDim) + i + 3]) + scl_inter;
+                            buffer[(j * xDim) + i + 1] = (float)((scl_slope * buffer[(j * xDim) + i + 1]) + scl_inter);
+                            buffer[(j * xDim) + i + 2] = (float)((scl_slope * buffer[(j * xDim) + i + 2]) + scl_inter);
+                            buffer[(j * xDim) + i + 3] = (float)((scl_slope * buffer[(j * xDim) + i + 3]) + scl_inter);
                         }
                     }
 
@@ -9896,7 +10047,7 @@ public class FileNIFTI extends FileBase {
                     for (j = 0; j < yDim; j++) {
 
                         for (i = 0; i < xDim; i++) {
-                            buffer[(j * xDim) + i] = (scl_slope * buffer[(j * xDim) + i]) + scl_inter;
+                            buffer[(j * xDim) + i] = (float)((scl_slope * buffer[(j * xDim) + i]) + scl_inter);
                         }
                     }
 
@@ -11662,11 +11813,11 @@ public class FileNIFTI extends FileBase {
             setBufferFloat(bufferByte, (float)fileInfo.getIntentP1(), 56, endianess);
             setBufferFloat(bufferByte, (float)fileInfo.getIntentP2(), 60, endianess);
             setBufferFloat(bufferByte, (float)fileInfo.getIntentP3(), 64, endianess);
-            setBufferShort(bufferByte, fileInfo.getIntentCode(), 68, endianess);
+            setBufferShort(bufferByte, (short)fileInfo.getIntentCode(), 68, endianess);
 
             setBufferShort(bufferByte, sourceType, 70, endianess);
             setBufferShort(bufferByte, fileInfo.getBitPix(), 72, endianess);
-            setBufferShort(bufferByte, fileInfo.getSliceStart(), 74, endianess);
+            setBufferShort(bufferByte, (short)fileInfo.getSliceStart(), 74, endianess);
 
             // set pixdim[0] to the qfac used in method 2
             setBufferFloat(bufferByte, qfac, 76, endianess);
@@ -11703,15 +11854,15 @@ public class FileNIFTI extends FileBase {
 
             // scl_inter
             setBufferFloat(bufferByte, 0.0f, 116, endianess);
-            setBufferShort(bufferByte, fileInfo.getSliceEnd(), 120, endianess);
+            setBufferShort(bufferByte, (short)fileInfo.getSliceEnd(), 120, endianess);
             bufferByte[122] = fileInfo.getSliceCode();
 
             // xyzt_units
             bufferByte[123] = (byte) (niftiSpatialUnits | niftiTimeUnits);
 
-            setBufferFloat(bufferByte, fileInfo.getCalMax(), 124, endianess);
-            setBufferFloat(bufferByte, fileInfo.getCalMin(), 128, endianess);
-            setBufferFloat(bufferByte, fileInfo.getSliceDuration(), 132, endianess);
+            setBufferFloat(bufferByte, (float)fileInfo.getCalMax(), 124, endianess);
+            setBufferFloat(bufferByte, (float)fileInfo.getCalMin(), 128, endianess);
+            setBufferFloat(bufferByte, (float)fileInfo.getSliceDuration(), 132, endianess);
 
             if (origin.length >= 4) {
 
@@ -11766,11 +11917,11 @@ public class FileNIFTI extends FileBase {
 
             if (qform_code > 0) {
                 Preferences.debug("Writing quatern_b = " + quatern_b + "\n", Preferences.DEBUG_FILEIO);
-                setBufferFloat(bufferByte, quatern_b, 256, endianess);
+                setBufferFloat(bufferByte, (float)quatern_b, 256, endianess);
                 Preferences.debug("Writing quatern_c = " + quatern_c + "\n", Preferences.DEBUG_FILEIO);
-                setBufferFloat(bufferByte, quatern_c, 260, endianess);
+                setBufferFloat(bufferByte, (float)quatern_c, 260, endianess);
                 Preferences.debug("Writing quatern_d = " + quatern_d + "\n");
-                setBufferFloat(bufferByte, quatern_d, 264, endianess);
+                setBufferFloat(bufferByte, (float)quatern_d, 264, endianess);
 
                 // qoffset_x
                 setBufferFloat(bufferByte, niftiOrigin[0], 268, endianess);
@@ -12008,11 +12159,11 @@ public class FileNIFTI extends FileBase {
             setBufferShort(bufferByte, (short) sform_code, 254, endianess);
 
             Preferences.debug("Writing quatern_b = " + quatern_b + "\n", Preferences.DEBUG_FILEIO);
-            setBufferFloat(bufferByte, quatern_b, 256, endianess);
+            setBufferFloat(bufferByte, (float)quatern_b, 256, endianess);
             Preferences.debug("Writing quatern_c = " + quatern_c + "\n", Preferences.DEBUG_FILEIO);
-            setBufferFloat(bufferByte, quatern_c, 260, endianess);
+            setBufferFloat(bufferByte, (float)quatern_c, 260, endianess);
             Preferences.debug("Writing quatern_d = " + quatern_d + "\n", Preferences.DEBUG_FILEIO);
-            setBufferFloat(bufferByte, quatern_d, 264, endianess);
+            setBufferFloat(bufferByte, (float)quatern_d, 264, endianess);
 
             // qoffset_x
             setBufferFloat(bufferByte, niftiOrigin[0], 268, endianess);
