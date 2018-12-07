@@ -430,10 +430,10 @@ public class FileInfoNIFTI extends FileInfoBase {
      * (e.g., a color lookup table specified via aux_file). - cal_min and cal_max only make sense when applied to
      * scalar-valued datasets (i.e., dim[0] < 5 or dim[5] = 1).
      */
-    private float cal_max = 0;
+    private double cal_max = 0;
 
     /** values of 0.0 for both fields imply that no calibration min and max values are used ! */
-    private float cal_min = 0;
+    private double cal_min = 0;
 
     /**
      * If qform_code > 0, coord_code = qform_code. If qform_code <= 0 and sform_code > 0, coord_code = sform_code.
@@ -441,7 +441,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
      * "MNI 152 normalized X,Y,Z coordinates".
      */
-    private short coord_code = 0;
+    private int coord_code = 0;
 
     /**
      * If qform_code > 0 and sform_code > 0, coord_code = qform_code and coord_code2 = sform_code. coord_code has values
@@ -449,7 +449,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
      * "MNI 152 normalized X,Y,Z coordinates".
      */
-    private short coord_code2 = 0;
+    private int coord_code2 = 0;
 
     /** Any text you like */
     private String descrip = null;
@@ -466,7 +466,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * large number of codes is given to indicate that the the voxel data should be interpreted as being drawn from a
      * given probability distribution.
      */
-    private short intentCode = 0;
+    private int intentCode = 0;
 
     /**
      * The intent_name field provides space for a 15 character (plus 0 byte) name string for the type of data stored.
@@ -506,9 +506,9 @@ public class FileInfoNIFTI extends FileInfoBase {
      * ignored if datatype is DT_RGB24. - If datatype is a complex type, then the scaling is to be applied to both the
      * real and imaginary parts.
      */
-    private float scl_slope = 1.0f;
+    private double scl_slope = 1.0;
 
-    private float scl_inter = 0.0f;
+    private double scl_inter = 0.0;
 
     /** Should always be a length of 348. */
     private int sizeof_hdr = -1;
@@ -530,13 +530,13 @@ public class FileInfoNIFTI extends FileInfoBase {
     private byte sliceCode = 0;
 
     /** Time used to acquire 1 slice. */
-    private float sliceDuration = 0.0f;
+    private double sliceDuration = 0.0;
 
     /** Slice timing pattern ends with slice = (sliceEnd + 1) */
-    private short sliceEnd = 0;
+    private long sliceEnd = 0;
 
     /** Slice timing pattern starts with slice = (sliceStart + 1) */
-    private short sliceStart = 0;
+    private long sliceStart = 0;
 
     /** Source bits per pixel : 1,8,16,32,64,128 24(rgb). */
     private short sourceBitPix = -1;
@@ -2034,7 +2034,7 @@ public class FileInfoNIFTI extends FileInfoBase {
                 break;
 
             default:
-                dialog.append("Unrecognized intent code = " + Short.toString(intentCode) + "\n");
+                dialog.append("Unrecognized intent code = " + Integer.toString(intentCode) + "\n");
         } // switch(intentCode)
 
         String coordString = null;
@@ -2164,9 +2164,9 @@ public class FileInfoNIFTI extends FileInfoBase {
 
         dialog.append("Source type = " + sourceTypeString + "\n");
 
-        dialog.append("Slope scale = " + Float.toString(scl_slope) + "\n");
+        dialog.append("Slope scale = " + Double.toString(scl_slope) + "\n");
 
-        dialog.append("Added offset = " + Float.toString(scl_inter) + "\n");
+        dialog.append("Added offset = " + Double.toString(scl_inter) + "\n");
 
         switch (freq_dim) {
 
@@ -2260,11 +2260,11 @@ public class FileInfoNIFTI extends FileInfoBase {
         dialog.append("Z Origin: " + Float.toString(super.getOrigin(2)) + "\n");
 
         if (cal_min != -1) {
-            dialog.append("cal_min = " + Float.toString(cal_min) + "\n");
+            dialog.append("cal_min = " + Double.toString(cal_min) + "\n");
         }
 
         if (cal_max != -1) {
-            dialog.append("cal_max = " + Float.toString(cal_max) + "\n");
+            dialog.append("cal_max = " + Double.toString(cal_max) + "\n");
         }
 
         if (bitpix != -1) {
@@ -4501,18 +4501,18 @@ public class FileInfoNIFTI extends FileInfoBase {
     /**
      * accessor to cal-max.
      * 
-     * @return float cal_max
+     * @return double cal_max
      */
-    public float getCalMax() {
+    public double getCalMax() {
         return cal_max;
     }
 
     /**
      * accessor to cal-min.
      * 
-     * @return float cal_min
+     * @return double cal_min
      */
-    public float getCalMin() {
+    public double getCalMin() {
         return cal_min;
     }
 
@@ -4521,7 +4521,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return coord_code
      */
-    public short getCoordCode() {
+    public int getCoordCode() {
         return coord_code;
     }
 
@@ -4530,7 +4530,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return coord_code2
      */
-    public short getCoordCode2() {
+    public int getCoordCode2() {
         return coord_code2;
     }
 
@@ -4557,7 +4557,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return intentCode
      */
-    public short getIntentCode() {
+    public int getIntentCode() {
         return intentCode;
     }
 
@@ -4611,7 +4611,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return scl_inter
      */
-    public float getSclInter() {
+    public double getSclInter() {
         return scl_inter;
     }
 
@@ -4620,7 +4620,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return scl_slope
      */
-    public float getSclSlope() {
+    public double getSclSlope() {
         return scl_slope;
     }
 
@@ -4654,9 +4654,9 @@ public class FileInfoNIFTI extends FileInfoBase {
     /**
      * provides the sliceDuration value.
      * 
-     * @return float sliceDuration
+     * @return double sliceDuration
      */
-    public float getSliceDuration() {
+    public double getSliceDuration() {
         return sliceDuration;
     }
 
@@ -4665,7 +4665,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return DOCUMENT ME!
      */
-    public short getSliceEnd() {
+    public long getSliceEnd() {
         return sliceEnd;
     }
 
@@ -4674,7 +4674,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @return DOCUMENT ME!
      */
-    public short getSliceStart() {
+    public long getSliceStart() {
         return sliceStart;
     }
 
@@ -4743,7 +4743,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param cal DOCUMENT ME!
      */
-    public void setCalMax(final float cal) {
+    public void setCalMax(final double cal) {
         cal_max = cal;
 
         if (cal_max < cal_min) {
@@ -4757,7 +4757,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param cal DOCUMENT ME!
      */
-    public void setCalMin(final float cal) {
+    public void setCalMin(final double cal) {
         cal_min = cal;
 
         if (cal_min > cal_max) {
@@ -4770,7 +4770,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param coord_code DOCUMENT ME!
      */
-    public void setCoordCode(final short coord_code) {
+    public void setCoordCode(final int coord_code) {
         this.coord_code = coord_code;
     }
 
@@ -4779,7 +4779,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param coord_code2 DOCUMENT ME!
      */
-    public void setCoordCode2(final short coord_code2) {
+    public void setCoordCode2(final int coord_code2) {
         this.coord_code2 = coord_code2;
     }
 
@@ -4806,7 +4806,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param intentCode DOCUMENT ME!
      */
-    public void setIntentCode(final short intentCode) {
+    public void setIntentCode(final int intentCode) {
         this.intentCode = intentCode;
     }
 
@@ -4860,7 +4860,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param scl_inter DOCUMENT ME!
      */
-    public void setSclInter(final float scl_inter) {
+    public void setSclInter(final double scl_inter) {
         this.scl_inter = scl_inter;
     }
 
@@ -4869,7 +4869,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param scl_slope DOCUMENT ME!
      */
-    public void setSclSlope(final float scl_slope) {
+    public void setSclSlope(final double scl_slope) {
         this.scl_slope = scl_slope;
     }
 
@@ -4905,7 +4905,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param sliceDuration DOCUMENT ME!
      */
-    public void setSliceDuration(final float sliceDuration) {
+    public void setSliceDuration(final double sliceDuration) {
         this.sliceDuration = sliceDuration;
     }
 
@@ -4914,7 +4914,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param sliceEnd DOCUMENT ME!
      */
-    public void setSliceEnd(final short sliceEnd) {
+    public void setSliceEnd(final long sliceEnd) {
         this.sliceEnd = sliceEnd;
     }
 
@@ -4923,7 +4923,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * 
      * @param sliceStart DOCUMENT ME!
      */
-    public void setSliceStart(final short sliceStart) {
+    public void setSliceStart(final long sliceStart) {
         this.sliceStart = sliceStart;
     }
 
