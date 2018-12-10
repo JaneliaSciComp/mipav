@@ -6514,14 +6514,94 @@ public  class PyWavelets extends AlgorithmBase {
 	  bior5_double,
 	  bior6_double,
 	};
-    /*DiscreteWavelet discrete_wavelet(WAVELET_NAME name, int order)
+	
+	private void free_discrete_wavelet(DiscreteWavelet w){
+
+	    /* deallocate filters */
+	    if (w.dec_len > 0)
+	    {
+	        w.dec_lo_float = null;
+	        w.dec_hi_float = null;
+	        w.dec_lo_double = null;
+	        w.dec_hi_double = null;
+	    }
+	    if (w.rec_len > 0)
+	    {
+	        w.rec_lo_float = null;
+	        w.rec_hi_float = null;
+	        w.rec_lo_double = null;
+	        w.rec_hi_double = null;
+	    }
+	    /* finally free struct */
+	    w = null;
+	}
+	
+	private DiscreteWavelet blank_discrete_wavelet(int filters_length)
+	{
+	    DiscreteWavelet w;
+
+
+	    /* pad to even length */
+	    if(filters_length > 0 && ((filters_length % 2)== 1))
+	        ++filters_length;
+
+	    w = new DiscreteWavelet();
+
+	    w.dec_len = w.rec_len = filters_length;
+	    if (filters_length > 0)
+	    {
+	        w.dec_lo_float = new float[filters_length];
+	        w.dec_hi_float = new float[filters_length];
+	        w.rec_lo_float = new float[filters_length];
+	        w.rec_hi_float = new float[filters_length];
+
+	        w.dec_lo_double = new double[filters_length];
+	        w.dec_hi_double = new double[filters_length];
+	        w.rec_lo_double = new double[filters_length];
+	        w.rec_hi_double = new double[filters_length];
+
+	        if(w.dec_lo_float == null || w.dec_hi_float == null ||
+	           w.rec_lo_float == null || w.rec_hi_float == null ||
+	           w.dec_lo_double == null || w.dec_hi_double == null ||
+	           w.rec_lo_double == null || w.rec_hi_double == null){
+	            free_discrete_wavelet(w);
+	            return null;
+	        }
+	    }
+	    else
+	    {
+	        w.dec_lo_float = null;
+	        w.dec_hi_float = null;
+	        w.rec_lo_float = null;
+	        w.rec_hi_float = null;
+
+	        w.dec_lo_double = null;
+	        w.dec_hi_double = null;
+	        w.rec_lo_double = null;
+	        w.rec_hi_double = null;
+	    }
+	    /* set w->base properties to "blank" values */
+	    w.base.support_width = -1;
+	    w.base.orthogonal = 0;
+	    w.base.biorthogonal = 0;
+	    w.base.symmetry = SYMMETRY.UNKNOWN;
+	    w.base.compact_support = 0;
+	    w.base.family_name = "";
+	    w.base.short_name = "";
+	    w.vanishing_moments_psi = 0;
+	    w.vanishing_moments_phi = 0;
+	    return w;
+	}
+
+	
+    DiscreteWavelet discrete_wavelet(WAVELET_NAME name, int order)
     {
     	int tmpInt;
     	float tmpFloat;
     	double tmpDouble;
         DiscreteWavelet w;
         // Haar wavelet
-        if(name == HAAR){
+        if(name == WAVELET_NAME.HAAR){
 
             // the same as db1
             w = discrete_wavelet(WAVELET_NAME.DB, 1);
@@ -6530,19 +6610,18 @@ public  class PyWavelets extends AlgorithmBase {
             return w;
 
         // Reverse biorthogonal wavelets family
-        } else if (name == RBIO) {
+        } else if (name == WAVELET_NAME.RBIO) {
             // rbio is like bior, only with switched filters 
             w = discrete_wavelet(WAVELET_NAME.BIOR, order);
             if (w == null) return null;
 
-            SWAP(size_t, w->dec_len, w->rec_len);
             tmpInt = w.dec_len;
             w.dec_len = w.rec_len;
             w.rec_len = tmpInt;
             SWAP_FLOAT_ARRAY(w.rec_lo_float, w.dec_lo_float);
             SWAP_FLOAT_ARRAY(w.rec_hi_float, w.dec_hi_float);
             SWAP_DOUBLE_ARRAY(w.rec_lo_double, w.dec_lo_double);
-            SWAP_DOUBLE_ARRRAY(w.rec_hi_double, w.dec_hi_double);
+            SWAP_DOUBLE_ARRAY(w.rec_hi_double, w.dec_hi_double);
 
             {
                 int i, j;
@@ -6586,41 +6665,41 @@ public  class PyWavelets extends AlgorithmBase {
             // Daubechies wavelets family
             case DB: {
                 int coeffs_idx = order - 1;
-                if (coeffs_idx >= NELEMS(db_float) ||
-                    coeffs_idx >= NELEMS(db_double))
-                    return NULL;
+                if (coeffs_idx >= db_float.length||
+                    coeffs_idx >= db_double.length)
+                    return null;
                 w = blank_discrete_wavelet(2 * order);
-                if(w == NULL) return NULL;
+                if(w == null) return null;
 
-                w->vanishing_moments_psi = order;
-                w->vanishing_moments_phi = 0;
-                w->base.support_width = 2*order - 1;
-                w->base.orthogonal = 1;
-                w->base.biorthogonal = 1;
-                w->base.symmetry = ASYMMETRIC;
-                w->base.compact_support = 1;
-                w->base.family_name = "Daubechies";
-                w->base.short_name = "db";
+                w.vanishing_moments_psi = order;
+                w.vanishing_moments_phi = 0;
+                w.base.support_width = 2*order - 1;
+                w.base.orthogonal = 1;
+                w.base.biorthogonal = 1;
+                w.base.symmetry = SYMMETRY.ASYMMETRIC;
+                w.base.compact_support = 1;
+                w.base.family_name = "Daubechies";
+                w.base.short_name = "db";
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_float[i] = db_float[coeffs_idx][i];
-                        w->dec_lo_float[i] = db_float[coeffs_idx][w->dec_len-1-i];
-                        w->rec_hi_float[i] = ((i % 2) ? -1 : 1)
-                          * db_float[coeffs_idx][w->dec_len-1-i];
-                        w->dec_hi_float[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_float[i] = db_float[coeffs_idx][i];
+                        w.dec_lo_float[i] = db_float[coeffs_idx][w.dec_len-1-i];
+                        w.rec_hi_float[i] = (((i % 2) == 1) ? -1 : 1)
+                          * db_float[coeffs_idx][w.dec_len-1-i];
+                        w.dec_hi_float[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * db_float[coeffs_idx][i];
                     }
                 }
 
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_double[i] = db_double[coeffs_idx][i];
-                        w->dec_lo_double[i] = db_double[coeffs_idx][w->dec_len-1-i];
-                        w->rec_hi_double[i] = ((i % 2) ? -1 : 1)
-                          * db_double[coeffs_idx][w->dec_len-1-i];
-                        w->dec_hi_double[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_double[i] = db_double[coeffs_idx][i];
+                        w.dec_lo_double[i] = db_double[coeffs_idx][w.dec_len-1-i];
+                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                          * db_double[coeffs_idx][w.dec_len-1-i];
+                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * db_double[coeffs_idx][i];
                     }
                 }
@@ -6630,43 +6709,43 @@ public  class PyWavelets extends AlgorithmBase {
 
             // Symlets wavelets family
             case SYM: {
-                size_t coeffs_idx = order - 2;
-                if (coeffs_idx >= NELEMS(sym_float) ||
-                    coeffs_idx >= NELEMS(sym_double))
-                    return NULL;
+                int coeffs_idx = order - 2;
+                if (coeffs_idx >= sym_float.length ||
+                    coeffs_idx >= sym_double.length)
+                    return null;
 
                 w = blank_discrete_wavelet(2 * order);
-                if(w == NULL) return NULL;
+                if(w == null) return null;
 
-                w->vanishing_moments_psi = order;
-                w->vanishing_moments_phi = 0;
-                w->base.support_width = 2*order - 1;
-                w->base.orthogonal = 1;
-                w->base.biorthogonal = 1;
-                w->base.symmetry = NEAR_SYMMETRIC;
-                w->base.compact_support = 1;
-                w->base.family_name = "Symlets";
-                w->base.short_name = "sym";
+                w.vanishing_moments_psi = order;
+                w.vanishing_moments_phi = 0;
+                w.base.support_width = 2*order - 1;
+                w.base.orthogonal = 1;
+                w.base.biorthogonal = 1;
+                w.base.symmetry = SYMMETRY.NEAR_SYMMETRIC;
+                w.base.compact_support = 1;
+                w.base.family_name = "Symlets";
+                w.base.short_name = "sym";
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_float[i] = sym_float[coeffs_idx][i];
-                        w->dec_lo_float[i] = sym_float[coeffs_idx][w->dec_len-1-i];
-                        w->rec_hi_float[i] = ((i % 2) ? -1 : 1)
-                          * sym_float[coeffs_idx][w->dec_len-1-i];
-                        w->dec_hi_float[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_float[i] = sym_float[coeffs_idx][i];
+                        w.dec_lo_float[i] = sym_float[coeffs_idx][w.dec_len-1-i];
+                        w.rec_hi_float[i] = (((i % 2) == 1) ? -1 : 1)
+                          * sym_float[coeffs_idx][w.dec_len-1-i];
+                        w.dec_hi_float[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * sym_float[coeffs_idx][i];
                     }
                 }
 
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_double[i] = sym_double[coeffs_idx][i];
-                        w->dec_lo_double[i] = sym_double[coeffs_idx][w->dec_len-1-i];
-                        w->rec_hi_double[i] = ((i % 2) ? -1 : 1)
-                          * sym_double[coeffs_idx][w->dec_len-1-i];
-                        w->dec_hi_double[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_double[i] = sym_double[coeffs_idx][i];
+                        w.dec_lo_double[i] = sym_double[coeffs_idx][w.dec_len-1-i];
+                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                          * sym_double[coeffs_idx][w.dec_len-1-i];
+                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * sym_double[coeffs_idx][i];
                     }
                 }
@@ -6675,44 +6754,44 @@ public  class PyWavelets extends AlgorithmBase {
 
             // Coiflets wavelets family
             case COIF: {
-                size_t coeffs_idx = order - 1;
-                if (coeffs_idx >= NELEMS(coif_float) ||
-                    coeffs_idx >= NELEMS(coif_double))
-                    return NULL;
+                int coeffs_idx = order - 1;
+                if (coeffs_idx >= coif_float.length ||
+                    coeffs_idx >= coif_double.length)
+                    return null;
                 w = blank_discrete_wavelet(6 * order);
-                if(w == NULL) return NULL;
+                if(w == null) return null;
 
-                w->vanishing_moments_psi = 2*order;
-                w->vanishing_moments_phi = 2*order -1;
-                w->base.support_width = 6*order - 1;
-                w->base.orthogonal = 1;
-                w->base.biorthogonal = 1;
-                w->base.symmetry = NEAR_SYMMETRIC;
-                w->base.compact_support = 1;
-                w->base.family_name = "Coiflets";
-                w->base.short_name = "coif";
+                w.vanishing_moments_psi = 2*order;
+                w.vanishing_moments_phi = 2*order -1;
+                w.base.support_width = 6*order - 1;
+                w.base.orthogonal = 1;
+                w.base.biorthogonal = 1;
+                w.base.symmetry = SYMMETRY.NEAR_SYMMETRIC;
+                w.base.compact_support = 1;
+                w.base.family_name = "Coiflets";
+                w.base.short_name = "coif";
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_float[i] = coif_float[coeffs_idx][i] * sqrt2_float;
-                        w->dec_lo_float[i] = coif_float[coeffs_idx][w->dec_len-1-i]
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_float[i] = coif_float[coeffs_idx][i] * sqrt2_float;
+                        w.dec_lo_float[i] = coif_float[coeffs_idx][w.dec_len-1-i]
                           * sqrt2_float;
-                        w->rec_hi_float[i] = ((i % 2) ? -1 : 1)
-                          * coif_float[coeffs_idx][w->dec_len-1-i] * sqrt2_float;
-                        w->dec_hi_float[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                        w.rec_hi_float[i] = (((i % 2) == 1) ? -1 : 1)
+                          * coif_float[coeffs_idx][w.dec_len-1-i] * sqrt2_float;
+                        w.dec_hi_float[i] = ((((w.dec_len-1-i) % 2) == 1)? -1 : 1)
                           * coif_float[coeffs_idx][i] * sqrt2_float;
                     }
                 }
 
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_double[i] = coif_double[coeffs_idx][i] * sqrt2_double;
-                        w->dec_lo_double[i] = coif_double[coeffs_idx][w->dec_len-1-i]
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_double[i] = coif_double[coeffs_idx][i] * sqrt2_double;
+                        w.dec_lo_double[i] = coif_double[coeffs_idx][w.dec_len-1-i]
                           * sqrt2_double;
-                        w->rec_hi_double[i] = ((i % 2) ? -1 : 1)
-                          * coif_double[coeffs_idx][w->dec_len-1-i] * sqrt2_double;
-                        w->dec_hi_double[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                          * coif_double[coeffs_idx][w.dec_len-1-i] * sqrt2_double;
+                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * coif_double[coeffs_idx][i] * sqrt2_double;
                     }
                 }
@@ -6721,74 +6800,74 @@ public  class PyWavelets extends AlgorithmBase {
 
             // Biorthogonal wavelets family
             case BIOR: {
-                unsigned int N = order / 10, M = order % 10;
-                size_t M_idx;
-                size_t M_max;
+                int N = order / 10, M = order % 10;
+                int M_idx;
+                int M_max;
                 switch (N) {
                 case 1:
-                    if (M % 2 != 1 || M > 5) return NULL;
+                    if (M % 2 != 1 || M > 5) return null;
                     M_idx = M / 2;
                     M_max = 5;
                     break;
                 case 2:
-                    if (M % 2 != 0 || M < 2 || M > 8) return NULL;
+                    if (M % 2 != 0 || M < 2 || M > 8) return null;
                     M_idx = M / 2 - 1;
                     M_max = 8;
                     break;
                 case 3:
-                    if (M % 2 != 1) return NULL;
+                    if (M % 2 != 1) return null;
                     M_idx = M / 2;
                     M_max = 9;
                     break;
                 case 4:
                 case 5:
-                    if (M != N) return NULL;
+                    if (M != N) return null;
                     M_idx = 0;
                     M_max = M;
                     break;
                 case 6:
-                    if (M != 8) return NULL;
+                    if (M != 8) return null;
                     M_idx = 0;
                     M_max = 8;
                     break;
                 default:
-                    return NULL;
+                    return null;
                 }
 
                 w = blank_discrete_wavelet((N == 1) ? 2 * M : 2 * M + 2);
-                if(w == NULL) return NULL;
+                if(w == null) return null;
 
-                w->vanishing_moments_psi = order/10;
-                w->vanishing_moments_phi = order % 10;
-                w->base.support_width = -1;
-                w->base.orthogonal = 0;
-                w->base.biorthogonal = 1;
-                w->base.symmetry = SYMMETRIC;
-                w->base.compact_support = 1;
-                w->base.family_name = "Biorthogonal";
-                w->base.short_name = "bior";
+                w.vanishing_moments_psi = order/10;
+                w.vanishing_moments_phi = order % 10;
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 1;
+                w.base.symmetry = SYMMETRY.SYMMETRIC;
+                w.base.compact_support = 1;
+                w.base.family_name = "Biorthogonal";
+                w.base.short_name = "bior";
                 {
-                    size_t n = M_max - M;
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_float[i] = bior_float[N - 1][0][i+n];
-                        w->dec_lo_float[i] = bior_float[N - 1][M_idx+1][w->dec_len-1-i];
-                        w->rec_hi_float[i] = ((i % 2) ? -1 : 1)
-                          * bior_float[N - 1][M_idx+1][w->dec_len-1-i];
-                        w->dec_hi_float[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int n = M_max - M;
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_float[i] = bior_float[N - 1][0][i+n];
+                        w.dec_lo_float[i] = bior_float[N - 1][M_idx+1][w.dec_len-1-i];
+                        w.rec_hi_float[i] = (((i % 2) == 1) ? -1 : 1)
+                          * bior_float[N - 1][M_idx+1][w.dec_len-1-i];
+                        w.dec_hi_float[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * bior_float[N - 1][0][i+n];
                     }
                 }
 
                 {
-                    size_t n = M_max - M;
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_double[i] = bior_double[N - 1][0][i+n];
-                        w->dec_lo_double[i] = bior_double[N - 1][M_idx+1][w->dec_len-1-i];
-                        w->rec_hi_double[i] = ((i % 2) ? -1 : 1)
-                          * bior_double[N - 1][M_idx+1][w->dec_len-1-i];
-                        w->dec_hi_double[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int n = M_max - M;
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_double[i] = bior_double[N - 1][0][i+n];
+                        w.dec_lo_double[i] = bior_double[N - 1][M_idx+1][w.dec_len-1-i];
+                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                          * bior_double[N - 1][M_idx+1][w.dec_len-1-i];
+                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * bior_double[N - 1][0][i+n];
                     }
                 }
@@ -6799,46 +6878,349 @@ public  class PyWavelets extends AlgorithmBase {
             // Discrete FIR filter approximation of Meyer wavelet
             case DMEY:
                 w = blank_discrete_wavelet(62);
-                if(w == NULL) return NULL;
+                if(w == null) return null;
 
-                w->vanishing_moments_psi = -1;
-                w->vanishing_moments_phi = -1;
-                w->base.support_width = -1;
-                w->base.orthogonal = 1;
-                w->base.biorthogonal = 1;
-                w->base.symmetry = SYMMETRIC;
-                w->base.compact_support = 1;
-                w->base.family_name = "Discrete Meyer (FIR Approximation)";
-                w->base.short_name = "dmey";
+                w.vanishing_moments_psi = -1;
+                w.vanishing_moments_phi = -1;
+                w.base.support_width = -1;
+                w.base.orthogonal = 1;
+                w.base.biorthogonal = 1;
+                w.base.symmetry = SYMMETRY.SYMMETRIC;
+                w.base.compact_support = 1;
+                w.base.family_name = "Discrete Meyer (FIR Approximation)";
+                w.base.short_name = "dmey";
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_float[i] = dmey_float[i];
-                        w->dec_lo_float[i] = dmey_float[w->dec_len-1-i];
-                        w->rec_hi_float[i] = ((i % 2) ? -1 : 1)
-                          * dmey_float[w->dec_len-1-i];
-                        w->dec_hi_float[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_float[i] = dmey_float[i];
+                        w.dec_lo_float[i] = dmey_float[w.dec_len-1-i];
+                        w.rec_hi_float[i] = (((i % 2) == 1) ? -1 : 1)
+                          * dmey_float[w.dec_len-1-i];
+                        w.dec_hi_float[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * dmey_float[i];
                     }
                 }
 
                 {
-                    size_t i;
-                    for(i = 0; i < w->rec_len; ++i){
-                        w->rec_lo_double[i] = dmey_double[i];
-                        w->dec_lo_double[i] = dmey_double[w->dec_len-1-i];
-                        w->rec_hi_double[i] = ((i % 2) ? -1 : 1)
-                          * dmey_double[w->dec_len-1-i];
-                        w->dec_hi_double[i] = (((w->dec_len-1-i) % 2) ? -1 : 1)
+                    int i;
+                    for(i = 0; i < w.rec_len; ++i){
+                        w.rec_lo_double[i] = dmey_double[i];
+                        w.dec_lo_double[i] = dmey_double[w.dec_len-1-i];
+                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                          * dmey_double[w.dec_len-1-i];
+                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * dmey_double[i];
                     }
                 }
                 break;
             default:
-                return NULL;
+                return null;
         }
         return w;
-    }*/
+    }
+    
+    ContinuousWavelet blank_continuous_wavelet()
+    {
+        ContinuousWavelet w;
+
+
+
+        w = new ContinuousWavelet();
+
+        /* set properties to "blank" values */
+        w.center_frequency = -1;
+        w.bandwidth_frequency = -1;
+        w.fbsp_order = 0;
+        return w;
+    }
+    
+    ContinuousWavelet continuous_wavelet(WAVELET_NAME name, int order)
+    {
+        ContinuousWavelet w;
+        switch(name){
+                /* Gaussian Wavelets */
+            case GAUS:
+                if (order > 8)
+                    return null;
+                w = blank_continuous_wavelet();
+                if(w == null) return null;
+
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 0;
+                if (order % 2 == 0)
+                    w.base.symmetry = SYMMETRY.SYMMETRIC;
+                else
+                    w.base.symmetry = SYMMETRY.ANTI_SYMMETRIC;
+                w.base.compact_support = 0;
+                w.base.family_name = "Gaussian";
+                w.base.short_name = "gaus";
+                w.complex_cwt = 0;
+                w.lower_bound = -5;
+                w.upper_bound = 5;
+                w.center_frequency = 0;
+                w.bandwidth_frequency = 0;
+                w.fbsp_order = 0;
+                break;
+            case MEXH:
+                w = blank_continuous_wavelet();
+                if(w == null) return null;
+
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 0;
+                w.base.symmetry = SYMMETRY.SYMMETRIC;
+                w.base.compact_support = 0;
+                w.base.family_name = "Mexican hat wavelet";
+                w.base.short_name = "mexh";
+                w.complex_cwt = 0;
+                w.lower_bound = -8;
+                w.upper_bound = 8;
+                w.center_frequency = 0;
+                w.bandwidth_frequency = 0;
+                w.fbsp_order = 0;
+                break;
+            case MORL:
+                w = blank_continuous_wavelet();
+                if(w == null) return null;
+
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 0;
+                w.base.symmetry = SYMMETRY.SYMMETRIC;
+                w.base.compact_support = 0;
+                w.base.family_name = "Morlet wavelet";
+                w.base.short_name = "morl";
+                w.complex_cwt = 0;
+                w.lower_bound = -8;
+                w.upper_bound = 8;
+                w.center_frequency = 0;
+                w.bandwidth_frequency = 0;
+                w.fbsp_order = 0;
+                break;
+            case CGAU:
+                if (order > 8)
+                    return null;
+                w = blank_continuous_wavelet();
+                if(w == null) return null;
+
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 0;
+                if (order % 2 == 0)
+                    w.base.symmetry = SYMMETRY.SYMMETRIC;
+                else
+                    w.base.symmetry = SYMMETRY.ANTI_SYMMETRIC;
+                w.base.compact_support = 0;
+                w.base.family_name = "Complex Gaussian wavelets";
+                w.base.short_name = "cgau";
+                w.complex_cwt = 1;
+                w.lower_bound = -5;
+                w.upper_bound = 5;
+                w.center_frequency = 0;
+                w.bandwidth_frequency = 0;
+                w.fbsp_order = 0;
+                break;
+            case SHAN:
+
+                w = blank_continuous_wavelet();
+                if(w == null) return null;
+
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 0;
+                w.base.symmetry = SYMMETRY.ASYMMETRIC;
+                w.base.compact_support = 0;
+                w.base.family_name = "Shannon wavelets";
+                w.base.short_name = "shan";
+                w.complex_cwt = 1;
+                w.lower_bound = -20;
+                w.upper_bound = 20;
+                w.center_frequency = 1;
+                w.bandwidth_frequency = 0.5f;
+                w.fbsp_order = 0;
+                break;
+            case FBSP:
+
+                w = blank_continuous_wavelet();
+                if(w == null) return null;
+
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 0;
+                w.base.symmetry = SYMMETRY.ASYMMETRIC;
+                w.base.compact_support = 0;
+                w.base.family_name = "Frequency B-Spline wavelets";
+                w.base.short_name = "fbsp";
+                w.complex_cwt = 1;
+                w.lower_bound = -20;
+                w.upper_bound = 20;
+                w.center_frequency = 0.5f;
+                w.bandwidth_frequency = 1;
+                w.fbsp_order = 2;
+                break;
+            case CMOR:
+
+                w = blank_continuous_wavelet();
+                if(w == null) return null;
+
+                w.base.support_width = -1;
+                w.base.orthogonal = 0;
+                w.base.biorthogonal = 0;
+                w.base.symmetry = SYMMETRY.ASYMMETRIC;
+                w.base.compact_support = 0;
+                w.base.family_name = "Complex Morlet wavelets";
+                w.base.short_name = "cmor";
+                w.complex_cwt = 1;
+                w.lower_bound = -8;
+                w.upper_bound = 8;
+                w.center_frequency = 0.5f;
+                w.bandwidth_frequency = 1;
+                w.fbsp_order = 0;
+                break;
+            default:
+                return null;
+        }
+        return w;
+    }
+
+    DiscreteWavelet copy_discrete_wavelet(DiscreteWavelet base)
+    {
+        int i;
+    	DiscreteWavelet w;
+
+        if(base == null) return null;
+
+        w = new DiscreteWavelet();
+
+        w.dec_len = base.dec_len;
+        if (base.dec_len > 0)
+        {
+            w.dec_lo_float = new float[w.dec_len];
+            w.dec_hi_float = new float[w.dec_len];
+            w.dec_lo_double = new double[w.dec_len];
+            w.dec_hi_double = new double[w.dec_len];
+            if(w.dec_lo_float == null || w.dec_hi_float == null ||
+                w.dec_lo_double == null || w.dec_hi_double == null){
+               free_discrete_wavelet(w);
+               return null;
+            }
+        }
+        else
+        {
+            w.dec_lo_float = null;
+            w.dec_hi_float = null;
+
+            w.dec_lo_double = null;
+            w.dec_hi_double = null;
+        }
+        w.rec_len = base.rec_len;
+        if (base.rec_len > 0)
+        {
+            w.rec_lo_float = new float[w.rec_len];
+            w.rec_hi_float = new float[w.rec_len];
+            w.rec_lo_double = new double[w.rec_len];
+            w.rec_hi_double = new double[w.rec_len];
+            if( w.rec_lo_float == null || w.rec_hi_float == null ||
+                w.rec_lo_double == null || w.rec_hi_double == null){
+               free_discrete_wavelet(w);
+               return null;
+            }
+        }
+        else
+        {
+            w.rec_lo_float = null;
+            w.rec_hi_float = null;
+
+            w.rec_lo_double = null;
+            w.rec_hi_double = null;
+        }
+
+
+        // FIXME: Test coverage, the only use in `wavelet` overwrites the filter
+        if (base.dec_len > 0)
+        {
+        	for (i = 0; i < w.dec_len; i++) {
+        		w.dec_lo_float[i] = base.dec_lo_float[i];
+        		w.dec_hi_float[i] = base.dec_hi_float[i];
+        		w.dec_lo_double[i] = base.dec_lo_double[i];
+        		w.dec_hi_double[i] = base.dec_hi_double[i];
+        	}
+        }
+        if (base.rec_len > 0)
+        {
+        	for (i = 0; i < w.rec_len; i++) {
+        		w.rec_lo_float[i] = base.rec_lo_float[i];
+        		w.rec_hi_float[i] = base.rec_hi_float[i];
+        		w.rec_lo_double[i] = base.rec_lo_double[i];
+        		w.rec_hi_double[i] = base.rec_hi_double[i];
+        	}
+        }
+        return w;
+    }
+    
+    /* Returns the floor of the base-2 log of it's input
+    *
+    * Undefined for x = 0
+    */
+   private short size_log2(int x){
+	   if(x <= 0) throw new IllegalArgumentException();
+	   return (short)(31 - Integer.numberOfLeadingZeros(x));
+   }
+
+    
+    /* buffers and max levels params */
+
+    private int dwt_buffer_length(int input_len, int filter_len, MODE mode){
+        if(input_len < 1 || filter_len < 1)
+            return 0;
+
+        switch(mode){
+                case MODE_PERIODIZATION:
+                    return input_len / 2 + (((input_len%2) == 1) ? 1 : 0);
+                default:
+                    return (input_len + filter_len - 1) / 2;
+        }
+    }
+
+    private int reconstruction_buffer_length(int coeffs_len, int filter_len){
+        if(coeffs_len < 1 || filter_len < 1)
+            return 0;
+
+        return 2*coeffs_len+filter_len-2;
+    }
+
+    private int idwt_buffer_length(int coeffs_len, int filter_len, MODE mode){
+        switch(mode){
+                case MODE_PERIODIZATION:
+                    return 2*coeffs_len;
+                default:
+                    return 2*coeffs_len-filter_len+2;
+        }
+    }
+
+    int swt_buffer_length(int input_len){
+        return input_len;
+    }
+
+    private short dwt_max_level(int input_len, int filter_len){
+        if(filter_len <= 1 || input_len < (filter_len-1))
+            return 0;
+
+        return size_log2(input_len/(filter_len-1));
+    }
+
+    private short swt_max_level(int input_len){
+        /* check how many times input_len is divisible by 2 */
+        short j = 0;
+        while (input_len > 0){
+            if ((input_len % 2) == 1)
+                return j;
+            input_len /= 2;
+            j++;
+        }
+        return j;
+    }
 
     
     public PyWavelets(ModelImage transformImage, ModelImage compressedTransformImage, 
