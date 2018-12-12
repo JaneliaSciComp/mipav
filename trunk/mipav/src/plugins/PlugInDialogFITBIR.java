@@ -247,6 +247,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final String IMG_PREVIEW_ELEMENT_NAME = "ImgPreviewFile";
 
     private static final String IMG_HASH_CODE_ELEMENT_NAME = "ImgFileHashCode";
+    
+    private static final String IMG_DIFF_GROUP = "Diffusion Direction Data";
+    
+    private static final String IMG_DIFF_BVAL_ELEMENT_NAME = "ImgDiffusionBValFile";
 
     private static final String recordIndicatorColumn = "record";
 
@@ -1870,13 +1874,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
     
     private void setBvalBvecFields(ArrayList<String> recordRepeat, Vector<File> fileList) {
-        String groupName = "Diffusion Direction Data.";
+        String groupName = IMG_DIFF_GROUP + ".";
         
         File bvalFile = null;
         File bvecFile = null;
-        
-        int numDirections = 0;
-        HashMap<Integer,Integer> bvalList = new HashMap<Integer,Integer>();
         
         Vector<File> otherFiles = new Vector<File>();
         for (File file : fileList) {
@@ -1889,6 +1890,39 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
         
+        if (bvalFile != null) {
+            HashMap<String, String> deTable = readBvalFile(bvalFile);
+            for (String deName : deTable.keySet()) {
+                if (isValueSet(deName) && isValueSet(deTable.get(deName))) {
+                    addCSVEntry(recordRepeat, deName, deTable.get(deName));
+                }
+            }
+            
+            addCSVEntry(recordRepeat, groupName + IMG_DIFF_BVAL_ELEMENT_NAME, bvalFile.getAbsolutePath());
+        }
+        
+        if (bvecFile != null) {
+            addCSVEntry(recordRepeat, groupName + "ImgDiffusionBVecFile", bvalFile.getAbsolutePath());
+        }
+        
+        // TODO - need to handle any additional files and put into Diffusion Derived Data.ImgFile?
+        for (File file : otherFiles) {
+            System.err.println("DWI other file:\t" + file);
+        }
+    }
+    
+    private HashMap<String, String> readBvalFile(File bvalFile) {
+        String groupName = IMG_DIFF_GROUP + ".";
+
+        if (bvalFile == null) {
+            return null;
+        }
+        
+        int numDirections = 0;
+        HashMap<Integer,Integer> bvalList = new HashMap<Integer,Integer>();
+        
+        HashMap<String, String> deTable = new HashMap<String, String>();
+
         if (bvalFile != null) {
             FileReader reader = null;
             try {
@@ -1918,9 +1952,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         reader.close();
                     } catch (IOException e1) {}
                 }
+                
+                return null;
             }
             
-            addCSVEntry(recordRepeat, groupName + "ImgDiffusionDirCt", "" + numDirections);
+            deTable.put(groupName + "ImgDiffusionDirCt", "" + numDirections);
             
             int bvalCount = 0;
             Integer[] bvals = (Integer[]) bvalList.keySet().toArray(new Integer[0]);
@@ -1930,35 +1966,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     bvalCount++;
                     
                     if (bvalCount == 1) {
-                        addCSVEntry(recordRepeat, groupName + "ImgDiffusionFirstBVal", "" + bvals[i]);
+                        deTable.put(groupName + "ImgDiffusionFirstBVal", "" + bvals[i]);
                     } else if (bvalCount == 2) {
-                        addCSVEntry(recordRepeat, groupName + "ImgDiffusionSecondBVal", "" + bvals[i]);
+                        deTable.put(groupName + "ImgDiffusionSecondBVal", "" + bvals[i]);
                     } else if (bvalCount == 3) {
-                        addCSVEntry(recordRepeat, groupName + "ImgDiffusionThirdBVal", "" + bvals[i]);
+                        deTable.put(groupName + "ImgDiffusionThirdBVal", "" + bvals[i]);
                     } else if (bvalCount == 4) {
-                        addCSVEntry(recordRepeat, groupName + "ImgDiffusionFourthBVal", "" + bvals[i]);
+                        deTable.put(groupName + "ImgDiffusionFourthBVal", "" + bvals[i]);
                     } else if (bvalCount == 5) {
-                        addCSVEntry(recordRepeat, groupName + "ImgDiffusionFifthBVal", "" + bvals[i]);
+                        deTable.put(groupName + "ImgDiffusionFifthBVal", "" + bvals[i]);
                     } else if (bvalCount == 6) {
-                        addCSVEntry(recordRepeat, groupName + "ImgDiffusionSixthBVal", "" + bvals[i]);
+                        deTable.put(groupName + "ImgDiffusionSixthBVal", "" + bvals[i]);
                     } else {
                         System.err.println("Found more than 6 bVals: " + bvalCount + " " + bvals[i]);
                     }
                 }
             }
-            addCSVEntry(recordRepeat, groupName + "ImgDiffusionBValCt", "" + bvalCount);
-            
-            addCSVEntry(recordRepeat, groupName + "ImgDiffusionBValFile", bvalFile.getAbsolutePath());
+            deTable.put(groupName + "ImgDiffusionBValCt", "" + bvalCount);
         }
         
-        if (bvecFile != null) {
-            addCSVEntry(recordRepeat, groupName + "ImgDiffusionBVecFile", bvalFile.getAbsolutePath());
-        }
-        
-        // TODO - need to handle any additional files and put into Diffusion Derived Data.ImgFile?
-        for (File file : otherFiles) {
-            System.err.println("DWI other file:\t" + file);
-        }
+        return deTable;
     }
     
     private void readFuncFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
@@ -4782,6 +4809,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return false;
     }
+    
+    private static final boolean isBValFileElement(final String groupName, final String deName) {
+        if (groupName.equalsIgnoreCase(IMG_DIFF_GROUP) && deName.equalsIgnoreCase(IMG_DIFF_BVAL_ELEMENT_NAME)) {
+            return true;
+        }
+        
+        return false;
+    }
 
     /**
      * Returns whether the given structure name indicates that it is an imaging structure that should be processed
@@ -5968,7 +6003,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     previewImgPanel.validate();
                     previewImgPanel.repaint();
                 } else {
-                    // TODO: if spectroscopy, only read image header, not the data and skip preview image
+                    // if spectroscopy, only read image header, not the data and skip preview image
                     final File file = new File(filePath);
                     System.out.println(file);
                     
@@ -7252,6 +7287,38 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     clearFields(fsData);
                                 }
                                 populateFields(fsData, null, spectroscopyHeaderList[0]);
+                            }
+                        }
+                    }
+                } else if (isImagingStructure(dataStructureName) && isBValFileElement(groupName, deName)) {
+                    // TODO get bval file, read it, map onto data elements, and set GUI components
+                    final JFileChooser chooser = new JFileChooser();
+                    chooser.setDialogTitle("Choose BVal file");
+                    chooser.setMultiSelectionEnabled(false);
+                    chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+                    chooser.setFileFilter(new FileNameExtensionFilter("Diffusion B-value file (.bval)", "bval"));
+                    final int returnValue = chooser.showOpenDialog(this);
+                    if (returnValue == JFileChooser.APPROVE_OPTION) {
+                        final File file = chooser.getSelectedFile();
+                        
+                        HashMap<String, String> bvalDeTable = readBvalFile(file);
+                        
+                        if (bvalDeTable == null) {
+                            MipavUtil.displayWarning("Unable to read contents of BVal file: " + file.getAbsolutePath());
+                        } else {
+                            for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
+                                String deNameWithGroup = IMG_DIFF_GROUP + "." + deVal.getName();
+                                if (deVal.getName().equalsIgnoreCase(deName)) {
+                                    final JTextField tf = (JTextField) deVal.getComp();
+                                    tf.setText(file.getAbsolutePath());
+                                    tf.setEnabled(false);
+//                                    break;
+                                } else if (bvalDeTable.containsKey(deNameWithGroup)) {
+                                    final JTextField tf = (JTextField) deVal.getComp();
+                                    tf.setText(bvalDeTable.get(deNameWithGroup));
+//                                    tf.setEnabled(false);
+//                                    break;
+                                }
                             }
                         }
                     }
