@@ -664,7 +664,12 @@ public class StrokeSegmentationDicomReceiver {
         	MipavUtil.displayError("Unable to write core segmentation report: " + e.getMessage());
         }
         
-        if (reportDir != null && (new File(reportDir).exists())) {
+        if (reportDir != null) {
+            File reportDirFile = new File(reportDir);
+            if (!reportDirFile.exists()) {
+                reportDirFile.mkdirs();
+            }
+            
             try {
                 File reportSubDir = new File(reportDir + File.separator + firstLightboxFile.getParentFile().getParentFile().getName() + File.separator + firstLightboxFile.getParentFile().getName());
                 
