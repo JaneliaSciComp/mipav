@@ -7171,7 +7171,11 @@ public  class PyWavelets extends AlgorithmBase {
     
     /* buffers and max levels params */
 
-    private int dwt_buffer_length(int input_len, int filter_len, MODE mode){
+   /*
+    * Length of DWT coeffs for specified input data length, filter length and
+    * signal extension mode.
+    */
+   private int dwt_buffer_length(int input_len, int filter_len, MODE mode){
         if(input_len < 1 || filter_len < 1)
             return 0;
 
@@ -7183,6 +7187,11 @@ public  class PyWavelets extends AlgorithmBase {
         }
     }
 
+    /*
+     * Length of reconstructed signal for specified input coeffs length and filter
+     * length. It is used for direct reconstruction from coefficients (normal
+     * convolution of upsampled coeffs with filter).
+     */
     private int reconstruction_buffer_length(int coeffs_len, int filter_len){
         if(coeffs_len < 1 || filter_len < 1)
             return 0;
@@ -7190,6 +7199,10 @@ public  class PyWavelets extends AlgorithmBase {
         return 2*coeffs_len+filter_len-2;
     }
 
+    /*
+     * Length of IDWT reconstructed signal for specified input coeffs length, filter
+     * length and extension mode.
+     */
     private int idwt_buffer_length(int coeffs_len, int filter_len, MODE mode){
         switch(mode){
                 case MODE_PERIODIZATION:
@@ -7199,10 +7212,12 @@ public  class PyWavelets extends AlgorithmBase {
         }
     }
 
-    int swt_buffer_length(int input_len){
+    /* Length of SWT coefficients for specified input signal length (== input_len) */
+    private int swt_buffer_length(int input_len){
         return input_len;
     }
 
+    /* Maximum useful level of DWT decomposition. */
     private short dwt_max_level(int input_len, int filter_len){
         if(filter_len <= 1 || input_len < (filter_len-1))
             return 0;
@@ -7210,6 +7225,7 @@ public  class PyWavelets extends AlgorithmBase {
         return size_log2(input_len/(filter_len-1));
     }
 
+    /* Maximum useful level of SWT decomposition. */
     private short swt_max_level(int input_len){
         /* check how many times input_len is divisible by 2 */
         short j = 0;
@@ -7528,5 +7544,777 @@ public  class PyWavelets extends AlgorithmBase {
         } // while(true)	
     }
 	
-	
+    /* downsampling convolution routine specific to periodization mode.
+    *
+    * input    - input data
+    * N        - input data length
+    * filter   - filter data
+    * F        - filter data length
+    * output   - output data
+    * step     - decimation step
+    * fstep    - step size between non-zero entries in filter
+    *            (used to improve performance for the multilevel swt)
+    */
+    private int downsampling_convolution_periodization(double input[], int N,
+            double filter[], int F,
+            double output[], int step,
+            int fstep)
+		{
+		int i = F/2, o = 0;
+		int padding = (step - (N % step)) % step;
+		
+		for (; i < F && i < N; i += step, ++o) {
+		double sum = 0;
+		int j;
+		int k_start = 0;
+		for (j = 0; j <= i; j += fstep)
+		sum += filter[j] * input[i-j];
+		if (fstep > 1)
+		k_start = j - (i + 1);
+		while (j < F){
+		int k;
+		for (k = k_start; k < padding && j < F; k += fstep, j += fstep)
+		sum += filter[j] * input[N-1];
+		for (k = k_start; k < N && j < F; k += fstep, j += fstep)
+		sum += filter[j] * input[N-1-k];
+		}
+		output[o] = sum;
+		}
+		
+		for(; i < N; i+=step, ++o){
+		double sum = 0;
+		int j;
+		for(j = 0; j < F; j += fstep)
+		sum += input[i-j]*filter[j];
+		output[o] = sum;
+		}
+		
+		for (; i < F && i < N + F/2; i += step, ++o) {
+		double sum = 0;
+		int j = 0;
+		int k_start = 0;
+		while (i-j >= N){
+		int k;
+		// for simplicity, not using fstep here
+		for (k = 0; k < padding && i-j >= N; ++k, ++j)
+		sum += filter[i-N-j] * input[N-1];
+		for (k = 0; k < N && i-j >= N; ++k, ++j)
+		sum += filter[i-N-j] * input[k];
+		}
+		if (fstep > 1)
+		j += (fstep - j % fstep) % fstep;  // move to next non-zero entry
+		for (; j <= i; j += fstep)
+		sum += filter[j] * input[i-j];
+		if (fstep > 1)
+		k_start = j - (i + 1);
+		while (j < F){
+		int k;
+		for (k = k_start; k < padding && j < F; k += fstep, j += fstep)
+		sum += filter[j] * input[N-1];
+		for (k = k_start; k < N && j < F; k += fstep, j += fstep)
+		sum += filter[j] * input[N-1-k];
+		}
+		output[o] = sum;
+		}
+		
+		for(; i < N + F/2; i += step, ++o){
+		double sum = 0;
+		int j = 0;
+		while (i-j >= N){
+		// for simplicity, not using fstep here
+		int k;
+		for (k = 0; k < padding && i-j >= N; ++k, ++j)
+		sum += filter[i-N-j] * input[N-1];
+		for (k = 0; k < N && i-j >= N; ++k, ++j)
+		sum += filter[i-N-j] * input[k];
+		}
+		if (fstep > 1)
+		j += (fstep - j % fstep) % fstep;  // move to next non-zero entry
+		for (; j < F; j += fstep)
+		sum += filter[j] * input[i-j];
+		output[o] = sum;
+		}
+		return 0;
+		}
+    /* Performs convolution of input with filter and downsamples by taking every
+     * step-th element from the result.
+     *
+     * input    - input data
+     * N        - input data length
+     * filter   - filter data
+     * F        - filter data length
+     * output   - output data
+     * step     - decimation step
+     * mode     - signal extension mode
+     */
+
+    /* memory efficient version */ 
+   private int  downsampling_convolution(double input[], int N,
+            double filter[], int F,
+            double output[],
+            int step, MODE mode)
+		{
+		/* This convolution performs efficient downsampling by computing every
+		* step'th element of normal convolution (currently tested only for step=1
+		* and step=2).
+		*/
+		
+		int i = step - 1, o = 0;
+		
+		if(mode == MODE.MODE_PERIODIZATION)
+		return downsampling_convolution_periodization(input, N, filter, F, output, step, 1);
+		
+		if (mode == MODE.MODE_SMOOTH && N < 2)
+		mode = MODE.MODE_CONSTANT_EDGE;
+		
+		// left boundary overhang
+		for(; i < F && i < N; i+=step, ++o){
+		double sum = 0;
+		int j;
+		for(j = 0; j <= i; ++j)
+		sum += filter[j]*input[i-j];
+		
+		switch(mode) {
+		case MODE_SYMMETRIC:
+		while (j < F){
+		int k;
+		for(k = 0; k < N && j < F; ++j, ++k)
+		sum += filter[j]*input[k];
+		for(k = 0; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_ANTISYMMETRIC:
+		// half-sample anti-symmetric
+		while (j < F){
+		int k;
+		for(k = 0; k < N && j < F; ++j, ++k)
+		sum -= filter[j]*input[k];
+		for(k = 0; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_REFLECT:
+		while (j < F){
+		int k;
+		for(k = 1; k < N && j < F; ++j, ++k)
+		sum += filter[j]*input[k];
+		for(k = 1; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_ANTIREFLECT:{
+		// whole-sample anti-symmetric
+		int k;
+		double le = input[0];    // current left edge value
+		double tmp = 0;
+		while (j < F) {
+		for(k = 1; k < N && j < F; ++j, ++k){
+		tmp = le - (input[k] - input[0]);
+		sum += filter[j]*tmp;
+		}
+		le = tmp;
+		for(k = 1; k < N && j < F; ++j, ++k){
+		tmp = le + (input[N-1-k] - input[N-1]);
+		sum += filter[j]*tmp;
+		}
+		le = tmp;
+		}
+		break;
+		}
+		case MODE_CONSTANT_EDGE:
+		for(; j < F; ++j)
+		sum += filter[j]*input[0];
+		break;
+		case MODE_SMOOTH:{
+		int k;
+		for(k = 1; j < F; ++j, ++k)
+		sum += filter[j]*(input[0] + k * (input[0] - input[1]));
+		break;
+		}
+		case MODE_PERIODIC:
+		while (j < F){
+		int k;
+		for(k = 0; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_ZEROPAD:
+		default:
+		break;
+		}
+		output[o] = sum;
+		}
+		
+		// center (if input equal or wider than filter: N >= F)
+		for(; i < N; i+=step, ++o){
+		double sum = 0;
+		int j;
+		for(j = 0; j < F; ++j)
+		sum += input[i-j]*filter[j];
+		output[o] = sum;
+		}
+		
+		// center (if filter is wider than input: F > N)
+		for(; i < F; i+=step, ++o){
+		double sum = 0;
+		int j = 0;
+		
+		switch(mode) {
+		case MODE_SYMMETRIC:
+		// Included from original: TODO: j < F-_offset
+		/* Iterate over filter in reverse to process elements away from
+		* data. This gives a known first input element to process (N-1)
+		*/
+		while (i - j >= N){
+		int k;
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[N-1-k];
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_ANTISYMMETRIC:
+		// half-sample anti-symmetric
+		while (i - j >= N){
+		int k;
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum -= filter[i-N-j]*input[N-1-k];
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_REFLECT:
+		while (i - j >= N){
+		int k;
+		for(k = 1; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[N-1-k];
+		for(k = 1; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_ANTIREFLECT:{
+		// whole-sample anti-symmetric
+		int k;
+		double re = input[N-1];    // current right edge value
+		double tmp = 0;
+		while (i - j >= N) {
+		for(k = 1; k < N && i-j >= N; ++j, ++k){
+		tmp = re - (input[N-1-k] - input[N-1]);
+		sum += filter[i-N-j]*tmp;
+		}
+		re = tmp;
+		for(k = 1; k < N && i-j >= N; ++j, ++k){
+		tmp = re + (input[k] - input[0]);
+		sum += filter[i-N-j]*tmp;
+		}
+		re = tmp;
+		}
+		break;
+		}
+		case MODE_CONSTANT_EDGE:
+		for(; i-j >= N; ++j)
+		sum += filter[j]*input[N-1];
+		break;
+		case MODE_SMOOTH:{
+		int k;
+		for(k = i - N + 1; i-j >= N; ++j, --k)
+		sum += filter[j]*(input[N-1] + k * (input[N-1] - input[N-2]));
+		break;
+		}
+		case MODE_PERIODIC:
+		while (i-j >= N){
+		int k;
+		for (k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_ZEROPAD:
+		default:
+		j = i - N + 1;
+		break;
+		}
+		
+		for(; j <= i; ++j)
+		sum += filter[j]*input[i-j];
+		
+		switch(mode) {
+		case MODE_SYMMETRIC:
+		while (j < F){
+		int k;
+		for(k = 0; k < N && j < F; ++j, ++k)
+		sum += filter[j]*input[k];
+		for(k = 0; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_ANTISYMMETRIC:
+		// half-sample anti-symmetric
+		while (j < F){
+		int k;
+		for(k = 0; k < N && j < F; ++j, ++k)
+		sum -= filter[j]*input[k];
+		for(k = 0; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_REFLECT:
+		while (j < F){
+		int k;
+		for(k = 1; k < N && j < F; ++j, ++k)
+		sum += filter[j]*input[k];
+		for(k = 1; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_ANTIREFLECT:{
+		// whole-sample anti-symmetric
+		int k;
+		double le = input[0];    // current left edge value
+		double tmp = 0;
+		while (j < F) {
+		for(k = 1; k < N && j < F; ++j, ++k){
+		tmp = le - (input[k] - input[0]);
+		sum += filter[j]*tmp;
+		}
+		le = tmp;
+		for(k = 1; k < N && j < F; ++j, ++k){
+		tmp = le + (input[N-1-k] - input[N-1]);
+		sum += filter[j]*tmp;
+		}
+		le = tmp;
+		}
+		break;
+		}
+		case MODE_CONSTANT_EDGE:
+		for(; j < F; ++j)
+		sum += filter[j]*input[0];
+		break;
+		case MODE_SMOOTH:{
+		int k;
+		for(k = 1; j < F; ++j, ++k)
+		sum += filter[j]*(input[0] + k * (input[0] - input[1]));
+		break;
+		}
+		case MODE_PERIODIC:
+		while (j < F){
+		int k;
+		for(k = 0; k < N && j < F; ++k, ++j)
+		sum += filter[j]*input[N-1-k];
+		}
+		break;
+		case MODE_ZEROPAD:
+		default:
+		break;
+		}
+		output[o] = sum;
+		}
+		
+		// right boundary overhang
+		for(; i < N+F-1; i += step, ++o){
+		double sum = 0;
+		int j = 0;
+		switch(mode) {
+		case MODE_SYMMETRIC:
+		// Included from original: TODO: j < F-_offset
+		while (i - j >= N){
+		int k;
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[N-1-k];
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_ANTISYMMETRIC:
+		// half-sample anti-symmetric
+		while (i - j >= N){
+		int k;
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum -= filter[i-N-j]*input[N-1-k];
+		for(k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_REFLECT:
+		while (i - j >= N){
+		int k;
+		for(k = 1; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[N-1-k];
+		for(k = 1; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_ANTIREFLECT:{
+		// whole-sample anti-symmetric
+		int k;
+		double re = input[N-1];    //current right edge value
+		double tmp = 0;
+		while (i - j >= N) {
+		//first reflection
+		for(k = 1; k < N && i-j >= N; ++j, ++k){
+		tmp = re - (input[N-1-k] - input[N-1]);
+		sum += filter[i-N-j]*tmp;
+		}
+		re = tmp;
+		//second reflection
+		for(k = 1; k < N && i-j >= N; ++j, ++k){
+		tmp = re + (input[k] - input[0]);
+		sum += filter[i-N-j]*tmp;
+		}
+		re = tmp;
+		}
+		break;
+		}
+		case MODE_CONSTANT_EDGE:
+		for(; i-j >= N; ++j)
+		sum += filter[j]*input[N-1];
+		break;
+		case MODE_SMOOTH:{
+		int k;
+		for(k = i - N + 1; i-j >= N; ++j, --k)
+		sum += filter[j]*(input[N-1] + k * (input[N-1] - input[N-2]));
+		break;
+		}
+		case MODE_PERIODIC:
+		while (i-j >= N){
+		int k;
+		for (k = 0; k < N && i-j >= N; ++j, ++k)
+		sum += filter[i-N-j]*input[k];
+		}
+		break;
+		case MODE_ZEROPAD:
+		default:
+		j = i - N + 1;
+		break;
+		}
+		for(; j < F; ++j)
+		sum += filter[j]*input[i-j];
+		output[o] = sum;
+		}
+		return 0;
+		}
+   
+   /*
+    * Performs normal (full) convolution of "upsampled" input coeffs array with
+    * filter Requires zero-filled output buffer (adds values instead of
+    * overwriting - can be called many times with the same output).
+    *
+    * input    - input data
+    * N        - input data length
+    * filter   - filter data
+    * F        - filter data length
+    * output   - output data
+    * O        - output lenght (currently not used)
+    * mode     - signal extension mode
+    */
+   private int upsampling_convolution_full(double input[], int N,
+           double filter[], int F,
+           double output[], int O)
+		{
+		/* Performs a zero-padded convolution, using each input element for two
+		* consecutive filter elements. This simulates an upsampled input.
+		*
+		* In contrast to downsampling_convolution, this adds to the output. This
+		* allows multiple runs with different inputs and the same output to be used
+		* for idwt.
+		*/
+		
+		// If check omitted, this function would be a no-op for F<2
+		int i = 0, o = 0;
+		
+		if(F<2)
+		return -1;
+		if((F%2) == 1)
+		return -3;
+		
+		for(; i < N && i < F/2; ++i, o += 2){
+		int j;
+		for(j = 0; j <= i; ++j){
+		output[o] += filter[j*2] * input[i-j];
+		output[o+1] += filter[j*2+1] * input[i-j];
+		}
+		}
+		
+		for(; i < N; ++i, o += 2){
+		int j;
+		for(j = 0; j < F/2; ++j){
+		output[o] += filter[j*2] * input[i-j];
+		output[o+1] += filter[j*2+1] * input[i-j];
+		}
+		}
+		
+		for(; i < F/2; ++i, o += 2){
+		int j;
+		for(j = i-(N-1); j <= i; ++j){
+		output[o] += filter[j*2] * input[i-j];
+		output[o+1] += filter[j*2+1] * input[i-j];
+		}
+		}
+		
+		for(; i < N+F/2; ++i, o += 2){
+		int j;
+		for(j = i-(N-1); j < F/2; ++j){
+		output[o] += filter[j*2] * input[i-j];
+		output[o+1] += filter[j*2+1] * input[i-j];
+		}
+		}
+		return 0;
+		}
+   
+   private int upsampling_convolution_valid_sf_periodization(double input[], int N,
+           double filter[], int F,
+           double output[], int O)
+		{
+		// TODO? Allow for non-2 step
+		
+		int start = F/4;
+		int i = start;
+		int end = N + start - ((((F/2)%2) == 1) ? 0 : 1);
+		int o = 0;
+		
+		if ((F%2) == 1) return -3; /* Filter must have even-length. */
+		
+		if ((F/2)%2 == 0){
+		// Shift output one element right. This is necessary for perfect reconstruction.
+		
+		// i = N-1; even element goes to output[O-1], odd element goes to output[0]
+		int j = 0;
+		while(j <= start-1){
+		int k;
+		for (k = 0; k < N && j <= start-1; ++k, ++j){
+		output[2*N-1] += filter[2*(start-1-j)] * input[k];
+		output[0] += filter[2*(start-1-j)+1] * input[k];
+		}
+		}
+		for (; j <= N+start-1 && j < F/2; ++j){
+		output[2*N-1] += filter[2*j] * input[N+start-1-j];
+		output[0] += filter[2*j+1] * input[N+start-1-j];
+		}
+		while (j < F / 2){
+		int k;
+		for (k = 0; k < N && j < F/2; ++k, ++j){
+		output[2*N-1] += filter[2*j] * input[N-1-k];
+		output[0] += filter[2*j+1] * input[N-1-k];
+		}
+		}
+		
+		o += 1;
+		}
+		
+		for (; i < F/2 && i < N; ++i, o += 2){
+		int j = 0;
+		for(; j <= i; ++j){
+		output[o] += filter[2*j] * input[i-j];
+		output[o+1] += filter[2*j+1] * input[i-j];
+		}
+		while (j < F/2){
+		int k;
+		for(k = 0; k < N && j < F/2; ++k, ++j){
+		output[o] += filter[2*j] * input[N-1-k];
+		output[o+1] += filter[2*j+1] * input[N-1-k];
+		}
+		}
+		}
+		
+		for (; i < N; ++i, o += 2){
+		int j;
+		for(j = 0; j < F/2; ++j){
+		output[o] += filter[2*j] * input[i-j];
+		output[o+1] += filter[2*j+1] * input[i-j];
+		}
+		}
+		
+		for (; i < F/2 && i < end; ++i, o += 2){
+		int j = 0;
+		while(i-j >= N){
+		int k;
+		for (k = 0; k < N && i-j >= N; ++k, ++j){
+		output[o] += filter[2*(i-N-j)] * input[k];
+		output[o+1] += filter[2*(i-N-j)+1] * input[k];
+		}
+		}
+		for (; j <= i && j < F/2; ++j){
+		output[o] += filter[2*j] * input[i-j];
+		output[o+1] += filter[2*j+1] * input[i-j];
+		}
+		while (j < F / 2){
+		int k;
+		for (k = 0; k < N && j < F/2; ++k, ++j){
+		output[o] += filter[2*j] * input[N-1-k];
+		output[o+1] += filter[2*j+1] * input[N-1-k];
+		}
+		}
+		}
+		
+		for (; i < end; ++i, o += 2){
+		int j = 0;
+		while(i-j >= N){
+		int k;
+		for (k = 0; k < N && i-j >= N; ++k, ++j){
+		output[o] += filter[2*(i-N-j)] * input[k];
+		output[o+1] += filter[2*(i-N-j)+1] * input[k];
+		}
+		}
+		for (; j <= i && j < F/2; ++j){
+		output[o] += filter[2*j] * input[i-j];
+		output[o+1] += filter[2*j+1] * input[i-j];
+		}
+		}
+		
+		return 0;
+		}
+   
+   /*
+    * performs IDWT for all modes
+    *
+    * The upsampling is performed by splitting filters to even and odd elements
+    * and performing 2 convolutions.  After refactoring the PERIODIZATION mode
+    * case to separate function this looks much clearer now.
+    */
+   /* Performs valid convolution (signals must overlap)
+    * Extends (virtually) input for MODE_PERIODIZATION.
+    */
+
+   private int upsampling_convolution_valid_sf(double input[], int N,
+                                                   double filter[], int F,
+                                                   double output[], int O,
+                                                   MODE mode)
+   {
+       // TODO: Allow non-2 step?
+
+       if(mode == MODE.MODE_PERIODIZATION)
+           return upsampling_convolution_valid_sf_periodization(input, N, filter, F, output, O);
+
+       if(((F%2) == 1) || (N < F/2))
+           return -1;
+
+       // Perform only stage 2 - all elements in the filter overlap an input element.
+       {
+           int o, i;
+           for(o = 0, i = F/2 - 1; i < N; ++i, o += 2){
+               double sum_even = 0;
+               double sum_odd = 0;
+               int j;
+               for(j = 0; j < F/2; ++j){
+                   sum_even += filter[j*2] * input[i-j];
+                   sum_odd += filter[j*2+1] * input[i-j];
+               }
+               output[o] += sum_even;
+               output[o+1] += sum_odd;
+           }
+       }
+       return 0;
+   }
+   
+   /* -> swt - todo */
+   private int upsampled_filter_convolution(double input[], int N,
+                                                double filter[], int F,
+                                                double output[],
+                                                int step, MODE mode)
+   {
+       return -1;
+   }
+   
+   private void gaus(double input[],
+           double output[], int N,
+           int number){
+		int i = 0;
+		for (i = 0; i < N; i++)
+		{
+		switch (number) {
+		case 1:
+		 output[i] = -2*input[i]*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(Math.sqrt(Math.PI/2));
+		 break;
+		case 2:
+		 output[i] = -2*(2*Math.pow(input[i], 2.0)-1)*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(3*Math.sqrt(Math.PI/2));
+		 break;
+		case 3:
+		 output[i] = -4*(-2*Math.pow(input[i], 3.0)+3*input[i])*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(15*Math.sqrt(Math.PI/2));
+		 break;
+		case 4:
+		 output[i] = 4*(-12*Math.pow(input[i], 2.0)+4*Math.pow(input[i], 4.0)+3)*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(105*Math.sqrt(Math.PI/2));
+		 break;
+		case 5:
+		 output[i] =  8*(-4*Math.pow(input[i], 5.0)+20*Math.pow(input[i], 3.0)-15*input[i])*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(105*9*Math.sqrt(Math.PI/2));
+		 break;
+		case 6:
+		 output[i] = -8*(8*Math.pow(input[i], 6.0)-60*Math.pow(input[i], 4.0)+90*Math.pow(input[i], 2.0)-15)*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(105*9*11*Math.sqrt(Math.PI/2));
+		 break;
+		case 7:
+		 output[i] =  -16*(-8*Math.pow(input[i], 7.0)+84*Math.pow(input[i], 5.0)-210*Math.pow(input[i], 3.0)+105*(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(105*9*11*13*Math.sqrt(Math.PI/2));
+		 break;
+		case 8:
+		 output[i] =  16*(16*Math.pow(input[i], 8.0)-224*Math.pow(input[i], 6.0)+840*Math.pow(input[i], 4.0)-840*Math.pow(input[i], 2.0)+105)*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(105*9*11*13*15*Math.sqrt(Math.PI/2));
+		 break;
+		}
+		}
+		}
+   
+   private void mexh(double input[], double output[], int N)
+   {
+       int i = 0;
+       for (i = 0; i < N; i++)
+       {
+           output[i] = (1-Math.pow(input[i], 2.0))*Math.exp(-Math.pow(input[i], 2.0)/2)*2/(Math.sqrt(3)*Math.sqrt(Math.sqrt(Math.PI)));
+       }
+   }
+   
+   private void morl(double input[], double output[], int N)
+   {
+       int i = 0;
+       for (i = 0; i < N; i++)
+       {
+           output[i] = Math.cos(5*input[i])*Math.exp(-Math.pow(input[i], 2.0)/2);
+       }
+   }
+   
+   private void cgau(double input[],
+           double output_r[], double output_i[], int N,
+           int number){
+		int i = 0;
+		for (i = 0; i < N; i++)
+		{
+		switch (number) {
+		case 1:
+		output_r[i] = (-2*input[i]*Math.cos(input[i])-Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(2*Math.sqrt(Math.PI/2));
+		output_i[i] = (2*input[i]*Math.sin(input[i])-Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(2*Math.sqrt(Math.PI/2));
+		break;
+		case 2:
+		output_r[i] = (4*Math.pow(input[i], 2.0)*Math.cos(input[i])+4*input[i]*Math.sin(input[i])-3*Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(10*Math.sqrt(Math.PI/2));
+		output_i[i] = (-4*Math.pow(input[i], 2.0)*Math.sin(input[i])+4*input[i]*Math.cos(input[i])+3*Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(10*Math.sqrt(Math.PI/2));
+		break;
+		case 3:
+		output_r[i] = (-8*Math.pow(input[i], 3.0)*Math.cos(input[i])-12*Math.pow(input[i], 2.0)*Math.sin(input[i])+18*input[i]*Math.cos(input[i])+7*Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(76*Math.sqrt(Math.PI/2));
+		output_i[i] = (8*Math.pow(input[i], 3.0)*Math.sin(input[i])-12*Math.pow(input[i], 2.0)*Math.cos(input[i])-18*input[i]*Math.sin(input[i])+7*Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(76*Math.sqrt(Math.PI/2));
+		
+		break;
+		case 4:
+		output_r[i] =  (16*Math.pow(input[i], 4.0)*Math.cos(input[i])+32*Math.pow(input[i], 3.0)*Math.sin(input[i])-72*Math.pow(input[i], 2.0)*Math.cos(input[i])-56*input[i]*Math.sin(input[i])+25*Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(764*Math.sqrt(Math.PI/2));;
+		output_i[i] = (-16*Math.pow(input[i], 4.0)*Math.sin(input[i])+32*Math.pow(input[i], 3.0)*Math.cos(input[i])+72*Math.pow(input[i], 2.0)*Math.sin(input[i])-56*input[i]*Math.cos(input[i])-25*Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(764*Math.sqrt(Math.PI/2));
+		
+		break;
+		case 5:
+		output_r[i] = (-32*Math.pow(input[i], 5.0)*Math.cos(input[i])-80*Math.pow(input[i], 4.0)*Math.sin(input[i])+240*Math.pow(input[i], 3.0)*Math.cos(input[i])+280*Math.pow(input[i], 2.0)*Math.sin(input[i])-250*input[i]*Math.cos(input[i])-81*Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(9496*Math.sqrt(Math.PI/2));
+		output_i[i] = (32*Math.pow(input[i], 5.0)*Math.sin(input[i])-80*Math.pow(input[i], 4.0)*Math.cos(input[i])-240*Math.pow(input[i], 3.0)*Math.sin(input[i])+280*Math.pow(input[i], 2.0)*Math.cos(input[i])+250*input[i]*Math.sin(input[i])-81*Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(9496*Math.sqrt(Math.PI/2));
+		
+		break;
+		case 6:
+		output_r[i] = (64*Math.pow(input[i], 6.0)*Math.cos(input[i])+192*Math.pow(input[i], 5.0)*Math.sin(input[i])-720*Math.pow(input[i], 4.0)*Math.cos(input[i])-1120*Math.pow(input[i], 3.0)*Math.sin(input[i])+1500*Math.pow(input[i], 2.0)*Math.cos(input[i])+972*input[i]*Math.sin(input[i])-331*Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(140152*Math.sqrt(Math.PI/2));
+		output_i[i] = (-64*Math.pow(input[i], 6.0)*Math.sin(input[i])+192*Math.pow(input[i], 5.0)*Math.cos(input[i])+720*Math.pow(input[i], 4.0)*Math.sin(input[i])-1120*Math.pow(input[i], 3.0)*Math.cos(input[i])-1500*Math.pow(input[i], 2.0)*Math.sin(input[i])+972*input[i]*Math.cos(input[i])+331*Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(140152*Math.sqrt(Math.PI/2));
+		
+		break;
+		case 7:
+		output_r[i] = (-128*Math.pow(input[i], 7.0)*Math.cos(input[i])-448*Math.pow(input[i], 6.0)*Math.sin(input[i])+2016*Math.pow(input[i], 5.0)*Math.cos(input[i])+3920*Math.pow(input[i], 4.0)*Math.sin(input[i])-7000*Math.pow(input[i], 3.0)*Math.cos(input[i])-6804*Math.pow(input[i], 2.0)*Math.sin(input[i])+4634*input[i]*Math.cos(input[i])+1303*Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(2390480*Math.sqrt(Math.PI/2));
+		output_i[i] = (128*Math.pow(input[i], 7.0)*Math.sin(input[i])-448*Math.pow(input[i], 6.0)*Math.cos(input[i])-2016*Math.pow(input[i], 5.0)*Math.sin(input[i])+3920*Math.pow(input[i], 4.0)*Math.cos(input[i])+7000*Math.pow(input[i], 3.0)*Math.sin(input[i])-6804*Math.pow(input[i], 2.0)*Math.cos(input[i])-4634*input[i]*Math.sin(input[i])+1303*Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(2390480*Math.sqrt(Math.PI/2));
+		
+		break;
+		case 8:
+		output_r[i] = (256*Math.pow(input[i], 8.0)*Math.cos(input[i])+1024*Math.pow(input[i], 7.0)*Math.sin(input[i])-5376*Math.pow(input[i], 6.0)*Math.cos(input[i])-12544*Math.pow(input[i], 5.0)*Math.sin(input[i])+28000*Math.pow(input[i], 4.0)*Math.cos(input[i])+36288*Math.pow(input[i], 3.0)*Math.sin(input[i])-37072*Math.pow(input[i], 2.0)*Math.cos(input[i])-20848*input[i]*Math.sin(input[i])+5937*Math.cos(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(46206736*Math.sqrt(Math.PI/2));
+		output_i[i] = (-256*Math.pow(input[i], 8.0)*Math.sin(input[i])+1024*Math.pow(input[i], 7.0)*Math.cos(input[i])+5376*Math.pow(input[i], 6.0)*Math.sin(input[i])-12544*Math.pow(input[i], 5.0)*Math.cos(input[i])-28000*Math.pow(input[i], 4.0)*Math.sin(input[i])+36288*Math.pow(input[i], 3.0)*Math.cos(input[i])+37072*Math.pow(input[i], 2.0)*Math.sin(input[i])-20848*input[i]*Math.cos(input[i])-5937*Math.sin(input[i]))*Math.exp(-Math.pow(input[i], 2.0))/Math.sqrt(46206736*Math.sqrt(Math.PI/2));
+		
+		break;
+		}
+		}
+		}
+
 }
