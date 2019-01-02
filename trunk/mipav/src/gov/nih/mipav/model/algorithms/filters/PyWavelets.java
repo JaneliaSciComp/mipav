@@ -4503,6 +4503,8 @@ public  class PyWavelets extends AlgorithmBase {
 		return 0;
 		}
    
+   
+   
    /*
     * Performs normal (full) convolution of "upsampled" input coeffs array with
     * filter Requires zero-filled output buffer (adds values instead of
@@ -5440,4 +5442,346 @@ public  class PyWavelets extends AlgorithmBase {
         cD = null;
         return 0;
     }
+    
+    public void test_dwt_idwt_basic() {
+    	int i;
+    	DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 2);
+        MODE mode = MODE.MODE_SYMMETRIC;
+        double x[] = new double[]{3, 7, 1, 1, -2, 5, 4, 6};
+        //cA, cD = pywt.dwt(x, 'db2')
+        double cA[];
+        double cD[];
+        int input_len, output_len;
+
+        input_len = x.length;
+        output_len = dwt_buffer_length(input_len, w.dec_len, mode);
+
+        cA = new double[output_len];
+        cD = new double[output_len];
+
+        double cA_expect[] = new double[]{5.65685425, 7.39923721, 0.22414387, 3.33677403, 7.77817459};
+        double cD_expect[] = new double[]{-2.44948974, -1.60368225, -4.44140056, -0.41361256, 1.22474487};
+
+        System.out.println("Wavelet: w.base.family_name = " + w.base.family_name + " w.vanishing_moments_psi = " + w.vanishing_moments_psi);
+
+        dec_a(x, input_len, w, cA, output_len, mode);
+        dec_d(x, input_len, w, cD, output_len, mode);
+
+        for(i=0; i<output_len; i++){
+            System.out.println("cA["+i+"] = " + cA[i] + "  cA_expect["+i+"] = " + cA_expect[i]);
+        }
+        System.out.println("\n");
+
+        for(i=0; i<output_len; i++){
+            System.out.println("cD["+i+"] = " + cD[i] + " cD_expect["+i+"] = " + cD_expect[i]);
+        }
+        System.out.println();
+
+        //x_roundtrip = pywt.idwt(cA, cD, 'db2')
+        int roundtrip_length = idwt_buffer_length(cA.length, db2_double.length, mode);
+        System.out.println("roundtrip_length = " + roundtrip_length + " Expected roundtrip_length = " + x.length);
+        double x_roundtrip[] = new double[roundtrip_length];
+        idwt(cA, cA.length, cD, cD.length, x_roundtrip, x_roundtrip.length, w, mode);
+        for (i = 0; i < x.length; i++) {
+        	System.out.println("x["+i+"] = " + x[i] + " x_roundtrip["+i+"] = " + x_roundtrip[i]);
+        }
+        
+        
+        free_discrete_wavelet(w);
+        cA = null;
+        cD = null;
+    }
+    
+    public void test_dwt_idwt_basic_complex() {
+    	int i;
+    	DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 2);
+        MODE mode = MODE.MODE_SYMMETRIC;
+        double xr[] = new double[]{3, 7, 1, 1, -2, 5, 4, 6};
+        double xi[] = new double[xr.length];
+        for (i = 0; i < xr.length; i++) {
+        	xi[i] = 0.5*xr[i];
+        }
+        // cA, cD = pywt.dwt(x, 'db2')
+        double cAr[];
+        double cAi[];
+        double cDr[];
+        double cDi[];
+        int input_len, output_len;
+
+        input_len = xr.length;
+        output_len = dwt_buffer_length(input_len, w.dec_len, mode);
+
+        cAr = new double[output_len];
+        cAi = new double[output_len];
+        cDr = new double[output_len];
+        cDi = new double[output_len];
+
+        double cA_expectr[] = new double[]{5.65685425, 7.39923721, 0.22414387, 3.33677403, 7.77817459};
+        double cA_expecti[] = new double[cA_expectr.length];
+        for (i = 0; i < cA_expectr.length; i++) {
+        	cA_expecti[i] = 0.5 * cA_expectr[i];
+        }
+        double cD_expectr[] = new double[]{-2.44948974, -1.60368225, -4.44140056, -0.41361256, 1.22474487};
+        double cD_expecti[] = new double[cD_expectr.length];
+        for (i = 0; i < cD_expectr.length; i++) {
+        	cD_expecti[i] = 0.5 * cD_expectr[i];
+        }
+        
+        System.out.println("Wavelet: w.base.family_name = " + w.base.family_name + " w.vanishing_moments_psi = " + w.vanishing_moments_psi);
+
+        dec_a(xr, input_len, w, cAr, output_len, mode);
+        dec_a(xi, input_len, w, cAi, output_len, mode);
+        dec_d(xr, input_len, w, cDr, output_len, mode);
+        dec_d(xi, input_len, w, cDi, output_len, mode);
+
+        for(i=0; i<output_len; i++){
+            System.out.println("cAr["+i+"] = " + cAr[i] + "  cA_expectr["+i+"] = " + cA_expectr[i]);
+            System.out.println("cAi["+i+"] = " + cAi[i] + "  cA_expecti["+i+"] = " + cA_expecti[i]);
+        }
+        System.out.println("\n");
+
+        for(i=0; i<output_len; i++){
+            System.out.println("cDr["+i+"] = " + cDr[i] + " cD_expectr["+i+"] = " + cD_expectr[i]);
+            System.out.println("cDi["+i+"] = " + cDi[i] + " cD_expecti["+i+"] = " + cD_expecti[i]);
+        }
+        System.out.println();
+
+        //x_roundtrip = pywt.idwt(cA, cD, 'db2')
+        int roundtrip_length = idwt_buffer_length(cAr.length, db2_double.length, mode);
+        System.out.println("roundtrip_length = " + roundtrip_length + " Expected roundtrip_length = " + xr.length);
+        double x_roundtripr[] = new double[roundtrip_length];
+        double x_roundtripi[] = new double[roundtrip_length];
+        idwt(cAr, cAr.length, cDr, cDr.length, x_roundtripr, x_roundtripr.length, w, mode);
+        idwt(cAi, cAi.length, cDi, cDi.length, x_roundtripi, x_roundtripi.length, w, mode);
+        for (i = 0; i < xr.length; i++) {
+        	System.out.println("xr["+i+"] = " + xr[i] + " x_roundtripr["+i+"] = " + x_roundtripr[i]);
+        	System.out.println("xi["+i+"] = " + xi[i] + " x_roundtripi["+i+"] = " + x_roundtripi[i]);
+        }
+    }
+    
+    public void test_dwt_idwt_partial_complex() {
+    	 // Haar is the same as db1
+    	int i;
+    	DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.HAAR, 1);
+        MODE mode = MODE.MODE_SYMMETRIC;
+        double xr[] = new double[]{3, 7, 1, 1, -2, 5, 4, 6};
+        double xi[] = new double[xr.length];
+        for (i = 0; i < xr.length; i++) {
+        	xi[i] = 0.5 * xr[i];
+        }
+
+        //cA, cD = pywt.dwt(x, 'haar')
+        double cAr[] = null;
+        double cAi[] = null;
+        double cDr[] = null;
+        double cDi[] = null;
+        int input_len, output_len;
+
+        input_len = xr.length;
+        output_len = dwt_buffer_length(input_len, w.dec_len, mode);
+
+        cAr = new double[output_len];
+        cAi = new double[output_len];
+        cDr = new double[output_len];
+        cDi = new double[output_len];
+        System.out.println("Wavelet: w.base.family_name = " + w.base.family_name + " w.vanishing_moments_psi = " + w.vanishing_moments_psi);
+
+        dec_a(xr, input_len, w, cAr, output_len, mode);
+        dec_a(xi, input_len, w, cAi, output_len, mode);
+        dec_d(xr, input_len, w, cDr, output_len, mode);
+        dec_d(xi, input_len, w, cDi, output_len, mode);
+
+        double cA_rec_expectr[] = new double[]{5.0, 5.0, 1.0, 1.0, 1.5, 1.5, 5.0, 5.0};
+        double cA_rec_expecti[] = new double[]{2.5, 2.5, 0.5, 0.5, 0.75, 0.75, 2.5, 2.5};
+        //cA_rec = pywt.idwt(cA, None, 'haar')
+        int roundtrip_length = idwt_buffer_length(cAr.length, db1_double.length, mode);
+        System.out.println("roundtrip_length = " + roundtrip_length + " Expected roundtrip_length = " + xr.length);
+        double cA_recr[] = new double[roundtrip_length];
+        double cA_reci[] = new double[roundtrip_length];
+        idwt(cAr, cAr.length, null, 0, cA_recr, cA_recr.length, w, mode);
+        idwt(cAi, cAi.length, null, 0, cA_reci, cA_reci.length, w, mode);
+        for (i = 0; i < cA_recr.length; i++) {
+        	System.out.println("cA_recr["+i+"] = " + cA_recr[i] + " cA_rec_expectr["+i+"] = " + cA_rec_expectr[i]);
+        	System.out.println("cA_reci["+i+"] = " + cA_reci[i] + " cA_rec_expecti["+i+"] = " + cA_rec_expecti[i]);
+        }
+
+        double cD_rec_expectr[] = new double[]{-2.0, 2.0, 0.0, 0.0, -3.5, 3.5, -1.0, 1.0};
+        double cD_rec_expecti[] = new double[]{-1.0, 1.0, 0.0, 0.0, -1.75, 1.75, -0.5, 0.5};
+        // cD_rec = pywt.idwt(None, cD, 'haar')
+        double cD_recr[] = new double[roundtrip_length];
+        double cD_reci[] = new double[roundtrip_length];
+        idwt(null, 0, cDr, cDr.length, cD_recr, cD_recr.length, w, mode);
+        idwt(null, 0, cDi, cDi.length, cD_reci, cD_reci.length, w, mode);
+        for (i = 0; i < cD_recr.length; i++) {
+        	System.out.println("cD_recr["+i+"] = " + cD_recr[i] + " cD_rec_expectr["+i+"] = " + cD_rec_expectr[i]);
+        	System.out.println("cD_reci["+i+"] = " + cD_reci[i] + " cD_rec_expecti["+i+"] = " + cD_rec_expecti[i]);
+        }
+
+        //assert_allclose(cA_rec + cD_rec, x)
+        double x_recr[] = new double[cA_recr.length];
+        double x_reci[] = new double[cA_reci.length];
+        for (i = 0; i < x_recr.length; i++) {
+        	x_recr[i] = cA_recr[i] + cD_recr[i];
+        	x_reci[i] = cA_reci[i] + cD_reci[i];
+        }
+        for (i = 0; i < xr.length; i++) {
+            System.out.println("xr["+i+"] = " + xr[i] + " x_recr["+i+"] = " + x_recr[i]);
+            System.out.println("xi["+i+"] = " + xi[i] + " x_reci["+i+"] = " + x_reci[i]);	
+        }
+    }
+    
+    public void test_dwt_wavelet_kwd() {
+        double x[] = new double[]{3, 7, 1, 1, -2, 5, 4, 6};
+        int i;
+    	DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.SYM, 3);
+        MODE mode = MODE.MODE_CONSTANT_EDGE;
+        //w = pywt.Wavelet('sym3')
+        //cA, cD = pywt.dwt(x, wavelet=w, mode='constant')
+        double cA[];
+        double cD[];
+        int input_len, output_len;
+
+        input_len = x.length;
+        output_len = dwt_buffer_length(input_len, w.dec_len, mode);
+
+        cA = new double[output_len];
+        cD = new double[output_len];
+        double cA_expect[] = new double[]{4.38354585, 3.80302657, 7.31813271, -0.58565539, 4.09727044, 7.81994027};
+        double cD_expect[] = new double[]{-1.33068221, -2.78795192, -3.16825651, -0.67715519, -0.09722957, -0.07045258};
+        System.out.println("Wavelet: w.base.family_name = " + w.base.family_name + " w.vanishing_moments_psi = " + w.vanishing_moments_psi);
+
+        dec_a(x, input_len, w, cA, output_len, mode);
+        dec_d(x, input_len, w, cD, output_len, mode);
+
+        for(i=0; i<output_len; i++){
+            System.out.println("cA["+i+"] = " + cA[i] + "  cA_expect["+i+"] = " + cA_expect[i]);
+        }
+        System.out.println("\n");
+
+        for(i=0; i<output_len; i++){
+            System.out.println("cD["+i+"] = " + cD[i] + " cD_expect["+i+"] = " + cD_expect[i]);
+        }
+        System.out.println();
+
+        //x_roundtrip = pywt.idwt(cA, cD, 'sym3')
+        int roundtrip_length = idwt_buffer_length(cA.length, sym3_double.length, mode);
+        System.out.println("roundtrip_length = " + roundtrip_length + " Expected roundtrip_length = " + x.length);
+        double x_roundtrip[] = new double[roundtrip_length];
+        idwt(cA, cA.length, cD, cD.length, x_roundtrip, x_roundtrip.length, w, mode);
+        for (i = 0; i < x.length; i++) {
+        	System.out.println("x["+i+"] = " + x[i] + " x_roundtrip["+i+"] = " + x_roundtrip[i]);
+        }
+        
+        
+        free_discrete_wavelet(w);
+        cA = null;
+        cD = null;
+    }
+    
+    public void test_dwt_coeff_len() {
+    	int i;
+    	// Periodization should give a dwt_buffer_length of 4
+    	// All other modes should give a buffer length of 6
+        double x[] = new double[]{3, 7, 1, 1, -2, 5, 4, 6};
+        DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.SYM, 3);
+        int ln_modes[] = new int[10];
+        for (i = 0; i <= 9; i++) {
+        	// Use i+1 to pass over MODE_INVALID(-1)
+        	ln_modes[i] = dwt_buffer_length(x.length, w.dec_len, MODE.values()[i+1]);
+        }
+
+        int expected_result[] = new int[10];
+        for (i = 0; i <= 9; i++) {
+        	expected_result[i] = 6;
+        }
+        expected_result[MODE.MODE_PERIODIZATION.type()] = 4;
+        for (i = 0; i <= 9; i++) {
+        	System.out.println("ln_modes["+i+"] = " + ln_modes[i] + " expected_result["+i+"] = " + expected_result[i]);
+        }
+       
+    }
+    
+    public void test_idwt_none_input() {
+        // None input equals arrays of zeros of the right length
+    	int i;
+    	DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 2);
+    	int res_length = idwt_buffer_length(4, db2_double.length, MODE.MODE_SYMMETRIC);
+        System.out.println("res_length = " + res_length);
+        //res1 = pywt.idwt([1, 2, 0, 1], None, 'db2', 'symmetric')
+        //res2 = pywt.idwt([1, 2, 0, 1], [0, 0, 0, 0], 'db2', 'symmetric')
+        double res1[] = new double[res_length];
+        double res2[] = new double[res_length];
+        idwt(new double[]{1, 2, 0, 1}, 4, null, 0, res1, res1.length, w, MODE.MODE_SYMMETRIC);
+        idwt(new double[]{1, 2, 0, 1}, 4, new double[]{0, 0, 0, 0}, 4, res2, res2.length, w, MODE.MODE_SYMMETRIC);
+        for (i = 0; i < res1.length; i++) {
+            System.out.println("res1["+i+"] = " + res1[i] + " res2["+i+"] = " + res2[i]);	
+        }
+        System.out.println();
+
+        //res1 = pywt.idwt(None, [1, 2, 0, 1], 'db2', 'symmetric')
+        //res2 = pywt.idwt([0, 0, 0, 0], [1, 2, 0, 1], 'db2', 'symmetric')
+        idwt(null, 0, new double[]{1, 2, 0, 1}, 4, res1, res1.length, w, MODE.MODE_SYMMETRIC);
+        idwt(new double[]{0, 0, 0, 0}, 4, new double[]{1, 2, 0, 1}, 4, res2, res2.length, w, MODE.MODE_SYMMETRIC);
+        for (i = 0; i < res1.length; i++) {
+            System.out.println("res1["+i+"] = " + res1[i] + " res2["+i+"] = " + res2[i]);	
+        }
+
+        //# Only one argument at a time can be None
+        //assert_raises(ValueError, pywt.idwt, None, None, 'db2', 'symmetric')
+    }
+    
+    public void test_dwt_single_axis() {
+        double x[][] = new double[][]{{3, 7, 1, 1},
+             {-2, 5, 4, 6}};
+             //axis: int, optional
+             //Axis over which to compute the DWT. If not given, the
+             //last axis is used.
+             //if axis < 0:
+                 //axis = axis + data.ndim
+
+        //cA, cD = pywt.dwt(x, 'db2', axis=-1)
+
+        //cA0, cD0 = pywt.dwt(x[0], 'db2')
+        //cA1, cD1 = pywt.dwt(x[1], 'db2')
+
+        //assert_allclose(cA[0], cA0)
+        //assert_allclose(cA[1], cA1)
+
+        //assert_allclose(cD[0], cD0)
+        //assert_allclose(cD[1], cD1)
+    }
+    
+    private double[] linspace(double LB, double UB, int N) {
+    	int i;
+    	double X[] = new double[N];
+    	X[0] = LB;
+    	X[N-1] = UB;
+    	double delta = (UB - LB)/(N-1);
+    	for (i = 1; i <= N-2; i++) {
+    	    X[i] = LB + i * delta;	
+    	}
+    	return X;
+    }
+    
+    /*ref_gaus(LB, UB, N, num):
+        X = np.linspace(LB, UB, N)
+        F0 = (2./np.pi)**(1./4.)*np.exp(-(X**2))
+        if (num == 1):
+            psi = -2.*X*F0
+        elif (num == 2):
+            psi = -2/(3**(1/2))*(-1 + 2*X**2)*F0
+        elif (num == 3):
+            psi = -4/(15**(1/2))*X*(3 - 2*X**2)*F0
+        elif (num == 4):
+            psi = 4/(105**(1/2))*(3 - 12*X**2 + 4*X**4)*F0
+        elif (num == 5):
+            psi = 8/(3*(105**(1/2)))*X*(-15 + 20*X**2 - 4*X**4)*F0
+        elif (num == 6):
+            psi = -8/(3*(1155**(1/2)))*(-15 + 90*X**2 - 60*X**4 + 8*X**6)*F0
+        elif (num == 7):
+            psi = -16/(3*(15015**(1/2)))*X*(105 - 210*X**2 + 84*X**4 - 8*X**6)*F0
+        elif (num == 8):
+            psi = 16/(45*(1001**(1/2)))*(105 - 840*X**2 + 840*X**4 -
+                                         224*X**6 + 16*X**8)*F0
+        return (psi, X)*/
 }
