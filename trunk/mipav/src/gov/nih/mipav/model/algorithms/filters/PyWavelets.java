@@ -5763,25 +5763,244 @@ public  class PyWavelets extends AlgorithmBase {
     	return X;
     }
     
-    /*ref_gaus(LB, UB, N, num):
-        X = np.linspace(LB, UB, N)
-        F0 = (2./np.pi)**(1./4.)*np.exp(-(X**2))
-        if (num == 1):
-            psi = -2.*X*F0
-        elif (num == 2):
-            psi = -2/(3**(1/2))*(-1 + 2*X**2)*F0
-        elif (num == 3):
-            psi = -4/(15**(1/2))*X*(3 - 2*X**2)*F0
-        elif (num == 4):
-            psi = 4/(105**(1/2))*(3 - 12*X**2 + 4*X**4)*F0
-        elif (num == 5):
-            psi = 8/(3*(105**(1/2)))*X*(-15 + 20*X**2 - 4*X**4)*F0
-        elif (num == 6):
-            psi = -8/(3*(1155**(1/2)))*(-15 + 90*X**2 - 60*X**4 + 8*X**6)*F0
-        elif (num == 7):
-            psi = -16/(3*(15015**(1/2)))*X*(105 - 210*X**2 + 84*X**4 - 8*X**6)*F0
-        elif (num == 8):
-            psi = 16/(45*(1001**(1/2)))*(105 - 840*X**2 + 840*X**4 -
-                                         224*X**6 + 16*X**8)*F0
-        return (psi, X)*/
+    private double[][] ref_gaus(double LB, double UB, int N, int num) {
+    	int i;
+        double X[] = linspace(LB, UB, N);
+        double X2[] = new double[N];
+        double X4[] = null;
+        double X6[] = null;
+        double X8[] = null;
+        for (i = 0; i < N; i++) {
+        	X2[i] = X[i] * X[i];
+        }
+        if (num >= 4) {
+        	X4 = new double[N];
+            for (i = 0; i < N; i++) {
+            	X4[i] = X2[i] * X2[i];
+            }
+            if (num >= 6) {
+            	X6 = new double[N];
+            	for (i = 0; i < N; i++) {
+            		X6[i] = X4[i] * X2[i];
+            	}
+            	if (num >= 8) {
+                	X8 = new double[N];
+                	for (i = 0; i < N; i++) {
+                		X8[i] = X4[i] * X4[i];
+                	}
+                }
+            } 
+        }
+        double F0[] = new double[N];
+        double var = Math.pow(2.0/Math.PI, 0.25);
+        for (i = 0; i < N; i++) {
+        	F0[i] = var * Math.exp(-X2[i]);
+        }
+        double psi[] = new double[N];
+        if (num == 1) {
+        	for (i = 0; i < N; i++) {
+                psi[i] = -2.0*X[i]*F0[i];
+        	}
+        }
+        else if (num == 2) {
+        	for (i = 0; i < N; i++) {
+                psi[i] = -2/Math.sqrt(3.0)*(-1 + 2*X2[i])*F0[i];
+        	}
+        }
+        else if (num == 3) {
+        	for (i = 0; i < N; i++) {
+                psi[i] = -4/Math.sqrt(15.0)*X[i]*(3 - 2*X2[i])*F0[i];
+        	}
+        }
+        else if (num == 4) {
+        	for (i = 0; i < N; i++) {
+                psi[i] = 4/Math.sqrt(105.0)*(3 - 12*X2[i] + 4*X4[i])*F0[i];
+        	}
+        }
+        else if (num == 5) {
+        	for (i = 0; i < N; i++) {
+                psi[i] = 8/(3*Math.sqrt(105.0))*X[i]*(-15 + 20*X2[i] - 4*X4[i])*F0[i];
+        	}
+        }
+        else if (num == 6) {
+        	for (i = 0; i < N; i++) {
+                psi[i] = -8/(3*Math.sqrt(1155.0))*(-15 + 90*X2[i] - 60*X4[i] + 8*X6[i])*F0[i];
+        	}
+        }
+        else if (num == 7) {
+        	for (i = 0; i < N; i++) {
+                psi[i] = -16/(3*Math.sqrt(15015.0))*X[i]*(105 - 210*X2[i] + 84*X4[i] - 8*X6[i])*F0[i];
+        	}
+        }
+        else if (num == 8) {
+        	for (i = 0; i < N; i++) {
+            psi[i] = 16/(45*Math.sqrt(1001.0))*(105 - 840*X2[i] + 840*X4[i] -
+                                         224*X6[i] + 16*X8[i])*F0[i];
+        	}
+        }
+        double psix[][] = new double[2][N];
+        psix[0] = psi;
+        psix[1] = X;
+        return psix;
+    }
+    
+    public double[][] ref_cgau(double LB, double UB, int N, int num) {
+    	int i;
+        double X[] = linspace(LB, UB, N);
+        double X2[] = null;
+        double X3[] = null;
+        double X4[] = null;
+        double X5[] = null;
+        double X6[] = null;
+        double X7[] = null;
+        double X8[] = null;
+        if (num >= 2) {
+        	X2 = new double[N];
+	        for (i = 0; i < N; i++) {
+	        	X2[i] = X[i] * X[i];
+	        }
+	        if (num >= 3) {
+	        	X3 = new double[N];
+	        	for (i = 0; i < N; i++) {
+	        		X3[i] = X2[i] * X[i];
+	        	}
+		        if (num >= 4) {
+		        	X4 = new double[N];
+		            for (i = 0; i < N; i++) {
+		            	X4[i] = X2[i] * X2[i];
+		            }
+		            if (num >= 5) {
+		            	X5 = new double[N];
+		            	for (i = 0; i < N; i++) {
+		            		X5[i] = X3[i] * X2[i];
+		            	}
+			            if (num >= 6) {
+			            	X6 = new double[N];
+			            	for (i = 0; i < N; i++) {
+			            		X6[i] = X4[i] * X2[i];
+			            	}
+			            	if (num >= 7) {
+			            		X7 = new double[N];
+			            		for (i = 0; i < N; i++) {
+			            			X7[i] = X4[i] * X3[i];
+			            		}
+				            	if (num >= 8) {
+				            		X8 = new double[N];
+					            	for (i = 0; i < N; i++) {
+					            		X8[i] = X4[i] * X4[i];
+					            	}
+					            }
+			            	}
+			            }
+		            }
+		        }
+	        }
+        }
+        double F0[] = new double[N];
+        for (i = 0; i < N; i++) {
+        	F0[i] = Math.exp(-X2[i]);
+        }
+        double F1r[] = new double[N];
+        double F1i[] = new double[N];
+        for (i = 0; i < N; i++) {
+        	F1r[i] = Math.cos(X[i]);
+        	F1i[i] = -Math.sin(X[i]);
+        }
+        double var = Math.sqrt(Math.exp(-0.5)*Math.sqrt(2.0)*Math.sqrt(Math.PI));
+        double F2r[] = new double[N];
+        double F2i[] = new double[N];
+        for (i = 0; i < N; i++) {
+        	F2r[i] = (F1r[i]*F0[i])/var;
+        	F2i[i] = (F1i[i]*F0[i])/var;
+        }
+        double psir[] = new double[N];
+        double psii[] = new double[N];
+        if (num == 1) {
+        	for (i = 0; i < N; i++) {
+                psir[i] = F2r[i] * (-2.0*X[i]) * Math.sqrt(2.0) + F2i[i] * Math.sqrt(2.0);
+                psii[i] = -F2r[i] * Math.sqrt(2.0) -2.0 *X[i] * F2i[i] * Math.sqrt(2.0);
+        	}
+        }
+        else if (num == 2) {
+        	for (i = 0; i < N; i++) {
+                psir[i] = 1.0/3.0*F2r[i]*(-3 + 4*X2[i])*Math.sqrt(6.0) - 1.0/3.0*F2i[i]*(4*X[i])*Math.sqrt(6.0);
+                psii[i] = 1.0/3.0*F2r[i]*(4*X[i])*Math.sqrt(6.0) + 1.0/3.0*F2i[i]*(-3 + 4*X2[i])*Math.sqrt(6.0);    
+        	}
+        }
+        else if (num == 3) {
+        	for (i = 0; i < N; i++) {
+                psir[i] = 1.0/15.0*F2r[i]*(18*X[i] - 8*X3[i])*Math.sqrt(30.0)
+                -1.0/15.0*F2i[i]*(7 - 12*X2[i])*Math.sqrt(30.0);
+                psii[i] = 1.0/15.0*F2r[i]*(7 - 12*X2[i])*Math.sqrt(30.0)
+                		+ 1.0/15.0*F2i[i]*(18*X[i] - 8*X3[i])*Math.sqrt(30.0);
+        	}
+        }
+        else if (num == 4) {
+        	for (i = 0; i < N; i++) {
+                psir[i] = 1.0/105.0*F2r[i]*(25 - 72*X2[i] + 16*X4[i])*Math.sqrt(210.0)
+                -1.0/105.0*F2i[i]*(-56*X[i] + 32*X3[i])*Math.sqrt(210.0);
+                psii[i] = 1.0/105.0*F2r[i]*(-56*X[i] + 32*X3[i])*Math.sqrt(210.0)
+                		+ 1.0/105.0*F2i[i]*(25 - 72*X2[i] + 16*X4[i])*Math.sqrt(210.0);
+        	}
+        }
+        else if (num == 5) {
+        	for (i = 0; i < N; i++) {
+                psir[i] = 1.0/135.0*F2r[i]*(-250*X[i] + 240*X3[i] -32*X5[i])*Math.sqrt(210.0)
+                        - 1.0/135.0*F2i[i]*(-81 + 280*X2[i] - 80*X4[i])*Math.sqrt(210.0);
+                psii[i] = 1.0/135.0*F2r[i]*(-81 + 280*X2[i] -80*X4[i])*Math.sqrt(210.0)
+                		+ 1.0/135.0*F2i[i]*(-250*X[i] + 240*X3[i] - 32*X5[i])*Math.sqrt(210.0);
+        	}
+        }
+        else if (num == 6) {
+        	for (i = 0; i < N; i++) {
+                psir[i] = 1.0/3465.0*F2r[i]*(-331 + 1500*X2[i] - 720*X4[i] + 64*X6[i])*Math.sqrt(2310.0)
+                        - 1.0/3465.0*F2i[i]*(972*X[i] -1120*X3[i] + 192*X5[i])*Math.sqrt(2310.0);
+                psii[i] = 1.0/3465.0*F2r[i]*(972*X[i] -1120*X3[i] + 192*X5[i])*Math.sqrt(2310.0)
+                		+ 1.0/3465.0*F2i[i]*(-331 + 1500*X2[i] -720*X4[i] + 64*X6[i])*Math.sqrt(2310.0);
+        	}
+        }
+        else if (num == 7) {
+        	for (i = 0; i < N; i++) {
+                psir[i] = 1.0/45045.0*F2r[i]*(4634*X[i] - 7000*X3[i] + 2016*X5[i] - 128*X7[i])*Math.sqrt(30030.0)
+                        - 1.0/45045.0*F2i[i]*(1303 - 6804*X2[i] + 3920*X4[i] - 448*X6[i])*Math.sqrt(30030.0);
+                psii[i] = 1.0/45045.0*F2r[i]*(1303 - 6804*X2[i] + 3920*X4[i] - 448*X6[i])*Math.sqrt(30030.0)
+                		+ 1.0/45045.0*F2i[i]*(4634*X[i] - 7000*X3[i] + 2016*X5[i] - 128*X7[i])*Math.sqrt(30030.0);
+        	}
+        }
+        else if (num == 8) {
+            for (i = 0; i < N; i++) {
+                psir[i] = 1.0/45045.0*F2r[i]*(5937 - 37072*X2[i] + 28000*X4[i] - 5376*X6[i] + 256*X8[i])*Math.sqrt(2002.0)
+                        - 1.0/45045.0*F2i[i]*(-20848*X[i] + 36288*X3[i] - 12544*X5[i] + 1024*X7[i])*Math.sqrt(2002.0);
+                psii[i] = 1.0/45045.0*F2r[i]*(-20848*X[i] + 36288*X3[i] - 12544*X5[i] + 1024*X7[i])*Math.sqrt(2002.0)
+                		+ 1.0/45045.0*F2i[i]*(5937 - 37072*X2[i] + 28000*X4[i] - 5376*X6[i] + 256*X8[i])*Math.sqrt(2002.0);
+            }
+        }
+
+        double sum = 0.0;
+        for (i = 0; i < N; i++) {
+        	sum = sum + psir[i]*psir[i] + psii[i]*psii[i];
+        }
+        double sqrt = Math.sqrt(sum * (X[1] - X[0]));
+        for (i = 0; i < N; i++) {
+        	psir[i] = psir[i]/sqrt;
+        	psii[i] = psii[i]/sqrt;
+        }
+        double psix[][] = new double[3][N];
+        psix[0] = psir;
+        psix[1] = psii;
+        psix[2] = X;
+        return psix;
+    }
+    
+    /*public double[] sinc2(double x[]) {
+    	int i;
+    	int N = x.length;
+    	double y[] = new double[N];
+    	for (i = 0; i < N; i++) {
+    		y[i] = 1.0;
+    	}
+        k = np.where(x)[0]
+        y[k] = np.sin(np.pi*x[k])/(np.pi*x[k])
+        return y
+    }*/
 }
