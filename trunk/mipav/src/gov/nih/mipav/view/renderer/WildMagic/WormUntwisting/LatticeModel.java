@@ -494,6 +494,7 @@ public class LatticeModel {
 	private boolean colorAnnotations = false;
 	
 	private Vector<AnnotationListener> annotationListeners;
+	private String annotationPrefix = "A";
 
 	/**
 	 * Creates a new LatticeModel
@@ -927,6 +928,17 @@ public class LatticeModel {
 		}
 		updateLattice(true);
 	}
+	
+	public String getAnnotationPrefix()
+	{
+		System.err.println("getAnnotationPrefix " + annotationPrefix);
+		return annotationPrefix;
+	}
+	
+	public void setAnnotationPrefix(String s)
+	{
+		annotationPrefix = s;
+	}
 
 	public int getCurrentIndex()
 	{
@@ -944,20 +956,36 @@ public class LatticeModel {
 			{
 				int value = 0;
 				String name = new String(text.getText());
-				for ( int j = 0; j < name.length(); j++ )
-				{
-					if ( Character.isDigit(name.charAt(j)) )
+				String prefix = getPrefix(name);
+				if ( prefix.equals(annotationPrefix) ) {
+					for ( int j = 0; j < name.length(); j++ )
 					{
-						value *= 10;
-						value += Integer.valueOf(name.substring(j,j+1));
-						//						System.err.println( name + " " + value + " " + name.substring(j,j+1) + " " + Integer.valueOf(name.substring(j,j+1)));
+						if ( Character.isDigit(name.charAt(j)) )
+						{
+							value *= 10;
+							value += Integer.valueOf(name.substring(j,j+1));
+							//						System.err.println( name + " " + value + " " + name.substring(j,j+1) + " " + Integer.valueOf(name.substring(j,j+1)));
+						}
 					}
+					highestIndex = Math.max( highestIndex, value );
 				}
-				highestIndex = Math.max( highestIndex, value );
 			}
 		}
 
 		return (highestIndex + 1);
+	}
+	
+	private String getPrefix(String name) {
+		String prefix = new String();
+		for ( int j = 0; j < name.length(); j++ ) {
+			if ( Character.isLetter(name.charAt(j) ) ) {
+				prefix += name.charAt(j);
+			}
+			else {
+				break;
+			}
+		}
+		return prefix;
 	}
 
 	/**
@@ -1317,7 +1345,9 @@ public class LatticeModel {
 				// updateLattice(false);
 			}
 		}
-		updateAnnotationListeners();
+		if ( pickedPoint != null ) {
+			updateAnnotationListeners();
+		}
 		return (pickedPoint != null);
 	}
 	
