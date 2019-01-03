@@ -278,6 +278,23 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		animationStep = -1;
 	}
 
+	public String getAnnotationPrefix()
+	{
+		if ( latticeModel != null )
+		{
+			return latticeModel.getAnnotationPrefix();
+		}
+		return "A";
+	}
+
+	public void setAnnotationPrefix(String s)
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.setAnnotationPrefix(s);
+		}
+	}
+	
 	public int getCurrentIndex()
 	{
 		if ( latticeModel != null )

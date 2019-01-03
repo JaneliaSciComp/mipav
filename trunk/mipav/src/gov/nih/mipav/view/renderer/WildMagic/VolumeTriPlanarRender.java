@@ -873,6 +873,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	}
     }
     
+    public String annotationPrefix() 
+    {
+    	return (m_kVOIInterface == null) ? "A" : m_kVOIInterface.getAnnotationPrefix();
+    }
+    
     public boolean doAutomaticLabels()
 	{
     	return (m_kVOIInterface == null) ? false : m_kVOIInterface.doAutomaticLabels();
@@ -1431,7 +1436,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									}
 									else
 									{
-										textVOI.setText("A"+ m_kVOIInterface.getCurrentIndex() );	
+										textVOI.setText(annotationPrefix() + m_kVOIInterface.getCurrentIndex() );	
 									}
 								}
 								else if ( doAutomaticLabels() )
@@ -1440,7 +1445,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 								}
 								else if ( !doAutomaticLabels() )
 								{
-									textVOI.setText("A"+id);	
+									textVOI.setText(annotationPrefix() + id);	
 								}
 								newTextVOI.getCurves().add(textVOI);
 								textVOI.setPlane( iPlane );
@@ -1605,7 +1610,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 										}
 										else
 										{
-											textVOI.setText("A"+ m_kVOIInterface.getCurrentIndex() );	
+											textVOI.setText(annotationPrefix() + m_kVOIInterface.getCurrentIndex() );	
 										}
 									}
 									else if ( doAutomaticLabels() )
@@ -1614,7 +1619,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									}
 									else if ( !doAutomaticLabels() )
 									{
-										textVOI.setText("A"+id);	
+										textVOI.setText(annotationPrefix() + id);	
 									}
 									newTextVOI.getCurves().add(textVOI);
 									add3DMarker( newTextVOI, doAutomaticLabels() );

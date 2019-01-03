@@ -45,6 +45,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -83,11 +84,18 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JCheckBox volumeClip;
 	private JSlider volumeRadius;
 	private JCheckBox displayLabel;
+	private JCheckBox displayGroupLabel;
 	// table user-interface for editing the positions of the annotations:
 	private ListSelectionModel annotationList;
 	private JTable annotationTable;
 	private DefaultTableModel annotationTableModel;
 	private boolean useLatticeMarkers = false;
+	
+	// table user-interface for editing the positions of the annotations:
+	private ListSelectionModel annotationGroupList;
+	private JTable annotationGroupTable;
+	private DefaultTableModel annotationGroupTableModel;
+	private String selectedPrefix = null;
 	
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image ) {
 		voiManager = voiInterface;
@@ -148,6 +156,22 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 			}
 		}
+		else if ( source == displayGroupLabel )
+		{	
+			// find the selected annotation and turn it's display on/off:
+			if ( (voiManager != null) && (selectedPrefix != null) )
+			{
+//				System.err.println("Display Group " + selectedPrefix );
+				VOI annotations = voiManager.getAnnotations();
+				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+					VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+					String prefix = getPrefix(text.getText());
+					if ( prefix.equals(selectedPrefix) ) {
+						text.display(((JCheckBox)source).isSelected());
+					}
+				}
+			}
+		}
 		else if ( source == volumeClip )
 		{
 			boolean clip = volumeClip.isSelected();
@@ -182,45 +206,104 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-
+		System.err.println("annotationChanged");
+		
 		if ( voiManager != null )
 		{
 			// get current annotations and update table:
 			VOI annotations = voiManager.getAnnotations();
-			// remove table listener durning updates:
+			// remove table listener during updates:
 			annotationTableModel.removeTableModelListener(this);
+			annotationList.removeListSelectionListener(this);
 			int numRows = annotationTableModel.getRowCount();
 			for ( int i = numRows -1; i >= 0; i-- ) {
 				annotationTableModel.removeRow(i);
 			}		
+			// remove table listener during updates:
+			annotationGroupTableModel.removeTableModelListener(this);
+			annotationGroupList.removeListSelectionListener(this);
+			numRows = annotationGroupTableModel.getRowCount();
+			for ( int i = numRows -1; i >= 0; i-- ) {
+				annotationGroupTableModel.removeRow(i);
+			}		
 			if ( annotations != null ) {
 				if ( annotations.getCurves().size() > 0 ) {
+					int[] segments = new int[annotations.getCurves().size()];
+					Vector<String> names = new Vector<String>();
 					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-
+						names.add(text.getText());
 						if ( useLatticeMarkers ) {
 							String note = new String(text.getNote());
-							System.err.println(i + "  " + note);
+//							System.err.println(i + "  " + note);
 							if ( note.contains("lattice segment:") ) {
 								int index = note.indexOf("lattice segment:");
 								note = note.substring(index + 17, note.length() );
 								int value = Integer.valueOf(note);
-								System.err.println(note + "   " + value );
+								segments[i] = value;
+//								System.err.println(note + "   " + value );
 								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z, value } );
 							}
 							else {
 								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+								segments[i] = -1;
 							}
 						}
 						else
 						{
 							annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+							segments[i] = -1;
 						}
 					}
+					Vector<String> prefixList = new Vector<String>();
+					String[] prefixes = new String[names.size()];
+					for ( int i = 0; i < names.size(); i++ ) {
+						String name = names.elementAt(i);
+						String prefix = getPrefix(name);
+//						System.err.println( name + "  " + prefix + "  " + getPostfix(name) );
+						prefixes[i] = prefix;
+						if ( prefix.length() > 0 && !prefixList.contains(prefix) ) {
+							prefixList.add(prefix);
+//							System.err.println(prefix);
+						}
+					}
+					for ( int i = 0; i < prefixList.size(); i++ ) {
+						String prefix = prefixList.elementAt(i);
+						boolean segmentMatch = true;
+						int segment = -1;
+						for ( int j = 0; j < prefixes.length; j++ ) {
+							if ( prefixes[j].equals(prefix) ) {
+								if ( segments[j] == -1 ) {
+									segmentMatch = false;
+									break;
+								}
+								else if ( segment == -1 ) {
+									segment = segments[j];
+								}
+								else if ( segment != segments[j] ) {
+									segmentMatch = false;
+									break;
+								}
+							}
+						}
+						if ( segmentMatch ) {
+							annotationGroupTableModel.addRow( new Object[]{ prefix, segment } );
+						}
+						else {
+							annotationGroupTableModel.addRow( new Object[]{ prefix } );
+						}
+					}
+//					System.err.println( selectedPrefix + "  " + prefixList.contains(selectedPrefix) );
+//					if ( !prefixList.contains(selectedPrefix) ) {
+//						annotationGroupTableModel.addRow( new Object[]{ selectedPrefix } );
+//					}
 				}
 			}
 			// restore table listener:
 			annotationTableModel.addTableModelListener(this);
+			annotationList.addListSelectionListener(this);
+			annotationGroupTableModel.addTableModelListener(this);
+			annotationGroupList.addListSelectionListener(this);
 		}		
 	}
 
@@ -236,7 +319,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		int column = e.getColumn();
 		boolean isChecked = false;
 		boolean isClipped = false;
-		if ( voiManager != null )
+		if ( voiManager != null && (e.getSource() == annotationTableModel) )
 		{
 			int row = e.getFirstRow();
 			VOI annotations = voiManager.getAnnotations();
@@ -276,7 +359,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 							note = note.substring(0, index);
 						}
 						note = note + "\n" + "lattice segment: " + value;
-						System.err.println(text.getText() + " " + note);
+//						System.err.println(text.getText() + " " + note);
 						text.setNote(note);
 					} catch ( java.lang.NumberFormatException error ) {
 						// value erased:
@@ -285,7 +368,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 							int index = note.indexOf("lattice segment:");
 							note = note.substring(0, index);
 						}
-						System.err.println(text.getText() + " " + note);
+//						System.err.println(text.getText() + " " + note);
 						text.setNote(note);
 					}
 				}
@@ -293,36 +376,140 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				isChecked = text.getVolumeVOI().GetDisplay();
 				isClipped = text.getVolumeVOI().GetClipped();
 			}
+			
+			displayLabel.setSelected(isChecked);
+			volumeClip.setSelected(isClipped);
 		}
-		displayLabel.setSelected(isChecked);
-		volumeClip.setSelected(isClipped);
+		if ( voiManager != null && (e.getSource() == annotationGroupTableModel) )
+		{
+			int row = annotationGroupTable.getSelectedRow();
+			int segment = -1;
+			String newPrefix = "";
+			boolean nameChanged = false;
+			boolean segmentChanged = false;
+			if ( column == 0 ) {
+				// new name:
+				if ( annotationGroupTableModel.getValueAt(row, 0) != null ) {
+					newPrefix = new String ( annotationGroupTableModel.getValueAt(row, 0).toString() );
+					if ( selectedPrefix.equals("new row") ) 
+					{
+						selectedPrefix = new String(newPrefix);
+						voiManager.setAnnotationPrefix( selectedPrefix );
+					}
+					else 
+					{
+						nameChanged = true;
+					}
+				}
+			}
+			else if ( column == 1 ) {
+				// change the segment:
+				try {
+					segment = Integer.valueOf(annotationGroupTableModel.getValueAt(row, column).toString());
+				} catch ( java.lang.NumberFormatException error ) {
+					// value erased:
+				}
+				segmentChanged = true;
+			}
+			if ( nameChanged || segmentChanged ) 
+			{
+				VOI annotations = voiManager.getAnnotations();
+				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+					VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+					String prefix = getPrefix(text.getText());
+					if ( segmentChanged && prefix.equals(selectedPrefix) ) {
+						String note = text.getNote();
+						if ( segment != -1 ) {
+							if ( note.contains("lattice segment:") ) {
+								int index = note.indexOf("lattice segment:");
+								note = note.substring(0, index);
+							}
+							note = note + "\n" + "lattice segment: " + segment;
+						}
+						else {
+							// value erased:
+							if ( note.contains("lattice segment:") ) {
+								int index = note.indexOf("lattice segment:");
+								note = note.substring(0, index);
+							}
+						}
+						text.setNote(note);
+					}
+					if ( nameChanged && prefix.equals(selectedPrefix) ) {
+						text.setText( newPrefix + getPostfix(text.getText() ) );
+						text.updateText();
+					}
+				}
+				if ( nameChanged ) {
+					selectedPrefix = new String(newPrefix);
+					voiManager.setAnnotationPrefix( selectedPrefix );
+				}
+				annotationChanged();
+			}
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
 	 */
 	public void valueChanged(ListSelectionEvent e) {
+		System.err.println("valueChanged " + e );
 		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
 			return;
 		
-		// Updates the displayLabel checkbox based on which row of the table is current:
-		VOI annotations = voiManager.getAnnotations();
+		if ( e.getSource() == annotationList ) {
+			if ( annotationTable.getRowCount() > 0 ) {
+				// Updates the displayLabel checkbox based on which row of the table is current:
+				VOI annotations = voiManager.getAnnotations();
 
-		int row = annotationTable.getSelectedRow();
-		boolean isChecked = true;
-		boolean isClipped = true;
-		if ( (annotations != null) && (row >= 0) ) {
-			if ( row < annotations.getCurves().size() ) {
-				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
-				if ( text.getVolumeVOI() != null )
-				{
-					isChecked = text.getVolumeVOI().GetDisplay();
-					isClipped = text.getVolumeVOI().GetClipped();
+				int row = annotationTable.getSelectedRow();
+				boolean isChecked = true;
+				boolean isClipped = true;
+				if ( (annotations != null) && (row >= 0) ) {
+					if ( row < annotations.getCurves().size() ) {
+						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+						if ( text.getVolumeVOI() != null )
+						{
+							isChecked = text.getVolumeVOI().GetDisplay();
+							isClipped = text.getVolumeVOI().GetClipped();
+						}
+					}
+				}
+				displayLabel.setSelected(isChecked);
+				volumeClip.setSelected(isClipped);
+			}
+		}
+		else if ( e.getSource() == annotationGroupList ) {
+			if ( annotationGroupTable.getRowCount() > 0 ) {
+				int row = annotationGroupTable.getSelectedRow();
+				if ( row != -1 ) {
+					if ( annotationGroupTableModel.getValueAt(row, 0) != null ) {
+						selectedPrefix = new String ( annotationGroupTableModel.getValueAt(row, 0).toString() );
+//						System.err.println("valueChanged " + row + "  " + selectedPrefix );
+						voiManager.setAnnotationPrefix( selectedPrefix );
+						boolean displayAll = true;
+						VOI annotations = voiManager.getAnnotations();
+						for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+							String prefix = getPrefix(text.getText());
+							if ( prefix.equals(selectedPrefix) ) {
+								if ( text.getVolumeVOI() != null )
+								{
+									displayAll &= text.getVolumeVOI().GetDisplay();
+									if ( !displayAll ) {
+										break;
+									}
+								}
+							}
+						}
+						displayGroupLabel.setSelected(displayAll);						
+					}
+					else {
+						selectedPrefix = "new row";
+					}
 				}
 			}
 		}
-		displayLabel.setSelected(isChecked);
-		volumeClip.setSelected(isClipped);
 	}
 
 	/**
@@ -352,6 +539,24 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationTable.getColumn("Name").setMaxWidth(100);
 			annotationList = annotationTable.getSelectionModel();
 			annotationList.addListSelectionListener(this);
+			
+
+			annotationGroupTableModel = new DefaultTableModel();
+			annotationGroupTableModel.addColumn("Group Name");
+			annotationGroupTableModel.addColumn("lattice segment");
+			annotationGroupTableModel.addTableModelListener(this);
+
+			annotationGroupTable = new JTable(annotationGroupTableModel);
+			annotationGroupTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			annotationGroupTable.addKeyListener(this);
+
+			annotationGroupTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+//			annotationGroupTable.getColumn("Group Name").setMinWidth(100);
+//			annotationGroupTable.getColumn("Group Name").setMaxWidth(100);
+//			annotationGroupTable.getColumn("lattice segment").setMinWidth(100);
+//			annotationGroupTable.getColumn("lattice segment").setMaxWidth(100);
+			annotationGroupList = annotationGroupTable.getSelectionModel();
+			annotationGroupList.addListSelectionListener(this);
 		}
 	}
 
@@ -380,11 +585,19 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayLabel = new JCheckBox("display", true);
 			displayLabel.addActionListener(this);
 			displayLabel.setActionCommand("displayLabel");
+			
+			// Display checkbox for displaying individual annotations:
+			displayGroupLabel = new JCheckBox("display group", true);
+			displayGroupLabel.addActionListener(this);
+			displayGroupLabel.setActionCommand("displayGroupLabel");
 
 			gbcC.gridx = 0;			gbcC.gridy = 0;
 			labelPanel.add( new JLabel("Annotation: " ), gbcC );
 			gbcC.gridx++;			gbcC.gridy = 0;
 			labelPanel.add(displayLabel, gbcC);
+			
+			gbcC.gridx++;			gbcC.gridy = 0;
+			labelPanel.add(displayGroupLabel, gbcC);
 			
 			// Display all button:
 			JButton displayAll = new JButton("Display all" );
@@ -412,18 +625,31 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			volumeRadius.addChangeListener(this);
 			gbcC.gridx++;			gbcC.gridy = 1;
 			labelPanel.add( volumeRadius, gbcC );
+			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display and Clipping"));
 			
 			// build the annotation table for the list of annotations:
 			buildAnnotationTable(latticeMarkers);
 			// add annotation table to a scroll pane:
 			JScrollPane kScrollPane = new JScrollPane(annotationTable);
 			Dimension size = kScrollPane.getPreferredSize();
-			System.err.println( size.width + " " + size.height );
+//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPane.setPreferredSize( size );
+			kScrollPane.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+			
+
+			// add annotation table to a scroll pane:
+			JScrollPane kScrollPaneGroup = new JScrollPane(annotationGroupTable);
+			size = kScrollPaneGroup.getPreferredSize();
+//			System.err.println( size.width + " " + size.height );
+			size.height /= 2;
+			kScrollPaneGroup.setPreferredSize( size );
+			kScrollPaneGroup.setBorder(JDialogBase.buildTitledBorder("Group list"));
+			
 			annotationPanel.add(kScrollPane, BorderLayout.NORTH);
-			annotationPanel.add(labelPanel, BorderLayout.CENTER);
-			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+			annotationPanel.add(kScrollPaneGroup, BorderLayout.CENTER);
+			annotationPanel.add(labelPanel, BorderLayout.SOUTH);
+//			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
 		}
 
 		// Add the list of annotations to the table:
@@ -433,51 +659,97 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	}
 
 	public void keyTyped(KeyEvent e) {
+		System.err.println("keyTyped");
 		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
-			int row = annotationTable.getSelectedRow();
-			int col = annotationTable.getSelectedColumn();
 			if ( voiManager != null )
 			{
-				if ( (row == 0)  && (col == 0) ) {
-					
-					VOIText text = new VOIText();
-					text.setText("center" );
-					int dimX = imageA.getExtents()[0];
-					int dimY = imageA.getExtents()[1];
-					int dimZ = imageA.getExtents()[2];
-					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-					
-					short id = (short) imageA.getVOIs().getUniqueID();
-					int colorID = 0;
-					VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-					newTextVOI.getCurves().add(text);
-					
-					voiManager.clear3DSelection();
-					voiManager.addAnnotation( newTextVOI );
-					voiManager.clear3DSelection();
-					int nRows = annotationTable.getRowCount();
-					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+				if ( (e.getSource() == annotationTable) ) {
+					// add a new annotation by tabbing:
+					int row = annotationTable.getSelectedRow();
+					int col = annotationTable.getSelectedColumn();
+					if ( (row == 0)  && (col == 0) ) {
+
+						VOIText text = new VOIText();
+						text.setText("center" );
+						int dimX = imageA.getExtents()[0];
+						int dimY = imageA.getExtents()[1];
+						int dimZ = imageA.getExtents()[2];
+						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+
+						short id = (short) imageA.getVOIs().getUniqueID();
+						int colorID = 0;
+						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+						newTextVOI.getCurves().add(text);
+
+						voiManager.clear3DSelection();
+						voiManager.addAnnotation( newTextVOI );
+						voiManager.clear3DSelection();
+						int nRows = annotationTable.getRowCount();
+						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+					}
+				}
+				else if ( e.getSource() == annotationGroupTable ) {
+					int row = annotationGroupTable.getSelectedRow();
+					int col = annotationGroupTable.getSelectedColumn();
+					if ( (row == 0)  && (col == 0) ) {
+						annotationGroupTableModel.removeTableModelListener(this);
+						annotationGroupTableModel.addRow( new Object[]{  } );
+						annotationGroupTableModel.addTableModelListener(this);
+						
+						int nRows = annotationGroupTable.getRowCount();
+						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
+					}	
 				}
 			}
 		}
-		if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
-			int row = annotationTable.getSelectedRow();
-			int col = annotationTable.getSelectedColumn();
-			if ( col == 0 && row >= 0 )
-			{
-				TableCellEditor editor = annotationTable.getCellEditor();
-				if ( editor != null )
-					editor.stopCellEditing();
-				VOI annotations = voiManager.getAnnotations();
-				annotations.getCurves().remove(row);
-				annotationChanged();
-				int nRows = annotationTable.getRowCount();
-				if ( row < nRows ) {
-					annotationTable.setRowSelectionInterval(row, row);
+		else if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
+			System.err.println("delete");
+			if ( (e.getSource() == annotationTable) ) {
+				int row = annotationTable.getSelectedRow();
+				int col = annotationTable.getSelectedColumn();
+				if ( col == 0 && row >= 0 )
+				{
+					TableCellEditor editor = annotationTable.getCellEditor();
+					if ( editor != null )
+						editor.stopCellEditing();
+					VOI annotations = voiManager.getAnnotations();
+					annotations.getCurves().remove(row);
+					annotationChanged();
+					int nRows = annotationTable.getRowCount();
+					if ( row < nRows ) {
+						annotationTable.setRowSelectionInterval(row, row);
+					}
+					else if ( nRows > 0 ) {
+						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+					}
 				}
-				else if ( nRows > 0 ) {
-					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+			}
+			else if ( (e.getSource() == annotationGroupTable) ) {
+				int row = annotationGroupTable.getSelectedRow();
+				int col = annotationGroupTable.getSelectedColumn();
+				if ( col == 0 && row >= 0 )
+				{
+					TableCellEditor editor = annotationGroupTable.getCellEditor();
+					if ( editor != null )
+						editor.stopCellEditing();
+
+					VOI annotations = voiManager.getAnnotations();
+					for ( int i = annotations.getCurves().size() - 1; i >= 0; i-- ) {
+						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+						String prefix = getPrefix(text.getText());
+						if ( prefix.equals(selectedPrefix) ) {
+							annotations.getCurves().remove(i);
+						}
+					}
+					annotationChanged();
+					int nRows = annotationGroupTable.getRowCount();
+					if ( row < nRows ) {
+						annotationGroupTable.setRowSelectionInterval(row, row);
+					}
+					else if ( nRows > 0 ) {
+						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
+					}
 				}
 			}
 		}
@@ -507,5 +779,32 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 			}
         }
+	}
+
+	private String getPrefix(String name) {
+		String prefix = new String();
+		for ( int j = 0; j < name.length(); j++ ) {
+			if ( Character.isLetter(name.charAt(j) ) ) {
+				prefix += name.charAt(j);
+			}
+			else {
+				break;
+			}
+		}
+		return prefix;
+	}
+	
+	private String getPostfix(String name) {
+		String prefix = new String();
+		for ( int j = 0; j < name.length(); j++ ) {
+			if ( Character.isLetter(name.charAt(j) ) ) {
+				prefix += name.charAt(j);
+			}
+			else {
+				break;
+			}
+		}
+//		System.err.println( name + "  " + prefix + "   " + (name.indexOf(prefix) + prefix.length()));
+		return name.substring( name.indexOf(prefix) + prefix.length() );
 	}
 }
