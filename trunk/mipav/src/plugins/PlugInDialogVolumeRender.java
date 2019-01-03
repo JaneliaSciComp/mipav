@@ -696,6 +696,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
                 dispose();
             }
 		}
+		if (command.equals("Padding"))
+		{
+			try {
+				paddingFactor = Integer.valueOf(segmentationPaddingText.getText().trim());
+			} catch(NumberFormatException e) {
+				paddingFactor = 0;
+			}
+			if ( voiManager != null ) {
+				voiManager.setPaddingFactor(paddingFactor);
+			}
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -2180,6 +2191,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridy++;
 		
 		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "          5");
+		segmentationPaddingText.addActionListener(this);
+		segmentationPaddingText.setActionCommand("Padding");
 		panel.add(segmentationPaddingText.getParent(), gbc);
 		gbc.gridy++;
 

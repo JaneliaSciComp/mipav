@@ -640,6 +640,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}		
 	}
 	
+	public void setPaddingFactor( int padding ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.setPaddingFactor(padding);
+		}		
+	}
+	
 	/**
 	 * Add an annotation to the latticeModel.
 	 * @param textVOI new annotation.

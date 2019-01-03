@@ -1877,6 +1877,17 @@ public class LatticeModel {
 		maskImage = image;
 	}
 
+	private int paddingFactor = 0;
+	public void setPaddingFactor( int padding ) {
+		paddingFactor = padding;
+		boolean display = (imageA.isRegistered(displayContours) != -1);
+		generateCurves(5);
+
+		if ( display )
+		{
+			imageA.registerVOI(displayContours);
+		}
+	}
 
 	/**
 	 * Sets the currently selected point (lattice or annotation).
@@ -3639,7 +3650,14 @@ public class LatticeModel {
 
 			final VOIContour ellipse = new VOIContour(true);
 			ellipse.setVolumeDisplayRange(minRange);
-			makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), ellipse, 32);
+			
+
+			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
+			radius += paddingFactor;
+
+			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse, 32);	
+			
+//			makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), ellipse, 32);
 			displayContours.getCurves().add(ellipse);
 		}
 		sID++;
