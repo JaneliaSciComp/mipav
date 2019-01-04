@@ -220,12 +220,12 @@ public  class PyWavelets extends AlgorithmBase {
     private class ContinuousWavelet {
 
         BaseWavelet base;
-        float lower_bound;
-        float upper_bound;
+        double lower_bound;
+        double upper_bound;
         /* Parameters for shan, fbsp, cmor*/
         int complex_cwt;
-        float center_frequency;
-        float bandwidth_frequency;
+        double center_frequency;
+        double bandwidth_frequency;
         int fbsp_order;
     }
     
@@ -3809,7 +3809,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.lower_bound = -20;
                 w.upper_bound = 20;
                 w.center_frequency = 1;
-                w.bandwidth_frequency = 0.5f;
+                w.bandwidth_frequency = 0.5;
                 w.fbsp_order = 0;
                 break;
             case FBSP:
@@ -3827,7 +3827,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.complex_cwt = 1;
                 w.lower_bound = -20;
                 w.upper_bound = 20;
-                w.center_frequency = 0.5f;
+                w.center_frequency = 0.5;
                 w.bandwidth_frequency = 1;
                 w.fbsp_order = 2;
                 break;
@@ -3846,7 +3846,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.complex_cwt = 1;
                 w.lower_bound = -8;
                 w.upper_bound = 8;
-                w.center_frequency = 0.5f;
+                w.center_frequency = 0.5;
                 w.bandwidth_frequency = 1;
                 w.fbsp_order = 0;
                 break;
@@ -6140,4 +6140,245 @@ public  class PyWavelets extends AlgorithmBase {
             }
         } // for (num = 1; num <= 8; num++)
     }
+    
+    public void test_shan() {
+    	int i;
+        double LB = -20;
+        double UB = 20;
+        int N = 1000;
+        double Fb = 1;
+        double Fc = 1.5;
+
+        double psix[][] = ref_shan(LB, UB, N, Fb, Fc);
+        double psir[] = psix[0];
+        double psii[] = psix[1];
+        double x[] = psix[2];
+        ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.SHAN,0);
+        w.center_frequency = Fc;
+        w.bandwidth_frequency = Fb;
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        double X[] = linspace(LB, UB, N);
+        double PSIR[] = new double[N]; // scaling function
+        double PSII[] = new double[N];
+        shan(X, PSIR, PSII, N, Fb, Fc);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("i = " + i + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        LB = -20;
+        UB = 20;
+        N = 1000;
+        Fb = 1.5;
+        Fc = 1;
+
+        psix = ref_shan(LB, UB, N, Fb, Fc);
+        psir = psix[0];
+        psii = psix[1];
+        x = psix[2];
+        //w = continuous_wavelet(WAVELET_NAME.SHAN,0);
+        w.center_frequency = Fc;
+        w.bandwidth_frequency = Fb;
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        shan(X, PSIR, PSII, N, Fb, Fc);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("i = " + i + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+    }
+    
+    public void test_cmor() {
+    	int i;
+        double LB = -20;
+        double UB = 20;
+        int N = 1000;
+        double Fb = 1;
+        double Fc = 1.5;
+
+        double psix[][] = ref_cmor(LB, UB, N, Fb, Fc);
+        double psir[] = psix[0];
+        double psii[] = psix[1];
+        double x[] = psix[2];
+        ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.CMOR,0);
+        w.center_frequency = Fc;
+        w.bandwidth_frequency = Fb;
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        double X[] = linspace(LB, UB, N);
+        double PSIR[] = new double[N]; // scaling function
+        double PSII[] = new double[N];
+        cmor(X, PSIR, PSII, N, Fb, Fc);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("i = " + i + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        LB = -20;
+        UB = 20;
+        N = 1000;
+        Fb = 1.5;
+        Fc = 1;
+
+        psix = ref_cmor(LB, UB, N, Fb, Fc);
+        psir = psix[0];
+        psii = psix[1];
+        x = psix[2];
+        w = continuous_wavelet(WAVELET_NAME.CMOR,0);
+        w.center_frequency = Fc;
+        w.bandwidth_frequency = Fb;
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        cmor(X, PSIR, PSII, N, Fb, Fc);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("i = " + i + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+    }
+    
+    public void test_fbsp() {
+        int i;
+        double LB = -20;
+        double UB = 20;
+        int N = 1000;
+        int M = 2;
+        double Fb = 1;
+        double Fc = 1.5;
+
+        double psix[][] = ref_fbsp(LB, UB, N, M, Fb, Fc);
+        double psir[] = psix[0];
+        double psii[] = psix[1];
+        double x[] = psix[2];
+        ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.FBSP,0);
+        w.center_frequency = Fc;
+        w.bandwidth_frequency = Fb;
+        w.fbsp_order = M;
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        double X[] = linspace(LB, UB, N);
+        double PSIR[] = new double[N]; // scaling function
+        double PSII[] = new double[N];
+        fbsp(X, PSIR, PSII, N, M, Fb, Fc);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("i = " + i + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        LB = -20;
+        UB = 20;
+        N = 1000;
+        M = 2;
+        Fb = 1.5;
+        Fc = 1;
+
+        psix = ref_fbsp(LB, UB, N, M, Fb, Fc);
+        psir = psix[0];
+        psii = psix[1];
+        x = psix[2];
+        //w = continuous_wavelet(WAVELET_NAME.FBSP,0);
+        w.center_frequency = Fc;
+        w.bandwidth_frequency = Fb;
+        w.fbsp_order = M;
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        fbsp(X, PSIR, PSII, N, M, Fb, Fc);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("i = " + i + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        LB = -20;
+        UB = 20;
+        N = 1000;
+        M = 3;
+        Fb = 1.5;
+        Fc = 1.2;
+
+       
+        psix = ref_fbsp(LB, UB, N, M, Fb, Fc);
+        psir = psix[0];
+        psii = psix[1];
+        x = psix[2];
+        //w = continuous_wavelet(WAVELET_NAME.FBSP,0);
+        w.center_frequency = Fc;
+        w.bandwidth_frequency = Fb;
+        w.fbsp_order = M;
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        //# TODO: investigate why atol = 1e-5 is necessary
+        fbsp(X, PSIR, PSII, N, M, Fb, Fc);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("i = " + i + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+    }
+    
+    public void test_morl() {
+    	int i;
+        double LB = -5;
+        double UB = 5;
+        int N = 1000;
+
+        double psix[][] = ref_morl(LB, UB, N);
+        double psi[] = psix[0];
+        double x[] = psix[1];
+        ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.MORL,0);
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        double X[] = linspace(LB, UB, N);
+        double PSI[] = new double[N];
+        morl(X, PSI, N);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSI = " + PSI[i] + " psi = " + psi[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+    }
+    
+    public void test_mexh() {
+    	int i;
+        double LB = -5;
+        double UB = 5;
+        int N = 1000;
+
+        double psix[][] = ref_mexh(LB, UB, N);
+        double psi[] = psix[0];
+        double x[] = psix[1];
+        ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.MEXH,0);
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        double X[] = linspace(LB, UB, N);
+        double PSI[] = new double[N];
+        mexh(X, PSI, N);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSI = " + PSI[i] + " psi = " + psi[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        LB = -5;
+        UB = 5;
+        N = 1001;
+
+        psix = ref_mexh(LB, UB, N);
+        psi = psix[0];
+        x = psix[1];
+        //w = continuous_wavelet(WAVELET_NAME.MEXH,0);
+        w.upper_bound = UB;
+        w.lower_bound = LB;
+        //PSI, X = w.wavefun(length=N)
+        X = linspace(LB, UB, N);
+        PSI = new double[N];
+        mexh(X, PSI, N);
+        for (i = 0; i < N; i++) {
+        	Preferences.debug("i = " + i + " PSI = " + PSI[i] + " psi = " + psi[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+    }
+
 }
