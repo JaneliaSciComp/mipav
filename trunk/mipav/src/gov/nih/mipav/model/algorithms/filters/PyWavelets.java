@@ -5855,46 +5855,44 @@ public  class PyWavelets extends AlgorithmBase {
         double X6[] = null;
         double X7[] = null;
         double X8[] = null;
-        if (num >= 2) {
-        	X2 = new double[N];
-	        for (i = 0; i < N; i++) {
-	        	X2[i] = X[i] * X[i];
-	        }
-	        if (num >= 3) {
-	        	X3 = new double[N];
-	        	for (i = 0; i < N; i++) {
-	        		X3[i] = X2[i] * X[i];
-	        	}
-		        if (num >= 4) {
-		        	X4 = new double[N];
-		            for (i = 0; i < N; i++) {
-		            	X4[i] = X2[i] * X2[i];
-		            }
-		            if (num >= 5) {
-		            	X5 = new double[N];
+    	X2 = new double[N];
+        for (i = 0; i < N; i++) {
+        	X2[i] = X[i] * X[i];
+        }
+        if (num >= 3) {
+        	X3 = new double[N];
+        	for (i = 0; i < N; i++) {
+        		X3[i] = X2[i] * X[i];
+        	}
+	        if (num >= 4) {
+	        	X4 = new double[N];
+	            for (i = 0; i < N; i++) {
+	            	X4[i] = X2[i] * X2[i];
+	            }
+	            if (num >= 5) {
+	            	X5 = new double[N];
+	            	for (i = 0; i < N; i++) {
+	            		X5[i] = X3[i] * X2[i];
+	            	}
+		            if (num >= 6) {
+		            	X6 = new double[N];
 		            	for (i = 0; i < N; i++) {
-		            		X5[i] = X3[i] * X2[i];
+		            		X6[i] = X4[i] * X2[i];
 		            	}
-			            if (num >= 6) {
-			            	X6 = new double[N];
-			            	for (i = 0; i < N; i++) {
-			            		X6[i] = X4[i] * X2[i];
-			            	}
-			            	if (num >= 7) {
-			            		X7 = new double[N];
-			            		for (i = 0; i < N; i++) {
-			            			X7[i] = X4[i] * X3[i];
-			            		}
-				            	if (num >= 8) {
-				            		X8 = new double[N];
-					            	for (i = 0; i < N; i++) {
-					            		X8[i] = X4[i] * X4[i];
-					            	}
-					            }
-			            	}
-			            }
+		            	if (num >= 7) {
+		            		X7 = new double[N];
+		            		for (i = 0; i < N; i++) {
+		            			X7[i] = X4[i] * X3[i];
+		            		}
+			            	if (num >= 8) {
+			            		X8 = new double[N];
+				            	for (i = 0; i < N; i++) {
+				            		X8[i] = X4[i] * X4[i];
+				            	}
+				            }
+		            	}
 		            }
-		        }
+	            }
 	        }
         }
         double F0[] = new double[N];
@@ -6115,5 +6113,31 @@ public  class PyWavelets extends AlgorithmBase {
             	Preferences.debug("i = " + i + " num = " + num + " PSI = " + PSI[i] + " psi = " + psi[i] + "\n", Preferences.DEBUG_ALGORITHM);
             }
         } // for (num == 1; num <= 8; num++)
+    }
+    
+    public void test_cgau() {
+        int i;
+        double LB = -5;
+        double UB = 5;
+        int N = 1000;
+        int num;
+        for (num = 1; num <= 8; num++) {
+            double psix[][] = ref_cgau(LB, UB, N, num);
+            double psir[] = psix[0];
+            double psii[] = psix[1];
+            double x[] = psix[2];
+            ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.CGAU,num);
+            // In continuous_wavelet case CGAU: w.lower_bound = -5 w.upper_bound = 5
+            // so grid is simply linspace(-5, 5, N), the same as generated in ref_cgau
+            //PSI, X = w.wavefun(length=N)
+            double X[] = linspace(LB, UB, N);
+            double PSIR[] = new double[N]; // scaling function
+            double PSII[] = new double[N];
+            cgau(X, PSIR, PSII, N, num);
+            for (i = 0; i < N; i++) {
+            	Preferences.debug("i = " + i + " num = " + num + " PSIR = " + PSIR[i] + " psir = " + psir[i] + "\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("i = " + i + " num = " + num + " PSII = " + PSII[i] + " psii = " + psii[i] + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+        } // for (num = 1; num <= 8; num++)
     }
 }
