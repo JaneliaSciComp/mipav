@@ -3697,6 +3697,7 @@ public  class PyWavelets extends AlgorithmBase {
 
 
         w = new ContinuousWavelet();
+        w.base = new BaseWavelet();
 
         /* set properties to "blank" values */
         w.center_frequency = -1;
@@ -5992,15 +5993,127 @@ public  class PyWavelets extends AlgorithmBase {
         return psix;
     }
     
-    /*public double[] sinc2(double x[]) {
+    public double[] sinc2(double x[]) {
     	int i;
     	int N = x.length;
     	double y[] = new double[N];
     	for (i = 0; i < N; i++) {
-    		y[i] = 1.0;
+    		if (x[i] == 0) {
+    		    y[i] = 1.0;
+    		}
+    		else {
+    			y[i] = Math.sin(Math.PI*x[i])/(Math.PI*x[i]);
+    		}
     	}
-        k = np.where(x)[0]
-        y[k] = np.sin(np.pi*x[k])/(np.pi*x[k])
-        return y
-    }*/
+        return y;
+    }
+    
+    public double[][] ref_shan(double LB, double UB, int N, double Fb, double Fc) {
+    	int i;
+        double x[] = linspace(LB, UB, N);
+        double psir[] = new double[N];
+        double psii[] = new double[N];
+        double Fbx[] = new double[N];
+        for (i = 0; i < N; i++) {
+        	Fbx[i] = Fb*x[i];
+        }
+        double sinc[] = sinc2(Fbx);
+        for (i = 0; i < N; i++) {
+        	psir[i] = Math.sqrt(Fb)*(sinc[i]*Math.cos(2*Math.PI*Fc*x[i]));
+        	psii[i] = Math.sqrt(Fb)*(sinc[i]*Math.sin(2*Math.PI*Fc*x[i]));
+        }
+        double psix[][] = new double[3][N];
+        psix[0] = psir;
+        psix[1] = psii;
+        psix[2] = x;
+        return psix;
+    }
+    
+    public double[][] ref_fbsp(double LB, double UB, int N, double m, double Fb, double Fc) {
+    	int i;
+        double x[] = linspace(LB, UB, N);
+        double psir[] = new double[N];
+        double psii[] = new double[N];
+        double Fbx[] = new double[N];
+        for (i = 0; i < N; i++) {
+        	Fbx[i] = Fb*x[i]/m;
+        }
+        double sinc[] = sinc2(Fbx);
+        for (i = 0; i < N; i++) {
+        	psir[i] = Math.sqrt(Fb)*(Math.pow(sinc[i],m)*Math.cos(2*Math.PI*Fc*x[i]));
+        	psii[i] = Math.sqrt(Fb)*(Math.pow(sinc[i],m)*Math.sin(2*Math.PI*Fc*x[i]));
+        }
+        double psix[][] = new double[3][N];
+        psix[0] = psir;
+        psix[1] = psii;
+        psix[2] = x;
+        return psix;
+    }
+    
+    public double[][] ref_cmor(double LB, double UB, int N, double Fb, double Fc) {
+    	int i;
+    	double x[] = linspace(LB, UB, N);
+        double psir[] = new double[N];
+        double psii[] = new double[N];
+        for (i = 0; i < N; i++) {
+        	psir[i] = Math.pow(Math.PI*Fb, -0.5)*Math.cos(2*Math.PI*Fc*x[i])*Math.exp(-(x[i]*x[i])/Fb);
+        	psii[i] = Math.pow(Math.PI*Fb, -0.5)*Math.sin(2*Math.PI*Fc*x[i])*Math.exp(-(x[i]*x[i])/Fb);
+        }
+        double psix[][] = new double[3][N];
+        psix[0] = psir;
+        psix[1] = psii;
+        psix[2] = x;
+        return psix;
+    }
+    
+    public double[][] ref_morl(double LB, double UB, int N) {
+    	int i;
+        double x[] = linspace(LB, UB, N);
+        double psi[] = new double[N];
+        for (i = 0; i < N; i++) {
+            psi[i] = Math.exp(-(x[i]*x[i])/2)*Math.cos(5*x[i]);
+        }
+        double psix[][] = new double[2][N];
+        psix[0] = psi;
+        psix[1] = x;
+        return psix;
+    }
+    
+    public double[][] ref_mexh(double LB, double UB, int N) {
+    	int i;
+        double x[] = linspace(LB, UB, N);
+        double psi[] = new double[N];
+        double x2;
+        for (i = 0; i < N; i++) {
+        	x2 = x[i]*x[i];
+            psi[i] = (2/(Math.sqrt(3)*Math.pow(Math.PI,0.25)))*Math.exp(-(x2)/2)*(1 - x2);
+        }
+        double psix[][] = new double[2][N];
+        psix[0] = psi;
+        psix[1] = x;
+        return psix;
+    }
+    
+    public void test_gaus() {
+    	int i;
+        double LB = -5;
+        double UB = 5;
+        int N = 1000;
+        int num;
+        for (num = 1; num <= 8; num++) {
+            double psix[][] = ref_gaus(LB, UB, N, num);
+            double psi[] = psix[0];
+            double x[] = psix[1];
+            ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.GAUS,num);
+            // In continuous_wavelet case GAUS: w.lower_bound = -5 w.upper_bound = 5
+            // so grid is simply linspace(-5, 5, N), the same as generated in ref_gaus
+            //PSI, X = w.wavefun(length=N)
+            double X[] = linspace(LB, UB, N);
+            double PSI[] = new double[N]; // scaling function
+            gaus(X, PSI, N, num);
+            for (i = 0; i < N; i++) {
+            	Preferences.debug("i = " + i + " num = " + num + " PSI = " + PSI[i] + " psi = " + psi[i] + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+        } // for (num == 1; num <= 8; num++)
+    }
 }
