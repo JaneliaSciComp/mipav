@@ -195,21 +195,22 @@ public  class PyWavelets extends AlgorithmBase {
 
         SYMMETRY symmetry;
 
-        int orthogonal = 1;
-        int biorthogonal = 1;
-        int compact_support = 1;
+        boolean orthogonal = true;
+        boolean biorthogonal = true;
+        boolean compact_support = true;
 
         int _builtin;
         String family_name;
         String short_name;
+        String name;
     }
     
     private class DiscreteWavelet {
         BaseWavelet base;
-        double dec_hi_double[];  /* highpass decomposition */
-        double dec_lo_double[];  /* lowpass decomposition */
-        double rec_hi_double[];  /* highpass reconstruction */
-        double rec_lo_double[];  /* lowpass reconstruction */
+        double dec_hi[];  /* highpass decomposition */
+        double dec_lo[];  /* lowpass decomposition */
+        double rec_hi[];  /* highpass reconstruction */
+        double rec_lo[];  /* lowpass reconstruction */
         int dec_len;   /* length of decomposition filter */
         int rec_len;   /* length of reconstruction filter */
 
@@ -3373,13 +3374,13 @@ public  class PyWavelets extends AlgorithmBase {
 	    /* deallocate filters */
 	    if (w.dec_len > 0)
 	    {
-	        w.dec_lo_double = null;
-	        w.dec_hi_double = null;
+	        w.dec_lo = null;
+	        w.dec_hi = null;
 	    }
 	    if (w.rec_len > 0)
 	    {
-	        w.rec_lo_double = null;
-	        w.rec_hi_double = null;
+	        w.rec_lo = null;
+	        w.rec_hi = null;
 	    }
 	    /* finally free struct */
 	    w = null;
@@ -3403,31 +3404,31 @@ public  class PyWavelets extends AlgorithmBase {
 	    if (filters_length > 0)
 	    {
 
-	        w.dec_lo_double = new double[filters_length];
-	        w.dec_hi_double = new double[filters_length];
-	        w.rec_lo_double = new double[filters_length];
-	        w.rec_hi_double = new double[filters_length];
+	        w.dec_lo = new double[filters_length];
+	        w.dec_hi = new double[filters_length];
+	        w.rec_lo = new double[filters_length];
+	        w.rec_hi = new double[filters_length];
 
-	        if(w.dec_lo_double == null || w.dec_hi_double == null ||
-	           w.rec_lo_double == null || w.rec_hi_double == null){
+	        if(w.dec_lo == null || w.dec_hi == null ||
+	           w.rec_lo == null || w.rec_hi == null){
 	            free_discrete_wavelet(w);
 	            return null;
 	        }
 	    }
 	    else
 	    {
-	        w.dec_lo_double = null;
-	        w.dec_hi_double = null;
-	        w.rec_lo_double = null;
-	        w.rec_hi_double = null;
+	        w.dec_lo = null;
+	        w.dec_hi = null;
+	        w.rec_lo = null;
+	        w.rec_hi = null;
 	    }
 	    /* set w->base properties to "blank" values */
 	    w.base = new BaseWavelet();
 	    w.base.support_width = -1;
-	    w.base.orthogonal = 0;
-	    w.base.biorthogonal = 0;
+	    w.base.orthogonal = false;
+	    w.base.biorthogonal = false;
 	    w.base.symmetry = SYMMETRY.UNKNOWN;
-	    w.base.compact_support = 0;
+	    w.base.compact_support = false;
 	    w.base.family_name = "";
 	    w.base.short_name = "";
 	    w.vanishing_moments_psi = 0;
@@ -3452,6 +3453,7 @@ public  class PyWavelets extends AlgorithmBase {
             w = discrete_wavelet(WAVELET_NAME.DB, 1);
             w.base.family_name = "Haar";
             w.base.short_name = "haar";
+            w.base.name = "haar" + String.valueOf(order);
             return w;
 
         // Reverse biorthogonal wavelets family
@@ -3463,30 +3465,31 @@ public  class PyWavelets extends AlgorithmBase {
             tmpInt = w.dec_len;
             w.dec_len = w.rec_len;
             w.rec_len = tmpInt;
-            SWAP_DOUBLE_ARRAY(w.rec_lo_double, w.dec_lo_double);
-            SWAP_DOUBLE_ARRAY(w.rec_hi_double, w.dec_hi_double);
+            SWAP_DOUBLE_ARRAY(w.rec_lo, w.dec_lo);
+            SWAP_DOUBLE_ARRAY(w.rec_hi, w.dec_hi);
 
             {
                 int i, j;
                 for(i = 0, j = w.rec_len - 1; i < j; i++, j--){
-                    tmpDouble = w.rec_lo_double[i];
-                    w.rec_lo_double[i] = w.rec_lo_double[j];
-                    w.rec_lo_double[j] = tmpDouble;
-                    tmpDouble = w.rec_hi_double[i];
-                    w.rec_hi_double[i] = w.rec_hi_double[j];
-                    w.rec_hi_double[j] = tmpDouble;
-                    tmpDouble = w.dec_lo_double[i];
-                    w.dec_lo_double[i] = w.dec_lo_double[j];
-                    w.dec_lo_double[j] = tmpDouble;
-                    tmpDouble = w.dec_hi_double[i];
-                    w.dec_hi_double[i] = w.dec_hi_double[j];
-                    w.dec_hi_double[j] = tmpDouble;
+                    tmpDouble = w.rec_lo[i];
+                    w.rec_lo[i] = w.rec_lo[j];
+                    w.rec_lo[j] = tmpDouble;
+                    tmpDouble = w.rec_hi[i];
+                    w.rec_hi[i] = w.rec_hi[j];
+                    w.rec_hi[j] = tmpDouble;
+                    tmpDouble = w.dec_lo[i];
+                    w.dec_lo[i] = w.dec_lo[j];
+                    w.dec_lo[j] = tmpDouble;
+                    tmpDouble = w.dec_hi[i];
+                    w.dec_hi[i] = w.dec_hi[j];
+                    w.dec_hi[j] = tmpDouble;
 
                 }
             }
 
             w.base.family_name = "Reverse biorthogonal";
             w.base.short_name = "rbio";
+            w.base.name = "rbio" + String.valueOf(order);
 
             return w;
         }
@@ -3503,21 +3506,22 @@ public  class PyWavelets extends AlgorithmBase {
                 w.vanishing_moments_psi = order;
                 w.vanishing_moments_phi = 0;
                 w.base.support_width = 2*order - 1;
-                w.base.orthogonal = 1;
-                w.base.biorthogonal = 1;
+                w.base.orthogonal = true;
+                w.base.biorthogonal = true;
                 w.base.symmetry = SYMMETRY.ASYMMETRIC;
-                w.base.compact_support = 1;
+                w.base.compact_support = true;
                 w.base.family_name = "Daubechies";
                 w.base.short_name = "db";
+                w.base.name = "db" + String.valueOf(order);
                 
                 {
                     int i;
                     for(i = 0; i < w.rec_len; ++i){
-                        w.rec_lo_double[i] = db_double[coeffs_idx][i];
-                        w.dec_lo_double[i] = db_double[coeffs_idx][w.dec_len-1-i];
-                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                        w.rec_lo[i] = db_double[coeffs_idx][i];
+                        w.dec_lo[i] = db_double[coeffs_idx][w.dec_len-1-i];
+                        w.rec_hi[i] = (((i % 2) == 1) ? -1 : 1)
                           * db_double[coeffs_idx][w.dec_len-1-i];
-                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
+                        w.dec_hi[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * db_double[coeffs_idx][i];
                     }
                 }
@@ -3537,22 +3541,22 @@ public  class PyWavelets extends AlgorithmBase {
                 w.vanishing_moments_psi = order;
                 w.vanishing_moments_phi = 0;
                 w.base.support_width = 2*order - 1;
-                w.base.orthogonal = 1;
-                w.base.biorthogonal = 1;
+                w.base.orthogonal = true;
+                w.base.biorthogonal = true;
                 w.base.symmetry = SYMMETRY.NEAR_SYMMETRIC;
-                w.base.compact_support = 1;
+                w.base.compact_support = true;
                 w.base.family_name = "Symlets";
                 w.base.short_name = "sym";
-                
+                w.base.name = "sym" + String.valueOf(order);
 
                 {
                     int i;
                     for(i = 0; i < w.rec_len; ++i){
-                        w.rec_lo_double[i] = sym_double[coeffs_idx][i];
-                        w.dec_lo_double[i] = sym_double[coeffs_idx][w.dec_len-1-i];
-                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                        w.rec_lo[i] = sym_double[coeffs_idx][i];
+                        w.dec_lo[i] = sym_double[coeffs_idx][w.dec_len-1-i];
+                        w.rec_hi[i] = (((i % 2) == 1) ? -1 : 1)
                           * sym_double[coeffs_idx][w.dec_len-1-i];
-                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
+                        w.dec_hi[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * sym_double[coeffs_idx][i];
                     }
                 }
@@ -3570,22 +3574,23 @@ public  class PyWavelets extends AlgorithmBase {
                 w.vanishing_moments_psi = 2*order;
                 w.vanishing_moments_phi = 2*order -1;
                 w.base.support_width = 6*order - 1;
-                w.base.orthogonal = 1;
-                w.base.biorthogonal = 1;
+                w.base.orthogonal = true;
+                w.base.biorthogonal = true;
                 w.base.symmetry = SYMMETRY.NEAR_SYMMETRIC;
-                w.base.compact_support = 1;
+                w.base.compact_support = true;
                 w.base.family_name = "Coiflets";
                 w.base.short_name = "coif";
+                w.base.name = "coif" + String.valueOf(order);
                 
                 {
                     int i;
                     for(i = 0; i < w.rec_len; ++i){
-                        w.rec_lo_double[i] = coif_double[coeffs_idx][i] * sqrt2_double;
-                        w.dec_lo_double[i] = coif_double[coeffs_idx][w.dec_len-1-i]
+                        w.rec_lo[i] = coif_double[coeffs_idx][i] * sqrt2_double;
+                        w.dec_lo[i] = coif_double[coeffs_idx][w.dec_len-1-i]
                           * sqrt2_double;
-                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                        w.rec_hi[i] = (((i % 2) == 1) ? -1 : 1)
                           * coif_double[coeffs_idx][w.dec_len-1-i] * sqrt2_double;
-                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
+                        w.dec_hi[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * coif_double[coeffs_idx][i] * sqrt2_double;
                     }
                 }
@@ -3634,22 +3639,23 @@ public  class PyWavelets extends AlgorithmBase {
                 w.vanishing_moments_psi = order/10;
                 w.vanishing_moments_phi = order % 10;
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 1;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = true;
                 w.base.symmetry = SYMMETRY.SYMMETRIC;
-                w.base.compact_support = 1;
+                w.base.compact_support = true;
                 w.base.family_name = "Biorthogonal";
                 w.base.short_name = "bior";
+                w.base.name = "bior" + String.valueOf(order);
                
                 {
                     int n = M_max - M;
                     int i;
                     for(i = 0; i < w.rec_len; ++i){
-                        w.rec_lo_double[i] = bior_double[N - 1][0][i+n];
-                        w.dec_lo_double[i] = bior_double[N - 1][M_idx+1][w.dec_len-1-i];
-                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                        w.rec_lo[i] = bior_double[N - 1][0][i+n];
+                        w.dec_lo[i] = bior_double[N - 1][M_idx+1][w.dec_len-1-i];
+                        w.rec_hi[i] = (((i % 2) == 1) ? -1 : 1)
                           * bior_double[N - 1][M_idx+1][w.dec_len-1-i];
-                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
+                        w.dec_hi[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * bior_double[N - 1][0][i+n];
                     }
                 }
@@ -3665,21 +3671,22 @@ public  class PyWavelets extends AlgorithmBase {
                 w.vanishing_moments_psi = -1;
                 w.vanishing_moments_phi = -1;
                 w.base.support_width = -1;
-                w.base.orthogonal = 1;
-                w.base.biorthogonal = 1;
+                w.base.orthogonal = true;
+                w.base.biorthogonal = true;
                 w.base.symmetry = SYMMETRY.SYMMETRIC;
-                w.base.compact_support = 1;
+                w.base.compact_support = true;
                 w.base.family_name = "Discrete Meyer (FIR Approximation)";
                 w.base.short_name = "dmey";
+                w.base.name = "dmey";
 
                 {
                     int i;
                     for(i = 0; i < w.rec_len; ++i){
-                        w.rec_lo_double[i] = dmey_double[i];
-                        w.dec_lo_double[i] = dmey_double[w.dec_len-1-i];
-                        w.rec_hi_double[i] = (((i % 2) == 1) ? -1 : 1)
+                        w.rec_lo[i] = dmey_double[i];
+                        w.dec_lo[i] = dmey_double[w.dec_len-1-i];
+                        w.rec_hi[i] = (((i % 2) == 1) ? -1 : 1)
                           * dmey_double[w.dec_len-1-i];
-                        w.dec_hi_double[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
+                        w.dec_hi[i] = ((((w.dec_len-1-i) % 2) == 1) ? -1 : 1)
                           * dmey_double[i];
                     }
                 }
@@ -3718,15 +3725,16 @@ public  class PyWavelets extends AlgorithmBase {
                 if(w == null) return null;
 
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 0;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = false;
                 if (order % 2 == 0)
                     w.base.symmetry = SYMMETRY.SYMMETRIC;
                 else
                     w.base.symmetry = SYMMETRY.ANTI_SYMMETRIC;
-                w.base.compact_support = 0;
+                w.base.compact_support = false;
                 w.base.family_name = "Gaussian";
                 w.base.short_name = "gaus";
+                w.base.name = "gaus" + String.valueOf(order);
                 w.complex_cwt = 0;
                 w.lower_bound = -5;
                 w.upper_bound = 5;
@@ -3739,12 +3747,13 @@ public  class PyWavelets extends AlgorithmBase {
                 if(w == null) return null;
 
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 0;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = false;
                 w.base.symmetry = SYMMETRY.SYMMETRIC;
-                w.base.compact_support = 0;
+                w.base.compact_support = false;
                 w.base.family_name = "Mexican hat wavelet";
                 w.base.short_name = "mexh";
+                w.base.name = "mexh";
                 w.complex_cwt = 0;
                 w.lower_bound = -8;
                 w.upper_bound = 8;
@@ -3757,12 +3766,13 @@ public  class PyWavelets extends AlgorithmBase {
                 if(w == null) return null;
 
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 0;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = false;
                 w.base.symmetry = SYMMETRY.SYMMETRIC;
-                w.base.compact_support = 0;
+                w.base.compact_support = false;
                 w.base.family_name = "Morlet wavelet";
                 w.base.short_name = "morl";
+                w.base.name = "morl";
                 w.complex_cwt = 0;
                 w.lower_bound = -8;
                 w.upper_bound = 8;
@@ -3777,15 +3787,16 @@ public  class PyWavelets extends AlgorithmBase {
                 if(w == null) return null;
 
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 0;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = false;
                 if (order % 2 == 0)
                     w.base.symmetry = SYMMETRY.SYMMETRIC;
                 else
                     w.base.symmetry = SYMMETRY.ANTI_SYMMETRIC;
-                w.base.compact_support = 0;
+                w.base.compact_support = false;
                 w.base.family_name = "Complex Gaussian wavelets";
                 w.base.short_name = "cgau";
+                w.base.name = "cgau" + String.valueOf(order);
                 w.complex_cwt = 1;
                 w.lower_bound = -5;
                 w.upper_bound = 5;
@@ -3799,12 +3810,13 @@ public  class PyWavelets extends AlgorithmBase {
                 if(w == null) return null;
 
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 0;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = false;
                 w.base.symmetry = SYMMETRY.ASYMMETRIC;
-                w.base.compact_support = 0;
+                w.base.compact_support = false;
                 w.base.family_name = "Shannon wavelets";
                 w.base.short_name = "shan";
+                w.base.name = "shan";
                 w.complex_cwt = 1;
                 w.lower_bound = -20;
                 w.upper_bound = 20;
@@ -3818,12 +3830,13 @@ public  class PyWavelets extends AlgorithmBase {
                 if(w == null) return null;
 
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 0;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = false;
                 w.base.symmetry = SYMMETRY.ASYMMETRIC;
-                w.base.compact_support = 0;
+                w.base.compact_support = false;
                 w.base.family_name = "Frequency B-Spline wavelets";
                 w.base.short_name = "fbsp";
+                w.base.name = "fbsp";
                 w.complex_cwt = 1;
                 w.lower_bound = -20;
                 w.upper_bound = 20;
@@ -3837,12 +3850,13 @@ public  class PyWavelets extends AlgorithmBase {
                 if(w == null) return null;
 
                 w.base.support_width = -1;
-                w.base.orthogonal = 0;
-                w.base.biorthogonal = 0;
+                w.base.orthogonal = false;
+                w.base.biorthogonal = false;
                 w.base.symmetry = SYMMETRY.ASYMMETRIC;
-                w.base.compact_support = 0;
+                w.base.compact_support = false;
                 w.base.family_name = "Complex Morlet wavelets";
                 w.base.short_name = "cmor";
+                w.base.name = "cmor";
                 w.complex_cwt = 1;
                 w.lower_bound = -8;
                 w.upper_bound = 8;
@@ -3869,32 +3883,32 @@ public  class PyWavelets extends AlgorithmBase {
         w.dec_len = base.dec_len;
         if (base.dec_len > 0)
         {
-            w.dec_lo_double = new double[w.dec_len];
-            w.dec_hi_double = new double[w.dec_len];
-            if(w.dec_lo_double == null || w.dec_hi_double == null) {
+            w.dec_lo = new double[w.dec_len];
+            w.dec_hi = new double[w.dec_len];
+            if(w.dec_lo == null || w.dec_hi == null) {
                free_discrete_wavelet(w);
                return null;
             }
         }
         else
         {
-            w.dec_lo_double = null;
-            w.dec_hi_double = null;
+            w.dec_lo = null;
+            w.dec_hi = null;
         }
         w.rec_len = base.rec_len;
         if (base.rec_len > 0)
         {
-            w.rec_lo_double = new double[w.rec_len];
-            w.rec_hi_double = new double[w.rec_len];
-            if(w.rec_lo_double == null || w.rec_hi_double == null) {
+            w.rec_lo = new double[w.rec_len];
+            w.rec_hi = new double[w.rec_len];
+            if(w.rec_lo == null || w.rec_hi == null) {
                free_discrete_wavelet(w);
                return null;
             }
         }
         else
         {
-            w.rec_lo_double = null;
-            w.rec_hi_double = null;
+            w.rec_lo = null;
+            w.rec_hi = null;
         }
 
 
@@ -3902,15 +3916,15 @@ public  class PyWavelets extends AlgorithmBase {
         if (base.dec_len > 0)
         {
         	for (i = 0; i < w.dec_len; i++) {
-        		w.dec_lo_double[i] = base.dec_lo_double[i];
-        		w.dec_hi_double[i] = base.dec_hi_double[i];
+        		w.dec_lo[i] = base.dec_lo[i];
+        		w.dec_hi[i] = base.dec_hi[i];
         	}
         }
         if (base.rec_len > 0)
         {
         	for (i = 0; i < w.rec_len; i++) {
-        		w.rec_lo_double[i] = base.rec_lo_double[i];
-        		w.rec_hi_double[i] = base.rec_hi_double[i];
+        		w.rec_lo[i] = base.rec_lo[i];
+        		w.rec_hi[i] = base.rec_hi[i];
         	}
         }
         return w;
@@ -5167,7 +5181,7 @@ public  class PyWavelets extends AlgorithmBase {
             	}
                 upsampling_convolution_valid_sf
                     (a_row, a_info.shape[axis],
-                     wavelet.rec_lo_double, wavelet.rec_len,
+                     wavelet.rec_lo, wavelet.rec_len,
                      output_row, output_info.shape[axis],
                      mode);
             }
@@ -5185,7 +5199,7 @@ public  class PyWavelets extends AlgorithmBase {
             	}
                 upsampling_convolution_valid_sf
                     (d_row, d_info.shape[axis],
-                     wavelet.rec_hi_double, wavelet.rec_len,
+                     wavelet.rec_hi, wavelet.rec_len,
                      output_row, output_info.shape[axis],
                      mode);
             }
@@ -5217,7 +5231,7 @@ public  class PyWavelets extends AlgorithmBase {
         }
 
         return downsampling_convolution(input, input_len,
-                                                    wavelet.dec_lo_double,
+                                                    wavelet.dec_lo,
                                                     wavelet.dec_len, output,
                                                     2, mode);
     }
@@ -5235,7 +5249,7 @@ public  class PyWavelets extends AlgorithmBase {
             return -1;
 
         return downsampling_convolution(input, input_len,
-                                                    wavelet.dec_hi_double,
+                                                    wavelet.dec_hi,
                                                     wavelet.dec_len, output,
                                                     2, mode);
     }
@@ -5253,7 +5267,7 @@ public  class PyWavelets extends AlgorithmBase {
             return -1;
 
         return upsampling_convolution_full(coeffs_a, coeffs_len,
-                                                       wavelet.rec_lo_double,
+                                                       wavelet.rec_lo,
                                                        wavelet.rec_len, output,
                                                        output_len);
     }
@@ -5270,7 +5284,7 @@ public  class PyWavelets extends AlgorithmBase {
             return -1;
 
         return upsampling_convolution_full(coeffs_d, coeffs_len,
-                                                       wavelet.rec_hi_double,
+                                                       wavelet.rec_hi,
                                                        wavelet.rec_len, output,
                                                        output_len);
     }
@@ -5312,7 +5326,7 @@ public  class PyWavelets extends AlgorithmBase {
         /* reconstruct approximation coeffs with lowpass reconstruction filter */
         if(coeffs_a != null) {
             if(upsampling_convolution_valid_sf(coeffs_a, input_len,
-                                                      wavelet.rec_lo_double,
+                                                      wavelet.rec_lo,
                                                       wavelet.rec_len, output,
                                                       output_len, mode) < 0){
                 return -1;
@@ -5324,7 +5338,7 @@ public  class PyWavelets extends AlgorithmBase {
          */
     if(coeffs_d != null){
             if(upsampling_convolution_valid_sf(coeffs_d, input_len,
-                                                      wavelet.rec_hi_double,
+                                                      wavelet.rec_hi,
                                                       wavelet.rec_len, output,
                                                       output_len, mode) < 0){
                 return -1;
@@ -5387,7 +5401,7 @@ public  class PyWavelets extends AlgorithmBase {
                           DiscreteWavelet wavelet,
                           double output[], int output_len,
                           int level){
-        return swt(input, input_len, wavelet.dec_lo_double,
+        return swt(input, input_len, wavelet.dec_lo,
                                 wavelet.dec_len, output, output_len, level);
     }
 
@@ -5398,7 +5412,7 @@ public  class PyWavelets extends AlgorithmBase {
                           DiscreteWavelet wavelet,
                           double output[], int output_len,
                           int level){
-        return swt(input, input_len, wavelet.dec_hi_double,
+        return swt(input, input_len, wavelet.dec_hi,
                                 wavelet.dec_len, output, output_len, level);
     }
     
@@ -6379,6 +6393,62 @@ public  class PyWavelets extends AlgorithmBase {
         for (i = 0; i < N; i++) {
         	Preferences.debug("i = " + i + " PSI = " + PSI[i] + " psi = " + psi[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
+    }
+        
+	    public void test_wavelet_properties() {
+	        //w = pywt.Wavelet('db3')
+	    	int i;
+	    	DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 3);
+	        MODE mode = MODE.MODE_SYMMETRIC;
+	
+	        //# Name
+	        System.out.println("Actual w.base.name = " + w.base.name + "Expected w.base.name = " + "db3");
+	        // assert_(w.name == 'db3')
+	        System.out.println("Actual w.short_name = " + w.base.short_name + " Expected w.base.short_name = " + "db");
+	        //assert_(w.short_family_name == 'db')
+	        System.out.println("Actual w.base.family_name = " + w.base.family_name + " Expected w.base.family_name = " + "Daubechies");
+	        //assert_(w.family_name, 'Daubechies')
+	
+	        //# String representation
+	        //fields = ('Family name', 'Short name', 'Filters length', 'Orthogonal',
+	        //          'Biorthogonal', 'Symmetry')
+	        //for field in fields:
+	            //assert_(field in str(w))
+	
+	        //# Filter coefficients
+	        double dec_lo[] = new double[]{0.03522629188210, -0.08544127388224, -0.13501102001039,
+	                  0.45987750211933, 0.80689150931334, 0.33267055295096};
+	        double dec_hi[] = new double[]{-0.33267055295096, 0.80689150931334, -0.45987750211933,
+	                  -0.13501102001039, 0.08544127388224, 0.03522629188210};
+	        double rec_lo[] = new double[]{0.33267055295096, 0.80689150931334, 0.45987750211933,
+	                  -0.13501102001039, -0.08544127388224, 0.03522629188210};
+	        double rec_hi[] = new double[]{0.03522629188210, 0.08544127388224, -0.13501102001039,
+	                  -0.45987750211933, 0.80689150931334, -0.33267055295096};
+	        for (i = 0; i < dec_lo.length; i++) {
+	        	System.out.println("i = " + i + "w.dec_lo = " + w.dec_lo[i] + " dec_lo = " + dec_lo[i]);
+	        }
+	        for (i = 0; i < dec_hi.length; i++) {
+	        	System.out.println("i = " + i + "w.dec_hi = " + w.dec_hi[i] + " dec_hi = " + dec_hi[i]);
+	        }
+	        for (i = 0; i < rec_lo.length; i++) {
+	        	System.out.println("i = " + i + "w.rec_lo = " + w.rec_lo[i] + " rec_lo = " + rec_lo[i]);
+	        }
+	        for (i = 0; i < rec_hi.length; i++) {
+	        	System.out.println("i = " + i + "w.rec_hi = " + w.rec_hi[i] + " rec_hi = " + rec_hi[i]);
+	        }
+	
+	        /*assert_(len(w.filter_bank) == 4)
+	
+	        # Orthogonality
+	        assert_(w.orthogonal)
+	        assert_(w.biorthogonal)
+	
+	        # Symmetry
+	        assert_(w.symmetry)
+	
+	        # Vanishing moments
+	        assert_(w.vanishing_moments_phi == 0)
+	        assert_(w.vanishing_moments_psi == 3)*/
     }
 
 }
