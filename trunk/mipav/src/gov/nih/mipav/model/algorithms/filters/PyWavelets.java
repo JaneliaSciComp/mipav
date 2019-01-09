@@ -6402,9 +6402,9 @@ public  class PyWavelets extends AlgorithmBase {
 	        MODE mode = MODE.MODE_SYMMETRIC;
 	
 	        //# Name
-	        System.out.println("Actual w.base.name = " + w.base.name + "Expected w.base.name = " + "db3");
+	        System.out.println("Actual w.base.name = " + w.base.name + " Expected w.base.name = " + "db3");
 	        // assert_(w.name == 'db3')
-	        System.out.println("Actual w.short_name = " + w.base.short_name + " Expected w.base.short_name = " + "db");
+	        System.out.println("Actual w.base.short_name = " + w.base.short_name + " Expected w.base.short_name = " + "db");
 	        //assert_(w.short_family_name == 'db')
 	        System.out.println("Actual w.base.family_name = " + w.base.family_name + " Expected w.base.family_name = " + "Daubechies");
 	        //assert_(w.family_name, 'Daubechies')
@@ -6425,30 +6425,272 @@ public  class PyWavelets extends AlgorithmBase {
 	        double rec_hi[] = new double[]{0.03522629188210, 0.08544127388224, -0.13501102001039,
 	                  -0.45987750211933, 0.80689150931334, -0.33267055295096};
 	        for (i = 0; i < dec_lo.length; i++) {
-	        	System.out.println("i = " + i + "w.dec_lo = " + w.dec_lo[i] + " dec_lo = " + dec_lo[i]);
+	        	System.out.println("i = " + i + " w.dec_lo = " + w.dec_lo[i] + " dec_lo = " + dec_lo[i]);
 	        }
 	        for (i = 0; i < dec_hi.length; i++) {
-	        	System.out.println("i = " + i + "w.dec_hi = " + w.dec_hi[i] + " dec_hi = " + dec_hi[i]);
+	        	System.out.println("i = " + i + " w.dec_hi = " + w.dec_hi[i] + " dec_hi = " + dec_hi[i]);
 	        }
 	        for (i = 0; i < rec_lo.length; i++) {
-	        	System.out.println("i = " + i + "w.rec_lo = " + w.rec_lo[i] + " rec_lo = " + rec_lo[i]);
+	        	System.out.println("i = " + i + " w.rec_lo = " + w.rec_lo[i] + " rec_lo = " + rec_lo[i]);
 	        }
 	        for (i = 0; i < rec_hi.length; i++) {
-	        	System.out.println("i = " + i + "w.rec_hi = " + w.rec_hi[i] + " rec_hi = " + rec_hi[i]);
+	        	System.out.println("i = " + i + " w.rec_hi = " + w.rec_hi[i] + " rec_hi = " + rec_hi[i]);
 	        }
 	
-	        /*assert_(len(w.filter_bank) == 4)
+	        //assert_(len(w.filter_bank) == 4)
 	
-	        # Orthogonality
-	        assert_(w.orthogonal)
-	        assert_(w.biorthogonal)
+	        // Orthogonality
+	        System.out.println("Actual w.base.orthogonal = " + w.base.orthogonal + " Expected w.base.orthogonal = true");
+	        System.out.println("Actual w.base.biorthogonal = " + w.base.biorthogonal + " Expected w.base.biorthogonal = true");
 	
-	        # Symmetry
-	        assert_(w.symmetry)
+	        // Symmetry
+	        System.out.println("Actual w.base.symmetry = " + w.base.symmetry + " Expected w.base.symmetry = ASYMMETRIC");
 	
-	        # Vanishing moments
-	        assert_(w.vanishing_moments_phi == 0)
-	        assert_(w.vanishing_moments_psi == 3)*/
+	        // Vanishing moments
+	        System.out.println("Actual w.vanishing_moments_phi = " + w.vanishing_moments_phi + " Expected w.vanishing_moments_phi = 0");
+	        System.out.println("Actual w.vanishing_moments_psi = " + w.vanishing_moments_psi + " Expected w.vanishing_moments_psi = 3");
     }
+	    
+	    /*public double[][] wavefun(DiscreteWavelet w, int level) {
+	       
+	        //wavefun(self, level=8)
+
+	        // Calculates approximations of scaling function (`phi`) and wavelet
+	        // function (`psi`) on xgrid (`x`) at a given level of refinement.
+
+	        // Parameters
+	        // ----------
+	        // level : int, optional
+	        //     Level of refinement (default: 8).
+
+	        // Returns
+	        // -------
+	        // [phi, psi, x] : array_like
+	        //     For orthogonal wavelets returns scaling function, wavelet function
+	        //     and xgrid - [phi, psi, x].
+
+	        // [phi_d, psi_d, phi_r, psi_r, x] : array_like
+	        //     For biorthogonal wavelets returns scaling and wavelet function both
+	        //    for decomposition and reconstruction and xgrid
+
+	        // Examples
+	        // --------
+	        // >>> import pywt
+	        // >>> # Orthogonal
+	        // >>> wavelet = pywt.Wavelet('db2')
+	        // >>> phi, psi, x = wavelet.wavefun(level=5)
+	        // >>> # Biorthogonal
+	        // >>> wavelet = pywt.Wavelet('bior3.5')
+	        // >>> phi_d, psi_d, phi_r, psi_r, x = wavelet.wavefun(level=5)
+
+	     
+	    	int filter_length;
+	        int right_extent_length;
+	        int output_length;
+	        int keep_length;
+	        double n, n_mul;
+	        cdef np.float64_t[::1] n_arr = <np.float64_t[:1]> &n,
+	        cdef np.float64_t[::1] n_mul_arr = <np.float64_t[:1]> &n_mul
+	        cdef double p "p"
+	        cdef double mul "mul"
+	        cdef Wavelet other "other"
+	        cdef phi_d, psi_d, phi_r, psi_r
+	        cdef psi_i
+	        cdef np.float64_t[::1] x, psi
+
+	        n = pow(sqrt(2.), <double>level)
+	        p = (pow(2., <double>level))
+
+	        if (w.base.orthogonal) {
+	            filter_length = w.dec_len;
+	            output_length = <pywt_index_t> ((filter_length-1) * p + 1)
+	            keep_length = get_keep_length(output_length, level, filter_length)
+	            output_length = fix_output_length(output_length, keep_length)
+
+	            right_extent_length = get_right_extent_length(output_length,
+	                                                          keep_length)
+
+	            // phi, psi, x
+	            return [np.concatenate(([0.],
+	                                    keep(upcoef(True, n_arr, self, level, 0), keep_length),
+	                                    np.zeros(right_extent_length))),
+	                    np.concatenate(([0.],
+	                                    keep(upcoef(False, n_arr, self, level, 0), keep_length),
+	                                    np.zeros(right_extent_length))),
+	                    np.linspace(0.0, (output_length-1)/p, output_length)]
+	        } // if (w.base.orthogonal)
+	        else { // not orthogonal
+	            if (w.base.biorthogonal && ((w.vanishing_moments_psi % 4) != 1)) {
+	               // # FIXME: I don't think this branch is well tested
+	                n_mul = -n;
+	            }
+	            else {
+	                n_mul = n;
+	            }
+
+	            other = Wavelet(filter_bank=self.inverse_filter_bank)
+
+	            filter_length  = other.dec_len;
+	            output_length = <pywt_index_t> ((filter_length-1) * p)
+	            keep_length = get_keep_length(output_length, level, filter_length)
+	            output_length = fix_output_length(output_length, keep_length)
+	            right_extent_length = get_right_extent_length(output_length, keep_length)
+
+	            phi_d  = np.concatenate(([0.],
+	                                     keep(upcoef(True, n_arr, other, level, 0), keep_length),
+	                                     np.zeros(right_extent_length)))
+	            psi_d  = np.concatenate(([0.],
+	                                     keep(upcoef(False, n_mul_arr, other, level, 0),
+	                                          keep_length),
+	                                     np.zeros(right_extent_length)))
+
+	            filter_length = w.dec_len;
+	            output_length = <pywt_index_t> ((filter_length-1) * p)
+	            keep_length = get_keep_length(output_length, level, filter_length)
+	            output_length = fix_output_length(output_length, keep_length)
+	            right_extent_length = get_right_extent_length(output_length, keep_length)
+
+	            phi_r  = np.concatenate(([0.],
+	                                     keep(upcoef(True, n_arr, self, level, 0), keep_length),
+	                                     np.zeros(right_extent_length)))
+	            psi_r  = np.concatenate(([0.],
+	                                     keep(upcoef(False, n_mul_arr, self, level, 0),
+	                                          keep_length),
+	                                     np.zeros(right_extent_length)))
+
+	            return [phi_d, psi_d, phi_r, psi_r,
+	                    np.linspace(0.0, (output_length - 1) / p, output_length)] 
+	        } // not orthogonal
+	    }*/
+	    
+	public int get_keep_length(int output_length,
+                int level, int filter_length) {
+		int i;
+		int lplus = filter_length - 2;
+		int keep_length = 1;
+		for (i = 0; i < level; i++) {
+		    keep_length = 2*keep_length+lplus;
+		}    
+		return keep_length;
+    }
+
+	public int fix_output_length(int output_length, int keep_length) {
+	    if ((output_length-keep_length-2) < 0) {
+	        output_length = keep_length+2;
+	    }
+	    return output_length;
+	}
+
+    public int get_right_extent_length(int output_length, int keep_length) {
+        return (output_length - keep_length - 1);
+    }
+    
+    //# TODO: Can this be replaced by the take parameter of upcoef? Or vice-versa?
+    public double[] keep(double arr[], int keep_length) {
+    	int i;
+        int length = arr.length;
+        if (keep_length < length) {
+            int left_bound = (length - keep_length) / 2;
+            double arr_keep[] = new double[keep_length];
+            for (i = left_bound; i < left_bound + keep_length; i++) {
+            	arr_keep[i-left_bound] = arr[i];
+            }
+    		return arr_keep;
+        }
+        return arr;
+    }
+    
+    /*public double[] upcoef(bolean do_rec_a, cdata_t[::1] coeffs, DiscreteWavelet wavelet, int level,
+            int take) {
+   cdef cdata_t[::1] rec
+   cdef int i, retval
+   cdef size_t rec_len, left_bound, right_bound, coeffs_size
+
+   rec_len = 0
+
+   if level < 1:
+       raise ValueError("Value of level must be greater than 0.")
+
+   for i in range(level):
+       coeffs_size = coeffs.size
+       # output len
+       rec_len = common.reconstruction_buffer_length(coeffs.size, wavelet.dec_len)
+       if rec_len < 1:
+           raise RuntimeError("Invalid output length.")
+
+       # To mirror multi-level wavelet reconstruction behaviour, when detail
+       # reconstruction is requested, the dec_d variant is only called at the
+       # first level to generate the approximation coefficients at the second
+       # level.  Subsequent levels apply the reconstruction filter.
+       if cdata_t is np.float64_t:
+           rec = np.zeros(rec_len, dtype=np.float64)
+           if do_rec_a or i > 0:
+               with nogil:
+                   retval = c_wt.double_rec_a(&coeffs[0], coeffs_size, wavelet.w,
+                                    &rec[0], rec_len)
+               if retval < 0:
+                   raise RuntimeError("C rec_a failed.")
+           else:
+               with nogil:
+                   retval = c_wt.double_rec_d(&coeffs[0], coeffs_size, wavelet.w,
+                                    &rec[0], rec_len)
+               if retval < 0:
+                   raise RuntimeError("C rec_d failed.")
+       elif cdata_t is np.float32_t:
+           rec = np.zeros(rec_len, dtype=np.float32)
+           if do_rec_a or i > 0:
+               with nogil:
+                   retval = c_wt.float_rec_a(&coeffs[0], coeffs_size, wavelet.w,
+                                   &rec[0], rec_len)
+               if retval < 0:
+                   raise RuntimeError("C rec_a failed.")
+           else:
+               with nogil:
+                   retval = c_wt.float_rec_d(&coeffs[0], coeffs_size, wavelet.w,
+                                   &rec[0], rec_len)
+               if retval < 0:
+                   raise RuntimeError("C rec_d failed.")
+       IF HAVE_C99_CPLX:
+           if cdata_t is np.complex128_t:
+               rec = np.zeros(rec_len, dtype=np.complex128)
+               if do_rec_a or i > 0:
+                   with nogil:
+                       retval = c_wt.double_complex_rec_a(&coeffs[0], coeffs_size, wavelet.w,
+                                        &rec[0], rec_len)
+                   if retval < 0:
+                       raise RuntimeError("C rec_a failed.")
+               else:
+                   with nogil:
+                       retval = c_wt.double_complex_rec_d(&coeffs[0], coeffs_size, wavelet.w,
+                                        &rec[0], rec_len)
+                   if retval < 0:
+                       raise RuntimeError("C rec_d failed.")
+           elif cdata_t is np.complex64_t:
+               rec = np.zeros(rec_len, dtype=np.complex64)
+               if do_rec_a or i > 0:
+                   with nogil:
+                       retval = c_wt.float_complex_rec_a(&coeffs[0], coeffs_size, wavelet.w,
+                                       &rec[0], rec_len)
+                   if retval < 0:
+                       raise RuntimeError("C rec_a failed.")
+               else:
+                   with nogil:
+                       retval = c_wt.float_complex_rec_d(&coeffs[0], coeffs_size, wavelet.w,
+                                       &rec[0], rec_len)
+                   if retval < 0:
+                       raise RuntimeError("C rec_d failed.")
+       # TODO: this algorithm needs some explaining
+       coeffs = rec
+
+   if take > 0 and take < rec_len:
+       left_bound = right_bound = (rec_len-take) // 2
+       if (rec_len-take) % 2:
+           # right_bound must never be zero for indexing to work
+           right_bound = right_bound + 1
+
+       return rec[left_bound:-right_bound]
+
+   return rec
+    }*/
 
 }
