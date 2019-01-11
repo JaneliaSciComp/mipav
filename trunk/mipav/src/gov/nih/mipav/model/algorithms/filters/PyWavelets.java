@@ -6483,59 +6483,80 @@ public  class PyWavelets extends AlgorithmBase {
 	        // >>> wavelet = pywt.Wavelet('bior3.5')
 	        // >>> phi_d, psi_d, phi_r, psi_r, x = wavelet.wavefun(level=5)
 
-	     
+	        int i;
 	    	int filter_length;
 	        int right_extent_length;
 	        int output_length;
 	        int keep_length;
-	        double n, n_mul;
-	        cdef np.float64_t[::1] n_arr = <np.float64_t[:1]> &n,
-	        cdef np.float64_t[::1] n_mul_arr = <np.float64_t[:1]> &n_mul
-	        cdef double p "p"
-	        cdef double mul "mul"
-	        cdef Wavelet other "other"
-	        cdef phi_d, psi_d, phi_r, psi_r
-	        cdef psi_i
-	        cdef np.float64_t[::1] x, psi
+	        //double n, n_mul;
+	        //cdef np.float64_t[::1] n_arr = <np.float64_t[:1]> &n,
+	        //cdef np.float64_t[::1] n_mul_arr = <np.float64_t[:1]> &n_mul
+	        double n_arr[] = new double[1];
+	        double n_mul_arr[] = new double[1];
+	        double p;
+	        double mul;
+	        DiscreteWavelet other;
+	        double phi[];
+	        double psi[];
+	        double x[];
+	        double phi_d[];
+	        double psi_d[];
+	        double phi_r[];
+	        double psi_r[];
+	        //cdef psi_i
+	        //cdef np.float64_t[::1] x, psi
+	        double ans[][];
 
-	        n = pow(sqrt(2.), <double>level)
-	        p = (pow(2., <double>level))
+	        n_arr[0] = Math.pow(Math.sqrt(2.0), (double)level);
+	        p = Math.pow(2.0, (double)level);
 
 	        if (w.base.orthogonal) {
 	            filter_length = w.dec_len;
-	            output_length = <pywt_index_t> ((filter_length-1) * p + 1)
-	            keep_length = get_keep_length(output_length, level, filter_length)
-	            output_length = fix_output_length(output_length, keep_length)
+	            output_length = (int) ((filter_length-1) * p + 1);
+	            keep_length = get_keep_length(output_length, level, filter_length);
+	            output_length = fix_output_length(output_length, keep_length);
 
 	            right_extent_length = get_right_extent_length(output_length,
-	                                                          keep_length)
+	                                                          keep_length);
 
 	            // phi, psi, x
-	            return [np.concatenate(([0.],
-	                                    keep(upcoef(True, n_arr, self, level, 0), keep_length),
-	                                    np.zeros(right_extent_length))),
-	                    np.concatenate(([0.],
-	                                    keep(upcoef(False, n_arr, self, level, 0), keep_length),
-	                                    np.zeros(right_extent_length))),
-	                    np.linspace(0.0, (output_length-1)/p, output_length)]
+	            double keepArray[] = keep(upcoef(true, n_arr, w, level, 0), keep_length);
+	            phi = new double[1 + keepArray.length + right_extent_length];
+	            for (i = 0; i < keepArray.length; i++) {
+	            	phi[i+1] = keepArray[i];
+	            }
+	            keepArray = keep(upcoef(false, n_arr, w, level, 0), keep_length);
+	            psi = new double[1 + keepArray.length + right_extent_length];
+	            for (i = 0; i < keepArray.length; i++) {
+	            	psi[i+1] = keepArray[i];
+	            }
+	            x = new double[output_length];
+	            for (i = 0; i < output_length; i++) {
+	            	x[i] = i*(output_length-1)/p;
+	            }
+	            ans = new double[3][];
+	            ans[0] = phi;
+	            ans[1] = psi;
+	            ans[2] = x;
+	            return ans;
 	        } // if (w.base.orthogonal)
 	        else { // not orthogonal
 	            if (w.base.biorthogonal && ((w.vanishing_moments_psi % 4) != 1)) {
 	               // # FIXME: I don't think this branch is well tested
-	                n_mul = -n;
+	                n_mul_arr[0] = -n_arr[0];
 	            }
 	            else {
-	                n_mul = n;
+	                n_mul_arr[0] = n_arr[0];
 	            }
 
-	            other = Wavelet(filter_bank=self.inverse_filter_bank)
+	            other = Wavelet(filter_bank=w.inverse_filter_bank);
 
 	            filter_length  = other.dec_len;
-	            output_length = <pywt_index_t> ((filter_length-1) * p)
-	            keep_length = get_keep_length(output_length, level, filter_length)
-	            output_length = fix_output_length(output_length, keep_length)
-	            right_extent_length = get_right_extent_length(output_length, keep_length)
-
+	            output_length = (int) ((filter_length-1) * p);
+	            keep_length = get_keep_length(output_length, level, filter_length);
+	            output_length = fix_output_length(output_length, keep_length);
+	            right_extent_length = get_right_extent_length(output_length, keep_length);
+                double keepArray[] = keep(upcoef(true, n_arr, other, level, 0), keep_length);
 	            phi_d  = np.concatenate(([0.],
 	                                     keep(upcoef(True, n_arr, other, level, 0), keep_length),
 	                                     np.zeros(right_extent_length)))
@@ -6600,97 +6621,69 @@ public  class PyWavelets extends AlgorithmBase {
         return arr;
     }
     
-    /*public double[] upcoef(bolean do_rec_a, cdata_t[::1] coeffs, DiscreteWavelet wavelet, int level,
+    public double[] upcoef(boolean do_rec_a, double coeffs[], DiscreteWavelet wavelet, int level,
             int take) {
-   cdef cdata_t[::1] rec
-   cdef int i, retval
-   cdef size_t rec_len, left_bound, right_bound, coeffs_size
-
-   rec_len = 0
-
-   if level < 1:
-       raise ValueError("Value of level must be greater than 0.")
-
-   for i in range(level):
-       coeffs_size = coeffs.size
-       # output len
-       rec_len = common.reconstruction_buffer_length(coeffs.size, wavelet.dec_len)
-       if rec_len < 1:
-           raise RuntimeError("Invalid output length.")
-
-       # To mirror multi-level wavelet reconstruction behaviour, when detail
-       # reconstruction is requested, the dec_d variant is only called at the
-       # first level to generate the approximation coefficients at the second
-       # level.  Subsequent levels apply the reconstruction filter.
-       if cdata_t is np.float64_t:
-           rec = np.zeros(rec_len, dtype=np.float64)
-           if do_rec_a or i > 0:
-               with nogil:
-                   retval = c_wt.double_rec_a(&coeffs[0], coeffs_size, wavelet.w,
-                                    &rec[0], rec_len)
-               if retval < 0:
-                   raise RuntimeError("C rec_a failed.")
-           else:
-               with nogil:
-                   retval = c_wt.double_rec_d(&coeffs[0], coeffs_size, wavelet.w,
-                                    &rec[0], rec_len)
-               if retval < 0:
-                   raise RuntimeError("C rec_d failed.")
-       elif cdata_t is np.float32_t:
-           rec = np.zeros(rec_len, dtype=np.float32)
-           if do_rec_a or i > 0:
-               with nogil:
-                   retval = c_wt.float_rec_a(&coeffs[0], coeffs_size, wavelet.w,
-                                   &rec[0], rec_len)
-               if retval < 0:
-                   raise RuntimeError("C rec_a failed.")
-           else:
-               with nogil:
-                   retval = c_wt.float_rec_d(&coeffs[0], coeffs_size, wavelet.w,
-                                   &rec[0], rec_len)
-               if retval < 0:
-                   raise RuntimeError("C rec_d failed.")
-       IF HAVE_C99_CPLX:
-           if cdata_t is np.complex128_t:
-               rec = np.zeros(rec_len, dtype=np.complex128)
-               if do_rec_a or i > 0:
-                   with nogil:
-                       retval = c_wt.double_complex_rec_a(&coeffs[0], coeffs_size, wavelet.w,
-                                        &rec[0], rec_len)
-                   if retval < 0:
-                       raise RuntimeError("C rec_a failed.")
-               else:
-                   with nogil:
-                       retval = c_wt.double_complex_rec_d(&coeffs[0], coeffs_size, wavelet.w,
-                                        &rec[0], rec_len)
-                   if retval < 0:
-                       raise RuntimeError("C rec_d failed.")
-           elif cdata_t is np.complex64_t:
-               rec = np.zeros(rec_len, dtype=np.complex64)
-               if do_rec_a or i > 0:
-                   with nogil:
-                       retval = c_wt.float_complex_rec_a(&coeffs[0], coeffs_size, wavelet.w,
-                                       &rec[0], rec_len)
-                   if retval < 0:
-                       raise RuntimeError("C rec_a failed.")
-               else:
-                   with nogil:
-                       retval = c_wt.float_complex_rec_d(&coeffs[0], coeffs_size, wavelet.w,
-                                       &rec[0], rec_len)
-                   if retval < 0:
-                       raise RuntimeError("C rec_d failed.")
-       # TODO: this algorithm needs some explaining
-       coeffs = rec
-
-   if take > 0 and take < rec_len:
-       left_bound = right_bound = (rec_len-take) // 2
-       if (rec_len-take) % 2:
-           # right_bound must never be zero for indexing to work
-           right_bound = right_bound + 1
-
-       return rec[left_bound:-right_bound]
-
-   return rec
-    }*/
+	   double rec[] = null;
+	   int i, retval;
+	   int rec_len, left_bound, right_bound, coeffs_size;
+	
+	   rec_len = 0;
+	
+	   if (level < 1) {
+	       MipavUtil.displayError("Value of level must be greater than 0.");
+	       return null;
+	   }
+	
+	   for (i = 0; i < level; i++) {
+	       coeffs_size = coeffs.length;
+	       // output len
+	       rec_len = reconstruction_buffer_length(coeffs.length, wavelet.dec_len);
+	       if (rec_len < 1) {
+	           MipavUtil.displayError("Invalid output length.");
+	           return null;
+	       }
+	
+	       // To mirror multi-level wavelet reconstruction behaviour, when detail
+	       // reconstruction is requested, the dec_d variant is only called at the
+	       // first level to generate the approximation coefficients at the second
+	       // level.  Subsequent levels apply the reconstruction filter
+	       rec = new double[rec_len];
+	       if (do_rec_a || (i > 0)) {
+	           retval = rec_a(coeffs, coeffs_size, wavelet,
+	                                rec, rec_len);
+	           if (retval < 0) {
+	               MipavUtil.displayError("C rec_a failed.");
+	               return null;
+	           }
+	       }
+	       else {
+	           retval = rec_d(coeffs, coeffs_size, wavelet,
+	                                rec, rec_len);
+	           if (retval < 0) {
+	               MipavUtil.displayError("C rec_d failed.");
+	               return null;
+	           }
+	       } // else 
+	       
+	       // TODO: this algorithm needs some explaining
+	       coeffs = rec;
+	   } // for (i = 0; i < level; i++)
+	
+	   if ((take > 0) && (take < rec_len)) {
+	       left_bound = right_bound = (rec_len-take) / 2;
+	       if (((rec_len-take) % 2) == 1) {
+	           //# right_bound must never be zero for indexing to work
+	           right_bound = right_bound + 1;
+	       }
+	
+	       double recCenter[] = new double[rec.length-right_bound-left_bound];
+	       for (i = 0; i < rec.length-right_bound-left_bound; i++) {
+	    	   recCenter[i] = rec[i + left_bound];
+	       }
+	       return recCenter;
+	   }
+	
+	   return rec;
+   }
 
 }
