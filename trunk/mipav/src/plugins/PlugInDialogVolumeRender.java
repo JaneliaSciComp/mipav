@@ -2310,6 +2310,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{			
 			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
+				backNextPanel.remove(displayModel);
+				backNextPanel.add(displayModel);
+				displayModel.setSelected(false);
+				backNextPanel.remove(previewUntwisting);
+				backNextPanel.add(previewUntwisting);
+				
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( openImages( voiFile, null, fileName ) )
