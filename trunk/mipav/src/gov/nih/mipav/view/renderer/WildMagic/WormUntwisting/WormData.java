@@ -1058,6 +1058,13 @@ public class WormData
 				text.add(left.elementAt(i));
 				text.add(left.elementAt(i));
 				text.setText( name + "L" );
+				String note = text.getNote();
+				if ( note.contains("lattice segment:") ) {
+					int index = note.indexOf("lattice segment:");
+					note = note.substring(0, index);
+				}
+				note = note + "\n" + "lattice segment: " + (i+1);
+				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();
 
@@ -1076,6 +1083,13 @@ public class WormData
 				text.add(right.elementAt(i));
 				text.add(right.elementAt(i));
 				text.setText( name + "R" );
+				note = text.getNote();
+				if ( note.contains("lattice segment:") ) {
+					int index = note.indexOf("lattice segment:");
+					note = note.substring(0, index);
+				}
+				note = note + "\n" + "lattice segment: " + (i+1);
+				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();
 				seamAnnotations.getCurves().add(text);
@@ -1089,6 +1103,13 @@ public class WormData
 				text.add(left.elementAt(i));
 				text.add(left.elementAt(i));
 				text.setText( name + "L" );
+				String note = text.getNote();
+				if ( note.contains("lattice segment:") ) {
+					int index = note.indexOf("lattice segment:");
+					note = note.substring(0, index);
+				}
+				note = note + "\n" + "lattice segment: " + (i+1);
+				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();
 
@@ -1107,6 +1128,13 @@ public class WormData
 				text.add(right.elementAt(i));
 				text.add(right.elementAt(i));
 				text.setText( name + "R" );
+				note = text.getNote();
+				if ( note.contains("lattice segment:") ) {
+					int index = note.indexOf("lattice segment:");
+					note = note.substring(0, index);
+				}
+				note = note + "\n" + "lattice segment: " + (i+1);
+				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();
 				seamAnnotations.getCurves().add(text);

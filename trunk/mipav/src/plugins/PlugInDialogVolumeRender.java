@@ -190,7 +190,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JButton startButton;
 
 	private JTabbedPane tabbedPane;
-
+	private int selectedTab = -1;
 
 	private VolumeTriPlanarInterface triVolume;
 	private JPanelAnnotations annotationPanelUI;
@@ -591,6 +591,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			else if ( command.equals("preview") )
 			{
+				selectedTab = tabbedPane.getSelectedIndex();
 				TransferFunction fn = null;
 				TransferFunction blueFn = null;
 				TransferFunction greenFn = null;
@@ -657,6 +658,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					}
 					volumeImage.UpdateImages(volumeImage.getLUT());
 				}
+				tabbedPane.setSelectedIndex(0);
 			}
 			if ( includeRange != null )
 			{
@@ -1256,7 +1258,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					pack();									
 				}
 			}
-			
 			
 			return true;
 		}
