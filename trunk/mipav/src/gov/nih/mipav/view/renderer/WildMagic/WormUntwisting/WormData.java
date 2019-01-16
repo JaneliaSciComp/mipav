@@ -1007,6 +1007,7 @@ public class WormData
 		Arrays.sort(pairSort);
 		
 		int pairCount = 0;
+		int extraCount = 0;
 		for ( int i = 0; i < left.size(); i++ )
 		{
 			int x = (int)left.elementAt(i).X;
@@ -1078,6 +1079,38 @@ public class WormData
 				text.setUseMarker(false);
 				text.update();
 				seamAnnotations.getCurves().add(text);
+			}
+			else
+			{
+				String name = "a" + extraCount++;
+				
+				// left seam cell:
+				VOIText text = new VOIText();
+				text.add(left.elementAt(i));
+				text.add(left.elementAt(i));
+				text.setText( name + "L" );
+				text.setUseMarker(false);
+				text.update();
+
+				//			int x = (int)seamCellPoints.elementAt(i).X;
+				//			int y = (int)seamCellPoints.elementAt(i).Y;
+				//			int z = (int)seamCellPoints.elementAt(i).Z;
+				//			if ( (i+1) != seamSegmentation.getFloat(x,y,z) )
+				//			{
+				//				System.err.println( "Seam Cell " + (i+1) + "  " + seamSegmentation.getFloat(x,y,z) );
+				//			}
+				seamAnnotations.getCurves().add(text);
+
+				// right seam cell:
+				// left seam cell:
+				text = new VOIText();
+				text.add(right.elementAt(i));
+				text.add(right.elementAt(i));
+				text.setText( name + "R" );
+				text.setUseMarker(false);
+				text.update();
+				seamAnnotations.getCurves().add(text);
+				
 			}
 		}
 
