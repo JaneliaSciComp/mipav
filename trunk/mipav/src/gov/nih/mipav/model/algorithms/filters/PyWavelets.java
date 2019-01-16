@@ -6451,7 +6451,158 @@ public  class PyWavelets extends AlgorithmBase {
 	        System.out.println("Actual w.vanishing_moments_psi = " + w.vanishing_moments_psi + " Expected w.vanishing_moments_psi = 3");
     }
 	    
-	    /*public double[][] wavefun(DiscreteWavelet w, int level) {
+	public void test_wavefun_sym3() {
+		    int i;
+	        //w = pywt.Wavelet('sym3')
+		    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.SYM, 3);
+	        // sym3 is an orthogonal wavelet, so 3 outputs from wavefun
+	        //phi, psi, x = w.wavefun(level=3)
+		    int level = 3;
+		    double ans[][] = wavefun(w, level);
+		    double phi[] = ans[0];
+		    double psi[] = ans[1];
+		    double x[] = ans[2];
+		    Preferences.debug("Actual phi.length = " + phi.length + " Expected phi.length = 41\n", Preferences.DEBUG_ALGORITHM);
+		    Preferences.debug("Actual psi.length = " + psi.length + " Expected psi.length = 41\n", Preferences.DEBUG_ALGORITHM);
+		    Preferences.debug("Actual x.length = " + x.length + " Expected x.length = 41\n", Preferences.DEBUG_ALGORITHM);
+
+	        double x_expect[] = new double[x.length];
+	        for (i = 0; i < x.length; i++) {
+	        	x_expect[i] = i*5.0/(x.length-1); 
+	        }
+	        for (i = 0; i < x.length; i++) {
+	             Preferences.debug("i = " + i + " x = " + x[i] + " x_expect = " + x_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        }
+	        double phi_expect[] = new double[]{0.00000000e+00, 1.04132926e-01, 2.52574126e-01,
+	                               3.96525521e-01, 5.70356539e-01, 7.18934305e-01,
+	                               8.70293448e-01, 1.05363620e+00, 1.24921722e+00,
+	                               1.15296888e+00, 9.41669683e-01, 7.55875887e-01,
+	                               4.96118565e-01, 3.28293151e-01, 1.67624969e-01,
+	                               -7.33690312e-02, -3.35452855e-01, -3.31221131e-01,
+	                               -2.32061503e-01, -1.66854239e-01, -4.34091324e-02,
+	                               -2.86152390e-02, -3.63563035e-02, 2.06034491e-02,
+	                               8.30280254e-02, 7.17779073e-02, 3.85914311e-02,
+	                               1.47527100e-02, -2.31896077e-02, -1.86122172e-02,
+	                               -1.56211329e-03, -8.70615088e-04, 3.20760857e-03,
+	                               2.34142153e-03, -7.73737194e-04, -2.99879354e-04,
+	                               1.23636238e-04, 0.00000000e+00, 0.00000000e+00,
+	                               0.00000000e+00, 0.00000000e+00};
+
+	        double psi_expect[] = new double[]{0.00000000e+00, 1.10265752e-02, 2.67449277e-02,
+	                               4.19878574e-02, 6.03947231e-02, 7.61275365e-02,
+	                               9.21548684e-02, 1.11568926e-01, 1.32278887e-01,
+	                               6.45829680e-02, -3.97635130e-02, -1.38929884e-01,
+	                               -2.62428322e-01, -3.62246804e-01, -4.62843343e-01,
+	                               -5.89607507e-01, -7.25363076e-01, -3.36865858e-01,
+	                               2.67715108e-01, 8.40176767e-01, 1.55574430e+00,
+	                               1.18688954e+00, 4.20276324e-01, -1.51697311e-01,
+	                               -9.42076108e-01, -7.93172332e-01, -3.26343710e-01,
+	                               -1.24552779e-01, 2.12909254e-01, 1.75770320e-01,
+	                               1.47523075e-02, 8.22192707e-03, -3.02920592e-02,
+	                               -2.21119497e-02, 7.30703025e-03, 2.83200488e-03,
+	                               -1.16759765e-03, 0.00000000e+00, 0.00000000e+00,
+	                               0.00000000e+00, 0.00000000e+00};
+
+	        for (i = 0; i < phi.length; i++) {
+	        	Preferences.debug("i = " + i + " phi = " + phi[i] + " phi_expect = " + phi_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        }
+	        for (i = 0; i < psi.length; i++) {
+	        	Preferences.debug("i = " + i + " psi = " + psi[i] + " psi_expect = " + psi_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        }
+	        
+	}
+	
+	public void test_wavefun_bior13() {
+		int i;
+	    //w = pywt.Wavelet('bior1.3')
+		DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.BIOR, 13);
+	    // bior1.3 is not an orthogonal wavelet, so 5 outputs from wavefun
+	    //phi_d, psi_d, phi_r, psi_r, x = w.wavefun(level=3)
+		int level = 3;
+		double ans[][] = wavefun(w, level);
+	    //for arr in [phi_d, psi_d, phi_r, psi_r]:
+	        //assert_(arr.size == 40)
+		double phi_d[] = ans[0];
+		double psi_d[] = ans[1];
+		double phi_r[] = ans[2];
+		double psi_r[] = ans[3];
+		double x[] = ans[4];
+		Preferences.debug("phi_d.length = " + phi_d.length + " Expected phi_d.length = 40\n", Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("psi_d.length = " + psi_d.length + " Expected psi_d.length = 40\n", Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("phi_r.length = " + phi_r.length + " Expected phi_r.length = 40\n", Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("psi_r.length = " + psi_r.length + " Expected psi_r.length = 40\n", Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("x.length = " + x.length + " Expected x.length = 40\n", Preferences.DEBUG_ALGORITHM);
+
+
+	    double phi_d_expect[] = new double[]{0., -0.00195313, 0.00195313, 0.01757813,
+	                             0.01367188, 0.00390625, -0.03515625, -0.12890625,
+	                             -0.15234375, -0.125, -0.09375, -0.0625, 0.03125,
+	                             0.15234375, 0.37890625, 0.78515625, 0.99609375,
+	                             1.08203125, 1.13671875, 1.13671875, 1.08203125,
+	                             0.99609375, 0.78515625, 0.37890625, 0.15234375,
+	                             0.03125, -0.0625, -0.09375, -0.125, -0.15234375,
+	                             -0.12890625, -0.03515625, 0.00390625, 0.01367188,
+	                             0.01757813, 0.00195313, -0.00195313, 0., 0., 0.};
+	    double phi_r_expect[] = new double[x.length];
+	    for (i = 15; i < 23; i++) {
+	    	phi_r_expect[i] = 1.0;
+	    }
+	    //phi_r_expect = np.zeros(x.size, dtype=np.float)
+	    //phi_r_expect[15:23] = 1
+
+	    double psi_d_expect[] = new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0,
+	                             0.015625, -0.015625, -0.140625, -0.109375,
+	                             -0.03125, 0.28125, 1.03125, 1.21875, 1.125, 0.625,
+	                             -0.625, -1.125, -1.21875, -1.03125, -0.28125,
+	                             0.03125, 0.109375, 0.140625, 0.015625, -0.015625,
+	                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+	    double psi_r_expect[] = new double[x.length];
+	    for (i = 7; i < 15; i++) {
+	    	psi_r_expect[i] = -0.125;
+	    }
+	    for (i = 15; i < 19; i++) {
+	    	psi_r_expect[i] = 1.0;
+	    }
+	    for (i = 19; i < 23; i++) {
+	    	psi_r_expect[i] = -1.0;
+	    }
+	    for (i = 23; i < 31; i++) {
+	    	psi_r_expect[i] = 0.125;
+	    }
+	    //psi_r_expect = np.zeros(x.size, dtype=np.float)
+	    //psi_r_expect[7:15] = -0.125
+	    //psi_r_expect[15:19] = 1
+	    //psi_r_expect[19:23] = -1
+	    //psi_r_expect[23:31] = 0.125
+
+	    //assert_allclose(x, np.linspace(0, 5, x.size, endpoint=False))
+	    double x_expect[] = new double[x.length];
+	    for (i = 0; i < x.length; i++) {
+	    	x_expect[i] = i * 5.0/x.length;
+	    }
+	    for (i = 0; i < x.length; i++) {
+	    	Preferences.debug("i = " + i + " x = " + x[i] + " x_expect = " + x_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    }
+	    for (i = 0; i < phi_d.length; i++) {
+	    	Preferences.debug("i = " + i + " phi_d = " + phi_d[i] + " phi_d_expect = " + phi_d_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    }
+	    for (i = 0; i < phi_r.length; i++) {
+	    	Preferences.debug("i = " + i + " phi_r = " + phi_r[i] + " phi_r_expect = " + phi_r_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    }
+	    for (i = 0; i < psi_d.length; i++) {
+	    	Preferences.debug("i = " + i + " psi_d = " + psi_d[i] + " psi_d_expect = " + psi_d_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    }
+	    for (i = 0; i < psi_r.length; i++) {
+	    	Preferences.debug("i = " + i + " psi_r = " + psi_r[i] + " psi_r_expect = " + psi_r_expect[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    }
+	    //assert_allclose(phi_d, phi_d_expect, rtol=1e-5, atol=1e-9)
+	    //assert_allclose(phi_r, phi_r_expect, rtol=1e-10, atol=1e-12)
+	    //assert_allclose(psi_d, psi_d_expect, rtol=1e-10, atol=1e-12)
+	    //assert_allclose(psi_r, psi_r_expect, rtol=1e-10, atol=1e-12)
+	}
+	    
+	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
 	        //wavefun(self, level=8)
 
@@ -6532,7 +6683,7 @@ public  class PyWavelets extends AlgorithmBase {
 	            }
 	            x = new double[output_length];
 	            for (i = 0; i < output_length; i++) {
-	            	x[i] = i*(output_length-1)/p;
+	            	x[i] = i/p;
 	            }
 	            ans = new double[3][];
 	            ans[0] = phi;
@@ -6549,7 +6700,7 @@ public  class PyWavelets extends AlgorithmBase {
 	                n_mul_arr[0] = n_arr[0];
 	            }
 
-	            other = Wavelet(filter_bank=w.inverse_filter_bank);
+	            other = Wavelet(inverse_filter_bank(w));
 
 	            filter_length  = other.dec_len;
 	            output_length = (int) ((filter_length-1) * p);
@@ -6557,32 +6708,44 @@ public  class PyWavelets extends AlgorithmBase {
 	            output_length = fix_output_length(output_length, keep_length);
 	            right_extent_length = get_right_extent_length(output_length, keep_length);
                 double keepArray[] = keep(upcoef(true, n_arr, other, level, 0), keep_length);
-	            phi_d  = np.concatenate(([0.],
-	                                     keep(upcoef(True, n_arr, other, level, 0), keep_length),
-	                                     np.zeros(right_extent_length)))
-	            psi_d  = np.concatenate(([0.],
-	                                     keep(upcoef(False, n_mul_arr, other, level, 0),
-	                                          keep_length),
-	                                     np.zeros(right_extent_length)))
+                phi_d = new double[1 + keepArray.length + right_extent_length];
+                for (i = 0; i < keepArray.length; i++) {
+                	phi_d[i+1] = keepArray[i];
+                }
+                keepArray = keep(upcoef(false, n_mul_arr, other, level, 0), keep_length);
+                psi_d = new double[1 + keepArray.length + right_extent_length];
+                for (i = 0; i < keepArray.length; i++) {
+                	psi_d[i+1] = keepArray[i];
+                }
 
 	            filter_length = w.dec_len;
-	            output_length = <pywt_index_t> ((filter_length-1) * p)
-	            keep_length = get_keep_length(output_length, level, filter_length)
-	            output_length = fix_output_length(output_length, keep_length)
-	            right_extent_length = get_right_extent_length(output_length, keep_length)
-
-	            phi_r  = np.concatenate(([0.],
-	                                     keep(upcoef(True, n_arr, self, level, 0), keep_length),
-	                                     np.zeros(right_extent_length)))
-	            psi_r  = np.concatenate(([0.],
-	                                     keep(upcoef(False, n_mul_arr, self, level, 0),
-	                                          keep_length),
-	                                     np.zeros(right_extent_length)))
-
-	            return [phi_d, psi_d, phi_r, psi_r,
-	                    np.linspace(0.0, (output_length - 1) / p, output_length)] 
+	            output_length = (int) ((filter_length-1) * p);
+	            keep_length = get_keep_length(output_length, level, filter_length);
+	            output_length = fix_output_length(output_length, keep_length);
+	            right_extent_length = get_right_extent_length(output_length, keep_length);
+                keepArray = keep(upcoef(true, n_arr, w, level, 0), keep_length);
+                phi_r = new double[1 + keepArray.length + right_extent_length];
+                for (i = 0; i < keepArray.length; i++) {
+                	phi_r[i+1] = keepArray[i];
+                }
+                keepArray = keep(upcoef(false, n_mul_arr, w, level, 0), keep_length);
+                psi_r = new double[1 + keepArray.length + right_extent_length];
+                for (i = 0; i < keepArray.length; i++) {
+                	psi_r[i+1] = keepArray[i];
+                }
+                x = new double[output_length];
+	            for (i = 0; i < output_length; i++) {
+	            	x[i] = i/p;
+	            }
+                ans = new double[5][];
+                ans[0] = phi_d;
+                ans[1] = psi_d;
+                ans[2] = phi_r;
+                ans[3] = psi_r;
+                ans[4] = x;
+                return ans;
 	        } // not orthogonal
-	    }*/
+	    }
 	    
 	public int get_keep_length(int output_length,
                 int level, int filter_length) {
@@ -6685,5 +6848,71 @@ public  class PyWavelets extends AlgorithmBase {
 	
 	   return rec;
    }
+    
+    
+    private DiscreteWavelet Wavelet(double filter_bank[][]) {
+    	int i;
+    	DiscreteWavelet w = new DiscreteWavelet();
+    	w.base = new BaseWavelet();
+    	w.dec_lo = new double[filter_bank[0].length];
+    	for (i = 0; i < filter_bank[0].length; i++) {
+    		w.dec_lo[i] = filter_bank[0][i];
+    	}
+    	w.dec_hi = new double[filter_bank[1].length];
+    	for (i = 0; i < filter_bank[1].length; i++) {
+    		w.dec_hi[i] = filter_bank[1][i];
+    	}
+    	w.rec_lo = new double[filter_bank[2].length];
+    	for (i = 0; i < filter_bank[2].length; i++) {
+    		w.rec_lo[i] = filter_bank[2][i];
+    	}
+    	w.rec_hi = new double[filter_bank[3].length];
+    	for (i = 0; i < filter_bank[3].length; i++) {
+    		w.rec_hi[i] = filter_bank[3][i];
+    	}
+    	w.dec_len = w.dec_lo.length;
+    	w.rec_len = w.rec_lo.length;
+    	return w;
+    }
+    
+    private double[][] filter_bank(DiscreteWavelet w) {
+        // Returns tuple of wavelet filters coefficients
+        // (dec_lo, dec_hi, rec_lo, rec_hi)
+        double ans[][] = new double[4][];
+        ans[0] = w.dec_lo;
+        ans[1] = w.dec_hi;
+        ans[2] = w.rec_lo;
+        ans[3] = w.rec_hi;
+        return ans;
+    }
+    
+    private double[][] inverse_filter_bank(DiscreteWavelet w) {
+        // Tuple of inverse wavelet filters coefficients
+        // (rec_lo[::-1], rec_hi[::-1], dec_lo[::-1], dec_hi[::-1])
+        // [::-1] means reversed array
+    	int i;
+        double rec_lo_reversed[] = new double[w.rec_lo.length];
+        for (i = 0; i < w.rec_lo.length; i++) {
+        	rec_lo_reversed[i] = w.rec_lo[w.rec_lo.length - 1 - i];
+        }
+        double rec_hi_reversed[] = new double[w.rec_hi.length];
+        for (i = 0; i < w.rec_hi.length; i++) {
+        	rec_hi_reversed[i] = w.rec_hi[w.rec_hi.length - 1 - i];
+        }
+        double dec_lo_reversed[] = new double[w.dec_lo.length];
+        for (i = 0; i < w.dec_lo.length; i++) {
+        	dec_lo_reversed[i] = w.dec_lo[w.dec_lo.length - 1 - i];
+        }
+        double dec_hi_reversed[] = new double[w.dec_hi.length];
+        for (i = 0; i < w.dec_hi.length; i++) {
+        	dec_hi_reversed[i] = w.dec_hi[w.dec_hi.length - 1 - i];
+        }
+        double ans[][] = new double[4][];
+        ans[0] = rec_lo_reversed;
+        ans[1] = rec_hi_reversed;
+        ans[2] = dec_lo_reversed;
+        ans[3] = dec_hi_reversed;
+        return ans;
+    }
 
 }
