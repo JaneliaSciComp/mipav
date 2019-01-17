@@ -193,16 +193,16 @@ public  class PyWavelets extends AlgorithmBase {
 
         int support_width;
 
-        SYMMETRY symmetry;
+        SYMMETRY symmetry = SYMMETRY.UNKNOWN;
 
-        boolean orthogonal = true;
-        boolean biorthogonal = true;
-        boolean compact_support = true;
+        boolean orthogonal = false;
+        boolean biorthogonal = false;
+        boolean compact_support = false;
 
         int _builtin;
-        String family_name;
-        String short_name;
-        String name;
+        String family_name = null;
+        String short_name = null;
+        String name = null;
     }
     
     private class DiscreteWavelet {
@@ -214,8 +214,8 @@ public  class PyWavelets extends AlgorithmBase {
         int dec_len;   /* length of decomposition filter */
         int rec_len;   /* length of reconstruction filter */
 
-        int vanishing_moments_psi;
-        int vanishing_moments_phi;
+        int vanishing_moments_psi = 0;
+        int vanishing_moments_phi = 0;
     } 
     
     private class ContinuousWavelet {
@@ -224,10 +224,11 @@ public  class PyWavelets extends AlgorithmBase {
         double lower_bound;
         double upper_bound;
         /* Parameters for shan, fbsp, cmor*/
-        int complex_cwt;
+        boolean complex_cwt;
         double center_frequency;
         double bandwidth_frequency;
         int fbsp_order;
+        int family_number;
     }
     
     private void SWAP_FLOAT_ARRAY(float x[], float y[]) {
@@ -3735,12 +3736,13 @@ public  class PyWavelets extends AlgorithmBase {
                 w.base.family_name = "Gaussian";
                 w.base.short_name = "gaus";
                 w.base.name = "gaus" + String.valueOf(order);
-                w.complex_cwt = 0;
+                w.complex_cwt = false;
                 w.lower_bound = -5;
                 w.upper_bound = 5;
                 w.center_frequency = 0;
                 w.bandwidth_frequency = 0;
                 w.fbsp_order = 0;
+                w.family_number = order;
                 break;
             case MEXH:
                 w = blank_continuous_wavelet();
@@ -3754,7 +3756,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.base.family_name = "Mexican hat wavelet";
                 w.base.short_name = "mexh";
                 w.base.name = "mexh";
-                w.complex_cwt = 0;
+                w.complex_cwt = false;
                 w.lower_bound = -8;
                 w.upper_bound = 8;
                 w.center_frequency = 0;
@@ -3773,7 +3775,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.base.family_name = "Morlet wavelet";
                 w.base.short_name = "morl";
                 w.base.name = "morl";
-                w.complex_cwt = 0;
+                w.complex_cwt = false;
                 w.lower_bound = -8;
                 w.upper_bound = 8;
                 w.center_frequency = 0;
@@ -3797,12 +3799,13 @@ public  class PyWavelets extends AlgorithmBase {
                 w.base.family_name = "Complex Gaussian wavelets";
                 w.base.short_name = "cgau";
                 w.base.name = "cgau" + String.valueOf(order);
-                w.complex_cwt = 1;
+                w.complex_cwt = true;
                 w.lower_bound = -5;
                 w.upper_bound = 5;
                 w.center_frequency = 0;
                 w.bandwidth_frequency = 0;
                 w.fbsp_order = 0;
+                w.family_number = order;
                 break;
             case SHAN:
 
@@ -3817,7 +3820,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.base.family_name = "Shannon wavelets";
                 w.base.short_name = "shan";
                 w.base.name = "shan";
-                w.complex_cwt = 1;
+                w.complex_cwt = true;
                 w.lower_bound = -20;
                 w.upper_bound = 20;
                 w.center_frequency = 1;
@@ -3837,7 +3840,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.base.family_name = "Frequency B-Spline wavelets";
                 w.base.short_name = "fbsp";
                 w.base.name = "fbsp";
-                w.complex_cwt = 1;
+                w.complex_cwt = true;
                 w.lower_bound = -20;
                 w.upper_bound = 20;
                 w.center_frequency = 0.5;
@@ -3857,7 +3860,7 @@ public  class PyWavelets extends AlgorithmBase {
                 w.base.family_name = "Complex Morlet wavelets";
                 w.base.short_name = "cmor";
                 w.base.name = "cmor";
-                w.complex_cwt = 1;
+                w.complex_cwt = true;
                 w.lower_bound = -8;
                 w.upper_bound = 8;
                 w.center_frequency = 0.5;
@@ -6394,6 +6397,28 @@ public  class PyWavelets extends AlgorithmBase {
         	Preferences.debug("i = " + i + " PSI = " + PSI[i] + " psi = " + psi[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
     }
+    
+    /*public void test_cwt_small_scales() {
+    	int i;
+        double data[] = new double[32];
+
+        // A scale of 0.1 was chosen specifically to give a filter of length 2 for
+        // mexh.  This corner case should not raise an error.
+        double sampling_period = 1.0;
+        ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.MEXH,0);
+        double scales[] = new double[]{0.1};
+        // cfs, f = cwt(data, scales=0.1, wavelet='mexh', sampling_period)
+        double ans[][] = cwt(data, scales, w, sampling_period);
+        double cfs[] = ans[0];
+        double f[] = ans[1];
+        //assert_allclose(cfs, np.zeros_like(cfs))
+        for (i = 0; i < cfs.length; i++) {
+            System.out.println("i = " + i + " cfs = " + cfs[i] + " cfs_expect = 0");	
+        }
+
+        //# extremely short scale factors raise a ValueError
+        //assert_raises(ValueError, pywt.cwt, data, scales=0.01, wavelet='mexh')
+    }*/
         
 	    public void test_wavelet_properties() {
 	        //w = pywt.Wavelet('db3')
@@ -6601,6 +6626,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    //assert_allclose(psi_d, psi_d_expect, rtol=1e-10, atol=1e-12)
 	    //assert_allclose(psi_r, psi_r_expect, rtol=1e-10, atol=1e-12)
 	}
+	
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
@@ -6747,6 +6773,217 @@ public  class PyWavelets extends AlgorithmBase {
 	        } // not orthogonal
 	    }
 	    
+	    private double[][] wavefun(ContinuousWavelet w, int level, int length) {
+	        // default level = 8;
+	    	// int default length = -1;
+	        //wavefun(self, level=8, length=None)
+
+	        //Calculates approximations of wavelet function (``psi``) on xgrid
+	        //(``x``) at a given level of refinement or length itself.
+
+	        //Parameters
+	        //----------
+	        //level : int, optional
+	        //    Level of refinement (default: 8). Defines the length by
+	        //     ``2**level`` if length is not set.
+	        //length : int, optional
+	        //    Number of samples. If set to -1, the length is set to
+	        //    ``2**level`` instead.
+
+	        //Returns
+	        //-------
+	        //psi : array_like
+	        //    Wavelet function computed for grid xval
+	        //xval : array_like
+	        //    grid going from lower_bound to upper_bound
+
+	        //Notes
+	        //-----
+	        //The effective support are set with ``lower_bound`` and ``upper_bound``.
+	        //The wavelet function is complex for ``'cmor'``, ``'shan'``, ``'fbsp'``
+	        //and ``'cgau'``.
+
+	        //The complex frequency B-spline wavelet (``'fbsp'``) has
+	        //``bandwidth_frequency``, ``center_frequency`` and ``fbsp_order`` as
+	        //additional parameters.
+
+	        //The complex Shannon wavelet (``'shan'``) has ``bandwidth_frequency``
+	        //and ``center_frequency`` as additional parameters.
+
+	        //The complex Morlet wavelet (``'cmor'``) has ``bandwidth_frequency``
+	        //and ``center_frequency`` as additional parameters.
+
+	        //Examples
+	        //--------
+	        //>>> import pywt
+	        //>>> import matplotlib.pyplot as plt
+	        //>>> lb = -5
+	        //>>> ub = 5
+	        //>>> n = 1000
+	        //>>> wavelet = pywt.ContinuousWavelet("gaus8")
+	        //>>> wavelet.upper_bound = ub
+	        //>>> wavelet.lower_bound = lb
+	        //>>> [psi,xval] = wavelet.wavefun(length=n)
+	        //>>> plt.plot(xval,psi) # doctest: +ELLIPSIS
+	        //[<matplotlib.lines.Line2D object at ...>]
+	        //>>> plt.title("Gaussian Wavelet of order 8") # doctest: +ELLIPSIS
+	        //<matplotlib.text.Text object at ...>
+	        //>>> plt.show() # doctest: +SKIP
+
+	        //>>> import pywt
+	        //>>> import matplotlib.pyplot as plt
+	        //>>> lb = -5
+	        //>>> ub = 5
+	        //>>> n = 1000
+	        //>>> wavelet = pywt.ContinuousWavelet("cgau4")
+	        //>>> wavelet.upper_bound = ub
+	        //>>> wavelet.lower_bound = lb
+	        //>>> [psi,xval] = wavelet.wavefun(length=n)
+	        //>>> plt.subplot(211) # doctest: +ELLIPSIS
+	        //<matplotlib.axes._subplots.AxesSubplot object at ...>
+	        //>>> plt.plot(xval,np.real(psi)) # doctest: +ELLIPSIS
+	        //[<matplotlib.lines.Line2D object at ...>]
+	        //>>> plt.title("Real part") # doctest: +ELLIPSIS
+	        //<matplotlib.text.Text object at ...>
+	        //>>> plt.subplot(212) # doctest: +ELLIPSIS
+	        //<matplotlib.axes._subplots.AxesSubplot object at ...>
+	        //>>> plt.plot(xval,np.imag(psi)) # doctest: +ELLIPSIS
+	        //[<matplotlib.lines.Line2D object at ...>]
+	        //>>> plt.title("Imaginary part") # doctest: +ELLIPSIS
+	        //<matplotlib.text.Text object at ...>
+	        //>>> plt.show() # doctest: +SKIP
+
+	        int i;
+	        int output_length;
+	        double psi_i[];
+	        double psi_r[];
+	        double psi[];
+	        double x64[];
+	        double psi64[];
+
+	        double p = Math.pow(2., (double)level);
+
+	        if (w != null) {
+	            if (length < 0) {
+	                output_length =(int)p;
+	            }
+	            else {
+	                output_length = length;
+	            }
+	            x64 = new double[output_length];
+	            for (i = 0; i < output_length; i++) {
+	            	x64[i] = w.lower_bound + i * (w.upper_bound - w.lower_bound)/(output_length - 1);
+	            }
+	            if (w.complex_cwt) {
+	                    //psi_r, psi_i = cwt_psi_single(x64, w, output_length);
+	            	double ret[][] = cwt_psi_single(x64, w, output_length);
+	            	psi_r = ret[0];
+	            	psi_i = ret[1];
+	            	double ans[][] = new double[3][];
+	            	ans[0] = psi_r;
+	            	ans[1] = psi_i;
+	            	ans[2] = x64;
+	            	return ans;
+	            }
+	            else {
+	                    //psi = cwt_psi_single(x64, self, output_length)
+	            	double ret[][] = cwt_psi_single(x64, w, output_length);
+	            	psi = ret[0];
+	            	double ans[][] = new double[2][];
+	            	ans[0] = psi;
+	            	ans[1] = x64;
+	            	return ans;
+	            }
+	        } // if (w != null)
+	        else {
+	        	return null;
+	        }
+	    }
+	    
+	    private double[][] cwt_psi_single(double data_t[], ContinuousWavelet wavelet, int output_len) {
+	        double psi[], psi_r[], psi_i[];
+	        int data_size = data_t.length;
+	        int family_number = 0;
+	        double bandwidth_frequency;
+	        double center_frequency;
+	        int fbsp_order;
+	        double ans[][];
+	        if (output_len < 1) {
+	            MipavUtil.displayError("Invalid output length.");
+	            return null;
+	        }
+
+            if (wavelet.base.short_name.equalsIgnoreCase("gaus")) {
+                psi = new double[output_len];
+                family_number = wavelet.family_number;
+                gaus(data_t, psi, data_size, family_number);
+                ans = new double[1][];
+                ans[0] = psi;
+                return ans;
+            }
+            else if (wavelet.base.short_name.equalsIgnoreCase("mexh")) {
+                psi = new double[output_len];
+                mexh(data_t, psi, data_size);
+                ans = new double[1][];
+                ans[0] = psi;
+                return ans;
+            }
+            else if (wavelet.base.short_name.equalsIgnoreCase("morl")) {
+                psi = new double[output_len];
+                morl(data_t, psi, data_size);
+                ans = new double[1][];
+                ans[0] = psi;
+                return ans;
+            }
+            else if (wavelet.base.short_name.equalsIgnoreCase("cgau")) {
+                psi_r = new double[output_len];
+                psi_i = new double[output_len];
+                family_number = wavelet.family_number;
+                cgau(data_t, psi_r, psi_i, data_size, family_number);
+                ans = new double[2][];
+                ans[0] = psi_r;
+                ans[1] = psi_i;
+                return ans;
+            }
+            else if (wavelet.base.short_name.equalsIgnoreCase("shan")) {
+            	psi_r = new double[output_len];
+                psi_i = new double[output_len];
+                bandwidth_frequency = wavelet.bandwidth_frequency;
+                center_frequency = wavelet.center_frequency;
+                shan(data_t, psi_r, psi_i, data_size, bandwidth_frequency, center_frequency);
+                ans = new double[2][];
+                ans[0] = psi_r;
+                ans[1] = psi_i;
+                return ans;
+            }
+            else if (wavelet.base.short_name.equalsIgnoreCase("fbsp")) {
+            	psi_r = new double[output_len];
+                psi_i = new double[output_len];
+                fbsp_order = wavelet.fbsp_order;
+                bandwidth_frequency = wavelet.bandwidth_frequency;
+                center_frequency = wavelet.center_frequency;
+                fbsp(data_t, psi_r, psi_i, data_size, fbsp_order, bandwidth_frequency, center_frequency);
+                ans = new double[2][];
+                ans[0] = psi_r;
+                ans[1] = psi_i;
+                return ans;
+            }
+            else if (wavelet.base.short_name.equalsIgnoreCase("cmor")) {
+            	psi_r = new double[output_len];
+                psi_i = new double[output_len];
+                bandwidth_frequency = wavelet.bandwidth_frequency;
+                center_frequency = wavelet.center_frequency;
+                cmor(data_t, psi_r, psi_i, data_size, bandwidth_frequency, center_frequency);
+                ans = new double[2][];
+                ans[0] = psi_r;
+                ans[1] = psi_i;
+                return ans;
+            }
+            return null;
+	        
+	    }
+
+	    
 	public int get_keep_length(int output_length,
                 int level, int filter_length) {
 		int i;
@@ -6849,6 +7086,32 @@ public  class PyWavelets extends AlgorithmBase {
 	   return rec;
    }
     
+    private DiscreteWavelet Wavelet(String name, double filter_bank[][]) {
+    	int i;
+    	DiscreteWavelet w = new DiscreteWavelet();
+    	w.base = new BaseWavelet();
+    	w.base.name = name;
+    	w.dec_lo = new double[filter_bank[0].length];
+    	for (i = 0; i < filter_bank[0].length; i++) {
+    		w.dec_lo[i] = filter_bank[0][i];
+    	}
+    	w.dec_hi = new double[filter_bank[1].length];
+    	for (i = 0; i < filter_bank[1].length; i++) {
+    		w.dec_hi[i] = filter_bank[1][i];
+    	}
+    	w.rec_lo = new double[filter_bank[2].length];
+    	for (i = 0; i < filter_bank[2].length; i++) {
+    		w.rec_lo[i] = filter_bank[2][i];
+    	}
+    	w.rec_hi = new double[filter_bank[3].length];
+    	for (i = 0; i < filter_bank[3].length; i++) {
+    		w.rec_hi[i] = filter_bank[3][i];
+    	}
+    	w.dec_len = w.dec_lo.length;
+    	w.rec_len = w.rec_lo.length;
+    	return w;
+    }
+    
     
     private DiscreteWavelet Wavelet(double filter_bank[][]) {
     	int i;
@@ -6914,5 +7177,393 @@ public  class PyWavelets extends AlgorithmBase {
         ans[3] = dec_hi_reversed;
         return ans;
     }
+    
+    boolean check_coefficients_orthogonal(DiscreteWavelet w) {
+        int i;
+        double epsilon = 5e-11;
+        int level = 5;
+        //phi, psi, x = w.wavefun(level=level)
+        double ans[][] = wavefun(w, level);
+        double phi[] = ans[0];
+        double psi[] = ans[1];
+        double x[] = ans[2];
+
+        // Lowpass filter coefficients sum to sqrt2
+        double sumdec_lo = 0.0;
+        for (i = 0; i < w.dec_lo.length; i++) {
+        	sumdec_lo += w.dec_lo[i];
+        }
+        double res = sumdec_lo-Math.sqrt(2);
+        if (Math.abs(res) >= epsilon) {
+            Preferences.debug("Lowpass filter coefficients don't sum to " + sumdec_lo + " instead of sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;
+        }
+        // sum even coef = sum odd coef = 1 / sqrt(2)
+        double sumdec_lo_even = 0.0;
+        for (i = 0; i < w.dec_lo.length; i += 2) {
+        	sumdec_lo_even += w.dec_lo[i];
+        }
+        res = sumdec_lo_even - 1.0/Math.sqrt(2.0);
+        if (Math.abs(res) > epsilon) {
+            Preferences.debug("Even lowpass filter coefficients sum to " + sumdec_lo_even + " instead of 1.0/sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;	
+        }
+
+        double sumdec_lo_odd = 0.0;
+        for (i = 1; i < w.dec_lo.length; i += 2) {
+        	sumdec_lo_odd += w.dec_lo[i];
+        }
+        res = sumdec_lo_odd - 1.0/Math.sqrt(2.0);
+        if (Math.abs(res) > epsilon) {
+            Preferences.debug("Odd lowpass filter coefficients sum to " + sumdec_lo_odd + " instead of 1.0/sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;	
+        }
+      
+        // Highpass filter coefficients sum to zero
+        double sum_dec_hi = 0.0;
+        for (i = 0; i < w.dec_hi.length; i++) {
+        	sum_dec_hi += w.dec_hi[i];
+        }
+        if (Math.abs(sum_dec_hi) > epsilon) {
+        	Preferences.debug("Highpass filter coefficents sum to " + sum_dec_hi + " instead of to zero\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+      
+        // Scaling function integrates to unity
+        double sumphi = 0.0;
+        for (i = 0; i < phi.length; i++) {
+        	sumphi += phi[i];
+        }
+        res = sumphi - Math.pow(2, level);
+        if (Math.abs(res) > epsilon) {
+        	Preferences.debug("Sum of phi = " + sumphi + " instead of 2**level\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+
+        // Wavelet function is orthogonal to the scaling function at the same scale
+        double sumphipsi = 0.0;
+        for (i = 0; i < phi.length; i++) {
+        	sumphipsi += phi[i]*psi[i];
+        }
+        if (Math.abs(sumphipsi) > epsilon) {
+        	Preferences.debug("Sum of phi*psi = " + sumphipsi + " instead of zero\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+    
+        // The lowpass and highpass filter coefficients are orthogonal
+        double sumlohi = 0.0;
+        for (i = 0; i < w.dec_lo.length; i++) {
+        	sumlohi += w.dec_lo[i]*w.dec_hi[i];
+        }
+        if (Math.abs(sumlohi) > epsilon) {
+        	Preferences.debug("Sum of dec_lo*dec_hi = " + sumlohi + " instead of zero\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+        return true;
+    }
+    
+    private boolean check_coefficients_biorthogonal(DiscreteWavelet w) {
+        int i;
+        double epsilon = 5e-11;
+        int level = 5;
+        //phi_d, psi_d, phi_r, psi_r, x = w.wavefun(level=level)
+        double ans[][] = wavefun(w, level);
+        double phi_d[] = ans[0];
+        double psi_d[] = ans[1];
+        double phi_r[] = ans[2];
+        double psi_r[] = ans[3];
+        double x[] = ans[4];
+
+        // Lowpass filter coefficients sum to sqrt2
+        double sumdec_lo = 0.0;
+        for (i = 0; i < w.dec_lo.length; i++) {
+        	sumdec_lo += w.dec_lo[i];
+        }
+        double res = sumdec_lo-Math.sqrt(2);
+        if (Math.abs(res) >= epsilon) {
+            Preferences.debug("Lowpass filter coefficients don't sum to " + sumdec_lo + " instead of sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;
+        }
+        // sum even coef = sum odd coef = 1 / sqrt(2)
+        double sumdec_lo_even = 0.0;
+        for (i = 0; i < w.dec_lo.length; i += 2) {
+        	sumdec_lo_even += w.dec_lo[i];
+        }
+        res = sumdec_lo_even - 1.0/Math.sqrt(2.0);
+        if (Math.abs(res) > epsilon) {
+            Preferences.debug("Even lowpass filter coefficients sum to " + sumdec_lo_even + " instead of 1.0/sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;	
+        }
+
+        double sumdec_lo_odd = 0.0;
+        for (i = 1; i < w.dec_lo.length; i += 2) {
+        	sumdec_lo_odd += w.dec_lo[i];
+        }
+        res = sumdec_lo_odd - 1.0/Math.sqrt(2.0);
+        if (Math.abs(res) > epsilon) {
+            Preferences.debug("Odd lowpass filter coefficients sum to " + sumdec_lo_odd + " instead of 1.0/sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;	
+        }
+        
+        // Highpass filter coefficients sum to zero
+        double sum_dec_hi = 0.0;
+        for (i = 0; i < w.dec_hi.length; i++) {
+        	sum_dec_hi += w.dec_hi[i];
+        }
+        if (Math.abs(sum_dec_hi) > epsilon) {
+        	Preferences.debug("Highpass filter coefficents sum to " + sum_dec_hi + " instead of to zero\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+        
+        // Scaling function integrates to unity
+        double sumphi_d = 0.0;
+        for (i = 0; i < phi_d.length; i++) {
+        	sumphi_d += phi_d[i];
+        }
+        res = sumphi_d - Math.pow(2, level);
+        if (Math.abs(res) > epsilon) {
+        	Preferences.debug("Sum of phi_d = " + sumphi_d + " instead of 2**level\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+        
+        double sumphi_r = 0.0;
+        for (i = 0; i < phi_r.length; i++) {
+        	sumphi_r += phi_r[i];
+        }
+        res = sumphi_r - Math.pow(2, level);
+        if (Math.abs(res) > epsilon) {
+        	Preferences.debug("Sum of phi_r = " + sumphi_r + " instead of 2**level\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+        return true;
+    }
+    
+    private boolean check_coefficients(DiscreteWavelet w) {
+    	int i;
+        double epsilon = 5e-11;
+        int level = 10;
+        
+        // Lowpass filter coefficients sum to sqrt2
+        double sumdec_lo = 0.0;
+        for (i = 0; i < w.dec_lo.length; i++) {
+        	sumdec_lo += w.dec_lo[i];
+        }
+        double res = sumdec_lo-Math.sqrt(2);
+        if (Math.abs(res) >= epsilon) {
+            Preferences.debug("Lowpass filter coefficients don't sum to " + sumdec_lo + " instead of sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;
+        }
+        // sum even coef = sum odd coef = 1 / sqrt(2)
+        double sumdec_lo_even = 0.0;
+        for (i = 0; i < w.dec_lo.length; i += 2) {
+        	sumdec_lo_even += w.dec_lo[i];
+        }
+        res = sumdec_lo_even - 1.0/Math.sqrt(2.0);
+        if (Math.abs(res) > epsilon) {
+            Preferences.debug("Even lowpass filter coefficients sum to " + sumdec_lo_even + " instead of 1.0/sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;	
+        }
+
+        double sumdec_lo_odd = 0.0;
+        for (i = 1; i < w.dec_lo.length; i += 2) {
+        	sumdec_lo_odd += w.dec_lo[i];
+        }
+        res = sumdec_lo_odd - 1.0/Math.sqrt(2.0);
+        if (Math.abs(res) > epsilon) {
+            Preferences.debug("Odd lowpass filter coefficients sum to " + sumdec_lo_odd + " instead of 1.0/sqrt2\n", Preferences.DEBUG_ALGORITHM);
+            return false;	
+        }
+        
+        // Highpass filter coefficients sum to zero
+        double sum_dec_hi = 0.0;
+        for (i = 0; i < w.dec_hi.length; i++) {
+        	sum_dec_hi += w.dec_hi[i];
+        }
+        if (Math.abs(sum_dec_hi) > epsilon) {
+        	Preferences.debug("Highpass filter coefficents sum to " + sum_dec_hi + " instead of to zero\n", Preferences.DEBUG_ALGORITHM);
+        	return false;
+        }
+        return true;
+    }
+    
+    /*private double[][] cwt(double data[], double scales[], ContinuousWavelet w, double sampling_period) {
+        // default sampling_period = 1.0
+        //cwt(data, scales, wavelet)
+
+        //One dimensional Continuous Wavelet Transform.
+
+        //Parameters
+        //----------
+        //data : array_like
+        //    Input signal
+        //scales : array_like
+        //    The wavelet scales to use. One can use
+        //    ``f = scale2frequency(scale, wavelet)/sampling_period`` to determine
+        //    what physical frequency, ``f``. Here, ``f`` is in hertz when the
+        //    ``sampling_period`` is given in seconds.
+        // wavelet : Wavelet object or name
+        //    Wavelet to use
+        //sampling_period : float
+        //    Sampling period for the frequencies output (optional).
+        //    The values computed for ``coefs`` are independent of the choice of
+        //    ``sampling_period`` (i.e. ``scales`` is not scaled by the sampling
+        //    period).
+
+        //Returns
+        //-------
+        //coefs : array_like
+        //    Continuous wavelet transform of the input signal for the given scales
+        //    and wavelet
+        //frequencies : array_like
+        //    If the unit of sampling period are seconds and given, than frequencies
+        //    are in hertz. Otherwise, a sampling period of 1 is assumed.
+
+        // Notes
+        // -----
+        // Size of coefficients arrays depends on the length of the input array and
+        // the length of given scales.
+
+        //Examples
+        //--------
+        //>>> import pywt
+        //>>> import numpy as np
+        //>>> import matplotlib.pyplot as plt
+        //>>> x = np.arange(512)
+        //>>> y = np.sin(2*np.pi*x/32)
+        //>>> coef, freqs=pywt.cwt(y,np.arange(1,129),'gaus1')
+        //>>> plt.matshow(coef) # doctest: +SKIP
+        //>>> plt.show() # doctest: +SKIP
+        //----------
+        //>>> import pywt
+        //>>> import numpy as np
+        //>>> import matplotlib.pyplot as plt
+        //>>> t = np.linspace(-1, 1, 200, endpoint=False)
+        //>>> sig  = np.cos(2 * np.pi * 7 * t) + np.real(np.exp(-7*(t-0.4)**2)*np.exp(1j*2*np.pi*2*(t-0.4)))
+        //>>> widths = np.arange(1, 31)
+        //>>> cwtmatr, freqs = pywt.cwt(sig, widths, 'mexh')
+        //>>> plt.imshow(cwtmatr, extent=[-1, 1, 1, 31], cmap='PRGn', aspect='auto',
+        //...            vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())  # doctest: +SKIP
+        //>>> plt.show() # doctest: +SKIP
+
+        // accept array_like input; make a copy to ensure a contiguous array
+        //dt = _check_dtype(data)
+        //data = np.array(data, dtype=dt)
+        //if not isinstance(wavelet, (ContinuousWavelet, Wavelet)):
+            //wavelet = DiscreteContinuousWavelet(wavelet)
+        //if np.isscalar(scales):
+            //scales = np.array([scales])
+        //if data.ndim == 1:
+    	double outReal[] = null;
+    	double outImag[] = null;
+            if (w.complex_cwt) {
+            	outReal = new double[scales.length];
+            	outImag = new double[scales.length];
+            }
+            else {
+                outReal = new double[scales.length];
+            }
+            int precision = 10;
+            int_psi, x = integrate_wavelet(wavelet, precision=precision)
+            for i in np.arange(np.size(scales)):
+                step = x[1] - x[0]
+                j = np.floor(
+                    np.arange(scales[i] * (x[-1] - x[0]) + 1) / (scales[i] * step))
+                if np.max(j) >= np.size(int_psi):
+                    j = np.delete(j, np.where((j >= np.size(int_psi)))[0])
+                coef = - np.sqrt(scales[i]) * np.diff(
+                    np.convolve(data, int_psi[j.astype(np.int)][::-1]))
+                d = (coef.size - data.size) / 2.
+                if d > 0:
+                    out[i, :] = coef[int(np.floor(d)):int(-np.ceil(d))]
+                elif d == 0.:
+                    out[i, :] = coef
+                else:
+                    raise ValueError(
+                        "Selected scale of {} too small.".format(scales[i]))
+            frequencies = scale2frequency(wavelet, scales, precision)
+            if np.isscalar(frequencies):
+                frequencies = np.array([frequencies])
+            for i in np.arange(len(frequencies)):
+                frequencies[i] /= sampling_period
+            return out, frequencies
+        //else:
+            //raise ValueError("Only dim == 1 supportet")
+     }*/
+    
+    private double[] _integrate(double arr[], double step) {
+    	int i;
+    	double integral[] = new double[arr.length];
+    	integral[0] = arr[0];
+    	for (i = 1; i < arr.length; i++) {
+    		integral[i] = integral[i-1] + arr[i];
+    	}
+    	for (i = 0; i < integral.length; i++) {
+    		integral[i] *= step;
+    	}
+        return integral;
+    }
+    
+    /*integrate_wavelet(wavelet, precision=8):
+        """
+        Integrate `psi` wavelet function from -Inf to x using the rectangle
+        integration method.
+
+        Parameters
+        ----------
+        wavelet : Wavelet instance or str
+            Wavelet to integrate.  If a string, should be the name of a wavelet.
+        precision : int, optional
+            Precision that will be used for wavelet function
+            approximation computed with the wavefun(level=precision)
+            Wavelet's method (default: 8).
+
+        Returns
+        -------
+        [int_psi, x] :
+            for orthogonal wavelets
+        [int_psi_d, int_psi_r, x] :
+            for other wavelets
+
+
+        Examples
+        --------
+        >>> from pywt import Wavelet, integrate_wavelet
+        >>> wavelet1 = Wavelet('db2')
+        >>> [int_psi, x] = integrate_wavelet(wavelet1, precision=5)
+        >>> wavelet2 = Wavelet('bior1.3')
+        >>> [int_psi_d, int_psi_r, x] = integrate_wavelet(wavelet2, precision=5)
+
+        """
+        # FIXME: this function should really use scipy.integrate.quad
+
+        if type(wavelet) in (tuple, list):
+            msg = ("Integration of a general signal is deprecated "
+                   "and will be removed in a future version of pywt.")
+            warnings.warn(msg, DeprecationWarning)
+        elif not isinstance(wavelet, (Wavelet, ContinuousWavelet)):
+            wavelet = DiscreteContinuousWavelet(wavelet)
+
+        if type(wavelet) in (tuple, list):
+            psi, x = np.asarray(wavelet[0]), np.asarray(wavelet[1])
+            step = x[1] - x[0]
+            return _integrate(psi, step), x
+
+        functions_approximations = wavelet.wavefun(precision)
+
+        if len(functions_approximations) == 2:      # continuous wavelet
+            psi, x = functions_approximations
+            step = x[1] - x[0]
+            return _integrate(psi, step), x
+
+        elif len(functions_approximations) == 3:    # orthogonal wavelet
+            phi, psi, x = functions_approximations
+            step = x[1] - x[0]
+            return _integrate(psi, step), x
+
+        else:                                       # biorthogonal wavelet
+            phi_d, psi_d, phi_r, psi_r, x = functions_approximations
+            step = x[1] - x[0]
+            return _integrate(psi_d, step), _integrate(psi_r, step), x*/
+
 
 }
