@@ -7453,23 +7453,60 @@ public  class PyWavelets extends AlgorithmBase {
         //if np.isscalar(scales):
             //scales = np.array([scales])
         //if data.ndim == 1:
-    	double outReal[] = null;
+    	int i, k;
+    	double out[] = null;
     	double outImag[] = null;
             if (w.complex_cwt) {
-            	outReal = new double[scales.length];
+            	out = new double[scales.length];
             	outImag = new double[scales.length];
             }
             else {
-                outReal = new double[scales.length];
+                out = new double[scales.length];
             }
             int precision = 10;
-            int_psi, x = integrate_wavelet(wavelet, precision=precision)
-            for i in np.arange(np.size(scales)):
-                step = x[1] - x[0]
-                j = np.floor(
-                    np.arange(scales[i] * (x[-1] - x[0]) + 1) / (scales[i] * step))
-                if np.max(j) >= np.size(int_psi):
-                    j = np.delete(j, np.where((j >= np.size(int_psi)))[0])
+            double ret[][] = integrate_wavelet(w, precision);
+            double int_psi[];
+            double int_psi_imag[];
+            double x[];
+            if (w.complex_cwt) {
+                int_psi = ret[0];
+                int_psi_imag = ret[1];
+                x = ret[2];
+            }
+            else {
+                int_psi = ret[0];
+                x = ret[1];
+            }
+            for (i = 0; i < scales.length; i++) {
+                double step = x[1] - x[0];
+                int jbound = (int)Math.floor((scales[i] * (x[-1] - x[0]) + 1) / (scales[i] * step));
+                int j[] = new int[jbound];
+                for (k = 0; k < jbound; k++) {
+                	j[k] = k;
+                }
+                if ((jbound-1) >= int_psi.length) {
+                	j = new int[int_psi.length];
+                	for (k = 0; k < int_psi.length; k++) {
+                		j[k] = k;
+                	}
+                }
+                int jreverse[] = new int[j.length];
+                for (k = 0; k < j.length; k++) {
+                    jreverse[k] = j[j.length - 1 - k];	
+                }
+                double int_psi_reverse[] = new double[j.length];
+                double int_psi_imag_reverse[] = new double[j.length];
+                for (k = 0; k < j.length; k++) {
+                	int_psi_reverse[k] = int_psi[jreverse[k]];
+                	if (w.complex_cwt) {
+                		int_psi_imag_reverse[k] = int_psi_imag[jreverse[k]];
+                	}
+                }
+                double con[] = convolve(data, int_psi_reverse);
+                double con_imag[];
+                if (w.complex_cwt) {
+                	con_imag = convolve(data, int_psi_imag_reverse);
+                }
                 coef = - np.sqrt(scales[i]) * np.diff(
                     np.convolve(data, int_psi[j.astype(np.int)][::-1]))
                 d = (coef.size - data.size) / 2.
@@ -7480,6 +7517,7 @@ public  class PyWavelets extends AlgorithmBase {
                 else:
                     raise ValueError(
                         "Selected scale of {} too small.".format(scales[i]))
+            } // for (i = 0; i < scales.length; i++)
             frequencies = scale2frequency(wavelet, scales, precision)
             if np.isscalar(frequencies):
                 frequencies = np.array([frequencies])
@@ -7489,6 +7527,22 @@ public  class PyWavelets extends AlgorithmBase {
         //else:
             //raise ValueError("Only dim == 1 supportet")
      }*/
+    
+    private double[] convolve(double a[], double b[]) {
+    	int i;
+    	int j;
+    	double c[] = new double[a.length + b.length - 1];
+    	for ( i = 0; i < c.length; i++ )
+    	{
+    	    for ( j = 0; j < b.length; j++ )
+    	    {
+    	    	if (((i - j) >= 0)  && ((i - j) < a.length)) {
+    	            c[i] += a[i - j] * b[j];    // convolve: multiply and accumulate
+    	    	}
+    	    }
+    	}
+    	return c;
+    }
     
     private double[] _integrate(double arr[], double step) {
     	int i;
@@ -7503,67 +7557,110 @@ public  class PyWavelets extends AlgorithmBase {
         return integral;
     }
     
-    /*integrate_wavelet(wavelet, precision=8):
-        """
-        Integrate `psi` wavelet function from -Inf to x using the rectangle
-        integration method.
+    private double[][] integrate_wavelet(DiscreteWavelet wavelet, int precision) {
+        // Default precision = 8
+        //Integrate `psi` wavelet function from -Inf to x using the rectangle
+        //integration method.
 
-        Parameters
-        ----------
-        wavelet : Wavelet instance or str
-            Wavelet to integrate.  If a string, should be the name of a wavelet.
-        precision : int, optional
-            Precision that will be used for wavelet function
-            approximation computed with the wavefun(level=precision)
-            Wavelet's method (default: 8).
+        //Parameters
+        //----------
+        //wavelet : Wavelet instance or str
+        //    Wavelet to integrate.  If a string, should be the name of a wavelet.
+        //precision : int, optional
+        //    Precision that will be used for wavelet function
+        //    approximation computed with the wavefun(level=precision)
+        //    Wavelet's method (default: 8).
 
-        Returns
-        -------
-        [int_psi, x] :
-            for orthogonal wavelets
-        [int_psi_d, int_psi_r, x] :
-            for other wavelets
+        //Returns
+        //-------
+        //[int_psi, x] :
+        //    for orthogonal wavelets
+        //[int_psi_d, int_psi_r, x] :
+        //    for other wavelets
 
 
-        Examples
-        --------
-        >>> from pywt import Wavelet, integrate_wavelet
-        >>> wavelet1 = Wavelet('db2')
-        >>> [int_psi, x] = integrate_wavelet(wavelet1, precision=5)
-        >>> wavelet2 = Wavelet('bior1.3')
-        >>> [int_psi_d, int_psi_r, x] = integrate_wavelet(wavelet2, precision=5)
+        //Examples
+        //--------
+        //>>> from pywt import Wavelet, integrate_wavelet
+        //>>> wavelet1 = Wavelet('db2')
+        //>>> [int_psi, x] = integrate_wavelet(wavelet1, precision=5)
+        //>>> wavelet2 = Wavelet('bior1.3')
+        //>>> [int_psi_d, int_psi_r, x] = integrate_wavelet(wavelet2, precision=5)
+        // FIXME: this function should really use scipy.integrate.quad
+        double functions_approximations[][] = wavefun(wavelet, precision);
 
-        """
-        # FIXME: this function should really use scipy.integrate.quad
+        if (functions_approximations.length == 3) { //   # orthogonal wavelet
+        	double phi[] = functions_approximations[0];
+        	double psi[] = functions_approximations[1];
+        	double x[] = functions_approximations[2];
+            double step = x[1] - x[0];
+            double integrand[] = _integrate(psi, step);
+            double ans[][] = new double[2][];
+            ans[0] = integrand;
+            ans[1] = x;
+            return ans;
+        }
+        else {       //                               # biorthogonal wavelet
+            double phi_d[] = functions_approximations[0];
+            double psi_d[] = functions_approximations[1];
+            double phi_r[] = functions_approximations[2];
+            double psi_r[] = functions_approximations[3];
+            double x[] = functions_approximations[4];
+            double step = x[1] - x[0];
+            double integrand_d[] = _integrate(psi_d, step);
+            double integrand_r[] = _integrate(psi_r, step);
+            double ans[][] =  new double[3][];
+            ans[0] = integrand_d;
+            ans[1] = integrand_r;
+            ans[2] = x;
+            return ans;
+        }
+    }
+    
+    private double[][] integrate_wavelet(ContinuousWavelet wavelet, int precision) {
+        // Default precision = 8
+        //Integrate `psi` wavelet function from -Inf to x using the rectangle
+        //integration method.
 
-        if type(wavelet) in (tuple, list):
-            msg = ("Integration of a general signal is deprecated "
-                   "and will be removed in a future version of pywt.")
-            warnings.warn(msg, DeprecationWarning)
-        elif not isinstance(wavelet, (Wavelet, ContinuousWavelet)):
-            wavelet = DiscreteContinuousWavelet(wavelet)
+        //Parameters
+        //----------
+        //wavelet : Wavelet instance or str
+        //    Wavelet to integrate.  If a string, should be the name of a wavelet.
+        //precision : int, optional
+        //    Precision that will be used for wavelet function
+        //    approximation computed with the wavefun(level=precision)
+        //    Wavelet's method (default: 8).
 
-        if type(wavelet) in (tuple, list):
-            psi, x = np.asarray(wavelet[0]), np.asarray(wavelet[1])
-            step = x[1] - x[0]
-            return _integrate(psi, step), x
+        //Returns
+        //-------
+        //[int_psi, x] :
+    	
+    	double functions_approximations[][] = wavefun(wavelet, precision, -1);
 
-        functions_approximations = wavelet.wavefun(precision)
-
-        if len(functions_approximations) == 2:      # continuous wavelet
-            psi, x = functions_approximations
-            step = x[1] - x[0]
-            return _integrate(psi, step), x
-
-        elif len(functions_approximations) == 3:    # orthogonal wavelet
-            phi, psi, x = functions_approximations
-            step = x[1] - x[0]
-            return _integrate(psi, step), x
-
-        else:                                       # biorthogonal wavelet
-            phi_d, psi_d, phi_r, psi_r, x = functions_approximations
-            step = x[1] - x[0]
-            return _integrate(psi_d, step), _integrate(psi_r, step), x*/
+        if (functions_approximations.length == 2) { //     # continuous wavelet real
+	        double psi[] = functions_approximations[0];
+	        double x[] = functions_approximations[1];
+	        double step = x[1] - x[0];
+	        double integrand[] = _integrate(psi, step);
+	        double ans[][] = new double[2][];
+	        ans[0] = integrand;
+	        ans[1] = x;
+	        return ans;
+        }
+        else { // functions_approximations == 3 continuous_wavelet complex
+        	double psi_r[] = functions_approximations[0];
+        	double psi_i[] = functions_approximations[1];
+        	double x[] = functions_approximations[2];
+        	double step = x[1] - x[0];
+        	double integrand_r[] = _integrate(psi_r, step);
+        	double integrand_i[] = _integrate(psi_i, step);
+        	double ans[][] = new double[3][];
+        	ans[0] = integrand_r;
+        	ans[1] = integrand_i;
+        	ans[2] = x;
+        	return ans;
+        }
+    }
 
 
 }
