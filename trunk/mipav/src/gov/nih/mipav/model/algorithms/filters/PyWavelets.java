@@ -6398,8 +6398,8 @@ public  class PyWavelets extends AlgorithmBase {
         }
     }
     
-    /*public void test_cwt_small_scales() {
-    	int i;
+    public void test_cwt_small_scales() {
+    	int i, j;
         double data[] = new double[32];
 
         // A scale of 0.1 was chosen specifically to give a filter of length 2 for
@@ -6408,17 +6408,21 @@ public  class PyWavelets extends AlgorithmBase {
         ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.MEXH,0);
         double scales[] = new double[]{0.1};
         // cfs, f = cwt(data, scales=0.1, wavelet='mexh', sampling_period)
-        double ans[][] = cwt(data, scales, w, sampling_period);
-        double cfs[] = ans[0];
-        double f[] = ans[1];
+        double ans[][][] = cwt(data, scales, w, sampling_period);
+        double cfs[][] = ans[0];
+        double f[] = ans[1][0];
         //assert_allclose(cfs, np.zeros_like(cfs))
         for (i = 0; i < cfs.length; i++) {
-            System.out.println("i = " + i + " cfs = " + cfs[i] + " cfs_expect = 0");	
+        	for (j = 0; j < cfs[i].length; j++) {
+                System.out.println("i = " + i + " j = " + j + " cfs = " + cfs[i][j] + " cfs_expect = 0");
+        	}
         }
 
         //# extremely short scale factors raise a ValueError
+        scales[0] = 0.01;
+        ans = cwt(data, scales, w, sampling_period);
         //assert_raises(ValueError, pywt.cwt, data, scales=0.01, wavelet='mexh')
-    }*/
+    }
         
 	    public void test_wavelet_properties() {
 	        //w = pywt.Wavelet('db3')
@@ -6626,6 +6630,50 @@ public  class PyWavelets extends AlgorithmBase {
 	    //assert_allclose(psi_d, psi_d_expect, rtol=1e-10, atol=1e-12)
 	    //assert_allclose(psi_r, psi_r_expect, rtol=1e-10, atol=1e-12)
 	}
+	
+	public void test_centrfreq() {
+	    // db1 is Haar function, frequency=1
+	    // w = pywt.Wavelet('db1')
+	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 1);
+	    double expected = 1;
+	    int precision = 12;
+	    double result = central_frequency(w, precision);
+	    // assert_almost_equal(result, expected, decimal=3)
+	    System.out.println("result = " + result + " expected = " + expected);
+	    // db2, frequency=2/3
+	    //w = pywt.Wavelet('db2')
+	    w = discrete_wavelet(WAVELET_NAME.DB, 2);
+	    expected = 2/3.0;
+	    result = central_frequency(w, precision);
+	    System.out.println("result = " + result + " expected = " + expected);
+	}
+	
+	public void test_scal2frq_scale() {
+	    double scale[] = new double[]{2};
+	    //w = pywt.Wavelet('db1')
+	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 1);
+	    double expected = 1. / scale[0];
+	    int precision = 12;
+	    double result[] = scale2frequency(w, scale, precision);
+	    //assert_almost_equal(result, expected, decimal=3)
+	    System.out.println("result[0] = " + result[0] + " expected = " + expected);
+	}
+	
+	/*public void test_intwave_orthogonal() {
+		//w = pywt.Wavelet('db1')
+	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 1);
+	    int precision = 12;
+	    double ans[] = integrate_wavelet(w, precision);
+	    double int_psi = ans[0];
+	    double x = ans[1];
+	    ix = x < 0.5
+	    # For x < 0.5, the integral is equal to x
+	    assert_allclose(int_psi[ix], x[ix])
+	    # For x > 0.5, the integral is equal to (1 - x)
+	    # Ignore last point here, there x > 1 and something goes wrong
+	    assert_allclose(int_psi[~ix][:-1], 1 - x[~ix][:-1], atol=1e-10)
+	}*/
+	
 	
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
@@ -7386,7 +7434,7 @@ public  class PyWavelets extends AlgorithmBase {
         return true;
     }
     
-    /*private double[][] cwt(double data[], double scales[], ContinuousWavelet w, double sampling_period) {
+    private double[][][] cwt(double data[], double scales[], ContinuousWavelet w, double sampling_period) {
         // default sampling_period = 1.0
         //cwt(data, scales, wavelet)
 
@@ -7454,19 +7502,19 @@ public  class PyWavelets extends AlgorithmBase {
             //scales = np.array([scales])
         //if data.ndim == 1:
     	int i, k;
-    	double out[] = null;
-    	double outImag[] = null;
+    	double out[][] = null;
+    	double out_imag[][] = null;
             if (w.complex_cwt) {
-            	out = new double[scales.length];
-            	outImag = new double[scales.length];
+            	out = new double[scales.length][];
+            	out_imag = new double[scales.length][];
             }
             else {
-                out = new double[scales.length];
+                out = new double[scales.length][];
             }
             int precision = 10;
             double ret[][] = integrate_wavelet(w, precision);
             double int_psi[];
-            double int_psi_imag[];
+            double int_psi_imag[] = null;
             double x[];
             if (w.complex_cwt) {
                 int_psi = ret[0];
@@ -7479,10 +7527,10 @@ public  class PyWavelets extends AlgorithmBase {
             }
             for (i = 0; i < scales.length; i++) {
                 double step = x[1] - x[0];
-                int jbound = (int)Math.floor((scales[i] * (x[-1] - x[0]) + 1) / (scales[i] * step));
+                int jbound = (int)Math.floor(scales[i] * (x[x.length-1] - x[0]) + 1);
                 int j[] = new int[jbound];
                 for (k = 0; k < jbound; k++) {
-                	j[k] = k;
+                	j[k] = (int)Math.floor(k/(scales[i] * step));
                 }
                 if ((jbound-1) >= int_psi.length) {
                 	j = new int[int_psi.length];
@@ -7503,30 +7551,255 @@ public  class PyWavelets extends AlgorithmBase {
                 	}
                 }
                 double con[] = convolve(data, int_psi_reverse);
-                double con_imag[];
+                double con_imag[] = null;
                 if (w.complex_cwt) {
                 	con_imag = convolve(data, int_psi_imag_reverse);
                 }
-                coef = - np.sqrt(scales[i]) * np.diff(
-                    np.convolve(data, int_psi[j.astype(np.int)][::-1]))
-                d = (coef.size - data.size) / 2.
-                if d > 0:
-                    out[i, :] = coef[int(np.floor(d)):int(-np.ceil(d))]
-                elif d == 0.:
-                    out[i, :] = coef
-                else:
-                    raise ValueError(
-                        "Selected scale of {} too small.".format(scales[i]))
+                double diff[] = new double[con.length-1];
+                for (k = 0; k < con.length-1; k++) {
+                	diff[k] = con[k+1] - con[k];
+                }
+                double diff_imag[] = null;
+                if (w.complex_cwt) {
+                	diff_imag = new double[con.length-1];
+                	for (k = 0; k < con.length-1; k++) {
+                    	diff_imag[k] = con_imag[k+1] - con_imag[k];
+                    }
+                }
+                double coef[] = new double[diff.length];
+                for (k = 0; k < diff.length; k++) {
+                	coef[k] = -Math.sqrt(scales[i]) * diff[k];
+                }
+                double coef_imag[] = null;
+                if (w.complex_cwt) {
+                	coef_imag = new double[diff.length];
+                	for (k = 0; k < diff.length; k++) {
+                    	coef_imag[k] = -Math.sqrt(scales[i]) * diff_imag[k];
+                    }
+                }
+                double d = (coef.length - data.length) / 2.0;
+                if (d > 0) {
+                    int len = coef.length - (int)Math.ceil(d) - (int)Math.floor(d);
+                    out[i] = new double[len];
+                    for (k = (int)Math.floor(d); k < coef.length - (int)Math.ceil(d); k++) {
+                    	out[i][k-(int)Math.floor(d)] = coef[k];
+                    }
+                    if (w.complex_cwt) {
+                    	out_imag[i] = new double[len];
+                    	for (k = (int)Math.floor(d); k < coef.length - (int)Math.ceil(d); k++) {
+                        	out_imag[i][k-(int)Math.floor(d)] = coef_imag[k];
+                        }
+                    }
+                }
+                else if (d == 0) {
+                	out[i] = new double[1];
+                	out[i][0] = coef[0];
+                	if (w.complex_cwt) {
+                		out_imag[i] = new double[1];
+                		out_imag[i][0] = coef_imag[0];
+                	}
+                }
+                else {
+                    MipavUtil.displayError("Selected scales["+i+"] = " + scales[i] + " is too small.");
+                    return null;
+                }
             } // for (i = 0; i < scales.length; i++)
-            frequencies = scale2frequency(wavelet, scales, precision)
-            if np.isscalar(frequencies):
-                frequencies = np.array([frequencies])
-            for i in np.arange(len(frequencies)):
-                frequencies[i] /= sampling_period
-            return out, frequencies
+            double frequencies[][] = new double[1][];
+            frequencies[0] = scale2frequency(w, scales, precision);
+            for (i = 0; i < frequencies[0].length; i++) {
+            	frequencies[0][i] /= sampling_period;
+            }
+            double ans[][][];
+            if (w.complex_cwt) {
+            	ans = new double[3][][];
+            	ans[0] = out;
+            	ans[1] = out_imag;
+            	ans[2] = frequencies;
+            }
+            else {
+            	ans = new double[2][][];
+            	ans[0] = out;
+            	ans[1] = frequencies;
+            }
+            return ans;
         //else:
             //raise ValueError("Only dim == 1 supportet")
-     }*/
+     }
+    
+    private double central_frequency(ContinuousWavelet wavelet, int precision) {
+        // precison has default = 8
+        // Computes the central frequency of the `psi` wavelet function.
+
+        // Parameters
+        // ----------
+        // wavelet : Wavelet instance, str or tuple
+        //     Wavelet to integrate.  If a string, should be the name of a wavelet.
+        // precision : int, optional
+        //     Precision that will be used for wavelet function
+        //     approximation computed with the wavefun(level=precision)
+        //     Wavelet's method (default: 8).
+
+        // Returns
+        // -------
+        // scalar
+
+        int i;
+        double functions_approximations[][] = wavefun(wavelet,precision,-1);
+        double psi[];
+        double psi_imag[];
+        double x[];
+        if (functions_approximations.length == 2) {
+        	psi = functions_approximations[0];
+        	psi_imag = new double[psi.length];
+        	x = functions_approximations[1];
+        }
+        else {
+            psi = functions_approximations[0];
+            psi_imag = functions_approximations[1];
+            x = functions_approximations[2];
+        }
+
+        double domain = x[x.length-1] - x[0];
+        if (domain <= 0) {
+        	MipavUtil.displayError("domain = " + domain + " in central_frequency");
+        	return domain;
+        }
+
+        FFTUtility fft = new FFTUtility(psi, psi_imag, 1, psi.length, 1, -1,
+				FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		double absfftmax = -Double.MAX_VALUE;
+		int index = 0;
+		for (i = 0; i < psi.length-1; i++) {
+			double val = psi[i+1]*psi[i+1] + psi_imag[i+1]*psi_imag[i+1];
+			if (val > absfftmax) {
+				absfftmax = val;
+				index = i;
+			}
+		}
+		index = index + 2;
+        if (index > psi.length / 2.0) {
+            index = psi.length - index + 2;
+        }
+
+        return 1.0 / (domain / (index - 1));
+    }
+    
+    private double central_frequency(DiscreteWavelet wavelet, int precision) {
+        // precison has default = 8
+        // Computes the central frequency of the `psi` wavelet function.
+
+        // Parameters
+        // ----------
+        // wavelet : Wavelet instance, str or tuple
+        //     Wavelet to integrate.  If a string, should be the name of a wavelet.
+        // precision : int, optional
+        //     Precision that will be used for wavelet function
+        //     approximation computed with the wavefun(level=precision)
+        //     Wavelet's method (default: 8).
+
+        // Returns
+        // -------
+        // scalar
+
+        int i;
+        double functions_approximations[][] = wavefun(wavelet,precision);
+        double psi[];
+        double psi_imag[];
+        double x[];
+        if (functions_approximations.length == 3) {
+        	// (psi, x)   for (phi, psi, x)
+        	psi = functions_approximations[1];
+        	x = functions_approximations[2];
+        }
+        else {
+        	// (psi_d, x) for (phi_d, psi_d, phi_r, psi_r, x)
+            psi = functions_approximations[1];
+            x = functions_approximations[4];
+        }
+        psi_imag = new double[psi.length];
+
+        double domain = x[x.length-1] - x[0];
+        if (domain <= 0) {
+        	MipavUtil.displayError("domain = " + domain + " in central_frequency");
+        	return domain;
+        }
+
+        FFTUtility fft = new FFTUtility(psi, psi_imag, 1, psi.length, 1, -1,
+				FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		double absfftmax = -Double.MAX_VALUE;
+		int index = 0;
+		for (i = 0; i < psi.length-1; i++) {
+			double val = psi[i+1]*psi[i+1] + psi_imag[i+1]*psi_imag[i+1];
+			if (val > absfftmax) {
+				absfftmax = val;
+				index = i;
+			}
+		}
+		index = index + 2;
+        if (index > psi.length / 2.0) {
+            index = psi.length - index + 2;
+        }
+
+        return 1.0 / (domain / (index - 1));
+    }
+
+
+
+    private double[] scale2frequency(ContinuousWavelet wavelet, double scale[], int precision) {
+        // Default precision = 8
+
+        // Parameters
+        // ----------
+        // wavelet : Wavelet instance or str
+        //     Wavelet to integrate.  If a string, should be the name of a wavelet.
+        // scale : scalar
+        //precision : int, optional
+        //    Precision that will be used for wavelet function approximation computed
+        //    with ``wavelet.wavefun(level=precision)``.  Default is 8.
+
+        //Returns
+        //-------
+        //freq : scalar
+        int i;
+        double cen = central_frequency(wavelet, precision);
+        double ans[] = new double[scale.length];
+        for (i = 0; i < scale.length; i++) {
+        	ans[i] = cen/scale[i];
+        }
+        return ans;
+    }
+    
+    private double[] scale2frequency(DiscreteWavelet wavelet, double scale[], int precision) {
+        // Default precision = 8
+
+        // Parameters
+        // ----------
+        // wavelet : Wavelet instance or str
+        //     Wavelet to integrate.  If a string, should be the name of a wavelet.
+        // scale : scalar
+        //precision : int, optional
+        //    Precision that will be used for wavelet function approximation computed
+        //    with ``wavelet.wavefun(level=precision)``.  Default is 8.
+
+        //Returns
+        //-------
+        //freq : scalar
+        int i;
+        double cen = central_frequency(wavelet, precision);
+        double ans[] = new double[scale.length];
+        for (i = 0; i < scale.length; i++) {
+        	ans[i] = cen/scale[i];
+        }
+        return ans;
+    }
     
     private double[] convolve(double a[], double b[]) {
     	int i;
