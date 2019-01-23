@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Vector;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
@@ -6659,20 +6660,134 @@ public  class PyWavelets extends AlgorithmBase {
 	    System.out.println("result[0] = " + result[0] + " expected = " + expected);
 	}
 	
-	/*public void test_intwave_orthogonal() {
+	public void test_intwave_orthogonal() {
+		int i;
 		//w = pywt.Wavelet('db1')
 	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 1);
 	    int precision = 12;
-	    double ans[] = integrate_wavelet(w, precision);
-	    double int_psi = ans[0];
-	    double x = ans[1];
-	    ix = x < 0.5
-	    # For x < 0.5, the integral is equal to x
-	    assert_allclose(int_psi[ix], x[ix])
-	    # For x > 0.5, the integral is equal to (1 - x)
-	    # Ignore last point here, there x > 1 and something goes wrong
-	    assert_allclose(int_psi[~ix][:-1], 1 - x[~ix][:-1], atol=1e-10)
-	}*/
+	    double ans[][]= integrate_wavelet(w, precision);
+	    double int_psi[] = ans[0];
+	    double x[] = ans[1];
+	    Vector<Integer>ix = new Vector<Integer>();
+	    Vector<Integer>notix = new Vector<Integer>();
+	    for (i = 0; i < x.length; i++) {
+	    	if (x[i] < 0.5) {
+	    		ix.add(i);
+	    	}
+	    	else if (x[i] > 0.5) {
+	    		notix.add(i);
+	    	}
+	    }
+	    notix.remove(notix.size()-1);
+	    for (i = 0; i < ix.size(); i++) {
+	    	int ind = ix.get(i);
+	    	Preferences.debug("index = " + ind + " int_psi = " + int_psi[ind] + " x = " + x[ind] + "\n", Preferences.DEBUG_ALGORITHM);
+	    }
+	    for (i = 0; i < notix.size(); i++) {
+	    	int ind = notix.get(i);
+	    	Preferences.debug("index = " + ind + " int_psi = " + int_psi[ind] + " (1 - x) = " + (1 - x[ind]) + "\n", Preferences.DEBUG_ALGORITHM);
+	    }
+	    //ix = x < 0.5
+	    //# For x < 0.5, the integral is equal to x
+	    //assert_allclose(int_psi[ix], x[ix])
+	    //# For x > 0.5, the integral is equal to (1 - x)
+	    //# Ignore last point here, there x > 1 and something goes wrong
+	    //assert_allclose(int_psi[~ix][:-1], 1 - x[~ix][:-1], atol=1e-10)
+	}
+	
+	public void test_threshold() {
+		int i;
+		double data[] = new double[]{1.0,1.5,2.0,2.5,3.0,3.5,4.0};
+
+	    // soft
+	    double soft_result[] = new double[]{0., 0., 0., 0.5, 1., 1.5, 2.};
+	    double thresholded[] = soft(data, 2, 0);
+	    
+	    //assert_allclose(pywt.threshold(data, 2, 'soft'),
+	    //                np.array(soft_result), rtol=1e-12)
+	    for (i = 0; i < 7; i++) {
+	    	System.out.println("i = " + i + " thresholded = " + thresholded[i] + " soft_result = " + soft_result[i]);
+	    }
+	    //assert_allclose(pywt.threshold(-data, 2, 'soft'),
+	    //                -np.array(soft_result), rtol=1e-12)
+	    double negdata[] = new double[data.length];
+	    double negsoft_result[] = new double[data.length];
+	    for (i = 0; i < data.length; i++) {
+	    	negdata[i] = -data[i];
+	    	negsoft_result[i] = -soft_result[i];
+	    }
+	    thresholded = soft(negdata, 2, 0);
+	    for (i = 0; i < 7; i++) {
+	    	System.out.println("i = " + i + " thresholded = " + thresholded[i] + " soft_result = " + negsoft_result[i]);
+	    }
+	    // assert_allclose(pywt.threshold([[1, 2]] * 2, 1, 'soft'),
+	    //                [[0, 1]] * 2, rtol=1e-12)
+	    /*assert_allclose(pywt.threshold([[1, 2]] * 2, 2, 'soft'),
+	                    [[0, 0]] * 2, rtol=1e-12)
+
+	    # soft thresholding complex values
+	    assert_allclose(pywt.threshold([[1j, 2j]] * 2, 1, 'soft'),
+	                    [[0j, 1j]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1+1j, 2+2j]] * 2, 6, 'soft'),
+	                    [[0, 0]] * 2, rtol=1e-12)
+	    complex_data = [[1+2j, 2+2j]]*2
+	    for thresh in [1, 2]:
+	        assert_allclose(pywt.threshold(complex_data, thresh, 'soft'),
+	                        _soft(complex_data, thresh), rtol=1e-12)
+
+	    # test soft thresholding with non-default substitute argument
+	    s = 5
+	    assert_allclose(pywt.threshold([[1j, 2]] * 2, 1.5, 'soft', substitute=s),
+	                    [[s, 0.5]] * 2, rtol=1e-12)
+
+	    # soft: no divide by zero warnings when input contains zeros
+	    assert_allclose(pywt.threshold(np.zeros(16), 2, 'soft'),
+	                    np.zeros(16), rtol=1e-12)
+
+	    # hard
+	    hard_result = [0., 0., 2., 2.5, 3., 3.5, 4.]
+	    assert_allclose(pywt.threshold(data, 2, 'hard'),
+	                    np.array(hard_result), rtol=1e-12)
+	    assert_allclose(pywt.threshold(-data, 2, 'hard'),
+	                    -np.array(hard_result), rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 1, 'hard'),
+	                    [[1, 2]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 2, 'hard'),
+	                    [[0, 2]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 2, 'hard', substitute=s),
+	                    [[s, 2]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1+1j, 2+2j]] * 2, 2, 'hard'),
+	                    [[0, 2+2j]] * 2, rtol=1e-12)
+
+	    # greater
+	    greater_result = [0., 0., 2., 2.5, 3., 3.5, 4.]
+	    assert_allclose(pywt.threshold(data, 2, 'greater'),
+	                    np.array(greater_result), rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 1, 'greater'),
+	                    [[1, 2]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 2, 'greater'),
+	                    [[0, 2]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 2, 'greater', substitute=s),
+	                    [[s, 2]] * 2, rtol=1e-12)
+	    # greater doesn't allow complex-valued inputs
+	    assert_raises(ValueError, pywt.threshold, [1j, 2j], 2, 'greater')
+
+	    # less
+	    assert_allclose(pywt.threshold(data, 2, 'less'),
+	                    np.array([1., 1.5, 2., 0., 0., 0., 0.]), rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 1, 'less'),
+	                    [[1, 0]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 1, 'less', substitute=s),
+	                    [[1, s]] * 2, rtol=1e-12)
+	    assert_allclose(pywt.threshold([[1, 2]] * 2, 2, 'less'),
+	                    [[1, 2]] * 2, rtol=1e-12)
+
+	    # less doesn't allow complex-valued inputs
+	    assert_raises(ValueError, pywt.threshold, [1j, 2j], 2, 'less')
+
+	    # invalid
+	    assert_raises(ValueError, pywt.threshold, data, 2, 'foo')*/
+	}
 	
 	
 	    
@@ -7934,6 +8049,368 @@ public  class PyWavelets extends AlgorithmBase {
         	return ans;
         }
     }
+    
+    public double[][] soft(double dataReal[], double dataImag[], double value, double substituteReal, double substituteImag) {
+    	// Default substituteReal = 0, substituteImag = 0;
+    	int i;
+    	double magnitude[] = new double[dataReal.length];
+    	double thresholdedReal[] = new double[dataReal.length];
+    	double thresholdedImag[] = new double[dataReal.length];
+    	double ans[][] = new double[2][];
+    	ans[0] = thresholdedReal;
+    	ans[1] = thresholdedImag;
+    	for (i = 0; i < dataReal.length; i++) {
+    		if ((dataReal[i] == 0.0) && (dataImag[i] == 0.0)) {
+    			thresholdedReal[i] = 0.0;
+    			thresholdedImag[i] = 0.0;
+    		}
+    		else {
+    		    magnitude[i] = zabs(dataReal[i],dataImag[i]);
+    		    thresholdedReal[i] = (1.0 - value/magnitude[i]);
+    		    if (thresholdedReal[i] < 0.0) {
+    		    	thresholdedReal[i] = 0.0;
+    		    	thresholdedImag[i] = 0.0;
+    		    }
+    		    thresholdedImag[i] = dataImag[i] * thresholdedReal[i];
+    		    thresholdedReal[i] = dataReal[i] * thresholdedReal[i];
+    		}
+    	}
+    	
+    	if ((substituteReal == 0) && (substituteImag == 0)) {
+    		return ans;
+    	}
+    	else {
+    		for (i = 0; i < thresholdedReal.length; i++) {
+    			if (magnitude[i] < value) {
+    				thresholdedReal[i] = substituteReal;
+    				thresholdedImag[i] = substituteImag;
+    			}
+    		}
+    		return ans;
+    	}
+    }
+    
+    public double[] soft(double data[], double value, double substitute) {
+    	// Default substitute = 0
+    	int i;
+    	double magnitude[] = new double[data.length];
+    	double thresholded[] = new double[data.length];
+    	for (i = 0; i < data.length; i++) {
+    		if (data[i] == 0.0) {
+    			thresholded[i] = 0.0;
+    		}
+    		else {
+    		    magnitude[i] = Math.abs(data[i]);
+    		    thresholded[i] = (1.0 - value/magnitude[i]);
+    		    if (thresholded[i] < 0.0) {
+    		    	thresholded[i] = 0.0;
+    		    }
+    		    thresholded[i] = data[i] * thresholded[i];
+    		}
+    	}
+    	
+    	if (substitute == 0) {
+    		return thresholded;
+    	}
+    	else {
+    		for (i = 0; i < thresholded.length; i++) {
+    			if (magnitude[i] < value) {
+    				thresholded[i] = substitute;
+    			}
+    		}
+    		return thresholded;
+    	}
+    }
+    
+    public double[][] nn_garrote(double dataReal[], double dataImag[], double value, double substituteReal, double substituteImag) {
+        // Non-negative Garrote
+    	// Default substituteReal = 0, substituteImag = 0;
+    	int i;
+    	double magnitude[] = new double[dataReal.length];
+    	double valueSquared = value * value;
+    	double thresholdedReal[] = new double[dataReal.length];
+    	double thresholdedImag[] = new double[dataReal.length];
+    	double ans[][] = new double[2][];
+    	ans[0] = thresholdedReal;
+    	ans[1] = thresholdedImag;
+    	for (i = 0; i < dataReal.length; i++) {
+    		if ((dataReal[i] == 0.0) && (dataImag[i] == 0.0)) {
+    			thresholdedReal[i] = 0.0;
+    			thresholdedImag[i] = 0.0;
+    		}
+    		else {
+    		    magnitude[i] = zabs(dataReal[i],dataImag[i]);
+    		    thresholdedReal[i] = (1.0 - valueSquared/(magnitude[i] * magnitude[i]));
+    		    if (thresholdedReal[i] < 0.0) {
+    		    	thresholdedReal[i] = 0.0;
+    		    	thresholdedImag[i] = 0.0;
+    		    }
+    		    thresholdedImag[i] = dataImag[i] * thresholdedReal[i];
+    		    thresholdedReal[i] = dataReal[i] * thresholdedReal[i];
+    		}
+    	}
+    	
+    	if ((substituteReal == 0) && (substituteImag == 0)) {
+    		return ans;
+    	}
+    	else {
+    		for (i = 0; i < thresholdedReal.length; i++) {
+    			if (magnitude[i] < value) {
+    				thresholdedReal[i] = substituteReal;
+    				thresholdedImag[i] = substituteImag;
+    			}
+    		}
+    		return ans;
+    	}
+    }
+    
+    public double[] nn_garrote(double data[], double value, double substitute) {
+        // Non-negative Garrote
+    	// Default substitute = 0
+    	int i;
+    	double magnitude[] = new double[data.length];
+    	double valueSquared = value * value;
+    	double thresholded[] = new double[data.length];
+    	for (i = 0; i < data.length; i++) {
+    		if (data[i] == 0.0) {
+    			thresholded[i] = 0.0;
+    		}
+    		else {
+    		    magnitude[i] = Math.abs(data[i]);
+    		    thresholded[i] = (1.0 - valueSquared/(magnitude[i] * magnitude[i]));
+    		    if (thresholded[i] < 0.0) {
+    		    	thresholded[i] = 0.0;
+    		    }
+    		    thresholded[i] = data[i] * thresholded[i];
+    		}
+    	}
+    	
+    	if (substitute == 0) {
+    		return thresholded;
+    	}
+    	else {
+    		for (i = 0; i < thresholded.length; i++) {
+    			if (magnitude[i] < value) {
+    				thresholded[i] = substitute;
+    			}
+    		}
+    		return thresholded;
+    	}
+    }
+    
+    public double[][] hard(double dataReal[], double dataImag[], double value, double substituteReal, double substituteImag) {
+    	// default substituteReal = 0.0, substituteImag = 0.0
+    	int i;
+        for (i = 0; i < dataReal.length; i++) {
+        	double absdata = zabs(dataReal[i],dataImag[i]);
+            if (absdata < value) {
+            	dataReal[i] = substituteReal;
+            	dataImag[i] = substituteImag;
+            }
+        }
+        double ans[][] = new double[2][];
+        ans[0] = dataReal;
+        ans[1] = dataImag;
+        return ans;
+    }
+    
+    /**
+     * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
+     * 
+     * @param zr double
+     * @param zi double
+     * 
+     * @return double
+     */
+    private double zabs(final double zr, final double zi) {
+        double u, v, q, s;
+        u = Math.abs(zr);
+        v = Math.abs(zi);
+        s = u + v;
 
+        // s * 1.0 makes an unnormalized underflow on CDC machines into a true
+        // floating zero
+        s = s * 1.0;
 
+        if (s == 0.0) {
+            return 0.0;
+        } else if (u > v) {
+            q = v / u;
+
+            return (u * Math.sqrt(1.0 + (q * q)));
+        } else {
+            q = u / v;
+
+            return (v * Math.sqrt(1.0 + (q * q)));
+        }
+    }
+    
+    public double[] hard(double data[], double value, double substitute) {
+    	// default substitute = 0.0
+    	int i;
+        for (i = 0; i < data.length; i++) {
+            if (Math.abs(data[i]) < value) {
+            	data[i] = substitute;
+            }
+        }
+        return data;
+    }
+    
+    public double[] greater(double data[], double value, double substitute) {
+        // default substitute = 0.0
+        // greater thresholding only supports real data
+    	int i;
+    	for (i = 0; i  < data.length; i++) {
+    		if (data[i] < value) {
+    			data[i] = substitute;
+    		}
+    	}
+        return data;
+    }
+    
+    public double[] less(double data[], double value, double substitute) {
+    	// default substitute = 0.0
+        // less thresholding only supports real data
+    	int i;
+    	for (i = 0; i < data.length; i++) {
+    		if (data[i] > value) {
+    			data[i] = substitute;
+    		}
+    	}
+    	return data;
+    }
+    
+    public double[] threshold_firm(double data[], double value_low, double value_high) {
+        // Firm threshold.
+
+        // The approach is intermediate between soft and hard thresholding [1]_. It
+        // behaves the same as soft-thresholding for values below `value_low` and
+        // the same as hard-thresholding for values above `thresh_high`.  For
+        // intermediate values, the thresholded value is in between that corresponding
+        // to soft or hard thresholding.
+
+        // Parameters
+        // ----------
+        // data : array-like
+        //    The data to threshold.  This can be either real or complex-valued.
+        // value_low : float
+        //    Any values smaller then `value_low` will be set to zero.
+        // value_high : float
+        //    Any values larger than `value_high` will not be modified.
+
+        // Notes
+        // -----
+        // This thresholding technique is also known as semi-soft thresholding [2]_.
+
+        // For each value, `x`, in `data`. This function computes::
+
+        //    if np.abs(x) <= value_low:
+        //        return 0
+        //    elif np.abs(x) > value_high:
+        //        return x
+        //    elif value_low < np.abs(x) and np.abs(x) <= value_high:
+        //        return x * value_high * (1 - value_low/x)/(value_high - value_low)
+
+        // ``firm`` is a continuous function (like soft thresholding), but is
+        // unbiased for large values (like hard thresholding).
+
+        // If ``value_high == value_low`` this function becomes hard-thresholding.
+        // If ``value_high`` is infinity, this function becomes soft-thresholding.
+
+        // Returns
+        // -------
+        // val_new : array-like
+        //    The values after firm thresholding at the specified thresholds.
+
+        // See Also
+        // --------
+        // threshold
+
+        // References
+        // ----------
+        // .. [1] H.-Y. Gao and A.G. Bruce. Waveshrink with firm shrinkage.
+        //    Statistica Sinica, Vol. 7, pp. 855-874, 1997.
+        // .. [2] A. Bruce and H-Y. Gao. WaveShrink: Shrinkage Functions and
+        //    Thresholds. Proc. SPIE 2569, Wavelet Applications in Signal and
+        //    Image Processing III, 1995.
+        //    DOI:10.1117/12.217582
+        int i;
+
+        if (value_low < 0) {
+            MipavUtil.displayError("value_low must be non-negative.");
+            return null;
+        }
+
+        if (value_high < value_low) {
+            MipavUtil.displayError("value_high must be greater than or equal to value_low.");
+            return null;
+        }
+
+        
+        double magnitude[] = new double[data.length];
+        double thresholded[] = new double[data.length];
+        double vdiff = value_high - value_low;
+        for (i = 0; i < data.length; i++) {
+        	if (data[i] == 0.0) {
+        		thresholded[i] = 0.0;
+        	}
+        	else {
+        	    magnitude[i] = Math.abs(data[i]);
+        	    thresholded[i] = value_high * (1 - value_low/magnitude[i]) / vdiff;
+        	    if (thresholded[i] < 0.0) {
+        	    	thresholded[i] = 0.0;
+        	    }
+        	    thresholded[i] = data[i] * thresholded[i];
+        	}
+        }
+
+        // restore hard-thresholding behavior for values > value_high
+        for (i = 0; i < magnitude.length; i++) {
+        	if (magnitude[i] > value_high) {
+        		thresholded[i] = data[i];
+        	}
+        }
+        return thresholded;
+    }
+    
+    private double[] _sign(double x[]) {
+        // Matlab-like sign function (numpy uses a different convention).
+    	double ret[] = new double [x.length];
+    	int i;
+    	for (i = 0; i < x.length; i++) {
+    		ret[i] = x[i]/Math.abs(x[i]);
+    	}
+        return ret;
+    }
+
+    private double[] _soft(double x[], double thresh) {
+        // soft thresholding supporting complex values.
+
+        // Notes
+        // -----
+        // This version is not robust to zeros in x.
+    	int i;
+        double ret[] = new double[x.length];
+        double signx[] = _sign(x);
+        for (i = 0; i < x.length; i++) {
+        	ret[i] = signx[i] * Math.max(Math.abs(x[i]) - thresh, 0);
+        }
+        return ret;
+    }
+    
+    private double[] _soft(double xReal[], double xImag[], double thresh) {
+        // soft thresholding supporting complex values.
+
+        // Notes
+        // -----
+        // This version is not robust to zeros in x.
+    	int i;
+        double ret[] = new double[xReal.length];
+        double signx[] = _sign(xReal);
+        for (i = 0; i < xReal.length; i++) {
+        	ret[i] = signx[i] * Math.max(zabs(xReal[i],xImag[i]) - thresh, 0);
+        }
+        return ret;
+    }
+        		
 }
