@@ -8851,36 +8851,40 @@ public  class PyWavelets extends AlgorithmBase {
     }
     
     public double[][] hard(double dataReal[], double dataImag[], double value, double substituteReal, double substituteImag) {
+    	double data2Real[] = dataReal.clone();
+    	double data2Imag[] = dataImag.clone();
     	// default substituteReal = 0.0, substituteImag = 0.0
     	int i;
-        for (i = 0; i < dataReal.length; i++) {
-        	double absdata = zabs(dataReal[i],dataImag[i]);
+        for (i = 0; i < data2Real.length; i++) {
+        	double absdata = zabs(data2Real[i],data2Imag[i]);
             if (absdata < value) {
-            	dataReal[i] = substituteReal;
-            	dataImag[i] = substituteImag;
+            	data2Real[i] = substituteReal;
+            	data2Imag[i] = substituteImag;
             }
         }
         double ans[][] = new double[2][];
-        ans[0] = dataReal;
-        ans[1] = dataImag;
+        ans[0] = data2Real;
+        ans[1] = data2Imag;
         return ans;
     }
     
     public double[][][] hard(double dataReal[][], double dataImag[][], double value, double substituteReal, double substituteImag) {
+    	double data2Real[][] = dataReal.clone();
+    	double data2Imag[][] = dataImag.clone();
     	// default substituteReal = 0.0, substituteImag = 0.0
     	int i,j;
-        for (i = 0; i < dataReal.length; i++) {
-	        	for (j = 0; j < dataReal[i].length; j++) {
-	        	double absdata = zabs(dataReal[i][j],dataImag[i][j]);
+        for (i = 0; i < data2Real.length; i++) {
+	        	for (j = 0; j < data2Real[i].length; j++) {
+	        	double absdata = zabs(data2Real[i][j],data2Imag[i][j]);
 	            if (absdata < value) {
-	            	dataReal[i][j] = substituteReal;
-	            	dataImag[i][j] = substituteImag;
+	            	data2Real[i][j] = substituteReal;
+	            	data2Imag[i][j] = substituteImag;
 	            }
         	}
         }
-        double ans[][][] = new double[3][][];
-        ans[0] = dataReal;
-        ans[1] = dataImag;
+        double ans[][][] = new double[2][][];
+        ans[0] = data2Real;
+        ans[1] = data2Imag;
         return ans;
     }
     
@@ -8917,78 +8921,84 @@ public  class PyWavelets extends AlgorithmBase {
     
     public double[] hard(double data[], double value, double substitute) {
     	// default substitute = 0.0
+    	double data2[] = data.clone();
     	int i;
-        for (i = 0; i < data.length; i++) {
-            if (Math.abs(data[i]) < value) {
-            	data[i] = substitute;
+        for (i = 0; i < data2.length; i++) {
+            if (Math.abs(data2[i]) < value) {
+            	data2[i] = substitute;
             }
         }
-        return data;
+        return data2;
     }
     
     public double[][] hard(double data[][], double value, double substitute) {
     	// default substitute = 0.0
+    	double data2[][] = data.clone();
     	int i,j;
-        for (i = 0; i < data.length; i++) {
-        	for (j = 0; j < data[i].length; j++) {
-	            if (Math.abs(data[i][j]) < value) {
-	            	data[i][j] = substitute;
+        for (i = 0; i < data2.length; i++) {
+        	for (j = 0; j < data2[i].length; j++) {
+	            if (Math.abs(data2[i][j]) < value) {
+	            	data2[i][j] = substitute;
 	            }
         	}
         }
-        return data;
+        return data2;
     }
     
     public double[] greater(double data[], double value, double substitute) {
+    	double data2[] = data.clone();
         // default substitute = 0.0
         // greater thresholding only supports real data
     	int i;
-    	for (i = 0; i  < data.length; i++) {
-    		if (data[i] < value) {
-    			data[i] = substitute;
+    	for (i = 0; i  < data2.length; i++) {
+    		if (data2[i] < value) {
+    			data2[i] = substitute;
     		}
     	}
-        return data;
+        return data2;
     }
     
     public double[][] greater(double data[][], double value, double substitute) {
         // default substitute = 0.0
         // greater thresholding only supports real data
+    	double data2[][] = data.clone();
     	int i, j;
-    	for (i = 0; i  < data.length; i++) {
-    		for (j = 0; j < data[i].length; j++) {
-	    		if (data[i][j] < value) {
-	    			data[i][j] = substitute;
+    	for (i = 0; i  < data2.length; i++) {
+    		for (j = 0; j < data2[i].length; j++) {
+	    		if (data2[i][j] < value) {
+	    			data2[i][j] = substitute;
 	    		}
     		}
     	}
-        return data;
+        return data2;
     }
     
     public double[] less(double data[], double value, double substitute) {
     	// default substitute = 0.0
         // less thresholding only supports real data
+    	double data2[] = data.clone();
     	int i;
-    	for (i = 0; i < data.length; i++) {
-    		if (data[i] > value) {
-    			data[i] = substitute;
+    	for (i = 0; i < data2.length; i++) {
+    		if (data2[i] > value) {
+    			data2[i] = substitute;
     		}
     	}
-    	return data;
+    	return data2;
     }
     
     public double[][] less(double data[][], double value, double substitute) {
     	// default substitute = 0.0
         // less thresholding only supports real data
+    	double data2[][] = data.clone();
     	int i,j;
-    	for (i = 0; i < data.length; i++) {
-    		for (j = 0; j < data[i].length; j++) {
-	    		if (data[i][j] > value) {
-	    			data[i][j] = substitute;
+    	for (i = 0; i < data2.length; i++) {
+    		for (j = 0; j < data2[i].length; j++) {
+	    		if (data2[i][j] > value) {
+	    			data2[i][j] = substitute;
 	    		}
     		}
     	}
-    	return data;
+    	return data2;
     }
     
     public double[] threshold_firm(double data[], double value_low, double value_high) {
