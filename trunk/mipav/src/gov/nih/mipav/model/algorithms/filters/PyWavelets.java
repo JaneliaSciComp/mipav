@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.RandomNumberGen;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.MipavUtil;
@@ -3997,6 +3998,11 @@ public  class PyWavelets extends AlgorithmBase {
     private int swt_buffer_length(int input_len){
         return input_len;
     }
+    
+    private short dwt_max_level(int input_len, DiscreteWavelet w) {
+    	int filter_len = w.dec_len;
+    	return dwt_max_level(input_len, filter_len);
+    }
 
     /* Maximum useful level of DWT decomposition. */
     private short dwt_max_level(int input_len, int filter_len){
@@ -7353,6 +7359,108 @@ public  class PyWavelets extends AlgorithmBase {
 	    	System.out.println("Error!  Not all other values are intermediate between soft and hard thresholding");
 	    }
 	}
+	
+	public void test_upcoef_reconstruct() {
+		int i;
+	    double data[] = new double[]{0, 1, 2};
+	    //a = pywt.downcoef('a', data, 'haar')
+	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.HAAR, 1);
+	    double a[] = downcoef('a', data, w, MODE.MODE_SYMMETRIC, 1);
+	    //d = pywt.downcoef('d', data, 'haar')
+        double d[] = downcoef('d', data, w, MODE.MODE_SYMMETRIC, 1);
+        int level = 1;
+        int take = 3;
+	    //rec = (pywt.upcoef('a', a, 'haar', take=3) +
+	    //       pywt.upcoef('d', d, 'haar', take=3))
+        double reca[] = upcoef('a', a, w, level, take);
+        double recd[] = upcoef('d', d, w, level, take);
+        double rec[] = new double[reca.length];
+        for (i = 0; i < reca.length; i++) {
+            rec[i] = reca[i] + recd[i];	
+        }
+	    //assert_allclose(rec, data)
+        for (i = 0; i < rec.length; i++) {
+            System.out.println("rec["+i+"] = " + rec[i] + " data["+i+"] = " + data[i]);
+        }
+	}
+	
+	public void test_downcoef_multilevel() {
+	    //rstate = np.random.RandomState(1234)
+	    //r = rstate.randn(16)
+		int i;
+		double r[] = new double[16];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		for (i = 0; i < 16; i++) {
+		     r[i] = randomGen.genStandardGaussian();
+		}
+	    int nlevels = 3;
+	    // calling with level=1 nlevels times
+	    double a1[] = r.clone();
+	    //for i in range(nlevels):
+	    //    a1 = pywt.downcoef('a', a1, 'haar', level=1)
+	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.HAAR, 1);
+	    for (i = 0; i < nlevels; i++) {
+	        a1 = downcoef('a', a1, w, MODE.MODE_SYMMETRIC, 1);
+	    }
+	    // call with level=nlevels once
+	    //a3 = pywt.downcoef('a', r, 'haar', level=nlevels)
+	    double a3[] = downcoef('a', r, w, MODE.MODE_SYMMETRIC, nlevels);
+	    //assert_allclose(a1, a3)
+	    for (i = 0; i < a1.length; i++) {
+	    	System.out.println("a1["+i+"] = " + a1[i] + " a3["+i+"] = " + a3[i]);
+	    }
+	}
+	
+	public void test_upcoef_multilevel() {
+	    //rstate = np.random.RandomState(1234)
+	    //r = rstate.randn(4)
+		int i;
+		double r[] = new double[4];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		for (i = 0; i < 4; i++) {
+		     r[i] = randomGen.genStandardGaussian();
+		}
+	    int nlevels = 3;
+	    // calling with level=1 nlevels times
+	    double a1[] = r.clone();
+	    //for i in range(nlevels):
+	    //    a1 = pywt.upcoef('a', a1, 'haar', level=1)
+	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.HAAR, 1);
+	    int take = 0;
+	    for (i = 0; i < nlevels; i++) {
+	        a1 = upcoef('a', a1, w, 1, 0);
+	    }
+	    // call with level=nlevels once
+	    //a3 = pywt.upcoef('a', r, 'haar', level=nlevels)
+	    double a3[] = upcoef('a', r, w, nlevels, take);
+	    //assert_allclose(a1, a3)
+	    for (i = 0; i < a1.length; i++) {
+	    	System.out.println("a1["+i+"] = " + a1[i] + " a3["+i+"] = " + a3[i]);
+	    }
+	}
+	
+	public void test_dwt_max_level() {
+		
+	    System.out.println("dwt_max_level(16, 2) = " + dwt_max_level(16, 2) + " Expected value = 4");
+	    System.out.println("dwt_max_level(16, 8) = " + dwt_max_level(16, 8) + " Expected value = 1");
+	    System.out.println("dwt_max_level(16, 9) = " + dwt_max_level(16, 9) + " Expected value = 1");
+	    System.out.println("dwt_max_level(16, 10) = " + dwt_max_level(16, 10) + " Expected value = 0");
+	    System.out.println("dwt_max_level(16, 18) = " + dwt_max_level(16, 18) + " Expected value = 0");
+
+	    // accepts discrete Wavelet object or string as well
+	    //assert_(pywt.dwt_max_level(32, pywt.Wavelet('sym5')) == 1)
+	    //assert_(pywt.dwt_max_level(32, 'sym5') == 1)
+	    DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.SYM, 5);
+	    System.out.println("dwt_max_level(32, w) = " + dwt_max_level(32, w) + " Expected value = 1");
+
+	    // string input that is not a discrete wavelet
+	    //assert_raises(ValueError, pywt.dwt_max_level, 16, 'mexh')
+
+	    // filter_len must be an integer >= 2
+	    //assert_raises(ValueError, pywt.dwt_max_level, 16, 1)
+	    //assert_raises(ValueError, pywt.dwt_max_level, 16, -1)
+	    //assert_raises(ValueError, pywt.dwt_max_level, 16, 3.3)*/
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
@@ -7746,6 +7854,150 @@ public  class PyWavelets extends AlgorithmBase {
         }
         return arr;
     }
+    
+    public double[] downcoef(char part, double data[], DiscreteWavelet wavelet, MODE mode, int level) {
+        // Default mode = symmetric
+    	// Default level = 1
+        //downcoef(part, data, wavelet, mode='symmetric', level=1)
+
+        //Partial Discrete Wavelet Transform data decomposition.
+
+        //Similar to `pywt.dwt`, but computes only one set of coefficients.
+        //Useful when you need only approximation or only details at the given level.
+
+        //Parameters
+        //----------
+        //part : str
+        //    Coefficients type:
+
+        //    * 'a' - approximations reconstruction is performed
+        //    * 'd' - details reconstruction is performed
+
+        //data : array_like
+        //    Input signal.
+        //wavelet : Wavelet object or name
+        //    Wavelet to use
+        //mode : str, optional
+        //    Signal extension mode, see `Modes`.  Default is 'symmetric'.
+        //level : int, optional
+        //    Decomposition level.  Default is 1.
+
+        //Returns
+        //-------
+        //coeffs : ndarray
+        //    1-D array of coefficients.
+
+        //See Also
+        //--------
+        //upcoef
+
+        if ((part != 'a') && (part != 'd')) {
+        	MipavUtil.displayError("part = " + part + " instead of the required a or d");
+        	return null;
+        }
+        return downcoef(part == 'a', data, wavelet, mode, level);
+    }
+    
+    public double[] downcoef(boolean do_dec_a, double data[], DiscreteWavelet wavelet, MODE mode, int level) {
+        double coeffs[] = null;
+        int i, retval;
+        int output_len, data_size;
+
+        if (level < 1) {
+            MipavUtil.displayError("Value of level must be greater than 0.");
+            return null;
+        }
+
+        for (i = 0; i < level; i++) {
+            data_size = data.length;
+            output_len = dwt_buffer_length(data.length, wavelet.dec_len, mode);
+            if (output_len < 1) {
+                MipavUtil.displayError("Invalid output length.");
+                return null;
+            }
+
+            // To mirror multi-level wavelet decomposition behaviour, when detail
+            // coefficients are requested, the dec_d variant is only called at the
+            // final level.  All prior levels use dec_a.  In other words, the detail
+            // coefficients at level n are those produced via the operation of the
+            // detail filter on the approximation coefficients of level n-1.
+            
+            coeffs = new double[output_len];
+            if (do_dec_a || (i < level - 1)) {
+                    retval = dec_a(data, data_size, wavelet,
+                                     coeffs, output_len, mode);
+                if (retval < 0) {
+                    MipavUtil.displayError("C dec_a failed.");
+                    return null;
+                }
+            }
+            else {
+                    retval = dec_d(data, data_size, wavelet,
+                                     coeffs, output_len, mode);
+                if (retval < 0) {
+                    MipavUtil.displayError("C dec_d failed.");
+                    return null;
+                }
+            }
+            data = coeffs;
+        } // for (i = 0; i < level; i++)
+
+        return coeffs;
+    }
+    
+    
+    private double[] upcoef(char part, double coeffs[], DiscreteWavelet wavelet, int level, int take) {
+        // level default is 1
+    	// take default is 0
+        //upcoef(part, coeffs, wavelet, level=1, take=0)
+
+        //Direct reconstruction from coefficients.
+
+        //Parameters
+        //----------
+        //part : str
+        //    Coefficients type:
+        //    * 'a' - approximations reconstruction is performed
+        //    * 'd' - details reconstruction is performed
+        //coeffs : array_like
+        //    Coefficients array to recontruct
+        //wavelet : Wavelet object or name
+        //    Wavelet to use
+        //level : int, optional
+        //    Multilevel reconstruction level.  Default is 1.
+        //take : int, optional
+        //    Take central part of length equal to 'take' from the result.
+        //    Default is 0.
+
+        //Returns
+        //-------
+        //rec : ndarray
+        //    1-D array with reconstructed data from coefficients.
+
+        //See Also
+        //--------
+        //downcoef
+
+        //Examples
+        //--------
+        //>>> import pywt
+        //>>> data = [1,2,3,4,5,6]
+        //>>> (cA, cD) = pywt.dwt(data, 'db2', 'smooth')
+        //>>> pywt.upcoef('a', cA, 'db2') + pywt.upcoef('d', cD, 'db2')
+        //array([-0.25      , -0.4330127 ,  1.        ,  2.        ,  3.        ,
+        //        4.        ,  5.        ,  6.        ,  1.78589838, -1.03108891])
+        //>>> n = len(data)
+        //>>> pywt.upcoef('a', cA, 'db2', take=n) + pywt.upcoef('d', cD, 'db2', take=n)
+        //array([ 1.,  2.,  3.,  4.,  5.,  6.])
+
+    	if ((part != 'a') && (part != 'd')) {
+        	MipavUtil.displayError("part = " + part + " instead of the required a or d");
+        	return null;
+        }
+    	
+        return upcoef(part == 'a', coeffs, wavelet, level, take);
+    }
+
     
     public double[] upcoef(boolean do_rec_a, double coeffs[], DiscreteWavelet wavelet, int level,
             int take) {
