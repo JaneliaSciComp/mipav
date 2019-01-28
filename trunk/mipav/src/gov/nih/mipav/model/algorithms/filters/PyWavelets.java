@@ -5298,7 +5298,136 @@ public  class PyWavelets extends AlgorithmBase {
                                                        wavelet.rec_len, output,
                                                        output_len);
     }
+    
+    private double[][] dwt(double data[], DiscreteWavelet wavelet, MODE mode, int axis) {
+        // Default mode = symmetric
+        // Default axis = -1
 
+        // Single level Discrete Wavelet Transform.
+
+        // Parameters
+        // ----------
+        // data : array_like
+        //     Input signal
+        // wavelet : Wavelet object or name
+        //     Wavelet to use
+        // mode : str, optional
+        //     Signal extension mode, see Modes
+        // axis: int, optional
+        //    Axis over which to compute the DWT. If not given, the
+        //    last axis is used.
+
+
+        // Returns
+        // -------
+        // (cA, cD) : tuple
+        //    Approximation and detail coefficients.
+
+        // Notes
+        // -----
+        // Length of coefficients arrays depends on the selected mode.
+        // For all modes except periodization:
+
+        //     ``len(cA) == len(cD) == floor((len(data) + wavelet.dec_len - 1) / 2)``
+
+        // For periodization mode ("per"):
+
+        //    ``len(cA) == len(cD) == ceil(len(data) / 2)``
+
+        //Examples
+        // --------
+        // >>> import pywt
+        // >>> (cA, cD) = pywt.dwt([1, 2, 3, 4, 5, 6], 'db1')
+        // >>> cA
+        // array([ 2.12132034,  4.94974747,  7.77817459])
+        // >>> cD
+        // array([-0.70710678, -0.70710678, -0.70710678])
+
+        // cA, cD = dwt_single(data, wavelet, mode)
+    	double arr[][] = dwt_single(data, wavelet, mode);
+            
+
+        //return (cA, cD)
+    	return arr;
+    }
+    
+    private double[][] dwt_single(double data[], DiscreteWavelet wavelet, MODE mode) {
+        int output_len = dwt_coeff_len(data.length, wavelet.dec_len, mode);
+        double cA[];
+        double cD[];
+        int retval_a, retval_d;
+        int data_size = data.length;
+        if (output_len < 1) {
+            MipavUtil.displayError("Invalid output length.");
+            return null;
+        }
+
+        cA = new double[output_len];
+        cD = new double[output_len];
+        retval_a = dec_a(data, data_size, wavelet,
+                             cA, output_len, mode);
+        retval_d = dec_d(data, data_size, wavelet,
+                            cD, output_len, mode);
+        if ( (retval_a < 0) || (retval_d < 0)) {
+            MipavUtil.displayError("C dwt failed.");
+            return null;
+        }
+        double arr[][] = new double[2][];
+        arr[0] = cA;
+        arr[1] = cD;
+        
+        //return (cA, cD)
+        return arr;
+    }
+    
+    private double[] idwt_single(double cA[], double cD[], DiscreteWavelet wavelet, MODE mode) {
+        int input_len, rec_len;
+        int retval;
+        double rec[];
+
+        // check for size difference between arrays
+        if (cA.length != cD.length) {
+            MipavUtil.displayError("Coefficients arrays must have the same size.");
+            return null;
+        }
+        else {
+            input_len = cA.length;
+        }
+
+        // find reconstruction buffer length
+        rec_len = idwt_buffer_length(input_len, wavelet.rec_len, mode);
+        if (rec_len < 1) {
+            String msg = ("Invalid coefficient arrays length for specified wavelet." +  
+                   " Wavelet and mode must be the same as used for decomposition.");
+            MipavUtil.displayError(msg);
+            return null;
+        }
+
+          
+        rec = new double[rec_len];
+        retval = idwt(cA, input_len, cD, input_len,
+                      rec, rec_len, wavelet, mode);
+        if (retval < 0) {
+                MipavUtil.displayError("C idwt failed.");
+                return null;
+        }
+        
+
+        return rec;
+    }
+    
+    private int dwt_coeff_len(int data_len, int filter_len, MODE mode) {
+        if (data_len < 1) {
+            MipavUtil.displayError("Value of data_len must be greater than zero.");
+            return -1;
+        }
+        if (filter_len < 1) {
+            MipavUtil.displayError("Value of filter_len must be greater than zero.");
+            return -1;
+        }
+
+        return dwt_buffer_length(data_len, filter_len, mode);
+    }
 
     /* Single level IDWT reconstruction */
     /*
@@ -7411,6 +7540,67 @@ public  class PyWavelets extends AlgorithmBase {
 	    }
 	}
 	
+	public void test_compare_downcoef_coeffs() {
+	    //rstate = np.random.RandomState(1234)
+	    //r = rstate.randn(16)
+		int i, j, k;
+		int nlevels;
+		DiscreteWavelet w;
+		int max_level;
+		double a[];
+		double d[];
+		double coeffs[][];
+		double r[] = new double[16];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		for (i = 0; i < 16; i++) {
+		     r[i] = randomGen.genStandardGaussian();
+		}
+		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+		                                        WAVELET_NAME.COIF, WAVELET_NAME.BIOR, WAVELET_NAME.DMEY};
+		
+		int orders[][] = new int[7][];
+		orders[0] = new int[]{1}; // HAAR
+		// RBIO 10, 20, 30, 40, 50, 60 do not work
+		orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+		orders[2] = new int[38]; // DB
+		for (i = 0; i < 38; i++) {
+			orders[2][i] = i+1;
+		}
+		orders[3] = new int[19]; // SYM
+		for (i = 0; i < 19; i++) {
+			orders[3][i] = i+2;
+		}
+		orders[4] = new int[17]; // COIF
+		for (i = 0; i < 17; i++) {
+			orders[4][i] = i+1;
+		}
+		orders[5] = orders[1].clone(); // BIOR
+		orders[6] = new int[]{0}; // DMEY
+		
+	    // compare downcoef against wavedec outputs
+	    for (nlevels = 1; nlevels <= 3; nlevels++) {
+	        for (i = 0; i < 7; i++) {
+	        	for (j = 0; j < orders[i].length; j++) {
+	            	w = discrete_wavelet(wName[i], orders[i][j]);
+	                max_level = dwt_max_level(r.length, w.dec_len);
+	                if (nlevels <= max_level) {
+	                	Preferences.debug("nlevels = " + nlevels + "  " + w.base.name + " " + " order = " + orders[i][j] + "\n", Preferences.DEBUG_ALGORITHM);
+	                    a = downcoef('a', r, w, MODE.MODE_SYMMETRIC, nlevels);
+	                    d = downcoef('d', r, w, MODE.MODE_SYMMETRIC, nlevels);
+	                    coeffs = wavedec(r, w, MODE.MODE_SYMMETRIC, nlevels, -1);
+	                    for (k = 0; k < a.length; k++) {
+	                    	Preferences.debug("a["+k+"] = "+ a[k] + "  coeffs[0]["+k+"] = " + coeffs[0][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	                    }
+	                    for (k = 0; k < d.length; k++) {
+	                    	Preferences.debug("d["+k+"] = "+ d[k] + "  coeffs[1]["+k+"] = " + coeffs[1][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	                    }
+	                } // if (nlevels <= max_level)
+	        	} // for (j = 0; j < orders[i].length; j++)
+	        } // for (i = 0; i < 7; i++)
+	    } // for (nlevels = 1; nlevels <= 3; nlevels++)
+	}
+	
+	
 	public void test_upcoef_multilevel() {
 	    //rstate = np.random.RandomState(1234)
 	    //r = rstate.randn(4)
@@ -7460,6 +7650,121 @@ public  class PyWavelets extends AlgorithmBase {
 	    //assert_raises(ValueError, pywt.dwt_max_level, 16, 1)
 	    //assert_raises(ValueError, pywt.dwt_max_level, 16, -1)
 	    //assert_raises(ValueError, pywt.dwt_max_level, 16, 3.3)*/
+	}
+	
+	public void test_perfect_reconstruction() {
+	                
+	    // Original list does not have HAAR or DMEY.
+		// Gives correct = 630 wrong = 6, but all wrong are in DMEY which is not included in the original test list.
+		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+                     WAVELET_NAME.COIF, WAVELET_NAME.BIOR, WAVELET_NAME.DMEY};
+        int i, j, k;
+        DiscreteWavelet w;
+        int correct = 0;
+        int wrong = 0;
+        int orders[][] = new int[7][];
+        orders[0] = new int[]{1}; // HAAR
+        // RBIO 10, 20, 30, 40, 50, 60 do not work
+        orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+        orders[2] = new int[38]; // DB
+        for (i = 0; i < 38; i++) {
+            orders[2][i] = i+1;
+        }
+        orders[3] = new int[19]; // SYM
+        for (i = 0; i < 19; i++) {
+            orders[3][i] = i+2;
+        }
+        orders[4] = new int[17]; // COIF
+        for (i = 0; i < 17; i++) {
+            orders[4][i] = i+1;
+        }
+        orders[5] = orders[1].clone(); // BIOR
+        orders[6] = new int[]{0}; // DMEY   
+        MODE modes[] = new MODE[]{MODE.MODE_ZEROPAD, MODE.MODE_CONSTANT_EDGE, MODE.MODE_SYMMETRIC, MODE.MODE_PERIODIC,
+        		MODE.MODE_SMOOTH, MODE.MODE_PERIODIZATION};
+        for (i = 0; i < wName.length; i++) {
+        	for (j = 0; j < orders[i].length; j++) {
+        		w = discrete_wavelet(wName[i], orders[i][j]);
+        		for (k = 0; k < modes.length; k++) {
+        			if (check_reconstruction(modes[k], w)) {
+        				correct++;
+        			}
+        			else {
+        				wrong++;
+        			}
+        		}
+        	}
+        }
+        Preferences.debug("correct = " + correct + " wrong = " + wrong + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("correct = " + correct + " wrong = " + wrong);
+    }
+	
+	    
+
+
+	private boolean check_reconstruction(MODE mode, DiscreteWavelet wavelet) {
+		int i, j;
+		int N;
+		double data[];
+		boolean answer = true;
+		RandomNumberGen randomGen = new RandomNumberGen();
+	    int data_size[] = new int[47];
+	    for (i = 0; i < 39; i++) {
+	    	data_size[i] = i+2;
+	    }
+	    data_size[39] = 100;
+	    data_size[40] = 200;
+	    data_size[41] = 500;
+	    data_size[42] = 1000;
+	    data_size[43] = 2000;
+	    data_size[44] = 10000;
+	    data_size[45] = 50000;
+	    data_size[46] = 100000;
+	    double epsilon = 5.0E-11;
+	    for (i = 0; i < data_size.length; i++) {
+	        N = data_size[i];
+	        data = new double[N];
+	        for (j = 0; j < N; j++) {
+	        	data[i] = randomGen.genStandardGaussian();	
+	        }
+	        
+	        // compute dwt coefficients
+	        //pa, pd = dwt(data, wavelet, mode)
+	        double arr[][] = dwt(data, wavelet, mode, -1);
+	        double pa[] = arr[0];
+	        double pd[] = arr[1];
+	        
+	        // compute reconstruction
+	        double rec1[] = idwt_single(pa, pd, wavelet, mode);
+	        
+	        double rec[];
+	        if ((data.length % 2) == 1) {
+	        	rec = new double[data.length];
+	        	for (j = 0; j < data.length; j ++) {
+	                rec[j] = rec1[j];
+	        	}
+	        }
+	        else {
+	        	rec = rec1;
+	        }
+	        
+	        double sum = 0.0;
+	        for (j = 0; j < data.length; j++) {
+	        	double val = data[j] - rec[j];
+	        	sum += (val * val);
+	        }
+	        double mean = sum/data.length;
+	        double rms_rec = Math.sqrt(mean);
+ 
+	        if (rms_rec < epsilon) {
+	        }
+	        else {
+	        	Preferences.debug("rms_rec = " + rms_rec + " > " + " epsilon = 5.0E-11 for mode = " + String.valueOf(mode) +
+	        			" for wavelet = " + wavelet.base.name +  " for data length = " + data.length + "\n", Preferences.DEBUG_ALGORITHM);
+	        	answer = false;
+	        }
+	    }
+	    return answer;
 	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
@@ -9554,6 +9859,86 @@ public  class PyWavelets extends AlgorithmBase {
         	}
         }
         return ret;
+    }
+    
+    private double[][] wavedec(double data[], DiscreteWavelet wavelet, MODE mode, int level, int axis) {
+        // Default mode is symmetric
+    	// Default -1 means level is calculated with dwt_max_level function
+    	// Default axis = -1 means last axis is used
+        // Multilevel 1D Discrete Wavelet Transform
+        // Parameters
+        // ----------
+        // data: array_like
+        //    Input data
+        // wavelet : Wavelet object or name string
+        //    Wavelet to use
+        // mode : str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric')
+        // level : int, optional
+        //    Decomposition level (must be >= 0). If level is -1 (default) then it
+        //    will be calculated using the `dwt_max_level` function.
+        // axis: int, optional
+        //    Axis over which to compute the DWT. If not given, the
+        //    last axis is used.
+
+        // Returns
+        // -------
+        // [cA_n, cD_n, cD_n-1, ..., cD2, cD1] : list
+        //    Ordered list of coefficients arrays
+        //    where `n` denotes the level of decomposition. The first element
+        //    (`cA_n`) of the result is approximation coefficients array and the
+        //    following elements (`cD_n` - `cD_1`) are details coefficients arrays.
+
+        // Examples
+        // --------
+        // >>> from pywt import wavedec
+        // >>> coeffs = wavedec([1,2,3,4,5,6,7,8], 'db1', level=2)
+        // >>> cA2, cD2, cD1 = coeffs
+        // >>> cD1
+        // array([-0.70710678, -0.70710678, -0.70710678, -0.70710678])
+        // >>> cD2
+        // array([-2., -2.])
+        // >>> cA2
+        // array([  5.,  13.])
+
+        
+        int i;
+    	level = check_level(data.length, wavelet.dec_len, level);
+
+        double coeffs_list[][] = new double[level+1][];
+
+        double a[] = data.clone();
+        for (i = 0; i < level; i++) {
+            //a, d = dwt(a, wavelet, mode, axis)
+        	double array[][] = dwt(a, wavelet, mode, axis);
+        	a = array[0];
+        	double d[] = array[1];
+            coeffs_list[i] = d;
+        }
+
+        coeffs_list[i] = a;
+        double coeffs_list2[][] = new double[level+1][];
+        for (i = 0; i < level+1; i++) {
+        	coeffs_list2[i] = coeffs_list[level-i];
+        }
+
+        return coeffs_list2;
+    }
+    
+    private int check_level(int sizes, int dec_lens, int level) {
+        int max_level = dwt_max_level(sizes, dec_lens);
+        if (level == -1) {
+            level = max_level;
+        }
+        else if (level < 0) {
+            MipavUtil.displayError("Level value of " + level + " is too low . Minimum level is 0.");
+            return level;
+        }
+        else if (level > max_level) {
+            MipavUtil.displayWarning("Level value of" + level +" is too high: all coefficients will experience boundary effects.");
+            return level;
+        }
+        return level;
     }
         		
 }
