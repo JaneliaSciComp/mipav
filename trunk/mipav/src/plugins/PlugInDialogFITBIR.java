@@ -6381,9 +6381,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                     }
 
-                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                    }
+//                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+//                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+//                    }
                     if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
                         tooltip += "<p><b>Guidelines & Instructions:</b></br>"
                                 + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
@@ -6424,9 +6424,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                         }
 
-                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                        }
+//                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+//                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+//                        }
                         if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
                             tooltip += "<p><b>Guidelines & Instructions:</b></br>"
                                     + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
@@ -6472,9 +6472,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                         }
 
-                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                        }
+//                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+//                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+//                        }
                         if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
                             tooltip += "<p><b>Guidelines & Instructions:</b></br>"
                                     + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
@@ -6521,9 +6521,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                     }
 
-                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                    }
+//                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+//                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+//                    }
                     if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
                         tooltip += "<p><b>Guidelines & Instructions:</b></br>"
                                 + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
