@@ -5218,11 +5218,17 @@ public  class PyWavelets extends AlgorithmBase {
             }
 
             // Copy from temporary output if necessary
-            if (make_temp_output)
+            if (make_temp_output) {
                 for (j = 0; j < output_info.shape[axis]; ++j)
                     // Offsets are byte offsets, to need to cast to char and back
                     output[(output_offset
                               + j * output_info.strides[axis])/8] = output_row[j];
+            }
+            else {
+            	for (j = 0; j < output.length - output_offset/8; j++) {
+            		output[j + output_offset/8] = output_row[j];
+            	}	
+            }
         }
 
         temp_coefs_a = null;
@@ -7980,6 +7986,29 @@ public  class PyWavelets extends AlgorithmBase {
 		 }
 	}
 	
+	public void test_idwt2() {
+		// >>> data = np.array([[1,2], [3,4]], dtype=np.float64)
+        // >>> coeffs = pywt.dwt2(data, 'haar')
+        // >>> pywt.idwt2(coeffs, 'haar')
+        // array([[ 1.,  2.],
+        //        [ 3.,  4.]])
+		double data[][] = new double[2][2];
+		data[0][0] = 1.0;
+		data[0][1] = 2.0;
+		data[1][0] = 3.0;
+		data[1][1] = 4.0;
+		DiscreteWavelet wavelet = discrete_wavelet(WAVELET_NAME.HAAR, 1);
+		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{wavelet, wavelet};
+		MODE modes[] = new MODE[]{MODE.MODE_SYMMETRIC, MODE.MODE_SYMMETRIC};
+		int axes[] = new int[]{0,1};
+		double arr[][][] = dwt2(data, wavelets, modes, axes);
+		double rec[][] = idwt2(arr, wavelets, modes, axes);
+		System.out.println("rec[0][0] = " + rec[0][0] + " data[0][0] = " + data[0][0]);
+		System.out.println("rec[0][1] = " + rec[0][1] + " data[0][1] = " + data[0][1]);
+		System.out.println("rec[1][0] = " + rec[1][0] + " data[1][0] = " + data[1][0]);
+		System.out.println("rec[1][1] = " + rec[1][1] + " data[1][1] = " + data[1][1]);
+	}
+	
 	public void test_3D_reconstruct() {
 		int i;
 	    double data[][][] = new double[][][]
@@ -9989,16 +10018,16 @@ public  class PyWavelets extends AlgorithmBase {
     }
     
     private double[] _sign(double x[]) {
-        // Matlab-like sign function (numpy uses a different convention).
-    	double ret[] = new double [x.length];
-    	int i;
-    	for (i = 0; i < x.length; i++) {
-    		ret[i] = x[i]/Math.abs(x[i]);
-    	}
-        return ret;
-    }
-    
-    private double[][] _sign(double xReal[], double xImag[]) {
+	    // Matlab-like sign function (numpy uses a different convention).
+		double ret[] = new double [x.length];
+		int i;
+		for (i = 0; i < x.length; i++) {
+			ret[i] = x[i]/Math.abs(x[i]);
+		}
+	    return ret;
+	}
+
+	private double[][] _sign(double xReal[], double xImag[]) {
         // Matlab-like sign function (numpy uses a different convention).
     	double ret[][] = new double[2][xReal.length];
     	int i;
@@ -10656,10 +10685,13 @@ public  class PyWavelets extends AlgorithmBase {
         //    Original signal reconstructed from input data.
 
         // drop the keys corresponding to value = None
-    	 int i;
+    	 int i, j;
     	 int axis;
     	 DiscreteWavelet wav;
     	 MODE mode;
+    	 double L[][];
+    	 double H[][];
+    	 int key_length;
     	 HashMap<String, double[][]> coeffMap = new HashMap<String, double[][]>();
     	 Iterator<Map.Entry<String, double[][]>> allIter = coeffs.entrySet().iterator();
          Map.Entry<String,double[][]> kEntry = null;
@@ -10728,31 +10760,53 @@ public  class PyWavelets extends AlgorithmBase {
         	wavelets = wavelet;
         }
  
-        int key_length = 0;
-        for (i = 1; i >= 0; i--) {
-        	key_length++;
+        HashMap<String, double[][]> new_coeffs = new HashMap<String, double[][]>();
+        for (i = 1, key_length = 2; i >= 0; i--, key_length--) {
             axis = axes[i];
             wav = wavelets[i];
             mode = modes[i];
+            new_coeffs.clear();
+            if (i > 0) {
+	            String keyTruncLast;
+	            allIter = coeffMap.entrySet().iterator();
+	            kEntry = null;
+	            Vector<String>new_keys = new Vector<String>();
+	            String key;
+	            while (allIter.hasNext()) {
+	            	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+	            	key = (String)kEntry.getKey();
+	            	keyTruncLast = key.substring(0,key.length()-1);
+	            	boolean found = false;
+	            	for (j = 0; (j < new_keys.size()) && (!found); j++) {
+	            		if (new_keys.get(j).equals(keyTruncLast)) {
+	            			found = true;
+	            		}
+	            	}
+	            	if (!found) {
+	            		new_keys.add(keyTruncLast);
+	            	}
+	            }
+	            for (j = 0; j < new_keys.size(); j++) {
+	            	key = new_keys.get(j);
+	            	L = coeffMap.get(key + "a");
+	            	H = coeffMap.get(key + "d");
+	            	new_coeffs.put(key, idwt_axis(L, H, wav, mode, axis));
+	            }
+            } // if (i > 0)
+            else {
+            	L = coeffMap.get("a");
+            	H = coeffMap.get("d");
+            	new_coeffs.put("answer", idwt_axis(L, H, wav, mode, axis));
+            }
+            coeffMap.clear();
+            Iterator<Map.Entry<String, double[][]>> newIter = new_coeffs.entrySet().iterator();
+            Map.Entry<String,double[][]> newEntry = null;
+            while (newIter.hasNext()) {
+            	newEntry = (Map.Entry<String,double[][]>) newIter.next();
+            	coeffMap.put((String)newEntry.getKey(), (double[][])newEntry.getValue());
+            }
         } // for (i = 1; i >= 0; i--)
-        return null;
-        /*for key_length, (axis, wav, mode) in reversed(
-                list(enumerate(zip(axes, wavelets, modes)))):
-            if axis < 0 or axis >= ndim:
-                raise ValueError("Axis greater than data dimensions")
-
-            new_coeffs = {}
-            new_keys = [''.join(coef) for coef in product('ad', repeat=key_length)]
-
-            for key in new_keys:
-                L = coeffs.get(key + 'a', None)
-                H = coeffs.get(key + 'd', None)
-
-                new_coeffs[key] = idwt_axis(L, H, wav, mode, axis)
-            coeffs = new_coeffs
-
-        return coeffs['']*/
-
+        return coeffMap.get("answer");
     } 	
     
     private boolean coeffs_ok(HashMap<String, double[][]>coeffs) {
@@ -10786,7 +10840,8 @@ public  class PyWavelets extends AlgorithmBase {
         	String key = allKeys.get(i);
         	for (j = 0; j < key.length(); j++) {
         		String subkey = key.substring(j, j+1);
-        		if ((subkey != "a") && (subkey != "d")) {
+        		
+        		if ((!(subkey.equals("a"))) && (!(subkey.equals("d")))) {
         		    if (badKeys == null) {
         		    	badKeys = new Vector<String>();
         		    }
@@ -10813,6 +10868,112 @@ public  class PyWavelets extends AlgorithmBase {
         }
 
         return true;
+    }
+    
+    private double[][] idwt_axis(double[][] coefs_a, double[][] coefs_d,
+            DiscreteWavelet wavelet, MODE mode, int axis) {
+    	// Default axis = 0;
+    	int x, y;
+    	int index;
+    	ArrayInfo a_info = new ArrayInfo();
+    	ArrayInfo d_info = new ArrayInfo();
+        ArrayInfo output_info = new ArrayInfo();
+		//cdef common.ArrayInfo *a_info_p = NULL
+		//cdef common.ArrayInfo *d_info_p = NULL
+		double output[][];
+		//cdef void *data_a = NULL
+		//cdef void *data_d = NULL
+		// Explicit input_shape necessary to prevent memory leak
+		//cdef size_t[::1] input_shape, output_shape
+		int retval = -5;
+		int input0length = 0;
+		int input1length = 0;
+		
+		if (coefs_a != null) {
+		    a_info.ndim = 2;
+		    a_info.strides = new int[]{8*coefs_a[0].length,8};
+	        a_info.shape = new int[]{coefs_a.length,coefs_a[0].length};
+	        input0length = coefs_a.length;
+	        input1length = coefs_a[0].length;
+		    //a_info_p = &a_info
+		    //data_a = <void *> coefs_a.data
+		}
+		if (coefs_d != null) {
+		    d_info.ndim = 2;
+		    d_info.strides = new int[]{8*coefs_d[0].length,8};
+		    d_info.shape = new int[]{coefs_d.length,coefs_d[0].length};
+		    input0length = coefs_d.length;
+	        input1length = coefs_d[0].length;
+		    //d_info_p = &d_info
+		    //data_d = <void *> coefs_d.data
+		}
+		
+		
+		int output_shape[] = new int[2];
+	    if (axis == 0) {
+	        output_shape[0] = idwt_buffer_length(input0length, wavelet.rec_len, mode);
+	    }
+	    else {
+	        output_shape[0] = input0length;
+	    }
+	    if (axis == 1) {
+	        output_shape[1] = idwt_buffer_length(input1length, wavelet.rec_len, mode);
+	    }
+	    else {
+	        output_shape[1] = input1length;
+	    }
+		output = new double[output_shape[0]][ output_shape[1]];
+		
+		output_info.ndim = 2;
+		output_info.strides = new int[]{8*output[0].length,8};
+		output_info.shape = new int[]{output.length,output[0].length};
+		
+        double temp_input_a[] = null;
+        if (coefs_a != null) {
+		    temp_input_a = new double[coefs_a.length*coefs_a[0].length];
+        }
+        double temp_input_d[] = null;
+        if (coefs_d != null) {
+            temp_input_d = new double[coefs_d.length*coefs_d[0].length];
+        }
+        double temp_output[] = new double[output.length*output[0].length];
+
+        if (coefs_a != null) {
+	        for (x = 0; x < coefs_a.length; x++) {
+	            for (y = 0; y < coefs_a[0].length; y++) {
+	            	index = y + x*coefs_a[0].length;
+	            	temp_input_a[index] = coefs_a[x][y];
+	            }
+	        }
+        }
+        
+        if (coefs_d != null) {
+	        for (x = 0; x < coefs_d.length; x++) {
+	            for (y = 0; y < coefs_d[0].length; y++) {
+	            	index = y + x*coefs_d[0].length;
+	            	temp_input_d[index] = coefs_d[x][y];
+	            }
+	        }
+        }
+	
+		
+        retval = idwt_axis(temp_input_a, a_info,
+                             temp_input_d, d_info,
+                             temp_output, output_info,
+                             wavelet, axis, mode);
+	    if (retval != 0) {
+	        MipavUtil.displayError("C inverse wavelet transform failed");
+	        return null;
+	    }
+		
+	    for (x = 0; x < output.length; x++) {
+            for (y = 0; y < output[0].length; y++) {
+            	index = y + x*output[0].length;
+            	output[x][y] = temp_output[index];
+            }
+        }
+		
+		return output;
     }
         
 }
