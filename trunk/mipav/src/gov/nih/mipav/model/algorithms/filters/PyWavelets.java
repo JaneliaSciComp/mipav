@@ -8059,6 +8059,80 @@ public  class PyWavelets extends AlgorithmBase {
 	    }
 	    System.out.println("Modes correct = " + modesCorrect + " modes wrong = " + modesWrong);
 	}
+	
+	public void test_dwdtn_idwtn_allwavelets() {
+		int i,j,k,m,n;
+		boolean correct;
+		// Don't include DMEY, CMOR, SHAN, FBSP
+		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+                WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
+	   DiscreteWavelet w;
+	   DiscreteWavelet wavelets[];
+	   MODE modes[];
+	   int numberCorrect = 0;
+	   int numberWrong = 0;
+	   int orders[][] = new int[7][];
+	   orders[0] = new int[]{1}; // HAAR
+	   // RBIO 10, 20, 30, 40, 50, 60 do not work
+	   orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+	   orders[2] = new int[38]; // DB
+	   for (i = 0; i < 38; i++) {
+	       orders[2][i] = i+1;
+	   }
+	   orders[3] = new int[19]; // SYM
+	   for (i = 0; i < 19; i++) {
+	       orders[3][i] = i+2;
+	   }
+	   orders[4] = new int[17]; // COIF
+	   for (i = 0; i < 17; i++) {
+	       orders[4][i] = i+1;
+	   }
+	   orders[5] = orders[1].clone(); // BIOR
+		RandomNumberGen randomGen = new RandomNumberGen();
+		double r[][] = new double[16][16];
+	    for (i = 0; i < 16; i++) {
+	    	for (j = 0; j < 16; j++) {
+	    		r[i][j] = randomGen.genStandardGaussian();
+	    	}
+	    }
+	    // test 2D case only for all wavelet types
+	    int axes[] = new int[]{0,1};
+	    MODE mode[] = new MODE[]{MODE.MODE_ZEROPAD, MODE.MODE_CONSTANT_EDGE, MODE.MODE_SYMMETRIC, MODE.MODE_PERIODIC,
+        		MODE.MODE_SMOOTH, MODE.MODE_PERIODIZATION};
+	    double atol = 1.0E-7;
+	    double rtol = 1.0E-7;
+	    double allowedError;
+	    double actualError;
+        for (i = 0; i < wName.length; i++) {
+        	for (j = 0; j < orders[i].length; j++) {
+        		w = discrete_wavelet(wName[i], orders[i][j]);
+        		wavelets = new DiscreteWavelet[]{w,w};
+        		for (k = 0; k < mode.length; k++) {
+        			modes = new MODE[]{mode[k],mode[k]};
+        			double arr[][][] = dwt2(r, wavelets, modes, axes);
+        			double rec[][] = idwt2(arr, wavelets, modes, axes);
+        			correct = true;
+        			for (m = 0; m < 16; m++) {
+        				for (n = 0; n < 16; n++) {
+        				    allowedError = atol + Math.abs(rtol * r[m][n]);
+        				    actualError = Math.abs(rec[m][n] - r[m][n]);
+        				    if (actualError > allowedError) {
+        				    	correct = false;
+        				    }
+        				}
+        			}
+        			if (correct) {
+        				numberCorrect++;
+        			}
+        			else {
+        				numberWrong++;
+        			}
+        		}
+        	}
+        }
+        Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
