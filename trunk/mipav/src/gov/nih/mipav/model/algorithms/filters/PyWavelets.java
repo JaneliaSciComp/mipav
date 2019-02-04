@@ -8010,7 +8010,14 @@ public  class PyWavelets extends AlgorithmBase {
 	}
 	
 	public void test_3D_reconstruct() {
-		int i;
+		int modesCorrect = 0;
+		int modesWrong = 0;
+		boolean correct;
+		double allowedError;
+		double actualError;
+		int i, j, k, m;
+		double atol = 1.0E-13;
+		double rtol = 1.0E-13;
 	    double data[][][] = new double[][][]
 	        {{{0, 4, 1, 5, 1, 4},
 	         {0, 5, 26, 3, 2, 1},
@@ -8022,15 +8029,35 @@ public  class PyWavelets extends AlgorithmBase {
 	         {5, 2, 6, 78, 12, 2}}};
 
 	    DiscreteWavelet wavelet = discrete_wavelet(WAVELET_NAME.HAAR, 1);
+	    DiscreteWavelet wavelets[] = new DiscreteWavelet[]{wavelet, wavelet,wavelet};
 	    MODE modes[] = new MODE[]{MODE.MODE_ZEROPAD, MODE.MODE_CONSTANT_EDGE, MODE.MODE_SYMMETRIC, MODE.MODE_REFLECT,
 	    		MODE.MODE_PERIODIC, MODE.MODE_PERIODIZATION, MODE.MODE_SMOOTH, MODE.MODE_ANTISYMMETRIC, MODE.MODE_ANTIREFLECT};
-	    MODE mode;
+	    MODE mode[];
+	    int axes[] = new int[]{0,1,2};
 	    for (i = 0; i < modes.length; i++) {
-	    	mode = modes[i];
-	        //d = pywt.dwtn(data, wavelet, mode=mode)
-	        //assert_allclose(data, pywt.idwtn(d, wavelet, mode=mode),
-	        //                rtol=1e-13, atol=1e-13)
+	    	correct = true;
+	    	mode = new MODE[]{modes[i],modes[i],modes[i]};
+	        double d[][][][] = dwt3(data, wavelets, mode,axes);
+	        double rec[][][] = idwt3(d, wavelets, mode, axes);
+	        for (j = 0; j < data.length; j++) {
+	        	for (k = 0; k < data[0].length; k++) {
+	        		for (m = 0; m < data[0][0].length; m++) {
+	        		    allowedError = atol	+ Math.abs(rtol*rec[j][k][m]);
+	        		    actualError = Math.abs(rec[j][k][m] - data[j][k][m]);
+	        		    if (actualError > allowedError) {
+	        		    	correct = false;
+	        		    }
+	        		}
+	        	}
+	        }
+	        if (correct) {
+	        	modesCorrect++;
+	        }
+	        else {
+	        	modesWrong++;
+	        }
 	    }
+	    System.out.println("Modes correct = " + modesCorrect + " modes wrong = " + modesWrong);
 	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
@@ -10651,10 +10678,10 @@ public  class PyWavelets extends AlgorithmBase {
         coeffMap.put("da", HL);
         coeffMap.put("ad", LH);
         coeffMap.put("dd", HH);
-        return idwtn(coeffMap, wavelet, mode, axes); 
+        return idwtn2(coeffMap, wavelet, mode, axes); 
     }
     
-    private double[][] idwtn(HashMap<String, double[][]>coeffs, DiscreteWavelet wavelet[], MODE modein[], int axes[]) {
+    private double[][] idwtn2(HashMap<String, double[][]>coeffs, DiscreteWavelet wavelet[], MODE modein[], int axes[]) {
         // Default mode = symmetric
     	// Default axes = null
         // Single-level n-dimensional Inverse Discrete Wavelet Transform for 2D.
@@ -10691,7 +10718,6 @@ public  class PyWavelets extends AlgorithmBase {
     	 MODE mode;
     	 double L[][];
     	 double H[][];
-    	 int key_length;
     	 HashMap<String, double[][]> coeffMap = new HashMap<String, double[][]>();
     	 Iterator<Map.Entry<String, double[][]>> allIter = coeffs.entrySet().iterator();
          Map.Entry<String,double[][]> kEntry = null;
@@ -10709,7 +10735,7 @@ public  class PyWavelets extends AlgorithmBase {
          }
 
         // Raise error for invalid key combinations
-        if (!coeffs_ok(coeffMap)) {
+        if (!coeffs_ok2(coeffMap)) {
         	return null;
         }
 
@@ -10761,7 +10787,7 @@ public  class PyWavelets extends AlgorithmBase {
         }
  
         HashMap<String, double[][]> new_coeffs = new HashMap<String, double[][]>();
-        for (i = 1, key_length = 2; i >= 0; i--, key_length--) {
+        for (i = 1; i >= 0; i--) {
             axis = axes[i];
             wav = wavelets[i];
             mode = modes[i];
@@ -10809,9 +10835,8 @@ public  class PyWavelets extends AlgorithmBase {
         return coeffMap.get("answer");
     } 	
     
-    private boolean coeffs_ok(HashMap<String, double[][]>coeffs) {
+    private boolean coeffs_ok2(HashMap<String, double[][]>coeffs) {
     	int i,j;
-        HashMap<String, double[][]> coeffMap = new HashMap<String, double[][]>();
        	Iterator<Map.Entry<String, double[][]>> allIter = coeffs.entrySet().iterator();
         Map.Entry<String,double[][]> kEntry = null;
         Vector<String>badKeys = null;
@@ -10970,6 +10995,820 @@ public  class PyWavelets extends AlgorithmBase {
             for (y = 0; y < output[0].length; y++) {
             	index = y + x*output[0].length;
             	output[x][y] = temp_output[index];
+            }
+        }
+		
+		return output;
+    }
+    
+    private double[][][][] dwt3(double data[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+        // Default mode = symmetric
+    	// Default axes = -3,-2,-1
+        // 2D Discrete Wavelet Transform.
+
+        // Parameters
+        // ----------
+        // data : array_like
+        //     3D array with input data
+        // wavelet : Wavelet object or name string, or 2-tuple of wavelets
+        //     Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in ``axes``.
+        // mode : str or 2-tuple of strings, optional
+        //    Signal extension mode, see Modes (default: 'symmetric').  This can
+        //    also be a tuple of modes specifying the mode to use on each axis in
+        //    ``axes``.
+        // axes : 2-tuple of ints, optional
+        //    Axes over which to compute the DWT. Repeated elements mean the DWT will
+        //    be performed multiple times along these axes.
+
+        //Returns
+        //-------
+        //(cA, (cH, cV, cD)) : tuple
+        //    Approximation, horizontal detail, vertical detail and diagonal
+        //    detail coefficients respectively.  Horizontal refers to array axis 0
+        //    (or ``axes[0]`` for user-specified ``axes``).
+
+        // Examples
+        // --------
+        // >>> import numpy as np
+        // >>> import pywt
+        // >>> data = np.ones((4,4), dtype=np.float64)
+        // >>> coeffs = pywt.dwt2(data, 'haar')
+        // >>> cA, (cH, cV, cD) = coeffs
+        // >>> cA
+        // array([[ 2.,  2.],
+        //       [ 2.,  2.]])
+        // >>> cV
+        // array([[ 0.,  0.],
+        //       [ 0.,  0.]])
+
+      
+        if ((axes != null) && (axes.length != 3)) {
+            MipavUtil.displayError("Expected 3 axes");
+            return null;
+        }
+
+        HashMap<String, double[][][]> coeffsMap = dwtn(data, wavelet, mode, axes);
+        double coefs[][][][] = new double[8][][][];
+        //return coefs['aa'], (coefs['da'], coefs['ad'], coefs['dd'])
+        coefs[0] = coeffsMap.get("aaa");
+        coefs[1] = coeffsMap.get("daa");
+        coefs[2] = coeffsMap.get("ada");
+        coefs[3] = coeffsMap.get("dda");
+        coefs[4] = coeffsMap.get("aad");
+        coefs[5] = coeffsMap.get("dad");
+        coefs[6] = coeffsMap.get("add");
+        coefs[7] = coeffsMap.get("ddd");
+        return coefs;
+    }
+    
+    public HashMap<String, double[][][]> dwtn(double data[][][], DiscreteWavelet wavelet[], MODE modein[], int axes[]) {
+        // Default mode = symmetric
+    	// Default axes = null
+        // Single-level n-dimensional Discrete Wavelet Transform for 2D case
+
+        // Parameters
+        // ----------
+        // data : array_like
+        //     n-dimensional array with input data.
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //     Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in ``axes``.
+        // mode : str or tuple of string, optional
+        //    Signal extension mode used in the decomposition,
+        //    see Modes (default: 'symmetric').  This can also be a tuple of modes
+        //    specifying the mode to use on each axis in ``axes``.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the DWT. Repeated elements mean the DWT will
+        //    be performed multiple times along these axes. A value of ``None`` (the
+        //    default) selects all axes.
+
+        //    Axes may be repeated, but information about the original size may be
+        //    lost if it is not divisible by ``2 ** nrepeats``. The reconstruction
+        //    will be larger, with additional values derived according to the
+        //    ``mode`` parameter. ``pywt.wavedecn`` should be used for multilevel
+        //    decomposition.
+
+        // Returns
+        // -------
+        // coeffs : dict
+        //    Results are arranged in a dictionary, where key specifies
+        //    the transform type on each dimension and value is a n-dimensional
+        //    coefficients array.
+
+        //    For example, for a 2D case the result will look something like this::
+
+        //        {'aa': <coeffs>  # A(LL) - approx. on 1st dim, approx. on 2nd dim
+        //         'ad': <coeffs>  # V(LH) - approx. on 1st dim, det. on 2nd dim
+        //         'da': <coeffs>  # H(HL) - det. on 1st dim, approx. on 2nd dim
+        //         'dd': <coeffs>  # D(HH) - det. on 1st dim, det. on 2nd dim
+        //        }
+
+        //    For user-specified ``axes``, the order of the characters in the
+        //    dictionary keys map to the specified ``axes``.
+
+       
+        int i;
+        int axis;
+        DiscreteWavelet wav;
+        MODE mode;
+        if (axes == null) {
+            axes = new int[]{0,1,2};
+        }
+        if (axes[0] < 0) {
+        	axes[0] = axes[0] + 3;
+        }
+        if (axes[1] < 0) {
+        	axes[1] = axes[1] + 3;
+        }
+        if (axes[2] < 0) {
+        	axes[2] = axes[2] + 3;
+        }
+        
+        // If there is only 1 mode, use the same mode for both axes
+        MODE modes[];
+        if (modein.length == 1) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m,m};
+        }
+        else {
+        	modes = modein;
+        }
+        
+        // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
+        DiscreteWavelet wavelets[];
+        if (wavelet.length == 1) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w,w};
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        //ValuePair<String, double[][]> pair = new ValuePair<String, double[][]>("", data);
+        //Vector<ValuePair<String, double[][]>> coeffs = new Vector<ValuePair<String, double[][]>>();
+        //coeffs.add(pair);
+        HashMap<String, double[][][]> coeffs = new HashMap<String, double[][][]>();
+        coeffs.put("", data);
+        HashMap<String, double[][][]> new_coeffs = new HashMap<String, double[][][]>();
+        for (i = 0; i < 3; i++) {
+            axis = axes[i];
+            wav = wavelets[i];
+            mode = modes[i];
+            new_coeffs.clear();
+            Iterator<Map.Entry<String, double[][][]>> allIter = coeffs.entrySet().iterator();
+            Map.Entry<String,double[][][]> kEntry = null;
+            while (allIter.hasNext()) {
+            	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+            	String subband = (String) kEntry.getKey();
+            	double x[][][] = (double[][][]) kEntry.getValue();
+            	double arr[][][][] = dwt_axis(x, wav, mode, axis);
+            	double cA[][][] = arr[0];
+            	double cD[][][] = arr[1];
+            	new_coeffs.put(subband + "a", cA);
+            	new_coeffs.put(subband + "d", cD);
+            }
+            coeffs.clear();
+            Iterator<Map.Entry<String, double[][][]>> newIter = new_coeffs.entrySet().iterator();
+            Map.Entry<String,double[][][]> newEntry = null;
+            while (newIter.hasNext()) {
+            	newEntry = (Map.Entry<String,double[][][]>) newIter.next();
+            	coeffs.put((String)newEntry.getKey(), (double[][][])newEntry.getValue());
+            }
+        }
+        return coeffs;
+    }
+    
+    private double[][][][] dwt_axis(double data[][][], DiscreteWavelet wavelet, MODE mode, int axis) {
+    	// default axis = 0;
+        // memory-views do not support n-dimensional arrays, use np.ndarray instead
+        ArrayInfo data_info  = new ArrayInfo();
+        ArrayInfo output_info = new ArrayInfo();
+        double cD[][][];
+        double cA[][][];
+        int i,j;
+        //int input_shape[];
+        int output_shape[];
+        int retval = -5;
+
+
+        //input_shape = new int[]{data.length,data[0].length};
+        output_shape = new int[3];
+        if (axis == 0) {
+            output_shape[0] = dwt_buffer_length(data.length, wavelet.dec_len, mode);
+        }
+        else {
+        	output_shape[0] = data.length;
+        }
+        if (axis == 1) {
+            output_shape[1] = dwt_buffer_length(data[0].length, wavelet.dec_len, mode);
+        }
+        else {
+        	output_shape[1] = data[0].length;
+        }
+        if (axis == 2) {
+            output_shape[2] = dwt_buffer_length(data[0][0].length, wavelet.dec_len, mode);
+        }
+        else {
+        	output_shape[2] = data[0][0].length;
+        }
+
+        cA = new double[output_shape[0]][output_shape[1]][output_shape[2]];
+        cD = new double[output_shape[0]][output_shape[1]][output_shape[2]];
+
+        data_info.ndim = 3;
+        data_info.strides = new int[]{8*data[0].length*data[0][0].length,8*data[0][0].length,8};
+        data_info.shape = new int[]{data.length,data[0].length,data[0][0].length};
+
+        output_info.ndim = 3;
+        output_info.strides = new int[]{8*cA[0].length*cA[0][0].length,8*cA[0][0].length,8};
+        output_info.shape = new int[]{cA.length,cA[0].length,cA[0][0].length};
+
+        
+        retval = downcoef_axis(data, data_info,
+                                     cA, output_info,
+                                     wavelet, axis,Coefficient.COEF_APPROX, mode,
+                                     0, DiscreteTransformType.DWT_TRANSFORM);
+        if (retval != 0) {
+            MipavUtil.displayError("C wavelet COEF_APPROX transform failed retval = " + retval);
+            return null;
+        }
+           
+        retval = downcoef_axis(data, data_info,
+                                 cD, output_info,
+                                 wavelet, axis, Coefficient.COEF_DETAIL, mode,
+                                 0, DiscreteTransformType.DWT_TRANSFORM);
+        if (retval != 0) {
+            MipavUtil.displayError("C wavelet COEF_DETAIL transform failed");
+            return null;
+        }
+        
+        double arr[][][][] = new double[2][][][];
+        arr[0] = cA;
+        arr[1] = cD;
+        return arr;
+    }
+    
+    /* Decomposition of input with lowpass filter */
+
+    private int downcoef_axis(double input[][][], ArrayInfo input_info,
+                                  double output[][][], ArrayInfo output_info,
+                                  DiscreteWavelet wavelet, int axis,
+                                  Coefficient coef, MODE dwt_mode,
+                                  int swt_level,
+                                  DiscreteTransformType transform){
+        int i;
+        int num_loops = 1;
+        double temp_input[] = null; 
+        double temp_output[] = null;
+        int linearOffset;
+        int sliceSize;
+        int rowIndex;
+        int colIndex;
+        int depthIndex;
+
+        // These are boolean values, but MSVC does not have <stdbool.h>
+        boolean make_temp_input, make_temp_output;
+
+        if (input_info.ndim != output_info.ndim)
+            return 1;
+        if (axis >= input_info.ndim)
+            return 2;
+
+        for (i = 0; i < input_info.ndim; ++i){
+            if (i == axis){
+                switch (transform) {
+                case DWT_TRANSFORM:
+                    if (dwt_buffer_length(input_info.shape[i], wavelet.dec_len,
+                                          dwt_mode) != output_info.shape[i])
+                        return 3;
+                    break;
+                case SWT_TRANSFORM:
+                    if (swt_buffer_length(input_info.shape[i])
+                        != output_info.shape[i])
+                        return 4;
+                    break;
+                }
+            } else {
+                if (input_info.shape[i] != output_info.shape[i])
+                    return 5;
+            }
+        }
+
+        //make_temp_input = input_info.strides[axis] != 8;
+        //make_temp_output = output_info.strides[axis] != 8;
+        // Must convert double[][] input and output into double[] temp_input
+        // and temp_output for use in dec_a and dec_d.
+        make_temp_input = true;
+        make_temp_output = true;
+        if (make_temp_input)
+            temp_input = new double[input_info.shape[axis]];
+        if (make_temp_output)
+            temp_output = new double[output_info.shape[axis]];
+
+        for (i = 0; i < output_info.ndim; ++i){
+            if (i != axis)
+                num_loops *= output_info.shape[i];
+        }
+
+        for (i = 0; i < num_loops; ++i) {
+            int j;
+            int input_offset = 0, output_offset = 0;
+            double input_row[];
+            double output_row[];
+
+            // Calculate offset into linear buffer
+            {
+                int reduced_idx = i;
+                for (j = 0; j < output_info.ndim; ++j){
+                    int j_rev = output_info.ndim - 1 - j;
+                    if (j_rev != axis){
+                        int axis_idx = reduced_idx % output_info.shape[j_rev];
+                        reduced_idx /= output_info.shape[j_rev];
+
+                        input_offset += (axis_idx * input_info.strides[j_rev]/8);
+                        output_offset += (axis_idx * output_info.strides[j_rev]/8);
+                    }
+                }
+            }
+
+            // Copy to temporary input if necessary
+            if (make_temp_input) {
+                for (j = 0; j < input_info.shape[axis]; ++j) {
+                    // Offsets are byte offsets, to need to cast to char and back
+                	linearOffset = input_offset + j * input_info.strides[axis]/8;
+                    // Axes are in order x, y, z
+                	sliceSize = input[0].length*input[0][0].length;
+                    rowIndex = linearOffset/sliceSize;
+                    colIndex = (linearOffset % sliceSize)/input[0][0].length;
+                    depthIndex = (linearOffset % sliceSize) % input[0][0].length;
+                    temp_input[j] = input[rowIndex][colIndex][depthIndex];
+                }
+            }
+        
+        
+
+            // Select temporary or direct output and input
+            //input_row = make_temp_input ? temp_input
+            //    : (const TYPE *)((const char *) input + input_offset);
+            input_row = temp_input;
+            //output_row = make_temp_output ? temp_output
+            //    : (TYPE *)((char *) output + output_offset);
+            output_row = temp_output;
+
+            switch (transform) {
+                case DWT_TRANSFORM:
+                    // Apply along axis
+                    switch (coef){
+                    case COEF_APPROX:
+                        dec_a(input_row, input_info.shape[axis],
+                                          wavelet,
+                                          output_row, output_info.shape[axis],
+                                          dwt_mode);
+                        break;
+                    case COEF_DETAIL:
+                        dec_d(input_row, input_info.shape[axis],
+                                          wavelet,
+                                          output_row, output_info.shape[axis],
+                                          dwt_mode);
+                        break;
+                    }
+                    break;
+
+                case SWT_TRANSFORM:
+                    // Apply along axis
+                    switch (coef){
+                    case COEF_APPROX:
+                        /*swt_a(input_row, input_info.shape[axis],
+                                          wavelet,
+                                          output_row, output_info.shape[axis],
+                                          swt_level);*/
+                        break;
+                    case COEF_DETAIL:
+                        /*swt_d(input_row, input_info.shape[axis],
+                                          wavelet,
+                                          output_row, output_info.shape[axis],
+                                          swt_level);*/
+                        break;
+                    }
+                    break;
+            }
+
+            // Copy from temporary output if necessary
+            if (make_temp_output) {
+                for (j = 0; j < output_info.shape[axis]; ++j) {
+                    // Offsets are byte offsets, to need to cast to char and back
+                    //*(TYPE *)((char *) output + output_offset
+                    //          + j * output_info.strides[axis]) = output_row[j];
+                	linearOffset = output_offset + j * output_info.strides[axis]/8;
+                	sliceSize = output[0].length * output[0][0].length;
+                	rowIndex = linearOffset/sliceSize;
+                	colIndex = (linearOffset % sliceSize)/output[0][0].length;
+                	depthIndex = (linearOffset % sliceSize) % output[0][0].length;
+                	output[rowIndex][colIndex][depthIndex] = output_row[j];
+                }
+            }
+        } // for (i = 0; i < num_loops; ++i)
+
+        temp_input = null;
+        temp_output = null;
+        return 0;
+    }
+    
+    private double[][][] idwt3(double coeffs[][][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+        // Default mode = symmetric
+    	// Default axes = -3,-2,-1
+        // 3-D Inverse Discrete Wavelet Transform.
+
+        // Reconstructs data from coefficient arrays.
+
+        // Parameters
+        // ----------
+        // coeffs : tuple
+        //    (cA, (cH, cV, cD)) A tuple with approximation coefficients and three
+        //    details coefficients 2D arrays like from `dwt2`.  If any of these
+        //    components are set to ``None``, it will be treated as zeros.
+        // wavelet : Wavelet object or name string, or 2-tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in ``axes``.
+        // mode : str or 2-tuple of strings, optional
+        //    Signal extension mode, see Modes (default: 'symmetric').  This can
+        //    also be a tuple of modes specifying the mode to use on each axis in
+        //    ``axes``.
+        // axes : 2-tuple of ints, optional
+        //    Axes over which to compute the IDWT. Repeated elements mean the IDWT
+        //    will be performed multiple times along these axes.
+
+        // Examples
+        // --------
+        // >>> import numpy as np
+        // >>> import pywt
+        // >>> data = np.array([[1,2], [3,4]], dtype=np.float64)
+        // >>> coeffs = pywt.dwt2(data, 'haar')
+        // >>> pywt.idwt2(coeffs, 'haar')
+        // array([[ 1.,  2.],
+        //        [ 3.,  4.]])
+
+        // L -low-pass data, H - high-pass data
+        double LLL[][][] = coeffs[0];
+        double HLL[][][] = coeffs[1];
+        double LHL[][][] = coeffs[2];
+        double HHL[][][] = coeffs[3];
+        double LLH[][][] = coeffs[4];
+        double HLH[][][] = coeffs[5];
+        double LHH[][][] = coeffs[6];
+        double HHH[][][] = coeffs[7];
+        if ((axes != null) && (axes.length != 3)) {
+            MipavUtil.displayError("Expected 3 axes");
+            return null;
+        }
+
+        HashMap<String, double[][][]> coeffMap = new HashMap<String, double[][][]>();
+        coeffMap.put("aaa", LLL);
+        coeffMap.put("daa", HLL);
+        coeffMap.put("ada", LHL);
+        coeffMap.put("dda", HHL);
+        coeffMap.put("aad", LLH);
+        coeffMap.put("dad", HLH);
+        coeffMap.put("add", LHH);
+        coeffMap.put("ddd", HHH);
+        return idwtn3(coeffMap, wavelet, mode, axes); 
+    }
+    
+    private double[][][] idwtn3(HashMap<String, double[][][]>coeffs, DiscreteWavelet wavelet[], MODE modein[], int axes[]) {
+        // Default mode = symmetric
+    	// Default axes = null
+        // Single-level n-dimensional Inverse Discrete Wavelet Transform for 3D.
+
+        // Parameters
+        //  ----------
+        // coeffs: dict
+        //    Dictionary as in output of ``dwtn``. Missing or ``None`` items
+        //    will be treated as zeros.
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //     Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in ``axes``.
+        // mode : str or list of string, optional
+        //    Signal extension mode used in the decomposition,
+        //    see Modes (default: 'symmetric').  This can also be a tuple of modes
+        //    specifying the mode to use on each axis in ``axes``.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the IDWT. Repeated elements mean the IDWT
+        //    will be performed multiple times along these axes. A value of ``None``
+        //    (the default) selects all axes.
+
+        //    For the most accurate reconstruction, the axes should be provided in
+        //    the same order as they were provided to ``dwtn``.
+
+        // Returns
+        // -------
+        // data: ndarray
+        //    Original signal reconstructed from input data.
+
+        // drop the keys corresponding to value = None
+    	 int i, j;
+    	 int axis;
+    	 DiscreteWavelet wav;
+    	 MODE mode;
+    	 double L[][][];
+    	 double H[][][];
+    	 HashMap<String, double[][][]> coeffMap = new HashMap<String, double[][][]>();
+    	 Iterator<Map.Entry<String, double[][][]>> allIter = coeffs.entrySet().iterator();
+         Map.Entry<String,double[][][]> kEntry = null;
+         Vector<String>keys = new Vector<String>();
+         Vector<double[][][]>values = new Vector<double[][][]>();
+         while (allIter.hasNext()) {
+         	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+         	String subband = (String) kEntry.getKey();
+         	double v[][][] = (double[][][]) kEntry.getValue();
+         	if (v != null) {
+         		coeffMap.put(subband, v);
+         		keys.add(subband);
+         		values.add(v);
+         	}
+         }
+
+        // Raise error for invalid key combinations
+        if (!coeffs_ok3(coeffMap)) {
+        	return null;
+        }
+
+        // key length matches the number of axes transformed
+        int ndim_transform = keys.get(0).length();
+        for (i = 1; i < keys.size(); i++) {
+            if (keys.get(i).length() > ndim_transform) {
+            	ndim_transform = keys.get(i).length();
+            }
+        }
+        
+        double firstValue[][][] = values.get(0);
+        for (i = 1; i < values.size(); i++) {
+        	double value[][][] = values.get(i);
+        	if ((value.length != firstValue.length) || (value[0].length != firstValue[0].length) || (value[0][0].length != firstValue[0][0].length)) {
+        		System.err.println("Map values are not all of equal size");
+        		return null;
+        	}
+        }
+ 
+        if (axes == null) {
+            axes = new int[]{0,1,2};
+        }
+        if (axes[0] < 0) {
+        	axes[0] = axes[0] + 3;
+        }
+
+        if (axes[2] < 0) {
+        	axes[2] = axes[2] + 3;
+        }
+        
+        // If there is only 1 mode, use the same mode for both axes
+        MODE modes[];
+        if (modein.length == 1) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m,m};
+        }
+        else {
+        	modes = modein;
+        }
+        
+        // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
+        DiscreteWavelet wavelets[];
+        if (wavelet.length == 1) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w, w};
+        }
+        else {
+        	wavelets = wavelet;
+        }
+ 
+        HashMap<String, double[][][]> new_coeffs = new HashMap<String, double[][][]>();
+        for (i = 2; i >= 0; i--) {
+            axis = axes[i];
+            wav = wavelets[i];
+            mode = modes[i];
+            new_coeffs.clear();
+            if (i > 0) {
+	            String keyTruncLast;
+	            allIter = coeffMap.entrySet().iterator();
+	            kEntry = null;
+	            Vector<String>new_keys = new Vector<String>();
+	            String key;
+	            while (allIter.hasNext()) {
+	            	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+	            	key = (String)kEntry.getKey();
+	            	keyTruncLast = key.substring(0,key.length()-1);
+	            	boolean found = false;
+	            	for (j = 0; (j < new_keys.size()) && (!found); j++) {
+	            		if (new_keys.get(j).equals(keyTruncLast)) {
+	            			found = true;
+	            		}
+	            	}
+	            	if (!found) {
+	            		new_keys.add(keyTruncLast);
+	            	}
+	            }
+	            for (j = 0; j < new_keys.size(); j++) {
+	            	key = new_keys.get(j);
+	            	L = coeffMap.get(key + "a");
+	            	H = coeffMap.get(key + "d");
+	            	new_coeffs.put(key, idwt_axis(L, H, wav, mode, axis));
+	            }
+            } // if (i > 0)
+            else {
+            	L = coeffMap.get("a");
+            	H = coeffMap.get("d");
+            	new_coeffs.put("answer", idwt_axis(L, H, wav, mode, axis));
+            }
+            coeffMap.clear();
+            Iterator<Map.Entry<String, double[][][]>> newIter = new_coeffs.entrySet().iterator();
+            Map.Entry<String,double[][][]> newEntry = null;
+            while (newIter.hasNext()) {
+            	newEntry = (Map.Entry<String,double[][][]>) newIter.next();
+            	coeffMap.put((String)newEntry.getKey(), (double[][][])newEntry.getValue());
+            }
+        } // for (i = 1; i >= 0; i--)
+        return coeffMap.get("answer");
+    } 	
+    
+    private boolean coeffs_ok3(HashMap<String, double[][][]>coeffs) {
+    	int i,j;
+       	Iterator<Map.Entry<String, double[][][]>> allIter = coeffs.entrySet().iterator();
+        Map.Entry<String,double[][][]> kEntry = null;
+        Vector<String>badKeys = null;
+        Vector<String>allKeys = new Vector<String>();
+        while (allIter.hasNext()) {
+        	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+        	String subband = (String) kEntry.getKey();
+        	double v[][][] = (double[][][]) kEntry.getValue();
+        	allKeys.add(subband);
+        	if (v == null) {
+        		if (badKeys == null) {
+        			badKeys = new Vector<String>();
+        		}
+        	    badKeys.add(subband);
+        	}
+        }
+        if (badKeys != null) {
+        	System.err.println("The following keys had values set to null:");
+        	for (i = 0; i < badKeys.size(); i++) {
+        		System.err.println("Key = " + badKeys.get(i));
+        	}
+        	return false;
+        }
+        
+        for (i = 0; i < allKeys.size(); i++) {
+        	String key = allKeys.get(i);
+        	for (j = 0; j < key.length(); j++) {
+        		String subkey = key.substring(j, j+1);
+        		
+        		if ((!(subkey.equals("a"))) && (!(subkey.equals("d")))) {
+        		    if (badKeys == null) {
+        		    	badKeys = new Vector<String>();
+        		    }
+        		    badKeys.add(key);
+        		    break;
+        		}
+        	}
+        }
+        if (badKeys != null) {
+        	System.err.println("The following keys had characters that were not a or d:");
+        	for (i = 0; i < badKeys.size(); i++) {
+        		System.err.println("Key = " + badKeys.get(i));
+        	}
+        	return false;
+        }
+        
+        int firstLength = allKeys.get(0).length();
+        for (i = 1; i < allKeys.size(); i++) {
+        	int length = allKeys.get(i).length();
+        	if (length != firstLength) {
+        		System.err.println("Not all keys were the same length");
+        		return false;
+        	}
+        }
+
+        return true;
+    }
+    
+    private double[][][] idwt_axis(double[][][] coefs_a, double[][][] coefs_d,
+            DiscreteWavelet wavelet, MODE mode, int axis) {
+    	// Default axis = 0;
+    	int x, y, z;
+    	int index;
+    	int sliceSize;
+    	ArrayInfo a_info = new ArrayInfo();
+    	ArrayInfo d_info = new ArrayInfo();
+        ArrayInfo output_info = new ArrayInfo();
+		//cdef common.ArrayInfo *a_info_p = NULL
+		//cdef common.ArrayInfo *d_info_p = NULL
+		double output[][][];
+		//cdef void *data_a = NULL
+		//cdef void *data_d = NULL
+		// Explicit input_shape necessary to prevent memory leak
+		//cdef size_t[::1] input_shape, output_shape
+		int retval = -5;
+		int input0length = 0;
+		int input1length = 0;
+		int input2length = 0;
+		
+		if (coefs_a != null) {
+		    a_info.ndim = 3;
+		    a_info.strides = new int[]{8*coefs_a[0].length*coefs_a[0][0].length,8*coefs_a[0][0].length,8};
+	        a_info.shape = new int[]{coefs_a.length,coefs_a[0].length,coefs_a[0][0].length};
+	        input0length = coefs_a.length;
+	        input1length = coefs_a[0].length;
+	        input2length = coefs_a[0][0].length;
+		    //a_info_p = &a_info
+		    //data_a = <void *> coefs_a.data
+		}
+		if (coefs_d != null) {
+		    d_info.ndim = 3;
+		    d_info.strides = new int[]{8*coefs_d[0].length*coefs_d[0][0].length,8*coefs_d[0][0].length,8};
+		    d_info.shape = new int[]{coefs_d.length,coefs_d[0].length,coefs_d[0][0].length};
+		    input0length = coefs_d.length;
+	        input1length = coefs_d[0].length;
+	        input2length = coefs_d[0][0].length;
+		    //d_info_p = &d_info
+		    //data_d = <void *> coefs_d.data
+		}
+		
+		
+		int output_shape[] = new int[3];
+	    if (axis == 0) {
+	        output_shape[0] = idwt_buffer_length(input0length, wavelet.rec_len, mode);
+	    }
+	    else {
+	        output_shape[0] = input0length;
+	    }
+	    if (axis == 1) {
+	        output_shape[1] = idwt_buffer_length(input1length, wavelet.rec_len, mode);
+	    }
+	    else {
+	        output_shape[1] = input1length;
+	    }
+	    if (axis == 2) {
+	        output_shape[2] = idwt_buffer_length(input2length, wavelet.rec_len, mode);
+	    }
+	    else {
+	        output_shape[2] = input2length;
+	    }
+		output = new double[output_shape[0]][output_shape[1]][output_shape[2]];
+		
+		output_info.ndim = 3;
+		output_info.strides = new int[]{8*output[0].length*output[0][0].length,8*output[0][0].length,8};
+		output_info.shape = new int[]{output.length,output[0].length,output[0][0].length};
+		
+        double temp_input_a[] = null;
+        if (coefs_a != null) {
+		    temp_input_a = new double[coefs_a.length*coefs_a[0].length*coefs_a[0][0].length];
+        }
+        double temp_input_d[] = null;
+        if (coefs_d != null) {
+            temp_input_d = new double[coefs_d.length*coefs_d[0].length*coefs_d[0][0].length];
+        }
+        double temp_output[] = new double[output.length*output[0].length*output[0][0].length];
+
+        if (coefs_a != null) {
+        	sliceSize = coefs_a[0][0].length*coefs_a[0].length;
+	        for (x = 0; x < coefs_a.length; x++) {
+	            for (y = 0; y < coefs_a[0].length; y++) {
+	            	for (z = 0; z < coefs_a[0][0].length; z++) {
+		            	index = z + y*coefs_a[0][0].length + x*sliceSize;
+		            	temp_input_a[index] = coefs_a[x][y][z];
+	            	}
+	            }
+	        }
+        }
+        
+        if (coefs_d != null) {
+        	sliceSize = coefs_d[0][0].length*coefs_d[0].length;
+	        for (x = 0; x < coefs_d.length; x++) {
+	            for (y = 0; y < coefs_d[0].length; y++) {
+	            	for (z = 0; z < coefs_d[0][0].length; z++) {
+	            	    index = z + y*coefs_d[0][0].length + x*sliceSize;
+	            	    temp_input_d[index] = coefs_d[x][y][z];
+	            	}
+	            }
+	        }
+        }
+	
+		
+        retval = idwt_axis(temp_input_a, a_info,
+                             temp_input_d, d_info,
+                             temp_output, output_info,
+                             wavelet, axis, mode);
+	    if (retval != 0) {
+	        MipavUtil.displayError("C inverse wavelet transform failed");
+	        return null;
+	    }
+		
+	    sliceSize = output[0][0].length * output[0].length;
+	    for (x = 0; x < output.length; x++) {
+            for (y = 0; y < output[0].length; y++) {
+            	for (z = 0; z < output[0][0].length; z++) {
+            	    index = z + y*output[0][0].length + x*sliceSize;
+            	    output[x][y][z] = temp_output[index];
+            	}
             }
         }
 		
