@@ -8133,6 +8133,212 @@ public  class PyWavelets extends AlgorithmBase {
         Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
 	}
+	
+
+	// 1d multilevel dwt tests
+
+	public void test_wavedec() {
+	    double x[] = new double[]{3, 7, 1, 1, -2, 5, 4, 6};
+	    DiscreteWavelet wavelet = discrete_wavelet(WAVELET_NAME.DB, 1);
+	    //cA3, cD3, cD2, cD1 = pywt.wavedec(x, db1)
+	    double arr[][] = wavedec(x, wavelet, MODE.MODE_SYMMETRIC, -1, -1);
+	    double cA3[] = arr[0];
+	    double cD3[] = arr[1];
+	    double cD2[] = arr[2];
+	    double cD1[] = arr[3];
+
+	    if (Math.abs(cA3[0]- 8.83883476) < 1.5E-7) {
+	    	System.out.println("cA3 is correct");
+	    }
+	    else {
+	    	System.out.println("cA3 is wrong");
+	    }
+	    if (Math.abs(cD3[0] + 0.35355339) < 1.5E-7) {
+	    	System.out.println("cD3 is correct");
+	    }
+	    else {
+	    	System.out.println("cD3 is wrong");
+	    }
+	    if((Math.abs(cD2[0]-4.0) < 4.0E-7) && (Math.abs(cD2[1]+3.5) < 3.5E-7)) {
+	    	System.out.println("cD2 is correct");
+	    }
+	    else {
+	    	System.out.println("cD2 is wrong");
+	    }
+	    if ((Math.abs(cD1[0]+2.82842712) < 2.82842712E-7) && (Math.abs(cD1[1]) < 1.0E-7) &&
+	    		(Math.abs(cD1[2]+4.94974747) < 4.94974747E-7) &&(Math.abs(cD1[3]+1.41421356) < 1.41421356E-7)) {
+	    	System.out.println("cD1 is correct");
+	    }
+	    else {
+	    	System.out.println("cD1 is wrong");
+	    }
+	    System.out.println("dwt_max_level(x.length, wavelet) = " + dwt_max_level(x.length, wavelet) + " expected value = 3");
+	    //assert_(pywt.dwt_max_level(len(x), db1) == 3)
+	}
+	
+	public void test_waverec_accuracies() {
+		RandomNumberGen randomGen = new RandomNumberGen();
+		double x[] = new double[8];
+		int i;
+		for (i = 0; i < 8; i++) {
+			x[i] = randomGen.genStandardGaussian();
+		}
+		DiscreteWavelet wavelet = discrete_wavelet(WAVELET_NAME.DB, 1);
+		double coeffs[][] = wavedec(x, wavelet, MODE.MODE_SYMMETRIC, -1, -1);
+		double rec[] = waverec(coeffs,wavelet, MODE.MODE_SYMMETRIC, -1);
+		double atol = 1.0E-7;
+		double rtol = 1.0E-7;
+		double allowedError;
+		double actualError;
+		boolean passed = true;
+		for (i = 0; i < 8; i++) {
+		    allowedError = atol + Math.abs(rtol * x[i]);
+		    actualError = Math.abs(x[i] - rec[i]);
+		    if (actualError > allowedError) {
+		        passed = false;	
+		    }
+		}
+	    if (passed) {
+	    	System.out.println("test_waverec_accuracies() passed");
+	    }
+	    else {
+	    	System.out.println("test_waverec_accuracies() failed");	
+	    }
+	}
+	
+	public void test_waverec_odd_length() {
+		int i;
+	    double x[] = new double[]{3, 7, 1, 1, -2, 5};
+	    DiscreteWavelet wavelet = discrete_wavelet(WAVELET_NAME.DB, 1);
+		double coeffs[][] = wavedec(x, wavelet, MODE.MODE_SYMMETRIC, -1, -1);
+		double rec[] = waverec(coeffs,wavelet, MODE.MODE_SYMMETRIC, -1);
+		double atol = 1.0E-7;
+		double rtol = 1.0E-12;
+		double allowedError;
+		double actualError;
+		boolean passed = true;
+		for (i = 0; i < 6; i++) {
+		    allowedError = atol + Math.abs(rtol * x[i]);
+		    actualError = Math.abs(x[i] - rec[i]);
+		    if (actualError > allowedError) {
+		        passed = false;	
+		    }
+		}
+	    if (passed) {
+	    	System.out.println("test_waverec_odd_length() passed");
+	    }
+	    else {
+	    	System.out.println("test_waverec_odd_length() failed");	
+	    }
+	}
+	
+	public void test_waverec_all_wavelets_modes() {
+	    // test 1D case using all wavelets and modes
+		int i,j,k,m,n;
+		boolean correct;
+		RandomNumberGen randomGen = new RandomNumberGen();
+		double r[] = new double[80];
+		for (i = 0; i < 80; i++) {
+			r[i] = randomGen.genStandardGaussian();
+		}
+		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+                WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
+	   DiscreteWavelet w;
+	   DiscreteWavelet wavelets[];
+	   MODE modes[];
+	   int numberCorrect = 0;
+	   int numberWrong = 0;
+	   int orders[][] = new int[7][];
+	   orders[0] = new int[]{1}; // HAAR
+	   // RBIO 10, 20, 30, 40, 50, 60 do not work
+	   orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+	   orders[2] = new int[38]; // DB
+	   for (i = 0; i < 38; i++) {
+	       orders[2][i] = i+1;
+	   }
+	   orders[3] = new int[19]; // SYM
+	   for (i = 0; i < 19; i++) {
+	       orders[3][i] = i+2;
+	   }
+	   orders[4] = new int[17]; // COIF
+	   for (i = 0; i < 17; i++) {
+	       orders[4][i] = i+1;
+	   }
+	   orders[5] = orders[1].clone(); // BIOR
+	   MODE mode[] = new MODE[]{MODE.MODE_ZEROPAD, MODE.MODE_CONSTANT_EDGE, MODE.MODE_SYMMETRIC, MODE.MODE_PERIODIC,
+       		MODE.MODE_SMOOTH, MODE.MODE_PERIODIZATION};
+	    double atol = 1.0E-7;
+	    double rtol = 1.0E-7;
+	    double allowedError;
+	    double actualError;
+       for (i = 0; i < wName.length; i++) {
+       	for (j = 0; j < orders[i].length; j++) {
+       		w = discrete_wavelet(wName[i], orders[i][j]);
+       		for (k = 0; k < mode.length; k++) {
+       			double coeffs[][] = wavedec(r,  w, mode[k], -1, -1);
+       			double rec[] = waverec(coeffs, w, mode[k], -1);
+       			correct = true;
+       			for (m = 0; m < 80; m++) {
+   				    allowedError = atol + Math.abs(rtol * r[m]);
+   				    actualError = Math.abs(rec[m] - r[m]);
+   				    if (actualError > allowedError) {
+   				    	correct = false;
+   				    }
+       			}
+       			if (correct) {
+       				numberCorrect++;
+       			}
+       			else {
+       				numberWrong++;
+       			}
+       		}
+       	}
+       }
+       Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
+       System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
+	}
+	
+	// 2d multilevel dwt function tests
+
+	public void test_waverec2_accuracies() {
+		int i,j;
+		RandomNumberGen randomGen = new RandomNumberGen();
+		double x[][] = new double[4][4];
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+			    x[i][j] = randomGen.genStandardGaussian();
+			}
+		}
+	    DiscreteWavelet w  = discrete_wavelet(WAVELET_NAME.DB, 1);
+	    DiscreteWavelet wavelets[] = new DiscreteWavelet[]{w, w};
+	    MODE modes[] = new MODE[]{MODE.MODE_SYMMETRIC, MODE.MODE_SYMMETRIC};
+	    int axes[] = new int[]{0,1};
+	    double coeffs[][][] = wavedec2(x, wavelets, modes, -1, axes);
+	    // Expected = 1 for a + 3 * (number of levels) = 7
+	    System.out.println("coeffs.length = " + coeffs.length + " expected value = 7");
+	    double rec[][] = waverec2(coeffs, wavelets, modes, axes);
+	    double atol = 1.0E-7;
+	    double rtol = 1.0E-7;
+	    double actualError;
+	    double allowedError;
+	    boolean correct = true;
+	    for (i = 0; i < 4; i++) {
+	    	for (j = 0; j < 4; j++) {
+	    		allowedError = atol + Math.abs(rtol*x[i][j]);
+	    		actualError = Math.abs(x[i][j] - rec[i][j]);
+	    		System.out.println("actualError = " + actualError);
+	    		if (actualError > allowedError) {
+	    			correct = false;
+	    		}
+	    	}
+	    }
+	    if (correct) {
+	    	System.out.println("test_waverec2_accuracies() passes");
+	    }
+	    else {
+	    	System.out.println("test_waverec2_accuracies() fails");	
+	    }
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
@@ -10308,6 +10514,67 @@ public  class PyWavelets extends AlgorithmBase {
         return level;
     }
     
+    private double[] waverec(double coeffs[][], DiscreteWavelet wavelet, MODE mode, int axis) {
+        // Default mode is symmetric
+    	// Default axis = -1 for last axis used
+        // Multilevel 1D Inverse Discrete Wavelet Transform.
+
+        // Parameters
+        // ----------
+        // coeffs : array_like
+        //    Coefficients list [cAn, cDn, cDn-1, ..., cD2, cD1]
+        // wavelet : Wavelet object or name string
+        //    Wavelet to use
+        // mode : str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric')
+        // axis: int, optional
+        //    Axis over which to compute the inverse DWT. If not given, the
+        //    last axis is used.
+
+        // Notes
+        // -----
+        // It may sometimes be desired to run `waverec` with some sets of
+        // coefficients omitted.  This can best be done by setting the corresponding
+        // arrays to zero arrays of matching shape and dtype.  Explicitly removing
+        // list entries or setting them to None is not supported.
+
+        // Specifically, to ignore detail coefficients at level 2, one could do::
+
+        //     coeffs[-2] == np.zeros_like(coeffs[-2])
+
+        // Examples
+        // --------
+        // >>> import pywt
+        // >>> coeffs = pywt.wavedec([1,2,3,4,5,6,7,8], 'db1', level=2)
+        // >>> pywt.waverec(coeffs, 'db1')
+        // array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])
+        int i, j;
+        if (coeffs.length < 1) {
+            MipavUtil.displayError("Coefficient list too short (minimum 1 arrays required).");
+            return null;
+        }
+        else if (coeffs.length == 1) {
+            // level 0 transform (just returns the approximation coefficients)
+            return coeffs[0];
+        }
+        
+        double a[] = coeffs[0];
+        for (i = 1; i < coeffs.length; i++) {
+        	double d[] = coeffs[i];
+        	if ((a != null) && (d != null)) {
+        		if (a.length == (d.length+1)) {
+        		    double atemp[] = new double[a.length-1];
+        		    for (j = 0; j < atemp.length; j++) {
+        		    	atemp[j] = a[j];
+        		    }
+        		    a = atemp;
+        		}
+        		a = idwt_single(a, d, wavelet, mode);
+        	}
+        }
+        return a; 
+    }
+    
     private double[][][] dwt2(double data[][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
         // Default mode = symmetric
     	// Default axes = -2,-1
@@ -11887,6 +12154,174 @@ public  class PyWavelets extends AlgorithmBase {
         }
 		
 		return output;
+    }
+    
+    private double[][][] wavedec2(double data[][], DiscreteWavelet wavelet[], MODE mode[], int level, int axes[]) {
+        // Default mode = symmetric,symmetric
+    	// Default level = -1;
+    	// Default axes = {-2,-1}
+        // Multilevel 2D Discrete Wavelet Transform.
+
+        // Parameters
+        // ----------
+        // data : ndarray
+        //    2D input data
+        // wavelet : Wavelet object or name string, or 2-tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in `axes`.
+        // mode : str or 2-tuple of str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric').  This can
+        //    also be a tuple containing a mode to apply along each axis in `axes`.
+        // level : int, optional
+        //    Decomposition level (must be >= 0). If level is -1 (default) then it
+        //    will be calculated using the `dwt_max_level` function.
+        // axes : 2-tuple of ints, optional
+        //    Axes over which to compute the DWT. Repeated elements are not allowed.
+
+        // Returns
+        // -------
+        // [cAn, (cHn, cVn, cDn), ... (cH1, cV1, cD1)] : list
+        //    Coefficients list.  For user-specified `axes`, `cH*`
+        //    corresponds to ``axes[0]`` while `cV*` corresponds to ``axes[1]``.
+        //    The first element returned is the approximation coefficients for the
+        //    nth level of decomposition.  Remaining elements are tuples of detail
+        //    coefficients in descending order of decomposition level.
+        //    (i.e. `cH1` are the horizontal detail coefficients at the first level)
+
+        // Examples
+        // --------
+        // >>> import pywt
+        // >>> import numpy as np
+        // >>> coeffs = pywt.wavedec2(np.ones((4,4)), 'db1')
+        // >>> # Levels:
+        // >>> len(coeffs)-1
+        // 2
+        // >>> pywt.waverec2(coeffs, 'db1')
+        // array([[ 1.,  1.,  1.,  1.],
+        //       [ 1.,  1.,  1.,  1.],
+        //       [ 1.,  1.,  1.,  1.],
+        //       [ 1.,  1.,  1.,  1.]])
+        int i;
+        if (axes.length != 2) {
+            MipavUtil.displayError("Expected 2 axes");
+            return null;
+        }
+        if (axes[0] == axes[1]) {
+            MipavUtil.displayError("The axes passed to wavedec2 must be unique.");
+            return null;
+        }
+
+        int dec_lengths[] = new int[]{wavelet[0].dec_len,wavelet[1].dec_len};
+        int level0 = check_level(data.length, dec_lengths[0], level);
+        int level1 = check_level(data[0].length, dec_lengths[1], level);
+        level = Math.min(level0, level1);
+
+        Vector<double[][]>coeffs_list = new Vector<double[][]>();
+
+        double a[][] = data;
+        for (i = 0; i < level;i++) {
+            //a, ds = dwt2(a, wavelet, mode, axes)
+        	double arr[][][] = dwt2(a, wavelet, mode, axes);
+        	a = arr[0];
+            coeffs_list.add(arr[3]);
+            coeffs_list.add(arr[2]);
+            coeffs_list.add(arr[1]);
+        }
+
+        coeffs_list.add(a);
+        double coeffs[][][] = new double[coeffs_list.size()][][];
+        int lastIndex = coeffs_list.size()-1;
+        for (i = lastIndex; i >= 0; i--) {
+        	coeffs[lastIndex-i] = coeffs_list.remove(i);
+        }
+
+        return coeffs;
+    }
+    
+    private double[][] waverec2(double coeffs[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+        // Default mode is symmetric,symmetric
+    	// Default axes is {-2,-1}
+        // Multilevel 2D Inverse Discrete Wavelet Transform.
+
+        // coeffs : list or tuple
+        //     Coefficients list [cAn, (cHn, cVn, cDn), ... (cH1, cV1, cD1)]
+        // wavelet : Wavelet object or name string, or 2-tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in `axes`.
+        // mode : str or 2-tuple of str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric').  This can
+        //    also be a tuple containing a mode to apply along each axis in `axes`.
+        // axes : 2-tuple of ints, optional
+        //    Axes over which to compute the IDWT. Repeated elements are not allowed.
+
+        // Returns
+        // -------
+        // 2D array of reconstructed data.
+
+        // Notes
+        // -----
+        // It may sometimes be desired to run `waverec2` with some sets of
+        // coefficients omitted.  This can best be done by setting the corresponding
+        // arrays to zero arrays of matching shape and dtype.  Explicitly removing
+        // list or tuple entries or setting them to None is not supported.
+
+        // Specifically, to ignore all detail coefficients at level 2, one could do::
+
+        //    coeffs[-2] == tuple([np.zeros_like(v) for v in coeffs[-2]])
+
+        // Examples
+        // --------
+        // >>> import pywt
+        // >>> import numpy as np
+        // >>> coeffs = pywt.wavedec2(np.ones((4,4)), 'db1')
+        // >>> # Levels:
+        // >>> len(coeffs)-1
+        // 2
+        // >>> pywt.waverec2(coeffs, 'db1')
+        // array([[ 1.,  1.,  1.,  1.],
+        //       [ 1.,  1.,  1.,  1.],
+        //       [ 1.,  1.,  1.,  1.],
+        //       [ 1.,  1.,  1.,  1.]])
+        int i, j, k;
+        double atemp[][];
+        double arr[][][] = new double[4][][];
+        double d[][][] = new double[3][][];
+    	if (axes[0] == axes[1]) {
+            MipavUtil.displayError("The axes passed to waverec2 must be unique.");
+            return null;
+        }
+
+        if (coeffs.length < 1) {
+            MipavUtil.displayError("Coefficient list too short (minimum 1 array required).");
+            return null;
+        }
+        else if (coeffs.length == 1) {
+            // level 0 transform (just returns the approximation coefficients)
+            return coeffs[0];
+        }
+
+        double a[][] = coeffs[0];
+        for (i = 1; i < coeffs.length; i+= 3) {
+        	d[0] = coeffs[i];
+        	d[1] = coeffs[i+1];
+        	d[2] = coeffs[i+2];
+        	if ((a.length == (d[0].length+1)) || (a[0].length == (d[0][0].length+1))) {
+        	    atemp = new double[d[0].length][d[0][0].length];
+        	    for (j = 0; j < d[0].length; j++) {
+        	    	for (k = 0; k < d[0][0].length; k++) {
+        	    		atemp[j][k] = a[j][k];
+        	    	}
+        	    }
+        	    a = atemp;
+        	}
+        	arr[0] = a;
+        	arr[1] = d[0];
+        	arr[2] = d[1];
+        	arr[3] = d[2];
+        	a = idwt2(arr, wavelet, mode, axes);
+        }
+       
+        return a;
     }
         
 }
