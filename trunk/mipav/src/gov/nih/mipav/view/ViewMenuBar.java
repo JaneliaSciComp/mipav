@@ -170,8 +170,6 @@ public class ViewMenuBar {
 						menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false), }),
 				menuBuilder.buildMenuItem("BRISK", "BRISK", 0, null, false),
 				menuBuilder.buildMenuItem("Convergence field", "CONVERGENCE", 0, null, false),
-				menuBuilder.buildMenuItem("Discrete Cosine Transform", "discreteCosine", 0, null, false),
-				menuBuilder.buildMenuItem("Discrete Sine Transform", "discreteSine", 0, null, false),
 				menuBuilder.makeMenu("Edge detection", false,
 						new JMenuItem[] { menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
 								menuBuilder.buildMenuItem("Embedded confidence", "EmbeddedConfidenceEdgeDetection", 0, null, false),
@@ -248,10 +246,8 @@ public class ViewMenuBar {
 								null, false),
 						menuBuilder.buildMenuItem("Rule based contrast enhancement", "rbcEnhancement", 0, null,
 								false), }),
-				menuBuilder.buildMenuItem("Haar Transform", "haar", 0, null, false),
 				menuBuilder.buildMenuItem("Harris corner detector", "HARRIS", 0, null, false),
 				menuBuilder.buildMenuItem("Harris Laplace", "HARRIS_LAPLACE", 0, null, false),
-				menuBuilder.buildMenuItem("Hartley Transform", "hartley", 0, null, false),
 				menuBuilder.makeMenu("Histogram tools", false,
 						new JMenuItem[] { menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null,
 								false),
@@ -274,6 +270,13 @@ public class ViewMenuBar {
 												false),
 						menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false),
 						menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false) }),
+						menuBuilder.makeMenu("Image transforms", false,
+								new JMenuItem[] { menuBuilder.buildMenuItem("Discrete Cosine Transform", "discreteCosine", 0, null, false),
+										menuBuilder.buildMenuItem("Discrete Sine Transform", "discreteSine", 0, null, false),
+										menuBuilder.buildMenuItem("Haar Transform", "haar", 0, null, false),
+										menuBuilder.buildMenuItem("Hartley Transform", "hartley", 0, null, false),
+										menuBuilder.buildMenuItem("Slant Transform", "slant", 0, null, false),
+										menuBuilder.buildMenuItem("Walsh-Hadamard Transform", "walsh", 0, null, false) }),
 				menuBuilder.buildMenuItem("Independent component", "Independent components", 0, null, false),
 				menuBuilder.buildMenuItem("Inverse gradient", "antigradient2", 0, null, false),
 				menuBuilder.buildMenuItem("Locally linear embedding", "LLE", 0, null, false),
@@ -549,7 +552,6 @@ public class ViewMenuBar {
 										false) }),
 						// menuBuilder.buildMenuItem("MRI combined info",
 						// "MRICorrection", 0, null, false)}),
-						menuBuilder.buildMenuItem("Slant Transform", "slant", 0, null, false),
 						menuBuilder
 								.makeMenu("SNR", false,
 										new JMenuItem[] {
@@ -582,8 +584,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Subsample", "subsample", 0, null, false),
 								menuBuilder.buildMenuItem("Transform", null, 0, null, false),
 								menuBuilder.buildMenuItem("Transform nonlinear", "TransformNL", 0, null, false),
-								menuBuilder.buildMenuItem("Transform to power of 2", null, 0, null, false), }),
-		                menuBuilder.buildMenuItem("Walsh-Hadamard Transform", "walsh", 0, null, false), });
+								menuBuilder.buildMenuItem("Transform to power of 2", null, 0, null, false), }),});
 	}
 
 	/**
