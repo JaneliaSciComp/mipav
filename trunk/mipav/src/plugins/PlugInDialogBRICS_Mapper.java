@@ -2532,6 +2532,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 continue;
             }
 
+            if (ds.getSubmissionType() == null || ds.getSubmissionType().equals("")) {
+            		System.out.println("Title " + ds.getTitle() + "Type " + ds.getSubmissionType());
+            }
             if (ds.getSubmissionType().equals(SubmissionType.IMAGING)) { // For test purposes since it only 7 secs when clinical takes 30 secs
           
                 // only include non-archived structures
@@ -2558,8 +2561,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * structures (without their attached data elements).
      */
     public class FormListRESTThread extends Thread implements ActionListener {
-        private static final String ddAuthBase    = "/portal/ws/webstart/dictionary/formStructure/details";
-        private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
+        private static final String ddAuthBase    = "portal/ws/webstart/dictionary/formStructure/details";
+        private static final String ddRequestBase = "portal/ws/ddt/dictionary/FormStructure";
 
         private static final String ddStructListRequest = ddRequestBase + "/byStatus?status=Published,Awaiting%20Publication&listAll?type=CLINICAL&incDEs=false";
         //private static final String ddStructListRequest = ddRequestBase + "/Published/listAll?type=IMAGING&incDEs=false";
@@ -2590,6 +2593,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     client = WebClient.create(ddServerURL + ddAuthBase);
                 } else {
                     client = WebClient.create(ddServerURL  + ddStructListRequest);
+                    System.out.println("Web service path: " + ddServerURL  + ddStructListRequest);
                 }
 
                 final HTTPConduit conduit = WebClient.getConfig(client).getHttpConduit();
@@ -2613,9 +2617,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
                 formStructureList = filterDataStructures(fullList);
 
-                // for (final FormStructure ds : dataStructureList) {
-                //      System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" + ds.getStatus());
-                // }
+                 //for (final SemanticFormStructure ds : fullList) {
+                 //     System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" + ds.getStatus());
+                 //}
 
                 progressBar.updateValue(100);
                 progressBar.setVisible(false);
@@ -2714,9 +2718,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 //    }
                 //}
 
-                // for (final FormStructure ds : dataStructureList) {
-                //     System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" + ds.getStatus());
-                // }
+                 //for (final FormStructure ds : dataStructureList) {
+                 //    System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" + ds.getStatus());
+                 //}
 
                 if (addProgressBar) {
                     progressBar.updateValue(100);
