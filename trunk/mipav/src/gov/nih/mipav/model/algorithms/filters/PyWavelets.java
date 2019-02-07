@@ -8789,6 +8789,167 @@ public  class PyWavelets extends AlgorithmBase {
 	    	System.out.println("test_waverec2_axes_subsets() fails");	
 	    }
 	}
+	
+	// 1d multilevel swt tests
+	
+	public void test_swt_decomposition() {
+		int i;
+	    double tol_double = 1e-13;
+	    double x[] = new double[]{3, 7, 1, 3, -2, 6, 4, 6};
+	    DiscreteWavelet wavelet  = discrete_wavelet(WAVELET_NAME.DB, 1);
+	    double atol = tol_double;
+	    double rtol;
+	    int level = 3;
+	    double ans[][] = swt1D(x, wavelet, level, 0);
+	    double cA3[] = ans[0];
+	    double cD3[] = ans[1];
+	    double cA2[] = ans[2];
+	    double cD2[] = ans[3];
+	    double cA1[] = ans[4];
+	    double cD1[] = ans[5];
+	    //(cA3, cD3), (cA2, cD2), (cA1, cD1) = pywt.swt(x, db1, level=3)
+	    double expected_cA1[] = new double[]{7.07106781, 5.65685425, 2.82842712, 0.70710678,
+	                    2.82842712, 7.07106781, 7.07106781, 6.36396103};
+	    rtol = 1.0E-8;
+	    boolean correct = true;
+	    double actualError;
+	    double allowableError;
+	    for (i = 0; i < cA1.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA1[i]);
+	        actualError = Math.abs(cA1[i] - expected_cA1[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA1 is close to expected_cA1");
+	    }
+	    else {
+	    	System.out.println("Error! cA1 is not close to expected_cA1");
+	    }
+	    double expected_cD1[] = new double[]{-2.82842712, 4.24264069, -1.41421356, 3.53553391,
+	                    -5.65685425, 1.41421356, -1.41421356, 2.12132034};
+	    correct = true;
+	    for (i = 0; i < cD1.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD1[i]);
+	        actualError = Math.abs(cD1[i] - expected_cD1[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD1 is close to expected_cD1");
+	    }
+	    else {
+	    	System.out.println("Error! cD1 is not close to expected_cD1");
+	    }
+	    double expected_cA2[] = new double[]{7, 4.5, 4, 5.5, 7, 9.5, 10, 8.5};
+	    rtol = tol_double;
+	    correct = true;
+	    for (i = 0; i < cA2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA2[i]);
+	        actualError = Math.abs(cA2[i] - expected_cA2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA2 is close to expected_cA2");
+	    }
+	    else {
+	    	System.out.println("Error! cA2 is not close to expected_cA2");
+	    }
+	    double expected_cD2[] = new double[]{3, 3.5, 0, -4.5, -3, 0.5, 0, 0.5};
+	    correct = true;
+	    for (i = 0; i < cD2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD2[i]);
+	        actualError = Math.abs(cD2[i] - expected_cD2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD2 is close to expected_cD2");
+	    }
+	    else {
+	    	System.out.println("Error! cD2 is not close to expected_cD2");
+	    }
+	    double expected_cA3[] = new double[8];
+	    for (i = 0; i < 8; i++) {
+	    	expected_cA3[i] = 9.89949494;
+	    }
+	    rtol = 1.0E-8;
+	    correct = true;
+	    for (i = 0; i < cA3.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA3[i]);
+	        actualError = Math.abs(cA3[i] - expected_cA3[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA3 is close to expected_cA3");
+	    }
+	    else {
+	    	System.out.println("Error! cA3 is not close to expected_cA3");
+	    }
+	    double expected_cD3[] = new double[]{0.00000000, -3.53553391, -4.24264069, -2.12132034,
+	                    0.00000000, 3.53553391, 4.24264069, 2.12132034};
+	    correct = true;
+	    for (i = 0; i < cD3.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD3[i]);
+	        actualError = Math.abs(cD3[i] - expected_cD3[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD3 is close to expected_cD3");
+	    }
+	    else {
+	    	System.out.println("Error! cD3 is not close to expected_cD3");
+	    }
+
+	    // level=1, start_level=1 decomposition should match level=2
+	    level = 1;
+	    int start_level = 1;
+	    double res[][] = swt1D(cA1, wavelet, level, start_level);
+	    cA2 = res[0];
+	    cD2 = res[1];
+	    rtol = tol_double;
+	    correct = true;
+	    for (i = 0; i < cA2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA2[i]);
+	        actualError = Math.abs(cA2[i] - expected_cA2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA2 is close to expected_cA2");
+	    }
+	    else {
+	    	System.out.println("Error! cA2 is not close to expected_cA2");
+	    }
+	    correct = true;
+	    for (i = 0; i < cD2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD2[i]);
+	        actualError = Math.abs(cD2[i] - expected_cD2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD2 is close to expected_cD2");
+	    }
+	    else {
+	    	System.out.println("Error! cD2 is not close to expected_cD2");
+	    }
+
+	    double coeffs[][] = swt1D(x, wavelet, -1, 0);
+	    System.out.println("coeffs.length = " + coeffs.length + " expected value = 6");
+	    System.out.println("swt_max_level(x.length) = " + swt_max_level(x.length) + " expected value = 3");
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
@@ -11711,16 +11872,16 @@ public  class PyWavelets extends AlgorithmBase {
                     // Apply along axis
                     switch (coef){
                     case COEF_APPROX:
-                        /*swt_a(input_row, input_info.shape[axis],
+                        swt_a(input_row, input_info.shape[axis],
                                           wavelet,
                                           output_row, output_info.shape[axis],
-                                          swt_level);*/
+                                          swt_level);
                         break;
                     case COEF_DETAIL:
-                        /*swt_d(input_row, input_info.shape[axis],
+                        swt_d(input_row, input_info.shape[axis],
                                           wavelet,
                                           output_row, output_info.shape[axis],
-                                          swt_level);*/
+                                          swt_level);
                         break;
                     }
                     break;
@@ -12878,16 +13039,16 @@ public  class PyWavelets extends AlgorithmBase {
                     // Apply along axis
                     switch (coef){
                     case COEF_APPROX:
-                        /*swt_a(input_row, input_info.shape[axis],
+                        swt_a(input_row, input_info.shape[axis],
                                           wavelet,
                                           output_row, output_info.shape[axis],
-                                          swt_level);*/
+                                          swt_level);
                         break;
                     case COEF_DETAIL:
-                        /*swt_d(input_row, input_info.shape[axis],
+                        swt_d(input_row, input_info.shape[axis],
                                           wavelet,
                                           output_row, output_info.shape[axis],
-                                          swt_level);*/
+                                          swt_level);
                         break;
                     }
                     break;
@@ -13889,6 +14050,131 @@ public  class PyWavelets extends AlgorithmBase {
         }
        
         return a;
+    }
+    
+    private double[][] swt1D(double data[], DiscreteWavelet wavelet, int level, int start_level) {
+        // Default level = -1
+    	// Default start_level = 0
+        // Multilevel 1D stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // data :
+        //    Input signal
+        // wavelet :
+        //    Wavelet to use (Wavelet object or name)
+        // level : int, optional
+        //    The number of decomposition steps to perform.
+        // start_level : int, optional
+        //    The level at which the decomposition will begin (it allows one to
+        //    skip a given number of transform steps and compute
+        //    coefficients starting from start_level) (default: 0)
+        // axis: int, optional
+        //    Axis over which to compute the SWT. If not given, the
+        //    last axis is used.
+
+        // Returns
+        // -------
+        // coeffs : list
+        //    List of approximation and details coefficients pairs in order
+        //    similar to wavedec function::
+
+        //        [(cAn, cDn), ..., (cA2, cD2), (cA1, cD1)]
+
+        //    where n equals input parameter ``level``.
+
+        //    If ``start_level = m`` is given, then the beginning m steps are
+        //    skipped::
+
+        //        [(cAm+n, cDm+n), ..., (cAm+1, cDm+1), (cAm, cDm)]
+
+        // Notes
+        // -----
+        // The implementation here follows the "algorithm a-trous" and requires that
+        // the signal length along the transformed axis be a multiple of ``2**level``.
+        // If this is not the case, the user should pad up to an appropriate size
+        //  using a function such as ``numpy.pad``.
+      
+        
+
+        if (level == -1) {
+            level = swt_max_level(data.length);
+        }
+
+        double ret[][] = swt(data, wavelet, level, start_level);
+        
+        //return [(np.asarray(cA), np.asarray(cD)) for cA, cD in ret]
+        return ret;
+    }
+    
+    public double[][] swt(double data[], DiscreteWavelet wavelet, int level, int start_level) {
+        double cA[];
+        double cD[];
+        int retval;
+        int end_level = start_level + level;
+        int data_size, output_len, i;
+        double datain[] = data.clone();
+
+        if ((datain.length % 2) == 1) {
+            MipavUtil.displayError("Length of data must be even.");
+            return null;
+        }
+
+        if (level < 1) {
+            MipavUtil.displayError("Level value must be greater than zero.");
+            return null;
+        }
+        if (start_level >= swt_max_level(datain.length)) {
+            MipavUtil.displayError("start_level must be less than " + swt_max_level(datain.length));
+            return null;
+        }
+
+        if (end_level > swt_max_level(datain.length)) {
+            String msg = "Level value too high (max level for current data size and start_level is " +
+                    (swt_max_level(datain.length) - start_level);
+            MipavUtil.displayError(msg);
+            return null;
+        }
+
+        output_len = swt_buffer_length(datain.length);
+        if (output_len < 1) {
+            MipavUtil.displayError("Invalid output length.");
+            return null;
+        }
+
+        Vector<double[]> ret = new Vector<double[]>();
+        for (i = start_level+1; i < end_level+1; i++) {
+            data_size = datain.length;
+            // alloc memory, decompose D
+            cD = new double[output_len];
+            retval = swt_d(datain, data_size, wavelet,
+                             cD, output_len, i);
+            if (retval < 0) {
+                MipavUtil.displayError("C swt failed.");
+                return null;
+            }
+            
+            // alloc memory, decompose A
+            cA = new double[output_len];
+            retval = swt_a(datain, data_size, wavelet,
+                             cA, output_len, i);
+            if (retval < 0) {
+                MipavUtil.displayError("C swt failed.");
+                return null;
+            }
+            
+
+            datain = cA;
+            ret.add(cD);
+            ret.add(cA);
+        } // for (i = start_level+1; i < end_level+1; i++)
+        
+        double ans[][] = new double[ret.size()][];
+        int lastIndex = ret.size()-1;
+        for (i = lastIndex; i >= 0; i--) {
+        	ans[lastIndex-i] = ret.remove(i);
+        }
+        return ans;
     }
         
 }
