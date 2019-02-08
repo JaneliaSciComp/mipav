@@ -8950,6 +8950,303 @@ public  class PyWavelets extends AlgorithmBase {
 	    System.out.println("coeffs.length = " + coeffs.length + " expected value = 6");
 	    System.out.println("swt_max_level(x.length) = " + swt_max_level(x.length) + " expected value = 3");
 	}
+	
+	public void test_swt_max_level() {
+	    // odd sized signal will warn about no levels of decomposition possible
+		System.out.println("swt_max_level(11) = " + swt_max_level(11) + " expected value = 0");
+
+	    // no warnings when >= 1 level of decomposition possible
+	    System .out.println("swt_max_level(2) = " + swt_max_level(2) + " expected value =  1");     // divisible by 2**1
+	    System.out.println("swt_max_level(4*3) = " + swt_max_level(4*3) + " expected value =  2");    // divisible by 2**2
+	    System.out.println("swt_max_level(16) = " + swt_max_level(16) + " expected value =  4");    // divisible by 2**4
+	    System.out.println("swt_max_level(16*3) = " + swt_max_level(16*3) + " expected value = 4");  // divisible by 2**4
+	}
+	
+	public void test_swt_axis() {
+		int i,j;
+	    double x[] = new double[]{3, 7, 1, 3, -2, 6, 4, 6};
+
+	    DiscreteWavelet db1 = discrete_wavelet(WAVELET_NAME.DB,1);
+	    //(cA2, cD2), (cA1, cD1) = pywt.swt(x, db1, level=2)
+	    int level = 2;
+	    double arr[][] = swt(x, db1, level, 0);
+	    double cA2[] = arr[0];
+	    double cD2[] = arr[1];
+	    double cA1[] = arr[2];
+	    double cD1[] = arr[3];
+
+	    // test cases use 2D arrays based on tiling x along an axis and then
+	    // calling swt along the other axis.
+	    double x_2d[][] = new double[5][8];
+	    for (i = 0; i < 5; i++) {
+	    	for (j = 0; j < 8; j++) {
+	    		x_2d[i][j] = x[j];
+	    	}
+	    }
+	   
+	    
+	    // (cA2_2d, cD2_2d), (cA1_2d, cD1_2d) = pywt.swt(x_2d, db1, level=2)
+	    level = 2;
+	    int start_level = 0;
+	    int axis = 1;
+	    double arr3[][][] = swt1D(x_2d, db1, level, start_level, axis);
+        double cA2_2d[][] = arr3[0];
+        double cD2_2d[][] = arr3[1];
+        double cA1_2d[][] = arr3[2];
+        double cD1_2d[][] = arr3[3];
+        System.out.println("cA2_2d.length = " + cA2_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+        System.out.println("cA2_2d[0].length = " + cA2_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+        System.out.println("cD2_2d.length = " + cD2_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+        System.out.println("cD2_2d[0].length = " + cD2_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+        System.out.println("cA1_2d.length = " + cA1_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+        System.out.println("cA1_2d[0].length = " + cA1_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+        System.out.println("cD1_2d.length = " + cD1_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+        System.out.println("cD1_2d[0].length = " + cD1_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+	    // each row should match the 1D result
+        boolean correct = true;
+        double actualError;
+        double allowedError;
+        double rtol = 1.0E-7;
+        double atol = 1.0E-10;
+        for (i = 0; i < cA1_2d.length; i++) {
+        	for (j = 0; j < cA1_2d[i].length; j++) {
+        	    allowedError = atol + Math.abs(rtol*cA1[j]);
+        	    actualError = Math.abs(cA1_2d[i][j] - cA1[j]);
+        	    if (actualError > allowedError) {
+        	    	correct = false;
+        	    }
+        	}
+        }
+        if (correct) {
+        	System.out.println("All rows of cA1_2d and cA1 are equal");
+        }
+        else {
+        	System.out.println("Error! Rows of cA1_2d and cA1 are not equal");
+        }
+        correct = true;
+        for (i = 0; i < cA2_2d.length; i++) {
+        	for (j = 0; j < cA2_2d[i].length; j++) {
+        	    allowedError = atol + Math.abs(rtol*cA2[j]);
+        	    actualError = Math.abs(cA2_2d[i][j] - cA2[j]);
+        	    if (actualError > allowedError) {
+        	    	correct = false;
+        	    }
+        	}
+        }
+        if (correct) {
+        	System.out.println("All rows of cA2_2d and cA2 are equal");
+        }
+        else {
+        	System.out.println("Error! Rows of cA2_2d and cA2 are not equal");
+        }
+        correct = true;
+        for (i = 0; i < cD1_2d.length; i++) {
+        	for (j = 0; j < cD1_2d[i].length; j++) {
+        	    allowedError = atol + Math.abs(rtol*cD1[j]);
+        	    actualError = Math.abs(cD1_2d[i][j] - cD1[j]);
+        	    if (actualError > allowedError) {
+        	    	correct = false;
+        	    }
+        	}
+        }
+        if (correct) {
+        	System.out.println("All rows of cD1_2d and cD1 are equal");
+        }
+        else {
+        	System.out.println("Error! Rows of cD1_2d and cD1 are not equal");
+        }
+        correct = true;
+        for (i = 0; i < cD2_2d.length; i++) {
+        	for (j = 0; j < cD2_2d[i].length; j++) {
+        	    allowedError = atol + Math.abs(rtol*cD2[j]);
+        	    actualError = Math.abs(cD2_2d[i][j] - cD2[j]);
+        	    if (actualError > allowedError) {
+        	    	correct = false;
+        	    }
+        	}
+        }
+        if (correct) {
+        	System.out.println("All rows of cD2_2d and cD2 are equal");
+        }
+        else {
+        	System.out.println("Error! Rows of cD2_2d and cD2 are not equal");
+        }
+
+	    // test SWT of 2D data along other axis (0)
+        x_2d = new double[8][5];
+	    for (i = 0; i < 8; i++) {
+	    	for (j = 0; j < 5; j++) {
+	    		x_2d[i][j] = x[i];
+	    	}
+	    }
+	    
+	        
+	    //(cA2_2d, cD2_2d), (cA1_2d, cD1_2d) = pywt.swt(x_2d, db1, level=2, axis=0)
+	        level = 2;
+		    start_level = 0;
+		    axis = 0;
+		    arr3 = swt1D(x_2d, db1, level, start_level, axis);
+	        cA2_2d = arr3[0];
+	        cD2_2d = arr3[1];
+	        cA1_2d = arr3[2];
+	        cD1_2d = arr3[3];
+	        System.out.println("cA2_2d.length = " + cA2_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+	        System.out.println("cA2_2d[0].length = " + cA2_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+	        System.out.println("cD2_2d.length = " + cD2_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+	        System.out.println("cD2_2d[0].length = " + cD2_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+	        System.out.println("cA1_2d.length = " + cA1_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+	        System.out.println("cA1_2d[0].length = " + cA1_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+	        System.out.println("cD1_2d.length = " + cD1_2d.length + " and x_2d.length = " + x_2d.length + " should be equal");
+	        System.out.println("cD1_2d[0].length = " + cD1_2d[0].length + " and x_2d[0.length = " + x_2d[0].length + " should be equal");
+		    // each column should match the 1D result
+	        correct = true;
+	        for (i = 0; i < cA1_2d.length; i++) {
+	        	for (j = 0; j < cA1_2d[i].length; j++) {
+	        	    allowedError = atol + Math.abs(rtol*cA1[i]);
+	        	    actualError = Math.abs(cA1_2d[i][j] - cA1[i]);
+	        	    if (actualError > allowedError) {
+	        	    	correct = false;
+	        	    }
+	        	}
+	        }
+	        if (correct) {
+	        	System.out.println("All columns of cA1_2d and cA1 are equal");
+	        }
+	        else {
+	        	System.out.println("Error! Columns of cA1_2d and cA1 are not equal");
+	        }
+	        correct = true;
+	        for (i = 0; i < cA2_2d.length; i++) {
+	        	for (j = 0; j < cA2_2d[i].length; j++) {
+	        	    allowedError = atol + Math.abs(rtol*cA2[i]);
+	        	    actualError = Math.abs(cA2_2d[i][j] - cA2[i]);
+	        	    if (actualError > allowedError) {
+	        	    	correct = false;
+	        	    }
+	        	}
+	        }
+	        if (correct) {
+	        	System.out.println("All columns of cA2_2d and cA2 are equal");
+	        }
+	        else {
+	        	System.out.println("Error! Columns of cA2_2d and cA2 are not equal");
+	        }
+	        correct = true;
+	        for (i = 0; i < cD1_2d.length; i++) {
+	        	for (j = 0; j < cD1_2d[i].length; j++) {
+	        	    allowedError = atol + Math.abs(rtol*cD1[i]);
+	        	    actualError = Math.abs(cD1_2d[i][j] - cD1[i]);
+	        	    if (actualError > allowedError) {
+	        	    	correct = false;
+	        	    }
+	        	}
+	        }
+	        if (correct) {
+	        	System.out.println("All columns of cD1_2d and cD1 are equal");
+	        }
+	        else {
+	        	System.out.println("Error! Columns of cD1_2d and cD1 are not equal");
+	        }
+	        correct = true;
+	        for (i = 0; i < cD2_2d.length; i++) {
+	        	for (j = 0; j < cD2_2d[i].length; j++) {
+	        	    allowedError = atol + Math.abs(rtol*cD2[i]);
+	        	    actualError = Math.abs(cD2_2d[i][j] - cD2[i]);
+	        	    if (actualError > allowedError) {
+	        	    	correct = false;
+	        	    }
+	        	}
+	        }
+	        if (correct) {
+	        	System.out.println("All columns of cD2_2d and cD2 are equal");
+	        }
+	        else {
+	        	System.out.println("Error! Columns of cD2_2d and cD2 are not equal");
+	        }
+
+	        
+
+	    // axis too large
+	    // assert_raises(ValueError, pywt.swt, x, db1, level=2, axis=5)*/
+	}
+	
+	public void test_swt_iswt_integration() {
+	    // This function performs a round-trip swt/iswt transform test on
+	    // all available types of wavelets in PyWavelets - except the
+	    // 'dmey' wavelet. The latter has been excluded because it does not
+	    // produce very precise results. This is likely due to the fact
+	    // that the 'dmey' wavelet is a discrete approximation of a
+	    // continuous wavelet. All wavelets are tested up to 3 levels. The
+	    // test validates neither swt or iswt as such, but it does ensure
+	    // that they are each other's inverse.
+       int i,j,k;
+	   int max_level = 3;
+	   WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+                WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
+	   DiscreteWavelet current_wavelet;
+	   DiscreteWavelet wavelets[];
+	   MODE modes[];
+	   int numberCorrect = 0;
+	   int numberWrong = 0;
+	   int orders[][] = new int[7][];
+	   orders[0] = new int[]{1}; // HAAR
+	   // RBIO 10, 20, 30, 40, 50, 60 do not work
+	   orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+	   orders[2] = new int[38]; // DB
+	   for (i = 0; i < 38; i++) {
+	       orders[2][i] = i+1;
+	   }
+	   orders[3] = new int[19]; // SYM
+	   for (i = 0; i < 19; i++) {
+	       orders[3][i] = i+2;
+	   }
+	   orders[4] = new int[17]; // COIF
+	   for (i = 0; i < 17; i++) {
+	       orders[4][i] = i+1;
+	   }
+	   orders[5] = orders[1].clone(); // BIOR
+	   double atol = 1.0E-7;
+	    double rtol = 1.0E-5;
+	    double allowedError;
+	    double actualError;
+	    boolean correct;
+        for (i = 0; i < wName.length; i++) {
+      	    for (j = 0; j < orders[i].length; j++) {
+	      		current_wavelet = discrete_wavelet(wName[i], orders[i][j]);
+		        int maxVal = Math.max(current_wavelet.dec_len, current_wavelet.rec_len);
+		        // For integers log2 is given by
+		        int input_length_power = 31 - Integer.numberOfLeadingZeros(maxVal);
+		        int exponent = input_length_power + max_level - 1;
+		        int input_length = 1;
+		        for (k = 0; k < exponent; k++) {
+		        	input_length *= 2;
+		        }
+		        double X[] = new double[input_length];
+		        for (k = 0; k < input_length; k++) {
+		        	X[k] = k;
+		        }
+		        int start_level = 0;
+		        double coeffs[][] = swt(X, current_wavelet, max_level,start_level);
+		        double Y[] = iswt(coeffs, current_wavelet);
+		        correct = true;
+		        for (k = 0; k < X.length; k++) {
+		        	allowedError = atol + Math.abs(rtol*X[k]);
+		        	actualError = Math.abs(X[k] - Y[k]);
+		        	if (actualError > allowedError) {
+		        		correct = false;
+		        	}
+		        }
+		        if (correct) {
+		        	numberCorrect++;
+		        }
+		        else {
+		        	numberWrong++;
+		        }
+      	    }
+      	}
+        Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
@@ -14107,6 +14404,73 @@ public  class PyWavelets extends AlgorithmBase {
         return ret;
     }
     
+    private double[][][] swt1D(double data[][], DiscreteWavelet wavelet, int level, int start_level, int axis) {
+        // Default level = -1
+    	// Default start_level = 0
+    	// Default axis = -1
+        // Multilevel 1D stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // data :
+        //    Input signal
+        // wavelet :
+        //    Wavelet to use (Wavelet object or name)
+        // level : int, optional
+        //    The number of decomposition steps to perform.
+        // start_level : int, optional
+        //    The level at which the decomposition will begin (it allows one to
+        //    skip a given number of transform steps and compute
+        //    coefficients starting from start_level) (default: 0)
+        // axis: int, optional
+        //    Axis over which to compute the SWT. If not given, the
+        //    last axis is used.
+
+        // Returns
+        // -------
+        // coeffs : list
+        //    List of approximation and details coefficients pairs in order
+        //    similar to wavedec function::
+
+        //        [(cAn, cDn), ..., (cA2, cD2), (cA1, cD1)]
+
+        //    where n equals input parameter ``level``.
+
+        //    If ``start_level = m`` is given, then the beginning m steps are
+        //    skipped::
+
+        //        [(cAm+n, cDm+n), ..., (cAm+1, cDm+1), (cAm, cDm)]
+
+        // Notes
+        // -----
+        // The implementation here follows the "algorithm a-trous" and requires that
+        // the signal length along the transformed axis be a multiple of ``2**level``.
+        // If this is not the case, the user should pad up to an appropriate size
+        //  using a function such as ``numpy.pad``.
+      
+        if (axis < 0) {
+        	axis = axis + 2;
+        }
+        if ((axis < 0) || (axis >= 2)) {
+        	MipavUtil.displayError("Incorrect axis value");
+        	return null;
+        }
+
+        if (level == -1) {
+        	if (axis == 0) {
+                level = swt_max_level(data.length);
+        	}
+        	else {
+        		level = swt_max_level(data[0].length);
+        	}
+        }
+
+        double ret[][][] = swt_axis(data, wavelet, level, start_level,axis);
+        
+        //return [(np.asarray(cA), np.asarray(cD)) for cA, cD in ret]
+        return ret;
+    }
+    
     public double[][] swt(double data[], DiscreteWavelet wavelet, int level, int start_level) {
         double cA[];
         double cD[];
@@ -14176,5 +14540,214 @@ public  class PyWavelets extends AlgorithmBase {
         }
         return ans;
     }
+    
+    private double[][][] swt_axis(double data[][], DiscreteWavelet wavelet, int level,
+            int start_level, int axis) {
+    	// Default axis = 0
+    	ArrayInfo data_info = new ArrayInfo();
+    	ArrayInfo output_info = new ArrayInfo();
+        double cD[][];
+        double cA[][];
+	    int output_shape[] = new int[2];
+	    int end_level = start_level + level;
+	    int retval = -5;
+	    int i;
+	
+	 if (((data.length*data[0].length) % 2) == 1) {
+	     MipavUtil.displayError("Length of data must be even.");
+	     return null;
+	 }
+	
+	 if (level < 1) {
+	     MipavUtil.displayError("Level value must be greater than zero.");
+	     return null;
+	 }
+	 int max_level;
+	 if (axis == 0) {
+		 max_level = swt_max_level(data.length);
+	 }
+	 else {
+		 max_level = swt_max_level(data[0].length);
+	 }
+	 if (start_level >= max_level) {
+	     MipavUtil.displayError("start_level must be less than " + max_level);
+	     return null;
+	 }
+	
+	 if (end_level > max_level) {
+	     String msg = "Level value too high (max level for current data size and start_level is " +
+	             (max_level - start_level);
+	     MipavUtil.displayError(msg);
+	     return null;
+	 }
+	
+	 // For SWT, the output matches the shape of the input
+	 output_shape[0] = data.length;
+	 output_shape[1] = data[0].length;
+	
+	 data_info.ndim = 2;
+	 data_info.strides = new int[]{8*data[0].length,8};
+	 data_info.shape = new int[]{data.length,data[0].length};
+	
+	 output_info.ndim = 2;
+	
+	 Vector<double[][]>ret = new Vector<double[][]>();
+	 for (i = start_level+1; i < end_level+1; i++) {
+	     cA = new double[output_shape[0]][output_shape[1]];
+	     cD = new double[output_shape[0]][output_shape[1]];
+	     output_info.strides = new int[]{8*cA[0].length,8};
+	     output_info.shape = new int[]{cA.length,cA[0].length};
+	     
+         retval = downcoef_axis(
+             data, data_info,
+             cA, output_info,
+             wavelet, axis,
+             Coefficient.COEF_APPROX,MODE.MODE_PERIODIZATION,
+             i, DiscreteTransformType.SWT_TRANSFORM);
+	         if (retval != 0) {
+	             MipavUtil.displayError("C wavelet transform failed with error code " + retval);
+	             return null;
+	         }
+	  
+             retval = downcoef_axis(
+                 data, data_info,
+                 cD, output_info,
+                 wavelet, axis,
+                 Coefficient.COEF_DETAIL, MODE.MODE_PERIODIZATION,
+                 i, DiscreteTransformType.SWT_TRANSFORM);
+	         if (retval != 0) {
+	             MipavUtil.displayError("C wavelet transform failed with error code " + retval);
+	             return null;
+	         }
+	     ret.add(cD);
+	     ret.add(cA);
+	
+	     // previous approx coeffs are the data for the next level
+	     data = cA;
+	     // update data_info to match the new data array
+	     data_info.strides = new int[]{8*data[0].length,8};
+	     data_info.shape = new int[]{data.length,data[0].length};
+	 } // for (i = start_level+1; i < end_level+1; i++)
+	
+	 double ans[][][] = new double[ret.size()][][];
+	 int lastIndex = ret.size()-1;
+	 for (i = lastIndex; i >= 0; i--) {
+		 ans[lastIndex-i] = ret.remove(i);
+	 }
+
+	 return ans;
+    }
+    
+    private double[] iswt(double coeffs[][], DiscreteWavelet wavelet) {
+       
+        // Multilevel 1D inverse discrete stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // coeffs : array_like
+        //    Coefficients list of tuples::
+
+        //        [(cAn, cDn), ..., (cA2, cD2), (cA1, cD1)]
+
+        //    where cA is approximation, cD is details.  Index 1 corresponds to
+        //    ``start_level`` from ``pywt.swt``.
+        // wavelet : Wavelet object or name string
+        //    Wavelet to use
+
+        // Returns
+        // -------
+        // 1D array of reconstructed data.
+
+        // Examples
+        // --------
+        // >>> import pywt
+        // >>> coeffs = pywt.swt([1,2,3,4,5,6,7,8], 'db2', level=2)
+        // >>> pywt.iswt(coeffs, 'db2')
+        // array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])
+        /*int j,k,i,m;
+        int first;
+        double output[][] = coeffs.clone();
+
+        // num_levels, equivalent to the decomposition level, n
+        int num_levels = coeffs.length/2; // A and D at each level
+        MODE mode = MODE.MODE_PERIODIZATION;
+        for (j = num_levels; j > 0; j--) {
+        	int step_size = 1;
+        	for (k = 0; k < j-1; k++) {
+        		step_size *= 2;
+        	}
+            int last_index = step_size;
+            double cD[] = coeffs[2*(num_levels - j)+1];
+            for (first = 0; first < last_index; first++) {
+
+                // Getting the indices that we will transform
+            	Vector<Integer>indices = new Vector<Integer>();
+                Vector<Integer>even_indices = new Vector<Integer>();
+                Vector<Integer>odd_indices = new Vector<Integer>();
+                for(i = first; i < cD.length; i += step_size) {
+                	indices.add(i);
+                    if ((i  % 2) == 1) {
+                    	odd_indices.add(i);
+                    }
+                    else {
+                    	even_indices.add(i);
+                    }
+                }
+
+                // perform the inverse dwt on the selected indices,
+                // making sure to use periodic boundary conditions
+                // Note:  indexing with an array of ints returns a contiguous
+                //        copy as required by idwt_single.
+                double output_even[][] = new double[output.length][even_indices.size()];
+                for (i = 0; i < output.length; i++) {
+                    for (m = 0; m < even_indices.size(); m++) {
+                    	output_even[i][m] = output[i][even_indices.get(m)];
+                    }
+                }
+                double cD_even[] = new double[even_indices.size()];
+                for (m = 0; m < even_indices.size(); m++) {
+                	cD_even[m] = cD[even_indices.get(m)];
+                }
+                double x1[] = idwt_single(output_even,
+                                 cD_even,
+                                 wavelet, mode);
+                double output_odd[][] = new double[output.length][odd_indices.size()];
+                for (i = 0; i < output.length; i++) {
+                    for (m = 0; m < odd_indices.size(); m++) {
+                    	output_odd[i][m] = output[i][odd_indices.get(m)];
+                    }
+                }
+                double cD_odd[] = new double[odd_indices.size()];
+                for (m = 0; m < odd_indices.size(); m++) {
+                	cD_odd[m] = cD[odd_indices.get(m)];
+                }
+                double x2[] = idwt_single(output_odd,
+                                 cD_odd,
+                                 wavelet, mode);
+
+                // perform a circular shift right
+                double xlast = x2[x2.length-1];
+                for (k = x2.length-1; k > 0; k++) {
+                	x2[k] = x2[k-1];
+                }
+                x2[0] = xlast;
+
+                // average and insert into the correct indices
+                for (i = 0; i < output.length; i++) {
+                	for (m = 0; m < even_indices.size(); m++) {
+                		output[i][even_indices.get(m)] = x1[m]/2.0;
+                	}
+                	for (m = 0; m < odd_indices.size(); m++) {
+                		output[i][odd_indices.get(m)] = x2[m]/2.0;
+                	}
+                }
+                output[indices] = (x1 + x2)/2.
+            } // for (first = 0; first < last_index; first++)
+        } // for (j = num_levels; j > 0; j--)
+
+        return output;*/
+    	return null;
+    }
+
         
 }
