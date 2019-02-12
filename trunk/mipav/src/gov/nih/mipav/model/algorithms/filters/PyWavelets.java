@@ -9184,8 +9184,6 @@ public  class PyWavelets extends AlgorithmBase {
 	   WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
                 WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
 	   DiscreteWavelet current_wavelet;
-	   DiscreteWavelet wavelets[];
-	   MODE modes[];
 	   int numberCorrect = 0;
 	   int numberWrong = 0;
 	   int orders[][] = new int[7][];
@@ -14664,9 +14662,16 @@ public  class PyWavelets extends AlgorithmBase {
         // >>> coeffs = pywt.swt([1,2,3,4,5,6,7,8], 'db2', level=2)
         // >>> pywt.iswt(coeffs, 'db2')
         // array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.])
-        /*int j,k,i,m;
+        int j,k,i,m;
+        int index;
         int first;
-        double output[][] = coeffs.clone();
+        double output[] = new double[coeffs.length * coeffs[0].length];
+        for (i = 0; i < coeffs.length; i++) {
+        	for (j = 0; j < coeffs[0].length; j++) {
+        		index = j + i * coeffs[0].length;
+        		output[index] = coeffs[i][j];
+        	}
+        }
 
         // num_levels, equivalent to the decomposition level, n
         int num_levels = coeffs.length/2; // A and D at each level
@@ -14684,9 +14689,9 @@ public  class PyWavelets extends AlgorithmBase {
             	Vector<Integer>indices = new Vector<Integer>();
                 Vector<Integer>even_indices = new Vector<Integer>();
                 Vector<Integer>odd_indices = new Vector<Integer>();
-                for(i = first; i < cD.length; i += step_size) {
+                for(i = first, index = 0; i < cD.length; i += step_size, index++) {
                 	indices.add(i);
-                    if ((i  % 2) == 1) {
+                    if ((index  % 2) == 1) {
                     	odd_indices.add(i);
                     }
                     else {
@@ -14698,11 +14703,9 @@ public  class PyWavelets extends AlgorithmBase {
                 // making sure to use periodic boundary conditions
                 // Note:  indexing with an array of ints returns a contiguous
                 //        copy as required by idwt_single.
-                double output_even[][] = new double[output.length][even_indices.size()];
-                for (i = 0; i < output.length; i++) {
-                    for (m = 0; m < even_indices.size(); m++) {
-                    	output_even[i][m] = output[i][even_indices.get(m)];
-                    }
+                double output_even[] = new double[even_indices.size()];
+                for (m = 0; m < even_indices.size(); m++) {
+                	output_even[m] = output[even_indices.get(m)];
                 }
                 double cD_even[] = new double[even_indices.size()];
                 for (m = 0; m < even_indices.size(); m++) {
@@ -14711,11 +14714,9 @@ public  class PyWavelets extends AlgorithmBase {
                 double x1[] = idwt_single(output_even,
                                  cD_even,
                                  wavelet, mode);
-                double output_odd[][] = new double[output.length][odd_indices.size()];
-                for (i = 0; i < output.length; i++) {
-                    for (m = 0; m < odd_indices.size(); m++) {
-                    	output_odd[i][m] = output[i][odd_indices.get(m)];
-                    }
+                double output_odd[] = new double[odd_indices.size()];
+                for (m = 0; m < odd_indices.size(); m++) {
+                	output_odd[m] = output[odd_indices.get(m)];
                 }
                 double cD_odd[] = new double[odd_indices.size()];
                 for (m = 0; m < odd_indices.size(); m++) {
@@ -14727,27 +14728,86 @@ public  class PyWavelets extends AlgorithmBase {
 
                 // perform a circular shift right
                 double xlast = x2[x2.length-1];
-                for (k = x2.length-1; k > 0; k++) {
+                for (k = x2.length-1; k > 0; k--) {
                 	x2[k] = x2[k-1];
                 }
                 x2[0] = xlast;
 
                 // average and insert into the correct indices
-                for (i = 0; i < output.length; i++) {
-                	for (m = 0; m < even_indices.size(); m++) {
-                		output[i][even_indices.get(m)] = x1[m]/2.0;
-                	}
-                	for (m = 0; m < odd_indices.size(); m++) {
-                		output[i][odd_indices.get(m)] = x2[m]/2.0;
-                	}
+                for (i = 0; i < indices.size(); i++) {
+                	output[indices.get(i)] = (x1[i] + x2[i])/2.0;
                 }
-                output[indices] = (x1 + x2)/2.
             } // for (first = 0; first < last_index; first++)
         } // for (j = num_levels; j > 0; j--)
 
-        return output;*/
-    	return null;
+        return output;
     }
+    
+    /*private double[][][] swt2(double data[][], DiscreteWavelet []wavelet, int level, int start_level, int axes[]) {
+        // Default level = -1
+    	// Default start_level = 0
+        // Default axes = -2,-1
+        // Multilevel 2D stationary wavelet transform.
+
+        Parameters
+        ----------
+        data : array_like
+            2D array with input data
+        wavelet : Wavelet object or name string, or 2-tuple of wavelets
+            Wavelet to use.  This can also be a tuple of wavelets to apply per
+            axis in ``axes``.
+        level : int
+            The number of decomposition steps to perform.
+        start_level : int, optional
+            The level at which the decomposition will start (default: 0)
+        axes : 2-tuple of ints, optional
+            Axes over which to compute the SWT. Repeated elements are not allowed.
+
+        Returns
+        -------
+        coeffs : list
+            Approximation and details coefficients (for ``start_level = m``)::
+
+                [
+                    (cA_m+level,
+                        (cH_m+level, cV_m+level, cD_m+level)
+                    ),
+                    ...,
+                    (cA_m+1,
+                        (cH_m+1, cV_m+1, cD_m+1)
+                    ),
+                    (cA_m,
+                        (cH_m, cV_m, cD_m)
+                    )
+                ]
+
+            where cA is approximation, cH is horizontal details, cV is
+            vertical details, cD is diagonal details and m is ``start_level``.
+
+        Notes
+        -----
+        The implementation here follows the "algorithm a-trous" and requires that
+        the signal length along the transformed axes be a multiple of ``2**level``.
+        If this is not the case, the user should pad up to an appropriate size
+        using a function such as ``numpy.pad``.
+        """
+        axes = tuple(axes)
+        data = np.asarray(data)
+        if len(axes) != 2:
+            raise ValueError("Expected 2 axes")
+        if len(axes) != len(set(axes)):
+            raise ValueError("The axes passed to swt2 must be unique.")
+        if data.ndim < len(np.unique(axes)):
+            raise ValueError("Input array has fewer dimensions than the specified "
+                             "axes")
+
+        coefs = swtn(data, wavelet, level, start_level, axes)
+        ret = []
+        for c in coefs:
+            ret.append((c['aa'], (c['da'], c['ad'], c['dd'])))
+
+        return ret
+    }*/
 
         
 }
