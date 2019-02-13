@@ -37,6 +37,7 @@ import javax.swing.JTextField;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 
 /**
@@ -391,7 +392,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.setLattice( newLattice );	
 //		latticeModel.expandLattice();
 	}
+
 	
+	/**
+	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
+	 * @return untwisted image.
+	 */
 	public ModelImage untwistTest()
 	{
 		if ( latticeModel == null ) return null;
@@ -638,6 +644,14 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		{
 			latticeModel.showModel(display);
 		}		
+	}
+	
+	public TriMesh generateTriMesh( int stepsize ) {
+		if ( latticeModel != null )
+		{
+			return latticeModel.generateTriMesh( null, true, stepsize);
+		}		
+		return null;
 	}
 	
 	public void setPaddingFactor( int padding ) {

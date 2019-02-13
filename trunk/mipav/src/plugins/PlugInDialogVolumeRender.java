@@ -50,6 +50,9 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelAnnotations;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
@@ -91,6 +94,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 /**
  * Implements the user-interface for the semi-automatic straightening of the worm.
@@ -171,6 +175,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JButton flipLatticeButton; 
 	private JButton previewUntwisting;
 	private JCheckBox displayModel;
+	private JCheckBox displaySurface;
 
 	private JButton nextButton;
 	
@@ -436,6 +441,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						return;
 					}
 				}
+				if ( volumeRenderer != null ) {
+					volumeRenderer.removeSurface("worm");
+					volumeRenderer.displaySurface(false);
+				}
 				voiManager.clear3DSelection();
 				save();
 				imageIndex++;
@@ -485,6 +494,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						return;
 					}
 				}
+				if ( volumeRenderer != null ) {
+					volumeRenderer.removeSurface("worm");
+					volumeRenderer.displaySurface(false);
+				}
 				voiManager.clear3DSelection();
 				save();
 				imageIndex--;
@@ -517,6 +530,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			else if (command.equals("done"))
 			{			
 				backNextPanel.remove(displayModel);
+				backNextPanel.remove(displaySurface);
 				backNextPanel.remove(previewUntwisting);
 				if ( editMode == EditSeamCells )
 				{
@@ -535,6 +549,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						MipavUtil.displayError( "Please designate two seam cells as the last pair");
 						return;
 					}
+				}
+				if ( volumeRenderer != null ) {
+					volumeRenderer.removeSurface("worm");
+					volumeRenderer.displaySurface(false);
 				}
 				if ( voiManager != null )
 				{
@@ -560,6 +578,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			// Enables user to generate a new lattice (when none of the automatic ones match well)
 			else if (command.equals("newLattice") )
 			{
+				if ( volumeRenderer != null ) {
+					volumeRenderer.removeSurface("worm");
+					volumeRenderer.displaySurface(false);
+				}
 				if ( voiManager != null )
 				{
 					voiManager.clear3DSelection();
@@ -571,6 +593,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				latticeSelectionPanel.add(flipLatticeButton);
 				latticeSelectionPanel.add(displayModel);
 				displayModel.setSelected(false);
+				latticeSelectionPanel.add(displaySurface);
+				displaySurface.setSelected(false);
 				latticeSelectionPanel.add(previewUntwisting);
 				this.validate();
 			}
@@ -587,6 +611,24 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					voiManager.showModel( displayModel.isSelected() );
 					volumeRenderer.updateVOIs();
+				}
+			}
+			else if ( command.equals("displaySurface") )
+			{
+				if ( voiManager != null )
+				{					
+					if ( displaySurface.isSelected() ) {
+						TriMesh mesh = voiManager.generateTriMesh(5);
+			        	SurfaceState surface = new SurfaceState( mesh, "worm" );
+						volumeRenderer.addSurface( surface, true );
+						volumeRenderer.displaySurface(true);
+						updateSurfacePanels();
+					}
+					else
+					{
+						volumeRenderer.removeSurface("worm");
+						volumeRenderer.displaySurface(false);						
+					}
 				}
 			}
 			else if ( command.equals("preview") )
@@ -612,6 +654,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					volumeRenderer.reCreateScene(volumeImage);
 					updateClipPanel();
 					volumeRenderer.resetAxisX();
+					volumeRenderer.removeSurface("worm");
+					volumeRenderer.displaySurface(false);
+						
 					if ( !wormImage.isColorImage() ) {
 						System.err.println(wormImage.getMin() + "  " + wormImage.getMax() );
 					}
@@ -857,6 +902,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			voiManager = null;
 		}
 		gpuPanel.removeAll();
+		if ( lightsPanel != null ) {
+			lightsPanel.dispose();
+			lightsPanel = null;
+		}
 		if ( volumeImage != null )
 		{
 			volumeImage.dispose();
@@ -1023,6 +1072,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				backNextPanel.remove(displayModel);
 				backNextPanel.add(displayModel);
 				displayModel.setSelected(false);
+				backNextPanel.remove(displaySurface);
+				backNextPanel.add(displaySurface);
+				displaySurface.setSelected(false);
 				backNextPanel.remove(previewUntwisting);
 				backNextPanel.add(previewUntwisting);
 				
@@ -1102,6 +1154,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 	
+	/**
+	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
+	 * @return untwisted image.
+	 */
 	private ModelImage untwistingTest()
 	{
 		return voiManager.untwistTest();
@@ -1332,6 +1388,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					latticeSelectionPanel.add(flipLatticeButton);
 					latticeSelectionPanel.add(displayModel);
 					displayModel.setSelected(false);
+					latticeSelectionPanel.add(displaySurface);
+					displaySurface.setSelected(false);
 					latticeSelectionPanel.remove(previewUntwisting);
 					latticeSelectionPanel.add(previewUntwisting);
 					latticeSelectionPanel.setVisible(true);
@@ -1964,13 +2022,20 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		flipLatticeButton.setVisible(true);
 		flipLatticeButton.setEnabled(true);
 		latticeSelectionPanel.add(flipLatticeButton);
-				
+
 		displayModel = gui.buildCheckBox("Show Model", false);
 		displayModel.addActionListener(this);
 		displayModel.setActionCommand("displayModel");
 		displayModel.setVisible(true);
 		displayModel.setEnabled(true);
 		latticeSelectionPanel.add(displayModel);
+
+		displaySurface = gui.buildCheckBox("Show Surface", false);
+		displaySurface.addActionListener(this);
+		displaySurface.setActionCommand("displaySurface");
+		displaySurface.setVisible(true);
+		displaySurface.setEnabled(true);
+		latticeSelectionPanel.add(displaySurface);
 		
 		previewUntwisting = gui.buildButton("preview");
 		previewUntwisting.addActionListener(this);
@@ -2314,6 +2379,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				backNextPanel.remove(displayModel);
 				backNextPanel.add(displayModel);
 				displayModel.setSelected(false);
+				backNextPanel.remove(displaySurface);
+				backNextPanel.add(displaySurface);
+				displaySurface.setSelected(false);
 				backNextPanel.remove(previewUntwisting);
 				backNextPanel.add(previewUntwisting);
 				
@@ -2515,6 +2583,21 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		clipPanel.add(clipGUI.getMainPanel() );
 //        clipGUI.resizePanel(clipPanel.getWidth(), 400);
 		clipPanel.revalidate();
+	}
+	
+	private JPanelLights_WM lightsPanel = null;
+	//	private JPanelSurface_WM surfaceGUI = null;
+	private void updateSurfacePanels() {
+		if ( lightsPanel == null ) {
+			lightsPanel = new JPanelLights_WM(volumeRenderer);
+			lightsPanel.enableLight(0, true);
+			lightsPanel.enableLight(1, true);
+			volumeRenderer.updateLighting(lightsPanel.getAllLights());
+		}
+//		if ( surfaceGUI == null ) {
+//			surfaceGUI = new JPanelSurface_WM(volumeRenderer);
+//			tabbedPane.addTab("Surface", null, lightsPanel);
+//		}
 	}
 
 }

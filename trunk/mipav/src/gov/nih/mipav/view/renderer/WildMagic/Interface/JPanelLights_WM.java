@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -210,14 +211,22 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     /** x, y, z box size. */
     private float xBox, yBox, zBox, maxBox;
 
+    public JPanelLights_WM(VolumeTriPlanarRender rayBasedRenderWM) {
+
+        this.rayBasedRenderWM = rayBasedRenderWM;
+        init(rayBasedRenderWM.getImage());
+    }
+    
     /**
      * Constructor.
      * @param kVolumeViewer parent frame.
      */
     public JPanelLights_WM(VolumeTriPlanarInterface kVolumeViewer) {
         super(kVolumeViewer);
-        
-        ModelImage image = kVolumeViewer.getImageA();
+        init(kVolumeViewer.getImageA());
+    }
+    
+    private void init(ModelImage image) {
         int xDim = image.getExtents()[0];
         int yDim = image.getExtents()[1];
         int zDim = image.getExtents()[2];

@@ -45,6 +45,7 @@ import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Plane3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
+import WildMagic.LibFoundation.Intersection.IntrSegment3Box3f;
 import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
@@ -55,6 +56,9 @@ import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
 /**
@@ -1107,7 +1111,7 @@ public class LatticeModel {
 		// the left and right-hand sides of the worm body. A third curve down the center-line of the worm body is
 		// also generated. Eventually, the center-line curve will be used to determine the number of sample points
 		// along the length of the straightened worm, and therefore the final length of the straightened worm volume.
-		generateCurves(1);
+		generateCurves(1, 1);
 		generateEllipses();
 		saveLatticeStatistics();
 	}
@@ -1142,7 +1146,12 @@ public class LatticeModel {
 			System.err.println( "untwistLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
 		}
 	}
+
 	
+	/**
+	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
+	 * @return untwisted image.
+	 */
 	public ModelImage untwistTest()
 	{
 //		if ( !latticeInterpolationInit ) {
@@ -1881,7 +1890,7 @@ public class LatticeModel {
 	public void setPaddingFactor( int padding ) {
 		paddingFactor = padding;
 		boolean display = (imageA.isRegistered(displayContours) != -1);
-		generateCurves(5);
+		generateCurves(5, 10);
 
 		if ( display )
 		{
@@ -2173,7 +2182,7 @@ public class LatticeModel {
 		
 		
 		
-		if ( !generateCurves(5) )
+		if ( !generateCurves(5, 10) )
 		{
 			return new float[]{-1,1};
 		}
@@ -2315,7 +2324,7 @@ public class LatticeModel {
 	{		
 		left = leftIn;
 		right = rightIn;
-		generateCurves(1);
+		generateCurves(1, 1);
 		generateEllipses();
 
 //		lengthResult[0] = length;
@@ -3323,7 +3332,7 @@ public class LatticeModel {
 	/**
 	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
-	protected boolean generateCurves( float stepSize ) {
+	protected boolean generateCurves( float stepSize, float contourStepSize ) {
 		clearCurves(false);
 
 		if ( seamCellImage != null )
@@ -3364,6 +3373,8 @@ public class LatticeModel {
 				Vector3f rightPt = right.elementAt(i);
 				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
 				seamCellIDs[i][1] = rightID;
+				
+				System.err.println( "left " + leftID + " right " + rightID );
 			}
 		}
 
@@ -3643,22 +3654,40 @@ public class LatticeModel {
 		// The next step of the algorithm attempts to solve this problem.
 		short sID = (short) 1;
 		displayContours = new VOI(sID, "wormContours");
-		for (int i = 0; i < centerPositions.size(); i += 10) {
-			final Vector3f rkEye = centerPositions.elementAt(i);
-			final Vector3f rkRVector = rightVectors.elementAt(i);
-			final Vector3f rkUVector = upVectors.elementAt(i);
+		for (int i = 0; i < centerPositions.size(); i += contourStepSize) {
+			Vector3f rkEye = centerPositions.elementAt(i);
+			Vector3f rkRVector = rightVectors.elementAt(i);
+			Vector3f rkUVector = upVectors.elementAt(i);
 
-			final VOIContour ellipse = new VOIContour(true);
+			VOIContour ellipse = new VOIContour(true);
 			ellipse.setVolumeDisplayRange(minRange);
 			
 
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += paddingFactor;
 
-			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse, 32);	
+			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
 			
 //			makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), ellipse, 32);
 			displayContours.getCurves().add(ellipse);
+			
+			if ( (contourStepSize != 1) && (i != (centerPositions.size() - 1)) && (i + 10) >= centerPositions.size() ) {
+				// add last contour:
+				i = centerPositions.size() - 1;
+				rkEye = centerPositions.elementAt(i);
+				rkRVector = rightVectors.elementAt(i);
+				rkUVector = upVectors.elementAt(i);
+
+				ellipse = new VOIContour(true);
+				ellipse.setVolumeDisplayRange(minRange);
+				
+
+				radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
+				radius += paddingFactor;
+
+				makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
+				displayContours.getCurves().add(ellipse);
+			}
 		}
 		sID++;
 		centerLine = new VOI(sID, "center line");
@@ -3693,7 +3722,7 @@ public class LatticeModel {
 
 				final VOIContour ellipse = new VOIContour(true);
 				ellipse.setVolumeDisplayRange(minRange);
-				makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), ellipse, 32);
+				makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), ellipse);
 				displayContoursAll.getCurves().add(ellipse);
 			}
 			imageA.unregisterAllVOIs();
@@ -4260,6 +4289,9 @@ public class LatticeModel {
 		// }
 	}
 
+	
+
+	private final int numEllipsePts = 32;
 	/**
 	 * Generates the 3D 1-voxel thick ellipsoids used in the intial worm model.
 	 * 
@@ -4273,14 +4305,13 @@ public class LatticeModel {
 	 */
 	protected Ellipsoid3f makeEllipse(final Vector3f right, final Vector3f up, final Vector3f center, final float diameterA, final float diameterB,
 			final VOIContour ellipse) {
-		final int numPts = 32;
 		final double[] adCos = new double[32];
 		final double[] adSin = new double[32];
-		for (int i = 0; i < numPts; i++) {
-			adCos[i] = Math.cos(Math.PI * 2.0 * i / numPts);
-			adSin[i] = Math.sin(Math.PI * 2.0 * i / numPts);
+		for (int i = 0; i < numEllipsePts; i++) {
+			adCos[i] = Math.cos(Math.PI * 2.0 * i / numEllipsePts);
+			adSin[i] = Math.sin(Math.PI * 2.0 * i / numEllipsePts);
 		}
-		for (int i = 0; i < numPts; i++) {
+		for (int i = 0; i < numEllipsePts; i++) {
 			final Vector3f pos1 = Vector3f.scale((float) (diameterA * adCos[i]), right);
 			final Vector3f pos2 = Vector3f.scale((float) (diameterB * adSin[i]), up);
 			final Vector3f pos = Vector3f.add(pos1, pos2);
@@ -4303,11 +4334,11 @@ public class LatticeModel {
 	 * @param ellipse
 	 */
 	protected void makeEllipse2D(final Vector3f right, final Vector3f up, final Vector3f center, final float diameterA,
-			final VOIContour ellipse, int numPts) {
+			final VOIContour ellipse) {
 		final float diameterB = diameterA / 2f;// + (1-scale) * diameterA/4f;
-		for (int i = 0; i < numPts; i++) {
-			final double c = Math.cos(Math.PI * 2.0 * i / numPts);
-			final double s = Math.sin(Math.PI * 2.0 * i / numPts);
+		for (int i = 0; i < numEllipsePts; i++) {
+			final double c = Math.cos(Math.PI * 2.0 * i / numEllipsePts);
+			final double s = Math.sin(Math.PI * 2.0 * i / numEllipsePts);
 			final Vector3f pos1 = Vector3f.scale((float) (diameterA * c), right);
 			final Vector3f pos2 = Vector3f.scale((float) (diameterB * s), up);
 			final Vector3f pos = Vector3f.add(pos1, pos2);
@@ -4317,10 +4348,10 @@ public class LatticeModel {
 	}
 
 	protected void makeEllipse2DA(final Vector3f right, final Vector3f up, final Vector3f center, final float radius,
-			final VOIContour ellipse, int numPts) {
-		for (int i = 0; i < numPts; i++) {
-			final double c = Math.cos(Math.PI * 2.0 * i / numPts);
-			final double s = Math.sin(Math.PI * 2.0 * i / numPts);
+			final VOIContour ellipse) {
+		for (int i = 0; i < numEllipsePts; i++) {
+			final double c = Math.cos(Math.PI * 2.0 * i / numEllipsePts);
+			final double s = Math.sin(Math.PI * 2.0 * i / numEllipsePts);
 			final Vector3f pos1 = Vector3f.scale((float) (radius * c), right);
 			final Vector3f pos2 = Vector3f.scale((float) (radius * s), up);
 			final Vector3f pos = Vector3f.add(pos1, pos2);
@@ -5926,7 +5957,7 @@ public class LatticeModel {
 		}
 
 		if ( (left.size() == right.size()) && (left.size() >= 2)) {
-			generateCurves(5);
+			generateCurves(5, 10);
 			if (showContours) {
 				imageA.registerVOI(displayContours);
 			}
@@ -8100,9 +8131,11 @@ public class LatticeModel {
 		int dimX = (int) (resultImage.getExtents()[0]);
 		int dimY = (int) (resultImage.getExtents()[1]);
 		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
+		float maxDist = Vector3f.normalize(center);
 
 		//		System.err.println( dimX + " " + dimY + " " + dimZ );
 
+//		generateTriMesh(imageName, false, 1);
 		latticeContours = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
 		resultImage.registerVOI( latticeContours );
 		for (int i = 0; i < dimZ; i++)
@@ -8113,25 +8146,49 @@ public class LatticeModel {
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += paddingFactor;
 
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour, numPts);			
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);			
+
+			if ( clipMask != null && (clipMask.size() == dimZ) ) {
+//				System.err.println( "use clip mask " + (i/10) + "  " + clipMask.size() );
+				boolean[] mask = clipMask.elementAt(i);
+				for ( int j = 0; j < mask.length; j++ ) {
+					if ( !mask[j] ) {
+						// extend contour out to edge:
+						Vector3f dir = Vector3f.sub( contour.elementAt(j), center );
+						dir.normalize();
+						dir.scale(maxDist);
+						dir.add(center);
+						contour.elementAt(j).copy(dir);
+					}
+				}
+				for ( int y = 0; y < dimY; y++ ) {
+					for ( int x = 0; x < dimX; x++ ) {
+						if ( contour.contains(x,y) ) {
+							contourImage.set(x,  y, i, 10 );
+						}
+					}
+				}
+			}
+			else
+			{
+				float radiusSq = radius*radius;
+				for ( int y = (int)Math.max(0, center.Y - radius); y < Math.min(dimY, center.Y + radius + 1); y++ )
+				{
+					for ( int x = (int)Math.max(0, center.X - radius); x < Math.min(dimX, center.X + radius + 1); x++ )
+					{
+						float dist = (x - center.X) * (x - center.X) + (y - center.Y) * (y - center.Y); 
+						if ( dist <= radiusSq )
+						{
+							contourImage.set(x,  y, i, 10 );
+						}
+					}
+				}
+			}
 			for ( int j = 0; j < contour.size(); j++ )
 			{
 				contour.elementAt(j).Z = i;
 			}
 			latticeContours.getCurves().add( contour );
-
-			float radiusSq = radius*radius;
-			for ( int y = (int)Math.max(0, center.Y - radius); y < Math.min(dimY, center.Y + radius + 1); y++ )
-			{
-				for ( int x = (int)Math.max(0, center.X - radius); x < Math.min(dimX, center.X + radius + 1); x++ )
-				{
-					float dist = (x - center.X) * (x - center.X) + (y - center.Y) * (y - center.Y); 
-					if ( dist <= radiusSq )
-					{
-						contourImage.set(x,  y, i, 10 );
-					}
-				}
-			}
 		}
 
 		System.err.println( "   contours " + AlgorithmBase.computeElapsedTime(time) );
@@ -8277,12 +8334,12 @@ public class LatticeModel {
 		resultImage.disposeLocal(false);
 		resultImage = null;
 
-//		if ( overlapImage != null ) {
-//			for ( int i = 0; i < overlapImage.getDataSize(); i++ ) {
-//				float count = overlapImage.getFloat(i);
-//				if ( count == 1 ) overlapImage.set(i, 0);
-//			}
-//			saveImage(imageName, overlapImage, false);
+		if ( overlapImage != null ) {
+			for ( int i = 0; i < overlapImage.getDataSize(); i++ ) {
+				float count = overlapImage.getFloat(i);
+				if ( count == 1 ) overlapImage.set(i, 0);
+			}
+			saveImage(imageName, overlapImage, false);
 //			
 //			// straighten the overlap image:
 //			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_overlap_straight.xml");
@@ -8302,9 +8359,9 @@ public class LatticeModel {
 //			resultImage.disposeLocal(false);
 //			resultImage = null;
 //			
-//			overlapImage.disposeLocal(false);
-//			overlapImage = null;
-//		}
+			overlapImage.disposeLocal(false);
+			overlapImage = null;
+		}
 
 		if ( sourceImage != null )
 		{
@@ -8377,7 +8434,9 @@ public class LatticeModel {
 		time = System.currentTimeMillis();
 	}
 
+	
 	/**
+	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
 	 * Straightens the worm image based on the input lattice positions. The image is straightened without first building a worm model.
 	 * The image is segmented after clipping based on surface markers or the lattice shape.
 	 * @param image
@@ -8424,7 +8483,7 @@ public class LatticeModel {
 			VOIContour contour = new VOIContour(true);
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += 5;
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour, 180);			
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);			
 			for ( int j = 0; j < contour.size(); j++ )
 			{
 				contour.elementAt(j).Z = i;
@@ -10640,6 +10699,269 @@ public class LatticeModel {
 		}
 		
 		saveLatticeStatistics(outputDirectory + File.separator, centerSpline.GetLength(0, 1), left, right, leftDistances, rightDistances, "_before");
+	}
+	
+	private Vector<boolean[]> clipMask = null;
+	public TriMesh generateTriMesh(String imageName, boolean returnMesh, int stepSize) {
+//		if ( displayContours == null ) return null;
+//		if ( displayContours.getCurves() == null ) return null;
+//		if ( displayContours.getCurves().size() <= 0 ) return null;
+//		if ( displayContours == null )
+		generateCurves(1, stepSize);
+		
+		ModelImage overlapImage = null;
+		int dimX = 0;
+		int dimY = 0;
+		int dimZ = 0;
+//		if ( !returnMesh ) {
+//			FileIO fileIO = new FileIO();
+//			overlapImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_overlap.xml" );
+//			dimX = overlapImage.getExtents().length > 0 ? overlapImage.getExtents()[0] : 1;
+//			dimY = overlapImage.getExtents().length > 1 ? overlapImage.getExtents()[1] : 1;
+//			dimZ = overlapImage.getExtents().length > 2 ? overlapImage.getExtents()[2] : 1;
+//		}
+		
+		Vector<Vector3f> positions = new Vector<Vector3f>();
+		int numContours = displayContours.getCurves().size();
+		for ( int i = 0; i < numContours; i++ ) {
+			VOIContour contour = (VOIContour) displayContours.getCurves().elementAt(i);
+			Vector3f center = new Vector3f();
+			int contourSize = contour.size();
+			for ( int j = 0; j < contourSize; j++ )
+			{
+				if ( (i == 0) || (i == (numContours-1) ) ) {
+					center.add(contour.elementAt(j));
+				}
+				positions.add(contour.elementAt(j));
+			}
+			if ( i == 0 ) {
+				center.scale(1.0f/(float)contourSize);
+				// first positions is center of 'head'
+				positions.add(0, center);
+			}
+			if ( i == (numContours-1) ) {
+				center.scale(1.0f/(float)contourSize);
+				// last position is center of 'tail'
+				positions.add(center);
+			}
+		}
+		VertexBuffer vBuf = new VertexBuffer(positions);
+		
+		Box3f[][] boxes = new Box3f[numContours-1][numEllipsePts];
+		System.err.println( "TriMesh " + numContours );
+		Vector<Integer> indexList = new Vector<Integer>();
+		for ( int i = 0; i < numContours; i++ ) {
+			VOIContour contour1 = (VOIContour) displayContours.getCurves().elementAt(i);
+			int contourSize1 = contour1.size();
+			for ( int j = 0; j < contourSize1; j++ )
+			{
+				if ( i == 0 ) {
+					int index = 0;
+					int sliceIndex1 = positions.indexOf(contour1.elementAt(j) );
+					int sliceIndex2 = positions.indexOf( contour1.elementAt((j+1)%contourSize1) );
+					indexList.add(index);
+					indexList.add(sliceIndex2);
+					indexList.add(sliceIndex1);
+				}
+				if ( i == (numContours-1) ) {
+					int index = positions.size()-1;
+					int sliceIndex1 = positions.indexOf(contour1.elementAt(j) );
+					int sliceIndex2 = positions.indexOf( contour1.elementAt((j+1)%contourSize1) );
+					indexList.add(index);
+					indexList.add(sliceIndex1);
+					indexList.add(sliceIndex2);
+				}
+				if ( i < (numContours - 1) ) {
+					VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i+1);
+					int contourSize2 = contour2.size();
+//					System.err.println( i + "   " + (contourSize1 == contourSize2) );
+					int sliceIndexJ = positions.indexOf(contour1.elementAt(j) );
+					int nextSliceIndexJ = positions.indexOf( contour2.elementAt(j) );
+					int sliceIndexJP1 = positions.indexOf(contour1.elementAt((j+1)%contourSize1) );
+					int nextSliceIndexJP1 = positions.indexOf( contour2.elementAt((j+1)%contourSize2) );
+					// tri 1:
+					indexList.add(sliceIndexJ);
+					indexList.add(nextSliceIndexJP1);
+					indexList.add(nextSliceIndexJ);
+					// tri 2:
+					indexList.add(sliceIndexJ);
+					indexList.add(sliceIndexJP1);
+					indexList.add(nextSliceIndexJP1);
+					
+					Vector3f center = new Vector3f();
+					center.add(contour1.elementAt(j));
+					center.add(contour2.elementAt(j));
+					center.add(contour2.elementAt((j+1)%contourSize2));
+					center.add(contour1.elementAt((j+1)%contourSize1));
+					center.scale(0.25f);
+					
+					
+					Vector3f edge1 = Vector3f.sub(contour1.elementAt((j+1)%contourSize1), contour1.elementAt(j));
+					float dist1 = edge1.normalize();
+					
+					Vector3f edge2 = Vector3f.sub(contour2.elementAt((j+1)%contourSize2), contour1.elementAt(j));
+					float dist2 = edge2.normalize();
+					
+					Vector3f edge3 = Vector3f.sub(contour2.elementAt(j), contour1.elementAt(j));
+					float dist3 = edge3.normalize();
+					
+					Vector3f edge4 = Vector3f.sub(contour2.elementAt((j+1)%contourSize2), contour1.elementAt((j+1)%contourSize1));
+					float dist4 = edge4.normalize();
+					
+					Vector3f edge5 = Vector3f.sub(contour2.elementAt((j+1)%contourSize2), contour2.elementAt(j));
+					float dist5 = edge5.normalize();
+					
+					Vector3f normal1 = edge1.cross(edge2); normal1.normalize();
+					Vector3f normal2 = edge2.cross(edge3); normal2.normalize();
+				    Vector3f normal = Vector3f.add(normal1, normal2);
+				    normal.scale(0.5f);
+
+					Vector3f axis1 = Vector3f.add(edge1, edge5);
+					axis1.scale(0.5f);
+					float extent1 = (dist1 + dist5)/4f;
+
+					Vector3f axis2 = Vector3f.add(edge3, edge4);
+					axis2.scale(0.5f);
+					float extent2 = (dist3 + dist4)/4f;
+					
+					Box3f box = new Box3f(center, new Vector3f[] {axis1, axis2, normal }, new float[] {extent1, extent2, 1} );
+					boxes[i][j] = box;
+				}
+			}
+		}
+		
+		clipMask = new Vector<boolean[]>();
+		int boxIndex = 0;
+		boolean[] currentMask = null;
+		boolean[] nextMask = null;
+		for ( int i = 0; i < numContours; i++ ) {
+			VOIContour contour1 = (VOIContour) displayContours.getCurves().elementAt(i);
+			int contourSize1 = contour1.size();
+			if ( i == 0 )
+			{
+				currentMask = new boolean[contourSize1];
+				nextMask = new boolean[contourSize1];
+			}
+			else
+			{
+				currentMask = nextMask;
+				nextMask = new boolean[contourSize1];
+			}
+			for ( int j = 0; j < contourSize1; j++ )
+			{				
+				if ( i < (numContours - 1) ) {
+					VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i+1);
+					int contourSize2 = contour2.size();
+
+					Vector3f posJ = contour1.elementAt(j);
+					Vector3f posJNext = contour2.elementAt(j);
+					Vector3f posJP1 = contour1.elementAt((j+1)%contourSize1);
+					Vector3f posJP1Next =contour2.elementAt((j+1)%contourSize2);
+					
+					int sliceIndexJ = positions.indexOf( posJ );
+					int nextSliceIndexJ = positions.indexOf( posJNext );
+					int sliceIndexJP1 = positions.indexOf( posJP1 );
+					int nextSliceIndexJP1 = positions.indexOf( posJP1Next );
+					
+					boolean test = false;
+//					if ( overlapImage != null ) {
+//						if (    (overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJ.X)),       Math.min( dimY-1, Math.max(0, (int)posJ.Y)),        Math.min( dimZ-1, Math.max(0, (int)posJ.Z)) ) != 0 ) || 
+//								(overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJNext.X)),   Math.min( dimY-1, Math.max(0, (int)posJNext.Y)),    Math.min( dimZ-1, Math.max(0, (int)posJNext.Z)) ) != 0 ) || 
+//								(overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJP1.X)),     Math.min( dimY-1, Math.max(0, (int)posJP1.Y)),      Math.min( dimZ-1, Math.max(0, (int)posJP1.Z)) ) != 0 ) || 
+//								(overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJP1Next.X)), Math.min( dimY-1, Math.max(0, (int)posJP1Next.Y)),  Math.min( dimZ-1, Math.max(0, (int)posJP1Next.Z)) ) != 0 ) ) {
+//
+//							vBuf.SetColor3(0, sliceIndexJ, 1, 0, 0);
+//							vBuf.SetColor3(0, nextSliceIndexJ, 1, 0, 0);
+//							vBuf.SetColor3(0, sliceIndexJP1, 1, 0, 0);
+//							vBuf.SetColor3(0, nextSliceIndexJP1, 1, 0, 0);
+//							currentMask[j] = true;
+//							currentMask[(j+1)%contourSize1] = true;
+//							nextMask[j] = true;
+//							nextMask[(j+1)%contourSize1] = true;
+//							test = true;
+//						}
+//					}
+					if ( !test ) {
+						Vector3f center = new Vector3f();
+						center.add(contour1.elementAt(j));
+						center.add(contour2.elementAt(j));
+						center.add(contour2.elementAt((j+1)%contourSize2));
+						center.add(contour1.elementAt((j+1)%contourSize1));
+						center.scale(0.25f);
+
+						Box3f box = boxes[i][j];
+						Vector3f normal = box.Axis[2];
+
+						Segment3f segment = new Segment3f();
+						segment.Center.scaleAdd(50, normal, center);
+						segment.Direction = normal;
+						segment.Extent = 50;
+						for ( int k = 0; k < boxes.length; k++ ) {
+							if ( (k < (i-1)) || (k > (i+1)) ) 
+							{
+								for ( int b = 0; b < boxes[k].length; b++ ) {
+									Box3f testBox = boxes[k][b];
+									if ( testBox != box ) {
+										IntrSegment3Box3f testSB = new IntrSegment3Box3f(segment,testBox,true);
+										if ( testSB.Test() ) {
+											vBuf.SetColor3(0, sliceIndexJ, 1, 0, 0);
+											vBuf.SetColor3(0, nextSliceIndexJ, 1, 0, 0);
+											vBuf.SetColor3(0, sliceIndexJP1, 1, 0, 0);
+											vBuf.SetColor3(0, nextSliceIndexJP1, 1, 0, 0);
+											currentMask[j] = true;
+											currentMask[(j+1)%contourSize1] = true;
+											nextMask[j] = true;
+											nextMask[(j+1)%contourSize1] = true;
+											break;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			for ( int j = 0; j < contourSize1; j++ )
+			{				
+				if ( currentMask[((j-1)+contourSize1)%contourSize1] && currentMask[(j+1)%contourSize1] ) 
+				{
+					currentMask[j] = true;
+					nextMask[j] = true;
+
+					if ( i < (numContours - 1) ) {
+						VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i+1);
+						int contourSize2 = contour2.size();
+						//					System.err.println( i + "   " + (contourSize1 == contourSize2) );
+						int sliceIndexJ = positions.indexOf(contour1.elementAt(j) );
+						int nextSliceIndexJ = positions.indexOf( contour2.elementAt(j) );
+						int sliceIndexJP1 = positions.indexOf(contour1.elementAt((j+1)%contourSize1) );
+						int nextSliceIndexJP1 = positions.indexOf( contour2.elementAt((j+1)%contourSize2) );
+
+						vBuf.SetColor3(0, sliceIndexJ, 1, 0, 0);
+						vBuf.SetColor3(0, nextSliceIndexJ, 1, 0, 0);
+						vBuf.SetColor3(0, sliceIndexJP1, 1, 0, 0);
+						vBuf.SetColor3(0, nextSliceIndexJP1, 1, 0, 0);
+					}
+				}
+			}
+			clipMask.add(currentMask);
+		}
+		
+		if ( overlapImage != null ) {
+			overlapImage.disposeLocal(false);
+			overlapImage = null;
+		}
+
+		if ( returnMesh ) {
+			int[] indexInput = new int[indexList.size()];
+			for ( int i = 0; i < indexList.size(); i++ ) {
+				indexInput[i] = indexList.elementAt(i);
+			}
+			IndexBuffer iBuf = new IndexBuffer(indexInput);
+			System.err.println("TriMesh " + vBuf.GetVertexQuantity() + " " + iBuf.GetIndexQuantity() );
+			return new TriMesh(vBuf, iBuf);		
+		}
+		return null;
 	}
 
 }
