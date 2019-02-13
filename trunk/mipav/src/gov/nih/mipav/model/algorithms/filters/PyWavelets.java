@@ -14743,71 +14743,341 @@ public  class PyWavelets extends AlgorithmBase {
         return output;
     }
     
-    /*private double[][][] swt2(double data[][], DiscreteWavelet []wavelet, int level, int start_level, int axes[]) {
+    private double[][][] swt2(double data[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
         // Default level = -1
     	// Default start_level = 0
         // Default axes = -2,-1
         // Multilevel 2D stationary wavelet transform.
 
-        Parameters
-        ----------
-        data : array_like
-            2D array with input data
-        wavelet : Wavelet object or name string, or 2-tuple of wavelets
-            Wavelet to use.  This can also be a tuple of wavelets to apply per
-            axis in ``axes``.
-        level : int
-            The number of decomposition steps to perform.
-        start_level : int, optional
-            The level at which the decomposition will start (default: 0)
-        axes : 2-tuple of ints, optional
-            Axes over which to compute the SWT. Repeated elements are not allowed.
+        // Parameters
+        // ----------
+        // data : array_like
+        //    2D array with input data
+        // wavelet : Wavelet object or name string, or 2-tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple of wavelets to apply per
+        //    axis in ``axes``.
+        // level : int
+        //    The number of decomposition steps to perform.
+        // start_level : int, optional
+        //    The level at which the decomposition will start (default: 0)
+        // axes : 2-tuple of ints, optional
+        //    Axes over which to compute the SWT. Repeated elements are not allowed.
 
-        Returns
-        -------
-        coeffs : list
-            Approximation and details coefficients (for ``start_level = m``)::
+        // Returns
+        // -------
+        // coeffs : list
+        //    Approximation and details coefficients (for ``start_level = m``)::
 
-                [
-                    (cA_m+level,
-                        (cH_m+level, cV_m+level, cD_m+level)
-                    ),
-                    ...,
-                    (cA_m+1,
-                        (cH_m+1, cV_m+1, cD_m+1)
-                    ),
-                    (cA_m,
-                        (cH_m, cV_m, cD_m)
-                    )
-                ]
+        //        [
+        //            (cA_m+level,
+        //                (cH_m+level, cV_m+level, cD_m+level)
+        //            ),
+        //            ...,
+        //            (cA_m+1,
+        //                (cH_m+1, cV_m+1, cD_m+1)
+        //            ),
+        //            (cA_m,
+        //                (cH_m, cV_m, cD_m)
+        //            )
+        //        ]
 
-            where cA is approximation, cH is horizontal details, cV is
-            vertical details, cD is diagonal details and m is ``start_level``.
+        //    where cA is approximation, cH is horizontal details, cV is
+        //    vertical details, cD is diagonal details and m is ``start_level``.
 
-        Notes
-        -----
-        The implementation here follows the "algorithm a-trous" and requires that
-        the signal length along the transformed axes be a multiple of ``2**level``.
-        If this is not the case, the user should pad up to an appropriate size
-        using a function such as ``numpy.pad``.
-        """
-        axes = tuple(axes)
-        data = np.asarray(data)
-        if len(axes) != 2:
-            raise ValueError("Expected 2 axes")
-        if len(axes) != len(set(axes)):
-            raise ValueError("The axes passed to swt2 must be unique.")
-        if data.ndim < len(np.unique(axes)):
-            raise ValueError("Input array has fewer dimensions than the specified "
-                             "axes")
-
-        coefs = swtn(data, wavelet, level, start_level, axes)
-        ret = []
-        for c in coefs:
-            ret.append((c['aa'], (c['da'], c['ad'], c['dd'])))
-
-        return ret
-    }*/
-
+        // Notes
+        // -----
+        // The implementation here follows the "algorithm a-trous" and requires that
+        // the signal length along the transformed axes be a multiple of ``2**level``.
+        // If this is not the case, the user should pad up to an appropriate size
+        // using a function such as ``numpy.pad``.
+    	int i;
+       
+		if ((axes != null) && (axes.length != 2)) {
+            MipavUtil.displayError("Expected 2 axes");
+            return null;
+        }
+		if ((axes !=  null) && (axes[0] == axes[1])) {
+            MipavUtil.displayError("The axes passed to swt2 must be unique.");
+		    return null;
+        }
         
+		HashMap<String, double[][]> coeffsMap[] = swtn(data, wavelet, level, start_level, axes);
+		double coefs[][][] = new double[4*coeffsMap.length][][];
+		for (i = 0; i < coeffsMap.length; i++) {
+		    coefs[4*i] = coeffsMap[i].get("aa");
+	        coefs[4*i+1] = coeffsMap[i].get("da");
+	        coefs[4*i+2] = coeffsMap[i].get("ad");
+	        coefs[4*i+3] = coeffsMap[i].get("dd");
+		}
+        return coefs;
+    }
+
+    private HashMap<String, double[][]>[] swtn(double data[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
+        // Default start_level = 0
+    	// Default axes = null
+        // n-dimensional stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // data : array_like
+        //    n-dimensional array with input data.
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple of wavelets to apply per
+        //    axis in ``axes``.
+        // level : int
+        //    The number of decomposition steps to perform.
+        // start_level : int, optional
+        //    The level at which the decomposition will start (default: 0)
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the SWT. A value of ``None`` (the
+        //    default) selects all axes. Axes may not be repeated.
+
+        // Returns
+        // -------
+        // [{coeffs_level_n}, ..., {coeffs_level_1}]: list of dict
+        //    Results for each level are arranged in a dictionary, where the key
+        //    specifies the transform type on each dimension and value is a
+        //    n-dimensional coefficients array.
+
+        //    For example, for a 2D case the result at a given level will look
+        //    something like this::
+
+        //        {'aa': <coeffs>  # A(LL) - approx. on 1st dim, approx. on 2nd dim
+        //         'ad': <coeffs>  # V(LH) - approx. on 1st dim, det. on 2nd dim
+        //         'da': <coeffs>  # H(HL) - det. on 1st dim, approx. on 2nd dim
+        //         'dd': <coeffs>  # D(HH) - det. on 1st dim, det. on 2nd dim
+        //        }
+
+        //    For user-specified ``axes``, the order of the characters in the
+        //    dictionary keys map to the specified ``axes``.
+
+        // Notes
+        // -----
+        // The implementation here follows the "algorithm a-trous" and requires that
+        // the signal length along the transformed axes be a multiple of ``2**level``.
+        // If this is not the case, the user should pad up to an appropriate size
+        // using a function such as ``numpy.pad``.
+    	int i, j;
+    	int axis;
+    	DiscreteWavelet wav;
+        
+        if (axes == null) {
+        	axes = new int[]{0,1};
+        }
+        if (axes[0] < 0) {
+        	axes[0] = axes[0] + 2;
+        }
+        if (axes[1] < 0) {
+        	axes[1] = axes[1] + 2;
+        }
+        if (axes[0] == axes[1]) {
+            MipavUtil.displayError("The axes passed to swtn must be unique.");
+            return null;
+        }
+        int num_axes = 2;
+
+        // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
+        DiscreteWavelet wavelets[];
+        if (wavelet.length == 1) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        HashMap<String, double[][]> coeffs = new HashMap<String, double[][]>();
+        HashMap<String, double[][]> new_coeffs = new HashMap<String, double[][]>();
+        HashMap<String, double[][]> ret[] = new HashMap[level];
+        for (i = 0; i < level; i++) {
+        	ret[i] = new HashMap<String, double[][]>();
+        }
+
+        for (i = start_level; i <  start_level + level; i++) {
+        	coeffs.clear();
+        	coeffs.put("", data);
+            for (j = 0; j < 2; j++) {
+	             axis = axes[j];
+	             wav = wavelets[j];
+	             new_coeffs.clear();
+	             Iterator<Map.Entry<String, double[][]>> allIter = coeffs.entrySet().iterator();
+	             Map.Entry<String,double[][]> kEntry = null;
+	             while (allIter.hasNext()) {
+	             	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+	             	String subband = (String) kEntry.getKey();
+	             	double x[][] = (double[][]) kEntry.getValue();
+	             	double arr[][][] = swt_axis(x, wav, 1, i, axis);
+	             	double cA[][] = arr[0];
+	            	double cD[][] = arr[1];
+	            	new_coeffs.put(subband + "a", cA);
+	            	new_coeffs.put(subband + "d", cD);
+	            } // while (allIter.hasNext())
+	             coeffs.clear();
+	             Iterator<Map.Entry<String, double[][]>> newIter = new_coeffs.entrySet().iterator();
+	             Map.Entry<String,double[][]> newEntry = null;
+	             while (newIter.hasNext()) {
+	             	newEntry = (Map.Entry<String,double[][]>) newIter.next();
+	             	coeffs.put((String)newEntry.getKey(), (double[][])newEntry.getValue());
+	             }
+            } // for (j = 0; j < 2; j++)
+            Iterator<Map.Entry<String, double[][]>> allIter = coeffs.entrySet().iterator();
+            Map.Entry<String,double[][]> kEntry = null;
+            while (allIter.hasNext()) {
+            	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+            	String subband = (String) kEntry.getKey();
+             	double x[][] = (double[][]) kEntry.getValue();
+            	ret[i].put(subband, x);
+            }
+            
+            // data for the next level is the approximation coeffs from this level
+            data = coeffs.get("aa");
+        } // for (i = start_level; i <  start_level + level; i++)
+
+        HashMap<String, double[][]> rev[] = new HashMap[level];
+        for (i = 0; i < level; i++) {
+        	rev[i] = ret[level-1-i];
+        }
+        return rev;    
+    }
+    
+    private double[][] iswt2(double coeffs[][][], DiscreteWavelet wavelet[]) {
+       
+        // Multilevel 2D inverse discrete stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // coeffs : list
+        //    Approximation and details coefficients::
+
+        //        [
+        //            (cA_n,
+        //                (cH_n, cV_n, cD_n)
+        //            ),
+        //            ...,
+        //            (cA_2,
+        //                (cH_2, cV_2, cD_2)
+        //            ),
+        //            (cA_1,
+        //                (cH_1, cV_1, cD_1)
+        //            )
+        //        ]
+
+        //    where cA is approximation, cH is horizontal details, cV is
+        //    vertical details, cD is diagonal details and n is the number of
+        //    levels.  Index 1 corresponds to ``start_level`` from ``pywt.swt2``.
+        // wavelet : Wavelet object or name string, or 2-tuple of wavelets
+        //    Wavelet to use.  This can also be a 2-tuple of wavelets to apply per
+        //    axis.
+
+        // Returns
+        // -------
+        // 2D array of reconstructed data.
+
+        // Examples
+        // --------
+        // >>> import pywt
+        // >>> coeffs = pywt.swt2([[1,2,3,4],[5,6,7,8],
+        // ...                     [9,10,11,12],[13,14,15,16]],
+        // ...                    'db1', level=2)
+        // >>> pywt.iswt2(coeffs, 'db1')
+        // array([[  1.,   2.,   3.,   4.],
+        //       [  5.,   6.,   7.,   8.],
+        //       [  9.,  10.,  11.,  12.],
+        //       [ 13.,  14.,  15.,  16.]])
+    	int i, j, k, index;
+    	int first_h, first_w;
+
+        double output[][] = new double[coeffs.length * coeffs[0].length][coeffs[0][0].length];
+        for (i = 0; i < coeffs.length; i++) {
+        	for (j = 0; j < coeffs[0].length; j++) {
+        		for (k = 0; k < coeffs[0][0].length; k++) {
+	        		index = j + i * coeffs[0].length;
+	        		output[index][k] = coeffs[i][j][k];
+        		}
+        	}
+        }
+       
+        //"iswt2 only supports 2D arrays.  see iswtn for a general "
+        //"n-dimensionsal ISWT"
+        // num_levels, equivalent to the decomposition level, n
+        int num_levels = coeffs.length/4; // "aa", "ad", "da", and "dd" in each level;
+     // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
+        DiscreteWavelet wavelets[];
+        if (wavelet.length == 1) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        for (j = 0; j < num_levels; j++) {
+        	int step_size = 1;
+        	for (k = 0; k < num_levels-j-1; k++) {
+        	    step_size *= 2;	
+        	}
+            int last_index = step_size;
+            double cA[][] = coeffs[4*j];
+            double cH[][] = coeffs[4*j+1];
+            double cV[][] = coeffs[4*j+2];
+            double cD[][] = coeffs[4*j+3];
+            // We are going to assume cH, cV, and cD are of equal size
+            if ((cH.length != cV.length) || (cH[0].length != cV[0].length) ||
+                (cH.length != cD.length) || (cH[0].length != cD[0].length)) {
+                MipavUtil.displayError("Mismatch in shape of intermediate coefficient arrays");
+                return null;
+            }
+            for (first_h = 0; first_h < last_index; first_h++) { 
+                for (first_w = 0; first_w < last_index; first_w++) {
+                    // Getting the indices that we will transform
+                	Vector<Integer>indices_h = new Vector<Integer>();
+                	for (i = first_h; i < cH.length; i += step_size) {
+                	    indices_h.add(i);	
+                	}
+                	Vector<Integer>indices_w = new Vector<Integer>();
+                	for (i = first_w; i < cH[0].length; i += step_size) {
+                	    indices_w.add(i);	
+                	}
+                    Vector<Integer>even_idx_h = new Vector<Integer>();
+
+                    /*even_idx_h = slice(first_h, cH.shape[0], 2*step_size)
+                    even_idx_w = slice(first_w, cH.shape[1], 2*step_size)
+                    odd_idx_h = slice(first_h + step_size, cH.shape[0], 2*step_size)
+                    odd_idx_w = slice(first_w + step_size, cH.shape[1], 2*step_size)
+
+                    # perform the inverse dwt on the selected indices,
+                    # making sure to use periodic boundary conditions
+                    x1 = idwt2((output[even_idx_h, even_idx_w],
+                               (cH[even_idx_h, even_idx_w],
+                                cV[even_idx_h, even_idx_w],
+                                cD[even_idx_h, even_idx_w])),
+                               wavelets, 'periodization')
+                    x2 = idwt2((output[even_idx_h, odd_idx_w],
+                               (cH[even_idx_h, odd_idx_w],
+                                cV[even_idx_h, odd_idx_w],
+                                cD[even_idx_h, odd_idx_w])),
+                               wavelets, 'periodization')
+                    x3 = idwt2((output[odd_idx_h, even_idx_w],
+                               (cH[odd_idx_h, even_idx_w],
+                                cV[odd_idx_h, even_idx_w],
+                                cD[odd_idx_h, even_idx_w])),
+                               wavelets, 'periodization')
+                    x4 = idwt2((output[odd_idx_h, odd_idx_w],
+                               (cH[odd_idx_h, odd_idx_w],
+                                cV[odd_idx_h, odd_idx_w],
+                                cD[odd_idx_h, odd_idx_w])),
+                               wavelets, 'periodization')
+
+                    # perform a circular shifts
+                    x2 = np.roll(x2, 1, axis=1)
+                    x3 = np.roll(x3, 1, axis=0)
+                    x4 = np.roll(x4, 1, axis=0)
+                    x4 = np.roll(x4, 1, axis=1)
+                    output[indices_h, indices_w] = (x1 + x2 + x3 + x4) / 4*/
+                }
+            }
+        } // for (j = 0; j < num_levels; j++)
+
+        return output;
+    }
 }
