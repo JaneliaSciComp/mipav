@@ -9331,6 +9331,56 @@ public  class PyWavelets extends AlgorithmBase {
         Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
 	}
+	
+	public void test_swt2_iswt2_non_square() {
+		int i, j, k, m, index;
+		int nrows[] = new int[]{8,16,48};
+		int nrow;
+		DiscreteWavelet wavelet = discrete_wavelet(WAVELET_NAME.DB,1);
+		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{wavelet, wavelet};
+		int axes[] = new int[]{0,1};
+		double tol_single = 1.0E-6;
+		double rtol = tol_single;
+		double atol = tol_single;
+		int level = 2;
+		boolean correct;
+		double allowedError;
+		double actualError;
+		int numberCorrect = 0;
+		int numberWrong = 0;
+		double X[][];
+		for (i = 0; i < 3; i++) {
+			nrow = nrows[i];
+			X = new double[nrow][32];
+			for (j = 0; j < nrow; j++) {
+				for (k = 0; k < 32; k++) {
+					index = j*32 + k;
+					X[j][k] = index;
+				}
+			}
+			int start_level = 0;
+	        double coeffs[][][] = swt2(X, wavelets, level,start_level,axes);
+	        double Y[][] = iswt2(coeffs, wavelets);
+	        correct = true;
+	        for (k = 0; k < X.length; k++) {
+	        	for (m = 0; m < X[k].length; m++) {
+		        	allowedError = atol + Math.abs(rtol*X[k][m]);
+		        	actualError = Math.abs(X[k][m] - Y[k][m]);
+		        	if (actualError > allowedError) {
+		        		correct = false;
+		        	}
+	        	}
+	        }
+	        if (correct) {
+	        	numberCorrect++;
+	        }
+	        else {
+	        	numberWrong++;
+	        }
+		}
+		Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);    
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
