@@ -3938,7 +3938,12 @@ public  class PyWavelets extends AlgorithmBase {
         return w;
     }
     
-    private void free_continuous_wavelet(ContinuousWavelet w){
+    private short dwt_max_level(int input_len, DiscreteWavelet w) {
+		int filter_len = w.dec_len;
+		return dwt_max_level(input_len, filter_len);
+	}
+
+	private void free_continuous_wavelet(ContinuousWavelet w){
 
         /* finally free struct */
         w = null;
@@ -4002,11 +4007,6 @@ public  class PyWavelets extends AlgorithmBase {
         return input_len;
     }
     
-    private short dwt_max_level(int input_len, DiscreteWavelet w) {
-    	int filter_len = w.dec_len;
-    	return dwt_max_level(input_len, filter_len);
-    }
-
     /* Maximum useful level of DWT decomposition. */
     private short dwt_max_level(int input_len, int filter_len){
         if(filter_len <= 1 || input_len < (filter_len-1))
@@ -4604,6 +4604,7 @@ public  class PyWavelets extends AlgorithmBase {
            double filter[], int F,
            double output[], int O)
 		{
+	 
 		// TODO? Allow for non-2 step
 		
 		int start = F/4;
@@ -4699,7 +4700,7 @@ public  class PyWavelets extends AlgorithmBase {
 		output[o+1] += filter[2*j+1] * input[i-j];
 		}
 		}
-		
+		 
 		return 0;
 		}
    
@@ -9245,6 +9246,91 @@ public  class PyWavelets extends AlgorithmBase {
         Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
 	}
+	
+	public void test_swt2_iswt2_integration() {
+		    // This function performs a round-trip swt2/iswt2 transform test on
+		    // all available types of wavelets in PyWavelets - except the
+		    // 'dmey' wavelet. The latter has been excluded because it does not
+		    // produce very precise results. This is likely due to the fact
+		    // that the 'dmey' wavelet is a discrete approximation of a
+		    // continuous wavelet. All wavelets are tested up to 3 levels. The
+		    // test validates neither swt2 or iswt2 as such, but it does ensure
+		    // that they are each other's inverse.
+		int i,j,k,m, index;
+		int max_level = 3;
+		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+                WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
+	   DiscreteWavelet current_wavelet;
+	   DiscreteWavelet current_wavelets[];
+	   
+	   int numberCorrect = 0;
+	   int numberWrong = 0;
+	   int orders[][] = new int[7][];
+	   orders[0] = new int[]{1}; // HAAR
+	   // RBIO 10, 20, 30, 40, 50, 60 do not work
+	   orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+	   orders[2] = new int[38]; // DB
+	   for (i = 0; i < 38; i++) {
+	       orders[2][i] = i+1;
+	   }
+	   orders[3] = new int[19]; // SYM
+	   for (i = 0; i < 19; i++) {
+	       orders[3][i] = i+2;
+	   }
+	   orders[4] = new int[17]; // COIF
+	   for (i = 0; i < 17; i++) {
+	       orders[4][i] = i+1;
+	   }
+	   orders[5] = orders[1].clone(); // BIOR
+	   double atol = 1.0E-5;
+	    double rtol = 1.0E-5;
+	    double allowedError;
+	    double actualError;
+	    boolean correct;
+	    int axes[] = new int[]{0,1};
+        for (i = 0; i < wName.length; i++) {
+      	    for (j = 0; j < orders[i].length; j++) {
+	      		current_wavelet = discrete_wavelet(wName[i], orders[i][j]);
+	      		current_wavelets = new DiscreteWavelet[]{current_wavelet, current_wavelet};
+		        int maxVal = Math.max(current_wavelet.dec_len, current_wavelet.rec_len);
+		        // For integers log2 is given by
+		        int input_length_power = 31 - Integer.numberOfLeadingZeros(maxVal);
+		        int exponent = input_length_power + max_level - 1;
+		        int input_length = 1;
+		        for (k = 0; k < exponent; k++) {
+		        	input_length *= 2;
+		        }
+		        double X[][] = new double[input_length][input_length];
+		        for (k = 0; k < input_length; k++) {
+		        	for (m = 0; m < input_length; m++) {
+		        		index = k*input_length + m;
+		        	    X[k][m] = index;
+		        	}
+		        }
+		        int start_level = 0;
+		        double coeffs[][][] = swt2(X, current_wavelets, max_level,start_level,axes);
+		        double Y[][] = iswt2(coeffs, current_wavelets);
+		        correct = true;
+		        for (k = 0; k < X.length; k++) {
+		        	for (m = 0; m < X[k].length; m++) {
+			        	allowedError = atol + Math.abs(rtol*X[k][m]);
+			        	actualError = Math.abs(X[k][m] - Y[k][m]);
+			        	if (actualError > allowedError) {
+			        		correct = false;
+			        	}
+		        	}
+		        }
+		        if (correct) {
+		        	numberCorrect++;
+		        }
+		        else {
+		        	numberWrong++;
+		        }
+      	    }
+      	}
+        Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
@@ -12818,12 +12904,12 @@ public  class PyWavelets extends AlgorithmBase {
 	            }
 	        }
         }
-	
-		
+        
         retval = idwt_axis(temp_input_a, a_info,
                              temp_input_d, d_info,
                              temp_output, output_info,
                              wavelet, axis, mode);
+        
 	    if (retval != 0) {
 	        MipavUtil.displayError("C inverse wavelet transform failed");
 	        return null;
@@ -14984,8 +15070,9 @@ public  class PyWavelets extends AlgorithmBase {
         //       [  5.,   6.,   7.,   8.],
         //       [  9.,  10.,  11.,  12.],
         //       [ 13.,  14.,  15.,  16.]])
-    	int i, j, k, index;
+    	int i, j, k, m, index;
     	int first_h, first_w;
+    	double xlast;
 
         double output[][] = new double[coeffs.length * coeffs[0].length][coeffs[0][0].length];
         for (i = 0; i < coeffs.length; i++) {
@@ -15010,6 +15097,8 @@ public  class PyWavelets extends AlgorithmBase {
         else {
         	wavelets = wavelet;
         }
+        int axes[] = new int[]{0,1};
+        MODE modes[] = new MODE[]{MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION};
 
         for (j = 0; j < num_levels; j++) {
         	int step_size = 1;
@@ -15017,7 +15106,7 @@ public  class PyWavelets extends AlgorithmBase {
         	    step_size *= 2;	
         	}
             int last_index = step_size;
-            double cA[][] = coeffs[4*j];
+            //double cA[][] = coeffs[4*j];
             double cH[][] = coeffs[4*j+1];
             double cV[][] = coeffs[4*j+2];
             double cD[][] = coeffs[4*j+3];
@@ -15027,7 +15116,7 @@ public  class PyWavelets extends AlgorithmBase {
                 MipavUtil.displayError("Mismatch in shape of intermediate coefficient arrays");
                 return null;
             }
-            for (first_h = 0; first_h < last_index; first_h++) { 
+            for (first_h = 0; first_h < last_index; first_h++) {
                 for (first_w = 0; first_w < last_index; first_w++) {
                     // Getting the indices that we will transform
                 	Vector<Integer>indices_h = new Vector<Integer>();
@@ -15039,41 +15128,128 @@ public  class PyWavelets extends AlgorithmBase {
                 	    indices_w.add(i);	
                 	}
                     Vector<Integer>even_idx_h = new Vector<Integer>();
+                    for (i = first_h; i < cH.length; i += 2*step_size) {
+                	    even_idx_h.add(i);	
+                	}
+                    Vector<Integer>even_idx_w = new Vector<Integer>();
+                    for (i = first_w; i < cH[0].length; i += 2*step_size) {
+                	    even_idx_w.add(i);	
+                	}
+                    Vector<Integer>odd_idx_h = new Vector<Integer>();
+                    for (i = first_h + step_size; i < cH.length; i += 2*step_size) {
+                	    odd_idx_h.add(i);	
+                	}
+                    Vector<Integer>odd_idx_w = new Vector<Integer>();
+                	for (i = first_w + step_size; i < cH[0].length; i += 2*step_size) {
+                	    odd_idx_w.add(i);	
+                	}
 
-                    /*even_idx_h = slice(first_h, cH.shape[0], 2*step_size)
-                    even_idx_w = slice(first_w, cH.shape[1], 2*step_size)
-                    odd_idx_h = slice(first_h + step_size, cH.shape[0], 2*step_size)
-                    odd_idx_w = slice(first_w + step_size, cH.shape[1], 2*step_size)
+                    // perform the inverse dwt on the selected indices,
+                    // making sure to use periodic boundary conditions
+                 	double output_x1[][] = new double[even_idx_h.size()][even_idx_w.size()];
+                	double cH_x1[][] = new double[even_idx_h.size()][even_idx_w.size()];
+                	double cV_x1[][] = new double[even_idx_h.size()][even_idx_w.size()];
+                	double cD_x1[][] = new double[even_idx_h.size()][even_idx_w.size()];
+                	for (i = 0; i < even_idx_h.size(); i++) {
+                		for (m = 0; m < even_idx_w.size(); m++) {
+                			output_x1[i][m] = output[even_idx_h.get(i)][even_idx_w.get(m)];
+                			cH_x1[i][m] = cH[even_idx_h.get(i)][even_idx_w.get(m)];
+                			cV_x1[i][m] = cV[even_idx_h.get(i)][even_idx_w.get(m)];
+                			cD_x1[i][m] = cD[even_idx_h.get(i)][even_idx_w.get(m)];
+                		}
+                	}
+                	double c[][][] = new double[4][][];
+                	c[0] = output_x1;
+                	c[1] = cH_x1;
+                	c[2] = cV_x1;
+                	c[3] = cD_x1;
+                    double x1[][] = idwt2(c, wavelets, modes, axes);
+                    double output_x2[][] = new double[even_idx_h.size()][odd_idx_w.size()];
+                	double cH_x2[][] = new double[even_idx_h.size()][odd_idx_w.size()];
+                	double cV_x2[][] = new double[even_idx_h.size()][odd_idx_w.size()];
+                	double cD_x2[][] = new double[even_idx_h.size()][odd_idx_w.size()];
+                	for (i = 0; i < even_idx_h.size(); i++) {
+                		for (m = 0; m < odd_idx_w.size(); m++) {
+                			output_x2[i][m] = output[even_idx_h.get(i)][odd_idx_w.get(m)];
+                			cH_x2[i][m] = cH[even_idx_h.get(i)][odd_idx_w.get(m)];
+                			cV_x2[i][m] = cV[even_idx_h.get(i)][odd_idx_w.get(m)];
+                			cD_x2[i][m] = cD[even_idx_h.get(i)][odd_idx_w.get(m)];
+                		}
+                	}
+                	c[0] = output_x2;
+                	c[1] = cH_x2;
+                	c[2] = cV_x2;
+                	c[3] = cD_x2;
+                    double x2[][] = idwt2(c, wavelets, modes, axes);
+                    double output_x3[][] = new double[odd_idx_h.size()][even_idx_w.size()];
+                	double cH_x3[][] = new double[odd_idx_h.size()][even_idx_w.size()];
+                	double cV_x3[][] = new double[odd_idx_h.size()][even_idx_w.size()];
+                	double cD_x3[][] = new double[odd_idx_h.size()][even_idx_w.size()];
+                	for (i = 0; i < odd_idx_h.size(); i++) {
+                		for (m = 0; m < even_idx_w.size(); m++) {
+                			output_x3[i][m] = output[odd_idx_h.get(i)][even_idx_w.get(m)];
+                			cH_x3[i][m] = cH[odd_idx_h.get(i)][even_idx_w.get(m)];
+                			cV_x3[i][m] = cV[odd_idx_h.get(i)][even_idx_w.get(m)];
+                			cD_x3[i][m] = cD[odd_idx_h.get(i)][even_idx_w.get(m)];
+                		}
+                	}
+                	c[0] = output_x3;
+                	c[1] = cH_x3;
+                	c[2] = cV_x3;
+                	c[3] = cD_x3;
+                	double x3[][] = idwt2(c, wavelets, modes, axes);
+                	double output_x4[][] = new double[odd_idx_h.size()][odd_idx_w.size()];
+                	double cH_x4[][] = new double[odd_idx_h.size()][odd_idx_w.size()];
+                	double cV_x4[][] = new double[odd_idx_h.size()][odd_idx_w.size()];
+                	double cD_x4[][] = new double[odd_idx_h.size()][odd_idx_w.size()];
+                	for (i = 0; i < odd_idx_h.size(); i++) {
+                		for (m = 0; m < odd_idx_w.size(); m++) {
+                			output_x4[i][m] = output[odd_idx_h.get(i)][odd_idx_w.get(m)];
+                			cH_x4[i][m] = cH[odd_idx_h.get(i)][odd_idx_w.get(m)];
+                			cV_x4[i][m] = cV[odd_idx_h.get(i)][odd_idx_w.get(m)];
+                			cD_x4[i][m] = cD[odd_idx_h.get(i)][odd_idx_w.get(m)];
+                		}
+                	}
+                	c[0] = output_x4;
+                	c[1] = cH_x4;
+                	c[2] = cV_x4;
+                	c[3] = cD_x4;
+                    double x4[][] = idwt2(c, wavelets, modes, axes);
 
-                    # perform the inverse dwt on the selected indices,
-                    # making sure to use periodic boundary conditions
-                    x1 = idwt2((output[even_idx_h, even_idx_w],
-                               (cH[even_idx_h, even_idx_w],
-                                cV[even_idx_h, even_idx_w],
-                                cD[even_idx_h, even_idx_w])),
-                               wavelets, 'periodization')
-                    x2 = idwt2((output[even_idx_h, odd_idx_w],
-                               (cH[even_idx_h, odd_idx_w],
-                                cV[even_idx_h, odd_idx_w],
-                                cD[even_idx_h, odd_idx_w])),
-                               wavelets, 'periodization')
-                    x3 = idwt2((output[odd_idx_h, even_idx_w],
-                               (cH[odd_idx_h, even_idx_w],
-                                cV[odd_idx_h, even_idx_w],
-                                cD[odd_idx_h, even_idx_w])),
-                               wavelets, 'periodization')
-                    x4 = idwt2((output[odd_idx_h, odd_idx_w],
-                               (cH[odd_idx_h, odd_idx_w],
-                                cV[odd_idx_h, odd_idx_w],
-                                cD[odd_idx_h, odd_idx_w])),
-                               wavelets, 'periodization')
-
-                    # perform a circular shifts
-                    x2 = np.roll(x2, 1, axis=1)
-                    x3 = np.roll(x3, 1, axis=0)
-                    x4 = np.roll(x4, 1, axis=0)
-                    x4 = np.roll(x4, 1, axis=1)
-                    output[indices_h, indices_w] = (x1 + x2 + x3 + x4) / 4*/
+                    // perform a circular shifts
+                    for (i = 0; i < x2.length; i++) {
+	                    xlast = x2[i][x2[i].length-1];
+	                    for (k = x2[i].length-1; k > 0; k--) {
+	                    	x2[i][k] = x2[i][k-1];
+	                    }
+	                    x2[i][0] = xlast;
+                    }
+                    for (i = 0; i < x3[0].length; i++) {
+		                xlast = x3[x3.length-1][i];
+		                for (k = x3.length-1; k > 0; k--) {
+		                	x3[k][i] = x3[k-1][i];
+		                }
+		                x3[0][i] = xlast;
+                    }
+                    for (i = 0; i < x4[0].length; i++) {
+		                xlast = x4[x4.length-1][i];
+		                for (k = x4.length-1; k > 0; k--) {
+		                	x4[k][i] = x4[k-1][i];
+		                }
+		                x4[0][i] = xlast;
+                    }
+                    for (i = 0; i < x4.length; i++) {
+	                    xlast = x4[i][x4[i].length-1];
+	                    for (k = x4[i].length-1; k > 0; k--) {
+	                    	x4[i][k] = x4[i][k-1];
+	                    }
+	                    x4[i][0] = xlast;
+                    }
+                    for (i = 0; i < x1.length; i++) {
+                    	for (k = 0; k < x1[i].length; k++) {
+                    		output[indices_h.get(i)][indices_w.get(k)] = (x1[i][k] + x2[i][k] + x3[i][k] + x4[i][k])/4.0;
+                    	}
+                    }
                 }
             }
         } // for (j = 0; j < num_levels; j++)
