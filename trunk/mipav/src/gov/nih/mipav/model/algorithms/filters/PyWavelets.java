@@ -9422,6 +9422,117 @@ public  class PyWavelets extends AlgorithmBase {
 		Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);    
 	}
+	
+	public void test_swt2_axes() {
+		int k, m;
+		int index;
+	    double atol = 1e-14;
+	    double rtol = 1.0E-7;
+	    DiscreteWavelet current_wavelet = discrete_wavelet(WAVELET_NAME.DB, 2);
+	    DiscreteWavelet wavelets[] = new DiscreteWavelet[]{current_wavelet,current_wavelet};
+	    int level = 1;
+	    int start_level = 0;
+	    int maxVal = Math.max(current_wavelet.dec_len, current_wavelet.rec_len);
+        double log2 = Math.log(maxVal)/Math.log(2.0);
+        int input_length_power = (int)Math.ceil(log2);
+        int input_length = 1;
+        for (k = 0; k < input_length_power; k++) {
+        	input_length *= 2;
+        }
+        double X[][] = new double[input_length][input_length];
+        for (k = 0; k < input_length; k++) {
+        	for (m = 0; m < input_length; m++) {
+        		index = k*input_length + m;
+        	    X[k][m] = index;
+        	}
+        }
+        int axes[] = new int[]{0,1};
+        double coeffs[][][] = swt2(X, wavelets, level,start_level,axes);
+        double cA1[][] = coeffs[0];
+        double cH1[][] = coeffs[1];
+        double cV1[][] = coeffs[2];
+        double cD1[][] = coeffs[3];
+        // opposite order
+        axes = new int[]{1,0};
+        double coeffs2[][][] = swt2(X, wavelets, level, start_level, axes);
+        double cA2[][] = coeffs2[0];
+        double cH2[][] = coeffs2[1];
+        double cV2[][] = coeffs2[2];
+        double cD2[][] = coeffs2[3];
+        double allowedError;
+        double actualError;
+        boolean correct = true;
+        for (k = 0; k < cA1.length; k++) {
+        	for (m = 0; m < cA1[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*cA2[k][m]);
+	        	actualError = Math.abs(cA1[k][m] - cA2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("cA1 and cA2 are close");
+        }
+        else {
+        	System.out.println("cA1 and cA2 are not close");
+        }
+        correct = true;
+        for (k = 0; k < cH1.length; k++) {
+        	for (m = 0; m < cH1[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*cV2[k][m]);
+	        	actualError = Math.abs(cH1[k][m] - cV2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("cH1 and cV2 are close");
+        }
+        else {
+        	System.out.println("cH1 and cV2 are not close");
+        }
+        correct = true;
+        for (k = 0; k < cV1.length; k++) {
+        	for (m = 0; m < cV1[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*cH2[k][m]);
+	        	actualError = Math.abs(cV1[k][m] - cH2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("cV1 and cH2 are close");
+        }
+        else {
+        	System.out.println("cV1 and cH2 are not close");
+        }
+        correct = true;
+        for (k = 0; k < cD1.length; k++) {
+        	for (m = 0; m < cD1[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*cD2[k][m]);
+	        	actualError = Math.abs(cD1[k][m] - cD2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("cD1 and cD2 are close");
+        }
+        else {
+        	System.out.println("cD1 and cD2 are not close");
+        }
+	    
+
+	    // duplicate axes not allowed
+	    // assert_raises(ValueError, pywt.swt2, X, current_wavelet, 1,
+	    //              axes=(0, 0))
+	    // too few axes
+	    // assert_raises(ValueError, pywt.swt2, X, current_wavelet, 1, axes=(0, ))
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
