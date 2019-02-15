@@ -9533,6 +9533,137 @@ public  class PyWavelets extends AlgorithmBase {
 	    // too few axes
 	    // assert_raises(ValueError, pywt.swt2, X, current_wavelet, 1, axes=(0, ))
 	}
+	
+	public void test_swtn_axes() {
+		int k, m;
+		int index;
+	    double atol = 1e-14;
+	    double rtol = 1.0E-7;
+	    DiscreteWavelet current_wavelet = discrete_wavelet(WAVELET_NAME.DB, 2);
+	    DiscreteWavelet wavelets[] = new DiscreteWavelet[]{current_wavelet,current_wavelet};
+	    int level = 1;
+	    int start_level = 0;
+	    int maxVal = Math.max(current_wavelet.dec_len, current_wavelet.rec_len);
+        double log2 = Math.log(maxVal)/Math.log(2.0);
+        int input_length_power = (int)Math.ceil(log2);
+        int input_length = 1;
+        for (k = 0; k < input_length_power; k++) {
+        	input_length *= 2;
+        }
+        double X[][] = new double[input_length][input_length];
+        for (k = 0; k < input_length; k++) {
+        	for (m = 0; m < input_length; m++) {
+        		index = k*input_length + m;
+        	    X[k][m] = index;
+        	}
+        }
+        int axes[] = new int[]{0,1};
+	    HashMap<String, double[][]>coeffs[] = swtn(X, wavelets, level, start_level, axes);
+	    double aa[][] = coeffs[0].get("aa");
+	    double ad[][] = coeffs[0].get("ad");
+	    double da[][] = coeffs[0].get("da");
+	    double dd[][] = coeffs[0].get("dd");
+	    // opposite order
+	    axes = new int[]{1,0};
+	    HashMap<String, double[][]>coeffs2[] = swtn(X, wavelets, level, start_level, axes);
+	    double aa2[][] = coeffs2[0].get("aa");
+	    double ad2[][] = coeffs2[0].get("ad");
+	    double da2[][] = coeffs2[0].get("da");
+	    double dd2[][] = coeffs2[0].get("dd");
+	    double allowedError;
+        double actualError;
+        boolean correct = true;
+        for (k = 0; k < aa.length; k++) {
+        	for (m = 0; m < aa[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*aa2[k][m]);
+	        	actualError = Math.abs(aa[k][m] - aa2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("aa and aa2 are close");
+        }
+        else {
+        	System.out.println("aa and aa2 are not close");
+        }
+        correct = true;
+        for (k = 0; k < ad.length; k++) {
+        	for (m = 0; m < ad[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*da2[k][m]);
+	        	actualError = Math.abs(ad[k][m] - da2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("ad and da2 are close");
+        }
+        else {
+        	System.out.println("ad and da2 are not close");
+        }
+        correct = true;
+        for (k = 0; k < da.length; k++) {
+        	for (m = 0; m < da[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*ad2[k][m]);
+	        	actualError = Math.abs(da[k][m] - ad2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("da and ad2 are close");
+        }
+        else {
+        	System.out.println("da and ad2 are not close");
+        }
+        correct = true;
+        for (k = 0; k < dd.length; k++) {
+        	for (m = 0; m < dd[0].length; m++) {
+	        	allowedError = atol + Math.abs(rtol*dd2[k][m]);
+	        	actualError = Math.abs(dd[k][m] - dd2[k][m]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+        if (correct) {
+        	System.out.println("dd and dd2 are close");
+        }
+        else {
+        	System.out.println("dd and dd2 are not close");
+        }
+
+	    // 0-level transform
+        axes = new int[]{0,1};
+	    HashMap<String, double[][]> empty[] = swtn(X, wavelets, 0, start_level, axes);
+	    if (empty.length == 0) {
+	    	System.out.println("empty.length is 0 as expected");
+	    }
+	    else {
+	    	System.out.println("empty.length is not 0 as expected");
+	    }
+
+	    // duplicate axes not allowed
+	    // assert_raises(ValueError, pywt.swtn, X, current_wavelet, 1, axes=(0, 0))
+
+	    // data.ndim = 0
+	    // assert_raises(ValueError, pywt.swtn, np.asarray([]), current_wavelet, 1)
+
+	    // start_level too large
+	    // assert_raises(ValueError, pywt.swtn, X, current_wavelet,
+	                  // level=1, start_level=2)
+
+	    // level < 1 in swt_axis call
+	    // assert_raises(ValueError, swt_axis, X, current_wavelet, level=0,
+	                  // start_level=0)
+	    // odd-sized data not allowed
+	    // assert_raises(ValueError, swt_axis, X[:-1, :], current_wavelet, level=0,
+	                  // start_level=0, axis=0)
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
@@ -15333,7 +15464,6 @@ public  class PyWavelets extends AlgorithmBase {
             MipavUtil.displayError("The axes passed to swtn must be unique.");
             return null;
         }
-        int num_axes = 2;
 
         // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
         DiscreteWavelet wavelets[];
