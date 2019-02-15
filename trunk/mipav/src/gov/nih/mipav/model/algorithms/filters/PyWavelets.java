@@ -15454,20 +15454,19 @@ public  class PyWavelets extends AlgorithmBase {
         if (axes == null) {
         	axes = new int[]{0,1};
         }
-        if (axes[0] < 0) {
-        	axes[0] = axes[0] + 2;
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] + 2;
+        	}
         }
-        if (axes[1] < 0) {
-        	axes[1] = axes[1] + 2;
-        }
-        if (axes[0] == axes[1]) {
+        if ((axes.length == 2) && (axes[0] == axes[1])) {
             MipavUtil.displayError("The axes passed to swtn must be unique.");
             return null;
         }
 
         // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
         DiscreteWavelet wavelets[];
-        if (wavelet.length == 1) {
+        if ((wavelet.length == 1) && (axes.length == 2)) {
         	DiscreteWavelet w = wavelet[0];
         	wavelets = new DiscreteWavelet[]{w, w};
         }
@@ -15485,7 +15484,7 @@ public  class PyWavelets extends AlgorithmBase {
         for (i = start_level; i <  start_level + level; i++) {
         	coeffs.clear();
         	coeffs.put("", data);
-            for (j = 0; j < 2; j++) {
+            for (j = 0; j < axes.length; j++) {
 	             axis = axes[j];
 	             wav = wavelets[j];
 	             new_coeffs.clear();
@@ -15508,7 +15507,7 @@ public  class PyWavelets extends AlgorithmBase {
 	             	newEntry = (Map.Entry<String,double[][]>) newIter.next();
 	             	coeffs.put((String)newEntry.getKey(), (double[][])newEntry.getValue());
 	             }
-            } // for (j = 0; j < 2; j++)
+            } // for (j = 0; j < axes.length; j++)
             Iterator<Map.Entry<String, double[][]>> allIter = coeffs.entrySet().iterator();
             Map.Entry<String,double[][]> kEntry = null;
             while (allIter.hasNext()) {
@@ -15519,10 +15518,162 @@ public  class PyWavelets extends AlgorithmBase {
             }
             
             // data for the next level is the approximation coeffs from this level
-            data = coeffs.get("aa");
+            if (axes.length == 1) {
+            	data = coeffs.get("a");
+            }
+            else if (axes.length == 2) {
+                data = coeffs.get("aa");
+            }
         } // for (i = start_level; i <  start_level + level; i++)
 
         HashMap<String, double[][]> rev[] = new HashMap[level];
+        for (i = 0; i < level; i++) {
+        	rev[i] = ret[level-1-i];
+        }
+        return rev;    
+    }
+    
+    private HashMap<String, double[][][]>[] swtn(double data[][][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
+        // Default start_level = 0
+    	// Default axes = null
+        // n-dimensional stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // data : array_like
+        //    n-dimensional array with input data.
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple of wavelets to apply per
+        //    axis in ``axes``.
+        // level : int
+        //    The number of decomposition steps to perform.
+        // start_level : int, optional
+        //    The level at which the decomposition will start (default: 0)
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the SWT. A value of ``None`` (the
+        //    default) selects all axes. Axes may not be repeated.
+
+        // Returns
+        // -------
+        // [{coeffs_level_n}, ..., {coeffs_level_1}]: list of dict
+        //    Results for each level are arranged in a dictionary, where the key
+        //    specifies the transform type on each dimension and value is a
+        //    n-dimensional coefficients array.
+
+        //    For example, for a 2D case the result at a given level will look
+        //    something like this::
+
+        //        {'aa': <coeffs>  # A(LL) - approx. on 1st dim, approx. on 2nd dim
+        //         'ad': <coeffs>  # V(LH) - approx. on 1st dim, det. on 2nd dim
+        //         'da': <coeffs>  # H(HL) - det. on 1st dim, approx. on 2nd dim
+        //         'dd': <coeffs>  # D(HH) - det. on 1st dim, det. on 2nd dim
+        //        }
+
+        //    For user-specified ``axes``, the order of the characters in the
+        //    dictionary keys map to the specified ``axes``.
+
+        // Notes
+        // -----
+        // The implementation here follows the "algorithm a-trous" and requires that
+        // the signal length along the transformed axes be a multiple of ``2**level``.
+        // If this is not the case, the user should pad up to an appropriate size
+        // using a function such as ``numpy.pad``.
+    	int i, j;
+    	int axis;
+    	DiscreteWavelet wav;
+        
+        if (axes == null) {
+        	axes = new int[]{0,1,2};
+        }
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] + 3;
+        	}
+        }
+        
+        if (axes.length == 3) {
+	        if ((axes[0] == axes[1]) || (axes[0] == axes[2]) || (axes[1] == axes[2])) {
+	            MipavUtil.displayError("The axes passed to swtn must be unique.");
+	            return null;
+	        }
+        }
+        else if (axes.length == 2) {
+        	if (axes[0] == axes[1]) {
+        		MipavUtil.displayError("The axes passed to swtn must be unique.");
+	            return null;	
+        	}
+        }
+
+        // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for all axes
+        DiscreteWavelet wavelets[];
+        if ((axes.length == 3) && (wavelet.length == 1)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w, w};
+        }
+        else if ((axes.length == 2) && (wavelet.length == 1)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        HashMap<String, double[][][]> coeffs = new HashMap<String, double[][][]>();
+        HashMap<String, double[][][]> new_coeffs = new HashMap<String, double[][][]>();
+        HashMap<String, double[][][]> ret[] = new HashMap[level];
+        for (i = 0; i < level; i++) {
+        	ret[i] = new HashMap<String, double[][][]>();
+        }
+
+        for (i = start_level; i <  start_level + level; i++) {
+        	coeffs.clear();
+        	coeffs.put("", data);
+            for (j = 0; j < axes.length; j++) {
+	             axis = axes[j];
+	             wav = wavelets[j];
+	             new_coeffs.clear();
+	             Iterator<Map.Entry<String, double[][][]>> allIter = coeffs.entrySet().iterator();
+	             Map.Entry<String,double[][][]> kEntry = null;
+	             while (allIter.hasNext()) {
+	             	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+	             	String subband = (String) kEntry.getKey();
+	             	double x[][][] = (double[][][]) kEntry.getValue();
+	             	double arr[][][][] = swt_axis(x, wav, 1, i, axis);
+	             	double cA[][][] = arr[0];
+	            	double cD[][][] = arr[1];
+	            	new_coeffs.put(subband + "a", cA);
+	            	new_coeffs.put(subband + "d", cD);
+	            } // while (allIter.hasNext())
+	             coeffs.clear();
+	             Iterator<Map.Entry<String, double[][][]>> newIter = new_coeffs.entrySet().iterator();
+	             Map.Entry<String,double[][][]> newEntry = null;
+	             while (newIter.hasNext()) {
+	             	newEntry = (Map.Entry<String,double[][][]>) newIter.next();
+	             	coeffs.put((String)newEntry.getKey(), (double[][][])newEntry.getValue());
+	             }
+            } // for (j = 0; j < axes.length; j++)
+            Iterator<Map.Entry<String, double[][][]>> allIter = coeffs.entrySet().iterator();
+            Map.Entry<String,double[][][]> kEntry = null;
+            while (allIter.hasNext()) {
+            	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+            	String subband = (String) kEntry.getKey();
+             	double x[][][] = (double[][][]) kEntry.getValue();
+            	ret[i].put(subband, x);
+            }
+            
+            // data for the next level is the approximation coeffs from this level
+            if (axes.length == 1) {
+            	data = coeffs.get("a");
+            }
+            else if (axes.length == 2) {
+                data = coeffs.get("aa");
+            }
+            else if (axes.length == 3) {
+            	data = coeffs.get("aaa");
+            }
+        } // for (i = start_level; i <  start_level + level; i++)
+
+        HashMap<String, double[][][]> rev[] = new HashMap[level];
         for (i = 0; i < level; i++) {
         	rev[i] = ret[level-1-i];
         }
@@ -15757,6 +15908,310 @@ public  class PyWavelets extends AlgorithmBase {
             }
         } // for (j = 0; j < num_levels; j++)
 
+        return output;
+    }
+    
+    private double [][][] iswtn(HashMap<String, double[][][]>coeffs[], DiscreteWavelet wavelet[], int axes[]) {
+        // Default value for axes == null
+        // Multilevel nD inverse discrete stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // coeffs : list
+        //    [{coeffs_level_n}, ..., {coeffs_level_1}]: list of dict
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple of wavelets to apply per
+        //    axis in ``axes``.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the inverse SWT. Axes may not be repeated.
+        //    The default is ``None``, which means transform all axes
+        //    (``axes = range(data.ndim)``).
+
+        // Returns
+        // -------
+        // nD array of reconstructed data.
+
+        // Examples
+        // --------
+        // >>> import pywt
+        // >>> coeffs = pywt.swtn([[1,2,3,4],[5,6,7,8],
+        // ...                     [9,10,11,12],[13,14,15,16]],
+        // ...                    'db1', level=2)
+        // >>> pywt.iswtn(coeffs, 'db1')
+        // array([[  1.,   2.,   3.,   4.],
+        //        [  5.,   6.,   7.,   8.],
+        //       [  9.,  10.,  11.,  12.],
+        //       [ 13.,  14.,  15.,  16.]])
+        int i,j,k,m;
+        int step_size;
+        int last_index;
+        double a[][][] = null;
+        HashMap<String,double[][][]> details;
+        int index = 0;
+        int dshape[];
+        int first1, first2, first3;
+        int end2;
+        int end3;
+        int endind2;
+        int endind3;
+        int index2;
+        int index3;
+        int ntransforms;
+        double approx[][][];
+        // key length matches the number of axes transformed
+    	int ndim_transform = 0;
+    	Iterator<Map.Entry<String, double[][][]>> allIter = coeffs[0].entrySet().iterator();
+        Map.Entry<String,double[][][]> kEntry = null;
+        while (allIter.hasNext()) {
+        	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+        	String subband = (String) kEntry.getKey();
+        	if (subband.length() > ndim_transform) {
+        	    ndim_transform = subband.length();	
+        	}
+        } // while (allIter.hasNext())
+        
+        double output[][][] = null;
+        if (ndim_transform == 1) {
+        	output = coeffs[0].get("a").clone();
+        }
+        else if (ndim_transform == 2) {
+        	output = coeffs[0].get("aa").clone();
+        }
+        else if (ndim_transform == 3) {
+        	output = coeffs[0].get("aaa").clone();
+        }
+
+        int ndim = 3;
+
+        if (axes == null) {
+            axes = new int[]{0,1,2};
+        }
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] + 3;
+        	}
+        }
+        
+
+        if (axes.length == 3) {
+	        if ((axes[0] == axes[1]) || (axes[0] == axes[2]) || (axes[1] == axes[2])) {
+	            MipavUtil.displayError("The axes passed to iswtn must be unique.");
+	            return null;
+	        }
+        }
+        else if (axes.length == 2) {
+        	if (axes[0] == axes[1]) {
+        		MipavUtil.displayError("The axes passed to iswtn must be unique.");
+	            return null;	
+        	}
+        }
+        
+        if (ndim_transform != axes.length) {
+            MipavUtil.displayError("The number of axes used in iswtn must match the number of dimensions transformed in swtn.");
+            return null;
+        }
+
+        // num_levels, equivalent to the decomposition level, n
+        int num_levels = coeffs.length;
+        
+     // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for all axes
+        DiscreteWavelet wavelets[];
+        if ((axes.length == 3) && (wavelet.length == 1)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w, w};
+        }
+        else if ((axes.length == 2) && (wavelet.length == 1)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        // initialize various slice objects used in the loops below
+        // these will remain slice(None) only on axes that aren't transformed
+        // indices = [slice(None), ]*ndim
+        // even_indices = [slice(None), ]*ndim
+        // odd_indices = [slice(None), ]*ndim
+        // odd_even_slices = [slice(None), ]*ndim
+        Vector<Integer>indices[] = new Vector[ndim];
+        Vector<Integer>even_indices[] = new Vector[ndim];
+        Vector<Integer>odd_indices[] = new Vector[ndim];
+        Vector<Integer>odd_even_slices[] = new Vector[ndim];
+        for (i = 0; i < ndim; i++) {
+        	indices[i] = new Vector<Integer>();
+        	even_indices[i] = new Vector<Integer>();
+        	odd_indices[i] = new Vector<Integer>();
+        	odd_even_slices[i] = new Vector<Integer>();
+        }
+
+        for (j = 0; j < num_levels; j++) {
+        	step_size = 1;
+        	for (k = 0; k <num_levels-j-1; k++) {
+        		step_size *= 2;
+        	}
+            last_index = step_size;
+            // will restore later
+            if (ndim_transform == 1) {
+            	a = coeffs[j].remove("a");
+            }
+            else if (ndim_transform == 2) {
+            	a = coeffs[j].remove("aa");
+            }
+            else if (ndim_transform == 3) {
+            	a = coeffs[j].remove("aaa");
+            }
+            details = coeffs[j];
+            // We assume all coefficient arrays are of equal size
+            int shapes[][] = new int[details.size()][3];
+            allIter = details.entrySet().iterator();
+            kEntry = null;
+            index = 0;
+            while (allIter.hasNext()) {
+            	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+            	double v[][][] = (double[][][])kEntry.getValue();
+            	shapes[index][0] = v.length;
+            	shapes[index][1] = v[0].length;
+            	shapes[index++][2] = v[0][0].length;
+            } // while (allIter.hasNext())
+            dshape = shapes[0];
+            for (k = 1; k < details.size(); k++) {
+            	for (m = 0; m < 3; m++) {
+            	    if (shapes[k][m] != shapes[0][m])	 {
+            	    	MipavUtil.displayError("Mismatch in shape of intermediate coefficient arrays");
+            	    	return null;
+            	    }
+            	}
+            }
+
+            // nested loop over all combinations of axis offsets at this level
+            if (ndim_transform >= 2) {
+            	end2 = last_index;
+            }
+            else {
+            	end2 = 1;
+            }
+            if (ndim_transform >= 3) {
+            	end3 = last_index;
+            }
+            else {
+            	end3 = 1;
+            }
+            for (first1 = 0; first1 < last_index; first1++) {
+            for (first2 = 0; first2 < end2; first2++) {
+            for (first3 = 0; first3 < end3; first3++) {
+            	indices[axes[0]] = new Vector<Integer>();
+            	for (i = first1; i < dshape[0]; i += step_size) {
+            	    indices[axes[0]].add(i);	
+            	}
+            	even_indices[axes[0]] = new Vector<Integer>();
+            	for (i = first1; i < dshape[0]; i += 2*step_size) {
+            		even_indices[axes[0]].add(i);
+            	}
+            	odd_indices[axes[0]] = new Vector<Integer>();
+            	for (i = first1 + step_size; i < dshape[0]; i += 2*step_size) {
+            		odd_indices[axes[0]].add(i);
+            	}
+            	if (ndim_transform >= 2) {
+            		indices[axes[1]] = new Vector<Integer>();
+                	for (i = first2; i < dshape[1]; i += step_size) {
+                	    indices[axes[1]].add(i);	
+                	}
+                	even_indices[axes[1]] = new Vector<Integer>();
+                	for (i = first2; i < dshape[1]; i += 2*step_size) {
+                		even_indices[axes[1]].add(i);
+                	}
+                	odd_indices[axes[1]] = new Vector<Integer>();
+                	for (i = first2 + step_size; i < dshape[1]; i += 2*step_size) {
+                		odd_indices[axes[1]].add(i);
+                	}	
+            	}
+            	if (ndim_transform >= 3) {
+            		indices[axes[2]] = new Vector<Integer>();
+                	for (i = first3; i < dshape[2]; i += step_size) {
+                	    indices[axes[2]].add(i);	
+                	}
+                	even_indices[axes[2]] = new Vector<Integer>();
+                	for (i = first3; i < dshape[2]; i += 2*step_size) {
+                		even_indices[axes[2]].add(i);
+                	}
+                	odd_indices[axes[2]] = new Vector<Integer>();
+                	for (i = first3 + step_size; i < dshape[2]; i += 2*step_size) {
+                		odd_indices[axes[2]].add(i);
+                	}	
+            	}
+
+                // nested loop over all combinations of odd/even inidices
+                approx = output.clone();
+                if (ndim_transform >= 2) {
+                    endind2 = indices[axes[1]].size();	
+                }
+                else {
+                	endind2 = output[0].length;
+                }
+                if (ndim_transform >= 3) {
+                	endind3 = indices[axes[2]].size();
+                }
+                else {
+                	endind3 = output[0][0].length;
+                }
+                for (i = 0; i < indices[axes[0]].size(); i++) {
+                    for (k = 0; k < endind2; k++) {
+                    	if (ndim_transform >= 2) {
+                    		index2 = indices[axes[1]].get(k);
+                    	}
+                    	else {
+                    		index2 = k;
+                    	}
+                    	for (m = 0; m < endind3; m++) {
+                    		if (ndim_transform >= 3) {
+                    			index3 = indices[axes[2]].get(m);
+                    		}
+                    		else {
+                    			index3 = m;
+                    		}
+                    		output[indices[axes[0]].get(i)][index2][index3] = 0;
+                    	}
+                    }
+                }
+                ntransforms = 0;
+                /*for odds in product(*([(0, 1), ]*ndim_transform)):
+                    for o, ax in zip(odds, axes):
+                        if o:
+                            odd_even_slices[ax] = odd_indices[ax]
+                        else:
+                            odd_even_slices[ax] = even_indices[ax]
+                    # extract the odd/even indices for all detail coefficients
+                    details_slice = {}
+                    for key, value in details.items():
+                        details_slice[key] = value[tuple(odd_even_slices)]
+                    details_slice['a'*ndim_transform] = approx[
+                        tuple(odd_even_slices)]
+
+                    # perform the inverse dwt on the selected indices,
+                    # making sure to use periodic boundary conditions
+                    x = idwtn(details_slice, wavelets, 'periodization', axes=axes)
+                    for o, ax in zip(odds, axes):
+                        # circular shift along any odd indexed axis
+                        if o:
+                            x = np.roll(x, 1, axis=ax)
+                    output[tuple(indices)] += x
+                    ntransforms += 1
+                output[tuple(indices)] /= ntransforms  # normalize*/
+            } // for (first3 = 0; first3 < end3; first3++)
+            } // for (first2 = 0; first2 < end2; first2++)
+            } // for (first1 = 0; first1 < last_index; first1++)
+            // restore approx coeffs to dict
+            if (ndim_transform == 1) {
+            	coeffs[j].put("a", a);
+            }
+            else if (ndim_transform == 2) {
+            	coeffs[j].put("aa", a);
+            }
+            else if (ndim_transform == 3) {
+            	coeffs[j].put("aaa", a);
+            }
+        } // for (j = 0; j < num_levels; j++)
         return output;
     }
 }
