@@ -3523,8 +3523,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         xFormButton.setPreferredSize(new Dimension(120, 30));
         xFormButton.setEnabled(false);
         
-        
-
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputXFormDirTextField);
         outputDirPanel.add(outputXFormDirButton);
@@ -3746,7 +3744,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	return true;
     }
     
-    /** Transform code */
+    /** Transform code - converts input data, using the mapping data, to the BRICS output format that can be validated.
+     *  This is where the magic happens.
+     *   */
     private void xFormFiles() {
     	int numRows = 0; // fileXFormTableModel.getRowCount();
     	String mapStr = null;
@@ -3806,7 +3806,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				
     				str = srcStrucs[0] + "\n";	// store form structure name to be written to output file
     				outputBW.write(str); 		// Writes out the Form Structure name
-    				str = "record,";  			// second row starts with "record"
+    				str = "record,";  			// second row starts with "record" and will be followed with Group.DE
     				
     				// reading through the mapping file - ensuring each mapped line is put into a 2d array list
     				mapLines.clear();
@@ -3819,17 +3819,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				}
     				
     				// Converting the 2d array list to an array in the format needed including group name and mappings if necessary
-    				String[][][] stri = new String[mapLines.size()][4][30];   // last index used for repeatability
+    				String[][][] stri = new String[mapLines.size()][4][50];   // last index used for repeatability
     				for (int j = 0; j < mapLines.size(); j++) {
-    					stri[j][0][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);  // Builds Reference Group.DE
-    					str = str + stri[j][0][0] + ",";										 // Builds column header DE string (second row of output file)
+    					stri[j][0][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);    // Builds Reference Group.DE
+    					str = str + stri[j][0][0] + ",";										  // Builds column header DE string (second row of output file)
     					
-    					stri[j][1][0] = mapLines.get(j).get(7);								 // The source DE(s)
+    					stri[j][1][0] = mapLines.get(j).get(7);								      // The source DE(s)
     					if(mapLines.get(j).size() >= 11) {
-    						stri[j][2][0] = mapLines.get(j).get(10);							 // Gets PV mappings 
+    						stri[j][2][0] = mapLines.get(j).get(10);							  // Gets PV mappings 
     					}
     					else {
-    						stri[j][2][0] = null;												 // No PV mappings - likely free-form (alpha numeric) DE
+    						stri[j][2][0] = null;												  // No PV mappings - likely free-form (alpha numeric) DE
     					}
     				}
     				str = str + "\n";
@@ -3892,7 +3892,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				// reads through the source file, matching DEs in the proper order
     				// writes a row at a time
     				while((srcStr = srcDataBR.readLine()) != null) {
-    					str = new String("x" + CSV_OUTPUT_DELIM);
     					String[] srcDataRow = srcStr.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
     					
     					for(int m = 0; m < srcDataRow.length; m++) {
@@ -3900,7 +3899,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     						if (matchDEs[m][1] != null) {
     							int refIndex = Integer.parseInt(matchDEs[m][1]);
 	    						int srcIndex = Arrays.asList(srcDataRow).indexOf(srcDataRow[m]);
-    							for (reps = 0; reps < 30; reps++) {
+    							for (reps = 0; reps < 50; reps++) {
     									if (stri[refIndex][3][reps] == null || stri[refIndex][3][reps].isEmpty()) {
     										break;
     									}
@@ -3915,8 +3914,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     					}
     					
     					// Build output string
-    					str = new String("x" + CSV_OUTPUT_DELIM);			// start of each new record
-    					for (int r = 0; r < 30; r++) {						// to support repeatability
+    					if(stri[0][3][0] != null && !stri[0][3][0].isEmpty()) {
+    						str = new String("x" + CSV_OUTPUT_DELIM);			// start of each new record
+    					}
+    					else {
+    						str = new String(CSV_OUTPUT_DELIM);					// start of each new record
+    					}
+    					for (int r = 0; r < 50; r++) {							// to support repeatability
     						boolean strEmpty = true;
 	    					for(int n = 0; n < stri.length; n++) {
 	    						if(stri[n][3][r] != null && !stri[n][3][r].isEmpty()) {
