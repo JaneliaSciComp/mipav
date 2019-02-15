@@ -9247,6 +9247,47 @@ public  class PyWavelets extends AlgorithmBase {
         System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
 	}
 	
+	public void test_swt_default_level_by_axis() {
+	    // make sure default number of levels matches the max level along the axis
+        int i, j, k;
+        int axis;
+	    DiscreteWavelet wav = discrete_wavelet(WAVELET_NAME.DB,2);
+	    int level = -1;
+	    int start_level = 0;
+	    int max_level;
+	    double x[][][] = new double[8][16][32];
+	    for (i = 0; i < 8; i++) {
+	    	for (j = 0; j < 16; j++) {
+	    		for (k = 0; k < 32; k++) {
+	    			x[i][j][k] = 1.0;
+	    		}
+	    	}
+	    }
+		for (axis = 0; axis <= 2; axis++) {
+		    double sdec[][][][] = swt1D(x, wav, level, start_level, axis);
+		    System.out.println("sdec.length = " + sdec.length); // a and d at each level
+		    if (axis == 0) {
+		    	max_level = swt_max_level(x.length);
+		    }
+		    else if (axis == 1) {
+		    	max_level = swt_max_level(x[0].length);
+		    }
+		    else {
+		    	max_level = swt_max_level(x[0][0].length);
+		    }
+		    System.out.println("max_level = " + max_level);
+		    if (sdec.length == 2*max_level) {
+		    	System.out.println("Expected equality");
+		    }
+		    else {
+		    	System.out.println("Expected equality did not occur");
+		    }
+		}
+		    //for axis in (0, 1, 2):
+		        //sdec = pywt.swt(x, wav, level=None, start_level=0, axis=axis)
+		        //assert_equal(len(sdec), pywt.swt_max_level(x.shape[axis]))
+    }
+	
 	public void test_swt2_iswt2_integration() {
 		    // This function performs a round-trip swt2/iswt2 transform test on
 		    // all available types of wavelets in PyWavelets - except the
@@ -14605,6 +14646,76 @@ public  class PyWavelets extends AlgorithmBase {
         return ret;
     }
     
+    private double[][][][] swt1D(double data[][][], DiscreteWavelet wavelet, int level, int start_level, int axis) {
+        // Default level = -1
+    	// Default start_level = 0
+    	// Default axis = -1
+        // Multilevel 1D stationary wavelet transform.
+
+        // Parameters
+        // ----------
+        // data :
+        //    Input signal
+        // wavelet :
+        //    Wavelet to use (Wavelet object or name)
+        // level : int, optional
+        //    The number of decomposition steps to perform.
+        // start_level : int, optional
+        //    The level at which the decomposition will begin (it allows one to
+        //    skip a given number of transform steps and compute
+        //    coefficients starting from start_level) (default: 0)
+        // axis: int, optional
+        //    Axis over which to compute the SWT. If not given, the
+        //    last axis is used.
+
+        // Returns
+        // -------
+        // coeffs : list
+        //    List of approximation and details coefficients pairs in order
+        //    similar to wavedec function::
+
+        //        [(cAn, cDn), ..., (cA2, cD2), (cA1, cD1)]
+
+        //    where n equals input parameter ``level``.
+
+        //    If ``start_level = m`` is given, then the beginning m steps are
+        //    skipped::
+
+        //        [(cAm+n, cDm+n), ..., (cAm+1, cDm+1), (cAm, cDm)]
+
+        // Notes
+        // -----
+        // The implementation here follows the "algorithm a-trous" and requires that
+        // the signal length along the transformed axis be a multiple of ``2**level``.
+        // If this is not the case, the user should pad up to an appropriate size
+        //  using a function such as ``numpy.pad``.
+      
+        if (axis < 0) {
+        	axis = axis + 3;
+        }
+        if ((axis < 0) || (axis >= 3)) {
+        	MipavUtil.displayError("Incorrect axis value");
+        	return null;
+        }
+
+        if (level == -1) {
+        	if (axis == 0) {
+                level = swt_max_level(data.length);
+        	}
+        	else if (axis == 1) {
+        		level = swt_max_level(data[0].length);
+        	}
+        	else {
+        		level = swt_max_level(data[0][0].length);
+        	}
+        }
+
+        double ret[][][][] = swt_axis(data, wavelet, level, start_level,axis);
+        
+        //return [(np.asarray(cA), np.asarray(cD)) for cA, cD in ret]
+        return ret;
+    }
+    
     public double[][] swt(double data[], DiscreteWavelet wavelet, int level, int start_level) {
         double cA[];
         double cD[];
@@ -14764,6 +14875,107 @@ public  class PyWavelets extends AlgorithmBase {
 	 } // for (i = start_level+1; i < end_level+1; i++)
 	
 	 double ans[][][] = new double[ret.size()][][];
+	 int lastIndex = ret.size()-1;
+	 for (i = lastIndex; i >= 0; i--) {
+		 ans[lastIndex-i] = ret.remove(i);
+	 }
+
+	 return ans;
+    }
+    
+    private double[][][][] swt_axis(double data[][][], DiscreteWavelet wavelet, int level,
+            int start_level, int axis) {
+    	// Default axis = 0
+    	ArrayInfo data_info = new ArrayInfo();
+    	ArrayInfo output_info = new ArrayInfo();
+        double cD[][][];
+        double cA[][][];
+	    int output_shape[] = new int[3];
+	    int end_level = start_level + level;
+	    int retval = -5;
+	    int i;
+	
+	 if (((data.length*data[0].length*data[0][0].length) % 2) == 1) {
+	     MipavUtil.displayError("Length of data must be even.");
+	     return null;
+	 }
+	
+	 if (level < 1) {
+	     MipavUtil.displayError("Level value must be greater than zero.");
+	     return null;
+	 }
+	 int max_level;
+	 if (axis == 0) {
+		 max_level = swt_max_level(data.length);
+	 }
+	 else if (axis == 1) {
+		 max_level = swt_max_level(data[0].length);
+	 }
+	 else {
+		 max_level = swt_max_level(data[0][0].length);
+	 }
+	 if (start_level >= max_level) {
+	     MipavUtil.displayError("start_level must be less than " + max_level);
+	     return null;
+	 }
+	
+	 if (end_level > max_level) {
+	     String msg = "Level value too high (max level for current data size and start_level is " +
+	             (max_level - start_level);
+	     MipavUtil.displayError(msg);
+	     return null;
+	 }
+	
+	 // For SWT, the output matches the shape of the input
+	 output_shape[0] = data.length;
+	 output_shape[1] = data[0].length;
+	 output_shape[2] = data[0][0].length;
+	
+	 data_info.ndim = 3;
+	 data_info.strides = new int[]{8*data[0].length*data[0][0].length,8*data[0][0].length,8};
+	 data_info.shape = new int[]{data.length,data[0].length, data[0][0].length};
+	
+	 output_info.ndim = 3;
+	
+	 Vector<double[][][]>ret = new Vector<double[][][]>();
+	 for (i = start_level+1; i < end_level+1; i++) {
+	     cA = new double[output_shape[0]][output_shape[1]][output_shape[2]];
+	     cD = new double[output_shape[0]][output_shape[1]][output_shape[2]];
+	     output_info.strides = new int[]{8*cA[0].length*cA[0][0].length,8*cA[0][0].length,8};
+	     output_info.shape = new int[]{cA.length,cA[0].length,cA[0][0].length};
+	     
+         retval = downcoef_axis(
+             data, data_info,
+             cA, output_info,
+             wavelet, axis,
+             Coefficient.COEF_APPROX,MODE.MODE_PERIODIZATION,
+             i, DiscreteTransformType.SWT_TRANSFORM);
+	         if (retval != 0) {
+	             MipavUtil.displayError("C wavelet transform failed with error code " + retval);
+	             return null;
+	         }
+	  
+             retval = downcoef_axis(
+                 data, data_info,
+                 cD, output_info,
+                 wavelet, axis,
+                 Coefficient.COEF_DETAIL, MODE.MODE_PERIODIZATION,
+                 i, DiscreteTransformType.SWT_TRANSFORM);
+	         if (retval != 0) {
+	             MipavUtil.displayError("C wavelet transform failed with error code " + retval);
+	             return null;
+	         }
+	     ret.add(cD);
+	     ret.add(cA);
+	
+	     // previous approx coeffs are the data for the next level
+	     data = cA;
+	     // update data_info to match the new data array
+	     data_info.strides = new int[]{8*data[0].length*data[0][0].length,8*data[0][0].length,8};
+	     data_info.shape = new int[]{data.length,data[0].length,data[0][0].length};
+	 } // for (i = start_level+1; i < end_level+1; i++)
+	
+	 double ans[][][][] = new double[ret.size()][][][];
 	 int lastIndex = ret.size()-1;
 	 for (i = lastIndex; i >= 0; i--) {
 		 ans[lastIndex-i] = ret.remove(i);
