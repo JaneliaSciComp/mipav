@@ -159,6 +159,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JTextField segmentationPaddingText;
 	private JCheckBox thresholdImageCheck;
 	private JTextField thresholdValue;
+	private JCheckBox modelStraightenCheck;
 	
 	private JCheckBox resliceImageCheck;
 	private JTextField resliceX, resliceY, resliceZ;
@@ -178,6 +179,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JCheckBox displaySurface;
 
 	private JButton nextButton;
+	private int nextDirection = 1;
 	
 	private JPanel opacityPanel;
 	private JPanel clipPanel;
@@ -283,7 +285,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 					// Batch Untwisting:
-					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText(), paddingFactor );
+					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText(), paddingFactor, modelStraightenCheck.isSelected() );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish straightening." );
 						e.printStackTrace();
@@ -418,11 +420,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
 			{
-				if ( editMode == EditAnnotations2 ) 
-				{
-					// test untwisting w/out opening images / saving, etc. to give time estimate:
-//					untwistingTest();
-				}
+				nextDirection = 1;
 				if ( editMode == EditSeamCells )
 				{
 					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
@@ -448,7 +446,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				voiManager.clear3DSelection();
 				save();
 				imageIndex++;
-
+				System.err.println( "next " + imageIndex );
 				if ( editMode == EditSeamCells )
 				{
 					openSeamCells();
@@ -476,6 +474,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			else if ( command.equals("back") )
 			{
+				nextDirection = -1;
 				if ( editMode == EditSeamCells )
 				{
 					if ( (wormData != null) && !wormData.checkSeamCells(voiManager.getAnnotations()) )
@@ -501,6 +500,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				voiManager.clear3DSelection();
 				save();
 				imageIndex--;
+				System.err.println( "back " + imageIndex );
 				if ( editMode == EditSeamCells )
 				{
 					openSeamCells();
@@ -1108,9 +1108,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						}
 						if ( (annotations.size() > 0) && (voiManager != null) )
 						{
+							voiManager.setAnnotations(annotations);
 							initDisplayAnnotationsPanel();
 							
-							voiManager.setAnnotations(annotations);
 							voiManager.editAnnotations(false);
 							VOIVector latticeVector = new VOIVector();
 							latticeVector.add(finalLattice);
@@ -1149,6 +1149,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 							}
 						}
 					}
+				}
+				else {
+					imageIndex += nextDirection;
+					openAnnotations(whichImage);
 				}
 			}
 		}
@@ -1403,6 +1407,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						voiManager.editLattice();
 					}
 				}
+				else {
+					imageIndex += nextDirection;
+					openLattice();
+				}
 			}
 		}
 	}
@@ -1434,12 +1442,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 					if ( (annotations.size() > 0) && (voiManager != null) )
 					{
+						voiManager.setAnnotations(annotations);
 						initDisplayAnnotationsPanel();
 						
-						voiManager.setAnnotations(annotations);
 						voiManager.editAnnotations(true);
 						voiManager.colorAnnotations(true);
 					}
+				}
+				else {
+					imageIndex += nextDirection;
+					openSeamCells();
 				}
 			}
 		}
@@ -1474,6 +1486,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					{
 						volumeRenderer.resetAxisX();
 					}
+				}
+				else {
+					imageIndex += nextDirection;
+					openStraightened();
 				}
 			}
 		}
@@ -2073,7 +2089,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			annotationPanelUI = new JPanelAnnotations(voiManager, volumeImage.GetImage());
 		}
-		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), annotations.elementAt(0), true);
+		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), true);
 		tabbedPane.addTab("Annotation", null, annotationPanelUI.getAnnotationsPanel());
 		pack();
 	}
@@ -2273,6 +2289,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridx = 0;
 		gbc.gridy++;
 
+		modelStraightenCheck = gui.buildCheckBox( "Segment straightened image with lattice", false);
+		panel.add(modelStraightenCheck.getParent(), gbc);
+		gbc.gridx++;
+		
+		gbc.gridx = 0;
+		gbc.gridy++;
+
 		resliceImageCheck = gui.buildCheckBox( "Reslice straightened", true);
 		panel.add(resliceImageCheck.getParent(), gbc);
 		gbc.gridx++;
@@ -2414,6 +2437,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						latticeVector.add(finalLattice);
 						voiManager.setLattice( latticeVector );
 					}					
+				}
+				else {
+					imageIndex += nextDirection;
+					checkSeam();
 				}
 			}
 		}	
