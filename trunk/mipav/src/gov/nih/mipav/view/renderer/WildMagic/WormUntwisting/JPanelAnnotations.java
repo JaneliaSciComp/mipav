@@ -567,7 +567,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
-	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, ModelImage image, VOI annotations, boolean latticeMarkers )
+	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, ModelImage image, boolean latticeMarkers )
 	{		
 		voiManager = voiInterface;
 		imageA = image;

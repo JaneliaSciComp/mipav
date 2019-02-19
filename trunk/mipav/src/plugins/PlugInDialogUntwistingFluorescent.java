@@ -341,14 +341,8 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 
 							model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
 							ModelImage contourImage = null;
-							if ( segmentSkinSurface.isSelected() )
-							{
-								contourImage = model.segmentSkin(wormImage, paddingFactor);
-							}
-							else if ( segmentLattice.isSelected() )
-							{
-								model.segmentLattice(wormImage, false, 0);
-							}
+							contourImage = model.segmentLattice(wormImage, false, 0, segmentLattice.isSelected());
+							
 							model.retwist(wormImage);
 							if ( straightenMarkersCheck.isSelected() )
 							{
@@ -367,14 +361,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 								model.setImage(nucleiImage);
 								model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
 
-								if ( segmentSkinSurface.isSelected() )
-								{
-									contourImage = model.segmentSkin(nucleiImage, contourImage, paddingFactor);
-								}
-								else if ( segmentLattice.isSelected() )
-								{
-									model.segmentLattice(nucleiImage, false, 0);
-								}
+								model.segmentLattice(nucleiImage, contourImage);
 								model.dispose();
 								model = null;
 

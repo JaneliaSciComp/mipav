@@ -388,7 +388,7 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String baseFileDir, final String baseFileDir2, final String baseFileName, final int paddingFactor )
+			final String baseFileDir, final String baseFileDir2, final String baseFileName, final int paddingFactor, final boolean segmentLattice )
 	{
 		long time = System.currentTimeMillis();
 		ModelImage wormImage = null;
@@ -435,16 +435,11 @@ public class PlugInAlgorithmWormUntwisting
 					System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
 					
 					ModelImage contourImage = null;
-					//							if ( segmentSkinSurface.isSelected() )
-//					{
-//						contourImage = model.segmentSkin(wormImage, paddingFactor);
-//					}
-					//							else if ( segmentLattice.isSelected() )
-					//							{
+
 					long timeSegmentLattice = System.currentTimeMillis();
-					contourImage = model.segmentLattice(wormImage, true, paddingFactor);
+					contourImage = model.segmentLattice(wormImage, true, paddingFactor, segmentLattice);
 					System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
-					//							}
+					
 					long timeRetwist = System.currentTimeMillis();
 					model.retwist(wormImage);
 					System.err.println( "retwist elapsed time =  " + AlgorithmBase.computeElapsedTime(timeRetwist) );
@@ -453,19 +448,19 @@ public class PlugInAlgorithmWormUntwisting
 					if ( wormData.readSeamCells() != null )
 					{
 						model.setMarkers( wormData.getSeamAnnotations() );
-						model.untwistMarkers();	
+						model.untwistMarkers(segmentLattice);	
 						model.saveAnnotationStraight(wormImage, "straightened_seamcells", "straightened_seamcells.csv" );	
 					}
 					wormData.readNamedSeamCells();
 					model.setMarkers( wormData.getSeamAnnotations() );
-					model.untwistMarkers();	
+					model.untwistMarkers(segmentLattice);	
 					model.saveAnnotationStraight(wormImage, "straightened_named_seamcells", "straightened_seamcells.csv" );	
 					
 					VOI markers = wormData.getMarkerAnnotations();
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
-						model.untwistMarkers();	
+						model.untwistMarkers(segmentLattice);	
 						model.saveAnnotationStraight(wormImage, "straightened_annotations", "straightened_annotations.csv" );	
 					}
 					System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
@@ -496,21 +491,13 @@ public class PlugInAlgorithmWormUntwisting
 						System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
 
 						timeSegmentLattice = System.currentTimeMillis();
-//						if ( segmentSkinSurface.isSelected() )
-//						{
-//							contourImage = model.segmentSkin(nucleiImage, contourImage, paddingFactor);
-//						}
-//						else if ( segmentLattice.isSelected() )
-//						{
-//							model.segmentLattice(nucleiImage, false, paddingFactor);
-//						}
 						if ( contourImage != null )
 						{
 							model.segmentLattice(nucleiImage, contourImage);
 						}
 						else
 						{
-							model.segmentLattice(nucleiImage, false, paddingFactor);
+							model.segmentLattice(nucleiImage, false, paddingFactor, segmentLattice);
 						}
 						
 						System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
@@ -521,7 +508,7 @@ public class PlugInAlgorithmWormUntwisting
 						if ( (markers != null) && (markers.getCurves().size() > 0) )
 						{
 							model.setMarkers(markers);
-							model.untwistMarkers();	
+							model.untwistMarkers(segmentLattice);	
 							model.saveAnnotationStraight(nucleiImage, "straightened_annotations", "straightened_annotations.csv" );	
 						}
 						System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );

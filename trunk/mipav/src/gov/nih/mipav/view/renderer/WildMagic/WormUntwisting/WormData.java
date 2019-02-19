@@ -1033,7 +1033,8 @@ public class WormData
 			{
 				value += wormImage.getFloat(x,y,z);
 			}
-			
+
+			int segment = Math.min(left.size() - 1, i+1);
 			boolean isSeamPair = (left.size() <= 10) || (i == left.size() -1);
 			if ( !isSeamPair )
 			{
@@ -1063,7 +1064,7 @@ public class WormData
 					int index = note.indexOf("lattice segment:");
 					note = note.substring(0, index);
 				}
-				note = note + "\n" + "lattice segment: " + (i+1);
+				note = note + "\n" + "lattice segment: " + segment;
 				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();
@@ -1088,7 +1089,7 @@ public class WormData
 					int index = note.indexOf("lattice segment:");
 					note = note.substring(0, index);
 				}
-				note = note + "\n" + "lattice segment: " + (i+1);
+				note = note + "\n" + "lattice segment: " + segment;
 				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();
@@ -1108,7 +1109,7 @@ public class WormData
 					int index = note.indexOf("lattice segment:");
 					note = note.substring(0, index);
 				}
-				note = note + "\n" + "lattice segment: " + (i+1);
+				note = note + "\n" + "lattice segment: " + segment;
 				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();
@@ -1133,7 +1134,7 @@ public class WormData
 					int index = note.indexOf("lattice segment:");
 					note = note.substring(0, index);
 				}
-				note = note + "\n" + "lattice segment: " + (i+1);
+				note = note + "\n" + "lattice segment: " + segment;
 				text.setNote(note);
 				text.setUseMarker(false);
 				text.update();

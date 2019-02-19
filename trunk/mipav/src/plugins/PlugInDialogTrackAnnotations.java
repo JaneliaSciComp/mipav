@@ -740,7 +740,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			
 
 			annotationPanelUI = new JPanelAnnotations(((VOILatticeManagerInterface)triVolume.getVOIManager()), imageA);
-			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, savedAnnotations, false);
+			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, false);
 
 			// back button:
 			buttonPanel = new JPanel();
@@ -797,7 +797,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 //			}
 //		}
 //		annotationTableModel.addTableModelListener(this);
-		annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, savedAnnotations, false);
+		annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, false);
 	}
 
 	/**
