@@ -15942,22 +15942,37 @@ public  class PyWavelets extends AlgorithmBase {
         //        [  5.,   6.,   7.,   8.],
         //       [  9.,  10.,  11.,  12.],
         //       [ 13.,  14.,  15.,  16.]])
-        int i,j,k,m;
+        int i,j,k,m,n;
         int step_size;
         int last_index;
         double a[][][] = null;
-        HashMap<String,double[][][]> details;
+        HashMap<String,double[][][]> details = new HashMap<String, double[][][]>();
+        HashMap<String,double[][][]> details_slice = new HashMap<String, double[][][]>();
         int index = 0;
         int dshape[];
         int first1, first2, first3;
         int end2;
         int end3;
-        int endind2;
-        int endind3;
+        int endind2 = 0;
+        int endind3 = 0;
         int index2;
         int index3;
-        int ntransforms;
+        int ntransforms = 0;
         double approx[][][];
+        int odds1;
+        int odds2;
+        int odds3;
+        MODE modes3[] = new MODE[]{MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION};
+        double xlast;
+        int dest0 = 0;
+        int dest1 = 0;
+        int dest2 = 0;
+        int src0 = 0;
+        int src1 = 0;
+        int src2 = 0;
+        boolean axis0Missing = true;
+        boolean axis1Missing = true;
+        boolean axis2Missing = true;
         // key length matches the number of axes transformed
     	int ndim_transform = 0;
     	Iterator<Map.Entry<String, double[][][]>> allIter = coeffs[0].entrySet().iterator();
@@ -16010,6 +16025,17 @@ public  class PyWavelets extends AlgorithmBase {
             MipavUtil.displayError("The number of axes used in iswtn must match the number of dimensions transformed in swtn.");
             return null;
         }
+        
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] == 0) {
+        		axis0Missing = false;
+        	}
+        	else if (axes[i] == 1) {
+        		axis1Missing = false;
+        	}
+        	else {
+        		axis2Missing = false;
+        }
 
         // num_levels, equivalent to the decomposition level, n
         int num_levels = coeffs.length;
@@ -16038,11 +16064,13 @@ public  class PyWavelets extends AlgorithmBase {
         Vector<Integer>even_indices[] = new Vector[ndim];
         Vector<Integer>odd_indices[] = new Vector[ndim];
         Vector<Integer>odd_even_slices[] = new Vector[ndim];
+        Vector<Integer>dest_slices[] = new Vector[ndim];
         for (i = 0; i < ndim; i++) {
         	indices[i] = new Vector<Integer>();
         	even_indices[i] = new Vector<Integer>();
         	odd_indices[i] = new Vector<Integer>();
         	odd_even_slices[i] = new Vector<Integer>();
+        	dest_slices[i] = new Vector<Integer>();
         }
 
         for (j = 0; j < num_levels; j++) {
@@ -16147,21 +16175,55 @@ public  class PyWavelets extends AlgorithmBase {
                     endind2 = indices[axes[1]].size();	
                 }
                 else {
-                	endind2 = output[0].length;
+                	if (axes[1] == 0) {
+                		endind2 = output.length;
+                	}
+                	else if (axes[1] == 1) {
+                		endind2 = output[0].length;
+                	}
+                	else {
+                	    endind2 = output[0][0].length;
+                	}
                 }
                 if (ndim_transform >= 3) {
                 	endind3 = indices[axes[2]].size();
                 }
                 else {
-                	endind3 = output[0][0].length;
+                	if (axes[2] == 0) {
+                		endind3 = output.length;
+                	}
+                	else if (axes[2] == 1) {
+                		endind3 = output[0].length;
+                	}
+                	else {
+                	    endind3 = output[0][0].length;
+                	}
                 }
                 for (i = 0; i < indices[axes[0]].size(); i++) {
+                	if (axes[0] == 0) {
+                		dest0 = indices[axes[0]].get(i);
+                	}
+                	else if (axes[0] == 1) {
+                		dest1 = indices[axes[0]].get(i);
+                	}
+                	else {
+                		dest2 = indices[axes[0]].get(i);
+                	}
                     for (k = 0; k < endind2; k++) {
                     	if (ndim_transform >= 2) {
                     		index2 = indices[axes[1]].get(k);
                     	}
                     	else {
                     		index2 = k;
+                    	}
+                    	if (axes[1] == 0) {
+                    		dest0 = index2;
+                    	}
+                    	else if (axes[1] == 1) {
+                    		dest1 = index2;
+                    	}
+                    	else {
+                    		dest2 = index2;
                     	}
                     	for (m = 0; m < endind3; m++) {
                     		if (ndim_transform >= 3) {
@@ -16170,11 +16232,500 @@ public  class PyWavelets extends AlgorithmBase {
                     		else {
                     			index3 = m;
                     		}
-                    		output[indices[axes[0]].get(i)][index2][index3] = 0;
+                    		if (axes[2] == 0) {
+                    			dest0 = index3;
+                    		}
+                    		else if (axes[2] == 1) {
+                    			dest1 = index3;
+                    		}
+                    		else {
+                    			dest2 = index3;
+                    		}
+                    		output[dest0][dest1][dest2] = 0;
                     	}
                     }
                 }
                 ntransforms = 0;
+                if (ndim_transform == 3) {
+                    for (odds1 = 0; odds1 <= 1; odds1++) {
+	                    if (odds1 == 1) {
+	                    	odd_even_slices[axes[0]] = odd_indices[axes[0]];
+	                    }
+	                    else {
+	                    	odd_even_slices[axes[0]] = even_indices[axes[0]];
+	                    }
+	                    if (axes[0] == 0) {
+	                    	dest_slices[0] = odd_even_slices[axes[0]];
+	                    }
+	                    else if (axes[0] == 1) {
+	                    	dest_slices[1] = odd_even_slices[axes[0]];
+	                    }
+	                    else {
+	                    	dest_slices[2] = odd_even_slices[axes[0]];
+	                    }
+	                    for (odds2 = 0; odds2 <= 1; odds2++) {
+		                    if (odds2 == 1) {
+		                    	odd_even_slices[axes[1]] = odd_indices[axes[1]];
+		                    }
+		                    else {
+		                    	odd_even_slices[axes[1]] = even_indices[axes[1]];
+		                    }
+		                    if (axes[1] == 0) {
+		                    	dest_slices[0] = odd_even_slices[axes[1]];
+		                    }
+		                    else if (axes[1] == 1) {
+		                    	dest_slices[1] = odd_even_slices[axes[1]];
+		                    }
+		                    else {
+		                    	dest_slices[2] = odd_even_slices[axes[1]];
+		                    }
+		                    for (odds3 = 0; odds3 <= 1; odds3++) {
+			                    if (odds3 == 1) {
+			                    	odd_even_slices[axes[2]] = odd_indices[axes[2]];
+			                    }
+			                    else {
+			                    	odd_even_slices[axes[2]] = even_indices[axes[2]];
+			                    }
+			                    if (axes[2] == 0) {
+			                    	dest_slices[0] = odd_even_slices[axes[2]];
+			                    }
+			                    else if (axes[2] == 1) {
+			                    	dest_slices[1] = odd_even_slices[axes[2]];
+			                    }
+			                    else {
+			                    	dest_slices[2] = odd_even_slices[axes[2]];
+			                    }
+			                    // extract the odd/even indices for all detail coefficients
+			                    details_slice.clear();
+			                    allIter = details.entrySet().iterator();
+			                    kEntry = null;
+			                    index = 0;
+			                    double value_odd_even[][][] = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
+			                    while (allIter.hasNext()) {
+			                    	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+			                    	String key = (String)kEntry.getKey();
+			                    	double value[][][] = (double[][][])kEntry.getValue();
+			                    	for (i = 0; i < dest_slices[0].size(); i++) {
+			    	                    for (m = 0; m < dest_slices[1].size(); m++) {
+			    	                        for (n = 0; n < dest_slices[2].size(); n++) {
+			    	                    	    value_odd_even[i][m][n] = value[dest_slices[0].get(i)][dest_slices[1].get(m)][dest_slices[2].get(n)];
+			    	                        }
+			    	                    }
+			                    	}
+			                    	details_slice.put(key, value_odd_even);
+			                    } // while (allIter.hasNext())
+			                    for (i = 0; i < dest_slices[0].size(); i++) {
+				                    for (m = 0; m < dest_slices[1].size(); m++) {
+				                        for (n = 0; n < dest_slices[2].size(); n++) {
+				                    	    value_odd_even[i][m][n] = approx[dest_slices[0].get(i)][dest_slices[1].get(m)][dest_slices[2].get(n)];
+				                        }
+				                    }
+			                	}
+			                    details_slice.put("aaa",value_odd_even);
+			                    // perform the inverse dwt on the selected indices,
+			                    // making sure to use periodic boundary conditions
+			                    double x[][][] = idwtn3(details_slice, wavelets, modes3, axes);
+			                    // circular shift along any odd indexed axis
+			                    if (odds1 == 1) {
+			                        if (axes[0] == 0) {	
+			                        	for (i = 0; i < x[0].length; i++) {
+			                        		for (m = 0; m < x[0][0].length; m++) {
+				        		                xlast = x[x.length-1][i][m];
+				        		                for (k = x.length-1; k > 0; k--) {
+				        		                	x[k][i][m] = x[k-1][i][m];
+				        		                }
+				        		                x[0][i][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else if (axes[0] == 1) {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i][0].length; m++) {
+			        	                    xlast = x[i][x[i].length-1][m];
+			        	                    for (k = x[i].length-1; k > 0; k--) {
+			        	                    	x[i][k][m] = x[i][k-1][m];
+			        	                    }
+			        	                    x[i][0][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i].length; m++) {
+			        	                    xlast = x[i][m][x[i][m].length-1];
+			        	                    for (k = x[i][m].length-1; k > 0; k--) {
+			        	                    	x[i][m][k] = x[i][m][k-1];
+			        	                    }
+			        	                    x[i][m][0] = xlast;
+			                        		}
+			                            }		
+			                        }
+			                    } // if (odds1 == 1)
+			                    if (odds2 == 1) {
+			                        if (axes[1] == 0) {	
+			                        	for (i = 0; i < x[0].length; i++) {
+			                        		for (m = 0; m < x[0][0].length; m++) {
+				        		                xlast = x[x.length-1][i][m];
+				        		                for (k = x.length-1; k > 0; k--) {
+				        		                	x[k][i][m] = x[k-1][i][m];
+				        		                }
+				        		                x[0][i][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else if (axes[1] == 1) {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i][0].length; m++) {
+			        	                    xlast = x[i][x[i].length-1][m];
+			        	                    for (k = x[i].length-1; k > 0; k--) {
+			        	                    	x[i][k][m] = x[i][k-1][m];
+			        	                    }
+			        	                    x[i][0][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i].length; m++) {
+			        	                    xlast = x[i][m][x[i][m].length-1];
+			        	                    for (k = x[i][m].length-1; k > 0; k--) {
+			        	                    	x[i][m][k] = x[i][m][k-1];
+			        	                    }
+			        	                    x[i][m][0] = xlast;
+			                        		}
+			                            }		
+			                        }
+			                    } // if (odds2 == 1)
+			                    if (odds3 == 1) {
+			                        if (axes[2] == 0) {	
+			                        	for (i = 0; i < x[0].length; i++) {
+			                        		for (m = 0; m < x[0][0].length; m++) {
+				        		                xlast = x[x.length-1][i][m];
+				        		                for (k = x.length-1; k > 0; k--) {
+				        		                	x[k][i][m] = x[k-1][i][m];
+				        		                }
+				        		                x[0][i][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else if (axes[2] == 1) {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i][0].length; m++) {
+			        	                    xlast = x[i][x[i].length-1][m];
+			        	                    for (k = x[i].length-1; k > 0; k--) {
+			        	                    	x[i][k][m] = x[i][k-1][m];
+			        	                    }
+			        	                    x[i][0][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i].length; m++) {
+			        	                    xlast = x[i][m][x[i][m].length-1];
+			        	                    for (k = x[i][m].length-1; k > 0; k--) {
+			        	                    	x[i][m][k] = x[i][m][k-1];
+			        	                    }
+			        	                    x[i][m][0] = xlast;
+			                        		}
+			                            }		
+			                        }
+			                    } // if (odds3 == 1)
+			                    for (i = 0; i < indices[axes[0]].size(); i++) {
+			                    	if (axes[0] == 0) {
+			                    		dest0 = indices[axes[0]].get(i);
+			                    		src0 = i;
+			                    	}
+			                    	else if (axes[0] == 1) {
+			                    		dest1 = indices[axes[0]].get(i);
+			                    		src1 = i;
+			                    	}
+			                    	else {
+			                    		dest2 = indices[axes[0]].get(i);
+			                    		src2 = i;
+			                    	}
+			                    	for (m = 0; m < indices[axes[1]].size(); m++) {
+			                    		if (axes[1] == 0) {
+				                    		dest0 = indices[axes[1]].get(m);
+				                    		src0 = m;
+				                    	}
+				                    	else if (axes[1] == 1) {
+				                    		dest1 = indices[axes[1]].get(m);
+				                    		src1 = m;
+				                    	}
+				                    	else {
+				                    		dest2 = indices[axes[m]].get(i);
+				                    		src2 = m;
+				                    	}
+			                    		for (n = 0; n < indices[axes[2]].size(); n++) {
+			                    			if (axes[2] == 0) {
+					                    		dest0 = indices[axes[2]].get(n);
+					                    		src0 = n;
+					                    	}
+					                    	else if (axes[2] == 1) {
+					                    		dest1 = indices[axes[2]].get(n);
+					                    		src1 = n;
+					                    	}
+					                    	else {
+					                    		dest2 = indices[axes[2]].get(n);
+					                    		src2 = n;
+					                    	}
+			                    			output[dest0][dest1][dest2] += x[src0][src1][src2];
+			                    		}
+			                    	}
+			                    }
+			                    ntransforms += 1;
+		                    } // for (odds3 = 0; odds3 <= 1; odds3++)
+	                    } // for (odds2 = 0; odds2 <= 1; odds2++)
+                    } // for (odds1 = 0; odds1 <= 1; odds1++)
+                } // if (ndim_transform == 3)
+                else if (ndim_transform == 2) {
+                    for (odds1 = 0; odds1 <= 1; odds1++) {
+	                    if (odds1 == 1) {
+	                    	odd_even_slices[axes[0]] = odd_indices[axes[0]];
+	                    }
+	                    else {
+	                    	odd_even_slices[axes[0]] = even_indices[axes[0]];
+	                    }
+	                    if (axes[0] == 0) {
+	                    	dest_slices[0] = odd_even_slices[axes[0]];
+	                    }
+	                    else if (axes[0] == 1) {
+	                    	dest_slices[1] = odd_even_slices[axes[0]];
+	                    }
+	                    else {
+	                    	dest_slices[2] = odd_even_slices[axes[0]];
+	                    }
+	                    for (odds2 = 0; odds2 <= 1; odds2++) {
+		                    if (odds2 == 1) {
+		                    	odd_even_slices[axes[1]] = odd_indices[axes[1]];
+		                    }
+		                    else {
+		                    	odd_even_slices[axes[1]] = even_indices[axes[1]];
+		                    }
+		                    if (axes[1] == 0) {
+		                    	dest_slices[0] = odd_even_slices[axes[1]];
+		                    }
+		                    else if (axes[1] == 1) {
+		                    	dest_slices[1] = odd_even_slices[axes[1]];
+		                    }
+		                    else {
+		                    	dest_slices[2] = odd_even_slices[axes[1]];
+		                    }
+		                    if (axis2Missing) {
+		                    	dest_slices[2].clear();
+		                    	for (i = 0; i < output[0][0].length; i++) {
+		                    		dest_slices[2].add(i);
+		                    	}
+		                    }
+		                    else if (axis1Missing) {
+		                    	dest_slices[2].clear();
+		                    	for (i = 0; i < output[0].length; i++) {
+		                    		dest_slices[2].add(i);
+		                    	}
+		                    }
+		                    else {
+		                    	dest_slices[2].clear();
+		                    	for (i = 0; i < output.length; i++) {
+		                    		dest_slices[2].add(i);
+		                    	}
+		                    }
+			                    // extract the odd/even indices for all detail coefficients
+			                    details_slice.clear();
+			                    allIter = details.entrySet().iterator();
+			                    kEntry = null;
+			                    index = 0;
+			                    double value_odd_even[][][] = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
+			                    while (allIter.hasNext()) {
+			                    	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+			                    	String key = (String)kEntry.getKey();
+			                    	double value[][][] = (double[][][])kEntry.getValue();
+			                    	for (i = 0; i < dest_slices[0].size(); i++) {
+			    	                    for (m = 0; m < dest_slices[1].size(); m++) {
+			    	                        for (n = 0; n < dest_slices[2].size(); n++) {
+			    	                    	    value_odd_even[i][m][n] = value[dest_slices[0].get(i)][dest_slices[1].get(m)][dest_slices[2].get(n)];
+			    	                        }
+			    	                    }
+			                    	}
+			                    	details_slice.put(key, value_odd_even);
+			                    } // while (allIter.hasNext())
+			                    for (i = 0; i < dest_slices[0].size(); i++) {
+				                    for (m = 0; m < dest_slices[1].size(); m++) {
+				                        for (n = 0; n < dest_slices[2].size(); n++) {
+				                    	    value_odd_even[i][m][n] = approx[dest_slices[0].get(i)][dest_slices[1].get(m)][dest_slices[2].get(n)];
+				                        }
+				                    }
+			                	}
+			                    details_slice.put("aa",value_odd_even);
+			                    // perform the inverse dwt on the selected indices,
+			                    // making sure to use periodic boundary conditions
+			                    double x[][][] = idwtn23(details_slice, wavelets, modes3, axes);
+			                    // circular shift along any odd indexed axis
+			                    if (odds1 == 1) {
+			                        if (axes[0] == 0) {	
+			                        	for (i = 0; i < x[0].length; i++) {
+			                        		for (m = 0; m < x[0][0].length; m++) {
+				        		                xlast = x[x.length-1][i][m];
+				        		                for (k = x.length-1; k > 0; k--) {
+				        		                	x[k][i][m] = x[k-1][i][m];
+				        		                }
+				        		                x[0][i][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else if (axes[0] == 1) {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i][0].length; m++) {
+			        	                    xlast = x[i][x[i].length-1][m];
+			        	                    for (k = x[i].length-1; k > 0; k--) {
+			        	                    	x[i][k][m] = x[i][k-1][m];
+			        	                    }
+			        	                    x[i][0][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i].length; m++) {
+			        	                    xlast = x[i][m][x[i][m].length-1];
+			        	                    for (k = x[i][m].length-1; k > 0; k--) {
+			        	                    	x[i][m][k] = x[i][m][k-1];
+			        	                    }
+			        	                    x[i][m][0] = xlast;
+			                        		}
+			                            }		
+			                        }
+			                    } // if (odds1 == 1)
+			                    if (odds2 == 1) {
+			                        if (axes[1] == 0) {	
+			                        	for (i = 0; i < x[0].length; i++) {
+			                        		for (m = 0; m < x[0][0].length; m++) {
+				        		                xlast = x[x.length-1][i][m];
+				        		                for (k = x.length-1; k > 0; k--) {
+				        		                	x[k][i][m] = x[k-1][i][m];
+				        		                }
+				        		                x[0][i][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else if (axes[1] == 1) {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i][0].length; m++) {
+			        	                    xlast = x[i][x[i].length-1][m];
+			        	                    for (k = x[i].length-1; k > 0; k--) {
+			        	                    	x[i][k][m] = x[i][k-1][m];
+			        	                    }
+			        	                    x[i][0][m] = xlast;
+			                        		}
+			                            }	
+			                        }
+			                        else {
+			                        	for (i = 0; i < x.length; i++) {
+			                        		for (m = 0; m < x[i].length; m++) {
+			        	                    xlast = x[i][m][x[i][m].length-1];
+			        	                    for (k = x[i][m].length-1; k > 0; k--) {
+			        	                    	x[i][m][k] = x[i][m][k-1];
+			        	                    }
+			        	                    x[i][m][0] = xlast;
+			                        		}
+			                            }		
+			                        }
+			                    } // if (odds2 == 1)
+			                    for (i = 0; i < indices[axes[0]].size(); i++) {
+			                    	if (axes[0] == 0) {
+			                    		dest0 = indices[axes[0]].get(i);
+			                    		src0 = i;
+			                    	}
+			                    	else if (axes[0] == 1) {
+			                    		dest1 = indices[axes[0]].get(i);
+			                    		src1 = i;
+			                    	}
+			                    	else {
+			                    		dest2 = indices[axes[0]].get(i);
+			                    		src2 = i;
+			                    	}
+			                    	for (m = 0; m < indices[axes[1]].size(); m++) {
+			                    		if (axes[1] == 0) {
+				                    		dest0 = indices[axes[1]].get(m);
+				                    		src0 = m;
+				                    	}
+				                    	else if (axes[1] == 1) {
+				                    		dest1 = indices[axes[1]].get(m);
+				                    		src1 = m;
+				                    	}
+				                    	else {
+				                    		dest2 = indices[axes[m]].get(i);
+				                    		src2 = m;
+				                    	}
+			                    		for (n = 0; n < indices[axes[2]].size(); n++) {
+			                    			if (axes[2] == 0) {
+					                    		dest0 = indices[axes[2]].get(n);
+					                    		src0 = n;
+					                    	}
+					                    	else if (axes[2] == 1) {
+					                    		dest1 = indices[axes[2]].get(n);
+					                    		src1 = n;
+					                    	}
+					                    	else {
+					                    		dest2 = indices[axes[2]].get(n);
+					                    		src2 = n;
+					                    	}
+			                    			output[dest0][dest1][dest2] += x[src0][src1][src2];
+			                    		}
+			                    	}
+			                    }
+			                    ntransforms += 1;
+		                    } // for (odds3 = 0; odds3 <= 1; odds3++)
+	                    } // for (odds2 = 0; odds2 <= 1; odds2++)
+                    } // for (odds1 = 0; odds1 <= 1; odds1++)
+                } // if (ndim_transform == 2)
+                for (i = 0; i < indices[axes[0]].size(); i++) {
+                	if (axes[0] == 0) {
+                		dest0 = indices[axes[0]].get(i);
+                	}
+                	else if (axes[0] == 1) {
+                		dest1 = indices[axes[0]].get(i);
+                	}
+                	else {
+                		dest2 = indices[axes[0]].get(i);
+                	}
+                    for (k = 0; k < endind2; k++) {
+                    	if (ndim_transform >= 2) {
+                    		index2 = indices[axes[1]].get(k);
+                    	}
+                    	else {
+                    		index2 = k;
+                    	}
+                    	if (axes[1] == 0) {
+                    		dest0 = index2;
+                    	}
+                    	else if (axes[1] == 1) {
+                    		dest1 = index2;
+                    	}
+                    	else {
+                    		dest2 = index2;
+                    	}
+                    	for (m = 0; m < endind3; m++) {
+                    		if (ndim_transform >= 3) {
+                    			index3 = indices[axes[2]].get(m);
+                    		}
+                    		else {
+                    			index3 = m;
+                    		}
+                    		if (axes[2] == 0) {
+                    			dest0 = index3;
+                    		}
+                    		else if (axes[2] == 1) {
+                    			dest1 = index3;
+                    		}
+                    		else {
+                    			dest2 = index3;
+                    		}
+                    		// normalize
+                    		output[dest0][dest1][dest2] /= ntransforms;
+                    	}
+                    }
+                }
                 /*for odds in product(*([(0, 1), ]*ndim_transform)):
                     for o, ax in zip(odds, axes):
                         if o:
