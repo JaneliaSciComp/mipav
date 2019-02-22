@@ -8952,6 +8952,179 @@ public  class PyWavelets extends AlgorithmBase {
 	    System.out.println("swt_max_level(x.length) = " + swt_max_level(x.length) + " expected value = 3");
 	}
 	
+	public void test_swtn_decomposition() {
+		int i;
+	    double tol_double = 1e-13;
+	    double x[][][] = new double[1][1][8];
+	    x[0][0][0] = 3;
+	    x[0][0][1] = 7;
+	    x[0][0][2] = 1;
+	    x[0][0][3] = 3;
+	    x[0][0][4] = -2;
+	    x[0][0][5] = 6;
+	    x[0][0][6] = 4;
+	    x[0][0][7] = 6;
+	    DiscreteWavelet wavelet  = discrete_wavelet(WAVELET_NAME.DB, 1);
+	    DiscreteWavelet wavelets[] = new DiscreteWavelet[]{wavelet};
+	    double atol = tol_double;
+	    double rtol;
+	    int level = 3;
+	    int axes[] = new int[]{2};
+	    HashMap<String, double[][][]> ans[] = swtn(x, wavelets, level, 0, axes);
+	    double cA3[] = ans[0].get("a")[0][0];
+	    double cD3[] = ans[0].get("d")[0][0];
+	    double cA2[] = ans[1].get("a")[0][0];
+	    double cD2[] = ans[1].get("d")[0][0];
+	    double cA1[] = ans[2].get("a")[0][0];
+	    double cD1[] = ans[2].get("d")[0][0];
+	    //(cA3, cD3), (cA2, cD2), (cA1, cD1) = pywt.swt(x, db1, level=3)
+	    double expected_cA1[] = new double[]{7.07106781, 5.65685425, 2.82842712, 0.70710678,
+	                    2.82842712, 7.07106781, 7.07106781, 6.36396103};
+	    rtol = 1.0E-8;
+	    boolean correct = true;
+	    double actualError;
+	    double allowableError;
+	    for (i = 0; i < cA1.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA1[i]);
+	        actualError = Math.abs(cA1[i] - expected_cA1[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA1 is close to expected_cA1");
+	    }
+	    else {
+	    	System.out.println("Error! cA1 is not close to expected_cA1");
+	    }
+	    double expected_cD1[] = new double[]{-2.82842712, 4.24264069, -1.41421356, 3.53553391,
+	                    -5.65685425, 1.41421356, -1.41421356, 2.12132034};
+	    correct = true;
+	    for (i = 0; i < cD1.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD1[i]);
+	        actualError = Math.abs(cD1[i] - expected_cD1[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD1 is close to expected_cD1");
+	    }
+	    else {
+	    	System.out.println("Error! cD1 is not close to expected_cD1");
+	    }
+	    double expected_cA2[] = new double[]{7, 4.5, 4, 5.5, 7, 9.5, 10, 8.5};
+	    rtol = tol_double;
+	    correct = true;
+	    for (i = 0; i < cA2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA2[i]);
+	        actualError = Math.abs(cA2[i] - expected_cA2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA2 is close to expected_cA2");
+	    }
+	    else {
+	    	System.out.println("Error! cA2 is not close to expected_cA2");
+	    }
+	    double expected_cD2[] = new double[]{3, 3.5, 0, -4.5, -3, 0.5, 0, 0.5};
+	    correct = true;
+	    for (i = 0; i < cD2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD2[i]);
+	        actualError = Math.abs(cD2[i] - expected_cD2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD2 is close to expected_cD2");
+	    }
+	    else {
+	    	System.out.println("Error! cD2 is not close to expected_cD2");
+	    }
+	    double expected_cA3[] = new double[8];
+	    for (i = 0; i < 8; i++) {
+	    	expected_cA3[i] = 9.89949494;
+	    }
+	    rtol = 1.0E-8;
+	    correct = true;
+	    for (i = 0; i < cA3.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA3[i]);
+	        actualError = Math.abs(cA3[i] - expected_cA3[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA3 is close to expected_cA3");
+	    }
+	    else {
+	    	System.out.println("Error! cA3 is not close to expected_cA3");
+	    }
+	    double expected_cD3[] = new double[]{0.00000000, -3.53553391, -4.24264069, -2.12132034,
+	                    0.00000000, 3.53553391, 4.24264069, 2.12132034};
+	    correct = true;
+	    for (i = 0; i < cD3.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD3[i]);
+	        actualError = Math.abs(cD3[i] - expected_cD3[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD3 is close to expected_cD3");
+	    }
+	    else {
+	    	System.out.println("Error! cD3 is not close to expected_cD3");
+	    }
+
+	    // level=1, start_level=1 decomposition should match level=2
+	    level = 1;
+	    int start_level = 1;
+	    double cA13[][][] = new double[1][1][cA1.length];
+	    for (i = 0; i < cA1.length; i++) {
+	    	cA13[0][0][i] = cA1[i];
+	    }
+	    HashMap<String, double[][][]> res[] = swtn(cA13, wavelets, level, start_level,axes);
+	    cA2 = res[0].get("a")[0][0];
+	    cD2 = res[0].get("d")[0][0];
+	    rtol = tol_double;
+	    correct = true;
+	    for (i = 0; i < cA2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cA2[i]);
+	        actualError = Math.abs(cA2[i] - expected_cA2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cA2 is close to expected_cA2");
+	    }
+	    else {
+	    	System.out.println("Error! cA2 is not close to expected_cA2");
+	    }
+	    correct = true;
+	    for (i = 0; i < cD2.length; i++) {
+	        allowableError = atol + Math.abs(rtol*expected_cD2[i]);
+	        actualError = Math.abs(cD2[i] - expected_cD2[i]);
+	        if (actualError > allowableError) {
+	        	correct = false;
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("cD2 is close to expected_cD2");
+	    }
+	    else {
+	    	System.out.println("Error! cD2 is not close to expected_cD2");
+	    }
+
+	    HashMap<String, double[][][]> coeffs[] = swtn(x, wavelets, 3, 0,axes);
+	    System.out.println("coeffs.length = " + coeffs.length + " expected value = 3");
+	    System.out.println("swt_max_level(x[0][0].length) = " + swt_max_level(x[0][0].length) + " expected value = 3");
+	}
+	
 	public void test_swt_max_level() {
 	    // odd sized signal will warn about no levels of decomposition possible
 		System.out.println("swt_max_level(11) = " + swt_max_level(11) + " expected value = 0");
@@ -9716,6 +9889,8 @@ public  class PyWavelets extends AlgorithmBase {
 	    double allowedError;
 	    double actualError;
 	    boolean correct;
+	    int ncorrect[] = new int[7];
+	    int nwrong[] = new int[7];
         for (i = 0; i < wName.length; i++) {
       	    for (j = 0; j < orders[i].length; j++) {
 	      		current_wavelet = discrete_wavelet(wName[i], orders[i][j]);
@@ -9774,9 +9949,13 @@ public  class PyWavelets extends AlgorithmBase {
 		        }
 		        if (correct) {
 		        	numberCorrect++;
+		        	ncorrect[n]++;
+		        	
 		        }
 		        else {
 		        	numberWrong++;
+		        	nwrong[n]++;
+		        	return;
 		        }
 		        for (k = 0; k < coeffs.length; k++) {
 		        	Iterator<Map.Entry<String, double[][][]>> allIter = coeffs[k].entrySet().iterator();
@@ -9810,6 +9989,9 @@ public  class PyWavelets extends AlgorithmBase {
       	}
         Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
+        for (i = 0; i < 7; i++) {
+        	System.out.println("ncorrect["+i+"] = " + ncorrect[i] + " nwrong["+i+"] = " + nwrong[i]);
+        }
         Preferences.debug("Number correct2 = " + numberCorrect2 + " number wrong2 = " + numberWrong2 + "\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Number correct2 = " + numberCorrect2 + " number wrong2 = " + numberWrong2);
 	}
@@ -15711,7 +15893,7 @@ public  class PyWavelets extends AlgorithmBase {
         return coefs;
     }
 
-    private HashMap<String, double[][]>[] swtn(double data[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
+    private HashMap<String, double[][]>[] swtn(double datain[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
         // Default start_level = 0
     	// Default axes = null
         // n-dimensional stationary wavelet transform.
@@ -15756,9 +15938,16 @@ public  class PyWavelets extends AlgorithmBase {
         // the signal length along the transformed axes be a multiple of ``2**level``.
         // If this is not the case, the user should pad up to an appropriate size
         // using a function such as ``numpy.pad``.
+    	
     	int i, j;
     	int axis;
     	DiscreteWavelet wav;
+    	double data[][] = new double[datain.length][datain[0].length];
+    	for (i = 0; i < data.length; i++) {
+    		for (j = 0; j < data[0].length; j++) {
+    			data[i][j] = datain[i][j];
+    		}
+    	}
         
         if (axes == null) {
         	axes = new int[]{0,1};
@@ -15823,7 +16012,7 @@ public  class PyWavelets extends AlgorithmBase {
             	kEntry = (Map.Entry<String,double[][]>) allIter.next();
             	String subband = (String) kEntry.getKey();
              	double x[][] = (double[][]) kEntry.getValue();
-            	ret[i].put(subband, x);
+            	ret[i-start_level].put(subband, x);
             }
             
             // data for the next level is the approximation coeffs from this level
@@ -15842,7 +16031,7 @@ public  class PyWavelets extends AlgorithmBase {
         return rev;    
     }
     
-    private HashMap<String, double[][][]>[] swtn(double data[][][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
+    private HashMap<String, double[][][]>[] swtn(double datain[][][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
         // Default start_level = 0
     	// Default axes = null
         // n-dimensional stationary wavelet transform.
@@ -15886,10 +16075,18 @@ public  class PyWavelets extends AlgorithmBase {
         // The implementation here follows the "algorithm a-trous" and requires that
         // the signal length along the transformed axes be a multiple of ``2**level``.
         // If this is not the case, the user should pad up to an appropriate size
-        // using a function such as ``numpy.pad``.
-    	int i, j;
+        // using a function such as ``numpy.pad``
+    	double data[][][] = new double[datain.length][datain[0].length][datain[0][0].length];
+    	int i, j,k;
     	int axis;
     	DiscreteWavelet wav;
+    	for (i = 0; i < data.length; i++) {
+    		for (j = 0; j < data[0].length; j++) {
+    			for (k = 0; k < data[0][0].length; k++) {
+    				data[i][j][k] = datain[i][j][k];
+    			}
+    		}
+    	}
         
         if (axes == null) {
         	axes = new int[]{0,1,2};
@@ -15967,7 +16164,7 @@ public  class PyWavelets extends AlgorithmBase {
             	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
             	String subband = (String) kEntry.getKey();
              	double x[][][] = (double[][][]) kEntry.getValue();
-            	ret[i].put(subband, x);
+            	ret[i-start_level].put(subband, x);
             }
             
             // data for the next level is the approximation coeffs from this level
@@ -16286,6 +16483,8 @@ public  class PyWavelets extends AlgorithmBase {
         int numberAxesMissing = 0;
         int outSize;
         int outSize2;
+        double value_odd_even[][][];
+        double atemp[][][] = null;
         // key length matches the number of axes transformed
     	int ndim_transform = 0;
     	Iterator<Map.Entry<String, double[][][]>> allIter = coeffs[0].entrySet().iterator();
@@ -16300,14 +16499,23 @@ public  class PyWavelets extends AlgorithmBase {
         
         double output[][][] = null;
         if (ndim_transform == 1) {
-        	output = coeffs[0].get("a").clone();
+        	atemp = coeffs[0].get("a");
         }
         else if (ndim_transform == 2) {
-        	output = coeffs[0].get("aa").clone();
+        	atemp = coeffs[0].get("aa");
         }
         else if (ndim_transform == 3) {
-        	output = coeffs[0].get("aaa").clone();
+        	atemp = coeffs[0].get("aaa");
         }
+        output = new double[atemp.length][atemp[0].length][atemp[0][0].length];
+        for (i = 0; i < atemp.length; i++) {
+        	for (j = 0; j < atemp[0].length; j++) {
+        		for (k = 0; k < atemp[0][0].length; k++) {
+        			output[i][j][k] = atemp[i][j][k];
+        		}
+        	}
+        }
+        
 
         int ndim = 3;
 
@@ -16346,7 +16554,7 @@ public  class PyWavelets extends AlgorithmBase {
         	else if (axes[i] == 1) {
         		axis1Missing = false;
         	}
-        	else {
+        	else if (axes[i] == 2) {
         		axis2Missing = false;
         }
         	if (axis0Missing) {
@@ -16494,7 +16702,14 @@ public  class PyWavelets extends AlgorithmBase {
             	}
 
                 // nested loop over all combinations of odd/even inidices
-                approx = output.clone();
+                approx = new double[output.length][output[0].length][output[0][0].length];
+                for (i = 0; i < approx.length; i++) {
+                	for (m = 0; m < approx[0].length; m++) {
+                		for (n = 0; n < approx[0][0].length; n++) {
+                			approx[i][m][n] = output[i][m][n];
+                		}
+                	}
+                }
                 if (ndim_transform >= 2) {
                     endind2 = indices[axes[1]].size();	
                 }
@@ -16518,7 +16733,7 @@ public  class PyWavelets extends AlgorithmBase {
                 			endind3 = output[0].length;
                 		}
                 		else {
-                			endind2 = output[0][0].length;
+                			endind3 = output[0][0].length;
                 		}
                 	}
                 	else if (numberAxesMissing == 1) {
@@ -16534,6 +16749,7 @@ public  class PyWavelets extends AlgorithmBase {
                 	}
                 }
                 for (i = 0; i < indices[axes[0]].size(); i++) {
+                	
                 	if (axes[0] == 0) {
                 		dest0 = indices[axes[0]].get(i);
                 	}
@@ -16557,12 +16773,11 @@ public  class PyWavelets extends AlgorithmBase {
                         	}
                     	}
                     	else {
-                    		index2 = k;
                     		if (axis0Missing) {
-                    			dest0 = index2;
+                    			dest0 = k;
                     		}
                     		else {
-                    			dest1 = index2;
+                    			dest1 = k;
                     		}
                     	}
                     	
@@ -16580,24 +16795,23 @@ public  class PyWavelets extends AlgorithmBase {
                         		}
                     		}
                     		else {
-                    			index3 = m;
                     			if (numberAxesMissing == 2) {
                     				if (axis0Missing && axis1Missing) {
-                    					dest1 = index3;
+                    					dest1 = m;
                     				}
                     				else {
-                    					dest2 = index3;
+                    					dest2 = m;
                     				}
                     			}
                     			else if (numberAxesMissing == 1) {
                     				if (axis0Missing) {
-                    					dest0 = index3;
+                    					dest0 = m;
                     				}
                     				else if (axis1Missing) {
-                    					dest1 = index3;
+                    					dest1 = m;
                     				}
                     				else {
-                    					dest2 = index3;
+                    					dest2 = m;
                     				}
                     			}
                     		}
@@ -16660,11 +16874,11 @@ public  class PyWavelets extends AlgorithmBase {
 			                    allIter = details.entrySet().iterator();
 			                    kEntry = null;
 			                    index = 0;
-			                    double value_odd_even[][][] = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    while (allIter.hasNext()) {
 			                    	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
 			                    	String key = (String)kEntry.getKey();
 			                    	double value[][][] = (double[][][])kEntry.getValue();
+			                    	value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    	for (i = 0; i < dest_slices[0].size(); i++) {
 			    	                    for (m = 0; m < dest_slices[1].size(); m++) {
 			    	                        for (n = 0; n < dest_slices[2].size(); n++) {
@@ -16674,6 +16888,7 @@ public  class PyWavelets extends AlgorithmBase {
 			                    	}
 			                    	details_slice.put(key, value_odd_even);
 			                    } // while (allIter.hasNext())
+			                    value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    for (i = 0; i < dest_slices[0].size(); i++) {
 				                    for (m = 0; m < dest_slices[1].size(); m++) {
 				                        for (n = 0; n < dest_slices[2].size(); n++) {
@@ -16814,7 +17029,7 @@ public  class PyWavelets extends AlgorithmBase {
 				                    		src1 = m;
 				                    	}
 				                    	else {
-				                    		dest2 = indices[axes[m]].get(i);
+				                    		dest2 = indices[axes[m]].get(m);
 				                    		src2 = m;
 				                    	}
 			                    		for (n = 0; n < indices[axes[2]].size(); n++) {
@@ -16894,12 +17109,11 @@ public  class PyWavelets extends AlgorithmBase {
 			                    details_slice.clear();
 			                    allIter = details.entrySet().iterator();
 			                    kEntry = null;
-			                    index = 0;
-			                    double value_odd_even[][][] = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    while (allIter.hasNext()) {
 			                    	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
 			                    	String key = (String)kEntry.getKey();
 			                    	double value[][][] = (double[][][])kEntry.getValue();
+			                    	value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    	for (i = 0; i < dest_slices[0].size(); i++) {
 			    	                    for (m = 0; m < dest_slices[1].size(); m++) {
 			    	                        for (n = 0; n < dest_slices[2].size(); n++) {
@@ -16909,6 +17123,7 @@ public  class PyWavelets extends AlgorithmBase {
 			                    	}
 			                    	details_slice.put(key, value_odd_even);
 			                    } // while (allIter.hasNext())
+			                    value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    for (i = 0; i < dest_slices[0].size(); i++) {
 				                    for (m = 0; m < dest_slices[1].size(); m++) {
 				                        for (n = 0; n < dest_slices[2].size(); n++) {
@@ -17014,7 +17229,7 @@ public  class PyWavelets extends AlgorithmBase {
 				                    		src1 = m;
 				                    	}
 				                    	else {
-				                    		dest2 = indices[axes[1]].get(i);
+				                    		dest2 = indices[axes[1]].get(m);
 				                    		src2 = m;
 				                    	}
 			                    		if (axis2Missing) {
@@ -17087,12 +17302,11 @@ public  class PyWavelets extends AlgorithmBase {
 			                    details_slice.clear();
 			                    allIter = details.entrySet().iterator();
 			                    kEntry = null;
-			                    index = 0;
-			                    double value_odd_even[][][] = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    while (allIter.hasNext()) {
 			                    	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
 			                    	String key = (String)kEntry.getKey();
 			                    	double value[][][] = (double[][][])kEntry.getValue();
+			                    	value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    	for (i = 0; i < dest_slices[0].size(); i++) {
 			    	                    for (m = 0; m < dest_slices[1].size(); m++) {
 			    	                        for (n = 0; n < dest_slices[2].size(); n++) {
@@ -17102,6 +17316,7 @@ public  class PyWavelets extends AlgorithmBase {
 			                    	}
 			                    	details_slice.put(key, value_odd_even);
 			                    } // while (allIter.hasNext())
+			                    value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()][dest_slices[2].size()];
 			                    for (i = 0; i < dest_slices[0].size(); i++) {
 				                    for (m = 0; m < dest_slices[1].size(); m++) {
 				                        for (n = 0; n < dest_slices[2].size(); n++) {
@@ -17237,12 +17452,11 @@ public  class PyWavelets extends AlgorithmBase {
                         	}
                     	}
                     	else {
-                    		index2 = k;
                     		if (axis0Missing) {
-                    			dest0 = index2;
+                    			dest0 = k;
                     		}
                     		else {
-                    			dest1 = index2;
+                    			dest1 = k;
                     		}
                     	}
                     	for (m = 0; m < endind3; m++) {
@@ -17259,24 +17473,23 @@ public  class PyWavelets extends AlgorithmBase {
                         		}
                     		}
                     		else {
-                    			index3 = m;
                     			if (numberAxesMissing == 2) {
                     				if (axis0Missing && axis1Missing) {
-                    					dest1 = index3;
+                    					dest1 = m;
                     				}
                     				else {
-                    					dest2 = index3;
+                    					dest2 = m;
                     				}
                     			}
                     			else if (numberAxesMissing == 1) {
                     				if (axis0Missing) {
-                    					dest0 = index3;
+                    					dest0 = m;
                     				}
                     				else if (axis1Missing) {
-                    					dest1 = index3;
+                    					dest1 = m;
                     				}
                     				else {
-                    					dest2 = index3;
+                    					dest2 = m;
                     				}
                     			}
                     		}
