@@ -9838,11 +9838,157 @@ public  class PyWavelets extends AlgorithmBase {
 	                  // start_level=0, axis=0)
 	}
 	
+	public void test_swtn_iswtn2_integration() {
+	    // This function performs a round-trip swtn/iswtn transform for various
+	    // possible combinations of:
+	    //   1.) 1 out of 2 axes and 2 out of 2 axes of a 2D array
+	    //
+	    // To keep test time down, only wavelets of length <= 8 are run.
+	    //
+	    // This test does not validate swtn or iswtn individually, but only
+	    // confirms that iswtn yields an (almost) perfect reconstruction of swtn.
+	    int max_level = 3;
+	    int axes[][] = new int[3][];
+	    axes[0] = new int[]{0};
+	    axes[1] = new int[]{1};
+	    axes[2] = new int[]{0,1};
+	    int h,i,j,k,m,n,p, index;
+		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+                WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
+	   DiscreteWavelet current_wavelet;
+	   DiscreteWavelet current_wavelets[];
+	   
+	   int numberCorrect = 0;
+	   int numberWrong = 0;
+	   int numberCorrect2 = 0;
+	   int numberWrong2 = 0;
+	   int orders[][] = new int[7][];
+	   orders[0] = new int[]{1}; // HAAR
+	   // RBIO 10, 20, 30, 40, 50, 60 do not work
+	   orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+	   orders[2] = new int[38]; // DB
+	   for (i = 0; i < 38; i++) {
+	       orders[2][i] = i+1;
+	   }
+	   orders[3] = new int[19]; // SYM
+	   for (i = 0; i < 19; i++) {
+	       orders[3][i] = i+2;
+	   }
+	   orders[4] = new int[17]; // COIF
+	   for (i = 0; i < 17; i++) {
+	       orders[4][i] = i+1;
+	   }
+	   orders[5] = orders[1].clone(); // BIOR
+	   double atol = 1.0E-5;
+	    double rtol = 1.0E-5;
+	    double allowedError;
+	    double actualError;
+	    boolean correct;
+	    int ncorrect[] = new int[7];
+	    int nwrong[] = new int[7];
+        for (i = 0; i < wName.length; i++) {
+      	    for (j = 0; j < orders[i].length; j++) {
+	      		current_wavelet = discrete_wavelet(wName[i], orders[i][j]);
+	      		if (current_wavelet.dec_len > 8) {
+	      			// Avoid excessive test duration
+	      			continue;
+	      		}
+	      		for (n = 0; n < axes.length; n++) {
+	      		current_wavelets = new DiscreteWavelet[axes[n].length];
+	      		for (k = 0; k < axes[n].length; k++) {
+	      			current_wavelets[k] = current_wavelet;
+	      		}
+		        int maxVal = Math.max(current_wavelet.dec_len, current_wavelet.rec_len);
+		        double log2 = Math.log(maxVal)/Math.log(2.0);
+		        int input_length_power = (int)Math.ceil(log2);
+		        int exponent = input_length_power + max_level - 1;
+		        int N = 1;
+		        for (k = 0; k < exponent; k++) {
+		        	N *= 2;
+		        }
+		        double X[][] = new double[N][N];
+		        for (k = 0; k < N; k++) {
+		        	for (m = 0; m < N; m++) {
+			            index = k*N + m;
+			        	X[k][m] = index;
+		        	}
+		        }
+		        int start_level = 0;
+		        HashMap<String, double[][]> coeffs[] = swtn(X, current_wavelets, max_level,start_level,axes[n]);
+		        HashMap<String, double[][]> coeffs_copy[] = new HashMap[coeffs.length];
+		        for (k = 0; k < coeffs.length; k++) {
+		        	coeffs_copy[k] = new HashMap<String, double[][]>();
+		        	Iterator<Map.Entry<String, double[][]>> allIter = coeffs[k].entrySet().iterator();
+		            Map.Entry<String,double[][]> kEntry = null;
+		            while (allIter.hasNext()) {
+		            	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+		            	String key = (String) kEntry.getKey();
+		            	double value[][] = (double[][])kEntry.getValue().clone();
+		            	coeffs_copy[k].put(key, value);
+		            } // while (allIter.hasNext())
+		        }
+		        double Y[][] = iswtn2(coeffs, current_wavelets,axes[n]);
+		        correct = true;
+		        for (h = 0; h < X.length; h++) {
+		        	for (m = 0; m < X[h].length; m++) {
+			        	allowedError = atol + Math.abs(rtol*X[h][m]);
+			        	actualError = Math.abs(X[h][m] - Y[h][m]);
+			        	if (actualError > allowedError) {
+			        		correct = false;
+			        	}
+		        	}
+		        }
+		        if (correct) {
+		        	numberCorrect++;
+		        	ncorrect[n]++;
+		        	
+		        }
+		        else {
+		        	numberWrong++;
+		        	nwrong[n]++;
+		        	return;
+		        }
+		        for (k = 0; k < coeffs.length; k++) {
+		        	Iterator<Map.Entry<String, double[][]>> allIter = coeffs[k].entrySet().iterator();
+		            Map.Entry<String,double[][]> kEntry = null;
+		            while (allIter.hasNext()) {
+		            	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+		            	String key = (String) kEntry.getKey();
+		            	double value[][] = (double[][])kEntry.getValue().clone();
+		            	double value2[][] = coeffs_copy[k].get(key);
+		            	// verify the inverse transform didn't modify any coeffs
+		            	correct = true;
+				        for (h = 0; h < value.length; h++) {
+				        	for (m = 0; m < value[h].length; m++) {
+					        	if (value[h][m] != value2[h][m]) {
+					        		correct = false;
+					        	}
+				        	}
+				        }
+				        if (correct) {
+				        	numberCorrect2++;
+				        }
+				        else {
+				        	numberWrong2++;
+				        }
+		            } // while (allIter.hasNext())
+		        }
+	      		}
+      	    }
+      	}
+        Preferences.debug("Number correct = " + numberCorrect + " number wrong = " + numberWrong + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
+        for (i = 0; i < 7; i++) {
+        	System.out.println("ncorrect["+i+"] = " + ncorrect[i] + " nwrong["+i+"] = " + nwrong[i]);
+        }
+        Preferences.debug("Number correct2 = " + numberCorrect2 + " number wrong2 = " + numberWrong2 + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("Number correct2 = " + numberCorrect2 + " number wrong2 = " + numberWrong2);
+	}
+	
 	public void test_swtn_iswtn_integration() {
 	    // This function performs a round-trip swtn/iswtn transform for various
 	    // possible combinations of:
-	    //   1.) 1 out of 2 axes of a 2D array
-	    //   2.) 2 out of 3 axes of a 3D array
+	    //   1.) 1 out of 3 axes, 2 out of 3 axes, and 3out of 3 axes of a 3D array
 	    //
 	    // To keep test time down, only wavelets of length <= 8 are run.
 	    //
@@ -13181,16 +13327,15 @@ public  class PyWavelets extends AlgorithmBase {
         if (axes == null) {
             axes = new int[]{0,1};
         }
-        if (axes[0] < 0) {
-        	axes[0] = axes[0] + 2;
-        }
-        if (axes[1] < 0) {
-        	axes[1] = axes[1] + 2;
+        for (i = 0; i < axes.length; i++) {
+	        if (axes[i] < 0) {
+	        	axes[i] = axes[i] + 2;
+	        }
         }
         
         // If there is only 1 mode, use the same mode for both axes
         MODE modes[];
-        if (modein.length == 1) {
+        if ((modein.length == 1) && (axes.length == 2)) {
         	MODE m = modein[0];
         	modes = new MODE[]{m,m};
         }
@@ -13200,7 +13345,7 @@ public  class PyWavelets extends AlgorithmBase {
         
         // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
         DiscreteWavelet wavelets[];
-        if (wavelet.length == 1) {
+        if ((wavelet.length == 1) && (axes.length == 2)) {
         	DiscreteWavelet w = wavelet[0];
         	wavelets = new DiscreteWavelet[]{w, w};
         }
@@ -13209,7 +13354,7 @@ public  class PyWavelets extends AlgorithmBase {
         }
  
         HashMap<String, double[][]> new_coeffs = new HashMap<String, double[][]>();
-        for (i = 1; i >= 0; i--) {
+        for (i = axes.length-1; i >= 0; i--) {
             axis = axes[i];
             wav = wavelets[i];
             mode = modes[i];
@@ -13253,7 +13398,7 @@ public  class PyWavelets extends AlgorithmBase {
             	newEntry = (Map.Entry<String,double[][]>) newIter.next();
             	coeffMap.put((String)newEntry.getKey(), (double[][])newEntry.getValue());
             }
-        } // for (i = 1; i >= 0; i--)
+        } // for (i = axes.length-1; i >= 0; i--)
         return coeffMap.get("answer");
     } 	
     
@@ -16414,6 +16559,545 @@ public  class PyWavelets extends AlgorithmBase {
             }
         } // for (j = 0; j < num_levels; j++)
 
+        return output;
+    }
+    
+    private double [][] iswtn2(HashMap<String, double[][]>coeffs[], DiscreteWavelet wavelet[], int axes[]) {
+        // Default value for axes == null
+        // Multilevel nD inverse discrete stationary wavelet transform for 1 or 2 axes on 2D.
+
+        // Parameters
+        // ----------
+        // coeffs : list
+        //    [{coeffs_level_n}, ..., {coeffs_level_1}]: list of dict
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple of wavelets to apply per
+        //    axis in ``axes``.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the inverse SWT. Axes may not be repeated.
+        //    The default is ``None``, which means transform all axes
+        //    (``axes = range(data.ndim)``).
+
+        // Returns
+        // -------
+        // nD array of reconstructed data.
+
+        // Examples
+        // --------
+        // >>> import pywt
+        // >>> coeffs = pywt.swtn([[1,2,3,4],[5,6,7,8],
+        // ...                     [9,10,11,12],[13,14,15,16]],
+        // ...                    'db1', level=2)
+        // >>> pywt.iswtn(coeffs, 'db1')
+        // array([[  1.,   2.,   3.,   4.],
+        //        [  5.,   6.,   7.,   8.],
+        //       [  9.,  10.,  11.,  12.],
+        //       [ 13.,  14.,  15.,  16.]])
+        int i,j,k,m;
+        int step_size;
+        int last_index;
+        double a[][] = null;
+        HashMap<String,double[][]> details = new HashMap<String, double[][]>();
+        HashMap<String,double[][]> details_slice = new HashMap<String, double[][]>();
+        int index = 0;
+        int dshape[];
+        int first1, first2;
+        int end2;
+        int endind2 = 0;
+        int index2;
+        int ntransforms = 0;
+        double approx[][];
+        int odds1;
+        int odds2;
+        MODE modes2[] = new MODE[]{MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION};
+        double xlast;
+        int dest0 = 0;
+        int dest1 = 0;
+        int src0 = 0;
+        int src1 = 0;
+        boolean axis0Missing = true;
+        boolean axis1Missing = true;
+        int outSize;
+        int outSize2;
+        double value_odd_even[][];
+        double atemp[][] = null;
+        // key length matches the number of axes transformed
+    	int ndim_transform = 0;
+    	Iterator<Map.Entry<String, double[][]>> allIter = coeffs[0].entrySet().iterator();
+        Map.Entry<String,double[][]> kEntry = null;
+        while (allIter.hasNext()) {
+        	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+        	String subband = (String) kEntry.getKey();
+        	if (subband.length() > ndim_transform) {
+        	    ndim_transform = subband.length();	
+        	}
+        } // while (allIter.hasNext())
+        
+        double output[][] = null;
+        if (ndim_transform == 1) {
+        	atemp = coeffs[0].get("a");
+        }
+        else if (ndim_transform == 2) {
+        	atemp = coeffs[0].get("aa");
+        }
+        output = new double[atemp.length][atemp[0].length];
+        for (i = 0; i < atemp.length; i++) {
+        	for (j = 0; j < atemp[0].length; j++) {
+                output[i][j] = atemp[i][j];
+        	}
+        }
+        
+
+        int ndim = 2;
+
+        if (axes == null) {
+            axes = new int[]{0,1};
+        }
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] + 2;
+        	}
+        }
+        
+
+         if (axes.length == 2) {
+        	if (axes[0] == axes[1]) {
+        		MipavUtil.displayError("The axes passed to iswtn2 must be unique.");
+	            return null;	
+        	}
+        }
+        
+        if (ndim_transform != axes.length) {
+            MipavUtil.displayError("The number of axes used in iswtn2 must match the number of dimensions transformed in swtn.");
+            return null;
+        }
+        
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] == 0) {
+        		axis0Missing = false;
+        	}
+        	else if (axes[i] == 1) {
+        		axis1Missing = false;
+        	}
+        }
+        
+
+        // num_levels, equivalent to the decomposition level, n
+        int num_levels = coeffs.length;
+        
+        // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for all axes
+        DiscreteWavelet wavelets[];
+        if ((axes.length == 2) && (wavelet.length == 1)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        // initialize various slice objects used in the loops below
+        // these will remain slice(None) only on axes that aren't transformed
+        // indices = [slice(None), ]*ndim
+        // even_indices = [slice(None), ]*ndim
+        // odd_indices = [slice(None), ]*ndim
+        // odd_even_slices = [slice(None), ]*ndim
+        Vector<Integer>indices[] = new Vector[ndim];
+        Vector<Integer>even_indices[] = new Vector[ndim];
+        Vector<Integer>odd_indices[] = new Vector[ndim];
+        Vector<Integer>odd_even_slices[] = new Vector[ndim];
+        Vector<Integer>dest_slices[] = new Vector[ndim];
+        for (i = 0; i < ndim; i++) {
+        	indices[i] = new Vector<Integer>();
+        	even_indices[i] = new Vector<Integer>();
+        	odd_indices[i] = new Vector<Integer>();
+        	odd_even_slices[i] = new Vector<Integer>();
+        	dest_slices[i] = new Vector<Integer>();
+        }
+
+        for (j = 0; j < num_levels; j++) {
+        	step_size = 1;
+        	for (k = 0; k <num_levels-j-1; k++) {
+        		step_size *= 2;
+        	}
+            last_index = step_size;
+            // will restore later
+            if (ndim_transform == 1) {
+            	a = coeffs[j].remove("a");
+            }
+            else if (ndim_transform == 2) {
+            	a = coeffs[j].remove("aa");
+            }
+            details = coeffs[j];
+            // We assume all coefficient arrays are of equal size
+            int shapes[][] = new int[details.size()][2];
+            allIter = details.entrySet().iterator();
+            kEntry = null;
+            index = 0;
+            while (allIter.hasNext()) {
+            	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+            	double v[][] = (double[][])kEntry.getValue();
+            	shapes[index][0] = v.length;
+            	shapes[index++][1] = v[0].length;
+            } // while (allIter.hasNext())
+            dshape = shapes[0];
+            for (k = 1; k < details.size(); k++) {
+            	for (m = 0; m < 2; m++) {
+            	    if (shapes[k][m] != shapes[0][m])	 {
+            	    	MipavUtil.displayError("Mismatch in shape of intermediate coefficient arrays");
+            	    	return null;
+            	    }
+            	}
+            }
+
+            // nested loop over all combinations of axis offsets at this level
+            if (ndim_transform >= 2) {
+            	end2 = last_index;
+            }
+            else {
+            	end2 = 1;
+            }
+            for (first1 = 0; first1 < last_index; first1++) {
+            for (first2 = 0; first2 < end2; first2++) {
+            	indices[axes[0]] = new Vector<Integer>();
+            	for (i = first1; i < dshape[0]; i += step_size) {
+            	    indices[axes[0]].add(i);	
+            	}
+            	even_indices[axes[0]] = new Vector<Integer>();
+            	for (i = first1; i < dshape[0]; i += 2*step_size) {
+            		even_indices[axes[0]].add(i);
+            	}
+            	odd_indices[axes[0]] = new Vector<Integer>();
+            	for (i = first1 + step_size; i < dshape[0]; i += 2*step_size) {
+            		odd_indices[axes[0]].add(i);
+            	}
+            	if (ndim_transform >= 2) {
+            		indices[axes[1]] = new Vector<Integer>();
+                	for (i = first2; i < dshape[1]; i += step_size) {
+                	    indices[axes[1]].add(i);	
+                	}
+                	even_indices[axes[1]] = new Vector<Integer>();
+                	for (i = first2; i < dshape[1]; i += 2*step_size) {
+                		even_indices[axes[1]].add(i);
+                	}
+                	odd_indices[axes[1]] = new Vector<Integer>();
+                	for (i = first2 + step_size; i < dshape[1]; i += 2*step_size) {
+                		odd_indices[axes[1]].add(i);
+                	}	
+            	}
+
+                // nested loop over all combinations of odd/even inidices
+                approx = new double[output.length][output[0].length];
+                for (i = 0; i < approx.length; i++) {
+                	for (m = 0; m < approx[0].length; m++) {
+                        approx[i][m] = output[i][m];
+                	}
+                }
+                if (ndim_transform >= 2) {
+                    endind2 = indices[axes[1]].size();	
+                }
+                else {
+                	// Make endind2 the missing axis
+                	if (axis0Missing) {
+                		endind2 = output.length;
+                	}
+                	else {
+                		endind2 = output[0].length;
+                	}
+                }
+                
+                for (i = 0; i < indices[axes[0]].size(); i++) {
+                	
+                	if (axes[0] == 0) {
+                		dest0 = indices[axes[0]].get(i);
+                	}
+                	else if (axes[0] == 1) {
+                		dest1 = indices[axes[0]].get(i);
+                	}
+                    for (k = 0; k < endind2; k++) {
+                    	if (ndim_transform >= 2) {
+                    		index2 = indices[axes[1]].get(k);
+                    		if (axes[1] == 0) {
+                        		dest0 = index2;
+                        	}
+                        	else if (axes[1] == 1) {
+                        		dest1 = index2;
+                        	}
+                    	}
+                    	else {
+                    		if (axis0Missing) {
+                    			dest0 = k;
+                    		}
+                    		else {
+                    			dest1 = k;
+                    		}
+                    	}
+                    		
+                    output[dest0][dest1] = 0;
+                    }
+                }
+                ntransforms = 0;
+                if (ndim_transform == 2) {
+                    for (odds1 = 0; odds1 <= 1; odds1++) {
+	                    if (odds1 == 1) {
+	                    	odd_even_slices[axes[0]] = odd_indices[axes[0]];
+	                    }
+	                    else {
+	                    	odd_even_slices[axes[0]] = even_indices[axes[0]];
+	                    }
+	                    if (axes[0] == 0) {
+	                    	dest_slices[0] = odd_even_slices[axes[0]];
+	                    }
+	                    else if (axes[0] == 1) {
+	                    	dest_slices[1] = odd_even_slices[axes[0]];
+	                    }
+	                    for (odds2 = 0; odds2 <= 1; odds2++) {
+		                    if (odds2 == 1) {
+		                    	odd_even_slices[axes[1]] = odd_indices[axes[1]];
+		                    }
+		                    else {
+		                    	odd_even_slices[axes[1]] = even_indices[axes[1]];
+		                    }
+		                    if (axes[1] == 0) {
+		                    	dest_slices[0] = odd_even_slices[axes[1]];
+		                    }
+		                    else if (axes[1] == 1) {
+		                    	dest_slices[1] = odd_even_slices[axes[1]];
+		                    }
+			                    // extract the odd/even indices for all detail coefficients
+			                    details_slice.clear();
+			                    allIter = details.entrySet().iterator();
+			                    kEntry = null;
+			                    while (allIter.hasNext()) {
+			                    	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+			                    	String key = (String)kEntry.getKey();
+			                    	double value[][] = (double[][])kEntry.getValue();
+			                    	value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()];
+			                    	for (i = 0; i < dest_slices[0].size(); i++) {
+			    	                    for (m = 0; m < dest_slices[1].size(); m++) {
+			    	                    	value_odd_even[i][m] = value[dest_slices[0].get(i)][dest_slices[1].get(m)];
+			    	                    }
+			                    	}
+			                    	details_slice.put(key, value_odd_even);
+			                    } // while (allIter.hasNext())
+			                    value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()];
+			                    for (i = 0; i < dest_slices[0].size(); i++) {
+				                    for (m = 0; m < dest_slices[1].size(); m++) {
+				                    	value_odd_even[i][m] = approx[dest_slices[0].get(i)][dest_slices[1].get(m)];
+				                    }
+			                	}
+			                    details_slice.put("aa",value_odd_even);
+			                    // perform the inverse dwt on the selected indices,
+			                    // making sure to use periodic boundary conditions
+			                    double x[][] = idwtn2(details_slice, wavelets, modes2, axes);
+			                    // circular shift along any odd indexed axis
+			                    if (odds1 == 1) {
+			                        if (axes[0] == 0) {	
+			                        	for (i = 0; i < x[0].length; i++) {
+			        		                xlast = x[x.length-1][i];
+			        		                for (k = x.length-1; k > 0; k--) {
+			        		                	x[k][i] = x[k-1][i];
+			        		                }
+			        		                x[0][i] = xlast;
+			                            }	
+			                        }
+			                        else if (axes[0] == 1) {
+			                        	for (i = 0; i < x.length; i++) {
+		        	                    xlast = x[i][x[i].length-1];
+		        	                    for (k = x[i].length-1; k > 0; k--) {
+		        	                    	x[i][k] = x[i][k-1];
+		        	                    }
+		        	                    x[i][0] = xlast;
+			                            }	
+			                        }
+			                    } // if (odds1 == 1)
+			                    if (odds2 == 1) {
+			                        if (axes[1] == 0) {	
+			                        	for (i = 0; i < x[0].length; i++) {
+			        		                xlast = x[x.length-1][i];
+			        		                for (k = x.length-1; k > 0; k--) {
+			        		                	x[k][i] = x[k-1][i];
+			        		                }
+			        		                x[0][i] = xlast;
+			                            }	
+			                        }
+			                        else if (axes[1] == 1) {
+			                        	for (i = 0; i < x.length; i++) {
+		        	                    xlast = x[i][x[i].length-1];
+		        	                    for (k = x[i].length-1; k > 0; k--) {
+		        	                    	x[i][k] = x[i][k-1];
+		        	                    }
+		        	                    x[i][0] = xlast;
+			                            }	
+			                        }
+			                    } // if (odds2 == 1)
+			                    for (i = 0; i < indices[axes[0]].size(); i++) {
+			                    	if (axes[0] == 0) {
+			                    		dest0 = indices[axes[0]].get(i);
+			                    		src0 = i;
+			                    	}
+			                    	else if (axes[0] == 1) {
+			                    		dest1 = indices[axes[0]].get(i);
+			                    		src1 = i;
+			                    	}
+			                    	for (m = 0; m < indices[axes[1]].size(); m++) {
+			                    		if (axes[1] == 0) {
+				                    		dest0 = indices[axes[1]].get(m);
+				                    		src0 = m;
+				                    	}
+				                    	else if (axes[1] == 1) {
+				                    		dest1 = indices[axes[1]].get(m);
+				                    		src1 = m;
+				                    	}
+			                    		
+			                    	    output[dest0][dest1] += x[src0][src1];
+			                    	}
+			                    }
+			                    ntransforms += 1;
+	                    } // for (odds2 = 0; odds2 <= 1; odds2++)
+                    } // for (odds1 = 0; odds1 <= 1; odds1++)
+                } // if (ndim_transform == 2)
+                else if (ndim_transform == 1) {
+                    for (odds1 = 0; odds1 <= 1; odds1++) {
+	                    if (odds1 == 1) {
+	                    	odd_even_slices[axes[0]] = odd_indices[axes[0]];
+	                    }
+	                    else {
+	                    	odd_even_slices[axes[0]] = even_indices[axes[0]];
+	                    }
+	                    if (axes[0] == 0) {
+	                    	dest_slices[0] = odd_even_slices[axes[0]];
+	                    }
+	                    else if (axes[0] == 1) {
+	                    	dest_slices[1] = odd_even_slices[axes[0]];
+	                    }
+	                    if (axis1Missing) {
+	                    	dest_slices[1].clear();
+	                    	for (i = 0; i < output[0].length; i++) {
+	                    		dest_slices[1].add(i);
+	                    	}
+	                    }
+	                    if (axis0Missing) {
+	                    	dest_slices[0].clear();
+	                    	for (i = 0; i < output.length; i++) {
+	                    		dest_slices[0].add(i);
+	                    	}
+	                    }
+	                    // extract the odd/even indices for all detail coefficients
+	                    details_slice.clear();
+	                    allIter = details.entrySet().iterator();
+	                    kEntry = null;
+	                    while (allIter.hasNext()) {
+	                    	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+	                    	String key = (String)kEntry.getKey();
+	                    	double value[][] = (double[][])kEntry.getValue();
+	                    	value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()];
+	                    	for (i = 0; i < dest_slices[0].size(); i++) {
+	    	                    for (m = 0; m < dest_slices[1].size(); m++) {
+	    	                    	value_odd_even[i][m] = value[dest_slices[0].get(i)][dest_slices[1].get(m)];
+	    	                    }
+	                    	}
+	                    	details_slice.put(key, value_odd_even);
+	                    } // while (allIter.hasNext())
+	                    value_odd_even = new double[dest_slices[0].size()][dest_slices[1].size()];
+	                    for (i = 0; i < dest_slices[0].size(); i++) {
+		                    for (m = 0; m < dest_slices[1].size(); m++) {
+		                    	value_odd_even[i][m] = approx[dest_slices[0].get(i)][dest_slices[1].get(m)];
+		                    }
+	                	}
+	                    details_slice.put("a",value_odd_even);
+	                    // perform the inverse dwt on the selected indices,
+	                    // making sure to use periodic boundary conditions
+	                    double x[][] = idwtn2(details_slice, wavelets, modes2, axes);
+	                    // circular shift along any odd indexed axis
+	                    if (odds1 == 1) {
+	                        if (axes[0] == 0) {	
+	                        	for (i = 0; i < x[0].length; i++) {
+	        		                xlast = x[x.length-1][i];
+	        		                for (k = x.length-1; k > 0; k--) {
+	        		                	x[k][i] = x[k-1][i];
+	        		                }
+	        		                x[0][i] = xlast;
+	                            }	
+	                        }
+	                        else if (axes[0] == 1) {
+	                        	for (i = 0; i < x.length; i++) {
+	        	                    xlast = x[i][x[i].length-1];
+	        	                    for (k = x[i].length-1; k > 0; k--) {
+	        	                    	x[i][k] = x[i][k-1];
+	        	                    }
+	        	                    x[i][0] = xlast;
+	                            }	
+	                        }
+	                    } // if (odds1 == 1)
+	                    for (i = 0; i < indices[axes[0]].size(); i++) {
+	                    	if (axes[0] == 0) {
+	                    		dest0 = indices[axes[0]].get(i);
+	                    		src0 = i;
+	                    	}
+	                    	else if (axes[0] == 1) {
+	                    		dest1 = indices[axes[0]].get(i);
+	                    		src1 = i;
+	                    	}
+	                    	if (axis0Missing) {
+	                    		outSize = output.length;
+	                    	}
+	                    	else {
+	                    	    outSize = output[0].length;	
+	                    	}
+	                    	for (m = 0; m < outSize; m++) {
+	                    		if (axis0Missing) {
+	                    			dest0 = m;
+	                    			src0 = m;
+	                    		}
+	                    		else if (axis1Missing) {
+	                    			dest1 = m;
+	                    			src1 = m;
+	                    		}
+	                    		output[dest0][dest1] += x[src0][src1];
+	                    	}
+	                    }
+	                    ntransforms += 1;
+                    } // for (odds1 = 0; odds1 <= 1; odds1++)
+                } // else if (ndim_transform == 1)
+                for (i = 0; i < indices[axes[0]].size(); i++) {
+                	if (axes[0] == 0) {
+                		dest0 = indices[axes[0]].get(i);
+                	}
+                	else if (axes[0] == 1) {
+                		dest1 = indices[axes[0]].get(i);
+                	}
+                    for (k = 0; k < endind2; k++) {
+                    	if (ndim_transform >= 2) {
+                    		index2 = indices[axes[1]].get(k);
+                    		if (axes[1] == 0) {
+                        		dest0 = index2;
+                        	}
+                        	else if (axes[1] == 1) {
+                        		dest1 = index2;
+                        	}
+                    	}
+                    	else {
+                    		if (axis0Missing) {
+                    			dest0 = k;
+                    		}
+                    		else {
+                    			dest1 = k;
+                    		}
+                    	}
+                        // normalize
+                        output[dest0][dest1] /= ntransforms;
+                    }
+                }
+            } // for (first2 = 0; first2 < end2; first2++)
+            } // for (first1 = 0; first1 < last_index; first1++)
+            // restore approx coeffs to dict
+            if (ndim_transform == 1) {
+            	coeffs[j].put("a", a);
+            }
+            else if (ndim_transform == 2) {
+            	coeffs[j].put("aa", a);
+            }
+        } // for (j = 0; j < num_levels; j++)
         return output;
     }
     
