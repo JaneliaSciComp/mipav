@@ -16556,17 +16556,17 @@ public  class PyWavelets extends AlgorithmBase {
         	}
         	else if (axes[i] == 2) {
         		axis2Missing = false;
-        }
-        	if (axis0Missing) {
-        		numberAxesMissing++;
-        	}
-        	if (axis1Missing) {
-        		numberAxesMissing++;
-        	}
-        	if (axis2Missing) {
-        		numberAxesMissing++;
         	}
         }
+    	if (axis0Missing) {
+    		numberAxesMissing++;
+    	}
+    	if (axis1Missing) {
+    		numberAxesMissing++;
+    	}
+    	if (axis2Missing) {
+    		numberAxesMissing++;
+    	}
         
 
         // num_levels, equivalent to the decomposition level, n
