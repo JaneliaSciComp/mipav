@@ -10928,6 +10928,55 @@ public  class PyWavelets extends AlgorithmBase {
         return ans;
     }
     
+    public void test_wavelet_coefficients() {
+    	WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
+                WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
+	   DiscreteWavelet current_wavelet;
+	   DiscreteWavelet current_wavelets[];
+	   int i,j;
+	   int numberCorrect = 0;
+	   int numberWrong = 0;
+	   int orders[][] = new int[7][];
+	   orders[0] = new int[]{1}; // HAAR
+	   // RBIO 10, 20, 30, 40, 50, 60 do not work
+	   orders[1] = new int[]{11,13,15,22,24,26,28,31,33,35,37,39,44,55,68}; // RBIO
+	   orders[2] = new int[38]; // DB
+	   for (i = 0; i < 38; i++) {
+	       orders[2][i] = i+1;
+	   }
+	   orders[3] = new int[19]; // SYM
+	   for (i = 0; i < 19; i++) {
+	       orders[3][i] = i+2;
+	   }
+	   orders[4] = new int[17]; // COIF
+	   for (i = 0; i < 17; i++) {
+	       orders[4][i] = i+1;
+	   }
+	   orders[5] = orders[1].clone(); // BIOR
+	   boolean correct;
+	   for (i = 0; i < wName.length; i++) {
+     	    for (j = 0; j < orders[i].length; j++) {
+	      		current_wavelet = discrete_wavelet(wName[i], orders[i][j]);
+	      		if (current_wavelet.base.orthogonal) {
+	      			correct =  check_coefficients_orthogonal(current_wavelet);
+	      		}
+	      		else if (current_wavelet.base.biorthogonal) {
+	      			correct = check_coefficients_biorthogonal(current_wavelet);
+	      		}
+	      		else {
+	      			correct = check_coefficients(current_wavelet);
+	      		}
+	      		if (correct) {
+	      			numberCorrect++;
+	      		}
+	      		else {
+	      			numberWrong++;
+	      		}
+     	    }
+	   }
+       System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
+    }
+    
     boolean check_coefficients_orthogonal(DiscreteWavelet w) {
         int i;
         double epsilon = 5e-11;
