@@ -10141,6 +10141,98 @@ public  class PyWavelets extends AlgorithmBase {
         Preferences.debug("Number correct2 = " + numberCorrect2 + " number wrong2 = " + numberWrong2 + "\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Number correct2 = " + numberCorrect2 + " number wrong2 = " + numberWrong2);
 	}
+	
+	public void test_per_axis_wavelets() {
+	    // tests separate wavelet for each axis.
+		int i,j,k;
+		double data[][][] = new double[16][16][16];
+		double data2[][] = new double[16][16];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		DiscreteWavelet wavelet1 = discrete_wavelet(WAVELET_NAME.HAAR, 1);
+		DiscreteWavelet wavelet2 = discrete_wavelet(WAVELET_NAME.SYM, 2);
+		DiscreteWavelet wavelet3 = discrete_wavelet(WAVELET_NAME.DB, 4);
+		DiscreteWavelet waves1[] = new DiscreteWavelet[]{wavelet1};
+		DiscreteWavelet waves2[] = new DiscreteWavelet[]{wavelet1, wavelet2};
+		DiscreteWavelet waves3[] = new DiscreteWavelet[]{wavelet1, wavelet2, wavelet3};
+		for (i = 0; i < 16; i++) {
+			for (j = 0; j < 16; j++) {
+				for (k = 0; k < 16; k++) {
+		            data[i][j][k] = randomGen.genStandardGaussian();
+				}
+				data2[i][j] = data[i][j][0];
+			}
+		}
+	    int level = 3;
+	    int start_level = 0;
+	    int axes2[] = new int[]{0,1};
+	    int axes3[] = new int[]{0,1,2};
+	    double atol = 1.0E-14;
+	    double rtol = 1.0E-5;
+	    double actualError;
+	    double allowedError;
+	    boolean correct;
+
+	    HashMap<String, double[][][]> coefs[] = swtn(data, waves3, level,start_level, axes3);
+	    double ans[][][] = iswtn(coefs, waves3, axes3);
+	    correct = true;
+        for (i = 0; i < data.length; i++) {
+        	for (j = 0; j < data[i].length; j++) {
+        		for (k = 0; k < data[i][j].length; k++) {
+		        	allowedError = atol + Math.abs(rtol*data[i][j][k]);
+		        	actualError = Math.abs(ans[i][j][k] - data[i][j][k]);
+		        	if (actualError > allowedError) {
+		        		correct = false;
+		        	}
+        		}
+        	}
+        }
+	    if (correct) {
+	    	System.out.println("All close for swtn-iswtn for 3 different wavelets");
+	    }
+	    else {
+	    	System.out.println("swtn-iswtn for 3 different wavelets does not pass");
+	    }
+	    
+	    coefs = swtn(data, waves1, level,start_level, axes3);
+	    ans = iswtn(coefs, waves1, axes3);
+	    correct = true;
+        for (i = 0; i < data.length; i++) {
+        	for (j = 0; j < data[i].length; j++) {
+        		for (k = 0; k < data[i][j].length; k++) {
+		        	allowedError = atol + Math.abs(rtol*data[i][j][k]);
+		        	actualError = Math.abs(ans[i][j][k] - data[i][j][k]);
+		        	if (actualError > allowedError) {
+		        		correct = false;
+		        	}
+        		}
+        	}
+        }
+	    if (correct) {
+	    	System.out.println("All close for swtn-iswtn for 1 wavelet");
+	    }
+	    else {
+	    	System.out.println("swtn-iswtn for 1 wavelet does not pass");
+	    }
+	    
+	    double coefs2[][][] = swt2(data2, waves2, level,start_level, axes2);
+	    double ans2[][] = iswt2(coefs2, waves2);
+	    correct = true;
+        for (i = 0; i < data.length; i++) {
+        	for (j = 0; j < data[i].length; j++) {
+	        	allowedError = atol + Math.abs(rtol*data2[i][j]);
+	        	actualError = Math.abs(ans2[i][j] - data2[i][j]);
+	        	if (actualError > allowedError) {
+	        		correct = false;
+	        	}
+        	}
+        }
+	    if (correct) {
+	    	System.out.println("All close for swt2-iswt2 for 2 wavelets");
+	    }
+	    else {
+	    	System.out.println("swt2-iswt2 for 2 wavelets does not pass");
+	    }
+	}
 	    
 	    public double[][] wavefun(DiscreteWavelet w, int level) {
 	       
