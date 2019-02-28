@@ -63,6 +63,7 @@ public  class PyWavelets extends AlgorithmBase {
 	private boolean showTransform;
 	private boolean showFilteredTransform;
 	private int levels;
+	private int start_level;
 	
 	private final int FILTER_NONE = 0;
 	private final int FILTER_SOFT = 1;
@@ -127,6 +128,11 @@ public  class PyWavelets extends AlgorithmBase {
     private ModelImage imageHLHn_filter[] = null;
     private ModelImage imageLHHn_filter[] = null;
     private ModelImage imageHHHn_filter[] = null;
+    
+    private ModelImage imageAnSWT[] = null;
+    private ModelImage imageAnSWT_filter[] = null;
+    private ModelImage imageLLLnSWT[] = null;
+    private ModelImage imageLLLnSWT_filter[] = null;
     
     private int SINGLE_LEVEL_DWT = 1; // Any number of axes
     private int MULTILEVEL_DWT = 2; // 2 axes for wavedec2 and 3 axes for wavedec3
@@ -4111,7 +4117,7 @@ public  class PyWavelets extends AlgorithmBase {
     public PyWavelets(ModelImage dstImg, ModelImage srcImg, int tType, WAVELET_NAME names[], int orders[],
     		MODE modes[], int axes[], int filterType, double filterVal1,
     		double filterVal2,  boolean showTransform, boolean showFilteredTransform,
-    		int levels) {
+    		int levels, int start_level) {
     	super(dstImg, srcImg);
     	this.tType = tType;
     	this.modes = modes;
@@ -4122,6 +4128,7 @@ public  class PyWavelets extends AlgorithmBase {
     	this.showTransform = showTransform;
     	this.showFilteredTransform = showFilteredTransform;
     	this.levels = levels;
+    	this.start_level = start_level;
     	wavelets = new DiscreteWavelet[names.length];
     	for (int i = 0; i < names.length; i++) {
     		wavelets[i] = discrete_wavelet(names[i], orders[i]);
@@ -5996,7 +6003,748 @@ public  class PyWavelets extends AlgorithmBase {
         	} // else 3D
         } // else if (tType == MULTILEVEL_DWT)
         else if (tType == SWT) {
+          // All decompostions are the same size as the original image
+          // Decompsitions go from start_level+1 to start_level+levels
+          int end_level = start_level+levels+1;
+          if (do2D) {
+        	buffer = new double[length];
+          	bufxy = new double[xDim][yDim];	
+          	filtBuffer = new double[4*length];
+        	if (showTransform) {
+        		imageAnSWT = new ModelImage[levels];
+        		imageHn = new ModelImage[levels];
+        		imageVn = new ModelImage[levels];
+        		imageDn = new ModelImage[levels];
+        		for (i = 0; i < levels; i++) {
+        			int current = start_level + levels - i; 
+        			String curString = String.valueOf(current);
+	        		imageAnSWT[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_A" + curString);
+	        		imageHn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H" + curString);
+	        		imageVn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V" + curString);
+	        		imageDn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_D" + curString);
+        		}
+        	}
         	
+        	if (showFilteredTransform) {
+        		imageAnSWT_filter = new ModelImage[levels];
+        		imageHn_filter = new ModelImage[levels];
+        		imageVn_filter = new ModelImage[levels];
+        		imageDn_filter = new ModelImage[levels];
+        		for (i = 0; i < levels; i++) {
+        			int current = start_level + levels - i; 
+        			String curString = String.valueOf(current) + "_filter";
+	        		imageAnSWT_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_A" + curString);
+	        		imageHn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H" + curString);
+	        		imageVn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V" + curString);
+	        		imageDn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_D" + curString);
+        		}	
+        	}
+          	for (z = 0; z < zDim; z++)	{
+              	try {
+                      srcImage.exportData(z * length, length, buffer);
+                  } catch (IOException e) {
+                      MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+
+                      setCompleted(false);
+
+                      return;
+                  }
+              	for (y = 0; y < yDim; y++) {
+              		for (x = 0; x < xDim; x++) {
+              			bufxy[x][y] = buffer[x + y * xDim];
+              	    }
+              	}
+                // Expect arr.length = 4 * levels  
+              	HashMap<String, double[][]> coeffsMap[] = swtn(bufxy, wavelets, levels, start_level, axes);
+        		double arr[][][] = new double[4*coeffsMap.length][][];
+        		for (i = 0; i < coeffsMap.length; i++) {
+        		    arr[4*i] = coeffsMap[i].get("aa");
+        	        arr[4*i+1] = coeffsMap[i].get("da");
+        	        arr[4*i+2] = coeffsMap[i].get("ad");
+        	        arr[4*i+3] = coeffsMap[i].get("dd");
+        		}
+              	if (showTransform) {
+              	    for (i = 0; i < arr.length/4; i++) {
+              	    	double cA[][] = arr[4*i];
+              	    	double cH[][] = arr[4*i+1];
+              	    	double cV[][] = arr[4*i+2];
+              	    	double cD[][] = arr[4*i+3];
+              	    	for (y = 0; y < yDim; y++) {
+              	    		for (x = 0; x < xDim; x++) {
+                                buffer[x + y * xDim] = cA[x][y];
+              	    		}
+              	    	} 
+              	    	try {
+              	    		imageAnSWT[i].importData(z * length, buffer, false);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageAnSWT["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (y = 0; y < yDim; y++) {
+              	    		for (x = 0; x < xDim; x++) {
+                                buffer[x + y * xDim] = cH[x][y];
+              	    		}
+              	    	} 
+              	    	try {
+              	    		imageHn[i].importData(z * length, buffer, false);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHn["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (y = 0; y < yDim; y++) {
+              	    		for (x = 0; x < xDim; x++) {
+                                buffer[x + y * xDim] = cV[x][y];
+              	    		}
+              	    	} 
+              	    	try {
+              	    		imageVn[i].importData(z * length, buffer, false);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageVn["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (y = 0; y < yDim; y++) {
+              	    		for (x = 0; x < xDim; x++) {
+                                buffer[x + y * xDim] = cD[x][y];
+              	    		}
+              	    	} 
+              	    	try {
+              	    		imageDn[i].importData(z * length, buffer, false);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageDn["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    } // for (i = 0; i < arr.length/4; i++)
+              	} // if (showTransform)
+              	if (filterType != FILTER_NONE) {
+                	for (i = 0; i < 4; i++) {
+                		for (x = 0; x < xDim; x++) {
+                			for (y = 0; y < yDim; y++) {
+                				filtBuffer[i*length + y*xDim + x] = arr[i][x][y];
+                			}
+                		}
+                	}
+                	filter(filtBuffer, filterType, filterVal1, filterVal2);
+                	for (i = 0; i < 4; i++) {
+                		for (x = 0; x < xDim; x++) {
+                			for (y = 0; y < yDim; y++) {
+                				arr[i][x][y] = filtBuffer[i*length + y*xDim + x];
+                			}
+                		}
+                	}
+                	if (showFilteredTransform) {
+                		for (i = 0; i < arr.length/4; i++) {
+                  	    	double cA[][] = arr[4*i];
+                  	    	double cH[][] = arr[4*i+1];
+                  	    	double cV[][] = arr[4*i+2];
+                  	    	double cD[][] = arr[4*i+3];
+                  	    	for (y = 0; y < yDim; y++) {
+                  	    		for (x = 0; x < xDim; x++) {
+                                    buffer[x + y * xDim] = cA[x][y];
+                  	    		}
+                  	    	} 
+                  	    	try {
+                  	    		imageAnSWT_filter[i].importData(z * length, buffer, false);
+                  	    	}
+                  	    	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageAnSWT_filter["+i+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+                  	    	
+                  	    	for (y = 0; y < yDim; y++) {
+                  	    		for (x = 0; x < xDim; x++) {
+                                    buffer[x + y * xDim] = cH[x][y];
+                  	    		}
+                  	    	} 
+                  	    	try {
+                  	    		imageHn_filter[i].importData(z * length, buffer, false);
+                  	    	}
+                  	    	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageHn_filter["+i+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+                  	    	
+                  	    	for (y = 0; y < yDim; y++) {
+                  	    		for (x = 0; x < xDim; x++) {
+                                    buffer[x + y * xDim] = cV[x][y];
+                  	    		}
+                  	    	} 
+                  	    	try {
+                  	    		imageVn_filter[i].importData(z * length, buffer, false);
+                  	    	}
+                  	    	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageVn_filter["+i+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+                  	    	
+                  	    	for (y = 0; y < yDim; y++) {
+                  	    		for (x = 0; x < xDim; x++) {
+                                    buffer[x + y * xDim] = cD[x][y];
+                  	    		}
+                  	    	} 
+                  	    	try {
+                  	    		imageDn_filter[i].importData(z * length, buffer, false);
+                  	    	}
+                  	    	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageDn_filter["+i+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+                  	    } // for (i = 0; i < arr.length/4; i++)	
+                	} // if (showFilteredTransform)
+              	} // if (filterType != FILTER_NONE)
+              	bufxy = iswtn2(coeffsMap, wavelets,axes);
+              	for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            	        buffer[x + y * xDim] = bufxy[x][y];
+            	    }
+            	}
+            	try {
+            		destImage.importData(z * length, buffer, false);
+            	}
+            	catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+                    setCompleted(false);
+
+                    return;
+                }
+          	} // for (z = 0; z < zDim; z++)
+          	destImage.calcMinMax();
+            if (showTransform) {
+            	for (i = 0; i < levels; i++) {
+	            	imageAnSWT[i].calcMinMax();
+	            	imageHn[i].calcMinMax();
+	            	imageVn[i].calcMinMax();
+	            	imageDn[i].calcMinMax();
+	            	JDialogBase.updateFileInfo(srcImage, imageAnSWT[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageVn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageDn[i]);
+	            	new ViewJFrameImage(imageAnSWT[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageVn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageDn[i], null, new Dimension(610, 200 + (index++ * 20)));
+            	}
+            }
+            if (showFilteredTransform) {
+            	for (i = 0; i < levels; i++) {
+	            	imageAnSWT_filter[i].calcMinMax();
+	            	imageHn_filter[i].calcMinMax();
+	            	imageVn_filter[i].calcMinMax();
+	            	imageDn_filter[i].calcMinMax();
+	            	JDialogBase.updateFileInfo(srcImage, imageAnSWT_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageVn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageDn_filter[i]);
+	            	new ViewJFrameImage(imageAnSWT_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageVn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageDn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+            	}
+            }
+            setCompleted(true);
+            return;
+          } // if (do2D)
+          else { // 3D
+        	buffer = new double[volume];
+          	filtBuffer = new double[8*volume];
+          	bufxyz = new double[xDim][yDim][zDim];
+          	if (showTransform) {
+          		imageLLLnSWT = new ModelImage[levels];
+          		imageHLLn = new ModelImage[levels];
+          		imageLHLn = new ModelImage[levels];
+          		imageHHLn = new ModelImage[levels];
+          		imageLLHn = new ModelImage[levels];
+          		imageHLHn = new ModelImage[levels];
+          		imageLHHn = new ModelImage[levels];
+          		imageHHHn = new ModelImage[levels];
+          		for (i = 0; i < levels; i++) {
+        			int current = start_level + levels - i; 
+        			String curString = String.valueOf(current);
+        			imageLLLnSWT[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL" + curString);
+              		imageHLLn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL" + curString);
+              		imageLHLn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL" + curString);
+              		imageHHLn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL" + curString);
+              		imageLLHn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH" + curString);
+              		imageHLHn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH" + curString);
+              		imageLHHn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH" + curString);
+              		imageHHHn[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH" + curString);
+          		}
+          	} // if (showTransform)
+          	
+          	if (showFilteredTransform) {
+          		imageLLLnSWT_filter = new ModelImage[levels];
+          		imageHLLn_filter = new ModelImage[levels];
+          		imageLHLn_filter = new ModelImage[levels];
+          		imageHHLn_filter = new ModelImage[levels];
+          		imageLLHn_filter = new ModelImage[levels];
+          		imageHLHn_filter = new ModelImage[levels];
+          		imageLHHn_filter = new ModelImage[levels];
+          		imageHHHn_filter = new ModelImage[levels];
+          		for (i = 0; i < levels; i++) {
+        			int current = start_level + levels - i; 
+        			String curString = String.valueOf(current) + "_filter";
+        			imageLLLnSWT_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL" + curString);
+              		imageHLLn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL" + curString);
+              		imageLHLn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL" + curString);
+              		imageHHLn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL" + curString);
+              		imageLLHn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH" + curString);
+              		imageHLHn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH" + curString);
+              		imageLHHn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH" + curString);
+              		imageHHHn_filter[i] = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH" + curString);
+          		}	
+          	} // if (showFilteredTransform)
+          	try {
+                srcImage.exportData(0, volume, buffer);
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+
+                setCompleted(false);
+
+                return;
+            }
+        	for (z = 0; z < zDim; z++) {
+	        	for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			bufxyz[x][y][z] = buffer[x + y * xDim + z * length];
+	        	    }
+	        	}
+        	}
+        	// Expect arr.length = 8 * levels  
+          	HashMap<String, double[][][]> coeffsMap[] = swtn(bufxyz, wavelets, levels, start_level, axes);
+    		double arr[][][][] = new double[8*coeffsMap.length][][][];
+    		for (i = 0; i < coeffsMap.length; i++) {
+    		    arr[8*i] = coeffsMap[i].get("aaa");
+    	        arr[8*i+1] = coeffsMap[i].get("daa");
+    	        arr[8*i+2] = coeffsMap[i].get("ada");
+    	        arr[8*i+3] = coeffsMap[i].get("dda");
+    	        arr[8*i+4] = coeffsMap[i].get("aad");
+    	        arr[8*i+5] = coeffsMap[i].get("dad");
+    	        arr[8*i+6] = coeffsMap[i].get("add");
+    	        arr[8*i+7] = coeffsMap[i].get("ddd");
+    		}
+    		if (showTransform) {
+    			for (i = 0; i < arr.length/8; i++) {
+          	    	double LLL[][][] = arr[8*i];
+          	    	double HLL[][][] = arr[8*i+1];
+          	    	double LHL[][][] = arr[8*i+2];
+          	    	double HHL[][][] = arr[8*i+3];
+          	    	double LLH[][][] = arr[8*i+4];
+          	    	double HLH[][][] = arr[8*i+5];
+          	    	double LHH[][][] = arr[8*i+6];
+          	    	double HHH[][][] = arr[8*i+7];
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = LLL[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageLLLnSWT[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLLLnSWT["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+          	    	
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = HLL[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageHLLn[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageHLLn["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+          	    	
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = LHL[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageLHLn[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLHLn["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+          	    	
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = HHL[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageHHLn[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageHHLn["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+          	    	
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = LLH[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageLLHn[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLLHn["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+          	    	
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = HLH[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageHLHn[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageHLHn["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+          	    	
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = LHH[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageLHHn[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLHHn["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+          	    	
+          	    	for (z = 0; z < zDim; z++) {
+	          	    	for (y = 0; y < yDim; y++) {
+	          	    		for (x = 0; x < xDim; x++) {
+	                            buffer[x + y * xDim] = HHH[x][y][z];
+	          	    		}
+	          	    	} 
+          	    	}
+          	    	try {
+          	    		imageHHHn[i].importData(0, buffer, true);
+          	    	}
+          	    	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageHHHn["+i+"].importData");
+
+	                    setCompleted(false);
+
+	                    return;
+	                }
+    			} // for (i = 0; i < arr.length/8; i++)
+    		} // if (showTransform)
+    		if (filterType != FILTER_NONE) {
+            	for (i = 0; i < 8; i++) {
+            		for (x = 0; x < xDim; x++) {
+            			for (y = 0; y < yDim; y++) {
+            				for (z = 0; z < zDim; z++) {
+            				    filtBuffer[i*volume + z*length + y*xDim + x] = arr[i][x][y][z];
+            				}
+            			}
+            		}
+            	}
+            	filter(filtBuffer, filterType, filterVal1, filterVal2);
+            	for (i = 0; i < 8; i++) {
+            		for (x = 0; x < xDim; x++) {
+            			for (y = 0; y < yDim; y++) {
+            				for (z = 0; z < zDim; z++) {
+            				arr[i][x][y][z] = filtBuffer[i*volume + z*length + y*xDim + x];
+            				}
+            			}
+            		}
+            	}
+            	if (showFilteredTransform) {
+            		for (i = 0; i < arr.length/8; i++) {
+              	    	double LLL[][][] = arr[8*i];
+              	    	double HLL[][][] = arr[8*i+1];
+              	    	double LHL[][][] = arr[8*i+2];
+              	    	double HHL[][][] = arr[8*i+3];
+              	    	double LLH[][][] = arr[8*i+4];
+              	    	double HLH[][][] = arr[8*i+5];
+              	    	double LHH[][][] = arr[8*i+6];
+              	    	double HHH[][][] = arr[8*i+7];
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = LLL[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageLLLnSWT_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageLLLnSWT_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = HLL[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageHLLn_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHLLn_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = LHL[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageLHLn_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageLHLn_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = HHL[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageHHLn_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHHLn_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = LLH[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageLLHn_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageLLHn_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = HLH[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageHLHn_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHLHn_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = LHH[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageLHHn_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageLHHn_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+              	    	
+              	    	for (z = 0; z < zDim; z++) {
+    	          	    	for (y = 0; y < yDim; y++) {
+    	          	    		for (x = 0; x < xDim; x++) {
+    	                            buffer[x + y * xDim] = HHH[x][y][z];
+    	          	    		}
+    	          	    	} 
+              	    	}
+              	    	try {
+              	    		imageHHHn_filter[i].importData(0, buffer, true);
+              	    	}
+              	    	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHHHn_filter["+i+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+        			} // for (i = 0; i < arr.length/8; i++)	
+            	} // if (showFilteredTransform)
+            } // if (filterType != FILTER_NONE)
+    		bufxyz = iswtn(coeffsMap, wavelets,axes);
+    		for (z = 0; z < zDim; z++) {
+	          	for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        	        buffer[x + y * xDim + z * length] = bufxyz[x][y][z];
+	        	    }
+	        	}
+    		}
+        	try {
+        		destImage.importData(0, buffer, true);
+        	}
+        	catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+                setCompleted(false);
+
+                return;
+            }
+        	if (showTransform) {
+        		for (i = 0; i < levels; i++) {
+	            	JDialogBase.updateFileInfo(srcImage, imageLLLnSWT[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLLn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHLn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHLn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageLLHn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLHn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHHn[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHHn[i]);
+	            	new ViewJFrameImage(imageLLLnSWT[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLLn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHLn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHLn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLLHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+        		}
+            }
+            if (showFilteredTransform) {
+            	for (i = 0; i < levels; i++) {
+	            	JDialogBase.updateFileInfo(srcImage, imageLLLnSWT_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLLn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHLn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHLn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageLLHn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLHn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHHn_filter[i]);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHHn_filter[i]);
+	            	new ViewJFrameImage(imageLLLnSWT_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLLn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHLn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHLn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLLHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+        		}	
+            }
+            setCompleted(true);
+            return;
+          } // else 3D
         } // else if (tType == SWT)
     }
     
