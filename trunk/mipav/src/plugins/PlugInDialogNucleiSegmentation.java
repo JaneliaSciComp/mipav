@@ -400,7 +400,7 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         setSplitImgSizeThresholdMB(splitThreshMB);
         
         if (splitImgFlag) {
-            Vector<File> newFileList = new Vector<File>(inputFiles.size() * splitImgNum * 2);
+            Vector<File> newFileList = new Vector<File>(inputFiles.size() * splitImgNum * splitImgNum);
             for (File origFile : inputFiles) {
                 long sizeMB = origFile.length() / 1024 / 1024;
                 
@@ -912,7 +912,7 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
     }
     
     private File[] splitFile(File origFile, int numTiles) {
-        File[] splitFiles = new File[numTiles * 2];
+        File[] splitFiles = new File[numTiles * numTiles];
         
         ModelImage origImg = openFile(origFile);
         
