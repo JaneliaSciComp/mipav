@@ -153,7 +153,7 @@ public  class PyWavelets extends AlgorithmBase {
     }
 
     /* Signal extension modes */
-    private enum MODE {
+    public enum MODE {
            MODE_INVALID (-1),
            MODE_ZEROPAD (0),   /* default, signal extended with zeros */
            MODE_SYMMETRIC(1),     /* signal extended symmetrically (mirror)
@@ -205,7 +205,7 @@ public  class PyWavelets extends AlgorithmBase {
     }
     
     /* Wavelet name */
-    private enum WAVELET_NAME {
+    public enum WAVELET_NAME {
         HAAR,
         RBIO,
         DB,
@@ -4092,8 +4092,8 @@ public  class PyWavelets extends AlgorithmBase {
     }
 
     
-    public PyWavelets(ModelImage dstImg, ModelImage srcImg, int tType, WAVELET_NAME names[], int orders[],
-    		MODE modes[], int axes[], int filterType[], double filterVal1[],
+    public PyWavelets(ModelImage dstImg, ModelImage srcImg, int tType, PyWavelets.WAVELET_NAME[] names, int orders[],
+    		MODE[] modes, int axes[], int filterType[], double filterVal1[],
     		double filterVal2[],  boolean showTransform, boolean showFilteredTransform,
     		int levels, int start_level) {
     	super(dstImg, srcImg);
