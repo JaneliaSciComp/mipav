@@ -7,24 +7,15 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJComponentGraph;
-import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Dimension;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-
-import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
 Copyright (c) 2006-2012 Filip Wasilewski <http://en.ig.ma/>
@@ -51,8 +42,6 @@ SOFTWARE.
 
 public  class PyWavelets extends AlgorithmBase {
 	
-    
-    private double epsilon;
     private int tType;
     private DiscreteWavelet wavelets[];
 	private MODE modes[]; 
@@ -152,7 +141,6 @@ public  class PyWavelets extends AlgorithmBase {
         Coefficient(int type) {
         	this.type = type;
         }
-        private int type() {return type;}
     }
 
     private enum DiscreteTransformType {
@@ -162,7 +150,6 @@ public  class PyWavelets extends AlgorithmBase {
         DiscreteTransformType (int type) {
         	this.type = type;
         }
-        private int type() {return type;}
     }
 
     /* Signal extension modes */
@@ -215,7 +202,6 @@ public  class PyWavelets extends AlgorithmBase {
         SYMMETRY(int type) {
         	this.type = type;
         }
-        private int type() {return type;}
     }
     
     /* Wavelet name */
@@ -285,7 +271,6 @@ public  class PyWavelets extends AlgorithmBase {
         boolean biorthogonal = false;
         boolean compact_support = false;
 
-        int _builtin;
         String family_name = null;
         String short_name = null;
         String name = null;
@@ -315,13 +300,6 @@ public  class PyWavelets extends AlgorithmBase {
         double bandwidth_frequency;
         int fbsp_order;
         int family_number;
-    }
-    
-    private void SWAP_FLOAT_ARRAY(float x[], float y[]) {
-    	float tmp[];
-    	tmp = x;
-    	x = y;
-    	y = tmp;
     }
     
     private void SWAP_DOUBLE_ARRAY(double x[], double y[]) {
@@ -4024,11 +4002,11 @@ public  class PyWavelets extends AlgorithmBase {
 		return dwt_max_level(input_len, filter_len);
 	}
 
-	private void free_continuous_wavelet(ContinuousWavelet w){
+	//private void free_continuous_wavelet(ContinuousWavelet w){
 
         /* finally free struct */
-        w = null;
-    }
+   //     w = null;
+    //}
     
     /* Returns the floor of the base-2 log of it's input
     *
@@ -6750,27 +6728,6 @@ public  class PyWavelets extends AlgorithmBase {
     	}
     	return;
     }
-    
-    private void computeEpsilon() {
-    	// epsilon = D1MACH(4)
-        // Machine epsilon is the smallest positive epsilon such that
-        // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.2204460e-16
-        // epsilon is called the largest relative spacing
-        epsilon = 1.0;
-        double neweps = 1.0;
-
-        while (true) {
-
-            if (1.0 == (1.0 + neweps)) {
-                break;
-            } else {
-                epsilon = neweps;
-                neweps = neweps / 2.0;
-            }
-        } // while(true)	
-    }
 	
     /* downsampling convolution routine specific to periodization mode.
     *
@@ -7438,13 +7395,13 @@ public  class PyWavelets extends AlgorithmBase {
    }
    
    /* -> swt - todo */
-   private int upsampled_filter_convolution(double input[], int N,
-                                                double filter[], int F,
-                                                double output[],
-                                                int step, MODE mode)
-   {
-       return -1;
-   }
+   //private int upsampled_filter_convolution(double input[], int N,
+   //                                             double filter[], int F,
+   //                                             double output[],
+   //                                             int step, MODE mode)
+   //{
+   //    return -1;
+   //}
    
    private void gaus(double input[],
            double output[], int N,
@@ -7601,7 +7558,7 @@ public  class PyWavelets extends AlgorithmBase {
     /* _d suffix - wavelet transform details */
     /* Decomposition of input with lowpass filter */
 
-    private int downcoef_axis(double input[], ArrayInfo input_info,
+    /*private int downcoef_axis(double input[], ArrayInfo input_info,
                                   double output[], ArrayInfo output_info,
                                   DiscreteWavelet wavelet, int axis,
                                   Coefficient coef, MODE dwt_mode,
@@ -7752,7 +7709,7 @@ public  class PyWavelets extends AlgorithmBase {
         temp_input = null;
         temp_output = null;
         return 0;
-    }
+    }*/
 
 
     // a_info and d_info are pointers, as they may be NULL
@@ -8709,9 +8666,9 @@ public  class PyWavelets extends AlgorithmBase {
         //assert_raises(ValueError, pywt.idwt, None, None, 'db2', 'symmetric')
     }
     
-    public void test_dwt_single_axis() {
-        double x[][] = new double[][]{{3, 7, 1, 1},
-             {-2, 5, 4, 6}};
+    //public void test_dwt_single_axis() {
+    //    double x[][] = new double[][]{{3, 7, 1, 1},
+    //         {-2, 5, 4, 6}};
              //axis: int, optional
              //Axis over which to compute the DWT. If not given, the
              //last axis is used.
@@ -8728,7 +8685,7 @@ public  class PyWavelets extends AlgorithmBase {
 
         //assert_allclose(cD[0], cD0)
         //assert_allclose(cD[1], cD1)
-    }
+    //}
     
     private double[] linspace(double LB, double UB, int N) {
     	int i;
@@ -9079,8 +9036,8 @@ public  class PyWavelets extends AlgorithmBase {
         for (num = 1; num <= 8; num++) {
             double psix[][] = ref_gaus(LB, UB, N, num);
             double psi[] = psix[0];
-            double x[] = psix[1];
-            ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.GAUS,num);
+            //double x[] = psix[1];
+            //ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.GAUS,num);
             // In continuous_wavelet case GAUS: w.lower_bound = -5 w.upper_bound = 5
             // so grid is simply linspace(-5, 5, N), the same as generated in ref_gaus
             //PSI, X = w.wavefun(length=N)
@@ -9103,8 +9060,8 @@ public  class PyWavelets extends AlgorithmBase {
             double psix[][] = ref_cgau(LB, UB, N, num);
             double psir[] = psix[0];
             double psii[] = psix[1];
-            double x[] = psix[2];
-            ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.CGAU,num);
+            //double x[] = psix[2];
+            //ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.CGAU,num);
             // In continuous_wavelet case CGAU: w.lower_bound = -5 w.upper_bound = 5
             // so grid is simply linspace(-5, 5, N), the same as generated in ref_cgau
             //PSI, X = w.wavefun(length=N)
@@ -9130,7 +9087,7 @@ public  class PyWavelets extends AlgorithmBase {
         double psix[][] = ref_shan(LB, UB, N, Fb, Fc);
         double psir[] = psix[0];
         double psii[] = psix[1];
-        double x[] = psix[2];
+        //double x[] = psix[2];
         ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.SHAN,0);
         w.center_frequency = Fc;
         w.bandwidth_frequency = Fb;
@@ -9155,7 +9112,7 @@ public  class PyWavelets extends AlgorithmBase {
         psix = ref_shan(LB, UB, N, Fb, Fc);
         psir = psix[0];
         psii = psix[1];
-        x = psix[2];
+        //x = psix[2];
         //w = continuous_wavelet(WAVELET_NAME.SHAN,0);
         w.center_frequency = Fc;
         w.bandwidth_frequency = Fb;
@@ -9180,7 +9137,7 @@ public  class PyWavelets extends AlgorithmBase {
         double psix[][] = ref_cmor(LB, UB, N, Fb, Fc);
         double psir[] = psix[0];
         double psii[] = psix[1];
-        double x[] = psix[2];
+        //double x[] = psix[2];
         ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.CMOR,0);
         w.center_frequency = Fc;
         w.bandwidth_frequency = Fb;
@@ -9205,7 +9162,7 @@ public  class PyWavelets extends AlgorithmBase {
         psix = ref_cmor(LB, UB, N, Fb, Fc);
         psir = psix[0];
         psii = psix[1];
-        x = psix[2];
+        //x = psix[2];
         w = continuous_wavelet(WAVELET_NAME.CMOR,0);
         w.center_frequency = Fc;
         w.bandwidth_frequency = Fb;
@@ -9231,7 +9188,7 @@ public  class PyWavelets extends AlgorithmBase {
         double psix[][] = ref_fbsp(LB, UB, N, M, Fb, Fc);
         double psir[] = psix[0];
         double psii[] = psix[1];
-        double x[] = psix[2];
+        //double x[] = psix[2];
         ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.FBSP,0);
         w.center_frequency = Fc;
         w.bandwidth_frequency = Fb;
@@ -9258,7 +9215,7 @@ public  class PyWavelets extends AlgorithmBase {
         psix = ref_fbsp(LB, UB, N, M, Fb, Fc);
         psir = psix[0];
         psii = psix[1];
-        x = psix[2];
+        //x = psix[2];
         //w = continuous_wavelet(WAVELET_NAME.FBSP,0);
         w.center_frequency = Fc;
         w.bandwidth_frequency = Fb;
@@ -9283,7 +9240,7 @@ public  class PyWavelets extends AlgorithmBase {
         psix = ref_fbsp(LB, UB, N, M, Fb, Fc);
         psir = psix[0];
         psii = psix[1];
-        x = psix[2];
+        //x = psix[2];
         //w = continuous_wavelet(WAVELET_NAME.FBSP,0);
         w.center_frequency = Fc;
         w.bandwidth_frequency = Fb;
@@ -9307,7 +9264,7 @@ public  class PyWavelets extends AlgorithmBase {
 
         double psix[][] = ref_morl(LB, UB, N);
         double psi[] = psix[0];
-        double x[] = psix[1];
+        //double x[] = psix[1];
         ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.MORL,0);
         w.upper_bound = UB;
         w.lower_bound = LB;
@@ -9328,7 +9285,7 @@ public  class PyWavelets extends AlgorithmBase {
 
         double psix[][] = ref_mexh(LB, UB, N);
         double psi[] = psix[0];
-        double x[] = psix[1];
+        //double x[] = psix[1];
         ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.MEXH,0);
         w.upper_bound = UB;
         w.lower_bound = LB;
@@ -9346,7 +9303,7 @@ public  class PyWavelets extends AlgorithmBase {
 
         psix = ref_mexh(LB, UB, N);
         psi = psix[0];
-        x = psix[1];
+        //x = psix[1];
         //w = continuous_wavelet(WAVELET_NAME.MEXH,0);
         w.upper_bound = UB;
         w.lower_bound = LB;
@@ -9371,7 +9328,7 @@ public  class PyWavelets extends AlgorithmBase {
         // cfs, f = cwt(data, scales=0.1, wavelet='mexh', sampling_period)
         double ans[][][] = cwt(data, scales, w, sampling_period);
         double cfs[][] = ans[0];
-        double f[] = ans[1][0];
+        //double f[] = ans[1][0];
         //assert_allclose(cfs, np.zeros_like(cfs))
         for (i = 0; i < cfs.length; i++) {
         	for (j = 0; j < cfs[i].length; j++) {
@@ -9389,7 +9346,7 @@ public  class PyWavelets extends AlgorithmBase {
 	        //w = pywt.Wavelet('db3')
 	    	int i;
 	    	DiscreteWavelet w = discrete_wavelet(WAVELET_NAME.DB, 3);
-	        MODE mode = MODE.MODE_SYMMETRIC;
+	        //MODE mode = MODE.MODE_SYMMETRIC;
 	
 	        //# Name
 	        System.out.println("Actual w.base.name = " + w.base.name + " Expected w.base.name = " + "db3");
@@ -10787,9 +10744,9 @@ public  class PyWavelets extends AlgorithmBase {
 		 int axes[] = new int[]{0,1};
 		 double arr[][][] = dwt2(data, wavelets, modes, axes);
 		 double cA[][] = arr[0];
-		 double CH[][] = arr[1];
+		 //double CH[][] = arr[1];
 		 double cV[][] = arr[2];
-		 double cD[][] = arr[3];
+		 //double cD[][] = arr[3];
 		 for (i = 0; i < 2; i++) {
 			 for (j = 0; j < 2; j++) {
 				 System.out.println("cA["+i+"]["+j+"] = " + cA[i][j] + " expected = 2");
@@ -11050,7 +11007,7 @@ public  class PyWavelets extends AlgorithmBase {
 	
 	public void test_waverec_all_wavelets_modes() {
 	    // test 1D case using all wavelets and modes
-		int i,j,k,m,n;
+		int i,j,k,m;
 		boolean correct;
 		RandomNumberGen randomGen = new RandomNumberGen();
 		double r[] = new double[80];
@@ -11060,8 +11017,6 @@ public  class PyWavelets extends AlgorithmBase {
 		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
                 WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
 	   DiscreteWavelet w;
-	   DiscreteWavelet wavelets[];
-	   MODE modes[];
 	   int numberCorrect = 0;
 	   int numberWrong = 0;
 	   int orders[][] = new int[7][];
@@ -12543,7 +12498,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    axes[0] = new int[]{0};
 	    axes[1] = new int[]{1};
 	    axes[2] = new int[]{0,1};
-	    int h,i,j,k,m,n,p, index;
+	    int h,i,j,k,m,n, index;
 		WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
                 WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
 	   DiscreteWavelet current_wavelet;
@@ -12962,13 +12917,9 @@ public  class PyWavelets extends AlgorithmBase {
 	        int right_extent_length;
 	        int output_length;
 	        int keep_length;
-	        //double n, n_mul;
-	        //cdef np.float64_t[::1] n_arr = <np.float64_t[:1]> &n,
-	        //cdef np.float64_t[::1] n_mul_arr = <np.float64_t[:1]> &n_mul
 	        double n_arr[] = new double[1];
 	        double n_mul_arr[] = new double[1];
 	        double p;
-	        double mul;
 	        DiscreteWavelet other;
 	        double phi[];
 	        double psi[];
@@ -12977,8 +12928,6 @@ public  class PyWavelets extends AlgorithmBase {
 	        double psi_d[];
 	        double phi_r[];
 	        double psi_r[];
-	        //cdef psi_i
-	        //cdef np.float64_t[::1] x, psi
 	        double ans[][];
 
 	        n_arr[0] = Math.pow(Math.sqrt(2.0), (double)level);
@@ -13156,7 +13105,6 @@ public  class PyWavelets extends AlgorithmBase {
 	        double psi_r[];
 	        double psi[];
 	        double x64[];
-	        double psi64[];
 
 	        double p = Math.pow(2., (double)level);
 
@@ -13527,7 +13475,7 @@ public  class PyWavelets extends AlgorithmBase {
 	   return rec;
    }
     
-    private DiscreteWavelet Wavelet(String name, double filter_bank[][]) {
+    /*private DiscreteWavelet Wavelet(String name, double filter_bank[][]) {
     	int i;
     	DiscreteWavelet w = new DiscreteWavelet();
     	w.base = new BaseWavelet();
@@ -13551,7 +13499,7 @@ public  class PyWavelets extends AlgorithmBase {
     	w.dec_len = w.dec_lo.length;
     	w.rec_len = w.rec_lo.length;
     	return w;
-    }
+    }*/
     
     
     private DiscreteWavelet Wavelet(double filter_bank[][]) {
@@ -13579,7 +13527,7 @@ public  class PyWavelets extends AlgorithmBase {
     	return w;
     }
     
-    private double[][] filter_bank(DiscreteWavelet w) {
+    /*private double[][] filter_bank(DiscreteWavelet w) {
         // Returns tuple of wavelet filters coefficients
         // (dec_lo, dec_hi, rec_lo, rec_hi)
         double ans[][] = new double[4][];
@@ -13588,7 +13536,7 @@ public  class PyWavelets extends AlgorithmBase {
         ans[2] = w.rec_lo;
         ans[3] = w.rec_hi;
         return ans;
-    }
+    }*/
     
     private double[][] inverse_filter_bank(DiscreteWavelet w) {
         // Tuple of inverse wavelet filters coefficients
@@ -13623,7 +13571,6 @@ public  class PyWavelets extends AlgorithmBase {
     	WAVELET_NAME wName[] = new WAVELET_NAME[]{WAVELET_NAME.HAAR, WAVELET_NAME.RBIO, WAVELET_NAME.DB, WAVELET_NAME.SYM,
                 WAVELET_NAME.COIF, WAVELET_NAME.BIOR};
 	   DiscreteWavelet current_wavelet;
-	   DiscreteWavelet current_wavelets[];
 	   int i,j;
 	   int numberCorrect = 0;
 	   int numberWrong = 0;
@@ -13676,7 +13623,7 @@ public  class PyWavelets extends AlgorithmBase {
         double ans[][] = wavefun(w, level);
         double phi[] = ans[0];
         double psi[] = ans[1];
-        double x[] = ans[2];
+        //double x[] = ans[2];
 
         // Lowpass filter coefficients sum to sqrt2
         double sumdec_lo = 0.0;
@@ -13759,10 +13706,10 @@ public  class PyWavelets extends AlgorithmBase {
         //phi_d, psi_d, phi_r, psi_r, x = w.wavefun(level=level)
         double ans[][] = wavefun(w, level);
         double phi_d[] = ans[0];
-        double psi_d[] = ans[1];
+        //double psi_d[] = ans[1];
         double phi_r[] = ans[2];
-        double psi_r[] = ans[3];
-        double x[] = ans[4];
+        //double psi_r[] = ans[3];
+        //double x[] = ans[4];
 
         // Lowpass filter coefficients sum to sqrt2
         double sumdec_lo = 0.0;
@@ -13831,7 +13778,6 @@ public  class PyWavelets extends AlgorithmBase {
     private boolean check_coefficients(DiscreteWavelet w) {
     	int i;
         double epsilon = 5e-11;
-        int level = 10;
         
         // Lowpass filter coefficients sum to sqrt2
         double sumdec_lo = 0.0;
@@ -14305,7 +14251,7 @@ public  class PyWavelets extends AlgorithmBase {
         double functions_approximations[][] = wavefun(wavelet, precision);
 
         if (functions_approximations.length == 3) { //   # orthogonal wavelet
-        	double phi[] = functions_approximations[0];
+        	//double phi[] = functions_approximations[0];
         	double psi[] = functions_approximations[1];
         	double x[] = functions_approximations[2];
             double step = x[1] - x[0];
@@ -14316,9 +14262,9 @@ public  class PyWavelets extends AlgorithmBase {
             return ans;
         }
         else {       //                               # biorthogonal wavelet
-            double phi_d[] = functions_approximations[0];
+           // double phi_d[] = functions_approximations[0];
             double psi_d[] = functions_approximations[1];
-            double phi_r[] = functions_approximations[2];
+            //double phi_r[] = functions_approximations[2];
             double psi_r[] = functions_approximations[3];
             double x[] = functions_approximations[4];
             double step = x[1] - x[0];
@@ -14958,7 +14904,7 @@ public  class PyWavelets extends AlgorithmBase {
         return ans;
     }
     
-    private double[] _sign(double x[]) {
+    /*private double[] _sign(double x[]) {
 	    // Matlab-like sign function (numpy uses a different convention).
 		double ret[] = new double [x.length];
 		int i;
@@ -14966,9 +14912,9 @@ public  class PyWavelets extends AlgorithmBase {
 			ret[i] = x[i]/Math.abs(x[i]);
 		}
 	    return ret;
-	}
+	}*/
 
-	private double[][] _sign(double xReal[], double xImag[]) {
+	/*private double[][] _sign(double xReal[], double xImag[]) {
         // Matlab-like sign function (numpy uses a different convention).
     	double ret[][] = new double[2][xReal.length];
     	int i;
@@ -14978,9 +14924,9 @@ public  class PyWavelets extends AlgorithmBase {
     		ret[1][i] = xImag[i]/absX;
     	}
         return ret;
-    }
+    }*/
     
-    private double[][] _sign(double x[][]) {
+    /*private double[][] _sign(double x[][]) {
         // Matlab-like sign function (numpy uses a different convention).
     	double ret[][] = new double [x.length][];
     	int i, j;
@@ -14993,7 +14939,7 @@ public  class PyWavelets extends AlgorithmBase {
     		}
     	}
         return ret;
-    }
+    }*/
     
     private double[][][] _sign(double xReal[][], double xImag[][]) {
         // Matlab-like sign function (numpy uses a different convention).
@@ -15013,7 +14959,7 @@ public  class PyWavelets extends AlgorithmBase {
         return ret;
     }
 
-    private double[] _soft(double x[], double thresh) {
+    /*private double[] _soft(double x[], double thresh) {
         // soft thresholding supporting complex values.
 
         // Notes
@@ -15026,9 +14972,9 @@ public  class PyWavelets extends AlgorithmBase {
         	ret[i] = signx[i] * Math.max(Math.abs(x[i]) - thresh, 0);
         }
         return ret;
-    }
+    }*/
     
-    private double[][] _soft(double xReal[], double xImag[], double thresh) {
+    /*private double[][] _soft(double xReal[], double xImag[], double thresh) {
         // soft thresholding supporting complex values.
 
         // Notes
@@ -15043,7 +14989,7 @@ public  class PyWavelets extends AlgorithmBase {
         	ret[1][i] = signx[1][i] * val;
         }
         return ret;
-    }
+    }*/
     
     private double[][][] _soft(double xReal[][], double xImag[][], double thresh) {
         // soft thresholding supporting complex values.
@@ -16419,7 +16365,7 @@ public  class PyWavelets extends AlgorithmBase {
         //    Original signal reconstructed from input data.
 
         // drop the keys corresponding to value = None
-    	 int i, j;
+    	 int i;
     	 int axis;
     	 DiscreteWavelet wav;
     	 MODE mode;
@@ -16987,9 +16933,6 @@ public  class PyWavelets extends AlgorithmBase {
         	wavelets = wavelet;
         }
 
-        //ValuePair<String, double[][]> pair = new ValuePair<String, double[][]>("", data);
-        //Vector<ValuePair<String, double[][]>> coeffs = new Vector<ValuePair<String, double[][]>>();
-        //coeffs.add(pair);
         HashMap<String, double[][][]> coeffs = new HashMap<String, double[][][]>();
         coeffs.put("", data);
         HashMap<String, double[][][]> new_coeffs = new HashMap<String, double[][][]>();
@@ -17028,7 +16971,6 @@ public  class PyWavelets extends AlgorithmBase {
         ArrayInfo output_info = new ArrayInfo();
         double cD[][][];
         double cA[][][];
-        int i,j;
         //int input_shape[];
         int output_shape[];
         int retval = -5;
@@ -19450,7 +19392,6 @@ public  class PyWavelets extends AlgorithmBase {
         boolean axis0Missing = true;
         boolean axis1Missing = true;
         int outSize;
-        int outSize2;
         double value_odd_even[][];
         double atemp[][] = null;
         // key length matches the number of axes transformed
