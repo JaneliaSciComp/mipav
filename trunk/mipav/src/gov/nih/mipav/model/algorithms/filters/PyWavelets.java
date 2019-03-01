@@ -57,9 +57,9 @@ public  class PyWavelets extends AlgorithmBase {
     private DiscreteWavelet wavelets[];
 	private MODE modes[]; 
 	private int axes[];
-	int filterType;
-	double filterVal1;
-	double filterVal2;
+	int filterType[];
+	double filterVal1[];
+	double filterVal2[];
 	private boolean showTransform;
 	private boolean showFilteredTransform;
 	private int levels;
@@ -4115,8 +4115,8 @@ public  class PyWavelets extends AlgorithmBase {
 
     
     public PyWavelets(ModelImage dstImg, ModelImage srcImg, int tType, WAVELET_NAME names[], int orders[],
-    		MODE modes[], int axes[], int filterType, double filterVal1,
-    		double filterVal2,  boolean showTransform, boolean showFilteredTransform,
+    		MODE modes[], int axes[], int filterType[], double filterVal1[],
+    		double filterVal2[],  boolean showTransform, boolean showFilteredTransform,
     		int levels, int start_level) {
     	super(dstImg, srcImg);
     	this.tType = tType;
@@ -4170,7 +4170,6 @@ public  class PyWavelets extends AlgorithmBase {
         // Any number of axes
         if (do2D) {
         	buffer = new double[length];
-        	filtBuffer = new double[4*length];
         	bufxy = new double[xDim][yDim];
         	if (showTransform) {
         		imageA = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_A");
@@ -4270,27 +4269,27 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
             	} // if (showTransform)
-            	if (filterType != FILTER_NONE) {
-            	for (i = 0; i < 4; i++) {
-            		for (j = 0; j < arr[i].length; j++) {
-            			for (k = 0; k < arr[i][j].length; k++) {
-            				filtBuffer[i*(arr[i].length)*(arr[i][j].length) + j*(arr[i][j].length) + k] = arr[i][j][k];
-            			}
-            		}
-            	}
-            	filter(filtBuffer, filterType, filterVal1, filterVal2);
-            	for (i = 0; i < 4; i++) {
-            		for (j = 0; j < arr[i].length; j++) {
-            			for (k = 0; k < arr[i][j].length; k++) {
-            				arr[i][j][k] = filtBuffer[i*(arr[i].length)*(arr[i][j].length) + j*(arr[i][j].length) + k];
-            			}
-            		}
-            	}
+            	
+       		    for (i = 0; i < 4; i++) {
+       		    	if (filterType[i] != FILTER_NONE) {
+       		    	    for (y = 0; y < yDim; y++) {
+       		    	    	for (x = 0; x < xDim; x++) {
+       		    	    		buffer[x + y * xDim] = arr[i][x][y];
+       		    	    	}
+       		    	    }
+       		    	    filter(buffer, filterType[i],filterVal1[i],filterVal2[i]);
+       		    	    for (y = 0; y < yDim; y++) {
+    		    	    	for (x = 0; x < xDim; x++) {
+    		    	    	    arr[i][x][y] = buffer[x + y * xDim];
+    		    	    	}
+    		    	    }
+       		    	} // if (filterType[i] != FILTER_NONE)
+       		    } // for (i = 0; i < 4; i++) 
             	if (showFilteredTransform) {
             		double cA[][] = arr[0];
-	       		    double cH[][] = arr[1];
-	       		    double cV[][] = arr[2];
-	       		    double cD[][] = arr[3];
+           		    double cH[][] = arr[1];
+           		    double cV[][] = arr[2];
+           		    double cD[][] = arr[3];
 	       		    for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
 	            			buffer[x + y * xDim] = cA[x][y];
@@ -4355,7 +4354,6 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }	
             	} // if (showFilteredImage)
-            	} // if (filterType != FILTER_NONE)
             	bufxy = idwt2(arr, wavelets, modes, axes);
             	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
@@ -4407,7 +4405,6 @@ public  class PyWavelets extends AlgorithmBase {
         } // if (do2D)
         else { // 3D
         	buffer = new double[volume];
-        	filtBuffer = new double[8*volume];
         	bufxyz = new double[xDim][yDim][zDim];
         	if (showTransform) {
         		imageLLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL");
@@ -4602,28 +4599,25 @@ public  class PyWavelets extends AlgorithmBase {
 		             return;
 		         }
         	} // if (showTransform)
-        	if (filterType != FILTER_NONE) {
         	for (i = 0; i < 8; i++) {
-        		for (j = 0; j < arr[i].length; j++) {
-        			for (k = 0; k < arr[i][j].length; k++) {
-        				for (m = 0; m < arr[i][j][k].length; m++) {
-        				    filtBuffer[i*(arr[i].length)*(arr[i][j].length)*(arr[i][j][k].length) + 
-        				               j*(arr[i][j].length*arr[i][j][k].length) + k*(arr[i][j][k].length) + m] = arr[i][j][k][m];
-        				}
-        			}
-        		}
-        	}
-        	filter(filtBuffer, filterType, filterVal1, filterVal2);
-        	for (i = 0; i < 8; i++) {
-        		for (j = 0; j < arr[i].length; j++) {
-        			for (k = 0; k < arr[i][j].length; k++) {
-        				for (m = 0; m < arr[i][j][k].length; m++) {
-        				arr[i][j][k][m] = filtBuffer[i*(arr[i].length)*(arr[i][j].length)*(arr[i][j][k].length) + 
-        	        				               j*(arr[i][j].length*arr[i][j][k].length) + k*(arr[i][j][k].length) + m] ;
-        				}
-        			}
-        		}
-        	}
+        	    if (filterType[i] != FILTER_NONE) {
+        		    for (z = 0; z < zDim; z++) {
+        			    for (y = 0; y < yDim; y++) {
+        				    for (x = 0; x < xDim; x++) {
+        				        buffer[z * length + y * xDim + x] = arr[i][x][y][z];
+        				    }
+        			    }
+        		    }
+        	        filter(buffer, filterType[i], filterVal1[i], filterVal2[i]);
+        		    for (z = 0; z < zDim; z++) {
+        			    for (y = 0; y < yDim; y++) {
+        				    for (x = 0; x < xDim; x++) {
+        				        arr[i][x][y][z] = buffer[z*length + y*xDim + x] ;
+        				    }
+        			    }
+        		    }
+        	    } // if (filterType[i] != FILTER_NONE)
+        	} // for (i = 0; i < 8; i++)
         	if (showFilteredTransform) {
         		double LLL[][][] = arr[0];
                 double HLL[][][] = arr[1];
@@ -4778,7 +4772,7 @@ public  class PyWavelets extends AlgorithmBase {
 		             return;
 		         }
         	} // if (showFilteredTransform)
-        	} // if (filterType != FILTER_NONE)
+        	
         	bufxyz = idwt3(arr, wavelets, modes, axes);
         	for (z = 0; z < zDim; z++) {
 	        	for (y = 0; y < yDim; y++) {
@@ -5011,41 +5005,40 @@ public  class PyWavelets extends AlgorithmBase {
 			                }
 		       		    } // for (level = levels-1; level >= 1; level--)
              	    } // if (showTransform)
-             	    if (filterType != FILTER_NONE) {
-             	    filtBuffer = new double[4*arr[0].length*arr[0][0].length];
-                   	for (i = 0; i < 4; i++) {
-                   		for (j = 0; j < arr[i].length; j++) {
-                   			for (k = 0; k < arr[i][j].length; k++) {
-                   				filtBuffer[i*(arr[i].length)*(arr[i][j].length) + j*(arr[i][j].length) + k] = arr[i][j][k];
-                   			}
-                   		}
-                   	}
-                   	filter(filtBuffer, filterType, filterVal1, filterVal2);
-                   	for (i = 0; i < 4; i++) {
-                   		for (j = 0; j < arr[i].length; j++) {
-                   			for (k = 0; k < arr[i][j].length; k++) {
-                   				arr[i][j][k] = filtBuffer[i*(arr[i].length)*(arr[i][j].length) + j*(arr[i][j].length) + k];
-                   			}
-                   		}
-                   	}
+             	    filtBuffer = new double[arr[0].length*arr[0][0].length];
+             	    for (i = 0; i < 4; i++) {
+             	        if (filterType[i] != FILTER_NONE) {
+                   		    for (j = 0; j < arr[i].length; j++) {
+                   			    for (k = 0; k < arr[i][j].length; k++) {
+                   				    filtBuffer[j*(arr[i][j].length) + k] = arr[i][j][k];
+                   			    }
+                   		    }
+                   	        filter(filtBuffer, filterType[i], filterVal1[i], filterVal2[i]);
+                   		    for (j = 0; j < arr[i].length; j++) {
+                   			    for (k = 0; k < arr[i][j].length; k++) {
+                   				    arr[i][j][k] = filtBuffer[j*(arr[i][j].length) + k];
+                   			    }
+                   		    }
+                   	    } // if (filterType[i] != FILTER_NONE)
+                   	} // for (i = 0; i < 4; i++)
                    	for (level = levels-1; level >= 1; level--) {
                    	    int offset = (levels - level)*3 + 1;
-                   	    filtBuffer = new double[3*arr[offset].length*arr[offset][0].length];
+                   	    filtBuffer = new double[arr[offset].length*arr[offset][0].length];
 	                   	for (i = offset; i < offset+3; i++) {
-                    		for (j = 0; j < arr[i].length; j++) {
-                    			for (k = 0; k < arr[i][j].length; k++) {
-                    				filtBuffer[i*(arr[i].length)*(arr[i][j].length) + j*(arr[i][j].length) + k] = arr[i][j][k];
-                    			}
-                    		}
-                    	}
-                    	filter(filtBuffer, filterType, filterVal1, filterVal2);
-                    	for (i = offset; i < offset+3; i++) {
-                    		for (j = 0; j < arr[i].length; j++) {
-                    			for (k = 0; k < arr[i][j].length; k++) {
-                    				arr[i][j][k] = filtBuffer[i*(arr[i].length)*(arr[i][j].length) + j*(arr[i][j].length) + k];
-                    			}
-                    		}
-                    	}
+	                   		if (filterType[i] != FILTER_NONE) {
+	                    		for (j = 0; j < arr[i].length; j++) {
+	                    			for (k = 0; k < arr[i][j].length; k++) {
+	                    				filtBuffer[j*(arr[i][j].length) + k] = arr[i][j][k];
+	                    			}
+	                    		}
+	                    	    filter(filtBuffer, filterType[i], filterVal1[i], filterVal2[i]);
+	                    		for (j = 0; j < arr[i].length; j++) {
+	                    			for (k = 0; k < arr[i][j].length; k++) {
+	                    				arr[i][j][k] = filtBuffer[j*(arr[i][j].length) + k];
+	                    			}
+	                    		}
+	                   		} // if (filterType[i] != FILTER_NONE)
+                    	} // for (i = offset; i < offset+3; i++)
                    	} // for (level = levels-1; level >= 1; level--)
                    	if (showFilteredTransform) {
                    		if (z == 0) {
@@ -5201,7 +5194,7 @@ public  class PyWavelets extends AlgorithmBase {
 			                }
 		       		    } // for (level = levels-1; level >= 1; level--)	
                    	} // if (showFilteredtransform)
-             	    } // if (filterType != FILTER_NONE)
+             	    
                     bufxy = waverec2(arr, wavelets, modes, axes);
                     for (y = 0; y < yDim; y++) {
                 		for (x = 0; x < xDim; x++) {
@@ -5586,54 +5579,49 @@ public  class PyWavelets extends AlgorithmBase {
 	                }
 	       		    } // for (level = levels-1; level >= 1; level--)
             	} // if (showTransform)
-            	if (filterType != FILTER_NONE) {
-             	    filtBuffer = new double[8*arr[0].length*arr[0][0].length*arr[0][0][0].length];
-                   	for (i = 0; i < 8; i++) {
+            	filtBuffer = new double[arr[0].length*arr[0][0].length*arr[0][0][0].length];
+                for (i = 0; i < 8; i++) {
+                	if (filterType[i] != FILTER_NONE) {
                    		for (j = 0; j < arr[i].length; j++) {
                    			for (k = 0; k < arr[i][j].length; k++) {
-                   				for (m = 0; m < arr[i][k][k].length; m++) {
-                   				    filtBuffer[i*(arr[i].length)*(arr[i][j].length)*(arr[i][j][k].length) + 
-                   				               j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m] = arr[i][j][k][m];
+                   				for (m = 0; m < arr[i][j][k].length; m++) {
+                   				    filtBuffer[j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m] = arr[i][j][k][m];
                    				}
                    			}
                    		}
-                   	}
-                   	filter(filtBuffer, filterType, filterVal1, filterVal2);
-                   	for (i = 0; i < 8; i++) {
+                   	    filter(filtBuffer, filterType[i], filterVal1[i], filterVal2[i]);
                    		for (j = 0; j < arr[i].length; j++) {
                    			for (k = 0; k < arr[i][j].length; k++) {
-                   				for (m = 0; m < arr[i][k][k].length; m++) {
-                   					arr[i][j][k][m] = filtBuffer[i*(arr[i].length)*(arr[i][j].length)*(arr[i][j][k].length) + 
-                                     				               j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m];
+                   				for (m = 0; m < arr[i][j][k].length; m++) {
+                   					arr[i][j][k][m] = filtBuffer[j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m];
                    				}
                    			}
                    		}
-                   	}
-                   	for (level = levels-1; level >= 1; level--) {
-                   	    int offset = (levels - level)*7 + 1;
-                   	    filtBuffer = new double[7*arr[offset].length*arr[offset][0].length*arr[offset][0][0].length];
-	                   	for (i = offset; i < offset+7; i++) {
+                   	} // if (filterType[i] != FILTER_NONE)
+                } // for (i = 0; i < 8; i++)
+                for (level = levels-1; level >= 1; level--) {
+                   	int offset = (levels - level)*7 + 1;
+                   	filtBuffer = new double[arr[offset].length*arr[offset][0].length*arr[offset][0][0].length];
+	                for (i = offset; i < offset+7; i++) {
+	                    if (filterType[i] != FILTER_NONE) {
                     		for (j = 0; j < arr[i].length; j++) {
                     			for (k = 0; k < arr[i][j].length; k++) {
-                    				for (m = 0; m < arr[i][k][k].length; m++) {
-                    					filtBuffer[i*(arr[i].length)*(arr[i][j].length)*(arr[i][j][k].length) + 
-                       				               j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m] = arr[i][j][k][m];
+                    				for (m = 0; m < arr[i][j][k].length; m++) {
+                    					filtBuffer[j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m] = arr[i][j][k][m];
                     				}
                     			}
                     		}
-                    	}
-                    	filter(filtBuffer, filterType, filterVal1, filterVal2);
-                    	for (i = offset; i < offset+7; i++) {
+                    	    filter(filtBuffer, filterType[i], filterVal1[i], filterVal2[i]);
                     		for (j = 0; j < arr[i].length; j++) {
                     			for (k = 0; k < arr[i][j].length; k++) {
-                    				for (m = 0; m < arr[i][k][k].length; m++) {
-                    					arr[i][j][k][m] = filtBuffer[i*(arr[i].length)*(arr[i][j].length)*(arr[i][j][k].length) + 
-                                       				               j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m];
+                    				for (m = 0; m < arr[i][j][k].length; m++) {
+                    					arr[i][j][k][m] = filtBuffer[j*(arr[i][j].length)*(arr[i][j][k].length) + k*(arr[i][j][k].length) + m];
                     				}
                     			}
                     		}
-                    	}
-                   	} // for (level = levels-1; level >= 1; level--)
+                    	} // if (filterType[i] != FILTER_NONE)
+	                } // for (i = offset; i < offset+7; i++)
+                } // for (level = levels-1; level >= 1; level--)
                    	if (showFilteredTransform) {
                 		extentsn = new int[]{arr[0].length,arr[0][0].length,arr[0][0][0].length};
                 		imageLLLn_filter = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LLL" + String.valueOf(levels) + "_filter");
@@ -5955,7 +5943,6 @@ public  class PyWavelets extends AlgorithmBase {
     	                }
     	       		    } // for (level = levels-1; level >= 1; level--)
                 	} // if (showFilteredTransform)
-            	} // if (filterType != FILTER_NONE)
             	bufxyz = waverec3(arr, wavelets, modes, axes);
             	for (z = 0; z < zDim; z++) {
 	                for (y = 0; y < yDim; y++) {
@@ -6009,7 +5996,6 @@ public  class PyWavelets extends AlgorithmBase {
           if (do2D) {
         	buffer = new double[length];
           	bufxy = new double[xDim][yDim];	
-          	filtBuffer = new double[4*length];
         	if (showTransform) {
         		imageAnSWT = new ModelImage[levels];
         		imageHn = new ModelImage[levels];
@@ -6134,22 +6120,21 @@ public  class PyWavelets extends AlgorithmBase {
     	                }
               	    } // for (i = 0; i < arr.length/4; i++)
               	} // if (showTransform)
-              	if (filterType != FILTER_NONE) {
-                	for (i = 0; i < 4; i++) {
-                		for (x = 0; x < xDim; x++) {
-                			for (y = 0; y < yDim; y++) {
-                				filtBuffer[i*length + y*xDim + x] = arr[i][x][y];
+                for (i = 0; i < arr.length; i++) {
+                	if (filterType[i] != FILTER_NONE) {
+                		for (y = 0; y < yDim; y++) {
+                			for (x = 0; x < xDim; x++) {
+                				buffer[y*xDim + x] = arr[i][x][y];
                 			}
                 		}
-                	}
-                	filter(filtBuffer, filterType, filterVal1, filterVal2);
-                	for (i = 0; i < 4; i++) {
-                		for (x = 0; x < xDim; x++) {
-                			for (y = 0; y < yDim; y++) {
-                				arr[i][x][y] = filtBuffer[i*length + y*xDim + x];
+                	    filter(buffer, filterType[i], filterVal1[i], filterVal2[i]);
+                		for (y = 0; y < yDim; y++) {
+                			for (x = 0; x < xDim; x++) {
+                				arr[i][x][y] = buffer[y*xDim + x];
                 			}
                 		}
-                	}
+                	} // if (filterType[i] != FILTER_NONE)
+                } // for (i = 0; i < arr.length; i++)
                 	if (showFilteredTransform) {
                 		for (i = 0; i < arr.length/4; i++) {
                   	    	double cA[][] = arr[4*i];
@@ -6221,7 +6206,7 @@ public  class PyWavelets extends AlgorithmBase {
         	                }
                   	    } // for (i = 0; i < arr.length/4; i++)	
                 	} // if (showFilteredTransform)
-              	} // if (filterType != FILTER_NONE)
+              	
               	bufxy = iswtn2(coeffsMap, wavelets,axes);
               	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
@@ -6277,7 +6262,6 @@ public  class PyWavelets extends AlgorithmBase {
           } // if (do2D)
           else { // 3D
         	buffer = new double[volume];
-          	filtBuffer = new double[8*volume];
           	bufxyz = new double[xDim][yDim][zDim];
           	if (showTransform) {
           		imageLLLnSWT = new ModelImage[levels];
@@ -6508,26 +6492,25 @@ public  class PyWavelets extends AlgorithmBase {
 	                }
     			} // for (i = 0; i < arr.length/8; i++)
     		} // if (showTransform)
-    		if (filterType != FILTER_NONE) {
-            	for (i = 0; i < 8; i++) {
-            		for (x = 0; x < xDim; x++) {
+    		for (i = 0; i < arr.length; i++) {
+    		    if (filterType[i] != FILTER_NONE) {
+            		for (z = 0; z < zDim; z++) {
             			for (y = 0; y < yDim; y++) {
-            				for (z = 0; z < zDim; z++) {
-            				    filtBuffer[i*volume + z*length + y*xDim + x] = arr[i][x][y][z];
+            				for (x = 0; x < xDim; x++) {
+            				    buffer[z*length + y*xDim + x] = arr[i][x][y][z];
             				}
             			}
             		}
-            	}
-            	filter(filtBuffer, filterType, filterVal1, filterVal2);
-            	for (i = 0; i < 8; i++) {
-            		for (x = 0; x < xDim; x++) {
+            	    filter(buffer, filterType[i], filterVal1[i], filterVal2[i]);
+            		for (z = 0; z < zDim; z++) {
             			for (y = 0; y < yDim; y++) {
-            				for (z = 0; z < zDim; z++) {
-            				arr[i][x][y][z] = filtBuffer[i*volume + z*length + y*xDim + x];
+            				for (x = 0; x < xDim; x++) {
+            				    arr[i][x][y][z] = buffer[z*length + y*xDim + x];
             				}
             			}
             		}
-            	}
+            	} // if (filterType[i] != FILTER_NONE)
+    		} // for (i = 0; i < arr.length; i++)
             	if (showFilteredTransform) {
             		for (i = 0; i < arr.length/8; i++) {
               	    	double LLL[][][] = arr[8*i];
@@ -6683,7 +6666,6 @@ public  class PyWavelets extends AlgorithmBase {
     	                }
         			} // for (i = 0; i < arr.length/8; i++)	
             	} // if (showFilteredTransform)
-            } // if (filterType != FILTER_NONE)
     		bufxyz = iswtn(coeffsMap, wavelets,axes);
     		for (z = 0; z < zDim; z++) {
 	          	for (y = 0; y < yDim; y++) {
