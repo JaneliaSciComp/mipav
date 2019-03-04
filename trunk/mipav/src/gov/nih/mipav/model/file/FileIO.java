@@ -861,6 +861,7 @@ public class FileIO {
                                 Preferences.debug(message + "\n", Preferences.DEBUG_FILEIO);
                             } else {
                                 Preferences.debug(message + "\n", Preferences.DEBUG_FILEIO);
+                                System.err.println(message);
                             }
 
                             return null;
