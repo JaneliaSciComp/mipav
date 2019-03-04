@@ -59,7 +59,32 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     private int levels;
     
     private int start_level;
-
+    
+    private ButtonGroup transformTypeGroup;
+    
+    private JRadioButton singleLevelDWTButton;
+    
+    private JRadioButton multiLevelDWTButton;
+    
+    private JRadioButton SWTButton;
+    
+    private int SINGLE_LEVEL_DWT = 1; // Any number of axes
+    private int MULTILEVEL_DWT = 2; // 2 axes for wavedec2 and 3 axes for wavedec3
+    private int SWT = 3;
+    
+    private JLabel labelLevels;
+    private JTextField textLevels;
+    
+    private JLabel labelStartLevel;
+    private JTextField textStartLevel;
+    
+    private JCheckBox xAxisCheckBox;
+    private JCheckBox yAxisCheckBox;
+    private JCheckBox zAxisCheckBox;
+    private boolean doX = false;
+    private boolean doY = false;
+    private boolean doZ = false;
+    
     /** DOCUMENT ME! */
     private JPanel paramsPanel;
     
@@ -111,6 +136,25 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("PyWavelets");
+        } else if ((source == singleLevelDWTButton) || (source == multiLevelDWTButton) || (source == SWTButton)) {
+        	if (singleLevelDWTButton.isSelected()) {
+        	    labelLevels.setEnabled(false);
+        	    textLevels.setEnabled(false);
+        	    labelStartLevel.setEnabled(false);
+        	    textStartLevel.setEnabled(false);
+        	}
+        	else if (multiLevelDWTButton.isSelected()) {
+        		labelLevels.setEnabled(true);
+        	    textLevels.setEnabled(true);
+        	    labelStartLevel.setEnabled(false);
+        	    textStartLevel.setEnabled(false);	
+        	}
+        	else { // SWTButton.isSelected()
+        		labelLevels.setEnabled(true);
+        	    textLevels.setEnabled(true);
+        	    labelStartLevel.setEnabled(true);
+        	    textStartLevel.setEnabled(true);		
+        	}
         } else {
             super.actionPerformed(event);
         }
@@ -278,9 +322,100 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         System.gc();
     }
     
-    private JPanel buildWaveletPanel() {
-    	 final JPanel waveletPanel = new JPanel();
-    	 return waveletPanel;
+    private JPanel buildTransformTypePanel() {
+    	 final JPanel transformTypePanel = new JPanel(new GridBagLayout());
+    	 GridBagConstraints gbc = new GridBagConstraints();
+         gbc.gridwidth = 3;
+         gbc.anchor = GridBagConstraints.WEST;
+         gbc.weightx = 1;
+
+    	 transformTypePanel.setBorder(buildTitledBorder("Transform"));
+    	 transformTypeGroup = new ButtonGroup();
+         singleLevelDWTButton = new JRadioButton("Single level discrete wavelet transform", true);
+         singleLevelDWTButton.setFont(serif12);
+         singleLevelDWTButton.setForeground(Color.black);
+         singleLevelDWTButton.addActionListener(this);
+         transformTypeGroup.add(singleLevelDWTButton);
+         gbc.gridx = 0;
+         gbc.gridy = 0;
+         transformTypePanel.add(singleLevelDWTButton,gbc);
+         
+         multiLevelDWTButton = new JRadioButton("Multilevel discrete wavelet transform", false);
+         multiLevelDWTButton.setFont(serif12);
+         multiLevelDWTButton.setForeground(Color.black);
+         multiLevelDWTButton.addActionListener(this);
+         transformTypeGroup.add(multiLevelDWTButton);
+         gbc.gridy = 1;
+         transformTypePanel.add(multiLevelDWTButton, gbc);
+         
+         SWTButton = new JRadioButton("Stationary wavelet transform", false);
+         SWTButton.setFont(serif12);
+         SWTButton.setForeground(Color.black);
+         SWTButton.addActionListener(this);
+         transformTypeGroup.add(SWTButton);
+         gbc.gridy = 2;
+         transformTypePanel.add(SWTButton, gbc);
+         
+         labelLevels = new JLabel("Levels");
+         labelLevels.setFont(serif12);
+         labelLevels.setForeground(Color.black);
+         labelLevels.setEnabled(false);
+         gbc.gridy = 3;
+         transformTypePanel.add(labelLevels, gbc);
+         
+         textLevels = new JTextField(10);
+         textLevels.setText("2");
+         textLevels.setFont(serif12);
+         textLevels.setForeground(Color.black);
+         textLevels.setEnabled(false);
+         gbc.gridx = 1;
+         transformTypePanel.add(textLevels, gbc);
+         
+         labelStartLevel = new JLabel("Start level");
+         labelStartLevel.setFont(serif12);
+         labelStartLevel.setForeground(Color.black);
+         labelStartLevel.setEnabled(false);
+         gbc.gridx = 0;
+         gbc.gridy = 4;
+         transformTypePanel.add(labelStartLevel, gbc);
+         
+         textStartLevel = new JTextField(10);
+         textStartLevel.setText("0");
+         textStartLevel.setFont(serif12);
+         textStartLevel.setForeground(Color.black);
+         textStartLevel.setEnabled(false);
+         gbc.gridx = 1;
+         transformTypePanel.add(textStartLevel, gbc);
+         
+         xAxisCheckBox = new JCheckBox("Transform along x axis");
+         xAxisCheckBox.setFont(serif12);
+         xAxisCheckBox.setForeground(Color.black);
+         xAxisCheckBox.addActionListener(this);
+         xAxisCheckBox.setSelected(true);
+         gbc.gridx = 0;
+         gbc.gridy = 5;
+         transformTypePanel.add(xAxisCheckBox, gbc);
+         
+         yAxisCheckBox = new JCheckBox("Transform along y axis");
+         yAxisCheckBox.setFont(serif12);
+         yAxisCheckBox.setForeground(Color.black);
+         yAxisCheckBox.addActionListener(this);
+         yAxisCheckBox.setSelected(true);
+         gbc.gridx = 0;
+         gbc.gridy = 6;
+         transformTypePanel.add(yAxisCheckBox, gbc);
+         
+         if (image.getNDims() > 2) {
+        	 zAxisCheckBox = new JCheckBox("Transform along z axis");
+             zAxisCheckBox.setFont(serif12);
+             zAxisCheckBox.setForeground(Color.black);
+             zAxisCheckBox.addActionListener(this);
+             zAxisCheckBox.setSelected(true);
+             gbc.gridx = 0;
+             gbc.gridy = 7;
+             transformTypePanel.add(yAxisCheckBox, gbc);	 
+         }
+    	 return transformTypePanel;
     }
 
     /**
@@ -290,8 +425,97 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
      */
     private boolean setVariables() {
         String tmpStr;
-
+        if (singleLevelDWTButton.isSelected()) {
+        	tType = SINGLE_LEVEL_DWT;
+        }
+        else if (multiLevelDWTButton.isSelected()) {
+        	tType = MULTILEVEL_DWT;
+        }
+        else {
+        	tType = SWT;
+        }
         
+        if ((tType == MULTILEVEL_DWT) || (tType == SWT)) {
+        	tmpStr = textLevels.getText();
+        	try {
+        		levels = Integer.parseInt(tmpStr);
+        	}
+        	catch(NumberFormatException e) {
+        		MipavUtil.displayError("Levels must be an integer");
+        		textLevels.requestFocus();
+        		textLevels.selectAll();
+        		return false;
+        	}
+        	if (levels < 1) {
+        		MipavUtil.displayError("Number of levels must be at least 1");
+        		textLevels.requestFocus();
+        		textLevels.selectAll();
+        		return false;
+        	}
+        	else if (levels > 10) {
+        		MipavUtil.displayError("Number of levels cannot exceed 10");
+        		textLevels.requestFocus();
+        		textLevels.selectAll();
+        		return false;
+        	}
+        }
+        
+        if (tType == SWT) {
+        	tmpStr = textStartLevel.getText();
+        	try {
+        		start_level = Integer.parseInt(tmpStr);
+        	}
+        	catch(NumberFormatException e) {
+        		MipavUtil.displayError("Start level must be an integer");
+        		textStartLevel.requestFocus();
+        		textStartLevel.selectAll();
+        		return false;
+        	}
+        	if (start_level < 0) {
+        		MipavUtil.displayError("Start level must be at least 0");
+        		textStartLevel.requestFocus();
+        		textStartLevel.selectAll();
+        		return false;
+        	}
+        	else if (start_level > 9) {
+        		MipavUtil.displayError("Start level cannot exceed 0");
+        		textStartLevel.requestFocus();
+        		textStartLevel.selectAll();
+        		return false;
+        	}
+        }
+        
+        doX = xAxisCheckBox.isSelected();
+        doY = yAxisCheckBox.isSelected();
+        if (image.getNDims() > 2) {
+        	doZ = zAxisCheckBox.isSelected();
+        }
+        
+        if (doX && doY && doZ) {
+        	axes = new int[]{0,1,2};
+        }
+        else if (doX && doY) {
+        	axes = new int[]{0,1};
+        }
+        else if (doX && doZ) {
+        	axes = new int[]{0,2};
+        }
+        else if (doY && doZ) {
+        	axes = new int[]{1,2};
+        }
+        else if (doX) {
+        	axes = new int[]{0};
+        }
+        else if (doY) {
+        	axes = new int[]{1};
+        }
+        else if (doZ) {
+        	axes = new int[]{2};
+        }
+        else {
+        	MipavUtil.displayError("No axis has been selected");
+        	return false;
+        }
         return true;
     }
 }
