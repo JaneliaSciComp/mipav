@@ -216,6 +216,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     // variables for auto-running on a csv from the command line and logging to files
     private String cmdLineCsvVar = "BricsCsvFile";
     private String cmdLineOutputVar = "BricsOutputDir";
+    private String cmdLineCsvExitVar = "BricsExit";
+    private boolean cmdLineCsvExit = false;
     private boolean cmdLineCsvFlag = false;
     private String cmdLineCsvFile = null;
     private String cmdLineOutputDir = null;
@@ -457,6 +459,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 cmdLineOutputDir = VariableTable.getReference().interpolate(cmdLineOutputVar);
                 System.err.println("Command line output dir: " + cmdLineOutputDir);
             }
+            
+            if (VariableTable.getReference().isVariableSet(cmdLineCsvExitVar)) {
+                cmdLineCsvExit = Boolean.getBoolean(VariableTable.getReference().interpolate(cmdLineCsvExitVar));
+                System.err.println("Exit after generation: " + cmdLineCsvExit);
+            }
         }
         
         if (!cmdLineCsvFlag) {
@@ -524,6 +531,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (errorFileOut != null) {
                 errorFileOut.close();
                 errorFileOut = null;
+            }
+            
+            if (cmdLineCsvExit) {
+                System.exit(0);
             }
         }
     }
