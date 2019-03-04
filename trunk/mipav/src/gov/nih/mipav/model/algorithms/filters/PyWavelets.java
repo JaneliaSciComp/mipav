@@ -80,6 +80,12 @@ public  class PyWavelets extends AlgorithmBase {
     private ModelImage imageHLH = null;
     private ModelImage imageLHH = null;
     private ModelImage imageHHH = null;
+    private ModelImage imageLL = null;
+    private ModelImage imageHL = null;
+    private ModelImage imageLH = null;
+    private ModelImage imageHH = null;
+    private ModelImage imageL = null;
+    
     
     private ModelImage imageLLL_filter = null;
     private ModelImage imageHLL_filter = null;
@@ -89,6 +95,11 @@ public  class PyWavelets extends AlgorithmBase {
     private ModelImage imageHLH_filter = null;
     private ModelImage imageLHH_filter = null;
     private ModelImage imageHHH_filter = null;
+    private ModelImage imageLL_filter = null;
+    private ModelImage imageHL_filter = null;
+    private ModelImage imageLH_filter = null;
+    private ModelImage imageHH_filter = null;
+    private ModelImage imageL_filter = null;
     
     private ModelImage imageAn = null;
     private ModelImage imageHn[] = null;
@@ -4151,15 +4162,19 @@ public  class PyWavelets extends AlgorithmBase {
         	bufxy = new double[xDim][yDim];
         	if (showTransform) {
         		imageA = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_A");
-        		imageH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H");
-        		imageV = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V");
+        		if (axes.length == 2) {
+        		    imageH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H");
+        		    imageV = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V");
+        		}
         		imageD = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_D");
         	}
         	
         	if (showFilteredTransform) {
         		imageA_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_A_filter");
-        		imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H_filter");
-        		imageV_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V_filter");
+        		if (axes.length == 2) {
+        		    imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H_filter");
+        		    imageV_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V_filter");
+        		}
         		imageD_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_D_filter");
         	}
             for (z = 0; z < zDim; z++)	{
@@ -4177,12 +4192,35 @@ public  class PyWavelets extends AlgorithmBase {
             			bufxy[x][y] = buffer[x + y * xDim];
             	    }
             	}
-            	double arr[][][] = dwt2(bufxy, wavelets, modes, axes);
+            	HashMap<String, double[][]> coeffsMap = dwtn(bufxy, wavelets, modes, axes);
+            	double arr[][][] = null;
+            	if (axes.length == 2) {
+                    arr = new double[4][][];
+                    arr[0] = coeffsMap.get("aa");
+                    arr[1] = coeffsMap.get("da");
+                    arr[2] = coeffsMap.get("ad");
+                    arr[3] = coeffsMap.get("dd");
+            	}
+            	else {
+            		arr = new double[2][][];
+            		arr[0] = coeffsMap.get("a");
+            		arr[1] = coeffsMap.get("d");
+            	}
             	if (showTransform) {
-	       		    double cA[][] = arr[0];
-	       		    double cH[][] = arr[1];
-	       		    double cV[][] = arr[2];
-	       		    double cD[][] = arr[3];
+            		double cA[][] = null;
+            		double cH[][] = null;
+            		double cV[][] = null;
+            		double cD[][] = null;
+            		if (axes.length == 2) {
+	       		        cA = arr[0];
+	       		        cH = arr[1];
+	       		        cV = arr[2];
+	       		        cD = arr[3];
+            		}
+            		else {
+            			cA = arr[0];
+            			cD = arr[1];
+            		}
 	       		    for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
 	            			buffer[x + y * xDim] = cA[x][y];
@@ -4199,37 +4237,39 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-	       		    for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cH[x][y];
-	            	    }
-	            	}
-	       		    try {
-	            		imageH.importData(z * length, buffer, false);
-	            	}
-	            	catch (IOException e) {
-	                    MipavUtil.displayError("IOException " + e + " on imageH.importData");
-
-	                    setCompleted(false);
-
-	                    return;
-	                }
-
-	       		     for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cV[x][y];
-	            	    }
-	            	}
-	       		    try {
-	            		imageV.importData(z * length, buffer, false);
-	            	}
-	            	catch (IOException e) {
-	                    MipavUtil.displayError("IOException " + e + " on imageV.importData");
-
-	                    setCompleted(false);
-
-	                    return;
-	                }
+	       		    if (axes.length == 2) {
+		       		    for (y = 0; y < yDim; y++) {
+		            		for (x = 0; x < xDim; x++) {
+		            			buffer[x + y * xDim] = cH[x][y];
+		            	    }
+		            	}
+		       		    try {
+		            		imageH.importData(z * length, buffer, false);
+		            	}
+		            	catch (IOException e) {
+		                    MipavUtil.displayError("IOException " + e + " on imageH.importData");
+	
+		                    setCompleted(false);
+	
+		                    return;
+		                }
+	
+		       		     for (y = 0; y < yDim; y++) {
+		            		for (x = 0; x < xDim; x++) {
+		            			buffer[x + y * xDim] = cV[x][y];
+		            	    }
+		            	}
+		       		    try {
+		            		imageV.importData(z * length, buffer, false);
+		            	}
+		            	catch (IOException e) {
+		                    MipavUtil.displayError("IOException " + e + " on imageV.importData");
+	
+		                    setCompleted(false);
+	
+		                    return;
+		                }
+	       		    } // if (axes.length == 2)
 	       		    
 	       		    for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
@@ -4248,7 +4288,7 @@ public  class PyWavelets extends AlgorithmBase {
 	                }
             	} // if (showTransform)
             	
-       		    for (i = 0; i < 4; i++) {
+       		    for (i = 0; i < arr.length; i++) {
        		    	if (filterType[i] != FILTER_NONE) {
        		    	    for (y = 0; y < yDim; y++) {
        		    	    	for (x = 0; x < xDim; x++) {
@@ -4262,12 +4302,22 @@ public  class PyWavelets extends AlgorithmBase {
     		    	    	}
     		    	    }
        		    	} // if (filterType[i] != FILTER_NONE)
-       		    } // for (i = 0; i < 4; i++) 
+       		    } // for (i = 0; i < arr.length; i++) 
             	if (showFilteredTransform) {
-            		double cA[][] = arr[0];
-           		    double cH[][] = arr[1];
-           		    double cV[][] = arr[2];
-           		    double cD[][] = arr[3];
+            		double cA[][] = null;
+            		double cH[][] = null;
+            		double cV[][] = null;
+            		double cD[][] = null;
+            		if (axes.length == 2) {
+	       		        cA = arr[0];
+	       		        cH = arr[1];
+	       		        cV = arr[2];
+	       		        cD = arr[3];
+            		}
+            		else {
+            			cA = arr[0];
+            			cD = arr[1];
+            		}
 	       		    for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
 	            			buffer[x + y * xDim] = cA[x][y];
@@ -4284,37 +4334,39 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-	       		    for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cH[x][y];
-	            	    }
-	            	}
-	       		    try {
-	            		imageH_filter.importData(z * length, buffer, false);
-	            	}
-	            	catch (IOException e) {
-	                    MipavUtil.displayError("IOException " + e + " on imageH_filter.importData");
-
-	                    setCompleted(false);
-
-	                    return;
-	                }
-
-	       		     for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cV[x][y];
-	            	    }
-	            	}
-	       		    try {
-	            		imageV_filter.importData(z * length, buffer, false);
-	            	}
-	            	catch (IOException e) {
-	                    MipavUtil.displayError("IOException " + e + " on imageV_filter.importData");
-
-	                    setCompleted(false);
-
-	                    return;
-	                }
+	       		    if (axes.length == 2) {
+		       		    for (y = 0; y < yDim; y++) {
+		            		for (x = 0; x < xDim; x++) {
+		            			buffer[x + y * xDim] = cH[x][y];
+		            	    }
+		            	}
+		       		    try {
+		            		imageH_filter.importData(z * length, buffer, false);
+		            	}
+		            	catch (IOException e) {
+		                    MipavUtil.displayError("IOException " + e + " on imageH_filter.importData");
+	
+		                    setCompleted(false);
+	
+		                    return;
+		                }
+	
+		       		     for (y = 0; y < yDim; y++) {
+		            		for (x = 0; x < xDim; x++) {
+		            			buffer[x + y * xDim] = cV[x][y];
+		            	    }
+		            	}
+		       		    try {
+		            		imageV_filter.importData(z * length, buffer, false);
+		            	}
+		            	catch (IOException e) {
+		                    MipavUtil.displayError("IOException " + e + " on imageV_filter.importData");
+	
+		                    setCompleted(false);
+	
+		                    return;
+		                }
+	       		    } // if (axes.length == 2)
 	       		    
 	       		    for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
@@ -4332,7 +4384,7 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }	
             	} // if (showFilteredImage)
-            	bufxy = idwt2(arr, wavelets, modes, axes);
+            	bufxy = idwtn2(coeffsMap, wavelets, modes, axes);
             	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
             	        buffer[x + y * xDim] = bufxy[x][y];
@@ -4352,30 +4404,42 @@ public  class PyWavelets extends AlgorithmBase {
             destImage.calcMinMax();
             if (showTransform) {
             	imageA.calcMinMax();
-            	imageH.calcMinMax();
-            	imageV.calcMinMax();
+            	if (axes.length == 2) {
+            	    imageH.calcMinMax();
+            	    imageV.calcMinMax();
+            	}
             	imageD.calcMinMax();
             	JDialogBase.updateFileInfo(srcImage, imageA);
-            	JDialogBase.updateFileInfo(srcImage, imageH);
-            	JDialogBase.updateFileInfo(srcImage, imageV);
+            	if (axes.length == 2) {
+            	    JDialogBase.updateFileInfo(srcImage, imageH);
+            	    JDialogBase.updateFileInfo(srcImage, imageV);
+            	}
             	JDialogBase.updateFileInfo(srcImage, imageD);
             	new ViewJFrameImage(imageA, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageH, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageV, null, new Dimension(610, 200 + (index++ * 20)));
+            	if (axes.length == 2) {
+	            	new ViewJFrameImage(imageH, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageV, null, new Dimension(610, 200 + (index++ * 20)));
+            	}
             	new ViewJFrameImage(imageD, null, new Dimension(610, 200 + (index++ * 20)));
             }
             if (showFilteredTransform) {
             	imageA_filter.calcMinMax();
-            	imageH_filter.calcMinMax();
-            	imageV_filter.calcMinMax();
+            	if (axes.length == 2) {
+            	    imageH_filter.calcMinMax();
+            	    imageV_filter.calcMinMax();
+            	}
             	imageD_filter.calcMinMax();
             	JDialogBase.updateFileInfo(srcImage, imageA_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageH_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageV_filter);
+            	if (axes.length == 2) {
+            	    JDialogBase.updateFileInfo(srcImage, imageH_filter);
+            	    JDialogBase.updateFileInfo(srcImage, imageV_filter);
+            	}
             	JDialogBase.updateFileInfo(srcImage, imageD_filter);
             	new ViewJFrameImage(imageA_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageH_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageV_filter, null, new Dimension(610, 200 + (index++ * 20)));
+            	if (axes.length == 2) {
+            	    new ViewJFrameImage(imageH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+            	    new ViewJFrameImage(imageV_filter, null, new Dimension(610, 200 + (index++ * 20)));
+            	}
             	new ViewJFrameImage(imageD_filter, null, new Dimension(610, 200 + (index++ * 20)));
             }
             setCompleted(true);
@@ -4385,25 +4449,49 @@ public  class PyWavelets extends AlgorithmBase {
         	buffer = new double[volume];
         	bufxyz = new double[xDim][yDim][zDim];
         	if (showTransform) {
-        		imageLLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL");
-        		imageHLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL");
-        		imageLHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL");
-        		imageHHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL");
-        		imageLLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH");
-        		imageHLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH");
-        		imageLHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH");
-        		imageHHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH");
+        		if (axes.length == 3) {
+	        		imageLLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL");
+	        		imageHLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL");
+	        		imageLHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL");
+	        		imageHHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL");
+	        		imageLLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH");
+	        		imageHLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH");
+	        		imageLHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH");
+	        		imageHHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH");
+        		}
+        		else if (axes.length == 2) {
+        			imageLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LL");
+	        		imageHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HL");
+	        		imageLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LH");
+	        		imageHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HH");	
+        		}
+        		else if (axes.length == 1) {
+        			imageL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_L");
+	        		imageH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H");	
+        		}
         	}
         	
         	if (showFilteredTransform) {
-        		imageLLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL_filter");
-        		imageHLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL_filter");
-        		imageLHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL_filter");
-        		imageHHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL_filter");
-        		imageLLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH_filter");
-        		imageHLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH_filter");
-        		imageLHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH_filter");
-        		imageHHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH_filter");	
+        		if (axes.length == 3) {
+	        		imageLLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL_filter");
+	        		imageHLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL_filter");
+	        		imageLHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL_filter");
+	        		imageHHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL_filter");
+	        		imageLLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH_filter");
+	        		imageHLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH_filter");
+	        		imageLHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH_filter");
+	        		imageHHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH_filter");	
+        		}
+        		else if (axes.length == 2) {
+        			imageLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LL_filter");
+	        		imageHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HL_filter");
+	        		imageLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LH_filter");
+	        		imageHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HH_filter");	
+        		}
+        		else if (axes.length == 1) {
+        			imageL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_L_filter");
+	        		imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H_filter");	
+        		}
         	}
         	
         	try {
@@ -4422,162 +4510,306 @@ public  class PyWavelets extends AlgorithmBase {
 	        	    }
 	        	}
         	}
-        	double arr[][][][] = dwt3(bufxyz, wavelets, modes, axes);
+        	double arr[][][][] = null;
+        	HashMap<String, double[][][]> coeffsMap = dwtn3(bufxyz, wavelets, modes, axes);
+        	if (axes.length == 3) {
+	            arr = new double[8][][][];
+	            arr[0] = coeffsMap.get("aaa");
+	            arr[1] = coeffsMap.get("daa");
+	            arr[2] = coeffsMap.get("ada");
+	            arr[3] = coeffsMap.get("dda");
+	            arr[4] = coeffsMap.get("aad");
+	            arr[5] = coeffsMap.get("dad");
+	            arr[6] = coeffsMap.get("add");
+	            arr[7] = coeffsMap.get("ddd");
+        	}
+        	else if (axes.length == 2) {
+        		arr = new double[4][][][];
+                arr[0] = coeffsMap.get("aa");
+                arr[1] = coeffsMap.get("da");
+                arr[2] = coeffsMap.get("ad");
+                arr[3] = coeffsMap.get("dd");
+        	}
+        	else {
+        		arr = new double[2][][][];
+        		arr[0] = coeffsMap.get("a");
+        		arr[1] = coeffsMap.get("d");
+        	}
         	if (showTransform) {
-        		double LLL[][][] = arr[0];
-                double HLL[][][] = arr[1];
-                double LHL[][][] = arr[2];
-                double HHL[][][] = arr[3];
-                double LLH[][][] = arr[4];
-                double HLH[][][] = arr[5];
-                double LHH[][][] = arr[6];
-                double HHH[][][] = arr[7];
-                
-                for (z = 0; z < zDim; z++) {
-	                for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim + z*length] = LLL[x][y][z];
-	            	    }
+        		if (axes.length == 3) {
+	        		double LLL[][][] = arr[0];
+	                double HLL[][][] = arr[1];
+	                double LHL[][][] = arr[2];
+	                double HHL[][][] = arr[3];
+	                double LLH[][][] = arr[4];
+	                double HLH[][][] = arr[5];
+	                double LHH[][][] = arr[6];
+	                double HHH[][][] = arr[7];
+	                
+	                for (z = 0; z < zDim; z++) {
+		                for (y = 0; y < yDim; y++) {
+		            		for (x = 0; x < xDim; x++) {
+		            			buffer[x + y * xDim + z*length] = LLL[x][y][z];
+		            	    }
+		            	}
+	                }
+	       		    try {
+	            		imageLLL.importData(0, buffer, true);
 	            	}
-                }
-       		    try {
-            		imageLLL.importData(0, buffer, true);
-            	}
-            	catch (IOException e) {
-                    MipavUtil.displayError("IOException " + e + " on imageLLL.importData");
-
-                    setCompleted(false);
-
-                    return;
-                }
-       		    
-		   		 for (z = 0; z < zDim; z++) {
+	            	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLLL.importData");
+	
+	                    setCompleted(false);
+	
+	                    return;
+	                }
+	       		    
+			   		 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HLL[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageHLL.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHLL.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LHL[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageLHL.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLHL.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HHL[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageHHL.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHHL.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LLH[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageLLH.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLLH.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HLH[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageHLH.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHLH.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LHH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageLHH.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLHH.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					    for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HHH[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageHHH.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHHH.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+        		} // if (axes.length == 3)
+        		else if (axes.length == 2) {
+        			double LL[][][] = arr[0];
+	                double HL[][][] = arr[1];
+	                double LH[][][] = arr[2];
+	                double HH[][][] = arr[3];
+	                
+	                for (z = 0; z < zDim; z++) {
 		                for (y = 0; y < yDim; y++) {
 		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HLL[x][y][z];
+		            			buffer[x + y * xDim + z*length] = LL[x][y][z];
 		            	    }
 		            	}
-		         }
-				    try {
-		     		imageHLL.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHLL.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
+	                }
+	       		    try {
+	            		imageLL.importData(0, buffer, true);
+	            	}
+	            	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLL.importData");
+	
+	                    setCompleted(false);
+	
+	                    return;
+	                }
+	       		    
+			   		 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HL[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageHL.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHL.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageLH.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLH.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HH[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageHH.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHH.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }	
+        		} // else if (axes.length == 2)
+        		else if (axes.length == 1) {
+        			double L[][][] = arr[0];
+	                double H[][][] = arr[1];
+	                
+	                for (z = 0; z < zDim; z++) {
 		                for (y = 0; y < yDim; y++) {
 		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LHL[x][y][z];
+		            			buffer[x + y * xDim + z*length] = L[x][y][z];
 		            	    }
 		            	}
-		         }
-				try {
-		     		imageLHL.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageLHL.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HHL[x][y][z];
-		            	    }
-		            	}
-		         }
-				    try {
-		     		imageHHL.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHHL.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LLH[x][y][z];
-		            	    }
-		            	}
-		         }
-				    try {
-		     		imageLLH.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageLLH.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HLH[x][y][z];
-		            	    }
-		            	}
-		         }
-				    try {
-		     		imageHLH.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHLH.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LHH[x][y][z];
-		            	    }
-		            	}
-		         }
-				try {
-		     		imageLHH.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageLHH.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				    for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HHH[x][y][z];
-		            	    }
-		            	}
-		         }
-				    try {
-		     		imageHHH.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHHH.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
+	                }
+	       		    try {
+	            		imageL.importData(0, buffer, true);
+	            	}
+	            	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageL.importData");
+	
+	                    setCompleted(false);
+	
+	                    return;
+	                }
+	       		    
+			   		 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = H[x][y][z];
+			            	    }
+			            	}
+			         }
+					    try {
+			     		imageH.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageH.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }	
+        		} // else if (axes.length == 1)
         	} // if (showTransform)
-        	for (i = 0; i < 8; i++) {
+        	for (i = 0; i < arr.length; i++) {
         	    if (filterType[i] != FILTER_NONE) {
         		    for (z = 0; z < zDim; z++) {
         			    for (y = 0; y < yDim; y++) {
@@ -4595,163 +4827,283 @@ public  class PyWavelets extends AlgorithmBase {
         			    }
         		    }
         	    } // if (filterType[i] != FILTER_NONE)
-        	} // for (i = 0; i < 8; i++)
+        	} // for (i = 0; i < arr.length; i++)
         	if (showFilteredTransform) {
-        		double LLL[][][] = arr[0];
-                double HLL[][][] = arr[1];
-                double LHL[][][] = arr[2];
-                double HHL[][][] = arr[3];
-                double LLH[][][] = arr[4];
-                double HLH[][][] = arr[5];
-                double LHH[][][] = arr[6];
-                double HHH[][][] = arr[7];
-                
-                for (z = 0; z < zDim; z++) {
-	                for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim + z*length] = LLL[x][y][z];
-	            	    }
+        		if (axes.length == 3) {
+	        		double LLL[][][] = arr[0];
+	                double HLL[][][] = arr[1];
+	                double LHL[][][] = arr[2];
+	                double HHL[][][] = arr[3];
+	                double LLH[][][] = arr[4];
+	                double HLH[][][] = arr[5];
+	                double LHH[][][] = arr[6];
+	                double HHH[][][] = arr[7];
+	                
+	                for (z = 0; z < zDim; z++) {
+		                for (y = 0; y < yDim; y++) {
+		            		for (x = 0; x < xDim; x++) {
+		            			buffer[x + y * xDim + z*length] = LLL[x][y][z];
+		            	    }
+		            	}
+	                }
+	       		    try {
+	            		imageLLL_filter.importData(0, buffer, true);
 	            	}
-                }
-       		    try {
-            		imageLLL_filter.importData(0, buffer, true);
-            	}
-            	catch (IOException e) {
-                    MipavUtil.displayError("IOException " + e + " on imageLLL_filter.importData");
-
-                    setCompleted(false);
-
-                    return;
-                }
-       		    
-		   		 for (z = 0; z < zDim; z++) {
+	            	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLLL_filter.importData");
+	
+	                    setCompleted(false);
+	
+	                    return;
+	                }
+	       		    
+			   		 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HLL[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageHLL_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHLL_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LHL[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageLHL_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLHL_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HHL[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageHHL_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHHL_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LLH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageLLH_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLLH_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HLH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageHLH_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHLH_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LHH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageLHH_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLHH_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					    for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HHH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageHHH_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHHH_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+        		} // if (axes.length == 3)
+        		else if (axes.length == 2) {
+        			double LL[][][] = arr[0];
+	                double HL[][][] = arr[1];
+	                double LH[][][] = arr[2];
+	                double HH[][][] = arr[3];
+	                
+	                for (z = 0; z < zDim; z++) {
 		                for (y = 0; y < yDim; y++) {
 		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HLL[x][y][z];
+		            			buffer[x + y * xDim + z*length] = LL[x][y][z];
 		            	    }
 		            	}
-		         }
-				try {
-		     		imageHLL_filter.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHLL_filter.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
+	                }
+	       		    try {
+	            		imageLL_filter.importData(0, buffer, true);
+	            	}
+	            	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageLL_filter.importData");
+	
+	                    setCompleted(false);
+	
+	                    return;
+	                }
+	       		    
+			   		 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HL[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageHL_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHL_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = LH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageLH_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageLH_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }
+					    
+					 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = HH[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageHH_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageHH_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }	
+        		} // else if (axes.length == 2)
+        		else if (axes.length == 1) {
+        			double L[][][] = arr[0];
+	                double H[][][] = arr[1];
+	                
+	                for (z = 0; z < zDim; z++) {
 		                for (y = 0; y < yDim; y++) {
 		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LHL[x][y][z];
+		            			buffer[x + y * xDim + z*length] = L[x][y][z];
 		            	    }
 		            	}
-		         }
-				try {
-		     		imageLHL_filter.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageLHL_filter.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HHL[x][y][z];
-		            	    }
-		            	}
-		         }
-				try {
-		     		imageHHL_filter.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHHL_filter.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LLH[x][y][z];
-		            	    }
-		            	}
-		         }
-				try {
-		     		imageLLH_filter.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageLLH_filter.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HLH[x][y][z];
-		            	    }
-		            	}
-		         }
-				try {
-		     		imageHLH_filter.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHLH_filter.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				 for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LHH[x][y][z];
-		            	    }
-		            	}
-		         }
-				try {
-		     		imageLHH_filter.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageLHH_filter.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
-				    
-				    for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = HHH[x][y][z];
-		            	    }
-		            	}
-		         }
-				try {
-		     		imageHHH_filter.importData(0, buffer, true);
-		     	}
-		     	catch (IOException e) {
-		             MipavUtil.displayError("IOException " + e + " on imageHHH_filter.importData");
-		
-		             setCompleted(false);
-		
-		             return;
-		         }
+	                }
+	       		    try {
+	            		imageLL_filter.importData(0, buffer, true);
+	            	}
+	            	catch (IOException e) {
+	                    MipavUtil.displayError("IOException " + e + " on imageL_filter.importData");
+	
+	                    setCompleted(false);
+	
+	                    return;
+	                }
+	       		    
+			   		 for (z = 0; z < zDim; z++) {
+			                for (y = 0; y < yDim; y++) {
+			            		for (x = 0; x < xDim; x++) {
+			            			buffer[x + y * xDim + z*length] = H[x][y][z];
+			            	    }
+			            	}
+			         }
+					try {
+			     		imageH_filter.importData(0, buffer, true);
+			     	}
+			     	catch (IOException e) {
+			             MipavUtil.displayError("IOException " + e + " on imageH_filter.importData");
+			
+			             setCompleted(false);
+			
+			             return;
+			         }	
+        		}
         	} // if (showFilteredTransform)
         	
-        	bufxyz = idwt3(arr, wavelets, modes, axes);
+        	bufxyz = idwtn3(coeffsMap, wavelets, modes, axes);
         	for (z = 0; z < zDim; z++) {
 	        	for (y = 0; y < yDim; y++) {
 	        		for (x = 0; x < xDim; x++) {
@@ -4770,40 +5122,76 @@ public  class PyWavelets extends AlgorithmBase {
                 return;
             }
         	if (showTransform) {
-            	JDialogBase.updateFileInfo(srcImage, imageLLL);
-            	JDialogBase.updateFileInfo(srcImage, imageHLL);
-            	JDialogBase.updateFileInfo(srcImage, imageLHL);
-            	JDialogBase.updateFileInfo(srcImage, imageHHL);
-            	JDialogBase.updateFileInfo(srcImage, imageLLH);
-            	JDialogBase.updateFileInfo(srcImage, imageHLH);
-            	JDialogBase.updateFileInfo(srcImage, imageLHH);
-            	JDialogBase.updateFileInfo(srcImage, imageHHH);
-            	new ViewJFrameImage(imageLLL, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHLL, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageLHL, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHHL, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageLLH, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHLH, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageLHH, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHHH, null, new Dimension(610, 200 + (index++ * 20)));
+        		if (axes.length == 3) {
+	            	JDialogBase.updateFileInfo(srcImage, imageLLL);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLL);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHL);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHL);
+	            	JDialogBase.updateFileInfo(srcImage, imageLLH);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLH);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHH);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHH);
+	            	new ViewJFrameImage(imageLLL, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLL, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHL, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHL, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLLH, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLH, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHH, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHH, null, new Dimension(610, 200 + (index++ * 20)));
+        		} // if (axes.length == 3)
+        		else if (axes.length == 2) {
+        			JDialogBase.updateFileInfo(srcImage, imageLL);
+	            	JDialogBase.updateFileInfo(srcImage, imageHL);
+	            	JDialogBase.updateFileInfo(srcImage, imageLH);
+	            	JDialogBase.updateFileInfo(srcImage, imageHH);	
+	            	new ViewJFrameImage(imageLL, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHL, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLH, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHH, null, new Dimension(610, 200 + (index++ * 20)));
+        		}
+        		else if (axes.length == 1) {
+        			JDialogBase.updateFileInfo(srcImage, imageL);
+	            	JDialogBase.updateFileInfo(srcImage, imageH);	
+	            	new ViewJFrameImage(imageL, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageH, null, new Dimension(610, 200 + (index++ * 20)));
+        		}
             }
             if (showFilteredTransform) {
-            	JDialogBase.updateFileInfo(srcImage, imageLLL_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageHLL_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageLHL_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageHHL_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageLLH_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageHLH_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageLHH_filter);
-            	JDialogBase.updateFileInfo(srcImage, imageHHH_filter);
-            	new ViewJFrameImage(imageLLL_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHLL_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageLHL_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHHL_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageLLH_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHLH_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageLHH_filter, null, new Dimension(610, 200 + (index++ * 20)));
-            	new ViewJFrameImage(imageHHH_filter, null, new Dimension(610, 200 + (index++ * 20)));	
+            	if (axes.length == 3) {
+	            	JDialogBase.updateFileInfo(srcImage, imageLLL_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLL_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHL_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHL_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageLLH_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageHLH_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageLHH_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageHHH_filter);
+	            	new ViewJFrameImage(imageLLL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLLH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHLH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLHH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHHH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+            	}
+            	else if (axes.length == 2) {
+            		JDialogBase.updateFileInfo(srcImage, imageLL_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageHL_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageLH_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageHH_filter);
+	            	new ViewJFrameImage(imageLL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageLH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageHH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+            	}
+            	else if (axes.length == 1) {
+            		JDialogBase.updateFileInfo(srcImage, imageL_filter);
+	            	JDialogBase.updateFileInfo(srcImage, imageH_filter);	
+	            	new ViewJFrameImage(imageL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+	            	new ViewJFrameImage(imageH_filter, null, new Dimension(610, 200 + (index++ * 20)));
+            	}
             }
             setCompleted(true);
             return;
@@ -15591,16 +15979,16 @@ public  class PyWavelets extends AlgorithmBase {
         if (axes == null) {
             axes = new int[]{0,1};
         }
-        if (axes[0] < 0) {
-        	axes[0] = axes[0] + 2;
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] + 2;
+        	}
         }
-        if (axes[1] < 0) {
-        	axes[1] = axes[1] + 2;
-        }
+        
         
         // If there is only 1 mode, use the same mode for both axes
         MODE modes[];
-        if (modein.length == 1) {
+        if ((modein.length == 1) && (axes.length == 2)) {
         	MODE m = modein[0];
         	modes = new MODE[]{m,m};
         }
@@ -15610,7 +15998,7 @@ public  class PyWavelets extends AlgorithmBase {
         
         // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
         DiscreteWavelet wavelets[];
-        if (wavelet.length == 1) {
+        if ((wavelet.length == 1) && (axes.length == 2)) {
         	DiscreteWavelet w = wavelet[0];
         	wavelets = new DiscreteWavelet[]{w, w};
         }
@@ -15624,7 +16012,7 @@ public  class PyWavelets extends AlgorithmBase {
         HashMap<String, double[][]> coeffs = new HashMap<String, double[][]>();
         coeffs.put("", data);
         HashMap<String, double[][]> new_coeffs = new HashMap<String, double[][]>();
-        for (i = 0; i < 2; i++) {
+        for (i = 0; i < axes.length; i++) {
             axis = axes[i];
             wav = wavelets[i];
             mode = modes[i];
@@ -16788,21 +17176,21 @@ public  class PyWavelets extends AlgorithmBase {
         if (axes == null) {
             axes = new int[]{0,1,2};
         }
-        if (axes[0] < 0) {
-        	axes[0] = axes[0] + 3;
-        }
-        if (axes[1] < 0) {
-        	axes[1] = axes[1] + 3;
-        }
-        if (axes[2] < 0) {
-        	axes[2] = axes[2] + 3;
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] +3;
+        	}
         }
         
         // If there is only 1 mode, use the same mode for both axes
         MODE modes[];
-        if (modein.length == 1) {
+        if ((modein.length == 1) && (axes.length == 3)) {
         	MODE m = modein[0];
-        	modes = new MODE[]{m,m,m};
+        	modes = new MODE[]{m,m,m};	
+        }
+        else if ((modein.length == 1) && (axes.length == 2)) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m};
         }
         else {
         	modes = modein;
@@ -16810,9 +17198,13 @@ public  class PyWavelets extends AlgorithmBase {
         
         // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
         DiscreteWavelet wavelets[];
-        if (wavelet.length == 1) {
+        if ((wavelet.length == 1) && (axes.length == 3)) {
         	DiscreteWavelet w = wavelet[0];
         	wavelets = new DiscreteWavelet[]{w, w,w};
+        }
+        else if ((wavelet.length == 1) && (axes.length == 2)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};	
         }
         else {
         	wavelets = wavelet;
@@ -16824,7 +17216,7 @@ public  class PyWavelets extends AlgorithmBase {
         HashMap<String, double[][][]> coeffs = new HashMap<String, double[][][]>();
         coeffs.put("", data);
         HashMap<String, double[][][]> new_coeffs = new HashMap<String, double[][][]>();
-        for (i = 0; i < 3; i++) {
+        for (i = 0; i < axes.length; i++) {
             axis = axes[i];
             wav = wavelets[i];
             mode = modes[i];
@@ -17337,19 +17729,20 @@ public  class PyWavelets extends AlgorithmBase {
         if (axes == null) {
             axes = new int[]{0,1,2};
         }
-        if (axes[0] < 0) {
-        	axes[0] = axes[0] + 3;
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] + 3;
+        	}
         }
-
-        if (axes[2] < 0) {
-        	axes[2] = axes[2] + 3;
-        }
-        
         // If there is only 1 mode, use the same mode for both axes
         MODE modes[];
-        if (modein.length == 1) {
+        if ((modein.length == 1) && (axes.length == 3)) {
         	MODE m = modein[0];
         	modes = new MODE[]{m,m,m};
+        }
+        else if ((modein.length == 1) && (axes.length == 2)) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m};	
         }
         else {
         	modes = modein;
@@ -17357,16 +17750,20 @@ public  class PyWavelets extends AlgorithmBase {
         
         // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
         DiscreteWavelet wavelets[];
-        if (wavelet.length == 1) {
+        if ((wavelet.length == 1) && (axes.length == 3)) {
         	DiscreteWavelet w = wavelet[0];
         	wavelets = new DiscreteWavelet[]{w, w, w};
+        }
+        else if ((wavelet.length == 1) && (axes.length == 2)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};
         }
         else {
         	wavelets = wavelet;
         }
  
         HashMap<String, double[][][]> new_coeffs = new HashMap<String, double[][][]>();
-        for (i = 2; i >= 0; i--) {
+        for (i = axes.length-1; i >= 0; i--) {
             axis = axes[i];
             wav = wavelets[i];
             mode = modes[i];
