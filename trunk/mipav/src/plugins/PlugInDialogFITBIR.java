@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
+import gov.nih.mipav.model.scripting.VariableTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
@@ -211,6 +212,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * = image
      */
     private int resolveConflictsUsing = RESOLVE_CONFLICT_ASK;
+    
+    // variables for auto-running on a csv from the command line and logging to files
+    private String cmdLineCsvVar = "BricsCsvFile";
+    private String cmdLineOutputVar = "BricsOutputDir";
+    private boolean cmdLineCsvFlag = false;
+    private String cmdLineCsvFile = null;
+    private String cmdLineOutputDir = null;
+    private File logFile = null;
+    private PrintStream logFileOut = null;
+    private PrintStream logOnlyOut = null;
+    private PrintStream logOnlyErr = null;
+    private File errorFile = null;
+    private PrintStream errorFileOut = null;
 
     private static final int RESOLVE_CONFLICT_ASK = 0;
 
@@ -433,20 +447,85 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         setVisible(true);
         validate();
         
-        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.PRIVACY_NOTICE, "Image Submission Package Creation Tool",
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-
-        if (response == JOptionPane.NO_OPTION) {
-            if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
-                System.gc();
-                System.exit(0);
-            } else {
-                return;
+        // if run from the command line with some variables set via the -d option, auto-load the csv
+        if (VariableTable.getReference().isVariableSet(cmdLineCsvVar)) {
+            cmdLineCsvFlag = true;
+            cmdLineCsvFile = VariableTable.getReference().interpolate(cmdLineCsvVar);
+            System.err.println("Command line CSV: " + cmdLineCsvFile);
+            
+            if (VariableTable.getReference().isVariableSet(cmdLineOutputVar)) {
+                cmdLineOutputDir = VariableTable.getReference().interpolate(cmdLineOutputVar);
+                System.err.println("Command line output dir: " + cmdLineOutputDir);
             }
         }
+        
+        if (!cmdLineCsvFlag) {
+            final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.PRIVACY_NOTICE, "Image Submission Package Creation Tool",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
-        final Thread thread = new FormListRESTThread(this);
-        thread.start();
+            if (response == JOptionPane.NO_OPTION) {
+                if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
+                    System.gc();
+                    System.exit(0);
+                } else {
+                    return;
+                }
+            }
+            
+            final Thread thread = new FormListRESTThread(this);
+            thread.start();
+        } else {
+            final Thread thread = new FormListRESTThread(this);
+            thread.run();
+            
+            csvFile = new File(cmdLineCsvFile);
+            
+            // change output dir
+            outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+            outputDirTextField.setText(outputDirBase);
+
+            // setup output and error logs and duplicate stderr/out to go to output
+            try {
+                if ( !new File(outputDirBase).exists()) {
+                    new File(outputDirBase).mkdirs();
+                }
+                
+                logFile = new File(outputDirBase + "log_file_output.log");
+                logFile.createNewFile();
+                errorFile = new File(outputDirBase + "log_file_error.log");
+                errorFile.createNewFile();
+
+                logFileOut = new PrintStream(new FileOutputStream(logFile, true));
+                errorFileOut = new PrintStream(new FileOutputStream(errorFile, true));
+                
+                logOnlyOut = new CmdLineOutputStream(System.out, logFileOut);
+                logOnlyErr = new CmdLineOutputStream(System.err, logFileOut);
+                
+                System.setOut(logOnlyOut);
+                System.setErr(logOnlyErr);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+            readCSVFile();
+
+            csvFileDir = csvFile.getAbsolutePath() + File.separator;
+            Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
+            
+            // generate files
+            actionPerformed(new ActionEvent(this, 0, "Finish"));
+            
+            System.setOut(System.out);
+            System.setErr(System.err);
+            if (logFileOut != null) {
+                logFileOut.close();
+                logFileOut = null;
+            }
+            if (errorFileOut != null) {
+                errorFileOut.close();
+                errorFileOut = null;
+            }
+        }
     }
 
     @Override
@@ -565,8 +644,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                     }
                 };
-                final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                 // we're now letting the fields be enforced by the validation
                 // tool
@@ -600,6 +677,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             break;
                         }
                     }
+                }
+                
+                int response;
+                if (!cmdLineCsvFlag) {
+                    response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                } else {
+                    response = JOptionPane.YES_OPTION;
                 }
 
                 if (response == JOptionPane.YES_OPTION) {
@@ -2370,6 +2455,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             Vector<String> csvProblemFileNameList = new Vector<String>(recordList.size());
             for (final ArrayList<ArrayList<String>> record : recordList) {
                 progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
+                System.out.println("Reading CSV row " + i + " of " + recordList.size());
+                
+                if (errorFileOut != null) {
+                    errorFileOut.println("Reading CSV row " + i + " of " + recordList.size());
+                }
+                
                 InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
                 if (progressInc > 0) {
                     progressBar.updateValue(progressBar.getValue() + progressInc);
@@ -2389,7 +2480,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             for (int j = 0; j < csvProblemTagList.size(); j++) {
                 final Vector<FileDicomTag> problemTags = csvProblemTagList.get(j);
-                if (problemTags != null) {
+                if (problemTags != null  && !cmdLineCsvFlag) {
                     boolean isDeidentified = deidentificationDialogDicom(csvProblemFileDirList.get(j), csvProblemFileNameList.get(j), problemTags);
 
                     if ( !isDeidentified) {
@@ -4491,8 +4582,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 }
             } else if (comp instanceof JList) {
-                final JList list = (JList) comp;
-                final ListModel listModel = list.getModel();
+                final JList<String> list = (JList<String>) comp;
+                final ListModel<String> listModel = list.getModel();
 
                 boolean found = false;
                 int otherSpecifyIndex = -1;
@@ -4551,10 +4642,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     private static final boolean isLegacyOtherSpecifyField(final DataElementValue deVal) {
         if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.FREE_FORM && deVal.getComp() instanceof JComboBox) {
-            final JComboBox combo = (JComboBox) deVal.getComp();
+            final JComboBox<String> combo = (JComboBox<String>) deVal.getComp();
             for (int i = 0; i < combo.getItemCount(); i++) {
-                if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
-                        || ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                if ( combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
+                        || combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                     return true;
                 }
             }
@@ -4570,17 +4661,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.SINGLE
                 || deVal.getDataElementInfo().getRestrictions() == InputRestrictions.MULTIPLE) {
             if (deVal.getComp() instanceof JComboBox) {
-                final JComboBox combo = (JComboBox) deVal.getComp();
+                final JComboBox<String> combo = (JComboBox<String>) deVal.getComp();
                 for (int i = 0; i < combo.getItemCount(); i++) {
-                    if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
-                            || ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                    if ( combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
+                            || combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                         return true;
                     }
                 }
             } else if (deVal.getComp() instanceof JList) {
-                final ListModel listModel = ((JList) deVal.getComp()).getModel();
+                final ListModel<String> listModel = ((JList<String>) deVal.getComp()).getModel();
                 for (int k = 0; k < listModel.getSize(); k++) {
-                    final String item = (String) listModel.getElementAt(k);
+                    final String item = listModel.getElementAt(k);
                     if (item.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                         return true;
                     }
@@ -5464,6 +5555,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final ArrayList<String> repeatValues = record.get(curRepeatNum);
 
                     ModelImage srcImage = null;
+                    
+                    int curConflictSelection = resolveConflictsUsing;
 
                     // if image file set in this repeat, read in the image
                     if (imageFileIndex != -1 && !repeatValues.get(imageFileIndex).trim().equals("")) {
@@ -5475,7 +5568,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         } else {
                             srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
                         }
-
+                        
                         if (srcImage != null) {
                             // basic check that image data is de-identified
                             problemTags = deidentificationCheckDicomTags(srcImage.getFileInfo());
@@ -5499,11 +5592,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             // or resolutions that are different than the ones determined by header....if there are,
                             // then prompt a warning
 
-                            resolveConflictsUsing = determineImageHeaderDescrepencies(srcImage, repeatValues);
+                            curConflictSelection = determineImageHeaderDescrepencies(srcImage, repeatValues);
+                        } else {
+                            // TODO problem reading img file - highlight
                         }
                     }
 
-                    if (resolveConflictsUsing == RESOLVE_CONFLICT_CSV && srcImage != null) {
+                    if (curConflictSelection == RESOLVE_CONFLICT_CSV && srcImage != null) {
                         populateFields(fsData, srcImage, srcImage.getFileInfo(0));
                     }
 
@@ -5530,7 +5625,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         final JTextField t = (JTextField) comp;
                                         t.setText(value);
                                     } else if (comp instanceof JComboBox) {
-                                        final JComboBox combo = (JComboBox) comp;
+                                        final JComboBox<String> combo = (JComboBox<String>) comp;
 
                                         boolean isOther = true;
 
@@ -5550,8 +5645,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                             System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                                         }
                                     } else if (comp instanceof JList) {
-                                        final JList list = (JList) comp;
-                                        final ListModel listModel = list.getModel();
+                                        final JList<String> list = (JList<String>) comp;
+                                        final ListModel<String> listModel = list.getModel();
 
                                         boolean found = false;
                                         int otherSpecifyIndex = -1;
@@ -5608,7 +5703,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                     }
 
-                    if ( (resolveConflictsUsing == RESOLVE_CONFLICT_ASK || resolveConflictsUsing == RESOLVE_CONFLICT_IMG) && srcImage != null) {
+                    if ( (curConflictSelection == RESOLVE_CONFLICT_ASK || curConflictSelection == RESOLVE_CONFLICT_IMG) && srcImage != null) {
                         populateFields(fsData, srcImage, srcImage.getFileInfo(0));
                     }
 
@@ -5645,7 +5740,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         final JTextField t = (JTextField) comp;
                                         t.setText(value);
                                     } else if (comp instanceof JComboBox) {
-                                        final JComboBox combo = (JComboBox) comp;
+                                        final JComboBox<String> combo = (JComboBox<String>) comp;
 
                                         boolean isOther = true;
 
@@ -5665,8 +5760,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                             // System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                                         }
                                     } else if (comp instanceof JList) {
-                                        final JList list = (JList) comp;
-                                        final ListModel listModel = list.getModel();
+                                        final JList<String> list = (JList<String>) comp;
+                                        final ListModel<String> listModel = list.getModel();
 
                                         boolean found = false;
                                         int otherSpecifyIndex = -1;
@@ -5760,8 +5855,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         private ModelImage readImgFromCSV(final String parentDir, final String imageFile) {
             String filePath;
             boolean isMultifile;
+            
             final FileIO fileIO = new FileIO();
+            
             // fileIO.setQuiet(true);
+            if (cmdLineCsvFlag) {
+                fileIO.setQuiet(true);
+            }
+            
             ModelImage srcImage = null;
             validFile = true;
             File origSrcFile;
@@ -5953,13 +6054,40 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 
                 if (!isSpectroscopy) {
                     final File file = new File(filePath);
+                    
                     System.out.println(file);
+                    
+//                    boolean[] prevDebugLvls = Preferences.getDebugLevels();
+//                    Preferences.setDebugLevels(new boolean[] {true, true, true, true, true});
+                    
+                    if (cmdLineCsvFlag) {
+                        PrintStream stdoutStream = new CmdLineOutputStream(System.out, errorFileOut);
+                        PrintStream stderrStream = new CmdLineOutputStream(System.err, errorFileOut);
+                        
+                        System.setOut(stdoutStream);
+                        System.setErr(stderrStream);
+                    }
+                    
                     srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
+                    
+                    if (cmdLineCsvFlag) {                            
+                        System.setOut(logOnlyOut);
+                        System.setErr(logOnlyErr);
+                    }
+                    
+//                    Preferences.setDebugLevels(prevDebugLvls);
 
                     if (srcImage == null) {
-                        MipavUtil.displayError("Unable to open image file specified: " + imageFile);
-                        validFile = false;
-                        return null;
+                        // TODO if cmd line, highlight failure somehow
+                        if (cmdLineCsvFlag) {
+                            System.err.println("Unable to open image file specified: " + imageFile);
+                            validFile = false;
+                            return null;
+                        } else {
+                            MipavUtil.displayError("Unable to open image file specified: " + imageFile);
+                            validFile = false;
+                            return null;
+                        }
                     }
 
                     final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
@@ -6362,7 +6490,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // special handling of SiteName for PDBP, where they want to use a set of permissible values
                 // with the free-form DE
                 if (isPDBPImagingStructure(fsData.getStructInfo().getShortName()) && de.getStructuralDataElement().getName().equalsIgnoreCase(SITE_NAME_ELEMENT_NAME)) {
-                    final JComboBox cb = new JComboBox();
+                    final JComboBox<String> cb = new JComboBox<String>();
                     cb.setName(de.getStructuralDataElement().getName());
                     cb.setFont(MipavUtil.font12);
                     final String[] items = PDBP_ALLOWED_SITE_NAMES;
@@ -6402,7 +6530,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         && de.getStructuralDataElement().getType() != null && !de.getStructuralDataElement().getType().equals(DataType.DATE)) {
                     if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.SINGLE
                             || de.getStructuralDataElement().getRestrictions() == InputRestrictions.FREE_FORM) {
-                        final JComboBox cb = new JComboBox();
+                        final JComboBox<String> cb = new JComboBox<String>();
                         cb.setName(de.getStructuralDataElement().getName());
                         cb.setFont(MipavUtil.font12);
 
@@ -6452,7 +6580,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             i++;
                         }
 
-                        final JList list = new JList(valStrList);
+                        final JList<String> list = new JList<String>(valStrList);
                         list.setName(de.getStructuralDataElement().getName());
                         list.setFont(MipavUtil.font12);
                         list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -6631,6 +6759,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         final String headerInfo = headerList.get(i);
 
                         message = message + fieldName + " : " + "      csv:" + param + "     header:" + headerInfo + "\n";
+                    }
+                    
+                    // TODO when running from the command line, note the conflict but use the CSV
+                    if (cmdLineCsvFlag) {
+                        System.err.println(message);
+                        return RESOLVE_CONFLICT_CSV;
                     }
 
                     UIManager.put("OptionPane.yesButtonText", "Use CSV");
@@ -6965,9 +7099,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             if (deVal.getComp() instanceof JTextField) {
                                 ((JTextField) deVal.getComp()).setText(null);
                             } else if (deVal.getComp() instanceof JComboBox) {
-                                ((JComboBox) deVal.getComp()).setSelectedItem(null);
+                                ((JComboBox<String>) deVal.getComp()).setSelectedItem(null);
                             } else if (deVal.getComp() instanceof JList) {
-                                ((JList) deVal.getComp()).clearSelection();
+                                ((JList<String>) deVal.getComp()).clearSelection();
                             }
                         }
                     }
@@ -7456,15 +7590,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         if (deComp instanceof JTextField) {
                             value = ((JTextField) deComp).getText().trim();
                         } else if (deComp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) deComp).getSelectedItem());
+                            value = (String) ( ((JComboBox<String>) deComp).getSelectedItem());
                         } else if (deComp instanceof JList) {
                             value = "";
-                            final int[] selectedIndicies = ((JList) deComp).getSelectedIndices();
+                            final int[] selectedIndicies = ((JList<String>) deComp).getSelectedIndices();
                             for (final int index : selectedIndicies) {
                                 if (value == "") {
-                                    value = (String) ((JList) deComp).getModel().getElementAt(index);
+                                    value = (String) ((JList<String>) deComp).getModel().getElementAt(index);
                                 } else {
-                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) deComp).getModel().getElementAt(index);
+                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList<String>) deComp).getModel().getElementAt(index);
                                 }
                             }
                         }
@@ -7544,18 +7678,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
 
                         } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) comp).getSelectedItem());
+                            value = (String) ( ((JComboBox<String>) comp).getSelectedItem());
                             if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || value.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                                 // value = deVal.getOtherSpecifyField().getText().trim();
                             }
                         } else if (comp instanceof JList) {
                             value = "";
-                            final int[] selectedIndicies = ((JList) comp).getSelectedIndices();
+                            final int[] selectedIndicies = ((JList<String>) comp).getSelectedIndices();
                             for (final int index : selectedIndicies) {
                                 if (value == "") {
-                                    value = (String) ((JList) comp).getModel().getElementAt(index);
+                                    value = (String) ((JList<String>) comp).getModel().getElementAt(index);
                                 } else {
-                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) comp).getModel().getElementAt(index);
+                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList<String>) comp).getModel().getElementAt(index);
                                 }
                             }
                         }
@@ -8140,7 +8274,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (isLegacyOtherSpecifyField(this)) {
                 otherSpecifyField = new JTextField();
                 otherSpecifyField.setVisible(false);
-                ((JComboBox) deComp).addActionListener(new OtherSpecifyListener(otherSpecifyField));
+                ((JComboBox<String>) deComp).addActionListener(new OtherSpecifyListener(otherSpecifyField));
             }
         }
 
@@ -8327,8 +8461,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             // sanity check before casts
             if (source instanceof JComboBox) {
-                otherSpecifyField.setVisible( ((JComboBox) source).getSelectedItem().equals(VALUE_OTHER_SPECIFY)
-                        || ((JComboBox) source).getSelectedItem().equals(VALUE_YES_SPECIFY));
+                otherSpecifyField.setVisible( ((JComboBox<String>) source).getSelectedItem().equals(VALUE_OTHER_SPECIFY)
+                        || ((JComboBox<String>) source).getSelectedItem().equals(VALUE_YES_SPECIFY));
                 final Window parentWindow = SwingUtilities.getWindowAncestor(otherSpecifyField);
                 // don't force the re-packing if the window hasn't been shown/created yet (as in CSV read)
                 if (parentWindow != null) {
@@ -8569,6 +8703,34 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
         public void addImageFile(final String file) {
             imageFiles.add(file);
+        }
+    }
+    
+    private class CmdLineOutputStream extends PrintStream {
+        PrintStream logFileStream;
+        
+        public CmdLineOutputStream(PrintStream out, PrintStream logStream) {
+            super(out);
+            
+            logFileStream = logStream;
+        }
+        
+//        public CmdLineOutputStream(PrintStream out1, PrintStream out2) {
+//            super(out1);
+//            this.out = out2;
+//        }
+        
+        public void write(byte buf[], int off, int len) {
+            try {
+                super.write(buf, off, len);
+                logFileStream.write(buf, off, len);
+            } catch (Exception e) {
+            }
+        }
+        
+        public void flush() {
+            super.flush();
+            logFileStream.flush();
         }
     }
 }
