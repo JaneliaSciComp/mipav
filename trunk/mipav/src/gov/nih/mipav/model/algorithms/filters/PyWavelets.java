@@ -5968,8 +5968,8 @@ public  class PyWavelets extends AlgorithmBase {
         	} // else 3D
         } // else if (tType == MULTILEVEL_DWT)
         else if (tType == SWT) {
-          // All decompostions are the same size as the original image
-          // Decompsitions go from start_level+1 to start_level+levels
+          // All decompositions are the same size as the original image
+          // Decompositions go from start_level+1 to start_level+levels
           if (do2D) {
         	buffer = new double[length];
           	bufxy = new double[xDim][yDim];	
