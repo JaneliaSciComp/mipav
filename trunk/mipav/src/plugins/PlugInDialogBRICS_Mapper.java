@@ -1404,7 +1404,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	Reader in = null;
         try {
 
-            final ArrayList<Float> gcLenList = new ArrayList<Float>();
             CSVParser records;
             try {
                 in = new FileReader(csvFile);
@@ -1416,9 +1415,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	displayError("Error reading file: " + csvFile);
                 return false;
             }
-            System.out.println("Header::::   " + records.getHeaderMap());
+           
             Map headerMap = records.getHeaderMap();
-            System.out.println("size of header arrary = " + headerMap.size());
+            //System.out.println("size of header arrary = " + headerMap.size());
             
             
             String[] DEHeaders = new String[headerMap.size()];
@@ -1428,9 +1427,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	recordSize = 3;
             }
             else if (headerMap.size() >= 5) {
-            	//String[] DEHeaders = (String[]) headerMap.keySet().toArray();
             	DEHeaders = new String[5];
             	recordSize = 5;
+            }
+            else {
+            	printlnToLog("Source data elements are not in proper format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.");
+            	in.close();
+            	return false;
             }
             
             // first line is data element attributes Name, PVs, PV Descriptions, Type, Title - on the first two are required.
@@ -1451,7 +1454,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	            	 DEHeaders[3] = new String("PV Descriptions");
 	            	 DEHeaders[4] = new String("Title");
 	            }
-	            
             }
             else {
             	printlnToLog("Source data elements are not in proper format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.");
@@ -1470,23 +1472,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	for(int j = 0; j < recordSize; j++) {
             		record[j]= recordList.get(i).get(j);
             	}
-            	//System.out.println("Record:  " + record);
             	dataElements.add(record);
             }
             
-           /* for (final CSVRecord record : records) { 
-                try {
-                    gcLenList.add(Float.valueOf(record.get(0)));
-                } catch (final NumberFormatException e) {
-                	displayError("Error parsing length on CSV line " + record.getRecordNumber());
-                    return false;
-                }
-            
-            } */
-            
             //Open dialog with and populate with source DEs
             SourceDEsDialog csvDEDialog = new SourceDEsDialog(this, dataElements);       
-        
         }
         catch (final Exception e) {
         	e.printStackTrace();
@@ -1505,110 +1495,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         return true;      
     }
         
-        /**
-         * Reads the CSV file that contains source (user's) data elements.
-         * Format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.
-         * Permissible Values (PVs) can only contain a-z, A-Z and 0-9 separated by semicolons.
-         * Puts the DEs into it's own dialog.
-         * 
-         * @return True if file is successfully opened
-         */
-        private boolean readSourceDEsCSVFileOld(File csvFile) {
-            BufferedReader br = null;
-            
-            try {
-                
-            	String str;
-                String mapID = "BRICSMap01";
-            	final FileInputStream fis= new FileInputStream(csvFile);
-            	br = new BufferedReader(new InputStreamReader(fis));
-                str = br.readLine();
-                
-                // ensure CSV is not empty 
-                if(str.isEmpty()) {
-                	displayError("Error in Loading: Chosen CSV file is empty");
-                	fis.close();
-                	return false;
-                }
-                
-                str = str.substring(0,10);
-                
-                // ensures mapping ID is included
-                if(!(str.equals(mapID))) {
-                	displayError("Error in Loading: Chosen CSV file does not Contain ID 'BRICSMap01' in the first cell");
-                	fis.close();
-                	return false;
-                }
-                
-            	str = br.readLine();
-            	
-                String[] DEHeaders = str.split(CSV_OUTPUT_DELIM);
-                for(int i =0; i < DEHeaders.length; i++) {
-                	DEHeaders[i] = DEHeaders[i].trim();
-                }
-                // first line is data element attributes Name, PVs, PV Descriptions, Type, Title - on the first two are required.
-                final String deName  = DEHeaders[0].trim();
-                final String deType  = DEHeaders[1].trim();
-                final String dePVs   = DEHeaders[2].trim();
-                if ( !deName.toLowerCase().equals("name") || !dePVs.toLowerCase().equals("pvs") ||  !deType.toLowerCase().equals("type")) {
-                	printlnToLog("Source data elements are not in proper format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.");
-                	fis.close();
-                	return false;
-                }
-                
-                /// Add code for reading CSV. - see PlugInDialog3dSWCstats.java
-                
-                Vector<String[]> dataElements = new Vector<String[]>(100);
-                dataElements.add(DEHeaders);
-                int row = 1; 
-                while ((str = br.readLine()) != null) {
-                    str = str.trim();
-                    //printlnToLog("Source string = " + str);
-                    
-                    // Need to split on CSV that could look like:   small, "medBig, big", BIG
-                    //String[] deDef =str.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
-                    String[] deDef = str.split(CSV_OUTPUT_DELIM);
 
-                    for(int i =0; i < deDef.length; i++) {
-                    	deDef[i] = deDef[i].trim();
-                    }
-                    if (deDef.length > 3 && !deDef[2].isEmpty()) { 	// PVs not empty
-                    	if ( !deDef[2].matches("^[\\w\\s;+\\,\\-()&]*$") ) {
-                    		// Need to fix to correct wording
-                    		 displayError("PVs can only contain a-z, A-Z and 0-9 separated by semicolons." + "  Row: " + row + " Element: " + deDef[0]);
-                    		 //fis.close();
-                    		 //return false;
-                    	}
-                    	else if (deDef[2].endsWith(";")) {
-                    		deDef[2] = deDef[2].substring(0, deDef[2].length()-1);
-                    	}
-                    	dataElements.add(deDef);
-                    	row++;
-                    }
-                    else if (deDef.length >= 2 ) {
-                    	dataElements.add(deDef);
-                    	row++;
-                    }    	
-                }
-                //fis.close();
-                //Open dialog with and populate with source DEs
-                SourceDEsDialog csvDEDialog = new SourceDEsDialog(this, dataElements);                 
-            } catch (final Exception e) {
-            	e.printStackTrace();
-            } finally {
-                if (br != null) {
-                    try {
-                        br.close();
-                    } catch (IOException e) {
-                        System.err.println("Problem closing CSV file handle.");
-                        e.printStackTrace();
-                    }
-                    return false;
-                }
-               
-            }
-            return true;      
-        }
     
     /**
      * Writes the CSV file that contains the mapping table data. It will be used by the mapping tools to transform the data.
