@@ -17589,7 +17589,115 @@ public  class PyWavelets extends AlgorithmBase {
         return coefs;
     }
     
+    public HashMap<String, double[][]> dwtn2(double data[][], DiscreteWavelet wavelet[], MODE modein[], int axes[]) {
+        // Default mode = symmetric
+    	// Default axes = null
+        // Single-level n-dimensional Discrete Wavelet Transform for 2D case
 
+        // Parameters
+        // ----------
+        // data : array_like
+        //     n-dimensional array with input data.
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //     Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in ``axes``.
+        // mode : str or tuple of string, optional
+        //    Signal extension mode used in the decomposition,
+        //    see Modes (default: 'symmetric').  This can also be a tuple of modes
+        //    specifying the mode to use on each axis in ``axes``.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the DWT. Repeated elements mean the DWT will
+        //    be performed multiple times along these axes. A value of ``None`` (the
+        //    default) selects all axes.
+
+        //    Axes may be repeated, but information about the original size may be
+        //    lost if it is not divisible by ``2 ** nrepeats``. The reconstruction
+        //    will be larger, with additional values derived according to the
+        //    ``mode`` parameter. ``pywt.wavedecn`` should be used for multilevel
+        //    decomposition.
+
+        // Returns
+        // -------
+        // coeffs : dict
+        //    Results are arranged in a dictionary, where key specifies
+        //    the transform type on each dimension and value is a n-dimensional
+        //    coefficients array.
+
+        //    For example, for a 2D case the result will look something like this::
+
+        //        {'aa': <coeffs>  # A(LL) - approx. on 1st dim, approx. on 2nd dim
+        //         'ad': <coeffs>  # V(LH) - approx. on 1st dim, det. on 2nd dim
+        //         'da': <coeffs>  # H(HL) - det. on 1st dim, approx. on 2nd dim
+        //         'dd': <coeffs>  # D(HH) - det. on 1st dim, det. on 2nd dim
+        //        }
+
+        //    For user-specified ``axes``, the order of the characters in the
+        //    dictionary keys map to the specified ``axes``.
+
+       
+        int i;
+        int axis;
+        DiscreteWavelet wav;
+        MODE mode;
+        if (axes == null) {
+            axes = new int[]{0,1};
+        }
+        for (i = 0; i < axes.length; i++) {
+        	if (axes[i] < 0) {
+        		axes[i] = axes[i] + 2;
+        	}
+        }
+        
+        // If there is only 1 mode, use the same mode for both axes
+        MODE modes[];
+        if ((modein.length == 1) && (axes.length == 2)) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m};
+        }
+        else {
+        	modes = modein;
+        }
+        
+        // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
+        DiscreteWavelet wavelets[];
+        if ((wavelet.length == 1) && (axes.length == 2)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};	
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        HashMap<String, double[][]> coeffs = new HashMap<String, double[][]>();
+        coeffs.put("", data);
+        HashMap<String, double[][]> new_coeffs = new HashMap<String, double[][]>();
+        for (i = 0; i < axes.length; i++) {
+            axis = axes[i];
+            wav = wavelets[i];
+            mode = modes[i];
+            new_coeffs.clear();
+            Iterator<Map.Entry<String, double[][]>> allIter = coeffs.entrySet().iterator();
+            Map.Entry<String,double[][]> kEntry = null;
+            while (allIter.hasNext()) {
+            	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+            	String subband = (String) kEntry.getKey();
+            	double x[][] = (double[][]) kEntry.getValue();
+            	double arr[][][] = dwt_axis(x, wav, mode, axis);
+            	double cA[][] = arr[0];
+            	double cD[][] = arr[1];
+            	new_coeffs.put(subband + "a", cA);
+            	new_coeffs.put(subband + "d", cD);
+            }
+            coeffs.clear();
+            Iterator<Map.Entry<String, double[][]>> newIter = new_coeffs.entrySet().iterator();
+            Map.Entry<String,double[][]> newEntry = null;
+            while (newIter.hasNext()) {
+            	newEntry = (Map.Entry<String,double[][]>) newIter.next();
+            	coeffs.put((String)newEntry.getKey(), (double[][])newEntry.getValue());
+            }
+        }
+        return coeffs;
+    }
 
     public HashMap<String, double[][][]> dwtn3(double data[][][], DiscreteWavelet wavelet[], MODE modein[], int axes[]) {
         // Default mode = symmetric
@@ -19040,6 +19148,577 @@ public  class PyWavelets extends AlgorithmBase {
        
         return a;
     }
+    
+    private Vector<HashMap<String, double[][]>> wavedecn(double data[][], DiscreteWavelet wavelet[], MODE modein[], int level, int axes[]) {
+        // Default mode = MODE.MODE_SYMMETRIC
+    	// Default level = -1
+    	// Default axes = null
+        // Multilevel nD Discrete Wavelet Transform.
+
+        // Parameters
+        // ----------
+        // data : ndarray
+        //    nD input data
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in `axes`.
+        // mode : str or tuple of str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric').  This can
+        //    also be a tuple containing a mode to apply along each axis in `axes`.
+        // level : int, optional
+        //    Decomposition level (must be >= 0). If level is None (default) then it
+        //    will be calculated using the `dwt_max_level` function.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the DWT. Axes may not be repeated. The
+        //    default is None, which means transform all axes
+        //    (``axes = range(data.ndim)``).
+
+        // Returns
+        // -------
+        // [cAn, {details_level_n}, ... {details_level_1}] : list
+        //    Coefficients list.  Coefficients are listed in descending order of
+        //    decomposition level.  `cAn` are the approximation coefficients at
+        //    level `n`.  Each `details_level_i` element is a dictionary
+        //    containing detail coefficients at level `i` of the decomposition.  As
+        //    a concrete example, a 3D decomposition would have the following set of
+        //    keys in each `details_level_i` dictionary::
+
+        //        {'aad', 'ada', 'daa', 'add', 'dad', 'dda', 'ddd'}
+
+        //    where the order of the characters in each key map to the specified
+        //    `axes`.
+
+        // Examples
+        // --------
+        // >>> import numpy as np
+        // >>> from pywt import wavedecn, waverecn
+        // >>> coeffs = wavedecn(np.ones((4, 4, 4)), 'db1')
+        // >>> # Levels:
+        // >>> len(coeffs)-1
+        // 2
+        // >>> waverecn(coeffs, 'db1')  # doctest: +NORMALIZE_WHITESPACE
+        // array([[[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]]]
+    	int i,j;
+    	if (axes == null) {
+    		axes = new int[]{0,1};
+    	}
+    	
+    	if ((axes.length == 2) && (axes[0] == axes[1])) {
+    		MipavUtil.displayError("The axes passed to wavedecn must be unique");
+    		return null;	
+    	}
+    	
+    	int datalength[] = new int[axes.length];
+    	for (i = 0; i < axes.length; i++) {
+    	    if (axes[i] == 0) {
+    	    	datalength[i] = data.length;
+    	    }
+    	    else if (axes[i] == 1) {
+    	    	datalength[i] = data[0].length;
+    	    }
+    	}
+    	
+    	int ndim_transform = axes.length;
+    	
+    	// If there is only 1 mode, use the same mode for both axes
+        MODE modes[];
+        if ((modein.length == 1) && (axes.length == 2)) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m};
+        }
+        else {
+        	modes = modein;
+        }
+        
+     // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
+        DiscreteWavelet wavelets[];
+        if ((wavelet.length == 1) && (axes.length == 2)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};	
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        int dec_lengths[] = null;
+        int level0;
+        int level1;
+        
+        if (axes.length == 2) {
+        	dec_lengths = new int[]{wavelet[0].dec_len,wavelet[1].dec_len};
+	        level0 = check_level(datalength[0], dec_lengths[0], level);
+	        level1 = check_level(datalength[1], dec_lengths[1], level);
+	        level = Math.min(level0, level1);	
+        }
+        else {
+        	dec_lengths = new int[]{wavelet[0].dec_len};
+        	level = check_level(datalength[0], dec_lengths[0], level);
+        }
+
+        Vector<HashMap<String, double[][]>>coeffs_list = new Vector<HashMap<String, double[][]>>();
+
+        double a[][] = new double[data.length][data[0].length];
+        for (i = 0; i < data.length; i++) {
+        	for (j = 0; j < data[0].length; j++) {
+        	    a[i][j] = data[i][j];
+        	}
+        }
+        HashMap <String, double[][]> coeffs = new HashMap<String, double[][]>();
+        for (i = 0; i < level; i++) {
+        	coeffs = dwtn2(a, wavelets, modes, axes);
+        	if (i < level - 1) {
+	        	if (ndim_transform == 2) {
+	        		a = coeffs.remove("aa");
+	        	}
+	        	else {
+	        		a = coeffs.remove("a");
+	        	}
+        	} // if (i < level - 1)
+        	coeffs_list.add(coeffs);
+        } // for (i = 0; i < level; i++)
+        
+        Vector<HashMap<String, double[][]>>coeffs_list_rev = new Vector<HashMap<String, double[][]>>();
+        for (i = coeffs_list.size()-1; i >= 0; i--) {
+        	coeffs_list_rev.add(coeffs_list.remove(i));
+        }
+
+        return coeffs_list_rev;
+        
+    }
+    
+    private Vector<HashMap<String, double[][][]>> wavedecn(double data[][][], DiscreteWavelet wavelet[], MODE modein[], int level, int axes[]) {
+        // Default mode = MODE.MODE_SYMMETRIC
+    	// Default level = -1
+    	// Default axes = null
+        // Multilevel nD Discrete Wavelet Transform.
+
+        // Parameters
+        // ----------
+        // data : ndarray
+        //    nD input data
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in `axes`.
+        // mode : str or tuple of str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric').  This can
+        //    also be a tuple containing a mode to apply along each axis in `axes`.
+        // level : int, optional
+        //    Decomposition level (must be >= 0). If level is None (default) then it
+        //    will be calculated using the `dwt_max_level` function.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the DWT. Axes may not be repeated. The
+        //    default is None, which means transform all axes
+        //    (``axes = range(data.ndim)``).
+
+        // Returns
+        // -------
+        // [cAn, {details_level_n}, ... {details_level_1}] : list
+        //    Coefficients list.  Coefficients are listed in descending order of
+        //    decomposition level.  `cAn` are the approximation coefficients at
+        //    level `n`.  Each `details_level_i` element is a dictionary
+        //    containing detail coefficients at level `i` of the decomposition.  As
+        //    a concrete example, a 3D decomposition would have the following set of
+        //    keys in each `details_level_i` dictionary::
+
+        //        {'aad', 'ada', 'daa', 'add', 'dad', 'dda', 'ddd'}
+
+        //    where the order of the characters in each key map to the specified
+        //    `axes`.
+
+        // Examples
+        // --------
+        // >>> import numpy as np
+        // >>> from pywt import wavedecn, waverecn
+        // >>> coeffs = wavedecn(np.ones((4, 4, 4)), 'db1')
+        // >>> # Levels:
+        // >>> len(coeffs)-1
+        // 2
+        // >>> waverecn(coeffs, 'db1')  # doctest: +NORMALIZE_WHITESPACE
+        // array([[[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]]]
+    	int i,j,k;
+    	if (axes == null) {
+    		axes = new int[]{0,1,2};
+    	}
+    	
+    	if ((axes.length == 3) && ((axes[0] == axes[1]) || (axes[0] == axes[2]) || (axes[1] == axes[2]))) {
+    		MipavUtil.displayError("The axes passed to wavedecn must be unique");
+    		return null;
+    	}
+    	else if ((axes.length == 2) && (axes[0] == axes[1])) {
+    		MipavUtil.displayError("The axes passed to wavedecn must be unique");
+    		return null;	
+    	}
+    	
+    	int datalength[] = new int[axes.length];
+    	for (i = 0; i < axes.length; i++) {
+    	    if (axes[i] == 0) {
+    	    	datalength[i] = data.length;
+    	    }
+    	    else if (axes[i] == 1) {
+    	    	datalength[i] = data[0].length;
+    	    }
+    	    else if (axes[i] == 2) {
+    	    	datalength[i] = data[0][0].length;
+    	    }
+    	}
+    	
+    	int ndim_transform = axes.length;
+    	
+    	// If there is only 1 mode, use the same mode for both axes
+        MODE modes[];
+        if ((modein.length == 1) && (axes.length == 3)) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m,m};	
+        }
+        else if ((modein.length == 1) && (axes.length == 2)) {
+        	MODE m = modein[0];
+        	modes = new MODE[]{m,m};
+        }
+        else {
+        	modes = modein;
+        }
+        
+     // If there is only 1 DiscreteWavelet, use the same DiscreteWavelet for both axes
+        DiscreteWavelet wavelets[];
+        if ((wavelet.length == 1) && (axes.length == 3)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w,w};
+        }
+        else if ((wavelet.length == 1) && (axes.length == 2)) {
+        	DiscreteWavelet w = wavelet[0];
+        	wavelets = new DiscreteWavelet[]{w, w};	
+        }
+        else {
+        	wavelets = wavelet;
+        }
+
+        int dec_lengths[] = null;
+        int level0;
+        int level1;
+        int level2;
+        
+        if (axes.length == 3) {
+	        dec_lengths = new int[]{wavelet[0].dec_len,wavelet[1].dec_len,wavelet[2].dec_len};
+	        level0 = check_level(datalength[0], dec_lengths[0], level);
+	        level1 = check_level(datalength[1], dec_lengths[1], level);
+	        level2 = check_level(datalength[2], dec_lengths[2], level);
+	        level = Math.min(Math.min(level0, level1),level2);
+        }
+        else if (axes.length == 2) {
+        	dec_lengths = new int[]{wavelet[0].dec_len,wavelet[1].dec_len};
+	        level0 = check_level(datalength[0], dec_lengths[0], level);
+	        level1 = check_level(datalength[1], dec_lengths[1], level);
+	        level = Math.min(level0, level1);	
+        }
+        else {
+        	dec_lengths = new int[]{wavelet[0].dec_len};
+        	level = check_level(datalength[0], dec_lengths[0], level);
+        }
+
+        Vector<HashMap<String, double[][][]>>coeffs_list = new Vector<HashMap<String, double[][][]>>();
+
+        double a[][][] = new double[data.length][data[0].length][data[0][0].length];
+        for (i = 0; i < data.length; i++) {
+        	for (j = 0; j < data[0].length; j++) {
+        		for (k = 0; k < data[0][0].length; k++) {
+        			a[i][j][k] = data[i][j][k];
+        		}
+        	}
+        }
+        HashMap <String, double[][][]> coeffs = new HashMap<String, double[][][]>();
+        for (i = 0; i < level; i++) {
+        	coeffs = dwtn3(a, wavelets, modes, axes);
+        	if (i < level-1) {
+	        	if (ndim_transform == 3) {
+	        		a = coeffs.remove("aaa");
+	        	}
+	        	else if (ndim_transform == 2) {
+	        		a = coeffs.remove("aa");
+	        	}
+	        	else {
+	        		a = coeffs.remove("a");
+	        	}
+        	} // if (i < level-1)
+        	coeffs_list.add(coeffs);
+        } // for (i = 0; i < level; i++)
+        
+        Vector<HashMap<String, double[][][]>>coeffs_list_rev = new Vector<HashMap<String, double[][][]>>();
+        for (i = coeffs_list.size()-1; i >= 0; i--) {
+        	coeffs_list_rev.add(coeffs_list.remove(i));
+        }
+
+        return coeffs_list_rev;
+    }
+    
+    private double[][] waverecn2(Vector<HashMap<String, double[][]>>coeffs, DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+        // Default mode == SYMMETRIC
+    	// Default axes == null
+        // Multilevel nD Inverse Discrete Wavelet Transform.
+
+        // coeffs : array_like
+        //    Coefficients list [cAn, {details_level_n}, ... {details_level_1}]
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in `axes`.
+        // mode : str or tuple of str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric').  This can
+        //    also be a tuple containing a mode to apply along each axis in `axes`.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the IDWT.  Axes may not be repeated.
+
+        // Returns
+        // -------
+        // nD array of reconstructed data.
+
+        // Notes
+        // -----
+        // It may sometimes be desired to run `waverecn` with some sets of
+        // coefficients omitted.  This can best be done by setting the corresponding
+        // arrays to zero arrays of matching shape and dtype.  Explicitly removing
+        // list or dictionary entries or setting them to None is not supported.
+
+        // Specifically, to ignore all detail coefficients at level 2, one could do::
+
+        //    coeffs[-2] = {k: np.zeros_like(v) for k, v in coeffs[-2].items()}
+
+        // Examples
+        // --------
+        // >>> import numpy as np
+        // >>> from pywt import wavedecn, waverecn
+        // >>> coeffs = wavedecn(np.ones((4, 4, 4)), 'db1')
+        // >>> # Levels:
+        // >>> len(coeffs)-1
+        // 2
+        // >>> waverecn(coeffs, 'db1')  # doctest: +NORMALIZE_WHITESPACE
+        // array([[[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]]])
+    	int i, j, k;
+    	if (axes == null) {
+    		axes = new int[]{0,1};
+    	}
+    	
+    	if ((axes.length == 2) && (axes[0] == axes[1])) {
+    		MipavUtil.displayError("The axes passed to wavedecn must be unique");
+    		return null;	
+    	}
+
+        if (coeffs.size() < 1) {
+            MipavUtil.displayError("Coefficient list too short (minimum 1 array required).");
+            return null;
+        }
+        
+        int ndim_transform = axes.length;
+        double atemp[][] = null;
+        double a[][] = null;
+        if (ndim_transform == 2) {
+            a = coeffs.get(0).get("aa");
+        }
+        else {
+        	a = coeffs.get(0).get("a");
+        }
+        double d[][];
+         for (i = 0; i < coeffs.size(); i++) {
+        	if (ndim_transform == 2) {
+        		d = coeffs.get(i).get("da");	
+        	}
+        	else {
+        		d = coeffs.get(i).get("d");
+        	}
+         	// The following if statement handles the case where the approximation
+             // coefficient returned at the previous level may exceed the size of the
+             // stored detail coefficients by 1 on any given axis.
+         	if ((a.length == (d.length+1)) || (a[0].length == (d[0].length+1))) {
+         	    atemp = new double[d.length][d[0].length];
+         	    for (j = 0; j < d.length; j++) {
+         	    	for (k = 0; k < d[0].length; k++) {
+         	    		atemp[j][k] = a[j][k];
+         	    	}
+         	    }
+         	    a = atemp;
+         	}
+         	if (ndim_transform == 2) {
+         		coeffs.get(i).put("aa", a);
+         	}
+         	else {
+         		coeffs.get(i).put("a", a);
+         	}
+         	a = idwtn2(coeffs.get(i), wavelet, mode, axes);
+         }	// for (i = 0; i < coeffs.size(); i++)
+
+        return a;
+    }
+    
+    private double[][][] waverecn3(Vector<HashMap<String, double[][][]>>coeffs, DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+        // Default mode == SYMMETRIC
+    	// Default axes == null
+        // Multilevel nD Inverse Discrete Wavelet Transform.
+
+        // coeffs : array_like
+        //    Coefficients list [cAn, {details_level_n}, ... {details_level_1}]
+        // wavelet : Wavelet object or name string, or tuple of wavelets
+        //    Wavelet to use.  This can also be a tuple containing a wavelet to
+        //    apply along each axis in `axes`.
+        // mode : str or tuple of str, optional
+        //    Signal extension mode, see `Modes` (default: 'symmetric').  This can
+        //    also be a tuple containing a mode to apply along each axis in `axes`.
+        // axes : sequence of ints, optional
+        //    Axes over which to compute the IDWT.  Axes may not be repeated.
+
+        // Returns
+        // -------
+        // nD array of reconstructed data.
+
+        // Notes
+        // -----
+        // It may sometimes be desired to run `waverecn` with some sets of
+        // coefficients omitted.  This can best be done by setting the corresponding
+        // arrays to zero arrays of matching shape and dtype.  Explicitly removing
+        // list or dictionary entries or setting them to None is not supported.
+
+        // Specifically, to ignore all detail coefficients at level 2, one could do::
+
+        //    coeffs[-2] = {k: np.zeros_like(v) for k, v in coeffs[-2].items()}
+
+        // Examples
+        // --------
+        // >>> import numpy as np
+        // >>> from pywt import wavedecn, waverecn
+        // >>> coeffs = wavedecn(np.ones((4, 4, 4)), 'db1')
+        // >>> # Levels:
+        // >>> len(coeffs)-1
+        // 2
+        // >>> waverecn(coeffs, 'db1')  # doctest: +NORMALIZE_WHITESPACE
+        // array([[[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]],
+        //       [[ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.],
+        //        [ 1.,  1.,  1.,  1.]]])
+    	int i, j, k, m;
+    	if (axes == null) {
+    		axes = new int[]{0,1,2};
+    	}
+    	
+    	if ((axes.length == 3) && ((axes[0] == axes[1]) || (axes[0] == axes[2]) || (axes[1] == axes[2]))) {
+    		MipavUtil.displayError("The axes passed to wavedecn must be unique");
+    		return null;
+    	}
+    	else if ((axes.length == 2) && (axes[0] == axes[1])) {
+    		MipavUtil.displayError("The axes passed to wavedecn must be unique");
+    		return null;	
+    	}
+
+        if (coeffs.size() < 1) {
+            MipavUtil.displayError("Coefficient list too short (minimum 1 array required).");
+            return null;
+        }
+        
+        int ndim_transform = axes.length;
+        double atemp[][][] = null;
+        double a[][][] = null;
+        if (ndim_transform == 3) {
+            a = coeffs.get(0).get("aaa");
+        }
+        else if (ndim_transform == 2) {
+        	a = coeffs.get(0).get("aa");
+        }
+        else {
+        	a = coeffs.get(0).get("a");
+        }
+        double d[][][];
+         for (i = 0; i < coeffs.size(); i++) {
+        	if (ndim_transform == 3) {
+         	    d = coeffs.get(i).get("daa");
+        	}
+        	else if (ndim_transform == 2) {
+        		d = coeffs.get(i).get("da");	
+        	}
+        	else {
+        		d = coeffs.get(i).get("d");
+        	}
+         	// The following if statement handles the case where the approximation
+             // coefficient returned at the previous level may exceed the size of the
+             // stored detail coefficients by 1 on any given axis.
+         	if ((a.length == (d.length+1)) || (a[0].length == (d[0].length+1)) || (a[0][0].length == (d[0][0].length+1))) {
+         	    atemp = new double[d.length][d[0].length][d[0][0].length];
+         	    for (j = 0; j < d.length; j++) {
+         	    	for (k = 0; k < d[0].length; k++) {
+         	    		for (m = 0; m < d[0][0].length; m++) {
+         	    		    atemp[j][k][m] = a[j][k][m];
+         	    		}
+         	    	}
+         	    }
+         	    a = atemp;
+         	}
+         	if (ndim_transform == 3) {
+         	    coeffs.get(i).put("aaa",a);
+         	}
+         	else if (ndim_transform == 2) {
+         		coeffs.get(i).put("aa", a);
+         	}
+         	else {
+         		coeffs.get(i).put("a", a);
+         	}
+         	a = idwtn3(coeffs.get(i), wavelet, mode, axes);
+         }	// for (i = 0; i < coeffs.size(); i++)
+
+        return a;
+    }
+
     
     private double[][] swt1D(double data[], DiscreteWavelet wavelet, int level, int start_level) {
         // Default level = -1
