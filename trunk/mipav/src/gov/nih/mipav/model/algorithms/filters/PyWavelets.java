@@ -5209,7 +5209,6 @@ public  class PyWavelets extends AlgorithmBase {
         } // else 3D
         } // if (tType == SINGLE_LEVEL_DWT)
         else if (tType == MULTILEVEL_DWT) {
-        	// must have 2 axes for wavedec2 and 3 axes for wavedec3
         	if (do2D) {
         		buffer = new double[length];
             	bufxy = new double[xDim][yDim];	
@@ -5228,9 +5227,22 @@ public  class PyWavelets extends AlgorithmBase {
                 			bufxy[x][y] = buffer[x + y * xDim];
                 	    }
                 	}
-                	// axes must be {0,1}
-                	// Expect coeffs.length = 1 (for a) + 3 * (number of levels)
-             	    double arr[][][] = wavedec2(bufxy, wavelets, modes, levels, axes);
+             	    Vector<HashMap<String, double[][]>> coeffs = wavedecn(bufxy, wavelets, modes, levels, axes);
+             	    double arr[][][] = new double[3*levels + 1][][];
+             	    if (axes.length == 2) {
+             	    	arr[0] = coeffs.get(0).get("aa");
+             	    	for (i = 0; i < levels; i++) {
+             	    		arr[3*i+1] = coeffs.get(i).get("da");
+             	    		arr[3*i+2] = coeffs.get(i).get("ad");
+             	    		arr[3*i+3] = coeffs.get(i).get("dd");
+             	    	}
+             	    }
+             	    else {
+             	    	arr[0] = coeffs.get(0).get("a");
+             	    	for (i = 0; i < levels; i++) {
+             	    		arr[i+1] = coeffs.get(i).get("d");
+             	    	}
+             	    }
              	    if (showTransform) {
              	    	if (z == 0) {
              	    		if (zDim == 2) {
@@ -5240,17 +5252,31 @@ public  class PyWavelets extends AlgorithmBase {
              	    			extentsn = new int[]{arr[0].length,arr[0][0].length,zDim};
              	    		}
              	    	    imageAn = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_A" + String.valueOf(levels));
-             	    	    imageHn = new ModelImage[levels];
-             	    	    imageVn = new ModelImage[levels];
+             	    	    if (axes.length == 2) {
+             	    	        imageHn = new ModelImage[levels];
+             	    	        imageVn = new ModelImage[levels];
+             	    	    }
              	    	    imageDn = new ModelImage[levels];
-             	    	    imageHn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(levels));
-             	    	    imageVn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + String.valueOf(levels));
+             	    	    if (axes.length == 2) {
+             	    	        imageHn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(levels));
+             	    	        imageVn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + String.valueOf(levels));
+             	    	    }
              	    	    imageDn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_D" + String.valueOf(levels));
              	    	} // if (z == 0)
-         	    	    double cA[][] = arr[0];
-         	    	    double cH[][] = arr[1];
-         	    	    double cV[][] = arr[2];
-         	    	    double cD[][] = arr[3];
+             	    	double cA[][] = null;
+             	    	double cH[][] = null;
+             	    	double cV[][] = null;
+             	    	double cD[][] = null;
+             	    	if (axes.length == 2) {
+         	    	        cA = arr[0];
+         	    	        cH = arr[1];
+         	    	        cV = arr[2];
+         	    	        cD = arr[3];
+             	    	}
+             	    	else {
+             	    		cA = arr[0];
+             	    		cD = arr[1];
+             	    	}
          	    	    buf = new double[cA.length * cA[0].length];
          	    	    for (y = 0; y < cA[0].length; y++) {
    	            		    for (x = 0; x < cA.length; x++) {
@@ -5268,37 +5294,39 @@ public  class PyWavelets extends AlgorithmBase {
        	                    return;
        	                }
              	    
-	       	       		for (y = 0; y < cH[0].length; y++) {
-		            		    for (x = 0; x < cH.length; x++) {
-		            			    buf[x + y * cH.length] = cH[x][y];
+	       	       		if (axes.length == 2) {
+	       	       		    for (y = 0; y < cH[0].length; y++) {
+			            		    for (x = 0; x < cH.length; x++) {
+			            			    buf[x + y * cH.length] = cH[x][y];
+			            	        }
+			            	    }
+		   	       		    try {
+		   	            		imageHn[0].importData(z * cH.length*cH[0].length , buf, false);
+		   	            	}
+		   	            	catch (IOException e) {
+		   	                    MipavUtil.displayError("IOException " + e + " on imageHn[0].importData");
+		
+		   	                    setCompleted(false);
+		
+		   	                    return;
+		   	                }
+		   	       		    
+			   	       		for (y = 0; y < cV[0].length; y++) {
+		            		    for (x = 0; x < cV.length; x++) {
+		            			    buf[x + y * cV.length] = cV[x][y];
 		            	        }
 		            	    }
-	   	       		    try {
-	   	            		imageHn[0].importData(z * cH.length*cH[0].length , buf, false);
-	   	            	}
-	   	            	catch (IOException e) {
-	   	                    MipavUtil.displayError("IOException " + e + " on imageHn[0].importData");
-	
-	   	                    setCompleted(false);
-	
-	   	                    return;
-	   	                }
-	   	       		    
-		   	       		for (y = 0; y < cV[0].length; y++) {
-	            		    for (x = 0; x < cV.length; x++) {
-	            			    buf[x + y * cV.length] = cV[x][y];
-	            	        }
-	            	    }
-		       		    try {
-		            		imageVn[0].importData(z * cV.length*cV[0].length , buf, false);
-		            	}
-		            	catch (IOException e) {
-		                    MipavUtil.displayError("IOException " + e + " on imageVn[0].importData");
-	
-		                    setCompleted(false);
-	
-		                    return;
-		                }
+			       		    try {
+			            		imageVn[0].importData(z * cV.length*cV[0].length , buf, false);
+			            	}
+			            	catch (IOException e) {
+			                    MipavUtil.displayError("IOException " + e + " on imageVn[0].importData");
+		
+			                    setCompleted(false);
+		
+			                    return;
+			                }
+	       	       		} // if (axes.length == 2)
 		       		    
 		       		    for (y = 0; y < cD[0].length; y++) {
 	            		    for (x = 0; x < cD.length; x++) {
@@ -5317,7 +5345,13 @@ public  class PyWavelets extends AlgorithmBase {
 		                }
 		       		    
 		       		    for (level = levels-1; level >= 1; level--) {
-		       		        int offset = (levels - level)*3 + 1;
+		       		    	int offset;
+		       		    	if (axes.length == 2) {
+		       		            offset = (levels - level)*3 + 1;
+		       		    	}
+		       		    	else {
+		       		    		offset = (levels - level) + 1;
+		       		    	}
 		       		        if (z == 0) {
 	             	    		if (zDim == 2) {
 	             	    			extentsn = new int[]{arr[offset].length,arr[offset][0].length};
@@ -5325,45 +5359,54 @@ public  class PyWavelets extends AlgorithmBase {
 	             	    		else {
 	             	    			extentsn = new int[]{arr[offset].length,arr[offset][0].length,zDim};
 	             	    		}
-	             	    	    imageHn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(level));
-	             	    	    imageVn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + String.valueOf(level));
+	             	    		if (axes.length == 2) {
+	             	    	        imageHn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(level));
+	             	    	        imageVn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + String.valueOf(level));
+	             	    		}
 	             	    	    imageDn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_D" + String.valueOf(level));
 	             	    	} // if (z == 0)
-	         	    	    cH = arr[offset];
-	         	    	    cV = arr[offset+1];
-	         	    	    cD = arr[offset+2];
-	         	    	    buf = new double[cH.length * cH[0].length];
-	         	    	    for (y = 0; y < cH[0].length; y++) {
-		            		    for (x = 0; x < cH.length; x++) {
-		            			    buf[x + y * cH.length] = cH[x][y];
-		            	        }
-		            	    }
-		   	       		    try {
-		   	            		imageHn[levels-level].importData(z * cH.length*cH[0].length , buf, false);
-		   	            	}
-		   	            	catch (IOException e) {
-		   	                    MipavUtil.displayError("IOException " + e + " on imageHn["+(levels-level)+"].importData");
-		
-		   	                    setCompleted(false);
-		
-		   	                    return;
-		   	                }
-	   	       		    
-			   	       		for (y = 0; y < cV[0].length; y++) {
-		            		    for (x = 0; x < cV.length; x++) {
-		            			    buf[x + y * cV.length] = cV[x][y];
-		            	        }
-		            	    }
-			       		    try {
-			            		imageVn[levels-level].importData(z * cV.length*cV[0].length , buf, false);
-			            	}
-			            	catch (IOException e) {
-			                    MipavUtil.displayError("IOException " + e + " on imageVn["+(levels-level)+"].importData");
-		
-			                    setCompleted(false);
-		
-			                    return;
-			                }
+		       		        if (axes.length == 2) {
+	         	    	        cH = arr[offset];
+	         	    	        cV = arr[offset+1];
+	         	    	        cD = arr[offset+2];
+		       		        }
+		       		        else {
+		       		        	cD = arr[offset];
+		       		        }
+	         	    	    buf = new double[cD.length * cD[0].length];
+	         	    	    if (axes.length == 2) {
+		         	    	    for (y = 0; y < cH[0].length; y++) {
+			            		    for (x = 0; x < cH.length; x++) {
+			            			    buf[x + y * cH.length] = cH[x][y];
+			            	        }
+			            	    }
+			   	       		    try {
+			   	            		imageHn[levels-level].importData(z * cH.length*cH[0].length , buf, false);
+			   	            	}
+			   	            	catch (IOException e) {
+			   	                    MipavUtil.displayError("IOException " + e + " on imageHn["+(levels-level)+"].importData");
+			
+			   	                    setCompleted(false);
+			
+			   	                    return;
+			   	                }
+		   	       		    
+				   	       		for (y = 0; y < cV[0].length; y++) {
+			            		    for (x = 0; x < cV.length; x++) {
+			            			    buf[x + y * cV.length] = cV[x][y];
+			            	        }
+			            	    }
+				       		    try {
+				            		imageVn[levels-level].importData(z * cV.length*cV[0].length , buf, false);
+				            	}
+				            	catch (IOException e) {
+				                    MipavUtil.displayError("IOException " + e + " on imageVn["+(levels-level)+"].importData");
+			
+				                    setCompleted(false);
+			
+				                    return;
+				                }
+	         	    	    } // if (axes.length == 2)
 		       		    
 			       		    for (y = 0; y < cD[0].length; y++) {
 		            		    for (x = 0; x < cD.length; x++) {
@@ -5383,7 +5426,14 @@ public  class PyWavelets extends AlgorithmBase {
 		       		    } // for (level = levels-1; level >= 1; level--)
              	    } // if (showTransform)
              	    filtBuffer = new double[arr[0].length*arr[0][0].length];
-             	    for (i = 0; i < 4; i++) {
+             	    int highestLevelNum;
+             	    if (axes.length == 2) {
+             	    	highestLevelNum = 4;
+             	    }
+             	    else {
+             	    	highestLevelNum = 2;
+             	    }
+             	    for (i = 0; i < highestLevelNum; i++) {
              	        if (filterType[i] != FILTER_NONE) {
                    		    for (j = 0; j < arr[i].length; j++) {
                    			    for (k = 0; k < arr[i][j].length; k++) {
@@ -5397,11 +5447,20 @@ public  class PyWavelets extends AlgorithmBase {
                    			    }
                    		    }
                    	    } // if (filterType[i] != FILTER_NONE)
-                   	} // for (i = 0; i < 4; i++)
+                   	} // for (i = 0; i < highestLevelNum; i++)
                    	for (level = levels-1; level >= 1; level--) {
-                   	    int offset = (levels - level)*3 + 1;
+                   		int offset;
+                   		int numberInSet;
+                   		if (axes.length == 2) {
+                   			offset = (levels - level)*3 + 1;
+                   			numberInSet = 3;
+                   		}
+                   		else {
+                   			offset = (levels - level) + 1;
+                   			numberInSet = 1;
+                   		}
                    	    filtBuffer = new double[arr[offset].length*arr[offset][0].length];
-	                   	for (i = offset; i < offset+3; i++) {
+	                   	for (i = offset; i < offset+numberInSet; i++) {
 	                   		if (filterType[i] != FILTER_NONE) {
 	                    		for (j = 0; j < arr[i].length; j++) {
 	                    			for (k = 0; k < arr[i][j].length; k++) {
@@ -5415,7 +5474,7 @@ public  class PyWavelets extends AlgorithmBase {
 	                    			}
 	                    		}
 	                   		} // if (filterType[i] != FILTER_NONE)
-                    	} // for (i = offset; i < offset+3; i++)
+                    	} // for (i = offset; i < offset+numberInSet; i++)
                    	} // for (level = levels-1; level >= 1; level--)
                    	if (showFilteredTransform) {
                    		if (z == 0) {
@@ -5426,17 +5485,31 @@ public  class PyWavelets extends AlgorithmBase {
              	    			extentsn = new int[]{arr[0].length,arr[0][0].length,zDim};
              	    		}
              	    	    imageAn_filter = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_A" + String.valueOf(levels)+"_filter");
-             	    	    imageHn_filter = new ModelImage[levels];
-             	    	    imageVn_filter = new ModelImage[levels];
+             	    	    if (axes.length == 2) {
+             	    	        imageHn_filter = new ModelImage[levels];
+             	    	        imageVn_filter = new ModelImage[levels];
+             	    	    }
              	    	    imageDn_filter = new ModelImage[levels];
-             	    	    imageHn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(levels)+"_filter");
-             	    	    imageVn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + String.valueOf(levels)+"_filter");
+             	    	    if (axes.length == 2) {
+             	    	        imageHn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(levels)+"_filter");
+             	    	        imageVn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + String.valueOf(levels)+"_filter");
+             	    	    }
              	    	    imageDn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_D" + String.valueOf(levels)+"_filter");
              	    	} // if (z == 0)
-         	    	    double cA[][] = arr[0];
-         	    	    double cH[][] = arr[1];
-         	    	    double cV[][] = arr[2];
-         	    	    double cD[][] = arr[3];
+                   		double cA[][] = null;
+                   		double cH[][] = null;
+                   		double cV[][] = null;
+                   		double cD[][] = null;
+                   		if (axes.length == 2) {
+         	    	        cA = arr[0];
+         	    	        cH = arr[1];
+         	    	        cV = arr[2];
+         	    	        cD = arr[3];
+                   		}
+                   		else {
+                   			cA = arr[0];
+                   			cD = arr[1];
+                   		}
          	    	    buf = new double[cA.length * cA[0].length];
          	    	    for (y = 0; y < cA[0].length; y++) {
    	            		    for (x = 0; x < cA.length; x++) {
@@ -5454,37 +5527,39 @@ public  class PyWavelets extends AlgorithmBase {
        	                    return;
        	                }
              	    
-	       	       		for (y = 0; y < cH[0].length; y++) {
-		            		    for (x = 0; x < cH.length; x++) {
-		            			    buf[x + y * cH.length] = cH[x][y];
+	       	       		if (axes.length == 2) {
+	       	       		    for (y = 0; y < cH[0].length; y++) {
+			            		    for (x = 0; x < cH.length; x++) {
+			            			    buf[x + y * cH.length] = cH[x][y];
+			            	        }
+			            	    }
+		   	       		    try {
+		   	            		imageHn_filter[0].importData(z * cH.length*cH[0].length , buf, false);
+		   	            	}
+		   	            	catch (IOException e) {
+		   	                    MipavUtil.displayError("IOException " + e + " on imageHn_filter[0].importData");
+		
+		   	                    setCompleted(false);
+		
+		   	                    return;
+		   	                }
+		   	       		    
+			   	       		for (y = 0; y < cV[0].length; y++) {
+		            		    for (x = 0; x < cV.length; x++) {
+		            			    buf[x + y * cV.length] = cV[x][y];
 		            	        }
 		            	    }
-	   	       		    try {
-	   	            		imageHn_filter[0].importData(z * cH.length*cH[0].length , buf, false);
-	   	            	}
-	   	            	catch (IOException e) {
-	   	                    MipavUtil.displayError("IOException " + e + " on imageHn_filter[0].importData");
-	
-	   	                    setCompleted(false);
-	
-	   	                    return;
-	   	                }
-	   	       		    
-		   	       		for (y = 0; y < cV[0].length; y++) {
-	            		    for (x = 0; x < cV.length; x++) {
-	            			    buf[x + y * cV.length] = cV[x][y];
-	            	        }
-	            	    }
-		       		    try {
-		            		imageVn_filter[0].importData(z * cV.length*cV[0].length , buf, false);
-		            	}
-		            	catch (IOException e) {
-		                    MipavUtil.displayError("IOException " + e + " on imageVn_filter[0].importData");
-	
-		                    setCompleted(false);
-	
-		                    return;
-		                }
+			       		    try {
+			            		imageVn_filter[0].importData(z * cV.length*cV[0].length , buf, false);
+			            	}
+			            	catch (IOException e) {
+			                    MipavUtil.displayError("IOException " + e + " on imageVn_filter[0].importData");
+		
+			                    setCompleted(false);
+		
+			                    return;
+			                }
+	       	       		} // if (axes.length == 2)
 		       		    
 		       		    for (y = 0; y < cD[0].length; y++) {
 	            		    for (x = 0; x < cD.length; x++) {
@@ -5503,7 +5578,13 @@ public  class PyWavelets extends AlgorithmBase {
 		                }
 		       		    
 		       		    for (level = levels-1; level >= 1; level--) {
-		       		        int offset = (levels - level)*3 + 1;
+		       		    	int offset;
+		       		    	if (axes.length == 2) {
+		       		            offset = (levels - level)*3 + 1;
+		       		    	}
+		       		    	else {
+		       		    		offset = (levels - level) + 1;
+		       		    	}
 		       		        if (z == 0) {
 	             	    		if (zDim == 2) {
 	             	    			extentsn = new int[]{arr[offset].length,arr[offset][0].length};
@@ -5511,48 +5592,57 @@ public  class PyWavelets extends AlgorithmBase {
 	             	    		else {
 	             	    			extentsn = new int[]{arr[offset].length,arr[offset][0].length,zDim};
 	             	    		}
-	             	    	    imageHn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + 
-	             	    		String.valueOf(level) + "_filter");
-	             	    	    imageVn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + 
-	             	    		String.valueOf(level) + "_filter");
+	             	    		if (axes.length == 2) {
+		             	    	    imageHn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + 
+		             	    		String.valueOf(level) + "_filter");
+		             	    	    imageVn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_V" + 
+		             	    		String.valueOf(level) + "_filter");
+	             	    		}
 	             	    	    imageDn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_D" + 
 	             	    		String.valueOf(level) + "_filter");
 	             	    	} // if (z == 0)
-	         	    	    cH = arr[offset];
-	         	    	    cV = arr[offset+1];
-	         	    	    cD = arr[offset+2];
-	         	    	    buf = new double[cH.length * cH[0].length];
-	         	    	    for (y = 0; y < cH[0].length; y++) {
-		            		    for (x = 0; x < cH.length; x++) {
-		            			    buf[x + y * cH.length] = cH[x][y];
-		            	        }
-		            	    }
-		   	       		    try {
-		   	            		imageHn_filter[levels-level].importData(z * cH.length*cH[0].length , buf, false);
-		   	            	}
-		   	            	catch (IOException e) {
-		   	                    MipavUtil.displayError("IOException " + e + " on imageHn_filter["+(levels-level)+"].importData");
-		
-		   	                    setCompleted(false);
-		
-		   	                    return;
-		   	                }
-	   	       		    
-			   	       		for (y = 0; y < cV[0].length; y++) {
-		            		    for (x = 0; x < cV.length; x++) {
-		            			    buf[x + y * cV.length] = cV[x][y];
-		            	        }
-		            	    }
-			       		    try {
-			            		imageVn_filter[levels-level].importData(z * cV.length*cV[0].length , buf, false);
-			            	}
-			            	catch (IOException e) {
-			                    MipavUtil.displayError("IOException " + e + " on imageVn_filter["+(levels-level)+"].importData");
-		
-			                    setCompleted(false);
-		
-			                    return;
-			                }
+		       		        if (axes.length == 2) {
+	         	    	        cH = arr[offset];
+	         	    	        cV = arr[offset+1];
+	         	    	        cD = arr[offset+2];
+		       		        }
+		       		        else {
+		       		        	cD = arr[offset];
+		       		        }
+	         	    	    buf = new double[cD.length * cD[0].length];
+	         	    	    if (axes.length == 2) {
+		         	    	    for (y = 0; y < cH[0].length; y++) {
+			            		    for (x = 0; x < cH.length; x++) {
+			            			    buf[x + y * cH.length] = cH[x][y];
+			            	        }
+			            	    }
+			   	       		    try {
+			   	            		imageHn_filter[levels-level].importData(z * cH.length*cH[0].length , buf, false);
+			   	            	}
+			   	            	catch (IOException e) {
+			   	                    MipavUtil.displayError("IOException " + e + " on imageHn_filter["+(levels-level)+"].importData");
+			
+			   	                    setCompleted(false);
+			
+			   	                    return;
+			   	                }
+		   	       		    
+				   	       		for (y = 0; y < cV[0].length; y++) {
+			            		    for (x = 0; x < cV.length; x++) {
+			            			    buf[x + y * cV.length] = cV[x][y];
+			            	        }
+			            	    }
+				       		    try {
+				            		imageVn_filter[levels-level].importData(z * cV.length*cV[0].length , buf, false);
+				            	}
+				            	catch (IOException e) {
+				                    MipavUtil.displayError("IOException " + e + " on imageVn_filter["+(levels-level)+"].importData");
+			
+				                    setCompleted(false);
+			
+				                    return;
+				                }
+	         	    	    } // if (axes.length == 2)
 		       		    
 			       		    for (y = 0; y < cD[0].length; y++) {
 		            		    for (x = 0; x < cD.length; x++) {
@@ -5572,7 +5662,21 @@ public  class PyWavelets extends AlgorithmBase {
 		       		    } // for (level = levels-1; level >= 1; level--)	
                    	} // if (showFilteredtransform)
              	    
-                    bufxy = waverec2(arr, wavelets, modes, axes);
+                   	if (axes.length == 2) {
+             	    	coeffs.get(0).put("aa", arr[0]);
+             	    	for (i = 0; i < levels; i++) {
+             	    		coeffs.get(i).put("da",arr[3*i+1]);
+             	    		coeffs.get(i).put("ad",arr[3*i+2]);
+             	    		coeffs.get(i).put("dd",arr[3*i+3]);
+             	    	}
+             	    }
+             	    else {
+             	    	coeffs.get(0).put("a",arr[0]);
+             	    	for (i = 0; i < levels; i++) {
+             	    		coeffs.get(i).put("d",arr[i+1]);
+             	    	}
+             	    }
+                   	bufxy = waverecn2(coeffs, wavelets, modes, axes);
                     for (y = 0; y < yDim; y++) {
                 		for (x = 0; x < xDim; x++) {
                 	        buffer[x + y * xDim] = bufxy[x][y];
@@ -5593,28 +5697,36 @@ public  class PyWavelets extends AlgorithmBase {
                 if (showTransform) {
                 	imageAn.calcMinMax();
 	                	for (i = 0; i < levels; i++) {
-	                	imageHn[i].calcMinMax();
-	                	imageVn[i].calcMinMax();
+	                	if (axes.length == 2) {
+	                	    imageHn[i].calcMinMax();
+	                	    imageVn[i].calcMinMax();
+	                	}
 	                	imageDn[i].calcMinMax();
                 	}
                 	new ViewJFrameImage(imageAn, null, new Dimension(610, 200 + (index++ * 20)));
                 	for (i = 0; i < levels; i++) {
-	                	new ViewJFrameImage(imageHn[i], null, new Dimension(610, 200 + (index++ * 20)));
-	                	new ViewJFrameImage(imageVn[i], null, new Dimension(610, 200 + (index++ * 20)));
+                		if (axes.length == 2) {
+	                	    new ViewJFrameImage(imageHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+	                	    new ViewJFrameImage(imageVn[i], null, new Dimension(610, 200 + (index++ * 20)));
+                		}
 	                	new ViewJFrameImage(imageDn[i], null, new Dimension(610, 200 + (index++ * 20)));
                 	}
                 }
                 if (showFilteredTransform) {
                 	imageAn_filter.calcMinMax();
                 	for (i = 0; i < levels; i++) {
-	                	imageHn_filter[i].calcMinMax();
-	                	imageVn_filter[i].calcMinMax();
+                		if (axes.length == 2) {
+	                	    imageHn_filter[i].calcMinMax();
+	                	    imageVn_filter[i].calcMinMax();
+                		}
 	                	imageDn_filter[i].calcMinMax();
                 	}
                 	new ViewJFrameImage(imageAn_filter, null, new Dimension(610, 200 + (index++ * 20)));
                 	for (i = 0; i < levels; i++) {
-	                	new ViewJFrameImage(imageHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
-	                	new ViewJFrameImage(imageVn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+                		if (axes.length == 2) {
+	                	    new ViewJFrameImage(imageHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+	                	    new ViewJFrameImage(imageVn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+                		}
 	                	new ViewJFrameImage(imageDn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
                 	}
                 }
@@ -5640,10 +5752,40 @@ public  class PyWavelets extends AlgorithmBase {
     	        	    }
     	        	}
             	}
-            	// Axes must be {0,1,2}
-            	double arr[][][][] = wavedec3(bufxyz, wavelets, modes, levels, axes);
+            	Vector<HashMap<String, double[][][]>> coeffs = wavedecn(bufxyz, wavelets, modes, levels, axes);
+            	double arr[][][][] = null;
+            	if (axes.length == 3) {
+            	    arr = new double[7*levels+1][][][];
+            	    arr[0] = coeffs.get(0).get("aaa");
+            	    for (i = 0; i < levels; i++) {
+            	    	arr[7*i+1] = coeffs.get(i).get("daa");
+            	    	arr[7*i+2] = coeffs.get(i).get("ada");
+            	    	arr[7*i+3] = coeffs.get(i).get("dda");
+            	    	arr[7*i+4] = coeffs.get(i).get("aad");
+            	    	arr[7*i+5] = coeffs.get(i).get("dad");
+            	    	arr[7*i+6] = coeffs.get(i).get("add");
+            	    	arr[7*i+7] = coeffs.get(i).get("ddd");
+            	    }
+            	} // if (axes.length = 3)
+            	else if (axes.length == 2) {
+            		arr = new double[3*levels+1][][][];
+            		arr[0] = coeffs.get(0).get("aa");
+            		for (i = 0; i < levels; i++) {
+            			arr[3*i+1] = coeffs.get(i).get("da");
+            			arr[3*i+2] = coeffs.get(i).get("ad");
+            			arr[3*i+3] = coeffs.get(i).get("dd");
+            		}
+            	}
+            	else {
+            		arr = new double[levels+1][][][];
+            		arr[0] = coeffs.get(0).get("a");
+            		for (i = 0; i < levels; i++) {
+            			arr[i+1] = coeffs.get(i).get("d");
+            		}
+            	}
             	if (showTransform) {
             		extentsn = new int[]{arr[0].length,arr[0][0].length,arr[0][0][0].length};
+            		if (axes.length == 3) {
             		imageLLLn = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LLL" + String.valueOf(levels));
      	    	    imageHLLn = new ModelImage[levels];
      	    	    imageLHLn = new ModelImage[levels];
@@ -5955,9 +6097,240 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    } // for (level = levels-1; level >= 1; level--)
+            		} // if (axes.length == 3)
+            		else if (axes.length == 2) {
+            			imageLL = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LL" + String.valueOf(levels));
+         	    	    imageHLn = new ModelImage[levels];
+         	    	    imageLHn = new ModelImage[levels];
+         	    	    imageHHn = new ModelImage[levels];
+         	    	    imageHLn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HL" + String.valueOf(levels));
+         	    	    imageLHn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LH" + String.valueOf(levels));
+         	    	    imageHHn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HH" + String.valueOf(levels));
+        	    	    double cLL[][][] = arr[0];
+         	    	    double cHL[][][] = arr[1];
+         	    	    double cLH[][][] = arr[2];
+         	    	    double cHH[][][] = arr[3];
+         	    	    buf = new double[cLL.length * cLL[0].length*cLL[0][0].length];
+         	    	    for (z = 0; z < cLL[0][0].length; z++) {
+         	    	        for (y = 0; y < cLL[0].length; y++) {
+    	            		    for (x = 0; x < cLL.length; x++) {
+    	            			    buf[x + y * cLL.length + z * cLL.length * cLL[0].length] = cLL[x][y][z];
+    	            	        }
+    	            	    }
+         	    	    }
+       	       		    try {
+       	            		imageLL.importData(0, buf, true);
+       	            	}
+       	            	catch (IOException e) {
+       	                    MipavUtil.displayError("IOException " + e + " on imageLL.importData");
+
+       	                    setCompleted(false);
+
+       	                    return;
+       	                }
+       	       		    
+    	   	       		for (z = 0; z < cHL[0][0].length; z++) {
+    	 	    	        for (y = 0; y < cHL[0].length; y++) {
+    	            		    for (x = 0; x < cHL.length; x++) {
+    	            			    buf[x + y * cHL.length + z * cHL.length * cHL[0].length] = cHL[x][y][z];
+    	            	        }
+    	            	    }
+    	 	    	    }
+    	       		    try {
+    	            		imageHLn[0].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHLn[0].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    
+    		       		 for (z = 0; z < cLH[0][0].length; z++) {
+    	  	    	        for (y = 0; y < cLH[0].length; y++) {
+    		            		    for (x = 0; x < cLH.length; x++) {
+    		            			    buf[x + y * cLH.length + z * cLH.length * cLH[0].length] = cLH[x][y][z];
+    		            	        }
+    		            	    }
+    	  	    	    }
+    	       		    try {
+    	            		imageLHn[0].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageLHn[0].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    
+    	       		    for (z = 0; z < cHH[0][0].length; z++) {
+    	  	    	        for (y = 0; y < cHH[0].length; y++) {
+    		            		    for (x = 0; x < cHH.length; x++) {
+    		            			    buf[x + y * cHH.length + z * cHH.length * cHH[0].length] = cHH[x][y][z];
+    		            	        }
+    		            	    }
+    	  	    	    }
+    	       		    try {
+    	            		imageHHn[0].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHHn[0].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    
+    	       		 for (level = levels-1; level >= 1; level--) {
+    	       		     int offset = (levels - level)*3 + 1;
+    	       		     extentsn = new int[]{arr[offset].length,arr[offset][0].length,arr[offset][0][0].length};   
+          	    	     imageHLn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HL" + String.valueOf(level));
+          	    	     imageLHn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LH" + String.valueOf(level));
+          	    	     imageHHn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HH" + String.valueOf(level));
+          	    	     cHL = arr[offset];
+          	    	     cLH = arr[offset+1];
+          	    	     cHH = arr[offset+2];
+          	    	     buf = new double[cHL.length * cHL[0].length * cHL[0][0].length];
+          	    	     for (z = 0; z < cHL[0][0].length; z++) {
+    	 	    	        for (y = 0; y < cHL[0].length; y++) {
+    	            		    for (x = 0; x < cHL.length; x++) {
+    	            			    buf[x + y * cHL.length + z * cHL.length * cHL[0].length] = cHL[x][y][z];
+    	            	        }
+    	            	    }
+    	 	    	    }
+    	       		    try {
+    	            		imageHLn[levels-level].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHLn["+(levels-level)+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    
+    		       		 for (z = 0; z < cLH[0][0].length; z++) {
+    	  	    	        for (y = 0; y < cLH[0].length; y++) {
+    		            		    for (x = 0; x < cLH.length; x++) {
+    		            			    buf[x + y * cLH.length + z * cLH.length * cLH[0].length] = cLH[x][y][z];
+    		            	        }
+    		            	    }
+    	  	    	    }
+    	       		    try {
+    	            		imageLHn[levels-level].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageLHn["+(levels-level)+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    
+    	       		    for (z = 0; z < cHH[0][0].length; z++) {
+    	  	    	        for (y = 0; y < cHH[0].length; y++) {
+    		            		    for (x = 0; x < cHH.length; x++) {
+    		            			    buf[x + y * cHH.length + z * cHH.length * cHH[0].length] = cHH[x][y][z];
+    		            	        }
+    		            	    }
+    	  	    	    }
+    	       		    try {
+    	            		imageHHn[levels-level].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHHn["+(levels-level)+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    } // for (level = levels-1; level >= 1; level--)
+            		} // else if (axes.length == 2)
+            		else if (axes.length == 1) {
+            			imageL = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_L" + String.valueOf(levels));
+         	    	    imageHn = new ModelImage[levels];
+         	    	    imageHn[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(levels));
+        	    	    double cL[][][] = arr[0];
+         	    	    double cH[][][] = arr[1];
+         	    	    buf = new double[cL.length * cL[0].length*cL[0][0].length];
+         	    	    for (z = 0; z < cL[0][0].length; z++) {
+         	    	        for (y = 0; y < cL[0].length; y++) {
+    	            		    for (x = 0; x < cL.length; x++) {
+    	            			    buf[x + y * cL.length + z * cL.length * cL[0].length] = cL[x][y][z];
+    	            	        }
+    	            	    }
+         	    	    }
+       	       		    try {
+       	            		imageL.importData(0, buf, true);
+       	            	}
+       	            	catch (IOException e) {
+       	                    MipavUtil.displayError("IOException " + e + " on imageL.importData");
+
+       	                    setCompleted(false);
+
+       	                    return;
+       	                }
+       	       		    
+    	   	       		for (z = 0; z < cH[0][0].length; z++) {
+    	 	    	        for (y = 0; y < cH[0].length; y++) {
+    	            		    for (x = 0; x < cH.length; x++) {
+    	            			    buf[x + y * cH.length + z * cH.length * cH[0].length] = cH[x][y][z];
+    	            	        }
+    	            	    }
+    	 	    	    }
+    	       		    try {
+    	            		imageHn[0].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHn[0].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    
+    	       		 for (level = levels-1; level >= 1; level--) {
+    	       		     int offset = (levels - level) + 1;
+    	       		     extentsn = new int[]{arr[offset].length,arr[offset][0].length,arr[offset][0][0].length};   
+          	    	     imageHn[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(level));
+          	    	     cH = arr[offset];
+          	    	     buf = new double[cH.length * cH[0].length * cH[0][0].length];
+          	    	     for (z = 0; z < cH[0][0].length; z++) {
+    	 	    	        for (y = 0; y < cH[0].length; y++) {
+    	            		    for (x = 0; x < cH.length; x++) {
+    	            			    buf[x + y * cH.length + z * cH.length * cH[0].length] = cH[x][y][z];
+    	            	        }
+    	            	    }
+    	 	    	    }
+    	       		    try {
+    	            		imageHn[levels-level].importData(0, buf, true);
+    	            	}
+    	            	catch (IOException e) {
+    	                    MipavUtil.displayError("IOException " + e + " on imageHn["+(levels-level)+"].importData");
+
+    	                    setCompleted(false);
+
+    	                    return;
+    	                }
+    	       		    
+    		       		 
+    	       		    } // for (level = levels-1; level >= 1; level--)	
+            		} // else if (axes.length == 1)
             	} // if (showTransform)
             	filtBuffer = new double[arr[0].length*arr[0][0].length*arr[0][0][0].length];
-                for (i = 0; i < 8; i++) {
+            	int highestLevelNumber;
+            	if (axes.length == 3) {
+            	    highestLevelNumber = 8;	
+            	}
+            	else if (axes.length == 2) {
+            		highestLevelNumber = 4;
+            	}
+            	else {
+            		highestLevelNumber = 2;
+            	}
+                for (i = 0; i < highestLevelNumber; i++) {
                 	if (filterType[i] != FILTER_NONE) {
                    		for (j = 0; j < arr[i].length; j++) {
                    			for (k = 0; k < arr[i][j].length; k++) {
@@ -5975,11 +6348,24 @@ public  class PyWavelets extends AlgorithmBase {
                    			}
                    		}
                    	} // if (filterType[i] != FILTER_NONE)
-                } // for (i = 0; i < 8; i++)
+                } // for (i = 0; i < highestLevelNumber; i++)
                 for (level = levels-1; level >= 1; level--) {
-                   	int offset = (levels - level)*7 + 1;
+                	int offset;
+                	int numberInSet;
+                	if (axes.length == 3) {
+                   	    offset = (levels - level)*7 + 1;
+                   	    numberInSet = 7;
+                	}
+                	else if (axes.length == 2) {
+                		offset = (levels - level)*3 + 1;
+                   	    numberInSet = 3;	
+                	}
+                	else {
+                		offset = (levels - level) + 1;
+                   	    numberInSet = 1;
+                	}
                    	filtBuffer = new double[arr[offset].length*arr[offset][0].length*arr[offset][0][0].length];
-	                for (i = offset; i < offset+7; i++) {
+	                for (i = offset; i < offset+numberInSet; i++) {
 	                    if (filterType[i] != FILTER_NONE) {
                     		for (j = 0; j < arr[i].length; j++) {
                     			for (k = 0; k < arr[i][j].length; k++) {
@@ -5997,10 +6383,11 @@ public  class PyWavelets extends AlgorithmBase {
                     			}
                     		}
                     	} // if (filterType[i] != FILTER_NONE)
-	                } // for (i = offset; i < offset+7; i++)
+	                } // for (i = offset; i < offset+numberInSet; i++)
                 } // for (level = levels-1; level >= 1; level--)
                    	if (showFilteredTransform) {
                 		extentsn = new int[]{arr[0].length,arr[0][0].length,arr[0][0][0].length};
+                		if (axes.length == 3) {
                 		imageLLLn_filter = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LLL" + String.valueOf(levels) + "_filter");
          	    	    imageHLLn_filter = new ModelImage[levels];
          	    	    imageLHLn_filter = new ModelImage[levels];
@@ -6319,8 +6706,260 @@ public  class PyWavelets extends AlgorithmBase {
     	                    return;
     	                }
     	       		    } // for (level = levels-1; level >= 1; level--)
+                		} // if (axes.length == 3)
+                		else if (axes.length == 2) {
+                			imageLL_filter = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LL" + String.valueOf(levels) + "_filter");
+             	    	    imageHLn_filter = new ModelImage[levels];
+             	    	    imageLHn_filter = new ModelImage[levels];
+             	    	    imageHHn_filter = new ModelImage[levels];
+             	    	    imageHLn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HL" + String.valueOf(levels) + "_filter");
+             	    	    imageLHn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LH" + String.valueOf(levels) + "_filter");
+             	    	    imageHHn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HH" + String.valueOf(levels) + "_filter");
+            	    	    double cLL[][][] = arr[0];
+             	    	    double cHL[][][] = arr[1];
+             	    	    double cLH[][][] = arr[2];
+             	    	    double cHH[][][] = arr[3];
+             	    	    buf = new double[cLL.length * cLL[0].length*cLL[0][0].length];
+             	    	    for (z = 0; z < cLL[0][0].length; z++) {
+             	    	        for (y = 0; y < cLL[0].length; y++) {
+        	            		    for (x = 0; x < cLL.length; x++) {
+        	            			    buf[x + y * cLL.length + z * cLL.length * cLL[0].length] = cLL[x][y][z];
+        	            	        }
+        	            	    }
+             	    	    }
+           	       		    try {
+           	            		imageLL_filter.importData(0, buf, true);
+           	            	}
+           	            	catch (IOException e) {
+           	                    MipavUtil.displayError("IOException " + e + " on imageLL_filter.importData");
+
+           	                    setCompleted(false);
+
+           	                    return;
+           	                }
+           	       		    
+        	   	       		for (z = 0; z < cHL[0][0].length; z++) {
+        	 	    	        for (y = 0; y < cHL[0].length; y++) {
+        	            		    for (x = 0; x < cHL.length; x++) {
+        	            			    buf[x + y * cHL.length + z * cHL.length * cHL[0].length] = cHL[x][y][z];
+        	            	        }
+        	            	    }
+        	 	    	    }
+        	       		    try {
+        	            		imageHLn_filter[0].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageHLn_filter[0].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        		       		 for (z = 0; z < cLH[0][0].length; z++) {
+        	  	    	        for (y = 0; y < cLH[0].length; y++) {
+        		            		    for (x = 0; x < cLH.length; x++) {
+        		            			    buf[x + y * cLH.length + z * cLH.length * cLH[0].length] = cLH[x][y][z];
+        		            	        }
+        		            	    }
+        	  	    	    }
+        	       		    try {
+        	            		imageLHn_filter[0].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageLHn_filter[0].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        	       		    for (z = 0; z < cHH[0][0].length; z++) {
+        	  	    	        for (y = 0; y < cHH[0].length; y++) {
+        		            		    for (x = 0; x < cHH.length; x++) {
+        		            			    buf[x + y * cHH.length + z * cHH.length * cHH[0].length] = cHH[x][y][z];
+        		            	        }
+        		            	    }
+        	  	    	    }
+        	       		    try {
+        	            		imageHHn_filter[0].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageHHn_filter[0].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        	       		    for (level = levels-1; level >= 1; level--) {
+        	       		     int offset = (levels - level)*3 + 1;
+        	       		     extentsn = new int[]{arr[offset].length,arr[offset][0].length,arr[offset][0][0].length};   
+              	    	     imageHLn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HL" + 
+        	       		         String.valueOf(level) + "_filter");
+              	    	     imageLHn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_LH" + 
+        	       		         String.valueOf(level) + "_filter");
+              	    	     imageHHn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_HH" + 
+        	       		         String.valueOf(level) + "_filter");
+              	    	     cHL = arr[offset];
+              	    	     cLH = arr[offset+1];
+              	    	     cHH = arr[offset+2];
+              	    	     buf = new double[cHL.length * cHL[0].length * cHL[0][0].length];
+              	    	     for (z = 0; z < cHL[0][0].length; z++) {
+        	 	    	        for (y = 0; y < cHL[0].length; y++) {
+        	            		    for (x = 0; x < cHL.length; x++) {
+        	            			    buf[x + y * cHL.length + z * cHL.length * cHL[0].length] = cHL[x][y][z];
+        	            	        }
+        	            	    }
+        	 	    	    }
+        	       		    try {
+        	            		imageHLn_filter[levels-level].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageHLn_filter["+(levels-level)+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        		       		 for (z = 0; z < cLH[0][0].length; z++) {
+        	  	    	        for (y = 0; y < cLH[0].length; y++) {
+        		            		    for (x = 0; x < cLH.length; x++) {
+        		            			    buf[x + y * cLH.length + z * cLH.length * cLH[0].length] = cLH[x][y][z];
+        		            	        }
+        		            	    }
+        	  	    	    }
+        	       		    try {
+        	            		imageLHn_filter[levels-level].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageLHn_filter["+(levels-level)+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        	       		    for (z = 0; z < cHH[0][0].length; z++) {
+        	  	    	        for (y = 0; y < cHH[0].length; y++) {
+        		            		    for (x = 0; x < cHH.length; x++) {
+        		            			    buf[x + y * cHH.length + z * cHH.length * cHH[0].length] = cHH[x][y][z];
+        		            	        }
+        		            	    }
+        	  	    	    }
+        	       		    try {
+        	            		imageHHn_filter[levels-level].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageHHn_filter["+(levels-level)+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        	       		    } // for (level = levels-1; level >= 1; level--)	
+                		} // else if (axes.length == 2)
+                		else if (axes.length == 1) {
+                			imageL_filter = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_L" + String.valueOf(levels) + "_filter");
+             	    	    imageHn_filter = new ModelImage[levels];
+             	    	    imageHn_filter[0] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + String.valueOf(levels) + "_filter");
+            	    	    double cL[][][] = arr[0];
+             	    	    double cH[][][] = arr[1];
+             	    	    buf = new double[cL.length * cL[0].length*cL[0][0].length];
+             	    	    for (z = 0; z < cL[0][0].length; z++) {
+             	    	        for (y = 0; y < cL[0].length; y++) {
+        	            		    for (x = 0; x < cL.length; x++) {
+        	            			    buf[x + y * cL.length + z * cL.length * cL[0].length] = cL[x][y][z];
+        	            	        }
+        	            	    }
+             	    	    }
+           	       		    try {
+           	            		imageL_filter.importData(0, buf, true);
+           	            	}
+           	            	catch (IOException e) {
+           	                    MipavUtil.displayError("IOException " + e + " on imageL_filter.importData");
+
+           	                    setCompleted(false);
+
+           	                    return;
+           	                }
+           	       		    
+        	   	       		for (z = 0; z < cH[0][0].length; z++) {
+        	 	    	        for (y = 0; y < cH[0].length; y++) {
+        	            		    for (x = 0; x < cH.length; x++) {
+        	            			    buf[x + y * cH.length + z * cH.length * cH[0].length] = cH[x][y][z];
+        	            	        }
+        	            	    }
+        	 	    	    }
+        	       		    try {
+        	            		imageHn_filter[0].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageHn_filter[0].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        	       		    for (level = levels-1; level >= 1; level--) {
+        	       		     int offset = (levels - level) + 1;
+        	       		     extentsn = new int[]{arr[offset].length,arr[offset][0].length,arr[offset][0][0].length};   
+              	    	     imageHn_filter[levels-level] = new ModelImage(ModelStorageBase.DOUBLE, extentsn, srcImage.getImageName() + "_H" + 
+        	       		         String.valueOf(level) + "_filter");
+              	    	     cH = arr[offset];
+              	    	     buf = new double[cH.length * cH[0].length * cH[0][0].length];
+              	    	     for (z = 0; z < cH[0][0].length; z++) {
+        	 	    	        for (y = 0; y < cH[0].length; y++) {
+        	            		    for (x = 0; x < cH.length; x++) {
+        	            			    buf[x + y * cH.length + z * cH.length * cH[0].length] = cH[x][y][z];
+        	            	        }
+        	            	    }
+        	 	    	    }
+        	       		    try {
+        	            		imageHn_filter[levels-level].importData(0, buf, true);
+        	            	}
+        	            	catch (IOException e) {
+        	                    MipavUtil.displayError("IOException " + e + " on imageHn_filter["+(levels-level)+"].importData");
+
+        	                    setCompleted(false);
+
+        	                    return;
+        	                }
+        	       		    
+        		       		 
+        	       		    } // for (level = levels-1; level >= 1; level--)		
+                		} // else if (axes.length == 1)
                 	} // if (showFilteredTransform)
-            	bufxyz = waverec3(arr, wavelets, modes, axes);
+                   	if (axes.length == 3) {
+                	    coeffs.get(0).put("aaa",arr[0]);
+                	    for (i = 0; i < levels; i++) {
+                	    	coeffs.get(i).put("daa",arr[7*i+1]);
+                	    	coeffs.get(i).put("ada",arr[7*i+2]);
+                	    	coeffs.get(i).put("dda",arr[7*i+3]);
+                	    	coeffs.get(i).put("aad",arr[7*i+4]);
+                	    	coeffs.get(i).put("dad",arr[7*i+5]);
+                	    	coeffs.get(i).put("add",arr[7*i+6]);
+                	    	coeffs.get(i).put("ddd",arr[7*i+7]);
+                	    }
+                	} // if (axes.length = 3)
+                	else if (axes.length == 2) {
+                        coeffs.get(0).put("aa",arr[0]);
+                		for (i = 0; i < levels; i++) {
+                			coeffs.get(i).put("da",arr[3*i+1]);
+                			coeffs.get(i).put("ad",arr[3*i+2]);
+                			coeffs.get(i).put("dd",arr[3*i+3]);
+                		}
+                	}
+                	else {
+                		coeffs.get(0).put("a",arr[0]);
+                		for (i = 0; i < levels; i++) {
+                			coeffs.get(i).put("d",arr[i+1]);
+                		}
+                	}
+            	bufxyz = waverecn3(coeffs, wavelets, modes, axes);
             	for (z = 0; z < zDim; z++) {
 	                for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
@@ -6338,6 +6977,7 @@ public  class PyWavelets extends AlgorithmBase {
 
                     return;
                 }
+            	if (axes.length == 3) {
             	if (showTransform) {
                 	new ViewJFrameImage(imageLLLn, null, new Dimension(610, 200 + (index++ * 20)));
                 	for (i = 0; i < levels; i++) {
@@ -6362,6 +7002,39 @@ public  class PyWavelets extends AlgorithmBase {
 	                	new ViewJFrameImage(imageHHHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));	
                 	}
                 }
+            	} // if (axes.length == 3)
+            	else if (axes.length == 2) {
+            		if (showTransform) {
+                    	new ViewJFrameImage(imageLL, null, new Dimension(610, 200 + (index++ * 20)));
+                    	for (i = 0; i < levels; i++) {
+    	                	new ViewJFrameImage(imageHLn[i], null, new Dimension(610, 200 + (index++ * 20)));
+    	                	new ViewJFrameImage(imageLHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+    	                	new ViewJFrameImage(imageHHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+                    	}
+                    }
+                    if (showFilteredTransform) {
+                    	new ViewJFrameImage(imageLL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+                    	for (i = 0; i < levels; i++) {
+    	                	new ViewJFrameImage(imageHLn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+    	                	new ViewJFrameImage(imageLHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+    	                	new ViewJFrameImage(imageHHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+                    	}
+                    }	
+            	} // else if (axes.length == 2)
+            	else if (axes.length == 1) {
+            		if (showTransform) {
+                    	new ViewJFrameImage(imageL, null, new Dimension(610, 200 + (index++ * 20)));
+                    	for (i = 0; i < levels; i++) {
+    	                	new ViewJFrameImage(imageHn[i], null, new Dimension(610, 200 + (index++ * 20)));
+                    	}
+                    }
+                    if (showFilteredTransform) {
+                    	new ViewJFrameImage(imageL_filter, null, new Dimension(610, 200 + (index++ * 20)));
+                    	for (i = 0; i < levels; i++) {
+    	                	new ViewJFrameImage(imageHn_filter[i], null, new Dimension(610, 200 + (index++ * 20)));
+                    	}
+                    }		
+            	} // else if (axes.length)
                 setCompleted(true);
                 return;
         	} // else 3D
@@ -12290,6 +12963,116 @@ public  class PyWavelets extends AlgorithmBase {
 	    }
 	    else {
 	    	System.out.println("test_waverec2_axes_subsets() fails");	
+	    }
+	}
+	
+	public void test_waverecn2() {
+		int i,j,k;
+		RandomNumberGen randomGen = new RandomNumberGen();
+		double data[][] = new double[8][8];
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+			    data[i][j] = randomGen.genStandardGaussian();
+			}
+		}
+		DiscreteWavelet wavelet  = discrete_wavelet(WAVELET_NAME.DB, 1);
+		DiscreteWavelet wavelets[];
+		MODE modes[];
+		double atol = 1.0E-14;
+		double rtol = 1.0E-7;
+		double actualError;
+		double allowedError;
+		boolean correct = true;
+	    // test all combinations of axes transformed
+		int axesSet[][] = new int[][]{{0}, {1}, {0,1}};
+		int axes[];
+	    for (i = 0; i < 3; i++) {
+	    	axes = axesSet[i];
+	    	if (axes.length == 1) {
+	    		wavelets = new DiscreteWavelet[]{wavelet};	
+	    		modes = new MODE[]{MODE.MODE_SYMMETRIC};	
+	    	}
+	    	else {
+	    		wavelets = new DiscreteWavelet[]{wavelet, wavelet};	
+	    		modes = new MODE[]{MODE.MODE_SYMMETRIC, MODE.MODE_SYMMETRIC};
+	    	}
+	        Vector<HashMap<String, double[][]>>coefs = wavedecn(data, wavelets, modes, -1, axes);   
+	        double rec[][] = waverecn2(coefs, wavelets, modes, axes);
+	        for (j = 0; j < 8; j++) {
+		    	for (k = 0; k < 8; k++) {
+			    		allowedError = atol + Math.abs(rtol*data[j][k]);
+			    		actualError = Math.abs(data[j][k] - rec[j][k]);
+			    		//System.out.println("actualError = " + actualError);
+			    		if (actualError > allowedError) {
+			    			correct = false;
+			    		}
+		    	}
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("test_waverecn2() passes");
+	    }
+	    else {
+	    	System.out.println("test_waverecn2() fails");	
+	    }
+	}
+	
+	public void test_waverecn3() {
+		int i,j,k,m;
+		RandomNumberGen randomGen = new RandomNumberGen();
+		double data[][][] = new double[8][8][8];
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+				for (k = 0; k < 8; k++) {
+			    data[i][j][k] = randomGen.genStandardGaussian();
+				}    
+			}
+		}
+		DiscreteWavelet wavelet  = discrete_wavelet(WAVELET_NAME.DB, 1);
+		DiscreteWavelet wavelets[];
+		MODE modes[];
+		double atol = 1.0E-14;
+		double rtol = 1.0E-7;
+		double actualError;
+		double allowedError;
+		boolean correct = true;
+	    // test all combinations of axes transformed
+		int axesSet[][] = new int[][]{{0}, {1}, {0,1}, {0,2}, {1,2}, {0,1,2}};
+		int axes[];
+	    for (i = 0; i < 3; i++) {
+	    	axes = axesSet[i];
+	    	if (axes.length == 1) {
+	    		wavelets = new DiscreteWavelet[]{wavelet};	
+	    		modes = new MODE[]{MODE.MODE_SYMMETRIC};	
+	    	}
+	    	else if (axes.length == 2){
+	    		wavelets = new DiscreteWavelet[]{wavelet, wavelet};	
+	    		modes = new MODE[]{MODE.MODE_SYMMETRIC, MODE.MODE_SYMMETRIC};
+	    	}
+	    	else {
+	    		wavelets = new DiscreteWavelet[]{wavelet, wavelet, wavelet};	
+	    		modes = new MODE[]{MODE.MODE_SYMMETRIC, MODE.MODE_SYMMETRIC, MODE.MODE_SYMMETRIC};	
+	    	}
+	        Vector<HashMap<String, double[][][]>>coefs = wavedecn(data, wavelets, modes, -1, axes);   
+	        double rec[][][] = waverecn3(coefs, wavelets, modes, axes);
+	        for (j = 0; j < 8; j++) {
+		    	for (k = 0; k < 8; k++) {
+		    		for (m = 0; m < 8; m++) {
+			    		allowedError = atol + Math.abs(rtol*data[j][k][m]);
+			    		actualError = Math.abs(data[j][k][m] - rec[j][k][m]);
+			    		//System.out.println("actualError = " + actualError);
+			    		if (actualError > allowedError) {
+			    			correct = false;
+			    		}
+		    		}
+		    	}
+	        }
+	    }
+	    if (correct) {
+	    	System.out.println("test_waverecn3() passes");
+	    }
+	    else {
+	    	System.out.println("test_waverecn3() fails");	
 	    }
 	}
 	
