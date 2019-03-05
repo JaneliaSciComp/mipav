@@ -461,7 +461,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
             
             if (VariableTable.getReference().isVariableSet(cmdLineCsvExitVar)) {
-                cmdLineCsvExit = Boolean.getBoolean(VariableTable.getReference().interpolate(cmdLineCsvExitVar));
+                cmdLineCsvExit = Boolean.parseBoolean(VariableTable.getReference().interpolate(cmdLineCsvExitVar));
                 System.err.println("Exit after generation: " + cmdLineCsvExit);
             }
         }
@@ -520,8 +520,63 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
             
             // generate files
-            actionPerformed(new ActionEvent(this, 0, "Finish"));
+            fileWriterWorkerThread = new javax.swing.SwingWorker<Object, Object>() {
+                @Override
+                public Object doInBackground() {
+                    try {
+                        createSubmissionFiles();
+                    } catch (final Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    return null;
+                }
+
+                @Override
+                public void done() {
+                    if (isFinished) {
+                        finishButton.setText("Close");
+                        finishButton.setEnabled(true);
+                    }
+                }
+            };
+
+            // instead, just require that the GUIDs are filled in
+            final int numRows = structTableModel.getRowCount();
+            int validGuids = 1;
+            for (int i = 0; i < numRows; i++) {
+                final String struct = (String) structTableModel.getValueAt(i, 0);
+                if (struct.endsWith(STRUCT_GUID_SEPERATOR + "UNKNOWNGUID")) {
+                    validGuids = -1;
+                    break;
+                } else {
+                    final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
+                    if ( !isGuid(guidTester)) {
+                        validGuids = 0;
+                        break;
+                    }
+                }
+            }
             
+            if (validGuids == -1) {
+                MipavUtil.displayError("Please complete GUID field for all Form Structures");
+                return;
+            } else if (validGuids == 0) {
+                MipavUtil.displayError("One or more GUID is invalid");
+                return;
+            }
+
+            removeStructButton.setEnabled(false);
+            finishButton.setEnabled(false);
+            outputDirButton.setEnabled(false);
+            addStructButton.setEnabled(false);
+            editDataElementsButton.setEnabled(false);
+            loadCSVButton.setEnabled(false);
+            selectBIDSButton.setEnabled(false);
+
+            fileWriterWorkerThread.run();
+            
+            // reset the outputs
             System.setOut(System.out);
             System.setErr(System.err);
             if (logFileOut != null) {
