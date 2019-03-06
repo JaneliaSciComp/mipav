@@ -85,6 +85,18 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     private boolean doY = false;
     private boolean doZ = false;
     
+    private JCheckBox transformCheckBox;
+    private JCheckBox filteredCheckBox;
+    /** Tabbed pane */
+    private JTabbedPane tabbedPane = null;
+    
+    private JLabel labelModeX;
+    private JLabel labelModeY;
+    private JLabel labelModeZ;
+    private JComboBox comboBoxModeX;
+    private JComboBox comboBoxModeY;
+    private JComboBox comboBoxModeZ;
+    
     /** DOCUMENT ME! */
     private JPanel paramsPanel;
     
@@ -142,18 +154,81 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         	    textLevels.setEnabled(false);
         	    labelStartLevel.setEnabled(false);
         	    textStartLevel.setEnabled(false);
+        	    if (xAxisCheckBox.isSelected()) {
+        	    	labelModeX.setEnabled(true);
+            		comboBoxModeX.setEnabled(true);	
+        	    }
+        	    if (yAxisCheckBox.isSelected()) {
+        	    	labelModeY.setEnabled(true);
+            		comboBoxModeY.setEnabled(true);	
+        	    }
+        	    if (image.getNDims() > 2) {
+        	    	if (zAxisCheckBox.isSelected()) {
+            	    	labelModeZ.setEnabled(true);
+                		comboBoxModeZ.setEnabled(true);	
+            	    }	
+        	    }
         	}
         	else if (multiLevelDWTButton.isSelected()) {
         		labelLevels.setEnabled(true);
         	    textLevels.setEnabled(true);
         	    labelStartLevel.setEnabled(false);
-        	    textStartLevel.setEnabled(false);	
+        	    textStartLevel.setEnabled(false);
+        	    if (xAxisCheckBox.isSelected()) {
+        	        labelModeX.setEnabled(true);
+        		    comboBoxModeX.setEnabled(true);
+        	    }
+        	    if (yAxisCheckBox.isSelected()) {
+        	    	labelModeY.setEnabled(true);
+            		comboBoxModeY.setEnabled(true);	
+        	    }
+        	    if (image.getNDims() > 2) {
+        	    	if (zAxisCheckBox.isSelected()) {
+            	    	labelModeZ.setEnabled(true);
+                		comboBoxModeZ.setEnabled(true);	
+            	    }	
+        	    }
         	}
         	else { // SWTButton.isSelected()
         		labelLevels.setEnabled(true);
         	    textLevels.setEnabled(true);
         	    labelStartLevel.setEnabled(true);
-        	    textStartLevel.setEnabled(true);		
+        	    textStartLevel.setEnabled(true);
+        	    labelModeX.setEnabled(false);
+        	    comboBoxModeX.setEnabled(false);
+        	    labelModeY.setEnabled(false);
+        	    comboBoxModeY.setEnabled(false);
+        	    if (image.getNDims() > 2) {
+        	        labelModeZ.setEnabled(false);
+        	        comboBoxModeZ.setEnabled(false);
+        	    }
+        	}
+        } else if ((source == xAxisCheckBox) || (source == yAxisCheckBox) || ((image.getNDims() > 2) && (source == zAxisCheckBox))) {
+        	if (xAxisCheckBox.isSelected() && (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected())) {
+        		labelModeX.setEnabled(true);
+        		comboBoxModeX.setEnabled(true);
+        	}
+        	else {
+        		labelModeX.setEnabled(false);
+        		comboBoxModeX.setEnabled(false);	
+        	}
+           	if (yAxisCheckBox.isSelected() && (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected())) {
+        		labelModeY.setEnabled(true);
+        		comboBoxModeY.setEnabled(true);
+        	}
+        	else {
+        		labelModeY.setEnabled(false);
+        		comboBoxModeY.setEnabled(false);	
+        	}
+        	if (image.getNDims() > 2) {
+        		if (zAxisCheckBox.isSelected() && (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected())) {
+            		labelModeZ.setEnabled(true);
+            		comboBoxModeZ.setEnabled(true);
+            	}
+            	else {
+            		labelModeZ.setEnabled(false);
+            		comboBoxModeZ.setEnabled(false);	
+            	}
         	}
         } else {
             super.actionPerformed(event);
@@ -315,9 +390,26 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
      */
     private void init() {
         setForeground(Color.black);
-
         setTitle("PyWavelets");
+        final JPanel transformTypePanel = buildTransformTypePanel();
+        final JPanel waveletPanel = buildWaveletPanel();
+        final JPanel filterPanel = buildFilterPanel();
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(MipavUtil.font12B);
+        tabbedPane.addTab("Transform type", transformTypePanel);
+        tabbedPane.addTab("Wavelets", waveletPanel);
+        tabbedPane.addTab("Filters", filterPanel);
+        //tabbedPane.addChangeListener(this);
         
+        final JPanel buttonPanel = new JPanel();
+        buttonPanel.add(buildButtons());
+
+        getContentPane().add(tabbedPane);
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        
+        pack();
+        setVisible(true);
+        setResizable(false);
 
         System.gc();
     }
@@ -415,7 +507,101 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
              gbc.gridy = 7;
              transformTypePanel.add(yAxisCheckBox, gbc);	 
          }
+         
+         transformCheckBox = new JCheckBox("Show transform images");
+         transformCheckBox.setFont(serif12);
+         transformCheckBox.setForeground(Color.black);
+         transformCheckBox.setSelected(false);
+         gbc.gridx = 0;
+         gbc.gridy++;
+         transformTypePanel.add(transformCheckBox, gbc);
+         
+         filteredCheckBox = new JCheckBox("Show filtered transform images");
+         filteredCheckBox.setFont(serif12);
+         filteredCheckBox.setForeground(Color.black);
+         filteredCheckBox.setSelected(false);
+         gbc.gridx = 0;
+         gbc.gridy++;
+         transformTypePanel.add(filteredCheckBox, gbc);
+         
+         labelModeX = new JLabel("X axis mode");
+         labelModeX.setFont(serif12);
+         labelModeX.setForeground(Color.black);
+         labelModeX.setEnabled(true);
+         gbc.gridx = 0;
+         gbc.gridy++;
+         transformTypePanel.add(labelModeX, gbc);
+         
+         comboBoxModeX = buildModeComboBox();
+         gbc.gridx = 1;
+         transformTypePanel.add(comboBoxModeX, gbc);
+         
+         labelModeY = new JLabel("Y axis mode");
+         labelModeY.setFont(serif12);
+         labelModeY.setForeground(Color.black);
+         labelModeY.setEnabled(true);
+         gbc.gridx = 0;
+         gbc.gridy++;
+         transformTypePanel.add(labelModeY, gbc);
+         
+         comboBoxModeY = buildModeComboBox();
+         gbc.gridx = 1;
+         transformTypePanel.add(comboBoxModeY, gbc);
+         
+         if (image.getNDims() > 2) {
+        	 labelModeZ = new JLabel("Z axis mode");
+             labelModeZ.setFont(serif12);
+             labelModeZ.setForeground(Color.black);
+             labelModeZ.setEnabled(true);
+             gbc.gridx = 0;
+             gbc.gridy++;
+             transformTypePanel.add(labelModeZ, gbc);
+             
+             comboBoxModeZ = buildModeComboBox();
+             gbc.gridx = 1;
+             transformTypePanel.add(comboBoxModeZ, gbc);	 
+         }
     	 return transformTypePanel;
+    }
+    
+    private JPanel buildWaveletPanel() {
+   	    final JPanel waveletPanel = new JPanel(new GridBagLayout());
+   	    GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 3;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+
+   	    waveletPanel.setBorder(buildTitledBorder("Wavelets"));
+   	    return waveletPanel;
+    }
+    
+    private JPanel buildFilterPanel() {
+   	    final JPanel filterPanel = new JPanel(new GridBagLayout());
+   	    GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 3;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+
+   	    filterPanel.setBorder(buildTitledBorder("Filters"));
+   	    return filterPanel;
+    }
+    
+    private JComboBox<String> buildModeComboBox() {
+    	final JComboBox<String> comboBox = new JComboBox<String>();
+        comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+        comboBox.addItem("Zeropad");
+        comboBox.addItem("Symmetric");
+        comboBox.addItem("Constant edge");
+        comboBox.addItem("Smooth");
+        comboBox.addItem("Periodic");
+        comboBox.addItem("Periodization");
+        comboBox.addItem("Reflect");
+        comboBox.addItem("Antisymmetric");
+        comboBox.addItem("Antireflect");
+        comboBox.addItem("Max");
+        comboBox.setSelectedIndex(1);
+        return comboBox;
     }
 
     /**
@@ -425,6 +611,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
      */
     private boolean setVariables() {
         String tmpStr;
+        int i;
         if (singleLevelDWTButton.isSelected()) {
         	tType = SINGLE_LEVEL_DWT;
         }
@@ -516,6 +703,57 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         	MipavUtil.displayError("No axis has been selected");
         	return false;
         }
+        
+        showTransform = transformCheckBox.isSelected();
+        
+        showFilteredTransform = filteredCheckBox.isSelected();
+        
+        if ((tType == SINGLE_LEVEL_DWT) || (tType == MULTILEVEL_DWT)) {
+	        modes = new PyWavelets.MODE[axes.length];
+	        String modeString[] = new String[axes.length];
+	        int index = 0;
+	        if (doX) {
+	        	modeString[index++] = (String) comboBoxModeX.getSelectedItem();
+	        }
+	        if (doY) {
+	        	modeString[index++] = (String) comboBoxModeY.getSelectedItem();
+	        }
+	        if (doZ) {
+	        	modeString[index] = (String) comboBoxModeZ.getSelectedItem();
+	        }
+	        for (i = 0; i < axes.length; i++) {
+	        	if (modeString[i].equals("Zeropad")) {
+	        		modes[i] = PyWavelets.MODE.MODE_ZEROPAD;
+	        	}
+	        	else if (modeString[i].equals("Symmetric")) {
+	        		modes[i] = PyWavelets.MODE.MODE_SYMMETRIC;
+	        	}
+	        	else if (modeString[i].equals("Constant edge")) {
+	        		modes[i] = PyWavelets.MODE.MODE_CONSTANT_EDGE;
+	        	}
+	        	else if (modeString[i].equals("Smooth")) {
+	        		modes[i] = PyWavelets.MODE.MODE_SMOOTH;
+	        	}
+	        	else if (modeString[i].equals("Periodic")) {
+	        		modes[i] = PyWavelets.MODE.MODE_PERIODIC;
+	        	}
+	        	else if (modeString[i].equals("Periodization")) {
+	        		modes[i] = PyWavelets.MODE.MODE_PERIODIZATION;
+	        	}
+	        	else if (modeString[i].equals("Reflect")) {
+	        		modes[i] = PyWavelets.MODE.MODE_REFLECT;
+	        	}
+	        	else if (modeString[i].equals("Antireflect")) {
+	        		modes[i] = PyWavelets.MODE.MODE_ANTIREFLECT;
+	        	}
+	        	else if (modeString[i].equals("Antisymmetric")) {
+	        		modes[i] = PyWavelets.MODE.MODE_ANTISYMMETRIC;
+	        	}
+	        	else if (modeString[i].equals("Max")) {
+	        		modes[i] = PyWavelets.MODE.MODE_MAX;
+	        	}
+	        }
+        } // if ((tType == SINGLE_LEVEL_DWT) || (tType == MULTILEVEL_DWT))
         return true;
     }
 }
