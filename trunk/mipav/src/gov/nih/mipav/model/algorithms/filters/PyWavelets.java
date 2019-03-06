@@ -4395,6 +4395,16 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }	
             	} // if (showFilteredImage)
+            	if (axes.length == 2) {
+                    coeffsMap.put("aa",arr[0]);
+                    coeffsMap.put("da",arr[1]);
+                    coeffsMap.put("ad",arr[2]);
+                    coeffsMap.put("dd",arr[3]);
+            	}
+            	else {
+            		coeffsMap.put("a",arr[0]);
+            		coeffsMap.put("d",arr[1]);
+            	}
             	bufxy = idwtn2(coeffsMap, wavelets, modes, axes);
             	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
@@ -4833,7 +4843,7 @@ public  class PyWavelets extends AlgorithmBase {
         		    for (z = 0; z < zDim; z++) {
         			    for (y = 0; y < yDim; y++) {
         				    for (x = 0; x < xDim; x++) {
-        				        arr[i][x][y][z] = buffer[z*length + y*xDim + x] ;
+        				        arr[i][x][y][z] = buffer[z*length + y*xDim + x];
         				    }
         			    }
         		    }
@@ -5084,7 +5094,7 @@ public  class PyWavelets extends AlgorithmBase {
 		            	}
 	                }
 	       		    try {
-	            		imageLL_filter.importData(0, buffer, true);
+	            		imageL_filter.importData(0, buffer, true);
 	            	}
 	            	catch (IOException e) {
 	                    MipavUtil.displayError("IOException " + e + " on imageL_filter.importData");
@@ -5113,7 +5123,26 @@ public  class PyWavelets extends AlgorithmBase {
 			         }	
         		}
         	} // if (showFilteredTransform)
-        	
+        	if (axes.length == 3) {
+	            coeffsMap.put("aaa",arr[0]);
+	            coeffsMap.put("daa",arr[1]);
+	            coeffsMap.put("ada",arr[2]);
+	            coeffsMap.put("dda",arr[3]);
+	            coeffsMap.put("aad",arr[4]);
+	            coeffsMap.put("dad",arr[5]);
+	            coeffsMap.put("add",arr[6]);
+	            coeffsMap.put("ddd",arr[7]);
+        	}
+        	else if (axes.length == 2) {
+                coeffsMap.put("aa",arr[0]);
+                coeffsMap.put("da",arr[1]);
+                coeffsMap.put("ad",arr[2]);
+                coeffsMap.put("dd",arr[3]);
+        	}
+        	else {
+        		coeffsMap.put("a",arr[0]);
+        		coeffsMap.put("d",arr[1]);
+        	}
         	bufxyz = idwtn3(coeffsMap, wavelets, modes, axes);
         	for (z = 0; z < zDim; z++) {
 	        	for (y = 0; y < yDim; y++) {
@@ -5228,8 +5257,9 @@ public  class PyWavelets extends AlgorithmBase {
                 	    }
                 	}
              	    Vector<HashMap<String, double[][]>> coeffs = wavedecn(bufxy, wavelets, modes, levels, axes);
-             	    double arr[][][] = new double[3*levels + 1][][];
+             	    double arr[][][] = null;
              	    if (axes.length == 2) {
+             	    	arr = new double[3*levels + 1][][];
              	    	arr[0] = coeffs.get(0).get("aa");
              	    	for (i = 0; i < levels; i++) {
              	    		arr[3*i+1] = coeffs.get(i).get("da");
@@ -5238,6 +5268,7 @@ public  class PyWavelets extends AlgorithmBase {
              	    	}
              	    }
              	    else {
+             	    	arr = new double[levels + 1][][];
              	    	arr[0] = coeffs.get(0).get("a");
              	    	for (i = 0; i < levels; i++) {
              	    		arr[i+1] = coeffs.get(i).get("d");
@@ -5893,7 +5924,7 @@ public  class PyWavelets extends AlgorithmBase {
 	            		imageLLHn[0].importData(0, buf, true);
 	            	}
 	            	catch (IOException e) {
-	                    MipavUtil.displayError("IOException " + e + " on imageLLLHn[0].importData");
+	                    MipavUtil.displayError("IOException " + e + " on imageLLHn[0].importData");
 
 	                    setCompleted(false);
 
@@ -6036,7 +6067,7 @@ public  class PyWavelets extends AlgorithmBase {
 	            		imageLLHn[levels-level].importData(0, buf, true);
 	            	}
 	            	catch (IOException e) {
-	                    MipavUtil.displayError("IOException " + e + " on imageLLLHn["+(levels-level)+"].importData");
+	                    MipavUtil.displayError("IOException " + e + " on imageLLHn["+(levels-level)+"].importData");
 
 	                    setCompleted(false);
 
@@ -6495,7 +6526,7 @@ public  class PyWavelets extends AlgorithmBase {
     	            		imageLLHn_filter[0].importData(0, buf, true);
     	            	}
     	            	catch (IOException e) {
-    	                    MipavUtil.displayError("IOException " + e + " on imageLLLHn_filter[0].importData");
+    	                    MipavUtil.displayError("IOException " + e + " on imageLLHn_filter[0].importData");
 
     	                    setCompleted(false);
 
@@ -6645,7 +6676,7 @@ public  class PyWavelets extends AlgorithmBase {
     	            		imageLLHn_filter[levels-level].importData(0, buf, true);
     	            	}
     	            	catch (IOException e) {
-    	                    MipavUtil.displayError("IOException " + e + " on imageLLLHn_filter["+(levels-level)+"].importData");
+    	                    MipavUtil.displayError("IOException " + e + " on imageLLHn_filter["+(levels-level)+"].importData");
 
     	                    setCompleted(false);
 
@@ -7095,7 +7126,7 @@ public  class PyWavelets extends AlgorithmBase {
               			bufxy[x][y] = buffer[x + y * xDim];
               	    }
               	}
-                // Expect arr.length = 4 * levels  
+                // Expect arr.length = 4 * levels for axes.length = 2 
               	HashMap<String, double[][]> coeffsMap[] = swtn(bufxy, wavelets, levels, start_level, axes);
               	double arr[][][] = null;
               	if (axes.length == 2) {
@@ -7349,7 +7380,20 @@ public  class PyWavelets extends AlgorithmBase {
 	                  	    } // for (i = 0; i < arr.length/2; i++)		
                 		} // else if (axes.length == 1)
                 	} // if (showFilteredTransform)
-              	
+                	if (axes.length == 2) {
+    	        		for (i = 0; i < coeffsMap.length; i++) {
+    	        		    coeffsMap[i].put("aa",arr[4*i]);
+    	        	        coeffsMap[i].put("da",arr[4*i+1]);
+    	        	        coeffsMap[i].put("ad",arr[4*i+2]);
+    	        	        coeffsMap[i].put("dd",arr[4*i+3]);
+    	        		}
+                  	}
+                  	else if (axes.length == 1) {
+    	        		for (i = 0; i < coeffsMap.length; i++) {
+    	        		    coeffsMap[i].put("a",arr[2*i]);
+    	        	        coeffsMap[i].put("d",arr[2*i+1]);
+    	        		}	
+                  	}
               	bufxy = iswtn2(coeffsMap, wavelets,axes);
               	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
@@ -7531,7 +7575,7 @@ public  class PyWavelets extends AlgorithmBase {
 	        	    }
 	        	}
         	}
-        	// Expect arr.length = 8 * levels  
+        	// Expect arr.length = 8 * levels if axes.length = 3
           	HashMap<String, double[][][]> coeffsMap[] = swtn(bufxyz, wavelets, levels, start_level, axes);
           	double arr[][][][] = null;
           	if (axes.length == 3) {
@@ -8136,6 +8180,32 @@ public  class PyWavelets extends AlgorithmBase {
 	        			} // for (i = 0; i < arr.length/2; i++)		
             		} // else if (axes.length)
             	} // if (showFilteredTransform)
+            	if (axes.length == 3) {
+    	    		for (i = 0; i < coeffsMap.length; i++) {
+    	    		    coeffsMap[i].put("aaa",arr[8*i]);
+    	    	        coeffsMap[i].put("daa",arr[8*i+1]);
+    	    	        coeffsMap[i].put("ada",arr[8*i+2]);
+    	    	        coeffsMap[i].put("dda",arr[8*i+3]);
+    	    	        coeffsMap[i].put("aad",arr[8*i+4]);
+    	    	        coeffsMap[i].put("dad",arr[8*i+5]);
+    	    	        coeffsMap[i].put("add",arr[8*i+6]);
+    	    	        coeffsMap[i].put("ddd",arr[8*i+7]);
+    	    		}
+              	} // if (axes.length == 3)
+              	else if (axes.length == 2) {
+    	    		for (i = 0; i < coeffsMap.length; i++) {
+    	    		    coeffsMap[i].put("aa",arr[4*i]);
+    	    	        coeffsMap[i].put("da",arr[4*i+1]);
+    	    	        coeffsMap[i].put("ad",arr[4*i+2]);
+    	    	        coeffsMap[i].put("dd",arr[4*i+3]);
+    	    		}	
+              	} // else if (axes.length == 2)
+              	else if (axes.length == 1) {
+    	    		for (i = 0; i < coeffsMap.length; i++) {
+    	    		    coeffsMap[i].put("a",arr[2*i]);
+    	    	        coeffsMap[i].put("d",arr[2*i+1]);
+    	    		}		
+              	} // else if (axes.length == 1)
     		bufxyz = iswtn(coeffsMap, wavelets,axes);
     		for (z = 0; z < zDim; z++) {
 	          	for (y = 0; y < yDim; y++) {
