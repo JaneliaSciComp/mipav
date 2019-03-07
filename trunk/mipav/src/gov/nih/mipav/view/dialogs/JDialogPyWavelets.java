@@ -73,10 +73,10 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     private int SWT = 3;
     
     private JLabel labelLevels;
-    private JTextField textLevels;
+    private JComboBox<String> comboBoxLevels;
     
     private JLabel labelStartLevel;
-    private JTextField textStartLevel;
+    private JComboBox<String> comboBoxStartLevel;
     
     private JCheckBox xAxisCheckBox;
     private JCheckBox yAxisCheckBox;
@@ -97,14 +97,40 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     private JComboBox comboBoxModeY;
     private JComboBox comboBoxModeZ;
     
-    /** DOCUMENT ME! */
-    private JPanel paramsPanel;
+    private JLabel labelNameX;
+    private JLabel labelNameY;
+    private JLabel labelNameZ;
+    private JComboBox comboBoxNameX;
+    private JComboBox comboBoxNameY;
+    private JComboBox comboBoxNameZ;
+    private JLabel labelOrderX;
+    private JLabel labelOrderY;
+    private JLabel labelOrderZ;
+    private JComboBox comboBoxOrderX;
+    private JComboBox comboBoxOrderY;
+    private JComboBox comboBoxOrderZ;
+    private String lastNameStringX = "Daubechies";
+    private String lastNameStringY = "Daubechies";
+    private String lastNameStringZ = "Daubechies";
     
+    GridBagConstraints gbc = new GridBagConstraints();
+    JPanel waveletPanel;
     
-    private JLabel mainLabel;
+    private int numComponents = 4;
+    private JLabel labelComponents[];
+    private JComboBox comboBoxFilterType[];
+    private JLabel labelVal1[];
+    private JTextField textVal1[];
+    private JLabel labelVal2[];
+    private JTextField textVal2[];
     
-    private JLabel mainLabel2;
-    
+    private final int FILTER_NONE = 0;
+	private final int FILTER_SOFT = 1;
+	private final int FILTER_NN_GARROTE = 2;
+	private final int FILTER_HARD = 3;
+	private final int FILTER_GREATER = 4;
+	private final int FILTER_LESS = 5;
+	private final int FILTER_THRESHOLD_FIRM = 6;
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -151,9 +177,9 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         } else if ((source == singleLevelDWTButton) || (source == multiLevelDWTButton) || (source == SWTButton)) {
         	if (singleLevelDWTButton.isSelected()) {
         	    labelLevels.setEnabled(false);
-        	    textLevels.setEnabled(false);
+        	    comboBoxLevels.setEnabled(false);
         	    labelStartLevel.setEnabled(false);
-        	    textStartLevel.setEnabled(false);
+        	    comboBoxStartLevel.setEnabled(false);
         	    if (xAxisCheckBox.isSelected()) {
         	    	labelModeX.setEnabled(true);
             		comboBoxModeX.setEnabled(true);	
@@ -171,9 +197,9 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         	}
         	else if (multiLevelDWTButton.isSelected()) {
         		labelLevels.setEnabled(true);
-        	    textLevels.setEnabled(true);
+        	    comboBoxLevels.setEnabled(true);
         	    labelStartLevel.setEnabled(false);
-        	    textStartLevel.setEnabled(false);
+        	    comboBoxStartLevel.setEnabled(false);
         	    if (xAxisCheckBox.isSelected()) {
         	        labelModeX.setEnabled(true);
         		    comboBoxModeX.setEnabled(true);
@@ -191,9 +217,9 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         	}
         	else { // SWTButton.isSelected()
         		labelLevels.setEnabled(true);
-        	    textLevels.setEnabled(true);
+        	    comboBoxLevels.setEnabled(true);
         	    labelStartLevel.setEnabled(true);
-        	    textStartLevel.setEnabled(true);
+        	    comboBoxStartLevel.setEnabled(true);
         	    labelModeX.setEnabled(false);
         	    comboBoxModeX.setEnabled(false);
         	    labelModeY.setEnabled(false);
@@ -203,33 +229,108 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         	        comboBoxModeZ.setEnabled(false);
         	    }
         	}
+        	tabbedPane.removeTabAt(2);
+        	final JPanel filterPanel = buildFilterPanel();
+            JScrollPane filterScroll = new JScrollPane(filterPanel);
+            filterScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            filterScroll.setBorder(buildTitledBorder("Filters")); 
+            tabbedPane.addTab("Filters", filterScroll);
         } else if ((source == xAxisCheckBox) || (source == yAxisCheckBox) || ((image.getNDims() > 2) && (source == zAxisCheckBox))) {
-        	if (xAxisCheckBox.isSelected() && (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected())) {
-        		labelModeX.setEnabled(true);
-        		comboBoxModeX.setEnabled(true);
+        	if (xAxisCheckBox.isSelected()) {
+        		if (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected()) {
+        		    labelModeX.setEnabled(true);
+        		    comboBoxModeX.setEnabled(true);
+        		}
+        		labelNameX.setEnabled(true);
+        		comboBoxNameX.setEnabled(true);
+        		labelOrderX.setEnabled(true);
+        		comboBoxOrderX.setEnabled(true);
         	}
         	else {
         		labelModeX.setEnabled(false);
-        		comboBoxModeX.setEnabled(false);	
+        		comboBoxModeX.setEnabled(false);
+        		labelNameX.setEnabled(false);
+        		comboBoxNameX.setEnabled(false);
+        		labelOrderX.setEnabled(false);
+        		comboBoxOrderX.setEnabled(false);
         	}
-           	if (yAxisCheckBox.isSelected() && (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected())) {
-        		labelModeY.setEnabled(true);
-        		comboBoxModeY.setEnabled(true);
+           	if (yAxisCheckBox.isSelected()) {
+           		if (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected()) {
+        		    labelModeY.setEnabled(true);
+        		    comboBoxModeY.setEnabled(true);
+           		}
+           		labelNameY.setEnabled(true);
+        		comboBoxNameY.setEnabled(true);
+        		labelOrderY.setEnabled(true);
+        		comboBoxOrderY.setEnabled(true);
         	}
         	else {
         		labelModeY.setEnabled(false);
-        		comboBoxModeY.setEnabled(false);	
+        		comboBoxModeY.setEnabled(false);
+        		labelNameY.setEnabled(false);
+        		comboBoxNameY.setEnabled(false);
+        		labelOrderY.setEnabled(false);
+        		comboBoxOrderY.setEnabled(false);
         	}
         	if (image.getNDims() > 2) {
-        		if (zAxisCheckBox.isSelected() && (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected())) {
-            		labelModeZ.setEnabled(true);
-            		comboBoxModeZ.setEnabled(true);
+        		if (zAxisCheckBox.isSelected()) {
+        			if (singleLevelDWTButton.isSelected() || multiLevelDWTButton.isSelected()) {
+            		    labelModeZ.setEnabled(true);
+            		    comboBoxModeZ.setEnabled(true);
+        			}
+        			labelNameZ.setEnabled(true);
+            		comboBoxNameZ.setEnabled(true);
+            		labelOrderZ.setEnabled(true);
+            		comboBoxOrderZ.setEnabled(true);
             	}
             	else {
             		labelModeZ.setEnabled(false);
-            		comboBoxModeZ.setEnabled(false);	
+            		comboBoxModeZ.setEnabled(false);
+            		labelNameZ.setEnabled(false);
+            		comboBoxNameZ.setEnabled(false);
+            		labelOrderZ.setEnabled(false);
+            		comboBoxOrderZ.setEnabled(false);
             	}
         	}
+        	tabbedPane.removeTabAt(2);
+        	final JPanel filterPanel = buildFilterPanel();
+            JScrollPane filterScroll = new JScrollPane(filterPanel);
+            filterScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            filterScroll.setBorder(buildTitledBorder("Filters")); 
+            tabbedPane.addTab("Filters", filterScroll);
+        } else if (source == comboBoxNameX) {
+        	String nameStringX = (String) comboBoxNameX.getSelectedItem();
+        	if (!nameStringX.equals(lastNameStringX)) {
+        		lastNameStringX = nameStringX;
+        		comboBoxOrderX = buildWaveletOrderComboBox(nameStringX);
+        		gbc.gridx = 1;
+        		gbc.gridy = 1;
+                waveletPanel.add(comboBoxOrderX, gbc);
+        	}
+        } else if (source == comboBoxNameY) {
+        	String nameStringY = (String) comboBoxNameY.getSelectedItem();
+        	if (!nameStringY.equals(lastNameStringY)) {
+        		lastNameStringY = nameStringY;
+        		comboBoxOrderY = buildWaveletOrderComboBox(nameStringY);
+        		gbc.gridx = 1;
+        		gbc.gridy = 3;
+                waveletPanel.add(comboBoxOrderY, gbc);
+        	}	
+        } else if ((image.getNDims() > 2) && (source == comboBoxNameZ)) {
+        	String nameStringZ = (String) comboBoxNameZ.getSelectedItem();
+        	if (!nameStringZ.equals(lastNameStringZ)) {
+        		lastNameStringZ = nameStringZ;
+        		comboBoxOrderZ = buildWaveletOrderComboBox(nameStringZ);
+        		gbc.gridx = 1;
+        		gbc.gridy = 5;
+                waveletPanel.add(comboBoxOrderZ, gbc);
+        	}
+        } else if ((source == comboBoxLevels) || (source == comboBoxStartLevel)){
+        	tabbedPane.removeTabAt(2);
+        	final JPanel filterPanel = buildFilterPanel();
+            JScrollPane filterScroll = new JScrollPane(filterPanel);
+            filterScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            filterScroll.setBorder(buildTitledBorder("Filters")); 
         } else {
             super.actionPerformed(event);
         }
@@ -392,13 +493,16 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         setForeground(Color.black);
         setTitle("PyWavelets");
         final JPanel transformTypePanel = buildTransformTypePanel();
-        final JPanel waveletPanel = buildWaveletPanel();
+        waveletPanel = buildWaveletPanel();
         final JPanel filterPanel = buildFilterPanel();
+        JScrollPane filterScroll = new JScrollPane(filterPanel);
+        filterScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        filterScroll.setBorder(buildTitledBorder("Filters"));   
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.addTab("Transform type", transformTypePanel);
         tabbedPane.addTab("Wavelets", waveletPanel);
-        tabbedPane.addTab("Filters", filterPanel);
+        tabbedPane.addTab("Filters", filterScroll);
         //tabbedPane.addChangeListener(this);
         
         final JPanel buttonPanel = new JPanel();
@@ -415,6 +519,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     }
     
     private JPanel buildTransformTypePanel() {
+    	 int i;
     	 final JPanel transformTypePanel = new JPanel(new GridBagLayout());
     	 GridBagConstraints gbc = new GridBagConstraints();
          gbc.gridwidth = 3;
@@ -455,13 +560,17 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
          gbc.gridy = 3;
          transformTypePanel.add(labelLevels, gbc);
          
-         textLevels = new JTextField(10);
-         textLevels.setText("2");
-         textLevels.setFont(serif12);
-         textLevels.setForeground(Color.black);
-         textLevels.setEnabled(false);
+         comboBoxLevels = new JComboBox<String>();
+         comboBoxLevels.setFont(serif12);
+         comboBoxLevels.setBackground(Color.white);
+         for (i = 1; i <= 10; i++) {
+             comboBoxLevels.addItem(String.valueOf(i));	 
+         }
+         comboBoxLevels.setSelectedIndex(1);
+         comboBoxLevels.addActionListener(this);
+         comboBoxLevels.setEnabled(false);
          gbc.gridx = 1;
-         transformTypePanel.add(textLevels, gbc);
+         transformTypePanel.add(comboBoxLevels, gbc);
          
          labelStartLevel = new JLabel("Start level");
          labelStartLevel.setFont(serif12);
@@ -471,13 +580,17 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
          gbc.gridy = 4;
          transformTypePanel.add(labelStartLevel, gbc);
          
-         textStartLevel = new JTextField(10);
-         textStartLevel.setText("0");
-         textStartLevel.setFont(serif12);
-         textStartLevel.setForeground(Color.black);
-         textStartLevel.setEnabled(false);
+         comboBoxStartLevel = new JComboBox<String>();
+         comboBoxStartLevel.setFont(serif12);
+         comboBoxStartLevel.setBackground(Color.white);
+         for (i = 0; i <= 9; i++) {
+             comboBoxStartLevel.addItem(String.valueOf(i));	 
+         }
+         comboBoxStartLevel.setSelectedIndex(0);
+         comboBoxStartLevel.addActionListener(this);
+         comboBoxStartLevel.setEnabled(false);
          gbc.gridx = 1;
-         transformTypePanel.add(textStartLevel, gbc);
+         transformTypePanel.add(comboBoxStartLevel, gbc);
          
          xAxisCheckBox = new JCheckBox("Transform along x axis");
          xAxisCheckBox.setFont(serif12);
@@ -565,24 +678,312 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     }
     
     private JPanel buildWaveletPanel() {
-   	    final JPanel waveletPanel = new JPanel(new GridBagLayout());
-   	    GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 3;
+    	final JPanel waveletPanel = new JPanel(new GridBagLayout());
+    	gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
    	    waveletPanel.setBorder(buildTitledBorder("Wavelets"));
-   	    return waveletPanel;
+   	    labelNameX = new JLabel("X axis wavelet family name");
+        labelNameX.setFont(serif12);
+        labelNameX.setForeground(Color.black);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        waveletPanel.add(labelNameX, gbc);
+        
+        comboBoxNameX = buildWaveletNameComboBox();
+        gbc.gridx = 1;
+        waveletPanel.add(comboBoxNameX, gbc);
+   	    
+   	    labelOrderX = new JLabel("X axis wavelet order");
+        labelOrderX.setFont(serif12);
+        labelOrderX.setForeground(Color.black);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        waveletPanel.add(labelOrderX, gbc);
+     
+        comboBoxOrderX = buildWaveletOrderComboBox("Daubechies");
+        gbc.gridx = 1;
+        waveletPanel.add(comboBoxOrderX, gbc);
+        
+        labelNameY = new JLabel("Y axis wavelet family name");
+        labelNameY.setFont(serif12);
+        labelNameY.setForeground(Color.black);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        waveletPanel.add(labelNameY, gbc);
+        
+        comboBoxNameY = buildWaveletNameComboBox();
+        gbc.gridx = 1;
+        waveletPanel.add(comboBoxNameY, gbc);
+   	    
+   	    labelOrderY = new JLabel("Y axis wavelet order");
+        labelOrderY.setFont(serif12);
+        labelOrderY.setForeground(Color.black);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        waveletPanel.add(labelOrderY, gbc);
+     
+        comboBoxOrderY = buildWaveletOrderComboBox("Daubechies");
+        gbc.gridx = 1;
+        waveletPanel.add(comboBoxOrderY, gbc);
+        
+        if (image.getNDims() > 2) {
+        	labelNameZ = new JLabel("Z axis wavelet family name");
+            labelNameZ.setFont(serif12);
+            labelNameZ.setForeground(Color.black);
+            gbc.gridx = 0;
+            gbc.gridy = 4;
+            waveletPanel.add(labelNameZ, gbc);
+            
+            comboBoxNameZ = buildWaveletNameComboBox();
+            gbc.gridx = 1;
+            waveletPanel.add(comboBoxNameZ, gbc);
+       	    
+       	    labelOrderZ = new JLabel("Z axis wavelet order");
+            labelOrderZ.setFont(serif12);
+            labelOrderZ.setForeground(Color.black);
+            gbc.gridx = 0;
+            gbc.gridy = 5;
+            waveletPanel.add(labelOrderZ, gbc);
+         
+            comboBoxOrderZ = buildWaveletOrderComboBox("Daubechies");
+            gbc.gridx = 1;
+            waveletPanel.add(comboBoxOrderZ, gbc);	
+        } // if (image.getNDims() > 2)
+	    return waveletPanel;
     }
     
     private JPanel buildFilterPanel() {
+    	int i;
+    	String tmpStr;
    	    final JPanel filterPanel = new JPanel(new GridBagLayout());
    	    GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
+        filterPanel.setBorder(buildTitledBorder("Filters"));
+        int axesTransformed = 0;
+        if (xAxisCheckBox.isSelected()) {
+        	axesTransformed++;
+        }
+        if (yAxisCheckBox.isSelected()) {
+        	axesTransformed++;
+        }
+        if ((image.getNDims() > 2) && zAxisCheckBox.isSelected()) {
+        	axesTransformed++;
+        }
+        
+        if (multiLevelDWTButton.isSelected() || SWTButton.isSelected()) {
+        	tmpStr = (String)comboBoxLevels.getSelectedItem();
+        	levels = Integer.parseInt(tmpStr);
+        }
+        
+        if (SWTButton.isSelected()) {
+        	tmpStr = (String)comboBoxStartLevel.getSelectedItem();
+        	start_level = Integer.parseInt(tmpStr);
+        }
 
-   	    filterPanel.setBorder(buildTitledBorder("Filters"));
+        if (singleLevelDWTButton.isSelected()) {
+        	if ((image.getNDims() == 2) || ((image.getNDims() > 2) && (!zAxisCheckBox.isSelected()))) {
+        	    if (axesTransformed == 2) {
+        	         numComponents = 4; 
+        	         labelComponents = new JLabel[numComponents];
+        	         labelComponents[0] = new JLabel("A");
+        	         labelComponents[1] = new JLabel("H");
+        	         labelComponents[2] = new JLabel("V");
+        	         labelComponents[3] = new JLabel("D");
+        	    } // if (axesTransformed == 2)
+        	    else {
+        	    	numComponents = 2;
+        	    	labelComponents = new JLabel[numComponents];
+        	    	labelComponents[0] = new JLabel("A");
+        	    	labelComponents[1] = new JLabel("D");
+        	    }
+        	} // if ((image.getNDims() == 2) || ((image.getNDims() > 2) && (!zAxisCheckBox.isSelected())))
+        	else if (axesTransformed == 3) {
+        		numComponents = 8;
+        		labelComponents = new JLabel[numComponents];
+        		labelComponents[0] = new JLabel("LLL");
+        		labelComponents[1] = new JLabel("HLL");
+        		labelComponents[2] = new JLabel("LHL");
+        		labelComponents[3] = new JLabel("HLL");
+        		labelComponents[4] = new JLabel("LLH");
+        		labelComponents[5] = new JLabel("HLH");
+        		labelComponents[6] = new JLabel("LHH");
+        		labelComponents[7] = new JLabel("HHH");
+        	}
+        	else if (axesTransformed == 2) {
+        		numComponents = 4;
+        		labelComponents = new JLabel[numComponents];
+        		labelComponents[0] = new JLabel("LL");
+        		labelComponents[1] = new JLabel("HL");
+        		labelComponents[2] = new JLabel("LH");
+        		labelComponents[3] = new JLabel("HL");
+        	}
+        	else {
+        		numComponents = 2;
+        		labelComponents = new JLabel[numComponents];
+        		labelComponents[0] = new JLabel("L");
+        		labelComponents[1] = new JLabel("H");
+        	}
+        } // if (singleLevelDWTButton.isSelected())
+        else if (multiLevelDWTButton.isSelected()) {
+        	if ((image.getNDims() == 2) || ((image.getNDims() > 2) && (!zAxisCheckBox.isSelected()))) {
+        		if (axesTransformed == 2) {
+        		    numComponents = 3*levels + 1;
+        		    labelComponents = new JLabel[numComponents];
+        		    labelComponents[0] = new JLabel("A"+String.valueOf(levels));
+        		    for (i = levels; i >= 1; i--) {
+        		    	labelComponents[3*(levels-i)+1] = new JLabel("H" + String.valueOf(i));
+        		    	labelComponents[3*(levels-i)+2] = new JLabel("V" + String.valueOf(i));
+        		    	labelComponents[3*(levels-i)+3] = new JLabel("D" + String.valueOf(i));
+        		    }
+        		} // if (axesTransformed == 2)
+        		else {
+        			numComponents = levels + 1;
+        		    labelComponents = new JLabel[numComponents];
+        		    labelComponents[0] = new JLabel("A"+String.valueOf(levels));
+        		    for (i = levels; i >= 1; i--) {
+        		    	labelComponents[(levels-i)+1] = new JLabel("D" + String.valueOf(i));
+        		    }	
+        		}
+        	} // if ((image.getNDims() == 2) || ((image.getNDims() > 2) && (!zAxisCheckBox.isSelected())))
+        	else if (axesTransformed == 3) {
+        		numComponents = 7*levels + 1;
+        		labelComponents = new JLabel[numComponents];
+        		labelComponents[0] = new JLabel("LLL" + String.valueOf(levels));
+        		for (i = levels; i >= 1; i--) {
+        			labelComponents[7*(levels-i)+1] = new JLabel("HLL" + String.valueOf(i));
+        			labelComponents[7*(levels-i)+2] = new JLabel("LHL" + String.valueOf(i));
+        			labelComponents[7*(levels-i)+3] = new JLabel("HHL" + String.valueOf(i));
+        			labelComponents[7*(levels-i)+4] = new JLabel("LLH" + String.valueOf(i));
+        			labelComponents[7*(levels-i)+5] = new JLabel("HLH" + String.valueOf(i));
+        			labelComponents[7*(levels-i)+6] = new JLabel("LHH" + String.valueOf(i));
+        			labelComponents[7*(levels-i)+7] = new JLabel("HHH" + String.valueOf(i));
+        		}
+        	} // else if (axesTransformed == 3)
+        	else if (axesTransformed == 2) {
+        		numComponents = 3*levels + 1;
+        		labelComponents = new JLabel[numComponents];
+        		labelComponents[0] = new JLabel("LL" + String.valueOf(levels));
+        		for (i = levels; i >= 1; i--) {
+        			labelComponents[3*(levels-i)+1] = new JLabel("HL" + String.valueOf(i));
+        			labelComponents[3*(levels-i)+2] = new JLabel("LH" + String.valueOf(i));
+        			labelComponents[3*(levels-i)+3] = new JLabel("HH" + String.valueOf(i));
+        		}	
+        	} // else if (axesTransformed == 2)
+        	else {
+        		numComponents = levels + 1;
+        		labelComponents = new JLabel[numComponents];
+        		labelComponents[0] = new JLabel("L" + String.valueOf(levels));
+        		for (i = levels; i >= 1; i--) {
+        			labelComponents[(levels-i)+1] = new JLabel("H" + String.valueOf(i));
+        		}		
+        	}
+        } // else if (multiLevelDWTButton.isSelected())
+        else { // SWTButton.isSelected()
+        	if ((image.getNDims() == 2) || ((image.getNDims() > 2) && (!zAxisCheckBox.isSelected()))) {
+        		if (axesTransformed == 2) {
+        			numComponents = 4*levels; 
+       	            labelComponents = new JLabel[numComponents];
+       	            for (i = levels; i >= 1; i--) {
+       	                labelComponents[4*(levels-i)] = new JLabel("A" + String.valueOf(i + start_level));
+       	                labelComponents[4*(levels-i)+1] = new JLabel("H" + String.valueOf(i + start_level));
+       	                labelComponents[4*(levels-i)+2] = new JLabel("V" + String.valueOf(i + start_level));
+       	                labelComponents[4*(levels-i)+3] = new JLabel("D" + String.valueOf(i + start_level));	
+       	            }
+        		} // if (axesTransformed == 2)
+        		else {
+        			numComponents = 2*levels; 
+       	            labelComponents = new JLabel[numComponents];
+       	            for (i = levels; i >= 1; i--) {
+       	                labelComponents[2*(levels-i)] = new JLabel("A" + String.valueOf(i + start_level));
+       	                labelComponents[2*(levels-i)+1] = new JLabel("D" + String.valueOf(i + start_level));	
+       	            }	
+        		}
+        	} // if ((image.getNDims() == 2) || ((image.getNDims() > 2) && (!zAxisCheckBox.isSelected())))
+        	else if (axesTransformed == 3) {
+        		numComponents = 8*levels; 
+   	            labelComponents = new JLabel[numComponents];
+   	            for (i = levels; i >= 1; i--) {
+   	                labelComponents[8*(levels-i)] = new JLabel("LLL" + String.valueOf(i + start_level));
+   	                labelComponents[8*(levels-i)+1] = new JLabel("HLL" + String.valueOf(i + start_level));
+   	                labelComponents[8*(levels-i)+2] = new JLabel("LHL" + String.valueOf(i + start_level));
+   	                labelComponents[8*(levels-i)+3] = new JLabel("HHL" + String.valueOf(i + start_level));
+   	                labelComponents[8*(levels-i)+4] = new JLabel("LLH" + String.valueOf(i + start_level));
+	                labelComponents[8*(levels-i)+5] = new JLabel("HLH" + String.valueOf(i + start_level));
+	                labelComponents[8*(levels-i)+6] = new JLabel("LHH" + String.valueOf(i + start_level));
+	                labelComponents[8*(levels-i)+7] = new JLabel("HHH" + String.valueOf(i + start_level));	
+   	            }	
+        	} // else if (axesTransformed == 3)
+        	else if (axesTransformed == 2) {
+        		numComponents = 4*levels; 
+   	            labelComponents = new JLabel[numComponents];
+   	            for (i = levels; i >= 1; i--) {
+   	                labelComponents[4*(levels-i)] = new JLabel("LL" + String.valueOf(i + start_level));
+   	                labelComponents[4*(levels-i)+1] = new JLabel("HL" + String.valueOf(i + start_level));
+   	                labelComponents[4*(levels-i)+2] = new JLabel("LH" + String.valueOf(i + start_level));
+   	                labelComponents[4*(levels-i)+3] = new JLabel("HH" + String.valueOf(i + start_level));
+   	            }
+        	} // else if (axesTransformed == 2)
+        	else {
+        		numComponents = 2*levels; 
+   	            labelComponents = new JLabel[numComponents];
+   	            for (i = levels; i >= 1; i--) {
+   	                labelComponents[2*(levels-i)] = new JLabel("L" + String.valueOf(i + start_level));
+   	                labelComponents[2*(levels-i)+1] = new JLabel("H" + String.valueOf(i + start_level));
+   	            }    	
+	        }
+        } // else SWTButton.isSelected()
+        filterType = new int[numComponents];
+        filterVal1 = new double[numComponents];
+        filterVal2 = new double[numComponents];
+        for (i = 0; i < numComponents; i++) {
+        	filterType[i] = FILTER_NONE;
+        }
+        comboBoxFilterType = new JComboBox[numComponents];
+        labelVal1 = new JLabel[numComponents];
+        textVal1 = new JTextField[numComponents];
+        labelVal2 = new JLabel[numComponents];
+        textVal2 = new JTextField[numComponents];
+        for (i = 0; i < numComponents; i++) {
+        	 labelComponents[i].setFont(serif12);
+             labelComponents[i].setForeground(Color.black);
+             gbc.gridx = 0;
+             gbc.gridy = 3*i;
+             filterPanel.add(labelComponents[i], gbc);
+             
+             comboBoxFilterType[i] = buildFilterTypeComboBox();
+             gbc.gridx = 1;
+             filterPanel.add(comboBoxFilterType[i],gbc);
+             
+             labelVal1[i] = new JLabel("Value");
+             labelVal1[i].setFont(serif12);
+             labelVal1[i].setForeground(Color.black);
+             gbc.gridx = 0;
+             gbc.gridy = 3*i+1;
+             filterPanel.add(labelVal1[i], gbc);
+             
+             textVal1[i] = new JTextField(10);
+             textVal1[i].setFont(serif12);
+             textVal1[i].setForeground(Color.black);
+             gbc.gridx = 1;
+             filterPanel.add(textVal1[i], gbc);
+             
+             labelVal2[i] = new JLabel("Substitute");
+             labelVal2[i].setFont(serif12);
+             labelVal2[i].setForeground(Color.black);
+             gbc.gridx = 0;
+             gbc.gridy = 3*i+2;
+             filterPanel.add(labelVal2[i], gbc);
+             
+             textVal2[i] = new JTextField(10);
+             textVal2[i].setFont(serif12);
+             textVal2[i].setForeground(Color.black);
+             gbc.gridx = 1;
+             filterPanel.add(textVal2[i], gbc);
+        }
    	    return filterPanel;
     }
     
@@ -603,6 +1004,81 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         comboBox.setSelectedIndex(1);
         return comboBox;
     }
+    
+    private JComboBox<String> buildWaveletNameComboBox() {
+    	final JComboBox<String> comboBox = new JComboBox<String>();
+        comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+        comboBox.addItem("Biorthogonal");
+        comboBox.addItem("Coiflets");
+        comboBox.addItem("Daubechies");
+        comboBox.addItem("Haar");
+        comboBox.addItem("Reverse biorthogonal");
+        comboBox.addItem("Symlets");
+        comboBox.setSelectedIndex(2);
+        comboBox.addActionListener(this);
+        return comboBox;
+    }
+    
+    private JComboBox<String> buildWaveletOrderComboBox(String family) {
+    	int i;
+    	final JComboBox<String> comboBox = new JComboBox<String>();
+    	comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+    	comboBox.removeAllItems();
+    	if ((family.equals("Biorthogonal")) || (family.equals("Reverse biorthogonal"))) {
+    		comboBox.addItem("11");
+    		comboBox.addItem("13");
+    		comboBox.addItem("15");
+    		comboBox.addItem("22");
+    		comboBox.addItem("24");
+    		comboBox.addItem("26");
+    		comboBox.addItem("28");
+    		comboBox.addItem("31");
+    		comboBox.addItem("33");
+    		comboBox.addItem("35");
+    		comboBox.addItem("37");
+    		comboBox.addItem("39");
+    		comboBox.addItem("44");
+    		comboBox.addItem("55");
+    		comboBox.addItem("68");
+    	}
+    	else if (family.equals("Coiflets")) {
+    	    for (i = 0; i < 17; i++) {
+    	    	comboBox.addItem(String.valueOf(i+1));
+    	    }
+    	}
+    	else if (family.equals("Daubechies")) {
+    		for (i = 0; i < 38; i++) {
+    	    	comboBox.addItem(String.valueOf(i+1));
+    	    }	
+    	}
+    	else if (family.equals("Haar")) {
+    		comboBox.addItem("1");
+    	}
+    	else if (family.equals("Symlets")) {
+    	    for (i = 0; i < 19; i++) {
+    	    	comboBox.addItem(String.valueOf(i+2));	
+    	    }
+    	}
+    	return comboBox;
+    }
+    
+    private JComboBox<String> buildFilterTypeComboBox() {
+    	final JComboBox<String> comboBox = new JComboBox<String>();
+    	comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+        comboBox.addItem("NONE");
+        comboBox.addItem("SOFT");
+        comboBox.addItem("NN_GARROTE");
+        comboBox.addItem("HARD");
+        comboBox.addItem("GREATER");
+        comboBox.addItem("LESS");
+        comboBox.addItem("THRESHOLD_FIRM");
+        comboBox.setSelectedIndex(0);
+        comboBox.addActionListener(this);
+    	return comboBox;
+    }
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
@@ -612,6 +1088,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     private boolean setVariables() {
         String tmpStr;
         int i;
+        int index;
         if (singleLevelDWTButton.isSelected()) {
         	tType = SINGLE_LEVEL_DWT;
         }
@@ -623,53 +1100,13 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         }
         
         if ((tType == MULTILEVEL_DWT) || (tType == SWT)) {
-        	tmpStr = textLevels.getText();
-        	try {
-        		levels = Integer.parseInt(tmpStr);
-        	}
-        	catch(NumberFormatException e) {
-        		MipavUtil.displayError("Levels must be an integer");
-        		textLevels.requestFocus();
-        		textLevels.selectAll();
-        		return false;
-        	}
-        	if (levels < 1) {
-        		MipavUtil.displayError("Number of levels must be at least 1");
-        		textLevels.requestFocus();
-        		textLevels.selectAll();
-        		return false;
-        	}
-        	else if (levels > 10) {
-        		MipavUtil.displayError("Number of levels cannot exceed 10");
-        		textLevels.requestFocus();
-        		textLevels.selectAll();
-        		return false;
-        	}
+        	tmpStr = (String)comboBoxLevels.getSelectedItem();
+        	levels = Integer.parseInt(tmpStr);
         }
         
         if (tType == SWT) {
-        	tmpStr = textStartLevel.getText();
-        	try {
-        		start_level = Integer.parseInt(tmpStr);
-        	}
-        	catch(NumberFormatException e) {
-        		MipavUtil.displayError("Start level must be an integer");
-        		textStartLevel.requestFocus();
-        		textStartLevel.selectAll();
-        		return false;
-        	}
-        	if (start_level < 0) {
-        		MipavUtil.displayError("Start level must be at least 0");
-        		textStartLevel.requestFocus();
-        		textStartLevel.selectAll();
-        		return false;
-        	}
-        	else if (start_level > 9) {
-        		MipavUtil.displayError("Start level cannot exceed 0");
-        		textStartLevel.requestFocus();
-        		textStartLevel.selectAll();
-        		return false;
-        	}
+        	tmpStr = (String)comboBoxStartLevel.getSelectedItem();
+        	start_level = Integer.parseInt(tmpStr);
         }
         
         doX = xAxisCheckBox.isSelected();
@@ -711,7 +1148,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         if ((tType == SINGLE_LEVEL_DWT) || (tType == MULTILEVEL_DWT)) {
 	        modes = new PyWavelets.MODE[axes.length];
 	        String modeString[] = new String[axes.length];
-	        int index = 0;
+	        index = 0;
 	        if (doX) {
 	        	modeString[index++] = (String) comboBoxModeX.getSelectedItem();
 	        }
@@ -754,6 +1191,78 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
 	        	}
 	        }
         } // if ((tType == SINGLE_LEVEL_DWT) || (tType == MULTILEVEL_DWT))
+        
+        names = new PyWavelets.WAVELET_NAME[axes.length];
+        String nameString[] = new String[axes.length];
+        index = 0;
+        if (doX) {
+        	nameString[index++] = (String) comboBoxNameX.getSelectedItem();
+        }
+        if (doY) {
+        	nameString[index++] = (String) comboBoxNameY.getSelectedItem();
+        }
+        if (doZ) {
+        	nameString[index] = (String) comboBoxNameZ.getSelectedItem();
+        }
+        for (i = 0; i < axes.length; i++) {
+        	if (nameString[i].equals("Biorthogonal")) {
+        		names[i] = PyWavelets.WAVELET_NAME.BIOR;
+        	}
+        	else if (nameString[i].equals("Coiflets")) {
+        		names[i] = PyWavelets.WAVELET_NAME.COIF;
+        	}
+        	else if (nameString[i].equals("Daubechies")) {
+        		names[i] = PyWavelets.WAVELET_NAME.DB;
+        	}
+        	else if (nameString[i].equals("Haar")) {
+        		names[i] = PyWavelets.WAVELET_NAME.HAAR;
+        	}
+        	else if (nameString[i].equals("Reverse biorthogonal")) {
+        		names[i] = PyWavelets.WAVELET_NAME.RBIO;
+        	}
+        	else if (nameString[i].equals("Symlets")) {
+        		names[i] = PyWavelets.WAVELET_NAME.RBIO;
+        	}
+        }
+        
+        orders = new int[axes.length];
+        index = 0;
+        if (doX) {
+        	tmpStr = (String) comboBoxOrderX.getSelectedItem();
+        	orders[index++] = Integer.valueOf(tmpStr).intValue();
+        }
+        if (doY) {
+        	tmpStr = (String) comboBoxOrderY.getSelectedItem();
+        	orders[index++] = Integer.valueOf(tmpStr).intValue();
+        }
+        if (doZ) {
+        	tmpStr = (String) comboBoxOrderZ.getSelectedItem();
+        	orders[index++] = Integer.valueOf(tmpStr).intValue();
+        }
+        
+        for (i = 0; i < numComponents; i++) {
+        	if (comboBoxFilterType[i].equals("NONE")) {
+        		filterType[i] = FILTER_NONE;
+        	}
+        	else if (comboBoxFilterType[i].equals("SOFT")) {
+        		filterType[i] = FILTER_SOFT;
+        	}
+        	else if (comboBoxFilterType[i].equals("NN_GARROTE")) {
+        		filterType[i] = FILTER_NN_GARROTE;
+        	}
+        	else if (comboBoxFilterType[i].equals("HARD")) {
+        	    filterType[i] = FILTER_HARD;
+        	}
+        	else if (comboBoxFilterType[i].equals("GREATER")) {
+        	    filterType[i] = FILTER_GREATER;
+        	}
+        	else if (comboBoxFilterType[i].equals("LESS")) {
+        	    filterType[i] = FILTER_LESS;
+        	}
+        	else if (comboBoxFilterType[i].equals("THRESHOLD_FIRM")) {
+        	    filterType[i] = FILTER_THRESHOLD_FIRM;
+        	}
+        }
         return true;
     }
 }
