@@ -160,6 +160,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
      * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
+    	int i;
         String command = event.getActionCommand();
         Object source = event.getSource();
 
@@ -331,6 +332,31 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
             filterScroll.setBorder(buildTitledBorder("Filters")); 
             tabbedPane.addTab("Filters", filterScroll);
         } else {
+        	for (i = 0; i < numComponents; i++) {
+        		if (source == comboBoxFilterType[i]) {
+        			String selection = (String)comboBoxFilterType[i].getSelectedItem();
+        			if (selection.equals("THRESHOLD_FIRM")) {
+        				labelVal1[i].setText("Low value");
+        				labelVal2[i].setText("High value");
+        			}
+        			else {
+        				labelVal1[i].setText("Value");
+        				labelVal2[i].setText("Substitute");
+        			}
+        			if (selection.equals("NONE")) {
+        				labelVal1[i].setEnabled(false);
+        				labelVal2[i].setEnabled(false);
+        				textVal1[i].setEnabled(false);
+        				textVal2[i].setEnabled(false);
+        			}
+        			else {
+        				labelVal1[i].setEnabled(true);
+        				labelVal2[i].setEnabled(true);
+        				textVal1[i].setEnabled(true);
+        				textVal2[i].setEnabled(true);	
+        			}
+        		}
+        	}
             super.actionPerformed(event);
         }
     }
@@ -960,6 +986,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
              labelVal1[i] = new JLabel("Value");
              labelVal1[i].setFont(serif12);
              labelVal1[i].setForeground(Color.black);
+             labelVal1[i].setEnabled(false);
              gbc.gridx = 0;
              gbc.gridy = 3*i+1;
              filterPanel.add(labelVal1[i], gbc);
@@ -967,12 +994,14 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
              textVal1[i] = new JTextField(10);
              textVal1[i].setFont(serif12);
              textVal1[i].setForeground(Color.black);
+             textVal1[i].setEnabled(false);
              gbc.gridx = 1;
              filterPanel.add(textVal1[i], gbc);
              
              labelVal2[i] = new JLabel("Substitute");
              labelVal2[i].setFont(serif12);
              labelVal2[i].setForeground(Color.black);
+             labelVal2[i].setEnabled(false);
              gbc.gridx = 0;
              gbc.gridy = 3*i+2;
              filterPanel.add(labelVal2[i], gbc);
@@ -980,6 +1009,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
              textVal2[i] = new JTextField(10);
              textVal2[i].setFont(serif12);
              textVal2[i].setForeground(Color.black);
+             textVal2[i].setEnabled(false);
              gbc.gridx = 1;
              filterPanel.add(textVal2[i], gbc);
         }
