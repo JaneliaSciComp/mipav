@@ -521,7 +521,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     	 int i;
     	 final JPanel transformTypePanel = new JPanel(new GridBagLayout());
     	 GridBagConstraints gbc = new GridBagConstraints();
-         gbc.gridwidth = 3;
+         gbc.gridwidth = 1;
          gbc.anchor = GridBagConstraints.WEST;
          gbc.weightx = 1;
 
@@ -678,7 +678,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     
     private JPanel buildWaveletPanel() {
     	final JPanel waveletPanel = new JPanel(new GridBagLayout());
-    	gbc.gridwidth = 3;
+    	gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
@@ -758,7 +758,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     	String tmpStr;
    	    final JPanel filterPanel = new JPanel(new GridBagLayout());
    	    GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         filterPanel.setBorder(buildTitledBorder("Filters"));
