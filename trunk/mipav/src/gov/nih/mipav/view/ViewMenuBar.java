@@ -231,9 +231,10 @@ public class ViewMenuBar {
 						new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
 								// null, null, null),
 								menuBuilder.buildMenuItem("Biorthogonal wavelets", "biorthogonalWavelets", 0, null, false),
+								menuBuilder.buildMenuItem("Multiscale products", "waveletMultiscaleProducts", 0, null, false), 
+								menuBuilder.buildMenuItem("PyWavelets", "pyWavelets", 0, null, false),
 								menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),
-								menuBuilder.buildMenuItem("Multiscale products", "waveletMultiscaleProducts", 0, null,
-										false), }),
+								}),
 						menuBuilder.makeMenu("Fractal dimension", false,
 								new JMenuItem[] {
 										menuBuilder.buildMenuItem("Box counting", "boxcount", 0, null, false), }),
