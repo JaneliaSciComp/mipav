@@ -1395,7 +1395,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     /**
      * Reads the CSV file that contains source (user's) data elements.
      * Format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.
-     * Permissible Values (PVs) can only contain a-z, A-Z and 0-9 separated by semicolons.
      * Puts the DEs into it's own dialog.
      * 
      * @return True if file is successfully opened
@@ -1417,7 +1416,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
            
             Map headerMap = records.getHeaderMap();
-            //System.out.println("size of header arrary = " + headerMap.size());
+            //System.out.println("size of header array = " + headerMap.size());
             
             
             String[] DEHeaders = new String[headerMap.size()];
@@ -1466,11 +1465,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             
             List<CSVRecord> recordList = records.getRecords();
             
-            System.out.println("Hello:  " + recordList.get(3).get(2));
+            //System.out.println("Hello:  " + recordList.get(3).get(2));
             for(int i=0; i < recordList.size(); i++ ) {
             	String[] record = new String[recordSize];
             	for(int j = 0; j < recordSize; j++) {
-            		record[j]= recordList.get(i).get(j);
+            		record[j]= recordList.get(i).get(j).trim();
             	}
             	dataElements.add(record);
             }
@@ -3863,7 +3862,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     					for (int t = 0; t < mapLines.size(); t++) {
     						String[] deStrVarNameArr  = stri[t][1][0].split(";");
     						for (int v = 0; v < deStrVarNameArr.length; v++) {
-		    					if( ordSrcDEs[s].equals(deStrVarNameArr[v].trim()) ) {   
+		    					if( ordSrcDEs[s].trim().equals(deStrVarNameArr[v].trim()) ) {   
 		    						error = false;		
 		    					}
     						}
