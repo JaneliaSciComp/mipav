@@ -48,7 +48,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private VOI coreVOI;
     
-    private float additionalObjectMinimumRatio = 0.2f;
+    private float additionalObjectMinimumRatio = 0.9f;
     
     private int additionalObjectSearchSize = 1000;
     
@@ -792,14 +792,14 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         // if the largest object is small, see if the next one is close in size
 //        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
-//            int objectMinSize = (int) (selectedObjectList.get(0).size * additionalObjectMinimumRatio);
-//            int nextObjectIndex = sortedObjects.length - 2;
-//            MaskObject nextObject;
-//            while (nextObjectIndex >= 0 && (nextObject = sortedObjects[nextObjectIndex]).size >= objectMinSize) {
-//                System.err.println(nextObject.id + "\t" + nextObject.size);
-//                selectedObjectList.add(nextObject);
-//                nextObjectIndex--;
-//            }
+            int objectMinSize = (int) (selectedObjectList.get(0).size * additionalObjectMinimumRatio);
+            int nextObjectIndex = sortedObjects.length - 2;
+            MaskObject nextObject;
+            while (nextObjectIndex >= 0 && (nextObject = sortedObjects[nextObjectIndex]).size >= objectMinSize) {
+                System.err.println(nextObject.id + "\t" + nextObject.size);
+                selectedObjectList.add(nextObject);
+                nextObjectIndex--;
+            }
 //        }
         
         // set the mask value for any object that isn't the largest to 0
