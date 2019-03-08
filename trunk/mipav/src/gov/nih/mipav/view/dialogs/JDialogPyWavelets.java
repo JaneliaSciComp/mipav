@@ -3,9 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -93,22 +91,22 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     private JLabel labelModeX;
     private JLabel labelModeY;
     private JLabel labelModeZ;
-    private JComboBox comboBoxModeX;
-    private JComboBox comboBoxModeY;
-    private JComboBox comboBoxModeZ;
+    private JComboBox<String> comboBoxModeX;
+    private JComboBox<String> comboBoxModeY;
+    private JComboBox<String> comboBoxModeZ;
     
     private JLabel labelNameX;
     private JLabel labelNameY;
     private JLabel labelNameZ;
-    private JComboBox comboBoxNameX;
-    private JComboBox comboBoxNameY;
-    private JComboBox comboBoxNameZ;
+    private JComboBox<String> comboBoxNameX;
+    private JComboBox<String> comboBoxNameY;
+    private JComboBox<String> comboBoxNameZ;
     private JLabel labelOrderX;
     private JLabel labelOrderY;
     private JLabel labelOrderZ;
-    private JComboBox comboBoxOrderX;
-    private JComboBox comboBoxOrderY;
-    private JComboBox comboBoxOrderZ;
+    private JComboBox<String> comboBoxOrderX;
+    private JComboBox<String> comboBoxOrderY;
+    private JComboBox<String> comboBoxOrderZ;
     private String lastNameStringX = "Daubechies";
     private String lastNameStringY = "Daubechies";
     private String lastNameStringZ = "Daubechies";
@@ -118,7 +116,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
     
     private int numComponents = 4;
     private JLabel labelComponents[];
-    private JComboBox comboBoxFilterType[];
+    private JComboBox<String> comboBoxFilterType[];
     private JLabel labelVal1[];
     private JTextField textVal1[];
     private JLabel labelVal2[];
@@ -331,6 +329,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
             JScrollPane filterScroll = new JScrollPane(filterPanel);
             filterScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             filterScroll.setBorder(buildTitledBorder("Filters")); 
+            tabbedPane.addTab("Filters", filterScroll);
         } else {
             super.actionPerformed(event);
         }
@@ -618,7 +617,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
              zAxisCheckBox.setSelected(true);
              gbc.gridx = 0;
              gbc.gridy = 7;
-             transformTypePanel.add(yAxisCheckBox, gbc);	 
+             transformTypePanel.add(zAxisCheckBox, gbc);	 
          }
          
          transformCheckBox = new JCheckBox("Show transform images");
@@ -1221,7 +1220,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         		names[i] = PyWavelets.WAVELET_NAME.RBIO;
         	}
         	else if (nameString[i].equals("Symlets")) {
-        		names[i] = PyWavelets.WAVELET_NAME.RBIO;
+        		names[i] = PyWavelets.WAVELET_NAME.SYM;
         	}
         }
         
@@ -1262,7 +1261,31 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         	else if (comboBoxFilterType[i].equals("THRESHOLD_FIRM")) {
         	    filterType[i] = FILTER_THRESHOLD_FIRM;
         	}
-        }
+        	
+        	if (filterType[i] != FILTER_NONE) {
+        		tmpStr = textVal1[i].getText();	
+        		try {
+        			filterVal1[i] = Double.valueOf(tmpStr).doubleValue();
+        		}
+        		catch (NumberFormatException e) {
+        		    MipavUtil.displayError("textval1["+i+"] does not have a proper number");
+        		    textVal1[i].requestFocus();
+        		    textVal1[i].selectAll();
+        		    return false;
+        		}
+        		
+        		tmpStr = textVal2[i].getText();	
+        		try {
+        			filterVal2[i] = Double.valueOf(tmpStr).doubleValue();
+        		}
+        		catch (NumberFormatException e) {
+        		    MipavUtil.displayError("textval2["+i+"] does not have a proper number");
+        		    textVal2[i].requestFocus();
+        		    textVal2[i].selectAll();
+        		    return false;
+        		}
+        	} // if (filterType[i] != FILTER_NONE)
+        } // for (i = 0; i < numComponents; i++)
         return true;
     }
 }
