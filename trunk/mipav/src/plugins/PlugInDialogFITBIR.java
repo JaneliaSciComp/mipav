@@ -252,6 +252,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     
     private static final String SPECTROSCOPY_FS_SUFFIX = "spectroscopy";
     
+    private static final String MRI_FS_NAME = "imagingmr";
+    
     private static final String FMRI_FS_SUFFIX = "functionalmr";
     
     private static final String DTI_FS_SUFFIX = "diffusion";
@@ -267,6 +269,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final String IMG_DIFF_GROUP = "Diffusion Direction Data";
     
     private static final String IMG_DIFF_BVAL_ELEMENT_NAME = "ImgDiffusionBValFile";
+    
+    private static final String IMG_MR_GROUP = "Magnetic Resonance Information";
+    
+    private static final String IMG_PULSE_SEQ_ELEMENT_NAME = "ImgPulseSeqTyp";
 
     private static final String recordIndicatorColumn = "record";
 
@@ -3088,11 +3094,41 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 } else {
                     // need to create a zip file with the original image files
                     try {
-                        final String zipFilePath = outputSubDir + outputFileNameBase + ".zip";
-                        printlnToLog("Creating ZIP file:\t" + zipFilePath);
-                        for (final String file : origFiles) {
-                            printlnToLog("Adding file to ZIP:\t" + file);
+                        String zipFilePath = outputSubDir + outputFileNameBase + ".zip";
+                        
+                        // if MR, try to put the pulse sequence type into the zip name
+                        if (isMRImagingStructure(dsName)) {
+                            // TODO
+                            String pulseSeq = "";
+                            boolean found = false;
+                            final FormStructureData fsData = fsDataList.get(i);
+                            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                                if (found) {
+                                    break;
+                                }
+
+                                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                                    if (found) {
+                                        break;
+                                    }
+                                    
+                                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                                        if (isPulseSeqTag(deVal)) {
+                                            pulseSeq = "_" + cleanPulseSeqVal(deVal.getValue());
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            zipFilePath = outputSubDir + outputFileNameBase + pulseSeq + ".zip";
                         }
+                        
+                        printlnToLog("Creating ZIP file (" + origFiles.size() + " files):\t" + zipFilePath);
+//                        for (final String file : origFiles) {
+//                            printlnToLog("Adding file to ZIP:\t" + file);
+//                        }
 
                         makeZipFile(zipFilePath, origFiles);
                         imagePath = zipFilePath;
@@ -3139,14 +3175,34 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     // if the user selected multiple files, zip them all up
                                     try {
                                         final String[] filePaths = srcFileValue.split(BROWSE_NONIMG_DELIM);
-                                        final String newZipPath = outputSubDir + outputFileNameBase + "_" + group.getName() + "_" + repeat.getRepeatNumber()
-                                                + "_" + deVal.getName() + ".zip";
-                                        printlnToLog("Creating ZIP file:\t" + newZipPath);
+                                        
+                                        String newZipPath = outputSubDir + outputFileNameBase + "_" + group.getName() + "_" + repeat.getRepeatNumber() + "_" + deVal.getName() + ".zip";
+                                        
+                                        // if MR, try to put the pulse sequence type into the zip name
+                                        if (isMRImagingStructure(dsName)) {
+                                            // TODO
+                                            String pulseSeq = "";
+                                            for (final RepeatableGroup groupPulse : fsData.getStructInfo().getRepeatableGroups()) {
+                                                for (final GroupRepeat repeatPulse : fsData.getAllGroupRepeats(groupPulse.getName())) {
+                                                    for (final DataElementValue deValPulse : repeatPulse.getDataElements()) {
+                                                        if (isPulseSeqTag(deValPulse)) {
+                                                            pulseSeq = "_" + cleanPulseSeqVal(deValPulse.getValue());
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            newZipPath = outputSubDir + outputFileNameBase + pulseSeq + ".zip";
+                                        }
+                                        
+                                        
+                                        
                                         final List<String> filePathList = new ArrayList<String>();
                                         for (final String file : filePaths) {
-                                            printlnToLog("Adding file to ZIP:\t" + file);
+//                                            printlnToLog("Adding file to ZIP:\t" + file);
                                             filePathList.add(file);
                                         }
+                                        printlnToLog("Creating ZIP file (" + filePathList.size() + " files):\t" + newZipPath);
                                         makeZipFile(newZipPath, filePathList);
 
                                         // now that the zip file is created, set the de value to the zip file path
@@ -5007,6 +5063,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         return false;
+    }
+    
+    private static final boolean isMRImagingStructure(final String structureName) {
+        if (!isImagingStructure(structureName)) {
+            return false;
+        }
+        
+        return structureName.equalsIgnoreCase(MRI_FS_NAME);
+    }
+    
+    private static final boolean isPulseSeqTag(final DataElementValue deVal) {
+        return deVal.getGroupName().equalsIgnoreCase(IMG_MR_GROUP) && deVal.getName().equalsIgnoreCase(IMG_PULSE_SEQ_ELEMENT_NAME);
+    }
+    
+    private static final String cleanPulseSeqVal(final String value) {
+        return value.replace('/', '-').replace(' ', '_').replace(',', '_');
     }
     
     private static final boolean isSpectroscopyImagingStructure(final String structureName) {
@@ -7232,7 +7304,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // System.out.println(dataStructureName);
                 if (isImagingStructure(dataStructureName) && isMainImagingFileElement(groupName, deName)) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-                    fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
+                    
+                    //fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
+                    fileChooser.setMulti(true);
 
                     final JFileChooser chooser = fileChooser.getFileChooser();
                     chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
