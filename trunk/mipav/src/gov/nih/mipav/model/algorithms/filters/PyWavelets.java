@@ -4171,23 +4171,9 @@ public  class PyWavelets extends AlgorithmBase {
         if (do2D) {
         	buffer = new double[length];
         	bufxy = new double[xDim][yDim];
-        	if (showTransform) {
-        		imageA = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_A");
-        		if (axes.length == 2) {
-        		    imageH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H");
-        		    imageV = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V");
-        		}
-        		imageD = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_D");
-        	}
         	
-        	if (showFilteredTransform) {
-        		imageA_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_A_filter");
-        		if (axes.length == 2) {
-        		    imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H_filter");
-        		    imageV_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_V_filter");
-        		}
-        		imageD_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_D_filter");
-        	}
+        	
+        	
             for (z = 0; z < zDim; z++)	{
             	try {
                     srcImage.exportData(z * length, length, buffer);
@@ -4232,13 +4218,29 @@ public  class PyWavelets extends AlgorithmBase {
             			cA = arr[0];
             			cD = arr[1];
             		}
-	       		    for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cA[x][y];
+            		if (z == 0) {
+        				int extents[] = null;
+        				if (srcImage.getNDims() == 2) {
+        				    extents = new int[]{cA.length,cA[0].length};
+        				}
+        				else {
+        					extents = new int[]{cA.length,cA[0].length,zDim};
+        				}
+                		imageA = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_A");
+                		if (axes.length == 2) {
+                		    imageH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_H");
+                		    imageV = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_V");
+                		}
+                		imageD = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_D");
+            		}
+            		buffer = new double[cA.length * cA[0].length];
+	       		    for (y = 0; y < cA[0].length; y++) {
+	            		for (x = 0; x < cA.length; x++) {
+	            			buffer[x + y * cA.length] = cA[x][y];
 	            	    }
 	            	}
 	       		    try {
-	            		imageA.importData(z * length, buffer, false);
+	            		imageA.importData(z * cA.length * cA[0].length, buffer, false);
 	            	}
 	            	catch (IOException e) {
 	                    MipavUtil.displayError("IOException " + e + " on imageA.importData");
@@ -4249,13 +4251,13 @@ public  class PyWavelets extends AlgorithmBase {
 	                }
 	       		    
 	       		    if (axes.length == 2) {
-		       		    for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim] = cH[x][y];
+		       		    for (y = 0; y < cH[0].length; y++) {
+		            		for (x = 0; x < cH.length; x++) {
+		            			buffer[x + y * cH.length] = cH[x][y];
 		            	    }
 		            	}
 		       		    try {
-		            		imageH.importData(z * length, buffer, false);
+		            		imageH.importData(z * cH.length * cH[0].length, buffer, false);
 		            	}
 		            	catch (IOException e) {
 		                    MipavUtil.displayError("IOException " + e + " on imageH.importData");
@@ -4265,13 +4267,13 @@ public  class PyWavelets extends AlgorithmBase {
 		                    return;
 		                }
 	
-		       		     for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim] = cV[x][y];
+		       		     for (y = 0; y < cV[0].length; y++) {
+		            		for (x = 0; x < cV.length; x++) {
+		            			buffer[x + y * cV.length] = cV[x][y];
 		            	    }
 		            	}
 		       		    try {
-		            		imageV.importData(z * length, buffer, false);
+		            		imageV.importData(z * cV.length * cV[0].length, buffer, false);
 		            	}
 		            	catch (IOException e) {
 		                    MipavUtil.displayError("IOException " + e + " on imageV.importData");
@@ -4282,13 +4284,13 @@ public  class PyWavelets extends AlgorithmBase {
 		                }
 	       		    } // if (axes.length == 2)
 	       		    
-	       		    for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cD[x][y];
+	       		    for (y = 0; y < cD[0].length; y++) {
+	            		for (x = 0; x < cD.length; x++) {
+	            			buffer[x + y * cD.length] = cD[x][y];
 	            	    }
 	            	}
 	       		    try {
-	            		imageD.importData(z * length, buffer, false);
+	            		imageD.importData(z * cD.length * cD[0].length, buffer, false);
 	            	}
 	            	catch (IOException e) {
 	                    MipavUtil.displayError("IOException " + e + " on imageD.importData");
@@ -4298,18 +4300,18 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
             	} // if (showTransform)
-            	
+            	buffer = new double[arr[0].length * arr[0][0].length];
        		    for (i = 0; i < arr.length; i++) {
        		    	if (filterType[i] != FILTER_NONE) {
-       		    	    for (y = 0; y < yDim; y++) {
-       		    	    	for (x = 0; x < xDim; x++) {
-       		    	    		buffer[x + y * xDim] = arr[i][x][y];
+       		    	    for (y = 0; y < arr[0][0].length; y++) {
+       		    	    	for (x = 0; x < arr[0].length; x++) {
+       		    	    		buffer[x + y * arr[0].length] = arr[i][x][y];
        		    	    	}
        		    	    }
        		    	    filter(buffer, filterType[i],filterVal1[i],filterVal2[i]);
-       		    	    for (y = 0; y < yDim; y++) {
-    		    	    	for (x = 0; x < xDim; x++) {
-    		    	    	    arr[i][x][y] = buffer[x + y * xDim];
+       		    	    for (y = 0; y < arr[0][0].length; y++) {
+    		    	    	for (x = 0; x < arr[0].length; x++) {
+    		    	    	    arr[i][x][y] = buffer[x + y * arr[0].length];
     		    	    	}
     		    	    }
        		    	} // if (filterType[i] != FILTER_NONE)
@@ -4329,13 +4331,29 @@ public  class PyWavelets extends AlgorithmBase {
             			cA = arr[0];
             			cD = arr[1];
             		}
-	       		    for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cA[x][y];
+            		if (z == 0) {
+        				int extents[] = null;
+        				if (srcImage.getNDims() == 2) {
+        				    extents = new int[]{cA.length,cA[0].length};
+        				}
+        				else {
+        					extents = new int[]{cA.length,cA[0].length,zDim};
+        				}
+                		imageA_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_A_filter");
+                		if (axes.length == 2) {
+                		    imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_H_filter");
+                		    imageV_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_V_filter");
+                		}
+                		imageD_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_D_filter");
+            		}
+            		buffer = new double[cA.length * cA[0].length];
+	       		    for (y = 0; y < cA[0].length; y++) {
+	            		for (x = 0; x < cA.length; x++) {
+	            			buffer[x + y * cA.length] = cA[x][y];
 	            	    }
 	            	}
 	       		    try {
-	            		imageA_filter.importData(z * length, buffer, false);
+	            		imageA_filter.importData(z * cA.length * cA[0].length, buffer, false);
 	            	}
 	            	catch (IOException e) {
 	                    MipavUtil.displayError("IOException " + e + " on imageA_filter.importData");
@@ -4346,13 +4364,13 @@ public  class PyWavelets extends AlgorithmBase {
 	                }
 	       		    
 	       		    if (axes.length == 2) {
-		       		    for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim] = cH[x][y];
+		       		    for (y = 0; y < cH[0].length; y++) {
+		            		for (x = 0; x < cH.length; x++) {
+		            			buffer[x + y * cH.length] = cH[x][y];
 		            	    }
 		            	}
 		       		    try {
-		            		imageH_filter.importData(z * length, buffer, false);
+		            		imageH_filter.importData(z * cH.length * cH[0].length, buffer, false);
 		            	}
 		            	catch (IOException e) {
 		                    MipavUtil.displayError("IOException " + e + " on imageH_filter.importData");
@@ -4362,13 +4380,13 @@ public  class PyWavelets extends AlgorithmBase {
 		                    return;
 		                }
 	
-		       		     for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim] = cV[x][y];
+		       		     for (y = 0; y < cV[0].length; y++) {
+		            		for (x = 0; x < cV.length; x++) {
+		            			buffer[x + y * cV.length] = cV[x][y];
 		            	    }
 		            	}
 		       		    try {
-		            		imageV_filter.importData(z * length, buffer, false);
+		            		imageV_filter.importData(z * cV.length * cV[0].length, buffer, false);
 		            	}
 		            	catch (IOException e) {
 		                    MipavUtil.displayError("IOException " + e + " on imageV_filter.importData");
@@ -4379,13 +4397,13 @@ public  class PyWavelets extends AlgorithmBase {
 		                }
 	       		    } // if (axes.length == 2)
 	       		    
-	       		    for (y = 0; y < yDim; y++) {
-	            		for (x = 0; x < xDim; x++) {
-	            			buffer[x + y * xDim] = cD[x][y];
+	       		    for (y = 0; y < cD[0].length; y++) {
+	            		for (x = 0; x < cD.length; x++) {
+	            			buffer[x + y * cD.length] = cD[x][y];
 	            	    }
 	            	}
 	       		    try {
-	            		imageD_filter.importData(z * length, buffer, false);
+	            		imageD_filter.importData(z * cD.length * cD[0].length, buffer, false);
 	            	}
 	            	catch (IOException e) {
 	                    MipavUtil.displayError("IOException " + e + " on imageD_filter.importData");
@@ -4406,6 +4424,7 @@ public  class PyWavelets extends AlgorithmBase {
             		coeffsMap.put("d",arr[1]);
             	}
             	bufxy = idwtn2(coeffsMap, wavelets, modes, axes);
+            	buffer = new double[length];
             	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
             	        buffer[x + y * xDim] = bufxy[x][y];
@@ -4469,51 +4488,6 @@ public  class PyWavelets extends AlgorithmBase {
         else { // 3D
         	buffer = new double[volume];
         	bufxyz = new double[xDim][yDim][zDim];
-        	if (showTransform) {
-        		if (axes.length == 3) {
-	        		imageLLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL");
-	        		imageHLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL");
-	        		imageLHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL");
-	        		imageHHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL");
-	        		imageLLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH");
-	        		imageHLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH");
-	        		imageLHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH");
-	        		imageHHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH");
-        		}
-        		else if (axes.length == 2) {
-        			imageLL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LL");
-	        		imageHL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HL");
-	        		imageLH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LH");
-	        		imageHH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HH");	
-        		}
-        		else if (axes.length == 1) {
-        			imageL = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_L");
-	        		imageH = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H");	
-        		}
-        	}
-        	
-        	if (showFilteredTransform) {
-        		if (axes.length == 3) {
-	        		imageLLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLL_filter");
-	        		imageHLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLL_filter");
-	        		imageLHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHL_filter");
-	        		imageHHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHL_filter");
-	        		imageLLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LLH_filter");
-	        		imageHLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HLH_filter");
-	        		imageLHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LHH_filter");
-	        		imageHHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HHH_filter");	
-        		}
-        		else if (axes.length == 2) {
-        			imageLL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LL_filter");
-	        		imageHL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HL_filter");
-	        		imageLH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_LH_filter");
-	        		imageHH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_HH_filter");	
-        		}
-        		else if (axes.length == 1) {
-        			imageL_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_L_filter");
-	        		imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_H_filter");	
-        		}
-        	}
         	
         	try {
                 srcImage.exportData(0, volume, buffer);
@@ -4567,10 +4541,21 @@ public  class PyWavelets extends AlgorithmBase {
 	                double LHH[][][] = arr[6];
 	                double HHH[][][] = arr[7];
 	                
-	                for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LLL[x][y][z];
+	        		int extents[] = new int[]{LLL.length, LLL[0].length, LLL[0][0].length};
+	                imageLLL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LLL");
+	        		imageHLL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HLL");
+	        		imageLHL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LHL");
+	        		imageHHL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HHL");
+	        		imageLLH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LLH");
+	        		imageHLH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HLH");
+	        		imageLHH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LHH");
+	        		imageHHH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HHH");
+	                
+	                buffer = new double[LLL.length * LLL[0].length * LLL[0][0].length];
+	        		for (z = 0; z < LLL[0][0].length; z++) {
+		                for (y = 0; y < LLL[0].length; y++) {
+		            		for (x = 0; x < LLL.length; x++) {
+		            			buffer[x + y * LLL.length + z*LLL.length*LLL[0].length] = LLL[x][y][z];
 		            	    }
 		            	}
 	                }
@@ -4585,10 +4570,10 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-			   		 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HLL[x][y][z];
+			   		 for (z = 0; z < HLL[0][0].length; z++) {
+			                for (y = 0; y < HLL[0].length; y++) {
+			            		for (x = 0; x < HLL.length; x++) {
+			            			buffer[x + y * HLL.length + z*HLL.length*HLL[0].length] = HLL[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4603,10 +4588,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LHL[x][y][z];
+					 for (z = 0; z < LHL[0][0].length; z++) {
+			                for (y = 0; y < LHL[0].length; y++) {
+			            		for (x = 0; x < LHL.length; x++) {
+			            			buffer[x + y * LHL.length + z*LHL.length*LHL[0].length] = LHL[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4621,10 +4606,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HHL[x][y][z];
+					 for (z = 0; z < HHL[0][0].length; z++) {
+			                for (y = 0; y < HHL[0].length; y++) {
+			            		for (x = 0; x < HHL.length; x++) {
+			            			buffer[x + y * HHL.length + z*HHL.length*HHL[0].length] = HHL[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4639,10 +4624,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LLH[x][y][z];
+					 for (z = 0; z < LLH[0][0].length; z++) {
+			                for (y = 0; y < LLH[0].length; y++) {
+			            		for (x = 0; x < LLH.length; x++) {
+			            			buffer[x + y * LLH.length + z*LLH.length*LLH[0].length] = LLH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4657,10 +4642,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HLH[x][y][z];
+					 for (z = 0; z < HLH[0][0].length; z++) {
+			                for (y = 0; y < HLH[0].length; y++) {
+			            		for (x = 0; x < HLH.length; x++) {
+			            			buffer[x + y * HLH.length + z*HLH.length*HLH[0].length] = HLH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4675,10 +4660,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LHH[x][y][z];
+					 for (z = 0; z < LHH[0][0].length; z++) {
+			                for (y = 0; y < LHH[0].length; y++) {
+			            		for (x = 0; x < LHH.length; x++) {
+			            			buffer[x + y * LHH.length + z*LHH.length*LHH[0].length] = LHH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4693,10 +4678,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					    for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HHH[x][y][z];
+					    for (z = 0; z < HHH[0][0].length; z++) {
+			                for (y = 0; y < HHH[0].length; y++) {
+			            		for (x = 0; x < HHH.length; x++) {
+			            			buffer[x + y * HHH.length + z*HHH.length*HHH[0].length] = HHH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4716,11 +4701,16 @@ public  class PyWavelets extends AlgorithmBase {
 	                double HL[][][] = arr[1];
 	                double LH[][][] = arr[2];
 	                double HH[][][] = arr[3];
-	                
-	                for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LL[x][y][z];
+	                int extents[] = new int[]{LL.length,LL[0].length,LL[0][0].length};
+	                imageLL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LL");
+	        		imageHL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HL");
+	        		imageLH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LH");
+	        		imageHH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HH");	
+	                buffer = new double[LL.length*LL[0].length*LL[0][0].length];
+	                for (z = 0; z < LL[0][0].length; z++) {
+		                for (y = 0; y < LL[0].length; y++) {
+		            		for (x = 0; x < LL.length; x++) {
+		            			buffer[x + y * LL.length + z*LL.length*LL[0].length] = LL[x][y][z];
 		            	    }
 		            	}
 	                }
@@ -4735,10 +4725,10 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-			   		 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HL[x][y][z];
+			   		 for (z = 0; z < HL[0][0].length; z++) {
+			                for (y = 0; y < HL[0].length; y++) {
+			            		for (x = 0; x < HL.length; x++) {
+			            			buffer[x + y * HL.length + z*HL.length*HL[0].length] = HL[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4753,10 +4743,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LH[x][y][z];
+					 for (z = 0; z < LH[0][0].length; z++) {
+			                for (y = 0; y < LH[0].length; y++) {
+			            		for (x = 0; x < LH.length; x++) {
+			            			buffer[x + y * LH.length + z*LH.length*LH[0].length] = LH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4771,10 +4761,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HH[x][y][z];
+					 for (z = 0; z < HH[0][0].length; z++) {
+			                for (y = 0; y < HH[0].length; y++) {
+			            		for (x = 0; x < HH.length; x++) {
+			            			buffer[x + y * HH.length + z*HH.length*HH[0].length] = HH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4792,11 +4782,14 @@ public  class PyWavelets extends AlgorithmBase {
         		else if (axes.length == 1) {
         			double L[][][] = arr[0];
 	                double H[][][] = arr[1];
+	                int extents[] = new int[]{L.length, L[0].length, L[0][0].length};
+	                imageL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_L");
+	        		imageH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_H");
 	                
-	                for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = L[x][y][z];
+	                for (z = 0; z < L[0][0].length; z++) {
+		                for (y = 0; y < L[0].length; y++) {
+		            		for (x = 0; x < L.length; x++) {
+		            			buffer[x + y * L.length + z*L.length*L[0].length] = L[x][y][z];
 		            	    }
 		            	}
 	                }
@@ -4811,10 +4804,10 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-			   		 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = H[x][y][z];
+			   		 for (z = 0; z < H[0][0].length; z++) {
+			                for (y = 0; y < H[0].length; y++) {
+			            		for (x = 0; x < H.length; x++) {
+			            			buffer[x + y * H.length + z*H.length*H[0].length] = H[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4830,20 +4823,21 @@ public  class PyWavelets extends AlgorithmBase {
 			         }	
         		} // else if (axes.length == 1)
         	} // if (showTransform)
+        	buffer = new double[arr[0].length*arr[0][0].length*arr[0][0][0].length];
         	for (i = 0; i < arr.length; i++) {
         	    if (filterType[i] != FILTER_NONE) {
-        		    for (z = 0; z < zDim; z++) {
-        			    for (y = 0; y < yDim; y++) {
-        				    for (x = 0; x < xDim; x++) {
-        				        buffer[z * length + y * xDim + x] = arr[i][x][y][z];
+        		    for (z = 0; z < arr[0][0][0].length; z++) {
+        			    for (y = 0; y < arr[0][0].length; y++) {
+        				    for (x = 0; x < arr[0].length; x++) {
+        				        buffer[z * arr[0].length * arr[0][0].length + y * arr[0].length + x] = arr[i][x][y][z];
         				    }
         			    }
         		    }
         	        filter(buffer, filterType[i], filterVal1[i], filterVal2[i]);
-        		    for (z = 0; z < zDim; z++) {
-        			    for (y = 0; y < yDim; y++) {
-        				    for (x = 0; x < xDim; x++) {
-        				        arr[i][x][y][z] = buffer[z*length + y*xDim + x];
+        		    for (z = 0; z < arr[0][0][0].length; z++) {
+        			    for (y = 0; y < arr[0][0].length; y++) {
+        				    for (x = 0; x < arr[0].length; x++) {
+        				        arr[i][x][y][z] = buffer[z * arr[0].length * arr[0][0].length + y * arr[0].length + x];
         				    }
         			    }
         		    }
@@ -4860,10 +4854,21 @@ public  class PyWavelets extends AlgorithmBase {
 	                double LHH[][][] = arr[6];
 	                double HHH[][][] = arr[7];
 	                
-	                for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LLL[x][y][z];
+	        		int extents[] = new int[]{LLL.length, LLL[0].length, LLL[0][0].length};
+	                imageLLL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LLL_filter");
+	        		imageHLL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HLL_filter");
+	        		imageLHL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LHL_filter");
+	        		imageHHL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HHL_filter");
+	        		imageLLH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LLH_filter");
+	        		imageHLH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HLH_filter");
+	        		imageLHH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LHH_filter");
+	        		imageHHH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HHH_filter");
+	                
+	                buffer = new double[LLL.length * LLL[0].length * LLL[0][0].length];
+	        		for (z = 0; z < LLL[0][0].length; z++) {
+		                for (y = 0; y < LLL[0].length; y++) {
+		            		for (x = 0; x < LLL.length; x++) {
+		            			buffer[x + y * LLL.length + z*LLL.length*LLL[0].length] = LLL[x][y][z];
 		            	    }
 		            	}
 	                }
@@ -4878,14 +4883,14 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-			   		 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HLL[x][y][z];
+			   		 for (z = 0; z < HLL[0][0].length; z++) {
+			                for (y = 0; y < HLL[0].length; y++) {
+			            		for (x = 0; x < HLL.length; x++) {
+			            			buffer[x + y * HLL.length + z*HLL.length*HLL[0].length] = HLL[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageHLL_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -4896,10 +4901,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LHL[x][y][z];
+					 for (z = 0; z < LHL[0][0].length; z++) {
+			                for (y = 0; y < LHL[0].length; y++) {
+			            		for (x = 0; x < LHL.length; x++) {
+			            			buffer[x + y * LHL.length + z*LHL.length*LHL[0].length] = LHL[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4914,14 +4919,14 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HHL[x][y][z];
+					 for (z = 0; z < HHL[0][0].length; z++) {
+			                for (y = 0; y < HHL[0].length; y++) {
+			            		for (x = 0; x < HHL.length; x++) {
+			            			buffer[x + y * HHL.length + z*HHL.length*HHL[0].length] = HHL[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageHHL_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -4932,14 +4937,14 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LLH[x][y][z];
+					 for (z = 0; z < LLH[0][0].length; z++) {
+			                for (y = 0; y < LLH[0].length; y++) {
+			            		for (x = 0; x < LLH.length; x++) {
+			            			buffer[x + y * LLH.length + z*LLH.length*LLH[0].length] = LLH[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageLLH_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -4950,14 +4955,14 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HLH[x][y][z];
+					 for (z = 0; z < HLH[0][0].length; z++) {
+			                for (y = 0; y < HLH[0].length; y++) {
+			            		for (x = 0; x < HLH.length; x++) {
+			            			buffer[x + y * HLH.length + z*HLH.length*HLH[0].length] = HLH[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageHLH_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -4968,10 +4973,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LHH[x][y][z];
+					 for (z = 0; z < LHH[0][0].length; z++) {
+			                for (y = 0; y < LHH[0].length; y++) {
+			            		for (x = 0; x < LHH.length; x++) {
+			            			buffer[x + y * LHH.length + z*LHH.length*LHH[0].length] = LHH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -4986,14 +4991,14 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					    for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HHH[x][y][z];
+					    for (z = 0; z < HHH[0][0].length; z++) {
+			                for (y = 0; y < HHH[0].length; y++) {
+			            		for (x = 0; x < HHH.length; x++) {
+			            			buffer[x + y * HHH.length + z*HHH.length*HHH[0].length] = HHH[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageHHH_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -5009,11 +5014,16 @@ public  class PyWavelets extends AlgorithmBase {
 	                double HL[][][] = arr[1];
 	                double LH[][][] = arr[2];
 	                double HH[][][] = arr[3];
-	                
-	                for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = LL[x][y][z];
+	                int extents[] = new int[]{LL.length,LL[0].length,LL[0][0].length};
+	                imageLL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LL_filter");
+	        		imageHL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HL_filter");
+	        		imageLH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_LH_filter");
+	        		imageHH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_HH_filter");	
+	                buffer = new double[LL.length*LL[0].length*LL[0][0].length];
+	                for (z = 0; z < LL[0][0].length; z++) {
+		                for (y = 0; y < LL[0].length; y++) {
+		            		for (x = 0; x < LL.length; x++) {
+		            			buffer[x + y * LL.length + z*LL.length*LL[0].length] = LL[x][y][z];
 		            	    }
 		            	}
 	                }
@@ -5028,14 +5038,14 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-			   		 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HL[x][y][z];
+			   		 for (z = 0; z < HL[0][0].length; z++) {
+			                for (y = 0; y < HL[0].length; y++) {
+			            		for (x = 0; x < HL.length; x++) {
+			            			buffer[x + y * HL.length + z*HL.length*HL[0].length] = HL[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageHL_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -5046,10 +5056,10 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = LH[x][y][z];
+					 for (z = 0; z < LH[0][0].length; z++) {
+			                for (y = 0; y < LH[0].length; y++) {
+			            		for (x = 0; x < LH.length; x++) {
+			            			buffer[x + y * LH.length + z*LH.length*LH[0].length] = LH[x][y][z];
 			            	    }
 			            	}
 			         }
@@ -5064,14 +5074,14 @@ public  class PyWavelets extends AlgorithmBase {
 			             return;
 			         }
 					    
-					 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = HH[x][y][z];
+					 for (z = 0; z < HH[0][0].length; z++) {
+			                for (y = 0; y < HH[0].length; y++) {
+			            		for (x = 0; x < HH.length; x++) {
+			            			buffer[x + y * HH.length + z*HH.length*HH[0].length] = HH[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageHH_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -5085,11 +5095,14 @@ public  class PyWavelets extends AlgorithmBase {
         		else if (axes.length == 1) {
         			double L[][][] = arr[0];
 	                double H[][][] = arr[1];
+	                int extents[] = new int[]{L.length, L[0].length, L[0][0].length};
+	                imageL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_L_filter");
+	        		imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_H_filter");
 	                
-	                for (z = 0; z < zDim; z++) {
-		                for (y = 0; y < yDim; y++) {
-		            		for (x = 0; x < xDim; x++) {
-		            			buffer[x + y * xDim + z*length] = L[x][y][z];
+	                for (z = 0; z < L[0][0].length; z++) {
+		                for (y = 0; y < L[0].length; y++) {
+		            		for (x = 0; x < L.length; x++) {
+		            			buffer[x + y * L.length + z*L.length*L[0].length] = L[x][y][z];
 		            	    }
 		            	}
 	                }
@@ -5104,14 +5117,14 @@ public  class PyWavelets extends AlgorithmBase {
 	                    return;
 	                }
 	       		    
-			   		 for (z = 0; z < zDim; z++) {
-			                for (y = 0; y < yDim; y++) {
-			            		for (x = 0; x < xDim; x++) {
-			            			buffer[x + y * xDim + z*length] = H[x][y][z];
+			   		 for (z = 0; z < H[0][0].length; z++) {
+			                for (y = 0; y < H[0].length; y++) {
+			            		for (x = 0; x < H.length; x++) {
+			            			buffer[x + y * H.length + z*H.length*H[0].length] = H[x][y][z];
 			            	    }
 			            	}
 			         }
-					try {
+					    try {
 			     		imageH_filter.importData(0, buffer, true);
 			     	}
 			     	catch (IOException e) {
@@ -5121,7 +5134,8 @@ public  class PyWavelets extends AlgorithmBase {
 			
 			             return;
 			         }	
-        		}
+        		} // else if (axes.length == 1)
+        		
         	} // if (showFilteredTransform)
         	if (axes.length == 3) {
 	            coeffsMap.put("aaa",arr[0]);
@@ -5144,6 +5158,7 @@ public  class PyWavelets extends AlgorithmBase {
         		coeffsMap.put("d",arr[1]);
         	}
         	bufxyz = idwtn3(coeffsMap, wavelets, modes, axes);
+        	buffer = new double[volume];
         	for (z = 0; z < zDim; z++) {
 	        	for (y = 0; y < yDim; y++) {
 	        		for (x = 0; x < xDim; x++) {
