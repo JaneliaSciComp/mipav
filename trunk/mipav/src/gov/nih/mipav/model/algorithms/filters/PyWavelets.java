@@ -4157,7 +4157,6 @@ public  class PyWavelets extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
         zDim = 1;
-        int volume = length * zDim;
         if (srcImage.getNDims() > 2) {
         	zDim = srcImage.getExtents()[2];
         	for (i = 0; i < axes.length; i++) {
@@ -4166,6 +4165,7 @@ public  class PyWavelets extends AlgorithmBase {
         		}
         	}
         } // if (srcImage.getNDims > 2)
+        int volume = length * zDim;
         if (tType == SINGLE_LEVEL_DWT) {
         // Any number of axes
         if (do2D) {
