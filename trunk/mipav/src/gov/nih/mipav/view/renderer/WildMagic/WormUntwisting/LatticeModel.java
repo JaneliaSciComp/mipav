@@ -4209,6 +4209,32 @@ public class LatticeModel {
 			//			System.err.println(pos);
 		}
 	}
+	
+	private VOIContour makeBox2D(Vector3f center, float radius ) {
+		VOIContour box = new VOIContour(true);
+		// add the 4 corners of the box:
+		Vector3f tempC = new Vector3f(center);
+		tempC.X += radius;
+		tempC.Y -= radius;
+		box.add(tempC); 
+		tempC = new Vector3f(center);
+		tempC.X += radius;
+		tempC.Y += radius;
+		box.add(tempC);
+		tempC = new Vector3f(center);
+		tempC.X -= radius;
+		tempC.Y += radius;
+		box.add(tempC);
+		tempC = new Vector3f(center);
+		tempC.X -= radius;
+		tempC.Y -= radius;
+		box.add(tempC);
+		return box;
+	}
+	
+	private boolean box2DContains(Vector3f center, float radius, float x, float y ) {
+		return ( (x >= (center.X-radius)) && (x <= center.X+radius) && (y >= center.Y-radius) && (y <= center.Y+radius) );
+	}
 
 	/**
 	 * Generates the VOI that highlights which point (lattice or annotation) is currently selected by the user.
@@ -7055,7 +7081,7 @@ public class LatticeModel {
 
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += paddingFactor;
-
+//			System.err.println( i + "  " + radius );
 			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);			
 
 			if ( !segmentLattice && (clipMask != null) && (clipMask.size() == dimZ) ) {
@@ -7073,7 +7099,7 @@ public class LatticeModel {
 				}
 				for ( int y = 0; y < dimY; y++ ) {
 					for ( int x = 0; x < dimX; x++ ) {
-						if ( contour.contains(x,y) ) {
+						if ( box2DContains(center, radius, x,y) && contour.contains(x,y) ) {
 							contourImage.set(x,  y, i, 10 );
 						}
 					}
@@ -7388,7 +7414,8 @@ public class LatticeModel {
 			System.err.println("untwistTest: using existing contours" );
 		}
 //		resultImage.registerVOI( latticeContours );
-		
+
+		float maxDist = Vector3f.normalize(center);
 		// this is the untwisting code:
 		final Vector3f[] corners = new Vector3f[4];
 		for (int i = 0; i < size; i++)
@@ -7399,15 +7426,30 @@ public class LatticeModel {
 			}	
 
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
-			radius += 5;
+			radius += paddingFactor;
 			if ( generateContours ) {
 				VOIContour contour = new VOIContour(true);
 				makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);			
+				if ( (clipMask != null) && (clipMask.size() == dimZ) ) {
+//					System.err.println( "use clip mask " + i + "  " + clipMask.size() );
+					boolean[] mask = clipMask.elementAt(i);
+					for ( int j = 0; j < mask.length; j++ ) {
+						if ( !mask[j] ) {
+							// extend contour out to edge:
+							Vector3f dir = Vector3f.sub( contour.elementAt(j), center );
+							dir.normalize();
+							dir.scale(maxDist);
+							dir.add(center);
+							contour.elementAt(j).copy(dir);
+						}
+					}
+				}
 				for ( int j = 0; j < contour.size(); j++ )
 				{
 					contour.elementAt(j).Z = i;
 				}
 				latticeContours.getCurves().add( contour );
+				
 			}
 			float radiusSq = radius*radius;
 
@@ -7485,12 +7527,8 @@ public class LatticeModel {
 				int closeCount = 0;
 				for ( int j = startIndex; j < endIndex; j++ )
 				{			
-					float distance = centerPositions.elementAt(j).distance( markerCenters.elementAt(i) );
-					float radius = leftPositions.elementAt(j).distance(rightPositions.elementAt(j))/2f;
-					//				System.err.println( markerNames.elementAt(i) + " " + distance + " " + radius + " " + (distance <= radius) );
-
-					// If the marker is within the radius of the current lattice position (or if existing contours exist):
-					if ( !generateContours  || (distance <= (1.25 * radius)) )
+					float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
+					radius += paddingFactor;
 					{
 						// Calculate the straightened marker location:
 						VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
@@ -7499,11 +7537,12 @@ public class LatticeModel {
 						}
 						Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i) );
 
-						if ( markerPt.X != Float.MAX_VALUE )
+						if ( box2DContains( center, radius, markerPt.X, markerPt.Y ) )
 						{
 							// If it is inside the skin marker contour:
 							if ( (contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y ) )
 							{
+//								System.err.println("unTwistTest: marker found: " + markerNames.elementAt(i) + "  " + j + (contours[j] == null));
 								// Calculate the distance of the marker to the sampling plane:
 								Plane3f plane = new Plane3f(normalVectors.elementAt(j), centerPositions.elementAt(j) );
 								DistanceVector3Plane3 dist = new DistanceVector3Plane3(markerCenters.elementAt(i), plane);
@@ -7529,6 +7568,7 @@ public class LatticeModel {
 				}
 				if ( !targetSlice.containsKey(i) && ((startIndex != 0) || (endIndex != size)) ) {
 					// no target slice - ignore contour:	
+//					System.err.println("unTwistTest: marker not found: " + markerNames.elementAt(i) );
 					for ( int j = startIndex; j < endIndex; j++ )
 					{			
 						// Calculate the straightened marker location:
@@ -8532,7 +8572,13 @@ public class LatticeModel {
 			contours[index] =  contour;
 			contours[i].update();
 		}
-
+		
+		// bounding box contours:
+		int dimX = (int) (resultImage.getExtents()[0]);
+		int dimY = (int) (resultImage.getExtents()[1]);
+		int dimZ = size;
+		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
+		
 		final Vector3f[] corners = new Vector3f[4];		
 		HashMap<Integer,Vector<Vector2d>> targetSlice = new HashMap<Integer,Vector<Vector2d>>();
 		for ( int i = 0; i < markerCenters.size(); i++ )
@@ -8548,6 +8594,9 @@ public class LatticeModel {
 //			System.err.println( i + "  " + markerNames.elementAt(i) + "  " + latticeSegment + "  " + startIndex + "  " + endIndex + "  " + size + "  " + splineRangeIndex.length);
 			for ( int j = startIndex; j < endIndex; j++ )
 			{			
+				float radius = (float) (1.05 * rightPositions.elementAt(j).distance(leftPositions.elementAt(j))/(2f));
+				radius += paddingFactor;
+				
 				// Calculate the straightened marker location:
 				VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
 				for (int k = 0; k < 4; k++) {
@@ -8555,11 +8604,13 @@ public class LatticeModel {
 				}
 				Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i) );
 
-				if ( markerPt.X != Float.MAX_VALUE )
+				if ( box2DContains(center, radius, markerPt.X, markerPt.Y ) )
 				{
 					// If it is inside the skin marker contour:
 					if ( (contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y ) )
 					{
+//						System.err.println("unTwistTest: marker found: " + markerNames.elementAt(i) + "  " + j + (contours[j] == null));
+						
 						// Calculate the distance of the marker to the sampling plane:
 						Plane3f plane = new Plane3f(normalVectors.elementAt(j), centerPositions.elementAt(j) );
 						DistanceVector3Plane3 dist = new DistanceVector3Plane3(markerCenters.elementAt(i), plane);
@@ -8582,6 +8633,7 @@ public class LatticeModel {
 				}
 			}
 			if ( !targetSlice.containsKey(i) && ((startIndex != 0) || (endIndex != size)) ) {
+//				System.err.println("unTwistTest: marker not found: " + markerNames.elementAt(i) );
 				// no target slice - ignore contour:	
 				for ( int j = startIndex; j < endIndex; j++ )
 				{			
@@ -9055,7 +9107,7 @@ public class LatticeModel {
 			y0 = y0 + ySlopeY;
 			z0 = z0 + zSlopeY;
 		}
-		//		System.err.println( minDistance );
+//		System.err.println( minDistance );
 		return closest;
 	}
 
