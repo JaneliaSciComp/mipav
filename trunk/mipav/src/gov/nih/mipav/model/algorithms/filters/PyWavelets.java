@@ -21946,28 +21946,28 @@ public  class PyWavelets extends AlgorithmBase {
             for (first1 = 0; first1 < last_index; first1++) {
             for (first2 = 0; first2 < end2; first2++) {
             	indices[axes[0]] = new Vector<Integer>();
-            	for (i = first1; i < dshape[0]; i += step_size) {
+            	for (i = first1; i < dshape[axes[0]]; i += step_size) {
             	    indices[axes[0]].add(i);	
             	}
             	even_indices[axes[0]] = new Vector<Integer>();
-            	for (i = first1; i < dshape[0]; i += 2*step_size) {
+            	for (i = first1; i < dshape[axes[0]]; i += 2*step_size) {
             		even_indices[axes[0]].add(i);
             	}
             	odd_indices[axes[0]] = new Vector<Integer>();
-            	for (i = first1 + step_size; i < dshape[0]; i += 2*step_size) {
+            	for (i = first1 + step_size; i < dshape[axes[0]]; i += 2*step_size) {
             		odd_indices[axes[0]].add(i);
             	}
             	if (ndim_transform >= 2) {
             		indices[axes[1]] = new Vector<Integer>();
-                	for (i = first2; i < dshape[1]; i += step_size) {
+                	for (i = first2; i < dshape[axes[1]]; i += step_size) {
                 	    indices[axes[1]].add(i);	
                 	}
                 	even_indices[axes[1]] = new Vector<Integer>();
-                	for (i = first2; i < dshape[1]; i += 2*step_size) {
+                	for (i = first2; i < dshape[axes[1]]; i += 2*step_size) {
                 		even_indices[axes[1]].add(i);
                 	}
                 	odd_indices[axes[1]] = new Vector<Integer>();
-                	for (i = first2 + step_size; i < dshape[1]; i += 2*step_size) {
+                	for (i = first2 + step_size; i < dshape[axes[1]]; i += 2*step_size) {
                 		odd_indices[axes[1]].add(i);
                 	}	
             	}
@@ -22532,42 +22532,42 @@ public  class PyWavelets extends AlgorithmBase {
             for (first2 = 0; first2 < end2; first2++) {
             for (first3 = 0; first3 < end3; first3++) {
             	indices[axes[0]] = new Vector<Integer>();
-            	for (i = first1; i < dshape[0]; i += step_size) {
+            	for (i = first1; i < dshape[axes[0]]; i += step_size) {
             	    indices[axes[0]].add(i);	
             	}
             	even_indices[axes[0]] = new Vector<Integer>();
-            	for (i = first1; i < dshape[0]; i += 2*step_size) {
+            	for (i = first1; i < dshape[axes[0]]; i += 2*step_size) {
             		even_indices[axes[0]].add(i);
             	}
             	odd_indices[axes[0]] = new Vector<Integer>();
-            	for (i = first1 + step_size; i < dshape[0]; i += 2*step_size) {
+            	for (i = first1 + step_size; i < dshape[axes[0]]; i += 2*step_size) {
             		odd_indices[axes[0]].add(i);
             	}
             	if (ndim_transform >= 2) {
             		indices[axes[1]] = new Vector<Integer>();
-                	for (i = first2; i < dshape[1]; i += step_size) {
+                	for (i = first2; i < dshape[axes[1]]; i += step_size) {
                 	    indices[axes[1]].add(i);	
                 	}
                 	even_indices[axes[1]] = new Vector<Integer>();
-                	for (i = first2; i < dshape[1]; i += 2*step_size) {
+                	for (i = first2; i < dshape[axes[1]]; i += 2*step_size) {
                 		even_indices[axes[1]].add(i);
                 	}
                 	odd_indices[axes[1]] = new Vector<Integer>();
-                	for (i = first2 + step_size; i < dshape[1]; i += 2*step_size) {
+                	for (i = first2 + step_size; i < dshape[axes[1]]; i += 2*step_size) {
                 		odd_indices[axes[1]].add(i);
                 	}	
             	}
             	if (ndim_transform >= 3) {
             		indices[axes[2]] = new Vector<Integer>();
-                	for (i = first3; i < dshape[2]; i += step_size) {
+                	for (i = first3; i < dshape[axes[2]]; i += step_size) {
                 	    indices[axes[2]].add(i);	
                 	}
                 	even_indices[axes[2]] = new Vector<Integer>();
-                	for (i = first3; i < dshape[2]; i += 2*step_size) {
+                	for (i = first3; i < dshape[axes[2]]; i += 2*step_size) {
                 		even_indices[axes[2]].add(i);
                 	}
                 	odd_indices[axes[2]] = new Vector<Integer>();
-                	for (i = first3 + step_size; i < dshape[2]; i += 2*step_size) {
+                	for (i = first3 + step_size; i < dshape[axes[2]]; i += 2*step_size) {
                 		odd_indices[axes[2]].add(i);
                 	}	
             	}
