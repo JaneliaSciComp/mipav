@@ -4785,6 +4785,7 @@ public  class PyWavelets extends AlgorithmBase {
 	                int extents[] = new int[]{L.length, L[0].length, L[0][0].length};
 	                imageL = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_L");
 	        		imageH = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_H");
+	        		buffer = new double[L.length*L[0].length*L[0][0].length];
 	                
 	                for (z = 0; z < L[0][0].length; z++) {
 		                for (y = 0; y < L[0].length; y++) {
@@ -5098,6 +5099,7 @@ public  class PyWavelets extends AlgorithmBase {
 	                int extents[] = new int[]{L.length, L[0].length, L[0][0].length};
 	                imageL_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_L_filter");
 	        		imageH_filter = new ModelImage(ModelStorageBase.DOUBLE, extents, srcImage.getImageName() + "_H_filter");
+	        		buffer = new double[L.length*L[0].length*L[0][0].length];
 	                
 	                for (z = 0; z < L[0][0].length; z++) {
 		                for (y = 0; y < L[0].length; y++) {
