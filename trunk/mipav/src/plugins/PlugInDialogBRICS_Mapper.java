@@ -16,6 +16,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -3833,7 +3835,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				}
     				
     				// Converting the 2d array list to an array in the format needed including group name and mappings if necessary
-    				String[][][] stri = new String[mapLines.size()][4][50];   // last index used for repeatability
+    				String[][][] stri = new String[mapLines.size()][5][50];   // last index used for repeatability
     				for (int j = 0; j < mapLines.size(); j++) {
     					stri[j][0][0] = mapLines.get(j).get(0) + "." + mapLines.get(j).get(2);    // Builds Reference Group.DE
     					str = str + stri[j][0][0] + ",";										  // Builds column header DE string (second row of output file)
@@ -3845,6 +3847,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     					else {
     						stri[j][2][0] = null;												  // No PV mappings - likely free-form (alpha numeric) DE
     					}
+    					stri[j][4][0] = mapLines.get(j).get(4);									  // Gets the data type
+    					//System.out.println("Type: " + stri[j][4][0]);
     				}
     				str = str + "\n";
     				outputBW.write(str); // Writes out the Form Structure record + groupname.de  columns  --- second row of output file
@@ -3917,8 +3921,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     									if (stri[refIndex][3][reps] == null || stri[refIndex][3][reps].isEmpty()) {
     										break;
     									}
-    							}					
-    							if(stri[refIndex][2][0] == null) {  								
+    							}
+    							
+    							
+    							if(stri[refIndex][4][0].trim().equals("DATE")) {
+    								System.out.println("Type: " + stri[refIndex][4][0] + " Date = " + convertDateToISOFormat(srcDataRow[srcIndex]));
+    								stri[refIndex][3][reps] = convertDateToISOFormat(srcDataRow[srcIndex]);
+    							}
+    							else if(stri[refIndex][2][0] == null) {  								
     								stri[refIndex][3][reps] = srcDataRow[srcIndex];
     							}
     							else { 
@@ -4022,4 +4032,37 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	}
     	return nRows;
     }
+    
+    /**
+     * Converts from DICOM/US date format (MM/DD/YYYY) or M/D/YYYY to ISO 8601 format (YYYY-MM-DDThh:mm:ss).
+     * 
+     * @param date A date string in the format MM/DD/YYYY or M/D/YYYY.
+     * @return An ISO 8601 formatted version of the given date (or the original string if not in the DICOM/US date
+     *         format).
+     */
+    private static final String convertDateToISOFormat(final String date) {
+        if (date == null) {
+            return "";
+        }
+
+        final String pattern = "^(\\d{1,2})[/-]*(\\d{1,2})[/-]*(\\d{4})$";
+        final Pattern p = Pattern.compile(pattern);
+        final Matcher m = p.matcher(date);
+        if (m.find()) {
+            String month = m.group(1);
+            String day = m.group(2);
+            final String year = m.group(3);
+            // add leading zeroes, if necessary
+            if (month.length() == 1) {
+                month = "0" + month;
+            }
+            if (day.length() == 1) {
+                day = "0" + day;
+            }
+            return year + "-" + month + "-" + day;
+        }
+
+        return date;
+    }
+    
 }
