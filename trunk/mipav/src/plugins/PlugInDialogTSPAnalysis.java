@@ -42,6 +42,51 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	private String pwiImageFileDirectory;
 	
 	/**
+     * Constructor used for instantiation during script execution (required for dynamic loading).
+     */
+    public PlugInDialogTSPAnalysis() {}
+
+    /**
+     * 
+     */
+    public PlugInDialogTSPAnalysis(final boolean modal) {
+        super(modal);
+
+        init();
+    }
+    
+ // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
+
+    // ************************************************************************
+    // ************************** Event Processing ****************************
+    // ************************************************************************
+
+    /**
+     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     * 
+     * @param event Event that triggers function.
+     */
+    @Override
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
+
+        if (command.equals("OK")) {
+            if (setVariables()) {
+                callAlgorithm();
+            }
+        } else if (command.equals("Script")) {
+            callAlgorithm();
+        } else if (command.equals("Cancel")) {
+            // dispose();
+            this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        } else {
+            super.actionPerformed(event);
+        }
+        // System.out.print(this.getSize());
+    } // end actionPerformed()
+	
+	/**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -100,13 +145,13 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
 
             if ( (TSPAnalysisAlgo.isCompleted() == true)) {
-                final Collection<ModelImage> list = TSPAnalysisAlgo.getResultImageList();
+                /*final Collection<ModelImage> list = TSPAnalysisAlgo.getResultImageList();
                 synchronized (list) {
                     final Iterator<ModelImage> itr = list.iterator();
                     while (itr.hasNext()) {
                         new ViewJFrameImage(itr.next());
                     }
-                }
+                }*/
                 insertScriptLine();
             }
 
@@ -130,7 +175,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 
         try {
 
-            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(resultImage, image);
+            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -151,10 +196,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
                 TSPAnalysisAlgo.run();
             }
         } catch (final OutOfMemoryError x) {
-            if (resultImage != null) {
+            /*if (resultImage != null) {
                 resultImage.disposeLocal(); // Clean up memory of result image
                 resultImage = null;
-            }
+            }*/
 
             MipavUtil.displayError("Generic algorithm: unable to allocate enough memory");
 
