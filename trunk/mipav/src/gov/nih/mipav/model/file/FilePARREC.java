@@ -4472,6 +4472,13 @@ public class FilePARREC extends FileBase {
         map.put("#  diffusion (ap, fh, rl)                   (3*float)",new Integer(3));
 //...%new columns for Feb 12, 2008
         map.put("#  label type (ASL)            (imagekey!)  (integer)", new Integer(1));
+        map.put("#  Contrast Bolus Agent                     (string)", new Integer(1));
+        map.put("#  Contrast Bolus Route                     (float)", new Integer(1));
+        map.put("#  Contrast Bolus Volume                    (string)", new Integer(1));
+        map.put("#  Contrast Bolus Start Time                (string)", new Integer(1));
+        map.put("#  Contrast Bolus Total Dose                (float)", new Integer(1));
+        map.put("#  Contrast Bolus Ingredient                (string)", new Integer(1));
+        map.put("#  Contrast Bolus Ingredient Concentration  (float)", new Integer(1));
         return map;
     };
 	
