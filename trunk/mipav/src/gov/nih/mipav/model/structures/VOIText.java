@@ -369,6 +369,10 @@ public class VOIText extends VOIBase {
     	}
     }
 
+    public boolean getDisplay( ) {
+    	return this.display;
+    }
+
     /**
      * gets whether or not the arrow should be drawn
      * @return

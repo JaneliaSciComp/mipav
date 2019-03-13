@@ -1537,7 +1537,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					annotationName = annotationName.substring(0, index);
 				}
-				//        		System.err.println( annotationName );
+				System.err.println( annotationName );
 
 //				timeCount = 0;
 				VOI annotation = new VOI( (short)i, annotationName, VOI.ANNOTATION, 0 );
@@ -1547,34 +1547,30 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					int red = 255;
 					int green = 255;
 					int blue = 255;
+					int label = 1;
 					fr = new FileReader(annotationFile);
 					BufferedReader br = new BufferedReader(fr);
 
 					String line = br.readLine();
-					line = br.readLine();
-					//    				System.err.println(line);
 					String[] parsed = line.split( "," );
-					if ( parsed.length > 0 )
-					{
-						if ( parsed[0].equals("color") )
-						{
-							red    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Integer.valueOf( parsed[1] ) : 0 : 0; 
-							green  = (parsed.length > 2) ? (parsed[2].length() > 0) ? Integer.valueOf( parsed[2] ) : 0 : 0; 
-							blue   = (parsed.length > 3) ? (parsed[3].length() > 0) ? Integer.valueOf( parsed[3] ) : 0 : 0; 
-
-							line = br.readLine();
-						}
-					}
 					while ( line != null )
 					{
 						//        				System.err.println(line);
 						int time = -1;
 						float x = 0, y = 0, z = 0;
 						parsed = line.split( "," );
+						// time:
 						time = (parsed.length > 0) ? (parsed[0].length() > 0) ? Integer.valueOf( parsed[0] ) : -1 : -1; 
+						// position:
 						x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
 						y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
 						z    = (parsed.length > 3) ? (parsed[3].length() > 0) ? Float.valueOf( parsed[3] ) : 0 : 0; 
+						// color:
+						red    = (parsed.length > 4) ? (parsed[4].length() > 0) ? Integer.valueOf( parsed[4] ) : red : red; 
+						green    = (parsed.length > 5) ? (parsed[5].length() > 0) ? Integer.valueOf( parsed[5] ) : green : green; 
+						blue    = (parsed.length > 6) ? (parsed[6].length() > 0) ? Integer.valueOf( parsed[6] ) : blue : blue; 						
+						// show label: 
+						label    = (parsed.length > 7) ? (parsed[7].length() > 0) ? Integer.valueOf( parsed[7] ) : label : label; 	
 
 						if ( time != -1 )
 						{
@@ -1595,6 +1591,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 							text.add( new Vector3f( x, y, z ) );
 							text.add( new Vector3f( x, y, z ) );
 							text.setText(annotationName);
+							text.display( label == 1 );
 							annotation.getCurves().add(text);
 
 							times.add( time );
@@ -1675,6 +1672,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 						text.setText( ((VOIText)tempList.elementAt(j).getCurves().elementAt(k)).getText() );
 						text.setColor( ((VOIText)tempList.elementAt(j).getCurves().elementAt(k)).getColor() );
+						text.display( ((VOIText)tempList.elementAt(j).getCurves().elementAt(k)).getDisplay() );
 						annotation.getCurves().add( text );
 
 						//        				System.err.print( " " + text.getText() );

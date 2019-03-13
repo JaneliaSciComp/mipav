@@ -2805,12 +2805,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							surface.SetTranslateVolumeCoords( position );							
 						}						
 					}
+					Color color = text.getColor();
+					surface.SetColor( new ColorRGB( color.getRed()/255.0f, 
+							color.getGreen()/255.0f,
+							color.getBlue()/255.0f ), true );
 					surface.SetDisplay(display);					
 				}
 				VOI annotationVOI = annotationVOIs.get(text.getText());
 				if ( annotationVOI != null )
 				{
 					Boolean display = annotationLabelsDisplay.get( text.getText() );
+					display &= text.getDisplay();
 					VOIText displayedText = (VOIText) annotationVOI.getCurves().elementAt(0);
 					if ( displayedText.getVolumeVOI() != null )
 					{
