@@ -135,6 +135,20 @@ public class FileInfoPARREC extends FileInfoBase {
     private float diffusion[][] = null;
     
     private int labelType[] = null;
+    
+    private String contrastBolusAgent[] = null;
+    
+    private float contrastBolusRoute[] = null;
+    
+    private String contrastBolusVolume[] = null;
+    
+    private String contrastBolusStartTime[] = null;
+    
+    private float contrastBolusTotalDose[] = null;
+    
+    private String contrastBolusIngredient[] = null;
+    
+    private float contrastBolusIngredientConcentration[] = null;
 
     // default constructor
     public FileInfoPARREC(String name, String directory, int format) {
@@ -264,6 +278,34 @@ public class FileInfoPARREC extends FileInfoBase {
         }
         if (labelType != null) {
         	dlg.append("Label type (ASL): " + labelType[index] + "\n");
+        }
+        
+        if (contrastBolusAgent != null) {
+        	dlg.append("Contrast Bolus Agent: " + contrastBolusAgent[index] + "\n");
+        }
+        
+        if (contrastBolusRoute != null) {
+        	dlg.append("Contrast Bolus Route: " + contrastBolusRoute[index] + "\n");
+        }
+        
+        if (contrastBolusVolume != null) {
+        	dlg.append("Contrast Bolus Volume: " + contrastBolusVolume[index] + "\n");
+        }
+        
+        if (contrastBolusStartTime != null) {
+        	dlg.append("Contrast Bolus Start Time: " + contrastBolusStartTime[index] + "\n");
+        }
+        
+        if (contrastBolusTotalDose != null) {
+        	dlg.append("Contrast Bolus Total Dose: " + contrastBolusTotalDose[index] + "\n");
+        }
+        
+        if (contrastBolusIngredient != null) {
+        	dlg.append("Contrast Bolus Ingredient: " + contrastBolusIngredient[index] + "\n");
+        }
+        
+        if (contrastBolusIngredientConcentration != null) {
+        	dlg.append("Contrast Bolus Ingredient Concentration: " + contrastBolusIngredientConcentration[index] + "\n");
         }
     }
 
@@ -736,5 +778,61 @@ public class FileInfoPARREC extends FileInfoBase {
     
     public int[] getLabelType() {
     	return labelType;
+    }
+    
+    public void setContrastBolusAgent(String contrastBolusAgent[]) {
+    	this.contrastBolusAgent = contrastBolusAgent;
+    }
+    
+    public String[] getContrastBolusAgent() {
+    	return contrastBolusAgent;
+    }
+    
+    public void setContrastBolusRoute(float contrastBolusRoute[]) {
+    	this.contrastBolusRoute = contrastBolusRoute;
+    }
+    
+    public float[] getContrastBolusRoute() {
+    	return contrastBolusRoute;
+    }
+    
+    public void setContrastBolusVolume(String contrastBolusVolume[]) {
+    	this.contrastBolusVolume = contrastBolusVolume;
+    }
+    
+    public String[] getContrastBolusVolume() {
+    	return contrastBolusVolume;
+    }
+    
+    public void setContrastBolusStartTime(String contrastBolusStartTime[]) {
+    	this.contrastBolusStartTime = contrastBolusStartTime;
+    }
+    
+    public String[] getContrastBolusStartTime() {
+    	return contrastBolusStartTime;
+    }
+    
+    public void setContrastBolusTotalDose(float contrastBolusTotalDose[]) {
+    	this.contrastBolusTotalDose = contrastBolusTotalDose;
+    }
+    
+    public float[] getContrastBolusTotalDose() {
+    	return contrastBolusTotalDose;
+    }
+    
+    public void setContrastBolusIngredient(String contrastBolusIngredient[]) {
+    	this.contrastBolusIngredient = contrastBolusIngredient;
+    }
+    
+    public String[] getContrastBolusIngredient() {
+    	return contrastBolusIngredient;
+    }
+    
+    public void setContrastBolusIngredientConcentration(float contrastBolusIngredientConcentration[]) {
+    	this.contrastBolusIngredientConcentration = contrastBolusIngredientConcentration;
+    }
+    
+    public float[] getContrastBolusIngredientConcentration() {
+    	return contrastBolusIngredientConcentration;
     }
 }
