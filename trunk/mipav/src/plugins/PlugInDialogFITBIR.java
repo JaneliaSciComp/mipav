@@ -716,41 +716,71 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                     }
                 };
-
-                // we're now letting the fields be enforced by the validation
-                // tool
-                // final int numRows = sourceTableModel.getRowCount();
-                // boolean areAllCompleted = true;
-                // for (int i = 0; i < numRows; i++) {
-                // if ( ((String) sourceTableModel.getValueAt(i,
-                // 1)).equalsIgnoreCase("No")) {
-                // areAllCompleted = false;
-                // break;
-                // }
-                // }
-                //
-                // if ( !areAllCompleted) {
-                // MipavUtil.displayError("Please complete required fields for all Form Structures");
-                // return;
-                // }
-
-                // instead, just require that the GUIDs are filled in
+                
+                // check that required fields have some value
                 final int numRows = structTableModel.getRowCount();
-                int validGuids = 1;
+                for (int i = 0; i < numRows; i++) {
+                    if ( ((String) structTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
+                        MipavUtil.displayError("Record " + (i+1) + ": Not all required fields have values");
+                        return;
+                    }
+                }
+
+                // require that the GUIDs are filled in and have proper prefixes
                 for (int i = 0; i < numRows; i++) {
                     final String struct = (String) structTableModel.getValueAt(i, 0);
                     if (struct.endsWith(STRUCT_GUID_SEPERATOR + "UNKNOWNGUID")) {
-                        validGuids = -1;
-                        break;
+                        MipavUtil.displayError("Record " + (i+1) + ": No GUID specified");
+                        return;
                     } else {
                         final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
                         if ( !isGuid(guidTester)) {
-                            validGuids = 0;
-                            break;
+                            MipavUtil.displayError("Record " + (i+1) + ": GUID value does not match the allow GUID format (" + guidTester + ")");
+                            return;
                         }
                     }
                 }
                 
+                // check that any field with an 'Other, specify' or 'Yes, specify' value in a required field has something in the sister field
+                for (int i = 0; i < numRows; i++) {
+                    final FormStructureData fsData = fsDataList.get(i);
+                    for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                        for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                            for (final DataElementValue deVal : repeat.getDataElements()) {
+                                if (deVal.getRequiredType() == RequiredType.REQUIRED) {
+                                    JComponent comp = deVal.getComp();
+                                    if (comp instanceof JComboBox) {
+                                        final JComboBox jc = (JComboBox) comp;
+                                        String selectedVal = (String) jc.getSelectedItem();
+                                        if (selectedVal.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || selectedVal.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                                            // check for a value in the matching OTH field in the same group
+                                            if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
+                                                MipavUtil.displayError("Record " + (i+1) + ": 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
+                                                return;
+                                            }
+                                        }
+                                    } else if (comp instanceof JList) {
+                                        final JList<String> list = (JList<String>) comp;
+                                        
+                                        List<String> selectedValList = list.getSelectedValuesList();
+                                        
+                                        for (final String val : selectedValList) {
+                                            if (val.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || val.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                                                // check for a value in the matching OTH field in the same group
+                                                if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
+                                                    MipavUtil.displayError("Record " + (i+1) + ": Required 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // fine so far, ask if the user is done
                 int response;
                 if (!cmdLineCsvFlag) {
                     response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
@@ -760,15 +790,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 if (response == JOptionPane.YES_OPTION) {
-
-                    if (validGuids == -1) {
-                        MipavUtil.displayError("Please complete GUID field for all Form Structures");
-                        return;
-                    } else if (validGuids == 0) {
-                        MipavUtil.displayError("One or more GUID is invalid");
-                        return;
-                    }
-
                     removeStructButton.setEnabled(false);
                     finishButton.setEnabled(false);
                     outputDirButton.setEnabled(false);
@@ -3180,7 +3201,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         
                                         // if MR, try to put the pulse sequence type into the zip name
                                         if (isMRImagingStructure(dsName)) {
-                                            // TODO
                                             String pulseSeq = "";
                                             for (final RepeatableGroup groupPulse : fsData.getStructInfo().getRepeatableGroups()) {
                                                 for (final GroupRepeat repeatPulse : fsData.getAllGroupRepeats(groupPulse.getName())) {
@@ -6216,7 +6236,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                    Preferences.setDebugLevels(prevDebugLvls);
 
                     if (srcImage == null) {
-                        // TODO if cmd line, highlight failure somehow
+                        // if cmd line, highlight failure
                         if (cmdLineCsvFlag) {
                             System.err.println("Unable to open image file specified: " + imageFile);
                             validFile = false;
@@ -6899,7 +6919,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         message = message + fieldName + " : " + "      csv:" + param + "     header:" + headerInfo + "\n";
                     }
                     
-                    // TODO when running from the command line, note the conflict but use the CSV
+                    // when running from the command line, note the conflict but use the CSV
                     if (cmdLineCsvFlag) {
                         System.err.println(message);
                         return RESOLVE_CONFLICT_CSV;
