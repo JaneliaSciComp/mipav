@@ -138,7 +138,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private static final String authProdServer = "https://fitbir.nih.gov/";
 
     /** File name of server configuration. */
-    private static final String configFileName = "brics_mapper_config.properties";    // TODO - new config needed.
+    private static final String configFileName = "brics_mapper_config.properties";    
 
     /** Property for reading the dd environment name from the BRICS config file. */
     private static final String ddEnvNameProp = "ddEnvName";
@@ -174,7 +174,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private static final String svnVersion 		= "$Rev: 15178 $";
     private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
-    private static final String pluginVersion 	= "Beta version 0.7";
+    private static final String pluginVersion 	= "Beta version 0.8";
 
 	private PlugInDialogBRICS_Mapper owner;
 
@@ -201,7 +201,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         // TODO - MIPAV centric
         outputDirBase = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR);
         if (outputDirBase == null) {
-            outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "BRICS_Mapping" + File.separator;
+            outputDirBase = System.getProperty("user.home") + File.separator + "BRICS_Mapping" + File.separator;
             Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
         }
         
@@ -932,7 +932,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
             else if (e.getClickCount() == 2 && fileXFormTable.getSelectedColumn() == fileXFormTableModel.getColumnIndex("Source Data Files") && tabbedPane.getSelectedIndex() == 1) {
             	
-            	final JFileChooser chooser = new JFileChooser(outputDataDirBase);
+            	final JFileChooser chooser = new JFileChooser(outputDirBase);
 
                 chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 chooser.setDialogTitle("Choose data file(s) to be transformed.");
@@ -3925,7 +3925,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     							
     							
     							if(stri[refIndex][4][0].trim().equals("DATE")) {
-    								System.out.println("Type: " + stri[refIndex][4][0] + " Date = " + convertDateToISOFormat(srcDataRow[srcIndex]));
+    								//System.out.println("Type: " + stri[refIndex][4][0] + " Date = " + convertDateToISOFormat(srcDataRow[srcIndex]));
     								stri[refIndex][3][reps] = convertDateToISOFormat(srcDataRow[srcIndex]);
     							}
     							else if(stri[refIndex][2][0] == null) {  								
