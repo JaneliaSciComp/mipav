@@ -2492,15 +2492,30 @@ public class FilePARREC extends FileBase {
                 }
                 
                 if (contrastBolusAgent != null) {
-                	contrastBolusAgent[i] = sliceArr[contrastBolusAgentIndex];
+                	if (contrastBolusAgentIndex >= sliceArr.length) {
+                		contrastBolusAgent = null;
+                	}
+                	else {
+                	    contrastBolusAgent[i] = sliceArr[contrastBolusAgentIndex];
+                	}
                 }
                 
                 if (contrastBolusRoute != null) {
-                	contrastBolusRoute[i] = Float.valueOf(sliceArr[contrastBolusRouteIndex]);
+                	if (contrastBolusRouteIndex >= sliceArr.length) {
+                		contrastBolusRoute = null;
+                	}
+                	else {
+                	    contrastBolusRoute[i] = Float.valueOf(sliceArr[contrastBolusRouteIndex]);
+                	}
                 }
                 
                 if (contrastBolusVolume != null) {
-                	contrastBolusVolume[i] = sliceArr[contrastBolusVolumeIndex];
+                	if (contrastBolusVolumeIndex >= sliceArr.length) {
+                		contrastBolusVolume = null;
+                	}
+                	else {
+                	    contrastBolusVolume[i] = sliceArr[contrastBolusVolumeIndex];
+                	}
                 }
                 
                 if (contrastBolusStartTime != null) {
@@ -2642,15 +2657,30 @@ public class FilePARREC extends FileBase {
                     }
                     
                     if (contrastBolusAgent != null) {
-                    	contrastBolusAgent[index] = sliceArr[contrastBolusAgentIndex];
+                    	if (contrastBolusAgent.length >= sliceArr.length) {
+                    		contrastBolusAgent = null;
+                    	}
+                    	else {
+                    	    contrastBolusAgent[index] = sliceArr[contrastBolusAgentIndex];
+                    	}
                     }
                     
                     if (contrastBolusRoute != null) {
-                    	contrastBolusRoute[index] = Float.valueOf(sliceArr[contrastBolusRouteIndex]);
+                    	if (contrastBolusRouteIndex >= sliceArr.length) {
+                    		contrastBolusRoute = null;
+                    	}
+                    	else {
+                    	    contrastBolusRoute[index] = Float.valueOf(sliceArr[contrastBolusRouteIndex]);
+                    	}
                     }
                     
                     if (contrastBolusVolume != null) {
-                    	contrastBolusVolume[index] = sliceArr[contrastBolusVolumeIndex];
+                    	if (contrastBolusVolumeIndex >= sliceArr.length) {
+                    		contrastBolusVolume = null;
+                    	}
+                    	else {
+                    	    contrastBolusVolume[index] = sliceArr[contrastBolusVolumeIndex];
+                    	}
                     }
                     
                     if (contrastBolusStartTime != null) {
