@@ -41,6 +41,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private String pwiImageFileDirectory;
 	
+	private JTextField masking_thresholdText;
+	
+	private int masking_threshold;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -113,6 +117,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         pwiImageFileDirectoryText = gui.buildFileField("Directory containing pwi image file: ", " ", false, JFileChooser.DIRECTORIES_ONLY);
         inputPanel.add(pwiImageFileDirectoryText.getParent(), gbc);
         
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel masking_thresholdLabel = new JLabel("Masking threshold");
+        masking_thresholdLabel.setFont(serif12);
+        masking_thresholdLabel.setForeground(Color.black);
+        inputPanel.add(masking_thresholdLabel, gbc);
+        
+        gbc.gridx = 1;
+        masking_thresholdText = new JTextField("800");
+        masking_thresholdText.setFont(serif12);
+        masking_thresholdText.setForeground(Color.black);
+        inputPanel.add(masking_thresholdText, gbc);
+        
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
         // Build the Panel that holds the OK and CANCEL Buttons
@@ -175,7 +192,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 
         try {
 
-            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory);
+            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, masking_threshold);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -225,7 +242,31 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     }
     
     private boolean setVariables() {
+    	String tmpStr;
     	pwiImageFileDirectory = pwiImageFileDirectoryText.getText();
+    	
+    	tmpStr = masking_thresholdText.getText();
+    	try {
+    		masking_threshold = Integer.valueOf(tmpStr).intValue();
+    	}
+    	catch (NumberFormatException e) {
+    	    MipavUtil.displayError("masking_threshold text does not have a proper integer");
+    	    masking_thresholdText.requestFocus();
+    	    masking_thresholdText.selectAll();
+    	    return false;
+    	}
+    	if (masking_threshold < 0) {
+    		MipavUtil.displayError("masking_threshold must be at least 0");
+    		masking_thresholdText.requestFocus();
+    	    masking_thresholdText.selectAll();
+    	    return false;
+    	}
+    	if (masking_threshold > 65535) {
+    		MipavUtil.displayError("masking_threshold cannot exceed 65535");
+    		masking_thresholdText.requestFocus();
+    	    masking_thresholdText.selectAll();
+    	    return false;
+    	}
     	return true;
     }
 
