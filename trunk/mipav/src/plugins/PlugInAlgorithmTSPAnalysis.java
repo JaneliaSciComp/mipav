@@ -27,7 +27,11 @@ import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
@@ -65,15 +69,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     private Collection<ModelImage> resultImageList;
     
     private String pwiImageFileDirectory;
+    
+    // Thresholding to mask out image pixels not corresponding to brain tissue
+    private int masking_threshold = 800;
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory) {
+    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, int masking_threshold) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
+    	this.masking_threshold = masking_threshold;
     }
 
     
@@ -82,6 +90,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
      * Starts the algorithm.
      */
     public void runAlgorithm() {
+    	int xDim;
+    	int yDim;
+    	int zDim;
+    	int tDim;
+    	int length;
+    	int volume;
+    	int dataSize;
+    	int extents[] = new int[4];
+    	String tDimString = null;
+    	String t0String = null;
+    	float t0;
+    	String t1String = null;
+    	float t1;
+    	float delT;
+    	int buffer[];
+    	int data[][][][];
+    	int x, y, z, t;
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
     	for (File fileEntry : folder.listFiles()) {
@@ -111,16 +136,80 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	fileIO.setFileDir(pwiImageFileDirectory + File.separator);
     	boolean performSort = true;
     	fileIO.setQuiet(false);
-    	ModelImage vols2 = fileIO.readDicom(selectedFileName, fileList, performSort);
-    	vols2.calcMinMax();
+    	ModelImage image3D = fileIO.readDicom(selectedFileName, fileList, performSort);
+    	image3D.calcMinMax();
     	//int imageIndex = 0;
     	//new ViewJFrameImage(vols2, null, new Dimension(610, 200 + (imageIndex++ * 20)));
-    	int extents[] = vols2.getExtents();
-    	int length = extents[0] * extents[1];
-    	int volume = length * extents[2];
-    	double buffer[] = new double[volume];
-    	
+    	int extents3D[] = image3D.getExtents();
+    	length = extents[0] * extents[1];
+    	xDim = extents[0];
+    	yDim = extents[1];
+    	FileInfoDicom dicomInfo = (FileInfoDicom) image3D.getFileInfo(0);
+    	FileDicomTagTable tagTable = dicomInfo.getTagTable();
+        if (tagTable.getValue("0020,0105") != null) {
+        	// Number of temporal positions
+            FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0105"));
+            tDimString = (String)tag.getValue(false);     
+        }
+        else {
+        	MipavUtil.displayError("Tag (0020,0105) for Number of Temporal Positions is null");
+        	setCompleted(false);
+        	return;
+        }
+        tDim = Integer.valueOf(tDimString.trim()).intValue();
+        extents[3] = tDim;
+        zDim = extents3D[2]/tDim;
+        extents[2] = zDim;
+        //System.out.println("zDim = " + zDim + " tDim = " + tDim);
+        if (tagTable.getValue("0018,1060") != null) {
+        	// Trigger time
+        	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1060"));
+        	t0String = (String)tag.getValue(false);
+        }
+        else {
+        	MipavUtil.displayError("Tag (0018,1060) for Trigger Time is null");
+        	setCompleted(false);
+        	return;
+        }
+        t0 = Float.valueOf(t0String.trim()).floatValue();
+        dicomInfo = (FileInfoDicom) image3D.getFileInfo(1);
+        tagTable = dicomInfo.getTagTable();
+        if (tagTable.getValue("0018,1060") != null) {
+        	// Trigger time
+        	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1060"));
+        	t1String = (String)tag.getValue(false);
+        }
+        else {
+        	MipavUtil.displayError("Tag (0018,1060) for Trigger Time is null");
+        	setCompleted(false);
+        	return;
+        }
+        t1 = Float.valueOf(t1String.trim()).floatValue();
+        delT = t1 - t0;
+        //System.out.println("delT = " + delT);
+        volume = zDim * length;
+        dataSize = volume * tDim;
+        buffer = new int[dataSize];
     	setCompleted(true);
+    	try {
+    		image3D.exportData(0,  dataSize, buffer);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on image3D.exportData");
+    		setCompleted(false);
+    		return;
+    	}
+    	data = new int[xDim][yDim][zDim][tDim];
+    	for (t = 0; t < tDim; t++) {
+    		for (z = 0; z < zDim; z++) {
+    			for (y = 0; y < yDim; y++) {
+    				for (x = 0; x < xDim; x++) {
+    					data[x][y][z][t] = buffer[x + y*xDim + t*length +z*tDim*length];
+    				}
+    			}
+    		}
+    	}
+    	
     } // end runAlgorithm()
     
     
