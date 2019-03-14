@@ -393,6 +393,20 @@ public class FilePARREC extends FileBase {
     
     private int labelTypePos = -1;
     
+    private int contrastBolusAgentPos = -1;
+    
+    private int contrastBolusRoutePos = -1;
+    
+    private int contrastBolusVolumePos = -1;
+    
+    private int contrastBolusStartTimePos = -1;
+    
+    private int contrastBolusTotalDosePos = -1;
+    
+    private int contrastBolusIngredientPos = -1;
+    
+    private int contrastBolusIngredientConcentrationPos = -1;
+    
     private int sliceOrientIndex;
     
     private int bValueIndex;
@@ -453,6 +467,20 @@ public class FilePARREC extends FileBase {
     
     private int labelTypeIndex = -1;
     
+    private int contrastBolusAgentIndex = -1;
+    
+    private int contrastBolusRouteIndex = -1;
+    
+    private int contrastBolusVolumeIndex = -1;
+    
+    private int contrastBolusStartTimeIndex = -1;
+    
+    private int contrastBolusTotalDoseIndex = -1;
+    
+    private int contrastBolusIngredientIndex = -1;
+    
+    private int contrastBolusIngredientConcentrationIndex = -1;
+    
     private int echoNumber[] = null;
     
     private int dynamicScanNumber[] = null;
@@ -510,6 +538,20 @@ public class FilePARREC extends FileBase {
     private float diffusion[][] = null;
     
     private int labelType[] = null;
+    
+    private String contrastBolusAgent[] = null;
+    
+    private float contrastBolusRoute[] = null;
+    
+    private String contrastBolusVolume[] = null;
+    
+    private String contrastBolusStartTime[] = null;
+    
+    private float contrastBolusTotalDose[] = null;
+    
+    private String contrastBolusIngredient[] = null;
+    
+    private float contrastBolusIngredientConcentration[] = null;
 
     /**counter**/   
     private int counter = 0;
@@ -1248,6 +1290,13 @@ public class FilePARREC extends FileBase {
                     int contrastTypeCounter = -1;
                     int diffusionAnisotropyTypeCounter = -1;
                     int labelTypeCounter = -1;
+                    int contrastBolusAgentCounter = -1;
+                    int contrastBolusRouteCounter = -1;
+                    int contrastBolusVolumeCounter = -1;
+                    int contrastBolusStartTimeCounter = -1;;
+                    int contrastBolusTotalDoseCounter = -1;
+                    int contrastBolusIngredientCounter = -1;
+                    int contrastBolusIngredientConcentrationCounter = -1;
                 	
                     if(nextLine.compareToIgnoreCase("# === IMAGE INFORMATION DEFINITION =============================================")==0) {
                         String line = raFile.readLine().trim();
@@ -1384,6 +1433,34 @@ public class FilePARREC extends FileBase {
                                     	   labelTypeCounter++;
                                        }
                                        
+                                       if (imageInfo.contains("Contrast Bolus Agent")) {
+                                    	   contrastBolusAgentCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("Contrast Bolus Route")) {
+                                    	   contrastBolusRouteCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("Contrast Bolus Volume")) {
+                                    	   contrastBolusVolumeCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("Contrast Bolus Start Time")) {
+                                    	   contrastBolusStartTimeCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("Contrast Bolus Total Dose")) {
+                                    	   contrastBolusTotalDoseCounter++;
+                                       }
+                                       
+                                       if ((imageInfo.contains("Contrast Bolus Ingredient")) && (!imageInfo.contains("Contrast Bolus Ingredient Concentration"))) {
+                                    	   contrastBolusIngredientCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("Contrast Bolus Ingredient Concentration")) {
+                                    	   contrastBolusIngredientConcentrationCounter++;
+                                       }
+                                       
                                   }                  
                             }
                      
@@ -1478,6 +1555,34 @@ public class FilePARREC extends FileBase {
                         }
                         if (labelTypeCounter != -1) {
                         	labelTypePos = counter - labelTypeCounter;
+                        }
+                        
+                        if (contrastBolusAgentCounter != -1) {
+                        	contrastBolusAgentPos = counter - contrastBolusAgentCounter;
+                        }
+                        
+                        if (contrastBolusRouteCounter != -1) {
+                        	contrastBolusRoutePos = counter - contrastBolusRouteCounter;
+                        }
+                        
+                        if (contrastBolusVolumeCounter != -1) {
+                        	contrastBolusVolumePos = counter - contrastBolusVolumeCounter;
+                        }
+                        
+                        if (contrastBolusStartTimeCounter != -1) {
+                        	contrastBolusStartTimePos = counter - contrastBolusStartTimeCounter;
+                        }
+                        
+                        if (contrastBolusTotalDoseCounter != -1) {
+                        	contrastBolusTotalDosePos = counter - contrastBolusTotalDoseCounter;
+                        }
+                        
+                        if (contrastBolusIngredientCounter != -1) {
+                        	contrastBolusIngredientPos = counter - contrastBolusIngredientCounter;
+                        }
+                        
+                        if (contrastBolusIngredientConcentrationCounter != -1) {
+                        	contrastBolusIngredientConcentrationPos = counter - contrastBolusIngredientConcentrationCounter;
                         }
                     }
              
@@ -2182,6 +2287,111 @@ public class FilePARREC extends FileBase {
 	        labelTypeIndex = ((counter2*1)+(counter3*2) + (labelTypePos-1));
         }
         
+        if (contrastBolusAgentPos >= 0) {
+        	contrastBolusAgent = new String[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastBolusAgentPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        contrastBolusAgentIndex = ((counter2*1)+(counter3*2) + (contrastBolusAgentPos-1));
+        }
+        
+        if (contrastBolusRoutePos >= 0) {
+        	contrastBolusRoute = new float[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastBolusRoutePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        contrastBolusRouteIndex = ((counter2*1)+(counter3*2) + (contrastBolusRoutePos-1));
+        }
+        
+        if (contrastBolusVolumePos >= 0) {
+        	contrastBolusVolume = new String[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastBolusVolumePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        contrastBolusVolumeIndex = ((counter2*1)+(counter3*2) + (contrastBolusVolumePos-1));
+        }
+        
+        if (contrastBolusStartTimePos >= 0) {
+        	contrastBolusStartTime = new String[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastBolusStartTimePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        contrastBolusStartTimeIndex = ((counter2*1)+(counter3*2) + (contrastBolusStartTimePos-1));
+        }
+
+        if (contrastBolusTotalDosePos >= 0) {
+        	contrastBolusTotalDose = new float[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastBolusTotalDosePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        contrastBolusTotalDoseIndex = ((counter2*1)+(counter3*2) + (contrastBolusTotalDosePos-1));
+        }
+
+        if (contrastBolusIngredientPos >= 0) {
+        	contrastBolusIngredient = new String[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastBolusIngredientPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        contrastBolusIngredientIndex = ((counter2*1)+(counter3*2) + (contrastBolusIngredientPos-1));
+        }
+
+        if (contrastBolusIngredientConcentrationPos >= 0) {
+        	contrastBolusIngredientConcentration = new float[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastBolusIngredientConcentrationPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        contrastBolusIngredientConcentrationIndex = ((counter2*1)+(counter3*2) + (contrastBolusIngredientConcentrationPos-1));
+        }
+        
         if (firstSliceValue != secondSliceValue) {
             for (int i = 0; i < Slices.size(); i++) {
             	String sliceIndex = Slices.get(i);
@@ -2279,6 +2489,54 @@ public class FilePARREC extends FileBase {
                 }
                 if (labelType != null) {
                 	labelType[i] = Integer.valueOf(sliceArr[labelTypeIndex]);
+                }
+                
+                if (contrastBolusAgent != null) {
+                	contrastBolusAgent[i] = sliceArr[contrastBolusAgentIndex];
+                }
+                
+                if (contrastBolusRoute != null) {
+                	contrastBolusRoute[i] = Float.valueOf(sliceArr[contrastBolusRouteIndex]);
+                }
+                
+                if (contrastBolusVolume != null) {
+                	contrastBolusVolume[i] = sliceArr[contrastBolusVolumeIndex];
+                }
+                
+                if (contrastBolusStartTime != null) {
+                	if (contrastBolusStartTimeIndex >= sliceArr.length) {
+                		contrastBolusStartTime = null;
+                	}
+                	else {
+                	    contrastBolusStartTime[i] = sliceArr[contrastBolusStartTimeIndex];
+                	}
+                }
+                
+                if (contrastBolusTotalDose != null) {
+                	if (contrastBolusTotalDoseIndex >= sliceArr.length) {
+                		contrastBolusTotalDose = null;
+                	}
+                	else {
+                	    contrastBolusTotalDose[i] = Float.valueOf(sliceArr[contrastBolusTotalDoseIndex]);
+                	}
+                }
+                
+                if (contrastBolusIngredient != null) {
+                	if (contrastBolusIngredientIndex >= sliceArr.length) {
+                		contrastBolusIngredient = null;
+                	}
+                	else {
+                	    contrastBolusIngredient[i] = sliceArr[contrastBolusIngredientIndex];
+                	}
+                }
+                
+                if (contrastBolusIngredientConcentration != null) {
+                	if (contrastBolusIngredientConcentrationIndex >= sliceArr.length) {
+                		contrastBolusIngredientConcentration = null;
+                	}
+                	else {
+                	    contrastBolusIngredientConcentration[i] = Float.valueOf(sliceArr[contrastBolusIngredientConcentrationIndex]);
+                	}
                 }
             }
         }
@@ -2382,6 +2640,54 @@ public class FilePARREC extends FileBase {
                     if (labelType != null) {
                     	labelType[index] = Integer.valueOf(sliceArr[labelTypeIndex]);
                     }
+                    
+                    if (contrastBolusAgent != null) {
+                    	contrastBolusAgent[index] = sliceArr[contrastBolusAgentIndex];
+                    }
+                    
+                    if (contrastBolusRoute != null) {
+                    	contrastBolusRoute[index] = Float.valueOf(sliceArr[contrastBolusRouteIndex]);
+                    }
+                    
+                    if (contrastBolusVolume != null) {
+                    	contrastBolusVolume[index] = sliceArr[contrastBolusVolumeIndex];
+                    }
+                    
+                    if (contrastBolusStartTime != null) {
+                    	if (contrastBolusStartTimeIndex >= sliceArr.length) {
+                    	    contrastBolusStartTime = null;	
+                    	}
+                    	else {
+                    	    contrastBolusStartTime[index] = sliceArr[contrastBolusStartTimeIndex];
+                    	}
+                    }
+                    
+                    if (contrastBolusTotalDose != null) {
+                    	if (contrastBolusTotalDoseIndex >= sliceArr.length) {
+                    		contrastBolusTotalDose = null;
+                    	}
+                    	else {
+                    	    contrastBolusTotalDose[index] = Float.valueOf(sliceArr[contrastBolusTotalDoseIndex]);
+                    	}
+                    }
+                    
+                    if (contrastBolusIngredient != null) {
+                    	if (contrastBolusIngredientIndex >= sliceArr.length) {
+                    		contrastBolusIngredient = null;
+                    	}
+                    	else {
+                    	    contrastBolusIngredient[index] = sliceArr[contrastBolusIngredientIndex];
+                    	}
+                    }
+                    
+                    if (contrastBolusIngredientConcentration != null) {
+                    	if (contrastBolusIngredientConcentrationIndex >= sliceArr.length) {
+                    		contrastBolusIngredientConcentration = null;
+                    	}
+                    	else {
+                    	    contrastBolusIngredientConcentration[index] = Float.valueOf(sliceArr[contrastBolusIngredientConcentrationIndex]);
+                    	}
+                    }
         		}
         	}
         	
@@ -2467,6 +2773,34 @@ public class FilePARREC extends FileBase {
         }
         if (labelType != null) {
         	fileInfo.setLabelType(labelType);
+        }
+        
+        if (contrastBolusAgent != null) {
+        	fileInfo.setContrastBolusAgent(contrastBolusAgent);
+        }
+        
+        if (contrastBolusRoute != null) {
+        	fileInfo.setContrastBolusRoute(contrastBolusRoute);
+        }
+        
+        if (contrastBolusVolume != null) {
+        	fileInfo.setContrastBolusVolume(contrastBolusVolume);
+        }
+        
+        if (contrastBolusStartTime != null) {
+        	fileInfo.setContrastBolusStartTime(contrastBolusStartTime);
+        }
+        
+        if (contrastBolusTotalDose != null) {
+        	fileInfo.setContrastBolusTotalDose(contrastBolusTotalDose);
+        }
+        
+        if (contrastBolusIngredient != null) {
+        	fileInfo.setContrastBolusIngredient(contrastBolusIngredient);
+        }
+        
+        if (contrastBolusIngredientConcentration != null) {
+        	fileInfo.setContrastBolusIngredientConcentration(contrastBolusIngredientConcentration);
         }
 
         float slicethk=0, slicegap=0;
