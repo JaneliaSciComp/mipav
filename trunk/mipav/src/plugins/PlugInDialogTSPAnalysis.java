@@ -38,12 +38,21 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	private PlugInAlgorithmTSPAnalysis TSPAnalysisAlgo = null;
 	
 	private JTextField pwiImageFileDirectoryText;
-	
+
 	private String pwiImageFileDirectory;
 	
 	private JTextField masking_thresholdText;
 	
-	private int masking_threshold;
+	// Threshold to mask out image pixels not corresponding to brain tissues
+	private int masking_threshold = 800;
+	
+	private JTextField TSP_thresholdText;
+	
+	private double TSP_threshold = 0.8;
+	
+    private JTextField TSP_iterText;
+	
+	private int TSP_iter = 4;
 	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
@@ -130,6 +139,32 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         masking_thresholdText.setForeground(Color.black);
         inputPanel.add(masking_thresholdText, gbc);
         
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
+        TSP_thresholdLabel.setFont(serif12);
+        TSP_thresholdLabel.setForeground(Color.black);
+        inputPanel.add(TSP_thresholdLabel, gbc);
+        
+        gbc.gridx = 1;
+        TSP_thresholdText = new JTextField("0.8");
+        TSP_thresholdText.setFont(serif12);
+        TSP_thresholdText.setForeground(Color.black);
+        inputPanel.add(TSP_thresholdText, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        JLabel TSP_iterLabel = new JLabel("TSP iterations");
+        TSP_iterLabel.setFont(serif12);
+        TSP_iterLabel.setForeground(Color.black);
+        inputPanel.add(TSP_iterLabel, gbc);
+        
+        gbc.gridx = 1;
+        TSP_iterText = new JTextField("4");
+        TSP_iterText.setFont(serif12);
+        TSP_iterText.setForeground(Color.black);
+        inputPanel.add(TSP_iterText, gbc);
+        
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
         // Build the Panel that holds the OK and CANCEL Buttons
@@ -192,7 +227,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 
         try {
 
-            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, masking_threshold);
+            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, masking_threshold,
+            		TSP_threshold, TSP_iter);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -265,6 +301,46 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     		MipavUtil.displayError("masking_threshold cannot exceed 65535");
     		masking_thresholdText.requestFocus();
     	    masking_thresholdText.selectAll();
+    	    return false;
+    	}
+    	
+    	tmpStr = TSP_thresholdText.getText();
+    	try {
+    		TSP_threshold = Double.valueOf(tmpStr).doubleValue();
+    	}
+    	catch (NumberFormatException e) {
+    	    MipavUtil.displayError("masking_threshold text does not have a proper double number");
+    	    TSP_thresholdText.requestFocus();
+    	    TSP_thresholdText.selectAll();
+    	    return false;
+    	}
+    	if (TSP_threshold < 0) {
+    		MipavUtil.displayError("TSP_threshold must be at least 0");
+    		TSP_thresholdText.requestFocus();
+    	    TSP_thresholdText.selectAll();
+    	    return false;
+    	}
+    	
+    	tmpStr = TSP_iterText.getText();
+    	try {
+    		TSP_iter = Integer.valueOf(tmpStr).intValue();
+    	}
+    	catch (NumberFormatException e) {
+    	    MipavUtil.displayError("TSP_iter text does not have a proper integer");
+    	    TSP_iterText.requestFocus();
+    	    TSP_iterText.selectAll();
+    	    return false;
+    	}
+    	if (TSP_iter < 1) {
+    		MipavUtil.displayError("TSP_iter must be at least 1");
+    		TSP_iterText.requestFocus();
+    	    TSP_iterText.selectAll();
+    	    return false;
+    	}
+    	if (masking_threshold > 100) {
+    		MipavUtil.displayError("TSP_iter cannot exceed 100");
+    		TSP_iterText.requestFocus();
+    	    TSP_iterText.selectAll();
     	    return false;
     	}
     	return true;
