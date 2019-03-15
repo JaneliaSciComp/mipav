@@ -48,7 +48,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private VOI coreVOI;
     
-    private float additionalObjectMinimumRatio = 0.9f;
+    private float additionalObjectMinimumRatio = 0.8f;
     
     private int additionalObjectSearchSize = 1000;
     
