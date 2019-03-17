@@ -90,6 +90,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
@@ -1938,13 +1939,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		leftPanel.add( dialogGUI.getContentPane(), BorderLayout.NORTH );
 		leftPanel.add( tabbedPane, BorderLayout.CENTER );
 
+		JScrollPane scroller = new JScrollPane(leftPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
 		volumePanel = initGPUPanel(EditNONE);
 		volumePanel.setVisible(false);
 		
 		
 		JPanel integratedPanel = new JPanel( new BorderLayout() );
-		integratedPanel.add( leftPanel, BorderLayout.WEST );
+		integratedPanel.add( scroller, BorderLayout.WEST );
 		integratedPanel.add( volumePanel, BorderLayout.EAST );
 		getContentPane().add(integratedPanel, BorderLayout.CENTER);
         
