@@ -2112,7 +2112,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     for (String valStr : split) {
                         Integer val = new Integer(valStr);
                         
-                        numDirections++;
+                        // only non-zero bvals be counted as part of directions
+                        if (!val.equals(new Integer(0))) {
+                            numDirections++;
+                        }
                         if (bvalList.containsKey(val)) {
                             bvalList.replace(val, bvalList.get(val) + 1);
                         } else {
@@ -5759,6 +5762,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if (curConflictSelection == RESOLVE_CONFLICT_CSV && srcImage != null) {
                         populateFields(fsData, srcImage, srcImage.getFileInfo(0));
                     }
+                    
+                    File bvalFile = null;
 
                     for (int i = 0; i < csvFieldNames.size(); i++) {
                         final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
@@ -5782,6 +5787,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
                                         final JTextField t = (JTextField) comp;
                                         t.setText(value);
+                                        
+                                        if (isBValFileElement(deGroupAndName[0], deGroupAndName[1])) {
+                                            bvalFile = new File(value);
+                                        }
                                     } else if (comp instanceof JComboBox) {
                                         final JComboBox<String> combo = (JComboBox<String>) comp;
 
@@ -5856,6 +5865,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                                     // found the DE, move to next column in CSV values
                                     break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // TODO if bval file given, try to read additional info
+                    if (bvalFile != null) {
+                        HashMap<String, String> bvalDeTable = readBvalFile(bvalFile);
+                            
+                        if (bvalDeTable == null) {
+                            MipavUtil.displayWarning("Unable to read contents of BVal file: " + bvalFile.getAbsolutePath());
+                        } else {
+                            for (final DataElementValue deVal : fsData.getGroupRepeat(IMG_DIFF_GROUP, 0).getDataElements()) {
+                                String deNameWithGroup = IMG_DIFF_GROUP + "." + deVal.getName();
+                                if (bvalDeTable.containsKey(deNameWithGroup)) {
+                                    // TODO check for conflicts with existing value instead of overwriting
+                                    final JTextField tf = (JTextField) deVal.getComp();
+                                    tf.setText(bvalDeTable.get(deNameWithGroup));
+//                                        tf.setEnabled(false);
+//                                        break;
                                 }
                             }
                         }
