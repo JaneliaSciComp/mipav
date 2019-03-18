@@ -58,10 +58,10 @@ public class FileIO {
     // -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private static final String FILE_READ = "Opening ";
+    public static final String FILE_READ = "Opening ";
 
     /** DOCUMENT ME! */
-    private static final String FILE_WRITE = "Saving ";
+    public static final String FILE_WRITE = "Saving ";
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -422,7 +422,6 @@ public class FileIO {
      * @return The image that was read in, or null if failure.
      */
     public ModelImage readDicom(String selectedFileName, String[] fileList, final boolean performSort) {
-
         FileDicom imageFile;
         FileInfoDicom refFileInfo;
         FileInfoDicom[] savedFileInfos;
