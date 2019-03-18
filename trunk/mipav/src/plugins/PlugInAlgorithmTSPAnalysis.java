@@ -27,11 +27,16 @@ import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
@@ -103,6 +108,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	int volume;
     	int dataSize;
     	int extents[] = new int[4];
+    	float resolutions[] = new float[4];
+    	int units[] = new int[4];
+    	int extents3D[] = new int[3];
+    	float resolutions3D[] = new float[3];
+    	int units3D[] = new int[3];
     	String tDimString = null;
     	String t0String = null;
     	float t0;
@@ -115,13 +125,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	int brain_mask[][][][];
     	double temp_mean[];
     	int brain_mask_norm[][][][];
+    	double dbuffer[];
     	int x, y, z, t;
     	int i,ii;
     	long sum;
     	int count;
     	double corr_map[][][];
     	double corr_map2[][][];
-    	int delay_map[][][];
+    	double delay_map[][][];
     	double peaks_map[][][];
     	double temp[];
     	double maxTemp;
@@ -130,7 +141,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	int it;
     	int brain_mask2[][][][];
     	int brain_mask_norm2[][][][];
+    	int A[];
+    	int B[];
     	double maxPeak;
+    	String delZString;
+    	float delZ;
+    	ModelImage corr_map2Image;
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
     	for (File fileEntry : folder.listFiles()) {
@@ -164,10 +180,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	image3D.calcMinMax();
     	//int imageIndex = 0;
     	//new ViewJFrameImage(vols2, null, new Dimension(610, 200 + (imageIndex++ * 20)));
-    	int extents3D[] = image3D.getExtents();
-    	length = extents[0] * extents[1];
-    	xDim = extents[0];
-    	yDim = extents[1];
+    	int extents3Dorg[] = image3D.getExtents();
+    	length = extents3Dorg[0] * extents3Dorg[1];
+    	xDim = extents3Dorg[0];
+    	yDim = extents3Dorg[1];
+    	extents[0] = xDim;
+    	extents3D[0] = xDim;
+    	extents[1] = yDim;
+    	extents3D[1] = yDim;
     	FileInfoDicom dicomInfo = (FileInfoDicom) image3D.getFileInfo(0);
     	FileDicomTagTable tagTable = dicomInfo.getTagTable();
         if (tagTable.getValue("0020,0105") != null) {
@@ -182,8 +202,28 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
         }
         tDim = Integer.valueOf(tDimString.trim()).intValue();
         extents[3] = tDim;
-        zDim = extents3D[2]/tDim;
+        zDim = extents3Dorg[2]/tDim;
         extents[2] = zDim;
+        extents3D[2] = zDim;
+        for (i = 0; i < 2; i++) {
+        	resolutions[i] = image3D.getResolutions(0)[i];
+        	resolutions3D[i] = resolutions[i];
+        	//System.out.println("resolutions["+i+"] = " + resolutions[i]);
+        }
+        if (tagTable.getValue("0018,0088") != null) {
+            // Spacing between slices
+        	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0088"));
+        	delZString = (String)tag.getValue(false);
+        }
+        else {
+        	MipavUtil.displayError("Tag (0018,0088) for Spacing between slices is null");
+        	setCompleted(false);
+        	return;
+        }
+        delZ = Float.valueOf(delZString.trim()).floatValue();
+        //System.out.println("delZ = " + delZ);
+        resolutions[2] = delZ;
+        resolutions3D[2] = delZ;
         //System.out.println("zDim = " + zDim + " tDim = " + tDim);
         if (tagTable.getValue("0018,1060") != null) {
         	// Trigger time
@@ -209,8 +249,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
         	return;
         }
         t1 = Float.valueOf(t1String.trim()).floatValue();
+        // Time in milliseconds
         delT = t1 - t0;
         //System.out.println("delT = " + delT);
+        resolutions[3] = delT;
+        for (i = 0; i < 3; i++) {
+        	units[i] = Unit.MILLIMETERS.getLegacyNum();
+        	units3D[i] = units[i];
+        }
+        units[3] = Unit.MILLISEC.getLegacyNum();
         volume = zDim * length;
         dataSize = volume * tDim;
         buffer = new int[dataSize];
@@ -222,6 +269,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     		setCompleted(false);
     		return;
     	}
+    	image3D.disposeLocal();
+    	image3D = null;
     	data = new int[xDim][yDim][zDim][tDim];
     	for (t = 0; t < tDim; t++) {
     		for (z = 0; z < zDim; z++) {
@@ -262,21 +311,21 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
 	    	}
     	}
     	// Loop over time dimension to calculate whole brain average perfusion time signal
-    	for (ii = 1; ii < tDim; ii++) {
+    	for (t = 1; t < tDim; t++) {
     	    sum = 0;
     	    count = 0;
     	    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    if (brain_mask_norm[x][y][z][t] < 0) {
+					    if (brain_mask_norm[x][y][z][t] != 0) {
 					    	sum += brain_mask_norm[x][y][z][t];
 					    	count++;
 					    }
 					}
 				}
     	    }
-    	    temp_mean[ii] = (double)sum/(double)count;
-    	} // for (ii = 1; ii < tDim; ii++)
+    	    temp_mean[t] = (double)sum/(double)count;
+    	} // for (t = 1; t < tDim; t++)
     	temp_mean[0] = 0;
     	
     	// Zero/Initialize output maps
@@ -285,7 +334,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	// TSP Correlation map with AIF delay compensation
     	corr_map2 = new double[xDim][yDim][zDim];
     	// TSP Delay map considering temporal similarity with whole brain average
-    	delay_map = new int[xDim][yDim][zDim];
+    	delay_map = new double[xDim][yDim][zDim];
     	// TSP Peaks map is the absolute value of the SI corresponding to the largest deviation from baseline
     	peaks_map = new double[xDim][yDim][zDim];
     	
@@ -298,7 +347,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     				for (t = 1; t < tDim; t++) {
     					sum += brain_mask_norm[x][y][z][t];
     				}
-    				if (sum < 0) {
+    				if (sum != 0) {
     				    temp = xcorrbias(brain_mask_norm[x][y][z], temp_mean);
     				    maxTemp = -Double.MAX_VALUE;
     				    maxIndex = -1;
@@ -311,7 +360,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     				    delay_map[x][y][z] = maxIndex;
     				    cc = corrcoef(circshift(brain_mask_norm[x][y][z], -maxIndex + tDim), temp_mean);
     				    corr_map2[x][y][z] = cc;
-    				} // if (sum < 0)
+    				} // if (sum != 0)
     			}
     		}
     	} // for (x = 0; x < xDim; x++)
@@ -349,21 +398,21 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     				}
     	    	}
         	}
-    		for (ii = 1; ii < tDim; ii++) {
+    		for (t = 1; t < tDim; t++) {
         	    sum = 0;
         	    count = 0;
         	    for (z = 0; z < zDim; z++) {
     				for (y = 0; y < yDim; y++) {
     					for (x = 0; x < xDim; x++) {
-    					    if (brain_mask_norm2[x][y][z][t] < 0) {
+    					    if (brain_mask_norm[x][y][z][t] != 0) {
     					    	sum += brain_mask_norm2[x][y][z][t];
     					    	count++;
     					    }
     					}
     				}
         	    }
-        	    temp_mean[ii] = (double)sum/(double)count;
-        	} // for (ii = 1; ii < tDim; ii++)
+        	    temp_mean[t] = (double)sum/(double)count;
+        	} // for (t = 1; t < tDim; t++)
         	temp_mean[0] = 0;
         	
         	for (x = 0; x < xDim; x++) {
@@ -371,10 +420,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
         			for (z = 0; z < zDim; z++) {
         				sum = 0;
         				for (t = 1; t < tDim; t++) {
-        					sum += brain_mask_norm2[x][y][z][t];
+        					sum += brain_mask_norm[x][y][z][t];
         				}
-        				if (sum < 0) {
-        				    temp = xcorrbias(brain_mask_norm2[x][y][z], temp_mean);
+        				if (sum != 0) {
+        				    temp = xcorrbias(brain_mask_norm[x][y][z], temp_mean);
         				    maxTemp = -Double.MAX_VALUE;
         				    maxIndex = -1;
         				    for (i = 0; i < temp.length; i++) {
@@ -386,21 +435,102 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
         				    delay_map[x][y][z] = maxIndex;
         				    maxPeak = -Double.MAX_VALUE;
         				    for (t = 0; t < tDim; t++) {
-        				    	if (Math.abs(brain_mask_norm2[x][y][z][t]) > maxPeak) {
-        				    		maxPeak = Math.abs(brain_mask_norm2[x][y][z][t]);
+        				    	if (Math.abs(brain_mask_norm[x][y][z][t]) > maxPeak) {
+        				    		maxPeak = Math.abs(brain_mask_norm[x][y][z][t]);
         				    	}
         				    }
         				    peaks_map[x][y][z] = maxPeak;
-        				    cc = corrcoef(brain_mask_norm2[x][y][z], temp_mean);
+        				    cc = corrcoef(brain_mask_norm[x][y][z], temp_mean);
         				    corr_map[x][y][z] = cc;
-        				    cc = corrcoef(circshift(brain_mask_norm2[x][y][z], -maxIndex + tDim), temp_mean);
+        				    cc = corrcoef(circshift(brain_mask_norm[x][y][z], -maxIndex + tDim), temp_mean);
         				    corr_map2[x][y][z] = cc;
-        				} // if (sum < 0)
+        				} // if (sum != 0)
         			}
         		}
         	} // for (x = 0; x < xDim; x++)
     	} // for (it = 1; it <= TSP_iter; it++)
     	
+    	// Clean up outliers (AIF delay must be within +/- 40 frames of whole brain average)
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    			    if (delay_map[x][y][z] > tDim + 40)	{
+    			    	delay_map[x][y][z] = tDim = 40;
+    			    }
+    			    else if (delay_map[x][y][z] < tDim - 40) {
+    			    	delay_map[x][y][z] = tDim - 40;
+    			    }
+    			    delay_map[x][y][z] = (delay_map[x][y][z] - tDim) * delT;
+    			    // Corr map > 1 or < 0 is not realistic
+    			    if (corr_map[x][y][z] > 1) {
+    			    	corr_map[x][y][z] = 1;
+    			    }
+    			    else if (corr_map[x][y][z] < 0) {
+    			    	corr_map[x][y][z] = 0;
+    			    }
+    			}
+    		}
+    	} // for (x = 0; x < xDim; x++)
+    	
+    	// Write images and clean up variable
+    	A = new int[]{xDim, yDim, zDim};
+    	B = new int[]{xDim/2, yDim/2, zDim/2};
+    	dbuffer = new double[volume];
+    	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = corr_map2[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		corr_map2Image.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on corr_map2Image");
+    		setCompleted(false);
+    		return;
+    	}
+    	FileInfoBase fileInfo[] = corr_map2Image.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    	}
+    	FileWriteOptions options = new FileWriteOptions(true);
+        options.setFileType(FileUtility.ANALYZE);
+        options.setFileDirectory(pwiImageFileDirectory + File.separator);
+        options.setFileName("corr_map2.img");
+        options.setBeginSlice(0);
+        options.setEndSlice(extents3D[2]-1);
+        options.setOptionsSet(true);
+        FileAnalyze analyzeFile;
+
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(corr_map2Image, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing corr_map2.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing corr_map2.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	corr_map2Image.disposeLocal();
+    	corr_map2Image = null;
     	setCompleted(true);
     } // end runAlgorithm()
     
@@ -451,6 +581,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     		}
     	}
     	else {
+    		n = -n;
     		for (i = 0; i < n; i++) {
     			y[x.length - (n - i)] = x[i];
     		}
