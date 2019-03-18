@@ -337,7 +337,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	    TSP_iterText.selectAll();
     	    return false;
     	}
-    	if (masking_threshold > 100) {
+    	if (TSP_iter > 100) {
     		MipavUtil.displayError("TSP_iter cannot exceed 100");
     		TSP_iterText.requestFocus();
     	    TSP_iterText.selectAll();
