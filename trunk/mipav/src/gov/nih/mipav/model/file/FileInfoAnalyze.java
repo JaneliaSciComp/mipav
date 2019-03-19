@@ -1022,7 +1022,7 @@ public class FileInfoAnalyze extends FileInfoBase {
         if ((dtype == DT_UNSIGNED_SHORT) || (dtype == DT_NONE) || (dtype == DT_UNKNOWN) ||
                 (dtype == DT_BINARY) || (dtype == DT_UNSIGNED_CHAR) || (dtype == DT_SIGNED_SHORT) ||
                 (dtype == DT_SIGNED_INT) || (dtype == DT_FLOAT) || (dtype == DT_COMPLEX) ||
-                (dtype == DT_RGB) || (dtype == DT_ALL)) {
+                (dtype == DT_RGB) || (dtype == DT_ALL) || (dtype == DT_DOUBLE)) {
             datatype = dtype;
         } else if (dtype == 6) { // Old illegal label for DT_UNSIGNED_SHORT
             datatype = DT_SIGNED_SHORT;
