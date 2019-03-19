@@ -46,21 +46,29 @@ import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJComponentBase;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJFrameMessage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Vector;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 
 
-public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
+
+public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseListener {
     
     private int xDim;
 
@@ -81,17 +89,27 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     private double TSP_threshold = 0.8;
     
     private int TSP_iter = 4;
+    
+    private double Psvd = 0.1;
+    
+    private ModelImage pickImage;
+    
+    private final Lock accessLock = new ReentrantLock();
+    private final Condition canProcessMouseClick = accessLock.newCondition();
+	private int xS;
+	private int yS;
     /**
      * Constructor.
      *
      */
     public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, int masking_threshold,
-    		double TSP_threshold, int TSP_iter) {
+    		double TSP_threshold, int TSP_iter, double Psvd) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.masking_threshold = masking_threshold;
     	this.TSP_threshold = TSP_threshold;
     	this.TSP_iter = TSP_iter;
+    	this.Psvd = Psvd;
     }
 
     
@@ -130,7 +148,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	int i,ii;
     	long sum;
     	int count;
-    	double corr_map[][][];
+    	// Remove hyphen from corr_map so MIPAV does not read corr_map and corr_map2 together as 1 file.
+    	double corrmap[][][];
     	double corr_map2[][][];
     	double delay_map[][][];
     	double peaks_map[][][];
@@ -147,6 +166,29 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	String delZString;
     	float delZ;
     	ModelImage corr_map2Image;
+    	ModelImage corrmapImage;
+    	ModelImage peaks_mapImage;
+    	ModelImage delay_mapImage;
+    	String TEString;
+    	double TE;
+    	int data_norm[][][][];
+    	int peaks[][][];
+    	int ttp[][][];
+    	int minpeaks;
+    	int minttp;
+    	byte mask3D[][][];
+    	double peaks_mean;
+    	double diff;
+    	double diff_squared_sum;
+    	double peaks_std;
+    	double peaks_threshold;
+    	double autoaif[];
+    	double minautoaif;
+    	double S[];
+    	double Ca[];
+    	int sliceBuffer[];
+    	int extents2D[];
+    	
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
     	for (File fileEntry : folder.listFiles()) {
@@ -190,6 +232,18 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	extents3D[1] = yDim;
     	FileInfoDicom dicomInfo = (FileInfoDicom) image3D.getFileInfo(0);
     	FileDicomTagTable tagTable = dicomInfo.getTagTable();
+    	if (tagTable.getValue("0018,0081") != null) {
+        	// Echo time in milliseconds
+            FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0081"));
+            TEString = (String)tag.getValue(false);     
+        }
+        else {
+        	MipavUtil.displayError("Tag (0018,0081) for Number of Echo Time TE is null");
+        	setCompleted(false);
+        	return;
+        }
+    	TE = Double.valueOf(TEString.trim()).doubleValue();
+    	//System.out.println("TE = " + TE);
         if (tagTable.getValue("0020,0105") != null) {
         	// Number of temporal positions
             FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0105"));
@@ -330,7 +384,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	
     	// Zero/Initialize output maps
         // TSP Correlation map with out AIF delay compensation
-    	corr_map = new double[xDim][yDim][zDim];
+    	corrmap = new double[xDim][yDim][zDim];
     	// TSP Correlation map with AIF delay compensation
     	corr_map2 = new double[xDim][yDim][zDim];
     	// TSP Delay map considering temporal similarity with whole brain average
@@ -441,7 +495,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
         				    }
         				    peaks_map[x][y][z] = maxPeak;
         				    cc = corrcoef(brain_mask_norm[x][y][z], temp_mean);
-        				    corr_map[x][y][z] = cc;
+        				    corrmap[x][y][z] = cc;
         				    cc = corrcoef(circshift(brain_mask_norm[x][y][z], -maxIndex + tDim), temp_mean);
         				    corr_map2[x][y][z] = cc;
         				} // if (sum != 0)
@@ -462,11 +516,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     			    }
     			    delay_map[x][y][z] = (delay_map[x][y][z] - tDim) * delT;
     			    // Corr map > 1 or < 0 is not realistic
-    			    if (corr_map[x][y][z] > 1) {
-    			    	corr_map[x][y][z] = 1;
+    			    if (corrmap[x][y][z] > 1) {
+    			    	corrmap[x][y][z] = 1;
     			    }
-    			    else if (corr_map[x][y][z] < 0) {
-    			    	corr_map[x][y][z] = 0;
+    			    else if (corrmap[x][y][z] < 0) {
+    			    	corrmap[x][y][z] = 0;
     			    }
     			}
     		}
@@ -496,6 +550,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
     	for (i = 0; i < zDim; i++) {
     		fileInfo[i].setResolutions(resolutions3D);
     		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
     	FileWriteOptions options = new FileWriteOptions(true);
         options.setFileType(FileUtility.ANALYZE);
@@ -503,7 +558,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
         options.setFileName("corr_map2.img");
         options.setBeginSlice(0);
         options.setEndSlice(extents3D[2]-1);
-        options.setOptionsSet(true);
+        options.setOptionsSet(false);
+        options.setSaveAs(true);
         FileAnalyze analyzeFile;
 
         try { // Construct a new file object
@@ -531,8 +587,330 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
         }
     	corr_map2Image.disposeLocal();
     	corr_map2Image = null;
+    	
+    	corrmapImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corrmap");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = corrmap[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		corrmapImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on corrmapImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = corrmapImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("corrmap.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(corrmapImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing corrmap.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing corrmap.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	corrmapImage.disposeLocal();
+    	corrmapImage = null;
+    	
+    	peaks_mapImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "peaks_map");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = peaks_map[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		peaks_mapImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on peaks_mapImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = peaks_mapImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("peaks_map.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(peaks_mapImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing peaks_map.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing peaks_map.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	peaks_mapImage.disposeLocal();
+    	peaks_mapImage = null;
+    	
+    	delay_mapImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "delay_map");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = delay_map[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		delay_mapImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on delay_mapImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = delay_mapImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("delay_map.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(delay_mapImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing delay_map.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing delay_map.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	delay_mapImage.disposeLocal();
+    	delay_mapImage = null;
+    	
+    	// Deconvolution analysis
+    	// Auto AIF Calculation
+    	// AIF is average signal of pixels with the largest SI deviations
+    	// (4 std) from baseline (likely to be large vessels)
+    	data_norm = new int[xDim][yDim][zDim][tDim];
+    	for (t = 0; t < tDim; t++) {
+    	    for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+					    data_norm[x][y][z][t] = data[x][y][z][t] - data[x][y][z][0];	
+					}
+				}
+	    	}
+    	} // for (t = 0; t < tDim; t++)
+    	peaks = new int[xDim][yDim][zDim];
+    	ttp = new int[xDim][yDim][zDim];
+    	for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					minpeaks = Integer.MAX_VALUE;
+					minttp = Integer.MAX_VALUE;
+					for (t = 0; t < tDim; t++) {
+						if (data_norm[x][y][z][t] < minpeaks) {
+							minpeaks = data_norm[x][y][z][t];
+							minttp = t;
+						}
+					}
+					peaks[x][y][z] = minpeaks;
+					ttp[x][y][z] = minttp;
+				}
+			}	
+		} // for (z = 0; z < zDim; z++)
+    	mask3D = new byte[xDim][yDim][zDim];
+    	sum = 0;
+	    count = 0;
+	    for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+				    if (peaks[x][y][z] != 0) {
+				    	sum += peaks[x][y][z];
+				    	count++;
+				    }
+				}
+			}
+	    }
+	    peaks_mean = (double)sum/(double)count;
+	    diff_squared_sum = 0.0;
+	    for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+				    if (peaks[x][y][z] != 0) {
+				    	diff = peaks[x][y][z] - peaks_mean;
+				    	diff_squared_sum += diff * diff;
+				    }
+				}
+			}
+	    }
+	    peaks_std = Math.sqrt(diff_squared_sum/(count-1));
+	    peaks_threshold = peaks_mean - 4.0*peaks_std;
+	    for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+				    if (peaks[x][y][z] < peaks_threshold) {
+				    	mask3D[x][y][z] = 1;
+				    }
+				}
+			}
+	    }
+	    autoaif = new double[tDim];
+	    minautoaif = Double.MAX_VALUE;
+	    for (t = 0; t < tDim; t++) {
+	        sum = 0;
+	        count = 0;
+	        for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+						if (mask3D[x][y][z] == 1) {
+						    sum += data_norm[x][y][z][t];
+						    count++;
+						}
+					}
+				}
+	        }
+	        autoaif[t] = (double)sum/(double)count;
+	        if (autoaif[t] < minautoaif) {
+	        	minautoaif = autoaif[t];
+	        }
+	    } // for (t = 0; t < tDim; t++)
+	    // time signal from mri
+	    S = new double[tDim];
+	    for (t = 0; t < tDim; t++) {
+	    	S[t] = autoaif[t] - minautoaif + 1;
+	    }
+	    // Calculate AIF as amount of contrast agent as estimated from R2
+	    Ca = new double[tDim];
+	    for (t = 1; t < tDim; t++) {
+	    	Ca[t] = -TE*Math.log(S[t]/S[0]);
+	    }
+	    Ca[0] = 0;
+	    
+	    // Optional pick image pixel corresponding to AIF (uncomment)
+	    sliceBuffer = new int[length];
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		sliceBuffer[x + y * xDim] = data[x][y][9][0];
+	    	}
+	    }
+	    extents2D = new int[]{xDim,yDim};
+	    pickImage = new ModelImage(ModelStorageBase.INTEGER,extents2D,"pickImage");
+	    try {
+	    	pickImage.importData(0, sliceBuffer, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException on pickImage.importData");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    ViewJFrameImage pickFrame = new ViewJFrameImage(pickImage);
+	    accessLock.lock();
+	    try {
+		    canProcessMouseClick.await();
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	    accessLock.unlock();
+	    try {
+	        pickFrame.finalize();
+	    }
+	    catch (Throwable e) {
+	    	
+	    }
     	setCompleted(true);
     } // end runAlgorithm()
+    
+    public void mouseClicked(MouseEvent mouseEvent) {
+	     ViewJComponentBase vBase= (ViewJComponentBase)pickImage.getParentFrame().getComponentImage();
+		try {
+
+		   xS = Math.round((mouseEvent.getX() / (vBase.getZoomX() * vBase.getResolutionX())) - 0.5f);
+           yS = Math.round((mouseEvent.getY() / (vBase.getZoomY() * vBase.getResolutionY())) - 0.5f);
+
+           if ((xS < 0) || (xS >= pickImage.getExtents()[0]) || (yS < 0) || (yS >= pickImage.getExtents()[1])) {
+               return;
+           }
+
+          
+       } catch (OutOfMemoryError error) {
+           System.gc();
+           MipavUtil.displayError("Out of memory: PlugInAlgorithmTSPAnalysis.mouseClicked+"
+           		+ "");
+
+           return;
+       }
+		
+	    canProcessMouseClick.signalAll();
+	}
+    
+    public void mousePressed(MouseEvent event) {
+		
+	}
+	
+	public void mouseReleased(MouseEvent event) {
+		
+	}
+	
+	public void mouseEntered(MouseEvent event) {
+		
+	}
+	
+	public void mouseExited(MouseEvent event) {
+		
+	}
     
     private double[] xcorrbias(int x[], double y[]) {
     	int i;
@@ -633,8 +1011,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        destImage = null;
-        srcImage = null;
         super.finalize();
     }
     
