@@ -663,10 +663,10 @@ public class FileUtility {
 
                     if (fileListBuffer[i].trim().toLowerCase().endsWith(suffix.toLowerCase())) { // note: not case
                         // sensitive!
-                        if (FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim()).equals(subName)) {
+//                        if (FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim()).equals(subName)) {
                             fileList[j] = fileListBuffer[i];
                             j++;
-                        }
+//                        }
                     }
                 }
             }
