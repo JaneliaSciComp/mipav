@@ -53,7 +53,6 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
@@ -62,6 +61,10 @@ import java.util.Vector;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import Jama.Matrix;
+import Jama.SingularValueDecomposition;
+
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -92,6 +95,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private double Psvd = 0.1;
     
+    private boolean autoAIFCalculation = true;
+    
     private ModelImage pickImage;
     
     private final Lock accessLock = new ReentrantLock();
@@ -103,13 +108,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      *
      */
     public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, int masking_threshold,
-    		double TSP_threshold, int TSP_iter, double Psvd) {
+    		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.masking_threshold = masking_threshold;
     	this.TSP_threshold = TSP_threshold;
     	this.TSP_iter = TSP_iter;
     	this.Psvd = Psvd;
+    	this.autoAIFCalculation = autoAIFCalculation;
     }
 
     
@@ -145,7 +151,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int brain_mask_norm[][][][];
     	double dbuffer[];
     	int x, y, z, t;
-    	int i,ii;
+    	int i,ii,jj;
     	long sum;
     	int count;
     	// Remove hyphen from corr_map so MIPAV does not read corr_map and corr_map2 together as 1 file.
@@ -188,6 +194,27 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double Ca[];
     	int sliceBuffer[];
     	int extents2D[];
+    	double CaPad[];
+    	double a[][];
+    	double D[][];
+    	Matrix dMat;
+    	SingularValueDecomposition svd;
+    	double singularValues[];
+    	Matrix uMat;
+    	Matrix vMat;
+    	double singularThreshold;
+    	double W[][];
+    	Matrix wMat;
+    	Matrix D_invMat;
+    	double CBV[][][];
+    	double CBF[][][];
+    	double MTT[][][];
+    	double Tmax[][][];
+    	double relCBF[][][];
+    	double TTP[][][];
+    	double x0[];
+    	double xdata[];
+    	double C[];
     	
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
@@ -739,9 +766,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	delay_mapImage = null;
     	
     	// Deconvolution analysis
-    	// Auto AIF Calculation
-    	// AIF is average signal of pixels with the largest SI deviations
-    	// (4 std) from baseline (likely to be large vessels)
+    	S = new double[tDim];
     	data_norm = new int[xDim][yDim][zDim][tDim];
     	for (t = 0; t < tDim; t++) {
     	    for (z = 0; z < zDim; z++) {
@@ -770,67 +795,108 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				}
 			}	
 		} // for (z = 0; z < zDim; z++)
-    	mask3D = new byte[xDim][yDim][zDim];
-    	sum = 0;
-	    count = 0;
-	    for (z = 0; z < zDim; z++) {
-			for (y = 0; y < yDim; y++) {
-				for (x = 0; x < xDim; x++) {
-				    if (peaks[x][y][z] != 0) {
-				    	sum += peaks[x][y][z];
-				    	count++;
-				    }
-				}
-			}
-	    }
-	    peaks_mean = (double)sum/(double)count;
-	    diff_squared_sum = 0.0;
-	    for (z = 0; z < zDim; z++) {
-			for (y = 0; y < yDim; y++) {
-				for (x = 0; x < xDim; x++) {
-				    if (peaks[x][y][z] != 0) {
-				    	diff = peaks[x][y][z] - peaks_mean;
-				    	diff_squared_sum += diff * diff;
-				    }
-				}
-			}
-	    }
-	    peaks_std = Math.sqrt(diff_squared_sum/(count-1));
-	    peaks_threshold = peaks_mean - 4.0*peaks_std;
-	    for (z = 0; z < zDim; z++) {
-			for (y = 0; y < yDim; y++) {
-				for (x = 0; x < xDim; x++) {
-				    if (peaks[x][y][z] < peaks_threshold) {
-				    	mask3D[x][y][z] = 1;
-				    }
-				}
-			}
-	    }
-	    autoaif = new double[tDim];
-	    minautoaif = Double.MAX_VALUE;
-	    for (t = 0; t < tDim; t++) {
-	        sum = 0;
-	        count = 0;
-	        for (z = 0; z < zDim; z++) {
+    	if (autoAIFCalculation) {
+	    	// Auto AIF Calculation
+	    	// AIF is average signal of pixels with the largest SI deviations
+	    	// (4 std) from baseline (likely to be large vessels)
+	    	mask3D = new byte[xDim][yDim][zDim];
+	    	sum = 0;
+		    count = 0;
+		    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-						if (mask3D[x][y][z] == 1) {
-						    sum += data_norm[x][y][z][t];
-						    count++;
-						}
+					    if (peaks[x][y][z] != 0) {
+					    	sum += peaks[x][y][z];
+					    	count++;
+					    }
 					}
 				}
-	        }
-	        autoaif[t] = (double)sum/(double)count;
-	        if (autoaif[t] < minautoaif) {
-	        	minautoaif = autoaif[t];
-	        }
-	    } // for (t = 0; t < tDim; t++)
-	    // time signal from mri
-	    S = new double[tDim];
-	    for (t = 0; t < tDim; t++) {
-	    	S[t] = autoaif[t] - minautoaif + 1;
-	    }
+		    }
+		    peaks_mean = (double)sum/(double)count;
+		    diff_squared_sum = 0.0;
+		    for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+					    if (peaks[x][y][z] != 0) {
+					    	diff = peaks[x][y][z] - peaks_mean;
+					    	diff_squared_sum += diff * diff;
+					    }
+					}
+				}
+		    }
+		    peaks_std = Math.sqrt(diff_squared_sum/(count-1));
+		    peaks_threshold = peaks_mean - 4.0*peaks_std;
+		    for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+					    if (peaks[x][y][z] < peaks_threshold) {
+					    	mask3D[x][y][z] = 1;
+					    }
+					}
+				}
+		    }
+		    autoaif = new double[tDim];
+		    minautoaif = Double.MAX_VALUE;
+		    for (t = 0; t < tDim; t++) {
+		        sum = 0;
+		        count = 0;
+		        for (z = 0; z < zDim; z++) {
+					for (y = 0; y < yDim; y++) {
+						for (x = 0; x < xDim; x++) {
+							if (mask3D[x][y][z] == 1) {
+							    sum += data_norm[x][y][z][t];
+							    count++;
+							}
+						}
+					}
+		        }
+		        autoaif[t] = (double)sum/(double)count;
+		        if (autoaif[t] < minautoaif) {
+		        	minautoaif = autoaif[t];
+		        }
+		    } // for (t = 0; t < tDim; t++)
+		    // time signal from mri
+		    for (t = 0; t < tDim; t++) {
+		    	S[t] = autoaif[t] - minautoaif + 1;
+		    }
+    	} // if (autoAIFCalculation)
+    	else {
+		    // Pick image pixel corresponding to AIF
+		    sliceBuffer = new int[length];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		sliceBuffer[x + y * xDim] = data[x][y][9][0];
+		    	}
+		    }
+		    extents2D = new int[]{xDim,yDim};
+		    accessLock.lock();
+		    pickImage = new ModelImage(ModelStorageBase.INTEGER,extents2D,"pickImage");
+		    try {
+		    	pickImage.importData(0, sliceBuffer, true);
+		    }
+		    catch (IOException e) {
+		    	MipavUtil.displayError("IOException on pickImage.importData");
+		    	setCompleted(false);
+		    	return;
+		    }
+		    new ViewJFrameImage(pickImage);
+		    pickImage.getParentFrame().getComponentImage().addMouseListener(this);
+		    try {
+			    canProcessMouseClick.await();
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		    accessLock.unlock();
+		    pickImage.getParentFrame().getComponentImage().removeMouseListener(this);
+		    pickImage.disposeLocal();
+		    pickImage = null;
+		    System.out.println("xS = " + xS + " yS = " + yS);
+		    for (t = 0; t < tDim; t++) {
+		    	S[t] = data[xS][yS][9][t];
+		    }
+    	} // else pick image pixel corresponding to AIF
+	    
 	    // Calculate AIF as amount of contrast agent as estimated from R2
 	    Ca = new double[tDim];
 	    for (t = 1; t < tDim; t++) {
@@ -838,39 +904,105 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    }
 	    Ca[0] = 0;
 	    
-	    // Optional pick image pixel corresponding to AIF (uncomment)
-	    sliceBuffer = new int[length];
-	    for (y = 0; y < yDim; y++) {
-	    	for (x = 0; x < xDim; x++) {
-	    		sliceBuffer[x + y * xDim] = data[x][y][9][0];
+	    // Assemble prefiltered 'a' matrix from Ca
+	    // zero pad Ca
+	    CaPad = new double[2*tDim];
+	    for (t = 0; t < tDim; t++) {
+	    	CaPad[t] = Ca[t];
+	    }
+	    a = new double[2*tDim][2*tDim];
+        for (ii = 0; ii < 2*tDim; ii++) { 
+        	for (jj = 0; jj < 2*tDim; jj++) {
+        	    if (jj <= ii) {
+        	    	if (jj == ii) {
+        	    		a[ii][jj] = delT * (4*CaPad[ii-jj] + CaPad[ii-jj+1])/5;
+        	    	}
+        	    	else if ((ii - jj) > CaPad.length - 2) {
+        	    		a[ii][jj] = delT*(CaPad[ii-jj-1] + 4*Ca[ii-jj])/5;
+        	    	}
+        	    	else {
+        	    		a[ii][jj] = delT*(CaPad[ii-jj-1] + 4*CaPad[ii-jj] + CaPad[ii-jj+1])/6;
+        	    	}
+        	    }
+        	}
+        } // for (ii = 0; ii < 2*tDim; ii++)
+        
+        // Assemble block-circulant 'D' matrix
+	    D = new double[2*tDim][2*tDim];
+	    for (ii = 0; ii < 2*tDim; ii++) {
+	    	for (jj = 0; jj < 2*tDim; jj++) {
+	    		if (jj <= ii) {
+	    			D[ii][jj] = a[ii][jj];
+	    		}
+	    		else {
+	    			D[ii][jj] = a[2*tDim+ii-jj][0];
+	    		}
 	    	}
 	    }
-	    extents2D = new int[]{xDim,yDim};
-	    pickImage = new ModelImage(ModelStorageBase.INTEGER,extents2D,"pickImage");
-	    try {
-	    	pickImage.importData(0, sliceBuffer, true);
-	    }
-	    catch (IOException e) {
-	    	MipavUtil.displayError("IOException on pickImage.importData");
-	    	setCompleted(false);
-	    	return;
-	    }
-	    ViewJFrameImage pickFrame = new ViewJFrameImage(pickImage);
-	    accessLock.lock();
-	    try {
-		    canProcessMouseClick.await();
-		}
-		catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	    accessLock.unlock();
-	    try {
-	        pickFrame.finalize();
-	    }
-	    catch (Throwable e) {
-	    	
-	    }
-    	setCompleted(true);
+	    
+	    // Compute SVD of 'D' and calculate inverse
+        dMat = new Matrix(D);
+        svd = new SingularValueDecomposition(dMat);
+        uMat = svd.getU();
+        singularValues = svd.getSingularValues();
+        vMat = svd.getV();
+        // threshold singularValues
+        singularThreshold = Psvd * singularValues[0];
+        for (i = 0; i < 2*tDim; i++) {
+        	if (singularValues[i] < singularThreshold) {
+        		singularValues[i] = 0;
+        	}
+        }
+        W = new double[2*tDim][2*tDim];
+        for (i = 0; i < 2*tDim; i++) {
+        	if (singularValues[i] == 0) {
+        		W[i][i] = 0;
+        	}
+        	else {
+        		W[i][i] = 1.0/singularValues[i];
+        	}
+        }
+        wMat = new Matrix(W);
+        D_invMat = (vMat.times(wMat)).times(uMat.transpose());
+        
+        // Iterate over brain volume to find rCBF
+        CBV = new double[xDim][yDim][zDim];
+        CBF = new double[xDim][yDim][zDim];
+        MTT = new double[xDim][yDim][zDim];
+        Tmax = new double[xDim][yDim][zDim];
+        relCBF = new double[xDim][yDim][zDim];
+        TTP = new double[xDim][yDim][zDim];
+        // Apply same mask as in TSP for speed of iteration
+        // Calculate Peaks and Time to peak mask
+        for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					if (data[x][y][z][0] < masking_threshold) {
+						peaks[x][y][z] = 0;
+					}
+					else {
+						TTP[x][y][z] = ttp[x][y][z] * delT;
+					}
+				}
+			}
+		} // for (z = 0; z < zDim; z++)
+        // Define some variables for fminsearch - initial guess
+        x0 = new double[]{0.1,4};
+        xdata = new double[2*tDim];
+        for (i = 0; i < 2*tDim; i++) {
+        	xdata[i] = i * delT;
+        }
+        C = new double[2*tDim];
+        // Iterate
+        for (z = 0; z < zDim; z++) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			
+        		}
+        	}
+        } // for (z = 0; z < zDim; z++)
+
+    	setCompleted(true); 
     } // end runAlgorithm()
     
     public void mouseClicked(MouseEvent mouseEvent) {
@@ -887,13 +1019,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
           
        } catch (OutOfMemoryError error) {
            System.gc();
-           MipavUtil.displayError("Out of memory: PlugInAlgorithmTSPAnalysis.mouseClicked+"
-           		+ "");
+           MipavUtil.displayError("Out of memory: PlugInAlgorithmTSPAnalysis.mouseClicked");
 
            return;
        }
-		
-	    canProcessMouseClick.signalAll();
+	        accessLock.lock();
+		    canProcessMouseClick.signalAll();
+		    accessLock.unlock();
 	}
     
     public void mousePressed(MouseEvent event) {
