@@ -58,6 +58,14 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private double Psvd = 0.1;
 	
+	private ButtonGroup AIFGroup;
+	
+	private JRadioButton autoButton;
+	
+	private JRadioButton pickButton;
+	
+	private boolean autoAIFCalculation = true;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -186,6 +194,22 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         PsvdText.setForeground(Color.black);
         inputPanel.add(PsvdText, gbc);
         
+        AIFGroup = new ButtonGroup();
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        autoButton = new JRadioButton("Auto AIF Calculation", true);
+        autoButton.setFont(serif12);
+        autoButton.setForeground(Color.black);
+        AIFGroup.add(autoButton);
+        inputPanel.add(autoButton, gbc);
+        
+        gbc.gridy = 6;
+        pickButton = new JRadioButton("Pick image pixel corresponding to AIF", false);
+        pickButton.setFont(serif12);
+        pickButton.setForeground(Color.black);
+        AIFGroup.add(pickButton);
+        inputPanel.add(pickButton, gbc);
+        
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
         // Build the Panel that holds the OK and CANCEL Buttons
@@ -249,7 +273,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd);
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -381,6 +405,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	    PsvdText.selectAll();
     	    return false;
     	}
+    	
+    	autoAIFCalculation = autoButton.isSelected();
     	return true;
     }
 
