@@ -1,21 +1,14 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
-import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
-import nibib.spim.PlugInAlgorithmGenerateFusion;
 
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 
 
 /**
@@ -29,11 +22,6 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     //private static final long serialVersionUID;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-	
-	private ModelImage resultImage = null;
-
-    /** This source image is typically set by the constructor */
-    private ModelImage image;
 	
 	private PlugInAlgorithmTSPAnalysis TSPAnalysisAlgo = null;
 	
@@ -242,13 +230,6 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
 
             if ( (TSPAnalysisAlgo.isCompleted() == true)) {
-                /*final Collection<ModelImage> list = TSPAnalysisAlgo.getResultImageList();
-                synchronized (list) {
-                    final Iterator<ModelImage> itr = list.iterator();
-                    while (itr.hasNext()) {
-                        new ViewJFrameImage(itr.next());
-                    }
-                }*/
                 insertScriptLine();
             }
 
@@ -311,7 +292,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
      */
     @Override
     protected void setGUIFromParams() {
-    	
+    	pwiImageFileDirectory = scriptParameters.getParams().getString("pwiImageFileDirectory");
+    	masking_threshold = scriptParameters.getParams().getInt("mask_thresh");
+    	TSP_threshold = scriptParameters.getParams().getDouble("TSP_thresh");
+    	TSP_iter = scriptParameters.getParams().getInt("iter");
+    	Psvd = scriptParameters.getParams().getDouble("psv");
+    	autoAIFCalculation = scriptParameters.getParams().getBoolean("auto_AIF");
     }
     
     /**
@@ -319,7 +305,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
      */
     @Override
     protected void storeParamsFromGUI() throws ParserException {
-    	
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("pwiImageFileDirectory", pwiImageFileDirectory));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_thresh", masking_threshold));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("TSP_thresh", TSP_threshold));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("iter", TSP_iter));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("psv", Psvd));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("auto_AIF", autoAIFCalculation));
     }
     
     private boolean setVariables() {
