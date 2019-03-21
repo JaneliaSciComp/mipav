@@ -23,10 +23,7 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
-import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
-import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
-import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -39,25 +36,14 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIBase;
-import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentBase;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewJFrameMessage;
-import gov.nih.mipav.view.ViewUserInterface;
 
-import java.awt.Color;
-import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Vector;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -72,17 +58,6 @@ import java.awt.event.MouseListener;
 
 
 public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseListener {
-    
-    private int xDim;
-
-    private int yDim;
-
-    private int zDim;
-
-    /** Slice size for xDim*yDim */
-    private int sliceSize;
-    
-    private Collection<ModelImage> resultImageList;
     
     private String pwiImageFileDirectory;
     
@@ -145,13 +120,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	float delT;
     	int buffer[];
     	int data[][][][];
-    	byte mask[][][][];
     	int brain_mask[][][][];
     	double temp_mean[];
     	int brain_mask_norm[][][][];
     	double dbuffer[];
     	int x, y, z, t;
-    	int i,ii,jj;
+    	int i,j,ii,jj;
     	long sum;
     	int count;
     	// Remove hyphen from corr_map so MIPAV does not read corr_map and corr_map2 together as 1 file.
@@ -166,8 +140,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int it;
     	int brain_mask2[][][][];
     	int brain_mask_norm2[][][][];
-    	int A[];
-    	int B[];
     	double maxPeak;
     	String delZString;
     	float delZ;
@@ -209,12 +181,25 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double CBV[][][];
     	double CBF[][][];
     	double MTT[][][];
-    	double Tmax[][][];
-    	double relCBF[][][];
+    	int Tmax[][][];
+    	//double relCBF[][][];
     	double TTP[][][];
     	double x0[];
     	double xdata[];
     	double C[];
+    	boolean alltMeetThreshold;
+    	double D_inv[][];
+    	double b[];
+    	double sumb;
+    	double rcbf;
+    	expfun minsearch;
+    	int exitStatus;
+    	double p[];
+    	ModelImage CBFImage;
+    	ModelImage MTTImage;
+    	ModelImage CBVImage;
+    	ModelImage TmaxImage;
+    	ModelImage TTPImage;
     	
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
@@ -554,8 +539,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	} // for (x = 0; x < xDim; x++)
     	
     	// Write images and clean up variable
-    	A = new int[]{xDim, yDim, zDim};
-    	B = new int[]{xDim/2, yDim/2, zDim/2};
     	dbuffer = new double[volume];
     	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
     	for (x = 0; x < xDim; x++) {
@@ -918,7 +901,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	    		a[ii][jj] = delT * (4*CaPad[ii-jj] + CaPad[ii-jj+1])/5;
         	    	}
         	    	else if ((ii - jj) > CaPad.length - 2) {
-        	    		a[ii][jj] = delT*(CaPad[ii-jj-1] + 4*Ca[ii-jj])/5;
+        	    		a[ii][jj] = delT*(CaPad[ii-jj-1] + 4*CaPad[ii-jj])/5;
         	    	}
         	    	else {
         	    		a[ii][jj] = delT*(CaPad[ii-jj-1] + 4*CaPad[ii-jj] + CaPad[ii-jj+1])/6;
@@ -964,13 +947,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         }
         wMat = new Matrix(W);
         D_invMat = (vMat.times(wMat)).times(uMat.transpose());
+        D_inv = D_invMat.getArray();
         
         // Iterate over brain volume to find rCBF
         CBV = new double[xDim][yDim][zDim];
         CBF = new double[xDim][yDim][zDim];
         MTT = new double[xDim][yDim][zDim];
-        Tmax = new double[xDim][yDim][zDim];
-        relCBF = new double[xDim][yDim][zDim];
+        Tmax = new int[xDim][yDim][zDim];
+        //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[xDim][yDim][zDim];
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
@@ -993,17 +977,421 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	xdata[i] = i * delT;
         }
         C = new double[2*tDim];
+        b = new double[2*tDim];
         // Iterate
         for (z = 0; z < zDim; z++) {
+        	fireProgressStateChanged((int)(100*z/zDim), null,
+					"Working on slice " + (z+1) + " of " + zDim);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			
-        		}
-        	}
+        		    alltMeetThreshold = true;
+        		    for (t = 0; (t < tDim) && alltMeetThreshold; t++) {
+        		    	if (data[x][y][z][t] < masking_threshold) {
+        		    		alltMeetThreshold = false;
+        		    	}
+        		    } // for (t = 0; (t < tDim) && alltMeetThreshold; t++)
+        		    if (alltMeetThreshold) {
+        		        // time signal from mri
+        		    	for (t = 0; t < tDim; t++) {
+        		    		S[t] = data[x][y][z][t];
+        		    	}
+        		    	// Calculate amount of contrast agent as estimated from R2
+        		    	for (t = 0; t < tDim; t++) {
+        		    		C[t] = -TE*Math.log(S[t]/S[0]);
+        		    	}
+        		    	// Solve for residual function
+        		    	for (i = 0; i < 2*tDim; i++) {
+        		    		b[i] = 0;
+        		    		// Second half of C is zeros
+        		    		for (j = 0; j < tDim; j++) {
+        		    		    b[i] += D_inv[i][j] * C[j];	
+        		    		}
+        		    	} // for (i = 0; i < 2*tDim; i++)
+        		    	sumb = 0;
+        		    	for (i = 0; i < 2*tDim; i++) {
+        		    		sumb += b[i];
+        		    	}
+        		    	if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb))) {
+        		    	    rcbf = -Double.MAX_VALUE;
+        		    	    Tmax[x][y][z] = -1;
+        		    	    for (i = 0; i < b.length/4; i++) {
+        		    	    	if (b[i] > rcbf) {
+        		    	    		rcbf = b[i];
+        		    	    		Tmax[x][y][z] = i;
+        		    	    	}
+        		    	    }
+        		    	    // Shift b to have a peak at origin for fitting
+        		    	    b = circshift(b,-Tmax[x][y][z]);
+        		    	    minsearch = new expfun(x0, b, xdata);
+        		    	    minsearch.driver();
+        		    	    exitStatus = minsearch.getExitStatus();
+        		    	    if (exitStatus >= 0) {
+        		    	    	// Normal termination
+        					    p = minsearch.getParameters();
+        					    CBF[x][y][z] = p[0];
+        					    // relCBF is max value of residual function.  Should be similar to CBF,
+        					    // but may be different.
+        					    //relCBF[x][y][z] = rcbf;
+        					    MTT[x][y][z] = p[1];
+        					    CBV[x][y][z] = rcbf * p[1];
+        		    	    }
+        		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
+        		    } // if (alltMeetThreshold)
+        		} // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < yDim; y++)
         } // for (z = 0; z < zDim; z++)
+        
+        // Write maps to images
+        CBFImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBF");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = CBF[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		CBFImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on CBFImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = CBFImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("CBF.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(CBFImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing CBF.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing CBF.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	CBFImage.disposeLocal();
+    	CBFImage = null;
+    	
+    	MTTImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "MTT");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = MTT[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		MTTImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on MTTImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = MTTImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("MTT.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(MTTImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing MTT.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing MTT.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	MTTImage.disposeLocal();
+    	MTTImage = null;
+    	
+    	CBVImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBV");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = CBV[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		CBVImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on CBVImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = CBVImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("CBV.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(CBVImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing CBV.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing CBV.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	CBVImage.disposeLocal();
+    	CBVImage = null;
+    	
+    	TmaxImage = new ModelImage(ModelStorageBase.INTEGER, extents3D, "Tmax");
+    	buffer = new int[volume];
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				buffer[x + y*xDim + z*length] = Tmax[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		TmaxImage.importData(0, buffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on TmaxImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = TmaxImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.INTEGER);
+    	}
+        options.setFileName("Tmax.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(TmaxImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing Tmax.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing Tmax.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	TmaxImage.disposeLocal();
+    	TmaxImage = null;
+    	
+    	TTPImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "TTP");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = TTP[x][y][z];
+    			}
+    		}
+    	}
+    	try {
+    		TTPImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on TTPImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = TTPImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("TTP.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(TTPImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing TTP.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing TTP.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+    	TTPImage.disposeLocal();
+    	TTPImage = null;
 
     	setCompleted(true); 
     } // end runAlgorithm()
+    
+    class expfun extends NLConstrainedEngine {
+    	double b[];
+    	double xdata[];
+        public expfun(double x0[], double b[], double xdata[]) {
+        	// nPoints, params
+        	super(b.length, x0.length);
+        	this.b = b;
+        	this.xdata = xdata;
+        	
+        	bounds = 2; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+        	
+        	bl[0] = -Double.MAX_VALUE;
+        	bu[0] = Double.MAX_VALUE;
+        	
+        	// Must be inside these limits
+        	bl[1] = 0.0;
+        	bu[1] = 75.0;
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < x0.length; i++) {
+				gues[i] = x0[i];
+			}
+        }
+        
+        /**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences
+					.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n",
+							Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters)
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("a0 " + String.valueOf(a[0]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("a1 " + String.valueOf(a[1]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+		}
+		
+		/**
+		 * Fit to function.
+		 * 
+		 * @param a
+		 *            The x value of the data point.
+		 * @param residuals
+		 *            The best guess parameter values.
+		 * @param covarMat
+		 *            The derivative values of y with respect to fitting
+		 *            parameters.
+		 */
+		public void fitToFunction(double[] a, double[] residuals,
+				double[][] covarMat) {
+			int ctrl;
+			int i;
+			
+			try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+
+					for (i = 0; i < b.length; i++) {
+					    residuals[i] = b[i] - (a[0]*Math.exp(-1/a[1]*xdata[i]));	
+					}
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+		}
+    }
     
     public void mouseClicked(MouseEvent mouseEvent) {
 	     ViewJComponentBase vBase= (ViewJComponentBase)pickImage.getParentFrame().getComponentImage();
@@ -1102,6 +1490,34 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	return y;
     }
     
+    private double[] circshift(double x[], int n) {
+    	int i;
+    	double y[] = new double[x.length];
+    	if (n > 0) {
+    	    for (i = 0; i < n; i++) {
+    	    	y[i] = x[x.length - (n - i)];
+    	    }
+    	    for (i = n; i < x.length; i++) {
+    	    	y[i] = x[i-n];
+    	    }
+    	}
+    	else if (n == 0) {
+    		for (i = 0; i < x.length; i++) {
+    			y[i] = x[i];
+    		}
+    	}
+    	else {
+    		n = -n;
+    		for (i = 0; i < n; i++) {
+    			y[x.length - (n - i)] = x[i];
+    		}
+    		for (i = n; i < x.length; i++) {
+    			y[i-n] = x[i];
+    		}
+    	}
+    	return y;
+    }
+    
     private double corrcoef(int x[], double y[]) {
     	int N = x.length;
     	int i;
@@ -1144,12 +1560,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      */
     public void finalize() {
         super.finalize();
-    }
-    
-    
-    
-    public Collection<ModelImage> getResultImageList() {
-        return resultImageList;
     }
 
 }
