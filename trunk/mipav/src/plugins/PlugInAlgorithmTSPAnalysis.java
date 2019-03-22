@@ -232,8 +232,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	fileIO.setQuiet(false);
     	ModelImage image3D = fileIO.readDicom(selectedFileName, fileList, performSort);
     	image3D.calcMinMax();
-    	//int imageIndex = 0;
-    	//new ViewJFrameImage(vols2, null, new Dimension(610, 200 + (imageIndex++ * 20)));
     	int extents3Dorg[] = image3D.getExtents();
     	length = extents3Dorg[0] * extents3Dorg[1];
     	xDim = extents3Dorg[0];
@@ -250,7 +248,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             TEString = (String)tag.getValue(false);     
         }
         else {
-        	MipavUtil.displayError("Tag (0018,0081) for Number of Echo Time TE is null");
+        	MipavUtil.displayError("Tag (0018,0081) for Echo Time TE is null");
         	setCompleted(false);
         	return;
         }
@@ -277,7 +275,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	//System.out.println("resolutions["+i+"] = " + resolutions[i]);
         }
         if (tagTable.getValue("0018,0088") != null) {
-            // Spacing between slices
+            // Spacing between slices in millimeters
         	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0088"));
         	delZString = (String)tag.getValue(false);
         }
@@ -292,7 +290,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         resolutions3D[2] = delZ;
         //System.out.println("zDim = " + zDim + " tDim = " + tDim);
         if (tagTable.getValue("0018,1060") != null) {
-        	// Trigger time
+        	// Trigger time in milliseconds
         	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1060"));
         	t0String = (String)tag.getValue(false);
         }
@@ -1027,6 +1025,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    exitStatus = minsearch.getExitStatus();
         		    	    if (exitStatus >= 0) {
         		    	    	// Normal termination
+        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
         					    p = minsearch.getParameters();
         					    CBF[x][y][z] = p[0];
         					    // relCBF is max value of residual function.  Should be similar to CBF,
@@ -1374,7 +1373,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				ctrl = ctrlMat[0];
 
 				if ((ctrl == -1) || (ctrl == 1)) {
-
+                    // Monoexponential decay
 					for (i = 0; i < b.length; i++) {
 					    residuals[i] = b[i] - (a[0]*Math.exp(-1/a[1]*xdata[i]));	
 					}
