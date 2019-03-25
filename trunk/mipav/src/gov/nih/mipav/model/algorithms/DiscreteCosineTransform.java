@@ -61,6 +61,17 @@ public class DiscreteCosineTransform extends AlgorithmBase {
 
     // ~ Static fields/initializers
     // -----------------------
+	
+	private final int FILTER_NONE = 0;
+	private final int FILTER_SOFT = 1;
+	private final int FILTER_NN_GARROTE = 2;
+	private final int FILTER_HARD = 3;
+	private final int FILTER_GREATER = 4;
+	private final int FILTER_LESS = 5;
+	private final int FILTER_THRESHOLD_FIRM = 6;
+	private int filterType;
+	private double filterVal1;
+	private double filterVal2;
 
     private int transformLength;
     
@@ -101,13 +112,18 @@ public class DiscreteCosineTransform extends AlgorithmBase {
 		
 	}
     
-    public DiscreteCosineTransform(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg) {
+    public DiscreteCosineTransform(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg, int filterType,
+    		double filterVal1, double filterVal2) {
 		super(null, srcImg);
 		this.transformImage = transformImage;
 		this.inverseImage = inverseImage;
+		this.filterType = filterType;
+		this.filterVal1 = filterVal1;
+		this.filterVal2 = filterVal2;
 	}
 
-    public DiscreteCosineTransform(boolean fastAlgorithm, int dims[], int testDataType, boolean printData) {
+    public DiscreteCosineTransform(boolean fastAlgorithm, int dims[], int testDataType, boolean printData, int filterType,
+    		double filterVal1, double filterVal2) {
     	this.dims = dims;
     	this.fastAlgorithm = fastAlgorithm;
         this.testDataType = testDataType;
@@ -120,6 +136,9 @@ public class DiscreteCosineTransform extends AlgorithmBase {
         	yDim = dims[1];
         	transformLength = xDim * yDim;
         }
+        this.filterType = filterType;
+		this.filterVal1 = filterVal1;
+		this.filterVal2 = filterVal2;
     }
     
     public void runAlgorithm() {
@@ -178,6 +197,9 @@ public class DiscreteCosineTransform extends AlgorithmBase {
 
                 return;
              }
+        	if (filterType != FILTER_NONE) {
+        		filter(doubleBuffer, filterType,filterVal1,filterVal2);	
+        	}
         	// Inverse transform
         	if (fastAlgorithm) {
         		IFCT2D(doubleBuffer, xDim, yDim);
@@ -961,6 +983,239 @@ public class DiscreteCosineTransform extends AlgorithmBase {
     			F[xy] = sum[xy];
     		}
     	}
+    }
+    
+    private void filter(double data[], int filterType, double filterVal1, double filterVal2) {
+    	if (filterType == FILTER_SOFT) {
+    		soft(data, filterVal1, filterVal2);
+    	}
+    	else if (filterType == FILTER_NN_GARROTE) {
+    		nn_garrote(data, filterVal1, filterVal2);
+    	}
+    	else if (filterType == FILTER_HARD) {
+    		hard(data, filterVal1, filterVal2);
+    	}
+    	else if (filterType == FILTER_GREATER) {
+    		greater(data, filterVal1, filterVal2);
+    	}
+    	else if (filterType == FILTER_LESS) {
+    		less(data, filterVal1, filterVal2);
+    	}
+    	else if (filterType == FILTER_THRESHOLD_FIRM) {
+    		threshold_firm(data, filterVal1, filterVal2);
+    	}
+    	return;
+    }
+    
+    public double[] soft(double data[], double value, double substitute) {
+    	// Default substitute = 0
+    	int i;
+    	double magnitude[] = new double[data.length];
+    	double thresholded[] = new double[data.length];
+    	for (i = 0; i < data.length; i++) {
+    		if (data[i] == 0.0) {
+    			thresholded[i] = 0.0;
+    		}
+    		else {
+    		    magnitude[i] = Math.abs(data[i]);
+    		    thresholded[i] = (1.0 - value/magnitude[i]);
+    		    if (thresholded[i] < 0.0) {
+    		    	thresholded[i] = 0.0;
+    		    }
+    		    thresholded[i] = data[i] * thresholded[i];
+    		}
+    	}
+    	
+    	if (substitute == 0) {
+    		return thresholded;
+    	}
+    	else {
+    		for (i = 0; i < thresholded.length; i++) {
+    			if (magnitude[i] < value) {
+    				thresholded[i] = substitute;
+    			}
+    		}
+    		return thresholded;
+    	}
+    }
+    
+    public double[] nn_garrote(double data[], double value, double substitute) {
+        // Non-negative Garrote
+    	// Default substitute = 0
+    	int i;
+    	double magnitude[] = new double[data.length];
+    	double valueSquared = value * value;
+    	double thresholded[] = new double[data.length];
+    	for (i = 0; i < data.length; i++) {
+    		if (data[i] == 0.0) {
+    			thresholded[i] = 0.0;
+    		}
+    		else {
+    		    magnitude[i] = Math.abs(data[i]);
+    		    thresholded[i] = (1.0 - valueSquared/(magnitude[i] * magnitude[i]));
+    		    if (thresholded[i] < 0.0) {
+    		    	thresholded[i] = 0.0;
+    		    }
+    		    thresholded[i] = data[i] * thresholded[i];
+    		}
+    	}
+    	
+    	if (substitute == 0) {
+    		return thresholded;
+    	}
+    	else {
+    		for (i = 0; i < thresholded.length; i++) {
+    			if (magnitude[i] < value) {
+    				thresholded[i] = substitute;
+    			}
+    		}
+    		return thresholded;
+    	}
+    }
+    
+    public double[] hard(double data[], double value, double substitute) {
+    	// default substitute = 0.0
+    	double data2[] = data.clone();
+    	int i;
+        for (i = 0; i < data2.length; i++) {
+            if (Math.abs(data2[i]) < value) {
+            	data2[i] = substitute;
+            }
+        }
+        return data2;
+    }
+    
+    public double[][] hard(double data[][], double value, double substitute) {
+    	// default substitute = 0.0
+    	double data2[][] = data.clone();
+    	int i,j;
+        for (i = 0; i < data2.length; i++) {
+        	for (j = 0; j < data2[i].length; j++) {
+	            if (Math.abs(data2[i][j]) < value) {
+	            	data2[i][j] = substitute;
+	            }
+        	}
+        }
+        return data2;
+    }
+    
+    public double[] greater(double data[], double value, double substitute) {
+    	double data2[] = data.clone();
+        // default substitute = 0.0
+        // greater thresholding only supports real data
+    	int i;
+    	for (i = 0; i  < data2.length; i++) {
+    		if (data2[i] < value) {
+    			data2[i] = substitute;
+    		}
+    	}
+        return data2;
+    }
+    
+    public double[] less(double data[], double value, double substitute) {
+    	// default substitute = 0.0
+        // less thresholding only supports real data
+    	double data2[] = data.clone();
+    	int i;
+    	for (i = 0; i < data2.length; i++) {
+    		if (data2[i] > value) {
+    			data2[i] = substitute;
+    		}
+    	}
+    	return data2;
+    }
+    
+    public double[] threshold_firm(double data[], double value_low, double value_high) {
+        // Firm threshold.
+
+        // The approach is intermediate between soft and hard thresholding [1]_. It
+        // behaves the same as soft-thresholding for values below `value_low` and
+        // the same as hard-thresholding for values above `thresh_high`.  For
+        // intermediate values, the thresholded value is in between that corresponding
+        // to soft or hard thresholding.
+
+        // Parameters
+        // ----------
+        // data : array-like
+        //    The data to threshold.  This can be either real or complex-valued.
+        // value_low : float
+        //    Any values smaller then `value_low` will be set to zero.
+        // value_high : float
+        //    Any values larger than `value_high` will not be modified.
+
+        // Notes
+        // -----
+        // This thresholding technique is also known as semi-soft thresholding [2]_.
+
+        // For each value, `x`, in `data`. This function computes::
+
+        //    if np.abs(x) <= value_low:
+        //        return 0
+        //    elif np.abs(x) > value_high:
+        //        return x
+        //    elif value_low < np.abs(x) and np.abs(x) <= value_high:
+        //        return x * value_high * (1 - value_low/x)/(value_high - value_low)
+
+        // ``firm`` is a continuous function (like soft thresholding), but is
+        // unbiased for large values (like hard thresholding).
+
+        // If ``value_high == value_low`` this function becomes hard-thresholding.
+        // If ``value_high`` is infinity, this function becomes soft-thresholding.
+
+        // Returns
+        // -------
+        // val_new : array-like
+        //    The values after firm thresholding at the specified thresholds.
+
+        // See Also
+        // --------
+        // threshold
+
+        // References
+        // ----------
+        // .. [1] H.-Y. Gao and A.G. Bruce. Waveshrink with firm shrinkage.
+        //    Statistica Sinica, Vol. 7, pp. 855-874, 1997.
+        // .. [2] A. Bruce and H-Y. Gao. WaveShrink: Shrinkage Functions and
+        //    Thresholds. Proc. SPIE 2569, Wavelet Applications in Signal and
+        //    Image Processing III, 1995.
+        //    DOI:10.1117/12.217582
+        int i;
+
+        if (value_low < 0) {
+            MipavUtil.displayError("value_low must be non-negative.");
+            return null;
+        }
+
+        if (value_high < value_low) {
+            MipavUtil.displayError("value_high must be greater than or equal to value_low.");
+            return null;
+        }
+
+        
+        double magnitude[] = new double[data.length];
+        double thresholded[] = new double[data.length];
+        double vdiff = value_high - value_low;
+        for (i = 0; i < data.length; i++) {
+        	if (data[i] == 0.0) {
+        		thresholded[i] = 0.0;
+        	}
+        	else {
+        	    magnitude[i] = Math.abs(data[i]);
+        	    thresholded[i] = value_high * (1 - value_low/magnitude[i]) / vdiff;
+        	    if (thresholded[i] < 0.0) {
+        	    	thresholded[i] = 0.0;
+        	    }
+        	    thresholded[i] = data[i] * thresholded[i];
+        	}
+        }
+
+        // restore hard-thresholding behavior for values > value_high
+        for (i = 0; i < magnitude.length; i++) {
+        	if (magnitude[i] > value_high) {
+        		thresholded[i] = data[i];
+        	}
+        }
+        return thresholded;
     }
 
 }
