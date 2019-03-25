@@ -1318,6 +1318,12 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         	} // if (filterType[i] != FILTER_NONE)
         	
         	if (filterType[i] == FILTER_THRESHOLD_FIRM) {
+        		if (filterVal1[i] < 0.0) {
+        			MipavUtil.displayError("filterVal1["+i+"] must be >= 0");
+        			textVal1[i].requestFocus();
+        		    textVal1[i].selectAll();
+        		    return false;
+        		}
         		if (filterVal2[i] < filterVal1[i]) {
         			MipavUtil.displayError("filterVal2["+i+"] must be >= filterVal1["+i+"]");
         			textVal2[i].requestFocus();
