@@ -31,6 +31,26 @@ public class JDialogHaarTransform extends JDialogScriptableBase implements Algor
     private ModelImage inverseImage;
     
     private HaarTransform htAlgo;
+    
+    private int filterType;
+    
+    private double filterVal1;
+    
+    private double filterVal2;
+    
+    private JComboBox<String> comboBoxFilterType;
+    private JLabel labelVal1;
+    private JTextField textVal1;
+    private JLabel labelVal2;
+    private JTextField textVal2;
+    
+    private final int FILTER_NONE = 0;
+	private final int FILTER_SOFT = 1;
+	private final int FILTER_NN_GARROTE = 2;
+	private final int FILTER_HARD = 3;
+	private final int FILTER_GREATER = 4;
+	private final int FILTER_LESS = 5;
+	private final int FILTER_THRESHOLD_FIRM = 6;
 	
 	/**
      * Empty constructor needed for dynamic instantiation.
@@ -59,12 +79,35 @@ public class JDialogHaarTransform extends JDialogScriptableBase implements Algor
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if (source == comboBoxFilterType) {
+        	String selection = (String)comboBoxFilterType.getSelectedItem();
+			if (selection.equals("THRESHOLD_FIRM")) {
+				labelVal1.setText("Low value");
+				labelVal2.setText("High value");
+			}
+			else {
+				labelVal1.setText("Value");
+				labelVal2.setText("Substitute");
+			}
+			if (selection.equals("NONE")) {
+				labelVal1.setEnabled(false);
+				labelVal2.setEnabled(false);
+				textVal1.setEnabled(false);
+				textVal2.setEnabled(false);
+			}
+			else {
+				labelVal1.setEnabled(true);
+				labelVal2.setEnabled(true);
+				textVal1.setEnabled(true);
+				textVal2.setEnabled(true);	
+			}
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -90,6 +133,46 @@ public class JDialogHaarTransform extends JDialogScriptableBase implements Algor
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         
+        comboBoxFilterType = buildFilterTypeComboBox();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel labelFilter = new JLabel("Coefficients filter");
+        labelFilter.setFont(serif12);
+        labelFilter.setForeground(Color.black);
+        paramsPanel.add(labelFilter, gbc);
+        gbc.gridx = 1;
+        paramsPanel.add(comboBoxFilterType,gbc);
+        
+        labelVal1 = new JLabel("Value");
+        labelVal1.setFont(serif12);
+        labelVal1.setForeground(Color.black);
+        labelVal1.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        paramsPanel.add(labelVal1, gbc);
+        
+        textVal1 = new JTextField(10);
+        textVal1.setFont(serif12);
+        textVal1.setForeground(Color.black);
+        textVal1.setEnabled(false);
+        gbc.gridx = 1;
+        paramsPanel.add(textVal1, gbc);
+        
+        labelVal2 = new JLabel("Substitute");
+        labelVal2.setFont(serif12);
+        labelVal2.setForeground(Color.black);
+        labelVal2.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        paramsPanel.add(labelVal2, gbc);
+        
+        textVal2 = new JTextField(10);
+        textVal2.setFont(serif12);
+        textVal2.setForeground(Color.black);
+        textVal2.setEnabled(false);
+        gbc.gridx = 1;
+        paramsPanel.add(textVal2, gbc);
+        
         getContentPane().add(paramsPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -98,8 +181,85 @@ public class JDialogHaarTransform extends JDialogScriptableBase implements Algor
         System.gc();
     }
     
+    private JComboBox<String> buildFilterTypeComboBox() {
+    	final JComboBox<String> comboBox = new JComboBox<String>();
+    	comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+        comboBox.addItem("NONE");
+        comboBox.addItem("SOFT");
+        comboBox.addItem("NN_GARROTE");
+        comboBox.addItem("HARD");
+        comboBox.addItem("GREATER");
+        comboBox.addItem("LESS");
+        comboBox.addItem("THRESHOLD_FIRM");
+        comboBox.setSelectedIndex(0);
+        comboBox.addActionListener(this);
+    	return comboBox;
+    }
+    
     private boolean setVariables() {
+    	String tmpStr;
+    	String selection = (String)comboBoxFilterType.getSelectedItem();
+    	if (selection.equals("NONE")) {
+    		filterType = FILTER_NONE;
+    	}
+    	else if (selection.equals("SOFT")) {
+    		filterType = FILTER_SOFT;
+    	}
+    	else if (selection.equals("NN_GARROTE")) {
+    		filterType = FILTER_NN_GARROTE;
+    	}
+    	else if (selection.equals("HARD")) {
+    	    filterType = FILTER_HARD;
+    	}
+    	else if (selection.equals("GREATER")) {
+    	    filterType = FILTER_GREATER;
+    	}
+    	else if (selection.equals("LESS")) {
+    	    filterType = FILTER_LESS;
+    	}
+    	else if (selection.equals("THRESHOLD_FIRM")) {
+    	    filterType = FILTER_THRESHOLD_FIRM;
+    	}
     	
+    	if (filterType != FILTER_NONE) {
+    		tmpStr = textVal1.getText();	
+    		try {
+    			filterVal1 = Double.valueOf(tmpStr).doubleValue();
+    		}
+    		catch (NumberFormatException e) {
+    		    MipavUtil.displayError("textval1 does not have a proper number");
+    		    textVal1.requestFocus();
+    		    textVal1.selectAll();
+    		    return false;
+    		}
+    		
+    		tmpStr = textVal2.getText();	
+    		try {
+    			filterVal2 = Double.valueOf(tmpStr).doubleValue();
+    		}
+    		catch (NumberFormatException e) {
+    		    MipavUtil.displayError("textval2 does not have a proper number");
+    		    textVal2.requestFocus();
+    		    textVal2.selectAll();
+    		    return false;
+    		}
+    	} // if (filterType != FILTER_NONE)
+    	
+    	if (filterType == FILTER_THRESHOLD_FIRM) {
+    		if (filterVal1 < 0.0) {
+    			MipavUtil.displayError("filterVal1 must be >= 0");
+    			textVal1.requestFocus();
+    		    textVal1.selectAll();
+    		    return false;
+    		}
+    		if (filterVal2 < filterVal1) {
+    			MipavUtil.displayError("filterVal2 must be >= filterVal1");
+    			textVal2.requestFocus();
+    		    textVal2.selectAll();
+    		    return false;
+    		}
+    	}
     	return true;
     }
 	
@@ -111,7 +271,7 @@ public class JDialogHaarTransform extends JDialogScriptableBase implements Algor
 		    inverseImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_inverse");	
 		    
 		    
-		    htAlgo = new HaarTransform(transformImage, inverseImage, srcImage);
+		    htAlgo = new HaarTransform(transformImage, inverseImage, srcImage, filterType, filterVal1, filterVal2);
 		    
 		    // This is very important. Adding this object as a listener allows the algorithm to
 		    // notify this object when it has completed of failed. See algorithm performed event.
@@ -219,11 +379,17 @@ public class JDialogHaarTransform extends JDialogScriptableBase implements Algor
 	
 	protected void setGUIFromParams() {
 		srcImage = scriptParameters.retrieveInputImage();
+		filterType = scriptParameters.getParams().getInt("filter_type");
+		filterVal1 = scriptParameters.getParams().getDouble("filter_val1");
+		filterVal2 = scriptParameters.getParams().getDouble("filter_val2");
 	}
 	
 	protected void storeParamsFromGUI() throws ParserException {
 		scriptParameters.storeInputImage(srcImage);	
 		scriptParameters.storeImageInRecorder(transformImage);
 		scriptParameters.storeImageInRecorder(inverseImage);
+		scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("filter_val1", filterVal1));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("filter_val2", filterVal2));
 	}
 }
