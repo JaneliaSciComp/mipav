@@ -347,6 +347,11 @@ public class DiscreteSineTransform extends AlgorithmBase {
              }
         	if (filterType != FILTER_NONE) {
         		filter(doubleBuffer, filterType,filterVal1,filterVal2);	
+        		for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            			dst[y][x] = doubleBuffer[x + y * xDim];
+            		}
+            	}
         	}
         	// Inverse transform
         	ddst2D(yDim, xDim, dst, src, 1);
