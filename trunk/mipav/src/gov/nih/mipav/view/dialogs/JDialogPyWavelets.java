@@ -1270,25 +1270,26 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         }
         
         for (i = 0; i < numComponents; i++) {
-        	if (comboBoxFilterType[i].equals("NONE")) {
+        	String selection = (String)comboBoxFilterType[i].getSelectedItem();
+        	if (selection.equals("NONE")) {
         		filterType[i] = FILTER_NONE;
         	}
-        	else if (comboBoxFilterType[i].equals("SOFT")) {
+        	else if (selection.equals("SOFT")) {
         		filterType[i] = FILTER_SOFT;
         	}
-        	else if (comboBoxFilterType[i].equals("NN_GARROTE")) {
+        	else if (selection.equals("NN_GARROTE")) {
         		filterType[i] = FILTER_NN_GARROTE;
         	}
-        	else if (comboBoxFilterType[i].equals("HARD")) {
+        	else if (selection.equals("HARD")) {
         	    filterType[i] = FILTER_HARD;
         	}
-        	else if (comboBoxFilterType[i].equals("GREATER")) {
+        	else if (selection.equals("GREATER")) {
         	    filterType[i] = FILTER_GREATER;
         	}
-        	else if (comboBoxFilterType[i].equals("LESS")) {
+        	else if (selection.equals("LESS")) {
         	    filterType[i] = FILTER_LESS;
         	}
-        	else if (comboBoxFilterType[i].equals("THRESHOLD_FIRM")) {
+        	else if (selection.equals("THRESHOLD_FIRM")) {
         	    filterType[i] = FILTER_THRESHOLD_FIRM;
         	}
         	
@@ -1315,6 +1316,15 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         		    return false;
         		}
         	} // if (filterType[i] != FILTER_NONE)
+        	
+        	if (filterType[i] == FILTER_THRESHOLD_FIRM) {
+        		if (filterVal2[i] < filterVal1[i]) {
+        			MipavUtil.displayError("filterVal2["+i+"] must be >= filterVal1["+i+"]");
+        			textVal2[i].requestFocus();
+        		    textVal2[i].selectAll();
+        		    return false;
+        		}
+        	}
         } // for (i = 0; i < numComponents; i++)
         return true;
     }
