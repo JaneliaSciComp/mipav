@@ -87,7 +87,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             if (setVariables()) {
                 callAlgorithm();
             }
-        } if (source == comboBoxFilterType) {
+        } else if (source == comboBoxFilterType) {
         	String selection = (String)comboBoxFilterType.getSelectedItem();
 			if (selection.equals("THRESHOLD_FIRM")) {
 				labelVal1.setText("Low value");
