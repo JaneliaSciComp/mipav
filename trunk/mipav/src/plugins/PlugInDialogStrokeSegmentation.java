@@ -41,14 +41,18 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private JTextField adcThresholdField;
     
     private JCheckBox symmetryCheckbox;
+    private JTextField symmetryRemovalMaxSliceField;
     
-    private JCheckBox cerebellumCheckbox;
-    private JTextField cerebellumSliceMaxField;
-    
-    private JCheckBox cerebellumAggressiveCheckbox;
-    private JTextField cerebellumAggressiveSliceMaxField;
+//    private JCheckBox cerebellumCheckbox;
+//    private JTextField cerebellumSliceMaxField;
+//    
+//    private JCheckBox cerebellumAggressiveCheckbox;
+//    private JTextField cerebellumAggressiveSliceMaxField;
     
     private JCheckBox skullRemovalCheckbox;
+    
+    private JCheckBox selectAdditionalObjCheckbox;
+    private JTextField selectAdditionalObjPctField;
 
     private boolean adcImageMultifile = false;
     private ModelImage adcImage;
@@ -60,15 +64,21 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private boolean doSymmetryRemoval = true;
     
-    private boolean doCerebellumSkip = true;
+    private int symmetryRemovalMaxSlice = 10;
     
-    private int cerebellumSkipSliceMax = 9;
+//    private boolean doCerebellumSkip = true;
     
-    private boolean doCerebellumSkipAggressive = true;
+//    private int cerebellumSkipSliceMax = 9;
     
-    private int cerebellumSkipAggressiveSliceMax = 15;
+//    private boolean doCerebellumSkipAggressive = true;
+    
+//    private int cerebellumSkipAggressiveSliceMax = 15;
     
     private boolean doSkullRemoval = true;
+    
+    private boolean doSelectAdditionalObj = false;
+    
+    private int selectAdditionalObjPct = 30;
     
     private JTextField threshCloseIterField;
     
@@ -317,16 +327,21 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         doSymmetryRemoval = symmetryCheckbox.isSelected();
         
-        doCerebellumSkip = cerebellumCheckbox.isSelected();
-        cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
+        symmetryRemovalMaxSlice = Integer.parseInt(symmetryRemovalMaxSliceField.getText());
         
-        doCerebellumSkipAggressive = cerebellumAggressiveCheckbox.isSelected();
-        cerebellumSkipAggressiveSliceMax = Integer.parseInt(cerebellumAggressiveSliceMaxField.getText());
+//        doCerebellumSkip = cerebellumCheckbox.isSelected();
+//        cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
+//        
+//        doCerebellumSkipAggressive = cerebellumAggressiveCheckbox.isSelected();
+//        cerebellumSkipAggressiveSliceMax = Integer.parseInt(cerebellumAggressiveSliceMaxField.getText());
         
         threshCloseIter = Integer.parseInt(threshCloseIterField.getText());
         threshCloseSize = Float.parseFloat(threshCloseSizeField.getText());
         
         doSkullRemoval = skullRemovalCheckbox.isSelected();
+        
+        doSelectAdditionalObj = selectAdditionalObjCheckbox.isSelected();
+        selectAdditionalObjPct = Integer.parseInt(selectAdditionalObjPctField.getText());
         
         return true;
     }
@@ -338,7 +353,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, doCerebellumSkipAggressive, cerebellumSkipAggressiveSliceMax, doSkullRemoval, threshCloseIter, threshCloseSize, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -384,16 +399,21 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         doSymmetryRemoval = scriptParameters.getParams().getBoolean("do_symmetry_removal");
         
-        doCerebellumSkip = scriptParameters.getParams().getBoolean("do_cerebellum_skip");
-        cerebellumSkipSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_slice_max");
+        symmetryRemovalMaxSlice = scriptParameters.getParams().getInt("symmetry_removal_slice_max");
         
-        doCerebellumSkipAggressive = scriptParameters.getParams().getBoolean("do_cerebellum_skip_aggressive");
-        cerebellumSkipAggressiveSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_aggressive_slice_max");
+//        doCerebellumSkip = scriptParameters.getParams().getBoolean("do_cerebellum_skip");
+//        cerebellumSkipSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_slice_max");
+//        
+//        doCerebellumSkipAggressive = scriptParameters.getParams().getBoolean("do_cerebellum_skip_aggressive");
+//        cerebellumSkipAggressiveSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_aggressive_slice_max");
         
         doSkullRemoval = scriptParameters.getParams().getBoolean("do_skull_removal");
         
         threshCloseIter = scriptParameters.getParams().getInt("threshold_close_iter_num");
         threshCloseSize = scriptParameters.getParams().getInt("threshold_close_kernel_size");
+        
+        doSelectAdditionalObj = scriptParameters.getParams().getBoolean("do_select_additional_objs");
+        selectAdditionalObjPct = scriptParameters.getParams().getInt("select_additional_objs_percent");
         
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
@@ -403,13 +423,16 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.storeImage(dwiImage, "dwi_image");
         scriptParameters.getParams().put(ParameterFactory.newParameter("adc_threshold", adcThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip_aggressive", doCerebellumSkipAggressive));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_aggressive_slice_max", cerebellumSkipAggressiveSliceMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("symmetry_removal_slice_max", symmetryRemovalMaxSlice));
+//        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
+//        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
+//        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip_aggressive", doCerebellumSkipAggressive));
+//        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_aggressive_slice_max", cerebellumSkipAggressiveSliceMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_skull_removal", doSkullRemoval));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_close_iter_num", threshCloseIter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_close_kernel_size", threshCloseSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_select_additional_objs", doSelectAdditionalObj));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("select_additional_objs_percent", selectAdditionalObjPct));
     }
     
     /**
@@ -453,48 +476,54 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         gbc.gridy++;
         gbc.gridx = 0;
         
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 1;
         
-        symmetryCheckbox = new JCheckBox("Perform symmetry removal on ADC mask", doSymmetryRemoval);
+        symmetryCheckbox = new JCheckBox("Perform symmetry removal on ADC mask up to slice", doSymmetryRemoval);
         symmetryCheckbox.setForeground(Color.black);
         symmetryCheckbox.setFont(serif12);
         mainPanel.add(symmetryCheckbox, gbc);
         
-        gbc.gridy++;
-        gbc.gridx = 0;
-        
-        gbc.gridwidth = 1;
-        
-        cerebellumCheckbox = new JCheckBox("Ignore thresholded ADC values up to slice", doCerebellumSkip);
-        cerebellumCheckbox.setForeground(Color.black);
-        cerebellumCheckbox.setFont(serif12);
-        mainPanel.add(cerebellumCheckbox, gbc);
-        
-        gbc.gridwidth = 1;
-        
-        cerebellumSliceMaxField = new JTextField(10);
-        cerebellumSliceMaxField.setText("" + cerebellumSkipSliceMax);
+        symmetryRemovalMaxSliceField = new JTextField(10);
+        symmetryRemovalMaxSliceField.setText("" + symmetryRemovalMaxSlice);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
-        mainPanel.add(cerebellumSliceMaxField, gbc);
+        mainPanel.add(symmetryRemovalMaxSliceField, gbc);
         
-        gbc.gridy++;
-        gbc.gridx = 0;
-        
-        gbc.gridwidth = 1;
-        
-        cerebellumAggressiveCheckbox = new JCheckBox("Perform second removal of threholded ADC values up to slice", doCerebellumSkipAggressive);
-        cerebellumAggressiveCheckbox.setForeground(Color.black);
-        cerebellumAggressiveCheckbox.setFont(serif12);
-        mainPanel.add(cerebellumAggressiveCheckbox, gbc);
-        
-        gbc.gridwidth = 1;
-        
-        cerebellumAggressiveSliceMaxField = new JTextField(10);
-        cerebellumAggressiveSliceMaxField.setText("" + cerebellumSkipAggressiveSliceMax);
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridx++;
-        mainPanel.add(cerebellumAggressiveSliceMaxField, gbc);
+//        gbc.gridy++;
+//        gbc.gridx = 0;
+//        
+//        gbc.gridwidth = 1;
+//        
+//        cerebellumCheckbox = new JCheckBox("Ignore thresholded ADC values up to slice", doCerebellumSkip);
+//        cerebellumCheckbox.setForeground(Color.black);
+//        cerebellumCheckbox.setFont(serif12);
+//        mainPanel.add(cerebellumCheckbox, gbc);
+//        
+//        gbc.gridwidth = 1;
+//        
+//        cerebellumSliceMaxField = new JTextField(10);
+//        cerebellumSliceMaxField.setText("" + cerebellumSkipSliceMax);
+//        gbc.fill = GridBagConstraints.NONE;
+//        gbc.gridx++;
+//        mainPanel.add(cerebellumSliceMaxField, gbc);
+//        
+//        gbc.gridy++;
+//        gbc.gridx = 0;
+//        
+//        gbc.gridwidth = 1;
+//        
+//        cerebellumAggressiveCheckbox = new JCheckBox("Perform second removal of threholded ADC values up to slice", doCerebellumSkipAggressive);
+//        cerebellumAggressiveCheckbox.setForeground(Color.black);
+//        cerebellumAggressiveCheckbox.setFont(serif12);
+//        mainPanel.add(cerebellumAggressiveCheckbox, gbc);
+//        
+//        gbc.gridwidth = 1;
+//        
+//        cerebellumAggressiveSliceMaxField = new JTextField(10);
+//        cerebellumAggressiveSliceMaxField.setText("" + cerebellumSkipAggressiveSliceMax);
+//        gbc.fill = GridBagConstraints.NONE;
+//        gbc.gridx++;
+//        mainPanel.add(cerebellumAggressiveSliceMaxField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
@@ -535,6 +564,22 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(threshCloseSizeField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        selectAdditionalObjCheckbox = new JCheckBox("Select additonal objects within X% size", doSelectAdditionalObj);
+        selectAdditionalObjCheckbox.setForeground(Color.black);
+        selectAdditionalObjCheckbox.setFont(serif12);
+        mainPanel.add(selectAdditionalObjCheckbox, gbc);
+        
+        selectAdditionalObjPctField = new JTextField(10);
+        selectAdditionalObjPctField.setText("" + selectAdditionalObjPct);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(selectAdditionalObjPctField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
