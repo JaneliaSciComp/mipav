@@ -30,13 +30,13 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int maxSymmetryGrowthSlice = 10;
     
-    private boolean doCerebellumSkip;
-    
-    private int cerebellumSkipSliceMax;
-    
-    private boolean doCerebellumSkipAggressive;
-    
-    private int cerebellumSkipAggressiveSliceMax;
+//    private boolean doCerebellumSkip;
+//    
+//    private int cerebellumSkipSliceMax;
+//    
+//    private boolean doCerebellumSkipAggressive;
+//    
+//    private int cerebellumSkipAggressiveSliceMax;
     
     private boolean doSkullRemoval;
     
@@ -47,6 +47,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     private float threshCloseSize;
     
     private VOI coreVOI;
+    
+    private boolean doSelectAdditionalObj = false;
     
     private float additionalObjectMinimumRatio = 0.7f;
     
@@ -89,20 +91,26 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, boolean cerebellumSkipAggressive, int cerebellumSkipAggressiveMax, boolean removeSkull, int closeIter, float closeSize, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, String outputDir) {
         super();
         
         dwiImage = dwi;
         adcImage = adc;
         adcThreshold = threshold;
         doSymmetryRemoval = symmetryRemoval;
-        doCerebellumSkip = cerebellumSkip;
-        cerebellumSkipSliceMax = cerebellumSkipMax;
-        doCerebellumSkipAggressive = cerebellumSkipAggressive;
-        cerebellumSkipAggressiveSliceMax = cerebellumSkipAggressiveMax;
+        maxSymmetryRemovalSlice = symmetryMax;
+        maxSymmetryGrowthSlice = symmetryMax;
+//        doCerebellumSkip = cerebellumSkip;
+//        cerebellumSkipSliceMax = cerebellumSkipMax;
+//        doCerebellumSkipAggressive = cerebellumSkipAggressive;
+//        cerebellumSkipAggressiveSliceMax = cerebellumSkipAggressiveMax;
         doSkullRemoval = removeSkull;
         threshCloseIter = closeIter;
         threshCloseSize = closeSize;
+        
+        doSelectAdditionalObj = doAdditionalObj;
+        additionalObjectMinimumRatio = 1f - (float)(additionalObjPct / 100f);
+        
         coreOutputDir = outputDir;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
@@ -282,7 +290,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             
             // do first two results with selection only based on core size
     //        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
-            File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, cerebellumSkipSliceMax, false);
+            File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, 0, false);
             
             if (lightboxPass1 != null) {
                 lightboxFileList.add(lightboxPass1);
@@ -683,9 +691,14 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             
             boolean allCoreSmallFlag = true;
             double resFactorCC = getResolutionFactorCC(adcImage);
-            for (int coreSize : coreSizeList) {
+            for (int i = 0; i < coreSizeList.length; i++) {
+                int coreSize = coreSizeList[i];
+                
+                sortedObjects[sortedObjects.length - 1 - i].setCoreSize(coreSize);
+                
                 if ((coreSize * resFactorCC) > coreSizeDistSelectionThreshold) {
                     allCoreSmallFlag = false;
+                    System.err.println("Found large core object");
                 }
             }
             
@@ -791,15 +804,21 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         // also keep 2nd (maybe 3rd) largest object as well, if first one is small and the second one is >= 50% of its size
         
         // if the largest object is small, see if the next one is close in size
+        if (doSelectAdditionalObj) {
 //        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
-            int objectMinSize = (int) (selectedObjectList.get(0).size * additionalObjectMinimumRatio);
-            int nextObjectIndex = sortedObjects.length - 2;
+            MaskObject primaryObject = selectedObjectList.get(0);
+            int objectMinSize = (int) (primaryObject.coreSize * additionalObjectMinimumRatio);
+            int nextObjectIndex = sortedObjects.length - 1;
             MaskObject nextObject;
-            while (nextObjectIndex >= 0 && (nextObject = sortedObjects[nextObjectIndex]).size >= objectMinSize) {
-                System.err.println(nextObject.id + "\t" + nextObject.size);
-                selectedObjectList.add(nextObject);
+            while (nextObjectIndex >= 0) {
+                nextObject = sortedObjects[nextObjectIndex];
+                if (nextObject.id != primaryObject.id && nextObject.coreSize >= objectMinSize) {
+                    System.err.println("Added obj: " + nextObject.id + "\t" + nextObject.size + "\t" + nextObject.coreSize);
+                    selectedObjectList.add(nextObject);
+                }
                 nextObjectIndex--;
             }
+        }
 //        }
         
         // set the mask value for any object that isn't the largest to 0
@@ -1006,6 +1025,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
 
         /** DOCUMENT ME! */
         public int size = 0;
+        
+        public int coreSize = 0;
 
         /**
          * Creates a new intObject object.
@@ -1018,6 +1039,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             index = idx;
             id = objectID;
             size = objectSize;
+        }
+        
+        public void setCoreSize(final int core) {
+            coreSize = core;
         }
     }
     
