@@ -118,6 +118,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             bandPass.setEnabled(false);
             bandStop.setEnabled(false);
             textF1.setEnabled(false);
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
             labelF1.setEnabled(false);
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
@@ -127,6 +128,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             textEpsilon.setEnabled(false);
             labelEpsilon.setEnabled(false);
             textF1.setEnabled(true);
+            labelF1.setText("Frequency F1 > 0.0 ");
             labelF1.setEnabled(true);
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
@@ -152,6 +154,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             bandPass.setEnabled(true);
             bandStop.setEnabled(true);
             textF1.setEnabled(true);
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
             labelF1.setEnabled(true);
             if (bandPass.isSelected() || bandStop.isSelected()) {
                 textF2.setEnabled(true);
@@ -171,6 +174,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             bandPass.setEnabled(true);
             bandStop.setEnabled(true);
             textF1.setEnabled(true);
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
             labelF1.setEnabled(true);
             if (bandPass.isSelected() || bandStop.isSelected()) {
                 textF2.setEnabled(true);
@@ -182,6 +186,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             }
         } else if (source == chebyshevIIFilter) {
         	textF1.setEnabled(true);
+        	labelF1.setText("Frequency F1 > (1/(2*PI)) to 1.0 ");
             labelF1.setEnabled(true);
             if (bandPass.isSelected() || bandStop.isSelected()) {
                 textF2.setEnabled(true);
@@ -346,7 +351,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
         textF1.setFont(serif12);
         textF1.setEnabled(false);
 
-        labelF1 = new JLabel("Frequency F1 >0.0 to 1.0 ");
+        labelF1 = new JLabel("Frequency F1 > 0.0 to 1.0 ");
         labelF1.setForeground(Color.black);
         labelF1.setFont(serif12);
         labelF1.setEnabled(false);
