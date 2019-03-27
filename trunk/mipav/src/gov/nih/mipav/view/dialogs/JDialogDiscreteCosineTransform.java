@@ -186,7 +186,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             }
         } else if (source == chebyshevIIFilter) {
         	textF1.setEnabled(true);
-        	labelF1.setText("Frequency F1 > (1/(2*PI)) to 1.0 ");
+        	labelF1.setText("Freq F1 > 1/(2*PI) to 1.0 ");
             labelF1.setEnabled(true);
             if (bandPass.isSelected() || bandStop.isSelected()) {
                 textF2.setEnabled(true);
