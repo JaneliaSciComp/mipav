@@ -33,25 +33,47 @@ public class JDialogHartleyTransform extends JDialogScriptableBase implements Al
     
     private HartleyTransform2 htAlgo;
     
+    private int constructionMethod;
+    public static final int CONSTRUCTION_NONE = 0;
+    public static final int GAUSSIAN = 2;
+    public static final int BUTTERWORTH = 3;
+    public static final int CHEBYSHEV_TYPE_I = 5;
+    public static final int CHEBYSHEV_TYPE_II = 6;
+    
     private int filterType;
+    private double f1;
+    private double f2;
+	public static final int LOWPASS = 1;
+    public static final int HIGHPASS = 2;
+    public static final int BANDPASS = 3;
+    public static final int BANDSTOP = 4;
+    private int filterOrder;
+    private double epsilon;  // maximum ripple in Chebyshev filters
     
-    private double filterVal1;
+    private JPanel constructionPanel;
+    private ButtonGroup constructionGroup;
+    private JRadioButton butterworthFilter;
+    private JRadioButton gaussianFilter;
+    private JRadioButton chebyshevIFilter;
+    private JRadioButton chebyshevIIFilter;
+    private JLabel labelOrder;
+    private JLabel labelEpsilon;
+    private JTextField textOrder;
+    private JTextField textEpsilon;
     
-    private double filterVal2;
+    private JPanel filterPanel;
+    private ButtonGroup filterTypeGroup;
+    private JRadioButton noneButton;
+    private JRadioButton lowPass;
+    private JRadioButton highPass;
+    private JRadioButton bandPass;
+    private JRadioButton bandStop;
+    private JLabel labelF1;
+    private JLabel labelF2;
+    private JTextField textF1;
+    private JTextField textF2;
+    private JPanel mainPanel;
     
-    private JComboBox<String> comboBoxFilterType;
-    private JLabel labelVal1;
-    private JTextField textVal1;
-    private JLabel labelVal2;
-    private JTextField textVal2;
-    
-    private final int FILTER_NONE = 0;
-	private final int FILTER_SOFT = 1;
-	private final int FILTER_NN_GARROTE = 2;
-	private final int FILTER_HARD = 3;
-	private final int FILTER_GREATER = 4;
-	private final int FILTER_LESS = 5;
-	private final int FILTER_THRESHOLD_FIRM = 6;
     
     //private ButtonGroup processorGroup;
     //private JRadioButton singleButton;
@@ -91,28 +113,108 @@ public class JDialogHartleyTransform extends JDialogScriptableBase implements Al
             if (setVariables()) {
                 callAlgorithm();
             }
-        } else if (source == comboBoxFilterType) {
-        	String selection = (String)comboBoxFilterType.getSelectedItem();
-			if (selection.equals("THRESHOLD_FIRM")) {
-				labelVal1.setText("Low value");
-				labelVal2.setText("High value");
-			}
-			else {
-				labelVal1.setText("Value");
-				labelVal2.setText("Substitute");
-			}
-			if (selection.equals("NONE")) {
-				labelVal1.setEnabled(false);
-				labelVal2.setEnabled(false);
-				textVal1.setEnabled(false);
-				textVal2.setEnabled(false);
-			}
-			else {
-				labelVal1.setEnabled(true);
-				labelVal2.setEnabled(true);
-				textVal1.setEnabled(true);
-				textVal2.setEnabled(true);	
-			}
+        } else if (source == noneButton) {
+            textOrder.setEnabled(false);
+            labelOrder.setEnabled(false);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
+            lowPass.setEnabled(false);
+            highPass.setEnabled(false);
+            bandPass.setEnabled(false);
+            bandStop.setEnabled(false);
+            textF1.setEnabled(false);
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
+            labelF1.setEnabled(false);
+            textF2.setEnabled(false);
+            labelF2.setEnabled(false);
+        } else if (source == gaussianFilter) {
+            textOrder.setEnabled(false);
+            labelOrder.setEnabled(false);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
+            textF1.setEnabled(true);
+            labelF1.setText("Frequency F1 > 0.0 ");
+            labelF1.setEnabled(true);
+            textF2.setEnabled(false);
+            labelF2.setEnabled(false);
+            lowPass.setEnabled(true);
+            highPass.setEnabled(true);
+            bandPass.setEnabled(false);
+            if (bandPass.isSelected()) {
+                bandPass.setSelected(false);
+                highPass.setSelected(true);
+            }
+            bandStop.setEnabled(false);
+            if (bandStop.isSelected()) {
+                bandStop.setSelected(false);
+                highPass.setSelected(true);
+            }
+        } else if (source == butterworthFilter) {
+            textOrder.setEnabled(true);
+            labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
+            lowPass.setEnabled(true);
+            highPass.setEnabled(true);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);
+            textF1.setEnabled(true);
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
+            labelF1.setEnabled(true);
+            if (bandPass.isSelected() || bandStop.isSelected()) {
+                textF2.setEnabled(true);
+                labelF2.setEnabled(true);
+            }
+            else {
+            	textF2.setEnabled(false);
+                labelF2.setEnabled(false);	
+            }
+        } else if (source == chebyshevIFilter) {
+            textOrder.setEnabled(true);
+            labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(true);
+            labelEpsilon.setEnabled(true);
+            lowPass.setEnabled(true);
+            highPass.setEnabled(true);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);
+            textF1.setEnabled(true);
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
+            labelF1.setEnabled(true);
+            if (bandPass.isSelected() || bandStop.isSelected()) {
+                textF2.setEnabled(true);
+                labelF2.setEnabled(true);
+            }
+            else {
+            	textF2.setEnabled(false);
+                labelF2.setEnabled(false);	
+            }
+        } else if (source == chebyshevIIFilter) {
+        	textF1.setEnabled(true);
+        	labelF1.setText("Freq F1 > 1/(2*PI) to 1.0 ");
+            labelF1.setEnabled(true);
+            if (bandPass.isSelected() || bandStop.isSelected()) {
+                textF2.setEnabled(true);
+                labelF2.setEnabled(true);
+            }
+            else {
+            	textF2.setEnabled(false);
+                labelF2.setEnabled(false);	
+            }
+            textOrder.setEnabled(true);
+            labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(true);
+            labelEpsilon.setEnabled(true);
+            lowPass.setEnabled(true);
+            highPass.setEnabled(true);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);
+        } else if ((source == lowPass) || (source == highPass)) {
+            textF2.setEnabled(false);
+            labelF2.setEnabled(false);
+        } else if ((source == bandPass) || (source == bandStop)) {
+            textF2.setEnabled(true);
+            labelF2.setEnabled(true);
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -130,71 +232,179 @@ public class JDialogHartleyTransform extends JDialogScriptableBase implements Al
 
         setTitle("Hartley Transform");
         getContentPane().setLayout(new BorderLayout());
-        JPanel paramsPanel = new JPanel(new GridBagLayout());
-        paramsPanel.setBorder(buildTitledBorder("Transform parameters"));
+        
+        constructionPanel = new JPanel(new GridBagLayout());
+        constructionPanel.setBorder(buildTitledBorder("Filter construction methods"));
+
+        constructionGroup = new ButtonGroup();
+        noneButton = new JRadioButton("No filter", true);
+        noneButton.setFont(serif12);
+        noneButton.setForeground(Color.black);
+        noneButton.addActionListener(this);
+        constructionGroup.add(noneButton);
+       
+        butterworthFilter = new JRadioButton("Butterworth filter", false);
+        butterworthFilter.setFont(serif12);
+        butterworthFilter.setForeground(Color.black);
+        butterworthFilter.addActionListener(this);
+        constructionGroup.add(butterworthFilter);
+
+        gaussianFilter = new JRadioButton("Gaussian filter", false);
+        gaussianFilter.setFont(serif12);
+        gaussianFilter.setForeground(Color.black);
+        gaussianFilter.addActionListener(this);
+        constructionGroup.add(gaussianFilter);
+        
+        chebyshevIFilter = new JRadioButton("Chebyshev Type I filter", false);
+        chebyshevIFilter.setFont(serif12);
+        chebyshevIFilter.setForeground(Color.black);
+        chebyshevIFilter.addActionListener(this);
+        constructionGroup.add(chebyshevIFilter);
+
+        chebyshevIIFilter = new JRadioButton("Chebyshev Type II filter", false);
+        chebyshevIIFilter.setFont(serif12);
+        chebyshevIIFilter.setForeground(Color.black);
+        chebyshevIIFilter.addActionListener(this);
+        constructionGroup.add(chebyshevIIFilter);
+
+        textOrder = new JTextField(10);
+        textOrder.setText("1");
+        textOrder.setFont(serif12);
+        textOrder.setForeground(Color.black);
+        textOrder.setEnabled(false);
+
+        labelOrder = new JLabel("Order");
+        labelOrder.setForeground(Color.black);
+        labelOrder.setFont(serif12);
+        labelOrder.setEnabled(false);
+        
+        textEpsilon = new JTextField(10);
+        textEpsilon.setText("0.5");
+        textEpsilon.setFont(serif12);
+        textEpsilon.setForeground(Color.black);
+        textEpsilon.setEnabled(false);
+
+        labelEpsilon = new JLabel("Maximum ripple");
+        labelEpsilon.setForeground(Color.black);
+        labelEpsilon.setFont(serif12);
+        labelEpsilon.setEnabled(false);
         
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         
-        /*processorGroup = new ButtonGroup();
-        singleButton = new JRadioButton("Single processor", true);
-        singleButton.setFont(serif12);
-        processorGroup.add(singleButton);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        paramsPanel.add(singleButton, gbc);
-        
-        multiButton = new JRadioButton("Multiple processors", false);
-        multiButton.setFont(serif12);
-        processorGroup.add(multiButton);
-        gbc.gridx = 0;
+        constructionPanel.add(noneButton, gbc);
         gbc.gridy = 1;
-        paramsPanel.add(multiButton, gbc);*/
-        
-        comboBoxFilterType = buildFilterTypeComboBox();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        JLabel labelFilter = new JLabel("Coefficients filter");
-        labelFilter.setFont(serif12);
-        labelFilter.setForeground(Color.black);
-        paramsPanel.add(labelFilter, gbc);
-        gbc.gridx = 1;
-        paramsPanel.add(comboBoxFilterType,gbc);
-        
-        labelVal1 = new JLabel("Value");
-        labelVal1.setFont(serif12);
-        labelVal1.setForeground(Color.black);
-        labelVal1.setEnabled(false);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        paramsPanel.add(labelVal1, gbc);
-        
-        textVal1 = new JTextField(10);
-        textVal1.setFont(serif12);
-        textVal1.setForeground(Color.black);
-        textVal1.setEnabled(false);
-        gbc.gridx = 1;
-        paramsPanel.add(textVal1, gbc);
-        
-        labelVal2 = new JLabel("Substitute");
-        labelVal2.setFont(serif12);
-        labelVal2.setForeground(Color.black);
-        labelVal2.setEnabled(false);
-        gbc.gridx = 0;
+        constructionPanel.add(butterworthFilter, gbc);
         gbc.gridy = 2;
-        paramsPanel.add(labelVal2, gbc);
-        
-        textVal2 = new JTextField(10);
-        textVal2.setFont(serif12);
-        textVal2.setForeground(Color.black);
-        textVal2.setEnabled(false);
+        constructionPanel.add(gaussianFilter, gbc);
+        gbc.gridy = 3;
+        constructionPanel.add(chebyshevIFilter, gbc);
+        gbc.gridy = 4;
+        constructionPanel.add(chebyshevIIFilter, gbc);
         gbc.gridx = 1;
-        paramsPanel.add(textVal2, gbc);
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
+        constructionPanel.add(labelOrder, gbc);
+        gbc.gridx = 2;
+        constructionPanel.add(textOrder, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        constructionPanel.add(labelEpsilon, gbc);
+        gbc.gridx = 2;
+        constructionPanel.add(textEpsilon, gbc);
         
-        
-        getContentPane().add(paramsPanel, BorderLayout.CENTER);
+        filterPanel = new JPanel(new GridBagLayout());
+        filterPanel.setBorder(buildTitledBorder("Filter specifications"));
+
+        filterTypeGroup = new ButtonGroup();
+
+        lowPass = new JRadioButton("Lowpass", true);
+        lowPass.setFont(serif12);
+        lowPass.setForeground(Color.black);
+        lowPass.addActionListener(this);
+        lowPass.setEnabled(false);
+        filterTypeGroup.add(lowPass);
+
+            
+        highPass = new JRadioButton("Highpass", false);
+        highPass.setFont(serif12);
+        highPass.addActionListener(this);
+        highPass.setForeground(Color.black);
+        highPass.setEnabled(false);
+        filterTypeGroup.add(highPass);
+
+        bandPass = new JRadioButton("Bandpass", false);
+        bandPass.setFont(serif12);
+        bandPass.setForeground(Color.black);
+        bandPass.addActionListener(this);
+        bandPass.setEnabled(false);
+        filterTypeGroup.add(bandPass);
+
+        bandStop = new JRadioButton("Bandstop", false);
+        bandStop.setForeground(Color.black);
+        bandStop.setFont(serif12);
+        bandStop.addActionListener(this);
+        bandStop.setEnabled(false);
+        filterTypeGroup.add(bandStop);
+
+        textF1 = new JTextField(10);
+        textF1.setText("0.1");
+        textF1.setFont(serif12);
+        textF1.setEnabled(false);
+
+        labelF1 = new JLabel("Frequency F1 > 0.0 to 1.0 ");
+        labelF1.setForeground(Color.black);
+        labelF1.setFont(serif12);
+        labelF1.setEnabled(false);
+
+        textF2 = new JTextField(10);
+        textF2.setText("0.4");
+        textF2.setFont(serif12);
+        textF2.setEnabled(false);
+
+        labelF2 = new JLabel("F2 exceeds F1 0.0 to 1.0 ");
+        labelF2.setForeground(Color.black);
+        labelF2.setFont(serif12);
+        labelF2.setEnabled(false);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        filterPanel.add(lowPass, gbc);
+        gbc.gridx = 1;
+        filterPanel.add(labelF1, gbc);
+        gbc.gridx = 2;
+        gbc.weightx = .5;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        filterPanel.add(textF1, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        filterPanel.add(highPass, gbc);
+        gbc.gridy = 2;
+        filterPanel.add(bandPass, gbc);
+        gbc.gridx = 1;
+        filterPanel.add(labelF2, gbc);
+        gbc.gridx = 2;
+        filterPanel.add(textF2, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        filterPanel.add(bandStop, gbc);
+
+        mainPanel = new JPanel(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(constructionPanel, gbc);
+        gbc.gridy = 1;
+        mainPanel.add(filterPanel, gbc);
+
+        getContentPane().add(mainPanel);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setResizable(true);
@@ -202,86 +412,157 @@ public class JDialogHartleyTransform extends JDialogScriptableBase implements Al
         System.gc();
     }
     
-    private JComboBox<String> buildFilterTypeComboBox() {
-    	final JComboBox<String> comboBox = new JComboBox<String>();
-    	comboBox.setFont(serif12);
-        comboBox.setBackground(Color.white);
-        comboBox.addItem("NONE");
-        comboBox.addItem("SOFT");
-        comboBox.addItem("NN_GARROTE");
-        comboBox.addItem("HARD");
-        comboBox.addItem("GREATER");
-        comboBox.addItem("LESS");
-        comboBox.addItem("THRESHOLD_FIRM");
-        comboBox.setSelectedIndex(0);
-        comboBox.addActionListener(this);
-    	return comboBox;
-    }
-    
     private boolean setVariables() {
     	String tmpStr;
-    	String selection = (String)comboBoxFilterType.getSelectedItem();
-    	if (selection.equals("NONE")) {
-    		filterType = FILTER_NONE;
-    	}
-    	else if (selection.equals("SOFT")) {
-    		filterType = FILTER_SOFT;
-    	}
-    	else if (selection.equals("NN_GARROTE")) {
-    		filterType = FILTER_NN_GARROTE;
-    	}
-    	else if (selection.equals("HARD")) {
-    	    filterType = FILTER_HARD;
-    	}
-    	else if (selection.equals("GREATER")) {
-    	    filterType = FILTER_GREATER;
-    	}
-    	else if (selection.equals("LESS")) {
-    	    filterType = FILTER_LESS;
-    	}
-    	else if (selection.equals("THRESHOLD_FIRM")) {
-    	    filterType = FILTER_THRESHOLD_FIRM;
-    	}
-    	
-    	if (filterType != FILTER_NONE) {
-    		tmpStr = textVal1.getText();	
-    		try {
-    			filterVal1 = Double.valueOf(tmpStr).doubleValue();
-    		}
-    		catch (NumberFormatException e) {
-    		    MipavUtil.displayError("textval1 does not have a proper number");
-    		    textVal1.requestFocus();
-    		    textVal1.selectAll();
-    		    return false;
-    		}
-    		
-    		tmpStr = textVal2.getText();	
-    		try {
-    			filterVal2 = Double.valueOf(tmpStr).doubleValue();
-    		}
-    		catch (NumberFormatException e) {
-    		    MipavUtil.displayError("textval2 does not have a proper number");
-    		    textVal2.requestFocus();
-    		    textVal2.selectAll();
-    		    return false;
-    		}
-    	} // if (filterType != FILTER_NONE)
-    	
-    	if (filterType == FILTER_THRESHOLD_FIRM) {
-    		if (filterVal1 < 0.0) {
-    			MipavUtil.displayError("filterVal1 must be >= 0");
-    			textVal1.requestFocus();
-    		    textVal1.selectAll();
-    		    return false;
-    		}
-    		if (filterVal2 < filterVal1) {
-    			MipavUtil.displayError("filterVal2 must be >= filterVal1");
-    			textVal2.requestFocus();
-    		    textVal2.selectAll();
-    		    return false;
-    		}
-    	}
-        //multiProcessor = multiButton.isSelected();
+    	if (noneButton.isSelected()) {
+            constructionMethod = CONSTRUCTION_NONE;
+        } else if (gaussianFilter.isSelected()) {
+            constructionMethod = GAUSSIAN;
+        } else if (butterworthFilter.isSelected()) {
+            constructionMethod = BUTTERWORTH;
+            tmpStr = textOrder.getText();
+            filterOrder = Integer.parseInt(tmpStr);
+
+            if (filterOrder < 1) {
+                MipavUtil.displayError("Butterworth order must be at least 1");
+                textOrder.requestFocus();
+                textOrder.selectAll();
+
+                return false;
+            }
+        } else if (chebyshevIFilter.isSelected()) {
+        	constructionMethod = CHEBYSHEV_TYPE_I;
+            tmpStr = textOrder.getText();
+            filterOrder = Integer.parseInt(tmpStr);
+
+            if (filterOrder < 1) {
+                MipavUtil.displayError("Chebyshev order must be at least 1");
+                textOrder.requestFocus();
+                textOrder.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = textEpsilon.getText();
+            epsilon = Double.parseDouble(tmpStr);
+            
+            if (epsilon <= 0.0) {
+            	MipavUtil.displayError("Chebyshev maximum ripple epsilon must be greater than 0.0");
+            	textEpsilon.requestFocus();
+            	textEpsilon.selectAll();
+            	
+            	return false;
+            }
+        }  else if (chebyshevIIFilter.isSelected()) {
+        	constructionMethod = CHEBYSHEV_TYPE_II;
+            tmpStr = textOrder.getText();
+            filterOrder = Integer.parseInt(tmpStr);
+
+            if (filterOrder < 1) {
+                MipavUtil.displayError("Chebyshev order must be at least 1");
+                textOrder.requestFocus();
+                textOrder.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = textEpsilon.getText();
+            epsilon = Double.parseDouble(tmpStr);
+            
+            if (epsilon <= 0.0) {
+            	MipavUtil.displayError("Chebyshev maximum ripple epsilon mut be greater than 0.0");
+            	textEpsilon.requestFocus();
+            	textEpsilon.selectAll();
+            	
+            	return false;
+            }
+        }
+
+    	if (lowPass.isSelected()) {
+            filterType = LOWPASS;
+        } else if (highPass.isSelected()) {
+            filterType = HIGHPASS;
+        } else if (bandPass.isSelected()) {
+            filterType = BANDPASS;
+        } else if (bandStop.isSelected()) {
+            filterType = BANDSTOP;
+        }
+
+        tmpStr = textF1.getText();
+
+        
+        if (constructionMethod == GAUSSIAN) {
+            f1 = Double.valueOf(tmpStr).doubleValue();
+
+            if (f1 <= 0.0) {
+                MipavUtil.displayError("F1 must exceed 0.0");
+                textF1.requestFocus();
+                textF1.selectAll();
+
+                return false;
+            }
+        } // end of else if (constructionMethod == GAUSSIAN)
+        else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I)) {
+            f1 = Double.valueOf(tmpStr).doubleValue();
+
+            if (f1 <= 0.0) {
+                MipavUtil.displayError("F1 must exceed 0.0");
+                textF1.requestFocus();
+                textF1.selectAll();
+
+                return false;
+            } else if (f1 > 1.0) {
+                MipavUtil.displayError("F1 must not exceed 1.0");
+                textF1.requestFocus();
+                textF1.selectAll();
+
+                return false;
+            }
+        } // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I))
+        else if (constructionMethod == CHEBYSHEV_TYPE_II) {
+        	f1 = Double.valueOf(tmpStr).doubleValue();
+
+            if (f1 <= 1.0/(2.0*Math.PI)) {
+                MipavUtil.displayError("F1 must exceed 1/(2.0*PI)");
+                textF1.requestFocus();
+                textF1.selectAll();
+
+                return false;
+            } else if (f1 > 1.0) {
+                MipavUtil.displayError("F1 must not exceed 1.0");
+                textF1.requestFocus();
+                textF1.selectAll();
+
+                return false;
+            }
+        	
+        } // else if (constructionMethod == CHEBYSHEV_TYPE_II)
+       
+
+        if (((filterType == BANDPASS) || (filterType == BANDSTOP)) && (constructionMethod != CONSTRUCTION_NONE)) {
+            tmpStr = textF2.getText();
+
+            if (testParameter(tmpStr, 0.0, 1.0)) {
+                f2 = Double.valueOf(tmpStr).doubleValue();
+
+
+                if (f2 <= f1) {
+                    MipavUtil.displayError("F2 must exceed F1");
+                    textF2.requestFocus();
+                    textF2.selectAll();
+
+                    return false;
+                }
+            } else {
+                MipavUtil.displayError("F2 must be between 0.0 and 1.0");
+                textF2.requestFocus();
+                textF2.selectAll();
+
+                return false;
+            }
+
+        } // if (((filterType == BANDPASS) || (filterType == BANDSTOP)) && (constructionMethod != CONSTRUCTION_NONE))
+
     	return true;
     }
 	
@@ -293,7 +574,8 @@ public class JDialogHartleyTransform extends JDialogScriptableBase implements Al
 		    inverseImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_inverse");	
 		    
 		    
-		    htAlgo = new HartleyTransform2(transformImage, inverseImage, srcImage, filterType, filterVal1, filterVal2);
+		    htAlgo = new HartleyTransform2(transformImage, inverseImage, srcImage, constructionMethod, filterType, f1, f2,
+		    		filterOrder, epsilon);
 		    
 		    // This is very important. Adding this object as a listener allows the algorithm to
 		    // notify this object when it has completed of failed. See algorithm performed event.
@@ -398,22 +680,79 @@ public class JDialogHartleyTransform extends JDialogScriptableBase implements Al
 
         dispose();
     }
+    
+    /**
+     * Accessor that sets the filter type (LOWPASS, HIGHPASS, BANDPASS, BANDSTOP).
+     *
+     * @param  type  Value to set the filter type to.
+     */
+    public void setFilterType(int type) {
+        filterType = type;
+    }
+
+    /**
+     * Accessor that sets the frequency 1 variable.
+     *
+     * @param  scale  Value to set frequency 1 to.
+     */
+    public void setF1(double scale) {
+        f1 = scale;
+    }
+
+    /**
+     * Accessor that sets the frequency 2 variable.
+     *
+     * @param  scale  Value to set frequency 2 to.
+     */
+    public void setF2(double scale) {
+        f2 = scale;
+    }
+    
+    /**
+     * Accessor that sets the construction method (WINDOW, GAUSSIAN, BUTTERWORTH).
+     *
+     * @param  method  Value to set the construction method to.
+     */
+    public void setMethod(int method) {
+        constructionMethod = method;
+    }
+    
+   /**
+    * 
+    * @param epsilon
+    */
+    public void setEpsilon(double epsilon) {
+    	this.epsilon = epsilon;
+    }
+    
+    /**
+     * Accessor that sets the butterworth order.
+     *
+     * @param  order  Value to set the butterworth order to.
+     */
+    public void setfilterOrder(int order) {
+        filterOrder = order;
+    }
 	
 	protected void setGUIFromParams() {
 		srcImage = scriptParameters.retrieveInputImage();
-		//multiProcessor = scriptParameters.getParams().getBoolean("mp");
-		filterType = scriptParameters.getParams().getInt("filter_type");
-		filterVal1 = scriptParameters.getParams().getDouble("filter_val1");
-		filterVal2 = scriptParameters.getParams().getDouble("filter_val2");
+		setFilterType(scriptParameters.getParams().getInt("filter_type"));
+        setF1(scriptParameters.getParams().getDouble("freq1"));
+        setF2(scriptParameters.getParams().getDouble("freq2"));
+        setMethod(scriptParameters.getParams().getInt("construction_method"));
+        setfilterOrder(scriptParameters.getParams().getInt("filter_order"));
+        setEpsilon(scriptParameters.getParams().getDouble("epsilon"));
 	}
 	
 	protected void storeParamsFromGUI() throws ParserException {
 		scriptParameters.storeInputImage(srcImage);	
 		scriptParameters.storeImageInRecorder(transformImage);
 		scriptParameters.storeImageInRecorder(inverseImage);
-		//scriptParameters.getParams().put(ParameterFactory.newParameter("mp", multiProcessor));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
-		scriptParameters.getParams().put(ParameterFactory.newParameter("filter_val1", filterVal1));
-		scriptParameters.getParams().put(ParameterFactory.newParameter("filter_val2", filterVal2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", f1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", f2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_order", filterOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("epsilon", epsilon));
 	}
 }
