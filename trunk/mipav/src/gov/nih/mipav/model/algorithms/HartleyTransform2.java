@@ -2,9 +2,6 @@ package gov.nih.mipav.model.algorithms;
 
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
@@ -83,18 +80,25 @@ public class HartleyTransform2 extends AlgorithmBase {
     // there are one for data and one for instructions, sizes are 8-64KB.
     private static final int L1_CACHE_BYTES = 8192;
     
-    private final int FILTER_NONE = 0;
-	private final int FILTER_SOFT = 1;
-	private final int FILTER_NN_GARROTE = 2;
-	private final int FILTER_HARD = 3;
-	private final int FILTER_GREATER = 4;
-	private final int FILTER_LESS = 5;
-	private final int FILTER_THRESHOLD_FIRM = 6;
-	private int filterType;
-	private double filterVal1;
-	private double filterVal2;
+	int xDim;
+	int yDim;
     
+	private int constructionMethod;
+    public static final int CONSTRUCTION_NONE = 0;
+    public static final int GAUSSIAN = 2;
+    public static final int BUTTERWORTH = 3;
+    public static final int CHEBYSHEV_TYPE_I = 5;
+    public static final int CHEBYSHEV_TYPE_II = 6;
     
+    private int filterType;
+    private double f1;
+    private double f2;
+	public static final int LOWPASS = 1;
+    public static final int HIGHPASS = 2;
+    public static final int BANDPASS = 3;
+    public static final int BANDSTOP = 4;
+    private int filterOrder;
+    private double epsilon;  // maximum ripple in Chebyshev filters
     public HartleyTransform2() {
 		
 	}
@@ -129,14 +133,17 @@ public class HartleyTransform2 extends AlgorithmBase {
     	}
     }
     
-    public HartleyTransform2(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg,
-    		int filterType, double filterVal1, double filterVal2) {
+    public HartleyTransform2(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg, int constructionMethod,
+    		int filterType, double f1, double f2, int filterOrder, double epsilon) {
 		super(null, srcImg);
 		this.transformImage = transformImage;
 		this.inverseImage = inverseImage;
+		this.constructionMethod = constructionMethod;
 		this.filterType = filterType;
-		this.filterVal1 = filterVal1;
-		this.filterVal2 = filterVal2;
+		this.f1 = f1;
+		this.f2 = f2;
+		this.filterOrder = filterOrder;
+		this.epsilon = epsilon;
 	}
     
     public void fht2D(int yDim, int xDim, double src[][], double dst[][], boolean forwardTransform) {
@@ -691,8 +698,6 @@ public class HartleyTransform2 extends AlgorithmBase {
 
 	
 	public void runAlgorithm() {
-		int xDim;
-		int yDim;
 		int zDim;
 		int length;
 		double doubleBuffer[];
@@ -737,7 +742,7 @@ public class HartleyTransform2 extends AlgorithmBase {
                 srcImage.exportData(z * length, length, doubleBuffer); // locks and releases lock
             } catch (IOException error) {
                 doubleBuffer = null;
-                errorCleanUp("Hartley Transform: Image(s) locked", true);
+                errorCleanUp("Hartley Transform2: Image(s) locked", true);
 
                 return;
             }
@@ -754,16 +759,29 @@ public class HartleyTransform2 extends AlgorithmBase {
         			src[y][x] = 0;
         		}
         	}
+        	center(doubleBuffer);
         	try {
                 transformImage.importData(z*length, doubleBuffer, false);
              } catch (IOException error) {
                 doubleBuffer = null;
-                errorCleanUp("Discrete Sine Transform: Image(s) locked", true);
+                errorCleanUp("Hartley Transform2: Image(s) locked", true);
 
                 return;
              }
-        	if (filterType != FILTER_NONE) {
-        		filter(doubleBuffer, filterType,filterVal1,filterVal2);	
+        	if (constructionMethod != CONSTRUCTION_NONE) {
+        		if (constructionMethod == GAUSSIAN) {
+                    makeGaussianFilter(doubleBuffer, f1);
+                }
+        		else if (constructionMethod == BUTTERWORTH) {
+        			makeButterworthFilter(doubleBuffer, f1, f2);
+        		}
+        		else if (constructionMethod == CHEBYSHEV_TYPE_I) {
+        		    makeChebyshevTypeIFilter(doubleBuffer, f1, f2);	
+        		}
+        		else if (constructionMethod == CHEBYSHEV_TYPE_II) {
+        		    makeChebyshevTypeIIFilter(doubleBuffer, f1, f2);	
+        		}
+        		center(doubleBuffer);
         		for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
             			dst[y][x] = doubleBuffer[x + y * xDim];
@@ -792,238 +810,436 @@ public class HartleyTransform2 extends AlgorithmBase {
         return;
 	}
 	
-	private void filter(double data[], int filterType, double filterVal1, double filterVal2) {
-    	if (filterType == FILTER_SOFT) {
-    		soft(data, filterVal1, filterVal2);
-    	}
-    	else if (filterType == FILTER_NN_GARROTE) {
-    		nn_garrote(data, filterVal1, filterVal2);
-    	}
-    	else if (filterType == FILTER_HARD) {
-    		hard(data, filterVal1, filterVal2);
-    	}
-    	else if (filterType == FILTER_GREATER) {
-    		greater(data, filterVal1, filterVal2);
-    	}
-    	else if (filterType == FILTER_LESS) {
-    		less(data, filterVal1, filterVal2);
-    	}
-    	else if (filterType == FILTER_THRESHOLD_FIRM) {
-    		threshold_firm(data, filterVal1, filterVal2);
-    	}
-    	return;
-    }
-    
-    public double[] soft(double data[], double value, double substitute) {
-    	// Default substitute = 0
-    	int i;
-    	double magnitude[] = new double[data.length];
-    	double thresholded[] = new double[data.length];
-    	for (i = 0; i < data.length; i++) {
-    		if (data[i] == 0.0) {
-    			thresholded[i] = 0.0;
-    		}
-    		else {
-    		    magnitude[i] = Math.abs(data[i]);
-    		    thresholded[i] = (1.0 - value/magnitude[i]);
-    		    if (thresholded[i] < 0.0) {
-    		    	thresholded[i] = 0.0;
-    		    }
-    		    thresholded[i] = data[i] * thresholded[i];
-    		}
-    	}
-    	
-    	if (substitute == 0) {
-    		return thresholded;
-    	}
-    	else {
-    		for (i = 0; i < thresholded.length; i++) {
-    			if (magnitude[i] < value) {
-    				thresholded[i] = substitute;
-    			}
-    		}
-    		return thresholded;
-    	}
-    }
-    
-    public double[] nn_garrote(double data[], double value, double substitute) {
-        // Non-negative Garrote
-    	// Default substitute = 0
-    	int i;
-    	double magnitude[] = new double[data.length];
-    	double valueSquared = value * value;
-    	double thresholded[] = new double[data.length];
-    	for (i = 0; i < data.length; i++) {
-    		if (data[i] == 0.0) {
-    			thresholded[i] = 0.0;
-    		}
-    		else {
-    		    magnitude[i] = Math.abs(data[i]);
-    		    thresholded[i] = (1.0 - valueSquared/(magnitude[i] * magnitude[i]));
-    		    if (thresholded[i] < 0.0) {
-    		    	thresholded[i] = 0.0;
-    		    }
-    		    thresholded[i] = data[i] * thresholded[i];
-    		}
-    	}
-    	
-    	if (substitute == 0) {
-    		return thresholded;
-    	}
-    	else {
-    		for (i = 0; i < thresholded.length; i++) {
-    			if (magnitude[i] < value) {
-    				thresholded[i] = substitute;
-    			}
-    		}
-    		return thresholded;
-    	}
-    }
-    
-    public double[] hard(double data[], double value, double substitute) {
-    	// default substitute = 0.0
-    	double data2[] = data.clone();
-    	int i;
-        for (i = 0; i < data2.length; i++) {
-            if (Math.abs(data2[i]) < value) {
-            	data2[i] = substitute;
+	
+    private void makeGaussianFilter(double buffer[], double rmsFreq) {
+        double xexpDenom, yexpDenom;
+        int x, y, pos;
+        double coeff;
+        double xCenter = (xDim-1.0)/2.0;
+        double yCenter = (yDim-1.0)/2.0;
+
+        xexpDenom = 2.0 * rmsFreq * rmsFreq * xCenter*xCenter;;
+        yexpDenom = 2.0 * rmsFreq * rmsFreq * yCenter*yCenter;;
+
+
+            
+
+        if (filterType == LOWPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    coeff = (Math.exp(-(x-xCenter) * (x-xCenter) / xexpDenom) *
+                                         Math.exp(-(y-yCenter) * (y-yCenter) / yexpDenom));
+                    buffer[pos] *= coeff;
+                }
             }
-        }
-        return data2;
+        } // end of if (filterType == LOWPASS)
+        else if (filterType == HIGHPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    coeff =  (1.0 -
+                                     (Math.exp(-(x-xCenter) * (x-xCenter) / xexpDenom) *
+                                          Math.exp(-(y-yCenter) * (y-yCenter) / yexpDenom)));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // end of if (filterType == HIGHPASS)
+        
     }
     
-    public double[][] hard(double data[][], double value, double substitute) {
-    	// default substitute = 0.0
-    	double data2[][] = data.clone();
-    	int i,j;
-        for (i = 0; i < data2.length; i++) {
-        	for (j = 0; j < data2[i].length; j++) {
-	            if (Math.abs(data2[i][j]) < value) {
-	            	data2[i][j] = substitute;
-	            }
-        	}
-        }
-        return data2;
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  fr1  DOCUMENT ME!
+     * @param  fr2  DOCUMENT ME!
+     */
+    private void makeButterworthFilter(double buffer[], double fr1, double fr2) {
+        int x, y, pos;
+        double distsq, width, centersq, coeff, num, xnorm, ynorm;
+        double xCenter = (xDim-1.0)/2.0;
+        double yCenter = (yDim-1.0)/2.0;
+        xnorm = xCenter*xCenter;
+        ynorm = yCenter*yCenter;
+
+
+            if (filterType == LOWPASS) {
+                for (y = 0; y <= (yDim - 1); y++) {
+                    for (x = 0; x <= (xDim - 1); x++) {
+                        pos = (y * xDim) + x;
+                        distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                        coeff = (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), filterOrder)));
+                        buffer[pos] *= coeff;
+                    }
+                }
+            } // end of if (filterType == LOWPASS)
+            else if (filterType == HIGHPASS) {
+                for (y = 0; y <= (yDim - 1); y++) {
+                    for (x = 0; x <= (xDim - 1); x++) {
+                        pos = (y * xDim) + x;
+                        distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                        coeff = (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
+                        buffer[pos] *= coeff;
+                    }
+                }
+            } // end of if (filterType == HIGHPASS)
+            else if (filterType == BANDPASS) {
+                width = fr2 - fr1;
+                centersq = fr1 * fr2;
+                for (y = 0; y <= (yDim - 1); y++) {
+                    for (x = 0; x <= (xDim - 1); x++) {
+                        pos =  (y * xDim) + x;
+                        distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                        num = Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder);
+                        coeff =  (num / (num + Math.pow((distsq - centersq), 2.0 * filterOrder)));
+                        buffer[pos] *= coeff;
+                    }
+                }
+            } // end of if (filterType == BANDPASS)
+            else if (filterType == BANDSTOP) {
+                width = fr2 - fr1;
+                centersq = fr1 * fr2;
+                for (y = 0; y <= (yDim - 1); y++) {
+                    for (x = 0; x <= (xDim - 1); x++) {
+                        pos = (y * xDim) + x;
+                        distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                        num = Math.pow((distsq - centersq), 2.0 * filterOrder);
+                        coeff = (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder)));
+                        buffer[pos] *= coeff;
+                    }
+                }
+            } // else if (filterType == BANDSTOP)
+        
     }
     
-    public double[] greater(double data[], double value, double substitute) {
-    	double data2[] = data.clone();
-        // default substitute = 0.0
-        // greater thresholding only supports real data
-    	int i;
-    	for (i = 0; i  < data2.length; i++) {
-    		if (data2[i] < value) {
-    			data2[i] = substitute;
-    		}
+    private double Chebyshev(int order, double w) {
+    	double wSquared;
+    	double wCubed;
+    	double wFourth;
+    	double wFifth;
+    	double wSixth;
+    	double wSeventh;
+    	double wEighth;
+    	double wNinth;
+    	double wTenth;
+    	double wEleventh;
+    	double wTwelfth;
+    	double wThirteenth;
+    	switch (order) {
+    	case 0:
+    		return 1;
+    	case 1:
+    		return w;
+    	case 2:
+    		return 2.0*w*w - 1;
+    	case 3:
+    		return 4.0*w*w*w - 3.0*w;
+    	case 4:
+    		wSquared = w * w;
+    		return 8.0*wSquared*wSquared - 8.0*wSquared + 1.0;
+    	case 5:
+    		wCubed = w * w * w;
+    		return 16.0*wCubed*w*w - 20.0*wCubed + 5.0*w;
+    	case 6:
+    		wSquared = w * w;
+    		wFourth = wSquared * wSquared;
+    		return 32.0*wFourth*wSquared -48.0*wFourth + 18.0*wSquared - 1.0;
+    	case 7:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		return 64.0*wFifth*wSquared - 112.0*wFifth + 56.0*wCubed - 7.0*w;
+    	case 8:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		return 128.0*wFourth*wFourth - 256.0*wSixth + 160.0*wFourth -32.0*wSquared + 1.0;
+    	case 9:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		return 256.0*wSeventh*wSquared - 576.0*wSeventh + 432.0*wFifth - 120.0*wCubed + 9.0*w;
+    	case 10:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		return 512.0*wEighth*wSquared - 1280.0*wEighth + 1120.0*wSixth - 400.0*wFourth + 50.0*wSquared - 1.0;
+    	case 11:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		return 1024.0*wNinth*wSquared - 2816.0*wNinth + 2816.0*wSeventh - 1232.0*wFifth + 220.0*wCubed - 11.0*w;
+    	case 12:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		wTenth = wEighth*wSquared;
+    		return 2048.0*wSixth*wSixth - 6144.0*wTenth + 6912.0*wEighth - 3584.0*wSixth + 840.0*wFourth - 72.0*wSquared + 1.0;
+    	case 13:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		wEleventh = wNinth*wSquared;
+    		return 4096.0*wEleventh*wSquared - 13312.0*wEleventh + 16640.0*wNinth - 9984.0*wSeventh + 2912.0*wFifth
+    				- 364.0*wCubed + 13.0;
+    	case 14:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		wTenth = wEighth*wSquared;
+    		wTwelfth = wSixth * wSixth;
+    		return 8192.0*wTwelfth*wSquared - 28672.0*wTwelfth + 39424.0*wTenth - 26880.0*wEighth + 9408.0*wSixth
+    				- 1568.0*wFourth + 98.0*wSquared - 1.0;
+    	case 15:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		wEleventh = wNinth*wSquared;
+    		wThirteenth = wEleventh*wSquared;
+    		return 16384.0*wThirteenth*wSquared - 61440.0*wThirteenth + 92160.0*wEleventh - 70400.0*wNinth + 28800.0*wSeventh
+    				- 6048.0*wFifth + 560.0*wCubed - 15.0*w;
+    	default:
+    		MipavUtil.displayError("No Chebyshev polynomial returned");
+    		return Double.NaN;
     	}
-        return data2;
+    	 
     }
     
-    public double[] less(double data[], double value, double substitute) {
-    	// default substitute = 0.0
-        // less thresholding only supports real data
-    	double data2[] = data.clone();
-    	int i;
-    	for (i = 0; i < data2.length; i++) {
-    		if (data2[i] > value) {
-    			data2[i] = substitute;
-    		}
-    	}
-    	return data2;
+    private void makeChebyshevTypeIFilter(double buffer[], double fr1, double fr2) {
+    	// Lowpass filter has ripples in the passband but no ripples in the stopband.
+    	int x, y, pos;
+        double distsq, coeff, xnorm, ynorm;
+        
+        double epsilonSquared = epsilon*epsilon;
+        double ratio;
+        double Tn;
+        double xCenter = (xDim-1.0)/2.0;
+        double yCenter = (yDim-1.0)/2.0;
+     
+        xnorm = xCenter*xCenter;
+        ynorm = yCenter*yCenter;
+
+        if (filterType == LOWPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = Math.sqrt(distsq)/fr1;
+                    Tn = Chebyshev(filterOrder, ratio);
+                    coeff = (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // end of if (filterType == LOWPASS)
+        else if (filterType == HIGHPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = fr1/Math.sqrt(distsq);
+                    Tn = Chebyshev(filterOrder, ratio);
+                    coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == HIGHPASS)	
+        else if (filterType == BANDPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                    Tn = Chebyshev(filterOrder, ratio);
+                    coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == BANDPASS)
+        else if (filterType == BANDSTOP) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                    Tn = Chebyshev(filterOrder, ratio);
+                    coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == BANDSTOP)
+        
     }
     
-    public double[] threshold_firm(double data[], double value_low, double value_high) {
-        // Firm threshold.
+    private void makeChebyshevTypeIIFilter(double buffer[], double fr1, double fr2) {
+    	// Lowpass filter has no ripples in the passband but has ripples in the stopband
+    	// fr1 end of pass band only works for 2.0 * PI * fr1 > 1.0
+    	// fr2 start of stop band
+    	// fr2 > fr1
+    	int x, y, pos;
+        double distsq, coeff, xnorm, ynorm;
+        
+        double ratio;
+        double Tn;
+        double Tn2;
+        double product;
+        double TnSquared;
+        
+        Tn2 = Chebyshev(filterOrder, 2.0 * Math.PI * fr1); // Only works if 2.0 * PI * fr1 > 1.0
+        product = epsilon * epsilon * Tn2 * Tn2;
+        
+        double xCenter = (xDim-1.0)/2.0;
+        double yCenter = (yDim-1.0)/2.0;
+     
+        xnorm = xCenter*xCenter;
+        ynorm = yCenter*yCenter;
 
-        // The approach is intermediate between soft and hard thresholding [1]_. It
-        // behaves the same as soft-thresholding for values below `value_low` and
-        // the same as hard-thresholding for values above `thresh_high`.  For
-        // intermediate values, the thresholded value is in between that corresponding
-        // to soft or hard thresholding.
+        if (filterType == LOWPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = fr1/Math.sqrt(distsq);
+                    Tn = Chebyshev(filterOrder, ratio);
+                    TnSquared = Tn*Tn;
+                    coeff = (TnSquared / (TnSquared + product));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // end of if (filterType == LOWPASS)
+        else if (filterType == HIGHPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = Math.sqrt(distsq)/fr1;
+                    Tn = Chebyshev(filterOrder, ratio);
+                    TnSquared = Tn*Tn;
+                    coeff = (TnSquared / (TnSquared + product));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == HIGHPASS)
+        else if (filterType == BANDPASS) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                    Tn = Chebyshev(filterOrder, ratio);
+                    TnSquared = Tn*Tn;
+                    coeff = (TnSquared / (TnSquared + product));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == BANDPASS)
+        else if (filterType == BANDSTOP) {
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                    Tn = Chebyshev(filterOrder, ratio);
+                    TnSquared = Tn*Tn;
+                    coeff = (TnSquared / (TnSquared + product));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == BANDSTOP)
+        
+    }
+    
+    /**
+     * Centers the FFT for display purposes.
+     *
+     * @param  rData  real data buffer
+     * @param  iData  imaginary data buffer
+     */
+    private void center(double[] data) {
 
-        // Parameters
-        // ----------
-        // data : array-like
-        //    The data to threshold.  This can be either real or complex-valued.
-        // value_low : float
-        //    Any values smaller then `value_low` will be set to zero.
-        // value_high : float
-        //    Any values larger than `value_high` will not be modified.
-
-        // Notes
-        // -----
-        // This thresholding technique is also known as semi-soft thresholding [2]_.
-
-        // For each value, `x`, in `data`. This function computes::
-
-        //    if np.abs(x) <= value_low:
-        //        return 0
-        //    elif np.abs(x) > value_high:
-        //        return x
-        //    elif value_low < np.abs(x) and np.abs(x) <= value_high:
-        //        return x * value_high * (1 - value_low/x)/(value_high - value_low)
-
-        // ``firm`` is a continuous function (like soft thresholding), but is
-        // unbiased for large values (like hard thresholding).
-
-        // If ``value_high == value_low`` this function becomes hard-thresholding.
-        // If ``value_high`` is infinity, this function becomes soft-thresholding.
-
-        // Returns
-        // -------
-        // val_new : array-like
-        //    The values after firm thresholding at the specified thresholds.
-
-        // See Also
-        // --------
-        // threshold
-
-        // References
-        // ----------
-        // .. [1] H.-Y. Gao and A.G. Bruce. Waveshrink with firm shrinkage.
-        //    Statistica Sinica, Vol. 7, pp. 855-874, 1997.
-        // .. [2] A. Bruce and H-Y. Gao. WaveShrink: Shrinkage Functions and
-        //    Thresholds. Proc. SPIE 2569, Wavelet Applications in Signal and
-        //    Image Processing III, 1995.
-        //    DOI:10.1117/12.217582
-        int i;
-
-        if (value_low < 0) {
-            MipavUtil.displayError("value_low must be non-negative.");
-            return null;
-        }
-
-        if (value_high < value_low) {
-            MipavUtil.displayError("value_high must be greater than or equal to value_low.");
-            return null;
-        }
+        // center() is called after the forward fast fourier transform to enhance the display
+        // center() is called before the inverse fast fourier transform to return the data
+        // to its original ordering.
+        int i, j, k;
+        int xdim, ydim, zdim;
+        int xnew, ynew, znew;
+        int xdimHalf, ydimHalf, zdimHalf;
+        double[] centerData;
+        int newLength;
 
         
-        double magnitude[] = new double[data.length];
-        double thresholded[] = new double[data.length];
-        double vdiff = value_high - value_low;
-        for (i = 0; i < data.length; i++) {
-        	if (data[i] == 0.0) {
-        		thresholded[i] = 0.0;
-        	}
-        	else {
-        	    magnitude[i] = Math.abs(data[i]);
-        	    thresholded[i] = value_high * (1 - value_low/magnitude[i]) / vdiff;
-        	    if (thresholded[i] < 0.0) {
-        	    	thresholded[i] = 0.0;
-        	    }
-        	    thresholded[i] = data[i] * thresholded[i];
-        	}
-        }
 
-        // restore hard-thresholding behavior for values > value_high
-        for (i = 0; i < magnitude.length; i++) {
-        	if (magnitude[i] > value_high) {
-        		thresholded[i] = data[i];
-        	}
-        }
-        return thresholded;
+            try {
+                centerData = new double[xDim * yDim]; // Temp storage for centered
+            } catch (OutOfMemoryError e) {
+                centerData = null;
+                System.gc();
+                displayError("HartleyTransform2: Out of memory creating centerData");
+
+                setCompleted(false);
+
+                return;
+            }
+
+            xdimHalf = xDim / 2;
+            ydimHalf = yDim / 2;
+
+            for (j = 0; j < ydimHalf; j++) {
+
+                for (i = 0; i < xdimHalf; i++) {
+
+                    xnew = i + xdimHalf;
+                    ynew = j + ydimHalf;
+                    centerData[(xDim * ynew) + xnew] = data[(xDim * j) + i];
+                }
+            }
+
+            for (j = ydimHalf; j < yDim; j++) {
+
+                for (i = 0; i < xdimHalf; i++) {
+
+                    xnew = i + xdimHalf;
+                    ynew = j - ydimHalf;
+                    centerData[(xDim * ynew) + xnew] = data[(xDim * j) + i];
+                }
+            }
+
+            for (j = ydimHalf; j < yDim; j++) {
+
+                for (i = xdimHalf; i < xDim; i++) {
+
+                    xnew = i - xdimHalf;
+                    ynew = j - ydimHalf;
+                    centerData[(xDim * ynew) + xnew] = data[(xDim * j) + i];
+                }
+            }
+
+            for (j = 0; j < ydimHalf; j++) {
+
+                for (i = xdimHalf; i < xDim; i++) {
+
+                    xnew = i - xdimHalf;
+                    ynew = j + ydimHalf;
+                    centerData[(xDim * ynew) + xnew] = data[(xDim * j) + i];
+                }
+            }
+
+            for (i = 0; i < xDim*yDim; i++) {
+                data[i] = centerData[i];
+            }
+        
     }
+
+
 
 }
 
