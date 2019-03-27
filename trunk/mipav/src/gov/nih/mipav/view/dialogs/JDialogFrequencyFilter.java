@@ -284,7 +284,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             imageCropCheckbox.setSelected(false);
             textKernelDiameter.setEnabled(false);
             labelKernelDiameter.setEnabled(false);
-            labelF1.setText("Frequency F1 >0.0 to 1.0 ");
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
             textOrder.setEnabled(true);
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(false);
@@ -296,7 +296,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             imageCropCheckbox.setSelected(false);
             textKernelDiameter.setEnabled(false);
             labelKernelDiameter.setEnabled(false);
-            labelF1.setText("Frequency F1 >0.0 to 1.0 ");
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
             textOrder.setEnabled(true);
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(true);
@@ -308,7 +308,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             imageCropCheckbox.setSelected(false);
             textKernelDiameter.setEnabled(false);
             labelKernelDiameter.setEnabled(false);
-            labelF1.setText("Frequency F1 >0.0 to 1.0 ");
+            labelF1.setText("Frequency F1 > (1/(2*PI)) to 1.0 ");
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
             textOrder.setEnabled(true);
