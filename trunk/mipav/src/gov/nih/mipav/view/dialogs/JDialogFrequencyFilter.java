@@ -308,7 +308,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             imageCropCheckbox.setSelected(false);
             textKernelDiameter.setEnabled(false);
             labelKernelDiameter.setEnabled(false);
-            labelF1.setText("Frequency F1 > (1/(2*PI)) to 1.0 ");
+            labelF1.setText("Freq F1 > 1/(2*PI) to 1.0 ");
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
             textOrder.setEnabled(true);
