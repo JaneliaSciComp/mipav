@@ -634,7 +634,8 @@ public class StrokeSegmentationDicomReceiver {
     }
     
     public void emailReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, double resFactorCC) {
-        String reportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, resFactorCC);
+        // generate report for website
+        String reportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, resFactorCC, false);
         
         if (reportTxt == null) {
         	return;
@@ -664,6 +665,30 @@ public class StrokeSegmentationDicomReceiver {
         	MipavUtil.displayError("Unable to write core segmentation report: " + e.getMessage());
         }
         
+        // email report has different metadata
+        String emailReportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, resFactorCC, true);
+        
+        final String emailReportPath = outputDir + File.separator + "core_seg_report_email.html";
+        
+        
+        try {
+            String fileTxt = emailReportTxt;
+            
+            for (int i = 0; i < lightboxFileList.size(); i++) {
+                fileTxt = fileTxt.replaceAll(reportCidBase + (i + 1), lightboxFileList.get(i).getName());
+            }
+            
+            out = new PrintWriter(emailReportPath);
+            out.println("<html>");
+            out.print(fileTxt);
+            out.println("</html>");
+            out.close();
+            out = null;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to write core segmentation email report: " + e.getMessage());
+        }
+        
         if (reportDir != null) {
             File reportDirFile = new File(reportDir);
             if (!reportDirFile.exists()) {
@@ -682,6 +707,7 @@ public class StrokeSegmentationDicomReceiver {
                     }
                     
                     FileUtils.copyFileToDirectory(new File(htmlReportPath), reportSubDir);
+                    FileUtils.copyFileToDirectory(new File(emailReportPath), reportSubDir);
                 }
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -742,7 +768,7 @@ public class StrokeSegmentationDicomReceiver {
         }
     }
     
-    private String generateReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, double resFactorCC) {
+    private String generateReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, double resFactorCC, boolean isEmailSafeReport) {
         final DecimalFormat format = new DecimalFormat("#######.#");
         
         FileInfoDicom fileInfoDicom = (FileInfoDicom) adcImage.getFileInfo(0);
@@ -753,13 +779,24 @@ public class StrokeSegmentationDicomReceiver {
         String studyTimeStr = (String) fileInfoDicom.getTagTable().getValue("0008,0030");
         String patientName = (String) fileInfoDicom.getTagTable().getValue("0010,0010");
         
+        String institutionStr = (String) fileInfoDicom.getTagTable().getValue("0008,0080");
+        String ageStr = parseAge((String) fileInfoDicom.getTagTable().getValue("0010,1010"));
+        String sexStr = (String) fileInfoDicom.getTagTable().getValue("0010,0040");
+        
         //String reportTxt = "<html>\n";
         String reportTxt = "";
         reportTxt += "<h1>" + "MIPAV Stroke Core Segmentation Report" + "</h1>\n";
         reportTxt += "<ul>\n";
-        reportTxt += "<li>" + "<b>" + "Time of segmentation run: " + "</b>" + curDateTimeStr + "</li>\n";
-        reportTxt += "<li>" + "<b>" + "Study date and time: " + "</b>" + convertDateTimeToISOFormat(studyDateStr, studyTimeStr) + "</li>\n";
-        reportTxt += "<li>" + "<b>" + "Patient last name initial: " + "</b>" + getInitialFromName(patientName) + "</li>\n";
+        if (!isEmailSafeReport) {
+            reportTxt += "<li>" + "<b>" + "Time of segmentation run: " + "</b>" + curDateTimeStr + "</li>\n";
+            reportTxt += "<li>" + "<b>" + "Study date and time: " + "</b>" + convertDateTimeToISOFormat(studyDateStr, studyTimeStr) + "</li>\n";
+            reportTxt += "<li>" + "<b>" + "Patient last name initial: " + "</b>" + getInitialFromName(patientName) + "</li>\n";
+        } else {
+            reportTxt += "<li>" + "<b>" + "Time of segmentation run: " + "</b>" + curDateTimeStr + "</li>\n";
+            reportTxt += "<li>" + "<b>" + "Institution Name: " + "</b>" + institutionStr + "</li>";
+            reportTxt += "<li>" + "<b>" + "Patient Age: " + "</b>" + ageStr + "</li>";
+            reportTxt += "<li>" + "<b>" + "Patient Sex: " + "</b>" + sexStr + "</li>";
+        }
         //reportTxt += "<li>" + "<b>" + "" + "</b>" + "" + "</li>";
         reportTxt += "</ul>\n";
         
@@ -944,5 +981,20 @@ public class StrokeSegmentationDicomReceiver {
             log("Error loading listener properties file: " + configFileName);
             return false;
         }
+    }
+    
+    private static final String parseAge(final String dicomAge) {
+        if (dicomAge == null || dicomAge.equals("")) {
+            return "-- No Age Found --";
+        }
+        
+        final String num = dicomAge.substring(0, dicomAge.length() - 1);
+        final String type = dicomAge.substring(dicomAge.length() - 1, dicomAge.length());
+
+        if (type.equalsIgnoreCase("Y") && Integer.parseInt(num) > 90) {
+            return "90Y";
+        }
+
+        return dicomAge;
     }
 }
