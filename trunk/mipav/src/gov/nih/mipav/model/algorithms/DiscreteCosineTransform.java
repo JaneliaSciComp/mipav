@@ -1299,14 +1299,13 @@ public class DiscreteCosineTransform extends AlgorithmBase {
                     distsq = (x * x / xnorm) + (y * y / ynorm);
                     if (distsq != 0.0) {
                         ratio = fr1/Math.sqrt(distsq);
+                        Tn = Chebyshev(filterOrder, ratio);
+                        TnSquared = Tn*Tn;
+                        coeff = (TnSquared / (TnSquared + product));
                     }
                     else {
-                    	distsq = (0.1 * 0.1 /xnorm) + (0.1 * 0.1/ynorm);
-                    	ratio = fr1/Math.sqrt(distsq);
-                    }
-                    Tn = Chebyshev(filterOrder, ratio);
-                    TnSquared = Tn*Tn;
-                    coeff = (TnSquared / (TnSquared + product));
+                    	coeff = 1.0;
+                    }  
                     buffer[pos] *= coeff;
                 }
             }
@@ -1344,14 +1343,13 @@ public class DiscreteCosineTransform extends AlgorithmBase {
                     distsq = (x * x / xnorm) + (y * y / ynorm);
                     if (distsq != 0) {
                         ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                        Tn = Chebyshev(filterOrder, ratio);
+                        TnSquared = Tn*Tn;
+                        coeff = (TnSquared / (TnSquared + product));
                     }
                     else {
-                    	distsq = (0.1 * 0.1 / xnorm) + (0.1 * 0.1 / ynorm);	
-                    	ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                    	coeff = 1.0;
                     }
-                    Tn = Chebyshev(filterOrder, ratio);
-                    TnSquared = Tn*Tn;
-                    coeff = (TnSquared / (TnSquared + product));
                     buffer[pos] *= coeff;
                 }
             }
