@@ -494,7 +494,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             csvFile = new File(cmdLineCsvFile);
             
             // change output dir
-            outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+            if (cmdLineOutputDir != null) {
+                // revert to default if there is a problem with the output dir
+                if (!(new File(cmdLineOutputDir)).exists()) {
+                    System.err.println("Command line output dir does not exist (" + cmdLineOutputDir + "), reverting to default.");
+                    outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+                } else if (!(new File(cmdLineOutputDir)).canWrite()) {
+                    System.err.println("Command line output dir is not writable (" + cmdLineOutputDir + "), reverting to default.");
+                    outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+                } else {
+                    outputDirBase = cmdLineOutputDir + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+                }
+            } else {
+                outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+            }
             outputDirTextField.setText(outputDirBase);
 
             // setup output and error logs and duplicate stderr/out to go to output
