@@ -321,6 +321,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
 
     private JDialog deidentDialog;
+    
+    private boolean csvDeidentDontAsk = false;
 
     public static final String[] anonymizeTagIDs = {
             // "0008,0014", // instance creator UID
@@ -840,6 +842,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (command.equalsIgnoreCase("cancelPII")) {
             // PII not de-id, close everything
             windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        } else if (command.equalsIgnoreCase("dontAskPII")) {
+            AbstractButton cb = (AbstractButton) e.getSource();
+            csvDeidentDontAsk = cb.isSelected();
         }
     }
 
@@ -1191,7 +1196,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         for (int j = 0; j < problemTagList.size(); j++) {
             final Vector<FileDicomTag> problemTags = problemTagList.get(j);
             if (problemTags != null) {
-                boolean isDeidentified = deidentificationDialogDicom(problemFileDirList.get(j), problemFileNameList.get(j), problemTags);
+                boolean isDeidentified = deidentificationDialogDicom(problemFileDirList.get(j), problemFileNameList.get(j), problemTags, true);
+                
+                // if the user certified that all data is okay, stop checking
+                if (csvDeidentDontAsk) {
+                    break;
+                }
 
                 if ( !isDeidentified) {
                     // should have already exited
@@ -2590,7 +2600,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (int j = 0; j < csvProblemTagList.size(); j++) {
                 final Vector<FileDicomTag> problemTags = csvProblemTagList.get(j);
                 if (problemTags != null  && !cmdLineCsvFlag) {
-                    boolean isDeidentified = deidentificationDialogDicom(csvProblemFileDirList.get(j), csvProblemFileNameList.get(j), problemTags);
+                    boolean isDeidentified = deidentificationDialogDicom(csvProblemFileDirList.get(j), csvProblemFileNameList.get(j), problemTags, true);
+                    
+                    // if the user certified that all data is okay, stop checking
+                    if (csvDeidentDontAsk) {
+                        break;
+                    }
 
                     if ( !isDeidentified) {
                         // should have already exited
@@ -7567,7 +7582,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(srcImage.getFileInfo());
                             if (problemTags != null) {
                                 isDeidentified = deidentificationDialogDicom(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getFileInfo(0).getFileName(),
-                                        problemTags);
+                                        problemTags, false);
                             }
 
                             if (isDeidentified) {
@@ -7600,7 +7615,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(spectroscopyHeaderList);
                             if (problemTags != null) {
                                 isDeidentified = deidentificationDialogDicom(spectroscopyHeaderList[0].getFileDirectory(), spectroscopyHeaderList[0].getFileName(),
-                                        problemTags);
+                                        problemTags, false);
                             }
 
                             if (isDeidentified) {
@@ -8035,7 +8050,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         return null;
     }
 
-    private boolean deidentificationDialogDicom(String fDir, String fName, Vector<FileDicomTag> problemTags) {
+    private boolean deidentificationDialogDicom(String fDir, String fName, Vector<FileDicomTag> problemTags, boolean fromCsv) {
         if (problemTags != null) {
             if (problemTags.size() > 0) {
                 String disclaimerText = new String(
@@ -8106,6 +8121,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 gbc.weighty = 1;
                 gbc.gridy++;
                 dialogPanel.add(new JScrollPane(table), gbc);
+                
+                if (fromCsv) {
+                    JCheckBox csvOptionCheckbox = new JCheckBox("Do not ask again for images in this CSV/BIDS dataset.  I have reviewed all of them for PII/PHI.", csvDeidentDontAsk);
+                    csvOptionCheckbox.setFont(serif12B);
+                    csvOptionCheckbox.setActionCommand("dontAskPII");
+                    csvOptionCheckbox.addActionListener(this);
+                    
+                    gbc.weightx = 0;
+                    gbc.weighty = 0;
+                    gbc.gridy++;
+                    gbc.fill = GridBagConstraints.NONE;
+                    gbc.anchor = GridBagConstraints.SOUTH;
+                    dialogPanel.add(csvOptionCheckbox, gbc);
+                }
 
                 gbc.weightx = 0;
                 gbc.weighty = 0;
