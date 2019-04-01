@@ -2,6 +2,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -53,6 +54,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	private JRadioButton pickButton;
 	
 	private boolean autoAIFCalculation = true;
+	
+	private JCheckBox multiThreadingEnabledCheckBox;
+	
+	private boolean multiThreading;
 	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
@@ -198,6 +203,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         AIFGroup.add(pickButton);
         inputPanel.add(pickButton, gbc);
         
+        gbc.gridy = 7;
+        if (ThreadUtil.getAvailableCores() > 1) {
+            multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
+        }
+        else {
+        	multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading disabled (" + ThreadUtil.getAvailableCores() + " core)");
+        }
+        multiThreadingEnabledCheckBox.setFont(MipavUtil.font12);
+        multiThreadingEnabledCheckBox.setForeground(Color.black);
+        multiThreadingEnabledCheckBox.setSelected(ThreadUtil.getAvailableCores() > 1);
+        multiThreadingEnabledCheckBox.setEnabled(ThreadUtil.getAvailableCores() > 1);
+        inputPanel.add(multiThreadingEnabledCheckBox, gbc);
+        
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
         // Build the Panel that holds the OK and CANCEL Buttons
@@ -254,7 +272,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation);
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -298,6 +316,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	TSP_iter = scriptParameters.getParams().getInt("iter");
     	Psvd = scriptParameters.getParams().getDouble("psv");
     	autoAIFCalculation = scriptParameters.getParams().getBoolean("auto_AIF");
+    	multiThreading = scriptParameters.getParams().getBoolean("multi_thread");
     }
     
     /**
@@ -311,6 +330,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("iter", TSP_iter));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("psv", Psvd));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("auto_AIF", autoAIFCalculation));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("multi_thread", multiThreading));
     }
     
     private boolean setVariables() {
@@ -398,6 +418,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	}
     	
     	autoAIFCalculation = autoButton.isSelected();
+    	multiThreading = multiThreadingEnabledCheckBox.isSelected();
     	return true;
     }
 
