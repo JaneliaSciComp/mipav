@@ -343,12 +343,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	image3D.disposeLocal();
     	image3D = null;
-    	data = new int[xDim][yDim][zDim][tDim];
+    	data = new int[zDim][yDim][xDim][tDim];
     	for (t = 0; t < tDim; t++) {
     		for (z = 0; z < zDim; z++) {
     			for (y = 0; y < yDim; y++) {
     				for (x = 0; x < xDim; x++) {
-    					data[x][y][z][t] = buffer[x + y*xDim + t*length +z*tDim*length];
+    					data[z][y][x][t] = buffer[x + y*xDim + t*length +z*tDim*length];
     				}
     			}
     		}
@@ -360,11 +360,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		for (z = 0; z < zDim; z++) {
     			for (y = 0; y < yDim; y++) {
     				for (x = 0; x < xDim; x++) {
-    					if (data[x][y][z][t] < masking_threshold) {
+    					if (data[z][y][x][t] < masking_threshold) {
     						brain_mask[x][y][z][t] = 0;
     					}
     					else {
-    						brain_mask[x][y][z][t] = data[x][y][z][t];
+    						brain_mask[x][y][z][t] = data[z][y][x][t];
     					}
     				}
     			}
@@ -452,7 +452,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     					}
     					else {
     						for (t = 0; t < tDim; t++) {
-    						    brain_mask2[x][y][z][t] = data[x][y][z][t];
+    						    brain_mask2[x][y][z][t] = data[z][y][x][t];
     						}
     					}
     				}
@@ -761,7 +761,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    data_norm[x][y][z][t] = data[x][y][z][t] - data[x][y][z][0];	
+					    data_norm[x][y][z][t] = data[z][y][x][t] - data[z][y][x][0];	
 					}
 				}
 	    	}
@@ -854,7 +854,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    sliceBuffer = new int[length];
 		    for (y = 0; y < yDim; y++) {
 		    	for (x = 0; x < xDim; x++) {
-		    		sliceBuffer[x + y * xDim] = data[x][y][9][0];
+		    		sliceBuffer[x + y * xDim] = data[9][y][x][0];
 		    	}
 		    }
 		    extents2D = new int[]{xDim,yDim};
@@ -882,7 +882,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    pickImage = null;
 		    System.out.println("xS = " + xS + " yS = " + yS);
 		    for (t = 0; t < tDim; t++) {
-		    	S[t] = data[xS][yS][9][t];
+		    	S[t] = data[9][yS][xS][t];
 		    }
     	} // else pick image pixel corresponding to AIF
 	    
@@ -956,10 +956,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         D_inv = D_invMat.getArray();
         
         // Iterate over brain volume to find rCBF
-        CBV = new double[xDim][yDim][zDim];
-        CBF = new double[xDim][yDim][zDim];
-        MTT = new double[xDim][yDim][zDim];
-        Tmax = new int[xDim][yDim][zDim];
+        CBV = new double[zDim][yDim][xDim];
+        CBF = new double[zDim][yDim][xDim];
+        MTT = new double[zDim][yDim][xDim];
+        Tmax = new int[zDim][yDim][xDim];
         //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[xDim][yDim][zDim];
         // Apply same mask as in TSP for speed of iteration
@@ -967,7 +967,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
-					if (data[x][y][z][0] < masking_threshold) {
+					if (data[z][y][x][0] < masking_threshold) {
 						peaks[x][y][z] = 0;
 					}
 					else {
@@ -977,18 +977,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			}
 		} // for (z = 0; z < zDim; z++)
         if (multiThreading) {
-        	int zLow;
-        	int zHigh;
         	ExecutorService executorService = Executors.newCachedThreadPool();	
-            for (i = 0; i < numberCores; i++) {
-            	if (i == 0) {
-            		zLow = 0;
-            	}
-            	else {
-            	    zLow = i*zDim/numberCores-1;
-            	}
-            	zHigh = (i+1)*zDim/numberCores;
-            	executorService.execute(new endCalc(zLow,zHigh,xDim,yDim,tDim,delT,TE,masking_threshold));	
+            for (z = 0; z < zDim; z++) {
+            	executorService.execute(new endCalc(xDim,yDim,tDim,delT,TE,masking_threshold,
+            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z]));	
             }
             
             executorService.shutdown();
@@ -1024,14 +1016,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		for (x = 0; x < xDim; x++) {
 		    		    alltMeetThreshold = true;
 		    		    for (t = 0; (t < tDim) && alltMeetThreshold; t++) {
-		    		    	if (data[x][y][z][t] < masking_threshold) {
+		    		    	if (data[z][y][x][t] < masking_threshold) {
 		    		    		alltMeetThreshold = false;
 		    		    	}
 		    		    } // for (t = 0; (t < tDim) && alltMeetThreshold; t++)
 		    		    if (alltMeetThreshold) {
 		    		        // time signal from mri
 		    		    	for (t = 0; t < tDim; t++) {
-		    		    		S[t] = data[x][y][z][t];
+		    		    		S[t] = data[z][y][x][t];
 		    		    	}
 		    		    	// Calculate amount of contrast agent as estimated from R2
 		    		    	for (t = 0; t < tDim; t++) {
@@ -1051,15 +1043,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	}
 		    		    	if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb))) {
 		    		    	    rcbf = -Double.MAX_VALUE;
-		    		    	    Tmax[x][y][z] = -1;
+		    		    	    Tmax[z][y][x] = -1;
 		    		    	    for (i = 0; i < b.length/4; i++) {
 		    		    	    	if (b[i] > rcbf) {
 		    		    	    		rcbf = b[i];
-		    		    	    		Tmax[x][y][z] = i;
+		    		    	    		Tmax[z][y][x] = i;
 		    		    	    	}
 		    		    	    }
 		    		    	    // Shift b to have a peak at origin for fitting
-		    		    	    b = circshift(b,-Tmax[x][y][z]);
+		    		    	    b = circshift(b,-Tmax[z][y][x]);
 		    		    	    minsearch = new expfun(x0, b, xdata);
 		    		    	    minsearch.driver();
 		    		    	    exitStatus = minsearch.getExitStatus();
@@ -1067,12 +1059,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    	// Normal termination
 		    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
 		    					    p = minsearch.getParameters();
-		    					    CBF[x][y][z] = p[0];
+		    					    CBF[z][y][x] = p[0];
 		    					    // relCBF is max value of residual function.  Should be similar to CBF,
 		    					    // but may be different.
 		    					    //relCBF[x][y][z] = rcbf;
-		    					    MTT[x][y][z] = p[1];
-		    					    CBV[x][y][z] = rcbf * p[1];
+		    					    MTT[z][y][x] = p[1];
+		    					    CBV[z][y][x] = rcbf * p[1];
 		    		    	    }
 		    		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
 		    		    } // if (alltMeetThreshold)
@@ -1086,7 +1078,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = CBF[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = CBF[z][y][x];
     			}
     		}
     	}
@@ -1136,7 +1128,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = MTT[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = MTT[z][y][x];
     			}
     		}
     	}
@@ -1186,7 +1178,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = CBV[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = CBV[z][y][x];
     			}
     		}
     	}
@@ -1237,7 +1229,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				buffer[x + y*xDim + z*length] = Tmax[x][y][z];
+    				buffer[x + y*xDim + z*length] = Tmax[z][y][x];
     			}
     		}
     	}
@@ -1338,28 +1330,28 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	D_inv = null;
     	
-    	for (x = 0; x < xDim; x++) {
+    	for (z = 0; z < zDim; z++) {
     		for (y = 0; y < yDim; y++) {
-    			for (z = 0; z < zDim; z++) {
-    				data[x][y][z] = null;
+    			for (x = 0; x < xDim; x++) {
+    				data[z][y][x] = null;
     			}
     		}
     	}
-    	for (x = 0; x < xDim; x++) {
+    	for (z = 0; z < zDim; z++) {
     		for (y = 0; y < yDim; y++) {
-    			data[x][y] = null;
-    			Tmax[x][y] = null;
-    			CBV[x][y] = null;
-    			CBF[x][y] = null;
-    			MTT[x][y] = null;
+    			data[z][y] = null;
+    			Tmax[z][y] = null;
+    			CBV[z][y] = null;
+    			CBF[z][y] = null;
+    			MTT[z][y] = null;
     		}
     	}
-    	for (x = 0; x < xDim; x++) {
-    		data[x] = null;
-    		Tmax[x] = null;
-    		CBV[x] = null;
-    		CBF[x] = null;
-    		MTT[x] = null;
+    	for (z = 0; z < zDim; z++) {
+    		data[z] = null;
+    		Tmax[z] = null;
+    		CBV[z] = null;
+    		CBF[z] = null;
+    		MTT[z] = null;
     	}
     	data = null;
     	Tmax = null;
@@ -1371,24 +1363,31 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     } // end runAlgorithm()
     
     public class endCalc implements Runnable {
-        int zLow;
-        int zHigh;
         int xDim;
         int yDim;
         int tDim;
         float delT;
         double TE;
         double masking_threshold;
+        int data[][][];
+        double CBV[][];
+        double CBF[][];
+        double MTT[][];
+        int Tmax[][];
     	
-    	public endCalc(int zLow, int zHigh, int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold) {
-        	this.zLow = zLow;
-        	this.zHigh = zHigh;
+    	public endCalc(int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
+    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
         	this.tDim = tDim;
         	this.delT = delT;
         	this.TE = TE;
         	this.masking_threshold = masking_threshold;
+        	this.data = data;
+        	this.CBV = CBV;
+        	this.CBF = CBF;
+        	this.MTT = MTT;
+        	this.Tmax = Tmax;
         }
     	
     	public void run() {
@@ -1404,7 +1403,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             }
             C = new double[2*tDim];
             b = new double[2*tDim];
-            int z;
             int y;
             int x;
             boolean alltMeetThreshold;
@@ -1417,66 +1415,64 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	int exitStatus;
         	double p[];
             // Iterate
-            for (z = zLow; z < zHigh; z++) {
-            	for (y = 0; y < yDim; y++) {
-            		for (x = 0; x < xDim; x++) {
-            		    alltMeetThreshold = true;
-            		    for (t = 0; (t < tDim) && alltMeetThreshold; t++) {
-            		    	if (data[x][y][z][t] < masking_threshold) {
-            		    		alltMeetThreshold = false;
-            		    	}
-            		    } // for (t = 0; (t < tDim) && alltMeetThreshold; t++)
-            		    if (alltMeetThreshold) {
-            		        // time signal from mri
-            		    	for (t = 0; t < tDim; t++) {
-            		    		S[t] = data[x][y][z][t];
-            		    	}
-            		    	// Calculate amount of contrast agent as estimated from R2
-            		    	for (t = 0; t < tDim; t++) {
-            		    		C[t] = -TE*Math.log(S[t]/S[0]);
-            		    	}
-            		    	// Solve for residual function
-            		    	for (i = 0; i < 2*tDim; i++) {
-            		    		b[i] = 0;
-            		    		// Second half of C is zeros
-            		    		for (j = 0; j < tDim; j++) {
-            		    		    b[i] += D_inv[i][j] * C[j];	
-            		    		}
-            		    	} // for (i = 0; i < 2*tDim; i++)
-            		    	sumb = 0;
-            		    	for (i = 0; i < 2*tDim; i++) {
-            		    		sumb += b[i];
-            		    	}
-            		    	if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb))) {
-            		    	    rcbf = -Double.MAX_VALUE;
-            		    	    Tmax[x][y][z] = -1;
-            		    	    for (i = 0; i < b.length/4; i++) {
-            		    	    	if (b[i] > rcbf) {
-            		    	    		rcbf = b[i];
-            		    	    		Tmax[x][y][z] = i;
-            		    	    	}
-            		    	    }
-            		    	    // Shift b to have a peak at origin for fitting
-            		    	    b = circshift(b,-Tmax[x][y][z]);
-            		    	    minsearch = new expfun(x0, b, xdata);
-            		    	    minsearch.driver();
-            		    	    exitStatus = minsearch.getExitStatus();
-            		    	    if (exitStatus >= 0) {
-            		    	    	// Normal termination
-            		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-            					    p = minsearch.getParameters();
-            					    CBF[x][y][z] = p[0];
-            					    // relCBF is max value of residual function.  Should be similar to CBF,
-            					    // but may be different.
-            					    //relCBF[x][y][z] = rcbf;
-            					    MTT[x][y][z] = p[1];
-            					    CBV[x][y][z] = rcbf * p[1];
-            		    	    }
-            		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
-            		    } // if (alltMeetThreshold)
-            		} // for (x = 0; x < xDim; x++)
-            	} // for (y = 0; y < yDim; y++)
-            } // for (z = zLow; z < zHigh; z++)	
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    alltMeetThreshold = true;
+        		    for (t = 0; (t < tDim) && alltMeetThreshold; t++) {
+        		    	if (data[y][x][t] < masking_threshold) {
+        		    		alltMeetThreshold = false;
+        		    	}
+        		    } // for (t = 0; (t < tDim) && alltMeetThreshold; t++)
+        		    if (alltMeetThreshold) {
+        		        // time signal from mri
+        		    	for (t = 0; t < tDim; t++) {
+        		    		S[t] = data[y][x][t];
+        		    	}
+        		    	// Calculate amount of contrast agent as estimated from R2
+        		    	for (t = 0; t < tDim; t++) {
+        		    		C[t] = -TE*Math.log(S[t]/S[0]);
+        		    	}
+        		    	// Solve for residual function
+        		    	for (i = 0; i < 2*tDim; i++) {
+        		    		b[i] = 0;
+        		    		// Second half of C is zeros
+        		    		for (j = 0; j < tDim; j++) {
+        		    		    b[i] += D_inv[i][j] * C[j];	
+        		    		}
+        		    	} // for (i = 0; i < 2*tDim; i++)
+        		    	sumb = 0;
+        		    	for (i = 0; i < 2*tDim; i++) {
+        		    		sumb += b[i];
+        		    	}
+        		    	if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb))) {
+        		    	    rcbf = -Double.MAX_VALUE;
+        		    	    Tmax[y][x] = -1;
+        		    	    for (i = 0; i < b.length/4; i++) {
+        		    	    	if (b[i] > rcbf) {
+        		    	    		rcbf = b[i];
+        		    	    		Tmax[y][x] = i;
+        		    	    	}
+        		    	    }
+        		    	    // Shift b to have a peak at origin for fitting
+        		    	    b = circshift(b,-Tmax[y][x]);
+        		    	    minsearch = new expfun(x0, b, xdata);
+        		    	    minsearch.driver();
+        		    	    exitStatus = minsearch.getExitStatus();
+        		    	    if (exitStatus >= 0) {
+        		    	    	// Normal termination
+        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+        					    p = minsearch.getParameters();
+        					    CBF[y][x] = p[0];
+        					    // relCBF is max value of residual function.  Should be similar to CBF,
+        					    // but may be different.
+        					    //relCBF[x][y][z] = rcbf;
+        					    MTT[y][x] = p[1];
+        					    CBV[y][x] = rcbf * p[1];
+        		    	    }
+        		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
+        		    } // if (alltMeetThreshold)
+        		} // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < yDim; y++)
     	}
     }
     
