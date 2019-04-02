@@ -96,8 +96,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Cancel")) {
-            // dispose();
-            this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            dispose();
         } else {
             super.actionPerformed(event);
         }
