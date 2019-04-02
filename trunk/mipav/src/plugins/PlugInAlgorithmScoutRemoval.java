@@ -23,23 +23,14 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.FileAnalyze;
-import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileNIFTI;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJComponentBase;
-import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,14 +56,7 @@ public class PlugInAlgorithmScoutRemoval extends AlgorithmBase {
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-    	int xDim;
-    	int yDim;
-    	int zDim;
-    	int length;
-    	int volume;
     	int extents3D[] = new int[3];
-    	float resolutions3D[] = new float[3];
-    	int units3D[] = new int[3];
     	String patientID;
     	int numberValidDirectories;
     	boolean useLast3Numbers;
@@ -84,7 +68,6 @@ public class PlugInAlgorithmScoutRemoval extends AlgorithmBase {
     	ModelImage image2D;
     	FileInfoDicom dicomInfo;
     	FileDicomTagTable tagTable;
-    	String positionString;
     	String orientation;
     	int index1;
     	int index2;
@@ -94,10 +77,7 @@ public class PlugInAlgorithmScoutRemoval extends AlgorithmBase {
     	int index;
     	String selectedFileName;
     	ModelImage image3D;
-    	
-    	double dbuffer[];
-    	int x, y, z, t;
-    	int i,j,ii,jj;
+    	int i;
     	
     	
     	FileIO fileIO = new FileIO(); 
