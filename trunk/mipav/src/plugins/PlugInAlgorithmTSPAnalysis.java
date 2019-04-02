@@ -36,7 +36,6 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentBase;
@@ -83,17 +82,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private final Condition canProcessMouseClick = accessLock.newCondition();
 	private int xS;
 	private int yS;
-	private int xDim;
-	private int yDim;
-	private int tDim;
-	private float delT;
-	private int data[][][][];
-	private double TE;
 	private double D_inv[][];
-	private int Tmax[][][];
-	private double CBV[][][];
-	private double CBF[][][];
-	private double MTT[][][];
     /**
      * Constructor.
      *
@@ -117,7 +106,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-    	int numberCores = ThreadUtil.getAvailableCores();
+    	int xDim;
+    	int yDim;
+    	int tDim;
+    	float delT;
+        int data[][][][];
+    	double TE;
+    	int Tmax[][][];
+    	double CBV[][][];
+    	double CBF[][][];
+    	double MTT[][][];
     	int zDim;
     	int length;
     	int volume;
@@ -1330,39 +1328,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	D_inv = null;
     	
-    	for (z = 0; z < zDim; z++) {
-    		for (y = 0; y < yDim; y++) {
-    			for (x = 0; x < xDim; x++) {
-    				data[z][y][x] = null;
-    			}
-    		}
-    	}
-    	for (z = 0; z < zDim; z++) {
-    		for (y = 0; y < yDim; y++) {
-    			data[z][y] = null;
-    			Tmax[z][y] = null;
-    			CBV[z][y] = null;
-    			CBF[z][y] = null;
-    			MTT[z][y] = null;
-    		}
-    	}
-    	for (z = 0; z < zDim; z++) {
-    		data[z] = null;
-    		Tmax[z] = null;
-    		CBV[z] = null;
-    		CBF[z] = null;
-    		MTT[z] = null;
-    	}
-    	data = null;
-    	Tmax = null;
-    	CBV = null;
-    	CBF = null;
-    	MTT = null;
-
     	setCompleted(true); 
     } // end runAlgorithm()
     
     public class endCalc implements Runnable {
+    	// The global D_inv is shared by all these Runnable routines.
+    	// All other variables are unique.
         int xDim;
         int yDim;
         int tDim;
