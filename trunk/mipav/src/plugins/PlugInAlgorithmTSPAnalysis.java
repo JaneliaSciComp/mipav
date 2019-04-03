@@ -543,7 +543,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
     			    if (delay_map[z][y][x] > tDim + 40)	{
-    			    	delay_map[z][y][x] = tDim = 40;
+    			    	delay_map[z][y][x] = tDim + 40;
     			    }
     			    else if (delay_map[z][y][x] < tDim - 40) {
     			    	delay_map[z][y][x] = tDim - 40;
