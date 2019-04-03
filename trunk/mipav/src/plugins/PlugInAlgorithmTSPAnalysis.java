@@ -206,6 +206,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage CBVImage;
     	ModelImage TmaxImage;
     	ModelImage TTPImage;
+    	long sumT[];
+    	int countT[];
     	
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
@@ -342,201 +344,217 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	image3D.disposeLocal();
     	image3D = null;
     	data = new int[zDim][yDim][xDim][tDim];
+    	// Start TSP processing
+    	brain_mask = new int[zDim][yDim][xDim][tDim];
+    	temp_mean = new double[tDim];
+    	brain_mask_norm = new int[zDim][yDim][xDim][tDim];
+    	// Normalize PWI by subtracting off pre_contrast (first) image
+    	// Loop over time dimension to calculate whole brain average perfusion time signal
     	for (t = 0; t < tDim; t++) {
+    		sum = 0;
+    		count = 0;
     		for (z = 0; z < zDim; z++) {
     			for (y = 0; y < yDim; y++) {
     				for (x = 0; x < xDim; x++) {
     					data[z][y][x][t] = buffer[x + y*xDim + t*length +z*tDim*length];
-    				}
-    			}
-    		}
-    	}
-    	
-    	// Start TSP processing
-    	brain_mask = new int[xDim][yDim][zDim][tDim];
-    	for (t = 0; t < tDim; t++) {
-    		for (z = 0; z < zDim; z++) {
-    			for (y = 0; y < yDim; y++) {
-    				for (x = 0; x < xDim; x++) {
     					if (data[z][y][x][t] < masking_threshold) {
-    						brain_mask[x][y][z][t] = 0;
+    						brain_mask[z][y][x][t] = 0;
     					}
     					else {
-    						brain_mask[x][y][z][t] = data[z][y][x][t];
+    						brain_mask[z][y][x][t] = data[z][y][x][t];
     					}
+    					brain_mask_norm[z][y][x][t] = brain_mask[z][y][x][t] - brain_mask[z][y][x][0];
+    					if (brain_mask_norm[z][y][x][t] != 0) {
+					    	sum += brain_mask_norm[z][y][x][t];
+					    	count++;
+					    }
     				}
     			}
     		}
-    	}
-    	temp_mean = new double[tDim];
-    	brain_mask_norm = new int[xDim][yDim][zDim][tDim];
-    	// Normalize PWI by subtracting off pre_contrast (first) image
-    	for (t = 0; t < tDim; t++) {
-    	    for (z = 0; z < zDim; z++) {
-				for (y = 0; y < yDim; y++) {
-					for (x = 0; x < xDim; x++) {
-					brain_mask_norm[x][y][z][t] = brain_mask[x][y][z][t] - brain_mask[x][y][z][0];	
-					}
-				}
-	    	}
-    	}
-    	// Loop over time dimension to calculate whole brain average perfusion time signal
-    	for (t = 1; t < tDim; t++) {
-    	    sum = 0;
-    	    count = 0;
-    	    for (z = 0; z < zDim; z++) {
-				for (y = 0; y < yDim; y++) {
-					for (x = 0; x < xDim; x++) {
-					    if (brain_mask_norm[x][y][z][t] != 0) {
-					    	sum += brain_mask_norm[x][y][z][t];
-					    	count++;
-					    }
-					}
-				}
-    	    }
-    	    temp_mean[t] = (double)sum/(double)count;
-    	} // for (t = 1; t < tDim; t++)
+    		if (t != 0) {
+    			temp_mean[t] = (double)sum/(double)count;
+    		}
+    	} // for (t = 0; t < tDim; t++)
     	temp_mean[0] = 0;
     	
     	// Zero/Initialize output maps
         // TSP Correlation map with out AIF delay compensation
-    	corrmap = new double[xDim][yDim][zDim];
+    	corrmap = new double[zDim][yDim][xDim];
     	// TSP Correlation map with AIF delay compensation
-    	corr_map2 = new double[xDim][yDim][zDim];
+    	corr_map2 = new double[zDim][yDim][xDim];
     	// TSP Delay map considering temporal similarity with whole brain average
-    	delay_map = new double[xDim][yDim][zDim];
+    	delay_map = new double[zDim][yDim][xDim];
     	// TSP Peaks map is the absolute value of the SI corresponding to the largest deviation from baseline
-    	peaks_map = new double[xDim][yDim][zDim];
+    	peaks_map = new double[zDim][yDim][xDim];
     	
     	// First TSP iteration, Loop over all voxels.  First find delay from cross-correlation.
     	// Then find Correlation Coefficient after shifting by delay
-    	for (x = 0; x < xDim; x++) {
-    		for (y = 0; y < yDim; y++) {
-    			for (z = 0; z < zDim; z++) {
-    				sum = 0;
-    				for (t = 1; t < tDim; t++) {
-    					sum += brain_mask_norm[x][y][z][t];
-    				}
-    				if (sum != 0) {
-    				    temp = xcorrbias(brain_mask_norm[x][y][z], temp_mean);
-    				    maxTemp = -Double.MAX_VALUE;
-    				    maxIndex = -1;
-    				    for (i = 0; i < temp.length; i++) {
-    				    	if (temp[i] > maxTemp) {
-    				    		maxTemp = temp[i];
-    				    		maxIndex = i;
-    				    	}
-    				    }
-    				    delay_map[x][y][z] = maxIndex;
-    				    cc = corrcoef(circshift(brain_mask_norm[x][y][z], -maxIndex + tDim), temp_mean);
-    				    corr_map2[x][y][z] = cc;
-    				} // if (sum != 0)
-    			}
-    		}
-    	} // for (x = 0; x < xDim; x++)
+    	if (multiThreading) {
+    		ExecutorService executorService = Executors.newCachedThreadPool();	
+            for (z = 0; z < zDim; z++) {
+            	executorService.execute(new corr1Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],corr_map2[z],
+            			temp_mean.clone()));	
+            }
+            
+            executorService.shutdown();
+            try {
+            	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
+            	if (!tasksEnded) {
+            		MipavUtil.displayError("Time out while waiting for corr1Calc tasks to finish");
+            		setCompleted(false);
+            		return;
+            	}
+            }
+            catch (InterruptedException ex) {
+            	ex.printStackTrace();
+            	MipavUtil.displayError("Interrupted exception during corr1Calc tasks");
+            	setCompleted(false);
+            	return;
+            }	
+    	}
+    	else { // single thread
+	    	for (z = 0; z < zDim; z++) {
+	    		for (y = 0; y < yDim; y++) {
+	    			for (x = 0; x < xDim; x++) {
+	    				sum = 0;
+	    				for (t = 1; t < tDim; t++) {
+	    					sum += brain_mask_norm[z][y][x][t];
+	    				}
+	    				if (sum != 0) {
+	    				    temp = xcorrbias(brain_mask_norm[z][y][x], temp_mean);
+	    				    maxTemp = -Double.MAX_VALUE;
+	    				    maxIndex = -1;
+	    				    for (i = 0; i < temp.length; i++) {
+	    				    	if (temp[i] > maxTemp) {
+	    				    		maxTemp = temp[i];
+	    				    		maxIndex = i;
+	    				    	}
+	    				    }
+	    				    delay_map[z][y][x] = maxIndex;
+	    				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
+	    				    corr_map2[z][y][x] = cc;
+	    				} // if (sum != 0)
+	    			}
+	    		}
+	    	} // for (z = 0; z < zDim; z++)
+    	} // else single thread
     	
     	// Following TSP iterations, Recalc who brain average (healthy)
     	// considering only tissue with correlations > TSP threshold
-    	brain_mask2 = new int[xDim][yDim][zDim][tDim];
-    	brain_mask_norm2 = new int[xDim][yDim][zDim][tDim];
+    	brain_mask2 = new int[zDim][yDim][xDim][tDim];
+    	brain_mask_norm2 = new int[zDim][yDim][xDim][tDim];
+    	sumT = new long[tDim];
+    	countT = new int[tDim];
     	for (it = 1; it <= TSP_iter; it++) {
+    		for (t = 1; t < tDim; t++) {
+    			sumT[t] = 0;
+    			countT[t] = 0;
+    		}
     		for (z = 0; z < zDim; z++) {
     			for (y = 0; y < yDim; y++) {
     				for (x = 0; x < xDim; x++) {
-    					if (corr_map2[x][y][z] < TSP_threshold) {
+    					if (corr_map2[z][y][x] < TSP_threshold) {
     						for (t = 0; t < tDim; t++) {
-    						    brain_mask2[x][y][z][t] = 0;
+    						    brain_mask2[z][y][x][t] = 0;
+    						    brain_mask_norm2[z][y][x][t] = 0;
     						}
     					}
     					else {
     						for (t = 0; t < tDim; t++) {
-    						    brain_mask2[x][y][z][t] = data[z][y][x][t];
+    						    brain_mask2[z][y][x][t] = data[z][y][x][t];
+    						    brain_mask_norm2[z][y][x][t] = brain_mask2[z][y][x][t] - brain_mask2[z][y][x][0];
+    						    if (brain_mask_norm2[z][y][x][t] != 0) {
+        					    	sumT[t] += brain_mask_norm2[z][y][x][t];
+        					    	countT[t]++;
+        					    }
     						}
     					}
     				}
     			}
     		} // for (z = 0; z < zDim; z++)
-    		for (i = 0; i < tDim; i++) {
-    			temp_mean[i] = 0;
-    		}
-    		for (t = 0; t < tDim; t++) {
-        	    for (z = 0; z < zDim; z++) {
-    				for (y = 0; y < yDim; y++) {
-    					for (x = 0; x < xDim; x++) {
-    					brain_mask_norm2[x][y][z][t] = brain_mask2[x][y][z][t] - brain_mask2[x][y][z][0];	
-    					}
-    				}
-    	    	}
-        	}
+    		
     		for (t = 1; t < tDim; t++) {
-        	    sum = 0;
-        	    count = 0;
-        	    for (z = 0; z < zDim; z++) {
-    				for (y = 0; y < yDim; y++) {
-    					for (x = 0; x < xDim; x++) {
-    					    if (brain_mask_norm[x][y][z][t] != 0) {
-    					    	sum += brain_mask_norm2[x][y][z][t];
-    					    	count++;
-    					    }
-    					}
-    				}
-        	    }
-        	    temp_mean[t] = (double)sum/(double)count;
+        	    temp_mean[t] = (double)sumT[t]/(double)countT[t];
         	} // for (t = 1; t < tDim; t++)
         	temp_mean[0] = 0;
         	
-        	for (x = 0; x < xDim; x++) {
-        		for (y = 0; y < yDim; y++) {
-        			for (z = 0; z < zDim; z++) {
-        				sum = 0;
-        				for (t = 1; t < tDim; t++) {
-        					sum += brain_mask_norm[x][y][z][t];
-        				}
-        				if (sum != 0) {
-        				    temp = xcorrbias(brain_mask_norm[x][y][z], temp_mean);
-        				    maxTemp = -Double.MAX_VALUE;
-        				    maxIndex = -1;
-        				    for (i = 0; i < temp.length; i++) {
-        				    	if (temp[i] > maxTemp) {
-        				    		maxTemp = temp[i];
-        				    		maxIndex = i;
-        				    	}
-        				    }
-        				    delay_map[x][y][z] = maxIndex;
-        				    maxPeak = -Double.MAX_VALUE;
-        				    for (t = 0; t < tDim; t++) {
-        				    	if (Math.abs(brain_mask_norm[x][y][z][t]) > maxPeak) {
-        				    		maxPeak = Math.abs(brain_mask_norm[x][y][z][t]);
-        				    	}
-        				    }
-        				    peaks_map[x][y][z] = maxPeak;
-        				    cc = corrcoef(brain_mask_norm[x][y][z], temp_mean);
-        				    corrmap[x][y][z] = cc;
-        				    cc = corrcoef(circshift(brain_mask_norm[x][y][z], -maxIndex + tDim), temp_mean);
-        				    corr_map2[x][y][z] = cc;
-        				} // if (sum != 0)
-        			}
-        		}
-        	} // for (x = 0; x < xDim; x++)
+        	if (multiThreading) {
+        		ExecutorService executorService = Executors.newCachedThreadPool();	
+                for (z = 0; z < zDim; z++) {
+                	executorService.execute(new corr2Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],peaks_map[z],corrmap[z],
+                			corr_map2[z], temp_mean.clone()));	
+                }
+                
+                executorService.shutdown();
+                try {
+                	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
+                	if (!tasksEnded) {
+                		MipavUtil.displayError("Time out while waiting for corr2Calc tasks to finish");
+                		setCompleted(false);
+                		return;
+                	}
+                }
+                catch (InterruptedException ex) {
+                	ex.printStackTrace();
+                	MipavUtil.displayError("Interrupted exception during corr2Calc tasks");
+                	setCompleted(false);
+                	return;
+                }	
+        	}
+        	else { // single thread
+	        	for (z = 0; z < zDim; z++) {
+	        		for (y = 0; y < yDim; y++) {
+	        			for (x = 0; x < xDim; x++) {
+	        				sum = 0;
+	        				for (t = 1; t < tDim; t++) {
+	        					sum += brain_mask_norm[z][y][x][t];
+	        				}
+	        				if (sum != 0) {
+	        				    temp = xcorrbias(brain_mask_norm[z][y][x], temp_mean);
+	        				    maxTemp = -Double.MAX_VALUE;
+	        				    maxIndex = -1;
+	        				    for (i = 0; i < temp.length; i++) {
+	        				    	if (temp[i] > maxTemp) {
+	        				    		maxTemp = temp[i];
+	        				    		maxIndex = i;
+	        				    	}
+	        				    }
+	        				    delay_map[z][y][x] = maxIndex;
+	        				    maxPeak = -Double.MAX_VALUE;
+	        				    for (t = 0; t < tDim; t++) {
+	        				    	if (Math.abs(brain_mask_norm[z][y][x][t]) > maxPeak) {
+	        				    		maxPeak = Math.abs(brain_mask_norm[z][y][x][t]);
+	        				    	}
+	        				    }
+	        				    peaks_map[z][y][x] = maxPeak;
+	        				    cc = corrcoef(brain_mask_norm[z][y][x], temp_mean);
+	        				    corrmap[z][y][x] = cc;
+	        				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
+	        				    corr_map2[z][y][x] = cc;
+	        				} // if (sum != 0)
+	        			}
+	        		}
+	        	} // for (z = 0; z < zDim; z++)
+        	} // else single thread
     	} // for (it = 1; it <= TSP_iter; it++)
     	
     	// Clean up outliers (AIF delay must be within +/- 40 frames of whole brain average)
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    			    if (delay_map[x][y][z] > tDim + 40)	{
-    			    	delay_map[x][y][z] = tDim = 40;
+    			    if (delay_map[z][y][x] > tDim + 40)	{
+    			    	delay_map[z][y][x] = tDim = 40;
     			    }
-    			    else if (delay_map[x][y][z] < tDim - 40) {
-    			    	delay_map[x][y][z] = tDim - 40;
+    			    else if (delay_map[z][y][x] < tDim - 40) {
+    			    	delay_map[z][y][x] = tDim - 40;
     			    }
-    			    delay_map[x][y][z] = (delay_map[x][y][z] - tDim) * delT;
+    			    delay_map[z][y][x] = (delay_map[z][y][x] - tDim) * delT;
     			    // Corr map > 1 or < 0 is not realistic
-    			    if (corrmap[x][y][z] > 1) {
-    			    	corrmap[x][y][z] = 1;
+    			    if (corrmap[z][y][x] > 1) {
+    			    	corrmap[z][y][x] = 1;
     			    }
-    			    else if (corrmap[x][y][z] < 0) {
-    			    	corrmap[x][y][z] = 0;
+    			    else if (corrmap[z][y][x] < 0) {
+    			    	corrmap[z][y][x] = 0;
     			    }
     			}
     		}
@@ -548,7 +566,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = corr_map2[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = corr_map2[z][y][x];
     			}
     		}
     	}
@@ -606,7 +624,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = corrmap[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = corrmap[z][y][x];
     			}
     		}
     	}
@@ -656,7 +674,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = peaks_map[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = peaks_map[z][y][x];
     			}
     		}
     	}
@@ -706,7 +724,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = delay_map[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = delay_map[z][y][x];
     			}
     		}
     	}
@@ -754,31 +772,31 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	// Deconvolution analysis
     	S = new double[tDim];
-    	data_norm = new int[xDim][yDim][zDim][tDim];
+    	data_norm = new int[zDim][yDim][xDim][tDim];
     	for (t = 0; t < tDim; t++) {
     	    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    data_norm[x][y][z][t] = data[z][y][x][t] - data[z][y][x][0];	
+					    data_norm[z][y][x][t] = data[z][y][x][t] - data[z][y][x][0];	
 					}
 				}
 	    	}
     	} // for (t = 0; t < tDim; t++)
-    	peaks = new int[xDim][yDim][zDim];
-    	ttp = new int[xDim][yDim][zDim];
+    	peaks = new int[zDim][yDim][xDim];
+    	ttp = new int[zDim][yDim][xDim];
     	for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					minpeaks = Integer.MAX_VALUE;
 					minttp = Integer.MAX_VALUE;
 					for (t = 0; t < tDim; t++) {
-						if (data_norm[x][y][z][t] < minpeaks) {
-							minpeaks = data_norm[x][y][z][t];
+						if (data_norm[z][y][x][t] < minpeaks) {
+							minpeaks = data_norm[z][y][x][t];
 							minttp = t;
 						}
 					}
-					peaks[x][y][z] = minpeaks;
-					ttp[x][y][z] = minttp;
+					peaks[z][y][x] = minpeaks;
+					ttp[z][y][x] = minttp;
 				}
 			}	
 		} // for (z = 0; z < zDim; z++)
@@ -786,14 +804,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	// Auto AIF Calculation
 	    	// AIF is average signal of pixels with the largest SI deviations
 	    	// (4 std) from baseline (likely to be large vessels)
-	    	mask3D = new byte[xDim][yDim][zDim];
+	    	mask3D = new byte[zDim][yDim][xDim];
 	    	sum = 0;
 		    count = 0;
 		    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    if (peaks[x][y][z] != 0) {
-					    	sum += peaks[x][y][z];
+					    if (peaks[z][y][x] != 0) {
+					    	sum += peaks[z][y][x];
 					    	count++;
 					    }
 					}
@@ -804,8 +822,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    if (peaks[x][y][z] != 0) {
-					    	diff = peaks[x][y][z] - peaks_mean;
+					    if (peaks[z][y][x] != 0) {
+					    	diff = peaks[z][y][x] - peaks_mean;
 					    	diff_squared_sum += diff * diff;
 					    }
 					}
@@ -816,8 +834,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    if (peaks[x][y][z] < peaks_threshold) {
-					    	mask3D[x][y][z] = 1;
+					    if (peaks[z][y][x] < peaks_threshold) {
+					    	mask3D[z][y][x] = 1;
 					    }
 					}
 				}
@@ -830,8 +848,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		        for (z = 0; z < zDim; z++) {
 					for (y = 0; y < yDim; y++) {
 						for (x = 0; x < xDim; x++) {
-							if (mask3D[x][y][z] == 1) {
-							    sum += data_norm[x][y][z][t];
+							if (mask3D[z][y][x] == 1) {
+							    sum += data_norm[z][y][x][t];
 							    count++;
 							}
 						}
@@ -959,17 +977,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         MTT = new double[zDim][yDim][xDim];
         Tmax = new int[zDim][yDim][xDim];
         //relCBF = new double[xDim][yDim][zDim];
-        TTP = new double[xDim][yDim][zDim];
+        TTP = new double[zDim][yDim][xDim];
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
         for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					if (data[z][y][x][0] < masking_threshold) {
-						peaks[x][y][z] = 0;
+						peaks[z][y][x] = 0;
 					}
 					else {
-						TTP[x][y][z] = ttp[x][y][z] * delT;
+						TTP[z][y][x] = ttp[z][y][x] * delT;
 					}
 				}
 			}
@@ -985,7 +1003,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             try {
             	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
             	if (!tasksEnded) {
-            		MipavUtil.displayError("Time out while waiting for tasks to finish");
+            		MipavUtil.displayError("Time out while waiting for endCalc tasks to finish");
             		setCompleted(false);
             		return;
             	}
@@ -1277,7 +1295,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = TTP[x][y][z];
+    				dbuffer[x + y*xDim + z*length] = TTP[z][y][x];
     			}
     		}
     	}
@@ -1330,6 +1348,126 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	setCompleted(true); 
     } // end runAlgorithm()
+    
+    public class corr1Calc implements Runnable {
+    	int xDim;
+        int yDim;
+        int tDim;
+        int brain_mask_norm[][][];
+        double delay_map[][];
+        double corr_map2[][];
+        double temp_mean[];
+        
+        public corr1Calc(int xDim, int yDim, int tDim, int brain_mask_norm[][][], double delay_map[][], 
+        		double corr_map2[][], double temp_mean[]) {
+        	this.xDim = xDim;
+        	this.yDim = yDim;
+        	this.tDim = tDim;
+        	this.brain_mask_norm = brain_mask_norm;
+        	this.delay_map = delay_map;
+        	this.corr_map2 = corr_map2;
+        	this.temp_mean = temp_mean;
+        }
+        
+        public void run() {
+        	int i, x, y, t;
+        	long sum;
+        	double temp[];
+        	double maxTemp;
+        	int maxIndex;
+        	double cc;
+        	for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				sum = 0;
+    				for (t = 1; t < tDim; t++) {
+    					sum += brain_mask_norm[y][x][t];
+    				}
+    				if (sum != 0) {
+    				    temp = xcorrbias(brain_mask_norm[y][x], temp_mean);
+    				    maxTemp = -Double.MAX_VALUE;
+    				    maxIndex = -1;
+    				    for (i = 0; i < temp.length; i++) {
+    				    	if (temp[i] > maxTemp) {
+    				    		maxTemp = temp[i];
+    				    		maxIndex = i;
+    				    	}
+    				    }
+    				    delay_map[y][x] = maxIndex;
+    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
+    				    corr_map2[y][x] = cc;
+    				} // if (sum != 0)
+    			}
+    		}	
+        }
+    }
+    
+    public class corr2Calc implements Runnable {
+    	int xDim;
+        int yDim;
+        int tDim;
+        int brain_mask_norm[][][];
+        double delay_map[][];
+        double peaks_map[][];
+        double corrmap[][];
+        double corr_map2[][];
+        double temp_mean[];
+        
+        public corr2Calc(int xDim, int yDim, int tDim, int brain_mask_norm[][][], double delay_map[][], 
+        		double peaks_map[][], double corrmap[][], double corr_map2[][], double temp_mean[]) {
+        	this.xDim = xDim;
+        	this.yDim = yDim;
+        	this.tDim = tDim;
+        	this.brain_mask_norm = brain_mask_norm;
+        	this.delay_map = delay_map;
+        	this.peaks_map = peaks_map;
+        	this.corrmap = corrmap;
+        	this.corr_map2 = corr_map2;
+        	this.temp_mean = temp_mean;
+        }
+        
+        public void run() {
+        	int i, x, y, t;
+        	long sum;
+        	double temp[];
+        	double maxTemp;
+        	int maxIndex;
+        	double cc;
+        	double maxPeak;
+        	
+        	for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				sum = 0;
+    				for (t = 1; t < tDim; t++) {
+    					sum += brain_mask_norm[y][x][t];
+    				}
+    				if (sum != 0) {
+    				    temp = xcorrbias(brain_mask_norm[y][x], temp_mean);
+    				    maxTemp = -Double.MAX_VALUE;
+    				    maxIndex = -1;
+    				    for (i = 0; i < temp.length; i++) {
+    				    	if (temp[i] > maxTemp) {
+    				    		maxTemp = temp[i];
+    				    		maxIndex = i;
+    				    	}
+    				    }
+    				    delay_map[y][x] = maxIndex;
+    				    maxPeak = -Double.MAX_VALUE;
+    				    for (t = 0; t < tDim; t++) {
+    				    	if (Math.abs(brain_mask_norm[y][x][t]) > maxPeak) {
+    				    		maxPeak = Math.abs(brain_mask_norm[y][x][t]);
+    				    	}
+    				    }
+    				    peaks_map[y][x] = maxPeak;
+    				    cc = corrcoef(brain_mask_norm[y][x], temp_mean);
+    				    corrmap[y][x] = cc;
+    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
+    				    corr_map2[y][x] = cc;
+    				} // if (sum != 0)
+    			}
+    		}
+        	
+        }
+    }
     
     public class endCalc implements Runnable {
     	// The global D_inv is shared by all these Runnable routines.
