@@ -98,9 +98,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.Psvd = Psvd;
     	this.autoAIFCalculation = autoAIFCalculation;
     	this.multiThreading = multiThreading;
-    }
-
-    
+    }   
     
     /**
      * Starts the algorithm.
@@ -208,6 +206,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage TTPImage;
     	long sumT[];
     	int countT[];
+    	boolean test = false;
+    	if (test) {
+    		testxcorr();
+    		testcircshift();
+    		testcorrcoef();
+    		setCompleted(true);
+    		return;
+    	}
     	
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
@@ -1720,6 +1726,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	public void mouseExited(MouseEvent event) {
 		
 	}
+	
+	public void testxcorr() {
+		int x[] = new int[]{1,2,3,4};
+		double y[] = new double[]{1,2,1,-1};
+		// Answer from MATLAB
+		double answer[] = new double[]{-0.25,-0.25,0.25,1.0,3.0,2.75,1.0};
+		double result[] = xcorrbias(x, y);
+		for (int i = 0; i < 7; i++) {
+			System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);
+		}
+	}
     
     private double[] xcorrbias(int x[], double y[]) {
     	int i;
@@ -1749,6 +1766,26 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	cout[i] = cout[i]/N;
         }
         return cout;
+    }
+    
+    public void testcircshift() {
+    	int i;
+    	int x[] = new int[]{0,1,2,3,4,5};
+    	int result[] = circshift(x, 3);
+    	int answer[] = new int[]{3,4,5,0,1,2};
+    	for (i = 0; i < 6; i++) {
+    		System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);	
+    	}
+    	result = circshift(x, 0);
+    	answer = new int[]{0, 1, 2, 3, 4, 5};
+    	for (i = 0; i < 6; i++) {
+    		System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);	
+    	}
+    	result = circshift(x,-3);
+    	answer = new int[]{3, 4, 5, 0, 1, 2};
+    	for (i = 0; i < 6; i++) {
+    		System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);	
+    	}
     }
     
     private int[] circshift(int x[], int n) {
@@ -1805,6 +1842,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		}
     	}
     	return y;
+    }
+    
+    public void testcorrcoef() {
+    	int x[] = new int[]{1, 5, 6, 9, -8, 11};
+    	double y[] = new double[]{9.7, 3.1, 6.2, -1.2, 0.0, 3.5};
+    	double answer = 0.0359;
+    	double result = corrcoef(x, y);
+    	System.out.println("result = " + result + " answer = " + answer);
     }
     
     private double corrcoef(int x[], double y[]) {
