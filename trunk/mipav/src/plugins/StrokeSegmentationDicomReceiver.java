@@ -317,6 +317,8 @@ public class StrokeSegmentationDicomReceiver {
                 boolean usePrevADC = false;
                 boolean usePrevDWI = false;
                 
+                boolean alreadySegmented = false;
+                
                 Vector<File> adcFiles = new Vector<File>();
                 Vector<File> dwiFiles = new Vector<File>();
                 
@@ -425,6 +427,9 @@ public class StrokeSegmentationDicomReceiver {
                             } else if (file.getName().equalsIgnoreCase("DWI")) {
                                 foundOutputDirDWI = true;
                             }
+                        } else if (file.getName().equalsIgnoreCase("core_seg_report.html")) {
+                            log("New data received for previously segmented subject.  Not running the segmentation again.");
+                            alreadySegmented = true;
                         }
                     }
                     
@@ -554,7 +559,7 @@ public class StrokeSegmentationDicomReceiver {
                     }
                 }
                 
-                if ((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI)) {
+                if (!alreadySegmented && ((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
                     // check that the number of files in the ADC and DWI directories are the same
                     File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
                     int numAdcFiles = adcDirFile.listFiles().length;
