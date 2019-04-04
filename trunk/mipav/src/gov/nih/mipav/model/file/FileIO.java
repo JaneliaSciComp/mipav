@@ -3652,7 +3652,7 @@ public class FileIO {
             }
 
             if (fileType == FileUtility.UNDEFINED && isQuiet()) {
-                System.err.println("FileIO read: Unable to get file type from suffix");
+                System.err.println("FileIO read: Unable to get file type from suffix: " + fDir + File.separator + fileName);
                 return fileType;
             }
 
