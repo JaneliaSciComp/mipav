@@ -740,9 +740,11 @@ public class FileIO {
 
                 try {
 
-                    if ( ((float) i / (nListImages - 1) * 100) > pBarVal) {
-                        pBarVal += 10;
-                        progressBar.updateValue(Math.round((float) i / (10 * (nListImages - 1)) * 100), false);
+                    if (progressBar != null) {
+	                	if ( ((float) i / (nListImages - 1) * 100) > pBarVal) {
+	                        pBarVal += 10;
+	                        progressBar.updateValue(Math.round((float) i / (10 * (nListImages - 1)) * 100), false);
+	                    }
                     }
 
                     FileInfoDicom fileInfoTemp;
@@ -919,8 +921,10 @@ public class FileIO {
             }
 
             if (fileList.length != savedFileInfos.length) {
-                progressBar.setVisible(false);
-                progressBar = null;
+            	if (progressBar != null) {
+                    progressBar.setVisible(false);
+                    progressBar = null;
+            	}
                 return readDicom(selectedFileName, fileList, performSort); // fileList has been modified, read dicom
                                                                            // based on this new file list
             }
