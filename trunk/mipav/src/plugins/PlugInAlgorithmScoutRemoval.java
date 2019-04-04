@@ -82,6 +82,7 @@ public class PlugInAlgorithmScoutRemoval extends AlgorithmBase {
     	
     	FileIO fileIO = new FileIO(); 
     	fileIO.setQuiet(false);
+    	fileIO.setSuppressProgressBar(true);
     	System.out.println("fileDirectory = " + fileDirectory);
     	File folder = new File(fileDirectory);
     	for (File fileEntry : folder.listFiles()) {
