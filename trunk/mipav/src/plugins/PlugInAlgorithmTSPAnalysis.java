@@ -244,6 +244,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	fileIO.setFileDir(pwiImageFileDirectory + File.separator);
     	boolean performSort = true;
     	fileIO.setQuiet(false);
+    	fileIO.setSuppressProgressBar(true);
     	ModelImage image3D = fileIO.readDicom(selectedFileName, fileList, performSort);
     	image3D.calcMinMax();
     	int extents3Dorg[] = image3D.getExtents();
@@ -1351,6 +1352,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		D_inv[t] = null;
     	}
     	D_inv = null;
+    	
+    	System.out.println("Finished directory " + pwiImageFileDirectory);
     	
     	setCompleted(true); 
     } // end runAlgorithm()
