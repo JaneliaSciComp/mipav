@@ -1405,11 +1405,13 @@ public class FileIO {
 
             try {
 
-                if (i == (nImages - 1)) {
-                    progressBar.updateValue(100, false);
-                } else if ( ((float) i / (nImages - 1) * 100) > pBarVal) {
-                    pBarVal += 10;
-                    progressBar.updateValue(10 + Math.round((float) i / (nImages - 1) * 90), false);
+                if (progressBar != null) {
+	            	if (i == (nImages - 1)) {
+	                    progressBar.updateValue(100, false);
+	                } else if ( ((float) i / (nImages - 1) * 100) > pBarVal) {
+	                    pBarVal += 10;
+	                    progressBar.updateValue(10 + Math.round((float) i / (nImages - 1) * 90), false);
+	                }
                 }
 
                 // setting the refFileInfo doesn't matter here, since we will be overriding the file info shortly
