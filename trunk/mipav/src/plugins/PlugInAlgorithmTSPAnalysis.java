@@ -1071,7 +1071,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    for (i = 0; i < b.length/4; i++) {
 		    		    	    	if (b[i] > rcbf) {
 		    		    	    		rcbf = b[i];
-		    		    	    		Tmax[z][y][x] = i;
+		    		    	    		Tmax[z][y][x] = i+1;
 		    		    	    	}
 		    		    	    }
 		    		    	    // Shift b to have a peak at origin for fitting
