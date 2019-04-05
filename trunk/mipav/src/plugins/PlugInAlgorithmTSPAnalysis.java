@@ -207,6 +207,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	long sumT[];
     	int countT[];
     	boolean test = false;
+    	
     	if (test) {
     		testxcorr();
     		testcircshift();
@@ -799,7 +800,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					for (t = 0; t < tDim; t++) {
 						if (data_norm[z][y][x][t] < minpeaks) {
 							minpeaks = data_norm[z][y][x][t];
-							minttp = t;
+							minttp = t+1;
 						}
 					}
 					peaks[z][y][x] = minpeaks;
@@ -1793,6 +1794,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private int[] circshift(int x[], int n) {
     	int i;
+    	n = n % x.length;
     	int y[] = new int[x.length];
     	if (n > 0) {
     	    for (i = 0; i < n; i++) {
@@ -1821,6 +1823,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private double[] circshift(double x[], int n) {
     	int i;
+    	n = n % x.length;
     	double y[] = new double[x.length];
     	if (n > 0) {
     	    for (i = 0; i < n; i++) {
