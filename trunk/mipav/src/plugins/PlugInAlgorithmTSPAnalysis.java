@@ -434,7 +434,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    				    for (i = 0; i < temp.length; i++) {
 	    				    	if (temp[i] > maxTemp) {
 	    				    		maxTemp = temp[i];
-	    				    		maxIndex = i;
+	    				    		maxIndex = i+1;
 	    				    	}
 	    				    }
 	    				    delay_map[z][y][x] = maxIndex;
@@ -523,7 +523,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        				    for (i = 0; i < temp.length; i++) {
 	        				    	if (temp[i] > maxTemp) {
 	        				    		maxTemp = temp[i];
-	        				    		maxIndex = i;
+	        				    		maxIndex = i+1;
 	        				    	}
 	        				    }
 	        				    delay_map[z][y][x] = maxIndex;
@@ -1398,7 +1398,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				    for (i = 0; i < temp.length; i++) {
     				    	if (temp[i] > maxTemp) {
     				    		maxTemp = temp[i];
-    				    		maxIndex = i;
+    				    		maxIndex = i+1;
     				    	}
     				    }
     				    delay_map[y][x] = maxIndex;
@@ -1456,7 +1456,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				    for (i = 0; i < temp.length; i++) {
     				    	if (temp[i] > maxTemp) {
     				    		maxTemp = temp[i];
-    				    		maxIndex = i;
+    				    		maxIndex = i+1;
     				    	}
     				    }
     				    delay_map[y][x] = maxIndex;
