@@ -978,6 +978,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         wMat = new Matrix(W);
         D_invMat = (vMat.times(wMat)).times(uMat.transpose());
         D_inv = D_invMat.getArray();
+        for (i = 0; i < 2*tDim; i++) {
+        	for (j = 0; j < 2*tDim; j++) {
+        		Preferences.debug("D_inv["+i+"]["+j+"] = " + D_inv[i][j] + "\n", Preferences.DEBUG_ALGORITHM);
+        	}
+        }
         
         // Iterate over brain volume to find rCBF
         CBV = new double[zDim][yDim][xDim];
@@ -1669,13 +1674,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			int ctrl;
 			int i;
 			
+			
 			try {
 				ctrl = ctrlMat[0];
 
 				if ((ctrl == -1) || (ctrl == 1)) {
                     // Monoexponential decay
 					for (i = 0; i < b.length; i++) {
-					    residuals[i] = b[i] - (a[0]*Math.exp(-1/a[1]*xdata[i]));	
+					    residuals[i] = b[i] - (a[0]*Math.exp(-1/a[1]*xdata[i]));
 					}
 				} // if ((ctrl == -1) || (ctrl == 1))
 
@@ -1853,7 +1859,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     public void testcorrcoef() {
     	int x[] = new int[]{1, 5, 6, 9, -8, 11};
     	double y[] = new double[]{9.7, 3.1, 6.2, -1.2, 0.0, 3.5};
-    	double answer = 0.0359;
+    	double answer = 0.035919004668078;
     	double result = corrcoef(x, y);
     	System.out.println("result = " + result + " answer = " + answer);
     }
