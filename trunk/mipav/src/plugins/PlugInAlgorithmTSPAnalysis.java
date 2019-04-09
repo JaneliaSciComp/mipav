@@ -212,6 +212,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		testxcorr();
     		testcircshift();
     		testcorrcoef();
+    		testexpfun();
     		setCompleted(true);
     		return;
     	}
@@ -384,6 +385,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		}
     	} // for (t = 0; t < tDim; t++)
     	temp_mean[0] = 0;
+    	
     	
     	// Zero/Initialize output maps
         // TSP Correlation map with out AIF delay compensation
@@ -1084,10 +1086,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    minsearch = new expfun(x0, b, xdata);
 		    		    	    minsearch.driver();
 		    		    	    exitStatus = minsearch.getExitStatus();
-		    		    	    if (exitStatus >= 0) {
+		    		    	    p = minsearch.getParameters();
+		    		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
 		    		    	    	// Normal termination
 		    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-		    					    p = minsearch.getParameters();
 		    					    CBF[z][y][x] = p[0];
 		    					    // relCBF is max value of residual function.  Should be similar to CBF,
 		    					    // but may be different.
@@ -1582,10 +1584,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    minsearch = new expfun(x0, b, xdata);
         		    	    minsearch.driver();
         		    	    exitStatus = minsearch.getExitStatus();
-        		    	    if (exitStatus >= 0) {
+        		    	    p = minsearch.getParameters();
+        		    	    if ((exitStatus >= 0) && (p[1] >= 0) && (p[1] < 75)) {
         		    	    	// Normal termination
         		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-        					    p = minsearch.getParameters();
         					    CBF[y][x] = p[0];
         					    // relCBF is max value of residual function.  Should be similar to CBF,
         					    // but may be different.
@@ -1600,6 +1602,22 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     }
     
+    public void testexpfun() {
+    	expfun minsearch;
+    	int exitStatus;
+    	double p[];
+    	double x0[] = new double[]{0.1,4};
+    	double b[] = new double[]{0.07, 0.06};
+    	double xdata[] = new double[]{5.0,6.0};
+    	 minsearch = new expfun(x0, b, xdata);
+ 	    minsearch.driver();
+ 	    exitStatus = minsearch.getExitStatus();	
+ 	    System.out.println("exitStatus = " + exitStatus);
+ 	    p = minsearch.getParameters();
+ 	    System.out.println("p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
+ 	    System.out.println("p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
+    }
+    
     class expfun extends NLConstrainedEngine {
     	double b[];
     	double xdata[];
@@ -1609,19 +1627,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.b = b;
         	this.xdata = xdata;
         	
-        	bounds = 2; // bounds = 0 means unconstrained
+        	bounds = 0; // bounds = 0 means unconstrained
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
         	
-        	bl[0] = -Double.MAX_VALUE;
-        	bu[0] = Double.MAX_VALUE;
         	
-        	// Must be inside these limits
-        	bl[1] = 0.0;
-        	bu[1] = 75.0;
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
