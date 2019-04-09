@@ -6982,8 +6982,10 @@ mainLoop:
         norm = dnrm2(nPts, residuals, 1);
         phi = 0.5 * norm * norm;
         if (Double.isNaN(phi)) {
-        	Preferences.debug("phi is NaN in lsunc iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
-        	System.out.println("phi is NaN in lsunc iters = " + iters);
+        	if (outputMes) {
+        	    Preferences.debug("phi is NaN in lsunc iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
+        	    System.out.println("phi is NaN in lsunc iters = " + iters);
+        	}
         	errorStatus = -12;
         	exitStatus = errorStatus;
         	return;
@@ -9759,8 +9761,10 @@ mainLoop:
 
             phi = phikp1;
             if (Double.isNaN(phi)) {
-            	Preferences.debug("phi is NaN in stepuc point 1 iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
-            	System.out.println("phi is NaN in stepuc point 1 iters = " + iters);
+            	if (outputMes) {
+            	    Preferences.debug("phi is NaN in stepuc point 1 iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
+            	    System.out.println("phi is NaN in stepuc point 1 iters = " + iters);
+            	}
             	errorStatus = -12;
             	exitStatus = errorStatus;
             }
@@ -9806,8 +9810,10 @@ mainLoop:
             temp = dnrm2(nPts, residuals, 1);
             phi = 0.5 * temp * temp;
             if (Double.isNaN(phi)) {
-            	Preferences.debug("phi is NaN in stepuc point 2 iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
-            	System.out.println("phi is NaN in stepuc point 2 iters = " + iters);
+            	if (outputMes) {
+            	    Preferences.debug("phi is NaN in stepuc point 2 iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
+            	    System.out.println("phi is NaN in stepuc point 2 iters = " + iters);
+            	}
             	errorStatus = -12;
             	exitStatus = errorStatus;
             	return;
