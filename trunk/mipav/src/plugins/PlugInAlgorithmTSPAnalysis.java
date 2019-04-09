@@ -65,7 +65,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private String pwiImageFileDirectory;
     
     // Thresholding to mask out image pixels not corresponding to brain tissue
-    private int masking_threshold = 800;
+    private int masking_threshold = 600;
     
     private double TSP_threshold = 0.8;
     
@@ -115,6 +115,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double CBV[][][];
     	double CBF[][][];
     	double MTT[][][];
+    	double chiSquared[][][];
     	int zDim;
     	int length;
     	int volume;
@@ -205,6 +206,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage CBVImage;
     	ModelImage TmaxImage;
     	ModelImage TTPImage;
+    	ModelImage chiSquaredImage;
     	long sumT[];
     	int countT[];
     	boolean test = false;
@@ -270,7 +272,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	setCompleted(false);
         	return;
         }
-    	TE = Double.valueOf(TEString.trim()).doubleValue();
+    	// Change to echo time in seconds
+    	TE = Double.valueOf(TEString.trim()).doubleValue() * 1.0E-3;
     	//System.out.println("TE = " + TE);
         if (tagTable.getValue("0020,0105") != null) {
         	// Number of temporal positions
@@ -333,13 +336,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         t1 = Float.valueOf(t1String.trim()).floatValue();
         // Time in milliseconds
         delT = t1 - t0;
+        // Change delT to seconds
+        delT = (float)(delT * 1.0E-3);
         //System.out.println("delT = " + delT);
         resolutions[3] = delT;
         for (i = 0; i < 3; i++) {
         	units[i] = Unit.MILLIMETERS.getLegacyNum();
         	units3D[i] = units[i];
         }
-        units[3] = Unit.MILLISEC.getLegacyNum();
+        units[3] = Unit.SECONDS.getLegacyNum();
         volume = zDim * length;
         dataSize = volume * tDim;
         buffer = new int[dataSize];
@@ -983,6 +988,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         D_invMat = (vMat.times(wMat)).times(uMat.transpose());
         D_inv = D_invMat.getArray();
         
+        
+        
         // Iterate over brain volume to find rCBF
         CBV = new double[zDim][yDim][xDim];
         CBF = new double[zDim][yDim][xDim];
@@ -990,6 +997,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         Tmax = new int[zDim][yDim][xDim];
         //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[zDim][yDim][xDim];
+        chiSquared = new double[zDim][yDim][xDim];
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
         for (z = 0; z < zDim; z++) {
@@ -1008,7 +1016,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
             	executorService.execute(new endCalc(xDim,yDim,tDim,delT,TE,masking_threshold,
-            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z]));	
+            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],chiSquared[z]));	
             }
             
             executorService.shutdown();
@@ -1093,6 +1101,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    					    //relCBF[x][y][z] = rcbf;
 		    					    MTT[z][y][x] = p[1];
 		    					    CBV[z][y][x] = rcbf * p[1];
+		    					    chiSquared[z][y][z] = minsearch.getChiSquared();
 		    		    	    }
 		    		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
 		    		    } // if (alltMeetThreshold)
@@ -1353,6 +1362,56 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	TTPImage.disposeLocal();
     	TTPImage = null;
     	
+    	chiSquaredImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "chiSquared");
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (z = 0; z < zDim; z++) {
+    				dbuffer[x + y*xDim + z*length] = chiSquared[z][y][x];
+    			}
+    		}
+    	}
+    	try {
+    		chiSquaredImage.importData(0, dbuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException on chiSquaredImage");
+    		setCompleted(false);
+    		return;
+    	}
+    	fileInfo = chiSquaredImage.getFileInfo();
+    	for (i = 0; i < zDim; i++) {
+    		fileInfo[i].setResolutions(resolutions3D);
+    		fileInfo[i].setUnitsOfMeasure(units3D);
+    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    	}
+        options.setFileName("chiSquared.img");
+       
+        try { // Construct a new file object
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            boolean zerofunused = false;
+            analyzeFile.setZerofunused(zerofunused);
+            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+            analyzeFile.writeImage(chiSquaredImage, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
+        } catch (final IOException error) {
+
+            MipavUtil.displayError("IOException on writing chiSquared.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        } catch (final OutOfMemoryError error) {
+
+            MipavUtil.displayError("Out of memory error on writing chiSquared.img");
+
+            error.printStackTrace();
+            setCompleted(false);
+            return;
+        }
+        chiSquaredImage.disposeLocal();
+    	chiSquaredImage = null;
+    	
     	for (t = 0; t < 2*tDim; t++) {
     		D_inv[t] = null;
     	}
@@ -1497,9 +1556,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         double CBF[][];
         double MTT[][];
         int Tmax[][];
+        double chiSquared[][];
     	
     	public endCalc(int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
-    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][]) {
+    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][],
+    			double chiSquared[][]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
         	this.tDim = tDim;
@@ -1511,6 +1572,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.CBF = CBF;
         	this.MTT = MTT;
         	this.Tmax = Tmax;
+        	this.chiSquared = chiSquared;
         }
     	
     	public void run() {
@@ -1591,6 +1653,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         					    //relCBF[x][y][z] = rcbf;
         					    MTT[y][x] = p[1];
         					    CBV[y][x] = rcbf * p[1];
+        					    chiSquared[y][x] = minsearch.getChiSquared();
         		    	    }
         		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
         		    } // if (alltMeetThreshold)
@@ -1690,14 +1753,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 
 				if ((ctrl == -1) || (ctrl == 1)) {
                     // Monoexponential decay
-					for (i = 0; i < b.length; i++) {
-					    residuals[i] = b[i] - (a[0]*Math.exp(-1/a[1]*xdata[i]));
+					for (i = 0; i < nPts; i++) {
+					    residuals[i] = (a[0]*Math.exp(-1/a[1]*xdata[i])) - b[i];
 					}
 				} // if ((ctrl == -1) || (ctrl == 1))
 
-				// Calculate the Jacobian numerically
+				// Calculate the Jacobian analytically
 				else if (ctrl == 2) {
-					ctrlMat[0] = 0;
+					for (i = 0; i < nPts; i++) {
+					    covarMat[i][0] = Math.exp(-1.0/a[1]*xdata[i]);
+					    covarMat[i][1] = xdata[i]/(a[1]*a[1])*a[0]*Math.exp(-1.0/a[1]*xdata[i]);
+					}
 				}
 			} catch (Exception e) {
 				Preferences.debug("function error: " + e.getMessage() + "\n",
