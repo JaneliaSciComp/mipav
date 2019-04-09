@@ -31,6 +31,7 @@ import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileNIFTI;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -955,6 +956,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	}
 	    }
 	    
+	    
 	    // Compute SVD of 'D' and calculate inverse
         dMat = new Matrix(D);
         svd = new SingularValueDecomposition(dMat);
@@ -980,11 +982,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         wMat = new Matrix(W);
         D_invMat = (vMat.times(wMat)).times(uMat.transpose());
         D_inv = D_invMat.getArray();
-        for (i = 0; i < 2*tDim; i++) {
-        	for (j = 0; j < 2*tDim; j++) {
-        		Preferences.debug("D_inv["+i+"]["+j+"] = " + D_inv[i][j] + "\n", Preferences.DEBUG_ALGORITHM);
-        	}
-        }
         
         // Iterate over brain volume to find rCBF
         CBV = new double[zDim][yDim][xDim];
