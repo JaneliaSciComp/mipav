@@ -5792,8 +5792,10 @@ mainLoop:
         temp = dnrm2(nPts, residuals, 1);
         phi = 0.5 * temp * temp;
         if (Double.isNaN(phi)) {
-        	Preferences.debug("phi is NaN in evruec iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
-        	System.out.println("phi is NaN in evruec iters = " + iters);
+        	if (outputMes) {
+        	    Preferences.debug("phi is NaN in evruec iters = " + iters + "\n", Preferences.DEBUG_ALGORITHM);
+        	    System.out.println("phi is NaN in evruec iters = " + iters);
+        	}
         	errorStatus = -12;
         	exitStatus = errorStatus;
         	return;
