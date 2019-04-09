@@ -33,7 +33,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	private JTextField masking_thresholdText;
 	
 	// Threshold to mask out image pixels not corresponding to brain tissues
-	private int masking_threshold = 800;
+	private int masking_threshold = 600;
 	
 	private JTextField TSP_thresholdText;
 	
@@ -139,7 +139,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         gbc.gridx = 1;
         masking_thresholdText = new JTextField(10);
-        masking_thresholdText.setText("800");
+        masking_thresholdText.setText("600");
         masking_thresholdText.setFont(serif12);
         masking_thresholdText.setForeground(Color.black);
         inputPanel.add(masking_thresholdText, gbc);
