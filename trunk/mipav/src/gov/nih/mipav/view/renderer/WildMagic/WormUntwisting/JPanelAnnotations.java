@@ -26,28 +26,21 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************/
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIText;
-import gov.nih.mipav.plugins.JDialogStandalonePlugin;
-import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Vector;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -56,7 +49,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -118,7 +110,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				if ( annotations.getCurves().size() > 0 ) {
 					for ( int i = 0; i < annotations.getCurves().size(); i++ )
 					{
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						text.display(true);
 					}
 				}
@@ -133,7 +125,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				if ( annotations.getCurves().size() > 0 ) {
 					for ( int i = 0; i < annotations.getCurves().size(); i++ )
 					{
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						text.display(false);
 					}
 				}
@@ -150,7 +142,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				int row = annotationTable.getSelectedRow();		        
 				if ( (annotations != null) && (row >= 0) ) {
 					if ( row < annotations.getCurves().size() ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(row);
 						text.display(((JCheckBox)source).isSelected());
 					}
 				}
@@ -164,7 +156,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 //				System.err.println("Display Group " + selectedPrefix );
 				VOI annotations = voiManager.getAnnotations();
 				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-					VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 					String prefix = getPrefix(text.getText());
 					if ( prefix.equals(selectedPrefix) ) {
 						text.display(((JCheckBox)source).isSelected());
@@ -183,7 +175,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				// turn off clipping for all rows:
 				for ( int i = 0; i < annotations.getCurves().size(); i++ ) 
 				{
-					VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 					text.getVolumeVOI().setVolumeClip(false);					
 				}
 				// clip radius:
@@ -192,7 +184,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				int row = annotationTable.getSelectedRow();		        
 				if ( (annotations != null) && (row >= 0) ) {
 					if ( row < annotations.getCurves().size() ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(row);
 						text.getVolumeVOI().setVolumeClip(clip);
 						text.getVolumeVOI().setVolumeClipRadius(value);
 					}
@@ -206,7 +198,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-		System.err.println("annotationChanged");
+//		System.err.println("annotationChanged");
 		
 		if ( voiManager != null )
 		{
@@ -231,18 +223,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					int[] segments = new int[annotations.getCurves().size()];
 					Vector<String> names = new Vector<String>();
 					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						names.add(text.getText());
 						if ( useLatticeMarkers ) {
-							String note = new String(text.getNote());
+							int latticeSegment = text.getLatticeSegment();
 //							System.err.println(i + "  " + note);
-							if ( note.contains("lattice segment:") ) {
-								int index = note.indexOf("lattice segment:");
-								note = note.substring(index + 17, note.length() );
-								int value = Integer.valueOf(note);
-								segments[i] = value;
+							if ( latticeSegment != -1 ) {
 //								System.err.println(note + "   " + value );
-								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z, value } );
+								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z, latticeSegment } );
 							}
 							else {
 								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
@@ -307,7 +295,12 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		}		
 	}
 
-
+	private boolean previewMode = false;
+	public void setPreviewMode( boolean preview ) 
+	{
+		previewMode = preview;
+	}
+	
 	/* (non-Javadoc)
 	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
 	 */
@@ -325,7 +318,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			VOI annotations = voiManager.getAnnotations();
 			if ( (row >= 0) && (row < annotations.getCurves().size()) )
 			{
-				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+				VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(row);
 				if ( column == 0 )
 				{
 					text.setText( annotationTableModel.getValueAt(row, column).toString() );
@@ -347,34 +340,23 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 							text.elementAt(0).Z = value;
 							text.elementAt(1).Z = value;
 						}
+						text.retwist(previewMode);
 					}
 				}
 				else
 				{
 					try {
 						int value = Integer.valueOf(annotationTableModel.getValueAt(row, column).toString());
-						String note = text.getNote();
-						if ( note.contains("lattice segment:") ) {
-							int index = note.indexOf("lattice segment:");
-							note = note.substring(0, index);
-						}
-						note = note + "\n" + "lattice segment: " + value;
-//						System.err.println(text.getText() + " " + note);
-						text.setNote(note);
+						text.setLatticeSegment(value);
 					} catch ( java.lang.NumberFormatException error ) {
-						// value erased:
-						String note = text.getNote();
-						if ( note.contains("lattice segment:") ) {
-							int index = note.indexOf("lattice segment:");
-							note = note.substring(0, index);
-						}
-//						System.err.println(text.getText() + " " + note);
-						text.setNote(note);
+						text.setLatticeSegment(-1);
 					}
 				}
 				text.update();
-				isChecked = text.getVolumeVOI().GetDisplay();
-				isClipped = text.getVolumeVOI().GetClipped();
+				if ( text.getVolumeVOI() != null ) {
+					isChecked = text.getVolumeVOI().GetDisplay();
+					isClipped = text.getVolumeVOI().GetClipped();
+				}
 			}
 			
 			displayLabel.setSelected(isChecked);
@@ -415,25 +397,10 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			{
 				VOI annotations = voiManager.getAnnotations();
 				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-					VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 					String prefix = getPrefix(text.getText());
 					if ( segmentChanged && prefix.equals(selectedPrefix) ) {
-						String note = text.getNote();
-						if ( segment != -1 ) {
-							if ( note.contains("lattice segment:") ) {
-								int index = note.indexOf("lattice segment:");
-								note = note.substring(0, index);
-							}
-							note = note + "\n" + "lattice segment: " + segment;
-						}
-						else {
-							// value erased:
-							if ( note.contains("lattice segment:") ) {
-								int index = note.indexOf("lattice segment:");
-								note = note.substring(0, index);
-							}
-						}
-						text.setNote(note);
+						text.setLatticeSegment(segment);
 					}
 					if ( nameChanged && prefix.equals(selectedPrefix) ) {
 						text.setText( newPrefix + getPostfix(text.getText() ) );
@@ -467,7 +434,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				boolean isClipped = true;
 				if ( (annotations != null) && (row >= 0) ) {
 					if ( row < annotations.getCurves().size() ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(row);
 						if ( text.getVolumeVOI() != null )
 						{
 							isChecked = text.getVolumeVOI().GetDisplay();
@@ -490,7 +457,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						boolean displayAll = true;
 						VOI annotations = voiManager.getAnnotations();
 						for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+							VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 							String prefix = getPrefix(text.getText());
 							if ( prefix.equals(selectedPrefix) ) {
 								if ( text.getVolumeVOI() != null )
@@ -669,7 +636,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					int col = annotationTable.getSelectedColumn();
 					if ( (row == 0)  && (col == 0) ) {
 
-						VOIText text = new VOIText();
+						VOIWormAnnotation text = new VOIWormAnnotation();
 						text.setText("center" );
 						int dimX = imageA.getExtents()[0];
 						int dimY = imageA.getExtents()[1];
@@ -736,7 +703,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 					VOI annotations = voiManager.getAnnotations();
 					for ( int i = annotations.getCurves().size() - 1; i >= 0; i-- ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						String prefix = getPrefix(text.getText());
 						if ( prefix.equals(selectedPrefix) ) {
 							annotations.getCurves().remove(i);
@@ -773,7 +740,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				int row = annotationTable.getSelectedRow();		        
 				if ( (annotations != null) && (row >= 0) ) {
 					if ( row < annotations.getCurves().size() ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(row);
 						text.getVolumeVOI().setVolumeClipRadius(value);
 					}
 				}

@@ -56,6 +56,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelAnnotations;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
@@ -93,6 +94,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -104,7 +107,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
  * and view/edit results from the automatic processes.
  * Provides framework for animating the annotations after untwisting.
  */
-public class PlugInDialogVolumeRender extends JFrame implements ActionListener, AlgorithmInterface, PropertyChangeListener, ViewImageUpdateInterface, WindowListener {
+public class PlugInDialogVolumeRender extends JFrame implements ActionListener, AlgorithmInterface, PropertyChangeListener, ViewImageUpdateInterface, WindowListener, ChangeListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 	
@@ -114,7 +117,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	public static final int CheckSeam = 3;
 	public static final int EditAnnotations1 = 4;
 	public static final int EditAnnotations2 = 5;
-	public static final int ReviewResults = 6;
+	public static final int IntegratedEditing = 6;
+	public static final int ReviewResults = 7;
 	
 	private JPanel algorithmsPanel;
 	private VOIVector annotationList;
@@ -191,7 +195,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private VOIVector[] potentialLattices;
 	private JTextField rangeFusionText;
 	
+	private JRadioButton integratedEdit;
 	private JRadioButton reviewResults;
+	
 	
 	private JRadioButton segmentSeamCells;
 	
@@ -395,6 +401,21 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						openAnnotations(1);
 					}
 				}
+				else if ( integratedEdit.isSelected() )
+				{
+					// start lattice editing:
+					if ( !integratedDisplay )
+					{
+						PlugInDialogVolumeRender editor = new PlugInDialogVolumeRender( this, PlugInDialogVolumeRender.IntegratedEditing, includeRange, imageIndex, baseFileDir, baseFileNameText.getText() );
+						editor.setLocation( this.getWidth(), this.getY() );
+						editor.openAll();
+					}
+					else
+					{
+						editMode = IntegratedEditing;
+						openAll();
+					}
+				}
 				else if ( reviewResults.isSelected() )
 				{
 					// start viewing untwisted results:
@@ -573,6 +594,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				if ( annotationPanelUI != null ) {
 					tabbedPane.remove(annotationPanelUI.getAnnotationsPanel());
 				}
+				if ( latticePanel != null ) {
+					tabbedPane.remove(latticePanel);
+				}
 				volOpacityPanel = null;
 				lutHistogramPanel = null;
 			}
@@ -634,6 +658,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			else if ( command.equals("preview") )
 			{
+				doneButton.setEnabled(false);
+				nextButton.setEnabled(false);
+				backButton.setEnabled(false);
 				selectedTab = tabbedPane.getSelectedIndex();
 				TransferFunction fn = null;
 				TransferFunction blueFn = null;
@@ -685,6 +712,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					}
 					volumeImage.UpdateImages(volumeImage.getLUT());
 					previewUntwisting.setText("return");
+					
+					// save twisted annotations and lattice:
+					previewImage.unregisterAllVOIs();
+					annotationsTwisted = new VOI(voiManager.getAnnotations());
+					latticeTwisted = new VOI(voiManager.getLattice());
+					voiManager.setPreviewMode(true, voiManager.getLatticeStraight(), voiManager.getAnnotationsStraight());
+					previewImage.registerVOI( voiManager.getAnnotationsStraight() );
+					
+					initDisplayAnnotationsPanel( );
+					annotationPanelUI.setPreviewMode(true);
 				}
 				else {
 					previewUntwisting.setText("preview");		
@@ -703,6 +740,53 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						((ModelRGB)volumeImage.getLUT()).setGreenFunction(greenFn);						
 					}
 					volumeImage.UpdateImages(volumeImage.getLUT());
+					
+					// restore twisted annotations and lattice:
+					wormImage.unregisterAllVOIs();
+					VOI annotations = voiManager.retwistAnnotations(latticeTwisted);
+					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+						VOIWormAnnotation textRT = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+						boolean newAnnotation = true;
+						for ( int j = 0; j < annotationsTwisted.getCurves().size(); j++ ) {
+							VOIWormAnnotation textT = (VOIWormAnnotation) annotationsTwisted.getCurves().elementAt(j);
+							if ( textT.getText().equals(textRT.getText()) ) {
+								System.err.println( textT.getText() + "   " + textT.firstElement() + "  =>   " + textRT.firstElement() );
+								if ( textRT.modified() ) {
+									textT.firstElement().copy(textRT.firstElement());
+									textT.lastElement().copy(textRT.lastElement());
+								}
+								newAnnotation = false;
+								break;
+							}
+						}
+						if ( newAnnotation ) {
+							// add any new annotations:
+							System.err.println( "New annotation " + textRT.getText() );
+							annotationsTwisted.getCurves().add( new VOIWormAnnotation(textRT));
+						}
+					}
+					for ( int i = annotationsTwisted.getCurves().size() - 1; i >= 0; i-- ) {
+						VOIWormAnnotation textT = (VOIWormAnnotation) annotationsTwisted.getCurves().elementAt(i);
+						boolean deleteAnnotation = true;
+						for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
+							VOIWormAnnotation textRT = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
+							if ( textT.getText().equals(textRT.getText() ) ) {
+								deleteAnnotation = false;
+								break;
+							}
+						}
+						if ( deleteAnnotation ) {
+							annotationsTwisted.getCurves().remove(i);
+						}
+					}
+					voiManager.setPreviewMode(false, latticeTwisted, annotationsTwisted);
+					wormImage.registerVOI( annotationsTwisted );
+					initDisplayAnnotationsPanel( );
+					annotationPanelUI.setPreviewMode(false);
+					
+					doneButton.setEnabled(true);
+					nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
+					backButton.setEnabled( imageIndex > 0 );					
 				}
 				tabbedPane.setSelectedIndex(0);
 			}
@@ -784,14 +868,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 //		System.err.println( "algorithmPerformed" );
 		voiManager = new VOILatticeManagerInterface( null, volumeImage.GetImage(), null, 0, true, null );
 		volumeRenderer.setVOILatticeManager(voiManager);
-		if ( (editMode == EditSeamCells) || (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) )
+		if ( (editMode == EditSeamCells) || (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) || (editMode == IntegratedEditing) )
 		{
 			if ( annotations != null )
 			{
 				if ( annotations.size() > 0 )
 				{
 					voiManager.setAnnotations(annotations);
-					if ( (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) )
+					if ( (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) || (editMode == IntegratedEditing) )
 					{
 						if ( finalLattice != null ) {
 							VOIVector latticeVector = new VOIVector();
@@ -828,6 +912,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			volumeRenderer.resetAxisX();
 		}
 
+		if ( editMode == IntegratedEditing ) {
+			initDisplayLatticePanel();
+		}
+		
 		volumeRenderer.displayVolumeSlices(false);
 		volumeRenderer.displayVolumeRaycast(true);
 		volumeRenderer.displayVOIs(true);
@@ -951,6 +1039,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 		}
 		else if ( mode == EditAnnotations2 )
+		{
+			latticeStraighten.setSelected(true);
+		}
+		else if ( mode == IntegratedEditing )
 		{
 			latticeStraighten.setSelected(true);
 		}
@@ -1159,12 +1251,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 	
+	
+	private VOI annotationsTwisted = null;
+	private VOI latticeTwisted = null;
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
 	 * @return untwisted image.
 	 */
 	private ModelImage untwistingTest()
 	{
+		voiManager.setPaddingFactor(paddingFactor);
 		return voiManager.untwistTest();
 	}
 
@@ -1411,6 +1507,96 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				else {
 					imageIndex += nextDirection;
 					openLattice();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Opens the current image and lattice for viewing/editing.
+	 */
+	protected void openAll()
+	{
+		if ( includeRange != null )
+		{			
+			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
+			{
+				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+				if ( openImages( voiFile, voiFile2, fileName ) )
+				{
+					wormImage.setImageName( wormImage.getImageName().replace("_rgb", ""));
+					if ( potentialLattices != null )
+					{
+						for ( int i = 0; i < potentialLattices.length; i++ )
+						{
+							if (potentialLattices[i] != null )
+							{
+								potentialLattices[i].clear();
+							}
+						}
+						potentialLattices = null;
+					}	
+					wormData = new WormData(wormImage);
+					latticeSelectionPanel.removeAll();
+					latticeSelectionPanel.setVisible(false);
+
+					int latticeIndex = -1;
+					finalLattice = wormData.readFinalLattice();
+					
+					latticeSelectionPanel.add(displayModel);
+					displayModel.setSelected(false);
+					latticeSelectionPanel.add(displaySurface);
+					displaySurface.setSelected(false);
+					latticeSelectionPanel.remove(previewUntwisting);
+					latticeSelectionPanel.add(previewUntwisting);
+					latticeSelectionPanel.setVisible(true);
+					if ( voiManager != null )
+					{
+						VOIVector latticeVector = new VOIVector();
+						latticeVector.add(finalLattice);
+						voiManager.setLattice(latticeVector);
+						voiManager.editLattice();
+					}
+					
+
+					wormData = new WormData(wormImage);
+//					wormData.readSeamCells();				
+//					
+					if ( annotations != null )
+					{
+						annotations.clear();
+						annotations = null;
+					}
+					annotations = new VOIVector();
+//					annotations.add( wormData.getSeamAnnotations() );
+//					wormImage.registerVOI( wormData.getSeamAnnotations() );
+
+					VOI markers = wormData.getIntegratedMarkerAnnotations();
+					if ( markers == null ) {
+						markers = wormData.getMarkerAnnotations();
+						if ( editAnnotations2.isEnabled() ) 
+						{
+							// open second set of markers:
+							markers.getCurves().addAll( wormData.getMarkerAnnotations(WormData.getOutputDirectory(voiFile2, fileName)).getCurves() );
+						}
+					}
+					annotations.add( markers );
+					wormImage.registerVOI( markers );
+
+					if ( (annotations.size() > 0) && (voiManager != null) )
+					{
+						voiManager.setAnnotations(annotations);
+						initDisplayAnnotationsPanel();
+						
+						voiManager.editAnnotations(true);
+						voiManager.colorAnnotations(true);
+					}
+				}
+				else {
+					imageIndex += nextDirection;
+					openAll();
 				}
 			}
 		}
@@ -1930,6 +2116,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		opacityPanel = new JPanel();
 		clipPanel = new JPanel();
 		tabbedPane = new JTabbedPane();
+		tabbedPane.addChangeListener(this);
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
 		tabbedPane.addTab("Clip", null, clipPanel);
@@ -2094,6 +2281,19 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		tabbedPane.addTab("Annotation", null, annotationPanelUI.getAnnotationsPanel());
 		pack();
 	}
+	
+	private JPanel latticePanel = null;
+	private void initDisplayLatticePanel() 
+	{
+		System.err.println("initDisplayLatticePanel");
+		if ( latticePanel == null ) {
+			latticePanel = new JPanel(new GridBagLayout());
+			latticePanel.add(newLatticeButton);
+			latticePanel.add(flipLatticeButton);
+		}
+		tabbedPane.addTab("Lattice", null, latticePanel);
+		pack();
+	}
 
 	/**
 	 * Builds the algorithms panel for automatic seam-cell detection, automatic lattice building, straightening, etc.
@@ -2223,6 +2423,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridy++;
 
 		gbc.gridx = 0;
+		integratedEdit = gui.buildRadioButton("Integrated Editing", false );
+		integratedEdit.addActionListener(this);
+		integratedEdit.setActionCommand("integratedEdit");
+//		panel.add(integratedEdit.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
 		reviewResults = gui.buildRadioButton("7). review straightened results", false );
 		reviewResults.addActionListener(this);
 		reviewResults.setActionCommand("reviewResults");
@@ -2242,6 +2449,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		group.add(editAnnotations1);
 		group.add(editAnnotations2);
 		group.add(createAnimation);
+		group.add(integratedEdit);
 		group.add(reviewResults);
 
 		return panel;
@@ -2343,6 +2551,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		else if ( editMode == EditAnnotations2 )
 		{
 			saveAnnotations();
+		}
+		else if ( editMode == IntegratedEditing ) {
+			saveLattice();
+//			wormData.saveSeamAnnotations( voiManager.getAnnotations(), false );
+			wormData.saveIntegratedMarkerAnnotations( voiManager.getAnnotations() );
 		}
 	}
 
@@ -2626,6 +2839,20 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 //			surfaceGUI = new JPanelSurface_WM(volumeRenderer);
 //			tabbedPane.addTab("Surface", null, lightsPanel);
 //		}
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent arg0) {
+		System.err.println( "stateChanged : tabbedPane? " + (arg0.getSource() == tabbedPane) );
+		if ( (voiManager != null) && (arg0.getSource() == tabbedPane) ) {
+//			System.err.println( tabbedPane.getSelectedIndex() + "  " + tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()) );
+			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Lattice" ) ) {
+				voiManager.editLattice();
+			}
+			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Annotation" ) ) {
+				voiManager.editAnnotations(false);
+			}
+		}
 	}
 
 }

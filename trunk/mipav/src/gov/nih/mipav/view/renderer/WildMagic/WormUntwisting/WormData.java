@@ -5,7 +5,6 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -18,7 +17,6 @@ import java.util.Vector;
 import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
-import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class WormData
@@ -32,6 +30,7 @@ public class WormData
 	public static final String editLatticeOutput = new String("lattice_final");
 	public static final String editAnnotationInput = new String("annotation");
 	public static final String editAnnotationOutput = new String("annotation_final");
+	public static final String integratedAnnotationOutput = new String("integrated_annotation");
 	public static final String outputImages = new String("output_images");
 	public static final String straightenedLattice = new String("straightened_lattice");
 	public static final String straightenedAnnotations = new String("straightened_annotations");
@@ -59,6 +58,10 @@ public class WormData
 	
 	
 	private boolean seamEdited = false;
+	
+	public static String getOutputDirectory( File imageFile, String imageName ) {
+		return new String(imageFile.getParent() + File.separator + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+	}
 	
 	public WormData( ModelImage image )
 	{
@@ -174,9 +177,26 @@ public class WormData
 		return autoLattice;
 	}
 	
+	public VOI getIntegratedMarkerAnnotations()
+	{
+		System.err.println("getIntegratedMarkerAnnotations");
+		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv");
+		return markerAnnotations;
+	}
+	
 	public VOI getMarkerAnnotations()
 	{
+		System.err.println("getMarkerAnnotations");
 		VOI markerAnnotations = readMarkers();
+		if ( markerAnnotations == null )
+			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
+		return markerAnnotations;
+	}
+	
+	public VOI getMarkerAnnotations(String outputDir)
+	{
+		System.err.println("getMarkerAnnotations " + outputDir);
+		VOI markerAnnotations = readMarkers(outputDir);
 		if ( markerAnnotations == null )
 			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
 		return markerAnnotations;
@@ -339,6 +359,16 @@ public class WormData
 		}
 		return annotations;
 	}
+
+
+	private VOI readMarkers(String outputDir)
+	{
+		VOI annotations = LatticeModel.readAnnotationsCSV(outputDir + File.separator + editAnnotationOutput + File.separator + "annotations.csv");
+		if ( annotations == null ) {
+			annotations = LatticeModel.readAnnotationsCSV(outputDir + File.separator + editAnnotationInput + File.separator + "annotations.csv");
+		}
+		return annotations;
+	}
 	
 	public Vector<Vector3f> readSeamCells()
 	{	
@@ -378,7 +408,7 @@ public class WormData
 		seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			VOIWormAnnotation text = (VOIWormAnnotation)seamAnnotations.getCurves().elementAt(i);
 			seamCellPoints.add(new Vector3f(text.elementAt(0)));
 		}
 		return seamCellPoints;
@@ -424,12 +454,20 @@ public class WormData
 	
 	public void saveMarkerAnnotations(VOI annotations)
 	{		
+		System.err.println("saveMarkerAnnotations");
 //		wormImage.unregisterAllVOIs();
 //		wormImage.registerVOI(annotations);
 //		annotations.setName("markers");
 //		System.err.println( outputDirectory + File.separator + editAnnotationOutput + File.separator );
 //		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
 		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editAnnotationOutput + File.separator, "annotations.csv", annotations);
+		wormImage.unregisterAllVOIs();
+	}
+	
+	public void saveIntegratedMarkerAnnotations(VOI annotations)
+	{		
+		System.err.println("saveIntegratedMarkerAnnotations");
+		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + integratedAnnotationOutput + File.separator, "annotations.csv", annotations);
 		wormImage.unregisterAllVOIs();
 	}
 
@@ -446,7 +484,7 @@ public class WormData
 		int count = 0;
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
+			VOIWormAnnotation text = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
 			if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
 			{
 				count++;
@@ -465,7 +503,7 @@ public class WormData
 		int count = 0;
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
+			VOIWormAnnotation text = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
 			if ( LatticeModel.match(text.getColor(), Color.green) )
 			{
 				count++;
@@ -483,7 +521,7 @@ public class WormData
 		int count = 0;
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
+			VOIWormAnnotation text = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
 			if ( LatticeModel.match(text.getColor(), Color.red) )
 			{
 				count++;
@@ -497,7 +535,7 @@ public class WormData
 		Vector<Vector3f> seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)annotations.getCurves().elementAt(i);
+			VOIWormAnnotation text = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
 			if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
 			{
 				Vector3f temp = new Vector3f(text.elementAt(0) );
@@ -677,7 +715,7 @@ public class WormData
 			int id = 1;
 			for ( int i = 0; i < annotations.getCurves().size(); i++ )
 			{
-				VOIText text = (VOIText)annotations.getCurves().elementAt(i);
+				VOIWormAnnotation text = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
 				if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
 				{
 					text.setText( "" + id++ );
@@ -905,7 +943,7 @@ public class WormData
 			for ( int i = 0; i < seamCellPoints.size(); i++ )
 			{
 				//			System.err.println( i );
-				VOIText text = new VOIText();
+				VOIWormAnnotation text = new VOIWormAnnotation();
 				text.add(seamCellPoints.elementAt(i));
 				text.add(seamCellPoints.elementAt(i));
 				text.setText( "" + (i+1) );
@@ -955,7 +993,7 @@ public class WormData
 		seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			VOIWormAnnotation text = (VOIWormAnnotation)seamAnnotations.getCurves().elementAt(i);
 			seamCellPoints.add(new Vector3f(text.elementAt(0)));
 		}
 	}
@@ -1055,17 +1093,11 @@ public class WormData
 				pairCount++;
 				
 				// left seam cell:
-				VOIText text = new VOIText();
+				VOIWormAnnotation text = new VOIWormAnnotation();
 				text.add(left.elementAt(i));
 				text.add(left.elementAt(i));
 				text.setText( name + "L" );
-				String note = text.getNote();
-				if ( note.contains("lattice segment:") ) {
-					int index = note.indexOf("lattice segment:");
-					note = note.substring(0, index);
-				}
-				note = note + "\n" + "lattice segment: " + segment;
-				text.setNote(note);
+				text.setLatticeSegment(segment);
 				text.setUseMarker(false);
 				text.update();
 
@@ -1080,17 +1112,11 @@ public class WormData
 
 				// right seam cell:
 				// left seam cell:
-				text = new VOIText();
+				text = new VOIWormAnnotation();
 				text.add(right.elementAt(i));
 				text.add(right.elementAt(i));
 				text.setText( name + "R" );
-				note = text.getNote();
-				if ( note.contains("lattice segment:") ) {
-					int index = note.indexOf("lattice segment:");
-					note = note.substring(0, index);
-				}
-				note = note + "\n" + "lattice segment: " + segment;
-				text.setNote(note);
+				text.setLatticeSegment(segment);
 				text.setUseMarker(false);
 				text.update();
 				seamAnnotations.getCurves().add(text);
@@ -1100,17 +1126,11 @@ public class WormData
 				String name = "a" + extraCount++;
 				
 				// left seam cell:
-				VOIText text = new VOIText();
+				VOIWormAnnotation text = new VOIWormAnnotation();
 				text.add(left.elementAt(i));
 				text.add(left.elementAt(i));
 				text.setText( name + "L" );
-				String note = text.getNote();
-				if ( note.contains("lattice segment:") ) {
-					int index = note.indexOf("lattice segment:");
-					note = note.substring(0, index);
-				}
-				note = note + "\n" + "lattice segment: " + segment;
-				text.setNote(note);
+				text.setLatticeSegment(segment);
 				text.setUseMarker(false);
 				text.update();
 
@@ -1125,17 +1145,11 @@ public class WormData
 
 				// right seam cell:
 				// left seam cell:
-				text = new VOIText();
+				text = new VOIWormAnnotation();
 				text.add(right.elementAt(i));
 				text.add(right.elementAt(i));
 				text.setText( name + "R" );
-				note = text.getNote();
-				if ( note.contains("lattice segment:") ) {
-					int index = note.indexOf("lattice segment:");
-					note = note.substring(0, index);
-				}
-				note = note + "\n" + "lattice segment: " + segment;
-				text.setNote(note);
+				text.setLatticeSegment(segment);
 				text.setUseMarker(false);
 				text.update();
 				seamAnnotations.getCurves().add(text);
@@ -1155,7 +1169,7 @@ public class WormData
 		seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
 		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			VOIWormAnnotation text = (VOIWormAnnotation)seamAnnotations.getCurves().elementAt(i);
 			seamCellPoints.add(new Vector3f(text.elementAt(0)));
 		}
 		wormImage.unregisterAllVOIs();
