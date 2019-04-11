@@ -572,6 +572,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     			    else if (corrmap[z][y][x] < 0) {
     			    	corrmap[z][y][x] = 0;
     			    }
+
     			}
     		}
     	} // for (x = 0; x < xDim; x++)
@@ -1814,12 +1815,20 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	}
 	
 	public void testxcorr() {
+        int i;
 		int x[] = new int[]{1,2,3,4};
 		double y[] = new double[]{1,2,1,-1};
 		// Answer from MATLAB
 		double answer[] = new double[]{-0.25,-0.25,0.25,1.0,3.0,2.75,1.0};
 		double result[] = xcorrbias(x, y);
-		for (int i = 0; i < 7; i++) {
+		for (i = 0; i < 7; i++) {
+			System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);
+		}
+	    x = new int[]{-34, 56, 98, -11, 45, 9};
+		y = new double[]{3.4, -2.7, 9.0, -6.1, 3.8, 4.8};
+		answer = new double[]{-27.2000,   23.2667,  148.4333,  -54.6667,   28.7000,  149.4167,  -68.9167,  118.8333,  -12.9833,   21.4500,    5.1000};
+		result = xcorrbias(x,y);
+		for (i = 0; i < 11; i++) {
 			System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);
 		}
 	}
