@@ -415,6 +415,7 @@ public class PlugInAlgorithmWormUntwisting
 
 					ModelImage seamImage = wormData.readSeamSegmentation();					
 					LatticeModel model = new LatticeModel(wormImage);
+					model.setPaddingFactor(paddingFactor);
 					model.setSeamCellImage(seamImage);
 					model.setLattice(lattice);
 

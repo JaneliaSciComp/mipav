@@ -1723,6 +1723,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 		for (int i = kVOIs.size() - 1; i >=0; i--) {
 			VOI kVOI = kVOIs.get(i);
+//			System.err.println("updateVOIs " + kVOI.getName() );
 			if ( kVOI.getName().equals("MakeSphere") )
 			{
 				System.err.println( "update 1" + kVOI.getName() );

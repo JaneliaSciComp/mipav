@@ -1,30 +1,24 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.BitSet;
-import java.util.Random;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -35,7 +29,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
@@ -512,7 +505,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return null;
 	}
 	
-	public VOIText getPickedAnnotation() {
+	public VOIWormAnnotation getPickedAnnotation() {
 		if ( latticeModel != null )
 		{
 			return latticeModel.getPickedAnnotation();
@@ -709,6 +702,52 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		return latticeModel.getAnnotations();		
 	}
+	
+	public VOI getAnnotationsStraight()
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.getAnnotationsStraight();		
+	}
+	
+	public VOI getLattice()
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.getLattice();		
+	}
+
+	
+	public VOI getLatticeStraight()
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.getLatticeStraight();		
+	}
+	
+	public void setPreviewMode( boolean preview, VOI lattice, VOI annotations )
+	{
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+		}
+		latticeModel.setPreviewMode( preview, lattice, annotations );
+	}
+	
+	public VOI retwistAnnotations(VOI lattice) 
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.retwistAnnotations(lattice);	
+	}
 
 	private void addLeftRightMarker( VOI textVOI )
 	{       
@@ -785,12 +824,21 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return false;
 	}
 
-	public void updateAnnotation( VOIText annotation )
+	public void updateAnnotation( VOIWormAnnotation annotation )
 	{
 		if ( latticeModel != null )
 		{
 			saveVOIs("updateAnnotation");
 			latticeModel.updateAnnotation(annotation);
+		}
+	}
+
+	public void updateAnnotation( VOIText annotation )
+	{
+		if ( latticeModel != null )
+		{
+			saveVOIs("updateAnnotation");
+			latticeModel.updateAnnotation(new VOIWormAnnotation(annotation));
 		}
 	}
 
