@@ -3736,6 +3736,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     private void printlnToLog(final String line) {
         logOutputArea.getTextArea().append(line + "\n");
+        System.err.println(line);
     }
 
     private JPanel buildButtonPanel() {
