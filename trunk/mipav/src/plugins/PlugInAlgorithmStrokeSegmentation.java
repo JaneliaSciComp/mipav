@@ -1206,7 +1206,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     public int getCoreSize(File lightboxFile) {
         int totalSize = 0;
         for (MaskObject obj : selectedObjectTable.get(lightboxFile)) {
-            totalSize += obj.size;
+            totalSize += obj.coreSize;
         }
         
         return totalSize;
