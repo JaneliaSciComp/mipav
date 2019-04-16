@@ -37,6 +37,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.DoubleDouble;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentBase;
@@ -1862,6 +1863,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         }
         return cout;
     }
+    
+    /*private double[] xcorrbias(int x[], double y[]) {
+    	int i;
+    	int m;
+    	int n;
+        int N = Math.max(x.length, y.length);
+        DoubleDouble xArr[] = new DoubleDouble[N];
+        DoubleDouble yArr[] = new DoubleDouble[N];
+        for (i = 0; i < x.length; i++) {
+        	xArr[i] = DoubleDouble.valueOf((double)x[i]);
+        }
+        for (i = 0; i < y.length; i++) {
+        	yArr[i] = DoubleDouble.valueOf(y[i]);
+        }
+        DoubleDouble coutDD[] = new DoubleDouble[2*N-1];
+        double cout[] = new double[2*N-1];
+        for (i = 0; i < 2*N-1; i++) {
+        	coutDD[i] = DoubleDouble.valueOf(0.0);
+        }
+        for (m = N-1; m >= 1; m--) {
+            for (n = 0; n <= N-m-1; n++) {
+                coutDD[N-1-m] = coutDD[N-1-m].add(yArr[n+m].multiply(xArr[n]));	
+            }
+        }
+        for (m = 0; m <= N-1; m++) {
+        	for (n = 0; n <= N-m-1; n++) {
+        		coutDD[N-1+m] = coutDD[N-1+m].add(xArr[n+m].multiply(yArr[n]));
+        	}
+        }
+        DoubleDouble NDD = DoubleDouble.valueOf((double)N);
+        for (i = 0; i < 2*N-1; i++) {
+        	cout[i] = (coutDD[i].divide(NDD)).doubleValue();
+        }
+        return cout;
+    }*/
     
     public void testcircshift() {
     	int i;
