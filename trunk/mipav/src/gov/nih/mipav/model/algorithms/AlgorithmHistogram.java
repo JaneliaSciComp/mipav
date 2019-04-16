@@ -937,8 +937,18 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
         }
         
-        UI.setDataText("Mean = " + df.format(mean) + "\n");
-        UI.setDataText("Standard deviation = " + df.format(stdDev) + "\n");
+        if (Math.abs(mean) >= 0.01) {
+            UI.setDataText("Mean = " + df.format(mean) + "\n");
+        }
+        else {
+        	UI.setDataText("Mean = " + mean + "\n");
+        }
+        if (stdDev >= 0.01) {
+            UI.setDataText("Standard deviation = " + df.format(stdDev) + "\n");
+        }
+        else {
+        	UI.setDataText("Standard deviation = " + stdDev + "\n");
+        }
         UI.setDataText("Skewness = " + df.format(skewness) + "\n");
         UI.setDataText("Kurtosis = " + df.format(kurtosis) + "\n");
         
