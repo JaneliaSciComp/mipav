@@ -24,6 +24,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -1898,6 +1899,55 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         }
         return cout;
     }*/
+    
+    /*private double[] xcorrbiasfft(int x[], double y[]) {
+		int i;
+    	FFTUtility fft;
+        int convLength = x.length + y.length - 1;
+        double xArr[] = new double[convLength];
+        double xImagArr[] = new double[convLength];
+        double yArr[] = new double[convLength];
+        double yImagArr[] = new double[convLength];
+        double cout[] = new double[convLength];
+        double cImagout[] = new double[convLength];
+        int N = x.length;
+        for (i = 0; i < x.length; i++) {
+        	xArr[i] = x[i];
+        }
+        for (i = 0; i < y.length; i++) {
+        	yArr[i] = y[i];
+        }
+        // Instantiate the 1d FFT routine
+ 		// -1 for forward transform
+ 		fft = new FFTUtility(xArr, xImagArr, 1,convLength, 1, -1,
+ 				FFTUtility.FFT);
+ 		fft.setShowProgress(false);
+ 		fft.run();
+ 		fft.finalize();
+ 		fft = null;
+ 		fft = new FFTUtility(yArr, yImagArr, 1,convLength, 1, -1,
+ 				FFTUtility.FFT);
+ 		fft.setShowProgress(false);
+ 		fft.run();
+ 		fft.finalize();
+ 		fft = null;
+ 		for (i = 0; i < convLength; i++) {
+ 			cout[i] = xArr[i]*yArr[i] + xImagArr[i]*yImagArr[i];
+ 			cImagout[i] = -xArr[i]*yImagArr[i] + xImagArr[i]*yArr[i];
+ 		}
+ 	    // +1 for backward transform
+		fft = new FFTUtility(cout, cImagout, 1, convLength, 1, 1,
+				FFTUtility.FFT);
+		fft.setShowProgress(false);		
+		fft.run();
+		fft.finalize();
+		fft = null;
+		for (i = 0; i < convLength; i++) {
+			cout[i] = cout[i]/N;
+		}
+		cout = circshift(cout,N-1);
+		return cout;
+	}*/
     
     public void testcircshift() {
     	int i;
