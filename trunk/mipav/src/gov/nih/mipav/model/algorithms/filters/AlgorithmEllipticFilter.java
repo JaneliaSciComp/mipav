@@ -2,22 +2,16 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
-import gov.nih.mipav.model.structures.ModelImage;
 
-import java.io.IOException;
 
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJProgressBar;
 
 
 /**
  *  This module contains a port from FORTRAN to Java of the FORTRAN program for designing elliptic-function
  *  filters found in "Elliptic Functions for Filter Design" by H. J. Orchard and Alan N. Wilson, Jr. in 
  *  IEEE Transactions on Circuits and Systems-I: Fundamental Theory and Applications, Vol. 44. No. 4,
- *  April, 1997, pp. 273-287.
+ *  April, 1997, pp. 273-287.  Permission to port code kindly granted by Alan N. Wilson, Jr.
  */
 public class AlgorithmEllipticFilter extends AlgorithmBase {
 
