@@ -9,9 +9,9 @@ import gov.nih.mipav.view.Preferences;
 
 /**
  *  This module contains a port from FORTRAN to Java of the FORTRAN program for designing elliptic-function
- *  filters found in "Elliptic Functions for Filter Design" by H. J. Orchard and Alan N. Wilson, Jr. in 
+ *  filters found in "Elliptic Functions for Filter Design" by H. J. Orchard and Alan N. Willson, Jr. in 
  *  IEEE Transactions on Circuits and Systems-I: Fundamental Theory and Applications, Vol. 44. No. 4,
- *  April, 1997, pp. 273-287.  Permission to port code kindly granted by Alan N. Wilson, Jr.
+ *  April, 1997, pp. 273-287.  Permission to port code kindly granted by Alan N. Willson, Jr.
  */
 public class AlgorithmEllipticFilter extends AlgorithmBase {
 
