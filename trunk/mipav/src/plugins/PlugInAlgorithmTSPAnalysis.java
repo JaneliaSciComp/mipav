@@ -131,8 +131,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	String tDimString = null;
     	String TRString = null;
     	float TR;
-    	String t1String = null;
-    	float t1;
     	int buffer[];
     	int brain_mask[][][][];
     	double temp_mean[];
@@ -212,6 +210,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	long sumT[];
     	int countT[];
     	boolean test = false;
+    	boolean Philips = true;
     	
     	if (test) {
     		testxcorr();
@@ -282,11 +281,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         if (tagTable.getValue("0020,0105") != null) {
         	// Number of temporal positions
             FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0105"));
-            tDimString = (String)tag.getValue(false);     
+            tDimString = (String)tag.getValue(false);    
+            Philips = true;
         }
         else if (tagTableLast.getValue("0020,0012") != null) {
         	FileDicomTag tag = tagTableLast.get(new FileDicomKey("0020,0012"));
             tDimString = (String)tag.getValue(false); 
+            Philips = false;
         }
         else {
         	MipavUtil.displayError("Tags (0020,0012) and (0020,0105) are both null");
@@ -359,16 +360,30 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	// Normalize PWI by subtracting off pre_contrast (first) image
     	// Loop over time dimension to calculate whole brain average perfusion time signal
     	
-		for (z = 0; z < zDim; z++) {
-			for (y = 0; y < yDim; y++) {
-				for (x = 0; x < xDim; x++) {
-					for (t = 0; t < tDim/2; t++) {
-					    data[z][y][x][2*t] = buffer[x + y*xDim + t*length +z*tDim*length];
-					    data[z][y][x][2*t+1] = buffer[x + y*xDim + (t+tDim/2)*length +z*tDim*length];
+		
+    	if (Philips) {
+	    	for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+						for (t = 0; t < tDim/2; t++) {
+						    data[z][y][x][2*t] = buffer[x + y*xDim + t*length +z*tDim*length];
+						    data[z][y][x][2*t+1] = buffer[x + y*xDim + (t+tDim/2)*length +z*tDim*length];
+						}
 					}
 				}
 			}
-		}
+    	}
+    	else {
+    		for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+						for (t = 0; t < tDim; t++) {
+						    data[z][y][x][t] = buffer[x + y*xDim + z*length + t*volume];
+						}
+					}
+				}
+			}	
+    	}
 		for (t = 0; t < tDim; t++) {
     		sum = 0;
     		count = 0;
