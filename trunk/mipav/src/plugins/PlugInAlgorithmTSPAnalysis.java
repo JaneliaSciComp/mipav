@@ -377,8 +377,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-						for (t = 0; t < tDim; t++) {
-						    data[z][y][x][t] = buffer[x + y*xDim + z*length + t*volume];
+						for (t = 0; t < tDim/2; t++) {
+						    data[z][y][x][2*t] = buffer[x + y*xDim + z*length + t*volume];
+						    data[z][y][x][2*t+1] = buffer[x + y*xDim + z*length + (t+tDim/2)*volume];
 						}
 					}
 				}
