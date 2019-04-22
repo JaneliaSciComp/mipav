@@ -129,8 +129,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	float resolutions3D[] = new float[3];
     	int units3D[] = new int[3];
     	String tDimString = null;
-    	String t0String = null;
-    	float t0;
+    	String TRString = null;
+    	float TR;
     	String t1String = null;
     	float t1;
     	int buffer[];
@@ -264,6 +264,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	extents3D[1] = yDim;
     	FileInfoDicom dicomInfo = (FileInfoDicom) image3D.getFileInfo(0);
     	FileDicomTagTable tagTable = dicomInfo.getTagTable();
+    	FileInfoDicom dicomInfoLast = (FileInfoDicom) image3D.getFileInfo(extents3Dorg[2]-1);
+    	FileDicomTagTable tagTableLast = dicomInfoLast.getTagTable();
     	if (tagTable.getValue("0018,0081") != null) {
         	// Echo time in milliseconds
             FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0081"));
@@ -282,8 +284,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0105"));
             tDimString = (String)tag.getValue(false);     
         }
+        else if (tagTableLast.getValue("0020,0012") != null) {
+        	FileDicomTag tag = tagTableLast.get(new FileDicomKey("0020,0012"));
+            tDimString = (String)tag.getValue(false); 
+        }
         else {
-        	MipavUtil.displayError("Tag (0020,0105) for Number of Temporal Positions is null");
+        	MipavUtil.displayError("Tags (0020,0012) and (0020,0105) are both null");
         	setCompleted(false);
         	return;
         }
@@ -312,34 +318,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         resolutions[2] = delZ;
         resolutions3D[2] = delZ;
         //System.out.println("zDim = " + zDim + " tDim = " + tDim);
-        if (tagTable.getValue("0018,1060") != null) {
-        	// Trigger time in milliseconds
-        	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1060"));
-        	t0String = (String)tag.getValue(false);
+        if (tagTable.getValue("0018,0080") != null) {
+        	// Repetition time in milliseconds
+        	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0080"));
+        	TRString = (String)tag.getValue(false);
         }
         else {
-        	MipavUtil.displayError("Tag (0018,1060) for Trigger Time is null");
+        	MipavUtil.displayError("Tag (0018,0080) for Repetition Time is null");
         	setCompleted(false);
         	return;
         }
-        t0 = Float.valueOf(t0String.trim()).floatValue();
-        dicomInfo = (FileInfoDicom) image3D.getFileInfo(1);
-        tagTable = dicomInfo.getTagTable();
-        if (tagTable.getValue("0018,1060") != null) {
-        	// Trigger time
-        	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1060"));
-        	t1String = (String)tag.getValue(false);
-        }
-        else {
-        	MipavUtil.displayError("Tag (0018,1060) for Trigger Time is null");
-        	setCompleted(false);
-        	return;
-        }
-        t1 = Float.valueOf(t1String.trim()).floatValue();
-        // Time in milliseconds
-        delT = t1 - t0;
+        TR = Float.valueOf(TRString.trim()).floatValue();
         // Change delT to seconds
-        delT = (float)(delT * 1.0E-3);
+        delT = (float)(TR * 1.0E-3/zDim);
         //System.out.println("delT = " + delT);
         resolutions[3] = delT;
         for (i = 0; i < 3; i++) {
@@ -367,32 +358,42 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	brain_mask_norm = new int[zDim][yDim][xDim][tDim];
     	// Normalize PWI by subtracting off pre_contrast (first) image
     	// Loop over time dimension to calculate whole brain average perfusion time signal
-    	for (t = 0; t < tDim; t++) {
+    	
+		for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					for (t = 0; t < tDim/2; t++) {
+					    data[z][y][x][2*t] = buffer[x + y*xDim + t*length +z*tDim*length];
+					    data[z][y][x][2*t+1] = buffer[x + y*xDim + (t+tDim/2)*length +z*tDim*length];
+					}
+				}
+			}
+		}
+		for (t = 0; t < tDim; t++) {
     		sum = 0;
     		count = 0;
     		for (z = 0; z < zDim; z++) {
     			for (y = 0; y < yDim; y++) {
     				for (x = 0; x < xDim; x++) {
-    					data[z][y][x][t] = buffer[x + y*xDim + t*length +z*tDim*length];
-    					if (data[z][y][x][t] < masking_threshold) {
-    						brain_mask[z][y][x][t] = 0;
-    					}
-    					else {
-    						brain_mask[z][y][x][t] = data[z][y][x][t];
-    					}
-    					brain_mask_norm[z][y][x][t] = brain_mask[z][y][x][t] - brain_mask[z][y][x][0];
-    					if (brain_mask_norm[z][y][x][t] != 0) {
+						if (data[z][y][x][t] < masking_threshold) {
+							brain_mask[z][y][x][t] = 0;
+						}
+						else {
+							brain_mask[z][y][x][t] = data[z][y][x][t];
+						}
+						brain_mask_norm[z][y][x][t] = brain_mask[z][y][x][t] - brain_mask[z][y][x][0];
+						if (brain_mask_norm[z][y][x][t] != 0) {
 					    	sum += brain_mask_norm[z][y][x][t];
 					    	count++;
 					    }
-    				}
-    			}
-    		}
-    		if (t != 0) {
-    			temp_mean[t] = (double)sum/(double)count;
-    		}
-    	} // for (t = 0; t < tDim; t++)
-    	temp_mean[0] = 0;
+			        }
+		        }
+	        }
+		    if (t != 0) {
+			    temp_mean[t] = (double)sum/(double)count;
+		    }
+	    } // for (t = 0; t < tDim; t++)
+	    temp_mean[0] = 0;
     	
     	
     	// Zero/Initialize output maps
