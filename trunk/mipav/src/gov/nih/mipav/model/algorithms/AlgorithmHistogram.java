@@ -374,6 +374,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
 
         int i;
         int length = 1;
+        int volume;
         int bins = 1;
         double[] imgBuffer;
         int nVOI;
@@ -477,6 +478,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
     
             int z, zStop;
+            int t, tStop;
             int value;
             double imageMax, imageMin;
             double divisor;
@@ -528,6 +530,12 @@ public class AlgorithmHistogram extends AlgorithmBase {
     
             length = image.getSliceSize();
             imgBuffer = new double[length];
+            
+            if (image.getNDims() > 3) {
+                tStop = image.getExtents()[3];
+            } else {
+                tStop = 1;
+            }
     
             if (image.getNDims() > 2) {
                 zStop = image.getExtents()[2];
@@ -535,7 +543,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 zStop = 1;
             }
                  
-    
+            volume = zStop * length;
             try {
                 image.setLock(ModelStorageBase.W_LOCKED);
             } catch (IOException error) {
@@ -544,61 +552,63 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 return;
             }
     
-            for (z = 0; z < zStop; z++) {
-    
-                try {
-    
-                    if (image.isComplexImage()) {
-                        image.exportMagData(2 * z * length, length, imgBuffer);
-                    } else if (image.isColorImage()) {
-                        image.exportRGBDataNoLock(RGBOffset, 4 * z * length, length, imgBuffer);
-                    } else {
-                        image.exportDataNoLock(z * length, length, imgBuffer);
-                    }
-                } catch (IOException error) {
-                    errorCleanUp("Algorithm Histogram: image bounds exceeded", false);
-                    image.releaseLock();
-    
-                    return;
-                }
-    
-                if ((image.isComplexImage()) && (image.getLogMagDisplay() == true)) {
-    
-                    for (i = 0; i < length; i++) {
-                        imgBuffer[i] =  (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
-                    }
-                }
-    
-                divisor = imageMax - imageMin;
-    
-                if (divisor == 0) {
-                    divisor = 1;
-                }
-    
-                factor = (bins - 1) / divisor;
-    
-                // This is the part that actually calculates the histogram
-                if (entireImage == false) {
-    
-                    for (i = 0; i < length; i++) {
-    
-                        if (mask.get((z * length) + i)) { // just calc. for VOI
-                            value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5);
-                            histoBuffer[value]++;
-                        }
-                    }
-                } else {
-    
-                    // Calculate for the entire image
-                    for (i = 0; i < length; i++) {
-                        value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5);
-    
-                        // System.out.println( "histoBuffer[value] = " + histoBuffer[value]);
-                        histoBuffer[value]++;
-                    }
-                }
-    
-                fireProgressStateChanged(Math.round((float) ((z + 1) + presentRun*zStop) / (zStop * numRuns) * 100));
+            for (t = 0; t < tStop; t++) {
+	            for (z = 0; z < zStop; z++) {
+	    
+	                try {
+	    
+	                    if (image.isComplexImage()) {
+	                        image.exportMagData(2 * t * volume + 2 * z * length, length, imgBuffer);
+	                    } else if (image.isColorImage()) {
+	                        image.exportRGBDataNoLock(RGBOffset, 4 * t * volume + 4 * z * length, length, imgBuffer);
+	                    } else {
+	                        image.exportDataNoLock(t * volume + z * length, length, imgBuffer);
+	                    }
+	                } catch (IOException error) {
+	                    errorCleanUp("Algorithm Histogram: image bounds exceeded", false);
+	                    image.releaseLock();
+	    
+	                    return;
+	                }
+	    
+	                if ((image.isComplexImage()) && (image.getLogMagDisplay() == true)) {
+	    
+	                    for (i = 0; i < length; i++) {
+	                        imgBuffer[i] =  (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
+	                    }
+	                }
+	    
+	                divisor = imageMax - imageMin;
+	    
+	                if (divisor == 0) {
+	                    divisor = 1;
+	                }
+	    
+	                factor = (bins - 1) / divisor;
+	    
+	                // This is the part that actually calculates the histogram
+	                if (entireImage == false) {
+	    
+	                    for (i = 0; i < length; i++) {
+	    
+	                        if (mask.get((z * length) + i)) { // just calc. for VOI
+	                            value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5);
+	                            histoBuffer[value]++;
+	                        }
+	                    }
+	                } else {
+	    
+	                    // Calculate for the entire image
+	                    for (i = 0; i < length; i++) {
+	                        value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5);
+	    
+	                        // System.out.println( "histoBuffer[value] = " + histoBuffer[value]);
+	                        histoBuffer[value]++;
+	                    }
+	                }
+	    
+	                fireProgressStateChanged(Math.round((float) (t*zStop + z + presentRun*zStop*tStop) / (tStop * zStop * numRuns) * 100));
+	            }
             }
     
             image.releaseLock();
@@ -636,7 +646,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
     
             mean = mean / bins;
-            histogram.setTotalPixels(length * zStop);
+            histogram.setTotalPixels(length * zStop * tStop);
             histogram.setMean(mean);
             histogram.setMode(mode);
             histogram.setStartRange(stRange);
@@ -678,8 +688,10 @@ public class AlgorithmHistogram extends AlgorithmBase {
         double imageMax, imageMin;
         double[] imgBuffer;
         int z, zStop;
+        int t, tStop;
         int value;
         int length;
+        int volume;
         double divisor;
         double factor;
         int i;
@@ -766,6 +778,13 @@ public class AlgorithmHistogram extends AlgorithmBase {
         } else {
             zStop = 1;
         }
+        
+        if (image.getNDims() > 3) {
+            tStop = image.getExtents()[3];
+        } else {
+            tStop = 1;
+        }
+        volume = length * zStop;
 
         try {
             image.setLock(ModelStorageBase.W_LOCKED);
@@ -775,115 +794,119 @@ public class AlgorithmHistogram extends AlgorithmBase {
             return;
         }
 
-        for (z = 0; z < zStop; z++) {
-
-            try {
-
-                if (image.isComplexImage()) {
-                    image.exportMagData(2 * z * length, length, imgBuffer);
-                } else if (image.isColorImage()) {
-                    image.exportRGBDataNoLock(RGBOffset, 4 * z * length, length, imgBuffer);
-                } else {
-                    image.exportDataNoLock(z * length, length, imgBuffer);
-                }
-            } catch (IOException error) {
-                errorCleanUp("Algorithm Histogram: image bounds exceeded", false);
-                image.releaseLock();
-
-                return;
-            }
-
-            if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
-
-                for (i = 0; i < length; i++) {
-                    imgBuffer[i] = (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
-                }
-            }
-
-            divisor = imageMax - imageMin;
-
-            if (divisor == 0) {
-                divisor = 1;
-            }
-
-            factor = (bins - 1) / divisor;
-
-            // This is the part that actually calculates the histogram
-            // Calculate for the entire image
-            for (i = 0; i < length; i++) {
-
-                if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
-                    if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
-                        sum += imgBuffer[i];
-                        sumSq += imgBuffer[i]*imgBuffer[i];
-                        cnt++;
-                        value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
-                        histoBuffer[value]++;
-                        if (displayGraph) {
-                            count[value] += 1.0f;
-                        }
-    
-                        if (histoBuffer[value] == 1) {
-                            lowValue[value] = imgBuffer[i];
-                            highValue[value] = imgBuffer[i];
-                        } // if histoBuffer[value] == 1)
-                        else {
-    
-                            if (imgBuffer[i] < lowValue[value]) {
-                                lowValue[value] = imgBuffer[i];
-                            } else if (imgBuffer[i] > highValue[value]) {
-                                highValue[value] = imgBuffer[i];
-                            }
-                        } // else
-                    }
-                }
-            }
-            
-            fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
+        for (t = 0; t < tStop; t++) {
+	        for (z = 0; z < zStop; z++) {
+	
+	            try {
+	
+	                if (image.isComplexImage()) {
+	                    image.exportMagData(2 * t * volume + 2 * z * length, length, imgBuffer);
+	                } else if (image.isColorImage()) {
+	                    image.exportRGBDataNoLock(RGBOffset, 4 * t * volume + 4 * z * length, length, imgBuffer);
+	                } else {
+	                    image.exportDataNoLock(t * volume + z * length, length, imgBuffer);
+	                }
+	            } catch (IOException error) {
+	                errorCleanUp("Algorithm Histogram: image bounds exceeded", false);
+	                image.releaseLock();
+	
+	                return;
+	            }
+	
+	            if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
+	
+	                for (i = 0; i < length; i++) {
+	                    imgBuffer[i] = (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
+	                }
+	            }
+	
+	            divisor = imageMax - imageMin;
+	
+	            if (divisor == 0) {
+	                divisor = 1;
+	            }
+	
+	            factor = (bins - 1) / divisor;
+	
+	            // This is the part that actually calculates the histogram
+	            // Calculate for the entire image
+	            for (i = 0; i < length; i++) {
+	
+	                if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
+	                    if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
+	                        sum += imgBuffer[i];
+	                        sumSq += imgBuffer[i]*imgBuffer[i];
+	                        cnt++;
+	                        value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
+	                        histoBuffer[value]++;
+	                        if (displayGraph) {
+	                            count[value] += 1.0f;
+	                        }
+	    
+	                        if (histoBuffer[value] == 1) {
+	                            lowValue[value] = imgBuffer[i];
+	                            highValue[value] = imgBuffer[i];
+	                        } // if histoBuffer[value] == 1)
+	                        else {
+	    
+	                            if (imgBuffer[i] < lowValue[value]) {
+	                                lowValue[value] = imgBuffer[i];
+	                            } else if (imgBuffer[i] > highValue[value]) {
+	                                highValue[value] = imgBuffer[i];
+	                            }
+	                        } // else
+	                    }
+	                }
+	            }
+	            
+	            fireProgressStateChanged(Math.round((float) (t * zStop + z) / (tStop * zStop) * 100));
+	        }
         }
         mean = sum/cnt;
         stdDev = Math.sqrt((sumSq - (sum*mean))/(cnt - 1));
         variance = stdDev * stdDev;
         
         sort = new double[cnt];
-        for (z = 0; z < zStop; z++) {
-
-            try {
-
-                if (image.isComplexImage()) {
-                    image.exportMagData(2 * z * length, length, imgBuffer);
-                } else if (image.isColorImage()) {
-                    image.exportRGBDataNoLock(RGBOffset, 4 * z * length, length, imgBuffer);
-                } else {
-                    image.exportDataNoLock(z * length, length, imgBuffer);
-                }
-            } catch (IOException error) {
-                errorCleanUp("Algorithm Histogram: image bounds exceeded", false);
-                image.releaseLock();
-
-                return;
-            }
-
-            if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
-
-                for (i = 0; i < length; i++) {
-                    imgBuffer[i] = (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
-                }
-            }
-
-            
-            for (i = 0; i < length; i++) {
-
-                if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
-                    if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
-                        sort[index++] = imgBuffer[i];
-                        diff = imgBuffer[i] - mean;
-                        diffSquared = diff * diff;
-                        diffCubed += (diffSquared*diff);
-                        diffFourth += (diffSquared*diffSquared);
-                    }
-                }
-            }
+        for (t = 0; t < tStop; t++) {
+	        for (z = 0; z < zStop; z++) {
+	
+	            try {
+	
+	                if (image.isComplexImage()) {
+	                    image.exportMagData(2 * t * volume + 2 * z * length, length, imgBuffer);
+	                } else if (image.isColorImage()) {
+	                    image.exportRGBDataNoLock(RGBOffset, 4 * t * volume + 4 * z * length, length, imgBuffer);
+	                } else {
+	                    image.exportDataNoLock(t * volume + z * length, length, imgBuffer);
+	                }
+	            } catch (IOException error) {
+	                errorCleanUp("Algorithm Histogram: image bounds exceeded", false);
+	                image.releaseLock();
+	
+	                return;
+	            }
+	
+	            if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
+	
+	                for (i = 0; i < length; i++) {
+	                    imgBuffer[i] = (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
+	                }
+	            }
+	
+	            
+	            for (i = 0; i < length; i++) {
+	
+	                if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
+	                    if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
+	                        sort[index++] = imgBuffer[i];
+	                        diff = imgBuffer[i] - mean;
+	                        diffSquared = diff * diff;
+	                        diffCubed += (diffSquared*diff);
+	                        diffFourth += (diffSquared*diffSquared);
+	                    }
+	                }
+	            }
+	        }
         }
         thirdCentralMoment = diffCubed/cnt;
         fourthCentralMoment = diffFourth/cnt;
@@ -1069,7 +1092,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 
             } // no area units
         } // if (image.getNDims() == 2)
-        else if (image.getNDims() == 3) {
+        else if (image.getNDims() >= 3) {
             int[] units = image.getFileInfo()[0].getUnitsOfMeasure();
 
             if ((units[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (units[0] == units[1]) && (units[0] == units[2])) {
@@ -1125,7 +1148,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 } // for (i = 0; i < bins; i++)
                 
             } // no volume units
-        } // else if (image.geteNDims() = 3)
+        } // else if (image.getNDims() >= 3)
+        
 
         // in this algorithm, we must clear the paint mask, since it was generated during generateVOIMask in the
         // constructor In the future, we might consider using a separate paint mask so that the image's paint mask can
