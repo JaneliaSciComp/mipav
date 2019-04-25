@@ -409,10 +409,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    }
 	    } // for (t = 0; t < tDim; t++)
 	    temp_mean[0] = 0;
-	    for (i = 0; i < temp_mean.length; i++) {
-	    	System.out.println("temp_mean["+i+"] = " + temp_mean[i]);
-	    	Preferences.debug("temp_mean["+i+"] = " + temp_mean[i] + "\n", Preferences.DEBUG_ALGORITHM);
-	    }
+	    //for (i = 0; i < temp_mean.length; i++) {
+	    	//System.out.println("temp_mean["+i+"] = " + temp_mean[i]);
+	    	//Preferences.debug("temp_mean["+i+"] = " + temp_mean[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    //}
     	
     	
     	// Zero/Initialize output maps
