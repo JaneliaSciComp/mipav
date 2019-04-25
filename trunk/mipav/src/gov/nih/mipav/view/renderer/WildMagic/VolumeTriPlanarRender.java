@@ -22,6 +22,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageExtract;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import WildMagic.LibFoundation.Curves.Curve3f;
@@ -887,11 +888,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	{
     	return (m_kVOIInterface == null) ? false : m_kVOIInterface.is3DSelectionEnabled();
 	}
-
-	public boolean is3DMouseEnabled()
+	
+	public boolean isEditAnnotations()
 	{
-    	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
+    	return m_kVOIInterface == null ? false : m_kVOIInterface.isEditAnnotations();
 	}
+	
 	/*
 	private boolean firstWormAnimation = true;
 	private LatticeModel model;
@@ -1019,13 +1021,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	}    	    	
     }
     
-    public Vector3f getSelectedPoint()
+    public boolean hasSelectedPoint()
     {
 		if ( m_kVOIInterface != null )
     	{
-			return m_kVOIInterface.getSelectedPoint();
+			return m_kVOIInterface.hasSelectedPoint();
     	}    	    	
-		return null;
+		return false;
     }
 	
 	/**
@@ -1041,7 +1043,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			switch( e.getKeyCode() )
 			{
 			case KeyEvent.VK_UP:
-				if ( getSelectedPoint() != null ) {
+				if ( hasSelectedPoint() ) {
 					m_kVolumeRayCast.GetScene().UpdateGS();
 					moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()) );
 				}
@@ -1050,7 +1052,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				}
 				break;
 			case KeyEvent.VK_DOWN:
-				if ( getSelectedPoint() != null ) {
+				if ( hasSelectedPoint() ) {
 					m_kVolumeRayCast.GetScene().UpdateGS();
 					moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()).neg() );
 				}
@@ -1059,7 +1061,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				}
 				break;
 			case KeyEvent.VK_RIGHT:
-				if ( getSelectedPoint() != null ) {
+				if ( hasSelectedPoint() ) {
 					m_kVolumeRayCast.GetScene().UpdateGS();
 					moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()) );
 				}
@@ -1068,7 +1070,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				}
 				break;
 			case KeyEvent.VK_LEFT:
-				if ( getSelectedPoint() != null ) {
+				if ( hasSelectedPoint() ) {
 					m_kVolumeRayCast.GetScene().UpdateGS();
 					moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
 				}
@@ -1157,9 +1159,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	public void mousePressed(MouseEvent e) {
 		super.mousePressed(e);
-		if (e.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled())) {
+		if (e.isControlDown() && is3DSelectionEnabled()) {
 			rightMousePressed = ((e.getModifiers() & InputEvent.BUTTON3_MASK) != 0);
-			clear3DSelection();
+			if ( !isEditAnnotations() || !e.isAltDown() ) {
+				System.err.println("mousePresed clear3DSelection");
+				clear3DSelection();
+			}
 			m_iXPick = e.getX();
 			m_iYPick = e.getY();
 			m_bPickPending = true;
@@ -1168,6 +1173,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	public void mouseReleased(MouseEvent e) {
 		super.mouseReleased(e);
 		rightMousePressed = false;
+		m_bMouseDrag = false;
 		setDefaultCursor();
 	}
 
@@ -1179,11 +1185,20 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
     }
     
-    public boolean modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse )
+    public boolean select3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse )
     {
     	if ( m_kVOIInterface != null )
     	{
-    		return m_kVOIInterface.modify3DMarker(startPt, endPt, pt, rightMouse);
+    		return m_kVOIInterface.select3DMarker(startPt, endPt, pt, rightMouse);
+    	}
+    	return false;
+    }
+    
+    public boolean modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		return m_kVOIInterface.modify3DMarker(startPt, endPt, pt);
     	}
     	return false;
     }
@@ -1214,10 +1229,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_kParent.setCameraParameters();
 			m_kParent.setObjectParameters();
 		}
-		if (e.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled())) {
+		if (e.isControlDown() && is3DSelectionEnabled()) {
 			m_iXPick = e.getX();
 			m_iYPick = e.getY();
 			m_bPickPending = true;
+			m_bMouseDrag = true;
 		}
 	}
 
@@ -1383,7 +1399,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					GetHeight(),kPos,kDir))
 			{				
 				m_bPickPending = false;
-				if ( is3DMouseEnabled() || is3DSelectionEnabled() )
+				if ( is3DSelectionEnabled() )
 				{
 					Vector3f maxPt = new Vector3f();
 					if ( m_kSlices.GetDisplay() )
@@ -1407,15 +1423,22 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							kPoint.add( kP2 );
 							m_kVolumeRayCast.localToVolumeCoords( kPoint );
 							maxPt.copy(kPoint);
-
+							
 							boolean picked = false;
-							if ( is3DSelectionEnabled() )
+							if ( !m_bMouseDrag ) {
+								picked = select3DMarker( null, null, maxPt, rightMousePressed );
+							}
+							else if ( m_bMouseDrag ) {
+								picked = modify3DMarker( null, null, maxPt );
+							}
+							
+							if ( picked && (m_kVOIInterface != null) )
 							{
-								picked = modify3DMarker( null, null, maxPt, rightMousePressed );
-								if ( picked && (m_kVOIInterface != null) )
-								{
-									VOIText text = m_kVOIInterface.getPickedAnnotation();
-									text.setPlane( iPlane );
+								Vector<VOIWormAnnotation> selectedAnnotations = m_kVOIInterface.getPickedAnnotation();
+								if ( selectedAnnotations != null ) {
+									for ( int i = 0; i < selectedAnnotations.size(); i++ ) {
+										selectedAnnotations.elementAt(i).setPlane(iPlane);
+									}
 								}
 							}
 							if ( !picked )
@@ -1583,10 +1606,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							if ( maxValue != -Float.MAX_VALUE )
 							{					
 								boolean picked = false;
-								if ( is3DSelectionEnabled() )
-								{
-									// check for selecting an existing marker:
-									picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed );
+								if ( !m_bMouseDrag ) {
+									// select or create a new marker:
+									picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed );
+								}
+								else if ( m_bMouseDrag ) {
+									// modify currently selected, if exists
+									picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt );
 								}
 								if ( !picked )
 								{

@@ -2554,6 +2554,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         toolbarBuilder.getVOIUndoButton().setEnabled(true);
         toolbarBuilder.getVOIRedoButton().setEnabled(false);
     }
+    
+    public void clearUndoRedo()
+    {
+        m_kUndoCommands.clear();
+        m_kUndoList.clear();
+        m_kRedoCommands.clear();
+        m_kRedoList.clear();
+    }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#selectAllVOIs(boolean)

@@ -208,6 +208,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 	private VolumeTriPlanarInterface triVolume;
 	private JPanelAnnotations annotationPanelUI;
+	private JPanelAnnotations latticePanelUI;
 
 	private VOILatticeManagerInterface voiManager;
 
@@ -594,6 +595,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				if ( annotationPanelUI != null ) {
 					tabbedPane.remove(annotationPanelUI.getAnnotationsPanel());
 				}
+				if ( latticePanelUI != null ) {
+					tabbedPane.remove(latticePanelUI.getAnnotationsPanel());
+				}
 				if ( latticePanel != null ) {
 					tabbedPane.remove(latticePanel);
 				}
@@ -743,7 +747,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					
 					// restore twisted annotations and lattice:
 					wormImage.unregisterAllVOIs();
+					VOI newLatticeTwisted = voiManager.retwistLattice(latticeTwisted);
 					VOI annotations = voiManager.retwistAnnotations(latticeTwisted);
+					if ( newLatticeTwisted != null ) {
+						latticeTwisted = newLatticeTwisted;
+					}
 					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 						VOIWormAnnotation textRT = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						boolean newAnnotation = true;
@@ -2279,6 +2287,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), true);
 		tabbedPane.addTab("Annotation", null, annotationPanelUI.getAnnotationsPanel());
+//		if (editMode == IntegratedEditing)
+//		{
+//			if ( latticePanelUI == null )
+//			{
+//				latticePanelUI = new JPanelAnnotations(voiManager, volumeImage.GetImage());
+//			}
+//			latticePanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), true, flipLatticeButton);
+//			
+//			tabbedPane.addTab("Lattice", null, latticePanelUI.getAnnotationsPanel());
+//		}
 		pack();
 	}
 	
@@ -2288,7 +2306,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		System.err.println("initDisplayLatticePanel");
 		if ( latticePanel == null ) {
 			latticePanel = new JPanel(new GridBagLayout());
-			latticePanel.add(newLatticeButton);
+//			latticePanel.add(newLatticeButton);
 			latticePanel.add(flipLatticeButton);
 		}
 		tabbedPane.addTab("Lattice", null, latticePanel);
@@ -2426,7 +2444,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		integratedEdit = gui.buildRadioButton("Integrated Editing", false );
 		integratedEdit.addActionListener(this);
 		integratedEdit.setActionCommand("integratedEdit");
-//		panel.add(integratedEdit.getParent(), gbc);
+		panel.add(integratedEdit.getParent(), gbc);
 		gbc.gridy++;
 
 		gbc.gridx = 0;

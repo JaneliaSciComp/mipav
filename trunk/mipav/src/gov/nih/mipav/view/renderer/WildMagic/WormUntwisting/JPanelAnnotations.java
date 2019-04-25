@@ -39,6 +39,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -62,12 +64,12 @@ import javax.swing.table.TableCellEditor;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-public class JPanelAnnotations extends JInterfaceBase implements ActionListener, AnnotationListener, TableModelListener, ListSelectionListener, KeyListener, ChangeListener {
+public class JPanelAnnotations extends JInterfaceBase implements ActionListener, AnnotationListener, TableModelListener, ListSelectionListener, KeyListener, ChangeListener, MouseListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
 	private ModelImage imageA;
-	
+
 	// on 'start' the images are loaded and the VolumeTriPlanarInterface is created:
 	private VOILatticeManagerInterface voiManager;
 	// annotation panel displayed in the VolumeTriPlanarInterface:
@@ -82,17 +84,26 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JTable annotationTable;
 	private DefaultTableModel annotationTableModel;
 	private boolean useLatticeMarkers = false;
-	
+
 	// table user-interface for editing the positions of the annotations:
 	private ListSelectionModel annotationGroupList;
 	private JTable annotationGroupTable;
 	private DefaultTableModel annotationGroupTableModel;
 	private String selectedPrefix = null;
 	
+	private boolean isLatticePanel = false;
+
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image ) {
 		voiManager = voiInterface;
 		imageA = image;
 		voiManager.addAnnotationListener(this);
+	}
+
+	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image, boolean latticePanel ) {
+		voiManager = voiInterface;
+		imageA = image;
+		voiManager.addAnnotationListener(this);
+		this.isLatticePanel = latticePanel;
 	}
 
 	/* (non-Javadoc)
@@ -153,7 +164,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			// find the selected annotation and turn it's display on/off:
 			if ( (voiManager != null) && (selectedPrefix != null) )
 			{
-//				System.err.println("Display Group " + selectedPrefix );
+				//				System.err.println("Display Group " + selectedPrefix );
 				VOI annotations = voiManager.getAnnotations();
 				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
@@ -167,7 +178,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		else if ( source == volumeClip )
 		{
 			boolean clip = volumeClip.isSelected();
-//			System.err.println("Clip annotation " + clip );
+			//			System.err.println("Clip annotation " + clip );
 			// find the selected annotation and turn it's display on/off:
 			if ( voiManager != null )
 			{
@@ -179,7 +190,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					text.getVolumeVOI().setVolumeClip(false);					
 				}
 				// clip radius:
-	        	float value = volumeRadius.getValue();
+				float value = volumeRadius.getValue();
 				// selected row:
 				int row = annotationTable.getSelectedRow();		        
 				if ( (annotations != null) && (row >= 0) ) {
@@ -198,8 +209,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-//		System.err.println("annotationChanged");
-		
+		//		System.err.println("annotationChanged");
+
 		if ( voiManager != null )
 		{
 			// get current annotations and update table:
@@ -227,9 +238,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						names.add(text.getText());
 						if ( useLatticeMarkers ) {
 							int latticeSegment = text.getLatticeSegment();
-//							System.err.println(i + "  " + note);
+							//							System.err.println(i + "  " + note);
 							if ( latticeSegment != -1 ) {
-//								System.err.println(note + "   " + value );
+								//								System.err.println(note + "   " + value );
 								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z, latticeSegment } );
 							}
 							else {
@@ -248,11 +259,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					for ( int i = 0; i < names.size(); i++ ) {
 						String name = names.elementAt(i);
 						String prefix = getPrefix(name);
-//						System.err.println( name + "  " + prefix + "  " + getPostfix(name) );
+						//						System.err.println( name + "  " + prefix + "  " + getPostfix(name) );
 						prefixes[i] = prefix;
 						if ( prefix.length() > 0 && !prefixList.contains(prefix) ) {
 							prefixList.add(prefix);
-//							System.err.println(prefix);
+							//							System.err.println(prefix);
 						}
 					}
 					for ( int i = 0; i < prefixList.size(); i++ ) {
@@ -281,11 +292,21 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 							annotationGroupTableModel.addRow( new Object[]{ prefix } );
 						}
 					}
-//					System.err.println( selectedPrefix + "  " + prefixList.contains(selectedPrefix) );
-//					if ( !prefixList.contains(selectedPrefix) ) {
-//						annotationGroupTableModel.addRow( new Object[]{ selectedPrefix } );
-//					}
+					//					System.err.println( selectedPrefix + "  " + prefixList.contains(selectedPrefix) );
+					//					if ( !prefixList.contains(selectedPrefix) ) {
+					//						annotationGroupTableModel.addRow( new Object[]{ selectedPrefix } );
+					//					}
+					
+
+					annotationList.clearSelection();
+					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+						if ( text.isSelected() ) {
+							annotationList.addSelectionInterval(i, i);
+						}
+					}
 				}
+
 			}
 			// restore table listener:
 			annotationTableModel.addTableModelListener(this);
@@ -300,7 +321,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	{
 		previewMode = preview;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
 	 */
@@ -358,7 +379,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					isClipped = text.getVolumeVOI().GetClipped();
 				}
 			}
-			
+
 			displayLabel.setSelected(isChecked);
 			volumeClip.setSelected(isClipped);
 		}
@@ -420,16 +441,18 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
 	 */
 	public void valueChanged(ListSelectionEvent e) {
-		System.err.println("valueChanged " + e );
+
 		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
 			return;
-		
+
+		updateTableSelection(e);
+
 		if ( e.getSource() == annotationList ) {
 			if ( annotationTable.getRowCount() > 0 ) {
 				// Updates the displayLabel checkbox based on which row of the table is current:
 				VOI annotations = voiManager.getAnnotations();
-
 				int row = annotationTable.getSelectedRow();
+
 				boolean isChecked = true;
 				boolean isClipped = true;
 				if ( (annotations != null) && (row >= 0) ) {
@@ -452,7 +475,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				if ( row != -1 ) {
 					if ( annotationGroupTableModel.getValueAt(row, 0) != null ) {
 						selectedPrefix = new String ( annotationGroupTableModel.getValueAt(row, 0).toString() );
-//						System.err.println("valueChanged " + row + "  " + selectedPrefix );
+						//						System.err.println("valueChanged " + row + "  " + selectedPrefix );
 						voiManager.setAnnotationPrefix( selectedPrefix );
 						boolean displayAll = true;
 						VOI annotations = voiManager.getAnnotations();
@@ -477,6 +500,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 			}
 		}
+
+		imageA.notifyImageDisplayListeners();
 	}
 
 	/**
@@ -498,15 +523,16 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationTableModel.addTableModelListener(this);
 
 			annotationTable = new JTable(annotationTableModel);
-			annotationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			annotationTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 			annotationTable.addKeyListener(this);
+			annotationTable.addMouseListener(this);
 
 			annotationTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 			annotationTable.getColumn("Name").setMinWidth(100);
 			annotationTable.getColumn("Name").setMaxWidth(100);
 			annotationList = annotationTable.getSelectionModel();
 			annotationList.addListSelectionListener(this);
-			
+
 
 			annotationGroupTableModel = new DefaultTableModel();
 			annotationGroupTableModel.addColumn("Group Name");
@@ -514,14 +540,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationGroupTableModel.addTableModelListener(this);
 
 			annotationGroupTable = new JTable(annotationGroupTableModel);
-			annotationGroupTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			annotationGroupTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 			annotationGroupTable.addKeyListener(this);
 
 			annotationGroupTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-//			annotationGroupTable.getColumn("Group Name").setMinWidth(100);
-//			annotationGroupTable.getColumn("Group Name").setMaxWidth(100);
-//			annotationGroupTable.getColumn("lattice segment").setMinWidth(100);
-//			annotationGroupTable.getColumn("lattice segment").setMaxWidth(100);
+			//			annotationGroupTable.getColumn("Group Name").setMinWidth(100);
+			//			annotationGroupTable.getColumn("Group Name").setMaxWidth(100);
+			//			annotationGroupTable.getColumn("lattice segment").setMinWidth(100);
+			//			annotationGroupTable.getColumn("lattice segment").setMaxWidth(100);
 			annotationGroupList = annotationGroupTable.getSelectionModel();
 			annotationGroupList.addListSelectionListener(this);
 		}
@@ -530,7 +556,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	public JPanel getAnnotationsPanel() {
 		return annotationPanel;
 	}
-	
+
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
@@ -543,16 +569,16 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		{			
 			annotationPanel = new JPanel();
 			annotationPanel.setLayout(new BorderLayout());
-			
+
 			GridBagLayout gbc = new GridBagLayout();
-	        GridBagConstraints gbcC = new GridBagConstraints();
-	        
+			GridBagConstraints gbcC = new GridBagConstraints();
+
 			JPanel labelPanel = new JPanel(gbc);
 			// Display checkbox for displaying individual annotations:
 			displayLabel = new JCheckBox("display", true);
 			displayLabel.addActionListener(this);
 			displayLabel.setActionCommand("displayLabel");
-			
+
 			// Display checkbox for displaying individual annotations:
 			displayGroupLabel = new JCheckBox("display group", true);
 			displayGroupLabel.addActionListener(this);
@@ -562,17 +588,17 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			labelPanel.add( new JLabel("Annotation: " ), gbcC );
 			gbcC.gridx++;			gbcC.gridy = 0;
 			labelPanel.add(displayLabel, gbcC);
-			
+
 			gbcC.gridx++;			gbcC.gridy = 0;
 			labelPanel.add(displayGroupLabel, gbcC);
-			
+
 			// Display all button:
 			JButton displayAll = new JButton("Display all" );
 			displayAll.addActionListener(this);
 			displayAll.setActionCommand("displayAll");
 			gbcC.gridx++;			gbcC.gridy = 0;
 			labelPanel.add( displayAll, gbcC );
-			
+
 			// Display none button:
 			JButton displayNone = new JButton("Display none" );
 			displayNone.addActionListener(this);
@@ -592,31 +618,36 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			volumeRadius.addChangeListener(this);
 			gbcC.gridx++;			gbcC.gridy = 1;
 			labelPanel.add( volumeRadius, gbcC );
-			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display and Clipping"));
 			
+//			if ( latticeButton != null ) {
+//				gbcC.gridx++;			gbcC.gridy = 0;
+//				labelPanel.add( latticeButton, gbcC );
+//			}
+			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display and Clipping"));
+
 			// build the annotation table for the list of annotations:
 			buildAnnotationTable(latticeMarkers);
 			// add annotation table to a scroll pane:
 			JScrollPane kScrollPane = new JScrollPane(annotationTable);
 			Dimension size = kScrollPane.getPreferredSize();
-//			System.err.println( size.width + " " + size.height );
+			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPane.setPreferredSize( size );
 			kScrollPane.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
-			
+
 
 			// add annotation table to a scroll pane:
 			JScrollPane kScrollPaneGroup = new JScrollPane(annotationGroupTable);
 			size = kScrollPaneGroup.getPreferredSize();
-//			System.err.println( size.width + " " + size.height );
+			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPaneGroup.setPreferredSize( size );
 			kScrollPaneGroup.setBorder(JDialogBase.buildTitledBorder("Group list"));
-			
+
 			annotationPanel.add(kScrollPane, BorderLayout.NORTH);
 			annotationPanel.add(kScrollPaneGroup, BorderLayout.CENTER);
 			annotationPanel.add(labelPanel, BorderLayout.SOUTH);
-//			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+			//			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
 		}
 
 		// Add the list of annotations to the table:
@@ -625,7 +656,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		return annotationPanel;
 	}
 
+	private boolean ctrlKey = false;
 	public void keyTyped(KeyEvent e) {
+
+		ctrlKey = e.isControlDown();
+
 		System.err.println("keyTyped");
 		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
 			if ( voiManager != null )
@@ -663,7 +698,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						annotationGroupTableModel.removeTableModelListener(this);
 						annotationGroupTableModel.addRow( new Object[]{  } );
 						annotationGroupTableModel.addTableModelListener(this);
-						
+
 						int nRows = annotationGroupTable.getRowCount();
 						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
 					}	
@@ -680,9 +715,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					TableCellEditor editor = annotationTable.getCellEditor();
 					if ( editor != null )
 						editor.stopCellEditing();
-					VOI annotations = voiManager.getAnnotations();
-					annotations.getCurves().remove(row);
-					annotationChanged();
+					voiManager.deleteSelectedPoint();
 					int nRows = annotationTable.getRowCount();
 					if ( row < nRows ) {
 						annotationTable.setRowSelectionInterval(row, row);
@@ -701,15 +734,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					if ( editor != null )
 						editor.stopCellEditing();
 
-					VOI annotations = voiManager.getAnnotations();
-					for ( int i = annotations.getCurves().size() - 1; i >= 0; i-- ) {
-						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
-						String prefix = getPrefix(text.getText());
-						if ( prefix.equals(selectedPrefix) ) {
-							annotations.getCurves().remove(i);
-						}
-					}
-					annotationChanged();
+					voiManager.deleteSelectedPoint();
 					int nRows = annotationGroupTable.getRowCount();
 					if ( row < nRows ) {
 						annotationGroupTable.setRowSelectionInterval(row, row);
@@ -724,15 +749,18 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	@Override
 	public void keyPressed(KeyEvent e) {
+		ctrlKey = e.isControlDown();
 	}
 
 	@Override
-	public void keyReleased(KeyEvent e) {}
+	public void keyReleased(KeyEvent e) {
+		ctrlKey = e.isControlDown();
+	}
 
 	public void stateChanged(ChangeEvent arg0) {
-        Object source = arg0.getSource();
-        if ( source == volumeRadius ) {
-        	float value = volumeRadius.getValue();
+		Object source = arg0.getSource();
+		if ( source == volumeRadius ) {
+			float value = volumeRadius.getValue();
 			if ( voiManager != null )
 			{
 				VOI annotations = voiManager.getAnnotations();
@@ -745,10 +773,10 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					}
 				}
 			}
-        }
+		}
 	}
 
-	private String getPrefix(String name) {
+	public static String getPrefix(String name) {
 		String prefix = new String();
 		for ( int j = 0; j < name.length(); j++ ) {
 			if ( Character.isLetter(name.charAt(j) ) ) {
@@ -760,8 +788,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		}
 		return prefix;
 	}
-	
-	private String getPostfix(String name) {
+
+	public static String getPostfix(String name) {
 		String prefix = new String();
 		for ( int j = 0; j < name.length(); j++ ) {
 			if ( Character.isLetter(name.charAt(j) ) ) {
@@ -771,7 +799,85 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				break;
 			}
 		}
-//		System.err.println( name + "  " + prefix + "   " + (name.indexOf(prefix) + prefix.length()));
+		//		System.err.println( name + "  " + prefix + "   " + (name.indexOf(prefix) + prefix.length()));
 		return name.substring( name.indexOf(prefix) + prefix.length() );
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		//		System.err.println("mousePressed " + ctrlKey );
+		//		updateTableSelection();
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {}
+
+	private void updateTableSelection(ListSelectionEvent e) {
+
+		if ( e.getSource() == annotationList ) {
+			if ( annotationTable.getRowCount() > 0 ) {
+				int[] rows = annotationTable.getSelectedRows();
+
+				// Updates the displayLabel checkbox based on which row of the table is current:
+				VOI annotations = voiManager.getAnnotations();
+
+				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+					text.setSelected( false );
+					text.updateSelected( imageA );
+				}
+
+				for ( int i = 0; i < rows.length; i++ ) {
+					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(rows[i]);
+					text.setSelected( true );
+					text.updateSelected( imageA );
+				}
+				imageA.notifyImageDisplayListeners();
+			}
+		}
+		else if ( e.getSource() == annotationGroupList ) {
+			int[] rows = annotationGroupTable.getSelectedRows();
+
+			// Updates the displayLabel checkbox based on which row of the table is current:
+			VOI annotations = voiManager.getAnnotations();
+
+			for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+				VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+				text.setSelected( false );
+				text.updateSelected( imageA );
+			}
+			annotationList.removeListSelectionListener(this);
+			annotationList.clearSelection();
+			for ( int i = 0; i < rows.length; i++ ) {
+				selectedPrefix = new String ( annotationGroupTableModel.getValueAt(rows[i], 0).toString() );
+
+				for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
+					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
+					String prefix = getPrefix(text.getText());
+					if ( prefix.equals(selectedPrefix) ) {
+						text.setSelected(true);
+						text.updateSelected(imageA);
+						annotationList.addSelectionInterval(j, j);
+					}
+				}
+			}
+			annotationList.addListSelectionListener(this);
+			imageA.notifyImageDisplayListeners();
+		}
 	}
 }
