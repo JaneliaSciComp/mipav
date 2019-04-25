@@ -30,6 +30,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 
 	private String pwiImageFileDirectory;
 	
+	private JCheckBox calculateMaskingCheckBox;
+	
+	private boolean calculateMaskingThreshold = true;
+	
+	private JLabel masking_thresholdLabel;
+	
 	private JTextField masking_thresholdText;
 	
 	// Threshold to mask out image pixels not corresponding to brain tissues
@@ -88,6 +94,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     public void actionPerformed(final ActionEvent event) {
         final String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
             if (setVariables()) {
@@ -97,6 +104,9 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (source == calculateMaskingCheckBox) {
+             masking_thresholdLabel.setEnabled(!calculateMaskingCheckBox.isSelected());
+        	 masking_thresholdText.setEnabled(!calculateMaskingCheckBox.isSelected());	
         } else {
             super.actionPerformed(event);
         }
@@ -132,9 +142,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         gbc.gridx = 0;
         gbc.gridy = 1;
-        JLabel masking_thresholdLabel = new JLabel("Masking threshold");
+        calculateMaskingCheckBox = new JCheckBox("Calculate masking threshold from mean and standard deviation");
+        calculateMaskingCheckBox.setSelected(true);
+        calculateMaskingCheckBox.setFont(MipavUtil.font12);
+        calculateMaskingCheckBox.setForeground(Color.black);
+        calculateMaskingCheckBox.addActionListener(this);
+        inputPanel.add(calculateMaskingCheckBox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        masking_thresholdLabel = new JLabel("Masking threshold");
         masking_thresholdLabel.setFont(serif12);
         masking_thresholdLabel.setForeground(Color.black);
+        masking_thresholdLabel.setEnabled(false);
         inputPanel.add(masking_thresholdLabel, gbc);
         
         gbc.gridx = 1;
@@ -142,10 +162,11 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         masking_thresholdText.setText("600");
         masking_thresholdText.setFont(serif12);
         masking_thresholdText.setForeground(Color.black);
+        masking_thresholdText.setEnabled(false);
         inputPanel.add(masking_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
         TSP_thresholdLabel.setFont(serif12);
         TSP_thresholdLabel.setForeground(Color.black);
@@ -159,7 +180,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         JLabel TSP_iterLabel = new JLabel("TSP iterations");
         TSP_iterLabel.setFont(serif12);
         TSP_iterLabel.setForeground(Color.black);
@@ -173,7 +194,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_iterText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         JLabel PsvdLabel = new JLabel("Psvd");
         PsvdLabel.setFont(serif12);
         PsvdLabel.setForeground(Color.black);
@@ -188,21 +209,21 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         AIFGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         autoButton = new JRadioButton("Auto AIF Calculation", true);
         autoButton.setFont(serif12);
         autoButton.setForeground(Color.black);
         AIFGroup.add(autoButton);
         inputPanel.add(autoButton, gbc);
         
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         pickButton = new JRadioButton("Pick image pixel corresponding to AIF", false);
         pickButton.setFont(serif12);
         pickButton.setForeground(Color.black);
         AIFGroup.add(pickButton);
         inputPanel.add(pickButton, gbc);
         
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -245,6 +266,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     public void algorithmPerformed(final AlgorithmBase algorithm) {
         if (algorithm instanceof PlugInAlgorithmTSPAnalysis) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
+            //System.out.println("Elapsed: " + algorithm.getElapsedTime());
 
             if ( (TSPAnalysisAlgo.isCompleted() == true)) {
                 insertScriptLine();
@@ -270,7 +292,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 
         try {
 
-            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, masking_threshold,
+            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -310,6 +332,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     protected void setGUIFromParams() {
     	pwiImageFileDirectory = scriptParameters.getParams().getString("pwiImageFileDirectory");
+    	calculateMaskingThreshold = scriptParameters.getParams().getBoolean("calc_mask_thresh");
     	masking_threshold = scriptParameters.getParams().getInt("mask_thresh");
     	TSP_threshold = scriptParameters.getParams().getDouble("TSP_thresh");
     	TSP_iter = scriptParameters.getParams().getInt("iter");
@@ -324,6 +347,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.getParams().put(ParameterFactory.newParameter("pwiImageFileDirectory", pwiImageFileDirectory));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_mask_thresh", calculateMaskingThreshold));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_thresh", masking_threshold));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("TSP_thresh", TSP_threshold));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("iter", TSP_iter));
@@ -336,27 +360,30 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	String tmpStr;
     	pwiImageFileDirectory = pwiImageFileDirectoryText.getText();
     	
-    	tmpStr = masking_thresholdText.getText();
-    	try {
-    		masking_threshold = Integer.valueOf(tmpStr).intValue();
-    	}
-    	catch (NumberFormatException e) {
-    	    MipavUtil.displayError("masking_threshold text does not have a proper integer");
-    	    masking_thresholdText.requestFocus();
-    	    masking_thresholdText.selectAll();
-    	    return false;
-    	}
-    	if (masking_threshold < 0) {
-    		MipavUtil.displayError("masking_threshold must be at least 0");
-    		masking_thresholdText.requestFocus();
-    	    masking_thresholdText.selectAll();
-    	    return false;
-    	}
-    	if (masking_threshold > 65535) {
-    		MipavUtil.displayError("masking_threshold cannot exceed 65535");
-    		masking_thresholdText.requestFocus();
-    	    masking_thresholdText.selectAll();
-    	    return false;
+    	calculateMaskingThreshold = calculateMaskingCheckBox.isSelected();
+    	if (!calculateMaskingThreshold) {
+	    	tmpStr = masking_thresholdText.getText();
+	    	try {
+	    		masking_threshold = Integer.valueOf(tmpStr).intValue();
+	    	}
+	    	catch (NumberFormatException e) {
+	    	    MipavUtil.displayError("masking_threshold text does not have a proper integer");
+	    	    masking_thresholdText.requestFocus();
+	    	    masking_thresholdText.selectAll();
+	    	    return false;
+	    	}
+	    	if (masking_threshold < 0) {
+	    		MipavUtil.displayError("masking_threshold must be at least 0");
+	    		masking_thresholdText.requestFocus();
+	    	    masking_thresholdText.selectAll();
+	    	    return false;
+	    	}
+	    	if (masking_threshold > 65535) {
+	    		MipavUtil.displayError("masking_threshold cannot exceed 65535");
+	    		masking_thresholdText.requestFocus();
+	    	    masking_thresholdText.selectAll();
+	    	    return false;
+	    	}
     	}
     	
     	tmpStr = TSP_thresholdText.getText();
