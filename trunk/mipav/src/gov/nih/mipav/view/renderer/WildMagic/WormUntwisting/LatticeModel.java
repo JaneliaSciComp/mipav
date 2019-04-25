@@ -1550,7 +1550,7 @@ public class LatticeModel {
 					retwistLattice[1][rightIndex] = true;
 				}
 				pickedPoint.X = pt.X;
-//				pickedPoint.Z = pt.Z;
+				pickedPoint.Z = pt.Z;
 			}
 			else {
 				pickedPoint.copy(pt);
