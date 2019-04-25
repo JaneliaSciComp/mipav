@@ -66,6 +66,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private String pwiImageFileDirectory;
     
+    private boolean calculateMaskingThreshold = true;
+    
     // Thresholding to mask out image pixels not corresponding to brain tissue
     private int masking_threshold = 600;
     
@@ -90,11 +92,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      * Constructor.
      *
      */
-    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, int masking_threshold,
+    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
     		boolean multiThreading) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
+    	this.calculateMaskingThreshold = calculateMaskingThreshold;
     	this.masking_threshold = masking_threshold;
     	this.TSP_threshold = TSP_threshold;
     	this.TSP_iter = TSP_iter;
@@ -384,6 +387,22 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				}
 			}	
     	}
+    	
+    	if (calculateMaskingThreshold) {
+    		long dataSum = 0;
+    		for (i = 0; i < dataSize; i++) {
+    			dataSum += buffer[i];
+    		}
+    		double mean = (double)dataSum/(double)dataSize;
+    		double squareSum = 0.0;
+    		for (i = 0; i < dataSize; i++) {
+    			double difference = buffer[i] - mean;
+    			squareSum += (difference * difference);
+    		}
+    		double stdDev = Math.sqrt(squareSum/(double)(dataSize-1));
+    		masking_threshold = (int)Math.round(mean + 0.5 * stdDev);
+    	} // if (calculateMaskingThreshold)
+    	
 		for (t = 0; t < tDim; t++) {
     		sum = 0;
     		count = 0;
