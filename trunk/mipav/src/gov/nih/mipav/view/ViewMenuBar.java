@@ -1529,7 +1529,6 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Watershed", false);
 			menuBuilder.setMenuItemEnabled("Power Watershed", false);
 			menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
-			menuBuilder.setMenuItemEnabled("Histogram summary", false);
 			menuBuilder.setMenuItemEnabled("Surface plotter", false);
 			menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
 			menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", false);
