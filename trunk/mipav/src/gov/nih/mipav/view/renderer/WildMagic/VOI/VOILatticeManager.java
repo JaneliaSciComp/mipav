@@ -48,13 +48,9 @@ public class VOILatticeManager extends VOIManager
 		return (m_kVOIInterface == null) ? false : m_kVOIInterface.is3DSelectionEnabled();
 	}
 
-	public boolean is3DMouseEnabled()
-	{
-		return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
-	}
 	
 	public void mouseDragged(MouseEvent kEvent) {
-		if ( kEvent.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled()) )
+		if ( kEvent.isControlDown() && is3DSelectionEnabled() )
 		{
 			if ( m_bSelected && ( m_iNearStatus == NearNone ) )
 			{
@@ -85,7 +81,7 @@ public class VOILatticeManager extends VOIManager
 	}
 
 	public void mouseMoved(MouseEvent kEvent) {
-		if ( kEvent.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled()) )
+		if ( kEvent.isControlDown() && is3DSelectionEnabled() )
 		{
 			showSelectedVOI(kEvent);
 		}
@@ -104,7 +100,7 @@ public class VOILatticeManager extends VOIManager
 		m_kCurrentVOI = null;
 		m_bSelected = false;
 		
-		if ( kEvent.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled()) )
+		if ( kEvent.isControlDown() && is3DSelectionEnabled() )
 		{
 			clear3DSelection();
 			if ( ( selectVOI( kEvent ) != null ) )
@@ -121,7 +117,7 @@ public class VOILatticeManager extends VOIManager
 	}
 
 	public void mouseReleased(MouseEvent kEvent) {
-		if ( kEvent.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled()) )
+		if ( kEvent.isControlDown() && is3DSelectionEnabled() )
 		{
 			if ( !m_bSelected )
 			{

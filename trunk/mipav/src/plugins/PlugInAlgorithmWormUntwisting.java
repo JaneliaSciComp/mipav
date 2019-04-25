@@ -457,7 +457,14 @@ public class PlugInAlgorithmWormUntwisting
 					model.untwistMarkers(segmentLattice);	
 					model.saveAnnotationStraight(wormImage, "straightened_named_seamcells", "straightened_seamcells.csv" );	
 					
-					VOI markers = wormData.getMarkerAnnotations();
+					boolean integratedMarkers = true;
+					VOI markers = wormData.getIntegratedMarkerAnnotations();
+					if ( markers == null ) {
+						markers = wormData.getMarkerAnnotations();
+						integratedMarkers = false;
+					}
+							
+							
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
@@ -503,16 +510,18 @@ public class PlugInAlgorithmWormUntwisting
 						
 						System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
 
-						timeAnnotation = System.currentTimeMillis();
-						wormData = new WormData(nucleiImage);
-						markers = wormData.getMarkerAnnotations();
-						if ( (markers != null) && (markers.getCurves().size() > 0) )
-						{
-							model.setMarkers(markers);
-							model.untwistMarkers(segmentLattice);	
-							model.saveAnnotationStraight(nucleiImage, "straightened_annotations", "straightened_annotations.csv" );	
+						if ( !integratedMarkers ) {
+							timeAnnotation = System.currentTimeMillis();
+							wormData = new WormData(nucleiImage);
+							markers = wormData.getMarkerAnnotations();
+							if ( (markers != null) && (markers.getCurves().size() > 0) )
+							{
+								model.setMarkers(markers);
+								model.untwistMarkers(segmentLattice);	
+								model.saveAnnotationStraight(nucleiImage, "straightened_annotations", "straightened_annotations.csv" );	
+							}
+							System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
 						}
-						System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
 						model.dispose();
 						model = null;
 

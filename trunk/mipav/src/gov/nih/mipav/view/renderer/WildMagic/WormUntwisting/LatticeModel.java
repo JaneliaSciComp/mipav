@@ -35,6 +35,7 @@ import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
@@ -211,7 +212,7 @@ public class LatticeModel {
 				line = br.readLine();
 //				System.err.println(line);
 
-				VOI lattice = new VOI( (short)sID, fileName, VOI.ANNOTATION, 0 );
+				VOI lattice = new VOI( (short)sID, "lattice", VOI.ANNOTATION, 0 );
 				lattice.setColor(new Color(0, 0, 255));
 				VOIContour left = new VOIContour(false);
 				left.update(new ColorRGBA(0, 0, 1, 1));
@@ -404,9 +405,9 @@ public class LatticeModel {
 
 	protected int[] latticeSlices;
 
-	private VOIContour leftBackup;
+//	private VOIContour leftBackup;
 
-	private VOIContour rightBackup;
+//	private VOIContour rightBackup;
 
 	protected float[] afTimeC;
 
@@ -450,8 +451,6 @@ public class LatticeModel {
 
 	private Vector3f pickedPoint = null;
 
-	private int pickedAnnotation = -1;
-
 	private VOI showSelectedVOI = null;
 
 	private VOIContour[] showSelected = null;
@@ -472,12 +471,6 @@ public class LatticeModel {
 
 	protected Vector3f wormOrigin = null;
 	protected Vector3f transformedOrigin = new Vector3f();
-
-//	private ModelImage markerSegmentation;
-//	private int[][] markerVolumes;
-//	private int[] markerIDs;
-//	private boolean[] completedIDs;
-//	private int[] currentID;
 
 	private Vector<VOI> neuriteData;
 	protected String outputDirectory;
@@ -624,6 +617,85 @@ public class LatticeModel {
 		return annotationVOIs;
 	}
 	
+	public VOI retwistLattice(VOI lattice) {
+		VOI newLattice = null;
+		VOIContour left3D = null;
+		VOIContour right3D = null;
+		
+		for ( int i = 0; i < retwistLattice[0].length; i++ ) {
+			if ( retwistLattice[0][i] || retwistLattice[1][i] ) {
+				if ( newLattice == null ) {
+					// create a copy of the lattice so we can change it:
+					newLattice = new VOI(lattice);
+					left3D = (VOIContour) newLattice.getCurves().elementAt(0);
+					right3D = (VOIContour) newLattice.getCurves().elementAt(1);
+				}
+			}
+			if ( retwistLattice[0][i] && retwistLattice[1][i] ) {
+				System.err.println("retwistLattice both " + i);
+				// both lattice pts changed:
+				Vector3f center = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+				center.scale(0.5f);
+				Vector3f leftDir = Vector3f.sub(left.elementAt(i), center); 
+				float leftLength = leftDir.normalize();
+				Vector3f rightDir = Vector3f.sub(right.elementAt(i), center); 
+				float rightLength = rightDir.normalize();
+				
+				Vector3f center3D =  Vector3f.add( left3D.elementAt(i), right3D.elementAt(i) );
+				center3D.scale(0.5f);
+
+				Vector3f leftDir3D = Vector3f.sub(left3D.elementAt(i), center3D); 
+				Vector3f rightDir3D = Vector3f.sub(right3D.elementAt(i), center3D); 
+
+				Vector3f newLeft = new Vector3f(center3D);
+				leftDir3D.normalize(); leftDir3D.scale(leftLength);
+				newLeft.add(leftDir3D);
+				left3D.elementAt(i).copy(newLeft);
+				
+				Vector3f newRight = new Vector3f(center3D);
+				rightDir3D.normalize(); rightDir3D.scale(rightLength);
+				newRight.add(rightDir3D);
+				right3D.elementAt(i).copy(newRight);	
+			}
+			else if ( retwistLattice[0][i] ) {
+				// left lattice pt changed:
+				Vector3f center = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+				center.scale(0.5f);
+				Vector3f leftDir = Vector3f.sub( left.elementAt(i), center); 
+				float leftLength = leftDir.normalize();
+				
+				Vector3f center3D =  Vector3f.add( left3D.elementAt(i), right3D.elementAt(i) );
+				center3D.scale(0.5f);
+
+				Vector3f leftDir3D = Vector3f.sub(left3D.elementAt(i), center3D); 
+
+				Vector3f newLeft = new Vector3f(center3D);
+				leftDir3D.normalize(); leftDir3D.scale(leftLength);
+				newLeft.add(leftDir3D);
+				left3D.elementAt(i).copy(newLeft);
+			}
+			else if ( retwistLattice[1][i] ) {
+				// right lattice pt changed:
+				Vector3f center = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+				center.scale(0.5f);
+				Vector3f rightDir = Vector3f.sub( right.elementAt(i), center); 
+				float rightLength = rightDir.normalize();
+				
+				Vector3f center3D =  Vector3f.add( left3D.elementAt(i), right3D.elementAt(i) );
+				center3D.scale(0.5f);
+
+				Vector3f rightDir3D = Vector3f.sub(right3D.elementAt(i), center3D); 
+				
+				Vector3f newRight = new Vector3f(center3D);
+				rightDir3D.normalize(); rightDir3D.scale(rightLength);
+				newRight.add(rightDir3D);
+				right3D.elementAt(i).copy(newRight);				
+			}
+		}
+		
+		return newLattice;
+	}
+	
 	public VOI retwistAnnotations(VOI lattice) {
 		setLattice(lattice);
 		for ( int i = annotationVOIs.getCurves().size() - 1; i >=0; i-- ) {
@@ -750,23 +822,16 @@ public class LatticeModel {
 	 * Clears the selected VOI or Annotation point.
 	 */
 	public void clear3DSelection() {
+		if ( annotationVOIs != null ) {
+			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+				text.setSelected(false);
+				text.updateSelected(imageA);
+			}
+		}
 		pickedPoint = null;
-		pickedAnnotation = -1;
 		if (showSelected != null) {
 			imageA.unregisterVOI(showSelectedVOI);
-		}
-		final VOIVector vois = imageA.getVOIs();
-		if ( vois == null )
-		{
-			return;
-		}
-		for (int i = vois.size() - 1; i >= 0; i--) {
-			final VOI voi = vois.elementAt(i);
-			final String name = voi.getName();
-			if (name.equals("showSelected")) {
-				// System.err.println( "clear3DSelection " + vois.elementAt(i).getName() );
-				imageA.unregisterVOI(voi);
-			}
 		}
 		if (showSelected != null) {
 			for (int i = 0; i < showSelected.length; i++) {
@@ -775,6 +840,7 @@ public class LatticeModel {
 			showSelected = null;
 		}
 		showSelectedVOI = null;
+		imageA.notifyImageDisplayListeners();
 	}
 
 	/**
@@ -801,18 +867,22 @@ public class LatticeModel {
 	public void deleteSelectedPoint(final boolean doAnnotation) {
 		if (doAnnotation)
 		{
-			if (pickedAnnotation != -1) {
-				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().remove(pickedAnnotation);
-				clear3DSelection();
-
-				if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
-					wormOrigin = null;
-					// updateLattice(true);
+			for ( int i = annotationVOIs.getCurves().size()-1; i >= 0; i-- ) {
+				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+				if ( text.isSelected() ) {
+					annotationVOIs.getCurves().remove(i);
+					text.setSelected(false);
+					text.updateSelected(imageA);
+					
+					if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
+						wormOrigin = null;
+					}
 				}
 			}
 			colorAnnotations();
+			updateAnnotationListeners();
 		}
-		else if ( !doAnnotation)
+		else if ( !doAnnotation && !previewMode )
 		{
 			boolean deletedLeft = false;
 			boolean deletedRight = false;
@@ -863,8 +933,6 @@ public class LatticeModel {
 			updateLattice(deletedLeft | deletedRight);
 		}
 		pickedPoint = null;
-		pickedAnnotation = -1;
-		updateAnnotationListeners();
 	}
 
 	/**
@@ -976,7 +1044,7 @@ public class LatticeModel {
 			{
 				int value = 0;
 				String name = new String(text.getText());
-				String prefix = getPrefix(name);
+				String prefix = JPanelAnnotations.getPrefix(name);
 				if ( prefix.equals(annotationPrefix) ) {
 					for ( int j = 0; j < name.length(); j++ )
 					{
@@ -995,18 +1063,6 @@ public class LatticeModel {
 		return (highestIndex + 1);
 	}
 	
-	private String getPrefix(String name) {
-		String prefix = new String();
-		for ( int j = 0; j < name.length(); j++ ) {
-			if ( Character.isLetter(name.charAt(j) ) ) {
-				prefix += name.charAt(j);
-			}
-			else {
-				break;
-			}
-		}
-		return prefix;
-	}
 
 	/**
 	 * Returns the currently selected point, either on the lattice or from the
@@ -1016,22 +1072,29 @@ public class LatticeModel {
 	public Vector3f getPicked() {
 		return pickedPoint;
 	}
+	
+	public boolean hasPicked() {
+		return ( (pickedPoint != null) || (getPickedAnnotation() != null) ) ;
+	}
 
-	public VOIWormAnnotation getPickedAnnotation() {
-		if ( pickedAnnotation == -1 ) {
-			return null;
-		}
+	public Vector<VOIWormAnnotation> getPickedAnnotation() {
 		if (annotationVOIs == null) {
 			return null;
 		}
 		if (annotationVOIs.getCurves() == null) {
 			return null;
 		}
-		if ( (pickedAnnotation < 0) || (pickedAnnotation > annotationVOIs.getCurves().size()) ) {
-			return null;
+		Vector<VOIWormAnnotation> selectedAnnotations = null;
+		for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
+			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+			if ( text.isSelected() ) {
+				if ( selectedAnnotations == null ) {
+					selectedAnnotations = new Vector<VOIWormAnnotation>();
+				}
+				selectedAnnotations.add(text);
+			}
 		}
-		updateAnnotationListeners();
-		return (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(pickedAnnotation);
+		return selectedAnnotations;
 	}
 
 	/**
@@ -1044,79 +1107,55 @@ public class LatticeModel {
 	public Vector3f getPicked(final Vector3f pt, final boolean doAnnotation) {
 		pickedPoint = null;
 
-		if (doAnnotation) {
-			if (annotationVOIs == null) {
-				return null;
+		if (left == null) {
+			return pickedPoint;
+		}
+		int closestL = -1;
+		float minDistL = Float.MAX_VALUE;
+		for (int i = 0; i < left.size(); i++) {
+			final float distance = pt.distance(left.elementAt(i));
+			if (distance < minDistL) {
+				minDistL = distance;
+				if (minDistL <= 12) {
+					closestL = i;
+				}
 			}
-			if (annotationVOIs.getCurves() == null) {
-				return null;
-			}
-			pickedAnnotation = -1;
-			float minDist = Float.MAX_VALUE;
-			for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
-				final Vector3f annotationPt = annotationVOIs.getCurves().elementAt(i).elementAt(0);
-				final float distance = pt.distance(annotationPt);
-				if (distance < minDist) {
-					minDist = distance;
-					if (minDist <= 12) {
-						pickedAnnotation = i;
+		}
+		int closestR = -1;
+		float minDistR = Float.MAX_VALUE;
+		if (right != null) {
+			for (int i = 0; i < right.size(); i++) {
+				final float distance = pt.distance(right.elementAt(i));
+				if (distance < minDistR) {
+					minDistR = distance;
+					if (minDistR <= 12) {
+						closestR = i;
 					}
 				}
 			}
-			if (pickedAnnotation != -1) {
-				pickedPoint = annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(0);
-			}
-		} else {
-			if (left == null) {
-				return pickedPoint;
-			}
-			int closestL = -1;
-			float minDistL = Float.MAX_VALUE;
-			for (int i = 0; i < left.size(); i++) {
-				final float distance = pt.distance(left.elementAt(i));
-				if (distance < minDistL) {
-					minDistL = distance;
-					if (minDistL <= 12) {
-						closestL = i;
-					}
-				}
-			}
-			int closestR = -1;
-			float minDistR = Float.MAX_VALUE;
-			if (right != null) {
-				for (int i = 0; i < right.size(); i++) {
-					final float distance = pt.distance(right.elementAt(i));
-					if (distance < minDistR) {
-						minDistR = distance;
-						if (minDistR <= 12) {
-							closestR = i;
-						}
-					}
-				}
-			}
+		}
 
-			// System.err.println( minDistL + " " + minDistR );
-			if ( (closestL != -1) && (closestR != -1)) {
-				if (minDistL < minDistR) {
-					// System.err.println( "Picked Lattice Left " + closestL );
-					pickedPoint = left.elementAt(closestL);
-				} else {
-					// System.err.println( "Picked Lattice Right " + closestR );
-					pickedPoint = right.elementAt(closestR);
-				}
-			} else if (closestL != -1) {
+		// System.err.println( minDistL + " " + minDistR );
+		if ( (closestL != -1) && (closestR != -1)) {
+			if (minDistL < minDistR) {
 				// System.err.println( "Picked Lattice Left " + closestL );
 				pickedPoint = left.elementAt(closestL);
-			} else if (closestR != -1) {
+			} else {
 				// System.err.println( "Picked Lattice Right " + closestR );
 				pickedPoint = right.elementAt(closestR);
 			}
-
-			if (pickedPoint != null) {
-				updateLattice(false);
-			}
+		} else if (closestL != -1) {
+			// System.err.println( "Picked Lattice Left " + closestL );
+			pickedPoint = left.elementAt(closestL);
+		} else if (closestR != -1) {
+			// System.err.println( "Picked Lattice Right " + closestR );
+			pickedPoint = right.elementAt(closestR);
 		}
-		updateAnnotationListeners();
+
+		if (pickedPoint != null) {
+			updateLattice(false);
+		}
+			
 		return pickedPoint;
 	}
 
@@ -1273,14 +1312,7 @@ public class LatticeModel {
 		return extent;
 	}
 
-	/**
-	 * Enables the user to move an annotation point with the mouse.
-	 * 
-	 * @param startPt 3D start point of a ray intersecting the volume.
-	 * @param endPt 3D end point of a ray intersecting the volume.
-	 * @param pt point along the ray with the maximum intensity value.
-	 */
-	public boolean modifyAnnotation(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean rightMouse ) {
+	public boolean selectAnnotation(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean rightMouse ) {
 		if ( annotationVOIs == null )
 		{
 			return false;
@@ -1293,98 +1325,93 @@ public class LatticeModel {
 		{
 			return false;
 		}
-//		System.err.println( "modifyAnnotation " + ( pickedPoint != null ) + " " + rightMouse + "  " + annotationVOIs.getCurves().size() );
-		if ( pickedPoint != null )
-		{
-			if ( rightMouse )
-			{
-				// rename add notes, etc.:
-				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(pickedAnnotation);
-				new JDialogAnnotation(imageA, annotationVOIs, pickedAnnotation, true, true);
-				text.updateText();
-				colorAnnotations();
-			}
-			else
-			{
-				// move
-				final Vector3f diff = Vector3f.sub(pt, pickedPoint);
-				pickedPoint.copy(pt);
-				annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(1).add(diff);
-				annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
-				// point was modified so set the retwist flag:
-				((VOIWormAnnotation)annotationVOIs.getCurves().elementAt(pickedAnnotation)).retwist(previewMode);
-			}
-		} 
-		else
-		{
-			pickedPoint = null;
-			pickedAnnotation = -1;
-			float minDist = Float.MAX_VALUE;
+		VOIWormAnnotation nearest = findNearestAnnotation(startPt, endPt, pt);
+		if ( nearest == null ) {
+			return false;
+		}
+		// toggle selection:
+		if ( !rightMouse ) {
+			nearest.setSelected( !nearest.isSelected() );
+			nearest.updateSelected(imageA);
 			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
 			{
-				final Vector3f annotationPt = annotationVOIs.getCurves().elementAt(i).elementAt(0);
-				final float distance = pt.distance(annotationPt);
-				if ( distance < minDist )
-				{
-					minDist = distance;
-					if ( minDist <= 12 )
-					{
-						pickedAnnotation = i;
-					}
-				}
-			}
-			if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
-			{
-				minDist = Float.MAX_VALUE;
-				// look at the vector under the mouse and see which lattice point is closest...
-				final Segment3f mouseVector = new Segment3f(startPt, endPt);
-				for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
-				{
-					DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotationVOIs.getCurves().elementAt(i).elementAt(0), mouseVector);
-					float distance = dist.Get();
-					//					System.err.println( i + " " + distance );
-					if ( distance < minDist )
-					{
-						minDist = distance;
-						if ( minDist <= 12 )
-						{
-							pickedAnnotation = i;
-						}
-					}
+				VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+				if ( text.isSelected() ) {
+					text.setSelectionOffset( Vector3f.sub(pt, text.elementAt(0)) );
 				}
 			}
 		}
-		if (pickedAnnotation != -1)
+		Vector<VOIWormAnnotation> selectedAnnotations = getPickedAnnotation();
+		if ( rightMouse && nearest.isSelected() && (selectedAnnotations.size() == 1) )
 		{
-			final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(pickedAnnotation);
-			if ( rightMouse )
-			{
-				new JDialogAnnotation(imageA, annotationVOIs, pickedAnnotation, true, true);
+			// rename add notes, etc.:
+			System.err.println("selectAnnotation JDialogAnnotation" );
+			new JDialogAnnotation(imageA, annotationVOIs, annotationVOIs.getCurves().indexOf(nearest), true, true);
+			nearest.updateText();
+			colorAnnotations();
+		}
+		else if ( rightMouse && (selectedAnnotations.size() > 1) )
+		{
+			// open dialog to group annotations
+			String groupName = JOptionPane.showInputDialog("Create group: ");
+			for ( int i = 0; i < selectedAnnotations.size(); i++ ) {
+				VOIWormAnnotation text = selectedAnnotations.elementAt(i);
+				text.setText( groupName + JPanelAnnotations.getPostfix(text.getText() ) );
 				text.updateText();
-				colorAnnotations();
-			}
-			pickedPoint = annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(0);
-			updateSelected();
-
-			if ( text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin") )
-			{
-				if ( wormOrigin == null )
-				{
-					wormOrigin = new Vector3f(pickedPoint);
-				}
-				wormOrigin.copy(pickedPoint);
-				// updateLattice(false);
 			}
 		}
-		if ( pickedPoint != null ) {
+		imageA.notifyImageDisplayListeners();
+		updateAnnotationListeners();
+			
+		return nearest.isSelected();
+	}
+	
+
+	/**
+	 * Enables the user to move an annotation point with the mouse.
+	 * 
+	 * @param startPt 3D start point of a ray intersecting the volume.
+	 * @param endPt 3D end point of a ray intersecting the volume.
+	 * @param pt point along the ray with the maximum intensity value.
+	 */
+	public boolean modifyAnnotation( final Vector3f pt ) {
+		if ( annotationVOIs == null )
+		{
+			return false;
+		}
+		if ( annotationVOIs.getCurves() == null )
+		{
+			return false;
+		}
+		if ( annotationVOIs.getCurves().size() == 0 )
+		{
+			return false;
+		}
+		
+		boolean modified = false;
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+			final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+			if ( text.isSelected() ) {
+				Vector3f diff = text.getSelectionOffset();
+				text.elementAt(0).copy(pt).sub(diff);
+				text.elementAt(1).copy(pt).sub(diff);
+				text.update();
+				text.updateSelected(imageA);
+				// point was modified so set the retwist flag:
+				text.retwist(previewMode);
+				modified = true;
+			}
+		}
+		if ( modified ) {
 			updateAnnotationListeners();
 		}
-		return (pickedPoint != null);
+			
+		return modified;
 	}
 	
 	public void updateAnnotation( VOIWormAnnotation annotation )
 	{
-		pickedAnnotation = -1;
+		int pickedAnnotation = -1;
 		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
 		{
 			if ( annotationVOIs.getCurves().elementAt(i) == annotation )
@@ -1395,11 +1422,13 @@ public class LatticeModel {
 		}
 		if (pickedAnnotation != -1)
 		{
-			annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
 			final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(pickedAnnotation);
+			text.update();
 			text.retwist(previewMode);
-			pickedPoint = annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(0);
-			updateSelected();
+			text.setSelected(true);
+			text.updateSelected(imageA);
+			pickedPoint = text.elementAt(0);
+//			updateSelected();
 
 			if ( text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin") )
 			{
@@ -1418,23 +1447,9 @@ public class LatticeModel {
 		updateAnnotationListeners();
 	}
 
-	/**
-	 * Enables the user to modify the lattice point with the mouse.
-	 * 
-	 * @param startPt 3D start point of a ray intersecting the volume.
-	 * @param endPt 3D end point of a ray intersecting the volume.
-	 * @param pt point along the ray with the maximum intensity value.
-	 */
-	public boolean modifyLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt) {
-		if (pickedPoint != null) {
-			pickedPoint.copy(pt);
-			updateLattice(false);
-			return true;
-		}
-		if ( lattice == null )
-		{
-			return false;
-		}
+	private boolean[][] retwistLattice = null;
+
+	public boolean selectLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt) {
 
 		pickedPoint = null;
 		int closestL = -1;
@@ -1502,8 +1517,48 @@ public class LatticeModel {
 			updateLattice(false);
 			return true;
 		}
-
-		return addInsertionPoint(startPt, endPt, pt);
+		if ( !previewMode ) {
+			return addInsertionPoint(startPt, endPt, pt);
+		}
+		else {
+			return false;
+		}
+	}
+	
+	/**
+	 * Enables the user to modify the lattice point with the mouse.
+	 * 
+	 * @param startPt 3D start point of a ray intersecting the volume.
+	 * @param endPt 3D end point of a ray intersecting the volume.
+	 * @param pt point along the ray with the maximum intensity value.
+	 */
+	public boolean modifyLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt) {
+		if ( lattice == null )
+		{
+			return false;
+		}
+		
+		// if preview constrain lattice points to x,0,z coordinates:
+		if (pickedPoint != null) {
+			if ( previewMode ) {
+				final int leftIndex = left.indexOf(pickedPoint);
+				final int rightIndex = right.indexOf(pickedPoint);
+				if ( (leftIndex != -1) && !retwistLattice[0][leftIndex] ) {
+					retwistLattice[0][leftIndex] = true;
+				}
+				if ( (rightIndex != -1) && !retwistLattice[1][rightIndex] ) {
+					retwistLattice[1][rightIndex] = true;
+				}
+				pickedPoint.X = pt.X;
+//				pickedPoint.Z = pt.Z;
+			}
+			else {
+				pickedPoint.copy(pt);
+			}
+			updateLattice(false);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -1513,39 +1568,98 @@ public class LatticeModel {
 	 * @param doAnnotation
 	 */
 	public void moveSelectedPoint(final Vector3f direction, final boolean doAnnotation) {
-		if (pickedPoint != null) {
-			pickedPoint.add(direction);
-			if (doAnnotation && (pickedAnnotation != -1)) {
-				annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(1).add(direction);
-				annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
-				// point was modified so set the retwist flag:
-				((VOIWormAnnotation)annotationVOIs.getCurves().elementAt(pickedAnnotation)).retwist(previewMode);
-				updateSelected();
-			} else {
-				updateLattice(false);
+		if ( doAnnotation ) {
+			boolean updateImage = false;
+			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+				if ( text.isSelected() ) {
+					text.elementAt(0).add(direction);
+					text.elementAt(1).add(direction);
+					text.update();
+
+					text.updateSelected(imageA);
+					text.retwist(previewMode);
+					updateImage = true;
+				}				
 			}
+			if ( updateImage )
+			{
+				imageA.notifyImageDisplayListeners();
+			}
+			updateAnnotationListeners();
 		}
-		updateAnnotationListeners();
+		else if ( pickedPoint != null ) {
+
+			if ( previewMode ) {
+				final int leftIndex = left.indexOf(pickedPoint);
+				final int rightIndex = right.indexOf(pickedPoint);
+				if ( (leftIndex != -1) && !retwistLattice[0][leftIndex] ) {
+					retwistLattice[0][leftIndex] = true;
+				}
+				if ( (rightIndex != -1) && !retwistLattice[1][rightIndex] ) {
+					retwistLattice[1][rightIndex] = true;
+				}
+				pickedPoint.X += direction.X;
+			}
+			else {
+				pickedPoint.add(direction);
+			}
+			updateLattice(false);
+		}
+		
+//		if (pickedPoint != null) {
+//			if ( previewMode ) {
+//				final int leftIndex = left.indexOf(pickedPoint);
+//				final int rightIndex = right.indexOf(pickedPoint);
+//				if ( (leftIndex != -1) && !retwistLattice[0][leftIndex] ) {
+//					retwistLattice[0][leftIndex] = true;
+//				}
+//				if ( (rightIndex != -1) && !retwistLattice[1][rightIndex] ) {
+//					retwistLattice[1][rightIndex] = true;
+//				}
+//				pickedPoint.X += direction.X;
+//			}
+//			else {
+//				pickedPoint.add(direction);
+//			}
+//			final VOIWormAnnotation text = getPickedAnnotation();
+//			if (doAnnotation && (text != null)) {
+////				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(pickedAnnotation);
+//				text.setSelected(true);
+//				text.updateSelected(imageA);
+//				text.retwist(previewMode);
+//				text.elementAt(1).add(direction);
+//				text.update();
+////				// point was modified so set the retwist flag:
+////				((VOIWormAnnotation)annotationVOIs.getCurves().elementAt(pickedAnnotation)).retwist(previewMode);
+//////				updateSelected();
+//			} else {
+//				updateLattice(false);
+//			}
+//		}
 	}
 	
 
 	public void updateSelectedPoint( Color color )
 	{
-		if (pickedPoint != null) {
-			VOIWormAnnotation text = (VOIWormAnnotation)annotationVOIs.getCurves().elementAt(pickedAnnotation);
+		Vector<VOIWormAnnotation> selectedAnnotations = getPickedAnnotation();
+		if ( selectedAnnotations != null ) {
+			for ( int i = 0; i < selectedAnnotations.size(); i++ ) {
+				final VOIWormAnnotation text = selectedAnnotations.elementAt(i);
 
-			if ( !match(text.getColor(), color) )
-			{
-				text.setColor(color);
+				if ( !match(text.getColor(), color) )
+				{
+					text.setColor(color);
+				}
+				else
+				{
+					text.setColor(Color.blue);
+				}
+				text.updateText();
+				colorAnnotations();
 			}
-			else
-			{
-				text.setColor(Color.blue);
-			}
-			text.updateText();
-			colorAnnotations();
+			updateAnnotationListeners();
 		}
-		updateAnnotationListeners();
 	}
 
 	/**
@@ -1634,31 +1748,6 @@ public class LatticeModel {
 			voiDir = new String(directory + fileName + File.separator);
 
 			clear3DSelection();
-
-//			imageA.unregisterAllVOIs();
-//			imageA.registerVOI(lattice);
-//			lattice.setColor(new Color(0, 0, 255));
-//			lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
-//			lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
-//			lattice.getCurves().elementAt(0).setClosed(false);
-//			lattice.getCurves().elementAt(1).setClosed(false);
-//			for (int j = 0; j < lattice.getCurves().elementAt(0).size(); j++) {
-//				final short id = (short) imageA.getVOIs().getUniqueID();
-//				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
-//				final VOIContour mainAxis = new VOIContour(false);
-//				mainAxis.add(lattice.getCurves().elementAt(0).elementAt(j));
-//				mainAxis.add(lattice.getCurves().elementAt(1).elementAt(j));
-//				marker.getCurves().add(mainAxis);
-//				marker.setColor(new Color(255, 255, 0));
-//				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-//				if (j == 0) {
-//					marker.setColor(new Color(0, 255, 0));
-//					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-//				}
-//				imageA.registerVOI(marker);
-//			}
-//
-//			saveAllVOIsTo(voiDir, imageA);
 			
 			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
 			for ( int j = 0; j < left.size(); j++ )
@@ -1721,34 +1810,7 @@ public class LatticeModel {
 		{
 			final String voiDir = new String(directory + fileName + File.separator);
 
-			clear3DSelection();
-
-//			imageA.unregisterAllVOIs();
-//			imageA.registerVOI(lattice);
-//			lattice.setColor(new Color(0, 0, 255));
-//			lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
-//			lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
-//			lattice.getCurves().elementAt(0).setClosed(false);
-//			lattice.getCurves().elementAt(1).setClosed(false);
-//			for (int j = 0; j < lattice.getCurves().elementAt(0).size(); j++) {
-//				final short id = (short) imageA.getVOIs().getUniqueID();
-//				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
-//				final VOIContour mainAxis = new VOIContour(false);
-//				mainAxis.add(lattice.getCurves().elementAt(0).elementAt(j));
-//				mainAxis.add(lattice.getCurves().elementAt(1).elementAt(j));
-//				marker.getCurves().add(mainAxis);
-//				marker.setColor(new Color(255, 255, 0));
-//				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-//				if (j == 0) {
-//					marker.setColor(new Color(0, 255, 0));
-//					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-//				}
-//				imageA.registerVOI(marker);
-//			}
-//
-//			saveAllVOIsTo(voiDir + File.separator, imageA);
-
-			
+			clear3DSelection();			
 
 			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
 			for ( int j = 0; j < left.size(); j++ )
@@ -1785,11 +1847,11 @@ public class LatticeModel {
 	}
 
 	public void deleteAnnotations() {
+		clear3DSelection();
 		if (annotationVOIs != null) {
 			imageA.unregisterVOI(annotationVOIs);
 		}
 		annotationVOIs = null;
-		clear3DSelection();
 		updateAnnotationListeners();
 	}
 	
@@ -1929,35 +1991,22 @@ public class LatticeModel {
 	 * @param pt
 	 * @param doAnnotation
 	 */
-	public void setPicked(final Vector3f pt, final boolean doAnnotation) {
+	public void modifyLeftRightMarker(final Vector3f pt) {
 		if (pickedPoint == null) {
 			return;
 		}
-		
 		pt.X = Math.round( pt.X );		pt.Y = Math.round( pt.Y );		pt.Z = Math.round( pt.Z );
-		
 
-		if (doAnnotation && (pickedAnnotation != -1)) {
-			final Vector3f diff = Vector3f.sub(pt, pickedPoint);
-			pickedPoint.copy(pt);
-			annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(1).add(diff);
-			annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
-			// point was modified so set the retwist flag:
-			((VOIWormAnnotation)annotationVOIs.getCurves().elementAt(pickedAnnotation)).retwist(previewMode);
-			updateSelected();
-		} else if ( !doAnnotation) {
-			if ( (leftMarker != null) && pickedPoint.equals(leftMarker.getCurves().elementAt(0).elementAt(0))) {
-				leftMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
-				leftMarker.update();
-			}
-			if ( (rightMarker != null) && pickedPoint.equals(rightMarker.getCurves().elementAt(0).elementAt(0))) {
-				rightMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
-				rightMarker.update();
-			}
-			pickedPoint.copy(pt);
-			updateLattice(false);
+		if ( (leftMarker != null) && pickedPoint.equals(leftMarker.getCurves().elementAt(0).elementAt(0))) {
+			leftMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
+			leftMarker.update();
 		}
-		updateAnnotationListeners();
+		if ( (rightMarker != null) && pickedPoint.equals(rightMarker.getCurves().elementAt(0).elementAt(0))) {
+			rightMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
+			rightMarker.update();
+		}
+		pickedPoint.copy(pt);
+		updateLattice(false);
 	}
 
 	/**
@@ -2282,8 +2331,8 @@ public class LatticeModel {
 				if (minDistL <= 12) {
 					// System.err.println( dist.GetSegment0Parameter() + " " + dist.GetSegment1Parameter() );
 					minIndexL = i;
-					newLeft = Vector3f.add(leftS.Center, Vector3f.scale(dist.GetSegment1Parameter(), leftS.Direction));
-					newLeft.copy(maxPt);
+//					newLeft = Vector3f.add(leftS.Center, Vector3f.scale(dist.GetSegment1Parameter(), leftS.Direction));
+					newLeft = new Vector3f(maxPt);
 				}
 			}
 		}
@@ -2299,8 +2348,8 @@ public class LatticeModel {
 				if (minDistR <= 12) {
 					// System.err.println( dist.GetSegment0Parameter() + " " + dist.GetSegment1Parameter() );
 					minIndexR = i;
-					newRight = Vector3f.add(rightS.Center, Vector3f.scale(dist.GetSegment1Parameter(), rightS.Direction));
-					newRight.copy(maxPt);
+//					newRight = Vector3f.add(rightS.Center, Vector3f.scale(dist.GetSegment1Parameter(), rightS.Direction));
+					newRight = new Vector3f(maxPt);
 				}
 			}
 		}
@@ -3572,91 +3621,6 @@ public class LatticeModel {
 		rightLine.getCurves().add(rightPositions);
 		rightLine.setColor(Color.green);
 		rightPositions.update(new ColorRGBA(0, 1, 0, 1));
-
-		if ( leftBackup != null )
-		{
-			// Saving contours:
-			VOIVector temp = imageA.getVOIsCopy();
-
-			// save ellipse worm contours:
-			sID++;
-			VOI displayContoursAll = new VOI(sID, "wormContours");
-			for (int i = 0; i < centerPositions.size(); i++) {
-				final Vector3f rkEye = centerPositions.elementAt(i);
-				final Vector3f rkRVector = rightVectors.elementAt(i);
-				final Vector3f rkUVector = upVectors.elementAt(i);
-
-				final VOIContour ellipse = new VOIContour(true);
-				ellipse.setVolumeDisplayRange(minRange);
-				makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), ellipse);
-				displayContoursAll.getCurves().add(ellipse);
-			}
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(displayContoursAll);
-			String imageName = imageA.getImageName();
-			if (imageName.contains("_clone")) {
-				imageName = imageName.replaceAll("_clone", "");
-			}
-			String voiDir = outputDirectory + File.separator + "wormContours" + File.separator;
-			saveAllVOIsTo(voiDir, imageA);
-
-			// save center curve:
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(centerLine);
-			voiDir = outputDirectory + File.separator + "centerLine" + File.separator;
-			saveAllVOIsTo(voiDir, imageA);
-
-			// save left curve:
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(leftLine);
-			voiDir = outputDirectory + File.separator + "leftLine" + File.separator;
-			saveAllVOIsTo(voiDir, imageA);
-
-			// save right curve:
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(rightLine);
-			voiDir = outputDirectory + File.separator + "rightLine" + File.separator;
-			saveAllVOIsTo(voiDir, imageA);
-
-
-			// save lattice edges:
-			sID++;
-			VOI latticeTemp = new VOI(sID, "lattice");
-			latticeTemp.getCurves().add(leftBackup);
-			latticeTemp.getCurves().add(rightBackup);
-			latticeTemp.setColor(Color.blue);
-			leftBackup.update(new ColorRGBA(0, 0, 1, 1));
-			rightBackup.update(new ColorRGBA(0, 0, 1, 1));
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(latticeTemp);
-			voiDir = outputDirectory + File.separator + "lattice" + File.separator;
-			saveAllVOIsTo(voiDir, imageA);
-
-
-			// save pairs:
-			sID++;
-			final VOI marker = new VOI(sID, "pairs", VOI.POLYLINE, (float) Math.random());
-			for (int j = 0; j < leftBackup.size(); j++) {
-				final VOIContour mainAxis = new VOIContour(false);
-				mainAxis.add(leftBackup.elementAt(j));
-				mainAxis.add(rightBackup.elementAt(j));
-				marker.getCurves().add(mainAxis);
-				marker.setColor(new Color(255, 255, 0));
-				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-				if (j == 0) {
-					marker.setColor(new Color(0, 255, 0));
-					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-				}
-			}
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(marker);
-			voiDir = outputDirectory + File.separator + "pairs" + File.separator;
-			saveAllVOIsTo(voiDir, imageA);
-
-			// restore VOIs:
-			imageA.unregisterAllVOIs();
-			imageA.restoreVOIs(temp);
-		}
 
 		imageA.registerVOI(leftLine);
 		imageA.registerVOI(rightLine);
@@ -5872,12 +5836,12 @@ public class LatticeModel {
 		annotationVOIs = null;
 		leftMarker = null;
 		rightMarker = null;
-		final VOIVector vois = imageA.getVOIs();
+		VOIVector vois = imageA.getVOIs();
 		for (int i = 0; i < vois.size(); i++) {
 			final VOI voi = vois.elementAt(i);
 			final String name = voi.getName();
-			// System.err.println( vois.elementAt(i).getName() );
-			if (name.equals("lattice")) {
+			 System.err.println( vois.elementAt(i).getName() );
+			if (name.contains("lattice")) {
 				lattice = voi;
 				left = (VOIContour) lattice.getCurves().elementAt(0);
 				right = (VOIContour) lattice.getCurves().elementAt(1);
@@ -5893,29 +5857,40 @@ public class LatticeModel {
 				displayContours = voi;
 			} else if (name.contains("interpolatedContours")) {
 				displayInterpolatedContours = voi;
-			} else if (name.equals("showSelected")) {
+			} else if (name.contains("showSelected")) {
 				showSelectedVOI = voi;
-				// System.err.println("updateLinks showSelected ");
+				imageA.unregisterVOI(showSelectedVOI);
+				showSelectedVOI = null;
+				 System.err.println("updateLinks showSelected ");
 			} else if (name.equals("leftMarker")) {
 				leftMarker = voi;
-				// System.err.println("updateLinks showSelected ");
 			} else if (name.equals("rightMarker")) {
 				rightMarker = voi;
-				// System.err.println("updateLinks showSelected ");
 			} else if (name.equals("annotationVOIs")) {
 				annotationVOIs = voi;
 			}
 		}
 		clear3DSelection();
-		if (showSelected != null) {
-			for (int i = 0; i < showSelected.length; i++) {
-				showSelected[i].dispose();
-			}
-			showSelected = null;
-		}
-		showSelectedVOI = null;
 		colorAnnotations();
+		if ( annotationVOIs != null ) {
+//			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+//				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+//				if ( text.isSelected() ) {
+//					text.setSelected(false);
+//					text.updateSelected(imageA);
+//				}
+//			}
+		}
 		updateLattice(true);
+		
+		vois = imageA.getVOIs();
+		for (int i = 0; i < vois.size(); i++) {
+			final VOI voi = vois.elementAt(i);
+			final String name = voi.getName(); 
+			if (name.contains("showSelected")) {
+				imageA.unregisterVOI(voi);
+			}
+		}
 	}
 
 	/**
@@ -7504,29 +7479,12 @@ public class LatticeModel {
 			leftSide.add(leftPt);
 			rightSide.add(rightPt);
 		}
-//		resultImage.registerVOI(latticeStraight);
 		latticeStraight.setColor(new Color(0, 0, 255));
 		latticeStraight.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
 		latticeStraight.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
 		latticeStraight.getCurves().elementAt(0).setClosed(false);
 		latticeStraight.getCurves().elementAt(1).setClosed(false);
 
-//		id = (short) image.getVOIs().getUniqueID();
-//		for (int j = 0; j < leftSide.size(); j++) {
-//			id = (short) image.getVOIs().getUniqueID();
-//			final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
-//			final VOIContour mainAxis = new VOIContour(false);
-//			mainAxis.add(leftSide.elementAt(j));
-//			mainAxis.add(rightSide.elementAt(j));
-//			marker.getCurves().add(mainAxis);
-//			marker.setColor(new Color(255, 255, 0));
-//			mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-//			if (j == 0) {
-//				marker.setColor(new Color(0, 255, 0));
-//				mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-//			}
-//			resultImage.registerVOI(marker);
-//		}
 				
 		// straighten markers:
 		if ( annotationVOIs != null ) {
@@ -7540,6 +7498,8 @@ public class LatticeModel {
 			}
 			
 			annotationsStraight = new VOI( (short)0, "straightened annotations", VOI.ANNOTATION, 0 );
+			String failList = new String("The following annotations are outside the worm bounds: \n" );
+			int failCount = 0;
 			for ( int i = 0; i < markerCenters.size(); i++ )
 			{
 				int latticeSegment = markerLatticeSegments.elementAt(i);
@@ -7554,6 +7514,8 @@ public class LatticeModel {
 				int minSlice = -1;
 				Vector3f minPt = new Vector3f();
 				int tryCount = 0;
+				float minFail = Float.MAX_VALUE;
+				Vector3f minFailPt = new Vector3f();
 				while ( minSlice == -1 && tryCount < 3 ) {
 					for ( int j = startIndex; j < endIndex; j++ )
 					{			
@@ -7567,6 +7529,10 @@ public class LatticeModel {
 //							System.err.println("unTwistTest: marker        " + markerNames.elementAt(i) + "  " + j + " " + minDistance[0] + "  " +
 //									( (contours[j] != null) && contours[j].contains( markerPt.X, markerPt.Y ) ) );
 //						}
+						if ( minDistance[0] < minFail ) {
+							minFail = minDistance[0];
+							minFailPt.copy(markerPt);
+						}
 
 						// If it is inside the skin marker contour:
 						if ( ( minDistance[0] < (tryCount * 5) ) && ((contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y )) )
@@ -7587,8 +7553,21 @@ public class LatticeModel {
 					}
 					tryCount++;
 				}
-				System.err.println( markerNames.elementAt(i) + "   " + minSlice + "   " + minUntwist );
+				if ( minSlice == -1 ) {
+					failList += markerNames.elementAt(i) + "\n";
+					failCount++;
+					System.err.println( markerNames.elementAt(i) + " FAIL  " + minSlice + "   " + minUntwist );
+					VOIWormAnnotation text = new VOIWormAnnotation();
+					text.setText(markerNames.elementAt(i));
+					text.add( new Vector3f(minFailPt) );
+					text.add( new Vector3f(minFailPt) );
+					text.setColor(Color.red);
+					annotationsStraight.getCurves().add(text);
+				}
 				
+			}
+			if ( failCount > 0 ) {
+				MipavUtil.displayInfo(failList);
 			}
 		}
 		System.err.println( "Untwisting TEST elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
@@ -8799,6 +8778,10 @@ public class LatticeModel {
 		this.previewMode = preview;
 		setAnnotations(annotations);
 		setLattice(lattice);
+		if ( retwistLattice != null ) {
+			retwistLattice = null;
+		}
+		retwistLattice = new boolean[2][left.size()];
 	}
 	
 	public void saveAnnotationStraight(final ModelImage image, String fileDirName, String fileName )
@@ -10073,6 +10056,48 @@ public class LatticeModel {
 		}
 
 		return inverseDiagonal(slice, 2*extent, corners, annotation.firstElement() );
+	}
+	
+	private VOIWormAnnotation findNearestAnnotation( final Vector3f startPt, final Vector3f endPt, final Vector3f pt ) {
+		int pickedAnnotation = -1;
+		float minDist = Float.MAX_VALUE;
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+		{
+			final Vector3f annotationPt = annotationVOIs.getCurves().elementAt(i).elementAt(0);
+			final float distance = pt.distance(annotationPt);
+			if ( distance < minDist )
+			{
+				minDist = distance;
+				if ( minDist <= 12 )
+				{
+					pickedAnnotation = i;
+				}
+			}
+		}
+		if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
+		{
+			minDist = Float.MAX_VALUE;
+			// look at the vector under the mouse and see which lattice point is closest...
+			final Segment3f mouseVector = new Segment3f(startPt, endPt);
+			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+			{
+				DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotationVOIs.getCurves().elementAt(i).elementAt(0), mouseVector);
+				float distance = dist.Get();
+				//					System.err.println( i + " " + distance );
+				if ( distance < minDist )
+				{
+					minDist = distance;
+					if ( minDist <= 12 )
+					{
+						pickedAnnotation = i;
+					}
+				}
+			}
+		}
+		if ( pickedAnnotation != -1 ) {
+			return (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(pickedAnnotation);
+		}
+		return null;
 	}
 	
 }

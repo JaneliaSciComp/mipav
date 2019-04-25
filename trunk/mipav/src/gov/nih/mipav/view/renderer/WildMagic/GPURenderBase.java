@@ -121,6 +121,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     /** Screen capture counter. */
     protected int m_iScreenCaptureCounter = 0;
     private int m_iMovieCounter = 0;
+    /** keeps track if the user is currently dragging with the mouse */
+    protected boolean m_bMouseDrag = false;
 
     /** Set to true when recording. */
     protected boolean m_bSnapshot = false;
