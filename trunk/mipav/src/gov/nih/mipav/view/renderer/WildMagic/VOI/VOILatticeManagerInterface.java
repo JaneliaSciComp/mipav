@@ -425,7 +425,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.setAnnotations( newAnnotationVOI );
 	}
 
-	public void add3DMarker( VOI textVOI, boolean automaticLabel )
+	public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect )
 	{
 		if ( doAnnotations )
 		{
@@ -440,7 +440,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 					return;
 				}
 			}
-			addAnnotation(textVOI);
+			addAnnotation(textVOI, multiSelect);
 		}
 		else
 		{
@@ -471,11 +471,11 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return mouseSelection3D;
 	}
 
-	public boolean select3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse )
+	public boolean select3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse, boolean multiSelect )
 	{
 		if ( doAnnotations )
 		{
-			return selectAnnotations(startPt, endPt, pt, rightMouse);
+			return selectAnnotations(startPt, endPt, pt, rightMouse, multiSelect);
 		}
 		return selectLattice(startPt, endPt, pt);
 	}
@@ -663,14 +663,23 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	 * Add an annotation to the latticeModel.
 	 * @param textVOI new annotation.
 	 */
-	public void addAnnotation( VOI textVOI )
+	public void addAnnotation( VOI textVOI, boolean multiSelect )
 	{       
 		if ( latticeModel == null )
 		{
 			latticeModel = new LatticeModel( m_kImageA );
 		}
 		saveVOIs("addAnnotation");
-		latticeModel.addAnnotation(textVOI);
+		latticeModel.addAnnotation(textVOI, multiSelect);
+	}
+	
+	/**
+	 * Add an annotation to the latticeModel.
+	 * @param textVOI new annotation.
+	 */
+	public void addAnnotation( VOI textVOI )
+	{       
+		addAnnotation(textVOI, false);
 	}
 	
 	public void displayAnnotation( String name, boolean display )
@@ -840,7 +849,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return false;
 	}
 
-	private boolean selectAnnotations( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse )
+	private boolean selectAnnotations( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse, boolean multiSelect )
 	{
 		if ( latticeModel != null )
 		{
@@ -849,7 +858,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				movingPickedPoint = true;
 				saveVOIs("selectAnnotations");
 			}
-			return latticeModel.selectAnnotation(startPt, endPt, pt, rightMouse);
+			return latticeModel.selectAnnotation(startPt, endPt, pt, rightMouse, multiSelect);
 		}
 		return false;
 	}
