@@ -2215,6 +2215,24 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 	}
 
+    public void setDisplayRedAsGray(boolean display) {
+		if (m_kVolumeRayCast != null) {
+			m_kVolumeRayCast.setDisplayRedAsGray(display);
+		}
+    }
+
+    public void setDisplayGreenAsGray(boolean display) {
+		if (m_kVolumeRayCast != null) {
+			m_kVolumeRayCast.setDisplayGreenAsGray(display);
+		}
+    }
+
+    public void SetDisplayBlueAsGray(boolean display) {
+		if (m_kVolumeRayCast != null) {
+			m_kVolumeRayCast.setDisplayBlueAsGray(display);
+		}
+    }
+
 	/**
 	 * Sets the sculpt drawing shape.
 	 * 
