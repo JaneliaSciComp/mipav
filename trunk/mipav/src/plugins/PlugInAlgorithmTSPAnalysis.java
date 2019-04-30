@@ -1874,7 +1874,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		}
 	}
     
-    private double[] xcorrbias(int x[], double y[]) {
+    /*private double[] xcorrbias(int x[], double y[]) {
     	int i;
     	int m;
     	int n;
@@ -1902,9 +1902,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	cout[i] = cout[i]/N;
         }
         return cout;
-    }
+    }*/
     
-    /*private double[] xcorrbias(int x[], double y[]) {
+    private double[] xcorrbias(int x[], double y[]) {
     	int i;
     	int m;
     	int n;
@@ -1937,7 +1937,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	cout[i] = (coutDD[i].divide(NDD)).doubleValue();
         }
         return cout;
-    }*/
+    }
     
     /*private double[] xcorrbiasfft(int x[], double y[]) {
 		int i;
