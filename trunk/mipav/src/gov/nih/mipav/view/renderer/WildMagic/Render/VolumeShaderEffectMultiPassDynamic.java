@@ -183,6 +183,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         + "float opacity = 1.0;" + "\n"
     	+ "color = texture(bVolumeImageA,position, 0.0);" + "\n";
 
+    private static String useRedOnly = ""
+        + "color.g = color.r;" + "\n"
+        + "color.b = color.r;" + "\n";
+    
+    private static String useGreenOnly = ""
+            + "color.r = color.g;" + "\n"
+            + "color.b = color.g;" + "\n";
+
     private static String readImageColorB = ""
         + "vec4 color = vec4(0.0);" + "\n"
         + "float opacity = 1.0;" + "\n"
@@ -632,6 +640,21 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     public void Blend(float fBlend)
     {       
     	super.Blend(fBlend);
+        checkPixelProgram();
+    }
+    
+    public void SetDisplayRedAsGray( boolean display ) {
+    	m_bDisplayRedAsGray = display;
+        checkPixelProgram();
+    }
+    
+    public void SetDisplayGreenAsGray( boolean display ) {
+    	m_bDisplayGreenAsGray = display;
+        checkPixelProgram();
+    }
+    
+    public void SetDisplayBlueAsGray( boolean display ) {
+    	m_bDisplayBlueAsGray = display;
         checkPixelProgram();
     }
 
@@ -1230,6 +1253,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		}
     		if ( m_kVolumeImageA.GetImage().isColorImage() )
     		{
+    			if ( m_bDisplayRedAsGray ) {
+    				text += useRedOnly;
+    			}
+    			else if ( m_bDisplayGreenAsGray ) {
+    				text += useGreenOnly;
+    			}
     			text += readColorMapRGBA;
     		}
     		else

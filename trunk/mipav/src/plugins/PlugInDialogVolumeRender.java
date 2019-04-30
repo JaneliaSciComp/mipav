@@ -182,6 +182,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JButton previewUntwisting;
 	private JCheckBox displayModel;
 	private JCheckBox displaySurface;
+	private JRadioButton displayChannel1;
+	private JRadioButton displayChannel2;
+	private JRadioButton displayBothChannels;
 
 	private JButton nextButton;
 	private int nextDirection = 1;
@@ -845,6 +848,27 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			if ( voiManager != null ) {
 				voiManager.setPaddingFactor(paddingFactor);
+			}
+		}
+		else if ( command.equals("displayChannel1") )
+		{
+			if ( volumeRenderer != null ) {
+				volumeRenderer.setDisplayRedAsGray(false);
+				volumeRenderer.setDisplayGreenAsGray(true);
+			}
+		}
+		else if ( command.equals("displayChannel2") )
+		{
+			if ( volumeRenderer != null ) {
+				volumeRenderer.setDisplayRedAsGray(true);
+				volumeRenderer.setDisplayGreenAsGray(false);
+			}
+		}
+		else if ( command.equals("displayBothChannels") )
+		{
+			if ( volumeRenderer != null ) {
+				volumeRenderer.setDisplayRedAsGray(false);
+				volumeRenderer.setDisplayGreenAsGray(false);
 			}
 		}
 	}
@@ -2260,6 +2284,28 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		latticeSelectionPanel.setVisible(false);
 
 
+		ButtonGroup group = new ButtonGroup();
+		displayChannel1 = gui.buildRadioButton("Channel 1", false);
+		displayChannel1.addActionListener(this);
+		displayChannel1.setActionCommand("displayChannel1");
+		displayChannel1.setVisible(true);
+		displayChannel1.setEnabled(true);
+		group.add(displayChannel1);
+		
+		displayChannel2 = gui.buildRadioButton("Channel 2", false);
+		displayChannel2.addActionListener(this);
+		displayChannel2.setActionCommand("displayChannel2");
+		displayChannel2.setVisible(true);
+		displayChannel2.setEnabled(true);
+		group.add(displayChannel2);
+		
+		displayBothChannels = gui.buildRadioButton("Display Both Channels", true);
+		displayBothChannels.addActionListener(this);
+		displayBothChannels.setActionCommand("displayBothChannels");
+		displayBothChannels.setVisible(true);
+		displayBothChannels.setEnabled(true);
+		group.add(displayBothChannels);
+
 		gpuPanel = new JPanel(new BorderLayout());
 		final int imagePanelWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.5f);
 		final int imagePanelHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.5f);
@@ -2815,6 +2861,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			lutHistogramPanel.histogramLUT(true, false, true);
 			lutPanel.removeAll();
 			lutPanel.add(lutHistogramPanel.getContainingPanel());
+			if ( volumeImage.GetImage().isColorImage() ) {
+				displayBothChannels.setSelected(true);
+				lutPanel.add(displayChannel1);
+				lutPanel.add(displayChannel2);
+				lutPanel.add(displayBothChannels);
+			}
 		}
 		else
 		{
