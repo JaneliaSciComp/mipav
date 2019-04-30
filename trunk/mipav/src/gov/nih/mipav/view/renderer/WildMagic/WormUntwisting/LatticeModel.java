@@ -568,32 +568,50 @@ public class LatticeModel {
 	 * 
 	 * @param textVOI
 	 */
-	public void addAnnotation(final VOI textVOI) {
+	public void addAnnotation(final VOI textVOI, boolean multiSelect) {
 		if (annotationVOIs == null) {
 			final int colorID = 0;
 			annotationVOIs = new VOI((short) colorID, "annotationVOIs", VOI.ANNOTATION, -1.0f);
 			imageA.registerVOI(annotationVOIs);
 		}
-		VOIWormAnnotation text = new VOIWormAnnotation( (VOIText)textVOI.getCurves().firstElement());
-		text.firstElement().X = Math.round( text.firstElement().X );		text.firstElement().Y = Math.round( text.firstElement().Y );		text.firstElement().Z = Math.round( text.firstElement().Z );
-		text.lastElement().X  = Math.round( text.lastElement().X );		    text.lastElement().Y  = Math.round( text.lastElement().Y );		    text.lastElement().Z  = Math.round( text.lastElement().Z );
-		Color c = text.getColor();
-		text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
-		text.setUseMarker(false);
-		text.retwist(previewMode);
-		annotationVOIs.getCurves().add(text);
+		VOIWormAnnotation newText = new VOIWormAnnotation( (VOIText)textVOI.getCurves().firstElement());
+		newText.firstElement().X = Math.round( newText.firstElement().X );	newText.firstElement().Y = Math.round( newText.firstElement().Y );  newText.firstElement().Z = Math.round( newText.firstElement().Z );
+		newText.lastElement().X  = Math.round( newText.lastElement().X );	newText.lastElement().Y  = Math.round( newText.lastElement().Y );   newText.lastElement().Z  = Math.round( newText.lastElement().Z );
+		Color c = newText.getColor();
+		newText.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
+		newText.setUseMarker(false);
+		newText.retwist(previewMode);
+		annotationVOIs.getCurves().add(newText);
 		annotationVOIs.setColor(c);
 
 		// checks if the annotation is the worm nose or the origin position:
-		if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
+		if (newText.getText().equalsIgnoreCase("nose") || newText.getText().equalsIgnoreCase("origin")) {
 			if (wormOrigin == null) {
-				wormOrigin = new Vector3f(text.elementAt(0));
+				wormOrigin = new Vector3f(newText.elementAt(0));
 			} else {
-				wormOrigin.copy(text.elementAt(0));
+				wormOrigin.copy(newText.elementAt(0));
 			}
 		}
 		// set the annotation colors, if necessary
 		colorAnnotations();
+		// update which annotations are selected:
+		newText.setSelected(true);
+		newText.updateSelected(imageA);
+		Vector3f pt = newText.elementAt(0);
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+		{
+			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+			if ( text != newText ) {
+				// set selection to false of not using multiSelect
+				text.setSelected( text.isSelected() && multiSelect );
+				text.updateSelected(imageA);
+			}
+			if ( text.isSelected() ) {
+				text.setSelectionOffset( Vector3f.sub(pt, text.elementAt(0)) );
+			}
+		}
+		imageA.notifyImageDisplayListeners();
+		
 		// update the annotation listeners to changes:
 		updateAnnotationListeners();
 	}
@@ -1312,7 +1330,7 @@ public class LatticeModel {
 		return extent;
 	}
 
-	public boolean selectAnnotation(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean rightMouse ) {
+	public boolean selectAnnotation(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean rightMouse, boolean multiSelect ) {
 		if ( annotationVOIs == null )
 		{
 			return false;
@@ -1329,41 +1347,59 @@ public class LatticeModel {
 		if ( nearest == null ) {
 			return false;
 		}
-		// toggle selection:
 		if ( !rightMouse ) {
+			// toggle nearest selection:
 			nearest.setSelected( !nearest.isSelected() );
 			nearest.updateSelected(imageA);
 			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
 			{
 				VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+				if ( text != nearest ) {
+					// set selection to false of not using multiSelect
+					text.setSelected( text.isSelected() && multiSelect );
+					text.updateSelected(imageA);
+				}
 				if ( text.isSelected() ) {
 					text.setSelectionOffset( Vector3f.sub(pt, text.elementAt(0)) );
 				}
 			}
+			imageA.notifyImageDisplayListeners();
+			updateAnnotationListeners();
+			return true;
 		}
-		Vector<VOIWormAnnotation> selectedAnnotations = getPickedAnnotation();
-		if ( rightMouse && nearest.isSelected() && (selectedAnnotations.size() == 1) )
-		{
-			// rename add notes, etc.:
-			System.err.println("selectAnnotation JDialogAnnotation" );
-			new JDialogAnnotation(imageA, annotationVOIs, annotationVOIs.getCurves().indexOf(nearest), true, true);
-			nearest.updateText();
-			colorAnnotations();
-		}
-		else if ( rightMouse && (selectedAnnotations.size() > 1) )
-		{
-			// open dialog to group annotations
-			String groupName = JOptionPane.showInputDialog("Create group: ");
-			for ( int i = 0; i < selectedAnnotations.size(); i++ ) {
-				VOIWormAnnotation text = selectedAnnotations.elementAt(i);
-				text.setText( groupName + JPanelAnnotations.getPostfix(text.getText() ) );
-				text.updateText();
+		if ( rightMouse ) {
+
+			Vector<VOIWormAnnotation> selectedAnnotations = getPickedAnnotation();
+			if ( selectedAnnotations == null ) {
+				return true;
 			}
-		}
-		imageA.notifyImageDisplayListeners();
-		updateAnnotationListeners();
 			
-		return nearest.isSelected();
+			if ( nearest.isSelected() && (selectedAnnotations.size() == 1) )
+			{
+				// rename add notes, etc.:
+				new JDialogAnnotation(imageA, annotationVOIs, annotationVOIs.getCurves().indexOf(nearest), true, true);
+				nearest.updateText();
+				colorAnnotations();
+			}
+			else if ( selectedAnnotations.size() > 1 )
+			{
+				// open dialog to group annotations
+				String groupName = JOptionPane.showInputDialog("Create group: ");
+				if ( groupName != null ) {
+					for ( int i = 0; i < selectedAnnotations.size(); i++ ) {
+						VOIWormAnnotation text = selectedAnnotations.elementAt(i);
+						text.setText( groupName + JPanelAnnotations.getPostfix(text.getText() ) );
+						text.updateText();
+					}
+				}
+			}
+
+			imageA.notifyImageDisplayListeners();
+			updateAnnotationListeners();
+			return true;
+		}
+			
+		return false;
 	}
 	
 

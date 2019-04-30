@@ -185,7 +185,7 @@ public class VOILatticeManager extends VOIManager
     {
     	if ( m_kVOIInterface != null )
     	{
-    		m_kVOIInterface.add3DMarker(textVOI, automaticLabel);
+    		m_kVOIInterface.add3DMarker(textVOI, automaticLabel, false);
     	}    	
     }
     
