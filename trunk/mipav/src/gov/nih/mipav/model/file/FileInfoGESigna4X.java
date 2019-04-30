@@ -1058,595 +1058,604 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogText dialog = (JDialogText) dlog;
-        displayPrimaryInfo(dialog, matrix);
+        
+        dialog.append(getAboutInfo(matrix));
 
-        dialog.append("\nSystem configuration header\n");
+        dialog.setSize(600, 500);
+    }
+    
+    public String getAboutInfo(TransMatrix matrix) {
+        String infoStr = "";
+        
+        infoStr = getPrimaryInfo(matrix);
+
+        infoStr += "\nSystem configuration header\n";
 
         if (systemID != null) {
-            dialog.append("System ID = " + systemID.trim() + "\n");
+            infoStr += "System ID = " + systemID.trim() + "\n";
         }
 
         if (systemConfigHospitalName != null) {
-            dialog.append("Hospital name = " + systemConfigHospitalName.trim() + "\n");
+            infoStr += "Hospital name = " + systemConfigHospitalName.trim() + "\n";
         }
 
-        dialog.append("\nStudy header\n");
+        infoStr += "\nStudy header\n";
 
         if (studyHeaderID != null) {
-            dialog.append("Study header ID = " + studyHeaderID.trim() + "\n");
+            infoStr += "Study header ID = " + studyHeaderID.trim() + "\n";
         }
 
         if (studyHeaderRevisionNumber != null) {
-            dialog.append("Study header revision number = " + studyHeaderRevisionNumber.trim() + "\n");
+            infoStr += "Study header revision number = " + studyHeaderRevisionNumber.trim() + "\n";
         }
 
         if (studyHeaderBlocks >= 0) {
-            dialog.append("Number of study header blocks = " + studyHeaderBlocks + "\n");
+            infoStr += "Number of study header blocks = " + studyHeaderBlocks + "\n";
         }
 
         if (MRIProcessName != null) {
-            dialog.append("MRI process name = " + MRIProcessName.trim() + "\n");
+            infoStr += "MRI process name = " + MRIProcessName.trim() + "\n";
         }
 
         if (studyTaskID != -32768) {
-            dialog.append("Unique processes task ID of creator = " + studyTaskID + "\n");
+            infoStr += "Unique processes task ID of creator = " + studyTaskID + "\n";
         }
 
         if (rawDataStudyNumber != null) {
-            dialog.append("Raw data study number = " + rawDataStudyNumber.trim() + "\n");
+            infoStr += "Raw data study number = " + rawDataStudyNumber.trim() + "\n";
         }
 
         if (studyNumber != null) {
-            dialog.append("Study number = " + studyNumber.trim() + "\n");
+            infoStr += "Study number = " + studyNumber.trim() + "\n";
         }
 
         if ((rawDataSystemID != null) && (rawDataSystemID.trim() != null) && (rawDataSystemID.trim().length() != 0)) {
-            dialog.append("Raw data ID from original study number = " + rawDataSystemID.trim() + "\n");
+            infoStr += "Raw data ID from original study number = " + rawDataSystemID.trim() + "\n";
         }
 
         if (systemGenerationID != null) {
-            dialog.append("System generation ID = " + systemGenerationID.trim() + "\n");
+            infoStr += "System generation ID = " + systemGenerationID.trim() + "\n";
         }
 
         if (studyDate != null) {
-            dialog.append("Study date = " + studyDate.trim() + "\n");
+            infoStr += "Study date = " + studyDate.trim() + "\n";
         }
 
         if (studyTime != null) {
-            dialog.append("Study time = " + studyTime.trim() + "\n");
+            infoStr += "Study time = " + studyTime.trim() + "\n";
         }
 
         if (patientName != null) {
-            dialog.append("Patient name = " + patientName.trim() + "\n");
+            infoStr += "Patient name = " + patientName.trim() + "\n";
         }
 
         if (patientID != null) {
-            dialog.append("Patient ID = " + patientID.trim() + "\n");
+            infoStr += "Patient ID = " + patientID.trim() + "\n";
         }
 
         if (patientAge != null) {
-            dialog.append("Patient age = " + patientAge.trim() + "\n");
+            infoStr += "Patient age = " + patientAge.trim() + "\n";
         }
 
         if (patientSex != null) {
-            dialog.append("Patient sex = " + patientSex.trim() + "\n");
+            infoStr += "Patient sex = " + patientSex.trim() + "\n";
         }
 
         if (patientWeight != -1) {
-            dialog.append("Patient weight = " + patientWeight + " grams\n");
+            infoStr += "Patient weight = " + patientWeight + " grams\n";
         }
 
         if (referringPhysician != null) {
-            dialog.append("Referring physician = " + referringPhysician.trim() + "\n");
+            infoStr += "Referring physician = " + referringPhysician.trim() + "\n";
         }
 
         if (diognostician != null) {
-            dialog.append("Diognostician = " + diognostician.trim() + "\n");
+            infoStr += "Diognostician = " + diognostician.trim() + "\n";
         }
 
         if (operator != null) {
-            dialog.append("Operator = " + operator.trim() + "\n");
+            infoStr += "Operator = " + operator.trim() + "\n";
         }
 
         if (studyDescription != null) {
-            dialog.append("Study description = " + studyDescription.trim() + "\n");
+            infoStr += "Study description = " + studyDescription.trim() + "\n";
         }
 
         if (history != null) {
-            dialog.append("History = " + history.trim() + "\n");
+            infoStr += "History = " + history.trim() + "\n";
         }
 
         if (hospitalName != null) {
-            dialog.append("Hospital name = " + hospitalName.trim() + "\n");
+            infoStr += "Hospital name = " + hospitalName.trim() + "\n";
         }
 
         if (patientStatus != null) {
-            dialog.append("Patient status = " + patientStatus + "\n");
+            infoStr += "Patient status = " + patientStatus + "\n";
         }
 
         if ((requestedNumber != null) && (requestedNumber.trim() != null) && (requestedNumber.trim().length() != 0)) {
-            dialog.append("Requested number for patient logging system = " + requestedNumber.trim() + "\n");
+            infoStr += "Requested number for patient logging system = " + requestedNumber.trim() + "\n";
         }
 
-        dialog.append("\nSeries header\n");
+        infoStr += "\nSeries header\n";
 
         if (seriesHeaderID != null) {
-            dialog.append("Series header ID = " + seriesHeaderID.trim() + "\n");
+            infoStr += "Series header ID = " + seriesHeaderID.trim() + "\n";
         }
 
         if (seriesHeaderRevisionNumber != null) {
-            dialog.append("Series header revision number = " + seriesHeaderRevisionNumber.trim() + "\n");
+            infoStr += "Series header revision number = " + seriesHeaderRevisionNumber.trim() + "\n";
         }
 
         if (seriesHeaderBlocks >= 0) {
-            dialog.append("Number of series header blocks = " + seriesHeaderBlocks + "\n");
+            infoStr += "Number of series header blocks = " + seriesHeaderBlocks + "\n";
         }
 
         if (seriesProcessName != null) {
-            dialog.append("MRI process name = " + seriesProcessName.trim() + "\n");
+            infoStr += "MRI process name = " + seriesProcessName.trim() + "\n";
         }
 
         if (seriesTaskID != -32768) {
-            dialog.append("Task ID of creating task within process = " + seriesTaskID + "\n");
+            infoStr += "Task ID of creating task within process = " + seriesTaskID + "\n";
         }
 
         if (originalSeriesNumber != null) {
-            dialog.append("Original series number = " + originalSeriesNumber.trim() + "\n");
+            infoStr += "Original series number = " + originalSeriesNumber.trim() + "\n";
         }
 
         if (seriesNumber != null) {
-            dialog.append("Series number = " + seriesNumber.trim() + "\n");
+            infoStr += "Series number = " + seriesNumber.trim() + "\n";
         }
 
         if (seriesRawDataSystemID != null) {
-            dialog.append("Raw data system ID from study = " + seriesRawDataSystemID.trim() + "\n");
+            infoStr += "Raw data system ID from study = " + seriesRawDataSystemID.trim() + "\n";
         }
 
         if (seriesSystemGenerationID != null) {
-            dialog.append("System generation ID = " + seriesSystemGenerationID.trim() + "\n");
+            infoStr += "System generation ID = " + seriesSystemGenerationID.trim() + "\n";
         }
 
         if (seriesDate != null) {
-            dialog.append("Series date = " + seriesDate.trim() + "\n");
+            infoStr += "Series date = " + seriesDate.trim() + "\n";
         }
 
         if (seriesTime != null) {
-            dialog.append("Series time = " + seriesTime.trim() + "\n");
+            infoStr += "Series time = " + seriesTime.trim() + "\n";
         }
 
         if (seriesDescription != null) {
-            dialog.append("Series description = " + seriesDescription.trim() + "\n");
+            infoStr += "Series description = " + seriesDescription.trim() + "\n";
         }
 
         if (seriesType != null) {
-            dialog.append("Series type = " + seriesType.trim() + "\n");
+            infoStr += "Series type = " + seriesType.trim() + "\n";
         }
 
         if (coilType != null) {
-            dialog.append("Coil type = " + coilType.trim() + "\n");
+            infoStr += "Coil type = " + coilType.trim() + "\n";
         }
 
         if ((coilName != null) && (coilName.trim() != null) && (coilName.trim().length() != 0)) {
-            dialog.append("Coil name = " + coilName.trim() + "\n");
+            infoStr += "Coil name = " + coilName.trim() + "\n";
         }
 
         if ((contrastDescription != null) && (contrastDescription.trim() != null) &&
                 (contrastDescription.trim().length() != 0)) {
-            dialog.append("Contrast description = " + contrastDescription.trim() + "\n");
+            infoStr += "Contrast description = " + contrastDescription.trim() + "\n";
         }
 
         if (planeType != null) {
-            dialog.append("Plane type = " + planeType + "\n");
+            infoStr += "Plane type = " + planeType + "\n";
         }
 
         if (planeName != null) {
-            dialog.append("Plane name = " + planeName.trim() + "\n");
+            infoStr += "Plane name = " + planeName.trim() + "\n";
         }
 
         if (imageMode != null) {
-            dialog.append("Image mode = " + imageMode.trim() + "\n");
+            infoStr += "Image mode = " + imageMode.trim() + "\n";
         }
 
         if (fieldStrength != -32768) {
-            dialog.append("Field strength = " + fieldStrength + " gauss\n");
+            infoStr += "Field strength = " + fieldStrength + " gauss\n";
         }
 
         if (pulseSequence != null) {
-            dialog.append("Pulse sequence = " + pulseSequence.trim() + "\n");
+            infoStr += "Pulse sequence = " + pulseSequence.trim() + "\n";
         }
 
         if (pulseSequenceSubtype != null) {
-            dialog.append("Pulse sequence subtype = " + pulseSequenceSubtype.trim() + "\n");
+            infoStr += "Pulse sequence subtype = " + pulseSequenceSubtype.trim() + "\n";
         }
 
         if (!Float.isNaN(fieldOfView)) {
-            dialog.append("Field of view = " + fieldOfView + " mm\n");
+            infoStr += "Field of view = " + fieldOfView + " mm\n";
         }
 
-        dialog.append("Center is relative to patient landmark\n");
+        infoStr += "Center is relative to patient landmark\n";
 
         if (!Float.isNaN(rlCenter)) {
-            dialog.append("R+L- center = " + rlCenter + "\n"); // MIPAV is R to L
+            infoStr += "R+L- center = " + rlCenter + "\n"; // MIPAV is R to L
         }
 
         if (!Float.isNaN(apCenter)) {
-            dialog.append("A+P- center = " + apCenter + "\n"); // MIPAV is A to P
+            infoStr += "A+P- center = " + apCenter + "\n"; // MIPAV is A to P
         }
 
         if (!Float.isNaN(siCenter)) {
-            dialog.append("S+I- center = " + siCenter + "\n"); // MIPAV is I to S
+            infoStr += "S+I- center = " + siCenter + "\n"; // MIPAV is I to S
         }
 
         if (orientation != null) {
-            dialog.append("Orientation = " + orientation.trim() + "\n");
+            infoStr += "Orientation = " + orientation.trim() + "\n";
         }
 
         if (position != null) {
-            dialog.append("Position = " + position.trim() + "\n");
+            infoStr += "Position = " + position.trim() + "\n";
         }
 
         if (longitudinalAnatomicalReference != null) {
-            dialog.append("Longitudinal anatomical reference = " + longitudinalAnatomicalReference.trim() + "\n");
+            infoStr += "Longitudinal anatomical reference = " + longitudinalAnatomicalReference.trim() + "\n";
         }
 
         if ((verticalAnatomicalReference != null) && (verticalAnatomicalReference.trim() != null) &&
                 (verticalAnatomicalReference.trim().length() != 0)) {
-            dialog.append("Vertical anatomical reference = " + verticalAnatomicalReference.trim() + "\n");
+            infoStr += "Vertical anatomical reference = " + verticalAnatomicalReference.trim() + "\n";
         }
 
         if (!Float.isNaN(verticalLandmark)) {
-            dialog.append("Vertical landmark = " + verticalLandmark + " relative to table top in millimeters\n");
+            infoStr += "Vertical landmark = " + verticalLandmark + " relative to table top in millimeters\n";
         }
 
         if (!Float.isNaN(horizontalLandmark)) {
-            dialog.append("Horizontal landmark = " + horizontalLandmark + " relative to table center in millimeters\n");
+            infoStr += "Horizontal landmark = " + horizontalLandmark + " relative to table center in millimeters\n";
         }
 
         if (!Float.isNaN(tableLocation)) {
-            dialog.append("Physical table location relative to home = " + tableLocation + "\n");
+            infoStr += "Physical table location relative to home = " + tableLocation + "\n";
         }
 
         if (scanMatrixX != -32768) {
-            dialog.append("Scan matrix X = " + scanMatrixX + "\n");
+            infoStr += "Scan matrix X = " + scanMatrixX + "\n";
         }
 
         if (scanMatrixY != -32768) {
-            dialog.append("Scan matrix Y = " + scanMatrixY + "\n");
+            infoStr += "Scan matrix Y = " + scanMatrixY + "\n";
         }
 
         if (imageMatrix != -32768) {
-            dialog.append("Image matrix = " + imageMatrix + "\n");
+            infoStr += "Image matrix = " + imageMatrix + "\n";
         }
 
         if (imagesAllocated != -32768) {
-            dialog.append("Number of images allocated = " + imagesAllocated + "\n");
+            infoStr += "Number of images allocated = " + imagesAllocated + "\n";
         }
 
         if (gatingType != null) {
-            dialog.append("Gating type = " + gatingType + "\n");
+            infoStr += "Gating type = " + gatingType + "\n";
         }
 
         if (pulseSequenceMode != null) {
-            dialog.append("Pulse sequence mode = " + pulseSequenceMode + "\n");
+            infoStr += "Pulse sequence mode = " + pulseSequenceMode + "\n";
         }
 
         if ((seriesPSDName != null) && (seriesPSDName.trim() != null) && (seriesPSDName.trim().length() != 0)) {
-            dialog.append("PSD name = " + seriesPSDName.trim() + "\n");
+            infoStr += "PSD name = " + seriesPSDName.trim() + "\n";
         }
 
         if (landmarkCounter >= 0) {
-            dialog.append("Number of times landmark established = " + landmarkCounter + "\n");
+            infoStr += "Number of times landmark established = " + landmarkCounter + "\n";
         }
 
         if (scanProtocolName != null) {
-            dialog.append("Protocol name for scan = " + scanProtocolName.trim() + "\n");
+            infoStr += "Protocol name for scan = " + scanProtocolName.trim() + "\n";
         }
 
         if (surfaceCoilType != null) {
-            dialog.append("Surface coil type = " + surfaceCoilType + "\n");
+            infoStr += "Surface coil type = " + surfaceCoilType + "\n";
         }
 
         if (suppressionTechnique != null) {
-            dialog.append("Suppression technique = " + suppressionTechnique + "\n");
+            infoStr += "Suppression technique = " + suppressionTechnique + "\n";
         }
 
         if (satSelections != null) {
-            dialog.append("SAT selections = " + satSelections + "\n");
+            infoStr += "SAT selections = " + satSelections + "\n";
         }
 
         if (surfaceCoilIntensityCorrection != null) {
-            dialog.append("Surface coil intensity correction = " + surfaceCoilIntensityCorrection + "\n");
+            infoStr += "Surface coil intensity correction = " + surfaceCoilIntensityCorrection + "\n";
         }
 
         if (satXLoc1 != -32768) {
-            dialog.append("R-side SAT pulse location relative to landmark = " + satXLoc1 + " millimeters\n");
+            infoStr += "R-side SAT pulse location relative to landmark = " + satXLoc1 + " millimeters\n";
         }
 
         if (satXLoc2 != -32768) {
-            dialog.append("L-side SAT pulse location relative to landmark = " + satXLoc2 + " millimeters\n");
+            infoStr += "L-side SAT pulse location relative to landmark = " + satXLoc2 + " millimeters\n";
         }
 
         if (satYLoc1 != -32768) {
-            dialog.append("A-side SAT pulse location relative to landmark = " + satYLoc1 + " millimeters\n");
+            infoStr += "A-side SAT pulse location relative to landmark = " + satYLoc1 + " millimeters\n";
         }
 
         if (satYLoc2 != -32768) {
-            dialog.append("P-side SAT pulse location relative to landmark = " + satYLoc2 + " millimeters\n");
+            infoStr += "P-side SAT pulse location relative to landmark = " + satYLoc2 + " millimeters\n";
         }
 
         if (satZLoc1 != -32768) {
-            dialog.append("S-side SAT pulse location relative to landmark = " + satZLoc1 + " millimeters\n");
+            infoStr += "S-side SAT pulse location relative to landmark = " + satZLoc1 + " millimeters\n";
         }
 
         if (satZLoc2 != -32768) {
-            dialog.append("I-side SAT pulse location relative to landmark = " + satZLoc2 + " millimeters\n");
+            infoStr += "I-side SAT pulse location relative to landmark = " + satZLoc2 + " millimeters\n";
         }
 
         if (satXThick != -32768) {
-            dialog.append("Thickness of X-axis SAT pulses = " + satXThick + " millimeters\n");
+            infoStr += "Thickness of X-axis SAT pulses = " + satXThick + " millimeters\n";
         }
 
         if (satYThick != -32768) {
-            dialog.append("Thickness of Y-axis SAT pulses = " + satYThick + " millimeters\n");
+            infoStr += "Thickness of Y-axis SAT pulses = " + satYThick + " millimeters\n";
         }
 
         if (satZThick != -32768) {
-            dialog.append("Thickness of Z-axis SAT pulses = " + satZThick + " millimeters\n");
+            infoStr += "Thickness of Z-axis SAT pulses = " + satZThick + " millimeters\n";
         }
 
         if (vasMode != null) {
-            dialog.append("TOF/PC image = " + vasMode + "\n");
+            infoStr += "TOF/PC image = " + vasMode + "\n";
         }
 
         if (phaseContrastFlowAxis != null) {
-            dialog.append("Phase contrast flow axis = " + phaseContrastFlowAxis + "\n");
+            infoStr += "Phase contrast flow axis = " + phaseContrastFlowAxis + "\n";
         }
 
         if (gatingType2 != null) {
-            dialog.append("Gating type - 2nd word = " + gatingType2 + "\n");
+            infoStr += "Gating type - 2nd word = " + gatingType2 + "\n";
         }
 
-        dialog.append("\nImage header\n");
+        infoStr += "\nImage header\n";
 
         if (imageHeaderID != null) {
-            dialog.append("Image header ID = " + imageHeaderID.trim() + "\n");
+            infoStr += "Image header ID = " + imageHeaderID.trim() + "\n";
         }
 
         if (imageHeaderRevisionNumber != null) {
-            dialog.append("Image header revision number = " + imageHeaderRevisionNumber.trim() + "\n");
+            infoStr += "Image header revision number = " + imageHeaderRevisionNumber.trim() + "\n";
         }
 
         if (imageHeaderBlocks >= 0) {
-            dialog.append("Number of image header blocks = " + imageHeaderBlocks + "\n");
+            infoStr += "Number of image header blocks = " + imageHeaderBlocks + "\n";
         }
 
         if (imageHeaderCreatorProcess != null) {
-            dialog.append("Image header creator process = " + imageHeaderCreatorProcess.trim() + "\n");
+            infoStr += "Image header creator process = " + imageHeaderCreatorProcess.trim() + "\n";
         }
 
         if (imageHeaderCreatorTask != -32768) {
-            dialog.append("Image header creator task = " + imageHeaderCreatorTask + "\n");
+            infoStr += "Image header creator task = " + imageHeaderCreatorTask + "\n";
         }
 
         if (imageCreationDate != null) {
-            dialog.append("Image creation date = " + imageCreationDate.trim() + "\n");
+            infoStr += "Image creation date = " + imageCreationDate.trim() + "\n";
         }
 
         if (imageCreationTime != null) {
-            dialog.append("Image creation time = " + imageCreationTime.trim() + "\n");
+            infoStr += "Image creation time = " + imageCreationTime.trim() + "\n";
         }
 
         if (imageNumber != null) {
-            dialog.append("Image number = " + imageNumber.trim() + "\n");
+            infoStr += "Image number = " + imageNumber.trim() + "\n";
         }
 
         if (series != null) {
-            dialog.append("Image series number = " + series.trim() + "\n");
+            infoStr += "Image series number = " + series.trim() + "\n";
         }
 
         if (imageRawDataSystemID != null) {
-            dialog.append("Raw data system ID = " + imageRawDataSystemID.trim() + "\n");
+            infoStr += "Raw data system ID = " + imageRawDataSystemID.trim() + "\n";
         }
 
         if (imageSystemGenerationID != null) {
-            dialog.append("System generation ID = " + imageSystemGenerationID.trim() + "\n");
+            infoStr += "System generation ID = " + imageSystemGenerationID.trim() + "\n";
         }
 
         if (!Float.isNaN(startX)) {
-            dialog.append("Start location X, right minimum = " + startX + "\n");
+            infoStr += "Start location X, right minimum = " + startX + "\n";
         }
 
         if (!Float.isNaN(endX)) {
-            dialog.append("End location X, right maximum = " + endX + "\n");
+            infoStr += "End location X, right maximum = " + endX + "\n";
         }
 
         if (!Float.isNaN(startY)) {
-            dialog.append("Start location Y, anterior minimum = " + startY + "\n");
+            infoStr += "Start location Y, anterior minimum = " + startY + "\n";
         }
 
         if (!Float.isNaN(endY)) {
-            dialog.append("End location Y, anterior maximum = " + endY + "\n");
+            infoStr += "End location Y, anterior maximum = " + endY + "\n";
         }
 
         if (!Float.isNaN(startZ)) {
-            dialog.append("Start location Z, superior minimum = " + startZ + "\n");
+            infoStr += "Start location Z, superior minimum = " + startZ + "\n";
         }
 
         if (!Float.isNaN(endZ)) {
-            dialog.append("End location Z, superior maximum = " + endZ + "\n");
+            infoStr += "End location Z, superior maximum = " + endZ + "\n";
         }
 
         if (!Float.isNaN(imageLocation)) {
-            dialog.append("Image location relative to landmark = " + imageLocation + "\n");
+            infoStr += "Image location relative to landmark = " + imageLocation + "\n";
         }
 
         if (!Float.isNaN(tablePosition)) {
-            dialog.append("Table position = " + tablePosition + "\n");
+            infoStr += "Table position = " + tablePosition + "\n";
         }
 
         if (!Float.isNaN(thickness)) {
-            dialog.append("Image thickness = " + thickness + "\n");
+            infoStr += "Image thickness = " + thickness + "\n";
         }
 
         if (!Float.isNaN(imageSpacing)) {
-            dialog.append("Spacing between slices = " + imageSpacing + "\n");
+            infoStr += "Spacing between slices = " + imageSpacing + "\n";
         }
 
         if (round != null) {
-            dialog.append(round + "\n");
+            infoStr += round + "\n";
         }
 
         if (!Float.isNaN(tr)) {
-            dialog.append("Repetition/recovery time tr = " + tr + " usec\n");
+            infoStr += "Repetition/recovery time tr = " + tr + " usec\n";
         }
 
         if (!Float.isNaN(ts)) {
-            dialog.append("Scan time ts = " + ts + " usec\n");
+            infoStr += "Scan time ts = " + ts + " usec\n";
         }
 
         if (!Float.isNaN(te)) {
-            dialog.append("Echo delay time te = " + te + " usec\n");
+            infoStr += "Echo delay time te = " + te + " usec\n";
         }
 
         if (!Float.isNaN(ti)) {
-            dialog.append("Inversion recovery time ti = " + ti + " usec\n");
+            infoStr += "Inversion recovery time ti = " + ti + " usec\n";
         }
 
         if (numberOfEchos != -32768) {
-            dialog.append("Total number of echos = " + numberOfEchos + "\n");
+            infoStr += "Total number of echos = " + numberOfEchos + "\n";
         }
 
         if (echoNumber != -32768) {
-            dialog.append("Echo number of current image = " + echoNumber + "\n");
+            infoStr += "Echo number of current image = " + echoNumber + "\n";
         }
 
         if (sliceQuantity > 0) {
-            dialog.append("Number of slices in this scan group = " + sliceQuantity + "\n");
+            infoStr += "Number of slices in this scan group = " + sliceQuantity + "\n";
         }
 
         if (averagesNumber != -32768) {
-            dialog.append("Number of averages = " + averagesNumber + "\n");
+            infoStr += "Number of averages = " + averagesNumber + "\n";
         }
 
         if (researchMode != null) {
-            dialog.append(researchMode + "\n");
+            infoStr += researchMode + "\n";
         }
 
         if ((psdFileName != null) && (psdFileName.trim() != null) && (psdFileName.trim().length() != 0)) {
-            dialog.append("PSD file name = " + psdFileName.trim() + "\n");
+            infoStr += "PSD file name = " + psdFileName.trim() + "\n";
         }
 
         if (graphicallyPrescribed != null) {
-            dialog.append(graphicallyPrescribed + "\n");
+            infoStr += graphicallyPrescribed + "\n";
         }
 
         if ((prescribedSeriesNumbers != null) && (prescribedSeriesNumbers.trim() != null) &&
                 (prescribedSeriesNumbers.trim().length() != 0)) {
-            dialog.append("Series numbers from which image was prescribed = " + prescribedSeriesNumbers.trim() + "\n");
+            infoStr += "Series numbers from which image was prescribed = " + prescribedSeriesNumbers.trim() + "\n";
         }
 
         if ((prescribedImageNumbers != null) && (prescribedImageNumbers.trim() != null) &&
                 (prescribedImageNumbers.trim().length() != 0)) {
-            dialog.append("Image numbers from which image was prescribed = " + prescribedImageNumbers.trim() + "\n");
+            infoStr += "Image numbers from which image was prescribed = " + prescribedImageNumbers.trim() + "\n";
         }
 
         if (imageShape != null) {
-            dialog.append("Image shape = " + imageShape + "\n");
+            infoStr += "Image shape = " + imageShape + "\n";
         }
 
-        dialog.append("X size in pixels = " + getExtents()[0] + "\n");
+        infoStr += "X size in pixels = " + getExtents()[0] + "\n";
 
-        dialog.append("Y size in pixels = " + getExtents()[1] + "\n");
+        infoStr += "Y size in pixels = " + getExtents()[1] + "\n";
 
         if (!Float.isNaN(pixelSize)) {
-            dialog.append("Pixel size = " + pixelSize + " millimeters\n");
+            infoStr += "Pixel size = " + pixelSize + " millimeters\n";
         }
 
-        dialog.append("Image not compressed\n");
+        infoStr += "Image not compressed\n";
 
-        dialog.append("Bits per pixel = " + bitsPerPixel + "\n");
+        infoStr += "Bits per pixel = " + bitsPerPixel + "\n";
 
         if (defaultWindow != -32768) {
-            dialog.append("Default window = " + defaultWindow + "\n");
+            infoStr += "Default window = " + defaultWindow + "\n";
         }
 
         if (defaultLevel != -32768) {
-            dialog.append("Default level = " + defaultLevel + "\n");
+            infoStr += "Default level = " + defaultLevel + "\n";
         }
 
         if (fileBlocks != -32768) {
-            dialog.append("Number of blocks in file including headers = " + fileBlocks + "\n");
+            infoStr += "Number of blocks in file including headers = " + fileBlocks + "\n";
         }
 
         if (!Float.isNaN(excitationsNumber)) {
-            dialog.append("Number of excitations = " + excitationsNumber + "\n");
+            infoStr += "Number of excitations = " + excitationsNumber + "\n";
         }
 
         if (!Float.isNaN(peakSAR)) {
-            dialog.append("Value of peak SAR = " + peakSAR + " watts/kg\n");
+            infoStr += "Value of peak SAR = " + peakSAR + " watts/kg\n";
         }
 
         if (!Float.isNaN(averageSAR)) {
-            dialog.append("Value of average SAR = " + averageSAR + " watts/kg\n");
+            infoStr += "Value of average SAR = " + averageSAR + " watts/kg\n";
         }
 
         if (SARMonitored != null) {
-            dialog.append(SARMonitored + "\n");
+            infoStr += SARMonitored + "\n";
         }
 
         if (contiguousSlices != null) {
-            dialog.append(contiguousSlices + "\n");
+            infoStr += contiguousSlices + "\n";
         }
 
         if (cardiacHeartRate != -32768) {
-            dialog.append("Cardiac heart rate = " + cardiacHeartRate + "\n");
+            infoStr += "Cardiac heart rate = " + cardiacHeartRate + "\n";
         }
 
         if (!Float.isNaN(totalPostTriggerDelayTime)) {
-            dialog.append("Time between QRS signal trigger (peak) and the first excitation pulse = " +
-                          totalPostTriggerDelayTime + " milliseconds\n");
+            infoStr += "Time between QRS signal trigger (peak) and the first excitation pulse = " +
+                          totalPostTriggerDelayTime + " milliseconds\n";
         }
 
         if (arrythmiaRejectionRatio != -32768) {
-            dialog.append("Percentage of average R-R interval in which excitation pulse trigger is recognized = " +
-                          arrythmiaRejectionRatio + "\n");
+            infoStr += "Percentage of average R-R interval in which excitation pulse trigger is recognized = " +
+                          arrythmiaRejectionRatio + "\n";
         }
 
         if (cardiacRepTime != null) {
-            dialog.append(cardiacRepTime + "\n");
+            infoStr += cardiacRepTime + "\n";
         }
 
         if (imagesPerCardiacCycle != -32768) {
-            dialog.append("Number of images to be acquired after initial trigger = " + imagesPerCardiacCycle + "\n");
+            infoStr += "Number of images to be acquired after initial trigger = " + imagesPerCardiacCycle + "\n";
         }
 
         if (scanARRs != Integer.MIN_VALUE) {
-            dialog.append("Number of R-R intervals during the scan = " + scanARRs + "\n");
+            infoStr += "Number of R-R intervals during the scan = " + scanARRs + "\n";
         }
 
         if (transmitAttenuatorSetting != -32768) {
-            dialog.append("Transmit attenuator setting = " + transmitAttenuatorSetting + " 1/10 DB\n");
+            infoStr += "Transmit attenuator setting = " + transmitAttenuatorSetting + " 1/10 DB\n";
         }
 
         if (receiveAttenuatorSetting != -32768) {
-            dialog.append("Receive attenuator setting = " + receiveAttenuatorSetting + " 1/10 DB\n");
+            infoStr += "Receive attenuator setting = " + receiveAttenuatorSetting + " 1/10 DB\n";
         }
 
         if (imageFieldStrength != Integer.MIN_VALUE) {
-            dialog.append("Magnetic field strength = " + imageFieldStrength + " 10 microgauss\n");
+            infoStr += "Magnetic field strength = " + imageFieldStrength + " 10 microgauss\n";
         }
 
         if (imageOffset != -32768) {
-            dialog.append("Frequency/phase offset for image = " + imageOffset + "\n");
+            infoStr += "Frequency/phase offset for image = " + imageOffset + "\n";
         }
 
         if (!Float.isNaN(interImageDelay)) {
-            dialog.append("Time between excitation pulses within the R-R interval = " + interImageDelay +
-                          " milliseconds\n");
+            infoStr += "Time between excitation pulses within the R-R interval = " + interImageDelay +
+                          " milliseconds\n";
         }
 
         if ((psdName != null) && (psdName.trim() != null) && (psdName.trim().length() != 0)) {
-            dialog.append("PSD name = " + psdName.trim() + "\n");
+            infoStr += "PSD name = " + psdName.trim() + "\n";
 
             String monthStr = null;
 
@@ -1706,7 +1715,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
             String dayStr = String.valueOf(psdDay);
             String yearStr = String.valueOf(psdYear + 1900);
-            dialog.append("PSD file creation date = " + monthStr + " " + dayStr + ", " + yearStr + "\n");
+            infoStr += "PSD file creation date = " + monthStr + " " + dayStr + ", " + yearStr + "\n";
 
             String hourStr = String.valueOf(psdHour);
             String minuteStr = String.valueOf(psdMinute);
@@ -1721,305 +1730,305 @@ public class FileInfoGESigna4X extends FileInfoBase {
                 secondsStr = "0".concat(secondsStr);
             }
 
-            dialog.append("PSD file creation time = " + hourStr + ":" + minuteStr + ":" + secondsStr + "\n");
+            infoStr += "PSD file creation time = " + hourStr + ":" + minuteStr + ":" + secondsStr + "\n";
         }
 
         if (flipAngle != -32768) {
-            dialog.append("Flip angle for GRASS = " + flipAngle + " degrees\n");
+            infoStr += "Flip angle for GRASS = " + flipAngle + " degrees\n";
         }
 
         if ((surfaceCoilsCorrectionType != null) && (surfaceCoilsCorrectionType.trim() != null) &&
                 (surfaceCoilsCorrectionType.trim().length() != 0)) {
-            dialog.append("Type of correction for surface coils = " + surfaceCoilsCorrectionType.trim() + "\n");
+            infoStr += "Type of correction for surface coils = " + surfaceCoilsCorrectionType.trim() + "\n";
         }
 
         if ((scSer != null) && (scSer.trim() != null) && (scSer.trim().length() != 0)) {
-            dialog.append("Series number of corrected/uncorrected image = " + scSer.trim() + "\n");
+            infoStr += "Series number of corrected/uncorrected image = " + scSer.trim() + "\n";
         }
 
         if ((scIma != null) && (scIma.trim() != null) && (scIma.trim().length() != 0)) {
-            dialog.append("Image number of corrected/uncorrected image = " + scIma.trim() + "\n");
+            infoStr += "Image number of corrected/uncorrected image = " + scIma.trim() + "\n";
         }
 
         if (extremityCoil != null) {
-            dialog.append(extremityCoil + "\n");
+            infoStr += extremityCoil + "\n";
         }
 
         if ((pSeries2 != null) && (pSeries2.trim() != null) && (pSeries2.trim().length() != 0)) {
-            dialog.append("Series number of second localizer = " + pSeries2.trim() + "\n");
+            infoStr += "Series number of second localizer = " + pSeries2.trim() + "\n";
         }
 
         if ((pImage2 != null) && (pImage2.trim() != null) && (pImage2.trim().length() != 0)) {
-            dialog.append("Image number of corrected/uncorrected image = " + pImage2.trim() + "\n");
+            infoStr += "Image number of corrected/uncorrected image = " + pImage2.trim() + "\n";
         }
 
         if (!Float.isNaN(rCenter)) {
-            dialog.append("R center coordinate on plane image = " + rCenter + " millimeters\n");
+            infoStr += "R center coordinate on plane image = " + rCenter + " millimeters\n";
         }
 
         if (!Float.isNaN(aCenter)) {
-            dialog.append("A center coordinate on plane image = " + aCenter + " millimeters\n");
+            infoStr += "A center coordinate on plane image = " + aCenter + " millimeters\n";
         }
 
         if (!Float.isNaN(sCenter)) {
-            dialog.append("S center coordinate on plane image = " + sCenter + " millimeters\n");
+            infoStr += "S center coordinate on plane image = " + sCenter + " millimeters\n";
         }
 
         if (!Float.isNaN(rNormal)) {
-            dialog.append("R normal coordinate = " + rNormal + "\n");
+            infoStr += "R normal coordinate = " + rNormal + "\n";
         }
 
         if (!Float.isNaN(aNormal)) {
-            dialog.append("A normal coordinate = " + aNormal + "\n");
+            infoStr += "A normal coordinate = " + aNormal + "\n";
         }
 
         if (!Float.isNaN(sNormal)) {
-            dialog.append("S normal coordinate = " + sNormal + "\n");
+            infoStr += "S normal coordinate = " + sNormal + "\n";
         }
 
         if (!Float.isNaN(imgTLHC_R)) {
-            dialog.append("Right top left hand corner = " + imgTLHC_R + " millimeters\n");
+            infoStr += "Right top left hand corner = " + imgTLHC_R + " millimeters\n";
         }
 
         if (!Float.isNaN(imgTLHC_A)) {
-            dialog.append("Anterior top left hand corner = " + imgTLHC_A + " millimeters\n");
+            infoStr += "Anterior top left hand corner = " + imgTLHC_A + " millimeters\n";
         }
 
         if (!Float.isNaN(imgTLHC_S)) {
-            dialog.append("Superior top left hand corner = " + imgTLHC_S + " millimeters\n");
+            infoStr += "Superior top left hand corner = " + imgTLHC_S + " millimeters\n";
         }
 
         if (!Float.isNaN(imgTRHC_R)) {
-            dialog.append("Right top right hand corner = " + imgTRHC_R + " millimeters\n");
+            infoStr += "Right top right hand corner = " + imgTRHC_R + " millimeters\n";
         }
 
         if (!Float.isNaN(imgTRHC_A)) {
-            dialog.append("Anterior top right hand corner = " + imgTRHC_A + " millimeters\n");
+            infoStr += "Anterior top right hand corner = " + imgTRHC_A + " millimeters\n";
         }
 
         if (!Float.isNaN(imgTRHC_S)) {
-            dialog.append("Superior top right hand corner = " + imgTRHC_S + " millimeters\n");
+            infoStr += "Superior top right hand corner = " + imgTRHC_S + " millimeters\n";
         }
 
         if (!Float.isNaN(imgBLHC_R)) {
-            dialog.append("Right bottom left hand corner = " + imgBLHC_R + " millimeters\n");
+            infoStr += "Right bottom left hand corner = " + imgBLHC_R + " millimeters\n";
         }
 
         if (!Float.isNaN(imgBLHC_A)) {
-            dialog.append("Anterior bottom left hand corner = " + imgBLHC_A + " millimeters\n");
+            infoStr += "Anterior bottom left hand corner = " + imgBLHC_A + " millimeters\n";
         }
 
         if (!Float.isNaN(imgBLHC_S)) {
-            dialog.append("Superior bottom left hand corner = " + imgBLHC_S + " millimeters\n");
+            infoStr += "Superior bottom left hand corner = " + imgBLHC_S + " millimeters\n";
         }
 
         if (imageHeaderDisclaimer != -32768) {
-            dialog.append("Image header disclaimer = " + imageHeaderDisclaimer + "\n");
+            infoStr += "Image header disclaimer = " + imageHeaderDisclaimer + "\n";
         }
 
         if (minimumDelay != -32768) {
-            dialog.append("Minimum delay after cardiac trigger = " + minimumDelay + " milliseconds\n");
+            infoStr += "Minimum delay after cardiac trigger = " + minimumDelay + " milliseconds\n";
         }
 
         if (cPhase != -32768) {
-            dialog.append("Number of cardiac phases to reconstruct = " + cPhase + "\n");
+            infoStr += "Number of cardiac phases to reconstruct = " + cPhase + "\n";
         }
 
         if (!Float.isNaN(TE2)) {
-            dialog.append("TE2 (VEMP) = " + TE2 + " milliseconds\n");
+            infoStr += "TE2 (VEMP) = " + TE2 + " milliseconds\n";
         }
 
         if (swapPF != null) {
-            dialog.append(swapPF + "\n");
+            infoStr += swapPF + "\n";
         }
 
         if (pauseInterval != -32768) {
-            dialog.append("Pause interval = " + pauseInterval + " milliseconds\n");
+            infoStr += "Pause interval = " + pauseInterval + " milliseconds\n";
         }
 
         if (!Float.isNaN(pauseTime)) {
-            dialog.append("Pause time = " + pauseTime + " milliseconds\n");
+            infoStr += "Pause time = " + pauseTime + " milliseconds\n";
         }
 
         if (!Float.isNaN(user0)) {
-            dialog.append("User 0 = " + user0 + "\n");
+            infoStr += "User 0 = " + user0 + "\n";
         }
 
         if (!Float.isNaN(user1)) {
-            dialog.append("User 1 = " + user1 + "\n");
+            infoStr += "User 1 = " + user1 + "\n";
         }
 
         if (!Float.isNaN(user2)) {
-            dialog.append("User 2 = " + user2 + "\n");
+            infoStr += "User 2 = " + user2 + "\n";
         }
 
         if (!Float.isNaN(user3)) {
-            dialog.append("User 3 = " + user3 + "\n");
+            infoStr += "User 3 = " + user3 + "\n";
         }
 
         if (!Float.isNaN(user4)) {
-            dialog.append("User 4 = " + user4 + "\n");
+            infoStr += "User 4 = " + user4 + "\n";
         }
 
         if (!Float.isNaN(user5)) {
-            dialog.append("User 5 = " + user5 + "\n");
+            infoStr += "User 5 = " + user5 + "\n";
         }
 
         if (!Float.isNaN(user6)) {
-            dialog.append("User 6 = " + user6 + "\n");
+            infoStr += "User 6 = " + user6 + "\n";
         }
 
         if (!Float.isNaN(user7)) {
-            dialog.append("User 7 = " + user7 + "\n");
+            infoStr += "User 7 = " + user7 + "\n";
         }
 
         if (!Float.isNaN(user8)) {
-            dialog.append("User 8 = " + user8 + "\n");
+            infoStr += "User 8 = " + user8 + "\n";
         }
 
         if (!Float.isNaN(user9)) {
-            dialog.append("User 9 = " + user9 + "\n");
+            infoStr += "User 9 = " + user9 + "\n";
         }
 
         if (obliquePlane != null) {
-            dialog.append("Oblique plane = " + obliquePlane + "\n");
+            infoStr += "Oblique plane = " + obliquePlane + "\n";
         }
 
         if (contrastUsed != null) {
-            dialog.append(contrastUsed + "\n");
+            infoStr += contrastUsed + "\n";
         }
 
         if (contrastAgent != null) {
-            dialog.append("Contrast agent = " + contrastAgent + "\n");
+            infoStr += "Contrast agent = " + contrastAgent + "\n";
         }
 
         if (!Float.isNaN(contrastAmount)) {
-            dialog.append("Contrast amount = " + contrastAmount + "\n");
+            infoStr += "Contrast amount = " + contrastAmount + "\n";
         }
 
         if (fileFormat != null) {
-            dialog.append("File format = " + fileFormat + "\n");
+            infoStr += "File format = " + fileFormat + "\n";
         }
 
         if (autoCenterFrequency != null) {
-            dialog.append("Auto center frequency = " + autoCenterFrequency + "\n");
+            infoStr += "Auto center frequency = " + autoCenterFrequency + "\n";
         }
 
         if (actualTransmitFrequency >= 0) {
-            dialog.append("Actual transmit frequency used on scan = " + actualTransmitFrequency + "\n");
+            infoStr += "Actual transmit frequency used on scan = " + actualTransmitFrequency + "\n";
         }
 
         if (actualReceiveFrequency >= 0) {
-            dialog.append("Actual receive frequency used on scan = " + actualReceiveFrequency + "\n");
+            infoStr += "Actual receive frequency used on scan = " + actualReceiveFrequency + "\n";
         }
 
         if (recommendedTransmitFrequency >= 0) {
-            dialog.append("Recommended automated transmit frequency = " + recommendedTransmitFrequency + "\n");
+            infoStr += "Recommended automated transmit frequency = " + recommendedTransmitFrequency + "\n";
         }
 
         if (recommendedReceiveFrequency >= 0) {
-            dialog.append("Recommended automated receive frequency = " + recommendedReceiveFrequency + "\n");
+            infoStr += "Recommended automated receive frequency = " + recommendedReceiveFrequency + "\n";
         }
 
         if (recommendedTransmitAttenuation >= 0) {
-            dialog.append("Recommended automated transmit attenuation = " + recommendedTransmitAttenuation +
-                          " 1/10 db\n");
+            infoStr += "Recommended automated transmit attenuation = " + recommendedTransmitAttenuation +
+                          " 1/10 db\n";
         }
 
         if (recommendedReceiveAttenuation >= 0) {
-            dialog.append("Recommended automated receive attenuation = " + recommendedReceiveAttenuation +
-                          " 1/10 db\n");
+            infoStr += "Recommended automated receive attenuation = " + recommendedReceiveAttenuation +
+                          " 1/10 db\n";
         }
 
         if (histogramPresent != null) {
-            dialog.append(histogramPresent + "\n");
+            infoStr += histogramPresent + "\n";
         }
 
         if (pfSwapped != null) {
-            dialog.append(pfSwapped + "\n");
+            infoStr += pfSwapped + "\n";
         }
 
         if (R1 != -32768) {
-            dialog.append("R1 = " + R1 + "\n");
+            infoStr += "R1 = " + R1 + "\n";
         }
 
         if (R2 != -32768) {
-            dialog.append("R2 = " + R2 + "\n");
+            infoStr += "R2 = " + R2 + "\n";
         }
 
         if (variableBandwidth != null) {
-            dialog.append("Variable bandwidth = " + variableBandwidth + "\n");
+            infoStr += "Variable bandwidth = " + variableBandwidth + "\n";
         }
 
         if (prescanReceiveAttenuation1 > 0) {
-            dialog.append("Prescan Receive Attenuation 1 = " + prescanReceiveAttenuation1 + "\n");
+            infoStr += "Prescan Receive Attenuation 1 = " + prescanReceiveAttenuation1 + "\n";
         }
 
         if (prescanReceiveAttenuation2 > 0) {
-            dialog.append("Prescan Receive Attenuation 2 = " + prescanReceiveAttenuation2 + "\n");
+            infoStr += "Prescan Receive Attenuation 2 = " + prescanReceiveAttenuation2 + "\n";
         }
 
         if (autoManualPrescan != null) {
-            dialog.append(autoManualPrescan + "\n");
+            infoStr += autoManualPrescan + "\n";
         }
 
         if (changedValues != null) {
-            dialog.append("Changed values = " + changedValues + "\n");
+            infoStr += "Changed values = " + changedValues + "\n";
         }
 
         if (imageType != null) {
-            dialog.append("Type = " + imageType + "\n");
+            infoStr += "Type = " + imageType + "\n";
         }
 
         if (collapseImage != null) {
-            dialog.append("Collapse Image = " + collapseImage + "\n");
+            infoStr += "Collapse Image = " + collapseImage + "\n";
         }
 
         if (sliceThicknessDisclaimer != null) {
-            dialog.append("Slice thickness disclaimer = " + sliceThicknessDisclaimer + "\n");
+            infoStr += "Slice thickness disclaimer = " + sliceThicknessDisclaimer + "\n";
         }
 
         if (PCVelocityEncoding != -32768) {
-            dialog.append("PC velocity encoding = " + PCVelocityEncoding + " mm/sec\n");
+            infoStr += "PC velocity encoding = " + PCVelocityEncoding + " mm/sec\n";
         }
 
         if (!Float.isNaN(projectionAngle)) {
-            dialog.append("Tardis projection angle = " + projectionAngle + " degrees\n");
+            infoStr += "Tardis projection angle = " + projectionAngle + " degrees\n";
         }
 
         if (concatenatedSATSelection != null) {
-            dialog.append("Concatenated SAT selection = " + concatenatedSATSelection + "\n");
+            infoStr += "Concatenated SAT selection = " + concatenatedSATSelection + "\n";
         }
 
         if (fractionalEffectiveEcho != null) {
-            dialog.append(fractionalEffectiveEcho + "\n");
+            infoStr += fractionalEffectiveEcho + "\n";
         }
 
         if (echoTrainLength >= 0) {
-            dialog.append("Echo train length = " + echoTrainLength + "\n");
+            infoStr += "Echo train length = " + echoTrainLength + "\n";
         }
 
         if (sliceMultiplier != -32768) {
-            dialog.append("Slice multiplier to obtain phases for FAST = " + sliceMultiplier + "\n");
+            infoStr += "Slice multiplier to obtain phases for FAST = " + sliceMultiplier + "\n";
         }
 
         if (cardiacPhaseNumber != -32768) {
-            dialog.append("Cardiac phase number = " + cardiacPhaseNumber + "\n");
+            infoStr += "Cardiac phase number = " + cardiacPhaseNumber + "\n";
         }
 
         if (scanAcquisitionNumber >= 0) {
-            dialog.append("Number of acquisitions in scan = " + scanAcquisitionNumber + "\n");
+            infoStr += "Number of acquisitions in scan = " + scanAcquisitionNumber + "\n";
         }
 
         if (vascularImagingFlags != null) {
-            dialog.append("Vascular imaging flags = " + vascularImagingFlags + "\n");
+            infoStr += "Vascular imaging flags = " + vascularImagingFlags + "\n";
         }
 
         if (!Float.isNaN(vencScalingFactor)) {
-            dialog.append("Venc scaling factor = " + vencScalingFactor + "\n");
+            infoStr += "Venc scaling factor = " + vencScalingFactor + "\n";
         }
 
-        dialog.setSize(600, 500);
+        return infoStr;
     }
 
     /**
