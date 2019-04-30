@@ -947,6 +947,15 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param matrix Transformation matrix
      */
     public abstract void displayAboutInfo(JDialogBase dialog, TransMatrix matrix);
+    
+    /**
+     * Abstract method which is used by the extending class to return information about the file header.
+     * 
+     * @param matrix Transformation matrix
+     * 
+     * @return A string containing information from the image header.
+     */
+    public String getAboutInfo(TransMatrix matrix) { return ""; }
 
     /**
      * Helper method to copy important file info type to another file info type.
@@ -1374,275 +1383,296 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             dialog.append("Dimension " + i + ":          " + extents[i] + "\n");
         }
         
+        dialog.append(getPrimaryInfo(matrix));
+    }
+    
+    /**
+     * Method called by many extending classes to return basic information in the dialog common to all images.
+     * 
+     * @param matrix Transformation matrix
+     * 
+     * @return The basic image header infomation.
+     */
+    public String getPrimaryInfo(final TransMatrix matrix) {
+        String infoStr = "";
+        
+//        dialog.setMessage("\n                     Image information\n\n");
+
+        for (int i = 0; i < extents.length; i++) {
+            infoStr += "Dimension " + i + ":          " + extents[i] + "\n";
+        }
+        
         
 
-        dialog.append("Type:                 " + ModelStorageBase.getBufferTypeStr(dataType) + "\n");
+        infoStr += "Type:                 " + ModelStorageBase.getBufferTypeStr(dataType) + "\n";
 
         if ( !ModelImage.isColorImage(getDataType())) {
-            dialog.append("Min:                  " + min + "\n");
-            dialog.append("Max:                  " + max + "\n");
+            infoStr += "Min:                  " + min + "\n";
+            infoStr += "Max:                  " + max + "\n";
         } else {
-            dialog.append("Min red:              " + minR + "\n");
-            dialog.append("Max red:              " + maxR + "\n");
-            dialog.append("Min green:            " + minG + "\n");
-            dialog.append("Max green:            " + maxG + "\n");
-            dialog.append("Min blue:             " + minB + "\n");
-            dialog.append("Max blue:             " + maxB + "\n");
+            infoStr += "Min red:              " + minR + "\n";
+            infoStr += "Max red:              " + maxR + "\n";
+            infoStr += "Min green:            " + minG + "\n";
+            infoStr += "Max green:            " + maxG + "\n";
+            infoStr += "Min blue:             " + minB + "\n";
+            infoStr += "Max blue:             " + maxB + "\n";
         }
 
-        dialog.append("Modality:             " + FileInfoBase.modalityStr[modality] + "\n");
+        infoStr += "Modality:             " + FileInfoBase.modalityStr[modality] + "\n";
 
 
-        dialog.append("Slice origin upper left corner of image - right hand rule\n");
+        infoStr += "Slice origin upper left corner of image - right hand rule\n";
        
         for (int i = 0; i < origin.length; i++) {
 
             switch (i) {
 
                 case 0:
-                    dialog.append(" Origin X (left to right) :         " + origin[0] + "\n");
+                    infoStr += " Origin X (left to right) :         " + origin[0] + "\n";
                     break;
 
                 case 1:
-                    dialog.append(" Origin Y (top to bottom) :         " + origin[1] + "\n");
+                    infoStr += " Origin Y (top to bottom) :         " + origin[1] + "\n";
                     break;
 
                 case 2:
-                    dialog.append(" Origin Z:(into the screen):        " + origin[2] + "\n");
+                    infoStr += " Origin Z:(into the screen):        " + origin[2] + "\n";
                     break;
 
                 case 3:
-                    dialog.append(" Origin T:(time):                   " + origin[3] + "\n");
+                    infoStr += " Origin T:(time):                   " + origin[3] + "\n";
                     break;
             }
         }
 
-        dialog.append("Orientation:          ");
+        infoStr += "Orientation:          ";
 
         switch (imageOrientation) {
 
             case AXIAL:
-                dialog.append("Axial \n");
+                infoStr += "Axial \n";
                 break;
 
             case CORONAL:
-                dialog.append("Coronal \n");
+                infoStr += "Coronal \n";
                 break;
 
             case SAGITTAL:
-                dialog.append("Sagittal \n");
+                infoStr += "Sagittal \n";
                 break;
 
             default:
-                dialog.append("Unknown \n");
+                infoStr += "Unknown \n";
         }
 
-        dialog.append("X axis orientation:   ");
+        infoStr += "X axis orientation:   ";
 
         switch (axisOrientation[0]) {
 
             case ORI_R2L_TYPE:
-                dialog.append("right to left \n");
+                infoStr += "right to left \n";
                 break;
 
             case ORI_L2R_TYPE:
-                dialog.append("left to right \n");
+                infoStr += "left to right \n";
                 break;
 
             case ORI_A2P_TYPE:
-                dialog.append("anterior to posterior \n");
+                infoStr += "anterior to posterior \n";
                 break;
 
             case ORI_P2A_TYPE:
-                dialog.append("posterior to anterior \n");
+                infoStr += "posterior to anterior \n";
                 break;
 
             case ORI_I2S_TYPE:
-                dialog.append("inferior to superior \n");
+                infoStr += "inferior to superior \n";
                 break;
 
             case ORI_S2I_TYPE:
-                dialog.append("superior to inferior \n");
+                infoStr += "superior to inferior \n";
                 break;
 
             default:
-                dialog.append("unknown to unknown \n");
+                infoStr += "unknown to unknown \n";
         }
 
-        dialog.append("Y axis orientation:   ");
+        infoStr += "Y axis orientation:   ";
 
         switch (axisOrientation[1]) {
 
             case ORI_R2L_TYPE:
-                dialog.append("right to left \n");
+                infoStr += "right to left \n";
                 break;
 
             case ORI_L2R_TYPE:
-                dialog.append("left to right \n");
+                infoStr += "left to right \n";
                 break;
 
             case ORI_A2P_TYPE:
-                dialog.append("anterior to posterior \n");
+                infoStr += "anterior to posterior \n";
                 break;
 
             case ORI_P2A_TYPE:
-                dialog.append("posterior to anterior \n");
+                infoStr += "posterior to anterior \n";
                 break;
 
             case ORI_I2S_TYPE:
-                dialog.append("inferior to superior \n");
+                infoStr += "inferior to superior \n";
                 break;
 
             case ORI_S2I_TYPE:
-                dialog.append("superior to inferior \n");
+                infoStr += "superior to inferior \n";
                 break;
 
             default:
-                dialog.append("unknown to unknown \n");
+                infoStr += "unknown to unknown \n";
         }
 
-        dialog.append("Z axis orientation:   ");
+        infoStr += "Z axis orientation:   ";
 
         switch (axisOrientation[2]) {
 
             case ORI_R2L_TYPE:
-                dialog.append("right to left \n");
+                infoStr += "right to left \n";
                 break;
 
             case ORI_L2R_TYPE:
-                dialog.append("left to right \n");
+                infoStr += "left to right \n";
                 break;
 
             case ORI_A2P_TYPE:
-                dialog.append("anterior to posterior \n");
+                infoStr += "anterior to posterior \n";
                 break;
 
             case ORI_P2A_TYPE:
-                dialog.append("posterior to anterior \n");
+                infoStr += "posterior to anterior \n";
                 break;
 
             case ORI_I2S_TYPE:
-                dialog.append("inferior to superior \n");
+                infoStr += "inferior to superior \n";
                 break;
 
             case ORI_S2I_TYPE:
-                dialog.append("superior to inferior \n");
+                infoStr += "superior to inferior \n";
                 break;
 
             default:
-                dialog.append("unknown to unknown \n");
+                infoStr += "unknown to unknown \n";
         }
 
         for (int i = 0; i < extents.length; i++) {
 
             if (dimResolutions[i] > 0.0) {
-                dialog.append("Pixel resolution " + i + ":  " + dimResolutions[i] + "  ");
+                infoStr += "Pixel resolution " + i + ":  " + dimResolutions[i] + "  ";
 
                 switch (unitsOfMeasure[i]) {
 
                     case INCHES:
-                        dialog.append("Inches \n");
+                        infoStr += "Inches \n";
                         break;
                         
                     case MILS:
-                        dialog.append("Mils \n");
+                        infoStr += "Mils \n";
                         break;
 
                     case MILLIMETERS:
-                        dialog.append("Millimeters \n");
+                        infoStr += "Millimeters \n";
                         break;
 
                     case CENTIMETERS:
-                        dialog.append("Centimeters \n");
+                        infoStr += "Centimeters \n";
                         break;
 
                     case METERS:
-                        dialog.append("Meters \n");
+                        infoStr += "Meters \n";
                         break;
 
                     case KILOMETERS:
-                        dialog.append("Kilometers \n");
+                        infoStr += "Kilometers \n";
                         break;
 
                     case MILES:
-                        dialog.append("Miles \n");
+                        infoStr += "Miles \n";
                         break;
 
                     case ANGSTROMS:
-                        dialog.append("Angstroms \n");
+                        infoStr += "Angstroms \n";
                         break;
 
                     case NANOMETERS:
-                        dialog.append("Nanometers \n");
+                        infoStr += "Nanometers \n";
                         break;
 
                     case MICROMETERS:
-                        dialog.append("Micrometers \n");
+                        infoStr += "Micrometers \n";
                         break;
 
                     case NANOSEC:
-                        dialog.append("Nanoseconds \n");
+                        infoStr += "Nanoseconds \n";
                         break;
 
                     case MICROSEC:
-                        dialog.append("Microseconds \n");
+                        infoStr += "Microseconds \n";
                         break;
 
                     case MILLISEC:
-                        dialog.append("Milliseconds \n");
+                        infoStr += "Milliseconds \n";
                         break;
 
                     case SECONDS:
-                        dialog.append("Seconds \n");
+                        infoStr += "Seconds \n";
                         break;
 
                     case MINUTES:
-                        dialog.append("Minutes \n");
+                        infoStr += "Minutes \n";
                         break;
 
                     case HOURS:
-                        dialog.append("Hours \n");
+                        infoStr += "Hours \n";
                         break;
 
                     case HZ:
-                        dialog.append("Hertz \n");
+                        infoStr += "Hertz \n";
                         break;
 
                     case PPM:
-                        dialog.append("Parts per million \n");
+                        infoStr += "Parts per million \n";
                         break;
 
                     case RADS:
-                        dialog.append("Radians per second \n");
+                        infoStr += "Radians per second \n";
                         break;
 
                     case DEGREES:
-                        dialog.append("Degrees \n");
+                        infoStr += "Degrees \n";
                         break;
 
                     default:
-                        dialog.append("Unknown \n");
+                        infoStr += "Unknown \n";
                         break;
                 } // end of switch(measure[i])
             } // end of if (resolutions[i] > 0.0)
         } // for (int i=0; i < 5; i++)
 
         if (extents.length >= 3) {
-            dialog.append("Slice thickness:     " + sliceThickness + "\n");
+            infoStr += "Slice thickness:     " + sliceThickness + "\n";
         }
 
         if (endianess == FileBase.LITTLE_ENDIAN) {
-            dialog.append("Endianess: Little Endian \n");
+            infoStr += "Endianess: Little Endian \n";
         } else {
-            dialog.append("Endianess: Big Endian \n");
+            infoStr += "Endianess: Big Endian \n";
         }
 
         if (matrix != null) {
 
             // when using displayAboutInfo(dialog) this doesn't appear
             // calling prg might use an editing panel to adjust this matrix
-            dialog.append("Matrix: \n" + matrix.matrixToString(10, 4) + "\n");
+            infoStr += "Matrix: \n" + matrix.matrixToString(10, 4) + "\n";
         }
+        
+        return infoStr;
     }
 
     /**
