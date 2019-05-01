@@ -1999,6 +1999,9 @@ public class FileIO {
         // list of the gradient/bval string keys seen, ordered as they are seen in the original volume
         ArrayList<String> gradientKeyList = new ArrayList<String>();
         
+        // default to the full number of slices (3D sorting)
+        int dtiVolSize = instanceNumsLength;
+        
         // Sorts DWI images based on gradient values corresponding to each volume in the series
         if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {
             if ((String) tagTable.getValue(philipsGradTag) != null) {
@@ -2013,11 +2016,50 @@ public class FileIO {
                     }
                     gradientIndexMap.get(savedFileKeyI).add(i);
                 }
+                
+                ArrayList<Integer> volSizes = new ArrayList<Integer>();
+                for (int i = 0; i < gradientKeyList.size(); i++) {
+                    int size = gradientIndexMap.get(gradientKeyList.get(i)).size();
+                    if (!volSizes.contains(size)) {
+                        volSizes.add(size);
+                    }
+                }
 
                 // Checks for incomplete DWI series
-                if (gradientKeyList.size() == 0 || (gradientKeyList.size() > 0 && gradientIndexMap.get(gradientKeyList.get(0)).size() == 1) || (gradientKeyList.size() >= 2 && gradientIndexMap.get(gradientKeyList.get(0)).size() != gradientIndexMap.get(gradientKeyList.get(1)).size())) {
+                if (gradientKeyList.size() == 0) {
                     isDTISort = false; // Not complete DWI series
                 } else {
+                    // if any of the volumes only have 1 slice, do 3D sorting
+                    for (int size : volSizes) {
+                        if (size == 1) {
+                            isDTISort = false;
+                            return dtiVolSize;
+                        }
+                    }
+                    
+                    if (volSizes.size() > 1) {
+                        if (volSizes.size() == 2) {
+                            int largerSize = volSizes.get(0) > volSizes.get(1) ? volSizes.get(0) : volSizes.get(1);
+                            int smallerSize = volSizes.get(0) <= volSizes.get(1) ? volSizes.get(0) : volSizes.get(1);
+                            
+                            // if the larger size is divisible by the smaller one, break it up into the smaller size
+                            if (largerSize % smallerSize != 0) {
+                                isDTISort = false;
+                                return dtiVolSize;
+                            } else {
+                                dtiVolSize = smallerSize;
+                            }
+                        } else {
+                            // too many volume sizes, revert to 3D
+                            isDTISort = false;
+                            return dtiVolSize;
+                        }
+                    } else {
+                        dtiVolSize = gradientIndexMap.get(gradientKeyList.get(0)).size();
+                    }
+                    
+                    // sort each of the volumes by instance number and populate the zInst array
+                    
                     int rintCounter = 0;
                     for (int i = 0; i < gradientKeyList.size(); i++) {
                         String gradientKey = gradientKeyList.get(i);
@@ -2043,6 +2085,8 @@ public class FileIO {
                             rintCounter++;
                         }
                     }
+                    
+                    dtiVolSize = gradientIndexMap.get(gradientKeyList.get(0)).size();
                 }
             }
         }// if PHILIPS Note: New sort method may need to be
@@ -2063,11 +2107,48 @@ public class FileIO {
                     gradientIndexMap.get(savedFileKeyI).add(i);
                 }
                 
-                if (gradientKeyList.size() == 0 || (gradientKeyList.size() > 0 && gradientIndexMap.get(gradientKeyList.get(0)).size() == 1)) {
-                    isDTISort = false; // Not complete DWI series
-                } else if (gradientKeyList.size() >= 2 && gradientIndexMap.get(gradientKeyList.get(0)).size() != gradientIndexMap.get(gradientKeyList.get(1)).size()) {
+                ArrayList<Integer> volSizes = new ArrayList<Integer>();
+                for (int i = 0; i < gradientKeyList.size(); i++) {
+                    int size = gradientIndexMap.get(gradientKeyList.get(i)).size();
+                    if (!volSizes.contains(size)) {
+                        volSizes.add(size);
+                    }
+                }
+                
+                if (gradientKeyList.size() == 0) {
                     isDTISort = false; // Not complete DWI series
                 } else {
+                    // if any of the volumes only have 1 slice, do 3D sorting
+                    for (int size : volSizes) {
+                        if (size == 1) {
+                            isDTISort = false;
+                            return dtiVolSize;
+                        }
+                    }
+                    
+                    if (volSizes.size() > 1) {
+                        if (volSizes.size() == 2) {
+                            int largerSize = volSizes.get(0) > volSizes.get(1) ? volSizes.get(0) : volSizes.get(1);
+                            int smallerSize = volSizes.get(0) <= volSizes.get(1) ? volSizes.get(0) : volSizes.get(1);
+                            
+                            // if the larger size is divisible by the smaller one, break it up into the smaller size
+                            if (largerSize % smallerSize != 0) {
+                                isDTISort = false;
+                                return dtiVolSize;
+                            } else {
+                                dtiVolSize = smallerSize;
+                            }
+                        } else {
+                            // too many volume sizes, revert to 3D
+                            isDTISort = false;
+                            return dtiVolSize;
+                        }
+                    } else {
+                        dtiVolSize = gradientIndexMap.get(gradientKeyList.get(0)).size();
+                    }
+                    
+                    // sort each of the volumes by instance number and populate the zInst array
+
                     isDTISort = true;
                     
                     int rintCounter = 0;
@@ -2152,17 +2233,18 @@ public class FileIO {
 //                }
 
             }
-        } else { // For DTI dicom data not aquired from GE or Philips scanners
+        } else { // For DTI dicom data not acquired from GE or Philips scanners
             isDTISort = false;
         }
 
+        // transfer zInst array over to indices array
         if (isDTISort && gradientKeyList.size() != 0) {
             for (int i = 0; i < indices.length; i++) {
                 indices[i] = zInst[i];
             }
         }
 
-        return gradientIndexMap.get(gradientKeyList.get(0)).size();
+        return dtiVolSize;
 
     }
 
