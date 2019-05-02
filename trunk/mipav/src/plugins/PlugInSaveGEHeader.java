@@ -7,14 +7,14 @@ import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Frame;
 
-public class PlugInSaveGE4XHeader  implements PlugInAlgorithm {
+public class PlugInSaveGEHeader  implements PlugInAlgorithm {
 
     //public static final String[] CATEGORY = {"Test", "A", "B"};
 
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogSaveGE4XHeader(parentFrame, image);
+            new PlugInDialogSaveGEHeader(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugInSaveGE4XHeader only runs on an image frame.");
         }

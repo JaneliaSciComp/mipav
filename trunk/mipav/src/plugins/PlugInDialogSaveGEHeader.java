@@ -10,13 +10,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 
-public class PlugInDialogSaveGE4XHeader extends JDialogScriptableBase {
+public class PlugInDialogSaveGEHeader extends JDialogScriptableBase {
     private ModelImage image;
     
     /**
      * Constructor for the dynamic instantiation and execution of the SaveHeaderText script action.
      */
-    public PlugInDialogSaveGE4XHeader() {
+    public PlugInDialogSaveGEHeader() {
         super();
     }
 
@@ -25,7 +25,7 @@ public class PlugInDialogSaveGE4XHeader extends JDialogScriptableBase {
      * 
      * @param img The image to save the header of.
      */
-    public PlugInDialogSaveGE4XHeader(Frame theParentFrame, final ModelImage img) {
+    public PlugInDialogSaveGEHeader(Frame theParentFrame, final ModelImage img) {
         super(theParentFrame, false);
         
         image = img;
@@ -53,6 +53,8 @@ public class PlugInDialogSaveGE4XHeader extends JDialogScriptableBase {
         try {
             writer = new FileWriter(outFile);
             writer.write(infoStr);
+            writer.flush();
+            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
