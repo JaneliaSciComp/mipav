@@ -1733,577 +1733,586 @@ public class FileInfoGESigna5X extends FileInfoBase {
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogText dialog = (JDialogText) dlog;
-        displayPrimaryInfo(dialog, matrix);
 
-        dialog.append("\n\n                Other information\n\n");
+        dialog.append(getAboutInfo(matrix));
 
-        dialog.append("Image width  = " + width + "\n");
-        dialog.append("Image height = " + height + "\n");
-        dialog.append("Image depth  = " + depth + "\n");
-        dialog.append("Image compression = " + compression + "\n");
-        dialog.append("Image background value      = " + valueBg + "\n");
-        dialog.append("Image value to add to image = " + addValue + "\n");
+        dialog.setSize(600, 500);
+    }
+    
+    public String getAboutInfo(TransMatrix matrix) {
+        String infoStr = "";
+        
+        infoStr += getPrimaryInfo(matrix);
+
+        infoStr += "\n\n                Other information\n\n";
+
+        infoStr += "Image width  = " + width + "\n";
+        infoStr += "Image height = " + height + "\n";
+        infoStr += "Image depth  = " + depth + "\n";
+        infoStr += "Image compression = " + compression + "\n";
+        infoStr += "Image background value      = " + valueBg + "\n";
+        infoStr += "Image value to add to image = " + addValue + "\n";
 
         /***********************************************************************************************/
-        dialog.append("\nExam informaton \n");
+        infoStr += "\nExam informaton \n";
 
         if (suiteID != null) {
-            dialog.append("Suite ID for this exam = " + suiteID.trim() + "\n");
+            infoStr += "Suite ID for this exam = " + suiteID.trim() + "\n";
         }
 
-        dialog.append("Examination number = " + examNum + "\n");
+        infoStr += "Examination number = " + examNum + "\n";
 
         if (hospName != null) {
-            dialog.append("Hospital name = " + hospName.trim() + "\n");
+            infoStr += "Hospital name = " + hospName.trim() + "\n";
         }
 
-        dialog.append("Detector type = " + detect + "\n");
-        dialog.append("Number of cells in detector = " + numCells + "\n");
-        dialog.append("Cell number at theta = " + zeroCell + "\n");
-        dialog.append("Cell spacing = " + cellSpace + "\n");
-        dialog.append("Distance from source to detector = " + srcToDet + "\n");
-        dialog.append("Distance from source to iso = " + srcToIso + "\n");
-        dialog.append("Tube type = " + tubeType + "\n");
-        dialog.append("DAS type = " + dasType + "\n");
-        dialog.append("Number of Decon kernels = " + numDcnK + "\n");
-        dialog.append("Number of elements in Decon kernel = " + dcnLen + "\n");
-        dialog.append("Decon kernel density = " + dcnDensity + "\n");
-        dialog.append("Decon kernel stepsize = " + dcnStepSize + "\n");
-        dialog.append("Decon kernel Shift Count = " + dcnShiftCnt + "\n");
-        dialog.append("Magnet strength (in gauss) = " + magStrength + "\n");
+        infoStr += "Detector type = " + detect + "\n";
+        infoStr += "Number of cells in detector = " + numCells + "\n";
+        infoStr += "Cell number at theta = " + zeroCell + "\n";
+        infoStr += "Cell spacing = " + cellSpace + "\n";
+        infoStr += "Distance from source to detector = " + srcToDet + "\n";
+        infoStr += "Distance from source to iso = " + srcToIso + "\n";
+        infoStr += "Tube type = " + tubeType + "\n";
+        infoStr += "DAS type = " + dasType + "\n";
+        infoStr += "Number of Decon kernels = " + numDcnK + "\n";
+        infoStr += "Number of elements in Decon kernel = " + dcnLen + "\n";
+        infoStr += "Decon kernel density = " + dcnDensity + "\n";
+        infoStr += "Decon kernel stepsize = " + dcnStepSize + "\n";
+        infoStr += "Decon kernel Shift Count = " + dcnShiftCnt + "\n";
+        infoStr += "Magnet strength (in gauss) = " + magStrength + "\n";
 
         if (patientID != null) {
-            dialog.append("Patient ID for this exam = " + patientID.trim() + "\n");
+            infoStr += "Patient ID for this exam = " + patientID.trim() + "\n";
         }
 
         if (patientName != null) {
-            dialog.append("Patient name = " + patientName.trim() + "\n");
+            infoStr += "Patient name = " + patientName.trim() + "\n";
         }
 
-        dialog.append("Patient age = " + patientAge + "\n");
-        dialog.append("Patient age notation = " + patian + "\n");
-        dialog.append("Patient sex = " + patientSex + "\n");
-        dialog.append("Patient weight = " + patWeight + "\n");
-        dialog.append("Trauma flag = " + trauma + "\n");
+        infoStr += "Patient age = " + patientAge + "\n";
+        infoStr += "Patient age notation = " + patian + "\n";
+        infoStr += "Patient sex = " + patientSex + "\n";
+        infoStr += "Patient weight = " + patWeight + "\n";
+        infoStr += "Trauma flag = " + trauma + "\n";
 
         if (hist != null) {
-            dialog.append("Patient history = " + hist.trim() + "\n");
+            infoStr += "Patient history = " + hist.trim() + "\n";
         }
 
         if (reqnum != null) {
-            dialog.append("Requisition number = " + reqnum.trim() + "\n");
+            infoStr += "Requisition number = " + reqnum.trim() + "\n";
         }
 
         secs2date(exDateTime);
-        dialog.append("Exam date/time stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
-                      ":" + seconds + "\n");
+        infoStr += "Exam date/time stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                      ":" + seconds + "\n";
 
         if (refPhy != null) {
-            dialog.append("Referring physician = " + refPhy.trim() + "\n");
+            infoStr += "Referring physician = " + refPhy.trim() + "\n";
         }
 
         if (diagRad != null) {
-            dialog.append("Diagnostician/Radiologist = " + diagRad.trim() + "\n");
+            infoStr += "Diagnostician/Radiologist = " + diagRad.trim() + "\n";
         }
 
         if (op != null) {
-            dialog.append("Operator = " + op.trim() + "\n");
+            infoStr += "Operator = " + op.trim() + "\n";
         }
 
         if (exDesc != null) {
-            dialog.append("Exam Description = " + exDesc.trim() + "\n");
+            infoStr += "Exam Description = " + exDesc.trim() + "\n";
         }
 
         if (examType != null) {
-            dialog.append("Examination type = " + examType.trim() + "\n");
+            infoStr += "Examination type = " + examType.trim() + "\n";
         }
 
-        dialog.append("Exam format = " + exFormat + "\n");
-        dialog.append("Start time (secs) of first axial in exam = " + firstAxTime + "\n");
+        infoStr += "Exam format = " + exFormat + "\n";
+        infoStr += "Start time (secs) of first axial in exam = " + firstAxTime + "\n";
 
         if (exSysID != null) {
-            dialog.append("Creator Suite and Host = " + exSysID.trim() + "\n");
+            infoStr += "Creator Suite and Host = " + exSysID.trim() + "\n";
         }
 
         secs2date(exLastMod);
-        dialog.append("Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
-                      ":" + seconds + "\n");
-        dialog.append("Non-zero indicates Protocol Exam = " + protocolFlag + "\n");
+        infoStr += "Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                      ":" + seconds + "\n";
+        infoStr += "Non-zero indicates Protocol Exam = " + protocolFlag + "\n";
 
         if (exAllocKey != null) {
-            dialog.append("Process that allocated this record = " + exAllocKey.trim() + "\n");
+            infoStr += "Process that allocated this record = " + exAllocKey.trim() + "\n";
         }
 
-        dialog.append("Genesis Version - Created = " + exVersCre + "\n");
-        dialog.append("Genesis Version - Now = " + exVersCur + "\n");
-        dialog.append("Patient Status = " + exStat + "\n");
+        infoStr += "Genesis Version - Created = " + exVersCre + "\n";
+        infoStr += "Genesis Version - Now = " + exVersCur + "\n";
+        infoStr += "Patient Status = " + exStat + "\n";
 
         if (studyUID != null) {
-            dialog.append("Study UID = " + studyUID.trim() + "\n");
+            infoStr += "Study UID = " + studyUID.trim() + "\n";
         }
 
-        dialog.append("Indicates if study has complete info (DICOM/genesis) = " + studyStatus + "\n");
+        infoStr += "Indicates if study has complete info (DICOM/genesis) = " + studyStatus + "\n";
 
         if (exPadding != null) {
-            dialog.append("exPadding = " + exPadding.trim() + "\n");
+            infoStr += "exPadding = " + exPadding.trim() + "\n";
         }
 
         /***********************************************************************************************/
-        dialog.append("\nSeries information \n");
+        infoStr += "\nSeries information \n";
 
         if (seSuid != null) {
-            dialog.append("Suite ID for this Series = " + seSuid.trim() + "\n");
+            infoStr += "Suite ID for this Series = " + seSuid.trim() + "\n";
         }
 
-        dialog.append("Exam Number = " + seExamNo + "\n");
-        dialog.append("Series Number = " + seriesNum + "\n");
+        infoStr += "Exam Number = " + seExamNo + "\n";
+        infoStr += "Series Number = " + seriesNum + "\n";
         secs2date(seDateTime);
-        dialog.append("Allocation Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" +
-                      minute + ":" + seconds + "\n");
+        infoStr += "Allocation Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" +
+                      minute + ":" + seconds + "\n";
         secs2date(seActualDT);
-        dialog.append("Actual Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" +
-                      minute + ":" + seconds + "\n");
+        infoStr += "Actual Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" +
+                      minute + ":" + seconds + "\n";
 
         if (seDesc != null) {
-            dialog.append("Series Description = " + seDesc.trim() + "\n");
+            infoStr += "Series Description = " + seDesc.trim() + "\n";
         }
 
         if (prSysID != null) {
-            dialog.append("Primary Receiver Suite and Host = " + prSysID.trim() + "\n");
+            infoStr += "Primary Receiver Suite and Host = " + prSysID.trim() + "\n";
         }
 
         if (panSysID != null) {
-            dialog.append("Archiver Suite and Host = " + panSysID.trim() + "\n");
+            infoStr += "Archiver Suite and Host = " + panSysID.trim() + "\n";
         }
 
-        dialog.append("Series Type = " + seType + "\n");
-        dialog.append("Series from which prescribed = " + seSource + "\n");
-        dialog.append("Most-like Plane (for L/S) = " + sePlane + "\n");
-        dialog.append("Scout or Axial (for CT) = " + scanType + "\n");
-        dialog.append("Patient Position = " + position + "\n");
-        dialog.append("Patient Entry = " + entry + "\n");
+        infoStr += "Series Type = " + seType + "\n";
+        infoStr += "Series from which prescribed = " + seSource + "\n";
+        infoStr += "Most-like Plane (for L/S) = " + sePlane + "\n";
+        infoStr += "Scout or Axial (for CT) = " + scanType + "\n";
+        infoStr += "Patient Position = " + position + "\n";
+        infoStr += "Patient Entry = " + entry + "\n";
 
         if (anatomicalRef != null) {
-            dialog.append("Anatomical reference = " + anatomicalRef.trim() + "\n");
+            infoStr += "Anatomical reference = " + anatomicalRef.trim() + "\n";
         }
 
-        dialog.append("Horizontal landmark = " + lmHor + "\n");
+        infoStr += "Horizontal landmark = " + lmHor + "\n";
 
         if (scanProtocolName != null) {
-            dialog.append("Scan Protocol Name = " + scanProtocolName.trim() + "\n");
+            infoStr += "Scan Protocol Name = " + scanProtocolName.trim() + "\n";
         }
 
-        dialog.append("If greater than 0 image used contrast (L/S) = " + seContrast + "\n");
-        dialog.append("RAS letter for first scan location (L/S) = " + startRAS + "\n");
-        dialog.append("First scan location (L/S) = " + startLoc + "\n");
-        dialog.append("RAS letter for last scan loction (L/S) = " + endRAS + "\n");
-        dialog.append("Last scan location (L/S) = " + endLoc + "\n");
-        dialog.append("Last pulse sequence used (L/S) = " + sePseq + "\n");
-        dialog.append("Landmark Counter = " + seLandmarkCnt + "\n");
-        dialog.append("Number of Acquisitions = " + seNacq + "\n");
-        dialog.append("Starting number for baselines = " + xBaseSt + "\n");
-        dialog.append("Ending number for baselines = " + xBaseEnd + "\n");
-        dialog.append("Starting number for enhanced scans = " + xenhSt + "\n");
-        dialog.append("Ending number for enhanced scans = " + xenhEnd + "\n");
+        infoStr += "If greater than 0 image used contrast (L/S) = " + seContrast + "\n";
+        infoStr += "RAS letter for first scan location (L/S) = " + startRAS + "\n";
+        infoStr += "First scan location (L/S) = " + startLoc + "\n";
+        infoStr += "RAS letter for last scan loction (L/S) = " + endRAS + "\n";
+        infoStr += "Last scan location (L/S) = " + endLoc + "\n";
+        infoStr += "Last pulse sequence used (L/S) = " + sePseq + "\n";
+        infoStr += "Landmark Counter = " + seLandmarkCnt + "\n";
+        infoStr += "Number of Acquisitions = " + seNacq + "\n";
+        infoStr += "Starting number for baselines = " + xBaseSt + "\n";
+        infoStr += "Ending number for baselines = " + xBaseEnd + "\n";
+        infoStr += "Starting number for enhanced scans = " + xenhSt + "\n";
+        infoStr += "Ending number for enhanced scans = " + xenhEnd + "\n";
         secs2date(seLastMod);
-        dialog.append("Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
-                      ":" + seconds + "\n");
+        infoStr += "Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                      ":" + seconds + "\n";
 
         if (seAllocKey != null) {
-            dialog.append("Process that allocated this record = " + seAllocKey.trim() + "\n");
+            infoStr += "Process that allocated this record = " + seAllocKey.trim() + "\n";
         }
 
-        dialog.append("Genesis Version - Created = " + seVersCre + "\n");
-        dialog.append("Genesis Version - Now = " + seVersCur + "\n");
-        dialog.append("Pixel Data size - as stored = " + sePdsA + "\n");
-        dialog.append("Pixel Data size - Compressed = " + sePdsC + "\n");
-        dialog.append("Pixel Data size - Uncompressed = " + sePdsU + "\n");
-        dialog.append("Echo 1 Alpha Value = " + echo1Alpha + "\n");
-        dialog.append("Echo 1 Beta Value = " + echo1Beta + "\n");
-        dialog.append("Echo 1 Window Value = " + echo1Window + "\n");
-        dialog.append("Echo 1 Level Value = " + echo1Level + "\n");
-        dialog.append("Echo 2 Alpha Value = " + echo2Alpha + "\n");
-        dialog.append("Echo 2 Beta Value = " + echo2Beta + "\n");
-        dialog.append("Echo 2 Window Value = " + echo2Window + "\n");
-        dialog.append("Echo 2 Level Value = " + echo2Level + "\n");
-        dialog.append("Echo 3 Alpha Value = " + echo3Alpha + "\n");
-        dialog.append("Echo 3 Beta Value = " + echo3Beta + "\n");
-        dialog.append("Echo 3 Window Value = " + echo3Window + "\n");
-        dialog.append("Echo 3 Level Value = " + echo3Level + "\n");
-        dialog.append("Echo 4 Alpha Value = " + echo4Alpha + "\n");
-        dialog.append("Echo 4 Beta Value = " + echo4Beta + "\n");
-        dialog.append("Echo 4 Window Value = " + echo4Window + "\n");
-        dialog.append("Echo 4 Level Value = " + echo4Level + "\n");
-        dialog.append("Echo 5 Alpha Value = " + echo5Alpha + "\n");
-        dialog.append("Echo 5 Beta Value = " + echo5Beta + "\n");
-        dialog.append("Echo 5 Window Value = " + echo5Window + "\n");
-        dialog.append("Echo 5 Level Value = " + echo5Level + "\n");
-        dialog.append("Echo 6 Alpha Value = " + echo6Alpha + "\n");
-        dialog.append("Echo 6 Beta Value = " + echo6Beta + "\n");
-        dialog.append("Echo 6 Window Value = " + echo6Window + "\n");
-        dialog.append("Echo 6 Level Value = " + echo6Level + "\n");
-        dialog.append("Echo 7 Alpha Value = " + echo7Alpha + "\n");
-        dialog.append("Echo 7 Beta Value = " + echo7Beta + "\n");
-        dialog.append("Echo 7 Window Value = " + echo7Window + "\n");
-        dialog.append("Echo 7 Level Value = " + echo7Level + "\n");
-        dialog.append("Echo 8 Alpha Value = " + echo8Alpha + "\n");
-        dialog.append("Echo 8 Beta Value = " + echo8Beta + "\n");
-        dialog.append("Echo 8 Window Value = " + echo8Window + "\n");
-        dialog.append("Echo 8 Level Value = " + echo8Level + "\n");
+        infoStr += "Genesis Version - Created = " + seVersCre + "\n";
+        infoStr += "Genesis Version - Now = " + seVersCur + "\n";
+        infoStr += "Pixel Data size - as stored = " + sePdsA + "\n";
+        infoStr += "Pixel Data size - Compressed = " + sePdsC + "\n";
+        infoStr += "Pixel Data size - Uncompressed = " + sePdsU + "\n";
+        infoStr += "Echo 1 Alpha Value = " + echo1Alpha + "\n";
+        infoStr += "Echo 1 Beta Value = " + echo1Beta + "\n";
+        infoStr += "Echo 1 Window Value = " + echo1Window + "\n";
+        infoStr += "Echo 1 Level Value = " + echo1Level + "\n";
+        infoStr += "Echo 2 Alpha Value = " + echo2Alpha + "\n";
+        infoStr += "Echo 2 Beta Value = " + echo2Beta + "\n";
+        infoStr += "Echo 2 Window Value = " + echo2Window + "\n";
+        infoStr += "Echo 2 Level Value = " + echo2Level + "\n";
+        infoStr += "Echo 3 Alpha Value = " + echo3Alpha + "\n";
+        infoStr += "Echo 3 Beta Value = " + echo3Beta + "\n";
+        infoStr += "Echo 3 Window Value = " + echo3Window + "\n";
+        infoStr += "Echo 3 Level Value = " + echo3Level + "\n";
+        infoStr += "Echo 4 Alpha Value = " + echo4Alpha + "\n";
+        infoStr += "Echo 4 Beta Value = " + echo4Beta + "\n";
+        infoStr += "Echo 4 Window Value = " + echo4Window + "\n";
+        infoStr += "Echo 4 Level Value = " + echo4Level + "\n";
+        infoStr += "Echo 5 Alpha Value = " + echo5Alpha + "\n";
+        infoStr += "Echo 5 Beta Value = " + echo5Beta + "\n";
+        infoStr += "Echo 5 Window Value = " + echo5Window + "\n";
+        infoStr += "Echo 5 Level Value = " + echo5Level + "\n";
+        infoStr += "Echo 6 Alpha Value = " + echo6Alpha + "\n";
+        infoStr += "Echo 6 Beta Value = " + echo6Beta + "\n";
+        infoStr += "Echo 6 Window Value = " + echo6Window + "\n";
+        infoStr += "Echo 6 Level Value = " + echo6Level + "\n";
+        infoStr += "Echo 7 Alpha Value = " + echo7Alpha + "\n";
+        infoStr += "Echo 7 Beta Value = " + echo7Beta + "\n";
+        infoStr += "Echo 7 Window Value = " + echo7Window + "\n";
+        infoStr += "Echo 7 Level Value = " + echo7Level + "\n";
+        infoStr += "Echo 8 Alpha Value = " + echo8Alpha + "\n";
+        infoStr += "Echo 8 Beta Value = " + echo8Beta + "\n";
+        infoStr += "Echo 8 Window Value = " + echo8Window + "\n";
+        infoStr += "Echo 8 Level Value = " + echo8Level + "\n";
 
         if (sePadding != null) {
-            dialog.append("sePadding = " + sePadding.trim() + "\n");
+            infoStr += "sePadding = " + sePadding.trim() + "\n";
         }
 
         /***********************************************************************************************/
-        dialog.append("\nImage informaton \n");
-        dialog.append("Image Header Suite ID = " + imgHdrSuiteID + "\n");
-        dialog.append("Image Exam number = " + imgHdrExamNum + "\n");
-        dialog.append("Image Series number = " + imgHdrSeriesNum + "\n");
-        dialog.append("Image number = " + imageNum + "\n");
+        infoStr += "\nImage informaton \n";
+        infoStr += "Image Header Suite ID = " + imgHdrSuiteID + "\n";
+        infoStr += "Image Exam number = " + imgHdrExamNum + "\n";
+        infoStr += "Image Series number = " + imgHdrSeriesNum + "\n";
+        infoStr += "Image number = " + imageNum + "\n";
         currentSeconds = System.currentTimeMillis() / 1000L;
 
         // dateTime >= 0 means dateTime does not exceed January 19, 2038 3:14:07
         if ((dateTime >= 0) && (dateTime < currentSeconds)) {
             secs2date(dateTime);
-            dialog.append("Image date time = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
-                          ":" + seconds + "\n");
+            infoStr += "Image date time = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                          ":" + seconds + "\n";
         }
 
         // actualDateTime >= 0 means actualDateTime does not exceed January 19, 2038 3:14:07
         if ((actualDateTime >= 0) && (actualDateTime < currentSeconds)) {
             secs2date(actualDateTime);
-            dialog.append("Image actual time = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
-                          ":" + seconds + "\n");
+            infoStr += "Image actual time = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                          ":" + seconds + "\n";
         }
 
-        dialog.append("Image scan time = " + scTime + "\n");
-        dialog.append("Slice thickness = " + sliceThickness + "\n");
-        dialog.append("Matrix size X = " + matrixSizeX + "\n");
-        dialog.append("Matrix size Y = " + matrixSizeY + "\n");
-        dialog.append("Field of view X = " + FOVX + "\n");
-        dialog.append("Field of view Y = " + FOVY + "\n");
-        dialog.append("Image dim X = " + imageDimX + "\n");
-        dialog.append("Image dim Y = " + imageDimY + "\n");
-        dialog.append("Pixel resolution X = " + pixelResX + "\n");
-        dialog.append("Pixel resolution Y = " + pixelResY + "\n");
+        infoStr += "Image scan time = " + scTime + "\n";
+        infoStr += "Slice thickness = " + sliceThickness + "\n";
+        infoStr += "Matrix size X = " + matrixSizeX + "\n";
+        infoStr += "Matrix size Y = " + matrixSizeY + "\n";
+        infoStr += "Field of view X = " + FOVX + "\n";
+        infoStr += "Field of view Y = " + FOVY + "\n";
+        infoStr += "Image dim X = " + imageDimX + "\n";
+        infoStr += "Image dim Y = " + imageDimY + "\n";
+        infoStr += "Pixel resolution X = " + pixelResX + "\n";
+        infoStr += "Pixel resolution Y = " + pixelResY + "\n";
 
         if (pixelID != null) {
-            dialog.append("Pixel ID = " + pixelID.trim() + "\n");
+            infoStr += "Pixel ID = " + pixelID.trim() + "\n";
         }
 
         if (IVCntrstAgent != null) {
-            dialog.append("IV contrast agent = " + IVCntrstAgent.trim() + "\n");
+            infoStr += "IV contrast agent = " + IVCntrstAgent.trim() + "\n";
         }
 
         if (OralCntrstAgent != null) {
-            dialog.append("Oral contrast agent = " + OralCntrstAgent.trim() + "\n");
+            infoStr += "Oral contrast agent = " + OralCntrstAgent.trim() + "\n";
         }
 
-        dialog.append("Image contrast mode = " + contrastMode + "\n");
-        dialog.append("Series from which prescribed = " + serrx + "\n");
-        dialog.append("Image from which prescribed = " + imgrx + "\n");
-        dialog.append("Screen format (8/16) bit = " + screenFormat + "\n");
-        dialog.append("Plane type = " + planeType + "\n");
-        dialog.append("Spacing between scans = " + scanSpacing + "\n");
-        dialog.append("Image compression type for allocation = " + compress + "\n");
-        dialog.append("Scout type = " + scoutType + "\n");
+        infoStr += "Image contrast mode = " + contrastMode + "\n";
+        infoStr += "Series from which prescribed = " + serrx + "\n";
+        infoStr += "Image from which prescribed = " + imgrx + "\n";
+        infoStr += "Screen format (8/16) bit = " + screenFormat + "\n";
+        infoStr += "Plane type = " + planeType + "\n";
+        infoStr += "Spacing between scans = " + scanSpacing + "\n";
+        infoStr += "Image compression type for allocation = " + compress + "\n";
+        infoStr += "Scout type = " + scoutType + "\n";
 
-        dialog.append("RAS letter of image location = " + loc_ras + "\n");
-        dialog.append("Image location = " + imgLoc + "\n");
-        dialog.append("Image center right = " + imgCtrR + "\n");
-        dialog.append("Image center anterior = " + imgCtrA + "\n");
-        dialog.append("Image center superior = " + imgCtrS + "\n");
-        dialog.append("Normal right = " + norm_R + "\n");
-        dialog.append("Normal anterior = " + norm_A + "\n");
-        dialog.append("Normal superior = " + norm_S + "\n");
-        dialog.append("Right top left hand corner = " + imgTLHC_R + "\n");
-        dialog.append("Anterior top left hand corner = " + imgTLHC_A + "\n");
-        dialog.append("Superior top left hand corner = " + imgTLHC_S + "\n");
-        dialog.append("Right top right hand corner = " + imgTRHC_R + "\n");
-        dialog.append("Anterior top right hand corner = " + imgTRHC_A + "\n");
-        dialog.append("Superior top right hand corner = " + imgTRHC_S + "\n");
-        dialog.append("Right bottom right hand corner = " + imgBRHC_R + "\n");
-        dialog.append("Anterior bottom right hand corner = " + imgBRHC_A + "\n");
-        dialog.append("Superior bottom right hand corner = " + imgBRHC_S + "\n");
+        infoStr += "RAS letter of image location = " + loc_ras + "\n";
+        infoStr += "Image location = " + imgLoc + "\n";
+        infoStr += "Image center right = " + imgCtrR + "\n";
+        infoStr += "Image center anterior = " + imgCtrA + "\n";
+        infoStr += "Image center superior = " + imgCtrS + "\n";
+        infoStr += "Normal right = " + norm_R + "\n";
+        infoStr += "Normal anterior = " + norm_A + "\n";
+        infoStr += "Normal superior = " + norm_S + "\n";
+        infoStr += "Right top left hand corner = " + imgTLHC_R + "\n";
+        infoStr += "Anterior top left hand corner = " + imgTLHC_A + "\n";
+        infoStr += "Superior top left hand corner = " + imgTLHC_S + "\n";
+        infoStr += "Right top right hand corner = " + imgTRHC_R + "\n";
+        infoStr += "Anterior top right hand corner = " + imgTRHC_A + "\n";
+        infoStr += "Superior top right hand corner = " + imgTRHC_S + "\n";
+        infoStr += "Right bottom right hand corner = " + imgBRHC_R + "\n";
+        infoStr += "Anterior bottom right hand corner = " + imgBRHC_A + "\n";
+        infoStr += "Superior bottom right hand corner = " + imgBRHC_S + "\n";
 
         if ((examType != null) && (examType.trim().equals("MR"))) {
 
             if (forImgRev != null) {
-                dialog.append("Foreign Image Revision = " + forImgRev.trim() + "\n");
+                infoStr += "Foreign Image Revision = " + forImgRev.trim() + "\n";
             }
 
-            dialog.append("Pulse repetition time (usec) = " + pulseRepTime + "\n");
-            dialog.append("Pulse Inversion time (usec) = " + inverTime + "\n");
-            dialog.append("Pulse echo time (usec) = " + echoTime + "\n");
-            dialog.append("Second echo (usec) = " + te2 + "\n");
+            infoStr += "Pulse repetition time (usec) = " + pulseRepTime + "\n";
+            infoStr += "Pulse Inversion time (usec) = " + inverTime + "\n";
+            infoStr += "Pulse echo time (usec) = " + echoTime + "\n";
+            infoStr += "Second echo (usec) = " + te2 + "\n";
 
-            dialog.append("Number of echoes = " + nEchoes + "\n");
-            dialog.append("Echo number = " + echoNum + "\n");
-            dialog.append("Table delta = " + tableDelta + "\n");
-            dialog.append("Number of excitations = " + NEX + "\n");
-            dialog.append("Continous Slices Flag = " + contig + "\n");
-            dialog.append("Caridac eart rate (bpm) = " + heartRate + "\n");
-            dialog.append("Delay time after trigger (msec) = " + tDel + "\n");
-            dialog.append("SAR average = " + sarAvg + "\n");
-            dialog.append("SAR peak = " + sarPeak + "\n");
-            dialog.append("Monitor SAR flag = " + monSar + "\n");
-            dialog.append("Trigger window = " + trgWindow + "\n");
-            dialog.append("Cardiac repetition time = " + repTime + "\n");
-            dialog.append("Images per cardiac .1 cycle = " + imgPCycle + "\n");
-            dialog.append("Actual transmit gain (.1db) = " + xmtGain + "\n");
-            dialog.append("Actual Receive gain Analog (.1db) = " + rcvGain1 + "\n");
-            dialog.append("Actual Receive gain Digital (.1db) = " + rcvGain2 + "\n");
-            dialog.append("Flip angle for grass scans = " + mr_flip + "\n");
-            dialog.append("Minimum delay after trigger (usec) = " + minDAT + "\n");
-            dialog.append("Total cardiac phase prescribed = " + cPhase + "\n");
-            dialog.append("Swap Phase/Frequency Axis = " + swapPF + "\n");
-            dialog.append("Pause interval (slices) = " + pauseInterval + "\n");
-            dialog.append("Pause time = " + pauseTime + "\n");
-            dialog.append("Oblique plane = " + obliquePlane + "\n");
-            dialog.append("Slice offsets on Freq axis = " + slocfov + "\n");
+            infoStr += "Number of echoes = " + nEchoes + "\n";
+            infoStr += "Echo number = " + echoNum + "\n";
+            infoStr += "Table delta = " + tableDelta + "\n";
+            infoStr += "Number of excitations = " + NEX + "\n";
+            infoStr += "Continous Slices Flag = " + contig + "\n";
+            infoStr += "Caridac eart rate (bpm) = " + heartRate + "\n";
+            infoStr += "Delay time after trigger (msec) = " + tDel + "\n";
+            infoStr += "SAR average = " + sarAvg + "\n";
+            infoStr += "SAR peak = " + sarPeak + "\n";
+            infoStr += "Monitor SAR flag = " + monSar + "\n";
+            infoStr += "Trigger window = " + trgWindow + "\n";
+            infoStr += "Cardiac repetition time = " + repTime + "\n";
+            infoStr += "Images per cardiac .1 cycle = " + imgPCycle + "\n";
+            infoStr += "Actual transmit gain (.1db) = " + xmtGain + "\n";
+            infoStr += "Actual Receive gain Analog (.1db) = " + rcvGain1 + "\n";
+            infoStr += "Actual Receive gain Digital (.1db) = " + rcvGain2 + "\n";
+            infoStr += "Flip angle for grass scans = " + mr_flip + "\n";
+            infoStr += "Minimum delay after trigger (usec) = " + minDAT + "\n";
+            infoStr += "Total cardiac phase prescribed = " + cPhase + "\n";
+            infoStr += "Swap Phase/Frequency Axis = " + swapPF + "\n";
+            infoStr += "Pause interval (slices) = " + pauseInterval + "\n";
+            infoStr += "Pause time = " + pauseTime + "\n";
+            infoStr += "Oblique plane = " + obliquePlane + "\n";
+            infoStr += "Slice offsets on Freq axis = " + slocfov + "\n";
 
             if (xmtFreq > 0) {
-                dialog.append("Center Frequency (0.1Hz) = " + xmtFreq + "\n");
+                infoStr += "Center Frequency (0.1Hz) = " + xmtFreq + "\n";
             }
 
             if (autoXmtFreq > 0) {
-                dialog.append("Auto Center frequency (0.1Hz) = " + autoXmtFreq + "\n");
+                infoStr += "Auto Center frequency (0.1Hz) = " + autoXmtFreq + "\n";
             }
 
-            dialog.append("Auto transmit gain (0.1dB) = " + autoXmtGain + "\n");
-            dialog.append("Prescan R1-Analog = " + prescan_r1 + "\n");
-            dialog.append("Prescan R2-Digital = " + prescan_r2 + "\n");
-            dialog.append("Bitmap defining user CVs = " + user_bitmap + "\n");
-            dialog.append("Center Frequency Method = " + cenFreq + "\n");
+            infoStr += "Auto transmit gain (0.1dB) = " + autoXmtGain + "\n";
+            infoStr += "Prescan R1-Analog = " + prescan_r1 + "\n";
+            infoStr += "Prescan R2-Digital = " + prescan_r2 + "\n";
+            infoStr += "Bitmap defining user CVs = " + user_bitmap + "\n";
+            infoStr += "Center Frequency Method = " + cenFreq + "\n";
 
-            dialog.append("Imaging mode = " + iMode + "\n");
-            dialog.append("Imaging options = " + iOptions + "\n");
-            dialog.append("Pulse sequence = " + pSeq + "\n");
-            dialog.append("Pulse sequence mode = " + pulseSeqMode + "\n");
+            infoStr += "Imaging mode = " + iMode + "\n";
+            infoStr += "Imaging options = " + iOptions + "\n";
+            infoStr += "Pulse sequence = " + pSeq + "\n";
+            infoStr += "Pulse sequence mode = " + pulseSeqMode + "\n";
 
             if (pulseSeqName != null) {
-                dialog.append("Pulse sequence name = " + pulseSeqName.trim() + "\n");
+                infoStr += "Pulse sequence name = " + pulseSeqName.trim() + "\n";
             }
 
             // psd_dateTime >= 0 menas psd_dateTime does not exceed January 19, 2038 3:14:07
             if ((psd_dateTime >= 0) && (psd_dateTime < currentSeconds)) {
                 secs2date(psd_dateTime);
-                dialog.append("PSD Creation date and time = " + month + " " + day + "," + " " + year + " " + hour +
-                              ":" + minute + ":" + seconds + "\n");
+                infoStr += "PSD Creation date and time = " + month + " " + day + "," + " " + year + " " + hour +
+                              ":" + minute + ":" + seconds + "\n";
             }
 
             if (psd_iname != null) {
-                dialog.append("PSD name from inside PSD = " + psd_iname.trim() + "\n");
+                infoStr += "PSD name from inside PSD = " + psd_iname.trim() + "\n";
             }
 
-            dialog.append("Coil type = " + coilType + "\n");
+            infoStr += "Coil type = " + coilType + "\n";
 
             if (coilName != null) {
-                dialog.append("Coil name = " + coilName.trim() + "\n");
+                infoStr += "Coil name = " + coilName.trim() + "\n";
             }
 
-            dialog.append("Surface coil type = " + surfaceCoilType + "\n");
-            dialog.append("Extremity coil flag = " + surfcext + "\n");
-            dialog.append("Raw data run number = " + rawRunNum + "\n");
-            dialog.append("Calibrated field strength (x10 Gauss) = " + calFldStr + "\n");
-            dialog.append("SAT fat/water/none = " + supp_tech + "\n");
-            dialog.append("Variable bandwidth (Hz) = " + vbw + "\n");
-            dialog.append("Number of slices in this scan group = " + slquant + "\n");
-            dialog.append("Graphically prescribed = " + gpre + "\n");
-            dialog.append("Interimage/interloc delay (uSec) = " + intr_del + "\n");
-            dialog.append("User var 0  = " + user0 + "\n");
-            dialog.append("User var 1  = " + user1 + "\n");
-            dialog.append("User var 2  = " + user2 + "\n");
-            dialog.append("User var 3  = " + user3 + "\n");
-            dialog.append("User var 4  = " + user4 + "\n");
-            dialog.append("User var 5  = " + user5 + "\n");
-            dialog.append("User var 6  = " + user6 + "\n");
-            dialog.append("User var 7  = " + user7 + "\n");
-            dialog.append("User var 8  = " + user8 + "\n");
-            dialog.append("User var 9  = " + user9 + "\n");
-            dialog.append("User var 10 = " + user10 + "\n");
-            dialog.append("User var 11 = " + user11 + "\n");
-            dialog.append("User var 12 = " + user12 + "\n");
-            dialog.append("User var 13 = " + user13 + "\n");
-            dialog.append("User var 14 = " + user14 + "\n");
-            dialog.append("User var 15 = " + user15 + "\n");
-            dialog.append("User var 16 = " + user16 + "\n");
-            dialog.append("User var 17 = " + user17 + "\n");
-            dialog.append("User var 18 = " + user18 + "\n");
-            dialog.append("User var 19 = " + user19 + "\n");
-            dialog.append("User var 20 = " + user20 + "\n");
-            dialog.append("User var 21 = " + user21 + "\n");
-            dialog.append("User var 22 = " + user22 + "\n");
+            infoStr += "Surface coil type = " + surfaceCoilType + "\n";
+            infoStr += "Extremity coil flag = " + surfcext + "\n";
+            infoStr += "Raw data run number = " + rawRunNum + "\n";
+            infoStr += "Calibrated field strength (x10 Gauss) = " + calFldStr + "\n";
+            infoStr += "SAT fat/water/none = " + supp_tech + "\n";
+            infoStr += "Variable bandwidth (Hz) = " + vbw + "\n";
+            infoStr += "Number of slices in this scan group = " + slquant + "\n";
+            infoStr += "Graphically prescribed = " + gpre + "\n";
+            infoStr += "Interimage/interloc delay (uSec) = " + intr_del + "\n";
+            infoStr += "User var 0  = " + user0 + "\n";
+            infoStr += "User var 1  = " + user1 + "\n";
+            infoStr += "User var 2  = " + user2 + "\n";
+            infoStr += "User var 3  = " + user3 + "\n";
+            infoStr += "User var 4  = " + user4 + "\n";
+            infoStr += "User var 5  = " + user5 + "\n";
+            infoStr += "User var 6  = " + user6 + "\n";
+            infoStr += "User var 7  = " + user7 + "\n";
+            infoStr += "User var 8  = " + user8 + "\n";
+            infoStr += "User var 9  = " + user9 + "\n";
+            infoStr += "User var 10 = " + user10 + "\n";
+            infoStr += "User var 11 = " + user11 + "\n";
+            infoStr += "User var 12 = " + user12 + "\n";
+            infoStr += "User var 13 = " + user13 + "\n";
+            infoStr += "User var 14 = " + user14 + "\n";
+            infoStr += "User var 15 = " + user15 + "\n";
+            infoStr += "User var 16 = " + user16 + "\n";
+            infoStr += "User var 17 = " + user17 + "\n";
+            infoStr += "User var 18 = " + user18 + "\n";
+            infoStr += "User var 19 = " + user19 + "\n";
+            infoStr += "User var 20 = " + user20 + "\n";
+            infoStr += "User var 21 = " + user21 + "\n";
+            infoStr += "User var 22 = " + user22 + "\n";
 
-            dialog.append("Projection angle = " + projectAngle + "\n");
-            dialog.append("Concat SAT type flag = " + user24 + "\n");
+            infoStr += "Projection angle = " + projectAngle + "\n";
+            infoStr += "Concat SAT type flag = " + user24 + "\n";
 
             if (im_alloc_key != null) {
-                dialog.append("Process that allocated record = " + im_alloc_key.trim() + "\n");
+                infoStr += "Process that allocated record = " + im_alloc_key.trim() + "\n";
             }
 
             // im_lastmod menas im_lastmod does not exceed January 19, 2038 3:14:07
             if ((im_lastmod >= 0) && (im_lastmod < currentSeconds)) {
                 secs2date(im_lastmod);
-                dialog.append("Date/Time of last change = " + month + " " + day + "," + " " + year + " " + hour + ":" +
-                              minute + ":" + seconds + "\n");
+                infoStr += "Date/Time of last change = " + month + " " + day + "," + " " + year + " " + hour + ":" +
+                              minute + ":" + seconds + "\n";
             }
 
-            dialog.append("Genesis version - created = " + im_verscre + "\n");
+            infoStr += "Genesis version - created = " + im_verscre + "\n";
 
             if (im_verscur != null) {
-                dialog.append("Genesis version - now = " + im_verscur.trim() + "\n");
+                infoStr += "Genesis version - now = " + im_verscur.trim() + "\n";
             }
 
-            dialog.append("Pixel data size - as stored = " + im_pds_a + "\n");
-            dialog.append("Pixel data size - compressed  = " + im_pds_c + "\n");
-            dialog.append("Pixel data size - uncompressed = " + im_pds_u + "\n");
+            infoStr += "Pixel data size - as stored = " + im_pds_a + "\n";
+            infoStr += "Pixel data size - compressed  = " + im_pds_c + "\n";
+            infoStr += "Pixel data size - uncompressed = " + im_pds_u + "\n";
 
-            // dialog.append("AcqRecon record checksum = " + im_checksum + "\n");
-            // dialog.append("Image Archive Flag = " + im_archived + "\n");
-            // dialog.append("Image Complete Flag = " + im_complete + "\n");
-            dialog.append("Bitmap of SAT selections = " + satbits + "\n");
-            dialog.append("Surface coil intensity correction flag = " + scic + "\n");
-            dialog.append("R-side pulse loc rel to landmark = " + satxloc1 + "\n");
-            dialog.append("L-side pulse loc rel to landmark = " + satxloc2 + "\n");
-            dialog.append("A-side pulse loc rel to landmark = " + satyloc1 + "\n");
-            dialog.append("P-side pulse loc rel to landmark = " + satyloc2 + "\n");
-            dialog.append("S-side pulse loc rel to landmark = " + satzloc1 + "\n");
-            dialog.append("I-side pulse loc rel to landmark = " + satzloc2 + "\n");
-            dialog.append("Thickness of X-axis SAT pulse = " + satxthick + "\n");
-            dialog.append("Thickness of Y-axis SAT pulse = " + satythick + "\n");
-            dialog.append("Thickness of Z-axis SAT pulse = " + satzthick + "\n");
+            // infoStr += "AcqRecon record checksum = " + im_checksum + "\n";
+            // infoStr += "Image Archive Flag = " + im_archived + "\n";
+            // infoStr += "Image Complete Flag = " + im_complete + "\n";
+            infoStr += "Bitmap of SAT selections = " + satbits + "\n";
+            infoStr += "Surface coil intensity correction flag = " + scic + "\n";
+            infoStr += "R-side pulse loc rel to landmark = " + satxloc1 + "\n";
+            infoStr += "L-side pulse loc rel to landmark = " + satxloc2 + "\n";
+            infoStr += "A-side pulse loc rel to landmark = " + satyloc1 + "\n";
+            infoStr += "P-side pulse loc rel to landmark = " + satyloc2 + "\n";
+            infoStr += "S-side pulse loc rel to landmark = " + satzloc1 + "\n";
+            infoStr += "I-side pulse loc rel to landmark = " + satzloc2 + "\n";
+            infoStr += "Thickness of X-axis SAT pulse = " + satxthick + "\n";
+            infoStr += "Thickness of Y-axis SAT pulse = " + satythick + "\n";
+            infoStr += "Thickness of Z-axis SAT pulse = " + satzthick + "\n";
 
-            dialog.append("Phase contrast flow axis = " + flax + "\n");
-            dialog.append("Phase contrast velocity encoding (mm/sec) = " + venc + "\n");
-            dialog.append("Slice thickness = " + thk_disclmr + "\n");
-            dialog.append("Auto/manual prescan flag = " + ps_flag + "\n");
-            dialog.append("Bitmap of change values = " + ps_status + "\n");
-            dialog.append("Magnitude, phase, imaginary, or real = " + image_type + "\n");
-            dialog.append("Collapse image = " + vas_collapse + "\n");
-            dialog.append("User variable 23 = " + user23n + "\n");
-            dialog.append("User variable 24 = " + user24n + "\n");
-            dialog.append("Projection algorithm = " + proj_alg + "\n");
+            infoStr += "Phase contrast flow axis = " + flax + "\n";
+            infoStr += "Phase contrast velocity encoding (mm/sec) = " + venc + "\n";
+            infoStr += "Slice thickness = " + thk_disclmr + "\n";
+            infoStr += "Auto/manual prescan flag = " + ps_flag + "\n";
+            infoStr += "Bitmap of change values = " + ps_status + "\n";
+            infoStr += "Magnitude, phase, imaginary, or real = " + image_type + "\n";
+            infoStr += "Collapse image = " + vas_collapse + "\n";
+            infoStr += "User variable 23 = " + user23n + "\n";
+            infoStr += "User variable 24 = " + user24n + "\n";
+            infoStr += "Projection algorithm = " + proj_alg + "\n";
 
             if (proj_name != null) {
-                dialog.append("Projection algorithm name = " + proj_name.trim() + "\n");
+                infoStr += "Projection algorithm name = " + proj_name.trim() + "\n";
             }
 
-            dialog.append("X axis rotation = " + xAxisRot + "\n");
-            dialog.append("Y axis rotation = " + yAxisRot + "\n");
-            dialog.append("Z axis rotation = " + zAxisRot + "\n");
-            dialog.append("Lower range of pixels 1 = " + threshMin1 + "\n");
-            dialog.append("Upper range of pixels 1 = " + threshMax1 + "\n");
-            dialog.append("Lower range of pixels 2 = " + threshMin2 + "\n");
-            dialog.append("Upper range of pixels 2 = " + threshMax2 + "\n");
-            dialog.append("Echo train length for fast spin echo = " + ETL + "\n");
-            dialog.append("Fractional echo-effective TE flag = " + fracEcho + "\n");
-            dialog.append("Preparatory pulse option = " + prepPulse + "\n");
-            dialog.append("Cardiac phase number = " + cPhaseNum + "\n");
-            dialog.append("Variable echo flag = " + varEcho + "\n");
+            infoStr += "X axis rotation = " + xAxisRot + "\n";
+            infoStr += "Y axis rotation = " + yAxisRot + "\n";
+            infoStr += "Z axis rotation = " + zAxisRot + "\n";
+            infoStr += "Lower range of pixels 1 = " + threshMin1 + "\n";
+            infoStr += "Upper range of pixels 1 = " + threshMax1 + "\n";
+            infoStr += "Lower range of pixels 2 = " + threshMin2 + "\n";
+            infoStr += "Upper range of pixels 2 = " + threshMax2 + "\n";
+            infoStr += "Echo train length for fast spin echo = " + ETL + "\n";
+            infoStr += "Fractional echo-effective TE flag = " + fracEcho + "\n";
+            infoStr += "Preparatory pulse option = " + prepPulse + "\n";
+            infoStr += "Cardiac phase number = " + cPhaseNum + "\n";
+            infoStr += "Variable echo flag = " + varEcho + "\n";
 
             if (refImg != null) {
-                dialog.append("Reference image field = " + refImg.trim() + "\n");
+                infoStr += "Reference image field = " + refImg.trim() + "\n";
             }
 
             if (sumImg != null) {
-                dialog.append("Summary image field = " + sumImg.trim() + "\n");
+                infoStr += "Summary image field = " + sumImg.trim() + "\n";
             }
 
-            dialog.append("Window value = " + imgWindow + "\n");
-            dialog.append("Level value = " + imgLevel + "\n");
-            dialog.append("Integer Slop Field 1 = " + slop_int_1 + "\n");
-            dialog.append("Integer Slop Field 2 = " + slop_int_2 + "\n");
-            dialog.append("Integer Slop Field 3 = " + slop_int_3 + "\n");
-            dialog.append("Integer Slop Field 4 = " + slop_int_4 + "\n");
-            dialog.append("Integer Slop Field 5 = " + slop_int_5 + "\n");
-            dialog.append("Float Slop Field 1 = " + slop_float_1 + "\n");
-            dialog.append("Float Slop Field 2 = " + slop_float_2 + "\n");
-            dialog.append("Float Slop Field 3 = " + slop_float_3 + "\n");
-            dialog.append("Float Slop Field 4 = " + slop_float_4 + "\n");
-            dialog.append("Float Slop Field 5 = " + slop_float_5 + "\n");
+            infoStr += "Window value = " + imgWindow + "\n";
+            infoStr += "Level value = " + imgLevel + "\n";
+            infoStr += "Integer Slop Field 1 = " + slop_int_1 + "\n";
+            infoStr += "Integer Slop Field 2 = " + slop_int_2 + "\n";
+            infoStr += "Integer Slop Field 3 = " + slop_int_3 + "\n";
+            infoStr += "Integer Slop Field 4 = " + slop_int_4 + "\n";
+            infoStr += "Integer Slop Field 5 = " + slop_int_5 + "\n";
+            infoStr += "Float Slop Field 1 = " + slop_float_1 + "\n";
+            infoStr += "Float Slop Field 2 = " + slop_float_2 + "\n";
+            infoStr += "Float Slop Field 3 = " + slop_float_3 + "\n";
+            infoStr += "Float Slop Field 4 = " + slop_float_4 + "\n";
+            infoStr += "Float Slop Field 5 = " + slop_float_5 + "\n";
 
             if (slop_str_1 != null) {
-                dialog.append("String Slop Field 1 = " + slop_str_1.trim() + "\n");
+                infoStr += "String Slop Field 1 = " + slop_str_1.trim() + "\n";
             }
 
             if (slop_str_2 != null) {
-                dialog.append("String Slop Field 2 = " + slop_str_2.trim() + "\n");
+                infoStr += "String Slop Field 2 = " + slop_str_2.trim() + "\n";
             }
 
-            dialog.append("Scan Acquisition Number = " + scanAcqNum + "\n");
-            dialog.append("Magnitude Weighting Flag = " + magWgtFlag + "\n");
-            dialog.append("Scale Weighted Venc (Velocity Encoding/PI) = " + vencScale + "\n");
-            dialog.append("GE Image Integrity = " + integrity + "\n");
-            dialog.append("Number of Phases = " + nPhase + "\n");
-            dialog.append("Frequency Direction = " + freqDir + "\n");
-            dialog.append("Vascular Mode = " + vasMode + "\n");
+            infoStr += "Scan Acquisition Number = " + scanAcqNum + "\n";
+            infoStr += "Magnitude Weighting Flag = " + magWgtFlag + "\n";
+            infoStr += "Scale Weighted Venc (Velocity Encoding/PI) = " + vencScale + "\n";
+            infoStr += "GE Image Integrity = " + integrity + "\n";
+            infoStr += "Number of Phases = " + nPhase + "\n";
+            infoStr += "Frequency Direction = " + freqDir + "\n";
+            infoStr += "Vascular Mode = " + vasMode + "\n";
 
             if (image_uid != null) {
-                dialog.append("Image Unique ID = " + image_uid.trim() + "\n");
+                infoStr += "Image Unique ID = " + image_uid.trim() + "\n";
             }
 
             if (sop_uid != null) {
-                dialog.append("Service Obj Clas Unique ID = " + sop_uid.trim() + "\n");
+                infoStr += "Service Obj Clas Unique ID = " + sop_uid.trim() + "\n";
             }
 
-            dialog.append("Bitmap of prescan options = " + preScanOpts + "\n");
-            dialog.append("Gradient offset in the x-direction = " + gOffsetX + "\n");
-            dialog.append("Gradient offset in the y-direction = " + gOffsetY + "\n");
-            dialog.append("Gradient offset in the z-direction = " + gOffsetZ + "\n");
-            dialog.append("Identifies images as original or unoriginal = " + unOriginal + "\n");
-            dialog.append("Number of EPI shots = " + nEPI + "\n");
-            dialog.append("Effective echo spacing for EPI = " + effEchoSpace + "\n");
-            dialog.append("Views per segment = " + viewsPerSeg + "\n");
-            dialog.append("Respiratory rate, breaths per minute = " + rbpm + "\n");
-            dialog.append("Respiratory trigger point as percent of max = " + rtPoint + "\n");
-            dialog.append("Type of receiver used = " + rcvType + "\n");
-            dialog.append("Peak rate of change in gradient field, tesla/sec = " + dbdt + "\n");
-            dialog.append("Limit in units of percent of theoretical curve = " + dbdtPer + "\n");
-            dialog.append("PSD estimated limit in units of percent = " + estdbdtPer + "\n");
-            dialog.append("PSD estimated limit in Tesla/sec = " + estdbdtts + "\n");
-            dialog.append("Avg head SAR = " + sarAvgHead + "\n");
-            dialog.append("Negative scan spacing for overlap slices = " + negScanSpacing + "\n");
-            dialog.append("Offset Frequency-Mag. Transfer = " + offsetFreq + "\n");
-            dialog.append("Defines how the following user tags are to be filled in = " + userUsageTag + "\n");
-            dialog.append("Define what process fills in the user CVs, ifcc or TIR = " + userFillMapMSW + "\n");
-            dialog.append("Define what process fills in the user CVs, ifcc or TIR = " + userFillMapLSW + "\n");
-            dialog.append("User Variable 25 = " + user25 + "\n");
-            dialog.append("User Variable 26 = " + user26 + "\n");
-            dialog.append("User Variable 27 = " + user27 + "\n");
-            dialog.append("User Variable 28 = " + user28 + "\n");
-            dialog.append("User Variable 29 = " + user29 + "\n");
-            dialog.append("User Variable 30 = " + user30 + "\n");
-            dialog.append("User Variable 31 = " + user31 + "\n");
-            dialog.append("User Variable 32 = " + user32 + "\n");
-            dialog.append("User Variable 33 = " + user33 + "\n");
-            dialog.append("User Variable 34 = " + user34 + "\n");
-            dialog.append("User Variable 35 = " + user35 + "\n");
-            dialog.append("User Variable 36 = " + user36 + "\n");
-            dialog.append("User Variable 37 = " + user37 + "\n");
-            dialog.append("User Variable 38 = " + user38 + "\n");
-            dialog.append("User Variable 39 = " + user39 + "\n");
-            dialog.append("User Variable 40 = " + user40 + "\n");
-            dialog.append("User Variable 41 = " + user41 + "\n");
-            dialog.append("User Variable 42 = " + user42 + "\n");
-            dialog.append("User Variable 43 = " + user43 + "\n");
-            dialog.append("User Variable 44 = " + user44 + "\n");
-            dialog.append("User Variable 45 = " + user45 + "\n");
-            dialog.append("User Variable 46 = " + user46 + "\n");
-            dialog.append("User Variable 47 = " + user47 + "\n");
-            dialog.append("User Variable 48 = " + user48 + "\n");
-            dialog.append("Integer Slop Field 6 = " + slop_int_6 + "\n");
-            dialog.append("Integer Slop Field 7 = " + slop_int_7 + "\n");
-            dialog.append("Integer Slop Field 8 = " + slop_int_8 + "\n");
-            dialog.append("Integer Slop Field 9 = " + slop_int_9 + "\n");
+            infoStr += "Bitmap of prescan options = " + preScanOpts + "\n";
+            infoStr += "Gradient offset in the x-direction = " + gOffsetX + "\n";
+            infoStr += "Gradient offset in the y-direction = " + gOffsetY + "\n";
+            infoStr += "Gradient offset in the z-direction = " + gOffsetZ + "\n";
+            infoStr += "Identifies images as original or unoriginal = " + unOriginal + "\n";
+            infoStr += "Number of EPI shots = " + nEPI + "\n";
+            infoStr += "Effective echo spacing for EPI = " + effEchoSpace + "\n";
+            infoStr += "Views per segment = " + viewsPerSeg + "\n";
+            infoStr += "Respiratory rate, breaths per minute = " + rbpm + "\n";
+            infoStr += "Respiratory trigger point as percent of max = " + rtPoint + "\n";
+            infoStr += "Type of receiver used = " + rcvType + "\n";
+            infoStr += "Peak rate of change in gradient field, tesla/sec = " + dbdt + "\n";
+            infoStr += "Limit in units of percent of theoretical curve = " + dbdtPer + "\n";
+            infoStr += "PSD estimated limit in units of percent = " + estdbdtPer + "\n";
+            infoStr += "PSD estimated limit in Tesla/sec = " + estdbdtts + "\n";
+            infoStr += "Avg head SAR = " + sarAvgHead + "\n";
+            infoStr += "Negative scan spacing for overlap slices = " + negScanSpacing + "\n";
+            infoStr += "Offset Frequency-Mag. Transfer = " + offsetFreq + "\n";
+            infoStr += "Defines how the following user tags are to be filled in = " + userUsageTag + "\n";
+            infoStr += "Define what process fills in the user CVs, ifcc or TIR = " + userFillMapMSW + "\n";
+            infoStr += "Define what process fills in the user CVs, ifcc or TIR = " + userFillMapLSW + "\n";
+            infoStr += "User Variable 25 = " + user25 + "\n";
+            infoStr += "User Variable 26 = " + user26 + "\n";
+            infoStr += "User Variable 27 = " + user27 + "\n";
+            infoStr += "User Variable 28 = " + user28 + "\n";
+            infoStr += "User Variable 29 = " + user29 + "\n";
+            infoStr += "User Variable 30 = " + user30 + "\n";
+            infoStr += "User Variable 31 = " + user31 + "\n";
+            infoStr += "User Variable 32 = " + user32 + "\n";
+            infoStr += "User Variable 33 = " + user33 + "\n";
+            infoStr += "User Variable 34 = " + user34 + "\n";
+            infoStr += "User Variable 35 = " + user35 + "\n";
+            infoStr += "User Variable 36 = " + user36 + "\n";
+            infoStr += "User Variable 37 = " + user37 + "\n";
+            infoStr += "User Variable 38 = " + user38 + "\n";
+            infoStr += "User Variable 39 = " + user39 + "\n";
+            infoStr += "User Variable 40 = " + user40 + "\n";
+            infoStr += "User Variable 41 = " + user41 + "\n";
+            infoStr += "User Variable 42 = " + user42 + "\n";
+            infoStr += "User Variable 43 = " + user43 + "\n";
+            infoStr += "User Variable 44 = " + user44 + "\n";
+            infoStr += "User Variable 45 = " + user45 + "\n";
+            infoStr += "User Variable 46 = " + user46 + "\n";
+            infoStr += "User Variable 47 = " + user47 + "\n";
+            infoStr += "User Variable 48 = " + user48 + "\n";
+            infoStr += "Integer Slop Field 6 = " + slop_int_6 + "\n";
+            infoStr += "Integer Slop Field 7 = " + slop_int_7 + "\n";
+            infoStr += "Integer Slop Field 8 = " + slop_int_8 + "\n";
+            infoStr += "Integer Slop Field 9 = " + slop_int_9 + "\n";
 
             if (mr_padding != null) {
-                dialog.append("Spare Space = " + mr_padding.trim() + "\n");
+                infoStr += "Spare Space = " + mr_padding.trim() + "\n";
             }
         }
-
-        dialog.setSize(600, 500);
+        
+        return infoStr;
     }
 
     /**

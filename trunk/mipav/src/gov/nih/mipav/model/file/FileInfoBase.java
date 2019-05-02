@@ -1378,10 +1378,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public void displayPrimaryInfo(final JDialogText dialog, final TransMatrix matrix) {
         dialog.setMessage("\n                     Image information\n\n");
-
-        for (int i = 0; i < extents.length; i++) {
-            dialog.append("Dimension " + i + ":          " + extents[i] + "\n");
-        }
         
         dialog.append(getPrimaryInfo(matrix));
     }

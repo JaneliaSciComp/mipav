@@ -7949,6 +7949,7 @@ public class FileIO {
 
                 if (fileList[i] != null) {
                     imageFile.setFileName(fileList[i]);
+                    imageFile.getFileInfo().setMultiFile(true);
                     imageFile.readImageFileData();
                     imageFile.readImage(buffer);
 
@@ -8185,6 +8186,7 @@ public class FileIO {
 
                 if (fileList[i] != null) {
                     imageFile.setFileName(fileList[i]);
+                    imageFile.getFileInfo().setMultiFile(true);
                     imageFile.readImageFileData();
                     imageFile.readImage(buffer);
 
