@@ -280,7 +280,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         }
     	// Uae echo time in milliseconds
     	TE = Double.valueOf(TEString.trim()).doubleValue();
-    	System.out.println("TE = " + TE);
+    	//System.out.println("TE = " + TE);
         if (tagTable.getValue("0020,0105") != null) {
         	// Number of temporal positions
             FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0105"));
@@ -335,6 +335,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         TR = Float.valueOf(TRString.trim()).floatValue();
         // Change delT to seconds
         delT = (float)(TR * 1.0E-3);
+        //System.out.println("delT = " + delT);
         resolutions[3] = delT;
         for (i = 0; i < 3; i++) {
         	units[i] = Unit.MILLIMETERS.getLegacyNum();
