@@ -1363,7 +1363,21 @@ public class FileInfoDicom extends FileInfoBase {
                     for (int q = 0; q < dimExtents[1]; q++) {
                         lut.set(0, q, 1); // the alpha channel is preloaded.
                     }
-    
+                } else if (photometricInterp.equals("PALETTE COLOR")
+                            && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                            && (bitsAllocated == 16)) {
+                        setDataType(ModelStorageBase.USHORT);
+                        displayType = ModelStorageBase.USHORT;
+                        bytesPerPixel = 2;
+        
+                        final int[] dimExtents = new int[2];
+                        dimExtents[0] = 4;
+                        dimExtents[1] = 256;
+                        lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
+        
+                        for (int q = 0; q < dimExtents[1]; q++) {
+                            lut.set(0, q, 1); // the alpha channel is preloaded.
+                        }
                 } else {
                     Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation" + "\n",
                             Preferences.DEBUG_FILEIO);
