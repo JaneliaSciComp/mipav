@@ -525,6 +525,8 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
                 case OW:
                     if (value instanceof char[]) {
                         setValue(value, ((char[]) value).length);
+                    } else if (value instanceof Short[]) {
+                        setValue(value, ((Short[]) value).length);
                     } else {
                         setValue(value, ((Byte[]) value).length);
                     }
