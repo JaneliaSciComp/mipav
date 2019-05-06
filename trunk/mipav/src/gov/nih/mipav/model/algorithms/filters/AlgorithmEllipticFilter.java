@@ -19,50 +19,50 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------\
 	// FORTRAN variables
 	// inputs
-    private int n1; // degree of filter, any positive integer > 1
-    private double apd; // passband ripple in dB = 10*log(1 + e[0]**2)
+    private int n; // degree of filter, any positive integer > 1
+    private double rp; // passband ripple in dB = 10*log(1 + e[0]**2)
     private double k; // elliptic modulus 0.0 <= k <= 1.0
     private boolean displayOutput;
     
-    // int no = n1 % 2
-    // int n2 = (n1 + no)/2;
-    // int n3 = (n1 - no)/2
+    private int no; //  n % 2
+    private int n2; // (n + no)/2;
+    private int n3; // (n - no)/2
     
-    // outputs
-    // Zeros
-    private double cafreal[];  // declared as double[n2]
-    private double cafimag[];  // declared as double[n2]
-    // Poles
-    private double df[]; // declared as double[n3];;
+    
     private boolean runFORTRAN;
     
     // MATLAB variables
     // inputs
     // Order of an normalized elliptic analog lowpass filter
-    int n;
+    //int n;
     // decibels of ripple in the passband
-    double rp;
+    // double rp;
     // decibels stopband is down
-    double rs;
-    
-    // int no = n % 2;
-    // int n3 = (n - no)/2
+    private double rs;
     
     // outputs
-    double zimag[]; // if n == 1, zimag = null, else declared as new double[2*n3]
-    double preal[]; // if n == 1, preal = new double[1], else declared as new double[2*n3 + no]; if odd last pole is purely real
-    double pimag[]; // if n == 1, pimag = null, else declared as new double[2*n3]
-    double gain[]; // declared as new double[1]
+    private double zimag[]; // if n == 1, zimag = null, else declared as new double[2*n3]
+    private double preal[]; // if n == 1, preal = new double[1], else declared as new double[2*n3 + no]; if odd last pole is purely real
+    private double pimag[]; // if n == 1, pimag = null, else declared as new double[2*n3]
+    private double gain[]; // declared as new double[1]
+    // Polynomial coefficients for low pass gain
+    private double N2[];
+    private double N0[];
+    private double D2[];
+    private double D1[];
+    private double D0[];
+    private boolean test = true;
     
    /**
     * The  FORTRAN example in the article of n = 7, apd = 0.1dB, k = 0.8 gives in Table VI:
-    *  Zeros:
+    * Make FORTRAN zeros poles and FORTRAN poles zeros
+    *  Poles:
     *  -0.0455944342 + j1.026557002
     *  -0.1713670100 + j0.918389608
     *  -0.3689660125 + j0.603979789
     *  -0.4980421689 + j0.0
     *  
-    *  Poles:
+    *  Zeros:
     *  1.268831784
     *  1.467798747
     *  2.384834232
@@ -90,24 +90,28 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    public AlgorithmEllipticFilter() {
+    	
+    }
 
     /**
      * 
-     * @param n1
+     * @param n
      * @param apd
      * @param k
-     * @param cafreal
-     * @param cafimag
-     * @param df
+     * @param preal
+     * @param pimag
+     * @param zimag
      * @param displayOutput
      */
-    public AlgorithmEllipticFilter(int n1, double apd, double k, double cafreal[], double cafimag[], double df[], boolean displayOutput) {
-        this.n1 = n1;
-        this.apd = apd;
+    public AlgorithmEllipticFilter(int n, double rp, double k, double preal[], double pimag[], double zimag[], boolean displayOutput) {
+        this.n = n;
+        this.rp = rp;
         this.k = k;
-        this.cafreal = cafreal;
-        this.cafimag = cafimag;
-        this.df = df;
+        this.preal = preal;
+        this.pimag = pimag;
+        this.zimag = zimag;
         this.displayOutput = displayOutput;
         this.runFORTRAN = true;
     }
@@ -134,21 +138,40 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     }
     
     public void runAlgorithm() {
-    	if (runFORTRAN) {
+    	if (test) {
+    		runTest();
+    	}
+    	else if (runFORTRAN) {
     	    runFORTRAN();	
     	}
     	else {
     		ellipap1();
     	}
     }
+    
+    public void runTest() {
+    	double wc;
+    	n = 7;
+    	rp = 0.1;
+    	rs = 55.43;
+    	no = n % 2;
+    	n3 = (n - no)/2;
+    	zimag = new double[2*n3];
+    	preal = new double[2*n3 + no];
+    	pimag = new double[2*n3];
+    	gain = new double[1];
+        new AlgorithmEllipticFilter(n, rp, rs, zimag, preal, pimag, gain, true);
+    	ellipap1();
+    	generatePoly();
+    	wc = find3dBfrequency();
+    	System.out.println("3dB frequency = " + wc);
+    	return;
+    }
 
     /**
      * Starts the program.
      */
     public void runFORTRAN() {
-        int no;
-        int n2;
-        int n3;
         double dbn = Math.log(10.0)/20.0;
         double apn;
         double e[] = new double[10];
@@ -159,7 +182,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         int i;
         int m2 = 1;
         double g[] = new double[10];
-        int n;
+        int j;
         double var;
         double asd;
         double a;
@@ -176,10 +199,10 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         double d;
         double denom2;
         
-        no = n1 % 2;
-        n2 = (n1 + no)/2;
-        n3 = (n1 - no)/2;
-        apn = dbn * apd;
+        no = n % 2;
+        n2 = (n + no)/2;
+        n3 = (n - no)/2;
+        apn = dbn * rp;
         e[0] = Math.sqrt(2.0 * Math.exp(apn) * Math.sinh(apn));
         ek[0] = k;
         
@@ -194,13 +217,13 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         } while (v > 1.0E-15);
         for (i = 0; i <= 10; i++) {
             m2 = m1 - i;
-            g[m2] = 4.0 * Math.pow((ek[m1]/4.0), (n1/Math.pow(2.0, i)));
+            g[m2] = 4.0 * Math.pow((ek[m1]/4.0), (n/Math.pow(2.0, i)));
             if (g[m2] > 1.0E-305) {
             	break;
             }
         } // for (i = 0; i <= 10; i++)
-        for (n = m2; n>= 1; n--) {
-        	g[n-1] = 2.0*Math.sqrt(g[n])/(1.0 + g[n]);
+        for (j = m2; j >= 1; j--) {
+        	g[j-1] = 2.0*Math.sqrt(g[j])/(1.0 + g[j]);
         }
         var = e[0]/g[0];
         asd = 10.0*Math.log10(1.0 + var*var);
@@ -210,13 +233,13 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         Preferences.debug("Stopband minimm loss = " + asd + " dB\n", Preferences.DEBUG_ALGORITHM);
         
         // Compute poles and zeros
-        for (n = 1; n <= m2; n++) {
-            a = (1.0 + g[n])*e[n-1]/2.0;
-            e[n] = a + Math.sqrt(a*a + g[n]);
+        for (j = 1; j <= m2; j++) {
+            a = (1.0 + g[j])*e[j-1]/2.0;
+            e[j] = a + Math.sqrt(a*a + g[j]);
         }
-        u2 = Math.log((1.0 + Math.sqrt(1.0 + e[m2]*e[m2]))/e[m2])/n1;
+        u2 = Math.log((1.0 + Math.sqrt(1.0 + e[m2]*e[m2]))/e[m2])/n;
         for (i = 1; i <= n3; i++) {
-            u1 = (2*i - 1)*pi2/n1;	
+            u1 = (2*i - 1)*pi2/n;	
             cosu1 = Math.cos(u1);
             coshu2 = Math.cosh(u2);
             sinu1 = Math.sin(u1);
@@ -225,55 +248,55 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
             creal = -sinu1*sinhu2/denom;
             cimag = -cosu1*coshu2/denom;
             d = 1.0/cosu1;
-            for (n = m1; n >= 1; n--) {
+            for (j = m1; j >= 1; j--) {
             	denom = creal*creal + cimag*cimag;
-            	denom2 = (1.0 + ek[n]);
-            	creal = (creal - ek[n]*creal/denom)/denom2;
-            	cimag = (cimag + ek[n]*cimag/denom)/denom2;
-            	d = (d + ek[n]/d)/denom2;
-            } // for (n = m1; n >= 1; n--)
+            	denom2 = (1.0 + ek[j]);
+            	creal = (creal - ek[j]*creal/denom)/denom2;
+            	cimag = (cimag + ek[j]*cimag/denom)/denom2;
+            	d = (d + ek[j]/d)/denom2;
+            } // for (j = m1; j >= 1; j--)
             denom = creal*creal + cimag*cimag;
-            cafreal[i-1] = creal/denom;
-            cafimag[i-1] = -cimag/denom;
-            df[i-1] = d/ek[0];
+            preal[i-1] = creal/denom;
+            pimag[i-1] = -cimag/denom;
+            zimag[i-1] = d/ek[0];
         } // for (i = 1; i <= n3; i++)
         if (no == 1) {
         	a = 1.0/Math.sinh(u2);
-        	for (n = m1; n >= 1; n--) {
-        		a = (a - ek[n]/a)/(1.0 + ek[n]);
-        	} // for (n = m1; n >= 1; n--)
-        	cafreal[n2-1] = -1.0/a;
-        	cafimag[n2-1] = 0.0;
+        	for (j = m1; j >= 1; j--) {
+        		a = (a - ek[j]/a)/(1.0 + ek[j]);
+        	} // for (j = m1; j >= 1; j--)
+        	preal[n2-1] = -1.0/a;
         } // if (no == 1)
         
         // Write output data
         if (displayOutput) {
-            System.out.println("Zeros:");
-        }
-        Preferences.debug("Zeros:\n", Preferences.DEBUG_ALGORITHM);
-        for (i = 0; i < n2; i++) {
-        	if (displayOutput) {
-        	    System.out.println(cafreal[i] + "  +  j * " + cafimag[i]);
-        	}
-        	Preferences.debug(cafreal[i] + "  +  j * " + cafimag[i], Preferences.DEBUG_ALGORITHM);
-        }
-        if (displayOutput) {
             System.out.println("Poles:");
         }
         Preferences.debug("Poles:\n", Preferences.DEBUG_ALGORITHM);
+        for (i = 0; i < n2; i++) {
+        	if (displayOutput) {
+        	    System.out.println(preal[i] + "  +  j * " + pimag[i]);
+        	}
+        	Preferences.debug(preal[i] + "  +  j * " + pimag[i], Preferences.DEBUG_ALGORITHM);
+        }
+        if (displayOutput) {
+            System.out.println("Zero:");
+        }
+        Preferences.debug("Zero:\n", Preferences.DEBUG_ALGORITHM);
         for (i = 0; i < n3; i++) {
         	if (displayOutput) {
-        	    System.out.println(String.valueOf(df[i]));
+        	    System.out.println(String.valueOf(zimag[i]));
         	}
-        	Preferences.debug(String.valueOf(df[i]) + "\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug(String.valueOf(zimag[i]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         return;
     }
     
     public void ellipap1() {
+    	// For n even, n poles and n zeros
+    	// For n odd, n poles, 1 of which is real, and n - 1 zeros
+    	// As the stop band attenuation goes to infinity, the Elliptic goes to Chebyshev
     	double dbn;
-    	int no;
-    	int n3;
     	double apn;
     	double asn;
     	double e[] = new double[10];
@@ -380,6 +403,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
             zimag[2*n3 - 2*index + 1] = df[index-1];
         } // for (index = 1; index <= n3; index++)
         if (no == 1) {
+        	// The real pole for odd pole counts
             a = 1.0/Math.sinh(u2);
             for (en = m1-1; en >= 1; en--) {
             	a = (a - ek[en]/a)/(1.0 + ek[en]);	
@@ -440,6 +464,99 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         }
         Preferences.debug("Gain = " + gain[0] + "\n", Preferences.DEBUG_ALGORITHM);
         return;
+    }
+    
+    public void generatePoly() {
+    	int i;
+        N2 = new double[n3];
+        N0 = new double[n3];
+        D2 = new double[n3];
+        D1 = new double[n3+no];
+        D0 = new double[n3+no];
+        for (i = 0; i < n3; i++) {
+        	N2[i] = 1.0;
+        	D2[i] = 1.0;
+        }
+        if (runFORTRAN) {
+        	for (i = 0; i < n3; i++) {
+        		N0[i] = zimag[i]*zimag[i];
+        		D1[i] = -2.0*preal[i];
+        		D0[i] = preal[i]*preal[i] + pimag[i]*pimag[i];
+        	}
+        	if (no == 1) {
+        		D1[n3] = 1.0;
+        		D0[n3] = -preal[n3];
+        	}
+        }
+        else {
+        	for (i = 0; i < n3; i++) {
+        		N0[i] = zimag[2*i]*zimag[2*i];
+        		D1[i] = -2.0*preal[2*i];
+        		D2[i] = preal[2*i]*preal[2*i] + pimag[2*i]*pimag[2*i];
+        	}
+        	if (no == 1) {
+        		D1[n3] = 1.0;
+        		D0[n3] = -preal[2*n3];
+        	}
+        }
+    }
+    
+    
+    public double findGain(double w) {
+    	int i;
+    	double gain = 1.0;
+    	for (i = 0; i < n3; i++) {
+    		gain *= (N2[i]*w*w + N0[i]);
+    	}
+    	for (i = 0; i < n3; i++) {
+    		gain /= (D2[i]*w*w + D1[i]*w + D0[i]);
+    	}
+    	if (no == 1) {
+    		gain /= (D1[n3]*w + D0[n3]);
+    	}
+    	return gain;
+    	
+    }
+    
+    public double find3dBfrequency() {
+    	// Find frequency where gain = 1/sqrt(2)
+    	double desiredGain = 1.0/Math.sqrt(2.0);
+    	double epsilon = 1.0E-10;
+    	double wc = 1.0;
+    	double wlow = 1.0;
+    	double whigh = 1.0;
+    	double gain;
+    	gain = findGain(wc);
+    	if (Math.abs(gain-desiredGain) < epsilon) {
+    		return wc;
+    	}
+    	if (gain < desiredGain) {
+    		while (gain < desiredGain) {
+    			whigh = wc;
+    			wc /= 10.0;
+    			gain = findGain(wc);
+    		}
+    		wlow = wc;
+    	}
+    	else {
+    		while (gain > desiredGain) {
+    			wlow = wc;
+    			wc *= 10.0;
+    			gain = findGain(wc);
+    		}
+    		whigh = wc;
+    	}
+    	while (Math.abs(gain - desiredGain) >= epsilon) {
+    		wc = Math.sqrt(wlow * whigh);
+    		gain = findGain(wc);
+    		if (gain < desiredGain) {
+    			whigh = wc;
+    		}
+    		else {
+    			wlow = wc;
+    		}
+    	}
+    	return wc;
     }
     
     /**
