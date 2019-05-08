@@ -2075,7 +2075,7 @@ public class FileIO {
                         
                         boolean validInstanceSort = false;
                         
-                        if ( ! (validInstanceSort = FileIO.sort(instNumArr, indexArr, instanceNumsLength))) {
+                        if ( ! (validInstanceSort = FileIO.sort(instNumArr, indexArr, instNumArr.length))) {
                             Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                             System.err.println("FileIO: instance numbers sort failed on DTI vol " + i);
                         }
