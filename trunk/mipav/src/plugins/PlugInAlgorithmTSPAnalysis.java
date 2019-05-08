@@ -1134,7 +1134,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    minsearch.driver();
 		    		    	    exitStatus = minsearch.getExitStatus();
 		    		    	    p = minsearch.getParameters();
-		    		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
+		    		    	    if (exitStatus >= 0){
 		    		    	    	// Normal termination
 		    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
 		    					    CBF[z][y][x] = p[0];
@@ -1686,7 +1686,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    minsearch.driver();
         		    	    exitStatus = minsearch.getExitStatus();
         		    	    p = minsearch.getParameters();
-        		    	    if ((exitStatus >= 0) && (p[1] >= 0) && (p[1] < 75)) {
+        		    	    if (exitStatus >= 0) {
         		    	    	// Normal termination
         		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
         					    CBF[y][x] = p[0];
@@ -1729,7 +1729,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.b = b;
         	this.xdata = xdata;
         	
-        	bounds = 0; // bounds = 0 means unconstrained
+        	bounds = 2; // bounds = 0 means unconstrained
+        	bl[0] = -Double.MAX_VALUE;
+        	bu[0] = Double.MAX_VALUE;
+        	bl[1] = 1.0E-10;
+        	bu[1] = 74.999999;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
