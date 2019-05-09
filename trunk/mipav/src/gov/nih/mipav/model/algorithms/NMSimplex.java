@@ -1,3 +1,6 @@
+package gov.nih.mipav.model.algorithms;
+
+import gov.nih.mipav.view.*;
 /**
 * nmsimplex.java
 * 
@@ -39,6 +42,29 @@
 		}
 	}
 	
+		public class Constraint implements Constraints
+	{
+		double round2(double num, int precision)
+	 {
+	 	double rnum;
+	 	int tnum;
+	
+	 	rnum = num*Math.pow(10,precision);
+	 	tnum = (int)(rnum < 0 ? rnum-0.5 : rnum + 0.5);
+	 	rnum = tnum/Math.pow(10,precision);
+	
+	 	return rnum;
+	 }
+		public void getConstrainedValues(double x[], int n) {
+			// round to 2 decimal places
+	   int i;
+	
+	   for (i=0; i<n; i++) {
+	     x[i] = round2(x[i],2);
+	   }
+		}
+	}
+	
 		public class Testfun
 	{
 		public static void main(String[] args) throws IOException
@@ -61,19 +87,10 @@
 	
 	*/
 
-interface Constraints
-{
-  public void getConstrainedValues(double x[], int n);
-}
 
 
-interface Objfun 
-{
-  public abstract double evalObjfun(double x[]);
-}
 
-
-public class NMSimplex 
+public abstract class NMSimplex 
 {
   static final int MAX_IT = 1000;      /* maximum number of iterations */
   static final double ALPHA  = 1.0;       /* reflection coefficient */
@@ -82,8 +99,8 @@ public class NMSimplex
 
   public NMSimplex(double start[], int n, double EPSILON, double scale, boolean display) 
   {
-    Constraints c = new Constraint();
-    Objfun objf = new Objfunc();
+    //Constraints c = new Constraint();
+    //Objfun objf = new Objfunc();
     
     
     
@@ -130,12 +147,14 @@ public class NMSimplex
           v[i][j] = qn + start[j];
         }
       }
-      c.getConstrainedValues(v[i],n);
+      //c.getConstrainedValues(v[i],n);
+      getConstrainedValues(v[i],n);
     }
 
     /* find the initial function values */
     for (j=0;j<=n;j++) {
-      f[j] = objf.evalObjfun(v[j]);
+      //f[j] = objf.evalObjfun(v[j]);
+    	f[j] = evalObjFun(v[j]);
     }
 
     k = n+1;
@@ -193,8 +212,10 @@ public class NMSimplex
   			vr[j] = vm[j]+ALPHA*(vm[j]-v[vg][j]);
   		}
       
-      c.getConstrainedValues(vr,n);
-  		fr = objf.evalObjfun(vr);
+      //c.getConstrainedValues(vr,n);
+      getConstrainedValues(vr,n);
+  		//fr = objf.evalObjfun(vr);
+        fr = evalObjfun(vr);
   		k++;
 
   		if (fr < f[vh] && fr >= f[vs]) {
@@ -211,8 +232,10 @@ public class NMSimplex
   				ve[j] = vm[j]+GAMMA*(vr[j]-vm[j]);
   			}
 
-        c.getConstrainedValues(ve,n);
-  			fe = objf.evalObjfun(ve);
+        //c.getConstrainedValues(ve,n);
+        getConstrainedValues(ve,n);
+  			//fe = objf.evalObjfun(ve);
+            fe = evalObjfun(ve);
   			k++;
 
   			/* by making fe < fr as opposed to fe < f[vs], 			   
@@ -242,8 +265,10 @@ public class NMSimplex
   					vc[j] = vm[j]+BETA*(vr[j]-vm[j]);
   				}
 
-          c.getConstrainedValues(vc,n);
-  				fc = objf.evalObjfun(vc);
+          //c.getConstrainedValues(vc,n);
+          getConstrainedValues(vc,n);
+  				//fc = objf.evalObjfun(vc);
+  				fc = evalObjfun(vc);
   				k++;
   			}
   			else {
@@ -253,8 +278,10 @@ public class NMSimplex
   					vc[j] = vm[j]-BETA*(vm[j]-v[vg][j]);
   				}
 
-          c.getConstrainedValues(vc,n);
-  				fc = objf.evalObjfun(vc);
+          //c.getConstrainedValues(vc,n);
+          getConstrainedValues(vc,n);
+  				//fc = objf.evalObjfun(vc);
+  				fc = evalObjfun(vc);
   				k++;
   			}
 
@@ -279,12 +306,16 @@ public class NMSimplex
   					}
   				}
 
-          c.getConstrainedValues(v[vg],n);
-  				f[vg] = objf.evalObjfun(v[vg]);
+          //c.getConstrainedValues(v[vg],n);
+          getConstrainedValues(v[vg],n);
+  				//f[vg] = objf.evalObjfun(v[vg]);
+  				f[vg] = evalObjfun(v[vg]);
   				k++;
 
-          c.getConstrainedValues(v[vh],n);
-  				f[vh] = objf.evalObjfun(v[vh]);
+          //c.getConstrainedValues(v[vh],n);
+          getConstrainedValues(v[vh],n);
+  				//f[vh] = objf.evalObjfun(v[vh]);
+  				f[vh] = evalObjfun(v[vh]);
   				k++;
   			}
   		}
@@ -340,5 +371,16 @@ public class NMSimplex
 
   	//return min;
   }
+  
+//interface Constraints
+//{
+  public abstract void getConstrainedValues(double x[], int n);
+//}
+
+
+//interface Objfun 
+//{
+  public abstract double evalObjfun(double x[]);
+//}
 
 }
