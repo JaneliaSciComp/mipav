@@ -24,6 +24,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
+import gov.nih.mipav.model.algorithms.NMSimplex;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
@@ -120,7 +121,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double CBV[][][];
     	double CBF[][][];
     	double MTT[][][];
-    	double chiSquared[][][];
+    	//double chiSquared[][][];
     	int zDim;
     	int length;
     	int volume;
@@ -202,14 +203,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double sumb;
     	double rcbf;
     	expfun minsearch;
-    	int exitStatus;
-    	double p[];
     	ModelImage CBFImage;
     	ModelImage MTTImage;
     	ModelImage CBVImage;
     	ModelImage TmaxImage;
     	ModelImage TTPImage;
-    	ModelImage chiSquaredImage;
+    	//ModelImage chiSquaredImage;
     	long sumT[];
     	int countT[];
     	boolean test = false;
@@ -1039,7 +1038,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         Tmax = new int[zDim][yDim][xDim];
         //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[zDim][yDim][xDim];
-        chiSquared = new double[zDim][yDim][xDim];
+        //chiSquared = new double[zDim][yDim][xDim];
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
         for (z = 0; z < zDim; z++) {
@@ -1058,7 +1057,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
             	executorService.execute(new endCalc(xDim,yDim,tDim,delT,TE,masking_threshold,
-            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],chiSquared[z]));	
+            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z]));	
             }
             
             executorService.shutdown();
@@ -1080,6 +1079,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         else { // single processor
 		    // Define some variables for fminsearch - initial guess
 		    x0 = new double[]{0.1,4};
+		    int dim = 2;
+            double eps = 1.0e-4;
+            double scale = 1.0;
+            boolean display = false;
 		    xdata = new double[2*tDim];
 		    for (i = 0; i < 2*tDim; i++) {
 		    	xdata[i] = i * delT;
@@ -1130,20 +1133,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    }
 		    		    	    // Shift b to have a peak at origin for fitting
 		    		    	    b = circshift(b,-Tmax[z][y][x]);
-		    		    	    minsearch = new expfun(x0, b, xdata);
+		    		    	    minsearch = new expfun(x0, dim, eps, scale, display, b, xdata);
 		    		    	    minsearch.driver();
-		    		    	    exitStatus = minsearch.getExitStatus();
-		    		    	    p = minsearch.getParameters();
-		    		    	    if (exitStatus >= 0){
+		    		    	    if ((x0[1] > 0) && (x0[1] < 75)) {
 		    		    	    	// Normal termination
 		    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-		    					    CBF[z][y][x] = p[0];
+		    					    CBF[z][y][x] = x0[0];
 		    					    // relCBF is max value of residual function.  Should be similar to CBF,
 		    					    // but may be different.
 		    					    //relCBF[x][y][z] = rcbf;
-		    					    MTT[z][y][x] = p[1];
-		    					    CBV[z][y][x] = rcbf * p[1];
-		    					    chiSquared[z][y][z] = minsearch.getChiSquared();
+		    					    MTT[z][y][x] = x0[1];
+		    					    CBV[z][y][x] = rcbf * x0[1];
 		    		    	    }
 		    		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
 		    		    } // if (alltMeetThreshold)
@@ -1404,7 +1404,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	TTPImage.disposeLocal();
     	TTPImage = null;
     	
-    	chiSquaredImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "chiSquared");
+    	/*chiSquaredImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "chiSquared");
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
@@ -1452,7 +1452,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             return;
         }
         chiSquaredImage.disposeLocal();
-    	chiSquaredImage = null;
+    	chiSquaredImage = null;*/
     	
     	for (t = 0; t < 2*tDim; t++) {
     		D_inv[t] = null;
@@ -1598,11 +1598,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         double CBF[][];
         double MTT[][];
         int Tmax[][];
-        double chiSquared[][];
+        //double chiSquared[][];
     	
     	public endCalc(int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
-    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][],
-    			double chiSquared[][]) {
+    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
         	this.tDim = tDim;
@@ -1614,7 +1613,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.CBF = CBF;
         	this.MTT = MTT;
         	this.Tmax = Tmax;
-        	this.chiSquared = chiSquared;
+        	//this.chiSquared = chiSquared;
         }
     	
     	public void run() {
@@ -1624,6 +1623,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             double C[];
             double b[];
     		x0 = new double[]{0.1,4};
+    		int dim = 2;
+            double eps = 1.0e-4;
+            double scale = 1.0;
+            boolean display = false;
             xdata = new double[2*tDim];
             for (i = 0; i < 2*tDim; i++) {
             	xdata[i] = i * delT;
@@ -1639,8 +1642,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             double sumb;
             double rcbf;
             expfun minsearch;
-        	int exitStatus;
-        	double p[];
             // Iterate
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
@@ -1682,20 +1683,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    }
         		    	    // Shift b to have a peak at origin for fitting
         		    	    b = circshift(b,-Tmax[y][x]);
-        		    	    minsearch = new expfun(x0, b, xdata);
+        		    	    minsearch = new expfun(x0, dim, eps, scale, display, b, xdata);
         		    	    minsearch.driver();
-        		    	    exitStatus = minsearch.getExitStatus();
-        		    	    p = minsearch.getParameters();
-        		    	    if (exitStatus >= 0) {
+        		    	    if ((x0[1] > 0) && (x0[1] < 75)) {
         		    	    	// Normal termination
         		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-        					    CBF[y][x] = p[0];
+        					    CBF[y][x] = x0[0];
         					    // relCBF is max value of residual function.  Should be similar to CBF,
         					    // but may be different.
         					    //relCBF[x][y][z] = rcbf;
-        					    MTT[y][x] = p[1];
-        					    CBV[y][x] = rcbf * p[1];
-        					    chiSquared[y][x] = minsearch.getChiSquared();
+        					    MTT[y][x] = x0[1];
+        					    CBV[y][x] = rcbf * x0[1];
         		    	    }
         		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
         		    } // if (alltMeetThreshold)
@@ -1706,21 +1704,76 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     public void testexpfun() {
     	expfun minsearch;
-    	int exitStatus;
-    	double p[];
     	double x0[] = new double[]{0.1,4};
+    	//double x0[] = new double[]{0.151297958944948,6.48713976636383};
+    	int dim = 2;
+        double eps = 1.0e-10;
+        double scale = 1.0;
+        boolean display = true;
     	double b[] = new double[]{0.07, 0.06};
     	double xdata[] = new double[]{5.0,6.0};
-    	 minsearch = new expfun(x0, b, xdata);
+    	 minsearch = new expfun(x0, dim, eps, scale, display, b, xdata);
  	    minsearch.driver();
- 	    exitStatus = minsearch.getExitStatus();	
- 	    System.out.println("exitStatus = " + exitStatus);
- 	    p = minsearch.getParameters();
- 	    System.out.println("p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
- 	    System.out.println("p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
+ 	    System.out.println("x0[0] = " + x0[0] + " MATLAB answer = 0.151297958944948");
+ 	    System.out.println("x0[1] = " + x0[1] + " MATLAB answer = 6.48713976636383");
     }
     
-    class expfun extends NLConstrainedEngine {
+    
+    class expfun extends NMSimplex {
+    	double b[];
+    	double xdata[];
+    	//int dim = 2;
+		//double eps = 1.0e-4;
+		//double scale = 1.0;
+		//boolean display = false;
+        public expfun(double x0[], int dim, double eps, double scale, boolean display, double b[], double xdata[]) {
+        	super(x0,dim,eps,scale,display);
+        	this.b = b;
+        	this.xdata = xdata;	
+        }
+        
+        public double evalObjfun(double x[]){
+        	int i;
+        	int nPts = b.length;
+        	double diff;
+        	double sum = 0.0;
+        	// Monoexponential decay
+			for (i = 0; i < nPts; i++) {
+			    diff = (x[0]*Math.exp(-1/x[1]*xdata[i])) - b[i];
+			    sum += diff*diff;
+			}
+			return sum;
+        }
+        
+        double round2(double num, int precision)
+   	 {
+   	 	double rnum;
+   	 	int tnum;
+   	
+   	 	rnum = num*Math.pow(10,precision);
+   	 	tnum = (int)(rnum < 0 ? rnum-0.5 : rnum + 0.5);
+   	 	rnum = tnum/Math.pow(10,precision);
+   	
+   	 	return rnum;
+   	 }
+   		public void getConstrainedValues(double x[], int n) {
+   			// round to 2 decimal places
+   	   int i;
+   	
+   	   for (i=0; i<n; i++) {
+   	     x[i] = round2(x[i],2);
+   	   }
+   		}
+   		
+   		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+    }
+    
+    /*class expfun extends NLConstrainedEngine {
     	double b[];
     	double xdata[];
         public expfun(double x0[], double b[], double xdata[]) {
@@ -1751,19 +1804,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			for (int i = 0; i < x0.length; i++) {
 				gues[i] = x0[i];
 			}
-        }
+        }*/
         
         /**
 		 * Starts the analysis.
 		 */
-		public void driver() {
+		/*public void driver() {
 			super.driver();
-		}
+		}*/
 
 		/**
 		 * Display results of displaying exponential fitting parameters.
 		 */
-		public void dumpResults() {
+		/*public void dumpResults() {
 			Preferences
 					.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n",
 							Preferences.DEBUG_ALGORITHM);
@@ -1775,7 +1828,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("a1 " + String.valueOf(a[1]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
-		}
+		}*/
 		
 		/**
 		 * Fit to function.
@@ -1788,7 +1841,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		 *            The derivative values of y with respect to fitting
 		 *            parameters.
 		 */
-		public void fitToFunction(double[] a, double[] residuals,
+		/*public void fitToFunction(double[] a, double[] residuals,
 				double[][] covarMat) {
 			int ctrl;
 			int i;
@@ -1818,7 +1871,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 
 			return;
 		}
-    }
+    }*/
     
     public void mouseClicked(MouseEvent mouseEvent) {
 	     ViewJComponentBase vBase= (ViewJComponentBase)pickImage.getParentFrame().getComponentImage();
