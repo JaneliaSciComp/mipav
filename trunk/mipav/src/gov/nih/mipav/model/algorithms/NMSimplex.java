@@ -96,13 +96,23 @@ public abstract class NMSimplex
   static final double ALPHA  = 1.0;       /* reflection coefficient */
   static final double BETA   = 0.5;       /* contraction coefficient */
   static final double GAMMA  = 2.0;       /* expansion coefficient */
+  
+  private double start[];
+  private int n;
+  private double EPSILON;
+  private double scale;
+  
 
   public NMSimplex(double start[], int n, double EPSILON, double scale, boolean display) 
   {
-    //Constraints c = new Constraint();
-    //Objfun objf = new Objfunc();
+    this.start = start;
+    this.n = n;
+    this.EPSILON = EPSILON;
+    this.scale = scale;
+    this.display = display;
+  }
     
-    
+  public void driver() { 
     
     double v[][] = new double[n+1][n];
     double f[]   = new double[n+1];
@@ -147,14 +157,12 @@ public abstract class NMSimplex
           v[i][j] = qn + start[j];
         }
       }
-      //c.getConstrainedValues(v[i],n);
       getConstrainedValues(v[i],n);
     }
 
     /* find the initial function values */
     for (j=0;j<=n;j++) {
-      //f[j] = objf.evalObjfun(v[j]);
-    	f[j] = evalObjFun(v[j]);
+    	f[j] = evalObjfun(v[j]);
     }
 
     k = n+1;
@@ -212,9 +220,7 @@ public abstract class NMSimplex
   			vr[j] = vm[j]+ALPHA*(vm[j]-v[vg][j]);
   		}
       
-      //c.getConstrainedValues(vr,n);
       getConstrainedValues(vr,n);
-  		//fr = objf.evalObjfun(vr);
         fr = evalObjfun(vr);
   		k++;
 
@@ -232,9 +238,7 @@ public abstract class NMSimplex
   				ve[j] = vm[j]+GAMMA*(vr[j]-vm[j]);
   			}
 
-        //c.getConstrainedValues(ve,n);
         getConstrainedValues(ve,n);
-  			//fe = objf.evalObjfun(ve);
             fe = evalObjfun(ve);
   			k++;
 
@@ -265,9 +269,7 @@ public abstract class NMSimplex
   					vc[j] = vm[j]+BETA*(vr[j]-vm[j]);
   				}
 
-          //c.getConstrainedValues(vc,n);
           getConstrainedValues(vc,n);
-  				//fc = objf.evalObjfun(vc);
   				fc = evalObjfun(vc);
   				k++;
   			}
@@ -278,9 +280,7 @@ public abstract class NMSimplex
   					vc[j] = vm[j]-BETA*(vm[j]-v[vg][j]);
   				}
 
-          //c.getConstrainedValues(vc,n);
           getConstrainedValues(vc,n);
-  				//fc = objf.evalObjfun(vc);
   				fc = evalObjfun(vc);
   				k++;
   			}
@@ -306,15 +306,11 @@ public abstract class NMSimplex
   					}
   				}
 
-          //c.getConstrainedValues(v[vg],n);
           getConstrainedValues(v[vg],n);
-  				//f[vg] = objf.evalObjfun(v[vg]);
   				f[vg] = evalObjfun(v[vg]);
   				k++;
 
-          //c.getConstrainedValues(v[vh],n);
           getConstrainedValues(v[vh],n);
-  				//f[vh] = objf.evalObjfun(v[vh]);
   				f[vh] = evalObjfun(v[vh]);
   				k++;
   			}
@@ -372,15 +368,9 @@ public abstract class NMSimplex
   	//return min;
   }
   
-//interface Constraints
-//{
+
   public abstract void getConstrainedValues(double x[], int n);
-//}
 
-
-//interface Objfun 
-//{
   public abstract double evalObjfun(double x[]);
-//}
 
 }
