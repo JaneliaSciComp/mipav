@@ -99,6 +99,7 @@ public abstract class NMSimplex
   private int n;
   private double EPSILON;
   private double scale;
+  private boolean display;
   
 
   public NMSimplex(double start[], int n, double EPSILON, double scale, boolean display) 
