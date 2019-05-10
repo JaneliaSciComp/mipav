@@ -83,6 +83,24 @@ package gov.nih.mipav.model.algorithms;
 	
 	}
 	
+	My run of Rosenbrock example gives:
+	Starting at double x0[] = new double[]{0.0,0.0};
+	The minimum was found at
+	1.000000e+00
+	1.000000e+00
+	101 Function Evaluations
+	50 Iterations through program
+	
+	This agrees with Nike Hutt's answer:
+	Initial Values
+	  0.00, 0.00, value 1.00
+	  0.97, 0.26, value 46.36
+	  0.26, 0.97, value 81.98
+	  102 Function Evaluations
+	  50 Iterations through program
+	  The minimum was found at
+	  1.00, 1.00, value 0.00
+	
 	*/
 
 
