@@ -629,18 +629,18 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			latticeModel.deleteAnnotations();
 		}
 	}
-	
-//	public void saveAnnotations( final String voiDir ) {
-//		if ( latticeModel != null )
-//		{
-//			latticeModel.saveAnnotations(voiDir);
-//		}
-//	}
-	
+
 	public void showModel( boolean display ) {
 		if ( latticeModel != null )
 		{
 			latticeModel.showModel(display);
+		}		
+	}
+	
+	public void showLattice( boolean display ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.showLattice(display);
 		}		
 	}
 	
@@ -731,6 +731,16 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		return latticeModel.getLatticeStraight();		
 	}
+
+	public boolean isPreview()
+	{
+		if ( latticeModel == null )
+		{
+			return false;
+		}
+		return latticeModel.isPreview( );
+	}
+
 	
 	public void setPreviewMode( boolean preview, VOI lattice, VOI annotations )
 	{

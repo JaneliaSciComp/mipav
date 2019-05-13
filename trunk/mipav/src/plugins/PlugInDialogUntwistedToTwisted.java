@@ -42,6 +42,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 
 import java.awt.BorderLayout;
@@ -78,15 +79,6 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	 * 
 	 */
 	private static final long serialVersionUID = -5858343401705223389L;
-	//	private JRadioButton untwistedToTwisted;
-	//	private JRadioButton twistedToUntwisted;
-	//	private JRadioButton noseCentric;
-	//	private JRadioButton defaultCoords;
-	//	private ModelImage wormImage;
-
-	//	private String baseFileDir;
-	//	private JTextField  baseFileLocText;
-	//	private String baseFileName;
 	private JTextField straightenedAnnotationText;
 	private String straightenedAnnotationFile;
 	private JTextField targetLocText;
@@ -97,14 +89,6 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	private String targetPointsFile;
 	private JTextField inputPointsText;
 	private String inputPointsFile;
-	private JTextField targetImageText;
-	private String targetImageName;
-	private JTextField inputImageText;
-	private String inputImageName;
-	//	private JTextField  baseFileNameText;
-	//	private Vector<Integer> includeRange;
-	//	private JPanel inputsPanel;
-	//	private JTextField rangeFusionText;
 
 	public PlugInDialogUntwistedToTwisted()
 	{
@@ -120,17 +104,6 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	 */
 	public void actionPerformed(ActionEvent event)
 	{
-		//		if ( event.getSource() == twistedToUntwisted && twistedToUntwisted.isSelected() )
-		//		{
-		//			defaultCoords.setSelected(true);
-		//			noseCentric.setSelected(false);
-		//			noseCentric.setEnabled(false);
-		//		}
-		//		if ( event.getSource() == untwistedToTwisted && untwistedToTwisted.isSelected() )
-		//		{
-		//			noseCentric.setEnabled(true);
-		//		}
-
 		String command = event.getActionCommand();
 		if (command.equals("OK")) {
 			if (setVariables()) {
@@ -239,12 +212,6 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 	private void callAlgorithm()
 	{
-//		System.err.println( targetDir );
-//		test(straightenedAnnotationFile);
-//		if ( true ) return;
-//		
-//		System.err.println( straightenedAnnotationFile );
-
 		if ( (targetDir.length() == 0) || (straightenedAnnotationFile.length() == 0) ) {
 			return;
 		}
@@ -256,28 +223,32 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		System.err.println(outputDirName);
 		System.err.println(inputFileName);
 
-		String toTwistedName = targetDir + File.separator + targetDirName + "_results" + File.separator + 
-				"output_images" + File.separator + targetDirName + "_toTwisted.xml";
-		File toTwistedFile = new File( toTwistedName );
+		String parentDir = targetDir.substring(0, targetDir.lastIndexOf(targetDirName) );
+		String imageName = parentDir + File.separator + targetDirName + ".tif";		
+		File imageFile = new File( imageName );
+		System.err.println(imageName + " " + imageFile.exists() );
+		
 		File annotationFile = new File( straightenedAnnotationFile );
 		File targetFile = new File( targetPointsFile );
 		File inputFile = new File( inputPointsFile );
-		System.err.println(toTwistedName + " " + toTwistedFile.exists() );
-		String toTwistedRaw = targetDir + File.separator + targetDirName + "_results" + File.separator + 
-				"output_images" + File.separator + targetDirName + "_toTwisted.raw";
-		File toTwistedFileRaw = new File( toTwistedRaw );
-		System.err.println(toTwistedRaw + "  " + toTwistedFileRaw.exists() );
-		ModelImage toTwisted = null;
-		if ( toTwistedFile.exists() && annotationFile.exists() && toTwistedFileRaw.exists() )
+		
+		ModelImage image = null;
+		if ( imageFile.exists() && annotationFile.exists() )
 		{
 			System.err.println("opening image...");
 			FileIO fileIO = new FileIO();
-			toTwisted = fileIO.readImage(toTwistedName);  
-			if ( toTwisted != null && (toTwisted.getMaxR() != 0) && (toTwisted.getMaxG() != 0) && (toTwisted.getMaxB() != 0) )
+			image = fileIO.readImage(imageName);  
+			if ( image != null  )
 			{
-				AlgorithmTPSpline spline = null;
-				boolean testSpline = false;
-				Vector<String> commonNames = new Vector<String>();
+				// create wormData
+				WormData wormData = new WormData(image);
+				// read final lattice:
+				VOI lattice = wormData.readFinalLattice();
+				// create LatticeModel:
+				LatticeModel latticeModel = new LatticeModel(image, lattice);
+								
+				
+				
 				VOI targetPts = null;
 				VOI inputPts = null;
 				if ( targetFile.exists() && inputFile.exists() )
@@ -289,52 +260,21 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 					if ( targetPts != null && inputPts != null)
 					{
 						checkPointMatch(targetPts, inputPts);
-						findPairs(toTwisted, targetPts, inputPts);
-						
-//						for ( int i = 0; i < targetPts.getCurves().size(); i++ )
-//						{
-//							String targetName = ((VOIText)targetPts.getCurves().elementAt(i)).getText();
-//							for ( int j = 0; j < inputPts.getCurves().size(); j++ )
-//							{
-//								String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
-//
-//								if ( targetName.equals(inputName) )
-//								{
-//									commonNames.add(inputName);
-//									System.err.println("Match found: " + inputName);
-//									break;
-//								}
-//							}
-//						}
-//
-//						int numTargetPts = commonNames.size();
-//						if ( numTargetPts >= 4 ) 
-//						{
-//							testSpline = true;					
-//						}
-//						else {
-//							MipavUtil.displayError( "Target points and input points must have at least 4 matches" );
-//						}
+						findPairs(image, targetPts, inputPts);
 					}
 				}
 
-
-				int dimX = toTwisted.getExtents().length > 0 ? toTwisted.getExtents()[0] : 1;
-				int dimY = toTwisted.getExtents().length > 1 ? toTwisted.getExtents()[1] : 1;
-				int dimZ = toTwisted.getExtents().length > 2 ? toTwisted.getExtents()[2] : 1;
-				//				System.err.println("displaying image...");
-				//				new ViewJFrameImage(toTwisted);
 				VOI annotations = LatticeModel.readAnnotationsCSV(straightenedAnnotationFile);
 				if ( annotations != null )
 				{
 					if ( annotations.getCurves().size() > 0 )
 					{
-						Vector<String> failedList = new Vector<String>();
-						VOI annotationVOI = new VOI( (short)0, inputFileName + "_" + targetDirName, VOI.ANNOTATION, 0 );
+//						Vector<String> failedList = new Vector<String>();
+						VOI annotationsToRetwist = new VOI( (short)0, inputFileName + "_" + targetDirName, VOI.ANNOTATION, 0 );
 						VOI annotationVOISpline = new VOI( (short)0, inputFileName + "_" + targetDirName + "_spline", VOI.ANNOTATION, 0 );
 						for ( int i = 0; i < annotations.getCurves().size(); i++ )
 						{
-							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+							VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 							Vector3f pos = text.elementAt(0);
 							String name = text.getText();
 
@@ -343,99 +283,46 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 							if ( inputSplineL != null )
 							{
 								transformedPt = findSplineTime(pos);
-								VOIText newText = new VOIText();
-								newText.setText(name);
-								newText.add(transformedPt);
-								annotationVOISpline.getCurves().add(newText);
 							}
-//							if ( piecewiseSplines != null )
-//							{
-//								spline = null;
-//								for ( int j = splineBoundsL.getCurves().size() - 1; j >= 0; j-- )
-//								{
-//									Vector3f boundL = splineBoundsL.getCurves().elementAt(j).elementAt(0);
-//									Vector3f boundR = splineBoundsR.getCurves().elementAt(j).elementAt(0);
-//									if ( pos.Z >= boundL.Z && pos.Z >= boundR.Z )
-//									{
-//										spline = piecewiseSplines.elementAt(j);
-//										
-//										System.err.println( "Found spline: " + "  " + name + "   " + ((VOIText)splineBoundsL.getCurves().elementAt(j)).getText() + "   " +
-//												((VOIText)splineBoundsR.getCurves().elementAt(j)).getText() );
-//										break;
-//									}
-//								}
-//								if ( spline != null )
-//								{
-//									float[] temp = spline.getCorrespondingPoint(pos.X, pos.Y, pos.Z);
-//									transformedPt.X = temp[0];
-//									transformedPt.Y = temp[1];
-//									transformedPt.Z = temp[2];
-//									System.err.println("Spline: " + name + " " + pos + " => " + transformedPt );
-//									
-//									VOIText newText = new VOIText();
-//									newText.setText(name);
-//									newText.add(transformedPt);
-//									annotationVOISpline.getCurves().add(newText);
-//								}
-//							}
-
-							if ( ((int)transformedPt.X >= 0) && ((int)transformedPt.X < dimX) && 
-									((int)transformedPt.Y >= 0) && ((int)transformedPt.Y < dimY) &&
-									((int)transformedPt.Z >= 0) && ((int)transformedPt.Z < dimZ)    )
-							{
-								float x = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 1 );
-								float y = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 2 );
-								float z = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 3 );
-								Vector3f newPos = new Vector3f(x, y, z);
-								System.err.println(newPos);
-								if ( !newPos.equals( Vector3f.ZERO ) )
-								{
-									VOIText newText = new VOIText();
-									newText.setText(name);
-									newText.add(newPos);
-
-									annotationVOI.getCurves().add(newText);
-								}
-								else
-								{
-									failedList.add(name);
-								}
-							}
-							else
-							{
-								failedList.add(name);
-							}
+							VOIWormAnnotation newText = new VOIWormAnnotation();
+							newText.setText(name);
+							newText.add(transformedPt);
+							newText.add(transformedPt);
+							// save original position:
+							annotationVOISpline.getCurves().add(newText);
+							// retwist position:
+							VOIWormAnnotation retwistText = new VOIWormAnnotation(newText);
+							retwistText.retwist(true);
+							annotationsToRetwist.getCurves().add( retwistText );
 						}
+						// set the annotations:
+						latticeModel.setAnnotations(annotationsToRetwist);						
+						// retwist:
+						VOI retwistedAnnotations = latticeModel.retwistAnnotations(lattice);
+						
 						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + "_spline.csv", annotationVOISpline);
-						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + "_retwist.csv", annotationVOI);
-						String msg = "Retwisted " + annotationVOI.getCurves().size() + " out of " + annotations.getCurves().size() + " annotations" + "\n";
-						for ( int j = 0; j < failedList.size(); j++ )
-						{
-							msg += failedList.elementAt(j) + " failed" + "\n";
-						}
+						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + "_retwist.csv", retwistedAnnotations);
+						String msg = "Retwisted " + retwistedAnnotations.getCurves().size() + " out of " + annotations.getCurves().size() + " annotations" + "\n";
+//						for ( int j = 0; j < failedList.size(); j++ )
+//						{
+//							msg += failedList.elementAt(j) + " failed" + "\n";
+//						}
 						MipavUtil.displayInfo( msg );
 					}
 				}
-				toTwisted.disposeLocal(false);
-				toTwisted = null;
-			}
-			else if ((toTwisted.getMaxR() == 0) && (toTwisted.getMaxG() == 0) && (toTwisted.getMaxB() == 0)) {
-				MipavUtil.displayError( "Error reading file: " + toTwistedFile.getName() );
+				image.disposeLocal(false);
+				image = null;
 			}
 			else
 			{
 				MipavUtil.displayError( "Error reading file: " + 
-						toTwistedFile.getName() + " " +  annotationFile.getName() + " " + targetFile.getName() + " " + inputFile.getName() );
+						imageFile.getName() + " " +  annotationFile.getName() + " " + targetFile.getName() + " " + inputFile.getName() );
 				System.err.println("image open failed");
 			}
 		}
-		else if ( !toTwistedFileRaw.exists() )
+		else if ( !imageFile.exists() )
 		{
-			MipavUtil.displayError( "Error reading file: " + toTwistedFileRaw.getName() );
-		}
-		else
-		{
-			MipavUtil.displayError( "Error reading file: " + toTwistedFile.getName() );
+			MipavUtil.displayError( "Error reading file: " + imageFile.getName() );
 		}
 	}     
 
@@ -494,14 +381,6 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		regPanel.add(inputPointsText.getParent(), gbc);
 		gbc.gridy++;
 
-		targetImageText = gui.buildFileField("Target image (optional) - transform to this space: ", "", false, JFileChooser.FILES_ONLY, this);
-		regPanel.add(targetImageText.getParent(), gbc);
-		gbc.gridy++;
-
-		inputImageText = gui.buildFileField("Input image (optional) - transform this image to target space: ", "", false, JFileChooser.FILES_ONLY, this);
-		regPanel.add(inputImageText.getParent(), gbc);
-		gbc.gridy++;
-
 
 
 		JPanel dirPanel = new JPanel(new GridBagLayout());
@@ -511,38 +390,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		targetLocText = gui.buildFileField("Target directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
 		dirPanel.add(targetLocText.getParent(), gbc);
 		gbc.gridy++;
-
-		//		baseFileNameText = gui.buildField("Base images name: ", "Decon");
-		//		inputsPanel.add(baseFileNameText.getParent(), gbc);
-		//		gbc.gridy++;
-		//
-		//		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", "             ");
-		//		inputsPanel.add(rangeFusionText.getParent(), gbc);
-		//		gbc.gridy++;
-
-		//		ButtonGroup group = new ButtonGroup();
-		//		untwistedToTwisted = gui.buildRadioButton( "untwisted->twisted", true);
-		//		untwistedToTwisted.addActionListener(this);
-		//		inputsPanel.add(untwistedToTwisted.getParent(), gbc);
-		//		group.add(untwistedToTwisted);
-		//		gbc.gridy++;
-		//		twistedToUntwisted = gui.buildRadioButton( "twisted->untwisted", false);
-		//		twistedToUntwisted.addActionListener(this);
-		//		inputsPanel.add(twistedToUntwisted.getParent(), gbc);
-		//		group.add(twistedToUntwisted);
-		//
-		//
-		//		gbc.gridy++;
-		//		group = new ButtonGroup();
-		//		defaultCoords = gui.buildRadioButton("default coordinates", true);
-		//		inputsPanel.add(defaultCoords.getParent(), gbc);
-		//		group.add(defaultCoords);
-		//		gbc.gridy++;
-		//		noseCentric = gui.buildRadioButton("nose centered", false);
-		//		inputsPanel.add(noseCentric.getParent(), gbc);
-		//		group.add(noseCentric);
-		//		gbc.gridy++;
-
+		
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(inputsPanel, BorderLayout.NORTH);
 		panel.add(regPanel, BorderLayout.CENTER);
@@ -764,39 +612,6 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 		targetPointsFile = targetPointsText.getText();
 		inputPointsFile = inputPointsText.getText();
-
-		targetImageName = targetImageText.getText();
-		inputImageName = inputImageText.getText();
-
-		//		baseFileDir = baseFileLocText.getText();
-		//		includeRange = new Vector<Integer>();
-		//		String rangeFusion = rangeFusionText.getText();
-		//		if(rangeFusion != null) {  
-		//			String[] ranges = rangeFusion.split("[,;]");
-		//			for(int i=0; i<ranges.length; i++) {
-		//				String[] subset = ranges[i].split("-");
-		//				int lowerBound = -1, bound = -1;
-		//				for(int j=0; j<subset.length; j++) {
-		//					try {
-		//						bound = Integer.valueOf(subset[j].trim());
-		//						if(lowerBound == -1) {
-		//							lowerBound = bound;
-		//							includeRange.add(lowerBound);
-		//						} 
-		//					} catch(NumberFormatException e) {
-		//						Preferences.debug("Invalid range specified: "+bound, Preferences.DEBUG_ALGORITHM);
-		//					}
-		//				}
-		//
-		//				for(int k=lowerBound+1; k<=bound; k++) {
-		//					includeRange.add(k);
-		//				}
-		//			}
-		//		}
-		//
-		//		if(includeRange.size() == 0) {
-		//			includeRange = null;
-		//		}
 
 		return true;
 	}
@@ -1496,124 +1311,5 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			inputPts.getCurves().clear();
 			inputPts.getCurves().addAll(temp.getCurves());
 		}
-	}
-	
-	private AlgorithmTPSpline createSpline(ModelImage toTwisted, Vector<String> commonNames, VOI targetPts, VOI inputPts, boolean printTest, boolean useImages ) {
-		ModelImage inputImage = toTwisted;
-		ModelImage targetImage = null;
-		boolean writeOutput = false;
-		if ( useImages ) {
-			FileIO fileIO;
-			if ( inputImageName != null ) {
-				File inputImageFile = new File( inputImageName );
-				if ( inputImageFile.exists() )
-				{
-					fileIO = new FileIO();
-					inputImage = fileIO.readImage(inputImageName);
-				}
-			}
-			if ( inputImage == null )
-			{
-				// no input image to warp, use the toTwisted image for dimensions, etc.
-				inputImage = toTwisted;
-				writeOutput = false;
-			}
-			if ( (targetImageName != null) && writeOutput) {
-				File inputImageFile = new File( targetImageName );
-				if ( inputImageFile.exists() )
-				{
-					fileIO = new FileIO();
-					targetImage = fileIO.readImage(targetImageName);
-				}
-			}
-			if ( targetImage == null )
-			{
-				targetImage = inputImage;
-			}
-		}
-		
-		
-		int numTargetPts = commonNames.size();
-		double[] xSource = new double[ numTargetPts ]; 
-		double[] ySource = new double[ numTargetPts ]; 
-		double[] zSource = new double[ numTargetPts ]; 
-		double[] xTarget = new double[ numTargetPts ]; 
-		double[] yTarget = new double[ numTargetPts ]; 
-		double[] zTarget = new double[ numTargetPts ]; 
-		for ( int i = 0; i < commonNames.size(); i++ ) {
-			Vector3f sourcePt = null;
-			Vector3f targetPt = null;
-			for ( int j = 0; j < targetPts.getCurves().size(); j++ )
-			{
-				String targetName = ((VOIText)targetPts.getCurves().elementAt(j)).getText();
-				if ( targetName.equals(commonNames.elementAt(i) ) )
-				{
-					targetPt = targetPts.getCurves().elementAt(j).elementAt(0);
-					break;
-				}
-			}
-			for ( int j = 0; j < inputPts.getCurves().size(); j++ )
-			{
-				String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
-				if ( inputName.equals(commonNames.elementAt(i) ) )
-				{
-					sourcePt = inputPts.getCurves().elementAt(j).elementAt(0);
-					break;
-				}
-			}
-			if ( sourcePt != null && targetPt != null )
-			{
-				System.err.println( commonNames.elementAt(i) );
-				xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
-				xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
-			}
-		}
-
-		// create spline:
-		AlgorithmTPSpline spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, targetImage,
-				inputImage, !writeOutput);
-
-		spline.setRunningInSeparateThread(false);
-		try {
-		spline.run();
-		} catch (Exception e) {
-			System.err.println(e.getStackTrace());
-			return null;
-		}
-		System.err.println("Number of spline points: " + xSource.length );
-
-		if ( writeOutput )
-		{
-			ModelImage outputImage = spline.getResultImage();
-			outputImage.calcMinMax();
-			new ViewJFrameImage((ModelImage) outputImage.clone());
-			System.err.println( outputImage.getImageName() + "   " + outputImage.getImageDirectory() );
-			ModelImage.saveImage(outputImage);
-			outputImage.disposeLocal(false);
-			outputImage = null;
-			inputImage.disposeLocal(false);
-			inputImage = null;
-
-			if ( targetImage != null )
-			{
-				targetImage.disposeLocal(false);
-				targetImage = null;
-			}
-		}
-		if ( printTest )
-		{
-			// test that target points warp to source points:
-			for ( int i = 0; i < numTargetPts; i++ ) {
-				Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
-				Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
-				float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
-				if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
-				{
-					System.err.println( sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
-				}
-			}
-		}
-		
-		return spline;
 	}
 }

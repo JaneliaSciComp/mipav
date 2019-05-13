@@ -91,19 +91,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private DefaultTableModel annotationGroupTableModel;
 	private String selectedPrefix = null;
 	
-	private boolean isLatticePanel = false;
 
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image ) {
 		voiManager = voiInterface;
 		imageA = image;
 		voiManager.addAnnotationListener(this);
-	}
-
-	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image, boolean latticePanel ) {
-		voiManager = voiInterface;
-		imageA = image;
-		voiManager.addAnnotationListener(this);
-		this.isLatticePanel = latticePanel;
 	}
 
 	/* (non-Javadoc)
@@ -209,7 +201,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-		//		System.err.println("annotationChanged");
+		System.err.println("annotationChanged");
 
 		if ( voiManager != null )
 		{
@@ -314,6 +306,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationGroupTableModel.addTableModelListener(this);
 			annotationGroupList.addListSelectionListener(this);
 		}		
+		annotationPanel.validate();
 	}
 
 	private boolean previewMode = false;
