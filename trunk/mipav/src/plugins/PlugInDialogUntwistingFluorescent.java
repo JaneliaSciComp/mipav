@@ -343,7 +343,6 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							ModelImage contourImage = null;
 							contourImage = model.segmentLattice(wormImage, false, 0, segmentLattice.isSelected());
 							
-							model.retwist(wormImage);
 							if ( straightenMarkersCheck.isSelected() )
 							{
 								model.interpolateLattice( false, false, false, true );								

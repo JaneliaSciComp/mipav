@@ -431,7 +431,7 @@ public class PlugInAlgorithmWormUntwisting
 
 
 					long timeInterpolateLattice = System.currentTimeMillis();
-					model.initializeInterpolation();
+					model.initializeInterpolation(true);
 					model.untwistImage( true );
 					System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
 					
@@ -441,10 +441,6 @@ public class PlugInAlgorithmWormUntwisting
 					contourImage = model.segmentLattice(wormImage, true, paddingFactor, segmentLattice);
 					System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
 					
-					long timeRetwist = System.currentTimeMillis();
-					model.retwist(wormImage);
-					System.err.println( "retwist elapsed time =  " + AlgorithmBase.computeElapsedTime(timeRetwist) );
-
 					long timeAnnotation = System.currentTimeMillis();
 					if ( wormData.readSeamCells() != null )
 					{
