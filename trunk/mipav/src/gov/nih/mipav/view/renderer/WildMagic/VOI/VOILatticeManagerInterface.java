@@ -10,6 +10,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
@@ -314,6 +315,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.addAnnotationListener(listener);
 	}
 	
+	public void addLatticeListener( LatticeListener listener ) {
+
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+		}
+		latticeModel.addLatticeListener(listener);
+	}
+	
 	/**
 	 * Enable editing annotations in either 3D or 2D windows with the mouse.
 	 * @param automaticLabels if true the labels are created with numbers only (no leading 'A' for annotation).
@@ -423,6 +433,21 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			saveVOIs("loadAnnotations");
 		}
 		latticeModel.setAnnotations( newAnnotationVOI );
+	}
+	
+	public void setAnnotations( VOI annotations )
+	{
+		boolean saveA = true;
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+			saveA = false;
+		}
+		if ( saveA )
+		{
+			saveVOIs("loadAnnotations");
+		}
+		latticeModel.setAnnotations( annotations );
 	}
 
 	public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect )
@@ -555,6 +580,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 	
+	public ModelImage getImage()
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.getImage();
+	}
+	
 	public void updateManager( int index, int orientation )
 	{
 		m_kVOIManagers.elementAt(index).setImage(m_kImageA, orientation);
@@ -602,6 +636,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	protected void undoVOIs()
 	{
+		System.err.println("undoVOIs " + m_kUndoList.size() );
 		if ( m_kUndoList.size() <= 0 )
 		{
 			return;
@@ -713,6 +748,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return latticeModel.getAnnotationsStraight();		
 	}
 	
+	public Vector3f getLatticePickedPoint()
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.getPicked();		
+	}
+	
 	public VOI getLattice()
 	{
 		if ( latticeModel == null )
@@ -745,11 +789,8 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	public void setPreviewMode( boolean preview, VOI lattice, VOI annotations )
 	{
 		clearUndoRedo();
-		if ( latticeModel == null )
-		{
-			latticeModel = new LatticeModel( m_kImageA );
-		}
 		latticeModel.setPreviewMode( preview, lattice, annotations );
+		saveVOIs("loadAnnotations");
 	}
 	
 	public VOI retwistAnnotations(VOI lattice) 

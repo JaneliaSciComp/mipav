@@ -96,6 +96,41 @@ public class VOIWormAnnotation extends VOIText {
 		return this.selectionOffset;
 	}
 	
+	private Vector3f untwistPt = null;
+	private float minDistance = -Float.MAX_VALUE;
+	public void untwistTest( Vector3f pt, float distance ) {
+		// save inbounds point:
+		if ( untwistPt == null ) {
+			untwistPt = new Vector3f(pt);
+			minDistance = distance;
+		}
+		if ( distance < minDistance ) {
+			untwistPt.copy(pt);
+		}
+	}
+	
+	public Vector3f getUntwistTest() {
+		return untwistPt;
+	}
+	
+
+	private Vector3f minUntwistPt = null;
+	private float minUntwistDistance = -Float.MAX_VALUE;
+	public void untwistTestNoBounds( Vector3f pt, float distance ) {
+		// save minumum point:
+		if ( minUntwistPt == null ) {
+			minUntwistPt = new Vector3f(pt);
+			minUntwistDistance = distance;
+		}
+		if ( distance < minUntwistDistance ) {
+			minUntwistPt.copy(pt);
+		}
+	}
+	
+	public Vector3f getUntwistTestNoBounds() {
+		return minUntwistPt;
+	}
+	
 	public VOI updateSelected(ModelImage image ) {
 		Vector3f pt = this.firstElement();
 		if (showSelectedVOI == null) {
