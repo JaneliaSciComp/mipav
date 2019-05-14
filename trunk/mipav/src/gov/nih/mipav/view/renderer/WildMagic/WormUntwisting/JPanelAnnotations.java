@@ -201,7 +201,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-		System.err.println("annotationChanged");
+//		System.err.println("annotationChanged");
 
 		if ( voiManager != null )
 		{

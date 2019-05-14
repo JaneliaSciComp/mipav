@@ -977,13 +977,13 @@ public class WormData
 		File outputFileDir = new File(seamCellDir);
 		if ( !outputFileDir.exists() )
 		{
-			segmentSeamFromLattice(null);
+			segmentSeamFromLattice(null, null, true);
 			return;
 		}
 		seamEdited = true;
 		seamAnnotations = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + namedSeamCellOutput + File.separator + "seam_cells.csv");
 		if ( seamAnnotations == null ) {
-			segmentSeamFromLattice(null);
+			segmentSeamFromLattice(null, null, true);
 			return;
 		}
 
@@ -995,7 +995,7 @@ public class WormData
 		}
 	}
 
-	public void segmentSeamFromLattice(VOI lattice)
+	public VOI segmentSeamFromLattice(VOI lattice, ModelImage image, boolean save)
 	{
 
 		System.err.println("segmentSeamFromLattice");
@@ -1007,9 +1007,10 @@ public class WormData
 		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
 
 		seamAnnotations = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
-//		wormImage.unregisterAllVOIs();
-
-//		wormImage.registerVOI(seamAnnotations);
+		if ( image == null )
+		{
+			image = wormImage;
+		}
 
 		float[] pairSort = new float[left.size()];
 		// decide which 10 points are seam cells by taking max pair values
@@ -1019,25 +1020,25 @@ public class WormData
 			int y = (int)left.elementAt(i).Y;
 			int z = (int)left.elementAt(i).Z;
 			float value;
-			if ( wormImage.isColorImage() ) 
+			if ( image.isColorImage() ) 
 			{
-				value = wormImage.getFloatC(x,y,z,2);
+				value = image.getFloatC(x,y,z,2);
 			}
 			else
 			{
-				value = wormImage.getFloat(x,y,z);
+				value = image.getFloat(x,y,z);
 			}
 
 			x = (int)right.elementAt(i).X;
 			y = (int)right.elementAt(i).Y;
 			z = (int)right.elementAt(i).Z;
-			if ( wormImage.isColorImage() ) 
+			if ( image.isColorImage() ) 
 			{
-				value += wormImage.getFloatC(x,y,z,2);
+				value += image.getFloatC(x,y,z,2);
 			}
 			else
 			{
-				value += wormImage.getFloat(x,y,z);
+				value += image.getFloat(x,y,z);
 			}
 			pairSort[i] = value;
 		}
@@ -1051,24 +1052,24 @@ public class WormData
 			int y = (int)left.elementAt(i).Y;
 			int z = (int)left.elementAt(i).Z;
 			float value;
-			if ( wormImage.isColorImage() ) 
+			if ( image.isColorImage() ) 
 			{
-				value = wormImage.getFloatC(x,y,z,2);
+				value = image.getFloatC(x,y,z,2);
 			}
 			else
 			{
-				value = wormImage.getFloat(x,y,z);
+				value = image.getFloat(x,y,z);
 			}
 			x = (int)right.elementAt(i).X;
 			y = (int)right.elementAt(i).Y;
 			z = (int)right.elementAt(i).Z;
-			if ( wormImage.isColorImage() ) 
+			if ( image.isColorImage() ) 
 			{
-				value += wormImage.getFloatC(x,y,z,2);
+				value += image.getFloatC(x,y,z,2);
 			}
 			else
 			{
-				value += wormImage.getFloat(x,y,z);
+				value += image.getFloat(x,y,z);
 			}
 
 			int segment = Math.min(left.size() - 1, i+1);
@@ -1155,15 +1156,16 @@ public class WormData
 
 			}
 		}
-
-		String seamCellDir = outputDirectory + File.separator + namedSeamCellOutput + File.separator;
-		File outputFileDir = new File(seamCellDir);
-		if ( !outputFileDir.exists() )
+		if ( save )
 		{
-			outputFileDir.mkdir();
+			String seamCellDir = outputDirectory + File.separator + namedSeamCellOutput + File.separator;
+			File outputFileDir = new File(seamCellDir);
+			if ( !outputFileDir.exists() )
+			{
+				outputFileDir.mkdir();
+			}
+			LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + namedSeamCellOutput + File.separator, "seam_cells.csv", seamAnnotations);
 		}
-		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + namedSeamCellOutput + File.separator, "seam_cells.csv", seamAnnotations);
-
 
 		seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
@@ -1171,7 +1173,8 @@ public class WormData
 			VOIWormAnnotation text = (VOIWormAnnotation)seamAnnotations.getCurves().elementAt(i);
 			seamCellPoints.add(new Vector3f(text.elementAt(0)));
 		}
-//		wormImage.unregisterAllVOIs();
+
+		return seamAnnotations;
 	}
 
 	public void segmentSkin()

@@ -1400,6 +1400,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 		if (m_bPickPending)
 		{
+			System.err.println("Width = " + GetWidth() + "   height = " + GetHeight() );
 			if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
 					GetHeight(),kPos,kDir))
 			{				
