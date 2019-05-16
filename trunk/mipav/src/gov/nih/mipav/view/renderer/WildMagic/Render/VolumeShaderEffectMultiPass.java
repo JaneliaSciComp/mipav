@@ -522,13 +522,26 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	m_bDisplayRedAsGray = display;
     }
     
+    public boolean getDisplayRedAsGray() {
+    	return m_bDisplayRedAsGray;
+    }
+    
     public void SetDisplayGreenAsGray( boolean display ) {
     	m_bDisplayGreenAsGray = display;
+    }
+    
+    public boolean getDisplayGreenAsGray() {
+    	return m_bDisplayGreenAsGray;
     }
     
     public void SetDisplayBlueAsGray( boolean display ) {
     	m_bDisplayBlueAsGray = display;
     }
+    
+    public boolean getDisplayBlueAsGray() {
+    	return m_bDisplayBlueAsGray;
+    }
+    
     
     public boolean GetGradientMagnitude()
     {

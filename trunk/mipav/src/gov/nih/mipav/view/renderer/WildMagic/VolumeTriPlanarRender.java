@@ -1400,7 +1400,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 		if (m_bPickPending)
 		{
-			System.err.println("Width = " + GetWidth() + "   height = " + GetHeight() );
+//			System.err.println("Width = " + GetWidth() + "   height = " + GetHeight() );
 			if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
 					GetHeight(),kPos,kDir))
 			{				
@@ -1578,15 +1578,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									float red = 0;
 									float green = 0;
 									float blue = 0;
-									if ( useRed )
+									if ( useRed && !(m_kVolumeRayCast.getDisplayGreenAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray())  )
 									{
 										red = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 1);
 									}
-									if ( useGreen )
+									if ( useGreen && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray()) )
 									{
 										green = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 2);
 									}
-									if ( useBlue )
+									if ( useBlue && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayGreenAsGray())  )
 									{
 										blue = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 3);
 									}

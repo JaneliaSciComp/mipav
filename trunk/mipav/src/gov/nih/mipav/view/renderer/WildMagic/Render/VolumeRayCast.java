@@ -632,12 +632,24 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.SetDisplayRedAsGray(display);
     }
 
+    public boolean getDisplayRedAsGray() {
+        return m_kVolumeShaderEffect.getDisplayRedAsGray();
+    }
+
     public void setDisplayGreenAsGray(boolean display) {
         m_kVolumeShaderEffect.SetDisplayGreenAsGray(display);
     }
 
+    public boolean getDisplayGreenAsGray() {
+        return m_kVolumeShaderEffect.getDisplayGreenAsGray();
+    }
+
     public void setDisplayBlueAsGray(boolean display) {
         m_kVolumeShaderEffect.SetDisplayBlueAsGray(display);
+    }
+
+    public boolean getDisplayBlueAsGray() {
+        return m_kVolumeShaderEffect.getDisplayBlueAsGray();
     }
     
     public void setRGBTA(ModelRGB RGBT) {
