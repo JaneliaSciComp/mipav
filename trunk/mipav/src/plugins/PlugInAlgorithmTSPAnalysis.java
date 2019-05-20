@@ -1836,7 +1836,18 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			double denom2;
 			double num;
 			double denom;
-			
+			double e1;
+			double e2;
+			double sum1;
+			double sum2;
+			double sum3;
+			double sum4;
+			double sum5;
+			double sum6;
+			double sum7;
+			double sum8;
+			double ratio1;
+			double ratio2;
 			
 			try {
 				ctrl = ctrlMat[0];
@@ -1859,13 +1870,31 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					residuals[0] = num1/denom1 - num2/denom2;
 				} // if ((ctrl == -1) || (ctrl == 1))
 
-				// Calculate the Jacobian numerically
+				// Calculate the Jacobian analytically
 				else if (ctrl == 2) {
-					//for (i = 0; i < nPts; i++) {
-					    //covarMat[i][0] = Math.exp(-1.0/a[1]*xdata[i]);
-					    //covarMat[i][1] = xdata[i]/(a[1]*a[1])*a[0]*Math.exp(-1.0/a[1]*xdata[i]);
-					//}
-					ctrlMat[0] = 0;
+					sum1 = 0.0;
+					sum2 = 0.0;
+					sum3 = 0.0;
+					sum4 = 0.0;
+					sum5 = 0.0;
+					sum6 = 0.0;
+					sum7 = 0.0;
+					sum8 = 0.0;
+					for (i = 0; i < xdata.length; i++) {
+					    e1 = Math.exp(-xdata[i]/a[0]);
+					    e2 = e1 * e1;
+					    sum1 += e2;
+					    sum2 += (xdata[i]/(a[0]*a[0]))*b[i]*e1;
+					    sum3 += b[i]*e1;
+					    sum4 += 2.0*(xdata[i]/(a[0]*a[0]))*e2;
+					    sum5 += e2*xdata[i];
+					    sum6 += ((xdata[i]*xdata[i])/(a[0]*a[0]))*b[i]*e1;
+					    sum7 += b[i]*e1*xdata[i];
+					    sum8 += 2.0*((xdata[i]*xdata[i])/(a[0]*a[0]))*e2;
+					}
+					ratio1 = (sum1 * sum2 - sum3 * sum4)/(sum1 * sum1);
+					ratio2 = (sum5 * sum6 - sum7 * sum8)/(sum5 * sum5);
+					covarMat[0][0] = ratio1 - ratio2;
 				}
 			} catch (Exception e) {
 				Preferences.debug("function error: " + e.getMessage() + "\n",
