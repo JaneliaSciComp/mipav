@@ -1082,7 +1082,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         } // if (multThreading)
         else { // single processor
 		    // Define some variables for fminsearch - initial guess
-		    x0 = new double[]{0.1,4};
+        	
+		    x0 = new double[]{4};
 		    xdata = new double[2*tDim];
 		    for (i = 0; i < 2*tDim; i++) {
 		    	xdata[i] = i * delT;
