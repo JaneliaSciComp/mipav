@@ -2973,6 +2973,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * Create the ZIP(s) containing the original image files and the meta-data for each image dataset.
      */
     private void createSubmissionFiles() {
+        
+        final ViewJProgressBar progressBar = new ViewJProgressBar("Generating output package", "Creating output CSV file(s)", 0, 100, false);
+        progressBar.setVisible(true);
+        progressBar.updateValue(5);
 
         final File outputDirFile = new File(outputDirBase);
         if ( !outputDirFile.exists()) {
@@ -2980,6 +2984,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         final int numDataStructs = structTableModel.getRowCount();
+        
+        final int progressInc = 95 / numDataStructs;
+        final int rowsPerInc = (numDataStructs / 95) + 1;
 
         // for each data structure chosen by the user, create a place to put
         // rows of csv data
@@ -3070,19 +3077,27 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if ( !outputSubDirFile.exists()) {
                 outputSubDirFile.mkdirs();
             }
+            
+            progressBar.setMessage("Creating submission files for record #" + (i+1));
+            if (progressInc > 0) {
+                progressBar.updateValue(progressBar.getValue() + progressInc);
+            } else if ( (i % rowsPerInc) == 0) {
+                progressBar.updateValue(progressBar.getValue() + 1);
+            }
 
             final ImgFileInfo imgFileInfo = structRowImgFileInfoList.get(i);
 
             if (isImagingStructure(dsName) && imgFileInfo != null) {
 
                 // this means we are working with the image datastructure
-                printlnToLog("Creating submission file for " + name);
+                printlnToLog("Creating submission file for record #" + (i+1) + ": " + name);
 
                 // printlnToLog("Opening: " + imageFile + ", multifile: " + multifiles.get(i));
 
                 final List<String> origFiles = imgFileInfo.getOrigFiles();
 
                 printlnToLog("Creating thumbnail image:\t" + outputSubDir + outputFileNameBase + ".jpg");
+                progressBar.setMessage("Creating thumbnail for record #" + (i+1));
 
                 MemoryImageSource thumbnailImageData = imgFileInfo.getThumbnailImgData();
 
@@ -3098,6 +3113,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         final File srcFile = new File(imgFileInfo.getImgFilePath());
                         final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
                         printlnToLog("Copying original image zip file into output directory:\t" + destFile.getAbsolutePath());
+                        progressBar.setMessage("Copying zip file for record #" + (i+1));
                         FileUtils.copyFile(srcFile, destFile);
                         imagePath = destFile.getAbsolutePath();
                     } catch (final IOException e) {
@@ -3111,6 +3127,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         final File srcFile = new File(imgFileInfo.getImgFilePath());
                         final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
                         printlnToLog("Copying original image tarball file into output directory:\t" + destFile.getAbsolutePath());
+                        progressBar.setMessage("Copying tarball file for record #" + (i+1));
                         FileUtils.copyFile(srcFile, destFile);
                         imagePath = destFile.getAbsolutePath();
                     } catch (final IOException e) {
@@ -3137,6 +3154,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                         
                         printlnToLog("Copying original image file into output directory:\t" + destFile.getAbsolutePath());
+                        progressBar.setMessage("Copying image file for record #" + (i+1));
                         FileUtils.copyFile(srcFile, destFile);
                         imagePath = destFile.getAbsolutePath();
                     } catch (final IOException e) {
@@ -3178,6 +3196,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                         
                         printlnToLog("Creating ZIP file (" + origFiles.size() + " files):\t" + zipFilePath);
+                        progressBar.setMessage("Creating ZIP file for record #" + (i+1));
 //                        for (final String file : origFiles) {
 //                            printlnToLog("Adding file to ZIP:\t" + file);
 //                        }
@@ -3253,7 +3272,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                                            printlnToLog("Adding file to ZIP:\t" + file);
                                             filePathList.add(file);
                                         }
-                                        printlnToLog("Creating ZIP file (" + filePathList.size() + " files):\t" + newZipPath);
+                                        printlnToLog("Creating ZIP of attached files for (" + filePathList.size() + " files):\t" + newZipPath);
+                                        progressBar.setMessage("Creating ZIP file for record #" + (i+1));
                                         makeZipFile(newZipPath, filePathList);
 
                                         // now that the zip file is created, set the de value to the zip file path
@@ -3269,6 +3289,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     try {
                                         final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
                                         printlnToLog("Copying attached file into output directory:\t" + destFile.getAbsolutePath());
+                                        progressBar.setMessage("Copying attached file for record #" + (i+1));
                                         FileUtils.copyFile(srcFile, destFile);
                                         deVal.setValue(destFile.getAbsolutePath());
                                     } catch (final IOException e) {
@@ -3305,6 +3326,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // this means that this is another data structure besides image
 
                 printlnToLog("Creating submission file for " + name);
+                progressBar.setMessage("Creating submission files for record #" + (i+1));
 
                 // if the data_structure contains image_file or
                 // image_thumbnail_file, just copy them over to submission
@@ -3486,6 +3508,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 }
 
                                 printlnToLog("Copying " + f.getName() + " to " + destFile.getAbsolutePath());
+                                progressBar.setMessage("Copying attached files for record #" + (i+1));
 
                                 try {
                                     final InputStream in = new FileInputStream(f);
@@ -3541,6 +3564,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final String csvFileName = structOutputBaseNameList.get(lowerName) + ".csv";
 
                 printlnToLog("Writing " + lowerName + " to CSV file: " + outputDirBase + csvFileName);
+                progressBar.setMessage("Writing CSV data for FormStructure: " + lowerName);
 
                 final File csvFile = new File(outputDirBase + csvFileName);
                 fw = new FileWriter(csvFile);
@@ -3567,6 +3591,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // Do nothing
             }
         }
+        
+        progressBar.dispose();
 
         printlnToLog("*** Submission pre-processing complete. ***");
         printlnToLog("*** Output files have been generated in directory " + outputDirBase + " ***");
@@ -7045,7 +7071,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 
                 extractDicomHeaderInfo(extractedFields, fileInfoDicom);
                 
-                extractDicomMRHeaderInfo(extractedFields, fileInfoDicom);
+                extractDicomMRHeaderInfo(extractedFields, img, fileInfoDicom);
                 
                 extractDicomCTHeaderInfo(extractedFields, fileInfoDicom);
             } else if (isNiftiFormat(fInfo)) {
@@ -7104,7 +7130,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     extractedFields.put("ImgDim4UoMVal", Unit.getUnitFromLegacyNum(units[3]).toString());
                 }
 //                extractedFields.put("ImgDim5UoMVal", Unit.getUnitFromLegacyNum(units[4]).toString());
-                if (exts.length > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
+                if (!extractedFields.containsKey("ImgDim4ExtentTyp") && exts.length > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
                     extractedFields.put("ImgDim4ExtentTyp", "Time");
                 }
             }
@@ -7206,7 +7232,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        private void extractDicomMRHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
+        private void extractDicomMRHeaderInfo(HashMap<String, String> extractedFields, ModelImage img, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName())) {
                 extractedFields.put("ImgEchoDur", getTagValue(fileInfoDicom, "0018,0081"));
                 extractedFields.put("ImgRepetitionGapVal", getTagValue(fileInfoDicom, "0018,0080"));
@@ -7226,7 +7252,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     extractedFields.put("ImgFlowCompnsatnInd", "Yes");
                 }
                 
-                extractDicomDtiHeaderInfo(extractedFields, fileInfoDicom);
+                extractDicomDtiHeaderInfo(extractedFields, img, fileInfoDicom);
                 
                 extractDicomFMRIHeaderInfo(extractedFields, fileInfoDicom);
                 
@@ -7266,11 +7292,55 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
         
-        private void extractDicomDtiHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
+        private void extractDicomDtiHeaderInfo(HashMap<String, String> extractedFields, ModelImage img, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
                 extractedFields.put("ImgPulseSeqTyp", "DTI");
+                
+                if (img.getExtents().length > 3) {
+                    extractedFields.put("ImgDim4ExtentTyp", "DTI directions");
+                }
             
-                // TODO
+                // if reading the dicom filled in the dti params, use them to fill in the direction info
+                DTIParameters dtiParam = img.getDTIParameters();
+                if (dtiParam != null) {
+                    double[] bvals = dtiParam.getbValues();
+                    
+                    ArrayList<Double> seenBvals = new ArrayList<Double>();
+                    
+                    int numDirections = 0;
+                    int bvalCount = 0;
+                    Arrays.sort(bvals);
+                    for (int i = 0; i < bvals.length; i++) {
+                        if (bvals[i] != 0) {
+                            numDirections++;
+                            
+                            if (!seenBvals.contains(bvals[i])) {
+                                bvalCount++;
+                                
+                                if (bvalCount == 1) {
+                                    extractedFields.put("ImgDiffusionFirstBVal", "" + bvals[i]);
+                                } else if (bvalCount == 2) {
+                                    extractedFields.put("ImgDiffusionSecondBVal", "" + bvals[i]);
+                                } else if (bvalCount == 3) {
+                                    extractedFields.put("ImgDiffusionThirdBVal", "" + bvals[i]);
+                                } else if (bvalCount == 4) {
+                                    extractedFields.put("ImgDiffusionFourthBVal", "" + bvals[i]);
+                                } else if (bvalCount == 5) {
+                                    extractedFields.put("ImgDiffusionFifthBVal", "" + bvals[i]);
+                                } else if (bvalCount == 6) {
+                                    extractedFields.put("ImgDiffusionSixthBVal", "" + bvals[i]);
+                                } else {
+                                    System.err.println("Found more than 6 bVals: " + bvalCount + " " + bvals[i]);
+                                }
+                                
+                                seenBvals.add(bvals[i]);
+                            }
+                        }
+                    }
+                    extractedFields.put("ImgDiffusionBValCt", "" + bvalCount);
+                    
+                    extractedFields.put("ImgDiffusionDirCt", "" + numDirections);
+                }
             }
         }
         
