@@ -120,7 +120,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double CBV[][][];
     	double CBF[][][];
     	double MTT[][][];
-    	double chiSquared[][][];
+    	//double chiSquared[][][];
     	int zDim;
     	int length;
     	int volume;
@@ -213,7 +213,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage CBVImage;
     	ModelImage TmaxImage;
     	ModelImage TTPImage;
-    	ModelImage chiSquaredImage;
+    	//ModelImage chiSquaredImage;
     	long sumT[];
     	int countT[];
     	boolean test = false;
@@ -1042,7 +1042,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         Tmax = new int[zDim][yDim][xDim];
         //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[zDim][yDim][xDim];
-        chiSquared = new double[zDim][yDim][xDim];
+        //chiSquared = new double[zDim][yDim][xDim];
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
         for (z = 0; z < zDim; z++) {
@@ -1061,7 +1061,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
             	executorService.execute(new endCalc(xDim,yDim,tDim,delT,TE,masking_threshold,
-            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],chiSquared[z]));	
+            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z]/*,chiSquared[z]*/));	
             }
             
             executorService.shutdown();
@@ -1156,7 +1156,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    					    //relCBF[x][y][z] = rcbf;
 		    					    MTT[z][y][x] = p[1];
 		    					    CBV[z][y][x] = rcbf * p[1];
-		    					    chiSquared[z][y][z] = minsearch.getChiSquared();
+		    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
 		    		    	    }
 		    		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
 		    		    } // if (alltMeetThreshold)
@@ -1417,7 +1417,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	TTPImage.disposeLocal();
     	TTPImage = null;
     	
-    	chiSquaredImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "chiSquared");
+    	/*chiSquaredImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "chiSquared");
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
@@ -1465,7 +1465,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             return;
         }
         chiSquaredImage.disposeLocal();
-    	chiSquaredImage = null;
+    	chiSquaredImage = null;*/
     	
     	for (t = 0; t < 2*tDim; t++) {
     		D_inv[t] = null;
@@ -1611,11 +1611,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         double CBF[][];
         double MTT[][];
         int Tmax[][];
-        double chiSquared[][];
+        //double chiSquared[][];
     	
     	public endCalc(int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
-    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][],
-    			double chiSquared[][]) {
+    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][]/*,
+    			double chiSquared[][]*/) {
         	this.xDim = xDim;
         	this.yDim = yDim;
         	this.tDim = tDim;
@@ -1627,7 +1627,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.CBF = CBF;
         	this.MTT = MTT;
         	this.Tmax = Tmax;
-        	this.chiSquared = chiSquared;
+        	//this.chiSquared = chiSquared;
         }
     	
     	public void run() {
@@ -1721,7 +1721,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         					    //relCBF[x][y][z] = rcbf;
         					    MTT[y][x] = p[1];
         					    CBV[y][x] = rcbf * p[1];
-        					    chiSquared[y][x] = minsearch.getChiSquared();
+        					    //chiSquared[y][x] = minsearch.getChiSquared();
         		    	    }
         		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
         		    } // if (alltMeetThreshold)
