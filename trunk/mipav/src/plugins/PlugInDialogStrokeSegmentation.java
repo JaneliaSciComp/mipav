@@ -43,6 +43,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private JCheckBox symmetryCheckbox;
     private JTextField symmetryRemovalMaxSliceField;
     
+    private JCheckBox filterCheckbox;
+    
 //    private JCheckBox cerebellumCheckbox;
 //    private JTextField cerebellumSliceMaxField;
 //    
@@ -62,9 +64,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private int adcThreshold = 620;
     
-    private boolean doSymmetryRemoval = true;
-    
+    private boolean doSymmetryRemoval = false;
     private int symmetryRemovalMaxSlice = 10;
+    
+    private boolean doFilter = true;
     
 //    private boolean doCerebellumSkip = true;
     
@@ -325,6 +328,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
             }
         }
         
+        doFilter = filterCheckbox.isSelected();
+        
         doSymmetryRemoval = symmetryCheckbox.isSelected();
         
         symmetryRemovalMaxSlice = Integer.parseInt(symmetryRemovalMaxSliceField.getText());
@@ -353,7 +358,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doFilter, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -397,6 +402,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         adcThreshold = scriptParameters.getParams().getInt("adc_threshold");
         
+        doFilter = scriptParameters.getParams().getBoolean("do_filter");
+        
         doSymmetryRemoval = scriptParameters.getParams().getBoolean("do_symmetry_removal");
         
         symmetryRemovalMaxSlice = scriptParameters.getParams().getInt("symmetry_removal_slice_max");
@@ -422,6 +429,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.storeImage(adcImage, "adc_image");
         scriptParameters.storeImage(dwiImage, "dwi_image");
         scriptParameters.getParams().put(ParameterFactory.newParameter("adc_threshold", adcThreshold));
+        // TODO DWI Filter
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
         scriptParameters.getParams().put(ParameterFactory.newParameter("symmetry_removal_slice_max", symmetryRemovalMaxSlice));
 //        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
@@ -472,6 +480,16 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         mainPanel.add(adcThresholdField, gbc);
         
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        filterCheckbox = new JCheckBox("Apply anisotropic filter to ADC volume", doFilter);
+        filterCheckbox.setForeground(Color.black);
+        filterCheckbox.setFont(serif12);
+        mainPanel.add(filterCheckbox, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
