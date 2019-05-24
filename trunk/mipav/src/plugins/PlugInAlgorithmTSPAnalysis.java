@@ -24,7 +24,6 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
-import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -32,7 +31,6 @@ import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileNIFTI;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -114,9 +112,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int yDim;
     	int tDim;
     	float delT;
-        int data[][][][];
+        short data[][][][];
     	double TE;
-    	int Tmax[][][];
+    	short Tmax[][][];
     	double CBV[][][];
     	double CBF[][][];
     	double MTT[][][];
@@ -134,10 +132,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	String tDimString = null;
     	String TRString = null;
     	float TR;
-    	int buffer[];
-    	int brain_mask[][][][];
+    	short buffer[];
+    	short brain_mask[][][][];
     	double temp_mean[];
-    	int brain_mask_norm[][][][];
+    	short brain_mask_norm[][][][];
     	double dbuffer[];
     	int x, y, z, t;
     	int i,j,ii,jj;
@@ -153,8 +151,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int maxIndex;
     	double cc;
     	int it;
-    	int brain_mask2[][][][];
-    	int brain_mask_norm2[][][][];
+    	short brain_mask2[][][][];
+    	short brain_mask_norm2[][][][];
     	double maxPeak;
     	String delZString;
     	float delZ;
@@ -163,11 +161,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage peaks_mapImage;
     	ModelImage delay_mapImage;
     	String TEString;
-    	int data_norm[][][][];
-    	int peaks[][][];
-    	int ttp[][][];
-    	int minpeaks;
-    	int minttp;
+    	short data_norm[][][][];
+    	short peaks[][][];
+    	short ttp[][][];
+    	short minpeaks;
+    	short minttp;
     	byte mask3D[][][];
     	double peaks_mean;
     	double diff;
@@ -347,7 +345,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         units[3] = Unit.SECONDS.getLegacyNum();
         volume = zDim * length;
         dataSize = volume * tDim;
-        buffer = new int[dataSize];
+        buffer = new short[dataSize];
     	try {
     		image3D.exportData(0,  dataSize, buffer);
     	}
@@ -358,11 +356,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	image3D.disposeLocal();
     	image3D = null;
-    	data = new int[zDim][yDim][xDim][tDim];
+    	data = new short[zDim][yDim][xDim][tDim];
     	// Start TSP processing
-    	brain_mask = new int[zDim][yDim][xDim][tDim];
+    	brain_mask = new short[zDim][yDim][xDim][tDim];
     	temp_mean = new double[tDim];
-    	brain_mask_norm = new int[zDim][yDim][xDim][tDim];
+    	brain_mask_norm = new short[zDim][yDim][xDim][tDim];
     	// Normalize PWI by subtracting off pre_contrast (first) image
     	// Loop over time dimension to calculate whole brain average perfusion time signal
     	
@@ -417,7 +415,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						else {
 							brain_mask[z][y][x][t] = data[z][y][x][t];
 						}
-						brain_mask_norm[z][y][x][t] = brain_mask[z][y][x][t] - brain_mask[z][y][x][0];
+						brain_mask_norm[z][y][x][t] = (short)(brain_mask[z][y][x][t] - brain_mask[z][y][x][0]);
 						if (brain_mask_norm[z][y][x][t] != 0) {
 					    	sum += brain_mask_norm[z][y][x][t];
 					    	count++;
@@ -500,8 +498,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	// Following TSP iterations, Recalc who brain average (healthy)
     	// considering only tissue with correlations > TSP threshold
-    	brain_mask2 = new int[zDim][yDim][xDim][tDim];
-    	brain_mask_norm2 = new int[zDim][yDim][xDim][tDim];
+    	brain_mask2 = new short[zDim][yDim][xDim][tDim];
+    	brain_mask_norm2 = new short[zDim][yDim][xDim][tDim];
     	sumT = new long[tDim];
     	countT = new int[tDim];
     	for (it = 1; it <= TSP_iter; it++) {
@@ -521,7 +519,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     					else {
     						for (t = 0; t < tDim; t++) {
     						    brain_mask2[z][y][x][t] = data[z][y][x][t];
-    						    brain_mask_norm2[z][y][x][t] = brain_mask2[z][y][x][t] - brain_mask2[z][y][x][0];
+    						    brain_mask_norm2[z][y][x][t] = (short)(brain_mask2[z][y][x][t] - brain_mask2[z][y][x][0]);
     						    if (brain_mask_norm2[z][y][x][t] != 0) {
         					    	sumT[t] += brain_mask_norm2[z][y][x][t];
         					    	countT[t]++;
@@ -832,27 +830,27 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	// Deconvolution analysis
     	S = new double[tDim];
-    	data_norm = new int[zDim][yDim][xDim][tDim];
+    	data_norm = new short[zDim][yDim][xDim][tDim];
     	for (t = 0; t < tDim; t++) {
     	    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    data_norm[z][y][x][t] = data[z][y][x][t] - data[z][y][x][0];	
+					    data_norm[z][y][x][t] = (short)(data[z][y][x][t] - data[z][y][x][0]);	
 					}
 				}
 	    	}
     	} // for (t = 0; t < tDim; t++)
-    	peaks = new int[zDim][yDim][xDim];
-    	ttp = new int[zDim][yDim][xDim];
+    	peaks = new short[zDim][yDim][xDim];
+    	ttp = new short[zDim][yDim][xDim];
     	for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
-					minpeaks = Integer.MAX_VALUE;
-					minttp = Integer.MAX_VALUE;
+					minpeaks = Short.MAX_VALUE;
+					minttp = Short.MAX_VALUE;
 					for (t = 0; t < tDim; t++) {
 						if (data_norm[z][y][x][t] < minpeaks) {
 							minpeaks = data_norm[z][y][x][t];
-							minttp = t+1;
+							minttp = (short)(t+1);
 						}
 					}
 					peaks[z][y][x] = minpeaks;
@@ -1038,7 +1036,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         CBV = new double[zDim][yDim][xDim];
         CBF = new double[zDim][yDim][xDim];
         MTT = new double[zDim][yDim][xDim];
-        Tmax = new int[zDim][yDim][xDim];
+        Tmax = new short[zDim][yDim][xDim];
         //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[zDim][yDim][xDim];
         //chiSquared = new double[zDim][yDim][xDim];
@@ -1122,7 +1120,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    for (i = 0; i < b.length/4; i++) {
 		    		    	    	if (b[i] > rcbf) {
 		    		    	    		rcbf = b[i];
-		    		    	    		Tmax[z][y][x] = i+1;
+		    		    	    		Tmax[z][y][x] = (short)(i+1);
 		    		    	    	}
 		    		    	    }
 		    		    	    // Shift b to have a peak at origin for fitting
@@ -1309,8 +1307,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	CBVImage.disposeLocal();
     	CBVImage = null;
     	
-    	TmaxImage = new ModelImage(ModelStorageBase.INTEGER, extents3D, "Tmax");
-    	buffer = new int[volume];
+    	TmaxImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "Tmax");
+    	buffer = new short[volume];
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
@@ -1330,7 +1328,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (i = 0; i < zDim; i++) {
     		fileInfo[i].setResolutions(resolutions3D);
     		fileInfo[i].setUnitsOfMeasure(units3D);
-    		fileInfo[i].setDataType(ModelStorageBase.INTEGER);
+    		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
         options.setFileName("Tmax.img");
        
@@ -1474,12 +1472,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int xDim;
         int yDim;
         int tDim;
-        int brain_mask_norm[][][];
+        short brain_mask_norm[][][];
         double delay_map[][];
         double corr_map2[][];
         double temp_mean[];
         
-        public corr1Calc(int xDim, int yDim, int tDim, int brain_mask_norm[][][], double delay_map[][], 
+        public corr1Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], double delay_map[][], 
         		double corr_map2[][], double temp_mean[]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
@@ -1526,14 +1524,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int xDim;
         int yDim;
         int tDim;
-        int brain_mask_norm[][][];
+        short brain_mask_norm[][][];
         double delay_map[][];
         double peaks_map[][];
         double corrmap[][];
         double corr_map2[][];
         double temp_mean[];
         
-        public corr2Calc(int xDim, int yDim, int tDim, int brain_mask_norm[][][], double delay_map[][], 
+        public corr2Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], double delay_map[][], 
         		double peaks_map[][], double corrmap[][], double corr_map2[][], double temp_mean[]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
@@ -1599,15 +1597,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         float delT;
         double TE;
         double masking_threshold;
-        int data[][][];
+        short data[][][];
         double CBV[][];
         double CBF[][];
         double MTT[][];
-        int Tmax[][];
+        short Tmax[][];
         //double chiSquared[][];
     	
     	public endCalc(int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
-    			int data[][][], double CBV[][], double CBF[][], double MTT[][], int Tmax[][]/*,
+    			short data[][][], double CBV[][], double CBF[][], double MTT[][], short Tmax[][]/*,
     			double chiSquared[][]*/) {
         	this.xDim = xDim;
         	this.yDim = yDim;
@@ -1680,7 +1678,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    for (i = 0; i < b.length/4; i++) {
         		    	    	if (b[i] > rcbf) {
         		    	    		rcbf = b[i];
-        		    	    		Tmax[y][x] = i+1;
+        		    	    		Tmax[y][x] = (short)(i+1);
         		    	    	}
         		    	    }
         		    	    // Shift b to have a peak at origin for fitting
@@ -1978,6 +1976,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         }
         return cout;
     }*/
+	
+	private double[] xcorrbias(short x[], double y[]) {
+    	int i;
+    	int m;
+    	int n;
+        int N = Math.max(x.length, y.length);
+        DoubleDouble xArr[] = new DoubleDouble[N];
+        DoubleDouble yArr[] = new DoubleDouble[N];
+        for (i = 0; i < x.length; i++) {
+        	xArr[i] = DoubleDouble.valueOf((double)x[i]);
+        }
+        for (i = 0; i < y.length; i++) {
+        	yArr[i] = DoubleDouble.valueOf(y[i]);
+        }
+        DoubleDouble coutDD[] = new DoubleDouble[2*N-1];
+        double cout[] = new double[2*N-1];
+        for (i = 0; i < 2*N-1; i++) {
+        	coutDD[i] = DoubleDouble.valueOf(0.0);
+        }
+        for (m = N-1; m >= 1; m--) {
+            for (n = 0; n <= N-m-1; n++) {
+                coutDD[N-1-m] = coutDD[N-1-m].add(yArr[n+m].multiply(xArr[n]));	
+            }
+        }
+        for (m = 0; m <= N-1; m++) {
+        	for (n = 0; n <= N-m-1; n++) {
+        		coutDD[N-1+m] = coutDD[N-1+m].add(xArr[n+m].multiply(yArr[n]));
+        	}
+        }
+        DoubleDouble NDD = DoubleDouble.valueOf((double)N);
+        for (i = 0; i < 2*N-1; i++) {
+        	cout[i] = (coutDD[i].divide(NDD)).doubleValue();
+        }
+        return cout;
+    }
     
     private double[] xcorrbias(int x[], double y[]) {
     	int i;
@@ -2083,6 +2116,35 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     }
     
+    private int[] circshift(short x[], int n) {
+    	int i;
+    	n = n % x.length;
+    	int y[] = new int[x.length];
+    	if (n > 0) {
+    	    for (i = 0; i < n; i++) {
+    	    	y[i] = x[x.length - (n - i)];
+    	    }
+    	    for (i = n; i < x.length; i++) {
+    	    	y[i] = x[i-n];
+    	    }
+    	}
+    	else if (n == 0) {
+    		for (i = 0; i < x.length; i++) {
+    			y[i] = x[i];
+    		}
+    	}
+    	else {
+    		n = -n;
+    		for (i = 0; i < n; i++) {
+    			y[x.length - (n - i)] = x[i];
+    		}
+    		for (i = n; i < x.length; i++) {
+    			y[i-n] = x[i];
+    		}
+    	}
+    	return y;
+    }
+    
     private int[] circshift(int x[], int n) {
     	int i;
     	n = n % x.length;
@@ -2147,6 +2209,39 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double answer = 0.035919004668078;
     	double result = corrcoef(x, y);
     	System.out.println("result = " + result + " answer = " + answer);
+    }
+    
+    private double corrcoef(short x[], double y[]) {
+    	int N = x.length;
+    	int i;
+    	double sumX = 0;
+    	double sumY = 0;
+    	double meanX;
+    	double meanY;
+    	double diffX;
+    	double diffY;
+    	double diffXSquaredSum = 0;
+    	double diffYSquaredSum = 0;
+    	double stdX;
+    	double stdY;
+    	double cf = 0;
+    	for (i = 0; i < N; i++) {
+    	    sumX += x[i];
+    	    sumY += y[i];
+    	}
+    	meanX = sumX/N;
+    	meanY = sumY/N;
+    	for (i = 0; i < N; i++) {
+    	    diffX = x[i] - meanX;
+    	    diffXSquaredSum += diffX*diffX;
+    	    diffY = y[i] - meanY;
+    	    diffYSquaredSum += diffY*diffY;
+    	    cf += diffX * diffY;
+    	}
+    	stdX = Math.sqrt(diffXSquaredSum/(N-1));
+    	stdY = Math.sqrt(diffYSquaredSum/(N-1));
+    	cf = cf/(stdX * stdY * (N-1));
+    	return cf;
     }
     
     private double corrcoef(int x[], double y[]) {
