@@ -197,7 +197,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double x0[];
     	double xdata[];
     	double C[];
-    	boolean alltMeetThreshold;
     	double b[];
     	double sumb;
     	double rcbf;
@@ -1096,13 +1095,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						//"Working on slice " + (z+1) + " of " + zDim);
 		    	for (y = 0; y < yDim; y++) {
 		    		for (x = 0; x < xDim; x++) {
-		    		    alltMeetThreshold = true;
-		    		    for (t = 0; (t < tDim) && alltMeetThreshold; t++) {
-		    		    	if (data[z][y][x][t] < masking_threshold) {
-		    		    		alltMeetThreshold = false;
-		    		    	}
-		    		    } // for (t = 0; (t < tDim) && alltMeetThreshold; t++)
-		    		    if (alltMeetThreshold) {
+		    		    if (data[z][y][x][0] >= masking_threshold) {
 		    		        // time signal from mri
 		    		    	for (t = 0; t < tDim; t++) {
 		    		    		S[t] = data[z][y][x][t];
@@ -1138,7 +1131,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    minsearch.driver();
 		    		    	    exitStatus = minsearch.getExitStatus();
 		    		    	    p[1] = minsearch.getParameters()[0];
-		    		    	    if (exitStatus >= 0){
+		    		    	    if ((exitStatus >= 0)  && (p[1] > 0) && (p[1] < 75)) {
 		    		    	    	// Normal termination
 		    		    	    	num1 = 0.0;
 	        		    	    	denom1 = 0.0;
@@ -1649,7 +1642,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             b = new double[2*tDim];
             int y;
             int x;
-            boolean alltMeetThreshold;
             int t;
             double S[] = new double[tDim];
             int j;
@@ -1661,13 +1653,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             // Iterate
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        		    alltMeetThreshold = true;
-        		    for (t = 0; (t < tDim) && alltMeetThreshold; t++) {
-        		    	if (data[y][x][t] < masking_threshold) {
-        		    		alltMeetThreshold = false;
-        		    	}
-        		    } // for (t = 0; (t < tDim) && alltMeetThreshold; t++)
-        		    if (alltMeetThreshold) {
+        		    if (data[y][x][0] >= masking_threshold) {
         		        // time signal from mri
         		    	for (t = 0; t < tDim; t++) {
         		    		S[t] = data[y][x][t];
@@ -1703,7 +1689,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    minsearch.driver();
         		    	    exitStatus = minsearch.getExitStatus();
         		    	    p[1] = minsearch.getParameters()[0];
-        		    	    if (exitStatus >= 0) {
+        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
         		    	    	// Normal termination
         		    	    	num1 = 0.0;
         		    	    	denom1 = 0.0;
@@ -1769,9 +1755,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.b = b;
         	this.xdata = xdata;
         	
-        	bounds = 1; // bounds = 0 means unconstrained
-        	bl[0] = 1.0E-10;
-        	bu[0] = 74.999999;
+        	bounds = 0; // bounds = 0 means unconstrained
+        	//bl[0] = 1.0E-10;
+        	//bu[0] = 74.999999;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
