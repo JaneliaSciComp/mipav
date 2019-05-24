@@ -1,6 +1,7 @@
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmAnisotropicDiffusion;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -22,7 +23,12 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private ModelImage adcImage;
     
+    private ModelImage adcVolForThresholding;
+    private ModelImage filteredADCImg = null;
+    
     private int adcThreshold;
+    
+    private boolean doFilter;
     
     private boolean doSymmetryRemoval;
     
@@ -91,12 +97,13 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean anisoFilter, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, String outputDir) {
         super();
         
         dwiImage = dwi;
         adcImage = adc;
         adcThreshold = threshold;
+        doFilter = anisoFilter;
         doSymmetryRemoval = symmetryRemoval;
         maxSymmetryRemovalSlice = symmetryMax;
         maxSymmetryGrowthSlice = symmetryMax;
@@ -240,13 +247,22 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 saveImageFile(maskImg, coreOutputDir, outputBasename + "_brain_mask", FileUtility.XML);
             }
             
+            // optionally filter ADC before thresholding, etc
+            adcVolForThresholding = adcImage;
+            if (doFilter) {
+                fireProgressStateChanged("Filtering ADC...");
+                
+                filteredADCImg = filterImage(adcImage);
+                adcVolForThresholding = filteredADCImg;
+            }
+            
             // get pixels from ADC within mask with intensity < 620
             fireProgressStateChanged("Thresholding ADC ...");
             fireProgressStateChanged(60);
             
             for (int i = 0; i < volLength; i++) {
                 if (segBuffer[i] != 0 && (maskImg != null && maskImg.getBoolean(i) == true)) {
-                    if (adcImage.getInt(i) < adcThreshold) {
+                    if (adcVolForThresholding.getInt(i) < adcThreshold) {
                         segBuffer[i] = 1;
                     } else {
                         segBuffer[i] = 0;
@@ -356,6 +372,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 segImg.disposeLocal();
             }
             
+            if (filteredADCImg != null) {
+                filteredADCImg.disposeLocal();
+            }
+            
             setCompleted(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -373,6 +393,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             if (dwiLightbox != null) {
                 dwiLightbox.disposeLocal();
                 dwiLightbox = null;
+            }
+            
+            if (filteredADCImg != null) {
+                filteredADCImg.disposeLocal();
+                filteredADCImg = null;
             }
             
             setCompleted(false);
@@ -568,7 +593,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         // get pixels from ADC within closed object mask with intensity < 620, again
         for (int i = 0; i < volLength; i++) {
             if (objectBuffer[i] != 0) {
-                if (adcImage.getInt(i) < adcThreshold) {
+                if (adcVolForThresholding.getInt(i) < adcThreshold) {
                     objectBuffer[i] = 1;
                 } else {
                     objectBuffer[i] = 0;
@@ -682,7 +707,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             for (int i = 0; i < processBuffer.length; i++) {
                 for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
                     if (processBuffer[i] == sortedObjects[sortedObjects.length - 1 - objNum].id) {
-                        if (adcImage.getInt(i) < adcThreshold) {
+                        if (adcVolForThresholding.getInt(i) < adcThreshold) {
                             coreSizeList[objNum]++;
                         }
                     }
@@ -1414,6 +1439,29 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
         
         return segImg;
+    }
+    
+    private ModelImage filterImage(final ModelImage srcImg) {
+        int[] destExtents = new int[3];
+        destExtents[0] = srcImg.getExtents()[0];
+        destExtents[1] = srcImg.getExtents()[1];
+        destExtents[2] = srcImg.getExtents()[2];
+        
+        float sigmaVal = 1.0f;
+        float normZ = sigmaVal * (srcImg.getResolutions(0)[0] / srcImg.getResolutions(0)[2]);
+        int iters = 10;
+        int diffusionK = 15;
+        boolean is25D = false;
+        
+        
+        ModelImage resImg = new ModelImage(ModelImage.FLOAT, destExtents, srcImg.getImageName() + "_filtered");
+
+        // Make algorithm
+        AlgorithmAnisotropicDiffusion diffusionAlgo = new AlgorithmAnisotropicDiffusion(resImg, srcImg, new float[] {sigmaVal, sigmaVal, normZ}, iters, diffusionK, true, is25D);
+
+        diffusionAlgo.run();
+        
+        return resImg;
     }
     
     public static final double getResolutionFactorCC(ModelImage img) {
