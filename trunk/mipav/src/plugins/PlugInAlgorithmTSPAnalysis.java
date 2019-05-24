@@ -209,7 +209,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	//ModelImage chiSquaredImage;
     	long sumT[];
     	int countT[];
-    	boolean test = true;
+    	boolean test = false;
     	boolean Philips = true;
     	
     	if (test) {
