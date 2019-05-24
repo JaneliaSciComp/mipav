@@ -144,7 +144,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	// Remove hyphen from corr_map so MIPAV does not read corr_map and corr_map2 together as 1 file.
     	double corrmap[][][];
     	double corr_map2[][][];
-    	double delay_map[][][];
+    	short delay_map[][][];
     	double peaks_map[][][];
     	double temp[];
     	double maxTemp;
@@ -440,7 +440,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	// TSP Correlation map with AIF delay compensation
     	corr_map2 = new double[zDim][yDim][xDim];
     	// TSP Delay map considering temporal similarity with whole brain average
-    	delay_map = new double[zDim][yDim][xDim];
+    	delay_map = new short[zDim][yDim][xDim];
     	// TSP Peaks map is the absolute value of the SI corresponding to the largest deviation from baseline
     	peaks_map = new double[zDim][yDim][xDim];
     	
@@ -487,7 +487,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    				    		maxIndex = i+1;
 	    				    	}
 	    				    }
-	    				    delay_map[z][y][x] = maxIndex;
+	    				    delay_map[z][y][x] = (short)maxIndex;
 	    				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
 	    				    corr_map2[z][y][x] = cc;
 	    				} // if (sum != 0)
@@ -576,7 +576,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        				    		maxIndex = i+1;
 	        				    	}
 	        				    }
-	        				    delay_map[z][y][x] = maxIndex;
+	        				    delay_map[z][y][x] = (short)maxIndex;
 	        				    maxPeak = -Double.MAX_VALUE;
 	        				    for (t = 0; t < tDim; t++) {
 	        				    	if (Math.abs(brain_mask_norm[z][y][x][t]) > maxPeak) {
@@ -600,12 +600,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
     			    if (delay_map[z][y][x] > tDim + 40)	{
-    			    	delay_map[z][y][x] = tDim + 40;
+    			    	delay_map[z][y][x] = (short)(tDim + 40);
     			    }
     			    else if (delay_map[z][y][x] < tDim - 40) {
-    			    	delay_map[z][y][x] = tDim - 40;
+    			    	delay_map[z][y][x] = (short)(tDim - 40);
     			    }
-    			    delay_map[z][y][x] = (delay_map[z][y][x] - tDim) * delT;
+    			    // Dealy delT mutliplication to point of image readin so we can use a short array
+    			    //delay_map[z][y][x] = (delay_map[z][y][x] - tDim) * delT;
+    			    delay_map[z][y][x] = (short)(delay_map[z][y][x] - tDim);
     			    // Corr map > 1 or < 0 is not realistic
     			    if (corrmap[z][y][x] > 1) {
     			    	corrmap[z][y][x] = 1;
@@ -782,7 +784,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = delay_map[z][y][x];
+    				dbuffer[x + y*xDim + z*length] = delay_map[z][y][x] * delT;
     			}
     		}
     	}
@@ -1473,11 +1475,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         int yDim;
         int tDim;
         short brain_mask_norm[][][];
-        double delay_map[][];
+        short delay_map[][];
         double corr_map2[][];
         double temp_mean[];
         
-        public corr1Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], double delay_map[][], 
+        public corr1Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][], 
         		double corr_map2[][], double temp_mean[]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
@@ -1511,7 +1513,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				    		maxIndex = i+1;
     				    	}
     				    }
-    				    delay_map[y][x] = maxIndex;
+    				    delay_map[y][x] = (short)maxIndex;
     				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
     				    corr_map2[y][x] = cc;
     				} // if (sum != 0)
@@ -1525,13 +1527,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         int yDim;
         int tDim;
         short brain_mask_norm[][][];
-        double delay_map[][];
+        short delay_map[][];
         double peaks_map[][];
         double corrmap[][];
         double corr_map2[][];
         double temp_mean[];
         
-        public corr2Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], double delay_map[][], 
+        public corr2Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][], 
         		double peaks_map[][], double corrmap[][], double corr_map2[][], double temp_mean[]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
@@ -1569,7 +1571,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				    		maxIndex = i+1;
     				    	}
     				    }
-    				    delay_map[y][x] = maxIndex;
+    				    delay_map[y][x] = (short)maxIndex;
     				    maxPeak = -Double.MAX_VALUE;
     				    for (t = 0; t < tDim; t++) {
     				    	if (Math.abs(brain_mask_norm[y][x][t]) > maxPeak) {
