@@ -145,7 +145,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double corrmap[][][];
     	double corr_map2[][][];
     	short delay_map[][][];
-    	double peaks_map[][][];
+    	short peaks_map[][][];
     	double temp[];
     	double maxTemp;
     	int maxIndex;
@@ -153,7 +153,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int it;
     	short brain_mask2[][][][];
     	short brain_mask_norm2[][][][];
-    	double maxPeak;
+    	short maxPeak;
     	String delZString;
     	float delZ;
     	ModelImage corr_map2Image;
@@ -442,7 +442,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	// TSP Delay map considering temporal similarity with whole brain average
     	delay_map = new short[zDim][yDim][xDim];
     	// TSP Peaks map is the absolute value of the SI corresponding to the largest deviation from baseline
-    	peaks_map = new double[zDim][yDim][xDim];
+    	peaks_map = new short[zDim][yDim][xDim];
     	
     	// First TSP iteration, Loop over all voxels.  First find delay from cross-correlation.
     	// Then find Correlation Coefficient after shifting by delay
@@ -577,10 +577,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        				    	}
 	        				    }
 	        				    delay_map[z][y][x] = (short)maxIndex;
-	        				    maxPeak = -Double.MAX_VALUE;
+	        				    maxPeak = Short.MIN_VALUE;
 	        				    for (t = 0; t < tDim; t++) {
 	        				    	if (Math.abs(brain_mask_norm[z][y][x][t]) > maxPeak) {
-	        				    		maxPeak = Math.abs(brain_mask_norm[z][y][x][t]);
+	        				    		maxPeak = (short)Math.abs(brain_mask_norm[z][y][x][t]);
 	        				    	}
 	        				    }
 	        				    peaks_map[z][y][x] = maxPeak;
@@ -730,16 +730,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	corrmapImage.disposeLocal();
     	corrmapImage = null;
     	
-    	peaks_mapImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "peaks_map");
+    	peaks_mapImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "peaks_map");
+    	buffer = new short[volume];
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = peaks_map[z][y][x];
+    				buffer[x + y*xDim + z*length] = peaks_map[z][y][x];
     			}
     		}
     	}
     	try {
-    		peaks_mapImage.importData(0, dbuffer, true);
+    		peaks_mapImage.importData(0, buffer, true);
     	}
     	catch (IOException e) {
     		MipavUtil.displayError("IOException on peaks_mapImage");
@@ -750,7 +751,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (i = 0; i < zDim; i++) {
     		fileInfo[i].setResolutions(resolutions3D);
     		fileInfo[i].setUnitsOfMeasure(units3D);
-    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+    		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
         options.setFileName("peaks_map.img");
        
@@ -1310,7 +1311,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	CBVImage = null;
     	
     	TmaxImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "Tmax");
-    	buffer = new short[volume];
+    	//buffer = new short[volume]; done for peaks_mapImage
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
@@ -1528,13 +1529,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         int tDim;
         short brain_mask_norm[][][];
         short delay_map[][];
-        double peaks_map[][];
+        short peaks_map[][];
         double corrmap[][];
         double corr_map2[][];
         double temp_mean[];
         
         public corr2Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][], 
-        		double peaks_map[][], double corrmap[][], double corr_map2[][], double temp_mean[]) {
+        		short peaks_map[][], double corrmap[][], double corr_map2[][], double temp_mean[]) {
         	this.xDim = xDim;
         	this.yDim = yDim;
         	this.tDim = tDim;
@@ -1551,9 +1552,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	long sum;
         	double temp[];
         	double maxTemp;
-        	int maxIndex;
+        	short maxIndex;
         	double cc;
-        	double maxPeak;
+        	short maxPeak;
         	
         	for (y = 0; y < yDim; y++) {
     			for (x = 0; x < xDim; x++) {
@@ -1568,17 +1569,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				    for (i = 0; i < temp.length; i++) {
     				    	if (temp[i] > maxTemp) {
     				    		maxTemp = temp[i];
-    				    		maxIndex = i+1;
+    				    		maxIndex = (short)(i+1);
     				    	}
     				    }
-    				    delay_map[y][x] = (short)maxIndex;
-    				    maxPeak = -Double.MAX_VALUE;
+    				    delay_map[y][x] = maxIndex;
+    				    maxPeak = Short.MIN_VALUE;
     				    for (t = 0; t < tDim; t++) {
     				    	if (Math.abs(brain_mask_norm[y][x][t]) > maxPeak) {
-    				    		maxPeak = Math.abs(brain_mask_norm[y][x][t]);
+    				    		maxPeak = (short)Math.abs(brain_mask_norm[y][x][t]);
     				    	}
     				    }
-    				    peaks_map[y][x] = maxPeak;
+    				    peaks_map[y][x] = (short)maxPeak;
     				    cc = corrcoef(brain_mask_norm[y][x], temp_mean);
     				    corrmap[y][x] = cc;
     				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
