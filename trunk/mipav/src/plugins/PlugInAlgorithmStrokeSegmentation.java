@@ -590,10 +590,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         short[] objectBuffer = chooseCoreObjects(threshImg, threshBuffer, removedBuffer, passNum, useDistanceSelection, selectedObjectList);
         
-        // get pixels from ADC within closed object mask with intensity < 620, again
+        // get pixels from ADC within closed object mask with intensity < 620, again - this time always from original ADC
         for (int i = 0; i < volLength; i++) {
             if (objectBuffer[i] != 0) {
-                if (adcVolForThresholding.getInt(i) < adcThreshold) {
+                if (adcImage.getInt(i) < adcThreshold) {
                     objectBuffer[i] = 1;
                 } else {
                     objectBuffer[i] = 0;
