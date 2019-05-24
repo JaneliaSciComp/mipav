@@ -200,11 +200,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double rcbf;
     	expfun minsearch;
     	int exitStatus;
-    	double p[] = new double[2];
-    	double num;
-    	double denom;
-    	double num1;
-    	double denom1;
+    	double p[];
     	ModelImage CBFImage;
     	ModelImage MTTImage;
     	ModelImage CBVImage;
@@ -213,7 +209,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	//ModelImage chiSquaredImage;
     	long sumT[];
     	int countT[];
-    	boolean test = false;
+    	boolean test = true;
     	boolean Philips = true;
     	
     	if (test) {
@@ -1083,7 +1079,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         else { // single processor
 		    // Define some variables for fminsearch - initial guess
         	
-		    x0 = new double[]{4};
+		    x0 = new double[]{0.1,4};
 		    xdata = new double[2*tDim];
 		    for (i = 0; i < 2*tDim; i++) {
 		    	xdata[i] = i * delT;
@@ -1131,18 +1127,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    minsearch = new expfun(x0, b, xdata);
 		    		    	    minsearch.driver();
 		    		    	    exitStatus = minsearch.getExitStatus();
-		    		    	    p[1] = minsearch.getParameters()[0];
-		    		    	    if ((exitStatus >= 0)  && (p[1] > 0) && (p[1] < 75)) {
+		    		    	    p = minsearch.getParameters();
+	        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
 		    		    	    	// Normal termination
-		    		    	    	num1 = 0.0;
-	        		    	    	denom1 = 0.0;
-	        		    	    	for (i = 0; i < 2*tDim; i++) {
-	                		    	    num = Math.exp(-xdata[i]/p[1]);
-	            						denom = num * num;
-	                                    num1 += b[i]*num;
-	                                    denom1 += denom;
-	        		    	    	}
-	        		    	    	p[0] = num1/denom1;
 		    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
 		    					    CBF[z][y][x] = p[0];
 		    					    // relCBF is max value of residual function.  Should be similar to CBF,
@@ -1630,11 +1617,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             int i;
             double C[];
             double b[];
-            double num;
-            double denom;
-            double num1;
-            double denom1;
-    		x0 = new double[]{4};
+    		x0 = new double[]{0.1,4};
             xdata = new double[2*tDim];
             for (i = 0; i < 2*tDim; i++) {
             	xdata[i] = i * delT;
@@ -1650,7 +1633,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             double rcbf;
             expfun minsearch;
         	int exitStatus;
-        	double p[] = new double[2];
+        	double p[];
             // Iterate
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
@@ -1687,20 +1670,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    // Shift b to have a peak at origin for fitting
         		    	    b = circshift(b,-Tmax[y][x]);
         		    	    minsearch = new expfun(x0, b, xdata);
-        		    	    minsearch.driver();
-        		    	    exitStatus = minsearch.getExitStatus();
-        		    	    p[1] = minsearch.getParameters()[0];
+	    		    	    minsearch.driver();
+	    		    	    exitStatus = minsearch.getExitStatus();
+	    		    	    p = minsearch.getParameters();
         		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
         		    	    	// Normal termination
-        		    	    	num1 = 0.0;
-        		    	    	denom1 = 0.0;
-        		    	    	for (i = 0; i < 2*tDim; i++) {
-                		    	    num = Math.exp(-xdata[i]/p[1]);
-            						denom = num * num;
-                                    num1 += b[i]*num;
-                                    denom1 += denom;
-        		    	    	}
-        		    	    	p[0] = num1/denom1;
         		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
         					    CBF[y][x] = p[0];
         					    // relCBF is max value of residual function.  Should be similar to CBF,
@@ -1718,47 +1692,52 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     }
     
     public void testexpfun() {
+    	int i;
     	expfun minsearch;
     	int exitStatus;
-    	double p[] = new double[2];
-    	double num;
-    	double denom;
-    	double num1;
-    	double denom1;
-    	int i;
-    	double x0[] = new double[]{4};
+    	double p[];
+    	double x0[] = new double[]{0.1,4};
     	double b[] = new double[]{0.07, 0.06};
     	double xdata[] = new double[]{5.0,6.0};
-    	minsearch = new expfun(x0, b, xdata);
+    	 minsearch = new expfun(x0, b, xdata);
  	    minsearch.driver();
  	    exitStatus = minsearch.getExitStatus();	
  	    System.out.println("exitStatus = " + exitStatus);
- 	    p[1] = minsearch.getParameters()[0];
- 	   num1 = 0.0;
-   	   denom1 = 0.0;
-   	   for (i = 0; i < 2; i++) {
-   	       num = Math.exp(-xdata[i]/p[1]);
-		   denom = num * num;
-           num1 += b[i]*num;
-           denom1 += denom;
-	   	}
-	   	p[0] = num1/denom1;
+ 	    p = minsearch.getParameters();
  	    System.out.println("p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
  	    System.out.println("p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
-	}
+ 	    
+ 	    b = new double[10];
+ 	    xdata = new double[10];
+ 	    for (i = 0; i < 10; i++) {
+ 	    	xdata[i] = i;
+ 	    	b[i] = 0.133*Math.exp(-i/5.67);
+ 	    }
+ 	   minsearch = new expfun(x0, b, xdata);
+	    minsearch.driver();
+	    exitStatus = minsearch.getExitStatus();	
+	    System.out.println("exitStatus = " + exitStatus);
+	    p = minsearch.getParameters();
+	    System.out.println("p[0] = " + p[0] + " answer = 0.133");
+	    System.out.println("p[1] = " + p[1] + " answer = 5.67");
+    }
     
     class expfun extends NLConstrainedEngine {
     	double b[];
     	double xdata[];
         public expfun(double x0[], double b[], double xdata[]) {
         	// nPoints, params
-        	super(1, 1);
+        	super(b.length, x0.length);
         	this.b = b;
         	this.xdata = xdata;
         	
         	bounds = 0; // bounds = 0 means unconstrained
-        	//bl[0] = 1.0E-10;
-        	//bu[0] = 74.999999;
+        	//bl[0] = -Double.MAX_VALUE;
+        	//bu[0] = Double.MAX_VALUE;
+        	//bl[1] = 1.0E-10;
+        	//bu[1] = 74.999999;
+
+        	
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
@@ -1802,86 +1781,28 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					Preferences.DEBUG_ALGORITHM);
 		}
 		
-		/**
-		 * Fit to function.
-		 * 
-		 * @param a
-		 *            The x value of the data point.
-		 * @param residuals
-		 *            The best guess parameter values.
-		 * @param covarMat
-		 *            The derivative values of y with respect to fitting
-		 *            parameters.
-		 */
 		public void fitToFunction(double[] a, double[] residuals,
 				double[][] covarMat) {
 			int ctrl;
 			int i;
-			double num1;
-			double num2;
-			double denom1;
-			double denom2;
-			double num;
-			double denom;
-			double e1;
-			double e2;
-			double sum1;
-			double sum2;
-			double sum3;
-			double sum4;
-			double sum5;
-			double sum6;
-			double sum7;
-			double sum8;
-			double ratio1;
-			double ratio2;
+			
 			
 			try {
 				ctrl = ctrlMat[0];
 
 				if ((ctrl == -1) || (ctrl == 1)) {
-                    // Monoexponential decay 
-					num1 = 0.0;
-					denom1 = 0.0;
-					num2 = 0.0;
-					denom2 = 0.0;
-					for (i = 0; i < xdata.length; i++) {
-					    //residuals[i] = (a[0]*Math.exp(-1/a[1]*xdata[i])) - b[i];
-						num = Math.exp(-xdata[i]/a[0]);
-						denom = num * num;
-                        num1 += b[i]*num;
-                        denom1 += denom;
-                        num2 += b[i]*xdata[i]*num;
-                        denom2 += xdata[i]*denom;
+                    // Monoexponential decay
+					for (i = 0; i < nPts; i++) {
+					    residuals[i] = (a[0]*Math.exp(-1/a[1]*xdata[i])) - b[i];
 					}
-					residuals[0] = num1/denom1 - num2/denom2;
 				} // if ((ctrl == -1) || (ctrl == 1))
 
 				// Calculate the Jacobian analytically
 				else if (ctrl == 2) {
-					sum1 = 0.0;
-					sum2 = 0.0;
-					sum3 = 0.0;
-					sum4 = 0.0;
-					sum5 = 0.0;
-					sum6 = 0.0;
-					sum7 = 0.0;
-					sum8 = 0.0;
-					for (i = 0; i < xdata.length; i++) {
-					    e1 = Math.exp(-xdata[i]/a[0]);
-					    e2 = e1 * e1;
-					    sum1 += e2;
-					    sum2 += (xdata[i]/(a[0]*a[0]))*b[i]*e1;
-					    sum3 += b[i]*e1;
-					    sum4 += 2.0*(xdata[i]/(a[0]*a[0]))*e2;
-					    sum5 += e2*xdata[i];
-					    sum6 += ((xdata[i]*xdata[i])/(a[0]*a[0]))*b[i]*e1;
-					    sum7 += b[i]*e1*xdata[i];
-					    sum8 += 2.0*((xdata[i]*xdata[i])/(a[0]*a[0]))*e2;
+					for (i = 0; i < nPts; i++) {
+					    covarMat[i][0] = Math.exp(-1.0/a[1]*xdata[i]);
+					    covarMat[i][1] = xdata[i]/(a[1]*a[1])*a[0]*Math.exp(-1.0/a[1]*xdata[i]);
 					}
-					ratio1 = (sum1 * sum2 - sum3 * sum4)/(sum1 * sum1);
-					ratio2 = (sum5 * sum6 - sum7 * sum8)/(sum5 * sum5);
-					covarMat[0][0] = ratio1 - ratio2;
 				}
 			} catch (Exception e) {
 				Preferences.debug("function error: " + e.getMessage() + "\n",
@@ -1890,6 +1811,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 
 			return;
 		}
+
+		
+		
     }
     
     public void mouseClicked(MouseEvent mouseEvent) {
