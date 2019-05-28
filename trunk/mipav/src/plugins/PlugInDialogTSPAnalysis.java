@@ -65,6 +65,14 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private boolean multiThreading;
 	
+	//private ButtonGroup searchGroup;
+	
+	//private JRadioButton search1DButton;
+	
+	//private JRadioButton search2DButton;
+	
+	private boolean search2D = true;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -236,6 +244,24 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         multiThreadingEnabledCheckBox.setEnabled(ThreadUtil.getAvailableCores() > 1);
         inputPanel.add(multiThreadingEnabledCheckBox, gbc);
         
+        /*searchGroup = new ButtonGroup();
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        search2DButton = new JRadioButton("2D search", true);
+        search2DButton.setFont(serif12);
+        search2DButton.setForeground(Color.black);
+        searchGroup.add(search2DButton);
+        inputPanel.add(search2DButton, gbc);
+        
+        gbc.gridy = 10;
+        search1DButton = new JRadioButton("1D search", false);
+        search1DButton.setFont(serif12);
+        search1DButton.setForeground(Color.black);
+        searchGroup.add(search1DButton);
+        inputPanel.add(search1DButton, gbc);*/
+        
+        
+        
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
         // Build the Panel that holds the OK and CANCEL Buttons
@@ -293,7 +319,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, calculateMaskingThreshold, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading);
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search2D);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -339,6 +365,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	Psvd = scriptParameters.getParams().getDouble("psv");
     	autoAIFCalculation = scriptParameters.getParams().getBoolean("auto_AIF");
     	multiThreading = scriptParameters.getParams().getBoolean("multi_thread");
+    	search2D = scriptParameters.getParams().getBoolean("search_2D");
     }
     
     /**
@@ -354,6 +381,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("psv", Psvd));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("auto_AIF", autoAIFCalculation));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("multi_thread", multiThreading));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("search_2D", search2D));
     }
     
     private boolean setVariables() {
@@ -445,6 +473,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	
     	autoAIFCalculation = autoButton.isSelected();
     	multiThreading = multiThreadingEnabledCheckBox.isSelected();
+    	//search2D = search2DButton.isSelected();
     	return true;
     }
 
