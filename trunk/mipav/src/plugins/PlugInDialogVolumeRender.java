@@ -1614,9 +1614,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					
 
 					wormData = new WormData(wormImage);
-//					wormData.readSeamCells();				
-//					
-					openAnnotations();
+					
+					openAnnotations(WormData.getOutputDirectory(voiFile, fileName), WormData.getOutputDirectory(voiFile2, fileName));
 				}
 				else {
 					imageIndex += nextDirection;
@@ -2675,7 +2674,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 	}
 	
-	private void openAnnotations()
+	private void openAnnotations(String dir1, String dir2 )
 	{
 		if ( annotations != null )
 		{
@@ -2684,9 +2683,26 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		annotations = new VOIVector();
 
-		VOI markers = wormData.getIntegratedMarkerAnnotations();
-		annotations.add( markers );
-		wormImage.registerVOI( markers );
+		if ( wormData.integratedExists() ) {
+			VOI markers = wormData.getIntegratedMarkerAnnotations();
+			if ( markers != null ) {
+				annotations.add( markers );
+				wormImage.registerVOI( markers );
+			}
+		}
+		else {
+			// read the original imageA/imageB markers - saved to the new integrated dir
+			VOI markers = wormData.getMarkerAnnotations(dir1);
+			if ( markers != null ) {
+				annotations.add( markers );
+				wormImage.registerVOI( markers );
+			}
+			markers = wormData.getMarkerAnnotations(dir2);
+			if ( markers != null ) {
+				annotations.add( markers );
+				wormImage.registerVOI( markers );
+			}
+		}
 
 		if ( (annotations.size() > 0) && (voiManager != null) )
 		{

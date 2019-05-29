@@ -177,10 +177,18 @@ public class WormData
 		return autoLattice;
 	}
 
+	public boolean integratedExists() {
+		File file = new File(outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv");
+		return file.exists();
+	}
+	
 	public VOI getIntegratedMarkerAnnotations()
 	{
 		System.err.println("getIntegratedMarkerAnnotations");
 		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv");
+
+		if ( markerAnnotations == null )
+			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
 		return markerAnnotations;
 	}
 
