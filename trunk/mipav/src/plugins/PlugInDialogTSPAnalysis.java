@@ -65,13 +65,21 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private boolean multiThreading;
 	
-	//private ButtonGroup searchGroup;
+	private ButtonGroup searchGroup;
 	
-	//private JRadioButton search1DButton;
+	private JRadioButton search1DElsuncButton;
 	
-	//private JRadioButton search2DButton;
+	private JRadioButton search2DElsuncButton;
 	
-	private boolean search2D = true;
+	private JRadioButton search2DNMSimplexButton;
+	
+	private final int ELSUNC_2D_SEARCH = 1;
+	
+	private final int ELSUNC_1D_SEARCH = 2;
+	
+	private final int NMSIMPLEX_2D_SEARCH = 3;
+	
+	private int search = ELSUNC_2D_SEARCH;
 	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
@@ -244,23 +252,28 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         multiThreadingEnabledCheckBox.setEnabled(ThreadUtil.getAvailableCores() > 1);
         inputPanel.add(multiThreadingEnabledCheckBox, gbc);
         
-        /*searchGroup = new ButtonGroup();
+        searchGroup = new ButtonGroup();
         gbc.gridx = 0;
         gbc.gridy = 9;
-        search2DButton = new JRadioButton("2D search", true);
-        search2DButton.setFont(serif12);
-        search2DButton.setForeground(Color.black);
-        searchGroup.add(search2DButton);
-        inputPanel.add(search2DButton, gbc);
+        search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
+        search2DElsuncButton.setFont(serif12);
+        search2DElsuncButton.setForeground(Color.black);
+        searchGroup.add(search2DElsuncButton);
+        inputPanel.add(search2DElsuncButton, gbc);
         
         gbc.gridy = 10;
-        search1DButton = new JRadioButton("1D search", false);
-        search1DButton.setFont(serif12);
-        search1DButton.setForeground(Color.black);
-        searchGroup.add(search1DButton);
-        inputPanel.add(search1DButton, gbc);*/
+        search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
+        search1DElsuncButton.setFont(serif12);
+        search1DElsuncButton.setForeground(Color.black);
+        searchGroup.add(search1DElsuncButton);
+        inputPanel.add(search1DElsuncButton, gbc);
         
-        
+        gbc.gridy = 11;
+        search2DNMSimplexButton = new JRadioButton("2D NMSimplex search", true);
+        search2DNMSimplexButton.setFont(serif12);
+        search2DNMSimplexButton.setForeground(Color.black);
+        searchGroup.add(search2DNMSimplexButton);
+        inputPanel.add(search2DNMSimplexButton, gbc);
         
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
@@ -319,7 +332,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, calculateMaskingThreshold, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search2D);
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -365,7 +378,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	Psvd = scriptParameters.getParams().getDouble("psv");
     	autoAIFCalculation = scriptParameters.getParams().getBoolean("auto_AIF");
     	multiThreading = scriptParameters.getParams().getBoolean("multi_thread");
-    	search2D = scriptParameters.getParams().getBoolean("search_2D");
+    	search = scriptParameters.getParams().getInt("search_pars");
     }
     
     /**
@@ -381,7 +394,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("psv", Psvd));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("auto_AIF", autoAIFCalculation));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("multi_thread", multiThreading));
-    	scriptParameters.getParams().put(ParameterFactory.newParameter("search_2D", search2D));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("search_pars", search));
     }
     
     private boolean setVariables() {
@@ -473,7 +486,15 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	
     	autoAIFCalculation = autoButton.isSelected();
     	multiThreading = multiThreadingEnabledCheckBox.isSelected();
-    	//search2D = search2DButton.isSelected();
+    	if (search2DElsuncButton.isSelected()) {
+    		search = ELSUNC_2D_SEARCH;
+    	}
+    	else if (search1DElsuncButton.isSelected()) {
+    	    search = ELSUNC_1D_SEARCH;	
+    	}
+    	else if (search2DNMSimplexButton.isSelected()) {
+    		search = NMSIMPLEX_2D_SEARCH;
+    	}
     	return true;
     }
 
