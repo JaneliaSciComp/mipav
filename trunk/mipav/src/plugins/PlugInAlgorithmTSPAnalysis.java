@@ -257,11 +257,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	FileIO fileIO = new FileIO(); 
     	fileIO.setFileDir(pwiImageFileDirectory + File.separator);
     	boolean performSort = true;
-    	fileIO.setQuiet(false);
+    	fileIO.setQuiet(true);
     	fileIO.setSuppressProgressBar(true);
-    	System.out.println("About to do fileIO.readDicom");
     	ModelImage image3D = fileIO.readDicom(selectedFileName, fileList, performSort);
-    	System.out.println("Have performed fileIO.readDicom");
     	image3D.calcMinMax();
     	int extents3Dorg[] = image3D.getExtents();
     	length = extents3Dorg[0] * extents3Dorg[1];
@@ -291,7 +289,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         if (tagTable.getValue("0020,0105") != null) {
         	// Number of temporal positions
             FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0105"));
-            tDimString = (String)tag.getValue(false);    
+            tDimString = (String)tag.getValue(false);
             Philips = true;
         }
         else if (tagTableLast.getValue("0020,0012") != null) {
