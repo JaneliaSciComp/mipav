@@ -121,7 +121,7 @@ public class LatticeModel {
 								// read the lattice segment:
 								int segment = (parsed.length > parsedIndex+6) ? (parsed[parsedIndex+6].length() > 0) ? Integer.valueOf( parsed[parsedIndex+6] ) : 1 : 1;
 //								System.err.println( name + "  " + segment );
-								text.setNote(fileName + "\n" + "lattice segment: " + segment);
+								text.setLatticeSegment(segment);
 							}
 							text.add( new Vector3f( x, y, z ) );
 							text.add( new Vector3f( x, y, z ) );
