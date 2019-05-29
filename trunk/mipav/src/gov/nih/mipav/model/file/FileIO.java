@@ -1025,7 +1025,7 @@ public class FileIO {
                     // zOri[1] = 1 but zOri[2] = 2, rather than 10.
                     if ( ! (validOriSort = FileIO.sort(zOrients, zOri, nImages))) {
                         Preferences.debug("FileIO: orientation number sort failed\n", Preferences.DEBUG_FILEIO);
-                        System.err.println("FileIO: instance number sort failed on " + fileList[0]);
+                        System.err.println("FileIO: orientation number sort failed on " + fileList[0]);
 
                         // Follow-on ordering if not a valid orientation sort:
                         // pre-order the orientation numbers to *****match the instance
@@ -2076,7 +2076,7 @@ public class FileIO {
                         boolean validInstanceSort = false;
                         
                         if ( ! (validInstanceSort = FileIO.sort(instNumArr, indexArr, instNumArr.length))) {
-                            Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("FileIO: instance numbers sort failed on DTI vol\n", Preferences.DEBUG_FILEIO);
                             System.err.println("FileIO: instance numbers sort failed on DTI vol " + i);
                         }
                         
@@ -2167,7 +2167,7 @@ public class FileIO {
                         boolean validInstanceSort = false;
                         
                         if ( ! (validInstanceSort = FileIO.sort(instNumArr, indexArr, instNumArr.length))) {
-                            Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("FileIO: instance numbers sort failed on DTI vol" + i + "\n", Preferences.DEBUG_FILEIO);
                             System.err.println("FileIO: instance numbers sort failed on DTI vol " + i);
                         }
                         
