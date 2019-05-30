@@ -143,7 +143,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	String TRString = null;
     	float TR;
     	short buffer[];
-    	short brain_mask[][][][];
+    	short brain_mask[];
     	double temp_mean[];
     	short brain_mask_norm[][][][];
     	double dbuffer[];
@@ -374,7 +374,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	image3D = null;
     	data = new short[zDim][yDim][xDim][tDim];
     	// Start TSP processing
-    	brain_mask = new short[zDim][yDim][xDim][tDim];
+    	brain_mask = new short[tDim];
     	temp_mean = new double[tDim];
     	brain_mask_norm = new short[zDim][yDim][xDim][tDim];
     	// Normalize PWI by subtracting off pre_contrast (first) image
@@ -426,12 +426,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     			for (y = 0; y < yDim; y++) {
     				for (x = 0; x < xDim; x++) {
 						if (data[z][y][x][t] < masking_threshold) {
-							brain_mask[z][y][x][t] = 0;
+							brain_mask[t] = 0;
 						}
 						else {
-							brain_mask[z][y][x][t] = data[z][y][x][t];
+							brain_mask[t] = data[z][y][x][t];
 						}
-						brain_mask_norm[z][y][x][t] = (short)(brain_mask[z][y][x][t] - brain_mask[z][y][x][0]);
+						brain_mask_norm[z][y][x][t] = (short)(brain_mask[t] - brain_mask[0]);
 						if (brain_mask_norm[z][y][x][t] != 0) {
 					    	sum += brain_mask_norm[z][y][x][t];
 					    	count++;
