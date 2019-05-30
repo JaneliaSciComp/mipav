@@ -161,8 +161,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int maxIndex;
     	double cc;
     	int it;
-    	short brain_mask2[][][][];
-    	short brain_mask_norm2[][][][];
+    	short brain_mask2[];
+    	short brain_mask_norm2;
     	short maxPeak;
     	String delZString;
     	float delZ;
@@ -514,8 +514,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	// Following TSP iterations, Recalc who brain average (healthy)
     	// considering only tissue with correlations > TSP threshold
-    	brain_mask2 = new short[zDim][yDim][xDim][tDim];
-    	brain_mask_norm2 = new short[zDim][yDim][xDim][tDim];
+    	brain_mask2 = new short[tDim];
     	sumT = new long[tDim];
     	countT = new int[tDim];
     	for (it = 1; it <= TSP_iter; it++) {
@@ -528,16 +527,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				for (x = 0; x < xDim; x++) {
     					if (corr_map2[z][y][x] < TSP_threshold) {
     						for (t = 0; t < tDim; t++) {
-    						    brain_mask2[z][y][x][t] = 0;
-    						    brain_mask_norm2[z][y][x][t] = 0;
+    						    brain_mask2[t] = 0;
+    						    brain_mask_norm2 = 0;
     						}
     					}
     					else {
     						for (t = 0; t < tDim; t++) {
-    						    brain_mask2[z][y][x][t] = data[z][y][x][t];
-    						    brain_mask_norm2[z][y][x][t] = (short)(brain_mask2[z][y][x][t] - brain_mask2[z][y][x][0]);
-    						    if (brain_mask_norm2[z][y][x][t] != 0) {
-        					    	sumT[t] += brain_mask_norm2[z][y][x][t];
+    						    brain_mask2[t] = data[z][y][x][t];
+    						    brain_mask_norm2 = (short)(brain_mask2[t] - brain_mask2[0]);
+    						    if (brain_mask_norm2 != 0) {
+        					    	sumT[t] += brain_mask_norm2;
         					    	countT[t]++;
         					    }
     						}
