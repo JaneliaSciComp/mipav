@@ -176,7 +176,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	short ttp[][][];
     	short minpeaks;
     	short minttp;
-    	byte mask3D[][][];
     	double peaks_mean;
     	double diff;
     	double diff_squared_sum;
@@ -880,7 +879,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	// Auto AIF Calculation
 	    	// AIF is average signal of pixels with the largest SI deviations
 	    	// (4 std) from baseline (likely to be large vessels)
-	    	mask3D = new byte[zDim][yDim][xDim];
 	    	sum = 0;
 		    count = 0;
 		    for (z = 0; z < zDim; z++) {
@@ -907,15 +905,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    }
 		    peaks_std = Math.sqrt(diff_squared_sum/(count-1));
 		    peaks_threshold = peaks_mean - 4.0*peaks_std;
-		    for (z = 0; z < zDim; z++) {
-				for (y = 0; y < yDim; y++) {
-					for (x = 0; x < xDim; x++) {
-					    if (peaks[z][y][x] < peaks_threshold) {
-					    	mask3D[z][y][x] = 1;
-					    }
-					}
-				}
-		    }
 		    autoaif = new double[tDim];
 		    minautoaif = Double.MAX_VALUE;
 		    for (t = 0; t < tDim; t++) {
@@ -924,7 +913,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		        for (z = 0; z < zDim; z++) {
 					for (y = 0; y < yDim; y++) {
 						for (x = 0; x < xDim; x++) {
-							if (mask3D[z][y][x] == 1) {
+							if (peaks[z][y][x] < peaks_threshold) {
 							    sum += data_norm[z][y][x][t];
 							    count++;
 							}
