@@ -171,7 +171,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage peaks_mapImage;
     	ModelImage delay_mapImage;
     	String TEString;
-    	short data_norm[][][][];
+    	short data_norm;
     	short peaks[][][];
     	short ttp[][][];
     	short minpeaks;
@@ -847,16 +847,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	// Deconvolution analysis
     	S = new double[tDim];
-    	data_norm = new short[zDim][yDim][xDim][tDim];
-    	for (t = 0; t < tDim; t++) {
-    	    for (z = 0; z < zDim; z++) {
-				for (y = 0; y < yDim; y++) {
-					for (x = 0; x < xDim; x++) {
-					    data_norm[z][y][x][t] = (short)(data[z][y][x][t] - data[z][y][x][0]);	
-					}
-				}
-	    	}
-    	} // for (t = 0; t < tDim; t++)
     	peaks = new short[zDim][yDim][xDim];
     	ttp = new short[zDim][yDim][xDim];
     	for (z = 0; z < zDim; z++) {
@@ -865,8 +855,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					minpeaks = Short.MAX_VALUE;
 					minttp = Short.MAX_VALUE;
 					for (t = 0; t < tDim; t++) {
-						if (data_norm[z][y][x][t] < minpeaks) {
-							minpeaks = data_norm[z][y][x][t];
+						data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
+						if (data_norm < minpeaks) {
+							minpeaks = data_norm;
 							minttp = (short)(t+1);
 						}
 					}
@@ -914,7 +905,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					for (y = 0; y < yDim; y++) {
 						for (x = 0; x < xDim; x++) {
 							if (peaks[z][y][x] < peaks_threshold) {
-							    sum += data_norm[z][y][x][t];
+								data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);
+							    sum += data_norm;
 							    count++;
 							}
 						}
