@@ -62,6 +62,9 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int additionalObjectMaxDistance = 4;
     
+    private boolean requireMinCoreSize;
+    private float minCoreSizeCC;
+    
     private FileIO fileIO;
     
     private int minAdcObjectSize = 10;
@@ -97,7 +100,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean anisoFilter, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean anisoFilter, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir) {
         super();
         
         dwiImage = dwi;
@@ -117,6 +120,9 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         doSelectAdditionalObj = doAdditionalObj;
         additionalObjectMinimumRatio = 1f - (float)(additionalObjPct / 100f);
+        
+        requireMinCoreSize = reqMinCore;
+        minCoreSizeCC = minCoreSize;
         
         coreOutputDir = outputDir;
         
@@ -714,6 +720,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 }
             }
             
+            // TODO min core size
+            
             boolean allCoreSmallFlag = true;
             double resFactorCC = getResolutionFactorCC(adcImage);
             for (int i = 0; i < coreSizeList.length; i++) {
@@ -789,6 +797,20 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 
                 selectedObjectList.add(selectedObject);
                 System.err.println("Selected object: " + selectedObject.id + "\t" + selectedObject.size);
+            }
+            
+            if (requireMinCoreSize) {
+                Vector<Integer> remObjIndexList = new Vector<Integer>();
+                for (int i = 0; i < selectedObjectList.size(); i++) {
+                    if ((selectedObjectList.get(i).coreSize * resFactorCC) < minCoreSizeCC) {
+                        remObjIndexList.add(i);
+                    }
+                }
+                
+                for (Integer objIndex : remObjIndexList) {
+                    System.err.println("Removed small object: " + selectedObjectList.get(objIndex).id + "\t" + selectedObjectList.get(objIndex).size + "\t" + (selectedObjectList.get(objIndex).coreSize * resFactorCC));
+                    selectedObjectList.remove(objIndex.intValue());
+                }
             }
         } else {
             System.err.println("No qualifying object found in volume.");

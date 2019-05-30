@@ -91,6 +91,12 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private float threshCloseSize = 4f;
     
+    private JCheckBox requireMinCoreSizeCheckbox;
+    private JTextField minCoreSizeCCField;
+    
+    private boolean requireMinCoreSize = true;
+    private float minCoreSizeCC = 0.2f;
+    
     private PlugInAlgorithmStrokeSegmentation segAlgo = null;
     
     private boolean isDicomListenerRun = false;
@@ -343,6 +349,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         threshCloseIter = Integer.parseInt(threshCloseIterField.getText());
         threshCloseSize = Float.parseFloat(threshCloseSizeField.getText());
         
+        requireMinCoreSize = requireMinCoreSizeCheckbox.isSelected();
+        minCoreSizeCC = Float.parseFloat(minCoreSizeCCField.getText());
+        
         doSkullRemoval = skullRemovalCheckbox.isSelected();
         
         doSelectAdditionalObj = selectAdditionalObjCheckbox.isSelected();
@@ -358,7 +367,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doFilter, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doFilter, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, requireMinCoreSize, minCoreSizeCC, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -422,6 +431,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         doSelectAdditionalObj = scriptParameters.getParams().getBoolean("do_select_additional_objs");
         selectAdditionalObjPct = scriptParameters.getParams().getInt("select_additional_objs_percent");
         
+        requireMinCoreSize = scriptParameters.getParams().getBoolean("do_require_min_core_size");
+        minCoreSizeCC = scriptParameters.getParams().getFloat("min_core_size_cc");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -441,6 +453,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_close_kernel_size", threshCloseSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_select_additional_objs", doSelectAdditionalObj));
         scriptParameters.getParams().put(ParameterFactory.newParameter("select_additional_objs_percent", selectAdditionalObjPct));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_require_min_core_size", requireMinCoreSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_core_size_cc", minCoreSizeCC));
     }
     
     /**
@@ -598,6 +612,25 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(selectAdditionalObjPctField, gbc);
+        
+        ;
+        ;
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        requireMinCoreSizeCheckbox = new JCheckBox("Require core objects to be above minimum size (CC)", requireMinCoreSize);
+        requireMinCoreSizeCheckbox.setForeground(Color.black);
+        requireMinCoreSizeCheckbox.setFont(serif12);
+        mainPanel.add(requireMinCoreSizeCheckbox, gbc);
+        
+        minCoreSizeCCField = new JTextField(10);
+        minCoreSizeCCField.setText("" + minCoreSizeCC);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(minCoreSizeCCField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
