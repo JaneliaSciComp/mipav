@@ -205,7 +205,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double TTP[][][];
     	double x0[];
     	int dim = 2;
-        double eps = 1.0e-4;
+        double eps = 1.0e-8;
         double scale = 1.0;
         boolean display = false;
     	double xdata[];
@@ -1671,7 +1671,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             double C[];
             double b[];
             int dim = 2;
-            double eps = 1.0e-4;
+            double eps = 1.0e-8;
             double scale = 1.0;
             boolean display = false;
             xdata = new double[2*tDim];
@@ -1806,6 +1806,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     public void testexpfun() {
     	expfun1D minsearch1D;
     	expfun2D minsearch2D;
+    	expfunNM minsearchNM;
     	int exitStatus;
     	double p[] = new double[2];
     	double num;
@@ -1880,6 +1881,30 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    System.out.println("2D exitStatus = " + exitStatus);
 	    System.out.println("2D p[0] = " + p[0] + " answer = 0.133");
 	    System.out.println("2D p[1] = " + p[1] + " answer = 5.67");
+	    
+	    int dim = 2;
+        double eps = 1.0e-8;
+        double scale = 1.0;
+        boolean display = false;
+	    x0 = new double[]{0.1,4};
+	    b = new double[]{0.07, 0.06};
+        xdata = new double[]{5.0,6.0};
+	    minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
+	    minsearchNM.driver();
+	    System.out.println("2D NMSimplex x0[0] = " + x0[0] + " MATLAB answer = 0.151297958944948");
+ 	    System.out.println("2D NMSimplex x0[1] = " + x0[1] + " MATLAB answer = 6.48713976636383");
+	    
+	    x0 = new double[]{0.1,4};
+	    b = new double[10];
+ 	    xdata = new double[10];
+ 	    for (i = 0; i < 10; i++) {
+ 	    	xdata[i] = i;
+ 	    	b[i] = 0.133*Math.exp(-i/5.67);
+ 	    }
+ 	    minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
+	    minsearchNM.driver();
+	    System.out.println("2D NMSimplex x0[0] = " +x0[0] + " answer = 0.133");
+	    System.out.println("2D NMSimplex x0[1] = " +x0[1] + " answer = 5.67");
 	}
     
     class expfun1D extends NLConstrainedEngine {
