@@ -149,8 +149,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double dbuffer[];
     	int x, y, z, t;
     	int i,j,ii,jj;
-    	long sum;
-    	int count;
+    	long sum[];
+    	long sumt;
+    	int count[];
+    	int countt;
     	// Remove hyphen from corr_map so MIPAV does not read corr_map and corr_map2 together as 1 file.
     	double corrmap[][][];
     	double corr_map2[][][];
@@ -418,12 +420,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		masking_threshold = (int)Math.round(mean + 0.5 * stdDev);
     	} // if (calculateMaskingThreshold)
     	
-		for (t = 0; t < tDim; t++) {
-    		sum = 0;
-    		count = 0;
-    		for (z = 0; z < zDim; z++) {
-    			for (y = 0; y < yDim; y++) {
-    				for (x = 0; x < xDim; x++) {
+		
+		sum = new long[tDim];
+		count = new int[tDim];
+    	for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					for (t = 0; t < tDim; t++) {
 						if (data[z][y][x][t] < masking_threshold) {
 							brain_mask[t] = 0;
 						}
@@ -432,16 +435,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						}
 						brain_mask_norm[z][y][x][t] = (short)(brain_mask[t] - brain_mask[0]);
 						if (brain_mask_norm[z][y][x][t] != 0) {
-					    	sum += brain_mask_norm[z][y][x][t];
-					    	count++;
+					    	sum[t] += brain_mask_norm[z][y][x][t];
+					    	count[t]++;
 					    }
-			        }
+					}
 		        }
 	        }
-		    if (t != 0) {
-			    temp_mean[t] = (double)sum/(double)count;
-		    }
-	    } // for (t = 0; t < tDim; t++)
+        }
+		for (t = 1; t < tDim; t++) {
+			temp_mean[t] = (double)sum[t]/(double)count[t];
+		}
 	    temp_mean[0] = 0;
 	    //for (i = 0; i < temp_mean.length; i++) {
 	    	//System.out.println("temp_mean["+i+"] = " + temp_mean[i]);
@@ -488,11 +491,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	for (z = 0; z < zDim; z++) {
 	    		for (y = 0; y < yDim; y++) {
 	    			for (x = 0; x < xDim; x++) {
-	    				sum = 0;
+	    				sumt = 0;
 	    				for (t = 1; t < tDim; t++) {
-	    					sum += brain_mask_norm[z][y][x][t];
+	    					sumt += brain_mask_norm[z][y][x][t];
 	    				}
-	    				if (sum != 0) {
+	    				if (sumt != 0) {
 	    				    temp = xcorrbias(brain_mask_norm[z][y][x], temp_mean);
 	    				    maxTemp = -Double.MAX_VALUE;
 	    				    maxIndex = -1;
@@ -576,11 +579,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        	for (z = 0; z < zDim; z++) {
 	        		for (y = 0; y < yDim; y++) {
 	        			for (x = 0; x < xDim; x++) {
-	        				sum = 0;
+	        				sumt = 0;
 	        				for (t = 1; t < tDim; t++) {
-	        					sum += brain_mask_norm[z][y][x][t];
+	        					sumt += brain_mask_norm[z][y][x][t];
 	        				}
-	        				if (sum != 0) {
+	        				if (sumt != 0) {
 	        				    temp = xcorrbias(brain_mask_norm[z][y][x], temp_mean);
 	        				    maxTemp = -Double.MAX_VALUE;
 	        				    maxIndex = -1;
@@ -870,19 +873,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	// Auto AIF Calculation
 	    	// AIF is average signal of pixels with the largest SI deviations
 	    	// (4 std) from baseline (likely to be large vessels)
-	    	sum = 0;
-		    count = 0;
+	    	sumt = 0;
+		    countt = 0;
 		    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
 					    if (peaks[z][y][x] != 0) {
-					    	sum += peaks[z][y][x];
-					    	count++;
+					    	sumt += peaks[z][y][x];
+					    	countt++;
 					    }
 					}
 				}
 		    }
-		    peaks_mean = (double)sum/(double)count;
+		    peaks_mean = (double)sumt/(double)countt;
 		    diff_squared_sum = 0.0;
 		    for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
@@ -894,25 +897,25 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					}
 				}
 		    }
-		    peaks_std = Math.sqrt(diff_squared_sum/(count-1));
+		    peaks_std = Math.sqrt(diff_squared_sum/(countt-1));
 		    peaks_threshold = peaks_mean - 4.0*peaks_std;
 		    autoaif = new double[tDim];
 		    minautoaif = Double.MAX_VALUE;
 		    for (t = 0; t < tDim; t++) {
-		        sum = 0;
-		        count = 0;
+		        sumt = 0;
+		        countt = 0;
 		        for (z = 0; z < zDim; z++) {
 					for (y = 0; y < yDim; y++) {
 						for (x = 0; x < xDim; x++) {
 							if (peaks[z][y][x] < peaks_threshold) {
 								data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);
-							    sum += data_norm;
-							    count++;
+							    sumt += data_norm;
+							    countt++;
 							}
 						}
 					}
 		        }
-		        autoaif[t] = (double)sum/(double)count;
+		        autoaif[t] = (double)sumt/(double)countt;
 		        if (autoaif[t] < minautoaif) {
 		        	minautoaif = autoaif[t];
 		        }
@@ -1299,7 +1302,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
     			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = CBV[z][y][x];
+    				dbuffer[x + y*xDim + z*length] = MTT[z][y][x];
     			}
     		}
     	}
