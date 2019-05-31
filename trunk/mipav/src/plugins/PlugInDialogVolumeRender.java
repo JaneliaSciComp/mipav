@@ -498,6 +498,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					openStraightened();
 				}
+				else if ( editMode == IntegratedEditing )
+				{
+					openAll();
+				}
 			}
 			else if ( command.equals("back") )
 			{
@@ -552,6 +556,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					openStraightened();
 				}
+				else if ( editMode == IntegratedEditing )
+				{
+					openAll();
+				}
 			}
 			// Closes the editing:
 			else if (command.equals("done"))
@@ -599,12 +607,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				if ( annotationPanelUI != null ) {
 					tabbedPane.remove(annotationPanelUI.getAnnotationsPanel());
 				}
-//				if ( checkSeamPanel != null ) {
-//					tabbedPane.remove(checkSeamPanel.getAnnotationsPanel());
-//				}
 				if ( latticePanel != null ) {
 					tabbedPane.remove(latticePanel);
 				}
+				annotationPanelUI = null;
+				latticePanel = null;
 				volOpacityPanel = null;
 				lutHistogramPanel = null;
 			}
@@ -1604,18 +1611,26 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					latticeSelectionPanel.remove(previewUntwisting);
 					latticeSelectionPanel.add(previewUntwisting);
 					latticeSelectionPanel.setVisible(true);
+					
+
+
+					if ( annotations != null )
+					{
+						annotations.clear();
+						annotations = null;
+					}
+					wormData = new WormData(wormImage);					
+					openAnnotations(WormData.getOutputDirectory(voiFile, fileName), WormData.getOutputDirectory(voiFile2, fileName));
+					
 					if ( voiManager != null )
 					{
 						VOIVector latticeVector = new VOIVector();
 						latticeVector.add(finalLattice);
 						voiManager.setLattice(latticeVector);
 						voiManager.editLattice();
+						initDisplayLatticePanel();
 					}
 					
-
-					wormData = new WormData(wormImage);
-					
-					openAnnotations(WormData.getOutputDirectory(voiFile, fileName), WormData.getOutputDirectory(voiFile2, fileName));
 				}
 				else {
 					imageIndex += nextDirection;
