@@ -35,6 +35,8 @@ public abstract class NelderMead
  private final int ackleyNum = 1;
  private int costNum = ackleyNum;
  private param_t params;
+ private point_t solution;
+ private double solx[];
  
 
   public NelderMead(int n, double x[], double tolx, double tolf, int max_iter, int max_eval, boolean verbose) 
@@ -51,7 +53,6 @@ public abstract class NelderMead
   public void driver() { 
 	  int i;
       point_t start;
-      point_t solution;
       
       start = new point_t();
       start.x = new double[n];
@@ -91,6 +92,14 @@ public abstract class NelderMead
     	  return;
       }
       
+  }
+  
+  public double[] getSolX() {
+	  return solution.x;
+  }
+  
+  public double getSolValue() {
+	  return solution.fx;
   }
   
  private void nelder_mead(point_t start, point_t solution) {
@@ -406,9 +415,9 @@ public abstract class NelderMead
   }
   
   // Define a generic point structure containing a position (x) and a value (fx)
-  private class point_t {
-	  double x[];
-	  double fx;
+  public class point_t {
+	  public double x[];
+	  public double fx;
   }
   
   // Define a simplex struct containing an array of n+1 points (p)
