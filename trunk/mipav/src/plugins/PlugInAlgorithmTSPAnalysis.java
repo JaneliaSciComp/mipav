@@ -25,6 +25,7 @@ This software may NOT be used for diagnostic purposes.
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
+import gov.nih.mipav.model.algorithms.NelderMead;
 import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -2219,6 +2220,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		 */
 		public void driver() {
 			super.driver();
+		}
+    }
+    
+    
+    
+    class expfunNM2 extends NelderMead  {
+    	double b[];
+    	double xdata[];
+    	public expfunNM2(double x0[], int n, double tolx, double tolf, int max_iter, int max_eval, boolean verbose, double b[], double xdata[]) {
+    		super(n, x0, tolx, tolf, max_iter, max_eval, verbose);
+    		this.b = b;
+    		this.xdata = xdata;
+    	}
+    	
+    	/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+
+		@Override
+		public void cost_function(int n, NelderMead.point_t point) {
+			int i;
+        	int nPts = b.length;
+        	double diff;
+        	double sum = 0.0;
+        	// Monoexponential decay
+			for (i = 0; i < nPts; i++) {
+			    diff = (point.x[0]*Math.exp(-1/point.x[1]*xdata[i])) - b[i];
+			    sum += diff*diff;
+			}
+			point.fx = sum;
+			return;
+			
 		}
     }
 
