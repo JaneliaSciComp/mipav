@@ -51,7 +51,6 @@ public abstract class NelderMead
   public void driver() { 
 	  int i;
       point_t start;
-      optimset_t optimset;
       point_t solution;
       
       start = new point_t();
