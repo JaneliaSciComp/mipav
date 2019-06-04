@@ -822,8 +822,8 @@ public class StrokeSegmentationDicomReceiver {
             if (coreObjectTable.get(lightboxFileList.get(i)) > 0) {
                 String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
                 reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
-            } else {
-                reportTxt += "<p>" + "<b>" + "No core region found!</p>\n";
+            } else if (passNum == 1) {
+                reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
             }
             
             //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='ADC volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
