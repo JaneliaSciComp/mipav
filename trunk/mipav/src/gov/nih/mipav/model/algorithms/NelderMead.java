@@ -427,15 +427,6 @@ public abstract class NelderMead
 	  int n;
   }
   
-  // Define optimization settings
-  private class optimset_t {
-	  double tolx;
-	  double tolf;
-	  int max_iter;
-	  int max_eval;
-	  boolean verbose;
-  }
-  
   private class param_t {
 	  double a;
 	  double b;
