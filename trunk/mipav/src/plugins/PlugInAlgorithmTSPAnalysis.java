@@ -87,6 +87,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	
 	private final int NMSIMPLEX_2D_SEARCH = 3;
 	
+	private final int NELDERMEAD_2D_SEARCH = 4;
+	
 	private int search = ELSUNC_2D_SEARCH;
     
     private ModelImage pickImage;
@@ -217,6 +219,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	expfun1D minsearch1D;
     	expfun2D minsearch2D;
     	expfunNM minsearchNM;
+    	expfunNM2 minsearchNM2;
+    	int n = 2;
+    	double tolx = 1.0E-8;
+    	double tolf = 1.0E-8;
+    	int max_iter = 5000;
+    	int max_eval = 5000;
+    	boolean verbose = false;
     	int exitStatus;
     	double p[] = new double[2];
     	ModelImage CBFImage;
@@ -1095,7 +1104,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						//"Working on slice " + (z+1) + " of " + zDim);
 		    	for (y = 0; y < yDim; y++) {
 		    		for (x = 0; x < xDim; x++) {
-		    			if ((search == ELSUNC_2D_SEARCH) || (search == NMSIMPLEX_2D_SEARCH)) {
+		    			if ((search == ELSUNC_2D_SEARCH) || (search == NMSIMPLEX_2D_SEARCH) || (search == NELDERMEAD_2D_SEARCH)) {
 		    		    	x0 = new double[]{0.1,4};
 		    		    }
 		    		    else {
@@ -1163,8 +1172,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			    					    MTT[z][y][x] = x0[1];
 			    					    CBV[z][y][x] = rcbf * x0[1];
 			    		    	    }
-	
 		    		    	    } // else if (search == NMSIMPLEX_2D_SEARCH)
+		    		    	    else if (search == NELDERMEAD_2D_SEARCH) {
+		    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+		    		    	    	minsearchNM2.driver();
+		    		    	    	p = minsearchNM2.getSolX();
+		    		    	    	if ((p[1] > 0) && (p[1] < 75)) {
+			    		    	    	// Normal termination
+			    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+			    					    CBF[z][y][x] = p[0];
+			    					    // relCBF is max value of residual function.  Should be similar to CBF,
+			    					    // but may be different.
+			    					    //relCBF[x][y][z] = rcbf;
+			    					    MTT[z][y][x] = p[1];
+			    					    CBV[z][y][x] = rcbf * p[1];
+			    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
+			    		    	    }	
+		    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
 		    		    	    else { // 1D search
 			    		    	    minsearch1D = new expfun1D(x0, b, xdata);
 			    		    	    minsearch1D.driver();
@@ -1691,6 +1715,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             expfun1D minsearch1D;
             expfun2D minsearch2D;
             expfunNM minsearchNM;
+            expfunNM2 minsearchNM2;
+        	int n = 2;
+        	double tolx = 1.0E-8;
+        	double tolf = 1.0E-8;
+        	int max_iter = 5000;
+        	int max_eval = 5000;
+        	boolean verbose = false;
         	int exitStatus;
         	double p[] = new double[2];
         	double num;
@@ -1700,7 +1731,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             // Iterate
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			if ((search == ELSUNC_2D_SEARCH) || (search == NMSIMPLEX_2D_SEARCH)) {
+        			if ((search == ELSUNC_2D_SEARCH) || (search == NMSIMPLEX_2D_SEARCH) || (search == NELDERMEAD_2D_SEARCH)) {
                     	x0 = new double[]{0.1,4};
                     }
                     else {
@@ -1770,6 +1801,22 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             		    	    }
 
         		    	    } //  else if (search == NMSIMPLEX_2D_SEARCH)
+        		    	    else if (search == NELDERMEAD_2D_SEARCH) {
+	    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+	    		    	    	minsearchNM2.driver();
+	    		    	    	p = minsearchNM2.getSolX();
+	    		    	    	if ((p[1] > 0) && (p[1] < 75)) {
+		    		    	    	// Normal termination
+		    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+		    					    CBF[y][x] = p[0];
+		    					    // relCBF is max value of residual function.  Should be similar to CBF,
+		    					    // but may be different.
+		    					    //relCBF[x][y][z] = rcbf;
+		    					    MTT[y][x] = p[1];
+		    					    CBV[y][x] = rcbf * p[1];
+		    					    //chiSquared[y][x] = minsearch.getChiSquared();
+		    		    	    }	
+	    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
         		    	    else { // 1D search
 	        		    	    minsearch1D = new expfun1D(x0, b, xdata);
 	        		    	    minsearch1D.driver();
@@ -1808,6 +1855,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	expfun1D minsearch1D;
     	expfun2D minsearch2D;
     	expfunNM minsearchNM;
+    	expfunNM2 minsearchNM2;
     	int exitStatus;
     	double p[] = new double[2];
     	double num;
@@ -1906,6 +1954,34 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    minsearchNM.driver();
 	    System.out.println("2D NMSimplex x0[0] = " +x0[0] + " answer = 0.133");
 	    System.out.println("2D NMSimplex x0[1] = " +x0[1] + " answer = 5.67");
+	    
+	    int n = 2;
+	    double tolx = 1.0E-8;
+	    double tolf = 1.0E-8;
+	    int max_iter = 5000;
+	    int max_eval = 5000;
+	    boolean verbose = false;
+	    x0 = new double[]{0.1,4};
+	    b = new double[]{0.07, 0.06};
+        xdata = new double[]{5.0,6.0};
+        minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+        minsearchNM2.driver();
+        p = minsearchNM2.getSolX();
+        System.out.println("NelderMead p[0] = " + p[0] +  " MATLAB answer = 0.151297958944948");
+	    System.out.println("NelderMead p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
+	    
+	    x0 = new double[]{0.1,4};
+	    b = new double[10];
+ 	    xdata = new double[10];
+ 	    for (i = 0; i < 10; i++) {
+ 	    	xdata[i] = i;
+ 	    	b[i] = 0.133*Math.exp(-i/5.67);
+ 	    }
+ 	   minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+       minsearchNM2.driver();
+       p = minsearchNM2.getSolX();
+       System.out.println("NelderMead p[0] = " + p[0] + " answer = 0.133");
+	   System.out.println("NelderMead p[1] = " + p[1] + " answer = 5.67");
 	}
     
     class expfun1D extends NLConstrainedEngine {
