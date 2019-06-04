@@ -73,11 +73,15 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private JRadioButton search2DNMSimplexButton;
 	
+	private JRadioButton search2DNelderMeadButton;
+	
 	private final int ELSUNC_2D_SEARCH = 1;
 	
 	private final int ELSUNC_1D_SEARCH = 2;
 	
 	private final int NMSIMPLEX_2D_SEARCH = 3;
+	
+	private final int NELDERMEAD_2D_SEARCH = 4;
 	
 	private int search = ELSUNC_2D_SEARCH;
 	
@@ -269,11 +273,18 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(search1DElsuncButton, gbc);
         
         gbc.gridy = 11;
-        search2DNMSimplexButton = new JRadioButton("2D NMSimplex search", true);
+        search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
+        
+        gbc.gridy = 12;
+        search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
+        search2DNelderMeadButton.setFont(serif12);
+        search2DNelderMeadButton.setForeground(Color.black);
+        searchGroup.add(search2DNelderMeadButton);
+        inputPanel.add(search2DNelderMeadButton, gbc);
         
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
@@ -494,6 +505,9 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	}
     	else if (search2DNMSimplexButton.isSelected()) {
     		search = NMSIMPLEX_2D_SEARCH;
+    	}
+    	else if (search2DNelderMeadButton.isSelected()) {
+    		search = NELDERMEAD_2D_SEARCH;
     	}
     	return true;
     }
