@@ -123,6 +123,7 @@ public abstract class NelderMead
 	 simplex.n = n;
 	 simplex.p = new point_t[n+1];
 	 for (int i = 0; i < n + 1; i++) {
+		 simplex.p[i] = new point_t();
 	     simplex.p[i].x = new double[n];
 	     for (int j = 0; j < n; j++) {
 	    	 simplex.p[i].x[j] = (i - 1 == j) ? (start.x[j] != 0.0 ? 1.05 * start.x[j] : 0.00025) : start.x[j];
