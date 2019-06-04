@@ -36,7 +36,6 @@ public abstract class NelderMead
  private int costNum = ackleyNum;
  private param_t params;
  private point_t solution;
- private double solx[];
  
 
   public NelderMead(int n, double x[], double tolx, double tolf, int max_iter, int max_eval, boolean verbose) 
