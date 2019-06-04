@@ -108,7 +108,7 @@ package gov.nih.mipav.model.algorithms;
 
 public abstract class NMSimplex 
 {
-  static final int MAX_IT = 1000;      /* maximum number of iterations */
+  static final int MAX_IT = 5000;      /* maximum number of iterations */
   static final double ALPHA  = 1.0;       /* reflection coefficient */
   static final double BETA   = 0.5;       /* contraction coefficient */
   static final double GAMMA  = 2.0;       /* expansion coefficient */
