@@ -1321,8 +1321,7 @@ public class CDFLIB {
              t = x - bx;
 
              if (b*eps<=2.E-2) {
-            	 c = 0.0;
-               //c = Math.log(x) + psi(b) + g + t;
+                 c = Math.log(x) + psi(b) + g + t;
              }
              else {
                c = Math.log(bx) + g + t;
@@ -1346,5 +1345,992 @@ public class CDFLIB {
              return result;
 
      }
+     
+   
+
+    private double psi(double xx) {
+/*---------------------------------------------------------------------
+!                 EVALUATION OF THE DIGAMMA FUNCTION
+!                           -----------
+!     PSI(XX) IS ASSIGNED THE VALUE 0 WHEN THE DIGAMMA FUNCTION CANNOT
+!     BE COMPUTED.
+!     THE MAIN COMPUTATION INVOLVES EVALUATION OF RATIONAL CHEBYSHEV
+!     APPROXIMATIONS PUBLISHED IN MATH. COMP. 27, 123-127(1973) BY
+!     CODY, STRECOK AND THACHER.
+!---------------------------------------------------------------------
+!     PSI WAS WRITTEN AT ARGONNE NATIONAL LABORATORY FOR THE FUNPACK
+!     PACKAGE OF SPECIAL FUNCTION SUBROUTINES. PSI WAS MODIFIED BY
+!     A.H. MORRIS (NSWC).
+!---------------------------------------------------------------------
+!---------------------------------------------------------------------
+!     PIOV4 = PI/4
+!     DX0 = ZERO OF PSI TO EXTENDED PRECISION
+!---------------------------------------------------------------------
+!     COEFFICIENTS FOR RATIONAL APPROXIMATION OF
+!     PSI(X) / (X - X0),  0.5 .LE. X .LE. 3.0
+!---------------------------------------------------------------------
+!     COEFFICIENTS FOR RATIONAL APPROXIMATION OF
+!     PSI(X) - LN(X) + 1 / (2*X),  X .GT. 3.0
+!---------------------------------------------------------------------
+! .. Function Return Value ..
+       REAL (dpkind) :: psi
+! ..
+! .. Scalar Arguments ..
+       REAL (dpkind) :: xx
+! ..
+! .. Local Scalars ..
+       REAL (dpkind) :: aug, den, sgn, w, x, xmax1, xmx0, xsmall, z
+       INTEGER :: m, n, nq
+! ..
+! .. Intrinsic Functions ..
+       INTRINSIC ABS, COS, EPSILON, HUGE, INT, LOG, MIN, REAL, SIN
+! ..
+! .. Parameters ..*/
+       double dx0 = 1.461632144968362341262659542325721325;
+       double piov4 = .785398163397448;
+       double p1[] = new double[]{
+         .130560269827897E+04, .413810161269013E+04,
+         .363351846806499E+04, .118645200713425E+04,
+         .142441585084029E+03, .477762828042627E+01,
+         .895385022981970E-02};
+       double p2[] = new double[]{
+         -.648157123766197E+00, -.448616543918019E+01,
+         -.701677227766759E+01, -.212940445131011E+01};
+       double q1[] = new double[] {
+         .691091682714533E-05, .190831076596300E+04,
+         .364127349079381E+04, .221000799247830E+04,
+         .520752771467162E+03, .448452573429826E+02, 1.0};
+       double q2[] = new double[] {
+         .777788548522962E+01, .546117738103215E+02,
+         .892920700481861E+02, .322703493791143E+02, 1.0};
+/* ..
+!---------------------------------------------------------------------
+!     MACHINE DEPENDENT CONSTANTS ...
+!        XMAX1  = THE SMALLEST POSITIVE FLOATING POINT CONSTANT
+!                 WITH ENTIRELY INTEGER REPRESENTATION.  ALSO USED
+!                 AS NEGATIVE OF LOWER BOUND ON ACCEPTABLE NEGATIVE
+!                 ARGUMENTS AND AS THE POSITIVE ARGUMENT BEYOND WHICH
+!                 PSI MAY BE REPRESENTED AS ALOG(X).
+!        XSMALL = ABSOLUTE ARGUMENT BELOW WHICH PI*COTAN(PI*X)
+!                 MAY BE REPRESENTED BY 1/X.
+!---------------------------------------------------------------------*/
+   double xmax1;
+   double xsmall;
+   double x;
+   double aug;
+   double w;
+   double sgn = 0.0;
+   double z = 0.0;
+   double den;
+   double xmx0;
+   int nq;
+   int n;
+   int m;
+   boolean do10 = true;
+   boolean do20 = true;
+   boolean do30 = true;
+       xmax1 = Integer.MAX_VALUE;
+       xmax1 = Math.min(xmax1,1.0/EPSILON());
+       xsmall = 1.E-9;
+//---------------------------------------------------------------------
+       x = xx;
+       aug = 0.0;
+
+       if (x>= 0.5) {
+    	    do10 = false;
+    	    do20 = false;
+    	    do30 = false;
+       }
+
+//---------------------------------------------------------------------
+//     X .LT. 0.5,  USE REFLECTION FORMULA
+//     PSI(1-X) = PSI(X) + PI * COTAN(PI*X)
+//---------------------------------------------------------------------
+       else if (Math.abs(x)>xsmall) {
+    	   
+       }
+       else if (x==0.0) {
+    	   // Error return
+    	   return 0.0;
+       }
+
+//---------------------------------------------------------------------
+//     0 .LT. ABS(X) .LE. XSMALL.  USE 1/X AS A SUBSTITUTE
+//     FOR  PI*COTAN(PI*X)
+//---------------------------------------------------------------------
+       else {
+           aug = -1.0/x;
+           do10 = false;
+           do20 = false;
+       }
+
+//---------------------------------------------------------------------
+//     REDUCTION OF ARGUMENT FOR COTAN
+//---------------------------------------------------------------------
+    if (do10) {
+       w = -x;
+       sgn = piov4;
+       if (w<=0.0) {
+         w = -w;
+         sgn = -sgn;
+//---------------------------------------------------------------------
+//     MAKE AN ERROR EXIT IF X .LE. -XMAX1
+//---------------------------------------------------------------------
+       }
+
+       if (w>=xmax1) {
+    	   // Error return 
+    	   return 0.0;
+       }
+       else { // w < xmax1
+            nq = (int)w;
+            w = w - (double)nq;
+            nq = (int)(w*4.0);
+            w = 4.0*(w-((double)nq)*.25);
+
+//---------------------------------------------------------------------
+//     W IS NOW RELATED TO THE FRACTIONAL PART OF  4.0 * X.
+//     ADJUST ARGUMENT TO CORRESPOND TO VALUES IN FIRST
+//     QUADRANT AND DETERMINE SIGN
+//---------------------------------------------------------------------
+	       n = nq/2;
+	       if (n+n!=nq) w = 1.0 - w;
+	
+	       z = piov4*w;
+	       m = n/2;
+	
+	       if (m+m!=n) sgn = -sgn;
+
+//---------------------------------------------------------------------
+//     DETERMINE FINAL VALUE FOR  -PI*COTAN(PI*X)
+//---------------------------------------------------------------------
+	       n = (nq+1)/2;
+	       m = n/2;
+	       m = m + m;
+	       if (m == n) {
+
+//---------------------------------------------------------------------
+//     CHECK FOR SINGULARITY
+//---------------------------------------------------------------------
+               if (z==0.0) {
+            	   // Error return 
+            	   return 0.0;
+               }
+               else { // z != 0.0
+//---------------------------------------------------------------------
+//     USE COS/SIN AS A SUBSTITUTE FOR COTAN, AND
+//     SIN/COS AS A SUBSTITUTE FOR TAN
+//---------------------------------------------------------------------
+                   aug = sgn*((Math.cos(z)/Math.sin(z))*4.0);
+                   do20 = false;
+               } // else z != 0.0
+	       } // if (m == n)
+       } // else w < xmax1
+    } // if (do10)
+
+    if (do20) {
+       aug = sgn*((Math.sin(z)/Math.cos(z))*4.0);
+    } // if (do20)
+
+    if (do30) {
+       x = 1.0 - x;
+    } // if (do30)
+
+       if (x<=3.0) {
+//---------------------------------------------------------------------
+//     0.5 .LE. X .LE. 3.0
+//---------------------------------------------------------------------
+
+         den = evaluate_polynomial(p1,x)/evaluate_polynomial(q1,x);
+
+         xmx0 = x - dx0;
+         return den*xmx0 + aug;
+
+//---------------------------------------------------------------------
+//     IF X .GE. XMAX1, PSI = LN(X)
+//---------------------------------------------------------------------
+       } // if (x <= 3.0)
+
+       if (x<xmax1) {
+//---------------------------------------------------------------------
+//     3.0 .LT. X .LT. XMAX1
+//---------------------------------------------------------------------
+         w = 1.0/(x*x);
+
+         aug = evaluate_polynomial(p2,w)/evaluate_polynomial(q2,w) - 
+           0.5/x + aug;
+       } // if (x < xmax1)
+
+       return aug + Math.log(x);
+
+
+
+    }
+    
+    
+
+    private double evaluate_polynomial(double a[], double x) {
+/*----------------------------------------------------------------------
+!              Evaluate a PoLynomial at x
+!                              Function
+!     Returns:
+!          A(1) + A(2)*X + ... + A(N)*X**(N-1)
+!                              Arguments
+!     A --> Array of coefficients of the polynomial.
+!     X --> Point at which the polynomial is to be evaluated.
+!----------------------------------------------------------------------
+! .. Function Return Value ..
+      REAL (dpkind) :: evaluate_polynomial
+! ..
+! .. Scalar Arguments ..
+      REAL (dpkind), INTENT (IN) :: x
+! ..
+! .. Array Arguments ..
+      REAL (dpkind), INTENT (IN) :: a(:)
+! ..
+! .. Local Scalars ..
+      REAL (dpkind) :: term
+      INTEGER :: i, n
+! ..
+! .. Intrinsic Functions ..
+      INTRINSIC SIZE
+! ..*/
+   int n;
+   int i;
+   double term;
+      n = a.length;
+      term = a[n-1];
+
+      for (i = n - 2; i >= 0; i--) {
+        term = a[i] + term*x;
+      }
+
+      return term;
+
+  }
+
+     
+    private double bpser(double a,double b, double x, double eps) {
+    /*-----------------------------------------------------------------------
+    !     POWER SERIES EXPANSION FOR EVALUATING IX(A,B) WHEN B .LE. 1
+    !     OR B*X .LE. 0.7.  EPS IS THE TOLERANCE USED.
+    !-----------------------------------------------------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: bpser
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind), INTENT (IN) :: a, b, eps, x
+    ! ..
+    ! .. Local Scalars ..
+            REAL (dpkind) :: a0, apb, b0, c, n, sum, t, tol, u, w, z
+            INTEGER :: i, m
+    ! ..
+    ! .. Intrinsic Functions ..
+            INTRINSIC ABS, EXP, LOG, MAX, MIN, REAL
+    ! ..*/
+    	    double a0;
+    	    double z;
+            double result = 0.0;
+            boolean do10 = true;
+            boolean do20 = true;
+            boolean do30 = true;
+            if (x==0.0) return result;
+    //-----------------------------------------------------------------------
+    //            COMPUTE THE FACTOR X**A/(A*BETA(A,B))
+    //-----------------------------------------------------------------------
+            a0 = Math.min(a,b);
+                if (a0 >= 1.0) {
+                    z = a*Math.log(x) - betaln(a,b);
+                    result = Math.exp(z)/a;
+                    do10 = false;
+                    do20 = false;
+                    do30 = false;
+            } // if (z0 >= 1.0)
+
+    /*10      CONTINUE
+            b0 = MAX(a,b)
+            IF (b0>=eight) GO TO 30
+            IF (b0>one) GO TO 20
+
+    !            PROCEDURE FOR A0 .LT. 1 AND B0 .LE. 1
+
+            bpser = x**a
+            IF (bpser==zero) RETURN
+
+            apb = a + b
+            IF (apb<=one) THEN
+              z = one + gam1(apb)
+            ELSE
+              u = REAL(a,kind=dpkind) + REAL(b,kind=dpkind) - one
+              z = (one+gam1(u))/apb
+            END IF
+
+            c = (one+gam1(a))*(one+gam1(b))/z
+            bpser = bpser*c*(b/apb)
+            GO TO 40
+
+    !         PROCEDURE FOR A0 .LT. 1 AND 1 .LT. B0 .LT. 8
+
+    20      CONTINUE
+            u = gamln1(a0)
+            m = b0 - one
+
+            IF (m>=1) THEN
+              c = one
+              DO i = 1, m
+                b0 = b0 - one
+                c = c*(b0/(a0+b0))
+              END DO
+
+              u = LOG(c) + u
+            END IF
+
+            z = a*LOG(x) - u
+            b0 = b0 - one
+            apb = a0 + b0
+
+            IF (apb<=one) THEN
+              t = one + gam1(apb)
+            ELSE
+              u = REAL(a0,kind=dpkind) + REAL(b0,kind=dpkind) - one
+              t = (one+gam1(u))/apb
+            END IF
+
+            bpser = EXP(z)*(a0/a)*(one+gam1(b0))/t
+            GO TO 40
+
+    !            PROCEDURE FOR A0 .LT. 1 AND B0 .GE. 8
+
+    30      CONTINUE
+            u = gamln1(a0) + algdiv(a0,b0)
+            z = a*LOG(x) - u
+            bpser = (a0/a)*EXP(z)
+
+    40      CONTINUE
+            IF (bpser==zero .OR. a<=0.1_dpkind*eps) RETURN
+    !-----------------------------------------------------------------------
+    !                     COMPUTE THE SERIES
+    !-----------------------------------------------------------------------
+            sum = zero
+            n = zero
+            c = one
+            tol = eps/a
+
+    50      CONTINUE
+            n = n + one
+            c = c*(half+(half-b/n))*x
+            w = c/(a+n)
+            sum = sum + w
+            IF (ABS(w)>tol) GO TO 50
+
+            bpser = bpser*(one+a*sum)
+
+            RETURN*/
+                return 0.0;
+
+    } 
+    
+    private double betaln(double a0,double b0) {
+    /*-----------------------------------------------------------------------
+    !     EVALUATION OF THE LOGARITHM OF THE BETA FUNCTION
+    !-----------------------------------------------------------------------
+    !     E = 0.5*LN(2*PI)
+    !--------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: betaln
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind) :: a0, b0
+    ! ..
+    ! .. Local Scalars ..
+            REAL (dpkind) :: a, b, c, h, u, v, w, z
+            INTEGER :: i, n
+    ! ..
+    ! .. Intrinsic Functions ..
+            INTRINSIC LOG, MAX, MIN
+    ! ..
+    ! .. Parameters ..*/
+            final double e = .918938533204673;
+    double a;
+    double b;
+    double h;
+    double w = 0.0;
+    double z;
+    double c;
+    double u;
+    double v;
+    double result;
+    int i;
+    int n;
+    boolean do10 = true;
+    boolean do20 = true;
+    boolean do30 = true;
+    boolean do40 = true;
+            a = Math.min(a0,b0);
+            b = Math.max(a0,b0);
+
+            if (a>= 8.0) {
+            	do10 = false;
+            	do20 = false;
+            	do30 = false;
+            	do40 = false;
+            }
+            else if (a>=1.0) {
+            
+            }
+
+    //-----------------------------------------------------------------------
+    //                   PROCEDURE WHEN A .LT. 1
+    //-----------------------------------------------------------------------
+            else if (b<8.0) {
+                return gamln(a) + (gamln(b)-gamln(a+b));
+            }
+
+            else {
+
+                return gamln(a) + algdiv(a,b);
+
+            }
+
+    //-----------------------------------------------------------------------
+    //                PROCEDURE WHEN 1 .LE. A .LT. 8
+    //-----------------------------------------------------------------------
+    if (do10) {
+            if (a <= 2.0) {
+	            if (b<=2.0) {
+	              result = gamln(a) + gamln(b) - gsumln(a,b);
+	              return result;
+	
+	            }
+	
+	            w = 0.0;
+	            if (b<8.0) {
+	            	do20 = false;
+	            }
+	            else {
+	                result = gamln(a) + algdiv(a,b);
+	                return result;
+	            }
+            } // if (a <= 2.0)
+    } // if (do10)
+
+    //                REDUCTION OF A WHEN B .LE. 1000
+
+    if (do20) {
+            if (b>1000.0) {
+            	do30 = false;
+            }
+            else { // b <= 1000
+	            n = (int)(a - 1.0);
+	            w = 1.0;
+	
+	            for (i = 1; i <=  n; i++) {
+	              a = a - 1.0;
+	              h = a/b;
+	              w = w*(h/(1.0+h));
+	            }
+	
+	            w = Math.log(w);
+	
+	            if (b>=8.0) {
+	              result = w + gamln(a) + algdiv(a,b);
+	              return result;
+	
+	    //                 REDUCTION OF B WHEN B .LT. 8
+	
+	            }
+            } // else b <= 1000
+    } // if (do20)
+
+    if (do30) {
+            n = (int)(b - 1.0);
+            z = 1.0;
+
+            for  (i = 1; i <= n; i++) {
+              b = b - 1.0;
+              z = z*(b/(a+b));
+            }
+
+            result = w + Math.log(z) + (gamln(a)+(gamln(b)-gsumln(a,b)));
+            return result;
+    } // if (d030)
+
+    //                REDUCTION OF A WHEN B .GT. 1000
+
+    if (do40) {
+            n = (int)(a - 1.0);
+            w = 1.0;
+
+            for (i = 1; i <= n; i++) {
+              a = a - 1.0;
+              w = w*(a/(1.0+a/b));
+            }
+
+            result = (Math.log(w)-n*Math.log(b)) + (gamln(a)+algdiv(a,b));
+            return result;
+    } // if (do40)
+
+    //-----------------------------------------------------------------------
+    //                   PROCEDURE WHEN A .GE. 8
+    //-----------------------------------------------------------------------
+            //w = bcorr(a,b);
+            h = a/b;
+            c = h/(1.0+h);
+            u = -(a-0.5)*Math.log(c);
+            v = b*alnrel(h);
+
+            if (u>v) {
+              result = ((((-0.5*Math.log(b))+e)+w)-v) - u;
+              return result;
+
+            }
+
+            result = ((((-0.5*Math.log(b))+e)+w)-u) - v;
+            return result;
+
+    }
+    
+    private double gsumln(double a,double b) {
+    /*-----------------------------------------------------------------------
+    !          EVALUATION OF THE FUNCTION LN(GAMMA(A + B))
+    !          FOR 1 .LE. A .LE. 2  AND  1 .LE. B .LE. 2
+    !-----------------------------------------------------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: gsumln
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind) :: a, b
+    ! ..
+    ! .. Local Scalars ..
+            REAL (dpkind) :: x
+    ! ..
+    ! .. Intrinsic Functions ..
+            INTRINSIC LOG, REAL
+    ! ..*/
+    	double x, result;
+            x = a + b - 2.0;
+
+            if (x<=0.25) {
+              return gamln1(1.0+x);
+            }
+
+            if (x<=1.25) {
+              result = gamln1(x) + alnrel(x);
+              return result;
+
+            }
+
+            result = gamln1(x-1.0) + Math.log(x*(1.0+x));
+            return result;
+
+    }
+
+    
+    private double algdiv(double a, double b) {
+    /*-----------------------------------------------------------------------
+    !     COMPUTATION OF LN(GAMMA(B)/GAMMA(A+B)) WHEN B .GE. 8
+    !                         --------
+    !     IN THIS ALGORITHM, DEL(X) IS THE FUNCTION DEFINED BY
+    !     LN(GAMMA(X)) = (X - 0.5)*LN(X) - X + 0.5*LN(2*PI) + DEL(X).
+    !-----------------------------------------------------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: algdiv
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind), INTENT (IN) :: a, b
+    ! ..
+    ! .. Local Scalars ..
+            REAL (dpkind) :: c, d, h, s11, s3, s5, s7, s9, t, u, v, w, x, x2
+    ! ..
+    ! .. Intrinsic Functions ..
+            INTRINSIC LOG
+    ! ..
+    ! .. Parameters ..*/
+            double c0 = .833333333333333E-01;
+            double c1 = -.277777777760991E-02;
+            double c2 = .793650666825390E-03;
+            double c3 = -.595202931351870E-03;
+            double c4 = .837308034031215E-03;
+            double c5 = -.165322962780713E-02;
+           double c, d, h, s11, s3, s5, s7, s9, t, u, v, w, x, x2, result;
+            if (a>b) {
+              h = b/a;
+              c = 1.0/(1.0+h);
+              x = h/(1.0+h);
+              d = a + (b-0.5);
+            }
+            else {
+              h = a/b;
+              c = h/(1.0+h);
+              x = 1.0/(1.0+h);
+              d = b + (a-0.5);
+            }
+
+    // SET SN = (1 - X**N)/(1 - X)
+
+            x2 = x*x;
+            s3 = 1.0 + (x+x2);
+            s5 = 1.0 + (x+x2*s3);
+            s7 = 1.0 + (x+x2*s5);
+            s9 = 1.0 + (x+x2*s7);
+            s11 = 1.0 + (x+x2*s9);
+
+    // SET W = DEL(B) - DEL(A + B)
+
+            t = (1.0/b);
+            t = t * t;
+            w = ((((c5*s11*t+c4*s9)*t+c3*s7)*t+c2*s5)*t+c1*s3)*t + c0;
+            w = w*(c/b);
+
+    // COMBINE THE RESULTS
+
+            u = d*alnrel(a/b);
+            v = a*(Math.log(b)-1.0);
+
+            if (u>v) {
+              result = (w-v) - u;
+            }
+            else {
+              result = (w-u) - v;
+            }
+            return result;
+
+    }
+    
+    private double alnrel(double a) {
+    /*-----------------------------------------------------------------------
+    !            EVALUATION OF THE FUNCTION LN(1 + A)
+    !-----------------------------------------------------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: alnrel
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind), INTENT (IN) :: a
+    ! ..
+    ! .. Local Scalars ..
+            REAL (dpkind) :: t, t2, w
+    ! ..
+    ! .. Intrinsic Functions ..
+            INTRINSIC ABS, LOG
+    ! ..
+    ! .. Parameters ..*/
+            double p[] = new double[]{ 1.0,
+              -.129418923021993E+01, .405303492862024,
+              -.178874546012214E-01};
+            double q[] = new double[] {1.0,
+              -.162752256355323E+01, .747811014037616,
+              -.845104217945565E-01};
+            double t, t2, w, result;
+            if (Math.abs(a)<=0.375) {
+              t = a/(a+2.0);
+              t2 = t*t;
+
+              w = evaluate_polynomial(p,t2)/evaluate_polynomial(q,t2);
+
+              result = 2.0*t*w;
+            }
+            else if (a<-1.0) {
+              result = -1.0;
+            }
+            else {
+              result = Math.log(a+1.0);
+            }
+            return result;
+
+    }
+
+    
+    private double gamln(double a) {
+    /*-----------------------------------------------------------------------
+    !            EVALUATION OF LN(GAMMA(A)) FOR POSITIVE A
+    !-----------------------------------------------------------------------
+    !     WRITTEN BY ALFRED H. MORRIS
+    !          NAVAL SURFACE WARFARE CENTER
+    !          DAHLGREN, VIRGINIA
+    !--------------------------
+    !     D = 0.5*(LN(2*PI) - 1)
+    !--------------------------
+    !--------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: gamln
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind), INTENT (IN) :: a
+    ! ..
+    ! .. Local Scalars ..
+            REAL (dpkind) :: t, w
+            INTEGER :: i, n
+    ! ..
+    ! .. Intrinsic Functions ..
+            INTRINSIC LOG
+    ! ..
+    ! .. Parameters ..*/
+            double c[] = new double[] { .833333333333333E-01,
+              -.277777777760991E-02, .793650666825390E-03, 
+              -.595202931351870E-03, .837308034031215E-03,
+              -.165322962780713E-02};
+            double d = .418938533204673;
+            double t;
+            double w;
+            int i;
+            int n;
+            double result;
+            if (a<=0.0) {
+              result = -1.0;
+            }
+            else if (a<=0.8) {
+              result = gamln1(a) - Math.log(a);
+            }
+            else if (a<=2.25) {
+              t = (a-0.5) - 0.5;
+              result = gamln1(t);
+            }
+            else if (a<10.0) {
+              n = (int)(a - 1.25);
+              t = a;
+              w = 1.0;
+
+              for (i = 1; i <= n; i++) {
+                t = t - 1.0;
+                w = t*w;
+              }
+
+              result = gamln1(t-1.0) + Math.log(w);
+            }
+            else {
+
+              t = (1.0/a);
+              t = t*t;
+
+              w = evaluate_polynomial(c,t)/a;
+
+              result = (d+w) + (a-0.5)*(Math.log(a)-1.0);
+            }
+            return result;
+
+    }
+    
+    private double gamln1(double a) {
+    /*-----------------------------------------------------------------------
+    !     EVALUATION OF LN(GAMMA(1 + A)) FOR -0.2 .LE. A .LE. 1.25
+    !-----------------------------------------------------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: gamln1
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind), INTENT (IN) :: a
+    ! ..
+    ! .. Local Scalars ..
+            REAL (dpkind) :: w, x
+    ! ..
+    ! .. Parameters ..*/
+            double p[] = new double[]{ .577215664901533,
+              .844203922187225, -.168860593646662,
+              -.780427615533591, -.402055799310489,
+              -.673562214325671E-01, -.271935708322958E-02};
+            double q[] = new double[] {1.0,
+              .288743195473681E+01, .312755088914843E+01,
+              .156875193295039E+01, .361951990101499,
+              .325038868253937E-01, .667465618796164E-03};
+            double r[] = new double[]{ .422784335098467,
+              .848044614534529, .565221050691933,
+              .156513060486551, .170502484022650E-01,
+              .497958207639485E-03};
+            double s[] = new double[]{ 1.0,
+              .124313399877507E+01, .548042109832463, 
+              .101552187439830, .713309612391000E-02,
+              .116165475989616E-03};
+            double w;
+            double x;
+            double result;
+    
+            if (a<0.6) {
+              w = evaluate_polynomial(p,a)/evaluate_polynomial(q,a);
+
+              result = -a*w;
+            }
+
+            else {
+
+              x = (a-0.5) -0.5;
+
+              w = evaluate_polynomial(r,x)/evaluate_polynomial(s,x);
+
+              result = x*w;
+            }
+            return result;
+
+    }
+
+     
+     private int ipmpar(int i) {
+    /* C-----------------------------------------------------------------------
+     C
+     C     IPMPAR PROVIDES THE INTEGER MACHINE CONSTANTS FOR THE COMPUTER
+     C     THAT IS USED. IT IS ASSUMED THAT THE ARGUMENT I IS AN INTEGER
+     C     HAVING ONE OF THE VALUES 1-10. IPMPAR(I) HAS THE VALUE ...
+     C
+     C  INTEGERS.
+     C
+     C     ASSUME INTEGERS ARE REPRESENTED IN THE N-DIGIT, BASE-A FORM
+     C
+     C               SIGN ( X(N-1)*A**(N-1) + ... + X(1)*A + X(0) )
+     C
+     C               WHERE 0 .LE. X(I) .LT. A FOR I=0,...,N-1.
+     C
+     C     IPMPAR(1) = A, THE BASE.
+     C
+     C     IPMPAR(2) = N, THE NUMBER OF BASE-A DIGITS.
+     C
+     C     IPMPAR(3) = A**N - 1, THE LARGEST MAGNITUDE.
+     C
+     C  FLOATING-POINT NUMBERS.
+     C
+     C     IT IS ASSUMED THAT THE SINGLE AND DOUBLE PRECISION FLOATING
+     C     POINT ARITHMETICS HAVE THE SAME BASE, SAY B, AND THAT THE
+     C     NONZERO NUMBERS ARE REPRESENTED IN THE FORM
+     C
+     C               SIGN (B**E) * (X(1)/B + ... + X(M)/B**M)
+     C
+     C               WHERE X(I) = 0,1,...,B-1 FOR I=1,...,M,
+     C               X(1) .GE. 1, AND EMIN .LE. E .LE. EMAX.
+     C
+     C     IPMPAR(4) = B, THE BASE.
+     C
+     C  SINGLE-PRECISION
+     C
+     C     IPMPAR(5) = M, THE NUMBER OF BASE-B DIGITS.
+     C
+     C     IPMPAR(6) = EMIN, THE SMALLEST EXPONENT E.
+     C
+     C     IPMPAR(7) = EMAX, THE LARGEST EXPONENT E.
+     C
+     C  DOUBLE-PRECISION
+     C
+     C     IPMPAR(8) = M, THE NUMBER OF BASE-B DIGITS.
+     C
+     C     IPMPAR(9) = EMIN, THE SMALLEST EXPONENT E.
+     C
+     C     IPMPAR(10) = EMAX, THE LARGEST EXPONENT E.
+     C
+     C-----------------------------------------------------------------------
+     C
+     C     TO DEFINE THIS FUNCTION FOR THE COMPUTER BEING USED, ACTIVATE
+     C     THE DATA STATMENTS FOR THE COMPUTER BY REMOVING THE C FROM
+     C     COLUMN 1. (ALL THE OTHER DATA STATEMENTS SHOULD HAVE C IN
+     C     COLUMN 1.)
+     C
+     C-----------------------------------------------------------------------
+     C
+     C     IPMPAR IS AN ADAPTATION OF THE FUNCTION I1MACH, WRITTEN BY
+     C     P.A. FOX, A.D. HALL, AND N.L. SCHRYER (BELL LABORATORIES).
+     C     IPMPAR WAS FORMED BY A.H. MORRIS (NSWC). THE CONSTANTS ARE
+     C     FROM BELL LABORATORIES, NSWC, AND OTHER SOURCES.
+     C
+     C-----------------------------------------------------------------------
+    
+     //    MACHINE CONSTANTS FOR IEEE ARITHMETIC MACHINES, SUCH AS THE AT&T
+     //     3B SERIES, MOTOROLA 68000 BASED MACHINES (E.G. SUN 3 AND AT&T
+     //     PC 7300), AND 8087 BASED MICROS (E.G. IBM PC AND AT&T 6300).
+     */
+    	  int IMACH[] = new int[11];
+           IMACH[1] =    2 ;
+           IMACH[2] =    31;
+           IMACH[3] = 2147483647;
+           IMACH[4] =     2;
+           IMACH[5] =    24;
+           IMACH[6] =  -125;
+           IMACH[7] =   128;
+           IMACH[8] =    53;
+           IMACH[9] =  -1021;
+           IMACH[10] =  1024;
+    
+           return IMACH[i];
+
+     }
+     
+     private double spmpar(int i) {
+     /*-----------------------------------------------------------------------
+     C
+     C     SPMPAR PROVIDES THE SINGLE PRECISION MACHINE CONSTANTS FOR
+     C     THE COMPUTER BEING USED. IT IS ASSUMED THAT THE ARGUMENT
+     C     I IS AN INTEGER HAVING ONE OF THE VALUES 1, 2, OR 3. IF THE
+     C     SINGLE PRECISION ARITHMETIC BEING USED HAS M BASE B DIGITS AND
+     C     ITS SMALLEST AND LARGEST EXPONENTS ARE EMIN AND EMAX, THEN
+     C
+     C        SPMPAR(1) = B**(1 - M), THE MACHINE PRECISION,
+     C
+     C        SPMPAR(2) = B**(EMIN - 1), THE SMALLEST MAGNITUDE,
+     C
+     C        SPMPAR(3) = B**EMAX*(1 - B**(-M)), THE LARGEST MAGNITUDE.
+     C
+     C-----------------------------------------------------------------------
+     C     WRITTEN BY
+     C        ALFRED H. MORRIS, JR.
+     C        NAVAL SURFACE WARFARE CENTER
+     C        DAHLGREN VIRGINIA
+     C-----------------------------------------------------------------------
+     C-----------------------------------------------------------------------
+     C     MODIFIED BY BARRY W. BROWN TO RETURN DOUBLE PRECISION MACHINE
+     C     CONSTANTS FOR THE COMPUTER BEING USED.  THIS MODIFICATION WAS
+     C     MADE AS PART OF CONVERTING BRATIO TO DOUBLE PRECISION
+     C-----------------------------------------------------------------------
+     C     .. Scalar Arguments ..
+           INTEGER i
+     C     ..
+     C     .. Local Scalars ..
+           DOUBLE PRECISION b,binv,bm1,one,w,z
+           INTEGER emax,emin,ibeta,m
+     C     ..
+     C     .. External Functions ..
+           INTEGER ipmpar
+           EXTERNAL ipmpar
+     C     ..
+     C     .. Intrinsic Functions ..
+           INTRINSIC dble
+     C     ..
+     C     .. Executable Statements ..
+     C*/
+    	 double b;
+    	 double binv;
+    	 double w;
+    	 double one;
+    	 double bm1;
+    	 double z;
+    	 int m;
+    	 int emin;
+    	 int ibeta;
+    	 int emax;
+           if (i <= 1) {
+               b = ipmpar(4);
+               m = ipmpar(8);
+               return Math.pow(b,(1-m));
+           }
+     
+           if (i <= 2) {
+               b = ipmpar(4);
+               emin = ipmpar(9);
+               one = 1.0;
+               binv = one/b;
+               w = Math.pow(b,(emin+2));
+               return ((w*binv)*binv)*binv;
+           }
+     
+           ibeta = ipmpar(4);
+           m = ipmpar(8);
+           emax = ipmpar(10);
+     
+           b = ibeta;
+           bm1 = ibeta - 1;
+           one = 1.0;
+           z = Math.pow(b,(m-1));
+           w = ((z-one)*b+bm1)/ (b*z);
+     
+           z = Math.pow(b,(emax-2));
+           return ((w*z)*b)*b;
+
+     }
+
+
     
 }
