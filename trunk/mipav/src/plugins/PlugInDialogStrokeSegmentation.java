@@ -40,14 +40,14 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private JTextField adcThresholdField;
     
-    private JCheckBox symmetryCheckbox;
+    private JRadioButton symmetryRadio;
     private JTextField symmetryRemovalMaxSliceField;
     
     private JCheckBox filterCheckbox;
     
-//    private JCheckBox cerebellumCheckbox;
-//    private JTextField cerebellumSliceMaxField;
-//    
+    private JRadioButton cerebellumRadio;
+    private JTextField cerebellumSliceMaxField;
+    
 //    private JCheckBox cerebellumAggressiveCheckbox;
 //    private JTextField cerebellumAggressiveSliceMaxField;
     
@@ -64,14 +64,14 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private int adcThreshold = 620;
     
-    private boolean doSymmetryRemoval = false;
+    private boolean doSymmetryRemoval = true;
     private int symmetryRemovalMaxSlice = 10;
     
     private boolean doFilter = true;
     
-//    private boolean doCerebellumSkip = true;
+    private boolean doCerebellumSkip = false;
     
-//    private int cerebellumSkipSliceMax = 9;
+    private int cerebellumSkipSliceMax = 10;
     
 //    private boolean doCerebellumSkipAggressive = true;
     
@@ -336,13 +336,13 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         doFilter = filterCheckbox.isSelected();
         
-        doSymmetryRemoval = symmetryCheckbox.isSelected();
+        doSymmetryRemoval = symmetryRadio.isSelected();
         
         symmetryRemovalMaxSlice = Integer.parseInt(symmetryRemovalMaxSliceField.getText());
         
-//        doCerebellumSkip = cerebellumCheckbox.isSelected();
-//        cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
-//        
+        doCerebellumSkip = cerebellumRadio.isSelected();
+        cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
+        
 //        doCerebellumSkipAggressive = cerebellumAggressiveCheckbox.isSelected();
 //        cerebellumSkipAggressiveSliceMax = Integer.parseInt(cerebellumAggressiveSliceMaxField.getText());
         
@@ -367,7 +367,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doFilter, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, requireMinCoreSize, minCoreSizeCC, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doFilter, doCerebellumSkip, cerebellumSkipSliceMax, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, requireMinCoreSize, minCoreSizeCC, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -417,9 +417,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         symmetryRemovalMaxSlice = scriptParameters.getParams().getInt("symmetry_removal_slice_max");
         
-//        doCerebellumSkip = scriptParameters.getParams().getBoolean("do_cerebellum_skip");
-//        cerebellumSkipSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_slice_max");
-//        
+        doCerebellumSkip = scriptParameters.getParams().getBoolean("do_cerebellum_skip");
+        cerebellumSkipSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_slice_max");
+        
 //        doCerebellumSkipAggressive = scriptParameters.getParams().getBoolean("do_cerebellum_skip_aggressive");
 //        cerebellumSkipAggressiveSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_aggressive_slice_max");
         
@@ -444,8 +444,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         // TODO DWI Filter
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
         scriptParameters.getParams().put(ParameterFactory.newParameter("symmetry_removal_slice_max", symmetryRemovalMaxSlice));
-//        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
-//        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
 //        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip_aggressive", doCerebellumSkipAggressive));
 //        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_aggressive_slice_max", cerebellumSkipAggressiveSliceMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_skull_removal", doSkullRemoval));
@@ -510,10 +510,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         gbc.gridwidth = 1;
         
-        symmetryCheckbox = new JCheckBox("Perform symmetry removal on ADC mask up to slice", doSymmetryRemoval);
-        symmetryCheckbox.setForeground(Color.black);
-        symmetryCheckbox.setFont(serif12);
-        mainPanel.add(symmetryCheckbox, gbc);
+        symmetryRadio = new JRadioButton("Perform symmetry removal on ADC mask up to slice");
+        symmetryRadio.setForeground(Color.black);
+        symmetryRadio.setFont(serif12);
+        mainPanel.add(symmetryRadio, gbc);
         
         symmetryRemovalMaxSliceField = new JTextField(10);
         symmetryRemovalMaxSliceField.setText("" + symmetryRemovalMaxSlice);
@@ -521,23 +521,33 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         gbc.gridx++;
         mainPanel.add(symmetryRemovalMaxSliceField, gbc);
         
-//        gbc.gridy++;
-//        gbc.gridx = 0;
-//        
-//        gbc.gridwidth = 1;
-//        
-//        cerebellumCheckbox = new JCheckBox("Ignore thresholded ADC values up to slice", doCerebellumSkip);
-//        cerebellumCheckbox.setForeground(Color.black);
-//        cerebellumCheckbox.setFont(serif12);
-//        mainPanel.add(cerebellumCheckbox, gbc);
-//        
-//        gbc.gridwidth = 1;
-//        
-//        cerebellumSliceMaxField = new JTextField(10);
-//        cerebellumSliceMaxField.setText("" + cerebellumSkipSliceMax);
-//        gbc.fill = GridBagConstraints.NONE;
-//        gbc.gridx++;
-//        mainPanel.add(cerebellumSliceMaxField, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        cerebellumRadio = new JRadioButton("Ignore thresholded ADC values up to slice");
+        cerebellumRadio.setForeground(Color.black);
+        cerebellumRadio.setFont(serif12);
+        mainPanel.add(cerebellumRadio, gbc);
+        
+        ButtonGroup cerebellumGroup = new ButtonGroup();
+        cerebellumGroup.add(symmetryRadio);
+        cerebellumGroup.add(cerebellumRadio);
+        
+        if (doSymmetryRemoval) {
+            symmetryRadio.setSelected(true);
+        } else {
+            cerebellumRadio.setSelected(true);
+        }
+        
+        gbc.gridwidth = 1;
+        
+        cerebellumSliceMaxField = new JTextField(10);
+        cerebellumSliceMaxField.setText("" + cerebellumSkipSliceMax);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(cerebellumSliceMaxField, gbc);
 //        
 //        gbc.gridy++;
 //        gbc.gridx = 0;
