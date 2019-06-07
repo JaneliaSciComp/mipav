@@ -1111,7 +1111,7 @@ public class CDFLIB {
 	   do140 = false;
     } // if (do60)
 
-    /*if (do70) {
+    if (do70) {
        w[0] = bpser(a0,b0,x0,eps);
        w1[0] = 0.5 + (0.5-w[0]);
        do80 = false;
@@ -1146,7 +1146,7 @@ public class CDFLIB {
 	   do140 = false;
     } // if (do90)
 
-    if (do100) {
+    /*if (do100) {
        w1[0] = bup(b0,a0,y0,x0,n,eps);
        b0 = b0 + n;
     } // if (do100)
@@ -1211,6 +1211,604 @@ public class CDFLIB {
        return;
 
 
+     }
+     
+     private double bup(double a,double b,double x,double y,int n,double eps) {
+     /*-----------------------------------------------------------------------
+     !     EVALUATION OF IX(A,B) - IX(A+N,B) WHERE N IS A POSITIVE INTEGER.
+     !     EPS IS THE TOLERANCE USED.
+     !-----------------------------------------------------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: bup
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: a, b, eps, x, y
+             INTEGER, INTENT (IN) :: n
+     ! ..
+     ! .. Local Scalars ..*/
+             double ap1, apb, d, l, r, t, w, result;
+             int i, k, kp1, mu, nm1;
+             boolean do10 = true;
+             boolean do20 = true;
+             boolean do30 = true;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP, MIN
+     ! ..
+     !          OBTAIN THE SCALING FACTOR EXP(-MU) AND
+     !             EXP(MU)*(X**A*Y**B/BETA(A,B))/A */
+             apb = a + b;
+             ap1 = a + 1.0;
+             mu = 0;
+             d = 1.0;
+
+             if (n != 1 &&  a>=1.0) {
+               if (apb>=1.1*ap1) {
+                 mu = (int)Math.abs(exparg(1));
+                 k = (int)exparg(0);
+                 mu = Math.min(k,mu);
+                 t = mu;
+                 d = Math.exp(-t);
+
+               }
+             }
+
+             result = brcmp1(mu,a,b,x,y)/a;
+
+             if (n==1 || result==0.0) return result;
+
+             nm1 = n - 1;
+             w = d;
+
+     //          LET K BE THE INDEX OF THE MAXIMUM TERM
+
+             k = 0;
+             if (b<=1.0) {
+            	 do10 = false;
+            	 do20 = false;
+             }
+             else if (y>1.E-4) {
+            	 
+             }
+             else {
+                 k = nm1;
+                 do10 = false;
+             }
+
+     if (do10) {
+             r = (b-1.0)*x/y - a;
+             if (r<1.0) {
+            	 do20 = false;
+             }
+             else {
+	             k = nm1;
+	             t = nm1;
+	             if (r<t) k = (int)r;
+             }
+     } // if (do10)
+
+     //          ADD THE INCREASING TERMS OF THE SERIES
+
+     if (do20) {
+             for (i = 1; i <= k; i++) {
+               l = i - 1;
+               d = ((apb+l)/(ap1+l))*x*d;
+               w = w + d;
+             }
+
+             if (k==nm1) {
+            	 do30 = false;
+             }
+     } // if (do20)
+
+     //          ADD THE REMAINING TERMS OF THE SERIES
+
+     if (do30) {
+             kp1 = k + 1;
+
+             for (i = kp1; i <= nm1; i++) {
+               l = i - 1;
+               d = ((apb+l)/(ap1+l))*x*d;
+               w = w + d;
+               if (d<=eps*w) break;
+             }
+     } // if (do30)
+
+             result = result*w;
+
+             return result;
+
+     }
+     
+     private double brcmp1(int mu,double a,double b,double x,double y) {
+     /*-----------------------------------------------------------------------
+     !          EVALUATION OF  EXP(MU) * (X**A*Y**B/BETA(A,B))
+     !-----------------------------------------------------------------------
+     !-----------------
+     !     CONST = 1/SQRT(2*PI)
+     !-----------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: brcmp1
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: a, b, x, y
+             INTEGER, INTENT (IN) :: mu
+     ! ..
+     ! .. Local Scalars ..*/
+             double a0, apb, b0, c, e, h, lambda, lnx, lny, t, u, v,
+               x0, y0, z, result;
+             int i, n;
+             boolean do10 = true;
+             boolean do20 = true;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP, LOG, MAX, MIN, SQRT
+     ! ..
+     ! .. Parameters ..*/
+             final double constant = .398942280401433;
+     
+             /*a0 = Math.min(a,b);
+
+             if (a0>=8.0) {
+            	 do10 = false;
+            	 do20 = false;
+             }
+             else { // a0 < 8.0
+
+	             if (x<=0.375) {
+	               lnx = Math.log(x);
+	               lny = alnrel(-x);
+	             }
+	             else {
+	
+	               if (y<=0.375) {
+	                 lnx = alnrel(-y);
+	                 lny = Math.log(y);
+	               }
+	               else {
+	                 lnx = Math.log(x);
+	                 lny = Math.log(y);
+	               }
+	             }
+	
+	             z = a*lnx + b*lny;
+	
+	             if (a0>=1.0) {
+	               z = z - betaln(a,b);
+	               result = esum(mu,z);
+	
+	               return result;
+	             }
+	
+	     //-----------------------------------------------------------------------
+	     //              PROCEDURE FOR A .LT. 1 OR B .LT. 1
+	     //-----------------------------------------------------------------------
+	             b0 = Math.max(a,b);
+	             if (b0>=8.0) {
+	            	 do10 = false;
+	             }
+	             else if (b0>1.0) {
+	            	 
+	             }
+	             else {
+	
+	     //                   ALGORITHM FOR B0 .LE. 1
+	
+		             result = esum(mu,z);
+		
+		             if (result==0.0) return result;
+		
+		             apb = a + b;
+		             if (apb<=1.0) {
+		               z = 1.0 + gam1(apb);
+		             }
+		             else {
+		               u = a + b - 1.0;
+		               z = (1.0+gam1(u))/apb;
+		             }
+		
+		             c = (1.0+gam1(a))*(1.0+gam1(b))/z;
+		             result = result*(a0*c)/(1.0+a0/b0);
+		
+		             return result;
+	             } // else
+             } // else a0 < 8.0
+
+     //                ALGORITHM FOR 1 .LT. B0 .LT. 8
+
+     if (do10) {
+             u = gamln1(a0);
+             n = (int)(b0 - 1.0);
+
+             if (n>=1) {
+               c = 1.0;
+               for  (i = 1; i <= n; i++) {
+                 b0 = b0 - 1.0;
+                 c = c*(b0/(a0+b0));
+               }
+               u = Math.log(c) + u;
+
+             }
+
+             z = z - u;
+             b0 = b0 - 1.0;
+             apb = a0 + b0;
+
+             if (apb<=1.0) {
+               t = 1.0 + gam1(apb);
+             }
+             else {
+               u = a0 + b0 - 1.0;
+               t = (1.0+gam1(u))/apb;
+             }
+
+             result = a0*esum(mu,z)*(1.0+gam1(b0))/t;
+
+             return result;
+     } // if (do10)
+
+     //                   ALGORITHM FOR B0 .GE. 8
+
+     if (do20) {
+             u = gamln1(a0) + algdiv(a0,b0);
+             result = a0*esum(mu,z-u);
+
+             return result;
+     } // if (do20)
+     !-----------------------------------------------------------------------
+     !              PROCEDURE FOR A .GE. 8 AND B .GE. 8
+     !-----------------------------------------------------------------------
+     30      CONTINUE
+             IF (a<=b) THEN
+               h = a/b
+               x0 = h/(one+h)
+               y0 = one/(one+h)
+               lambda = a - (a+b)*x
+             ELSE
+               h = b/a
+               x0 = one/(one+h)
+               y0 = h/(one+h)
+               lambda = (a+b)*y - b
+             END IF
+
+             e = -lambda/a
+             IF (ABS(e)<=0.6_dpkind) THEN
+               u = rlog1(e)
+             ELSE
+               u = e - LOG(x/x0)
+             END IF
+
+             e = lambda/b
+
+             IF (ABS(e)<=0.6_dpkind) THEN
+               v = rlog1(e)
+             ELSE
+               v = e - LOG(y/y0)
+             END IF
+
+             z = esum(mu,-(a*u+b*v))
+
+             brcmp1 = const*SQRT(b*x0)*z*EXP(-bcorr(a,b))*/
+             return 0.0;
+
+    }
+
+     
+     private double bfrac(double a,double b,double x,double y,double lambda,double eps) {
+     /*-----------------------------------------------------------------------
+     !     CONTINUED FRACTION EXPANSION FOR IX(A,B) WHEN A,B .GT. 1.
+     !     IT IS ASSUMED THAT  LAMBDA = (A + B)*Y - B.
+     !-----------------------------------------------------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: bfrac
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: a, b, eps, lambda, x, y
+     ! ..
+     ! .. Local Scalars ..*/
+             double alpha, an, anp1, beta, bn, bnp1, c, c0, c1, e,
+               n, p, r, r0, s, t, w, yp1, result;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS
+     */
+             result = brcomp(a,b,x,y);
+
+             if (result==0.0) return result;
+
+             c = 1.0 + lambda;
+             c0 = b/a;
+             c1 = 1.0 + 1.0/a;
+             yp1 = y + 1.0;
+
+             n = 0.0;
+             p = 1.0;
+             s = a + 1.0;
+             an = 0.0;
+             bn = 1.0;
+             anp1 = 1.0;
+             bnp1 = c/c1;
+             r = c1/c;
+
+     //        CONTINUED FRACTION CALCULATION
+
+     while (true) {
+             n = n + 1.0;
+             t = n/a;
+             w = n*(b-n)*x;
+             e = a/s;
+             alpha = (p*(p+c0)*e*e)*(w*x);
+             e = (1.0+t)/(c1+t+t);
+             beta = n + w/s + e*(c+n*yp1);
+             p = 1.0 + t;
+             s = s + 2.0;
+
+     //        UPDATE AN, BN, ANP1, AND BNP1
+
+             t = alpha*an + beta*anp1;
+             an = anp1;
+             anp1 = t;
+             t = alpha*bn + beta*bnp1;
+             bn = bnp1;
+             bnp1 = t;
+
+             r0 = r;
+             r = anp1/bnp1;
+             if (Math.abs(r-r0)<=eps*r) break;
+
+     //        RESCALE AN, BN, ANP1, AND BNP1
+
+             an = an/bnp1;
+             bn = bn/bnp1;
+             anp1 = r;
+             bnp1 = 1.0;
+     } // while (true)
+
+             result = result*r;
+
+             return result;
+
+     }
+     
+     private double brcomp(double a,double b,double x,double y) {
+     /*-----------------------------------------------------------------------
+     !               EVALUATION OF X**A*Y**B/BETA(A,B)
+     !-----------------------------------------------------------------------
+     !-----------------
+     !     CONST = 1/SQRT(2*PI)
+     !-----------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: brcomp
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: a, b, x, y
+     ! ..
+     ! .. Local Scalars ..*/
+             double a0, apb, c, e, h, lambda, lnx, lny, t, u, v,
+               x0, y0, result;
+             double b0 = 0.0;
+             double z = 0.0;
+             int i, n;
+             boolean do10 = true;
+             boolean do20 = true;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP, LOG, MAX, MIN, SQRT
+     ! ..
+     ! .. Parameters ..*/
+             final double constant = .398942280401433;
+     
+             result = 0.0;
+
+             if (x<=0.0 || y<=0.0) return result;
+
+             a0 = Math.min(a,b);
+
+             if (a0>=8.0) {
+            	 do10 = false;
+            	 do20 = false;
+             }
+             else { // a0 < 8.0
+
+	             if (x<=0.375) {
+	               lnx = Math.log(x);
+	               lny = alnrel(-x);
+	             }
+	             else {
+	               if (y<=0.375) {
+	                 lnx = alnrel(-y);
+	                 lny = Math.log(y);
+	               }
+	               else {
+	                 lnx = Math.log(x);
+	                 lny = Math.log(y);
+	               }
+	             }
+	
+	             z = a*lnx + b*lny;
+	
+	             if (a0>=1.0) {
+	               z = z - betaln(a,b);
+	               result = Math.exp(z);
+	
+	               return result;
+	             }
+	
+	     //-----------------------------------------------------------------------
+	     //              PROCEDURE FOR A .LT. 1 OR B .LT. 1
+	     //-----------------------------------------------------------------------
+	
+	             b0 = Math.max(a,b);
+	
+	             if (b0>=8.0) {
+	            	 do10 = false;
+	             }
+	             else if (b0>1.0) {
+	            	 
+	             }
+	
+	     //                   ALGORITHM FOR B0 .LE. 1
+	             else {
+		             result = Math.exp(z);
+		
+		             if (result==0.0) return result;
+		
+		             apb = a + b;
+		
+		             if (apb<=1.0) {
+		               z = 1.0 + gam1(apb);
+		             }
+		             else {
+		               u = a + b - 1.0;
+		               z = (1.0+gam1(u))/apb;
+		             }
+		
+		             c = (1.0+gam1(a))*(1.0+gam1(b))/z;
+		             result = result*(a0*c)/(1.0+a0/b0);
+		             return result;
+	             } // else
+             } // else a0 < 8.0
+
+     //                ALGORITHM FOR 1 .LT. B0 .LT. 8
+
+     if (do10) {
+             u = gamln1(a0);
+             n = (int)(b0 - 1.0);
+
+             if (n>=1) {
+               c = 1.0;
+               for (i = 1; i <= n; i++) {
+                 b0 = b0 - 1.0;
+                 c = c*(b0/(a0+b0));
+               }
+
+               u = Math.log(c) + u;
+
+             } // if (n >= 1)
+
+             z = z - u;
+             b0 = b0 - 1.0;
+             apb = a0 + b0;
+
+             if (apb<=1.0) {
+               t = 1.0 + gam1(apb);
+             }
+             else {
+               u = a0 + b0 - 1.0;
+               t = (1.0+gam1(u))/apb;
+             }
+
+             result = a0*Math.exp(z)*(1.0+gam1(b0))/t;
+             return result;
+     } // if (do10)
+
+     //                   ALGORITHM FOR B0 .GE. 8
+
+     if (do20) {
+             u = gamln1(a0) + algdiv(a0,b0);
+             result = a0*Math.exp(z-u);
+             return result;
+     } // if (do20)
+     //-----------------------------------------------------------------------
+     //              PROCEDURE FOR A .GE. 8 AND B .GE. 8
+     //-----------------------------------------------------------------------
+    
+             if (a<=b) {
+               h = a/b;
+               x0 = h/(1.0+h);
+               y0 = 1.0/(1.0+h);
+               lambda = a - (a+b)*x;
+             }
+             else {
+               h = b/a;
+               x0 = 1.0/(1.0+h);
+               y0 = h/(1.0+h);
+               lambda = (a+b)*y - b;
+             }
+
+             e = -lambda/a;
+
+             if (Math.abs(e)<=0.6) {
+               u = rlog1(e);
+             }
+             else {
+               u = e - Math.log(x/x0);
+             }
+
+             e = lambda/b;
+
+             if (Math.abs(e)<=0.6) {
+               v = rlog1(e);
+             }
+             else {
+               v = e - Math.log(y/y0);
+             }
+             z = Math.exp(-(a*u+b*v));
+
+             result = constant*Math.sqrt(b*x0)*z*Math.exp(-bcorr(a,b));
+             return result;
+
+     }
+     
+     private double rlog1(double x) {
+     /*-----------------------------------------------------------------------
+     !             EVALUATION OF THE FUNCTION X - LN(1 + X)
+     !-----------------------------------------------------------------------
+     !------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: rlog1
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: x
+     ! ..
+     ! .. Local Scalars ..*/
+             double h, r, t, w, w1, result;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC LOG
+     ! ..
+     ! .. Parameters ..*/
+             final double a = .566749439387324E-01;
+             final double b = .456512608815524E-01;
+             final double p[] = new double[]{.333333333333333,
+                -.224696413112536, .620886815375787E-02};
+             final double q[] = new double[] {1.0,
+               -.127408923933623E+01, .354508718369557};
+     
+             if (x<=-1.0) {
+               result = -1.0;
+             }
+             else if (x>=(-0.39) && x<=0.57) {
+               if (x<-0.18) {
+                 h = x + 0.3;
+                 h = h/0.7;
+                 w1 = a - h*0.3;
+               }
+               else if (x>0.18) {
+                 h = 0.75*x - 0.25;
+                 w1 = b + h/3.0;
+               }
+               else {
+     // ARGUMENT REDUCTION
+
+                 h = x;
+                 w1 = 0.0;
+               }
+
+     // SERIES EXPANSION
+
+               r = h/(h+2.0);
+               t = r*r;
+
+               w = evaluate_polynomial(p,t)/evaluate_polynomial(q,t);
+
+               result = 2.0*t*(1.0/(1.0-r)-r*w) + w1;
+             }
+             else {
+               w = (x+0.5) + 0.5;
+               result = x - Math.log(w);
+             }
+             return result;
      }
      
      private double fpser(double a,double b, double x, double eps) {
@@ -1393,7 +1991,7 @@ public class CDFLIB {
          .363351846806499E+04, .118645200713425E+04,
          .142441585084029E+03, .477762828042627E+01,
          .895385022981970E-02};
-       double p2[] = new double[]{
+       double p2[] = new double[]{0.0,
          -.648157123766197E+00, -.448616543918019E+01,
          -.701677227766759E+01, -.212940445131011E+01};
        double q1[] = new double[] {
@@ -1621,15 +2219,15 @@ public class CDFLIB {
     ! .. Scalar Arguments ..
             REAL (dpkind), INTENT (IN) :: a, b, eps, x
     ! ..
-    ! .. Local Scalars ..
-            REAL (dpkind) :: a0, apb, b0, c, n, sum, t, tol, u, w, z
-            INTEGER :: i, m
-    ! ..
+    ! .. Local Scalars ..*/
+            double a0, apb, c, n, sum, t, tol, u, w, z;
+            double b0 = 0.0;
+            int i, m;
+    /*
     ! .. Intrinsic Functions ..
             INTRINSIC ABS, EXP, LOG, MAX, MIN, REAL
     ! ..*/
-    	    double a0;
-    	    double z;
+    	    
             double result = 0.0;
             boolean do10 = true;
             boolean do20 = true;
@@ -1639,96 +2237,166 @@ public class CDFLIB {
     //            COMPUTE THE FACTOR X**A/(A*BETA(A,B))
     //-----------------------------------------------------------------------
             a0 = Math.min(a,b);
-                if (a0 >= 1.0) {
+            if (a0 >= 1.0) {
                     z = a*Math.log(x) - betaln(a,b);
                     result = Math.exp(z)/a;
                     do10 = false;
                     do20 = false;
                     do30 = false;
-            } // if (z0 >= 1.0)
+            } // if (a0 >= 1.0)
 
-    /*10      CONTINUE
-            b0 = MAX(a,b)
-            IF (b0>=eight) GO TO 30
-            IF (b0>one) GO TO 20
+    if (do10) {
+            b0 = Math.max(a,b);
+            if (b0>=8.0) {
+            	do20 = false;
+            }
+            else if (b0>1.0) {
+            	
+            }
+            else {
+    //            PROCEDURE FOR A0 .LT. 1 AND B0 .LE. 1
 
-    !            PROCEDURE FOR A0 .LT. 1 AND B0 .LE. 1
+	            result = Math.pow(x,a);
+	            if (result==0.0) return result;
+	
+	            apb = a + b;
+	            if (apb<=1.0) {
+	                z = 1.0 + gam1(apb);
+	            }
+	            else {
+	              u = a + b - 1.0;
+	              z = (1.0+gam1(u))/apb;
+	            }
+	
+	            c = (1.0+gam1(a))*(1.0+gam1(b))/z;
+	            result = result*c*(b/apb);
+	            do20 = false;
+	            do30 = false;
+            } // else
+    } // if (do10)
 
-            bpser = x**a
-            IF (bpser==zero) RETURN
+    //         PROCEDURE FOR A0 .LT. 1 AND 1 .LT. B0 .LT. 8
 
-            apb = a + b
-            IF (apb<=one) THEN
-              z = one + gam1(apb)
-            ELSE
-              u = REAL(a,kind=dpkind) + REAL(b,kind=dpkind) - one
-              z = (one+gam1(u))/apb
-            END IF
+    if (do20) {
+            u = gamln1(a0);
+            m = (int)(b0 - 1.0);
 
-            c = (one+gam1(a))*(one+gam1(b))/z
-            bpser = bpser*c*(b/apb)
-            GO TO 40
+            if (m>=1) {
+              c = 1.0;
+              for (i = 1; i <= m; i++) {
+                b0 = b0 - 1.0;
+                c = c*(b0/(a0+b0));
+              }
 
-    !         PROCEDURE FOR A0 .LT. 1 AND 1 .LT. B0 .LT. 8
+              u = Math.log(c) + u;
+            } // if (m >= 1)
 
-    20      CONTINUE
-            u = gamln1(a0)
-            m = b0 - one
+            z = a*Math.log(x) - u;
+            b0 = b0 - 1.0;
+            apb = a0 + b0;
 
-            IF (m>=1) THEN
-              c = one
-              DO i = 1, m
-                b0 = b0 - one
-                c = c*(b0/(a0+b0))
-              END DO
+            if (apb<=1.0) {
+              t = 1.0 + gam1(apb);
+            }
+            else {
+              u = a0 + b0 - 1.0;
+              t = (1.0+gam1(u))/apb;
+            }
 
-              u = LOG(c) + u
-            END IF
+            result = Math.exp(z)*(a0/a)*(1.0+gam1(b0))/t;
+            do30 = false;
+    } // if (do20)
 
-            z = a*LOG(x) - u
-            b0 = b0 - one
-            apb = a0 + b0
+    //            PROCEDURE FOR A0 .LT. 1 AND B0 .GE. 8
 
-            IF (apb<=one) THEN
-              t = one + gam1(apb)
-            ELSE
-              u = REAL(a0,kind=dpkind) + REAL(b0,kind=dpkind) - one
-              t = (one+gam1(u))/apb
-            END IF
+    if (do30) {
+            u = gamln1(a0) + algdiv(a0,b0);
+            z = a*Math.log(x) - u;
+            result = (a0/a)*Math.exp(z);
+    } // if (do30)
 
-            bpser = EXP(z)*(a0/a)*(one+gam1(b0))/t
-            GO TO 40
+        if (result==0.0 || a<=0.1*eps) return result;
+//-----------------------------------------------------------------------
+//                     COMPUTE THE SERIES
+//-----------------------------------------------------------------------
+        sum = 0.0;
+        n = 0;
+        c = 1.0;
+        tol = eps/a;
 
-    !            PROCEDURE FOR A0 .LT. 1 AND B0 .GE. 8
+        do {
+	        n = n + 1;
+	        c = c*(0.5+(0.5-b/n))*x;
+	        w = c/(a+n);
+	        sum = sum + w;
+        } while (Math.abs(w)>tol);
 
-    30      CONTINUE
-            u = gamln1(a0) + algdiv(a0,b0)
-            z = a*LOG(x) - u
-            bpser = (a0/a)*EXP(z)
+        result = result*(1.0+a*sum);
 
-    40      CONTINUE
-            IF (bpser==zero .OR. a<=0.1_dpkind*eps) RETURN
-    !-----------------------------------------------------------------------
-    !                     COMPUTE THE SERIES
-    !-----------------------------------------------------------------------
-            sum = zero
-            n = zero
-            c = one
-            tol = eps/a
+        return result;
 
-    50      CONTINUE
-            n = n + one
-            c = c*(half+(half-b/n))*x
-            w = c/(a+n)
-            sum = sum + w
-            IF (ABS(w)>tol) GO TO 50
+    }
+    
+    private double gam1(double a) {
+    /*     ------------------------------------------------------------------
+    !     COMPUTATION OF 1/GAMMA(A+1) - 1  FOR -0.5 .LE. A .LE. 1.5
+    !     ------------------------------------------------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: gam1
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind), INTENT (IN) :: a
+    ! ..
+    ! .. Local Scalars ..*/
+            double d, t, w, result;
+    
+    // Parameters ..
+            final double p[] = new double[]{.577215664901533,
+              -.409078193005776, -.230975380857675,
+              .597275330452234E-01, .766968181649490E-02,
+              -.514889771323592E-02, .589597428611429E-03};
+            final double q[] = new double[]{ .100000000000000E+01,
+               .427569613095214, .158451672430138,
+              .261132021441447E-01, .423244297896961E-02};
+            final double r[] =  new double[]{
+              -.422784335098468, -.771330383816272,
+              -.244757765222226, .118378989872749,
+              .930357293360349E-03, -.118290993445146E-01,
+              .223047661158249E-02, .266505979058923E-03,
+              -.132674909766242E-03};
+            final double s1 = .273076135303957;
+            final double s2 = .559398236957378E-01;
+    
+            t = a;
+            d = a - 0.5;
 
-            bpser = bpser*(one+a*sum)
+            if (d>0.0) t = d - 0.5;
 
-            RETURN*/
-                return 0.0;
+            if (t==0.0) {
+              result = 0.0;
+            }
+            else if (t>0.0) {
+              w = evaluate_polynomial(p,t)/evaluate_polynomial(q,t);
 
-    } 
+              if (d<=0.0) {
+                result = a*w;
+              }
+              else {
+                result = (t/a)*((w-0.5)-0.5);
+              }
+            }
+            else {
+              w = evaluate_polynomial(r,t)/((s2*t+s1)*t+1.0);
+
+              if (d<=0.0) {
+                result = a*((w+0.5)+0.5);
+              }
+              else {
+                result = t*w/a;
+              }
+            }
+            return result;
+    }
     
     private double betaln(double a0,double b0) {
     /*-----------------------------------------------------------------------
@@ -1873,7 +2541,7 @@ public class CDFLIB {
     //-----------------------------------------------------------------------
     //                   PROCEDURE WHEN A .GE. 8
     //-----------------------------------------------------------------------
-            //w = bcorr(a,b);
+            w = bcorr(a,b);
             h = a/b;
             c = h/(1.0+h);
             u = -(a-0.5)*Math.log(c);
@@ -1886,6 +2554,65 @@ public class CDFLIB {
             }
 
             result = ((((-0.5*Math.log(b))+e)+w)-u) - v;
+            return result;
+
+    }
+    
+    private double bcorr(double a0, double b0) {
+    /*-----------------------------------------------------------------------
+    !     EVALUATION OF  DEL(A0) + DEL(B0) - DEL(A0 + B0)  WHERE
+    !     LN(GAMMA(A)) = (A - 0.5)*LN(A) - A + 0.5*LN(2*PI) + DEL(A).
+    !     IT IS ASSUMED THAT A0 .GE. 8 AND B0 .GE. 8.
+    !-----------------------------------------------------------------------
+    ! .. Function Return Value ..
+            REAL (dpkind) :: bcorr
+    ! ..
+    ! .. Scalar Arguments ..
+            REAL (dpkind) :: a0, b0
+    ! ..
+    ! .. Local Scalars ..*/
+            double a, b, c, h, s11, s3, s5, s7, s9, t, w, x, x2, result;
+    /*
+    ! .. Intrinsic Functions ..
+            INTRINSIC MAX, MIN
+    ! ..
+    ! .. Parameters ..*/
+            final double c0 = .833333333333333E-01;
+            final double c1 = -.277777777760991E-02;
+            final double c2 = .793650666825390E-03;
+            final double c3 = -.595202931351870E-03;
+            final double c4 = .837308034031215E-03;
+            final double c5 = -.165322962780713E-02;
+   
+            a = Math.min(a0,b0);
+            b = Math.max(a0,b0);
+
+            h = a/b;
+            c = h/(1.0+h);
+            x = 1.0/(1.0+h);
+            x2 = x*x;
+
+    //                SET SN = (1 - X**N)/(1 - X)
+
+            s3 = 1.0 + (x+x2);
+            s5 = 1.0 + (x+x2*s3);
+            s7 = 1.0 + (x+x2*s5);
+            s9 = 1.0 + (x+x2*s7);
+            s11 = 1.0 + (x+x2*s9);
+
+    //                SET W = DEL(B) - DEL(A + B)
+
+            t = (1.0/b);
+            t = t *t;
+            w = ((((c5*s11*t+c4*s9)*t+c3*s7)*t+c2*s5)*t+c1*s3)*t + c0;
+            w = w*(c/b);
+
+    //                   COMPUTE  DEL(A) + W
+
+            t = (1.0/a);
+            t = t * t;
+
+            result = (((((c5*t+c4)*t+c3)*t+c2)*t+c1)*t+c0)/a + w;
             return result;
 
     }
