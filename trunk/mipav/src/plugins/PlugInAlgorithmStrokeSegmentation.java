@@ -36,10 +36,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int maxSymmetryGrowthSlice = 10;
     
-//    private boolean doCerebellumSkip;
-//    
-//    private int cerebellumSkipSliceMax;
-//    
+    private boolean doCerebellumSkip;
+    
+    private int cerebellumSkipSliceMax;
+    
 //    private boolean doCerebellumSkipAggressive;
 //    
 //    private int cerebellumSkipAggressiveSliceMax;
@@ -100,7 +100,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean anisoFilter, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean anisoFilter, boolean cerebellumSkip, int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir) {
         super();
         
         dwiImage = dwi;
@@ -110,8 +110,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         doSymmetryRemoval = symmetryRemoval;
         maxSymmetryRemovalSlice = symmetryMax;
         maxSymmetryGrowthSlice = symmetryMax;
-//        doCerebellumSkip = cerebellumSkip;
-//        cerebellumSkipSliceMax = cerebellumSkipMax;
+        doCerebellumSkip = cerebellumSkip;
+        cerebellumSkipSliceMax = cerebellumSkipMax;
 //        doCerebellumSkipAggressive = cerebellumSkipAggressive;
 //        cerebellumSkipAggressiveSliceMax = cerebellumSkipAggressiveMax;
         doSkullRemoval = removeSkull;
@@ -311,8 +311,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             fireProgressStateChanged(70);
             
             // do first two results with selection only based on core size
-    //        File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
-            File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, 0, false);
+            File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false);
+//            File lightboxPass1 = processThresholdedImg(segImg, segBuffer, extents, 1, false, 0, false);
             
             if (lightboxPass1 != null) {
                 lightboxFileList.add(lightboxPass1);
@@ -713,7 +713,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             for (int i = 0; i < processBuffer.length; i++) {
                 for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
                     if (processBuffer[i] == sortedObjects[sortedObjects.length - 1 - objNum].id) {
-                        if (adcVolForThresholding.getInt(i) < adcThreshold) {
+                        if (adcImage.getInt(i) < adcThreshold) {
                             coreSizeList[objNum]++;
                         }
                     }
