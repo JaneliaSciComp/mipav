@@ -204,35 +204,23 @@ public class CDFLIB {
      ! ..
              has_status = PRESENT(status)
 
-     ! status = 0 means NO error
+     ! status = 0 means NO error*/
 
-             IF (has_status) THEN
-               status = 0
-             END IF
+             if (status !=null) {
+               status[0] = 0;
+             }
 
-             CALL check_complements(cum,ccum,the_f%name,'cum','ccum', &
-               local_cum,local_ccum,set_values=(which/=1),bad_status=3, &
-               status=status)
+            
 
-             IF (has_status) THEN
-               IF (status/=0) THEN
-                 RETURN
-               END IF
-             END IF
-
-             params(1) = local_cum
+             /*params(1) = local_cum
              params(2) = local_ccum
              params(3) = f
              params(4) = dfn
              params(5) = dfd
 
-             IF (PRESENT(check_input)) THEN
-               local_check_input = check_input
-             ELSE
-               local_check_input = .TRUE.
-             END IF
+             
 
-             IF (local_check_input) THEN
+             IF (check_input) THEN
                CALL validate_parameters(the_f,which,params,status)
 
                IF (has_status) THEN
@@ -297,6 +285,8 @@ public class CDFLIB {
              return;
 
      }
+     
+     
      
      private void local_cum_f(double f,double dfn,double dfd,double cum[],double ccum[],int status[], boolean check_input) {
      /*----------------------------------------------------------------------
@@ -484,32 +474,14 @@ public class CDFLIB {
      ! ..
              has_status = PRESENT(status)
 
-     ! status = 0 means no error
+     ! status = 0 means no error */
 
-             IF (has_status) THEN
-               status = 0
-             END IF
+             if (status != null) {
+               status[0] = 0;
+             }
 
-             CALL check_complements(cum,ccum,the_beta%name,'cum','ccum', &
-               local_cum,local_ccum,set_values=(which/=1),bad_status=3, &
-               status=status)
 
-             IF (has_status) THEN
-               IF (status/=0) THEN
-                 RETURN
-               END IF
-             END IF
-
-             CALL check_complements(x,cx,the_beta%name,'x','cx',local_x, &
-               local_cx,set_values=(which/=2),bad_status=4,status=status)
-
-             IF (has_status) THEN
-               IF (status/=0) THEN
-                 RETURN
-               END IF
-             END IF
-
-             params(1) = local_cum
+             /*params(1) = local_cum
              params(2) = local_ccum
              params(3) = local_x
              params(4) = local_cx
@@ -773,7 +745,7 @@ public class CDFLIB {
 ! ..*/
     double eps;
     int ind;
-    int n;
+    int n = 20;
     double a0, b0, x0, y0;
     double lambda = 0.0;
     double t;
@@ -1146,7 +1118,7 @@ public class CDFLIB {
 	   do140 = false;
     } // if (do90)
 
-    /*if (do100) {
+    if (do100) {
        w1[0] = bup(b0,a0,y0,x0,n,eps);
        b0 = b0 + n;
     } // if (do100)
@@ -1198,7 +1170,7 @@ public class CDFLIB {
        w[0] = basym(a0,b0,lambda,100.0*eps);
 
        w1[0] = 0.5 + (0.5-w[0]);
-    } // if (do140)*/
+    } // if (do140)
 
     //  TERMINATION OF THE PROCEDURE
 
@@ -1210,6 +1182,667 @@ public class CDFLIB {
        w1[0] = t;
        return;
 
+
+     }
+     
+     private double basym(double a,double b,double lambda,double eps) {
+     /*-----------------------------------------------------------------------
+     !     ASYMPTOTIC EXPANSION FOR IX(A,B) FOR LARGE A AND B.
+     !     LAMBDA = (A + B)*Y - B  AND EPS IS THE TOLERANCE USED.
+     !     IT IS ASSUMED THAT LAMBDA IS NONNEGATIVE AND THAT
+     !     A AND B ARE GREATER THAN OR EQUAL TO 15.
+     !-----------------------------------------------------------------------
+     !------------------------
+     !     ****** NUM IS THE MAXIMUM VALUE THAT N CAN TAKE IN THE DO LOOP
+     !            ENDING AT STATEMENT 50. IT IS REQUIRED THAT NUM BE EVEN.
+     !            THE ARRAYS A0, B0, C, D HAVE DIMENSION NUM + 1.
+     !------------------------
+     !     E0 = 2/SQRT(PI)
+     !     E1 = 2**(-3/2)
+     !------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: basym
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: a, b, eps, lambda
+     ! ..
+     ! .. Local Scalars ..*/
+             double bsum, dsum, f, h, h2, hn, j0, j1, r, r0, r1, s,
+               sum, t, t0, t1, u, w, w0, z, z0, z2, zn, znm1, result;
+             int i, im1, imj, j, m, mm1, mmj, n, np1;
+     
+     // Local Arrays ..
+             double a0[] = new double[21];
+             double b0[] = new double[21];
+             double c[] = new double[21];
+             double d[] = new double[21];
+     
+     /* .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP, SQRT
+     ! ..
+     ! .. Parameters ..*/
+             final double e0 = 1.12837916709551;
+             final double e1 = .353553390593274;
+             final int num = 20;
+     
+             result = 0.0;
+
+             if (a<b) {
+               h = a/b;
+               r0 = 1.0/(1.0+h);
+               r1 = (b-a)/b;
+               w0 = 1.0/Math.sqrt(a*(1.0+h));
+             }
+             else {
+               h = b/a;
+               r0 = 1.0/(1.0+h);
+               r1 = (b-a)/a;
+               w0 = 1.0/Math.sqrt(b*(1.0+h));
+             }
+
+             f = a*rlog1(-lambda/a) + b*rlog1(lambda/b);
+             t = Math.exp(-f);
+
+             if (t==0.0) return result;
+
+             z0 = Math.sqrt(f);
+             z = 0.5*(z0/e1);
+             z2 = f + f;
+
+             a0[0] = (2.0/3.0)*r1;
+             c[0] = -0.5*a0[0];
+             d[0] = -c[0];
+             j0 = (0.5/e0)*erfc1(1,z0);
+             j1 = e1;
+             sum = j0 + d[0]*w0*j1;
+
+             s = 1.0;
+             h2 = h*h;
+             hn = 1.0;
+             w = w0;
+             znm1 = z;
+             zn = z2;
+             for (n = 2; n <= num; n += 2) {
+               hn = h2*hn;
+               a0[n-1] = 2.0*r0*(1.0+h*hn)/(n+2.0);
+               np1 = n + 1;
+               s = s + hn;
+               a0[np1-1] = 2.0*r1*s/(n+3.0);
+
+               for (i = n; i <= np1; i++) {
+                 r = -0.5*(i+1.0);
+                 b0[0] = r*a0[0];
+                 for (m = 2; m <= i; m++) {
+                   bsum = 0.0;
+                   mm1 = m - 1;
+                   for (j = 1; j <= mm1; j++) {
+                     mmj = m - j;
+                     bsum = bsum + (j*r-mmj)*a0[j-1]*b0[mmj-1];
+                   } // for (j = 1; j <= mm1; j++)
+                   b0[m-1] = r*a0[m-1] + bsum/m;
+                 } // for (m = 2; m <= i; m++)
+
+                 c[i-1] = b0[i-1]/(i+1.0);
+
+                 dsum = 0.0;
+                 im1 = i - 1;
+                 for (j = 1; j <= im1; j++) {
+                   imj = i - j;
+                   dsum = dsum + d[imj-1]*c[j-1];
+                 } // for (j = 1; j <= im1; j++)
+                 d[i-1] = -(dsum+c[i-1]);
+               } // for (i = n; i <= np1; i++)
+
+               j0 = e1*znm1 + (n-1.0)*j0;
+               j1 = e1*zn + n*j1;
+               znm1 = z2*znm1;
+               zn = z2*zn;
+               w = w0*w;
+               t0 = d[n-1]*w*j0;
+               w = w0*w;
+               t1 = d[np1-1]*w*j1;
+               sum = sum + (t0+t1);
+               if (Math.abs(t0)+Math.abs(t1)<=eps*sum) break;
+             } // for (n = 2; n <= num; n += 2)
+
+             u = Math.exp(-bcorr(a,b));
+
+             result = e0*t*u*sum;
+
+             return result;
+
+     }
+
+     
+     private void bgrat(double a,double b,double x,double y,double w[],double eps,int ierr[]) {
+     /* .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: a, b, eps, x, y
+             REAL (dpkind), INTENT (INOUT) :: w
+             INTEGER, INTENT (OUT) :: ierr
+     ! ..
+     ! .. Local Scalars ..*/
+             double bm1, bp2n, cn, coef, dj, j, l, lnx, n2, nu,
+               r, s, sum, t, t2, u, v, z;
+             double p[] = new double[1];
+             double q[] = new double[1];
+             int i, n, nm1;
+    
+     // .. Local Arrays ..
+           double c[] = new double[30];
+           double d[] = new double[30];
+     /*
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP, LOG
+     ! ..
+     !-----------------------------------------------------------------------
+     !     ASYMPTOTIC EXPANSION FOR IX(A,B) WHEN A IS LARGER THAN B.
+     !     THE RESULT OF THE EXPANSION IS ADDED TO W. IT IS ASSUMED
+     !     THAT A .GE. 15 AND B .LE. 1.  EPS IS THE TOLERANCE USED.
+     !     IERR IS A VARIABLE THAT REPORTS THE STATUS OF THE RESULTS.
+     !-----------------------------------------------------------------------*/
+             bm1 = (b-0.5) - 0.5;
+             nu = a + 0.5*bm1;
+
+             if (y<=0.375) {
+               lnx = alnrel(-y);
+             }
+             else {
+               lnx = Math.log(x);
+             }
+
+             z = -nu*lnx;
+             if (b*z==0.0) {
+            	 // THE EXPANSION CANNOT BE COMPUTED
+
+                 ierr[0] = 1;
+
+                 return;
+             }
+
+     //                 COMPUTATION OF THE EXPANSION
+     //                 SET R = EXP(-Z)*Z**B/GAMMA(B)
+
+             r = b*(1.0+gam1(b))*Math.exp(b*Math.log(z));
+             r = r*Math.exp(a*lnx)*Math.exp(0.5*bm1*lnx);
+             u = algdiv(b,a) + b*Math.log(nu);
+             u = r*Math.exp(-u);
+
+             if (u!=0.0) {
+               grat1(b,z,r,p,q,eps);
+
+               v = 0.25*(1.0/nu)*(1.0/nu);
+               t2 = 0.25*lnx*lnx;
+               l = w[0]/u;
+               j = q[0]/r;
+               sum = j;
+               t = 1.0;
+               cn = 1.0;
+               n2 = 0.0;
+               for (n = 1; n <= 30; n++) {
+                 bp2n = b + n2;
+                 j = (bp2n*(bp2n+1.0)*j+(z+bp2n+1.0)*t)*v;
+                 n2 = n2 + 2.0;
+                 t = t*t2;
+                 cn = cn/(n2*(n2+1.0));
+                 c[n-1] = cn;
+                 s = 0.0;
+
+                 if (n!=1) {
+                   nm1 = n - 1;
+                   coef = b - n;
+                   for (i = 1; i <= nm1; i++) {
+                     s = s + coef*c[i-1]*d[n-i-1];
+                     coef = coef + b;
+                   } // for (i = 1; i <= nm1; i++)
+                 } // if (n != 1)
+
+                 d[n-1] = bm1*cn + s/n;
+                 dj = d[n-1]*j;
+                 sum = sum + dj;
+                 if (sum<=0.0) {
+                	 // THE EXPANSION CANNOT BE COMPUTED
+                     ierr[0] = 1;
+                     return;
+                 }
+                 if (Math.abs(dj)<=eps*(sum+l)) break;
+               } // for (n = 1; n <= 30; n++)
+
+     // ADD THE RESULTS TO W
+
+               ierr[0] = 0;
+               w[0] = w[0] + u*sum;
+               return;
+
+             } // if (u != 0.0)
+
+     }
+     
+     private void grat1(double a,double x,double r,double p[],double q[],double eps) {
+     /*-----------------------------------------------------------------------
+     !        EVALUATION OF THE INCOMPLETE GAMMA RATIO FUNCTIONS
+     !                      P(A,X) AND Q(A,X)
+     !     IT IS ASSUMED THAT A .LE. 1.  EPS IS THE TOLERANCE TO BE USED.
+     !     THE INPUT ARGUMENT R HAS THE VALUE E**(-X)*X**A/GAMMA(A).
+     !-----------------------------------------------------------------------
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: a, eps, r, x
+             REAL (dpkind), INTENT (OUT) :: p, q
+     ! ..
+     ! .. Local Scalars ..*/
+             double a2n, a2nm1, am0, an0, b2n, b2nm1, cma,
+               l, t, w;
+             double an = 0.0;
+             double c = 0.0;
+             double sum = 0.0;
+             double tol = 0.0;
+             double g = 0.0;
+             double j = 0.0;
+             double z = 0.0;
+             double h = 0.0;
+             boolean do10 = true;
+             boolean do20 = true;
+             boolean do30 = true;
+             boolean do40 = true;
+             boolean do50 = true;
+    
+     /* Intrinsic Functions ..
+             INTRINSIC ABS, EXP, LOG, SQRT
+     */
+             if (a*x==0.0) {
+            	 if (x <= a) {
+            		 p[0] = 0.0;
+            	     q[0] = 1.0;
+            	     return; 
+            	 }
+            	 p[0] = 1.0;
+                 q[0] = 0.0;
+                 return;
+             }
+             if (a==0.5) {
+            	 if (x<0.25) {
+                 p[0] = erf(Math.sqrt(x));
+                 q[0] = 0.5 + (0.5-p[0]);
+                 return;
+
+            	 }
+
+               q[0] = erfc1(0,Math.sqrt(x));
+               p[0] = 0.5 + (0.5-q[0]);
+               return;
+             }
+             if (x<1.1) {
+            	 
+             }
+             else {
+                 do10 = false;
+                 do20 = false;
+                 do30 = false;
+                 do40 = false;
+                 do50 = false;
+             }
+
+     //             TAYLOR SERIES FOR P(A,X)/X**A
+
+     if (do10) {
+             an = 3.0;
+             c = x;
+             sum = x/(a+3.0);
+             tol = 0.1*eps/(a+1.0);
+     } // if (do10)
+
+     if (do20) {
+        do {
+             an = an + 1.0;
+             c = -c*(x/an);
+             t = c/(a+an);
+             sum = sum + t;
+
+        } while (Math.abs(t)>tol);
+
+             j = a*x*((sum/6.0-0.5/(a+2.0))*x+1.0/(a+1.0));
+
+             z = a*Math.log(x);
+             h = gam1(a);
+             g = 1.0 + h;
+
+             if (x<0.25) {
+            	 
+             }
+             else if (a<x/2.59) {
+            	 do30 = false;
+            	 do40 = false;
+             }
+             else {
+            	 do30 = false;
+             }
+     } // if (do20)
+
+     if (do30) {
+             if (z>(-.13394)) {
+            	 do40 = false;
+             }
+     } // if (do30)
+
+     if (do40) {
+             w = Math.exp(z);
+             p[0] = w*g*(0.5+(0.5-j));
+             q[0] = 0.5 + (0.5-p[0]);
+             return;
+     } // if (do40)
+
+     if (do50) {
+             l = rexp(z);
+             w = 0.5 + (0.5+l);
+             q[0] = (w*j-l)*g - h;
+             if (q[0]<0.0) {
+            	 p[0] = 1.0;
+                 q[0] = 0.0;
+                 return;
+             }
+             p[0] = 0.5 + (0.5-q[0]);
+             return;
+     } // if (do50)
+
+     //              CONTINUED FRACTION EXPANSION
+
+             a2nm1 = 1.0;
+             a2n = 1.0;
+             b2nm1 = x;
+             b2n = x + (1.0-a);
+             c = 1.0;
+
+     do {
+             a2nm1 = x*a2n + c*a2nm1;
+             b2nm1 = x*b2n + c*b2nm1;
+             am0 = a2nm1/b2nm1;
+             c = c + 1.0;
+             cma = c - a;
+             a2n = a2nm1 + cma*a2n;
+             b2n = b2nm1 + cma*b2n;
+             an0 = a2n/b2n;
+
+     } while(Math.abs(an0-am0)>=eps*an0);
+
+             q[0] = r*an0;
+             p[0] = 0.5 + (0.5-q[0]);
+             return;
+
+     }
+     
+     private double rexp(double x) {
+     /*-----------------------------------------------------------------------
+     !            EVALUATION OF THE FUNCTION EXP(X) - 1
+     !-----------------------------------------------------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: rexp
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: x
+     ! ..
+     ! .. Local Scalars ..*/
+             double w, result;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP
+     ! ..
+     ! .. Parameters ..*/
+             final double p1 = .914041914819518E-09;
+             final double p2 = .238082361044469E-01;
+             final double q[] = new double[]{ 1.0, 
+               -.499999999085958, .107141568980644, 
+               -.119041179760821E-01, .595130811860248E-03};
+     
+             if (Math.abs(x)<=0.15) {
+               result = x*(((p2*x+p1)*x+1.0)/evaluate_polynomial(q,x));
+             }
+             else {
+               w = Math.exp(x);
+
+               if (x<=0.0) {
+                 result = (w-0.5) - 0.5;
+               }
+               else {
+                 result = w*(0.5+(0.5-1.0/w));
+               }
+             }
+             return result;
+     }
+     
+     private double erf(double x) {
+     /*-----------------------------------------------------------------------
+     !             EVALUATION OF THE REAL ERROR FUNCTION
+     !-----------------------------------------------------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: erf
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: x
+     ! ..
+     ! .. Local Scalars ..*/
+             double ax, bot, t, top, x2, result;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP, SIGN
+     ! ..
+     ! .. Parameters ..*/
+             final double a[] = new double[]{.128379167095513,
+                .479137145607681E-01, .323076579225834E-01,
+               -.133733772997339E-02, .771058495001320E-04};
+             final double b[] = new double[]{ 1.0,
+               .375795757275549, .538971687740286E-01,
+               .301048631703895E-02};
+             final double p[] = new double[]{ 3.00459261020162E+02,
+               4.51918953711873E+02, 3.39320816734344E+02,
+               1.52989285046940E+02, 4.31622272220567E+01,
+               7.21175825088309, 5.64195517478974E-01,
+               -1.36864857382717E-07};
+             final double q[] = new double[]{ 3.00459260956983E+02,
+               7.90950925327898E+02, 9.31354094850610E+02,
+               6.38980264465631E+02, 2.77585444743988E+02,
+               7.70001529352295E+01, 1.27827273196294E+01, 1.0};
+             final double r[] = new double[]{2.82094791773523E-01,
+               4.65807828718470, 2.13688200555087E+01,
+               2.62370141675169E+01, 2.10144126479064};
+             final double s[] = new double[]{1.0,
+               1.80124575948747E+01, 9.90191814623914E+01,
+               1.87114811799590E+02, 9.41537750555460E+01};
+             final double c = .564189583547756;
+     
+             ax = Math.abs(x);
+
+             if (ax<=0.5) {
+               t = x*x;
+
+               top = evaluate_polynomial(a,t) + 1.0;
+               bot = evaluate_polynomial(b,t);
+
+               result = x*(top/bot);
+
+             }
+             else if (ax<=4.0) {
+               top = evaluate_polynomial(p,ax);
+               bot = evaluate_polynomial(q,ax);
+
+               result = 0.5 + (0.5-Math.exp(-x*x)*top/bot);
+
+               if (x<0.0) result = -result;
+
+             }
+             else if (ax<5.8) {
+               x2 = x*x;
+               t = 1.0/x2;
+
+               top = evaluate_polynomial(r,t);
+               bot = evaluate_polynomial(s,t);
+
+               result = (c-top/(x2*bot))/ax;
+               result = 0.5 + (0.5-Math.exp(-x2)*result);
+
+               if (x<0.0) result = -result;
+             }
+             else {
+               if (x >= 0.0) {
+            	   result = 1.0;
+               }
+               else {
+            	   result = -1.0;
+               }
+             }
+             return result;
+
+     }
+     
+     private double erfc1(int ind,double x) {
+     /*-----------------------------------------------------------------------
+     !         EVALUATION OF THE COMPLEMENTARY ERROR FUNCTION
+     !          ERFC1(IND,X) = ERFC(X)            IF IND = 0
+     !          ERFC1(IND,X) = EXP(X*X)*ERFC(X)   OTHERWISE
+     !-----------------------------------------------------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: erfc1
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind), INTENT (IN) :: x
+             INTEGER, INTENT (IN) :: ind
+     ! ..
+     ! .. Local Scalars ..*/
+             double ax, bot, e, t, top, w;
+             double result = 0.0;
+             boolean do10 = true;
+             boolean do20 = true;
+             boolean do30 = true;
+             boolean do40 = true;
+     /*
+     ! .. Intrinsic Functions ..
+             INTRINSIC ABS, EXP
+     ! ..
+     ! .. Parameters ..*/
+             final double a[] = new double[]{ .128379167095513,
+               .479137145607681E-01, .323076579225834E-01,
+               -.133733772997339E-02, .771058495001320E-04};
+             final double b[] = new double[]{ 1.0,
+               .375795757275549, .538971687740286E-01,
+               .301048631703895E-02};
+             final double p[] = new double[]{ 3.00459261020162E+02,
+               4.51918953711873E+02, 3.39320816734344E+02,
+               1.52989285046940E+02, 4.31622272220567E+01,
+               7.21175825088309, 5.64195517478974E-01,
+               -1.36864857382717E-07};
+             final double q[] = new double[]{ 3.00459260956983E+02,
+               7.90950925327898E+02, 9.31354094850610E+02,
+               6.38980264465631E+02, 2.77585444743988E+02,
+               7.70001529352295E+01, 1.27827273196294E+01, 1.0};
+             final double r[] = new double[]{ 2.82094791773523E-01,
+               4.65807828718470, 2.13688200555087E+01,
+               2.62370141675169E+01, 2.10144126479064};
+             final double s[] = new double[]{ 1.0,
+               1.80124575948747E+01, 9.90191814623914E+01,
+               1.87114811799590E+02, 9.41537750555460E+01};
+             final double c = .564189583547756;
+   
+     //                     ABS(X) .LE. 0.5
+             ax = Math.abs(x);
+
+             if (ax<=0.5) {
+     // x in [-0.5, 0.5]
+
+               t = x*x;
+
+               top = evaluate_polynomial(a,t) + 1.0;
+               bot = evaluate_polynomial(b,t);
+
+               result = 0.5 + (0.5-x*(top/bot));
+
+               if (ind!=0) result = Math.exp(t)*result;
+
+               return result;
+
+             } // if (ax<=0.5)
+
+             if (ax>4.0) {
+            	 
+             }
+             else {
+             top = evaluate_polynomial(p,ax);
+             bot = evaluate_polynomial(q,ax);
+
+             result = top/bot;
+             do10 = false;
+             do20 = false;
+             }
+
+     //                      ABS(X) .GT. 4
+
+     if (do10) {
+
+             if (x<=(-5.6)) {
+            	 do20 = false;
+            	 do30 = false;
+             }
+
+             else if (ind!=0) {
+            
+             }
+
+             else if (x>100.0) {
+            	 do20 = false;
+            	 do30 = false;
+            	 do40 = false;
+             }
+
+             else if (x*x>-exparg(1)) {
+            	 do20 = false;
+            	 do30 = false;
+            	 do40 = false;
+             }
+     } // if (do10)
+
+     if (do20) {
+
+             t = (1.0/x);
+             t = t * t;
+
+             top = evaluate_polynomial(r,t);
+             bot = evaluate_polynomial(s,t);
+
+             result = (c-t*top/bot)/ax;
+     } // if (do20)
+
+     //                      FINAL ASSEMBLY
+
+     if (do30) {
+
+             if (ind!=0) {
+               if (x<0.0) result = 2.0*Math.exp(x*x) - result;
+               return result;
+
+             }
+
+             w = x*x;
+             t = w;
+             e = w - t;
+             result = ((0.5+(0.5-e))*Math.exp(-t))*result;
+
+             if (x<0.0) result = 2.0 - result;
+
+             return result;
+     } // if (do30)
+
+     //             LIMIT VALUE FOR LARGE NEGATIVE X
+
+     if (do40) {
+
+             result = 2.0;
+
+             if (ind!=0) result = 2.0*Math.exp(x*x);
+
+             return result;
+     } // if (do40)
+
+     //   LIMIT VALUE FOR LARGE POSITIVE X (WHEN IND = 0)
+
+             result = 0.0;
+             return result;
 
      }
      
@@ -1335,8 +1968,10 @@ public class CDFLIB {
              INTEGER, INTENT (IN) :: mu
      ! ..
      ! .. Local Scalars ..*/
-             double a0, apb, b0, c, e, h, lambda, lnx, lny, t, u, v,
-               x0, y0, z, result;
+             double a0, apb, c, e, h, lambda, lnx, lny, t, u, v,
+               x0, y0, result;
+             double b0 = 0.0;
+             double z = 0.0;
              int i, n;
              boolean do10 = true;
              boolean do20 = true;
@@ -1347,7 +1982,7 @@ public class CDFLIB {
      ! .. Parameters ..*/
              final double constant = .398942280401433;
      
-             /*a0 = Math.min(a,b);
+             a0 = Math.min(a,b);
 
              if (a0>=8.0) {
             	 do10 = false;
@@ -1455,43 +2090,106 @@ public class CDFLIB {
 
              return result;
      } // if (do20)
-     !-----------------------------------------------------------------------
-     !              PROCEDURE FOR A .GE. 8 AND B .GE. 8
-     !-----------------------------------------------------------------------
-     30      CONTINUE
-             IF (a<=b) THEN
-               h = a/b
-               x0 = h/(one+h)
-               y0 = one/(one+h)
-               lambda = a - (a+b)*x
-             ELSE
-               h = b/a
-               x0 = one/(one+h)
-               y0 = h/(one+h)
-               lambda = (a+b)*y - b
-             END IF
+     //-----------------------------------------------------------------------
+     //              PROCEDURE FOR A .GE. 8 AND B .GE. 8
+     //-----------------------------------------------------------------------
+    
+             if (a<=b) {
+               h = a/b;
+               x0 = h/(1.0+h);
+               y0 = 1.0/(1.0+h);
+               lambda = a - (a+b)*x;
+             }
+             else {
+               h = b/a;
+               x0 = 1.0/(1.0+h);
+               y0 = h/(1.0+h);
+               lambda = (a+b)*y - b;
+             }
 
-             e = -lambda/a
-             IF (ABS(e)<=0.6_dpkind) THEN
-               u = rlog1(e)
-             ELSE
-               u = e - LOG(x/x0)
-             END IF
+             e = -lambda/a;
+             if (Math.abs(e)<=0.6) {
+               u = rlog1(e);
+             }
+             else {
+               u = e - Math.log(x/x0);
+             }
 
-             e = lambda/b
+             e = lambda/b;
 
-             IF (ABS(e)<=0.6_dpkind) THEN
-               v = rlog1(e)
-             ELSE
-               v = e - LOG(y/y0)
-             END IF
+             if (Math.abs(e)<=0.6) {
+               v = rlog1(e);
+             }
+             else {
+               v = e - Math.log(y/y0);
+             }
 
-             z = esum(mu,-(a*u+b*v))
+             z = esum(mu,-(a*u+b*v));
 
-             brcmp1 = const*SQRT(b*x0)*z*EXP(-bcorr(a,b))*/
-             return 0.0;
+             result = constant*Math.sqrt(b*x0)*z*Math.exp(-bcorr(a,b));
+             return result;
 
     }
+     
+     private double esum(int mu, double x) {
+     /*-----------------------------------------------------------------------
+     !                    EVALUATION OF EXP(MU + X)
+     !-----------------------------------------------------------------------
+     ! .. Function Return Value ..
+             REAL (dpkind) :: esum
+     ! ..
+     ! .. Scalar Arguments ..
+             REAL (dpkind) :: x
+             INTEGER :: mu
+     ! ..
+     ! .. Local Scalars ..*/
+             double w;
+             boolean do10 = true;
+             double result;
+     /* ..
+     ! .. Intrinsic Functions ..
+             INTRINSIC EXP
+     */
+             if (x>0.0) {
+            	 
+             }
+
+             else if (mu<0) {
+            	 do10 = false;
+             }
+             else {
+                 w = mu + x;
+
+                 if (w>0.0) {
+                	 do10 = false;
+                 }
+                 else {
+                     result = Math.exp(w);
+                     return result;
+                 }
+             }
+
+     if (do10) {
+             if (mu>0) {
+            	 
+             }
+             else {
+	             w = mu + x;
+	
+	             if (w>=0.0) {
+	               result = Math.exp(w);
+	               return result;
+	
+	             }
+             }
+     }
+
+             w = mu;
+             result = Math.exp(w)*Math.exp(x);
+
+             return result;
+
+     }
 
      
      private double bfrac(double a,double b,double x,double y,double lambda,double eps) {
