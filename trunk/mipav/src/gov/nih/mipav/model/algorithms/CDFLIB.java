@@ -161,8 +161,6 @@ public class CDFLIB {
 	 !         This routine assumes monotonicity and will find an arbitrary one
 	 !         of the two values.
 	 */
-    
-     private final double tiny = 1.0E-100;
      
      public double cum_f(double f,double dfn,double dfd,int status[], boolean check_input) {
     	     int which = 1;
@@ -2690,7 +2688,7 @@ public class CDFLIB {
          .142441585084029E+03, .477762828042627E+01,
          .895385022981970E-02};
        double p2[] = new double[]{0.0,
-         -.648157123766197E+00, -.448616543918019E+01,
+         -.648157123766197, -.448616543918019E+01,
          -.701677227766759E+01, -.212940445131011E+01};
        double q1[] = new double[] {
          .691091682714533E-05, .190831076596300E+04,
@@ -2840,7 +2838,7 @@ public class CDFLIB {
          den = evaluate_polynomial(p1,x)/evaluate_polynomial(q1,x);
 
          xmx0 = x - dx0;
-         return den*xmx0 + aug;
+         return (den*xmx0 + aug);
 
 //---------------------------------------------------------------------
 //     IF X .GE. XMAX1, PSI = LN(X)
@@ -2857,7 +2855,7 @@ public class CDFLIB {
            0.5/x + aug;
        } // if (x < xmax1)
 
-       return aug + Math.log(x);
+       return (aug + Math.log(x));
 
 
 
@@ -3149,12 +3147,12 @@ public class CDFLIB {
     //                   PROCEDURE WHEN A .LT. 1
     //-----------------------------------------------------------------------
             else if (b<8.0) {
-                return gamln(a) + (gamln(b)-gamln(a+b));
+                return (gamln(a) + (gamln(b)-gamln(a+b)));
             }
 
             else {
 
-                return gamln(a) + algdiv(a,b);
+                return (gamln(a) + algdiv(a,b));
 
             }
 
@@ -3586,176 +3584,5 @@ public class CDFLIB {
             return result;
 
     }
-
-     
-     private int ipmpar(int i) {
-    /* C-----------------------------------------------------------------------
-     C
-     C     IPMPAR PROVIDES THE INTEGER MACHINE CONSTANTS FOR THE COMPUTER
-     C     THAT IS USED. IT IS ASSUMED THAT THE ARGUMENT I IS AN INTEGER
-     C     HAVING ONE OF THE VALUES 1-10. IPMPAR(I) HAS THE VALUE ...
-     C
-     C  INTEGERS.
-     C
-     C     ASSUME INTEGERS ARE REPRESENTED IN THE N-DIGIT, BASE-A FORM
-     C
-     C               SIGN ( X(N-1)*A**(N-1) + ... + X(1)*A + X(0) )
-     C
-     C               WHERE 0 .LE. X(I) .LT. A FOR I=0,...,N-1.
-     C
-     C     IPMPAR(1) = A, THE BASE.
-     C
-     C     IPMPAR(2) = N, THE NUMBER OF BASE-A DIGITS.
-     C
-     C     IPMPAR(3) = A**N - 1, THE LARGEST MAGNITUDE.
-     C
-     C  FLOATING-POINT NUMBERS.
-     C
-     C     IT IS ASSUMED THAT THE SINGLE AND DOUBLE PRECISION FLOATING
-     C     POINT ARITHMETICS HAVE THE SAME BASE, SAY B, AND THAT THE
-     C     NONZERO NUMBERS ARE REPRESENTED IN THE FORM
-     C
-     C               SIGN (B**E) * (X(1)/B + ... + X(M)/B**M)
-     C
-     C               WHERE X(I) = 0,1,...,B-1 FOR I=1,...,M,
-     C               X(1) .GE. 1, AND EMIN .LE. E .LE. EMAX.
-     C
-     C     IPMPAR(4) = B, THE BASE.
-     C
-     C  SINGLE-PRECISION
-     C
-     C     IPMPAR(5) = M, THE NUMBER OF BASE-B DIGITS.
-     C
-     C     IPMPAR(6) = EMIN, THE SMALLEST EXPONENT E.
-     C
-     C     IPMPAR(7) = EMAX, THE LARGEST EXPONENT E.
-     C
-     C  DOUBLE-PRECISION
-     C
-     C     IPMPAR(8) = M, THE NUMBER OF BASE-B DIGITS.
-     C
-     C     IPMPAR(9) = EMIN, THE SMALLEST EXPONENT E.
-     C
-     C     IPMPAR(10) = EMAX, THE LARGEST EXPONENT E.
-     C
-     C-----------------------------------------------------------------------
-     C
-     C     TO DEFINE THIS FUNCTION FOR THE COMPUTER BEING USED, ACTIVATE
-     C     THE DATA STATMENTS FOR THE COMPUTER BY REMOVING THE C FROM
-     C     COLUMN 1. (ALL THE OTHER DATA STATEMENTS SHOULD HAVE C IN
-     C     COLUMN 1.)
-     C
-     C-----------------------------------------------------------------------
-     C
-     C     IPMPAR IS AN ADAPTATION OF THE FUNCTION I1MACH, WRITTEN BY
-     C     P.A. FOX, A.D. HALL, AND N.L. SCHRYER (BELL LABORATORIES).
-     C     IPMPAR WAS FORMED BY A.H. MORRIS (NSWC). THE CONSTANTS ARE
-     C     FROM BELL LABORATORIES, NSWC, AND OTHER SOURCES.
-     C
-     C-----------------------------------------------------------------------
-    
-     //    MACHINE CONSTANTS FOR IEEE ARITHMETIC MACHINES, SUCH AS THE AT&T
-     //     3B SERIES, MOTOROLA 68000 BASED MACHINES (E.G. SUN 3 AND AT&T
-     //     PC 7300), AND 8087 BASED MICROS (E.G. IBM PC AND AT&T 6300).
-     */
-    	  int IMACH[] = new int[11];
-           IMACH[1] =    2 ;
-           IMACH[2] =    31;
-           IMACH[3] = 2147483647;
-           IMACH[4] =     2;
-           IMACH[5] =    24;
-           IMACH[6] =  -125;
-           IMACH[7] =   128;
-           IMACH[8] =    53;
-           IMACH[9] =  -1021;
-           IMACH[10] =  1024;
-    
-           return IMACH[i];
-
-     }
-     
-     private double spmpar(int i) {
-     /*-----------------------------------------------------------------------
-     C
-     C     SPMPAR PROVIDES THE SINGLE PRECISION MACHINE CONSTANTS FOR
-     C     THE COMPUTER BEING USED. IT IS ASSUMED THAT THE ARGUMENT
-     C     I IS AN INTEGER HAVING ONE OF THE VALUES 1, 2, OR 3. IF THE
-     C     SINGLE PRECISION ARITHMETIC BEING USED HAS M BASE B DIGITS AND
-     C     ITS SMALLEST AND LARGEST EXPONENTS ARE EMIN AND EMAX, THEN
-     C
-     C        SPMPAR(1) = B**(1 - M), THE MACHINE PRECISION,
-     C
-     C        SPMPAR(2) = B**(EMIN - 1), THE SMALLEST MAGNITUDE,
-     C
-     C        SPMPAR(3) = B**EMAX*(1 - B**(-M)), THE LARGEST MAGNITUDE.
-     C
-     C-----------------------------------------------------------------------
-     C     WRITTEN BY
-     C        ALFRED H. MORRIS, JR.
-     C        NAVAL SURFACE WARFARE CENTER
-     C        DAHLGREN VIRGINIA
-     C-----------------------------------------------------------------------
-     C-----------------------------------------------------------------------
-     C     MODIFIED BY BARRY W. BROWN TO RETURN DOUBLE PRECISION MACHINE
-     C     CONSTANTS FOR THE COMPUTER BEING USED.  THIS MODIFICATION WAS
-     C     MADE AS PART OF CONVERTING BRATIO TO DOUBLE PRECISION
-     C-----------------------------------------------------------------------
-     C     .. Scalar Arguments ..
-           INTEGER i
-     C     ..
-     C     .. Local Scalars ..
-           DOUBLE PRECISION b,binv,bm1,one,w,z
-           INTEGER emax,emin,ibeta,m
-     C     ..
-     C     .. External Functions ..
-           INTEGER ipmpar
-           EXTERNAL ipmpar
-     C     ..
-     C     .. Intrinsic Functions ..
-           INTRINSIC dble
-     C     ..
-     C     .. Executable Statements ..
-     C*/
-    	 double b;
-    	 double binv;
-    	 double w;
-    	 double one;
-    	 double bm1;
-    	 double z;
-    	 int m;
-    	 int emin;
-    	 int ibeta;
-    	 int emax;
-           if (i <= 1) {
-               b = ipmpar(4);
-               m = ipmpar(8);
-               return Math.pow(b,(1-m));
-           }
-     
-           if (i <= 2) {
-               b = ipmpar(4);
-               emin = ipmpar(9);
-               one = 1.0;
-               binv = one/b;
-               w = Math.pow(b,(emin+2));
-               return ((w*binv)*binv)*binv;
-           }
-     
-           ibeta = ipmpar(4);
-           m = ipmpar(8);
-           emax = ipmpar(10);
-     
-           b = ibeta;
-           bm1 = ibeta - 1;
-           one = 1.0;
-           z = Math.pow(b,(m-1));
-           w = ((z-one)*b+bm1)/ (b*z);
-     
-           z = Math.pow(b,(emax-2));
-           return ((w*z)*b)*b;
-
-     }
-
-
     
 }
