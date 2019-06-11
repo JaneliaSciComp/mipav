@@ -166,8 +166,8 @@ public class CDFLIB {
      
      public double cum_f(double f,double dfn,double dfd,int status[], boolean check_input) {
     	     int which = 1;
-    	     double cum[] = new double[]{1};
-    	     double ccum[] = new double[]{0};
+    	     double cum[] = new double[]{0};
+    	     double ccum[] = null;
              cdf_f(which,cum,ccum,f,dfn,dfd,status,check_input);
              return cum[0];
      }
@@ -241,8 +241,8 @@ public class CDFLIB {
 
                 local_cum_f(f,dfn,dfd,local_cum,local_ccum,status, check_input);
 
-                if (cum[0] == 1) cum[0] = local_cum[0];
-                if (ccum[0] == 1) ccum[0] = local_ccum[0];
+                if (cum != null) cum[0] = local_cum[0];
+                if (ccum != null) ccum[0] = local_ccum[0];
                 break;
 
              case 2:
@@ -529,8 +529,8 @@ public class CDFLIB {
 
                local_cum_beta(local_x,local_cx,a,b,local_cum,local_ccum);
 
-               if (cum[0] == 1) cum[0] = local_cum[0];
-               if (ccum[0] == 1) ccum[0] = local_ccum[0];
+               if (cum != null) cum[0] = local_cum[0];
+               if (ccum != null) ccum[0] = local_ccum[0];
 
                return;
 
@@ -1059,63 +1059,53 @@ public class CDFLIB {
     if (do50) {
        w[0] = fpser(a0,b0,x0,eps);
        w1[0] = 0.5 + (0.5-w[0]);
-       do60 = false;
-	   do70 = false;
-	   do80 = false;
-	   do90 = false;
-	   do100 = false;
-	   do110 = false;
-	   do120 = false;
-	   do130 = false;
-	   do140 = false;
+       if (ind==0) return;
+       t = w[0];
+       w[0] = w1[0];
+       w1[0] = t;
+       return;
     } // if (do50)
 
     if (do60) {
        w1[0] = apser(a0,b0,x0,eps);
        w[0] = 0.5 + (0.5-w1[0]);
-       do70 = false;
-	   do80 = false;
-	   do90 = false;
-	   do100 = false;
-	   do110 = false;
-	   do120 = false;
-	   do130 = false;
-	   do140 = false;
+       if (ind==0) return;
+       t = w[0];
+       w[0] = w1[0];
+       w1[0] = t;
+       return;
     } // if (do60)
 
     if (do70) {
        w[0] = bpser(a0,b0,x0,eps);
        w1[0] = 0.5 + (0.5-w[0]);
-       do80 = false;
-	   do90 = false;
-	   do100 = false;
-	   do110 = false;
-	   do120 = false;
-	   do130 = false;
-	   do140 = false;
+       if (ind==0) return;
+       t = w[0];
+       w[0] = w1[0];
+       w1[0] = t;
+       return;
     } // if (do70)
        
 
     if (do80) {
        w1[0] = bpser(b0,a0,y0,eps);
        w[0] = 0.5 + (0.5-w1[0]);
-       do90 = false;
-	   do100 = false;
-	   do110 = false;
-	   do120 = false;
-	   do130 = false;
-	   do140 = false;
+       if (ind==0) return;
+       t = w[0];
+       w[0] = w1[0];
+       w1[0] = t;
+       return;
     } // if (do80)
 
     if (do90) {
        w[0] = bfrac(a0,b0,x0,y0,lambda,15.0*eps);
 
        w1[0] = 0.5 + (0.5-w[0]);
-       do100 = false;
-	   do110 = false;
-	   do120 = false;
-	   do130 = false;
-	   do140 = false;
+       if (ind==0) return;
+       t = w[0];
+       w[0] = w1[0];
+       w1[0] = t;
+       return;
     } // if (do90)
 
     if (do100) {
@@ -1127,9 +1117,11 @@ public class CDFLIB {
        bgrat(b0,a0,y0,x0,w1,15.0*eps,ierr1);
 
        w[0] = 0.5 + (0.5-w1[0]);
-       do120 = false;
-	   do130 = false;
-	   do140 = false;
+       if (ind==0) return;
+       t = w[0];
+       w[0] = w1[0];
+       w1[0] = t;
+       return;
     } // if (do110)
 
     if (do120) {
@@ -1145,11 +1137,15 @@ public class CDFLIB {
        if (x0>0.7) {
     	   
        }
-
-       w[0] = w[0] + bpser(a0,b0,x0,eps);
-       w1[0] = 0.5 + (0.5-w[0]);
-       do130 = false;
-	   do140 = false;
+       else {
+	       w[0] = w[0] + bpser(a0,b0,x0,eps);
+	       w1[0] = 0.5 + (0.5-w[0]);
+	       if (ind==0) return;
+	       t = w[0];
+	       w[0] = w1[0];
+	       w1[0] = t;
+	       return;
+       }
     } // if (do120)
 
     if (do130) {
@@ -1162,7 +1158,11 @@ public class CDFLIB {
        bgrat(a0,b0,x0,y0,w,15.0*eps,ierr1);
 
        w1[0] = 0.5 + (0.5-w[0]);
-       do140 = false;
+       if (ind==0) return;
+       t = w[0];
+       w[0] = w1[0];
+       w1[0] = t;
+       return;
     } // if (do130)
 
     if (do140) {
