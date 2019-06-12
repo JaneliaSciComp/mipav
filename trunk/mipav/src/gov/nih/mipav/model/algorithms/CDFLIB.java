@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 // Ported from a site at the University of Texas Department of Biostatistics and Applied Mathematics
@@ -161,531 +162,1270 @@ public class CDFLIB {
 	 !         This routine assumes monotonicity and will find an arbitrary one
 	 !         of the two values.
 	 */
-     
-     public double cum_f(double f,double dfn,double dfd,int status[], boolean check_input) {
-    	     int which = 1;
-    	     double cum[] = new double[]{0};
-    	     double ccum[] = null;
-             cdf_f(which,cum,ccum,f,dfn,dfd,status,check_input);
-             return cum[0];
-     }
-     
-     private void cdf_f(int which, double cum[], double ccum[] ,
-    		 double f, double dfn, double dfd,int status[], boolean check_input) {
-    	 boolean match_cum;
-    	 double local_cum[] = new double[1];
-    	 double local_ccum[] = new double[1];
-     /*! .. Use Statements ..
-             USE cdf_aux_mod
-             USE zero_finder
-     ! ..
-     ! .. Scalar Arguments ..
-             REAL (dpkind), OPTIONAL :: ccum, cum
-             REAL (dpkind) :: dfd, dfn, f
-             INTEGER, OPTIONAL, INTENT (OUT) :: status
-             INTEGER, INTENT (IN) :: which
-             LOGICAL, OPTIONAL, INTENT (IN) :: check_input
-     ! ..
-     ! .. Local Structures ..
-             TYPE (zf_locals) :: local
-     ! ..
-     ! .. Local Arrays ..
-             REAL (dpkind) :: params(6)
-     ! ..
-     ! .. Local Scalars ..
-             REAL (dpkind) :: fx, local_ccum, local_cum, try_ccum, try_cum
-             INTEGER :: zf_status
-             LOGICAL :: has_status, local_check_input, match_cum
-     ! ..
-     ! .. Intrinsic Functions ..
-             INTRINSIC PRESENT
-     ! ..
-             has_status = PRESENT(status)
-
-     ! status = 0 means NO error*/
-
-             if (status !=null) {
-               status[0] = 0;
-             }
-
-            
-
-             /*params(1) = local_cum
-             params(2) = local_ccum
-             params(3) = f
-             params(4) = dfn
-             params(5) = dfd
-
-             
-
-             IF (check_input) THEN
-               CALL validate_parameters(the_f,which,params,status)
-
-               IF (has_status) THEN
-                 IF (status/=0) THEN
-                   RETURN
-                 END IF
-               END IF
-             END IF
-
-     ! ++++++++++          ++++++++++          ++++++++++
-     ! Compute the Answers
-     ! ++++++++++          ++++++++++          ++++++++++*/
-
-             if (which>1) match_cum = (local_cum[0]<=0.5);
-
-             switch (which) {
-             case 1:
-
-                local_cum_f(f,dfn,dfd,local_cum,local_ccum,status, check_input);
-
-                if (cum != null) cum[0] = local_cum[0];
-                if (ccum != null) ccum[0] = local_ccum[0];
-                break;
-
-             case 2:
-               /*f = five
-               zf_status = 0
-
-               CALL cdf_set_zero_finder(the_f,3,local)
-
-               DO
-                 CALL rc_interval_zf(zf_status,f,fx,local)
-
-                 IF (zf_status/=1) EXIT
-
-                 CALL local_cum_f(f,dfn,dfd,try_cum,try_ccum,status)
-
-                 IF (has_status) THEN
-                   IF (status/=0) THEN
-                     RETURN
-                   END IF
-                 END IF
-
-                 IF (match_cum) THEN
-                   fx = try_cum - local_cum
-                 ELSE
-                   fx = try_ccum - local_ccum
-                 END IF
-               END DO
-
-     ! Can NOT solve for Degrees of Freedom
-
-             END SELECT*/
-            	 break;
-             } // switch(which)
-
-             /*IF (has_status) THEN
-     ! Set the status of the zero finder
-               CALL cdf_finalize_status(local,status)
-             END IF*/
-
-             return;
-
-     }
-     
-     
-     
-     private void local_cum_f(double f,double dfn,double dfd,double cum[],double ccum[],int status[], boolean check_input) {
-     /*----------------------------------------------------------------------
-
-     !                              Function
-
-     !     Computes the integral from 0 to F of the f-density.
-     !     f    --> Upper limit of integration of the f-density.
-     !     dfn  --> Degrees of freedom of the numerator
-     !     dfd  --> Degrees of freedom of the denominator
-     !     cum  <-- Cumulative f-distribution.
-     !     ccum <-- Complement of Cumulative f-distribution.
-     !     status <-- tells the caller whether the problem was successfully solved.
-     !                Set to 10 if cdf_beta has no answer and status was used in
-     !                the initial call to cdf_f (otherwise, it breaks down)
-
-     !                              Method
-
-     !     Formula   26.6.2   of   Abramowitz   and   Stegun,  Handbook  of
-     !     Mathematical  Functions (1966) is used to reduce the computation
-     !     of the  cumulative  distribution function for the  F  variate to
-     !     that of an incomplete beta.
-
-     !                              Note
-     !     If F is less than or equal to 0, 0 is returned.
-     !------------------------------------------------------------------
-     ! .. Use Statements ..
-             USE cdf_beta_mod
-     ! ..
-     ! .. Scalar Arguments ..
-             REAL (dpkind), INTENT (OUT) :: ccum, cum
-             REAL (dpkind), INTENT (IN) :: dfd, dfn, f
-             INTEGER, OPTIONAL, INTENT (OUT) :: status
-     ! ..
-     ! .. Local Scalars ..
-             REAL (dpkind) :: dsum, prod, xx, yy
-             INTEGER :: beta_status
-     ! ..
-     ! .. Intrinsic Functions ..
-             INTRINSIC PRESENT
-     ! ..
-     */
-    	 int beta_status[] = new int[]{0};
-    	 double prod;
-    	 double dsum;
-    	 double xx;
-    	 double yy;
-             if (f<=0.0) {
-               cum[0] = 0.0;
-               ccum[0] = 1.0;
-               return;
-             }
-
-
-             prod = dfn*f;
-
-     /*     XX is such that the incomplete beta with parameters
-     !     DFD/2 and DFN/2 evaluated at XX is 1 - CUM or CCUM
-
-     !     YY is 1 - XX
-
-     !     Calculate the smaller of XX and YY accurately*/
-
-             dsum = dfd + prod;
-
-             //IF (xx>half) THEN
-             //  yy = prod/dsum
-             //  xx = one - yy
-            // ELSE
-               xx = dfd/dsum;
-               yy = 1.0 - xx;
-             //END IF
-
-             cdf_beta(1,ccum,cum,xx,yy,0.5*dfd,0.5*dfn, beta_status, check_input);
-
-             if (beta_status[0] != 0) {
-               // cdf_beta has NO answer.
-
-               status[0] = 10;
-               Preferences.debug("Error in local_cum_f call to cdf_beta\n", Preferences.DEBUG_ALGORITHM);
-               Preferences.debug("Status: " +  beta_status[0] + "\n", Preferences.DEBUG_ALGORITHM);
-
-             }
-
-             return;
-
-     }
-     
-     /*----------------------------------------------------------------------
-
-     !                               cdf_beta_mod
-     !                               *=*=*=*=*=*=
-
-     !  -  SUBROUTINE CDF_BETA(WHICH, CUM, CCUM, X, CX, A, B, STATUS, CHECK_INPUT)
-     !  -  REAL (dpkind) FUNCTION CUM_BETA(X, A, B, STATUS, CHECK_INPUT)
-     !  -  REAL (dpkind) FUNCTION CCUM_BETA(X, A, B, STATUS, CHECK_INPUT)
-     !  -  REAL (dpkind) FUNCTION INV_BETA(CUM, CCUM, A, B, STATUS, CHECK_INPUT)
-
-     !                             The Distribution
-     !                             ================
-
-     !    The density of the beta distribution is defined on x in [0,1] and is
-     !    proportional to:
-
-     !                                 a      b
-     !                                x  (1-x)
-
-     !                                Arguments
-     !                                =========
-
-     !  - INTEGER, INTENT(IN) :: WHICH. Integer indicating which of the next
-     !    four arguments is to be calculated.
-     !  Input Range: [ 1:4 ]
-     !     1.  CUM and CCUM
-     !     2.  X and CX
-     !     3.  A
-     !     4.  B
-     !  - REAL (dpkind), OPTIONAL :: CUM. The CDF of the beta distribution.
-     !  Range: [ 0:1 ]
-     !  - REAL (dpkind), OPTIONAL :: CCUM. One minus the CDF of the beta
-     !    distribution.
-     !  Range: [ 0:1 ]
-     !  - REAL (dpkind), OPTIONAL :: X. The upper limit of integration of the
-     !    beta density. The lower limit is 0.
-     !  Range: [ 0:1 ]
-     !  - REAL (dpkind), OPTIONAL :: CX. One minus the upper limit of
-     !    integration of the beta density. The lower limit is 0.
-     !  Range: [ 0:1 ]
-     !  - REAL (dpkind) :: A. The first parameter of the beta density.
-     !  Range: [ 10^-10:10^10 ]
-     !  - REAL (dpkind) :: B. The second parameter of the beta density.
-     !  Range: [ 10^-10:10^10 ]
-     !  - INTEGER, OPTIONAL, INTENT(OUT) :: STATUS. Return code.  Possible values:
-     !      0 problem solved successfully
-     !     -1 WHICH outside input range
-     !     -2 CUM outside range
-     !     -3 CCUM outside range
-     !     -4 X outside range
-     !     -5 CX outside range
-     !     -6 A outside range
-     !     -7 B outside range
-     !      3 CUM + CCUM is not nearly one
-     !      4 X + CX is not nearly one
-     !    -50 Answer (if any) is BELOW the LOWER search bound
-     !     50 Answer (if any) is ABOVE the UPPER search bound
-     !  - LOGICAL, INTENT(IN), OPTIONAL :: CHECK_INPUT. If PRESENT and
-     !       .TRUE. input argument values are not checked for validity.
-
-     !  NOTE: CUM and CCUM and also X and CX must add to (nearly) one.*/
-     
-     private void cdf_beta(int which,double cum[], double ccum[], double x,
-    		 double cx, double a,double b, int status[], boolean check_input) {
-    	 
-       boolean match_cum;
-       double local_cum[] = new double[1];
-       double local_ccum[] = new double[1];
-       double local_x = x;
-       double local_cx = cx;
-    /* ! .. Use Statements ..
-             USE cdf_aux_mod
-             USE zero_finder
-     ! ..
-     ! .. Scalar Arguments ..
-             REAL (dpkind) :: a, b
-             REAL (dpkind), OPTIONAL :: ccum, cum, cx, x
-             INTEGER, OPTIONAL, INTENT (OUT) :: status
-             INTEGER, INTENT (IN) :: which
-             LOGICAL, OPTIONAL, INTENT (IN) :: check_input
-     ! ..
-     ! .. Local Structures ..
-     ! .. Local Arrays
-             TYPE (zf_locals) :: local
-     ! ..
-     ! .. Local Scalars ..
-             REAL (dpkind) :: fx, local_ccum, local_cum, local_cx, local_x, &
-               try_ccum, try_cum
-             INTEGER :: zf_status
-             LOGICAL :: has_status, local_check_input, match_cum
-     ! ..
-     ! .. Intrinsic Functions ..
-             INTRINSIC PRESENT
-     ! ..
-     ! .. Local Arrays ..
-             REAL (dpkind) :: params(6)
-     ! ..
-             has_status = PRESENT(status)
-
-     ! status = 0 means no error */
-
-             if (status != null) {
-               status[0] = 0;
-             }
-
-
-             /*params(1) = local_cum
-             params(2) = local_ccum
-             params(3) = local_x
-             params(4) = local_cx
-             params(5) = a
-             params(6) = b
-
-             IF (PRESENT(check_input)) THEN
-               local_check_input = check_input
-             ELSE
-               local_check_input = .TRUE.
-             END IF
-
-     ! ++++++++++          ++++++++++          ++++++++++
-     ! Range check arguments and see that they add to one
-     ! ++++++++++          ++++++++++          ++++++++++
-
-             IF (local_check_input) THEN
-     ! Assure that x + cx nearly one
-
-               IF (which/=2) THEN
-                 IF ( .NOT. add_to_one(local_x,local_cx,the_beta%name,'x','cx' &
-                   ,4,status)) RETURN
-               END IF
-
-               CALL validate_parameters(the_beta,which,params,status)
-
-               IF (has_status) THEN
-                 IF (status/=0) THEN
-                   RETURN
-                 END IF
-               END IF
-
-             END IF
-
-     !++++++++++++++++++++++++++++++++++++++++++++++++++
-     ! Compute the Answers
-     !++++++++++++++++++++++++++++++++++++++++++++++++++
-*/
-             if (which>1) match_cum = (local_cum[0]<=0.5);
-
-             switch (which) {
-
-             case 1:
-            //  Calculate cum and ccum
-
-               local_cum_beta(local_x,local_cx,a,b,local_cum,local_ccum);
-
-               if (cum != null) cum[0] = local_cum[0];
-               if (ccum != null) ccum[0] = local_ccum[0];
-
-               return;
-
-            /* CASE (2)
-     ! Calculate x and cx
-
-               local_x = half
-               zf_status = 0
-
-               CALL cdf_set_zero_finder(the_beta,3,local)
-
-               IF (match_cum) THEN
-                 DO
-                   CALL rc_interval_zf(zf_status,local_x,fx,local)
-
-                   IF (zf_status/=1) EXIT
-
-                   local_cx = one - local_x
-
-                   CALL local_cum_beta(local_x,local_cx,a,b,try_cum,try_ccum)
-
-                   fx = try_cum - cum
-                 END DO
-
-               ELSE
-                 DO
-                   CALL rc_interval_zf(zf_status,local_cx,fx,local)
-
-                   IF (zf_status/=1) EXIT
-
-                   local_x = one - local_cx
-
-                   CALL local_cum_beta(local_x,local_cx,a,b,try_cum,try_ccum)
-
-                   fx = try_ccum - ccum
-                 END DO
-               END IF
-
-               IF (PRESENT(x)) x = local_x
-               IF (PRESENT(cx)) cx = local_cx
-
-             CASE (3)
-     ! Calculate a
-
-               a = five
-               zf_status = 0
-
-               CALL cdf_set_zero_finder(the_beta,5,local)
-
-               DO
-                 CALL rc_step_zf(zf_status,a,fx,local)
-
-                 IF (zf_status/=1) EXIT
-
-                 CALL local_cum_beta(local_x,local_cx,a,b,try_cum,try_ccum)
-
-                 IF (match_cum) THEN
-                   fx = try_cum - cum
-                 ELSE
-                   fx = try_ccum - ccum
-                 END IF
-               END DO
-
-             CASE (4)
-     ! Calculate b
-
-               b = five
-               zf_status = 0
-
-               CALL cdf_set_zero_finder(the_beta,6,local)
-
-               DO
-                 CALL rc_step_zf(zf_status,b,fx,local)
-
-                 IF (zf_status/=1) EXIT
-
-                 CALL local_cum_beta(local_x,local_cx,a,b,try_cum,try_ccum)
-
-                 IF (match_cum) THEN
-                   fx = try_cum - cum
-                 ELSE
-                   fx = try_ccum - ccum
-                 END IF
-               END DO
-
-             END SELECT
-
-             IF (has_status) THEN
-               CALL cdf_finalize_status(local,status)
-             END IF
-
-             RETURN*/
-             }
-
-     }
-     
-     private void local_cum_beta(double x,double y,double a,double b,double cum[], double ccum[]) {
-     /*----------------------------------------------------------------------
-     !          Double precision cUMulative incomplete BETa distribution
-
-     !                              Function
-
-     !     Calculates the cdf to X of the incomplete beta distribution
-     !     with parameters a and b.  This is the integral from 0 to x
-     !     of (1/B(a,b))*f(t)) where f(t) = t**(a-1) * (1-t)**(b-1)
-
-     !                              Arguments
-
-     !     X --> Upper limit of integration.
-     !     Y --> 1 - X.
-     !     A --> First parameter of the beta distribution.
-     !     B --> Second parameter of the beta distribution.
-     !     CUM <-- Cumulative incomplete beta distribution.
-     !     CCUM <-- Compliment of Cumulative incomplete beta distribution.
-
-     !                              Method
-
-     !     Cumulative distribution function  (CUM)  is calculated directly by
-     !     code associated with the following reference.
-     !     DiDinato, A. R. and Morris,  A.   H.  Algorithm 708: Significant
-     !     Digit Computation of the Incomplete  Beta  Function Ratios.  ACM
-     !     Trans. Math.  Softw. 18 (1993), 360-373.
-     !     Computation of other parameters involve a seach for a value that
-     !     produces  the desired  value  of CUM.   The search relies  on  the
-     !     monotinicity of CUM with the other parameter.
-     !----------------------------------------------------------------------
-     ! .. Use Statements ..
-             USE biomath_mathlib_mod
-     ! ..
-     ! .. Scalar Arguments ..
-             REAL (dpkind), INTENT (IN) :: a, b, x, y
-             REAL (dpkind), INTENT (OUT) :: ccum, cum
-     ! ..
-     ! .. Local Scalars ..
-             INTEGER :: ierr
-     ! */
-    	 int ierr[] = new int[1];
-             if (x<=0.0) {
-               cum[0] = 0.0;
-               ccum[0] = 1.0;
-               return;
-             }
-
-             if (y<=0.0) {
-               cum[0] = 1.0;
-               ccum[0] = 0.0;
-               return;
-             }
-
-     // Because of the bounds on a, b, x, y
-     // ierr can not be <> 0
-
-             bratio(a,b,x,y,cum,ccum,ierr);
-
-             return;
-
-     }
+	
+	 private double small;
+     private double big;
+     private double absstp;
+     private double relstp;
+     private double stpmul;
+     private double abstol;
+     private double reltol;
+     private int i99999 = 0;
+	
+	public CDFLIB() {
+		
+	}
+	
+	public void selfTest() {
+		int status[] = new int[1];
+		double f[] = new double[]{0.90,0.95,0.99};
+		double dfn[] = new double[33];
+		double dfd[] = new double[33];
+		int i, j, k;
+		for (i = 0; i < 30; i++) {
+			dfn[i] = i+1;
+			dfd[i] = i+1;
+		}
+		dfn[30] = 40;
+		dfd[30] = 40;
+		dfn[31] = 60;
+		dfd[31] = 60;
+		dfn[32] = 120;
+		dfd[32] = 120;
+		double result = 0.0;
+		double answer[][][] = new double[3][33][33];
+		answer[0][0][0] = 39.86;
+		answer[0][0][1] = 8.53;
+		answer[0][0][2] = 5.54;
+		answer[0][0][3] = 4.54;
+		answer[0][0][4] = 4.06;
+		for (i = 0; i < 1; i++) {
+			for (j = 0; j < 1; j++) {
+				for (k = 0; k < 5; k++) {
+				    
+				    Preferences.debug("f = " + f[i] + " dfn = " + dfn[j] + " dfd = " + dfd[k] +
+				    		" result = " + result + " answer = " + answer[i][j][k] + "\n", Preferences.DEBUG_ALGORITHM);
+				}
+			}
+		}
+	}
+	
+    private void cdff(int which,double p[],double q[],double f[],double dfn[],double dfd[],int status[], double bound[]) {
+	/**********************************************************************
+	C
+	C      SUBROUTINE CDFF( WHICH, P, Q, F, DFN, DFD, STATUS, BOUND )
+	C               Cumulative Distribution Function
+	C               F distribution
+	C
+	C
+	C                              Function
+	C
+	C
+	C     Calculates any one parameter of the F distribution
+	C     given values for the others.
+	C
+	C
+	C                              Arguments
+	C
+	C
+	C     WHICH --> Integer indicating which of the next four argument
+	C               values is to be calculated from the others.
+	C               Legal range: 1..4
+	C               iwhich = 1 : Calculate P and Q from F,DFN and DFD
+	C               iwhich = 2 : Calculate F from P,Q,DFN and DFD
+	C               iwhich = 3 : Calculate DFN from P,Q,F and DFD
+	C               iwhich = 4 : Calculate DFD from P,Q,F and DFN
+	C                    INTEGER WHICH
+	C
+	C       P <--> The integral from 0 to F of the f-density.
+	C              Input range: [0,1].
+	C                    DOUBLE PRECISION P
+	C
+	C       Q <--> 1-P.
+	C              Input range: (0, 1].
+	C              P + Q = 1.0.
+	C                    DOUBLE PRECISION Q
+	C
+	C       F <--> Upper limit of integration of the f-density.
+	C              Input range: [0, +infinity).
+	C              Search range: [0,1E100]
+	C                    DOUBLE PRECISION F
+	C
+	C     DFN < --> Degrees of freedom of the numerator sum of squares.
+	C               Input range: (0, +infinity).
+	C               Search range: [ 1E-100, 1E100]
+	C                    DOUBLE PRECISION DFN
+	C
+	C     DFD < --> Degrees of freedom of the denominator sum of squares.
+	C               Input range: (0, +infinity).
+	C               Search range: [ 1E-100, 1E100]
+	C                    DOUBLE PRECISION DFD
+	C
+	C     STATUS <-- 0 if calculation completed correctly
+	C               -I if input parameter number I is out of range
+	C                1 if answer appears to be lower than lowest
+	C                  search bound
+	C                2 if answer appears to be higher than greatest
+	C                  search bound
+	C                3 if P + Q .ne. 1
+	C                    INTEGER STATUS
+	C
+	C     BOUND <-- Undefined if STATUS is 0
+	C
+	C               Bound exceeded by parameter number I if STATUS
+	C               is negative.
+	C
+	C               Lower search bound if STATUS is 1.
+	C
+	C               Upper search bound if STATUS is 2.
+	C
+	C
+	C                              Method
+	C
+	C
+	C     Formula   26.6.2   of   Abramowitz   and   Stegun,  Handbook  of
+	C     Mathematical  Functions (1966) is used to reduce the computation
+	C     of the  cumulative  distribution function for the  F  variate to
+	C     that of an incomplete beta.
+	C
+	C     Computation of other parameters involve a seach for a value that
+	C     produces  the desired  value  of P.   The search relies  on  the
+	C     monotinicity of P with the other parameter.
+	C
+	C                              WARNING
+	C
+	C     The value of the  cumulative  F distribution is  not necessarily
+	C     monotone in  either degrees of freedom.  There  thus may  be two
+	C     values  that  provide a given CDF  value.   This routine assumes
+	C     monotonicity and will find an arbitrary one of the two values.
+	C
+	C**********************************************************************
+	C     .. Parameters ..
+	      DOUBLE PRECISION tol
+	      PARAMETER (tol=1.0D-8)
+	      DOUBLE PRECISION atol
+	      PARAMETER (atol=1.0D-50)
+	      DOUBLE PRECISION zero,inf
+	      PARAMETER (zero=1.0D-100,inf=1.0D100)*/
+    	final double tol = 1.0E-8;
+    	final double atol = 1.0E-50;
+    	final double zero = 1.0E-100;
+    	final double inf = 1.0E100;
+	/*     ..
+	C     .. Scalar Arguments ..
+	      DOUBLE PRECISION bound,dfd,dfn,f,p,q
+	      INTEGER status,which
+	C     ..
+	C     .. Local Scalars ..*/
+	      double ccum[] = new double[1];
+	      double cum[] = new double[1];
+	      double fx[] = new double[1];
+	      double pq;
+	      boolean qhi[] = new boolean[1];
+	      boolean qleft[]= new boolean[1];
+	      boolean qporq = false;
+	/*C     ..
+	C     .. External Functions ..
+	      DOUBLE PRECISION spmpar
+	      EXTERNAL spmpar
+	C     ..
+	C     .. External Subroutines ..
+	      EXTERNAL cumf,dinvr,dstinv
+	C     ..
+	C     .. Intrinsic Functions ..
+	      INTRINSIC abs
+	C     ..*/
+	      boolean do10 = true;
+	      boolean do20 = true;
+	      boolean do30 = true;
+	      boolean do40 = true;
+	      boolean do50 = true;
+	      boolean do70 = true;
+	      boolean do80 = true;
+	      boolean do90 = true;
+	      boolean do110 = true;
+	      boolean do130 = true;
+	      boolean do150 = true;
+	      boolean do170 = true;
+	      boolean do180 = true;
+	      boolean do190 = true;
+	      if (! ((which < 1) || (which > 4))) {
+	    	  do10 = false;
+	    	  do20 = false;
+	      }
+	      else if (! (which < 1)) {
+	    	  
+	      }
+	      else {
+	          bound[0] = 1.0;
+	          do10 = false;
+	      }
+
+	      if (do10) {
+	       bound[0] = 4.0;
+	      } // if (do10)
+	   if (do20) {
+	      status[0] = -1;
+	      return;
+	   } // if (do20)
+
+	   if (do30) {
+	      if (which == 1) {
+	    	  do40 = false;
+	    	  do50 = false;
+	      }
+	      else if(! ((p[0] < 0.0) || (p[0] > 1.0))) {
+	    	  do40 = false;
+	    	  do50 = false;
+	      }
+	      else if (! (p[0] < 0.0)) {
+	    	 
+	      }
+	      else {
+	          bound[0] = 0.0;
+	          do40 = false;
+	      }
+	   } // if (do30)
+
+	   if (do40) {
+	       bound[0] = 1.0;
+	   } // if (do40)
+	   if (do50) {
+	       status[0] = -2;
+	       return;
+	   } // if (do50)
+
+	   
+	   if (do70) {
+	      if (which == 1) {
+	    	  do80 = false;
+	    	  do90 = false;
+	      }
+	      else if (! ((q[0] <= 0.0) || (q[0] > 1.0))) {
+	    	  do80 = false;
+	    	  do90 = false;
+	      }
+	      else if (! (q[0] <= 0.0)) {
+	    	  
+	      }
+	      else {
+	          bound[0] = 0.0;
+	          do80 = false;
+	      }
+	   } // if (do70)
+
+	   if (do80) {
+	      bound[0] = 1.0;
+	   } // if (do80)
+	   if (do90) {
+	      status[0] = -3;
+	      return;
+	   } // if (do90)
+
+	  
+	  if (do110) {
+	      if (which == 2) {
+	      }
+	      else if (! (f[0] < 0.0)) {
+	    	  
+	      }
+	      else {
+	          bound[0] = 0.0;
+	          status[0] = -4;
+	          return;
+	      }
+	  } // if (do110)
+
+	 
+	  if (do130) {
+	      if (which == 3) {
+	    	  
+	      }
+	      else if (! (dfn[0] <= 0.0)) {
+	    	  
+	      }
+	      else {
+	          bound[0] = 0.0;
+	          status[0] = -5;
+	          return;
+	      }
+	  }
+
+	  if (do150) {
+	      if (which == 4) {
+	    	  
+	      }
+	      else if (! (dfd[0] <= 0.0)) {
+	    	  
+	      }
+	      else {
+	          bound[0] = 0.0;
+	          status[0] = -6;
+	          return;
+	      }
+	  } // if (do150)
+
+	
+	  if (do170) {
+	      if (which == 1) {
+	    	  do180 = false;
+	    	  do190 = false;
+	      }
+	      else {
+	          pq = p[0] + q[0];
+	          if (! (Math.abs(((pq)-0.5)-0.5) >
+	          (3.0*spmpar(1)))) {
+	        	  do180 = false;
+	        	  do190 = false;
+	          }
+	          else if (! (pq < 0.0)) {
+	        	  
+	          }
+	          else {
+	              bound[0] = 0.0;
+	              do180 = false;
+	          }
+	      }
+	  } // if (do170)
+
+	  if (do180) {
+	      bound[0] = 1.0;
+	  } // if (do180
+	  if (do190) {
+	      status[0] = 3;
+	      return;
+	  } // if (do190)
+
+	      if (! (which == 1)) qporq = p[0] <= q[0];
+	      if (which == 1) {
+	          cumf(f[0],dfn[0],dfd[0],p,q);
+	          status[0] = 0;
+	      }
+	      else if (which == 2) {
+	          f[0] = 5.0;
+	          dstinv(0.0,inf,0.5,0.5,5.0,atol,tol);
+	          status[0] = 0;
+	          dinvr(status,f,fx,qleft,qhi);
+	          while (true) {
+	              if (! (status[0] == 1)) break;
+	              cumf(f[0],dfn[0],dfd[0],cum,ccum);
+	              if (qporq) {
+	                  fx[0] = cum[0] - p[0];
+	              }
+	              else {
+	                  fx[0] = ccum[0] - q[0];
+	              }
+	              dinvr(status,f,fx,qleft,qhi);
+	          } // while (true)
+
+	          if (status[0] == -1) {
+		          if (qleft[0]) {
+		              status[0] = 1;
+		              bound[0] = 0.0;
+		          }
+		          else {
+		              status[0] = 2;
+		              bound[0] = inf;
+		          }
+	          } // if (status[0] == -1)
+	      } // else if (which == 2)
+
+	      /*ELSE IF ((3).EQ. (which)) THEN
+	          dfn = 5.0D0
+	          CALL dstinv(zero,inf,0.5D0,0.5D0,5.0D0,atol,tol)
+	          status = 0
+	          CALL dinvr(status,dfn,fx,qleft,qhi)
+	  290     IF (.NOT. (status.EQ.1)) GO TO 320
+	          CALL cumf(f,dfn,dfd,cum,ccum)
+	          IF (.NOT. (qporq)) GO TO 300
+	          fx = cum - p
+	          GO TO 310
+
+	  300     fx = ccum - q
+	  310     CALL dinvr(status,dfn,fx,qleft,qhi)
+	          GO TO 290
+
+	  320     IF (.NOT. (status.EQ.-1)) GO TO 350
+	          IF (.NOT. (qleft)) GO TO 330
+	          status = 1
+	          bound = zero
+	          GO TO 340
+
+	  330     status = 2
+	          bound = inf
+	  340     CONTINUE
+	  350     CONTINUE
+
+	      ELSE IF ((4).EQ. (which)) THEN
+	          dfd = 5.0D0
+	          CALL dstinv(zero,inf,0.5D0,0.5D0,5.0D0,atol,tol)
+	          status = 0
+	          CALL dinvr(status,dfd,fx,qleft,qhi)
+	  360     IF (.NOT. (status.EQ.1)) GO TO 390
+	          CALL cumf(f,dfn,dfd,cum,ccum)
+	          IF (.NOT. (qporq)) GO TO 370
+	          fx = cum - p
+	          GO TO 380
+
+	  370     fx = ccum - q
+	  380     CALL dinvr(status,dfd,fx,qleft,qhi)
+	          GO TO 360
+
+	  390     IF (.NOT. (status.EQ.-1)) GO TO 420
+	          IF (.NOT. (qleft)) GO TO 400
+	          status = 1
+	          bound = zero
+	          GO TO 410
+
+	  400     status = 2
+	          bound = inf
+	  410     CONTINUE
+	  420 END IF
+
+	      RETURN*/
+
+    }
+    
+    private void dstinv(double zsmall,double zbig,double zabsst,double zrelst,
+    		double zstpmu,double zabsto,double zrelto) {
+    /**********************************************************************
+    C
+    C      SUBROUTINE DSTINV( SMALL, BIG, ABSSTP, RELSTP, STPMUL,
+    C     +                   ABSTOL, RELTOL )
+    C      Double Precision - SeT INverse finder - Reverse Communication
+    C
+    C
+    C                              Function
+    C
+    C
+    C     Concise Description - Given a monotone function F finds X
+    C     such that F(X) = Y.  Uses Reverse communication -- see invr.
+    C     This routine sets quantities needed by INVR.
+    C
+    C          More Precise Description of INVR -
+    C
+    C     F must be a monotone function, the results of QMFINV are
+    C     otherwise undefined.  QINCR must be .TRUE. if F is non-
+    C     decreasing and .FALSE. if F is non-increasing.
+    C
+    C     QMFINV will return .TRUE. if and only if F(SMALL) and
+    C     F(BIG) bracket Y, i. e.,
+    C          QINCR is .TRUE. and F(SMALL).LE.Y.LE.F(BIG) or
+    C          QINCR is .FALSE. and F(BIG).LE.Y.LE.F(SMALL)
+    C
+    C     if QMFINV returns .TRUE., then the X returned satisfies
+    C     the following condition.  let
+    C               TOL(X) = MAX(ABSTOL,RELTOL*ABS(X))
+    C     then if QINCR is .TRUE.,
+    C          F(X-TOL(X)) .LE. Y .LE. F(X+TOL(X))
+    C     and if QINCR is .FALSE.
+    C          F(X-TOL(X)) .GE. Y .GE. F(X+TOL(X))
+    C
+    C
+    C                              Arguments
+    C
+    C
+    C     SMALL --> The left endpoint of the interval to be
+    C          searched for a solution.
+    C                    SMALL is DOUBLE PRECISION
+    C
+    C     BIG --> The right endpoint of the interval to be
+    C          searched for a solution.
+    C                    BIG is DOUBLE PRECISION
+    C
+    C     ABSSTP, RELSTP --> The initial step size in the search
+    C          is MAX(ABSSTP,RELSTP*ABS(X)). See algorithm.
+    C                    ABSSTP is DOUBLE PRECISION
+    C                    RELSTP is DOUBLE PRECISION
+    C
+    C     STPMUL --> When a step doesn't bound the zero, the step
+    C                size is multiplied by STPMUL and another step
+    C                taken.  A popular value is 2.0
+    C                    DOUBLE PRECISION STPMUL
+    C
+    C     ABSTOL, RELTOL --> Two numbers that determine the accuracy
+    C          of the solution.  See function for a precise definition.
+    C                    ABSTOL is DOUBLE PRECISION
+    C                    RELTOL is DOUBLE PRECISION
+    C
+    C
+    C                              Method
+    C
+    C
+    C     Compares F(X) with Y for the input value of X then uses QINCR
+    C     to determine whether to step left or right to bound the
+    C     desired x.  the initial step size is
+    C          MAX(ABSSTP,RELSTP*ABS(S)) for the input value of X.
+    C     Iteratively steps right or left until it bounds X.
+    C     At each step which doesn't bound X, the step size is doubled.
+    C     The routine is careful never to step beyond SMALL or BIG.  If
+    C     it hasn't bounded X at SMALL or BIG, QMFINV returns .FALSE.
+    C     after setting QLEFT and QHI.
+    C
+    C     If X is successfully bounded then Algorithm R of the paper
+    C     'Two Efficient Algorithms with Guaranteed Convergence for
+    C     Finding a Zero of a Function' by J. C. P. Bus and
+    C     T. J. Dekker in ACM Transactions on Mathematical
+    C     Software, Volume 1, No. 4 page 330 (DEC. '75) is employed
+    C     to find the zero of the function F(X)-Y. This is routine
+    C     QRZERO.
+    C
+    C***********************************************************************/
+          small = zsmall;
+          big = zbig;
+          absstp = zabsst;
+          relstp = zrelst;
+          stpmul = zstpmu;
+          abstol = zabsto;
+          reltol = zrelto;
+          return;
+    }
+
+    private void dinvr(int status[],double x[],double fx[], boolean qleft[], boolean qhi[]) {
+    /**********************************************************************
+    C
+    C     SUBROUTINE DINVR(STATUS, X, FX, QLEFT, QHI)
+    C          Double precision
+    C          bounds the zero of the function and invokes zror
+    C                    Reverse Communication
+    C
+    C
+    C                              Function
+    C
+    C
+    C     Bounds the    function  and  invokes  ZROR   to perform the   zero
+    C     finding.  STINVR  must  have   been  called  before this   routine
+    C     in order to set its parameters.
+    C
+    C
+    C                              Arguments
+    C
+    C
+    C     STATUS <--> At the beginning of a zero finding problem, STATUS
+    C                 should be set to 0 and INVR invoked.  (The value
+    C                 of parameters other than X will be ignored on this cal
+    C
+    C                 When INVR needs the function evaluated, it will set
+    C                 STATUS to 1 and return.  The value of the function
+    C                 should be set in FX and INVR again called without
+    C                 changing any of its other parameters.
+    C
+    C                 When INVR has finished without error, it will return
+    C                 with STATUS 0.  In that case X is approximately a root
+    C                 of F(X).
+    C
+    C                 If INVR cannot bound the function, it returns status
+    C                 -1 and sets QLEFT and QHI.
+    C                         INTEGER STATUS
+    C
+    C     X <-- The value of X at which F(X) is to be evaluated.
+    C                         DOUBLE PRECISION X
+    C
+    C     FX --> The value of F(X) calculated when INVR returns with
+    C            STATUS = 1.
+    C                         DOUBLE PRECISION FX
+    C
+    C     QLEFT <-- Defined only if QMFINV returns .FALSE.  In that
+    C          case it is .TRUE. If the stepping search terminated
+    C          unsucessfully at SMALL.  If it is .FALSE. the search
+    C          terminated unsucessfully at BIG.
+    C                    QLEFT is LOGICAL
+    C
+    C     QHI <-- Defined only if QMFINV returns .FALSE.  In that
+    C          case it is .TRUE. if F(X) .GT. Y at the termination
+    C          of the search and .FALSE. if F(X) .LT. Y at the
+    C          termination of the search.
+    C                    QHI is LOGICAL
+
+    C
+    C**********************************************************************
+    C     .. Scalar Arguments ..
+          DOUBLE PRECISION fx,x,zabsst,zabsto,zbig,zrelst,zrelto,zsmall,
+         +                 zstpmu
+          INTEGER status
+          LOGICAL qhi,qleft
+    C     ..
+    C     .. Local Scalars ..*/
+         double xhi,zx,zy,zz;
+         double fbig = 0.0;
+         double fsmall = 0.0;
+         double xsave = 0.0;
+         double yy = 0.0;
+         double step = 0.0;
+         double xub = 0.0;
+         double xlb = 0.0;
+         double xlo = 0.0;
+         //int i99999;
+         boolean qdum1,qdum2,qok,qup;
+         boolean qincr = false;
+         boolean qcond = false;
+         boolean qlim = false;
+         boolean qbdd = false;
+    /*     ..
+    C     .. External Subroutines ..
+          EXTERNAL dstzr,dzror
+    C     ..
+    C     .. Intrinsic Functions ..
+          INTRINSIC abs,max,min
+    C     ..
+    C     .. Statement Functions ..
+          LOGICAL qxmon
+    C     ..
+    C     .. Save statement ..
+          SAVE
+    C     ..
+    C     .. Statement Function definitions ..
+          qxmon(zx,zy,zz) = zx .LE. zy .AND. zy .LE. zz
+    C     ..
+    C     .. Executable Statements ..*/
+         boolean do5 = true;
+         boolean do10 = true;
+         boolean do20 = true;
+         boolean do30 = true;
+         boolean do50 = true;
+         boolean do60 = true;
+         boolean do80 = true;
+         boolean do90 = true;
+         boolean do100 = true;
+         boolean do110 = true;
+         boolean do120 = true;
+         boolean do130 = true;
+         boolean do140 = true;
+         boolean do150 = true;
+         boolean do170 = true;
+         boolean do180 = true;
+         boolean do190 = true;
+         boolean do200 = true;
+         boolean do210 = true;
+         boolean do220 = true;
+         boolean do240 = true;
+         boolean do250 = true;
+         
+
+          if (status[0] > 0) {
+              if (i99999 >= 10) {
+            	  do5 = false;
+              }
+              if (i99999 >= 20) {
+            	  do10 = false;
+              }
+              if (i99999 >= 30) {
+            	  do20 = false;
+              }
+              if (i99999 >= 40) {
+            	  do30 = false;
+              }
+              if (i99999 >= 60) {
+            	  do50 = false;
+              }
+              if (i99999 >= 80) {
+            	  do60 = false;
+              }
+              if (i99999 >= 90) {
+            	  do80 = false;
+              }
+              if (i99999 >= 100) {
+            	  do90 = false;
+              }
+              if (i99999 >= 110) {
+            	  do100 = false;
+              }
+              if (i99999 >= 120) {
+            	  do110 = false;
+              }
+              if (i99999 >= 130) {
+            	  do120 = false;
+              }
+              if (i99999 >= 140) {
+            	  do130 = false;
+              }
+              if (i99999 >= 150) {
+            	  do140 = false;
+              }
+              if (i99999 >= 170) {
+            	  do150 = false;
+              }
+              if (i99999 >= 180) {
+            	  do170 = false;
+              }
+              if (i99999 >= 190) {
+            	  do180 = false;
+              }
+              if (i99999 >= 200) {
+            	  do190 = false;
+              }
+              if (i99999 >= 210) {
+            	  do200 = false;
+              }
+              if (i99999 >= 220) {
+            	  do210 = false;
+              }
+              if (i99999 >= 240) {
+            	  do220 = false;
+              }
+              if (i99999 >= 250) {
+            	  do240 = false;
+              }
+          } // if (status[0] > 0)
+
+          if (do5) {
+	          qcond = !qxmon(small,x[0],big);
+	          if (qcond) {
+	        	  MipavUtil.displayError("SMALL, X[0], BIG not monotone in INVR");
+	        	  return;
+	          }
+	          xsave = x[0];
+	    
+	    //    See that SMALL and BIG bound the zero and set QINCR
+	    
+	          x[0] = small;
+	    //     GET-FUNCTION-VALUE
+	          i99999 = 10;
+	          status[0] = 1;
+	          return;
+          } // if (do5)
+
+       if (do10) {
+          fsmall = fx[0];
+          x[0] = big;
+    //     GET-FUNCTION-VALUE
+          i99999 = 20;
+          status[0] = 1;
+          return;
+       } // if (do10)
+
+       if (do20) {
+          fbig = fx[0];
+          qincr = fbig > fsmall;
+          if (! (qincr)) {
+        	  do30 = false;
+          }
+          else if (fsmall <= 0.0) {
+        	  
+          }
+          else {
+              status[0] = -1;
+              qleft[0] = true;
+              qhi[0] = true;
+              return;
+          }
+       }
+
+       if (do30) {
+          if (fbig >= 0.0) {
+        	  do50 = false;
+        	  do60 = false;
+          }
+          else {
+	          status[0] = -1;
+	          qleft[0] = false;
+	          qhi[0] = false;
+	          return;
+          }
+       } // if (do30)
+
+       if (do50) {
+          if (fsmall >= 0.0) {
+        	  
+          }
+          else {
+	          status[0] = -1;
+	          qleft[0] = true;
+	          qhi[0] = false;
+	          return;
+          }
+       } // if (do50)
+
+       if (do60) {
+          if (fbig <= 0.0) {
+        	  
+          }
+          else {
+	          status[0] = -1;
+	          qleft[0] = false;
+	          qhi[0] = true;
+	          return;
+	          
+          }
+       } // if (do60)
+
+       if (do80) {
+          x[0] = xsave;
+          step = Math.max(absstp,relstp*Math.abs(x[0]));
+    //      YY = F(X) - Y
+    //     GET-FUNCTION-VALUE
+          i99999 = 90;
+          status[0] = 1;
+          return;
+       } // if (do80)
+
+       if (do90) {
+          yy = fx[0];
+          if (! (yy == 0.0)) {
+        	
+          }
+          else {
+	          status[0] = 0;
+	          qok = true;
+	          return;
+          }
+       }
+
+      if (do100) {
+           qup = (qincr && (yy < 0.0)) ||
+               (!qincr && (yy > 0.0));
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    //     HANDLE CASE IN WHICH WE MUST STEP HIGHER
+    
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          if (! (qup)) {
+        	  do110 = false;
+        	  do120 = false;
+        	  do130 = false;
+        	  do140 = false;
+        	  do150 = false;
+          }
+          else {
+              xlb = xsave;
+              xub = Math.min(xlb+step,big);
+              do110 = false;
+          }
+      } // if (do100)
+
+      if (do110) {
+          if (qcond) {
+        	  do120 = false;
+        	  do130 = false;
+        	  do140 = false;
+          }
+    //      YY = F(XUB) - Y
+      } // if (do110)
+      if (do120) {
+          x[0] = xub;
+    //    GET-FUNCTION-VALUE
+          i99999 = 130;
+          status[0] = 1;
+          return;
+      } // if (do120)
+
+      if (do130) {
+          yy = fx[0];
+          qbdd = (qincr && (yy >= 0.0)) ||
+               (!qincr && (yy <= 0.0));
+          qlim = xub >= big;
+          qcond = qbdd || qlim;
+          if (qcond) {
+        	  
+          }
+          else {
+	          step = stpmul*step;
+	          xlb = xub;
+	          xub = Math.min(xlb+step,big);
+          }
+      } // if (do130)
+      if (do140) {
+       if (qcond) {
+    	   
+       }
+       else {
+    	   x[0] = xub;
+    	    //    GET-FUNCTION-VALUE
+          i99999 = 130;
+          status[0] = 1;
+          return;   
+       }
+      } // if (do140)
+
+      if (do150) {
+          if (! (qlim && !qbdd)) {
+        	  do170 = false;
+        	  do180 = false;
+        	  do190 = false;
+        	  do200 = false;
+        	  do210 = false;
+        	  do220 = false;
+          }
+          else {
+	          status[0] = -1;
+	          qleft[0] = false;
+	          qhi[0] =  !qincr;
+	          x[0] = big;
+	          return;
+          }
+      }
+
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    //     HANDLE CASE IN WHICH WE MUST STEP LOWER
+    
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      if (do170) {
+          xub = xsave;
+          xlb = Math.max(xub-step,small);
+          do180 = false;
+      } // if (do170)
+
+      if (do180) {
+          if (qcond) {
+        	  do190 = false;
+        	  do200 = false;
+        	  do210 = false;
+          }
+    //      YY = F(XLB) - Y
+      } // if (do180)
+      if (do190) {
+          x[0] = xlb;
+    //     GET-FUNCTION-VALUE
+          i99999 = 200;
+          status[0] = 1;
+          return;
+      } // if (do190)
+
+      if (do200) {
+          yy = fx[0];
+          qbdd = (qincr && (yy <= 0.0)) ||
+                (!qincr && (yy >= 0.0));
+          qlim = xlb <= small;
+          qcond = qbdd || qlim;
+          if (qcond) {
+        	  do210 = false;
+          }
+          else {
+	          step = stpmul*step;
+	          xub = xlb;
+	          xlb = Math.max(xub-step,small);
+          }
+      } // if (do200)
+      if (do210) {
+    	  x[0] = xlb;
+    	    //     GET-FUNCTION-VALUE
+          i99999 = 200;
+          status[0] = 1;
+          return;
+      } // if (do210)
+
+      if (do220) {
+          if (! (qlim && !qbdd)) {
+        	  
+          }
+          else {
+	          status[0] = -1;
+	          qleft[0] = true;
+	          qhi[0] = qincr;
+	          x[0] = small;
+	          return;
+          }
+      } // if (do220)
+
+      if (do240) {
+          //dstzr(xlb,xub,abstol,reltol);
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    //     IF WE REACH HERE, XLB AND XUB BOUND THE ZERO OF F.
+    
+   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          status[0] = 0;
+          do250 = false;
+      } // if (do240)
+
+      if (do250) {
+          if (! (status[0] == 1)) {
+        	  x[0] = xlo;
+        	  status[0] = 0;
+        	  return;
+          }
+      }
+      //dzror(status,x,fx,xlo,xhi,qdum1,qdum2);
+      if (! (status[0] == 1)) {
+    	  x[0] = xlo;
+    	  status[0] = 0;
+    	  return;
+      }
+      // GET-FUNCTION-VALUE
+      i99999 = 250;
+      status[0] = 1;
+      return;
+
+    }
+    
+    private boolean qxmon(double zx,double zy,double zz) {
+    	boolean result;
+    	result = (zx <= zy) && (zy <= zz);
+    	return result;
+    }
+
+
+
+    
+    private void cumf(double f,double dfn,double dfd,double cum[], double ccum[]) {
+    /**********************************************************************
+    C
+    C     SUBROUTINE CUMF(F,DFN,DFD,CUM,CCUM)
+    C                    CUMulative F distribution
+    C
+    C
+    C                              Function
+    C
+    C
+    C     Computes  the  integral from  0  to  F of  the f-density  with DFN
+    C     and DFD degrees of freedom.
+    C
+    C
+    C                              Arguments
+    C
+    C
+    C     F --> Upper limit of integration of the f-density.
+    C                                                  F is DOUBLE PRECISION
+    C
+    C     DFN --> Degrees of freedom of the numerator sum of squares.
+    C                                                  DFN is DOUBLE PRECISI
+    C
+    C     DFD --> Degrees of freedom of the denominator sum of squares.
+    C                                                  DFD is DOUBLE PRECISI
+    C
+    C     CUM <-- Cumulative f distribution.
+    C                                                  CUM is DOUBLE PRECISI
+    C
+    C     CCUM <-- Compliment of Cumulative f distribution.
+    C                                                  CCUM is DOUBLE PRECIS
+    C
+    C
+    C                              Method
+    C
+    C
+    C     Formula  26.5.28 of  Abramowitz and   Stegun   is  used to  reduce
+    C     the cumulative F to a cumulative beta distribution.
+    C
+    C
+    C                              Note
+    C
+    C
+    C     If F is less than or equal to 0, 0 is returned.
+    C
+    C**********************************************************************
+    C     .. Scalar Arguments ..
+          DOUBLE PRECISION dfd,dfn,f,cum,ccum
+    C     ..
+    C     .. Local Scalars ..*/
+
+          double dsum,prod,xx,yy;
+          int ierr[] = new int[1];
+    //     ..
+    //     .. Parameters ..
+    //      DOUBLE PRECISION half
+          final double half = 0.5;
+    //      DOUBLE PRECISION done
+          final double done = 1.0;
+    /*     ..
+    C     .. External Subroutines ..
+          EXTERNAL bratio
+    C     ..
+    C     .. Executable Statements ..*/
+
+          if (f <= 0.0) {
+              cum[0] = 0.0;
+              ccum[0] = 1.0;
+              return;
+          }
+
+          prod = dfn*f;
+    /*
+    C     XX is such that the incomplete beta with parameters
+    C     DFD/2 and DFN/2 evaluated at XX is 1 - CUM or CCUM
+    C
+    C     YY is 1 - XX
+    C
+    C     Calculate the smaller of XX and YY accurately
+    C*/
+          dsum = dfd + prod;
+          xx = dfd/dsum;
+          if (xx > half) {
+              yy = prod/dsum;
+              xx = done - yy;
+          }
+          else {
+              yy = done - xx;
+          }
+
+          bratio(dfd*half,dfn*half,xx,yy,ccum,cum,ierr);
+          return;
+
+    }
+
+    
+    private double spmpar(int i) {
+    /*-----------------------------------------------------------------------
+    C
+    C     SPMPAR PROVIDES THE SINGLE PRECISION MACHINE CONSTANTS FOR
+    C     THE COMPUTER BEING USED. IT IS ASSUMED THAT THE ARGUMENT
+    C     I IS AN INTEGER HAVING ONE OF THE VALUES 1, 2, OR 3. IF THE
+    C     SINGLE PRECISION ARITHMETIC BEING USED HAS M BASE B DIGITS AND
+    C     ITS SMALLEST AND LARGEST EXPONENTS ARE EMIN AND EMAX, THEN
+    C
+    C        SPMPAR(1) = B**(1 - M), THE MACHINE PRECISION,
+    C
+    C        SPMPAR(2) = B**(EMIN - 1), THE SMALLEST MAGNITUDE,
+    C
+    C        SPMPAR(3) = B**EMAX*(1 - B**(-M)), THE LARGEST MAGNITUDE.
+    C
+    C-----------------------------------------------------------------------
+    C     WRITTEN BY
+    C        ALFRED H. MORRIS, JR.
+    C        NAVAL SURFACE WARFARE CENTER
+    C        DAHLGREN VIRGINIA
+    C-----------------------------------------------------------------------
+    C-----------------------------------------------------------------------
+    C     MODIFIED BY BARRY W. BROWN TO RETURN DOUBLE PRECISION MACHINE
+    C     CONSTANTS FOR THE COMPUTER BEING USED.  THIS MODIFICATION WAS
+    C     MADE AS PART OF CONVERTING BRATIO TO DOUBLE PRECISION
+    C-----------------------------------------------------------------------
+    C     .. Scalar Arguments ..
+          INTEGER i
+    C     ..
+    C     .. Local Scalars ..*/
+          double b,binv,bm1,one,w,z, result;
+          int emax,emin,ibeta,m;
+    /*     ..
+    C     .. External Functions ..
+          INTEGER ipmpar
+          EXTERNAL ipmpar
+    C     ..
+    C     .. Intrinsic Functions ..
+          INTRINSIC dble
+    C     ..
+    C     .. Executable Statements ..
+    */
+          if (i == 1) {
+	          b = ipmpar(4);
+	          m = ipmpar(8);
+	          result = Math.pow(b,(1-m));
+	          return result;
+          }
+          else if (i == 2) {
+	          b = ipmpar(4);
+	          emin = ipmpar(9);
+	          one = 1.0;
+	          binv = one/b;
+	          w = Math.pow(b,(emin+2));
+	          result = ((w*binv)*binv)*binv;
+	          return result;
+          } // else if (i == 2)
+          else {
+	          ibeta = ipmpar(4);
+	          m = ipmpar(8);
+	          emax = ipmpar(10);
+	    
+	          b = ibeta;
+	          bm1 = ibeta - 1;
+	          one = 1.0;
+	          z = Math.pow(b, (m-1));
+	          w = ((z-one)*b+bm1)/ (b*z);
+	    
+	          z = Math.pow(b,(emax-2));
+	          result = ((w*z)*b)*b;
+	          return result;
+          }
+
+    }
+    
+    private int ipmpar(int i) {
+    /*-----------------------------------------------------------------------
+    C
+    C     IPMPAR PROVIDES THE INTEGER MACHINE CONSTANTS FOR THE COMPUTER
+    C     THAT IS USED. IT IS ASSUMED THAT THE ARGUMENT I IS AN INTEGER
+    C     HAVING ONE OF THE VALUES 1-10. IPMPAR(I) HAS THE VALUE ...
+    C
+    C  INTEGERS.
+    C
+    C     ASSUME INTEGERS ARE REPRESENTED IN THE N-DIGIT, BASE-A FORM
+    C
+    C               SIGN ( X(N-1)*A**(N-1) + ... + X(1)*A + X(0) )
+    C
+    C               WHERE 0 .LE. X(I) .LT. A FOR I=0,...,N-1.
+    C
+    C     IPMPAR(1) = A, THE BASE.
+    C
+    C     IPMPAR(2) = N, THE NUMBER OF BASE-A DIGITS.
+    C
+    C     IPMPAR(3) = A**N - 1, THE LARGEST MAGNITUDE.
+    C
+    C  FLOATING-POINT NUMBERS.
+    C
+    C     IT IS ASSUMED THAT THE SINGLE AND DOUBLE PRECISION FLOATING
+    C     POINT ARITHMETICS HAVE THE SAME BASE, SAY B, AND THAT THE
+    C     NONZERO NUMBERS ARE REPRESENTED IN THE FORM
+    C
+    C               SIGN (B**E) * (X(1)/B + ... + X(M)/B**M)
+    C
+    C               WHERE X(I) = 0,1,...,B-1 FOR I=1,...,M,
+    C               X(1) .GE. 1, AND EMIN .LE. E .LE. EMAX.
+    C
+    C     IPMPAR(4) = B, THE BASE.
+    C
+    C  SINGLE-PRECISION
+    C
+    C     IPMPAR(5) = M, THE NUMBER OF BASE-B DIGITS.
+    C
+    C     IPMPAR(6) = EMIN, THE SMALLEST EXPONENT E.
+    C
+    C     IPMPAR(7) = EMAX, THE LARGEST EXPONENT E.
+    C
+    C  DOUBLE-PRECISION
+    C
+    C     IPMPAR(8) = M, THE NUMBER OF BASE-B DIGITS.
+    C
+    C     IPMPAR(9) = EMIN, THE SMALLEST EXPONENT E.
+    C
+    C     IPMPAR(10) = EMAX, THE LARGEST EXPONENT E.
+    C
+    C-----------------------------------------------------------------------
+    C
+    C     TO DEFINE THIS FUNCTION FOR THE COMPUTER BEING USED, ACTIVATE
+    C     THE DATA STATMENTS FOR THE COMPUTER BY REMOVING THE C FROM
+    C     COLUMN 1. (ALL THE OTHER DATA STATEMENTS SHOULD HAVE C IN
+    C     COLUMN 1.)
+    C
+    C-----------------------------------------------------------------------
+    C
+    C     IPMPAR IS AN ADAPTATION OF THE FUNCTION I1MACH, WRITTEN BY
+    C     P.A. FOX, A.D. HALL, AND N.L. SCHRYER (BELL LABORATORIES).
+    C     IPMPAR WAS FORMED BY A.H. MORRIS (NSWC). THE CONSTANTS ARE
+    C     FROM BELL LABORATORIES, NSWC, AND OTHER SOURCES.
+    C
+    C-----------------------------------------------------------------------
+    C     .. Scalar Arguments ..
+          INTEGER i
+    C     ..
+    C     .. Local Arrays ..
+          INTEGER imach(10)
+    C     ..
+    C     .. Data statements ..*/
+    	int IMACH[] = new int[11];
+    	int result;
+    
+    //     MACHINE CONSTANTS FOR IEEE ARITHMETIC MACHINES, SUCH AS THE AT&T
+    //     3B SERIES, MOTOROLA 68000 BASED MACHINES (E.G. SUN 3 AND AT&T
+    //     PC 7300), AND 8087 BASED MICROS (E.G. IBM PC AND AT&T 6300).
+    
+          IMACH[ 1] =    2;
+          IMACH[ 2] =    31;
+          IMACH[ 3] = 2147483647;
+          IMACH[ 4] =    2;
+          IMACH[ 5] =    24;
+          IMACH[ 6] =  -125;
+          IMACH[ 7] =   128;
+          IMACH[ 8] =    53;
+          IMACH[ 9] = -1021;
+          IMACH[10] =  1024;
+    
+          result = IMACH[i];
+          return result;
+
+    }
+
+
+
      
      private double EPSILON() {
 	     double epsilon = 1.0;
