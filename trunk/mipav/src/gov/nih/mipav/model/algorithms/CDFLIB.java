@@ -171,6 +171,8 @@ public class CDFLIB {
      private double abstol;
      private double reltol;
      private int i99999 = 0;
+     private double xxlo;
+     private double xxhi;
 	
 	public CDFLIB() {
 		
@@ -178,7 +180,14 @@ public class CDFLIB {
 	
 	public void selfTest() {
 		int status[] = new int[1];
-		double f[] = new double[]{0.90,0.95,0.99};
+		double bound[] = new double[1];
+		double f[] = new double[1];
+		double pi[] = new double[1];
+		double qi[] = new double[1];
+		double dfni[] = new double[1];
+		double dfdi[] = new double[1];
+		double p[] = new double[]{0.90,0.95,0.99};
+		double q[] = new double[]{0.10,0.05,0.01};
 		double dfn[] = new double[33];
 		double dfd[] = new double[33];
 		int i, j, k;
@@ -192,7 +201,6 @@ public class CDFLIB {
 		dfd[31] = 60;
 		dfn[32] = 120;
 		dfd[32] = 120;
-		double result = 0.0;
 		double answer[][][] = new double[3][33][33];
 		answer[0][0][0] = 39.86;
 		answer[0][0][1] = 8.53;
@@ -200,11 +208,15 @@ public class CDFLIB {
 		answer[0][0][3] = 4.54;
 		answer[0][0][4] = 4.06;
 		for (i = 0; i < 1; i++) {
+			pi[0] = p[i];
+			qi[0] = q[i];		
 			for (j = 0; j < 1; j++) {
+				dfni[0] = dfn[j];
 				for (k = 0; k < 5; k++) {
-				    
-				    Preferences.debug("f = " + f[i] + " dfn = " + dfn[j] + " dfd = " + dfd[k] +
-				    		" result = " + result + " answer = " + answer[i][j][k] + "\n", Preferences.DEBUG_ALGORITHM);
+				    dfdi[0] = dfd[k];
+				    cdff(2,pi,qi,f,dfni,dfdi,status,bound);
+				    Preferences.debug("p = " + p[i] + " dfn = " + dfn[j] + " dfd = " + dfd[k] +
+				    		" result = " + f[0] + " answer = " + answer[i][j][k] + "\n", Preferences.DEBUG_ALGORITHM);
 				}
 			}
 		}
@@ -529,60 +541,65 @@ public class CDFLIB {
 		          }
 	          } // if (status[0] == -1)
 	      } // else if (which == 2)
+	      else if (which == 3) {
+	          dfn[0] = 5.0;
+	          dstinv(zero,inf,0.5,0.5,5.0,atol,tol);
+	          status[0] = 0;
+	          dinvr(status,dfn,fx,qleft,qhi);
+	          while (true) {
+		          if (! (status[0] == 1)) break;
+		          cumf(f[0],dfn[0],dfd[0],cum,ccum);
+		          if (qporq) {
+		              fx[0] = cum[0] - p[0];
+		          }
+		          else {
+		              fx[0] = ccum[0] - q[0];
+		          }
+		          dinvr(status,dfn,fx,qleft,qhi);
+	          } // while (true)
 
-	      /*ELSE IF ((3).EQ. (which)) THEN
-	          dfn = 5.0D0
-	          CALL dstinv(zero,inf,0.5D0,0.5D0,5.0D0,atol,tol)
-	          status = 0
-	          CALL dinvr(status,dfn,fx,qleft,qhi)
-	  290     IF (.NOT. (status.EQ.1)) GO TO 320
-	          CALL cumf(f,dfn,dfd,cum,ccum)
-	          IF (.NOT. (qporq)) GO TO 300
-	          fx = cum - p
-	          GO TO 310
+	          if (status[0]== -1) {
+		          if (qleft[0]) {
+		              status[0] = 1;
+		              bound[0] = zero;
+		          }
+		          else {
+		              status[0] = 2;
+		              bound[0] = inf;
+		          }
+	          } // if (status[0] == -1)
+	      } // else if (which == 3)
 
-	  300     fx = ccum - q
-	  310     CALL dinvr(status,dfn,fx,qleft,qhi)
-	          GO TO 290
+	      else if (which == 4) {
+	          dfd[0] = 5.0;
+	          dstinv(zero,inf,0.5,0.5,5.0,atol,tol);
+	          status[0] = 0;
+	          dinvr(status,dfd,fx,qleft,qhi);
+	          while (true) {
+		          if (! (status[0] == 1)) break;
+		          cumf(f[0],dfn[0],dfd[0],cum,ccum);
+		          if (qporq) {
+		              fx[0] = cum[0] - p[0];
+		          }
+		          else {
+		              fx[0] = ccum[0] - q[0];
+		          }
+		          dinvr(status,dfd,fx,qleft,qhi);
+	          } // while (true)
 
-	  320     IF (.NOT. (status.EQ.-1)) GO TO 350
-	          IF (.NOT. (qleft)) GO TO 330
-	          status = 1
-	          bound = zero
-	          GO TO 340
+	          if (status[0] == -1) {
+		          if (qleft[0]) {
+		              status[0] = 1;
+		              bound[0] = zero;
+		          }
+		          else {
+		              status[0] = 2;
+		              bound[0] = inf;
+		          }
+	          } // if (status[0] == -1)
+	      } // else if (which == 4)
 
-	  330     status = 2
-	          bound = inf
-	  340     CONTINUE
-	  350     CONTINUE
-
-	      ELSE IF ((4).EQ. (which)) THEN
-	          dfd = 5.0D0
-	          CALL dstinv(zero,inf,0.5D0,0.5D0,5.0D0,atol,tol)
-	          status = 0
-	          CALL dinvr(status,dfd,fx,qleft,qhi)
-	  360     IF (.NOT. (status.EQ.1)) GO TO 390
-	          CALL cumf(f,dfn,dfd,cum,ccum)
-	          IF (.NOT. (qporq)) GO TO 370
-	          fx = cum - p
-	          GO TO 380
-
-	  370     fx = ccum - q
-	  380     CALL dinvr(status,dfd,fx,qleft,qhi)
-	          GO TO 360
-
-	  390     IF (.NOT. (status.EQ.-1)) GO TO 420
-	          IF (.NOT. (qleft)) GO TO 400
-	          status = 1
-	          bound = zero
-	          GO TO 410
-
-	  400     status = 2
-	          bound = inf
-	  410     CONTINUE
-	  420 END IF
-
-	      RETURN*/
+	      return;
 
     }
     
@@ -746,7 +763,6 @@ public class CDFLIB {
           LOGICAL qhi,qleft
     C     ..
     C     .. Local Scalars ..*/
-         double xhi,zx,zy,zz;
          double fbig = 0.0;
          double fsmall = 0.0;
          double xsave = 0.0;
@@ -754,9 +770,12 @@ public class CDFLIB {
          double step = 0.0;
          double xub = 0.0;
          double xlb = 0.0;
-         double xlo = 0.0;
+         double xlo[] = new double[1];
+         double xhi[] = new double[1];
          //int i99999;
-         boolean qdum1,qdum2,qok,qup;
+         boolean qdum1[] = new boolean[1];
+         boolean qdum2[] = new boolean[1];
+         boolean qup;
          boolean qincr = false;
          boolean qcond = false;
          boolean qlim = false;
@@ -966,7 +985,7 @@ public class CDFLIB {
           }
           else {
 	          status[0] = 0;
-	          qok = true;
+	          //qok = true;
 	          return;
           }
        }
@@ -1119,7 +1138,7 @@ public class CDFLIB {
       } // if (do220)
 
       if (do240) {
-          //dstzr(xlb,xub,abstol,reltol);
+          dstzr(xlb,xub,abstol,reltol);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
     //     IF WE REACH HERE, XLB AND XUB BOUND THE ZERO OF F.
@@ -1131,14 +1150,14 @@ public class CDFLIB {
 
       if (do250) {
           if (! (status[0] == 1)) {
-        	  x[0] = xlo;
+        	  x[0] = xlo[0];
         	  status[0] = 0;
         	  return;
           }
       }
-      //dzror(status,x,fx,xlo,xhi,qdum1,qdum2);
+      dzror(status,x,fx,xlo,xhi,qdum1,qdum2);
       if (! (status[0] == 1)) {
-    	  x[0] = xlo;
+    	  x[0] = xlo[0];
     	  status[0] = 0;
     	  return;
       }
@@ -1147,6 +1166,486 @@ public class CDFLIB {
       status[0] = 1;
       return;
 
+    }
+    
+    private void dstzr(double zxlo, double zxhi, double zabstl, double zreltl) {
+    /**********************************************************************
+    C
+    C     SUBROUTINE DSTZR( XLO, XHI, ABSTOL, RELTOL )
+    C     Double precision SeT ZeRo finder - Reverse communication version
+    C
+    C
+    C                              Function
+    C
+    C
+    C
+    C     Sets quantities needed by ZROR.  The function of ZROR
+    C     and the quantities set is given here.
+    C
+    C     Concise Description - Given a function F
+    C     find XLO such that F(XLO) = 0.
+    C
+    C          More Precise Description -
+    C
+    C     Input condition. F is a double precision function of a single
+    C     double precision argument and XLO and XHI are such that
+    C          F(XLO)*F(XHI)  .LE.  0.0
+    C
+    C     If the input condition is met, QRZERO returns .TRUE.
+    C     and output values of XLO and XHI satisfy the following
+    C          F(XLO)*F(XHI)  .LE. 0.
+    C          ABS(F(XLO)  .LE. ABS(F(XHI)
+    C          ABS(XLO-XHI)  .LE. TOL(X)
+    C     where
+    C          TOL(X) = MAX(ABSTOL,RELTOL*ABS(X))
+    C
+    C     If this algorithm does not find XLO and XHI satisfying
+    C     these conditions then QRZERO returns .FALSE.  This
+    C     implies that the input condition was not met.
+    C
+    C
+    C                              Arguments
+    C
+    C
+    C     XLO --> The left endpoint of the interval to be
+    C           searched for a solution.
+    C                    XLO is DOUBLE PRECISION
+    C
+    C     XHI --> The right endpoint of the interval to be
+    C           for a solution.
+    C                    XHI is DOUBLE PRECISION
+    C
+    C     ABSTOL, RELTOL --> Two numbers that determine the accuracy
+    C                      of the solution.  See function for a
+    C                      precise definition.
+    C                    ABSTOL is DOUBLE PRECISION
+    C                    RELTOL is DOUBLE PRECISION
+    C
+    C
+    C                              Method
+    C
+    C
+    C     Algorithm R of the paper 'Two Efficient Algorithms with
+    C     Guaranteed Convergence for Finding a Zero of a Function'
+    C     by J. C. P. Bus and T. J. Dekker in ACM Transactions on
+    C     Mathematical Software, Volume 1, no. 4 page 330
+    C     (Dec. '75) is employed to find the zero of F(X)-Y.
+    C
+    C**********************************************************************/
+          xxlo = zxlo;
+          xxhi = zxhi;
+          abstol = zabstl;
+          reltol = zreltl;
+          return;
+    }
+    
+    private void dzror(int status[],double x[], double fx[], double xlo[], double xhi[], boolean qleft[], boolean qhi[]) {
+    /**********************************************************************
+    C
+    C     SUBROUTINE DZROR(STATUS, X, FX, XLO, XHI, QLEFT, QHI)
+    C     Double precision ZeRo of a function -- Reverse Communication
+    C
+    C
+    C                              Function
+    C
+    C
+    C     Performs the zero finding.  STZROR must have been called before
+    C     this routine in order to set its parameters.
+    C
+    C
+    C                              Arguments
+    C
+    C
+    C     STATUS <--> At the beginning of a zero finding problem, STATUS
+    C                 should be set to 0 and ZROR invoked.  (The value
+    C                 of other parameters will be ignored on this call.)
+    C
+    C                 When ZROR needs the function evaluated, it will set
+    C                 STATUS to 1 and return.  The value of the function
+    C                 should be set in FX and ZROR again called without
+    C                 changing any of its other parameters.
+    C
+    C                 When ZROR has finished without error, it will return
+    C                 with STATUS 0.  In that case (XLO,XHI) bound the answe
+    C
+    C                 If ZROR finds an error (which implies that F(XLO)-Y an
+    C                 F(XHI)-Y have the same sign, it returns STATUS -1.  In
+    C                 this case, XLO and XHI are undefined.
+    C                         INTEGER STATUS
+    C
+    C     X <-- The value of X at which F(X) is to be evaluated.
+    C                         DOUBLE PRECISION X
+    C
+    C     FX --> The value of F(X) calculated when ZROR returns with
+    C            STATUS = 1.
+    C                         DOUBLE PRECISION FX
+    C
+    C     XLO <-- When ZROR returns with STATUS = 0, XLO bounds the
+    C             inverval in X containing the solution below.
+    C                         DOUBLE PRECISION XLO
+    C
+    C     XHI <-- When ZROR returns with STATUS = 0, XHI bounds the
+    C             inverval in X containing the solution above.
+    C                         DOUBLE PRECISION XHI
+    C
+    C     QLEFT <-- .TRUE. if the stepping search terminated unsucessfully
+    C                at XLO.  If it is .FALSE. the search terminated
+    C                unsucessfully at XHI.
+    C                    QLEFT is LOGICAL
+    C
+    C     QHI <-- .TRUE. if F(X) .GT. Y at the termination of the
+    C              search and .FALSE. if F(X) .LT. Y at the
+    C              termination of the search.
+    C                    QHI is LOGICAL
+    C
+    C**********************************************************************
+    C     .. Scalar Arguments ..
+          DOUBLE PRECISION fx,x,xhi,xlo,zabstl,zreltl,zxhi,zxlo
+          INTEGER status
+          LOGICAL qhi,qleft
+    C     ..
+    C     .. Save statement ..
+          SAVE
+    C     ..
+    C     .. Local Scalars ..*/
+          double fda,fdb,m;
+          double fb = 0.0;
+          double a = 0.0;
+          double fa = 0.0;
+          double b = 0.0;
+          double c = 0.0;
+          double fc = 0.0;
+          double mb = 0.0;
+          double tol = 0.0;
+          double d = 0.0;
+          double fd = 0.0;
+          double p = 0.0;
+          double q = 0.0;
+          double w = 0.0;
+          //INTEGER i99999
+          int ext = 0;
+          boolean first = false;
+          boolean qrzero;
+    /*     ..
+    C     .. Intrinsic Functions ..
+          INTRINSIC abs,max,sign
+    C     ..
+    C     .. Statement Functions ..
+          DOUBLE PRECISION ftol
+    C     ..
+    C     .. Statement Function definitions ..
+          ftol(zx) = 0.5D0*max(abstol,reltol*abs(zx))
+    C     ..
+    C     .. Executable Statements ..*/
+          boolean do5 = true;
+          boolean do10 = true;
+          boolean do20 = true;
+          boolean do40 = true;
+          boolean do60 = true;
+          boolean do70 = true;
+          boolean do80 = true;
+          boolean do90 = true;
+          boolean do100 = true;
+          boolean do110 = true;
+          boolean do120 = true;
+          boolean do130 = true;
+          boolean do140 = true;
+          boolean do150 = true;
+          boolean do160 = true;
+          boolean do190 = true;
+
+          if (status[0] > 0) {
+        	  if (i99999 > 5) {
+        		  do5 = false;
+        	  }
+        	  if (i99999 > 10) {
+        		  do10 = false;
+        	  }
+        	  if (i99999 > 20) {
+        		  do20 = false;
+        	  }
+        	  if (i99999 > 40) {
+        		  do40 = false;
+        	  }
+        	  if (i99999 > 60) {
+        		  do60 = false;
+        	  }
+        	  if (i99999 > 70) {
+        		  do70 = false;
+        	  }
+        	  if (i99999 > 80) {
+        		  do80 = false;
+        	  }
+        	  if (i99999 > 90) {
+        		  do90 = false;
+        	  }
+        	  if (i99999 > 100) {
+        		  do100 = false;
+        	  }
+        	  if (i99999 > 110) {
+        		  do110 = false;
+        	  }
+        	  if (i99999 > 120) {
+        		  do120 = false;
+        	  }
+        	  if (i99999 > 130) {
+        		  do130 = false;
+        	  }
+        	  if (i99999 > 140) {
+        		  do140 = false;
+        	  }
+        	  if (i99999 > 150) {
+        		  do150 = false;
+        	  }
+        	  if (i99999 > 160) {
+        		  do160 = false;
+        	  }
+        	  if (i99999 > 190) {
+        		  do190 = false;
+        	  }
+          } // if (status[0] > 0)
+          if (do5) {
+	          xlo[0] = xxlo;
+	          xhi[0] = xxhi;
+	          b = xlo[0];
+	          x[0] = xlo[0];
+	    //    GET-FUNCTION-VALUE
+	          i99999 = 10;
+	          status[0] = 1;
+	          return;
+          } // if (do5)
+
+       if (do10) {
+          fb = fx[0];
+          xlo[0] = xhi[0];
+          a = xlo[0];
+          x[0] = xlo[0];
+    //    GET-FUNCTION-VALUE
+          i99999 = 20;
+          status[0] = 1;
+          return;
+       } // if (do10)
+    
+    //     Check that F(ZXLO) < 0 < F(ZXHI)  or
+    //                F(ZXLO) > 0 > F(ZXHI)
+    
+       if (do20) {
+          if (! (fb< 0.0)) {
+        	  
+          }
+          else if (! (fx[0] < 0.0)) {
+        	  
+          }
+          else {
+	          status[0] = -1;
+	          qleft[0] = fx[0]< fb;
+	          qhi[0] = false;
+	          return;
+          }
+       } // if (do200
+
+     if (do40) {
+          if (! (fb > 0.0)) {
+        	  
+          }
+          else if (! (fx[0] > 0.0)) {
+        	  
+          }
+          else {
+	          status[0] = -1;
+	          qleft[0] = fx[0] > fb;
+	          qhi[0] = true;
+	          return;
+          }
+     } // if (do40)
+
+      if (do60) {
+          fa = fx[0];
+          first = true;
+      } // if (do60)
+      while (true) {
+      if (do70) {
+          c = a;
+          fc = fa;
+          ext = 0;
+      } // if (do70)
+      if (do80) {
+          if (! (Math.abs(fc) < Math.abs(fb))) {
+        	  do90 = false;
+          }
+          else if (! (c != a)) {
+        	  
+          }
+          else {
+              d = a;
+              fd = fa;
+          }
+      } // if (d080)
+      if (do90) {
+          a = b;
+          fa = fb;
+          xlo[0] = c;
+          b = xlo[0];
+          fb = fc;
+          c = a;
+          fc = fa;
+      } // if (d090)
+      if (do100) {
+          tol = ftol(xlo[0]);
+          m = (c+b)*.5;
+          mb = m - b;
+          if (! (Math.abs(mb) > tol)) {
+        	  break;
+          }
+          else if (! (ext > 3)) {
+          }
+          else {
+              w = mb;
+              do110 = false;
+              do120 = false;
+              do130 = false;
+              do140 = false;
+              do150 = false;
+              do160 = false;
+          }
+      } // if (do100)
+      if (do110) {
+    	  if (mb >= 0) {
+    		  tol = Math.abs(tol);
+    	  }
+    	  else {
+    		  tol = -Math.abs(tol);
+    	  }
+          p = (b-a)*fb;
+          if (! (first)) {
+        	  
+          }
+          else {
+	          q = fa - fb;
+	          first = false;
+	          do120 = false;
+          }
+      } // if (do110)
+      if (do120) {
+          fdb = (fd-fb)/ (d-b);
+          fda = (fd-fa)/ (d-a);
+          p = fda*p;
+          q = fdb*fa - fda*fb;
+      } // if (do120)
+      if (do130) {
+          if (! (p < 0.0)) {
+        	  
+          }
+          else {
+              p = -p;
+              q = -q;
+          }
+      } // if (do130)
+      if (do140) {
+          if (ext == 3) p = p*2.0;
+          if (! (p == 0.0 || p <= (q*tol))) {
+      
+          }
+          else {
+              w = tol;
+              do150 = false;
+              do160 = false;
+          }
+      } // if (do140)
+      if (do150) {
+          if (! (p <  (mb*q))) {
+   
+          }
+          else {
+              w = p/q;
+              do160 = false;
+          }
+      } // if (do150)
+
+      if (do160) {
+          w = mb;
+      } // if (do160)
+      if (do190) {
+          d = a;
+          fd = fa;
+          a = b;
+          fa = fb;
+          b = b + w;
+          xlo[0] = b;
+          x[0] = xlo[0];
+    //    GET-FUNCTION-VALUE
+          i99999 =  200;
+          status[0] = 1;
+          return;
+      } // if (do190)
+
+          fb = fx[0];
+          if (! ((fc*fb) >= 0.0)) {
+        	  
+          }
+          else {
+        	  do70 = true;
+        	  do80 = true;
+        	  do90 = true;
+        	  do100 = true;
+        	  do110 = true;
+        	  do120 = true;
+        	  do130 = true;
+        	  do140 = true;
+        	  do150 = true;
+        	  do160 = true;
+        	  do190 = true;
+              continue;  
+          }
+      
+
+          if (! (w == mb)) {
+        	 
+          }
+          else {
+              ext = 0;
+              do70 = false;
+        	  do80 = true;
+        	  do90 = true;
+        	  do100 = true;
+        	  do110 = true;
+        	  do120 = true;
+        	  do130 = true;
+        	  do140 = true;
+        	  do150 = true;
+        	  do160 = true;
+        	  do190 = true;
+        	  continue;
+          }
+
+          ext = ext + 1;
+          do70 = false;
+    	  do80 = true;
+    	  do90 = true;
+    	  do100 = true;
+    	  do110 = true;
+    	  do120 = true;
+    	  do130 = true;
+    	  do140 = true;
+    	  do150 = true;
+    	  do160 = true;
+    	  do190 = true;
+      } // while (true)
+
+          xhi[0] = c;
+          qrzero = (fc >= 0.0 && fb <= 0.0) ||
+                  (fc < 0.0 && fb >= 0.0);
+          if (! (qrzero)) {
+        	  status[0] = -1;
+        	  return;
+          }
+          status[0] = 0;
+          return;
+    }
+
+    private double ftol(double zx) {
+    	double result = 0.5*Math.max(abstol,reltol*Math.abs(zx));
+    	return result;
     }
     
     private boolean qxmon(double zx,double zy,double zz) {
