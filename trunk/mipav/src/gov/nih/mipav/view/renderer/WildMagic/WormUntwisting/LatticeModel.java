@@ -2685,6 +2685,9 @@ public class LatticeModel {
 	public void setAnnotations(final VOI newAnnotations) {
 		if (annotationVOIs != null) {
 			imageA.unregisterVOI(annotationVOIs);
+			if ( (annotationsStraight != null) && imageA.isRegistered(annotationsStraight) != -1 ) {
+				imageA.unregisterVOI(annotationsStraight);
+			}
 		}
 		annotationVOIs = newAnnotations;
 		annotationVOIs.setName("annotationVOIs");

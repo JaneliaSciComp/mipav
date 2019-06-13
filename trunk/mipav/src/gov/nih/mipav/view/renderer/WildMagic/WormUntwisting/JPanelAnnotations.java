@@ -26,6 +26,8 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************/
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
@@ -41,10 +43,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -134,6 +138,45 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 			}
 			displayLabel.setSelected(false);
+		}
+		else if ( command.equals("openAnnotations" ) ) {
+
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String voiDir = null;
+
+            final JFileChooser chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+            final int returnVal = chooser.showOpenDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            }
+
+            if (fileName != null) {
+                voiDir = new String(directory + fileName);
+                System.err.println("Opening csv file " + voiDir );
+                VOI annotations = LatticeModel.readAnnotationsCSV(voiDir);
+                if ( annotations != null && annotations.getCurves().size() > 0 ) {
+                	for ( int i = 0; i < annotations.getCurves().size(); i++) {
+
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+						text.retwist(previewMode);
+                	}
+                	voiManager.setAnnotations(annotations);
+                }
+            }
 		}
 		else if ( source == displayLabel )
 		{	
@@ -598,6 +641,13 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayNone.setActionCommand("displayNone");
 			gbcC.gridx++;			gbcC.gridy = 0;
 			labelPanel.add( displayNone, gbcC );
+			
+			// Display none button:
+			JButton openAnnotations = new JButton("Open annotation .csv" );
+			openAnnotations.addActionListener(this);
+			openAnnotations.setActionCommand("openAnnotations");
+			gbcC.gridx++;			gbcC.gridy = 0;
+			labelPanel.add( openAnnotations, gbcC );
 
 			// volume clip checkbox for clipping around individual annotations:
 			volumeClip = new JCheckBox("volume clip", true);
@@ -612,10 +662,6 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			gbcC.gridx++;			gbcC.gridy = 1;
 			labelPanel.add( volumeRadius, gbcC );
 			
-//			if ( latticeButton != null ) {
-//				gbcC.gridx++;			gbcC.gridy = 0;
-//				labelPanel.add( latticeButton, gbcC );
-//			}
 			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display and Clipping"));
 
 			// build the annotation table for the list of annotations:
