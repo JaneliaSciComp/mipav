@@ -170,9 +170,47 @@ public class CDFLIB {
      private double stpmul;
      private double abstol;
      private double reltol;
-     private int i99999 = 0;
+     
      private double xxlo;
      private double xxhi;
+     
+     private int i99999_dinvr = 0;
+     private double fbig_dinvr = 0.0;
+     private double fsmall_dinvr = 0.0;
+     private double xsave_dinvr = 0.0;
+     private double yy_dinvr = 0.0;
+     private double step_dinvr = 0.0;
+     private double xub_dinvr = 0.0;
+     private double xlb_dinvr = 0.0;
+     private double xlo_dinvr[] = new double[1];
+     private double xhi_dinvr[] = new double[1];
+     private boolean qdum1_dinvr[] = new boolean[1];
+     private boolean qdum2_dinvr[] = new boolean[1];
+     private boolean qup_dinvr;
+     private boolean qincr_dinvr = false;
+     private boolean qcond_dinvr = false;
+     private boolean qlim_dinvr = false;
+     private boolean qbdd_dinvr = false;
+     
+     
+     private int i99999_dzror = 0;
+     private double fda_dzror,fdb_dzror,m_dzror;
+     private double fb_dzror = 0.0;
+     private double a_dzror = 0.0;
+     private double fa_dzror = 0.0;
+     private double b_dzror = 0.0;
+     private double c_dzror = 0.0;
+     private double fc_dzror = 0.0;
+     private double mb_dzror = 0.0;
+     private double tol_dzror = 0.0;
+     private double d_dzror = 0.0;
+     private double fd_dzror = 0.0;
+     private double p_dzror = 0.0;
+     private double q_dzror = 0.0;
+     private double w_dzror = 0.0;
+     private int ext_dzror = 0;
+     private boolean first_dzror = false;
+     private boolean qrzero_dzror;
 	
 	public CDFLIB() {
 		
@@ -762,25 +800,8 @@ public class CDFLIB {
           INTEGER status
           LOGICAL qhi,qleft
     C     ..
-    C     .. Local Scalars ..*/
-         double fbig = 0.0;
-         double fsmall = 0.0;
-         double xsave = 0.0;
-         double yy = 0.0;
-         double step = 0.0;
-         double xub = 0.0;
-         double xlb = 0.0;
-         double xlo[] = new double[1];
-         double xhi[] = new double[1];
-         //int i99999;
-         boolean qdum1[] = new boolean[1];
-         boolean qdum2[] = new boolean[1];
-         boolean qup;
-         boolean qincr = false;
-         boolean qcond = false;
-         boolean qlim = false;
-         boolean qbdd = false;
-    /*     ..
+        Replace local variables with globals to replace effect of SAVE statement.
+         ..
     C     .. External Subroutines ..
           EXTERNAL dstzr,dzror
     C     ..
@@ -822,104 +843,104 @@ public class CDFLIB {
          
 
           if (status[0] > 0) {
-              if (i99999 >= 10) {
+              if (i99999_dinvr >= 10) {
             	  do5 = false;
               }
-              if (i99999 >= 20) {
+              if (i99999_dinvr >= 20) {
             	  do10 = false;
               }
-              if (i99999 >= 30) {
+              if (i99999_dinvr >= 30) {
             	  do20 = false;
               }
-              if (i99999 >= 40) {
+              if (i99999_dinvr >= 40) {
             	  do30 = false;
               }
-              if (i99999 >= 60) {
+              if (i99999_dinvr >= 60) {
             	  do50 = false;
               }
-              if (i99999 >= 80) {
+              if (i99999_dinvr >= 80) {
             	  do60 = false;
               }
-              if (i99999 >= 90) {
+              if (i99999_dinvr >= 90) {
             	  do80 = false;
               }
-              if (i99999 >= 100) {
+              if (i99999_dinvr >= 100) {
             	  do90 = false;
               }
-              if (i99999 >= 110) {
+              if (i99999_dinvr >= 110) {
             	  do100 = false;
               }
-              if (i99999 >= 120) {
+              if (i99999_dinvr >= 120) {
             	  do110 = false;
               }
-              if (i99999 >= 130) {
+              if (i99999_dinvr >= 130) {
             	  do120 = false;
               }
-              if (i99999 >= 140) {
+              if (i99999_dinvr >= 140) {
             	  do130 = false;
               }
-              if (i99999 >= 150) {
+              if (i99999_dinvr >= 150) {
             	  do140 = false;
               }
-              if (i99999 >= 170) {
+              if (i99999_dinvr >= 170) {
             	  do150 = false;
               }
-              if (i99999 >= 180) {
+              if (i99999_dinvr >= 180) {
             	  do170 = false;
               }
-              if (i99999 >= 190) {
+              if (i99999_dinvr >= 190) {
             	  do180 = false;
               }
-              if (i99999 >= 200) {
+              if (i99999_dinvr >= 200) {
             	  do190 = false;
               }
-              if (i99999 >= 210) {
+              if (i99999_dinvr >= 210) {
             	  do200 = false;
               }
-              if (i99999 >= 220) {
+              if (i99999_dinvr >= 220) {
             	  do210 = false;
               }
-              if (i99999 >= 240) {
+              if (i99999_dinvr >= 240) {
             	  do220 = false;
               }
-              if (i99999 >= 250) {
+              if (i99999_dinvr >= 250) {
             	  do240 = false;
               }
           } // if (status[0] > 0)
 
           if (do5) {
-	          qcond = !qxmon(small,x[0],big);
-	          if (qcond) {
+	          qcond_dinvr = !qxmon(small,x[0],big);
+	          if (qcond_dinvr) {
 	        	  MipavUtil.displayError("SMALL, X[0], BIG not monotone in INVR");
 	        	  return;
 	          }
-	          xsave = x[0];
+	          xsave_dinvr = x[0];
 	    
 	    //    See that SMALL and BIG bound the zero and set QINCR
 	    
 	          x[0] = small;
 	    //     GET-FUNCTION-VALUE
-	          i99999 = 10;
+	          i99999_dinvr = 10;
 	          status[0] = 1;
 	          return;
           } // if (do5)
 
        if (do10) {
-          fsmall = fx[0];
+          fsmall_dinvr = fx[0];
           x[0] = big;
     //     GET-FUNCTION-VALUE
-          i99999 = 20;
+          i99999_dinvr = 20;
           status[0] = 1;
           return;
        } // if (do10)
 
        if (do20) {
-          fbig = fx[0];
-          qincr = fbig > fsmall;
-          if (! (qincr)) {
+          fbig_dinvr = fx[0];
+          qincr_dinvr = fbig_dinvr > fsmall_dinvr;
+          if (! (qincr_dinvr)) {
         	  do30 = false;
           }
-          else if (fsmall <= 0.0) {
+          else if (fsmall_dinvr <= 0.0) {
         	  
           }
           else {
@@ -928,10 +949,10 @@ public class CDFLIB {
               qhi[0] = true;
               return;
           }
-       }
+       } // if (do20)
 
        if (do30) {
-          if (fbig >= 0.0) {
+          if (fbig_dinvr >= 0.0) {
         	  do50 = false;
         	  do60 = false;
           }
@@ -944,7 +965,7 @@ public class CDFLIB {
        } // if (do30)
 
        if (do50) {
-          if (fsmall >= 0.0) {
+          if (fsmall_dinvr >= 0.0) {
         	  
           }
           else {
@@ -956,7 +977,7 @@ public class CDFLIB {
        } // if (do50)
 
        if (do60) {
-          if (fbig <= 0.0) {
+          if (fbig_dinvr <= 0.0) {
         	  
           }
           else {
@@ -969,18 +990,18 @@ public class CDFLIB {
        } // if (do60)
 
        if (do80) {
-          x[0] = xsave;
-          step = Math.max(absstp,relstp*Math.abs(x[0]));
+          x[0] = xsave_dinvr;
+          step_dinvr = Math.max(absstp,relstp*Math.abs(x[0]));
     //      YY = F(X) - Y
     //     GET-FUNCTION-VALUE
-          i99999 = 90;
+          i99999_dinvr = 90;
           status[0] = 1;
           return;
        } // if (do80)
 
        if (do90) {
-          yy = fx[0];
-          if (! (yy == 0.0)) {
+          yy_dinvr = fx[0];
+          if (! (yy_dinvr == 0.0)) {
         	
           }
           else {
@@ -988,17 +1009,17 @@ public class CDFLIB {
 	          //qok = true;
 	          return;
           }
-       }
+       } // if (do90)
 
       if (do100) {
-           qup = (qincr && (yy < 0.0)) ||
-               (!qincr && (yy > 0.0));
+           qup_dinvr = (qincr_dinvr && (yy_dinvr < 0.0)) ||
+               (!qincr_dinvr && (yy_dinvr > 0.0));
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
     //     HANDLE CASE IN WHICH WE MUST STEP HIGHER
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-          if (! (qup)) {
+          if (! (qup_dinvr)) {
         	  do110 = false;
         	  do120 = false;
         	  do130 = false;
@@ -1006,58 +1027,58 @@ public class CDFLIB {
         	  do150 = false;
           }
           else {
-              xlb = xsave;
-              xub = Math.min(xlb+step,big);
-              do110 = false;
+              xlb_dinvr = xsave_dinvr;
+              xub_dinvr = Math.min(xlb_dinvr+step_dinvr,big);
+              do110= false;
           }
       } // if (do100)
 
       if (do110) {
-          if (qcond) {
+          if (qcond_dinvr) {
         	  do120 = false;
         	  do130 = false;
         	  do140 = false;
           }
     //      YY = F(XUB) - Y
-      } // if (do110)
+      } // if (do110_dinvr)
       if (do120) {
-          x[0] = xub;
+          x[0] = xub_dinvr;
     //    GET-FUNCTION-VALUE
-          i99999 = 130;
+          i99999_dinvr = 130;
           status[0] = 1;
           return;
       } // if (do120)
 
       if (do130) {
-          yy = fx[0];
-          qbdd = (qincr && (yy >= 0.0)) ||
-               (!qincr && (yy <= 0.0));
-          qlim = xub >= big;
-          qcond = qbdd || qlim;
-          if (qcond) {
+          yy_dinvr = fx[0];
+          qbdd_dinvr = (qincr_dinvr && (yy_dinvr >= 0.0)) ||
+               (!qincr_dinvr && (yy_dinvr <= 0.0));
+          qlim_dinvr = xub_dinvr >= big;
+          qcond_dinvr = qbdd_dinvr || qlim_dinvr;
+          if (qcond_dinvr) {
         	  
           }
           else {
-	          step = stpmul*step;
-	          xlb = xub;
-	          xub = Math.min(xlb+step,big);
+	          step_dinvr = stpmul*step_dinvr;
+	          xlb_dinvr = xub_dinvr;
+	          xub_dinvr = Math.min(xlb_dinvr+step_dinvr,big);
           }
       } // if (do130)
       if (do140) {
-       if (qcond) {
+       if (qcond_dinvr) {
     	   
        }
        else {
-    	   x[0] = xub;
+    	   x[0] = xub_dinvr;
     	    //    GET-FUNCTION-VALUE
-          i99999 = 130;
+          i99999_dinvr = 130;
           status[0] = 1;
           return;   
        }
       } // if (do140)
 
       if (do150) {
-          if (! (qlim && !qbdd)) {
+          if (! (qlim_dinvr && !qbdd_dinvr)) {
         	  do170 = false;
         	  do180 = false;
         	  do190 = false;
@@ -1068,11 +1089,11 @@ public class CDFLIB {
           else {
 	          status[0] = -1;
 	          qleft[0] = false;
-	          qhi[0] =  !qincr;
+	          qhi[0] =  !qincr_dinvr;
 	          x[0] = big;
 	          return;
           }
-      }
+      } // if (do150)
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
@@ -1080,13 +1101,13 @@ public class CDFLIB {
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       if (do170) {
-          xub = xsave;
-          xlb = Math.max(xub-step,small);
+          xub_dinvr = xsave_dinvr;
+          xlb_dinvr = Math.max(xub_dinvr-step_dinvr,small);
           do180 = false;
       } // if (do170)
 
       if (do180) {
-          if (qcond) {
+          if (qcond_dinvr) {
         	  do190 = false;
         	  do200 = false;
         	  do210 = false;
@@ -1094,51 +1115,51 @@ public class CDFLIB {
     //      YY = F(XLB) - Y
       } // if (do180)
       if (do190) {
-          x[0] = xlb;
+          x[0] = xlb_dinvr;
     //     GET-FUNCTION-VALUE
-          i99999 = 200;
+          i99999_dinvr = 200;
           status[0] = 1;
           return;
       } // if (do190)
 
       if (do200) {
-          yy = fx[0];
-          qbdd = (qincr && (yy <= 0.0)) ||
-                (!qincr && (yy >= 0.0));
-          qlim = xlb <= small;
-          qcond = qbdd || qlim;
-          if (qcond) {
+          yy_dinvr = fx[0];
+          qbdd_dinvr = (qincr_dinvr && (yy_dinvr <= 0.0)) ||
+                (!qincr_dinvr && (yy_dinvr >= 0.0));
+          qlim_dinvr = xlb_dinvr <= small;
+          qcond_dinvr = qbdd_dinvr || qlim_dinvr;
+          if (qcond_dinvr) {
         	  do210 = false;
           }
           else {
-	          step = stpmul*step;
-	          xub = xlb;
-	          xlb = Math.max(xub-step,small);
+	          step_dinvr = stpmul*step_dinvr;
+	          xub_dinvr = xlb_dinvr;
+	          xlb_dinvr = Math.max(xub_dinvr-step_dinvr,small);
           }
       } // if (do200)
       if (do210) {
-    	  x[0] = xlb;
+    	  x[0] = xlb_dinvr;
     	    //     GET-FUNCTION-VALUE
-          i99999 = 200;
+          i99999_dinvr = 200;
           status[0] = 1;
           return;
       } // if (do210)
 
       if (do220) {
-          if (! (qlim && !qbdd)) {
+          if (! (qlim_dinvr && !qbdd_dinvr)) {
         	  
           }
           else {
 	          status[0] = -1;
 	          qleft[0] = true;
-	          qhi[0] = qincr;
+	          qhi[0] = qincr_dinvr;
 	          x[0] = small;
 	          return;
           }
       } // if (do220)
 
       if (do240) {
-          dstzr(xlb,xub,abstol,reltol);
+          dstzr(xlb_dinvr,xub_dinvr,abstol,reltol);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
     //     IF WE REACH HERE, XLB AND XUB BOUND THE ZERO OF F.
@@ -1150,19 +1171,19 @@ public class CDFLIB {
 
       if (do250) {
           if (! (status[0] == 1)) {
-        	  x[0] = xlo[0];
+        	  x[0] = xlo_dinvr[0];
         	  status[0] = 0;
         	  return;
           }
-      }
-      dzror(status,x,fx,xlo,xhi,qdum1,qdum2);
+      } // if (do250)
+      dzror(status,x,fx,xlo_dinvr,xhi_dinvr,qdum1_dinvr,qdum2_dinvr);
       if (! (status[0] == 1)) {
-    	  x[0] = xlo[0];
+    	  x[0] = xlo_dinvr[0];
     	  status[0] = 0;
     	  return;
       }
       // GET-FUNCTION-VALUE
-      i99999 = 250;
+      i99999_dinvr = 250;
       status[0] = 1;
       return;
 
@@ -1307,26 +1328,7 @@ public class CDFLIB {
     C     .. Save statement ..
           SAVE
     C     ..
-    C     .. Local Scalars ..*/
-          double fda,fdb,m;
-          double fb = 0.0;
-          double a = 0.0;
-          double fa = 0.0;
-          double b = 0.0;
-          double c = 0.0;
-          double fc = 0.0;
-          double mb = 0.0;
-          double tol = 0.0;
-          double d = 0.0;
-          double fd = 0.0;
-          double p = 0.0;
-          double q = 0.0;
-          double w = 0.0;
-          //INTEGER i99999
-          int ext = 0;
-          boolean first = false;
-          boolean qrzero;
-    /*     ..
+    C    Replaced local variables with globals to reflect SAVE statement.
     C     .. Intrinsic Functions ..
           INTRINSIC abs,max,sign
     C     ..
@@ -1355,73 +1357,73 @@ public class CDFLIB {
           boolean do190 = true;
 
           if (status[0] > 0) {
-        	  if (i99999 > 5) {
+        	  if (i99999_dzror > 5) {
         		  do5 = false;
         	  }
-        	  if (i99999 > 10) {
+        	  if (i99999_dzror > 10) {
         		  do10 = false;
         	  }
-        	  if (i99999 > 20) {
+        	  if (i99999_dzror > 20) {
         		  do20 = false;
         	  }
-        	  if (i99999 > 40) {
+        	  if (i99999_dzror > 40) {
         		  do40 = false;
         	  }
-        	  if (i99999 > 60) {
+        	  if (i99999_dzror > 60) {
         		  do60 = false;
         	  }
-        	  if (i99999 > 70) {
+        	  if (i99999_dzror > 70) {
         		  do70 = false;
         	  }
-        	  if (i99999 > 80) {
+        	  if (i99999_dzror > 80) {
         		  do80 = false;
         	  }
-        	  if (i99999 > 90) {
+        	  if (i99999_dzror > 90) {
         		  do90 = false;
         	  }
-        	  if (i99999 > 100) {
+        	  if (i99999_dzror > 100) {
         		  do100 = false;
         	  }
-        	  if (i99999 > 110) {
+        	  if (i99999_dzror > 110) {
         		  do110 = false;
         	  }
-        	  if (i99999 > 120) {
+        	  if (i99999_dzror > 120) {
         		  do120 = false;
         	  }
-        	  if (i99999 > 130) {
+        	  if (i99999_dzror > 130) {
         		  do130 = false;
         	  }
-        	  if (i99999 > 140) {
+        	  if (i99999_dzror > 140) {
         		  do140 = false;
         	  }
-        	  if (i99999 > 150) {
+        	  if (i99999_dzror > 150) {
         		  do150 = false;
         	  }
-        	  if (i99999 > 160) {
+        	  if (i99999_dzror > 160) {
         		  do160 = false;
         	  }
-        	  if (i99999 > 190) {
+        	  if (i99999_dzror > 190) {
         		  do190 = false;
         	  }
           } // if (status[0] > 0)
           if (do5) {
 	          xlo[0] = xxlo;
 	          xhi[0] = xxhi;
-	          b = xlo[0];
+	          b_dzror = xlo[0];
 	          x[0] = xlo[0];
 	    //    GET-FUNCTION-VALUE
-	          i99999 = 10;
+	          i99999_dzror = 10;
 	          status[0] = 1;
 	          return;
           } // if (do5)
 
        if (do10) {
-          fb = fx[0];
+          fb_dzror = fx[0];
           xlo[0] = xhi[0];
-          a = xlo[0];
+          a_dzror = xlo[0];
           x[0] = xlo[0];
     //    GET-FUNCTION-VALUE
-          i99999 = 20;
+          i99999_dzror = 20;
           status[0] = 1;
           return;
        } // if (do10)
@@ -1430,7 +1432,7 @@ public class CDFLIB {
     //                F(ZXLO) > 0 > F(ZXHI)
     
        if (do20) {
-          if (! (fb< 0.0)) {
+          if (! (fb_dzror < 0.0)) {
         	  
           }
           else if (! (fx[0] < 0.0)) {
@@ -1438,14 +1440,14 @@ public class CDFLIB {
           }
           else {
 	          status[0] = -1;
-	          qleft[0] = fx[0]< fb;
+	          qleft[0] = fx[0]< fb_dzror;
 	          qhi[0] = false;
 	          return;
           }
        } // if (do200
 
      if (do40) {
-          if (! (fb > 0.0)) {
+          if (! (fb_dzror > 0.0)) {
         	  
           }
           else if (! (fx[0] > 0.0)) {
@@ -1453,54 +1455,54 @@ public class CDFLIB {
           }
           else {
 	          status[0] = -1;
-	          qleft[0] = fx[0] > fb;
+	          qleft[0] = fx[0] > fb_dzror;
 	          qhi[0] = true;
 	          return;
           }
      } // if (do40)
 
       if (do60) {
-          fa = fx[0];
-          first = true;
+          fa_dzror = fx[0];
+          first_dzror = true;
       } // if (do60)
       while (true) {
       if (do70) {
-          c = a;
-          fc = fa;
-          ext = 0;
+          c_dzror = a_dzror;
+          fc_dzror = fa_dzror;
+          ext_dzror = 0;
       } // if (do70)
       if (do80) {
-          if (! (Math.abs(fc) < Math.abs(fb))) {
+          if (! (Math.abs(fc_dzror) < Math.abs(fb_dzror))) {
         	  do90 = false;
           }
-          else if (! (c != a)) {
+          else if (! (c_dzror != a_dzror)) {
         	  
           }
           else {
-              d = a;
-              fd = fa;
+              d_dzror = a_dzror;
+              fd_dzror = fa_dzror;
           }
       } // if (d080)
       if (do90) {
-          a = b;
-          fa = fb;
-          xlo[0] = c;
-          b = xlo[0];
-          fb = fc;
-          c = a;
-          fc = fa;
+          a_dzror = b_dzror;
+          fa_dzror = fb_dzror;
+          xlo[0] = c_dzror;
+          b_dzror = xlo[0];
+          fb_dzror = fc_dzror;
+          c_dzror = a_dzror;
+          fc_dzror = fa_dzror;
       } // if (d090)
       if (do100) {
-          tol = ftol(xlo[0]);
-          m = (c+b)*.5;
-          mb = m - b;
-          if (! (Math.abs(mb) > tol)) {
+          tol_dzror = ftol(xlo[0]);
+          m_dzror = (c_dzror+b_dzror)*.5;
+          mb_dzror = m_dzror - b_dzror;
+          if (! (Math.abs(mb_dzror) > tol_dzror)) {
         	  break;
           }
-          else if (! (ext > 3)) {
+          else if (! (ext_dzror > 3)) {
           }
           else {
-              w = mb;
+              w_dzror = mb_dzror;
               do110 = false;
               do120 = false;
               do130 = false;
@@ -1510,77 +1512,77 @@ public class CDFLIB {
           }
       } // if (do100)
       if (do110) {
-    	  if (mb >= 0) {
-    		  tol = Math.abs(tol);
+    	  if (mb_dzror >= 0) {
+    		  tol_dzror = Math.abs(tol_dzror);
     	  }
     	  else {
-    		  tol = -Math.abs(tol);
+    		  tol_dzror = -Math.abs(tol_dzror);
     	  }
-          p = (b-a)*fb;
-          if (! (first)) {
+          p_dzror = (b_dzror-a_dzror)*fb_dzror;
+          if (! (first_dzror)) {
         	  
           }
           else {
-	          q = fa - fb;
-	          first = false;
+	          q_dzror = fa_dzror - fb_dzror;
+	          first_dzror = false;
 	          do120 = false;
           }
       } // if (do110)
       if (do120) {
-          fdb = (fd-fb)/ (d-b);
-          fda = (fd-fa)/ (d-a);
-          p = fda*p;
-          q = fdb*fa - fda*fb;
+          fdb_dzror = (fd_dzror-fb_dzror)/ (d_dzror-b_dzror);
+          fda_dzror = (fd_dzror-fa_dzror)/ (d_dzror-a_dzror);
+          p_dzror = fda_dzror*p_dzror;
+          q_dzror = fdb_dzror*fa_dzror - fda_dzror*fb_dzror;
       } // if (do120)
       if (do130) {
-          if (! (p < 0.0)) {
+          if (! (p_dzror < 0.0)) {
         	  
           }
           else {
-              p = -p;
-              q = -q;
+              p_dzror = -p_dzror;
+              q_dzror = -q_dzror;
           }
       } // if (do130)
       if (do140) {
-          if (ext == 3) p = p*2.0;
-          if (! (p == 0.0 || p <= (q*tol))) {
+          if (ext_dzror == 3) p_dzror = p_dzror*2.0;
+          if (! (p_dzror == 0.0 || p_dzror <= (q_dzror*tol_dzror))) {
       
           }
           else {
-              w = tol;
+              w_dzror = tol_dzror;
               do150 = false;
               do160 = false;
           }
       } // if (do140)
       if (do150) {
-          if (! (p <  (mb*q))) {
+          if (! (p_dzror <  (mb_dzror*q_dzror))) {
    
           }
           else {
-              w = p/q;
+              w_dzror = p_dzror/q_dzror;
               do160 = false;
           }
       } // if (do150)
 
       if (do160) {
-          w = mb;
+          w_dzror = mb_dzror;
       } // if (do160)
       if (do190) {
-          d = a;
-          fd = fa;
-          a = b;
-          fa = fb;
-          b = b + w;
-          xlo[0] = b;
+          d_dzror = a_dzror;
+          fd_dzror = fa_dzror;
+          a_dzror = b_dzror;
+          fa_dzror = fb_dzror;
+          b_dzror = b_dzror + w_dzror;
+          xlo[0] = b_dzror;
           x[0] = xlo[0];
     //    GET-FUNCTION-VALUE
-          i99999 =  200;
+          i99999_dzror =  200;
           status[0] = 1;
           return;
       } // if (do190)
 
-          fb = fx[0];
-          if (! ((fc*fb) >= 0.0)) {
+          fb_dzror = fx[0];
+          if (! ((fc_dzror*fb_dzror) >= 0.0)) {
         	  
           }
           else {
@@ -1599,11 +1601,11 @@ public class CDFLIB {
           }
       
 
-          if (! (w == mb)) {
+          if (! (w_dzror == mb_dzror)) {
         	 
           }
           else {
-              ext = 0;
+              ext_dzror = 0;
               do70 = false;
         	  do80 = true;
         	  do90 = true;
@@ -1618,7 +1620,7 @@ public class CDFLIB {
         	  continue;
           }
 
-          ext = ext + 1;
+          ext_dzror = ext_dzror + 1;
           do70 = false;
     	  do80 = true;
     	  do90 = true;
@@ -1632,10 +1634,10 @@ public class CDFLIB {
     	  do190 = true;
       } // while (true)
 
-          xhi[0] = c;
-          qrzero = (fc >= 0.0 && fb <= 0.0) ||
-                  (fc < 0.0 && fb >= 0.0);
-          if (! (qrzero)) {
+          xhi[0] = c_dzror;
+          qrzero_dzror = (fc_dzror >= 0.0 && fb_dzror <= 0.0) ||
+                  (fc_dzror < 0.0 && fb_dzror >= 0.0);
+          if (! (qrzero_dzror)) {
         	  status[0] = -1;
         	  return;
           }
