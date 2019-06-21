@@ -85,6 +85,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private int search = ELSUNC_2D_SEARCH;
 	
+	private JCheckBox boundsCheckBox;
+	
+	private boolean calculateBounds = false;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -126,7 +130,16 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             dispose();
         } else if (source == calculateMaskingCheckBox) {
              masking_thresholdLabel.setEnabled(!calculateMaskingCheckBox.isSelected());
-        	 masking_thresholdText.setEnabled(!calculateMaskingCheckBox.isSelected());	
+        	 masking_thresholdText.setEnabled(!calculateMaskingCheckBox.isSelected());
+        } else if((source == search1DElsuncButton) || (source == search2DElsuncButton) ||
+        		(source == search2DNMSimplexButton) || (source == search2DNelderMeadButton)) {
+        	if (search2DElsuncButton.isSelected() || (source == search2DNMSimplexButton) || (source == search2DNelderMeadButton)) {
+        		boundsCheckBox.setEnabled(true);
+        	}
+        	else {
+        		boundsCheckBox.setEnabled(false);
+        		boundsCheckBox.setSelected(false);
+        	}
         } else {
             super.actionPerformed(event);
         }
@@ -262,13 +275,15 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
         search2DElsuncButton.setFont(serif12);
         search2DElsuncButton.setForeground(Color.black);
+        search2DElsuncButton.addActionListener(this);
         searchGroup.add(search2DElsuncButton);
-        inputPanel.add(search2DElsuncButton, gbc);
+        inputPanel.add(search2DElsuncButton, gbc);   
         
         gbc.gridy = 10;
         search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
         search1DElsuncButton.setFont(serif12);
         search1DElsuncButton.setForeground(Color.black);
+        search1DElsuncButton.addActionListener(this);
         searchGroup.add(search1DElsuncButton);
         inputPanel.add(search1DElsuncButton, gbc);
         
@@ -276,6 +291,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
+        search2DNMSimplexButton.addActionListener(this);
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
         
@@ -283,8 +299,15 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
         search2DNelderMeadButton.setFont(serif12);
         search2DNelderMeadButton.setForeground(Color.black);
+        search2DNelderMeadButton.addActionListener(this);
         searchGroup.add(search2DNelderMeadButton);
         inputPanel.add(search2DNelderMeadButton, gbc);
+        
+        gbc.gridy = 13;
+        boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
+        boundsCheckBox.setFont(MipavUtil.font12);
+        boundsCheckBox.setForeground(Color.black);
+        inputPanel.add(boundsCheckBox, gbc);
         
         getContentPane().add(inputPanel, BorderLayout.NORTH);
 
@@ -343,7 +366,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, calculateMaskingThreshold, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search);
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateBounds);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -390,6 +413,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	autoAIFCalculation = scriptParameters.getParams().getBoolean("auto_AIF");
     	multiThreading = scriptParameters.getParams().getBoolean("multi_thread");
     	search = scriptParameters.getParams().getInt("search_pars");
+    	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
     }
     
     /**
@@ -406,6 +430,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("auto_AIF", autoAIFCalculation));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("multi_thread", multiThreading));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("search_pars", search));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
     }
     
     private boolean setVariables() {
@@ -509,6 +534,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	else if (search2DNelderMeadButton.isSelected()) {
     		search = NELDERMEAD_2D_SEARCH;
     	}
+    	
+    	calculateBounds = boundsCheckBox.isSelected();
     	return true;
     }
 
