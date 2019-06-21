@@ -183,7 +183,9 @@ public class FileAnalyze extends FileBase {
             int nBuffers;
             int bufferSize;
             float[] buffer = null;
+            double[] dbuffer = null;
             float[] resultBuffer = null;
+            double[] dresultBuffer = null;
 
             if (image.getNDims() > 1) {
                 bufferSize = image.getSliceSize();
@@ -251,24 +253,24 @@ public class FileAnalyze extends FileBase {
                     image.importData(k * bufferSize, resultBuffer, false);
                 }
             } else {
-                buffer = new float[bufferSize];
-                resultBuffer = new float[bufferSize];
+                dbuffer = new double[bufferSize];
+                dresultBuffer = new double[bufferSize];
 
                 int i, j, k;
                 int xDim = image.getExtents()[0];
                 int yDim = image.getExtents()[1];
 
                 for (k = 0; k < nBuffers; k++) {
-                    image.exportData(k * bufferSize, bufferSize, buffer);
+                    image.exportData(k * bufferSize, bufferSize, dbuffer);
 
                     for (j = 0; j < yDim; j++) {
 
                         for (i = 0; i < xDim; i++) {
-                            resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
+                            dresultBuffer[(j * xDim) + i] = dbuffer[((yDim - 1 - j) * xDim) + i];
                         }
                     }
 
-                    image.importData(k * bufferSize, resultBuffer, false);
+                    image.importData(k * bufferSize, dresultBuffer, false);
                 }
             }
         } catch (IOException error) {
