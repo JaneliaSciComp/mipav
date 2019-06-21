@@ -90,6 +90,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	private final int NELDERMEAD_2D_SEARCH = 4;
 	
 	private int search = ELSUNC_2D_SEARCH;
+	
+	private boolean calculateBounds = false;
     
     private ModelImage pickImage;
     
@@ -104,7 +106,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      */
     public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
-    		boolean multiThreading, int search) {
+    		boolean multiThreading, int search, boolean calculateBounds) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.calculateMaskingThreshold = calculateMaskingThreshold;
@@ -115,6 +117,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.autoAIFCalculation = autoAIFCalculation;
     	this.multiThreading = multiThreading;
     	this.search = search;
+    	this.calculateBounds = calculateBounds;
     }   
     
     /**
@@ -240,6 +243,21 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double denom;
     	double num1;
     	double denom1;
+    	int nPts;
+    	double covarMat[][] = null;
+    	double errorSumOfSquares;
+    	double s2;
+    	double arr2D[][] = new double[2][2];
+    	double det;
+    	double invDiag2D[] = new double[2];
+    	double se0;
+    	double se1;
+    	// Distance from value to lower and upper 95% confidence bounds
+    	double p0MaxDistFromValue[][][] = null;
+    	double p1MaxDistFromValue[][][] = null;
+    	ModelImage p0MaxDistImage;
+    	ModelImage p1MaxDistImage;
+    	double expval;
     	boolean test = false;
     	boolean Philips = true;
     	
@@ -1052,6 +1070,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[zDim][yDim][xDim];
         //chiSquared = new double[zDim][yDim][xDim];
+        if (calculateBounds) {
+        	p0MaxDistFromValue = new double[zDim][yDim][xDim];
+        	p1MaxDistFromValue = new double[zDim][yDim][xDim];
+        }
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
         for (z = 0; z < zDim; z++) {
@@ -1070,7 +1092,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
             	executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
-            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z]/*,chiSquared[z]*/));	
+            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],p0MaxDistFromValue[z], p1MaxDistFromValue[z]/*,chiSquared[z]*/));	
             }
             
             executorService.shutdown();
@@ -1098,6 +1120,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    }
 		    C = new double[2*tDim];
 		    b = new double[2*tDim];
+		    if (calculateBounds) {
+		    	covarMat = new double[2*tDim][2];
+		    }
 		    // Iterate
 		    for (z = 0; z < zDim; z++) {
 		    	//fireProgressStateChanged((int)(100*z/zDim), null,
@@ -1157,6 +1182,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			    					    MTT[z][y][x] = p[1];
 			    					    CBV[z][y][x] = rcbf * p[1];
 			    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
+			    					    if (calculateBounds) {
+				    					    nPts = xdata.length;
+				    					    errorSumOfSquares = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	expval = Math.exp(-1.0/p[1]*xdata[i]); 
+				    						    covarMat[i][0] = expval;
+				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+				    						    diff = (p[0]*expval) - b[i];
+				    						    errorSumOfSquares += (diff * diff);
+				    						}
+				    					    s2 = errorSumOfSquares/(nPts - 2);
+				    					    arr2D[0][0] = 0.0;
+				    					    arr2D[0][1] = 0.0;
+				    					    arr2D[1][0] = 0.0;
+				    					    arr2D[1][1] = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
+				    					    }
+				    					    arr2D[1][0] = arr2D[0][1];
+				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+				    					    if (det != 0.0) {
+					    					    invDiag2D[0] = arr2D[1][1]/det;
+					    					    invDiag2D[1] = arr2D[0][0]/det;
+					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+					    					        p0MaxDistFromValue[z][y][x] = 2.0 * se0;
+					    					    }
+					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+					    					        p1MaxDistFromValue[z][y][x] = 2.0 * se1;
+					    					    }
+				    					    } // if (det != 0.0)
+			    					    } // if (calculateBounds)
 			    		    	    }	
 		    		    	    } // if (search == ELSUNC_2D_SEARCH)
 		    		    	    else if (search == NMSIMPLEX_2D_SEARCH) {
@@ -1171,6 +1231,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			    					    //relCBF[x][y][z] = rcbf;
 			    					    MTT[z][y][x] = x0[1];
 			    					    CBV[z][y][x] = rcbf * x0[1];
+			    					    if (calculateBounds) {
+				    					    nPts = xdata.length;
+				    					    errorSumOfSquares = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	expval = Math.exp(-1.0/x0[1]*xdata[i]);
+				    						    covarMat[i][0] = expval;
+				    						    covarMat[i][1] = xdata[i]/(x0[1]*x0[1])*x0[0]*expval;
+				    						    diff = (x0[0]*expval) - b[i];
+				    						    errorSumOfSquares += (diff * diff);
+				    						}
+				    					    s2 = errorSumOfSquares/(nPts - 2);
+				    					    arr2D[0][0] = 0.0;
+				    					    arr2D[0][1] = 0.0;
+				    					    arr2D[1][0] = 0.0;
+				    					    arr2D[1][1] = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
+				    					    }
+				    					    arr2D[1][0] = arr2D[0][1];
+				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+				    					    if (det != 0.0) {
+					    					    invDiag2D[0] = arr2D[1][1]/det;
+					    					    invDiag2D[1] = arr2D[0][0]/det;
+					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+					    					        p0MaxDistFromValue[z][y][x] = 2.0 * se0;
+					    					    }
+					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+					    					        p1MaxDistFromValue[z][y][x] = 2.0 * se1;
+					    					    }
+				    					    } // if (det != 0.0)
+			    					    } // if (calculateBounds)
 			    		    	    }
 		    		    	    } // else if (search == NMSIMPLEX_2D_SEARCH)
 		    		    	    else if (search == NELDERMEAD_2D_SEARCH) {
@@ -1187,6 +1282,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			    					    MTT[z][y][x] = p[1];
 			    					    CBV[z][y][x] = rcbf * p[1];
 			    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
+			    					    if (calculateBounds) {
+				    					    nPts = xdata.length;
+				    					    errorSumOfSquares = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	expval = Math.exp(-1.0/p[1]*xdata[i]);
+				    						    covarMat[i][0] = expval;
+				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+				    						    diff = (p[0]*expval) - b[i];
+				    						    errorSumOfSquares += (diff * diff);
+				    						}
+				    					    s2 = errorSumOfSquares/(nPts - 2);
+				    					    arr2D[0][0] = 0.0;
+				    					    arr2D[0][1] = 0.0;
+				    					    arr2D[1][0] = 0.0;
+				    					    arr2D[1][1] = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
+				    					    }
+				    					    arr2D[1][0] = arr2D[0][1];
+				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+				    					    if (det != 0.0) {
+					    					    invDiag2D[0] = arr2D[1][1]/det;
+					    					    invDiag2D[1] = arr2D[0][0]/det;
+					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+					    					        p0MaxDistFromValue[z][y][x] = 2.0 * se0;
+					    					    }
+					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+					    					        p1MaxDistFromValue[z][y][x] = 2.0 * se1;
+					    					    }
+				    					    } // if (det != 0.0)
+			    					    } // if (calculateBounds)
 			    		    	    }	
 		    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
 		    		    	    else { // 1D search
@@ -1474,6 +1604,109 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	TTPImage.disposeLocal();
     	TTPImage = null;
     	
+    	if (calculateBounds) {
+    		p0MaxDistImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "p0MaxDistance");
+        	for (x = 0; x < xDim; x++) {
+        		for (y = 0; y < yDim; y++) {
+        			for (z = 0; z < zDim; z++) {
+        				dbuffer[x + y*xDim + z*length] = p0MaxDistFromValue[z][y][x];
+        			}
+        		}
+        	}
+        	try {
+        	    p0MaxDistImage.importData(0, dbuffer, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException on p0MaxDistImage");
+        		setCompleted(false);
+        		return;
+        	}
+        	fileInfo = p0MaxDistImage.getFileInfo();
+        	for (i = 0; i < zDim; i++) {
+        		fileInfo[i].setResolutions(resolutions3D);
+        		fileInfo[i].setUnitsOfMeasure(units3D);
+        		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+        	}
+            options.setFileName("p0MaxDist.img");
+           
+            try { // Construct a new file object
+                analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+                boolean zerofunused = false;
+                analyzeFile.setZerofunused(zerofunused);
+                //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+                analyzeFile.writeImage(p0MaxDistImage, options);
+                analyzeFile.finalize();
+                analyzeFile = null;
+            } catch (final IOException error) {
+
+                MipavUtil.displayError("IOException on writing p0MaxDist.img");
+
+                error.printStackTrace();
+                setCompleted(false);
+                return;
+            } catch (final OutOfMemoryError error) {
+
+                MipavUtil.displayError("Out of memory error on writing p0MaxDist.img");
+
+                error.printStackTrace();
+                setCompleted(false);
+                return;
+            }
+        	p0MaxDistImage.disposeLocal();
+        	p0MaxDistImage = null;
+        	
+        	p1MaxDistImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "p1MaxDistance");
+        	for (x = 0; x < xDim; x++) {
+        		for (y = 0; y < yDim; y++) {
+        			for (z = 0; z < zDim; z++) {
+        				dbuffer[x + y*xDim + z*length] = p1MaxDistFromValue[z][y][x];
+        			}
+        		}
+        	}
+        	
+        	try {
+        	    p1MaxDistImage.importData(0, dbuffer, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException on p1MaxDistImage");
+        		setCompleted(false);
+        		return;
+        	}
+        	fileInfo = p1MaxDistImage.getFileInfo();
+        	for (i = 0; i < zDim; i++) {
+        		fileInfo[i].setResolutions(resolutions3D);
+        		fileInfo[i].setUnitsOfMeasure(units3D);
+        		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+        	}
+            options.setFileName("p1MaxDist.img");
+           
+            try { // Construct a new file object
+                analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+                boolean zerofunused = false;
+                analyzeFile.setZerofunused(zerofunused);
+                //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+                analyzeFile.writeImage(p1MaxDistImage, options);
+                analyzeFile.finalize();
+                analyzeFile = null;
+            } catch (final IOException error) {
+
+                MipavUtil.displayError("IOException on writing p1MaxDist.img");
+
+                error.printStackTrace();
+                setCompleted(false);
+                return;
+            } catch (final OutOfMemoryError error) {
+
+                MipavUtil.displayError("Out of memory error on writing p1MaxDist.img");
+
+                error.printStackTrace();
+                setCompleted(false);
+                return;
+            }
+        	p1MaxDistImage.disposeLocal();
+        	p1MaxDistImage = null;
+    	} // if (calculateBounds)
+    	
     	/*chiSquaredImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "chiSquared");
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
@@ -1669,10 +1902,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         double CBF[][];
         double MTT[][];
         short Tmax[][];
+        double p0MaxDistFromValue[][];
+        double p1MaxDistFromValue[][];
         //double chiSquared[][];
     	
     	public endCalc(int search, int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
-    			short data[][][], double CBV[][], double CBF[][], double MTT[][], short Tmax[][]/*,
+    			short data[][][], double CBV[][], double CBF[][], double MTT[][], short Tmax[][],
+    			double p0MaxDistFromValue[][], double p1MaxDistFromValue[][]/*,
     			double chiSquared[][]*/) {
     		this.search = search;
         	this.xDim = xDim;
@@ -1686,6 +1922,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.CBF = CBF;
         	this.MTT = MTT;
         	this.Tmax = Tmax;
+        	if (calculateBounds) {
+        	    this.p0MaxDistFromValue = p0MaxDistFromValue;
+        	    this.p1MaxDistFromValue = p1MaxDistFromValue;
+        	}
         	//this.chiSquared = chiSquared;
         }
     	
@@ -1728,6 +1968,20 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	double denom;
         	double num1;
         	double denom1;
+        	int nPts;
+        	double covarMat[][] = null;
+        	double errorSumOfSquares;
+        	double s2;
+        	double arr2D[][] = new double[2][2];
+        	double det;
+        	double invDiag2D[] = new double[2];
+        	double se0;
+        	double se1;
+        	double diff;
+        	double expval;
+        	if (calculateBounds) {
+		    	covarMat = new double[2*tDim][2];
+		    }
             // Iterate
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
@@ -1784,6 +2038,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        					    MTT[y][x] = p[1];
 	        					    CBV[y][x] = rcbf * p[1];
 	        					    //chiSquared[y][x] = minsearch.getChiSquared();
+	        					    if (calculateBounds) {
+			    					    nPts = xdata.length;
+			    					    errorSumOfSquares = 0.0;
+			    					    for (i = 0; i < nPts; i++) {
+			    					    	expval =  Math.exp(-1.0/p[1]*xdata[i]);
+			    						    covarMat[i][0] = Math.exp(-1.0/p[1]*xdata[i]);
+			    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+			    						    diff = (p[0]*expval) - b[i];
+			    						    errorSumOfSquares += (diff * diff);
+			    						}
+			    					    s2 = errorSumOfSquares/(nPts - 2);
+			    					    arr2D[0][0] = 0.0;
+			    					    arr2D[0][1] = 0.0;
+			    					    arr2D[1][0] = 0.0;
+			    					    arr2D[1][1] = 0.0;
+			    					    for (i = 0; i < nPts; i++) {
+			    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+			    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+			    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
+			    					    }
+			    					    arr2D[1][0] = arr2D[0][1];
+			    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+			    					    if (det != 0.0) {
+				    					    invDiag2D[0] = arr2D[1][1]/det;
+				    					    invDiag2D[1] = arr2D[0][0]/det;
+				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+				    					        p0MaxDistFromValue[y][x] = 2.0 * se0;
+				    					    }
+				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {   
+				    					        p1MaxDistFromValue[y][x] = 2.0 * se1;
+				    					    }
+			    					    } // if (det != 0.0)
+		    					    } // if (calculateBounds)
 	        		    	    }	
         		    	    } // if (search == ELSUNC_2D_SEARCH)
         		    	    else if (search == NMSIMPLEX_2D_SEARCH) {
@@ -1798,8 +2087,42 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             					    //relCBF[x][y][z] = rcbf;
             					    MTT[y][x] = x0[1];
             					    CBV[y][x] = rcbf * x0[1];
+            					    if (calculateBounds) {
+			    					    nPts = xdata.length;
+			    					    errorSumOfSquares = 0.0;
+			    					    for (i = 0; i < nPts; i++) {
+			    					    	expval = Math.exp(-1.0/x0[1]*xdata[i]);
+			    						    covarMat[i][0] = expval;
+			    						    covarMat[i][1] = xdata[i]/(x0[1]*x0[1])*x0[0]*expval;
+			    						    diff = (x0[0]*expval) - b[i];
+			    						    errorSumOfSquares += (diff * diff);
+			    						}
+			    					    s2 = errorSumOfSquares/(nPts - 2);
+			    					    arr2D[0][0] = 0.0;
+			    					    arr2D[0][1] = 0.0;
+			    					    arr2D[1][0] = 0.0;
+			    					    arr2D[1][1] = 0.0;
+			    					    for (i = 0; i < nPts; i++) {
+			    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+			    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+			    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
+			    					    }
+			    					    arr2D[1][0] = arr2D[0][1];
+			    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+			    					    if (det != 0.0) {
+				    					    invDiag2D[0] = arr2D[1][1]/det;
+				    					    invDiag2D[1] = arr2D[0][0]/det;
+				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+				    					        p0MaxDistFromValue[y][x] = 2.0 * se0;
+				    					    }
+				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+				    					        p1MaxDistFromValue[y][x] = 2.0 * se1;
+				    					    }
+			    					    } // if (det != 0.0)
+		    					    } // if (calculateBounds)
             		    	    }
-
         		    	    } //  else if (search == NMSIMPLEX_2D_SEARCH)
         		    	    else if (search == NELDERMEAD_2D_SEARCH) {
 	    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
@@ -1815,6 +2138,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    					    MTT[y][x] = p[1];
 		    					    CBV[y][x] = rcbf * p[1];
 		    					    //chiSquared[y][x] = minsearch.getChiSquared();
+		    					    if (calculateBounds) {
+			    					    nPts = xdata.length;
+			    					    errorSumOfSquares = 0.0;
+			    					    for (i = 0; i < nPts; i++) {
+			    					    	expval = Math.exp(-1.0/p[1]*xdata[i]);
+			    						    covarMat[i][0] = expval;
+			    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+			    						    diff = (p[0]*expval) - b[i];
+			    						    errorSumOfSquares += (diff * diff);
+			    						}
+			    					    s2 = errorSumOfSquares/(nPts - 2);
+			    					    arr2D[0][0] = 0.0;
+			    					    arr2D[0][1] = 0.0;
+			    					    arr2D[1][0] = 0.0;
+			    					    arr2D[1][1] = 0.0;
+			    					    for (i = 0; i < nPts; i++) {
+			    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+			    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+			    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
+			    					    }
+			    					    arr2D[1][0] = arr2D[0][1];
+			    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+			    					    if (det != 0.0) {
+				    					    invDiag2D[0] = arr2D[1][1]/det;
+				    					    invDiag2D[1] = arr2D[0][0]/det;
+				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+				    					        p0MaxDistFromValue[y][x] = 2.0 * se0;
+				    					    }
+				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+				    					        p1MaxDistFromValue[y][x] = 2.0 * se1;
+				    					    }
+			    					    } // if (det != 0.0)
+		    					    } // if (calculateBounds)
 		    		    	    }	
 	    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
         		    	    else { // 1D search
