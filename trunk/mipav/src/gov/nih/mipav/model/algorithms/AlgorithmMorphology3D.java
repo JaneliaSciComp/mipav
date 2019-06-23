@@ -2152,10 +2152,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         startZ = offsetZ * sliceSize;
                         endZ = startZ + stepZ;
 
-                        if (startZ < 0) {
-                            startZ = 0;
-                        }
-
                         if (endZ > imgSize) {
                             endZ = imgSize;
                         }
