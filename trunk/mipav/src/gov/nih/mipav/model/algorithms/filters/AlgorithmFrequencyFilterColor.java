@@ -162,6 +162,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     public static final int CHEBYSHEV_TYPE_I = 5;
     
     public static final int CHEBYSHEV_TYPE_II = 6;
+    
+    public static final int ELLIPTIC = 7;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -188,11 +190,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     private int[] end; // if image cropping the ending index in a dimension
 
     /** DOCUMENT ME! */
-    private float f1; // cutoff frequency in LOWPASS and HIGHPASS
+    private double f1; // cutoff frequency in LOWPASS and HIGHPASS
                       // lower frequency in BANDPASS and BANDSTOP
 
     /** DOCUMENT ME! */
-    private float f2; // higher frequency in BANDPASS and BANDSTOP
+    private double f2; // higher frequency in BANDPASS and BANDSTOP
                       // User inputs f1 and f2 from 0.0 to 1.0.  Program multiplies
                       // these numbers by PI for FIR filters.
 
@@ -299,7 +301,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     
     private int originalDataType;
     
-    private float epsilon;  // maximum ripple in Chebyshev filters
+    private double epsilon;  // maximum ripple in Chebyshev filters or passband ripple in decibels in Elliptic
+    
+    private double rs; // decibels stopband is down in Elliptic
     
     private double sqrt2 = Math.sqrt(2.0);
     private double sqrt3 = Math.sqrt(3.0);
@@ -459,11 +463,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
      * @param  filterOrder    order of a Butterworth or chebyshev filter
-     * @param  epsilon        Maximum ripple in a chebyshev filter
+     * @param  epsilon        Maximum ripple in a chebyshev filter or passband ripple in decibels in Elliptic filter
+     * @param  rs             Decibels stopband is down in Elliptic filter
      */
     public AlgorithmFrequencyFilterColor(ModelImage srcImg, boolean image25D, boolean imageCrop, int kernelDiameter,
-                                    int filterType, float freq1, float freq2, int constructionMethod,
-                                    int filterOrder, float epsilon) {
+                                    int filterType, double freq1, double freq2, int constructionMethod,
+                                    int filterOrder, double epsilon, double rs) {
         super(null, srcImg);
 
         this.image25D = image25D;
@@ -475,6 +480,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         this.constructionMethod = constructionMethod;
         this.filterOrder = filterOrder;
         this.epsilon = epsilon;
+        this.rs = rs;
     }
 
     /**
@@ -492,11 +498,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
      * @param  filterOrder    order of the Butterworth or chebyshev filter
-     * @param  epsilon        Maximum ripple in chebyshev filter
+     * @param  epsilon        Maximum ripple in chebyshev filter or passband ripple in decibels in Elliptic filter
+     * @param  rs             Decibels stopband is down in Elliptic
      */
     public AlgorithmFrequencyFilterColor(ModelImage destImg, ModelImage srcImg, boolean image25D, boolean imageCrop,
-                                    int kernelDiameter, int filterType, float freq1, float freq2,
-                                    int constructionMethod, int filterOrder, float epsilon) {
+                                    int kernelDiameter, int filterType, double freq1, double freq2,
+                                    int constructionMethod, int filterOrder, double epsilon, double rs) {
         super(destImg, srcImg);
 
         this.imageCrop = imageCrop;
@@ -508,6 +515,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         this.constructionMethod = constructionMethod;
         this.filterOrder = filterOrder;
         this.epsilon = epsilon;
+        this.rs = rs;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -771,6 +779,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         
         if (constructionMethod == CHEBYSHEV_TYPE_II) {
         	makeChebyshevTypeIIFilter(f1, f2);
+        }
+        
+        if (constructionMethod == ELLIPTIC) {
+        	makeEllipticFilter(f1, f2);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -1054,6 +1066,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         
         if (constructionMethod == CHEBYSHEV_TYPE_II) {
         	makeChebyshevTypeIIFilter(f1, f2);
+        }
+        
+        if (constructionMethod == ELLIPTIC) {
+        	makeEllipticFilter(f1, f2);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -2004,7 +2020,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         if ((transformDir == INVERSE) &&
                 ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH) ||
                      (constructionMethod == GABOR) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
-                     (constructionMethod == CHEBYSHEV_TYPE_II))) {
+                     (constructionMethod == CHEBYSHEV_TYPE_II) || (constructionMethod == ELLIPTIC))) {
 
             if (!image25D) {
 
@@ -2114,7 +2130,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         if ((transformDir == FORWARD) &&
                 ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH) ||
                      (constructionMethod == GABOR) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
-                     (constructionMethod == CHEBYSHEV_TYPE_II))) {
+                     (constructionMethod == CHEBYSHEV_TYPE_II) || (constructionMethod == ELLIPTIC))) {
 
             if (!image25D) {
                 fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
@@ -2255,16 +2271,16 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     /**
      * Builds the idealized bandpass kernel in 2 dimensions.
      *
-     * @param  FLow   defines the cutoff frequecy at low freqs.
-     * @param  FHigh  defines the cutoff frequecy at high freqs.
+     * @param  FLow   defines the cutoff frequency at low freqs.
+     * @param  FHigh  defines the cutoff frequency at high freqs.
      */
-    private void idealBPKernel2D(float FLow, float FHigh) {
+    private void idealBPKernel2D(double FLow, double FHigh) {
         int x, y, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim];
@@ -2281,10 +2297,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             for (x = 0; x <= (kDim - 1); x++) {
                 pos = (y * kDim) + x;
-                distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
+                distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
 
                 if ((x == halfKDim) && (y == halfKDim)) {
-                    iKernel[pos] = ((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI));
+                    iKernel[pos] = (float)(((FHigh * FHigh) - (FLow * FLow)) / (4.0 * Math.PI));
                 } else if (distance < tau) {
                 	double realArg = FHigh * distance;
                 	double imaginaryArg = 0.0;
@@ -2327,16 +2343,16 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     /**
      * Builds the idealized bandpass kernel in 2 dimensions.
      *
-     * @param  FLow   defines the cutoff frequecy at low freqs.
-     * @param  FHigh  defines the cutoff frequecy at high freqs.
+     * @param  FLow   defines the cutoff frequency at low freqs.
+     * @param  FHigh  defines the cutoff frequency at high freqs.
      */
-    private void idealBPKernel3D(float FLow, float FHigh) {
+    private void idealBPKernel3D(double FLow, double FHigh) {
         int x, y, z, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim * kDim];
@@ -2355,12 +2371,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float)
-                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                    distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
                                              ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
-                        iKernel[pos] = ((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI));
+                        iKernel[pos] = (float)(((FHigh * FHigh) - (FLow * FLow)) / (4.0 * Math.PI));
                     } else if (distance < tau) {
                     	double realArg = FHigh * distance;
                     	double imaginaryArg = 0.0;
@@ -2406,13 +2421,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  FLow   defines the cutoff frequecy at low freqs.
      * @param  FHigh  defines the cutoff frequecy at high freqs.
      */
-    private void idealBSKernel2D(float FLow, float FHigh) {
+    private void idealBSKernel2D(double FLow, double FHigh) {
         int x, y, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim];
@@ -2429,10 +2444,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             for (x = 0; x <= (kDim - 1); x++) {
                 pos = (y * kDim) + x;
-                distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
+                distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
 
                 if ((x == halfKDim) && (y == halfKDim)) {
-                    iKernel[pos] = 1.0f - (((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI)));
+                    iKernel[pos] = (float)(1.0 - (((FHigh * FHigh) - (FLow * FLow)) / ( 4.0 * Math.PI)));
                 } else if (distance < tau) {
                 	double realArg = FHigh * distance;
                 	double imaginaryArg = 0.0;
@@ -2478,13 +2493,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  FLow   defines the cutoff frequecy at low freqs.
      * @param  FHigh  defines the cutoff frequecy at high freqs.
      */
-    private void idealBSKernel3D(float FLow, float FHigh) {
+    private void idealBSKernel3D(double FLow, double FHigh) {
         int x, y, z, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim * kDim];
@@ -2503,12 +2518,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float)
-                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                    distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
                                              ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
-                        iKernel[pos] = 1.0f - (((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI)));
+                        iKernel[pos] = (float)(1.0 - (((FHigh * FHigh) - (FLow * FLow)) / ( 4.0 * Math.PI)));
                     } else if (distance < tau) {
                     	double realArg = FHigh * distance;
                     	double imaginaryArg = 0.0;
@@ -2553,13 +2567,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *
      * @param  cutoffFreq  defines the cutoff frequecy
      */
-    private void idealHPKernel2D(float cutoffFreq) {
+    private void idealHPKernel2D(double cutoffFreq) {
         int x, y, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim];
@@ -2576,10 +2590,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             for (x = 0; x <= (kDim - 1); x++) {
                 pos = (y * kDim) + x;
-                distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
+                distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
 
                 if ((x == halfKDim) && (y == halfKDim)) {
-                    iKernel[pos] = 1.0f - ((cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI)));
+                    iKernel[pos] = (float)(1.0 - ((cutoffFreq * cutoffFreq) / (4.0 * Math.PI)));
                 } else if (distance < tau) {
                 	double realArg = cutoffFreq * distance;
                 	double imaginaryArg = 0.0;
@@ -2613,13 +2627,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *
      * @param  cutoffFreq  defines the cutoff frequecy
      */
-    private void idealHPKernel3D(float cutoffFreq) {
+    private void idealHPKernel3D(double cutoffFreq) {
         int x, y, z, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim * kDim];
@@ -2638,12 +2652,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float)
-                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                    distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
                                              ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
-                        iKernel[pos] = 1.0f - ((cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI)));
+                        iKernel[pos] = (float)(1.0 - ((cutoffFreq * cutoffFreq) / (4.0 * Math.PI)));
                     } else if (distance < tau) {
                     	double realArg = cutoffFreq * distance;
                     	double imaginaryArg = 0.0;
@@ -2677,12 +2690,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *
      * @param  cutoffFreq  defines the cutoff frequecy
      */
-    private void idealLPKernel2D(float cutoffFreq) {
+    private void idealLPKernel2D(double cutoffFreq) {
         int x, y, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim];
@@ -2699,10 +2712,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             for (x = 0; x <= (kDim - 1); x++) {
                 pos = (y * kDim) + x;
-                distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
+                distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)));
 
                 if ((x == halfKDim) && (y == halfKDim)) {
-                    iKernel[pos] = (cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI));
+                    iKernel[pos] = (float)((cutoffFreq * cutoffFreq) / ( 4.0 * Math.PI));
                 } else if (distance < tau) {
                 	double realArg = cutoffFreq * distance;
                 	double imaginaryArg = 0.0;
@@ -2735,13 +2748,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *
      * @param  cutoffFreq  defines the cutoff frequecy
      */
-    private void idealLPKernel3D(float cutoffFreq) {
+    private void idealLPKernel3D(double cutoffFreq) {
         int x, y, z, halfKDim, pos;
-        float distance, tau;
+        double distance, tau;
 
 
         halfKDim = (kDim - 1) / 2;
-        tau = (float) (halfKDim + 1);
+        tau = (double) (halfKDim + 1);
 
         try {
             iKernel = new float[kDim * kDim * kDim];
@@ -2760,12 +2773,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float)
-                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                    distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
                                              ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
-                        iKernel[pos] = (cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI));
+                        iKernel[pos] = (float)((cutoffFreq * cutoffFreq) / (4.0 * Math.PI));
                     } else if (distance < tau) {
                     	double realArg = cutoffFreq * distance;
                     	double imaginaryArg = 0.0;
@@ -2826,12 +2838,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  fr1  DOCUMENT ME!
      * @param  fr2  DOCUMENT ME!
      */
-    private void makeButterworthFilter(float fr1, float fr2) {
+    private void makeButterworthFilter(double fr1, double fr2) {
         int x, y, z, pos;
-        float distsq, width, centersq, coeff, num, xnorm, ynorm, xcenter, ycenter;
+        double distsq, width, centersq, coeff, num, xnorm, ynorm, xcenter, ycenter;
         int upperZ;
-        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
-        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xcenter = (newDimLengths[0] - 1.0) / 2.0;
+        ycenter = (newDimLengths[1] - 1.0) / 2.0;
         xnorm = xcenter * xcenter;
         ynorm = ycenter * ycenter;
 
@@ -2852,7 +2864,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), filterOrder)));
+                            coeff = (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), filterOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -2870,7 +2882,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
+                            coeff = (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -2890,8 +2902,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder);
-                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * filterOrder)));
+                            num =  Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder);
+                            coeff =  (num / (num + Math.pow((distsq - centersq), 2.0 * filterOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -2911,8 +2923,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            num = (float) Math.pow((distsq - centersq), 2.0 * filterOrder);
-                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder)));
+                            num = Math.pow((distsq - centersq), 2.0 * filterOrder);
+                            coeff = (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -2923,6 +2935,124 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             } // else if (filterType == BANDSTOP)
         } // if ((ndim == 2) || (image25D))
         
+    }
+    
+    private void makeEllipticFilter(double fr1, double fr2) {
+    	// Lowpass filter has ripples in the passband but no ripples in the stopband.
+    	int x, y, z, pos;
+        double distsq, coeff, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
+        int upperZ;
+        
+        double ratio;
+        double Tn;
+        double wc;
+        double rp = epsilon;
+    	int no = filterOrder % 2;
+    	int n3 = (filterOrder - no)/2;
+    	double zimag[] = new double[2*n3];
+    	double preal[] = new double[2*n3 + no];
+    	double pimag[] = new double[2*n3];
+    	double gain[] = new double[1];
+        AlgorithmEllipticFilter ef = new AlgorithmEllipticFilter(filterOrder, rp, rs, zimag, preal, pimag, gain, true);
+    	ef.ellipap1();
+    	ef.generatePoly();
+    	wc = ef.find3dBfrequency();
+     
+        xcenter = (newDimLengths[0] - 1.0) / 2.0;
+        ycenter = (newDimLengths[1] - 1.0) / 2.0;
+        xnorm = xcenter * xcenter;
+        ynorm = ycenter * ycenter;
+
+        if ((ndim == 2) || (image25D)) {
+
+            if (image25D) {
+                upperZ = newDimLengths[2] - 1;
+            } else {
+                upperZ = 0;
+            }
+
+            if (filterType == LOWPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = wc * Math.sqrt(distsq)/fr1;
+                            Tn = ef.findGain(ratio);
+                            coeff = (1.0 / (1.0 + Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // end of if (filterType == LOWPASS)
+            else if (filterType == HIGHPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = wc * fr1/Math.sqrt(distsq);
+                            Tn = ef.findGain(ratio);
+                            coeff = (1.0 / (1.0 + Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;    
+                        }
+                    }
+                }
+            } // else if (filterType == HIGHPASS)	
+            else if (filterType == BANDPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = wc * Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                            Tn = ef.findGain(ratio);
+                            coeff = (1.0 / (1.0 + Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDPASS)
+            else if (filterType == BANDSTOP) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = wc * ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                            Tn = ef.findGain(ratio);
+                            coeff = (1.0 / (1.0 + Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDSTOP)
+        } // if ((ndim == 2) || (image25D))
+       
     }
     
     private double Chebyshev(int order, double w) {
@@ -3028,10 +3158,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     	 
     }
     
-    private void makeChebyshevTypeIFilter(float fr1, float fr2) {
+    private void makeChebyshevTypeIFilter(double fr1, double fr2) {
     	// Lowpass filter has ripples in the passband but no ripples in the stopband.
     	int x, y, z, pos;
-        float distsq, coeff, xnorm, ynorm, xcenter, ycenter;
+        double distsq, coeff, xnorm, ynorm, xcenter, ycenter;
         int upperZ;
         
         double epsilonSquared = epsilon*epsilon;
@@ -3039,8 +3169,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         double Tn;
         
      
-        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
-        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xcenter = (newDimLengths[0] - 1.0) / 2.0;
+        ycenter = (newDimLengths[1] - 1.0) / 2.0;
         xnorm = xcenter * xcenter;
         ynorm = ycenter * ycenter;
 
@@ -3063,7 +3193,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
                             ratio = Math.sqrt(distsq)/fr1;
                             Tn = Chebyshev(filterOrder, ratio);
-                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            coeff = (1.0 / (1.0 + epsilonSquared*Tn*Tn));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -3083,7 +3213,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
                             ratio = fr1/Math.sqrt(distsq);
                             Tn = Chebyshev(filterOrder, ratio);
-                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            coeff = (1.0 / (1.0 + epsilonSquared*Tn*Tn));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -3103,7 +3233,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
                             ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
                             Tn = Chebyshev(filterOrder, ratio);
-                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            coeff = (1.0 / (1.0 + epsilonSquared*Tn*Tn));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -3123,7 +3253,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
                             ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
                             Tn = Chebyshev(filterOrder, ratio);
-                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            coeff = (1.0 / (1.0 + epsilonSquared*Tn*Tn));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -3136,13 +3266,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         
     }
     
-    private void makeChebyshevTypeIIFilter(float fr1, float fr2) {
+    private void makeChebyshevTypeIIFilter(double fr1, double fr2) {
     	// Lowpass filter has no ripples in the passband but has ripples in the stopband
     	// fr1 end of pass band only works for 2.0 * PI * fr1 > 1.0
     	// fr2 start of stop band
     	// fr2 > fr1
     	int x, y, z, pos;
-        float distsq, coeff, xnorm, ynorm, xcenter, ycenter;
+        double distsq, coeff, xnorm, ynorm, xcenter, ycenter;
         int upperZ;
         
         double ratio;
@@ -3154,8 +3284,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         Tn2 = Chebyshev(filterOrder, 2.0 * Math.PI * fr1); // Only works if 2.0 * PI * fr1 > 1.0
         product = epsilon * epsilon * Tn2 * Tn2;
         
-        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
-        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xcenter = (newDimLengths[0] - 1.0) / 2.0;
+        ycenter = (newDimLengths[1] - 1.0) / 2.0;
         xnorm = xcenter * xcenter;
         ynorm = ycenter * ycenter;
 
@@ -3179,7 +3309,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             ratio = fr1/Math.sqrt(distsq);
                             Tn = Chebyshev(filterOrder, ratio);
                             TnSquared = Tn*Tn;
-                            coeff = (float) (TnSquared / (TnSquared + product));
+                            coeff = (TnSquared / (TnSquared + product));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -3200,7 +3330,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             ratio = Math.sqrt(distsq)/fr1;
                             Tn = Chebyshev(filterOrder, ratio);
                             TnSquared = Tn*Tn;
-                            coeff = (float) (TnSquared / (TnSquared + product));
+                            coeff = (TnSquared / (TnSquared + product));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -3221,7 +3351,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
                             Tn = Chebyshev(filterOrder, ratio);
                             TnSquared = Tn*Tn;
-                            coeff = (float) (TnSquared / (TnSquared + product));
+                            coeff = (TnSquared / (TnSquared + product));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -3242,7 +3372,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
                             Tn = Chebyshev(filterOrder, ratio);
                             TnSquared = Tn*Tn;
-                            coeff = (float) (TnSquared / (TnSquared + product));
+                            coeff = (TnSquared / (TnSquared + product));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -4411,14 +4541,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *
      * @param  rmsFreq  DOCUMENT ME!
      */
-    private void makeGaussianFilter(float rmsFreq) {
+    private void makeGaussianFilter(double rmsFreq) {
         double xexpDenom, yexpDenom;
         int x, y, z, pos;
         int upperZ;
-        float coeff, xcenter, ycenter;
+        double coeff, xcenter, ycenter;
 
-        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
-        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xcenter = (newDimLengths[0] - 1.0) / 2.0;
+        ycenter = (newDimLengths[1] - 1.0) / 2.0;
 
         xexpDenom = 2.0 * rmsFreq * rmsFreq * xcenter * xcenter;
         yexpDenom = 2.0 * rmsFreq * rmsFreq * ycenter * ycenter;
@@ -4439,7 +4569,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
-                            coeff = (float) (Math.exp(-(x - xcenter) * (x - xcenter) / xexpDenom) *
+                            coeff = (Math.exp(-(x - xcenter) * (x - xcenter) / xexpDenom) *
                                                  Math.exp(-(y - ycenter) * (y - ycenter) / yexpDenom));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
@@ -4457,7 +4587,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
-                            coeff = (float) (1.0 -
+                            coeff = (1.0 -
                                              (Math.exp(-(x - xcenter) * (x - xcenter) / xexpDenom) *
                                                   Math.exp(-(y - ycenter) * (y - ycenter) / yexpDenom)));
                             realData[pos] *= coeff;
@@ -4477,12 +4607,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      *
      * @param  fr1  DOCUMENT ME!
      */
-    private void makeHomomorphicFilter(float fr1) {
+    private void makeHomomorphicFilter(double fr1) {
         int x, y, z, pos;
-        float distsq, coeff, xnorm, ynorm, xcenter, ycenter;
+        double distsq, coeff, xnorm, ynorm, xcenter, ycenter;
         int upperZ;
-        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
-        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xcenter = (newDimLengths[0] - 1.0) / 2.0;
+        ycenter = (newDimLengths[1] - 1.0) / 2.0;
         xnorm = xcenter * xcenter;
         ynorm = ycenter * ycenter;
 
@@ -4501,7 +4631,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                         pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                         distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
+                        coeff = (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                         realData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                         imagiData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                         imagjData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
