@@ -368,8 +368,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private int originalFilterOrder;
     
-    /** The maximum filter ripple */
-    private float originalEpsilon;
+    /** The maximum filter ripple in Chebyshev I and II
+     * The passband ripple in decibels in Elliptic*/
+    private double originalEpsilon;
+    
+    /** Decibels stopband is down in Elliptic */
+    private double originalRs;
 
     /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private boolean originalCropCheckbox;
@@ -4614,10 +4618,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
     
     /**
      * 
-     * @return value inidicating the maximum filter ripple
+     * @return value indicating the maximum filter ripple in Chdebyshev Type I and II
+     *   or passband ripple in decibels in Elliptic
      */
-    public final float getOriginalEpsilon() {
+    public final double getOriginalEpsilon() {
     	return originalEpsilon;
+    }
+    
+    /** Decibels stopband is down in Elliptic */
+    public final double getOriginalRs() {
+    	return originalRs;
     }
 
     /**
@@ -7608,10 +7618,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
     
     /**
      * 
-     * @param epsilon maximum filter ripple
+     * @param epsilon maximum filter ripple in Chebyshev I and II
+     *  or maximum passband ripple in decibels in Elliptic
      */
-    public void setOriginalEpsilon(final float epsilon) {
+    public void setOriginalEpsilon(final double epsilon) {
     	originalEpsilon = epsilon;
+    }
+    
+    public void setOriginalRs(final double rs) {
+    	originalRs = rs;
     }
 
     /**
