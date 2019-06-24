@@ -2,8 +2,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-
-
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 
@@ -20,7 +19,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
 	// FORTRAN variables
 	// inputs
     private int n; // degree of filter, any positive integer > 1
-    private double rp[]; // passband ripple in dB = 10*log(1 + e[0]**2)
+    private double rp; // passband ripple in dB = 10*log(1 + e[0]**2)
     private double k; // elliptic modulus 0.0 <= k <= 1.0
     private boolean displayOutput;
     
@@ -38,7 +37,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     // decibels of ripple in the passband
     // double rp;
     // decibels stopband is down
-    private double rs[];
+    private double rs;
     
     // outputs
     private double zimag[]; // if n == 1, zimag = null, else declared as new double[2*n3]
@@ -51,7 +50,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     private double D2[];
     private double D1[];
     private double D0[];
-    private boolean test = true;
+    private boolean test = false;
     
    /**
     * The  FORTRAN example in the article of n = 7, apd = 0.1dB, k = 0.8 gives in Table VI:
@@ -105,7 +104,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
      * @param zimag
      * @param displayOutput
      */
-    public AlgorithmEllipticFilter(int n, double rp[], double k, double preal[], double pimag[], double zimag[], boolean displayOutput) {
+    public AlgorithmEllipticFilter(int n, double rp, double k, double preal[], double pimag[], double zimag[], boolean displayOutput) {
         this.n = n;
         this.rp = rp;
         this.k = k;
@@ -116,7 +115,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         this.runFORTRAN = true;
     }
     
-    public AlgorithmEllipticFilter(int n, double rp[], double rs[], double zimag[], double preal[], double pimag[], double gain[], boolean displayOutput) {
+    public AlgorithmEllipticFilter(int n, double rp, double rs, double zimag[], double preal[], double pimag[], double gain[], boolean displayOutput) {
     	this.n = n;
     	this.rp = rp;
     	this.rs = rs;
@@ -152,8 +151,8 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     public void runTest() {
     	double wc;
     	n = 7;
-    	rp = new double[]{0.1};
-    	rs = new double[]{55.43};
+    	rp = 0.1;
+    	rs = 55.43;
     	no = n % 2;
     	n3 = (n - no)/2;
     	zimag = new double[2*n3];
@@ -161,14 +160,10 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     	pimag = new double[2*n3];
     	gain = new double[1];
         new AlgorithmEllipticFilter(n, rp, rs, zimag, preal, pimag, gain, true);
-    	//ellipap1();
-    	//generatePoly();
-    	//wc = find3dBfrequency();
-    	//System.out.println("3dB frequency = " + wc);
-        //rsToSet3dBfrequency(2.0);
-        //System.out.println("rs[0] = " + rs[0]);
-        rpToSet3dBfrequency(0.4);
-        System.out.println("rp[0] = " + rp[0]);
+        ellipap1();
+    	generatePoly();
+    	wc = find3dBfrequency();
+    	System.out.println("3dB frequency = " + wc);
     	return;
     }
 
@@ -206,7 +201,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         no = n % 2;
         n2 = (n + no)/2;
         n3 = (n - no)/2;
-        apn = dbn * rp[0];
+        apn = dbn * rp;
         e[0] = Math.sqrt(2.0 * Math.exp(apn) * Math.sinh(apn));
         ek[0] = k;
         
@@ -335,7 +330,7 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         if (n == 1) {
         	// Special case; for n == 1, reduces to Chebyshev type 1
         	zimag = null;
-        	preal[0] = -Math.sqrt(1.0/(Math.pow(10, (rp[0]/10))-1));
+        	preal[0] = -Math.sqrt(1.0/(Math.pow(10, (rp/10))-1));
         	pimag = null;
         	gain[0] = -preal[0];
         	return;
@@ -345,8 +340,8 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         
         no = n % 2;
         n3 = (n - no)/2;
-        apn = dbn * rp[0];
-        asn = dbn * rs[0];
+        apn = dbn * rp;
+        asn = dbn * rs;
         e[0] = Math.sqrt(2.0 * Math.exp(apn) * Math.sinh(apn));
         g[0] = e[0]/Math.sqrt(Math.exp(2.0 * asn) - 1.0);
         
@@ -510,14 +505,15 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     	int i;
     	double gain = 1.0;
     	for (i = 0; i < n3; i++) {
-    		gain *= (N2[i]*w*w + N0[i]);
-    	}
-    	for (i = 0; i < n3; i++) {
-    		gain /= (D2[i]*w*w + D1[i]*w + D0[i]);
+    		gain *= (D2[i]*w*w + D1[i]*w + D0[i]);
     	}
     	if (no == 1) {
-    		gain /= (D1[n3]*w + D0[n3]);
+    		gain *= (D1[n3]*w + D0[n3]);
     	}
+    	for (i = 0; i < n3; i++) {
+    		gain /= (N2[i]*w*w + N0[i]);
+    	}
+    	
     	return gain;
     	
     }
@@ -536,129 +532,35 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     	}
     	if (gain < desiredGain) {
     		while (gain < desiredGain) {
-    			whigh = wc;
-    			wc /= 10.0;
-    			gain = findGain(wc);
-    		}
-    		wlow = wc;
-    	}
-    	else {
-    		while (gain > desiredGain) {
     			wlow = wc;
     			wc *= 10.0;
     			gain = findGain(wc);
     		}
     		whigh = wc;
     	}
+    	else {
+    		while (gain > desiredGain) {
+    			whigh = wc;
+    			wc /= 10.0;
+    			gain = findGain(wc);
+    			if (wc == 0) {
+    				MipavUtil.displayError("Gain at wc = 0 reaches a minimum of " + gain + " Try increasing order of filter");
+    				System.exit(0);
+    			}
+    		}
+    		wlow = wc;
+    	}
     	while (Math.abs(gain - desiredGain) >= epsilon) {
     		wc = Math.sqrt(wlow * whigh);
     		gain = findGain(wc);
     		if (gain < desiredGain) {
-    			whigh = wc;
+    			wlow = wc;
     		}
     		else {
-    			wlow = wc;
+    			whigh = wc;
     		}
     	}
     	return wc;
-    }
-    
-    public void rsToSet3dBfrequency(double wdesired) {
-        // Find rs[0] where 3dB frequency = wdesired
-    	// By taking rs[0] close to 0 w3dB is taken to a minimum value of 1.0.
-    	// stopband loss = 10log(1 + epsilon**2/g**2) has a minimum value of zero.
-    	double epsilon = 1.0E-10;
-    	double rslow = rs[0];
-    	double rshigh = rs[0];
-    	double w3dB;
-    	ellipap1();
-    	generatePoly();
-    	w3dB = find3dBfrequency();
-    	if (Math.abs(w3dB - wdesired) < epsilon) {
-    		return;
-    	}
-    	if (w3dB < wdesired) {
-    		while (w3dB < wdesired) {
-    			rslow = rs[0];
-    			rs[0] *= 2.0;
-    			ellipap1();
-            	generatePoly();
-    			w3dB = find3dBfrequency();
-    		}
-            rshigh = rs[0];
-    	}
-    	else {
-    		while (w3dB > wdesired) {
-    			rshigh = rs[0];
-    			rs[0] /= 2.0;
-    			ellipap1();
-            	generatePoly();
-    			w3dB = find3dBfrequency();
-    		}
-    		rslow = rs[0];
-    	}
-    	while (Math.abs(w3dB - wdesired) >= epsilon) {
-    		rs[0] = Math.sqrt(rslow * rshigh);
-    		ellipap1();
-        	generatePoly();
-    		w3dB = find3dBfrequency();
-    		if (w3dB < wdesired) {
-    			rslow = rs[0];
-    		}
-    		else {
-    			rshigh = rs[0];
-    		}
-    	}
-    	return; // return answer in rs[0]
-    }
-    
-    public void rpToSet3dBfrequency(double wdesired) {
-        // Find rp[0] where 3dB frequency = wdesired
-    	// By taking rp[0] low w3dB is taken to a minimum value of 1.665.
-    	// rp[0] = 10*log(1 + e[0]**2) has a minimum value of 0.
-    	double epsilon = 1.0E-10;
-    	double rplow = rp[0];
-    	double rphigh = rp[0];
-    	double w3dB;
-    	ellipap1();
-    	generatePoly();
-    	w3dB = find3dBfrequency();
-    	if (Math.abs(w3dB - wdesired) < epsilon) {
-    		return;
-    	}
-    	if (w3dB < wdesired) {
-    		while (w3dB < wdesired) {
-    			rplow = rp[0];
-    			rp[0] *= 2.0;
-    			ellipap1();
-            	generatePoly();
-    			w3dB = find3dBfrequency();
-    		}
-            rphigh = rp[0];
-    	}
-    	else {
-    		while (w3dB > wdesired) {
-    			rphigh = rp[0];
-    			rp[0] /= 2.0;
-    			ellipap1();
-            	generatePoly();
-    			w3dB = find3dBfrequency();
-    		}
-    		rplow = rp[0];
-    	}
-    	while (Math.abs(w3dB - wdesired) >= epsilon) {
-    		rp[0] = Math.sqrt(rplow * rphigh);
-    		ellipap1();
-        	generatePoly();
-    		w3dB = find3dBfrequency();
-    		if (w3dB < wdesired) {
-    			rplow = rp[0];
-    		}
-    		else {
-    			rphigh = rp[0];
-    		}
-    	}
-    	return; // return answer in rp[0]
     }
     
     /**
