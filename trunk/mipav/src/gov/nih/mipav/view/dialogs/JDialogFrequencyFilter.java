@@ -355,6 +355,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
             textOrder.setEnabled(true);
+            textOrder.setText("7");
             labelOrder.setEnabled(true);
             textEpsilon.setText("0.1");
             textEpsilon.setEnabled(true);
