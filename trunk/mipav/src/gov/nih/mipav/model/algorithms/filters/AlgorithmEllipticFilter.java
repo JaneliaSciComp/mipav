@@ -327,6 +327,8 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         double ci2[] = new double[1];
         int i;
     	
+        no = n % 2;
+        n3 = (n - no)/2;
         if (n == 1) {
         	// Special case; for n == 1, reduces to Chebyshev type 1
         	zimag = null;
@@ -338,8 +340,6 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         
         dbn = Math.log(10.0)/20.0;
         
-        no = n % 2;
-        n3 = (n - no)/2;
         apn = dbn * rp;
         asn = dbn * rs;
         e[0] = Math.sqrt(2.0 * Math.exp(apn) * Math.sinh(apn));
@@ -477,25 +477,37 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
         	D2[i] = 1.0;
         }
         if (runFORTRAN) {
-        	for (i = 0; i < n3; i++) {
-        		N0[i] = zimag[i]*zimag[i];
-        		D1[i] = -2.0*preal[i];
-        		D0[i] = preal[i]*preal[i] + pimag[i]*pimag[i];
+        	if (n == 1) {
+        	    D1[0] = 1.0;
+        	    D0[0] = -preal[0];
         	}
-        	if (no == 1) {
-        		D1[n3] = 1.0;
-        		D0[n3] = -preal[n3];
+        	else {
+	        	for (i = 0; i < n3; i++) {
+	        		N0[i] = zimag[i]*zimag[i];
+	        		D1[i] = -2.0*preal[i];
+	        		D0[i] = preal[i]*preal[i] + pimag[i]*pimag[i];
+	        	}
+	        	if (no == 1) {
+	        		D1[n3] = 1.0;
+	        		D0[n3] = -preal[n3];
+	        	}
         	}
         }
         else {
-        	for (i = 0; i < n3; i++) {
-        		N0[i] = zimag[2*i]*zimag[2*i];
-        		D1[i] = -2.0*preal[2*i];
-        		D2[i] = preal[2*i]*preal[2*i] + pimag[2*i]*pimag[2*i];
+        	if (n == 1) {
+        	    D1[0] = 1.0;
+        	    D0[0] = -preal[0];
         	}
-        	if (no == 1) {
-        		D1[n3] = 1.0;
-        		D0[n3] = -preal[2*n3];
+        	else {
+	        	for (i = 0; i < n3; i++) {
+	        		N0[i] = zimag[2*i]*zimag[2*i];
+	        		D1[i] = -2.0*preal[2*i];
+	        		D2[i] = preal[2*i]*preal[2*i] + pimag[2*i]*pimag[2*i];
+	        	}
+	        	if (no == 1) {
+	        		D1[n3] = 1.0;
+	        		D0[n3] = -preal[2*n3];
+	        	}
         	}
         }
     }
@@ -504,14 +516,19 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     public double findGain(double w) {
     	int i;
     	double gain = 1.0;
-    	for (i = 0; i < n3; i++) {
-    		gain *= (D2[i]*w*w + D1[i]*w + D0[i]);
+    	if (n == 1) {
+    		gain = D1[0]*w + D0[0];
     	}
-    	if (no == 1) {
-    		gain *= (D1[n3]*w + D0[n3]);
-    	}
-    	for (i = 0; i < n3; i++) {
-    		gain /= (N2[i]*w*w + N0[i]);
+    	else {
+	    	for (i = 0; i < n3; i++) {
+	    		gain *= (D2[i]*w*w + D1[i]*w + D0[i]);
+	    	}
+	    	if (no == 1) {
+	    		gain *= (D1[n3]*w + D0[n3]);
+	    	}
+	    	for (i = 0; i < n3; i++) {
+	    		gain /= (N2[i]*w*w + N0[i]);
+	    	}
     	}
     	
     	return gain;
