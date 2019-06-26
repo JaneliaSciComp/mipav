@@ -1413,7 +1413,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             tmpStr = textEpsilon.getText();
             epsilon = Double.parseDouble(tmpStr);
             
-            if (epsilon <= 0.0f) {
+            if (epsilon <= 0.0) {
             	MipavUtil.displayError("Chebyshev maximum ripple epsilon must be greater than 0.0");
             	textEpsilon.requestFocus();
             	textEpsilon.selectAll();
@@ -1436,7 +1436,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             tmpStr = textEpsilon.getText();
             epsilon = Double.parseDouble(tmpStr);
             
-            if (epsilon <= 0.0f) {
+            if (epsilon <= 0.0) {
             	MipavUtil.displayError("Elliptic passband ripple in decibels must be greater than 0.0");
             	textEpsilon.requestFocus();
             	textEpsilon.selectAll();
@@ -1447,7 +1447,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             tmpStr = textRs.getText();
             rs = Double.parseDouble(tmpStr);
             
-            if (rs <= 0.0f) {
+            if (rs <= 0.0) {
             	MipavUtil.displayError("Elliptic decibels stopband is down must be greater than 0.0");
             	textRs.requestFocus();
             	textRs.selectAll();
