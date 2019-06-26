@@ -390,7 +390,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             TSPAnalysisAlgo.addListener(this);
-            // createProgressBar("Creating plugin", " ...", generateFusionAlgo);
+            createProgressBar("Creating plugin", " ...", TSPAnalysisAlgo);
+            progressBar.setVisible(true);
 
             setVisible(false); // Hide dialog
 
