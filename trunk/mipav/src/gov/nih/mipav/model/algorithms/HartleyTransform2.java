@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
 
+import gov.nih.mipav.model.algorithms.filters.AlgorithmEllipticFilter;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 
@@ -89,6 +90,7 @@ public class HartleyTransform2 extends AlgorithmBase {
     public static final int BUTTERWORTH = 3;
     public static final int CHEBYSHEV_TYPE_I = 5;
     public static final int CHEBYSHEV_TYPE_II = 6;
+    public static final int ELLIPTIC = 7;
     
     private int filterType;
     private double f1;
@@ -98,7 +100,11 @@ public class HartleyTransform2 extends AlgorithmBase {
     public static final int BANDPASS = 3;
     public static final int BANDSTOP = 4;
     private int filterOrder;
-    private double epsilon;  // maximum ripple in Chebyshev filters
+    // maximum ripple in Chebyshev filters
+    // passband ripple in dB = 10*log(1 + e[0]**2) in Elliptic filter
+    private double epsilon;  
+    
+    private double rs; // decibels stopband is down in Elliptic filter
     public HartleyTransform2() {
 		
 	}
@@ -134,7 +140,7 @@ public class HartleyTransform2 extends AlgorithmBase {
     }
     
     public HartleyTransform2(ModelImage transformImage, ModelImage inverseImage, ModelImage srcImg, int constructionMethod,
-    		int filterType, double f1, double f2, int filterOrder, double epsilon) {
+    		int filterType, double f1, double f2, int filterOrder, double epsilon, double rs) {
 		super(null, srcImg);
 		this.transformImage = transformImage;
 		this.inverseImage = inverseImage;
@@ -144,6 +150,7 @@ public class HartleyTransform2 extends AlgorithmBase {
 		this.f2 = f2;
 		this.filterOrder = filterOrder;
 		this.epsilon = epsilon;
+		this.rs = rs;
 	}
     
     public void fht2D(int yDim, int xDim, double src[][], double dst[][], boolean forwardTransform) {
@@ -781,6 +788,9 @@ public class HartleyTransform2 extends AlgorithmBase {
         		else if (constructionMethod == CHEBYSHEV_TYPE_II) {
         		    makeChebyshevTypeIIFilter(doubleBuffer, f1, f2);	
         		}
+        		else if (constructionMethod == ELLIPTIC) {
+        			makeEllipticFilter(doubleBuffer, f1, f2);
+        		}
         		center(doubleBuffer);
         		for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
@@ -909,6 +919,88 @@ public class HartleyTransform2 extends AlgorithmBase {
                     }
                 }
             } // else if (filterType == BANDSTOP)
+        
+    }
+    
+    private void makeEllipticFilter(double buffer[], double fr1, double fr2) {
+    	// Filter has ripples in both the passband and stopband
+    	int x, y, pos;
+        double distsq, coeff, xnorm, ynorm;
+        
+        double ratio;
+        double Tn;
+        double wc;
+        double rp = epsilon;
+    	int no = filterOrder % 2;
+    	int n3 = (filterOrder - no)/2;
+    	double zimag[] = new double[2*n3];
+    	double preal[] = new double[2*n3 + no];
+    	double pimag[] = new double[2*n3];
+    	double gain[] = new double[1];
+        AlgorithmEllipticFilter ef = new AlgorithmEllipticFilter(filterOrder, rp, rs, zimag, preal, pimag, gain, false);
+        ef.ellipap1();
+    	ef.generatePoly();
+    	wc = ef.find3dBfrequency();
+     
+        double xCenter = (xDim-1.0)/2.0;
+        double yCenter = (yDim-1.0)/2.0;
+        xnorm = xCenter*xCenter;
+        ynorm = yCenter*yCenter;
+
+        
+
+        if (filterType == LOWPASS) {
+
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = wc * Math.sqrt(distsq)/fr1;
+                    Tn = ef.findGain(ratio);
+                    coeff = (1.0 / (1.0 + Tn*Tn));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // end of if (filterType == LOWPASS)
+        else if (filterType == HIGHPASS) {
+
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = wc * fr1/Math.sqrt(distsq);
+                    Tn = ef.findGain(ratio);
+                    coeff = (1.0 / (1.0 + Tn*Tn));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == HIGHPASS)	
+        else if (filterType == BANDPASS) {
+
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = wc * Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                    Tn = ef.findGain(ratio);
+                    coeff = (1.0 / (1.0 + Tn*Tn));
+                    buffer[pos] *= coeff;   
+                }
+            }
+        } // else if (filterType == BANDPASS)
+        else if (filterType == BANDSTOP) {
+
+            for (y = 0; y <= (yDim - 1); y++) {
+                for (x = 0; x <= (xDim - 1); x++) {
+                    pos = (y * xDim) + x;
+                    distsq = ((x-xCenter) * (x-xCenter) / xnorm) + ((y-yCenter) * (y-yCenter) / ynorm);
+                    ratio = wc * ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                    Tn = ef.findGain(ratio);
+                    coeff = (1.0 / (1.0 + Tn*Tn));
+                    buffer[pos] *= coeff;
+                }
+            }
+        } // else if (filterType == BANDSTOP)
         
     }
     
