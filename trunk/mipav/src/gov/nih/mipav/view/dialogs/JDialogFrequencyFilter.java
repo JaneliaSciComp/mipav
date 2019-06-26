@@ -323,7 +323,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             textEpsilon.setText("0.5");
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
-            labelEpsilon.setText("Maximum ripple");
+            labelEpsilon.setText("Maximum ripple in pass band");
             textRs.setEnabled(false);
             labelRs.setEnabled(false);
             bandPass.setEnabled(true);
@@ -341,7 +341,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             textEpsilon.setText("0.5");
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
-            labelEpsilon.setText("Maximum ripple");
+            labelEpsilon.setText("Maximum ripple in stop band");
             textRs.setEnabled(false);
             labelRs.setEnabled(false);
             bandPass.setEnabled(true);
