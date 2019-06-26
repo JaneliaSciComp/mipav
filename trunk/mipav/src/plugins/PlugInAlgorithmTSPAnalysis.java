@@ -273,6 +273,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		return;
     	}
     	
+    	fireProgressStateChanged("Opening selecting images...");
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
     	for (File fileEntry : folder.listFiles()) {
@@ -417,6 +418,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         units[3] = Unit.SECONDS.getLegacyNum();
         volume = zDim * length;
         dataSize = volume * tDim;
+        fireProgressStateChanged("Exporting data  ...");
+        fireProgressStateChanged(10);
         buffer = new short[dataSize];
     	try {
     		image3D.exportData(0,  dataSize, buffer);
@@ -519,6 +522,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	// First TSP iteration, Loop over all voxels.  First find delay from cross-correlation.
     	// Then find Correlation Coefficient after shifting by delay
+    	fireProgressStateChanged("First TSP iteration  ...");
+        fireProgressStateChanged(20);
     	if (multiThreading) {
     		ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
@@ -575,6 +580,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	sumT = new long[tDim];
     	countT = new int[tDim];
     	for (it = 1; it <= TSP_iter; it++) {
+    		fireProgressStateChanged("Later TSP iteration number " + it + " out of " + TSP_iter);
+            fireProgressStateChanged(30 + 40 * (it-1)/TSP_iter);
     		for (t = 1; t < tDim; t++) {
     			sumT[t] = 0;
     			countT[t] = 0;
@@ -693,6 +700,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	} // for (x = 0; x < xDim; x++)
     	
     	// Write images and clean up variable
+    	
+    	fireProgressStateChanged("Writing first set of images");
+        fireProgressStateChanged(70);
     	dbuffer = new double[volume];
     	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
     	for (x = 0; x < xDim; x++) {
@@ -904,6 +914,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	delay_mapImage = null;
     	
     	// Deconvolution analysis
+    	fireProgressStateChanged("Deconvolution analysis");
+        fireProgressStateChanged(75);
     	S = new double[tDim];
     	peaks = new short[zDim][yDim][xDim];
     	ttp = new short[zDim][yDim][xDim];
@@ -1087,9 +1099,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         D_invMat = (vMat.times(wMat)).times(uMat.transpose());
         D_inv = D_invMat.getArray();
         
-        
-        
         // Iterate over brain volume to find rCBF
+        fireProgressStateChanged("Iterate over brain volume to find CBF");
+        fireProgressStateChanged(80);
         CBV = new double[zDim][yDim][xDim];
         CBF = new double[zDim][yDim][xDim];
         MTT = new double[zDim][yDim][xDim];
@@ -1380,6 +1392,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         } // else single processor
         
         // Write maps to images
+        fireProgressStateChanged("Writing final set of images");
+        fireProgressStateChanged(95);
         CBFImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBF");
     	for (x = 0; x < xDim; x++) {
     		for (y = 0; y < yDim; y++) {
