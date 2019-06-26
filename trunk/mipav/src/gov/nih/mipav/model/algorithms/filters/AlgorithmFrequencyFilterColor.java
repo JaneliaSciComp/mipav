@@ -2938,9 +2938,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     }
     
     private void makeEllipticFilter(double fr1, double fr2) {
-    	// Lowpass filter has ripples in the passband but no ripples in the stopband.
+    	// Filter has ripples in both the passband and stopband
     	int x, y, z, pos;
-        double distsq, coeff, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
+        double distsq, coeff, xnorm, ynorm, xcenter, ycenter;
         int upperZ;
         
         double ratio;
