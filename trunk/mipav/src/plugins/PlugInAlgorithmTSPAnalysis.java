@@ -92,6 +92,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	private int search = ELSUNC_2D_SEARCH;
 	
 	private boolean calculateBounds = false;
+	
+	private String fileNameBase = "IM";
     
     private ModelImage pickImage;
     
@@ -106,7 +108,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      */
     public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
-    		boolean multiThreading, int search, boolean calculateBounds) {
+    		boolean multiThreading, int search, boolean calculateBounds, String fileNameBase) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.calculateMaskingThreshold = calculateMaskingThreshold;
@@ -118,6 +120,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.multiThreading = multiThreading;
     	this.search = search;
     	this.calculateBounds = calculateBounds;
+    	this.fileNameBase = fileNameBase;
     }   
     
     /**
@@ -276,7 +279,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		if (!fileEntry.isDirectory()) {
     			if (fileEntry.getName().length() > 2) {
     			    String startName = fileEntry.getName().substring(0,2);
-    			    if (startName.equalsIgnoreCase("IM")) {
+    			    if (startName.equalsIgnoreCase(fileNameBase)) {
     			    	selectedFileNumber++;
     			    }
     			}
@@ -288,7 +291,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		if (!fileEntry.isDirectory()) {
     			if (fileEntry.getName().length() > 2) {
     			    String startName = fileEntry.getName().substring(0,2);
-    			    if (startName.equalsIgnoreCase("IM")) {
+    			    if (startName.equalsIgnoreCase(fileNameBase)) {
     			    	fileList[index++] = fileEntry.getName();
     			    }
     			}
