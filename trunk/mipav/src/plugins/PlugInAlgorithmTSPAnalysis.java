@@ -277,11 +277,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int selectedFileNumber = 0;
     	for (File fileEntry : folder.listFiles()) {
     		if (!fileEntry.isDirectory()) {
-    			if (fileEntry.getName().length() > 2) {
-    			    String startName = fileEntry.getName().substring(0,2);
+    			if (fileEntry.getName().length() > fileNameBase.length()) {
+    			    String startName = fileEntry.getName().substring(0,fileNameBase.length());
     			    if (startName.equalsIgnoreCase(fileNameBase)) {
     			    	selectedFileNumber++;
     			    }
+    			}
+    		}
+    		else {
+    			for (File fileEntry2 : fileEntry.listFiles()) {
+    				if (!fileEntry2.isDirectory()) {
+    					if (fileEntry2.getName().length() > fileNameBase.length()) {
+    	    			    String startName = fileEntry2.getName().substring(0,fileNameBase.length());
+    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+    	    			    	selectedFileNumber++;
+    	    			    }
+    	    			}	
+    				}
     			}
     		}
     	}
@@ -289,11 +301,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int index = 0;
     	for (File fileEntry : folder.listFiles()) {
     		if (!fileEntry.isDirectory()) {
-    			if (fileEntry.getName().length() > 2) {
-    			    String startName = fileEntry.getName().substring(0,2);
+    			if (fileEntry.getName().length() > fileNameBase.length()) {
+    			    String startName = fileEntry.getName().substring(0,fileNameBase.length());
     			    if (startName.equalsIgnoreCase(fileNameBase)) {
     			    	fileList[index++] = fileEntry.getName();
     			    }
+    			}
+    		}
+    		else {
+    			for (File fileEntry2 : fileEntry.listFiles()) {
+    				if (!fileEntry2.isDirectory()) {
+    					if (fileEntry2.getName().length() > fileNameBase.length()) {
+    	    			    String startName = fileEntry2.getName().substring(0,fileNameBase.length());
+    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+    	    			    	fileList[index++] = fileEntry.getName();	
+    	    			    }
+    	    			}	
+    				}
     			}
     		}
     	}
