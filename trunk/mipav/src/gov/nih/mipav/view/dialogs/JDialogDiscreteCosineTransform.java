@@ -182,6 +182,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
+            labelEpsilon.setText("Maximum pass band ripple");
             textRs.setEnabled(false);
             labelRs.setEnabled(false);
             lowPass.setEnabled(true);
@@ -215,6 +216,7 @@ public class JDialogDiscreteCosineTransform extends JDialogScriptableBase implem
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
+            labelEpsilon.setText("Maximum stop band ripple");
             textRs.setEnabled(false);
             labelRs.setEnabled(false);
             lowPass.setEnabled(true);
