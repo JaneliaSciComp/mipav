@@ -519,6 +519,19 @@ public class AlgorithmEllipticFilter extends AlgorithmBase {
     	if (n == 1) {
     		gain = D1[0]*w + D0[0];
     	}
+    	else if (Double.isInfinite(w)) {
+    		if (no == 0) {
+	    	    for (i = 0; i < n3; i++) {
+	    	    	gain *= D2[i];
+	    	    }
+	    	    for (i = 0; i < n3; i++) {
+	    	    	gain /= N2[i];
+	    	    }
+    		}
+    		else {
+    			gain = Double.POSITIVE_INFINITY;
+    		}
+    	}
     	else {
 	    	for (i = 0; i < n3; i++) {
 	    		gain *= (D2[i]*w*w + D1[i]*w + D0[i]);
