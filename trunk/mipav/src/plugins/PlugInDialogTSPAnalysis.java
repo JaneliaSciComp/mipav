@@ -30,6 +30,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 
 	private String pwiImageFileDirectory;
 	
+	private JTextField baseText;
+	
 	private JCheckBox calculateMaskingCheckBox;
 	
 	private boolean calculateMaskingThreshold = true;
@@ -88,6 +90,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	private JCheckBox boundsCheckBox;
 	
 	private boolean calculateBounds = false;
+	
+	private String fileNameBase = "IM";
 	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
@@ -175,6 +179,20 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         gbc.gridx = 0;
         gbc.gridy = 1;
+        JLabel baseLabel = new JLabel("Base name in selected files");
+        baseLabel.setFont(serif12);
+        baseLabel.setForeground(Color.black);
+        inputPanel.add(baseLabel, gbc);
+        
+        gbc.gridx = 1;
+        baseText = new JTextField(10);
+        baseText.setText("IM");
+        baseText.setFont(serif12);
+        baseText.setForeground(Color.black);
+        inputPanel.add(baseText, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         calculateMaskingCheckBox = new JCheckBox("Calculate masking threshold from mean and standard deviation");
         calculateMaskingCheckBox.setSelected(true);
         calculateMaskingCheckBox.setFont(MipavUtil.font12);
@@ -183,7 +201,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(calculateMaskingCheckBox, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         masking_thresholdLabel = new JLabel("Masking threshold");
         masking_thresholdLabel.setFont(serif12);
         masking_thresholdLabel.setForeground(Color.black);
@@ -199,7 +217,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(masking_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
         TSP_thresholdLabel.setFont(serif12);
         TSP_thresholdLabel.setForeground(Color.black);
@@ -213,7 +231,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         JLabel TSP_iterLabel = new JLabel("TSP iterations");
         TSP_iterLabel.setFont(serif12);
         TSP_iterLabel.setForeground(Color.black);
@@ -227,7 +245,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_iterText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         JLabel PsvdLabel = new JLabel("Psvd");
         PsvdLabel.setFont(serif12);
         PsvdLabel.setForeground(Color.black);
@@ -242,21 +260,21 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         AIFGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         autoButton = new JRadioButton("Auto AIF Calculation", true);
         autoButton.setFont(serif12);
         autoButton.setForeground(Color.black);
         AIFGroup.add(autoButton);
         inputPanel.add(autoButton, gbc);
         
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         pickButton = new JRadioButton("Pick image pixel corresponding to AIF", false);
         pickButton.setFont(serif12);
         pickButton.setForeground(Color.black);
         AIFGroup.add(pickButton);
         inputPanel.add(pickButton, gbc);
         
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -271,7 +289,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         searchGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
         search2DElsuncButton.setFont(serif12);
         search2DElsuncButton.setForeground(Color.black);
@@ -279,7 +297,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DElsuncButton);
         inputPanel.add(search2DElsuncButton, gbc);   
         
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
         search1DElsuncButton.setFont(serif12);
         search1DElsuncButton.setForeground(Color.black);
@@ -287,7 +305,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search1DElsuncButton);
         inputPanel.add(search1DElsuncButton, gbc);
         
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
@@ -295,7 +313,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
         
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
         search2DNelderMeadButton.setFont(serif12);
         search2DNelderMeadButton.setForeground(Color.black);
@@ -303,7 +321,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNelderMeadButton);
         inputPanel.add(search2DNelderMeadButton, gbc);
         
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
         boundsCheckBox.setFont(MipavUtil.font12);
         boundsCheckBox.setForeground(Color.black);
@@ -366,7 +384,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, calculateMaskingThreshold, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateBounds);
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateBounds, fileNameBase);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -436,6 +454,14 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     private boolean setVariables() {
     	String tmpStr;
     	pwiImageFileDirectory = pwiImageFileDirectoryText.getText();
+    	
+    	fileNameBase = baseText.getText().trim();
+    	if (fileNameBase == null) {
+    		MipavUtil.displayError("The file name base is empty");
+    		baseText.requestFocus();
+    		baseText.selectAll();
+    		return false;
+    	}
     	
     	calculateMaskingThreshold = calculateMaskingCheckBox.isSelected();
     	if (!calculateMaskingThreshold) {
