@@ -43,6 +43,7 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
     public static final int BUTTERWORTH = 3;
     public static final int CHEBYSHEV_TYPE_I = 5;
     public static final int CHEBYSHEV_TYPE_II = 6;
+    public static final int ELLIPTIC = 7;
     
     private int filterType;
     private double f1;
@@ -52,7 +53,11 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
     public static final int BANDPASS = 3;
     public static final int BANDSTOP = 4;
     private int filterOrder;
-    private double epsilon;  // maximum ripple in Chebyshev filters
+    // maximum ripple in Chebyshev filters
+    // passband ripple in dB = 10*log(1 + e[0]**2) in Elliptic filter
+    private double epsilon;  
+    
+    private double rs; // decibels stopband is down in Elliptic filter
     
     private JPanel constructionPanel;
     private ButtonGroup constructionGroup;
@@ -60,10 +65,13 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
     private JRadioButton gaussianFilter;
     private JRadioButton chebyshevIFilter;
     private JRadioButton chebyshevIIFilter;
+    private JRadioButton ellipticFilter;
     private JLabel labelOrder;
     private JLabel labelEpsilon;
+    private JLabel labelRs;
     private JTextField textOrder;
     private JTextField textEpsilon;
+    private JTextField textRs;
     
     private JPanel filterPanel;
     private ButtonGroup filterTypeGroup;
@@ -117,6 +125,8 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
             labelOrder.setEnabled(false);
             textEpsilon.setEnabled(false);
             labelEpsilon.setEnabled(false);
+            textRs.setEnabled(false);
+            labelRs.setEnabled(false);
             lowPass.setEnabled(false);
             highPass.setEnabled(false);
             bandPass.setEnabled(false);
@@ -131,6 +141,8 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
             labelOrder.setEnabled(false);
             textEpsilon.setEnabled(false);
             labelEpsilon.setEnabled(false);
+            textRs.setEnabled(false);
+            labelRs.setEnabled(false);
             textF1.setEnabled(true);
             labelF1.setText("Frequency F1 > 0.0 ");
             labelF1.setEnabled(true);
@@ -153,6 +165,8 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(false);
             labelEpsilon.setEnabled(false);
+            textRs.setEnabled(false);
+            labelRs.setEnabled(false);
             lowPass.setEnabled(true);
             highPass.setEnabled(true);
             bandPass.setEnabled(true);
@@ -173,6 +187,9 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
+            labelEpsilon.setText("Maximum pass band ripple");
+            textRs.setEnabled(false);
+            labelRs.setEnabled(false);
             lowPass.setEnabled(true);
             highPass.setEnabled(true);
             bandPass.setEnabled(true);
@@ -204,10 +221,38 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
+            labelEpsilon.setText("Maximum stop band ripple");
+            textRs.setEnabled(false);
+            labelRs.setEnabled(false);
             lowPass.setEnabled(true);
             highPass.setEnabled(true);
             bandPass.setEnabled(true);
             bandStop.setEnabled(true);
+        } else if (source == ellipticFilter) {
+        	textF1.setEnabled(true);
+            labelF1.setText("Frequency F1 > 0.0 to 1.0 ");
+            labelF1.setEnabled(true);
+            if (bandPass.isSelected() || bandStop.isSelected()) {
+                textF2.setEnabled(true);
+                labelF2.setEnabled(true);
+            }
+            else {
+            	textF2.setEnabled(false);
+                labelF2.setEnabled(false);	
+            }
+            textOrder.setEnabled(true);
+            textOrder.setText("7");
+            labelOrder.setEnabled(true);
+            textEpsilon.setText("0.1");
+            textEpsilon.setEnabled(true);
+            labelEpsilon.setEnabled(true);
+            labelEpsilon.setText("Passband ripple in decibels");
+            textRs.setEnabled(true);
+            labelRs.setEnabled(true);
+            lowPass.setEnabled(true);
+            highPass.setEnabled(true);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);    
         } else if ((source == lowPass) || (source == highPass)) {
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
@@ -287,6 +332,12 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
         chebyshevIIFilter.setForeground(Color.black);
         chebyshevIIFilter.addActionListener(this);
         constructionGroup.add(chebyshevIIFilter);
+        
+        ellipticFilter = new JRadioButton("Elliptic filter", false);
+        ellipticFilter.setFont(serif12);
+        ellipticFilter.setForeground(Color.black);
+        ellipticFilter.addActionListener(this);
+        constructionGroup.add(ellipticFilter);
 
         textOrder = new JTextField(10);
         textOrder.setText("1");
@@ -310,6 +361,17 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
         labelEpsilon.setFont(serif12);
         labelEpsilon.setEnabled(false);
         
+        textRs = new JTextField(10);
+        textRs.setText("55.43");
+        textRs.setFont(serif12);
+        textRs.setForeground(Color.black);
+        textRs.setEnabled(false);
+        
+        labelRs = new JLabel("Decibels stop band is down");
+        labelRs.setForeground(Color.black);
+        labelRs.setFont(serif12);
+        labelRs.setEnabled(false);
+        
         gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
@@ -325,17 +387,24 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
         constructionPanel.add(chebyshevIFilter, gbc);
         gbc.gridy = 4;
         constructionPanel.add(chebyshevIIFilter, gbc);
-        gbc.gridx = 1;
         gbc.gridy = 5;
+        constructionPanel.add(ellipticFilter, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
         constructionPanel.add(labelOrder, gbc);
         gbc.gridx = 2;
         constructionPanel.add(textOrder, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         constructionPanel.add(labelEpsilon, gbc);
         gbc.gridx = 2;
         constructionPanel.add(textEpsilon, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 8;
+        constructionPanel.add(labelRs, gbc);
+        gbc.gridx = 2;
+        constructionPanel.add(textRs, gbc);
         
         filterPanel = new JPanel(new GridBagLayout());
         filterPanel.setBorder(buildTitledBorder("Filter specifications"));
@@ -499,6 +568,40 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
             	
             	return false;
             }
+        } else if (ellipticFilter.isSelected()) {
+        	constructionMethod = ELLIPTIC;
+            tmpStr = textOrder.getText();
+            filterOrder = Integer.parseInt(tmpStr);
+
+            if (filterOrder < 1) {
+                MipavUtil.displayError("Elliptic order must be at least 1");
+                textOrder.requestFocus();
+                textOrder.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = textEpsilon.getText();
+            epsilon = Double.parseDouble(tmpStr);
+            
+            if (epsilon <= 0.0) {
+            	MipavUtil.displayError("Elliptic paasband ripple in decibels epsilon mut be greater than 0.0");
+            	textEpsilon.requestFocus();
+            	textEpsilon.selectAll();
+            	
+            	return false;
+            }
+            
+            tmpStr = textRs.getText();
+            rs = Double.parseDouble(tmpStr);
+            
+            if (rs <= 0.0) {
+            	MipavUtil.displayError("Elliptic decibels stopband is down must be greater than 0.0");
+            	textRs.requestFocus();
+            	textRs.selectAll();
+            	
+            	return false;
+            }
         }
 
     	if (lowPass.isSelected()) {
@@ -525,7 +628,7 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
                 return false;
             }
         } // end of else if (constructionMethod == GAUSSIAN)
-        else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I)) {
+        else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) || (constructionMethod == ELLIPTIC)) {
             f1 = Double.valueOf(tmpStr).doubleValue();
 
             if (f1 <= 0.0) {
@@ -541,7 +644,7 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
 
                 return false;
             }
-        } // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I))
+        } // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) || (constructionMethod == ELLIPTIC))
         else if (constructionMethod == CHEBYSHEV_TYPE_II) {
         	f1 = Double.valueOf(tmpStr).doubleValue();
 
@@ -598,7 +701,7 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
 		    
 		    
 		    dsAlgo = new DiscreteSineTransform(transformImage, inverseImage, srcImage, multiProcessor, constructionMethod, filterType, f1, f2,
-		    		 filterOrder, epsilon);
+		    		 filterOrder, epsilon, rs);
 		    
 		    // This is very important. Adding this object as a listener allows the algorithm to
 		    // notify this object when it has completed of failed. See algorithm performed event.
@@ -749,6 +852,14 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
     }
     
     /**
+     * 
+     * @param rs
+     */
+     public void setRs(double rs) {
+     	this.rs = rs;
+     }
+    
+    /**
      * Accessor that sets the butterworth order.
      *
      * @param  order  Value to set the butterworth order to.
@@ -766,6 +877,7 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
         setMethod(scriptParameters.getParams().getInt("construction_method"));
         setfilterOrder(scriptParameters.getParams().getInt("filter_order"));
         setEpsilon(scriptParameters.getParams().getDouble("epsilon"));
+        setRs(scriptParameters.getParams().getDouble("rs"));
 	}
 	
 	protected void storeParamsFromGUI() throws ParserException {
@@ -779,5 +891,6 @@ public class JDialogDiscreteSineTransform extends JDialogScriptableBase implemen
         scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_order", filterOrder));
         scriptParameters.getParams().put(ParameterFactory.newParameter("epsilon", epsilon));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rs", rs));
 	}
 }
