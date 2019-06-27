@@ -261,7 +261,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
          * freqfilter either breaks for 2d or for 3d images.
          */
         FFTer = new AlgorithmFrequencyFilter(tempImage[1], !is2d, false, kernelDiameter,
-                                             AlgorithmFrequencyFilter.LOWPASS, frequency, 0,
+                                             AlgorithmFrequencyFilter.LOWPASS, (double)frequency, 0.0,
                                              AlgorithmFrequencyFilter.GAUSSIAN, 0, 0.0, 0.0, false);
 
         // don't set to a new Thread just yet.  let run serially.
