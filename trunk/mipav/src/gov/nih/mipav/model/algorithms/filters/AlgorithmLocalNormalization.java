@@ -262,7 +262,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
          */
         FFTer = new AlgorithmFrequencyFilter(tempImage[1], !is2d, false, kernelDiameter,
                                              AlgorithmFrequencyFilter.LOWPASS, frequency, 0,
-                                             AlgorithmFrequencyFilter.GAUSSIAN, 0, 0.0f, false);
+                                             AlgorithmFrequencyFilter.GAUSSIAN, 0, 0.0, 0.0, false);
 
         // don't set to a new Thread just yet.  let run serially.
         // (ie., in current Thread):
