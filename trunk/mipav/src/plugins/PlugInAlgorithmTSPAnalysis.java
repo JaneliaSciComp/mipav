@@ -298,6 +298,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     			}
     		}
     	}
+    	
+    	if (selectedFileNumber == 0) {
+    		MipavUtil.displayError("No selected image files were found");
+    		setCompleted(false);
+    		return;
+    	}
+    	
     	String fileList[] = new String[selectedFileNumber];
     	int index = 0;
     	for (File fileEntry : folder.listFiles()) {
