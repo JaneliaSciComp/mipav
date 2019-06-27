@@ -1448,7 +1448,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             rs = Double.parseDouble(tmpStr);
             
             if (rs <= 0.0) {
-            	MipavUtil.displayError("Elliptic decibels stopband is down must be greater than 0.0");
+            	MipavUtil.displayError("Elliptic decibels stopband down must be greater than 0.0");
             	textRs.requestFocus();
             	textRs.selectAll();
             	
