@@ -295,6 +295,18 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	    			    }
     	    			}	
     				}
+    				else {
+    					for (File fileEntry3 : fileEntry2.listFiles()) {
+    	    				if (!fileEntry3.isDirectory()) {
+    	    					if (fileEntry3.getName().length() > fileNameBase.length()) {
+    	    	    			    String startName = fileEntry3.getName().substring(0,fileNameBase.length());
+    	    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+    	    	    			    	selectedFileNumber++;
+    	    	    			    }
+    	    	    			}	
+    	    				}
+    					}
+    				}
     			}
     		}
     	}
@@ -322,9 +334,21 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     					if (fileEntry2.getName().length() > fileNameBase.length()) {
     	    			    String startName = fileEntry2.getName().substring(0,fileNameBase.length());
     	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
-    	    			    	fileList[index++] = fileEntry.getName();	
+    	    			    	fileList[index++] = fileEntry2.getName();	
     	    			    }
     	    			}	
+    				}
+    				else {
+    					for (File fileEntry3 : fileEntry2.listFiles()) {
+    	    				if (!fileEntry3.isDirectory()) {
+    	    					if (fileEntry3.getName().length() > fileNameBase.length()) {
+    	    	    			    String startName = fileEntry3.getName().substring(0,fileNameBase.length());
+    	    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+    	    	    			    	fileList[index++] = fileEntry3.getName();		
+    	    	    			    }
+    	    	    			}	
+    	    				}
+    					}
     				}
     			}
     		}
