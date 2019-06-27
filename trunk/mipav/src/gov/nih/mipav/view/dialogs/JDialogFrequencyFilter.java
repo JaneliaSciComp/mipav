@@ -196,11 +196,11 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private JRadioButton windowFilter;
     
-    private double epsilon = 0.5;
+    // maximum ripple in Chebyshev filters
+    // passband ripple in dB = 10*log(1 + e[0]**2) in Elliptic filter
+    private double epsilon;  
     
-    private double rp; // passband ripple in dB = 10*log(1 + e[0]**2) for Elliptic filter
-    
-    private double rs; // decibels stopband is down for Elliptic filter
+    private double rs; // decibels stopband is down in Elliptic filter
     
     private boolean onlyFrequencyFilter = false;
     
