@@ -2156,20 +2156,27 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             endZ = imgSize;
                         }
 
-                        if (indexY < 0) {
-                            indexY = 0;
-                        }
-
                         if (indexYU > sliceSize) {
                             indexYU = sliceSize;
                         }
 
-                        if (offsetX < 0) {
-                            offsetX = 0;
-                        }
-
                         if (offsetXU > xDim) {
                             offsetXU = xDim;
+                        }
+                        
+                        while (startZ < 0) {
+                        	startZ += sliceSize;
+                        	count += kDimXY * kDimXY;
+                        }
+                        
+                        while (indexY < 0) {
+                        	indexY += xDim;
+                        	count += kDimXY;
+                        }
+                        
+                        while (offsetX < 0) {
+                        	offsetX++;
+                        	count++;
                         }
 
                         for (k = startZ; k < endZ; k += sliceSize) {
@@ -2177,29 +2184,22 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             // only work on valid pixels
                             // essentially process only the overlap between
                             // valid image and kernel slices
-                            if (k >= 0) {
-                                startY = k + indexY;
-                                endY = k + indexYU;
+                            startY = k + indexY;
+                            endY = k + indexYU;
 
-                                for (j = startY; j < endY; j += xDim) {
-                                    startX = j + offsetX;
-                                    endX = j + offsetXU;
+                            for (j = startY; j < endY; j += xDim) {
+                                startX = j + offsetX;
+                                endX = j + offsetXU;
 
-                                    for (i = startX; i < endX; i++) {
+                                for (i = startX; i < endX; i++) {
 
                                         if (kernel.get(count) == true) {
                                             processBuffer[i] = value;
                                         }
 
-                                        count++;
-                                    }
+                                    count++;
                                 }
-                            } else {
-
-                                // jump to the next kernel slice as the current slice
-                                // overlaps invalid image slices
-                                count += kDimXY * kDimXY;
-                            } // end if (k > 0) {} else {}
+                            }
                         } // end for (k = startZ; ...)
                     }
                 } else {
@@ -2672,30 +2672,32 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         startZ = offsetZ * sliceSize;
                         endZ = startZ + stepZ;
 
-                        // Took this out and check it later. This caused the a subtle error by setting
-                        // a pixel on an incorrect slice
-                        // if (startZ < 0) {
-                        // startZ = 0;
-                        // }
-
                         if (endZ > imgSize) {
                             endZ = imgSize;
-                        }
-
-                        if (indexY < 0) {
-                            indexY = 0;
                         }
 
                         if (indexYU > sliceSize) {
                             indexYU = sliceSize;
                         }
 
-                        if (offsetX < 0) {
-                            offsetX = 0;
-                        }
 
                         if (offsetXU > xDim) {
                             offsetXU = xDim;
+                        }
+                        
+                        while (startZ < 0) {
+                        	startZ += sliceSize;
+                        	count += kDimXY * kDimXY;
+                        }
+                        
+                        while (indexY < 0) {
+                        	indexY += xDim;
+                        	count += kDimXY;
+                        }
+                        
+                        while (offsetX < 0) {
+                        	offsetX++;
+                        	count++;
                         }
 
                         kernelLoop: for (k = startZ; k < endZ; k += sliceSize) {
@@ -2703,31 +2705,25 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             // only process on valid image slices
                             // essentially process only the overlap between
                             // valid image and kernel slices
-                            if (k >= 0) {
-                                startY = k + indexY;
-                                endY = k + indexYU;
+                            startY = k + indexY;
+                            endY = k + indexYU;
 
-                                for (j = startY; j < endY; j += xDim) {
-                                    startX = j + offsetX;
-                                    endX = j + offsetXU;
+                            for (j = startY; j < endY; j += xDim) {
+                                startX = j + offsetX;
+                                endX = j + offsetXU;
 
-                                    for (i = startX; i < endX; i++) {
+                                for (i = startX; i < endX; i++) {
 
-                                        if ( (kernel.get(count) == true) && (imgBuffer[i] == 0)) {
-                                            clear = true;
+                                    if ( (kernel.get(count) == true) && (imgBuffer[i] == 0)) {
+                                        clear = true;
 
-                                            break kernelLoop;
-                                        }
-
-                                        count++;
+                                        break kernelLoop;
                                     }
-                                }
-                            } else {
 
-                                // jump to the next kernel slice as the current
-                                // image slice overlaps invalid image slices
-                                count += kDimXY * kDimXY;
-                            } // end if (k > 0) {} else {}
+                                    count++;
+                                }
+                            }
+                            
                         }
                     }
 
