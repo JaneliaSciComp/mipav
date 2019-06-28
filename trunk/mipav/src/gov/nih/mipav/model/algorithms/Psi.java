@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.Preferences;
 
 /**
  * <p>
@@ -73,7 +74,7 @@ public class Psi {
     private double result[];
 
     /** REAL_VERSION or COMPLEX_VERSION */
-    private final int version;
+    private int version;
 
     /** Real part of input argument */
     @SuppressWarnings("unused")
@@ -90,6 +91,10 @@ public class Psi {
     /** Imaginary part of output result */
     @SuppressWarnings("unused")
     private double imagResult[];
+    
+    public Psi() {
+    	
+    }
 
     /**
      * 
@@ -137,6 +142,39 @@ public class Psi {
             // complexPsi();
         }
     }
+    
+    public void testrealPsi() {
+        result = new double[1];
+        double xtest[] = new double[]{0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,
+     		   2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4.0,4.1,4.2,4.3,4.4,4.5,
+     		   4.6,4.7,4.8,4.9,5.0,-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,
+     		   -0.7,-0.8,-0.9,-1.1,-1.2,-1.3,-1.4,-1.5,-1.6,-1.7,-1.8,-1.9,-2.1,-2.2,-2.3,-2.4,-2.5,-2.6,-2.7,-2.8,
+     		   -2.9,-3.1,-3.2,-3.3,-3.4,-3.5,-3.6,-3.7,-3.8,-3.9,-4.1,-4.2,-4.3,-4.4,-4.5,-4.6,-4.7,-4.8,-4.9};
+        double answer[] = new double[]{-1.04237549E1,-5.28903990,-3.50252422,-2.56138454,-1.96351003,-1.54061921,
+        		-1.22002355,-.96500857,-.75492695,-.57721566,-.42375494,-.28903990,-.16910089,-.06138454,
+        		.03648997,.12604745,.20854787,.28499143,.35618416,.42278434,.48533597,.54429344,.60003988,.65290117,
+        		.70315664,.75104745,.79678317,.84054699,.88249995,.92278434,.96152644,.99883889,1.03482249,1.06956784,
+        		1.10315664,1.13566284,1.16715354,1.19768985,1.22732754,1.25611767,1.28410709,1.31133889,1.33785279,
+        		1.36368548,1.38887093,1.41344062,1.43742381,1.46084774,1.48373779,1.50611767,9.2450731,4.0349914,
+        		2.1133098,9.5938079E-1,3.6489974E-2,-8.9471788E-1,-2.0739528,-4.0390399,-9.3126438,1.0154164E1,
+        		4.8683248,2.8825405,1.6736665,7.0315664E-1,-2.6971788E-1,-1.4857175,-3.4834843,-8.7863280,1.0630354E1,
+        		5.3228702,3.3173232,2.0903332,1.1031566,1.1489751E-1,-1.1153471,-3.1263415,-8.4415005,1.0952935E1,
+        		5.6353702,3.6203535,2.3844508,1.3888709,3.9267528E-1,-8.4507686E-1,-2.8631836,-8.1850902,1.1196838E1,
+        		5.8734655,3.8529116,2.6117235,1.6110931,6.1006659E-1,-6.3231090E-1,-2.6548503,-7.9810086};
+        int i;
+        int errorsDetected = 0;
+        for (i = 0; i < xtest.length; i++) {
+     	   x = xtest[i];
+     	   realPsi();
+     	   Preferences.debug("x = " + x + " result = " + result[0] + "answer = " + answer[i] + "\n", Preferences.DEBUG_ALGORITHM);
+     	   if (Math.abs(result[0]-answer[i])/answer[i] >= 1.0E-8) {
+     		   Preferences.debug("Error detected\n",Preferences.DEBUG_ALGORITHM);
+     		   errorsDetected++;
+     	   }
+        }
+        Preferences.debug(errorsDetected + " errors found in " + xtest.length + " runs of realPsi()\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println(errorsDetected + " errors found in " + xtest.length + " runs of realPsi()");
+     }
 
     /**
      * This code is a port of the FORTRAN routine PSI from the book Computation of Special Functions by Shanjie Zhang
