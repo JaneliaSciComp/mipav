@@ -26,6 +26,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
 import gov.nih.mipav.model.algorithms.NelderMead;
+import gov.nih.mipav.model.algorithms.Statistics;
 import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -260,6 +261,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double p1MaxDistFromValue[][][] = null;
     	ModelImage p0MaxDistImage;
     	ModelImage p1MaxDistImage;
+    	double t975[] = new double[1];
     	double expval;
     	boolean test = false;
     	boolean Philips = true;
@@ -1161,8 +1163,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         if (multiThreading) {
         	ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
-            	executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
+            	if (calculateBounds) {
+            	    executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
             			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],p0MaxDistFromValue[z], p1MaxDistFromValue[z]/*,chiSquared[z]*/));	
+            	}
+            	else {
+            		executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
+                			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],null, null/*,chiSquared[z]*/));   	
+            	}
             }
             
             executorService.shutdown();
