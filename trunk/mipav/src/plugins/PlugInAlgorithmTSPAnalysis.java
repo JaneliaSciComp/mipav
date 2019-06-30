@@ -577,7 +577,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             
             executorService.shutdown();
             try {
-            	boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+            	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
             	if (!tasksEnded) {
             		MipavUtil.displayError("Time out while waiting for corr1Calc tasks to finish");
             		setCompleted(false);
@@ -669,7 +669,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
                 
                 executorService.shutdown();
                 try {
-                	boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+                	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
                 	if (!tasksEnded) {
                 		MipavUtil.displayError("Time out while waiting for corr2Calc tasks to finish");
                 		setCompleted(false);
@@ -1190,7 +1190,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             
             executorService.shutdown();
             try {
-            	boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
+            	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
             	if (!tasksEnded) {
             		MipavUtil.displayError("Time out while waiting for endCalc tasks to finish");
             		setCompleted(false);
