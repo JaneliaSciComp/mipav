@@ -261,7 +261,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double p1MaxDistFromValue[][][] = null;
     	ModelImage p0MaxDistImage;
     	ModelImage p1MaxDistImage;
-    	double t975[] = new double[1];
     	double expval;
     	boolean test = false;
     	boolean Philips = true;
@@ -405,8 +404,18 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	return;
         }
         tDim = Integer.valueOf(tDimString.trim()).intValue();
+        if ((tDim <= 2) || (tDim > 500)) {
+        	MipavUtil.displayError("Exiting with an impossible time dimension value of " + tDim);
+        	setCompleted(false);
+        	return;
+        }
         extents[3] = tDim;
         zDim = extents3Dorg[2]/tDim;
+        if ((zDim <= 2) || (zDim > 500)) {
+        	MipavUtil.displayError("Exiting with an impossible z dimension value of " + zDim);
+        	setCompleted(false);
+        	return;
+        }
         extents[2] = zDim;
         extents3D[2] = zDim;
         for (i = 0; i < 2; i++) {
@@ -560,6 +569,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	if (multiThreading) {
     		ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
+            	fireProgressStateChanged("First TSP iteration launching multithread " + (z+1) + " of " + zDim);
+                fireProgressStateChanged(20 + (9 * z)/(zDim-1));
             	executorService.execute(new corr1Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],corr_map2[z],
             			temp_mean.clone()));	
             }
@@ -582,6 +593,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	else { // single thread
 	    	for (z = 0; z < zDim; z++) {
+	    		fireProgressStateChanged("First TSP iteration doing slice " + (z+1) + " of " + zDim);
+                fireProgressStateChanged(20 + (9 * z)/(zDim-1));
 	    		for (y = 0; y < yDim; y++) {
 	    			for (x = 0; x < xDim; x++) {
 	    				sumt = 0;
@@ -601,7 +614,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    				    delay_map[z][y][x] = (short)maxIndex;
 	    				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
 	    				    corr_map2[z][y][x] = cc;
-	    				} // if (sum != 0)
+	    				} // if (sumt != 0)
 	    			}
 	    		}
 	    	} // for (z = 0; z < zDim; z++)
