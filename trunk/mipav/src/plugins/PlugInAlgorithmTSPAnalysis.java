@@ -577,7 +577,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             
             executorService.shutdown();
             try {
-            	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
+            	boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
             	if (!tasksEnded) {
             		MipavUtil.displayError("Time out while waiting for corr1Calc tasks to finish");
             		setCompleted(false);
@@ -669,7 +669,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
                 
                 executorService.shutdown();
                 try {
-                	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
+                	boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
                 	if (!tasksEnded) {
                 		MipavUtil.displayError("Time out while waiting for corr2Calc tasks to finish");
                 		setCompleted(false);
@@ -1176,6 +1176,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         if (multiThreading) {
         	ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
+            	fireProgressStateChanged("Iterating to find CBF launching thread " + (z+1) + " of " + zDim);
+                fireProgressStateChanged(80 + (14 * z)/(zDim-1));
             	if (calculateBounds) {
             	    executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
             			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],p0MaxDistFromValue[z], p1MaxDistFromValue[z]/*,chiSquared[z]*/));	
@@ -1188,7 +1190,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             
             executorService.shutdown();
             try {
-            	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
+            	boolean tasksEnded = executorService.awaitTermination(10, TimeUnit.MINUTES);
             	if (!tasksEnded) {
             		MipavUtil.displayError("Time out while waiting for endCalc tasks to finish");
             		setCompleted(false);
@@ -1216,8 +1218,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    }
 		    // Iterate
 		    for (z = 0; z < zDim; z++) {
-		    	//fireProgressStateChanged((int)(100*z/zDim), null,
-						//"Working on slice " + (z+1) + " of " + zDim);
+		    	fireProgressStateChanged("Iterating to find CBF doing slice " + (z+1) + " of " + zDim);
+                fireProgressStateChanged(80 + (14 * z)/(zDim-1));
 		    	for (y = 0; y < yDim; y++) {
 		    		for (x = 0; x < xDim; x++) {
 		    			if ((search == ELSUNC_2D_SEARCH) || (search == NMSIMPLEX_2D_SEARCH) || (search == NELDERMEAD_2D_SEARCH)) {
