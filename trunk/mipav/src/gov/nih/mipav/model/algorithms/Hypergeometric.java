@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 
 /**
@@ -56,7 +57,7 @@ public class Hypergeometric {
     public static final int COMPLEX_VERSION = 2;
 
     /** Tells whether real number or complex number version */
-    private final int version;
+    private int version;
 
     /** Input parameter */
     private double a;
@@ -85,6 +86,10 @@ public class Hypergeometric {
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
+    
+    public Hypergeometric() {
+    	
+    }
 
     /**
      * @param a input parameter
@@ -148,10 +153,66 @@ public class Hypergeometric {
             return;
         }
     } // run()
+    
+    public void testrealArgument() {
+        result = new double[1];
+        int errorsDetected = 0;
+        // Value at x = 0
+        // F(a,b,c,0) = 1
+        
+        // Value at x = 1
+        // F(a,b,c,1) = gamma(c)*gamma(c-a-b)/(gamma(c-a)*gamma(c-b)) for c > a + b
+        a = 1;
+        b = 3;
+        c = 6;
+        double gam1[] = new double[1];
+        double gam2[] = new double[1];
+        double gam3[] = new double[1];
+        double gam4[] = new double[1];
+        Gamma gam = new Gamma(c,gam1);
+        gam.run();
+        gam = new Gamma(c-a-b,gam2);
+        gam.run();
+        gam = new Gamma(c-a,gam3);
+        gam.run();
+        gam = new Gamma(c-b,gam4);
+        gam.run();
+        double ans1 = (gam1[0]*gam2[0])/(gam3[0]*gam4[0]);
+        double atest[] = new double[]{1.0,1.0};
+        double btest[] = new double[]{2.0,3.0};
+        double ctest[] = new double[]{3.0,6.0};
+        double xtest[] = new double[]{0.0,1.0};
+        double answer[] = new double[]{1.0,ans1};
+        int i;
+        for (i = 0; i < atest.length; i++) {
+        	a = atest[i];
+        	b = btest[i];
+        	c = ctest[i];
+        	x = xtest[i];
+	        realArgument();
+	        Preferences.debug("a = " + a + " b = " + b + " c = " + c + " x = " + x + " result = " + result[0] + " answer = " + answer[i] + "\n",Preferences.DEBUG_ALGORITHM);
+	        if (answer[i] != 0.0) {
+		        if (Math.abs(result[0]-answer[i])/answer[i] >= 1.0E-8) {
+		     		   Preferences.debug("Error detected\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;
+		        }
+	        }
+	        else {
+	        	if (Math.abs(result[0]) > 1.0E-8) {
+	        		Preferences.debug("Error detected\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;	
+	        	}
+	        }
+        }
+        Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests");
+    }
 
     /**
      * This is a port of subroutine HYGFX from Computation of Special Functions by Shanjie Zhang and Jianming Jin, pp.
      * 376-379.
+     * c != 0, -1, -2
+     * x <= 1
      * 
      */
     private void realArgument() {
@@ -216,7 +277,7 @@ public class Hypergeometric {
             result[0] = 1.0;
             return;
         } // if ((x == 0.0) || (a == 0.0) || (b == 0.0))
-        else if ( ( (1.0 - x) == eps) && (c - a - b > 0.0)) {
+        else if ( ( (1.0 - x) <= eps) && (c - a - b > 0.0)) {
             // For c > a + b calculate F(a,b,c,1) using
             // F(a,b,c,1) = Gamma(c)*Gamma(c-a-b)/(Gamma(c-a)*Gamma(c-b))
             gamm = new Gamma(c, gc);
