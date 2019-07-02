@@ -262,6 +262,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage p0MaxDistImage;
     	ModelImage p1MaxDistImage;
     	double expval;
+    	//double t975[] = new double[1];;
     	boolean test = false;
     	boolean Philips = true;
     	
@@ -274,7 +275,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		return;
     	}
     	
-    	fireProgressStateChanged("Opening selecting images...");
+    	fireProgressStateChanged("Opening selected images...");
     	File folder = new File(pwiImageFileDirectory);
     	int selectedFileNumber = 0;
     	for (File fileEntry : folder.listFiles()) {
@@ -1158,6 +1159,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         if (calculateBounds) {
         	p0MaxDistFromValue = new double[zDim][yDim][xDim];
         	p1MaxDistFromValue = new double[zDim][yDim][xDim];
+        	//Statistics stat = new Statistics(Statistics.STUDENTS_T_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION,2*tDim-2,.975,t975);
+        	//stat.run();
+        	//System.out.println("t.975 = " + t975[0]);
         }
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
