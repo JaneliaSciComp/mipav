@@ -265,6 +265,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double t975[] = new double[1];
     	boolean test = false;
     	boolean Philips = true;
+    	String subfolder = null;
+    	String subsubfolder = null;
     	
     	if (test) {
     		testxcorr();
@@ -293,6 +295,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     					if (fileEntry2.getName().length() > fileNameBase.length()) {
     	    			    String startName = fileEntry2.getName().substring(0,fileNameBase.length());
     	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+    	    			    	if (subfolder == null) {
+    	    			    		subfolder = fileEntry.getName();
+    	    			    		pwiImageFileDirectory = pwiImageFileDirectory + File.separator + subfolder;
+    	    			    	}
     	    			    	selectedFileNumber++;
     	    			    }
     	    			}	
@@ -303,6 +309,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	    					if (fileEntry3.getName().length() > fileNameBase.length()) {
     	    	    			    String startName = fileEntry3.getName().substring(0,fileNameBase.length());
     	    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+    	    	    			    	if (subsubfolder == null) {
+    	    	    			    		subsubfolder = fileEntry2.getName();
+    	    	    			    		pwiImageFileDirectory = pwiImageFileDirectory + File.separator + fileEntry.getName() + File.separator + subsubfolder;
+    	    	    			    	}
     	    	    			    	selectedFileNumber++;
     	    	    			    }
     	    	    			}	
@@ -319,6 +329,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		return;
     	}
     	
+    	folder = new File(pwiImageFileDirectory);
+    	
     	String fileList[] = new String[selectedFileNumber];
     	int index = 0;
     	for (File fileEntry : folder.listFiles()) {
@@ -328,30 +340,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     			    if (startName.equalsIgnoreCase(fileNameBase)) {
     			    	fileList[index++] = fileEntry.getName();
     			    }
-    			}
-    		}
-    		else {
-    			for (File fileEntry2 : fileEntry.listFiles()) {
-    				if (!fileEntry2.isDirectory()) {
-    					if (fileEntry2.getName().length() > fileNameBase.length()) {
-    	    			    String startName = fileEntry2.getName().substring(0,fileNameBase.length());
-    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
-    	    			    	fileList[index++] = fileEntry2.getName();	
-    	    			    }
-    	    			}	
-    				}
-    				else {
-    					for (File fileEntry3 : fileEntry2.listFiles()) {
-    	    				if (!fileEntry3.isDirectory()) {
-    	    					if (fileEntry3.getName().length() > fileNameBase.length()) {
-    	    	    			    String startName = fileEntry3.getName().substring(0,fileNameBase.length());
-    	    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
-    	    	    			    	fileList[index++] = fileEntry3.getName();		
-    	    	    			    }
-    	    	    			}	
-    	    				}
-    					}
-    				}
     			}
     		}
     	}
