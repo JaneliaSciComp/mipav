@@ -262,7 +262,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage p0MaxDistImage;
     	ModelImage p1MaxDistImage;
     	double expval;
-    	//double t975[] = new double[1];;
+    	double t975[] = new double[1];
     	boolean test = false;
     	boolean Philips = true;
     	
@@ -1159,9 +1159,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         if (calculateBounds) {
         	p0MaxDistFromValue = new double[zDim][yDim][xDim];
         	p1MaxDistFromValue = new double[zDim][yDim][xDim];
-        	//Statistics stat = new Statistics(Statistics.STUDENTS_T_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION,2*tDim-2,.975,t975);
-        	//stat.run();
-        	//System.out.println("t.975 = " + t975[0]);
+        	Statistics stat = new Statistics(Statistics.STUDENTS_T_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION,.975,2*tDim-2,t975);
+        	stat.run();
         }
         // Apply same mask as in TSP for speed of iteration
         // Calculate Peaks and Time to peak mask
@@ -1184,11 +1183,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
                 fireProgressStateChanged(80 + (14 * z)/(zDim-1));
             	if (calculateBounds) {
             	    executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
-            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],p0MaxDistFromValue[z], p1MaxDistFromValue[z]/*,chiSquared[z]*/));	
+            			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],p0MaxDistFromValue[z], p1MaxDistFromValue[z],t975[0]/*,chiSquared[z]*/));	
             	}
             	else {
             		executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
-                			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],null, null/*,chiSquared[z]*/));   	
+                			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],null, null,t975[0]/*,chiSquared[z]*/));   	
             	}
             }
             
@@ -1307,10 +1306,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
 					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
 					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[z][y][x] = 2.0 * se0;
+					    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
 					    					    }
 					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[z][y][x] = 2.0 * se1;
+					    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
 					    					    }
 				    					    } // if (det != 0.0)
 			    					    } // if (calculateBounds)
@@ -1356,10 +1355,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
 					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
 					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[z][y][x] = 2.0 * se0;
+					    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
 					    					    }
 					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[z][y][x] = 2.0 * se1;
+					    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
 					    					    }
 				    					    } // if (det != 0.0)
 			    					    } // if (calculateBounds)
@@ -1407,10 +1406,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
 					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
 					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[z][y][x] = 2.0 * se0;
+					    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
 					    					    }
 					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[z][y][x] = 2.0 * se1;
+					    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
 					    					    }
 				    					    } // if (det != 0.0)
 			    					    } // if (calculateBounds)
@@ -2003,11 +2002,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         short Tmax[][];
         double p0MaxDistFromValue[][];
         double p1MaxDistFromValue[][];
+        double t975;
         //double chiSquared[][];
     	
     	public endCalc(int search, int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
     			short data[][][], double CBV[][], double CBF[][], double MTT[][], short Tmax[][],
-    			double p0MaxDistFromValue[][], double p1MaxDistFromValue[][]/*,
+    			double p0MaxDistFromValue[][], double p1MaxDistFromValue[][], double t975/*,
     			double chiSquared[][]*/) {
     		this.search = search;
         	this.xDim = xDim;
@@ -2024,6 +2024,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	if (calculateBounds) {
         	    this.p0MaxDistFromValue = p0MaxDistFromValue;
         	    this.p1MaxDistFromValue = p1MaxDistFromValue;
+        	    this.t975 = t975;
         	}
         	//this.chiSquared = chiSquared;
         }
@@ -2165,10 +2166,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
 				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
 				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-				    					        p0MaxDistFromValue[y][x] = 2.0 * se0;
+				    					        p0MaxDistFromValue[y][x] = t975 * se0;
 				    					    }
 				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {   
-				    					        p1MaxDistFromValue[y][x] = 2.0 * se1;
+				    					        p1MaxDistFromValue[y][x] = t975 * se1;
 				    					    }
 			    					    } // if (det != 0.0)
 		    					    } // if (calculateBounds)
@@ -2214,10 +2215,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
 				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
 				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-				    					        p0MaxDistFromValue[y][x] = 2.0 * se0;
+				    					        p0MaxDistFromValue[y][x] = t975 * se0;
 				    					    }
 				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-				    					        p1MaxDistFromValue[y][x] = 2.0 * se1;
+				    					        p1MaxDistFromValue[y][x] = t975 * se1;
 				    					    }
 			    					    } // if (det != 0.0)
 		    					    } // if (calculateBounds)
@@ -2265,10 +2266,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
 				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
 				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-				    					        p0MaxDistFromValue[y][x] = 2.0 * se0;
+				    					        p0MaxDistFromValue[y][x] = t975 * se0;
 				    					    }
 				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-				    					        p1MaxDistFromValue[y][x] = 2.0 * se1;
+				    					        p1MaxDistFromValue[y][x] = t975 * se1;
 				    					    }
 			    					    } // if (det != 0.0)
 		    					    } // if (calculateBounds)
