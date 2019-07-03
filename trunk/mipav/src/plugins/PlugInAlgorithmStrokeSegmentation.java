@@ -268,10 +268,19 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             
             for (int i = 0; i < volLength; i++) {
                 if (segBuffer[i] != 0 && (maskImg != null && maskImg.getBoolean(i) == true)) {
-                    if (adcVolForThresholding.getInt(i) < adcThreshold) {
-                        segBuffer[i] = 1;
+                    if (isADCFractional()) {
+                        float adcFracThreshold = adcThreshold / 1000.0f;
+                        if (adcVolForThresholding.getFloat(i) < adcFracThreshold) {
+                            segBuffer[i] = 1;
+                        } else {
+                            segBuffer[i] = 0;
+                        }
                     } else {
-                        segBuffer[i] = 0;
+                        if (adcVolForThresholding.getInt(i) < adcThreshold) {
+                            segBuffer[i] = 1;
+                        } else {
+                            segBuffer[i] = 0;
+                        }
                     }
                 } else {
                     segBuffer[i] = 0;
@@ -599,10 +608,19 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         // get pixels from ADC within closed object mask with intensity < 620, again - this time always from original ADC
         for (int i = 0; i < volLength; i++) {
             if (objectBuffer[i] != 0) {
-                if (adcImage.getInt(i) < adcThreshold) {
-                    objectBuffer[i] = 1;
+                if (isADCFractional()) {
+                    float adcFracThreshold = adcThreshold / 1000.0f;
+                    if (adcImage.getFloat(i) < adcFracThreshold) {
+                        objectBuffer[i] = 1;
+                    } else {
+                        objectBuffer[i] = 0;
+                    }
                 } else {
-                    objectBuffer[i] = 0;
+                    if (adcImage.getInt(i) < adcThreshold) {
+                        objectBuffer[i] = 1;
+                    } else {
+                        objectBuffer[i] = 0;
+                    }
                 }
             } else {
                 objectBuffer[i] = 0;
@@ -713,8 +731,15 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             for (int i = 0; i < processBuffer.length; i++) {
                 for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
                     if (processBuffer[i] == sortedObjects[sortedObjects.length - 1 - objNum].id) {
-                        if (adcImage.getInt(i) < adcThreshold) {
-                            coreSizeList[objNum]++;
+                        if (isADCFractional()) {
+                            float adcFracThreshold = adcThreshold / 1000.0f;
+                            if (adcImage.getFloat(i) < adcFracThreshold) {
+                                coreSizeList[objNum]++;
+                            }
+                        } else {
+                            if (adcImage.getInt(i) < adcThreshold) {
+                                coreSizeList[objNum]++;
+                            }
                         }
                     }
                 }
@@ -1497,5 +1522,9 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
         
         return resolCC[0] * resolCC[1] * resolCC[2];
+    }
+    
+    private boolean isADCFractional() {
+        return (adcImage.getType() == ModelStorageBase.FLOAT);
     }
 }

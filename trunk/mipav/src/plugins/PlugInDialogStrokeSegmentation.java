@@ -482,7 +482,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("Input parameters"));
         
-        JLabel labelThreshold = new JLabel("ADC threshold value");
+        JLabel labelThreshold = new JLabel("ADC threshold value (if fractional ADC found, divided by 1000)");
         labelThreshold.setForeground(Color.black);
         labelThreshold.setFont(serif12);
         mainPanel.add(labelThreshold, gbc);
