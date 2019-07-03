@@ -77,15 +77,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private JRadioButton search2DNelderMeadButton;
 	
-	private final int ELSUNC_2D_SEARCH = 1;
-	
-	private final int ELSUNC_1D_SEARCH = 2;
-	
-	private final int NMSIMPLEX_2D_SEARCH = 3;
-	
-	private final int NELDERMEAD_2D_SEARCH = 4;
-	
-	private int search = ELSUNC_2D_SEARCH;
+	private int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
 	
 	private JCheckBox boundsCheckBox;
 	
@@ -550,16 +542,16 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	autoAIFCalculation = autoButton.isSelected();
     	multiThreading = multiThreadingEnabledCheckBox.isSelected();
     	if (search2DElsuncButton.isSelected()) {
-    		search = ELSUNC_2D_SEARCH;
+    		search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
     	}
     	else if (search1DElsuncButton.isSelected()) {
-    	    search = ELSUNC_1D_SEARCH;	
+    	    search = PlugInAlgorithmTSPAnalysis.ELSUNC_1D_SEARCH;	
     	}
     	else if (search2DNMSimplexButton.isSelected()) {
-    		search = NMSIMPLEX_2D_SEARCH;
+    		search = PlugInAlgorithmTSPAnalysis.NMSIMPLEX_2D_SEARCH;
     	}
     	else if (search2DNelderMeadButton.isSelected()) {
-    		search = NELDERMEAD_2D_SEARCH;
+    		search = PlugInAlgorithmTSPAnalysis.NELDERMEAD_2D_SEARCH;
     	}
     	
     	calculateBounds = boundsCheckBox.isSelected();
