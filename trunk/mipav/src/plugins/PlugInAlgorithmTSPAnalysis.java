@@ -66,6 +66,7 @@ import java.awt.event.MouseListener;
 public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseListener {
     
     private String pwiImageFileDirectory;
+    private ModelImage pwiImage = null;
     
     private boolean calculateMaskingThreshold = true;
     
@@ -82,13 +83,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private boolean multiThreading = true;
     
-    private final int ELSUNC_2D_SEARCH = 1;
+    public static final int ELSUNC_2D_SEARCH = 1;
 	
-	private final int ELSUNC_1D_SEARCH = 2;
+    public static final int ELSUNC_1D_SEARCH = 2;
 	
-	private final int NMSIMPLEX_2D_SEARCH = 3;
+    public static final int NMSIMPLEX_2D_SEARCH = 3;
 	
-	private final int NELDERMEAD_2D_SEARCH = 4;
+    public static final int NELDERMEAD_2D_SEARCH = 4;
 	
 	private int search = ELSUNC_2D_SEARCH;
 	
@@ -103,6 +104,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	private int xS;
 	private int yS;
 	private double D_inv[][];
+	
+    private ModelImage MTTImage;
+    private ModelImage TmaxImage;
+    
+    private String outputFilePath = null;
+    private String outputPrefix = "";
+	
     /**
      * Constructor.
      *
@@ -112,6 +120,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		boolean multiThreading, int search, boolean calculateBounds, String fileNameBase) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
+    	outputFilePath = pwiImageFileDirectory;
     	this.calculateMaskingThreshold = calculateMaskingThreshold;
     	this.masking_threshold = masking_threshold;
     	this.TSP_threshold = TSP_threshold;
@@ -122,7 +131,26 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.search = search;
     	this.calculateBounds = calculateBounds;
     	this.fileNameBase = fileNameBase;
-    }   
+    }
+    
+    public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean calculateMaskingThreshold, int masking_threshold,
+            double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
+            boolean multiThreading, int search, boolean calculateBounds) {
+        //super(resultImage, srcImg);
+        this.pwiImageFileDirectory = pwiImage.getImageDirectory();
+        this.pwiImage = pwiImage;
+        outputFilePath = pwiImageFileDirectory;
+        this.calculateMaskingThreshold = calculateMaskingThreshold;
+        this.masking_threshold = masking_threshold;
+        this.TSP_threshold = TSP_threshold;
+        this.TSP_iter = TSP_iter;
+        this.Psvd = Psvd;
+        this.autoAIFCalculation = autoAIFCalculation;
+        this.multiThreading = multiThreading;
+        this.search = search;
+        this.calculateBounds = calculateBounds;
+        //this.fileNameBase = fileNameBase;
+    }
     
     /**
      * Starts the algorithm.
@@ -236,9 +264,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int exitStatus;
     	double p[] = new double[2];
     	ModelImage CBFImage;
-    	ModelImage MTTImage;
     	ModelImage CBVImage;
-    	ModelImage TmaxImage;
     	ModelImage TTPImage;
     	//ModelImage chiSquaredImage;
     	long sumT[];
@@ -276,81 +302,87 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		setCompleted(true);
     		return;
     	}
-    	
-    	fireProgressStateChanged("Opening selected images...");
-    	File folder = new File(pwiImageFileDirectory);
-    	int selectedFileNumber = 0;
-    	for (File fileEntry : folder.listFiles()) {
-    		if (!fileEntry.isDirectory()) {
-    			if (fileEntry.getName().length() > fileNameBase.length()) {
-    			    String startName = fileEntry.getName().substring(0,fileNameBase.length());
-    			    if (startName.equalsIgnoreCase(fileNameBase)) {
-    			    	selectedFileNumber++;
-    			    }
-    			}
-    		}
-    		else {
-    			for (File fileEntry2 : fileEntry.listFiles()) {
-    				if (!fileEntry2.isDirectory()) {
-    					if (fileEntry2.getName().length() > fileNameBase.length()) {
-    	    			    String startName = fileEntry2.getName().substring(0,fileNameBase.length());
-    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
-    	    			    	if (subfolder == null) {
-    	    			    		subfolder = fileEntry.getName();
-    	    			    		pwiImageFileDirectory = pwiImageFileDirectory + File.separator + subfolder;
-    	    			    	}
-    	    			    	selectedFileNumber++;
-    	    			    }
-    	    			}	
-    				}
-    				else {
-    					for (File fileEntry3 : fileEntry2.listFiles()) {
-    	    				if (!fileEntry3.isDirectory()) {
-    	    					if (fileEntry3.getName().length() > fileNameBase.length()) {
-    	    	    			    String startName = fileEntry3.getName().substring(0,fileNameBase.length());
-    	    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
-    	    	    			    	if (subsubfolder == null) {
-    	    	    			    		subsubfolder = fileEntry2.getName();
-    	    	    			    		pwiImageFileDirectory = pwiImageFileDirectory + File.separator + fileEntry.getName() + File.separator + subsubfolder;
-    	    	    			    	}
-    	    	    			    	selectedFileNumber++;
-    	    	    			    }
-    	    	    			}	
-    	    				}
-    					}
-    				}
-    			}
-    		}
-    	}
-    	
-    	if (selectedFileNumber == 0) {
-    		MipavUtil.displayError("No selected image files were found");
-    		setCompleted(false);
-    		return;
-    	}
-    	
-    	folder = new File(pwiImageFileDirectory);
-    	
-    	String fileList[] = new String[selectedFileNumber];
-    	int index = 0;
-    	for (File fileEntry : folder.listFiles()) {
-    		if (!fileEntry.isDirectory()) {
-    			if (fileEntry.getName().length() > fileNameBase.length()) {
-    			    String startName = fileEntry.getName().substring(0,fileNameBase.length());
-    			    if (startName.equalsIgnoreCase(fileNameBase)) {
-    			    	fileList[index++] = fileEntry.getName();
-    			    }
-    			}
-    		}
-    	}
-    	String selectedFileName = fileList[0];
-    	FileIO fileIO = new FileIO(); 
-    	fileIO.setFileDir(pwiImageFileDirectory + File.separator);
-    	boolean performSort = true;
-    	fileIO.setQuiet(true);
-    	fileIO.setSuppressProgressBar(true);
-    	ModelImage image3D = fileIO.readDicom(selectedFileName, fileList, performSort);
-    	image3D.calcMinMax();
+
+        ModelImage image3D;
+        if (pwiImage == null) {
+        	fireProgressStateChanged("Opening selected images...");
+        	File folder = new File(pwiImageFileDirectory);
+        	int selectedFileNumber = 0;
+        	for (File fileEntry : folder.listFiles()) {
+        		if (!fileEntry.isDirectory()) {
+        			if (fileEntry.getName().length() > fileNameBase.length()) {
+        			    String startName = fileEntry.getName().substring(0,fileNameBase.length());
+        			    if (startName.equalsIgnoreCase(fileNameBase)) {
+        			    	selectedFileNumber++;
+        			    }
+        			}
+        		}
+        		else {
+        			for (File fileEntry2 : fileEntry.listFiles()) {
+        				if (!fileEntry2.isDirectory()) {
+        					if (fileEntry2.getName().length() > fileNameBase.length()) {
+        	    			    String startName = fileEntry2.getName().substring(0,fileNameBase.length());
+        	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+        	    			        if (subfolder == null) {
+                                        subfolder = fileEntry.getName();
+                                        pwiImageFileDirectory = pwiImageFileDirectory + File.separator + subfolder;
+                                    }
+        	    			    	selectedFileNumber++;
+        	    			    }
+        	    			}	
+        				}
+        				else {
+        					for (File fileEntry3 : fileEntry2.listFiles()) {
+        	    				if (!fileEntry3.isDirectory()) {
+        	    					if (fileEntry3.getName().length() > fileNameBase.length()) {
+        	    	    			    String startName = fileEntry3.getName().substring(0,fileNameBase.length());
+        	    	    			    if (startName.equalsIgnoreCase(fileNameBase)) {
+        	    	    			        if (subsubfolder == null) {
+                                                subsubfolder = fileEntry2.getName();
+                                                pwiImageFileDirectory = pwiImageFileDirectory + File.separator + fileEntry.getName() + File.separator + subsubfolder;
+                                            }
+        	    	    			    	selectedFileNumber++;
+        	    	    			    }
+        	    	    			}	
+        	    				}
+        					}
+        				}
+        			}
+        		}
+        	}
+
+        	if (selectedFileNumber == 0) {
+        		MipavUtil.displayError("No selected image files were found");
+        		setCompleted(false);
+        		return;
+        	}
+        	
+        	folder = new File(pwiImageFileDirectory);
+        	
+        	String fileList[] = new String[selectedFileNumber];
+        	int index = 0;
+        	for (File fileEntry : folder.listFiles()) {
+        		if (!fileEntry.isDirectory()) {
+        			if (fileEntry.getName().length() > fileNameBase.length()) {
+        			    String startName = fileEntry.getName().substring(0,fileNameBase.length());
+        			    if (startName.equalsIgnoreCase(fileNameBase)) {
+        			    	fileList[index++] = fileEntry.getName();
+        			    }
+        			}
+        		}
+        	}
+        	String selectedFileName = fileList[0];
+        	FileIO fileIO = new FileIO(); 
+        	fileIO.setFileDir(pwiImageFileDirectory + File.separator);
+        	boolean performSort = true;
+        	fileIO.setQuiet(true);
+        	fileIO.setSuppressProgressBar(true);
+        	image3D = fileIO.readDicom(selectedFileName, fileList, performSort);
+        	image3D.calcMinMax();
+        } else {
+            image3D = pwiImage;
+        }
+
     	int extents3Dorg[] = image3D.getExtents();
     	length = extents3Dorg[0] * extents3Dorg[1];
     	xDim = extents3Dorg[0];
@@ -460,8 +492,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		setCompleted(false);
     		return;
     	}
-    	image3D.disposeLocal();
-    	image3D = null;
+    	// if the image was opened outside of the algorithm, let the caller clean it up
+    	if (pwiImage == null) {
+    	    image3D.disposeLocal();
+    	    image3D = null;
+    	}
+    	
     	data = new short[zDim][yDim][xDim][tDim];
     	// Start TSP processing
     	brain_mask = new short[tDim];
@@ -763,8 +799,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	FileWriteOptions options = new FileWriteOptions(true);
         options.setFileType(FileUtility.ANALYZE);
-        options.setFileDirectory(pwiImageFileDirectory + File.separator);
-        options.setFileName("corr_map2.img");
+        options.setFileDirectory(outputFilePath + File.separator);
+        options.setFileName(outputPrefix + "corr_map2.img");
         options.setBeginSlice(0);
         options.setEndSlice(extents3D[2]-1);
         options.setOptionsSet(false);
@@ -819,7 +855,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName("corrmap.img");
+        options.setFileName(outputPrefix + "corrmap.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -870,7 +906,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
-        options.setFileName("peaks_map.img");
+        options.setFileName(outputPrefix + "peaks_map.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -920,7 +956,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName("delay_map.img");
+        options.setFileName(outputPrefix + "delay_map.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -1461,7 +1497,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName("CBF.img");
+        options.setFileName(outputPrefix + "CBF.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -1511,7 +1547,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName("MTT.img");
+        options.setFileName(outputPrefix + "MTT.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -1536,8 +1572,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             setCompleted(false);
             return;
         }
-    	MTTImage.disposeLocal();
-    	MTTImage = null;
+//    	MTTImage.disposeLocal();
+//    	MTTImage = null;
     	
     	CBVImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBV");
     	for (x = 0; x < xDim; x++) {
@@ -1561,7 +1597,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName("CBV.img");
+        options.setFileName(outputPrefix + "CBV.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -1612,7 +1648,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
-        options.setFileName("Tmax.img");
+        options.setFileName(outputPrefix + "Tmax.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -1637,8 +1673,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             setCompleted(false);
             return;
         }
-    	TmaxImage.disposeLocal();
-    	TmaxImage = null;
+//    	TmaxImage.disposeLocal();
+//    	TmaxImage = null;
     	
     	TTPImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "TTP");
     	for (x = 0; x < xDim; x++) {
@@ -1662,7 +1698,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName("TTP.img");
+        options.setFileName(outputPrefix + "TTP.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -1815,7 +1851,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName("chiSquared.img");
+        options.setFileName(outputPrefix + "chiSquared.img");
        
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
@@ -3168,16 +3204,36 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	cf = cf/(stdX * stdY * (N-1));
     	return cf;
     }
-    
-    
-
-//  ~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.
      */
     public void finalize() {
         super.finalize();
+        
+        if (MTTImage != null) {
+            MTTImage.disposeLocal();
+            MTTImage = null;
+        }
+        if (TmaxImage != null) {
+            TmaxImage.disposeLocal();
+            TmaxImage = null;
+        }
     }
 
+    public ModelImage getMTTImage() {
+        return MTTImage;
+    }
+    
+    public ModelImage getTmaxImage() {
+        return TmaxImage;
+    }
+    
+    public void setOutputFilePath(String path) {
+        outputFilePath = path;
+    }
+    
+    public void setOutputPrefix(String prefix) {
+        outputPrefix = prefix;
+    }
 }
