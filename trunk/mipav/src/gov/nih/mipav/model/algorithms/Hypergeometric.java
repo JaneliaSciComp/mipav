@@ -178,11 +178,13 @@ public class Hypergeometric {
         gam = new Gamma(c-b,gam4);
         gam.run();
         double ans1 = (gam1[0]*gam2[0])/(gam3[0]*gam4[0]);
-        double atest[] = new double[]{1.0,1.0};
-        double btest[] = new double[]{2.0,3.0};
-        double ctest[] = new double[]{3.0,6.0};
-        double xtest[] = new double[]{0.0,1.0};
-        double answer[] = new double[]{1.0,ans1};
+        double atest[] = new double[]{1.0,1.0,0.1,-0.1,1.0E-8,2+1.0E-9,-2,-1,500,500,-1000,-100,300,5,10,2.25};
+        double btest[] = new double[]{2.0,3.0,0.2,0.2,1.0E-8,3,-3,-1.5,-500,500,-2000,-200,10,-300,5,3.75};
+        double ctest[] = new double[]{3.0,6.0,0.3,0.3,1.0E-8,5,-5+1.0E-9,-2-1.0E-15,500,500,-4000.1,-300+1.0E-9,5,10,-300.5,-0.5};
+        double xtest[] = new double[]{0.0,1.0,0.5,0.5,1.0E-6,-0.75,0.5,0.5,0.75,-0.6,-0.5,0.5*Math.sqrt(2.0),0.5,0.5,0.5,-1};
+        double answer[] = new double[]{1.0,ans1,1.046432811217352,.956434210968214,1.00000000000001,0.492238858852651,
+        		0.47499999991375,.625,9.332636185032189E-302,8.709809816217217E-103,5.233580403196932E94,2.653635302903707E-31,
+        		3.912238919961547E98,1.661006238211309E-7,-3.852027081523919E32,-0.631220676949703};
         int i;
         for (i = 0; i < atest.length; i++) {
         	a = atest[i];
@@ -192,7 +194,7 @@ public class Hypergeometric {
 	        realArgument();
 	        Preferences.debug("a = " + a + " b = " + b + " c = " + c + " x = " + x + " result = " + result[0] + " answer = " + answer[i] + "\n",Preferences.DEBUG_ALGORITHM);
 	        if (answer[i] != 0.0) {
-		        if (Math.abs(result[0]-answer[i])/answer[i] >= 1.0E-8) {
+		        if ((result[0]/answer[i] < 1-1.0E-8) || (result[0]/answer[i] > 1+1.0E-8)) {
 		     		   Preferences.debug("Error detected\n",Preferences.DEBUG_ALGORITHM);
 		     		   errorsDetected++;
 		        }
