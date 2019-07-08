@@ -209,6 +209,91 @@ public class Hypergeometric {
         Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests\n", Preferences.DEBUG_ALGORITHM);
         System.out.println(errorsDetected + " errors detected in " + atest.length + " tests");
     }
+    
+    public void testcomplexArgument() {
+        realResult = new double[1];
+        imagResult = new double[1];
+        int errorsDetected = 0;
+        // Value at x = 0
+        // F(a,b,c,0) = 1
+        
+        // Value at x = 1
+        // F(a,b,c,1) = gamma(c)*gamma(c-a-b)/(gamma(c-a)*gamma(c-b)) for c > a + b
+        a = 1;
+        b = 3;
+        c = 6;
+        double gam1[] = new double[1];
+        double gam2[] = new double[1];
+        double gam3[] = new double[1];
+        double gam4[] = new double[1];
+        Gamma gam = new Gamma(c,gam1);
+        gam.run();
+        gam = new Gamma(c-a-b,gam2);
+        gam.run();
+        gam = new Gamma(c-a,gam3);
+        gam.run();
+        gam = new Gamma(c-b,gam4);
+        gam.run();
+        double ans1 = (gam1[0]*gam2[0])/(gam3[0]*gam4[0]);
+        double atest[] = new double[]{1.0,1.0,0.1,-0.1,0.1,1.0E-8,1.0E-8,1.0,100.0,2+1.0E-9,-2,-1,500,500,-1000,-100,300,5,10,2.25,1,1,-1,4,5,2.0/3.0};
+        double btest[] = new double[]{2.0,3.0,0.2,0.2,0.2,1.0E-8,-1.0E-6,10.0,200.0,3,-3,-1.5,-500,500,-2000,-200,10,-300,5,3.75,0.9,2.5,0.9,1.1,2.2,1};
+        double ctest[] = new double[]{3.0,6.0,0.3,0.3,-0.3,1.0E-8,1.0E-12,1.0,350.0,5,-5+1.0E-9,-2-1.0E-15,500,500,-4000.1,-300+1.0E-9,5,10,-300.5,-0.5,2,5,2,2,-2.5,4.0/3.0};
+        double realZtest[] = new double[]{0.0,1.0,0.5,0.5,-0.5,1.0E-6,-1.0E-10,0.5,0.0,-0.75,0.5,0.5,0.75,-0.6,-0.5,0.5*Math.sqrt(2.0),0.5,0.5,0.5,-1,0.5,0.5,0.5,0.5,0.49,0.5};
+        double imagZtest[] = new double[]{0.0,0.0,0.0,0.0,0.5,0.0,1.0E-12,1.0E-9,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.5*Math.sqrt(3),0.5*Math.sqrt(3),-0.5*Math.sqrt(3),
+        		0.5*Math.sqrt(3) - 0.01,0.5*Math.sqrt(3),0.5*Math.sqrt(3)};
+        double realAnswer[] = new double[]{1.0,ans1,1.046432811217352,.956434210968214,1.027216624114001,1.00000000000001,1.000000000001,1024.0,5.686708048303445E155,0.492238858852651,
+        		0.47499999991375,.625,9.332636185032189E-302,8.709809816217217E-103,5.233580403196932E94,2.653635302903707E-31,
+        		3.912238919961547E98,1.661006238211309E-7,-3.852027081523919E32,-0.631220676949703,0.932633569241998,0.950417228136049,0.775,-0.47009767283509,
+        		1.084589030597151E3,0.883319375142725};
+        double imagAnswer[] = new double[]{0.0,0.0,0.0,0.0,-0.013577157567418,0.0,-1.0E-14,2.048E-5,4.471204020179333E155,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+        		0.475200538581623,0.548723642506806,0.389711431702997,0.500986178581549,-5.115786480028586E3,0.509984679019064};
+        int i;
+        boolean realErrorDetected;
+        for (i = 0; i < atest.length; i++) {
+        	a = atest[i];
+        	b = btest[i];
+        	c = ctest[i];
+        	realZ = realZtest[i];
+        	imagZ = imagZtest[i];
+        	realErrorDetected = false;
+	        complexArgument();
+	        Preferences.debug("a = " + a + " b = " + b + " c = " + c + " realZ = " + realZ + " imagZ = " + imagZ + " realResult = " + realResult[0] + " realAnswer = " + realAnswer[i] +     		
+	        		" imagResult = " + imagResult[0] + " imagAnswer = " + imagAnswer[i] + "\n",Preferences.DEBUG_ALGORITHM);
+	        if (realAnswer[i] != 0.0) {
+		        if ((realResult[0]/realAnswer[i] < 1-1.0E-8) || (realResult[0]/realAnswer[i] > 1+1.0E-8) || (Double.isNaN(realResult[0]))) {
+		     		   Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;
+		     		   realErrorDetected = true;
+		        }
+	        }
+	        else {
+	        	if (Math.abs(realResult[0]) > 1.0E-8) {
+	        		Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;
+		     		   realErrorDetected = true;
+	        	}
+	        }
+	        
+	        if (imagAnswer[i] != 0.0) {
+		        if ((imagResult[0]/imagAnswer[i] < 1-1.0E-8) || (imagResult[0]/imagAnswer[i] > 1+1.0E-8) || (Double.isNaN(imagResult[0]))) {
+		     		   Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+		     		   if (!realErrorDetected) {
+		     		       errorsDetected++;
+		     		   }
+		        }
+	        }
+	        else {
+	        	if (Math.abs(imagResult[0]) > 1.0E-8) {
+	        		Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+	        		   if (!realErrorDetected) {
+		     		       errorsDetected++;
+	        		   }
+	        	}
+	        }
+        }
+        Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests");
+    }
 
     /**
      * This is a port of subroutine HYGFX from Computation of Special Functions by Shanjie Zhang and Jianming Jin, pp.
