@@ -250,7 +250,7 @@ public class Gamma {
         } else if (version == Gamma.LGAMMA) {
             lgamma();
         } else if (version == Gamma.CGAMMA) {
-            // cgamma();
+            cgamma();
         } else if (version == Gamma.INCOG) {
             incog();
         }
@@ -380,42 +380,107 @@ public class Gamma {
         } // if (functionCode == 1)
         return;
     } // lgamma
-
+    
     /**
-     * This code is a port of the FORTRAN routine CGAMA from the book Computation of Special Functions by Shanjie Zhang
-     * and Jianming Jin, John Wiley & Sons, Inc., 1996, pp. 51-52. This routine calculates the gamma(x) for functionCode =
-     * 1 or the ln(gamma(x)) for the function code = 0. x is complex and the output is complex.
+     * This code is a port of the FORTRAN routine CGAMA from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 51-52.  This routine calculates the gamma(x) for functionCode = 1 or
+     * the ln(gamma(x)) for the function code = 0.  x is complex and the output is
+     * complex.
      */
-    /*
-     * private void cgamma() { double a[] = new double[]{8.333333333333333E-2, -2.777777777777778E-3,
-     * 7.936507936507937E-4, -5.952380952380952E-4, 8.417508417508418E-4, -1.917526917526918E-3, 6.410256410256410E-3,
-     * -2.955065359477124E-2, 1.796443723688307E-1, -1.392432216905900}; double x1 = 0.0; double y1 = 0.0; double x0;
-     * int na = 0; double z1; double th; int k; double t; double gr1; double gi1; int j; double th1; double sr; double
-     * si; double th2; double g0; double z2;
-     * 
-     * if (imagX == 0.0 && realX == (int)realX && realX <= 0.0) { realResult[0] = Double.POSITIVE_INFINITY;
-     * imagResult[0] = 0.0; return; } // if (imagX == 0.0 && realX == (int)realX && realX <= 0.0) else if (realX < 0.0) { //
-     * When realX < 0.0, let x = -x x1 = realX; y1 = imagX; realX = -realX; imagX = -imagX; } // else if (realX < 0.0)
-     * x0 = realX; if (realX <= 7.0) { // When realX <= 7, add an integer to realX such that realX + na > 7 na = (int)(7 -
-     * realX); x0 = realX + na; } // if (realX <= 7.0) // Calculate ln(gamma(x+n)) using // ln(gamma(z)), when |z| ->
-     * infinity and |arg z| < PI, approaches: // (z - 1/2)ln(z) - z + (1/2)ln(2*PI) + 1/(12*z) - 1/(360*z**3) +
-     * 1/(1260*z**5) // - 1/(1680*z**7) + 1/(1188*z**9) - 691/(360360*z**11) + 7/(1092*z**13) // - 3617/(122400*z**15) +
-     * ... z1 = Math.sqrt(x0*x0 + imagX*imagX); th = Math.atan(imagX/x0); realResult[0] = (x0-0.5)*Math.log(z1) -
-     * th*imagX - x0 + 0.5*Math.log(2.0*Math.PI); imagResult[0] = th*(x0-0.5) + imagX*Math.log(z1) - imagX; for (k = 1;
-     * k <= 10; k++) { t = Math.pow(z1,(1-2*k)); realResult[0] = realResult[0] + a[k-1]*t*Math.cos((2.0*k-1.0)*th);
-     * imagResult[0] = imagResult[0] - a[k-1]*t*Math.sin((2.0*k-1.0)*th); } // for (k = 1; k <= 10; k++) if (realX <=
-     * 7.0) { // Calculate ln(gamma(x)) using // gamma(z) = (z-1)gamma(z-1) = (z-1)*(z-2)...*(z-n)*gamma(z-n) gr1 = 0.0;
-     * gi1 = 0.0; for (j = 0; j <= na-1; j++) { gr1 = gr1 + 0.5*Math.log((realX+j)*(realX+j) + imagX*imagX); gi1 = gi1 +
-     * Math.atan(imagX/(realX+j)); } // for (j = 0; j <= na-1; j++) realResult[0] = realResult[0] - gr1; imagResult[0] =
-     * imagResult[0] - gi1; } // if (realX <= 7.0) if (x1 < 0.0) { // When realX < 0, use gamma(-z) =
-     * -pi/(z*gamma(z)*sin(PI*z)) for // z not equal to 0, +-1, +-2, ... z1 = Math.sqrt(realX*realX + imagX*imagX); th1 =
-     * Math.atan(imagX/realX); sr = -Math.sin(Math.PI*realX)*Math.cosh(Math.PI*imagX); si =
-     * -Math.cos(Math.PI*realX)*Math.sinh(Math.PI*imagX); z2 = Math.sqrt(sr*sr + si*si); th2 = Math.atan(si/sr); if (sr <
-     * 0.0) { th2 = Math.PI + th2; } realResult[0] = Math.log(Math.PI/(z1*z2)) - realResult[0]; imagResult[0] = -th1 -
-     * th2 - imagResult[0]; realX = x1; imagX = y1; } // if (x1 < 0.0) if (functionCode == 1) { // Calculate gamma(x) g0 =
-     * Math.exp(realResult[0]); realResult[0] = g0*Math.cos(imagResult[0]); imagResult[0] = g0*Math.sin(imagResult[0]); } //
-     * if (functionCode == 1) return; } // cgamma
-     */
+    private void cgamma() {
+        double a[] = new double[]{8.333333333333333E-2, -2.777777777777778E-3,
+                                  7.936507936507937E-4, -5.952380952380952E-4,
+                                  8.417508417508418E-4, -1.917526917526918E-3,
+                                  6.410256410256410E-3, -2.955065359477124E-2,
+                                  1.796443723688307E-1, -1.392432216905900};
+        double x1 = 0.0;
+        double y1 = 0.0;
+        double x0;
+        int na = 0;
+        double z1;
+        double th;
+        int k;
+        double t;
+        double gr1;
+        double gi1;
+        int j;
+        double th1;
+        double sr;
+        double si;
+        double th2;
+        double g0;
+        double z2;
+        
+        if (imagX == 0.0 && realX == (int)realX && realX <= 0.0) {
+            realResult[0] = Double.POSITIVE_INFINITY;
+            imagResult[0] = 0.0;
+            return;
+        } // if (imagX == 0.0 && realX == (int)realX && realX <= 0.0)
+        else if (realX < 0.0) {
+            // When realX < 0.0, let x = -x
+            x1 = realX;
+            y1 = imagX;
+            realX = -realX;
+            imagX = -imagX;
+        } // else if (realX < 0.0)
+        x0 = realX;
+        if (realX <= 7.0) {
+            // When realX <= 7, add an integer to realX such that realX + na > 7
+            na = (int)(7 - realX);
+            x0 = realX + na;
+        } // if (realX <= 7.0)
+        // Calculate ln(gamma(x+n)) using
+        // ln(gamma(z)), when |z| -> infinity and |arg z| < PI, approaches:
+        // (z - 1/2)ln(z) - z + (1/2)ln(2*PI) + 1/(12*z) - 1/(360*z**3) + 1/(1260*z**5) 
+        // - 1/(1680*z**7) + 1/(1188*z**9) - 691/(360360*z**11) + 7/(1092*z**13)
+        // - 3617/(122400*z**15) + ...
+        z1 = Math.sqrt(x0*x0 + imagX*imagX);
+        th = Math.atan(imagX/x0);
+        realResult[0] = (x0-0.5)*Math.log(z1) - th*imagX - x0 + 0.5*Math.log(2.0*Math.PI);
+        imagResult[0] = th*(x0-0.5) + imagX*Math.log(z1) - imagX;
+        for (k = 1; k <= 10; k++) {
+            t = Math.pow(z1,(1-2*k));
+            realResult[0] = realResult[0] + a[k-1]*t*Math.cos((2.0*k-1.0)*th);
+            imagResult[0] = imagResult[0] - a[k-1]*t*Math.sin((2.0*k-1.0)*th);
+        } // for (k = 1; k <= 10; k++)
+        if (realX <= 7.0) {
+            // Calculate ln(gamma(x)) using
+            // gamma(z) = (z-1)gamma(z-1) = (z-1)*(z-2)...*(z-n)*gamma(z-n)  
+            gr1 = 0.0;
+            gi1 = 0.0;
+            for (j = 0; j <= na-1; j++) {
+                gr1 = gr1 + 0.5*Math.log((realX+j)*(realX+j) + imagX*imagX);
+                gi1 = gi1 + Math.atan(imagX/(realX+j));
+            } // for (j = 0; j <= na-1; j++)
+            realResult[0] = realResult[0] - gr1;
+            imagResult[0] = imagResult[0] - gi1;
+        } // if (realX <= 7.0)
+        if (x1 < 0.0) {
+            // When realX < 0, use gamma(-z) = -pi/(z*gamma(z)*sin(PI*z)) for 
+            // z not equal to 0, +-1, +-2, ...
+            z1 = Math.sqrt(realX*realX + imagX*imagX);
+            th1 = Math.atan(imagX/realX);
+            sr = -Math.sin(Math.PI*realX)*Math.cosh(Math.PI*imagX);
+            si = -Math.cos(Math.PI*realX)*Math.sinh(Math.PI*imagX);
+            z2 = Math.sqrt(sr*sr + si*si);
+            th2 = Math.atan(si/sr);
+            if (sr < 0.0) {
+                th2 = Math.PI + th2;
+            }
+            realResult[0] = Math.log(Math.PI/(z1*z2)) - realResult[0];
+            imagResult[0] = -th1 - th2 - imagResult[0];
+            realX = x1;
+            imagX = y1;
+        } // if (x1 < 0.0)
+        if (functionCode == 1) {
+            // Calculate gamma(x)
+            g0 = Math.exp(realResult[0]);
+            realResult[0] = g0*Math.cos(imagResult[0]);
+            imagResult[0] = g0*Math.sin(imagResult[0]);
+        } // if (functionCode == 1)
+        return;
+    } // cgamma
 
     /**
      * This code is a port of the FORTRAN routine INCOG from the book Computation of Special Functions by Shanjie Zhang
