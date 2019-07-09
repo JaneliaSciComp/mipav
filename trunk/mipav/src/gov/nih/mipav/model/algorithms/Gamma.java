@@ -374,6 +374,40 @@ public class Gamma {
     	 Preferences.debug(errorsDetected + " errors detected in " + realXtest.length + " tests\n", Preferences.DEBUG_ALGORITHM);
          System.out.println(errorsDetected + " errors detected in " + realXtest.length + " tests");
     }
+    
+    public void testincog() {
+    	lowerIncompleteGamma = new double[1];
+    	upperIncompleteGamma = new double[1];
+    	regularizedGammaP = new double[1];
+    	double atest[] = new double[]{0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0,
+    			1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0};
+    	double xtest[] = new double[]{0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,2.0,3.0,5.0,10.0,15.0,20.0,25.0,30.0,50.0,100.0,0.0,0.1,0.2,0.3,
+    			0.4,0.5,0.6,0.7,0.8,0.9,1.0,2.0,3.0,5.0,10.0,15.0,20.0,25.0,30.0,50.0,100.0};
+    	double answer[] = new double[]{0.0,0.61199137,0.83821247,0.99509456,1.11470799,1.21003562,1.28800381,1.35287224,1.40749992,1.45392174,
+    			1.49364827,1.69180673,1.74709734,1.76967925,1.77244012,1.77245377,1.77245385,1.77245385,1.77245385,1.77245385,1.77245385,0.0,0.09516258,
+    			0.18126925,0.25918179,0.32967996,0.39346934,0.45118838,0.50341469,0.55067104,0.59343033,0.63212056,0.86466472,0.95021293,
+    			0.99326205,0.99995460,0.99999969,1.0,1.0,1.0,1.0,1.0};
+    	int i;
+        int errorsDetected = 0;
+        for (i = 0; i < xtest.length; i++) {
+           a = atest[i];
+     	   x = xtest[i];
+     	   incog();
+     	   Preferences.debug("a = " + a + " x = " + x + " result = " + lowerIncompleteGamma[0] + "answer = " + answer[i] + "\n", Preferences.DEBUG_ALGORITHM);
+     	   if (answer[i] != 0.0) {
+	     	   if ((lowerIncompleteGamma[0]/answer[i] < 1 - 1.0E-7) || (lowerIncompleteGamma[0]/answer[i] > 1 + 1.0E-7)){
+	     		   Preferences.debug("Error detected\n",Preferences.DEBUG_ALGORITHM);
+	     		   errorsDetected++;
+	     	   }
+            }
+            else if (Math.abs(lowerIncompleteGamma[0]) > 1.0E-7) {
+            	Preferences.debug("Error detected\n",Preferences.DEBUG_ALGORITHM);
+	     	    errorsDetected++;
+            }
+        }
+        Preferences.debug(errorsDetected + " errors found in " + xtest.length + " runs of incog()\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println(errorsDetected + " errors found in " + xtest.length + " runs of incog()");
+    }
 
     public void run() {
         if (version == Gamma.GAMMA) {
