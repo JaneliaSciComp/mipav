@@ -243,6 +243,83 @@ public class Gamma {
        Preferences.debug(errorsDetected + " errors found in " + xtest.length + " runs of gamma()\n", Preferences.DEBUG_ALGORITHM);
        System.out.println(errorsDetected + " errors found in " + xtest.length + " runs of gamma()");
     }
+    
+    public void testcgamma() {
+    	functionCode = 1; // Calculate gamma(x) instead of the ln(gamma(x))
+    	realResult = new double[1];
+    	imagResult = new double[1];
+    	double realXtest[] = new double[]{0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.0,1.0,1.0,
+    			1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,
+    			5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,
+    			10.0,10.0,10.0,10.0};
+    	double imagXtest[] = new double[]{0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,0.0,0.5,1.0,
+    			1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,
+    			6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0};
+    	double realAnswer[] = new double[]{1.7724539,0.81816400,0.30069462,0.15443098,8.9855177E-2,4.8476085E-2,2.1445671E-2,6.4089281E-3,
+    			7.0977147E-5,-1.3860451E-3,-9.6948071E-4,-3.2699983E-4,9.1246779E-6,7.5592446E-5,3.9584974E-5,4.4948956E-6,-6.1895889E-6,
+    			-3.8404414E-6,-3.8932259E-7,6.4698048E-7,3.3787244E-7,1.0,0.80169410,0.49801567,0.28713095,0.15190400,
+    			6.6872772E-2,1.9292759E-2,-1.4467844E-3,-6.3050661E-3,-4.5018045E-3,-1.6996645E-3,-6.8668631E-5,3.5876362E-4,
+    			2.3227946E-4,4.9304479E-5,-2.6637337E-5,-2.4722096E-5,-5.8684192E-6,2.8753379E-6,2.5415314E-6,3.9189293E-7,24.0,17.017385,
+    			1.2178365,-12.319673,-15.586498,-9.1511724,1.6041883E-2,5.2284729,4.8104161,1.5665302,-0.97439524,-1.4336061,-0.61415030,
+    			0.16523446,0.34218685,0.14144084,-4.4812335E-2,-7.3263245E-2,-2.0897466E-2,1.4747623E-2,1.3276965E-2,3.6288000E5,
+    			1.5406528E5,-2.1725564E5,-3.1313093E5,-5.6872836E4,2.1254096E5,1.9762414E5,-1.9884701E4,-1.5269379E5,-8.4097367E4,
+    			4.7216412E4,7.9601729E4,1.6189752E4,-3.6976721E4,-2.7545582E4,6.5248090E3,1.7145397E4,4.1023244E3,-6.6362955E3,
+    			-4.4719189E3,1.4238519E3};
+    	double imagAnswer[] = new double[]{0.0,-0.76331383,-0.42496788,-0.18052756,-6.0493760E-2,-9.4457143E-3,6.8653648E-3,8.0206598E-3,
+    			4.6804466E-3,1.6229161E-3,8.3630391E-5,-2.9984922E-4,-2.0207779E-4,-5.2838836E-5,1.4187559E-5,1.8638145E-5,6.1727064E-6,
+    			-1.0657283E-6,-1.7749779E-6,-5.1755125E-7,1.6893698E-7,0.0,-0.19963974,-0.15494983,-4.7203533E-2,1.9804880E-2,
+    			4.0322635E-2,3.3896011E-2,1.9152690E-2,6.9204490E-3,4.8078798E-4,-1.3585194E-3,-1.0382177E-3,-3.4176135E-4,
+    			3.6555353E-5,9.9733984E-5,4.5247499E-5,3.5279789E-7,-1.0029067E-5,-4.6315765E-6,2.4865027E-7,1.1284480E-6,0.0,15.983251,
+    			21.470125,14.189577,1.0575920,-8.3675044,-9.4332933,-4.5108291,0.83650339,2.9572969,2.0066899,0.21962525,-0.68780601,
+    			-0.55033196,-8.1046668E-2,0.15755811,0.11735155,6.3133014E-3,-3.7035723E-2,-1.9337412E-2,3.6390117E-3,0.0,
+    			3.2331150E5,2.6713203E5,-7.7360934E4,-2.8895044E5,-1.5354015E5,1.1325292E5,1.9216983E5,4.8182095E4,-9.8828803E4,
+    			-9.1467538E4,7.8361661E3,5.8751041E4,2.6624762E4,-1.9000311E4,-2.3261815E4,-7.5686213E2,1.1282289E4,4.9442235E3,
+    			-3.4140423E3,-3.4960820E3};
+    	int i;
+    	int errorsDetected = 0;
+    	boolean realErrorDetected;
+    	for (i = 0; i < realXtest.length; i++) {
+    		realX = realXtest[i];
+    		imagX = imagXtest[i];
+    		realErrorDetected = false;
+    		cgamma();
+    		Preferences.debug("realX = " + realX + " imagX = " + imagX + " realResult = " + realResult[0] + " realAnswer = " + realAnswer[i] +     		
+	        		" imagResult = " + imagResult[0] + " imagAnswer = " + imagAnswer[i] + "\n",Preferences.DEBUG_ALGORITHM);
+    		if (realAnswer[i] != 0.0) {
+		        if ((realResult[0]/realAnswer[i] < 1-1.0E-7) || (realResult[0]/realAnswer[i] > 1+1.0E-7) || (Double.isNaN(realResult[0]))) {
+		     		   Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;
+		     		   realErrorDetected = true;
+		        }
+	        }
+	        else {
+	        	if (Math.abs(realResult[0]) > 1.0E-7) {
+	        		Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;
+		     		   realErrorDetected = true;
+	        	}
+	        }
+	        
+	        if (imagAnswer[i] != 0.0) {
+		        if ((imagResult[0]/imagAnswer[i] < 1-1.0E-7) || (imagResult[0]/imagAnswer[i] > 1+1.0E-7) || (Double.isNaN(imagResult[0]))) {
+		     		   Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+		     		   if (!realErrorDetected) {
+		     		       errorsDetected++;
+		     		   }
+		        }
+	        }
+	        else {
+	        	if (Math.abs(imagResult[0]) > 1.0E-7) {
+	        		Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+	        		   if (!realErrorDetected) {
+		     		       errorsDetected++;
+	        		   }
+	        	}
+	        }
+    	}
+    	 Preferences.debug(errorsDetected + " errors detected in " + realXtest.length + " tests\n", Preferences.DEBUG_ALGORITHM);
+         System.out.println(errorsDetected + " errors detected in " + realXtest.length + " tests");
+    }
 
     public void run() {
         if (version == Gamma.GAMMA) {
