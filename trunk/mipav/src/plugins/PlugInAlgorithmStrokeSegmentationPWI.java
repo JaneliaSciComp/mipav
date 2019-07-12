@@ -1577,34 +1577,34 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         MTTImage = tspAlgo.getMTTImage();
         TmaxImage = tspAlgo.getTmaxImage();
         
-        final int[] extents = TmaxImage.getExtents();
-        final int sliceLength = extents[0] * extents[1];
-        final int volLength = sliceLength * extents[2];
-        final FileInfoBase fInfo = (FileInfoBase) TmaxImage.getFileInfo(0).clone();
-        
-        ModelImage pwiSegImg = new ModelImage(ModelImage.UBYTE, TmaxImage.getExtents(), TmaxImage.getImageName() + "_seg");
-        for (int i = 0; i < pwiSegImg.getExtents()[2]; i++) {
-            pwiSegImg.setFileInfo(fInfo, i);
-        }
-        
-        for (int i = 0; i < volLength; i++) {
-            if (TmaxImage.getInt(i) > pwiThreshold) {
-                pwiSegImg.set(i, 1);
-            } else {
-                pwiSegImg.set(i, 0);
-            }
-        }
-        
         System.err.println("PWI TSP Algo time elapsed: " + (System.currentTimeMillis() - tspStartTime) / 1000.0f);
         
         long regStartTime = System.currentTimeMillis();
         
         // TODO register PWI seg to ADC since it is lower res
-        ModelImage regPwiSegImg = registerImg(pwiSegImg, adcImage);
+        ModelImage TmaxRegImage = registerImg(TmaxImage, adcImage);
         
         System.err.println("PWI seg registration time elapsed: " + (System.currentTimeMillis() - regStartTime) / 1000.0f);
         
-        return regPwiSegImg;
+        final int[] extents = TmaxRegImage.getExtents();
+        final int sliceLength = extents[0] * extents[1];
+        final int volLength = sliceLength * extents[2];
+        final FileInfoBase fInfo = (FileInfoBase) TmaxRegImage.getFileInfo(0).clone();
+        
+        ModelImage pwiSegImg = new ModelImage(ModelImage.UBYTE, TmaxRegImage.getExtents(), TmaxRegImage.getImageName() + "_seg");
+        for (int i = 0; i < pwiSegImg.getExtents()[2]; i++) {
+            pwiSegImg.setFileInfo(fInfo, i);
+        }
+        
+        for (int i = 0; i < volLength; i++) {
+            if (TmaxRegImage.getInt(i) > pwiThreshold) {
+                pwiSegImg.set(i, 1);
+            } else {
+                pwiSegImg.set(i, 0);
+            }
+        }
+
+        return pwiSegImg;
     }
     
     private ModelImage registerImg(ModelImage movingImg, ModelImage refImg) {
