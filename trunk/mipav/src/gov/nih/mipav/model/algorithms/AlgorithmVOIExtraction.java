@@ -74,6 +74,8 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
     
     // connected = 4 or connected = 8
     private int connected = 8;
+    
+    private int numVOIAdded = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1358,6 +1360,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                
 
                                 VOIs.add(addedVOI);
+                                numVOIAdded++;
                                 VOIIndexArray[grayScaleNumber] = VOIs.size() - 1;
                                 VOIs.VOIAt(VOIIndexArray[grayScaleNumber]).importPolygon(contourPolygon, z);
                                 ((VOIContour) (VOIs.VOIAt(VOIIndexArray[grayScaleNumber]).getCurves().lastElement()))
@@ -1914,5 +1917,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
      */
     public VOI getAddedVOI() {
         return addedVOI;
+    }
+    
+    public int getNumVOIAdded() {
+    	return numVOIAdded;
     }
 }
