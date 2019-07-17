@@ -362,6 +362,10 @@ public abstract class VolumeObject
         }
     }
     
+    public void setImageB(VolumeImage imageB) {
+    	m_kVolumeImageB = imageB;
+    }
+    
     /**
      * Sets the light for the EllipsoidsShader.
      * @param kLightType the name of the light to set (Light0, Light1, etc.)

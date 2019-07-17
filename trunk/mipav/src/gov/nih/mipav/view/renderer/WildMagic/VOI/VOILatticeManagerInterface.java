@@ -242,6 +242,9 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				defaultVoxelSize.requestFocus();
 			}
 		} 
+		else if ( command.equals("SegmentNerveRing") ) {
+			mouseSelection3D = true;
+		}
 		else if ( command.equals("animateStraightening") )
 		{
 			System.err.println("Starting Worm Straightening Animation");

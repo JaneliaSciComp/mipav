@@ -2377,6 +2377,16 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			m_kVolumeRayCast.SetGradientMagnitude(bShow);
 		}
 	}
+	
+
+    
+    public void setImageB(VolumeImage imageB) {
+    	m_kVolumeImageB = imageB;
+		for (int i = 0; i < m_kDisplayList.size(); i++) {
+			m_kDisplayList.get(i).setImageB(imageB);
+		}
+		m_kVolumeRayCast.recreateShaderEffect(m_pkRenderer,	m_akSceneTarget[3]);
+    }
 
 	/**
 	 * Sets the ModelImage to use as an alternative to the volume ModelImage for
@@ -3030,6 +3040,39 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_bDisplay = false;
 		m_kVolumeImageA = image;
 		m_kVolumeRayCast.reCreateScene(image);
+
+		m_kTranslate = m_kVolumeRayCast.GetTranslate();
+
+		m_fX = m_kVolumeImageA.GetScaleX();
+		m_fY = m_kVolumeImageA.GetScaleY();
+		m_fZ = m_kVolumeImageA.GetScaleZ();
+		m_fMax = Math.max(m_fX, Math.max(m_fY, m_fZ));
+		
+
+		m_kSlices.reCreateScene(m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ);
+		m_kVolumeClip.reCreateScene(m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ);
+//		m_kVolumeBox.reCreateScene(m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ);
+//		m_kVolumeCube.reCreateScene(m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ);
+
+		// initial update of objects
+		m_spkScene.UpdateGS();
+		m_spkScene.UpdateRS();
+
+		// initial culling of scene
+		m_kCuller.SetCamera(m_spkCamera);
+		m_kCuller.ComputeVisibleSet(m_spkScene);
+
+		InitializeCameraMotion(.05f, 0.1f);
+		UpdateCameraZoomSpeed(.05f);
+		InitializeObjectMotion(m_spkScene);
+		m_bDisplay = true;
+	}
+	
+	public void reCreateScene(VolumeImage imageA, VolumeImage imageB) {
+		m_bDisplay = false;
+		m_kVolumeImageA = imageA;
+		m_kVolumeImageB = imageB;
+		m_kVolumeRayCast.reCreateScene(imageA, imageB);
 
 		m_kTranslate = m_kVolumeRayCast.GetTranslate();
 

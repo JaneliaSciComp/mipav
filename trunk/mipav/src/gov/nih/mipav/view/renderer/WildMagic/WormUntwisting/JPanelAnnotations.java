@@ -25,11 +25,16 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************
  ******************************************************************/
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 
@@ -44,6 +49,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -64,7 +70,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
-
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -72,10 +78,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
-	private ModelImage imageA;
+	private VolumeImage imageA;
 
 	// on 'start' the images are loaded and the VolumeTriPlanarInterface is created:
 	private VOILatticeManagerInterface voiManager;
+	private VolumeTriPlanarRender volumeRenderer = null;
 	// annotation panel displayed in the VolumeTriPlanarInterface:
 	private JPanel annotationPanel;
 	// turns on/off displaying individual annotations
@@ -94,11 +101,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JTable annotationGroupTable;
 	private DefaultTableModel annotationGroupTableModel;
 	private String selectedPrefix = null;
-	
 
-	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, ModelImage image ) {
+	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
 		voiManager = voiInterface;
-		imageA = image;
+		volumeRenderer = renderer;
+		this.imageA = imageA;
 		voiManager.addAnnotationListener(this);
 	}
 
@@ -177,6 +184,50 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
                 	voiManager.setAnnotations(annotations);
                 }
             }
+		}
+		else if ( command.equals("thresholdSegmentation") ) {
+
+			VOI annotations = voiManager.getAnnotations();
+			if ( (annotations != null) ) {
+				if ( annotations.getCurves().size() > 0 ) {
+					Vector<Vector3f> seedList = new Vector<Vector3f>();
+					float maxValue = -Float.MAX_VALUE;
+					float minValue =  Float.MAX_VALUE;
+					for ( int i = 0; i < annotations.getCurves().size(); i++ )
+					{
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+						// read positions and values and set up segmentation:
+						Vector3f pos = text.elementAt(0);
+						seedList.add(new Vector3f(pos));
+						
+						float value = imageA.GetImage().getFloat( (int)pos.X, (int)pos.Y, (int)pos.Z );
+						if ( value > maxValue ) maxValue = value;
+						if ( value < minValue ) minValue = value;						
+					}
+					BitSet visited = new BitSet(imageA.GetImage().getVolumeSize());
+					ModelImage mask = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageA.GetImage().getExtents(), "NerveRing" );
+					final int dimX = imageA.GetImage().getExtents().length > 0 ? imageA.GetImage().getExtents()[0] : 1;
+					final int dimY = imageA.GetImage().getExtents().length > 1 ? imageA.GetImage().getExtents()[1] : 1;
+					final int dimZ = imageA.GetImage().getExtents().length > 2 ? imageA.GetImage().getExtents()[2] : 1;
+					for ( int z = 0; z < dimZ; z++ )
+						for ( int y = 0; y < dimY; y++ )
+							for ( int x = 0; x < dimX; x++ )
+								mask.setC(x,  y,  z, 2, imageA.GetImage().get(x,y,z) );
+					
+					int count = WormSegmentation.fill(imageA.GetImage(), minValue, (float)imageA.GetImage().getMax(), seedList, visited, mask);
+					System.err.println(imageA.GetImage().getImageName() + "  " + count );
+					if ( count > 0 ) {
+						mask.calcMinMax();
+						if ( voiManager != null )
+						{
+							voiManager.setImage(mask, null);
+						}
+						imageA.UpdateData(mask, true);
+						volumeRenderer.resetAxis();
+						volumeRenderer.reCreateScene(imageA, true);
+					}
+				}
+			}
 		}
 		else if ( source == displayLabel )
 		{	
@@ -537,7 +588,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			}
 		}
 
-		imageA.notifyImageDisplayListeners();
+		imageA.GetImage().notifyImageDisplayListeners();
 	}
 
 	/**
@@ -596,7 +647,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
-	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, ModelImage image, boolean latticeMarkers )
+	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, VolumeImage image, boolean latticeMarkers )
 	{		
 		voiManager = voiInterface;
 		imageA = image;
@@ -641,25 +692,32 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayNone.setActionCommand("displayNone");
 			gbcC.gridx++;			gbcC.gridy = 0;
 			labelPanel.add( displayNone, gbcC );
-			
-			// Display none button:
+
+			// Open CSV button:
 			JButton openAnnotations = new JButton("Open annotation .csv" );
 			openAnnotations.addActionListener(this);
 			openAnnotations.setActionCommand("openAnnotations");
-			gbcC.gridx++;			gbcC.gridy = 0;
+			gbcC.gridx = 0;			gbcC.gridy++;
 			labelPanel.add( openAnnotations, gbcC );
+			
+			// Segment button:
+			JButton segment = new JButton("threshold segmentation" );
+			segment.addActionListener(this);
+			segment.setActionCommand("thresholdSegmentation");
+			gbcC.gridx++;
+			labelPanel.add( segment, gbcC );
 
 			// volume clip checkbox for clipping around individual annotations:
 			volumeClip = new JCheckBox("volume clip", true);
 			volumeClip.setSelected(false);
 			volumeClip.addActionListener(this);
 			volumeClip.setActionCommand("volumeClip");
-			gbcC.gridx = 1;			gbcC.gridy = 1;
+			gbcC.gridx = 1;			gbcC.gridy++;
 			labelPanel.add( volumeClip, gbcC );
 
 			volumeRadius = new JSlider(0, 70, 30);
 			volumeRadius.addChangeListener(this);
-			gbcC.gridx++;			gbcC.gridy = 1;
+			gbcC.gridx++;
 			labelPanel.add( volumeRadius, gbcC );
 			
 			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display and Clipping"));
@@ -712,13 +770,13 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 						VOIWormAnnotation text = new VOIWormAnnotation();
 						text.setText("center" );
-						int dimX = imageA.getExtents()[0];
-						int dimY = imageA.getExtents()[1];
-						int dimZ = imageA.getExtents()[2];
+						int dimX = imageA.GetImage().getExtents()[0];
+						int dimY = imageA.GetImage().getExtents()[1];
+						int dimZ = imageA.GetImage().getExtents()[2];
 						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
 						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
 
-						short id = (short) imageA.getVOIs().getUniqueID();
+						short id = (short) imageA.GetImage().getVOIs().getUniqueID();
 						int colorID = 0;
 						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
 						newTextVOI.getCurves().add(text);
@@ -878,15 +936,15 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 					text.setSelected( false );
-					text.updateSelected( imageA );
+					text.updateSelected( imageA.GetImage() );
 				}
 
 				for ( int i = 0; i < rows.length; i++ ) {
 					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(rows[i]);
 					text.setSelected( true );
-					text.updateSelected( imageA );
+					text.updateSelected( imageA.GetImage() );
 				}
-				imageA.notifyImageDisplayListeners();
+				imageA.GetImage().notifyImageDisplayListeners();
 			}
 		}
 		else if ( e.getSource() == annotationGroupList ) {
@@ -898,7 +956,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 				VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 				text.setSelected( false );
-				text.updateSelected( imageA );
+				text.updateSelected( imageA.GetImage() );
 			}
 			annotationList.removeListSelectionListener(this);
 			annotationList.clearSelection();
@@ -910,13 +968,13 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					String prefix = getPrefix(text.getText());
 					if ( prefix.equals(selectedPrefix) ) {
 						text.setSelected(true);
-						text.updateSelected(imageA);
+						text.updateSelected(imageA.GetImage());
 						annotationList.addSelectionInterval(j, j);
 					}
 				}
 			}
 			annotationList.addListSelectionListener(this);
-			imageA.notifyImageDisplayListeners();
+			imageA.GetImage().notifyImageDisplayListeners();
 		}
 	}
 }
