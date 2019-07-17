@@ -25,6 +25,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.MemoryImageSource;
 import java.io.*;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.NumberFormat;
@@ -6156,8 +6157,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     String destName = imageFile.replace("/", File.separator);
                     destName = destName.replace("\\", File.separator);
                     destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName.lastIndexOf("."));
+                    
                     // String destDirName =
-                    final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
+                    //final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
+                    
+                    final String tempDir = Files.createTempDirectory(destName + "_unzip_").toString();
                     tempDirs.add(tempDir);
 
                     origSrcFile = new File(imageFile);
@@ -6182,9 +6186,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     while ( (entry = zin.getNextEntry()) != null) {
                         f = new File(tempDir);
-                        if ( !f.exists()) {
-                            f.mkdir();
-                        }
+//                        if ( !f.exists()) {
+//                            f.mkdir();
+//                        }
 
                         final String entryName = entry.getName();
 
@@ -6240,7 +6244,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     destName = destName.replace("\\", File.separator);
                     destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName.lastIndexOf(".t"));
                     // String destDirName =
-                    final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
+                    
+                    //final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
+                    final String tempDir = Files.createTempDirectory(destName + "_unzip_").toString();
                     tempDirs.add(tempDir);
 
                     origSrcFile = new File(imageFile);
@@ -6266,9 +6272,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     while ( (entry = tin.getNextEntry()) != null) {
                         f = new File(tempDir);
-                        if ( !f.exists()) {
-                            f.mkdir();
-                        }
+//                        if ( !f.exists()) {
+//                            f.mkdir();
+//                        }
 
                         if (entry.isDirectory()) {
                             // if a directory, create it instead of trying to write it to disk
