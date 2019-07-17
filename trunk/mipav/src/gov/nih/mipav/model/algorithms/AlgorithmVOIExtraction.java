@@ -124,6 +124,11 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         VOIIndexArray = null;
         addedVOI = null;
         colorTable = null;
+        if (nameTable != null) {
+        	for (i = 0; i < nameTable.length; i++) {
+        		nameTable[i] = null;
+        	}
+        }
         nameTable = null;
     }
 
