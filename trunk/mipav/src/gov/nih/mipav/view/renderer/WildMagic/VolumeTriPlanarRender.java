@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmReslice;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -1386,6 +1388,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		if ( m_kParent != null )
 		{
 			m_kParent.addSlices(m_kSlices);
+		}
+	}
+	
+	public void reCreateScene(VolumeImage imageA, boolean updateListeners) 
+	{
+		super.reCreateScene(imageA);
+
+		if ( m_kParent != null )
+		{
+			m_kParent.addSlices(m_kSlices);
+		}
+		if ( updateListeners && configuredListener != null ) {
+    		configuredListener.algorithmPerformed( new AlgorithmReslice(m_kVolumeImageA.GetImage(), 0) );
 		}
 	}
 

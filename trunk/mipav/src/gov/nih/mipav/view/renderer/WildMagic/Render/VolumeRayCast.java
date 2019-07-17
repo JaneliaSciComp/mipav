@@ -338,6 +338,43 @@ public class VolumeRayCast extends VolumeObject
     	m_fVolumeMult = (2.0f*maxBox);
     }
     
+    public void reCreateScene( VolumeImage imageA, VolumeImage imageB )
+    {
+        m_kVolumeImageA = imageA;
+        m_kVolumeImageB = imageB;
+        
+        if ( m_kMesh != null )
+        {
+            m_kScene.GetChild(0).Local.SetTranslate( Vector3f.ZERO );  
+        	m_kScene.DetachChild(m_kMesh);
+            m_kScene.UpdateGS();
+        }
+
+    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
+        reCreateBox(iDimX, iDimY, iDimZ);
+        m_kScene.AttachChild( m_kMesh );
+        
+        m_kScene.UpdateGS();
+        m_kTranslate = new Vector3f( m_kScene.WorldBound.GetCenter() );
+        m_kTranslate.neg();
+        m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );               
+
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+        m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
+		float xBox = (iDimX - 1) * afResolutions[0];
+		float yBox = (iDimY - 1) * afResolutions[1];
+		float zBox = (iDimZ - 1) * afResolutions[2];
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        
+		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
+		m_kLocalScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
+    	m_kVolumeTrans = new Vector3f(0, 0, 0);
+    	m_fVolumeDiv = 1f/(2.0f*maxBox);
+    	m_fVolumeMult = (2.0f*maxBox);
+    }
+    
     /** delete local memory. */
     public void dispose(Renderer kRenderer)
     {

@@ -910,6 +910,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm)
 	{       
+		if ( algorithm != null ) {
+			wormImage = volumeImage.GetImage();
+			volOpacityPanel = null;
+			lutHistogramPanel = null;
+			updateHistoLUTPanels(true);
+			updateClipPanel();
+			return;
+		}
+		
 		if ( (annotationList != null) && (annotationNames != null) && (triVolume != null) )
 		{
 			triVolume.addVOIS( annotationList, annotationNames );
@@ -2336,12 +2345,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	{		
 		if ( annotationPanelUI == null )
 		{
-			annotationPanelUI = new JPanelAnnotations(voiManager, volumeImage.GetImage());
-			annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), true);
+			annotationPanelUI = new JPanelAnnotations(voiManager, volumeRenderer, volumeImage );
+			annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage, true);
 			tabbedPane.addTab("Annotation", null, annotationPanelUI.getAnnotationsPanel());
 			pack();
 		}
-		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage.GetImage(), true);
+		annotationPanelUI.initDisplayAnnotationsPanel(voiManager, volumeImage, true);
 	}
 
 	private JPanel latticePanel = null;

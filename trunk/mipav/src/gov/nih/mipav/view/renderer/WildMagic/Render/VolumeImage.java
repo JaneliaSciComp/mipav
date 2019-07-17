@@ -1297,6 +1297,11 @@ public class VolumeImage implements Serializable {
 	 */
 	public void UpdateData(final ModelImage kImage, boolean reload) {
 		m_kImage = kImage;
+		if ( m_kVolume == null ) {
+			m_kPostfix = "";
+			init(null, 0, false);
+			return;
+		}
 		initLUT();
 		if ( reload )
 		{			

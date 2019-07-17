@@ -288,6 +288,59 @@ public class WormSegmentation
 	}
 
 
+	public static int fill(final ModelImage image, float cutOffMin, float cutOffMax, final Vector<Vector3f> seedList, BitSet visited, ModelImage mask) {
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
+		int count = 0;
+		while (seedList.size() > 0) {
+			final Vector3f seed = seedList.remove(0);
+
+			final int z = Math.round(seed.Z);
+			final int y = Math.round(seed.Y);
+			final int x = Math.round(seed.X);
+			int index = z*dimY*dimX + y*dimX + x;			
+			
+			if ( visited.get(index) )
+			{
+				continue;
+			}
+			visited.set(index);
+			
+			float value = image.getFloat(x, y, z);
+			if ( (value >= cutOffMin) && (value < cutOffMax) )
+			{
+				mask.setC(x, y, z, 1, value);
+			}
+			
+			count++;
+
+			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
+			{
+				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
+				{
+					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
+					{
+						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
+							index = z1*dimY*dimX + y1*dimX + x1;
+							if ( !visited.get(index) )
+							{
+								value = image.getFloat(x1, y1, z1);
+								if ( (value >= cutOffMin) && (value < cutOffMax) )
+								{
+									seedList.add( new Vector3f(x1,y1,z1) );
+								}
+							}
+						}
+					}
+				}
+			}							
+		}
+		return count;
+	}
+
+
 
 //	public static Vector<Vector3f> findMaxPeaks( ModelImage image, float minPeakVal )
 //	{

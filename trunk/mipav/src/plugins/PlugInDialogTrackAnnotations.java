@@ -447,8 +447,8 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
 			GuiBuilder gui = new GuiBuilder(dialogGUI);
 
-			annotationPanelUI = new JPanelAnnotations(((VOILatticeManagerInterface)triVolume.getVOIManager()), imageA);
-			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, false);
+			annotationPanelUI = new JPanelAnnotations(((VOILatticeManagerInterface)triVolume.getVOIManager()), triVolume.getVolumeGPU(), triVolume.getVolumeImageA());
+			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), triVolume.getVolumeImageA(), false);
 
 			// back button:
 			buttonPanel = new JPanel();
@@ -479,7 +479,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			triVolume.insertTab( "Track Annotation", annotationPanel );
 		}
 		
-		annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), imageA, false);
+		annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), triVolume.getVolumeImageA(), false);
 	}
 
 	/**
