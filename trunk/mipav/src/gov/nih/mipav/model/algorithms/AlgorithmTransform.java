@@ -6178,6 +6178,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index2Size;
         VOIBaseVector curves = null;
         VOI currentVOI;
+        int numVOIAdded = 0;
+        int numVOIsLost = 0;
 
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         ModelImage tmpMask = null;
@@ -6332,10 +6334,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
                     VOIExtAlgo.run();
+                    numVOIAdded = VOIExtAlgo.getNumVOIAdded();
                     VOIExtAlgo.finalize();
                     VOIExtAlgo = null;
-                    destImage.addVOIs(tmpMask.getVOIs());
-                    tmpMask.resetVOIs();
+                    if (numVOIAdded > 0) {
+                        destImage.addVOIs(tmpMask.getVOIs());
+                        tmpMask.resetVOIs();
+                    }
+                    else {
+                    	numVOIsLost++;
+                    	Preferences.debug("VOI " + image.getVOIs().get(index).getName() + " lost in AlgorithmVOIExtraction\n",
+                    			Preferences.DEBUG_ALGORITHM);
+                    }
                     for (z = 0; z < oZdim; z++) {
                         for (j = 0; j < oYdim; j++) {
                             for (i = 0; i < oXdim; i++) {
@@ -6346,26 +6356,28 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
             } // for (index2 = 0; index2 < curves.size(); index2++)
             numDestVOIs[index] = destImage.getVOIs().size();
-        	if (index == 0) {
-        		for (i = 0; i < numDestVOIs[0]; i++) {
-        			currentVOI = destImage.getVOIs().get(i);
-        			currentVOI.setAllActive(true);
-        		}
-        	}
-        	else {
-        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
-        	    	currentVOI = destImage.getVOIs().get(i);
-        	    	currentVOI.setAllActive(false);
-        	    }
-        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
-        	    	currentVOI = destImage.getVOIs().get(i);
-        	    	currentVOI.setAllActive(true);
-        	    }
-        	}
-        	destImage.groupVOIs();
-    	    numDestVOIs[index] = destImage.getVOIs().size();
-    	    destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
-    	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
+            if (numVOIAdded > 0) {
+	        	if (index == 0) {
+	        		for (i = 0; i < numDestVOIs[0]; i++) {
+	        			currentVOI = destImage.getVOIs().get(i);
+	        			currentVOI.setAllActive(true);
+	        		}
+	        	}
+	        	else {
+	        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
+	        	    	currentVOI = destImage.getVOIs().get(i);
+	        	    	currentVOI.setAllActive(false);
+	        	    }
+	        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
+	        	    	currentVOI = destImage.getVOIs().get(i);
+	        	    	currentVOI.setAllActive(true);
+	        	    }
+	        	}
+	        	destImage.groupVOIs();
+	    	    numDestVOIs[index] = destImage.getVOIs().size();
+    	        destImage.getVOIs().get(index-numVOIsLost).setName(image.getVOIs().get(index).getName());
+    	        destImage.getVOIs().get(index-numVOIsLost).setColor(image.getVOIs().get(index).getColor());
+    	    }
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
