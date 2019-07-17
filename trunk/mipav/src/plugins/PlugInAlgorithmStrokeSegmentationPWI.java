@@ -9,7 +9,6 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogFuzzyCMeans;
 
 import java.io.*;
@@ -1582,7 +1581,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         long regStartTime = System.currentTimeMillis();
         
         // TODO register PWI seg to ADC since it is lower res
-        ModelImage TmaxRegImage = registerImg(TmaxImage, adcImage);
+        ModelImage TmaxRegImage = registerImg(getFirstVolume(pwiImg), adcImage, TmaxImage);
         
         System.err.println("PWI seg registration time elapsed: " + (System.currentTimeMillis() - regStartTime) / 1000.0f);
         
@@ -1607,14 +1606,123 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return pwiSegImg;
     }
     
-    private ModelImage registerImg(ModelImage movingImg, ModelImage refImg) {
+    private ModelImage getFirstVolume(ModelImage multiVolImg) {
+        int extents3Dorg[] = multiVolImg.getExtents();
+        int length = extents3Dorg[0] * extents3Dorg[1];
+        int xDim = extents3Dorg[0];
+        int yDim = extents3Dorg[1];
+        int zDim;
+        int tDim;
+        int units3D[] = new int[3];
+        int extents3D[] = new int[3];
+        float resolutions3D[] = new float[3];
+        
+        String tDimString;
+        
+        String delZString;
+        float delZ;
+        
+        extents3D[0] = xDim;
+        extents3D[1] = yDim;
+        
+        FileInfoDicom dicomInfo = (FileInfoDicom) multiVolImg.getFileInfo(0);
+        FileDicomTagTable tagTable = dicomInfo.getTagTable();
+        FileInfoDicom dicomInfoLast = (FileInfoDicom) multiVolImg.getFileInfo(extents3Dorg[2]-1);
+        FileDicomTagTable tagTableLast = dicomInfoLast.getTagTable();
+
+        //System.out.println("TE = " + TE);
+        if (tagTable.getValue("0020,0105") != null) {
+            // Number of temporal positions
+            FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0105"));
+            tDimString = (String)tag.getValue(false);
+        }
+        else if (tagTableLast.getValue("0020,0012") != null) {
+            FileDicomTag tag = tagTableLast.get(new FileDicomKey("0020,0012"));
+            tDimString = (String)tag.getValue(false); 
+        }
+        else {
+            MipavUtil.displayError("Tags (0020,0012) and (0020,0105) are both null");
+            setCompleted(false);
+            return multiVolImg;
+        }
+        tDim = Integer.valueOf(tDimString.trim()).intValue();
+        if ((tDim <= 2) || (tDim > 500)) {
+            MipavUtil.displayError("Exiting with an impossible time dimension value of " + tDim);
+            setCompleted(false);
+            return multiVolImg;
+        }
+        zDim = extents3Dorg[2]/tDim;
+        if ((zDim <= 2) || (zDim > 500)) {
+            MipavUtil.displayError("Exiting with an impossible z dimension value of " + zDim);
+            setCompleted(false);
+            return multiVolImg;
+        }
+        extents3D[2] = zDim;
+        for (int i = 0; i < 2; i++) {
+            resolutions3D[i] = multiVolImg.getResolutions(0)[i];
+            //System.out.println("resolutions["+i+"] = " + resolutions[i]);
+        }
+        
+        if (tagTable.getValue("0018,0088") != null) {
+            // Spacing between slices in millimeters
+            FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0088"));
+            delZString = (String)tag.getValue(false);
+        }
+        else {
+            MipavUtil.displayError("Tag (0018,0088) for Spacing between slices is null");
+            setCompleted(false);
+            return multiVolImg;
+        }
+        delZ = Float.valueOf(delZString.trim()).floatValue();
+        //System.out.println("delZ = " + delZ);
+        resolutions3D[2] = delZ;
+        //System.out.println("zDim = " + zDim + " tDim = " + tDim);
+
+        for (int i = 0; i < 3; i++) {
+            units3D[i] = Unit.MILLIMETERS.getLegacyNum();
+        }
+        
+        int volume = zDim * length;
+
+        short[] buffer = new short[volume];
+        
+        try {
+            multiVolImg.exportData(0, volume, buffer);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on multiVolImg.exportData");
+            setCompleted(false);
+            return multiVolImg;
+        }
+        
+        ModelImage firstVol = new ModelImage(multiVolImg.getType(), extents3D, multiVolImg.getImageName() + "_firstVol");
+        firstVol.setResolutions(resolutions3D);
+        // TODO units? others?
+        
+        try {
+            firstVol.importData(buffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException on firstVol.importData");
+            setCompleted(false);
+            return multiVolImg;
+        }
+        
+        return firstVol;
+    }
+    
+    private ModelImage registerImg(ModelImage movingImg, ModelImage refImg, ModelImage imgToTransform) {
+        ModelImage transfImg = imgToTransform;
+        if (transfImg == null) {
+            transfImg = movingImg;
+        }
+        
         // TODO
         int costFunc = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
         
         // TODO 
-        //int dof = 6;
+        int dof = 6;
         //int dof = 9;
-        int dof = 12;
+        //int dof = 12;
 
         int searchAngle = 45;
         int coarseAngle = 15;
@@ -1655,13 +1763,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         final TransMatrix finalMatrix = regAlgo.getTransform();
         //System.err.println(finalMatrix);
-
-        final String name = JDialogBase.makeImageName(movingImg.getImageName(), "_register");
         
         float fillValue = 0.0f;
         boolean pad = false;
 
-        AlgorithmTransform transform = new AlgorithmTransform(movingImg, finalMatrix, AlgorithmTransform.NEAREST_NEIGHBOR, xresA, yresA, zresA, xdimA,
+        AlgorithmTransform transform = new AlgorithmTransform(transfImg, finalMatrix, AlgorithmTransform.NEAREST_NEIGHBOR, xresA, yresA, zresA, xdimA,
                 ydimA, zdimA, true, false, pad);
 
         transform.setUpdateOriginFlag(true);
