@@ -263,7 +263,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         PlugInAlgorithmStrokeSegmentationPWI segAlgo = (PlugInAlgorithmStrokeSegmentationPWI) algorithm;
         
         if (segAlgo instanceof PlugInAlgorithmStrokeSegmentationPWI) {
-            Preferences.debug("Stroke segmentation Elapsed: " + segAlgo.getElapsedTime());
+            System.err.println("Stroke segmentation Elapsed: " + segAlgo.getElapsedTime());
             
             double resFactorCC = PlugInAlgorithmStrokeSegmentationPWI.getResolutionFactorCC(adcImage);
             
