@@ -339,6 +339,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             ModelImage pwiSegImg = calcPwiSegImg(pwiImage);
             
+            saveImageFile(pwiSegImg, coreOutputDir, outputBasename + "_PWI_Tmax_thresh", FileUtility.XML);
+            
             int pwiSegVolLen = pwiSegImg.getExtents()[0] * pwiSegImg.getExtents()[1] * pwiSegImg.getExtents()[2];
             
             short[] pwiSegBuffer = new short[pwiSegVolLen];
@@ -1608,7 +1610,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
     private ModelImage getFirstVolume(ModelImage multiVolImg) {
         int extents3Dorg[] = multiVolImg.getExtents();
-        int length = extents3Dorg[0] * extents3Dorg[1];
+        int sliceLength = extents3Dorg[0] * extents3Dorg[1];
         int xDim = extents3Dorg[0];
         int yDim = extents3Dorg[1];
         int zDim;
@@ -1682,30 +1684,30 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             units3D[i] = Unit.MILLIMETERS.getLegacyNum();
         }
         
-        int volume = zDim * length;
-
-        short[] buffer = new short[volume];
-        
-        try {
-            multiVolImg.exportData(0, volume, buffer);
-        }
-        catch (IOException e) {
-            MipavUtil.displayError("IOException on multiVolImg.exportData");
-            setCompleted(false);
-            return multiVolImg;
-        }
+        short[] sliceBuffer = new short[sliceLength];
         
         ModelImage firstVol = new ModelImage(multiVolImg.getType(), extents3D, multiVolImg.getImageName() + "_firstVol");
         firstVol.setResolutions(resolutions3D);
         // TODO units? others?
         
-        try {
-            firstVol.importData(buffer);
-        } catch (IOException e) {
-            MipavUtil.displayError("IOException on firstVol.importData");
-            setCompleted(false);
-            return multiVolImg;
+        int zDest = 0; // start counting the slices of the destination image at the first slice.
+
+        int multiVolZDim = extents3Dorg[2];
+        
+        for (int zSrc = 0; (zSrc < multiVolZDim) && !threadStopped; zSrc += tDim) {
+            try {
+                // try copying the zSrc slice out of srcImage, making it the zDest in destImage
+                multiVolImg.exportSliceXY(zSrc, sliceBuffer);
+                firstVol.importData(zDest * sliceLength, sliceBuffer, false);
+                zDest++;
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException on PWI first vol export/import");
+                setCompleted(false);
+                return multiVolImg;
+            }
         }
+
+        saveImageFile(firstVol, coreOutputDir, outputBasename + "_PWI_firstVol", FileUtility.XML);
         
         return firstVol;
     }
@@ -1753,6 +1755,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         regAlgo.setRunningInSeparateThread(false);
         regAlgo.run();
+        
+        //saveImageFile(movingImg, coreOutputDir, outputBasename + "_PWI_firstVol_reg", FileUtility.XML);
         
         final int xdimA = refImg.getExtents()[0];
         final int ydimA = refImg.getExtents()[1];
