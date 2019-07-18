@@ -1380,7 +1380,8 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
                                 } // end of if (grayScaleNumber >= 1000)
                             } // end of if (newGrayScale)
-                        } // end of if ((!mask.get(scanPos)) && (expImgBuffer[scanPos] != 0))
+                            contourPolygon.reset();
+                        } // end of if ((!mask.get(smallPos)) && (objBuffer[smallPos] == obj))
                     } // end of for (x = 0; x < xDimE; x++)
                 } // end of for (y = 0; y < yDimE; y++)
 
@@ -1515,7 +1516,8 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                     }
                                 }
                             }
-                        } // end of if ((!mask.get(scanPos)) && (expImgBuffer[scanPos] != 0))
+                            contourPolygon.reset();
+                        } // end of if ((!outMask.get(smallPos)) && (!mask.get(smallPos)) && (objBuffer[smallPos] == 0))
                     } // end of for (x = 0; x < xDimE; x++)
                 } // end of for (y = 0; y < yDimE; y++)
 
