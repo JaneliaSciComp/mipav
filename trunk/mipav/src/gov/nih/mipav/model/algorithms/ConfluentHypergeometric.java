@@ -1614,7 +1614,7 @@ public class ConfluentHypergeometric {
         		1.9000000E1,5.3391087E4,-5.0000000,-7.5133965E5,1.0,3.5477001E7,3.1663628E8,1.8380420E9,8.5491797E9,3.4392897E10,
         		1.2443806E11,4.1455281E11,1.2915594E12,3.8049369E12,1.0686475E13};
         int i;
-        for (i = 0; i < atest.length; i++) {
+        /*for (i = 0; i < atest.length; i++) {
         	a = atest[i];
         	b = btest[i]; 
         	x = xtest[i];
@@ -1638,7 +1638,7 @@ public class ConfluentHypergeometric {
 	        }
         }
         Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests on firstKindRealArgument()\n", Preferences.DEBUG_ALGORITHM);
-        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindRealArgument()");
+        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindRealArgument()");*/
         
         errorsDetected = 0;
         for (i = 0; i < atest.length; i++) {
@@ -1678,7 +1678,7 @@ public class ConfluentHypergeometric {
         Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplexArgument()\n", Preferences.DEBUG_ALGORITHM);
         System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplexArgument()");
         
-        errorsDetected = 0;
+        /*errorsDetected = 0;
         for (i = 0; i < atest.length; i++) {
         	errorFound = false;
         	realA = atest[i];
@@ -1714,7 +1714,7 @@ public class ConfluentHypergeometric {
 	        }
         }
         Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplex()\n", Preferences.DEBUG_ALGORITHM);
-        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplex()");	
+        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplex()");*/	
     }
 
     /**
@@ -2039,16 +2039,17 @@ public class ConfluentHypergeometric {
                     imagCR1 = 0.0;
                     realCR2 = 1.0;
                     imagCR2 = 0.0;
+                    denom = realZ*realZ + imagZ*imagZ;
                     for (i = 1; i <= 8; i++) {
-                        realTemp = -realCR1 * (a + i - 1.0) * (a - b + i) / (realZ * i) + imagCR1 * (a + i - 1.0)
-                                * (a - b + i) / (imagZ * i);
-                        imagCR1 = -realCR1 * (a + i - 1.0) * (a - b + i) / (imagZ * i) - imagCR1 * (a + i - 1.0)
-                                * (a - b + i) / (realZ * i);
+                        realTemp = -realCR1 * (a + i - 1.0) * (a - b + i) * realZ/ (denom * i) + imagCR1 * (a + i - 1.0)
+                                * (a - b + i) * imagZ/ (denom * i);
+                        imagCR1 = realCR1 * (a + i - 1.0) * (a - b + i) * imagZ/ (denom * i) - imagCR1 * (a + i - 1.0)
+                                * (a - b + i) * realZ / (denom * i);
                         realCR1 = realTemp;
-                        realTemp = realCR2 * (b - a + i - 1.0) * (i - a) / (realZ * i) - imagCR2 * (b - a + i - 1.0)
-                                * (i - a) / (imagZ * i);
-                        imagCR2 = realCR2 * (b - a + i - 1.0) * (i - a) / (imagZ * i) + imagCR2 * (b - a + i - 1.0)
-                                * (i - a) / (realZ * i);
+                        realTemp = realCR2 * (b - a + i - 1.0) * (i - a) * realZ/ (denom * i) - imagCR2 * (b - a + i - 1.0)
+                                * (i - a) * imagZ/ (denom * i);
+                        imagCR2 = -realCR2 * (b - a + i - 1.0) * (i - a) * imagZ / (denom * i) + imagCR2 * (b - a + i - 1.0)
+                                * (i - a) * realZ/ (denom * i);
                         realCR2 = realTemp;
                         realCS1 = realCS1 + realCR1;
                         imagCS1 = imagCS1 + imagCR1;
@@ -2060,7 +2061,7 @@ public class ConfluentHypergeometric {
                     } else if ( (realZ == 0.0) && (imagZ < 0.0)) {
                         phi = -0.5 * Math.PI;
                     } else {
-                        phi = Math.atan(imagZ / realZ);
+                        phi = Math.atan2(imagZ,realZ);
                     }
                     if ( (phi > -0.5 * Math.PI) && (phi < 1.5 * Math.PI)) {
                         ns = 1;
