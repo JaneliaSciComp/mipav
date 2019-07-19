@@ -6371,7 +6371,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     VOIExtAlgo = null;
                     if (numVOIAdded > 0) {
                         destImage.addVOIs(tmpMask.getVOIs());
-                        tmpMask.resetVOIs();
+                        for (i = tmpMask.getVOIs().size()-1; i >= 0; i--) {
+                        	VOI voiremoved = tmpMask.getVOIs().remove(i);
+                        	voiremoved.dispose();
+                        }
                     }
                     else {
                     	numVOIsLost++;
