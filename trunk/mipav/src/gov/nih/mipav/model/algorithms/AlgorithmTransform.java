@@ -6373,7 +6373,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                         destImage.addVOIs(tmpMask.getVOIs());
                         for (i = tmpMask.getVOIs().size()-1; i >= 0; i--) {
                         	VOI voiremoved = tmpMask.getVOIs().remove(i);
-                        	voiremoved.dispose();
+                        	if (voiremoved != null) {
+                        	    voiremoved.dispose();
+                        	}
                         }
                     }
                     else {
