@@ -5978,7 +5978,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         ModelImage tmpMask = null;
         VOIVector voiVector;
         int numVOIAdded = 0;
-        int numVOIsLost = 0;
 
 
         final int mod = Math.max(1, oXdim / 50);
@@ -6047,7 +6046,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         tmpMask.resetVOIs();
                     }
                     else {
-                    	numVOIsLost++;
                     	Preferences.debug("VOI " + image.getVOIs().get(index).getName() + " lost in AlgorithmVOIExtraction\n",
                     			Preferences.DEBUG_ALGORITHM);
                     }
@@ -6160,7 +6158,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         tmpMask.resetVOIs();
                     }
                     else {
-                    	numVOIsLost++;
                     	Preferences.debug("VOI " + image.getVOIs().get(index).getName() + " lost in AlgorithmVOIExtraction\n",
                     			Preferences.DEBUG_ALGORITHM);
                     }
