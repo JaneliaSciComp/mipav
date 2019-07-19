@@ -1614,7 +1614,7 @@ public class ConfluentHypergeometric {
         		1.9000000E1,5.3391087E4,-5.0000000,-7.5133965E5,1.0,3.5477001E7,3.1663628E8,1.8380420E9,8.5491797E9,3.4392897E10,
         		1.2443806E11,4.1455281E11,1.2915594E12,3.8049369E12,1.0686475E13};
         int i;
-        /*for (i = 0; i < atest.length; i++) {
+        for (i = 0; i < atest.length; i++) {
         	a = atest[i];
         	b = btest[i]; 
         	x = xtest[i];
@@ -1638,7 +1638,7 @@ public class ConfluentHypergeometric {
 	        }
         }
         Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests on firstKindRealArgument()\n", Preferences.DEBUG_ALGORITHM);
-        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindRealArgument()");*/
+        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindRealArgument()");
         
         errorsDetected = 0;
         for (i = 0; i < atest.length; i++) {
@@ -1678,7 +1678,7 @@ public class ConfluentHypergeometric {
         Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplexArgument()\n", Preferences.DEBUG_ALGORITHM);
         System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplexArgument()");
         
-        /*errorsDetected = 0;
+        errorsDetected = 0;
         for (i = 0; i < atest.length; i++) {
         	errorFound = false;
         	realA = atest[i];
@@ -1714,7 +1714,7 @@ public class ConfluentHypergeometric {
 	        }
         }
         Preferences.debug(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplex()\n", Preferences.DEBUG_ALGORITHM);
-        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplex()");*/	
+        System.out.println(errorsDetected + " errors detected in " + atest.length + " tests on firstKindComplex()");	
     }
 
     /**
