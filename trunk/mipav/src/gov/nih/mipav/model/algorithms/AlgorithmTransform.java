@@ -5895,8 +5895,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                 VOIExtAlgo.finalize();
                 VOIExtAlgo = null;
                 if (numVOIAdded > 0) {
-                    destImage.addVOIs(tmpMask.getVOIs());
-                    tmpMask.resetVOIs();
+                	while (tmpMask.getVOIs().size() > 0) {
+                        VOI voiremoved = tmpMask.getVOIs().remove(0);
+                        if (voiremoved != null) {
+                        	destImage.getVOIs().add(voiremoved);
+                        }
+                	}
                 }
                 else {
                 	numVOIsLost++;
@@ -6042,8 +6046,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                     VOIExtAlgo.finalize();
                     VOIExtAlgo = null;
                     if (numVOIAdded > 0) {
-                        destImage.addVOIs(tmpMask.getVOIs());
-                        tmpMask.resetVOIs();
+                    	while (tmpMask.getVOIs().size() > 0) {
+                            VOI voiremoved = tmpMask.getVOIs().remove(0);
+                            if (voiremoved != null) {
+                            	destImage.getVOIs().add(voiremoved);
+                            }
+                    	}
                     }
                     else {
                     	Preferences.debug("VOI " + image.getVOIs().get(index).getName() + " lost in AlgorithmVOIExtraction\n",
@@ -6154,8 +6162,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                     VOIExtAlgo.finalize();
                     VOIExtAlgo = null;
                     if (numVOIAdded > 0) {
-                        destImage.addVOIs(tmpMask.getVOIs());
-                        tmpMask.resetVOIs();
+                    	while (tmpMask.getVOIs().size() > 0) {
+                            VOI voiremoved = tmpMask.getVOIs().remove(0);
+                            if (voiremoved != null) {
+                            	destImage.getVOIs().add(voiremoved);
+                            }
+                    	}
                     }
                     else {
                     	Preferences.debug("VOI " + image.getVOIs().get(index).getName() + " lost in AlgorithmVOIExtraction\n",
@@ -6367,12 +6379,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     VOIExtAlgo.finalize();
                     VOIExtAlgo = null;
                     if (numVOIAdded > 0) {
-                        destImage.addVOIs(tmpMask.getVOIs());
-                        for (i = tmpMask.getVOIs().size()-1; i >= 0; i--) {
-                        	VOI voiremoved = tmpMask.getVOIs().remove(i);
-                        	if (voiremoved != null) {
-                        	    voiremoved.dispose();
-                        	}
+                    	while (tmpMask.getVOIs().size() > 0) {
+                            VOI voiremoved = tmpMask.getVOIs().remove(0);
+                            if (voiremoved != null) {
+                            	destImage.getVOIs().add(voiremoved);
+                            }
                         }
                     }
                     else {
@@ -6628,8 +6639,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                     VOIExtAlgo = null;
                     
                     if (numVOIAdded > 0) {
-	                    destImage.addVOIs(tmpMask.getVOIs());
-	                    tmpMask.resetVOIs();
+                    	while (tmpMask.getVOIs().size() > 0) {
+                            VOI voiremoved = tmpMask.getVOIs().remove(0);
+                            if (voiremoved != null) {
+                            	destImage.getVOIs().add(voiremoved);
+                            }
+                    	}
                     }
                     else {
                     	numVOIsLost++;
