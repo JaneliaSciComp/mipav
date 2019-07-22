@@ -1397,6 +1397,128 @@ public class ConfluentHypergeometric {
         return;
     } // arsub
     
+    public void complexTestFirstKind() {
+    	realResult = new double[1];
+    	imagResult = new double[1];
+    	int errorsDetected = 0;
+        boolean errorFound;
+    	double realATest[] = new double[]{0.1,1.0E-8,1.0,50.0};
+    	double imagATest[] = new double[]{0.0,0.0,0.0,0.0};
+    	double realBTest[] = new double[]{0.2,1.0E-12,1.0,10.0};
+    	double imagBTest[] = new double[]{0.0,0.0,0.0,0.0};
+    	double realZTest[] = new double[]{-0.5,-1.0E-10,10.0,0.0};
+    	double imagZTest[] = new double[]{1.0,1.0E-12,1.0E-9,200.0};
+    	double realAnswer[] = new double[]{0.667236640109150,0.999999,2.202646579480672E4,-3.000605782805072E35};
+    	double imagAnswer[] = new double[]{0.274769720129335,1.0E-8,2.202646579480672E-5,3.046849261045972E35};
+    	int i;
+    	for (i = 0; i < realATest.length; i++) {
+        	errorFound = false;
+        	a = realATest[i];
+        	b = realBTest[i]; 
+        	realZ = realZTest[i];
+        	imagZ = imagZTest[i];
+	        firstKindComplexArgument();
+	        Preferences.debug("a = " + a + " b = " + b + " realZ = " + realZ + " imagZ = " + imagZ + " realResult = " + realResult[0] + 
+	        		" imagResult = " + imagResult[0] + " realAnswer = " + realAnswer[i] + 
+	        		" imagAnswer = " + imagAnswer[i] + "\n",Preferences.DEBUG_ALGORITHM);
+	        if (Double.isNaN(realResult[0])) {
+	        	Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+	     		errorsDetected++;	
+	     		errorFound = true;
+	        }
+	        else if (realAnswer[i] != 0.0) {
+		        if ((realResult[0]/realAnswer[i] < 1-1.0E-7) || (realResult[0]/realAnswer[i] > 1+1.0E-7)) {
+		     		   Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;
+		     		   errorFound = true;
+		        }
+	        }
+	        else if (Math.abs(realResult[0]) > 1.0E-7) {
+        		Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+	     		errorsDetected++;	
+	     		errorFound = true;
+	        }
+	        if (Double.isNaN(imagResult[0])) {
+	        	Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+	        	if (!errorFound) {
+	     		    errorsDetected++;	
+	        	}
+	        }
+	        else if (imagAnswer[i] != 0.0) {
+		        if ((imagResult[0]/imagAnswer[i] < 1-1.0E-7) || (imagResult[0]/imagAnswer[i] > 1+1.0E-7)) {
+		     		   Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+		     		   if (!errorFound) {
+		     		       errorsDetected++;
+		     		   }
+		        }
+	        }
+	        else if (Math.abs(imagResult[0]) > 1.0E-7) {
+	        	Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+	        	if (!errorFound) {
+	        		errorsDetected++;
+	        	}
+	        }
+        }
+        Preferences.debug(errorsDetected + " errors detected in " + realATest.length + " tests on firstKindComplexArgument()\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println(errorsDetected + " errors detected in " + realATest.length + " tests on firstKindComplexArgument()");
+        
+        errorsDetected = 0;
+        for (i = 0; i < realATest.length; i++) {
+        	errorFound = false;
+        	realA = realATest[i];
+        	imagA = imagATest[i];
+        	realB = realBTest[i]; 
+        	imagB = imagBTest[i];
+        	realZ = realZTest[i];
+        	imagZ = imagZTest[i];
+	        firstKindComplex();
+	        Preferences.debug("realA = " + realA + "imagA = " + imagA + " realB = " + realB + 
+	        		"imagB = " + imagB + " realZ = " + realZ + " imagZ = " + imagZ + " realResult = " + realResult[0] + 
+	        		" imagResult = " + imagResult[0] + " realAnswer = " + realAnswer[i] + 
+	        		" imagAnswer = " + imagAnswer[i] + "\n",Preferences.DEBUG_ALGORITHM);
+	        if (Double.isNaN(realResult[0])) {
+	        	Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+	     		errorsDetected++;	
+	     		errorFound = true;
+	        }
+	        else if (realAnswer[i] != 0.0) {
+		        if ((realResult[0]/realAnswer[i] < 1-1.0E-7) || (realResult[0]/realAnswer[i] > 1+1.0E-7)) {
+		     		   Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+		     		   errorsDetected++;
+		     		   errorFound = true;
+		        }
+	        }
+	        else if (Math.abs(realResult[0]) > 1.0E-7) {
+        		Preferences.debug("Error detected in real part\n",Preferences.DEBUG_ALGORITHM);
+	     		errorsDetected++;	
+	     		errorFound = true;
+	        }
+	        if (Double.isNaN(imagResult[0])) {
+	        	Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+	        	if (!errorFound) {
+	     		    errorsDetected++;	
+	        	}
+	        }
+	        else if (imagAnswer[i] != 0.0) {
+		        if ((imagResult[0]/imagAnswer[i] < 1-1.0E-7) || (imagResult[0]/imagAnswer[i] > 1+1.0E-7)) {
+		     		   Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+		     		   if (!errorFound) {
+		     		       errorsDetected++;
+		     		   }
+		        }
+	        }
+	        else if (Math.abs(imagResult[0]) > 1.0E-7) {
+	        	Preferences.debug("Error detected in imaginary part\n",Preferences.DEBUG_ALGORITHM);
+	        	if (!errorFound) {
+	        		errorsDetected++;
+	        	}
+	        }
+        }
+	        
+        Preferences.debug(errorsDetected + " errors detected in " + realATest.length + " tests on firstKindComplex()\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println(errorsDetected + " errors detected in " + realATest.length + " tests on firstKindComplex()");
+    }
+    
     public void realTestFirstKind() {
     	// a = 500, b = 511, x = 10 only works for firstKindComplex()
     	// a = 1, b = 2, x = 600 works on firstKindRealArgument() and firstKindComplexArgument() but not on firstKindComplex()
@@ -2153,7 +2275,6 @@ public class ConfluentHypergeometric {
     	result = new double[1];
     	method = new int[1];
         int errorsDetected = 0;
-        boolean errorFound;
     	double atest[] = new double[]{-5.0,-4.5,-4.0,-3.5,-3.0,-2.5,-2.0,-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,-5.0,-4.5,
     			-4.0,-3.5,-3.0,-2.5,-2.0,-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,-5.0,-4.5,-4.0,-3.5,-3.0,-2.5,-2.0,-1.5,
     			-1.0,-0.5,0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,-5.0,-4.5,-4.0,-3.5,-3.0,-2.5,-2.0,-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5,2.0,
