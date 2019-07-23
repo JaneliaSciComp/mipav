@@ -1402,18 +1402,21 @@ public class ConfluentHypergeometric {
     	imagResult = new double[1];
     	int errorsDetected = 0;
         boolean errorFound;
-    	double realATest[] = new double[]{0.1,1.0E-8,1.0,50.0,5.0,-5.0,5.0,-5.0,1.0,-5.0,2.0};
-    	double imagATest[] = new double[]{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,8.0};
-    	double realBTest[] = new double[]{0.2,1.0E-12,1.0,10.0,0.1,0.1,2.0,2.0,1.0,-5.0 + 1.0E-9,-150.0};
-    	double imagBTest[] = new double[]{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,-5.0 + 1.0E-9,1.0};
-    	double realZTest[] = new double[]{-0.5,-1.0E-10,10.0,0.0,-2.0,2.0,100.0,-100.0,1.0,-1.0,150.0};
-    	double imagZTest[] = new double[]{1.0,1.0E-12,1.0E-9,200.0,300.0,300.0,-1000.0,1000.0,-1.0,0.0,0.0};
+    	double realATest[] = new double[]{0.1,1.0E-8,1.0,50.0,5.0,-5.0,5.0,-5.0,1.0,-5.0,2.0,-5.0,1.0,-10.0,20.0};
+    	double imagATest[] = new double[]{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,8.0,0.0,0.0,500.0,0.0};
+    	double realBTest[] = new double[]{0.2,1.0E-12,1.0,10.0,0.1,0.1,2.0,2.0,1.0,-5.0 + 1.0E-9,-150.0,-2.0,-1.0,0.0,10.0};
+    	double imagBTest[] = new double[]{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,-5.0 + 1.0E-9,1.0,-1.0,1.0E-12,5.0,1000.0};
+    	double realZTest[] = new double[]{-0.5,-1.0E-10,10.0,0.0,-2.0,2.0,100.0,-100.0,1.0,-1.0,150.0,1.0,1.0,10.0,-5.0};
+    	double imagZTest[] = new double[]{1.0,1.0E-12,1.0E-9,200.0,300.0,300.0,-1000.0,1000.0,-1.0,0.0,0.0,2-1.0E-10,
+    			0.0,0.0,0.0};
     	double realAnswer[] = new double[]{0.667236640109150,0.999999,2.202646579480672E4,-3.000605782805072E35,
     			7.20855632163922E10,2.897045042631838E10,7.002864442038879E50,7.196140446954445E11,
-    			1.468693939915885,0.507421537454510,-9.853780031496243E135};
+    			1.468693939915885,0.507421537454510,-9.853780031496243E135,61.699999992549998,
+    			-5.528996131321089E-1,7.086198763185099E43,0.993763703678828};
     	double imagAnswer[] = new double[]{0.274769720129335,1.0E-8,2.202646579480672E-5,3.046849261045972E35,
     			-1.55028911922414E10,-8.276253515853658E11,8.973775767458327E50,-1.233790613611111E12,
-    			-2.287355287178842,0.298577267504408,3.293888962100131E136};
+    			-2.287355287178842,0.298577267504408,3.293888962100131E136,9.899999997100000,
+    			2.718281828459045E12,2.328576049934718E43,0.099687801957356};
     	int i;
     	for (i = 0; i < 8; i++) {
         	errorFound = false;
@@ -1476,8 +1479,8 @@ public class ConfluentHypergeometric {
         	realZ = realZTest[i];
         	imagZ = imagZTest[i];
 	        firstKindComplex();
-	        Preferences.debug("realA = " + realA + "imagA = " + imagA + " realB = " + realB + 
-	        		"imagB = " + imagB + " realZ = " + realZ + " imagZ = " + imagZ + " realResult = " + realResult[0] + 
+	        Preferences.debug("realA = " + realA + " imagA = " + imagA + " realB = " + realB + 
+	        		" imagB = " + imagB + " realZ = " + realZ + " imagZ = " + imagZ + " realResult = " + realResult[0] + 
 	        		" imagResult = " + imagResult[0] + " realAnswer = " + realAnswer[i] + 
 	        		" imagAnswer = " + imagAnswer[i] + "\n",Preferences.DEBUG_ALGORITHM);
 	        if (Double.isNaN(realResult[0])) {
