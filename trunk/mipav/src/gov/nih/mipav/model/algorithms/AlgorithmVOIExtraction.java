@@ -1155,6 +1155,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         int scanPos;
         int smallLength, smallPos, smallX, smallY;
         short grayScaleNumber = 0;
+        int firstCurveNumber[] = new int[10000];
         int nCurves;
         Polygon contourPolygon;
         boolean newGrayScale;
@@ -1503,8 +1504,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                 voiID = (short) (VOIs.VOIAt(VOIIndexArray[i]).getID() + 1);
                                 nCurves = VOIs.VOIAt(VOIIndexArray[i]).getCurves().size();
 
-                                for (j = 0; j < nCurves; j++) {
-
+                                for (j = firstCurveNumber[i]; j < nCurves; j++) {
                                     if (((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves().elementAt(j)))
                                             .contains(x / 2, y / 2) && (voiID == obj)) {
                                         newGrayScale = false;
@@ -1524,6 +1524,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                  
             } // for (short obj = 1; obj < (srcImage.getMax() + 1); obj++)
             fireProgressStateChanged(Math.round((z + 1) * 100.0f / zDim));
+            for (i = 0; i < grayScaleNumber; i++) {
+            	firstCurveNumber[i] = VOIs.VOIAt(VOIIndexArray[i]).getCurves().size();
+            }
         } // end of for (z = 0; z < zDim; z++)
 
         if (threadStopped) {
