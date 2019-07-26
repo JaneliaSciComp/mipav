@@ -75,6 +75,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4600563188022683359L;
 
+    /** loads mesh files in basic volume coordinates */
+    private JCheckBox volumeCoordsCheck;
+    
     /** The colors for the surfaces. */
 	private static ColorRGB[] fixedColor;
 
@@ -332,8 +335,8 @@ public class JPanelSurface_WM extends JInterfaceBase
      * Add surface to the volume image. Calls the FileSurface.openSurfaces function to open a file dialog so the user
      * can choose the surfaces to add.
      */
-    public void addSurface() {
-        TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA());
+    private void addSurface() {
+        TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA(), volumeCoordsCheck.isSelected());
         
         if ( akSurfaces != null )
         {
@@ -376,7 +379,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         	kList.add( iSize + i, akSurfaces[i].GetName() );
         	SurfaceState kSurface = new SurfaceState( akSurfaces[i], akSurfaces[i].GetName() );
         	m_akSurfaceStates.add( kSurface );        
-        	m_kVolumeViewer.addSurface( kSurface );
+        	m_kVolumeViewer.addSurface( kSurface, volumeCoordsCheck.isSelected() );
         }
         surfaceList.setSelectedIndex(iSize);
         setElementsEnabled(true);
@@ -1202,9 +1205,14 @@ public class JPanelSurface_WM extends JInterfaceBase
         removeButton.setActionCommand("Remove");
         removeButton.setFont(MipavUtil.font12B);
         removeButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        volumeCoordsCheck = new JCheckBox("volume coorinates", false);
+        volumeCoordsCheck.setFont(MipavUtil.font12B);
+        volumeCoordsCheck.setPreferredSize(MipavUtil.defaultButtonSize);
         
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
+        buttonPanel.add(volumeCoordsCheck);
         
         // list panel for surface filenames
         surfaceList = new JList(new DefaultListModel());

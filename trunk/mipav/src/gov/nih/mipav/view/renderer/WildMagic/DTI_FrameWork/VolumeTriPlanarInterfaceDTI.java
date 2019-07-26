@@ -12,6 +12,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.PlaneRender_WM;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
@@ -224,7 +225,7 @@ implements ChangeListener {
      */
     protected void constructRenderers(final ViewJProgressBar progressBar) {
 
-    	initShared();
+//    	initShared();
     	
         progressBar.updateValue(0, true);
         MipavUtil.centerOnScreen(progressBar);
@@ -236,8 +237,9 @@ implements ChangeListener {
         m_akPlaneRender = new PlaneRender_WM[3];
         progressBar.setMessage("Constructing gpu renderer...");
 
-        raycastRenderWM = new VolumeTriPlanerRenderDTI( sharedRenderer, new GLCanvas(caps, sharedDrawable.getContext()), this, m_kVolumeImageA,
-                m_kVolumeImageB);
+//        raycastRenderWM = new VolumeTriPlanerRenderDTI( sharedRenderer, newSharedCanvas(), this, m_kVolumeImageA,
+//                m_kVolumeImageB);
+        raycastRenderWM = new VolumeTriPlanerRenderDTI( this, m_kVolumeImageA, m_kVolumeImageB);
 
         progressBar.updateValueImmed(80);
         progressBar.setMessage("Constructing Lookup Table...");

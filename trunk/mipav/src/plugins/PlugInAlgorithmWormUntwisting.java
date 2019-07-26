@@ -54,6 +54,7 @@ import java.util.Vector;
 import javax.swing.JProgressBar;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 /**
  * Implements batch algorithms for worm untwisting:
@@ -270,6 +271,62 @@ public class PlugInAlgorithmWormUntwisting
 			calcMaxProjection(batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileName);		
 		}
 	}
+	
+	
+	public static void generateModelMesh( JProgressBar batchProgress, final Vector<Integer> includeRange, 
+			final String baseFileDir, final String baseFileName, final int paddingFactor )
+	{
+		int meshCount = 0;
+		if ( includeRange != null )
+		{			
+			ModelImage wormImage = null;
+			for ( int i = 0; i < includeRange.size(); i++ )
+			{
+				// Build the full image name:
+				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				if ( voiFile.exists() )
+				{
+					//					System.err.println( fileName );
+					FileIO fileIO = new FileIO();
+					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					WormData wormData = new WormData(wormImage); 
+					VOI lattice = wormData.readFinalLattice();
+					if ( lattice != null )
+					{				
+						LatticeModel model = new LatticeModel(wormImage);
+						model.setPaddingFactor(paddingFactor);
+						model.setLattice(lattice);
+						TriMesh mesh = model.generateTriMesh(true, 1);
+						if ( mesh != null ) {
+							LatticeModel.saveTriMesh( wormImage, "model", "", mesh );
+							mesh.dispose();
+							mesh = null;
+							meshCount++;
+						}
+					}
+					
+					if ( wormImage != null )
+					{
+						wormImage.unregisterAllVOIs();
+						wormImage.disposeLocal(false);
+					}
+					if ( wormData != null )
+					{
+						wormData.dispose();
+					}
+				}
+				if ( batchProgress != null )
+				{
+					batchProgress.setValue((int)(100 * (float)(i+1)/includeRange.size()));
+					batchProgress.update(batchProgress.getGraphics());
+				}
+			}
+				
+		}
+		MipavUtil.displayInfo( "Generated " + meshCount + " triangle mesh modelss." );
+	}
+	
 	
 	public static void reslice( JProgressBar batchProgress, final Vector<Integer> includeRange, 
 			final String baseFileDir, final String baseFileDir2, final String baseFileName,

@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
@@ -15,6 +16,8 @@ import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelAnnotationAnimation;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
@@ -27,6 +30,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavInitGPU;
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -45,7 +49,9 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -68,6 +74,7 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.Surfaces.TubeSurface;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.jogamp.opengl.util.Animator;
 
@@ -96,7 +103,30 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	public VolumeTriPlanarRender(VolumeImage kVolumeImageA)
 	{
-		super(kVolumeImageA);
+		super();
+		initShared(null);
+		m_pkRenderer = new OpenGLRenderer(m_eFormat, m_eDepth, m_eStencil,
+				m_eBuffering, m_eMultisampling, m_iWidth, m_iHeight, newSharedCanvas());
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addGLEventListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addKeyListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas()
+				.addMouseMotionListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseWheelListener(this);
+		m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
+
+		m_kShared = sharedRenderer;
+		m_bShared = true;
+
+		m_kAnimator = new Animator(GetCanvas());
+		
+		m_kVolumeImageA = kVolumeImageA;
+		m_kVolumeImageB = new VolumeImage();
+
+		m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float) Math.PI / 18.0f);
+		m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float) Math.PI / 18.0f);
+		m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float) Math.PI / 18.0f);
+		m_kParent = null;
 	}
 
 
@@ -125,6 +155,39 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
 	{
 		super( kShared, kCanvas, kVolumeImageA, kVolumeImageB);
+		m_kParent = kParent;
+	}
+
+
+	/**
+	 * Construct the Volume/Surface/Tri-Planar renderer.
+	 * @param kVolumeImageA volume data and textures for ModelImage A.
+	 * @param kVolumeImageB volume data and textures for ModelImage B.
+	 */
+	public VolumeTriPlanarRender( VolumeTriPlanarInterface kParent, VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
+	{
+		super( );
+		initShared(kParent);
+		m_pkRenderer = new OpenGLRenderer(m_eFormat, m_eDepth, m_eStencil,
+				m_eBuffering, m_eMultisampling, m_iWidth, m_iHeight, newSharedCanvas());
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addGLEventListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addKeyListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas()
+				.addMouseMotionListener(this);
+		((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseWheelListener(this);
+		m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
+
+		m_kShared = sharedRenderer;
+		m_bShared = true;
+
+		m_kAnimator = new Animator(GetCanvas());
+
+		m_kVolumeImageA = kVolumeImageA;
+		m_kVolumeImageB = kVolumeImageB;
+		m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float) Math.PI / 18.0f);
+		m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float) Math.PI / 18.0f);
+		m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float) Math.PI / 18.0f);
 		m_kParent = kParent;
 	}
 
@@ -183,18 +246,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					);
 			float[] rotMatrix = new float[16];
 			rot4.getData(rotMatrix);
-			VolumeImageCrop.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), rotMatrix);
+			VolumeImageCrop.main(newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), rotMatrix);
 			if ( m_kVolumeImageB.GetImage() != null )
 			{
-				VolumeImageCrop.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageB, m_kVolumeRayCast.GetClipEffect(), rotMatrix);
+				VolumeImageCrop.main(newSharedCanvas(), m_kParent, m_kVolumeImageB, m_kVolumeRayCast.GetClipEffect(), rotMatrix);
 			}
 			m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 		}
 		if ( m_bExtract )
 		{
-			m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-			VolumeImageExtract.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), m_iExtractLevel);
-			m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			if ( m_kParent != null )
+			{
+				m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				VolumeImageExtract.main(newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), m_iExtractLevel);
+				m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			}
 			m_bExtract = false;
 		}
 
@@ -1391,18 +1457,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 	}
 	
-	public void reCreateScene(VolumeImage imageA, boolean updateListeners) 
-	{
-		super.reCreateScene(imageA);
-
-		if ( m_kParent != null )
-		{
-			m_kParent.addSlices(m_kSlices);
-		}
-		if ( updateListeners && configuredListener != null ) {
-    		configuredListener.algorithmPerformed( new AlgorithmReslice(m_kVolumeImageA.GetImage(), 0) );
-		}
-	}
+//	public void reCreateScene(VolumeImage imageA, boolean updateListeners) 
+//	{
+//		super.reCreateScene(imageA);
+//
+//		if ( m_kParent != null )
+//		{
+//			m_kParent.addSlices(m_kSlices);
+//		}
+//		if ( updateListeners && configuredListener != null ) {
+//    		configuredListener.algorithmPerformed( new AlgorithmReslice(m_kVolumeImageA.GetImage(), 0) );
+//		}
+//	}
 
 
 	/**
@@ -3205,5 +3271,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
         m_kParent.translateSurface(pointName, kPosition);
         annotatePtsCounter++;
     }
-  
+    
+    
 }

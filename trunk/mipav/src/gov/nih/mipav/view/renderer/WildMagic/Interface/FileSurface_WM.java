@@ -830,7 +830,7 @@ public class FileSurface_WM {
 	 *            ModelImage for location/orientation and scale information.
 	 * @return array of TriMesh objects.
 	 */
-	public static TriMesh[] openSurfaces(ModelImage kImage, boolean toFileCoords) {
+	public static TriMesh[] openSurfaces(ModelImage kImage, boolean isFileCoords) {
 		File[] akFiles = openFiles(true);
 
 		if (akFiles == null) {
@@ -843,12 +843,12 @@ public class FileSurface_WM {
 			if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || (kName.indexOf(".vtk") != -1)
 					|| (kName.indexOf(".vtp") != -1) || (kName.indexOf(".stl") != -1) || (kName.indexOf(".ply") != -1)
 					|| (kName.indexOf(".txt") != -1) || (kName.indexOf(".gii") != -1)) {
-				kSurface[i] = readSurface(kImage, akFiles[i], null, toFileCoords);
+				kSurface[i] = readSurface(kImage, akFiles[i], null, isFileCoords);
 			} else if (kName.indexOf(".xml") != -1) {
 				FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(kName, akFiles[i].getParent());
 				FileInfoSurfaceRefXML_WM kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
 				akFiles[i] = new File(akFiles[i].getParent() + File.separatorChar + kFileInfo.getSurfaceFileName());
-				kSurface[i] = readSurface(kImage, akFiles[i], kFileInfo.getMaterial(), toFileCoords);
+				kSurface[i] = readSurface(kImage, akFiles[i], kFileInfo.getMaterial(), isFileCoords);
 			}
 		}
 
@@ -1310,7 +1310,7 @@ public class FileSurface_WM {
 	 *            file storing the mesh
 	 * @return TriMesh
 	 */
-	private static TriMesh loadPlyAsciiMesh(File file, ModelImage kImage) {
+	private static TriMesh loadPlyAsciiMesh(File file, ModelImage kImage, boolean isFileCoords ) {
 
 		TriMesh mesh;
 		int i;
@@ -1362,16 +1362,17 @@ public class FileSurface_WM {
 				y = Float.valueOf(st.nextToken());
 				z = Float.valueOf(st.nextToken());
 
-				ptIn.X = x;
-				ptIn.Y = y;
-				ptIn.Z = z;
+				if ( !isFileCoords ) {
+					ptIn.X = x;
+					ptIn.Y = y;
+					ptIn.Z = z;
+					MipavCoordinateSystems.scannerToFile(ptIn, ptOut, kImage);
 
-				MipavCoordinateSystems.scannerToFile(ptIn, ptOut, kImage);
+					x = (ptOut.X * _res[0] * _direction[0]) + _startLocation[0];
+					y = (ptOut.Y * _res[1] * _direction[1]) + _startLocation[1];
+					z = (ptOut.Z * _res[2] * _direction[2]) + _startLocation[2];
 
-				x = (ptOut.X * _res[0] * _direction[0]) + _startLocation[0];
-				y = (ptOut.Y * _res[1] * _direction[1]) + _startLocation[1];
-				z = (ptOut.Z * _res[2] * _direction[2]) + _startLocation[2];
-
+				}
 				vertexArray.add(new Vector3f(x, y, z));
 			}
 
@@ -2633,7 +2634,7 @@ public class FileSurface_WM {
 	 *            The Material for the surface.
 	 * @return TriMesh
 	 */
-	public static TriMesh readSurface(ModelImage kImage, File file, MaterialState kMaterial, boolean toFileCoords) {
+	public static TriMesh readSurface(ModelImage kImage, File file, MaterialState kMaterial, boolean isFileCoords) {
 		int iType = 0, iQuantity = 0;
 		boolean isSur = true;
 		int[] extents = kImage.getExtents();
@@ -2770,7 +2771,7 @@ public class FileSurface_WM {
 						}
 
 						else if (file.getName().endsWith("ply")) {
-							akComponent[i] = loadPlyAsciiMesh(file, kImage);
+							akComponent[i] = loadPlyAsciiMesh(file, kImage, isFileCoords);
 						} else if (file.getName().endsWith("txt")) {
 							akComponent[i] = readAscii(file);
 						}
@@ -2781,21 +2782,21 @@ public class FileSurface_WM {
 					kClod.SelectLevelOfDetail();
 					akComponent[i] = kClod;
 				}
-				if (akComponent[i] != null) {
+				if (akComponent[i] != null && !isFileCoords ) {
 					for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
 
-						if (toFileCoords) {
-							// The mesh files save the vertex positions as
-							// pt.x*resX*direction[0] + startLocation
-							// Return the loaded positions in file index coordinates:
-							akComponent[i].VBuffer.SetPosition3(j,
-									(akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0])
-											/ (direction[0] * resols[0]),
-									(akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1])
-											/ (direction[1] * resols[1]),
-									(akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2])
-											/ (direction[2] * resols[2]));
-						} else {
+//						if (toFileCoords) {
+//							// The mesh files save the vertex positions as
+//							// pt.x*resX*direction[0] + startLocation
+//							// Return the loaded positions in file index coordinates:
+//							akComponent[i].VBuffer.SetPosition3(j,
+//									(akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0])
+//											/ (direction[0] * resols[0]),
+//									(akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1])
+//											/ (direction[1] * resols[1]),
+//									(akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2])
+//											/ (direction[2] * resols[2]));
+//						} else {
 							// System.err.println( akComponent[i].VBuffer.GetPosition3( j ) );
 							// The mesh files save the verticies as
 							// pt.x*resX*direction[0] + startLocation
@@ -2808,7 +2809,7 @@ public class FileSurface_WM {
 											/ direction[1]) - yBox) / (2.0f * maxBox),
 									((2.0f * (akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2])
 											/ direction[2]) - zBox) / (2.0f * maxBox));
-						}
+//						}
 					}
 					akComponent[i].SetName(file.getName());
 				}

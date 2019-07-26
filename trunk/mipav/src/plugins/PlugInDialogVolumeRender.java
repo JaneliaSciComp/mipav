@@ -138,6 +138,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JPanel backNextPanel;
 	private JRadioButton calcMaxProjection;
 	private JRadioButton resliceRotate;
+	private JRadioButton generateModelMesh;
 	private JPanel choicePanel;
 	private JButton closeButton;
 	private JRadioButton createAnimation;
@@ -331,6 +332,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					}
 					startButton.setEnabled(true);
 				}
+				else if ( generateModelMesh.isSelected() )
+				{
+					try {
+						PlugInAlgorithmWormUntwisting.generateModelMesh( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), paddingFactor );
+					} catch ( java.lang.OutOfMemoryError e ) {
+						MipavUtil.displayError( "Error: Not enough memory. Unable to finish reslice calculation." );
+						return;
+					}
+					startButton.setEnabled(true);
+				}
 				else if ( editSeamCells.isSelected() )
 				{
 					// Start seam cell editing:
@@ -418,6 +429,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					else
 					{
 						editMode = IntegratedEditing;
+						inputsPanel.setVisible(false);
+						validate();
 						openAll();
 					}
 				}
@@ -584,6 +597,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						MipavUtil.displayError( "Please designate two seam cells as the last pair");
 						return;
 					}
+				}
+				if ( editMode == IntegratedEditing ) 
+				{
+					inputsPanel.setVisible(true);
+					validate();
 				}
 				if ( volumeRenderer != null ) {
 					volumeRenderer.removeSurface("worm");
@@ -927,15 +945,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			return;
 		}
 
-		float min = (float) wormImage.getMin();
-		float max = (float) wormImage.getMax();
-		TransferFunction kTransfer = new TransferFunction();
-		kTransfer.removeAll();
-		kTransfer.addPoint(min, 255);
-		kTransfer.addPoint((min + ((max - min) / 3.0f)), 255 * 0.67f);
-		kTransfer.addPoint((min + ((max - min) * 2.0f / 3.0f)), 255 * 0.333f);
-		kTransfer.addPoint(max, 0);
-		volumeRenderer.getVolumeImage().UpdateImages(kTransfer, 0, null);
+		
+//		float min = (float) wormImage.getMin();
+//		float max = (float) wormImage.getMax();
+//		TransferFunction kTransfer = new TransferFunction();
+//		kTransfer.removeAll();
+//		kTransfer.addPoint(min, 255);
+//		kTransfer.addPoint((min + ((max - min) / 3.0f)), 255 * 0.67f);
+//		kTransfer.addPoint((min + ((max - min) * 2.0f / 3.0f)), 255 * 0.333f);
+//		kTransfer.addPoint(max, 0);
+//		volumeRenderer.getVolumeImage().UpdateImages(kTransfer, 0, null);
 		updateClipPanel();
 
 //		System.err.println( "algorithmPerformed" );
@@ -1447,16 +1466,19 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			
 			if ( previousExtents == null )
 			{
-				volumeImage = new VolumeImage(false, wormImage, "", null, 0, false);
-				updateHistoLUTPanels(true);
+				volumeImage = new VolumeImage(false, wormImage, "A", null, 0, false);
 
-				volumeRenderer = new VolumeTriPlanarRender(volumeImage);
+				volumeRenderer = new VolumeTriPlanarRender(null, volumeImage, new VolumeImage() );
 				volumeRenderer.addConfiguredListener(this);
+				
+				updateHistoLUTPanels(true);
+				
 				gpuPanel.add(volumeRenderer.GetCanvas(), BorderLayout.CENTER);
 				gpuPanel.setVisible(true);
 				tabbedPane.setVisible(true);
 				volumePanel.setVisible(true);
 				pack();				
+				volumeRenderer.startAnimator(true);    	
 			}
 			else
 			{
@@ -2444,6 +2466,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridy++;
 
 		gbc.gridx = 0;
+		generateModelMesh = gui.buildRadioButton("Generate triangle mesh from lattice", false );
+		generateModelMesh.addActionListener(this);
+		panel.add(generateModelMesh.getParent(), gbc);
+		gbc.gridy++;
+		
+		gbc.gridx = 0;
 		batchProgress = new JProgressBar(0,100);
 		panel.add(batchProgress, gbc);
 
@@ -2452,6 +2480,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		group.add(latticeStraighten);
 		group.add(calcMaxProjection);
 		group.add(resliceRotate);
+		group.add(generateModelMesh);
 		
 		return panel;
 	}
@@ -2922,12 +2951,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			volOpacityPanel.addPropertyChangeListener(this);
 			opacityPanel.removeAll();
 			opacityPanel.add( volOpacityPanel.getMainPanel() );
+	        TransferFunction kTransfer = volOpacityPanel.getCompA().getOpacityTransferFunction();
+			volumeImage.UpdateImages(kTransfer, 0, null);
 		}
 		else
 		{
 //			volOpacityPanel.setImages( volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true );
 			volOpacityPanel.setImages( volumeImage.GetImage(), null, null, null, true );
 			opacityPanel.validate();
+	        TransferFunction kTransfer = volOpacityPanel.getCompA().getOpacityTransferFunction();
+			volumeImage.UpdateImages(kTransfer, 0, null);
 		}
 		
 		if ( lutHistogramPanel == null )

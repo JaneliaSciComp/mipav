@@ -37,16 +37,19 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 
@@ -1139,7 +1142,7 @@ public class LatticeModel {
 	}
 
 
-	public TriMesh generateTriMesh(String imageName, boolean returnMesh, int stepSize) {
+	public TriMesh generateTriMesh( boolean returnMesh, int stepSize ) {
 
 		generateCurves(1, stepSize);
 
@@ -2203,7 +2206,7 @@ public class LatticeModel {
 		//		System.err.println( dimX + " " + dimY + " " + dimZ );
 
 		if ( !segmentLattice ) {
-			generateTriMesh(imageName, false, 1);
+			generateTriMesh(false, 1);
 		}
 		latticeContours = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
 		resultImage.registerVOI( latticeContours );
@@ -7530,8 +7533,72 @@ public class LatticeModel {
 			//			System.err.println( "               saveImage TIF " + AlgorithmBase.computeElapsedTime(time) );
 		}
 	}
+	
 
 
+
+	public static void saveImage(final ModelImage originalImage, final ModelImage image, String postScript ) {
+		
+		String outputDirectory = new String(originalImage.getImageDirectory() + JDialogBase.makeImageName(originalImage.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(originalImage.getImageFileName(), "_results") );
+		String parentDir = new String(originalImage.getImageDirectory() + JDialogBase.makeImageName(originalImage.getImageFileName(), "") + File.separator);
+		checkParentDir(parentDir);	
+		
+		String voiDir = outputDirectory + File.separator;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}
+		voiDir = outputDirectory + File.separator + "segmentation" + File.separator;
+		
+		String imageName = JDialogBase.makeImageName(originalImage.getImageFileName(), "");
+		imageName = imageName + postScript;
+		
+		int maxVal = -1;
+		voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
+			final String[] list = voiFileDir.list();
+			for (int i = 0; i < list.length; i++) {
+				int fileVal = -1;
+//				System.err.println(list[i] + "   " + imageName + "   " + list[i].contains(imageName) );
+				if ( list[i].contains(imageName) ) {
+					String sub = list[i].substring( list[i].indexOf(imageName) + imageName.length(), list[i].length() );
+					for ( int j = 0; j < sub.length(); j++ ) {
+						String test = new String( "" + sub.charAt(j) );
+						int val;
+						try {
+							val = Integer.valueOf(test);
+							if ( fileVal == -1 ) {
+								fileVal = val;
+							}
+							else
+							{
+								fileVal = fileVal * 10 + val;
+							}
+						} catch(NumberFormatException e) {
+						}
+					}
+//					System.err.println( "    " + fileVal );
+				}
+				if ( fileVal > maxVal )
+				{
+					maxVal = fileVal;
+				}
+			}
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}
+
+		maxVal++;
+		imageName = imageName + "_" + maxVal;
+
+		ModelImage.saveImage(image, imageName + ".tif", voiDir, false);
+
+	}
 
 	private void saveLatticeStatistics()
 	{
@@ -7559,6 +7626,72 @@ public class LatticeModel {
 	}
 
 
+    public static void saveTriMesh( ModelImage image, String subDir, String postScript, TriMesh mesh ) {
+		
+		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
+		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
+		checkParentDir(parentDir);	
+		
+		String voiDir = outputDirectory + File.separator;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}
+		voiDir = outputDirectory + File.separator + subDir + File.separator;		
+		
+		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
+		imageName = imageName + postScript;
+		
+
+		int maxVal = -1;
+		voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
+			final String[] list = voiFileDir.list();
+			for (int i = 0; i < list.length; i++) {
+				int fileVal = -1;
+//				System.err.println(list[i] + "   " + imageName + "   " + list[i].contains(imageName) );
+				if ( list[i].contains(imageName) ) {
+					String sub = list[i].substring( list[i].indexOf(imageName) + imageName.length(), list[i].length() );
+					for ( int j = 0; j < sub.length(); j++ ) {
+						String test = new String( "" + sub.charAt(j) );
+						int val;
+						try {
+							val = Integer.valueOf(test);
+							if ( fileVal == -1 ) {
+								fileVal = val;
+							}
+							else
+							{
+								fileVal = fileVal * 10 + val;
+							}
+						} catch(NumberFormatException e) {
+						}
+					}
+//					System.err.println( "    " + fileVal );
+				}
+				if ( fileVal > maxVal )
+				{
+					maxVal = fileVal;
+				}
+			}
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}
+
+		maxVal++;
+		imageName = imageName + "_" + maxVal + ".ply";
+		
+        try {
+            FileSurface_WM.save( voiDir + imageName, mesh, 0, mesh.VBuffer, false, null, null, null, null);
+        } catch (IOException error) {
+        	MipavUtil.displayError("Error while trying to save single mesh");
+        }
+    }
 
 
 	private void saveSpline(final ModelImage image, VOI data, Vector3f transformedOrigin, final String postFix) {
