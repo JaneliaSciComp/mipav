@@ -1010,6 +1010,7 @@ public class WormData
 		if ( lattice == null )
 		{
 			lattice = readFinalLattice();
+			if ( lattice == null ) return null;
 		}
 		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
 		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);

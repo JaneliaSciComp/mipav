@@ -171,12 +171,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     /** The small bar on the top right corner the volume view frame. */
     protected static JProgressBar rendererProgressBar;
-
-    protected static GLProfile glp;
-
-    protected static GLCapabilities caps;
-
-    protected static int gl_width, gl_height;
     /**
      * Retrieve the progress bar used in the volume renderer (the one in the upper right hand corner).
      * 
@@ -354,23 +348,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     protected ViewUserInterface userInterface;
 
     protected boolean m_bDependentInterfaceInit = false;
-
-    protected GLOffscreenAutoDrawable sharedDrawable = null;
-
-    protected VolumeTriPlanarRender sharedRenderer;
-
-    protected static boolean init = initClass();
-
-    public static boolean initClass() {
-        GLProfile.initSingleton();
-        glp = GLProfile.getMaxProgrammable(true);
-        caps = new GLCapabilities(glp);
-        caps.setHardwareAccelerated(true);
-        gl_width  = 512;
-        gl_height = 512;
-        return true;
-    }
-
     /**
      * Specific constructor call from the VolumeViewerDTI.
      */
@@ -567,7 +544,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         } else if (command.equals("BrainSurface")) {
             if (brainsurfaceFlattenerRender == null) {
                 brainsurfaceFlattenerRender = new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender(
-                		new GLCanvas(caps, sharedDrawable.getContext()), this, m_kVolumeImageA, m_kVolumeImageB);
+                		raycastRenderWM.newSharedCanvas(), this, m_kVolumeImageA, m_kVolumeImageB);
                 final TriMesh kSurface = raycastRenderWM.getSurface(surfaceGUI.getSelectedSurface());
                 final Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface,
                         raycastRenderWM.getSurfaceCenter(surfaceGUI.getSelectedSurface()));
@@ -588,7 +565,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             resizePanel();
         } else if (command.equals("FlyThru")) {
             if (m_kFlyThroughRender == null) {
-                m_kFlyThroughRender = FlyThroughRender.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
+                m_kFlyThroughRender = FlyThroughRender.main(raycastRenderWM.newSharedCanvas(), this,
 						m_kVolumeImageA, m_kVolumeImageB, raycastRenderWM.getTranslate(), false);
                 
 //                new FlyThroughRender(this, m_kVolumeImageA, m_kVolumeImageB, raycastRenderWM.getTranslate());
@@ -714,11 +691,11 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     	{
 			if ( (m_akPlaneRender[0] == null) )
 			{
-				m_akPlaneRender[0] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
+				m_akPlaneRender[0] = PlaneRender_WM.main(raycastRenderWM.newSharedCanvas(), this,
 						m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL, kSlices, false);
-		        m_akPlaneRender[1] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
+		        m_akPlaneRender[1] = PlaneRender_WM.main(raycastRenderWM.newSharedCanvas(), this,
 		        		m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL, kSlices, false);
-		        m_akPlaneRender[2] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
+		        m_akPlaneRender[2] = PlaneRender_WM.main(raycastRenderWM.newSharedCanvas(), this,
 		        		m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL, kSlices, false);
 		        
 		        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
@@ -754,14 +731,18 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         	getRendererGUI().setDisplaySurfaceCheck(true);
         }
     }
+
+    public void addSurface(final SurfaceState kSurface) {
+    	addSurface(kSurface, false);
+    }
     
     /**
      * Add TriMesh surfaces to the Volume Renderer.
      * 
      * @param akSurfaces new surfaces.
      */
-    public void addSurface(final SurfaceState kSurface) {
-        raycastRenderWM.addSurface(kSurface);
+    public void addSurface(final SurfaceState kSurface, boolean fileCoords ) {
+        raycastRenderWM.addSurface(kSurface, fileCoords);
         insertTab("Light", m_kLightsPanel.getMainPanel());
         m_kLightsPanel.enableLight(0, true);
         insertTab("Surface", surfaceGUI.getMainPanel());
@@ -1473,16 +1454,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     }
 
 
-    public GLCanvas newSharedCanvas()
-    {
-    	return new GLCanvas(caps, sharedDrawable.getContext());
-    }
-
-
-    public GLContext getSharedContext()
-    {
-    	return sharedDrawable.getContext();
-    }
 
     @Override
     public void paintToShortMask()
@@ -2503,7 +2474,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         if (flag) {
         	if (multiHistogramGUI == null )
         	{
-        		multiHistogramGUI = new JPanelMultiDimensionalTransfer(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kVolumeImageA);
+        		multiHistogramGUI = new JPanelMultiDimensionalTransfer(raycastRenderWM.newSharedCanvas(), this, m_kVolumeImageA);
         		maxPanelWidth = Math.max(multiHistogramGUI.getPreferredSize().width, maxPanelWidth);
         	}
         	
@@ -2721,17 +2692,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 	        }
         }
         
-        if ( sharedRenderer != null )
-        {
-        	sharedRenderer.dispose();
-        	sharedRenderer = null;
-        }
-        if ( sharedDrawable != null )
-        {
-        	releaseShared();
-        	sharedDrawable = null;
-        }
-
         if (m_kVolumeImageA != null) {
             if (m_kVolumeImageA.GetImage() != null) {
                 m_kVolumeImageA.GetImage().removeImageDisplayListener(this);
@@ -3608,7 +3568,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
      */
     protected void constructRenderers(final ViewJProgressBar progressBar) {
 
-    	initShared();
+//    	initShared();
     	
         final int iStep = (progressBar != null) ? (100 - progressBar.getValue()) / 5 : 0;
         if (progressBar != null) {
@@ -3624,7 +3584,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             progressBar.setMessage("Creating Volume & Surface Renderer...");
         }
 
-        raycastRenderWM = new VolumeTriPlanarRender( sharedRenderer, new GLCanvas(caps, sharedDrawable.getContext()), this, m_kVolumeImageA, m_kVolumeImageB);
+//        raycastRenderWM = new VolumeTriPlanarRender( sharedRenderer, newSharedCanvas(), this, m_kVolumeImageA, m_kVolumeImageB);
+        raycastRenderWM = new VolumeTriPlanarRender( this, m_kVolumeImageA, m_kVolumeImageB);
         
         if (progressBar != null) {
             progressBar.updateValueImmed(progressBar.getValue() + iStep);
@@ -3647,32 +3608,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         setVisible(true);
     }
 
-    protected void initShared() {
-    	if ( sharedDrawable == null )
-    	{
-            sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
-            sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
-    		sharedDrawable.addGLEventListener(sharedRenderer);
-    		// init and render one frame, which will setup the shared textures
-    		sharedDrawable.display();
-    		
-    		// need to check hardware capabilities...
-            if ( Preferences.OperatingSystem.getOS() != OperatingSystem.OS_MAC )
-            {
-            	caps.setStereo(true);
-            }
-    	}
-    	else
-    	{
-    		sharedRenderer.reInitialize(m_kVolumeImageA, m_kVolumeImageB);
-        	sharedDrawable.display();  
-    	}
-    }
-
-    protected void releaseShared() {
-        sharedDrawable.destroy();
-        sharedDrawable = null;
-    }
         
     int prevHeight;
     /**

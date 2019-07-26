@@ -53,7 +53,11 @@ import java.util.Arrays;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLDrawableFactory;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.GLOffscreenAutoDrawable;
+import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -109,6 +113,31 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		ChangeListener {
 
 	private static final long serialVersionUID = -8415814666722429687L;
+
+    protected static GLProfile glp;
+
+    protected static GLCapabilities caps;
+
+    protected static int gl_width, gl_height;
+
+    protected VolumeTriPlanarRender sharedRenderer;
+    protected GLOffscreenAutoDrawable sharedDrawable = null;
+    protected static boolean init = initClass();
+
+    public static boolean initClass() {
+        GLProfile.initSingleton();
+        glp = GLProfile.getMaxProgrammable(true);
+        caps = new GLCapabilities(glp);
+        caps.setHardwareAccelerated(true);
+        gl_width  = 512;
+        gl_height = 512;
+        return true;
+    }
+
+    public GLCanvas newSharedCanvas()
+    {
+    	return new GLCanvas(caps, sharedDrawable.getContext());
+    }
 
 	/** New sculpting object for WM-based sculpting. */
 	protected Sculptor_WM m_kSculptor = null;
@@ -882,10 +911,46 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_kDisplayList.remove(m_kSlices);
 		m_kSlices = null;
 		m_kShared = null;
+		
+        if ( sharedDrawable != null )
+        {
+        	releaseShared();
+        	sharedDrawable = null;
+        }
+        
 		super.dispose(kDrawable);
 	}
 
+    protected void initShared(VolumeTriPlanarInterface kParent) {
+    	if ( sharedDrawable == null )
+    	{
+            sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+            sharedRenderer = new VolumeTriPlanarRender(kParent, null, m_kVolumeImageA, m_kVolumeImageB);
+    		sharedDrawable.addGLEventListener(sharedRenderer);
+    		// init and render one frame, which will setup the shared textures
+    		sharedDrawable.display();
+    		
+    		// need to check hardware capabilities...
+            if ( Preferences.OperatingSystem.getOS() != OperatingSystem.OS_MAC )
+            {
+            	caps.setStereo(true);
+            }
+    	}
+    	else
+    	{
+    		sharedRenderer.reInitialize(m_kVolumeImageA, m_kVolumeImageB);
+        	sharedDrawable.display();  
+    	}
+    }
+
+    protected void releaseShared() {
+        sharedDrawable.destroy();
+        sharedDrawable = null;
+    }
+
 	protected void disposeShared(VolumeImage imageA, VolumeImage imageB) {
+		if ( m_pkRenderer == null ) return;
+		if ( imageA == null ) return;
 		m_pkRenderer.ReleaseTexture(imageA.GetVolumeTarget());
 		m_pkRenderer.ReleaseTexture(imageA.GetColorMapTarget());
 		if (imageA.GetImage().isColorImage()) {
@@ -1218,6 +1283,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public TriMesh getSurface(String kSurfaceName) {
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.get(i).GetName() != null) {
+				System.err.println("getSurface " + m_kDisplayList.get(i).GetName());
 				if (m_kDisplayList.get(i).GetName().equals(kSurfaceName)) {
 					return m_kDisplayList.get(i).GetMesh();
 				}

@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
@@ -40,6 +41,11 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
         super(kShared, kCanvas, kParent, kVolumeImageA, kVolumeImageB );
+    }
+    
+	public VolumeTriPlanerRenderDTI( VolumeTriPlanarInterface kParent, VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
+	{
+        super( kParent, kVolumeImageA, kVolumeImageB );
     }
 
     /**

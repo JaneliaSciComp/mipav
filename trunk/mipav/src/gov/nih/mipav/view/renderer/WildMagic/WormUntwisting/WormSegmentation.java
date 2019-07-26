@@ -311,10 +311,9 @@ public class WormSegmentation
 			float value = image.getFloat(x, y, z);
 			if ( (value >= cutOffMin) && (value < cutOffMax) )
 			{
-				mask.setC(x, y, z, 1, value);
+				mask.set(x, y, z, value);
+				count++;
 			}
-			
-			count++;
 
 			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
 			{

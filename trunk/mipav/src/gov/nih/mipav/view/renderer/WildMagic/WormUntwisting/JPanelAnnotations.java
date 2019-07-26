@@ -1,6 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.WormUntwisting;
 
 
+import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmMarchingCubes;
+
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -28,12 +31,17 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
@@ -60,6 +68,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -72,6 +81,9 @@ import javax.swing.table.TableCellEditor;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
 public class JPanelAnnotations extends JInterfaceBase implements ActionListener, AnnotationListener, TableModelListener, ListSelectionListener, KeyListener, ChangeListener, MouseListener {
@@ -79,6 +91,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private static final long serialVersionUID = -9056581285643263551L;
 
 	private VolumeImage imageA;
+	
 
 	// on 'start' the images are loaded and the VolumeTriPlanarInterface is created:
 	private VOILatticeManagerInterface voiManager;
@@ -101,6 +114,12 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JTable annotationGroupTable;
 	private DefaultTableModel annotationGroupTableModel;
 	private String selectedPrefix = null;
+	
+	private int displayChannel = 1;
+	private JTextField thresholdMin;
+	private JTextField thresholdMax;
+	private ModelImage mask;
+	private TriMesh mesh;
 
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
 		voiManager = voiInterface;
@@ -196,37 +215,81 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					for ( int i = 0; i < annotations.getCurves().size(); i++ )
 					{
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
-						// read positions and values and set up segmentation:
-						Vector3f pos = text.elementAt(0);
-						seedList.add(new Vector3f(pos));
-						
-						float value = imageA.GetImage().getFloat( (int)pos.X, (int)pos.Y, (int)pos.Z );
-						if ( value > maxValue ) maxValue = value;
-						if ( value < minValue ) minValue = value;						
+						if ( text.isSelected() ) {
+							// read positions and values and set up segmentation:
+							Vector3f pos = text.elementAt(0);
+							seedList.add(new Vector3f(pos));
+
+							float value = imageA.GetImage().getFloat( (int)pos.X, (int)pos.Y, (int)pos.Z );
+							if ( value > maxValue ) maxValue = value;
+							if ( value < minValue ) minValue = value;						
+						}
+					}
+					if ( seedList.size() == 0 ) {
+						MipavUtil.displayInfo( "No annotations selected, please select annotations for segmentation." );
+						return;
 					}
 					BitSet visited = new BitSet(imageA.GetImage().getVolumeSize());
-					ModelImage mask = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageA.GetImage().getExtents(), "NerveRing" );
-					final int dimX = imageA.GetImage().getExtents().length > 0 ? imageA.GetImage().getExtents()[0] : 1;
-					final int dimY = imageA.GetImage().getExtents().length > 1 ? imageA.GetImage().getExtents()[1] : 1;
-					final int dimZ = imageA.GetImage().getExtents().length > 2 ? imageA.GetImage().getExtents()[2] : 1;
-					for ( int z = 0; z < dimZ; z++ )
-						for ( int y = 0; y < dimY; y++ )
-							for ( int x = 0; x < dimX; x++ )
-								mask.setC(x,  y,  z, 2, imageA.GetImage().get(x,y,z) );
+					if ( mask != null ) {
+						mask.disposeLocal(false);
+						mask = null;
+					}
+					mask = new ModelImage(ModelStorageBase.FLOAT, imageA.GetImage().getExtents(), "NerveRing" );
+					JDialogBase.updateFileInfo(imageA.GetImage(), mask);
+
+					float minThreshold = minValue;
+					try {
+						minThreshold = Float.valueOf(thresholdMin.getText().trim());
+					} catch(NumberFormatException e) {}
+					float maxThreshold = (float)imageA.GetImage().getMax();
+					try {
+						maxThreshold = Float.valueOf(thresholdMax.getText().trim());
+					} catch(NumberFormatException e) {}
 					
-					int count = WormSegmentation.fill(imageA.GetImage(), minValue, (float)imageA.GetImage().getMax(), seedList, visited, mask);
-					System.err.println(imageA.GetImage().getImageName() + "  " + count );
+					int count = WormSegmentation.fill(imageA.GetImage(), minThreshold, maxThreshold, seedList, visited, mask);
+
+					
+					System.err.println("Segmentation results " + imageA.GetImage().getImageName() + "  " + count );
+
+					// remove previous segmentation:
+					volumeRenderer.removeSurface("nerveRing");
+					volumeRenderer.displaySurface(false);	
+					
 					if ( count > 0 ) {
-						mask.calcMinMax();
-						if ( voiManager != null )
-						{
-							voiManager.setImage(mask, null);
-						}
-						imageA.UpdateData(mask, true);
-						volumeRenderer.resetAxis();
-						volumeRenderer.reCreateScene(imageA, true);
+				    	if ( (Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable()) )
+				    	{
+				    		OpenCLAlgorithmMarchingCubes cubesAlg = new OpenCLAlgorithmMarchingCubes(mask, 0, false,
+				    				false, false, 0, null );
+				    		cubesAlg.setRunningInSeparateThread(false);
+				    		cubesAlg.run();
+				    		mesh = cubesAlg.getMesh();
+				    		if ( mesh != null ) {
+				    			System.err.println("extracted mesh " + mesh.VBuffer.GetVertexQuantity() );
+				    			SurfaceState surface = new SurfaceState( new TriMesh(new VertexBuffer(mesh.VBuffer), new IndexBuffer(mesh.IBuffer)), "segmentation" );
+				    			volumeRenderer.addSurface( surface, true );
+				    			volumeRenderer.displaySurface(true);
+				    			JPanelLights_WM lightsPanel = new JPanelLights_WM(volumeRenderer);
+				    			lightsPanel.enableLight(0, true);
+				    			lightsPanel.enableLight(1, true);
+				    			volumeRenderer.updateLighting(lightsPanel.getAllLights());
+				    		}
+				    	}
+//						ModelImage origImage = imageA.GetImage();	
 					}
 				}
+			}
+		}
+		else if ( command.equals("deleteSegmentation") ) {
+			// remove segmentation:
+			volumeRenderer.removeSurface("segmentation");
+			volumeRenderer.displaySurface(false);	
+		}
+		else if ( command.equals("saveSegmentation") ) {
+			if ( mask != null ) {
+				LatticeModel.saveImage( imageA.GetImage(), mask, "_segmentation" );
+			}
+			if ( mesh != null ) {
+				LatticeModel.saveTriMesh( imageA.GetImage(), "segmentation", "", mesh );
 			}
 		}
 		else if ( source == displayLabel )
@@ -322,21 +385,26 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						names.add(text.getText());
+						Vector3f pos = text.elementAt(0);
+						float value = imageA.GetImage().getFloat((int)pos.X, (int)pos.Y, (int)pos.Z);
+						if ( imageA.GetImage().isColorImage() )
+							value = imageA.GetImage().getFloatC((int)pos.X, (int)pos.Y, (int)pos.Z, displayChannel == 1 ? 1 : 2 );
+						
 						if ( useLatticeMarkers ) {
 							int latticeSegment = text.getLatticeSegment();
 							//							System.err.println(i + "  " + note);
 							if ( latticeSegment != -1 ) {
 								//								System.err.println(note + "   " + value );
-								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z, latticeSegment } );
+								annotationTableModel.addRow( new Object[]{text.getText(), pos.X, pos.Y, pos.Z, latticeSegment, value } );
 							}
 							else {
-								annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+								annotationTableModel.addRow( new Object[]{text.getText(), pos.X, pos.Y, pos.Z, "", value } );
 								segments[i] = -1;
 							}
 						}
 						else
 						{
-							annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+							annotationTableModel.addRow( new Object[]{text.getText(), pos.X, pos.Y, pos.Z, value } );
 							segments[i] = -1;
 						}
 					}
@@ -451,7 +519,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						text.retwist(previewMode);
 					}
 				}
-				else
+				else if ( annotationTableModel.getColumnName(column).equals("segment") )
 				{
 					try {
 						int value = Integer.valueOf(annotationTableModel.getValueAt(row, column).toString());
@@ -598,7 +666,16 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private void buildAnnotationTable(boolean latticeMarkers) {
 		if ( annotationTable == null )
 		{
-			annotationTableModel = new DefaultTableModel();
+			annotationTableModel = new DefaultTableModel() {
+
+			    @Override
+			    public boolean isCellEditable(int row, int column) {
+			    	String columnName = getColumnName(column);
+			    	if ( columnName.equals("value") ) return false;
+			       return true;
+			    }
+			};
+			
 			annotationTableModel.addColumn("Name");
 			annotationTableModel.addColumn("x");
 			annotationTableModel.addColumn("y");
@@ -607,6 +684,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				annotationTableModel.addColumn("lattice segment");
 				useLatticeMarkers = true;
 			}
+			annotationTableModel.addColumn("value");
+			
 			annotationTableModel.addTableModelListener(this);
 
 			annotationTable = new JTable(annotationTableModel);
@@ -644,6 +723,23 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		return annotationPanel;
 	}
 
+
+    private static GridBagConstraints gbc = new GridBagConstraints();
+    private static GridBagLayout gbLayout = new GridBagLayout();
+    
+    private static void initGB() {
+    	gbc = new GridBagConstraints();
+        gbLayout = new GridBagLayout();
+    	gbc.gridx = 0;
+    	gbc.gridy = 0;
+    	gbc.weightx = 1;
+    	gbc.weighty = 1;
+    	gbc.gridheight = 1;
+    	gbc.gridwidth = 1;
+    	gbc.anchor = GridBagConstraints.WEST;
+    	gbc.fill = GridBagConstraints.HORIZONTAL;
+    }
+	
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
@@ -656,11 +752,48 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		{			
 			annotationPanel = new JPanel();
 			annotationPanel.setLayout(new BorderLayout());
+			
+			initGB();
+			JPanel displayPanel = new JPanel(new BorderLayout());
+			JPanel thresholdPanel = new JPanel(gbLayout);
+			thresholdPanel.setBorder(JDialogBase.buildTitledBorder("Threshold Segmentation"));
 
-			GridBagLayout gbc = new GridBagLayout();
-			GridBagConstraints gbcC = new GridBagConstraints();
+			thresholdPanel.add( new JLabel("min value:"), gbc );
+			thresholdMin = new JTextField( String.valueOf(imageA.GetImage().getMax()/2) );
+			gbc.gridx++;
+			thresholdPanel.add( thresholdMin, gbc );
+			
+			gbc.gridx = 0;
+			gbc.gridy++;
+			thresholdPanel.add( new JLabel("max value:"), gbc );
+			thresholdMax = new JTextField( String.valueOf(imageA.GetImage().getMax()) );
+			gbc.gridx++;
+			thresholdPanel.add( thresholdMax, gbc );
+			
+			// Segment button:
+			gbc.gridx = 0;
+			gbc.gridy++;
+			JButton segment = new JButton("threshold segmentation" );
+			segment.addActionListener(this);
+			segment.setActionCommand("thresholdSegmentation");
+			segment.setPreferredSize(MipavUtil.defaultButtonSize);
+			thresholdPanel.add( segment, gbc );
+			gbc.gridx++;
+			JButton deleteSegmentation = new JButton("remove" );
+			deleteSegmentation.addActionListener(this);
+			deleteSegmentation.setActionCommand("deleteSegmentation");
+			deleteSegmentation.setPreferredSize(MipavUtil.defaultButtonSize);
+			thresholdPanel.add( deleteSegmentation, gbc );
+			gbc.gridx++;
+			JButton saveSegmentation = new JButton("save" );
+			saveSegmentation.addActionListener(this);
+			saveSegmentation.setActionCommand("saveSegmentation");
+			saveSegmentation.setPreferredSize(MipavUtil.defaultButtonSize);
+			thresholdPanel.add( saveSegmentation, gbc );
+			
 
-			JPanel labelPanel = new JPanel(gbc);
+			initGB();
+			JPanel labelPanel = new JPanel(gbLayout);
 			// Display checkbox for displaying individual annotations:
 			displayLabel = new JCheckBox("display", true);
 			displayLabel.addActionListener(this);
@@ -671,54 +804,47 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayGroupLabel.addActionListener(this);
 			displayGroupLabel.setActionCommand("displayGroupLabel");
 
-			gbcC.gridx = 0;			gbcC.gridy = 0;
-			labelPanel.add( new JLabel("Annotation: " ), gbcC );
-			gbcC.gridx++;			gbcC.gridy = 0;
-			labelPanel.add(displayLabel, gbcC);
+			gbc.gridx = 0;			gbc.gridy = 0;
+			labelPanel.add( new JLabel("Annotation: " ), gbc );
+			gbc.gridx++;			gbc.gridy = 0;
+			labelPanel.add(displayLabel, gbc);
 
-			gbcC.gridx++;			gbcC.gridy = 0;
-			labelPanel.add(displayGroupLabel, gbcC);
+			gbc.gridx++;			gbc.gridy = 0;
+			labelPanel.add(displayGroupLabel, gbc);
 
 			// Display all button:
 			JButton displayAll = new JButton("Display all" );
 			displayAll.addActionListener(this);
 			displayAll.setActionCommand("displayAll");
-			gbcC.gridx++;			gbcC.gridy = 0;
-			labelPanel.add( displayAll, gbcC );
+			gbc.gridx++;			gbc.gridy = 0;
+			labelPanel.add( displayAll, gbc );
 
 			// Display none button:
 			JButton displayNone = new JButton("Display none" );
 			displayNone.addActionListener(this);
 			displayNone.setActionCommand("displayNone");
-			gbcC.gridx++;			gbcC.gridy = 0;
-			labelPanel.add( displayNone, gbcC );
+			gbc.gridx++;			gbc.gridy = 0;
+			labelPanel.add( displayNone, gbc );
 
 			// Open CSV button:
 			JButton openAnnotations = new JButton("Open annotation .csv" );
 			openAnnotations.addActionListener(this);
 			openAnnotations.setActionCommand("openAnnotations");
-			gbcC.gridx = 0;			gbcC.gridy++;
-			labelPanel.add( openAnnotations, gbcC );
-			
-			// Segment button:
-			JButton segment = new JButton("threshold segmentation" );
-			segment.addActionListener(this);
-			segment.setActionCommand("thresholdSegmentation");
-			gbcC.gridx++;
-			labelPanel.add( segment, gbcC );
+			gbc.gridx = 0;			gbc.gridy++;
+			labelPanel.add( openAnnotations, gbc );
 
 			// volume clip checkbox for clipping around individual annotations:
 			volumeClip = new JCheckBox("volume clip", true);
 			volumeClip.setSelected(false);
 			volumeClip.addActionListener(this);
 			volumeClip.setActionCommand("volumeClip");
-			gbcC.gridx = 1;			gbcC.gridy++;
-			labelPanel.add( volumeClip, gbcC );
+			gbc.gridx = 1;			gbc.gridy++;
+			labelPanel.add( volumeClip, gbc );
 
 			volumeRadius = new JSlider(0, 70, 30);
 			volumeRadius.addChangeListener(this);
-			gbcC.gridx++;
-			labelPanel.add( volumeRadius, gbcC );
+			gbc.gridx++;
+			labelPanel.add( volumeRadius, gbc );
 			
 			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display and Clipping"));
 
@@ -741,9 +867,12 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			kScrollPaneGroup.setPreferredSize( size );
 			kScrollPaneGroup.setBorder(JDialogBase.buildTitledBorder("Group list"));
 
+			displayPanel.add(thresholdPanel, BorderLayout.NORTH);
+			displayPanel.add(labelPanel, BorderLayout.SOUTH);
+			
 			annotationPanel.add(kScrollPane, BorderLayout.NORTH);
 			annotationPanel.add(kScrollPaneGroup, BorderLayout.CENTER);
-			annotationPanel.add(labelPanel, BorderLayout.SOUTH);
+			annotationPanel.add(displayPanel, BorderLayout.SOUTH);
 			//			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
 		}
 
@@ -977,4 +1106,58 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			imageA.GetImage().notifyImageDisplayListeners();
 		}
 	}
+	
+	private int segmentationCount = 1;
+    public void create3DVOI( ModelImage mask)
+    {
+    	int[] aiExtents = mask.getExtents();
+        int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
+        int[] buffer = new int[length];
+
+        for (int i = 0; i < length; i++) {
+            buffer[i] = (int)mask.getFloat(i);
+        }
+
+        float[] afResolutions = mask.getResolutions(0);
+        int[] direction = MipavCoordinateSystems.getModelDirections(mask);
+        float[] startLocation = mask.getFileInfo(0).getOrigin();
+        SurfaceExtractorCubes kExtractor = 
+            new SurfaceExtractorCubes(aiExtents[0], 
+                    aiExtents[1], 
+                    aiExtents[2], buffer,
+                    afResolutions[0], 
+                    afResolutions[1], 
+                    afResolutions[2], direction,
+                    startLocation, null);
+        TriMesh mesh = kExtractor.getLevelSurface( (int)mask.getMax(), false );
+        if ( mesh != null )
+        {
+        	SurfaceState surface = new SurfaceState( mesh, "worm" );
+			volumeRenderer.addSurface( surface, true );
+			volumeRenderer.displaySurface(true);
+			updateSurfacePanels();
+			System.err.println("TriMesh " + mesh.GetTriangleQuantity());
+        }
+        else
+        {
+			System.err.println("TriMesh null");
+        }
+        kExtractor = null;
+    }
+    
+	private JPanelLights_WM lightsPanel = null;
+	//	private JPanelSurface_WM surfaceGUI = null;
+	private void updateSurfacePanels() {
+		if ( lightsPanel == null ) {
+			lightsPanel = new JPanelLights_WM(volumeRenderer);
+			lightsPanel.enableLight(0, true);
+			lightsPanel.enableLight(1, true);
+			volumeRenderer.updateLighting(lightsPanel.getAllLights());
+		}
+//		if ( surfaceGUI == null ) {
+//			surfaceGUI = new JPanelSurface_WM(volumeRenderer);
+//			tabbedPane.addTab("Surface", null, lightsPanel);
+//		}
+	}
+
 }
