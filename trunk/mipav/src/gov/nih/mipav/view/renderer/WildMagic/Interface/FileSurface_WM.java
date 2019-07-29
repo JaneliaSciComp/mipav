@@ -1414,6 +1414,7 @@ public class FileSurface_WM {
 
 			IndexBuffer kIBuffer = new IndexBuffer(aiConnect.length, aiConnect);
 			mesh = new TriMesh(kVBuffer, kIBuffer);
+			mesh.SetName(file.getName());
 			MaterialState kMaterial = new MaterialState();
 			mesh.AttachGlobalState(kMaterial);
 			return mesh;
@@ -2811,6 +2812,9 @@ public class FileSurface_WM {
 											/ direction[2]) - zBox) / (2.0f * maxBox));
 //						}
 					}
+					akComponent[i].SetName(file.getName());
+				}
+				if (akComponent[i] != null ) {
 					akComponent[i].SetName(file.getName());
 				}
 				if (akComponent[i] == null) {

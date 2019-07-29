@@ -3,14 +3,12 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewToolBarBuilder;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogSmoothMesh;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
@@ -26,8 +24,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.BitSet;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Vector;
@@ -148,7 +144,8 @@ public class JPanelSurface_WM extends JInterfaceBase
     private JList polylineList;
     
     /** The list box in the dialog for surfaces. */
-    private JList surfaceList;
+    private JList<String> surfaceList;
+    private DefaultListModel<String> listModel;
 
     /** Check Box for surface picking. */
     private JCheckBox surfacePickableCB;
@@ -352,12 +349,11 @@ public class JPanelSurface_WM extends JInterfaceBase
 
     public void setSurfaceStates(Vector<SurfaceState> kSurfaces)
     {
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        int iSize = kList.getSize();
+        int iSize = listModel.getSize();
         m_akSurfaceStates = kSurfaces;
         for ( int i = 0; i < kSurfaces.size(); i++ )
         {            
-            kList.add( iSize + i, m_akSurfaceStates.get(i).Name );
+        	listModel.add( iSize + i, m_akSurfaceStates.get(i).Name );
             m_kVolumeViewer.addSurface( m_akSurfaceStates.get(i) );
             updateSelected(i);
         }
@@ -372,11 +368,10 @@ public class JPanelSurface_WM extends JInterfaceBase
      */
     public void addSurfaces( TriMesh[] akSurfaces )
     {
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        int iSize = kList.getSize();
+        int iSize = listModel.getSize();
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
-        	kList.add( iSize + i, akSurfaces[i].GetName() );
+        	listModel.add( iSize + i, new String(akSurfaces[i].GetName()) );
         	SurfaceState kSurface = new SurfaceState( akSurfaces[i], akSurfaces[i].GetName() );
         	m_akSurfaceStates.add( kSurface );        
         	m_kVolumeViewer.addSurface( kSurface, volumeCoordsCheck.isSelected() );
@@ -396,10 +391,9 @@ public class JPanelSurface_WM extends JInterfaceBase
 
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 m_akSurfaceStates.get( aiSelected[i] ).Fill = mode;
-                m_kVolumeViewer.setPolygonMode( (String)kList.elementAt(aiSelected[i]), mode);
+                m_kVolumeViewer.setPolygonMode( listModel.elementAt(aiSelected[i]), mode);
             }
         }
     }
@@ -461,8 +455,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         {
             return null;
         }               
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        return (String)kList.elementAt(aiSelected[aiSelected.length - 1]);
+        return listModel.elementAt(aiSelected[aiSelected.length - 1]);
     }
 
     /**
@@ -472,9 +465,8 @@ public class JPanelSurface_WM extends JInterfaceBase
     public String[] getSelectedSurfaces() {
         int[] aiSelected = surfaceList.getSelectedIndices();
         String[] akNames = new String[aiSelected.length];
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
         for (int i = 0; i < aiSelected.length; i++) {
-            akNames[i] = new String((String)kList.elementAt(aiSelected[i]));
+            akNames[i] = new String(listModel.elementAt(aiSelected[i]));
         }
         return akNames;
     }
@@ -491,9 +483,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         int[] aiSelected = surfaceList.getSelectedIndices();
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setSurfaceTexture( (String)kList.elementAt(aiSelected[i]),
+                m_kVolumeViewer.setSurfaceTexture( listModel.elementAt(aiSelected[i]),
                         bTextureOn, bUseNewImage, bUseNewLUT);
             }
         }
@@ -531,14 +522,13 @@ public class JPanelSurface_WM extends JInterfaceBase
         if ( m_kVolumeViewer != null )
         {
             int[] aiSelected = surfaceList.getSelectedIndices();
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 ColorRGB kColor = new ColorRGB( _color.getRed()/255.0f, 
                         _color.getGreen()/255.0f,
                         _color.getBlue()/255.0f );
                 m_akSurfaceStates.get(aiSelected[i]).SurfaceColor = 
                     new Color( _color.getRed(), _color.getGreen(), _color.getBlue() );
-                m_kVolumeViewer.setColor( (String)kList.elementAt(aiSelected[i]),
+                m_kVolumeViewer.setColor( listModel.elementAt(aiSelected[i]),
                         kColor, true );
             }
         }
@@ -566,9 +556,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         int[] aiSelected = surfaceList.getSelectedIndices();
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.SetImageNew( (String)kList.elementAt(aiSelected[i]), kImage);
+                m_kVolumeViewer.SetImageNew( listModel.elementAt(aiSelected[i]), kImage);
             }
         }
     }
@@ -583,9 +572,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         int[] aiSelected = surfaceList.getSelectedIndices();
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.SetLUTNew( (String)kList.elementAt(aiSelected[i]), kLUT);
+                m_kVolumeViewer.SetLUTNew( listModel.elementAt(aiSelected[i]), kLUT);
             }
         }
     }
@@ -602,9 +590,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         colorButton.setBackground( new Color(kMaterial.Diffuse.R, kMaterial.Diffuse.G, kMaterial.Diffuse.B) );
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             m_akSurfaceStates.get(iIndex).Material = kMaterial;
-            m_kVolumeViewer.setMaterial( (String)kList.elementAt(iIndex), kMaterial, true);
+            m_kVolumeViewer.setMaterial( listModel.elementAt(iIndex), kMaterial, true);
         }
     }
 
@@ -638,7 +625,6 @@ public class JPanelSurface_WM extends JInterfaceBase
             int numTriangles = 0;
             // construct the lists of items whose LODs need to be changed
             int[] aiSelected = surfaceList.getSelectedIndices();
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             boolean found = false;
             if ( aiSelected.length == 0) return;
             
@@ -667,7 +653,7 @@ public class JPanelSurface_WM extends JInterfaceBase
 			                   	 mesh.SetName(new String(kMesh.GetName()));
 			            		 SurfaceState kState = new SurfaceState( mesh, mesh.GetName() );
 			            		 
-			                     m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+			                     m_kVolumeViewer.removeSurface( listModel.elementAt(aiSelected[i]) );
 			                     m_akSurfaceStates.remove(aiSelected[i]);
 			                     
 			                     m_akSurfaceStates.add( kState );        
@@ -700,8 +686,7 @@ public class JPanelSurface_WM extends JInterfaceBase
      */
     public boolean surfaceAdded()
     {
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        if ( kList.size() > 0 )
+        if ( listModel.size() > 0 )
         {
             return true;
         }
@@ -716,9 +701,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         int[] aiSelected = surfaceList.getSelectedIndices();
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.toggleGeodesicPathDisplay( (String)kList.elementAt(aiSelected[i]),
+                m_kVolumeViewer.toggleGeodesicPathDisplay( listModel.elementAt(aiSelected[i]),
                         iWhich);
             }
         }
@@ -834,8 +818,8 @@ public class JPanelSurface_WM extends JInterfaceBase
     	
     	if ( akPolylines != null )
         {
-        	DefaultListModel kList = (DefaultListModel)polylineList.getModel();
-            int iSize = kList.getSize();
+        	DefaultListModel listModel = (DefaultListModel)polylineList.getModel();
+            int iSize = listModel.getSize();
             
             for ( int i = 0; i < akPolylines.length ; i++ ) {
             	polylineCounterList.add(iSize + i, polylineCounter);
@@ -861,7 +845,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             
             for ( int i = 0; i < akPolylines.length; i++ )
             {
-                kList.add( iSize + i, akPolylines[i].GetName() );
+                listModel.add( iSize + i, akPolylines[i].GetName() );
                
             }
             polylineList.setSelectedIndex(iSize);
@@ -936,9 +920,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         
         if ( m_kVolumeViewer != null )
         {
-            //TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
-           
-            //DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             tmesh = new TriangleMesh[ aiSelected.length ];
             for (int i = 0; i < aiSelected.length; i++) {
             	
@@ -948,18 +929,7 @@ public class JPanelSurface_WM extends JInterfaceBase
                 IndexBuffer kIBuffer = new IndexBuffer( kMesh.IBuffer);
                 tmesh[i] = new TriangleMesh(kVBuffer, kIBuffer);
                 tmesh[i].SetName(kMesh.GetName());
-                
-                //TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
-                //mesh.SetName( kMesh.GetName() );
-                //akSurfaces[i] = mesh;
-
-                //m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
-                //m_akSurfaceStates.get(aiSelected[0]).Surface = mesh;
-                //m_kVolumeViewer.addSurface(m_akSurfaceStates.get(aiSelected[0]));
             }
-
-
-
 
             decimateButton.setEnabled(false);
             detailSlider.setEnabled(true);
@@ -1004,8 +974,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         
         if ( m_kVolumeViewer != null )
         {           
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            int iSize = kList.getSize();
+            int iSize = listModel.getSize();
             for (int i = 0; i < aiSelected.length; i++) {
             	
                 TriMesh kMesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
@@ -1038,7 +1007,7 @@ public class JPanelSurface_WM extends JInterfaceBase
 
                 	//System.err.println( mesh.GetName() );
 
-                	kList.add( iSize++, mesh.GetName() );
+                	listModel.add( iSize++, mesh.GetName() );
 
                 	m_akSurfaceStates.add( kSurface );        
                 	m_kVolumeViewer.addSurface( kSurface );
@@ -1051,8 +1020,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         
         if ( m_kVolumeViewer != null )
         {           
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            int iSize = kList.getSize();
+            int iSize = listModel.getSize();
             for (int i = 0; i < aiSelected.length; i++) {
             	
                 TriMesh mesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
@@ -1064,7 +1032,7 @@ public class JPanelSurface_WM extends JInterfaceBase
 
             	//System.err.println( mesh.GetName() );
 
-            	kList.add( iSize++, chMesh.GetName() );
+            	listModel.add( iSize++, chMesh.GetName() );
 
             	m_akSurfaceStates.add( kSurface );        
             	m_kVolumeViewer.addSurface( kSurface );
@@ -1107,8 +1075,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     {
         if ( m_kVolumeViewer != null )
         {           
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            int iSize = kList.getSize();
+            int iSize = listModel.getSize();
             for (int i = 0; i < aiSelected.length; i++) {
             	
                 TriMesh mesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
@@ -1124,7 +1091,7 @@ public class JPanelSurface_WM extends JInterfaceBase
 
             	//System.err.println( mesh.GetName() );
 
-            	kList.add( iSize++, chMesh.GetName() );
+            	listModel.add( iSize++, chMesh.GetName() );
 
             	m_akSurfaceStates.add( kSurface );        
             	m_kVolumeViewer.addSurface( kSurface );
@@ -1156,10 +1123,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     private void displayAdvancedMaterialOptions(int[] aiSelected) {
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 new JFrameSurfaceMaterialProperties_WM(this, aiSelected[i], m_kVolumeViewer.GetLights(),
-                        m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[i]) ) );
+                        m_kVolumeViewer.getMaterial( listModel.elementAt(aiSelected[i]) ) );
             }
         }
     }
@@ -1215,7 +1181,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         buttonPanel.add(volumeCoordsCheck);
         
         // list panel for surface filenames
-        surfaceList = new JList(new DefaultListModel());
+        listModel = new DefaultListModel<String>();
+        surfaceList = new JList<String>(listModel);
         surfaceList.addListSelectionListener(this);
         surfaceList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
 
@@ -1568,7 +1535,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     private void removePolyline() {
     	int[] aiSelected = polylineList.getSelectedIndices();
     	int index;
-        DefaultListModel kList = (DefaultListModel)polylineList.getModel();
+        DefaultListModel listModel = (DefaultListModel)polylineList.getModel();
         if ( m_kVolumeViewer != null )
         {
             for (int i = 0; i < aiSelected.length; i++) {
@@ -1578,7 +1545,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             }
         }
         for (int i = 0; i < aiSelected.length; i++) {
-            kList.remove(aiSelected[i]);
+            listModel.remove(aiSelected[i]);
         }
     }
 
@@ -1588,16 +1555,14 @@ public class JPanelSurface_WM extends JInterfaceBase
     private void removeSurface()
     {
         int[] aiSelected = surfaceList.getSelectedIndices();
-
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
         if ( m_kVolumeViewer != null )
         {
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+                m_kVolumeViewer.removeSurface( listModel.elementAt(aiSelected[i]) );
             }
         }
         for (int i = 0; i < aiSelected.length; i++) {
-            kList.remove(aiSelected[i]);
+        	listModel.remove(aiSelected[i]);
             m_akSurfaceStates.remove(aiSelected[i]);
         }
     }
@@ -1768,10 +1733,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     private void setBackface(int[] aiSelected) {
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 m_akSurfaceStates.get( aiSelected[i] ).BackfaceCull = surfaceBackFaceCB.isSelected();
-                m_kVolumeViewer.setBackface( (String)kList.elementAt(aiSelected[i]),
+                m_kVolumeViewer.setBackface( listModel.elementAt(aiSelected[i]),
                         surfaceBackFaceCB.isSelected());
             }
 
@@ -1785,10 +1749,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     private void setClipping(int[] aiSelected) {
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 m_akSurfaceStates.get( aiSelected[i] ).Clip = surfaceClipCB.isSelected();
-                m_kVolumeViewer.setClipping( (String)kList.elementAt(aiSelected[i]),
+                m_kVolumeViewer.setClipping( listModel.elementAt(aiSelected[i]),
                                              surfaceClipCB.isSelected());
             }
 
@@ -1848,10 +1811,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     private void setPickable(int[] aiSelected) {
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 m_akSurfaceStates.get( aiSelected[i] ).Pickable = surfacePickableCB.isSelected();
-                m_kVolumeViewer.setPickable( (String)kList.elementAt(aiSelected[i]),
+                m_kVolumeViewer.setPickable( listModel.elementAt(aiSelected[i]),
                         surfacePickableCB.isSelected());
             }
         }
@@ -1866,14 +1828,13 @@ public class JPanelSurface_WM extends JInterfaceBase
         if ( m_kVolumeViewer != null )
         {
             float opacity = opacitySlider.getValue() / 100.0f;
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 m_akSurfaceStates.get( aiSelected[i] ).Opacity = opacity;
 
                 m_akSurfaceStates.get( aiSelected[i] ).TransparencyOn = surfaceTransparencyCB.isSelected();
                 if ( surfaceTransparencyCB.isSelected() )
                 {
-                    m_kVolumeViewer.setTransparency( (String)kList.elementAt(aiSelected[i]), opacity);
+                    m_kVolumeViewer.setTransparency( listModel.elementAt(aiSelected[i]), opacity);
                 }
             }
         }
@@ -1903,8 +1864,6 @@ public class JPanelSurface_WM extends JInterfaceBase
 
         if ( m_kVolumeViewer != null )
         {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            
             int numTriangles = 0;
             float volume = 0;
             float area = 0;
@@ -1920,20 +1879,20 @@ public class JPanelSurface_WM extends JInterfaceBase
                 }
                 
                 if (iSmoothType == JDialogSmoothMesh.SMOOTH1) {
-                    m_kVolumeViewer.smoothMesh((String)kList.elementAt(aiSelected[i]),
+                    m_kVolumeViewer.smoothMesh(listModel.elementAt(aiSelected[i]),
                             dialog.getIterations(),
                             dialog.getAlpha(),
                             dialog.getVolumeLimit(),
                             dialog.getVolumePercent());
                 }
                 else if (iSmoothType == JDialogSmoothMesh.SMOOTH2) {
-                    m_kVolumeViewer.smoothTwo((String)kList.elementAt(aiSelected[i]),
+                    m_kVolumeViewer.smoothTwo(listModel.elementAt(aiSelected[i]),
                             dialog.getIterations(), dialog.getStiffness(), dialog.getVolumeLimit(),
                                         dialog.getVolumePercent());
                 }
 
                 else {
-                    m_kVolumeViewer.smoothThree((String)kList.elementAt(aiSelected[i]),
+                    m_kVolumeViewer.smoothThree(listModel.elementAt(aiSelected[i]),
                             dialog.getIterations(), dialog.getLambda(), dialog.getMu());
                 }
 
