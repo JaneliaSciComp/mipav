@@ -2166,7 +2166,9 @@ public class VolumeSurface extends VolumeObject
     	ModelImage srcImage = m_kVolumeImageA.GetImage();
 		int dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
 		int dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;		
-		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;		
+		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;	
+		
+		System.err.println("computeSurfaceMask " + dimX + "   " + dimY + "   " + dimZ );
 				
 		m_kSurfaceMask = new BitSet( dimX * dimY * dimZ );
 		Vector3f min = new Vector3f();

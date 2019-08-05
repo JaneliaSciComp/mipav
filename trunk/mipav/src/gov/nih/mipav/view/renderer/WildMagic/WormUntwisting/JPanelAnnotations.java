@@ -31,6 +31,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -45,6 +46,10 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
+import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
+import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphSamples;
+import gov.nih.mipav.view.renderer.flythroughview.ModelImage3DLayout;
+import gov.nih.mipav.view.renderer.flythroughview.Skeleton3D;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -79,7 +84,9 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
+import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -120,12 +127,25 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JTextField thresholdMax;
 	private ModelImage mask;
 	private TriMesh mesh;
+	private SurfaceState surfacState;
+	private VOI segmentationCurve;
+	private VOIContour segmentationContour;
+	private JCheckBox displayMidline;
+	private JCheckBox displaySurface;
 
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
 		voiManager = voiInterface;
 		volumeRenderer = renderer;
 		this.imageA = imageA;
 		voiManager.addAnnotationListener(this);
+	}
+	
+	public void dispose() 
+	{
+		if ( mask != null ) {
+			mask.disposeLocal(false);
+			mask = null;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -234,7 +254,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						mask.disposeLocal(false);
 						mask = null;
 					}
-					mask = new ModelImage(ModelStorageBase.FLOAT, imageA.GetImage().getExtents(), "NerveRing" );
+					mask = new ModelImage(ModelStorageBase.FLOAT, imageA.GetImage().getExtents(), JDialogBase.makeImageName(imageA.GetImage().getImageName(),  "_segmentation") );
 					JDialogBase.updateFileInfo(imageA.GetImage(), mask);
 
 					float minThreshold = minValue;
@@ -252,29 +272,69 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					System.err.println("Segmentation results " + imageA.GetImage().getImageName() + "  " + count );
 
 					// remove previous segmentation:
+			        if ( segmentationCurve != null ) {
+						imageA.GetImage().unregisterVOI(segmentationCurve);
+						segmentationCurve = null;
+			        }
+			        
 					volumeRenderer.removeSurface("nerveRing");
 					volumeRenderer.displaySurface(false);	
+		    		if ( mesh != null ) {
+		    			mesh = null;
+		    		}
 					
 					if ( count > 0 ) {
+
+				        // Setup layout of 3D image for mapping sample coordinates
+				        // to real coordinates.
+				        int[] aiExtents = mask.getExtents();
+
+				        ModelImage3DLayout kVolumeLayout = new ModelImage3DLayout(aiExtents[0], aiExtents[1], aiExtents[2],1,1,1,0,0, 0);
+
+				        // Perform the skeletonization of the input image.
+				        // Extract the centerline curve.
+				        Skeleton3D kSkeleton = new Skeleton3D(mask, kVolumeLayout);
+
+				        FlyPathGraphSamples kFlyPathGraphSamples = kSkeleton.getPathGraph(1, 1);
+
+				        FlyPathGraphCurve kFlyPathGraphCurve = new FlyPathGraphCurve(kFlyPathGraphSamples, 0.07f, 2);
+				        System.err.println("Skelentonize " + kFlyPathGraphCurve.getNumBranches() );
+				        if ( kFlyPathGraphCurve.getNumBranches() > 0 ) {
+				        	Curve3f kCurve = kFlyPathGraphCurve.getCurvePosition(0);
+				        	int numVertex = 100;
+				        	segmentationCurve = new VOI( (short)0, "nerve_ring", VOI.CONTOUR, -1f);
+				        	segmentationContour = new VOIContour(false);
+				        	segmentationCurve.getCurves().add(segmentationContour);
+				            float fStep = kCurve.GetTotalLength() / (numVertex - 1);
+				            imageA.GetImage().registerVOI(segmentationCurve);
+				            for ( int i = 0;i < numVertex; i++ ) {
+				                float fDist = i * fStep;
+				                float fTime = kCurve.GetTime(fDist, 100, 1e-02f);      
+				                Vector3f kPoint = kCurve.GetPosition(fTime);
+				                segmentationContour.add(new Vector3f(kPoint));
+				            }
+				            segmentationContour.update( new ColorRGBA(255,0,0, 1) );
+				            displayMidline.setSelected(true);
+				        }											
+						
 				    	if ( (Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable()) )
-				    	{
+				    	{				    		
 				    		OpenCLAlgorithmMarchingCubes cubesAlg = new OpenCLAlgorithmMarchingCubes(mask, 0, false,
 				    				false, false, 0, null );
 				    		cubesAlg.setRunningInSeparateThread(false);
 				    		cubesAlg.run();
 				    		mesh = cubesAlg.getMesh();
 				    		if ( mesh != null ) {
-				    			System.err.println("extracted mesh " + mesh.VBuffer.GetVertexQuantity() );
-				    			SurfaceState surface = new SurfaceState( new TriMesh(new VertexBuffer(mesh.VBuffer), new IndexBuffer(mesh.IBuffer)), "segmentation" );
-				    			volumeRenderer.addSurface( surface, true );
-				    			volumeRenderer.displaySurface(true);
+//				    			System.err.println("extracted mesh " + mesh.VBuffer.GetVertexQuantity() );
+				    			surfacState = new SurfaceState( new TriMesh(new VertexBuffer(mesh.VBuffer), new IndexBuffer(mesh.IBuffer)), "segmentation" );
+				    			volumeRenderer.addSurface( surfacState, true );
+				    			volumeRenderer.displaySurface(false);
 				    			JPanelLights_WM lightsPanel = new JPanelLights_WM(volumeRenderer);
 				    			lightsPanel.enableLight(0, true);
 				    			lightsPanel.enableLight(1, true);
 				    			volumeRenderer.updateLighting(lightsPanel.getAllLights());
 				    		}
 				    	}
-//						ModelImage origImage = imageA.GetImage();	
 					}
 				}
 			}
@@ -283,14 +343,33 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			// remove segmentation:
 			volumeRenderer.removeSurface("segmentation");
 			volumeRenderer.displaySurface(false);	
+
+            imageA.GetImage().unregisterVOI(segmentationCurve);
+            displayMidline.setSelected(false);
+            displaySurface.setSelected(false);
 		}
 		else if ( command.equals("saveSegmentation") ) {
 			if ( mask != null ) {
-				LatticeModel.saveImage( imageA.GetImage(), mask, "_segmentation" );
+				LatticeModel.saveImage( imageA.GetImage(), mask, "segmentation", "" );
 			}
 			if ( mesh != null ) {
-				LatticeModel.saveTriMesh( imageA.GetImage(), "segmentation", "", mesh );
+				LatticeModel.saveTriMesh( imageA.GetImage(), "segmentation", "_mesh", mesh );
 			}
+			// save the spline of the medial axis of the segmentation in .csv:
+			if ( segmentationContour != null ) {
+				LatticeModel.saveContourAsCSV( imageA.GetImage(), "segmentation", "_midLine", segmentationContour );
+			}
+		}
+		else if ( command.equals("displayMidline") ) {
+			if ( displayMidline.isSelected() ) {
+				imageA.GetImage().registerVOI(segmentationCurve);
+			}
+			else {
+				imageA.GetImage().unregisterVOI(segmentationCurve);
+			}
+		}
+		else if ( command.equals("displaySurface") ) {
+			volumeRenderer.displaySurface(displaySurface.isSelected());
 		}
 		else if ( source == displayLabel )
 		{	
@@ -790,7 +869,18 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			saveSegmentation.setActionCommand("saveSegmentation");
 			saveSegmentation.setPreferredSize(MipavUtil.defaultButtonSize);
 			thresholdPanel.add( saveSegmentation, gbc );
-			
+
+			gbc.gridx = 0;
+			gbc.gridy++;
+			displayMidline = new JCheckBox("Display Midline", false);
+			displayMidline.addActionListener(this);
+			displayMidline.setActionCommand("displayMidline");
+			thresholdPanel.add( displayMidline, gbc );
+			gbc.gridx++;
+			displaySurface = new JCheckBox("Display Segmentation Surface", false);
+			displaySurface.addActionListener(this);
+			displaySurface.setActionCommand("displaySurface");
+			thresholdPanel.add( displaySurface, gbc );
 
 			initGB();
 			JPanel labelPanel = new JPanel(gbLayout);
@@ -1107,57 +1197,4 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		}
 	}
 	
-	private int segmentationCount = 1;
-    public void create3DVOI( ModelImage mask)
-    {
-    	int[] aiExtents = mask.getExtents();
-        int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
-        int[] buffer = new int[length];
-
-        for (int i = 0; i < length; i++) {
-            buffer[i] = (int)mask.getFloat(i);
-        }
-
-        float[] afResolutions = mask.getResolutions(0);
-        int[] direction = MipavCoordinateSystems.getModelDirections(mask);
-        float[] startLocation = mask.getFileInfo(0).getOrigin();
-        SurfaceExtractorCubes kExtractor = 
-            new SurfaceExtractorCubes(aiExtents[0], 
-                    aiExtents[1], 
-                    aiExtents[2], buffer,
-                    afResolutions[0], 
-                    afResolutions[1], 
-                    afResolutions[2], direction,
-                    startLocation, null);
-        TriMesh mesh = kExtractor.getLevelSurface( (int)mask.getMax(), false );
-        if ( mesh != null )
-        {
-        	SurfaceState surface = new SurfaceState( mesh, "worm" );
-			volumeRenderer.addSurface( surface, true );
-			volumeRenderer.displaySurface(true);
-			updateSurfacePanels();
-			System.err.println("TriMesh " + mesh.GetTriangleQuantity());
-        }
-        else
-        {
-			System.err.println("TriMesh null");
-        }
-        kExtractor = null;
-    }
-    
-	private JPanelLights_WM lightsPanel = null;
-	//	private JPanelSurface_WM surfaceGUI = null;
-	private void updateSurfacePanels() {
-		if ( lightsPanel == null ) {
-			lightsPanel = new JPanelLights_WM(volumeRenderer);
-			lightsPanel.enableLight(0, true);
-			lightsPanel.enableLight(1, true);
-			volumeRenderer.updateLighting(lightsPanel.getAllLights());
-		}
-//		if ( surfaceGUI == null ) {
-//			surfaceGUI = new JPanelSurface_WM(volumeRenderer);
-//			tabbedPane.addTab("Surface", null, lightsPanel);
-//		}
-	}
-
 }
