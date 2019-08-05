@@ -1141,15 +1141,31 @@ public class LatticeModel {
 		updateLattice(true);
 	}
 
+//	public BitSet computeVolumeMask(BitSet surfaceMask, ModelImage volMask, int stepSize ) {
+//		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+//		int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;		
+//		int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;	
+//		System.err.println("computeVolumeMask " + dimX + "   " + dimY + "   " + dimZ );
+//		
+//		BitSet volMask = new BitSet(dimX*dimY*dimZ);
+//
+//		generateCurves(1, stepSize);
+//		Vector<Vector3f> seeds = new Vector<Vector3f>();
+//		for ( int i = 20; i < centerPositions.size() - 20; i++ ) {
+//			seeds.add(new Vector3f(centerPositions.elementAt(i)));
+//		}
+//		System.err.println("Number of seeds " + seeds.size());
+//
+//		WormSegmentation.fill(surfaceMask, seeds, volMask, dimX, dimY, dimZ);
+//		
+//		return volMask;
+//	}
 
 	public TriMesh generateTriMesh( boolean returnMesh, int stepSize ) {
 
 		generateCurves(1, stepSize);
 
 		ModelImage overlapImage = null;
-		int dimX = 0;
-		int dimY = 0;
-		int dimZ = 0;
 		//		if ( !returnMesh ) {
 		//			FileIO fileIO = new FileIO();
 		//			overlapImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_overlap.xml" );
@@ -1162,10 +1178,14 @@ public class LatticeModel {
 		int numContours = displayContours.getCurves().size();
 		for ( int i = 0; i < numContours; i++ ) {
 			VOIContour contour = (VOIContour) displayContours.getCurves().elementAt(i);
+			Vector3f min = new Vector3f( contour.elementAt(0) );
+			Vector3f max = new Vector3f( contour.elementAt(0) );
 			Vector3f center = new Vector3f();
 			int contourSize = contour.size();
 			for ( int j = 0; j < contourSize; j++ )
 			{
+				min.min(contour.elementAt(j));
+				max.max(contour.elementAt(j));
 				if ( (i == 0) || (i == (numContours-1) ) ) {
 					center.add(contour.elementAt(j));
 				}
@@ -1475,6 +1495,11 @@ public class LatticeModel {
 	public VOIContour getLeft()
 	{
 		return left;
+	}
+
+	public VOIContour getCenter()
+	{
+		return centerPositions;
 	}
 
 	/**
@@ -2206,7 +2231,7 @@ public class LatticeModel {
 		//		System.err.println( dimX + " " + dimY + " " + dimZ );
 
 		if ( !segmentLattice ) {
-			generateTriMesh(false, 1);
+			generateTriMesh( false, 1);
 		}
 		latticeContours = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
 		resultImage.registerVOI( latticeContours );
@@ -3569,12 +3594,21 @@ public class LatticeModel {
 	 * Enables the user to visualize the simple ellipse-based model of the worm during lattice construction.
 	 */
 	public void showModel(boolean display) {
-		if ( display && (imageA.isRegistered(displayContours) == -1) ) {
-			imageA.registerVOI(displayContours);
+//		if ( display && (imageA.isRegistered(displayContours) == -1) ) {
+//			imageA.registerVOI(displayContours);
+//			imageA.notifyImageDisplayListeners();
+//		}
+//		if ( !display && (imageA.isRegistered(displayContours) != -1) ) {
+//			imageA.unregisterVOI(displayContours);
+//			imageA.notifyImageDisplayListeners();
+//		}
+		if ( samplingPlanes == null ) generateEllipses();
+		if ( display && (imageA.isRegistered(samplingPlanes) == -1) ) {
+			imageA.registerVOI(samplingPlanes);
 			imageA.notifyImageDisplayListeners();
 		}
-		if ( !display && (imageA.isRegistered(displayContours) != -1) ) {
-			imageA.unregisterVOI(displayContours);
+		if ( !display && (imageA.isRegistered(samplingPlanes) != -1) ) {
+			imageA.unregisterVOI(samplingPlanes);
 			imageA.notifyImageDisplayListeners();
 		}
 	}
@@ -6556,8 +6590,6 @@ public class LatticeModel {
 		//		}
 	}
 
-
-
 	/**
 	 * Called from the straightening function. Exports the finalized worm model slice-by-slice into the straightened
 	 * image.
@@ -7537,7 +7569,7 @@ public class LatticeModel {
 
 
 
-	public static void saveImage(final ModelImage originalImage, final ModelImage image, String postScript ) {
+	public static void saveImage(final ModelImage originalImage, final ModelImage image, String subDir, String postScript ) {
 		
 		String outputDirectory = new String(originalImage.getImageDirectory() + JDialogBase.makeImageName(originalImage.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(originalImage.getImageFileName(), "_results") );
 		String parentDir = new String(originalImage.getImageDirectory() + JDialogBase.makeImageName(originalImage.getImageFileName(), "") + File.separator);
@@ -7551,52 +7583,60 @@ public class LatticeModel {
 			//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
 		}
-		voiDir = outputDirectory + File.separator + "segmentation" + File.separator;
+		voiDir = outputDirectory + File.separator + subDir + File.separator;
 		
-		String imageName = JDialogBase.makeImageName(originalImage.getImageFileName(), "");
+		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
 		imageName = imageName + postScript;
 		
-		int maxVal = -1;
-		voiFileDir = new File(voiDir);
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
-			final String[] list = voiFileDir.list();
-			for (int i = 0; i < list.length; i++) {
-				int fileVal = -1;
-//				System.err.println(list[i] + "   " + imageName + "   " + list[i].contains(imageName) );
-				if ( list[i].contains(imageName) ) {
-					String sub = list[i].substring( list[i].indexOf(imageName) + imageName.length(), list[i].length() );
-					for ( int j = 0; j < sub.length(); j++ ) {
-						String test = new String( "" + sub.charAt(j) );
-						int val;
-						try {
-							val = Integer.valueOf(test);
-							if ( fileVal == -1 ) {
-								fileVal = val;
-							}
-							else
-							{
-								fileVal = fileVal * 10 + val;
-							}
-						} catch(NumberFormatException e) {
-						}
-					}
-//					System.err.println( "    " + fileVal );
-				}
-				if ( fileVal > maxVal )
-				{
-					maxVal = fileVal;
-				}
-			}
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			//			System.err.println( "saveImage " + voiDir);
-			voiFileDir.mkdir();
+//		int maxVal = -1;
+//		voiFileDir = new File(voiDir);
+//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
+//			final String[] list = voiFileDir.list();
+//			for (int i = 0; i < list.length; i++) {
+//				int fileVal = -1;
+////				System.err.println(list[i] + "   " + imageName + "   " + list[i].contains(imageName) );
+//				if ( list[i].contains(imageName) ) {
+//					String sub = list[i].substring( list[i].indexOf(imageName) + imageName.length(), list[i].length() );
+//					for ( int j = 0; j < sub.length(); j++ ) {
+//						String test = new String( "" + sub.charAt(j) );
+//						int val;
+//						try {
+//							val = Integer.valueOf(test);
+//							if ( fileVal == -1 ) {
+//								fileVal = val;
+//							}
+//							else
+//							{
+//								fileVal = fileVal * 10 + val;
+//							}
+//						} catch(NumberFormatException e) {
+//						}
+//					}
+////					System.err.println( "    " + fileVal );
+//				}
+//				if ( fileVal > maxVal )
+//				{
+//					maxVal = fileVal;
+//				}
+//			}
+//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+//		} else { // voiFileDir does not exist
+//			//			System.err.println( "saveImage " + voiDir);
+//			voiFileDir.mkdir();
+//		}
+//
+//		maxVal++;
+//		imageName = imageName + "_" + maxVal;
+		
+
+		imageName = imageName + ".tif";
+		File imageFile = new File(voiDir + imageName);
+		if (imageFile.exists() && !imageFile.isDirectory()) { 
+			imageFile.delete();
 		}
 
-		maxVal++;
-		imageName = imageName + "_" + maxVal;
-
-		ModelImage.saveImage(image, imageName + ".tif", voiDir, false);
+    	System.err.println(voiDir + imageName );
+		ModelImage.saveImage(image, imageName, voiDir, false);
 
 	}
 
@@ -7625,6 +7665,64 @@ public class LatticeModel {
 		saveLatticeStatistics(outputDirectory + File.separator, centerSpline.GetLength(0, 1), left, right, leftDistances, rightDistances, "_before");
 	}
 
+	public static void saveContourAsCSV( ModelImage image, String subDir, String postScript, VOIContour contour )
+	{
+		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
+		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
+		checkParentDir(parentDir);	
+		
+		String voiDir = outputDirectory + File.separator;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}
+		voiDir = outputDirectory + File.separator + subDir + File.separator;		
+		
+		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
+		imageName = imageName + postScript + ".csv";
+		
+		// check files, create new directories and delete any existing files:
+		final File fileDir = new File(voiDir);
+
+		if (fileDir.exists() && fileDir.isDirectory()) {} 
+		else if (fileDir.exists() && !fileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			fileDir.mkdir();
+		}
+		File file = new File(fileDir + File.separator + imageName);
+		if (file.exists()) {
+			file.delete();
+			file = new File(fileDir + File.separator + imageName);
+		}
+
+
+		if ( contour == null )
+			return;
+		if ( contour.size() == 0 )
+			return;
+
+		try {
+
+			final FileWriter fw = new FileWriter(file);
+			final BufferedWriter bw = new BufferedWriter(fw);
+			bw.write("Contour" + "\n");
+			bw.write("x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "\n");
+			for (int i = 0; i < contour.size(); i++) {
+				Vector3f position = contour.elementAt(i);
+				bw.write(position.X + "," + position.Y + "," + position.Z + "\n");
+
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
+			e.printStackTrace();
+		}
+	}
+
 
     public static void saveTriMesh( ModelImage image, String subDir, String postScript, TriMesh mesh ) {
 		
@@ -7645,53 +7743,61 @@ public class LatticeModel {
 		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
 		imageName = imageName + postScript;
 		
-
-		int maxVal = -1;
-		voiFileDir = new File(voiDir);
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
-			final String[] list = voiFileDir.list();
-			for (int i = 0; i < list.length; i++) {
-				int fileVal = -1;
-//				System.err.println(list[i] + "   " + imageName + "   " + list[i].contains(imageName) );
-				if ( list[i].contains(imageName) ) {
-					String sub = list[i].substring( list[i].indexOf(imageName) + imageName.length(), list[i].length() );
-					for ( int j = 0; j < sub.length(); j++ ) {
-						String test = new String( "" + sub.charAt(j) );
-						int val;
-						try {
-							val = Integer.valueOf(test);
-							if ( fileVal == -1 ) {
-								fileVal = val;
-							}
-							else
-							{
-								fileVal = fileVal * 10 + val;
-							}
-						} catch(NumberFormatException e) {
-						}
-					}
-//					System.err.println( "    " + fileVal );
-				}
-				if ( fileVal > maxVal )
-				{
-					maxVal = fileVal;
-				}
-			}
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			//			System.err.println( "saveImage " + voiDir);
-			voiFileDir.mkdir();
-		}
-
-		maxVal++;
-		imageName = imageName + "_" + maxVal + ".ply";
 		
+
+//		int maxVal = -1;
+//		voiFileDir = new File(voiDir);
+//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
+//			final String[] list = voiFileDir.list();
+//			for (int i = 0; i < list.length; i++) {
+//				int fileVal = -1;
+////				System.err.println(list[i] + "   " + imageName + "   " + list[i].contains(imageName) );
+//				if ( list[i].contains(imageName) ) {
+//					String sub = list[i].substring( list[i].indexOf(imageName) + imageName.length(), list[i].length() );
+//					for ( int j = 0; j < sub.length(); j++ ) {
+//						String test = new String( "" + sub.charAt(j) );
+//						int val;
+//						try {
+//							val = Integer.valueOf(test);
+//							if ( fileVal == -1 ) {
+//								fileVal = val;
+//							}
+//							else
+//							{
+//								fileVal = fileVal * 10 + val;
+//							}
+//						} catch(NumberFormatException e) {
+//						}
+//					}
+////					System.err.println( "    " + fileVal );
+//				}
+//				if ( fileVal > maxVal )
+//				{
+//					maxVal = fileVal;
+//				}
+//			}
+//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+//		} else { // voiFileDir does not exist
+//			//			System.err.println( "saveImage " + voiDir);
+//			voiFileDir.mkdir();
+//		}
+//
+//		maxVal++;
+//		imageName = imageName + "_" + maxVal + ".ply";
+		
+		imageName = imageName + ".ply";
+		File meshFile = new File(voiDir + imageName);
+		if (meshFile.exists() && !meshFile.isDirectory()) { 
+			meshFile.delete();
+		}
         try {
+        	System.err.println(voiDir + imageName );
             FileSurface_WM.save( voiDir + imageName, mesh, 0, mesh.VBuffer, false, null, null, null, null);
         } catch (IOException error) {
         	MipavUtil.displayError("Error while trying to save single mesh");
         }
     }
+
 
 
 	private void saveSpline(final ModelImage image, VOI data, Vector3f transformedOrigin, final String postFix) {
@@ -8870,5 +8976,4 @@ public class LatticeModel {
 			}
 		}
 	}
-
 }

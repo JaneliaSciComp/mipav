@@ -1065,6 +1065,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			previewImage.disposeLocal(false);
 			previewImage = null;
 		}
+		if ( annotationPanelUI != null )
+		{
+			annotationPanelUI.dispose();
+			annotationPanelUI = null;
+		}
 	}
 	
 	/**

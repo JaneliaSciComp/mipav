@@ -6993,25 +6993,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 	{
 		File file = new File(fileName);
 		if ( file.exists() )
-		{
-
-	        int[] extents = image.getExtents();
-	        int xDim = extents[0];
-	        int yDim = extents[1];
-	        int zDim = extents[2];
-
-	        float[] resols = image.getFileInfo()[0].getResolutions();
-	        float xBox = (xDim - 1) * resols[0];
-	        float yBox = (yDim - 1) * resols[1];
-	        float zBox = (zDim - 1) * resols[2];
-	        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-	        
-	        float[] startLocation = image.getFileInfo(0).getOrigin();
-	        int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(image);
-	        float[] direction = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
-	        float[] box = new float[]{0f,0f,0f};
-			
-			
+		{			
             short sID = (short)(image.getVOIs().getUniqueID());
 			//        	System.err.println( fileName );
 			FileReader fr;
@@ -7019,9 +7001,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 				fr = new FileReader(file);
 				BufferedReader br = new BufferedReader(fr);
 				String line = br.readLine();
+				line = line.toLowerCase();
+				boolean contourType = false;
+				if ( line.contains("contour") ) {
+					line = br.readLine();
+					contourType = true;
+				}
 				line = br.readLine();
 
-				VOI annotationVOI = new VOI( (short)sID, fileName, VOI.ANNOTATION, 0 );
+				VOI annotationVOI;
+				VOIContour contour = null;
+				if ( !contourType ) {
+					annotationVOI = new VOI( (short)sID, fileName, VOI.ANNOTATION, 0 );
+				}
+				else {
+					annotationVOI = new VOI( (short)sID, fileName, VOI.CONTOUR, 0 );
+					contour = new VOIContour(false);
+					annotationVOI.getCurves().add(contour);
+				}
 				int count = 1;
 				while ( line != null )
 				{
@@ -7065,13 +7062,22 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 						}
 						else if ( parsed.length == 3 )
 						{
-							z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
-							x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
-							y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
-							text.setText( "" );
-							text.add( new Vector3f( x, y, z ) );
-							text.add( new Vector3f( x+1, y, z ) );
-							annotationVOI.getCurves().add(text);
+							if ( contourType ) {
+								x    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+								y    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+								z    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0;
+								contour.add( new Vector3f(x,y,z) );
+							}
+							else {
+								// z, x, y order - Ruida's request
+								z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+								x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+								y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+								text.setText( "" );
+								text.add( new Vector3f( x, y, z ) );
+								text.add( new Vector3f( x+1, y, z ) );
+								annotationVOI.getCurves().add(text);
+							}
 						}
 						count++;
 					}
@@ -7080,8 +7086,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 				fr.close();
 				if ( count > 1 )
 				{
-					m_kParent.addSphereVOIs( annotationVOI );
-//					image.registerVOI(annotationVOI);
+					if ( !contourType )
+						m_kParent.addSphereVOIs( annotationVOI );
+					else 
+						image.registerVOI(annotationVOI);
 				}
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block

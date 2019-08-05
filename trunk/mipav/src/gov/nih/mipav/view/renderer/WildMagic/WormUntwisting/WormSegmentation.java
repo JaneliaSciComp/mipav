@@ -311,7 +311,7 @@ public class WormSegmentation
 			float value = image.getFloat(x, y, z);
 			if ( (value >= cutOffMin) && (value < cutOffMax) )
 			{
-				mask.set(x, y, z, value);
+				mask.set(x, y, z, 1);
 				count++;
 			}
 
@@ -330,6 +330,72 @@ public class WormSegmentation
 								{
 									seedList.add( new Vector3f(x1,y1,z1) );
 								}
+							}
+						}
+					}
+				}
+			}							
+		}
+		return count;
+	}
+
+
+	public static int fill(final BitSet surfaceMask, final Vector<Vector3f> seedList, BitSet visited, int dimX, int dimY, int dimZ) {
+
+		int count = 0;
+		int size = dimX*dimY*dimZ;
+		while (seedList.size() > 0) {
+			final Vector3f seed = seedList.lastElement();
+			seedList.remove(seedList.lastElement());
+
+			final int z = Math.round(seed.Z);
+			final int y = Math.round(seed.Y);
+			final int x = Math.round(seed.X);
+			int index = z*dimY*dimX + y*dimX + x;			
+			
+
+			if ( (count % 1000) == 0 )
+				System.err.println( seedList.size() + "   " + visited.cardinality() + "   (" + x + "  " + y + "  " + z + ")   " + size );
+			
+			if ( visited.get(index) )
+			{
+				continue;
+			}
+			visited.set(index);
+			count++;
+			
+			boolean surfaceTouched = false;
+			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
+			{
+				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
+				{
+					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
+					{
+						index = z1*dimY*dimX + y1*dimX + x1;
+						if ( surfaceMask.get(index) ) {
+							visited.set(index);
+							surfaceTouched = true;
+						}
+					}
+				}
+			}
+			
+			if ( surfaceTouched ) continue;
+
+			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
+			{
+				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
+				{
+					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
+					{
+						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
+							index = z1*dimY*dimX + y1*dimX + x1;
+							if ( surfaceMask.get(index) ) {
+								visited.set(index);
+							}
+							else if ( !visited.get(index) )
+							{
+								seedList.add( new Vector3f(x1,y1,z1) );
 							}
 						}
 					}
