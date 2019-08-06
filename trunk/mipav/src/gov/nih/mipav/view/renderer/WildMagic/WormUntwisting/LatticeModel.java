@@ -1507,6 +1507,21 @@ public class LatticeModel {
 		return center;
 	}
 
+	public Vector<Vector3f> getNormalVectors()
+	{
+		return normalVectors;
+	}
+
+	public Vector<Vector3f> getRightVectors()
+	{
+		return rightVectors;
+	}
+
+	public Vector<Vector3f> getUpVectors()
+	{
+		return upVectors;
+	}
+
 	/**
 	 * Returns the currently selected point, either on the lattice or from the
 	 * annotation list. 
@@ -7718,6 +7733,68 @@ public class LatticeModel {
 			for (int i = 0; i < contour.size(); i++) {
 				Vector3f position = contour.elementAt(i);
 				bw.write(position.X + "," + position.Y + "," + position.Z + "\n");
+
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
+			e.printStackTrace();
+		}
+	}
+
+
+	public static void saveBasisVectorsAsCSV( ModelImage image, String subDir, String postScript, VOIContour positions,
+			Vector<Vector3f> normals, Vector<Vector3f> rightVectors, Vector<Vector3f> upVectors )
+	{
+		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
+		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
+		checkParentDir(parentDir);	
+		
+		String voiDir = outputDirectory + File.separator;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}
+		voiDir = outputDirectory + File.separator + subDir + File.separator;		
+		
+		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
+		imageName = imageName + postScript + ".csv";
+		
+		// check files, create new directories and delete any existing files:
+		final File fileDir = new File(voiDir);
+
+		if (fileDir.exists() && fileDir.isDirectory()) {} 
+		else if (fileDir.exists() && !fileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			fileDir.mkdir();
+		}
+		File file = new File(fileDir + File.separator + imageName);
+		if (file.exists()) {
+			file.delete();
+			file = new File(fileDir + File.separator + imageName);
+		}
+
+
+		if ( positions == null || normals == null || rightVectors == null || upVectors == null )
+			return;
+		if ( positions.size() == 0 || normals.size() == 0 || rightVectors.size() == 0 || upVectors.size() == 0 )
+			return;
+
+		try {
+
+			final FileWriter fw = new FileWriter(file);
+			final BufferedWriter bw = new BufferedWriter(fw);
+			bw.write("x" + "," + "y" + "," + "z" + "," + "xN" + "," + "yN" + "," + "zN" + "," + "xR" + "," + "yR" + "," + "zR" + "," + "xU" + "," + "yU" + "," + "zU" + "\n");
+			for (int i = 0; i < positions.size(); i++) {
+				Vector3f position = positions.elementAt(i);
+				Vector3f normal = normals.elementAt(i);      normal.normalize();
+				Vector3f right  = rightVectors.elementAt(i); right.normalize();
+				Vector3f up     = upVectors.elementAt(i);    up.normalize();
+				bw.write(position.X + "," + position.Y + "," + position.Z + "," + normal.X + "," + normal.Y + "," + normal.Z + "," + right.X + "," + right.Y + "," + right.Z + "," + up.X + "," + up.Y + "," + up.Z + "\n");
 
 			}
 			bw.newLine();
