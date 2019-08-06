@@ -310,6 +310,9 @@ public class PlugInAlgorithmWormUntwisting
 						model.setPaddingFactor(paddingFactor);
 						model.setLattice(lattice);	
 						TriMesh mesh = model.generateTriMesh( true, 1);
+
+						LatticeModel.saveContourAsCSV( wormImage, "model", "_centerLine", model.getCenter() );
+						LatticeModel.saveContourAsCSV( wormImage, "model", "_centerKnotPoints", model.getCenterControlPoints() );
 						if ( mesh != null ) {
 							LatticeModel.saveTriMesh( wormImage, "model", "_mesh", mesh );
 							

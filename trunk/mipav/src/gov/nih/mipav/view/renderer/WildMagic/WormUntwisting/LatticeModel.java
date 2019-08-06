@@ -1502,6 +1502,11 @@ public class LatticeModel {
 		return centerPositions;
 	}
 
+	public VOIContour getCenterControlPoints()
+	{
+		return center;
+	}
+
 	/**
 	 * Returns the currently selected point, either on the lattice or from the
 	 * annotation list. 
