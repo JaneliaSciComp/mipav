@@ -31,6 +31,8 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
     private JTextField reportDirField;
 //    private JTextField emailField;
     private JTextField minExpectedSlicesField;
+    private JTextField minExpectedSlicesPWIField;
+    private JTextField maxWaitTimeField;
     
     private JCheckBox emailCheckbox;
     
@@ -51,6 +53,10 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
     private boolean doAutoStart = false;
     
     private int minExpectedSlices = 30;
+    
+    private int minExpectedSlicesPWI = 1600;
+    
+    private int maxWaitTime = 10;
     
     private StrokeSegmentationDicomReceiverPWI dicomReceiver;
     
@@ -202,6 +208,34 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
         gbc.gridx++;
         mainPanel.add(minExpectedSlicesField, gbc);
         
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        JLabel labelNumSlicesPWI = new JLabel("Minimum number of expected slices per PWI volume");
+        labelNumSlicesPWI.setForeground(Color.black);
+        labelNumSlicesPWI.setFont(MipavUtil.font12);
+        mainPanel.add(labelNumSlicesPWI, gbc);
+        
+        minExpectedSlicesPWIField = new JTextField(20);
+        minExpectedSlicesPWIField.setText("" + minExpectedSlicesPWI);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(minExpectedSlicesPWIField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        JLabel labelMaxWait = new JLabel("Maximum number of minutes to wait for PWI data before processing only ADC/DWI");
+        labelMaxWait.setForeground(Color.black);
+        labelMaxWait.setFont(MipavUtil.font12);
+        mainPanel.add(labelMaxWait, gbc);
+        
+        maxWaitTimeField = new JTextField(20);
+        maxWaitTimeField.setText("" + maxWaitTime);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(maxWaitTimeField, gbc);
+        
 //        
 //        JLabel labelEmail = new JLabel("Send email report to");
 //        labelEmail.setForeground(Color.black);
@@ -280,6 +314,8 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
         doEmailReport = emailCheckbox.isSelected();
 //        emailAddress = emailField.getText();
         minExpectedSlices = Integer.parseInt(minExpectedSlicesField.getText());
+        minExpectedSlicesPWI = Integer.parseInt(minExpectedSlicesPWIField.getText());
+        maxWaitTime = Integer.parseInt(maxWaitTimeField.getText());
         
         return true;
     }
@@ -288,7 +324,7 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
         try {
             log("Starting DICOM receiver: " + ae + " @ " + ipAddress + ":" + port);
             
-            dicomReceiver = new StrokeSegmentationDicomReceiverPWI(ipAddress, port, ae, outputDir, reportDir, minExpectedSlices, doEmailReport, logOutputArea);
+            dicomReceiver = new StrokeSegmentationDicomReceiverPWI(ipAddress, port, ae, outputDir, reportDir, minExpectedSlices, minExpectedSlicesPWI, maxWaitTime, doEmailReport, logOutputArea);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -427,6 +463,10 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
                 doAutoStart = Boolean.parseBoolean(prop.getProperty("listenerAutoStart", "" + doAutoStart));
                 
                 minExpectedSlices = Integer.parseInt(prop.getProperty("listenerMinExpectedSlices", "" + minExpectedSlices));
+                
+                minExpectedSlicesPWI = Integer.parseInt(prop.getProperty("listenerMinExpectedSlicesPWI", "" + minExpectedSlicesPWI));
+                
+                maxWaitTime = Integer.parseInt(prop.getProperty("listenerMaxWaitTime", "" + maxWaitTime));
                 
                 if (in != null) {
                     in.close();

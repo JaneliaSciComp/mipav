@@ -168,6 +168,9 @@ public class StrokeSegmentationDicomReceiverPWI {
     private String emailPort;
     
     private int minExpectedSlices;
+    
+    private int minExpectedSlicesPWI;
+    private int maxWaitTime;
 
     // TODO new storage format
     
@@ -177,7 +180,7 @@ public class StrokeSegmentationDicomReceiverPWI {
     
 //    private String storageFilePathFormat = "{0020000D}/{0020000E}/{00080008}/{00080018}.dcm";
     
-    public StrokeSegmentationDicomReceiverPWI(final String ip, final int port, final String curAE, final String outputDir, final String reportDir, final int numSlices, final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
+    public StrokeSegmentationDicomReceiverPWI(final String ip, final int port, final String curAE, final String outputDir, final String reportDir, final int numSlices, final int numSlicesPWI, final int maxWait,final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
         serverIP = ip;
         serverPort = port;
         serverAE = curAE;
@@ -187,6 +190,9 @@ public class StrokeSegmentationDicomReceiverPWI {
         logOutputArea = area;
         
         minExpectedSlices = numSlices;
+        
+        minExpectedSlicesPWI = numSlicesPWI;
+        maxWaitTime = maxWait;
         
         conn.setBindAddress(serverIP);
         conn.setPort(serverPort);
@@ -813,6 +819,11 @@ public class StrokeSegmentationDicomReceiverPWI {
 //                passDetails = " -- first 9 slices excluded";
                 reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
             } else if (passNum == 2) {
+//              passDetails = " -- first 15 slices excluded";
+//              reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
+//          } else if (passNum == 3) {
+              reportTxt += "<h3>" + "PWI Tmax > 6s" + "</h3>\n";
+            } else if (passNum == 3) {
 //                passDetails = " -- first 15 slices excluded";
 //                reportTxt += "<h3>" + "ADC image with core segmentation pass " + passNum + passDetails + "</h3>\n";
 //            } else if (passNum == 3) {
