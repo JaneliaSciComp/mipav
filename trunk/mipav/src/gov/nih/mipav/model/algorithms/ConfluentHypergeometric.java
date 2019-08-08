@@ -1920,6 +1920,12 @@ public class ConfluentHypergeometric {
             result[0] = 1.0;
             for (k = 1; k <= m; k++) {
                 r = r * (a + k - 1.0) / k / (b + k - 1.0) * x;
+                if (Double.isInfinite(r)) {
+                	System.err.println("Overflow error in firstKindRealArgument k = " + k + " produces r = " + r);
+                	Preferences.debug("Overflow error in firstKindRealArgument k = " + k + " produces r = " + r + "\n", Preferences.DEBUG_ALGORITHM);
+                	result[0] = Double.NaN;
+                	return;
+                }
                 result[0] = result[0] + r;
             }
         } // else if ((a == (int)a) && (a < 0.0))
@@ -1951,6 +1957,12 @@ public class ConfluentHypergeometric {
                 rg = 1.0;
                 for (j = 1; j <= 500; j++) {
                     rg = rg * (a + j - 1.0) / (j * (b + j - 1.0)) * x;
+                    if (Double.isInfinite(rg)) {
+                    	System.err.println("Overflow error in firstKindRealArgument j = " + j + " produces rg = " + rg);
+                    	Preferences.debug("Overflow error in firstKindRealArgument j = " + j + " produces rg = " + rg + "\n", Preferences.DEBUG_ALGORITHM);
+                    	result[0] = Double.NaN;
+                    	return;
+                    }
                     result[0] = result[0] + rg;
                     if (Math.abs(rg / result[0]) < 1.0E-15) {
                         break;
@@ -2117,8 +2129,22 @@ public class ConfluentHypergeometric {
             for (k = 1; k <= m; k++) {
                 realTemp = realCR * (a + k - 1.0) / k / (b + k - 1.0) * realZ - imagCR * (a + k - 1.0) / k
                         / (b + k - 1.0) * imagZ;
+                if (Double.isInfinite(realTemp)) {
+                	System.err.println("Overflow error in firstKindComplexArgument k = " + k + " produces realTemp = " + realTemp);
+                	Preferences.debug("Overflow error in firstKindComplexArgument k = " + k + " produces realTemp = " + realTemp + "\n", Preferences.DEBUG_ALGORITHM);
+                	realResult[0] = Double.NaN;
+                	imagResult[0] = Double.NaN;
+                	return;
+                }
                 imagCR = realCR * (a + k - 1.0) / k / (b + k - 1.0) * imagZ + imagCR * (a + k - 1.0) / k
                         / (b + k - 1.0) * realZ;
+                if (Double.isInfinite(imagCR)) {
+                	System.err.println("Overflow error in firstKindComplexArgument k = " + k + " produces imagCR = " + imagCR);
+                	Preferences.debug("Overflow error in firstKindComplexArgument k = " + k + " produces imagCR = " + imagCR + "\n", Preferences.DEBUG_ALGORITHM);
+                	realResult[0] = Double.NaN;
+                	imagResult[0] = Double.NaN;
+                	return;
+                }
                 realCR = realTemp;
                 realResult[0] = realResult[0] + realCR;
                 imagResult[0] = imagResult[0] + imagCR;
@@ -2156,8 +2182,22 @@ public class ConfluentHypergeometric {
                     for (j = 1; j <= 500; j++) {
                         realTemp = realCRG * (a + j - 1.0) / (j * (b + j - 1.0)) * realZ - imagCRG * (a + j - 1.0)
                                 / (j * (b + j - 1.0)) * imagZ;
+                        if (Double.isInfinite(realTemp)) {
+                        	System.err.println("Overflow error in firstKindComplexArgument j = " + j + " produces realTemp = " + realTemp);
+                        	Preferences.debug("Overflow error in firstKindRealArgument j = " + j + " produces realTemp = " + realTemp + "\n", Preferences.DEBUG_ALGORITHM);
+                        	realResult[0] = Double.NaN;
+                        	imagResult[0] = Double.NaN;
+                        	return;
+                        }
                         imagCRG = realCRG * (a + j - 1.0) / (j * (b + j - 1.0)) * imagZ + imagCRG * (a + j - 1.0)
                                 / (j * (b + j - 1.0)) * realZ;
+                        if (Double.isInfinite(imagCRG)) {
+                        	System.err.println("Overflow error in firstKindComplexArgument j = " + j + " produces imagCRG = " + imagCRG);
+                        	Preferences.debug("Overflow error in firstKindRealArgument j = " + j + " produces imagCRG = " + imagCRG + "\n", Preferences.DEBUG_ALGORITHM);
+                        	realResult[0] = Double.NaN;
+                        	imagResult[0] = Double.NaN;
+                        	return;
+                        }
                         realCRG = realTemp;
                         realResult[0] = realResult[0] + realCRG;
                         imagResult[0] = imagResult[0] + imagCRG;
@@ -2420,7 +2460,7 @@ public class ConfluentHypergeometric {
         		-8.631035,1.0,1.152005E1,1.600000E1,1.481663E1,1.100000E1,7.023116,4.000000,2.078272,1.000000,4.504573E-1,1.915145E-1,
         		3.532813E2,2.026437E1,-6.843750E1,-4.332382E1,-8.125000,8.385255,1.075000E1,7.826238,4.500000,2.236068,1.0,4.117876E-1,
         		1.584297E-1,5.752803E-2,1.986208E-2,6.557534E-3,2.079596E-3,6.358052E-4,1.879694E-4,5.387320E-5,1.500116E-5,3.800000E2,
-        		1.038567E2,-3.100000E1,-4.069455E1,-1.600000E1,1.487916,7.000000,6.273062,4.000000,2.126732,1.0,4.285295E-1,1.704222E-1,
+        		1.038567E2,-3.100000E1,-4.069455E1,-1.600000E1,1.48791626,7.000000,6.273062,4.000000,2.126732,1.0,4.285295E-1,1.704222E-1,
         		6.366319E-2,2.253306E-2,7.605683E-3,2.460571E-3,7.660747E-4,2.302951E-4,6.703172E-5,1.893560E-5,3.079687E2,1.579922E2,
         		9.062500,-3.060618E1,-1.937500E1,-3.633610,3.750000,4.807546,3.500000,2.012461,1.0,4.472136E-1,1.841570E-1,7.085192E-2,
         		2.572732E-2,8.882593E-3,2.932618E-3,9.300237E-4,2.843407E-4,8.406245E-5,2.409283E-5,1.550000E2,1.751986E2,4.500000E1,
