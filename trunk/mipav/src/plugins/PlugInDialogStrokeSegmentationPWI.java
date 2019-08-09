@@ -2,7 +2,6 @@ import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
@@ -290,6 +289,10 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
                     dwiImage.disposeLocal();
                     dwiImage = null;
                 }
+                if (pwiImage != null) {
+                    pwiImage.disposeLocal();
+                    pwiImage = null;
+                }
             }
 
             if (!isDicomListenerRun && isExitRequired()) {
@@ -434,6 +437,10 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             if (adcImage != null) {
                 adcImage.disposeLocal();
                 adcImage = null;
+            }
+            if (pwiImage != null) {
+                pwiImage.disposeLocal();
+                pwiImage = null;
             }
 
             MipavUtil.displayError("Stroke segmentation: unable to allocate enough memory");
