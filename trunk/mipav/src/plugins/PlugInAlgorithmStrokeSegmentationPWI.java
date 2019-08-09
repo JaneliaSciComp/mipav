@@ -368,6 +368,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 }
             }
             
+            pwiSegImg.disposeLocal();
+            
             try {
                 segImg.importData(0, coreSegBuffer, true);
             } catch (IOException error) {
@@ -499,6 +501,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     public void finalize() {
         dwiImage = null;
         adcImage = null;
+        pwiImage = null;
         super.finalize();
     }
     
@@ -1693,7 +1696,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         long regStartTime = System.currentTimeMillis();
         
         // register PWI seg to ADC since it is lower res
-        TmaxRegImage = registerImg(getFirstVolume(pwiImg), adcImage, TmaxUnregImage);
+        ModelImage firstPwiVol = getFirstVolume(pwiImg);
+        TmaxRegImage = registerImg(firstPwiVol, adcImage, TmaxUnregImage);
+        firstPwiVol.disposeLocal();
         
         System.err.println("PWI seg registration time elapsed: " + (System.currentTimeMillis() - regStartTime) / 1000.0f);
         
