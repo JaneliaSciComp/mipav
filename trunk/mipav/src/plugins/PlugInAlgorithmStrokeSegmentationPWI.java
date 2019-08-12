@@ -1678,11 +1678,12 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         double Psvd = 0.1;
         boolean autoAIFCalculation = true;
         boolean multiThreading = true;
+        boolean calculateCBFCBVMTT = true;
         
         int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
         
         PlugInAlgorithmTSPAnalysis tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, calculateMaskingThreshold, masking_threshold,
-                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, false);
+                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateCBFCBVMTT, false);
         
         tspAlgo.setOutputFilePath(coreOutputDir);
         tspAlgo.setOutputPrefix(new File(coreOutputDir).getName() + "_" + outputLabel + "_PWI_");

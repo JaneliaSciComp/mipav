@@ -139,7 +139,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean calculateMaskingThreshold, int masking_threshold,
             double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
-            boolean multiThreading, int search, boolean calculateBounds) {
+            boolean multiThreading, int search, boolean calculateCBFCBVMTT, boolean calculateBounds) {
         //super(resultImage, srcImg);
         this.pwiImageFileDirectory = pwiImage.getImageDirectory();
         this.pwiImage = pwiImage;
@@ -152,6 +152,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         this.autoAIFCalculation = autoAIFCalculation;
         this.multiThreading = multiThreading;
         this.search = search;
+        this.calculateCBFCBVMTT = calculateCBFCBVMTT;
         this.calculateBounds = calculateBounds;
         //this.fileNameBase = fileNameBase;
     }
