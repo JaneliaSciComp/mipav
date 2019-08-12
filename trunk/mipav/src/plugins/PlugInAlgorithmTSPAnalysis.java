@@ -93,6 +93,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	
 	private int search = ELSUNC_2D_SEARCH;
 	
+	private boolean calculateCBFCBVMTT = true;
+	
 	private boolean calculateBounds = false;
 	
 	private String fileNameBase = "IM";
@@ -117,7 +119,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      */
     public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
-    		boolean multiThreading, int search, boolean calculateBounds, String fileNameBase) {
+    		boolean multiThreading, int search, 
+    		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	outputFilePath = pwiImageFileDirectory;
@@ -129,6 +132,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.autoAIFCalculation = autoAIFCalculation;
     	this.multiThreading = multiThreading;
     	this.search = search;
+    	this.calculateCBFCBVMTT = calculateCBFCBVMTT;
     	this.calculateBounds = calculateBounds;
     	this.fileNameBase = fileNameBase;
     }
@@ -163,9 +167,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         short data[][][][];
     	double TE;
     	short Tmax[][][];
-    	double CBV[][][];
-    	double CBF[][][];
-    	double MTT[][][];
+    	double CBV[][][] = null;
+    	double CBF[][][] = null;
+    	double MTT[][][] = null;
     	//double chiSquared[][][];
     	int zDim;
     	int length;
@@ -1171,11 +1175,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         D_inv = D_invMat.getArray();
         
         // Iterate over brain volume to find rCBF
-        fireProgressStateChanged("Iterate over brain volume to find CBF");
+        fireProgressStateChanged("Iterate over brain volume to find Tmax");
         fireProgressStateChanged(80);
-        CBV = new double[zDim][yDim][xDim];
-        CBF = new double[zDim][yDim][xDim];
-        MTT = new double[zDim][yDim][xDim];
+        if (calculateCBFCBVMTT) {
+            CBV = new double[zDim][yDim][xDim];
+            CBF = new double[zDim][yDim][xDim];
+            MTT = new double[zDim][yDim][xDim];
+        }
         Tmax = new short[zDim][yDim][xDim];
         //relCBF = new double[xDim][yDim][zDim];
         TTP = new double[zDim][yDim][xDim];
@@ -1203,15 +1209,27 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         if (multiThreading) {
         	ExecutorService executorService = Executors.newCachedThreadPool();	
             for (z = 0; z < zDim; z++) {
-            	fireProgressStateChanged("Iterating to find CBF launching thread " + (z+1) + " of " + zDim);
+            	fireProgressStateChanged("Iterating to find Tmax launching thread " + (z+1) + " of " + zDim);
                 fireProgressStateChanged(80 + (14 * z)/(zDim-1));
             	if (calculateBounds) {
-            	    executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
+            		if (calculateCBFCBVMTT) {
+            	        executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
             			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],p0MaxDistFromValue[z], p1MaxDistFromValue[z],t975[0]/*,chiSquared[z]*/));	
+            		}
+            		else {
+            			executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
+                    			data[z],null,null,null,Tmax[z],p0MaxDistFromValue[z], p1MaxDistFromValue[z],t975[0]/*,chiSquared[z]*/));		
+            		}
             	}
             	else {
-            		executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
-                			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],null, null,t975[0]/*,chiSquared[z]*/));   	
+            		if (calculateCBFCBVMTT) {
+            		    executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
+                			data[z],CBV[z],CBF[z],MTT[z],Tmax[z],null, null,t975[0]/*,chiSquared[z]*/));
+            		}
+            		else {
+            			executorService.execute(new endCalc(search, xDim,yDim,tDim,delT,TE,masking_threshold,
+                    			data[z],null,null,null,Tmax[z],null, null,t975[0]/*,chiSquared[z]*/));	
+            		}
             	}
             }
             
@@ -1245,7 +1263,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    }
 		    // Iterate
 		    for (z = 0; z < zDim; z++) {
-		    	fireProgressStateChanged("Iterating to find CBF doing slice " + (z+1) + " of " + zDim);
+		    	fireProgressStateChanged("Iterating to find Tmax doing slice " + (z+1) + " of " + zDim);
                 fireProgressStateChanged(80 + (14 * z)/(zDim-1));
 		    	for (y = 0; y < yDim; y++) {
 		    		for (x = 0; x < xDim; x++) {
@@ -1285,186 +1303,194 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	    		Tmax[z][y][x] = (short)(i+1);
 		    		    	    	}
 		    		    	    }
-		    		    	    // Shift b to have a peak at origin for fitting
-		    		    	    b = circshift(b,-Tmax[z][y][x]);
-		    		    	    if (search == ELSUNC_2D_SEARCH) {
-		    		    	    	minsearch2D = new expfun2D(x0, b, xdata);
-			    		    	    minsearch2D.driver();
-			    		    	    exitStatus = minsearch2D.getExitStatus();
-			    		    	    p = minsearch2D.getParameters();
-			    		    	    if ((exitStatus >= 0)  && (p[1] > 0) && (p[1] < 75)) {
-			    		    	    	// Normal termination
-			    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-			    					    CBF[z][y][x] = p[0];
-			    					    // relCBF is max value of residual function.  Should be similar to CBF,
-			    					    // but may be different.
-			    					    //relCBF[x][y][z] = rcbf;
-			    					    MTT[z][y][x] = p[1];
-			    					    CBV[z][y][x] = rcbf * p[1];
-			    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
-			    					    if (calculateBounds) {
-				    					    nPts = xdata.length;
-				    					    errorSumOfSquares = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	expval = Math.exp(-1.0/p[1]*xdata[i]); 
-				    						    covarMat[i][0] = expval;
-				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
-				    						    diff = (p[0]*expval) - b[i];
-				    						    errorSumOfSquares += (diff * diff);
-				    						}
-				    					    s2 = errorSumOfSquares/(nPts - 2);
-				    					    arr2D[0][0] = 0.0;
-				    					    arr2D[0][1] = 0.0;
-				    					    arr2D[1][0] = 0.0;
-				    					    arr2D[1][1] = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-				    					    }
-				    					    arr2D[1][0] = arr2D[0][1];
-				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-				    					    if (det != 0.0) {
-					    					    invDiag2D[0] = arr2D[1][1]/det;
-					    					    invDiag2D[1] = arr2D[0][0]/det;
-					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
+		    		    	    if (calculateCBFCBVMTT || calculateBounds) {
+			    		    	    // Shift b to have a peak at origin for fitting
+			    		    	    b = circshift(b,-Tmax[z][y][x]);
+			    		    	    if (search == ELSUNC_2D_SEARCH) {
+			    		    	    	minsearch2D = new expfun2D(x0, b, xdata);
+				    		    	    minsearch2D.driver();
+				    		    	    exitStatus = minsearch2D.getExitStatus();
+				    		    	    p = minsearch2D.getParameters();
+				    		    	    if ((exitStatus >= 0)  && (p[1] > 0) && (p[1] < 75)) {
+				    		    	    	// Normal termination
+				    		    	    	if (calculateCBFCBVMTT) {
+					    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+					    					    CBF[z][y][x] = p[0];
+					    					    // relCBF is max value of residual function.  Should be similar to CBF,
+					    					    // but may be different.
+					    					    //relCBF[x][y][z] = rcbf;
+					    					    MTT[z][y][x] = p[1];
+					    					    CBV[z][y][x] = rcbf * p[1];
+				    		    	    	}
+				    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
+				    					    if (calculateBounds) {
+					    					    nPts = xdata.length;
+					    					    errorSumOfSquares = 0.0;
+					    					    for (i = 0; i < nPts; i++) {
+					    					    	expval = Math.exp(-1.0/p[1]*xdata[i]); 
+					    						    covarMat[i][0] = expval;
+					    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+					    						    diff = (p[0]*expval) - b[i];
+					    						    errorSumOfSquares += (diff * diff);
+					    						}
+					    					    s2 = errorSumOfSquares/(nPts - 2);
+					    					    arr2D[0][0] = 0.0;
+					    					    arr2D[0][1] = 0.0;
+					    					    arr2D[1][0] = 0.0;
+					    					    arr2D[1][1] = 0.0;
+					    					    for (i = 0; i < nPts; i++) {
+					    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+					    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+					    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
 					    					    }
-					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
+					    					    arr2D[1][0] = arr2D[0][1];
+					    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+					    					    if (det != 0.0) {
+						    					    invDiag2D[0] = arr2D[1][1]/det;
+						    					    invDiag2D[1] = arr2D[0][0]/det;
+						    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+						    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+						    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+						    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
+						    					    }
+						    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+						    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
+						    					    }
+					    					    } // if (det != 0.0)
+				    					    } // if (calculateBounds)
+				    		    	    }	
+			    		    	    } // if (search == ELSUNC_2D_SEARCH)
+			    		    	    else if (search == NMSIMPLEX_2D_SEARCH) {
+			    		    	    	minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
+				    		    	    minsearchNM.driver();
+				    		    	    if ((x0[1] > 0) && (x0[1] < 75)) {
+				    		    	    	// Normal termination
+				    		    	    	if (calculateCBFCBVMTT) {
+					    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+					    					    CBF[z][y][x] = x0[0];
+					    					    // relCBF is max value of residual function.  Should be similar to CBF,
+					    					    // but may be different.
+					    					    //relCBF[x][y][z] = rcbf;
+					    					    MTT[z][y][x] = x0[1];
+					    					    CBV[z][y][x] = rcbf * x0[1];
+				    		    	    	}
+				    					    if (calculateBounds) {
+					    					    nPts = xdata.length;
+					    					    errorSumOfSquares = 0.0;
+					    					    for (i = 0; i < nPts; i++) {
+					    					    	expval = Math.exp(-1.0/x0[1]*xdata[i]);
+					    						    covarMat[i][0] = expval;
+					    						    covarMat[i][1] = xdata[i]/(x0[1]*x0[1])*x0[0]*expval;
+					    						    diff = (x0[0]*expval) - b[i];
+					    						    errorSumOfSquares += (diff * diff);
+					    						}
+					    					    s2 = errorSumOfSquares/(nPts - 2);
+					    					    arr2D[0][0] = 0.0;
+					    					    arr2D[0][1] = 0.0;
+					    					    arr2D[1][0] = 0.0;
+					    					    arr2D[1][1] = 0.0;
+					    					    for (i = 0; i < nPts; i++) {
+					    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+					    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+					    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
 					    					    }
-				    					    } // if (det != 0.0)
-			    					    } // if (calculateBounds)
-			    		    	    }	
-		    		    	    } // if (search == ELSUNC_2D_SEARCH)
-		    		    	    else if (search == NMSIMPLEX_2D_SEARCH) {
-		    		    	    	minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
-			    		    	    minsearchNM.driver();
-			    		    	    if ((x0[1] > 0) && (x0[1] < 75)) {
-			    		    	    	// Normal termination
-			    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-			    					    CBF[z][y][x] = x0[0];
-			    					    // relCBF is max value of residual function.  Should be similar to CBF,
-			    					    // but may be different.
-			    					    //relCBF[x][y][z] = rcbf;
-			    					    MTT[z][y][x] = x0[1];
-			    					    CBV[z][y][x] = rcbf * x0[1];
-			    					    if (calculateBounds) {
-				    					    nPts = xdata.length;
-				    					    errorSumOfSquares = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	expval = Math.exp(-1.0/x0[1]*xdata[i]);
-				    						    covarMat[i][0] = expval;
-				    						    covarMat[i][1] = xdata[i]/(x0[1]*x0[1])*x0[0]*expval;
-				    						    diff = (x0[0]*expval) - b[i];
-				    						    errorSumOfSquares += (diff * diff);
-				    						}
-				    					    s2 = errorSumOfSquares/(nPts - 2);
-				    					    arr2D[0][0] = 0.0;
-				    					    arr2D[0][1] = 0.0;
-				    					    arr2D[1][0] = 0.0;
-				    					    arr2D[1][1] = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-				    					    }
-				    					    arr2D[1][0] = arr2D[0][1];
-				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-				    					    if (det != 0.0) {
-					    					    invDiag2D[0] = arr2D[1][1]/det;
-					    					    invDiag2D[1] = arr2D[0][0]/det;
-					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
+					    					    arr2D[1][0] = arr2D[0][1];
+					    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+					    					    if (det != 0.0) {
+						    					    invDiag2D[0] = arr2D[1][1]/det;
+						    					    invDiag2D[1] = arr2D[0][0]/det;
+						    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+						    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+						    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+						    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
+						    					    }
+						    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+						    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
+						    					    }
+					    					    } // if (det != 0.0)
+				    					    } // if (calculateBounds)
+				    		    	    }
+			    		    	    } // else if (search == NMSIMPLEX_2D_SEARCH)
+			    		    	    else if (search == NELDERMEAD_2D_SEARCH) {
+			    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+			    		    	    	minsearchNM2.driver();
+			    		    	    	p = minsearchNM2.getSolX();
+			    		    	    	if ((p[1] > 0) && (p[1] < 75)) {
+				    		    	    	// Normal termination
+			    		    	    		if (calculateCBFCBVMTT) {
+					    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+					    					    CBF[z][y][x] = p[0];
+					    					    // relCBF is max value of residual function.  Should be similar to CBF,
+					    					    // but may be different.
+					    					    //relCBF[x][y][z] = rcbf;
+					    					    MTT[z][y][x] = p[1];
+					    					    CBV[z][y][x] = rcbf * p[1];
+			    		    	    		}
+				    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
+				    					    if (calculateBounds) {
+					    					    nPts = xdata.length;
+					    					    errorSumOfSquares = 0.0;
+					    					    for (i = 0; i < nPts; i++) {
+					    					    	expval = Math.exp(-1.0/p[1]*xdata[i]);
+					    						    covarMat[i][0] = expval;
+					    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+					    						    diff = (p[0]*expval) - b[i];
+					    						    errorSumOfSquares += (diff * diff);
+					    						}
+					    					    s2 = errorSumOfSquares/(nPts - 2);
+					    					    arr2D[0][0] = 0.0;
+					    					    arr2D[0][1] = 0.0;
+					    					    arr2D[1][0] = 0.0;
+					    					    arr2D[1][1] = 0.0;
+					    					    for (i = 0; i < nPts; i++) {
+					    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+					    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+					    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
 					    					    }
-					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
-					    					    }
-				    					    } // if (det != 0.0)
-			    					    } // if (calculateBounds)
-			    		    	    }
-		    		    	    } // else if (search == NMSIMPLEX_2D_SEARCH)
-		    		    	    else if (search == NELDERMEAD_2D_SEARCH) {
-		    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
-		    		    	    	minsearchNM2.driver();
-		    		    	    	p = minsearchNM2.getSolX();
-		    		    	    	if ((p[1] > 0) && (p[1] < 75)) {
-			    		    	    	// Normal termination
-			    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-			    					    CBF[z][y][x] = p[0];
-			    					    // relCBF is max value of residual function.  Should be similar to CBF,
-			    					    // but may be different.
-			    					    //relCBF[x][y][z] = rcbf;
-			    					    MTT[z][y][x] = p[1];
-			    					    CBV[z][y][x] = rcbf * p[1];
-			    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
-			    					    if (calculateBounds) {
-				    					    nPts = xdata.length;
-				    					    errorSumOfSquares = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	expval = Math.exp(-1.0/p[1]*xdata[i]);
-				    						    covarMat[i][0] = expval;
-				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
-				    						    diff = (p[0]*expval) - b[i];
-				    						    errorSumOfSquares += (diff * diff);
-				    						}
-				    					    s2 = errorSumOfSquares/(nPts - 2);
-				    					    arr2D[0][0] = 0.0;
-				    					    arr2D[0][1] = 0.0;
-				    					    arr2D[1][0] = 0.0;
-				    					    arr2D[1][1] = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-				    					    }
-				    					    arr2D[1][0] = arr2D[0][1];
-				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-				    					    if (det != 0.0) {
-					    					    invDiag2D[0] = arr2D[1][1]/det;
-					    					    invDiag2D[1] = arr2D[0][0]/det;
-					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
-					    					    }
-					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
-					    					    }
-				    					    } // if (det != 0.0)
-			    					    } // if (calculateBounds)
-			    		    	    }	
-		    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
-		    		    	    else { // 1D search
-			    		    	    minsearch1D = new expfun1D(x0, b, xdata);
-			    		    	    minsearch1D.driver();
-			    		    	    exitStatus = minsearch1D.getExitStatus();
-			    		    	    p[1] = minsearch1D.getParameters()[0];
-			    		    	    if ((exitStatus >= 0)  && (p[1] > 0) && (p[1] < 75)) {
-			    		    	    	// Normal termination
-			    		    	    	num1 = 0.0;
-		        		    	    	denom1 = 0.0;
-		        		    	    	for (i = 0; i < 2*tDim; i++) {
-		                		    	    num = Math.exp(-xdata[i]/p[1]);
-		            						denom = num * num;
-		                                    num1 += b[i]*num;
-		                                    denom1 += denom;
-		        		    	    	}
-		        		    	    	p[0] = num1/denom1;
-			    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-			    					    CBF[z][y][x] = p[0];
-			    					    // relCBF is max value of residual function.  Should be similar to CBF,
-			    					    // but may be different.
-			    					    //relCBF[x][y][z] = rcbf;
-			    					    MTT[z][y][x] = p[1];
-			    					    CBV[z][y][x] = rcbf * p[1];
-			    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
-			    		    	    }
-		    		    	    } // else 1D search
+					    					    arr2D[1][0] = arr2D[0][1];
+					    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+					    					    if (det != 0.0) {
+						    					    invDiag2D[0] = arr2D[1][1]/det;
+						    					    invDiag2D[1] = arr2D[0][0]/det;
+						    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+						    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+						    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+						    					        p0MaxDistFromValue[z][y][x] = t975[0] * se0;
+						    					    }
+						    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+						    					        p1MaxDistFromValue[z][y][x] = t975[0] * se1;
+						    					    }
+					    					    } // if (det != 0.0)
+				    					    } // if (calculateBounds)
+				    		    	    }	
+			    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
+			    		    	    else if (calculateCBFCBVMTT) { // 1D search
+				    		    	    minsearch1D = new expfun1D(x0, b, xdata);
+				    		    	    minsearch1D.driver();
+				    		    	    exitStatus = minsearch1D.getExitStatus();
+				    		    	    p[1] = minsearch1D.getParameters()[0];
+				    		    	    if ((exitStatus >= 0)  && (p[1] > 0) && (p[1] < 75)) {
+				    		    	    	// Normal termination
+				    		    	    	num1 = 0.0;
+			        		    	    	denom1 = 0.0;
+			        		    	    	for (i = 0; i < 2*tDim; i++) {
+			                		    	    num = Math.exp(-xdata[i]/p[1]);
+			            						denom = num * num;
+			                                    num1 += b[i]*num;
+			                                    denom1 += denom;
+			        		    	    	}
+			        		    	    	p[0] = num1/denom1;
+				    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+				    					    CBF[z][y][x] = p[0];
+				    					    // relCBF is max value of residual function.  Should be similar to CBF,
+				    					    // but may be different.
+				    					    //relCBF[x][y][z] = rcbf;
+				    					    MTT[z][y][x] = p[1];
+				    					    CBV[z][y][x] = rcbf * p[1];
+				    					    //chiSquared[z][y][z] = minsearch.getChiSquared();
+				    		    	    }
+			    		    	    } // else 1D search
+		    		    	    } // if (calculateCBFCBVMTT || calculateBounds)
 		    		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
 		    		    } // if ((data[z][y][x][0] >= masking_threshold)
 		    		} // for (x = 0; x < xDim; x++)
@@ -1475,155 +1501,157 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         // Write maps to images
         fireProgressStateChanged("Writing final set of images");
         fireProgressStateChanged(95);
-        CBFImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBF");
-    	for (x = 0; x < xDim; x++) {
-    		for (y = 0; y < yDim; y++) {
-    			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = CBF[z][y][x];
-    			}
-    		}
-    	}
-    	try {
-    		CBFImage.importData(0, dbuffer, true);
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("IOException on CBFImage");
-    		setCompleted(false);
-    		return;
-    	}
-    	fileInfo = CBFImage.getFileInfo();
-    	for (i = 0; i < zDim; i++) {
-    		fileInfo[i].setResolutions(resolutions3D);
-    		fileInfo[i].setUnitsOfMeasure(units3D);
-    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
-    	}
-        options.setFileName(outputPrefix + "CBF.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(CBFImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing CBF.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing CBF.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
-    	CBFImage.disposeLocal();
-    	CBFImage = null;
-    	
-    	MTTImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "MTT");
-    	for (x = 0; x < xDim; x++) {
-    		for (y = 0; y < yDim; y++) {
-    			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = MTT[z][y][x];
-    			}
-    		}
-    	}
-    	try {
-    		MTTImage.importData(0, dbuffer, true);
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("IOException on MTTImage");
-    		setCompleted(false);
-    		return;
-    	}
-    	fileInfo = MTTImage.getFileInfo();
-    	for (i = 0; i < zDim; i++) {
-    		fileInfo[i].setResolutions(resolutions3D);
-    		fileInfo[i].setUnitsOfMeasure(units3D);
-    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
-    	}
-        options.setFileName(outputPrefix + "MTT.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(MTTImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing MTT.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing MTT.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
-//    	MTTImage.disposeLocal();
-//    	MTTImage = null;
-    	
-    	CBVImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBV");
-    	for (x = 0; x < xDim; x++) {
-    		for (y = 0; y < yDim; y++) {
-    			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = MTT[z][y][x];
-    			}
-    		}
-    	}
-    	try {
-    		CBVImage.importData(0, dbuffer, true);
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("IOException on CBVImage");
-    		setCompleted(false);
-    		return;
-    	}
-    	fileInfo = CBVImage.getFileInfo();
-    	for (i = 0; i < zDim; i++) {
-    		fileInfo[i].setResolutions(resolutions3D);
-    		fileInfo[i].setUnitsOfMeasure(units3D);
-    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
-    	}
-        options.setFileName(outputPrefix + "CBV.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(CBVImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing CBV.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing CBV.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
-    	CBVImage.disposeLocal();
-    	CBVImage = null;
+        if (calculateCBFCBVMTT) {
+	        CBFImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBF");
+	    	for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < yDim; y++) {
+	    			for (z = 0; z < zDim; z++) {
+	    				dbuffer[x + y*xDim + z*length] = CBF[z][y][x];
+	    			}
+	    		}
+	    	}
+	    	try {
+	    		CBFImage.importData(0, dbuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on CBFImage");
+	    		setCompleted(false);
+	    		return;
+	    	}
+	    	fileInfo = CBFImage.getFileInfo();
+	    	for (i = 0; i < zDim; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	        options.setFileName(outputPrefix + "CBF.img");
+	       
+	        try { // Construct a new file object
+	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+	            boolean zerofunused = false;
+	            analyzeFile.setZerofunused(zerofunused);
+	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+	            analyzeFile.writeImage(CBFImage, options);
+	            analyzeFile.finalize();
+	            analyzeFile = null;
+	        } catch (final IOException error) {
+	
+	            MipavUtil.displayError("IOException on writing CBF.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        } catch (final OutOfMemoryError error) {
+	
+	            MipavUtil.displayError("Out of memory error on writing CBF.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        }
+	    	CBFImage.disposeLocal();
+	    	CBFImage = null;
+	    	
+	    	MTTImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "MTT");
+	    	for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < yDim; y++) {
+	    			for (z = 0; z < zDim; z++) {
+	    				dbuffer[x + y*xDim + z*length] = MTT[z][y][x];
+	    			}
+	    		}
+	    	}
+	    	try {
+	    		MTTImage.importData(0, dbuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on MTTImage");
+	    		setCompleted(false);
+	    		return;
+	    	}
+	    	fileInfo = MTTImage.getFileInfo();
+	    	for (i = 0; i < zDim; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	        options.setFileName(outputPrefix + "MTT.img");
+	       
+	        try { // Construct a new file object
+	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+	            boolean zerofunused = false;
+	            analyzeFile.setZerofunused(zerofunused);
+	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+	            analyzeFile.writeImage(MTTImage, options);
+	            analyzeFile.finalize();
+	            analyzeFile = null;
+	        } catch (final IOException error) {
+	
+	            MipavUtil.displayError("IOException on writing MTT.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        } catch (final OutOfMemoryError error) {
+	
+	            MipavUtil.displayError("Out of memory error on writing MTT.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        }
+	//    	MTTImage.disposeLocal();
+	//    	MTTImage = null;
+	    	
+	    	CBVImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBV");
+	    	for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < yDim; y++) {
+	    			for (z = 0; z < zDim; z++) {
+	    				dbuffer[x + y*xDim + z*length] = MTT[z][y][x];
+	    			}
+	    		}
+	    	}
+	    	try {
+	    		CBVImage.importData(0, dbuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on CBVImage");
+	    		setCompleted(false);
+	    		return;
+	    	}
+	    	fileInfo = CBVImage.getFileInfo();
+	    	for (i = 0; i < zDim; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	        options.setFileName(outputPrefix + "CBV.img");
+	       
+	        try { // Construct a new file object
+	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+	            boolean zerofunused = false;
+	            analyzeFile.setZerofunused(zerofunused);
+	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+	            analyzeFile.writeImage(CBVImage, options);
+	            analyzeFile.finalize();
+	            analyzeFile = null;
+	        } catch (final IOException error) {
+	
+	            MipavUtil.displayError("IOException on writing CBV.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        } catch (final OutOfMemoryError error) {
+	
+	            MipavUtil.displayError("Out of memory error on writing CBV.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        }
+	    	CBVImage.disposeLocal();
+	    	CBVImage = null;
+        } // if (calculateCBFCBVMTT)
     	
     	TmaxImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "Tmax");
     	//buffer = new short[volume]; done for peaks_mapImage
@@ -2041,10 +2069,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.TE = TE;
         	this.masking_threshold = masking_threshold;
         	this.data = data;
-        	this.CBV = CBV;
-        	this.CBF = CBF;
-        	this.MTT = MTT;
         	this.Tmax = Tmax;
+        	if (calculateCBFCBVMTT) {
+	        	this.CBV = CBV;
+	        	this.CBF = CBF;
+	        	this.MTT = MTT;
+        	}
         	if (calculateBounds) {
         	    this.p0MaxDistFromValue = p0MaxDistFromValue;
         	    this.p1MaxDistFromValue = p1MaxDistFromValue;
@@ -2145,186 +2175,194 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		    	    		Tmax[y][x] = (short)(i+1);
         		    	    	}
         		    	    }
+        		    	    if (calculateCBFCBVMTT || calculateBounds) {
         		    	    // Shift b to have a peak at origin for fitting
-        		    	    b = circshift(b,-Tmax[y][x]);
-        		    	    if (search == ELSUNC_2D_SEARCH) {
-        		    	    	minsearch2D = new expfun2D(x0, b, xdata);
-	        		    	    minsearch2D.driver();
-	        		    	    exitStatus = minsearch2D.getExitStatus();
-	        		    	    p = minsearch2D.getParameters();
-	        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
-	        		    	    	// Normal termination
-	        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-	        					    CBF[y][x] = p[0];
-	        					    // relCBF is max value of residual function.  Should be similar to CBF,
-	        					    // but may be different.
-	        					    //relCBF[x][y][z] = rcbf;
-	        					    MTT[y][x] = p[1];
-	        					    CBV[y][x] = rcbf * p[1];
-	        					    //chiSquared[y][x] = minsearch.getChiSquared();
-	        					    if (calculateBounds) {
-			    					    nPts = xdata.length;
-			    					    errorSumOfSquares = 0.0;
-			    					    for (i = 0; i < nPts; i++) {
-			    					    	expval =  Math.exp(-1.0/p[1]*xdata[i]);
-			    						    covarMat[i][0] = Math.exp(-1.0/p[1]*xdata[i]);
-			    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
-			    						    diff = (p[0]*expval) - b[i];
-			    						    errorSumOfSquares += (diff * diff);
-			    						}
-			    					    s2 = errorSumOfSquares/(nPts - 2);
-			    					    arr2D[0][0] = 0.0;
-			    					    arr2D[0][1] = 0.0;
-			    					    arr2D[1][0] = 0.0;
-			    					    arr2D[1][1] = 0.0;
-			    					    for (i = 0; i < nPts; i++) {
-			    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-			    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-			    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-			    					    }
-			    					    arr2D[1][0] = arr2D[0][1];
-			    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-			    					    if (det != 0.0) {
-				    					    invDiag2D[0] = arr2D[1][1]/det;
-				    					    invDiag2D[1] = arr2D[0][0]/det;
-				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-				    					        p0MaxDistFromValue[y][x] = t975 * se0;
+	        		    	    b = circshift(b,-Tmax[y][x]);
+	        		    	    if (search == ELSUNC_2D_SEARCH) {
+	        		    	    	minsearch2D = new expfun2D(x0, b, xdata);
+		        		    	    minsearch2D.driver();
+		        		    	    exitStatus = minsearch2D.getExitStatus();
+		        		    	    p = minsearch2D.getParameters();
+		        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
+		        		    	    	// Normal termination
+		        		    	    	if (calculateCBFCBVMTT) {
+			        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+			        					    CBF[y][x] = p[0];
+			        					    // relCBF is max value of residual function.  Should be similar to CBF,
+			        					    // but may be different.
+			        					    //relCBF[x][y][z] = rcbf;
+			        					    MTT[y][x] = p[1];
+			        					    CBV[y][x] = rcbf * p[1];
+		        		    	    	}
+		        					    //chiSquared[y][x] = minsearch.getChiSquared();
+		        					    if (calculateBounds) {
+				    					    nPts = xdata.length;
+				    					    errorSumOfSquares = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	expval =  Math.exp(-1.0/p[1]*xdata[i]);
+				    						    covarMat[i][0] = Math.exp(-1.0/p[1]*xdata[i]);
+				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+				    						    diff = (p[0]*expval) - b[i];
+				    						    errorSumOfSquares += (diff * diff);
+				    						}
+				    					    s2 = errorSumOfSquares/(nPts - 2);
+				    					    arr2D[0][0] = 0.0;
+				    					    arr2D[0][1] = 0.0;
+				    					    arr2D[1][0] = 0.0;
+				    					    arr2D[1][1] = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
 				    					    }
-				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {   
-				    					        p1MaxDistFromValue[y][x] = t975 * se1;
+				    					    arr2D[1][0] = arr2D[0][1];
+				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+				    					    if (det != 0.0) {
+					    					    invDiag2D[0] = arr2D[1][1]/det;
+					    					    invDiag2D[1] = arr2D[0][0]/det;
+					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+					    					        p0MaxDistFromValue[y][x] = t975 * se0;
+					    					    }
+					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {   
+					    					        p1MaxDistFromValue[y][x] = t975 * se1;
+					    					    }
+				    					    } // if (det != 0.0)
+			    					    } // if (calculateBounds)
+		        		    	    }	
+	        		    	    } // if (search == ELSUNC_2D_SEARCH)
+	        		    	    else if (search == NMSIMPLEX_2D_SEARCH) {
+	        		    	    	minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
+	            		    	    minsearchNM.driver();
+	            		    	    if ((x0[1] > 0) && (x0[1] < 75)) {
+	            		    	    	// Normal termination
+	            		    	    	if (calculateCBFCBVMTT) {
+		            		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+		            					    CBF[y][x] = x0[0];
+		            					    // relCBF is max value of residual function.  Should be similar to CBF,
+		            					    // but may be different.
+		            					    //relCBF[x][y][z] = rcbf;
+		            					    MTT[y][x] = x0[1];
+		            					    CBV[y][x] = rcbf * x0[1];
+	            		    	    	}
+	            					    if (calculateBounds) {
+				    					    nPts = xdata.length;
+				    					    errorSumOfSquares = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	expval = Math.exp(-1.0/x0[1]*xdata[i]);
+				    						    covarMat[i][0] = expval;
+				    						    covarMat[i][1] = xdata[i]/(x0[1]*x0[1])*x0[0]*expval;
+				    						    diff = (x0[0]*expval) - b[i];
+				    						    errorSumOfSquares += (diff * diff);
+				    						}
+				    					    s2 = errorSumOfSquares/(nPts - 2);
+				    					    arr2D[0][0] = 0.0;
+				    					    arr2D[0][1] = 0.0;
+				    					    arr2D[1][0] = 0.0;
+				    					    arr2D[1][1] = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
 				    					    }
-			    					    } // if (det != 0.0)
-		    					    } // if (calculateBounds)
-	        		    	    }	
-        		    	    } // if (search == ELSUNC_2D_SEARCH)
-        		    	    else if (search == NMSIMPLEX_2D_SEARCH) {
-        		    	    	minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
-            		    	    minsearchNM.driver();
-            		    	    if ((x0[1] > 0) && (x0[1] < 75)) {
-            		    	    	// Normal termination
-            		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-            					    CBF[y][x] = x0[0];
-            					    // relCBF is max value of residual function.  Should be similar to CBF,
-            					    // but may be different.
-            					    //relCBF[x][y][z] = rcbf;
-            					    MTT[y][x] = x0[1];
-            					    CBV[y][x] = rcbf * x0[1];
-            					    if (calculateBounds) {
-			    					    nPts = xdata.length;
-			    					    errorSumOfSquares = 0.0;
-			    					    for (i = 0; i < nPts; i++) {
-			    					    	expval = Math.exp(-1.0/x0[1]*xdata[i]);
-			    						    covarMat[i][0] = expval;
-			    						    covarMat[i][1] = xdata[i]/(x0[1]*x0[1])*x0[0]*expval;
-			    						    diff = (x0[0]*expval) - b[i];
-			    						    errorSumOfSquares += (diff * diff);
-			    						}
-			    					    s2 = errorSumOfSquares/(nPts - 2);
-			    					    arr2D[0][0] = 0.0;
-			    					    arr2D[0][1] = 0.0;
-			    					    arr2D[1][0] = 0.0;
-			    					    arr2D[1][1] = 0.0;
-			    					    for (i = 0; i < nPts; i++) {
-			    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-			    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-			    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-			    					    }
-			    					    arr2D[1][0] = arr2D[0][1];
-			    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-			    					    if (det != 0.0) {
-				    					    invDiag2D[0] = arr2D[1][1]/det;
-				    					    invDiag2D[1] = arr2D[0][0]/det;
-				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-				    					        p0MaxDistFromValue[y][x] = t975 * se0;
+				    					    arr2D[1][0] = arr2D[0][1];
+				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+				    					    if (det != 0.0) {
+					    					    invDiag2D[0] = arr2D[1][1]/det;
+					    					    invDiag2D[1] = arr2D[0][0]/det;
+					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+					    					        p0MaxDistFromValue[y][x] = t975 * se0;
+					    					    }
+					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+					    					        p1MaxDistFromValue[y][x] = t975 * se1;
+					    					    }
+				    					    } // if (det != 0.0)
+			    					    } // if (calculateBounds)
+	            		    	    }
+	        		    	    } //  else if (search == NMSIMPLEX_2D_SEARCH)
+	        		    	    else if (search == NELDERMEAD_2D_SEARCH) {
+		    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+		    		    	    	minsearchNM2.driver();
+		    		    	    	p = minsearchNM2.getSolX();
+		    		    	    	if ((p[1] > 0) && (p[1] < 75)) {
+			    		    	    	// Normal termination
+		    		    	    		if (calculateCBFCBVMTT) {
+				    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+				    					    CBF[y][x] = p[0];
+				    					    // relCBF is max value of residual function.  Should be similar to CBF,
+				    					    // but may be different.
+				    					    //relCBF[x][y][z] = rcbf;
+				    					    MTT[y][x] = p[1];
+				    					    CBV[y][x] = rcbf * p[1];
+		    		    	    		}
+			    					    //chiSquared[y][x] = minsearch.getChiSquared();
+			    					    if (calculateBounds) {
+				    					    nPts = xdata.length;
+				    					    errorSumOfSquares = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	expval = Math.exp(-1.0/p[1]*xdata[i]);
+				    						    covarMat[i][0] = expval;
+				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
+				    						    diff = (p[0]*expval) - b[i];
+				    						    errorSumOfSquares += (diff * diff);
+				    						}
+				    					    s2 = errorSumOfSquares/(nPts - 2);
+				    					    arr2D[0][0] = 0.0;
+				    					    arr2D[0][1] = 0.0;
+				    					    arr2D[1][0] = 0.0;
+				    					    arr2D[1][1] = 0.0;
+				    					    for (i = 0; i < nPts; i++) {
+				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
+				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
+				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
 				    					    }
-				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-				    					        p1MaxDistFromValue[y][x] = t975 * se1;
-				    					    }
-			    					    } // if (det != 0.0)
-		    					    } // if (calculateBounds)
-            		    	    }
-        		    	    } //  else if (search == NMSIMPLEX_2D_SEARCH)
-        		    	    else if (search == NELDERMEAD_2D_SEARCH) {
-	    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
-	    		    	    	minsearchNM2.driver();
-	    		    	    	p = minsearchNM2.getSolX();
-	    		    	    	if ((p[1] > 0) && (p[1] < 75)) {
-		    		    	    	// Normal termination
-		    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-		    					    CBF[y][x] = p[0];
-		    					    // relCBF is max value of residual function.  Should be similar to CBF,
-		    					    // but may be different.
-		    					    //relCBF[x][y][z] = rcbf;
-		    					    MTT[y][x] = p[1];
-		    					    CBV[y][x] = rcbf * p[1];
-		    					    //chiSquared[y][x] = minsearch.getChiSquared();
-		    					    if (calculateBounds) {
-			    					    nPts = xdata.length;
-			    					    errorSumOfSquares = 0.0;
-			    					    for (i = 0; i < nPts; i++) {
-			    					    	expval = Math.exp(-1.0/p[1]*xdata[i]);
-			    						    covarMat[i][0] = expval;
-			    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
-			    						    diff = (p[0]*expval) - b[i];
-			    						    errorSumOfSquares += (diff * diff);
-			    						}
-			    					    s2 = errorSumOfSquares/(nPts - 2);
-			    					    arr2D[0][0] = 0.0;
-			    					    arr2D[0][1] = 0.0;
-			    					    arr2D[1][0] = 0.0;
-			    					    arr2D[1][1] = 0.0;
-			    					    for (i = 0; i < nPts; i++) {
-			    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-			    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-			    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-			    					    }
-			    					    arr2D[1][0] = arr2D[0][1];
-			    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-			    					    if (det != 0.0) {
-				    					    invDiag2D[0] = arr2D[1][1]/det;
-				    					    invDiag2D[1] = arr2D[0][0]/det;
-				    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-				    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-				    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-				    					        p0MaxDistFromValue[y][x] = t975 * se0;
-				    					    }
-				    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-				    					        p1MaxDistFromValue[y][x] = t975 * se1;
-				    					    }
-			    					    } // if (det != 0.0)
-		    					    } // if (calculateBounds)
-		    		    	    }	
-	    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
-        		    	    else { // 1D search
-	        		    	    minsearch1D = new expfun1D(x0, b, xdata);
-	        		    	    minsearch1D.driver();
-	        		    	    exitStatus = minsearch1D.getExitStatus();
-	        		    	    p[1] = minsearch1D.getParameters()[0];
-	        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
-	        		    	    	// Normal termination
-	        		    	    	num1 = 0.0;
-	        		    	    	denom1 = 0.0;
-	        		    	    	for (i = 0; i < 2*tDim; i++) {
-	                		    	    num = Math.exp(-xdata[i]/p[1]);
-	            						denom = num * num;
-	                                    num1 += b[i]*num;
-	                                    denom1 += denom;
-	        		    	    	}
-	        		    	    	p[0] = num1/denom1;
-	        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-	        					    CBF[y][x] = p[0];
-	        					    // relCBF is max value of residual function.  Should be similar to CBF,
-	        					    // but may be different.
-	        					    //relCBF[x][y][z] = rcbf;
-	        					    MTT[y][x] = p[1];
-	        					    CBV[y][x] = rcbf * p[1];
-	        					    //chiSquared[y][x] = minsearch.getChiSquared();
-	        		    	    }
-        		    	    } // 1D search
+				    					    arr2D[1][0] = arr2D[0][1];
+				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
+				    					    if (det != 0.0) {
+					    					    invDiag2D[0] = arr2D[1][1]/det;
+					    					    invDiag2D[1] = arr2D[0][0]/det;
+					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
+					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
+					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
+					    					        p0MaxDistFromValue[y][x] = t975 * se0;
+					    					    }
+					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
+					    					        p1MaxDistFromValue[y][x] = t975 * se1;
+					    					    }
+				    					    } // if (det != 0.0)
+			    					    } // if (calculateBounds)
+			    		    	    }	
+		    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
+	        		    	    else if (calculateCBFCBVMTT) { // 1D search
+		        		    	    minsearch1D = new expfun1D(x0, b, xdata);
+		        		    	    minsearch1D.driver();
+		        		    	    exitStatus = minsearch1D.getExitStatus();
+		        		    	    p[1] = minsearch1D.getParameters()[0];
+		        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
+		        		    	    	// Normal termination
+		        		    	    	num1 = 0.0;
+		        		    	    	denom1 = 0.0;
+		        		    	    	for (i = 0; i < 2*tDim; i++) {
+		                		    	    num = Math.exp(-xdata[i]/p[1]);
+		            						denom = num * num;
+		                                    num1 += b[i]*num;
+		                                    denom1 += denom;
+		        		    	    	}
+		        		    	    	p[0] = num1/denom1;
+		        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
+		        					    CBF[y][x] = p[0];
+		        					    // relCBF is max value of residual function.  Should be similar to CBF,
+		        					    // but may be different.
+		        					    //relCBF[x][y][z] = rcbf;
+		        					    MTT[y][x] = p[1];
+		        					    CBV[y][x] = rcbf * p[1];
+		        					    //chiSquared[y][x] = minsearch.getChiSquared();
+		        		    	    }
+	        		    	    } // 1D search
+        		    	    } // if (calculateCBFCBVMTT || calculateBounds)
         		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
         		    } // if ((data[y][x][0] >= masking_threshold)
         		} // for (x = 0; x < xDim; x++)
