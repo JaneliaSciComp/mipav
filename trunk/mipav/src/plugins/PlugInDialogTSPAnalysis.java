@@ -79,6 +79,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
 	
+	private JCheckBox CBFCBVMTTCheckBox;
+	
+	private boolean calculateCBFCBVMTT = true;
+	
 	private JCheckBox boundsCheckBox;
 	
 	private boolean calculateBounds = false;
@@ -314,6 +318,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(search2DNelderMeadButton, gbc);
         
         gbc.gridy = 14;
+        CBFCBVMTTCheckBox = new JCheckBox("CBF, CBV, and MTT calculated", true);
+        CBFCBVMTTCheckBox.setFont(MipavUtil.font12);
+        CBFCBVMTTCheckBox.setForeground(Color.black);
+        inputPanel.add(CBFCBVMTTCheckBox, gbc);
+        
+        gbc.gridy = 15;
         boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
         boundsCheckBox.setFont(MipavUtil.font12);
         boundsCheckBox.setForeground(Color.black);
@@ -376,7 +386,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, calculateMaskingThreshold, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateBounds, fileNameBase);
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, 
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -424,6 +435,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	autoAIFCalculation = scriptParameters.getParams().getBoolean("auto_AIF");
     	multiThreading = scriptParameters.getParams().getBoolean("multi_thread");
     	search = scriptParameters.getParams().getInt("search_pars");
+    	calculateCBFCBVMTT = scriptParameters.getParams().getBoolean("calc_CBFCBVMTT");
     	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
     }
     
@@ -441,6 +453,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("auto_AIF", autoAIFCalculation));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("multi_thread", multiThreading));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("search_pars", search));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_CBFCBVMTT", calculateCBFCBVMTT));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
     }
     
@@ -553,6 +566,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	else if (search2DNelderMeadButton.isSelected()) {
     		search = PlugInAlgorithmTSPAnalysis.NELDERMEAD_2D_SEARCH;
     	}
+    	
+    	calculateCBFCBVMTT = CBFCBVMTTCheckBox.isSelected();
     	
     	calculateBounds = boundsCheckBox.isSelected();
     	return true;
