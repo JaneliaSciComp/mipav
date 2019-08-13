@@ -1678,7 +1678,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         double Psvd = 0.1;
         boolean autoAIFCalculation = true;
         boolean multiThreading = true;
-        boolean calculateCBFCBVMTT = true;
+        boolean calculateCBFCBVMTT = false;
         
         int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
         
