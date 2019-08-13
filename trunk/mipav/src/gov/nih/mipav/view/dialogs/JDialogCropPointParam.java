@@ -414,13 +414,13 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
             try {
                 if (image.getNDims() >= 2) {
                     xBounds[0] *= -1;
-                    xBounds[1] = resultImage.getExtents()[0] - image.getExtents()[0];
+                    xBounds[1] = Math.abs(xBounds[1] - xBounds[0]) + 1 - image.getExtents()[0];
                     yBounds[0] *= -1;
-                    yBounds[1] = resultImage.getExtents()[1] - image.getExtents()[1];
+                    yBounds[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 - image.getExtents()[1];
                 }
                 if (image.getNDims() >= 3) {
                     zBounds[0] *= -1;
-                    zBounds[1] = resultImage.getExtents()[2] - image.getExtents()[2];
+                    zBounds[1] = Math.abs(zBounds[1] - zBounds[0] + 1) - image.getExtents()[2];
                 }
                 cropAlgo = new AlgorithmAddMargins(image, xBounds, yBounds, zBounds);
                 cropAlgo.addListener(this);
