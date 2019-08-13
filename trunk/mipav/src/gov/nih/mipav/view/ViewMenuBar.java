@@ -988,6 +988,7 @@ public class ViewMenuBar {
 														"CropBoundaryParam", 0, null, false),
 										menuBuilder.buildMenuItem("Using point parameters", "CropPointParam", 0, null,
 												false),
+										menuBuilder.buildMenuItem("Using tilted rectangle", "CropTiltedRect", 0, null, false),
 										menuBuilder.buildMenuItem("Using VOI", "Crop", 0, null, false) }),
 
 				// menuBuilder.buildMenuItem("Dicom order", "DicomOrder", 0,
