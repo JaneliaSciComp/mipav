@@ -138,13 +138,13 @@ public class AlgorithmCropTilted extends AlgorithmBase {
             destExtents = new int[3];
             destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
             destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
-            destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
+            destExtents[2] = Math.abs(zBounds[1] - zBounds[0]) + 1;
 
         } else if (srcImage.getNDims() == 4) {
             destExtents = new int[4];
             destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
             destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
-            destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
+            destExtents[2] = Math.abs(zBounds[1] - zBounds[0]) + 1;
             destExtents[3] = srcImage.getExtents()[3];
         } else {
             return;
