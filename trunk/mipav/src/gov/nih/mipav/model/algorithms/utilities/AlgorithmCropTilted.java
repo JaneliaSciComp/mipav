@@ -56,15 +56,8 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	double dely23 = y3Point - y2Point;
         double height = Math.sqrt(delx23*delx23 + dely23*dely23);
         
-        // y = ((y3-y1)/(x3-x1))*(x-x1) + y1;
-        // y = ((y4-y2)/(x4-x2))*(x-x2) + y2
-        // Center at intersection of 2 lines
-        double xcenter = (x1Point*x4Point*y3Point - x1Point*x2Point*y3Point - x3Point*x4Point*y1Point 
-        		+ x2Point*x3Point*y1Point - x2Point*x3Point*y4Point + x1Point*x2Point*y4Point
-        		+ x3Point*x4Point*y2Point - x1Point*x4Point*y2Point)/
-        		(x4Point*y3Point - x2Point*y3Point - x4Point*y1Point + x2Point*y1Point
-        	    - x3Point*y4Point + x1Point*y4Point + x3Point*y2Point - x1Point*y2Point);
-        double ycenter = ((y3Point - y1Point)/(x3Point - x1Point)) * (xcenter - x1Point) + y1Point;
+        double xcenter = (x1Point + x2Point + x3Point + x4Point)/4.0;
+        double ycenter = (y1Point + y2Point + y3Point + y4Point)/4.0;
         System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter);
         // Center in resolution space
         float xres = srcImage.getFileInfo()[0].getResolutions()[0];
