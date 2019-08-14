@@ -188,7 +188,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
     
     /**
      * 
-     * @param x13Point
+     * @param x3Point
      */
     public void setX3Point(int x3Point) {
         this.x3Point = x3Point;
