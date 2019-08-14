@@ -335,12 +335,12 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         image = scriptParameters.retrieveInputImage();
         setX1(scriptParameters.getParams().getInt("x1_point"));
         setY1(scriptParameters.getParams().getInt("y1_point"));
-        setX1(scriptParameters.getParams().getInt("x2_point"));
-        setY1(scriptParameters.getParams().getInt("y2_point"));
-        setX1(scriptParameters.getParams().getInt("x3_point"));
-        setY1(scriptParameters.getParams().getInt("y3_point"));
-        setX1(scriptParameters.getParams().getInt("x4_point"));
-        setY1(scriptParameters.getParams().getInt("y4_point"));
+        setX2(scriptParameters.getParams().getInt("x2_point"));
+        setY2(scriptParameters.getParams().getInt("y2_point"));
+        setX3(scriptParameters.getParams().getInt("x3_point"));
+        setY3(scriptParameters.getParams().getInt("y3_point"));
+        setX4(scriptParameters.getParams().getInt("x4_point"));
+        setY4(scriptParameters.getParams().getInt("y4_point"));
         
         if (x1 < 0) {
             throw new ParameterException("x1_point", "Cannot have x1 < 0");
