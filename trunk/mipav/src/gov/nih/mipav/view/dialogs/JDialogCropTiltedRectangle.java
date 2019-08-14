@@ -797,7 +797,6 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         try {
         	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterInt("x1_point", 0));
             table.put(new ParameterInt("y1_point", 0));
             table.put(new ParameterInt("x2_point", 0));
