@@ -93,6 +93,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	
 	private int search = ELSUNC_2D_SEARCH;
 	
+	private boolean calculateCorrelation = true;
+	
 	private boolean calculateCBFCBVMTT = true;
 	
 	private boolean calculateBounds = false;
@@ -119,7 +121,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      */
     public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
-    		boolean multiThreading, int search, 
+    		boolean multiThreading, int search, boolean calculateCorrelation, 
     		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
@@ -132,6 +134,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.autoAIFCalculation = autoAIFCalculation;
     	this.multiThreading = multiThreading;
     	this.search = search;
+    	this.calculateCorrelation = calculateCorrelation;
     	this.calculateCBFCBVMTT = calculateCBFCBVMTT;
     	this.calculateBounds = calculateBounds;
     	this.fileNameBase = fileNameBase;
@@ -139,7 +142,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean calculateMaskingThreshold, int masking_threshold,
             double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
-            boolean multiThreading, int search, boolean calculateCBFCBVMTT, boolean calculateBounds) {
+            boolean multiThreading, int search, 
+            boolean calculateCBFCBVMTT, boolean calculateBounds) {
         //super(resultImage, srcImg);
         this.pwiImageFileDirectory = pwiImage.getImageDirectory();
         this.pwiImage = pwiImage;
@@ -197,8 +201,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int count[];
     	int countt;
     	// Remove hyphen from corr_map so MIPAV does not read corr_map and corr_map2 together as 1 file.
-    	double corrmap[][][];
-    	double corr_map2[][][];
+    	double corrmap[][][] = null;
+    	double corr_map2[][][] = null;
     	short delay_map[][][];
     	short peaks_map[][][];
     	double temp[];
@@ -583,10 +587,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	
     	// Zero/Initialize output maps
-        // TSP Correlation map with out AIF delay compensation
-    	corrmap = new double[zDim][yDim][xDim];
-    	// TSP Correlation map with AIF delay compensation
-    	corr_map2 = new double[zDim][yDim][xDim];
+	    if (calculateCorrelation) {
+	        // TSP Correlation map with out AIF delay compensation
+	    	corrmap = new double[zDim][yDim][xDim];
+	    	// TSP Correlation map with AIF delay compensation
+	    	corr_map2 = new double[zDim][yDim][xDim];
+	    }
     	// TSP Delay map considering temporal similarity with whole brain average
     	delay_map = new short[zDim][yDim][xDim];
     	// TSP Peaks map is the absolute value of the SI corresponding to the largest deviation from baseline
@@ -601,8 +607,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             for (z = 0; z < zDim; z++) {
             	fireProgressStateChanged("First TSP iteration launching multithread " + (z+1) + " of " + zDim);
                 fireProgressStateChanged(20 + (9 * z)/(zDim-1));
-            	executorService.execute(new corr1Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],corr_map2[z],
-            			temp_mean.clone()));	
+                if (calculateCorrelation) {
+	            	executorService.execute(new corr1Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],corr_map2[z],
+	            			temp_mean.clone()));	
+                }
+                else {
+                	executorService.execute(new corr1Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],null,
+	            			temp_mean.clone()));		
+                }
             }
             
             executorService.shutdown();
@@ -642,8 +654,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    				    	}
 	    				    }
 	    				    delay_map[z][y][x] = (short)maxIndex;
-	    				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
-	    				    corr_map2[z][y][x] = cc;
+	    				    if (calculateCorrelation) {
+		    				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
+		    				    corr_map2[z][y][x] = cc;
+	    				    }
 	    				} // if (sumt != 0)
 	    			}
 	    		}
@@ -665,7 +679,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		for (z = 0; z < zDim; z++) {
     			for (y = 0; y < yDim; y++) {
     				for (x = 0; x < xDim; x++) {
-    					if (corr_map2[z][y][x] < TSP_threshold) {
+    					if ((corr_map2 != null) && (corr_map2[z][y][x] < TSP_threshold)) {
     						for (t = 0; t < tDim; t++) {
     						    brain_mask2[t] = 0;
     						    brain_mask_norm2 = 0;
@@ -693,8 +707,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	if (multiThreading) {
         		ExecutorService executorService = Executors.newCachedThreadPool();	
                 for (z = 0; z < zDim; z++) {
-                	executorService.execute(new corr2Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],peaks_map[z],corrmap[z],
-                			corr_map2[z], temp_mean.clone()));	
+                	if (calculateCorrelation) {
+                	    executorService.execute(new corr2Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],peaks_map[z],corrmap[z],
+                			corr_map2[z], temp_mean.clone()));
+                	}
+                	else {
+                		executorService.execute(new corr2Calc(xDim,yDim,tDim,brain_mask_norm[z],delay_map[z],peaks_map[z],null,
+                    			null,temp_mean.clone()));	
+                	}
                 }
                 
                 executorService.shutdown();
@@ -739,10 +759,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        				    	}
 	        				    }
 	        				    peaks_map[z][y][x] = maxPeak;
-	        				    cc = corrcoef(brain_mask_norm[z][y][x], temp_mean);
-	        				    corrmap[z][y][x] = cc;
-	        				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
-	        				    corr_map2[z][y][x] = cc;
+	        				    if (calculateCorrelation) {
+		        				    cc = corrcoef(brain_mask_norm[z][y][x], temp_mean);
+		        				    corrmap[z][y][x] = cc;
+		        				    cc = corrcoef(circshift(brain_mask_norm[z][y][x], -maxIndex + tDim), temp_mean);
+		        				    corr_map2[z][y][x] = cc;
+	        				    }
 	        				} // if (sum != 0)
 	        			}
 	        		}
@@ -763,12 +785,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     			    // Dealy delT mutliplication to point of image readin so we can use a short array
     			    //delay_map[z][y][x] = (delay_map[z][y][x] - tDim) * delT;
     			    delay_map[z][y][x] = (short)(delay_map[z][y][x] - tDim);
-    			    // Corr map > 1 or < 0 is not realistic
-    			    if (corrmap[z][y][x] > 1) {
-    			    	corrmap[z][y][x] = 1;
-    			    }
-    			    else if (corrmap[z][y][x] < 0) {
-    			    	corrmap[z][y][x] = 0;
+    			    if (calculateCorrelation) {
+	    			    // Corr map > 1 or < 0 is not realistic
+	    			    if (corrmap[z][y][x] > 1) {
+	    			    	corrmap[z][y][x] = 1;
+	    			    }
+	    			    else if (corrmap[z][y][x] < 0) {
+	    			    	corrmap[z][y][x] = 0;
+	    			    }
     			    }
 
     			}
@@ -780,113 +804,117 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	fireProgressStateChanged("Writing first set of images");
         fireProgressStateChanged(70);
     	dbuffer = new double[volume];
-    	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
-    	for (x = 0; x < xDim; x++) {
-    		for (y = 0; y < yDim; y++) {
-    			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = corr_map2[z][y][x];
-    			}
-    		}
-    	}
-    	try {
-    		corr_map2Image.importData(0, dbuffer, true);
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("IOException on corr_map2Image");
-    		setCompleted(false);
-    		return;
-    	}
-    	FileInfoBase fileInfo[] = corr_map2Image.getFileInfo();
-    	for (i = 0; i < zDim; i++) {
-    		fileInfo[i].setResolutions(resolutions3D);
-    		fileInfo[i].setUnitsOfMeasure(units3D);
-    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
-    	}
-    	FileWriteOptions options = new FileWriteOptions(true);
-        options.setFileType(FileUtility.ANALYZE);
+    	FileInfoBase fileInfo[];
+    	FileAnalyze analyzeFile;
+    	FileWriteOptions options  = new FileWriteOptions(true);
+    	options.setFileType(FileUtility.ANALYZE);
         options.setFileDirectory(outputFilePath + File.separator);
-        options.setFileName(outputPrefix + "corr_map2.img");
         options.setBeginSlice(0);
         options.setEndSlice(extents3D[2]-1);
         options.setOptionsSet(false);
         options.setSaveAs(true);
-        FileAnalyze analyzeFile;
-
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(corr_map2Image, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing corr_map2.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing corr_map2.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
-    	corr_map2Image.disposeLocal();
-    	corr_map2Image = null;
-    	
-    	corrmapImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corrmap");
-    	for (x = 0; x < xDim; x++) {
-    		for (y = 0; y < yDim; y++) {
-    			for (z = 0; z < zDim; z++) {
-    				dbuffer[x + y*xDim + z*length] = corrmap[z][y][x];
-    			}
-    		}
-    	}
-    	try {
-    		corrmapImage.importData(0, dbuffer, true);
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("IOException on corrmapImage");
-    		setCompleted(false);
-    		return;
-    	}
-    	fileInfo = corrmapImage.getFileInfo();
-    	for (i = 0; i < zDim; i++) {
-    		fileInfo[i].setResolutions(resolutions3D);
-    		fileInfo[i].setUnitsOfMeasure(units3D);
-    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
-    	}
-        options.setFileName(outputPrefix + "corrmap.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(corrmapImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing corrmap.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing corrmap.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
-    	corrmapImage.disposeLocal();
-    	corrmapImage = null;
+    	if (calculateCorrelation) {
+	    	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
+	    	for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < yDim; y++) {
+	    			for (z = 0; z < zDim; z++) {
+	    				dbuffer[x + y*xDim + z*length] = corr_map2[z][y][x];
+	    			}
+	    		}
+	    	}
+	    	try {
+	    		corr_map2Image.importData(0, dbuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on corr_map2Image");
+	    		setCompleted(false);
+	    		return;
+	    	}
+	    	fileInfo = corr_map2Image.getFileInfo();
+	    	for (i = 0; i < zDim; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	        
+	        options.setFileName(outputPrefix + "corr_map2.img");
+	
+	        try { // Construct a new file object
+	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+	            boolean zerofunused = false;
+	            analyzeFile.setZerofunused(zerofunused);
+	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+	            analyzeFile.writeImage(corr_map2Image, options);
+	            analyzeFile.finalize();
+	            analyzeFile = null;
+	        } catch (final IOException error) {
+	
+	            MipavUtil.displayError("IOException on writing corr_map2.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        } catch (final OutOfMemoryError error) {
+	
+	            MipavUtil.displayError("Out of memory error on writing corr_map2.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        }
+	    	corr_map2Image.disposeLocal();
+	    	corr_map2Image = null;
+	    	
+	    	corrmapImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corrmap");
+	    	for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < yDim; y++) {
+	    			for (z = 0; z < zDim; z++) {
+	    				dbuffer[x + y*xDim + z*length] = corrmap[z][y][x];
+	    			}
+	    		}
+	    	}
+	    	try {
+	    		corrmapImage.importData(0, dbuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on corrmapImage");
+	    		setCompleted(false);
+	    		return;
+	    	}
+	    	fileInfo = corrmapImage.getFileInfo();
+	    	for (i = 0; i < zDim; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	        options.setFileName(outputPrefix + "corrmap.img");
+	       
+	        try { // Construct a new file object
+	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+	            boolean zerofunused = false;
+	            analyzeFile.setZerofunused(zerofunused);
+	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
+	            analyzeFile.writeImage(corrmapImage, options);
+	            analyzeFile.finalize();
+	            analyzeFile = null;
+	        } catch (final IOException error) {
+	
+	            MipavUtil.displayError("IOException on writing corrmap.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        } catch (final OutOfMemoryError error) {
+	
+	            MipavUtil.displayError("Out of memory error on writing corrmap.img");
+	
+	            error.printStackTrace();
+	            setCompleted(false);
+	            return;
+	        }
+	    	corrmapImage.disposeLocal();
+	    	corrmapImage = null;
+    	} // if (calculateCorrelation)
     	
     	peaks_mapImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "peaks_map");
     	buffer = new short[volume];
@@ -1924,7 +1952,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         int tDim;
         short brain_mask_norm[][][];
         short delay_map[][];
-        double corr_map2[][];
+        double corr_map2[][] = null;
         double temp_mean[];
         
         public corr1Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][], 
@@ -1934,7 +1962,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.tDim = tDim;
         	this.brain_mask_norm = brain_mask_norm;
         	this.delay_map = delay_map;
-        	this.corr_map2 = corr_map2;
+        	if (calculateCorrelation) {
+        	    this.corr_map2 = corr_map2;
+        	}
         	this.temp_mean = temp_mean;
         }
         
@@ -1962,8 +1992,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				    	}
     				    }
     				    delay_map[y][x] = (short)maxIndex;
-    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
-    				    corr_map2[y][x] = cc;
+    				    if (calculateCorrelation) {
+	    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
+	    				    corr_map2[y][x] = cc;
+    				    }
     				} // if (sum != 0)
     			}
     		}	
@@ -1989,8 +2021,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	this.brain_mask_norm = brain_mask_norm;
         	this.delay_map = delay_map;
         	this.peaks_map = peaks_map;
-        	this.corrmap = corrmap;
-        	this.corr_map2 = corr_map2;
+        	if (calculateCorrelation) {
+	        	this.corrmap = corrmap;
+	        	this.corr_map2 = corr_map2;
+        	}
         	this.temp_mean = temp_mean;
         }
         
@@ -2027,10 +2061,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     				    	}
     				    }
     				    peaks_map[y][x] = (short)maxPeak;
-    				    cc = corrcoef(brain_mask_norm[y][x], temp_mean);
-    				    corrmap[y][x] = cc;
-    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
-    				    corr_map2[y][x] = cc;
+    				    if (calculateCorrelation) {
+	    				    cc = corrcoef(brain_mask_norm[y][x], temp_mean);
+	    				    corrmap[y][x] = cc;
+	    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
+	    				    corr_map2[y][x] = cc;
+    				    }
     				} // if (sum != 0)
     			}
     		}
