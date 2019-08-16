@@ -177,10 +177,10 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	if (run2D) {
 	        delx12 = x2 - x1;
 	    	dely12 = y2 - y1;
-	    	width = Math.sqrt(delx12*delx12 + dely12*dely12);
+	    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres)/xres;
 	    	delx23 = x3 - x2;
 	    	dely23 = y3 - y2;
-	        height = Math.sqrt(delx23*delx23 + dely23*dely23);
+	        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres)/yres;
 	        
 	        xcenter = (x1 + x2 + x3 + x4)/4.0;
 	        ycenter = (y1 + y2 + y3 + y4)/4.0;
@@ -201,33 +201,40 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	                                           units, doVOI, doClip, doPad, doRotateCenter, center);
     	} // if (run2D)
     	else {
+    		oZdim = srcImage.getExtents()[2];
+    		zres = srcImage.getFileInfo()[0].getResolutions()[2];
+	        oZres = zres;
     		delx12 = x2 - x1;
 	    	dely12 = y2 - y1;
 	    	delz12 = z2 - z1;
-	    	width = Math.sqrt(delx12*delx12 + dely12*dely12 + delz12*delz12);
+	    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres + delz12*delz12*zres*zres)/xres;
 	    	delx23 = x3 - x2;
 	    	dely23 = y3 - y2;
 	    	delz23 = z3 - z2;
-	        height = Math.sqrt(delx23*delx23 + dely23*dely23 + delz23*delz23);
+	        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres + delz23*delz23*zres*zres)/yres;
 	        delx15 = x5 - x1;
 	        dely15 = y5 - y1;
 	        delz15 = z5 - z1;
-	        depth = Math.sqrt(delx15*delx15 + dely15*dely15 + delz15*delz15);
+	        depth = Math.sqrt(delx15*delx15*xres*xres + dely15*dely15*yres*yres + delz15*delz15*zres*zres)/zres;
+	        System.out.println("depth = " + depth);
 	        xcenter = (x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8)/8.0;
 	        ycenter = (y1 + y2 + y3 + y4 + y5 + y6 + y7 + y8)/8.0;
 	        zcenter = (z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8)/8.0;
 	        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter + " zcenter = " + zcenter);
 	        // Center in resolution space
-	        zres = srcImage.getFileInfo()[0].getResolutions()[2];
-	        oZres = zres;
-	        oZdim = srcImage.getExtents()[2];
+	        ratio = (double)(z1 - z5)/(double)(y1 - y5);
+	        thetaX = (180.0/Math.PI)*Math.atan(ratio);
+	        System.out.println("thetaX = " + thetaX);
+	        ratio = (double)(x1 - x5)/(double)(z1 - z5);
+	        thetaY = (180.0/Math.PI)*Math.atan(ratio);
+	        System.out.println("thetaY = " + thetaY);
 	        ratio = (double)(y3 - y4)/(double)(x3 - x4);
 	        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaZ = " + thetaZ);
 	        xfrm = new TransMatrix(4);
 	        xfrm.identity();
 	        xfrm.setTranslate(xres * xcenter, yres * ycenter, zres * zcenter);
-	        xfrm.setRotate(-thetaX,-thetaY,-thetaZ,DEGREES);;
+	        xfrm.setRotate(-thetaX,thetaY,-thetaZ,DEGREES);;
 	        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
 	        interp = AlgorithmTransform.TRILINEAR;
 	        
