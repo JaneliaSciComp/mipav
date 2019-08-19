@@ -10,32 +10,32 @@ import gov.nih.mipav.view.MipavUtil;
  * Algorithm to crop a tilted rectangle
  */
 public class AlgorithmCropTilted extends AlgorithmBase { 
-    private int x1;
-    private int x2;
-    private int x3;
-    private int x4;
-    private int x5;
-    private int x6;
-    private int x7;
-    private int x8;
+    private double x1;
+    private double x2;
+    private double x3;
+    private double x4;
+    private double x5;
+    private double x6;
+    private double x7;
+    private double x8;
     
-    private int y1;
-    private int y2;
-    private int y3;
-    private int y4;
-    private int y5;
-    private int y6;
-    private int y7;
-    private int y8;
+    private double y1;
+    private double y2;
+    private double y3;
+    private double y4;
+    private double y5;
+    private double y6;
+    private double y7;
+    private double y8;
     
-    private int z1;
-    private int z2;
-    private int z3;
-    private int z4;
-    private int z5;
-    private int z6;
-    private int z7;
-    private int z8;
+    private double z1;
+    private double z2;
+    private double z3;
+    private double z4;
+    private double z5;
+    private double z6;
+    private double z7;
+    private double z8;
     
     private ModelImage resultImage;
     
@@ -60,8 +60,8 @@ public class AlgorithmCropTilted extends AlgorithmBase {
      * @param x4
      * @param y4
      */
-    public AlgorithmCropTilted(ModelImage srcImage, int x1, int y1, int x2, int y2,
-    		int x3, int y3, int x4, int y4) {
+    public AlgorithmCropTilted(ModelImage srcImage, double x1, double y1, double x2, double y2,
+    		double x3, double y3, double x4, double y4) {
         super(null, srcImage);
         this.x1 = x1;
         this.y1 = y1;
@@ -104,9 +104,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
      * @param y8
      * @param z8
      */
-    public AlgorithmCropTilted(ModelImage srcImage, int x1, int y1, int z1, int x2, int y2, int z2,
-    		int x3, int y3, int z3, int x4, int y4, int z4, int x5, int y5, int z5, int x6,
-    		int y6, int z6, int x7, int y7, int z7, int x8, int y8, int z8) {
+    public AlgorithmCropTilted(ModelImage srcImage, double x1, double y1, double z1, double x2, double y2, double z2,
+    		double x3, double y3, double z3, double x4, double y4, double z4, double x5, double y5, double z5, double x6,
+    		double y6, double z6, double x7, double y7, double z7, double x8, double y8, double z8) {
         super(null, srcImage);
         this.x1 = x1;
         this.y1 = y1;
@@ -173,6 +173,14 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         boolean doRotateCenter = false;
         Vector3f center = new Vector3f(0.0f,0.0f,0.0f);
         AlgorithmTransform algoTrans;
+        //i = 107 j = 71 k = 16 X = 108.40897670747673 Y = 71.0000014349817 Z = 17.982873916625977
+		//i = 161 j = 71 k = 16 X = 155.17434463469482 Y = 71.0000014349817 Z = 12.936144828796387
+		//i = 107 j = 186 k = 16 X = 108.40897670747673 Y = 185.9999958544973 Z = 17.982873916625977
+		//i = 161 j = 186 k = 16 X = 155.17434463469482 Y = 185.9999958544973 Z = 12.936144828796387
+		//i = 107 j = 71 k = 21 X = 121.78397553158895 Y = 71.0000014349817 Z = 22.313000857830048
+		//i = 161 j = 71 k = 21 X = 168.54934345880704 Y = 71.0000014349817 Z = 17.266271770000458
+		//i = 107 j = 186 k = 21 X = 121.78397553158895 Y = 185.9999958544973 Z = 22.313000857830048
+		//i = 161 j = 186 k = 21 X = 168.54934345880704 Y = 185.9999958544973 Z = 17.266271770000458
     	
     	if (run2D) {
 	        delx12 = x2 - x1;
@@ -187,7 +195,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter);
 	        // Center in resolution space
 	        yres = srcImage.getFileInfo()[0].getResolutions()[1];
-	        ratio = (double)((y3 - y4)*yres)/(double)((x3 - x4)*xres);
+	        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
 	        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaZ = " + thetaZ);
 	        xfrm = new TransMatrix(3);
@@ -222,13 +230,13 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        zcenter = (z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8)/8.0;
 	        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter + " zcenter = " + zcenter);
 	        // Center in resolution space
-	        ratio = (double)(z1 - z5)/(double)(y1 - y5);
+	        ratio = ((y1 - y5)*yres)/((z1 - z5)*zres);
 	        thetaX = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaX = " + thetaX);
-	        ratio = (double)(x1 - x5)/(double)(z1 - z5);
+	        ratio = ((z1 - z5)*zres)/((x1 - x5)*xres);
 	        thetaY = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaY = " + thetaY);
-	        ratio = (double)(y3 - y4)/(double)(x3 - x4);
+	        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
 	        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaZ = " + thetaZ);
 	        xfrm = new TransMatrix(4);
