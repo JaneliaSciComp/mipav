@@ -187,7 +187,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter);
 	        // Center in resolution space
 	        yres = srcImage.getFileInfo()[0].getResolutions()[1];
-	        ratio = (double)(y3 - y4)/(double)(x3 - x4);
+	        ratio = (double)((y3 - y4)*yres)/(double)((x3 - x4)*xres);
 	        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaZ = " + thetaZ);
 	        xfrm = new TransMatrix(3);
