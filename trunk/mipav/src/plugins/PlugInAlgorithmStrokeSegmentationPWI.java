@@ -3,6 +3,7 @@ import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmAnisotropicDiffusion;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -10,6 +11,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogFuzzyCMeans;
+import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 
 import java.awt.Color;
 import java.io.*;
@@ -279,7 +281,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             // get pixels from ADC within mask with intensity < 620
             fireProgressStateChanged("Thresholding ADC ...");
-            fireProgressStateChanged(60);
+            fireProgressStateChanged(20);
             
             short[] coreSegBuffer = new short[volLength];
             for (int i = 0; i < volLength; i++) {
@@ -328,7 +330,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             // select largest object
             fireProgressStateChanged("Finding core lesion ...");
-            fireProgressStateChanged(70);
+            fireProgressStateChanged(30);
             
             // do first two results with selection only based on core size
             File lightboxPass1 = processThresholdedImg(segImg, adcImage, coreSegBuffer, extents, 1, doCerebellumSkip, cerebellumSkipSliceMax, false, doSymmetryRemoval);
@@ -338,6 +340,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 lightboxFileList.add(lightboxPass1);
             }
             
+            fireProgressStateChanged("Calculating perfusion Tmax ...");
+            fireProgressStateChanged(35);
+            
             // calculate Tmax, register to adc, generate lightbox of perfusion area
             File lightboxPWI = processPwi(pwiImage);
             
@@ -345,7 +350,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 lightboxFileList.add(lightboxPWI);
             }
             
-            // TODO core pass done with a segImg that combines Tmax > 2 and DWI as search area
+            fireProgressStateChanged("Finding Tmax-based core lesion ...");
+            fireProgressStateChanged(85);
+            
+            // core pass done with a segImg that combines Tmax > 2 and DWI as search area
             ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, skullMaskImg, pwiCoreSegThreshold);
             for (int i = 0; i < volLength; i++) {
                 if ((dwiSegBuffer[i] != 0 || pwiSegImg.getInt(i) != 0) && (skullMaskImg != null && skullMaskImg.getBoolean(i) == true)) {
@@ -393,7 +401,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
             
             // generate lightbox of DWI volume with custom transfer function
-            dwiLightbox = generateLightbox(dwiImage, null, coreLightboxColor, lightboxOpacity);
+            dwiLightbox = generateLightbox(dwiImage, null, coreLightboxColor, lightboxOpacity, false);
             
             File lightboxDWI = saveImageFile(dwiLightbox, coreOutputDir, outputBasename + "_DWI_lightbox", FileUtility.PNG, true);
             
@@ -420,7 +428,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
     //        // output core object to VOI on disk
     //        fireProgressStateChanged("Saving core VOI ...");
-    //        fireProgressStateChanged(80);
+    //        fireProgressStateChanged(90);
     //        
     //        coreVOI = maskToVOI(segImg);
     //        if (!saveVOI(segImg, coreVOI, coreOutputDir, outputBasename + "_VOI")) {
@@ -539,7 +547,6 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         opts.setOptionsSet(true);
         opts.setMultiFile(false);
         
-        // TODO set lut/rgb transfer func
         if (useDwiLUT) {
             int dwiMaxLUT = 150;
             
@@ -720,7 +727,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest_pass" + passNum, FileUtility.XML);
         
         // combine core mask with ADC and save lightbox
-        ModelImage coreLightbox = generateLightbox(lightboxBgImg, threshImg, coreLightboxColor, lightboxOpacity);
+        ModelImage coreLightbox = generateLightbox(lightboxBgImg, threshImg, coreLightboxColor, lightboxOpacity, false);
         
         lightboxFile = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_ADC_core_lightbox_pass" + passNum, FileUtility.PNG);
         
@@ -1328,16 +1335,56 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return true;
     }
     
-    private ModelImage generateLightbox(final ModelImage imgA, final ModelImage mask, Color maskColor, float blendingOpacity) {
+    private ModelImage generateLightbox(final ModelImage imgA, final ModelImage mask, Color maskColor, float blendingOpacity, boolean isTmax) {
         ModelImage lightbox = null;
         
         ModelImage newRGB;
         if (imgA.isColorImage()) {
             newRGB = (ModelImage) imgA.clone();
         } else {
-            newRGB = new ModelImage(ModelImage.ARGB, imgA.getExtents(), imgA.getImageName());
-            final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imgA, imgA, imgA, newRGB, true, true, 255.0f, true);
-            mathAlgo.run();
+            if (!isTmax) {
+            	newRGB = new ModelImage(ModelImage.ARGB, imgA.getExtents(), imgA.getImageName());
+            	final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imgA, imgA, imgA, newRGB, true, true, 255.0f, true);
+            	mathAlgo.run();
+            } else {
+            	float tmaxWin = 10;
+	            float tmaxLev = 1;
+	            
+	            ModelLUT tmaxLUT = new ModelLUT();
+	            TransferFunction tf = new TransferFunction();
+	            float[] tfX = new float[] {0, 0, 6, (int)imgA.getMax()};
+	            float[] tfY = new float[] {255, 153, 0, 0};
+//	            float[] tfX = new float[4];
+//	            float[] tfY = new float[4];
+//	            JDialogWinLevel.calcWinLevTransferFunction(imgA, tmaxWin, tmaxLev, tfX, tfY);
+	            tf.importArrays(tfX, tfY, tfX.length);
+	            tmaxLUT.setTransferFunction(tf);
+	            
+	            ModelImage newImg = (ModelImage) imgA.clone();
+	            
+	            for (int i = 0; i < imgA.getSize(); i++) {
+	                int indexA = (int) (tf.getRemappedValue(imgA.getInt(i), (int)imgA.getMax()) + 0.5f);
+	                newImg.set(i, indexA);
+	            }
+	            
+	            newImg.calcMinMax();
+	            
+	            //AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(newImg, ModelImage.UBYTE, newImg.getMin(), newImg.getMax(), 0, 255, false);
+	            //changeTypeAlgo.run();
+	            
+	            //saveImageFile(newImg, coreOutputDir, outputBasename + "_PWI_Tmax_reg_rgb_remap", FileUtility.XML);
+            	
+            	newRGB = new ModelImage(ModelImage.ARGB, newImg.getExtents(), newImg.getImageName());
+            	final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImg, newImg, newImg, newRGB, true, true, 255.0f, true, true);
+            	mathAlgo.run();
+            	
+            	//saveImageFile(newRGB, coreOutputDir, outputBasename + "_PWI_Tmax_reg_rgb", FileUtility.XML);
+            	
+            	newImg.disposeLocal();
+	            
+//	            ViewJFrameImage frame = new ViewJFrameImage(newRGB);
+//	            frame.setActiveImage(ViewJFrameImage.IMAGE_A);
+            }
         }
         
         if (mask != null) {
@@ -1606,11 +1653,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         segImg = segArray[0];
         
-        fireProgressStateChanged(40);
+        fireProgressStateChanged(10);
         
         // extract class 4 as mask
         fireProgressStateChanged("Extracting segmentation mask ...");
-        fireProgressStateChanged(45);
+        fireProgressStateChanged(15);
         
         final int[] extents = srcImg.getExtents();
         final int sliceLength = extents[0] * extents[1];
@@ -1678,19 +1725,29 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         double Psvd = 0.1;
         boolean autoAIFCalculation = true;
         boolean multiThreading = true;
+        boolean calculateCorrelation = false;
         boolean calculateCBFCBVMTT = false;
+        boolean calculateBounds = false;
         
         int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
         
         PlugInAlgorithmTSPAnalysis tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, calculateMaskingThreshold, masking_threshold,
-                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateCBFCBVMTT, false);
+                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateCorrelation, calculateCBFCBVMTT, calculateBounds);
         
-        tspAlgo.setOutputFilePath(coreOutputDir);
+        tspAlgo.setOutputFilePath(null);
+        //tspAlgo.setOutputFilePath(coreOutputDir);
         tspAlgo.setOutputPrefix(new File(coreOutputDir).getName() + "_" + outputLabel + "_PWI_");
+        
+        linkProgressToAlgorithm(tspAlgo);
+        tspAlgo.setProgressValues(generateProgressValues(35, 70));
+        
+        tspAlgo.setRunningInSeparateThread(false);
         
         tspAlgo.run();
         
         ModelImage TmaxUnregImage = tspAlgo.getTmaxImage();
+        
+        saveImageFile(TmaxUnregImage, coreOutputDir, outputBasename + "_PWI_Tmax", FileUtility.XML);
         
         System.err.println("PWI TSP Algo time elapsed: " + (System.currentTimeMillis() - tspStartTime) / 1000.0f);
         
@@ -1706,9 +1763,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, skullMaskImg, pwiThreshold);
         
         // combine perfusion mask with Tmax and save lightbox
-        ModelImage perfLightbox = generateLightbox(TmaxRegImage, pwiSegImg, pwiLightboxColor, lightboxOpacity);
+        ModelImage perfLightbox = generateLightbox(TmaxRegImage, pwiSegImg, pwiLightboxColor, lightboxOpacity, true);
         
-        File lightboxFile = saveImageFile(perfLightbox, coreOutputDir, outputBasename + "_Tmax_perfusion_lightbox", FileUtility.PNG);
+        File lightboxFile = saveImageFile(perfLightbox, coreOutputDir, outputBasename + "_Tmax_perfusion_lightbox", FileUtility.PNG, false);
         
         if (lightboxFile != null) {
         	int size = 0;
@@ -1864,7 +1921,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
         }
 
-        saveImageFile(firstVol, coreOutputDir, outputBasename + "_PWI_firstVol", FileUtility.XML);
+        //saveImageFile(firstVol, coreOutputDir, outputBasename + "_PWI_firstVol", FileUtility.XML);
         
         return firstVol;
     }
@@ -1908,7 +1965,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 doMultiThread, fastMode, baseNumIter, numMinima);
 
         linkProgressToAlgorithm(regAlgo);
-        regAlgo.setProgressValues(generateProgressValues(10, 90));
+        regAlgo.setProgressValues(generateProgressValues(70, 85));
         
         regAlgo.setRunningInSeparateThread(false);
         regAlgo.run();

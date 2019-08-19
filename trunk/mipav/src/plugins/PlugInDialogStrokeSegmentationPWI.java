@@ -1121,9 +1121,10 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
                                 }
                             }
                         }
+                        
+                        img.disposeLocal();
+                        img = null;
                     }
-                    img.disposeLocal();
-                    img = null;
                 }
             }
         }
