@@ -52,14 +52,14 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
     
-    private int x1;
-    private int x2;
-    private int x3;
-    private int x4;
-    private int x5;
-    private int x6;
-    private int x7;
-    private int x8;
+    private double x1;
+    private double x2;
+    private double x3;
+    private double x4;
+    private double x5;
+    private double x6;
+    private double x7;
+    private double x8;
     
     private JTextField x1Input;
     private JTextField x2Input;
@@ -70,14 +70,14 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
     private JTextField x7Input;
     private JTextField x8Input;
     
-    private int y1;
-    private int y2;
-    private int y3;
-    private int y4;
-    private int y5;
-    private int y6;
-    private int y7;
-    private int y8;
+    private double y1;
+    private double y2;
+    private double y3;
+    private double y4;
+    private double y5;
+    private double y6;
+    private double y7;
+    private double y8;
     
     private JTextField y1Input;
     private JTextField y2Input;
@@ -88,14 +88,14 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
     private JTextField y7Input;
     private JTextField y8Input;
     
-    private int z1;
-    private int z2;
-    private int z3;
-    private int z4;
-    private int z5;
-    private int z6;
-    private int z7;
-    private int z8;
+    private double z1;
+    private double z2;
+    private double z3;
+    private double z4;
+    private double z5;
+    private double z6;
+    private double z7;
+    private double z8;
     
     private JTextField z1Input;
     private JTextField z2Input;
@@ -196,7 +196,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x1
      */
-    public void setX1(int x1) {
+    public void setX1(double x1) {
         this.x1 = x1;
     }
     
@@ -204,7 +204,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y1
      */
-    public void setY1(int y1) {
+    public void setY1(double y1) {
         this.y1 = y1;
     }
     
@@ -212,7 +212,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z1
      */
-    public void setZ1(int z1) {
+    public void setZ1(double z1) {
         this.z1 = z1;
     }
     
@@ -220,7 +220,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x2
      */
-    public void setX2(int x2) {
+    public void setX2(double x2) {
         this.x2 = x2;
     }
     
@@ -228,7 +228,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y2
      */
-    public void setY2(int y2) {
+    public void setY2(double y2) {
         this.y2 = y2;
     }
     
@@ -236,7 +236,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z2
      */
-    public void setZ2(int z2) {
+    public void setZ2(double z2) {
         this.z2 = z2;
     }
     
@@ -244,7 +244,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x3
      */
-    public void setX3(int x3) {
+    public void setX3(double x3) {
         this.x3 = x3;
     }
     
@@ -252,7 +252,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y3
      */
-    public void setY3(int y3) {
+    public void setY3(double y3) {
         this.y3 = y3;
     }
     
@@ -260,7 +260,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z3
      */
-    public void setZ3(int z3) {
+    public void setZ3(double z3) {
         this.z3 = z3;
     }
     
@@ -268,7 +268,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x4
      */
-    public void setX4(int x4) {
+    public void setX4(double x4) {
         this.x4 = x4;
     }
     
@@ -276,7 +276,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y4
      */
-    public void setY4(int y4) {
+    public void setY4(double y4) {
         this.y4 = y4;
     }
     
@@ -284,7 +284,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z4
      */
-    public void setZ4(int z4) {
+    public void setZ4(double z4) {
         this.z4 = z4;
     }
     
@@ -292,7 +292,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x5
      */
-    public void setX5(int x5) {
+    public void setX5(double x5) {
         this.x5 = x5;
     }
     
@@ -300,7 +300,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y5
      */
-    public void setY5(int y5) {
+    public void setY5(double y5) {
         this.y5 = y5;
     }
     
@@ -308,7 +308,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z5
      */
-    public void setZ5(int z5) {
+    public void setZ5(double z5) {
         this.z5 = z5;
     }
     
@@ -316,7 +316,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x6
      */
-    public void setX6(int x6) {
+    public void setX6(double x6) {
         this.x6 = x6;
     }
     
@@ -324,7 +324,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y6
      */
-    public void setY6(int y6) {
+    public void setY6(double y6) {
         this.y6 = y6;
     }
     
@@ -332,7 +332,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z6
      */
-    public void setZ6(int z6) {
+    public void setZ6(double z6) {
         this.z6 = z6;
     }
     
@@ -340,7 +340,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x7
      */
-    public void setX7(int x7) {
+    public void setX7(double x7) {
         this.x7 = x7;
     }
     
@@ -348,7 +348,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y7
      */
-    public void setY7(int y7) {
+    public void setY7(double y7) {
         this.y7 = y7;
     }
     
@@ -356,7 +356,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z7
      */
-    public void setZ7(int z7) {
+    public void setZ7(double z7) {
         this.z7 = z7;
     }
     
@@ -364,7 +364,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param x8
      */
-    public void setX8(int x8) {
+    public void setX8(double x8) {
         this.x8 = x8;
     }
     
@@ -372,7 +372,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param y8
      */
-    public void setY8(int y8) {
+    public void setY8(double y8) {
         this.y8 = y8;
     }
     
@@ -380,7 +380,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * 
      * @param z8
      */
-    public void setZ8(int z8) {
+    public void setZ8(double z8) {
         this.z8 = z8;
     }
 
@@ -580,221 +580,221 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        setX1(scriptParameters.getParams().getInt("x1_point"));
-        setY1(scriptParameters.getParams().getInt("y1_point"));
-        setZ1(scriptParameters.getParams().getInt("z1_point"));
-        setX2(scriptParameters.getParams().getInt("x2_point"));
-        setY2(scriptParameters.getParams().getInt("y2_point"));
-        setZ2(scriptParameters.getParams().getInt("z2_point"));
-        setX3(scriptParameters.getParams().getInt("x3_point"));
-        setY3(scriptParameters.getParams().getInt("y3_point"));
-        setZ3(scriptParameters.getParams().getInt("z3_point"));
-        setX4(scriptParameters.getParams().getInt("x4_point"));
-        setY4(scriptParameters.getParams().getInt("y4_point"));
-        setZ4(scriptParameters.getParams().getInt("z4_point"));
-        setX5(scriptParameters.getParams().getInt("x5_point"));
-        setY5(scriptParameters.getParams().getInt("y5_point"));
-        setZ5(scriptParameters.getParams().getInt("z5_point"));
-        setX6(scriptParameters.getParams().getInt("x6_point"));
-        setY6(scriptParameters.getParams().getInt("y6_point"));
-        setZ6(scriptParameters.getParams().getInt("z6_point"));
-        setX7(scriptParameters.getParams().getInt("x7_point"));
-        setY7(scriptParameters.getParams().getInt("y7_point"));
-        setZ7(scriptParameters.getParams().getInt("z7_point"));
-        setX8(scriptParameters.getParams().getInt("x8_point"));
-        setY8(scriptParameters.getParams().getInt("y8_point"));
-        setZ8(scriptParameters.getParams().getInt("z8_point"));
+        setX1(scriptParameters.getParams().getDouble("x1_point"));
+        setY1(scriptParameters.getParams().getDouble("y1_point"));
+        setZ1(scriptParameters.getParams().getDouble("z1_point"));
+        setX2(scriptParameters.getParams().getDouble("x2_point"));
+        setY2(scriptParameters.getParams().getDouble("y2_point"));
+        setZ2(scriptParameters.getParams().getDouble("z2_point"));
+        setX3(scriptParameters.getParams().getDouble("x3_point"));
+        setY3(scriptParameters.getParams().getDouble("y3_point"));
+        setZ3(scriptParameters.getParams().getDouble("z3_point"));
+        setX4(scriptParameters.getParams().getDouble("x4_point"));
+        setY4(scriptParameters.getParams().getDouble("y4_point"));
+        setZ4(scriptParameters.getParams().getDouble("z4_point"));
+        setX5(scriptParameters.getParams().getDouble("x5_point"));
+        setY5(scriptParameters.getParams().getDouble("y5_point"));
+        setZ5(scriptParameters.getParams().getDouble("z5_point"));
+        setX6(scriptParameters.getParams().getDouble("x6_point"));
+        setY6(scriptParameters.getParams().getDouble("y6_point"));
+        setZ6(scriptParameters.getParams().getDouble("z6_point"));
+        setX7(scriptParameters.getParams().getDouble("x7_point"));
+        setY7(scriptParameters.getParams().getDouble("y7_point"));
+        setZ7(scriptParameters.getParams().getDouble("z7_point"));
+        setX8(scriptParameters.getParams().getDouble("x8_point"));
+        setY8(scriptParameters.getParams().getDouble("y8_point"));
+        setZ8(scriptParameters.getParams().getDouble("z8_point"));
         
         if (x1 < 0) {
             throw new ParameterException("x1_point", "Cannot have x1 < 0");
         }
         
-        if (x1 >= image.getExtents()[0]) {
-            throw new ParameterException("x1_point", "Cannot have x1 >= image.getExtents()[0]");
+        if (x1 > image.getExtents()[0]-1) {
+            throw new ParameterException("x1_point", "Cannot have x1 > image.getExtents()[0]-1");
         }
         
         if (y1 < 0) {
             throw new ParameterException("y1_point", "Cannot have y1 < 0");
         }
         
-        if (y1 >= image.getExtents()[1]) {
-            throw new ParameterException("y1_point", "Cannot have y1 >= image.getExtents()[1]");
+        if (y1 >= image.getExtents()[1]-1) {
+            throw new ParameterException("y1_point", "Cannot have y1 > image.getExtents()[1]-1");
         }
         
         if (z1 < 0) {
             throw new ParameterException("z1_point", "Cannot have z1 < 0");
         }
         
-        if (z1 >= image.getExtents()[2]) {
-            throw new ParameterException("z1_point", "Cannot have z1 >= image.getExtents()[2]");
+        if (z1 > image.getExtents()[2]-1) {
+            throw new ParameterException("z1_point", "Cannot have z1 > image.getExtents()[2]-1");
         }
         
         if (x2 < 0) {
             throw new ParameterException("x2_point", "Cannot have x2 < 0");
         }
         
-        if (x2 >= image.getExtents()[0]) {
-            throw new ParameterException("x2_point", "Cannot have x2 >= image.getExtents()[0]");
+        if (x2 > image.getExtents()[0]-1) {
+            throw new ParameterException("x2_point", "Cannot have x2 > image.getExtents()[0]-1");
         }
         
         if (y2 < 0) {
             throw new ParameterException("y2_point", "Cannot have y2 < 0");
         }
         
-        if (y2 >= image.getExtents()[1]) {
-            throw new ParameterException("y2_point", "Cannot have y2 >= image.getExtents()[1]");
+        if (y2 > image.getExtents()[1]-1) {
+            throw new ParameterException("y2_point", "Cannot have y2 > image.getExtents()[1]-1");
         }
         
         if (z2 < 0) {
             throw new ParameterException("z2_point", "Cannot have z2 < 0");
         }
         
-        if (z2 >= image.getExtents()[2]) {
-            throw new ParameterException("z2_point", "Cannot have z2 >= image.getExtents()[2]");
+        if (z2 > image.getExtents()[2]-1) {
+            throw new ParameterException("z2_point", "Cannot have z2 > image.getExtents()[2]-1");
         }
         
         if (x3 < 0) {
             throw new ParameterException("x3_point", "Cannot have x3 < 0");
         }
         
-        if (x3 >= image.getExtents()[0]) {
-            throw new ParameterException("x3_point", "Cannot have x3 >= image.getExtents()[0]");
+        if (x3 > image.getExtents()[0]-1) {
+            throw new ParameterException("x3_point", "Cannot have x3 > image.getExtents()[0]-1");
         }
         
         if (y3 < 0) {
             throw new ParameterException("y3_point", "Cannot have y3 < 0");
         }
         
-        if (y3 >= image.getExtents()[1]) {
-            throw new ParameterException("y3_point", "Cannot have y3 >= image.getExtents()[1]");
+        if (y3 > image.getExtents()[1]-1) {
+            throw new ParameterException("y3_point", "Cannot have y3 > image.getExtents()[1]-1");
         }
         
         if (z3 < 0) {
             throw new ParameterException("z3_point", "Cannot have z3 < 0");
         }
         
-        if (z3 >= image.getExtents()[2]) {
-            throw new ParameterException("z3_point", "Cannot have z3 >= image.getExtents()[2]");
+        if (z3 > image.getExtents()[2]-1) {
+            throw new ParameterException("z3_point", "Cannot have z3 > image.getExtents()[2]-1");
         }
         
         if (x4 < 0) {
             throw new ParameterException("x4_point", "Cannot have x4 < 0");
         }
         
-        if (x4 >= image.getExtents()[0]) {
-            throw new ParameterException("x4_point", "Cannot have x4 >= image.getExtents()[0]");
+        if (x4 > image.getExtents()[0]-1) {
+            throw new ParameterException("x4_point", "Cannot have x4 > image.getExtents()[0]-1");
         }
         
         if (y4 < 0) {
             throw new ParameterException("y4_point", "Cannot have y4 < 0");
         }
         
-        if (y4 >= image.getExtents()[1]) {
-            throw new ParameterException("y4_point", "Cannot have y4 >= image.getExtents()[1]");
+        if (y4 > image.getExtents()[1]-1) {
+            throw new ParameterException("y4_point", "Cannot have y4 > image.getExtents()[1]-1");
         }
         
         if (z4 < 0) {
             throw new ParameterException("z4_point", "Cannot have z4 < 0");
         }
         
-        if (z4 >= image.getExtents()[2]) {
-            throw new ParameterException("z4_point", "Cannot have z4 >= image.getExtents()[2]");
+        if (z4 > image.getExtents()[2]-1) {
+            throw new ParameterException("z4_point", "Cannot have z4 > image.getExtents()[2]-1");
         }
         
         if (x5 < 0) {
             throw new ParameterException("x5_point", "Cannot have x5 < 0");
         }
         
-        if (x5 >= image.getExtents()[0]) {
-            throw new ParameterException("x5_point", "Cannot have x5 >= image.getExtents()[0]");
+        if (x5 > image.getExtents()[0]-1) {
+            throw new ParameterException("x5_point", "Cannot have x5 > image.getExtents()[0]-1");
         }
         
         if (y5 < 0) {
             throw new ParameterException("y5_point", "Cannot have y5 < 0");
         }
         
-        if (y5 >= image.getExtents()[1]) {
-            throw new ParameterException("y5_point", "Cannot have y5 >= image.getExtents()[1]");
+        if (y5 > image.getExtents()[1]-1) {
+            throw new ParameterException("y5_point", "Cannot have y5 > image.getExtents()[1]-1");
         }
         
         if (z5 < 0) {
             throw new ParameterException("z5_point", "Cannot have z5 < 0");
         }
         
-        if (z5 >= image.getExtents()[2]) {
-            throw new ParameterException("z5_point", "Cannot have z5 >= image.getExtents()[2]");
+        if (z5 > image.getExtents()[2]-1) {
+            throw new ParameterException("z5_point", "Cannot have z5 > image.getExtents()[2]-1");
         }
         
         if (x6 < 0) {
             throw new ParameterException("x6_point", "Cannot have x6 < 0");
         }
         
-        if (x6 >= image.getExtents()[0]) {
-            throw new ParameterException("x6_point", "Cannot have x6 >= image.getExtents()[0]");
+        if (x6 > image.getExtents()[0]-1) {
+            throw new ParameterException("x6_point", "Cannot have x6 > image.getExtents()[0]-1");
         }
         
         if (y6 < 0) {
             throw new ParameterException("y6_point", "Cannot have y6 < 0");
         }
         
-        if (y6 >= image.getExtents()[1]) {
-            throw new ParameterException("y6_point", "Cannot have y6 >= image.getExtents()[1]");
+        if (y6 > image.getExtents()[1]-1) {
+            throw new ParameterException("y6_point", "Cannot have y6 > image.getExtents()[1]-1");
         }
         
         if (z6 < 0) {
             throw new ParameterException("z6_point", "Cannot have z6 < 0");
         }
         
-        if (z6 >= image.getExtents()[2]) {
-            throw new ParameterException("z6_point", "Cannot have z6 >= image.getExtents()[2]");
+        if (z6 > image.getExtents()[2]-1) {
+            throw new ParameterException("z6_point", "Cannot have z6 > image.getExtents()[2]-1");
         }
         
         if (x7 < 0) {
             throw new ParameterException("x7_point", "Cannot have x7 < 0");
         }
         
-        if (x7 >= image.getExtents()[0]) {
-            throw new ParameterException("x7_point", "Cannot have x7 >= image.getExtents()[0]");
+        if (x7 > image.getExtents()[0]-1) {
+            throw new ParameterException("x7_point", "Cannot have x7 > image.getExtents()[0]-1");
         }
         
         if (y7 < 0) {
             throw new ParameterException("y7_point", "Cannot have y7 < 0");
         }
         
-        if (y7 >= image.getExtents()[1]) {
-            throw new ParameterException("y7_point", "Cannot have y7 >= image.getExtents()[1]");
+        if (y7 > image.getExtents()[1]-1) {
+            throw new ParameterException("y7_point", "Cannot have y7 > image.getExtents()[1]-1");
         }
         
         if (z7 < 0) {
             throw new ParameterException("z7_point", "Cannot have z7 < 0");
         }
         
-        if (z7 >= image.getExtents()[2]) {
-            throw new ParameterException("z7_point", "Cannot have z7 >= image.getExtents()[2]");
+        if (z7 > image.getExtents()[2]-1) {
+            throw new ParameterException("z7_point", "Cannot have z7 > image.getExtents()[2]-1");
         }
         
         if (x8 < 0) {
             throw new ParameterException("x8_point", "Cannot have x8 < 0");
         }
         
-        if (x8 >= image.getExtents()[0]) {
-            throw new ParameterException("x8_point", "Cannot have x8 >= image.getExtents()[0]");
+        if (x8 > image.getExtents()[0]-1) {
+            throw new ParameterException("x8_point", "Cannot have x8 > image.getExtents()[0]-1");
         }
         
         if (y8 < 0) {
             throw new ParameterException("y8_point", "Cannot have y8 < 0");
         }
         
-        if (y8 >= image.getExtents()[1]) {
-            throw new ParameterException("y8_point", "Cannot have y8 >= image.getExtents()[1]");
+        if (y8 > image.getExtents()[1]-1) {
+            throw new ParameterException("y8_point", "Cannot have y8 > image.getExtents()[1]-1");
         }
         
         if (z8 < 0) {
             throw new ParameterException("z8_point", "Cannot have z8 < 0");
         }
         
-        if (z8 >= image.getExtents()[2]) {
-            throw new ParameterException("z8_point", "Cannot have z8 >= image.getExtents()[2]");
+        if (z8 > image.getExtents()[2]-1) {
+            throw new ParameterException("z8_point", "Cannot have z8 > image.getExtents()[2]-1");
         }
     }
 
@@ -863,7 +863,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x1Label, gbc);
         optionPanel.add(x1Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x1Input = new JTextField("0", 4);
+        x1Input = new JTextField("0", 15);
         x1Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x1Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -880,7 +880,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y1Label, gbc);
         optionPanel.add(y1Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y1Input = new JTextField("0", 4);
+        y1Input = new JTextField("0", 15);
         y1Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y1Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -897,7 +897,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z1Label, gbc);
         optionPanel.add(z1Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z1Input = new JTextField("0", 4);
+        z1Input = new JTextField("0", 15);
         z1Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z1Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -914,7 +914,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x2Label, gbc);
         optionPanel.add(x2Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x2Input = new JTextField("0", 4);
+        x2Input = new JTextField("0", 15);
         x2Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x2Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -931,7 +931,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y2Label, gbc);
         optionPanel.add(y2Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y2Input = new JTextField("0", 4);
+        y2Input = new JTextField("0", 15);
         y2Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y2Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -948,7 +948,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z2Label, gbc);
         optionPanel.add(z2Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z2Input = new JTextField("0", 4);
+        z2Input = new JTextField("0", 15);
         z2Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z2Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -965,7 +965,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x3Label, gbc);
         optionPanel.add(x3Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x3Input = new JTextField("0", 4);
+        x3Input = new JTextField("0", 15);
         x3Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x3Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -982,7 +982,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y3Label, gbc);
         optionPanel.add(y3Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y3Input = new JTextField("0", 4);
+        y3Input = new JTextField("0", 15);
         y3Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y3Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -999,7 +999,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z3Label, gbc);
         optionPanel.add(z3Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z3Input = new JTextField("0", 4);
+        z3Input = new JTextField("0", 15);
         z3Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z3Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1016,7 +1016,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x4Label, gbc);
         optionPanel.add(x4Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x4Input = new JTextField("0", 4);
+        x4Input = new JTextField("0", 15);
         x4Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x4Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1033,7 +1033,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y4Label, gbc);
         optionPanel.add(y4Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y4Input = new JTextField("0", 4);
+        y4Input = new JTextField("0", 15);
         y4Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y4Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1050,7 +1050,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z4Label, gbc);
         optionPanel.add(z4Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z4Input = new JTextField("0", 4);
+        z4Input = new JTextField("0", 15);
         z4Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z4Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1067,7 +1067,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x5Label, gbc);
         optionPanel.add(x5Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x5Input = new JTextField("0", 4);
+        x5Input = new JTextField("0", 15);
         x5Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x5Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1084,7 +1084,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y5Label, gbc);
         optionPanel.add(y5Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y5Input = new JTextField("0", 4);
+        y5Input = new JTextField("0", 15);
         y5Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y5Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1101,7 +1101,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z5Label, gbc);
         optionPanel.add(z5Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z5Input = new JTextField("0", 4);
+        z5Input = new JTextField("0", 15);
         z5Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z5Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1118,7 +1118,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x6Label, gbc);
         optionPanel.add(x6Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x6Input = new JTextField("0", 4);
+        x6Input = new JTextField("0", 15);
         x6Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x6Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1135,7 +1135,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y6Label, gbc);
         optionPanel.add(y6Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y6Input = new JTextField("0", 4);
+        y6Input = new JTextField("0", 15);
         y6Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y6Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1152,7 +1152,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z6Label, gbc);
         optionPanel.add(z6Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z6Input = new JTextField("0", 4);
+        z6Input = new JTextField("0", 15);
         z6Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z6Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1169,7 +1169,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x7Label, gbc);
         optionPanel.add(x7Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x7Input = new JTextField("0", 4);
+        x7Input = new JTextField("0", 15);
         x7Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x7Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1186,7 +1186,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y7Label, gbc);
         optionPanel.add(y7Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y7Input = new JTextField("0", 4);
+        y7Input = new JTextField("0", 15);
         y7Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y7Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1203,7 +1203,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z7Label, gbc);
         optionPanel.add(z7Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z7Input = new JTextField("0", 4);
+        z7Input = new JTextField("0", 15);
         z7Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z7Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1220,7 +1220,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(x8Label, gbc);
         optionPanel.add(x8Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x8Input = new JTextField("0", 4);
+        x8Input = new JTextField("0", 15);
         x8Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x8Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1237,7 +1237,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(y8Label, gbc);
         optionPanel.add(y8Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y8Input = new JTextField("0", 4);
+        y8Input = new JTextField("0", 15);
         y8Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y8Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1254,7 +1254,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         gbl.setConstraints(z8Label, gbc);
         optionPanel.add(z8Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        z8Input = new JTextField("0", 4);
+        z8Input = new JTextField("0", 15);
         z8Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(z8Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -1278,30 +1278,30 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
     private boolean setVariables() {
 
         try {
-            x1 = Integer.parseInt(x1Input.getText());
-            y1 = Integer.parseInt(y1Input.getText());
-            z1 = Integer.parseInt(z1Input.getText());
-            x2 = Integer.parseInt(x2Input.getText());
-            y2 = Integer.parseInt(y2Input.getText());
-            z2 = Integer.parseInt(z2Input.getText());
-            x3 = Integer.parseInt(x3Input.getText());
-            y3 = Integer.parseInt(y3Input.getText());
-            z3 = Integer.parseInt(z3Input.getText());
-            x4 = Integer.parseInt(x4Input.getText());
-            y4 = Integer.parseInt(y4Input.getText());
-            z4 = Integer.parseInt(z4Input.getText());
-            x5 = Integer.parseInt(x5Input.getText());
-            y5 = Integer.parseInt(y5Input.getText());
-            z5 = Integer.parseInt(z5Input.getText());
-            x6 = Integer.parseInt(x6Input.getText());
-            y6 = Integer.parseInt(y6Input.getText());
-            z6 = Integer.parseInt(z6Input.getText());
-            x7 = Integer.parseInt(x7Input.getText());
-            y7 = Integer.parseInt(y7Input.getText());
-            z7 = Integer.parseInt(z7Input.getText());
-            x8 = Integer.parseInt(x8Input.getText());
-            y8 = Integer.parseInt(y8Input.getText());
-            z8 = Integer.parseInt(z8Input.getText());
+            x1 = Double.parseDouble(x1Input.getText());
+            y1 = Double.parseDouble(y1Input.getText());
+            z1 = Double.parseDouble(z1Input.getText());
+            x2 = Double.parseDouble(x2Input.getText());
+            y2 = Double.parseDouble(y2Input.getText());
+            z2 = Double.parseDouble(z2Input.getText());
+            x3 = Double.parseDouble(x3Input.getText());
+            y3 = Double.parseDouble(y3Input.getText());
+            z3 = Double.parseDouble(z3Input.getText());
+            x4 = Double.parseDouble(x4Input.getText());
+            y4 = Double.parseDouble(y4Input.getText());
+            z4 = Double.parseDouble(z4Input.getText());
+            x5 = Double.parseDouble(x5Input.getText());
+            y5 = Double.parseDouble(y5Input.getText());
+            z5 = Double.parseDouble(z5Input.getText());
+            x6 = Double.parseDouble(x6Input.getText());
+            y6 = Double.parseDouble(y6Input.getText());
+            z6 = Double.parseDouble(z6Input.getText());
+            x7 = Double.parseDouble(x7Input.getText());
+            y7 = Double.parseDouble(y7Input.getText());
+            z7 = Double.parseDouble(z7Input.getText());
+            x8 = Double.parseDouble(x8Input.getText());
+            y8 = Double.parseDouble(y8Input.getText());
+            z8 = Double.parseDouble(z8Input.getText());
         } catch (NumberFormatException nfe) {
 
             // an empty text-field.  decide which one is empty, then alert the user to correct
@@ -1321,8 +1321,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x1 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X1 >= image.getExtents()[0]");
+        if (x1 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X1 > image.getExtents()[0]-1");
             x1Input.requestFocus();
             x1Input.selectAll();
 
@@ -1337,8 +1337,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y1 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y1 >= image.getExtents()[1]");
+        if (y1 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y1 > image.getExtents()[1]-1");
             y1Input.requestFocus();
             y1Input.selectAll();
 
@@ -1353,8 +1353,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z1 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z1 >= image.getExtents()[2]");
+        if (z1 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z1 > image.getExtents()[2]-1");
             z1Input.requestFocus();
             z1Input.selectAll();
 
@@ -1369,8 +1369,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x2 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X2 >= image.getExtents()[0]");
+        if (x2 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X2 > image.getExtents()[0]-1");
             x2Input.requestFocus();
             x2Input.selectAll();
 
@@ -1385,8 +1385,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y2 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y2 >= image.getExtents()[1]");
+        if (y2 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y2 > image.getExtents()[1]-1");
             y2Input.requestFocus();
             y2Input.selectAll();
 
@@ -1401,8 +1401,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z2 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z2 >= image.getExtents()[2]");
+        if (z2 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z2 > image.getExtents()[2]-1");
             z2Input.requestFocus();
             z2Input.selectAll();
 
@@ -1417,8 +1417,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x3 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X3 >= image.getExtents()[0]");
+        if (x3 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X3 > image.getExtents()[0]-1");
             x3Input.requestFocus();
             x3Input.selectAll();
 
@@ -1433,8 +1433,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y3 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y3 >= image.getExtents()[1]");
+        if (y3 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y3 > image.getExtents()[1]-1");
             y3Input.requestFocus();
             y3Input.selectAll();
 
@@ -1449,8 +1449,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z3 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z3 >= image.getExtents()[2]");
+        if (z3 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z3 > image.getExtents()[2]-1");
             z3Input.requestFocus();
             z3Input.selectAll();
 
@@ -1465,8 +1465,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x4 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X4 >= image.getExtents()[0]");
+        if (x4 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X4 > image.getExtents()[0]-1");
             x4Input.requestFocus();
             x4Input.selectAll();
 
@@ -1481,8 +1481,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y4 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y4 >= image.getExtents()[1]");
+        if (y4 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y4 > image.getExtents()[1]-1");
             y4Input.requestFocus();
             y4Input.selectAll();
 
@@ -1497,8 +1497,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z4 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z4 >= image.getExtents()[2]");
+        if (z4 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z4 > image.getExtents()[2]-1");
             z4Input.requestFocus();
             z4Input.selectAll();
 
@@ -1513,8 +1513,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x5 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X5 >= image.getExtents()[0]");
+        if (x5 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X5 > image.getExtents()[0]-1");
             x5Input.requestFocus();
             x5Input.selectAll();
 
@@ -1529,8 +1529,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y5 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y5 >= image.getExtents()[1]");
+        if (y5 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y5 > image.getExtents()[1]-1");
             y5Input.requestFocus();
             y5Input.selectAll();
 
@@ -1545,8 +1545,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z5 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z5 >= image.getExtents()[2]");
+        if (z5 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z5 > image.getExtents()[2]-1");
             z5Input.requestFocus();
             z5Input.selectAll();
 
@@ -1561,8 +1561,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x6 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X6 >= image.getExtents()[0]");
+        if (x6 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X6 > image.getExtents()[0]-1");
             x6Input.requestFocus();
             x6Input.selectAll();
 
@@ -1577,8 +1577,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y6 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y6 >= image.getExtents()[1]");
+        if (y6 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y6 > image.getExtents()[1]-1");
             y6Input.requestFocus();
             y6Input.selectAll();
 
@@ -1593,8 +1593,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z6 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z6 >= image.getExtents()[2]");
+        if (z6 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z6 > image.getExtents()[2]-1");
             z6Input.requestFocus();
             z6Input.selectAll();
 
@@ -1609,8 +1609,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x7 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X7 >= image.getExtents()[0]");
+        if (x7 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X7 > image.getExtents()[0]-1");
             x7Input.requestFocus();
             x7Input.selectAll();
 
@@ -1625,8 +1625,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y7 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y7 >= image.getExtents()[1]");
+        if (y7 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y7 > image.getExtents()[1]-1");
             y7Input.requestFocus();
             y7Input.selectAll();
 
@@ -1641,8 +1641,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z7 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z7 >= image.getExtents()[2]");
+        if (z7 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z7 > image.getExtents()[2]-1");
             z7Input.requestFocus();
             z7Input.selectAll();
 
@@ -1657,8 +1657,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (x8 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X8 >= image.getExtents()[0]");
+        if (x8 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X8 > image.getExtents()[0]-1");
             x8Input.requestFocus();
             x8Input.selectAll();
 
@@ -1673,8 +1673,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (y8 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y8 >= image.getExtents()[1]");
+        if (y8 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y8 > image.getExtents()[1]-1");
             y8Input.requestFocus();
             y8Input.selectAll();
 
@@ -1689,8 +1689,8 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
             return false;
         }
 
-        if (z8 >= image.getExtents()[2]) {
-            MipavUtil.displayError("Cannot have Z8 >= image.getExtents()[2]");
+        if (z8 > image.getExtents()[2]-1) {
+            MipavUtil.displayError("Cannot have Z8 > image.getExtents()[2]-1");
             z8Input.requestFocus();
             z8Input.selectAll();
 
@@ -1747,30 +1747,30 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
         try {
         	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterInt("x1_point", 0));
-            table.put(new ParameterInt("y1_point", 0));
-            table.put(new ParameterInt("z1_point", 0));
-            table.put(new ParameterInt("x2_point", 0));
-            table.put(new ParameterInt("y2_point", 0));
-            table.put(new ParameterInt("z2_point", 0));
-            table.put(new ParameterInt("x3_point", 0));
-            table.put(new ParameterInt("y3_point", 0));
-            table.put(new ParameterInt("z3_point", 0));
-            table.put(new ParameterInt("x4_point", 0));
-            table.put(new ParameterInt("y4_point", 0));
-            table.put(new ParameterInt("z4_point", 0));
-            table.put(new ParameterInt("x5_point", 0));
-            table.put(new ParameterInt("y5_point", 0));
-            table.put(new ParameterInt("z5_point", 0));
-            table.put(new ParameterInt("x6_point", 0));
-            table.put(new ParameterInt("y6_point", 0));
-            table.put(new ParameterInt("z6_point", 0));
-            table.put(new ParameterInt("x7_point", 0));
-            table.put(new ParameterInt("y7_point", 0));
-            table.put(new ParameterInt("z7_point", 0));
-            table.put(new ParameterInt("x8_point", 0));
-            table.put(new ParameterInt("y8_point", 0));
-            table.put(new ParameterInt("z8_point", 0));
+            table.put(new ParameterDouble("x1_point", 0));
+            table.put(new ParameterDouble("y1_point", 0));
+            table.put(new ParameterDouble("z1_point", 0));
+            table.put(new ParameterDouble("x2_point", 0));
+            table.put(new ParameterDouble("y2_point", 0));
+            table.put(new ParameterDouble("z2_point", 0));
+            table.put(new ParameterDouble("x3_point", 0));
+            table.put(new ParameterDouble("y3_point", 0));
+            table.put(new ParameterDouble("z3_point", 0));
+            table.put(new ParameterDouble("x4_point", 0));
+            table.put(new ParameterDouble("y4_point", 0));
+            table.put(new ParameterDouble("z4_point", 0));
+            table.put(new ParameterDouble("x5_point", 0));
+            table.put(new ParameterDouble("y5_point", 0));
+            table.put(new ParameterDouble("z5_point", 0));
+            table.put(new ParameterDouble("x6_point", 0));
+            table.put(new ParameterDouble("y6_point", 0));
+            table.put(new ParameterDouble("z6_point", 0));
+            table.put(new ParameterDouble("x7_point", 0));
+            table.put(new ParameterDouble("y7_point", 0));
+            table.put(new ParameterDouble("z7_point", 0));
+            table.put(new ParameterDouble("x8_point", 0));
+            table.put(new ParameterDouble("y8_point", 0));
+            table.put(new ParameterDouble("z8_point", 0));
         	} catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
