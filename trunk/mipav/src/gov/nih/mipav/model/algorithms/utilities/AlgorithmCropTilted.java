@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
 
@@ -166,12 +167,20 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	int oXdim = srcImage.getExtents()[0];;
         int oYdim = srcImage.getExtents()[1];
         int oZdim;
-        int units[] = srcImage.getFileInfo()[0].getUnitsOfMeasure();
+        int units[] = srcImage.getUnitsOfMeasure();
+        int xunit = units[0];
+        int yunit = units[1];
+        int zunit;
         boolean doVOI = true;
         boolean doClip = true;
         boolean doPad = false;
         boolean doRotateCenter = false;
         Vector3f center = new Vector3f(0.0f,0.0f,0.0f);
+        if ((xunit != yunit) && (xunit != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (yunit != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
+        	yres = (float)((Unit.getUnitFromLegacyNum(yunit)).
+            		getConversionFactor(Unit.getUnitFromLegacyNum(xunit)) * yres);
+        	units[1] = units[0];
+        }
         AlgorithmTransform algoTrans;
         //i = 107 j = 71 k = 16 X = 108.40897670747673 Y = 71.0000014349817 Z = 17.982873916625977
 		//i = 161 j = 71 k = 16 X = 155.17434463469482 Y = 71.0000014349817 Z = 12.936144828796387
@@ -181,6 +190,34 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 		//i = 161 j = 71 k = 21 X = 168.54934345880704 Y = 71.0000014349817 Z = 17.266271770000458
 		//i = 107 j = 186 k = 21 X = 121.78397553158895 Y = 185.9999958544973 Z = 22.313000857830048
 		//i = 161 j = 186 k = 21 X = 168.54934345880704 Y = 185.9999958544973 Z = 17.266271770000458
+        /*boolean test = true;
+        if (test) {
+        	// For tilted 30 degrees around y
+        	x1 = 108.40897670747673;
+        	y1 = 71.0000014349817;
+        	z1 = 17.982873916625977;
+        	x2 = 155.17434463469482;
+        	y2 = 71.0000014349817;
+        	z2 = 12.936144828796387;
+        	x3 = 155.17434463469482;
+        	y3 = 185.9999958544973;
+        	z3 = 12.936144828796387;
+        	x4 = 108.40897670747673;
+        	y4 = 185.9999958544973;
+        	z4 = 17.98287391662597;
+        	x5 = 121.78397553158895;
+        	y5 = 71.0000014349817;
+        	z5 = 22.313000857830048;
+        	x6 = 168.54934345880704;
+        	y6 = 71.0000014349817;
+        	z6 = 17.266271770000458;
+        	x7 = 168.54934345880704;
+        	y7 = 185.9999958544973;
+        	z7 = 17.26627177000045;
+            x8 = 121.78397553158895;
+            y8 = 185.9999958544973;
+            z8 = 22.313000857830048;
+        }*/
     	
     	if (run2D) {
 	        delx12 = x2 - x1;
@@ -211,15 +248,23 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	else {
     		oZdim = srcImage.getExtents()[2];
     		zres = srcImage.getFileInfo()[0].getResolutions()[2];
+    		zunit = units[2];
+    		 if ((xunit != zunit) && (xunit != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (zunit != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
+    	        	zres = (float)((Unit.getUnitFromLegacyNum(zunit)).
+    	            		getConversionFactor(Unit.getUnitFromLegacyNum(xunit)) * zres);
+    	        	units[2] = units[0];
+    	    }
 	        oZres = zres;
     		delx12 = x2 - x1;
 	    	dely12 = y2 - y1;
 	    	delz12 = z2 - z1;
 	    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres + delz12*delz12*zres*zres)/xres;
+	    	System.out.println("width = " + width);
 	    	delx23 = x3 - x2;
 	    	dely23 = y3 - y2;
 	    	delz23 = z3 - z2;
 	        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres + delz23*delz23*zres*zres)/yres;
+	        System.out.println("height = " + height);
 	        delx15 = x5 - x1;
 	        dely15 = y5 - y1;
 	        delz15 = z5 - z1;
@@ -233,7 +278,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        ratio = ((y1 - y5)*yres)/((z1 - z5)*zres);
 	        thetaX = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaX = " + thetaX);
-	        ratio = ((z1 - z5)*zres)/((x1 - x5)*xres);
+	        ratio = ((x1 - x5)*xres)/((z1 - z5)*zres);
 	        thetaY = (180.0/Math.PI)*Math.atan(ratio);
 	        System.out.println("thetaY = " + thetaY);
 	        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
@@ -242,7 +287,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        xfrm = new TransMatrix(4);
 	        xfrm.identity();
 	        xfrm.setTranslate(xres * xcenter, yres * ycenter, zres * zcenter);
-	        xfrm.setRotate(-thetaX,thetaY,-thetaZ,DEGREES);;
+	        xfrm.setRotate(-thetaX,thetaY,-thetaZ,DEGREES);
 	        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
 	        interp = AlgorithmTransform.TRILINEAR;
 	        
@@ -270,6 +315,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         }
         xBounds[1] = (int)Math.ceil(xcenter + width/2.0);
         if (xBounds[1] > srcImage.getExtents()[0] - 1) {
+        	System.out.println("right = " + xBounds[1]);
         	MipavUtil.displayError("Cannot have right > xDim - 1");
         	setCompleted(false);
         	return;
@@ -338,6 +384,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         }
         AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(rotatedImage, resultImage, xBounds, yBounds, zBounds);
         cropAlgo.run();
+        resultImage.calcMinMax();
         setCompleted(true);    
     }
     
