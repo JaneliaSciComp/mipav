@@ -182,14 +182,19 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         	units[1] = units[0];
         }
         AlgorithmTransform algoTrans;
-        //i = 107 j = 71 k = 16 X = 108.40897670747673 Y = 71.0000014349817 Z = 17.982873916625977
-		//i = 161 j = 71 k = 16 X = 155.17434463469482 Y = 71.0000014349817 Z = 12.936144828796387
-		//i = 107 j = 186 k = 16 X = 108.40897670747673 Y = 185.9999958544973 Z = 17.982873916625977
-		//i = 161 j = 186 k = 16 X = 155.17434463469482 Y = 185.9999958544973 Z = 12.936144828796387
-		//i = 107 j = 71 k = 21 X = 121.78397553158895 Y = 71.0000014349817 Z = 22.313000857830048
-		//i = 161 j = 71 k = 21 X = 168.54934345880704 Y = 71.0000014349817 Z = 17.266271770000458
-		//i = 107 j = 186 k = 21 X = 121.78397553158895 Y = 185.9999958544973 Z = 22.313000857830048
-		//i = 161 j = 186 k = 21 X = 168.54934345880704 Y = 185.9999958544973 Z = 17.266271770000458
+        // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
+        // Record the voxel coordinates of the 8 edge voxels.
+        // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
+        // tilted x 15 degrees, y 15 degrees, z 15 degrees.  Then for each of these reverse the angles of rotation
+        // to get back to the original image.  When reversing the original rotation, use code like the following
+        // in AlgorithmTransform.trilinear(double[], TransMatrix):
+        //if (((i == 107) || (i == 161)) && ((j == 71) || (j == 186)) && ((k == 16) || (k == 21))) {
+        //	System.out.println("i = " + i + " j = " + j + " k = " + k + " X = " + X + " Y = " + Y + " Z = " + Z); 
+        //}
+        // i are the untilted x coordinates, j are the untilted y coordinates, and k are the untilted z coordinates.
+        // X are the tilted x coordinates, Y are the tilted y coordinates, and Z are the tilted Z coordinates.
+        // You can then use code like below to feed in the 24 titled values:
+        
         /*boolean test = true;
         if (test) {
         	// For tilted 30 degrees around y
@@ -218,7 +223,8 @@ public class AlgorithmCropTilted extends AlgorithmBase {
             y8 = 185.9999958544973;
             z8 = 22.313000857830048;
         }*/
-    	
+        // Run AlgorithmCropTilted with these 24 values on a titled image to verify that tilted crop works correctly.
+       
     	if (run2D) {
 	        delx12 = x2 - x1;
 	    	dely12 = y2 - y1;
