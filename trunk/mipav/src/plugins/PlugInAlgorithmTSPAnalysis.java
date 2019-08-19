@@ -27,13 +27,13 @@ import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
 import gov.nih.mipav.model.algorithms.NelderMead;
 import gov.nih.mipav.model.algorithms.Statistics;
-import gov.nih.mipav.model.file.FileAnalyze;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileTypeTable;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -114,6 +114,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private String outputFilePath = null;
     private String outputPrefix = "";
+    
+    private FileIO fileIO = null;
 	
     /**
      * Constructor.
@@ -142,7 +144,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean calculateMaskingThreshold, int masking_threshold,
             double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
-            boolean multiThreading, int search, 
+            boolean multiThreading, int search, boolean calculateCorrelation,
             boolean calculateCBFCBVMTT, boolean calculateBounds) {
         //super(resultImage, srcImg);
         this.pwiImageFileDirectory = pwiImage.getImageDirectory();
@@ -156,6 +158,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         this.autoAIFCalculation = autoAIFCalculation;
         this.multiThreading = multiThreading;
         this.search = search;
+        this.calculateCorrelation = calculateCorrelation;
         this.calculateCBFCBVMTT = calculateCBFCBVMTT;
         this.calculateBounds = calculateBounds;
         //this.fileNameBase = fileNameBase;
@@ -805,14 +808,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         fireProgressStateChanged(70);
     	dbuffer = new double[volume];
     	FileInfoBase fileInfo[];
-    	FileAnalyze analyzeFile;
-    	FileWriteOptions options  = new FileWriteOptions(true);
-    	options.setFileType(FileUtility.ANALYZE);
-        options.setFileDirectory(outputFilePath + File.separator);
-        options.setBeginSlice(0);
-        options.setEndSlice(extents3D[2]-1);
-        options.setOptionsSet(false);
-        options.setSaveAs(true);
+    	
     	if (calculateCorrelation) {
 	    	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
 	    	for (x = 0; x < xDim; x++) {
@@ -836,32 +832,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setUnitsOfMeasure(units3D);
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
+	    	
+	    	saveImageFile(corr_map2Image, outputFilePath, outputPrefix + "corr_map2.img", FileUtility.ANALYZE);
 	        
-	        options.setFileName(outputPrefix + "corr_map2.img");
-	
-	        try { // Construct a new file object
-	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-	            boolean zerofunused = false;
-	            analyzeFile.setZerofunused(zerofunused);
-	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-	            analyzeFile.writeImage(corr_map2Image, options);
-	            analyzeFile.finalize();
-	            analyzeFile = null;
-	        } catch (final IOException error) {
-	
-	            MipavUtil.displayError("IOException on writing corr_map2.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        } catch (final OutOfMemoryError error) {
-	
-	            MipavUtil.displayError("Out of memory error on writing corr_map2.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        }
 	    	corr_map2Image.disposeLocal();
 	    	corr_map2Image = null;
 	    	
@@ -887,31 +860,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setUnitsOfMeasure(units3D);
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
-	        options.setFileName(outputPrefix + "corrmap.img");
-	       
-	        try { // Construct a new file object
-	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-	            boolean zerofunused = false;
-	            analyzeFile.setZerofunused(zerofunused);
-	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-	            analyzeFile.writeImage(corrmapImage, options);
-	            analyzeFile.finalize();
-	            analyzeFile = null;
-	        } catch (final IOException error) {
-	
-	            MipavUtil.displayError("IOException on writing corrmap.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        } catch (final OutOfMemoryError error) {
-	
-	            MipavUtil.displayError("Out of memory error on writing corrmap.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        }
+	    	
+	    	saveImageFile(corrmapImage, outputFilePath, outputPrefix + "corrmap.img", FileUtility.ANALYZE);
+	    	
 	    	corrmapImage.disposeLocal();
 	    	corrmapImage = null;
     	} // if (calculateCorrelation)
@@ -939,31 +890,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
-        options.setFileName(outputPrefix + "peaks_map.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(peaks_mapImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
+    	
+    	saveImageFile(peaks_mapImage, outputFilePath, outputPrefix + "peaks_map.img", FileUtility.ANALYZE);
 
-            MipavUtil.displayError("IOException on writing peaks_map.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing peaks_map.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
     	peaks_mapImage.disposeLocal();
     	peaks_mapImage = null;
     	
@@ -989,31 +918,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName(outputPrefix + "delay_map.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(delay_mapImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing delay_map.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing delay_map.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
+    	
+    	saveImageFile(delay_mapImage, outputFilePath, outputPrefix + "delay_map.img", FileUtility.ANALYZE);
+    	
     	delay_mapImage.disposeLocal();
     	delay_mapImage = null;
     	
@@ -1553,31 +1460,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setUnitsOfMeasure(units3D);
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
-	        options.setFileName(outputPrefix + "CBF.img");
-	       
-	        try { // Construct a new file object
-	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-	            boolean zerofunused = false;
-	            analyzeFile.setZerofunused(zerofunused);
-	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-	            analyzeFile.writeImage(CBFImage, options);
-	            analyzeFile.finalize();
-	            analyzeFile = null;
-	        } catch (final IOException error) {
-	
-	            MipavUtil.displayError("IOException on writing CBF.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        } catch (final OutOfMemoryError error) {
-	
-	            MipavUtil.displayError("Out of memory error on writing CBF.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        }
+	    	
+	    	saveImageFile(CBFImage, outputFilePath, outputPrefix + "CBF.img", FileUtility.ANALYZE);
+	        
 	    	CBFImage.disposeLocal();
 	    	CBFImage = null;
 	    	
@@ -1603,31 +1488,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setUnitsOfMeasure(units3D);
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
-	        options.setFileName(outputPrefix + "MTT.img");
-	       
-	        try { // Construct a new file object
-	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-	            boolean zerofunused = false;
-	            analyzeFile.setZerofunused(zerofunused);
-	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-	            analyzeFile.writeImage(MTTImage, options);
-	            analyzeFile.finalize();
-	            analyzeFile = null;
-	        } catch (final IOException error) {
-	
-	            MipavUtil.displayError("IOException on writing MTT.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        } catch (final OutOfMemoryError error) {
-	
-	            MipavUtil.displayError("Out of memory error on writing MTT.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        }
+	    	
+	    	saveImageFile(MTTImage, outputFilePath, outputPrefix + "MTT.img", FileUtility.ANALYZE);
+	        
 	//    	MTTImage.disposeLocal();
 	//    	MTTImage = null;
 	    	
@@ -1653,31 +1516,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setUnitsOfMeasure(units3D);
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
-	        options.setFileName(outputPrefix + "CBV.img");
-	       
-	        try { // Construct a new file object
-	            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-	            boolean zerofunused = false;
-	            analyzeFile.setZerofunused(zerofunused);
-	            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-	            analyzeFile.writeImage(CBVImage, options);
-	            analyzeFile.finalize();
-	            analyzeFile = null;
-	        } catch (final IOException error) {
-	
-	            MipavUtil.displayError("IOException on writing CBV.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        } catch (final OutOfMemoryError error) {
-	
-	            MipavUtil.displayError("Out of memory error on writing CBV.img");
-	
-	            error.printStackTrace();
-	            setCompleted(false);
-	            return;
-	        }
+	        
+	    	
+	    	saveImageFile(CBVImage, outputFilePath, outputPrefix + "CBV.img", FileUtility.ANALYZE);
+	    	
 	    	CBVImage.disposeLocal();
 	    	CBVImage = null;
         } // if (calculateCBFCBVMTT)
@@ -1705,31 +1547,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
-        options.setFileName(outputPrefix + "Tmax.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(TmaxImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing Tmax.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing Tmax.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
+    	
+    	saveImageFile(TmaxImage, outputFilePath, outputPrefix + "Tmax.img", FileUtility.ANALYZE);
+    	
 //    	TmaxImage.disposeLocal();
 //    	TmaxImage = null;
     	
@@ -1755,31 +1575,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setUnitsOfMeasure(units3D);
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
-        options.setFileName(outputPrefix + "TTP.img");
-       
-        try { // Construct a new file object
-            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            boolean zerofunused = false;
-            analyzeFile.setZerofunused(zerofunused);
-            //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-            analyzeFile.writeImage(TTPImage, options);
-            analyzeFile.finalize();
-            analyzeFile = null;
-        } catch (final IOException error) {
-
-            MipavUtil.displayError("IOException on writing TTP.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        } catch (final OutOfMemoryError error) {
-
-            MipavUtil.displayError("Out of memory error on writing TTP.img");
-
-            error.printStackTrace();
-            setCompleted(false);
-            return;
-        }
+    	
+    	saveImageFile(TTPImage, outputFilePath, outputPrefix + "TTP.img", FileUtility.ANALYZE);
+    	
     	TTPImage.disposeLocal();
     	TTPImage = null;
     	
@@ -1806,31 +1604,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		fileInfo[i].setUnitsOfMeasure(units3D);
         		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
         	}
-            options.setFileName("p0MaxDist.img");
-           
-            try { // Construct a new file object
-                analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-                boolean zerofunused = false;
-                analyzeFile.setZerofunused(zerofunused);
-                //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-                analyzeFile.writeImage(p0MaxDistImage, options);
-                analyzeFile.finalize();
-                analyzeFile = null;
-            } catch (final IOException error) {
+        	
+        	saveImageFile(p0MaxDistImage, outputFilePath, outputPrefix + "p0MaxDist.img", FileUtility.ANALYZE);
 
-                MipavUtil.displayError("IOException on writing p0MaxDist.img");
-
-                error.printStackTrace();
-                setCompleted(false);
-                return;
-            } catch (final OutOfMemoryError error) {
-
-                MipavUtil.displayError("Out of memory error on writing p0MaxDist.img");
-
-                error.printStackTrace();
-                setCompleted(false);
-                return;
-            }
         	p0MaxDistImage.disposeLocal();
         	p0MaxDistImage = null;
         	
@@ -1857,31 +1633,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		fileInfo[i].setUnitsOfMeasure(units3D);
         		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
         	}
-            options.setFileName("p1MaxDist.img");
-           
-            try { // Construct a new file object
-                analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-                boolean zerofunused = false;
-                analyzeFile.setZerofunused(zerofunused);
-                //createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
-                analyzeFile.writeImage(p1MaxDistImage, options);
-                analyzeFile.finalize();
-                analyzeFile = null;
-            } catch (final IOException error) {
+        	
+        	saveImageFile(p1MaxDistImage, outputFilePath, outputPrefix + "p1MaxDist.img", FileUtility.ANALYZE);
 
-                MipavUtil.displayError("IOException on writing p1MaxDist.img");
-
-                error.printStackTrace();
-                setCompleted(false);
-                return;
-            } catch (final OutOfMemoryError error) {
-
-                MipavUtil.displayError("Out of memory error on writing p1MaxDist.img");
-
-                error.printStackTrace();
-                setCompleted(false);
-                return;
-            }
         	p1MaxDistImage.disposeLocal();
         	p1MaxDistImage = null;
     	} // if (calculateBounds)
@@ -3310,5 +3064,41 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     public void setOutputPrefix(String prefix) {
         outputPrefix = prefix;
+    }
+    
+    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
+        if (fileIO == null) {
+            fileIO = new FileIO();
+            fileIO.setQuiet(true);
+        }
+        
+        // if no directory specified, skip writing out images
+        if (dir == null) {
+        	return null;
+        }
+        
+        FileWriteOptions opts = new FileWriteOptions(true);
+        opts.setFileDirectory(dir);
+
+        if (img.getNDims() == 3) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(img.getExtents()[2] - 1);
+        } else if (img.getNDims() == 4) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(img.getExtents()[2] - 1);
+            opts.setBeginTime(0);
+            opts.setEndTime(img.getExtents()[3] - 1);
+        }
+
+        opts.setFileType(fileType);
+        final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
+        opts.setFileName(fileBasename + ext);
+
+        opts.setOptionsSet(true);
+        opts.setMultiFile(false);
+        
+        fileIO.writeImage(img, opts, false, false);
+        
+        return new File(dir + File.separator + fileBasename + ext);
     }
 }
