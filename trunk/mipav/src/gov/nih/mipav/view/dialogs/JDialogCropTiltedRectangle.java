@@ -48,20 +48,20 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
     
-    private int x1;
-    private int x2;
-    private int x3;
-    private int x4;
+    private double x1;
+    private double x2;
+    private double x3;
+    private double x4;
     
     private JTextField x1Input;
     private JTextField x2Input;
     private JTextField x3Input;
     private JTextField x4Input;
     
-    private int y1;
-    private int y2;
-    private int y3;
-    private int y4;
+    private double y1;
+    private double y2;
+    private double y3;
+    private double y4;
     
     private JTextField y1Input;
     private JTextField y2Input;
@@ -158,7 +158,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param x1
      */
-    public void setX1(int x1) {
+    public void setX1(double x1) {
         this.x1 = x1;
     }
     
@@ -166,7 +166,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param y1
      */
-    public void setY1(int y1) {
+    public void setY1(double y1) {
         this.y1 = y1;
     }
     
@@ -174,7 +174,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param x2
      */
-    public void setX2(int x2) {
+    public void setX2(double x2) {
         this.x2 = x2;
     }
     
@@ -182,7 +182,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param y2
      */
-    public void setY2(int y2) {
+    public void setY2(double y2) {
         this.y2 = y2;
     }
     
@@ -190,7 +190,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param x3
      */
-    public void setX3(int x3) {
+    public void setX3(double x3) {
         this.x3 = x3;
     }
     
@@ -198,7 +198,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param y3
      */
-    public void setY3(int y3) {
+    public void setY3(double y3) {
         this.y3 = y3;
     }
     
@@ -206,7 +206,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param x4
      */
-    public void setX4(int x4) {
+    public void setX4(double x4) {
         this.x4 = x4;
     }
     
@@ -214,7 +214,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * 
      * @param y4
      */
-    public void setY4(int y4) {
+    public void setY4(double y4) {
         this.y4 = y4;
     }
 
@@ -333,77 +333,77 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        setX1(scriptParameters.getParams().getInt("x1_point"));
-        setY1(scriptParameters.getParams().getInt("y1_point"));
-        setX2(scriptParameters.getParams().getInt("x2_point"));
-        setY2(scriptParameters.getParams().getInt("y2_point"));
-        setX3(scriptParameters.getParams().getInt("x3_point"));
-        setY3(scriptParameters.getParams().getInt("y3_point"));
-        setX4(scriptParameters.getParams().getInt("x4_point"));
-        setY4(scriptParameters.getParams().getInt("y4_point"));
+        setX1(scriptParameters.getParams().getDouble("x1_point"));
+        setY1(scriptParameters.getParams().getDouble("y1_point"));
+        setX2(scriptParameters.getParams().getDouble("x2_point"));
+        setY2(scriptParameters.getParams().getDouble("y2_point"));
+        setX3(scriptParameters.getParams().getDouble("x3_point"));
+        setY3(scriptParameters.getParams().getDouble("y3_point"));
+        setX4(scriptParameters.getParams().getDouble("x4_point"));
+        setY4(scriptParameters.getParams().getDouble("y4_point"));
         
         if (x1 < 0) {
             throw new ParameterException("x1_point", "Cannot have x1 < 0");
         }
         
-        if (x1 >= image.getExtents()[0]) {
-            throw new ParameterException("x1_point", "Cannot have x1 >= image.getExtents()[0]");
+        if (x1 > image.getExtents()[0]-1) {
+            throw new ParameterException("x1_point", "Cannot have x1 > image.getExtents()[0]-1");
         }
         
         if (y1 < 0) {
             throw new ParameterException("y1_point", "Cannot have y1 < 0");
         }
         
-        if (y1 >= image.getExtents()[1]) {
-            throw new ParameterException("y1_point", "Cannot have y1 >= image.getExtents()[1]");
+        if (y1 > image.getExtents()[1]-1) {
+            throw new ParameterException("y1_point", "Cannot have y1 > image.getExtents()[1]-1");
         }
         
         if (x2 < 0) {
             throw new ParameterException("x2_point", "Cannot have x2 < 0");
         }
         
-        if (x2 >= image.getExtents()[0]) {
-            throw new ParameterException("x2_point", "Cannot have x2 >= image.getExtents()[0]");
+        if (x2 > image.getExtents()[0]-1) {
+            throw new ParameterException("x2_point", "Cannot have x2 > image.getExtents()[0]-1");
         }
         
         if (y2 < 0) {
             throw new ParameterException("y2_point", "Cannot have y2 < 0");
         }
         
-        if (y2 >= image.getExtents()[1]) {
-            throw new ParameterException("y2_point", "Cannot have y2 >= image.getExtents()[1]");
+        if (y2 > image.getExtents()[1]-1) {
+            throw new ParameterException("y2_point", "Cannot have y2 > image.getExtents()[1]-1");
         }
         
         if (x3 < 0) {
             throw new ParameterException("x3_point", "Cannot have x3 < 0");
         }
         
-        if (x3 >= image.getExtents()[0]) {
-            throw new ParameterException("x3_point", "Cannot have x3 >= image.getExtents()[0]");
+        if (x3 > image.getExtents()[0]-1) {
+            throw new ParameterException("x3_point", "Cannot have x3 > image.getExtents()[0]-1");
         }
         
         if (y3 < 0) {
             throw new ParameterException("y3_point", "Cannot have y3 < 0");
         }
         
-        if (y3 >= image.getExtents()[1]) {
-            throw new ParameterException("y3_point", "Cannot have y3 >= image.getExtents()[1]");
+        if (y3 > image.getExtents()[1]-1) {
+            throw new ParameterException("y3_point", "Cannot have y3 > image.getExtents()[1]-1");
         }
         
         if (x4 < 0) {
             throw new ParameterException("x4_point", "Cannot have x4 < 0");
         }
         
-        if (x4 >= image.getExtents()[0]) {
-            throw new ParameterException("x4_point", "Cannot have x4 >= image.getExtents()[0]");
+        if (x4 > image.getExtents()[0]-1) {
+            throw new ParameterException("x4_point", "Cannot have x4 > image.getExtents()[0]-1");
         }
         
         if (y4 < 0) {
             throw new ParameterException("y4_point", "Cannot have y4 < 0");
         }
         
-        if (y4 >= image.getExtents()[1]) {
-            throw new ParameterException("y4_point", "Cannot have y4 >= image.getExtents()[1]");
+        if (y4 >= image.getExtents()[1]-1) {
+            throw new ParameterException("y4_point", "Cannot have y4 > image.getExtents()[1]-1");
         }
     }
 
@@ -456,7 +456,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(x1Label, gbc);
         optionPanel.add(x1Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x1Input = new JTextField("0", 4);
+        x1Input = new JTextField("0", 15);
         x1Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x1Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -473,7 +473,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(y1Label, gbc);
         optionPanel.add(y1Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y1Input = new JTextField("0", 4);
+        y1Input = new JTextField("0", 15);
         y1Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y1Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -490,7 +490,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(x2Label, gbc);
         optionPanel.add(x2Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x2Input = new JTextField("0", 4);
+        x2Input = new JTextField("0", 15);
         x2Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x2Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -507,7 +507,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(y2Label, gbc);
         optionPanel.add(y2Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y2Input = new JTextField("0", 4);
+        y2Input = new JTextField("0", 15);
         y2Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y2Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -524,7 +524,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(x3Label, gbc);
         optionPanel.add(x3Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x3Input = new JTextField("0", 4);
+        x3Input = new JTextField("0", 15);
         x3Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x3Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -541,7 +541,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(y3Label, gbc);
         optionPanel.add(y3Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y3Input = new JTextField("0", 4);
+        y3Input = new JTextField("0", 15);
         y3Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y3Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -558,7 +558,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(x4Label, gbc);
         optionPanel.add(x4Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        x4Input = new JTextField("0", 4);
+        x4Input = new JTextField("0", 15);
         x4Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(x4Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -575,7 +575,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbl.setConstraints(y4Label, gbc);
         optionPanel.add(y4Label);
         optionPanel.add(Box.createHorizontalStrut(10));
-        y4Input = new JTextField("0", 4);
+        y4Input = new JTextField("0", 15);
         y4Input.addActionListener(this);
         MipavUtil.makeNumericsOnly(y4Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -601,14 +601,14 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
     private boolean setVariables() {
 
         try {
-            x1 = Integer.parseInt(x1Input.getText());
-            y1 = Integer.parseInt(y1Input.getText());
-            x2 = Integer.parseInt(x2Input.getText());
-            y2 = Integer.parseInt(y2Input.getText());
-            x3 = Integer.parseInt(x3Input.getText());
-            y3 = Integer.parseInt(y3Input.getText());
-            x4 = Integer.parseInt(x4Input.getText());
-            y4 = Integer.parseInt(y4Input.getText());
+            x1 = Double.parseDouble(x1Input.getText());
+            y1 = Double.parseDouble(y1Input.getText());
+            x2 = Double.parseDouble(x2Input.getText());
+            y2 = Double.parseDouble(y2Input.getText());
+            x3 = Double.parseDouble(x3Input.getText());
+            y3 = Double.parseDouble(y3Input.getText());
+            x4 = Double.parseDouble(x4Input.getText());
+            y4 = Double.parseDouble(y4Input.getText());
         } catch (NumberFormatException nfe) {
 
             // an empty text-field.  decide which one is empty, then alert the user to correct
@@ -628,8 +628,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (x1 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X1 point >= image.getExtents()[0]");
+        if (x1 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X1 point > image.getExtents()[0]-1");
             x1Input.requestFocus();
             x1Input.selectAll();
 
@@ -644,8 +644,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (y1 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y1 point >= image.getExtents()[1]");
+        if (y1 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y1 point > image.getExtents()[1]-1");
             y1Input.requestFocus();
             y1Input.selectAll();
 
@@ -660,8 +660,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (x2 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X2 point >= image.getExtents()[0]");
+        if (x2 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X2 point > image.getExtents()[0]-1");
             x2Input.requestFocus();
             x2Input.selectAll();
 
@@ -676,8 +676,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (y2 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y2 point >= image.getExtents()[1]");
+        if (y2 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y2 point > image.getExtents()[1]-1");
             y2Input.requestFocus();
             y2Input.selectAll();
 
@@ -692,8 +692,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (x3 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X3 point >= image.getExtents()[0]");
+        if (x3 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X3 point > image.getExtents()[0]-1");
             x3Input.requestFocus();
             x3Input.selectAll();
 
@@ -708,8 +708,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (y3 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y3 point >= image.getExtents()[1]");
+        if (y3 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y3 point > image.getExtents()[1]-1");
             y3Input.requestFocus();
             y3Input.selectAll();
 
@@ -724,8 +724,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (x4 >= image.getExtents()[0]) {
-            MipavUtil.displayError("Cannot have X4 point >= image.getExtents()[0]");
+        if (x4 > image.getExtents()[0]-1) {
+            MipavUtil.displayError("Cannot have X4 point > image.getExtents()[0]-1");
             x4Input.requestFocus();
             x4Input.selectAll();
 
@@ -740,8 +740,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
             return false;
         }
 
-        if (y4 >= image.getExtents()[1]) {
-            MipavUtil.displayError("Cannot have Y4 point >= image.getExtents()[1]");
+        if (y4 > image.getExtents()[1]-1) {
+            MipavUtil.displayError("Cannot have Y4 point > image.getExtents()[1]-1");
             y4Input.requestFocus();
             y4Input.selectAll();
 
@@ -797,14 +797,14 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         try {
         	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterInt("x1_point", 0));
-            table.put(new ParameterInt("y1_point", 0));
-            table.put(new ParameterInt("x2_point", 0));
-            table.put(new ParameterInt("y2_point", 0));
-            table.put(new ParameterInt("x3_point", 0));
-            table.put(new ParameterInt("y3_point", 0));
-            table.put(new ParameterInt("x4_point", 0));
-            table.put(new ParameterInt("y4_point", 0));
+            table.put(new ParameterDouble("x1_point", 0));
+            table.put(new ParameterDouble("y1_point", 0));
+            table.put(new ParameterDouble("x2_point", 0));
+            table.put(new ParameterDouble("y2_point", 0));
+            table.put(new ParameterDouble("x3_point", 0));
+            table.put(new ParameterDouble("y3_point", 0));
+            table.put(new ParameterDouble("x4_point", 0));
+            table.put(new ParameterDouble("y4_point", 0));
         	} catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
