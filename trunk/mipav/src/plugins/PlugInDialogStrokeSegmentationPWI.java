@@ -103,6 +103,18 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private boolean requireMinCoreSize = true;
     private float minCoreSizeCC = 0.2f;
     
+    private JCheckBox pwiMultithreadCheckbox;
+    private boolean doPwiMultithread = true;
+    
+    private JCheckBox pwiCalcCorrMapCheckbox;
+    private boolean doPwiCalcCorrMap = false;
+    
+    private JCheckBox pwiCalcCBFCBVMTTCheckbox;
+    private boolean doPwiCalcCBFCBVMTT = false;
+    
+    private JCheckBox pwiSaveOutputFilesCheckbox;
+    private boolean doPwiSaveOutputFiles = false;
+    
     private PlugInAlgorithmStrokeSegmentationPWI segAlgo = null;
     
     private boolean isDicomListenerRun = false;
@@ -397,6 +409,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         doSelectAdditionalObj = selectAdditionalObjCheckbox.isSelected();
         selectAdditionalObjPct = Integer.parseInt(selectAdditionalObjPctField.getText());
         
+        doPwiMultithread = pwiMultithreadCheckbox.isSelected();
+        doPwiCalcCorrMap = pwiCalcCorrMapCheckbox.isSelected();
+        doPwiCalcCBFCBVMTT = pwiCalcCBFCBVMTTCheckbox.isSelected();
+        doPwiSaveOutputFiles = pwiSaveOutputFilesCheckbox.isSelected();
+        
         return true;
     }
 
@@ -408,7 +425,9 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
 
         try {
             // TODO
-            segAlgo = new PlugInAlgorithmStrokeSegmentationPWI(dwiImage, adcImage, pwiImage, adcThreshold, doFilter, doCerebellumSkip, cerebellumSkipSliceMax, doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, requireMinCoreSize, minCoreSizeCC, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentationPWI(dwiImage, adcImage, pwiImage, adcThreshold, doFilter, doCerebellumSkip, cerebellumSkipSliceMax, 
+            		doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, 
+            		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -479,6 +498,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         requireMinCoreSize = scriptParameters.getParams().getBoolean("do_require_min_core_size");
         minCoreSizeCC = scriptParameters.getParams().getFloat("min_core_size_cc");
         
+        doPwiMultithread = scriptParameters.getParams().getBoolean("do_pwi_multithread");
+        doPwiCalcCorrMap = scriptParameters.getParams().getBoolean("do_pwi_calc_corr_map");
+        doPwiCalcCBFCBVMTT = scriptParameters.getParams().getBoolean("do_pwi_calc_cbf_cbv_mtt");
+        doPwiSaveOutputFiles = scriptParameters.getParams().getBoolean("do_pwi_save_output_files");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -500,6 +524,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         scriptParameters.getParams().put(ParameterFactory.newParameter("select_additional_objs_percent", selectAdditionalObjPct));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_require_min_core_size", requireMinCoreSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_core_size_cc", minCoreSizeCC));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_multithread", doPwiMultithread));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_calc_corr_map", doPwiCalcCorrMap));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_calc_cbf_cbv_mtt", doPwiCalcCBFCBVMTT));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_save_output_files", doPwiSaveOutputFiles));
     }
     
     /**
@@ -668,9 +697,6 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         gbc.gridx++;
         mainPanel.add(selectAdditionalObjPctField, gbc);
         
-        ;
-        ;
-        
         gbc.gridy++;
         gbc.gridx = 0;
         
@@ -686,6 +712,46 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(minCoreSizeCCField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        pwiMultithreadCheckbox = new JCheckBox("Enable PWI multi-threaded TSP processing", doPwiMultithread);
+        pwiMultithreadCheckbox.setForeground(Color.black);
+        pwiMultithreadCheckbox.setFont(serif12);
+        mainPanel.add(pwiMultithreadCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        pwiCalcCorrMapCheckbox = new JCheckBox("Calculate PWI correlation maps", doPwiCalcCorrMap);
+        pwiCalcCorrMapCheckbox.setForeground(Color.black);
+        pwiCalcCorrMapCheckbox.setFont(serif12);
+        mainPanel.add(pwiCalcCorrMapCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        pwiCalcCBFCBVMTTCheckbox = new JCheckBox("Calculate PWI CBF, CBV, and MTT", doPwiCalcCBFCBVMTT);
+        pwiCalcCBFCBVMTTCheckbox.setForeground(Color.black);
+        pwiCalcCBFCBVMTTCheckbox.setFont(serif12);
+        mainPanel.add(pwiCalcCBFCBVMTTCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        pwiSaveOutputFilesCheckbox = new JCheckBox("Save all PWI TSP algorithm output volumes", doPwiSaveOutputFiles);
+        pwiSaveOutputFilesCheckbox.setForeground(Color.black);
+        pwiSaveOutputFilesCheckbox.setFont(serif12);
+        mainPanel.add(pwiSaveOutputFilesCheckbox, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
