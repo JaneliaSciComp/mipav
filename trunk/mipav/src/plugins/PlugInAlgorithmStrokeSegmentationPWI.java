@@ -111,13 +111,21 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private float coreSelectionDistWeight = 1f;
     private float coreSelectionSizeWeight = 1 - coreSelectionDistWeight;
     
+    boolean doPwiMultiThreading = true;
+    boolean doPwiCalculateCorrelation = false;
+    boolean doPwiCalculateCBFCBVMTT = false;
+    boolean doPwiSaveOutputs = false;
+    
     /**
      * Constructor.
      *
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentationPWI(ModelImage dwi, ModelImage adc, ModelImage pwi, int threshold, boolean anisoFilter, boolean cerebellumSkip, int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj, int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentationPWI(ModelImage dwi, ModelImage adc, ModelImage pwi, int threshold, boolean anisoFilter, boolean cerebellumSkip,
+    		int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj,
+    		int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir, boolean pwiMultiThreading, boolean pwiCalculateCorrelation,
+    		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs) {
         super();
         
         dwiImage = dwi;
@@ -143,6 +151,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         minCoreSizeCC = minCoreSize;
         
         coreOutputDir = outputDir;
+        
+        doPwiMultiThreading = pwiMultiThreading;
+        doPwiCalculateCorrelation = pwiCalculateCorrelation;
+        doPwiCalculateCBFCBVMTT = pwiCalculateCorrelation;
+        doPwiSaveOutputs = pwiCalculateCorrelation;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
     }
@@ -1724,18 +1737,18 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         int TSP_iter = 4;
         double Psvd = 0.1;
         boolean autoAIFCalculation = true;
-        boolean multiThreading = true;
-        boolean calculateCorrelation = false;
-        boolean calculateCBFCBVMTT = false;
         boolean calculateBounds = false;
         
         int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
         
         PlugInAlgorithmTSPAnalysis tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, calculateMaskingThreshold, masking_threshold,
-                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateCorrelation, calculateCBFCBVMTT, calculateBounds);
+                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, doPwiMultiThreading, search, doPwiCalculateCorrelation, doPwiCalculateCBFCBVMTT, calculateBounds);
         
-        tspAlgo.setOutputFilePath(null);
-        //tspAlgo.setOutputFilePath(coreOutputDir);
+        if (doPwiSaveOutputs) {
+        	tspAlgo.setOutputFilePath(coreOutputDir);
+        } else {
+        	tspAlgo.setOutputFilePath(null);
+        }
         tspAlgo.setOutputPrefix(new File(coreOutputDir).getName() + "_" + outputLabel + "_PWI_");
         
         linkProgressToAlgorithm(tspAlgo);
