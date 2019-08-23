@@ -127,9 +127,9 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     
     private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
     
-    private static final String adcFileStub = "Baseline_ADC";
-    private static final String dwiFileStub = "Baseline_DWI";
-    private static final String pwiFileStub = "Baseline_PWI";
+    private static final String adcFileStub = "ADC";
+    private static final String dwiFileStub = "DWI";
+    private static final String pwiFileStub = "PWI";
     
     private static final String PREF_PLUGIN_STROKE_SEG_LAST_DIR = "PlugInStrokeSegLastDir";
     private static final String PREF_PLUGIN_STROKE_SEG_LAST_ADC = "PlugInStrokeSegLastADC";
@@ -758,7 +758,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         
         gbc.gridwidth = 3;
         
-        dirMethodRadio = new JRadioButton("Select directory with Baseline_ADC and Baseline_DWI files/subdirectories");
+        dirMethodRadio = new JRadioButton("Select directory with ADC, DWI, and PWI files/subdirectories");
         dirMethodRadio.setForeground(Color.black);
         dirMethodRadio.setFont(serif12);
         dirMethodRadio.setActionCommand("DirMethod");
@@ -1060,7 +1060,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
                         adcImageMultifile = true;
                         foundADC = true;
                     }
-                } else if (file.getName().endsWith(".img")) {
+                } else {
                     adcPath = file.getAbsolutePath();
                     foundADC = true;
                 }
@@ -1072,7 +1072,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
                         dwiImageMultifile = true;
                         foundDWI = true;
                     }
-                } else if (file.getName().endsWith(".img")) {
+                } else {
                     dwiPath = file.getAbsolutePath();
                     foundDWI = true;
                 }
@@ -1084,7 +1084,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
                         pwiImageMultifile = true;
                         foundPWI = true;
                     }
-                } else if (file.getName().endsWith(".img")) {
+                } else {
                     pwiPath = file.getAbsolutePath();
                     foundPWI = true;
                 }

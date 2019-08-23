@@ -3,7 +3,6 @@ import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmAnisotropicDiffusion;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -39,6 +38,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
     private ModelImage skullMaskImg = null;
     
+    private ModelImage pwiBrainMaskImg = null;
+    
     private int adcThreshold;
     
     private boolean doFilter;
@@ -60,6 +61,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private boolean doSkullRemoval;
     
     private int skullRemovalMaskThreshold = 70;
+    
+    private int ventricalRemovalMaskThreshold = 95;
     
     private int threshCloseIter;
     
@@ -219,6 +222,73 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     }
                 }
                 
+                // get largest object after ventrical threshold (+some dilation) and save it for later pwi masking
+                pwiBrainMaskImg = new ModelImage(ModelStorageBase.BOOLEAN, dwiImage.getExtents(), "pwi_brain_mask");
+                for (int i = 0; i < pwiBrainMaskImg.getExtents()[2]; i++) {
+                	pwiBrainMaskImg.setFileInfo(fInfo, i);
+                }
+                
+                for (int i = 0; i < volLength; i++) {
+                    if (dwiImage.getInt(i) > ventricalRemovalMaskThreshold) {
+                    	pwiBrainMaskImg.set(i, 1);
+                    } else {
+                    	pwiBrainMaskImg.set(i, 0);
+                    }
+                }
+                
+                
+                short[] maskBuffer = new short[volLength];
+                short[] processBuffer = new short[volLength];
+                try {
+                	pwiBrainMaskImg.exportData(0, volLength, maskBuffer);
+                } catch (IOException error) {
+                    if (segImg != null) {
+                        segImg.disposeLocal();
+                        segImg = null;
+                    }
+                    
+                    maskBuffer = null;
+                    displayError("Error on brain mask export: " + skullMaskImg.getImageName());
+                    setCompleted(false);
+                    return;
+                }
+                
+                MaskObject[] objects = findObjects(skullMaskImg, maskBuffer, processBuffer, 100, 10000000);
+                
+                if (objects.length > 0) {
+                    MaskObject largest = objects[objects.length - 1];
+                    for (int i = 0; i < processBuffer.length; i++) {
+                        if (processBuffer[i] == largest.id) {
+                            maskBuffer[i] = 1;
+                        } else {
+                            maskBuffer[i] = 0;
+                        }
+                    }
+                }
+                
+                try {
+                	pwiBrainMaskImg.importData(0, maskBuffer, true);
+                } catch (IOException error) {
+                    if (segImg != null) {
+                        segImg.disposeLocal();
+                        segImg = null;
+                    }
+                    
+                    if (pwiBrainMaskImg != null) {
+                    	pwiBrainMaskImg.disposeLocal();
+                    	pwiBrainMaskImg = null;
+                    }
+                    
+                    maskBuffer = null;
+                    displayError("Error on pwi brain mask importData");
+                    setCompleted(false);
+                    return;
+                }
+                
+                //dilate(pwiBrainMaskImg, 0.5f);
+                
+                saveImageFile(pwiBrainMaskImg, coreOutputDir, outputBasename + "_pwi_brain_mask", FileUtility.XML);
+                
                 // open - try to disconnect any artifacts from the brain mask
                 open(skullMaskImg);
                 
@@ -229,8 +299,6 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 fillHoles(skullMaskImg);
                 
                 // select only largest object
-                short[] maskBuffer = new short[volLength];
-                short[] processBuffer = new short[volLength];
                 try {
                     skullMaskImg.exportData(0, volLength, maskBuffer);
                 } catch (IOException error) {
@@ -245,7 +313,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     return;
                 }
                 
-                MaskObject[] objects = findObjects(skullMaskImg, maskBuffer, processBuffer, 100, 10000000);
+                objects = findObjects(skullMaskImg, maskBuffer, processBuffer, 100, 10000000);
                 
                 if (objects.length > 0) {
                     MaskObject largest = objects[objects.length - 1];
@@ -278,7 +346,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 }
                 
                 // dilate object slightly
-                dilate(skullMaskImg);
+                dilate(skullMaskImg, 1);
                 
                 saveImageFile(skullMaskImg, coreOutputDir, outputBasename + "_brain_mask", FileUtility.XML);
             }
@@ -367,9 +435,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             fireProgressStateChanged(85);
             
             // core pass done with a segImg that combines Tmax > 2 and DWI as search area
-            ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, skullMaskImg, pwiCoreSegThreshold);
+            ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiBrainMaskImg, pwiCoreSegThreshold);
             for (int i = 0; i < volLength; i++) {
-                if ((dwiSegBuffer[i] != 0 || pwiSegImg.getInt(i) != 0) && (skullMaskImg != null && skullMaskImg.getBoolean(i) == true)) {
+                if ((dwiSegBuffer[i] != 0 || pwiSegImg.getInt(i) != 0) && (pwiBrainMaskImg != null && pwiBrainMaskImg.getBoolean(i) == true)) {
                     if (isADCFractional()) {
                         float adcFracThreshold = adcThreshold / 1000.0f;
                         if (adcVolForThresholding.getFloat(i) < adcFracThreshold) {
@@ -471,6 +539,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 skullMaskImg = null;
             }
             
+            if (pwiBrainMaskImg != null) {
+            	pwiBrainMaskImg.disposeLocal();
+            	pwiBrainMaskImg = null;
+            }
+            
             if (segImg != null) {
                 segImg.disposeLocal();
             }
@@ -495,6 +568,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             if (skullMaskImg != null) {
                 skullMaskImg.disposeLocal();
                 skullMaskImg = null;
+            }
+            
+            if (pwiBrainMaskImg != null) {
+            	pwiBrainMaskImg.disposeLocal();
+            	pwiBrainMaskImg = null;
             }
             
             if (dwiLightbox != null) {
@@ -841,7 +919,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 }
             }
             
-            // TODO min core size
+            // min core size
             
             boolean allCoreSmallFlag = true;
             double resFactorCC = getResolutionFactorCC(adcImage);
@@ -937,7 +1015,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             System.err.println("No qualifying object found in volume.");
         }
         
-        // TODO disabled selection of additional objects based on size/distance for now
+        // disabled selection of additional objects based on size/distance for now
         
         // disabled size limit - just search based on distance
 //        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
@@ -1565,9 +1643,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
     }
     
-    private void dilate(ModelImage img) {
+    private void dilate(ModelImage img, float kernelMM) {
         int kernel = AlgorithmMorphology3D.CONNECTED6;
-        float kernelSize = 1f; // mm
+        float kernelSize = kernelMM; // mm
         int itersD = 1;
         int itersE = 1;
         boolean wholeImg = true;
@@ -1773,7 +1851,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         System.err.println("PWI seg registration time elapsed: " + (System.currentTimeMillis() - regStartTime) / 1000.0f);
         
-        ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, skullMaskImg, pwiThreshold);
+        ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiBrainMaskImg, pwiThreshold);
         
         // combine perfusion mask with Tmax and save lightbox
         ModelImage perfLightbox = generateLightbox(TmaxRegImage, pwiSegImg, pwiLightboxColor, lightboxOpacity, true);
@@ -1945,10 +2023,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             transfImg = movingImg;
         }
         
-        // TODO
         int costFunc = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
         
-        // TODO 
         int dof = 6;
         //int dof = 9;
         //int dof = 12;

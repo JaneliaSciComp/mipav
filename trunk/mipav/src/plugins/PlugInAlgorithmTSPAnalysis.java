@@ -116,6 +116,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private String outputPrefix = "";
     
     private FileIO fileIO = null;
+    
+    private int saveFileFormat = FileUtility.NIFTI;
 	
     /**
      * Constructor.
@@ -833,7 +835,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
 	    	
-	    	saveImageFile(corr_map2Image, outputFilePath, outputPrefix + "corr_map2.img", FileUtility.ANALYZE);
+	    	saveImageFile(corr_map2Image, outputFilePath, outputPrefix + "corr_map2", saveFileFormat);
 	        
 	    	corr_map2Image.disposeLocal();
 	    	corr_map2Image = null;
@@ -861,7 +863,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
 	    	
-	    	saveImageFile(corrmapImage, outputFilePath, outputPrefix + "corrmap.img", FileUtility.ANALYZE);
+	    	saveImageFile(corrmapImage, outputFilePath, outputPrefix + "corrmap", saveFileFormat);
 	    	
 	    	corrmapImage.disposeLocal();
 	    	corrmapImage = null;
@@ -891,7 +893,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
     	
-    	saveImageFile(peaks_mapImage, outputFilePath, outputPrefix + "peaks_map.img", FileUtility.ANALYZE);
+    	saveImageFile(peaks_mapImage, outputFilePath, outputPrefix + "peaks_map", saveFileFormat);
 
     	peaks_mapImage.disposeLocal();
     	peaks_mapImage = null;
@@ -919,7 +921,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
     	
-    	saveImageFile(delay_mapImage, outputFilePath, outputPrefix + "delay_map.img", FileUtility.ANALYZE);
+    	saveImageFile(delay_mapImage, outputFilePath, outputPrefix + "delay_map", saveFileFormat);
     	
     	delay_mapImage.disposeLocal();
     	delay_mapImage = null;
@@ -1461,7 +1463,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
 	    	
-	    	saveImageFile(CBFImage, outputFilePath, outputPrefix + "CBF.img", FileUtility.ANALYZE);
+	    	saveImageFile(CBFImage, outputFilePath, outputPrefix + "CBF", saveFileFormat);
 	        
 	    	CBFImage.disposeLocal();
 	    	CBFImage = null;
@@ -1489,7 +1491,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
 	    	}
 	    	
-	    	saveImageFile(MTTImage, outputFilePath, outputPrefix + "MTT.img", FileUtility.ANALYZE);
+	    	saveImageFile(MTTImage, outputFilePath, outputPrefix + "MTT", saveFileFormat);
 	        
 	//    	MTTImage.disposeLocal();
 	//    	MTTImage = null;
@@ -1518,7 +1520,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	}
 	        
 	    	
-	    	saveImageFile(CBVImage, outputFilePath, outputPrefix + "CBV.img", FileUtility.ANALYZE);
+	    	saveImageFile(CBVImage, outputFilePath, outputPrefix + "CBV", saveFileFormat);
 	    	
 	    	CBVImage.disposeLocal();
 	    	CBVImage = null;
@@ -1548,7 +1550,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setDataType(ModelStorageBase.SHORT);
     	}
     	
-    	saveImageFile(TmaxImage, outputFilePath, outputPrefix + "Tmax.img", FileUtility.ANALYZE);
+    	saveImageFile(TmaxImage, outputFilePath, outputPrefix + "Tmax", saveFileFormat);
     	
 //    	TmaxImage.disposeLocal();
 //    	TmaxImage = null;
@@ -1576,7 +1578,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
     	}
     	
-    	saveImageFile(TTPImage, outputFilePath, outputPrefix + "TTP.img", FileUtility.ANALYZE);
+    	saveImageFile(TTPImage, outputFilePath, outputPrefix + "TTP", saveFileFormat);
     	
     	TTPImage.disposeLocal();
     	TTPImage = null;
@@ -1605,7 +1607,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
         	}
         	
-        	saveImageFile(p0MaxDistImage, outputFilePath, outputPrefix + "p0MaxDist.img", FileUtility.ANALYZE);
+        	saveImageFile(p0MaxDistImage, outputFilePath, outputPrefix + "p0MaxDist", saveFileFormat);
 
         	p0MaxDistImage.disposeLocal();
         	p0MaxDistImage = null;
@@ -1634,7 +1636,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
         	}
         	
-        	saveImageFile(p1MaxDistImage, outputFilePath, outputPrefix + "p1MaxDist.img", FileUtility.ANALYZE);
+        	saveImageFile(p1MaxDistImage, outputFilePath, outputPrefix + "p1MaxDist", saveFileFormat);
 
         	p1MaxDistImage.disposeLocal();
         	p1MaxDistImage = null;
