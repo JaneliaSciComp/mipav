@@ -2530,6 +2530,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if ( !csvFieldNamesWithRecord[i].trim().equals("")) {
                         // if the names are surrounded by quotes, remove them before adding.
                         csvFieldNames.add(csvFieldNamesWithRecord[i].trim().replaceAll("^\"|\"$", ""));
+                        
+                        // TODO check that the field name matches one of the group/de combos from the form structure
                     } else {
                         // ignore if no more real field names (and no data values for the column). otherwise show error
                         boolean allEmpty = true;
@@ -2635,6 +2637,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
             final long csvReadEndTime = System.currentTimeMillis();
             System.out.println("CSV input read took " + ( (csvReadEndTime - csvReadStartTime) / 1000) + " seconds (" + recordList.size() + " records)");
+            System.out.println();
 
             for (int j = 0; j < csvProblemTagList.size(); j++) {
                 final Vector<FileDicomTag> problemTags = csvProblemTagList.get(j);
@@ -6365,15 +6368,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     if (srcImage == null) {
                         // if cmd line, highlight failure
-                        if (cmdLineCsvFlag) {
-                            System.err.println("Unable to open image file specified: " + imageFile);
-                            validFile = false;
-                            return null;
-                        } else {
-                            MipavUtil.displayError("Unable to open image file specified: " + imageFile);
-                            validFile = false;
-                            return null;
-                        }
+                    	logError("Unable to open image file specified: " + imageFile);
+                        validFile = false;
+                        return null;
                     }
 
                     final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
@@ -6504,11 +6501,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     previewImgPanel.repaint();
                 }
             } catch (final FileNotFoundException e) {
-                MipavUtil.displayError("The system cannot find the file specified: " + imageFile);
+            	// if cmd line, output error but continue
+        		logError("The system cannot find the file specified: " + imageFile);
                 e.printStackTrace();
                 validFile = false;
             } catch (final NullPointerException e) {
-                MipavUtil.displayError("Unable to open image file specified: " + imageFile);
+            	// if cmd line, output error but continue
+            	logError("Unable to open image file specified: " + imageFile);
                 e.printStackTrace();
                 validFile = false;
             } catch (final Exception e) {
@@ -9078,5 +9077,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             super.flush();
             logFileStream.flush();
         }
+    }
+    
+    private void logError(String msg) {
+    	if (!cmdLineCsvFlag) {
+    		MipavUtil.displayError(msg);
+    	} else {
+    		System.err.println(msg);
+    		errorFileOut.println(msg);
+    	}
     }
 }
