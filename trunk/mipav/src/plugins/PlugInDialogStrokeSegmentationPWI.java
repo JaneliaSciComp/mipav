@@ -66,7 +66,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private ModelImage dwiImage;
     
     private boolean pwiImageMultifile = false;
-    private ModelImage pwiImage;
+    private ModelImage pwiImage = null;
     
     private int adcThreshold = 620;
     
@@ -138,6 +138,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private String lastDir = "";
     private String lastDwi = "";
     private String lastAdc = "";
+    
+    private boolean allowNoPWI = false;
 
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
@@ -170,7 +172,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     /**
      * Constructor for DICOM catcher.
      */
-    public PlugInDialogStrokeSegmentationPWI(final StrokeSegmentationDicomReceiverPWI parent, final String dicomDir) {
+    public PlugInDialogStrokeSegmentationPWI(final StrokeSegmentationDicomReceiverPWI parent, final String dicomDir, boolean noPWI) {
         super(false);
 
         setVisible(false);
@@ -180,6 +182,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         listenerParent = parent;
         
         dirFileString = dicomDir;
+        
+        allowNoPWI = noPWI;
         
         // set dir and find files
         findVolumesInDir(dirFileString);
@@ -211,7 +215,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         }
         
         // TODO
-        if (pwiPath != null && !pwiPath.equals("")) {
+        if ((pwiPath != null && !pwiPath.equals("")) && !allowNoPWI) {
             final File pwiFile = new File(pwiPath);
             pwiImage = openImage(pwiFile, pwiImageMultifile);
             
@@ -219,12 +223,14 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
                 System.err.println("Error opening PWI volume from file: " + dwiPath);
                 return;
             }
+        } else if (allowNoPWI) {
+        	// do nothing
         } else {
             System.err.println("No PWI volume selected.");
             return;
         }
         
-        if (adcImage != null && dwiImage != null && pwiImage != null) {
+        if (adcImage != null && dwiImage != null && (pwiImage != null || allowNoPWI)) {
             callAlgorithm();
         }
     }
@@ -247,6 +253,10 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             }
         } else if (command.equals("BrowseDWI")) {
             if (browseDWIImage()) {
+                fileMethodRadio.setSelected(true);
+            }
+        } else if (command.equals("BrowsePWI")) {
+            if (browsePWIImage()) {
                 fileMethodRadio.setSelected(true);
             }
         } else if (command.equals("BrowseADC")) {
@@ -1038,6 +1048,66 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         return false;
     }
     
+    private boolean browsePWIImage() {
+        final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+        fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
+
+        final JFileChooser chooser = fileChooser.getFileChooser();
+        chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+
+        // default to TECH filter
+        int filter = ViewImageFileFilter.TECH;
+
+        try {
+            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
+        } catch (final NumberFormatException nfe) {
+
+            // an invalid value was set in preferences -- so don't
+            // use it!
+            filter = -1;
+        }
+
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+        if (filter != -1) {
+            // it seems that the set command adds the filter
+            // again...
+            // chooser.addChoosableFileFilter(new
+            // ViewImageFileFilter(filter));
+
+            // if filter is something we already added, then remove
+            // it before
+            // setting it..... (kludgy, kludgy....)
+            final javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
+
+            if (found != null) {
+                chooser.removeChoosableFileFilter(found);
+            }
+
+            // initially set to the preferences
+            chooser.setFileFilter(new ViewImageFileFilter(filter));
+        }
+
+        final int returnVal = chooser.showOpenDialog(this);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            boolean isMultiFile = fileChooser.isMulti();
+
+            final File file = chooser.getSelectedFile();
+            ViewUserInterface.getReference().setDefaultDirectory(file.getParent());
+            
+            pwiImageFileField.setText(file.getAbsolutePath());
+            pwiImageMultifile = isMultiFile;
+
+            return true;
+        }
+        
+        return false;
+    }
+    
     private ModelImage openImage(final File file, final boolean isMultiFile) {
         final FileIO fileIO = new FileIO();
         fileIO.setQuiet(true);
@@ -1105,9 +1175,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             return false;
         }
         
-        if (!foundPWI) {
+        if (!foundPWI && !allowNoPWI) {
             MipavUtil.displayError("No PWI files found in directory: " + dir);
             return false;
+        } else if (!foundPWI && allowNoPWI) {
+        	System.err.println("No PWI files found - running DWI/ADC coretool only: " + dir);
         }
         
         outputDir = dirFile.getAbsolutePath() + File.separator;
