@@ -1,8 +1,4 @@
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
-import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
-
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -10,7 +6,6 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -326,7 +321,6 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
             
             dicomReceiver = new StrokeSegmentationDicomReceiverPWI(ipAddress, port, ae, outputDir, reportDir, minExpectedSlices, minExpectedSlicesPWI, maxWaitTime, doEmailReport, logOutputArea);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             
             stopAlgorithm();
@@ -447,7 +441,6 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
                     try {
                         ipAddress = InetAddress.getLocalHost().getHostAddress();
                     } catch (UnknownHostException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }

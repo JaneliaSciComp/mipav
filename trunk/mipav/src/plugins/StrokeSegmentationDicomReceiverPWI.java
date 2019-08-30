@@ -99,6 +99,8 @@ public class StrokeSegmentationDicomReceiverPWI {
     
     private final Lock fileListLock = new ReentrantLock();
     
+    private Timer pwiTimeoutTimer = new Timer();
+    
     private final BasicCStoreSCP cstoreSCP = new BasicCStoreSCP("*") {
 
         @Override
@@ -240,7 +242,6 @@ public class StrokeSegmentationDicomReceiverPWI {
         try {
             device.bindConnections();
         } catch (GeneralSecurityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -313,23 +314,29 @@ public class StrokeSegmentationDicomReceiverPWI {
                 
                 boolean foundADC = false;
                 boolean foundDWI = false;
+                boolean foundPWI = false;
                 
                 boolean mergeADC = false;
                 boolean mergeDWI = false;
+                boolean mergePWI = false;
                 
                 boolean foundOutputDirADC = false;
                 boolean foundOutputDirDWI = false;
+                boolean foundOutputDirPWI = false;
                 
                 boolean usePrevADC = false;
                 boolean usePrevDWI = false;
+                boolean usePrevPWI = false;
                 
                 boolean alreadySegmented = false;
                 
                 Vector<File> adcFiles = new Vector<File>();
                 Vector<File> dwiFiles = new Vector<File>();
+                Vector<File> pwiFiles = new Vector<File>();
                 
                 Vector<Attributes> adcAttrList = new Vector<Attributes>();
                 Vector<Attributes> dwiAttrList = new Vector<Attributes>();
+                Vector<Attributes> pwiAttrList = new Vector<Attributes>();
                 
                 File baseOutputDir = null;
                 String lastnameInitial = null;
@@ -377,13 +384,24 @@ public class StrokeSegmentationDicomReceiverPWI {
                                 dwiAttrList.add(attr);
                                 foundDWI = true;
                                 break;
+                            } else if (PlugInDialogStrokeSegmentationPWI.isPWI(val)) {
+                                pwiFiles.add(file);
+                                pwiAttrList.add(attr);
+                                foundPWI = true;
+                                break;
                             }
                         }
                     } catch (IOException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }
+                
+                // TODO - PWI support
+                // on getting new subject scan, start timer to wait for PWI
+                // on timer expiration, check that minimum number of PWI slices is met
+                // if enough slices, check that ADC/DWI are done transferring and run PWI-incorporating algorithm
+                // if not enough slices, check that ADC/DWI are done transferring and run non-PWI algorithm
+                // TODO - maybe also trigger if specific number of slices is hit exactly - 1600, 2400?
                 
                 // if we saw series with 'Reg' in series or protocol names, prefer them
                 if (foundADC && foundRegSeries) {
@@ -423,8 +441,27 @@ public class StrokeSegmentationDicomReceiverPWI {
                     }
                 }
                 
+                // if we saw series with 'Reg' in series or protocol names, prefer them
+                if (foundPWI && foundRegSeries) {
+                    Vector<File> pwiRegFiles = new Vector<File>();
+                    
+                    for (int i = 0; i < pwiFiles.size(); i++) {
+                        final Attributes attr = pwiAttrList.get(i);
+                        final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                        final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                        
+                        if (PlugInDialogStrokeSegmentationPWI.isRegisteredVol(seriesDesc, protocolName)) {
+                            pwiRegFiles.add(pwiFiles.get(i));
+                        }
+                    }
+                    
+                    if (pwiRegFiles.size() > 0) {
+                        pwiFiles = pwiRegFiles;
+                    }
+                }
+                
                 // if we didn't find both ADC and DWI, check for previous transfer in output dir
-                if (baseOutputDir != null && !foundADC || !foundDWI) {
+                if (baseOutputDir != null && !foundADC || !foundDWI || !foundPWI) {
                     File[] outputDirFiles = baseOutputDir.listFiles();
                     for (File file : outputDirFiles) {
                         if (file.isDirectory()) { 
@@ -432,6 +469,8 @@ public class StrokeSegmentationDicomReceiverPWI {
                                 foundOutputDirADC = true;
                             } else if (file.getName().equalsIgnoreCase("DWI")) {
                                 foundOutputDirDWI = true;
+                            } else if (file.getName().equalsIgnoreCase("PWI")) {
+                                foundOutputDirPWI = true;
                             }
                         } else if (file.getName().equalsIgnoreCase("core_seg_report.html")) {
                             log("New data received for previously segmented subject.  Not running the segmentation again.");
@@ -447,7 +486,6 @@ public class StrokeSegmentationDicomReceiverPWI {
                         try {
                             prevAttr = parse(prevFile);
                         } catch (IOException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                         Attributes newAttr = adcAttrList.get(0);
@@ -485,7 +523,6 @@ public class StrokeSegmentationDicomReceiverPWI {
                         try {
                             prevAttr = parse(prevFile);
                         } catch (IOException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                         Attributes newAttr = dwiAttrList.get(0);
@@ -514,6 +551,43 @@ public class StrokeSegmentationDicomReceiverPWI {
                         log("Found previously received DWI volume in output directory.");
                         usePrevDWI = true;
                     }
+                    
+                    if (foundPWI && foundOutputDirPWI) {
+                        log("Found previously received PWI volume in output directory, but also received new PWI volume.");
+                        
+                        File prevFile = new File(baseOutputDir + File.separator + "PWI").listFiles()[0];
+                        Attributes prevAttr = null;
+                        try {
+                            prevAttr = parse(prevFile);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        Attributes newAttr = pwiAttrList.get(0);
+                        
+                        boolean isPrevReg = isRegisteredVol(prevAttr);
+                        boolean isNewReg = isRegisteredVol(newAttr);
+                        
+                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                        
+                        // prefer series marked as 'reg', but otherwise go with the new one
+                        if (!isNewReg && isPrevReg) {
+                            log("Preferring previously received PWI volume.");
+                            usePrevPWI = true;
+                        } else if (isNewReg && !isPrevReg) {
+                            log("Preferring newly received PWI volume.");
+                            usePrevPWI = false;
+                        } else if (prevStudyNum.equals(newStudyNum)) {
+                            log("Merging new PWI files with previously received volume.");
+                            mergePWI = true;
+                        } else {
+                            log("Preferring newly received PWI volume.");
+                            usePrevPWI = false;
+                        }
+                    } else if (!foundPWI && foundOutputDirPWI) {
+                        log("Found previously received PWI volume in output directory.");
+                        usePrevPWI = true;
+                    }
                 }
                 
                 // move ADC and DWI files to their own dir under parent inside outputDir
@@ -535,7 +609,6 @@ public class StrokeSegmentationDicomReceiverPWI {
                         try {
                             renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
                         } catch (IOException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                     }
@@ -559,27 +632,83 @@ public class StrokeSegmentationDicomReceiverPWI {
                         try {
                             renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
                         } catch (IOException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                     }
                 }
                 
-                if (!alreadySegmented && ((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
-                    // check that the number of files in the ADC and DWI directories are the same
-                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
-                    int numAdcFiles = adcDirFile.listFiles().length;
-                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
-                    int numDwiFiles = dwiDirFile.listFiles().length;
+                if (foundPWI && !usePrevPWI) {
+                    log("Found PWI volume in completed transfer. Moving to " + baseOutputDir);
                     
-                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
-                        log("Running segmentation on datasets in " + baseOutputDir.getAbsolutePath());
-                        new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath());
-                    } else {
-                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+                    File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
+                    
+                    // clean-up prev PWI dir
+                    if (foundOutputDirPWI && !mergePWI) {
+                        File backupDir = new File(pwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                        boolean success = pwiDirFile.renameTo(backupDir);
+                        if (success) {
+                            log("Failed to move previous PWI data to : " + backupDir);
+                        }
                     }
+                    
+                    for (File file : pwiFiles) {
+                        try {
+                            renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                
+                if (!alreadySegmented) {
+                	if (foundPWI || usePrevPWI) {
+                		// use PWI version of the coretool algo
+	                	if (((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
+		                    // check that the number of files in the ADC and DWI directories are the same
+		                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+		                    int numAdcFiles = adcDirFile.listFiles().length;
+		                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+		                    int numDwiFiles = dwiDirFile.listFiles().length;
+		                    
+		                    File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
+		                    int numPwiFiles = pwiDirFile.listFiles().length;
+		                    
+		                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
+		                    	if (numPwiFiles >= minExpectedSlicesPWI) {
+		                    		log("Received " + numPwiFiles + " PWI files, meeting minimum threshold (" + minExpectedSlicesPWI + ")");
+		                    		log("Running PWI-incorporating segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+		                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), false);
+		                    	} else {
+		                    		log("Received " + numPwiFiles + " PWI files, NOT meeting minimum threshold (" + minExpectedSlicesPWI + ")");
+		                    		log("Running non-PWI segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+		                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), true);
+		                    	}
+		                    } else {
+		                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+		                    }
+		                } else {
+		                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
+		                }
+                	} else {
+                		if (((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
+		                    // check that the number of files in the ADC and DWI directories are the same
+		                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+		                    int numAdcFiles = adcDirFile.listFiles().length;
+		                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+		                    int numDwiFiles = dwiDirFile.listFiles().length;
+		                    
+		                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
+	                    		log("Running non-PWI segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+	                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), true);
+		                    } else {
+		                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+		                    }
+		                } else {
+		                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
+		                }
+                	}
                 } else {
-                    log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + ").");
+                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
                 }
                 
                 // check if incoming dicom dir is empty and remove if it is
@@ -626,7 +755,6 @@ public class StrokeSegmentationDicomReceiverPWI {
             
             device.unbindConnections();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return false;
         }
@@ -721,7 +849,6 @@ public class StrokeSegmentationDicomReceiverPWI {
                     FileUtils.copyFileToDirectory(new File(emailReportPath), reportSubDir);
                 }
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -1014,5 +1141,58 @@ public class StrokeSegmentationDicomReceiverPWI {
         }
 
         return dicomAge;
+    }
+    
+    private class CoreToolProcessingThread implements Runnable {
+    	public volatile boolean isDone = false;
+    	
+    	public long timeStarted;
+    	public String receivedFilesPath;
+    	
+    	public int timeLimitSec;
+    	public int minPwiSlices;
+    	public int minAdcDwiSlices;
+    	
+    	public int curPwiSlices = 0;
+    	public int curAdcSlices = 0;
+    	public int curDwiSlices = 0;
+    	
+    	public CoreToolProcessingThread(String recvPath, int maxMinutes, int minPwi, int minAdc) {
+    		timeStarted = System.currentTimeMillis();
+    		receivedFilesPath = recvPath;
+    		
+    		timeLimitSec = maxMinutes * 60;
+    		minPwiSlices = minPwi;
+    		minAdcDwiSlices = minAdc;
+    	}
+    	
+		@Override
+		public void run() {
+			while (!isDone) {
+				if (timeLimitSec <= getTimeSinceStartSec()) {
+					// TODO hit time limit. check num slices received. if not enough pwi, just run with adc/dwi.  if enough, run adc/dwi/pwi
+				} else {
+					// TODO sleep for a while or until a new file transfer is received
+					
+					// TODO check num slices received. if not enough pwi, just run with adc/dwi.  if enough, run adc/dwi/pwi
+				}
+			}
+		}
+		
+		public int getTimeSinceStartSec() {
+			return (int) (System.currentTimeMillis() - timeStarted) / 1000;
+		}
+		
+		public void addToPwiSliceCount(int numSlices) {
+			curPwiSlices += numSlices;
+		}
+		
+		public void addToAdciSliceCount(int numSlices) {
+			curAdcSlices += numSlices;
+		}
+		
+		public void addToDwiSliceCount(int numSlices) {
+			curDwiSlices += numSlices;
+		}
     }
 }

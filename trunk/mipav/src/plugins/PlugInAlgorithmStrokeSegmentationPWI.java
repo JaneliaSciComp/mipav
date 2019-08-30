@@ -114,6 +114,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private float coreSelectionDistWeight = 1f;
     private float coreSelectionSizeWeight = 1 - coreSelectionDistWeight;
     
+    boolean havePWI = true;
+    
     boolean doPwiMultiThreading = true;
     boolean doPwiCalculateCorrelation = false;
     boolean doPwiCalculateCBFCBVMTT = false;
@@ -134,6 +136,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         dwiImage = dwi;
         adcImage = adc;
         pwiImage = pwi;
+        
+        if (pwiImage == null) {
+        	havePWI = false;
+        }
+        
         adcThreshold = threshold;
         doFilter = anisoFilter;
         doSymmetryRemoval = symmetryRemoval;
@@ -421,64 +428,67 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 lightboxFileList.add(lightboxPass1);
             }
             
-            fireProgressStateChanged("Calculating perfusion Tmax ...");
-            fireProgressStateChanged(35);
+            if (havePWI) {
             
-            // calculate Tmax, register to adc, generate lightbox of perfusion area
-            File lightboxPWI = processPwi(pwiImage);
-            
-            if (lightboxPWI != null) {
-                lightboxFileList.add(lightboxPWI);
-            }
-            
-            fireProgressStateChanged("Finding Tmax-based core lesion ...");
-            fireProgressStateChanged(85);
-            
-            // core pass done with a segImg that combines Tmax > 2 and DWI as search area
-            ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiBrainMaskImg, pwiCoreSegThreshold);
-            for (int i = 0; i < volLength; i++) {
-                if ((dwiSegBuffer[i] != 0 || pwiSegImg.getInt(i) != 0) && (pwiBrainMaskImg != null && pwiBrainMaskImg.getBoolean(i) == true)) {
-                    if (isADCFractional()) {
-                        float adcFracThreshold = adcThreshold / 1000.0f;
-                        if (adcVolForThresholding.getFloat(i) < adcFracThreshold) {
-                        	coreSegBuffer[i] = 1;
-                        } else {
-                        	coreSegBuffer[i] = 0;
-                        }
-                    } else {
-                        if (adcVolForThresholding.getInt(i) < adcThreshold) {
-                        	coreSegBuffer[i] = 1;
-                        } else {
-                        	coreSegBuffer[i] = 0;
-                        }
-                    }
-                } else {
-                	coreSegBuffer[i] = 0;
-                }
-            }
-            
-            pwiSegImg.disposeLocal();
-            
-            try {
-                segImg.importData(0, coreSegBuffer, true);
-            } catch (IOException error) {
-                if (segImg != null) {
-                    segImg.disposeLocal();
-                    segImg = null;
-                }
-                
-                coreSegBuffer = null;
-                displayError("Error on adc threshold importData: " + adcImage.getImageName());
-                setCompleted(false);
-                return;
-            }
-            
-            saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_pwi", FileUtility.XML);
-            
-            File lightboxPass2 = processThresholdedImg(segImg, adcImage, coreSegBuffer, extents, 2, doCerebellumSkip, cerebellumSkipSliceMax, false, doSymmetryRemoval);
-            
-            if (lightboxPass2 != null) {
-                lightboxFileList.add(lightboxPass2);
+	            fireProgressStateChanged("Calculating perfusion Tmax ...");
+	            fireProgressStateChanged(35);
+	            
+	            // calculate Tmax, register to adc, generate lightbox of perfusion area
+	            File lightboxPWI = processPwi(pwiImage);
+	            
+	            if (lightboxPWI != null) {
+	                lightboxFileList.add(lightboxPWI);
+	            }
+	            
+	            fireProgressStateChanged("Finding Tmax-based core lesion ...");
+	            fireProgressStateChanged(85);
+	            
+	            // core pass done with a segImg that combines Tmax > 2 and DWI as search area
+	            ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiBrainMaskImg, pwiCoreSegThreshold);
+	            for (int i = 0; i < volLength; i++) {
+	                if ((dwiSegBuffer[i] != 0 || pwiSegImg.getInt(i) != 0) && (pwiBrainMaskImg != null && pwiBrainMaskImg.getBoolean(i) == true)) {
+	                    if (isADCFractional()) {
+	                        float adcFracThreshold = adcThreshold / 1000.0f;
+	                        if (adcVolForThresholding.getFloat(i) < adcFracThreshold) {
+	                        	coreSegBuffer[i] = 1;
+	                        } else {
+	                        	coreSegBuffer[i] = 0;
+	                        }
+	                    } else {
+	                        if (adcVolForThresholding.getInt(i) < adcThreshold) {
+	                        	coreSegBuffer[i] = 1;
+	                        } else {
+	                        	coreSegBuffer[i] = 0;
+	                        }
+	                    }
+	                } else {
+	                	coreSegBuffer[i] = 0;
+	                }
+	            }
+	            
+	            pwiSegImg.disposeLocal();
+	            
+	            try {
+	                segImg.importData(0, coreSegBuffer, true);
+	            } catch (IOException error) {
+	                if (segImg != null) {
+	                    segImg.disposeLocal();
+	                    segImg = null;
+	                }
+	                
+	                coreSegBuffer = null;
+	                displayError("Error on adc threshold importData: " + adcImage.getImageName());
+	                setCompleted(false);
+	                return;
+	            }
+	            
+	            saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_pwi", FileUtility.XML);
+	            
+	            File lightboxPass2 = processThresholdedImg(segImg, adcImage, coreSegBuffer, extents, 2, doCerebellumSkip, cerebellumSkipSliceMax, false, doSymmetryRemoval);
+	            
+	            if (lightboxPass2 != null) {
+	                lightboxFileList.add(lightboxPass2);
+	            }
             }
             
             // generate lightbox of DWI volume with custom transfer function
@@ -524,7 +534,13 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     //        }
             
             // save core stats to tab-delmited file
-            if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), pwiImage.getImageFileName(), adcImage.getResolutions(0))) {
+            String pwiImageName;
+            if (pwiImage != null) {
+            	pwiImageName = pwiImage.getImageFileName();
+            } else {
+            	pwiImageName = "No PWI included in processing";
+            }
+            if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), pwiImageName, adcImage.getResolutions(0))) {
                 if (segImg != null) {
                     segImg.disposeLocal();
                     segImg = null;
