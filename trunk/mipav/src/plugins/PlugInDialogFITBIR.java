@@ -207,6 +207,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private final ArrayList<String> tempDirs = new ArrayList<String>();
 
     private boolean isFinished = false;
+    
+    /** Map between file paths and DTI info extracted from their DICOM headers. */
+    private Hashtable<String, DTIParameters> dicomDtiHeaderData = new Hashtable<String, DTIParameters>();
 
     /**
      * Indicates how to resolve conflicts between csv and image header values. 0 = no choice made/ask always, 1 = csv, 2
@@ -270,6 +273,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final String IMG_DIFF_GROUP = "Diffusion Direction Data";
     
     private static final String IMG_DIFF_BVAL_ELEMENT_NAME = "ImgDiffusionBValFile";
+    private static final String IMG_DIFF_BVEC_ELEMENT_NAME = "ImgDiffusionBVecFile";
     
     private static final String IMG_MR_GROUP = "Magnetic Resonance Information";
     
@@ -464,6 +468,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             cmdLineCsvFile = VariableTable.getReference().interpolate(cmdLineCsvVar);
             System.err.println("Command line CSV: " + cmdLineCsvFile);
             
+            if (!(new File(cmdLineCsvFile).exists())) {
+            	MipavUtil.displayError("Command line CSV not found: " + cmdLineCsvFile);
+            	if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
+                    System.gc();
+                    System.exit(0);
+                } else {
+                    return;
+                }
+            }
+            
             if (VariableTable.getReference().isVariableSet(cmdLineOutputVar)) {
                 cmdLineOutputDir = VariableTable.getReference().interpolate(cmdLineOutputVar);
                 System.err.println("Command line output dir: " + cmdLineOutputDir);
@@ -563,93 +577,46 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             };
 
-            // check that required fields have some value
-            final int numRows = structTableModel.getRowCount();
-            for (int i = 0; i < numRows; i++) {
-                if ( ((String) structTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
-                    MipavUtil.displayError("Record " + (i+1) + ": Not all required fields have values");
-                    return;
-                }
-            }
+            boolean readyForSub = checkRecordsForSubmission();
 
-            // require that the GUIDs are filled in and have proper prefixes
-            for (int i = 0; i < numRows; i++) {
-                final String struct = (String) structTableModel.getValueAt(i, 0);
-                if (struct.endsWith(STRUCT_GUID_SEPERATOR + "UNKNOWNGUID")) {
-                    MipavUtil.displayError("Record " + (i+1) + ": No GUID specified");
-                    return;
-                } else {
-                    final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
-                    if ( !isGuid(guidTester)) {
-                        MipavUtil.displayError("Record " + (i+1) + ": GUID value does not match the allow GUID format (" + guidTester + ")");
-                        return;
-                    }
-                }
-            }
-            
-            // check that any field with an 'Other, specify' or 'Yes, specify' value in a required field has something in the sister field
-            for (int i = 0; i < numRows; i++) {
-                final FormStructureData fsData = fsDataList.get(i);
-                for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-                    for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
-                        for (final DataElementValue deVal : repeat.getDataElements()) {
-                            if (deVal.getRequiredType() == RequiredType.REQUIRED) {
-                                JComponent comp = deVal.getComp();
-                                if (comp instanceof JComboBox) {
-                                    final JComboBox jc = (JComboBox) comp;
-                                    String selectedVal = (String) jc.getSelectedItem();
-                                    if (selectedVal.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || selectedVal.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                                        // check for a value in the matching OTH field in the same group
-                                        if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
-                                            MipavUtil.displayError("Record " + (i+1) + ": 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
-                                            return;
-                                        }
-                                    }
-                                } else if (comp instanceof JList) {
-                                    final JList<String> list = (JList<String>) comp;
-                                    
-                                    List<String> selectedValList = list.getSelectedValuesList();
-                                    
-                                    for (final String val : selectedValList) {
-                                        if (val.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || val.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                                            // check for a value in the matching OTH field in the same group
-                                            if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
-                                                MipavUtil.displayError("Record " + (i+1) + ": Required 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
-                                                return;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            removeStructButton.setEnabled(false);
-            finishButton.setEnabled(false);
-            outputDirButton.setEnabled(false);
-            addStructButton.setEnabled(false);
-            editDataElementsButton.setEnabled(false);
-            loadCSVButton.setEnabled(false);
-            selectBIDSButton.setEnabled(false);
-
-            fileWriterWorkerThread.run();
-            
-            // reset the outputs
-            System.setOut(System.out);
-            System.setErr(System.err);
-            if (logFileOut != null) {
-                logFileOut.close();
-                logFileOut = null;
-            }
-            if (errorFileOut != null) {
-                errorFileOut.close();
-                errorFileOut = null;
-            }
-            
-            if (cmdLineCsvExit) {
-                System.exit(0);
+            if (readyForSub) {
+	            removeStructButton.setEnabled(false);
+	            finishButton.setEnabled(false);
+	            outputDirButton.setEnabled(false);
+	            addStructButton.setEnabled(false);
+	            editDataElementsButton.setEnabled(false);
+	            loadCSVButton.setEnabled(false);
+	            selectBIDSButton.setEnabled(false);
+	
+	            fileWriterWorkerThread.run();
+	            
+	            // reset the outputs
+	            System.setOut(System.out);
+	            System.setErr(System.err);
+	            if (logFileOut != null) {
+	                logFileOut.close();
+	                logFileOut = null;
+	            }
+	            if (errorFileOut != null) {
+	                errorFileOut.close();
+	                errorFileOut = null;
+	            }
+	            
+	            if (cmdLineCsvExit) {
+	                System.exit(0);
+	            }
+            } else {
+            	// reset the outputs
+	            System.setOut(System.out);
+	            System.setErr(System.err);
+	            if (logFileOut != null) {
+	                logFileOut.close();
+	                logFileOut = null;
+	            }
+	            if (errorFileOut != null) {
+	                errorFileOut.close();
+	                errorFileOut = null;
+	            }
             }
         }
     }
@@ -770,89 +737,30 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                     }
                 };
-                
-                // check that required fields have some value
-                final int numRows = structTableModel.getRowCount();
-                for (int i = 0; i < numRows; i++) {
-                    if ( ((String) structTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
-                        MipavUtil.displayError("Record " + (i+1) + ": Not all required fields have values");
-                        return;
-                    }
-                }
 
-                // require that the GUIDs are filled in and have proper prefixes
-                for (int i = 0; i < numRows; i++) {
-                    final String struct = (String) structTableModel.getValueAt(i, 0);
-                    if (struct.endsWith(STRUCT_GUID_SEPERATOR + "UNKNOWNGUID")) {
-                        MipavUtil.displayError("Record " + (i+1) + ": No GUID specified");
-                        return;
-                    } else {
-                        final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
-                        if ( !isGuid(guidTester)) {
-                            MipavUtil.displayError("Record " + (i+1) + ": GUID value does not match the allow GUID format (" + guidTester + ")");
-                            return;
-                        }
-                    }
-                }
-                
-                // check that any field with an 'Other, specify' or 'Yes, specify' value in a required field has something in the sister field
-                for (int i = 0; i < numRows; i++) {
-                    final FormStructureData fsData = fsDataList.get(i);
-                    for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-                        for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
-                            for (final DataElementValue deVal : repeat.getDataElements()) {
-                                if (deVal.getRequiredType() == RequiredType.REQUIRED) {
-                                    JComponent comp = deVal.getComp();
-                                    if (comp instanceof JComboBox) {
-                                        final JComboBox jc = (JComboBox) comp;
-                                        String selectedVal = (String) jc.getSelectedItem();
-                                        if (selectedVal.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || selectedVal.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                                            // check for a value in the matching OTH field in the same group
-                                            if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
-                                                MipavUtil.displayError("Record " + (i+1) + ": 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
-                                                return;
-                                            }
-                                        }
-                                    } else if (comp instanceof JList) {
-                                        final JList<String> list = (JList<String>) comp;
-                                        
-                                        List<String> selectedValList = list.getSelectedValuesList();
-                                        
-                                        for (final String val : selectedValList) {
-                                            if (val.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || val.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                                                // check for a value in the matching OTH field in the same group
-                                                if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
-                                                    MipavUtil.displayError("Record " + (i+1) + ": Required 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
-                                                    return;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // fine so far, ask if the user is done
-                int response;
-                if (!cmdLineCsvFlag) {
-                    response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                } else {
-                    response = JOptionPane.YES_OPTION;
-                }
+                boolean readyForSub = checkRecordsForSubmission();
 
-                if (response == JOptionPane.YES_OPTION) {
-                    removeStructButton.setEnabled(false);
-                    finishButton.setEnabled(false);
-                    outputDirButton.setEnabled(false);
-                    addStructButton.setEnabled(false);
-                    editDataElementsButton.setEnabled(false);
-                    loadCSVButton.setEnabled(false);
-                    selectBIDSButton.setEnabled(false);
-
-                    fileWriterWorkerThread.execute();
+                if (readyForSub) {
+	                // fine so far, ask if the user is done
+	                int response;
+	                if (!cmdLineCsvFlag) {
+	                    response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
+	                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+	                } else {
+	                    response = JOptionPane.YES_OPTION;
+	                }
+	
+	                if (response == JOptionPane.YES_OPTION) {
+	                    removeStructButton.setEnabled(false);
+	                    finishButton.setEnabled(false);
+	                    outputDirButton.setEnabled(false);
+	                    addStructButton.setEnabled(false);
+	                    editDataElementsButton.setEnabled(false);
+	                    loadCSVButton.setEnabled(false);
+	                    selectBIDSButton.setEnabled(false);
+	
+	                    fileWriterWorkerThread.execute();
+	                }
                 }
             }
         } else if (command.equalsIgnoreCase("EditDataElements")) {
@@ -2142,7 +2050,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
         
         if (bvecFile != null) {
-            addCSVEntry(recordRepeat, groupName + "ImgDiffusionBVecFile", bvalFile.getAbsolutePath());
+            addCSVEntry(recordRepeat, groupName + IMG_DIFF_BVEC_ELEMENT_NAME, bvalFile.getAbsolutePath());
         }
         
         // TODO - need to handle any additional files and put into Diffusion Derived Data.ImgFile?
@@ -2518,6 +2426,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             // List of records, each record consisting of 1+ lines, split into field values
             final ArrayList<ArrayList<ArrayList<String>>> recordList = new ArrayList<ArrayList<ArrayList<String>>>();
+            
+            FormStructure dataStructure = null;
+            for (final FormStructure ds : dataStructureList) {
+                if (ds.getShortName().equalsIgnoreCase(dsName)) {
+                    if (ds.getDataElements().size() == 0) {
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, dsName, true);
+                        thread.run();
+
+                        dataStructure = thread.getFullFormStructure();
+                    } else {
+                        dataStructure = ds;
+                    }
+                }
+            }
 
             csvFieldNames = new ArrayList<String>(csvFieldNamesWithRecord.length - 1);
             int recordFieldIndex = -1;
@@ -2528,10 +2450,38 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 } else {
                     // don't add fields without a name (error in the middle of the CSV, ignore at the end)
                     if ( !csvFieldNamesWithRecord[i].trim().equals("")) {
+                    	String csvField = csvFieldNamesWithRecord[i].trim().replaceAll("^\"|\"$", "");
+                    	
                         // if the names are surrounded by quotes, remove them before adding.
-                        csvFieldNames.add(csvFieldNamesWithRecord[i].trim().replaceAll("^\"|\"$", ""));
+                        csvFieldNames.add(csvField);
                         
-                        // TODO check that the field name matches one of the group/de combos from the form structure
+                        // check that the field name matches one of the group/de combos from the form structure
+                    	final String[] deGroupAndName = splitFieldString(csvField);
+                    	
+                    	boolean foundField = false;
+                    	
+                    	// all data elements belong to a group. if there is no group, this is always an error
+                    	if (deGroupAndName.length == 2) {
+                        	DE_SEARCH:
+                        	for (RepeatableGroup group : dataStructure.getRepeatableGroups()) {
+                        		if (group.getName().equalsIgnoreCase(deGroupAndName[0])) {
+                        			for (MapElement de : group.getDataElements()) {
+                        				if (de.getStructuralDataElement().getName().equalsIgnoreCase(deGroupAndName[1])) {
+                        					foundField = true;
+                        					break DE_SEARCH;
+                        				}
+                        			}
+                        		}
+                        	}
+                        	
+                        	if (!foundField) {
+                        		MipavUtil.displayError("Unrecogzied data element in CSV: " + csvField + ".  Check that all group and data element names match those in " + dsName);
+                        		return false;
+                        	}
+                    	} else {
+                    		MipavUtil.displayError("Data element without a specified group in CSV: " + csvField + ".  Check " + dsName + " in the Data Dictionary to find the appropriate group.");
+                    		return false;
+                    	}
                     } else {
                         // ignore if no more real field names (and no data values for the column). otherwise show error
                         boolean allEmpty = true;
@@ -7345,6 +7295,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             
                 // if reading the dicom filled in the dti params, use them to fill in the direction info
                 DTIParameters dtiParam = img.getDTIParameters();
+                
+                // save extracted dti info for later verification before submission file generation
+                dicomDtiHeaderData.put(img.getImageDirectory() + File.separator + img.getImageFileName(), dtiParam);
+                
                 if (dtiParam != null) {
                     double[] bvals = dtiParam.getbValues();
                     
@@ -9086,5 +9040,126 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     		System.err.println(msg);
     		errorFileOut.println(msg);
     	}
+    }
+    
+    private boolean checkRecordsForSubmission() {
+    	// check that required fields have some value
+        final int numRows = structTableModel.getRowCount();
+        for (int i = 0; i < numRows; i++) {
+            if ( ((String) structTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
+                MipavUtil.displayError("Record " + (i+1) + ": Not all required fields have values");
+                return false;
+            }
+        }
+
+        // require that the GUIDs are filled in and have proper prefixes
+        for (int i = 0; i < numRows; i++) {
+            final String struct = (String) structTableModel.getValueAt(i, 0);
+            if (struct.endsWith(STRUCT_GUID_SEPERATOR + "UNKNOWNGUID")) {
+                MipavUtil.displayError("Record " + (i+1) + ": No GUID specified");
+                return false;
+            } else {
+                final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
+                if ( !isGuid(guidTester)) {
+                    MipavUtil.displayError("Record " + (i+1) + ": GUID value does not match the allow GUID format (" + guidTester + ")");
+                    return false;
+                }
+            }
+        }
+        
+        // check that any field with an 'Other, specify' or 'Yes, specify' value in a required field has something in the sister field
+        for (int i = 0; i < numRows; i++) {
+            final FormStructureData fsData = fsDataList.get(i);
+            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                        if (deVal.getRequiredType() == RequiredType.REQUIRED) {
+                            JComponent comp = deVal.getComp();
+                            if (comp instanceof JComboBox) {
+                                final JComboBox jc = (JComboBox) comp;
+                                String selectedVal = (String) jc.getSelectedItem();
+                                if (selectedVal.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || selectedVal.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                                    // check for a value in the matching OTH field in the same group
+                                    if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
+                                        MipavUtil.displayError("Record " + (i+1) + ": 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
+                                        return false;
+                                    }
+                                }
+                            } else if (comp instanceof JList) {
+                                final JList<String> list = (JList<String>) comp;
+                                
+                                List<String> selectedValList = list.getSelectedValuesList();
+                                
+                                for (final String val : selectedValList) {
+                                    if (val.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || val.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                                        // check for a value in the matching OTH field in the same group
+                                        if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
+                                            MipavUtil.displayError("Record " + (i+1) + ": Required 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // if DTI, check that the dicoms have the gradient info, etc or bval/bvec files are attached
+        // TODO verify that all the most common DICOM DTI tags are being checked in the DICOM reader
+        for (int i = 0; i < numRows; i++) {
+            final FormStructureData fsData = fsDataList.get(i);
+            if (isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
+	            boolean rowHasDtiInfo = false;
+	            String imgFile = null;
+	            boolean foundBval = false;
+	            boolean foundBvec = false;
+	            BVALVEC_SEARCH:
+	            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+	            	if (group.getName().equals(IMG_DIFF_GROUP)) {
+		                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+		                    for (final DataElementValue deVal : repeat.getDataElements()) {
+		                    	// require that both bval and bvec fields are filled
+		                    	if (deVal.getName().equals(IMG_DIFF_BVAL_ELEMENT_NAME) && new File(deVal.getValue()).exists()) {
+		                    		if (foundBvec) {
+		                    			rowHasDtiInfo = true;
+		                    			break BVALVEC_SEARCH;
+		                    		} else {
+		                    			foundBval = true;
+		                    		}
+		                    	} else if (deVal.getName().equals(IMG_DIFF_BVEC_ELEMENT_NAME) && new File(deVal.getValue()).exists()) {
+		                    		if (foundBval) {
+		                    			rowHasDtiInfo = true;
+		                    			break BVALVEC_SEARCH;
+		                    		} else {
+		                    			foundBvec = true;
+		                    		}
+		                    	}
+		                    }
+		                }
+	            	}
+	            }
+	            
+	            ImgFileInfo imgInfo = structRowImgFileInfoList.get(i);
+	            imgFile = imgInfo.getOrigFiles().get(0);
+	            
+	            // check dicom header for different manuf gradient/etc tags - may need to save this when doing initial img extraction
+ 	            if (imgFile != null && dicomDtiHeaderData.containsKey(imgFile)) {
+	            	// TODO what values should be checked?
+	            	DTIParameters dtiParam = dicomDtiHeaderData.get(imgFile);
+	            	if (dtiParam != null && dtiParam.getbValues() != null && (dtiParam.getbMatrixVals() != null || dtiParam.getGradients() != null)) {
+	            		rowHasDtiInfo = true;
+	            	}
+	            }
+	            
+	            if (!rowHasDtiInfo) {
+	            	MipavUtil.displayError("Record " + (i+1) + ": No DTI B-value/Gradient/Matrix information found in image header or bval/bvec files");
+	            	return false;
+	            }
+            }
+        }
+        
+        return true;
     }
 }
