@@ -1292,6 +1292,6 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     }
     
     public static final boolean isPWI(final String imgType) {
-        return (imgType.equalsIgnoreCase("FFE") || imgType.equalsIgnoreCase("M_FFE"));
+        return (imgType.equalsIgnoreCase("FFE") || imgType.equalsIgnoreCase("M_FFE") || imgType.equalsIgnoreCase("PERFUSION"));
     }
 }
