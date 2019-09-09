@@ -2015,17 +2015,38 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 
         int multiVolZDim = extents3Dorg[2];
         
-        for (int zSrc = 0; (zSrc < multiVolZDim) && !threadStopped; zSrc += tDim) {
-            try {
-                // try copying the zSrc slice out of srcImage, making it the zDest in destImage
-                multiVolImg.exportSliceXY(zSrc, sliceBuffer);
-                firstVol.importData(zDest * sliceLength, sliceBuffer, false);
-                zDest++;
-            } catch (IOException e) {
-                MipavUtil.displayError("IOException on PWI first vol export/import");
-                setCompleted(false);
-                return multiVolImg;
-            }
+        for (int zSrc = 0; (zSrc < multiVolZDim) && !threadStopped; zSrc++) {
+        	String acquisNum = (String)((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0012").getValue(false);
+        	String temporalPosNum = (String)((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0100").getValue(false);
+        	
+        	// prefer temporal position indicator, but fall-back to acquision number since not all PWI vols have 0020,0100
+        	if (temporalPosNum != null && temporalPosNum.trim().equals("1")) {
+	            try {
+	                // try copying the zSrc slice out of srcImage, making it the zDest in destImage
+	                multiVolImg.exportSliceXY(zSrc, sliceBuffer);
+	                firstVol.importData(zDest * sliceLength, sliceBuffer, false);
+	                zDest++;
+	            } catch (IOException e) {
+	                MipavUtil.displayError("IOException on PWI first vol export/import");
+	                setCompleted(false);
+	                return multiVolImg;
+	            }
+        	} else {
+        		if (acquisNum != null && acquisNum.trim().equals("1")) {
+    	            try {
+    	                // try copying the zSrc slice out of srcImage, making it the zDest in destImage
+    	                multiVolImg.exportSliceXY(zSrc, sliceBuffer);
+    	                firstVol.importData(zDest * sliceLength, sliceBuffer, false);
+    	                zDest++;
+    	            } catch (IOException e) {
+    	                MipavUtil.displayError("IOException on PWI first vol export/import");
+    	                setCompleted(false);
+    	                return multiVolImg;
+    	            }
+            	}
+        	}
+        	
+        	
         }
 
         //saveImageFile(firstVol, coreOutputDir, outputBasename + "_PWI_firstVol", FileUtility.XML);
