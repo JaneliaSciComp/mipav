@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 
+import java.io.IOException;
+import java.util.BitSet;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -15,6 +17,7 @@ import gov.nih.mipav.view.ViewVOIVector;
  * Algorithm to crop a tilted rectangle
  */
 public class AlgorithmCropTilted extends AlgorithmBase { 
+
     private double x1;
     private double x2;
     private double x3;
@@ -84,6 +87,10 @@ public class AlgorithmCropTilted extends AlgorithmBase {
             this.y3 = y3;
             this.x4 = x4;
             this.y4 = y4;
+        }
+        else if (method == MASK_METHOD) {
+        	this.x1 = x1;
+        	this.y1 = y1;
         }
     }
     
@@ -170,6 +177,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	double zcenter = 0.0;
     	float xres = srcImage.getFileInfo()[0].getResolutions()[0];
     	float yres = srcImage.getFileInfo()[0].getResolutions()[1];
+    	double pixArea = xres * yres;
     	float zres;
     	double ratio;
     	double thetaX = 0.0;
@@ -180,8 +188,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	float oXres = xres;
     	float oYres = yres;
     	float oZres;
-    	int oXdim = srcImage.getExtents()[0];;
+    	int oXdim = srcImage.getExtents()[0];
         int oYdim = srcImage.getExtents()[1];
+        int length = oXdim * oYdim;
         int oZdim;
         int units[] = srcImage.getUnitsOfMeasure();
         int xunit = units[0];
@@ -199,7 +208,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         }
         AlgorithmTransform algoTrans;
         double term;
-        double theta = 0.0;
         // Moment of inertia or second moment of the area A with respect to the x axis
         double Ix = 0.0;
         // Moment of inertia about the y axis
@@ -221,6 +229,28 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double diffx2;
         double diffy1;
         double diffy2;
+        short buffer[];
+        short value;
+        int xLow;
+        int xHigh;
+        int yLow;
+        int yHigh;
+        int nextXLow;
+        int nextXHigh;
+        int nextYLow;
+        int nextYHigh;
+        boolean found;
+        int nPts = 0;
+        Vector<Float>xpos;
+        Vector<Float>ypos;
+        BitSet havePos = new BitSet(length);
+        int x;
+        int y;
+        int index;
+        double xdiff;
+        double ydiff;
+        int xStart;
+        int yStart;
         // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
         // Record the voxel coordinates of the 8 edge voxels.
         // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
@@ -288,115 +318,199 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 		        xfrm.setRotate(-thetaZ);
 		        xfrm.setTranslate(-xres * xcenter,-yres * ycenter);
     		} // if (method == VERTICES_METHOD)
-    		else if (method == VOI_METHOD) {
-    			/**
-    			 * From statics it is known that any planar shape or closed curve possesses two principal axes 90 degrees
-    			 * apart intersecting at the centroid of the area.  (For certain areas such as a circle, there may be more
-    			 * than two principal axes about the centroid, but there are always at least two.)  The moment of inertia is
-    			 * maximum about one principal axis and minimum about the other principal axis.  Here the angle in degrees 
-    			 * with the principal axis having the smallest absolute angle is reported.  For a rectangle with the principal
-    			 * axes going through the centroid the moment of inertia Ix' = (1/12)*width*(height**3) and 
-    			 * Iy' = (1/12)*(height**3)*width.
-    			 * References: On the Computation of the Moments of a Polygon, with Some Applications by Soerjadi
-    			 * Vector Mechanics for Engineers Statics Ninth Edition by Beer, Johnston, Mazurek, Eisenberg
-    			 * Chapter 9 Distributed Forces: Moments of Inertia */
-    	        int nVOIs;
-    	        ViewVOIVector VOIs = srcImage.getVOIs();
-    	        nVOIs = VOIs.size();
-    	        int nBoundingVOIs = 0;
-    	        int index = -1;
-    	        int nActiveBoundingVOIs = 0;
-    	        
-    	        for (i = 0; i < nVOIs; i++) {
-    	
-    	            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
-    	                nBoundingVOIs++;
-    	                if (nBoundingVOIs == 1) {
-    	                	index = i;
-    	                }
-    	                if (VOIs.VOIAt(i).isActive()) {
-    	                    nActiveBoundingVOIs++;	
-    	                    index = i;
-    	                }
-    	            }
-    	        } // for (i = 0; i < nVOIs; i++)
-    	        if (nBoundingVOIs == 0) {
-    	        	MipavUtil.displayError("Must have one contour or polyline VOI");
-    	        	setCompleted(false);
-    	        	return;
-    	        }
-    	        
-    	        if (nActiveBoundingVOIs > 1) {
-    	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
-    	            setCompleted(false);
-    	            return;
-    	        }	
-    	        Vector<VOIBase> vArray = VOIs.VOIAt(index).getCurves();	
-    	        if (vArray == null) {
-    	        	MipavUtil.displayError("vArray is null");
-    	        	setCompleted(false);
-    	        	return;
-    	        }
-    	        if (vArray.size() == 0) {
-    	        	MipavUtil.displayError("No curves in VOI");
-    	        	setCompleted(false);
-    	        	return;
-    	        }
-    	        if (vArray.size() > 1) {
-    	            MipavUtil.displayError("More than 1 curve in VOI");
-    	            setCompleted(false);
-    	            return;
-    	        }
-			    VOIBase v  = vArray.get(0);
-			    int nPts = v.size();
-				float xPts[] = new float[nPts];
-				float yPts[] = new float[nPts];
-				float zPts[] = new float[nPts];
-				v.exportArrays(xPts, yPts, zPts);
-				for (i = 0; i < nPts; i++) {
-					xPts[i] = xPts[i] * xres;
-					yPts[i] = yPts[i] * yres;
-				}
-				exactTotalPixelCount = 0.0;
-				for (i = 0; i < nPts-1; i++) {
-		            term = (xPts[i]*yPts[i+1] - xPts[i+1]*yPts[i]);
-		            exactTotalPixelCount += term;
-		            xcenter += (xPts[i] + xPts[i+1]) * term;
-		            ycenter += (yPts[i] + yPts[i+1]) * term;
-		        }
-		        term =  (xPts[nPts-1]*yPts[0] - xPts[0]*yPts[nPts-1]);
-		        exactTotalPixelCount += term;
-		        exactTotalPixelCount = 0.5*Math.abs(exactTotalPixelCount);
-		        xcenter += (xPts[nPts-1] + xPts[0]) * term;
-		        ycenter += (yPts[nPts-1] + yPts[0]) * term;
-		        xcenter = Math.abs(xcenter/(6.0 * exactTotalPixelCount));
-		        ycenter = Math.abs(ycenter/(6.0 * exactTotalPixelCount));
-		        System.out.println("xcenter = " + (xcenter/xres) + " ycenter = " + (ycenter/yres));
-		        
-		        Ix = 0.0;
-		        Iy = 0.0;
-		        Pxy = 0.0;
-		        for (i = 0; i < nPts-1; i++) {
-		            diffx1 = xPts[i] - xcenter;
-		            diffx2 = xPts[i+1] - xcenter;
-		            diffy1 = yPts[i] - ycenter;
-		            diffy2 = yPts[i+1] - ycenter;
-		            term = (diffx1*diffy2 - diffx2*diffy1);
-		            Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
-		            Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
-		            Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
-		        }
-		        diffx1 = xPts[nPts-1] - xcenter;
-		        diffx2 = xPts[0] - xcenter;
-		        diffy1 = yPts[nPts-1] - ycenter;
-		        diffy2 = yPts[0] - ycenter;
-		        term = (diffx1*diffy2 - diffx2*diffy1);
-		        Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
-		        Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
-		        Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
-		        Ix = Ix/12.0;
-		        Iy = Iy/12.0;
-		        Pxy = Pxy/24.0;
+    		else if ((method == MASK_METHOD) || (method == VOI_METHOD)) {
+    			if (method == MASK_METHOD) {
+	    			if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
+	    	                (srcImage.getType() != ModelImage.BYTE) && (srcImage.getType() != ModelImage.USHORT) &&
+	    	                (srcImage.getType() != ModelImage.SHORT)) {
+	    	            displayError("Source Image must be Boolean, UByte, Byte, UShort, or Short");
+	    	            setCompleted(false);
+	
+	    	            return;
+	    	        }
+	    			
+	    			buffer = new short[length];
+	    			try {
+	                    srcImage.exportData(0, length, buffer);
+	                } catch (IOException error) {
+	                    displayError("Algorithm CropTilted: image bounds exceeded");
+	                    setCompleted(false);
+	
+	                    return;
+	                }
+	    			xStart = (int)Math.round(x1);
+	    			yStart = (int)Math.round(y1);
+	                value = buffer[xStart + yStart*oXdim];
+	                found = true;
+	                xLow = Math.max(0,xStart-1);
+	                xHigh = Math.min(oXdim-1,xStart+1);
+	                yLow = Math.max(0,yStart-1);
+	                yHigh = Math.min(oYdim-1,yStart+1);
+	                nextXLow = xLow;
+	                nextXHigh = xHigh;
+	                nextYLow = yLow;
+	                nextYHigh = yHigh;
+	                xpos = new Vector<Float>();
+	                ypos = new Vector<Float>();
+	                xpos.add(xStart*xres);
+	                ypos.add(yStart*yres);
+	                havePos.set(xStart + yStart*oXdim);
+	                while (found) {
+	                    found = false;
+	                    xLow = nextXLow;
+	                    xHigh = nextXHigh;
+	                    yLow = nextYLow;
+	                    yHigh = nextYHigh;
+	                    for (y = yLow; y <= yHigh; y++) {
+	                    	for (x = xLow; x <= xHigh; x++) {
+	                    	    index = x + oXdim * y;
+	                    	    if ((buffer[index] == value) && (!havePos.get(index)) && 
+	                    	    (((x >= 1) && havePos.get(index-1)) || ((x < oXdim - 1) && havePos.get(index+1)) ||
+	                    	     ((y >= 1) && havePos.get(index-oXdim)) || ((y < oYdim - 1) && havePos.get(index+oXdim)))) {
+	                    	    	found = true;
+	                    	    	havePos.set(index);
+	                    	    	nPts++;
+	                    	    	xpos.add(x*xres);
+	                    	    	ypos.add(y*yres);
+	                    	    	xcenter += x*xres;
+	                    	    	ycenter += y*yres;
+	                    	    	if ((x == xLow)  && (nextXLow > 0) && (nextXLow == xLow)) {
+	                    	    		nextXLow = xLow-1;
+	                    	    	}
+	                    	    	if ((x == xHigh) && (nextXHigh < oXdim-1) && (nextXHigh == xHigh)) {
+	                    	    		nextXHigh = xHigh+1;
+	                    	    	}
+	                    	    	if ((y == yLow)  && (nextYLow > 0) && (nextYLow == yLow)) {
+	                    	    		nextYLow = yLow-1;
+	                    	    	}
+	                    	    	if ((y == yHigh) && (nextYHigh < oYdim-1) && (nextYHigh == yHigh)) {
+	                    	    		nextYHigh = yHigh+1;
+	                    	    	}
+	                    	    }
+	                    	}
+	                    }
+	                } // while (found)
+	                xcenter = Math.abs(xcenter/nPts);
+	                ycenter = Math.abs(ycenter/nPts);
+	                System.out.println("xcenter = " + (xcenter/xres) + " ycenter = " + (ycenter/yres));
+	                for (i = 0; i < nPts; i++) {
+	                    xdiff = xpos.get(i) - xcenter;
+	                    ydiff = ypos.get(i) - ycenter;
+	                    Ix += ydiff*ydiff*pixArea;
+	                    Iy += xdiff*xdiff*pixArea;
+	                    Pxy += xdiff*ydiff*pixArea;
+	                } // for (i = 0; i < nPts; i++)
+    		    } // if (method == MASK_METHOD)
+    		    else if (method == VOI_METHOD) {
+	    			/**
+	    			 * From statics it is known that any planar shape or closed curve possesses two principal axes 90 degrees
+	    			 * apart intersecting at the centroid of the area.  (For certain areas such as a circle, there may be more
+	    			 * than two principal axes about the centroid, but there are always at least two.)  The moment of inertia is
+	    			 * maximum about one principal axis and minimum about the other principal axis.  Here the angle in degrees 
+	    			 * with the principal axis having the smallest absolute angle is reported.  For a rectangle with the principal
+	    			 * axes going through the centroid the moment of inertia Ix' = (1/12)*width*(height**3) and 
+	    			 * Iy' = (1/12)*(height**3)*width.
+	    			 * References: On the Computation of the Moments of a Polygon, with Some Applications by Soerjadi
+	    			 * Vector Mechanics for Engineers Statics Ninth Edition by Beer, Johnston, Mazurek, Eisenberg
+	    			 * Chapter 9 Distributed Forces: Moments of Inertia */
+	    	        int nVOIs;
+	    	        ViewVOIVector VOIs = srcImage.getVOIs();
+	    	        nVOIs = VOIs.size();
+	    	        int nBoundingVOIs = 0;
+	    	        index = -1;
+	    	        int nActiveBoundingVOIs = 0;
+	    	        
+	    	        for (i = 0; i < nVOIs; i++) {
+	    	
+	    	            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+	    	                nBoundingVOIs++;
+	    	                if (nBoundingVOIs == 1) {
+	    	                	index = i;
+	    	                }
+	    	                if (VOIs.VOIAt(i).isActive()) {
+	    	                    nActiveBoundingVOIs++;	
+	    	                    index = i;
+	    	                }
+	    	            }
+	    	        } // for (i = 0; i < nVOIs; i++)
+	    	        if (nBoundingVOIs == 0) {
+	    	        	MipavUtil.displayError("Must have one contour or polyline VOI");
+	    	        	setCompleted(false);
+	    	        	return;
+	    	        }
+	    	        
+	    	        if (nActiveBoundingVOIs > 1) {
+	    	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
+	    	            setCompleted(false);
+	    	            return;
+	    	        }	
+	    	        Vector<VOIBase> vArray = VOIs.VOIAt(index).getCurves();	
+	    	        if (vArray == null) {
+	    	        	MipavUtil.displayError("vArray is null");
+	    	        	setCompleted(false);
+	    	        	return;
+	    	        }
+	    	        if (vArray.size() == 0) {
+	    	        	MipavUtil.displayError("No curves in VOI");
+	    	        	setCompleted(false);
+	    	        	return;
+	    	        }
+	    	        if (vArray.size() > 1) {
+	    	            MipavUtil.displayError("More than 1 curve in VOI");
+	    	            setCompleted(false);
+	    	            return;
+	    	        }
+				    VOIBase v  = vArray.get(0);
+				    nPts = v.size();
+					float xPts[] = new float[nPts];
+					float yPts[] = new float[nPts];
+					float zPts[] = new float[nPts];
+					v.exportArrays(xPts, yPts, zPts);
+					for (i = 0; i < nPts; i++) {
+						xPts[i] = xPts[i] * xres;
+						yPts[i] = yPts[i] * yres;
+					}
+					exactTotalPixelCount = 0.0;
+					for (i = 0; i < nPts-1; i++) {
+			            term = (xPts[i]*yPts[i+1] - xPts[i+1]*yPts[i]);
+			            exactTotalPixelCount += term;
+			            xcenter += (xPts[i] + xPts[i+1]) * term;
+			            ycenter += (yPts[i] + yPts[i+1]) * term;
+			        }
+			        term =  (xPts[nPts-1]*yPts[0] - xPts[0]*yPts[nPts-1]);
+			        exactTotalPixelCount += term;
+			        exactTotalPixelCount = 0.5*Math.abs(exactTotalPixelCount);
+			        xcenter += (xPts[nPts-1] + xPts[0]) * term;
+			        ycenter += (yPts[nPts-1] + yPts[0]) * term;
+			        xcenter = Math.abs(xcenter/(6.0 * exactTotalPixelCount));
+			        ycenter = Math.abs(ycenter/(6.0 * exactTotalPixelCount));
+			        System.out.println("xcenter = " + (xcenter/xres) + " ycenter = " + (ycenter/yres));
+			        
+			        Ix = 0.0;
+			        Iy = 0.0;
+			        Pxy = 0.0;
+			        for (i = 0; i < nPts-1; i++) {
+			            diffx1 = xPts[i] - xcenter;
+			            diffx2 = xPts[i+1] - xcenter;
+			            diffy1 = yPts[i] - ycenter;
+			            diffy2 = yPts[i+1] - ycenter;
+			            term = (diffx1*diffy2 - diffx2*diffy1);
+			            Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+			            Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+			            Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
+			        }
+			        diffx1 = xPts[nPts-1] - xcenter;
+			        diffx2 = xPts[0] - xcenter;
+			        diffy1 = yPts[nPts-1] - ycenter;
+			        diffy2 = yPts[0] - ycenter;
+			        term = (diffx1*diffy2 - diffx2*diffy1);
+			        Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+			        Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+			        Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
+			        Ix = Ix/12.0;
+			        Iy = Iy/12.0;
+			        Pxy = Pxy/24.0;
+    		    } // else if (method == VOI_METHOD)
 		        
 		        theta1 = 0.5*Math.atan2(2.0*Pxy, Iy-Ix);
 		        if (theta1 >= 0.0) {
@@ -458,7 +572,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 		        xfrm.setTranslate(xcenter,ycenter);
 		        xfrm.setRotate(-thetaZ);
 		        xfrm.setTranslate(-xcenter,-ycenter);
-    		} // else if (method == VOI_METHOD)
+    		} // else if ((Method == MASK_MEATHOD) || (method == VOI_METHOD))
 	        interp = AlgorithmTransform.BILINEAR;
 	        
 	        algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oXdim, oYdim,
@@ -610,6 +724,5 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     public ModelImage getResultImage() {
     	return resultImage;
     }
-    
     
 }
