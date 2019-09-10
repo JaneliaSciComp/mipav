@@ -48,6 +48,22 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
     
+    final int VERTICES_METHOD = 1;
+    final int VOI_METHOD = 2;
+    final int MASK_METHOD = 3;
+    int method = VERTICES_METHOD;
+    
+    private JPanel optionPanel;
+    
+    private JLabel x1Label;
+    private JLabel x2Label;
+    private JLabel x3Label;
+    private JLabel x4Label;
+    private JLabel y1Label;
+    private JLabel y2Label;
+    private JLabel y3Label;
+    private JLabel y4Label;
+    
     private double x1;
     private double x2;
     private double x3;
@@ -67,6 +83,10 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
     private JTextField y2Input;
     private JTextField y3Input;
     private JTextField y4Input;
+    
+    private ButtonGroup methodGroup;
+    private JRadioButton VOIButton;
+    private JRadioButton verticesButton;
     
     private AlgorithmCropTilted cropAlgo;
     
@@ -99,12 +119,52 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if ((source == VOIButton) || (source == verticesButton)) {
+        	if (VOIButton.isSelected()) {
+        	    x1Label.setEnabled(false);
+        	    x2Label.setEnabled(false);	
+        	    x3Label.setEnabled(false);	
+        	    x4Label.setEnabled(false);
+        	    y1Label.setEnabled(false);
+        	    y2Label.setEnabled(false);	
+        	    y3Label.setEnabled(false);	
+        	    y4Label.setEnabled(false);
+        	    x1Input.setEnabled(false);
+        	    x2Input.setEnabled(false);	
+        	    x3Input.setEnabled(false);	
+        	    x4Input.setEnabled(false);
+        	    y1Input.setEnabled(false);
+        	    y2Input.setEnabled(false);	
+        	    y3Input.setEnabled(false);	
+        	    y4Input.setEnabled(false);
+        	    optionPanel.setEnabled(false);
+        	}
+        	else {
+        		x1Label.setEnabled(true);
+        	    x2Label.setEnabled(true);	
+        	    x3Label.setEnabled(true);	
+        	    x4Label.setEnabled(true);
+        	    y1Label.setEnabled(true);
+        	    y2Label.setEnabled(true);	
+        	    y3Label.setEnabled(true);	
+        	    y4Label.setEnabled(true);
+        	    x1Input.setEnabled(true);
+        	    x2Input.setEnabled(true);	
+        	    x3Input.setEnabled(true);	
+        	    x4Input.setEnabled(true);
+        	    y1Input.setEnabled(true);
+        	    y2Input.setEnabled(true);	
+        	    y3Input.setEnabled(true);	
+        	    y4Input.setEnabled(true);
+        	    optionPanel.setEnabled(true);
+        	}
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -224,7 +284,7 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
     protected void callAlgorithm() {
     	try {
                 cropAlgo = new AlgorithmCropTilted(image, x1, y1, x2, y2,
-                		x3, y3, x4, y4);
+                		x3, y3, x4, y4, method);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -432,32 +492,51 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         setForeground(Color.black);
 
         Box contentBox = new Box(BoxLayout.Y_AXIS);
-        JPanel optionPanel = new JPanel();
+        
+        methodGroup = new ButtonGroup();
+        VOIButton = new JRadioButton("VOI", true);
+        VOIButton.setFont(serif12);
+        VOIButton.setForeground(Color.black);
+        VOIButton.addActionListener(this);
+        methodGroup.add(VOIButton);
+        //VOIButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        contentBox.add(VOIButton);
+        
+        verticesButton = new JRadioButton("Vertices", false);
+        verticesButton.setFont(serif12);
+        verticesButton.setForeground(Color.black);
+        verticesButton.addActionListener(this);
+        methodGroup.add(verticesButton);
+        //verticesButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        contentBox.add(verticesButton);
 
-        // make border
-        optionPanel.setBorder(buildTitledBorder("Pixels Retained Around Tilted Rectangle"));
-        contentBox.add(optionPanel);
-
+        optionPanel = new JPanel();
         // set layout
         GridBagLayout gbl = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
         optionPanel.setLayout(gbl);
-
         gbc.anchor = GridBagConstraints.NORTHWEST;
         // make content, place into layout
+
+        // make border
+        optionPanel.setBorder(buildTitledBorder("Pixels Retained Around Tilted Rectangle"));
+        optionPanel.setEnabled(false);
+        contentBox.add(optionPanel);
         
         optionPanel.add(Box.createHorizontalStrut(10));
         
-        JLabel x1Label = new JLabel("Upper left X point:");
+        x1Label = new JLabel("Upper left X point:");
         x1Label.setFont(serif12);
         x1Label.setForeground(Color.black);
         x1Label.setRequestFocusEnabled(false);
+        x1Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(x1Label, gbc);
         optionPanel.add(x1Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         x1Input = new JTextField("0", 15);
         x1Input.addActionListener(this);
+        x1Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(x1Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(x1Input, gbc);
@@ -465,16 +544,18 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         
         optionPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel y1Label = new JLabel("Upper left Y point:");
+        y1Label = new JLabel("Upper left Y point:");
         y1Label.setFont(serif12);
         y1Label.setForeground(Color.black);
         y1Label.setRequestFocusEnabled(false);
+        y1Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(y1Label, gbc);
         optionPanel.add(y1Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         y1Input = new JTextField("0", 15);
         y1Input.addActionListener(this);
+        y1Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(y1Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(y1Input, gbc);
@@ -482,16 +563,18 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         
         optionPanel.add(Box.createHorizontalStrut(10));
         
-        JLabel x2Label = new JLabel("Upper right X point:");
+        x2Label = new JLabel("Upper right X point:");
         x2Label.setFont(serif12);
         x2Label.setForeground(Color.black);
         x2Label.setRequestFocusEnabled(false);
+        x2Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(x2Label, gbc);
         optionPanel.add(x2Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         x2Input = new JTextField("0", 15);
         x2Input.addActionListener(this);
+        x2Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(x2Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(x2Input, gbc);
@@ -499,16 +582,18 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         
         optionPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel y2Label = new JLabel("Upper right Y point:");
+        y2Label = new JLabel("Upper right Y point:");
         y2Label.setFont(serif12);
         y2Label.setForeground(Color.black);
         y2Label.setRequestFocusEnabled(false);
+        y2Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(y2Label, gbc);
         optionPanel.add(y2Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         y2Input = new JTextField("0", 15);
         y2Input.addActionListener(this);
+        y2Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(y2Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(y2Input, gbc);
@@ -516,16 +601,18 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         
         optionPanel.add(Box.createHorizontalStrut(10));
         
-        JLabel x3Label = new JLabel("Lower right X point:");
+        x3Label = new JLabel("Lower right X point:");
         x3Label.setFont(serif12);
         x3Label.setForeground(Color.black);
         x3Label.setRequestFocusEnabled(false);
+        x3Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(x3Label, gbc);
         optionPanel.add(x3Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         x3Input = new JTextField("0", 15);
         x3Input.addActionListener(this);
+        x3Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(x3Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(x3Input, gbc);
@@ -533,16 +620,18 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         
         optionPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel y3Label = new JLabel("Lower right Y point:");
+        y3Label = new JLabel("Lower right Y point:");
         y3Label.setFont(serif12);
         y3Label.setForeground(Color.black);
         y3Label.setRequestFocusEnabled(false);
+        y3Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(y3Label, gbc);
         optionPanel.add(y3Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         y3Input = new JTextField("0", 15);
         y3Input.addActionListener(this);
+        y3Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(y3Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(y3Input, gbc);
@@ -550,16 +639,18 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         
         optionPanel.add(Box.createHorizontalStrut(10));
         
-        JLabel x4Label = new JLabel("Lower left X point:");
+        x4Label = new JLabel("Lower left X point:");
         x4Label.setFont(serif12);
         x4Label.setForeground(Color.black);
         x4Label.setRequestFocusEnabled(false);
+        x4Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(x4Label, gbc);
         optionPanel.add(x4Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         x4Input = new JTextField("0", 15);
         x4Input.addActionListener(this);
+        x4Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(x4Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(x4Input, gbc);
@@ -567,16 +658,18 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         
         optionPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel y4Label = new JLabel("Lower left Y point:");
+        y4Label = new JLabel("Lower left Y point:");
         y4Label.setFont(serif12);
         y4Label.setForeground(Color.black);
         y4Label.setRequestFocusEnabled(false);
+        y4Label.setEnabled(false);
         gbc.gridwidth = 2; // GridBagConstraints.RELATIVE;
         gbl.setConstraints(y4Label, gbc);
         optionPanel.add(y4Label);
         optionPanel.add(Box.createHorizontalStrut(10));
         y4Input = new JTextField("0", 15);
         y4Input.addActionListener(this);
+        y4Input.setEnabled(false);
         MipavUtil.makeNumericsOnly(y4Input, false);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(y4Input, gbc);
@@ -599,154 +692,186 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+    	if (verticesButton.isSelected()) {
+    		method = VERTICES_METHOD;
 
-        try {
-            x1 = Double.parseDouble(x1Input.getText());
-            y1 = Double.parseDouble(y1Input.getText());
-            x2 = Double.parseDouble(x2Input.getText());
-            y2 = Double.parseDouble(y2Input.getText());
-            x3 = Double.parseDouble(x3Input.getText());
-            y3 = Double.parseDouble(y3Input.getText());
-            x4 = Double.parseDouble(x4Input.getText());
-            y4 = Double.parseDouble(y4Input.getText());
-        } catch (NumberFormatException nfe) {
-
-            // an empty text-field.  decide which one is empty, then alert the user to correct
-            JTextField t = determineNull();
-            MipavUtil.displayError("Improper number!");
-            t.requestFocus();
-            t.selectAll();
-
-            return false;
-        }
+	        try {
+	            x1 = Double.parseDouble(x1Input.getText());
+	            y1 = Double.parseDouble(y1Input.getText());
+	            x2 = Double.parseDouble(x2Input.getText());
+	            y2 = Double.parseDouble(y2Input.getText());
+	            x3 = Double.parseDouble(x3Input.getText());
+	            y3 = Double.parseDouble(y3Input.getText());
+	            x4 = Double.parseDouble(x4Input.getText());
+	            y4 = Double.parseDouble(y4Input.getText());
+	        } catch (NumberFormatException nfe) {
+	
+	            // an empty text-field.  decide which one is empty, then alert the user to correct
+	            JTextField t = determineNull();
+	            MipavUtil.displayError("Improper number!");
+	            t.requestFocus();
+	            t.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (x1 < 0) {
+	            MipavUtil.displayError("Cannot have X1 point < 0");
+	            x1Input.requestFocus();
+	            x1Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (x1 > image.getExtents()[0]-1) {
+	            MipavUtil.displayError("Cannot have X1 point > image.getExtents()[0]-1");
+	            x1Input.requestFocus();
+	            x1Input.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (y1 < 0) {
+	            MipavUtil.displayError("Cannot have Y1 point < 0");
+	            y1Input.requestFocus();
+	            y1Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (y1 > image.getExtents()[1]-1) {
+	            MipavUtil.displayError("Cannot have Y1 point > image.getExtents()[1]-1");
+	            y1Input.requestFocus();
+	            y1Input.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (x2 < 0) {
+	            MipavUtil.displayError("Cannot have X2 point < 0");
+	            x2Input.requestFocus();
+	            x2Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (x2 > image.getExtents()[0]-1) {
+	            MipavUtil.displayError("Cannot have X2 point > image.getExtents()[0]-1");
+	            x2Input.requestFocus();
+	            x2Input.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (y2 < 0) {
+	            MipavUtil.displayError("Cannot have Y2 point < 0");
+	            y2Input.requestFocus();
+	            y2Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (y2 > image.getExtents()[1]-1) {
+	            MipavUtil.displayError("Cannot have Y2 point > image.getExtents()[1]-1");
+	            y2Input.requestFocus();
+	            y2Input.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (x3 < 0) {
+	            MipavUtil.displayError("Cannot have X3 point < 0");
+	            x3Input.requestFocus();
+	            x3Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (x3 > image.getExtents()[0]-1) {
+	            MipavUtil.displayError("Cannot have X3 point > image.getExtents()[0]-1");
+	            x3Input.requestFocus();
+	            x3Input.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (y3 < 0) {
+	            MipavUtil.displayError("Cannot have Y3 point < 0");
+	            y3Input.requestFocus();
+	            y3Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (y3 > image.getExtents()[1]-1) {
+	            MipavUtil.displayError("Cannot have Y3 point > image.getExtents()[1]-1");
+	            y3Input.requestFocus();
+	            y3Input.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (x4 < 0) {
+	            MipavUtil.displayError("Cannot have X4 point < 0");
+	            x4Input.requestFocus();
+	            x4Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (x4 > image.getExtents()[0]-1) {
+	            MipavUtil.displayError("Cannot have X4 point > image.getExtents()[0]-1");
+	            x4Input.requestFocus();
+	            x4Input.selectAll();
+	
+	            return false;
+	        }
+	        
+	        if (y4 < 0) {
+	            MipavUtil.displayError("Cannot have Y4 point < 0");
+	            y4Input.requestFocus();
+	            y4Input.selectAll();
+	
+	            return false;
+	        }
+	
+	        if (y4 > image.getExtents()[1]-1) {
+	            MipavUtil.displayError("Cannot have Y4 point > image.getExtents()[1]-1");
+	            y4Input.requestFocus();
+	            y4Input.selectAll();
+	
+	            return false;
+	        }
+    	} // if (verticesButton.isSelected())
+    	else if (VOIButton.isSelected()) {
+    		method = VOI_METHOD;
         
-        if (x1 < 0) {
-            MipavUtil.displayError("Cannot have X1 point < 0");
-            x1Input.requestFocus();
-            x1Input.selectAll();
-
-            return false;
-        }
-
-        if (x1 > image.getExtents()[0]-1) {
-            MipavUtil.displayError("Cannot have X1 point > image.getExtents()[0]-1");
-            x1Input.requestFocus();
-            x1Input.selectAll();
-
-            return false;
-        }
-        
-        if (y1 < 0) {
-            MipavUtil.displayError("Cannot have Y1 point < 0");
-            y1Input.requestFocus();
-            y1Input.selectAll();
-
-            return false;
-        }
-
-        if (y1 > image.getExtents()[1]-1) {
-            MipavUtil.displayError("Cannot have Y1 point > image.getExtents()[1]-1");
-            y1Input.requestFocus();
-            y1Input.selectAll();
-
-            return false;
-        }
-        
-        if (x2 < 0) {
-            MipavUtil.displayError("Cannot have X2 point < 0");
-            x2Input.requestFocus();
-            x2Input.selectAll();
-
-            return false;
-        }
-
-        if (x2 > image.getExtents()[0]-1) {
-            MipavUtil.displayError("Cannot have X2 point > image.getExtents()[0]-1");
-            x2Input.requestFocus();
-            x2Input.selectAll();
-
-            return false;
-        }
-        
-        if (y2 < 0) {
-            MipavUtil.displayError("Cannot have Y2 point < 0");
-            y2Input.requestFocus();
-            y2Input.selectAll();
-
-            return false;
-        }
-
-        if (y2 > image.getExtents()[1]-1) {
-            MipavUtil.displayError("Cannot have Y2 point > image.getExtents()[1]-1");
-            y2Input.requestFocus();
-            y2Input.selectAll();
-
-            return false;
-        }
-        
-        if (x3 < 0) {
-            MipavUtil.displayError("Cannot have X3 point < 0");
-            x3Input.requestFocus();
-            x3Input.selectAll();
-
-            return false;
-        }
-
-        if (x3 > image.getExtents()[0]-1) {
-            MipavUtil.displayError("Cannot have X3 point > image.getExtents()[0]-1");
-            x3Input.requestFocus();
-            x3Input.selectAll();
-
-            return false;
-        }
-        
-        if (y3 < 0) {
-            MipavUtil.displayError("Cannot have Y3 point < 0");
-            y3Input.requestFocus();
-            y3Input.selectAll();
-
-            return false;
-        }
-
-        if (y3 > image.getExtents()[1]-1) {
-            MipavUtil.displayError("Cannot have Y3 point > image.getExtents()[1]-1");
-            y3Input.requestFocus();
-            y3Input.selectAll();
-
-            return false;
-        }
-        
-        if (x4 < 0) {
-            MipavUtil.displayError("Cannot have X4 point < 0");
-            x4Input.requestFocus();
-            x4Input.selectAll();
-
-            return false;
-        }
-
-        if (x4 > image.getExtents()[0]-1) {
-            MipavUtil.displayError("Cannot have X4 point > image.getExtents()[0]-1");
-            x4Input.requestFocus();
-            x4Input.selectAll();
-
-            return false;
-        }
-        
-        if (y4 < 0) {
-            MipavUtil.displayError("Cannot have Y4 point < 0");
-            y4Input.requestFocus();
-            y4Input.selectAll();
-
-            return false;
-        }
-
-        if (y4 > image.getExtents()[1]-1) {
-            MipavUtil.displayError("Cannot have Y4 point > image.getExtents()[1]-1");
-            y4Input.requestFocus();
-            y4Input.selectAll();
-
-            return false;
-        }
+	        int i;
+	        int nVOIs;
+	        ViewVOIVector VOIs = image.getVOIs();
+	        nVOIs = VOIs.size();
+	        int nBoundingVOIs = 0;
+	        int nActiveBoundingVOIs = 0;
+	        
+	        for (i = 0; i < nVOIs; i++) {
+	
+	            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+	                nBoundingVOIs++;
+	                if (VOIs.VOIAt(i).isActive()) {
+	                    nActiveBoundingVOIs++;	
+	                }
+	            }
+	        } // for (i = 0; i < nVOIs; i++)
+	        if (nBoundingVOIs == 0) {
+	        	MipavUtil.displayError("Must have one contour or polyline VOI");
+	        	return false;
+	        }
+	        
+	        if (nActiveBoundingVOIs > 1) {
+	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
+	            return false;
+	        }
+    	} // else if (VOIButton.isSelected())
 
         return true;
     }
