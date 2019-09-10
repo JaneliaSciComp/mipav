@@ -1,11 +1,15 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 
+import java.util.Vector;
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewVOIVector;
 
 /**
  * Algorithm to crop a tilted rectangle
@@ -38,6 +42,11 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     private double z7;
     private double z8;
     
+    final int VERTICES_METHOD = 1;
+    final int VOI_METHOD = 2;
+    final int MASK_METHOD = 3;
+    int method = VERTICES_METHOD;
+    
     private ModelImage resultImage;
     
     /** used for setting rotation */
@@ -62,17 +71,20 @@ public class AlgorithmCropTilted extends AlgorithmBase {
      * @param y4
      */
     public AlgorithmCropTilted(ModelImage srcImage, double x1, double y1, double x2, double y2,
-    		double x3, double y3, double x4, double y4) {
+    		double x3, double y3, double x4, double y4, int method) {
         super(null, srcImage);
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
-        this.x3 = x3;
-        this.y3 = y3;
-        this.x4 = x4;
-        this.y4 = y4;
         run2D = true;
+        this.method = method;
+        if (method == VERTICES_METHOD) {
+        	this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+            this.x3 = x3;
+            this.y3 = y3;
+            this.x4 = x4;
+            this.y4 = y4;
+        }
     }
     
     
@@ -107,41 +119,45 @@ public class AlgorithmCropTilted extends AlgorithmBase {
      */
     public AlgorithmCropTilted(ModelImage srcImage, double x1, double y1, double z1, double x2, double y2, double z2,
     		double x3, double y3, double z3, double x4, double y4, double z4, double x5, double y5, double z5, double x6,
-    		double y6, double z6, double x7, double y7, double z7, double x8, double y8, double z8) {
+    		double y6, double z6, double x7, double y7, double z7, double x8, double y8, double z8, int method) {
         super(null, srcImage);
-        this.x1 = x1;
-        this.y1 = y1;
-        this.z1 = z1;
-        this.x2 = x2;
-        this.y2 = y2;
-        this.z2 = z2;
-        this.x3 = x3;
-        this.y3 = y3;
-        this.z3 = z3;
-        this.x4 = x4;
-        this.y4 = y4;
-        this.z4 = z4;
-        this.x5 = x5;
-        this.y5 = y5;
-        this.z5 = z5;
-        this.x6 = x6;
-        this.y6 = y6;
-        this.z6 = z6;
-        this.x7 = x7;
-        this.y7 = y7;
-        this.z7 = z7;
-        this.x8 = x8;
-        this.y8 = y8;
-        this.z8 = z8;
         run2D = false;
+        this.method = method;
+        if (method == VERTICES_METHOD) {
+	        this.x1 = x1;
+	        this.y1 = y1;
+	        this.z1 = z1;
+	        this.x2 = x2;
+	        this.y2 = y2;
+	        this.z2 = z2;
+	        this.x3 = x3;
+	        this.y3 = y3;
+	        this.z3 = z3;
+	        this.x4 = x4;
+	        this.y4 = y4;
+	        this.z4 = z4;
+	        this.x5 = x5;
+	        this.y5 = y5;
+	        this.z5 = z5;
+	        this.x6 = x6;
+	        this.y6 = y6;
+	        this.z6 = z6;
+	        this.x7 = x7;
+	        this.y7 = y7;
+	        this.z7 = z7;
+	        this.x8 = x8;
+	        this.y8 = y8;
+	        this.z8 = z8;
+        }
+        
     }
     
     public void runAlgorithm() {
     	double delx12;
     	double dely12;
     	double delz12;
-    	double width;
-    	double height;
+    	double width = 0;
+    	double height = 0;
     	double depth = 0;
     	double delx23;
     	double dely23;
@@ -149,8 +165,8 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	double delx15;
     	double dely15;
     	double delz15;
-    	double xcenter;
-    	double ycenter;
+    	double xcenter = 0.0;
+    	double ycenter = 0.0;
     	double zcenter = 0.0;
     	float xres = srcImage.getFileInfo()[0].getResolutions()[0];
     	float yres = srcImage.getFileInfo()[0].getResolutions()[1];
@@ -158,8 +174,8 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	double ratio;
     	double thetaX = 0.0;
     	double thetaY = 0.0;
-    	double thetaZ;
-    	TransMatrix xfrm;
+    	double thetaZ = 0.0;
+    	TransMatrix xfrm = null;
     	int interp;
     	float oXres = xres;
     	float oYres = yres;
@@ -182,6 +198,29 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         	units[1] = units[0];
         }
         AlgorithmTransform algoTrans;
+        double term;
+        double theta = 0.0;
+        // Moment of inertia or second moment of the area A with respect to the x axis
+        double Ix = 0.0;
+        // Moment of inertia about the y axis
+        double Iy = 0.0;
+        // Product of inertia
+        double Pxy = 0.0;
+        double theta1;
+        double theta2;
+        double Iave;
+        double Idiff;
+        double Ixp1;
+        double Ixp2;
+        double R;
+        double Imin;
+        double Imax;
+        int i;
+        double exactTotalPixelCount;
+        double diffx1;
+        double diffx2;
+        double diffy1;
+        double diffy2;
         // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
         // Record the voxel coordinates of the 8 edge voxels.
         // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
@@ -226,26 +265,200 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         // Run AlgorithmCropTilted with these 24 values on a titled image to verify that tilted crop works correctly.
        
     	if (run2D) {
-	        delx12 = x2 - x1;
-	    	dely12 = y2 - y1;
-	    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres)/xres;
-	    	delx23 = x3 - x2;
-	    	dely23 = y3 - y2;
-	        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres)/yres;
-	        
-	        xcenter = (x1 + x2 + x3 + x4)/4.0;
-	        ycenter = (y1 + y2 + y3 + y4)/4.0;
-	        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter);
-	        // Center in resolution space
-	        yres = srcImage.getFileInfo()[0].getResolutions()[1];
-	        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
-	        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
-	        System.out.println("thetaZ = " + thetaZ);
-	        xfrm = new TransMatrix(3);
-	        xfrm.identity();
-	        xfrm.setTranslate(xres * xcenter,yres * ycenter);
-	        xfrm.setRotate(-thetaZ);
-	        xfrm.setTranslate(-xres * xcenter,-yres * ycenter);
+    		if (method == VERTICES_METHOD) {
+		        delx12 = x2 - x1;
+		    	dely12 = y2 - y1;
+		    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres)/xres;
+		    	System.out.println("width = " + width);
+		    	delx23 = x3 - x2;
+		    	dely23 = y3 - y2;
+		        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres)/yres;
+		        System.out.println("height = " + height);
+		        
+		        xcenter = (x1 + x2 + x3 + x4)/4.0;
+		        ycenter = (y1 + y2 + y3 + y4)/4.0;
+		        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter);
+		        // Center in resolution space
+		        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
+		        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
+		        System.out.println("thetaZ = " + thetaZ);
+		        xfrm = new TransMatrix(3);
+		        xfrm.identity();
+		        xfrm.setTranslate(xres * xcenter,yres * ycenter);
+		        xfrm.setRotate(-thetaZ);
+		        xfrm.setTranslate(-xres * xcenter,-yres * ycenter);
+    		} // if (method == VERTICES_METHOD)
+    		else if (method == VOI_METHOD) {
+    			/**
+    			 * From statics it is known that any planar shape or closed curve possesses two principal axes 90 degrees
+    			 * apart intersecting at the centroid of the area.  (For certain areas such as a circle, there may be more
+    			 * than two principal axes about the centroid, but there are always at least two.)  The moment of inertia is
+    			 * maximum about one principal axis and minimum about the other principal axis.  Here the angle in degrees 
+    			 * with the principal axis having the smallest absolute angle is reported.  For a rectangle with the principal
+    			 * axes going through the centroid the moment of inertia Ix' = (1/12)*width*(height**3) and 
+    			 * Iy' = (1/12)*(height**3)*width.
+    			 * References: On the Computation of the Moments of a Polygon, with Some Applications by Soerjadi
+    			 * Vector Mechanics for Engineers Statics Ninth Edition by Beer, Johnston, Mazurek, Eisenberg
+    			 * Chapter 9 Distributed Forces: Moments of Inertia */
+    	        int nVOIs;
+    	        ViewVOIVector VOIs = srcImage.getVOIs();
+    	        nVOIs = VOIs.size();
+    	        int nBoundingVOIs = 0;
+    	        int index = -1;
+    	        int nActiveBoundingVOIs = 0;
+    	        
+    	        for (i = 0; i < nVOIs; i++) {
+    	
+    	            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+    	                nBoundingVOIs++;
+    	                if (nBoundingVOIs == 1) {
+    	                	index = i;
+    	                }
+    	                if (VOIs.VOIAt(i).isActive()) {
+    	                    nActiveBoundingVOIs++;	
+    	                    index = i;
+    	                }
+    	            }
+    	        } // for (i = 0; i < nVOIs; i++)
+    	        if (nBoundingVOIs == 0) {
+    	        	MipavUtil.displayError("Must have one contour or polyline VOI");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        
+    	        if (nActiveBoundingVOIs > 1) {
+    	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
+    	            setCompleted(false);
+    	            return;
+    	        }	
+    	        Vector<VOIBase> vArray = VOIs.VOIAt(index).getCurves();	
+    	        if (vArray == null) {
+    	        	MipavUtil.displayError("vArray is null");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        if (vArray.size() == 0) {
+    	        	MipavUtil.displayError("No curves in VOI");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        if (vArray.size() > 1) {
+    	            MipavUtil.displayError("More than 1 curve in VOI");
+    	            setCompleted(false);
+    	            return;
+    	        }
+			    VOIBase v  = vArray.get(0);
+			    int nPts = v.size();
+				float xPts[] = new float[nPts];
+				float yPts[] = new float[nPts];
+				float zPts[] = new float[nPts];
+				v.exportArrays(xPts, yPts, zPts);
+				for (i = 0; i < nPts; i++) {
+					xPts[i] = xPts[i] * xres;
+					yPts[i] = yPts[i] * yres;
+				}
+				exactTotalPixelCount = 0.0;
+				for (i = 0; i < nPts-1; i++) {
+		            term = (xPts[i]*yPts[i+1] - xPts[i+1]*yPts[i]);
+		            exactTotalPixelCount += term;
+		            xcenter += (xPts[i] + xPts[i+1]) * term;
+		            ycenter += (yPts[i] + yPts[i+1]) * term;
+		        }
+		        term =  (xPts[nPts-1]*yPts[0] - xPts[0]*yPts[nPts-1]);
+		        exactTotalPixelCount += term;
+		        exactTotalPixelCount = 0.5*Math.abs(exactTotalPixelCount);
+		        xcenter += (xPts[nPts-1] + xPts[0]) * term;
+		        ycenter += (yPts[nPts-1] + yPts[0]) * term;
+		        xcenter = Math.abs(xcenter/(6.0 * exactTotalPixelCount));
+		        ycenter = Math.abs(ycenter/(6.0 * exactTotalPixelCount));
+		        System.out.println("xcenter = " + (xcenter/xres) + " ycenter = " + (ycenter/yres));
+		        
+		        Ix = 0.0;
+		        Iy = 0.0;
+		        Pxy = 0.0;
+		        for (i = 0; i < nPts-1; i++) {
+		            diffx1 = xPts[i] - xcenter;
+		            diffx2 = xPts[i+1] - xcenter;
+		            diffy1 = yPts[i] - ycenter;
+		            diffy2 = yPts[i+1] - ycenter;
+		            term = (diffx1*diffy2 - diffx2*diffy1);
+		            Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+		            Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+		            Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
+		        }
+		        diffx1 = xPts[nPts-1] - xcenter;
+		        diffx2 = xPts[0] - xcenter;
+		        diffy1 = yPts[nPts-1] - ycenter;
+		        diffy2 = yPts[0] - ycenter;
+		        term = (diffx1*diffy2 - diffx2*diffy1);
+		        Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+		        Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+		        Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
+		        Ix = Ix/12.0;
+		        Iy = Iy/12.0;
+		        Pxy = Pxy/24.0;
+		        
+		        theta1 = 0.5*Math.atan2(2.0*Pxy, Iy-Ix);
+		        if (theta1 >= 0.0) {
+		            theta2 = theta1 - Math.PI/2.0;
+		        }
+		        else {
+		            theta2 = theta1 + Math.PI/2.0;
+		        }
+		        Iave = (Ix + Iy)/2.0;
+		        Idiff = (Ix - Iy)/2.0;
+		        Ixp1 = Iave + Idiff*Math.cos(2.0*theta1) - Pxy*Math.sin(2.0*theta1);
+		        Preferences.debug("Ixp1 = " + Ixp1 + "\n", Preferences.DEBUG_ALGORITHM);
+		        Ixp2 = Iave + Idiff*Math.cos(2.0*theta2) - Pxy*Math.sin(2.0*theta2);
+		        Preferences.debug("Ixp2 = " + Ixp2 + "\n", Preferences.DEBUG_ALGORITHM);
+		        // Double check
+		        R = Math.sqrt(Idiff*Idiff + Pxy*Pxy);
+		        Imin = Iave - R;
+		        Preferences.debug("Imin = " + Imin + "\n", Preferences.DEBUG_ALGORITHM);
+		        Imax = Iave + R;
+		        Preferences.debug("Imax = " + Imax + "\n", Preferences.DEBUG_ALGORITHM);
+		        if (Math.abs(theta1) < Math.abs(theta2)) {
+		        //if (Ixp1 < Ixp2) {
+		            thetaZ = theta1;
+		            // Ix' = Ixp1 = (1/12)(width *xres)*((height * yres)**3)
+		            // Iy' = Ixp2 = (1/12)((width * xres)**3) *(height * yres)
+		            // Ixp1/Ixp2 = ((height *yres)**2)/((width * xres) ** 2)
+		            // (height * yres)**2 = (Ixp1/Ixp2) * (width * xres)**2
+		            // (height * yres) = sqrt(Ixp1/Ixp2) * (width * xres)
+		            // Ixp1 = (1/12)*((Ixp1/Ixp2)**1.5) * (width * xres)**4
+		            // (width * xres)**4 = 12*(Ixp2**1.5)/sqrt(Ixp1)
+		            // width = ((12 * (Ixp2**1.5)/sqrt(Ixp1))**0.25)/xres
+		            // height = (12 * Ixp2)/(((width * xres)**3)*yres)
+		            width = Math.pow((12 * (Math.pow(Ixp2,1.5))/Math.sqrt(Ixp1)),0.25)/xres;
+		            System.out.println("width = " + width);
+		            height = (12 * Ixp2)/(Math.pow((width * xres),3)*yres);
+		            System.out.println("height = " + height);
+		            
+		        }
+		        else {
+		            thetaZ = theta2;
+		            // Ix' = Ixp2 = (1/12)(width *xres)*((height * yres)**3)
+		            // Iy' = Ixp1 = (1/12)((width * xres)**3) *(height * yres)
+		            // Ixp2/Ixp1 = ((height *yres)**2)/((width * xres) ** 2)
+		            // (height * yres)**2 = (Ixp2/Ixp1) * (width * xres)**2
+		            // (height * yres) = sqrt(Ixp2/Ixp1) * (width * xres)
+		            // Ixp2 = (1/12)*((Ixp2/Ixp1)**1.5) * (width * xres)**4
+		            // (width * xres)**4 = 12*(Ixp1**1.5)/sqrt(Ixp2)
+		            // width = ((12 * (Ixp1**1.5)/sqrt(Ixp2))**0.25)/xres
+		            // height = (12 * Ixp1)/(((width * xres)**3)*yres)
+		            width = Math.pow((12 * (Math.pow(Ixp1,1.5))/Math.sqrt(Ixp2)),0.25)/xres;
+		            System.out.println("width = " + width);
+		            height = (12 * Ixp1)/(Math.pow((width * xres),3)*yres);
+		            System.out.println("height = " + height);
+		        }
+		        thetaZ = (180.0/Math.PI)*thetaZ;
+		        System.out.println("thetaZ = " + thetaZ);
+		        xfrm = new TransMatrix(3);
+		        xfrm.identity();
+		        xfrm.setTranslate(xcenter,ycenter);
+		        xfrm.setRotate(-thetaZ);
+		        xfrm.setTranslate(-xcenter,-ycenter);
+    		} // else if (method == VOI_METHOD)
 	        interp = AlgorithmTransform.BILINEAR;
 	        
 	        algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oXdim, oYdim,
@@ -397,5 +610,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     public ModelImage getResultImage() {
     	return resultImage;
     }
-
+    
+    
 }
