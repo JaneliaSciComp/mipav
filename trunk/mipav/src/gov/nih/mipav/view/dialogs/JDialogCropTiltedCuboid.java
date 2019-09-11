@@ -106,6 +106,11 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
     private JTextField z7Input;
     private JTextField z8Input;
     
+    final int VERTICES_METHOD = 1;
+    final int VOI_METHOD = 2;
+    final int MASK_METHOD = 3;
+    int method = VERTICES_METHOD;
+    
     private AlgorithmCropTilted cropAlgo;
     
    
@@ -391,7 +396,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
     	try {
                 cropAlgo = new AlgorithmCropTilted(image, x1, y1, z1, x2, y2, z2,
                 		x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6,
-                		x7, y7, z7, x8, y8, z8);
+                		x7, y7, z7, x8, y8, z8, method);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
