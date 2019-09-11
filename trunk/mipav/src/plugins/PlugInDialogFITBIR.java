@@ -7296,10 +7296,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // if reading the dicom filled in the dti params, use them to fill in the direction info
                 DTIParameters dtiParam = img.getDTIParameters();
                 
-                // save extracted dti info for later verification before submission file generation
-                dicomDtiHeaderData.put(img.getImageDirectory() + File.separator + img.getImageFileName(), dtiParam);
-                
                 if (dtiParam != null) {
+                	// save extracted dti info for later verification before submission file generation
+                    dicomDtiHeaderData.put(img.getImageDirectory() + File.separator + img.getImageFileName(), dtiParam);
+                	
                     double[] bvals = dtiParam.getbValues();
                     
                     ArrayList<Double> seenBvals = new ArrayList<Double>();
@@ -7337,6 +7337,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     extractedFields.put("ImgDiffusionBValCt", "" + bvalCount);
                     
                     extractedFields.put("ImgDiffusionDirCt", "" + numDirections);
+                } else {
+                	System.err.println("No DICOM embedded DTI information found.");
+            		if (cmdLineCsvFlag) {
+            			errorFileOut.println("No DICOM embedded DTI information found.");
+            		}
                 }
             }
         }
