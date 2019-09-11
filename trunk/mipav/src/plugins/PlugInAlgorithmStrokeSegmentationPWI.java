@@ -2017,7 +2017,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         for (int zSrc = 0; (zSrc < multiVolZDim) && !threadStopped; zSrc++) {
         	String acquisNum = (String)((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0012").getValue(false);
-        	String temporalPosNum = (String)((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0100").getValue(false);
+        	String temporalPosNum = null;
+        	if (((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().containsTag("0020,0100")) {
+        	    temporalPosNum = (String)((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0100").getValue(false);
+        	}
         	
         	// prefer temporal position indicator, but fall-back to acquision number since not all PWI vols have 0020,0100
         	if (temporalPosNum != null && temporalPosNum.trim().equals("1")) {
