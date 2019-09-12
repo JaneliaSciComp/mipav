@@ -179,6 +179,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	float yres = srcImage.getFileInfo()[0].getResolutions()[1];
     	double pixArea = xres * yres;
     	float zres;
+    	double pixVolume;
     	double ratio;
     	double thetaX = 0.0;
     	double thetaY = 0.0;
@@ -212,8 +213,12 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double Ix = 0.0;
         // Moment of inertia about the y axis
         double Iy = 0.0;
+        // Moment of inertia about the z axis
+        double Iz = 0.0;
         // Product of inertia
         double Pxy = 0.0;
+        double Pyz = 0.0;
+        double Pzx = 0.0;
         double theta1;
         double theta2;
         double Iave;
@@ -235,22 +240,41 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         int xHigh;
         int yLow;
         int yHigh;
+        int zLow;
+        int zHigh;
         int nextXLow;
         int nextXHigh;
         int nextYLow;
         int nextYHigh;
+        int nextZLow;
+        int nextZHigh;
         boolean found;
         int nPts = 0;
         Vector<Float>xpos;
         Vector<Float>ypos;
-        BitSet havePos = new BitSet(length);
+        Vector<Float>zpos;
+        BitSet havePos;
         int x;
         int y;
+        int z;
         int index;
         double xdiff;
         double ydiff;
+        double zdiff;
         int xStart;
         int yStart;
+        int zStart;
+        int volume;
+        double a1;
+        double b;
+        double c;
+        double d;
+        double x1real[];
+        double x2real[];
+        double x2imag[];
+        double x3real[];
+        double x3imag[];
+        double result[];
         // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
         // Record the voxel coordinates of the 8 edge voxels.
         // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
@@ -354,6 +378,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	                ypos = new Vector<Float>();
 	                xpos.add(xStart*xres);
 	                ypos.add(yStart*yres);
+	                havePos = new BitSet(length);
 	                havePos.set(xStart + yStart*oXdim);
 	                while (found) {
 	                    found = false;
@@ -588,40 +613,157 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	        	units[2] = units[0];
     	    }
 	        oZres = zres;
-    		delx12 = x2 - x1;
-	    	dely12 = y2 - y1;
-	    	delz12 = z2 - z1;
-	    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres + delz12*delz12*zres*zres)/xres;
-	    	System.out.println("width = " + width);
-	    	delx23 = x3 - x2;
-	    	dely23 = y3 - y2;
-	    	delz23 = z3 - z2;
-	        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres + delz23*delz23*zres*zres)/yres;
-	        System.out.println("height = " + height);
-	        delx15 = x5 - x1;
-	        dely15 = y5 - y1;
-	        delz15 = z5 - z1;
-	        depth = Math.sqrt(delx15*delx15*xres*xres + dely15*dely15*yres*yres + delz15*delz15*zres*zres)/zres;
-	        System.out.println("depth = " + depth);
-	        xcenter = (x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8)/8.0;
-	        ycenter = (y1 + y2 + y3 + y4 + y5 + y6 + y7 + y8)/8.0;
-	        zcenter = (z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8)/8.0;
-	        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter + " zcenter = " + zcenter);
-	        // Center in resolution space
-	        ratio = ((y1 - y5)*yres)/((z1 - z5)*zres);
-	        thetaX = (180.0/Math.PI)*Math.atan(ratio);
-	        System.out.println("thetaX = " + thetaX);
-	        ratio = ((x1 - x5)*xres)/((z1 - z5)*zres);
-	        thetaY = (180.0/Math.PI)*Math.atan(ratio);
-	        System.out.println("thetaY = " + thetaY);
-	        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
-	        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
-	        System.out.println("thetaZ = " + thetaZ);
-	        xfrm = new TransMatrix(4);
-	        xfrm.identity();
-	        xfrm.setTranslate(xres * xcenter, yres * ycenter, zres * zcenter);
-	        xfrm.setRotate(-thetaX,thetaY,-thetaZ,DEGREES);
-	        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
+	        if (method == MASK_METHOD) {
+	        	if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
+    	                (srcImage.getType() != ModelImage.BYTE) && (srcImage.getType() != ModelImage.USHORT) &&
+    	                (srcImage.getType() != ModelImage.SHORT)) {
+    	            displayError("Source Image must be Boolean, UByte, Byte, UShort, or Short");
+    	            setCompleted(false);
+
+    	            return;
+    	        }
+    			
+    			volume = length * oZdim;
+    			pixVolume = pixArea * zres;
+	        	buffer = new short[volume];
+    			try {
+                    srcImage.exportData(0, volume, buffer);
+                } catch (IOException error) {
+                    displayError("Algorithm CropTilted: image bounds exceeded");
+                    setCompleted(false);
+
+                    return;
+                }
+    			xStart = (int)Math.round(x1);
+    			yStart = (int)Math.round(y1);
+    			zStart = (int)Math.round(z1);
+                value = buffer[xStart + yStart*oXdim + zStart*length];
+                found = true;
+                xLow = Math.max(0,xStart-1);
+                xHigh = Math.min(oXdim-1,xStart+1);
+                yLow = Math.max(0,yStart-1);
+                yHigh = Math.min(oYdim-1,yStart+1);
+                zLow = Math.max(0,zStart-1);
+                zHigh = Math.min(oZdim-1,zStart+1);
+                nextXLow = xLow;
+                nextXHigh = xHigh;
+                nextYLow = yLow;
+                nextYHigh = yHigh;
+                nextZLow = zLow;
+                nextZHigh = zHigh;
+                xpos = new Vector<Float>();
+                ypos = new Vector<Float>();
+                zpos = new Vector<Float>();
+                xpos.add(xStart*xres);
+                ypos.add(yStart*yres);
+                zpos.add(zStart*zres);
+                havePos = new BitSet(volume);
+                havePos.set(xStart + yStart*oXdim + zStart*length);
+                while (found) {
+                    found = false;
+                    xLow = nextXLow;
+                    xHigh = nextXHigh;
+                    yLow = nextYLow;
+                    yHigh = nextYHigh;
+                    zLow = nextZLow;
+                    zHigh = nextZHigh;
+                    for (z = zLow; z <= zHigh; z++) {
+	                    for (y = yLow; y <= yHigh; y++) {
+	                    	for (x = xLow; x <= xHigh; x++) {
+	                    	    index = x + oXdim * y + length * z;
+	                    	    if ((buffer[index] == value) && (!havePos.get(index)) && 
+	                    	    (((x >= 1) && havePos.get(index-1)) || ((x < oXdim - 1) && havePos.get(index+1)) ||
+	                    	     ((y >= 1) && havePos.get(index-oXdim)) || ((y < oYdim - 1) && havePos.get(index+oXdim)) ||
+	                    	     ((z >= 1) && havePos.get(index-length)) || ((z < oZdim - 1) && havePos.get(index+length)))) {
+	                    	    	found = true;
+	                    	    	havePos.set(index);
+	                    	    	nPts++;
+	                    	    	xpos.add(x*xres);
+	                    	    	ypos.add(y*yres);
+	                    	    	zpos.add(z*zres);
+	                    	    	xcenter += x*xres;
+	                    	    	ycenter += y*yres;
+	                    	    	zcenter += z*zres;
+	                    	    	if ((x == xLow)  && (nextXLow > 0) && (nextXLow == xLow)) {
+	                    	    		nextXLow = xLow-1;
+	                    	    	}
+	                    	    	if ((x == xHigh) && (nextXHigh < oXdim-1) && (nextXHigh == xHigh)) {
+	                    	    		nextXHigh = xHigh+1;
+	                    	    	}
+	                    	    	if ((y == yLow)  && (nextYLow > 0) && (nextYLow == yLow)) {
+	                    	    		nextYLow = yLow-1;
+	                    	    	}
+	                    	    	if ((y == yHigh) && (nextYHigh < oYdim-1) && (nextYHigh == yHigh)) {
+	                    	    		nextYHigh = yHigh+1;
+	                    	    	}
+	                    	    	if ((z == zLow)  && (nextZLow > 0) && (nextZLow == zLow)) {
+	                    	    		nextZLow = zLow-1;
+	                    	    	}
+	                    	    	if ((z == zHigh) && (nextZHigh < oZdim-1) && (nextZHigh == zHigh)) {
+	                    	    		nextZHigh = zHigh+1;
+	                    	    	}
+	                    	    }
+	                    	}
+	                    }
+                    }
+                } // while (found)
+                xcenter = Math.abs(xcenter/nPts);
+                ycenter = Math.abs(ycenter/nPts);
+                zcenter = Math.abs(zcenter/nPts);
+                System.out.println("xcenter = " + (xcenter/xres) + " ycenter = " + (ycenter/yres) + " zcenter = " + (zcenter/zres));
+                for (i = 0; i < nPts; i++) {
+                    xdiff = xpos.get(i) - xcenter;
+                    ydiff = ypos.get(i) - ycenter;
+                    zdiff = zpos.get(i) - zcenter;
+                    Ix += (ydiff*ydiff + zdiff*zdiff)*pixVolume;
+                    Iy += (xdiff*xdiff + zdiff*zdiff)*pixVolume;
+                    Iz += (xdiff*xdiff + ydiff*ydiff)*pixVolume;
+                    Pxy += xdiff*ydiff*pixVolume;
+                    Pyz += ydiff*zdiff*pixVolume;
+                    Pzx += zdiff*xdiff*pixVolume;
+                } // for (i = 0; i < nPts; i++)	
+                // K**3 - (Ix + Iy + Iz)K**2 + (IxIy + IyIz + IzIx - Pxy**2 - Pyz**2 - Pzx**2)K
+                // - (IxIyIz - IxPyz**2 - IyPzx**2 - IzPxy**2 - 2PxyPyzPzx) = 0
+                // is a cubic equation in K yielding 3 positive real roots, K1, K2, and K3
+                // which are the principal moments of inertia for the given body.
+	        } // if (method == MASK_METHOD)
+	        else if (method == VOI_METHOD) {
+	    		delx12 = x2 - x1;
+		    	dely12 = y2 - y1;
+		    	delz12 = z2 - z1;
+		    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres + delz12*delz12*zres*zres)/xres;
+		    	System.out.println("width = " + width);
+		    	delx23 = x3 - x2;
+		    	dely23 = y3 - y2;
+		    	delz23 = z3 - z2;
+		        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres + delz23*delz23*zres*zres)/yres;
+		        System.out.println("height = " + height);
+		        delx15 = x5 - x1;
+		        dely15 = y5 - y1;
+		        delz15 = z5 - z1;
+		        depth = Math.sqrt(delx15*delx15*xres*xres + dely15*dely15*yres*yres + delz15*delz15*zres*zres)/zres;
+		        System.out.println("depth = " + depth);
+		        xcenter = (x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8)/8.0;
+		        ycenter = (y1 + y2 + y3 + y4 + y5 + y6 + y7 + y8)/8.0;
+		        zcenter = (z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8)/8.0;
+		        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter + " zcenter = " + zcenter);
+		        // Center in resolution space
+		        ratio = ((y1 - y5)*yres)/((z1 - z5)*zres);
+		        thetaX = (180.0/Math.PI)*Math.atan(ratio);
+		        System.out.println("thetaX = " + thetaX);
+		        ratio = ((x1 - x5)*xres)/((z1 - z5)*zres);
+		        thetaY = (180.0/Math.PI)*Math.atan(ratio);
+		        System.out.println("thetaY = " + thetaY);
+		        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
+		        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
+		        System.out.println("thetaZ = " + thetaZ);
+		        xfrm = new TransMatrix(4);
+		        xfrm.identity();
+		        xfrm.setTranslate(xres * xcenter, yres * ycenter, zres * zcenter);
+		        xfrm.setRotate(-thetaX,thetaY,-thetaZ,DEGREES);
+		        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
+	        } // else if (method == VOI_METHOD)
+	        
 	        interp = AlgorithmTransform.TRILINEAR;
 	        
 	        algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim,
