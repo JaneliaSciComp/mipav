@@ -13,10 +13,33 @@ package gov.nih.mipav.model.algorithms;
  *
  */
 public class CubicEquation {
+	private double a1;
+	private double b;
+	private double c;
+	private double d;
+	private double x1real[];
+	private double x2real[];
+	private double x2imag[];
+	private double x3real[];
+	private double x3imag[];
+	private int result[];
 	
 	public CubicEquation(double a1, double b, double c, double d, double x1real[], 
 			double x2real[], double x2imag[], double x3real[], double x3imag[],
 			int result[]) {
+		this.a1 = a1;
+		this.b = b;
+		this.c = c;
+		this.d = d;
+		this.x1real = x1real;
+		this.x2real = x2real;
+		this.x2imag = x2imag;
+		this.x3real = x3real;
+		this.x3imag = x3imag;
+		this.result = result;
+	}
+	
+	public void run() {
 		double a;
 		double p, q, u, v;
 		double r, alpha;
