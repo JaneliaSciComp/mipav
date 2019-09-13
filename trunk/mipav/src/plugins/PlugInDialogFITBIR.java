@@ -6277,12 +6277,25 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         isMultifile = true;
                         File[] fileList = origSrcFile.listFiles();
                         if (fileList.length > 0) {
-                            origSrcFile = fileList[0];
-                            filePath = origSrcFile.getAbsolutePath();
+                            // find first file that doesn't start with . (e.g., .DS_Store) and isn't a directory
+                            for (File file : fileList) {
+                                if (file.isFile() && !file.getName().startsWith(".")) {
+                                    origSrcFile = file;
+                                    break;
+                                }
+                            }
+                            
+                            if (origSrcFile.isDirectory()) {
+                                logError("No files found in specified image directory (those starting with '.' excluded): " + filePath);
+                                validFile = false;
+                                return null;
+                            } else {
+                                filePath = origSrcFile.getAbsolutePath();
 
-                            System.out.println("Opening from dir:\t" + filePath);
+                                System.out.println("Opening from dir:\t" + filePath);
+                            }
                         } else {
-                            MipavUtil.displayError("Unable to open image files in specified directory: " + filePath);
+                            logError("No files found in specified image directory: " + filePath);
                             validFile = false;
                             return null;
                         }
@@ -7157,7 +7170,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
             // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
-            if (isValueSet(ageVal) && ageVal.equalsIgnoreCase("135Y")) {
+            if (isValueSet(ageVal) && (ageVal.equalsIgnoreCase("135Y") || ageVal.startsWith("X"))) {
                 ageVal = null;
             }
             if (isValueSet(ageVal)) {
@@ -7302,41 +7315,48 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 	
                     double[] bvals = dtiParam.getbValues();
                     
-                    ArrayList<Double> seenBvals = new ArrayList<Double>();
-                    
-                    int numDirections = 0;
-                    int bvalCount = 0;
-                    Arrays.sort(bvals);
-                    for (int i = 0; i < bvals.length; i++) {
-                        if (bvals[i] != 0) {
-                            numDirections++;
-                            
-                            if (!seenBvals.contains(bvals[i])) {
-                                bvalCount++;
+                    if (bvals != null) {
+                        ArrayList<Double> seenBvals = new ArrayList<Double>();
+                        
+                        int numDirections = 0;
+                        int bvalCount = 0;
+                        Arrays.sort(bvals);
+                        for (int i = 0; i < bvals.length; i++) {
+                            if (bvals[i] != 0) {
+                                numDirections++;
                                 
-                                if (bvalCount == 1) {
-                                    extractedFields.put("ImgDiffusionFirstBVal", "" + bvals[i]);
-                                } else if (bvalCount == 2) {
-                                    extractedFields.put("ImgDiffusionSecondBVal", "" + bvals[i]);
-                                } else if (bvalCount == 3) {
-                                    extractedFields.put("ImgDiffusionThirdBVal", "" + bvals[i]);
-                                } else if (bvalCount == 4) {
-                                    extractedFields.put("ImgDiffusionFourthBVal", "" + bvals[i]);
-                                } else if (bvalCount == 5) {
-                                    extractedFields.put("ImgDiffusionFifthBVal", "" + bvals[i]);
-                                } else if (bvalCount == 6) {
-                                    extractedFields.put("ImgDiffusionSixthBVal", "" + bvals[i]);
-                                } else {
-                                    System.err.println("Found more than 6 bVals: " + bvalCount + " " + bvals[i]);
+                                if (!seenBvals.contains(bvals[i])) {
+                                    bvalCount++;
+                                    
+                                    if (bvalCount == 1) {
+                                        extractedFields.put("ImgDiffusionFirstBVal", "" + bvals[i]);
+                                    } else if (bvalCount == 2) {
+                                        extractedFields.put("ImgDiffusionSecondBVal", "" + bvals[i]);
+                                    } else if (bvalCount == 3) {
+                                        extractedFields.put("ImgDiffusionThirdBVal", "" + bvals[i]);
+                                    } else if (bvalCount == 4) {
+                                        extractedFields.put("ImgDiffusionFourthBVal", "" + bvals[i]);
+                                    } else if (bvalCount == 5) {
+                                        extractedFields.put("ImgDiffusionFifthBVal", "" + bvals[i]);
+                                    } else if (bvalCount == 6) {
+                                        extractedFields.put("ImgDiffusionSixthBVal", "" + bvals[i]);
+                                    } else {
+                                        System.err.println("Found more than 6 bVals: " + bvalCount + " " + bvals[i]);
+                                    }
+                                    
+                                    seenBvals.add(bvals[i]);
                                 }
-                                
-                                seenBvals.add(bvals[i]);
                             }
                         }
+                        extractedFields.put("ImgDiffusionBValCt", "" + bvalCount);
+                        
+                        extractedFields.put("ImgDiffusionDirCt", "" + numDirections);
+                    } else {
+                        System.err.println("No DICOM embedded DTI bval information found.");
+                        if (cmdLineCsvFlag) {
+                            errorFileOut.println("No DICOM embedded DTI bval information found.");
+                        }
                     }
-                    extractedFields.put("ImgDiffusionBValCt", "" + bvalCount);
-                    
-                    extractedFields.put("ImgDiffusionDirCt", "" + numDirections);
                 } else {
                 	System.err.println("No DICOM embedded DTI information found.");
             		if (cmdLineCsvFlag) {
