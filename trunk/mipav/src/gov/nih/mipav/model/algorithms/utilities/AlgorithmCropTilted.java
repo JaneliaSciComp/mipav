@@ -156,6 +156,11 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        this.y8 = y8;
 	        this.z8 = z8;
         }
+        else if (method == MASK_METHOD) {
+        	this.x1 = x1;
+	        this.y1 = y1;
+	        this.z1 = z1;	
+        }
         
     }
     
@@ -269,12 +274,24 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double b;
         double c;
         double d;
-        double x1real[];
-        double x2real[];
-        double x2imag[];
-        double x3real[];
-        double x3imag[];
-        double result[];
+        double K1real[];
+        double K2real[];
+        double K2imag[];
+        double K3real[];
+        double K3imag[];
+        int result[];
+        CubicEquation ce;
+        double dircosx1;
+        double dircosy1;
+        double dircosz1;
+        double dircosx2;
+        double dircosy2;
+        double dircosz2;
+        double dircosx3;
+        double dircosy3;
+        double dircosz3;
+        double scalextoy;
+        double scalextoz;
         // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
         // Record the voxel coordinates of the 8 edge voxels.
         // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
@@ -613,7 +630,43 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	        	units[2] = units[0];
     	    }
 	        oZres = zres;
-	        if (method == MASK_METHOD) {
+	        if (method == VERTICES_METHOD) {
+	    		delx12 = x2 - x1;
+		    	dely12 = y2 - y1;
+		    	delz12 = z2 - z1;
+		    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres + delz12*delz12*zres*zres)/xres;
+		    	System.out.println("width = " + width);
+		    	delx23 = x3 - x2;
+		    	dely23 = y3 - y2;
+		    	delz23 = z3 - z2;
+		        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres + delz23*delz23*zres*zres)/yres;
+		        System.out.println("height = " + height);
+		        delx15 = x5 - x1;
+		        dely15 = y5 - y1;
+		        delz15 = z5 - z1;
+		        depth = Math.sqrt(delx15*delx15*xres*xres + dely15*dely15*yres*yres + delz15*delz15*zres*zres)/zres;
+		        System.out.println("depth = " + depth);
+		        xcenter = (x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8)/8.0;
+		        ycenter = (y1 + y2 + y3 + y4 + y5 + y6 + y7 + y8)/8.0;
+		        zcenter = (z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8)/8.0;
+		        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter + " zcenter = " + zcenter);
+		        // Center in resolution space
+		        ratio = ((y1 - y5)*yres)/((z1 - z5)*zres);
+		        thetaX = (180.0/Math.PI)*Math.atan(ratio);
+		        System.out.println("thetaX = " + thetaX);
+		        ratio = ((x1 - x5)*xres)/((z1 - z5)*zres);
+		        thetaY = (180.0/Math.PI)*Math.atan(ratio);
+		        System.out.println("thetaY = " + thetaY);
+		        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
+		        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
+		        System.out.println("thetaZ = " + thetaZ);
+		        xfrm = new TransMatrix(4);
+		        xfrm.identity();
+		        xfrm.setTranslate(xres * xcenter, yres * ycenter, zres * zcenter);
+		        xfrm.setRotate(-thetaX,thetaY,-thetaZ,DEGREES);
+		        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
+	        } // if (method == VOI_VERTICES)
+	        else if (method == MASK_METHOD) {
 	        	if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
     	                (srcImage.getType() != ModelImage.BYTE) && (srcImage.getType() != ModelImage.USHORT) &&
     	                (srcImage.getType() != ModelImage.SHORT)) {
@@ -726,43 +779,47 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 // - (IxIyIz - IxPyz**2 - IyPzx**2 - IzPxy**2 - 2PxyPyzPzx) = 0
                 // is a cubic equation in K yielding 3 positive real roots, K1, K2, and K3
                 // which are the principal moments of inertia for the given body.
-	        } // if (method == MASK_METHOD)
-	        else if (method == VOI_METHOD) {
-	    		delx12 = x2 - x1;
-		    	dely12 = y2 - y1;
-		    	delz12 = z2 - z1;
-		    	width = Math.sqrt(delx12*delx12*xres*xres + dely12*dely12*yres*yres + delz12*delz12*zres*zres)/xres;
-		    	System.out.println("width = " + width);
-		    	delx23 = x3 - x2;
-		    	dely23 = y3 - y2;
-		    	delz23 = z3 - z2;
-		        height = Math.sqrt(delx23*delx23*xres*xres + dely23*dely23*yres*yres + delz23*delz23*zres*zres)/yres;
-		        System.out.println("height = " + height);
-		        delx15 = x5 - x1;
-		        dely15 = y5 - y1;
-		        delz15 = z5 - z1;
-		        depth = Math.sqrt(delx15*delx15*xres*xres + dely15*dely15*yres*yres + delz15*delz15*zres*zres)/zres;
-		        System.out.println("depth = " + depth);
-		        xcenter = (x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8)/8.0;
-		        ycenter = (y1 + y2 + y3 + y4 + y5 + y6 + y7 + y8)/8.0;
-		        zcenter = (z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8)/8.0;
-		        System.out.println("xcenter = " + xcenter + " ycenter = " + ycenter + " zcenter = " + zcenter);
-		        // Center in resolution space
-		        ratio = ((y1 - y5)*yres)/((z1 - z5)*zres);
-		        thetaX = (180.0/Math.PI)*Math.atan(ratio);
-		        System.out.println("thetaX = " + thetaX);
-		        ratio = ((x1 - x5)*xres)/((z1 - z5)*zres);
-		        thetaY = (180.0/Math.PI)*Math.atan(ratio);
-		        System.out.println("thetaY = " + thetaY);
-		        ratio = ((y3 - y4)*yres)/((x3 - x4)*xres);
-		        thetaZ = (180.0/Math.PI)*Math.atan(ratio);
-		        System.out.println("thetaZ = " + thetaZ);
-		        xfrm = new TransMatrix(4);
-		        xfrm.identity();
-		        xfrm.setTranslate(xres * xcenter, yres * ycenter, zres * zcenter);
-		        xfrm.setRotate(-thetaX,thetaY,-thetaZ,DEGREES);
-		        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
-	        } // else if (method == VOI_METHOD)
+                a1 = 1.0;
+                b = -(Ix + Iy + Iz);
+                c = (Ix*Iy + Iy*Iz + Iz*Ix - Pxy*Pxy - Pyz*Pyz - Pzx*Pzx);
+                d = -(Ix*Iy*Iz - Ix*Pyz*Pyz - Iy*Pzx*Pzx - Iz*Pxy*Pxy - 2.0*Pxy*Pyz*Pzx);
+                K1real = new double[1];
+                K2real = new double[1];
+                K2imag = new double[1];
+                K3real = new double[1];
+                K3imag = new double[1];
+                result = new int[1];
+                ce = new CubicEquation(a1, b, c, d, K1real, K2real, K2imag, K3real, K3imag, result);
+                ce.run();
+                if (result[0] == 1) {
+                	MipavUtil.displayError("Cubic equation for principal moments of inertia gives 2 complex conjugate values");
+                	setCompleted(false);
+                	return;
+                }
+                // (Ix - K)dircosx - Pxydircosy - Pzxdircosz = 0
+                // -Pxydircosx + (Iy - K)dircosy - Pyzdircosz = 0
+                // Multiplying the first equation by -Pyz, the second equation by Pzx, and adding the 2
+                // dircosy = dircosx*((Ix - K)Pyz + PxyPzx]/((Iy - K)Pzx + PxyPyz)
+                // dircosz = ((Ix - K)dircosx  - Pxydircosy)/Pzx = ((Ix - K)dircosx - Pxyscalextoydircosx)/Pzx
+                // dircosx**2 + dircosy**2 + dircosz**2 = 1
+                // For root1:
+                scalextoy = ((Ix - K1real[0])*Pyz + Pxy*Pzx)/((Iy - K1real[0])*Pzx + Pxy*Pyz);
+                scalextoz = ((Ix - K1real[0]) - Pxy*scalextoy)/Pzx;
+                dircosx1 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
+                dircosy1 = dircosx1 * scalextoy;
+                dircosz1 = dircosx1 * scalextoz;
+                scalextoy = ((Ix - K2real[0])*Pyz + Pxy*Pzx)/((Iy - K2real[0])*Pzx + Pxy*Pyz);
+                scalextoz = ((Ix - K2real[0]) - Pxy*scalextoy)/Pzx;
+                dircosx2 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
+                dircosy2 = dircosx2 * scalextoy;
+                dircosz2 = dircosx2 * scalextoz;
+                scalextoy = ((Ix - K3real[0])*Pyz + Pxy*Pzx)/((Iy - K3real[0])*Pzx + Pxy*Pyz);
+                scalextoz = ((Ix - K3real[0]) - Pxy*scalextoy)/Pzx;
+                dircosx3 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
+                dircosy3 = dircosx1 * scalextoy;
+                dircosz3 = dircosx1 * scalextoz;
+                // I have 9 directional cosines, but I don't know if these correspond to positive or negative angles.
+	        } // else if (method == MASK_METHOD)
 	        
 	        interp = AlgorithmTransform.TRILINEAR;
 	        
