@@ -1803,9 +1803,14 @@ public class FileIO {
         studyDescription = (String) tagTable.getValue("0008,1030");
         seriesDescription = (String) tagTable.getValue("0008,103E");
         scannerType = (String) tagTable.getValue("0008,0070");
+        
+        String imageType = (String) tagTable.getValue("0008,0008");
+        String protocolName = (String) tagTable.getValue("0018,1030");
 
         if ( (studyDescription != null && studyDescription.toUpperCase().contains("DTI"))
-                || (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
+                || (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))
+                || (protocolName != null && protocolName.toUpperCase().contains("DTI"))
+                || (imageType != null && imageType.toUpperCase().contains("DIFFUSION"))) {
             if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {
                 // For Siemen's DWI 3D Mosaic Images
                 if (image.is3DImage()) {
@@ -1908,10 +1913,10 @@ public class FileIO {
                     dtiparams = new DTIParameters(numVolumes);
                     dtiparams.setNumVolumes(numVolumes);
 
+                    final double[] flBvalueArray = new double[numVolumes];
+                    final double[][] flGradientArray = new double[numVolumes][3];
+                    
                     if ((String) tagTable.getValue("0018,9087") != null) {
-                        final double[] flBvalueArray = new double[numVolumes];
-                        final double[][] flGradientArray = new double[numVolumes][3];
-
                         for (int i = 0; i < numVolumes; i++) {
                             final FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i * image.getExtents()[2]);
 
@@ -1929,6 +1934,47 @@ public class FileIO {
                                 flGradientArray[i][0] = Double.valueOf(arr2[1]);
                                 flGradientArray[i][1] = Double.valueOf(arr2[2]);
                                 flGradientArray[i][2] = Double.valueOf(arr2[0]);
+                            }
+                        }
+                        dtiparams.setbValues(flBvalueArray);
+                        dtiparams.setGradients(flGradientArray);
+                    } else if (tagTable.containsTag("0018,9117")) {
+                        for (int i = 0; i < numVolumes; i++) {
+                            final FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i * image.getExtents()[2]);
+    
+                            // Get Bvalues from Philips Tags
+                            final FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
+                            
+                            Vector<FileDicomSQItem> seq = ((FileDicomSQ) tag4dTable.getValue("0018,9117", false)).getSequence();
+                            for (FileDicomSQItem item : seq) {
+                                if (item.getTagList().containsKey(new FileDicomKey("0018,9087"))) {
+                                    String philipsBvalue = ((String) item.getTagList().get(new FileDicomKey("0018,9087")).getValue(true)).trim();
+                                    flBvalueArray[i] = Double.parseDouble(philipsBvalue);
+                                }
+                                
+                                if (item.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
+                                    String philipsGrads = ((String) item.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                    final String grads = philipsGrads.replace('\\', '\t');
+                                    final String[] arr2 = grads.split("\t");
+                                    flGradientArray[i][0] = Double.valueOf(arr2[1]);
+                                    flGradientArray[i][1] = Double.valueOf(arr2[2]);
+                                    flGradientArray[i][2] = Double.valueOf(arr2[0]);
+                                }
+                                
+                                // DiffusionGradientDirectionSequence 0018,9076
+                                if (item.getTagList().containsKey(new FileDicomKey("0018,9076"))) {
+                                    Vector<FileDicomSQItem> seqGrad = ((FileDicomSQ) item.getValue("0018,9076", false)).getSequence();
+                                    for (FileDicomSQItem itemGrad : seqGrad) {
+                                        if (itemGrad.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
+                                            String philipsGrads = ((String) itemGrad.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                            final String grads = philipsGrads.replace('\\', '\t');
+                                            final String[] arr2 = grads.split("\t");
+                                            flGradientArray[i][0] = Double.valueOf(arr2[1]);
+                                            flGradientArray[i][1] = Double.valueOf(arr2[2]);
+                                            flGradientArray[i][2] = Double.valueOf(arr2[0]);
+                                        }
+                                    }
+                                }
                             }
                         }
                         dtiparams.setbValues(flBvalueArray);
@@ -6414,6 +6460,7 @@ public class FileIO {
 
         for (int i = 0; i < size - 1; i++) {
             if (A[i] == A[i + 1]) {
+            	//System.err.println(i + " = " + A[i] + " " + B[i] + "\t" + (i+1) + " = " + A[i+1] + " " + B[i]);
                 return false;
             }
         }
