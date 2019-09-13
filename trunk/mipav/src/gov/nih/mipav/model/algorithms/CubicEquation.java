@@ -7,8 +7,8 @@ package gov.nih.mipav.model.algorithms;
  * The equation is a1*x**3 + b*x**2 + c*x + d = 0
  * If result = 0, a1 = 0
  * If result = 1, x1 is real and x2 and x3 are complex with x3 = complex conjugate of x2
- * If result = 2, only 2 real roots are found
- * If result = 3, 3 real roots are found
+ * If result = 2, there are 3 real roots of which at least 2 are equal
+ * If result = 3, 3 real and unequal roots are found
  * @author ilb
  *
  */
@@ -72,6 +72,7 @@ public class CubicEquation {
 		    	v = u;
 		    	x1real[0] = u + v - a/3.0;
 		    	x2real[0] = -(u + v) / 2.0 - a / 3.0;
+		    	x3real[0] = x2real[0];
 		    	result[0] = 2;
 		    } // else if (d == 0)
 		    else { // d < 0
