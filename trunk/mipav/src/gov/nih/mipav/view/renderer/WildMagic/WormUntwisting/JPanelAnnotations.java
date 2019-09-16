@@ -32,6 +32,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -132,6 +133,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private VOIContour segmentationContour;
 	private JCheckBox displayMidline;
 	private JCheckBox displaySurface;
+	private JButton createCurve;
 
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
 		voiManager = voiInterface;
@@ -430,6 +432,22 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 			}
 		}
+		else if ( command.equals("createCurve") ) {
+
+			VOI annotations = voiManager.getAnnotations();
+			// find selected control points:
+			Vector<VOIWormAnnotation> controlPoints = new Vector<VOIWormAnnotation>();
+			for ( int i = 0; i < annotations.getCurves().size(); i++ ) 
+			{
+				VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+				if ( text.isSelected() ) {
+					controlPoints.add(text);
+				}
+			}
+			if ( controlPoints.size() > 0 ) {
+				voiManager.addSplineControlPts(controlPoints);
+			}
+		}
 	}
 
 	/* (non-Javadoc)
@@ -443,6 +461,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		{
 			// get current annotations and update table:
 			VOI annotations = voiManager.getAnnotations();
+			
 			// remove table listener during updates:
 			annotationTableModel.removeTableModelListener(this);
 			annotationList.removeListSelectionListener(this);
@@ -936,6 +955,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			gbc.gridx++;
 			labelPanel.add( volumeRadius, gbc );
 			
+			// Create curve button:
+			createCurve = new JButton("curve" );
+			createCurve.setEnabled(false);
+			createCurve.addActionListener(this);
+			createCurve.setActionCommand("createCurve");
+			gbc.gridx = 0;			gbc.gridy++;
+			labelPanel.add( createCurve, gbc );
+			
 			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display and Clipping"));
 
 			// build the annotation table for the list of annotations:
@@ -1145,6 +1172,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	private void updateTableSelection(ListSelectionEvent e) {
 
+		int numSelected = -1;
 		if ( e.getSource() == annotationList ) {
 			if ( annotationTable.getRowCount() > 0 ) {
 				int[] rows = annotationTable.getSelectedRows();
@@ -1162,6 +1190,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(rows[i]);
 					text.setSelected( true );
 					text.updateSelected( imageA.GetImage() );
+					numSelected++;
 				}
 				imageA.GetImage().notifyImageDisplayListeners();
 			}
@@ -1189,12 +1218,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						text.setSelected(true);
 						text.updateSelected(imageA.GetImage());
 						annotationList.addSelectionInterval(j, j);
+						numSelected++;
 					}
 				}
 			}
 			annotationList.addListSelectionListener(this);
 			imageA.GetImage().notifyImageDisplayListeners();
 		}
+		createCurve.setEnabled(numSelected > 1);
 	}
 	
 }

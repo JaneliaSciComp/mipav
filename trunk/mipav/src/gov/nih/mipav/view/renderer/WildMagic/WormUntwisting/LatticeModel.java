@@ -148,14 +148,16 @@ public class LatticeModel {
 						}
 						else if ( parsed.length == 3 )
 						{
+							if ( count > 1 ) {
 							// position only
-							z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
-							x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
-							y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
-							text.setText( "" );
+							x    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+							y    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+							z    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+							text.setText( "pt_" + count );
 							text.add( new Vector3f( x, y, z ) );
 							text.add( new Vector3f( x+1, y, z ) );
 							annotationVOIs.getCurves().add(text);
+							}
 						}
 						count++;
 					}
@@ -657,6 +659,7 @@ public class LatticeModel {
 	private boolean colorAnnotations = false;
 
 	private Vector<AnnotationListener> annotationListeners;
+	private Vector<CurveListener> curveListeners;
 	private Vector<LatticeListener> latticeListeners;
 
 	private String annotationPrefix = "A";
@@ -683,6 +686,18 @@ public class LatticeModel {
 	private boolean previewMode = false;
 
 	private Vector<boolean[]> clipMask = null;
+	
+	// spline data members:
+	private class AnnotationSplineControlPts  {
+		public String name;
+		public String prefix;
+		public Vector<VOIWormAnnotation> annotations;
+		public VOIContour curve;
+		public VOI curveVOI;
+		public boolean selected = true;
+		public AnnotationSplineControlPts() {}
+	}
+	protected Vector<AnnotationSplineControlPts> splineControlPtsList;
 
 	/**
 	 * Creates a new LatticeModel
@@ -746,6 +761,10 @@ public class LatticeModel {
 			imageA.registerVOI(annotationVOIs);
 		}
 		VOIWormAnnotation newText = new VOIWormAnnotation( (VOIText)textVOI.getCurves().firstElement());
+		addAnnotation(newText, multiSelect);
+	}
+	
+	public void addAnnotation( VOIWormAnnotation newText, boolean multiSelect ) {
 		newText.firstElement().X = Math.round( newText.firstElement().X );	newText.firstElement().Y = Math.round( newText.firstElement().Y );  newText.firstElement().Z = Math.round( newText.firstElement().Z );
 		newText.lastElement().X  = Math.round( newText.lastElement().X );	newText.lastElement().Y  = Math.round( newText.lastElement().Y );   newText.lastElement().Z  = Math.round( newText.lastElement().Z );
 		Color c = newText.getColor();
@@ -799,6 +818,63 @@ public class LatticeModel {
 		}
 		if ( !annotationListeners.contains(listener ) ) {
 			annotationListeners.add(listener);
+		}
+	}
+
+	/**
+	 * Add a curve to the list.
+	 * 
+	 * @param textVOI
+	 */
+	public void addSplineControlPts( Vector<VOIWormAnnotation> controlPts ) {
+		if ( controlPts.size() < 2 ) return;
+		
+		if ( splineControlPtsList == null ) {
+			splineControlPtsList = new Vector<AnnotationSplineControlPts>();
+		}
+		
+		// make the curve a spline and display:
+		AnnotationSplineControlPts annotationSpline = new AnnotationSplineControlPts();
+		splineControlPtsList.add(annotationSpline);
+		
+		annotationSpline.annotations = controlPts;
+		// generate curve:
+		NaturalSpline3 spline = smoothCurve(annotationSpline.annotations);
+
+		//display:
+		annotationSpline.prefix = getPrefix(controlPts.elementAt(0).getText());
+		annotationSpline.curve = new VOIContour(false);
+		float length = spline.GetLength(0, 1);
+		int maxLength = (int)Math.ceil(length);
+		float step = 1;
+		if ( maxLength != length )
+		{
+			step = (length / maxLength);
+		}
+		for (int i = 0; i <= maxLength; i++) {
+			final float t = spline.GetTime(i*step);
+			annotationSpline.curve.add(spline.GetPosition(t));
+		}
+		annotationSpline.name = new String( annotationSpline.prefix );
+		annotationSpline.curveVOI = new VOI((short)splineControlPtsList.size(), annotationSpline.name );
+		annotationSpline.curveVOI.getCurves().add(annotationSpline.curve);
+		annotationSpline.curveVOI.setColor(Color.red);
+		annotationSpline.curve.update(new ColorRGBA(1, 0, 0, 1));
+		imageA.registerVOI(annotationSpline.curveVOI);
+		
+		imageA.notifyImageDisplayListeners();
+
+		// update the annotation listeners to changes:
+		updateCurveListeners();
+	}
+
+	public void addCurveListener( CurveListener listener )
+	{
+		if ( curveListeners == null ) {
+			curveListeners = new Vector<CurveListener>();
+		}
+		if ( !curveListeners.contains(listener ) ) {
+			curveListeners.add(listener);
 		}
 	}
 
@@ -1436,7 +1512,113 @@ public class LatticeModel {
 	{
 		return annotationsStraight;
 	}
+	
+	public Vector<String> getSplineCurves() {
+		if ( splineControlPtsList == null ) return null;
+		Vector<String> curveNames = new Vector<String>();
+		for ( int i = 0; i < splineControlPtsList.size(); i++ )
+		{
+			curveNames.add(splineControlPtsList.elementAt(i).name);
+		}
+		return curveNames;
+	}
 
+	public void deleteSelectedCurve()
+	{
+		if ( splineControlPtsList == null ) return;
+		for ( int i = splineControlPtsList.size() - 1; i >= 0; i-- )
+		{
+			if ( splineControlPtsList.elementAt(i).selected )
+			{
+				AnnotationSplineControlPts splinePts = splineControlPtsList.remove(i);
+				imageA.unregisterVOI(splinePts.curveVOI);
+				splinePts.curveVOI.dispose();
+				splinePts.curveVOI = null;
+			}
+		}
+		updateAnnotationListeners();
+		updateCurveListeners();
+	}
+	
+	public boolean isCurveSelected(String name)
+	{
+		if ( splineControlPtsList == null ) return false;
+		for ( int i = 0; i < splineControlPtsList.size(); i++ )
+		{
+			if ( name.equals(splineControlPtsList.elementAt(i).name) )
+			{
+				return splineControlPtsList.elementAt(i).selected;
+			}
+		}
+		return false;
+	}
+	
+	public void setCurveName(String oldName, String newName)
+	{
+		if ( splineControlPtsList == null ) return;
+		for ( int i = 0; i < splineControlPtsList.size(); i++ )
+		{
+			if ( oldName.equals(splineControlPtsList.elementAt(i).name) )
+			{
+				splineControlPtsList.elementAt(i).name = new String(newName);
+				splineControlPtsList.elementAt(i).curveVOI.setName(newName);
+				break;
+			}
+		}
+	}
+	
+	public void setCurveSelected(String name, boolean selected)
+	{
+		if ( splineControlPtsList == null ) return;
+		for ( int i = 0; i < splineControlPtsList.size(); i++ )
+		{
+			if ( name.equals(splineControlPtsList.elementAt(i).name) )
+			{
+				splineControlPtsList.elementAt(i).selected = selected;
+				for ( int j = 0; j < splineControlPtsList.elementAt(i).annotations.size(); j++ )
+				{
+					VOIWormAnnotation text = splineControlPtsList.elementAt(i).annotations.elementAt(j);
+					text.setSelected( selected );
+					text.updateSelected( imageA );
+				}
+				updateAnnotationListeners();
+				break;
+			}
+		}
+	}
+	
+	public boolean isCurveVisible(String name)
+	{
+		if ( splineControlPtsList == null ) return false;
+		for ( int i = 0; i < splineControlPtsList.size(); i++ )
+		{
+			if ( name.equals(splineControlPtsList.elementAt(i).name) )
+			{
+				VOIContour curve = splineControlPtsList.elementAt(i).curve;
+				if ( curve.getVolumeVOI() != null ) {
+					return curve.getVolumeVOI().GetDisplay();
+				}
+				break;
+			}
+		}
+		return false;
+	}
+	
+	public void setCurveVisible(String name, boolean visible)
+	{
+		if ( splineControlPtsList == null ) return;
+		for ( int i = 0; i < splineControlPtsList.size(); i++ )
+		{
+			if ( name.equals(splineControlPtsList.elementAt(i).name) )
+			{
+				VOIContour curve = splineControlPtsList.elementAt(i).curve;
+				if ( curve.getVolumeVOI() != null ) {
+					curve.getVolumeVOI().SetDisplay(visible);
+				}
+				break;
+			}
+		}
+	}
 
 	public int getCurrentIndex()
 	{
@@ -2205,8 +2387,181 @@ public class LatticeModel {
 			//			updateLattice(true);
 		}
 	}
+	
+	
+	public void openNeuriteCurves()
+	{
+		String dir = WormData.getOutputDirectory(imageA);
+		String fileName = WormData.neuriteOutput;
+		
+		final String voiDir = new String(dir + File.separator + fileName + File.separator);
+		File voiFileDir = new File(voiDir);
+		
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+			final String[] list = voiFileDir.list();
+			for (int i = 0; i < list.length; i++) {
+				final File lrFile = new File(voiDir + list[i]);
+				System.err.println( lrFile.getName() );
+				if ( lrFile.getName().contains("controlPts") ) {
+					VOI annotations = LatticeModel.readAnnotationsCSV(voiDir + list[i]);
+					addAnnotations(annotations);
+					Vector<VOIWormAnnotation> splineControlPts = new Vector<VOIWormAnnotation>();
+					for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
+						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
+						splineControlPts.add(text);
+					}
+					addSplineControlPts(splineControlPts);
+				}
+			}
+		} 
+	}
 
+	public void saveNeuriteCurves()
+	{
+		if ( splineControlPtsList == null ) return;
+		if ( splineControlPtsList.size() <= 0 ) return;
+		
+	
+		String dir = WormData.getOutputDirectory(imageA) + File.separator;
+		String fileName = WormData.neuriteOutput;
 
+		String imageName = JDialogBase.makeImageName(imageA.getImageFileName(), "");
+		
+		
+		final String voiDir = new String(dir + fileName + File.separator);
+		for ( int i = 0; i < splineControlPtsList.size(); i++ ) {
+			AnnotationSplineControlPts annotationSpline = splineControlPtsList.elementAt(i);
+
+			VOI curveVOI = new VOI((short)0, annotationSpline.name );
+			for ( int j = 0; j < annotationSpline.annotations.size(); j++ ) curveVOI.getCurves().add(annotationSpline.annotations.elementAt(j));
+
+			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, imageName + "_" + annotationSpline.name + "_controlPts.csv", curveVOI );
+			LatticeModel.saveContourAsCSV( imageA, fileName, "_" + annotationSpline.name + "_spline", annotationSpline.curve );
+
+			// remove annotations from the annotations list so not saved twice:
+			for ( int j = 0; j < annotationSpline.annotations.size(); j++ ) {
+				annotationVOIs.getCurves().remove(annotationSpline.annotations.elementAt(j));
+			}
+		}
+		
+	}
+	
+
+	
+	public void untwistNeuriteCurves(boolean useLatticeModel)
+	{		
+		String dir = WormData.getOutputDirectory(imageA);
+		String fileName = WormData.neuriteOutput;
+		
+		final String voiDir = new String(dir + File.separator + fileName + File.separator);
+		File voiFileDir = new File(voiDir);
+		
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+			final String[] list = voiFileDir.list();
+			for (int i = 0; i < list.length; i++) {
+				final File lrFile = new File(voiDir + list[i]);
+				System.err.println( lrFile.getName() );
+				VOI annotations = LatticeModel.readAnnotationsCSV(voiDir + list[i]);
+				setMarkers(annotations);
+				untwistMarkers(useLatticeModel);	
+				saveAnnotationStraight(imageA, "straightened_neurites", "straightened_" + list[i] );	
+			}
+		} 
+	}
+	
+	public static void openStraightNeuriteCurves(ModelImage image) {
+
+		String dir = WormData.getOutputDirectory(image);
+		
+		final String voiDir = new String(dir + File.separator + "straightened_neurites" + File.separator );
+		File voiFileDir = new File(voiDir);
+		
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+			final String[] list = voiFileDir.list();
+			for (int i = 0; i < list.length; i++) {
+				final File lrFile = new File(voiDir + list[i]);
+				System.err.println( lrFile.getName() );
+				if ( lrFile.getName().contains("controlPts") ) {
+					VOI annotations = LatticeModel.readAnnotationsCSV(voiDir + list[i]);
+					image.registerVOI(annotations);					
+				}
+				else {
+
+					VOI annotations = LatticeModel.readAnnotationsCSV(voiDir + list[i]);
+					VOIContour curve = new VOIContour(false);
+					Vector<VOIContour> curveList = null;
+					System.err.println( annotations.getCurves().size() );
+					for (int j = 0; j < annotations.getCurves().size(); j++ ) {
+						curve.add( annotations.getCurves().elementAt(j).elementAt(0) );
+						if ( curve.size() > 1 ) {
+							float dist = curve.elementAt(curve.size() -1 ).distance(curve.elementAt( curve.size() -2 ) );
+							if ( dist > 5 ) // should be one voxel spacing... 
+							{
+								System.err.println(dist);
+								if ( curveList == null ) {
+									curveList = new Vector<VOIContour>();
+								}
+								curveList.add(curve);
+								// remove the point with the big jump:
+								Vector3f lastPt = curve.lastElement();
+								curve.remove( curve.lastElement() );
+								curve = new VOIContour(false);
+								curve.add( lastPt );
+							}
+						}
+					}
+					System.err.println("");
+					System.err.println("");
+					if ( curveList != null ) {
+						curveList.add(curve);
+						curve = null;
+						
+						int maxSize = -1;
+						int maxSizeIndex = -1;
+						for ( int j = 0; j < curveList.size(); j++ ) {
+							if ( curveList.elementAt(j).size() > maxSize ) {
+								maxSize = curveList.elementAt(j).size();
+								maxSizeIndex = j;
+							}
+						}
+						if ( maxSizeIndex != -1 ) {
+							VOIContour newCurve = new VOIContour(false);
+							newCurve.addAll(curveList.elementAt(maxSizeIndex));
+							System.err.println( newCurve.size() );
+							for ( int j = maxSizeIndex + 1; j < curveList.size(); j++ ) {
+								System.err.println( curveList.elementAt(j).size() );
+								float skipDist = newCurve.lastElement().distance( curveList.elementAt(j).firstElement());
+								System.err.println(skipDist);
+								if ( skipDist < 20 ) {
+									newCurve.addAll( curveList.elementAt(j) );
+								}
+							}
+							for ( int j = maxSizeIndex - 1; j >= 0; j-- ) {
+								System.err.println( curveList.elementAt(j).size() );
+								float skipDist = curveList.elementAt(j).lastElement().distance( newCurve.firstElement());
+								System.err.println(skipDist);
+								if ( skipDist < 20 ) {
+									for ( int k = 0; k < curveList.elementAt(j).size(); k++ ) {
+										newCurve.add(k, curveList.elementAt(j).elementAt(k) );
+									}
+								}
+							}
+							System.err.println("");
+							System.err.println("");
+							System.err.println( newCurve.size() );
+							curve = newCurve;
+						}
+					}
+					if ( curve != null ) {
+						VOI curveVOI = new VOI((short)0, list[i]);
+						curveVOI.getCurves().add(curve);
+						image.registerVOI(curveVOI);
+					}
+				}
+			}
+		} 
+	}
+	
 
 	public ModelImage segmentLattice(final ModelImage image, boolean saveContourImage, int paddingFactor, boolean segmentLattice )
 	{
@@ -2781,6 +3136,64 @@ public class LatticeModel {
 		updateAnnotationListeners();
 	}
 
+	/**
+	 * Called when new annotations are loaded from file, replaces current annotations.
+	 * 
+	 * @param newAnnotations
+	 */
+	public void addAnnotations(final VOI newAnnotations) {
+		if (annotationVOIs == null) {
+			annotationVOIs = newAnnotations;
+			annotationVOIs.setName("annotationVOIs");
+			imageA.registerVOI(annotationVOIs);
+		}
+		else {
+			annotationVOIs.getCurves().addAll( newAnnotations.getCurves() );
+		}
+		clear3DSelection();
+
+		if (showSelected != null) {
+			for (int i = 0; i < showSelected.length; i++) {
+				showSelected[i].dispose();
+			}
+			showSelected = null;
+		}
+		showSelectedVOI = null;
+		clearAddLeftRightMarkers();		
+
+		if ( annotationVOIs == null )
+		{
+			return;
+		}
+		if ( imageA.isRegistered(annotationVOIs) == -1 ) {
+			imageA.registerVOI(annotationVOIs);
+		}
+		for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
+			final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+			//			text.setColor(Color.blue);
+			final Color c = text.getColor();
+			//			System.err.println( text.getText() + "  " + text.getColor() );
+			text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
+			text.elementAt(1).copy(text.elementAt(0));
+			//			text.elementAt(1).add(6, 0, 0);
+			text.setUseMarker(false);
+
+			if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
+				if (wormOrigin == null) {
+					wormOrigin = new Vector3f(text.elementAt(0));
+					// updateLattice(true);
+				} else {
+					wormOrigin.copy(text.elementAt(0));
+					// updateLattice(false);
+				}
+			}
+		}
+		colorAnnotations();
+		updateAnnotationListeners();
+	}
+
+	
+	
 	/**
 	 * Change the underlying image for the latticeModel. Update the output directories.
 	 * @param image
@@ -6289,6 +6702,29 @@ public class LatticeModel {
 		return new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, curve.size() - 1, time, akPoints);
 	}
 
+	public static NaturalSpline3 smoothCurve(final Vector<VOIWormAnnotation> controlPts) {
+		float totalDistance = 0;
+		for (int i = 0; i < controlPts.size() - 1; i++) {
+			totalDistance += controlPts.elementAt(i).elementAt(0).distance(controlPts.elementAt(i + 1).elementAt(0));
+		}
+
+		final Vector3f[] akPoints = new Vector3f[controlPts.size()];
+		float[] time = new float[controlPts.size()];
+		float distance = 0;
+		for (int i = 0; i < controlPts.size(); i++) {
+			if (i > 0) {
+				distance += controlPts.elementAt(i).elementAt(0).distance(controlPts.elementAt(i - 1).elementAt(0));
+				time[i] = distance / totalDistance;
+				akPoints[i] = new Vector3f(controlPts.elementAt(i).elementAt(0));
+			} else {
+				time[i] = 0;
+				akPoints[i] = new Vector3f(controlPts.elementAt(i).elementAt(0));
+			}
+		}
+
+		return new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, controlPts.size() - 1, time, akPoints);
+	}
+
 
 	protected Vector3f[] straightenFrame(final ModelImage image, int slice,
 			final int[] extents, final Vector3f[] verts, Vector3f centerPos, Vector3f leftPos, Vector3f rightPos ) 
@@ -8821,15 +9257,163 @@ public class LatticeModel {
 		return resultImage;
 	}
 
+	public static String getPrefix(String name) {
+		String prefix = new String();
+		for ( int j = 0; j < name.length(); j++ ) {
+			if ( Character.isLetter(name.charAt(j) ) ) {
+				prefix += name.charAt(j);
+			}
+			else {
+				break;
+			}
+		}
+		return prefix;
+	}
+	
+	private boolean containsAnnotation( VOI annotationsList, VOIWormAnnotation text ) {
+		for ( int i = 0; i < annotationsList.getCurves().size(); i++ ) {
+			if ( annotationsList.getCurves().elementAt(i) == text ) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void updateSplineControlPoints() {
+		if ( splineControlPtsList == null ) return;
+		if ( splineControlPtsList.size() == 0 ) return;
+		
+		// check for added / removed points:
+		// update spline:
+		for ( int i = splineControlPtsList.size() - 1; i >= 0; i-- )
+		{
+			AnnotationSplineControlPts annotationSpline = splineControlPtsList.elementAt(i);
+			// remove deleted points:
+			for ( int j = annotationSpline.annotations.size() - 1; j >= 0; j-- ) {
+				if ( !containsAnnotation(annotationVOIs, annotationSpline.annotations.elementAt(j) ) )
+				{
+					annotationSpline.annotations.remove(j);
+				}
+				else if ( !annotationSpline.prefix.equals( getPrefix(annotationSpline.annotations.elementAt(j).getText()) ) ) 
+				{
+					annotationSpline.annotations.remove(j);
+				}
+			}
+			// add new points w/same prefix:
+			for ( int j = 0; j < annotationVOIs.getCurves().size(); j++ ) {
+				VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(j);
+				if ( getPrefix(text.getText()).equals( annotationSpline.prefix ) ) {
+					if ( !annotationSpline.annotations.contains(text) ) {
+						// find two closest pts and add it...
+						int nearest1 = -1;
+						float minDist1 = Float.MAX_VALUE;
+						for ( int k = 0; k < annotationSpline.annotations.size(); k++ ) {
+							float dist = text.elementAt(0).distance( annotationSpline.annotations.elementAt(k).elementAt(0) );
+							if ( dist < minDist1 ) {
+								minDist1 = dist;
+								nearest1 = k;
+							}
+						}
+						System.err.println(text.getText() + "  " + nearest1 + "  " + annotationSpline.annotations.size() );
+						if ( nearest1 == 0 ) {
+							// place either before of after first element:
+							float distBetween = annotationSpline.annotations.elementAt(nearest1).elementAt(0).distance( annotationSpline.annotations.elementAt(nearest1+1).elementAt(0) );
+							float distNext = text.elementAt(0).distance( annotationSpline.annotations.elementAt(1).elementAt(0) );
+							if ( distNext > distBetween ) {
+								annotationSpline.annotations.add(0, text);
+							}
+							else {
+								annotationSpline.annotations.add(1, text);
+							}							
+						}
+						else if ( nearest1 == annotationSpline.annotations.size() -1 ) {
+							// place either before of after last element:
+							float distBetween = annotationSpline.annotations.elementAt(nearest1).elementAt(0).distance( annotationSpline.annotations.elementAt(nearest1-1).elementAt(0) );
+							float distNext = text.elementAt(0).distance( annotationSpline.annotations.elementAt(nearest1-1).elementAt(0) );
+							if ( distNext > distBetween ) {
+								annotationSpline.annotations.add(text);
+							}
+							else {
+								annotationSpline.annotations.add(nearest1-1, text);
+							}							
+						}
+						else if ( nearest1 != -1 ) {
+							float distPrev = text.elementAt(0).distance( annotationSpline.annotations.elementAt(nearest1-1).elementAt(0) );						
+							float distNext = text.elementAt(0).distance( annotationSpline.annotations.elementAt(nearest1+1).elementAt(0) );
+							if ( distPrev <= distNext ) {
+								annotationSpline.annotations.add(nearest1, text);
+							}
+							else {
+								annotationSpline.annotations.add(nearest1+1, text);
+							}
+						}
+					}
+				}
+			}
+			if ( annotationSpline.annotations.size() < 2 ) {
+				imageA.unregisterVOI(annotationSpline.curveVOI);
+				splineControlPtsList.remove(i);
+				annotationSpline.curveVOI.dispose();
+				annotationSpline.curveVOI = null;
+
+				updateCurveListeners();
+			}
+			else {
+				NaturalSpline3 spline = smoothCurve(annotationSpline.annotations);
+
+				//display:
+				imageA.unregisterVOI(annotationSpline.curveVOI);
+
+				annotationSpline.curveVOI.getCurves().clear();
+				annotationSpline.curve.dispose();
+				annotationSpline.curve = null;
+				annotationSpline.curve = new VOIContour(false);
+
+				annotationSpline.curveVOI.dispose();
+				annotationSpline.curveVOI = null;
+				annotationSpline.curveVOI = new VOI((short)splineControlPtsList.size(), annotationSpline.name );
+				annotationSpline.curveVOI.getCurves().add(annotationSpline.curve);
+
+
+				float length = spline.GetLength(0, 1);
+				int maxLength = (int)Math.ceil(length);
+				float step = 1;
+				if ( maxLength != length )
+				{
+					step = (length / maxLength);
+				}
+				for (int j = 0; j <= maxLength; j++) {
+					final float t = spline.GetTime(j*step);
+					annotationSpline.curve.add(spline.GetPosition(t));
+				}
+				annotationSpline.curveVOI.setColor(Color.red);
+				annotationSpline.curve.update(new ColorRGBA(1, 0, 0, 1));
+
+				imageA.registerVOI(annotationSpline.curveVOI);
+			}
+			imageA.notifyImageDisplayListeners();
+		}
+
+	}
+	
 	/**
 	 * Updates the list of listeners that the annotations have
 	 * changed. This is how the latticeModel communicates changes
 	 * to the different plugins that display lists of annotations, etc.
 	 */
 	private void updateAnnotationListeners() {
+		updateSplineControlPoints();
 		if ( annotationListeners != null ) {
 			for ( int i = 0; i < annotationListeners.size(); i++ ) {
 				annotationListeners.elementAt(i).annotationChanged();
+			}
+		}
+	}
+	
+	private void updateCurveListeners() {
+		if ( curveListeners != null ) {
+			for ( int i = 0; i < curveListeners.size(); i++ ) {
+				curveListeners.elementAt(i).curveChanged();
 			}
 		}
 	}

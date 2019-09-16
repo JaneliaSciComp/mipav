@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.VOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
@@ -10,6 +11,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.CurveListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
@@ -318,6 +320,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.addAnnotationListener(listener);
 	}
 	
+	public void addCurveListener( CurveListener listener ) {
+
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+		}
+		latticeModel.addCurveListener(listener);
+	}
+	
 	public void addLatticeListener( LatticeListener listener ) {
 
 		if ( latticeModel == null )
@@ -372,12 +383,28 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			setLattice(lattice);
 		}
 	}
-	
+
 	public void saveLattice(String directory, String fileName)
 	{
 		if ( latticeModel != null )
 		{
 			latticeModel.saveLattice( directory, fileName );
+		}
+	}
+
+	public void openNeuriteCurves() {
+
+		if ( latticeModel != null )
+		{
+			latticeModel.openNeuriteCurves();
+		}
+	}
+	
+	public void saveNeuriteCurves( )
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.saveNeuriteCurves( );
 		}
 	}
 	
@@ -697,6 +724,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}		
 	}
 	
+	public void addSplineControlPts( Vector<VOIWormAnnotation> controlPts ) {
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+		}
+		saveVOIs("addCurve");
+		latticeModel.addSplineControlPts(controlPts);
+	}
+	
 	/**
 	 * Add an annotation to the latticeModel.
 	 * @param textVOI new annotation.
@@ -749,6 +785,56 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			return null;
 		}
 		return latticeModel.getAnnotationsStraight();		
+	}
+	
+	public Vector<String> getSplineCurves()
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.getSplineCurves();		
+	}
+
+	public void setCurveVisible(String name, boolean visible)
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.setCurveVisible(name, visible);
+		}		
+	}
+	
+	public void setCurveName(String oldName, String newName)
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.setCurveName(oldName, newName);
+		}
+	}
+	
+	public void setCurveSelected(String name, boolean selected)
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.setCurveSelected(name, selected);
+		}
+	}
+	
+	public boolean isCurveSelected(String name)
+	{
+		if ( latticeModel != null )
+		{
+			return latticeModel.isCurveSelected(name);
+		}
+		return false;
+	}
+	
+	public void deleteSelectedCurve()
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.deleteSelectedCurve();
+		}
 	}
 	
 	public Vector3f getLatticePickedPoint()
