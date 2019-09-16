@@ -1851,10 +1851,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			else
 			{
 				Vector<VOIBase> kCurves = kVOI.getCurves();
+				if ( kCurves != null ) {
 				for (int k = 0; k < kCurves.size(); k++) {
 					VOIBase kVOI3D = kCurves.get(k);
 					bUpdateVOIs |= drawVOI(kVOI3D, this, m_kVolumeImageA,
 							m_kTranslate);
+				}
 				}
 			}
 		}

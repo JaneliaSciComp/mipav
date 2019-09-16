@@ -36,6 +36,7 @@ public class WormData
 	public static final String straightenedAnnotations = new String("straightened_annotations");
 	public static final String straightenedSeamCells = new String("straightened_seamcells");
 	public static final String straightenedNamedSeamCells = new String("straightened_named_seamcells");
+	public static final String neuriteOutput = new String("neurite_final");
 
 
 	private String imageName;
@@ -61,6 +62,28 @@ public class WormData
 
 	public static String getOutputDirectory( File imageFile, String imageName ) {
 		return new String(imageFile.getParent() + File.separator + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+	}
+
+	public static String getOutputDirectory( ModelImage image ) {
+
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		boolean isStraight = false;
+		if (imageName.contains("_straight")) {
+			imageName = imageName.replaceAll("_straight", "");
+			isStraight = true;
+		}
+		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+		String outputImagesDirectory = outputDirectory + File.separator + "output_images" + File.separator;
+		if ( isStraight )
+		{
+			outputImagesDirectory = image.getImageDirectory();
+			outputDirectory = outputImagesDirectory.replaceAll( "output_images", "");
+			outputDirectory = outputDirectory.substring(0, outputDirectory.length() - 2);
+		}
+		return outputDirectory;
 	}
 
 	public WormData( ModelImage image )

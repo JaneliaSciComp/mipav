@@ -607,25 +607,26 @@ public class PlugInAlgorithmWormUntwisting
 					System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
 					
 					long timeAnnotation = System.currentTimeMillis();
+					// untwist seam cells:
 					if ( wormData.readSeamCells() != null )
 					{
 						model.setMarkers( wormData.getSeamAnnotations() );
 						model.untwistMarkers(segmentLattice);	
 						model.saveAnnotationStraight(wormImage, "straightened_seamcells", "straightened_seamcells.csv" );	
 					}
+					// untwist named seam cells:
 					wormData.readNamedSeamCells();
 					model.setMarkers( wormData.getSeamAnnotations() );
 					model.untwistMarkers(segmentLattice);	
 					model.saveAnnotationStraight(wormImage, "straightened_named_seamcells", "straightened_seamcells.csv" );	
 					
+					// Untwist annotations:
 					boolean integratedMarkers = true;
 					VOI markers = wormData.getIntegratedMarkerAnnotations();
 					if ( markers == null ) {
 						markers = wormData.getMarkerAnnotations();
 						integratedMarkers = false;
-					}
-							
-							
+					}	
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
@@ -633,6 +634,9 @@ public class PlugInAlgorithmWormUntwisting
 						model.saveAnnotationStraight(wormImage, "straightened_annotations", "straightened_annotations.csv" );	
 					}
 					System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
+					
+					// untwist neurite curves:
+					model.untwistNeuriteCurves(segmentLattice);
 
 					if ( (nucleiFile != null) && nucleiFile.exists() )
 					{			
