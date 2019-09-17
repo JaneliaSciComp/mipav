@@ -2015,27 +2015,35 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 
         int multiVolZDim = extents3Dorg[2];
         
+        String acquisNumFirst = (String)((FileInfoDicom) multiVolImg.getFileInfo(0)).getTagTable().get("0020,0012").getValue(false);
+        String temporalPosNumFirst = null;
+        if (((FileInfoDicom) multiVolImg.getFileInfo(0)).getTagTable().get("0020,0100") != null) {
+            temporalPosNumFirst = (String)((FileInfoDicom) multiVolImg.getFileInfo(0)).getTagTable().get("0020,0100").getValue(false);
+        }
+        
         for (int zSrc = 0; (zSrc < multiVolZDim) && !threadStopped; zSrc++) {
         	String acquisNum = (String)((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0012").getValue(false);
         	String temporalPosNum = null;
-        	if (((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().containsTag("0020,0100")) {
+        	if (((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0100") != null) {
         	    temporalPosNum = (String)((FileInfoDicom) multiVolImg.getFileInfo(zSrc)).getTagTable().get("0020,0100").getValue(false);
         	}
         	
         	// prefer temporal position indicator, but fall-back to acquision number since not all PWI vols have 0020,0100
-        	if (temporalPosNum != null && temporalPosNum.trim().equals("1")) {
-	            try {
-	                // try copying the zSrc slice out of srcImage, making it the zDest in destImage
-	                multiVolImg.exportSliceXY(zSrc, sliceBuffer);
-	                firstVol.importData(zDest * sliceLength, sliceBuffer, false);
-	                zDest++;
-	            } catch (IOException e) {
-	                MipavUtil.displayError("IOException on PWI first vol export/import");
-	                setCompleted(false);
-	                return multiVolImg;
-	            }
+        	if (temporalPosNum != null) {
+        	    if (temporalPosNum.trim().equals(temporalPosNumFirst.trim())) {
+    	            try {
+    	                // try copying the zSrc slice out of srcImage, making it the zDest in destImage
+    	                multiVolImg.exportSliceXY(zSrc, sliceBuffer);
+    	                firstVol.importData(zDest * sliceLength, sliceBuffer, false);
+    	                zDest++;
+    	            } catch (IOException e) {
+    	                MipavUtil.displayError("IOException on PWI first vol export/import");
+    	                setCompleted(false);
+    	                return multiVolImg;
+    	            }
+        	    }
         	} else {
-        		if (acquisNum != null && acquisNum.trim().equals("1")) {
+        		if (acquisNum != null && acquisNum.trim().equals(acquisNumFirst.trim())) {
     	            try {
     	                // try copying the zSrc slice out of srcImage, making it the zDest in destImage
     	                multiVolImg.exportSliceXY(zSrc, sliceBuffer);
@@ -2052,7 +2060,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         	
         }
 
-        //saveImageFile(firstVol, coreOutputDir, outputBasename + "_PWI_firstVol", FileUtility.XML);
+        saveImageFile(firstVol, coreOutputDir, outputBasename + "_PWI_firstVol", FileUtility.XML);
         
         return firstVol;
     }
