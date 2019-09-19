@@ -62,6 +62,30 @@ public class CubicEquation {
 		System.out.println("x1 = " + x1real[0]);
 		System.out.println("x2 = " + x2real[0] + " + i * " + x2imag[0]);
 		System.out.println("x3 = " + x3real[0] + " i * " + x3imag[0]);
+		
+		// x**3 - 6*x**2 + 11*x - 6 has the roots 1, 2, and 3 with result = 3
+		b = -6.0;
+		c = 11.0;
+		d = -6.0;
+		ce = new CubicEquation(a1, b, c, d, x1real, x2real, x2imag,
+				x3real, x3imag, result);
+		ce.run();
+		System.out.println("result = " + result[0]);
+		System.out.println("x1 = " + x1real[0]);
+		System.out.println("x2 = " + x2real[0] + " + i * " + x2imag[0]);
+		System.out.println("x3 = " + x3real[0] + " + i * " + x3imag[0]);
+		
+		// x**3 - 5*x**2 + 8*x - 4 has the roots 1, 2, and 2 with result = 2
+		b = -5.0;
+		c = 8.0;
+		d = -4.0;
+		ce = new CubicEquation(a1, b, c, d, x1real, x2real, x2imag,
+				x3real, x3imag, result);
+		ce.run();
+		System.out.println("result = " + result[0]);
+		System.out.println("x1 = " + x1real[0]);
+		System.out.println("x2 = " + x2real[0] + " + i * " + x2imag[0]);
+		System.out.println("x3 = " + x3real[0] + " + i * " + x3imag[0]);
 	}
 	
 	public void run() {
@@ -98,6 +122,8 @@ public class CubicEquation {
 		    	x1real[0] = u + v - a/3.0;
 		    	x2real[0] = -(u + v) / 2.0 - a / 3.0;
 		    	x3real[0] = x2real[0];
+		    	x2imag[0] = 0;
+		    	x3imag[0] = 0;
 		    	result[0] = 2;
 		    } // else if (d == 0)
 		    else { // d < 0
@@ -111,6 +137,8 @@ public class CubicEquation {
 		    	x1real[0] = r13 * (Math.cos((6.0 * Math.PI - alpha) / 3.0) + Math.cos(alpha/3.0)) - a / 3.0;
 		    	x2real[0] = r13 * (Math.cos((2.0 * Math.PI + alpha) / 3.0) + Math.cos((4.0 * Math.PI - alpha) / 3.0)) - a / 3.0;
 		    	x3real[0] = r13 * (Math.cos((4.0 * Math.PI + alpha) / 3.0) + Math.cos((2.0 * Math.PI - alpha) / 3.0)) - a / 3.0;
+		    	x2imag[0] = 0;
+		    	x3imag[0] = 0;
 		    	result[0] = 3;
 		    } // else d < 0
 		} 
