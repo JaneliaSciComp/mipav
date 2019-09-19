@@ -24,6 +24,10 @@ public class CubicEquation {
 	private double x3imag[];
 	private int result[];
 	
+	public CubicEquation() {
+	    
+	}
+	
 	public CubicEquation(double a1, double b, double c, double d, double x1real[], 
 			double x2real[], double x2imag[], double x3real[], double x3imag[],
 			int result[]) {
@@ -37,6 +41,27 @@ public class CubicEquation {
 		this.x3real = x3real;
 		this.x3imag = x3imag;
 		this.result = result;
+	}
+	
+	public void selfTest() {
+		// x**3 - x + 2 has roots -1.520, 0.760 + i(0.858), and 0.760 - i(0.858)  Expect result = 1
+		a1 = 1.0;
+		b = 0.0;
+		c = -1.0;
+		d = 2.0;
+		x1real = new double[1];
+		x2real = new double[1];
+		x2imag = new double[1];
+		x3real = new double[1];
+		x3imag = new double[1];
+		result = new int[1];
+		CubicEquation ce = new CubicEquation(a1, b, c, d, x1real, x2real, x2imag,
+				x3real, x3imag, result);
+		ce.run();
+		System.out.println("result = " + result[0]);
+		System.out.println("x1 = " + x1real[0]);
+		System.out.println("x2 = " + x2real[0] + " + i * " + x2imag[0]);
+		System.out.println("x3 = " + x3real[0] + " i * " + x3imag[0]);
 	}
 	
 	public void run() {
@@ -58,8 +83,8 @@ public class CubicEquation {
 		    }
 		    // 3 cases d > 0, d == 0, d < 0
 		    if (d > 0) {
-		    	u = Math.pow(-q/2.0 + Math.sqrt(d), (1.0/3.0));
-		    	v = Math.pow(-q/2.0 - Math.sqrt(d), (1.0/3.0));
+		    	u = Xroot(-q/2.0 + Math.sqrt(d), 3.0);
+		    	v = Xroot(-q/2.0 - Math.sqrt(d), 3.0);
 		    	x1real[0] = u + v - a/3.0;
 		    	x2real[0] = -(u + v)/2.0 - a/3.0;
 		    	x2imag[0] = Math.sqrt(3.0) / 2.0 * (u - v);
@@ -68,7 +93,7 @@ public class CubicEquation {
 		    	result[0] = 1;
 		    } // if (d > 0)
 		    else if (d == 0) {
-		    	u = Math.pow(-q/2.0, (1.0/3.0));
+		    	u = Xroot(-q/2.0, 3.0);
 		    	v = u;
 		    	x1real[0] = u + v - a/3.0;
 		    	x2real[0] = -(u + v) / 2.0 - a / 3.0;
@@ -82,7 +107,7 @@ public class CubicEquation {
 		    		// If q > 0 the angle becomes 2 * PI - alpha
 		    		alpha = 2.0 * Math.PI - alpha;
 		    	}
-		    	r13 = Math.pow(r, (1.0/3.0));
+		    	r13 = Xroot(r, 3.0);
 		    	x1real[0] = r13 * (Math.cos((6.0 * Math.PI - alpha) / 3.0) + Math.cos(alpha/3.0)) - a / 3.0;
 		    	x2real[0] = r13 * (Math.cos((2.0 * Math.PI + alpha) / 3.0) + Math.cos((4.0 * Math.PI - alpha) / 3.0)) - a / 3.0;
 		    	x3real[0] = r13 * (Math.cos((4.0 * Math.PI + alpha) / 3.0) + Math.cos((2.0 * Math.PI - alpha) / 3.0)) - a / 3.0;
@@ -94,5 +119,13 @@ public class CubicEquation {
 		}
 		
 	}
+	
+	 public double Xroot(double a, double x)
+     {
+         double i = 1;
+         if (a < 0)
+             i = -1;
+         return (i * Math.exp( Math.log(a*i)/x));
+     }
 
 }
