@@ -4378,8 +4378,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             final File laxFile = JDialogMemoryAllocation.getStartupFile(this);
             mems = JDialogMemoryAllocation.readStartupFile(laxFile);
 
-            if ( !Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE).equals(mems[0])
-                    || !Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(mems[1])) {
+            if (!Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(mems[1])) {
                 if ( !MipavUtil.getForceQuiet()) {
                     MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n" + "those in the Preferences file.\n"
                             + "Memory Allocation will display so you can " + "ensure this is correct.");
@@ -4393,7 +4392,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // else sizes match; there are no problems
         } catch (final NullPointerException npe) { // prefs not found/invalid strings
             // pref mem limit not set in prefs file, so use what's in the lax/plist
-            Preferences.setProperty(Preferences.PREF_STARTING_HEAP_SIZE, mems[0]);
+            //Preferences.setProperty(Preferences.PREF_STARTING_HEAP_SIZE, mems[0]);
             Preferences.setProperty(Preferences.PREF_MAX_HEAP_SIZE, mems[1]);
             // if ( !GraphicsEnvironment.isHeadless() && !MipavUtil.getForceQuiet()) {
             // MipavUtil.displayWarning("Heap size settings in the "
