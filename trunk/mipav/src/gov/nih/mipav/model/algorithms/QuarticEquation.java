@@ -62,6 +62,10 @@ public class QuarticEquation {
 	final int COMPLEX_ROOTS = 2;
 	int inputType;
 	
+	public QuarticEquation() {
+		
+	}
+	
 	public QuarticEquation(int degree, double areal, double aimag, double breal, double bimag,
 			double creal, double cimag, double dreal, double dimag, double ereal, double eimag,
 			int num_sols[], double solsreal[], double solsimag[]) {
@@ -93,6 +97,44 @@ public class QuarticEquation {
 		this.num_sols = num_sols;
 		this.solsreal = sols;
 		inputType = ONLY_REAL_ROOTS;
+	}
+	
+	public void selfTest() {
+	    // x**4	+ 6x**3 - 5x**2 - 10x - 3 = 0
+		// has the roots (-7 +- sqrt(37))/2, (1 +- sqrt(5))/2
+		// -0.4586187348508902, -6.54138126514911, 1.618033988749895, -0.6180339887498948
+		int i;
+		degree = 4;
+		areal = 1.0;
+		aimag = 0.0;
+		breal = 6.0;
+		bimag = 0.0;
+		creal = -5.0;
+		cimag = 0.0;
+		dreal = -10.0;
+		dimag = 0.0;
+		ereal = -3.0;
+		eimag = 0.0;
+		num_sols =  new int[1];
+		solsreal = new double[4];
+		solsimag = new double[4];
+		QuarticEquation qe = new QuarticEquation(degree, areal, aimag, breal, bimag, creal, cimag,
+				dreal, dimag, ereal, eimag, num_sols, solsreal, solsimag);
+		qe.run();
+		
+		QuarticEquation qe2 = new QuarticEquation(degree, areal, breal, creal, dreal, ereal, num_sols,
+				solsreal);
+		qe2.run();
+		
+		// x**4 + 6x**3 + 7x**2 -7x - 12 = 0
+		// has the roots x = 1.1478990357,   x = -1.5739495179 +/- 0.3689894075 i,   and   x = -4.0000000000, 
+		// x = -4 is an exact root
+		creal = 7.0;
+		dreal = -7.0;
+		ereal = -12.0;
+		qe = new QuarticEquation(degree, areal, aimag, breal, bimag, creal, cimag,
+				dreal, dimag, ereal, eimag, num_sols, solsreal, solsimag);
+		qe.run();
 	}
 	
 	public void run() {
@@ -183,7 +225,7 @@ public class QuarticEquation {
 	    int dst_i, src_i;
 	    for (dst_i = 0; dst_i <= degree; ++dst_i)
 	        dst[dst_i] = 0;
-	    calc_binomials(degree+1, binomials[0].length, binomials[0]);
+	    calc_binomials(degree+1, binomials[0].length, binomials);
 	    calc_powers(shift, degree, shift_powers);
 	    for (src_i = 0; src_i <= degree; ++src_i)
 	        for (dst_i = 0; dst_i <= src_i; ++dst_i)
@@ -371,7 +413,7 @@ public class QuarticEquation {
 		for (i = 0; i < num_sols[0]; i++) {
 			solsreal[i] = sols[i].real;
 			solsimag[i] = sols[i].imag;
-		    System.out.println(sols[i].real + " + i" + sols[i].imag);	
+		    System.out.println(sols[i].real + " + i * " + sols[i].imag);	
 		}
 	}
 	
@@ -439,7 +481,7 @@ public class QuarticEquation {
 	    int dst_i, src_i;
 	    for (dst_i = 0; dst_i <= degree; ++dst_i)
 	        dst[dst_i] = complex_from_real(0.0);
-	    calc_binomials(degree+1, binomials[0].length, binomials[0]);
+	    calc_binomials(degree+1, binomials[0].length, binomials);
 	    calc_powers(shift, degree, shift_powers);
 	    for (src_i = 0; src_i <= degree; ++src_i)
 	        for (dst_i = 0; dst_i <= src_i; ++dst_i)
@@ -447,17 +489,15 @@ public class QuarticEquation {
 	}
 
 
-	private void calc_binomials(int num_binoms, int stride, double[] dst) {
+	private void calc_binomials(int num_binoms, int stride, double[][] dst) {
 	    int row;
 	    for (row = 0; row < num_binoms; ++row) {
-	        int row_idx = row * stride;
-	        int prev_row_idx = (row - 1) * stride;
 	        int col;
-	        dst[row_idx] = 1;
+	        dst[row][0] = 1;
 	        for (col = 1; col < row; ++col) {
-	            dst[row_idx + col] = dst[prev_row_idx + col - 1] + dst[prev_row_idx + col];
+	            dst[row][col] = dst[row-1][col - 1] + dst[row-1][ col];
 	        }
-	        dst[row_idx + row] = 1;
+	        dst[row][ row] = 1;
 	    }
 	}
 	
