@@ -9156,7 +9156,7 @@ public class FileNIFTI extends FileBase {
                 axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
             }
             fileInfo.setAxisOrientation(axisOrientation);
-            for (i = 0; i < fileInfo.getOrigin().length; i++) {
+            for (i = 0; i < Math.min(LPSOrigin.length,fileInfo.getOrigin().length); i++) {
                 LPSOrigin[i] = (double)fileInfo.getOrigin()[i];
             }
 
