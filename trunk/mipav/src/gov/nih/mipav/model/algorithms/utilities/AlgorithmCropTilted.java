@@ -88,10 +88,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
             this.x4 = x4;
             this.y4 = y4;
         }
-        else if (method == MASK_METHOD) {
-        	this.x1 = x1;
-        	this.y1 = y1;
-        }
     }
     
     
@@ -266,9 +262,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double xdiff;
         double ydiff;
         double zdiff;
-        int xStart;
-        int yStart;
-        int zStart;
+        int xStart = 0;
+        int yStart = 0;
+        int zStart = 0;
         int volume;
         double a1;
         double b;
@@ -360,78 +356,71 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 		        xfrm.setTranslate(-xres * xcenter,-yres * ycenter);
     		} // if (method == VERTICES_METHOD)
     		else if ((method == MASK_METHOD) || (method == VOI_METHOD)) {
+    			int nVOIs;
+    	        ViewVOIVector VOIs = srcImage.getVOIs();
+    	        nVOIs = VOIs.size();
+    	        int nBoundingVOIs = 0;
+    	        index = -1;
+    	        int nActiveBoundingVOIs = 0;
+    	        
+    	        for (i = 0; i < nVOIs; i++) {
+    	
+    	            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+    	                nBoundingVOIs++;
+    	                if (nBoundingVOIs == 1) {
+    	                	index = i;
+    	                }
+    	                if (VOIs.VOIAt(i).isActive()) {
+    	                    nActiveBoundingVOIs++;	
+    	                    index = i;
+    	                }
+    	            }
+    	        } // for (i = 0; i < nVOIs; i++)
+    	        if (nBoundingVOIs == 0) {
+    	        	MipavUtil.displayError("Must have one contour or polyline VOI");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        
+    	        if (nActiveBoundingVOIs > 1) {
+    	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
+    	            setCompleted(false);
+    	            return;
+    	        }	
+    	        Vector<VOIBase> vArray = VOIs.VOIAt(index).getCurves();	
+    	        if (vArray == null) {
+    	        	MipavUtil.displayError("vArray is null");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        if (vArray.size() == 0) {
+    	        	MipavUtil.displayError("No curves in VOI");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        if (vArray.size() > 1) {
+    	            MipavUtil.displayError("More than 1 curve in VOI");
+    	            setCompleted(false);
+    	            return;
+    	        }
     			if (method == MASK_METHOD) {
-	    			if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
-	    	                (srcImage.getType() != ModelImage.BYTE) && (srcImage.getType() != ModelImage.USHORT) &&
-	    	                (srcImage.getType() != ModelImage.SHORT)) {
-	    	            displayError("Source Image must be Boolean, UByte, Byte, UShort, or Short");
-	    	            setCompleted(false);
-	
-	    	            return;
-	    	        }
-	    			
-	    			buffer = new short[length];
-	    			try {
-	                    srcImage.exportData(0, length, buffer);
-	                } catch (IOException error) {
-	                    displayError("Algorithm CropTilted: image bounds exceeded");
-	                    setCompleted(false);
-	
-	                    return;
-	                }
-	    			xStart = (int)Math.round(x1);
-	    			yStart = (int)Math.round(y1);
-	                value = buffer[xStart + yStart*oXdim];
-	                found = true;
-	                xLow = Math.max(0,xStart-1);
-	                xHigh = Math.min(oXdim-1,xStart+1);
-	                yLow = Math.max(0,yStart-1);
-	                yHigh = Math.min(oYdim-1,yStart+1);
-	                nextXLow = xLow;
-	                nextXHigh = xHigh;
-	                nextYLow = yLow;
-	                nextYHigh = yHigh;
-	                xpos = new Vector<Float>();
+    				setMask(srcImage.generateVOIMask());
+    				BitSet mask = srcImage.getMask();
+    				xpos = new Vector<Float>();
 	                ypos = new Vector<Float>();
-	                xpos.add(xStart*xres);
-	                ypos.add(yStart*yres);
-	                havePos = new BitSet(length);
-	                havePos.set(xStart + yStart*oXdim);
-	                while (found) {
-	                    found = false;
-	                    xLow = nextXLow;
-	                    xHigh = nextXHigh;
-	                    yLow = nextYLow;
-	                    yHigh = nextYHigh;
-	                    for (y = yLow; y <= yHigh; y++) {
-	                    	for (x = xLow; x <= xHigh; x++) {
-	                    	    index = x + oXdim * y;
-	                    	    if ((buffer[index] == value) && (!havePos.get(index)) && 
-	                    	    (((x >= 1) && havePos.get(index-1)) || ((x < oXdim - 1) && havePos.get(index+1)) ||
-	                    	     ((y >= 1) && havePos.get(index-oXdim)) || ((y < oYdim - 1) && havePos.get(index+oXdim)))) {
-	                    	    	found = true;
-	                    	    	havePos.set(index);
-	                    	    	nPts++;
-	                    	    	xpos.add(x*xres);
-	                    	    	ypos.add(y*yres);
-	                    	    	xcenter += x*xres;
-	                    	    	ycenter += y*yres;
-	                    	    	if ((x == xLow)  && (nextXLow > 0) && (nextXLow == xLow)) {
-	                    	    		nextXLow = xLow-1;
-	                    	    	}
-	                    	    	if ((x == xHigh) && (nextXHigh < oXdim-1) && (nextXHigh == xHigh)) {
-	                    	    		nextXHigh = xHigh+1;
-	                    	    	}
-	                    	    	if ((y == yLow)  && (nextYLow > 0) && (nextYLow == yLow)) {
-	                    	    		nextYLow = yLow-1;
-	                    	    	}
-	                    	    	if ((y == yHigh) && (nextYHigh < oYdim-1) && (nextYHigh == yHigh)) {
-	                    	    		nextYHigh = yHigh+1;
-	                    	    	}
-	                    	    }
-	                    	}
-	                    }
-	                } // while (found)
+	    			for (y = 0; y < oYdim; y++) {
+	    				for (x = 0; x < oYdim; x++) {
+	    					index = x + y * oXdim;
+	    					if (mask.get(index)) {
+	    						nPts++;
+	    						xpos.add(x*xres);
+	    			            ypos.add(y*yres);
+	    			            xcenter += x*xres;
+                    	    	ycenter += y*yres;
+	    					}
+	    				}
+	    			}
+	                
 	                xcenter = Math.abs(xcenter/nPts);
 	                ycenter = Math.abs(ycenter/nPts);
 	                System.out.println("xcenter = " + (xcenter/xres) + " ycenter = " + (ycenter/yres));
@@ -455,54 +444,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	    			 * References: On the Computation of the Moments of a Polygon, with Some Applications by Soerjadi
 	    			 * Vector Mechanics for Engineers Statics Ninth Edition by Beer, Johnston, Mazurek, Eisenberg
 	    			 * Chapter 9 Distributed Forces: Moments of Inertia */
-	    	        int nVOIs;
-	    	        ViewVOIVector VOIs = srcImage.getVOIs();
-	    	        nVOIs = VOIs.size();
-	    	        int nBoundingVOIs = 0;
-	    	        index = -1;
-	    	        int nActiveBoundingVOIs = 0;
-	    	        
-	    	        for (i = 0; i < nVOIs; i++) {
-	    	
-	    	            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
-	    	                nBoundingVOIs++;
-	    	                if (nBoundingVOIs == 1) {
-	    	                	index = i;
-	    	                }
-	    	                if (VOIs.VOIAt(i).isActive()) {
-	    	                    nActiveBoundingVOIs++;	
-	    	                    index = i;
-	    	                }
-	    	            }
-	    	        } // for (i = 0; i < nVOIs; i++)
-	    	        if (nBoundingVOIs == 0) {
-	    	        	MipavUtil.displayError("Must have one contour or polyline VOI");
-	    	        	setCompleted(false);
-	    	        	return;
-	    	        }
-	    	        
-	    	        if (nActiveBoundingVOIs > 1) {
-	    	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
-	    	            setCompleted(false);
-	    	            return;
-	    	        }	
-	    	        Vector<VOIBase> vArray = VOIs.VOIAt(index).getCurves();	
-	    	        if (vArray == null) {
-	    	        	MipavUtil.displayError("vArray is null");
-	    	        	setCompleted(false);
-	    	        	return;
-	    	        }
-	    	        if (vArray.size() == 0) {
-	    	        	MipavUtil.displayError("No curves in VOI");
-	    	        	setCompleted(false);
-	    	        	return;
-	    	        }
-	    	        if (vArray.size() > 1) {
-	    	            MipavUtil.displayError("More than 1 curve in VOI");
-	    	            setCompleted(false);
-	    	            return;
-	    	        }
-				    VOIBase v  = vArray.get(0);
+    		    	VOIBase v  = vArray.get(0);
 				    nPts = v.size();
 					float xPts[] = new float[nPts];
 					float yPts[] = new float[nPts];
@@ -614,7 +556,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 		        xfrm.setTranslate(xcenter,ycenter);
 		        xfrm.setRotate(-thetaZ);
 		        xfrm.setTranslate(-xcenter,-ycenter);
-    		} // else if ((Method == MASK_MEATHOD) || (method == VOI_METHOD))
+		        xcenter = xcenter /xres;
+		        ycenter = ycenter / yres;
+    		} // else if ((Method == MASK_METHOD) || (method == VOI_METHOD))
 	        interp = AlgorithmTransform.BILINEAR;
 	        
 	        algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oXdim, oYdim,
