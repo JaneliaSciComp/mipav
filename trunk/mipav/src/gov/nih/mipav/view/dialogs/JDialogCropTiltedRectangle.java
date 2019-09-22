@@ -234,14 +234,14 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
         gbc.gridy = 0;
         
         methodGroup = new ButtonGroup();
-        VOIButton = new JRadioButton("VOI contour or polyline at rectangle boundary", true);
+        VOIButton = new JRadioButton("Use rectangle boundary from VOI contour or polyline", true);
         VOIButton.setFont(serif12);
         VOIButton.setForeground(Color.black);
         VOIButton.addActionListener(this);
         methodGroup.add(VOIButton);
         cropPanel.add(VOIButton,gbc);
         
-        maskButton = new JRadioButton("Enter 1 point on the rectangle mask", false);
+        maskButton = new JRadioButton("Use rectangle area from mask generated from VOI", false);
         maskButton.setFont(serif12);
         maskButton.setForeground(Color.black);
         maskButton.addActionListener(this);
@@ -313,8 +313,13 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
 
 	        
     	} // if (verticesButton.isSelected())
-    	else if (VOIButton.isSelected()) {
-    		method = VOI_METHOD;
+    	else if (VOIButton.isSelected() || maskButton.isSelected()) {
+    		if (VOIButton.isSelected()) {
+    		    method = VOI_METHOD;
+    		}
+    		else {
+    			method = MASK_METHOD;
+    		}
         
 	        int i;
 	        int nVOIs;
@@ -341,19 +346,8 @@ public class JDialogCropTiltedRectangle extends JDialogScriptableBase implements
 	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
 	            return false;
 	        }
-    	} // else if (VOIButton.isSelected())
-    	else if (maskButton.isSelected()) {
-    		method = MASK_METHOD;
-    		if ((image.getVOIs() == null) || (image.getVOIs().size() == 0)) {
-                MipavUtil.displayError("1 point must be entered");
-                return false;
-            }
-            
-            Vector3f[] pts = image.getVOIs().VOIAt(0).exportAllPoints();
-            x1 = pts[0].X;
-            y1 = pts[0].Y;
-            
-    	}
+    	} // else if (VOIButton.isSelected() || maskButton.isSelected())
+    	
 
         return true;
     }
