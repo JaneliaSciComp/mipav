@@ -288,6 +288,28 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double dircosz3;
         double scalextoy;
         double scalextoz;
+        double xaxisdircosx;
+        double xaxisdircosy;
+        double xaxisdircosz;
+        double yaxisdircosx;
+        double yaxisdircosy;
+        double yaxisdircosz;
+        double zaxisdircosx;
+        double zaxisdircosy;
+        double zaxisdircosz;
+        double del;
+        int newx;
+        int newy;
+        int newz;
+        double finalx1;
+        double finaly1;
+        double finalz1;
+        double finalx2;
+        double finaly2;
+        double finalz2;
+        double distx;
+        double disty;
+        double distz;
         // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
         // Record the voxel coordinates of the 8 edge voxels.
         // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
@@ -611,99 +633,73 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 		        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
 	        } // if (method == VOI_VERTICES)
 	        else if (method == MASK_METHOD) {
-	        	if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
-    	                (srcImage.getType() != ModelImage.BYTE) && (srcImage.getType() != ModelImage.USHORT) &&
-    	                (srcImage.getType() != ModelImage.SHORT)) {
-    	            displayError("Source Image must be Boolean, UByte, Byte, UShort, or Short");
-    	            setCompleted(false);
-
-    	            return;
-    	        }
-    			
+	        	
     			volume = length * oZdim;
     			pixVolume = pixArea * zres;
-	        	buffer = new short[volume];
-    			try {
-                    srcImage.exportData(0, volume, buffer);
-                } catch (IOException error) {
-                    displayError("Algorithm CropTilted: image bounds exceeded");
-                    setCompleted(false);
-
-                    return;
-                }
-    			xStart = (int)Math.round(x1);
-    			yStart = (int)Math.round(y1);
-    			zStart = (int)Math.round(z1);
-                value = buffer[xStart + yStart*oXdim + zStart*length];
-                found = true;
-                xLow = Math.max(0,xStart-1);
-                xHigh = Math.min(oXdim-1,xStart+1);
-                yLow = Math.max(0,yStart-1);
-                yHigh = Math.min(oYdim-1,yStart+1);
-                zLow = Math.max(0,zStart-1);
-                zHigh = Math.min(oZdim-1,zStart+1);
-                nextXLow = xLow;
-                nextXHigh = xHigh;
-                nextYLow = yLow;
-                nextYHigh = yHigh;
-                nextZLow = zLow;
-                nextZHigh = zHigh;
-                xpos = new Vector<Float>();
+	        	
+                int nVOIs;
+    	        ViewVOIVector VOIs = srcImage.getVOIs();
+    	        nVOIs = VOIs.size();
+    	        int nBoundingVOIs = 0;
+    	        index = -1;
+    	        int nActiveBoundingVOIs = 0;
+    	        
+    	        for (i = 0; i < nVOIs; i++) {
+    	
+    	            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+    	                nBoundingVOIs++;
+    	                if (nBoundingVOIs == 1) {
+    	                	index = i;
+    	                }
+    	                if (VOIs.VOIAt(i).isActive()) {
+    	                    nActiveBoundingVOIs++;	
+    	                    index = i;
+    	                }
+    	            }
+    	        } // for (i = 0; i < nVOIs; i++)
+    	        if (nBoundingVOIs == 0) {
+    	        	MipavUtil.displayError("Must have one contour or polyline VOI");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        
+    	        if (nActiveBoundingVOIs > 1) {
+    	            MipavUtil.displayError("Cannot have more than one active bounding VOI");
+    	            setCompleted(false);
+    	            return;
+    	        }	
+    	        Vector<VOIBase> vArray = VOIs.VOIAt(index).getCurves();	
+    	        if (vArray == null) {
+    	        	MipavUtil.displayError("vArray is null");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        if (vArray.size() == 0) {
+    	        	MipavUtil.displayError("No curves in VOI");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
+    	        setMask(srcImage.generateVOIMask());
+				BitSet mask = srcImage.getMask();
+				xpos = new Vector<Float>();
                 ypos = new Vector<Float>();
                 zpos = new Vector<Float>();
-                xpos.add(xStart*xres);
-                ypos.add(yStart*yres);
-                zpos.add(zStart*zres);
-                havePos = new BitSet(volume);
-                havePos.set(xStart + yStart*oXdim + zStart*length);
-                while (found) {
-                    found = false;
-                    xLow = nextXLow;
-                    xHigh = nextXHigh;
-                    yLow = nextYLow;
-                    yHigh = nextYHigh;
-                    zLow = nextZLow;
-                    zHigh = nextZHigh;
-                    for (z = zLow; z <= zHigh; z++) {
-	                    for (y = yLow; y <= yHigh; y++) {
-	                    	for (x = xLow; x <= xHigh; x++) {
-	                    	    index = x + oXdim * y + length * z;
-	                    	    if ((buffer[index] == value) && (!havePos.get(index)) && 
-	                    	    (((x >= 1) && havePos.get(index-1)) || ((x < oXdim - 1) && havePos.get(index+1)) ||
-	                    	     ((y >= 1) && havePos.get(index-oXdim)) || ((y < oYdim - 1) && havePos.get(index+oXdim)) ||
-	                    	     ((z >= 1) && havePos.get(index-length)) || ((z < oZdim - 1) && havePos.get(index+length)))) {
-	                    	    	found = true;
-	                    	    	havePos.set(index);
-	                    	    	nPts++;
-	                    	    	xpos.add(x*xres);
-	                    	    	ypos.add(y*yres);
-	                    	    	zpos.add(z*zres);
-	                    	    	xcenter += x*xres;
-	                    	    	ycenter += y*yres;
-	                    	    	zcenter += z*zres;
-	                    	    	if ((x == xLow)  && (nextXLow > 0) && (nextXLow == xLow)) {
-	                    	    		nextXLow = xLow-1;
-	                    	    	}
-	                    	    	if ((x == xHigh) && (nextXHigh < oXdim-1) && (nextXHigh == xHigh)) {
-	                    	    		nextXHigh = xHigh+1;
-	                    	    	}
-	                    	    	if ((y == yLow)  && (nextYLow > 0) && (nextYLow == yLow)) {
-	                    	    		nextYLow = yLow-1;
-	                    	    	}
-	                    	    	if ((y == yHigh) && (nextYHigh < oYdim-1) && (nextYHigh == yHigh)) {
-	                    	    		nextYHigh = yHigh+1;
-	                    	    	}
-	                    	    	if ((z == zLow)  && (nextZLow > 0) && (nextZLow == zLow)) {
-	                    	    		nextZLow = zLow-1;
-	                    	    	}
-	                    	    	if ((z == zHigh) && (nextZHigh < oZdim-1) && (nextZHigh == zHigh)) {
-	                    	    		nextZHigh = zHigh+1;
-	                    	    	}
-	                    	    }
-	                    	}
-	                    }
-                    }
-                } // while (found)
+                for (z = 0; z < oZdim; z++) {
+	    			for (y = 0; y < oYdim; y++) {
+	    				for (x = 0; x < oYdim; x++) {
+	    					index = x + y * oXdim + z * length;
+	    					if (mask.get(index)) {
+	    						nPts++;
+	    						xpos.add(x*xres);
+	    			            ypos.add(y*yres);
+	    			            zpos.add(z*zres);
+	    			            xcenter += x*xres;
+	                	    	ycenter += y*yres;
+	                	    	zcenter += z*zres;
+	    					}
+	    				}
+	    			}
+                }
                 xcenter = Math.abs(xcenter/nPts);
                 ycenter = Math.abs(ycenter/nPts);
                 zcenter = Math.abs(zcenter/nPts);
@@ -762,7 +758,114 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 dircosx3 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
                 dircosy3 = dircosx1 * scalextoy;
                 dircosz3 = dircosx1 * scalextoz;
-                // I have 9 directional cosines, but I don't know if these correspond to positive or negative angles.
+                if ((dircosx1 >= dircosx2) && (dircosx1 >= dircosx3)) {
+                	xaxisdircosx = dircosx1;
+                	xaxisdircosy = dircosy1;
+                	xaxisdircosz = dircosz1;
+                	if (dircosy2 >= dircosy3) {
+                		yaxisdircosx = dircosx2;
+                		yaxisdircosy = dircosy2;
+                		yaxisdircosz = dircosz2;
+                		zaxisdircosx = dircosx3;
+                		zaxisdircosy = dircosy3;
+                		zaxisdircosz = dircosz3;
+                	}
+                	else {
+                		yaxisdircosx = dircosx3;
+                		yaxisdircosy = dircosy3;
+                		yaxisdircosz = dircosz3;
+                		zaxisdircosx = dircosx2;
+                		zaxisdircosy = dircosy2;
+                		zaxisdircosz = dircosz2;	
+                	}
+                } // if ((dircosx1 >= dircosx2) && (dircosx1 >= dircosx3))
+                else if (dircosx2 >= dircosx3) {
+                	xaxisdircosx = dircosx2;
+                	xaxisdircosy = dircosy2;
+                	xaxisdircosz = dircosz2;
+                	if (dircosy1 >= dircosy3) {
+                		yaxisdircosx = dircosx1;
+                		yaxisdircosy = dircosy1;
+                		yaxisdircosz = dircosz1;
+                		zaxisdircosx = dircosx3;
+                		zaxisdircosy = dircosy3;
+                		zaxisdircosz = dircosz3;
+                	}
+                	else {
+                		yaxisdircosx = dircosx3;
+                		yaxisdircosy = dircosy3;
+                		yaxisdircosz = dircosz3;
+                		zaxisdircosx = dircosx1;
+                		zaxisdircosy = dircosy1;
+                		zaxisdircosz = dircosz1;	
+                	}
+                } // else if (dircosx2 >= dircosx3)
+                else {
+                	xaxisdircosx = dircosx3;
+                	xaxisdircosy = dircosy3;
+                	xaxisdircosz = dircosz3;
+                	if (dircosy1 >= dircosy2) {
+                		yaxisdircosx = dircosx1;
+                		yaxisdircosy = dircosy1;
+                		yaxisdircosz = dircosz1;
+                		zaxisdircosx = dircosx2;
+                		zaxisdircosy = dircosy2;
+                		zaxisdircosz = dircosz2;
+                	}
+                	else {
+                		yaxisdircosx = dircosx2;
+                		yaxisdircosy = dircosy2;
+                		yaxisdircosz = dircosz2;
+                		zaxisdircosx = dircosx1;
+                		zaxisdircosy = dircosy1;
+                		zaxisdircosz = dircosz1;	
+                	}
+                }
+                del = 0.1* Math.min(oXres,Math.min(oYres,oZres));
+                // Find maximum width point
+                newx = (int)Math.round(xcenter/xres);
+                newy = (int)Math.round(ycenter/yres);
+                newz = (int)Math.round(zcenter/zres);
+                finalx1 = xcenter;
+                finaly1 = ycenter;
+                finalz1 = zcenter;
+                index = newx + newy * oXdim + newz * length;
+                i = 1;
+                while (mask.get(index)) {
+                	finalx1 = xcenter + (i-1) * del * xaxisdircosx;
+                	finaly1 = ycenter + (i-1) * del * xaxisdircosy;
+                	finalz1 = zcenter + (i-1) * del * zaxisdircosz;
+                    newx = (int)Math.round((xcenter + i * del * xaxisdircosx)/xres);
+                    newy = (int)Math.round((ycenter + i * del * xaxisdircosy)/yres);
+                    newz = (int)Math.round((zcenter + i * del + xaxisdircosz)/zres);
+                    i++;
+                }
+                // Find minimum width point
+                xaxisdircosx = -xaxisdircosx;
+                xaxisdircosy = -xaxisdircosy;
+                xaxisdircosz = -xaxisdircosz;
+                newx = (int)Math.round(xcenter/xres);
+                newy = (int)Math.round(ycenter/yres);
+                newz = (int)Math.round(zcenter/zres);
+                finalx2 = newx;
+                finaly2 = newy;
+                finalz2 = newz;
+                index = newx + newy * oXdim + newz * length;
+                i = 1;
+                while (mask.get(index)) {
+                	finalx2 = xcenter + (i-1) * del * xaxisdircosx;
+                	finaly2 = ycenter + (i-1) * del * xaxisdircosy;
+                	finalz2 = zcenter + (i-1) * del * zaxisdircosz;
+                    newx = (int)Math.round((xcenter + i * del * xaxisdircosx)/xres);
+                    newy = (int)Math.round((ycenter + i * del * xaxisdircosy)/yres);
+                    newz = (int)Math.round((zcenter + i * del + xaxisdircosz)/zres);
+                    i++;
+                }
+                distx = finalx2 - finalx1;
+                disty = finaly2 - finaly1;
+                distz = finalz2 - finalz1;
+                width = Math.sqrt(distx*distx*xres*xres + disty*disty*yres*yres + distz*distz*zres*zres)/xres;
+                System.out.println("width = " + width);
 	        } // else if (method == MASK_METHOD)
 	        
 	        interp = AlgorithmTransform.TRILINEAR;
