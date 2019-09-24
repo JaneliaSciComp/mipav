@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.BitSet;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -152,11 +153,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        this.y8 = y8;
 	        this.z8 = z8;
         }
-        else if (method == MASK_METHOD) {
-        	this.x1 = x1;
-	        this.y1 = y1;
-	        this.z1 = z1;	
-        }
         
     }
     
@@ -235,26 +231,10 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double diffx2;
         double diffy1;
         double diffy2;
-        short buffer[];
-        short value;
-        int xLow;
-        int xHigh;
-        int yLow;
-        int yHigh;
-        int zLow;
-        int zHigh;
-        int nextXLow;
-        int nextXHigh;
-        int nextYLow;
-        int nextYHigh;
-        int nextZLow;
-        int nextZHigh;
-        boolean found;
         int nPts = 0;
         Vector<Float>xpos;
         Vector<Float>ypos;
         Vector<Float>zpos;
-        BitSet havePos;
         int x;
         int y;
         int z;
@@ -262,10 +242,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double xdiff;
         double ydiff;
         double zdiff;
-        int xStart = 0;
-        int yStart = 0;
-        int zStart = 0;
-        int volume;
         double a1;
         double b;
         double c;
@@ -586,7 +562,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 	        algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oXdim, oYdim,
 	                                           units, doVOI, doClip, doPad, doRotateCenter, center);
     	} // if (run2D)
-    	else {
+    	else { // run3D
     		oZdim = srcImage.getExtents()[2];
     		zres = srcImage.getFileInfo()[0].getResolutions()[2];
     		zunit = units[2];
@@ -633,8 +609,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
 		        xfrm.setTranslate(-xres * xcenter, -yres * ycenter, -zres * zcenter);
 	        } // if (method == VOI_VERTICES)
 	        else if (method == MASK_METHOD) {
-	        	
-    			volume = length * oZdim;
     			pixVolume = pixArea * zres;
 	        	
                 int nVOIs;
@@ -736,6 +710,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 	setCompleted(false);
                 	return;
                 }
+                System.out.println("K1real = " + K1real[0]);
+                System.out.println("K2real = " + K2real[0]);
+                System.out.println("K3real = " + K3real[0]);
                 // (Ix - K)dircosx - Pxydircosy - Pzxdircosz = 0
                 // -Pxydircosx + (Iy - K)dircosy - Pyzdircosz = 0
                 // Multiplying the first equation by -Pyz, the second equation by Pzx, and adding the 2
@@ -756,8 +733,8 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 scalextoy = ((Ix - K3real[0])*Pyz + Pxy*Pzx)/((Iy - K3real[0])*Pzx + Pxy*Pyz);
                 scalextoz = ((Ix - K3real[0]) - Pxy*scalextoy)/Pzx;
                 dircosx3 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
-                dircosy3 = dircosx1 * scalextoy;
-                dircosz3 = dircosx1 * scalextoz;
+                dircosy3 = dircosx3 * scalextoy;
+                dircosz3 = dircosx3 * scalextoz;
                 if ((dircosx1 >= dircosx2) && (dircosx1 >= dircosx3)) {
                 	xaxisdircosx = dircosx1;
                 	xaxisdircosy = dircosy1;
@@ -834,16 +811,14 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 while (mask.get(index)) {
                 	finalx1 = xcenter + (i-1) * del * xaxisdircosx;
                 	finaly1 = ycenter + (i-1) * del * xaxisdircosy;
-                	finalz1 = zcenter + (i-1) * del * zaxisdircosz;
+                	finalz1 = zcenter + (i-1) * del * xaxisdircosz;
                     newx = (int)Math.round((xcenter + i * del * xaxisdircosx)/xres);
                     newy = (int)Math.round((ycenter + i * del * xaxisdircosy)/yres);
                     newz = (int)Math.round((zcenter + i * del + xaxisdircosz)/zres);
+                    index = newx + newy * oXdim + newz * length;
                     i++;
                 }
                 // Find minimum width point
-                xaxisdircosx = -xaxisdircosx;
-                xaxisdircosy = -xaxisdircosy;
-                xaxisdircosz = -xaxisdircosz;
                 newx = (int)Math.round(xcenter/xres);
                 newy = (int)Math.round(ycenter/yres);
                 newz = (int)Math.round(zcenter/zres);
@@ -853,26 +828,156 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 index = newx + newy * oXdim + newz * length;
                 i = 1;
                 while (mask.get(index)) {
-                	finalx2 = xcenter + (i-1) * del * xaxisdircosx;
-                	finaly2 = ycenter + (i-1) * del * xaxisdircosy;
-                	finalz2 = zcenter + (i-1) * del * zaxisdircosz;
-                    newx = (int)Math.round((xcenter + i * del * xaxisdircosx)/xres);
-                    newy = (int)Math.round((ycenter + i * del * xaxisdircosy)/yres);
-                    newz = (int)Math.round((zcenter + i * del + xaxisdircosz)/zres);
+                	finalx2 = xcenter + (i-1) * del * -xaxisdircosx;
+                	finaly2 = ycenter + (i-1) * del * -xaxisdircosy;
+                	finalz2 = zcenter + (i-1) * del * -xaxisdircosz;
+                    newx = (int)Math.round((xcenter + i * del * -xaxisdircosx)/xres);
+                    newy = (int)Math.round((ycenter + i * del * -xaxisdircosy)/yres);
+                    newz = (int)Math.round((zcenter + i * del * -xaxisdircosz)/zres);
+                    index = newx + newy * oXdim + newz * length;
                     i++;
                 }
                 distx = finalx2 - finalx1;
                 disty = finaly2 - finaly1;
                 distz = finalz2 - finalz1;
-                width = Math.sqrt(distx*distx*xres*xres + disty*disty*yres*yres + distz*distz*zres*zres)/xres;
+                width = Math.sqrt(distx*distx + disty*disty + distz*distz)/xres;
                 System.out.println("width = " + width);
+                
+                // Find maximum height point
+                newx = (int)Math.round(xcenter/xres);
+                newy = (int)Math.round(ycenter/yres);
+                newz = (int)Math.round(zcenter/zres);
+                finalx1 = xcenter;
+                finaly1 = ycenter;
+                finalz1 = zcenter;
+                index = newx + newy * oXdim + newz * length;
+                i = 1;
+                while (mask.get(index)) {
+                	finalx1 = xcenter + (i-1) * del * yaxisdircosx;
+                	finaly1 = ycenter + (i-1) * del * yaxisdircosy;
+                	finalz1 = zcenter + (i-1) * del * yaxisdircosz;
+                    newx = (int)Math.round((xcenter + i * del * yaxisdircosx)/xres);
+                    newy = (int)Math.round((ycenter + i * del * yaxisdircosy)/yres);
+                    newz = (int)Math.round((zcenter + i * del + yaxisdircosz)/zres);
+                    index = newx + newy * oXdim + newz * length;
+                    i++;
+                }
+                // Find minimum height point
+                newx = (int)Math.round(xcenter/xres);
+                newy = (int)Math.round(ycenter/yres);
+                newz = (int)Math.round(zcenter/zres);
+                finalx2 = newx;
+                finaly2 = newy;
+                finalz2 = newz;
+                index = newx + newy * oXdim + newz * length;
+                i = 1;
+                while (mask.get(index)) {
+                	finalx2 = xcenter + (i-1) * del * -yaxisdircosx;
+                	finaly2 = ycenter + (i-1) * del * -yaxisdircosy;
+                	finalz2 = zcenter + (i-1) * del * -yaxisdircosz;
+                    newx = (int)Math.round((xcenter + i * del * -yaxisdircosx)/xres);
+                    newy = (int)Math.round((ycenter + i * del * -yaxisdircosy)/yres);
+                    newz = (int)Math.round((zcenter + i * del * -yaxisdircosz)/zres);
+                    index = newx + newy * oXdim + newz * length;
+                    i++;
+                }
+                distx = finalx2 - finalx1;
+                disty = finaly2 - finaly1;
+                distz = finalz2 - finalz1;
+                height = Math.sqrt(distx*distx + disty*disty + distz*distz)/yres;
+                System.out.println("height = " + height);
+                
+                // Find maximum depth point
+                newx = (int)Math.round(xcenter/xres);
+                newy = (int)Math.round(ycenter/yres);
+                newz = (int)Math.round(zcenter/zres);
+                finalx1 = xcenter;
+                finaly1 = ycenter;
+                finalz1 = zcenter;
+                index = newx + newy * oXdim + newz * length;
+                i = 1;
+                while (mask.get(index)) {
+                	finalx1 = xcenter + (i-1) * del * zaxisdircosx;
+                	finaly1 = ycenter + (i-1) * del * zaxisdircosy;
+                	finalz1 = zcenter + (i-1) * del * zaxisdircosz;
+                    newx = (int)Math.round((xcenter + i * del * zaxisdircosx)/xres);
+                    newy = (int)Math.round((ycenter + i * del * zaxisdircosy)/yres);
+                    newz = (int)Math.round((zcenter + i * del + zaxisdircosz)/zres);
+                    index = newx + newy * oXdim + newz * length;
+                    i++;
+                }
+                // Find minimum depth point
+                newx = (int)Math.round(xcenter/xres);
+                newy = (int)Math.round(ycenter/yres);
+                newz = (int)Math.round(zcenter/zres);
+                finalx2 = newx;
+                finaly2 = newy;
+                finalz2 = newz;
+                index = newx + newy * oXdim + newz * length;
+                i = 1;
+                while (mask.get(index)) {
+                	finalx2 = xcenter + (i-1) * del * -zaxisdircosx;
+                	finaly2 = ycenter + (i-1) * del * -zaxisdircosy;
+                	finalz2 = zcenter + (i-1) * del * -zaxisdircosz;
+                    newx = (int)Math.round((xcenter + i * del * -zaxisdircosx)/xres);
+                    newy = (int)Math.round((ycenter + i * del * -zaxisdircosy)/yres);
+                    newz = (int)Math.round((zcenter + i * del * -zaxisdircosz)/zres);
+                    index = newx + newy * oXdim + newz * length;
+                    i++;
+                }
+                distx = finalx2 - finalx1;
+                disty = finaly2 - finaly1;
+                distz = finalz2 - finalz1;
+                depth = Math.sqrt(distx*distx + disty*disty + distz*distz)/zres;
+                System.out.println("depth = " + depth);
+                
+                Vector3d[] row = new Vector3d[3];
+                row[0] = new Vector3d(xaxisdircosx, xaxisdircosy, xaxisdircosz);
+                row[1] = new Vector3d(yaxisdircosx, yaxisdircosy, yaxisdircosz);
+                row[2] = new Vector3d(zaxisdircosx, zaxisdircosy, zaxisdircosz);
+                Vector3d pdum3 = new Vector3d();
+                
+                // At this point, the matrix (in rows[]) is orthonormal.
+                // Check for a coordinate system flip.  If the determinant
+                // is -1, then negate the matrix and the scaling factors.
+                pdum3 = Vector3d.cross( row[1], row[2] );
+                if (row[0].dot(pdum3) < 0) {
+
+                    for (i = 0; i < 3; i++) {
+                        row[i].X *= -1;
+                        row[i].Y *= -1;
+                        row[i].Z *= -1;
+                    }
+                }
+                
+                thetaY = Math.asin(row[0].Z);
+
+                if (Math.cos(thetaY) != 0) {
+                    thetaX = -Math.atan2(row[1].Z, row[2].Z);
+                    thetaZ = -Math.atan2(row[0].Y, row[0].X);
+                } else {
+                    thetaX = Math.atan2(row[2].Y, row[1].Y);
+                    thetaZ = 0;
+                }
+                System.out.println("thetaX = " + (180.0/Math.PI)*thetaX);
+                System.out.println("thetaY = " + (180.0/Math.PI)*thetaY);
+                System.out.println("thetaZ = " + (180.0/Math.PI)*thetaZ);
+                
+                xfrm = new TransMatrix(4);
+		        xfrm.identity();
+		        xfrm.setTranslate(xcenter, ycenter, zcenter);
+		        xfrm.setRotate(thetaX,thetaY,thetaZ,RADIANS);
+		        xfrm.setTranslate(-xcenter, -ycenter, -zcenter);
+		        xcenter = xcenter /xres;
+		        ycenter = ycenter / yres;
+		        zcenter = zcenter /zres;
 	        } // else if (method == MASK_METHOD)
 	        
 	        interp = AlgorithmTransform.TRILINEAR;
 	        
 	        algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim,
 	                                           units, doVOI, doClip, doPad, doRotateCenter, center);	
-    	}
+    	} // else run3D
         float fillValue = 0.0f;
         algoTrans.setFillValue(fillValue);
         boolean doUpdateOrigin = false;
