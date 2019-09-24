@@ -813,7 +813,6 @@ public class ViewMenuBar {
 						menuBuilder.buildMenuItem("Link to another image", "LinkFrame", 0, null, true),
 						menuBuilder.buildMenuItem("Surface plotter", "Surface plotter", 0, null, true),
 						menuBuilder.buildMenuItem("Triplanar", "Tri-planar", 0, "3plane_16x16.gif", true),
-						menuBuilder.buildMenuItem("Volume renderer (J3D)", "VolTriplanar", 0, "java3d.gif", true),
 						menuBuilder.buildMenuItem("Volume renderer (GPU)", "WMVolTriplanar", 0, "wm.gif", true),
 						menuBuilder.buildMenuItem("Multimodality", "Multimodality", 0, "4frame.gif", true),
 						menuBuilder.buildMenuItem("MultimodalitySingle", "MultimodalitySingle", 0, "4frame.gif",

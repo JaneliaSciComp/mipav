@@ -2073,50 +2073,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
           
         	ViewJFrameMultimodalitySingleViewer multimodalFrame = new ViewJFrameMultimodalitySingleViewer(getActiveImage(), this);
         	multimodalFrame.validate();
-        	
-        } else if (command.equals("VolTriplanar")) {
-
-            // 3 space representation makes no sense on a 2d image!
-            if (componentImage.getImageA().getNDims() == 2) {
-                MipavUtil.displayError("This tool cannot be used on 2D images!");
-
-                return;
-            }
-
-            try {
-                float[] res;
-                float diffRatio;
-                int[] units = new int[4];
-
-                res = imageA.getFileInfo(0).getResolutions();
-                units = imageA.getFileInfo(0).getUnitsOfMeasure();
-                diffRatio = Math.max(res[2] / res[0], res[2] / res[1]);
-
-                final int unit = units[0];
-
-                if ( ( (units[1] != unit) || (units[2] != unit)) || (diffRatio >= 20)) {
-                    final int reply = JOptionPane.showConfirmDialog(this,
-                            "Image resolution or units appear out of range. \nPlease, adjust the image resolution or units", "Adjust Image Resolution/Units",
-                            JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
-
-                    if (reply == JOptionPane.YES_OPTION) {
-                        final JDialogImageInfo imageInfoDialog = getActiveImageInfoDialog();
-
-                        if (imageInfoDialog != null) {
-                            imageInfoDialog.setResolutionTag();
-                            imageInfoDialog.populateTalairachTab();
-                            imageInfoDialog.setVisible(true);
-                            imageInfoDialog.toFront();
-                        }
-                    } else {
-                        new JDialogVolViewResample(imageA, imageB, command);
-                    }
-                } else {
-                    new JDialogVolViewResample(imageA, imageB, command);
-                }
-            } catch (final OutOfMemoryError error) {
-                MipavUtil.displayError("Out of memory: unable to open Volume Triplanar frame.");
-            }
         } else if (command.equals("WMVolTriplanar")) {
 
             // 3 space representation makes no sense on a 2d image!
