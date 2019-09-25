@@ -407,7 +407,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     				xpos = new Vector<Float>();
 	                ypos = new Vector<Float>();
 	    			for (y = 0; y < oYdim; y++) {
-	    				for (x = 0; x < oYdim; x++) {
+	    				for (x = 0; x < oXdim; x++) {
 	    					index = x + y * oXdim;
 	    					if (mask.get(index)) {
 	    						nPts++;
@@ -660,7 +660,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 zpos = new Vector<Float>();
                 for (z = 0; z < oZdim; z++) {
 	    			for (y = 0; y < oYdim; y++) {
-	    				for (x = 0; x < oYdim; x++) {
+	    				for (x = 0; x < oXdim; x++) {
 	    					index = x + y * oXdim + z * length;
 	    					if (mask.get(index)) {
 	    						nPts++;
@@ -710,6 +710,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 	setCompleted(false);
                 	return;
                 }
+                System.out.println("Ix = " + Ix);
+                System.out.println("Iy = " + Iy);
+                System.out.println("Iz = " + Iz);
                 System.out.println("K1real = " + K1real[0]);
                 System.out.println("K2real = " + K2real[0]);
                 System.out.println("K3real = " + K3real[0]);
@@ -721,25 +724,35 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 // dircosx**2 + dircosy**2 + dircosz**2 = 1
                 // For root1:
                 scalextoy = ((Ix - K1real[0])*Pyz + Pxy*Pzx)/((Iy - K1real[0])*Pzx + Pxy*Pyz);
+                System.out.println("scalextoy = " + scalextoy);
                 scalextoz = ((Ix - K1real[0]) - Pxy*scalextoy)/Pzx;
+                System.out.println("scalextoz = " + scalextoz);
                 dircosx1 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
+                System.out.println("dircosx1 = " + dircosx1);
                 dircosy1 = dircosx1 * scalextoy;
+                System.out.println("dircosy1 = " + dircosy1);
                 dircosz1 = dircosx1 * scalextoz;
+                System.out.println("dircosz1 = " + dircosz1);
                 scalextoy = ((Ix - K2real[0])*Pyz + Pxy*Pzx)/((Iy - K2real[0])*Pzx + Pxy*Pyz);
+                System.out.println("scalextoy = " + scalextoy);
                 scalextoz = ((Ix - K2real[0]) - Pxy*scalextoy)/Pzx;
+                System.out.println("scalextoz = " + scalextoz);
                 dircosx2 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
+                System.out.println("dircosx2 = " + dircosx2);
                 dircosy2 = dircosx2 * scalextoy;
+                System.out.println("dircosy2 = " + dircosy2);
                 dircosz2 = dircosx2 * scalextoz;
+                System.out.println("dircosz2 = " + dircosz2);
                 scalextoy = ((Ix - K3real[0])*Pyz + Pxy*Pzx)/((Iy - K3real[0])*Pzx + Pxy*Pyz);
                 scalextoz = ((Ix - K3real[0]) - Pxy*scalextoy)/Pzx;
                 dircosx3 = 1/Math.sqrt(1 + scalextoy*scalextoy + scalextoz*scalextoz);
-                dircosy3 = dircosx3 * scalextoy;
+                dircosy3 = dircosx3 * scalextoy; 
                 dircosz3 = dircosx3 * scalextoz;
                 if ((dircosx1 >= dircosx2) && (dircosx1 >= dircosx3)) {
                 	xaxisdircosx = dircosx1;
                 	xaxisdircosy = dircosy1;
                 	xaxisdircosz = dircosz1;
-                	if (dircosy2 >= dircosy3) {
+                	if (Math.abs(dircosy2) >= Math.abs(dircosy3)) {
                 		yaxisdircosx = dircosx2;
                 		yaxisdircosy = dircosy2;
                 		yaxisdircosz = dircosz2;
@@ -760,7 +773,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 	xaxisdircosx = dircosx2;
                 	xaxisdircosy = dircosy2;
                 	xaxisdircosz = dircosz2;
-                	if (dircosy1 >= dircosy3) {
+                	if (Math.abs(dircosy1) >= Math.abs(dircosy3)) {
                 		yaxisdircosx = dircosx1;
                 		yaxisdircosy = dircosy1;
                 		yaxisdircosz = dircosz1;
@@ -781,7 +794,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 	xaxisdircosx = dircosx3;
                 	xaxisdircosy = dircosy3;
                 	xaxisdircosz = dircosz3;
-                	if (dircosy1 >= dircosy2) {
+                	if (Math.abs(dircosy1) >= Math.abs(dircosy2)) {
                 		yaxisdircosx = dircosx1;
                 		yaxisdircosy = dircosy1;
                 		yaxisdircosz = dircosz1;
