@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
@@ -242,17 +243,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double xdiff;
         double ydiff;
         double zdiff;
-        double a1;
-        double b;
-        double c;
-        double d;
-        double K1real[];
-        double K2real[];
-        double K2imag[];
-        double K3real[];
-        double K3imag[];
-        int result[];
-        CubicEquation ce;
         double dircosx1;
         double dircosy1;
         double dircosz1;
@@ -284,9 +274,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double distx;
         double disty;
         double distz;
-        directionalCosineModel dcm = null;
-        double params[];
-        int exitStatus;
         // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
         // Record the voxel coordinates of the 8 edge voxels.
         // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
@@ -694,7 +681,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 // - (IxIyIz - IxPyz**2 - IyPzx**2 - IzPxy**2 - 2PxyPyzPzx) = 0
                 // is a cubic equation in K yielding 3 positive real roots, K1, K2, and K3
                 // which are the principal moments of inertia for the given body.
-                a1 = 1.0;
+                /*a1 = 1.0;
                 b = -(Ix + Iy + Iz);
                 c = (Ix*Iy + Iy*Iz + Iz*Ix - Pxy*Pxy - Pyz*Pyz - Pzx*Pzx);
                 d = -(Ix*Iy*Iz - Ix*Pyz*Pyz - Iy*Pzx*Pzx - Iz*Pxy*Pxy - 2.0*Pxy*Pyz*Pzx);
@@ -714,55 +701,32 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                
                 System.out.println("K1real = " + K1real[0]);
                 System.out.println("K2real = " + K2real[0]);
-                System.out.println("K3real = " + K3real[0]);
-                dcm = new directionalCosineModel(K1real[0],Ix,Iy,Iz,Pxy,Pyz,Pzx);
-                dcm.driver();
-                dcm.dumpResults();
-                exitStatus = dcm.getExitStatus();
-    		    if (exitStatus < 0 ) {
-    		    	System.out.println("Error in NLConstrainedEngine during AlgorithmCropTilted K1real call to directionalCosineModel");
-    		    	printExitStatus(exitStatus);
-    		    	System.exit(-1);
-    		    }
-                params = dcm.getParameters();
-                dircosx1 = Math.cos(params[0]);
-                dircosy1 = Math.cos(params[1]);
-                dircosz1 = Math.cos(params[2]);
-                dcm = new directionalCosineModel(K2real[0],Ix,Iy,Iz,Pxy,Pyz,Pzx);
-                dcm.driver();
-                dcm.dumpResults();
-                exitStatus = dcm.getExitStatus();
-    		    if (exitStatus < 0 ) {
-    		    	System.out.println("Error in NLConstrainedEngine during AlgorithmCropTilted K2real call to directionalCosineModel");
-    		    	printExitStatus(exitStatus);
-    		    	System.exit(-1);
-    		    }
-                params = dcm.getParameters();
-                dircosx2 = Math.cos(params[0]);
-                dircosy2 = Math.cos(params[1]);
-                dircosz2 = Math.cos(params[2]);
-                dcm = new directionalCosineModel(K3real[0],Ix,Iy,Iz,Pxy,Pyz,Pzx);
-                dcm.driver();
-                dcm.dumpResults();
-                exitStatus = dcm.getExitStatus();
-    		    if (exitStatus < 0 ) {
-    		    	System.out.println("Error in NLConstrainedEngine during AlgorithmCropTilted K3real call to directionalCosineModel");
-    		    	printExitStatus(exitStatus);
-    		    	System.exit(-1);
-    		    }
-                params = dcm.getParameters();
-                dircosx3 = Math.cos(params[0]);
-                dircosy3 = Math.cos(params[1]);
-                dircosz3 = Math.cos(params[2]);
-                System.out.println("dircosx1 = " + dircosx1);
-                System.out.println("dircosy1 = " + dircosy1);
-                System.out.println("dircosz1 = " + dircosz1);
-                System.out.println("dircosx2 = " + dircosx2);
-                System.out.println("dircosy2 = " + dircosy2);
-                System.out.println("dircosz2 = " + dircosz2);
-                System.out.println("dircosx3 = " + dircosx3);
-                System.out.println("dircosy3 = " + dircosy3);
-                System.out.println("dircosz3 = " + dircosz3);
+                System.out.println("K3real = " + K3real[0]);*/
+                double arr[][] = new double[3][3];
+                arr[0][0] = Ix;
+                arr[0][1] = -Pxy;
+                arr[0][2] = -Pzx;
+                arr[1][0] = -Pxy;
+                arr[1][1] = Iy;
+                arr[1][2] = -Pyz;
+                arr[2][0] = -Pzx;
+                arr[2][1] = -Pyz;
+                arr[2][2] = Iz;
+                double eigenvalue[] = new double[3]; // Number of column dimensions
+                double eigenvector[][] = new double[3][3]; // [number of row dimensions][number of column dimensions]
+                // In EigenvalueDecomposition the columns represent the
+                // eigenvectors
+                Eigenvalue.decompose( arr, eigenvector, eigenvalue);
+                dircosx1 = eigenvector[0][0];
+                dircosy1 = eigenvector[0][1];
+                dircosz1 = eigenvector[0][2];
+                dircosx2 = eigenvector[1][0];
+                dircosy2 = eigenvector[1][1];
+                dircosz2 = eigenvector[1][2];
+                dircosx3 = eigenvector[2][0];
+                dircosy3 = eigenvector[2][1];
+                dircosz3 = eigenvector[2][2];
+               
                 
                 if ((Math.abs(dircosx1) >= Math.abs(dircosx2)) && (Math.abs(dircosx1) >= Math.abs(dircosx3))) {
                 	xaxisdircosx = dircosx1;
@@ -827,6 +791,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 		zaxisdircosz = dircosz1;	
                 	}
                 }
+                System.out.println("xaxisdircosx = " + xaxisdircosx + " xaxisdircosy = " + xaxisdircosy + " xaxisdircosz = " + xaxisdircosz);
+                System.out.println("yaxisdircosx = " + yaxisdircosx + " yaxisdircosy = " + yaxisdircosy + " yaxisdircosz = " + yaxisdircosz);
+                System.out.println("zaxisdircosx = " + zaxisdircosx + " zaxisdircosy = " + zaxisdircosy + " zaxisdircosz = " + zaxisdircosz);
                 del = 0.1* Math.min(oXres,Math.min(oYres,oZres));
                 // Find maximum width point
                 newx = (int)Math.round(xcenter/xres);
@@ -843,7 +810,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 	finalz1 = zcenter + (i-1) * del * xaxisdircosz;
                     newx = (int)Math.round((xcenter + i * del * xaxisdircosx)/xres);
                     newy = (int)Math.round((ycenter + i * del * xaxisdircosy)/yres);
-                    newz = (int)Math.round((zcenter + i * del + xaxisdircosz)/zres);
+                    newz = (int)Math.round((zcenter + i * del * xaxisdircosz)/zres);
                     index = newx + newy * oXdim + newz * length;
                     i++;
                 }
@@ -851,9 +818,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 newx = (int)Math.round(xcenter/xres);
                 newy = (int)Math.round(ycenter/yres);
                 newz = (int)Math.round(zcenter/zres);
-                finalx2 = newx;
-                finaly2 = newy;
-                finalz2 = newz;
+                finalx2 = xcenter;
+                finaly2 = ycenter;
+                finalz2 = zcenter;
                 index = newx + newy * oXdim + newz * length;
                 i = 1;
                 while (mask.get(index)) {
@@ -870,6 +837,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 disty = finaly2 - finaly1;
                 distz = finalz2 - finalz1;
                 width = Math.sqrt(distx*distx + disty*disty + distz*distz)/xres;
+                System.out.println("x1 = " + (finalx1/xres) + " x2 = " + (finalx2/xres));
                 System.out.println("width = " + width);
                 
                 // Find maximum height point
@@ -887,7 +855,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 	finalz1 = zcenter + (i-1) * del * yaxisdircosz;
                     newx = (int)Math.round((xcenter + i * del * yaxisdircosx)/xres);
                     newy = (int)Math.round((ycenter + i * del * yaxisdircosy)/yres);
-                    newz = (int)Math.round((zcenter + i * del + yaxisdircosz)/zres);
+                    newz = (int)Math.round((zcenter + i * del * yaxisdircosz)/zres);
                     index = newx + newy * oXdim + newz * length;
                     i++;
                 }
@@ -895,9 +863,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 newx = (int)Math.round(xcenter/xres);
                 newy = (int)Math.round(ycenter/yres);
                 newz = (int)Math.round(zcenter/zres);
-                finalx2 = newx;
-                finaly2 = newy;
-                finalz2 = newz;
+                finalx2 = xcenter;
+                finaly2 = ycenter;
+                finalz2 = zcenter;
                 index = newx + newy * oXdim + newz * length;
                 i = 1;
                 while (mask.get(index)) {
@@ -913,6 +881,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 distx = finalx2 - finalx1;
                 disty = finaly2 - finaly1;
                 distz = finalz2 - finalz1;
+                System.out.println("y1 = " + (finaly1/yres) + " y2 = " + (finaly2/yres));
                 height = Math.sqrt(distx*distx + disty*disty + distz*distz)/yres;
                 System.out.println("height = " + height);
                 
@@ -931,7 +900,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 	finalz1 = zcenter + (i-1) * del * zaxisdircosz;
                     newx = (int)Math.round((xcenter + i * del * zaxisdircosx)/xres);
                     newy = (int)Math.round((ycenter + i * del * zaxisdircosy)/yres);
-                    newz = (int)Math.round((zcenter + i * del + zaxisdircosz)/zres);
+                    newz = (int)Math.round((zcenter + i * del * zaxisdircosz)/zres);
                     index = newx + newy * oXdim + newz * length;
                     i++;
                 }
@@ -939,9 +908,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 newx = (int)Math.round(xcenter/xres);
                 newy = (int)Math.round(ycenter/yres);
                 newz = (int)Math.round(zcenter/zres);
-                finalx2 = newx;
-                finaly2 = newy;
-                finalz2 = newz;
+                finalx2 = xcenter;
+                finaly2 = ycenter;
+                finalz2 = zcenter;
                 index = newx + newy * oXdim + newz * length;
                 i = 1;
                 while (mask.get(index)) {
@@ -964,6 +933,20 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 row[0] = new Vector3d(xaxisdircosx, xaxisdircosy, xaxisdircosz);
                 row[1] = new Vector3d(yaxisdircosx, yaxisdircosy, yaxisdircosz);
                 row[2] = new Vector3d(zaxisdircosx, zaxisdircosy, zaxisdircosz);
+                Vector3d scale = new Vector3d();
+                // Compute X scale factor and normalize first row.
+                scale.X = row[0].length();
+
+                // row[0] = *V3Scale(&row[0], 1.0);
+                row[0].scale(1.0);
+                
+                // Now, compute Y scale and normalize 2nd row.
+                scale.Y = row[1].length();
+                row[1].scale(1.0);
+                
+                // Next, get Z scale and normalize 3rd row.
+                scale.Z = row[2].length();
+                row[2].scale(1.0);
                 Vector3d pdum3 = new Vector3d();
                 
                 // At this point, the matrix (in rows[]) is orthonormal.
@@ -971,7 +954,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 // is -1, then negate the matrix and the scaling factors.
                 pdum3 = Vector3d.cross( row[1], row[2] );
                 if (row[0].dot(pdum3) < 0) {
-
+                    scale.neg();
                     for (i = 0; i < 3; i++) {
                         row[i].X *= -1;
                         row[i].Y *= -1;
@@ -988,6 +971,25 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                     thetaX = Math.atan2(row[2].Y, row[1].Y);
                     thetaZ = 0;
                 }
+                if (thetaX < -Math.PI/2.0) {
+                	thetaX = thetaX + Math.PI;
+                }
+                else if (thetaX > Math.PI/2.0) {
+                	thetaX = thetaX - Math.PI;
+                }
+                if (thetaY < -Math.PI/2.0) {
+                	thetaY = thetaY + Math.PI;
+                }
+                else if (thetaY > Math.PI/2.0) {
+                	thetaY = thetaY - Math.PI;
+                }
+                if (thetaZ < -Math.PI/2.0) {
+                	thetaZ = thetaZ + Math.PI;
+                }
+                else if (thetaZ > Math.PI/2.0) {
+                	thetaZ = thetaZ - Math.PI;
+                }
+                
                 System.out.println("thetaX = " + (180.0/Math.PI)*thetaX);
                 System.out.println("thetaY = " + (180.0/Math.PI)*thetaY);
                 System.out.println("thetaZ = " + (180.0/Math.PI)*thetaZ);
@@ -1105,177 +1107,5 @@ public class AlgorithmCropTilted extends AlgorithmBase {
     	return resultImage;
     }
     
-    class directionalCosineModel extends NLConstrainedEngine {
-    	
-        private double K;
-        private double Ix;
-        private double Iy;
-        private double Iz;
-        private double Pxy;
-        private double Pyz;
-        private double Pzx;
-        /**
-         * Creates a new directionalCosineModel object.
-         *
-         */
-        public directionalCosineModel(double K, double Ix, double Iy, double Iz, double Pxy, double Pyz, double Pzx) {
-
-            // 4 data points, 3 coefficients
-        	
-            super(4, 3);
-            this.K = K;
-            this.Ix = Ix;
-            this.Iy = Iy;
-            this.Iz = Iz;
-            this.Pxy = Pxy;
-            this.Pyz = Pyz;
-            this.Pzx = Pzx;
-            
-            bounds = 2; // bounds = 0 means unconstrained
-
-            // bounds = 1 means same lower and upper bounds for
-            // all parameters
-            // bounds = 2 means different lower and upper bounds
-            // for all parameters
-            
-            // Constrain parameter 0
-            bl[0] = 0.0;
-            bu[0] = Math.PI;
-
-            // Constrain parameter 1
-            bl[1] = 0.0;
-            bu[1] = Math.PI;
-            
-            // Constrain parameter 2
-            bl[2] = 0.0;
-            bu[2] = Math.PI;
-            
-            // The default is internalScaling = false
-            // To make internalScaling = true and have the columns of the
-            // Jacobian scaled to have unit length include the following line.
-            // internalScaling = true;
-            // Suppress diagnostic messages
-            outputMes = true;
-
-            gues[0] = Math.PI/2.0;
-            gues[1] = Math.PI/2.0;
-            gues[2] = Math.PI/2.0;
-        }
-
-
-        /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            super.driver();
-        }
-
-
-        /**
-         * Display results of displaying exponential fitting parameters.
-         */
-        public void dumpResults() {
-            Preferences.debug(" ******* directionalCosineModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
-        }
-        
-        /**
-         * 
-         * 
-         * @param a The best guess parameter values.
-         * @param residuals ymodel - yData.
-         * @param covarMat The derivative values of y with respect to fitting parameters.
-         */
-        public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
-            int ctrl;
-            double ymod = 0;
-
-            try {
-                ctrl = ctrlMat[0];
-                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + "\n", 
-                // Preferences.DEBUG_ALGORITHM);
-                if ( (ctrl == -1) || (ctrl == 1)) {
-                    
-                    // evaluate the residuals[j] = ymod - yData[j]
-                	double cosa0 = Math.cos(a[0]);
-                	double cosa1 = Math.cos(a[1]);
-                	double cosa2 = Math.cos(a[2]);
-                	
-                	residuals[0] = (Ix - K)*cosa0 - Pxy*cosa1 - Pzx*cosa2;
-                	residuals[1] = -Pxy*cosa0 + (Iy - K)*cosa1 - Pyz*cosa2;
-                	residuals[2] = -Pzx*cosa0 - Pyz*cosa1 + (Iz - K)*cosa2;
-                	ymod = cosa0*cosa0 + cosa1*cosa1 + cosa2*cosa2;
-                	residuals[3] = ymod - 1.0;
-                } // if ((ctrl == -1) || (ctrl == 1))
-                else if (ctrl == 2) {
-                    // Calculate the Jacobian analytically
-                	double cosa0 = Math.cos(a[0]);
-                	double cosa1 = Math.cos(a[1]);
-                	double cosa2 = Math.cos(a[2]);
-                	double sina0 = Math.sin(a[0]);
-                	double sina1 = Math.sin(a[1]);
-                	double sina2 = Math.sin(a[2]);
-                    covarMat[0][0] = -(Ix - K)*sina0;
-                    covarMat[0][1] = Pxy*sina1;
-                    covarMat[0][2] = Pzx*sina2;
-                    covarMat[1][0] = Pxy*sina0;
-                    covarMat[1][1] = -(Iy - K)*sina1;
-                    covarMat[1][2] = Pyz*sina2;
-                    covarMat[2][0] = Pzx*sina0;
-                    covarMat[2][1] = Pyz*sina1;
-                    covarMat[2][2] = -(Iz - K)*sina2;
-                    covarMat[3][0] = -2*cosa0*sina0;
-                    covarMat[3][1] = -2*cosa1*sina1;
-                    covarMat[3][2] = -2*cosa2*sina2;
-                }
-                // Calculate the Jacobian numerically
-                // else if (ctrl == 2) {
-                // ctrlMat[0] = 0;
-                // }
-            } catch (final Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
-            }
-
-            return;
-        }
-       
-    }
-    
-    public void printExitStatus(int exitStatus) {
-		if (exitStatus == -1) {
-            System.err.println("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or");
-            System.err.println("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry");
-        } 
-        else if (exitStatus == -2) {
-        	System.err.println("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations");
-        }
-        else if (exitStatus == -3) {
-        	System.err.println("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite");
-        }
-        else if (exitStatus == -4) {
-        	System.err.println("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that");
-        }
-        else if (exitStatus == -5) {
-        	System.err.println("Abnormal termination because an undamped step with Newtons method is a failure");
-        }
-        else if (exitStatus == -6) {
-        	System.err.println("Abnormal termination because the latest search direction computed using subspace minimization");
-        	System.err.println("was not a descent direction (probably caused by a wrongly computed Jacobian)");
-        }
-        else if (exitStatus == -7) {
-        	System.err.println("Abnormal termination because there is only one feasible point");
-        	System.err.println("namely X(I) = BL(I) = BU(I), I = 1,2,...,N");
-        }
-        else if (exitStatus == -8) {
-        	System.err.println("Abnormal termination due to driver error");
-        }
-        else {
-        	System.err.println("Exit status = " + exitStatus);
-        }
-	}
     
 }
