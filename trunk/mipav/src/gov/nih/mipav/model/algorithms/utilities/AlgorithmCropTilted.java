@@ -274,6 +274,13 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double distx;
         double disty;
         double distz;
+        double I1;
+        double I2;
+        double I3;
+        double Ixp;
+        double Iyp;
+        double Izp;
+        double volume;
         // To develop and test code do create an untilted cuboid with a rectangle and VOI propagation to neighboring slices.
         // Record the voxel coordinates of the 8 edge voxels.
         // Then use AlgorithmTransform to create tilted x 30 degrees, tilted y 30 degrees, tilted z 30 degrees, 
@@ -681,17 +688,17 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 // - (IxIyIz - IxPyz**2 - IyPzx**2 - IzPxy**2 - 2PxyPyzPzx) = 0
                 // is a cubic equation in K yielding 3 positive real roots, K1, K2, and K3
                 // which are the principal moments of inertia for the given body.
-                /*a1 = 1.0;
-                b = -(Ix + Iy + Iz);
-                c = (Ix*Iy + Iy*Iz + Iz*Ix - Pxy*Pxy - Pyz*Pyz - Pzx*Pzx);
-                d = -(Ix*Iy*Iz - Ix*Pyz*Pyz - Iy*Pzx*Pzx - Iz*Pxy*Pxy - 2.0*Pxy*Pyz*Pzx);
-                K1real = new double[1];
-                K2real = new double[1];
-                K2imag = new double[1];
-                K3real = new double[1];
-                K3imag = new double[1];
-                result = new int[1];
-                ce = new CubicEquation(a1, b, c, d, K1real, K2real, K2imag, K3real, K3imag, result);
+                /*double a1 = 1.0;
+                double b = -(Ix + Iy + Iz);
+                double c = (Ix*Iy + Iy*Iz + Iz*Ix - Pxy*Pxy - Pyz*Pyz - Pzx*Pzx);
+                double d = -(Ix*Iy*Iz - Ix*Pyz*Pyz - Iy*Pzx*Pzx - Iz*Pxy*Pxy - 2.0*Pxy*Pyz*Pzx);
+                double K1real[] = new double[1];
+                double K2real[] = new double[1];
+                double K2imag[] = new double[1];
+                double K3real[] = new double[1];
+                double K3imag[] = new double[1];
+                int result[] = new int[1];
+                CubicEquation ce = new CubicEquation(a1, b, c, d, K1real, K2real, K2imag, K3real, K3imag, result);
                 ce.run();
                 if (result[0] == 1) {
                 	MipavUtil.displayError("Cubic equation for principal moments of inertia gives 2 complex conjugate values");
@@ -726,75 +733,122 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 dircosx3 = eigenvector[2][0];
                 dircosy3 = eigenvector[2][1];
                 dircosz3 = eigenvector[2][2];
+                // The roots I1, I2, and I3 are the principal moments of inertia of the body.
+                I1 = eigenvalue[0];
+                I2 = eigenvalue[1];
+                I3 = eigenvalue[2];
                
                 
                 if ((Math.abs(dircosx1) >= Math.abs(dircosx2)) && (Math.abs(dircosx1) >= Math.abs(dircosx3))) {
                 	xaxisdircosx = dircosx1;
                 	xaxisdircosy = dircosy1;
                 	xaxisdircosz = dircosz1;
+                	Ixp = I1;
                 	if (Math.abs(dircosy2) >= Math.abs(dircosy3)) {
                 		yaxisdircosx = dircosx2;
                 		yaxisdircosy = dircosy2;
                 		yaxisdircosz = dircosz2;
+                		Iyp = I2;
                 		zaxisdircosx = dircosx3;
                 		zaxisdircosy = dircosy3;
                 		zaxisdircosz = dircosz3;
+                		Izp = I3;
                 	}
                 	else {
                 		yaxisdircosx = dircosx3;
                 		yaxisdircosy = dircosy3;
                 		yaxisdircosz = dircosz3;
+                		Iyp = I3;
                 		zaxisdircosx = dircosx2;
                 		zaxisdircosy = dircosy2;
-                		zaxisdircosz = dircosz2;	
+                		zaxisdircosz = dircosz2;
+                		Izp = I2;
                 	}
                 } // if ((Math.abs(dircosx1) >= Math.abs(dircosx2)) && (Math.abs(dircosx1) >= Math.abs(dircosx3)))
                 else if (Math.abs(dircosx2) >= Math.abs(dircosx1)  && (Math.abs(dircosx2) >= Math.abs(dircosx3))) {
                 	xaxisdircosx = dircosx2;
                 	xaxisdircosy = dircosy2;
                 	xaxisdircosz = dircosz2;
+                	Ixp = I2;
                 	if (Math.abs(dircosy1) >= Math.abs(dircosy3)) {
                 		yaxisdircosx = dircosx1;
                 		yaxisdircosy = dircosy1;
                 		yaxisdircosz = dircosz1;
+                		Iyp = I1;
                 		zaxisdircosx = dircosx3;
                 		zaxisdircosy = dircosy3;
                 		zaxisdircosz = dircosz3;
+                		Izp = I3;
                 	}
                 	else {
                 		yaxisdircosx = dircosx3;
                 		yaxisdircosy = dircosy3;
                 		yaxisdircosz = dircosz3;
+                		Iyp = I3;
                 		zaxisdircosx = dircosx1;
                 		zaxisdircosy = dircosy1;
                 		zaxisdircosz = dircosz1;	
+                		Izp = I1;
                 	}
                 } // else if (Math.abs(dircosx2) >= Math.abs(dircosx1)  && (Math.abs(dircosx2) >= Math.abs(dircosx3))) {
                 else {
                 	xaxisdircosx = dircosx3;
                 	xaxisdircosy = dircosy3;
                 	xaxisdircosz = dircosz3;
+                	Ixp = I3;
                 	if (Math.abs(dircosy1) >= Math.abs(dircosy2)) {
                 		yaxisdircosx = dircosx1;
                 		yaxisdircosy = dircosy1;
                 		yaxisdircosz = dircosz1;
+                		Iyp = I1;
                 		zaxisdircosx = dircosx2;
                 		zaxisdircosy = dircosy2;
                 		zaxisdircosz = dircosz2;
+                		Izp = I2;
                 	}
                 	else {
                 		yaxisdircosx = dircosx2;
                 		yaxisdircosy = dircosy2;
                 		yaxisdircosz = dircosz2;
+                		Iyp = I2;
                 		zaxisdircosx = dircosx1;
                 		zaxisdircosy = dircosy1;
-                		zaxisdircosz = dircosz1;	
+                		zaxisdircosz = dircosz1;
+                		Izp = I1;
                 	}
                 }
+                System.out.println("Ixp = " + Ixp);
+                System.out.println("Iyp = " + Iyp);
+                System.out.println("Izp = " + Izp);
                 System.out.println("xaxisdircosx = " + xaxisdircosx + " xaxisdircosy = " + xaxisdircosy + " xaxisdircosz = " + xaxisdircosz);
                 System.out.println("yaxisdircosx = " + yaxisdircosx + " yaxisdircosy = " + yaxisdircosy + " yaxisdircosz = " + yaxisdircosz);
                 System.out.println("zaxisdircosx = " + zaxisdircosx + " zaxisdircosy = " + zaxisdircosy + " zaxisdircosz = " + zaxisdircosz);
-                del = 0.1* Math.min(oXres,Math.min(oYres,oZres));
+                // volume = width*xres*height*yres*depth*zres = nPts*xres*yres*zres;
+                // Ixp, Iyp, and Izp are the principal moments of inertia of a rectangular prism
+                // Ixp = (1.0/12.0)*(height*height*yres*yres + depth*depth*zres*zres)*volume
+                // Iyp = (1.0/12.0)*(width*width*xres*xres + depth*depth*zres*zres)*volume
+                // Izp = (1.0/12.0)*(width*width*xres*xres + height*height*yres*yres)*volume
+                // Iyp - Ixp = (1.0/12.0)*(width*width*xres*xres - height*height*yres*yres)*volume
+                // Iyp - Ixp + Izp = (1.0/12.0)*(2*width*width*xres*xres)*volume = (1.0/6.0)*(width*width*xres*xres)*volume
+                // width*xres = sqrt((6.0/volume)*(Iyp - Ixp  + Izp))
+                // width = sqrt((6.0/volume)*(Iyp - Ixp + Izp))/xres
+                // Ixp - Iyp = (1.0/12.0)*(height*height*yres*yres  - width*width*xres*xres)*volume
+                // Ixp - Iyp + Izp = (1.0/12.0)*(2.0*height*height*yres*yres)*volume = (1.0/6.0)*(height*height*yres*yres)*volume
+                // height*yres = sqrt((6.0/volume)*(Ixp - Iyp + Izp))
+                // height = sqrt((6.0/volume)*(Ixp - Iyp + Izp))/yres
+                // Ixp - Izp = (1.0/12.0)*(depth*depth*zres*zres - width*width*xres*xres)*volume
+                // Ixp - Izp + Iyp = (1.0/12.0)*(2*depth*depth*zres*zres)*volume = (1.0/6.0)(depth*depth*zres*zres)*volume
+                // depth*zres = sqrt((6.0/volume)*(Ixp - Izp + Iyp))
+                // depth = sqrt((6.0/volume)*(Ixp - Izp + Iyp))/zres
+                volume = nPts * xres * yres * zres;
+                width = Math.sqrt((6.0/volume)*(Iyp - Ixp + Izp))/xres;
+                System.out.println("width = " + width);
+                height = Math.sqrt((6.0/volume)*(Ixp - Iyp + Izp))/yres;
+                System.out.println("height = " + height);
+                depth = Math.sqrt((6.0/volume)*(Ixp - Izp + Iyp))/zres;
+                System.out.println("depth = " + depth);
+                
+                /*del = 0.1* Math.min(oXres,Math.min(oYres,oZres));
                 // Find maximum width point
                 newx = (int)Math.round(xcenter/xres);
                 newy = (int)Math.round(ycenter/yres);
@@ -927,7 +981,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 disty = finaly2 - finaly1;
                 distz = finalz2 - finalz1;
                 depth = Math.sqrt(distx*distx + disty*disty + distz*distz)/zres;
-                System.out.println("depth = " + depth);
+                System.out.println("depth = " + depth);*/
                 
                 Vector3d[] row = new Vector3d[3];
                 row[0] = new Vector3d(xaxisdircosx, xaxisdircosy, xaxisdircosz);
@@ -976,7 +1030,7 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 }
                 else if (thetaX > Math.PI/2.0) {
                 	thetaX = thetaX - Math.PI;
-                }
+                }             
                 if (thetaY < -Math.PI/2.0) {
                 	thetaY = thetaY + Math.PI;
                 }
