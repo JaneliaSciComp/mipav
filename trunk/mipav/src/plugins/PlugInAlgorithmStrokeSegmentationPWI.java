@@ -165,7 +165,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         doPwiMultiThreading = pwiMultiThreading;
         doPwiCalculateCorrelation = pwiCalculateCorrelation;
         doPwiCalculateCBFCBVMTT = pwiCalculateCorrelation;
-        doPwiSaveOutputs = pwiCalculateCorrelation;
+        doPwiSaveOutputs = pwiSaveOutputs;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
     }
@@ -1380,8 +1380,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             		"Core Voxel Count (DWI+ADC)", "Core Volume (DWI+ADC) " + volUnitsStr,
             		"Core Voxel Count (DWI+TMax+ADC)", "Core Volume (DWI+TMax+ADC) " + volUnitsStr,
             		"Tmax > " + pwiThreshold + " Voxel Count", "Tmax > " + pwiThreshold + " Volume",
-            		"Perfusion mismatch (Perfusion - DWI+ADC)", "Perfusion ratio (Perfusion/DWI+ADC)",
-            		"Perfusion mismatch (Perfusion - DWI+Tmax+ADC)", "Perfusion ratio (Perfusion/DWI+Tmax+ADC)"));
+            		"Perfusion mismatch (Perfusion - DWI+ADC)", "Perfusion ratio (DWI+ADC/DWI+ADC)",
+            		"Perfusion mismatch (Perfusion - DWI+Tmax+ADC)", "Perfusion ratio (DWI+Tmax+ADC/Perfusion)"));
             
             double perfusionSize = 0;
             double dwiCore = 0;
@@ -1412,9 +1412,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             double perfusionVol = perfusionSize * voxelSize;
             
             double perfusionMismatchDwi = perfusionSize - dwiCore;
-            double perfusionRatioDwi = perfusionSize / dwiCore;
+            double perfusionRatioDwi = dwiCore / perfusionSize;
             double perfusionMismatchPwi = perfusionSize - pwiCore;
-            double perfusionRatioPwi = perfusionSize / pwiCore;
+            double perfusionRatioPwi = pwiCore / perfusionSize;
             
             System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize);
             csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCore, dwiCoreVol, pwiCore, pwiCoreVol, perfusionSize, perfusionVol, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);

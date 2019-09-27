@@ -11,7 +11,8 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Properties;
-
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -49,9 +50,9 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
     
     private int minExpectedSlices = 30;
     
-    private int minExpectedSlicesPWI = 1600;
+    private int[] minExpectedSlicesPWI = new int[] {1600, 2400, 2640};
     
-    private int maxWaitTime = 10;
+    private int maxWaitTime = 7;
     
     private StrokeSegmentationDicomReceiverPWI dicomReceiver;
     
@@ -206,13 +207,13 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
         gbc.gridy++;
         gbc.gridx = 0;
         
-        JLabel labelNumSlicesPWI = new JLabel("Minimum number of expected slices per PWI volume");
+        JLabel labelNumSlicesPWI = new JLabel("Number of expected slices per PWI volume");
         labelNumSlicesPWI.setForeground(Color.black);
         labelNumSlicesPWI.setFont(MipavUtil.font12);
         mainPanel.add(labelNumSlicesPWI, gbc);
         
         minExpectedSlicesPWIField = new JTextField(20);
-        minExpectedSlicesPWIField.setText("" + minExpectedSlicesPWI);
+        minExpectedSlicesPWIField.setText(intArrayToStr(minExpectedSlicesPWI));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(minExpectedSlicesPWIField, gbc);
@@ -309,7 +310,7 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
         doEmailReport = emailCheckbox.isSelected();
 //        emailAddress = emailField.getText();
         minExpectedSlices = Integer.parseInt(minExpectedSlicesField.getText());
-        minExpectedSlicesPWI = Integer.parseInt(minExpectedSlicesPWIField.getText());
+        minExpectedSlicesPWI = strToIntArray(minExpectedSlicesPWIField.getText());
         maxWaitTime = Integer.parseInt(maxWaitTimeField.getText());
         
         return true;
@@ -457,7 +458,10 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
                 
                 minExpectedSlices = Integer.parseInt(prop.getProperty("listenerMinExpectedSlices", "" + minExpectedSlices));
                 
-                minExpectedSlicesPWI = Integer.parseInt(prop.getProperty("listenerMinExpectedSlicesPWI", "" + minExpectedSlicesPWI));
+                int[] intArr = strToIntArray(prop.getProperty("listenerMinExpectedSlicesPWI", "" + intArrayToStr(minExpectedSlicesPWI)));
+                if (intArr != null) {
+                    minExpectedSlicesPWI = intArr;
+                }
                 
                 maxWaitTime = Integer.parseInt(prop.getProperty("listenerMaxWaitTime", "" + maxWaitTime));
                 
@@ -474,5 +478,23 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
             log("Error loading listener properties file: " + configFileName);
             return false;
         }
+    }
+    
+    private static final String intArrayToStr(int[] intArr) {
+        return IntStream.of(intArr).mapToObj(Integer::toString).collect(Collectors.joining(", "));
+    }
+    
+    private static final int[] strToIntArray(String intListString) {
+        int[] intArr = null;
+        
+        String[] strArr = intListString.split(",\\w*");
+        if (strArr.length > 0) {
+            intArr = new int[strArr.length];
+            for (int i = 0; i < strArr.length; i++) {
+                intArr[i] = Integer.parseInt(strArr[i].trim());
+            }
+        }
+        
+        return intArr;
     }
 }

@@ -289,7 +289,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             double resFactorCC = PlugInAlgorithmStrokeSegmentationPWI.getResolutionFactorCC(adcImage);
             
             if (listenerParent != null) {
-                listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), resFactorCC);
+                listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), segAlgo.getPerfusionObjectSizeTable(), resFactorCC);
             }
 
             if (segAlgo.isCompleted()) {
@@ -1280,7 +1280,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     }
     
     public static final boolean isRegisteredVol(final String seriesDesc, final String protocolName) {
-        return (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"));
+        return ((seriesDesc != null && seriesDesc.toLowerCase().contains("reg")) || (protocolName != null && protocolName.toLowerCase().contains("reg")));
     }
     
     public static final boolean isADC(final String imgType) {
