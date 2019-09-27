@@ -261,19 +261,6 @@ public class AlgorithmCropTilted extends AlgorithmBase {
         double zaxisdircosx;
         double zaxisdircosy;
         double zaxisdircosz;
-        double del;
-        int newx;
-        int newy;
-        int newz;
-        double finalx1;
-        double finaly1;
-        double finalz1;
-        double finalx2;
-        double finaly2;
-        double finalz2;
-        double distx;
-        double disty;
-        double distz;
         double I1;
         double I2;
         double I3;
@@ -848,14 +835,14 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 depth = Math.sqrt((6.0/volume)*(Ixp - Izp + Iyp))/zres;
                 System.out.println("depth = " + depth);
                 
-                /*del = 0.1* Math.min(oXres,Math.min(oYres,oZres));
+                /*double del = 0.1* Math.min(oXres,Math.min(oYres,oZres));
                 // Find maximum width point
-                newx = (int)Math.round(xcenter/xres);
-                newy = (int)Math.round(ycenter/yres);
-                newz = (int)Math.round(zcenter/zres);
-                finalx1 = xcenter;
-                finaly1 = ycenter;
-                finalz1 = zcenter;
+                int newx = (int)Math.round(xcenter/xres);
+                int newy = (int)Math.round(ycenter/yres);
+                int newz = (int)Math.round(zcenter/zres);
+                double finalx1 = xcenter;
+                double finaly1 = ycenter;
+                double finalz1 = zcenter;
                 index = newx + newy * oXdim + newz * length;
                 i = 1;
                 while (mask.get(index)) {
@@ -872,9 +859,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                 newx = (int)Math.round(xcenter/xres);
                 newy = (int)Math.round(ycenter/yres);
                 newz = (int)Math.round(zcenter/zres);
-                finalx2 = xcenter;
-                finaly2 = ycenter;
-                finalz2 = zcenter;
+                double finalx2 = xcenter;
+                double finaly2 = ycenter;
+                double finalz2 = zcenter;
                 index = newx + newy * oXdim + newz * length;
                 i = 1;
                 while (mask.get(index)) {
@@ -887,9 +874,9 @@ public class AlgorithmCropTilted extends AlgorithmBase {
                     index = newx + newy * oXdim + newz * length;
                     i++;
                 }
-                distx = finalx2 - finalx1;
-                disty = finaly2 - finaly1;
-                distz = finalz2 - finalz1;
+                double distx = finalx2 - finalx1;
+                double disty = finaly2 - finaly1;
+                double distz = finalz2 - finalz1;
                 width = Math.sqrt(distx*distx + disty*disty + distz*distz)/xres;
                 System.out.println("x1 = " + (finalx1/xres) + " x2 = " + (finalx2/xres));
                 System.out.println("width = " + width);
