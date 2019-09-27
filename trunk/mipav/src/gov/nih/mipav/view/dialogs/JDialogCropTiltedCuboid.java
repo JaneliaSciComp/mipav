@@ -329,16 +329,30 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-    	
+    	int i;
+        int nVOIs;
+        ViewVOIVector VOIs = image.getVOIs();
+        nVOIs = VOIs.size();
     	if (verticesButton.isSelected()) {
+    		
     		method = VERTICES_METHOD;
     		
     		if ((image.getVOIs() == null) || (image.getVOIs().size() == 0)) {
                 MipavUtil.displayError("8 points must be entered");
                 return false;
             }
-            VOIBaseVector curves = image.getVOIs().VOIAt(0).getCurves();
+            
+    		
+    		for (i = 0; i < nVOIs; i++) {
+    			
+	            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+	            	break;
+	            }    
+	        } // for (i = 0; i < nVOIs; i++)
+    		
+    		VOIBaseVector curves = image.getVOIs().VOIAt(i).getCurves();
             int nPts = curves.size();
+
 
             if (nPts < 8) {
                 MipavUtil.displayError("Number of points = " + nPts + " less than required 8");
@@ -346,7 +360,7 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
                 return false;
             }
 
-            Vector3f[] pts = image.getVOIs().VOIAt(0).exportAllPoints();
+            Vector3f[] pts = image.getVOIs().VOIAt(i).exportAllPoints();
             x1 = pts[0].X;
             y1 = pts[0].Y;
             z1 = pts[0].Z;
@@ -377,10 +391,6 @@ public class JDialogCropTiltedCuboid extends JDialogScriptableBase implements Al
     		
     	    method = MASK_METHOD;
         
-	        int i;
-	        int nVOIs;
-	        ViewVOIVector VOIs = image.getVOIs();
-	        nVOIs = VOIs.size();
 	        int nBoundingVOIs = 0;
 	        int nActiveBoundingVOIs = 0;
 	        
