@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 /**
- * This is a port of code wirtten by Gerolamo Cardano under the Code Project Open Licence.
+ * This is a port of code written by Gerolamo Cardano under the Code Project Open Licence.
  * A copy of the license if found at https://www.codeproject.com/info/cpol10.aspx.
  * The equation is a1*x**3 + b*x**2 + c*x + d = 0
  * If result = 0, a1 = 0
