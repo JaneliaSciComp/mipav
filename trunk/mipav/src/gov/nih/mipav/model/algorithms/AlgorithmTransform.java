@@ -5875,7 +5875,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                 value = imgBuffer[Y0pos + X0pos];
                             } // end if Y in bounds
                         } // end if X in bounds
-
+                        
                         tmpMask.set(i, j, value);
                     } // end for j
                 } // end for i
@@ -6267,8 +6267,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (index = 0; index < voiVector.size(); index++) {
             final VOI presentVOI = voiVector.elementAt(index);
+            curves = presentVOI.getCurves();
             if (presentVOI.getCurveType() == VOI.CONTOUR) {
-                curves = presentVOI.getCurves();
                 index2Size = curves.size();
             } else {
                 index2Size = 1;
@@ -6367,7 +6367,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 // ******* Make algorithm for VOI extraction.
-                if ( (curves != null) && (index2 == curves.size() - 1)) {
+                if ( (curves != null) && (index2 == index2Size - 1)) {
                     indexC++;
                     tmpMask.calcMinMax();
 
@@ -6378,6 +6378,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     numVOIAdded = VOIExtAlgo.getNumVOIAdded();
                     VOIExtAlgo.finalize();
                     VOIExtAlgo = null;
+                    System.out.println("numVOIAdded = " + numVOIAdded);
                     if (numVOIAdded > 0) {
                     	while (tmpMask.getVOIs().size() > 0) {
                             VOI voiremoved = tmpMask.getVOIs().remove(0);
@@ -12607,6 +12608,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                         Y = (j2 + (imm * T10)) * invYRes;
                         if ( (Y > -0.5) && (Y < iYdim)) {
                             Z = (j3 + (imm * T20)) * invZRes;
+                            
                             if ( (Z > -0.5) && (Z < iZdim)) {
 
                                 if (X <= 0) {
