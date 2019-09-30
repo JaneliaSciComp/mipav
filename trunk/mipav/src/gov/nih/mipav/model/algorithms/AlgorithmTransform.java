@@ -6378,7 +6378,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     numVOIAdded = VOIExtAlgo.getNumVOIAdded();
                     VOIExtAlgo.finalize();
                     VOIExtAlgo = null;
-                    System.out.println("numVOIAdded = " + numVOIAdded);
                     if (numVOIAdded > 0) {
                     	while (tmpMask.getVOIs().size() > 0) {
                             VOI voiremoved = tmpMask.getVOIs().remove(0);
