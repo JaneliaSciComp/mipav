@@ -64,7 +64,7 @@ public class Poly {
 		// x**5 - 15x**4 + 85x**3 - 225x**2 + 274x - 120 has roots 1, 2, 3, 4, 5
 		type = SolveP5(x, -15.0, 85.0, -225.0, 274.0, -120.0);
 		System.out.println("Solved quintic answer type = " + type + " x[0] = " + x[0] + " x[1] = " + x[1] + " x[2] = " + x[2] + " x[3] = " + x[3] + " x[4] = " + x[4]);
-		System.out.println("True quartic answer type = 5 x[0] = 1.0  x[1] = 2.0 x[2] = 3.0 x[3] = 4.0 x[5] = 5.0");
+		System.out.println("True quintic answer type = 5 x[0] = 1.0  x[1] = 2.0 x[2] = 3.0 x[3] = 4.0 x[5] = 5.0");
 	}
 	
 	//=============================================================================
