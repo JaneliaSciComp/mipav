@@ -103,7 +103,7 @@ public class Poly {
 
 	// x - array of size 2
 	// return 2: 2 real roots x[0], x[1]
-	// return 0: pair of complex roots: x[0]켲*x[1]
+	// return 0: pair of complex roots: x[0] +/- i*x[1]
 	public int   SolveP2(double x[], double a, double b) {			// solve equation x^2 + a*x + b = 0
 		double D = 0.25*a*a - b;
 		if (D >= 0) {
@@ -120,7 +120,7 @@ public class Poly {
 	// x - array of size 3
 	// In case 3 real roots: => x[0], x[1], x[2], return 3
 //	         2 real roots: x[0], x[1],          return 2
-//	         1 real root : x[0], x[1] � i*x[2], return 1
+//	         1 real root : x[0], x[1] +/- i*x[2], return 1
 	public int SolveP3(double x[],double a,double b,double c) {	// solve cubic equation x^3 + a*x^2 + b*x + c = 0
 		double a2 = a*a;
 	    double q  = (a2 - 3*b)/9; 
@@ -285,9 +285,9 @@ public class Poly {
 			if( c>0 )	// sign = -1
 			{
 				x[0] = -sz3/2;					
-				x[1] = ( sz1 -sz2)/2;		// x[0]켲*x[1]
+				x[1] = ( sz1 -sz2)/2;		// x[0] +/- i*x[1]
 				x[2] =  sz3/2;
-				x[3] = (-sz1 -sz2)/2;		// x[2]켲*x[3]
+				x[3] = (-sz1 -sz2)/2;		// x[2] +/- i*x[3]
 				return 0;
 			}
 			// now: c<0 , sign = +1
@@ -299,7 +299,7 @@ public class Poly {
 		} // if( res3>1 )	// 3 real roots, 
 		// now resoventa have 1 real and pair of compex roots
 		// x[0] - real root, and x[0]>0, 
-		// x[1]켲*x[2] - complex roots, 
+		// x[1] +/- i*x[2] - complex roots, 
 		// x[0] must be >=0. But one times x[0]=~ 1e-17, so:
 		if (x[0] < 0) x[0] = 0;
 		double sz1 = Math.sqrt(x[0]);
@@ -332,8 +332,8 @@ public class Poly {
 	//-----------------------------------------------------------------------------
 	// x - array of size 4
 	// return 4: 4 real roots x[0], x[1], x[2], x[3], possible multiple roots
-	// return 2: 2 real roots x[0], x[1] and complex x[2]켲*x[3], 
-	// return 0: two pair of complex roots: x[0]켲*x[1],  x[2]켲*x[3], 
+	// return 2: 2 real roots x[0], x[1] and complex x[2] +/- i*x[3], 
+	// return 0: two pair of complex roots: x[0] +/- i*x[1],  x[2] +/- i*x[3], 
 	public int   SolveP4(double x[],double a,double b,double c,double d) {	// solve equation x^4 + a*x^3 + b*x^2 + c*x + d by Dekart-Euler method
 		// move to a=0:
 		double d1 = d + 0.25*a*( 0.25*b*a - 3./64*a*a*a - c);
