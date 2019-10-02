@@ -231,6 +231,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private PrintStream logOnlyErr = null;
     private File errorFile = null;
     private PrintStream errorFileOut = null;
+    
+    private boolean bidsPackageFlag = false;
 
     private static final int RESOLVE_CONFLICT_ASK = 0;
 
@@ -833,8 +835,53 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     @Override
     public void windowOpened(final WindowEvent e) {}
+    
+    private File findBIDSRootDir(final File selectedDir) {
+        File rootDir = null;
+        
+        File[] dirFiles = selectedDir.listFiles();
+        for (int i = 0; rootDir == null && i < dirFiles.length; i++) {
+            File file = dirFiles[i];
+            if (!isBIDSFileToIgnore(file)) {
+                if (file.isDirectory()) {
+                    rootDir = findBIDSRootDir(file);
+                    break;
+                } else {
+                    if (isBIDSKeyFile(file)) {
+                        rootDir = selectedDir;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return rootDir;
+    }
+    
+    private final boolean isBIDSFileToIgnore(final File file) {
+        if (file.getName().equalsIgnoreCase(".DS_Store") || file.getName().equalsIgnoreCase("__MACOSX")) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private final boolean isBIDSKeyFile(final File file) {
+        if (file.getName().equalsIgnoreCase("participants.tsv") || file.getName().equalsIgnoreCase("dataset_description.json") || file.getName().substring(0, 3).equalsIgnoreCase("SUB")) {
+            return true;
+        }
+        
+        return false;
+    }
 
-    private boolean processBIDSDirectories(final File bidsDir) {
+    private boolean processBIDSDirectories(final File selectedDir) {
+        File bidsDir = findBIDSRootDir(selectedDir);
+        
+        if (bidsDir == null) {
+            MipavUtil.displayError("No BIDS root directory found in selected path: " + selectedDir);
+            return false;
+        }
+        
         BIDSPackage bidsPackage = new BIDSPackage(bidsDir);
         
         final ViewJProgressBar progressBar = new ViewJProgressBar("Reading BIDS directories", "Reading BIDS directories...", 0, 100, false);
@@ -1077,6 +1124,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         Vector<Vector<FileDicomTag>> problemTagList = new Vector<Vector<FileDicomTag>>();
         Vector<String> problemFileDirList = new Vector<String>();
         Vector<String> problemFileNameList = new Vector<String>();
+        
+        bidsPackageFlag = true;
 
         int curScanNum = 0;
         for (BIDSSubject subj : bidsPackage.getSubjectList()) {
@@ -1896,7 +1945,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
         readGenericFieldsFromJson(recordRepeat, scan.getScanJson());
         
-        readMRFieldsFromJson(recordRepeat, scan.getScanJson());
+        readMRFieldsFromJson(recordRepeat, scan.getScanJson(), scan.getScanImgFile().getName());
         
         switch (scan.getParent().getScanType()) {
             case DWI:
@@ -1949,7 +1998,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         addCSVEntry(jsonData, "SpacingBetweenSlices", recordRepeat, groupName + "ImgGapBetwnSlicesMeasr");
     }
     
-    private void readMRFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
+    private void readMRFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData, String imgFileName) {
 //            "MagneticFieldStrength": 3,
 //            "SeriesDescription": "SAG_3D_T2_FLAIR",
 //            "ProtocolName": "SAG_3D_T2_FLAIR",
@@ -1974,10 +2023,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //        "EffectiveEchoSpacing": 0.00047001,
         
         String groupName = "Magnetic Resonance Information.";
+
+        // TODO BIDS now has PulseSequenceType, but it probably requires mapping
         
-        addCSVEntry(jsonData, "ImgPulseSeqTyp", recordRepeat, groupName + "ImgPulseSeqTyp");
+        String pulseSeq = getJsonString(jsonData, "ImgPulseSeqTyp");
+        if (!isValueSet(pulseSeq)) {
+            // guess value based on the image file name
+            pulseSeq = guessPulseSeqFromFileName(imgFileName);
+        }
         
-        addCSVEntry(jsonData, "ImgPulseSeqTyp", recordRepeat, groupName + "ImgPulseSeqTyp");
+        // set either through json value or file name guessing
+        if (isValueSet(pulseSeq)) {
+            csvFieldNames.add(groupName + "ImgPulseSeqTyp");
+            recordRepeat.add(pulseSeq);
+        }
+        
         csvFieldNames.add(groupName + "ImgScannerStrgthVal");
         recordRepeat.add(convertMagFieldStrengthToBRICS(getJsonString(jsonData, "MagneticFieldStrength")));
         
@@ -2179,7 +2239,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                        1.14,
 //                        2.415,
 //                        1.2075  ],
-        
+
         String groupName = "fMRI Information.";
         
         String taskType = mapTaskNameBIDS(getJsonString(jsonData, "TaskName"));
@@ -5778,6 +5838,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                         
                         if (srcImage != null) {
+                            setFormImpliedRecordDataElements(fsData, srcImage, repeatValues);
+                            
                             // basic check that image data is de-identified
                             problemTags = deidentificationCheckDicomTags(srcImage.getFileInfo());
                             problemTagsFileDir = srcImage.getFileInfo(0).getFileDirectory();
@@ -7011,6 +7073,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     
                     // when running from the command line, note the conflict but use the CSV
                     if (cmdLineCsvFlag) {
+                        System.err.println(message);
+                        return RESOLVE_CONFLICT_CSV;
+                    }
+                    
+                    if (bidsPackageFlag) {
                         System.err.println(message);
                         return RESOLVE_CONFLICT_CSV;
                     }
@@ -9186,5 +9253,56 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
         
         return true;
+    }
+    
+    private void setFormImpliedRecordDataElements(final FormStructureData fsData, final ModelImage img, final ArrayList<String> repeatValues) {
+        if (isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
+            // TODO
+            csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
+            repeatValues.add("fMRI");
+        } else if (isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
+            // TODO
+            csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
+            repeatValues.add("DTI");
+
+            if (img.getExtents().length > 3) {
+                csvFieldNames.add("Image pixel information and dimensions" + "." + "ImgDim4ExtentTyp");
+                repeatValues.add("DTI directions");
+            }
+        }
+    }
+    
+    
+    private String guessPulseSeqFromFileName(final String imgFileName) {
+        // TODO pulse seq from BIDS spec not mapped yet:
+//        T1 Rho map  T1rho   Quantitative T1rho brain imaging
+//        T1 map  T1map   quantitative T1 map
+//        T2 map  T2map   quantitative T2 map
+//        Proton density map  PDmap   
+//        Angiography angio   
+        
+        String pulseSeq = null;
+        
+        if (imgFileName.contains("_T1w.")) {
+            pulseSeq = "T1";
+        } else if (imgFileName.contains("_inplaneT1.")) {
+            pulseSeq = "T2";
+        } else if (imgFileName.contains("_T2w.")) {
+            pulseSeq = "T2";
+        } else if (imgFileName.contains("_inplaneT2.")) {
+            pulseSeq = "T2";
+        } else if (imgFileName.contains("_T2star.")) {
+            pulseSeq = "GRE";
+        } else if (imgFileName.contains("_FLAIR.")) {
+            pulseSeq = "FLAIR";
+        } else if (imgFileName.contains("_FLASH.")) {
+            pulseSeq = "FLASH";
+        } else if (imgFileName.contains("_PD.")) {
+            pulseSeq = "PD SE";
+        } else if (imgFileName.contains("_PDT2.")) {
+            pulseSeq = "PD/T2W FSE";
+        }
+        
+        return pulseSeq;
     }
 }
