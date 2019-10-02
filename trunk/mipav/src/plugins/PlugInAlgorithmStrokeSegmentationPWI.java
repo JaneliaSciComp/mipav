@@ -243,6 +243,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     }
                 }
                 
+                // open - try to disconnect any artifacts from the brain mask
+                open(pwiBrainMaskImg);
+                
+                // close
+                //close(skullMaskImg, 2, 2f, false);
                 
                 short[] maskBuffer = new short[volLength];
                 short[] processBuffer = new short[volLength];
@@ -255,12 +260,12 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     }
                     
                     maskBuffer = null;
-                    displayError("Error on brain mask export: " + skullMaskImg.getImageName());
+                    displayError("Error on brain mask export: " + pwiBrainMaskImg.getImageName());
                     setCompleted(false);
                     return;
                 }
                 
-                MaskObject[] objects = findObjects(skullMaskImg, maskBuffer, processBuffer, 100, 10000000);
+                MaskObject[] objects = findObjects(pwiBrainMaskImg, maskBuffer, processBuffer, 100, 10000000);
                 
                 if (objects.length > 0) {
                     MaskObject largest = objects[objects.length - 1];

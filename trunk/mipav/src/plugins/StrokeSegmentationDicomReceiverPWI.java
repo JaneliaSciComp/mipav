@@ -1517,7 +1517,7 @@ public class StrokeSegmentationDicomReceiverPWI {
     				    if (curAdcSlices >= minAdcDwiSlices && curAdcSlices == curDwiSlices) {
                             // run with PWI/ADC/DWI
                             done = true;
-                            log("Received " + curPwiSlices + " PWI files, meeting minimum threshold (" + minExpectedSlicesPWI + ")");
+                            log("Received " + curPwiSlices + " PWI files, meeting threshold (" + PlugInDialogStrokeSegmentationListenerPWI.intArrayToStr(minExpectedSlicesPWI) + ")");
                             log("Running PWI-incorporating segmentation on datasets in " + receivedFilesPath);
                             new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, receivedFilesPath, false);
                         }
@@ -1549,7 +1549,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                     if (isAllowedPwiSliceNum) {
                         if (curAdcSlices >= minAdcDwiSlices && curAdcSlices == curDwiSlices) {
                             // run with PWI/ADC/DWI
-                            log("Received " + curPwiSlices + " PWI files, meeting minimum threshold (" + minExpectedSlicesPWI + ")");
+                            log("Received " + curPwiSlices + " PWI files, meeting threshold (" + PlugInDialogStrokeSegmentationListenerPWI.intArrayToStr(minExpectedSlicesPWI) + ")");
                             log("Running PWI-incorporating segmentation on datasets in " + receivedFilesPath);
                             new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, receivedFilesPath, false);
                         } else {
@@ -1558,7 +1558,7 @@ public class StrokeSegmentationDicomReceiverPWI {
 					} else {
 						if (curAdcSlices >= minAdcDwiSlices && curAdcSlices == curDwiSlices) {
 							// run with just ADC/DWI
-							log("Received " + curPwiSlices + " PWI files, NOT meeting minimum threshold (" + minExpectedSlicesPWI + ")");
+							log("Received " + curPwiSlices + " PWI files, NOT meeting threshold (" + PlugInDialogStrokeSegmentationListenerPWI.intArrayToStr(minExpectedSlicesPWI) + ")");
                     		log("Running non-PWI segmentation on datasets in " + receivedFilesPath);
                     		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, receivedFilesPath, true);
 						} else {

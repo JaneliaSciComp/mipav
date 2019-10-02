@@ -480,11 +480,11 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
         }
     }
     
-    private static final String intArrayToStr(int[] intArr) {
+    public static final String intArrayToStr(int[] intArr) {
         return IntStream.of(intArr).mapToObj(Integer::toString).collect(Collectors.joining(", "));
     }
     
-    private static final int[] strToIntArray(String intListString) {
+    public static final int[] strToIntArray(String intListString) {
         int[] intArr = null;
         
         String[] strArr = intListString.split(",\\w*");
