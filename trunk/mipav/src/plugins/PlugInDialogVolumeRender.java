@@ -1763,11 +1763,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
 						z    = (parsed.length > 3) ? (parsed[3].length() > 0) ? Float.valueOf( parsed[3] ) : 0 : 0; 
 						// color:
-						red    = (parsed.length > 4) ? (parsed[4].length() > 0) ? Integer.valueOf( parsed[4] ) : red : red; 
-						green    = (parsed.length > 5) ? (parsed[5].length() > 0) ? Integer.valueOf( parsed[5] ) : green : green; 
-						blue    = (parsed.length > 6) ? (parsed[6].length() > 0) ? Integer.valueOf( parsed[6] ) : blue : blue; 						
+						red    = (int) ((parsed.length > 4) ? (parsed[4].length() > 0) ? Float.valueOf( parsed[4] ) : red : red); 
+						green    = (int) ((parsed.length > 5) ? (parsed[5].length() > 0) ? Float.valueOf( parsed[5] ) : green : green); 
+						blue    = (int) ((parsed.length > 6) ? (parsed[6].length() > 0) ? Float.valueOf( parsed[6] ) : blue : blue); 						
 						// show label: 
-						label    = (parsed.length > 7) ? (parsed[7].length() > 0) ? Integer.valueOf( parsed[7] ) : label : label; 	
+						label    = (int) ((parsed.length > 7) ? (parsed[7].length() > 0) ? Float.valueOf( parsed[7] ) : label : label); 	
 
 						if ( time != -1 )
 						{
