@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -7,6 +8,9 @@ import java.util.*;
 import java.time.format.DateTimeFormatter;  
 import java.time.LocalDateTime; 
 import javax.vecmath.*;
+
+import Jama.Matrix;
+import Jama.SingularValueDecomposition;
 
 /**
 libdt - OpenCV library for Dynamic Textures - version 1.0
@@ -125,6 +129,121 @@ int main(int argc, char** argv)
 	
 	
 	cout<<"Experiment Finish: "<<getTime()<<endl;
+	
+	/*!
+ * \brief
+ * reduce current dytex mixture using HEM.
+ * 
+ * \param hopt
+ * HEM learning options
+ * 
+ * \returns
+ * reduced dynamic texture mixture.
+ * 
+ * Learns a new dytex mixture using several runs of HEM with component splitting procedure
+ * 
+ * \remarks
+ * After loading or learning a DTM, this is the interface function to be called to reduce a mixture
+ * 
+ * \see
+ * learnWithSplitting | HEMOptions
+ */
+	/*
+DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
+{
+	//reduced mixture
+	DytexMix hembest(this->opt);  	
+
+	//OPTIONS
+	double pert=hopt.splitOpt.pert;
+	int Ks=hopt.K;
+	//initialize splitting sequence
+	if(hopt.splitOpt.sched.empty())
+	{
+		for(int i=1;i<=hopt.K;i++)
+			hopt.splitOpt.sched.push_back(i);
+	}
+	
+	//%%% preprocess %%%
+	cout<<"preprocessing DT..."<<endl;	
+	for(int i=0;i<dt.size();i++)
+	{
+		SVD svd(dt[i].C);
+		Mat Cu,Cs,Cv;
+		svd.u.copyTo(Cu);
+		svd.vt.copyTo(Cv);	
+		Cv=Cv.t();
+		Cs=Mat::zeros(svd.w.rows,svd.w.rows,svd.w.type());				
+		Mat tmpM=Cs.diag();
+		svd.w.copyTo(tmpM);
+		tmpM=Cv*Cs;		
+		tmpM.copyTo(dt[i].Cvs);
+		dt[i].isCvs=true;
+	}
+
+	//check for valid splitting sched
+	if(hopt.splitOpt.sched[0]!=1)
+	{
+		CV_Error(-1, "schedule must start with 1!");
+	}
+	std::vector<int> tmp;
+	vector<int>::iterator it;
+	for(int i=1;i<hopt.splitOpt.sched.size();i++)
+		tmp.push_back(hopt.splitOpt.sched[i]/hopt.splitOpt.sched[i-1]);
+
+	if(find_if (tmp.begin(), tmp.end(), IsGT2)!=tmp.end())
+		CV_Error(-1, "cannot grow K more than 2 times previous");
+
+	cout<<"Growing schedule: ";
+	copy(hopt.splitOpt.sched.begin(), hopt.splitOpt.sched.end(),ostream_iterator<int>(cout," "));
+	cout<<endl;
+	cout<<"Ks: "<<Ks<<endl;
+
+	//HEM splitting loop
+	int Kiter=1;
+	while(hembest.dt.size()<hopt.K)
+	{
+		if(Kiter==1)
+		{
+			cout<<"*** EM: K="<<hembest.dt.size()+1<<" ***********************"<<endl;
+		}
+		else
+		{
+			std::vector<int> mysplits;
+			//split here
+			while(hembest.dt.size()<hopt.splitOpt.sched[Kiter-1])
+			{
+				DytexSplitParams splitopt;
+				splitopt.crit=hopt.splitOpt.crit;				
+				splitopt.ignore=mysplits;
+				splitopt.target=-1;
+				splitopt.pert=hopt.splitOpt.pert;
+				splitopt.mode=hopt.splitOpt.mode;
+				splitopt.vars=hopt.splitOpt.vars;
+				int c1,c2;
+				hembest.dytex_mix_split(splitopt,c2,c1);
+				mysplits.push_back(c1);
+				mysplits.push_back(c2);
+			}
+			//remove pre-cache (since it is invalid after splitting)
+			for(int ii=0;ii<hembest.dt.size();ii++)
+			{
+				hembest.dt[ii].isCvs=false;
+			}
+			cout<<"*** EM: K="<<hembest.dt.size()<<"******************"<<endl;
+		}
+		std::vector<int> classes;
+		//runs HEM algorithm for current mixture
+		runHEM(hembest,hopt,classes);
+		Kiter++;
+	}
+
+	//RUN HEM again on once on final solution			
+	hopt.termvalue=hopt.termvalBest;	
+	hopt.maxiter=50;  //Can be adjusted to run more iterations
+	runHEM(hembest,hopt,hembest.classes);
+	return hembest;
+}
 
 
 }
@@ -170,7 +289,325 @@ int main(int argc, char** argv)
     	DytexRegOptions ropt = new DytexRegOptions (cov_reg_type.COV_REG_MIN,0.01,cov_reg_type.COV_REG_MIN,0.01,cov_reg_type.COV_REG_MIN,0.01,
     			cov_reg_type.COV_REG_ADD,0.999);
     	HEMOptions hopt = new HEMOptions(4,ropt,0.0001,Ymean_type.NONZERO_YMEAN,Verbose_mode.COMPACT);
+    	
+    	//split schedule of 1,2,4
+    	for(int i=1;i<=4;i=i*2)
+    	hopt.splitOpt.sched.add(i);
+    	
+    	//run The HEM 
+    	DytexMix emout=reduceWithSplitting(dtm, hopt);
     }
+    
+    private DytexMix reduceWithSplitting(DytexMix dtm, HEMOptions hopt)
+    {
+    	int j,k;
+    	//reduced mixture
+    	DytexMix hembest = new DytexMix(dtm.opt);
+    	//OPTIONS
+    	double pert=hopt.splitOpt.pert;
+    	int Ks=hopt.K;
+    	//initialize splitting sequence
+    	if(hopt.splitOpt.sched.isEmpty())
+    	{
+    		for(int i=1;i<=hopt.K;i++)
+    			hopt.splitOpt.sched.add(i);
+    	}
+    	
+    	//%%% preprocess %%%
+    	System.out.println("preprocessing DT...");	
+    	for(int i=0;i<dtm.dt.size();i++)
+    	{
+    		if ((dtm.dt.get(i).C.dims == 2) && (dtm.dt.get(i).C.type == CV_64F)) {
+	    		Matrix cMat = new Matrix(dtm.dt.get(i).C.double2D);
+	    		SingularValueDecomposition svd = new SingularValueDecomposition(cMat);
+	    		Matrix matV = svd.getV();
+	    		double singularValues[] = svd.getSingularValues();
+	    		double arrSingular[][] = new double[singularValues.length][singularValues.length];
+	    		for (j = 0; j < singularValues.length; j++) {
+	    			arrSingular[j][j] = singularValues[j];
+	    		}
+	    		Matrix matS = new Matrix(arrSingular);
+	    		Matrix matVS = matV.times(matS);
+	    		double arrVS[][] = matVS.getArray();
+	    		dtm.dt.get(i).Cvs.create(arrVS.length, arrVS[0].length, CV_64F);
+	    		for (j = 0; j < arrVS.length; j++) {
+	    			for (k = 0; k < arrVS[0].length; k++) {
+	    				dtm.dt.get(i).Cvs.double2D[j][k] = arrVS[j][k];
+	    			}
+	    		}
+	    		dtm.dt.get(i).isCvs=true;
+    		} // if ((dtm.dt.get(i).C.dims == 2) && (dtm.dt.get(i).C.type == CV_64F))
+    		else {
+    			MipavUtil.displayError("For SVD dims = " + dtm.dt.get(i).C.dims + " type = " + dtm.dt.get(i).C.type);
+    			System.exit(-1);
+    		}
+    	} // for(int i=0;i<dtm.dt.size();i++)
+    	
+    	//check for valid splitting sched
+    	if(hopt.splitOpt.sched.get(0)!=1)
+    	{
+    		MipavUtil.displayError("schedule must start with 1!");
+    		System.exit(-1);
+    	}
+    	Vector<Integer> tmp = new Vector<Integer>();
+    	for(int i=1;i<hopt.splitOpt.sched.size();i++)
+    		tmp.add(hopt.splitOpt.sched.get(i)/hopt.splitOpt.sched.get(i-1));
+    	
+    	for (j = 0; j < tmp.size(); j++) {
+    		if (tmp.get(j) > 2) {
+    			MipavUtil.displayError("Cannot grow K more than 2 times previous");
+    			System.exit(-1);
+    		}
+    	}
+
+    	System.out.print("Growing schedule: ");
+    	for (j = 0; j < hopt.splitOpt.sched.size(); j++) {
+    		System.out.print(hopt.splitOpt.sched.get(j) + " ");
+    	}
+    	System.out.print("\n");
+    	System.out.println("Ks: " + Ks);
+    	//HEM splitting loop
+    	int Kiter=1;
+    	while(hembest.dt.size()<hopt.K)
+    	{
+    		if(Kiter==1)
+    		{
+    			System.out.println("*** EM: K= "+(hembest.dt.size()+1) + " ***********************");
+    		}
+    		else
+    		{
+    			Vector<Integer> mysplits = new Vector<Integer>();
+    			//split here
+    			while(hembest.dt.size()<hopt.splitOpt.sched.get(Kiter-1))
+    			{
+    				DytexSplitParams splitopt = new DytexSplitParams();
+    				splitopt.crit=hopt.splitOpt.crit;				
+    				splitopt.ignore=mysplits;
+    				splitopt.target=-1;
+    				splitopt.pert=hopt.splitOpt.pert;
+    				splitopt.mode=hopt.splitOpt.mode;
+    				splitopt.vars=hopt.splitOpt.vars;
+    				int c1[] = new int[1];
+    				int c2[] = new int[1];
+    				//dytex_mix_split(hembest, splitopt,c2,c1);
+    				mysplits.add(c1[0]);
+    				mysplits.add(c2[0]);
+    			}
+    			//remove pre-cache (since it is invalid after splitting)
+    			for(int ii=0;ii<hembest.dt.size();ii++)
+    			{
+    				hembest.dt.get(ii).isCvs=false;
+    			}
+    			System.out.println("*** EM: K= " + hembest.dt.size() + " ******************");
+    		}
+    		Vector<Integer> classes = new Vector<Integer>();
+    		//runs HEM algorithm for current mixture
+    		//runHEM(hembest,hopt,classes);
+    		Kiter++;
+    	}
+
+    	//RUN HEM again on once on final solution			
+    	hopt.termvalue=hopt.termvalBest;	
+    	hopt.maxiter=50;  //Can be adjusted to run more iterations
+    	//runHEM(hembest,hopt,hembest.classes);
+    	return hembest;
+    }
+    
+    /*!
+     * \brief
+     * splits a component in current DT mixture
+     * 
+     * \param splitopt
+     * options for which component to split and how to split
+     * 
+     * \param ctg
+     * the index of the new component.
+     * 
+     * \param csp
+     * the component that was split
+     * 
+     * \see
+     * ppertC
+     */
+    /*private void dytex_mix_split(DytexMix dtm, DytexSplitParams splitopt,int ctg[],int csp[])
+    {
+    	int i;
+    	int K=dtm.alpha.size();
+    	int c1,c2,newK;
+    	if(K==1)
+    	{
+    		c1=1;
+    	}
+    	else
+    	{
+    		Vector<Dytex> olddt=dtm.dt;
+    		Vector<Double> olda1=dtm.alpha;
+    		Vector<Double> tmpal = new Vector<Double>();
+    		System.out.println("*** split criteria ***");
+
+    		Vector<Mat> myQ = new Vector<Mat>(K);
+    		Vector<Double> myQe= new Vector<Double>(K);
+    		Mat F;
+    		boolean flag=true;
+    		//vector<OPT_F_TYPE>::iterator result;
+    		switch(splitopt.crit)
+    		{
+    			//%%% split component with largest Q variance %%%
+    			case DytexSplitParams::SPLITQ:
+    				for(int jjj=0;jjj<K;jjj++)
+    				{
+    					boolean proceed = false;
+    					for (i = 0; i < splitopt.ignore.size() && (!proceed); i++) {
+    						if (splitopt.ignore.get(i) == jjj) {
+    						    proceed = true;	
+    						}
+    					}
+    					if(proceed)
+    					{
+    						myQe.set(jjj,-1.0);
+    					}
+    					else
+    					{
+    						//check empty
+    						if(olddt.get(jjj).isempty)
+    						{
+    							myQe.set(jjj,-1.0);
+    						}
+    						else
+    						{
+    							//normalize Q by forcing C to be orthonormal
+    							Matrix cMat = new Matrix(olddt.get(jjj).C.double2D);
+    							SingularValueDecomposition svd = new SingularValueDecomposition(cMat);
+    				    		Matrix matVt = svd.getV().transpose();
+    				    		double singularValues[] = svd.getSingularValues();
+    							Mat test(svd.w.rows,svd.w.rows,OPT_MAT_TYPE);
+    							test=Scalar(0);
+    							Mat tmpM;
+    							tmpM=test.diag();
+    							svd.w.copyTo(tmpM);
+    							F=test*svd.vt;
+    							myQ[jjj]=F*olddt[jjj].Q.mtx*F.t();
+    							Mat eigM;
+    							eigen(myQ[jjj],eigM);
+    							double minVal,maxVal;
+    							minMaxLoc(eigM,&minVal,&maxVal);
+    							myQe[jjj]=maxVal;								
+    						}
+    					}
+    				}
+
+    				for(int i=0;i<myQe.size();i++)
+    				{
+    					if(myQe[i]!=-1)
+    					{
+    						flag=false;
+    						break;
+    					}
+    				}
+    				if(flag)
+    				{
+    					c1=0;
+    					cout<<"nothing to split"<<endl;
+    				}
+    				else
+    				{
+    					vector<OPT_F_TYPE>::iterator result = max_element(myQe.begin(),myQe.end()); 
+    					c1=distance(myQe.begin(), result)+1;
+    				}
+    			break;
+
+    			//split component with largest prior
+    			case DytexSplitParams::SPLITP:
+    				tmpal=olda1;
+    				for(int i=0;i<splitopt.ignore.size();i++)
+    				{
+    					tmpal[splitopt.ignore[i]]=-1;
+    				}
+    				result = max_element(tmpal.begin(),tmpal.end()); 
+    				c1=distance(tmpal.begin(), result)+1;
+
+    			break;
+
+    			default:
+    				CV_Error(-1,"TO DO");
+
+    		}
+    	}
+
+    	// initialize with previous	
+    	//adding a new one
+    	if(splitopt.target==-1)
+    	{
+    		c2=K+1;
+    		newK=K+1;			
+    		dt.push_back(Dytex()); //add one mroe blank DT in the list
+    		alpha.push_back(0.0);
+    		
+    	}
+    	//updating existing
+    	else
+    	{
+    		c2=splitopt.target;
+    		newK=K;
+    	}
+
+    	cout<<"Spliting Cluster "<<c1<<" : new cluster "<<c2<<endl;
+    	
+    	//check if there is anything to split
+    	if (c1 == 0)
+    	{
+    		dt[c2-1].isempty=true;		
+    		alpha[c2-1]=0;
+    	}
+    	else
+    	{
+    		//duplicate cluster %%% all parameters c
+    		dt[c1-1].A.copyTo(dt[c2-1].A);
+    		dt[c1-1].C.copyTo(dt[c2-1].C);
+    		dt[c1-1].Ymean.copyTo(dt[c2-1].Ymean);	
+    		dt[c1-1].mu0.copyTo(dt[c2-1].mu0);
+    		dt[c1-1].Q.mtx.copyTo(dt[c2-1].Q.mtx);			
+    		dt[c2-1].Q.covopt=dt[c1-1].Q.covopt;
+    		dt[c2-1].Q.n=dt[c1-1].Q.n;
+    		dt[c2-1].Q.regopt=dt[c1-1].Q.regopt;
+    		dt[c2-1].Q.regval=dt[c1-1].Q.regval;
+    		dt[c1-1].R.mtx.copyTo(dt[c2-1].R.mtx);			
+    		dt[c2-1].R.covopt=dt[c1-1].R.covopt;
+    		dt[c2-1].R.n=dt[c1-1].R.n;
+    		dt[c2-1].R.regopt=dt[c1-1].R.regopt;
+    		dt[c2-1].R.regval=dt[c1-1].R.regval;
+    		dt[c1-1].S0.mtx.copyTo(dt[c2-1].S0.mtx);			
+    		dt[c2-1].S0.covopt=dt[c1-1].S0.covopt;
+    		dt[c2-1].S0.n=dt[c1-1].S0.n;
+    		dt[c2-1].S0.regopt=dt[c1-1].S0.regopt;
+    		dt[c2-1].S0.regval=dt[c1-1].S0.regval;					
+    		dt[c2-1].isempty=dt[c1-1].isempty;
+    		dt[c2-1].vrows=dt[c1-1].vrows;
+    		dt[c2-1].vcols=dt[c1-1].vcols;
+    		dt[c2-1].dtopt=dt[c1-1].dtopt;
+    		dt[c1-1].Cvs.copyTo(dt[c2-1].Cvs);
+    		dt[c2-1].isCvs=dt[c1-1].isCvs;
+    		double tmp     = alpha[c1-1]/((double)2.0);
+    		alpha[c1-1] = tmp;
+    		alpha[c2-1] = tmp;
+    		
+    		//perturb new cluster
+    		dytex_perturb(dt[c2-1], splitopt.pert, splitopt.mode, splitopt.vars);
+
+    		// also perturb old cluster (if principal axis split on C, A, x)
+    		if(splitopt.mode==DytexSplitParams::MODEP)
+    		{
+    			if( splitopt.vars==DytexSplitParams::VARC)
+    			{
+    				dytex_perturb(dt[c1-1], -splitopt.pert, splitopt.mode, splitopt.vars);
+    			}
+    		}
+
+    	}
+    	ctg=c2-1;
+    	csp=c1-1;
+    }*/
+
     
     /*!
 	 * \brief
@@ -531,6 +968,9 @@ int main(int argc, char** argv)
     	  // set to 0,0 if unknown
     	public int vrows,  /**< for synthesis, number of rows in a frame (0 if unknown).  */
     	      vcols;  /**< for synthesis, number of columns in a frame (0 if unknown). */
+    	public boolean isempty; /**< indicates am empty Dt */
+    	public Mat Cvs = new Mat();      /**< Cvs precomputed value */
+    	public boolean isCvs;   /**< Cvs computed */
     	public Dytex() {
     		
     	}
@@ -571,6 +1011,7 @@ int main(int argc, char** argv)
     	    this.rows = rows;
     	    this.cols = cols;
     	    this.type = type;
+    	    dims = 2;
     	    if (type == CV_8U) {
     	        byte2D = new byte[rows][cols];	
     	    }
@@ -655,6 +1096,10 @@ int main(int argc, char** argv)
     	public Vector<Integer> classes = new Vector<Integer>();
     	public DytexMix() {
     		
+    	}
+    	
+    	public DytexMix(DytexOptions opt) {
+    		this.opt = opt;
     	}
     }
     
