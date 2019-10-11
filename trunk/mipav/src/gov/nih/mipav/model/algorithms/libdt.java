@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -11,6 +10,7 @@ import javax.vecmath.*;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
 libdt - OpenCV library for Dynamic Textures - version 1.0
@@ -389,7 +389,7 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     				splitopt.vars=hopt.splitOpt.vars;
     				int c1[] = new int[1];
     				int c2[] = new int[1];
-    				//dytex_mix_split(hembest, splitopt,c2,c1);
+    				dytex_mix_split(hembest, splitopt,c2,c1);
     				mysplits.add(c1[0]);
     				mysplits.add(c2[0]);
     			}
@@ -429,11 +429,12 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
      * \see
      * ppertC
      */
-    /*private void dytex_mix_split(DytexMix dtm, DytexSplitParams splitopt,int ctg[],int csp[])
+    private void dytex_mix_split(DytexMix dtm, DytexSplitParams splitopt,int ctg[],int csp[])
     {
     	int i;
     	int K=dtm.alpha.size();
-    	int c1,c2,newK;
+    	int c1 = 1;
+    	int c2,newK;
     	if(K==1)
     	{
     		c1=1;
@@ -445,15 +446,15 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     		Vector<Double> tmpal = new Vector<Double>();
     		System.out.println("*** split criteria ***");
 
-    		Vector<Mat> myQ = new Vector<Mat>(K);
+    		Vector<Matrix> myQ = new Vector<Matrix>(K);
     		Vector<Double> myQe= new Vector<Double>(K);
-    		Mat F;
+    		Matrix F;
     		boolean flag=true;
     		//vector<OPT_F_TYPE>::iterator result;
     		switch(splitopt.crit)
     		{
     			//%%% split component with largest Q variance %%%
-    			case DytexSplitParams::SPLITQ:
+    			case SPLITQ:
     				for(int jjj=0;jjj<K;jjj++)
     				{
     					boolean proceed = false;
@@ -480,25 +481,35 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     							SingularValueDecomposition svd = new SingularValueDecomposition(cMat);
     				    		Matrix matVt = svd.getV().transpose();
     				    		double singularValues[] = svd.getSingularValues();
-    							Mat test(svd.w.rows,svd.w.rows,OPT_MAT_TYPE);
-    							test=Scalar(0);
-    							Mat tmpM;
-    							tmpM=test.diag();
-    							svd.w.copyTo(tmpM);
-    							F=test*svd.vt;
-    							myQ[jjj]=F*olddt[jjj].Q.mtx*F.t();
-    							Mat eigM;
-    							eigen(myQ[jjj],eigM);
-    							double minVal,maxVal;
-    							minMaxLoc(eigM,&minVal,&maxVal);
-    							myQe[jjj]=maxVal;								
+    				    		double testArray[][] = new double[singularValues.length][singularValues.length];
+    				    		for (i = 0; i < singularValues.length; i++) {
+    				    			testArray[i][i] = singularValues[i];
+    				    		}
+    				    		Matrix test = new Matrix(testArray);
+    				    		F = test.times(matVt);
+    							myQ.set(jjj,(F.times(new Matrix(olddt.get(jjj).Q.mtx.double2D))).times(F.transpose()));
+    							double[] eigenvalue = new double[myQ.get(jjj).getColumnDimension()];
+    					        double[][] eigenvector = new double[myQ.get(jjj).getRowDimension()][myQ.get(jjj).getColumnDimension()];
+    					        double temp;
+    					        double[] tempCol = new double[6];
+    					        int m, n, index;
+    					        // In EigenvalueDecomposition the columns represent the
+    					        // eigenvectors
+    					        Eigenvalue.decompose( myQ.get(jjj).getArray(), eigenvector, eigenvalue);
+    							double maxVal = -Double.MAX_VALUE;
+    							for (i = 0; i < eigenvalue.length; i++) {
+    								if (eigenvalue[i] > maxVal) {
+    									maxVal = eigenvalue[i];
+    								}
+    							}
+    							myQe.set(jjj,maxVal);								
     						}
     					}
     				}
 
-    				for(int i=0;i<myQe.size();i++)
+    				for(i=0;i<myQe.size();i++)
     				{
-    					if(myQe[i]!=-1)
+    					if(myQe.get(i) !=-1)
     					{
     						flag=false;
     						break;
@@ -507,30 +518,44 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     				if(flag)
     				{
     					c1=0;
-    					cout<<"nothing to split"<<endl;
+    					System.out.println("nothing to split");
     				}
     				else
     				{
-    					vector<OPT_F_TYPE>::iterator result = max_element(myQe.begin(),myQe.end()); 
-    					c1=distance(myQe.begin(), result)+1;
+    					double result = -Double.MAX_VALUE;
+    					int index = -1;
+    					for (i = 0; i < myQe.size(); i++) {
+    						if (myQe.get(i) > result) {
+    							result= myQe.get(i);
+    							index = i;
+    						}
+    					}
+    					c1 = index + 1;
     				}
     			break;
 
     			//split component with largest prior
-    			case DytexSplitParams::SPLITP:
+    			case SPLITP:
     				tmpal=olda1;
-    				for(int i=0;i<splitopt.ignore.size();i++)
+    				for(i=0;i<splitopt.ignore.size();i++)
     				{
-    					tmpal[splitopt.ignore[i]]=-1;
+    					tmpal.set(splitopt.ignore.get(i),-1.0);
     				}
-    				result = max_element(tmpal.begin(),tmpal.end()); 
-    				c1=distance(tmpal.begin(), result)+1;
+    				double result = -Double.MAX_VALUE;
+					int index = -1;
+					for (i = 0; i < tmpal.size(); i++) {
+						if (tmpal.get(i) > result) {
+							result= tmpal.get(i);
+							index = i;
+						}
+					}
+					c1 = index + 1;
 
     			break;
 
     			default:
-    				CV_Error(-1,"TO DO");
-
+    				MipavUtil.displayError("TO DO");
+                    System.exit(-1);
     		}
     	}
 
@@ -540,8 +565,8 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     	{
     		c2=K+1;
     		newK=K+1;			
-    		dt.push_back(Dytex()); //add one mroe blank DT in the list
-    		alpha.push_back(0.0);
+    		dtm.dt.add(new Dytex()); //add one more blank DT in the list
+    		dtm.alpha.add(0.0);
     		
     	}
     	//updating existing
@@ -551,62 +576,168 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     		newK=K;
     	}
 
-    	cout<<"Spliting Cluster "<<c1<<" : new cluster "<<c2<<endl;
+    	System.out.println("Spliting Cluster " + c1 + " : new cluster " + c2);
     	
     	//check if there is anything to split
     	if (c1 == 0)
     	{
-    		dt[c2-1].isempty=true;		
-    		alpha[c2-1]=0;
+    		dtm.dt.get(c2-1).isempty=true;		
+    		dtm.alpha.set(c2-1,0.0);
     	}
     	else
     	{
     		//duplicate cluster %%% all parameters c
-    		dt[c1-1].A.copyTo(dt[c2-1].A);
-    		dt[c1-1].C.copyTo(dt[c2-1].C);
-    		dt[c1-1].Ymean.copyTo(dt[c2-1].Ymean);	
-    		dt[c1-1].mu0.copyTo(dt[c2-1].mu0);
-    		dt[c1-1].Q.mtx.copyTo(dt[c2-1].Q.mtx);			
-    		dt[c2-1].Q.covopt=dt[c1-1].Q.covopt;
-    		dt[c2-1].Q.n=dt[c1-1].Q.n;
-    		dt[c2-1].Q.regopt=dt[c1-1].Q.regopt;
-    		dt[c2-1].Q.regval=dt[c1-1].Q.regval;
-    		dt[c1-1].R.mtx.copyTo(dt[c2-1].R.mtx);			
-    		dt[c2-1].R.covopt=dt[c1-1].R.covopt;
-    		dt[c2-1].R.n=dt[c1-1].R.n;
-    		dt[c2-1].R.regopt=dt[c1-1].R.regopt;
-    		dt[c2-1].R.regval=dt[c1-1].R.regval;
-    		dt[c1-1].S0.mtx.copyTo(dt[c2-1].S0.mtx);			
-    		dt[c2-1].S0.covopt=dt[c1-1].S0.covopt;
-    		dt[c2-1].S0.n=dt[c1-1].S0.n;
-    		dt[c2-1].S0.regopt=dt[c1-1].S0.regopt;
-    		dt[c2-1].S0.regval=dt[c1-1].S0.regval;					
-    		dt[c2-1].isempty=dt[c1-1].isempty;
-    		dt[c2-1].vrows=dt[c1-1].vrows;
-    		dt[c2-1].vcols=dt[c1-1].vcols;
-    		dt[c2-1].dtopt=dt[c1-1].dtopt;
-    		dt[c1-1].Cvs.copyTo(dt[c2-1].Cvs);
-    		dt[c2-1].isCvs=dt[c1-1].isCvs;
-    		double tmp     = alpha[c1-1]/((double)2.0);
-    		alpha[c1-1] = tmp;
-    		alpha[c2-1] = tmp;
+    		copyTo(dtm.dt.get(c1-1).A,dtm.dt.get(c2-1).A);
+    		copyTo(dtm.dt.get(c1-1).C,dtm.dt.get(c2-1).C);
+    		copyTo(dtm.dt.get(c1-1).Ymean,dtm.dt.get(c2-1).Ymean);	
+    		copyTo(dtm.dt.get(c1-1).mu0,dtm.dt.get(c2-1).mu0);
+    		copyTo(dtm.dt.get(c1-1).Q.mtx,dtm.dt.get(c2-1).Q.mtx);			
+    		dtm.dt.get(c2-1).Q.covopt=dtm.dt.get(c1-1).Q.covopt;
+    		dtm.dt.get(c2-1).Q.n=dtm.dt.get(c1-1).Q.n;
+    		dtm.dt.get(c2-1).Q.regopt=dtm.dt.get(c1-1).Q.regopt;
+    		dtm.dt.get(c2-1).Q.regval=dtm.dt.get(c1-1).Q.regval;
+    		copyTo(dtm.dt.get(c1-1).R.mtx,dtm.dt.get(c2-1).R.mtx);			
+    		dtm.dt.get(c2-1).R.covopt=dtm.dt.get(c1-1).R.covopt;
+    		dtm.dt.get(c2-1).R.n=dtm.dt.get(c1-1).R.n;
+    		dtm.dt.get(c2-1).R.regopt=dtm.dt.get(c1-1).R.regopt;
+    		dtm.dt.get(c2-1).R.regval=dtm.dt.get(c1-1).R.regval;
+    		copyTo(dtm.dt.get(c1-1).S0.mtx,dtm.dt.get(c2-1).S0.mtx);			
+    		dtm.dt.get(c2-1).S0.covopt=dtm.dt.get(c1-1).S0.covopt;
+    		dtm.dt.get(c2-1).S0.n=dtm.dt.get(c1-1).S0.n;
+    		dtm.dt.get(c2-1).S0.regopt=dtm.dt.get(c1-1).S0.regopt;
+    		dtm.dt.get(c2-1).S0.regval=dtm.dt.get(c1-1).S0.regval;					
+    		dtm.dt.get(c2-1).isempty=dtm.dt.get(c1-1).isempty;
+    		dtm.dt.get(c2-1).vrows=dtm.dt.get(c1-1).vrows;
+    		dtm.dt.get(c2-1).vcols=dtm.dt.get(c1-1).vcols;
+    		dtm.dt.get(c2-1).dtopt=dtm.dt.get(c1-1).dtopt;
+    		copyTo(dtm.dt.get(c1-1).Cvs,dtm.dt.get(c2-1).Cvs);
+    		dtm.dt.get(c2-1).isCvs=dtm.dt.get(c1-1).isCvs;
+    		double tmp     = dtm.alpha.get(c1-1)/((double)2.0);
+    		dtm.alpha.set(c1-1,tmp);
+    		dtm.alpha.set(c2-1,tmp);
     		
     		//perturb new cluster
-    		dytex_perturb(dt[c2-1], splitopt.pert, splitopt.mode, splitopt.vars);
+    		dytex_perturb(dtm.dt.get(c2-1), splitopt.pert, splitopt.mode, splitopt.vars);
 
     		// also perturb old cluster (if principal axis split on C, A, x)
-    		if(splitopt.mode==DytexSplitParams::MODEP)
+    		if(splitopt.mode==Split_mode.MODEP)
     		{
-    			if( splitopt.vars==DytexSplitParams::VARC)
+    			if( splitopt.vars==Split_vars.VARC)
     			{
-    				dytex_perturb(dt[c1-1], -splitopt.pert, splitopt.mode, splitopt.vars);
+    				dytex_perturb(dtm.dt.get(c1-1), -splitopt.pert, splitopt.mode, splitopt.vars);
     			}
     		}
 
     	}
-    	ctg=c2-1;
-    	csp=c1-1;
-    }*/
+    	ctg[0]=c2-1;
+    	csp[0]=c1-1;
+    }
+    
+    /*!
+     * \brief
+     * custom perturbation of C based on max variance of S0
+     * 
+     * \param dtp
+     * Dt to perturb
+     * 
+     * \param pert
+     * pert value
+     * 
+     * \param mode
+     * perturbation mode; 
+     * 
+     * \param vars
+     * variables to perturb
+     * 
+     * \remark only perturbation based on scale up principal axis and varialble C is implemented
+     *
+     * \see
+     * dytex_mix_split | ppertC
+     */
+    private void dytex_perturb(Dytex dtp, double pert, Split_mode mode, Split_vars vars)
+    {
+    	System.out.println("perturbing C by " + pert);
+
+    	switch(mode)
+    	{
+    		//scale up principal axis
+    		case MODEP:
+    			switch(vars)
+    			{
+    				//perturb C
+    				case VARC:
+    					ppertC(dtp.C,dtp.S0.mtx,pert);	
+    					break;
+    				default:
+    					MipavUtil.displayError("TO DO");
+    					System.exit(-1);
+    			}
+    			break;
+    		default:
+    			MipavUtil.displayError("TO DO");
+    			System.exit(-1);
+    	}
+    }
+    
+    /*!
+     * \brief
+     * custom perturbation of C; normalize S0 by the lengths of C
+     * 
+     * \param C
+     * current C.
+     * 
+     * \param S0
+     * parameter S0 of DT.
+     * 
+     * \param pert
+     * perturbation amount.
+     * 
+     * \see
+     * dytex_perturb
+     */
+    private void ppertC(Mat C,Mat S0,double pert)
+    {	
+
+    	/*int m=C.rows;
+    	int n=C.cols;
+
+    	Mat cc;
+    	sqrt((C.t()*C).diag(),cc);
+
+    	Mat tmpM,tmpM2;
+    	Matrix matC = new Matrix(C.double2D);
+    	Matrix matCT = matC.transpose();
+    	Matrix matCC = matCC.times(matC);
+    	multiply(cc,cc,tmpM);
+    	multiply(S0,tmpM,tmpM2);
+
+    	double minVal,maxVal;
+    	Point minLoc,maxLoc;
+    	minMaxLoc(tmpM2,&minVal,&maxVal,&minLoc,&maxLoc);
+
+    	C.col(maxLoc.y)=(((double)1.0)+pert)*C.col(maxLoc.y);*/
+
+
+    }
+    
+    private void copyTo(Mat A, Mat B) {
+    	int i,j;
+        B.flags = A.flags;
+        B.dims = A.dims;
+        B.depth = A.depth;
+        B.rows = A.rows;
+        B.size = new int[A.size.length];
+        for (i = 0; i <A.size.length; i++) {
+        	B.size[i] = A.size[i];
+        }
+        B.type = A.type;
+        B.double2D = new double[A.double2D.length][A.double2D[0].length];
+        for (i = 0; i < A.double2D.length; i++) {
+        	for (j = 0; j < A.double2D[0].length; j++) {
+        		B.double2D[i][j] = A.double2D[i][j];
+        	}
+        }
+    }
 
     
     /*!
