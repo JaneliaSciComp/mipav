@@ -4,7 +4,8 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 import java.util.*;
-import java.time.format.DateTimeFormatter;  
+import java.time.format.DateTimeFormatter;
+import java.time.Clock;
 import java.time.LocalDateTime; 
 import javax.vecmath.*;
 
@@ -94,164 +95,6 @@ using namespace std;
 */
 
 
-
-/**
-int main(int argc, char** argv)
-{
-	cout<<"Experiment Started: "<<getTime()<<endl;
-
-	
-	string fpath="../../testdata/HEM/47fa110.dtm";
-
-	//load existing	dtm	
-	DytexMix dtm;
-	Bufferer buf(fpath,fstream::in | fstream::binary);
-	buf.read(dtm);	
-	buf.close();
-
-	
-
-	//setting up HEM to reduce mixture to only 4 components
-	DytexRegOptions ropt(CovMatrix::COV_REG_MIN,0.01,CovMatrix::COV_REG_MIN,0.01,CovMatrix::COV_REG_MIN,0.01,CovMatrix::COV_REG_ADD,0.999);
-	HEMOptions hopt(4,ropt,0.0001,DytexOptions::NONZERO_YMEAN,HEMOptions::COMPACT);
-
-	//split schedule of 1,2,4
-	for(int i=1;i<=4;i=i*2)
-	hopt.splitOpt.sched.push_back(i);
-
-
-	//run The HEM 
-	DytexMix emout=dtm.reduceWithSplitting(hopt);
-	
-		
-	for(int i=0;i<emout.alpha.size();i++)
-		cout<<"Alpha "<<i+1<<" is "<<std::fixed<<std::setprecision(14)<<emout.alpha[i]<<endl;
-	
-	
-	cout<<"Experiment Finish: "<<getTime()<<endl;
-	
-	/*!
- * \brief
- * reduce current dytex mixture using HEM.
- * 
- * \param hopt
- * HEM learning options
- * 
- * \returns
- * reduced dynamic texture mixture.
- * 
- * Learns a new dytex mixture using several runs of HEM with component splitting procedure
- * 
- * \remarks
- * After loading or learning a DTM, this is the interface function to be called to reduce a mixture
- * 
- * \see
- * learnWithSplitting | HEMOptions
- */
-	/*
-DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
-{
-	//reduced mixture
-	DytexMix hembest(this->opt);  	
-
-	//OPTIONS
-	double pert=hopt.splitOpt.pert;
-	int Ks=hopt.K;
-	//initialize splitting sequence
-	if(hopt.splitOpt.sched.empty())
-	{
-		for(int i=1;i<=hopt.K;i++)
-			hopt.splitOpt.sched.push_back(i);
-	}
-	
-	//%%% preprocess %%%
-	cout<<"preprocessing DT..."<<endl;	
-	for(int i=0;i<dt.size();i++)
-	{
-		SVD svd(dt[i].C);
-		Mat Cu,Cs,Cv;
-		svd.u.copyTo(Cu);
-		svd.vt.copyTo(Cv);	
-		Cv=Cv.t();
-		Cs=Mat::zeros(svd.w.rows,svd.w.rows,svd.w.type());				
-		Mat tmpM=Cs.diag();
-		svd.w.copyTo(tmpM);
-		tmpM=Cv*Cs;		
-		tmpM.copyTo(dt[i].Cvs);
-		dt[i].isCvs=true;
-	}
-
-	//check for valid splitting sched
-	if(hopt.splitOpt.sched[0]!=1)
-	{
-		CV_Error(-1, "schedule must start with 1!");
-	}
-	std::vector<int> tmp;
-	vector<int>::iterator it;
-	for(int i=1;i<hopt.splitOpt.sched.size();i++)
-		tmp.push_back(hopt.splitOpt.sched[i]/hopt.splitOpt.sched[i-1]);
-
-	if(find_if (tmp.begin(), tmp.end(), IsGT2)!=tmp.end())
-		CV_Error(-1, "cannot grow K more than 2 times previous");
-
-	cout<<"Growing schedule: ";
-	copy(hopt.splitOpt.sched.begin(), hopt.splitOpt.sched.end(),ostream_iterator<int>(cout," "));
-	cout<<endl;
-	cout<<"Ks: "<<Ks<<endl;
-
-	//HEM splitting loop
-	int Kiter=1;
-	while(hembest.dt.size()<hopt.K)
-	{
-		if(Kiter==1)
-		{
-			cout<<"*** EM: K="<<hembest.dt.size()+1<<" ***********************"<<endl;
-		}
-		else
-		{
-			std::vector<int> mysplits;
-			//split here
-			while(hembest.dt.size()<hopt.splitOpt.sched[Kiter-1])
-			{
-				DytexSplitParams splitopt;
-				splitopt.crit=hopt.splitOpt.crit;				
-				splitopt.ignore=mysplits;
-				splitopt.target=-1;
-				splitopt.pert=hopt.splitOpt.pert;
-				splitopt.mode=hopt.splitOpt.mode;
-				splitopt.vars=hopt.splitOpt.vars;
-				int c1,c2;
-				hembest.dytex_mix_split(splitopt,c2,c1);
-				mysplits.push_back(c1);
-				mysplits.push_back(c2);
-			}
-			//remove pre-cache (since it is invalid after splitting)
-			for(int ii=0;ii<hembest.dt.size();ii++)
-			{
-				hembest.dt[ii].isCvs=false;
-			}
-			cout<<"*** EM: K="<<hembest.dt.size()<<"******************"<<endl;
-		}
-		std::vector<int> classes;
-		//runs HEM algorithm for current mixture
-		runHEM(hembest,hopt,classes);
-		Kiter++;
-	}
-
-	//RUN HEM again on once on final solution			
-	hopt.termvalue=hopt.termvalBest;	
-	hopt.maxiter=50;  //Can be adjusted to run more iterations
-	runHEM(hembest,hopt,hembest.classes);
-	return hembest;
-}
-
-
-}
-
-
-
-
-*/
 	
 	public void runAlgorithm() {
 		
@@ -402,16 +245,522 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     		}
     		Vector<Integer> classes = new Vector<Integer>();
     		//runs HEM algorithm for current mixture
-    		//runHEM(hembest,hopt,classes);
+    		runHEM(hembest,hopt,classes);
     		Kiter++;
     	}
 
     	//RUN HEM again on once on final solution			
     	hopt.termvalue=hopt.termvalBest;	
     	hopt.maxiter=50;  //Can be adjusted to run more iterations
-    	//runHEM(hembest,hopt,hembest.classes);
+    	runHEM(hembest,hopt,hembest.classes);
     	return hembest;
     }
+    
+    /*!
+     * \brief
+     * run iterations of HEM for a mixture of DT
+     * 
+     * \param hembest
+     * input DT mixture.
+     * 
+     * \param hopt
+     * learning option for HEM.
+     * 
+     * \param classes
+     * Class of each input DT that is ID of the new DT
+     * 
+     * \remarks
+     * in general, this should not be called.use reduceWithSplitting instead
+     * 
+     * \see
+     * reduceWithSplitting | HEMOptions
+     */
+    private void runHEM(DytexMix hembest, HEMOptions hopt, Vector<Integer> classes)
+    {
+    	//used to display info in change in classes during EM loop
+    	Clock elapsedtime;
+    	int numlastclasses=5;
+        boolean FlagYmean;
+        if (hopt.Ymean == Ymean_type.ZERO_YMEAN) {
+        	FlagYmean = false;
+        }
+        else {
+        	FlagYmean = true;
+        }
+        boolean FlagVerbose;
+        if (hopt.verbose == Verbose_mode.QUIET) {
+        	FlagVerbose = false;
+        }
+        else {
+        	FlagVerbose = true;
+        }
+
+    	int Kb=hembest.dt.size();
+    	if (FlagVerbose)
+    	    System.out.println("Preprocessing " + Kb + " base components...");
+
+    	for(int i=0;i<Kb;i++)
+    	{		
+    		if(hembest.dt.get(i).dtopt.Yopt!=hopt.Ymean)
+    		{
+    			System.out.println("** Warning: hemopt.Ymean does not match " + hembest.dt.get(i).dtopt.Yopt);
+    		}
+    		//Preprocessing already done
+    	}
+
+    	//HEM parameters
+    	int n=hembest.dt.get(0).dtopt.n;
+    	int m=hembest.dt.get(0).dtopt.m;
+    	if (FlagVerbose)
+    		System.out.println("n = " + n); 
+    		System.out.println("m = " + m);
+    	    System.out.println("Ymean = " + hembest.dt.get(0).dtopt.Yopt);
+    	
+    	int Nvs=hopt.N;
+    	int tau=hopt.tau;
+    	//min total probability for blank cluster
+    	double MINPROB =(((double)1.0)/(((double)2.0)*(double)Kb));  
+
+    	//initializations
+    	/*if(hembest.dt.size()==0)
+    	{
+    		if(FlagVerbose)
+    			System.out.println("Initializing First DT with Sub-optimal: ");
+    		
+    		//average of all DTs
+    		Dytex tmpC= init_multiple_dt();
+    		hembest.dt.push_back(tmpC);
+    		hembest.alpha.push_back(1.0);
+    	}
+    	
+    	//current mixture size
+    	int Kr=hembest.dt.size(); 
+
+    	//Regularize the initializations
+    	for(int i=0;i<Kr;i++)
+    	{		
+    		hembest.dt[i].setRegularizer(hopt.regopt);
+    		hembest.dt[i].regularize(true);			
+
+    		if(hembest.dt[i].isCvs==false)
+    		{
+    			SVD svd(hembest.dt[i].C);
+    			Mat Cu,Cs,Cv;
+    			svd.u.copyTo(Cu);
+    			svd.vt.copyTo(Cv);	
+    			Cv=Cv.t();
+    			Cs=Mat::zeros(svd.w.rows,svd.w.rows,svd.w.type());				
+    			Mat tmpM=Cs.diag();
+    			svd.w.copyTo(tmpM);
+    			tmpM=Cv*Cs;			
+    			tmpM.copyTo(hembest.dt[i].Cvs);
+    			hembest.dt[i].isCvs=true;
+    		}
+    	}
+
+
+    	//%%% RUN HEM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    	//initialize convergence measures	
+    	std::vector<double> datalikelihood(hopt.maxiter+1,0);
+    	std::vector<double> ddtall(hopt.maxiter,0);
+    	std::vector<double> pdtall(hopt.maxiter,0);
+    	std::vector<std::vector<int> > lastclasses(numlastclasses);
+    	int lastclassesind = 0;
+
+    	for(int i=0;i<numlastclasses;i++)
+    		lastclasses[i]=std::vector<int>(Kb,0);
+
+    	//initializa blanks
+    	std::vector<double> blank(Kr,0);
+    	for(int j=0;j<Kr;j++)
+    	{
+    		if(hembest.dt[j].isempty)
+    			blank[j]=1;
+    	}
+
+    	//initialize loop
+    	clock_t starttime=clock();	
+    	int iter=0;
+    	//hem loop
+    	while(1)
+    	{
+    		//compute statistics between 2 DT for HEM E-step
+    		Estats Estat(dt,hembest.dt,tau,FlagYmean);
+    		Estat.computeEll();
+    		Mat ell=Estat.Ell.clone();
+    		Mat tmpM=Mat(alpha).clone();
+    		tmpM=tmpM*Nvs;
+    		Mat tmpM2;
+    		repeat(tmpM,1,Kr,tmpM2);
+
+    		Mat tmpM3(hembest.alpha);
+    		Mat tmpM4;
+    		log(tmpM3.t(),tmpM4);
+    		Mat tmpM5;
+    		repeat(tmpM4,Kb,1,tmpM5);
+    		multiply(ell,tmpM2,tmpM);
+
+    		//aggregated statistics for dti and dtj
+    		ell = tmpM + tmpM5;
+
+    		// soft assignment and data likelihood
+    		Mat logZ   = Mat::zeros(Kb,Kr,OPT_MAT_TYPE);  
+    		Mat tmp = (logtrick(ell.t())).t();
+    		for(int j=0;j<Kr;j++)
+    		{
+    			logZ.col(j) = ell.col(j) - tmp;
+    		}
+
+    		datalikelihood[iter]=sum(tmp)[0];
+    		Mat Z;
+    		exp(logZ,Z);
+
+    		if(FlagVerbose>=2)
+    			cout<<endl;
+
+    		//hard assignment
+    		classes.clear();		
+    		for(int i=0;i<Z.rows;i++)
+    		{
+    			double min,max;
+    			Point minL,maxL;
+    			minMaxLoc(Z.row(i),&min,&max,&minL,&maxL);				
+    			classes.push_back(maxL.x+1);
+    		}
+
+    		//Check Convergence
+    		double ddLL=0;
+    		double dpLL=0;
+    		
+    		if(iter>0)
+    		{
+    			//compute change in log-likelihood
+    			ddLL=datalikelihood[iter]-datalikelihood[iter-1];
+    			dpLL=abs(ddLL/datalikelihood[iter-1]);
+    		}
+    		else
+    		{
+    			ddLL = INF;			
+    			dpLL = INF;
+    		}
+    		//class assignment info
+    		lastclasses[lastclassesind]=classes;
+
+    		//count the number of class changes
+    		std::vector<int> dclass;
+    		for(int ii=0;ii<numlastclasses;ii++)
+    		{
+    			int sum=0;
+    			for(int i=0;i<lastclasses[0].size();i++)
+    			{
+    				if(lastclasses[ii][i]!=lastclasses[lastclassesind][i])
+    					sum++;
+    			}
+    			dclass.push_back(sum);
+    		}
+
+    		string dclassstr="";			
+    		for(int i=lastclassesind+1;i<numlastclasses;i++)
+    		{
+    			stringstream ss;
+    			ss<<dclass[i];
+    			dclassstr=dclassstr+ss.str()+" ";
+    		}
+    		for(int i=0;i<lastclassesind;i++)
+    		{
+    			stringstream ss;
+    			ss<<dclass[i];
+    			dclassstr=dclassstr+ss.str()+" ";
+    		}
+
+    		//% lastclassind points to the oldest classes
+    		lastclassesind = lastclassesind+1;
+    		if (lastclassesind>=numlastclasses)
+    			lastclassesind = 0;
+
+    		//output strings
+    		stringstream ss2;
+    		ss2<<"dclass = "<<dclassstr;
+    		string outstr2=ss2.str();
+    		string outstr1s;
+    		string outstr3;
+    		stringstream ss3;
+
+    		ss3<<"L= "<<datalikelihood[iter]<<" (pL= "<<dpLL<<")";
+    		outstr1s=ss3.str();
+    		
+    		if(FlagVerbose==1)
+    		{
+    			stringstream ss3;
+    			ss3<<"iter= "<<iter+1<<"; "<<outstr1s<<"; "<<outstr2<<";  ";
+    			outstr3=ss3.str();
+    			cout<<outstr3<<endl;
+    		}
+    		else if(FlagVerbose>=2)
+    		{			
+    			cout<<outstr2<<endl;
+    		}
+
+    		// check if negative change in log-likelihood!
+    		if (ddLL<0)
+    		{
+    			cout<<"WARNING -- change in log likelihood is negative???"<<endl;
+    		}	
+    		//%%% check convergence conditions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    		int breakout = 0;
+    		string termstr;
+    		if (iter >= hopt.maxiter)
+    		{
+    			termstr = "***** done -- max iter reached\n";
+    			breakout = 1;
+    		}
+    		//only this convergence condition
+    		if ( (ddLL >= 0) && (dpLL < hopt.termvalue) )
+    		{
+    			termstr = "***** done -- small percent change in data likelihood\n";
+    			breakout = 1;
+    		}
+
+    		//%%% convergence condition was reached... %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    		if (breakout)
+    		{
+    			if (FlagVerbose >= 1)
+    			{
+    				if (FlagVerbose == 1)
+    				{
+    					cout<<endl;				
+    				}
+    				cout<<termstr<<endl;
+    			}	
+    			break;
+    		}
+
+    		//%%% M-Step %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+
+    		//compute Nhat - total soft assignments per cluster
+    		//1) update prior probabilities
+    		Mat Nhat;
+    		reduce(Z,Nhat,0,CV_REDUCE_SUM);
+    		tmp=Nhat/((double)Kb);
+    		for(int i=0;i<hembest.alpha.size();i++)
+    			hembest.alpha[i]=tmp.at<OPT_F_TYPE>(0,i);
+    				
+
+    		// compute weights: Zij * alpha(i)
+    		repeat(Mat(alpha), 1, Kr,tmpM);
+    		Mat W;
+    		multiply(Z,tmpM,W);		
+    		// normalize weights
+    		reduce(W,tmpM,0,CV_REDUCE_SUM);
+    		repeat(tmpM, Kb, 1,tmpM2);
+    		divide(W,tmpM2,tmpM3);
+    		W=tmpM3.clone();
+    		Estat.computeAggregateStats(W);
+
+    		//%%% loop through each cluster %%%
+    		for(int j=0;j<Kr;j++)
+    		{			
+    			//check if this is cluster is blank
+    			if(hembest.alpha[j]<=MINPROB)
+    			{
+    				blank[j]=1;
+    				hembest.dt[j].isempty=true;
+    				if (FlagVerbose >= 1)
+    					cout<<"blank";
+    			}			
+    			else // % --- standard M-step: learn the parameters -------------------------
+    			{			
+
+    				Mat xij      = Estat.xij[j];
+    				Mat etaj     = Estat.etaj[j];
+    				Mat gammaj   = Estat.gammaj[j];
+    				Mat Phij     = Estat.Phij[j];
+    				Mat varphij  = Estat.varphij[j];
+    				Mat phij     = Estat.phij[j];
+    				Mat betaj    = Estat.betaj[j];
+    				Mat Psij     = Estat.Psij[j];
+    				double Lambdaj  = Estat.Lambdaj[j];
+    				Mat Gammaj   = Estat.Gammaj[j];
+    				
+    				//%%% compute new parameters %%%
+
+    				//C parameter
+    				Mat iPhij = Phij.inv();
+    				Mat newC = Gammaj*iPhij;
+    				hembest.dt[j].C=newC;
+    				//update preprocessing step
+    				SVD svd(newC);
+    				Mat test=Mat::zeros(svd.w.rows,svd.w.rows,OPT_MAT_TYPE);				
+    				Mat tmpM;
+    				tmpM=test.diag();
+    				svd.w.copyTo(tmpM);
+    				hembest.dt[j].Cvs=svd.vt.t()*test;
+    				hembest.dt[j].isCvs=true;
+
+    				// R parameter
+    				hembest.dt[j].R.mtx=(Lambdaj - trace(iPhij*(Gammaj.t()*Gammaj))[0]) / (m);
+
+    				// A parameter
+    				Mat newA = Psij*(phij.inv());
+    				hembest.dt[j].A = newA;
+
+    				// Q parameter
+    				hembest.dt[j].Q.mtx = (varphij-newA*Psij.t());
+
+    				//mu parameter
+    				Mat newmu=xij.clone();
+    				hembest.dt[j].mu0=newmu;
+
+
+    				// S parameter 
+    				Mat newS = etaj - newmu*newmu.t();
+    				switch(opt.Sopt)
+    				{
+    				case CovMatrix::COV_DIAG:			
+    					hembest.dt[j].S0.mtx=newS.diag().clone();
+    					hembest.dt[j].S0.covopt=CovMatrix::COV_DIAG;
+    					break;
+    				default:
+    					CV_Error(-1,"TO DO");
+    				}
+
+    				// Ymean parameter
+    				Mat newYmean;
+    				if (FlagYmean)
+    				{
+    					newYmean = (gammaj - newC*betaj);
+    				}
+    				else
+    				{
+    					newYmean = Mat::zeros(m,1,OPT_MAT_TYPE);
+    				}				
+    				hembest.dt[j].Ymean = newYmean;
+
+    				// regularize the new parameters
+    				hembest.dt[j].setRegularizer(hopt.regopt);
+    				hembest.dt[j].regularize(true);
+    			}
+    		}
+    		if (FlagVerbose >= 2)
+    		{
+    			cout<<endl;
+    		}
+
+    		//%%% handle empty clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    		////find the largest cluster and split it to fill the blank cluster
+    		for(int j=0;j<Kr;j++)
+    		{
+    			if(blank[j])
+    			{
+    				if(FlagVerbose)
+    					cout<<"Cluster "<<j<<"Is blank"<<endl;			
+
+    				DytexSplitParams splitopt;				
+    				splitopt.crit=hopt.emptySplitOpt.crit;
+    				splitopt.pert=hopt.emptySplitOpt.pert;
+    				splitopt.mode=hopt.emptySplitOpt.mode;
+    				splitopt.vars=hopt.emptySplitOpt.vars;
+    				//				splitopt.len=tau;
+    				splitopt.ignore.clear();
+    				splitopt.target=j+1;
+    				int c1,c2;
+    				hembest.dytex_mix_split(splitopt,c1,c2);
+
+    				blank[j]=0;						
+    			}
+    		}
+
+    		elapsedtime=clock()-starttime;
+    		if(FlagVerbose>=2)
+    		{
+    			cout<<"Elapsed Time: "<<elapsedtime<<endl;
+    		}
+
+    		iter=iter+1; //End of HEM iteration
+
+    	}*/ 
+    }
+    
+    /*!
+     * \brief
+     * initialize a single DT from current mixture
+     * 
+     * \returns
+     * new DT
+     * 
+     * \see
+     * initcluster_doretto
+     */
+    /*private Dytex init_multiple_dt()
+    {
+    	//copy template
+    	Dytex odt = new dytex(dt[0].dtopt);
+
+    	if(odt.dtopt.Yopt==DytexOptions::ZERO_YMEAN)
+    	{
+    		odt.Ymean=Mat::zeros(odt.dtopt.m,1,OPT_MAT_TYPE);
+    	}
+    	dt[0].Cvs.copyTo(odt.Cvs);
+    	odt.isCvs=false;
+    	//extract Cs
+    	Mat Call(odt.dtopt.m,odt.dtopt.n*dt.size(),OPT_MAT_TYPE);
+    	Call=Scalar(0);
+    	for(int i=0;i<dt.size();i++)
+    	{
+    		int cstart=i*odt.dtopt.n;
+    		Mat tmpM=Call.colRange(cstart,cstart+odt.dtopt.n);
+    		dt[i].C.copyTo(tmpM);
+    	}
+    	if(Call.rows>Call.cols)
+    	{
+    		SVD svd(Call);		
+    		svd.u.colRange(0,odt.dtopt.n).copyTo(odt.C);		
+    	}
+    	else
+    	{
+    		Mat CC = Call*Call.t();
+    		SVD svd(CC);		
+    		svd.u.colRange(0,odt.dtopt.n).copyTo(odt.C);
+    	}
+    	//initialize accumulators
+    	odt.mu0=Scalar(0);
+    	odt.S0.mtx=Scalar(0);
+    	odt.Ymean=Scalar(0);
+    	odt.A=Scalar(0);
+    	odt.Q.mtx=Scalar(0);
+    	odt.R.mtx=Scalar(0);
+
+    	//compute other parameters by averaging
+    	for(int i=0;i<dt.size();i++)
+    	{
+    		//compute transformation
+    		Mat F=odt.C.t()*dt[i].C;
+
+    		//accumulate
+    		odt.mu0=odt.mu0+F*dt[i].mu0;		
+
+    		Mat tmpM(dt[i].S0.mtx.rows,dt[i].S0.mtx.rows,OPT_MAT_TYPE);
+    		tmpM=Scalar(0);
+    		Mat tmpM2=tmpM.diag();
+    		dt[i].S0.mtx.copyTo(tmpM2);
+
+    		odt.S0.mtx=odt.S0.mtx+ (F*tmpM*(F.t())).diag();
+    		odt.Ymean=odt.Ymean+dt[i].Ymean;
+    		odt.A=odt.A+F*dt[i].A*(F.inv());
+    		odt.Q.mtx=odt.Q.mtx+ F*dt[i].Q.mtx*(F.t());
+    		odt.R.mtx=odt.R.mtx+dt[i].R.mtx;
+    	}
+
+    	odt.mu0    = odt.mu0/dt.size();	
+    	odt.S0.mtx     = odt.S0.mtx/dt.size();
+    	odt.Ymean  = odt.Ymean/dt.size();
+    	odt.A      = odt.A/dt.size();
+    	odt.Q.mtx  = odt.Q.mtx/dt.size();
+    	odt.R.mtx  = odt.R.mtx/dt.size();
+    	
+    	return odt;
+    }*/
     
     /*!
      * \brief
@@ -697,27 +1046,39 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
      */
     private void ppertC(Mat C,Mat S0,double pert)
     {	
-
-    	/*int m=C.rows;
+        int i, x, y;
+    	int m=C.rows;
     	int n=C.cols;
+    	
 
-    	Mat cc;
-    	sqrt((C.t()*C).diag(),cc);
-
-    	Mat tmpM,tmpM2;
+    	
     	Matrix matC = new Matrix(C.double2D);
     	Matrix matCT = matC.transpose();
-    	Matrix matCC = matCC.times(matC);
-    	multiply(cc,cc,tmpM);
-    	multiply(S0,tmpM,tmpM2);
-
-    	double minVal,maxVal;
-    	Point minLoc,maxLoc;
-    	minMaxLoc(tmpM2,&minVal,&maxVal,&minLoc,&maxLoc);
-
-    	C.col(maxLoc.y)=(((double)1.0)+pert)*C.col(maxLoc.y);*/
-
-
+    	Matrix matCC = matCT.times(matC);
+    	double array[][] = matCC.getArray();
+    	double diag2D[][] = new double[array.length][array.length];
+    	for (i = 0; i < array.length; i++) {
+    	    diag2D[i][i] = array[i][i];	
+    	}
+    	Matrix matM = new Matrix(diag2D);
+    	Matrix matS0 = new Matrix(S0.double2D);
+    	Matrix matM2 = matS0.times(matM);
+    	double arrM2[][] = matM2.getArray();
+    	int maxLocx = -1;
+    	int maxLocy = -1;
+    	double maxVal = -Double.MAX_VALUE;
+    	for (y = 0; y < arrM2.length; y++) {
+    		for (x = 0; x < arrM2[0].length; x++) {
+    			if (arrM2[y][x] > maxVal) {
+    				maxVal = arrM2[y][x];
+    				maxLocx = x;
+    				maxLocy = y;
+    			}
+    		}
+    	}
+    	for (y = 0; y < C.double2D.length; y++) {
+    		C.double2D[y][maxLocy] =(((double)1.0)+pert)*C.double2D[y][maxLocy];
+    	}
     }
     
     private void copyTo(Mat A, Mat B) {
@@ -726,16 +1087,20 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
         B.dims = A.dims;
         B.depth = A.depth;
         B.rows = A.rows;
-        B.size = new int[A.size.length];
-        for (i = 0; i <A.size.length; i++) {
-        	B.size[i] = A.size[i];
+        if (A.size != null) {
+	        B.size = new int[A.size.length];
+	        for (i = 0; i <A.size.length; i++) {
+	        	B.size[i] = A.size[i];
+	        }
         }
         B.type = A.type;
-        B.double2D = new double[A.double2D.length][A.double2D[0].length];
-        for (i = 0; i < A.double2D.length; i++) {
-        	for (j = 0; j < A.double2D[0].length; j++) {
-        		B.double2D[i][j] = A.double2D[i][j];
-        	}
+        if ((A.double2D != null) && (A.double2D[0] != null)) {
+	        B.double2D = new double[A.double2D.length][A.double2D[0].length];
+	        for (i = 0; i < A.double2D.length; i++) {
+	        	for (j = 0; j < A.double2D[0].length; j++) {
+	        		B.double2D[i][j] = A.double2D[i][j];
+	        	}
+	        }
         }
     }
 
@@ -744,7 +1109,7 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
 	 * \brief
 	 * Verbose modes.	 
 	 */
-	public enum Verbose_mode{QUITE,COMPACT,VERBOSE};
+	public enum Verbose_mode{QUIET,COMPACT,VERBOSE};
     
     /*!
      * \brief
@@ -934,7 +1299,11 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
 
     	//initialize DytexSplitParams
     	public DytexSplitParams() {
-    		
+    		crit=Split_crit.SPLITQ;
+    		mode=Split_mode.MODEP;
+    		pert=0.01;
+    		vars=Split_vars.VARC;	
+    		target=-1;	
     	};
     };
     
@@ -965,8 +1334,8 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     
     public class DytexOptions {  	
     	// DT options  
-    	public int n[] = new int[1];    /**< dimension of the state space, x_t. */
-    	public int m[] = new int[1];    /**< dimension of the observation space, y_t. */
+    	public int n;    /**< dimension of the state space, x_t. */
+    	public int m;    /**< dimension of the observation space, y_t. */
     	public cov_type Ropt; /**< covariance type for R (usually COV_IID). */
     	public cov_type Sopt; /**< covariance type for S (usually COV_DIAG). */
     	Ymean_type Yopt; /**< option to model observation mean. */
@@ -1103,8 +1472,35 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     	public Mat Cvs = new Mat();      /**< Cvs precomputed value */
     	public boolean isCvs;   /**< Cvs computed */
     	public Dytex() {
-    		
+    	    isempty = true;	
     	}
+    	
+    	// constructor
+    	/*public Dytex(DytexOptions opt) {
+    	  dtopt = opt;
+    	  if (dtopt.Yopt == Ymean_type.NONZERO_YMEAN) {
+    		  Ymean.create(dtopt.m,1,CV_64F);
+    	  }
+    	  else {
+    		  Ymean.create(0,0,CV_64F);
+    	  }
+    	  A.create(dtopt.n, dtopt.n, CV_64F);
+    	  C.create(dtopt.m, dtopt.n, CV_64F);
+    	  mu0.create(dtopt.n, 1, CV_64F);
+    	  R(dtopt.m, dtopt.Ropt),
+    	  Q(dtopt.n, CovMatrix::COV_FULL),
+    	  S0(dtopt.n, dtopt.Sopt),
+    	  vrows = 0;
+    	  vcols = 0;
+    		isempty=false;
+    		isCvs=false;
+    	  switch(dtopt.Yopt) {
+    	  case DytexOptions::NONZERO_YMEAN:
+    	  case DytexOptions::ZERO_YMEAN:
+    	    break;
+    	  default:
+    	    CV_Error(-1, "bad Yopt");
+    	  }*/
     }
     
     public class Mat {
@@ -1143,6 +1539,7 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     	    this.cols = cols;
     	    this.type = type;
     	    dims = 2;
+    	    size = new int[]{rows,cols};
     	    if (type == CV_8U) {
     	        byte2D = new byte[rows][cols];	
     	    }
@@ -1470,8 +1867,12 @@ DytexMix DytexMix::reduceWithSplitting(HEMOptions hopt)
     
     public void read(DytexOptions opt) {
     	readHeader("DytexOptions");
-    	read("n",opt.n);
-    	read("m",opt.m);
+    	int n[] = new int[1];
+    	read("n",n);
+    	opt.n = n[0];
+    	int m[] = new int[1];
+    	read("m",m);
+    	opt.m = m[0];
     	byte temp[] = new byte[1];
     	read("Ropt",temp);
     	opt.Ropt= getCov_type(temp[0]);
