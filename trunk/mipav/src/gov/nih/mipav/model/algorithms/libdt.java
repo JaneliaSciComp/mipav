@@ -245,14 +245,14 @@ using namespace std;
     		}
     		Vector<Integer> classes = new Vector<Integer>();
     		//runs HEM algorithm for current mixture
-    		runHEM(hembest,hopt,classes);
+    		runHEM(dtm,hembest,hopt,classes);
     		Kiter++;
     	}
 
     	//RUN HEM again on once on final solution			
     	hopt.termvalue=hopt.termvalBest;	
     	hopt.maxiter=50;  //Can be adjusted to run more iterations
-    	runHEM(hembest,hopt,hembest.classes);
+    	runHEM(dtm,hembest,hopt,hembest.classes);
     	return hembest;
     }
     
@@ -275,7 +275,7 @@ using namespace std;
      * \see
      * reduceWithSplitting | HEMOptions
      */
-    private void runHEM(DytexMix hembest, HEMOptions hopt, Vector<Integer> classes)
+    private void runHEM(DytexMix dtm, DytexMix hembest, HEMOptions hopt, Vector<Integer> classes)
     {
     	//used to display info in change in classes during EM loop
     	Clock elapsedtime;
@@ -295,26 +295,26 @@ using namespace std;
         	FlagVerbose = true;
         }
 
-    	int Kb=hembest.dt.size();
+    	int Kb=dtm.dt.size();
     	if (FlagVerbose)
     	    System.out.println("Preprocessing " + Kb + " base components...");
 
     	for(int i=0;i<Kb;i++)
     	{		
-    		if(hembest.dt.get(i).dtopt.Yopt!=hopt.Ymean)
+    		if(dtm.dt.get(i).dtopt.Yopt!=hopt.Ymean)
     		{
-    			System.out.println("** Warning: hemopt.Ymean does not match " + hembest.dt.get(i).dtopt.Yopt);
+    			System.out.println("** Warning: hemopt.Ymean does not match " + dtm.dt.get(i).dtopt.Yopt);
     		}
     		//Preprocessing already done
     	}
 
     	//HEM parameters
-    	int n=hembest.dt.get(0).dtopt.n;
-    	int m=hembest.dt.get(0).dtopt.m;
+    	int n=dtm.dt.get(0).dtopt.n;
+    	int m=dtm.dt.get(0).dtopt.m;
     	if (FlagVerbose)
     		System.out.println("n = " + n); 
     		System.out.println("m = " + m);
-    	    System.out.println("Ymean = " + hembest.dt.get(0).dtopt.Yopt);
+    	    System.out.println("Ymean = " + dtm.dt.get(0).dtopt.Yopt);
     	
     	int Nvs=hopt.N;
     	int tau=hopt.tau;
@@ -328,7 +328,7 @@ using namespace std;
     			System.out.println("Initializing First DT with Sub-optimal: ");
     		
     		//average of all DTs
-    		Dytex tmpC= init_multiple_dt();
+    		Dytex tmpC= init_multiple_dt(dtm);
     		hembest.dt.push_back(tmpC);
     		hembest.alpha.push_back(1.0);
     	}
@@ -692,75 +692,83 @@ using namespace std;
      * \see
      * initcluster_doretto
      */
-    /*private Dytex init_multiple_dt()
+    private Dytex init_multiple_dt(DytexMix dtm)
     {
+    	int i,j;
     	//copy template
-    	Dytex odt = new dytex(dt[0].dtopt);
+    	Dytex odt = new Dytex(dtm.dt.get(0).dtopt);
 
-    	if(odt.dtopt.Yopt==DytexOptions::ZERO_YMEAN)
+    	if(odt.dtopt.Yopt== Ymean_type.ZERO_YMEAN)
     	{
-    		odt.Ymean=Mat::zeros(odt.dtopt.m,1,OPT_MAT_TYPE);
+    		odt.Ymean= new Mat(odt.dtopt.m,1,CV_64F);
     	}
-    	dt[0].Cvs.copyTo(odt.Cvs);
+    	copyTo(dtm.dt.get(0).Cvs,odt.Cvs);
     	odt.isCvs=false;
     	//extract Cs
-    	Mat Call(odt.dtopt.m,odt.dtopt.n*dt.size(),OPT_MAT_TYPE);
-    	Call=Scalar(0);
-    	for(int i=0;i<dt.size();i++)
+    	
+    	Mat cMat = new Mat(odt.dtopt.m,odt.dtopt.n*dtm.dt.size(),CV_64F);
+    	for(i=0;i<dtm.dt.size();i++)
     	{
     		int cstart=i*odt.dtopt.n;
-    		Mat tmpM=Call.colRange(cstart,cstart+odt.dtopt.n);
-    		dt[i].C.copyTo(tmpM);
+    		copyToDstColRange(dtm.dt.get(i).C,cMat,cstart,cstart+odt.dtopt.n);
     	}
-    	if(Call.rows>Call.cols)
+    	if(cMat.rows>cMat.cols)
     	{
-    		SVD svd(Call);		
-    		svd.u.colRange(0,odt.dtopt.n).copyTo(odt.C);		
+    		Matrix cMatrix = new Matrix(cMat.double2D);
+    		SingularValueDecomposition svd = new SingularValueDecomposition(cMatrix);
+    		Mat matU = new Mat(svd.getU().getArray());
+    		copyFromSrcColRange(matU,odt.C,0,odt.dtopt.n);				
     	}
     	else
     	{
-    		Mat CC = Call*Call.t();
-    		SVD svd(CC);		
-    		svd.u.colRange(0,odt.dtopt.n).copyTo(odt.C);
+    		Matrix cMatrix = new Matrix(cMat.double2D);
+    		Matrix ccMatrix = cMatrix.times(cMatrix.transpose());
+    		SingularValueDecomposition svd = new SingularValueDecomposition(ccMatrix);
+    		Mat matU = new Mat(svd.getU().getArray());
+    		copyFromSrcColRange(matU,odt.C,0,odt.dtopt.n);	
     	}
     	//initialize accumulators
-    	odt.mu0=Scalar(0);
-    	odt.S0.mtx=Scalar(0);
-    	odt.Ymean=Scalar(0);
-    	odt.A=Scalar(0);
-    	odt.Q.mtx=Scalar(0);
-    	odt.R.mtx=Scalar(0);
+    	odt.mu0.init(0);
+    	odt.S0.mtx.init(0);
+    	odt.Ymean.init(0);
+    	odt.A.init(0);
+    	odt.Q.mtx.init(0);
+    	odt.R.mtx.init(0);
 
     	//compute other parameters by averaging
-    	for(int i=0;i<dt.size();i++)
+    	for(i=0;i<dtm.dt.size();i++)
     	{
     		//compute transformation
-    		Mat F=odt.C.t()*dt[i].C;
+    		Mat F=times(transpose(odt.C),dtm.dt.get(i).C);
 
     		//accumulate
-    		odt.mu0=odt.mu0+F*dt[i].mu0;		
+    		odt.mu0=plus(odt.mu0,times(F,dtm.dt.get(i).mu0));		
 
-    		Mat tmpM(dt[i].S0.mtx.rows,dt[i].S0.mtx.rows,OPT_MAT_TYPE);
-    		tmpM=Scalar(0);
-    		Mat tmpM2=tmpM.diag();
-    		dt[i].S0.mtx.copyTo(tmpM2);
+    		Mat tmpM = new Mat(dtm.dt.get(i).S0.mtx.rows,dtm.dt.get(i).S0.mtx.rows,CV_64F);
+    		for (j = 0; j < dtm.dt.get(i).S0.mtx.rows; j++) {
+    			tmpM.double2D[j][j] = dtm.dt.get(i).S0.mtx.double2D[j][0];
+    		}
 
-    		odt.S0.mtx=odt.S0.mtx+ (F*tmpM*(F.t())).diag();
-    		odt.Ymean=odt.Ymean+dt[i].Ymean;
-    		odt.A=odt.A+F*dt[i].A*(F.inv());
-    		odt.Q.mtx=odt.Q.mtx+ F*dt[i].Q.mtx*(F.t());
-    		odt.R.mtx=odt.R.mtx+dt[i].R.mtx;
-    	}
+    		Mat FTF = times(times(F,tmpM),transpose(F));
+    		for (j = 0; j < odt.S0.mtx.rows; j++) {
+    			odt.S0.mtx.double2D[j][0] = odt.S0.mtx.double2D[j][0] + FTF.double2D[j][j];
+    		}
+    		odt.Ymean=plus(odt.Ymean,dtm.dt.get(i).Ymean);
+    		Mat Finv = new Mat((new Matrix(F.double2D)).inverse().getArray());
+    		odt.A = plus(odt.A,times(times(F,dtm.dt.get(i).A),Finv));
+    		odt.Q.mtx=plus(odt.Q.mtx,times(times(F,dtm.dt.get(i).Q.mtx),transpose(F)));
+    		odt.R.mtx=plus(odt.R.mtx,dtm.dt.get(i).R.mtx);
+        }
 
-    	odt.mu0    = odt.mu0/dt.size();	
-    	odt.S0.mtx     = odt.S0.mtx/dt.size();
-    	odt.Ymean  = odt.Ymean/dt.size();
-    	odt.A      = odt.A/dt.size();
-    	odt.Q.mtx  = odt.Q.mtx/dt.size();
-    	odt.R.mtx  = odt.R.mtx/dt.size();
+    	odt.mu0.divide(dtm.dt.size());	
+    	odt.S0.mtx.divide(dtm.dt.size());
+    	odt.Ymean.divide(dtm.dt.size());
+    	odt.A.divide(dtm.dt.size());
+        odt.Q.mtx.divide(dtm.dt.size());
+    	odt.R.mtx.divide(dtm.dt.size());
     	
     	return odt;
-    }*/
+    }
     
     /*!
      * \brief
@@ -1103,6 +1111,24 @@ using namespace std;
 	        }
         }
     }
+    
+    private void copyToDstColRange(Mat A, Mat B, int inclusiveStart, int exclusiveEnd) {
+    	int i,j;
+    	for (i = 0; i < A.double2D.length; i++) {
+    		for (j = inclusiveStart; j < exclusiveEnd; j++) {
+    			B.double2D[i][j] = A.double2D[i][j-inclusiveStart];
+    		}
+    	}
+    }
+    
+    private void copyFromSrcColRange(Mat A, Mat B, int inclusiveStart, int exclusiveEnd) {
+    	int i,j;
+    	for (i = 0; i < A.double2D.length; i++) {
+    		for (j = inclusiveStart; j < exclusiveEnd; j++) {
+    			B.double2D[i][j-inclusiveStart] = A.double2D[i][j];
+    		}
+    	}
+    }
 
     
     /*!
@@ -1438,9 +1464,33 @@ using namespace std;
     	public cov_type     covopt;  /**< type of covariance matrix */
     	public cov_reg_type regopt;  /**< type of regularization to be used */
     	public double regval;  /**< regularization value */
+    	/** cache the matrix square-root of the covariance matrix. */
+    	private  Mat sqrtmtx;
     	public CovMatrix() {
-    		
+    	    sqrtmtx = null;	
     	}
+    	
+    	public CovMatrix(int n, cov_type covopt) {
+    		  mtx = new Mat( (covopt == cov_type.COV_IID ? 1 : n), (covopt == cov_type.COV_FULL ? n : 1), CV_64F);  // initialize mtx
+    		  regopt = cov_reg_type.COV_REG_NONE;
+    		  regval = 0.0;                                         // initialize regs
+    	
+    		  this.covopt = covopt;
+    		  this.n      = n;
+    		  switch(covopt) {
+    		  case COV_FULL: case COV_DIAG: case COV_IID:
+    		    break;
+    		  default:
+    		    MipavUtil.displayError("Error: invalid cov_type");
+    		    System.exit(-1);
+    		  }
+    		  if (n<1) {
+    		    MipavUtil.displayError("Error: invalid n");
+    		    System.exit(-1);
+    		  }
+
+    		  sqrtmtx = null;
+    		}
     }
     
     /** Dynamic Texture class.
@@ -1476,31 +1526,33 @@ using namespace std;
     	}
     	
     	// constructor
-    	/*public Dytex(DytexOptions opt) {
+    	public Dytex(DytexOptions opt) {
     	  dtopt = opt;
     	  if (dtopt.Yopt == Ymean_type.NONZERO_YMEAN) {
-    		  Ymean.create(dtopt.m,1,CV_64F);
+    		  Ymean = new Mat(dtopt.m,1,CV_64F);
     	  }
     	  else {
-    		  Ymean.create(0,0,CV_64F);
+    		  Ymean = new Mat(0,0,CV_64F);
     	  }
-    	  A.create(dtopt.n, dtopt.n, CV_64F);
-    	  C.create(dtopt.m, dtopt.n, CV_64F);
-    	  mu0.create(dtopt.n, 1, CV_64F);
-    	  R(dtopt.m, dtopt.Ropt),
-    	  Q(dtopt.n, CovMatrix::COV_FULL),
-    	  S0(dtopt.n, dtopt.Sopt),
+    	  A = new Mat(dtopt.n, dtopt.n, CV_64F);
+    	  C = new Mat(dtopt.m, dtopt.n, CV_64F);
+    	  mu0 = new Mat(dtopt.n, 1, CV_64F);
+    	  R = new CovMatrix(dtopt.m, dtopt.Ropt);
+    	  Q = new CovMatrix(dtopt.n, cov_type.COV_FULL);
+    	  S0 = new CovMatrix(dtopt.n, dtopt.Sopt);
     	  vrows = 0;
     	  vcols = 0;
     		isempty=false;
     		isCvs=false;
     	  switch(dtopt.Yopt) {
-    	  case DytexOptions::NONZERO_YMEAN:
-    	  case DytexOptions::ZERO_YMEAN:
+    	  case NONZERO_YMEAN:
+    	  case ZERO_YMEAN:
     	    break;
     	  default:
-    	    CV_Error(-1, "bad Yopt");
-    	  }*/
+    	    MipavUtil.displayError("bad Yopt");
+    	    System.exit(-1);
+    	  }
+    	}
     }
     
     public class Mat {
@@ -1531,6 +1583,42 @@ using namespace std;
    public int refcount[];
     	public Mat() {
     		
+    	}
+    	
+    	public Mat(int rows, int cols, int type) {
+    		this.rows = rows;
+    	    this.cols = cols;
+    	    this.type = type;
+    	    dims = 2;
+    	    size = new int[]{rows,cols};
+    	    if (type == CV_8U) {
+    	        byte2D = new byte[rows][cols];	
+    	    }
+    	    else if (type == CV_64F) {
+    	        double2D = new double[rows][cols];	
+    	    }
+    	    else if (type == CV_64FC3) {
+    	        Vector3d2D = new Vector3d[rows][cols];	
+    	        for (int x = 0; x < rows; x++) {
+    	        	for (int y = 0; y < cols; y++) {
+    	        		Vector3d2D[x][y] = new Vector3d();
+    	        	}
+    	        }
+    	    }	
+    	}
+    	
+    	public Mat(double d2D[][]) {
+    		this.rows = d2D.length;
+    		this.cols = d2D[0].length;
+    		this.type = CV_64F;
+    		dims = 2;
+    		size = new int[]{rows,cols};
+    		double2D = new double[rows][cols];
+    		for (int r = 0; r < rows; r++) {
+    			for (int c = 0; c < cols; c++) {
+    				double2D[r][c] = d2D[r][c];
+    			}
+    		}
     	}
     	
     	public void create(int rows, int cols, int type) {
@@ -1605,6 +1693,110 @@ using namespace std;
         	    }	
     		} // else if (dims == 3)
     	}
+    	
+    	public void init(double val) {
+    		if (dims == 2) {
+	    		if (type == CV_64F) {
+	    			for (int r = 0; r < rows; r++) {
+        	        	for (int c = 0; c < cols; c++) {
+        	        		double2D[r][c] = val;
+        	        	}
+        	        }	
+	    		}
+    		}
+    		else if (dims == 3) {
+    			if (type == CV_64F) {
+    				for (int d = 0; d < depth; d++) {
+	    				for (int r = 0; r < rows; r++) {
+	        	        	for (int c = 0; c < cols; c++) {
+	        	        		double3D[d][r][c] = val;
+	        	        	}
+	        	        }
+    				}
+    			}
+    		}
+    	}
+    	
+    	public void divide(double val) {
+    		if (dims == 2) {
+	    		if (type == CV_64F) {
+	    			for (int r = 0; r < rows; r++) {
+        	        	for (int c = 0; c < cols; c++) {
+        	        		double2D[r][c] /= val;
+        	        	}
+        	        }	
+	    		}
+    		}
+    		else if (dims == 3) {
+    			if (type == CV_64F) {
+    				for (int d = 0; d < depth; d++) {
+	    				for (int r = 0; r < rows; r++) {
+	        	        	for (int c = 0; c < cols; c++) {
+	        	        		double3D[d][r][c] /= val;
+	        	        	}
+	        	        }
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    public Mat plus(Mat A, Mat B) {
+    	int r,c;
+    	if (A.rows != B.rows) {
+    		MipavUtil.displayError("A.rows != B.rows in Mat plus");
+    		System.exit(-1);
+    	}
+    	if (A.cols != B.cols) {
+    		MipavUtil.displayError("A.cols != B.cols in Mat plus");
+    		System.exit(-1);
+    	}
+    	int rows = A.rows;
+    	int cols = A.cols;
+    	int type = A.type;
+    	Mat dest = new Mat(rows, cols, type);
+    	for (r = 0; r < rows; r++) {
+    		for (c = 0; c < cols; c++) {
+    		    dest.double2D[r][c] = A.double2D[r][c] + B.double2D[r][c];	
+    		}
+    	}
+    	return dest;
+    }
+    
+    
+    public Mat times(Mat A, Mat B) {
+    	int i, r,c;
+    	if (A.cols != B.rows) {
+    		MipavUtil.displayError("A.cols != B.rows in Mat times");
+    		System.exit(-1);
+    	}
+    	int rows = A.rows;
+    	int cols = B.cols;
+    	int type = A.type;
+    	int inner = A.cols;
+    	Mat dest = new Mat(rows, cols, type);
+    	for (r = 0; r < rows; r++) {
+    		for (c = 0; c < cols; c++) {
+    			for (i = 0; i < inner; i++) {
+    		        dest.double2D[r][c] += A.double2D[r][i] + B.double2D[i][c];
+    			}
+    		}
+    	}
+    	return dest;
+    }
+    
+    public Mat transpose(Mat A) {
+    	int r,c;
+    	int rows = A.rows;
+    	int cols = A.cols;
+    	int type = A.type;
+    	Mat dest = new Mat(cols, rows, type);
+    	for (r = 0; r < rows; r++) {
+    		for (c = 0; c < cols; c++) {
+    		    dest.double2D[c][r] = A.double2D[r][c];
+    		}
+    	}
+    	return dest;
     }
     
     public class DytexMix {
