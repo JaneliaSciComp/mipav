@@ -287,16 +287,11 @@ using namespace std;
         else {
         	FlagYmean = true;
         }
-        boolean FlagVerbose;
-        if (hopt.verbose == Verbose_mode.QUIET) {
-        	FlagVerbose = false;
-        }
-        else {
-        	FlagVerbose = true;
-        }
+        Verbose_mode FlagVerbose= hopt.verbose;
+        
 
     	int Kb=dtm.dt.size();
-    	if (FlagVerbose)
+    	if (FlagVerbose != Verbose_mode.QUIET)
     	    System.out.println("Preprocessing " + Kb + " base components...");
 
     	for(int i=0;i<Kb;i++)
@@ -311,7 +306,7 @@ using namespace std;
     	//HEM parameters
     	int n=dtm.dt.get(0).dtopt.n;
     	int m=dtm.dt.get(0).dtopt.m;
-    	if (FlagVerbose)
+    	if (FlagVerbose != Verbose_mode.QUIET)
     		System.out.println("n = " + n); 
     		System.out.println("m = " + m);
     	    System.out.println("Ymean = " + dtm.dt.get(0).dtopt.Yopt);
@@ -322,27 +317,27 @@ using namespace std;
     	double MINPROB =(((double)1.0)/(((double)2.0)*(double)Kb));  
 
     	//initializations
-    	/*if(hembest.dt.size()==0)
+    	if(hembest.dt.size()==0)
     	{
-    		if(FlagVerbose)
+    		if(FlagVerbose != Verbose_mode.QUIET)
     			System.out.println("Initializing First DT with Sub-optimal: ");
     		
     		//average of all DTs
     		Dytex tmpC= init_multiple_dt(dtm);
-    		hembest.dt.push_back(tmpC);
-    		hembest.alpha.push_back(1.0);
+    		hembest.dt.add(tmpC);
+    		hembest.alpha.add(1.0);
     	}
     	
     	//current mixture size
     	int Kr=hembest.dt.size(); 
 
     	//Regularize the initializations
-    	for(int i=0;i<Kr;i++)
+    	/*for(int i=0;i<Kr;i++)
     	{		
-    		hembest.dt[i].setRegularizer(hopt.regopt);
-    		hembest.dt[i].regularize(true);			
+    		setRegularizer(hembest.dt.get(i),hopt.regopt);
+    		hembest.dt.get(i).regularize(true);			
 
-    		if(hembest.dt[i].isCvs==false)
+    		if(hembest.dt.get(i).isCvs==false)
     		{
     			SVD svd(hembest.dt[i].C);
     			Mat Cu,Cs,Cv;
@@ -679,8 +674,154 @@ using namespace std;
 
     		iter=iter+1; //End of HEM iteration
 
-    	}*/ 
+    	}*/
     }
+    
+    private void setRegularizer(Dytex dy, DytexRegOptions dtreg) {
+    	setRegularizer(dy.R, dtreg.Ropt, dtreg.Rval);
+    	setRegularizer(dy.Q, dtreg.Qopt, dtreg.Qval);
+    	setRegularizer(dy.S0, dtreg.Sopt, dtreg.Sval);
+    }
+    
+ // set regularization mode
+    private void setRegularizer(CovMatrix cov, cov_reg_type regopt, double regval) {
+      switch(regopt) {
+      case COV_REG_NONE: case COV_REG_MIN: case COV_REG_ADD:
+        break;
+      default:
+        MipavUtil.displayError("ERROR: invalid cov_reg_type!");
+        System.exit(-1);
+      }
+
+      if (regval < 0) {
+        MipavUtil.displayError("ERROR: invalid regval");
+        System.exit(-1);
+      }
+      
+      cov.regopt = regopt;
+      cov.regval = regval;
+    }
+    
+   /* private void regularize(Dytex dy, boolean regA) 
+    {
+      regularize(dy.R);
+      regularize(dy.Q);
+      regularize(dy.S0);
+
+      if(regA) //For HEM
+      {
+    	  //Regularization of A		
+    	  double target=0.999;
+    	  Mat E;
+
+    	  E=eigc(dy.A);
+    	  Mat Eabs=eigc_abs(E);
+    	  double minVal,maxVal;
+    	  minMaxLoc(Eabs,&minVal,&maxVal);
+    	  if(maxVal>target)
+    	  {
+    		  A=A*target/maxVal;
+    	  }
+      }
+    }*/
+    
+ // regularize
+    private void regularize(CovMatrix cov) {
+      /*switch(cov.regopt) {
+      case COV_REG_NONE:
+        // do nothing
+        break;
+
+      case COV_REG_MIN:
+        switch(cov.covopt) {
+        case COV_FULL:
+          // min bound on eigenvalues
+          {
+          // A = V * (diagonal values) * V' giving a rows * rows product
+          // Column of V represent the eigenvectors
+          double[] eigenvalue = new double[cov.mtx.cols];
+		  double[][] eigenvector = new double[cov.mtx.rows][cov.mtx.cols];
+		  Eigenvalue.decompose(cov.mtx.double2D, eigenvector, eigenvalue);
+		  // In openCV eigV rows are the eigenvalues
+		  // In openCV mtx = eigv" * diag(S) *eigV
+		  // In OpenvCV a cols * cols product
+		  //Size sz = mtx.size();
+		  //Mat eigS(sz.height, 1, OPT_MAT_TYPE), 
+		  //eigV(sz.height, sz.width, OPT_MAT_TYPE);
+		  // eigen(mtx, eigS, eigV);
+    	// min bound on eigenvalues
+    	boolean doRecon = inp_minbnd(eigenvalue, cov.regval);
+    	// reconstruct matrix (if something changed)
+    	if (doRecon) {
+    		Mat matV = new Mat(eigenvector);
+    		double diag[][] = new double[eigenvalue.length][eigenvalue.length];
+    		for (int i = 0; i < eigenvalue.length; i++) {
+    			diag[i][i] = eigenvalue[i];
+    		}
+    		Mat matDiag = new Mat(diag);
+    		Mat matVT = transpose(matV);
+    		cov.mtx = times(times(matV,matDiag),matVT);
+    	}
+
+    	//cout << "eigS = \n" << eigS << "\n";
+    	//cout << "eigV = \n" << eigV << "\n";
+
+    	// reconstruct matrix (if something changed)
+    	//if (doRecon) {
+    	  // note: eigV rows are the eigenvalues
+    	  //Mat S = repeat(eigS, 1, sz.width);   // S = [eigS, eigS ...]
+    	  //multiply(S, eigV, S);                // S = S .* eigV
+    	  //mtx = eigV.t() * S;                  // mtx = eigV'*diag(S)*eigV
+    	//}
+          }
+          break;
+        case COV_DIAG: case COV_IID: 
+          // min of elements 
+          inp_minbnd(cov.mtx, cov.regval);
+          break;
+        }
+        break;
+
+      case COV_REG_ADD:
+        // regularize by adding to diagonal
+        switch(cov.covopt) {
+        case COV_FULL:
+          {
+    	// add to just diagonal
+    	// TODO: can optimize this (add in-place)
+    	Mat dmtx = mtx.diag();
+    	add(dmtx, regval, dmtx);
+          }
+          break;
+
+        case COV_DIAG:
+        case COV_IID:
+          // add to diagonal (all elements)
+          // TODO: can optimize this (add in-place)
+          add(mtx, regval, mtx);
+          break;
+        }
+        break;    
+
+      default:
+        CV_Error(-1, "ERROR: invalid cov_reg_type!");
+      }*/
+    }
+    
+    // bound the minimum entry of a matrix, in-place
+    // returns true if an entry changed
+    private boolean inp_minbnd(double arr[], double min_bnd) {
+    	int i;
+    	boolean retval = false;
+    	for (i = 0; i < arr.length; i++) {
+    		if (arr[i] < min_bnd) {
+    			arr[i] = min_bnd;
+    			retval = true;
+    		}
+    	}
+    	return retval;
+    }
+ 
     
     /*!
      * \brief
