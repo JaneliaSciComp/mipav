@@ -277,6 +277,7 @@ using namespace std;
      */
     private void runHEM(DytexMix dtm, DytexMix hembest, HEMOptions hopt, Vector<Integer> classes)
     {
+    	int i, j;
     	//used to display info in change in classes during EM loop
     	Clock elapsedtime;
     	int numlastclasses=5;
@@ -294,7 +295,7 @@ using namespace std;
     	if (FlagVerbose != Verbose_mode.QUIET)
     	    System.out.println("Preprocessing " + Kb + " base components...");
 
-    	for(int i=0;i<Kb;i++)
+    	for(i=0;i<Kb;i++)
     	{		
     		if(dtm.dt.get(i).dtopt.Yopt!=hopt.Ymean)
     		{
@@ -332,24 +333,25 @@ using namespace std;
     	int Kr=hembest.dt.size(); 
 
     	//Regularize the initializations
-    	/*for(int i=0;i<Kr;i++)
+    	for(i=0;i<Kr;i++)
     	{		
     		setRegularizer(hembest.dt.get(i),hopt.regopt);
-    		hembest.dt.get(i).regularize(true);			
+    		regularize(hembest.dt.get(i),true);			
 
     		if(hembest.dt.get(i).isCvs==false)
-    		{
-    			SVD svd(hembest.dt[i].C);
-    			Mat Cu,Cs,Cv;
-    			svd.u.copyTo(Cu);
-    			svd.vt.copyTo(Cv);	
-    			Cv=Cv.t();
-    			Cs=Mat::zeros(svd.w.rows,svd.w.rows,svd.w.type());				
-    			Mat tmpM=Cs.diag();
-    			svd.w.copyTo(tmpM);
-    			tmpM=Cv*Cs;			
-    			tmpM.copyTo(hembest.dt[i].Cvs);
-    			hembest.dt[i].isCvs=true;
+    		{   
+    			Matrix cMat = new Matrix(hembest.dt.get(i).C.double2D);
+    			SingularValueDecomposition svd = new SingularValueDecomposition(cMat);
+    		    double singularValues[] = svd.getSingularValues();
+    		    Mat Cv = new Mat(svd.getV().getArray());
+    		    double arr[][] = new double[singularValues.length][singularValues.length];
+    		    for (j = 0; j < singularValues.length; j++) {
+    		    	arr[j][j] = singularValues[j];
+    		    }
+    		    Mat Cs = new Mat(arr);
+    			Mat tmpM= times(Cv,Cs);			
+    			copyTo(tmpM,hembest.dt.get(i).Cvs);
+    			hembest.dt.get(i).isCvs=true;
     		}
     	}
 
@@ -357,31 +359,45 @@ using namespace std;
     	//%%% RUN HEM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     	//initialize convergence measures	
-    	std::vector<double> datalikelihood(hopt.maxiter+1,0);
-    	std::vector<double> ddtall(hopt.maxiter,0);
-    	std::vector<double> pdtall(hopt.maxiter,0);
-    	std::vector<std::vector<int> > lastclasses(numlastclasses);
+    	Vector<Double> datalikelihood = new Vector<Double>(hopt.maxiter+1);
+    	for (i = 0; i < hopt.maxiter+1; i++) {
+    		datalikelihood.add(0.0);
+    	}
+    	Vector<Double>ddtall = new Vector<Double>(hopt.maxiter);
+    	Vector<Double>pdtall = new Vector<Double>(hopt.maxiter);
+    	for (i = 0; i < hopt.maxiter; i++) {
+    		ddtall.add(0.0);
+    		pdtall.add(0.0);
+    	}
+    	Vector<Vector<Integer>> lastclasses = new Vector<Vector<Integer>>(numlastclasses);
     	int lastclassesind = 0;
 
-    	for(int i=0;i<numlastclasses;i++)
-    		lastclasses[i]=std::vector<int>(Kb,0);
+    	for(i=0;i<numlastclasses;i++) {
+    		lastclasses.add(new Vector<Integer>(Kb));
+    		for (j = 0; j < Kb; j++) {
+    			lastclasses.get(i).add(0);
+    		}
+    	}   
 
     	//initializa blanks
-    	std::vector<double> blank(Kr,0);
-    	for(int j=0;j<Kr;j++)
+    	Vector<Double> blank = new Vector<Double>(Kr);
+    	for (i = 0; i < Kr; i++) {
+    		blank.add(0.0);
+    	}
+    	for(j=0;j<Kr;j++)
     	{
-    		if(hembest.dt[j].isempty)
-    			blank[j]=1;
+    		if(hembest.dt.get(j).isempty)
+    			blank.set(j,1.0);
     	}
 
     	//initialize loop
-    	clock_t starttime=clock();	
+    	long starttime= System.currentTimeMillis();	
     	int iter=0;
     	//hem loop
-    	while(1)
+    	/*while(true)
     	{
     		//compute statistics between 2 DT for HEM E-step
-    		Estats Estat(dt,hembest.dt,tau,FlagYmean);
+    		Estats Estat(dtm.dt,hembest.dt,tau,FlagYmean);
     		Estat.computeEll();
     		Mat ell=Estat.Ell.clone();
     		Mat tmpM=Mat(alpha).clone();
@@ -677,6 +693,546 @@ using namespace std;
     	}*/
     }
     
+    /*!
+     * \brief
+     * Computes statistics between 2 DT for HEM E-step.
+     * 
+     * Write detailed description for Estats here.
+     * 
+     * \remarks
+     * Fatser version and takes less memory because only aggregate statistics are precomputed and stored
+     * 
+     * \see
+     * DytexMix::runHEM
+     */
+    class Estats
+    {
+
+    	/*!
+    	 * \brief
+    	 * cell array of DT components of base mixture	 
+    	 */
+    	public Vector<Dytex> dti = new Vector<Dytex>();
+    	/*!
+    	 * \brief
+    	 * cell array of DT component of reduced mixture	 
+    	 */
+    	public Vector<Dytex> dtj = new Vector<Dytex>(0);
+
+    	/*!
+    	 * \brief
+    	 * sequence length	 
+    	 */
+    	public int tau;
+
+    	/*!
+    	 * \brief
+    	 * 1 = use Ymean, 0 = don't use Ymean	 
+    	 */
+    	public boolean useYmean;
+
+    	/*!
+    	 * \brief
+    	 * Expected log-likelihood between Dts	 
+    	 */
+    	public Mat Ell;
+
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> xij = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> etaj = new Vector<Mat>();	
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> Phij = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> varphij = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> phij = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> betaj = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> Psij = new Vector<Mat>();	
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> Gammaj = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Double> Lambdaj = new Vector<Double>();
+    	/*!
+    	 * \brief
+    	 * aggregate statistic.	 
+    	 */
+    	public Vector<Mat> gammaj = new Vector<Mat>();
+
+    	
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_Q_Ft = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_Q_GtC2 = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_Q_Wt = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_Q_foo = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_Q_Jt = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_Q_Ht = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_Lt = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_LF = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Vector<Mat> dtjsa_LtGt = new Vector<Mat>();
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_iA2;	
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_Szero;	
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_Psij_init;
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_etaj_init;
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_varphij_init;
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_Phij_init;
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_phij_init;
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+    	public Mat dtjsa_Q_logdet;	
+    	/*!
+    	 * \brief
+    	 * SENS ANALYSIS Cache variable
+    	 */
+
+    	/*!
+    	 * \brief
+    	 * check if reduced DT is blank or not
+    	 */
+    	Vector<Boolean> dtjblank = new Vector<Boolean>();	
+
+    	/*!
+    	 * \brief
+    	 * initialize Estats object.
+    	 * 
+    	 * \param dti
+    	 * cell array of DT components of base mixture.
+    	 * 
+    	 * \param dtj
+    	 * cell array of DT component of reduced mixture.
+    	 * 
+    	 * \param tau
+    	 * sequence length.
+    	 * 
+    	 * \param useYmean
+    	 * 1 = use Ymean, 0 = don't use Ymean.
+    	 * 
+    	 * initialize SENS ANALYSIS Cache for base and reduced DTs
+    	 * 
+    	 */
+    	public Estats(Vector<Dytex> dti,Vector<Dytex> dtj,int tau,boolean useYmean)
+    	{
+    		this.dti=dti;
+    		this.dtj=dtj;
+    		this.tau=tau;
+    		this.useYmean=useYmean;
+    		//build SENS ANALYSIS Cache
+    		saveCache();
+    	}
+    	
+    	/*!
+    	 * \brief
+    	 * RUN AND CACHE THE SENS ANALYSIS FOR DTJ 
+    	 */
+    	public void saveCache() {
+    		/*int i, j;
+    		int Kb=dti.size();
+    		int Kr=dtj.size();
+    		int len=tau;
+    		int dx=dtj.get(0).C.cols;
+    		int dy=dtj.get(0).C.rows;
+
+    		//initialize cache		
+    		for(i=0;i<Kr;i++)
+    		{
+    			Mat tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_Q_Ft.add(tmp);
+
+    			tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_Q_GtC2.add(tmp);
+
+    			tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_Q_Wt.add(tmp);
+
+    			tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_Q_foo.add(tmp);
+
+    			tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_Q_Jt.add(tmp);
+
+    			tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_Q_Ht.add(tmp);
+
+    			tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_Lt.add(tmp);
+
+    			tmp=create(len,dx,dx,CV_64F);
+    			dtjsa_LF.add(tmp);
+
+    			tmp=create(len,dx,dy,CV_64F);
+    			dtjsa_LtGt.add(tmp);
+    		}
+    		dtjsa_iA2= create(Kr,dx,dx,CV_64F);
+    		dtjsa_Szero.create(1,Kr,CV_64F);
+    		dtjsa_Psij_init= create(Kr,dx,dx,CV_64F);
+    		dtjsa_etaj_init= create(Kr,dx,dx,CV_64F);
+    		dtjsa_varphij_init= create(Kr,dx,dx,CV_64F);
+    		dtjsa_Phij_init= create(Kr,dx,dx,CV_64F);
+    		dtjsa_phij_init= create(Kr,dx,dx,CV_64F);
+    		dtjsa_Q_logdet.create(len,Kr,CV_64F);
+
+    		//RUN AND CACHE THE SENS ANALYSIS FOR DTJ
+    		if (dtjblank.size() > Kr) {
+    	        while (dtjblank.size() > Kr) {
+    	        	dtjblank.remove(dtjblank.size() - 1);
+    	        }
+    		}
+    		else if (dtjblank.size() < Kr) {
+    			while(dtjblank.size() < Kr) {
+    				dtjblank.add(false);
+    			}
+    		}
+    		for(j=0;j<Kr;j++)
+    		{
+    			Dytex dt2=dtj.get(j);
+
+    			if(dt2.isempty)
+    			{
+    				dtjblank.set(j,true);
+    				continue;
+    			}
+
+    			Mat S2;
+    			Mat tmpM;
+    			switch(dt2.dtopt.Sopt)
+    			{
+    			case COV_DIAG:
+    				S2.create(dt2.S0.mtx.rows,dt2.S0.mtx.rows,CV_64F);
+    				for (i = 0; i < dt2.S0.mtx.rows; i++) { 
+    					S2.double2D[i][i] = dt2.S0.mtx.double2D[i][0];
+    				}
+    				break;
+
+    			default:
+    				MipavUtil.displayError("Cov type Not supported");
+    				System.exit(-1);
+    			}
+
+    			boolean Szero=true;
+    			for(int m=0;m<S2.rows;m++)
+    				for(int n=0;n<S2.cols;n++)
+    				{
+    					if(S2.double2D[m][n]!=0)
+    						Szero=false;
+    				}
+
+    				//special n=0 case
+    				if (dx==0)
+    				{
+    					MipavUtil.displayError("n=0 case not supported");
+    					System.exit(-1);
+    				}
+
+    				Mat A2 = dt2.A;
+    				Matrix A2M=new Matrix(dt2.A.double2D);
+    				Mat iA2=new Mat(A2M.inverse().getArray());
+    				Mat Q2=dt2.Q.mtx;
+    				Mat C2=dt2.C;
+    				Mat C2vs=dt2.Cvs;
+    				double r2=dt2.R.mtx.double2D[0][0];
+    				Mat C2R2C2=times(transpose(C2),C2);
+    				C2R2C2.divide(r2);
+
+    				// initialize KALMAN (t=1)
+    				Mat Q_curVtt1=S2;
+
+    				// Kalman cache
+    				Mat Q_Vtt1 = create(len,dx,dx,CV_64F);
+    				Mat Q_Vtt  = create(len,dx,dx,CV_64F);
+    				Mat Q_Ft   = create(len,dx,dx,CV_64F);
+    				Mat Q_GtC2 = create(len,dx,dx,CV_64F);
+    				Mat Q_Gt   = create(len,dx,dy,CV_64F);
+    				Mat Q_Wt   = create(len,dx,dx,CV_64F);
+    				Mat Q_foo  = create(len,dx,dx,CV_64F);
+    				Mat Q_logdet = new Mat(len,1,CV_64F);
+
+    				//KALMAN filter on Q
+    				Mat Q_curVtt,Q_curfoo,Q_curWt,Q_KtC2;
+    				for(int t=0;t<len;t++)
+    				{
+    					if (t>0)
+    					{
+    						Q_curVtt1   = plus(times(times(A2,Q_curVtt),transpose(A2)),Q2);
+    					}
+    					if((t==0) && (Szero==true))
+    					{
+    						Q_curfoo= new Mat(dx,dx,CV_64F);
+    					}
+    					else
+    					{
+    						Matrix Qinv = (new Matrix(Q_curVtt1.double2D)).inverse();
+    						Matrix Qc = Qinv.plus(new Matrix(C2R2C2.double2D));
+    						Q_curWt = new Mat(Qc.inverse().getArray());
+    						Mat eyeMat = new Mat(dx,dx,CV_64F);
+    						for (i = 0; i < dx; i++) {
+    							eyeMat.double2D[i][i] = 1.0;
+    						}
+    						Q_curfoo = times(Q_curVtt1,minus(eyeMat,times(C2R2C2,Q_curWt)));
+    					}
+    					Q_KtC2        = times(Q_curfoo,C2R2C2);
+    					MatVid::frame(Q_GtC2,t) = A2*Q_KtC2;
+    					MatVid::frame(Q_Ft,t)   = A2-MatVid::frame(Q_GtC2,t);
+    					MatVid::frame(Q_Gt,t)   = (A2*Q_curfoo*(C2.t()))/r2;
+    					Q_curVtt    = Q_curVtt1 - Q_KtC2*Q_curVtt1;
+
+    					Mat tmpM=MatVid::frame(Q_Vtt1,t);
+    					Q_curVtt1.copyTo(tmpM);
+    					tmpM=MatVid::frame(Q_Vtt,t);
+    					Q_curVtt.copyTo(tmpM);
+    					tmpM=MatVid::frame(Q_Wt,t);
+    					Q_curWt.copyTo(tmpM);
+    					tmpM=MatVid::frame(Q_foo,t);
+    					Q_curfoo.copyTo(tmpM);
+    					Q_logdet.at<OPT_F_TYPE>(t,0)   = logdetiid((C2vs.t())*Q_curVtt1*C2vs, r2, dy);
+    				}//142
+
+    				// KALMAN smoothing filter on Q, and sensitivity analysis
+    				Mat Q_Jt=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
+    				Q_Jt.setTo(0);
+    				Mat Q_Ht=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
+    				Q_Ht.setTo(0);
+    				Mat Q_Vtt1tau=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
+    				Q_Vtt1tau.setTo(0);
+    				MatVid::frame(Q_Vtt1tau,0).setTo(INF);
+    				Mat Q_Vttau=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
+    				Q_Vttau.setTo(0);
+    				Mat Lt=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
+    				Lt.setTo(0);
+    				Mat LF=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
+    				LF.setTo(0);
+    				Mat LtGt=MatVid::create(len,dx,dy,OPT_MAT_TYPE);
+    				LtGt.setTo(0);
+
+    				Mat Q_curVttau,curLt,Q_curVtt1tau;
+    				for(int t=len-1;t>=0;t--)
+    				{
+    					if (t==(len-1))
+    					{
+    						Q_curVttau   = MatVid::frame(Q_Vtt,len-1);
+    						iA2.copyTo(curLt);
+    					}      
+    					else
+    					{
+    						MatVid::frame(Q_Jt,t) = MatVid::frame(Q_Vtt,t)*(A2.t())*(MatVid::frame(Q_Vtt1,t+1).inv());
+    						MatVid::frame(Q_Ht,t) = iA2 - MatVid::frame(Q_Jt,t);
+    						Q_curVttau  = MatVid::frame(Q_Vtt,t) + MatVid::frame(Q_Jt,t)*(Q_curVttau-MatVid::frame(Q_Vtt1,t+1))*(MatVid::frame(Q_Jt,t).t());
+    						curLt = MatVid::frame(Q_Ht,t) + MatVid::frame(Q_Jt,t)*curLt*MatVid::frame(Q_Ft,t+1);
+    					}
+    					Mat tmpM=MatVid::frame(Q_Vttau,t);
+    					Q_curVttau.copyTo(tmpM);
+
+    					if (t<(len-1))
+    					{
+    						if (t==len-2)
+    						{					
+    							Q_curVtt1tau = (Mat::eye(dx,dx,OPT_MAT_TYPE) - iA2*MatVid::frame(Q_GtC2,len-1))*A2*MatVid::frame(Q_Vtt,len-2);
+    						}
+    						else      
+    						{
+    							Q_curVtt1tau = MatVid::frame(Q_Vtt,t+1)*(MatVid::frame(Q_Jt,t).t())+MatVid::frame(Q_Jt,t+1)*(Q_curVtt1tau-A2*MatVid::frame(Q_Vtt,t+1))*(MatVid::frame(Q_Jt,t).t());
+    						}
+    						Mat tmpM=MatVid::frame(Q_Vtt1tau,t+1);
+    						Q_curVtt1tau.copyTo(tmpM);
+    					}    
+
+    					// sensitivity analysis cache
+    					MatVid::frame(LF,t)   = curLt*MatVid::frame(Q_Ft,t);
+    					MatVid::frame(LtGt,t) = curLt*MatVid::frame(Q_Gt,t);
+    					tmpM=MatVid::frame(Lt,t);
+    					curLt.copyTo(tmpM);    
+    				}//182
+
+    				//save things
+    				dtjsa_Q_Ft[j]   = Q_Ft;
+    				dtjsa_Q_GtC2[j] = Q_GtC2;
+    				dtjsa_Q_Wt[j]   = Q_Wt;
+    				dtjsa_Q_foo[j]  = Q_foo;
+    				dtjsa_Q_Jt[j]   = Q_Jt;
+    				dtjsa_Q_Ht[j]   = Q_Ht;
+    				dtjsa_Lt[j]        = Lt;
+    				dtjsa_LF[j]        = LF;
+    				dtjsa_LtGt[j]      = LtGt;
+    				tmpM=MatVid::frame(dtjsa_iA2,j);
+    				iA2.copyTo(tmpM);
+    				dtjsa_Szero.at<OPT_F_TYPE>(0,j)     = (double)Szero;
+
+    				tmpM=MatVid::subvid(Q_Vtt1tau,Range(1,len),Range::all(),Range::all());
+    				Mat tmpM2;
+    				MatVid::reduce(tmpM,tmpM2,CV_REDUCE_SUM);
+    				Mat tmpM3=MatVid::frame(dtjsa_Psij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				tmpM2.copyTo(tmpM3);
+
+    				tmpM=MatVid::frame(dtjsa_etaj_init,j);
+    				tmpM2= MatVid::frame(Q_Vttau,0);
+    				tmpM2.copyTo(tmpM);
+
+
+    				tmpM=MatVid::subvid(Q_Vttau,Range(1,len),Range::all(),Range::all());
+    				Mat tmpN1;
+    				MatVid::reduce(tmpM,tmpN1,CV_REDUCE_SUM);
+    				tmpM3=MatVid::frame(dtjsa_varphij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				tmpN1.copyTo(tmpM3);
+
+    				Mat tmpN2;
+    				MatVid::reduce(Q_Vttau,tmpN2,CV_REDUCE_SUM);
+    				tmpM3=MatVid::frame(dtjsa_Phij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				tmpN2.copyTo(tmpM3);
+
+    				tmpM=MatVid::subvid(Q_Vttau,Range(0,len-1),Range::all(),Range::all());
+    				Mat tmpN3;
+    				MatVid::reduce(tmpM,tmpN3,CV_REDUCE_SUM);
+    				tmpM3=MatVid::frame(dtjsa_phij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				tmpN3.copyTo(tmpM3);
+
+    				tmpM=dtjsa_Q_logdet.col(j);
+    				Q_logdet.copyTo(tmpM);
+
+    		}//202	*/
+    	}
+    }
+    
+    private Mat frame(Mat vid, int f) {
+    	  
+    	//cout<<"Test "<<f<<"  "<<vid.size[0]<<endl;
+      if(vid.dims != 3) {
+    	  MipavUtil.displayError("vid.dims = " + vid.dims + " instead of the required 3 in Mat frame");
+    	  System.exit(-1);
+      }
+      if((f < 0) || (f >= vid.size[0])) {
+    	  MipavUtil.displayError("f is an impossible " + f + " in Mat frame");
+    	  System.exit(-1);
+      }
+      Mat myf = new Mat(vid.size[1], vid.size[2], vid.type);
+      myf.double2D = vid.double3D[vid.step[0]*f];
+      myf.bytesPerRow = vid.step[1];
+
+      //dumpMatSize(myf);
+      return myf;
+      
+      //return MatVid::subvid(vid, f, f, 0, vid.size[1]-1, 0, vid.size[2]-1);
+
+      /*
+      Mat myf = MatVid::subvid(vid, Range(f, f+1), Range::all(), Range::all() );
+
+      dumpMatSize(myf);
+
+      // make it an image (remove the first coordinate)
+      myf.dims = 2;
+      myf.size[0] = myf.size[1];
+      myf.size[1] = myf.size[2];
+      myf.size[2] = 0;
+      myf.step[0] = myf.step[1];
+      myf.step[1] = myf.step[2];
+      myf.step[2] = 0;
+
+      myf.rows = myf.size[0];
+      myf.cols = myf.size[1];
+
+      dumpMatSize(myf);
+
+      return myf;
+      */
+    }
+    
+    private Mat create(int frames, int rows, int cols, int type) {
+    	  int sz[] = {frames, rows, cols};
+    	  return new Mat(3, sz, type);
+   }
+    
     private void setRegularizer(Dytex dy, DytexRegOptions dtreg) {
     	setRegularizer(dy.R, dtreg.Ropt, dtreg.Rval);
     	setRegularizer(dy.Q, dtreg.Qopt, dtreg.Qval);
@@ -702,8 +1258,9 @@ using namespace std;
       cov.regval = regval;
     }
     
-   /* private void regularize(Dytex dy, boolean regA) 
+   private void regularize(Dytex dy, boolean regA) 
     {
+	  int i;
       regularize(dy.R);
       regularize(dy.Q);
       regularize(dy.S0);
@@ -712,22 +1269,60 @@ using namespace std;
       {
     	  //Regularization of A		
     	  double target=0.999;
-    	  Mat E;
-
-    	  E=eigc(dy.A);
-    	  Mat Eabs=eigc_abs(E);
-    	  double minVal,maxVal;
-    	  minMaxLoc(Eabs,&minVal,&maxVal);
-    	  if(maxVal>target)
-    	  {
-    		  A=A*target/maxVal;
-    	  }
+    	  double[] eigenvalueR = new double[dy.A.cols];
+    	  double[] eigenvalueI = new double[dy.A.cols];
+    	  double [] eigenabs = new double[dy.A.cols];
+		  double[][] eigenvector = new double[dy.A.rows][dy.A.cols];
+		  Eigenvalue.decompose(dy.A.double2D, eigenvector, eigenvalueR, eigenvalueI);
+		  for (i = 0; i < eigenvalueR.length; i++) {
+			  eigenabs[i] = zabs(eigenvalueR[i], eigenvalueI[i]);
+		  }
+		  double maxVal = -Double.MAX_VALUE;
+		  for (i = 0; i < eigenabs.length; i++) {
+			  if (eigenabs[i] > maxVal) {
+				  maxVal = eigenabs[i];
+			  }
+		  }
+		  if (maxVal > target) {
+		      dy.A.multiply(target/maxVal);
+		  }
       }
-    }*/
+    }
+   
+   /**
+    * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
+    * 
+    * @param zr double
+    * @param zi double
+    * 
+    * @return double
+    */
+   private double zabs(final double zr, final double zi) {
+       double u, v, q, s;
+       u = Math.abs(zr);
+       v = Math.abs(zi);
+       s = u + v;
+
+       // s * 1.0 makes an unnormalized underflow on CDC machines into a true
+       // floating zero
+       s = s * 1.0;
+
+       if (s == 0.0) {
+           return 0.0;
+       } else if (u > v) {
+           q = v / u;
+
+           return (u * Math.sqrt(1.0 + (q * q)));
+       } else {
+           q = u / v;
+
+           return (v * Math.sqrt(1.0 + (q * q)));
+       }
+   }
     
- // regularize
+    // regularize
     private void regularize(CovMatrix cov) {
-      /*switch(cov.regopt) {
+      switch(cov.regopt) {
       case COV_REG_NONE:
         // do nothing
         break;
@@ -777,7 +1372,7 @@ using namespace std;
           break;
         case COV_DIAG: case COV_IID: 
           // min of elements 
-          inp_minbnd(cov.mtx, cov.regval);
+          inp_minbnd(cov.mtx.double2D, cov.regval);
           break;
         }
         break;
@@ -788,24 +1383,28 @@ using namespace std;
         case COV_FULL:
           {
     	// add to just diagonal
-    	// TODO: can optimize this (add in-place)
-    	Mat dmtx = mtx.diag();
-    	add(dmtx, regval, dmtx);
+    	for (int i = 0; i < cov.mtx.double2D.length; i++) {
+    		cov.mtx.double2D[i][i] += cov.regval;
+    	}
           }
           break;
 
         case COV_DIAG:
         case COV_IID:
           // add to diagonal (all elements)
-          // TODO: can optimize this (add in-place)
-          add(mtx, regval, mtx);
+          for (int i = 0; i < cov.mtx.double2D.length; i++) {
+        	  for (int j = 0; j < cov.mtx.double2D[0].length; j++) {
+        		  cov.mtx.double2D[i][j] += cov.regval;
+        	  }
+          }
           break;
         }
         break;    
 
       default:
-        CV_Error(-1, "ERROR: invalid cov_reg_type!");
-      }*/
+        MipavUtil.displayError("ERROR: invalid cov_reg_type!");
+        System.exit(-1);
+      }
     }
     
     // bound the minimum entry of a matrix, in-place
@@ -817,6 +1416,22 @@ using namespace std;
     		if (arr[i] < min_bnd) {
     			arr[i] = min_bnd;
     			retval = true;
+    		}
+    	}
+    	return retval;
+    }
+    
+    // bound the minimum entry of a matrix, in-place
+    // returns true if an entry changed
+    private boolean inp_minbnd(double arr[][], double min_bnd) {
+    	int i, j;
+    	boolean retval = false;
+    	for (i = 0; i < arr.length; i++) {
+    		for (j = 0; j < arr[0].length; j++) {
+	    		if (arr[i][j] < min_bnd) {
+	    			arr[i][j] = min_bnd;
+	    			retval = true;
+	    		}
     		}
     	}
     	return retval;
@@ -1710,6 +2325,8 @@ using namespace std;
    public int depth, rows, cols;
    public int size[];
    public int type;
+   public int step[];
+   public int bytesPerRow;
    //! pointer to the data
    public byte data[];
    public byte byte2D[][];
@@ -1746,6 +2363,56 @@ using namespace std;
     	        	}
     	        }
     	    }	
+    	}
+    	
+    	public Mat(int dims, int size[], int type) {
+    		int x, y , z;
+    		this.dims = dims;
+    		this.size = size;
+    		this.type = type;
+    		if (dims == 2) {
+    			this.rows = size[0];
+    			this.cols = size[1];
+    		}
+    		else if (dims == 3) {
+    			this.depth = size[0];
+    			this.rows = size[1];
+    			this.cols = size[2];
+    		}
+    		if (dims == 2) {
+    			if (type == CV_8U) {
+        	        byte2D = new byte[rows][cols];	
+        	    }
+        	    else if (type == CV_64F) {
+        	        double2D = new double[rows][cols];	
+        	    }
+        	    else if (type == CV_64FC3) {
+        	        Vector3d2D = new Vector3d[rows][cols];	
+        	        for (x = 0; x < rows; x++) {
+        	        	for (y = 0; y < cols; y++) {
+        	        		Vector3d2D[x][y] = new Vector3d();
+        	        	}
+        	        }
+        	    }	
+    		} // if (dims == 2)
+    		else if (dims == 3) {
+    			if (type == CV_8U) {
+        	        byte3D = new byte[depth][rows][cols];	
+        	    }
+        	    else if (type == CV_64F) {
+        	        double3D = new double[depth][rows][cols];	
+        	    }
+        	    else if (type == CV_64FC3) {
+        	        Vector3d3D = new Vector3d[depth][rows][cols];
+        	        for (x = 0; x < depth; x++) {
+	        	        for (y = 0; y < rows; y++) {
+	        	        	for (z = 0; z < cols; z++) {
+	        	        		Vector3d3D[x][y][z] = new Vector3d();
+	        	        	}
+	        	        }
+        	        }
+        	    }	
+    		} // else if (dims == 3)
     	}
     	
     	public Mat(double d2D[][]) {
@@ -1880,6 +2547,29 @@ using namespace std;
     			}
     		}
     	}
+    	
+    	public void multiply(double val) {
+    		if (dims == 2) {
+	    		if (type == CV_64F) {
+	    			for (int r = 0; r < rows; r++) {
+        	        	for (int c = 0; c < cols; c++) {
+        	        		double2D[r][c] *= val;
+        	        	}
+        	        }	
+	    		}
+    		}
+    		else if (dims == 3) {
+    			if (type == CV_64F) {
+    				for (int d = 0; d < depth; d++) {
+	    				for (int r = 0; r < rows; r++) {
+	        	        	for (int c = 0; c < cols; c++) {
+	        	        		double3D[d][r][c] *= val;
+	        	        	}
+	        	        }
+    				}
+    			}
+    		}
+    	}
     }
     
     public Mat plus(Mat A, Mat B) {
@@ -1904,6 +2594,28 @@ using namespace std;
     	return dest;
     }
     
+    public Mat minus(Mat A, Mat B) {
+    	int r,c;
+    	if (A.rows != B.rows) {
+    		MipavUtil.displayError("A.rows != B.rows in Mat plus");
+    		System.exit(-1);
+    	}
+    	if (A.cols != B.cols) {
+    		MipavUtil.displayError("A.cols != B.cols in Mat plus");
+    		System.exit(-1);
+    	}
+    	int rows = A.rows;
+    	int cols = A.cols;
+    	int type = A.type;
+    	Mat dest = new Mat(rows, cols, type);
+    	for (r = 0; r < rows; r++) {
+    		for (c = 0; c < cols; c++) {
+    		    dest.double2D[r][c] = A.double2D[r][c] - B.double2D[r][c];	
+    		}
+    	}
+    	return dest;
+    }
+    
     
     public Mat times(Mat A, Mat B) {
     	int i, r,c;
@@ -1919,7 +2631,7 @@ using namespace std;
     	for (r = 0; r < rows; r++) {
     		for (c = 0; c < cols; c++) {
     			for (i = 0; i < inner; i++) {
-    		        dest.double2D[r][c] += A.double2D[r][i] + B.double2D[i][c];
+    		        dest.double2D[r][c] += (A.double2D[r][i] * B.double2D[i][c]);
     			}
     		}
     	}
