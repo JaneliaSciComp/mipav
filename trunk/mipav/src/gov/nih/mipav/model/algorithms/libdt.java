@@ -919,7 +919,7 @@ using namespace std;
     	 * RUN AND CACHE THE SENS ANALYSIS FOR DTJ 
     	 */
     	public void saveCache() {
-    		/*int i, j;
+    		/*int i, j, r, c;
     		int Kb=dti.size();
     		int Kr=dtj.size();
     		int len=tau;
@@ -1064,62 +1064,84 @@ using namespace std;
     						Q_curfoo = times(Q_curVtt1,minus(eyeMat,times(C2R2C2,Q_curWt)));
     					}
     					Q_KtC2        = times(Q_curfoo,C2R2C2);
-    					MatVid::frame(Q_GtC2,t) = A2*Q_KtC2;
-    					MatVid::frame(Q_Ft,t)   = A2-MatVid::frame(Q_GtC2,t);
-    					MatVid::frame(Q_Gt,t)   = (A2*Q_curfoo*(C2.t()))/r2;
-    					Q_curVtt    = Q_curVtt1 - Q_KtC2*Q_curVtt1;
+    					Mat frame_Q_GtC2_t = frame(Q_GtC2,t);
+    					copyTo(times(A2,Q_KtC2),frame_Q_GtC2_t);
+    					Mat frame_Q_Ft_t = frame(Q_Ft,t);
+    					copyTo(minus(A2,frame_Q_GtC2_t),frame_Q_Ft_t);
+    					Mat frame_Q_Gt_t = frame(Q_Gt,t);
+    					copyTo(divide(times(times(A2,Q_curfoo),transpose(C2)),r2),frame_Q_Gt_t);
+    					Q_curVtt    = minus(Q_curVtt1,times(Q_KtC2,Q_curVtt1));
 
-    					Mat tmpM=MatVid::frame(Q_Vtt1,t);
-    					Q_curVtt1.copyTo(tmpM);
-    					tmpM=MatVid::frame(Q_Vtt,t);
-    					Q_curVtt.copyTo(tmpM);
-    					tmpM=MatVid::frame(Q_Wt,t);
-    					Q_curWt.copyTo(tmpM);
-    					tmpM=MatVid::frame(Q_foo,t);
-    					Q_curfoo.copyTo(tmpM);
-    					Q_logdet.at<OPT_F_TYPE>(t,0)   = logdetiid((C2vs.t())*Q_curVtt1*C2vs, r2, dy);
+    					tmpM=frame(Q_Vtt1,t);
+    					copyTo(Q_curVtt1,tmpM);
+    					tmpM=frame(Q_Vtt,t);
+    					copyTo(Q_curVtt,tmpM);
+    					tmpM=frame(Q_Wt,t);
+    					copyTo(Q_curWt,tmpM);
+    					tmpM=frame(Q_foo,t);
+    					copyTo(Q_curfoo,tmpM);
+    					Q_logdet.double2D[t][0]   = logdetiid(times(times(transpose(C2vs),Q_curVtt1),C2vs), r2, dy);
     				}//142
 
     				// KALMAN smoothing filter on Q, and sensitivity analysis
-    				Mat Q_Jt=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
-    				Q_Jt.setTo(0);
-    				Mat Q_Ht=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
-    				Q_Ht.setTo(0);
-    				Mat Q_Vtt1tau=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
-    				Q_Vtt1tau.setTo(0);
-    				MatVid::frame(Q_Vtt1tau,0).setTo(INF);
-    				Mat Q_Vttau=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
-    				Q_Vttau.setTo(0);
-    				Mat Lt=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
-    				Lt.setTo(0);
-    				Mat LF=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
-    				LF.setTo(0);
-    				Mat LtGt=MatVid::create(len,dx,dy,OPT_MAT_TYPE);
-    				LtGt.setTo(0);
+    				Mat Q_Jt=create(len,dx,dx,CV_64F);
+    				Mat Q_Ht=create(len,dx,dx,CV_64F);
+    				Mat Q_Vtt1tau=create(len,dx,dx,CV_64F);
+    				Mat frame_Q_Vtt1tau = frame(Q_Vtt1tau,0);
+    				for (r = 0; r < frame_Q_Vtt1tau.double2D.length; r++) {
+    					for (c = 0; c < frame_Q_Vtt1tau.double2D[0].length; c++) {
+    						frame_Q_Vtt1tau.double2D[r][c] = Double.MAX_VALUE;
+    					}
+    				}
+    				Mat Q_Vttau=create(len,dx,dx,CV_64F);
+    				Mat Lt=create(len,dx,dx,CV_64F);
+    				Mat LF=create(len,dx,dx,CV_64F);
+    				Mat LtGt=create(len,dx,dy,CV_64F);
 
     				Mat Q_curVttau,curLt,Q_curVtt1tau;
     				for(int t=len-1;t>=0;t--)
     				{
     					if (t==(len-1))
     					{
-    						Q_curVttau   = MatVid::frame(Q_Vtt,len-1);
-    						iA2.copyTo(curLt);
+    						Q_curVttau   = frame(Q_Vtt,len-1);
+    						copyTo(iA2,curLt);
     					}      
     					else
     					{
-    						MatVid::frame(Q_Jt,t) = MatVid::frame(Q_Vtt,t)*(A2.t())*(MatVid::frame(Q_Vtt1,t+1).inv());
-    						MatVid::frame(Q_Ht,t) = iA2 - MatVid::frame(Q_Jt,t);
-    						Q_curVttau  = MatVid::frame(Q_Vtt,t) + MatVid::frame(Q_Jt,t)*(Q_curVttau-MatVid::frame(Q_Vtt1,t+1))*(MatVid::frame(Q_Jt,t).t());
-    						curLt = MatVid::frame(Q_Ht,t) + MatVid::frame(Q_Jt,t)*curLt*MatVid::frame(Q_Ft,t+1);
+    						//MatVid::frame(Q_Jt,t) = MatVid::frame(Q_Vtt,t)*(A2.t())*(MatVid::frame(Q_Vtt1,t+1).inv());
+    						Mat frame_Q_Vtt_t = frame(Q_Vtt,t);
+    						Mat A2t = transpose(A2);
+    						Mat frame_Q_Vtt1_tp1 = frame(Q_Vtt1,t+1);
+    						Mat Q_Vtt1_tp1_inv = new Mat((new Matrix(frame_Q_Vtt1_tp1.double2D)).inverse().getArray());
+    						Mat frame_Q_Jt_t = frame(Q_Jt,t);
+    						copyTo(times(times(frame_Q_Vtt_t,A2t),Q_Vtt1_tp1_inv),frame_Q_Jt_t);
+    						//MatVid::frame(Q_Ht,t) = iA2 - MatVid::frame(Q_Jt,t);
+    						Mat frame_Q_Ht_t = frame(Q_Ht,t);
+    						copyTo(minus(iA2,frame_Q_Jt_t),frame_Q_Ht_t);
+    						//Q_curVttau  = MatVid::frame(Q_Vtt,t) + MatVid::frame(Q_Jt,t)*(Q_curVttau-MatVid::frame(Q_Vtt1,t+1))*(MatVid::frame(Q_Jt,t).t());
+    						Mat Q_Jt_t_trans = transpose(frame_Q_Jt_t);
+    						Mat diff = minus(Q_curVttau,frame_Q_Vtt1_tp1);
+    						Mat prod = times(times(frame_Q_Jt_t,diff),Q_Jt_t_trans);
+    						Q_curVttau = plus(frame_Q_Vtt_t,prod);
+    						//curLt = MatVid::frame(Q_Ht,t) + MatVid::frame(Q_Jt,t)*curLt*MatVid::frame(Q_Ft,t+1);
+    						Mat frame_Q_Ft_tp1 = frame(Q_Ft,t+1);
+    						curLt = plus(frame_Q_Ht_t,times(times(frame_Q_Jt_t,curLt),frame_Q_Ft_tp1));
     					}
-    					Mat tmpM=MatVid::frame(Q_Vttau,t);
-    					Q_curVttau.copyTo(tmpM);
+    					tmpM=frame(Q_Vttau,t);
+    					copyTo(Q_curVttau,tmpM);
 
     					if (t<(len-1))
     					{
     						if (t==len-2)
     						{					
-    							Q_curVtt1tau = (Mat::eye(dx,dx,OPT_MAT_TYPE) - iA2*MatVid::frame(Q_GtC2,len-1))*A2*MatVid::frame(Q_Vtt,len-2);
+    							//Q_curVtt1tau = (Mat::eye(dx,dx,OPT_MAT_TYPE) - iA2*MatVid::frame(Q_GtC2,len-1))*A2*MatVid::frame(Q_Vtt,len-2);
+    							Mat frame_Q_Vtt_lenm2 = frame(Q_Vtt,len-2);
+    							Mat frame_Q_GtC2_lenm1 = frame(Q_GtC2,len-1);
+    							Mat dxdx = new Mat(dx,dx,CV_64F);
+    							for (r = 0; r < dx; r++) {
+    								dxdx.double2D[r][r] = 1.0;
+    							}
+    							Mat prod = times(times(times(iA2,frame_Q_GtC2_lenm1),A2),frame_Q_Vtt_lenm2);
     						}
     						else      
     						{
@@ -1185,6 +1207,40 @@ using namespace std;
     	}
     }
     
+    /*!
+     * \brief
+     * compute logdet of transformed covariance w/ diagonal or iid noise.
+     * 
+     * \param Q
+     * parameter Q.
+     * 
+     * \param r
+     * parameter r.
+     * 
+     * \param C
+     * parameter C.
+     * 
+     * \returns
+     * logdet value.
+     * 
+     * \see
+     * saveCache.
+     */
+    double logdetiid(Mat Q, double r, int C)
+    {
+    	int i;
+    	double ld;
+    	double[] eigenvalue = new double[Q.cols];
+		double[][] eigenvector = new double[Q.rows][Q.cols];
+		Eigenvalue.decompose(Q.double2D, eigenvector, eigenvalue);
+		double ts = 0.0;
+		for (i = 0; i < eigenvalue.length; i++) {
+			ts += Math.log(eigenvalue[i]/r + 1.0);
+		}
+    	ld=ts+C*Math.log(r);
+    	return ld;
+    }
+    
     private Mat frame(Mat vid, int f) {
     	  
     	//cout<<"Test "<<f<<"  "<<vid.size[0]<<endl;
@@ -1201,15 +1257,6 @@ using namespace std;
       myf.bytesPerRow = vid.step[1];
 
       //dumpMatSize(myf);
-      return myf;
-      
-      //return MatVid::subvid(vid, f, f, 0, vid.size[1]-1, 0, vid.size[2]-1);
-
-      /*
-      Mat myf = MatVid::subvid(vid, Range(f, f+1), Range::all(), Range::all() );
-
-      dumpMatSize(myf);
-
       // make it an image (remove the first coordinate)
       myf.dims = 2;
       myf.size[0] = myf.size[1];
@@ -1221,11 +1268,14 @@ using namespace std;
 
       myf.rows = myf.size[0];
       myf.cols = myf.size[1];
-
-      dumpMatSize(myf);
-
       return myf;
-      */
+      
+      //return MatVid::subvid(vid, f, f, 0, vid.size[1]-1, 0, vid.size[2]-1);
+
+      
+      //Mat myf = MatVid::subvid(vid, Range(f, f+1), Range::all(), Range::all() );
+
+      //dumpMatSize(myf);
     }
     
     private Mat create(int frames, int rows, int cols, int type) {
@@ -2633,6 +2683,20 @@ using namespace std;
     			for (i = 0; i < inner; i++) {
     		        dest.double2D[r][c] += (A.double2D[r][i] * B.double2D[i][c]);
     			}
+    		}
+    	}
+    	return dest;
+    }
+    
+    public Mat divide(Mat A, double q) {
+    	int i, r,c;
+    	int rows = A.rows;
+    	int cols = A.cols;
+    	int type = A.type;
+    	Mat dest = new Mat(rows, cols, type);
+    	for (r = 0; r < rows; r++) {
+    		for (c = 0; c < cols; c++) {
+    		        dest.double2D[r][c] = A.double2D[r][c]/q;
     		}
     	}
     	return dest;
