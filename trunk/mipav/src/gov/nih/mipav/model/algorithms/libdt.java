@@ -986,7 +986,7 @@ using namespace std;
     				continue;
     			}
 
-    			Mat S2;
+    			Mat S2 = new Mat();
     			Mat tmpM;
     			switch(dt2.dtopt.Sopt)
     			{
@@ -1098,7 +1098,8 @@ using namespace std;
     				Mat LF=create(len,dx,dx,CV_64F);
     				Mat LtGt=create(len,dx,dy,CV_64F);
 
-    				Mat Q_curVttau,curLt,Q_curVtt1tau;
+    				Mat Q_curVttau = null;
+    				Mat curLt,Q_curVtt1tau;
     				for(int t=len-1;t>=0;t--)
     				{
     					if (t==(len-1))
@@ -1142,29 +1143,42 @@ using namespace std;
     								dxdx.double2D[r][r] = 1.0;
     							}
     							Mat prod = times(times(times(iA2,frame_Q_GtC2_lenm1),A2),frame_Q_Vtt_lenm2);
+    							Q_curVtt1tau = minus(dxdx,prod);
     						}
     						else      
     						{
-    							Q_curVtt1tau = MatVid::frame(Q_Vtt,t+1)*(MatVid::frame(Q_Jt,t).t())+MatVid::frame(Q_Jt,t+1)*(Q_curVtt1tau-A2*MatVid::frame(Q_Vtt,t+1))*(MatVid::frame(Q_Jt,t).t());
+    							Mat frame_Q_Jt_t = frame(Q_Jt,t);
+    							Mat Q_Jt_t_transpose = transpose(frame_Q_Jt_t);
+    							Mat frame_Q_Vtt_tp1 = frame(Q_Vtt,t+1);
+    							Mat diff = minus(Q_curVtt1tau,times(A2,frame_Q_Vtt_tp1));
+    							Mat frame_Q_Jt_tp1 = frame(Q_Jt,t+1);
+    							Mat prod = times(times(frame_Q_Jt_tp1,diff),Q_Jt_t_transpose);
+    							frame_Q_Vtt_tp1 = frame(Q_Vtt,t+1);
+    							Mat firstProd = times(frame_Q_Vtt_tp1,Q_Jt_t_transpose);
+    							Q_curVtt1tau = plus(firstProd, prod);
     						}
-    						Mat tmpM=MatVid::frame(Q_Vtt1tau,t+1);
-    						Q_curVtt1tau.copyTo(tmpM);
+    						tmpM = frame(Q_Vtt1tau,t+1);
+    					    copyTo(Q_curVtt1tau,tmpM);
     					}    
 
     					// sensitivity analysis cache
-    					MatVid::frame(LF,t)   = curLt*MatVid::frame(Q_Ft,t);
-    					MatVid::frame(LtGt,t) = curLt*MatVid::frame(Q_Gt,t);
-    					tmpM=MatVid::frame(Lt,t);
-    					curLt.copyTo(tmpM);    
+    					Mat frame_LF_t = frame(LF,t);
+    					Mat frame_Q_Ft_t = frame(Q_Ft,t);
+    					frame_LF_t = times(curLt,frame_Q_Ft_t);
+    					Mat frame_LtGt_t = frame(LtGt,t);
+    					Mat frame_Q_Gt_t = frame(Q_Gt,t);
+    					frame_LtGt_t = times(curLt,frame_Q_Gt_t);
+    					tmpM=frame(Lt,t);
+    					copyTo(curLt,tmpM);    
     				}//182
 
     				//save things
-    				dtjsa_Q_Ft[j]   = Q_Ft;
-    				dtjsa_Q_GtC2[j] = Q_GtC2;
-    				dtjsa_Q_Wt[j]   = Q_Wt;
-    				dtjsa_Q_foo[j]  = Q_foo;
-    				dtjsa_Q_Jt[j]   = Q_Jt;
-    				dtjsa_Q_Ht[j]   = Q_Ht;
+    				dtjsa_Q_Ft.set(j,Q_Ft);
+    				dtjsa_Q_GtC2.set(j,Q_GtC2);
+    				dtjsa_Q_Wt.set(j,Q_Wt);
+    				dtjsa_Q_foo.set(j,Q_foo);
+    				dtjsa_Q_Jt.set(j,Q_Jt);
+    				/*dtjsa_Q_Ht[j]   = Q_Ht;
     				dtjsa_Lt[j]        = Lt;
     				dtjsa_LF[j]        = LF;
     				dtjsa_LtGt[j]      = LtGt;
@@ -1203,7 +1217,7 @@ using namespace std;
     				tmpM=dtjsa_Q_logdet.col(j);
     				Q_logdet.copyTo(tmpM);
 
-    		}//202	*/
+    		}//202 */
     	}
     }
     
