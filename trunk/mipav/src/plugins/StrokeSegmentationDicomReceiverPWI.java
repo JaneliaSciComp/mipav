@@ -1519,6 +1519,10 @@ public class StrokeSegmentationDicomReceiverPWI {
                             done = true;
                             log("Received " + curPwiSlices + " PWI files, meeting threshold (" + PlugInDialogStrokeSegmentationListenerPWI.intArrayToStr(minExpectedSlicesPWI) + ")");
                             log("Running PWI-incorporating segmentation on datasets in " + receivedFilesPath);
+                            
+                            // remove listener thread since we are starting the algorithm
+                            coreToolThreadTable.remove(receivedFilesPath);
+                            
                             new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, receivedFilesPath, false);
                         }
 				    }
@@ -1551,6 +1555,10 @@ public class StrokeSegmentationDicomReceiverPWI {
                             // run with PWI/ADC/DWI
                             log("Received " + curPwiSlices + " PWI files, meeting threshold (" + PlugInDialogStrokeSegmentationListenerPWI.intArrayToStr(minExpectedSlicesPWI) + ")");
                             log("Running PWI-incorporating segmentation on datasets in " + receivedFilesPath);
+                            
+                            // remove listener thread since we are starting the algorithm
+                            coreToolThreadTable.remove(receivedFilesPath);
+                            
                             new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, receivedFilesPath, false);
                         } else {
                             log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + receivedFilesPath + " --- ADC: " + curAdcSlices + " --- DWI: " + curDwiSlices + " --- PWI: " + curPwiSlices);
@@ -1560,6 +1568,10 @@ public class StrokeSegmentationDicomReceiverPWI {
 							// run with just ADC/DWI
 							log("Received " + curPwiSlices + " PWI files, NOT meeting threshold (" + PlugInDialogStrokeSegmentationListenerPWI.intArrayToStr(minExpectedSlicesPWI) + ")");
                     		log("Running non-PWI segmentation on datasets in " + receivedFilesPath);
+                    		
+                    		// remove listener thread since we are starting the algorithm
+                            coreToolThreadTable.remove(receivedFilesPath);
+                    		
                     		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, receivedFilesPath, true);
 						} else {
 							log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + receivedFilesPath + " --- ADC: " + curAdcSlices + " --- DWI: " + curDwiSlices + " --- PWI: " + curPwiSlices);
