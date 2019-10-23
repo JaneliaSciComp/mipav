@@ -842,7 +842,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         File[] dirFiles = selectedDir.listFiles();
         for (int i = 0; rootDir == null && i < dirFiles.length; i++) {
             File file = dirFiles[i];
-            if (!isBIDSFileToIgnore(file)) {
+            if (!isFileToIgnore(file)) {
                 if (file.isDirectory()) {
                     rootDir = findBIDSRootDir(file);
                     break;
@@ -858,7 +858,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         return rootDir;
     }
     
-    private final boolean isBIDSFileToIgnore(final File file) {
+    private final boolean isFileToIgnore(final File file) {
         if (file.getName().equalsIgnoreCase(".DS_Store") || file.getName().equalsIgnoreCase("__MACOSX")) {
             return true;
         }
@@ -5726,8 +5726,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     }
                                 }
                             }
-                            
+
                             if (de != null) {
+                                // if another DE was appended, make sure that each record matches the new total length even if it did not have a value for the new DE
+                                for (final ArrayList<String> values : record) {
+                                    int fieldDiff = csvFieldNames.size() - record.size();
+                                    for (int j = 0; j < fieldDiff; j++) {
+                                        values.add("");
+                                    }
+                                }
+                                
                                 for (final ArrayList<String> values : record) {
                                     // check value not empty and check type of field for date
                                     if ( !values.get(i).trim().equals("") && de.getType().equals(DataType.DATE)) {
@@ -5735,7 +5743,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     }
                                 }
                             } else {
-                                MipavUtil.displayError("Unrecogzied data element in CSV: " + csvFieldNames.get(i));
+                                MipavUtil.displayError("Unrecognized data element in CSV: " + csvFieldNames.get(i));
                             }
                         }
 
@@ -5998,6 +6006,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         }
                     }
+                    
+//                    // TODO for MR-based data, try to set pulse sequence type for the first repeat based on available info, if not set already. check that srcImage is not null to only do it on the main row
+//                    if (srcImage != null && fsData.isGroupRepeatSet(IMG_MR_GROUP, 0)) {
+//                        for (final DataElementValue deVal : fsData.getGroupRepeat(IMG_MR_GROUP, 0).getDataElements()) {
+//                            String pulseSequenceGuess = extractPulseSequence(fsData, srcImage, srcImage.getFileInfo(0));
+//                            if (isValueSet(pulseSequenceGuess) && isPulseSeqTag(deVal) && !isValueSet(deVal.getValue())) {
+//                                setElementComponentValue(deVal, pulseSequenceGuess);
+//                            }
+//                        }
+//                    }
 
                     if ( (curConflictSelection == RESOLVE_CONFLICT_ASK || curConflictSelection == RESOLVE_CONFLICT_IMG) && srcImage != null) {
                         populateFields(fsData, srcImage, srcImage.getFileInfo(0));
@@ -7367,11 +7385,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
         private void extractDicomDtiHeaderInfo(HashMap<String, String> extractedFields, ModelImage img, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
-                extractedFields.put("ImgPulseSeqTyp", "DTI");
-                
-                if (img.getExtents().length > 3) {
-                    extractedFields.put("ImgDim4ExtentTyp", "DTI directions");
-                }
+//                if (img.getExtents().length > 3) {
+//                    extractedFields.put("ImgDim4ExtentTyp", "DTI directions");
+//                }
             
                 // if reading the dicom filled in the dti params, use them to fill in the direction info
                 DTIParameters dtiParam = img.getDTIParameters();
@@ -7435,8 +7451,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
         private void extractDicomFMRIHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
-                extractedFields.put("ImgPulseSeqTyp", "fMRI");
-            
                 String seriesDescription = getTagValue(fileInfoDicom, "0008,103E");
                 if (isValueSet(seriesDescription) && seriesDescription.toLowerCase().contains("rest")) {
                     extractedFields.put("ImgFMRITaskTyp", "Rest");
@@ -7459,6 +7473,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             extractedFields.put("ImgScannerManufName", convertNiftiDescToBRICSManuf(description));
             extractedFields.put("ImgScannerModelName", convertNiftiDescToBRICSModel(description));
             extractedFields.put("ImgScannerSftwrVrsnNum", convertNiftiDescToBRICSVer(description));
+        }
+        
+        private String extractPulseSequence(FormStructureData fsData, ModelImage img, FileInfoBase fileInfo) {
+            if (isMRModality(fileInfo, fsData.getStructInfo().getShortName()) && isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
+                return "DTI";
+            } else if (isMRModality(fileInfo, fsData.getStructInfo().getShortName()) && isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
+                return "fMRI";
+            }
+            
+            // TODO use other information to guess MR pulse sequence?
+            
+            return null;
         }
 
         /**
@@ -9258,16 +9284,52 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private void setFormImpliedRecordDataElements(final FormStructureData fsData, final ModelImage img, final ArrayList<String> repeatValues) {
         if (isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
             // TODO
-            csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
-            repeatValues.add("fMRI");
+            boolean foundDE = false;
+            for (int i = 0; i < csvFieldNames.size(); i++) {
+                if (csvFieldNames.get(i).equalsIgnoreCase(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME)) {
+                    foundDE = true;
+                    if (repeatValues.get(i).trim().equals("")) {
+                        repeatValues.set(i, "fMRI");
+                    }
+                }
+            }
+            
+            if (!foundDE) {
+                csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
+                repeatValues.add("fMRI");
+            }
         } else if (isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
             // TODO
-            csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
-            repeatValues.add("DTI");
+            boolean foundDE = false;
+            for (int i = 0; i < csvFieldNames.size(); i++) {
+                if (csvFieldNames.get(i).equalsIgnoreCase(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME)) {
+                    foundDE = true;
+                    if (repeatValues.get(i).trim().equals("")) {
+                        repeatValues.set(i, "DTI");
+                    }
+                }
+            }
+            
+            if (!foundDE) {
+                csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
+                repeatValues.add("DTI");
+            }
 
             if (img.getExtents().length > 3) {
-                csvFieldNames.add("Image pixel information and dimensions" + "." + "ImgDim4ExtentTyp");
-                repeatValues.add("DTI directions");
+                foundDE = false;
+                for (int i = 0; i < csvFieldNames.size(); i++) {
+                    if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions" + "." + "ImgDim4ExtentTyp")) {
+                        foundDE = true;
+                        if (repeatValues.get(i).trim().equals("")) {
+                            repeatValues.set(i, "DTI directions");
+                        }
+                    }
+                }
+                
+                if (!foundDE) {
+                    csvFieldNames.add("Image pixel information and dimensions" + "." + "ImgDim4ExtentTyp");
+                    repeatValues.add("DTI directions");
+                }
             }
         }
     }
