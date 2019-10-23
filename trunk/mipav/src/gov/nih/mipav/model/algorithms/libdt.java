@@ -833,147 +833,186 @@ using namespace std;
     			} // end cache constants 287
 
     			// initialize KALMAN (t=1)
-    			Mat P_Vtt1=S1.clone();
+    			Mat P_Vtt1=clone(S1);
 
     			// storage for Kalman smoother
-    			std::vector<Mat> Q_GtC1;
+    			Vector<Mat> Q_GtC1 = new Vector<Mat>();
     			for(int m=0;m<Kr;m++)
     			{
-    				Mat tmpM=MatVid::create(len,dx,dx,OPT_MAT_TYPE);
-    				tmpM.setTo(0);
-    				Q_GtC1.push_back(tmpM);
+    			    tmpM=create(len,dx,dx,CV_64F);
+    				Q_GtC1.add(tmpM);
     			}
 
     			// storage for ELL
-    			Mat ell = Mat::zeros(1,Kr,OPT_MAT_TYPE);
+    			Mat ell = new Mat (1,Kr,CV_64F);
 
     			//initialize sensitivity analysis
-    			Mat bxt1=Mat::zeros(dx,len+1,OPT_MAT_TYPE);
-    			tmpM=bxt1.col(0);
-    			mu01.copyTo(tmpM);
+    			Mat bxt1=new Mat(dx,len+1,CV_64F);
+    			for (r = 0; r < dx; r++) {
+    				bxt1.double2D[r][0] = mu01.double2D[r][0];
+    			}
 
-    			Mat bxt2=Mat::zeros(dx,len+1,OPT_MAT_TYPE);
-    			tmpM=bxt2.col(0);
-    			mu01.copyTo(tmpM);
+    			Mat bxt2=new Mat(dx,len+1,CV_64F);
+    			for (r = 0; r < dx; r++) {
+    				bxt2.double2D[r][0] = mu01.double2D[r][0];
+    			}
 
-    			Mat bxt3  = MatVid::create(Kr,dx,len+1,OPT_MAT_TYPE);
-    			bxt3.setTo(0);
+    			Mat bxt3  = create(Kr,dx,len+1,CV_64F);
 
     			for(int j=0;j<Kr;j++)
     			{
-    				if(!dtjblank[j])
+    				if(!Estat.dtjblank.get(j))
     				{
-    					Mat tmpM=MatVid::frame(bxt3,j);
-    					Mat tmp2=tmpM.col(0);
-    					dtj[j].mu0.copyTo(tmp2);				
+    					for (r = 0; r < dx; r++) {
+    	    				bxt3.double3D[j][r][0] = Estat.dtj.get(j).mu0.double2D[r][0];
+    	    			}				
     				}
     			}
 
-    			Mat bVt11 = MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    			bVt11.setTo(0);
+    			Mat bVt11 = create(len+1,dx,dx,CV_64F);
 
-    			tmpM=MatVid::frame(bVt11,0);
-    			S1.copyTo(tmpM);
+    			tmpM=frame(bVt11,0);
+    			copyTo(S1,tmpM);
 
-    			Mat bVt12 = MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    			bVt12.setTo(0);
+    			Mat bVt12 = create(len+1,dx,dx,CV_64F);
 
-    			std::vector<Mat> bVt13;
+    			Vector<Mat> bVt13 = new Vector<Mat>();
     			for(int j=0;j<Kr;j++)
     			{
-    				Mat tmpM=MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    				tmpM.setTo(0);
-    				bVt13.push_back(tmpM);
+    				tmpM=create(len+1,dx,dx,CV_64F);
+    				bVt13.add(tmpM);
     			}
 
-    			Mat bVt22 = MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    			bVt22.setTo(0);
+    			Mat bVt22 = create(len+1,dx,dx,CV_64F);
 
-    			std::vector<Mat> bVt23;
+    			Vector<Mat> bVt23 = new Vector<Mat>();
     			for(int j=0;j<Kr;j++)
     			{
-    				Mat tmpM=MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    				tmpM.setTo(0);
-    				bVt23.push_back(tmpM);
+    				tmpM=create(len+1,dx,dx,CV_64F);
+    				bVt23.add(tmpM);
     			}
 
-    			std::vector<Mat> bVt33;
+    			Vector<Mat> bVt33 = new Vector<Mat>();
     			for(int j=0;j<Kr;j++)
     			{
-    				Mat tmpM=MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    				tmpM.setTo(0);
-    				bVt33.push_back(tmpM);
+    				tmpM=create(len+1,dx,dx,CV_64F);
+    				bVt33.add(tmpM);
     			}
 
     			// iterate from t=1 to len		
-    			Mat P_Vtt,P_foo,P_Wt,P_KtC1,P_GtC1,P_GtR1Gt,P_Ft,tmp_GbFb;
+    			Mat P_Vtt,P_foo,P_Wt,P_KtC1,P_GtC1,P_GtR1Gt,P_Ft;
+    			Mat tmp_GbFb = new Mat();
     			for(int t=0;t<len;t++)
     			{			
     				//KALMAN filter on P at time t
     				if (t>0)
     				{
-    					P_Vtt1   = A1*P_Vtt*A1.t()+Q1;
+    					P_Vtt1   = plus(times(times(A1,P_Vtt),transpose(A1)),Q1);
     				}	
-    				if((t==0) && Szero)
+    				if((t==0) && (Szero != 0))
     				{
-    					P_foo  = Mat::zeros(dx,dx,OPT_MAT_TYPE);
+    					P_foo  = new Mat(dx,dx,CV_64F);
     				}
     				else
     				{
-    					P_Wt     = (P_Vtt1.inv()+C1R1C1).inv(); 
-    					P_foo    = P_Vtt1*(Mat::eye(dx,dx,OPT_MAT_TYPE)-C1R1C1*P_Wt);
+    					Mat P_Vtt1_inverse = new Mat((new Matrix(P_Vtt1.double2D)).inverse().getArray());
+    					P_Wt = new Mat((new Matrix((plus(P_Vtt1_inverse,C1R1C1)).double2D)).inverse().getArray());
+    					Mat eyeMat = new Mat(dx,dx,CV_64F);
+    					for (r = 0; r < dx; r++) {
+    						eyeMat.double2D[r][r] = 1.0;
+    					}
+    					P_foo = times(P_Vtt1,minus(eyeMat,times(C1R1C1,P_Wt)));
     				}
 
-    				P_KtC1    = P_foo*C1R1C1;
-    				P_GtC1    = A1*P_KtC1;
-    				P_Vtt     = P_Vtt1 - P_KtC1*P_Vtt1;
-    				P_GtR1Gt  = P_GtC1*P_foo.t()*A1.t();
-    				P_Ft      = A1-P_GtC1;
+    				P_KtC1    = times(P_foo,C1R1C1);
+    				P_GtC1    = times(A1,P_KtC1);
+    				P_Vtt     = minus(P_Vtt1,times(P_KtC1,P_Vtt1));
+    				P_GtR1Gt  = times(times(P_GtC1,transpose(P_foo)),transpose(A1));
+    				P_Ft      = minus(A1,P_GtC1);
 
     				// update sensitivity analysis for P
-    				tmp_GbFb.create(P_GtC1.rows,P_GtC1.cols+P_Ft.cols,OPT_MAT_TYPE);
-    				tmpM=tmp_GbFb.colRange(Range(0,P_GtC1.cols));
-    				P_GtC1.copyTo(tmpM);
-    				tmpM=tmp_GbFb.colRange(Range(P_GtC1.cols,P_GtC1.cols+P_Ft.cols));
-    				P_Ft.copyTo(tmpM);
+    				tmp_GbFb.create(P_GtC1.rows,P_GtC1.cols+P_Ft.cols,CV_64F);
+    				for (r = 0; r < P_GtC1.rows; r++) {
+    					for (c = 0; c < P_GtC1.cols; c++) {
+    						tmp_GbFb.double2D[r][c] = P_GtC1.double2D[r][c]; 
+    					}
+    				}
+    				
+    				for (r = 0; r < P_GtC1.rows; r++) {
+    					for (c = 0; c < P_Ft.cols; c++) {
+    						tmp_GbFb.double2D[r][P_GtC1.cols+c] = P_Ft.double2D[r][c]; 
+    					}
+    				}
 
-    				bxt2.col(t+1)    = P_GtC1*bxt1.col(t) + P_Ft*bxt2.col(t);
-    				bxt1.col(t+1)    = A1*bxt1.col(t);
+    				double firstPart;
+    				double secondPart;
+    				for (r = 0; r < dx; r++) {
+    					bxt2.double2D[r][t+1] = 0.0;
+    					bxt1.double2D[r][t+1] = 0.0;
+    				    for (c = 0; c < dx; c++) {
+    				    		bxt2.double2D[r][t+1] += (P_GtC1.double2D[r][c]*bxt1.double2D[c][t] + P_Ft.double2D[r][c]*bxt2.double2D[c][t]);
+    				    		bxt1.double2D[r][t+1] += (A1.double2D[r][c]*bxt1.double2D[c][t]);
+    				    }
+    				}
 
 
-    				Mat tmp1=MatVid::frame(bVt11,t);
-    				Mat tmp2=MatVid::frame(bVt12,t);
-    				Mat tmp3=MatVid::frame(bVt12,t).t(); 
-    				Mat tmp4=MatVid::frame(bVt22,t);		
-    				tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    				Mat tmpM2=tmpM(Range(0,tmp1.rows),Range(0,tmp1.cols));
-    				tmp1.copyTo(tmpM2);
-    				tmpM2=tmpM(Range(0,tmp1.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    				tmp2.copyTo(tmpM2);
-    				tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(0,tmp1.cols));
-    				tmp3.copyTo(tmpM2);
-    				tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    				tmp4.copyTo(tmpM2);
+    				Mat tmp1=frame(bVt11,t);
+    				Mat tmp2=frame(bVt12,t);
+    				Mat tmp3=transpose(frame(bVt12,t)); 
+    				Mat tmp4=frame(bVt22,t);
+    				tmpM = new Mat();
+    				tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = 0; c < tmp1.cols; c++) {
+    						tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    					}
+    				}
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = 0; c < tmp2.cols; c++) {
+    						tmpM.double2D[r][tmp1.cols+c] = tmp2.double2D[r][c];
+    					}
+    				}
+    				for (r = 0; r < tmp3.rows; r++) {
+    					for (c = 0; c < tmp1.cols; c++) {
+    						tmpM.double2D[tmp1.rows+r][c] = tmp3.double2D[r][c];
+    					}
+    				}
+    				for (r = 0; r < tmp3.rows; r++) {
+    					for (c = 0; c < tmp2.cols; c++) {
+    						tmpM.double2D[tmp1.rows+r][tmp1.cols+c] = tmp4.double2D[r][c];
+    					}
+    				}
 
-    				MatVid::frame(bVt22,t+1) = tmp_GbFb * tmpM * tmp_GbFb.t()  + P_GtR1Gt;
+    				Mat frame_bvt22_tp1 = frame(bVt22,t+1);
+    				frame_bvt22_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GbFb)),P_GtR1Gt);
 
-    				tmp1=MatVid::frame(bVt11,t);
-    				tmp2=MatVid::frame(bVt12,t);
-    				tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    				tmpM2=tmpM.colRange(0,tmp1.cols);
-    				tmp1.copyTo(tmpM2);
-    				tmpM2=tmpM.colRange(tmp1.cols,tmp1.cols+tmp2.cols);
-    				tmp2.copyTo(tmpM2);
+    				tmp1=frame(bVt11,t);
+    				tmp2=frame(bVt12,t);
+    				tmpM = new Mat();
+    				tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = 0; c < tmp1.cols; c++) {
+    						tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    					}
+    				}
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = 0; c < tmp2.cols; c++) {
+    						tmpM.double2D[r][tmp1.cols+c] = tmp2.double2D[r][c];
+    					}
+    				}
 
-    				MatVid::frame(bVt12,t+1) = A1*(tmpM*tmp_GbFb.t());
-    				MatVid::frame(bVt11,t+1) = A1*MatVid::frame(bVt11,t)*A1.t() + Q1;
+    				Mat frame_bVt12_tp1 = frame(bVt12,t+1);
+    				frame_bVt12_tp1 = times(A1,times(tmpM,transpose(tmp_GbFb)));
+    				Mat frame_bVt11_tp1 = frame(bVt11,t+1);
+    				Mat frame_bVt11_t = frame(bVt11,t);
+    				frame_bVt11_tp1 = plus(times(times(A1,frame_bVt11_t),transpose(A1)),Q1);
 
     				//compute cross-covariance
     				for(int j=0;j<Kr;j++)
     				{
-    					if(dtjblank[j])
+    					if(Estat.dtjblank.get(j))
     					{
-    						ell.at<OPT_F_TYPE>(0,j)=-1e300;
+    						ell.double2D[0][j]=-1e300;
     					}
     					else
     					{
@@ -1083,7 +1122,7 @@ using namespace std;
     			// store expected log-likelihood
     			tmpM=Ell.row(i);
     			ell.copyTo(tmpM);
-    	}*/	
+    	}*/
     }
     
     /*!
@@ -1730,18 +1769,6 @@ using namespace std;
       myf.double2D = vid.double3D[vid.step[0]*f];
       myf.bytesPerRow = vid.step[1];
 
-      //dumpMatSize(myf);
-      // make it an image (remove the first coordinate)
-      myf.dims = 2;
-      myf.size[0] = myf.size[1];
-      myf.size[1] = myf.size[2];
-      myf.size[2] = 0;
-      myf.step[0] = myf.step[1];
-      myf.step[1] = myf.step[2];
-      myf.step[2] = 0;
-
-      myf.rows = myf.size[0];
-      myf.cols = myf.size[1];
       return myf;
       
       //return MatVid::subvid(vid, f, f, 0, vid.size[1]-1, 0, vid.size[2]-1);
@@ -2849,7 +2876,7 @@ using namespace std;
    public int depth, rows, cols;
    public int size[];
    public int type;
-   public int step[];
+   public int step[] = new int[3];
    public int bytesPerRow;
    //! pointer to the data
    public byte data[];
@@ -2902,6 +2929,7 @@ using namespace std;
     			this.depth = size[0];
     			this.rows = size[1];
     			this.cols = size[2];
+    			step[0] = 1;
     		}
     		if (dims == 2) {
     			if (type == CV_8U) {
@@ -2921,13 +2949,16 @@ using namespace std;
     		} // if (dims == 2)
     		else if (dims == 3) {
     			if (type == CV_8U) {
-        	        byte3D = new byte[depth][rows][cols];	
+        	        byte3D = new byte[depth][rows][cols];
+        	        step[1] = cols;
         	    }
         	    else if (type == CV_64F) {
-        	        double3D = new double[depth][rows][cols];	
+        	        double3D = new double[depth][rows][cols];
+        	        step[1] = 8*cols;
         	    }
         	    else if (type == CV_64FC3) {
         	        Vector3d3D = new Vector3d[depth][rows][cols];
+        	        step[1] = 24*cols;
         	        for (x = 0; x < depth; x++) {
 	        	        for (y = 0; y < rows; y++) {
 	        	        	for (z = 0; z < cols; z++) {
@@ -2989,6 +3020,7 @@ using namespace std;
     			this.depth = size[0];
     			this.rows = size[1];
     			this.cols = size[2];
+    			step[0] = 1;
     		}
     		if (dims == 2) {
     			if (type == CV_8U) {
@@ -3008,13 +3040,16 @@ using namespace std;
     		} // if (dims == 2)
     		else if (dims == 3) {
     			if (type == CV_8U) {
-        	        byte3D = new byte[depth][rows][cols];	
+        	        byte3D = new byte[depth][rows][cols];
+        	        step[1] = cols;
         	    }
         	    else if (type == CV_64F) {
-        	        double3D = new double[depth][rows][cols];	
+        	        double3D = new double[depth][rows][cols];
+        	        step[1]= 8*cols;
         	    }
         	    else if (type == CV_64FC3) {
         	        Vector3d3D = new Vector3d[depth][rows][cols];
+        	        step[1] = 24*cols;
         	        for (x = 0; x < depth; x++) {
 	        	        for (y = 0; y < rows; y++) {
 	        	        	for (z = 0; z < cols; z++) {
@@ -3200,6 +3235,36 @@ using namespace std;
     		for (c = 0; c < cols; c++) {
     		    dest.double2D[c][r] = A.double2D[r][c];
     		}
+    	}
+    	return dest;
+    }
+    
+    public Mat clone(Mat A) {
+    	int d,r,c;
+    	Mat dest;
+    	int rows = A.rows;
+    	int cols = A.cols;
+    	int type = A.type;
+    	int dims =  A.dims;
+    	int size[] = A.size;
+    	if (dims == 2) {
+    	    dest = new Mat(rows, cols, type);
+	    	for (r = 0; r < rows; r++) {
+	    		for (c = 0; c < cols; c++) {
+	    		    dest.double2D[r][c] = A.double2D[r][c];
+	    		}
+	    	}
+    	}
+    	else {
+    		dest = new Mat(dims,size,type);
+    		int depth = A.depth;
+    		for (d = 0; d < depth; d++) {
+	    		for (r = 0; r < rows; r++) {
+		    		for (c = 0; c < cols; c++) {
+		    		    dest.double3D[d][r][c] = A.double3D[d][r][c];
+		    		}
+		    	}
+    	    }
     	}
     	return dest;
     }
