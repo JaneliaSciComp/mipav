@@ -1016,37 +1016,79 @@ using namespace std;
     					}
     					else
     					{
-    						Mat tmp = dtj[j].A*MatVid::frame(dtjsa_Q_foo[j],t);
-    						MatVid::frame(Q_GtC1[j],t) = tmp*MatVid::frame(C2R2C1,j);
-    						Mat Q_GtR1Gt  = tmp*MatVid::frame(C2R2R1R2C2,j)*tmp.t();
-    						Mat PQ_GtR1Gt = A1*P_foo*MatVid::frame(C1R2C2,j)*tmp.t();
+    						Mat tmp = times(Estat.dtj.get(j).A,frame(Estat.dtjsa_Q_foo.get(j),t));
+    						Mat frame_Q_GtC1j_t = frame(Q_GtC1.get(j),t);
+    						frame_Q_GtC1j_t = times(tmp,frame(C2R2C1,j));
+    						Mat Q_GtR1Gt  = times(times(tmp,frame(C2R2R1R2C2,j)),transpose(tmp));
+    						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),frame(C1R2C2,j)),transpose(tmp));
 
     						double ell_mahal;
     						//compute expected log-likelihood
-    						if((t==0) && Szero)
+    						if((t==0) && (Szero != 0.0))
     						{
-    							CV_Error(-1,"not supported yet");
+    							MipavUtil.displayError("not supported yet");
+    							System.exit(-1);
     						}
     						else
     						{
-    							Mat tmp_QWtC2R2C1 = MatVid::frame(dtjsa_Q_Wt[j],t)*MatVid::frame(C2R2C1,j);
-    							double ell_mahal1 = trace((MatVid::frame(bVt11,t)+bxt1.col(t)*bxt1.col(t).t())*(MatVid::frame(C1R2C1,j)-MatVid::frame(C1R2C2,j)*tmp_QWtC2R2C1))[0]+ dy*r1/dtj[j].R.mtx.at<OPT_F_TYPE>(0,0) - trace(MatVid::frame(dtjsa_Q_Wt[j],t)*MatVid::frame(C2R2R1R2C2,j))[0];
-    							double ell_mahal2 = trace((MatVid::frame(bVt23[j],t)+bxt2.col(t)*(MatVid::frame(bxt3,j).col(t)).t())*(MatVid::frame(C2R2C1,j)-MatVid::frame(C2R2C2,j)*tmp_QWtC2R2C1))[0];
-    							double ell_mahal3 = trace((MatVid::frame(bVt33[j],t)+(MatVid::frame(bxt3,j).col(t))*(MatVid::frame(bxt3,j).col(t)).t())*(MatVid::frame(C2R2C2,j)-MatVid::frame(C2R2C2,j)*MatVid::frame(dtjsa_Q_Wt[j],t)*MatVid::frame(C2R2C2,j)))[0];
-
-    							if (useYmean)
+    							Mat tmp_QWtC2R2C1 = times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2C1,j));
+    							Mat bxt1_colt = new Mat(bxt1.rows,1,CV_64F);
+    							for (r = 0; r < bxt1.rows; r++) {
+    								bxt1_colt.double2D[r][0] = bxt1.double2D[r][t];
+    							}
+    							Mat firstMat = plus(frame(bVt11,t),times(bxt1_colt,transpose(bxt1_colt)));
+    							Mat secondMat = minus(frame(C1R2C1,j),times(frame(C1R2C2,j),tmp_QWtC2R2C1));
+    							Mat firstProd = times(firstMat,secondMat);
+    							double firstTrace = trace(firstProd);
+    							double middleNum = dy*r1/Estat.dtj.get(j).R.mtx.double2D[0][0];
+    							Mat lastMat = times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2R1R2C2,j));
+    							double lastTrace = trace(lastMat);
+    							double ell_mahal1 = firstTrace + middleNum - lastTrace;
+    							Mat bxt2_colt = new Mat(bxt2.rows,1,CV_64F);
+    							for (r = 0; r < bxt2.rows; r++) {
+    								bxt2_colt.double2D[r][0] = bxt2.double2D[r][t];
+    							}
+    							Mat bxt3_j = frame(bxt3,j);
+    							Mat bxt3_j_colt = new Mat(bxt3_j.rows,1,CV_64F);
+    							for (r = 0; r < bxt3_j.rows; r++) {
+    								bxt3_j_colt.double2D[r][0] = bxt3_j.double2D[r][t];
+    							}
+    						    firstMat =  plus(frame(bVt23.get(j),t),times(bxt2_colt,transpose(bxt3_j_colt)));
+    						    secondMat = minus(frame(C2R2C1,j),times(frame(C2R2C2,j),tmp_QWtC2R2C1));
+    						    double ell_mahal2 = trace(times(firstMat,secondMat));
+    							firstMat = plus(frame(bVt33.get(j),t),times(bxt3_j_colt,transpose(bxt3_j_colt)));
+                                Mat frame_C2R2C2_j = frame(C2R2C2,j);
+                                secondMat = minus(frame_C2R2C2_j,times(times(frame_C2R2C2_j,frame(Estat.dtjsa_Q_Wt.get(j),t)),frame_C2R2C2_j));
+                                double ell_mahal3 = trace(times(firstMat,secondMat));
+    							if (Estat.useYmean)
     							{
-    								Mat tmp_QWtC2R2Ydiff = MatVid::frame(dtjsa_Q_Wt[j],t)*C2R2Ydiff.col(j);
-    								Mat tmpM=(2*(bxt1.col(t).t())*(C1R2Ydiff.col(j) - MatVid::frame(C1R2C2,j)*tmp_QWtC2R2Ydiff)+((Ydiff.col(j).t())*Ydiff.col(j))/dtj[j].R.mtx.at<OPT_F_TYPE>(0,0)-(C2R2Ydiff.col(j).t())*tmp_QWtC2R2Ydiff);
-    								ell_mahal1 = ell_mahal1 + tmpM.at<OPT_F_TYPE>(0,0);
+    								Mat C2R2Ydiff_colj = new Mat(C2R2Ydiff.rows,1,CV_64F);
+    								for (r = 0; r < C2R2Ydiff.rows; r++) {
+    									C2R2Ydiff_colj.double2D[r][0] = C2R2Ydiff.double2D[r][j];
+    								}
+    								Mat tmp_QWtC2R2Ydiff = times(frame(Estat.dtjsa_Q_Wt.get(j),t),C2R2Ydiff_colj);
+    								Mat C1R2Ydiff_colj = new Mat(C1R2Ydiff.rows,1,CV_64F);
+    								for (r = 0; r < C1R2Ydiff.rows; r++) {
+    									C1R2Ydiff_colj.double2D[r][0] = C1R2Ydiff.double2D[r][j];
+    								}
+    								Mat Ydiff_colj = new Mat(Ydiff.rows,1,CV_64F);
+    								for (r = 0; r < Ydiff.rows; r++) {
+    									Ydiff_colj.double2D[r][0] = Ydiff.double2D[r][j];
+    								}
+    								firstMat = times(transpose(bxt1_colt),2.0);
+    								secondMat = minus(C1R2Ydiff_colj,times(frame(C1R2C2,j),tmp_QWtC2R2Ydiff));
+    								Mat thirdMat = divide(times(transpose(Ydiff_colj),Ydiff_colj),Estat.dtj.get(j).R.mtx.double2D[0][0]);
+    								Mat fourthMat = times(transpose(C2R2Ydiff_colj),tmp_QWtC2R2Ydiff);
+    								tmpM = minus(plus(times(firstMat,secondMat),thirdMat),fourthMat);
+    								ell_mahal1 = ell_mahal1 + tmpM.double2D[0][0];
 
-    								tmpM=(MatVid::frame(bxt3,j).col(t)).t()*(C2R2Ydiff.col(j) - MatVid::frame(C2R2C2,j)*tmp_QWtC2R2Ydiff);
-    								ell_mahal2 = ell_mahal2 + tmpM.at<OPT_F_TYPE>(0,0);
+    								tmpM = times(transpose(bxt3_j_colt),minus(C2R2Ydiff_colj,times(frame_C2R2C2_j,tmp_QWtC2R2Ydiff)));
+    								ell_mahal2 = ell_mahal2 + tmpM.double2D[0][0];
     							}
     							ell_mahal = ell_mahal1 - 2*ell_mahal2 + ell_mahal3;
     						}//376
 
-    						ell.at<OPT_F_TYPE>(0,j) = ell.at<OPT_F_TYPE>(0,j) - 0.5*(ell_mahal + dtjsa_Q_logdet.at<OPT_F_TYPE>(t,j) + ell_const);
+    						ell.double2D[0][j] = ell.double2D[0][j] - 0.5*(ell_mahal + Estat.dtjsa_Q_logdet.double2D[t][j] + ell_const);
 
     						//sensitivity analysis (for t+1)
     						Mat tmp1=MatVid::frame(Q_GtC1[j],t);
@@ -3267,6 +3309,15 @@ using namespace std;
     	    }
     	}
     	return dest;
+    }
+    
+    public double trace (Mat A) {
+    	int r;
+        double ret = 0.0;
+        for (r = 0; r < Math.min(A.rows,A.cols); r++) {
+        	ret += A.double2D[r][r];
+        }
+        return ret;
     }
     
     public class DytexMix {
