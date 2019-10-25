@@ -281,7 +281,7 @@ using namespace std;
      */
     private void runHEM(DytexMix dtm, DytexMix hembest, HEMOptions hopt, Vector<Integer> classes)
     {
-    	/*int i, j;
+    	/*int i, j, r, c;
     	//used to display info in change in classes during EM loop
     	Clock elapsedtime;
     	int numlastclasses=5;
@@ -403,45 +403,64 @@ using namespace std;
     		//compute statistics between 2 DT for HEM E-step
     		Estats Estat = new Estats(dtm.dt,hembest.dt,tau,FlagYmean);
     		computeEll(Estat);
-    		Mat ell=Estat.Ell.clone();
-    		Mat tmpM=Mat(alpha).clone();
-    		tmpM=tmpM*Nvs;
-    		Mat tmpM2;
+    		Mat ell=clone(Estat.Ell);
+    		Mat tmpM = new Mat(dtm.alpha.size(),1,CV_64F);
+    		for (r = 0; r < dtm.alpha.size(); r++) {
+    			tmpM.double2D[r][0] = dtm.alpha.get(r);
+    		}
+    		tmpM=times(tmpM,Nvs);
+    		Mat tmpM2 = new Mat();
     		repeat(tmpM,1,Kr,tmpM2);
 
-    		Mat tmpM3(hembest.alpha);
-    		Mat tmpM4;
-    		log(tmpM3.t(),tmpM4);
-    		Mat tmpM5;
+    		Mat tmpM4 = new Mat(1, hembest.alpha.size(), CV_64F);
+    		for (c = 0; c < hembest.alpha.size(); c++) {
+    			tmpM4.double2D[0][c] = Math.log(hembest.alpha.get(c));
+    		}
+    		Mat tmpM5 = new Mat();
     		repeat(tmpM4,Kb,1,tmpM5);
-    		multiply(ell,tmpM2,tmpM);
+    		tmpM = times(ell,tmpM2);
 
     		//aggregated statistics for dti and dtj
-    		ell = tmpM + tmpM5;
+    		ell = plus(tmpM,tmpM5);
 
     		// soft assignment and data likelihood
-    		Mat logZ   = Mat::zeros(Kb,Kr,OPT_MAT_TYPE);  
-    		Mat tmp = (logtrick(ell.t())).t();
-    		for(int j=0;j<Kr;j++)
+    		Mat logZ   = new Mat(Kb,Kr,CV_64F);  
+    		Mat tmp = transpose(logtrick(transpose(ell)));
+    		for(j=0;j<Kr;j++)
     		{
-    			logZ.col(j) = ell.col(j) - tmp;
+    			for (r = 0; r < Kb; r++) {
+    			    logZ.double2D[r][j] = ell.double2D[r][j] - tmp.double2D[r][0];
+    			}
     		}
 
-    		datalikelihood[iter]=sum(tmp)[0];
-    		Mat Z;
-    		exp(logZ,Z);
+    		double sumtmp = 0.0;
+    		for (r = 0; r < Kb; r++) {
+    		    sumtmp += tmp.double2D[r][0];	
+    		}
+    		datalikelihood.set(iter,sumtmp);
+    		Mat Z = new Mat(Kb,Kr,CV_64F);
+    		for (r = 0; r < Kb; r++) {
+    			for (c = 0; c < Kr; c++) {
+    				Z.double2D[r][c] = Math.exp(logZ.double2D[r][c]);
+    			}
+    		}
 
-    		if(FlagVerbose>=2)
-    			cout<<endl;
+    		if(FlagVerbose == Verbose_mode.VERBOSE)
+    			System.out.print("\n");
 
     		//hard assignment
     		classes.clear();		
-    		for(int i=0;i<Z.rows;i++)
+    		for(i=0;i<Z.rows;i++)
     		{
-    			double min,max;
-    			Point minL,maxL;
-    			minMaxLoc(Z.row(i),&min,&max,&minL,&maxL);				
-    			classes.push_back(maxL.x+1);
+    			int maxL = -1;
+    			double max = -Double.MAX_VALUE;
+    			for (c = 0; c < Z.cols; c++) {
+    				if (Z.double2D[i][c] > max) {
+    					max = Z.double2D[i][c];
+    					maxL = c;
+    				}
+    			}
+    			classes.add(maxL+1);
     		}
 
     		//Check Convergence
@@ -451,42 +470,38 @@ using namespace std;
     		if(iter>0)
     		{
     			//compute change in log-likelihood
-    			ddLL=datalikelihood[iter]-datalikelihood[iter-1];
-    			dpLL=abs(ddLL/datalikelihood[iter-1]);
+    			ddLL=datalikelihood.get(iter)-datalikelihood.get(iter-1);
+    			dpLL=Math.abs(ddLL/datalikelihood.get(iter-1));
     		}
     		else
     		{
-    			ddLL = INF;			
-    			dpLL = INF;
+    			ddLL = Double.MAX_VALUE;			
+    			dpLL = Double.MAX_VALUE;
     		}
     		//class assignment info
-    		lastclasses[lastclassesind]=classes;
+    		lastclasses.set(lastclassesind,classes);
 
     		//count the number of class changes
-    		std::vector<int> dclass;
+    		Vector<Integer> dclass = new Vector<Integer>();
     		for(int ii=0;ii<numlastclasses;ii++)
     		{
     			int sum=0;
-    			for(int i=0;i<lastclasses[0].size();i++)
+    			for(i=0;i<lastclasses.get(0).size();i++)
     			{
-    				if(lastclasses[ii][i]!=lastclasses[lastclassesind][i])
+    				if(lastclasses.get(ii).get(i)!=lastclasses.get(lastclassesind).get(i))
     					sum++;
     			}
-    			dclass.push_back(sum);
+    			dclass.add(sum);
     		}
 
-    		string dclassstr="";			
-    		for(int i=lastclassesind+1;i<numlastclasses;i++)
+    		String dclassstr="";			
+    		for(i=lastclassesind+1;i<numlastclasses;i++)
     		{
-    			stringstream ss;
-    			ss<<dclass[i];
-    			dclassstr=dclassstr+ss.str()+" ";
+    			dclassstr=dclassstr+ String.valueOf(dclass.get(i))+" ";
     		}
-    		for(int i=0;i<lastclassesind;i++)
+    		for(i=0;i<lastclassesind;i++)
     		{
-    			stringstream ss;
-    			ss<<dclass[i];
-    			dclassstr=dclassstr+ss.str()+" ";
+    			dclassstr=dclassstr+String.valueOf(dclass.get(i))+" ";
     		}
 
     		//% lastclassind points to the oldest classes
@@ -495,27 +510,19 @@ using namespace std;
     			lastclassesind = 0;
 
     		//output strings
-    		stringstream ss2;
-    		ss2<<"dclass = "<<dclassstr;
-    		string outstr2=ss2.str();
-    		string outstr1s;
-    		string outstr3;
-    		stringstream ss3;
+    		String outstr2= "dclass = " + dclassstr;
+    		String outstr1s;
+    		String outstr3;
 
-    		ss3<<"L= "<<datalikelihood[iter]<<" (pL= "<<dpLL<<")";
-    		outstr1s=ss3.str();
+    		outstr1s = "L= " + datalikelihood.get(iter) + " (pL= " + dpLL +")";
     		
-    		if(FlagVerbose==1)
+    		if(FlagVerbose!= Verbose_mode.QUIET)
     		{
-    			stringstream ss3;
-    			ss3<<"iter= "<<iter+1<<"; "<<outstr1s<<"; "<<outstr2<<";  ";
-    			outstr3=ss3.str();
-    			cout<<outstr3<<endl;
+    			System.out.println("iter= " + (iter+1));
+    		    System.out.println(outstr1s);
+    		    System.out.println(outstr2);
     		}
-    		else if(FlagVerbose>=2)
-    		{			
-    			cout<<outstr2<<endl;
-    		}
+    		
 
     		// check if negative change in log-likelihood!
     		if (ddLL<0)
@@ -699,11 +706,51 @@ using namespace std;
     
     /*!
      * \brief
+     * calculate log(sum(A)) using only log(A)
+     * 
+     * \param lA
+     * column vector of log values
+     * 
+     * \returns
+     * log(sum(A))
+     *
+     * \see
+     * runEM
+     */
+    Mat logtrick(Mat lA)
+    {
+    	int r, c;
+    	Mat s;
+    	Mat mv = new Mat();
+    	reduce(lA,mv,0,CV_REDUCE_MAX);
+    	Mat tmpM = new Mat();
+    	repeat(mv,lA.rows,1,tmpM);
+    	Mat temp=minus(lA,tmpM);
+
+    	for (r = 0; r < temp.rows; r++) {
+    		for (c = 0; c < temp.cols; c++) {
+    			tmpM.double2D[r][c] = Math.exp(temp.double2D[r][c]);
+    		}
+    	}
+    	Mat cterm = new Mat();
+    	reduce(tmpM,cterm,0,CV_REDUCE_SUM);
+    	for (r = 0; r < cterm.rows; r++) {
+    		for (c = 0; c < cterm.cols; c++) {
+    			tmpM.double2D[r][c] = Math.log(cterm.double2D[r][c]);
+    		}
+    	}
+    	s=plus(mv,tmpM);
+
+    	return s;
+    }
+    
+    /*!
+     * \brief
      * Compute Expected log-likelihood between base and reduced DTs
      */
     private void computeEll(Estats Estat)
     {
-    	/*int r,c;
+    	int r,c;
     	int Kb=Estat.dti.size();
     	int Kr=Estat.dtj.size();
     	int len=Estat.tau;
@@ -758,7 +805,7 @@ using namespace std;
     			Mat C1 = dt1.C;
     			Mat mu01 = dt1.mu0;
     			double r1 = dt1.R.mtx.double2D[0][0];
-    			Mat Ymean1 = dt1.Ymean;
+    			//Mat Ymean1 = dt1.Ymean;
 
     			//some constants
     			Mat Ydiff=new Mat(dy,Kr,CV_64F);
@@ -771,7 +818,7 @@ using namespace std;
     			Mat C1R2Ydiff  = new Mat(dx,Kr,CV_64F);
     			Mat C2R2Ydiff  = new Mat(dx,Kr,CV_64F);
     			Mat C2R2C2 = create(Kr,dx,dx,CV_64F);
-    			double Szero;
+    			double Szero = 0.0;
     			//cache constants
     			for(int j=0;j<Kr;j++)
     			{
@@ -900,7 +947,8 @@ using namespace std;
     			}
 
     			// iterate from t=1 to len		
-    			Mat P_Vtt,P_foo,P_Wt,P_KtC1,P_GtC1,P_GtR1Gt,P_Ft;
+    			Mat P_Vtt = null;
+    			Mat P_foo,P_Wt,P_KtC1,P_GtC1,P_GtR1Gt,P_Ft;
     			Mat tmp_GbFb = new Mat();
     			for(int t=0;t<len;t++)
     			{			
@@ -944,8 +992,6 @@ using namespace std;
     					}
     				}
 
-    				double firstPart;
-    				double secondPart;
     				for (r = 0; r < dx; r++) {
     					bxt2.double2D[r][t+1] = 0.0;
     					bxt1.double2D[r][t+1] = 0.0;
@@ -1022,7 +1068,7 @@ using namespace std;
     						Mat Q_GtR1Gt  = times(times(tmp,frame(C2R2R1R2C2,j)),transpose(tmp));
     						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),frame(C1R2C2,j)),transpose(tmp));
 
-    						double ell_mahal;
+    						double ell_mahal = 0.0;
     						//compute expected log-likelihood
     						if((t==0) && (Szero != 0.0))
     						{
@@ -1091,69 +1137,131 @@ using namespace std;
     						ell.double2D[0][j] = ell.double2D[0][j] - 0.5*(ell_mahal + Estat.dtjsa_Q_logdet.double2D[t][j] + ell_const);
 
     						//sensitivity analysis (for t+1)
-    						Mat tmp1=MatVid::frame(Q_GtC1[j],t);
-    						Mat tmp2=MatVid::frame(dtjsa_Q_Ft[j],t);
-    						Mat tmp_GrFr(tmp1.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);					
-    						Mat tmpM=tmp_GrFr.colRange(0,tmp1.cols);
-    						tmp1.copyTo(tmpM);
-    						tmpM=tmp_GrFr.colRange(tmp1.cols,tmp1.cols+tmp2.cols);
-    						tmp2.copyTo(tmpM);
-
-    						tmp1=bxt1.col(t);
-    						tmp2=MatVid::frame(bxt3,j).col(t);
-
-    						Mat tmpM2(tmp1.rows+tmp2.rows,tmp1.cols,OPT_MAT_TYPE);
-    						tmpM=tmpM2.rowRange(0,tmp1.rows);
-    						tmp1.copyTo(tmpM);
-    						tmpM=tmpM2.rowRange(tmp1.rows,tmp1.rows+tmp2.rows);
-    						tmp2.copyTo(tmpM);
-    						MatVid::frame(bxt3,j).col(t+1) = tmp_GrFr * tmpM2;
-
-    						if (useYmean)
-    						{
-    							MatVid::frame(bxt3,j).col(t+1) = MatVid::frame(bxt3,j).col(t+1) + tmp*C2R2Ydiff.col(j);
+    						tmp1=frame(Q_GtC1.get(j),t);
+    						tmp2=frame(Estat.dtjsa_Q_Ft.get(j),t);
+    						Mat tmp_GrFr = new Mat(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmp_GrFr.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    							for (c = tmp1.cols; c < tmp1.cols + tmp2.cols; c++) {
+    								tmp_GrFr.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
     						}
 
-    						tmp1=MatVid::frame(bVt11,t);
-    						tmp2=MatVid::frame(bVt13[j],t);
-    						Mat tmp3=MatVid::frame(bVt13[j],t).t();
-    						Mat tmp4=MatVid::frame(bVt33[j],t);
-    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(0,tmp1.cols));
-    						tmp1.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp2.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(0,tmp1.cols));
-    						tmp3.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp4.copyTo(tmpM2);
-    						MatVid::frame(bVt33[j],t+1) = tmp_GrFr * tmpM * tmp_GrFr.t()  + Q_GtR1Gt;
+    						tmp1 = new Mat(bxt1.rows,1,CV_64F);
+							for (r = 0; r < bxt1.rows; r++) {
+								tmp1.double2D[r][0] = bxt1.double2D[r][t];
+							}
+    						Mat bxt3_j = frame(bxt3,j);
+							Mat tpm2 = new Mat(bxt3_j.rows,1,CV_64F);
+							for (r = 0; r < bxt3_j.rows; r++) {
+								tmp2.double2D[r][0] = bxt3_j.double2D[r][t];
+							}
+
+    						Mat tmpM2 = new Mat(tmp1.rows+tmp2.rows,tmp1.cols,CV_64F);
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM2.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows + tmp2.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM2.double2D[r][c] = tmp2.double2D[r - tmp1.rows][c];
+    							}
+    						}
+    						Mat bxt3_j_tp1 = new Mat(bxt3_j.rows,1,CV_64F);
+    						bxt3_j_tp1 = times(tmp_GrFr,tmpM2);
+    						for (r = 0; r < bxt3_j.rows; r++) {
+    							bxt3_j.double2D[r][t+1] = bxt3_j_tp1.double2D[r][0];
+    						}
+
+    						if (Estat.useYmean)
+    						{
+    							Mat C2R2Ydiff_colj = new Mat(C2R2Ydiff.rows,1,CV_64F);
+    							for (r = 0; r < C2R2Ydiff.rows; r++) {
+    								C2R2Ydiff_colj.double2D[r][0] = C2R2Ydiff.double2D[r][j];
+    							}
+    							bxt3_j_tp1 = plus(bxt3_j_tp1,times(tmp,C2R2Ydiff_colj));
+    							for (r = 0; r < bxt3_j.rows; r++) {
+        							bxt3_j.double2D[r][t+1] = bxt3_j_tp1.double2D[r][0];
+        						}
+    						}
+
+    						tmp1=frame(bVt11,t);
+    						tmp2=frame(bVt13.get(j),t);
+    						tmp3=transpose(frame(bVt13.get(j),t));
+    						tmp4=frame(bVt33.get(j),t);
+    						tmpM = new Mat();
+    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
+    						for (r = 0; r <tmp1.rows;r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols + tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows + tmp3.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp3.double2D[r-tmp1.rows][c];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows + tmp3.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols + tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
+    							}
+    						}
+    						Mat bVt33j_tp1 = frame(bVt33.get(j),t+1);
+    						bVt33j_tp1 = plus(times(times(tmp_GrFr,tmpM),transpose(tmp_GrFr)),Q_GtR1Gt);
 
 
-    						tmp1=MatVid::frame(bVt11,t);
-    						tmp2=MatVid::frame(bVt13[j],t);
-    						tmp3=MatVid::frame(bVt12,t).t();
-    						tmp4=MatVid::frame(bVt23[j],t);
-    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(0,tmp1.cols));
-    						tmp1.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp2.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(0,tmp1.cols));
-    						tmp3.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp4.copyTo(tmpM2);
-    						MatVid::frame(bVt23[j],t+1) = tmp_GbFb * tmpM * tmp_GrFr.t()  + PQ_GtR1Gt;
+    						tmp1=frame(bVt11,t);
+    						tmp2=frame(bVt13.get(j),t);
+    						tmp3=transpose(frame(bVt12,t));
+    						tmp4=frame(bVt23.get(j),t);
+    						tmpM = new Mat();
+    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols + tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows + tmp3.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp3.double2D[r-tmp1.rows][c];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows + tmp3.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols + tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
+    							}
+    						}
+    						Mat bVt23j_tp1 = frame(bVt23.get(j),t+1);
+    						bVt23j_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GrFr)),PQ_GtR1Gt);
 
-    						tmp1=MatVid::frame(bVt11,t);
-    						tmp2=MatVid::frame(bVt13[j],t);
-    						tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);					
-    						tmpM2=tmpM.colRange(0,tmp1.cols);
-    						tmp1.copyTo(tmpM2);
-    						tmpM2=tmpM.colRange(tmp1.cols,tmp1.cols+tmp2.cols);
-    						tmp2.copyTo(tmpM2);
+    						tmp1=frame(bVt11,t);
+    						tmp2=frame(bVt13.get(j),t);
+    						tmpM = new Mat();
+    						tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    							for (c= tmp1.cols; c < tmp1.cols + tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
+    						}
 
-    						MatVid::frame(bVt13[j],t+1) = A1*(tmpM*tmp_GrFr.t());
+    						Mat bVt13j_tp1 = frame(bVt13.get(j),t+1);
+    						bVt13j_tp1 = times(A1,times(tmpM,transpose(tmp_GrFr)));
     					}//388
 
     				}//389
@@ -1162,9 +1270,10 @@ using namespace std;
     			//end Kalman forward
 
     			// store expected log-likelihood
-    			tmpM=Ell.row(i);
-    			ell.copyTo(tmpM);
-    	}*/
+    			for (c = 0; c < Estat.Ell.cols; c++) {
+    				Estat.Ell.double2D[i][c] = ell.double2D[0][c];
+    			}
+    	}
     }
     
     /*!
@@ -1717,6 +1826,92 @@ using namespace std;
 	  }
 	  return sub;
    }
+    
+    private void reduce(Mat src, Mat dst, int dim, int rtype) {
+    	int r, c;
+    	// dim = 0 means the matrix is reduced to a single row
+    	// dim = 1 means the matrix is reduced to a single column
+    	if (dim == 0) {
+    		dst = new Mat(1, src.cols, src.type);
+    		if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG)) {
+    			for (c = 0; c < src.cols; c++) {
+    				dst.double2D[0][c] = 0.0;
+    				for (r = 0; r < src.rows; r++) {
+    					dst.double2D[0][c] += src.double2D[r][c];
+    				}
+    				if (rtype == CV_REDUCE_AVG) {
+    					dst.double2D[0][c] /= src.rows;
+    				}
+    			}
+    		} // if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG))
+    		else if (rtype == CV_REDUCE_MAX) {
+    			for (c = 0; c < src.cols; c++) {
+    				dst.double2D[0][c] = -Double.MAX_VALUE;
+    					for (r = 0; r < src.rows; r++) {
+    						if (src.double2D[r][c] > dst.double2D[0][c]) {
+    							dst.double2D[0][c] = src.double2D[r][c];
+    						}
+    					}
+    			}
+    		} // else if (rtype == CV_REDUCE_MAX)
+    		else if (rtype == CV_REDUCE_MIN) {
+    			for (c = 0; c < src.cols; c++) {
+    				dst.double2D[0][c] = Double.MAX_VALUE;
+    				for (r = 0; r < src.rows; r++) {
+    					if (src.double2D[r][c] < dst.double2D[0][c]) {
+    						dst.double2D[0][c] = src.double2D[r][c];
+    					}
+    				}
+    			}
+    		} // else if (type == CV_REDUCE_MIN)
+    		else {
+    			MipavUtil.displayError("rytpe is an illegal " + rtype + " in reduce");
+    			System.exit(-1);
+    		}
+    	} // if (dim == 0)
+    	else if (dim == 1) {
+    		dst = new Mat(src.rows, 1, src.type);
+    		if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG)) {
+    			for (r = 0; r < src.rows; r++) {
+    				dst.double2D[r][0] = 0.0;
+    				for (c = 0; c < src.cols; c++) {
+    					dst.double2D[r][0] += src.double2D[r][c];
+    				}
+    				if (rtype == CV_REDUCE_AVG) {
+    					dst.double2D[r][0] /= src.cols;
+    				}
+    			}
+    		} // if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG))
+    		else if (rtype == CV_REDUCE_MAX) {
+    			for (r = 0; r < src.rows; r++) {
+    				dst.double2D[r][0] = -Double.MAX_VALUE;
+    				for (c = 0; c < src.cols; c++) {
+    					if (src.double2D[r][c] > dst.double2D[r][0]) {
+    						dst.double2D[r][0] = src.double2D[r][c];
+    					}
+    				}
+    			}
+    		} // else if (rtype == CV_REDUCE_MAX)
+    		else if (rtype == CV_REDUCE_MIN) {
+    			for (r = 0; r < src.rows; r++) {
+    				dst.double2D[r][0] = Double.MAX_VALUE;
+    				for (c = 0; c < src.cols; c++) {
+    					if (src.double2D[r][c] < dst.double2D[r][0]) {
+    						dst.double2D[r][0] = src.double2D[r][c];
+    					}
+    				}
+    			}
+    		} // else if (rtype == CV_REDUCE_MIN)
+    		else {
+    			MipavUtil.displayError("rytpe is an illegal " + rtype + " in reduce");
+    			System.exit(-1);
+    		}
+    	} // else if (dim == 1)
+    	else {
+    		MipavUtil.displayError("dim = an illegal " + dim + " in reduce");
+    		System.exit(-1);
+    	}
+    }
     
     // reduce video to a single image (similar to OpenCV reduce)
     private void reduce(Mat vid, Mat out, int reduceOp) {
@@ -3318,6 +3513,34 @@ using namespace std;
         	ret += A.double2D[r][r];
         }
         return ret;
+    }
+    
+    public Mat repeat(Mat img, int nf) {
+    	  Mat v;
+    	  if (nf <= 0) {
+    		  MipavUtil.displayError("nf = " + nf + " in public Mat repeat");
+    		  System.exit(-1);
+    	  }
+    	  v = create(nf, img.rows, img.cols, img.type);
+    	  for (int j=0; j<nf; j++) {
+    	    Mat f = frame(v, j);
+    	    copyTo(img,f);
+    	  }
+    	  return v;
+    }
+    
+    public void repeat(Mat src, int ny, int nx, Mat dst) {
+    	int y,x,r,c;
+    	dst.create(ny*src.rows,nx*src.cols,src.type);
+    	for (y = 0; y < ny; y++) {
+    		for (x = 0; x < nx; x++) {
+    			for (r = 0; r < src.rows; r++) {
+    				for (c = 0; c < src.cols; c++) {
+    					dst.double2D[y*src.rows + r][x*src.cols + c] = src.double2D[r][c];
+    				}
+    			}
+    		}
+    	}
     }
     
     public class DytexMix {
