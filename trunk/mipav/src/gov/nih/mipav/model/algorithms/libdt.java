@@ -723,7 +723,7 @@ using namespace std;
      */
     private void computeAggregateStats(Estats Estat, Mat W)
     {
-    	/*int i, j, m, n, r, c;
+    	/*int i, j, m, n, r, c, t;
     	int Kb=Estat.dti.size();
     	int Kr=Estat.dtj.size();
     	int len=Estat.tau;
@@ -894,182 +894,324 @@ using namespace std;
     				}
     			}
 
-    			Mat bVt11 = MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    			bVt11.setTo(0);
+    			Mat bVt11 = create(len+1,dx,dx,CV_64F);
 
-    			tmpM=MatVid::frame(bVt11,0);
-    			S1.copyTo(tmpM);
+    			tmpM=frame(bVt11,0);
+    			copyTo(S1,tmpM);
 
-    			Mat bVt12 = MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    			bVt12.setTo(0);
+    			Mat bVt12 = create(len+1,dx,dx,CV_64F);
 
-    			std::vector<Mat> bVt13;
-    			for(int j=0;j<Kr;j++)
+    			Vector<Mat> bVt13 = new Vector<Mat>();
+    			for(j=0;j<Kr;j++)
     			{
-    				Mat tmpM=MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    				tmpM.setTo(0);
-    				bVt13.push_back(tmpM);
+    				tmpM=create(len+1,dx,dx,CV_64F);
+    				bVt13.add(tmpM);
     			}
 
-    			Mat bVt22 = MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    			bVt22.setTo(0);
+    			Mat bVt22 = create(len+1,dx,dx,CV_64F);
 
-    			std::vector<Mat> bVt23;
-    			for(int j=0;j<Kr;j++)
+    			Vector<Mat> bVt23 = new Vector<Mat>();
+    			for(j=0;j<Kr;j++)
     			{
-    				Mat tmpM=MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    				tmpM.setTo(0);
-    				bVt23.push_back(tmpM);
+    				tmpM=create(len+1,dx,dx,CV_64F);
+    				bVt23.add(tmpM);
     			}
 
-    			std::vector<Mat> bVt33;
-    			for(int j=0;j<Kr;j++)
+    			Vector<Mat> bVt33 = new Vector<Mat>();
+    			for(j=0;j<Kr;j++)
     			{
-    				Mat tmpM=MatVid::create(len+1,dx,dx,OPT_MAT_TYPE);
-    				tmpM.setTo(0);
-    				bVt33.push_back(tmpM);
+    				tmpM=create(len+1,dx,dx,CV_64F);
+    				bVt33.add(tmpM);
     			}
 
     			// iterate from t=1 to len		
     			Mat P_Vtt,P_foo,P_Wt,P_KtC1,P_GtC1,P_GtR1Gt,P_Ft,tmp_GbFb;
-    			for(int t=0;t<len;t++)
+    			for(t=0;t<len;t++)
     			{			
     				//KALMAN filter on P at time t
     				if (t>0)
     				{
-    					P_Vtt1   = A1*P_Vtt*A1.t()+Q1;
+    					P_Vtt1   = plus(times(times(A1,P_Vtt),transpose(A1)),Q1);
     				}	
-    				if((t==0) && Szero)
+    				if((t==0) && (Szero != 0.0))
     				{
-    					P_foo  = Mat::zeros(dx,dx,OPT_MAT_TYPE);
+    					P_foo  = new Mat(dx,dx,CV_64F);
     				}
     				else
     				{
-    					P_Wt     = (P_Vtt1.inv()+C1R1C1).inv(); 
-    					P_foo    = P_Vtt1*(Mat::eye(dx,dx,OPT_MAT_TYPE)-C1R1C1*P_Wt);
+    					P_Wt     = new Mat(new Matrix(plus(new Mat((new Matrix(P_Vtt1.double2D)).inverse().getArray()),C1R1C1).double2D).inverse().getArray()); 
+    					Mat eyeMat = new Mat(dx,dx,CV_64F);
+    					for (r = 0; r < dx; r++) {
+    						eyeMat.double2D[r][r] = 1.0;
+    					}
+    					P_foo = times(P_Vtt1,minus(eyeMat,times(C1R1C1,P_Wt)));
     				}
 
-    				P_KtC1    = P_foo*C1R1C1;
-    				P_GtC1    = A1*P_KtC1;
-    				P_Vtt     = P_Vtt1 - P_KtC1*P_Vtt1;
-    				P_GtR1Gt  = P_GtC1*P_foo.t()*A1.t();
-    				P_Ft      = A1-P_GtC1;
+    				P_KtC1    = times(P_foo,C1R1C1);
+    				P_GtC1    = times(A1,P_KtC1);
+    				P_Vtt     = minus(P_Vtt1,times(P_KtC1,P_Vtt1));
+    				P_GtR1Gt  = times(times(P_GtC1,transpose(P_foo)),transpose(A1));
+    				P_Ft      = minus(A1,P_GtC1);
 
     				// update sensitivity analysis for P
-    				tmp_GbFb.create(P_GtC1.rows,P_GtC1.cols+P_Ft.cols,OPT_MAT_TYPE);
-    				tmpM=tmp_GbFb.colRange(Range(0,P_GtC1.cols));
-    				P_GtC1.copyTo(tmpM);
-    				tmpM=tmp_GbFb.colRange(Range(P_GtC1.cols,P_GtC1.cols+P_Ft.cols));
-    				P_Ft.copyTo(tmpM);
+    				tmp_GbFb =  new Mat();
+    				tmp_GbFb.create(P_GtC1.rows,P_GtC1.cols+P_Ft.cols,CV_64F);
+    				for (r = 0; r < P_GtC1.rows; r++) {
+    					for (c = 0; c < P_GtC1.cols; c++) {
+    						tmp_GbFb.double2D[r][c] = P_GtC1.double2D[r][c];
+    					}
+    				}
+    				for (r = 0; r < P_GtC1.rows; r++) {
+    					for (c = P_GtC1.cols; c < P_GtC1.cols+P_Ft.cols; c++) {
+    						tmp_GbFb.double2D[r][c] = P_Ft.double2D[r][c-P_GtC1.cols];
+    					}
+    				}
 
-    				bxt2.col(t+1)    = P_GtC1*bxt1.col(t) + P_Ft*bxt2.col(t);
-    				bxt1.col(t+1)    = A1*bxt1.col(t);
+    				for (r = 0; r < P_GtC1.rows; r++) {
+    					bxt2.double2D[r][t+1] = 0;
+    					for (c = 0; c < P_GtC1.cols; c++) {
+    						bxt2.double2D[r][t+1] += P_GtC1.double2D[r][c]*bxt1.double2D[c][t];
+    					}
+    					for (c = 0; c < P_Ft.cols; c++) {
+    						bxt2.double2D[r][t+1] += P_Ft.double2D[r][c]*bxt2.double2D[c][t];
+    					}
+    				}
+    				for (r = 0; r < A1.rows; r++) {
+    					bxt1.double2D[r][t+1] = 0.0;
+    					for (c = 0; c < A1.cols; c++) {
+    						bxt1.double2D[r][t+1] += A1.double2D[r][c]*bxt1.double2D[c][t];
+    					}
+    				}
 
 
-    				Mat tmp1=MatVid::frame(bVt11,t);
-    				Mat tmp2=MatVid::frame(bVt12,t);
-    				Mat tmp3=MatVid::frame(bVt12,t).t(); 
-    				Mat tmp4=MatVid::frame(bVt22,t);		
-    				tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    				Mat tmpM2=tmpM(Range(0,tmp1.rows),Range(0,tmp1.cols));
-    				tmp1.copyTo(tmpM2);
-    				tmpM2=tmpM(Range(0,tmp1.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    				tmp2.copyTo(tmpM2);
-    				tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(0,tmp1.cols));
-    				tmp3.copyTo(tmpM2);
-    				tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    				tmp4.copyTo(tmpM2);
+    				Mat tmp1=frame(bVt11,t);
+    				Mat tmp2=frame(bVt12,t);
+    				Mat tmp3=transpose(frame(bVt12,t)); 
+    				Mat tmp4=frame(bVt22,t);
+    				tmpM = new Mat();
+    				tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = 0; c < tmp1.cols; c++) {
+    						tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    					}
+    				}
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    						tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    					}
+    				}
+    				for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
+    					for (c = 0; c < tmp1.cols; c++) {
+    						tmpM.double2D[r][c] = tmp3.double2D[r-tmp1.rows][c];
+    					}
+    				}
+    				for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
+    					for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    						tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
+    					}
+    				}
 
-    				MatVid::frame(bVt22,t+1) = tmp_GbFb * tmpM * tmp_GbFb.t()  + P_GtR1Gt;
+    				Mat bVt22_tp1 = frame(bVt22,t+1);
+    				bVt22_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GbFb)),P_GtR1Gt);
 
-    				tmp1=MatVid::frame(bVt11,t);
-    				tmp2=MatVid::frame(bVt12,t);
-    				tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    				tmpM2=tmpM.colRange(0,tmp1.cols);
-    				tmp1.copyTo(tmpM2);
-    				tmpM2=tmpM.colRange(tmp1.cols,tmp1.cols+tmp2.cols);
-    				tmp2.copyTo(tmpM2);
+    				tmp1=frame(bVt11,t);
+    				tmp2=frame(bVt12,t);
+    				tmpM = new Mat();
+    				tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = 0; c < tmp1.cols; c++) {
+    						tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    					}
+    				}
+    				for (r = 0; r < tmp1.rows; r++) {
+    					for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    						tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    					}
+    				}
 
-    				MatVid::frame(bVt12,t+1) = A1*(tmpM*tmp_GbFb.t());
-    				MatVid::frame(bVt11,t+1) = A1*MatVid::frame(bVt11,t)*A1.t() + Q1;
+    				Mat bVt12_tp1 = frame(bVt12,t+1);
+    				bVt12_tp1 = times(A1,times(tmpM,transpose(tmp_GbFb)));
+    				Mat bVt11_tp1 = frame(bVt11,t+1);
+    				bVt11_tp1 = plus(times(times(A1,frame(bVt11,t)),transpose(A1)),Q1);
 
     				//compute cross-covariance
-    				for(int j=0;j<Kr;j++)
+    				for(j=0;j<Kr;j++)
     				{
-    					if(dtjblank[j])
+    					if(Estat.dtjblank.get(j))
     					{
-    						ell.at<OPT_F_TYPE>(0,j)=-1e300;
+    						ell.double2D[0][j]=-1e300;
     					}
     					else
     					{
-    						Mat tmp = dtj[j].A*MatVid::frame(dtjsa_Q_foo[j],t);
-    						MatVid::frame(Q_GtC1[j],t) = tmp*MatVid::frame(C2R2C1,j);
-    						Mat Q_GtR1Gt  = tmp*MatVid::frame(C2R2R1R2C2,j)*tmp.t();
-    						Mat PQ_GtR1Gt = A1*P_foo*MatVid::frame(C1R2C2,j)*tmp.t();
+    						Mat tmp = times(Estat.dtj.get(j).A,frame(Estat.dtjsa_Q_foo.get(j),t));
+    						Mat Q_GtC1j_t = frame(Q_GtC1.get(j),t);
+    						Q_GtC1j_t = times(tmp,frame(C2R2C1,j));
+    						Mat Q_GtR1Gt  = times(times(tmp,frame(C2R2R1R2C2,j)),transpose(tmp));
+    						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),frame(C1R2C2,j)),transpose(tmp));
 
     						double ell_mahal;
-    						if((t==0) && Szero)
+    						if((t==0) && (Szero != 0.0))
     						{
-    							CV_Error(-1,"not supported yet");
+    							MipavUtil.displayError("not supported yet");
+    							System.exit(-1);
     						}
     						else
     						{
-    							Mat tmp_QWtC2R2C1 = MatVid::frame(dtjsa_Q_Wt[j],t)*MatVid::frame(C2R2C1,j);
-    							double ell_mahal1 = trace((MatVid::frame(bVt11,t)+bxt1.col(t)*bxt1.col(t).t())*(MatVid::frame(C1R2C1,j)-MatVid::frame(C1R2C2,j)*tmp_QWtC2R2C1))[0]+ dy*r1/dtj[j].R.mtx.at<OPT_F_TYPE>(0,0) - trace(MatVid::frame(dtjsa_Q_Wt[j],t)*MatVid::frame(C2R2R1R2C2,j))[0];
-    							double ell_mahal2 = trace((MatVid::frame(bVt23[j],t)+bxt2.col(t)*(MatVid::frame(bxt3,j).col(t)).t())*(MatVid::frame(C2R2C1,j)-MatVid::frame(C2R2C2,j)*tmp_QWtC2R2C1))[0];
-    							double ell_mahal3 = trace((MatVid::frame(bVt33[j],t)+(MatVid::frame(bxt3,j).col(t))*(MatVid::frame(bxt3,j).col(t)).t())*(MatVid::frame(C2R2C2,j)-MatVid::frame(C2R2C2,j)*MatVid::frame(dtjsa_Q_Wt[j],t)*MatVid::frame(C2R2C2,j)))[0];
+    							Mat tmp_QWtC2R2C1 = times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2C1,j));
+    							Mat bxt1_bxt1 = new Mat(bxt1.rows,bxt1.rows,CV_64F);
+    							for (r = 0; r < bxt1.rows; r++) {
+    								for (c = 0; c < bxt1.rows; c++) {
+    									bxt1_bxt1.double2D[r][c] = bxt1.double2D[r][t]*bxt1.double2D[c][t];
+    								}
+    							}
+    							Mat part1a = plus(frame(bVt11,t),bxt1_bxt1);
+    							Mat part1b = minus(frame(C1R2C1,j),times(frame(C2R2C2,j),tmp_QWtC2R2C1));
+    							double trace1 = trace(times(part1a,part1b));
+    							double num2 = dy*r1/Estat.dtj.get(j).R.mtx.double2D[0][0];
+    							double trace3 = trace(times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2R1R2C2,j)));
+    							double ell_mahal1 = trace1 + num2 - trace3;
+    							Mat bxt3_j = frame(bxt3,j);
+    							Mat bxt2_bxt3_j = new Mat(bxt2.rows,bxt3_j.rows,CV_64F);
+    							for (r = 0; r < bxt2.rows; r++) {
+    								for (c = 0; c < bxt3_j.rows; c++) {
+    									bxt2_bxt3_j.double2D[r][c] = bxt2.double2D[r][t]*bxt3_j.double2D[c][t];
+    								}
+    							}
+    							Mat part2a = plus(frame(bVt23.get(j),t),bxt2_bxt3_j);
+    							Mat part2b = minus(frame(C2R2C1,j),times(frame(C2R2C2,j),tmp_QWtC2R2C1));
+    							double ell_mahal2 = trace(times(part2a,part2b));
+    							Mat bxt3_j_bxt3_j = new Mat(bxt3_j.rows,bxt3_j.rows,CV_64F);
+    							for (r = 0; r < bxt3_j.rows; r++) {
+    								for (c = 0; c < bxt3_j.rows; c++) {
+    									bxt3_j_bxt3_j.double2D[r][c]= bxt3_j.double2D[r][t]*bxt3_j.double2D[c][t];
+    								}
+    							}
+    							Mat part3a = plus(frame(bVt33.get(j),t),bxt3_j_bxt3_j);
+    							Mat C2R2C2_j = frame(C2R2C2,j);
+    							Mat part3b = minus(C2R2C2_j,times(times(C2R2C2_j,frame(Estat.dtjsa_Q_Wt.get(j),t)),C2R2C2_j));
+    							double ell_mahal3 = trace(times(part3a,part3b));
 
-    							if (useYmean)
+    							if (Estat.useYmean)
     							{
-    								Mat tmp_QWtC2R2Ydiff = MatVid::frame(dtjsa_Q_Wt[j],t)*C2R2Ydiff.col(j);
-    								Mat tmpM=(2*(bxt1.col(t).t())*(C1R2Ydiff.col(j) - MatVid::frame(C1R2C2,j)*tmp_QWtC2R2Ydiff)+((Ydiff.col(j).t())*Ydiff.col(j))/dtj[j].R.mtx.at<OPT_F_TYPE>(0,0)-(C2R2Ydiff.col(j).t())*tmp_QWtC2R2Ydiff);
-    								ell_mahal1 = ell_mahal1 + tmpM.at<OPT_F_TYPE>(0,0);
+    								Mat dtjsa_Q_Wtj_t = frame(Estat.dtjsa_Q_Wt.get(j),t);
+    								Mat tmp_QWtC2R2Ydiff = new Mat(dtjsa_Q_Wtj_t.rows,1,CV_64F);
+    								for (r = 0; r < dtjsa_Q_Wtj_t.rows; r++) {
+    								    tmp_QWtC2R2Ydiff.double2D[r][0] = 0.0;
+    								    for (c = 0; c < dtjsa_Q_Wtj_t.cols; c++) {
+    								    	tmp_QWtC2R2Ydiff.double2D[r][0] += dtjsa_Q_Wtj_t.double2D[r][c]*C2R2Ydiff.double2D[c][j];
+    								    }
+    								}
+    								Mat part1c = times(frame(C1R2C2,j),tmp_QWtC2R2Ydiff);
+    								part1b = new Mat(C1R2Ydiff.rows,1,CV_64F);
+    								for (r = 0; r < C1R2Ydiff.rows; r++) {
+    									part1b.double2D[r][0] = C1R2Ydiff.double2D[r][j] - part1c.double2D[r][0];
+    								}
+    								double var1 = 0.0;
+    								for (r = 0; r < bxt1.rows; r++) {
+    								    var1 += 2*bxt1.double2D[r][t]*part1b.double2D[r][0];	
+    								}
+    								double var2 = 0.0;
+    								for (r = 0; r < Ydiff.rows; r++) {
+    									var2 += Ydiff.double2D[r][j]*Ydiff.double2D[r][j]/Estat.dtj.get(j).R.mtx.double2D[0][0];
+    								}
+    								double var3 = 0.0;
+    								for (r = 0; r < C2R2Ydiff.rows; r++) {
+    									var3 += (C2R2Ydiff.double2D[r][j]*tmp_QWtC2R2Ydiff.double2D[r][0]);
+    								}
+    								double varTotal = var1 + var2 - var3;
+    								ell_mahal1 = ell_mahal1 + varTotal;
 
-    								tmpM=(MatVid::frame(bxt3,j).col(t)).t()*(C2R2Ydiff.col(j) - MatVid::frame(C2R2C2,j)*tmp_QWtC2R2Ydiff);
-    								ell_mahal2 = ell_mahal2 + tmpM.at<OPT_F_TYPE>(0,0);
+    								Mat part2 = times(frame(C2R2C2,j),tmp_QWtC2R2Ydiff);
+    								var1 = 0.0;
+    								for (r = 0; r < bxt3_j.rows; r++) {
+    									var1 += bxt3_j.double2D[r][t]*(C2R2Ydiff.double2D[r][j] - part2.double2D[r][0]);
+    								}
+    								ell_mahal2 = ell_mahal2 + var1;
     							}
     							ell_mahal = ell_mahal1 - 2*ell_mahal2 + ell_mahal3;
     						}//376
 
-    						ell.at<OPT_F_TYPE>(0,j) = ell.at<OPT_F_TYPE>(0,j) - 0.5*(ell_mahal + dtjsa_Q_logdet.at<OPT_F_TYPE>(t,j) + ell_const);
+    						ell.double2D[0][j] = ell.double2D[0][j] - 0.5*(ell_mahal + Estat.dtjsa_Q_logdet.double2D[t][j] + ell_const);
 
     						//sensitivity analysis (for t+1)
-    						Mat tmp1=MatVid::frame(Q_GtC1[j],t);
-    						Mat tmp2=MatVid::frame(dtjsa_Q_Ft[j],t);
-    						Mat tmp_GrFr(tmp1.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);					
-    						Mat tmpM=tmp_GrFr.colRange(0,tmp1.cols);
-    						tmp1.copyTo(tmpM);
-    						tmpM=tmp_GrFr.colRange(tmp1.cols,tmp1.cols+tmp2.cols);
-    						tmp2.copyTo(tmpM);
-
-    						tmp1=bxt1.col(t);
-    						tmp2=MatVid::frame(bxt3,j).col(t);
-
-    						Mat tmpM2(tmp1.rows+tmp2.rows,tmp1.cols,OPT_MAT_TYPE);
-    						tmpM=tmpM2.rowRange(0,tmp1.rows);
-    						tmp1.copyTo(tmpM);
-    						tmpM=tmpM2.rowRange(tmp1.rows,tmp1.rows+tmp2.rows);
-    						tmp2.copyTo(tmpM);
-    						MatVid::frame(bxt3,j).col(t+1) = tmp_GrFr * tmpM2;
-
-    						if (useYmean)
-    						{
-    							MatVid::frame(bxt3,j).col(t+1) = MatVid::frame(bxt3,j).col(t+1) + tmp*C2R2Ydiff.col(j);
+    						tmp1=frame(Q_GtC1.get(j),t);
+    						tmp2=frame(Estat.dtjsa_Q_Ft.get(j),t);
+    						Mat tmp_GrFr = new Mat(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmp_GrFr.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    								tmp_GrFr.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
     						}
 
-    						tmp1=MatVid::frame(bVt11,t);
-    						tmp2=MatVid::frame(bVt13[j],t);
-    						Mat tmp3=MatVid::frame(bVt13[j],t).t();
-    						Mat tmp4=MatVid::frame(bVt33[j],t);
-    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(0,tmp1.cols));
-    						tmp1.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp2.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(0,tmp1.cols));
-    						tmp3.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp4.copyTo(tmpM2);
+    						tmp1 = new Mat(bxt2.rows,1,CV_64F);
+    						for (r = 0; r < bxt1.rows; r++) {
+    							tmp1.double2D[r][0] = bxt1.double2D[r][t];
+    						}
+    						Mat bxt3_j = frame(bxt3,j);
+    						tmp2 = new Mat(bxt3_j.rows,1,CV_64F);
+    						for (r = 0; r < bxt3_j.rows; r++) {
+    							tmp2.double2D[r][0] = bxt3_j.double2D[r][t];
+    						}
+
+    						Mat tmpM2 = new Mat(tmp1.rows+tmp2.rows,tmp1.cols,CV_64F);
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM2.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows+tmp2.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM2.double2D[r][c] = tmp2.double2D[r-tmp1.rows][c];
+    							}
+    						}
+    						Mat prod = times(tmp_GrFr,tmpM2);
+    						for (r = 0; r < bxt3_j.rows; r++) {
+    							bxt3_j.double2D[r][t+1] = prod.double2D[r][0];
+    						}
+
+    						if (Estat.useYmean)
+    						{
+    							double result;
+    							for (r = 0; r < tmp.rows; r++) {
+    								result = 0.0;
+    								for (c = 0; c < tmp.cols; c++) {
+    									result += tmp.double2D[r][c]*C2R2Ydiff.double2D[c][j];
+    								}
+    								bxt3_j.double2D[r][t+1] = bxt3_j.double2D[r][t+1] + result;
+    							}
+    						}
+
+    						tmp1=frame(bVt11,t);
+    						tmp2=frame(bVt13.get(j),t);
+    						tmp3=transpose(frame(bVt13.get(j),t));
+    						tmp4=frame(bVt33.get(j),t);
+    						tmpM = new Mat();
+    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp3.double2D[r-tmp1.rows][c];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
+    							}
+    						}
     						MatVid::frame(bVt33[j],t+1) = tmp_GrFr * tmpM * tmp_GrFr.t()  + Q_GtR1Gt;
 
 
