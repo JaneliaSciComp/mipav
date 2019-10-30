@@ -723,7 +723,7 @@ using namespace std;
      */
     private void computeAggregateStats(Estats Estat, Mat W)
     {
-    	/*int i, j, m, n, r, c, t;
+    	int i, j, m, n, r, c, t;
     	int Kb=Estat.dti.size();
     	int Kr=Estat.dtj.size();
     	int len=Estat.tau;
@@ -752,12 +752,11 @@ using namespace std;
     	{
     		Dytex dt1=Estat.dti.get(i);
 
-    		Mat S1;
+    		Mat S1 = new Mat();
     		Mat tmpM;
     		switch(dt1.dtopt.Sopt)
     		{
     		case COV_DIAG:
-    			S1 = new Mat();
     			S1.create(dt1.S0.mtx.rows,dt1.S0.mtx.rows,CV_64F);
     			for (r = 0; r < dt1.S0.mtx.rows; r++) {
     				S1.double2D[r][r] = dt1.S0.mtx.double2D[r][0];
@@ -801,7 +800,7 @@ using namespace std;
     			Mat C1R2Ydiff  = new Mat(dx,Kr,CV_64F);
     			Mat C2R2Ydiff  = new Mat(dx,Kr,CV_64F);
     			Mat C2R2C2 = create(Kr,dx,dx,CV_64F);
-    			double Szero;
+    			double Szero = 0.0;
     			for(j=0;j<Kr;j++)
     			{
     				if(!Estat.dtjblank.get(j))
@@ -925,7 +924,8 @@ using namespace std;
     			}
 
     			// iterate from t=1 to len		
-    			Mat P_Vtt,P_foo,P_Wt,P_KtC1,P_GtC1,P_GtR1Gt,P_Ft,tmp_GbFb;
+    			Mat P_Vtt = null;
+    			Mat P_foo,P_Wt,P_KtC1,P_GtC1,P_GtR1Gt,P_Ft,tmp_GbFb;
     			for(t=0;t<len;t++)
     			{			
     				//KALMAN filter on P at time t
@@ -1049,7 +1049,7 @@ using namespace std;
     						Mat Q_GtR1Gt  = times(times(tmp,frame(C2R2R1R2C2,j)),transpose(tmp));
     						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),frame(C1R2C2,j)),transpose(tmp));
 
-    						double ell_mahal;
+    						double ell_mahal = 0.0;
     						if((t==0) && (Szero != 0.0))
     						{
     							MipavUtil.displayError("not supported yet");
@@ -1212,33 +1212,56 @@ using namespace std;
     								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
     							}
     						}
-    						MatVid::frame(bVt33[j],t+1) = tmp_GrFr * tmpM * tmp_GrFr.t()  + Q_GtR1Gt;
+    						Mat bVt33j_tp1 = frame(bVt33.get(j),t+1);
+    						bVt33j_tp1 = plus(times(times(tmp_GrFr,tmpM),transpose(tmp_GrFr)),Q_GtR1Gt);
 
 
-    						tmp1=MatVid::frame(bVt11,t);
-    						tmp2=MatVid::frame(bVt13[j],t);
-    						tmp3=MatVid::frame(bVt12,t).t();
-    						tmp4=MatVid::frame(bVt23[j],t);
-    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(0,tmp1.cols));
-    						tmp1.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(0,tmp1.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp2.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(0,tmp1.cols));
-    						tmp3.copyTo(tmpM2);
-    						tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    						tmp4.copyTo(tmpM2);
-    						MatVid::frame(bVt23[j],t+1) = tmp_GbFb * tmpM * tmp_GrFr.t()  + PQ_GtR1Gt;
+    						tmp1=frame(bVt11,t);
+    						tmp2=frame(bVt13.get(j),t);
+    						tmp3=transpose(frame(bVt12,t));
+    						tmp4=frame(bVt23.get(j),t);
+    						tmpM = new Mat();
+    						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp3.double2D[r-tmp1.rows][c];
+    							}
+    						}
+    						for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
+    							}
+    						}
+    						Mat bVt23j_tp1 = frame(bVt23.get(j),t+1);
+    						bVt23j_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GrFr)),PQ_GtR1Gt);
 
-    						tmp1=MatVid::frame(bVt11,t);
-    						tmp2=MatVid::frame(bVt13[j],t);
-    						tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);					
-    						tmpM2=tmpM.colRange(0,tmp1.cols);
-    						tmp1.copyTo(tmpM2);
-    						tmpM2=tmpM.colRange(tmp1.cols,tmp1.cols+tmp2.cols);
-    						tmp2.copyTo(tmpM2);
+    						tmp1=frame(bVt11,t);
+    						tmp2=frame(bVt13.get(j),t);
+    						tmpM = new Mat();
+    						tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = 0; c < tmp1.cols; c++) {
+    								tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    							}
+    						}
+    						for (r = 0; r < tmp1.rows; r++) {
+    							for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    								tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    							}
+    						}
 
-    						MatVid::frame(bVt13[j],t+1) = A1*(tmpM*tmp_GrFr.t());
+    						Mat bVt13j_tp1 = frame(bVt13.get(j),t+1);
+    						bVt13j_tp1 = times(A1,times(tmpM,transpose(tmp_GrFr)));
     					}//388
 
     				}//389
@@ -1246,168 +1269,224 @@ using namespace std;
     			}//390
 
     			// store expected log-likelihood
-    			tmpM=Ell.row(i);
-    			ell.copyTo(tmpM);
+    			for (c = 0; c < Ell.cols; c++) {
+    				Ell.double2D[i][c] = ell.double2D[0][c];
+    			}
 
     			//constants
-    			Mat ut_init = C1*bxt1.colRange(0,tau);
-    			Mat ut_inits;
+    			Mat ut_init = new Mat(C1.rows,Estat.tau,CV_64F);
+    			for (r = 0; r < C1.rows; r++) {
+    				for (c = 0; c < Estat.tau; c++) {
+    				    ut_init.double2D[r][c] = 0.0;	
+    				    for (m = 0; m < C1.cols; m++) {
+    				    	ut_init.double2D[r][c] += C1.double2D[r][m]*bxt1.double2D[m][c];
+    				    }
+    				}
+    			}
+    			Mat ut_inits = new Mat();
     			reduce(ut_init,ut_inits,1,CV_REDUCE_SUM);
 
     			double Ut_init = 0;
-    			for(int t=0;t<len;t++)
+    			for(t=0;t<len;t++)
     			{
-    				Ut_init = Ut_init + trace(MatVid::frame(bVt11,t)*(C1C1))[0] + dy*r1;
+    				Ut_init = Ut_init + trace(times(frame(bVt11,t),C1C1)) + dy*r1;
     			}
 
     			//Sensitivity Analysis for Kalman Smoothing Filter %%%
 
-    			for(int j=0;j<Kr;j++)
+    			for(j=0;j<Kr;j++)
     			{
-    				if(!dtjblank[j])
+    				if(!Estat.dtjblank.get(j))
     				{
     					//initialize aggregate statistics
-    					Mat xij= Mat::zeros(dx,1,OPT_MAT_TYPE);
-    					Mat etaj=MatVid::frame(dtjsa_etaj_init,j).clone();
-    					Mat Phij=MatVid::frame(dtjsa_Phij_init,j).clone();
-    					Mat varphij=MatVid::frame(dtjsa_varphij_init,j).clone();
-    					Mat phij=MatVid::frame(dtjsa_phij_init,j).clone();
-    					Mat betaj=Mat::zeros(dx,1,OPT_MAT_TYPE);
-    					Mat Psij=MatVid::frame(dtjsa_Psij_init,j).clone();
-    					Mat Gammaj=Mat::zeros(dy,dx,OPT_MAT_TYPE);
+    					Mat xij= new Mat(dx,1,CV_64F);
+    					Mat etaj=clone(frame(Estat.dtjsa_etaj_init,j));
+    					Mat Phij=clone(frame(Estat.dtjsa_Phij_init,j));
+    					Mat varphij=clone(frame(Estat.dtjsa_varphij_init,j));
+    					Mat phij=clone(frame(Estat.dtjsa_phij_init,j));
+    					Mat betaj=new Mat(dx,1,CV_64F);
+    					Mat Psij=clone(frame(Estat.dtjsa_Psij_init,j));
+    					Mat Gammaj=new Mat(dy,dx,CV_64F);
 
     					Mat d_ut,udiff;
     					Mat gammaj; 
-    					if(useYmean)
+    					if(Estat.useYmean)
     					{
     						d_ut   = Ymean1;
-    						Mat tmpM;
-    						repeat(Ydiff.col(j),1,len,tmpM);
-    						udiff  = ut_init + tmpM;
-    						gammaj    = ut_inits  + d_ut*len;
+    						tmpM = new Mat(Ydiff.rows,len,CV_64F);
+    						for (r = 0; r < Ydiff.rows; r++) {
+    							for (c = 0; c < len; c++) {
+    								tmpM.double2D[r][c] = Ydiff.double2D[r][j];
+    							}
+    						}
+    						udiff  = plus(ut_init,tmpM);
+    						gammaj    = plus(ut_inits,times(d_ut,len));
     					}
     					else
     					{
-    						d_ut   = Mat::zeros(1,1,OPT_MAT_TYPE);
+    						d_ut   = new Mat(1,1,CV_64F);
     						udiff  = ut_init; //reference NO change
     						gammaj    = ut_inits;
     					}
 
-    					double Lambdaj   = Ut_init + trace(udiff.t()*udiff)[0];
+    					double Lambdaj   = Ut_init + trace(times(transpose(udiff),udiff));
 
 
     					// initialize
-    					Mat xtb = MatVid::frame(dtjsa_iA2,j)*(MatVid::frame(bxt3,j).col(len));
-    					Mat Xit = MatVid::frame(dtjsa_iA2,j)*MatVid::frame(bVt33[j],len)*(MatVid::frame(dtjsa_iA2,j).t());
-    					Mat Mt  = Mat::zeros(dx,dx,OPT_MAT_TYPE);
-    					Mat omt = Mat::zeros(dx,dx,OPT_MAT_TYPE);
+    					Mat bxt3_j = frame(bxt3,j);
+    					Mat bxt3_j_len = new Mat(bxt3_j.rows,1,CV_64F);
+    					for (r = 0; r < bxt3_j.rows; r++) {
+    						bxt3_j_len.double2D[r][0] = bxt3_j.double2D[r][len];
+    					}
+    					Mat xtb = times(frame(Estat.dtjsa_iA2,j),bxt3_j_len);
+    					Mat Xit = times(times(frame(Estat.dtjsa_iA2,j),frame(bVt33.get(j),len)),transpose(frame(Estat.dtjsa_iA2,j)));
+    					Mat Mt  = new Mat(dx,dx,CV_64F);
+    					Mat omt = new Mat(dx,dx,CV_64F);
 
-    					Mat Xit_t1,xtb_t1;
-    					for(int t=len-1;t>=0;t--)
+    					Mat Xit_t1 = null;
+    					Mat xtb_t1 = null;
+    					for(t=len-1;t>=0;t--)
     					{
-    						Mat LGCM = MatVid::frame(dtjsa_Lt[j],t)*MatVid::frame(Q_GtC1[j],t) + Mt;
+    						Mat LGCM = plus(times(frame(Estat.dtjsa_Lt.get(j),t),frame(Q_GtC1.get(j),t)),Mt);
 
-    						Mat omt_t1 = omt.clone();					
-    						Mat Omt = LGCM*MatVid::frame(bVt11,t)+ MatVid::frame(dtjsa_LF[j],t)*(MatVid::frame(bVt23[j],t).t());
-    						omt = LGCM*MatVid::frame(bVt23[j],t) + MatVid::frame(dtjsa_LF[j],t)*MatVid::frame(bVt33[j],t);
+    						Mat omt_t1 = clone(omt);					
+    						Mat Omt = plus(times(LGCM,frame(bVt11,t)),times(frame(Estat.dtjsa_LF.get(j),t),transpose(frame(bVt23.get(j),t))));
+    						omt = plus(times(LGCM,frame(bVt23.get(j),t)),times(frame(Estat.dtjsa_LF.get(j),t),frame(bVt33.get(j),t)));
 
-    						Mat kappat = C1*(Omt.t()) + (MatVid::frame(dtjsa_LtGt[j],t)*r1).t();
+    						Mat kappat = plus(times(C1,transpose(Omt)),transpose(times(frame(Estat.dtjsa_LtGt.get(j),t),r1)));
 
 
     						//%%% compute statistics %%%
-    						Mat d_Pt     = Xit + xtb*xtb.t();
-    						Mat d_Ptt1;
+    						Mat d_Pt     = plus(Xit,times(xtb,transpose(xtb)));
+    						Mat d_Ptt1 = null;
     						if (t<(len-1))
     						{
-    							Mat Xitt1 = omt_t1*(MatVid::frame(dtjsa_Q_Ht[j],t).t()) + Xit_t1*(MatVid::frame(dtjsa_Q_Jt[j],t).t());
-    							d_Ptt1  = Xitt1 + xtb_t1*xtb.t();
+    							Mat Xitt1 = plus(times(omt_t1,transpose(frame(Estat.dtjsa_Q_Ht.get(j),t))),times(Xit_t1,transpose(frame(Estat.dtjsa_Q_Jt.get(j),t))));
+    							d_Ptt1  = plus(Xitt1,times(xtb_t1,transpose(xtb)));
     						}
-    						Mat Wt     = kappat + udiff.col(t)*xtb.t();
+    						Mat xtb_t = transpose(xtb);
+    						Mat udiff_xtb = new Mat(udiff.rows,xtb_t.cols,CV_64F);
+    						for (r = 0; r < udiff.rows; r++) {
+    							for (c = 0; c < xtb_t.cols; c++) {
+    								udiff_xtb.double2D[r][c] = udiff.double2D[r][t]*xtb_t.double2D[0][c];
+    							}
+    						}
+    						Mat Wt     = plus(kappat,udiff_xtb);
 
     						//%%% aggregate statistics
     						if (t==0)
     						{
-    							xij     = xtb.clone();
-    							etaj    = etaj + d_Pt;
+    							xij     = clone(xtb);
+    							etaj    = plus(etaj,d_Pt);
     						}
     						else
     						{
-    							varphij = varphij + d_Pt;
+    							varphij = plus(varphij,d_Pt);
     						}
-    						Phij      = Phij    + d_Pt;
-    						betaj     = betaj   + xtb;
-    						Gammaj    = Gammaj  + Wt;
-    						if (t<(tau-1))
+    						Phij      = plus(Phij,d_Pt);
+    						betaj     = plus(betaj,xtb);
+    						Gammaj    = plus(Gammaj,Wt);
+    						if (t<(Estat.tau-1))
     						{
-    							phij    = phij    + d_Pt;
-    							Psij    = Psij    + d_Ptt1;
+    							phij    = plus(phij,d_Pt);
+    							Psij    = plus(Psij,d_Ptt1);
     						}
 
     						//%%% update sensitivity analysis
     						if(t>0)
     						{
-    							xtb_t1 = xtb.clone();
-    							Xit_t1 = Xit.clone();										
+    							xtb_t1 = clone(xtb);
+    							Xit_t1 = clone(Xit);										
 
-    							Mat tmp1=MatVid::frame(dtjsa_Q_Ht[j],t-1);
-    							Mat tmp2=MatVid::frame(dtjsa_Q_Jt[j],t-1);
-    							Mat QHJ(tmp1.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);					
-    							Mat tmpM2=QHJ.colRange(0,tmp1.cols);
-    							tmp1.copyTo(tmpM2);
-    							tmpM2=QHJ.colRange(tmp1.cols,tmp1.cols+tmp2.cols);
-    							tmp2.copyTo(tmpM2);
+    							Mat tmp1=frame(Estat.dtjsa_Q_Ht.get(j),t-1);
+    							Mat tmp2=frame(Estat.dtjsa_Q_Jt.get(j),t-1);
+    							Mat QHJ = new Mat(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
+    							for (r = 0; r < tmp1.rows; r++) {
+    								for (c = 0; c < tmp1.cols; c++) {
+    									QHJ.double2D[r][c] = tmp1.double2D[r][c];
+    								}
+    							}
+    							for (r = 0; r < tmp1.rows; r++) {
+    								for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    									QHJ.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    								}
+    							}
 
 
 
-    							Mat tmp3=MatVid::frame(bxt3,j).col(t);
+    							bxt3_j = frame(bxt3,j);
+    							Mat tmp3 = new Mat(bxt3_j.rows,1,CV_64F);
+    							for (r = 0; r < bxt3_j.rows; r++) {
+    								tmp3.double2D[r][0] = bxt3_j.double2D[r][t];
+    							}
     							Mat tmp4=xtb;
-    							Mat tmpM(tmp3.rows+tmp4.rows,tmp3.cols,OPT_MAT_TYPE);					
-    							tmpM2=tmpM.rowRange(0,tmp3.rows);
-    							tmp3.copyTo(tmpM2);
-    							tmpM2=tmpM.rowRange(tmp3.rows,tmp3.rows+tmp4.rows);
-    							tmp4.copyTo(tmpM2);
-    							xtb   = QHJ * tmpM;
+    							tmpM = new Mat(tmp3.rows+tmp4.rows,tmp3.cols,CV_64F);					
+    							for (r = 0; r < tmp3.rows; r++) {
+    								for (c = 0; c < tmp3.cols; c++) {
+    									tmpM.double2D[r][c] = tmp3.double2D[r][c];
+    								}
+    							}
+
+    							for (r = tmp3.rows; r < tmp3.rows+tmp4.rows; r++) {
+    								for (c = 0; c < tmp3.cols; c++) {
+    									tmpM.double2D[r][c] = tmp4.double2D[r-tmp3.rows][c];
+    								}
+    							}
+    							xtb   = times(QHJ,tmpM);
 
 
-    							tmp1=MatVid::frame(bVt33[j],t);
-    							Mat tmp5=omt.t();
+    							tmp1=frame(bVt33.get(j),t);
+    							Mat tmp5=transpose(omt);
     							tmp2=tmp5;
     							tmp3=omt;
     							tmp4=Xit;
-    							tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,OPT_MAT_TYPE);
-    							tmpM2=tmpM(Range(0,tmp1.rows),Range(0,tmp1.cols));
-    							tmp1.copyTo(tmpM2);
-    							tmpM2=tmpM(Range(0,tmp1.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    							tmp2.copyTo(tmpM2);
-    							tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(0,tmp1.cols));
-    							tmp3.copyTo(tmpM2);
-    							tmpM2=tmpM(Range(tmp1.rows,tmp1.rows+tmp3.rows),Range(tmp1.cols,tmp1.cols+tmp2.cols));
-    							tmp4.copyTo(tmpM2);
+    							tmpM = new Mat();
+    							tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
+    							for (r = 0; r < tmp1.rows; r++) {
+    								for (c = 0; c < tmp1.cols; c++) {
+    									tmpM.double2D[r][c] = tmp1.double2D[r][c];
+    								}
+    							}
+    							for (r = 0; r < tmp1.rows; r++) {
+    								for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    									tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
+    								}
+    							}
+    							for (r = tmp1.rows; r < tmp1.rows+tmp3.cols; r++) {
+    								for (c = 0; c < tmp1.cols; c++) {
+    									tmpM.double2D[r][c] = tmp3.double2D[r-tmp1.rows][c];
+    								}
+    							}
+    							for (r = tmp1.rows; r < tmp1.rows+tmp3.cols; r++) {
+    								for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
+    									tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
+    								}
+    							}
 
-    							Xit   = QHJ * tmpM * QHJ.t();
+    							Xit   = times(times(QHJ,tmpM),transpose(QHJ));
 
-    							Mt = MatVid::frame(dtjsa_Q_Jt[j],t-1)*LGCM*A1;
+    							Mt = times(times(frame(Estat.dtjsa_Q_Jt.get(j),t-1),LGCM),A1);
     						}
 
     					}//501
 
     					//save and aggregate statistics
-    					this->xij[j]     = this->xij[j]+W.at<OPT_F_TYPE>(i,j)*xij;
-    					this->etaj[j]    = this->etaj[j]+W.at<OPT_F_TYPE>(i,j)*etaj;
-    					this->gammaj[j]  = this->gammaj[j]+W.at<OPT_F_TYPE>(i,j)*(gammaj  / tau);
-    					this->Phij[j]    = this->Phij[j]+W.at<OPT_F_TYPE>(i,j)*(Phij    / tau);
-    					this->varphij[j] = this->varphij[j]+W.at<OPT_F_TYPE>(i,j)*(varphij / (tau-1));
-    					this->phij[j]    = this->phij[j]+W.at<OPT_F_TYPE>(i,j)*(phij    / (tau-1));
-    					this->betaj[j]   = this->betaj[j]+W.at<OPT_F_TYPE>(i,j)*(betaj   / tau);
-    					this->Psij[j]    = this->Psij[j]+W.at<OPT_F_TYPE>(i,j)*(Psij    / (tau-1));
-    					this->Lambdaj[j] = this->Lambdaj[j]+W.at<OPT_F_TYPE>(i,j)*(Lambdaj / tau);
-    					this->Gammaj[j]  = this->Gammaj[j]+W.at<OPT_F_TYPE>(i,j)*(Gammaj  / tau);					
+    				    Estat.xij.set(j,plus(Estat.xij.get(j),times(xij,W.double2D[i][j])));
+    					Estat.etaj.set(j,plus(Estat.etaj.get(j),times(etaj,W.double2D[i][j])));
+    					Estat.gammaj.set(j,plus(Estat.gammaj.get(j),times(divide(gammaj,Estat.tau),W.double2D[i][j])));
+    					Estat.Phij.set(j,plus(Estat.Phij.get(j),times(divide(Phij,Estat.tau),W.double2D[i][j])));
+    					Estat.varphij.set(j,plus(Estat.varphij.get(j),times(divide(varphij,(Estat.tau-1)),W.double2D[i][j])));
+    					Estat.phij.set(j,plus(Estat.phij.get(j),times(divide(phij,(Estat.tau-1)),W.double2D[i][j])));
+    					Estat.betaj.set(j,plus(Estat.betaj.get(j),times(divide(betaj,Estat.tau),W.double2D[i][j])));
+    					Estat.Psij.set(j,plus(Estat.Psij.get(j),times(divide(Psij,(Estat.tau-1)),W.double2D[i][j])));
+    					Estat.Lambdaj.set(j,Estat.Lambdaj.get(j)+W.double2D[i][j]*(Lambdaj / Estat.tau));
+    					Estat.Gammaj.set(j,plus(Estat.Gammaj.get(j),times(divide(Gammaj,Estat.tau),W.double2D[i][j])));					
 
     				}//522
 
     			}//523
 
-    	}//525*/
+    	}//525
 
     }
     
@@ -2247,12 +2326,14 @@ using namespace std;
     			dtjsa_LtGt.add(tmp);
     		}
     		dtjsa_iA2= create(Kr,dx,dx,CV_64F);
+    		dtjsa_Szero = new Mat();
     		dtjsa_Szero.create(1,Kr,CV_64F);
     		dtjsa_Psij_init= create(Kr,dx,dx,CV_64F);
     		dtjsa_etaj_init= create(Kr,dx,dx,CV_64F);
     		dtjsa_varphij_init= create(Kr,dx,dx,CV_64F);
     		dtjsa_Phij_init= create(Kr,dx,dx,CV_64F);
     		dtjsa_phij_init= create(Kr,dx,dx,CV_64F);
+    		dtjsa_Q_logdet = new Mat();
     		dtjsa_Q_logdet.create(len,Kr,CV_64F);
 
     		//RUN AND CACHE THE SENS ANALYSIS FOR DTJ
@@ -3488,6 +3569,7 @@ using namespace std;
         {
         	//setting parameters
         	this.K=K;
+        	this.regopt = reg;
         	this.verbose=verbose;
         	this.termvalue=termvalue;
         	this.termvalBest=1e-5;  //default
@@ -3634,6 +3716,7 @@ using namespace std;
     	         Qval,  /**< Regularization value for Q. */
     	         Sval,  /**< Regularization value for S. */
     			 Aval;  /**< Regularization value for S. */
+    	
     	public DytexRegOptions(cov_reg_type Ropt, double Rval, 
     			  cov_reg_type Qopt, double Qval, 
     			  cov_reg_type Sopt, double Sval,cov_reg_type Aopt, double Aval) {
