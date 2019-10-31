@@ -353,7 +353,7 @@ using namespace std;
     		    	arr[j][j] = singularValues[j];
     		    }
     		    Mat Cs = new Mat(arr);
-    			Mat tmpM= times(Cv,Cs);			
+    			Mat tmpM= times(Cv,Cs);	
     			copyTo(tmpM,hembest.dt.get(i).Cvs);
     			hembest.dt.get(i).isCvs=true;
     		}
@@ -403,6 +403,8 @@ using namespace std;
     		//compute statistics between 2 DT for HEM E-step
     		Estats Estat = new Estats(dtm.dt,hembest.dt,tau,FlagYmean);
     		computeEll(Estat);
+    		System.out.println("Estat.Ell.rows = " + Estat.Ell.rows);
+    		System.out.println("Estat.Ell.cols = " + Estat.Ell.cols);
     		Mat ell=clone(Estat.Ell);
     		Mat tmpM = new Mat(dtm.alpha.size(),1,CV_64F);
     		for (r = 0; r < dtm.alpha.size(); r++) {
@@ -2473,7 +2475,7 @@ using namespace std;
     				Mat LtGt=create(len,dx,dy,CV_64F);
 
     				Mat Q_curVttau = null;
-    				Mat curLt = null;
+    				Mat curLt = new Mat();
     				Mat Q_curVtt1tau = null;
     				for(int t=len-1;t>=0;t--)
     				{
@@ -3427,6 +3429,7 @@ using namespace std;
         B.dims = A.dims;
         B.depth = A.depth;
         B.rows = A.rows;
+        B.cols = A.cols;
         if (A.size != null) {
 	        B.size = new int[A.size.length];
 	        for (i = 0; i <A.size.length; i++) {
@@ -3435,7 +3438,10 @@ using namespace std;
         }
         B.type = A.type;
         if ((A.double2D != null) && (A.double2D[0] != null)) {
-	        B.double2D = new double[A.double2D.length][A.double2D[0].length];
+        	if ((B.double2D == null) || (B.double2D[0] == null) || (A.double2D.length != B.double2D.length) ||
+        			(A.double2D[0].length != B.double2D[0].length)) {
+	            B.double2D = new double[A.double2D.length][A.double2D[0].length];
+        	}
 	        for (i = 0; i < A.double2D.length; i++) {
 	        	for (j = 0; j < A.double2D[0].length; j++) {
 	        		B.double2D[i][j] = A.double2D[i][j];
@@ -4245,7 +4251,10 @@ using namespace std;
     	int i, r,c;
     	if (A.cols != B.rows) {
     		MipavUtil.displayError("A.cols != B.rows in Mat times");
-    		System.exit(-1);
+    		System.out.println("A.cols = " + A.cols);
+    		System.out.println("B.rows = " + B.rows);
+    		int test[] = new int[1];
+    		test[5] = 0;
     	}
     	int rows = A.rows;
     	int cols = B.cols;
