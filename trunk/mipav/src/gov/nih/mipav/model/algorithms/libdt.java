@@ -383,7 +383,7 @@ using namespace std;
     		}
     	}   
 
-    	//initializa blanks
+    	//initialize blanks
     	Vector<Double> blank = new Vector<Double>(Kr);
     	for (i = 0; i < Kr; i++) {
     		blank.add(0.0);
@@ -403,8 +403,6 @@ using namespace std;
     		//compute statistics between 2 DT for HEM E-step
     		Estats Estat = new Estats(dtm.dt,hembest.dt,tau,FlagYmean);
     		computeEll(Estat);
-    		System.out.println("Estat.Ell.rows = " + Estat.Ell.rows);
-    		System.out.println("Estat.Ell.cols = " + Estat.Ell.cols);
     		Mat ell=clone(Estat.Ell);
     		Mat tmpM = new Mat(dtm.alpha.size(),1,CV_64F);
     		for (r = 0; r < dtm.alpha.size(); r++) {
@@ -420,7 +418,7 @@ using namespace std;
     		}
     		Mat tmpM5 = new Mat();
     		repeat(tmpM4,Kb,1,tmpM5);
-    		tmpM = times(ell,tmpM2);
+    		tmpM = elementTimes(ell,tmpM2);
 
     		//aggregated statistics for dti and dtj
     		ell = plus(tmpM,tmpM5);
@@ -573,7 +571,7 @@ using namespace std;
     	    	alphaMat.double2D[i][0] = dtm.alpha.get(i);
     	    }
     		repeat(alphaMat, 1, Kr,tmpM);
-    		Mat W = times(Z,tmpM);	
+    		Mat W = elementTimes(Z,tmpM);	
     		// normalize weights
     		reduce(W,tmpM,0,CV_REDUCE_SUM);
     		repeat(tmpM, Kb, 1,tmpM2);
@@ -3393,26 +3391,21 @@ using namespace std;
     	int n=C.cols;
     	
 
-    	
-    	Matrix matC = new Matrix(C.double2D);
-    	Matrix matCT = matC.transpose();
-    	Matrix matCC = matCT.times(matC);
-    	double array[][] = matCC.getArray();
-    	double diag2D[][] = new double[array.length][array.length];
-    	for (i = 0; i < array.length; i++) {
-    	    diag2D[i][i] = array[i][i];	
+    	Mat matCTC = times(transpose(C),C);
+    	double diag2D[][] = new double[matCTC.rows][matCTC.cols];
+    	for (i = 0; i < matCTC.rows; i++) {
+    	    diag2D[i][i] = Math.sqrt(matCTC.double2D[i][i]);	
     	}
-    	Matrix matM = new Matrix(diag2D);
-    	Matrix matS0 = new Matrix(S0.double2D);
-    	Matrix matM2 = matS0.times(matM);
-    	double arrM2[][] = matM2.getArray();
+    	Mat cc = new Mat(diag2D);
+    	Mat tmpM = elementTimes(cc,cc);
+    	Mat tmpM2 = elementTimes(S0,tmpM);
     	int maxLocx = -1;
     	int maxLocy = -1;
     	double maxVal = -Double.MAX_VALUE;
-    	for (y = 0; y < arrM2.length; y++) {
-    		for (x = 0; x < arrM2[0].length; x++) {
-    			if (arrM2[y][x] > maxVal) {
-    				maxVal = arrM2[y][x];
+    	for (y = 0; y < tmpM2.rows; y++) {
+    		for (x = 0; x < tmpM2.cols; x++) {
+    			if (tmpM2.double2D[y][x] > maxVal) {
+    				maxVal = tmpM2.double2D[y][x];
     				maxLocx = x;
     				maxLocy = y;
     			}
@@ -4246,15 +4239,34 @@ using namespace std;
     	return dest;
     }
     
+    public Mat elementTimes(Mat A, Mat B) {
+    	int r,c;
+    	if (A.rows != B.rows) {
+    		System.out.println("A.rows != B.rows in Mat elementTimes");
+    		System.exit(-1);
+    	}
+    	if (A.cols != B.cols) {
+    		System.out.println("A.cols != B.cols in Mat elementTimes");
+    		System.exit(-1);
+    	}
+    	int rows = A.rows;
+    	int cols = A.cols;
+    	int type = A.type;
+    	Mat dest = new Mat(rows,cols,type);
+    	for (r = 0; r < rows; r++) {
+    		for (c = 0; c < cols; c++) {
+    		    dest.double2D[r][c] = A.double2D[r][c]*B.double2D[r][c];	
+    		}
+    	}
+    	return dest;
+    }
+    
     
     public Mat times(Mat A, Mat B) {
     	int i, r,c;
     	if (A.cols != B.rows) {
     		MipavUtil.displayError("A.cols != B.rows in Mat times");
-    		System.out.println("A.cols = " + A.cols);
-    		System.out.println("B.rows = " + B.rows);
-    		int test[] = new int[1];
-    		test[5] = 0;
+    		System.exit(-1);
     	}
     	int rows = A.rows;
     	int cols = B.cols;
