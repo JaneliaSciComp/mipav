@@ -2620,7 +2620,7 @@ using namespace std;
     	// dim = 0 means the matrix is reduced to a single row
     	// dim = 1 means the matrix is reduced to a single column
     	if (dim == 0) {
-    		dst = new Mat(1, src.cols, src.type);
+    		dst.create(1, src.cols, src.type);
     		if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG)) {
     			for (c = 0; c < src.cols; c++) {
     				dst.double2D[0][c] = 0.0;
@@ -2658,7 +2658,7 @@ using namespace std;
     		}
     	} // if (dim == 0)
     	else if (dim == 1) {
-    		dst = new Mat(src.rows, 1, src.type);
+    		dst.create(src.rows, 1, src.type);
     		if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG)) {
     			for (r = 0; r < src.rows; r++) {
     				dst.double2D[r][0] = 0.0;
@@ -4220,11 +4220,15 @@ using namespace std;
     public Mat minus(Mat A, Mat B) {
     	int r,c;
     	if (A.rows != B.rows) {
-    		MipavUtil.displayError("A.rows != B.rows in Mat plus");
+    		MipavUtil.displayError("A.rows != B.rows in Mat minus");
+    		System.out.println("A.rows = " + A.rows + " A.cols = " + A.cols);
+    		System.out.println("B.rows = " + B.rows + " B.cols = " + B.cols);
+    		int test[] = new int[1];
+    		test[5] = 0;
     		System.exit(-1);
     	}
     	if (A.cols != B.cols) {
-    		MipavUtil.displayError("A.cols != B.cols in Mat plus");
+    		MipavUtil.displayError("A.cols != B.cols in Mat minus");
     		System.exit(-1);
     	}
     	int rows = A.rows;
