@@ -573,6 +573,7 @@ using namespace std;
     		repeat(alphaMat, 1, Kr,tmpM);
     		Mat W = elementTimes(Z,tmpM);	
     		// normalize weights
+    		tmpM = new Mat();
     		reduce(W,tmpM,0,CV_REDUCE_SUM);
     		repeat(tmpM, Kb, 1,tmpM2);
     		Mat tmpM3 = divide(W,tmpM2);
@@ -581,7 +582,7 @@ using namespace std;
 
     		//%%% loop through each cluster %%%
     		for(j=0;j<Kr;j++)
-    		{			
+    		{	
     			//check if this is cluster is blank
     			if(hembest.alpha.get(j)<=MINPROB)
     			{
@@ -775,7 +776,7 @@ using namespace std;
     				if(S1.double2D[m][n]!=0.0)
     					S1zero=false;
     			}
-
+                
     			//special n=0 case
     			if (dx==0)
     			{
@@ -1471,16 +1472,61 @@ using namespace std;
     					}//501
 
     					//save and aggregate statistics
-    				    Estat.xij.set(j,plus(Estat.xij.get(j),times(xij,W.double2D[i][j])));
-    					Estat.etaj.set(j,plus(Estat.etaj.get(j),times(etaj,W.double2D[i][j])));
-    					Estat.gammaj.set(j,plus(Estat.gammaj.get(j),times(divide(gammaj,Estat.tau),W.double2D[i][j])));
-    					Estat.Phij.set(j,plus(Estat.Phij.get(j),times(divide(Phij,Estat.tau),W.double2D[i][j])));
-    					Estat.varphij.set(j,plus(Estat.varphij.get(j),times(divide(varphij,(Estat.tau-1)),W.double2D[i][j])));
-    					Estat.phij.set(j,plus(Estat.phij.get(j),times(divide(phij,(Estat.tau-1)),W.double2D[i][j])));
-    					Estat.betaj.set(j,plus(Estat.betaj.get(j),times(divide(betaj,Estat.tau),W.double2D[i][j])));
-    					Estat.Psij.set(j,plus(Estat.Psij.get(j),times(divide(Psij,(Estat.tau-1)),W.double2D[i][j])));
+    					if (Estat.xij.get(j).rows != 0) {
+    				        Estat.xij.set(j,plus(Estat.xij.get(j),times(xij,W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.xij.set(j,times(xij,W.double2D[i][j]));
+    					}
+    					if (Estat.etaj.get(j).rows != 0) {
+    					    Estat.etaj.set(j,plus(Estat.etaj.get(j),times(etaj,W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.etaj.set(j,times(etaj,W.double2D[i][j]));	
+    					}
+    					if (Estat.gammaj.get(j).rows != 0) {
+    					    Estat.gammaj.set(j,plus(Estat.gammaj.get(j),times(divide(gammaj,Estat.tau),W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.gammaj.set(j,times(divide(gammaj,Estat.tau),W.double2D[i][j]));	
+    					}
+    					if (Estat.Phij.get(j).rows != 0) {
+    					    Estat.Phij.set(j,plus(Estat.Phij.get(j),times(divide(Phij,Estat.tau),W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.Phij.set(j,times(divide(Phij,Estat.tau),W.double2D[i][j]));	
+    					}
+    					if (Estat.varphij.get(j).rows != 0) {
+    					    Estat.varphij.set(j,plus(Estat.varphij.get(j),times(divide(varphij,(Estat.tau-1)),W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.varphij.set(j,times(divide(varphij,(Estat.tau-1)),W.double2D[i][j]));	
+    					}
+    					if (Estat.phij.get(j).rows != 0) {
+    					    Estat.phij.set(j,plus(Estat.phij.get(j),times(divide(phij,(Estat.tau-1)),W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.phij.set(j,times(divide(phij,(Estat.tau-1)),W.double2D[i][j]));	
+    					}
+    					if (Estat.betaj.get(j).rows != 0) {
+    					    Estat.betaj.set(j,plus(Estat.betaj.get(j),times(divide(betaj,Estat.tau),W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.betaj.set(j,times(divide(betaj,Estat.tau),W.double2D[i][j]));	
+    					}
+    					if (Estat.Psij.get(j).rows != 0) {
+    					    Estat.Psij.set(j,plus(Estat.Psij.get(j),times(divide(Psij,(Estat.tau-1)),W.double2D[i][j])));
+    					}
+    					else {
+    						Estat.Psij.set(j,times(divide(Psij,(Estat.tau-1)),W.double2D[i][j]));	
+    					}
     					Estat.Lambdaj.set(j,Estat.Lambdaj.get(j)+W.double2D[i][j]*(Lambdaj / Estat.tau));
-    					Estat.Gammaj.set(j,plus(Estat.Gammaj.get(j),times(divide(Gammaj,Estat.tau),W.double2D[i][j])));					
+    					if (Estat.Gammaj.get(j).rows != 0) {
+    					    Estat.Gammaj.set(j,plus(Estat.Gammaj.get(j),times(divide(Gammaj,Estat.tau),W.double2D[i][j])));		
+    					}
+    					else {
+    						Estat.Gammaj.set(j,times(divide(Gammaj,Estat.tau),W.double2D[i][j]));		
+    					}
 
     				}//522
 
@@ -4221,10 +4267,6 @@ using namespace std;
     	int r,c;
     	if (A.rows != B.rows) {
     		MipavUtil.displayError("A.rows != B.rows in Mat minus");
-    		System.out.println("A.rows = " + A.rows + " A.cols = " + A.cols);
-    		System.out.println("B.rows = " + B.rows + " B.cols = " + B.cols);
-    		int test[] = new int[1];
-    		test[5] = 0;
     		System.exit(-1);
     	}
     	if (A.cols != B.cols) {
