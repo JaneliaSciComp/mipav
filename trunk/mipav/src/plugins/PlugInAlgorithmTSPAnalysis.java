@@ -109,8 +109,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	private int yS;
 	private double D_inv[][];
 	
-    private ModelImage MTTImage;
+//    private ModelImage MTTImage;
     private ModelImage TmaxImage;
+    private ModelImage delay_mapImage;
     
     private String outputFilePath = null;
     private String outputPrefix = "";
@@ -223,7 +224,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage corr_map2Image;
     	ModelImage corrmapImage;
     	ModelImage peaks_mapImage;
-    	ModelImage delay_mapImage;
     	String TEString;
     	short data_norm;
     	short peaks[][][];
@@ -923,8 +923,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	saveImageFile(delay_mapImage, outputFilePath, outputPrefix + "delay_map", saveFileFormat);
     	
-    	delay_mapImage.disposeLocal();
-    	delay_mapImage = null;
+//    	delay_mapImage.disposeLocal();
+//    	delay_mapImage = null;
     	
     	// Deconvolution analysis
     	fireProgressStateChanged("Deconvolution analysis");
@@ -1468,7 +1468,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	CBFImage.disposeLocal();
 	    	CBFImage = null;
 	    	
-	    	MTTImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "MTT");
+	    	ModelImage MTTImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "MTT");
 	    	for (x = 0; x < xDim; x++) {
 	    		for (y = 0; y < yDim; y++) {
 	    			for (z = 0; z < zDim; z++) {
@@ -1493,8 +1493,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	
 	    	saveImageFile(MTTImage, outputFilePath, outputPrefix + "MTT", saveFileFormat);
 	        
-	//    	MTTImage.disposeLocal();
-	//    	MTTImage = null;
+	    	MTTImage.disposeLocal();
+	    	MTTImage = null;
 	    	
 	    	CBVImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "CBV");
 	    	for (x = 0; x < xDim; x++) {
@@ -3042,22 +3042,30 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     public void finalize() {
         super.finalize();
         
-        if (MTTImage != null) {
-            MTTImage.disposeLocal();
-            MTTImage = null;
+        if (delay_mapImage != null) {
+            delay_mapImage.disposeLocal();
+            delay_mapImage = null;
         }
+//        if (MTTImage != null) {
+//            MTTImage.disposeLocal();
+//            MTTImage = null;
+//        }
         if (TmaxImage != null) {
             TmaxImage.disposeLocal();
             TmaxImage = null;
         }
     }
 
-    public ModelImage getMTTImage() {
-        return MTTImage;
-    }
+//    public ModelImage getMTTImage() {
+//        return MTTImage;
+//    }
     
     public ModelImage getTmaxImage() {
         return TmaxImage;
+    }
+    
+    public ModelImage getDelayMapImage() {
+        return delay_mapImage;
     }
     
     public void setOutputFilePath(String path) {
