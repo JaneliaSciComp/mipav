@@ -115,6 +115,18 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private JCheckBox pwiSaveOutputFilesCheckbox;
     private boolean doPwiSaveOutputFiles = false;
     
+    private JCheckBox artifactCleanupWithDelayMapCheckbox;
+    private boolean doArtifactCleanupWithDelayMap = true;
+    
+    private JTextField delayMapThresholdField;
+    private int delayMapThreshold = 1; // 0 or 1
+    
+    private JTextField delayMapCloseIterField;
+    private int delayMapCloseIter = 1;
+    
+    private JTextField delayMapCloseSizeField;
+    private float delayMapCloseSize = 6f;
+    
     private PlugInAlgorithmStrokeSegmentationPWI segAlgo = null;
     
     private boolean isDicomListenerRun = false;
@@ -424,6 +436,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         doPwiCalcCBFCBVMTT = pwiCalcCBFCBVMTTCheckbox.isSelected();
         doPwiSaveOutputFiles = pwiSaveOutputFilesCheckbox.isSelected();
         
+        doArtifactCleanupWithDelayMap = artifactCleanupWithDelayMapCheckbox.isSelected();
+        delayMapThreshold = Integer.parseInt(delayMapThresholdField.getText());
+        delayMapCloseIter = Integer.parseInt(delayMapCloseIterField.getText());
+        delayMapCloseSize = Float.parseFloat(delayMapCloseSizeField.getText());
+        
         return true;
     }
 
@@ -437,7 +454,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             // TODO
             segAlgo = new PlugInAlgorithmStrokeSegmentationPWI(dwiImage, adcImage, pwiImage, adcThreshold, doFilter, doCerebellumSkip, cerebellumSkipSliceMax, 
             		doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, 
-            		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles);
+            		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles, doArtifactCleanupWithDelayMap,
+            		delayMapThreshold, delayMapCloseSize, delayMapCloseIter);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -513,6 +531,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         doPwiCalcCBFCBVMTT = scriptParameters.getParams().getBoolean("do_pwi_calc_cbf_cbv_mtt");
         doPwiSaveOutputFiles = scriptParameters.getParams().getBoolean("do_pwi_save_output_files");
         
+        doArtifactCleanupWithDelayMap = scriptParameters.getParams().getBoolean("do_pwi_delaymap_thresh");
+        delayMapThreshold = scriptParameters.getParams().getInt("pwi_delaymap_thresh_val");
+        delayMapCloseSize = scriptParameters.getParams().getFloat("pwi_delaymap_close_kernel_size");
+        delayMapCloseIter = scriptParameters.getParams().getInt("pwi_delaymap_close_iter_num");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -539,6 +562,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_calc_corr_map", doPwiCalcCorrMap));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_calc_cbf_cbv_mtt", doPwiCalcCBFCBVMTT));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_save_output_files", doPwiSaveOutputFiles));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_delaymap_thresh", doArtifactCleanupWithDelayMap));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_delaymap_thresh_val", delayMapThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_delaymap_close_kernel_size", delayMapCloseSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_delaymap_close_iter_num", delayMapCloseIter));
     }
     
     /**
@@ -762,6 +790,62 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         pwiSaveOutputFilesCheckbox.setForeground(Color.black);
         pwiSaveOutputFilesCheckbox.setFont(serif12);
         mainPanel.add(pwiSaveOutputFilesCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        artifactCleanupWithDelayMapCheckbox = new JCheckBox("Clean up PWI artifacts using delay map threshold", doArtifactCleanupWithDelayMap);
+        artifactCleanupWithDelayMapCheckbox.setForeground(Color.black);
+        artifactCleanupWithDelayMapCheckbox.setFont(serif12);
+        mainPanel.add(artifactCleanupWithDelayMapCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        JLabel labelDelayMapThreshold = new JLabel("Delay map minimum threshold value (usually 1 or 0)");
+        labelDelayMapThreshold.setForeground(Color.black);
+        labelDelayMapThreshold.setFont(serif12);
+        mainPanel.add(labelDelayMapThreshold, gbc);
+        
+        delayMapThresholdField = new JTextField(10);
+        delayMapThresholdField.setText("" + delayMapThreshold);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(delayMapThresholdField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        JLabel labelDelayMapCloseSize = new JLabel("Delay map threshold mask closing circle diameter (mm)");
+        labelDelayMapCloseSize.setForeground(Color.black);
+        labelDelayMapCloseSize.setFont(serif12);
+        mainPanel.add(labelDelayMapCloseSize, gbc);
+        
+        delayMapCloseSizeField = new JTextField(10);
+        delayMapCloseSizeField.setText("" + delayMapCloseSize);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(delayMapCloseSizeField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        JLabel labelDelayMapCloseIter = new JLabel("Delay map threshold mask close iterations");
+        labelDelayMapCloseIter.setForeground(Color.black);
+        labelDelayMapCloseIter.setFont(serif12);
+        mainPanel.add(labelDelayMapCloseIter, gbc);
+        
+        delayMapCloseIterField = new JTextField(10);
+        delayMapCloseIterField.setText("" + delayMapCloseIter);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(delayMapCloseIterField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;

@@ -1255,14 +1255,14 @@ public class StrokeSegmentationDicomReceiverPWI {
                 // core no PWI, perfusion, core w/ PWI, dwi
                 
                 if (passNum == 1) {
-                    passDetails = " -- no PWI";
+                    passDetails = "";
                     passDescr = "ADC image with core segmentation" + passDetails;
                 } else if (passNum == 2) {
                     passDescr = "PWI Tmax > 6s";
-                } else if (passNum == 3) {
-                    passDetails = " -- with PWI";
-                    passDescr = "ADC image with core segmentation" + passDetails;
                 } else if (passNum == 4) {
+                    passDetails = " -- considering Tmax lesion";
+                    passDescr = "ADC image with core segmentation" + passDetails;
+                } else if (passNum == 3) {
                     passDescr = "DWI image";
                 }
                 
@@ -1271,26 +1271,36 @@ public class StrokeSegmentationDicomReceiverPWI {
                 if (coreObjectTable.get(lightboxFileList.get(i)) > 0) {
                     String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
                     reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
+                    
+                    if (passNum == 1) {
+                        if (perfusionObjectTable.get(lightboxFileList.get(1)) > 0) {
+                            double perfVol = perfusionObjectTable.get(lightboxFileList.get(1)).doubleValue();
+                            
+                            double noPwiCore = coreObjectTable.get(lightboxFileList.get(0)).doubleValue();
+                            double noPwiCoreDiff = (perfVol - noPwiCore) * resFactorCC;
+                            double noPwiCoreRatio = perfVol / noPwiCore;
+                        
+                            reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + format.format(noPwiCoreDiff) + "</p>\n";
+                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(noPwiCoreRatio) + "</p>\n";
+                        }
+                    } else if (passNum == 4) {
+                        if (perfusionObjectTable.get(lightboxFileList.get(1)) > 0) {
+                            double perfVol = perfusionObjectTable.get(lightboxFileList.get(1)).doubleValue();
+                            
+                            double pwiCore = coreObjectTable.get(lightboxFileList.get(3)).doubleValue();
+                            double pwiCoreDiff = (perfVol - pwiCore) * resFactorCC;
+                            double pwiCoreRatio = perfVol / pwiCore;
+                        
+                            reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + format.format(pwiCoreDiff) + "</p>\n";
+                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(pwiCoreRatio) + "</p>\n";
+                        }
+                    }
                 } else if (perfusionObjectTable.get(lightboxFileList.get(i)) > 0) {
                     double perfVol = perfusionObjectTable.get(lightboxFileList.get(i)).doubleValue();
                     
                     String perfSegVol = format.format(perfVol * resFactorCC);
-                    reportTxt += "<p>" + "<b>" + "Perfusion volume (mL): " + "</b>" + perfSegVol + "</p>\n";
-                    
-                    double noPwiCore = coreObjectTable.get(lightboxFileList.get(0)).doubleValue();
-                    double pwiCore = coreObjectTable.get(lightboxFileList.get(2)).doubleValue();
-                    
-                    double noPwiCoreDiff = (perfVol - noPwiCore) * resFactorCC;
-                    double pwiCoreDiff = (perfVol - pwiCore) * resFactorCC;
-                    
-                    double noPwiCoreRatio = noPwiCore / perfVol;
-                    double pwiCoreRatio = pwiCore / perfVol;
-                    
-                    reportTxt += "<p>" + "<b>" + "Perfusion mismatch (Perfusion - DWI+ADC) (mL): " + "</b>" + format.format(noPwiCoreDiff) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Perfusion ratio (DWI+ADC/Perfusion): " + "</b>" + format.format(noPwiCoreRatio) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Perfusion mismatch (Perfusion - DWI+ADC+Tmax) (mL): " + "</b>" + format.format(pwiCoreDiff) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Perfusion ratio (DWI+ADC+Tmax/Perfusion): " + "</b>" + format.format(pwiCoreRatio) + "</p>\n";
-                } else if (passNum == 1 || passNum == 3) {
+                    reportTxt += "<p>" + "<b>" + "Tmax volume (mL): " + "</b>" + perfSegVol + "</p>\n";
+                } else if (passNum == 1 || passNum == 4) {
                     reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
                 } else if (passNum == 2) {
                     reportTxt += "<p>" + "<b>" + "No perfusion region found.</p>\n";
