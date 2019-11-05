@@ -404,7 +404,7 @@ using namespace std;
     		Estats Estat = new Estats(dtm.dt,hembest.dt,tau,FlagYmean);
     		computeEll(Estat);
     		Mat ell=clone(Estat.Ell);
-    		Mat tmpM = new Mat(dtm.alpha.size(),1,CV_64F);
+       		Mat tmpM = new Mat(dtm.alpha.size(),1,CV_64F);
     		for (r = 0; r < dtm.alpha.size(); r++) {
     			tmpM.double2D[r][0] = dtm.alpha.get(r);
     		}
@@ -435,7 +435,7 @@ using namespace std;
 
     		double sumtmp = 0.0;
     		for (r = 0; r < Kb; r++) {
-    		    sumtmp += tmp.double2D[r][0];	
+    		    sumtmp += tmp.double2D[r][0];
     		}
     		datalikelihood.set(iter,sumtmp);
     		Mat Z = new Mat(Kb,Kr,CV_64F);
@@ -1044,7 +1044,7 @@ using namespace std;
     					}
     					else
     					{
-    						Mat tmp = times(Estat.dtj.get(j).A,frame(Estat.dtjsa_Q_foo.get(j),t));
+    						Mat tmp = times(Estat.dtj.get(j).A,Estat.dtjsa_Q_foo.get(j)[t]);
     						Mat Q_GtC1j_t = frame(Q_GtC1.get(j),t);
     						Q_GtC1j_t = times(tmp,frame(C2R2C1,j));
     						Mat Q_GtR1Gt  = times(times(tmp,frame(C2R2R1R2C2,j)),transpose(tmp));
@@ -1058,7 +1058,7 @@ using namespace std;
     						}
     						else
     						{
-    							Mat tmp_QWtC2R2C1 = times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2C1,j));
+    							Mat tmp_QWtC2R2C1 = times(Estat.dtjsa_Q_Wt.get(j)[t],frame(C2R2C1,j));
     							Mat bxt1_bxt1 = new Mat(bxt1.rows,bxt1.rows,CV_64F);
     							for (r = 0; r < bxt1.rows; r++) {
     								for (c = 0; c < bxt1.rows; c++) {
@@ -1069,7 +1069,7 @@ using namespace std;
     							Mat part1b = minus(frame(C1R2C1,j),times(frame(C2R2C2,j),tmp_QWtC2R2C1));
     							double trace1 = trace(times(part1a,part1b));
     							double num2 = dy*r1/Estat.dtj.get(j).R.mtx.double2D[0][0];
-    							double trace3 = trace(times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2R1R2C2,j)));
+    							double trace3 = trace(times(Estat.dtjsa_Q_Wt.get(j)[t],frame(C2R2R1R2C2,j)));
     							double ell_mahal1 = trace1 + num2 - trace3;
     							Mat bxt3_j = frame(bxt3,j);
     							Mat bxt2_bxt3_j = new Mat(bxt2.rows,bxt3_j.rows,CV_64F);
@@ -1089,17 +1089,16 @@ using namespace std;
     							}
     							Mat part3a = plus(frame(bVt33.get(j),t),bxt3_j_bxt3_j);
     							Mat C2R2C2_j = frame(C2R2C2,j);
-    							Mat part3b = minus(C2R2C2_j,times(times(C2R2C2_j,frame(Estat.dtjsa_Q_Wt.get(j),t)),C2R2C2_j));
+    							Mat part3b = minus(C2R2C2_j,times(times(C2R2C2_j,Estat.dtjsa_Q_Wt.get(j)[t]),C2R2C2_j));
     							double ell_mahal3 = trace(times(part3a,part3b));
 
     							if (Estat.useYmean)
     							{
-    								Mat dtjsa_Q_Wtj_t = frame(Estat.dtjsa_Q_Wt.get(j),t);
-    								Mat tmp_QWtC2R2Ydiff = new Mat(dtjsa_Q_Wtj_t.rows,1,CV_64F);
-    								for (r = 0; r < dtjsa_Q_Wtj_t.rows; r++) {
+    								Mat tmp_QWtC2R2Ydiff = new Mat(Estat.dtjsa_Q_Wt.get(j)[t].rows,1,CV_64F);
+    								for (r = 0; r < Estat.dtjsa_Q_Wt.get(j)[t].rows; r++) {
     								    tmp_QWtC2R2Ydiff.double2D[r][0] = 0.0;
-    								    for (c = 0; c < dtjsa_Q_Wtj_t.cols; c++) {
-    								    	tmp_QWtC2R2Ydiff.double2D[r][0] += dtjsa_Q_Wtj_t.double2D[r][c]*C2R2Ydiff.double2D[c][j];
+    								    for (c = 0; c < Estat.dtjsa_Q_Wt.get(j)[t].cols; c++) {
+    								    	tmp_QWtC2R2Ydiff.double2D[r][0] += Estat.dtjsa_Q_Wt.get(j)[t].double2D[r][c]*C2R2Ydiff.double2D[c][j];
     								    }
     								}
     								Mat part1c = times(frame(C1R2C2,j),tmp_QWtC2R2Ydiff);
@@ -1136,7 +1135,7 @@ using namespace std;
 
     						//sensitivity analysis (for t+1)
     						tmp1=frame(Q_GtC1.get(j),t);
-    						tmp2=frame(Estat.dtjsa_Q_Ft.get(j),t);
+    						tmp2=Estat.dtjsa_Q_Ft.get(j)[t];
     						Mat tmp_GrFr = new Mat(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
     						for (r = 0; r < tmp1.rows; r++) {
     							for (c = 0; c < tmp1.cols; c++) {
@@ -1301,12 +1300,12 @@ using namespace std;
     				{
     					//initialize aggregate statistics
     					Mat xij= new Mat(dx,1,CV_64F);
-    					Mat etaj=clone(frame(Estat.dtjsa_etaj_init,j));
-    					Mat Phij=clone(frame(Estat.dtjsa_Phij_init,j));
-    					Mat varphij=clone(frame(Estat.dtjsa_varphij_init,j));
-    					Mat phij=clone(frame(Estat.dtjsa_phij_init,j));
+    					Mat etaj=clone(Estat.dtjsa_etaj_init[j]);
+    					Mat Phij=clone(Estat.dtjsa_Phij_init[j]);
+    					Mat varphij=clone(Estat.dtjsa_varphij_init[j]);
+    					Mat phij=clone(Estat.dtjsa_phij_init[j]);
     					Mat betaj=new Mat(dx,1,CV_64F);
-    					Mat Psij=clone(frame(Estat.dtjsa_Psij_init,j));
+    					Mat Psij=clone(Estat.dtjsa_Psij_init[j]);
     					Mat Gammaj=new Mat(dy,dx,CV_64F);
 
     					Mat d_ut,udiff;
@@ -1339,8 +1338,8 @@ using namespace std;
     					for (r = 0; r < bxt3_j.rows; r++) {
     						bxt3_j_len.double2D[r][0] = bxt3_j.double2D[r][len];
     					}
-    					Mat xtb = times(frame(Estat.dtjsa_iA2,j),bxt3_j_len);
-    					Mat Xit = times(times(frame(Estat.dtjsa_iA2,j),frame(bVt33.get(j),len)),transpose(frame(Estat.dtjsa_iA2,j)));
+    					Mat xtb = times(Estat.dtjsa_iA2[j],bxt3_j_len);
+    					Mat Xit = times(times(Estat.dtjsa_iA2[j],frame(bVt33.get(j),len)),transpose(Estat.dtjsa_iA2[j]));
     					Mat Mt  = new Mat(dx,dx,CV_64F);
     					Mat omt = new Mat(dx,dx,CV_64F);
 
@@ -1348,13 +1347,13 @@ using namespace std;
     					Mat xtb_t1 = null;
     					for(t=len-1;t>=0;t--)
     					{
-    						Mat LGCM = plus(times(frame(Estat.dtjsa_Lt.get(j),t),frame(Q_GtC1.get(j),t)),Mt);
+    						Mat LGCM = plus(times(Estat.dtjsa_Lt.get(j)[t],frame(Q_GtC1.get(j),t)),Mt);
 
     						Mat omt_t1 = clone(omt);					
-    						Mat Omt = plus(times(LGCM,frame(bVt11,t)),times(frame(Estat.dtjsa_LF.get(j),t),transpose(frame(bVt23.get(j),t))));
-    						omt = plus(times(LGCM,frame(bVt23.get(j),t)),times(frame(Estat.dtjsa_LF.get(j),t),frame(bVt33.get(j),t)));
+    						Mat Omt = plus(times(LGCM,frame(bVt11,t)),times(Estat.dtjsa_LF.get(j)[t],transpose(frame(bVt23.get(j),t))));
+    						omt = plus(times(LGCM,frame(bVt23.get(j),t)),times(Estat.dtjsa_LF.get(j)[t],frame(bVt33.get(j),t)));
 
-    						Mat kappat = plus(times(C1,transpose(Omt)),transpose(times(frame(Estat.dtjsa_LtGt.get(j),t),r1)));
+    						Mat kappat = plus(times(C1,transpose(Omt)),transpose(times(Estat.dtjsa_LtGt.get(j)[t],r1)));
 
 
     						//%%% compute statistics %%%
@@ -1362,7 +1361,7 @@ using namespace std;
     						Mat d_Ptt1 = null;
     						if (t<(len-1))
     						{
-    							Mat Xitt1 = plus(times(omt_t1,transpose(frame(Estat.dtjsa_Q_Ht.get(j),t))),times(Xit_t1,transpose(frame(Estat.dtjsa_Q_Jt.get(j),t))));
+    							Mat Xitt1 = plus(times(omt_t1,transpose(Estat.dtjsa_Q_Ht.get(j)[t])),times(Xit_t1,transpose(Estat.dtjsa_Q_Jt.get(j)[t])));
     							d_Ptt1  = plus(Xitt1,times(xtb_t1,transpose(xtb)));
     						}
     						Mat xtb_t = transpose(xtb);
@@ -1399,8 +1398,8 @@ using namespace std;
     							xtb_t1 = clone(xtb);
     							Xit_t1 = clone(Xit);										
 
-    							Mat tmp1=frame(Estat.dtjsa_Q_Ht.get(j),t-1);
-    							Mat tmp2=frame(Estat.dtjsa_Q_Jt.get(j),t-1);
+    							Mat tmp1=Estat.dtjsa_Q_Ht.get(j)[t-1];
+    							Mat tmp2=Estat.dtjsa_Q_Jt.get(j)[t-1];
     							Mat QHJ = new Mat(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
     							for (r = 0; r < tmp1.rows; r++) {
     								for (c = 0; c < tmp1.cols; c++) {
@@ -1466,7 +1465,7 @@ using namespace std;
 
     							Xit   = times(times(QHJ,tmpM),transpose(QHJ));
 
-    							Mt = times(times(frame(Estat.dtjsa_Q_Jt.get(j),t-1),LGCM),A1);
+    							Mt = times(times(Estat.dtjsa_Q_Jt.get(j)[t-1],LGCM),A1);
     						}
 
     					}//501
@@ -1553,7 +1552,7 @@ using namespace std;
     {
     	int r, c;
     	Mat s;
-    	Mat mv = new Mat();
+    	Mat mv = new Mat(); 
     	reduce(lA,mv,0,CV_REDUCE_MAX);
     	Mat tmpM = new Mat();
     	repeat(mv,lA.rows,1,tmpM);
@@ -1643,13 +1642,20 @@ using namespace std;
     			Mat Ydiff=new Mat(dy,Kr,CV_64F);
     			Mat C1C1   = times(transpose(C1),C1);
     			Mat C1R1C1 = divide(C1C1,r1);
-    			Mat C1R2C1 = create(Kr,dx,dx,CV_64F);
-    			Mat C2R2C1 = create(Kr,dx,dx,CV_64F);
-    			Mat C1R2C2 = create(Kr,dx,dx,CV_64F);
-    			Mat C2R2R1R2C2 = create(Kr,dx,dx,CV_64F);
+    			Mat C1R2C1[] = new Mat[Kr];
+    	        Mat C2R2C1[] = new Mat[Kr];
+    	        Mat C1R2C2[] = new Mat[Kr];
+    	        Mat C2R2R1R2C2[] = new Mat[Kr];
+    	        Mat C2R2C2[] = new Mat[Kr];
+    	        for (r = 0; r < Kr; r++) {
+    	        	C1R2C1[r] = new Mat(dx,dx,CV_64F);
+    	        	C2R2C1[r] = new Mat(dx,dx,CV_64F);
+    	        	C1R2C2[r] = new Mat(dx,dx,CV_64F);
+    	        	C2R2R1R2C2[r] = new Mat(dx,dx,CV_64F);
+    	        	C2R2C2[r] = new Mat(dx,dx,CV_64F);
+    	        }
     			Mat C1R2Ydiff  = new Mat(dx,Kr,CV_64F);
     			Mat C2R2Ydiff  = new Mat(dx,Kr,CV_64F);
-    			Mat C2R2C2 = create(Kr,dx,dx,CV_64F);
     			double Szero = 0.0;
     			//cache constants
     			for(int j=0;j<Kr;j++)
@@ -1678,20 +1684,11 @@ using namespace std;
 
     					Mat C2 = Estat.dtj.get(j).C;
     					double r2 = Estat.dtj.get(j).R.mtx.double2D[0][0];
-    					//MatVid::frame(C1R2C1,j) = (C1.t()*C1)/r2;
-                        Mat frame_C1R2C1_j = frame(C1R2C1,j);
-                        frame_C1R2C1_j = divide(times(transpose(C1),C1),r2);
-    					//MatVid::frame(C2R2C2,j) = (C2.t()*C2)/r2;
-    					Mat frame_C2R2C2_j = frame(C2R2C2,j);
-                        frame_C2R2C2_j = divide(times(transpose(C2),C2),r2);
-    					//MatVid::frame(C2R2C1,j) = (C2.t()*C1)/r2;
-    					Mat frame_C2R2C1_j = frame(C2R2C1,j);
-                        frame_C2R2C1_j = divide(times(transpose(C2),C1),r2);
-    					//MatVid::frame(C1R2C2,j) = MatVid::frame(C2R2C1,j).t();
-    					Mat frame_C1R2C2_j = transpose(frame(C2R2C1,j));
-    					//MatVid::frame(C2R2R1R2C2,j) = (C2.t()*C2)*r1/(pow(r2,2));
-    					Mat frame_C2R2R1R2C2_j = frame(C2R2R1R2C2,j);
-    					frame_C2R2R1R2C2_j = divide(times(times(transpose(C2),C2),r1),(r2*r2));
+                        C1R2C1[j] = divide(times(transpose(C1),C1),r2);
+                        C2R2C2[j] = divide(times(transpose(C2),C2),r2);
+                        C2R2C1[j] = divide(times(transpose(C2),C1),r2);
+    					C1R2C2[j] = transpose(C2R2C1[j]);
+    					C2R2R1R2C2[j] = divide(times(times(transpose(C2),C2),r1),(r2*r2));
     					if (Estat.useYmean)
     					{
     						
@@ -1715,11 +1712,14 @@ using namespace std;
     			Mat P_Vtt1=clone(S1);
 
     			// storage for Kalman smoother
-    			Vector<Mat> Q_GtC1 = new Vector<Mat>();
+    			Vector<Mat[]> Q_GtC1 = new Vector<Mat[]>();
     			for(int m=0;m<Kr;m++)
     			{
-    			    tmpM=create(len,dx,dx,CV_64F);
-    				Q_GtC1.add(tmpM);
+    				Mat tm[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Q_GtC1.add(tm);
     			}
 
     			// storage for ELL
@@ -1736,46 +1736,66 @@ using namespace std;
     				bxt2.double2D[r][0] = mu01.double2D[r][0];
     			}
 
-    			Mat bxt3  = create(Kr,dx,len+1,CV_64F);
+    			Mat bxt3[] = new Mat[Kr];
+    			for (r = 0; r < Kr; r++) {
+    				bxt3[r] = new Mat(dx,len+1,CV_64F);
+    			}
 
     			for(int j=0;j<Kr;j++)
     			{
     				if(!Estat.dtjblank.get(j))
     				{
     					for (r = 0; r < dx; r++) {
-    	    				bxt3.double3D[j][r][0] = Estat.dtj.get(j).mu0.double2D[r][0];
+    	    				bxt3[j].double2D[r][0] = Estat.dtj.get(j).mu0.double2D[r][0];
     	    			}				
     				}
     			}
 
-    			Mat bVt11 = create(len+1,dx,dx,CV_64F);
-
-    			tmpM=frame(bVt11,0);
-    			copyTo(S1,tmpM);
-
-    			Mat bVt12 = create(len+1,dx,dx,CV_64F);
-
-    			Vector<Mat> bVt13 = new Vector<Mat>();
-    			for(int j=0;j<Kr;j++)
-    			{
-    				tmpM=create(len+1,dx,dx,CV_64F);
-    				bVt13.add(tmpM);
+    			Mat bVt11[] = new Mat[len+1];
+    			for (r = 0; r < len+1; r++) {
+    				bVt11[r] = new Mat(dx,dx,CV_64F);
     			}
 
-    			Mat bVt22 = create(len+1,dx,dx,CV_64F);
+    			copyTo(S1,bVt11[0]);
 
-    			Vector<Mat> bVt23 = new Vector<Mat>();
-    			for(int j=0;j<Kr;j++)
-    			{
-    				tmpM=create(len+1,dx,dx,CV_64F);
-    				bVt23.add(tmpM);
+    			Mat bVt12[] = new Mat[len+1];
+    			for (r = 0; r < len+1; r++) {
+    				bVt12[r] = new Mat(dx,dx,CV_64F);
     			}
 
-    			Vector<Mat> bVt33 = new Vector<Mat>();
+    			Vector<Mat[]> bVt13 = new Vector<Mat[]>();
     			for(int j=0;j<Kr;j++)
     			{
-    				tmpM=create(len+1,dx,dx,CV_64F);
-    				bVt33.add(tmpM);
+    				Mat tm[] = new Mat[len+1];
+    				for (r = 0; r < len+1;r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				bVt13.add(tm);
+    			}
+
+    			Mat bVt22[] = new Mat[len+1];
+    			for (r = 0; r < len+1; r++) {
+    				bVt22[r] = new Mat(dx,dx,CV_64F);
+    			}
+
+    			Vector<Mat[]> bVt23 = new Vector<Mat[]>();
+    			for(int j=0;j<Kr;j++)
+    			{
+    				Mat tm[] = new Mat[len+1];
+    				for (r = 0; r < len+1; r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				bVt23.add(tm);
+    			}
+
+    			Vector<Mat[]> bVt33 = new Vector<Mat[]>();
+    			for(int j=0;j<Kr;j++)
+    			{
+    				Mat tm[] = new Mat[len+1];
+    				for (r = 0; r < len+1; r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				bVt33.add(tm);
     			}
 
     			// iterate from t=1 to len		
@@ -1834,10 +1854,10 @@ using namespace std;
     				}
 
 
-    				Mat tmp1=frame(bVt11,t);
-    				Mat tmp2=frame(bVt12,t);
-    				Mat tmp3=transpose(frame(bVt12,t)); 
-    				Mat tmp4=frame(bVt22,t);
+    				Mat tmp1=bVt11[t];
+    				Mat tmp2=bVt12[t];
+    				Mat tmp3=transpose(bVt12[t]); 
+    				Mat tmp4=bVt22[t];
     				tmpM = new Mat();
     				tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
     				for (r = 0; r < tmp1.rows; r++) {
@@ -1861,11 +1881,10 @@ using namespace std;
     					}
     				}
 
-    				Mat frame_bvt22_tp1 = frame(bVt22,t+1);
-    				frame_bvt22_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GbFb)),P_GtR1Gt);
+    				bVt22[t+1] = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GbFb)),P_GtR1Gt);
 
-    				tmp1=frame(bVt11,t);
-    				tmp2=frame(bVt12,t);
+    				tmp1=bVt11[t];
+    				tmp2=bVt12[t];
     				tmpM = new Mat();
     				tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);
     				for (r = 0; r < tmp1.rows; r++) {
@@ -1879,11 +1898,8 @@ using namespace std;
     					}
     				}
 
-    				Mat frame_bVt12_tp1 = frame(bVt12,t+1);
-    				frame_bVt12_tp1 = times(A1,times(tmpM,transpose(tmp_GbFb)));
-    				Mat frame_bVt11_tp1 = frame(bVt11,t+1);
-    				Mat frame_bVt11_t = frame(bVt11,t);
-    				frame_bVt11_tp1 = plus(times(times(A1,frame_bVt11_t),transpose(A1)),Q1);
+    				bVt12[t+1] = times(A1,times(tmpM,transpose(tmp_GbFb)));
+    				bVt11[t+1] = plus(times(times(A1,bVt11[t]),transpose(A1)),Q1);
 
     				//compute cross-covariance
     				for(int j=0;j<Kr;j++)
@@ -1894,11 +1910,10 @@ using namespace std;
     					}
     					else
     					{
-    						Mat tmp = times(Estat.dtj.get(j).A,frame(Estat.dtjsa_Q_foo.get(j),t));
-    						Mat frame_Q_GtC1j_t = frame(Q_GtC1.get(j),t);
-    						frame_Q_GtC1j_t = times(tmp,frame(C2R2C1,j));
-    						Mat Q_GtR1Gt  = times(times(tmp,frame(C2R2R1R2C2,j)),transpose(tmp));
-    						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),frame(C1R2C2,j)),transpose(tmp));
+    						Mat tmp = times(Estat.dtj.get(j).A,Estat.dtjsa_Q_foo.get(j)[t]);
+    						Q_GtC1.get(j)[t] = times(tmp,C2R2C1[j]);
+    						Mat Q_GtR1Gt  = times(times(tmp,C2R2R1R2C2[j]),transpose(tmp));
+    						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),C1R2C2[j]),transpose(tmp));
 
     						double ell_mahal = 0.0;
     						//compute expected log-likelihood
@@ -1909,34 +1924,32 @@ using namespace std;
     						}
     						else
     						{
-    							Mat tmp_QWtC2R2C1 = times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2C1,j));
+    							Mat tmp_QWtC2R2C1 = times(Estat.dtjsa_Q_Wt.get(j)[t],C2R2C1[j]);
     							Mat bxt1_colt = new Mat(bxt1.rows,1,CV_64F);
     							for (r = 0; r < bxt1.rows; r++) {
     								bxt1_colt.double2D[r][0] = bxt1.double2D[r][t];
     							}
-    							Mat firstMat = plus(frame(bVt11,t),times(bxt1_colt,transpose(bxt1_colt)));
-    							Mat secondMat = minus(frame(C1R2C1,j),times(frame(C1R2C2,j),tmp_QWtC2R2C1));
+    							Mat firstMat = plus(bVt11[t],times(bxt1_colt,transpose(bxt1_colt)));
+    							Mat secondMat = minus(C1R2C1[j],times(C1R2C2[j],tmp_QWtC2R2C1));
     							Mat firstProd = times(firstMat,secondMat);
     							double firstTrace = trace(firstProd);
     							double middleNum = dy*r1/Estat.dtj.get(j).R.mtx.double2D[0][0];
-    							Mat lastMat = times(frame(Estat.dtjsa_Q_Wt.get(j),t),frame(C2R2R1R2C2,j));
+    							Mat lastMat = times(Estat.dtjsa_Q_Wt.get(j)[t],C2R2R1R2C2[j]);
     							double lastTrace = trace(lastMat);
     							double ell_mahal1 = firstTrace + middleNum - lastTrace;
     							Mat bxt2_colt = new Mat(bxt2.rows,1,CV_64F);
     							for (r = 0; r < bxt2.rows; r++) {
     								bxt2_colt.double2D[r][0] = bxt2.double2D[r][t];
     							}
-    							Mat bxt3_j = frame(bxt3,j);
-    							Mat bxt3_j_colt = new Mat(bxt3_j.rows,1,CV_64F);
-    							for (r = 0; r < bxt3_j.rows; r++) {
-    								bxt3_j_colt.double2D[r][0] = bxt3_j.double2D[r][t];
+    							Mat bxt3_j_colt = new Mat(bxt3[j].rows,1,CV_64F);
+    							for (r = 0; r < bxt3[j].rows; r++) {
+    								bxt3_j_colt.double2D[r][0] = bxt3[j].double2D[r][t];
     							}
-    						    firstMat =  plus(frame(bVt23.get(j),t),times(bxt2_colt,transpose(bxt3_j_colt)));
-    						    secondMat = minus(frame(C2R2C1,j),times(frame(C2R2C2,j),tmp_QWtC2R2C1));
+    						    firstMat =  plus(bVt23.get(j)[t],times(bxt2_colt,transpose(bxt3_j_colt)));
+    						    secondMat = minus(C2R2C1[j],times(C2R2C2[j],tmp_QWtC2R2C1));
     						    double ell_mahal2 = trace(times(firstMat,secondMat));
-    							firstMat = plus(frame(bVt33.get(j),t),times(bxt3_j_colt,transpose(bxt3_j_colt)));
-                                Mat frame_C2R2C2_j = frame(C2R2C2,j);
-                                secondMat = minus(frame_C2R2C2_j,times(times(frame_C2R2C2_j,frame(Estat.dtjsa_Q_Wt.get(j),t)),frame_C2R2C2_j));
+    							firstMat = plus(bVt33.get(j)[t],times(bxt3_j_colt,transpose(bxt3_j_colt)));
+                                secondMat = minus(C2R2C2[j],times(times(C2R2C2[j],Estat.dtjsa_Q_Wt.get(j)[t]),C2R2C2[j]));
                                 double ell_mahal3 = trace(times(firstMat,secondMat));
     							if (Estat.useYmean)
     							{
@@ -1944,7 +1957,7 @@ using namespace std;
     								for (r = 0; r < C2R2Ydiff.rows; r++) {
     									C2R2Ydiff_colj.double2D[r][0] = C2R2Ydiff.double2D[r][j];
     								}
-    								Mat tmp_QWtC2R2Ydiff = times(frame(Estat.dtjsa_Q_Wt.get(j),t),C2R2Ydiff_colj);
+    								Mat tmp_QWtC2R2Ydiff = times(Estat.dtjsa_Q_Wt.get(j)[t],C2R2Ydiff_colj);
     								Mat C1R2Ydiff_colj = new Mat(C1R2Ydiff.rows,1,CV_64F);
     								for (r = 0; r < C1R2Ydiff.rows; r++) {
     									C1R2Ydiff_colj.double2D[r][0] = C1R2Ydiff.double2D[r][j];
@@ -1954,13 +1967,13 @@ using namespace std;
     									Ydiff_colj.double2D[r][0] = Ydiff.double2D[r][j];
     								}
     								firstMat = times(transpose(bxt1_colt),2.0);
-    								secondMat = minus(C1R2Ydiff_colj,times(frame(C1R2C2,j),tmp_QWtC2R2Ydiff));
+    								secondMat = minus(C1R2Ydiff_colj,times(C1R2C2[j],tmp_QWtC2R2Ydiff));
     								Mat thirdMat = divide(times(transpose(Ydiff_colj),Ydiff_colj),Estat.dtj.get(j).R.mtx.double2D[0][0]);
     								Mat fourthMat = times(transpose(C2R2Ydiff_colj),tmp_QWtC2R2Ydiff);
     								tmpM = minus(plus(times(firstMat,secondMat),thirdMat),fourthMat);
     								ell_mahal1 = ell_mahal1 + tmpM.double2D[0][0];
 
-    								tmpM = times(transpose(bxt3_j_colt),minus(C2R2Ydiff_colj,times(frame_C2R2C2_j,tmp_QWtC2R2Ydiff)));
+    								tmpM = times(transpose(bxt3_j_colt),minus(C2R2Ydiff_colj,times(C2R2C2[j],tmp_QWtC2R2Ydiff)));
     								ell_mahal2 = ell_mahal2 + tmpM.double2D[0][0];
     							}
     							ell_mahal = ell_mahal1 - 2*ell_mahal2 + ell_mahal3;
@@ -1969,8 +1982,8 @@ using namespace std;
     						ell.double2D[0][j] = ell.double2D[0][j] - 0.5*(ell_mahal + Estat.dtjsa_Q_logdet.double2D[t][j] + ell_const);
 
     						//sensitivity analysis (for t+1)
-    						tmp1=frame(Q_GtC1.get(j),t);
-    						tmp2=frame(Estat.dtjsa_Q_Ft.get(j),t);
+    						tmp1=Q_GtC1.get(j)[t];
+    						tmp2=Estat.dtjsa_Q_Ft.get(j)[t];
     						Mat tmp_GrFr = new Mat(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
     						for (r = 0; r < tmp1.rows; r++) {
     							for (c = 0; c < tmp1.cols; c++) {
@@ -1985,10 +1998,9 @@ using namespace std;
 							for (r = 0; r < bxt1.rows; r++) {
 								tmp1.double2D[r][0] = bxt1.double2D[r][t];
 							}
-    						Mat bxt3_j = frame(bxt3,j);
-							Mat tpm2 = new Mat(bxt3_j.rows,1,CV_64F);
-							for (r = 0; r < bxt3_j.rows; r++) {
-								tmp2.double2D[r][0] = bxt3_j.double2D[r][t];
+							Mat tpm2 = new Mat(bxt3[j].rows,1,CV_64F);
+							for (r = 0; r < bxt3[j].rows; r++) {
+								tmp2.double2D[r][0] = bxt3[j].double2D[r][t];
 							}
 
     						Mat tmpM2 = new Mat(tmp1.rows+tmp2.rows,tmp1.cols,CV_64F);
@@ -2002,10 +2014,10 @@ using namespace std;
     								tmpM2.double2D[r][c] = tmp2.double2D[r - tmp1.rows][c];
     							}
     						}
-    						Mat bxt3_j_tp1 = new Mat(bxt3_j.rows,1,CV_64F);
+    						Mat bxt3_j_tp1 = new Mat(bxt3[j].rows,1,CV_64F);
     						bxt3_j_tp1 = times(tmp_GrFr,tmpM2);
-    						for (r = 0; r < bxt3_j.rows; r++) {
-    							bxt3_j.double2D[r][t+1] = bxt3_j_tp1.double2D[r][0];
+    						for (r = 0; r < bxt3[j].rows; r++) {
+    							bxt3[j].double2D[r][t+1] = bxt3_j_tp1.double2D[r][0];
     						}
 
     						if (Estat.useYmean)
@@ -2015,15 +2027,15 @@ using namespace std;
     								C2R2Ydiff_colj.double2D[r][0] = C2R2Ydiff.double2D[r][j];
     							}
     							bxt3_j_tp1 = plus(bxt3_j_tp1,times(tmp,C2R2Ydiff_colj));
-    							for (r = 0; r < bxt3_j.rows; r++) {
-        							bxt3_j.double2D[r][t+1] = bxt3_j_tp1.double2D[r][0];
+    							for (r = 0; r < bxt3[j].rows; r++) {
+        							bxt3[j].double2D[r][t+1] = bxt3_j_tp1.double2D[r][0];
         						}
     						}
 
-    						tmp1=frame(bVt11,t);
-    						tmp2=frame(bVt13.get(j),t);
-    						tmp3=transpose(frame(bVt13.get(j),t));
-    						tmp4=frame(bVt33.get(j),t);
+    						tmp1=bVt11[t];
+    						tmp2=bVt13.get(j)[t];
+    						tmp3=transpose(bVt13.get(j)[t]);
+    						tmp4=bVt33.get(j)[t];
     						tmpM = new Mat();
     						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
     						for (r = 0; r <tmp1.rows;r++) {
@@ -2046,14 +2058,13 @@ using namespace std;
     								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
     							}
     						}
-    						Mat bVt33j_tp1 = frame(bVt33.get(j),t+1);
-    						bVt33j_tp1 = plus(times(times(tmp_GrFr,tmpM),transpose(tmp_GrFr)),Q_GtR1Gt);
+    						bVt33.get(j)[t+1] = plus(times(times(tmp_GrFr,tmpM),transpose(tmp_GrFr)),Q_GtR1Gt);
 
 
-    						tmp1=frame(bVt11,t);
-    						tmp2=frame(bVt13.get(j),t);
-    						tmp3=transpose(frame(bVt12,t));
-    						tmp4=frame(bVt23.get(j),t);
+    						tmp1=bVt11[t];
+    						tmp2=bVt13.get(j)[t];
+    						tmp3=transpose(bVt12[t]);
+    						tmp4=bVt23.get(j)[t];
     						tmpM = new Mat();
     						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
     						for (r = 0; r < tmp1.rows; r++) {
@@ -2076,11 +2087,10 @@ using namespace std;
     								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
     							}
     						}
-    						Mat bVt23j_tp1 = frame(bVt23.get(j),t+1);
-    						bVt23j_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GrFr)),PQ_GtR1Gt);
+    						bVt23.get(j)[t+1] = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GrFr)),PQ_GtR1Gt);
 
-    						tmp1=frame(bVt11,t);
-    						tmp2=frame(bVt13.get(j),t);
+    						tmp1=bVt11[t];
+    						tmp2=bVt13.get(j)[t];
     						tmpM = new Mat();
     						tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
     						for (r = 0; r < tmp1.rows; r++) {
@@ -2092,8 +2102,7 @@ using namespace std;
     							}
     						}
 
-    						Mat bVt13j_tp1 = frame(bVt13.get(j),t+1);
-    						bVt13j_tp1 = times(A1,times(tmpM,transpose(tmp_GrFr)));
+    						bVt13.get(j)[t+1] = times(A1,times(tmpM,transpose(tmp_GrFr)));
     					}//388
 
     				}//389
@@ -2208,52 +2217,52 @@ using namespace std;
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_Q_Ft = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_Q_Ft = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_Q_GtC2 = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_Q_GtC2 = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_Q_Wt = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_Q_Wt = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_Q_foo = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_Q_foo = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_Q_Jt = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_Q_Jt = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_Q_Ht = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_Q_Ht = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_Lt = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_Lt = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_LF = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_LF = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Vector<Mat> dtjsa_LtGt = new Vector<Mat>();
+    	public Vector<Mat[]> dtjsa_LtGt = new Vector<Mat[]>();
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Mat dtjsa_iA2;	
+    	public Mat dtjsa_iA2[];	
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
@@ -2263,27 +2272,27 @@ using namespace std;
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Mat dtjsa_Psij_init;
+    	public Mat dtjsa_Psij_init[];
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Mat dtjsa_etaj_init;
+    	public Mat dtjsa_etaj_init[];
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Mat dtjsa_varphij_init;
+    	public Mat dtjsa_varphij_init[];
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Mat dtjsa_Phij_init;
+    	public Mat dtjsa_Phij_init[];
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
     	 */
-    	public Mat dtjsa_phij_init;
+    	public Mat dtjsa_phij_init[];
     	/*!
     	 * \brief
     	 * SENS ANALYSIS Cache variable
@@ -2335,6 +2344,7 @@ using namespace std;
     	 */
     	public void saveCache() {
     		int i, j, r, c;
+    		Mat tm[];
     		int Kb=dti.size();
     		int Kr=dtj.size();
     		int len=tau;
@@ -2344,41 +2354,87 @@ using namespace std;
     		//initialize cache		
     		for(i=0;i<Kr;i++)
     		{
-    			Mat tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_Q_Ft.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_Q_Ft.add(tm);
 
-    			tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_Q_GtC2.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_Q_GtC2.add(tm);
 
-    			tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_Q_Wt.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_Q_Wt.add(tm);
 
-    			tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_Q_foo.add(tmp);
+    			
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_Q_foo.add(tm);
 
-    			tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_Q_Jt.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_Q_Jt.add(tm);
 
-    			tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_Q_Ht.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r]= new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_Q_Ht.add(tm);
 
-    			tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_Lt.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_Lt.add(tm);
 
-    			tmp=create(len,dx,dx,CV_64F);
-    			dtjsa_LF.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dx,CV_64F);
+    			}
+    			dtjsa_LF.add(tm);
 
-    			tmp=create(len,dx,dy,CV_64F);
-    			dtjsa_LtGt.add(tmp);
+    			tm = new Mat[len];
+    			for (r = 0; r < len; r++) {
+    				tm[r] = new Mat(dx,dy,CV_64F);
+    			}
+    			dtjsa_LtGt.add(tm);
     		}
-    		dtjsa_iA2= create(Kr,dx,dx,CV_64F);
+    		dtjsa_iA2 = new Mat[Kr];
+    		for (r = 0; r < Kr; r++) {
+    			dtjsa_iA2[r] = new Mat(dx,dx,CV_64F);
+    		}
     		dtjsa_Szero = new Mat();
     		dtjsa_Szero.create(1,Kr,CV_64F);
-    		dtjsa_Psij_init= create(Kr,dx,dx,CV_64F);
-    		dtjsa_etaj_init= create(Kr,dx,dx,CV_64F);
-    		dtjsa_varphij_init= create(Kr,dx,dx,CV_64F);
-    		dtjsa_Phij_init= create(Kr,dx,dx,CV_64F);
-    		dtjsa_phij_init= create(Kr,dx,dx,CV_64F);
+    		dtjsa_Psij_init = new Mat[Kr];
+    		for (r = 0; r < Kr; r++) {
+    			dtjsa_Psij_init[r] = new Mat(dx,dx,CV_64F);
+    		}
+    		dtjsa_etaj_init = new Mat[Kr];
+    		for (r = 0; r < Kr; r++) {
+    			dtjsa_etaj_init[r] = new Mat(dx,dx,CV_64F);
+    		}
+    		dtjsa_varphij_init = new Mat[Kr];
+    		for (r = 0; r < Kr; r++) {
+    			dtjsa_varphij_init[r] = new Mat(dx,dx,CV_64F);
+    		}
+    		dtjsa_Phij_init = new Mat[Kr];
+    		for (r = 0; r < Kr; r++) {
+    			dtjsa_Phij_init[r] = new Mat(dx,dx,CV_64F);
+    		}
+    		dtjsa_phij_init = new Mat[Kr];
+    		for (r = 0; r < Kr; r++) {
+    			dtjsa_phij_init[r] = new Mat(dx,dx,CV_64F);
+    		}
     		dtjsa_Q_logdet = new Mat();
     		dtjsa_Q_logdet.create(len,Kr,CV_64F);
 
@@ -2448,13 +2504,34 @@ using namespace std;
     				Mat Q_curVtt1=S2;
 
     				// Kalman cache
-    				Mat Q_Vtt1 = create(len,dx,dx,CV_64F);
-    				Mat Q_Vtt  = create(len,dx,dx,CV_64F);
-    				Mat Q_Ft   = create(len,dx,dx,CV_64F);
-    				Mat Q_GtC2 = create(len,dx,dx,CV_64F);
-    				Mat Q_Gt   = create(len,dx,dy,CV_64F);
-    				Mat Q_Wt   = create(len,dx,dx,CV_64F);
-    				Mat Q_foo  = create(len,dx,dx,CV_64F);
+    				Mat Q_Vtt1[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Vtt1[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Q_Vtt[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Vtt[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Q_Ft[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Ft[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Q_GtC2[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_GtC2[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Q_Gt[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Gt[r] = new Mat(dx,dy,CV_64F);
+    				}
+    				Mat Q_Wt[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Wt[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Q_foo[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_foo[r] = new Mat(dx,dx,CV_64F);
+    				}
     				Mat Q_logdet = new Mat(len,1,CV_64F);
 
     				//KALMAN filter on Q
@@ -2484,39 +2561,52 @@ using namespace std;
     						Q_curfoo = times(Q_curVtt1,minus(eyeMat,times(C2R2C2,Q_curWt)));
     					}
     					Q_KtC2        = times(Q_curfoo,C2R2C2);
-    					Mat frame_Q_GtC2_t = frame(Q_GtC2,t);
-    					copyTo(times(A2,Q_KtC2),frame_Q_GtC2_t);
-    					Mat frame_Q_Ft_t = frame(Q_Ft,t);
-    					copyTo(minus(A2,frame_Q_GtC2_t),frame_Q_Ft_t);
-    					Mat frame_Q_Gt_t = frame(Q_Gt,t);
-    					copyTo(divide(times(times(A2,Q_curfoo),transpose(C2)),r2),frame_Q_Gt_t);
+    					copyTo(times(A2,Q_KtC2),Q_GtC2[t]);
+    					copyTo(minus(A2,Q_GtC2[t]),Q_Ft[t]);
+    					copyTo(divide(times(times(A2,Q_curfoo),transpose(C2)),r2),Q_Gt[t]);
     					Q_curVtt    = minus(Q_curVtt1,times(Q_KtC2,Q_curVtt1));
 
-    					tmpM=frame(Q_Vtt1,t);
-    					copyTo(Q_curVtt1,tmpM);
-    					tmpM=frame(Q_Vtt,t);
-    					copyTo(Q_curVtt,tmpM);
-    					tmpM=frame(Q_Wt,t);
-    					copyTo(Q_curWt,tmpM);
-    					tmpM=frame(Q_foo,t);
-    					copyTo(Q_curfoo,tmpM);
+    					copyTo(Q_curVtt1,Q_Vtt1[t]);
+    					copyTo(Q_curVtt,Q_Vtt[t]);
+    					copyTo(Q_curWt,Q_Wt[t]);
+    					copyTo(Q_curfoo,Q_foo[t]);
     					Q_logdet.double2D[t][0]   = logdetiid(times(times(transpose(C2vs),Q_curVtt1),C2vs), r2, dy);
     				}//142
 
     				// KALMAN smoothing filter on Q, and sensitivity analysis
-    				Mat Q_Jt=create(len,dx,dx,CV_64F);
-    				Mat Q_Ht=create(len,dx,dx,CV_64F);
-    				Mat Q_Vtt1tau=create(len,dx,dx,CV_64F);
-    				Mat frame_Q_Vtt1tau = frame(Q_Vtt1tau,0);
-    				for (r = 0; r < frame_Q_Vtt1tau.double2D.length; r++) {
-    					for (c = 0; c < frame_Q_Vtt1tau.double2D[0].length; c++) {
-    						frame_Q_Vtt1tau.double2D[r][c] = Double.MAX_VALUE;
+    				Mat Q_Jt[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Jt[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Q_Ht[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Ht[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Q_Vtt1tau[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Vtt1tau[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				for (r = 0; r < Q_Vtt1tau[0].double2D.length; r++) {
+    					for (c = 0; c < Q_Vtt1tau[0].double2D[0].length; c++) {
+    						Q_Vtt1tau[0].double2D[r][c] = Double.MAX_VALUE;
     					}
     				}
-    				Mat Q_Vttau=create(len,dx,dx,CV_64F);
-    				Mat Lt=create(len,dx,dx,CV_64F);
-    				Mat LF=create(len,dx,dx,CV_64F);
-    				Mat LtGt=create(len,dx,dy,CV_64F);
+    				Mat Q_Vttau[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Q_Vttau[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat Lt[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					Lt[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat LF[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					LF[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Mat LtGt[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					LtGt[r] = new Mat(dx,dy,CV_64F);
+    				}
 
     				Mat Q_curVttau = null;
     				Mat curLt = new Mat();
@@ -2525,67 +2615,49 @@ using namespace std;
     				{
     					if (t==(len-1))
     					{
-    						Q_curVttau   = frame(Q_Vtt,len-1);
+    						Q_curVttau   = Q_Vtt[len-1];
     						copyTo(iA2,curLt);
     					}      
     					else
     					{
-    						Mat frame_Q_Vtt_t = frame(Q_Vtt,t);
     						Mat A2t = transpose(A2);
-    						Mat frame_Q_Vtt1_tp1 = frame(Q_Vtt1,t+1);
-    						Mat Q_Vtt1_tp1_inv = new Mat((new Matrix(frame_Q_Vtt1_tp1.double2D)).inverse().getArray());
-    						Mat frame_Q_Jt_t = frame(Q_Jt,t);
-    						copyTo(times(times(frame_Q_Vtt_t,A2t),Q_Vtt1_tp1_inv),frame_Q_Jt_t);
-    						Mat frame_Q_Ht_t = frame(Q_Ht,t);
-    						copyTo(minus(iA2,frame_Q_Jt_t),frame_Q_Ht_t);
-    						Mat Q_Jt_t_trans = transpose(frame_Q_Jt_t);
-    						Mat diff = minus(Q_curVttau,frame_Q_Vtt1_tp1);
-    						Mat prod = times(times(frame_Q_Jt_t,diff),Q_Jt_t_trans);
-    						Q_curVttau = plus(frame_Q_Vtt_t,prod);
-    						Mat frame_Q_Ft_tp1 = frame(Q_Ft,t+1);
-    						curLt = plus(frame_Q_Ht_t,times(times(frame_Q_Jt_t,curLt),frame_Q_Ft_tp1));
+    						Mat Q_Vtt1_tp1_inv = new Mat((new Matrix(Q_Vtt1[t+1].double2D)).inverse().getArray());
+    						copyTo(times(times(Q_Vtt[t],A2t),Q_Vtt1_tp1_inv),Q_Jt[t]);
+    						copyTo(minus(iA2,Q_Jt[t]),Q_Ht[t]);
+    						Mat Q_Jt_t_trans = transpose(Q_Jt[t]);
+    						Mat diff = minus(Q_curVttau,Q_Vtt1[t+1]);
+    						Mat prod = times(times(Q_Jt[t],diff),Q_Jt_t_trans);
+    						Q_curVttau = plus(Q_Vtt[t],prod);
+    						curLt = plus(Q_Ht[t],times(times(Q_Jt[t],curLt),Q_Ft[t+1]));
     					}
-    					tmpM=frame(Q_Vttau,t);
-    					copyTo(Q_curVttau,tmpM);
+    					copyTo(Q_curVttau,Q_Vttau[t]);
 
     					if (t<(len-1))
     					{
     						if (t==len-2)
     						{					
-    							Mat frame_Q_Vtt_lenm2 = frame(Q_Vtt,len-2);
-    							Mat frame_Q_GtC2_lenm1 = frame(Q_GtC2,len-1);
     							Mat dxdx = new Mat(dx,dx,CV_64F);
     							for (r = 0; r < dx; r++) {
     								dxdx.double2D[r][r] = 1.0;
     							}
-    							Mat prod = times(times(times(iA2,frame_Q_GtC2_lenm1),A2),frame_Q_Vtt_lenm2);
+    							Mat prod = times(times(times(iA2,Q_GtC2[len-1]),A2),Q_Vtt[len-2]);
     							Q_curVtt1tau = minus(dxdx,prod);
     						}
     						else      
     						{
-    							Mat frame_Q_Jt_t = frame(Q_Jt,t);
-    							Mat Q_Jt_t_transpose = transpose(frame_Q_Jt_t);
-    							Mat frame_Q_Vtt_tp1 = frame(Q_Vtt,t+1);
-    							Mat diff = minus(Q_curVtt1tau,times(A2,frame_Q_Vtt_tp1));
-    							Mat frame_Q_Jt_tp1 = frame(Q_Jt,t+1);
-    							Mat prod = times(times(frame_Q_Jt_tp1,diff),Q_Jt_t_transpose);
-    							frame_Q_Vtt_tp1 = frame(Q_Vtt,t+1);
-    							Mat firstProd = times(frame_Q_Vtt_tp1,Q_Jt_t_transpose);
+    							Mat Q_Jt_t_transpose = transpose(Q_Jt[t]);
+    							Mat diff = minus(Q_curVtt1tau,times(A2,Q_Vtt[t+1]));
+    							Mat prod = times(times(Q_Jt[t+1],diff),Q_Jt_t_transpose);
+    							Mat firstProd = times(Q_Vtt[t+1],Q_Jt_t_transpose);
     							Q_curVtt1tau = plus(firstProd, prod);
     						}
-    						tmpM = frame(Q_Vtt1tau,t+1);
-    					    copyTo(Q_curVtt1tau,tmpM);
+    					    copyTo(Q_curVtt1tau,Q_Vtt1tau[t+1]);
     					}    
 
     					// sensitivity analysis cache
-    					Mat frame_LF_t = frame(LF,t);
-    					Mat frame_Q_Ft_t = frame(Q_Ft,t);
-    					frame_LF_t = times(curLt,frame_Q_Ft_t);
-    					Mat frame_LtGt_t = frame(LtGt,t);
-    					Mat frame_Q_Gt_t = frame(Q_Gt,t);
-    					frame_LtGt_t = times(curLt,frame_Q_Gt_t);
-    					tmpM=frame(Lt,t);
-    					copyTo(curLt,tmpM);    
+    					LF[t] = times(curLt,Q_Ft[t]);
+    					LtGt[t] = times(curLt,Q_Gt[t]);
+    					copyTo(curLt,Lt[t]);    
     				}//182
 
     				//save things
@@ -2598,8 +2670,7 @@ using namespace std;
     				dtjsa_Lt.set(j,Lt);
     				dtjsa_LF.set(j,LF);
     				dtjsa_LtGt.set(j,LtGt);
-    				tmpM=frame(dtjsa_iA2,j);
-    				copyTo(iA2,tmpM);
+    				copyTo(iA2,dtjsa_iA2[j]);
     				if (Szero) {
     				    dtjsa_Szero.double2D[0][j]     = 1.0;
     				}
@@ -2607,33 +2678,31 @@ using namespace std;
     					 dtjsa_Szero.double2D[0][j]     = 0.0;	
     				}
 
-    				tmpM=subvid(Q_Vtt1tau,1,len);
+    				Mat tmpMS[]=subvid(Q_Vtt1tau,1,len);
     				Mat tmpM2 = new Mat();
-    				reduce(tmpM,tmpM2,CV_REDUCE_SUM);
-    				Mat tmpM3=frame(dtjsa_Psij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
-    				copyTo(tmpM2,tmpM3);
+    				reduce(tmpMS,tmpM2,CV_REDUCE_SUM);
+    				//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				copyTo(tmpM2,dtjsa_Psij_init[j]);
 
-    				tmpM=frame(dtjsa_etaj_init,j);
-    				tmpM2= frame(Q_Vttau,0);
-    				copyTo(tmpM2,tmpM);
+    				copyTo(Q_Vttau[0],dtjsa_etaj_init[j]);
 
 
-    				tmpM=subvid(Q_Vttau,1,len);
+    				tmpMS=subvid(Q_Vttau,1,len);
     				Mat tmpN1 = new Mat();
-    				reduce(tmpM,tmpN1,CV_REDUCE_SUM);
-    				tmpM3=frame(dtjsa_varphij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
-    				copyTo(tmpN1,tmpM3);
+    				reduce(tmpMS,tmpN1,CV_REDUCE_SUM);
+    				//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				copyTo(tmpN1,dtjsa_varphij_init[j]);
 
     				Mat tmpN2 = new Mat();
     				reduce(Q_Vttau,tmpN2,CV_REDUCE_SUM);
-    				tmpM3=frame(dtjsa_Phij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
-    				copyTo(tmpN2,tmpM3);
+    				//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				copyTo(tmpN2,dtjsa_Phij_init[j]);
 
-    				tmpM=subvid(Q_Vttau,0,len-1);
+    				tmpMS=subvid(Q_Vttau,0,len-1);
     				Mat tmpN3 = new Mat();
-    				reduce(tmpM,tmpN3,CV_REDUCE_SUM);
-    				tmpM3=frame(dtjsa_phij_init,j);//    = sum(Q_Vtt1tau(:,:,2:len),3);
-    				copyTo(tmpN3,tmpM3);
+    				reduce(tmpMS,tmpN3,CV_REDUCE_SUM);
+    				//    = sum(Q_Vtt1tau(:,:,2:len),3);
+    				copyTo(tmpN3,dtjsa_phij_init[j]);
 
     				for (r = 0; r < len; r++) {
     					dtjsa_Q_logdet.double2D[r][j] = Q_logdet.double2D[r][j];
@@ -2643,22 +2712,26 @@ using namespace std;
     	}
     }
     
-    Mat subvid(Mat vid, int frange_start_inclusive, int frange_end_exclusive) {
-    	int i;
-	    if((frange_start_inclusive < 0) || frange_start_inclusive >=  vid.size[0]) {
+    Mat[] subvid(Mat vid[], int frange_start_inclusive, int frange_end_exclusive) {
+    	int i,r,c;
+	    if((frange_start_inclusive < 0) || frange_start_inclusive >=  vid.length) {
 	    	MipavUtil.displayError("frange_start_incluive is an impossible " + frange_start_inclusive);
 	    	System.exit(-1);
 	    }
-	    if((frange_end_exclusive <= 0) || (frange_end_exclusive > vid.size[0])) {
+	    if((frange_end_exclusive <= 0) || (frange_end_exclusive > vid.length)) {
 	    	MipavUtil.displayError("frange_end_exclusive is an impossible " + frange_end_exclusive);
 	    	System.exit(-1);
-	  }
-	  int array_size[] = new int[]{frange_end_exclusive - frange_start_inclusive,vid.double3D[0].length,vid.double3D[0][0].length};
-	  Mat sub = new Mat(3, array_size, CV_64F);
-	  for (i = frange_start_inclusive; i < frange_end_exclusive; i++) {
-	      sub.double3D[i-frange_start_inclusive] = vid.double3D[frange_start_inclusive]; 
-	  }
-	  return sub;
+	    }
+	    Mat sub[] = new Mat[frange_end_exclusive-frange_start_inclusive];
+	    for (i = 0; i < sub.length; i++) {
+	    	sub[i] = new Mat(vid[0].rows,vid[0].cols,CV_64F);
+	    	for (r = 0; r < vid[0].rows; r++) {
+	    		for (c = 0; c < vid[0].cols; c++) {
+	    			sub[i].double2D[r][c] = vid[i+frange_start_inclusive].double2D[r][c];
+	    		}
+	    	}
+	    }
+	    return sub;
    }
     
     private void reduce(Mat src, Mat dst, int dim, int rtype) {
@@ -2747,6 +2820,104 @@ using namespace std;
     	}
     }
     
+    private void reduce(Mat src[], Mat dst, int dim, int rtype) {
+    	int d,r, c;
+    	// dim = 0 means the matrix is reduced to a single row
+    	// dim = 1 means the matrix is reduced to a single column
+    	if (dim == 0) {
+    		dst.create(1, src[0].cols, src[0].type);
+    		if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG)) {
+	    			for (c = 0; c < src[0].cols; c++) {
+	    				dst.double2D[0][c] = 0.0;
+	    				for (d = 0; d < src.length; d++) {
+		    				for (r = 0; r < src[0].rows; r++) {
+		    					dst.double2D[0][c] += src[d].double2D[r][c];
+		    				}
+	    				}
+	    				if (rtype == CV_REDUCE_AVG) {
+	    					dst.double2D[0][c] /= (src.length*src[0].rows);
+	    				}
+	    			}
+    		} // if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG))
+    		else if (rtype == CV_REDUCE_MAX) {
+    			for (c = 0; c < src[0].cols; c++) {
+    				dst.double2D[0][c] = -Double.MAX_VALUE;
+    				for (d = 0; d < src.length; d++) {
+    					for (r = 0; r < src[0].rows; r++) {
+    						if (src[d].double2D[r][c] > dst.double2D[0][c]) {
+    							dst.double2D[0][c] = src[d].double2D[r][c];
+    						}
+    					}
+    			    }
+    			}
+    		} // else if (rtype == CV_REDUCE_MAX)
+    		else if (rtype == CV_REDUCE_MIN) {
+    			for (c = 0; c < src[0].cols; c++) {
+    				dst.double2D[0][c] = Double.MAX_VALUE;
+    				for (d = 0; d < src.length; d++) {
+	    				for (r = 0; r < src[0].rows; r++) {
+	    					if (src[d].double2D[r][c] < dst.double2D[0][c]) {
+	    						dst.double2D[0][c] = src[d].double2D[r][c];
+	    					}
+	    				}
+    				}
+    			}
+    		} // else if (type == CV_REDUCE_MIN)
+    		else {
+    			MipavUtil.displayError("rytpe is an illegal " + rtype + " in reduce");
+    			System.exit(-1);
+    		}
+    	} // if (dim == 0)
+    	else if (dim == 1) {
+    		dst.create(src[0].rows, 1, src[0].type);
+    		if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG)) {
+    			for (r = 0; r < src[0].rows; r++) {
+    				dst.double2D[r][0] = 0.0;
+    				for (d = 0; d < src.length; d++) {
+	    				for (c = 0; c < src[0].cols; c++) {
+	    					dst.double2D[r][0] += src[d].double2D[r][c];
+	    				}
+    				}
+    				if (rtype == CV_REDUCE_AVG) {
+    					dst.double2D[r][0] /= (src.length*src[0].cols);
+    				}
+    			}
+    		} // if ((rtype == CV_REDUCE_SUM) || (rtype == CV_REDUCE_AVG))
+    		else if (rtype == CV_REDUCE_MAX) {
+    			for (r = 0; r < src[0].rows; r++) {
+    				dst.double2D[r][0] = -Double.MAX_VALUE;
+    				for (d = 0; d < src.length; d++) {
+	    				for (c = 0; c < src[0].cols; c++) {
+	    					if (src[d].double2D[r][c] > dst.double2D[r][0]) {
+	    						dst.double2D[r][0] = src[d].double2D[r][c];
+	    					}
+	    				}
+    				}
+    			}
+    		} // else if (rtype == CV_REDUCE_MAX)
+    		else if (rtype == CV_REDUCE_MIN) {
+    			for (r = 0; r < src[0].rows; r++) {
+    				dst.double2D[r][0] = Double.MAX_VALUE;
+    				for (d = 0; d < src.length; d++) {
+	    				for (c = 0; c < src[0].cols; c++) {
+	    					if (src[d].double2D[r][c] < dst.double2D[r][0]) {
+	    						dst.double2D[r][0] = src[d].double2D[r][c];
+	    					}
+	    				}
+    				}
+    			}
+    		} // else if (rtype == CV_REDUCE_MIN)
+    		else {
+    			MipavUtil.displayError("rytpe is an illegal " + rtype + " in reduce");
+    			System.exit(-1);
+    		}
+    	} // else if (dim == 1)
+    	else {
+    		MipavUtil.displayError("dim = an illegal " + dim + " in reduce");
+    		System.exit(-1);
+    	}
+    }
+    
     // reduce video to a single image (similar to OpenCV reduce)
     private void reduce(Mat vid, Mat out, int reduceOp) {
     	int r,c;
@@ -2785,6 +2956,49 @@ using namespace std;
     	  for (r = 0; r < vid.size[1]; r++) {
     		  for (c = 0; c < vid.size[2]; c++) {
     		      out.double2D[r][c] /= vid.size[0];	  
+    		  }
+    	  }
+      }
+      
+    }
+    
+    // reduce video to a single image (similar to OpenCV reduce)
+    private void reduce(Mat vid[], Mat out, int reduceOp) {
+    	int r,c;
+      if ((reduceOp == CV_REDUCE_SUM) || (reduceOp == CV_REDUCE_AVG)) {
+        out.create(vid[0].rows, vid[0].cols, CV_64F);
+      } else {
+        out.create(vid[0].rows, vid[0].cols, vid[0].type);
+      }
+
+      //Mat vtmp;
+
+      for (int z=0; z<vid.length; z++) {
+        switch (reduceOp) {
+        case CV_REDUCE_SUM:
+        case CV_REDUCE_AVG:
+          if (vid[0].type == out.type) {
+        	  for (r = 0; r < vid[0].rows; r++) {
+        		  for (c = 0; c < vid[0].cols; c++) {
+        			  out.double2D[r][c] += vid[z].double2D[r][c];
+        		  }
+        	  }
+          }
+          else {
+    	       //vbz.convertTo(vtmp, out.type);
+    	       //out += vtmp;
+          }
+          break;
+        default:
+          MipavUtil.displayError("bad option, or unimplemented!");
+          System.exit(-1);
+        }
+      }
+        
+      if (reduceOp == CV_REDUCE_AVG) {
+    	  for (r = 0; r < vid[0].rows; r++) {
+    		  for (c = 0; c < vid[0].cols; c++) {
+    		      out.double2D[r][c] /= vid.length;	  
     		  }
     	  }
       }
