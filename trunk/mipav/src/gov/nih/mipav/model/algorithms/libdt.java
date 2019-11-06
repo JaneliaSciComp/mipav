@@ -794,13 +794,20 @@ using namespace std;
     			Mat Ydiff=  new Mat(dy,Kr,CV_64F);
     			Mat C1C1   = times(transpose(C1),C1);
     			Mat C1R1C1 = divide(C1C1,r1);
-    			Mat C1R2C1 = create(Kr,dx,dx,CV_64F);
-    			Mat C2R2C1 = create(Kr,dx,dx,CV_64F);
-    			Mat C1R2C2 = create(Kr,dx,dx,CV_64F);
-    			Mat C2R2R1R2C2 = create(Kr,dx,dx,CV_64F);
+    			Mat C1R2C1[] = new Mat[Kr];
+    			Mat C2R2C1[] = new Mat[Kr];
+    			Mat C1R2C2[] = new Mat[Kr];
+    			Mat C2R2R1R2C2[] = new Mat[Kr];
+    			Mat C2R2C2[] = new Mat[Kr];
+    			for (r = 0; r < Kr; r++) {
+    				C1R2C1[r] = new Mat(dx,dx,CV_64F);
+    				C2R2C1[r] = new Mat(dx,dx,CV_64F);
+    				C1R2C2[r] = new Mat(dx,dx,CV_64F);
+    				C2R2R1R2C2[r] = new Mat(dx,dx,CV_64F);
+    				C2R2C2[r] = new Mat(dx,dx,CV_64F);
+    			}
     			Mat C1R2Ydiff  = new Mat(dx,Kr,CV_64F);
     			Mat C2R2Ydiff  = new Mat(dx,Kr,CV_64F);
-    			Mat C2R2C2 = create(Kr,dx,dx,CV_64F);
     			double Szero = 0.0;
     			for(j=0;j<Kr;j++)
     			{
@@ -828,16 +835,11 @@ using namespace std;
 
     					Mat C2 = Estat.dtj.get(j).C;
     					double r2 = Estat.dtj.get(j).R.mtx.double2D[0][0];
-    					Mat C1R2C1_j = frame(C1R2C1,j);
-    					C1R2C1_j = divide(times(transpose(C1),C1),r2);
-    					Mat C2R2C2_j = frame(C2R2C2,j);
-    					C2R2C2_j = divide(times(transpose(C2),C2),r2);
-    					Mat C2R2C1_j = frame(C2R2C1,j);
-    					C2R2C1_j = divide(times(transpose(C2),C1),r2);
-    					Mat C1R2C2_j = frame(C1R2C2,j);
-    					C1R2C2_j = transpose(C2R2C1_j);
-    					Mat C2R2R1R2C2_j = frame(C2R2R1R2C2,j);
-    					C2R2R1R2C2_j = divide(times(times(transpose(C2),C2),r1),r2*r2);
+    					C1R2C1[j] = divide(times(transpose(C1),C1),r2);
+    					C2R2C2[j] = divide(times(transpose(C2),C2),r2);
+    					C2R2C1[j] = divide(times(transpose(C2),C1),r2);
+    					C1R2C2[j] = transpose(C2R2C1[j]);
+    					C2R2R1R2C2[j] = divide(times(times(transpose(C2),C2),r1),r2*r2);
     					if (Estat.useYmean)
     					{
     					    for (c = 0; c < C1.cols; c++) {
@@ -860,11 +862,14 @@ using namespace std;
     			Mat P_Vtt1=clone(S1);
 
     			// storage for Kalman smoother
-    			Vector<Mat> Q_GtC1 = new Vector<Mat>();
+    			Vector<Mat[]> Q_GtC1 = new Vector<Mat[]>();
     			for(m=0;m<Kr;m++)
     			{
-    				tmpM=create(len,dx,dx,CV_64F);
-    				Q_GtC1.add(tmpM);
+    				Mat tm[] = new Mat[len];
+    				for (r = 0; r < len; r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				Q_GtC1.add(tm);
     			}
 
     			// storage for ELL
@@ -881,47 +886,66 @@ using namespace std;
     				bxt2.double2D[r][0] = mu01.double2D[r][0];
     			}
 
-    			Mat bxt3  = create(Kr,dx,len+1,CV_64F);
+    			Mat bxt3[] = new Mat[Kr];
+    			for (r = 0; r < Kr; r++) {
+    				bxt3[r] = new Mat(dx,len+1,CV_64F);
+    			}
 
     			for(j=0;j<Kr;j++)
     			{
     				if(!Estat.dtjblank.get(j))
     				{
-    					tmpM=frame(bxt3,j);
-    					for (r = 0; r < tmpM.rows; r++) {
-    						tmpM.double2D[r][0] = Estat.dtj.get(j).mu0.double2D[r][0];
+    					for (r = 0; r < bxt3[j].rows; r++) {
+    						bxt3[j].double2D[r][0] = Estat.dtj.get(j).mu0.double2D[r][0];
     					}				
     				}
     			}
 
-    			Mat bVt11 = create(len+1,dx,dx,CV_64F);
-
-    			tmpM=frame(bVt11,0);
-    			copyTo(S1,tmpM);
-
-    			Mat bVt12 = create(len+1,dx,dx,CV_64F);
-
-    			Vector<Mat> bVt13 = new Vector<Mat>();
-    			for(j=0;j<Kr;j++)
-    			{
-    				tmpM=create(len+1,dx,dx,CV_64F);
-    				bVt13.add(tmpM);
+    			Mat bVt11[] = new Mat[len+1];
+    			for (r = 0; r < len+1; r++) {
+    				bVt11[r] = new Mat(dx,dx,CV_64F);
     			}
 
-    			Mat bVt22 = create(len+1,dx,dx,CV_64F);
+    			copyTo(S1,bVt11[0]);
 
-    			Vector<Mat> bVt23 = new Vector<Mat>();
-    			for(j=0;j<Kr;j++)
-    			{
-    				tmpM=create(len+1,dx,dx,CV_64F);
-    				bVt23.add(tmpM);
+    			Mat bVt12[] = new Mat[len+1];
+    			for (r = 0; r < len+1; r++) {
+    				bVt12[r] = new Mat(dx,dx,CV_64F);
     			}
 
-    			Vector<Mat> bVt33 = new Vector<Mat>();
+    			Vector<Mat[]> bVt13 = new Vector<Mat[]>();
     			for(j=0;j<Kr;j++)
     			{
-    				tmpM=create(len+1,dx,dx,CV_64F);
-    				bVt33.add(tmpM);
+    				Mat tm[] = new Mat[len+1];
+    				for (r =  0; r < len+1; r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				bVt13.add(tm);
+    			}
+
+    			Mat bVt22[] = new Mat[len+1];
+    			for (r = 0; r < len+1; r++) {
+    				bVt22[r] = new Mat(dx,dx,CV_64F);
+    			}
+
+    			Vector<Mat[]> bVt23 = new Vector<Mat[]>();
+    			for(j=0;j<Kr;j++)
+    			{
+    				Mat tm[] = new Mat[len+1];
+    				for (r = 0; r < len+1; r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				bVt23.add(tm);
+    			}
+
+    			Vector<Mat[]> bVt33 = new Vector<Mat[]>();
+    			for(j=0;j<Kr;j++)
+    			{
+    				Mat tm[] = new Mat[len+1];
+    				for (r = 0; r < len+1; r++) {
+    					tm[r] = new Mat(dx,dx,CV_64F);
+    				}
+    				bVt33.add(tm);
     			}
 
     			// iterate from t=1 to len		
@@ -985,10 +1009,10 @@ using namespace std;
     				}
 
 
-    				Mat tmp1=frame(bVt11,t);
-    				Mat tmp2=frame(bVt12,t);
-    				Mat tmp3=transpose(frame(bVt12,t)); 
-    				Mat tmp4=frame(bVt22,t);
+    				Mat tmp1=bVt11[t];
+    				Mat tmp2=bVt12[t];
+    				Mat tmp3=transpose(bVt12[t]); 
+    				Mat tmp4=bVt22[t];
     				tmpM = new Mat();
     				tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
     				for (r = 0; r < tmp1.rows; r++) {
@@ -1012,11 +1036,10 @@ using namespace std;
     					}
     				}
 
-    				Mat bVt22_tp1 = frame(bVt22,t+1);
-    				bVt22_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GbFb)),P_GtR1Gt);
+    				bVt22[t+1] = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GbFb)),P_GtR1Gt);
 
-    				tmp1=frame(bVt11,t);
-    				tmp2=frame(bVt12,t);
+    				tmp1=bVt11[t];
+    				tmp2=bVt12[t];
     				tmpM = new Mat();
     				tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);
     				for (r = 0; r < tmp1.rows; r++) {
@@ -1030,10 +1053,8 @@ using namespace std;
     					}
     				}
 
-    				Mat bVt12_tp1 = frame(bVt12,t+1);
-    				bVt12_tp1 = times(A1,times(tmpM,transpose(tmp_GbFb)));
-    				Mat bVt11_tp1 = frame(bVt11,t+1);
-    				bVt11_tp1 = plus(times(times(A1,frame(bVt11,t)),transpose(A1)),Q1);
+    				bVt12[t+1] = times(A1,times(tmpM,transpose(tmp_GbFb)));
+    				bVt11[t+1] = plus(times(times(A1,bVt11[t]),transpose(A1)),Q1);
 
     				//compute cross-covariance
     				for(j=0;j<Kr;j++)
@@ -1045,10 +1066,9 @@ using namespace std;
     					else
     					{
     						Mat tmp = times(Estat.dtj.get(j).A,Estat.dtjsa_Q_foo.get(j)[t]);
-    						Mat Q_GtC1j_t = frame(Q_GtC1.get(j),t);
-    						Q_GtC1j_t = times(tmp,frame(C2R2C1,j));
-    						Mat Q_GtR1Gt  = times(times(tmp,frame(C2R2R1R2C2,j)),transpose(tmp));
-    						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),frame(C1R2C2,j)),transpose(tmp));
+    						Q_GtC1.get(j)[t] = times(tmp,C2R2C1[j]);
+    						Mat Q_GtR1Gt  = times(times(tmp,C2R2R1R2C2[j]),transpose(tmp));
+    						Mat PQ_GtR1Gt = times(times(times(A1,P_foo),C1R2C2[j]),transpose(tmp));
 
     						double ell_mahal = 0.0;
     						if((t==0) && (Szero != 0.0))
@@ -1058,38 +1078,36 @@ using namespace std;
     						}
     						else
     						{
-    							Mat tmp_QWtC2R2C1 = times(Estat.dtjsa_Q_Wt.get(j)[t],frame(C2R2C1,j));
+    							Mat tmp_QWtC2R2C1 = times(Estat.dtjsa_Q_Wt.get(j)[t],C2R2C1[j]);
     							Mat bxt1_bxt1 = new Mat(bxt1.rows,bxt1.rows,CV_64F);
     							for (r = 0; r < bxt1.rows; r++) {
     								for (c = 0; c < bxt1.rows; c++) {
     									bxt1_bxt1.double2D[r][c] = bxt1.double2D[r][t]*bxt1.double2D[c][t];
     								}
     							}
-    							Mat part1a = plus(frame(bVt11,t),bxt1_bxt1);
-    							Mat part1b = minus(frame(C1R2C1,j),times(frame(C2R2C2,j),tmp_QWtC2R2C1));
+    							Mat part1a = plus(bVt11[t],bxt1_bxt1);
+    							Mat part1b = minus(C1R2C1[j],times(C2R2C2[j],tmp_QWtC2R2C1));
     							double trace1 = trace(times(part1a,part1b));
     							double num2 = dy*r1/Estat.dtj.get(j).R.mtx.double2D[0][0];
-    							double trace3 = trace(times(Estat.dtjsa_Q_Wt.get(j)[t],frame(C2R2R1R2C2,j)));
+    							double trace3 = trace(times(Estat.dtjsa_Q_Wt.get(j)[t],C2R2R1R2C2[j]));
     							double ell_mahal1 = trace1 + num2 - trace3;
-    							Mat bxt3_j = frame(bxt3,j);
-    							Mat bxt2_bxt3_j = new Mat(bxt2.rows,bxt3_j.rows,CV_64F);
+    							Mat bxt2_bxt3_j = new Mat(bxt2.rows,bxt3[j].rows,CV_64F);
     							for (r = 0; r < bxt2.rows; r++) {
-    								for (c = 0; c < bxt3_j.rows; c++) {
-    									bxt2_bxt3_j.double2D[r][c] = bxt2.double2D[r][t]*bxt3_j.double2D[c][t];
+    								for (c = 0; c < bxt3[j].rows; c++) {
+    									bxt2_bxt3_j.double2D[r][c] = bxt2.double2D[r][t]*bxt3[j].double2D[c][t];
     								}
     							}
-    							Mat part2a = plus(frame(bVt23.get(j),t),bxt2_bxt3_j);
-    							Mat part2b = minus(frame(C2R2C1,j),times(frame(C2R2C2,j),tmp_QWtC2R2C1));
+    							Mat part2a = plus(bVt23.get(j)[t],bxt2_bxt3_j);
+    							Mat part2b = minus(C2R2C1[j],times(C2R2C2[j],tmp_QWtC2R2C1));
     							double ell_mahal2 = trace(times(part2a,part2b));
-    							Mat bxt3_j_bxt3_j = new Mat(bxt3_j.rows,bxt3_j.rows,CV_64F);
-    							for (r = 0; r < bxt3_j.rows; r++) {
-    								for (c = 0; c < bxt3_j.rows; c++) {
-    									bxt3_j_bxt3_j.double2D[r][c]= bxt3_j.double2D[r][t]*bxt3_j.double2D[c][t];
+    							Mat bxt3_j_bxt3_j = new Mat(bxt3[j].rows,bxt3[j].rows,CV_64F);
+    							for (r = 0; r < bxt3[j].rows; r++) {
+    								for (c = 0; c < bxt3[j].rows; c++) {
+    									bxt3_j_bxt3_j.double2D[r][c]= bxt3[j].double2D[r][t]*bxt3[j].double2D[c][t];
     								}
     							}
-    							Mat part3a = plus(frame(bVt33.get(j),t),bxt3_j_bxt3_j);
-    							Mat C2R2C2_j = frame(C2R2C2,j);
-    							Mat part3b = minus(C2R2C2_j,times(times(C2R2C2_j,Estat.dtjsa_Q_Wt.get(j)[t]),C2R2C2_j));
+    							Mat part3a = plus(bVt33.get(j)[t],bxt3_j_bxt3_j);
+    							Mat part3b = minus(C2R2C2[j],times(times(C2R2C2[j],Estat.dtjsa_Q_Wt.get(j)[t]),C2R2C2[j]));
     							double ell_mahal3 = trace(times(part3a,part3b));
 
     							if (Estat.useYmean)
@@ -1101,7 +1119,7 @@ using namespace std;
     								    	tmp_QWtC2R2Ydiff.double2D[r][0] += Estat.dtjsa_Q_Wt.get(j)[t].double2D[r][c]*C2R2Ydiff.double2D[c][j];
     								    }
     								}
-    								Mat part1c = times(frame(C1R2C2,j),tmp_QWtC2R2Ydiff);
+    								Mat part1c = times(C1R2C2[j],tmp_QWtC2R2Ydiff);
     								part1b = new Mat(C1R2Ydiff.rows,1,CV_64F);
     								for (r = 0; r < C1R2Ydiff.rows; r++) {
     									part1b.double2D[r][0] = C1R2Ydiff.double2D[r][j] - part1c.double2D[r][0];
@@ -1121,10 +1139,10 @@ using namespace std;
     								double varTotal = var1 + var2 - var3;
     								ell_mahal1 = ell_mahal1 + varTotal;
 
-    								Mat part2 = times(frame(C2R2C2,j),tmp_QWtC2R2Ydiff);
+    								Mat part2 = times(C2R2C2[j],tmp_QWtC2R2Ydiff);
     								var1 = 0.0;
-    								for (r = 0; r < bxt3_j.rows; r++) {
-    									var1 += bxt3_j.double2D[r][t]*(C2R2Ydiff.double2D[r][j] - part2.double2D[r][0]);
+    								for (r = 0; r < bxt3[j].rows; r++) {
+    									var1 += bxt3[j].double2D[r][t]*(C2R2Ydiff.double2D[r][j] - part2.double2D[r][0]);
     								}
     								ell_mahal2 = ell_mahal2 + var1;
     							}
@@ -1134,7 +1152,7 @@ using namespace std;
     						ell.double2D[0][j] = ell.double2D[0][j] - 0.5*(ell_mahal + Estat.dtjsa_Q_logdet.double2D[t][j] + ell_const);
 
     						//sensitivity analysis (for t+1)
-    						tmp1=frame(Q_GtC1.get(j),t);
+    						tmp1=Q_GtC1.get(j)[t];
     						tmp2=Estat.dtjsa_Q_Ft.get(j)[t];
     						Mat tmp_GrFr = new Mat(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
     						for (r = 0; r < tmp1.rows; r++) {
@@ -1152,10 +1170,9 @@ using namespace std;
     						for (r = 0; r < bxt1.rows; r++) {
     							tmp1.double2D[r][0] = bxt1.double2D[r][t];
     						}
-    						Mat bxt3_j = frame(bxt3,j);
-    						tmp2 = new Mat(bxt3_j.rows,1,CV_64F);
-    						for (r = 0; r < bxt3_j.rows; r++) {
-    							tmp2.double2D[r][0] = bxt3_j.double2D[r][t];
+    						tmp2 = new Mat(bxt3[j].rows,1,CV_64F);
+    						for (r = 0; r < bxt3[j].rows; r++) {
+    							tmp2.double2D[r][0] = bxt3[j].double2D[r][t];
     						}
 
     						Mat tmpM2 = new Mat(tmp1.rows+tmp2.rows,tmp1.cols,CV_64F);
@@ -1170,8 +1187,8 @@ using namespace std;
     							}
     						}
     						Mat prod = times(tmp_GrFr,tmpM2);
-    						for (r = 0; r < bxt3_j.rows; r++) {
-    							bxt3_j.double2D[r][t+1] = prod.double2D[r][0];
+    						for (r = 0; r < bxt3[j].rows; r++) {
+    							bxt3[j].double2D[r][t+1] = prod.double2D[r][0];
     						}
 
     						if (Estat.useYmean)
@@ -1182,14 +1199,14 @@ using namespace std;
     								for (c = 0; c < tmp.cols; c++) {
     									result += tmp.double2D[r][c]*C2R2Ydiff.double2D[c][j];
     								}
-    								bxt3_j.double2D[r][t+1] = bxt3_j.double2D[r][t+1] + result;
+    								bxt3[j].double2D[r][t+1] = bxt3[j].double2D[r][t+1] + result;
     							}
     						}
 
-    						tmp1=frame(bVt11,t);
-    						tmp2=frame(bVt13.get(j),t);
-    						tmp3=transpose(frame(bVt13.get(j),t));
-    						tmp4=frame(bVt33.get(j),t);
+    						tmp1=bVt11[t];
+    						tmp2=bVt13.get(j)[t];
+    						tmp3=transpose(bVt13.get(j)[t]);
+    						tmp4=bVt33.get(j)[t];
     						tmpM = new Mat();
     						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
     						for (r = 0; r < tmp1.rows; r++) {
@@ -1212,14 +1229,13 @@ using namespace std;
     								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
     							}
     						}
-    						Mat bVt33j_tp1 = frame(bVt33.get(j),t+1);
-    						bVt33j_tp1 = plus(times(times(tmp_GrFr,tmpM),transpose(tmp_GrFr)),Q_GtR1Gt);
+    						bVt33.get(j)[t+1] = plus(times(times(tmp_GrFr,tmpM),transpose(tmp_GrFr)),Q_GtR1Gt);
 
 
-    						tmp1=frame(bVt11,t);
-    						tmp2=frame(bVt13.get(j),t);
-    						tmp3=transpose(frame(bVt12,t));
-    						tmp4=frame(bVt23.get(j),t);
+    						tmp1=bVt11[t];
+    						tmp2=bVt13.get(j)[t];
+    						tmp3=transpose(bVt12[t]);
+    						tmp4=bVt23.get(j)[t];
     						tmpM = new Mat();
     						tmpM.create(tmp1.rows+tmp3.rows,tmp1.cols+tmp2.cols,CV_64F);
     						for (r = 0; r < tmp1.rows; r++) {
@@ -1242,11 +1258,10 @@ using namespace std;
     								tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
     							}
     						}
-    						Mat bVt23j_tp1 = frame(bVt23.get(j),t+1);
-    						bVt23j_tp1 = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GrFr)),PQ_GtR1Gt);
+    						bVt23.get(j)[t+1] = plus(times(times(tmp_GbFb,tmpM),transpose(tmp_GrFr)),PQ_GtR1Gt);
 
-    						tmp1=frame(bVt11,t);
-    						tmp2=frame(bVt13.get(j),t);
+    						tmp1=bVt11[t];
+    						tmp2=bVt13.get(j)[t];
     						tmpM = new Mat();
     						tmpM.create(tmp1.rows,tmp1.cols+tmp2.cols,CV_64F);					
     						for (r = 0; r < tmp1.rows; r++) {
@@ -1260,8 +1275,7 @@ using namespace std;
     							}
     						}
 
-    						Mat bVt13j_tp1 = frame(bVt13.get(j),t+1);
-    						bVt13j_tp1 = times(A1,times(tmpM,transpose(tmp_GrFr)));
+    						bVt13.get(j)[t+1] = times(A1,times(tmpM,transpose(tmp_GrFr)));
     					}//388
 
     				}//389
@@ -1289,7 +1303,7 @@ using namespace std;
     			double Ut_init = 0;
     			for(t=0;t<len;t++)
     			{
-    				Ut_init = Ut_init + trace(times(frame(bVt11,t),C1C1)) + dy*r1;
+    				Ut_init = Ut_init + trace(times(bVt11[t],C1C1)) + dy*r1;
     			}
 
     			//Sensitivity Analysis for Kalman Smoothing Filter %%%
@@ -1333,13 +1347,12 @@ using namespace std;
 
 
     					// initialize
-    					Mat bxt3_j = frame(bxt3,j);
-    					Mat bxt3_j_len = new Mat(bxt3_j.rows,1,CV_64F);
-    					for (r = 0; r < bxt3_j.rows; r++) {
-    						bxt3_j_len.double2D[r][0] = bxt3_j.double2D[r][len];
+    					Mat bxt3_j_len = new Mat(bxt3[j].rows,1,CV_64F);
+    					for (r = 0; r < bxt3[j].rows; r++) {
+    						bxt3_j_len.double2D[r][0] = bxt3[j].double2D[r][len];
     					}
     					Mat xtb = times(Estat.dtjsa_iA2[j],bxt3_j_len);
-    					Mat Xit = times(times(Estat.dtjsa_iA2[j],frame(bVt33.get(j),len)),transpose(Estat.dtjsa_iA2[j]));
+    					Mat Xit = times(times(Estat.dtjsa_iA2[j],bVt33.get(j)[len]),transpose(Estat.dtjsa_iA2[j]));
     					Mat Mt  = new Mat(dx,dx,CV_64F);
     					Mat omt = new Mat(dx,dx,CV_64F);
 
@@ -1347,11 +1360,11 @@ using namespace std;
     					Mat xtb_t1 = null;
     					for(t=len-1;t>=0;t--)
     					{
-    						Mat LGCM = plus(times(Estat.dtjsa_Lt.get(j)[t],frame(Q_GtC1.get(j),t)),Mt);
+    						Mat LGCM = plus(times(Estat.dtjsa_Lt.get(j)[t],Q_GtC1.get(j)[t]),Mt);
 
     						Mat omt_t1 = clone(omt);					
-    						Mat Omt = plus(times(LGCM,frame(bVt11,t)),times(Estat.dtjsa_LF.get(j)[t],transpose(frame(bVt23.get(j),t))));
-    						omt = plus(times(LGCM,frame(bVt23.get(j),t)),times(Estat.dtjsa_LF.get(j)[t],frame(bVt33.get(j),t)));
+    						Mat Omt = plus(times(LGCM,bVt11[t]),times(Estat.dtjsa_LF.get(j)[t],transpose(bVt23.get(j)[t])));
+    						omt = plus(times(LGCM,bVt23.get(j)[t]),times(Estat.dtjsa_LF.get(j)[t],bVt33.get(j)[t]));
 
     						Mat kappat = plus(times(C1,transpose(Omt)),transpose(times(Estat.dtjsa_LtGt.get(j)[t],r1)));
 
@@ -1413,11 +1426,9 @@ using namespace std;
     							}
 
 
-
-    							bxt3_j = frame(bxt3,j);
-    							Mat tmp3 = new Mat(bxt3_j.rows,1,CV_64F);
-    							for (r = 0; r < bxt3_j.rows; r++) {
-    								tmp3.double2D[r][0] = bxt3_j.double2D[r][t];
+    							Mat tmp3 = new Mat(bxt3[j].rows,1,CV_64F);
+    							for (r = 0; r < bxt3[j].rows; r++) {
+    								tmp3.double2D[r][0] = bxt3[j].double2D[r][t];
     							}
     							Mat tmp4=xtb;
     							tmpM = new Mat(tmp3.rows+tmp4.rows,tmp3.cols,CV_64F);					
@@ -1435,7 +1446,7 @@ using namespace std;
     							xtb   = times(QHJ,tmpM);
 
 
-    							tmp1=frame(bVt33.get(j),t);
+    							tmp1=bVt33.get(j)[t];
     							Mat tmp5=transpose(omt);
     							tmp2=tmp5;
     							tmp3=omt;
