@@ -3417,6 +3417,11 @@ using namespace std;
 
     		Vector<Matrix> myQ = new Vector<Matrix>(K);
     		Vector<Double> myQe= new Vector<Double>(K);
+    		double tmp[][] = new double[1][1];
+    		for (i = 0; i < K; i++) {
+    			myQ.add(new Matrix(tmp));
+    			myQe.add(0.0);
+    		}
     		Matrix F;
     		boolean flag=true;
     		//vector<OPT_F_TYPE>::iterator result;
