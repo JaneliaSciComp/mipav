@@ -2716,7 +2716,7 @@ using namespace std;
     				copyTo(tmpN3,dtjsa_phij_init[j]);
 
     				for (r = 0; r < len; r++) {
-    					dtjsa_Q_logdet.double2D[r][j] = Q_logdet.double2D[r][j];
+    					dtjsa_Q_logdet.double2D[r][j] = Q_logdet.double2D[r][0];
     				}
 
     		}//202 
