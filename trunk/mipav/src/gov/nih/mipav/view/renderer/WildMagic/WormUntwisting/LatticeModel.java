@@ -1684,6 +1684,16 @@ public class LatticeModel {
 		return centerPositions;
 	}
 
+	public VOIContour getLeftCurve()
+	{
+		return leftPositions;
+	}
+
+	public VOIContour getRightCurve()
+	{
+		return rightPositions;
+	}
+
 	public VOIContour getCenterControlPoints()
 	{
 		return center;
