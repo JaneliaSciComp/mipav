@@ -3672,9 +3672,9 @@ using namespace std;
     	
 
     	Mat matCTC = times(transpose(C),C);
-    	double diag2D[][] = new double[matCTC.rows][matCTC.cols];
+    	double diag2D[][] = new double[matCTC.rows][1];
     	for (i = 0; i < matCTC.rows; i++) {
-    	    diag2D[i][i] = Math.sqrt(matCTC.double2D[i][i]);	
+    	    diag2D[i][0] = Math.sqrt(matCTC.double2D[i][i]);	
     	}
     	Mat cc = new Mat(diag2D);
     	Mat tmpM = elementTimes(cc,cc);
