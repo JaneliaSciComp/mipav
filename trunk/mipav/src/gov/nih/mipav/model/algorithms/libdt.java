@@ -2009,7 +2009,7 @@ using namespace std;
 							for (r = 0; r < bxt1.rows; r++) {
 								tmp1.double2D[r][0] = bxt1.double2D[r][t];
 							}
-							Mat tpm2 = new Mat(bxt3[j].rows,1,CV_64F);
+							tmp2 = new Mat(bxt3[j].rows,1,CV_64F);
 							for (r = 0; r < bxt3[j].rows; r++) {
 								tmp2.double2D[r][0] = bxt3[j].double2D[r][t];
 							}
