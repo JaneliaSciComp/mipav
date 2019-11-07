@@ -1578,10 +1578,10 @@ using namespace std;
     	reduce(tmpM,cterm,0,CV_REDUCE_SUM);
     	for (r = 0; r < cterm.rows; r++) {
     		for (c = 0; c < cterm.cols; c++) {
-    			tmpM.double2D[r][c] = Math.log(cterm.double2D[r][c]);
+    			cterm.double2D[r][c] = Math.log(cterm.double2D[r][c]);
     		}
     	}
-    	s=plus(mv,tmpM);
+    	s=plus(mv,cterm);
 
     	return s;
     }
@@ -4441,6 +4441,10 @@ using namespace std;
     	int r,c;
     	if (A.rows != B.rows) {
     		MipavUtil.displayError("A.rows != B.rows in Mat plus");
+    		System.out.println("A.rows = " + A.rows + " A.cols = " + A.cols);
+    		System.out.println("B.rows = " + B.rows + " B.cols = " + B.cols);
+    		int testme[] = new int[1];
+    		testme[5] = 0;
     		System.exit(-1);
     	}
     	if (A.cols != B.cols) {
