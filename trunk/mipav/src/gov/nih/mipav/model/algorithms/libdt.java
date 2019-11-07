@@ -2930,7 +2930,7 @@ using namespace std;
     }
     
     // reduce video to a single image (similar to OpenCV reduce)
-    private void reduce(Mat vid, Mat out, int reduceOp) {
+    /*private void reduce(Mat vid, Mat out, int reduceOp) {
     	int r,c;
       if ((reduceOp == CV_REDUCE_SUM) || (reduceOp == CV_REDUCE_AVG)) {
         out.create(vid.size[1], vid.size[2], CV_64F);
@@ -2971,7 +2971,7 @@ using namespace std;
     	  }
       }
       
-    }
+    }*/
     
     // reduce video to a single image (similar to OpenCV reduce)
     private void reduce(Mat vid[], Mat out, int reduceOp) {
@@ -3050,7 +3050,7 @@ using namespace std;
     	return ld;
     }
     
-    private Mat frame(Mat vid, int f) {
+    /*private Mat frame(Mat vid, int f) {
     	  
     	//cout<<"Test "<<f<<"  "<<vid.size[0]<<endl;
       if(vid.dims != 3) {
@@ -3073,12 +3073,21 @@ using namespace std;
       //Mat myf = MatVid::subvid(vid, Range(f, f+1), Range::all(), Range::all() );
 
       //dumpMatSize(myf);
-    }
+    }*/
     
-    private Mat create(int frames, int rows, int cols, int type) {
+    /*private Mat create(int frames, int rows, int cols, int type) {
     	  int sz[] = {frames, rows, cols};
     	  return new Mat(3, sz, type);
-   }
+   }*/
+    
+    private Mat[] create(int frames, int rows, int cols, int type) {
+    	int r;
+        Mat tm[] = new Mat[frames];
+        for (r = 0; r < frames; r++) {
+        	tm[r] = new Mat(rows, cols, type);
+        }
+        return tm;
+    }
     
     private void setRegularizer(Dytex dy, DytexRegOptions dtreg) {
     	setRegularizer(dy.R, dtreg.Ropt, dtreg.Rval);
@@ -4635,7 +4644,7 @@ using namespace std;
         return ret;
     }
     
-    public Mat repeat(Mat img, int nf) {
+    /*public Mat repeat(Mat img, int nf) {
     	  Mat v;
     	  if (nf <= 0) {
     		  MipavUtil.displayError("nf = " + nf + " in public Mat repeat");
@@ -4647,7 +4656,21 @@ using namespace std;
     	    copyTo(img,f);
     	  }
     	  return v;
-    }
+    }*/
+    
+    public Mat[] repeat(Mat img, int nf) {
+  	  Mat v[];
+  	  if (nf <= 0) {
+  		  MipavUtil.displayError("nf = " + nf + " in public Mat repeat");
+  		  System.exit(-1);
+  	  }
+  	  v = create(nf, img.rows, img.cols, img.type);
+  	  for (int j=0; j<nf; j++) {
+  	    Mat f = v[j];
+  	    copyTo(img,f);
+  	  }
+  	  return v;
+  }
     
     public void repeat(Mat src, int ny, int nx, Mat dst) {
     	int y,x,r,c;
