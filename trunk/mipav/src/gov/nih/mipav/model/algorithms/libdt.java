@@ -1167,7 +1167,7 @@ using namespace std;
     							}
     						}
 
-    						tmp1 = new Mat(bxt2.rows,1,CV_64F);
+    						tmp1 = new Mat(bxt1.rows,1,CV_64F);
     						for (r = 0; r < bxt1.rows; r++) {
     							tmp1.double2D[r][0] = bxt1.double2D[r][t];
     						}
