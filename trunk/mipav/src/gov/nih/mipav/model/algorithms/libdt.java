@@ -1464,12 +1464,12 @@ using namespace std;
     									tmpM.double2D[r][c] = tmp2.double2D[r][c-tmp1.cols];
     								}
     							}
-    							for (r = tmp1.rows; r < tmp1.rows+tmp3.cols; r++) {
+    							for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
     								for (c = 0; c < tmp1.cols; c++) {
     									tmpM.double2D[r][c] = tmp3.double2D[r-tmp1.rows][c];
     								}
     							}
-    							for (r = tmp1.rows; r < tmp1.rows+tmp3.cols; r++) {
+    							for (r = tmp1.rows; r < tmp1.rows+tmp3.rows; r++) {
     								for (c = tmp1.cols; c < tmp1.cols+tmp2.cols; c++) {
     									tmpM.double2D[r][c] = tmp4.double2D[r-tmp1.rows][c-tmp1.cols];
     								}
