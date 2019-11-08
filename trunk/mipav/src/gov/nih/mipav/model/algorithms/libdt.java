@@ -781,6 +781,7 @@ using namespace std;
     			if (dx==0)
     			{
     				MipavUtil.displayError("n=0 case not supported");
+    				System.exit(-1);
     			}
 
     			Mat A1 = dt1.A;
@@ -1086,7 +1087,7 @@ using namespace std;
     								}
     							}
     							Mat part1a = plus(bVt11[t],bxt1_bxt1);
-    							Mat part1b = minus(C1R2C1[j],times(C2R2C2[j],tmp_QWtC2R2C1));
+    							Mat part1b = minus(C1R2C1[j],times(C1R2C2[j],tmp_QWtC2R2C1));
     							double trace1 = trace(times(part1a,part1b));
     							double num2 = dy*r1/Estat.dtj.get(j).R.mtx.double2D[0][0];
     							double trace3 = trace(times(Estat.dtjsa_Q_Wt.get(j)[t],C2R2R1R2C2[j]));
@@ -2471,7 +2472,6 @@ using namespace std;
     			}
 
     			Mat S2 = new Mat();
-    			Mat tmpM;
     			switch(dt2.dtopt.Sopt)
     			{
     			case COV_DIAG:
