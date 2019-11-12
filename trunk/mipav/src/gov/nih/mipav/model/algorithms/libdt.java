@@ -576,6 +576,7 @@ using namespace std;
     		// normalize weights
     		tmpM = new Mat();
     		reduce(W,tmpM,0,CV_REDUCE_SUM);
+    		tmpM2 = new Mat();
     		repeat(tmpM, Kb, 1,tmpM2);
     		Mat tmpM3 = divide(W,tmpM2);
     		W=clone(tmpM3);
