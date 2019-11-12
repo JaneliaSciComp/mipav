@@ -3467,9 +3467,6 @@ using namespace std;
     							myQ.set(jjj,(F.times(new Matrix(olddt.get(jjj).Q.mtx.double2D))).times(F.transpose()));
     							double[] eigenvalue = new double[myQ.get(jjj).getColumnDimension()];
     					        double[][] eigenvector = new double[myQ.get(jjj).getRowDimension()][myQ.get(jjj).getColumnDimension()];
-    					        double temp;
-    					        double[] tempCol = new double[6];
-    					        int m, n, index;
     					        // In EigenvalueDecomposition the columns represent the
     					        // eigenvectors
     					        Eigenvalue.decompose( myQ.get(jjj).getArray(), eigenvector, eigenvalue);
