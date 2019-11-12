@@ -5,7 +5,6 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.*;
 import java.time.format.DateTimeFormatter;
-import java.time.Clock;
 import java.time.LocalDateTime; 
 import javax.vecmath.*;
 
@@ -142,7 +141,8 @@ using namespace std;
     	hopt.splitOpt.sched.add(i);
     	
     	//run The HEM 
-    	DytexMix emout=reduceWithSplitting(dtm, hopt);
+    	//DytexMix emout=reduceWithSplitting(dtm, hopt);
+    	reduceWithSplitting(dtm, hopt);
     }
     
     private DytexMix reduceWithSplitting(DytexMix dtm, HEMOptions hopt)
@@ -151,7 +151,7 @@ using namespace std;
     	//reduced mixture
     	DytexMix hembest = new DytexMix(dtm.opt);
     	//OPTIONS
-    	double pert=hopt.splitOpt.pert;
+    	//double pert=hopt.splitOpt.pert;
     	int Ks=hopt.K;
     	//initialize splitting sequence
     	if(hopt.splitOpt.sched.isEmpty())
@@ -512,7 +512,6 @@ using namespace std;
     		//output strings
     		String outstr2= "dclass = " + dclassstr;
     		String outstr1s;
-    		String outstr3;
 
     		outstr1s = "L= " + datalikelihood.get(iter) + " (pL= " + dpLL +")";
     		
@@ -2359,7 +2358,7 @@ using namespace std;
     	public void saveCache() {
     		int i, j, r, c;
     		Mat tm[];
-    		int Kb=dti.size();
+    		//int Kb=dti.size();
     		int Kr=dtj.size();
     		int len=tau;
     		int dx=dtj.get(0).C.cols;
@@ -2833,7 +2832,7 @@ using namespace std;
     	}
     }
     
-    private void reduce(Mat src[], Mat dst, int dim, int rtype) {
+    /*private void reduce(Mat src[], Mat dst, int dim, int rtype) {
     	int d,r, c;
     	// dim = 0 means the matrix is reduced to a single row
     	// dim = 1 means the matrix is reduced to a single column
@@ -2929,7 +2928,7 @@ using namespace std;
     		MipavUtil.displayError("dim = an illegal " + dim + " in reduce");
     		System.exit(-1);
     	}
-    }
+    }*/
     
     // reduce video to a single image (similar to OpenCV reduce)
     /*private void reduce(Mat vid, Mat out, int reduceOp) {
@@ -3232,6 +3231,10 @@ using namespace std;
           // min of elements 
           inp_minbnd(cov.mtx.double2D, cov.regval);
           break;
+        case COV_ILLEGAL:
+        	MipavUtil.displayError("cov.covopt is COV_ILLEGAL in regularize");
+        	System.exit(-1);
+        	break;
         }
         break;
 
@@ -3256,6 +3259,10 @@ using namespace std;
         	  }
           }
           break;
+        case COV_ILLEGAL:
+        	MipavUtil.displayError("cov.covopt is COV_ILLEGAL in regularize");
+        	System.exit(-1);
+        	break;  
         }
         break;    
 
@@ -3672,8 +3679,8 @@ using namespace std;
     private void ppertC(Mat C,Mat S0,double pert)
     {	
         int i, x, y;
-    	int m=C.rows;
-    	int n=C.cols;
+    	//int m=C.rows;
+    	//int n=C.cols;
     	
 
     	Mat matCTC = times(transpose(C),C);
@@ -3684,14 +3691,14 @@ using namespace std;
     	Mat cc = new Mat(diag2D);
     	Mat tmpM = elementTimes(cc,cc);
     	Mat tmpM2 = elementTimes(S0,tmpM);
-    	int maxLocx = -1;
+    	//int maxLocx = -1;
     	int maxLocy = -1;
     	double maxVal = -Double.MAX_VALUE;
     	for (y = 0; y < tmpM2.rows; y++) {
     		for (x = 0; x < tmpM2.cols; x++) {
     			if (tmpM2.double2D[y][x] > maxVal) {
     				maxVal = tmpM2.double2D[y][x];
-    				maxLocx = x;
+    				//maxLocx = x;
     				maxLocy = y;
     			}
     		}
@@ -4083,9 +4090,9 @@ using namespace std;
     	public cov_reg_type regopt;  /**< type of regularization to be used */
     	public double regval;  /**< regularization value */
     	/** cache the matrix square-root of the covariance matrix. */
-    	private  Mat sqrtmtx;
+    	//private  Mat sqrtmtx;
     	public CovMatrix() {
-    	    sqrtmtx = null;	
+    	    //sqrtmtx = null;	
     	}
     	
     	public CovMatrix(int n, cov_type covopt) {
@@ -4107,7 +4114,7 @@ using namespace std;
     		    System.exit(-1);
     		  }
 
-    		  sqrtmtx = null;
+    		  //sqrtmtx = null;
     		}
     }
     
@@ -4573,7 +4580,7 @@ using namespace std;
     }
     
     public Mat times(Mat A, double q) {
-    	int i, r,c;
+    	int r,c;
     	int rows = A.rows;
     	int cols = A.cols;
     	int type = A.type;
@@ -4587,7 +4594,7 @@ using namespace std;
     }
     
     public Mat divide(Mat A, double q) {
-    	int i, r,c;
+    	int r,c;
     	int rows = A.rows;
     	int cols = A.cols;
     	int type = A.type;
@@ -4827,12 +4834,13 @@ using namespace std;
     	}
 
     	int type=0;	
-    	int els=0;
+    	//int els=0;
     	try {
 	    	type = getInt(endian);
 	
 	    	read(dims);
-	    	els = getInt(endian);
+	    	//els = getInt(endian);
+	    	getInt(endian);
 	    	
 	    	int sz[]={dims.x,dims.y,dims.z};
 	    	if(dims.x==1)
@@ -5069,9 +5077,10 @@ using namespace std;
     	}
     	
     	//read/skip size of the type
-    	int size;
+    	//int size;
     	try {
-    	    size = getInt(endian);
+    	    //size = getInt(endian);
+    		getInt(endian);
     	}
     	catch (IOException e) {
     		MipavUtil.displayError(e + " ");
