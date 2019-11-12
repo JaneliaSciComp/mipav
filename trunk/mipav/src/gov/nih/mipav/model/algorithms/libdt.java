@@ -570,6 +570,7 @@ using namespace std;
     	    for (i = 0; i < dtm.alpha.size(); i++) {
     	    	alphaMat.double2D[i][0] = dtm.alpha.get(i);
     	    }
+    	    tmpM = new Mat();
     		repeat(alphaMat, 1, Kr,tmpM);
     		Mat W = elementTimes(Z,tmpM);	
     		// normalize weights
