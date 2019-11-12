@@ -3405,7 +3405,8 @@ using namespace std;
     	int i;
     	int K=dtm.alpha.size();
     	int c1 = 1;
-    	int c2,newK;
+    	int c2;
+    	//int newK;
     	if(K==1)
     	{
     		c1=1;
@@ -3540,7 +3541,7 @@ using namespace std;
     	if(splitopt.target==-1)
     	{
     		c2=K+1;
-    		newK=K+1;			
+    		//newK=K+1;			
     		dtm.dt.add(new Dytex()); //add one more blank DT in the list
     		dtm.alpha.add(0.0);
     		
@@ -3549,7 +3550,7 @@ using namespace std;
     	else
     	{
     		c2=splitopt.target;
-    		newK=K;
+    		//newK=K;
     	}
 
     	System.out.println("Spliting Cluster " + c1 + " : new cluster " + c2);
