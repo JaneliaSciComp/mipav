@@ -141,8 +141,13 @@ using namespace std;
     	hopt.splitOpt.sched.add(i);
     	
     	//run The HEM 
-    	//DytexMix emout=reduceWithSplitting(dtm, hopt);
-    	reduceWithSplitting(dtm, hopt);
+    	DytexMix emout=reduceWithSplitting(dtm, hopt);
+    	
+    	for(int i=0;i<emout.alpha.size();i++)
+    		System.out.println("Alpha " + (i+1) + " is " + emout.alpha.get(i));
+    	
+    	System.out.println("Experiment Finish: " + getTime());
+   
     }
     
     private DytexMix reduceWithSplitting(DytexMix dtm, HEMOptions hopt)
