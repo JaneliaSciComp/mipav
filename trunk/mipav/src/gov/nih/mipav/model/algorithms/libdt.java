@@ -2159,7 +2159,7 @@ using namespace std;
     	 * \brief
     	 * cell array of DT component of reduced mixture	 
     	 */
-    	public Vector<Dytex> dtj = new Vector<Dytex>(0);
+    	public Vector<Dytex> dtj = new Vector<Dytex>();
 
     	/*!
     	 * \brief
