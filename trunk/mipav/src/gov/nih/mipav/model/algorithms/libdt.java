@@ -5172,4 +5172,278 @@ using namespace std;
             return (Double.longBitsToDouble(tmpLong));
         }
     }
+    
+    class VidSeqSegmParams
+    {
+    	public int inputType;
+    	public String vidpath;
+    	public int trainvidnum;
+    	public int totalvids;
+    	public int winxy;
+    	public int winz;
+    	public int stepxy;
+    	public int stepz;
+    	public norm_type ntype;
+    	public double bkvar;
+    	public int bkvarf;
+    	public int K;
+    	public int n;
+    	public double reg;
+    	public int nfrm;
+    	public int stepxy2;
+    	public int stepz2;
+    	public int filtxy;
+    	public int filtz;
+    	public boolean fsave;
+    	public String savepath;
+    	public String savename;
+    	
+    	public VidSeqSegmParams()
+    	{
+    		totalvids=1;
+    		inputType=0;
+    		vidpath="C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/ocean-fire-noborder.y";	
+    		trainvidnum=1;
+    		winxy=5;
+    		winz=5;
+    		stepxy=4;
+    		stepz=4;
+    		ntype=norm_type.NORM_ZM;
+    		bkvar=0;
+    		bkvarf=0;
+    		K=2;
+    		n=2;
+    		reg=50;
+    		nfrm=0;
+    		stepxy2=4;
+    		stepz2=4;
+    		filtxy=5;
+    		filtz=5;
+    		fsave=true;
+    		savepath="C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/";
+    		savename="rslt";
+    	}
+    	
+    	/*!
+    	 * \brief
+    	 * update segmentation parameters from params file.
+    	 */
+
+    	/*void updateFromFile(String fpath)
+    	{
+    		ConfigFile cfg(fpath);		
+
+    		if(cfg.keyExists("totalvids"))
+    		totalvids = cfg.getValueOfKey<int>("totalvids");
+
+    		if(cfg.keyExists("trainvidnum"))
+    		trainvidnum = cfg.getValueOfKey<int>("trainvidnum");
+    		
+
+    		if(cfg.keyExists("savepath"))
+    		savepath = cfg.getValueOfKey<std::string>("savepath");
+
+    		if(cfg.keyExists("savename"))
+    		savename = cfg.getValueOfKey<std::string>("savename");
+
+    		if(cfg.keyExists("vidpath"))
+    		vidpath = cfg.getValueOfKey<std::string>("vidpath");
+    		
+    		if(cfg.keyExists("winxy"))
+    		winxy = cfg.getValueOfKey<int>("winxy");
+    		
+    		if(cfg.keyExists("winz"))
+    		winz = cfg.getValueOfKey<int>("winz");
+    		
+    		if(cfg.keyExists("stepxy"))
+    		stepxy = cfg.getValueOfKey<int>("stepxy");
+    		
+    		if(cfg.keyExists("stepz"))
+    		stepz = cfg.getValueOfKey<int>("stepz");
+
+    		if(cfg.keyExists("ntype"))
+    		ntype = (PatchOptions::norm_type)cfg.getValueOfKey<int>("ntype");
+
+    		if(cfg.keyExists("bkvar"))
+    		bkvar = cfg.getValueOfKey<double>("bkvar");
+
+    		if(cfg.keyExists("bkvarf"))
+    		bkvarf = cfg.getValueOfKey<int>("bkvarf");
+
+    		if(cfg.keyExists("K"))
+    		K = cfg.getValueOfKey<int>("K");
+    		
+    		if(cfg.keyExists("n"))
+    		n = cfg.getValueOfKey<int>("n");
+
+    		if(cfg.keyExists("reg"))
+    		reg = cfg.getValueOfKey<double>("reg");
+
+    		if(cfg.keyExists("nfrm"))
+    		nfrm = cfg.getValueOfKey<int>("nfrm");
+
+    		if(cfg.keyExists("stepxy2"))
+    		stepxy2 = cfg.getValueOfKey<int>("stepxy2");
+    		
+    		if(cfg.keyExists("stepz2"))
+    		stepz2 = cfg.getValueOfKey<int>("stepz2");
+    		
+    		if(cfg.keyExists("filtxy"))
+    		filtxy = cfg.getValueOfKey<int>("filtxy");
+    		
+    		if(cfg.keyExists("filtz"))
+    		filtz = cfg.getValueOfKey<int>("filtz");
+
+    		if(cfg.keyExists("fsave"))
+    		fsave = (bool)cfg.getValueOfKey<int>("fsave");
+    	}*/
+
+    }
+    
+    /*class ConfigFile
+    {
+    	private HashMap<String,String> contents = new HashMap<String,String>();
+    	private String fName;
+
+    	void removeComment(String line)
+    	{
+    		if (line.indexOf(';') != -1)
+    			line.erase(line.find(';'));
+    	}
+
+    	bool onlyWhitespace(const std::string &line) const
+    	{
+    		return (line.find_first_not_of(' ') == line.npos);
+    	}
+    	bool validLine(const std::string &line) const
+    	{
+    		std::string temp = line;
+    		temp.erase(0, temp.find_first_not_of("\t "));
+    		if (temp[0] == '=')
+    			return false;
+
+    		for (size_t i = temp.find('=') + 1; i < temp.length(); i++)
+    			if (temp[i] != ' ')
+    				return true;
+
+    		return false;
+    	}
+
+    	void extractKey(std::string &key, size_t const &sepPos, const std::string &line) const
+    	{
+    		key = line.substr(0, sepPos);
+    		if (key.find('\t') != line.npos || key.find(' ') != line.npos)
+    			key.erase(key.find_first_of("\t "));
+    	}
+    	void extractValue(std::string &value, size_t const &sepPos, const std::string &line) const
+    	{
+    		value = line.substr(sepPos + 1);
+    		value.erase(0, value.find_first_not_of("\t "));
+    		value.erase(value.find_last_not_of("\t ") + 1);
+    	}
+
+    	void extractContents(const std::string &line) 
+    	{
+    		std::string temp = line;
+    		temp.erase(0, temp.find_first_not_of("\t "));
+    		size_t sepPos = temp.find('=');
+
+    		std::string key, value;
+    		extractKey(key, sepPos, temp);
+    		extractValue(value, sepPos, temp);
+
+    		if (!keyExists(key))
+    			contents.insert(std::pair<std::string, std::string>(key, value));
+    		else
+    			exitWithError("CFG: Can only have unique key names!\n");
+    	}
+
+    	void parseLine(const std::string &line, size_t const lineNo)
+    	{
+    		if (line.find('=') == line.npos)
+    			exitWithError("CFG: Couldn't find separator on line: " + Convert::T_to_string(lineNo) + "\n");
+
+    		if (!validLine(line))
+    			exitWithError("CFG: Bad format for line: " + Convert::T_to_string(lineNo) + "\n");
+
+    		extractContents(line);
+    	}
+
+    	private void ExtractKeys()
+    	{
+    		File file = new File(fName);
+        	try {
+    		    raFile = new RandomAccessFile(file, "r");
+        	}
+        	catch (FileNotFoundException e) {
+        		MipavUtil.displayError("CFG: File " + fName + " couldn't be found!\n");
+        		System.exit(-1);
+        	}
+
+    		String line;
+    		int lineNo = 0;
+    		long fileLength = raFile.length();
+    		while (raFile.getFilePointer() < fileLength - 1)
+    		{
+    			lineNo++;
+    			String temp = raFile.readLine();
+
+    			if (temp.isEmpty())
+    				continue;
+
+    			removeComment(temp);
+    			if (onlyWhitespace(temp))
+    				continue;
+
+    			parseLine(temp, lineNo);
+    		}
+
+    		file.close();
+    	}
+    
+    	public ConfigFile(String fName)
+    	{
+    		this.fName = fName;
+    		ExtractKeys();
+    	}
+
+    	bool keyExists(const std::string &key) const
+    	{
+    		return contents.find(key) != contents.end();
+    	}
+
+    	template <typename ValueType>
+    	ValueType getValueOfKey(const std::string &key, ValueType const &defaultValue = ValueType()) const
+    	{
+    		if (!keyExists(key))
+    			return defaultValue;
+
+    		return Convert::string_to_T<ValueType>(contents.find(key)->second);
+    	}
+    }*/
+    
+    /** Normalization mode for each patch. */
+    enum norm_type {
+      NORM_NONE,  /**< no normalization. */
+      NORM_ZM,    /**< each pixel is zero-mean in time. */
+      NORM_ZMUV   /**< each pixel is zero-mean in time, and all pixels have unit-variance. */
+    }
+    
+    /** Class for specifying spatio-temporal patches (cubes).
+    \sa PatchExtractor, PatchBatchExtractor
+*/
+	class PatchOptions
+	{
+	
+	
+	
+	  // patch options
+	  public Point3i    win;     /**< patch size (x, y, z). */
+	  public Point3i    step;    /**< step size between patches (x, y, z). */
+	  public norm_type  normopt; /**< normalization method. */
+	  public double  minvar; /**< minimum variance. */
+	  public int     minvarf;  /**< frames to skip in checking variance. */
+	 
+	}
+
 }
