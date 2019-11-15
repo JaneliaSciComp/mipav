@@ -3199,7 +3199,7 @@ using namespace std;
           double[] eigenvalue = new double[cov.mtx.cols];
 		  double[][] eigenvector = new double[cov.mtx.rows][cov.mtx.cols];
 		  Eigenvalue.decompose(cov.mtx.double2D, eigenvector, eigenvalue);
-		  // In openCV eigV rows are the eigenvalues
+		  // In openCV eigV rows are the eigenvectors
 		  // In openCV mtx = eigv" * diag(S) *eigV
 		  // In OpenvCV a cols * cols product
 		  //Size sz = mtx.size();
