@@ -4458,10 +4458,6 @@ using namespace std;
     	int r,c;
     	if (A.rows != B.rows) {
     		MipavUtil.displayError("A.rows != B.rows in Mat plus");
-    		System.out.println("A.rows = " + A.rows + " A.cols = " + A.cols);
-    		System.out.println("B.rows = " + B.rows + " B.cols = " + B.cols);
-    		int testme[] = new int[1];
-    		testme[5] = 0;
     		System.exit(-1);
     	}
     	if (A.cols != B.cols) {
