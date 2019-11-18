@@ -3997,6 +3997,16 @@ using namespace std;
     	public DytexOptions() {
     		
     	}
+    	
+    	// constructor
+    	DytexOptions(int n, int m, cov_type Ropt, cov_type Sopt, Ymean_type Yopt)
+    	{
+    		this.n = n;
+    		this.m = m;
+    		this.Ropt = Ropt;
+    		this.Sopt = Sopt;
+    		this.Yopt = Yopt;
+    	}
     }
     
     /** Class for specifying the regularization methods for a Dytex. 
@@ -5173,6 +5183,88 @@ using namespace std;
         }
     }
     
+    /*!
+     * \brief
+     * main function for video segmentation using Dynamic textures.
+     * 
+     * \param argc
+     * number of input arguments.
+     * 
+     * \param argv
+     * only one argument i.e the path of the parameter file.
+     * 
+     */
+    // paramsFile "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/params.txt";
+    // paramsFile "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/riversteamfire/params.txt";
+    public int test_videoSegm(String paramFile)
+    {
+    	VidSeqSegmParams params = new VidSeqSegmParams();
+    		
+    	if(paramFile != null)
+    	{
+    		params.updateFromFile(paramFile);
+    	}
+
+
+    	//Train the DTM using traing video	
+    	String trainVidPath = params.vidpath;
+
+    	String trainDtmPath=params.savepath+params.savename+"/train.dtm";
+
+        File file = new File(params.savepath); // param.savepath ends in File.separatorChar
+        if (!file.exists()) {
+            file.mkdir();
+        }
+
+    	File file2 = new File(params.savepath+params.savename+File.separatorChar);
+    	if (!file2.exists()) {
+    		file2.mkdir();
+    	}
+    	
+    	File file3 = new File(trainDtmPath);
+        /*if (!file3.exists())
+    	{
+    		//Do the training
+    		VidSegm tvs = new VidSegm(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,params.bkvar,params.K,
+    				params.n,params.reg,params.nfrm,params.bkvarf);		
+    		learnDTM(tvs,trainVidPath,false);
+    		Bufferer buf(trainDtmPath,fstream::out | fstream::binary);
+    		buf.write(tvs.dtm);		
+    		buf.close();
+    	}
+
+    	
+    	std::vector<string> paths;	
+    	for(int i=0;i<params.totalvids;i++)
+    	{
+    		char buff[200];
+    		sprintf(buff,params.vidpath.c_str(),i);
+    		string ipath(buff);		
+    		paths.push_back(ipath);		
+    	}
+    	
+    	
+    	string vidPath2=params.savepath+params.savename+"/";
+    	
+    	
+    	//load existing	dtm	
+    	DytexMix dtm;
+    	Bufferer buf(trainDtmPath,fstream::in | fstream::binary);
+    	buf.read(dtm);	
+    	buf.close();
+    	for(int p=0;p<dtm.dt.size();p++)
+    	{
+    		dtm.dt[p].vrows=params.winxy;
+    		dtm.dt[p].vcols=params.winxy;
+    	}
+
+    	VidSegm vs(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,params.bkvar,params.K,params.n,params.reg,params.nfrm,params.bkvarf);		
+    	vs.dtm=dtm;
+    	vs.segmentVideoSequence(paths,params.stepxy2,params.stepz2,params.filtxy,params.filtz,vidPath2);*/
+
+    	return 1;
+    }
+    
     class VidSeqSegmParams
     {
     	public int inputType;
@@ -5229,142 +5321,201 @@ using namespace std;
     	 * update segmentation parameters from params file.
     	 */
 
-    	/*void updateFromFile(String fpath)
+    	void updateFromFile(String fpath)
     	{
-    		ConfigFile cfg(fpath);		
+    		int intSave;
+    		ConfigFile cfg = new ConfigFile(fpath);		
 
     		if(cfg.keyExists("totalvids"))
-    		totalvids = cfg.getValueOfKey<int>("totalvids");
+    		totalvids = cfg.getIntValueOfKey("totalvids");
 
     		if(cfg.keyExists("trainvidnum"))
-    		trainvidnum = cfg.getValueOfKey<int>("trainvidnum");
+    		trainvidnum = cfg.getIntValueOfKey("trainvidnum");
     		
 
     		if(cfg.keyExists("savepath"))
-    		savepath = cfg.getValueOfKey<std::string>("savepath");
+    		savepath = cfg.getStringValueOfKey("savepath");
 
     		if(cfg.keyExists("savename"))
-    		savename = cfg.getValueOfKey<std::string>("savename");
+    		savename = cfg.getStringValueOfKey("savename");
 
     		if(cfg.keyExists("vidpath"))
-    		vidpath = cfg.getValueOfKey<std::string>("vidpath");
+    		vidpath = cfg.getStringValueOfKey("vidpath");
     		
     		if(cfg.keyExists("winxy"))
-    		winxy = cfg.getValueOfKey<int>("winxy");
+    		winxy = cfg.getIntValueOfKey("winxy");
     		
     		if(cfg.keyExists("winz"))
-    		winz = cfg.getValueOfKey<int>("winz");
+    		winz = cfg.getIntValueOfKey("winz");
     		
     		if(cfg.keyExists("stepxy"))
-    		stepxy = cfg.getValueOfKey<int>("stepxy");
+    		stepxy = cfg.getIntValueOfKey("stepxy");
     		
     		if(cfg.keyExists("stepz"))
-    		stepz = cfg.getValueOfKey<int>("stepz");
+    		stepz = cfg.getIntValueOfKey("stepz");
 
     		if(cfg.keyExists("ntype"))
-    		ntype = (PatchOptions::norm_type)cfg.getValueOfKey<int>("ntype");
+    		ntype = getNorm_type(cfg.getIntValueOfKey("ntype"));
 
     		if(cfg.keyExists("bkvar"))
-    		bkvar = cfg.getValueOfKey<double>("bkvar");
+    		bkvar = cfg.getDoubleValueOfKey("bkvar");
 
     		if(cfg.keyExists("bkvarf"))
-    		bkvarf = cfg.getValueOfKey<int>("bkvarf");
+    		bkvarf = cfg.getIntValueOfKey("bkvarf");
 
     		if(cfg.keyExists("K"))
-    		K = cfg.getValueOfKey<int>("K");
+    		K = cfg.getIntValueOfKey("K");
     		
     		if(cfg.keyExists("n"))
-    		n = cfg.getValueOfKey<int>("n");
+    		n = cfg.getIntValueOfKey("n");
 
     		if(cfg.keyExists("reg"))
-    		reg = cfg.getValueOfKey<double>("reg");
+    		reg = cfg.getDoubleValueOfKey("reg");
 
     		if(cfg.keyExists("nfrm"))
-    		nfrm = cfg.getValueOfKey<int>("nfrm");
+    		nfrm = cfg.getIntValueOfKey("nfrm");
 
     		if(cfg.keyExists("stepxy2"))
-    		stepxy2 = cfg.getValueOfKey<int>("stepxy2");
+    		stepxy2 = cfg.getIntValueOfKey("stepxy2");
     		
     		if(cfg.keyExists("stepz2"))
-    		stepz2 = cfg.getValueOfKey<int>("stepz2");
+    		stepz2 = cfg.getIntValueOfKey("stepz2");
     		
     		if(cfg.keyExists("filtxy"))
-    		filtxy = cfg.getValueOfKey<int>("filtxy");
+    		filtxy = cfg.getIntValueOfKey("filtxy");
     		
     		if(cfg.keyExists("filtz"))
-    		filtz = cfg.getValueOfKey<int>("filtz");
+    		filtz = cfg.getIntValueOfKey("filtz");
 
-    		if(cfg.keyExists("fsave"))
-    		fsave = (bool)cfg.getValueOfKey<int>("fsave");
-    	}*/
+    		if(cfg.keyExists("fsave")) {
+	    		intSave = cfg.getIntValueOfKey("fsave");
+	    		if (intSave == 0) {
+	    			fsave = false;
+	    		}
+	    		else {
+	    			fsave = true;
+	    		}
+    		}
+    	}
 
     }
     
-    /*class ConfigFile
+    class ConfigFile
     {
     	private HashMap<String,String> contents = new HashMap<String,String>();
     	private String fName;
 
     	void removeComment(String line)
     	{
-    		if (line.indexOf(';') != -1)
-    			line.erase(line.find(';'));
+    		int pos = line.indexOf(';');
+    		if (pos != -1)
+    			line = line.substring(0,pos);
     	}
 
-    	bool onlyWhitespace(const std::string &line) const
+    	boolean onlyWhitespace(String line)
     	{
-    		return (line.find_first_not_of(' ') == line.npos);
+    	    line = line.trim();
+    	    return line.isEmpty();
     	}
-    	bool validLine(const std::string &line) const
+    	boolean validLine(String line)
     	{
-    		std::string temp = line;
-    		temp.erase(0, temp.find_first_not_of("\t "));
-    		if (temp[0] == '=')
+    		String temp = line;
+    		while ((temp.substring(0,1).equals(" ")) || (temp.substring(0,1).equals("\t"))) {
+    			temp = temp.substring(1);
+    		}
+    		if (temp.substring(0,1).equals("="))
     			return false;
 
-    		for (size_t i = temp.find('=') + 1; i < temp.length(); i++)
-    			if (temp[i] != ' ')
+    		int pos = temp.indexOf('=');
+    		for (int i = pos + 1; i < temp.length(); i++)
+    			if (!temp.substring(i,i+1).equals(" "))
     				return true;
 
     		return false;
     	}
 
-    	void extractKey(std::string &key, size_t const &sepPos, const std::string &line) const
+    	String extractKey(int sepPos, String line)
     	{
-    		key = line.substr(0, sepPos);
-    		if (key.find('\t') != line.npos || key.find(' ') != line.npos)
-    			key.erase(key.find_first_of("\t "));
+    		String key = line.substring(0, sepPos);
+    		int index1 = key.indexOf('\t');
+    		int index2 = key.indexOf(' ');
+    		int index;
+    		if ((index1 != -1) && (index2 != -1)) {
+    			index = Math.min(index1,index2);
+    		}
+    		else if (index1 != -1) {
+    			index = index1;
+    		}
+    		else if (index2 != -1) {
+    			index = index2;
+    		}
+    		else {
+    			index = -1;
+    		}
+    		if (index != -1) {
+    			key = key.substring(0,index);
+    		}
+    		return key;
     	}
-    	void extractValue(std::string &value, size_t const &sepPos, const std::string &line) const
+    	String extractValue(int sepPos, String line)
     	{
-    		value = line.substr(sepPos + 1);
-    		value.erase(0, value.find_first_not_of("\t "));
-    		value.erase(value.find_last_not_of("\t ") + 1);
+    		String value = line.substring(sepPos + 1);
+    		while ((value.substring(0,1).equals(" ")) || (value.substring(0,1).equals("\t"))) {
+    			value = value.substring(1);
+    		}
+    		int index1 = value.lastIndexOf('\t');
+    		int index2 = value.lastIndexOf(' ');
+    		int index;
+    		if ((index1 != -1) && (index2 != -1)) {
+    			index = Math.max(index1,index2);
+    		}
+    		else if (index1 != -1) {
+    			index = index1;
+    		}
+    		else if (index2 != -1) {
+    			index = index2;
+    		}
+    		else {
+    			index = -1;
+    		}
+    		if (index != -1) {
+    			value = value.substring(0,index+1);
+    		}
+    		return value;
     	}
 
-    	void extractContents(const std::string &line) 
+    	void extractContents(String line) 
     	{
-    		std::string temp = line;
-    		temp.erase(0, temp.find_first_not_of("\t "));
-    		size_t sepPos = temp.find('=');
+    		String temp = line;
+    		while ((temp.substring(0,1).equals(" ")) || (temp.substring(0,1).equals("\t"))) {
+    			temp = temp.substring(1);
+    		}
+    		int sepPos = temp.indexOf('=');
 
-    		std::string key, value;
-    		extractKey(key, sepPos, temp);
-    		extractValue(value, sepPos, temp);
+    		String key, value;
+    		key = extractKey(sepPos, temp);
+    		value = extractValue(sepPos, temp);
 
-    		if (!keyExists(key))
-    			contents.insert(std::pair<std::string, std::string>(key, value));
-    		else
-    			exitWithError("CFG: Can only have unique key names!\n");
+    		if (!contents.containsKey(key))
+    			contents.put(key, value);
+    		else {
+    			MipavUtil.displayError("CFG: Can only have unique key names!");
+    			System.exit(-1);
+    		}
     	}
 
-    	void parseLine(const std::string &line, size_t const lineNo)
+    	void parseLine(String line, int lineNo)
     	{
-    		if (line.find('=') == line.npos)
-    			exitWithError("CFG: Couldn't find separator on line: " + Convert::T_to_string(lineNo) + "\n");
+    		int pos = line.indexOf('=');
+    		if (pos == -1) {
+    			MipavUtil.displayError("CFG: Couldn't find = separator on line: " + lineNo);
+    			System.exit(-1);
+    		}
 
-    		if (!validLine(line))
-    			exitWithError("CFG: Bad format for line: " + Convert::T_to_string(lineNo) + "\n");
+    		if (!validLine(line)) {
+    			MipavUtil.displayError("CFG: Bad format for line: " + lineNo);
+    			System.exit(-1);
+    		}
 
     		extractContents(line);
     	}
@@ -5380,8 +5531,8 @@ using namespace std;
         		System.exit(-1);
         	}
 
-    		String line;
     		int lineNo = 0;
+    		try {
     		long fileLength = raFile.length();
     		while (raFile.getFilePointer() < fileLength - 1)
     		{
@@ -5398,7 +5549,12 @@ using namespace std;
     			parseLine(temp, lineNo);
     		}
 
-    		file.close();
+    		raFile.close();
+    		}
+    		catch (IOException e) {
+    			System.err.println("In extractKeys " + e);
+    			System.exit(-1);
+    		}
     	}
     
     	public ConfigFile(String fName)
@@ -5407,26 +5563,66 @@ using namespace std;
     		ExtractKeys();
     	}
 
-    	bool keyExists(const std::string &key) const
+    	boolean keyExists(String key)
     	{
-    		return contents.find(key) != contents.end();
+    		return contents.containsKey(key);
     	}
 
-    	template <typename ValueType>
-    	ValueType getValueOfKey(const std::string &key, ValueType const &defaultValue = ValueType()) const
+    	int getIntValueOfKey(String key)
     	{
-    		if (!keyExists(key))
-    			return defaultValue;
-
-    		return Convert::string_to_T<ValueType>(contents.find(key)->second);
+    		String value = contents.get(key);
+    		if (value != null) {
+    			return Integer.valueOf(value).intValue();
+    		}
+    		else {
+    			return 0;
+    		}
     	}
-    }*/
+    	
+    	double getDoubleValueOfKey(String key)
+    	{
+    		String value = contents.get(key);
+    		if (value != null) {
+    			return Double.valueOf(value).doubleValue();
+    		}
+    		else {
+    			return 0.0;
+    		}
+    	}
+    	
+    	String getStringValueOfKey(String key) {
+    		return contents.get(key);
+    	}
+    }
     
     /** Normalization mode for each patch. */
     enum norm_type {
-      NORM_NONE,  /**< no normalization. */
-      NORM_ZM,    /**< each pixel is zero-mean in time. */
-      NORM_ZMUV   /**< each pixel is zero-mean in time, and all pixels have unit-variance. */
+      NORM_NONE(0),  /**< no normalization. */
+      NORM_ZM(1),    /**< each pixel is zero-mean in time. */
+      NORM_ZMUV(2),   /**< each pixel is zero-mean in time, and all pixels have unit-variance. */
+      NORM_ILLEGAL(3);
+      
+      public final int norm_code;
+      
+      norm_type(int norm_code) {
+   		this.norm_code = norm_code;
+   	  }
+    }
+    
+    public norm_type getNorm_type(int norm_code) {
+    	if (norm_code == 0) {
+    		return norm_type.NORM_NONE;
+    	}
+    	else if (norm_code == 1) {
+    		return norm_type.NORM_ZM;
+    	}
+    	else if (norm_code == 2) {
+    		return norm_type.NORM_ZMUV;
+    	}
+    	else {
+    		MipavUtil.displayError("Illegal number = " + norm_code + " for norm_type");
+    		return norm_type.NORM_ILLEGAL;
+    	}
     }
     
     /** Class for specifying spatio-temporal patches (cubes).
@@ -5443,7 +5639,454 @@ using namespace std;
 	  public norm_type  normopt; /**< normalization method. */
 	  public double  minvar; /**< minimum variance. */
 	  public int     minvarf;  /**< frames to skip in checking variance. */
+	  
+	  PatchOptions(int winxy, int winz, int stepxy, int stepz, norm_type normopt,double minvar,int minvarf)
+		{
+		    win = new Point3i();
+		    win.x = winxy;
+		    win.y = winxy;
+		    win.z = winz;
+		    step = new Point3i();
+		    step.x = stepxy;
+		    step.y = stepxy;
+		    step.z = step.z;
+		    this.normopt = normopt;
+			this.minvar=minvar;
+			this.minvarf=minvarf;
+		  checkValues();
+		}
+	  
+	  void checkValues() {
+		  if (win.x<= 0) {
+			  MipavUtil.displayError("win.x <= 0");
+			  System.exit(-1);
+		  }
+		  if (win.y<= 0) {
+			  MipavUtil.displayError("win.y <= 0");
+			  System.exit(-1);
+		  }
+		  if (win.z<= 0) {
+			  MipavUtil.displayError("win.z <= 0");
+			  System.exit(-1);
+		  }
+		  if (step.x<= 0) {
+			  MipavUtil.displayError("step.x <= 0");
+			  System.exit(-1);
+		  }
+		  if (step.y<= 0) {
+			  MipavUtil.displayError("step.y <= 0");
+			  System.exit(-1);
+		  }
+		  if (step.z<= 0) {
+			  MipavUtil.displayError("step.z <= 0");
+			  System.exit(-1);
+		  }
+		}
 	 
 	}
+	
+	/*!
+	 * \brief
+	 * Video segmentatin class.
+	 * 
+	 * Can be used to segment a video or video sequence using dynamic textures.
+	 * 
+	 * 
+	 * \see
+	 * DytexMix.
+	 */
+	class VidSegm
+	{
+		//variables
 
+			/*!
+			 * \brief
+			 * dynamix texture mixture learned from training video.		 
+			 */
+			public DytexMix dtm;
+			/*!
+			* \brief
+			* initial training video segmentation.		 
+			*/
+			public Mat initSegm;
+			/*!
+			 * \brief
+			 * patch options for dtm learning and segmentation.		 
+			 */
+			public PatchOptions popt;
+			/*!
+			* \brief
+			* number of segments.		 
+			*/
+			public int K;
+			/*!
+			* \brief
+			* number of states.		 
+			*/
+			public int n;
+			/*!
+			* \brief
+			* regularization value for the dtm.		 
+			*/
+			public double regV;	
+			/*!
+			* \brief
+			* number of frames to use for the training video.		 
+			*/
+			public int nfrm;	
+		
+			/*!
+			* \brief
+			* offset to center of patch.		 
+			*/
+			public Point3i              coff;        
+			/*!
+			* \brief
+			* all x-locations on step grid.		 
+			*/
+			public Vector<Integer>          allx;        
+			/*!
+			* \brief
+			* all y-locations on step grid.		 
+			*/
+			public Vector<Integer>          ally;        
+			/*!
+			* \brief
+			* all z-locations on step grid.		 
+			*/
+			public Vector<Integer>          allz;  
+			/*!
+			* \brief
+			* size of the video.		 
+			*/
+			public Point3i              vidsize;     
+			/*!
+			* \brief
+			* coordinates of top-left of all patches.		 
+			*/
+			public Vector<Point3i>      locall;        
+			/*!
+			* \brief
+			* mask for all patches.		 
+			*/
+			public Vector<Boolean>         locall_mask;         
+			/*!
+			* \brief
+			* classes for all valid patches.		 
+			*/
+			Vector<Integer>     allclasses;	
+			
+			/*!
+			 * \brief
+			 * initialize a video segmentor object.
+			 * 
+			 * \param winxy
+			 * xy patch size.
+			 * 
+			 * \param winz
+			 * z patch size.
+			 * 
+			 * \param stepxy
+			 * xy step size.
+			 * 
+			 * \param stepz
+			 * z step size.
+			 * 
+			 * \param nt
+			 * patch normalization tyep.
+			 * 
+			 * \param bkv
+			 * minimum background variance.
+			 * 
+			 * \param K
+			 * number of segments.
+			 * 
+			 * \param n
+			 * number of states.
+			 * 
+			 * \param reg
+			 * dtm regularization value.
+			 * 
+			 * \param nf
+			 * number of frames to use for training.
+			 * 
+			 * \param bkvf
+			 * number of frames to look for variance test (make patches more strict).
+			 * 
+			 * \see
+			 * learnDTM.
+			 */
+			public VidSegm(int winxy,int winz,int stepxy,int stepz,norm_type nt,double bkv,int K,int n,double reg,int nf,int bkvf)
+			{
+				popt = new PatchOptions(winxy,winz,stepxy,stepz,nt,bkv,bkvf);
+				dtm = new DytexMix(new DytexOptions(n,winxy*winxy,cov_type.COV_IID,cov_type.COV_DIAG,
+						nt==norm_type.NORM_NONE?Ymean_type.NONZERO_YMEAN:Ymean_type.ZERO_YMEAN));
+				this.K=K;
+				this.regV=reg;
+				this.n=n;
+				nfrm=nf;
+			}
+	}
+	
+	/*!
+	 * \brief
+	 * learn the dtm using training video.
+	 * 
+	 * \param vpath
+	 * training video dat file path.
+	 * 
+	 * \param doseg
+	 * do the initial segmentation or not.
+	 * 
+	 * Can be used for the initial segmentation of the training video.
+	 * 
+	 * 
+	 * \see
+	 * segmentVideoSequence.
+	 */
+	/*void learnDTM(VidSegm tvs, String vpath,boolean dosegm)
+	{
+		//load training video
+		Mat img=loaddat(vpath,"t");	
+
+		//Get the required video frames
+		if(nfrm!=0)
+		{
+			img=MatVid::subvid(img,Range(0,tvs.nfrm),Range::all(),Range::all());
+		}
+			
+		cout<<"Training video size: "<<img.size[0]<<" "<<img.size[1]<<" "<<img.size[2]<<endl;
+		
+		//Get patches
+		PatchBatchExtractor pbe(img, tvs.popt);
+		cout<<"Found Patches: "<<pbe.patches.size()<<endl;
+
+		//Learn the mixture
+		DytexRegOptions ropt(CovMatrix::COV_REG_MIN,regV,CovMatrix::COV_REG_MIN,regV,CovMatrix::COV_REG_MIN,regV);
+		EMOptions emopt(tvs.K,tvs.ropt,1e-4,EMOptions::COMPACT);	
+		
+		clock_t s_time=clock();
+		dtm.learnWithSplitting(pbe.patches,emopt);
+		clock_t e_time=clock()-s_time;
+		cout<<"Total Time Taken :"<<(double)e_time/(double)CLOCKS_PER_SEC<<endl;
+		
+		if(dosegm)
+		{
+			//Do the initial segmentation	
+			Mat smask=pbe.segm_mask(dtm.classes);	
+			smask=maxvotefilt(smask,5,5,5,tvs.K);
+			colorMask(img,smask,tvs.initSegm,1);
+		}
+
+	}*/
+	
+	//function to load dat file
+	/*Mat loaddat(String filename, String opt)
+	{
+		Mat output; //output matrix
+		Mat chframe[];		//Single frame channels
+
+		//loading descriptor from file
+		DatDescriptor desc=loaddatinfo(filename,checkOptionInStr(opt,"d"));
+
+		// parameters for algorithm 
+		int rows=(int)desc.dimensions.get(0).doubleValue();
+		int cols=(int)desc.dimensions.get(1).doubleValue();
+		int chns=(int)desc.channels;
+		int tframes=(int)desc.data_sets;
+		int elbytes=0;
+		int sz[]={tframes,rows,cols};
+
+		chframe=new Mat[chns];
+
+		if(desc.data_type.compare("unsigned_1")==0)
+		{
+			elbytes=1;		
+			for(int i=0;i<chns;i++)
+				chframe[i].create(rows,cols,CV_8UC1);
+		}
+		else
+		{
+			elbytes=8;		
+			for(int i=0;i<chns;i++)
+				chframe[i].create(rows,cols,CV_64FC1);
+		}
+		
+		if( (desc.data_type.compare("unsigned_1")==0) && checkOptionInStr(opt,"t") )
+		{		
+			output.create(3,sz,CV_8UC(chns));
+		}
+		else 
+		{	
+			output.create(3,sz,CV_64FC(chns));
+		}
+
+		
+		//reading data from file
+		filename.append("/data");	
+
+		//read data from dat file		
+		ifstream ifile (filename.c_str(), ios::in|ios::binary|ios::ate);
+		
+		Mat temp;
+		if (ifile.is_open())
+		{
+			ifile.seekg (0, ios::beg);				
+			for(int i=0;i<desc.data_sets;i++)  //for all frames
+			{	
+				for(int j=0;j<chns;j++)  //for all channels
+				{
+					ifile.read ((char*)chframe[j].data, rows*cols*elbytes); //read one channel data from file	
+				}
+				
+				merge(chframe,chns,temp);
+				int abc=temp.channels();
+
+				if( (output.depth()==CV_64F) && (temp.depth()==CV_8U) )
+					temp.convertTo(temp,CV_64FC(chns));
+
+				Mat fptr;
+				fptr=MatVid::frame(output,i);
+				temp.copyTo(fptr);
+			}
+		}
+
+		ifile.close();
+
+		return output;
+	}*/
+	
+	int checkOptionInStr(String str,String opt)
+	{
+		int j=str.indexOf(opt);
+		if(j>=0)
+			return 1;
+		else
+			return 0;
+	}
+	
+	/** Structure to represent Dat file Descriptor parameters
+	*/
+	class DatDescriptor
+	{
+		public String data_type;
+		public String byte_order;
+		public double data_sets;
+		public double channels;
+		public Vector<Double> dimensions;
+		public String feature;
+		public String history;
+		
+		public DatDescriptor()
+		{
+			data_type = "";
+			byte_order = "";
+			data_sets = 0.0;
+			channels = 0.0;
+			dimensions.clear();
+			feature = "";
+			history="";
+		}
+	}
+	
+	//equivalent to loaddatinfo matlab function
+	/*DatDescriptor loaddatinfo(String filename, int verbose)
+	{
+		//default descriptor
+		DatDescriptor desc;	
+		filename = filename + "/descriptor";	
+		File dfile = new File(filename);
+		try {
+		    raFile = new RandomAccessFile(dfile, "r");
+    	}
+    	catch (FileNotFoundException e) {
+    		MipavUtil.displayError(e + " ");
+    		System.exit(-1);
+    	}
+
+			//read and parse each line of the descriptor file
+			while (true)
+			{
+				String line,str,key,valuestr,temp,temp2;
+				Vector<String> value;
+
+				try {
+					line = raFile.readLine();
+				}
+				catch (IOException e) {
+					break;
+				}
+
+				if(line=="")
+					continue;
+
+				if( (line.charAt(0)=='(') && (line.charAt(line.length()-1)==')') )
+				{
+					str=line.substring(1,line.length()-2);
+					strtok2(str," ",key,valuestr);
+					while(1)
+					{
+						strtok2(valuestr, " ",temp,temp2);
+						value.push_back(temp);
+						if ( temp2.length() == 0 )
+						{
+							break;
+						}  				  
+						valuestr = temp2;
+					}	
+					// save into descriptor variables
+					if ( key.compare("_data_type")==0)
+						desc.data_type = value[0];
+					else if ( key.compare("_byte_order")==0)
+						desc.byte_order = value[0];      
+					else if ( key.compare("_data_sets")==0 )
+						desc.data_sets = strtod(value[0].c_str(),NULL);
+					else if ( key.compare("_channels")==0  )
+						desc.channels = strtod(value[0].c_str(),NULL);
+					else if ( key.compare("_dimensions")==0 )
+					{			  
+						desc.dimensions.push_back(strtod(value[0].c_str(),NULL));
+						desc.dimensions.push_back(strtod(value[1].c_str(),NULL));
+					}
+					else if ( key.compare("_feature")==0 )
+						desc.feature = value[0];
+					else
+						cout<<"loaddat:badkey: "<<"unrecognized descriptor key: "<<key<<endl;				
+				}
+			}
+
+			dfile.close();
+
+		if ( verbose )
+		{
+			cout<<"data_type:  "<<desc.data_type<<endl;
+			cout<<"byte_order: "<<desc.byte_order<<endl;
+			cout<<"data_sets:  "<<desc.data_sets<<endl;
+			cout<<"channels:   "<<desc.channels<<endl;
+			cout<<"dimensions: "<<desc.dimensions[0]<<" x "<<desc.dimensions[1]<<endl;
+			cout<<"feature:    "<<desc.feature<<endl;
+		}
+
+
+		return desc;
+	}*/
+
+	String[] strtok2(String str,String del,String key, String valuestr)
+	{	 
+		String ans[] =  new String[2];
+		int ind=str.indexOf(del,0);
+		if(ind == -1)
+		{
+			key=str;
+			valuestr="";
+		}
+		else
+		{		 
+			key=str.substring(0,ind);
+			valuestr=str.substring(ind+1,str.length());
+		}
+		ans[0] = key;
+		ans[1] = valuestr;
+		return ans;
+	}
 }
