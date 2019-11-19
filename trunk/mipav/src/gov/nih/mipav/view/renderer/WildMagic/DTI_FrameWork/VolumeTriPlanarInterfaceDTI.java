@@ -22,7 +22,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.BitSet;
 
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeListener;

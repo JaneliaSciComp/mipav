@@ -14,9 +14,9 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
 import java.awt.event.MouseEvent;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -234,7 +234,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 	}
 
 	/* (non-Javadoc)
-	 * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
+	 * @see com.jogamp.opengl.GLEventListener#display(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	@Override
 	public void display(GLAutoDrawable arg0)
@@ -463,7 +463,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 	}
 
 	/* (non-Javadoc)
-	 * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
+	 * @see com.jogamp.opengl.GLEventListener#init(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	@Override
 	public void init(GLAutoDrawable arg0) {      

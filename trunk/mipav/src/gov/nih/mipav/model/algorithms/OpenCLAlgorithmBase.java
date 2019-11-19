@@ -13,10 +13,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import javax.media.nativewindow.NativeSurface;
-import javax.media.opengl.GL;
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLContext;
+import com.jogamp.nativewindow.NativeSurface;
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLContext;
 
 import jogamp.opengl.GLContextImpl;
 import jogamp.opengl.GLDrawableImpl;

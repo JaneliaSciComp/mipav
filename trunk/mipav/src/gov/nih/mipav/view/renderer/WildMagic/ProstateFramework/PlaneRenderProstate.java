@@ -31,8 +31,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 
-import javax.media.opengl.*;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.*;
+import com.jogamp.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
 /**
@@ -510,7 +510,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
     /*
      * (non-Javadoc)
      * 
-     * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
+     * @see com.jogamp.opengl.GLEventListener#display(com.jogamp.opengl.GLAutoDrawable)
      */
     public void display(final GLAutoDrawable arg0) {
         if ( !m_bModified) {
@@ -588,7 +588,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
     /*
      * (non-Javadoc)
      * 
-     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#displayChanged(javax.media.opengl.GLAutoDrawable,
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#displayChanged(com.jogamp.opengl.GLAutoDrawable,
      *      boolean, boolean)
      */
     public void displayChanged(final GLAutoDrawable arg0, final boolean arg1, final boolean arg2) {
@@ -792,7 +792,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
     /*
      * (non-Javadoc)
      * 
-     * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
+     * @see com.jogamp.opengl.GLEventListener#init(com.jogamp.opengl.GLAutoDrawable)
      */
     public void init(final GLAutoDrawable arg0) {
         if (m_kVolumeImageA == null) {
@@ -1040,7 +1040,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
     /*
      * (non-Javadoc)
      * 
-     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#reshape(javax.media.opengl.GLAutoDrawable, int, int,
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#reshape(com.jogamp.opengl.GLAutoDrawable, int, int,
      *      int, int)
      */
     public void reshape(final GLAutoDrawable arg0, final int iX, final int iY, final int iWidth, final int iHeight) {

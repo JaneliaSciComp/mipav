@@ -7,7 +7,7 @@ import java.io.RandomAccessFile;
 import java.net.URL;
 
 import javax.imageio.ImageIO;
-import javax.media.opengl.GL;
+import com.jogamp.opengl.GL;
 
 public class demoImage
 {

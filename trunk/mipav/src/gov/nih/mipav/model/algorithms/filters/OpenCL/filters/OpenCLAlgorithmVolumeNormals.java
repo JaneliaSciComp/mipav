@@ -9,8 +9,8 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.io.IOException;
 
-import javax.media.opengl.GL3;
-import javax.media.opengl.GL3bc;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GL3bc;
 
 import WildMagic.LibRenderers.OpenGLRenderer.TextureID;
 

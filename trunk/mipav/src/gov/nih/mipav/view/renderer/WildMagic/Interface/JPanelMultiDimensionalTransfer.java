@@ -43,7 +43,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
 /**

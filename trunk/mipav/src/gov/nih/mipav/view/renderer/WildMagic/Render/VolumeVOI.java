@@ -8,7 +8,7 @@ import java.awt.font.LineMetrics;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
-import javax.media.opengl.GL;
+import com.jogamp.opengl.GL;
 import javax.swing.JCheckBox;
 
 import gov.nih.mipav.model.structures.ModelImage;
