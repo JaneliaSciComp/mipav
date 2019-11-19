@@ -38,9 +38,9 @@ import java.awt.event.WindowEvent;
 import java.io.FileNotFoundException;
 import java.util.Vector;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 
 import WildMagic.ApplicationDemos.Iridescence;
@@ -298,7 +298,7 @@ implements GLEventListener, ScreenCoordinateListener
 
 
 	/* (non-Javadoc)
-	 * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
+	 * @see com.jogamp.opengl.GLEventListener#display(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	public void display(GLAutoDrawable arg0) {
 		if ( !m_bModified )
@@ -382,7 +382,7 @@ implements GLEventListener, ScreenCoordinateListener
 	}
 
 	/* (non-Javadoc)
-	 * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#displayChanged(javax.media.opengl.GLAutoDrawable, boolean, boolean)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#displayChanged(com.jogamp.opengl.GLAutoDrawable, boolean, boolean)
 	 */
 	public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2)
 	{              
@@ -623,7 +623,7 @@ implements GLEventListener, ScreenCoordinateListener
 	}
 
 	/* (non-Javadoc)
-	 * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
+	 * @see com.jogamp.opengl.GLEventListener#init(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	 @Override
 	 public void init(GLAutoDrawable arg0) {
@@ -857,7 +857,7 @@ implements GLEventListener, ScreenCoordinateListener
 
 
 	 /* (non-Javadoc)
-	  * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
+	  * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#reshape(com.jogamp.opengl.GLAutoDrawable, int, int, int, int)
 	  */
 	 @Override
 	 public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {

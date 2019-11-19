@@ -42,7 +42,7 @@ import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import javax.media.opengl.GLException;
+import com.jogamp.opengl.GLException;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 

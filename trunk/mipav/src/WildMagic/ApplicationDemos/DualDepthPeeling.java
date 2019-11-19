@@ -29,20 +29,20 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2;
-import javax.media.opengl.GL2ES2;
-import javax.media.opengl.GL2GL3;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.GLException;
-import javax.media.opengl.GLProfile;
-import javax.media.opengl.awt.GLCanvas;
-import javax.media.opengl.fixedfunc.GLLightingFunc;
-import javax.media.opengl.fixedfunc.GLMatrixFunc;
-import javax.media.opengl.fixedfunc.GLPointerFunc;
-import javax.media.opengl.glu.GLU;
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2GL3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.GLException;
+import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.awt.GLCanvas;
+import com.jogamp.opengl.fixedfunc.GLLightingFunc;
+import com.jogamp.opengl.fixedfunc.GLMatrixFunc;
+import com.jogamp.opengl.fixedfunc.GLPointerFunc;
+import com.jogamp.opengl.glu.GLU;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.util.Animator;
@@ -323,68 +323,68 @@ public class DualDepthPeeling implements GLEventListener, KeyListener, MouseList
 		gl.glGenFramebuffers(1, g_dualPeelingSingleFboId, 0);
 		for (int i = 0; i < 2; i++)
 		{
-			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualDepthTexId[i]);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_dualDepthTexId[i]);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
 			
 			//gl.glEnable( GL2.GL_PIXEL_UNPACK_BUFFER );
 			
-			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2.GL_FLOAT_RG32_NV, g_imageWidth, g_imageHeight,
+			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0,  GL2.GL_FLOAT_RG32_NV, g_imageWidth, g_imageHeight,
 					0,  GL.GL_RGB,  GL.GL_FLOAT, null);
 
-			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualFrontBlenderTexId[i]);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL.GL_RGBA, g_imageWidth, g_imageHeight,
+			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_dualFrontBlenderTexId[i]);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0,  GL.GL_RGBA, g_imageWidth, g_imageHeight,
 					0,  GL.GL_RGBA,  GL.GL_FLOAT, null);
 
-			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualBackTempTexId[i]);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL.GL_RGBA, g_imageWidth, g_imageHeight,
+			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_dualBackTempTexId[i]);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0,  GL.GL_RGBA, g_imageWidth, g_imageHeight,
 					0,  GL.GL_RGBA,  GL.GL_FLOAT, null);
 		}
 
 		gl.glGenTextures(1, g_dualBackBlenderTexId, 0);
-		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualBackBlenderTexId[0]);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0, GL.GL_RGB, g_imageWidth, g_imageHeight,
+		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_dualBackBlenderTexId[0]);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0, GL.GL_RGB, g_imageWidth, g_imageHeight,
 				0, GL.GL_RGB, GL.GL_FLOAT, null);
 
 		gl.glGenFramebuffers(1, g_dualBackBlenderFboId, 0);
 		gl.glBindFramebuffer( GL.GL_FRAMEBUFFER, g_dualBackBlenderFboId[0]);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualBackBlenderTexId[0], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualBackBlenderTexId[0], 0);
 
 		gl.glBindFramebuffer( GL.GL_FRAMEBUFFER, g_dualPeelingSingleFboId[0]);
 
 		int j = 0;
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL.GL_COLOR_ATTACHMENT0,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualDepthTexId[j], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualDepthTexId[j], 0);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL2GL3.GL_COLOR_ATTACHMENT1,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualFrontBlenderTexId[j], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualFrontBlenderTexId[j], 0);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL2GL3.GL_COLOR_ATTACHMENT2,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualBackTempTexId[j], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualBackTempTexId[j], 0);
 
 		j = 1;
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL2GL3.GL_COLOR_ATTACHMENT3,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualDepthTexId[j], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualDepthTexId[j], 0);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL2GL3.GL_COLOR_ATTACHMENT4,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualFrontBlenderTexId[j], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualFrontBlenderTexId[j], 0);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL2GL3.GL_COLOR_ATTACHMENT5,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualBackTempTexId[j], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualBackTempTexId[j], 0);
 
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL2GL3.GL_COLOR_ATTACHMENT6,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualBackBlenderTexId[0], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_dualBackBlenderTexId[0], 0);
 	}
 	
 	
@@ -730,28 +730,28 @@ public class DualDepthPeeling implements GLEventListener, KeyListener, MouseList
 		
 		gl.glGenTextures(2, g_accumulationTexId, 0);
 
-		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_accumulationTexId[0]);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2GL3.GL_RGBA16F,
+		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_accumulationTexId[0]);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0,  GL2GL3.GL_RGBA16F,
 				g_imageWidth, g_imageHeight, 0,  GL.GL_RGBA,  GL.GL_FLOAT, null);
 
-		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_accumulationTexId[1]);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2.GL_FLOAT_R32_NV,
+		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_accumulationTexId[1]);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0,  GL2.GL_FLOAT_R32_NV,
 				g_imageWidth, g_imageHeight, 0,  GL.GL_RGBA,  GL.GL_FLOAT, null);
 
 		gl.glGenFramebuffers(1, g_accumulationFboId, 0);
 		gl.glBindFramebuffer( GL.GL_FRAMEBUFFER, g_accumulationFboId[0]);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL.GL_COLOR_ATTACHMENT0,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_accumulationTexId[0], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_accumulationTexId[0], 0);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL2GL3.GL_COLOR_ATTACHMENT1,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_accumulationTexId[1], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_accumulationTexId[1], 0);
 
 		//int uiStatus = gl.glCheckFramebufferStatus(GL.GL_FRAMEBUFFER);
 	}
@@ -766,44 +766,44 @@ public class DualDepthPeeling implements GLEventListener, KeyListener, MouseList
 
 		for (int i = 0; i < 2; i++)
 		{
-			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_frontDepthTexId[i]);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2GL3.GL_DEPTH_COMPONENT32F,
+			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_frontDepthTexId[i]);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0,  GL2GL3.GL_DEPTH_COMPONENT32F,
 					g_imageWidth, g_imageHeight, 0,  GL2ES2.GL_DEPTH_COMPONENT,  GL.GL_FLOAT, null);
 
-			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_frontColorTexId[i]);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL.GL_RGBA, g_imageWidth, g_imageHeight,
+			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_frontColorTexId[i]);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S,  GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+			gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0,  GL.GL_RGBA, g_imageWidth, g_imageHeight,
 					0,  GL.GL_RGBA,  GL.GL_FLOAT, null);
 
 			gl.glBindFramebuffer( GL.GL_FRAMEBUFFER, g_frontFboId[i]);
 			gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL.GL_DEPTH_ATTACHMENT,
-					GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_frontDepthTexId[i], 0);
+					GL2GL3.GL_TEXTURE_RECTANGLE, g_frontDepthTexId[i], 0);
 			gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL.GL_COLOR_ATTACHMENT0,
-					GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_frontColorTexId[i], 0);
+					GL2GL3.GL_TEXTURE_RECTANGLE, g_frontColorTexId[i], 0);
 		}
 
 		gl.glGenTextures(1, g_frontColorBlenderTexId, 0);
-		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_frontColorBlenderTexId[0]);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
-		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0, GL. GL_RGBA, g_imageWidth, g_imageHeight,
+		gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE, g_frontColorBlenderTexId[0]);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
+		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
+		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE, 0, GL. GL_RGBA, g_imageWidth, g_imageHeight,
 				0,  GL.GL_RGBA,  GL.GL_FLOAT, null);
 
 		gl.glGenFramebuffers(1, g_frontColorBlenderFboId, 0);
 		gl.glBindFramebuffer( GL.GL_FRAMEBUFFER, g_frontColorBlenderFboId[0]);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL.GL_DEPTH_ATTACHMENT,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_frontDepthTexId[0], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_frontDepthTexId[0], 0);
 		gl.glFramebufferTexture2D( GL.GL_FRAMEBUFFER,  GL.GL_COLOR_ATTACHMENT0,
-				GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_frontColorBlenderTexId[0], 0);
+				GL2GL3.GL_TEXTURE_RECTANGLE, g_frontColorBlenderTexId[0], 0);
 	}
 
 

@@ -17,10 +17,10 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Vector;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2;
-import javax.media.opengl.GL2ES2;
-import javax.media.opengl.GL2GL3;
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2GL3;
 
 public class GLSLProgramObject
 {
@@ -185,7 +185,7 @@ public class GLSLProgramObject
 	}
 
 	public void bindTextureRECT(GL2 gl, String texname, int texid, int texunit) {
-		bindTexture(gl, GL2GL3.GL_TEXTURE_RECTANGLE_ARB, texname, texid, texunit);
+		bindTexture(gl, GL2GL3.GL_TEXTURE_RECTANGLE, texname, texid, texunit);
 	}
 
 	public void destroy(GL2 gl)

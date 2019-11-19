@@ -55,9 +55,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -205,7 +205,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	}
 
 	/* (non-Javadoc)
-	 * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
+	 * @see com.jogamp.opengl.GLEventListener#display(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	@Override
 	public void display(GLAutoDrawable arg0) {

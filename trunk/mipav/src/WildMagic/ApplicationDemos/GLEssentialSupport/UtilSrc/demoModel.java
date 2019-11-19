@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.net.URL;
 
-import javax.media.opengl.GL;
+import com.jogamp.opengl.GL;
 
 import com.jogamp.common.nio.Buffers;
 

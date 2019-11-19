@@ -13,9 +13,9 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;

@@ -26,8 +26,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;

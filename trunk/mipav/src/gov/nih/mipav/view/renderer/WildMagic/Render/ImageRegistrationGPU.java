@@ -28,8 +28,8 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 
-import javax.media.opengl.*;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.*;
+import com.jogamp.opengl.awt.GLCanvas;
 
 public class ImageRegistrationGPU extends JavaApplication3D
 //implements GLEventListener, KeyListener

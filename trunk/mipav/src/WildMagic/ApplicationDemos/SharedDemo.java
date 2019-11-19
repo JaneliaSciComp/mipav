@@ -32,14 +32,14 @@ import gov.nih.mipav.view.Preferences.OperatingSystem;
 
 import java.util.List;
 
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLCapabilitiesImmutable;
-import javax.media.opengl.GLDrawableFactory;
-import javax.media.opengl.GLException;
-import javax.media.opengl.GLOffscreenAutoDrawable;
-import javax.media.opengl.GLProfile;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLCapabilitiesImmutable;
+import com.jogamp.opengl.GLDrawableFactory;
+import com.jogamp.opengl.GLException;
+import com.jogamp.opengl.GLOffscreenAutoDrawable;
+import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
 
 import com.jogamp.opengl.util.Animator;
@@ -71,21 +71,27 @@ public class SharedDemo extends Thread {
     	 test.initShared();
     	 GLCanvas glCanvas;
 
-         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+//         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+         glCanvas = new GLCanvas(caps);
+         glCanvas.setSharedContext(test.sharedDrawable.getContext());
          Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
          //Iridescence.main( args);
     	 
-         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+//         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+         glCanvas = new GLCanvas(caps);
+         glCanvas.setSharedContext(test.sharedDrawable.getContext());
          Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
          //Iridescence.main( args);
     	 
-         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+//         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+         glCanvas = new GLCanvas(caps);
+         glCanvas.setSharedContext(test.sharedDrawable.getContext());
          //Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
          Iridescence.main( args);
     }
     
     private void initShared() {
-    	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
+    	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height);
        
         sharedDemo = new Iridescence();
         sharedDrawable.addGLEventListener(sharedDemo);

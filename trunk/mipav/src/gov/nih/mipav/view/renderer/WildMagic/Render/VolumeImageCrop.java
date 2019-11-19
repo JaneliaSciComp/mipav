@@ -5,9 +5,9 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import java.awt.Frame;
 import java.awt.event.KeyListener;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;

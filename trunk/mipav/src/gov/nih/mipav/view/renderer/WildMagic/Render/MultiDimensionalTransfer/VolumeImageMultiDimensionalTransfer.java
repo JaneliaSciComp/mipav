@@ -26,9 +26,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Vector;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
 
 import com.jogamp.opengl.util.Animator;
@@ -180,7 +180,7 @@ implements GLEventListener, KeyListener
 	}
 	
 	/* (non-Javadoc)
-	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#display(javax.media.opengl.GLAutoDrawable)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#display(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	public void display(GLAutoDrawable arg0) {
 		if ( !m_bInit )
@@ -266,7 +266,7 @@ implements GLEventListener, KeyListener
 	}
 
 	/* (non-Javadoc)
-	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#dispose(javax.media.opengl.GLAutoDrawable)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#dispose(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	public void dispose(GLAutoDrawable arg0)
 	{
@@ -323,7 +323,7 @@ implements GLEventListener, KeyListener
 	}
 
 	/* (non-Javadoc)
-	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#init(javax.media.opengl.GLAutoDrawable)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#init(com.jogamp.opengl.GLAutoDrawable)
 	 */
 	public void init(GLAutoDrawable arg0) {
 
@@ -606,7 +606,7 @@ implements GLEventListener, KeyListener
 	}
 	
 	/* (non-Javadoc)
-	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#reshape(com.jogamp.opengl.GLAutoDrawable, int, int, int, int)
 	 */
 	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
 	{      

@@ -16,9 +16,9 @@ import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.Vector;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibGraphics.Rendering.WireframeState;

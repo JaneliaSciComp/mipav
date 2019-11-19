@@ -52,13 +52,13 @@ import java.awt.event.MouseMotionListener;
 import java.util.Arrays;
 import java.util.Vector;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLDrawableFactory;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.GLOffscreenAutoDrawable;
-import javax.media.opengl.GLProfile;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLDrawableFactory;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.GLOffscreenAutoDrawable;
+import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -136,7 +136,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
     public GLCanvas newSharedCanvas()
     {
-    	return new GLCanvas(caps, sharedDrawable.getContext());
+    	GLCanvas canvas = new GLCanvas(caps);
+    	canvas.setSharedContext(sharedDrawable.getContext());
+    	return canvas;
+//    	return new GLCanvas(caps, sharedDrawable.getContext());
     }
 
 	/** New sculpting object for WM-based sculpting. */
@@ -590,7 +593,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable
+	 * com.jogamp.opengl.GLEventListener#display(com.jogamp.opengl.GLAutoDrawable
 	 * )
 	 */
 	@Override
@@ -924,7 +927,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
     protected void initShared(VolumeTriPlanarInterface kParent) {
     	if ( sharedDrawable == null )
     	{
-            sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+            sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height);
             sharedRenderer = new VolumeTriPlanarRender(kParent, null, m_kVolumeImageA, m_kVolumeImageB);
     		sharedDrawable.addGLEventListener(sharedRenderer);
     		// init and render one frame, which will setup the shared textures

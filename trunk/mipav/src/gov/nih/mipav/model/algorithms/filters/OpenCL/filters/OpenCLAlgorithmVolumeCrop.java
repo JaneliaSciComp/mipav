@@ -14,7 +14,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;

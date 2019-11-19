@@ -8,8 +8,8 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
 import java.awt.event.MouseEvent;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;

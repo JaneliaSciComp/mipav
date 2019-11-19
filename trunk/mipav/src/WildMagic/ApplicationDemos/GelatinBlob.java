@@ -28,10 +28,10 @@ import java.awt.event.WindowEvent;
 import java.util.Iterator;
 import java.util.TreeSet;
 
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
