@@ -55,12 +55,17 @@ public class libdt extends AlgorithmBase {
     /** byte array for double * */
     private final byte[] byteDoubleBuffer = new byte[8];
     private final int CV_8U = 0;
+    private final int CV_8UC1 = 0;
+    private final int CV_8UC = 1;
     private final int CV_64F = 6;
+    private final int CV_64FC1 = 6;
+    private final int CV_64FC = 7;
     private final int CV_64FC3 = 22;
     private final int CV_REDUCE_SUM = 0;
     private final int CV_REDUCE_AVG = 1;
     private final int CV_REDUCE_MAX = 2;
     private final int CV_REDUCE_MIN = 3;
+    private boolean debug = true;
 	
 	public libdt() {
 		
@@ -2729,8 +2734,101 @@ using namespace std;
     	}
     }
     
+    Mat[] subvid(Mat vid[], Range box_z, Range box_y, Range box_x) {
+    	int i,d,r,c,ch;
+    	int dstart;
+    	int rstart;
+    	int cstart;
+    	Mat sub[];
+    	int depth;
+    	int rows;
+    	int cols;
+    	if (box_z.all) {
+    		depth = vid.length;
+    		dstart = 0;
+    	}
+    	else {
+    		depth = box_z.end - box_z.start;
+    		dstart = box_z.start;
+    	}
+    	sub = new Mat[depth];
+    	if (box_y.all) {
+    		rows = vid[0].rows;
+    		rstart = 0;
+    	}
+    	else {
+    		rows = box_y.end - box_y.start;
+    		rstart = box_y.start;
+    	}
+    	if (box_x.all) {
+    		cols = vid[0].cols;
+    		cstart = 0;
+    	}
+    	else {
+    		cols = box_x.end - box_x.start;
+    		cstart = box_x.start;
+    	}
+    	int channels = vid[0].channels;
+    	int type = vid[0].type;
+    	if (type == CV_64F) {
+    	    for (i = 0; i < depth; i++) {
+    	    	sub[i] = new Mat(rows,cols,CV_64F);
+    	    }
+    	    for (d = 0; d < depth; d++) {
+    	    	for (r = 0; r < rows; r++) {
+    	    		for (c = 0; c < cols; c++) {
+    	    			sub[d].double2D[r][c] = vid[d+dstart].double2D[r+rstart][c+cstart];
+    	    		}
+    	    	}
+    	    }
+    	} // if (type == CV_64F)
+    	else if (type == CV_8U) {
+    		for (i = 0; i < depth; i++) {
+    	    	sub[i] = new Mat(rows,cols,CV_8U);
+    	    }
+    	    for (d = 0; d < depth; d++) {
+    	    	for (r = 0; r < rows; r++) {
+    	    		for (c = 0; c < cols; c++) {
+    	    			sub[d].byte2D[r][c] = vid[d+dstart].byte2D[r+rstart][c+cstart];
+    	    		}
+    	    	}
+    	    }	
+    	} // else if (type == CV_8U)
+    	else if (type == CV_64FC) {
+    		int sz[] = new int[]{rows,cols};
+    	    for (i = 0; i < depth; i++) {
+    	    	sub[i] = new Mat(2,sz,CV_64FC,channels);
+    	    }
+    	    for (d = 0; d < depth; d++) {
+    	    	for (ch = 0; ch < channels; ch++) {
+	    	    	for (r = 0; r < rows; r++) {
+	    	    		for (c = 0; c < cols; c++) {
+	    	    			sub[d].double2DC[ch][r][c] = vid[d+dstart].double2DC[ch][r+rstart][c+cstart];
+	    	    		}
+	    	    	}
+    	    	}
+    	    }
+    	} // else if (type == CV_64FC)
+    	else if (type == CV_8UC) {
+    		int sz[] = new int[]{rows,cols};
+    	    for (i = 0; i < depth; i++) {
+    	    	sub[i] = new Mat(2,sz,CV_8UC,channels);
+    	    }
+    	    for (d = 0; d < depth; d++) {
+    	    	for (ch = 0; ch < channels; ch++) {
+	    	    	for (r = 0; r < rows; r++) {
+	    	    		for (c = 0; c < cols; c++) {
+	    	    			sub[d].byte2DC[ch][r][c] = vid[d+dstart].byte2DC[ch][r+rstart][c+cstart];
+	    	    		}
+	    	    	}
+    	    	}
+    	    }
+    	} // else if (type == CV_8UC)
+    	return sub;
+    }
+    
     Mat[] subvid(Mat vid[], int frange_start_inclusive, int frange_end_exclusive) {
-    	int i,r,c;
+    	int i,r,c,ch;
 	    if((frange_start_inclusive < 0) || frange_start_inclusive >=  vid.length) {
 	    	MipavUtil.displayError("frange_start_incluive is an impossible " + frange_start_inclusive);
 	    	System.exit(-1);
@@ -2740,13 +2838,51 @@ using namespace std;
 	    	System.exit(-1);
 	    }
 	    Mat sub[] = new Mat[frange_end_exclusive-frange_start_inclusive];
-	    for (i = 0; i < sub.length; i++) {
-	    	sub[i] = new Mat(vid[0].rows,vid[0].cols,CV_64F);
-	    	for (r = 0; r < vid[0].rows; r++) {
-	    		for (c = 0; c < vid[0].cols; c++) {
-	    			sub[i].double2D[r][c] = vid[i+frange_start_inclusive].double2D[r][c];
-	    		}
-	    	}
+	    if (vid[0].type == CV_64F) {
+		    for (i = 0; i < sub.length; i++) {
+		    	sub[i] = new Mat(vid[0].rows,vid[0].cols,CV_64F);
+		    	for (r = 0; r < vid[0].rows; r++) {
+		    		for (c = 0; c < vid[0].cols; c++) {
+		    			sub[i].double2D[r][c] = vid[i+frange_start_inclusive].double2D[r][c];
+		    		}
+		    	}
+		    }
+	    }
+	    else if (vid[0].type == CV_8U) {
+	    	for (i = 0; i < sub.length; i++) {
+		    	sub[i] = new Mat(vid[0].rows,vid[0].cols,CV_8U);
+		    	for (r = 0; r < vid[0].rows; r++) {
+		    		for (c = 0; c < vid[0].cols; c++) {
+		    			sub[i].byte2D[r][c] = vid[i+frange_start_inclusive].byte2D[r][c];
+		    		}
+		    	}
+		    }	
+	    }
+	    else if (vid[0].type == CV_64FC) {
+	    	int sz[] = new int[]{vid[0].rows,vid[0].cols};
+		    for (i = 0; i < sub.length; i++) {
+		    	sub[i] = new Mat(2,sz,CV_64FC,vid[0].channels);
+		    	for (ch = 0; ch < vid[0].channels; ch++) {
+			    	for (r = 0; r < vid[0].rows; r++) {
+			    		for (c = 0; c < vid[0].cols; c++) {
+			    			sub[i].double2DC[ch][r][c] = vid[i+frange_start_inclusive].double2DC[ch][r][c];
+			    		}
+			    	}
+		    	}
+		    }
+	    }
+	    else if (vid[0].type == CV_8UC) {
+	    	int sz[] = new int[]{vid[0].rows,vid[0].cols};
+		    for (i = 0; i < sub.length; i++) {
+		    	sub[i] = new Mat(2,sz,CV_8UC,vid[0].channels);
+		    	for (ch = 0; ch < vid[0].channels; ch++) {
+			    	for (r = 0; r < vid[0].rows; r++) {
+			    		for (c = 0; c < vid[0].cols; c++) {
+			    			sub[i].byte2DC[ch][r][c] = vid[i+frange_start_inclusive].byte2DC[ch][r][c];
+			    		}
+			    	}
+		    	}
+		    }
 	    }
 	    return sub;
    }
@@ -4206,7 +4342,7 @@ using namespace std;
    //! the array dimensionality, >= 2
    public int dims;
    //! the number of rows and columns or (-1, -1) when the array has more than 2 dimensions
-   public int depth, rows, cols;
+   public int depth, rows, cols,channels;
    public int size[];
    public int type;
    public int step[] = new int[3];
@@ -4214,10 +4350,14 @@ using namespace std;
    //! pointer to the data
    public byte data[];
    public byte byte2D[][];
+   public byte byte2DC[][][];
    public double double2D[][];
+   public double double2DC[][][];
    public Vector3d Vector3d2D[][];
    public byte byte3D[][][];
+   public byte byte3DC[][][][];
    public double double3D[][][];
+   public double double3DC[][][][];
    public Vector3d Vector3d3D[][][];
 
    //! pointer to the reference counter;
@@ -4303,6 +4443,42 @@ using namespace std;
     		} // else if (dims == 3)
     	}
     	
+    	public Mat(int dims, int size[], int type, int channels) {
+    		int x, y , z;
+    		this.dims = dims;
+    		this.size = size;
+    		this.type = type;
+    		this.channels = channels;
+    		if (dims == 2) {
+    			this.rows = size[0];
+    			this.cols = size[1];
+    		}
+    		else if (dims == 3) {
+    			this.depth = size[0];
+    			this.rows = size[1];
+    			this.cols = size[2];
+    			step[0] = 1;
+    		}
+    		if (dims == 2) {
+    			if (type == CV_8UC) {
+        	        byte2DC = new byte[channels][rows][cols];	
+        	    }
+        	    else if (type == CV_64FC) {
+        	        double2DC = new double[channels][rows][cols];	
+        	    }
+    		} // if (dims == 2)
+    		else if (dims == 3) {
+    			if (type == CV_8UC) {
+        	        byte3DC = new byte[channels][depth][rows][cols];
+        	        step[1] = cols;
+        	    }
+        	    else if (type == CV_64FC) {
+        	        double3DC = new double[channels][depth][rows][cols];
+        	        step[1] = 8*cols;
+        	    }
+    		} // else if (dims == 3)
+    	}
+    	
     	public Mat(double d2D[][]) {
     		this.rows = d2D.length;
     		this.cols = d2D[0].length;
@@ -4338,6 +4514,41 @@ using namespace std;
     	        	}
     	        }
     	    }
+    	}
+    	
+    	public void create(int dims, int size[], int type, int channels) {
+    		this.dims = dims;
+    		this.size = size;
+    		this.type = type;
+    		this.channels = channels;
+    		if (dims == 2) {
+    			this.rows = size[0];
+    			this.cols = size[1];
+    		}
+    		else if (dims == 3) {
+    			this.depth = size[0];
+    			this.rows = size[1];
+    			this.cols = size[2];
+    			step[0] = 1;
+    		}
+    		if (dims == 2) {
+    			if (type == CV_8UC) {
+        	        byte2DC = new byte[channels][rows][cols];	
+        	    }
+        	    else if (type == CV_64FC) {
+        	        double2DC = new double[channels][rows][cols];	
+        	    }
+    		}
+    		else if (dims == 3) {
+    			if (type == CV_8UC) {
+        	        byte3DC = new byte[channels][depth][rows][cols];
+        	        step[1] = cols;
+        	    }
+        	    else if (type == CV_64FC) {
+        	        double3DC = new double[channels][depth][rows][cols];
+        	        step[1]= 8*cols*channels;
+        	    }
+    		}
     	}
     	
     	public void create(int dims, int size[], int type) {
@@ -5844,22 +6055,28 @@ using namespace std;
 	 * \see
 	 * segmentVideoSequence.
 	 */
-	/*void learnDTM(VidSegm tvs, String vpath,boolean dosegm)
+	void learnDTM(VidSegm tvs, String vpath,boolean dosegm)
 	{
 		//load training video
-		Mat img=loaddat(vpath,"t");	
+		Mat img[]=loaddat(vpath,"t");	
 
 		//Get the required video frames
-		if(nfrm!=0)
+		if(tvs.nfrm!=0)
 		{
-			img=MatVid::subvid(img,Range(0,tvs.nfrm),Range::all(),Range::all());
+			img=subvid(img,0,tvs.nfrm);
 		}
 			
-		cout<<"Training video size: "<<img.size[0]<<" "<<img.size[1]<<" "<<img.size[2]<<endl;
+		System.out.println("Training video size frames: " + img.length  + " rows: " + img[0].size[0] + " cols: " + img[0].size[1]);
 		
 		//Get patches
-		PatchBatchExtractor pbe(img, tvs.popt);
-		cout<<"Found Patches: "<<pbe.patches.size()<<endl;
+		Range box_z = new Range();
+		box_z.all = true;
+		Range box_y = new Range();
+		box_y.all = true;
+		Range box_x = new Range();
+		box_x.all = true;
+		PatchBatchExtractor pbe = new PatchBatchExtractor(img, tvs.popt,box_z,box_y,box_x);
+		/*cout<<"Found Patches: "<<pbe.patches.size()<<endl;
 
 		//Learn the mixture
 		DytexRegOptions ropt(CovMatrix::COV_REG_MIN,regV,CovMatrix::COV_REG_MIN,regV,CovMatrix::COV_REG_MIN,regV);
@@ -5876,14 +6093,15 @@ using namespace std;
 			Mat smask=pbe.segm_mask(dtm.classes);	
 			smask=maxvotefilt(smask,5,5,5,tvs.K);
 			colorMask(img,smask,tvs.initSegm,1);
-		}
+		}*/
 
-	}*/
+	}
 	
 	//function to load dat file
-	/*Mat loaddat(String filename, String opt)
+	Mat[] loaddat(String filename, String opt)
 	{
-		Mat output; //output matrix
+		int i,r,c;
+		Mat output[]; //output matrix
 		Mat chframe[];		//Single frame channels
 
 		//loading descriptor from file
@@ -5895,66 +6113,118 @@ using namespace std;
 		int chns=(int)desc.channels;
 		int tframes=(int)desc.data_sets;
 		int elbytes=0;
-		int sz[]={tframes,rows,cols};
+		//int sz[]={tframes,rows,cols};
 
 		chframe=new Mat[chns];
+		for (i = 0; i < chns; i++) {
+		    chframe[i] = new Mat();	
+		}
 
-		if(desc.data_type.compare("unsigned_1")==0)
+		if(desc.data_type.equals("unsigned_1"))
 		{
 			elbytes=1;		
-			for(int i=0;i<chns;i++)
+			for(i=0;i<chns;i++)
 				chframe[i].create(rows,cols,CV_8UC1);
 		}
 		else
 		{
 			elbytes=8;		
-			for(int i=0;i<chns;i++)
+			for(i=0;i<chns;i++)
 				chframe[i].create(rows,cols,CV_64FC1);
 		}
 		
-		if( (desc.data_type.compare("unsigned_1")==0) && checkOptionInStr(opt,"t") )
+		output = new Mat[tframes];
+		int sz2D[] = new int[]{rows,cols};
+		for (i = 0; i < tframes; i++) {
+			output[i] = new Mat();
+		}
+		if( (desc.data_type.equals("unsigned_1")) && (checkOptionInStr(opt,"t") != 0))
 		{		
-			output.create(3,sz,CV_8UC(chns));
+			for (i = 0; i < tframes; i++) {
+				output[i].create(2,sz2D,CV_8UC,chns);
+			}
 		}
 		else 
 		{	
-			output.create(3,sz,CV_64FC(chns));
+			for (i = 0; i < tframes; i++) {
+				output[i].create(2,sz2D,CV_64FC,chns);
+			}
 		}
 
 		
 		//reading data from file
-		filename.append("/data");	
-
-		//read data from dat file		
-		ifstream ifile (filename.c_str(), ios::in|ios::binary|ios::ate);
+		filename = filename + "/data";
+		File ifile = new File(filename);
+		try {
+		    raFile = new RandomAccessFile(ifile, "r");
+    	}
+    	catch (FileNotFoundException e) {
+    		MipavUtil.displayError(e + " ");
+    		System.exit(-1);
+    	}
+		//read data from dat file	
 		
-		Mat temp;
-		if (ifile.is_open())
-		{
-			ifile.seekg (0, ios::beg);				
-			for(int i=0;i<desc.data_sets;i++)  //for all frames
+		try {
+			raFile.seek(0L);	
+		}
+		catch (IOException e) {
+    		MipavUtil.displayError(e + " ");
+    		System.exit(-1);
+    	}
+		byte buf[] = new byte[rows*cols*elbytes];
+			for(i=0;i<desc.data_sets;i++)  //for all frames
 			{	
 				for(int j=0;j<chns;j++)  //for all channels
 				{
-					ifile.read ((char*)chframe[j].data, rows*cols*elbytes); //read one channel data from file	
+					//ifile.read ((char*)chframe[j].data, rows*cols*elbytes); //read one channel data from file	
+					try {
+					    raFile.read(buf);
+					}
+					catch (IOException e) {
+			    		MipavUtil.displayError(e + " ");
+			    		System.exit(-1);
+			    	}
+					if (elbytes == 1) {
+						for (r = 0; r < rows; r++) {
+							for (c = 0; c < cols; c++) {
+								chframe[j].byte2D[r][c] = buf[r*cols + c];
+								if (output[0].type == CV_8UC) {
+								    output[i].byte2DC[j][r][c] = buf[r*cols + c];
+								}
+								else if (output[0].type == CV_64FC) {
+									output[i].double2DC[j][r][c] = (double)(buf[r*cols + c] & 0xff);
+								}
+							}
+						}
+					} // if (elbytes == 1)
+					else if (elbytes == 8) {
+						for (r = 0; r < rows; r++) {
+							for (c = 0; c < cols; c++) {
+								try {
+								    chframe[j].double2D[r][c] = getDouble(endian);
+								}
+								catch (IOException e) {
+						    		MipavUtil.displayError(e + " ");
+						    		System.exit(-1);
+						    	}
+								output[i].double2DC[j][r][c] = chframe[j].double2D[r][c];
+							}
+						}	
+					}
 				}
 				
-				merge(chframe,chns,temp);
-				int abc=temp.channels();
-
-				if( (output.depth()==CV_64F) && (temp.depth()==CV_8U) )
-					temp.convertTo(temp,CV_64FC(chns));
-
-				Mat fptr;
-				fptr=MatVid::frame(output,i);
-				temp.copyTo(fptr);
 			}
-		}
 
-		ifile.close();
+		    try {
+			    raFile.close();
+		    }
+		    catch (IOException e) {
+	    		MipavUtil.displayError(e + " ");
+	    		System.exit(-1);
+	    	}
 
 		return output;
-	}*/
+	}
 	
 	int checkOptionInStr(String str,String opt)
 	{
@@ -5990,10 +6260,10 @@ using namespace std;
 	}
 	
 	//equivalent to loaddatinfo matlab function
-	/*DatDescriptor loaddatinfo(String filename, int verbose)
+	DatDescriptor loaddatinfo(String filename, int verbose)
 	{
 		//default descriptor
-		DatDescriptor desc;	
+		DatDescriptor desc = new DatDescriptor();	
 		filename = filename + "/descriptor";	
 		File dfile = new File(filename);
 		try {
@@ -6008,7 +6278,7 @@ using namespace std;
 			while (true)
 			{
 				String line,str,key,valuestr,temp,temp2;
-				Vector<String> value;
+				Vector<String> value = new Vector<String>();
 
 				try {
 					line = raFile.readLine();
@@ -6020,14 +6290,19 @@ using namespace std;
 				if(line=="")
 					continue;
 
+				String ans[];
 				if( (line.charAt(0)=='(') && (line.charAt(line.length()-1)==')') )
 				{
 					str=line.substring(1,line.length()-2);
-					strtok2(str," ",key,valuestr);
-					while(1)
+					ans = strtok2(str," ");
+					key = ans[0];
+					valuestr = ans[1];
+					while(true)
 					{
-						strtok2(valuestr, " ",temp,temp2);
-						value.push_back(temp);
+						ans = strtok2(valuestr, " ");
+						temp = ans[0];
+						temp2 = ans[1];
+						value.add(temp);
 						if ( temp2.length() == 0 )
 						{
 							break;
@@ -6035,44 +6310,52 @@ using namespace std;
 						valuestr = temp2;
 					}	
 					// save into descriptor variables
-					if ( key.compare("_data_type")==0)
-						desc.data_type = value[0];
-					else if ( key.compare("_byte_order")==0)
-						desc.byte_order = value[0];      
-					else if ( key.compare("_data_sets")==0 )
-						desc.data_sets = strtod(value[0].c_str(),NULL);
-					else if ( key.compare("_channels")==0  )
-						desc.channels = strtod(value[0].c_str(),NULL);
-					else if ( key.compare("_dimensions")==0 )
+					if ( key.equals("_data_type"))
+						desc.data_type = value.get(0);
+					else if ( key.equals("_byte_order"))
+						desc.byte_order = value.get(0);      
+					else if ( key.equals("_data_sets"))
+						desc.data_sets = Double.valueOf(value.get(0)).doubleValue();
+					else if ( key.equals("_channels"))
+						desc.channels = Double.valueOf(value.get(0)).doubleValue();
+					else if ( key.equals("_dimensions"))
 					{			  
-						desc.dimensions.push_back(strtod(value[0].c_str(),NULL));
-						desc.dimensions.push_back(strtod(value[1].c_str(),NULL));
+						desc.dimensions.add(Double.valueOf(value.get(0)).doubleValue());
+						desc.dimensions.add(Double.valueOf(value.get(1)).doubleValue());
 					}
-					else if ( key.compare("_feature")==0 )
-						desc.feature = value[0];
+					else if ( key.equals("_feature"))
+						desc.feature = value.get(0);
 					else
-						cout<<"loaddat:badkey: "<<"unrecognized descriptor key: "<<key<<endl;				
+						System.err.println("loaddat:badkey: unrecognized descriptor key: " + key);				
 				}
 			}
 
-			dfile.close();
+			try {
+			    raFile.close();
+			}
+			catch (IOException e) {
+				MipavUtil.displayError(e + " ");
+	    		System.exit(-1);    	
+			}
 
-		if ( verbose )
+		if ( verbose != 0)
 		{
-			cout<<"data_type:  "<<desc.data_type<<endl;
-			cout<<"byte_order: "<<desc.byte_order<<endl;
-			cout<<"data_sets:  "<<desc.data_sets<<endl;
-			cout<<"channels:   "<<desc.channels<<endl;
-			cout<<"dimensions: "<<desc.dimensions[0]<<" x "<<desc.dimensions[1]<<endl;
-			cout<<"feature:    "<<desc.feature<<endl;
+			System.out.println("data_type:  " + desc.data_type);
+			System.out.println("byte_order: " + desc.byte_order);
+			System.out.println("data_sets:  " + desc.data_sets);
+			System.out.println("channels:   " + desc.channels);
+			System.out.println("dimensions: " + desc.dimensions.get(0) + " x " + desc.dimensions.get(1));
+			System.out.println("feature:    " + desc.feature);
 		}
 
 
 		return desc;
-	}*/
+	}
 
-	String[] strtok2(String str,String del,String key, String valuestr)
-	{	 
+	String[] strtok2(String str,String del)
+	{	
+		String key;
+	    String valuestr;
 		String ans[] =  new String[2];
 		int ind=str.indexOf(del,0);
 		if(ind == -1)
@@ -6088,5 +6371,426 @@ using namespace std;
 		ans[0] = key;
 		ans[1] = valuestr;
 		return ans;
+	}
+	
+	/** Class for extracting spatio-temporal patches (cubes) from a video (batch mode).
+    This extractor works in "batch" mode, where all patches extracted from a video and stored.
+    It is basically a wrapper around PatchExtractor, which stores all the obtained patches.
+    \sa PatchExtractor, PatchOptions
+*/
+class PatchBatchExtractor
+	{
+	  
+	  public PatchOptions         patopt;      /**< patch options. */
+	  public Vector<Point3i>      loc;         /**< coordinates of top-left of each patch. */
+	  public Point3i              coff;        /**< offset to center of patch. */
+	  public Vector<Integer>          allx;        /**< all x-locations on step grid. */
+	  public Vector<Integer>          ally;        /**< all y-locations on step grid. */
+	  public Vector<Integer>          allz;        /**< all z-locations on step grid. */
+	  public Vector<Mat>          patches;     /**< vector of all patches, corresponding to loc. */
+	  public Vector<Mat>          patchesall;     /**< vector of all patches, corresponding to loc. */
+	  public Range                box_x;       /**< bounding box (x) for patch locations (top-left corner). */
+	  public Range                box_y;       /**< bounding box (y) for patch locations. */
+	  public Range                box_z;       /**< bounding box (z) for patch locations. */
+	  public Point3i              vidsize;     /**< size of the video. */
+	  public Vector<Point3i>      locall;         /**< coordinates of top-left of all patches. */
+	  public Vector<Boolean>         locall_mask;         /**< mask for all patches. */
+	  
+	  /*
+	  Batch patch extraction
+	*/
+
+	// constructor
+	PatchBatchExtractor(Mat vid[], PatchOptions patopt, Range box_z, Range box_y, Range box_x)  
+	{
+	  /*this.patopt = patopt;
+	  if (vid.length < 2) {
+		  MipavUtil.displayError("vid.length < 2 in PatchBatchExtractor");
+		  System.exit(-1);
+	  }
+
+	  // remember settings
+	  this.box_x = box_x; this.box_y = box_y; this.box_z = box_z;
+	  this.vidsize = new Point3i(vid.length, vid[0].size[1], vid[0].size[0]);
+
+	  // internal bounding box size and offsets
+	  Point3i vbox_size, vbox_off;
+	  // subvideo from internal bounding box
+	  Mat     boxvid[];
+
+	  // check bounding box: 
+	  if ((box_z.all) && (box_y.all) && (box_z.all)) {
+	    // using full video
+	    vbox_size = new Point3i(vid.length, vid[0].size[1], vid[0].size[0]);
+	    vbox_off  = new Point3i(0, 0, 0);
+
+	    boxvid = vid;
+	  } else {
+	    // using sub-video
+	    Range   vbox_z = new Range();
+	    Range vbox_x = new Range();
+	    Range vbox_y = new Range();
+	    // adjust box to align with patch locations
+	    if (box_z.all) {
+	      vbox_off.z  = 0;
+	      vbox_size.z = vid[0].size[0];
+	      vbox_z.all = true;
+	    } else {
+	      vbox_off.z  = (box_z.start % patopt.step.z == 0 ? box_z.start : ((box_z.start/patopt.step.z)+1)*patopt.step.z);
+	      vbox_size.z = box_z.end - vbox_off.z;
+	      vbox_z      = new Range(vbox_off.z, Math.min(box_z.end+patopt.win.z, vid[0].size[0]) );
+	    }
+
+	    if (box_y.all) {
+	      vbox_off.y  = 0;
+	      vbox_size.y = vid[0].size[1];
+	      vbox_y.all = true;;
+	    } else {
+	      vbox_off.y  = (box_y.start % patopt.step.y == 0 ? box_y.start : ((box_y.start/patopt.step.y)+1)*patopt.step.y);
+	      vbox_size.y = box_y.end - vbox_off.y;
+	      vbox_y      = new Range(vbox_off.y, Math.min(box_y.end+patopt.win.y, vid[0].size[1]) );
+	    }
+	       
+	    if (box_x.all) {
+	      vbox_off.x  = 0;
+	      vbox_size.x = vid.length;
+	      vbox_x.all = true;
+	    } else {
+	      vbox_off.x  = (box_x.start % patopt.step.x == 0 ? box_x.start : ((box_x.start/patopt.step.x)+1)*patopt.step.x);
+	      vbox_size.x = box_x.end - vbox_off.x;
+	      vbox_x      = new Range(vbox_off.x, Math.min(box_x.end+patopt.win.x, vid.length) );
+	    }    
+
+	    boxvid = subvid(vid, vbox_z, vbox_y, vbox_x);
+	    
+	    if (debug) {
+		    if (vbox_z.all) {
+		    	System.out.println("box range.z = all");
+		    }
+		    else {
+		        System.out.println("box range.z = " + vbox_z.start + " inclusive to " + vbox_z.end + " exclusive");
+		    }
+		    if (vbox_y.all) {
+		    	System.out.println("box range.y = all");
+		    }
+		    else {
+		        System.out.println("box range.y = " + vbox_y.start + " inclusive to " + vbox_y.end + " exclusive");
+		    }
+		    if (vbox_x.all) {
+		    	System.out.println("box range.x = all");
+		    }
+		    else {
+		        System.out.println("box range.x = " + vbox_x.start + " inclusive to " + vbox_x.end + " exclusive");
+		    }
+	    }
+	  }
+
+	if (debug) {
+	  System.out.println("box size: " + vbox_size);
+	  System.out.println("box off:  " + vbox_off);
+	}
+
+	  // create the patch extractor
+	  PatchExtractor pe = new PatchExtractor(patopt, boxvid[0].size[1], boxvid.length);
+	  
+	  // copy some info
+	  coff = pe.coff;
+	  allx = pe.allx;
+	  ally = pe.ally;
+	  int xsize = allx.size();
+	  int ysize = ally.size();
+
+	  // figure out possible z
+	  int zsize = (boxvid.size[0]-patopt.win.z) / patopt.step.z + 1;
+	  allz.reserve(zsize);
+	  for (int z=0; z<=boxvid.size[0]-patopt.win.z; z+=patopt.step.z) {
+	    allz.push_back(z);
+	  }
+
+	  // offset allx, ally, allz
+	  for (unsigned int i=0; i<allx.size(); i++)
+	    allx[i] += vbox_off.x;
+	  for (unsigned int i=0; i<ally.size(); i++)
+	    ally[i] += vbox_off.y;
+	  for (unsigned int i=0; i<allz.size(); i++)
+	    allz[i] += vbox_off.z;
+
+	  // reserve space
+	  int total = zsize*xsize*ysize;
+	  loc.reserve(total);
+	  patches.reserve(total);
+	  patchesall.reserve(total);
+	#ifdef DEBUG
+	  cout << "reserve total: " << total << "\n";
+	#endif
+
+	  // loop through frames
+	  int frame=0;
+	  Mat clip;
+	  while (frame < boxvid.size[0]) {
+	    // get next clip to add
+	    int clipz = (frame == 0 ? patopt.win.z : patopt.step.z);
+
+	#ifdef DEBUG
+	    cout << "  @f=" << frame << ": read chunk of " << clipz << " frames\n";
+	#endif
+
+	    if (frame+clipz > boxvid.size[0]) {
+
+	#ifdef DEBUG
+	      cout << "  not enough frames\n";
+	#endif
+	      break;
+	    }
+	    clip = MatVid::subvid(boxvid, Range(frame, frame+clipz), Range::all(), Range::all());
+
+	#ifdef DEBUG
+	    dumpMatSize(clip);
+	#endif
+	    // add frames
+	    if (!pe.addFrames(clip)) {
+	      // we should not get here
+	      CV_Error(-1, "something wrong!");
+
+	    } else {
+	      // now add to our patch vector
+	      const vector<Mat> &mypat = pe.getPatches();
+	      for (unsigned int i=0; i<mypat.size(); i++) 
+		  {
+			// create a copy of the patch
+			  if(pe.locyx_mask[i]==true) //only valid patches
+			  {
+				Mat p;
+				mypat[i].copyTo(p);
+				patches.push_back(p);
+				// add the location (with possible offset)
+				loc.push_back(Point3i(pe.locyx[i].x + vbox_off.x, 
+							  pe.locyx[i].y + vbox_off.y, 
+							  pe.locz       + vbox_off.z));
+				
+			  }
+			  //save all locations
+			  locall.push_back(Point3i(pe.locyx[i].x + vbox_off.x, 
+				  pe.locyx[i].y + vbox_off.y, 
+				  pe.locz       + vbox_off.z));
+			  locall_mask.push_back(pe.locyx_mask[i]);
+			  
+			  //save all patches
+			  Mat p;
+			  mypat[i].copyTo(p);
+			  patchesall.push_back(p);
+	      }
+	    }
+
+	    frame += clipz;
+	  }*/
+	}
+	
+	}
+
+	class Range {
+		public int start;
+		public int end;
+		public boolean all = false;
+		
+		public Range() {
+			
+		}
+	
+		public Range(int start, int end) {
+			this.start = start;
+			this.end = end;
+		}
+	}
+	
+	enum fill_type { FILL_NN,  /**< use nearest-neighbor. */
+		   FILL_NNFILL,          /**< use nearest-neighbor (fill in patches). */
+		   FILL_VOTE,            /**< overlapping patches vote. */
+    }
+	
+	/** Class for extracting spatio-temporal patches (cubes) from a video (online mode).
+    The extractor works in an "online" mode, where frames are added sequentially.
+    When enough frames are added a true flag is returned,
+    which indicates that new patches have been formed.
+    Normalization of patches is handled efficiently, and access is given to the current video buffer.
+    Also included is a function for converting a set of labels corresponding to each patche 
+    to an image.
+        
+    The actual patches will be in different places, depending on the normalization used:
+      1) norm_none --> patches are sub-videos of the buffer (vbuf);
+      2) norm_zm   --> patches are sub-videos of the buffer (vbuf_zm);
+      3) norm_zmuv --> patches are local copies.
+    Note that in some cases, the patches are just references to a sub-videos of the video buffer.
+    Hence, it is not allowed to modify the patches.
+    
+    \sa PatchOptions, PatchBatchExtractor
+*/
+	class PatchExtractor
+	{
+	
+	  /** fill type for generating images from patch labels.
+	      \sa patchLabelsToImage
+	  */
+	  
+	
+	  //public PatchOptions     patopt;   /**< options for extracting patches. */
+	  //public int              vrows,    /**< number of rows in the video frame. */
+	  //                 vcols;    /**< number of columns in the video frame. */
+	  //public Vector<Point2i>  locyx = new Vector<Point2i>();    /**< (y,x) coordinates of top-left of each patch. */
+	  //public Vector<Boolean>     locyx_mask = new Vector<Boolean>();    /**< patch mask depending on pixel variance. */
+	  //public int              locz;     /**< current z location of the patches (z of the first frame of the patch). */
+	  public int              curz;     /**< z location for next frame added. */
+	  public int              nextz;    /**< value of curz that will form a new patch. */
+	  public Point3i          coff;     /**< offset to center of patch. */
+	  public Vector<Integer>      allx = new Vector<Integer>();     /**< all x-locations on step grid. */
+	  public Vector<Integer>      ally = new Vector<Integer>();     /**< all y-locations on step grid. */
+	
+	  //public Mat         vbuf;     /**< video buffer to store current frames [vrows,vcols,patopt.win.z] type=OPT_MAT_TYPE. */
+	  //public Mat         vbuf_zm;  /**< video buffer w/o mean [vrows,vcols,patopt.win.z] type=OPT_MAT_TYPE. */
+	  //public Vector<Mat> patches = new Vector<Mat>();  /**< the set of patches. */
+	  public boolean        flag_zm;  /**< flag if vbuf_zm is used. */
+	  //public Mat         frame_center;   /**< center frame of the video buffer (reference to vbuf). */
+	  //public Mat         frame_patches;  /**< center frames of the video buffer (reference to vbuf). */
+	  
+	  
+	  // there are several modes:
+	  // 1) norm_none --> patches are sub-videos of the buffer (vbuf)
+	  // 2) norm_zm   --> patches are sub-videos of the buffer (vbuf_zm)
+	  // 3) norm_zmuv --> patches are local copies
+	
+
+
+	// constructor
+	/*public PatchExtractor(PatchOptions patopt, int vrows, int vcols)
+	{
+	  this.patopt = patopt;
+	  this.vrows = vrows;
+	  this.vcols = vcols;
+	 
+	  if (vrows < patopt.win.y) {
+		  MipavUtil.displayError("vrows < patopt.win.y in PatchExtractor");
+		  System.exit(-1);
+	  }
+	  if (vcols < patopt.win.x){
+		  MipavUtil.displayError("vcols < patopt.win.x in PatchExtractor");
+		  System.exit(-1);
+	  }
+
+	  // initialize the location structure
+	  getLoc();
+
+	  // initialize the buffers
+	  vbuf = MatVid::create(patopt.win.z, vrows, vcols, OPT_MAT_TYPE);
+	  if (patopt.normopt != PatchOptions::NORM_NONE) {
+	    vbuf_zm = MatVid::create(patopt.win.z, vrows, vcols, OPT_MAT_TYPE);
+	    flag_zm = true;
+	  } else {
+	    flag_zm = false;
+	  }
+
+	  // initialize patches
+	  patches.resize(locyx.size());
+	  switch(patopt.normopt) {
+	  case PatchOptions::NORM_NONE:
+	    // setup patches on the vbuf buffer
+	    for (int i=0; i<(int)locyx.size(); i++) {
+	      patches[i] = MatVid::subvid(vbuf, Range(0, patopt.win.z), 
+					  Range(locyx[i].y, locyx[i].y+patopt.win.y), 
+					  Range(locyx[i].x, locyx[i].x+patopt.win.x));
+	    }
+	    break;
+	  case PatchOptions::NORM_ZM:
+	    // setup patches on the vbuf_zm buffer
+	    for (int i=0; i<(int)locyx.size(); i++) {
+	      patches[i] = MatVid::subvid(vbuf_zm, Range(0, patopt.win.z), 
+					  Range(locyx[i].y, locyx[i].y+patopt.win.y), 
+					  Range(locyx[i].x, locyx[i].x+patopt.win.x));
+	    }
+	    break;
+	  case PatchOptions::NORM_ZMUV:
+	    // setup patches (allocate new memory)
+	    for (int i=0; i<(int)locyx.size(); i++) {
+	      patches[i] = MatVid::create(patopt.win.z, patopt.win.y, patopt.win.x, OPT_MAT_TYPE);
+	    }
+	    break;
+	  default:
+	    CV_Error(-1, "bad option");
+	  }
+	  
+	  // reset the extractor
+	  reset();
+	  
+	  
+	  // initialize pointer to center frame
+	  frame_center = MatVid::frame(vbuf, coff.z);
+
+	  // initialize pointer to center chunk of frames
+	  // The number of frames will be the z-step size.
+	  // TODO: Except on the first call, which will also include the beginning frames.
+	  int tmp = patopt.step.z / 2;
+	  frame_patches = MatVid::subvid(vbuf, 
+	                                 Range(coff.z-tmp, coff.z-tmp+patopt.step.z),
+	                                 Range::all(), Range::all());
+	  //dumpMatSize(frame_patches);
+	}*/
+	
+	// get locations
+	void getLoc() {
+	  
+		/*if (debug) {
+		  System.out.println("size: " + vrows + "," + vcols);
+		}
+
+	  // coff = floor(winsize/2)
+	  
+	  //BUG FIXED
+	  //coff = (Point3i)(patopt.win * 0.5);
+
+	  coff.x=(int)(patopt.win.x*0.5);
+	  coff.y=(int)(patopt.win.y*0.5);
+	  coff.z=(int)(patopt.win.z*0.5);
+
+
+	  //zrange = 1:step(3):(sizez-winsize(3)+1);
+	  //yrange = 1:step(1):(sizey-winsize(1)+1);
+	  //xrange = 1:step(2):(sizex-winsize(2)+1);
+
+	  int ysize = (vrows-patopt.win.y) / patopt.step.y + 1;
+	  int xsize = (vcols-patopt.win.x) / patopt.step.x + 1;
+	  int maxsize = xsize*ysize;
+	  locyx.ensureCapacity(maxsize);
+	  locyx_mask.ensureCapacity(maxsize);
+	  allx.ensureCapacity(xsize);
+	  ally.ensureCapacity(ysize);
+
+	#ifdef DEBUG
+	  cout << "x=" << xsize << ", y=" << ysize << " max=" << maxsize << "\n";
+	#endif
+
+	  // locyx (iterate over x then y) 
+	  for (int y=0; y<=vrows-patopt.win.y; y+=patopt.step.y) {
+	    for (int x=0; x<=vcols-patopt.win.x; x+=patopt.step.x) {
+	      locyx.push_back(Point2i(x, y));
+		  locyx_mask.push_back(true);  //initialize mask
+	      if (y==0)	allx.push_back(x);
+	    }
+	    ally.push_back(y);
+	  }
+
+	#ifdef DEBUG
+	  cout << "p=" << locyx.size() << "\n";
+	  cout << "locyx = " << locyx << "\n";
+	  cout << "allx = ";
+	  for (int i=0; i<(int)allx.size(); i++)
+	    cout << allx[i] << " ";
+	  cout << "\n";
+	  cout << "ally = ";
+	  for (int i=0; i<(int)ally.size(); i++)
+	    cout << ally[i] << " ";
+	  cout << "\n";
+	#endif*/
+
+	}
+
 	}
 }
