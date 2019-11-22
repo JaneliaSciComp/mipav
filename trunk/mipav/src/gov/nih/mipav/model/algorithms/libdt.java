@@ -4280,6 +4280,17 @@ using namespace std;
     		   this.Aval = Aval;
     	}
     	
+    	public DytexRegOptions(cov_reg_type Ropt, double Rval, 
+  			  cov_reg_type Qopt, double Qval, 
+  			  cov_reg_type Sopt, double Sval) {
+  		   this.Ropt = Ropt;
+  		   this.Rval = Rval;
+  		   this.Qopt = Qopt;
+  		   this.Qval = Qval;
+  		   this.Sopt = Sopt;
+  		   this.Sval = Sval;
+  	}
+    	
     }
     
     /** type of covariance matrix.  */
@@ -6202,21 +6213,21 @@ using namespace std;
 		Range box_x = new Range();
 		box_x.all = true;
 		PatchBatchExtractor pbe = new PatchBatchExtractor(img, tvs.popt,box_z,box_y,box_x);
-		/*cout<<"Found Patches: "<<pbe.patches.size()<<endl;
+		System.out.println("Found Patches size: " + pbe.patches.size());
 
 		//Learn the mixture
-		DytexRegOptions ropt(CovMatrix::COV_REG_MIN,regV,CovMatrix::COV_REG_MIN,regV,CovMatrix::COV_REG_MIN,regV);
-		EMOptions emopt(tvs.K,tvs.ropt,1e-4,EMOptions::COMPACT);	
+		DytexRegOptions ropt = new DytexRegOptions(cov_reg_type.COV_REG_MIN,tvs.regV,cov_reg_type.COV_REG_MIN,tvs.regV,cov_reg_type.COV_REG_MIN,tvs.regV);
+		EMOptions emopt = new EMOptions(tvs.K,ropt,1e-4,Verbose_mode.COMPACT);	
 		
-		clock_t s_time=clock();
-		dtm.learnWithSplitting(pbe.patches,emopt);
-		clock_t e_time=clock()-s_time;
-		cout<<"Total Time Taken :"<<(double)e_time/(double)CLOCKS_PER_SEC<<endl;
+		long s_time= System.currentTimeMillis();	
+		learnWithSplitting(tvs.dtm,pbe.patches,emopt);
+		long e_time=System.currentTimeMillis()-s_time;
+		System.out.println("Total Time Taken :" + (double)e_time/1000.0 + " seconds");
 		
-		if(dosegm)
+		/*if(dosegm)
 		{
 			//Do the initial segmentation	
-			Mat smask=pbe.segm_mask(dtm.classes);	
+			Mat smask=pbe.segm_mask(tvs.dtm.classes);	
 			smask=maxvotefilt(smask,5,5,5,tvs.K);
 			colorMask(img,smask,tvs.initSegm,1);
 		}*/
@@ -6513,8 +6524,8 @@ class PatchBatchExtractor
 	  public Vector<Integer>          allx;        /**< all x-locations on step grid. */
 	  public Vector<Integer>          ally;        /**< all y-locations on step grid. */
 	  public Vector<Integer>          allz;        /**< all z-locations on step grid. */
-	  public Vector<Mat>          patches;     /**< vector of all patches, corresponding to loc. */
-	  public Vector<Mat>          patchesall;     /**< vector of all patches, corresponding to loc. */
+	  public Vector<Mat[]>          patches;     /**< vector of all patches, corresponding to loc. */
+	  public Vector<Mat[]>          patchesall;     /**< vector of all patches, corresponding to loc. */
 	  public Range                box_x;       /**< bounding box (x) for patch locations (top-left corner). */
 	  public Range                box_y;       /**< bounding box (y) for patch locations. */
 	  public Range                box_z;       /**< bounding box (z) for patch locations. */
@@ -6680,45 +6691,59 @@ class PatchBatchExtractor
 	        dumpMatSize(clip); 
 	    }
 	    // add frames
-	    /*if (!addFrames(pe,clip)) {
+	    if (!addFrames(pe,clip)) {
 	      // we should not get here
 	      MipavUtil.displayError("something wrong on addFrames(pe,clip) in PatchBatchExtractor!");
 	      System.exit(-1);
 
 	    } else {
 	      // now add to our patch vector
-	      Vector<Mat> mypat = pe.getPatches();
-	      for (unsigned int i=0; i<mypat.size(); i++) 
+	      Vector<Mat[]> mypat = getPatches(pe);
+	      for (i=0; i<mypat.size(); i++) 
 		  {
 			// create a copy of the patch
-			  if(pe.locyx_mask[i]==true) //only valid patches
+			  if(pe.locyx_mask.get(i)==true) //only valid patches
 			  {
-				Mat p;
-				mypat[i].copyTo(p);
-				patches.push_back(p);
+				Mat p[] = new Mat[mypat.get(i).length];
+				copyTo(mypat.get(i),p);
+				patches.add(p);
 				// add the location (with possible offset)
-				loc.push_back(Point3i(pe.locyx[i].x + vbox_off.x, 
-							  pe.locyx[i].y + vbox_off.y, 
+				loc.add(new Point3i(pe.locyx.get(i).x + vbox_off.x, 
+							  pe.locyx.get(i).y + vbox_off.y, 
 							  pe.locz       + vbox_off.z));
 				
 			  }
 			  //save all locations
-			  locall.push_back(Point3i(pe.locyx[i].x + vbox_off.x, 
-				  pe.locyx[i].y + vbox_off.y, 
+			  locall.add(new Point3i(pe.locyx.get(i).x + vbox_off.x, 
+				  pe.locyx.get(i).y + vbox_off.y, 
 				  pe.locz       + vbox_off.z));
-			  locall_mask.push_back(pe.locyx_mask[i]);
+			  locall_mask.add(pe.locyx_mask.get(i));
 			  
 			  //save all patches
-			  Mat p;
-			  mypat[i].copyTo(p);
-			  patchesall.push_back(p);
+			  Mat p[] = new Mat[mypat.get(i).length];
+			  copyTo(mypat.get(i),p);
+			  patchesall.add(p);
 	      }
 	    }
 
-	    frame += clipz;*/
+	    frame += clipz;
 	  }
 	}
 	
+	}
+
+
+	Vector<Mat[]> getPatches(PatchExtractor pe) {
+	if (pe.curz < pe.patopt.win.z) {
+	     MipavUtil.displayError("not enough frames added yet!");
+	     System.exit(-1);
+	}
+	if ( (pe.curz-pe.patopt.win.z) % pe.patopt.step.z != 0) {
+	    MipavUtil.displayError("getPatch at wrong time!");
+	    System.exit(-1);
+	}
+	
+	return pe.patches;
 	}
 
 	class Range {
@@ -7302,6 +7327,835 @@ class PatchBatchExtractor
 			}
 		}
 		return min;
+	}
+	
+	/*!
+	 * \brief
+	 * EM learninig options.
+	 *
+	 * \remarks
+	 * In EM implementation few options are not implemented and their default values
+	 * are used instead
+	 * \see
+	 * DytexMix
+	 */
+	class EMOptions
+	{
+		/*!
+		 * \brief
+		 * number of clusters.	 
+		 */
+		public int K;
+		/*!
+		 * \brief
+		 * regularization options.	 
+		 * \see
+		 * DytexRegOptions
+		 */
+		public DytexRegOptions regopt;
+		/*!
+		 * \brief
+		 * termination parameter.	 
+		 */
+		public double termvalue;
+		/*!
+		 * \brief
+		 * termination value for the EMBEST.	 
+		 */
+		public double termvalBest;  
+		/*!
+		 * \brief
+		 * maximum number of iterations.	 
+		 */
+		public int maxiter;
+		
+		/*!
+		 * \brief
+		 * verbose value.	 
+		 */
+		public Verbose_mode verbose;
+		/*!
+		 * \brief
+		 * empty cluster splitting options.	 
+		 * \see
+		 * DytexSplitParams
+		 */
+		public DytexSplitParams emptySplitOpt = new DytexSplitParams();
+		/*!
+		 * \brief
+		 * cluster splitting options.	 
+		 * \see
+		 * DytexSplitParams
+		 */
+		public DytexSplitParams splitOpt = new DytexSplitParams();
+
+		//initialize EM options
+		/*!
+		 * \brief
+		 * initialize EMOptions object.
+		 * 
+		 * \param K
+		 * number of clusters.
+		 * 
+		 * \param regopt
+		 * regularization options.
+		 * 
+		 * \param termvalue
+		 * termination parameter.
+		 * 
+		 * \param verbose
+		 * verbose value.
+		 * 
+		 * \see
+		 * DytexOptions | DytexMix | HEMOptions
+		 */
+		public EMOptions(int K,DytexRegOptions regopt,double termvalue,Verbose_mode verbose) {
+			//setting parameters
+			this.K=K;
+			this.verbose=verbose;
+			this.termvalue=termvalue;
+			this.termvalBest=1e-5;  
+			maxiter=500;
+
+			//setting empty cluster splitting options
+			emptySplitOpt.crit=Split_crit.SPLITP;	
+			emptySplitOpt.pert=0.01;
+			emptySplitOpt.mode=Split_mode.MODEP;
+			emptySplitOpt.vars=Split_vars.VARC;
+
+			//splitting schedule [1 2 4 8 16....]
+			splitOpt.sched.clear();
+
+			if( (K>2) && (K%2==0))
+			{
+				splitOpt.sched.add(1);
+				splitOpt.sched.add(2);		
+				while(true)
+				{
+					if(splitOpt.sched.get(splitOpt.sched.size()-1)==K)
+					{
+						break;
+					}		
+					int tmp=splitOpt.sched.get(splitOpt.sched.size()-1)*2;
+					splitOpt.sched.add(tmp);
+				}
+			}	
+		}
+	}
+	
+	/*!
+	 * \brief
+	 * learn a DTM uisng EM given a set of patches
+	 * 
+	 * \param Yin
+	 * cell array of video
+	 * 
+	 * \param emopt
+	 * EM learning options.
+	 *  
+	 * Learns a dytex mixture using several runs of EM with component splitting procedure:
+	 * 
+	 * \remarks
+	 * After initializing a DTM with DytexOptions, this is the interface function to be called 
+	 * in order to learn a mixture from a set of video patches.
+	 * 
+	 * \see
+	 * reduceWithSplitting | EMOptions
+	 */
+	void learnWithSplitting(DytexMix dtm, Vector<Mat[]> Yin,EMOptions emopt)
+	{
+		/*int i,j;
+		double pert;	
+		pert=emopt.splitOpt.pert;
+		//initialize splitting sequence
+		if(emopt.splitOpt.sched.isEmpty())
+		{
+			for(i=1;i<=emopt.K;i++)
+				emopt.splitOpt.sched.add(i);
+		}
+		//check for valid splitting sched
+		if(emopt.splitOpt.sched.get(0)!=1)
+		{
+			MipavUtil.displayError("schedule must start with 1!");
+			System.exit(-1);
+		}
+		Vector<Integer> tmp;
+		//vector<int>::iterator it;
+		for(i=1;i<emopt.splitOpt.sched.size();i++)
+			tmp.add(emopt.splitOpt.sched.get(i)/emopt.splitOpt.sched.get(i-1));
+		
+		for (j = 0; j < tmp.size(); j++) {
+    		if (tmp.get(j) > 2) {
+    			MipavUtil.displayError("Cannot grow K more than 2 times previous");
+    			System.exit(-1);
+    		}
+    	}
+
+		System.out.println("Growing schedule: ");
+		for (j = 0; j < emopt.splitOpt.sched.size(); j++) {
+    		System.out.print(emopt.splitOpt.sched.get(j) + " ");
+    	}
+    	System.out.print("\n");
+		System.out.println("Ks: "+ emopt.K);	
+
+		int Kiter=1;
+
+		while(dtm.dt.size()<emopt.K)
+		{
+			//do first cluster
+			if(Kiter==1)
+			{			 
+				System.out.println("*** EM: K=" + (dtm.dt.size()+1) + "******************");
+			}
+			else
+			{
+				Vector<Integer> mysplits = new Vector<Integer>();
+				
+				//splitting current mixture
+				while(dtm.dt.size()<emopt.splitOpt.sched.get(Kiter-1))
+				{
+					DytexSplitParams splitopt = new DytexSplitParams();
+					splitopt.crit=emopt.splitOpt.crit;				
+					splitopt.ignore=mysplits;
+					splitopt.target=-1;
+					splitopt.pert=emopt.splitOpt.pert;
+					splitopt.mode=emopt.splitOpt.mode;
+					splitopt.vars=emopt.splitOpt.vars;
+					int c1[] = new int[1];
+					int c2[] = new int[1];
+					dytex_mix_split(dtm,splitopt,c2,c1);
+					mysplits.add(c1[0]);
+					mysplits.add(c2[0]);
+				}
+				System.out.println("*** EM: K=" + dtm.dt.size() + "******************");
+			}
+			runEM(dtm,Yin,emopt);  //RUN EM uisng current Mixture		
+			Kiter++;
+		}
+
+		//RUN EM again on once on final solution
+		emopt.termvalue=emopt.termvalBest;
+		runEM(dtm,Yin,emopt);
+		//initialize kalman caches
+		setupKFB(Yin.get(0).length);*/
+	}
+	
+	/*!
+	 * \brief
+	 * run EM for a mixture of DT
+	 * 
+	 * \param Yin
+	 * cell array of video
+	 * 
+	 * \param emopt
+	 * EM learning options
+	 * 
+	 * \remarks
+	 * in general, this should not be called.use learnWithSplitting instead
+	 * 
+	 * \see
+	 * learnWithSplitting | runHEM
+	 */
+	void runEM(DytexMix dtm, Vector<Mat[]> Yin, EMOptions emopt)
+	{
+		/*long elapsedtime;	
+		//used to display info in change in classes during EM loop
+		int numlastclasses=5;			
+		//erase old class info
+		dtm.classes.clear();  
+		
+		//options
+		Ymean_type FlagYmean   =   dtm.opt.Yopt;
+		Verbose_mode FlagVerbose = emopt.verbose;	
+		int n=dtm.opt.n;
+		int N=Yin.size();
+		//min total probability for blank cluster
+		double MINPROB =(((double)1.0)/(((double)2.0)*(double)N));  
+		
+		//           PREPROCESSING               //
+		if(FlagVerbose != Verbose_mode.QUIET)
+			System.out.println("Converting images...");
+
+		//convert movie into a data matrix Y(:,i,t)
+		//this makes running the Kalman filter a lot faster
+		Mat foo;
+		int mysx[] = new int[1];
+		int mysy[] = new int[1];
+		int mysc[] = new int[1];
+		int mycnorm[] = new int[1];
+		int tau,dy;
+		Mat Y[];
+		Vector<Mat> Ymean;
+		for(int yi=0;yi<N;yi++)
+		{
+			foo=convertmovie(Yin.get(yi),mysx,mysy,mysc,mycnorm);
+			tau=foo.cols;
+			dy=foo.rows;
+			if(yi==0)
+			{
+				int sz[]={tau,dy,N};				
+				Y=create(tau,dy,N,foo.type); 
+			}
+			else
+			{
+				if(tau!=Y.size[0])
+					CV_Error(-1,"Y has videos with different lengths!");
+			}
+
+			if(FlagYmean) 
+			{
+				Mat tmpM;
+				reduce(foo,tmpM,2,CV_REDUCE_AVG);
+				Ymean.push_back(tmpM);
+			}
+			
+			for(int j=0;j<dy;j++)
+				for(int k=0;k<tau;k++)
+					Y.at<OPT_F_TYPE>(k,j,yi)=foo.at<OPT_F_TYPE>(j,k);	
+		}
+		//
+
+		//               INITIALIZATION                              //
+		//initialization of first DT in the blank mixture using Sub-optimal methhod
+		if(dt.size()==0)  
+		{
+			std::vector<int> randind(N,0);
+			for(int i=0;i<N;i++)
+				randind[i]=i;
+
+			if(FlagVerbose)
+				cout<<"Initializing First DT with Sub-optimal: "<<endl;
+			
+			std::vector<Mat> tmpY = extractY(Y, randind);
+			Dytex tmpC= initcluster_doretto(tmpY, opt);
+			dt.push_back(tmpC);
+			alpha.push_back(1.0);
+		}
+		int K=dt.size(); //current mixture size
+		//Regularize the initializations
+		for(int i=0;i<K;i++)
+		{		
+			dt[i].setRegularizer(emopt.regopt);
+			dt[i].regularize();							
+		}
+		//
+			
+		//             RUN EM loooop                   /
+		
+		//initialize convergence measures	
+		std::vector<double> datalikelihood(emopt.maxiter+1,0);
+		std::vector<double> ddtall(emopt.maxiter,0);
+		std::vector<double> pdtall(emopt.maxiter,0);
+		std::vector<std::vector<int> > lastclasses(numlastclasses);
+		int lastclassesind = 0;
+		Mat Z;
+		Mat logZ;
+		for(int i=0;i<numlastclasses;i++)
+			lastclasses[i]=std::vector<int>(N,0);
+
+		//initializa blanks
+		std::vector<double> blank(K,0);
+		for(int j=0;j<K;j++)
+		{
+			if(dt[j].isempty)
+				blank[j]=1;
+		}
+
+		//initialize loop
+		clock_t starttime=clock();	
+		int iter=0;
+		double ddLL,dpLL;
+		//loop EM********************
+		while(1)
+		{
+			if(FlagVerbose>=2)
+			{
+				cout<<"***** iter "<<iter<<" *****"<<endl;
+				cout<<"E-Step: Running Kalman filter: ";
+			}
+			
+			//state expectation
+			std::vector<std::vector<Mat> > xthat;
+			//state covariance
+			std::vector<Mat> Vthat,Vtt1hat;
+			//log-likelihoods of each Y
+			Mat LL(N,K,OPT_MAT_TYPE);
+
+			string di3opt="";
+			//%%%% E-Step %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			for(int j=0;j<K;j++)
+			{
+				if (FlagVerbose >= 2)
+					cout<<j<<" ";
+
+				//option to subtract Ymean
+				if (FlagYmean)
+					di3opt = "y";
+				else
+					di3opt = "";
+				
+				if (blank[j]==0)
+				{
+					//compute likelihood of each video for this cluster
+					std::vector<Mat> xt;
+					Mat Vt,Vtt1;
+					Mat tmpL;
+					Dytex test1=dt[j];
+					//conditional state inference using Kalman smoothing filter
+					DytexKalmanFilter::dytex_kalman(Y, dt[j], di3opt,xt,Vt,Vtt1,tmpL);	
+					xthat.push_back(xt);
+					Vthat.push_back(Vt);
+					Vtt1hat.push_back(Vtt1);
+					LL.col(j) = tmpL.t() + log(alpha[j]);
+				}
+				else
+				{
+					LL.col(j) = (double)(-1e300); // a very small number...
+				}				
+			}
+					
+			//% soft assignment and data likelihood (no constraints)
+			Mat tmp = (logtrick(LL.t())).t();				
+			logZ.create(tmp.rows,K,OPT_MAT_TYPE);
+			for(int j=0;j<K;j++)
+			{
+				logZ.col(j) = LL.col(j) - tmp;
+			}
+			Scalar stmp=sum(tmp);
+			datalikelihood[iter] = stmp[0];
+			exp(logZ,Z);		
+
+			if (FlagVerbose >= 2)
+				cout<<endl;
+
+			//hard assignment
+			classes.clear();
+			for(int i=0;i<Z.rows;i++)
+			{
+				double min,max;
+				Point minL,maxL;
+				minMaxLoc(Z.row(i),&min,&max,&minL,&maxL);				
+				classes.push_back(maxL.x+1);
+			}
+
+			//Check Convergence
+			if(iter>0)
+			{
+				//compute change in log-likelihood
+				ddLL=datalikelihood[iter]-datalikelihood[iter-1];
+				dpLL=abs(ddLL/datalikelihood[iter-1]);
+			}
+			else
+			{
+				ddLL = INF;
+				dpLL = INF;			
+				
+			}
+			//class assignment info
+			lastclasses[lastclassesind]=classes;
+
+			//count the number of class changes
+			std::vector<int> dclass;
+			for(int ii=0;ii<numlastclasses;ii++)
+			{
+				int sum=0;
+				for(int i=0;i<lastclasses[0].size();i++)
+				{
+					if(lastclasses[ii][i]!=lastclasses[lastclassesind][i])
+						sum++;
+				}
+				dclass.push_back(sum);
+			}
+
+			string dclassstr="";			
+			for(int i=lastclassesind+1;i<numlastclasses;i++)
+			{
+				stringstream ss;
+				ss<<dclass[i];
+				dclassstr=dclassstr+ss.str()+" ";
+			}
+			for(int i=0;i<lastclassesind;i++)
+			{
+				stringstream ss;
+				ss<<dclass[i];
+				dclassstr=dclassstr+ss.str()+" ";
+			}
+
+			//% lastclassind points to the oldest classes
+			lastclassesind = lastclassesind+1;
+			if (lastclassesind>=numlastclasses)
+				lastclassesind = 0;
+
+
+			//output strings
+			stringstream ss2;
+			ss2<<"dclass = "<<dclassstr;
+			string outstr2=ss2.str();
+			string outstr1s;
+			string outstr3;		
+			stringstream ss3;					
+			ss3<<"L= "<<datalikelihood[iter]<<" (pL= "<<dpLL<<")";
+			outstr1s=ss3.str();		
+			if(FlagVerbose==1)
+			{
+				stringstream ss3;
+				ss3<<"iter= "<<iter+1<<"; "<<outstr1s<<"; "<<outstr2<<";  ";
+				outstr3=ss3.str();
+				cout<<outstr3<<endl;
+			}
+			else if(FlagVerbose>=2)
+			{			
+				cout<<outstr2<<endl;
+			}
+			// check if negative change in log-likelihood!
+			if (ddLL<0)
+			{
+				cout<<"WARNING -- change in log likelihood is negative???"<<endl;	
+			}	
+
+
+			//%%% check convergence conditions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			int breakout = 0;
+			string termstr;
+			if (iter >= emopt.maxiter)
+			{
+				termstr = "***** done -- max iter reached\n";
+				breakout = 1;
+			}
+
+			//only this convergence condition
+			if ( (ddLL >= 0) && (dpLL < emopt.termvalue) )
+			{
+				termstr = "***** done -- small percent change in data likelihood\n";
+				breakout = 1;
+			}
+				
+			//%%% convergence condition was reached... %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			if (breakout)
+			{
+				if (FlagVerbose >= 1)
+				{
+					if (FlagVerbose == 1)
+					{
+						cout<<endl;				
+					}
+					cout<<termstr<<endl;
+				}	
+				break;
+			}
+
+			//%%% M-Step %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+
+			//1) update prior probabilities
+			//total soft assignments per cluster
+			Mat Nhat;
+			reduce(Z,Nhat,0,CV_REDUCE_SUM);
+			tmp=Nhat/((double)N);		
+			for(int i=0;i<alpha.size();i++)
+				alpha[i]=tmp.at<OPT_F_TYPE>(0,i);
+
+			
+			//%%% loop through each cluster and compute aggregate statistics%%%
+			for(int j=0;j<K;j++)
+			{		
+				//output of Kalman filters
+				std::vector<Mat> jxthat;
+				Mat jYmean;
+				Mat jz;
+				Mat PhiAll,Phi,sphi,Psi,Lambda,Gamma,Eta,Xi;
+				//check if this is cluster is blank
+				if(alpha[j]<=MINPROB)
+				{
+					blank[j]=1;
+					dt[j].isempty=true;
+					if (FlagVerbose >= 1)
+						cout<<"blank";
+				}			
+				else // % --- standard M-step: learn the parameters -------------------------
+				{
+					//get output of Kalman filters
+					jxthat=xthat[j];
+					Mat jVthat=Vthat[j];
+					Mat jVtt1hat=Vtt1hat[j];
+					jz=Z.col(j);
+					double jN=Nhat.at<OPT_F_TYPE>(0,j);
+
+					if(FlagYmean)
+						jYmean=dt[j].Ymean;
+
+					//compute aggregated statistics %%%
+					//% Initialize Phi and phi
+					PhiAll=Mat::zeros(n,n,OPT_MAT_TYPE);
+					Phi=Mat::zeros(n,n,OPT_MAT_TYPE); // varphi
+					sphi=Mat::zeros(n,n,OPT_MAT_TYPE); //lowercase phi
+
+					Mat tmp1;
+					MatVid::reduce(jVthat,tmp1,CV_REDUCE_SUM);
+					Mat tmp1a = tmp1 - MatVid::frame(jVthat,0);
+					Mat tmp1b = tmp1 - MatVid::frame(jVthat,jVthat.size[0]-1);
+
+					//Initialize Psi
+					Psi=Mat::zeros(n,n,OPT_MAT_TYPE);
+					Mat tmp3;
+					MatVid::reduce(jVtt1hat,tmp3,CV_REDUCE_SUM);
+
+					//Initialize Gamma and Lambda
+					Gamma = Mat::zeros(dy,n,OPT_MAT_TYPE);
+
+					switch(opt.Ropt)
+					{
+					case CovMatrix::COV_IID:
+						Lambda.create(1,1,OPT_MAT_TYPE);
+						Lambda=Scalar(0);
+						break;
+					default:
+						CV_Error(-1,"TO DO");
+					}
+
+					//Initialize Xi
+					Xi = Mat::zeros(n,1,OPT_MAT_TYPE);
+					//Initialize Eta
+					Eta = Mat::zeros(n,n,OPT_MAT_TYPE);
+
+					// aggregate over all samples     
+					for(int i=0;i<N;i++)
+					{
+						//current X and Y and Z
+						Mat myx=jxthat[i];
+						Mat myy;
+						double myz;
+						Mat tmpM(dy,tau,OPT_MAT_TYPE);
+						for(int p=0;p<Y.size[0];p++)
+							for(int q=0;q<Y.size[1];q++)
+								tmpM.at<OPT_F_TYPE>(q,p)=Y.at<OPT_F_TYPE>(p,q,i);
+
+						if (FlagYmean)
+						{							
+							Mat tmpM2;
+							repeat(jYmean,1,tau,tmpM2);
+							myy=tmpM-tmpM2;
+						}
+						else
+						{
+							myy=tmpM;
+						}
+
+						myz=jz.at<OPT_F_TYPE>(i,0);
+
+						// update Phi and phi
+						Mat tmp2 = myx*myx.t();
+						Mat tmp2a = tmp2 - myx.col(0)*(myx.col(0)).t();
+						Mat tmp2b = tmp2 - myx.col(myx.cols-1)*(myx.col(myx.cols-1)).t();
+
+						Phi    = Phi    + myz*(tmp1a+tmp2a);
+						sphi   = sphi   + myz*(tmp1b+tmp2b);
+						PhiAll = PhiAll + myz*(tmp1+tmp2);
+
+						// update Psi			
+						Mat tmp4 = myx.colRange(Range(1,myx.cols))*((myx.colRange(Range(0,myx.cols-1))).t());
+						Psi = Psi + myz*(tmp3+tmp4);
+
+						//Gamma and Lambda
+						Gamma = Gamma + myz*(myy*myx.t());
+						Scalar scatmp;
+
+						switch(opt.Ropt)
+						{
+						case CovMatrix::COV_IID:
+
+							multiply(myy,myy,tmpM);
+							scatmp=sum(tmpM);
+							Lambda=Lambda+myz*scatmp[0];
+							break;
+						default:
+							CV_Error(-1,"TO DO");
+						}
+
+						// Xi and Eta					
+						// using only initial state samples
+						Xi  = Xi  + myz*myx.col(0);
+						Eta = Eta + myz*(MatVid::frame(jVthat,0) + myx.col(0)*(myx.col(0).t()));
+					}
+
+					//Compute New parameters
+
+					//2) C parameter
+					Mat iPhiAll=PhiAll.inv();
+					Mat newC=Gamma*iPhiAll;
+					dt[j].C=newC;
+
+					//3) R parameter
+					Mat rnew;
+					switch(opt.Ropt)
+					{
+					case CovMatrix::COV_IID:			
+						rnew = (Lambda - trace(iPhiAll*(Gamma.t()*Gamma))) / (dy*tau*jN);
+						dt[j].R.mtx=rnew;
+						dt[j].R.covopt=CovMatrix::COV_IID;						
+						break;
+					default:
+						CV_Error(-1,"TO DO");
+					}
+
+					//4) A parameter
+					Mat newA = Psi*sphi.inv();
+					dt[j].A = newA;
+
+					// 5) Q parameter
+					Mat Q = (Phi-newA*Psi.t())/( (tau-1)*jN);
+					dt[j].Q.mtx= Q;
+
+					// 6) mu parameter
+					Mat newmu = Xi / jN;
+					dt[j].mu0 = newmu;
+
+					//7) S parameter 
+					Mat newS = Eta/jN - newmu*newmu.t();
+
+					switch(opt.Sopt)
+					{
+					case CovMatrix::COV_DIAG:			
+						dt[j].S0.mtx=newS.diag();
+						dt[j].S0.covopt=CovMatrix::COV_DIAG;
+						break;
+					default:
+						CV_Error(-1,"TO DO");
+					}
+
+					// 8) Ymean parameter
+					Mat newYmean = Mat::zeros(dy,1,OPT_MAT_TYPE);
+					if (FlagYmean)
+					{
+						for(int i=0;i<N;i++)
+						{
+							Mat tmpM;
+							reduce(jxthat[i],tmpM,1,CV_REDUCE_AVG);							
+							newYmean = newYmean + (jz.at<OPT_F_TYPE>(i,0))*(Ymean[i] - newC*tmpM);
+						}					
+						newYmean = newYmean / jN;
+					}
+
+					dt[j].Ymean = newYmean;
+
+					// regularize the new parameters
+					dt[j].setRegularizer(emopt.regopt);
+					dt[j].regularize();			
+
+				}	
+			}
+			if (FlagVerbose >= 2)
+				cout<<endl;
+
+			//%%% handle empty clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+			//find the largest cluster and split it to fill the blank cluster
+			for(int j=0;j<K;j++)
+			{
+				if(blank[j])
+				{
+					if(FlagVerbose)
+						cout<<"Cluster "<<j<<"Is blank"<<endl;			
+
+					DytexSplitParams splitopt;				
+					splitopt.crit=emopt.emptySplitOpt.crit;
+					splitopt.pert=emopt.emptySplitOpt.pert;
+					splitopt.mode=emopt.emptySplitOpt.mode;
+					splitopt.vars=emopt.emptySplitOpt.vars;
+					splitopt.ignore.clear();
+					splitopt.target=j+1;
+					int c1,c2;
+					dytex_mix_split(splitopt,c1,c2);
+
+					blank[j]=0;						
+				}
+			}	
+
+			elapsedtime=clock()-starttime;
+			if(FlagVerbose>=2)
+			{
+				cout<<"Elapsed Time: "<<elapsedtime<<endl;
+			}
+
+			iter=iter+1;  //finish current EM iteration
+		}
+		
+		//End of EM loop
+		if(FlagVerbose>=1)
+		{
+			cout<<"alpha= ";
+			for(int i=0;i<alpha.size();i++)
+				cout<<alpha[i]<<"  ";
+
+			cout<<endl;
+		}*/
+	}
+	
+	/*!
+	 * \brief
+	 * convert a movie or video clip into a 2d matrix
+	 * 
+	 * \param Y
+	 * movie or video clip
+	 * 
+	 * \param sx
+	 * original size x of movie
+	 * 
+	 * \param sy
+	 * original size y of movie
+	 * 
+	 * \param sc
+	 * color space of movie
+	 * 
+	 * \param cnorm
+	 * color space of movie
+	 * 
+	 * \returns
+	 * converted video
+	 *   
+	 * convert 3D/4D to column vectors
+	 * 
+	 * \remarks
+	 * used by runEM
+	 * 
+	 * \see
+	 * runEM | extractY
+	 */
+	Mat convertmovie(Mat Y[],int sx[],int sy[],int sc[],int cnorm[])
+	{
+		Mat Yout = new Mat();
+		if(Y.length>=2)
+		{
+			sy[0]=Y[0].rows;
+			sx[0]=Y[0].cols;
+			sc[0]=1;
+			Yout.create(sy[0]*sx[0],Y.length,Y[0].type);			
+			//copy data column wise
+			int index=0;		
+			int index2=0;				
+			for(int k=0;k<Y[0].cols;k++)
+			{
+				for(int j=0;j<Y[0].rows;j++)
+				{
+					index=0;
+					for(int i=0;i<Y.length;i++)
+					{
+						Yout.double2D[index2][index]=Y[i].double2D[j][k];
+						index++;
+					}
+					index2++;
+				}
+			}			
+		}
+		//double minV,maxV;
+		//minMaxLoc(Yout,&minV,&maxV); // Yout is not created unless sc[0] = 1
+		//if ((sc[0]==3) && (maxV<=1.0))
+		//{
+			//cnorm[0]=1;
+		//}
+		//else
+		//{
+			cnorm[0]=0;
+		//}
+		return Yout;
 	}
 
 }
