@@ -2663,6 +2663,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         // should have already exited
                         continue;
                     }
+                } else if (problemTags != null && problemTags.size() > 0) {
+                    // TODO when running from the cmd line, still make note of problematic tags in output
+                    System.err.println("Tags potentially containing PII/PHI found (" + csvProblemFileDirList.get(j) + File.separator + csvProblemFileNameList.get(j) + ":");
+                    System.err.format("%-14s%-40s%s%n", "DICOM tag", "Name", "Value");
+                    for (FileDicomTag tag : problemTags) {
+                        System.err.format("%-14s%-40s%s%n", tag.getKey().toString(), tag.getName(), (String) tag.getValue(true));
+                    }
                 }
             }
 
