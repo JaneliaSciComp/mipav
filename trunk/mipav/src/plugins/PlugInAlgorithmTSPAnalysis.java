@@ -111,7 +111,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	
 //    private ModelImage MTTImage;
     private ModelImage TmaxImage;
-    private ModelImage delay_mapImage;
+//    private ModelImage delay_mapImage;
     
     private String outputFilePath = null;
     private String outputPrefix = "";
@@ -224,6 +224,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	ModelImage corr_map2Image;
     	ModelImage corrmapImage;
     	ModelImage peaks_mapImage;
+    	ModelImage delay_mapImage;
     	String TEString;
     	short data_norm;
     	short peaks[][][];
@@ -923,8 +924,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	
     	saveImageFile(delay_mapImage, outputFilePath, outputPrefix + "delay_map", saveFileFormat);
     	
-//    	delay_mapImage.disposeLocal();
-//    	delay_mapImage = null;
+    	delay_mapImage.disposeLocal();
+    	delay_mapImage = null;
     	
     	// Deconvolution analysis
     	fireProgressStateChanged("Deconvolution analysis");
@@ -3042,10 +3043,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     public void finalize() {
         super.finalize();
         
-        if (delay_mapImage != null) {
-            delay_mapImage.disposeLocal();
-            delay_mapImage = null;
-        }
+//        if (delay_mapImage != null) {
+//            delay_mapImage.disposeLocal();
+//            delay_mapImage = null;
+//        }
 //        if (MTTImage != null) {
 //            MTTImage.disposeLocal();
 //            MTTImage = null;
@@ -3064,9 +3065,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         return TmaxImage;
     }
     
-    public ModelImage getDelayMapImage() {
-        return delay_mapImage;
-    }
+//    public ModelImage getDelayMapImage() {
+//        return delay_mapImage;
+//    }
     
     public void setOutputFilePath(String path) {
         outputFilePath = path;

@@ -1237,7 +1237,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                 // core no PWI, DWI
                 
                 if (passNum == 1) {
-                    passDetails = " -- no PWI";
+                    passDetails = "";
                     passDescr = "ADC image with core segmentation" + passDetails;
                 } else if (passNum == 2) {
                     passDescr = "DWI image";
