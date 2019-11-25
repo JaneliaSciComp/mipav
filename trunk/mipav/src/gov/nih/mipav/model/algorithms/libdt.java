@@ -3268,9 +3268,10 @@ using namespace std;
     	return ld;
     }
     
-    /*private Mat frame(Mat vid, int f) {
+    private Mat frame(Mat vid, int f) {
     	  
     	//cout<<"Test "<<f<<"  "<<vid.size[0]<<endl;
+      int r,c;
       if(vid.dims != 3) {
     	  MipavUtil.displayError("vid.dims = " + vid.dims + " instead of the required 3 in Mat frame");
     	  System.exit(-1);
@@ -3280,7 +3281,11 @@ using namespace std;
     	  System.exit(-1);
       }
       Mat myf = new Mat(vid.size[1], vid.size[2], vid.type);
-      myf.double2D = vid.double3D[vid.step[0]*f];
+      for (r = 0; r < vid.size[1]; r++) {
+    	  for (c = 0; c < vid.size[2]; c++) {
+    		  myf.double2D[r][c] = vid.double3D[f][r][c];
+    	  }
+      }
       myf.bytesPerRow = vid.step[1];
 
       return myf;
@@ -3291,7 +3296,7 @@ using namespace std;
       //Mat myf = MatVid::subvid(vid, Range(f, f+1), Range::all(), Range::all() );
 
       //dumpMatSize(myf);
-    }*/
+    }
     
     /*private Mat create(int frames, int rows, int cols, int type) {
     	  int sz[] = {frames, rows, cols};
@@ -7598,36 +7603,38 @@ class PatchBatchExtractor
 			}
 			else
 			{
-				if(tau!=Y.size[0])
-					CV_Error(-1,"Y has videos with different lengths!");
+				if(tau!=Y.length) {
+					MipavUtil.displayError("In runEM Y has videos with different lengths!");
+					System.exit(-1);
+				}
 			}
 
-			if(FlagYmean) 
+			if(FlagYmean == Ymean_type.NONZERO_YMEAN) 
 			{
-				Mat tmpM;
+				Mat tmpM = new Mat();
 				reduce(foo,tmpM,2,CV_REDUCE_AVG);
-				Ymean.push_back(tmpM);
+				Ymean.add(tmpM);
 			}
 			
 			for(int j=0;j<dy;j++)
 				for(int k=0;k<tau;k++)
-					Y.at<OPT_F_TYPE>(k,j,yi)=foo.at<OPT_F_TYPE>(j,k);	
+					Y[k].double2D[j][yi]=foo.double2D[j][k];	
 		}
 		//
 
 		//               INITIALIZATION                              //
 		//initialization of first DT in the blank mixture using Sub-optimal methhod
-		if(dt.size()==0)  
+		if(dtm.dt.size()==0)  
 		{
-			std::vector<int> randind(N,0);
+			Vector<Integer> randind = new Vector<Integer>(N);
 			for(int i=0;i<N;i++)
-				randind[i]=i;
+				randind.add(i);
 
-			if(FlagVerbose)
-				cout<<"Initializing First DT with Sub-optimal: "<<endl;
+			if(FlagVerbose != Verbose_mode.QUIET)
+				System.out.println("Initializing First DT with Sub-optimal:");
 			
-			std::vector<Mat> tmpY = extractY(Y, randind);
-			Dytex tmpC= initcluster_doretto(tmpY, opt);
+			Vector<Mat> tmpY = extractY(Y, randind);
+			Dytex tmpC= initcluster_doretto(tmpY, dtm.opt);
 			dt.push_back(tmpC);
 			alpha.push_back(1.0);
 		}
@@ -8156,6 +8163,468 @@ class PatchBatchExtractor
 			cnorm[0]=0;
 		//}
 		return Yout;
+	}
+	
+	/*!
+	 * \brief
+	 * extract patches at inds locations from a single Mat format
+	 * 
+	 * \param Yin
+	 *  patches in Yit format.
+	 * 
+	 * \param inds
+	 * ids of patches to get.
+	 * 
+	 * \returns
+	 * individual patches
+	 *  
+	 * \see
+	 * Separate items with the '|' character.
+	 */
+	Vector<Mat> extractY(Mat Yin[], Vector<Integer> inds)
+	{	
+		Vector<Mat> Yout = new Vector<Mat>();		
+		int dy=Yin[0].rows;
+		int tau=Yin.length;
+
+		for(int i=0;i<inds.size();i++)
+		{
+			Mat tmpM = new Mat(dy,tau,Yin[0].type);
+			//copy data
+			for(int j=0;j<dy;j++)
+			{
+				for(int k=0;k<tau;k++)
+				{
+					tmpM.double2D[j][k]=Yin[k].double2D[j][inds.get(i)];
+				}
+			}
+			Yout.add(tmpM);
+		}
+
+		return Yout;
+	}
+	
+	/*!
+	 * \brief
+	 * use suboptimal method to learn a single DT from a set of videos
+	 * 
+	 * \param Y
+	 * Input patches.
+	 * 
+	 * \param param
+	 * DT learning options.
+	 * 
+	 * \returns
+	 * learned DT
+	 * 
+	 * \see
+	 * Dytex
+	 */
+	Dytex initcluster_doretto(Vector<Mat> Y,DytexOptions param)
+	{
+		Dytex mydt= new Dytex(param);
+		learnLeastSquares(mydt, Y);	
+		return mydt;
+	}
+	
+	// learning (multiple videos)
+	void learnLeastSquares(Dytex mydt, Vector<Mat> videos) {
+	  /*int r,c;
+	  // --- process video ---
+	  int nump = videos.size(); // number of videos
+	  int tau[] = new int[nump];				// length of each video
+
+	  int inds[] = new int[nump + 1];		// index boundaries for each video
+
+	  int tauall;
+
+	  inds[0] = 0;
+
+	  // figure out the size of all videos
+	  for (int p=0; p<nump; p++) {
+	    int mytau = 0;
+	    if (videos.get(p).dims == 3)
+	      mytau = videos.get(p).size[0];
+	    else if (videos.get(p).dims == 2)
+	      mytau = videos.get(p).cols;
+	    else {
+	      MipavUtil.displayError("In learnLeastSquares unknown size");
+	      System.exit(-1);
+	    }
+	    
+	    tau[p]    = mytau;
+	    inds[p+1] = inds[p]+mytau;    
+	  }
+	  tauall = inds[nump];
+
+	  //cout << "tau = "; for (int p=0; p<nump; p++) cout << tau[p] << " "; cout << "\n";
+	  //cout << "inds = "; for (int p=0; p<nump; p++)  cout << inds[p] << " "; cout << "\n";
+
+	  // allocate space
+	  Mat Yall = new Mat(mydt.dtopt.m, tauall, CV_64F);
+	  Mat tmp1 = new Mat();
+	  
+	  //cout << "Yall: "; dumpMatSize(Yall);
+
+	  // initialize Ymean accumulator
+	  if (mydt.dtopt.Yopt == Ymean_type.NONZERO_YMEAN)
+	    Ymean = 0.0;
+
+	  // for each video, process it, compute and subtract the mean
+	  for (int p=0; p<nump; p++) { 
+		// get video p in Yall
+		  Mat Yall_p = new Mat(mydt.dtopt.m, inds[p+1]-inds[p], CV_64F);
+		  for (r = 0; r < mydt.dtopt.m; r++) {
+			  for (c = inds[p]; c < inds[p+1]; c++) {
+				  Yall_p.double2D[r][c-inds[p]] = Yall.double2D[r][c];
+			  }
+		  }
+	    //System.out.println("Yall_p: " +  dumpMatSize(Yall_p));
+
+	    processVideoTraining(mydt, videos.get(p), Yall_p, tmp1);
+
+	    // update accumulator
+	    if (mydt.dtopt.Yopt == Ymean_type.NONZERO_YMEAN)
+	      Ymean += tmp1;
+	  }
+
+	  // normalize mean
+	  if (mydt.dtopt.Yopt == Ymean_type.NONZERO_YMEAN) {
+	    Ymean /= nump;
+	  }
+
+	  // --- special case when n=0 ---
+	  if (mydt.dtopt.n == 0) {
+	    // only need to calculate R
+	    calculate(mydt.R,Yall, true);
+		tau = null;
+		inds = null;
+	    return;
+	  }
+
+	  // --- do PCA on Yall ---
+	  Mat Xall;
+	  if (Yall.rows > Yall.cols) {
+	    // ... using SVD
+	    //cout << "lls:use SVD\n";
+	    Matrix YallMat = new Matrix(Yall.double2D);
+		SingularValueDecomposition svd = new SingularValueDecomposition(YallMat);
+		Mat matU = new Mat(svd.getU().getArray());
+		// C = u(1:n)
+		mydt.C.create(matU.rows, mydt.dtopt.n, CV_64F);
+	    for (r = 0; r < matU.rows; r++) {
+	    	for (c = 0; c < mydt.dtopt.n; c++) {
+	    		mydt.C.double2D[r][c] = matU.double2D[r][c];
+	    	}
+	    }
+	    //cout << "singular values: " << svd.w << "\n";
+
+	    // X = w(1:n)*vt(1:n,:)
+	    Matrix matVT = new Mat(svd.getV().transpose().getArray());
+	    XAll = new Mat(mydt.dtopt.n,matVT.cols,CV_64F);
+	    for (r = 0; r < mydt.dtopt.n, r++) {
+	    	for (c = 0; c <matVT.cols; c++) {
+	    		Xall.double2D[r][c] = matVT.double2D[r][c];
+	    	}
+	    }
+		double singularValues[] = svd.getSingularValues();
+		double scaleFactor;
+		for (r = 0; r < mydt.dtopt.n; r++) {
+		    scaleFactor = singularValues[r];
+		    for (c = 0; c < XAll.cols; c++) {
+		    	Xall.double2D[r][c] *= scaleFactor;
+		    }
+		}
+
+	    //Mat Xall2 = C.t()*Yall;   // X = C'*Yall    
+	    //cout << "Xall err=" << norm(Xall, Xall2) << "\n";
+
+	  } else {
+	    // ... using eig
+	    //cout << "lls:use eig\n";
+
+	    Mat tmp;
+	    mulTransposed(Yall, tmp, false);
+	    SVD svd(tmp);
+	    svd.u.colRange(0,dtopt.n).copyTo(C);  // C = u(1:n)
+	    
+	    //cout << "singular values: " << svd.w << "\n";
+
+	    Xall = C.t()*Yall;   // X = C'*Yall
+	  }
+
+	  // --- estimate initial condition ---
+	  if (nump == 1) {
+	    // only one video (just copy it)
+	    Xall.col(0).copyTo(mu0);
+	    S0.mtx = 0.0;
+
+	  } else {
+	    // extract first X from each image and store in Xall0
+	    Mat Xall0(dtopt.n, nump, OPT_MAT_TYPE);
+	    for (int p=0; p<nump; p++) {
+	      Mat Xall0c = Xall0.col(p);
+	      Xall.col(inds[p]).copyTo(Xall0c);
+	    }
+	    // estimate the initial mean
+	    reduce(Xall0, mu0, 1, CV_REDUCE_AVG);
+	    // estimate the initial covariance
+	    for (int p=0; p<nump; p++)
+	      Xall0.col(p) -= mu0;     // subtract inital mean
+	    S0.calculate(Xall0, true); // calculate covariance
+	  }
+	  
+	  // --- estimate A ---
+	  Mat Phi1all; // store X(1:end-1)
+	  Mat Phi2all; // store X(2:end)
+
+	  if (nump == 1) {
+	    // only one video, just make pointers (no memory copied)
+	    Phi1all = Xall.colRange(0, Xall.cols-1);
+	    Phi2all = Xall.colRange(1, Xall.cols);
+
+	  } else {
+	    // copy to Phi1all and Phi2all
+	    // allocate space
+	    Phi1all.create(dtopt.n, tauall-nump, OPT_MAT_TYPE); // store X(1:end-1)
+	    Phi2all.create(dtopt.n, tauall-nump, OPT_MAT_TYPE); // store X(2:end)
+
+	    //cout << "Phi1all: "; dumpMatSize(Phi1all);
+	    //cout << "Phi2all: "; dumpMatSize(Phi2all);
+
+	    // for each video
+	    for (int p=0; p<nump; p++) {
+	      Mat Phi1 = Xall.colRange(inds[p], inds[p+1]-1);
+	      Mat pPhi1all = Phi1all.colRange(inds[p]-p, inds[p+1]-(p+1));
+	      //cout << "Phi1: "; dumpMatSize(Phi1);
+	      //cout << "pPhi1all: "; dumpMatSize(pPhi1all);
+	      Phi1.copyTo(pPhi1all);
+	      
+	      Mat Phi2 = Xall.colRange(inds[p]+1, inds[p+1]);
+	      Mat pPhi2all = Phi2all.colRange(inds[p]-p, inds[p+1]-(p+1));
+	      //cout << "Phi2: "; dumpMatSize(Phi2);
+	      //cout << "pPhi2all: "; dumpMatSize(pPhi2all);
+	      Phi2.copyTo(pPhi2all);
+	    }
+	  }
+
+	  Mat iPhi1all;
+	  invert(Phi1all, iPhi1all, DECOMP_SVD);
+	  A = Phi2all*iPhi1all;
+	  
+	  // --- estimate Q ---
+	  Mat V = Phi2all - A*Phi1all;
+	  Q.calculate(V, false);
+	  
+	  // --- estimate R ---
+	  Mat errory = Yall - C*Xall;
+	  R.calculate(errory, true);   // (to match matlab)
+
+	  // clean up
+	  free(tau);
+	  free(inds);*/
+	}
+	
+	// convert a video into a vector time-series
+	// also subtract the empirical mean if necessary, and return it.
+	void processVideoTraining(Dytex mydt, Mat vin, Mat Yout, Mat Yout_mean) {
+	  /*int r,c;
+	  Mat Ytmp;
+	  
+	  switch(vin.dims) {
+	  case 3:
+	    // vectorize
+	    Ytmp = vectorize(vin, true);
+	    
+	    // save/check video size
+	    if (mydt.vrows == 0 && mydt.vcols == 0) {
+	      mydt.vrows = vin.size[1];
+	      mydt.vcols = vin.size[2];
+	    } else {
+	      if(mydt.vrows != vin.size[1] || mydt.vcols != vin.size[2]) {
+	    	  MipavUtil.displayError("In processVideoTraining mydt.vrows != vin.size[1] || mydt.vcols != vin.size[2]");
+	    	  System.exit(-1);
+	      }
+	    }
+	    break;
+	    
+	  case 2:
+	    // already vectorized
+	    Ytmp = vin;
+	    break;
+	    
+	  default:
+	   MipavUtil.displayError("Unsupported video dims (color) in processVideoTraining");
+	   System.exit(-1);
+	  }
+	  
+	  //cout << "Ytmp: "; dumpMatSize(Ytmp);
+
+	  // --- check dimensions ---
+	  //CV_Assert(Ytmp.rows == Yout.rows);
+	  //CV_Assert(Ytmp.cols == Yout.cols);
+	    
+	  // --- convert to double/float ---
+	  Yout = new Mat(Ytmp.rows, Ytmp.cols, CV_64F);
+	  if (Ytmp.type == CV_8U) {
+	    //cout << "llS convertTo float\n";
+		for (r = 0; r < Ytmp.rows; r++) {
+			for (c = 0; c < Ytmp.cols; c++) {
+				Yout.double2D[r][c] = (Ytmp.byte2D[r][c] & 0xff);
+			}
+		}
+	  } else {
+	    copyTo(Ytmp,Yout); // copy to Yall
+	  }
+	    
+	  // --- compute the mean for the video ---
+	  switch (mydt.dtopt.Yopt) {
+	  case NONZERO_YMEAN:
+	    // compute the mean
+	    reduce(Yout, Yout_mean, 1, CV_REDUCE_AVG);
+	    // subtract mean from Y
+	    for (c=0; c<Yout.cols; c++) {
+	    	for (r = 0; r < Yout.rows; r++) {
+	            Yout.double2D[r][c] -= Yout_mean;
+	    	}
+	    }
+	    break;
+	    
+	  case ZERO_YMEAN:
+	    // do nothing
+	    break;
+	  default:
+	    MipavUtil.displayError("In processVideoTraining bad Yopt");
+	    System.exit(-1);
+	  }*/
+	}
+	
+	/*Mat vectorize(Mat vid, boolean flag_col) {
+		  int r,c;
+		  if(vid.dims != 3) {
+			  MipavUtil.displayError("vid.dims = " + vid.dims + "instead of the required 3 in vectorize");
+			  System.exit(-1);
+		  }
+
+		  //dumpMatSize(vid);
+		  Mat vv = new Mat();
+
+		  // column-wise frames
+		  if (flag_col) {
+		    vv.create(vid.size[1]*vid.size[2], vid.size[0], vid.type);
+		    //dumpMatSize(vv);
+
+		    // copy each frame into a column
+		    // TODO: could be faster?
+		    for (int f=0; f<vid.size[0]; f++) {
+		      Mat myframe = frame(vid, f);
+
+		      // copy column-wise
+		      for (int y=0; y<myframe.cols; y++) {
+			// get column part in vv
+		    Mat vvcol = new Mat(vid.size[1],1,CV_64F);
+			for (r = y*vid.size[1]; r < (y+1)*vid.size[1]; r++) {
+				vvcol.double2D[r-y*vid.size[1]][0] = vv.double2D[r][f];
+			}
+			//dumpMatSize(vvcol);
+
+			// get column part of frame
+			Mat mycol = new Mat(myframe.rows,1,CV_64F);
+			for (r = 0; r < myframe.rows; r++) {
+				mycol.double2D[r][0] = myframe.double2D[r][y];
+			}
+			//dumpMatSize(mycol);
+			
+			// copy
+			copyTo(mycol,vvcol);
+		      }
+		    }
+		    
+		  } else {
+		    MipavUtil.displayError("not implemented in vectorize");
+		    System.exit(-1);
+		  }
+
+		  return vv;
+		}*/
+	
+	// calculate a covariance matrix from data
+	/*void calculate(CovMatrix cov, Mat data, boolean use_unbiased) {
+	  int N = 0;
+	  
+	  
+	  // check data
+	  if(data.rows != cov.n) {
+		  MipavUtil.displayError("data.rows != cov.n in caclulate");
+		  System.exit(-1);
+	  }
+
+	  // calculate sum
+	  switch(cov.covopt) {
+	  case COV_FULL:
+		
+	    mulTransposed(data, cov.mtx, false);  // data*data^T
+	    N = data.cols;
+	    break;
+
+	  case COV_DIAG:
+	  case COV_IID:
+	    {
+	      Mat tmp = new Mat();
+	      // square: data.*data
+	      elementTimes(data, data, tmp);
+	      
+	      if (covopt == cov_type.COV_IID) {
+		// sum everything
+	    	  cov.mtx = new Mat(1,1,CV_64F);
+	    	  for (r = 0; r < tmp.rows, r++) {
+	    		  for (c = 0; c < tmp.cols; c++) {
+	    			  mtx += tmp.double2D[r][c];
+	    		  }
+	    	  }
+		N   = data.cols*data.rows;
+	      } else {
+		// sum over rows
+		reduce(tmp, cov.mtx, 1, CV_REDUCE_SUM);
+		N = data.cols;
+	      }
+	    }
+	    break;
+
+	  default:
+	    MipavUtil.displayError("In calculate unknown cov");
+	    System.exit(-1);
+	  }   
+
+	  // average
+	  if (use_unbiased)
+	    divide(cov.mtx,(double)(N-1));
+	  else
+	    divide(cov.mtx,(double)N);
+	}*/
+	
+	void multTransposed(Mat src, Mat dst, boolean transposeFirst) {
+		int c1, c2,r,r1,r2,c;
+		if (transposeFirst) {
+			dst.create(src.cols, src.cols, CV_64F);
+			for (c1 = 0; c1 < src.cols; c1++) {
+				for (c2 = 0; c2 < src.cols; c2++) {
+				   for (r = 0; r < src.rows; r++) {
+					   dst.double2D[c1][c2] += (src.double2D[r][c1]* src.double2D[r][c2]);
+				   }
+				}
+			}
+		}
+		else {
+		    dst.create(src.rows,src.rows,CV_64F);
+		    for (r1 = 0; r1 <src.rows;r1++) {
+		    	for (r2 = 0; r2 <src.rows; r2++) {
+		    		for (c = 0; c < src.cols; c++) {
+		    			dst.double2D[r1][r2] += (src.double2D[r1][c] * src.double2D[r2][c]);
+		    		}
+		    	}
+		    }
+		}
 	}
 
 }
