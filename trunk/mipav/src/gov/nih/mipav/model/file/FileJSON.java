@@ -57,7 +57,7 @@ public class FileJSON extends FileBase {
     private boolean haveBlank = false;
 
     /** DOCUMENT ME! */
-    private ModelImage image;
+    private ModelImage image[];
 
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
@@ -116,13 +116,13 @@ public class FileJSON extends FileBase {
     }
 
     /**
-     * reads the FITS file header and data.
+     * reads the JSON file header and data.
      * 
      * @exception IOException if there is an error reading the file
      * 
      * @return DOCUMENT ME!
      */
-    public ModelImage readImage() throws IOException {
+    public ModelImage[] readImage() throws IOException {
         int i = 0;
         int j = 0;
         String s, firstS, subS;
@@ -167,6 +167,14 @@ public class FileJSON extends FileBase {
         TransMatrix matrix;
         char c;
         boolean inInfoStructure = false;
+        int index;
+        int index2;
+        String description = null;
+        String url = null;
+        String version = null;
+        String year = null;
+        String contributor = null;
+        String date_created = null;
 
         try {
 
@@ -189,24 +197,46 @@ public class FileJSON extends FileBase {
                 count++;
                 if ((s.startsWith("\"info\":"))  && (s.endsWith("{"))) {
                     inInfoStructure = true;
-                    MipavUtil.displayError("Found info");
-                    System.exit(-1);
                     continue;
                 }
+                else if (inInfoStructure) {
+	                if ((s.equals("}")) || (s.equals("},"))) {
+	                	inInfoStructure = false;
+	                	MipavUtil.displayError("info close");
+	                	System.exit(-1);
+	                	continue;
+	                }
+	                else if ((s.startsWith("\"description\":"))) {
+	                	index  = s.indexOf(":");
+	                	s = s.substring(index+1);
+	                	index = s.indexOf("\"");
+	                	index2 = s.lastIndexOf("\"");
+	                	if ((index != -1) && (index2 > index)) {
+	                		description = s.substring(index+1,index2);
+	                		fileInfo.setDescription(description);
+	                	}
+	                	continue;
+	                } // else if ((s.startsWith("\"description\":")))
+                } // else if (inInfoStructure)
                 
             } // while(readAgain) looping for first required keyword of SIMPLE
 
            
 
-            image.calcMinMax();
+            for (i = 0; i < image.length; i++) {
+                image[i].calcMinMax();
+            }
             raFile.close();
 
             return image;
         } catch (final Exception e) {
 
             if (image != null) {
-                image.disposeLocal();
-                image = null;
+            	for (i = 0; i < image.length; i++) {
+                    image[i].disposeLocal();
+                    image[i] = null;
+            	}
+            	image = null;
             }
 
             System.gc();
