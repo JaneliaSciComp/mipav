@@ -288,6 +288,9 @@ public class FileUtility {
     /** Aperio TIFF based .svs */
     public static final int SVS = 82;
     
+    /** extension .json */
+    public static final int JSON = 83;
+    
     
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
@@ -298,7 +301,7 @@ public class FileUtility {
             "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
             "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
             "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage", "trk",
-            "czi", "pgm", "ppm", "svs"};
+            "czi", "pgm", "ppm", "svs", "json"};
 
     
 
