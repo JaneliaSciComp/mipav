@@ -440,6 +440,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.openLastImage(number);
         } else if (command.equals("OpenNewImage")) {
             userInterface.openImageFrame();
+        } else if (command.equals("OpenJSONImages")) {
+        	userInterface.openJSONImageFrames();
         } else if (command.equals("closeAllImages")) {
             userInterface.closeAllImages();
         } else if (command.equals("CreateBlankImage")) {
