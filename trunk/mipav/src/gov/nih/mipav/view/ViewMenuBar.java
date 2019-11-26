@@ -714,6 +714,7 @@ public class ViewMenuBar {
 				menuBuilder.buildMenuItem("Open image (A) from disk", "OpenNewImage", 0, "open.gif", true),
 				menuBuilder.makeMenu("Open image (A)...", true,
 						new JMenuItem[] { menuBuilder.buildMenuItem("Leica series", "loadLeica", 0, "open.gif", true),
+								menuBuilder.buildMenuItem("JSON images", "OpenJSONImages", 0, "open.gif", true),
 								menuBuilder.buildMenuItem("Image sequence", "openImgSeq", 0, "open.gif", true),
 								menuBuilder.buildMenuItem("Create blank image", "CreateBlankImage", 0, "open.gif",
 										true),
