@@ -134,6 +134,9 @@ public class FileTypeTable {
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.JPEG, new FileTypeInfo("JPEG", ".jpg,.jpeg"));
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.JP2, new FileTypeInfo("JPEG2000", ".jp2"));
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.JSON, new FileTypeInfo("JSON", ".json"));
+        FileTypeTable.FILE_EXT_TABLE.put(".json", FileUtility.JSON);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.LSM, new FileTypeInfo("LSM", ".lsm"));
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.LSM_MULTIFILE, new FileTypeInfo("LSM multifile", ".lsm"));
