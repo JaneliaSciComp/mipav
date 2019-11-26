@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import java.awt.Frame;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.JFileChooser;
@@ -159,6 +160,202 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     public boolean isPutInFrame() {
 
         return this.putInFrame;
+    }
+    
+    public ArrayList<Vector<String>> openJSON() {
+    	 ViewJFrameImage imageFrame;
+         FileIO fileIO;
+         Vector<String> images = new Vector<String>();
+         ModelImage linkedImage = null;
+         ArrayList<Vector<String>> imagesArrayList = new ArrayList<Vector<String>>();
+         File[] openedFiles = null;
+
+         // lets set the user defined file filters
+         ViewImageFileFilter.setUserDefinedExtensions();
+
+         // address of TIFF header of second image in file if present
+         // for LSM510 image files
+
+         // set the filter type to the preferences saved filter
+         int filter = 0;
+
+         try {
+             filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
+         } catch (NumberFormatException nfe) {
+
+             // an invalid value was set in preferences -- so don't use it!
+             filter = -1;
+         }
+
+    
+
+             try {
+                 setMulti(false);
+
+                 // chooser = new JFileChooser();
+                 if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                     File file = new File(UI.getDefaultDirectory());
+
+                     if (file != null) {
+                         chooser.setCurrentDirectory(file);
+                     } else {
+                         chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                     }
+                 } else {
+                     chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                 }
+
+                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.JSON));
+
+                 if (filter != -1) {
+                     // it seems that the set command adds the filter again...
+                     // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
+
+                     // if filter is something we already added, then remove it before
+                     // setting it..... (kludgy, kludgy....)
+                     javax.swing.filechooser.FileFilter found = findFilter(chooser, filter);
+
+                     if (found != null) {
+                         chooser.removeChoosableFileFilter(found);
+                     }
+
+                     // initially set to the preferences
+                     chooser.setFileFilter(new ViewImageFileFilter(filter));
+                 }
+
+                 // but if the filterType was set, then use that instead
+                 // set the current filter to filterType
+                 if (filterType != -1) { // filterType has been set
+
+                     // don't add this filter twice --- if it's there, then remove it
+                     javax.swing.filechooser.FileFilter found2 = findFilter(chooser, filterType);
+
+                     if (found2 != null) {
+                         chooser.removeChoosableFileFilter(found2);
+                     }
+
+                     // set the current file filter
+                     chooser.setFileFilter(new ViewImageFileFilter(filterType));
+                 }
+
+                 chooser.setDialogTitle("Open Image");
+
+                 int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+
+                 if (returnValue == JFileChooser.APPROVE_OPTION) {
+                     //fileIO = new FileIO();
+                     openedFiles = chooser.getSelectedFiles();
+                     directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                     UI.setDefaultDirectory(directory);
+                 } else {
+                     return null;
+                 }
+             } catch (OutOfMemoryError e) {
+                 MipavUtil.displayError("Out of memory!");
+
+                 return null;
+             }
+         
+
+         
+             ModelImage imageArray[] = null;
+             try {
+            	 fileName = openedFiles[0].getName();
+            	 FileJSON imageFile = new FileJSON(fileName, directory);
+            	 imageArray = imageFile.readImage();
+             } catch (IOException e) {
+                 MipavUtil.displayError("IOException!");
+
+                 return null;
+             }
+                 
+                for (int k = 0; k < imageArray.length; k++) {
+                 image = imageArray[k];
+                 if (image == null) {
+                     // System.err.println("ViewOpenFileUI: image = null");
+                     return null;
+                 }
+
+                 if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY)) {
+                 	//LUT = fileIO.getModelLUT();
+                 }
+                 //modelRGB = fileIO.getModelRGB();
+
+                 //readLinkedImage also gets LUT2 and modelRGB2
+                 linkedImage = readLinkedImage();
+
+                 if (linkedImage != null) {
+                     xmlLinked = true;
+
+                     //LUT2 = fileIO.getModelLUT();
+                     //modelRGB2 = fileIO.getModelRGB();
+
+                 }
+             
+
+             try {
+
+                 if (putInFrame == true) {
+                     imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
+
+                     if (modelRGB != null) {
+                         imageFrame.setRGBTA(modelRGB);
+                     }
+
+                     if (xmlLinked && (linkedImage != null)) {
+                         imageFrame.setAndLoad(linkedImage);
+
+                         if (LUT2 != null) {
+
+                             if (modelRGB2 != null) {
+                                 imageFrame.setRGBTB(modelRGB2);
+                             }
+
+                             imageFrame.setLUTb(LUT2);
+                             imageFrame.updateImages(LUT, LUT2, true, 0);
+                         }
+                     }
+                 }
+
+                 images.addElement(image.getImageName());
+
+                 if (xmlLinked) {
+                     images.addElement(linkedImage.getImageName());
+                 }
+             } catch (OutOfMemoryError e) {
+                 MipavUtil.displayError("Out of memory!");
+
+                 return null;
+             }
+
+             
+             // System.err.println("Getting to set last image flag");
+             if (setLastImageFlag) {
+                 Preferences.setLastImage(directory + fileName, image.getFileInfo()[0].getMultiFile(), image.getNDims());
+             }
+
+             Vector<Frame> imageFrames = UI.getImageFrameVector();
+
+             if (imageFrames.size() < 1) {
+                 UI.buildMenu();
+                 UI.setControls();
+             } else {
+                 UI.buildMenu();
+
+                 for (int i = 0; i < imageFrames.size(); i++) {
+
+                     if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
+                         ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+                     }
+                 }
+
+                 UI.getActiveImageFrame().setControls();
+             }
+              
+             imagesArrayList.add(images);
+         }
+
+         return imagesArrayList;	
     }
 
     /**
