@@ -3589,10 +3589,6 @@ public class FileIO {
                     }
 
                     break;
-                    
-                case FileUtility.JSON:
-                	image = readJSON(fileName, fileDir);
-                	break;
 
                 case FileUtility.MEDIVISION:
                     image = readMedVision(fileName, fileDir);
@@ -9713,59 +9709,7 @@ public class FileIO {
 
     }
     
-    /**
-     * Reads a MedVision file by calling the read method of the file.
-     * 
-     * @param fileName Name of the image file to read.
-     * @param fileDir Directory of the image file to read.
-     * 
-     * @return The image that was read in, or null if failure.
-     */
-    private ModelImage readJSON(final String fileName, final String fileDir) {
-        ModelImage image = null;
-        FileJSON imageFile;
-
-        try {
-            imageFile = new FileJSON(fileName, fileDir);
-            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
-            image = imageFile.readImage();
-        } catch (final IOException error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return null;
-        } catch (final OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return null;
-        }
-
-        return image;
-
-    }
+   
 
     /**
      * Reads a MedVision file by calling the read method of the file.
