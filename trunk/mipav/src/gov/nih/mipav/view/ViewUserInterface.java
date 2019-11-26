@@ -539,6 +539,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
+        } else if (command.equals("OpenJSONImages")) {
+            openJSONImageFrames();
         } else if (command.equals("closeAllImages")) {
             closeAllImages();
         } else if (command.equals("BrowseImages")) {
@@ -2422,6 +2424,76 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     + "Somehow the Image list sent an incorrect name to " + "the image image hashtable.  \n" + iae.getMessage() + "\n", 1);
             // System.out.println("Bad argument.");
         }
+    }
+    
+    public void openJSONImageFrames() {
+    	final ViewOpenFileUI openFile = new ViewOpenFileUI(true);
+        final boolean stackFlag = getLastStackFlag();
+
+        // set the filter type to the preferences saved filter
+        int filter = ViewImageFileFilter.TECH;
+
+        try {
+            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
+        } catch (final NumberFormatException nfe) {
+
+            // an invalid value was set in preferences -- so fix it!
+            filter = ViewImageFileFilter.TECH;
+            Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, Integer.toString(filter));
+        }
+
+        openFile.setFilterType(filter);
+
+        final ArrayList<Vector<String>> openImagesArrayList = openFile.openJSON();
+
+        if (openImagesArrayList != null) {
+
+            for (int i = 0; i < openImagesArrayList.size(); i++) {
+
+                final Vector<String> openImageNames = openImagesArrayList.get(i);
+
+                // if open failed, then imageNames will be null
+                if (openImageNames == null) {
+                    return;
+                }
+
+                final boolean sizeChanged = false;
+
+                // if the SaveAllOnSave preference flag is set, then
+                // load all the files associated with this image (VOIs, LUTs, etc.)
+                if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
+                    final Enumeration<String> e = openImageNames.elements();
+
+                    while (e.hasMoreElements()) {
+
+                        try {
+                            final String name = e.nextElement();
+                            final ModelImage img = this.getRegisteredImageByName(name);
+
+                            // get frame for image
+                            final ViewJFrameImage imgFrame = img.getParentFrame();
+
+                            // if the image size was changed to FLOAT, then don't
+                            // load any luts (chances are they won't work)
+                            if ( !sizeChanged) {
+
+                                // load any luts
+                                imgFrame.loadLUT(true, true);
+                            }
+
+                            // load any vois
+                            imgFrame.loadAllVOIs(true);
+                        } catch (final IllegalArgumentException iae) {
+
+                            // MipavUtil.displayError("There was a problem with the supplied name.\n" );
+                            Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
+                                    + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
+                            Preferences.debug("Bad argument.");
+                        }
+                    }
+                }
+            }
+        }	
     }
 
     /**
