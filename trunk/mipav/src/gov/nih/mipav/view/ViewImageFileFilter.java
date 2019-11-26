@@ -89,6 +89,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
 
     /** Fiber track files */
     public static final int FIBER = 24;
+    
+    public static final int JSON = 25;
 
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -112,7 +114,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
             "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files", "User Defined", "R-table (*.rtb)",
             "Data provenance (*.xmp)", // NLT
             "TIFF files (*.tif; *.tiff)", "DicomMatrix file (*.dicomMatrix)",
-            "Fiber Files (*.dat; *.vtk; *.vtp)"}; // FIBER
+            "Fiber Files (*.dat; *.vtk; *.vtp)",
+            "JSON (*.json)"}; // FIBER
 
     /** short description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -133,7 +136,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
             "Transfer Function Files", // FUNCT
             "VOI Files", // VOI
             "Nonlinear Transformation Files", // NLT
-            "Dynamic", "Plugin", "User Defined", "R-table", "Data provenance", "TIFF", "DicomMatrix"};
+            "Dynamic", "Plugin", "User Defined", "R-table", "Data provenance", "TIFF", "DicomMatrix",
+            "Fiber", "JSON"};
 
     /** array of user defined extensions */
     protected static String[] userDefinedExtensions;
@@ -386,6 +390,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
             return true;
         } else if (filterType == ViewImageFileFilter.DICOMMATRIX && extension.equals(".dicommatrix")) {
             return true;
+        }
+        else if (filterType == ViewImageFileFilter.JSON && extension.equals(".json")) {
+        	return true;
         }
         return false;
     }
