@@ -1,15 +1,11 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.TransMatrix;
 
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,9 +31,6 @@ public class FileJSON extends FileBase {
     int sourceType = ModelStorageBase.FLOAT;
 
     /** DOCUMENT ME! */
-    private int BLANK = 0;
-
-    /** DOCUMENT ME! */
     private boolean endianess;
 
     /** DOCUMENT ME! */
@@ -55,15 +48,10 @@ public class FileJSON extends FileBase {
     private String fileName;
 
     /** DOCUMENT ME! */
-    private boolean haveBlank = false;
-
-    /** DOCUMENT ME! */
     private ModelImage image[];
 
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
-
-    private boolean isColorPlanar2D = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -122,48 +110,8 @@ public class FileJSON extends FileBase {
      */
     public ModelImage[] readImage() throws IOException {
         int i = 0;
-        int j = 0;
-        String s, firstS, subS;
-        String dateString;
-        String jobNameString;
-        String timeString;
-        int numApos;
-        int aposLoc[];
-        boolean haveTime;
+        String s;
         boolean readAgain;
-        int count = 0;
-        int bitsPerPixel;
-
-        // data value = (FITS_value) X BSCALE + BZERO
-        double BSCALE = 1.0;
-        double BZERO = 0.0;
-        long offset;
-        float[] imgBuffer;
-        double[] imgDBuffer;
-        int bufferSize;
-        // Be able to handle dimensions of length 1 in read in as long
-        // as no more than 4 dimensions greater than length 1 are present
-        final float[] imgResols = new float[] {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-        final double[] scale = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-        // reference pixel position along axis
-        final double[] crpix = new double[6];
-        // coordinate of reference pixel
-        final double[] crval = new double[6];
-        final boolean[] haveCrpix = new boolean[6];
-        final boolean[] haveCrval = new boolean[6];
-        float minResol;
-        float maxResol;
-        int dimNumber;
-        int[] reducedExtents;
-        double[] reducedScale;
-        double[] reducedCrpix;
-        double[] reducedCrval;
-        boolean[] reducedHaveCrpix;
-        boolean[] reducedHaveCrval;
-        float focalRatio;
-        double origin[];
-        TransMatrix matrix;
-        char c;
         boolean inInfoStructure = false;
         int index;
         int index2;
@@ -197,6 +145,7 @@ public class FileJSON extends FileBase {
         Vector<Integer>yvalVector = new Vector<Integer>();
         int image_id = 0;
         int id = 0;
+        //int count = 0;
         int lastimage_id = -1;
         int buffer[] = null;
         boolean emptySegmentation = false;
@@ -219,7 +168,7 @@ public class FileJSON extends FileBase {
                     break;
                 }
                 s = readLine();
-                count++;
+                //count++;
                 if ((s.startsWith("\"info\":"))  && (s.endsWith("{"))) {
                     inInfoStructure = true;
                     continue;
@@ -541,8 +490,6 @@ public class FileJSON extends FileBase {
      */
     private String readLine() throws IOException {
         String tempString;
-        String retString;
-        int index;
 
         try {
             tempString = raFile.readLine();
