@@ -4,7 +4,8 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 
 import java.io.File;
@@ -20,16 +21,6 @@ public class FileJSON extends FileBase {
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    int[] imgExtents;
-
-    /** DOCUMENT ME! */
-    int nDimensions = 2;
-
-    /** DOCUMENT ME! */
-    int sourceType = ModelStorageBase.FLOAT;
-
     /** DOCUMENT ME! */
     private boolean endianess;
 
@@ -84,7 +75,6 @@ public class FileJSON extends FileBase {
         fileInfoCopy = null;
         file = null;
         image = null;
-        imgExtents = null;
         LUT = null;
         
         try {
@@ -149,6 +139,19 @@ public class FileJSON extends FileBase {
         int lastimage_id = -1;
         int buffer[] = null;
         boolean emptySegmentation = false;
+        String xleftString;
+        String ytopString;
+        String xrightString;
+        String ybottomString;
+        int xleft = 0;
+        int ytop = 0;
+        int xright = 0;
+        int ybottom = 0;
+        VOIVector VOIVec = new VOIVector();
+        VOI newVOI;
+        int xArr[];
+        int yArr[];
+        int zArr[];
 
         try {
 
@@ -346,6 +349,8 @@ public class FileJSON extends FileBase {
                     			MipavUtil.displayError("IOException on image["+lastimage_id+"].importData(0,buffer,true)");
                     		}
                     	    buffer = new int[width*height];
+                    	    image[lastimage_id].addVOIs(VOIVec);
+                    	    VOIVec.clear();
                     	}
                     	else if ((image_id != lastimage_id) && (buffer == null)) {
                     		buffer = new int[width*height];
@@ -356,6 +361,13 @@ public class FileJSON extends FileBase {
                     	xvalVector.clear();
                     	yvalVector.clear();
                     	lastimage_id = image_id;
+                    	newVOI = new VOI((short) id, "id"+id, VOI.CONTOUR, -1.0f);
+                    	xArr = new int[]{xleft,xright,xright,xleft};
+                    	yArr = new int[]{ytop,ytop,ybottom,ybottom};
+                    	zArr = new int[]{0,0,0,0};
+                    	newVOI.importCurve(xArr, yArr, zArr);
+                        newVOI.getCurves().lastElement().setFixed(true);
+                        VOIVec.add(newVOI);
                     	continue;
                     }
                     else if (inObjectStructure) {
@@ -433,6 +445,50 @@ public class FileJSON extends FileBase {
                     		}
                     		continue;
                     	} // else if (s.trim().startsWith("\"id\":"))
+                    	else if (s.trim().startsWith("\"bbox\":")) {
+                    	    index = s.indexOf(":");
+                    	    s = s.substring(index+1).trim();
+                    	    index = s.indexOf("[");
+                    	    index2 = s.indexOf(",");
+                    	    xleftString = s.substring(index+1,index2).trim();
+                    	    try {
+                    	    	xleft = Integer.valueOf(xleftString).intValue();
+                    	    }
+                    	    catch (NumberFormatException e) {
+                    	        MipavUtil.displayError("Number format exception on xleftString");
+                    	        return null;
+                    	    }
+                    	    s = s.substring(index2+1);
+                    	    index = s.indexOf(",");
+                    	    ytopString = s.substring(0,index).trim();
+                    	    try {
+                    	    	ytop = Integer.valueOf(ytopString).intValue();
+                    	    }
+                    	    catch (NumberFormatException e) {
+                    	        MipavUtil.displayError("Number format exception on ytopString");
+                    	        return null;
+                    	    }
+                    	    s = s.substring(index+1);
+                    	    index = s.indexOf(",");
+                    	    xrightString = s.substring(0,index).trim();
+                    	    try {
+                    	    	xright = Integer.valueOf(xrightString).intValue();
+                    	    }
+                    	    catch (NumberFormatException e) {
+                    	        MipavUtil.displayError("Number format exception on xrightString");
+                    	        return null;
+                    	    }
+                    	    s = s.substring(index+1);
+                    	    index = s.indexOf("]");
+                    	    ybottomString = s.substring(0,index).trim();
+                    	    try {
+                    	    	ybottom = Integer.valueOf(ybottomString).intValue();
+                    	    }
+                    	    catch (NumberFormatException e) {
+                    	        MipavUtil.displayError("Number format exception on ybottomString");
+                    	        return null;
+                    	    }
+                    	} // else if (s.trim().startsWith("\"bbox\":"))
                     } // else if (inObjectStructure)
                     else if ((!inObjectStructure) && ((s.trim().equals("]")) || (s.trim().equals("],")))) {
                     	System.out.println("Finishing image_id = " + image_id + " id = " + id);
@@ -450,6 +506,15 @@ public class FileJSON extends FileBase {
                 		catch (IOException e) {
                 			MipavUtil.displayError("IOException on image["+image_id+"].importData(0,buffer,true)");
                 		}
+                    	newVOI = new VOI((short) id, "id"+id, VOI.CONTOUR, -1.0f);
+                    	xArr = new int[]{xleft,xright,xright,xleft};
+                    	yArr = new int[]{ytop,ytop,ybottom,ybottom};
+                    	zArr = new int[]{0,0,0,0};
+                    	newVOI.importCurve(xArr, yArr, zArr);
+                        newVOI.getCurves().lastElement().setFixed(true);
+                        VOIVec.add(newVOI);
+                        image[image_id].addVOIs(VOIVec);
+                	    VOIVec.clear();
                     	break;
                     }
                 } // else if (inAnnotationsStructure)
