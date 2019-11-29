@@ -2428,17 +2428,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     
     public void openJSONImageFrames() {
     	final ViewOpenFileUI openFile = new ViewOpenFileUI(true);
-        final boolean stackFlag = getLastStackFlag();
 
         // set the filter type to the preferences saved filter
-        int filter = ViewImageFileFilter.TECH;
+        int filter = ViewImageFileFilter.JSON;
 
         try {
             filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
         } catch (final NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so fix it!
-            filter = ViewImageFileFilter.TECH;
+            filter = ViewImageFileFilter.JSON;
             Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, Integer.toString(filter));
         }
 
@@ -2486,7 +2485,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         } catch (final IllegalArgumentException iae) {
 
                             // MipavUtil.displayError("There was a problem with the supplied name.\n" );
-                            Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
+                            Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openJSONImageFrames(). "
                                     + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
                             Preferences.debug("Bad argument.");
                         }
