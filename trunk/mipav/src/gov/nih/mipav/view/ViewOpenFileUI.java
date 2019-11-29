@@ -164,7 +164,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     
     public ArrayList<Vector<String>> openJSON() {
     	 ViewJFrameImage imageFrame;
-         FileIO fileIO;
          Vector<String> images = new Vector<String>();
          ModelImage linkedImage = null;
          ArrayList<Vector<String>> imagesArrayList = new ArrayList<Vector<String>>();
@@ -172,9 +171,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
          // lets set the user defined file filters
          ViewImageFileFilter.setUserDefinedExtensions();
-
-         // address of TIFF header of second image in file if present
-         // for LSM510 image files
 
          // set the filter type to the preferences saved filter
          int filter = 0;
@@ -243,7 +239,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                  int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                  if (returnValue == JFileChooser.APPROVE_OPTION) {
-                     //fileIO = new FileIO();
                      openedFiles = chooser.getSelectedFiles();
                      directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                      UI.setDefaultDirectory(directory);
