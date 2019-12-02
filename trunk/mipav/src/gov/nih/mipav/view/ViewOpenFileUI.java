@@ -254,10 +254,12 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
          
              ModelImage imageArray[] = null;
+             ModelLUT LUTArray[] = null;
              try {
             	 fileName = openedFiles[0].getName();
             	 FileJSON imageFile = new FileJSON(fileName, directory);
             	 imageArray = imageFile.readImage();
+            	 LUTArray = imageFile.getModelLUTArray();
              } catch (IOException e) {
                  MipavUtil.displayError("IOException!");
 
@@ -271,9 +273,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                      return null;
                  }
 
-                 if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY)) {
-                 	//LUT = fileIO.getModelLUT();
-                 }
+                 //if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY)) {
+                 	LUT = LUTArray[k];
+                 //}
                  //modelRGB = fileIO.getModelRGB();
 
                  //readLinkedImage also gets LUT2 and modelRGB2
