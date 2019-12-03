@@ -8,11 +8,9 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Random;
 import java.util.Vector;
 
 
@@ -45,9 +43,6 @@ public class FileJSON extends FileBase {
 
     /** DOCUMENT ME! */
     private ModelLUT LUT[] = null;
-    
-    private static final float MIN_BRIGHTNESS = 0.8f;
-    private Random random = new Random();
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -105,7 +100,6 @@ public class FileJSON extends FileBase {
      */
     public ModelImage[] readImage() throws IOException {
         int i = 0;
-        int j;
         String s;
         boolean readAgain;
         boolean inInfoStructure = false;
@@ -160,10 +154,6 @@ public class FileJSON extends FileBase {
         int yArr[];
         int zArr[];
         int dimExtentsLUT[];
-        Vector<Color> colorVector = new Vector<Color>();
-        boolean find;
-        Color color;
-        Color intColor;
 
         try {
 
@@ -365,31 +355,10 @@ public class FileJSON extends FileBase {
                     	    dimExtentsLUT = new int[2];
                             dimExtentsLUT[0] = 4;
                             dimExtentsLUT[1] = 256;
-                            LUT[lastimage_id] = new ModelLUT(ModelLUT.GRAY, (lastid + 2), dimExtentsLUT);
-                            LUT[lastimage_id].setColor(0,Color.BLACK);
-                            colorVector.clear();
+                            LUT[lastimage_id] = new ModelLUT(ModelLUT.STRIPED, (lastid + 2), dimExtentsLUT);
                             for (i = 1; i <= lastid + 1; i++) {
-                            	find = false;
-                            	do {
-	                                color = createRandomBrightColor();
-	                                int R = (int)(color.getRed());
-	                    			int G = (int)(color.getGreen());
-	                    			int B = (int)(color.getBlue()); 
-	                    			intColor = new Color(R, G, B); //random color, but can be bright or dull
-	                                for (j = 0; j < colorVector.size(); j++) {
-	                                    Color old_color = colorVector.get(j);
-	                                    if (old_color!= null &&  old_color.getRed() == color.getRed() && 
-	                    						old_color.getGreen() == color.getGreen() &&
-	                    						old_color.getBlue() == color.getBlue() ) {
-	                    					find = true;
-	                    					break;
-	                    				}
-	                                }
-                            	} while (find);
-                            	LUT[lastimage_id].setColor(i, intColor);
-                            	VOIVec.get(i-1).setColor(intColor);
+                            	VOIVec.get(i-1).setColor(LUT[lastimage_id].getColor(i));
                             } // for (i = 1; i <= lastid + 1; i++)
-                            LUT[lastimage_id].makeIndexedLUT(null);
                             image[lastimage_id].addVOIs(VOIVec);
                     	    VOIVec.clear();
                     	}
@@ -558,31 +527,10 @@ public class FileJSON extends FileBase {
                         dimExtentsLUT = new int[2];
                         dimExtentsLUT[0] = 4;
                         dimExtentsLUT[1] = 256;
-                        LUT[image_id] = new ModelLUT(ModelLUT.GRAY, (id + 2), dimExtentsLUT);
-                        LUT[image_id].setColor(0,Color.BLACK);
-                        colorVector.clear();
-                        for (i = 1; i <= id + 1; i++) {
-                        	find = false;
-                        	do {
-                                color = createRandomBrightColor();
-                                int R = (int)(color.getRed());
-                    			int G = (int)(color.getGreen());
-                    			int B = (int)(color.getBlue()); 
-                    			intColor = new Color(R, G, B); //random color, but can be bright or dull
-                                for (j = 0; j < colorVector.size(); j++) {
-                                    Color old_color = colorVector.get(j);
-                                    if (old_color!= null &&  old_color.getRed() == color.getRed() && 
-                    						old_color.getGreen() == color.getGreen() &&
-                    						old_color.getBlue() == color.getBlue() ) {
-                    					find = true;
-                    					break;
-                    				}
-                                }
-                        	} while (find);
-                        	LUT[image_id].setColor(i, intColor);
-                        	VOIVec.get(i-1).setColor(intColor);
+                        LUT[image_id] = new ModelLUT(ModelLUT.STRIPED, (id + 2), dimExtentsLUT);
+                        for (i = 1; i <= id + 1; i++) {	
+                        	VOIVec.get(i-1).setColor(LUT[image_id].getColor(i));
                         } // for (i = 1; i <= id + 1; i++)
-                        LUT[image_id].makeIndexedLUT(null);
                         image[image_id].addVOIs(VOIVec);
                 	    VOIVec.clear();
                     	break;
@@ -639,13 +587,5 @@ public class FileJSON extends FileBase {
       
         return tempString.trim();
     }
-
-	 private Color createRandomBrightColor() {
-	        float h = random.nextFloat();
-	        float s = random.nextFloat();
-	        float b = MIN_BRIGHTNESS + ((1f - MIN_BRIGHTNESS) * random.nextFloat());
-	        Color c = Color.getHSBColor(h, s, b);
-	        return c;
-	    }
 
 }
