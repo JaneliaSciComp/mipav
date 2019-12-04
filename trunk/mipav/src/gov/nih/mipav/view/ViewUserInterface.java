@@ -4,6 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.plugins.*;
 import gov.nih.mipav.util.NativeLibraryLoader;
 import gov.nih.mipav.util.ThreadUtil;
+import gov.nih.mipav.model.algorithms.AlgorithmHistogram;
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
 import gov.nih.mipav.model.file.*;
@@ -2460,35 +2461,40 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 // if the SaveAllOnSave preference flag is set, then
                 // load all the files associated with this image (VOIs, LUTs, etc.)
-                if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
-                    final Enumeration<String> e = openImageNames.elements();
+                final Enumeration<String> e = openImageNames.elements();
 
-                    while (e.hasMoreElements()) {
+                while (e.hasMoreElements()) {
 
-                        try {
-                            final String name = e.nextElement();
-                            final ModelImage img = this.getRegisteredImageByName(name);
+                    try {
+                        final String name = e.nextElement();
+                        final ModelImage img = this.getRegisteredImageByName(name);
 
-                            // get frame for image
-                            final ViewJFrameImage imgFrame = img.getParentFrame();
+                        // get frame for image
+                        final ViewJFrameImage imgFrame = img.getParentFrame();
 
-                            // if the image size was changed to FLOAT, then don't
-                            // load any luts (chances are they won't work)
-                            if ( !sizeChanged) {
+                        // if the image size was changed to FLOAT, then don't
+                        // load any luts (chances are they won't work)
+                        if ( !sizeChanged) {
 
-                                // load any luts
-                                imgFrame.loadLUT(true, true);
-                            }
-
-                            // load any vois
-                            imgFrame.loadAllVOIs(true);
-                        } catch (final IllegalArgumentException iae) {
-
-                            // MipavUtil.displayError("There was a problem with the supplied name.\n" );
-                            Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openJSONImageFrames(). "
-                                    + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
-                            Preferences.debug("Bad argument.");
+                            // load any luts
+                            imgFrame.loadLUT(true, true);
                         }
+
+                        // load any vois
+                        imgFrame.loadAllVOIs(true);
+                        ViewJComponentEditImage comp = imgFrame.getComponentImage();
+                        ModelLUT lut = comp.getLUTa();
+                        JPanelHistogram histoPanel = new JPanelHistogram(img, lut, true);
+                        histoPanel.resetHistoLUT();
+                        histoPanel.disposeLocal();
+                        histoPanel = null;
+                        imgFrame.updateImages(lut, null, true, -1);
+                    } catch (final IllegalArgumentException iae) {
+
+                        // MipavUtil.displayError("There was a problem with the supplied name.\n" );
+                        Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openJSONImageFrames(). "
+                                + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
+                        Preferences.debug("Bad argument.");
                     }
                 }
             }
