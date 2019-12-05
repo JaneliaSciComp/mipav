@@ -114,8 +114,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
             "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files", "User Defined", "R-table (*.rtb)",
             "Data provenance (*.xmp)", // NLT
             "TIFF files (*.tif; *.tiff)", "DicomMatrix file (*.dicomMatrix)",
-            "Fiber Files (*.dat; *.vtk; *.vtp)",
-            "JSON (*.json)"}; // FIBER
+            "Fiber Files (*.dat; *.vtk; *.vtp)", // FIBER
+            "JSON (*.json)"}; 
 
     /** short description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
