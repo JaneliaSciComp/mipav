@@ -437,7 +437,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         doPwiSaveOutputFiles = pwiSaveOutputFilesCheckbox.isSelected();
         
         doArtifactCleanup = artifactCleanupCheckbox.isSelected();
-        meanThreshold = Integer.parseInt(meanThresholdField.getText());
+        meanThreshold = Float.parseFloat(meanThresholdField.getText());
         artifactCloseIter = Integer.parseInt(artifactCloseIterField.getText());
         artifactCloseSize = Float.parseFloat(artifactCloseSizeField.getText());
         
