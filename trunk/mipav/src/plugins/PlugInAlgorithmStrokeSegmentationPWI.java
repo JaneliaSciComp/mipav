@@ -2228,6 +2228,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 
         // close
 //        close(maskImg, artifactCloseIter, artifactCloseSize, false);
+        
+     // fill holes
+        fillHoles(maskImg);
 
         short[] maskBuffer = new short[volLength];
         short[] processBuffer = new short[volLength];
