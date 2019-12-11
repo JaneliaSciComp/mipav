@@ -127,6 +127,12 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private JTextField artifactCloseSizeField;
     private float artifactCloseSize = 6f;
     
+    private JCheckBox perfusionSymmetryRemovalCheckbox;
+    private boolean doPerfusionSymmetryRemoval = true;
+    
+    private JTextField minPerfusionObjectSizeField;
+    private int minPerfusionObjectSize = 100;
+    
     private PlugInAlgorithmStrokeSegmentationPWI segAlgo = null;
     
     private boolean isDicomListenerRun = false;
@@ -441,6 +447,9 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         artifactCloseIter = Integer.parseInt(artifactCloseIterField.getText());
         artifactCloseSize = Float.parseFloat(artifactCloseSizeField.getText());
         
+        doPerfusionSymmetryRemoval = perfusionSymmetryRemovalCheckbox.isSelected();
+        minPerfusionObjectSize = Integer.parseInt(minPerfusionObjectSizeField.getText());
+        
         return true;
     }
 
@@ -455,7 +464,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             segAlgo = new PlugInAlgorithmStrokeSegmentationPWI(dwiImage, adcImage, pwiImage, adcThreshold, doFilter, doCerebellumSkip, cerebellumSkipSliceMax, 
             		doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, 
             		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles, doArtifactCleanup,
-            		meanThreshold, artifactCloseSize, artifactCloseIter);
+            		meanThreshold, artifactCloseSize, artifactCloseIter, doPerfusionSymmetryRemoval, minPerfusionObjectSize);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -846,6 +855,32 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(artifactCloseIterField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        perfusionSymmetryRemovalCheckbox = new JCheckBox("Perform symmetry removal on perfusion mask", doPerfusionSymmetryRemoval);
+        perfusionSymmetryRemovalCheckbox.setForeground(Color.black);
+        perfusionSymmetryRemovalCheckbox.setFont(serif12);
+        mainPanel.add(perfusionSymmetryRemovalCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        JLabel labelPerfSize = new JLabel("Minimum size of perfusion mask objects");
+        labelPerfSize.setForeground(Color.black);
+        labelPerfSize.setFont(serif12);
+        mainPanel.add(labelPerfSize, gbc);
+        
+        minPerfusionObjectSizeField = new JTextField(10);
+        minPerfusionObjectSizeField.setText("" + minPerfusionObjectSize);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(minPerfusionObjectSizeField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;

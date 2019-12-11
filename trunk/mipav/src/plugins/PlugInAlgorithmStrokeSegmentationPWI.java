@@ -130,6 +130,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private float artifactCloseSize = 6f;
     private int artifactCloseIter = 1;
     
+    private boolean doPerfusionSymmetryRemoval = true;
+    private int minPerfusionObjectSize = 100;
+    
     /**
      * Constructor.
      *
@@ -139,7 +142,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     public PlugInAlgorithmStrokeSegmentationPWI(ModelImage dwi, ModelImage adc, ModelImage pwi, int threshold, boolean anisoFilter, boolean cerebellumSkip,
     		int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj,
     		int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir, boolean pwiMultiThreading, boolean pwiCalculateCorrelation,
-    		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs, boolean doArtifactCleanup, float artMean, float artCloseSize, int artCloseIter) {
+    		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs, boolean doArtifactCleanup, float artMean, float artCloseSize, int artCloseIter,
+    		boolean doPerfSymmetry, int minPerfSize) {
         super();
         
         dwiImage = dwi;
@@ -180,6 +184,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         artifactMeanThreshold = artMean;
         artifactCloseSize = artCloseSize;
         artifactCloseIter = artCloseIter;
+        
+        doPerfusionSymmetryRemoval = doPerfSymmetry;
+        minPerfusionObjectSize = minPerfSize;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
     }
@@ -1655,6 +1662,28 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
     }
     
+    private void open25D(ModelImage img) {
+        int kernel = AlgorithmMorphology25D.CONNECTED4;
+        float kernelSize = 1f; // mm
+        int itersD = 2;
+        int itersE = 2;
+        boolean wholeImg = true;
+
+        try {
+
+            // Make algorithm
+            AlgorithmMorphology25D closeAlgo25D = new AlgorithmMorphology25D(img, kernel, kernelSize, AlgorithmMorphology25D.OPEN, itersD, itersE, 0, 0, wholeImg);
+
+            // closeAlgo25D.addListener(this);
+
+            closeAlgo25D.run();
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Open: unable to allocate enough memory");
+
+            return;
+        }
+    }
+    
     private void close(ModelImage img, int iters, float size, boolean do25D) {
         // allow for closing to be skipped
         if (iters == 0) {
@@ -1914,6 +1943,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         firstPwiVol.disposeLocal();
         
         ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiThreshold);
+        cleanupMask(pwiSegImg, doPerfusionSymmetryRemoval, minPerfusionObjectSize);
         
         // combine perfusion mask with Tmax and save lightbox
         ModelImage perfLightbox = generateLightbox(TmaxRegImage, pwiSegImg, pwiLightboxColor, lightboxOpacity, true);
@@ -2126,7 +2156,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         float fillValue = 0.0f;
         boolean pad = false;
 
-        AlgorithmTransform transform = new AlgorithmTransform(imgToTransform, transformation, AlgorithmTransform.NEAREST_NEIGHBOR, xresA, yresA, zresA, xdimA,
+        AlgorithmTransform transform = new AlgorithmTransform(imgToTransform, transformation, AlgorithmTransform.TRILINEAR, xresA, yresA, zresA, xdimA,
                 ydimA, zdimA, true, false, pad);
 
         transform.setUpdateOriginFlag(true);
@@ -2222,6 +2252,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 maskImg.set(i, 0);
             }
         }
+        
+        saveImageFile(maskImg, coreOutputDir, outputBasename + "_pwi_brain_mask", FileUtility.XML);
 
         // open - try to disconnect any artifacts from the brain mask
         open(maskImg);
@@ -2280,5 +2312,121 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         //saveImageFile(maskImg, coreOutputDir, outputBasename + "_pwi_brain_mask", FileUtility.XML);
         
         return maskImg;
+    }
+    
+    private void cleanupMask(ModelImage maskImg, boolean doSymmetryRemoval, int minObjSize) {
+        final int[] extents = maskImg.getExtents();
+        final int sliceLength = extents[0] * extents[1];
+        final int volLength = sliceLength * extents[2];
+        
+        short[] removedBuffer = null;
+        short[] maskBuffer = null;
+        
+        // TODO cleanup mask by removing voxels that are symmetric across the image center
+        if (doSymmetryRemoval) {
+            if (removedBuffer == null) {
+                removedBuffer = new short[volLength];
+            }
+            
+            if (maskBuffer == null) {
+                maskBuffer = new short[volLength];
+                
+                try {
+                    maskImg.exportData(0, volLength, maskBuffer);
+                } catch (IOException error) {
+                    maskBuffer = null;
+                    displayError("Error on mask export for cleanup: " + maskImg.getImageName());
+                    setCompleted(false);
+                }
+            }
+            
+            // if values are mirrored across the the l->r of the image, cancel them out.  core values should only be on one side, while the cerebelum will have values on both sides
+            for (int iZ = 0; iZ < extents[2]; iZ++) {
+                for (int iY = 0; iY < extents[1]; iY++) {
+                    for (int iX = 0; iX < extents[0] / 2; iX++) {
+                        int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
+                        int mirroredIndex = (iZ * sliceLength) + (iY * extents[0]) + (extents[0] - iX - 1);
+                        
+                        if (maskBuffer[index] > 0 && maskBuffer[mirroredIndex] > 0) {
+//                            threshBuffer[index] = 0;
+//                            threshBuffer[mirroredIndex] = 0;
+                            
+                            removedBuffer[index] = 1;
+                            removedBuffer[mirroredIndex] = 1;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // remove objects below a certain size
+        if (minObjSize > 0) {
+            if (removedBuffer == null) {
+                removedBuffer = new short[volLength];
+            }
+            
+            if (maskBuffer == null) {
+                maskBuffer = new short[volLength];
+                
+                try {
+                    maskImg.exportData(0, volLength, maskBuffer);
+                } catch (IOException error) {
+                    maskBuffer = null;
+                    displayError("Error on mask export for cleanup: " + maskImg.getImageName());
+                    setCompleted(false);
+                }
+            }
+            
+            short[] processBuffer = new short[volLength];
+    
+            MaskObject[] objects = findObjects(maskImg, maskBuffer, processBuffer, minObjSize, 10000000);
+    
+            if (objects.length > 0) {
+                for (int i = 0; i < processBuffer.length; i++) {
+                    for (int curObjNum = 0; curObjNum < objects.length; curObjNum++) {
+                        if (processBuffer[i] == objects[curObjNum].id) {
+                            maskBuffer[i] = 1;
+                            removedBuffer[i] = 0;
+                        } else {
+                            maskBuffer[i] = 0;
+                            removedBuffer[i] = 1;
+                        }
+                    }
+                }
+            }
+            
+            try {
+                maskImg.importData(0, maskBuffer, true);
+            } catch (IOException error) {
+                maskBuffer = null;
+                displayError("Error on mask cleanup importData");
+                setCompleted(false);
+            }
+        }
+
+        if (removedBuffer != null) {
+            try {
+                maskImg.importData(0, removedBuffer, true);
+            } catch (IOException error) {
+                removedBuffer = null;
+                displayError("Error on mask cleanup importData");
+                setCompleted(false);
+            }
+            
+            saveImageFile(maskImg, coreOutputDir, outputBasename + "_mask_cleanup_removed", FileUtility.XML);
+            removedBuffer = null;
+            
+            if (maskBuffer != null) {
+                try {
+                    maskImg.importData(0, maskBuffer, true);
+                } catch (IOException error) {
+                    maskBuffer = null;
+                    displayError("Error on mask cleanup importData");
+                    setCompleted(false);
+                }
+            }
+        }
+        
+        saveImageFile(maskImg, coreOutputDir, outputBasename + "_mask_cleaned", FileUtility.XML);
     }
 }
