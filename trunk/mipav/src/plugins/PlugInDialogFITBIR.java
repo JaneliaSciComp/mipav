@@ -517,15 +517,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // revert to default if there is a problem with the output dir
                 if (!(new File(cmdLineOutputDir)).exists()) {
                     System.err.println("Command line output dir does not exist (" + cmdLineOutputDir + "), reverting to default.");
-                    outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+                    outputDirBase = getNonCollidingNumberedFilePath(outputDirBase + File.separator + csvFile.getName(), 2) + File.separator;
                 } else if (!(new File(cmdLineOutputDir)).canWrite()) {
                     System.err.println("Command line output dir is not writable (" + cmdLineOutputDir + "), reverting to default.");
-                    outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+                    outputDirBase = getNonCollidingNumberedFilePath(outputDirBase + File.separator + csvFile.getName(), 2) + File.separator;
                 } else {
-                    outputDirBase = cmdLineOutputDir + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+                    outputDirBase = getNonCollidingNumberedFilePath(cmdLineOutputDir + File.separator + csvFile.getName(), 2) + File.separator;
                 }
             } else {
-                outputDirBase = outputDirBase + File.separator + csvFile.getName() + "_-_" + System.currentTimeMillis() + File.separator;
+                outputDirBase = getNonCollidingNumberedFilePath(outputDirBase + File.separator + csvFile.getName(), 2) + File.separator;
             }
             outputDirTextField.setText(outputDirBase);
 
@@ -2664,7 +2664,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         continue;
                     }
                 } else if (problemTags != null && problemTags.size() > 0) {
-                    // TODO when running from the cmd line, still make note of problematic tags in output
+                    // when running from the cmd line, still make note of problematic tags in output
                     System.err.println("Tags potentially containing PII/PHI found (" + csvProblemFileDirList.get(j) + File.separator + csvProblemFileNameList.get(j) + ":");
                     System.err.format("%-14s%-40s%s%n", "DICOM tag", "Name", "Value");
                     for (FileDicomTag tag : problemTags) {
@@ -9341,7 +9341,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
     }
     
-    
     private String guessPulseSeqFromFileName(final String imgFileName) {
         // TODO pulse seq from BIDS spec not mapped yet:
 //        T1 Rho map  T1rho   Quantitative T1rho brain imaging
@@ -9373,5 +9372,25 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
         
         return pulseSeq;
+    }
+    
+    private String getNonCollidingNumberedFilePath(String file, int digits) {
+        int num = 1;
+        
+        File curFile = null;
+        
+        boolean done = false;
+        while (!done) {
+            String paddedNum = String.format("%02d", num);
+            curFile = new File(file + "__" + paddedNum);
+            
+            if (curFile.exists()) {
+                num++;
+            } else {
+                done = true;
+            }
+        }
+        
+        return curFile.getPath();
     }
 }
