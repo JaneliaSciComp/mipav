@@ -6986,7 +6986,7 @@ public class libdt extends AlgorithmBase {
 	 * \see learnWithSplitting | runHEM
 	 */
 	void runEM(DytexMix dtm, Vector<Mat[]> Yin, EMOptions emopt) {
-		/*int i,j;
+		/*int i,j,r,c;
 		long elapsedtime;	
 		//used to display info in change in classes during EM loop
 		int numlastclasses=5;			
@@ -7096,7 +7096,7 @@ public class libdt extends AlgorithmBase {
 		}
 		int lastclassesind = 0;
 		Mat Z;
-		Mat logZ;
+		Mat logZ = new Mat();
 
 		//initialize blanks
 		Vector<Double>blank = new Vector<Double>();
@@ -7125,8 +7125,8 @@ public class libdt extends AlgorithmBase {
 			//state expectation
 		    Vector<Vector<Mat> > xthat = new Vector<Vector<Mat>>();
 			//state covariance
-			Vector<Mat> Vthat = new Vector<Mat>();
-			Vector Vtt1hat = new Vector<Mat>();
+			Vector<Mat[]> Vthat = new Vector<Mat[]>();
+			Vector<Mat[]> Vtt1hat = new Vector<Mat[]>();
 			//log-likelihoods of each Y
 			Mat LL = new Mat(N,K,CV_64F);
 
@@ -7147,87 +7147,102 @@ public class libdt extends AlgorithmBase {
 				{
 					//compute likelihood of each video for this cluster
 					Vector<Mat> xt = new Vector<Mat>();
-					Mat Vt,Vtt1;
+					Mat Vt[];
+					Mat Vtt1[];
 					Mat tmpL;
 					Dytex test1=dtm.dt.get(j);
 					//conditional state inference using Kalman smoothing filter
-					DytexKalmanFilter::dytex_kalman(Y, dtm.dt.get(j), di3opt,xt,Vt,Vtt1,tmpL);	
-					xthat.push_back(xt);
-					Vthat.push_back(Vt);
-					Vtt1hat.push_back(Vtt1);
-					LL.col(j) = tmpL.t() + log(alpha[j]);
+					dytex_kalman(Y, dtm.dt.get(j), di3opt,xt,Vt,Vtt1,tmpL);	
+					xthat.add(xt);
+					Vthat.add(Vt);
+					Vtt1hat.add(Vtt1);
+					for (r = 0; r < LL.rows; r++) {
+					    LL.double2D[r][j] = tmpL.double2D[0][r] + Math.log(dtm.alpha.get(j));
+					}
 				}
-				else
-				{
-					LL.col(j) = (double)(-1e300); // a very small number...
+				else {
+			        for (r = 0; r < LL.rows;r++) {
+					    LL.double2D[r][j] = -1e300; // a very small number...
+			        }
 				}				
 			}
 					
 			//% soft assignment and data likelihood (no constraints)
-			Mat tmp = (logtrick(LL.t())).t();				
-			logZ.create(tmp.rows,K,OPT_MAT_TYPE);
-			for(int j=0;j<K;j++)
+			Mat tmp = transpose(logtrick(transpose(LL)));				
+			logZ.create(tmp.rows,K,CV_64F);
+			for(j=0;j<K;j++)
 			{
-				logZ.col(j) = LL.col(j) - tmp;
+				for (r = 0; r < logZ.rows; r++) {
+				    logZ.double2D[r][j] = LL.double2D[r][j] - tmp.double2D[r][0];
+				}
 			}
-			Scalar stmp=sum(tmp);
-			datalikelihood[iter] = stmp[0];
-			exp(logZ,Z);		
+			double stmp = 0.0;
+			for (r = 0; r < tmp.rows; r++) {
+				stmp += tmp.double2D[r][0];
+			}
+			datalikelihood.set(iter,stmp);
+			Z = new Mat(logZ.rows,logZ.cols,CV_64F);
+			for (r = 0; r < logZ.rows; r++) {
+				for (c = 0; c < logZ.cols;c++) {
+					Z.double2D[r][c] = Math.exp(logZ.double2D[r][c]);
+				}
+			}		
 
-			if (FlagVerbose >= 2)
-				cout<<endl;
+			if (FlagVerbose == Verbose_mode.VERBOSE)
+				System.out.println();
 
 			//hard assignment
-			classes.clear();
-			for(int i=0;i<Z.rows;i++)
+			dtm.classes.clear();
+			for(i=0;i<Z.rows;i++)
 			{
-				double min,max;
-				Point minL,maxL;
-				minMaxLoc(Z.row(i),&min,&max,&minL,&maxL);				
-				classes.push_back(maxL.x+1);
+				double max = Z.double2D[i][0];
+				int maxL = 0;
+				for (c = 1; c < Z.cols; c++) {
+					if (Z.double2D[i][c] > max) {
+						max = Z.double2D[i][c];
+						maxL = c;
+					}
+				}				
+				dtm.classes.add(maxL+1);
 			}
 
 			//Check Convergence
 			if(iter>0)
 			{
 				//compute change in log-likelihood
-				ddLL=datalikelihood[iter]-datalikelihood[iter-1];
-				dpLL=abs(ddLL/datalikelihood[iter-1]);
+				ddLL=datalikelihood.get(iter)-datalikelihood.get(iter-1);
+				dpLL=Math.abs(ddLL/datalikelihood.get(iter-1));
 			}
 			else
 			{
-				ddLL = INF;
-				dpLL = INF;			
+				ddLL = Double.MAX_VALUE;
+				dpLL = Double.MAX_VALUE;			
 				
 			}
 			//class assignment info
-			lastclasses[lastclassesind]=classes;
+			lastclasses.set(lastclassesind,dtm.classes);
 
 			//count the number of class changes
-			std::vector<int> dclass;
+			Vector<Integer> dclass = new Vector<Integer>();
 			for(int ii=0;ii<numlastclasses;ii++)
 			{
 				int sum=0;
-				for(int i=0;i<lastclasses[0].size();i++)
+				for(i=0;i<lastclasses.get(0).size();i++)
 				{
-					if(lastclasses[ii][i]!=lastclasses[lastclassesind][i])
+					if(lastclasses.get(ii).get(i)!=lastclasses.get(lastclassesind).get(i))
 						sum++;
 				}
-				dclass.push_back(sum);
+				dclass.add(sum);
 			}
 
-			string dclassstr="";			
-			for(int i=lastclassesind+1;i<numlastclasses;i++)
+			String dclassstr="";			
+			for(i=lastclassesind+1;i<numlastclasses;i++)
 			{
-				stringstream ss;
-				ss<<dclass[i];
-				dclassstr=dclassstr+ss.str()+" ";
+				dclassstr=dclassstr+String.valueOf(dclass.get(i))+" ";
 			}
-			for(int i=0;i<lastclassesind;i++)
+			for(i=0;i<lastclassesind;i++)
 			{
-				stringstream ss;
-				ss<<dclass[i];
-				dclassstr=dclassstr+ss.str()+" ";
+				dclassstr=dclassstr+String.valueOf(dclass.get(i))+" ";
 			}
 
 			//% lastclassind points to the oldest classes
@@ -7237,35 +7252,28 @@ public class libdt extends AlgorithmBase {
 
 
 			//output strings
-			stringstream ss2;
-			ss2<<"dclass = "<<dclassstr;
-			string outstr2=ss2.str();
-			string outstr1s;
-			string outstr3;		
-			stringstream ss3;					
-			ss3<<"L= "<<datalikelihood[iter]<<" (pL= "<<dpLL<<")";
-			outstr1s=ss3.str();		
-			if(FlagVerbose==1)
+			String outstr2 = "dclass = " + dclassstr;
+			String outstr1s = "L= " + datalikelihood.get(iter) + " (pL= " + dpLL + ")";
+			String outstr3;			
+			if(FlagVerbose==Verbose_mode.COMPACT)
 			{
-				stringstream ss3;
-				ss3<<"iter= "<<iter+1<<"; "<<outstr1s<<"; "<<outstr2<<";  ";
-				outstr3=ss3.str();
-				cout<<outstr3<<endl;
+				outstr3="iter= "+(iter+1)+"; " + outstr1s + "; " + outstr2 + ";  ";
+				System.out.println(outstr3);
 			}
-			else if(FlagVerbose>=2)
+			else if(FlagVerbose==Verbose_mode.VERBOSE)
 			{			
-				cout<<outstr2<<endl;
+				System.out.println(outstr2);
 			}
 			// check if negative change in log-likelihood!
 			if (ddLL<0)
 			{
-				cout<<"WARNING -- change in log likelihood is negative???"<<endl;	
+				System.out.println("WARNING -- change in log likelihood is negative???");	
 			}	
 
 
 			//%%% check convergence conditions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			int breakout = 0;
-			string termstr;
+			String termstr;
 			if (iter >= emopt.maxiter)
 			{
 				termstr = "***** done -- max iter reached\n";
@@ -7280,15 +7288,15 @@ public class libdt extends AlgorithmBase {
 			}
 				
 			//%%% convergence condition was reached... %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			if (breakout)
+			if (breakout != 0)
 			{
-				if (FlagVerbose >= 1)
+				if (FlagVerbose != Verbose_mode.QUIET)
 				{
-					if (FlagVerbose == 1)
+					if (FlagVerbose == Verbose_mode.COMPACT)
 					{
-						cout<<endl;				
+						System.out.println();				
 					}
-					cout<<termstr<<endl;
+					System.out.println(termstr);
 				}	
 				break;
 			}
@@ -7299,110 +7307,132 @@ public class libdt extends AlgorithmBase {
 			//total soft assignments per cluster
 			Mat Nhat;
 			reduce(Z,Nhat,0,CV_REDUCE_SUM);
-			tmp=Nhat/((double)N);		
-			for(int i=0;i<alpha.size();i++)
-				alpha[i]=tmp.at<OPT_F_TYPE>(0,i);
+			tmp=divide(Nhat,((double)N));		
+			for(i=0;i<dtm.alpha.size();i++)
+				dtm.alpha.set(i,tmp.double2D[0][i]);
 
 			
 			//%%% loop through each cluster and compute aggregate statistics%%%
-			for(int j=0;j<K;j++)
+			for(j=0;j<K;j++)
 			{		
 				//output of Kalman filters
-				std::vector<Mat> jxthat;
+				Vector<Mat> jxthat = new Vector<Mat>();
 				Mat jYmean;
 				Mat jz;
 				Mat PhiAll,Phi,sphi,Psi,Lambda,Gamma,Eta,Xi;
 				//check if this is cluster is blank
-				if(alpha[j]<=MINPROB)
+				if(dtm.alpha.get(j)<=MINPROB)
 				{
-					blank[j]=1;
-					dt[j].isempty=true;
-					if (FlagVerbose >= 1)
-						cout<<"blank";
+					blank.set(j,1.0);
+					dtm.dt.get(j).isempty=true;
+					if (FlagVerbose != Verbose_mode.QUIET)
+						System.out.println("blank");
 				}			
 				else // % --- standard M-step: learn the parameters -------------------------
 				{
 					//get output of Kalman filters
-					jxthat=xthat[j];
-					Mat jVthat=Vthat[j];
-					Mat jVtt1hat=Vtt1hat[j];
-					jz=Z.col(j);
-					double jN=Nhat.at<OPT_F_TYPE>(0,j);
+					jxthat=xthat.get(j);
+					Mat jVthat[]=Vthat.get(j);
+					Mat jVtt1hat[]=Vtt1hat.get(j);
+					jz = new Mat(Z.rows,1,CV_64F);
+					for (r = 0; r < Z.rows; r++) {
+					    jz.double2D[r][0]=Z.double2D[r][j];
+					}
+					double jN=Nhat.double2D[0][j];
 
-					if(FlagYmean)
-						jYmean=dt[j].Ymean;
+					if(FlagYmean == Ymean_type.NONZERO_YMEAN)
+						jYmean=dtm.dt.get(j).Ymean;
 
 					//compute aggregated statistics %%%
 					//% Initialize Phi and phi
-					PhiAll=Mat::zeros(n,n,OPT_MAT_TYPE);
-					Phi=Mat::zeros(n,n,OPT_MAT_TYPE); // varphi
-					sphi=Mat::zeros(n,n,OPT_MAT_TYPE); //lowercase phi
+					PhiAll=new Mat(n,n,CV_64F);
+					Phi=new Mat(n,n,CV_64F); // varphi
+					sphi=new Mat(n,n,CV_64F); //lowercase phi
 
-					Mat tmp1;
-					MatVid::reduce(jVthat,tmp1,CV_REDUCE_SUM);
-					Mat tmp1a = tmp1 - MatVid::frame(jVthat,0);
-					Mat tmp1b = tmp1 - MatVid::frame(jVthat,jVthat.size[0]-1);
+					Mat tmp1 = new Mat();
+					reduce(jVthat,tmp1,CV_REDUCE_SUM);
+					Mat tmp1a = minus(tmp1,jVthat[0]);
+					Mat tmp1b = minus(tmp1,jVthat[jVthat.length-1]);
 
 					//Initialize Psi
-					Psi=Mat::zeros(n,n,OPT_MAT_TYPE);
-					Mat tmp3;
-					MatVid::reduce(jVtt1hat,tmp3,CV_REDUCE_SUM);
+					Psi=new Mat(n,n,CV_64F);
+					Mat tmp3 = new Mat();
+					reduce(jVtt1hat,tmp3,CV_REDUCE_SUM);
 
 					//Initialize Gamma and Lambda
-					Gamma = Mat::zeros(dy,n,OPT_MAT_TYPE);
+					Gamma = new Mat(dy,n,CV_64F);
 
-					switch(opt.Ropt)
+					switch(dtm.opt.Ropt)
 					{
-					case CovMatrix::COV_IID:
-						Lambda.create(1,1,OPT_MAT_TYPE);
-						Lambda=Scalar(0);
+					case COV_IID:
+						Lambda = new Mat(1,1,CV_64F);
 						break;
 					default:
-						CV_Error(-1,"TO DO");
+						MipavUtil.displayError("TO DO");
+						System.exit(-1);
 					}
 
 					//Initialize Xi
-					Xi = Mat::zeros(n,1,OPT_MAT_TYPE);
+					Xi = new Mat(n,1,CV_64F);
 					//Initialize Eta
-					Eta = Mat::zeros(n,n,OPT_MAT_TYPE);
+					Eta = new Mat(n,n,CV_64F);
 
 					// aggregate over all samples     
-					for(int i=0;i<N;i++)
+					for(i=0;i<N;i++)
 					{
 						//current X and Y and Z
-						Mat myx=jxthat[i];
+						Mat myx=jxthat.get(i);
 						Mat myy;
 						double myz;
-						Mat tmpM(dy,tau,OPT_MAT_TYPE);
-						for(int p=0;p<Y.size[0];p++)
-							for(int q=0;q<Y.size[1];q++)
-								tmpM.at<OPT_F_TYPE>(q,p)=Y.at<OPT_F_TYPE>(p,q,i);
+						Mat tmpM = new Mat(dy,tau,CV_64F);
+						for(int p=0;p<Y.length;p++)
+							for(int q=0;q<Y[0].rows;q++)
+								tmpM.double2D[q][p]=Y[p].double2D[q][i];
 
-						if (FlagYmean)
+						if (FlagYmean  == Ymean_type.NONZERO_YMEAN)
 						{							
-							Mat tmpM2;
+							Mat tmpM2 = new Mat();
 							repeat(jYmean,1,tau,tmpM2);
-							myy=tmpM-tmpM2;
+							myy=minus(tmpM,tmpM2);
 						}
 						else
 						{
 							myy=tmpM;
 						}
 
-						myz=jz.at<OPT_F_TYPE>(i,0);
+						myz=jz.double2D[i][0];
 
 						// update Phi and phi
-						Mat tmp2 = myx*myx.t();
-						Mat tmp2a = tmp2 - myx.col(0)*(myx.col(0)).t();
-						Mat tmp2b = tmp2 - myx.col(myx.cols-1)*(myx.col(myx.cols-1)).t();
+						Mat tmp2 = times(myx,transpose(myx));
+						Mat myxcol = new Mat(myx.rows,1,CV_64F);
+						for (r = 0; r < myx.rows; r++) {
+							myxcol.double2D[r][0] = myx.double2D[r][0];
+						}
+						Mat tmp2a = minus(tmp2,times(myxcol,transpose(myxcol)));
+						for (r = 0; r < myx.rows; r++) {
+							myxcol.double2D[r][0] = myx.double2D[r][myx.cols-1];
+						}
+						Mat tmp2b = minus(tmp2,times(myxcol,transpose(myxcol)));
 
-						Phi    = Phi    + myz*(tmp1a+tmp2a);
-						sphi   = sphi   + myz*(tmp1b+tmp2b);
-						PhiAll = PhiAll + myz*(tmp1+tmp2);
+						Phi    = plus(Phi,times(plus(tmp1a,tmp2a),myz));
+						sphi   = plus(sphi,times(plus(tmp1b,tmp2b),myz));
+						PhiAll = plus(PhiAll,times(plus(tmp1,tmp2),myz));
 
-						// update Psi			
-						Mat tmp4 = myx.colRange(Range(1,myx.cols))*((myx.colRange(Range(0,myx.cols-1))).t());
-						Psi = Psi + myz*(tmp3+tmp4);
+						// update Psi
+						Mat myxcol1 = new Mat(myx.rows,myx.cols-1,CV_64F);
+						for (r = 0; r < myx.rows; r++) {
+							for (c = 1; c < myx.cols; c++) {
+								myxcol1.double2D[r][c-1] = myx.double2D[r][c]
+;							}
+						}
+						Mat myxcol0 = new Mat(myx.rows,myx.cols-1,CV_64F);
+						for (r = 0; r < myx.rows; r++) {
+							for (c = 0; c < myx.cols-1; c++) {
+								myxcol0.double2D[r][c] = myx.double2D[r][c]
+;							}
+						}
+						Mat tmp4 = times(myxcol1,transpose(myxcol0));
+						Psi = plus(Psi,times(plus(tmp3,tmp4),myz));
 
 						//Gamma and Lambda
 						Gamma = Gamma + myz*(myy*myx.t());
@@ -7535,8 +7565,8 @@ public class libdt extends AlgorithmBase {
 				cout<<alpha[i]<<"  ";
 
 			cout<<endl;
-		}
-		*/
+		}*/
+		
 	}
 
 	/*
@@ -8103,5 +8133,426 @@ public class libdt extends AlgorithmBase {
 			}
 		}
 	}
+	
+	 public enum kf_mode {KF_CACHE,       /**< cache filter matrices. */
+			KF_COMPUTE_WITH_CACHE,      /**< compute LL from cache. */
+			KF_COMPUTE_WITHOUT_CACHE    /**< compute LL w/o using cache. */
+			};
+			
+			/** class for running the Kalman filter for dynamic texture inference.
+		    There are two ways to use the class:
+		    1) instantiate with a DT to create a Kalman filter where most matrices are 
+		       pre-computed.  The KF instance can then be used for fast inference;
+		    2) use the static functions to compute inference on a DT.
+		    In general, the first method should be used if the DT will not change and
+		    the KF will be used many times.  The second method should be used if 
+		    inference is required only once before the DT changes.
+		*/
+		class DytexKalmanFilter
+		{
+		  // cache for instantiated Kalman filter
+		  public Mat           cache_Kt;     /**< cache for an instantiated Kalman filter: Kalman gain matrices [n x m x tau]. */
+		  public Mat           cache_detMt;  /**< cache for an instantiated Kalman filter: determinant term [1 x tau]. */
+		  public Mat           cache_invMt;  /**< cache for an instantiated Kalman filter: inverse covariance matrix [m x m x tau]. */
+		  public Dytex         cache_dt[];    /**< cache for an instantiated Kalman filter: DT reference (use a pointer). */
+		}
+		 
+			  //conditional state inference using Kalman smoothing filter
+		/*!
+		 * \brief
+		 * conditional state inference using Kalman smoothing filter.
+		 * 
+		 * \param Y
+		 * cell array of video in format Y(:,i,t) w/ mean subtracted
+		 * 
+		 * \param dt
+		 * dynamic texture.
+		 * 
+		 * \param di3opt
+		 * explicitly subtract mean or not.
+		 * 
+		 * \param xt
+		 * output: state expectation: E(x_t|y_1,...y_tau); (cell array entries for each sequence Y)
+		 * 
+		 * \param Vt
+		 * state covariance: cov(x_t|y_1,...,y_tau); (3-dim matrix)
+		 * 
+		 * \param Vt1
+		 * state covariance: cov(x_t,x_{t-1}|y_1,...,y_tau); (3-dim matrix)
+		 * 
+		 * \param L
+		 * vector of log-likelihoods of videos in Y
+		 * 
+		 * 
+		 * \remarks
+		 * Calculates loglikelihood as well as E-Step statistics
+		 * 
+		 * \see
+		 * DytexMix
+		 */
+	    public void dytex_kalman(Mat Y2[], Dytex dt, String opt,Vector<Mat> xt,Mat Vt[],Mat Vt1[],Mat L) {
+	    	int i,r,c;
+	    	double value;
+	    	Mat Y[] = new Mat[Y2.length];
+	    	for (i = 0; i < Y.length; i++) {
+	    		Y[i] = new Mat();
+	    	}
+	    	copyTo(Y2,Y);
+
+	    	//Set output modes
+	    	boolean doL=true; //compute logliklihood
+	    	boolean doX=true; //also compute stats
+
+	    	Mat A=dt.A;
+	    	Mat C=dt.C;
+	    	Mat Q=dt.Q.mtx;
+	    	int dx=C.cols;
+	    	int dy=C.rows;
+
+	    	Mat Cu;
+	    	Mat Cs = null;
+	    	Mat Cv = null;
+	    	Mat R;
+	    	Mat iR = null;
+	    	Mat CR = null;
+	    	Mat CRC = null;
+	        cov_type Ropt = cov_type.COV_IID;
+	    	Mat mu0 = null;
+	    	Mat V0 = null;
+	    	if(dt.Q.n!=0)
+	    	{
+	    		Ropt=dt.R.covopt;
+	    		switch(Ropt)
+	    		{
+	    			case COV_IID:
+	    				R=dt.R.mtx;
+	    				iR = new Mat(R.rows,R.cols,CV_64F);
+	    				for (r = 0; r < R.rows; r++) {
+	    					for (c = 0; c < R.cols; c++) {
+	    						iR.double2D[r][c] = 1.0/R.double2D[r][c];
+	    					}
+	    				}
+	    				CR=times(transpose(C),iR.double2D[0][0]);
+	    				CRC=times(CR,C);
+	    				if(doL)
+	    				{
+	    					Mat tmpM = new Mat(iR.rows,iR.cols,CV_64F);
+	    					for (r = 0; r < iR.rows; r++) {
+	    						for (c = 0; c < iR.cols; c++) {
+	    							tmpM.double2D[r][c] = Math.sqrt(iR.double2D[r][c]);
+	    						}
+	    					}
+	    					Mat tmpM1=times(C,tmpM.double2D[0][0]);
+	    					Matrix tmpM1Matrix = new Matrix(tmpM1.double2D);
+	    					SingularValueDecomposition svd = new SingularValueDecomposition(tmpM1Matrix);
+	    					Matrix matV = svd.getV();
+	    					double singularValues[] = svd.getSingularValues();
+	    					Matrix matU = svd.getU();
+	    					Cu = new Mat(matU.getArray());	
+	    					Cv= new Mat(matV.getArray());
+	    					Cs= new Mat(singularValues.length,singularValues.length,CV_64F);
+	    					for (r = 0; r < singularValues.length; r++) {
+	    						Cs.double2D[r][r] = singularValues[r];
+	    					}	
+	    				}
+	    				else
+	    				{
+	    					Cv = new Mat(1,1,CV_64F);
+	    					Cv.double2D[0][0] = 1.0;
+	    					Cs = new Mat(1,1,CV_64F);
+	    					Cs.double2D[0][0] = 1.0;
+	    				}
+	    			break;
+
+	    			case COV_DIAG:
+	    				//TO DO
+	    			break;
+
+	    			case COV_FULL:
+	    				//TO DO
+	    			case COV_ILLEGAL:
+	    			break;
+	    		}
+
+	    		mu0=dt.mu0;
+	    		Mat tmpM;
+	    		switch(dt.S0.covopt)
+	    		{
+	    			case COV_DIAG:
+	    				V0 = new Mat(dt.S0.mtx.rows,dt.S0.mtx.rows,dt.S0.mtx.type);
+	    				for (r = 0; r < dt.S0.mtx.rows; r++) {
+	    					V0.double2D[r][r] = dt.S0.mtx.double2D[r][0];
+	    				}	
+	    			break;
+	    			case COV_FULL:
+	    				V0=dt.S0.mtx;				
+	    			break;
+	    			default:
+	    				MipavUtil.displayError("bad Sopt");
+	    				System.exit(-1);
+	    			break;
+	    		}
+	    	}
+
+	    	Mat Ymean=dt.Ymean;
+
+	    	// already in Y(:,i,t) format (mean subtracted too)
+	    	int YN=Y[0].cols;
+	    	int tau=Y.length;
+
+	    	// explicitly subtract mean
+	    	if(opt.substring(0,1).equalsIgnoreCase("y"))
+	    	{
+	    		for(int t=0;t<tau;t++)
+	    		{
+	    			Mat tmpM = new Mat();
+	    			repeat(Ymean,1,YN,tmpM);
+	    			Y[t]=minus(Y[t],tmpM);
+	    		}
+
+	    	}
+	    	
+	    	// special case: n=0
+	    	if  (dt.Q.n==0)  
+	    	{
+	    		//TO DO
+	    	}
+
+	    	//OpenCV implementation of Kalman Filter
+
+	    	//%%% initialize storage %%%%%%%%%%%%%%%%%%%%%%%%%	
+	    	Mat xt1t[] = new Mat[tau];
+	    	for (i = 0; i < tau; i++) {
+	    		xt1t[i] = new Mat(dx,YN,CV_64F);
+	    	}
+	    	Mat xtt[] = new Mat[tau];
+	    	for (i = 0; i < tau; i++) {
+	    		xtt[i] = new Mat(dx,YN,CV_64F);
+	    	}
+	    	int sz2[]={tau,dx,dx};
+	    	Mat Vt1t[] = new Mat[tau];
+	    	for (i = 0; i < tau; i++) {
+	    		Vt1t[i] = new Mat(dx,dx,CV_64F);
+	    	}	
+	    	Mat Vtt[] = new Mat[tau];
+	    	for (i = 0; i < tau; i++) {
+	    		Vtt[i] = new Mat(dx,dx,CV_64F);
+	    	}
+	    	
+	    	Mat Kt;
+	    	if( (Ropt!=cov_type.COV_IID) && (Ropt!=cov_type.COV_DIAG) )
+	    	{
+	    		Kt=new Mat(dx,dy,CV_64F);
+	    	}
+	    	Mat L1= new Mat(1,YN,CV_64F);
+
+	    	 //%%% initialize forward pass %%%%%%%%%%%%%%%%%%%%
+	    	Mat tmpM=xt1t[0];
+	    	Mat tmpM2 = new Mat(dx,1,CV_64F);
+	    	for(i=0;i<YN;i++)
+	    	{
+	    		for (r = 0; r < dx; r++) {
+	    			tmpM.double2D[r][i] = mu0.double2D[r][0];
+	    		}
+	    	}
+	    	tmpM=Vt1t[0];
+	    	copyTo(V0,tmpM);
+
+
+	    	Mat Phi = new Mat();
+	    	//RUN Forward Pass
+	    	for(int t=0;t<tau;t++)
+	    	{
+	    		if(t>0)
+	    		{
+	    			tmpM=xt1t[t];
+	    			tmpM2=times(A,xtt[t-1]);
+	    			copyTo(tmpM2,tmpM);
+
+	    			tmpM=Vt1t[t];
+	    			tmpM2=plus(times(times(A,Vtt[t-1]),transpose(A)),Q);
+	    			copyTo(tmpM2,tmpM);
+	    		}
+
+	    		
+	    		if( (Ropt==cov_type.COV_IID) || (Ropt==cov_type.COV_DIAG) )
+	    		{
+	    			//Using Matrix iNversion lemma
+	    			tmpM=Vt1t[t];
+	    			
+	    			//check if any element is zero 
+	    			boolean flag=true;
+	    			for(i=0;i<tmpM.rows;i++)
+	    				for(int j=0;j<tmpM.rows;j++)
+	    				{
+	    					if(tmpM.double2D[i][j]!=0)
+	    						flag=false;
+	    				}
+	    			if(flag==true)
+	    			{
+	    				copyTo(tmpM,Phi);
+	    			}
+	    			else
+	    			{
+	    				Mat tmpMinv = new Mat((new Matrix(tmpM.double2D)).inverse().getArray());
+	    				tmpM2=plus(tmpMinv,CRC);
+	    				Mat tmpM3=new Mat((new Matrix(tmpM2.double2D)).inverse().getArray());
+	    			    copyTo(tmpM3,Phi);
+	    			}
+	    			
+	    			// expansion using matrix inversion lemma...
+	    			Mat CYCx= minus(times(CR,Y[t]),times(CRC,xt1t[t]));
+	    			xtt[t]=minus(plus(xt1t[t],times(Vt1t[t],CYCx)),times(times(times(Vt1t[t],CRC),Phi),CYCx));						
+
+	    			// expansion using matrix inversion lemma...
+	    			tmpM=Vt1t[t];
+	    		    Vtt[t]=plus(minus(tmpM,times(times(tmpM,CRC),tmpM)),times(times(times(times(tmpM,CRC),Phi),CRC),tmpM));
+	    			tmpM2=Vtt[t];
+
+	    			//% compute the log-likelihood efficiently: p(y_t | y_1,...,y_{t-1})
+	    			if(doL)
+	    			{
+	    				Q = times(times(times(times(Cs,transpose(Cv)),Vt1t[t]),Cv),Cs);
+	    				double[] eigenvalue = new double[Q.cols];
+	    				double[][] eigenvector = new double[Q.rows][Q.cols];
+	    				Eigenvalue.decompose(Q.double2D, eigenvector, eigenvalue);
+	    				double E;
+	    				double term1 = 0.0;
+	    				for (i = 0; i < eigenvalue.length; i++) {
+	    					E = Math.log(eigenvalue[i]+1.0);
+	    					term1 += E;
+	    				}
+	    				
+	    				
+	    				Mat term2 = null;
+	    				Mat YCx=minus(Y[t],times(C,xt1t[t]));
+	    				if(Ropt==cov_type.COV_IID)
+	    				{
+	    					term1 = term1 - dy*Math.log(iR.double2D[0][0]);
+	    					tmpM = new Mat(YCx.rows,YCx.cols,CV_64F);
+	    					for (r = 0; r < YCx.rows; r++) {
+	    						for (c = 0; c < YCx.cols; c++) {
+	    							tmpM.double2D[r][c] = YCx.double2D[r][c]*YCx.double2D[r][c];
+	    						}
+	    					}				
+	    					
+	    					Mat abc2 = new Mat();
+	    					reduce(tmpM,abc2,0,CV_REDUCE_SUM);
+	    					tmpM=abc2;
+
+	    					term2=times(tmpM,iR.double2D[0][0]);
+	    				}
+	    				else
+	    				{
+	    					MipavUtil.displayError("TO DO");
+	    					System.exit(-1);
+	    				}
+	    								
+
+	    				tmpM = times(times(Phi,CYCx),CYCx);				
+	    				Mat abc2 = new Mat();
+	    				reduce(tmpM,abc2,0,CV_REDUCE_SUM);
+	    				tmpM=abc2;
+	    				
+	    				term2=minus(term2,tmpM);
+	    				for (r = 0; r < L1.rows; r++) {
+	    					for (c = 0; c < L1.cols; c++) {
+	    						L1.double2D[r][c] = L1.double2D[r][c] - 0.5*(term1 + term2.double2D[r][c]);
+	    					}
+	    				}
+	    				value = 0.5*(dy*Math.log(2.0*Math.PI)); //% the Gaussian constant
+	    				for (r = 0; r < L1.rows; r++) {
+	    					for (c = 0; c < L1.cols; c++) {
+	    						L1.double2D[r][c] = L1.double2D[r][c] - value;
+	    					}
+	    				}
+	    			}
+	    		}
+	    		else //for Ropt=full, we need to compute normally
+	    		{
+	    			MipavUtil.displayError("TO DO");
+	    			System.exit(-1);
+	    		}
+
+	    	}
+
+	    	if(!doX)
+	    	{
+	    		L=L1;
+	    		return;
+	    	}
+	    	else
+	    	{
+	    		//Backward pass
+	    		Mat xthat[] = new Mat[tau];
+	    		for (i = 0; i < tau; i++) {
+	    			xthat[i] = new Mat(dx,YN,CV_64F);
+	    		}
+	    		Mat Vthat[] = new Mat[tau];
+	    		for (i = 0; i < tau; i++) {
+	    			Vthat[i] = new Mat(dx,dx,CV_64F);
+	    		}
+	    		Mat Vtt1hat[] = new Mat[tau-1];
+	    		for (i = 0; i < tau-1; i++) {
+	    			Vtt1hat[i] = new Mat(dx,dx,CV_64F);
+	    		}
+	    		Mat Jt[] = new Mat[tau];
+	    		for (i = 0; i < tau; i++) {
+	    			Jt[i] = new Mat(dx,dx,CV_64F);
+	    		}
+
+	    		//initialize		
+	    		tmpM=xthat[tau-1];
+	    		copyTo(xtt[tau-1],tmpM);
+
+	    		tmpM=Vthat[tau-1];
+	    		copyTo(Vtt[tau-1],tmpM);
+	    		if( (Ropt==cov_type.COV_IID) || (Ropt==cov_type.COV_DIAG) )
+	    		{
+	    			Mat eyeMat = new Mat(dx,dx,CV_64F);
+	    			for (i = 0; i < dx; i++) {
+	    				eyeMat.double2D[i][i] = 1.0;
+	    			}
+	    			Vtt1hat[tau-2]=times(times(plus(minus(eyeMat,times(Vt1t[tau-1],CRC)),times(times(times(Vt1t[tau-1],CRC),Phi),CRC)),A),Vtt[tau-2]);
+	    			tmpM=Vtt1hat[tau-2];
+	    		}
+	    		else
+	    		{
+	    			MipavUtil.displayError("TO DO");
+	    			System.exit(-1);
+	    		}
+
+	    		for(int t=tau-1;t>0;t--)
+	    		{
+	    			tmpM=new Mat((new Matrix(Vt1t[t].double2D)).inverse().getArray());
+	    			Jt[t-1]=times(times(Vtt[t-1],transpose(A)),tmpM);			
+	    			xthat[t-1]= plus(xtt[t-1],times(Jt[t-1],(minus(xthat[t],times(A,xtt[t-1])))));
+	    			Vthat[t-1] = plus(Vtt[t-1],times(times(Jt[t-1],(minus(Vthat[t],Vt1t[t]))),transpose(Jt[t-1])));
+	    			
+	    			if(t<tau-1)
+	    			{
+	    				Vtt1hat[t-1] = plus(times(Vtt[t],transpose(Jt[t-1])),times(times(Jt[t],(minus(Vtt1hat[t],times(A,Vtt[t])))),transpose(Jt[t-1])));
+	    			}
+	    			
+	    		}
+	    		//%%% convert xthat into cell array %%%
+	    		Vector<Mat> xthatout = new Vector<Mat>();
+	    		for(i=0;i<YN;i++)
+	    		{
+	    			tmpM = new Mat(dx,tau,CV_64F);
+	    			for(int j=0;j<dx;j++)
+	    				for(int k=0;k<tau;k++)
+	    					tmpM.double2D[j][k]=xthat[k].double2D[j][i];
+
+	    			xthatout.add(tmpM);
+	    		}
+
+	    		xt=xthatout;
+	    		Vt=Vthat;
+	    		Vt1=Vtt1hat;
+	    		if(doL)
+	    			L=L1;
+	        }
+	    }
 
 }
