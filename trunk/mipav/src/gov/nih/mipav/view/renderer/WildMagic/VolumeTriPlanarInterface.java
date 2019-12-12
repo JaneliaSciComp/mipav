@@ -427,7 +427,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     }
 
 
-	public void addConfiguredListener( AlgorithmInterface listener )
+	public void addConfiguredListener( RendererListener listener )
 	{
 		if ( raycastRenderWM != null )
 		{

@@ -26,6 +26,7 @@ import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
@@ -304,7 +305,6 @@ public class VolumeRayCast extends VolumeObject
     public void reCreateScene( VolumeImage image )
     {
         m_kVolumeImageA = image;
-        m_kVolumeImageB = null;
         
         if ( m_kMesh != null )
         {
@@ -312,6 +312,8 @@ public class VolumeRayCast extends VolumeObject
         	m_kScene.DetachChild(m_kMesh);
             m_kScene.UpdateGS();
         }
+        m_kScene.Local = new Transformation();
+        m_kScene.World = new Transformation();
 
     	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
     	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
@@ -624,7 +626,9 @@ public class VolumeRayCast extends VolumeObject
     
     public void SetClipSphere( Vector3f center, Vector3f scale, float radius, boolean bEnable )
     {
-    	m_kVolumeShaderEffect.SetClipSphere(center, scale, radius, bEnable);
+    	if ( m_kVolumeShaderEffect != null ) {
+    		m_kVolumeShaderEffect.SetClipSphere(center, scale, radius, bEnable);
+    	}
     }
 
     public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )

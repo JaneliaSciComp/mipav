@@ -1029,7 +1029,7 @@ public class WormData
 	public VOI segmentSeamFromLattice(VOI lattice, ModelImage image, boolean save)
 	{
 
-		System.err.println("segmentSeamFromLattice");
+//		System.err.println("segmentSeamFromLattice");
 		if ( lattice == null )
 		{
 			lattice = readFinalLattice();
@@ -1113,7 +1113,7 @@ public class WormData
 				{
 					if ( value >= pairSort[(pairSort.length -1) - j] )
 					{
-						System.err.println( value + "  " + pairSort[(pairSort.length -1) - j]);
+//						System.err.println( value + "  " + pairSort[(pairSort.length -1) - j]);
 						isSeamPair = true;
 						break;
 					}

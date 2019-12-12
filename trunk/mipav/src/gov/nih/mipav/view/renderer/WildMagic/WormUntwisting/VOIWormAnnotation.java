@@ -22,6 +22,7 @@ public class VOIWormAnnotation extends VOIText {
 	private VOI showSelectedVOI = null;
 	private VOIContour[] showSelected = null;
 	private Vector3f selectionOffset = null;
+	private boolean isCurveAnnotation = false;
 	
 	public VOIWormAnnotation() {
 		super();
@@ -77,6 +78,14 @@ public class VOIWormAnnotation extends VOIText {
 	
 	public void setLatticeSegment( int segment ) {
 		this.latticeSegment = segment;
+	}
+	
+	public boolean isCurveAnnotation() {
+		return isCurveAnnotation;
+	}
+	
+	public void setCurveAnnotation( boolean isCurve ) {
+		isCurveAnnotation = isCurve;
 	}
 	
 	public void setSelected( boolean select ) {

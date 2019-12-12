@@ -73,6 +73,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -105,7 +106,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private VOILatticeManagerInterface voiManager;
 	private VolumeTriPlanarRender volumeRenderer = null;
 	// annotation panel displayed in the VolumeTriPlanarInterface:
-	private JPanel annotationPanel;
+	private JSplitPane annotationPanel;
 	// turns on/off displaying individual annotations
 	private JCheckBox volumeClip;
 	private JSlider volumeRadius;
@@ -455,7 +456,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-//		System.err.println("annotationChanged");
+		System.err.println("annotationChanged " + imageA.GetImage().getImageName() );
 
 		if ( voiManager != null )
 		{
@@ -482,6 +483,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					Vector<String> names = new Vector<String>();
 					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+						if ( text == null ) continue;
+						
+						System.err.println( text.getText() );
 						names.add(text.getText());
 						Vector3f pos = text.elementAt(0);
 						float value = imageA.GetImage().getFloat((int)pos.X, (int)pos.Y, (int)pos.Z);
@@ -817,7 +821,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		}
 	}
 
-	public JPanel getAnnotationsPanel() {
+	public JSplitPane getAnnotationsPanel() {
 		return annotationPanel;
 	}
 
@@ -841,18 +845,17 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
-	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, VolumeImage image, boolean latticeMarkers )
+	public JSplitPane initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, VolumeImage image, boolean latticeMarkers )
 	{		
 		voiManager = voiInterface;
 		imageA = image;
 		voiManager.addAnnotationListener(this);
 		if ( annotationPanel == null )
 		{			
-			annotationPanel = new JPanel();
-			annotationPanel.setLayout(new BorderLayout());
+//			annotationPanel = new JPanel();
+//			annotationPanel.setLayout(new BorderLayout());
 			
 			initGB();
-			JPanel displayPanel = new JPanel(new BorderLayout());
 			JPanel thresholdPanel = new JPanel(gbLayout);
 			thresholdPanel.setBorder(JDialogBase.buildTitledBorder("Threshold Segmentation"));
 
@@ -973,7 +976,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPane.setPreferredSize( size );
-			kScrollPane.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+			kScrollPane.setBorder(JDialogBase.buildTitledBorder( imageA.GetImage().getImageName() + " Annotation list"));
 
 
 			// add annotation table to a scroll pane:
@@ -982,14 +985,33 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPaneGroup.setPreferredSize( size );
-			kScrollPaneGroup.setBorder(JDialogBase.buildTitledBorder("Group list"));
+			kScrollPaneGroup.setBorder(JDialogBase.buildTitledBorder( imageA.GetImage().getImageName() + " Group list"));
 
-			displayPanel.add(thresholdPanel, BorderLayout.NORTH);
-			displayPanel.add(labelPanel, BorderLayout.SOUTH);
+			JSplitPane displayPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, thresholdPanel, labelPanel );
+			displayPanel.setOneTouchExpandable(true);
+			displayPanel.setDividerSize(6);
+			displayPanel.setContinuousLayout(true);
+			displayPanel.setResizeWeight(0.5);
+			displayPanel.setDividerLocation(0.5);
 			
-			annotationPanel.add(kScrollPane, BorderLayout.NORTH);
-			annotationPanel.add(kScrollPaneGroup, BorderLayout.CENTER);
-			annotationPanel.add(displayPanel, BorderLayout.SOUTH);
+			JSplitPane listPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, kScrollPane, kScrollPaneGroup );
+			listPanel.setOneTouchExpandable(true);
+			listPanel.setDividerSize(6);
+			listPanel.setContinuousLayout(true);
+			listPanel.setResizeWeight(0.5);
+			listPanel.setDividerLocation(0.5);
+			
+
+			
+			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, listPanel, displayPanel );
+			annotationPanel.setOneTouchExpandable(true);
+			annotationPanel.setDividerSize(6);
+			annotationPanel.setContinuousLayout(true);
+			annotationPanel.setResizeWeight(0.5);
+			annotationPanel.setDividerLocation(0.5);
+			
+			
+//			annotationPanel.add(displayPanel, BorderLayout.SOUTH);
 			//			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
 		}
 
@@ -1179,6 +1201,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 				// Updates the displayLabel checkbox based on which row of the table is current:
 				VOI annotations = voiManager.getAnnotations();
+				
+				System.err.println( voiManager + " " + imageA.GetImage().getImageName() );
 
 				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);

@@ -394,10 +394,11 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	public void openNeuriteCurves() {
 
-		if ( latticeModel != null )
+		if ( latticeModel == null )
 		{
-			latticeModel.openNeuriteCurves();
+			latticeModel = new LatticeModel( m_kImageA );
 		}
+		latticeModel.openNeuriteCurves();
 	}
 	
 	public void saveNeuriteCurves( )
@@ -446,6 +447,23 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 			setAnnotations(annotations);
 		}
+	}
+
+	public void addAnnotations( VOIVector annotations )
+	{
+		VOI newAnnotationVOI = annotations.size() > 0 ? annotations.elementAt(0).getCurves() != null ? annotations.elementAt(0) : null : null;
+
+		boolean saveA = true;
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+			saveA = false;
+		}
+		if ( saveA )
+		{
+			saveVOIs("addAnnotations");
+		}
+		latticeModel.addAnnotations( newAnnotationVOI );
 	}
 	
 	public void setAnnotations( VOIVector annotations )
@@ -700,6 +718,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		{
 			latticeModel.showModel(display);
 		}		
+	}
+	
+	public boolean isModelDisplayed() {
+
+		if ( latticeModel != null )
+		{
+			return latticeModel.isModelDisplayed();
+		}		
+		return false;
 	}
 	
 	public void showLattice( boolean display ) {

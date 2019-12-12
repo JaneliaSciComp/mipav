@@ -137,6 +137,8 @@ public class VolumeImage implements Serializable {
 //	private ModelImage[] m_akImagesGM;
 
 	private Vector2f[] m_akGradientMagMinMax;
+	
+	private TransferFunction opacityTransferFn;
 
 	/* Default Constructor */
 	public VolumeImage() {}
@@ -276,7 +278,7 @@ public class VolumeImage implements Serializable {
 			ModelLUT.exportIndexedLUTMin(m_kLUT, aucData);
 		}
 		// Return the new GraphicsImage containing the table data:
-		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + m_kPostfix));
+		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + m_kImage.getImageName() + m_kPostfix));
 	}
 
 
@@ -2313,7 +2315,6 @@ public class VolumeImage implements Serializable {
 	 */
 	private boolean UpdateImages(final ModelImage kImage, final Texture kOpacityTexture,
 			final GraphicsImage kOpacityMap, final TransferFunction kTransfer) {
-		
 		final int iLutHeight = 256;
 		final float[] afData = kOpacityMap.GetFloatData();
 
@@ -2327,6 +2328,10 @@ public class VolumeImage implements Serializable {
 		kOpacityTexture.Reload(true);
 		return true;
 	}
+	
+	public TransferFunction getOpacityFn() {
+		return opacityTransferFn;
+	}
 
 	/**
 	 * Update the opacity transfer function.
@@ -2338,6 +2343,7 @@ public class VolumeImage implements Serializable {
 	 */
 	private boolean UpdateImages2(final ModelImage kImage, final Texture kOpacityTexture,
 			final GraphicsImage kOpacityMap, final TransferFunction kTransfer) {
+		opacityTransferFn = new TransferFunction(kTransfer);
 		final int iLutHeight = kOpacityMap.GetBound(0);
 		final byte[] abData = kOpacityMap.GetData();
 

@@ -1823,6 +1823,20 @@ public abstract class JDialogBase extends JDialog
                                 Color.black);
     }
 
+
+    /**
+     * Builds a titled border with the given title, an etched border, and the proper font and color.
+     *
+     * @param   title  Title of the border
+     * @param   color  Color of the border
+     *
+     * @return  The titled border.
+     */
+    public static TitledBorder buildTitledBorder(String title, Color color) {
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+        		color);
+    }
+
     /**
      * Helper method to create a label with the proper font and font color.
      *

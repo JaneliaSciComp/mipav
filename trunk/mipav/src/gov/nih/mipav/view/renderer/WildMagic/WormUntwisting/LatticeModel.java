@@ -315,6 +315,14 @@ public class LatticeModel {
 		}
 
 	} // end saveAllVOIsTo()
+	
+	
+
+	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations )
+	{
+		LatticeModel.saveAnnotationsAsCSV(dir,fileName, annotations, false);
+	}
+	
 	/**
 	 * Saves the input annotations to the CSV file in the following format:
 	 * name,x,y,z
@@ -322,7 +330,7 @@ public class LatticeModel {
 	 * @param fileName
 	 * @param annotations
 	 */
-	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations)
+	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, boolean isCurve )
 	{
 		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
 		//		System.err.println("Saving annotations list: " + dir + "  " + fileName );
@@ -349,13 +357,19 @@ public class LatticeModel {
 
 		try {
 			boolean saveLatticeSegment = false;
+			int curveAnnotationCount = 0;
 			for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 				VOIWormAnnotation annotation = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
-				if ( annotation.getLatticeSegment() != -1 ) {
+				if ( !annotation.isCurveAnnotation() && annotation.getLatticeSegment() != -1 ) {
 					saveLatticeSegment = true;
-					break;
+				}
+				if ( annotation.isCurveAnnotation() ) {
+					curveAnnotationCount++;
 				}
 			}
+			// only write out annotations that aren't part of a curve segment:
+			if ( !isCurve && (curveAnnotationCount == annotations.getCurves().size()) ) return;
+			
 			final FileWriter fw = new FileWriter(file);
 			final BufferedWriter bw = new BufferedWriter(fw);
 			if ( saveLatticeSegment ) {
@@ -367,6 +381,8 @@ public class LatticeModel {
 			for (int i = 0; i < annotations.getCurves().size(); i++) {
 
 				VOIWormAnnotation annotation = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
+				if ( !isCurve && annotation.isCurveAnnotation() ) continue;
+				if ( isCurve && !annotation.isCurveAnnotation() ) continue;
 				Vector3f position = annotation.elementAt(0);
 				if ( saveLatticeSegment ) {
 					int segment = annotation.getLatticeSegment();
@@ -380,6 +396,7 @@ public class LatticeModel {
 				else {
 					bw.write(annotation.getText() + "," + position.X + "," + position.Y + ","	+ position.Z + "," + annotation.getColorString() + "\n");
 				}
+				numSaved++;
 				Preferences.debug(numSaved + "   " + annotation.getText() + "\n", Preferences.DEBUG_ALGORITHM );
 				//				System.err.println( numSaved++ + "   " + annotation.getText() );
 			}
@@ -390,7 +407,7 @@ public class LatticeModel {
 			e.printStackTrace();
 		}
 		Preferences.debug("Annotation written: " + numSaved + "\n", Preferences.DEBUG_ALGORITHM );
-		//		System.err.println( "Annotation written: " + numSaved );
+		System.err.println( "saveAnnotationsAsCSV " + fileName + "  " + numSaved );
 	}
 
 	protected static Vector3f inverseDiagonal( int slice, int extent, Vector3f[] verts, Vector3f target ) 
@@ -2236,11 +2253,11 @@ public class LatticeModel {
 	 * Saves the current annotations.
 	 * @param dir
 	 * @param fileName
-	 */
-	public void saveAnnotationsAsCSV(final String dir, final String fileName)
-	{
-		saveAnnotationsAsCSV(dir, fileName, annotationVOIs);
-	}
+//	 */
+//	public void saveAnnotationsAsCSV(final String dir, final String fileName)
+//	{
+//		saveAnnotationsAsCSV(dir, fileName, annotationVOIs);
+//	}
 
 	public void saveAnnotationStraight(final ModelImage image, String fileDirName, String fileName )
 	{
@@ -2362,7 +2379,7 @@ public class LatticeModel {
 		{
 			final String voiDir = new String(directory + fileName + File.separator);
 
-			clear3DSelection();			
+//			clear3DSelection();			
 
 			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
 			for ( int j = 0; j < left.size(); j++ )
@@ -2414,13 +2431,16 @@ public class LatticeModel {
 				System.err.println( lrFile.getName() );
 				if ( lrFile.getName().contains("controlPts") ) {
 					VOI annotations = LatticeModel.readAnnotationsCSV(voiDir + list[i]);
-					addAnnotations(annotations);
-					Vector<VOIWormAnnotation> splineControlPts = new Vector<VOIWormAnnotation>();
-					for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
-						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
-						splineControlPts.add(text);
+					if ( annotations != null ) {
+						addAnnotations(annotations);
+						Vector<VOIWormAnnotation> splineControlPts = new Vector<VOIWormAnnotation>();
+						for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
+							VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
+							text.setCurveAnnotation(true);
+							splineControlPts.add(text);
+						}
+						addSplineControlPts(splineControlPts);
 					}
-					addSplineControlPts(splineControlPts);
 				}
 			}
 		} 
@@ -2441,17 +2461,16 @@ public class LatticeModel {
 		final String voiDir = new String(dir + fileName + File.separator);
 		for ( int i = 0; i < splineControlPtsList.size(); i++ ) {
 			AnnotationSplineControlPts annotationSpline = splineControlPtsList.elementAt(i);
+			
+			for ( int j = 0; j < annotationSpline.annotations.size(); j++ ) {
+				annotationSpline.annotations.elementAt(j).setCurveAnnotation(true);
+			}
 
 			VOI curveVOI = new VOI((short)0, annotationSpline.name );
-			for ( int j = 0; j < annotationSpline.annotations.size(); j++ ) curveVOI.getCurves().add(annotationSpline.annotations.elementAt(j));
+			for ( int j = 0; j < annotationSpline.annotations.size(); j++ ) curveVOI.getCurves().add(new VOIWormAnnotation(annotationSpline.annotations.elementAt(j)) );
 
-			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, imageName + "_" + annotationSpline.name + "_controlPts.csv", curveVOI );
+			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, imageName + "_" + annotationSpline.name + "_controlPts.csv", curveVOI, true );
 			LatticeModel.saveContourAsCSV( imageA, fileName, "_" + annotationSpline.name + "_spline", annotationSpline.curve );
-
-			// remove annotations from the annotations list so not saved twice:
-			for ( int j = 0; j < annotationSpline.annotations.size(); j++ ) {
-				annotationVOIs.getCurves().remove(annotationSpline.annotations.elementAt(j));
-			}
 		}
 		
 	}
@@ -3152,6 +3171,8 @@ public class LatticeModel {
 	 * @param newAnnotations
 	 */
 	public void addAnnotations(final VOI newAnnotations) {
+		System.err.println( "addAnnotations " + imageA.getImageName() + " " + newAnnotations.getCurves().size() );
+		if ( newAnnotations.getCurves().size() == 0 ) return;
 		if (annotationVOIs == null) {
 			annotationVOIs = newAnnotations;
 			annotationVOIs.setName("annotationVOIs");
@@ -3773,6 +3794,7 @@ public class LatticeModel {
 	public void setLattice(final VOI newLattice) {
 		if (lattice != null) {
 			imageA.unregisterVOI(lattice);
+			clearCurves(true);
 		}
 		this.lattice = newLattice;
 		if ( this.lattice == null )
@@ -4054,6 +4076,11 @@ public class LatticeModel {
 			imageA.unregisterVOI(samplingPlanes);
 			imageA.notifyImageDisplayListeners();
 		}
+	}
+	
+	public boolean isModelDisplayed()
+	{
+		return (imageA.isRegistered(samplingPlanes) != -1);
 	}
 
 	/**
@@ -5228,7 +5255,7 @@ public class LatticeModel {
 		// The next step of the algorithm attempts to solve this problem.
 		short sID = (short) 1;
 		displayContours = new VOI(sID, "wormContours");
-		System.err.println("generateCurves " + paddingFactor );
+//		System.err.println("generateCurves " + paddingFactor );
 		for (int i = 0; i < centerPositions.size(); i += contourStepSize) {
 			Vector3f rkEye = centerPositions.elementAt(i);
 			Vector3f rkRVector = rightVectors.elementAt(i);
@@ -9403,7 +9430,19 @@ public class LatticeModel {
 			}
 			imageA.notifyImageDisplayListeners();
 		}
-
+		
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+			text.setCurveAnnotation(false);
+		}
+		for ( int i = 0; i < splineControlPtsList.size(); i++ )
+		{
+			AnnotationSplineControlPts annotationSpline = splineControlPtsList.elementAt(i);
+			// update annotations with isCurveAnnotation flag:
+			for ( int j = 0; j < annotationSpline.annotations.size(); j++ ) {
+				annotationSpline.annotations.elementAt(j).setCurveAnnotation(true);
+			}
+		}
 	}
 	
 	/**
