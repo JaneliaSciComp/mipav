@@ -73,6 +73,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     protected VolumeImage m_kVolumeImageA_Old;
     protected VolumeImage m_kVolumeImageB_Old;
     
+    protected VolumeImage m_kVolumeImageA_New;
+    protected VolumeImage m_kVolumeImageB_New;
+    
     /** Scene-graph root node: */
     protected Node m_spkScene;
     /** Culling: turns backface/frontface culling on/off: */
@@ -347,6 +350,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     public VolumeImage getVolumeImage()
     {
         return m_kVolumeImageA;
+    }
+    
+    public VolumeImage getVolumeImageB()
+    {
+        return m_kVolumeImageB;
     }
 
 
@@ -722,6 +730,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 		 {
 			 m_kAnimator.setRunAsFastAsPossible(bRunFast);
 			 m_kAnimator.start();
+		 }
+	 }
+	 
+	 public void pauseAnimator(boolean pause)
+	 {
+		 if ( m_kAnimator != null )
+		 {
+			 if ( pause )
+				 m_kAnimator.pause();
+			 else
+				 m_kAnimator.resume();
 		 }
 	 }
     

@@ -43,7 +43,9 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.RendererListener;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelAnnotations;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
@@ -68,13 +70,14 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
 import org.jocl.Sizeof;
 
 
 
-public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener {
+public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, RendererListener, WindowListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -225,7 +228,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	/* (non-Javadoc)
 	 * Called when the volume renderer is initialized and visible.
 	 */
-	public void algorithmPerformed(AlgorithmBase algorithm) {
+	public void rendererConfigured(VolumeTriPlanarRenderBase renderer) {
 		// Add user-interface panels
 		triVolume.actionPerformed( new ActionEvent(this, 0, "HistoLUT") );
 		triVolume.actionPerformed( new ActionEvent(this, 0, "Opacity") );
@@ -448,7 +451,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			GuiBuilder gui = new GuiBuilder(dialogGUI);
 
 			annotationPanelUI = new JPanelAnnotations(((VOILatticeManagerInterface)triVolume.getVOIManager()), triVolume.getVolumeGPU(), triVolume.getVolumeImageA());
-			JPanel annotationPanel = annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), triVolume.getVolumeImageA(), false);
+			JPanel annotationPanel = new JPanel( new BorderLayout() );
 
 			// back button:
 			buttonPanel = new JPanel();
@@ -475,6 +478,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			doneButton.setEnabled(true);
 			buttonPanel.add( doneButton );
 
+			annotationPanel.add(annotationPanelUI.initDisplayAnnotationsPanel((VOILatticeManagerInterface)triVolume.getVOIManager(), triVolume.getVolumeImageA(), false), BorderLayout.NORTH);
 			annotationPanel.add(buttonPanel, BorderLayout.SOUTH);
 			triVolume.insertTab( "Track Annotation", annotationPanel );
 		}
@@ -1142,5 +1146,11 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				latticeModel = null;
 			}
 		}
+	}
+
+	@Override
+	public void setActiveRenderer(VolumeTriPlanarRenderBase renderer) {
+		// TODO Auto-generated method stub
+		
 	}
 }

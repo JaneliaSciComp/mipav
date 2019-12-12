@@ -40,7 +40,9 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.RendererListener;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 
@@ -73,7 +75,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 /**
  * This class is a work in progress for developing algorithms to support the worm untwisting project.
  */
-public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin implements AlgorithmInterface
+public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin implements RendererListener
 {
 
 	private static final long serialVersionUID = 2476025001402032629L;
@@ -146,7 +148,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	 *
 	 * @param  algorithm  Algorithm that caused the event.
 	 */
-	public void algorithmPerformed(AlgorithmBase algorithm) 
+	public void rendererConfigured(VolumeTriPlanarRenderBase renderer) 
 	{ 
 		triVolume.addVOIS( annotationList, annotationNames );
 		triVolume.displayAnnotationSpheres();
@@ -3650,6 +3652,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 
 		return true;
+	}
+
+	@Override
+	public void setActiveRenderer(VolumeTriPlanarRenderBase renderer) {
+		// TODO Auto-generated method stub
+		
 	}     
 
 

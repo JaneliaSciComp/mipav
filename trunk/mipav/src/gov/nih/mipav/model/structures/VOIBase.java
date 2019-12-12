@@ -2059,6 +2059,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return m_iVOIType;
     }
 
+    public void deleteVolumeVOI() 
+    {
+        m_kVolumeVOI = null;
+    }
+
     /**
      * Returns the VolumeVOI data member used to draw this contour in the GPU VOlumeRenderer.
      * @return VolumeVOI for rendering this contour in the GPU VolumeRenderer.
@@ -2600,7 +2605,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         m_bReloadPoints = true;
         if ( m_kVolumeVOI != null )
         {
-            m_kVolumeVOI.setVOI(this);
+            m_kVolumeVOI.setVOI(this, true);
         }
     }
 

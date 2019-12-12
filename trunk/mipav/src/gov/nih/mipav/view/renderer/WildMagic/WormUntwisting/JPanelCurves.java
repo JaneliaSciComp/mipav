@@ -331,7 +331,7 @@ public class JPanelCurves extends JInterfaceBase implements ActionListener, Tabl
 			gbc.gridx++;			gbc.gridy = 0;
 			labelPanel.add( displayNone, gbc );
 			
-			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display"));
+			labelPanel.setBorder(JDialogBase.buildTitledBorder( imageA.GetImage().getImageName() + " Display"));
 
 			// build the curve table for the list of curves:
 			buildCurveTable();
@@ -341,7 +341,7 @@ public class JPanelCurves extends JInterfaceBase implements ActionListener, Tabl
 			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPane.setPreferredSize( size );
-			kScrollPane.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+			kScrollPane.setBorder(JDialogBase.buildTitledBorder( imageA.GetImage().getImageName() + " Annotation list"));
 
 
 			displayPanel.add(labelPanel, BorderLayout.SOUTH);

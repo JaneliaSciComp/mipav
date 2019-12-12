@@ -87,10 +87,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	/** Parent user-interface and display frame. */
 	protected VolumeTriPlanarInterface m_kParent = null;
-	protected AlgorithmInterface configuredListener = null;
+	protected RendererListener configuredListener = null;
 	protected boolean rightMousePressed = false;
 	protected boolean altPressed = false;
-    protected boolean m_bFirstDisplay = true;
     private VOILatticeManagerInterface m_kVOIInterface = null;
 	/**
 	 * Default Constructor.
@@ -266,8 +265,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 		if ( m_bFirstDisplay && (configuredListener != null) )
 		{		
-    		configuredListener.algorithmPerformed( null );
+    		configuredListener.rendererConfigured( this );
 			m_bFirstDisplay = false;
+			m_kSlices.SetDisplay(false);
+			m_kVolumeRayCast.SetDisplay(true);
 		}
 //		if ( wormAnimationStep() != -1 )
 		{
@@ -919,7 +920,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 	}
 
-	public void addConfiguredListener( AlgorithmInterface listener )
+	public void addConfiguredListener( RendererListener listener )
 	{
 		configuredListener = listener;
 	}
@@ -1240,6 +1241,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_iXPick = e.getX();
 			m_iYPick = e.getY();
 			m_bPickPending = true;
+		}
+		if (configuredListener != null )
+		{		
+    		configuredListener.setActiveRenderer( this );
 		}
 	}
 	public void mouseReleased(MouseEvent e) {

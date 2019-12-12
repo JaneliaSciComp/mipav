@@ -50,6 +50,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
@@ -75,7 +76,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	// on 'start' the images are loaded and the VolumeTriPlanarInterface is created:
 	private VOILatticeManagerInterface voiManager;
 	// annotation panel displayed in the VolumeTriPlanarInterface:
-	private JPanel annotationPanel;
+	private JSplitPane annotationPanel;
 	// turns on/off displaying individual annotations
 	private JCheckBox displaySeam;
 	private JCheckBox displayLattice;
@@ -123,7 +124,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void latticeChanged() {
-		System.err.println("latticeChanged");
+//		System.err.println("latticeChanged");
 
 		if ( voiManager != null )
 		{
@@ -406,23 +407,20 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 		}
 	}
 
-	public JPanel getAnnotationsPanel() {
+	public JSplitPane getAnnotationsPanel() {
 		return annotationPanel;
 	}
 
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
-	public JPanel initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, ModelImage image )
+	public JSplitPane initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, ModelImage image )
 	{		
 		voiManager = voiInterface;
 		imageA = image;
 		voiManager.addLatticeListener(this);
 		if ( annotationPanel == null )
 		{			
-			annotationPanel = new JPanel();
-			annotationPanel.setLayout(new BorderLayout());
-
 			GridBagLayout gbc = new GridBagLayout();
 			GridBagConstraints gbcC = new GridBagConstraints();
 
@@ -440,7 +438,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			gbcC.gridy++;
 			labelPanel.add( displayLattice, gbcC );
 
-			labelPanel.setBorder(JDialogBase.buildTitledBorder("Display"));
+			labelPanel.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Display"));
 
 			// build the annotation table for the list of annotations:
 			buildAnnotationTable();
@@ -450,11 +448,15 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPane.setPreferredSize( size );
-			kScrollPane.setBorder(JDialogBase.buildTitledBorder("Lattice"));
+			kScrollPane.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Lattice"));
 
-
-			annotationPanel.add(kScrollPane, BorderLayout.NORTH);
-			annotationPanel.add(labelPanel, BorderLayout.CENTER);
+	
+			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, kScrollPane, labelPanel );
+			annotationPanel.setOneTouchExpandable(true);
+			annotationPanel.setDividerSize(6);
+			annotationPanel.setContinuousLayout(true);
+			annotationPanel.setResizeWeight(0.5);
+			annotationPanel.setDividerLocation(0.5);
 		}
 
 		// Add the list of annotations to the table:

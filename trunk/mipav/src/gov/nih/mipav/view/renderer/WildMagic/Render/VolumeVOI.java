@@ -498,6 +498,7 @@ public class VolumeVOI extends VolumeObject
 	 */
 	public void setZCompare( boolean bOn )
 	{
+		if ( m_kZState == null ) return;
 		if ( bOn )
 		{
 			m_kZState.Compare = ZBufferState.CompareMode.CF_LEQUAL;
@@ -957,6 +958,9 @@ public class VolumeVOI extends VolumeObject
 
 		if ( (m_kVOI.getType() == VOI.ANNOTATION) )
 		{
+			if ( m_kVOI.size() == 1 ) {
+				m_kVOI.add( new Vector3f( m_kVOI.elementAt(0) ) );
+			}
 			textAnnotations( m_kVOI.get(1), m_kVOI.get(0) );
 			m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));
 		}

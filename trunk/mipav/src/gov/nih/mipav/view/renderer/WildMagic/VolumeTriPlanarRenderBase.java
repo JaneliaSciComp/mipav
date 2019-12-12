@@ -179,6 +179,8 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 * normals for the volume data.
 	 */
 	protected boolean m_bFirstRender = true;
+    protected boolean m_bFirstDisplay = true;
+	protected boolean m_bResetImages = false;
 
 	/** Painting parameters: */
 	protected boolean m_bPaintEnabled = false;
@@ -610,12 +612,51 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			m_kVolumeImageA_Old = null;
 			m_kVolumeImageB_Old = null;
 		}
+		
+		if (!m_bVisible || !m_bDisplay) {
+			return;
+		}
+		
+		boolean forceFBReload = false;
+		if ( m_bResetImages ) {
+			m_kVolumeImageA = m_kVolumeImageA_New;
+			m_bFirstRender = true;
+			m_bInit = false;
+			m_kDeleteList.addAll(m_kDisplayList);
+			m_kDisplayList.clear();
+			
+			if (m_kDeleteList.size() > 0) {
+				for (int i = m_kDeleteList.size() - 1; i >= 0; i--) {
+					VolumeObject kObj = m_kDeleteList.remove(0);
+					kObj.dispose(m_pkRenderer);
+				}
+			}
+			
+			if (m_pkPlane != null) {
+				m_pkRenderer.ReleaseResources(m_pkPlane);
+				m_pkPlane = null;
+			}
+			// need to delete VOI GPU objects:
+			// here
+			VOIVector vois = m_kVolumeImageA.GetImage().getVOIs();
+			for (int i = vois.size() - 1; i >=0; i--) {
+				VOI kVOI = vois.get(i);
+				Vector<VOIBase> kCurves = kVOI.getCurves();
+				for (int k = 0; k < kCurves.size(); k++) {
+					VOIBase kVOI3D = kCurves.get(k);
+					kVOI3D.deleteVolumeVOI();
+				}
+			}
+			
+			m_kSlices = null;
+			
+			m_bResetImages = false;
+			forceFBReload = true;
+			m_bFirstDisplay = true;
+		}
 
 		if (!m_bInit) {
 			init(arg0);
-		}
-		if (!m_bVisible || !m_bDisplay) {
-			return;
 		}
 		if (m_bDispose) {
 			System.err.println("Calling dispose " + this);
@@ -635,7 +676,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 		if (m_kFBO == null || m_bFirstRender) {
 			m_bFirstRender = false;
-			CreateRenderTarget(arg0, m_iWidth, m_iHeight);
+			CreateRenderTarget(arg0, m_iWidth, m_iHeight, forceFBReload);
 		}
 
 		if (m_bUpdateCenterOnDisplay) {
@@ -667,6 +708,12 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		Move();
 		Pick();
 
+		if ( m_bFirstDisplay )
+		{		
+			m_kSlices.SetDisplay(false);
+			m_kVolumeRayCast.SetDisplay(true);
+		}
+		
 		Render(arg0);
 		UpdateFrameCount();
 //		UpdateSceneRotation();
@@ -890,10 +937,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			m_kFBO.TerminateBuffer();
 			m_kFBO = null;
 		}
-		if (m_pkPlane != null) {
+		if (m_pkPlane != null && m_pkRenderer != null ) {
 			m_pkRenderer.ReleaseResources(m_pkPlane);
 		}
-		if (m_akSceneTarget != null) {
+		if (m_akSceneTarget != null && m_pkRenderer != null) {
 			for (int i = 0; i < m_akSceneTarget.length; i++) {
 				if (m_akSceneTarget[i] != null) {
 					m_pkRenderer.ReleaseTexture(m_akSceneTarget[i]);
@@ -911,7 +958,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			disposeShared(m_kVolumeImageA, m_kVolumeImageB);
 		}
 		// Shared context will delete the slices:
-		m_kDisplayList.remove(m_kSlices);
+		if ( m_kDisplayList != null ) {
+			m_kDisplayList.remove(m_kSlices);
+		}
 		m_kSlices = null;
 		m_kShared = null;
 		
@@ -1286,7 +1335,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public TriMesh getSurface(String kSurfaceName) {
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.get(i).GetName() != null) {
-				System.err.println("getSurface " + m_kDisplayList.get(i).GetName());
+//				System.err.println("getSurface " + m_kDisplayList.get(i).GetName());
 				if (m_kDisplayList.get(i).GetName().equals(kSurfaceName)) {
 					return m_kDisplayList.get(i).GetMesh();
 				}
@@ -1436,9 +1485,13 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 */
 	@Override
 	public void init(GLAutoDrawable arg0) {
+		
 		if (m_kVolumeImageA == null) {
 			return;
 		}
+		
+//		System.err.println("init " + m_kVolumeImageA.GetImage().getImageName() );
+		
 		// -javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
 		// -Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
 		// Profile.clear();
@@ -1912,7 +1965,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			if (m_pkRenderer != null) {
 				((OpenGLRenderer) m_pkRenderer).SetDrawable(arg0);
 			}
-			CreateRenderTarget(arg0, iWidth, iHeight);
+			CreateRenderTarget(arg0, iWidth, iHeight, false);
 			if (m_kSculptor != null) {
 				m_kSculptor.enableSculpt(m_kSculptor.getEnable());
 			}
@@ -2284,6 +2337,13 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 	}
 
+    public boolean getDisplayRedAsGray() {
+		if (m_kVolumeRayCast != null) {
+			return m_kVolumeRayCast.getDisplayRedAsGray();
+		}
+		return false;
+    }
+
     public void setDisplayRedAsGray(boolean display) {
 		if (m_kVolumeRayCast != null) {
 			m_kVolumeRayCast.setDisplayRedAsGray(display);
@@ -2296,10 +2356,24 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
     }
 
-    public void SetDisplayBlueAsGray(boolean display) {
+    public boolean getDisplayGreenAsGray() {
+		if (m_kVolumeRayCast != null) {
+			return m_kVolumeRayCast.getDisplayGreenAsGray();
+		}
+		return false;
+    }
+
+    public void setDisplayBlueAsGray(boolean display) {
 		if (m_kVolumeRayCast != null) {
 			m_kVolumeRayCast.setDisplayBlueAsGray(display);
 		}
+    }
+    
+    public boolean getDisplayBlueAsGray() {
+		if (m_kVolumeRayCast != null) {
+			return m_kVolumeRayCast.getDisplayBlueAsGray();
+		}
+		return false;
     }
 
 	/**
@@ -2446,7 +2520,11 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			m_kVolumeRayCast.SetGradientMagnitude(bShow);
 		}
 	}
-	
+
+    public void setImages(VolumeImage imageA) {
+    	 m_kVolumeImageA_New = imageA;
+    	 m_bResetImages = true;
+    }
 
     
     public void setImageB(VolumeImage imageB) {
@@ -2966,23 +3044,26 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 * @param iWidth
 	 * @param iHeight
 	 */
-	protected void CreateRenderTarget(GLAutoDrawable kDrawable, int iWidth,
-			int iHeight) {
-		if ((m_akSceneTarget != null) && (m_akSceneTarget[0] != null)) {
-			if (m_akSceneTarget[0].GetImage() != null) {
-				if ((m_akSceneTarget[0].GetImage().GetBound(0) == iWidth)
-						&& (m_akSceneTarget[0].GetImage().GetBound(1) == iHeight)) {
-					return;
+	protected void CreateRenderTarget(GLAutoDrawable kDrawable, 
+			int iWidth, int iHeight, boolean forceReload) {
+		if ( !forceReload ) {
+			if ((m_akSceneTarget != null) && (m_akSceneTarget[0] != null)) {
+				if (m_akSceneTarget[0].GetImage() != null) {
+					if ((m_akSceneTarget[0].GetImage().GetBound(0) == iWidth)
+							&& (m_akSceneTarget[0].GetImage().GetBound(1) == iHeight)) {
+						return;
+					}
 				}
 			}
 		}
-
+		
 		if (m_kFBO != null) {
 			m_kFBO.SetDrawable(kDrawable);
 			m_kFBO.TerminateBuffer();
 			m_kFBO = null;
 		}
 
+//		System.err.println("new OpenGLFrameBuffer");
 		m_kFBO = new OpenGLFrameBuffer(m_eFormat, m_eDepth, m_eStencil,
 				m_eBuffering, m_eMultisampling, m_pkRenderer, kDrawable);
 
@@ -3005,6 +3086,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 		m_kFBO.InitializeBuffer(m_akSceneTarget);
 
+//		System.err.println( "CreateRenderTarget " + m_pkPlane );
 		if (m_pkPlane == null) {
 			m_pkScreenCamera = new Camera();
 			m_pkScreenCamera.Perspective = false;
@@ -3049,6 +3131,8 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 			m_pkRenderer.LoadResources(m_pkPlane);
 
+
+//			System.err.println("new m_kVolumeRayCast.recreateShaderEffect");
 			m_kVolumeRayCast.recreateShaderEffect(m_pkRenderer,
 					m_akSceneTarget[3]);
 		}
@@ -3134,6 +3218,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		InitializeCameraMotion(.05f, 0.1f);
 		UpdateCameraZoomSpeed(.05f);
 		InitializeObjectMotion(m_spkScene);
+
+//		m_kVolumeRayCast.ReloadVolumeShader(m_pkRenderer);
+//		m_kVolumeRayCast.recreateShaderEffect(m_pkRenderer,
+//				m_akSceneTarget[3]);
 		m_bDisplay = true;
 	}
 	
@@ -3169,7 +3257,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		InitializeObjectMotion(m_spkScene);
 		m_bDisplay = true;
 	}
-
+	
 	/**
 	 * Calculates the rotation for the arbitrary clip plane.
 	 * 
@@ -3753,6 +3841,16 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		if (bUpdateVOIs)
 		{
 			UpdateSceneRotation();
+		}
+	}
+	
+	public void deleteVOIs(VOIVector kVOIs) {
+
+		for (int i = 0; i < m_kDisplayList.size(); i++) {
+			if (m_kDisplayList.get(i) instanceof VolumeVOI) {
+				m_kDeleteList.add( m_kDisplayList.remove(i) );
+				i--;
+			}
 		}
 	}
 
