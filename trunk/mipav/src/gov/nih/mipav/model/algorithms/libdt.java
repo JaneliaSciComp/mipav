@@ -4427,6 +4427,20 @@ public class libdt extends AlgorithmBase {
 		}
 		return dest;
 	}
+	
+	public Mat plus(Mat A, double b) {
+		int r, c;
+		int rows = A.rows;
+		int cols = A.cols;
+		int type = A.type;
+		Mat dest = new Mat(rows, cols, type);
+		for (r = 0; r < rows; r++) {
+			for (c = 0; c < cols; c++) {
+				dest.double2D[r][c] = A.double2D[r][c] + b;
+			}
+		}
+		return dest;
+	}
 
 	public Mat divide(Mat A, Mat B) {
 		int d, r, c;
@@ -4482,6 +4496,20 @@ public class libdt extends AlgorithmBase {
 		for (r = 0; r < rows; r++) {
 			for (c = 0; c < cols; c++) {
 				dest.double2D[r][c] = A.double2D[r][c] - B.double2D[r][c];
+			}
+		}
+		return dest;
+	}
+	
+	public Mat minus(Mat A, double b) {
+		int r, c;
+		int rows = A.rows;
+		int cols = A.cols;
+		int type = A.type;
+		Mat dest = new Mat(rows, cols, type);
+		for (r = 0; r < rows; r++) {
+			for (c = 0; c < cols; c++) {
+				dest.double2D[r][c] = A.double2D[r][c] - b;
 			}
 		}
 		return dest;
@@ -4588,6 +4616,43 @@ public class libdt extends AlgorithmBase {
 			}
 		}
 		return dest;
+	}
+	
+	public Mat col(Mat A, int colNum) {
+		int r;
+		int rows = A.rows;
+		int type = A.type;
+		Mat dest = new Mat(rows, 1, type);
+		for (r = 0; r < rows; r++) {
+		    dest.double2D[r][0] = A.double2D[r][colNum];
+		}
+		return dest;
+	}
+	
+	public double sum(Mat A) {
+		int d,r,c;
+		double sum = 0.0;
+		int rows = A.rows;
+		int cols = A.cols;
+		int dims = A.dims;
+		if (dims == 2) {
+		    for (r = 0; r < rows; r++) {
+		    	for (c = 0; c < cols; c++) {
+		    		sum += A.double2D[r][c];
+		    	}
+		    }
+		}
+		else {
+			int depth = A.depth;
+			for (d = 0; d < depth; d++) {
+				for (r = 0; r < rows; r++) {
+					for (c = 0; c < cols; c++) {
+						sum += A.double3D[d][r][c];
+					}
+				}
+			}
+		}
+		return sum;
 	}
 
 	public Mat clone(Mat A) {
@@ -6911,67 +6976,106 @@ public class libdt extends AlgorithmBase {
 			}
 		}
 	}
-
-	/*
-	 * ! \brief learn a DTM uisng EM given a set of patches
+	
+	/*!
+	 * \brief
+	 * learn a DTM uisng EM given a set of patches
 	 * 
-	 * \param Yin cell array of video
+	 * \param Yin
+	 * cell array of video
 	 * 
-	 * \param emopt EM learning options.
+	 * \param emopt
+	 * EM learning options.
+	 *  
+	 * Learns a dytex mixture using several runs of EM with component splitting procedure:
 	 * 
-	 * Learns a dytex mixture using several runs of EM with component splitting
-	 * procedure:
+	 * \remarks
+	 * After initializing a DTM with DytexOptions, this is the interface function to be called 
+	 * in order to learn a mixture from a set of video patches.
 	 * 
-	 * \remarks After initializing a DTM with DytexOptions, this is the
-	 * interface function to be called in order to learn a mixture from a set of
-	 * video patches.
-	 * 
-	 * \see reduceWithSplitting | EMOptions
+	 * \see
+	 * reduceWithSplitting | EMOptions
 	 */
-	void learnWithSplitting(DytexMix dtm, Vector<Mat[]> Yin, EMOptions emopt) {
-		/*
-		 * int i,j; double pert; pert=emopt.splitOpt.pert; //initialize
-		 * splitting sequence if(emopt.splitOpt.sched.isEmpty()) {
-		 * for(i=1;i<=emopt.K;i++) emopt.splitOpt.sched.add(i); } //check for
-		 * valid splitting sched if(emopt.splitOpt.sched.get(0)!=1) {
-		 * MipavUtil.displayError("schedule must start with 1!");
-		 * System.exit(-1); } Vector<Integer> tmp; //vector<int>::iterator it;
-		 * for(i=1;i<emopt.splitOpt.sched.size();i++)
-		 * tmp.add(emopt.splitOpt.sched.get(i)/emopt.splitOpt.sched.get(i-1));
-		 * 
-		 * for (j = 0; j < tmp.size(); j++) { if (tmp.get(j) > 2) {
-		 * MipavUtil.displayError("Cannot grow K more than 2 times previous");
-		 * System.exit(-1); } }
-		 * 
-		 * System.out.println("Growing schedule: "); for (j = 0; j <
-		 * emopt.splitOpt.sched.size(); j++) {
-		 * System.out.print(emopt.splitOpt.sched.get(j) + " "); }
-		 * System.out.print("\n"); System.out.println("Ks: "+ emopt.K);
-		 * 
-		 * int Kiter=1;
-		 * 
-		 * while(dtm.dt.size()<emopt.K) { //do first cluster if(Kiter==1) {
-		 * System.out.println("*** EM: K=" + (dtm.dt.size()+1) +
-		 * "******************"); } else { Vector<Integer> mysplits = new
-		 * Vector<Integer>();
-		 * 
-		 * //splitting current mixture
-		 * while(dtm.dt.size()<emopt.splitOpt.sched.get(Kiter-1)) {
-		 * DytexSplitParams splitopt = new DytexSplitParams();
-		 * splitopt.crit=emopt.splitOpt.crit; splitopt.ignore=mysplits;
-		 * splitopt.target=-1; splitopt.pert=emopt.splitOpt.pert;
-		 * splitopt.mode=emopt.splitOpt.mode; splitopt.vars=emopt.splitOpt.vars;
-		 * int c1[] = new int[1]; int c2[] = new int[1];
-		 * dytex_mix_split(dtm,splitopt,c2,c1); mysplits.add(c1[0]);
-		 * mysplits.add(c2[0]); } System.out.println("*** EM: K=" +
-		 * dtm.dt.size() + "******************"); } runEM(dtm,Yin,emopt); //RUN
-		 * EM uisng current Mixture Kiter++; }
-		 * 
-		 * //RUN EM again on once on final solution
-		 * emopt.termvalue=emopt.termvalBest; runEM(dtm,Yin,emopt); //initialize
-		 * kalman caches setupKFB(Yin.get(0).length);
-		 */
+	void learnWithSplitting(DytexMix dtm, Vector<Mat[]> Yin,EMOptions emopt)
+	{
+		int i,j;
+		double pert;	
+		pert=emopt.splitOpt.pert;
+		//initialize splitting sequence
+		if(emopt.splitOpt.sched.isEmpty())
+		{
+			for(i=1;i<=emopt.K;i++)
+				emopt.splitOpt.sched.add(i);
+		}
+		//check for valid splitting sched
+		if(emopt.splitOpt.sched.get(0)!=1)
+		{
+			MipavUtil.displayError("schedule must start with 1!");
+			System.exit(-1);
+		}
+		Vector<Integer> tmp = new Vector<Integer>();
+		//vector<int>::iterator it;
+		for(i=1;i<emopt.splitOpt.sched.size();i++)
+			tmp.add(emopt.splitOpt.sched.get(i)/emopt.splitOpt.sched.get(i-1));
+		
+		for (j = 0; j < tmp.size(); j++) {
+    		if (tmp.get(j) > 2) {
+    			MipavUtil.displayError("Cannot grow K more than 2 times previous");
+    			System.exit(-1);
+    		}
+    	}
+
+		System.out.println("Growing schedule: ");
+		for (j = 0; j < emopt.splitOpt.sched.size(); j++) {
+    		System.out.print(emopt.splitOpt.sched.get(j) + " ");
+    	}
+    	System.out.print("\n");
+		System.out.println("Ks: "+ emopt.K);	
+
+		int Kiter=1;
+
+		while(dtm.dt.size()<emopt.K)
+		{
+			//do first cluster
+			if(Kiter==1)
+			{			 
+				System.out.println("*** EM: K=" + (dtm.dt.size()+1) + "******************");
+			}
+			else
+			{
+				Vector<Integer> mysplits = new Vector<Integer>();
+				
+				//splitting current mixture
+				while(dtm.dt.size()<emopt.splitOpt.sched.get(Kiter-1))
+				{
+					DytexSplitParams splitopt = new DytexSplitParams();
+					splitopt.crit=emopt.splitOpt.crit;				
+					splitopt.ignore=mysplits;
+					splitopt.target=-1;
+					splitopt.pert=emopt.splitOpt.pert;
+					splitopt.mode=emopt.splitOpt.mode;
+					splitopt.vars=emopt.splitOpt.vars;
+					int c1[] = new int[1];
+					int c2[] = new int[1];
+					dytex_mix_split(dtm,splitopt,c2,c1);
+					mysplits.add(c1[0]);
+					mysplits.add(c2[0]);
+				}
+				System.out.println("*** EM: K=" + dtm.dt.size() + "******************");
+			}
+			runEM(dtm,Yin,emopt);  //RUN EM uisng current Mixture		
+			Kiter++;
+		}
+
+		//RUN EM again on once on final solution
+		emopt.termvalue=emopt.termvalBest;
+		runEM(dtm,Yin,emopt);
+		//initialize kalman caches
+		/*setupKFB(Yin.get(0).length);*/
 	}
+
+
+	
 
 	/*
 	 * ! \brief run EM for a mixture of DT
@@ -6986,7 +7090,7 @@ public class libdt extends AlgorithmBase {
 	 * \see learnWithSplitting | runHEM
 	 */
 	void runEM(DytexMix dtm, Vector<Mat[]> Yin, EMOptions emopt) {
-		/*int i,j,r,c;
+		int i,j,r,c;
 		long elapsedtime;	
 		//used to display info in change in classes during EM loop
 		int numlastclasses=5;			
@@ -7012,9 +7116,10 @@ public class libdt extends AlgorithmBase {
 		int mysy[] = new int[1];
 		int mysc[] = new int[1];
 		int mycnorm[] = new int[1];
-		int tau,dy;
-		Mat Y[];
-		Vector<Mat> Ymean;
+		int tau = 1;
+		int dy = 1;
+		Mat Y[] = null;
+		Vector<Mat> Ymean = new Vector<Mat>();
 		for(int yi=0;yi<N;yi++)
 		{
 			foo=convertmovie(Yin.get(yi),mysx,mysy,mysc,mycnorm);
@@ -7147,9 +7252,15 @@ public class libdt extends AlgorithmBase {
 				{
 					//compute likelihood of each video for this cluster
 					Vector<Mat> xt = new Vector<Mat>();
-					Mat Vt[];
-					Mat Vtt1[];
-					Mat tmpL;
+					Mat Vt[] = new Mat[Y.length];
+					for (i = 0; i < Y.length; i++) {
+						Vt[i] = new Mat();
+					}
+					Mat Vtt1[] = new Mat[Y.length-1];
+					for (i = 0; i < Y.length-1; i++) {
+						Vtt1[i] = new Mat();
+					}
+					Mat tmpL = new Mat();
 					Dytex test1=dtm.dt.get(j);
 					//conditional state inference using Kalman smoothing filter
 					dytex_kalman(Y, dtm.dt.get(j), di3opt,xt,Vt,Vtt1,tmpL);	
@@ -7273,7 +7384,7 @@ public class libdt extends AlgorithmBase {
 
 			//%%% check convergence conditions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			int breakout = 0;
-			String termstr;
+			String termstr = null;
 			if (iter >= emopt.maxiter)
 			{
 				termstr = "***** done -- max iter reached\n";
@@ -7305,7 +7416,7 @@ public class libdt extends AlgorithmBase {
 
 			//1) update prior probabilities
 			//total soft assignments per cluster
-			Mat Nhat;
+			Mat Nhat = new Mat();
 			reduce(Z,Nhat,0,CV_REDUCE_SUM);
 			tmp=divide(Nhat,((double)N));		
 			for(i=0;i<dtm.alpha.size();i++)
@@ -7317,9 +7428,10 @@ public class libdt extends AlgorithmBase {
 			{		
 				//output of Kalman filters
 				Vector<Mat> jxthat = new Vector<Mat>();
-				Mat jYmean;
+				Mat jYmean = new Mat();
 				Mat jz;
-				Mat PhiAll,Phi,sphi,Psi,Lambda,Gamma,Eta,Xi;
+				Mat PhiAll,Phi,sphi,Psi,Gamma,Eta,Xi;
+				Mat Lambda = new Mat();
 				//check if this is cluster is blank
 				if(dtm.alpha.get(j)<=MINPROB)
 				{
@@ -7435,137 +7547,144 @@ public class libdt extends AlgorithmBase {
 						Psi = plus(Psi,times(plus(tmp3,tmp4),myz));
 
 						//Gamma and Lambda
-						Gamma = Gamma + myz*(myy*myx.t());
-						Scalar scatmp;
+						Gamma = plus(Gamma,times(times(myy,transpose(myx)),myz));
+						double scatmp;
 
-						switch(opt.Ropt)
+						switch(dtm.opt.Ropt)
 						{
-						case CovMatrix::COV_IID:
+						case COV_IID:
 
-							multiply(myy,myy,tmpM);
+							tmpM = times(myy,myy);
 							scatmp=sum(tmpM);
-							Lambda=Lambda+myz*scatmp[0];
+							Lambda=plus(Lambda,(myz*scatmp));
 							break;
 						default:
-							CV_Error(-1,"TO DO");
+							MipavUtil.displayError("TO DO");
+							System.exit(-1);
 						}
 
 						// Xi and Eta					
 						// using only initial state samples
-						Xi  = Xi  + myz*myx.col(0);
-						Eta = Eta + myz*(MatVid::frame(jVthat,0) + myx.col(0)*(myx.col(0).t()));
+						myxcol0 = col(myx, 0);
+						Xi  = plus(Xi,times(myxcol0,myz));
+						Eta = plus(Eta,times(plus(jVthat[0],times(myxcol0,transpose(myxcol0))),myz));
 					}
 
 					//Compute New parameters
 
 					//2) C parameter
-					Mat iPhiAll=PhiAll.inv();
-					Mat newC=Gamma*iPhiAll;
-					dt[j].C=newC;
+					Mat iPhiAll=new Mat((new Matrix(PhiAll.double2D)).inverse().getArray());
+					Mat newC=times(Gamma,iPhiAll);
+					dtm.dt.get(j).C=newC;
 
 					//3) R parameter
 					Mat rnew;
-					switch(opt.Ropt)
+					switch(dtm.opt.Ropt)
 					{
-					case CovMatrix::COV_IID:			
-						rnew = (Lambda - trace(iPhiAll*(Gamma.t()*Gamma))) / (dy*tau*jN);
-						dt[j].R.mtx=rnew;
-						dt[j].R.covopt=CovMatrix::COV_IID;						
+					case COV_IID:			
+						rnew = divide(minus(Lambda,trace(times(iPhiAll,times(transpose(Gamma),Gamma)))),(dy*tau*jN));
+						dtm.dt.get(j).R.mtx=rnew;
+						dtm.dt.get(j).R.covopt=cov_type.COV_IID;						
 						break;
 					default:
-						CV_Error(-1,"TO DO");
+						MipavUtil.displayError("TO DO");
+						System.exit(-1);
 					}
 
 					//4) A parameter
-					Mat newA = Psi*sphi.inv();
-					dt[j].A = newA;
+					Mat sphiinv = new Mat((new Matrix(sphi.double2D)).inverse().getArray());
+					Mat newA = times(Psi,sphiinv);
+					dtm.dt.get(j).A = newA;
 
 					// 5) Q parameter
-					Mat Q = (Phi-newA*Psi.t())/( (tau-1)*jN);
-					dt[j].Q.mtx= Q;
+					Mat Q = divide(minus(Phi,times(newA,transpose(Psi))),( (tau-1)*jN));
+					dtm.dt.get(j).Q.mtx= Q;
 
 					// 6) mu parameter
-					Mat newmu = Xi / jN;
-					dt[j].mu0 = newmu;
+					Mat newmu = divide(Xi,jN);
+					dtm.dt.get(j).mu0 = newmu;
 
 					//7) S parameter 
-					Mat newS = Eta/jN - newmu*newmu.t();
+					Mat newS = minus(divide(Eta,jN),times(newmu,transpose(newmu)));
 
-					switch(opt.Sopt)
+					switch(dtm.opt.Sopt)
 					{
-					case CovMatrix::COV_DIAG:			
-						dt[j].S0.mtx=newS.diag();
-						dt[j].S0.covopt=CovMatrix::COV_DIAG;
+					case COV_DIAG:			
+						for (r = 0; r < Math.min(newS.rows,newS.cols); r++) {
+							dtm.dt.get(j).S0.mtx.double2D[r][0] = newS.double2D[r][r];
+						}
+						dtm.dt.get(j).S0.covopt=cov_type.COV_DIAG;
 						break;
 					default:
-						CV_Error(-1,"TO DO");
+						MipavUtil.displayError("TO DO");
 					}
 
 					// 8) Ymean parameter
-					Mat newYmean = Mat::zeros(dy,1,OPT_MAT_TYPE);
-					if (FlagYmean)
+					Mat newYmean = new Mat(dy,1,CV_64F);
+					if (FlagYmean == Ymean_type.NONZERO_YMEAN)
 					{
-						for(int i=0;i<N;i++)
+						for(i=0;i<N;i++)
 						{
-							Mat tmpM;
-							reduce(jxthat[i],tmpM,1,CV_REDUCE_AVG);							
-							newYmean = newYmean + (jz.at<OPT_F_TYPE>(i,0))*(Ymean[i] - newC*tmpM);
+							Mat tmpM = new Mat();
+							reduce(jxthat.get(i),tmpM,1,CV_REDUCE_AVG);							
+							newYmean = plus(newYmean,times(minus(Ymean.get(i),times(newC,tmpM)),(jz.double2D[i][0])));
 						}					
-						newYmean = newYmean / jN;
+						newYmean = divide(newYmean,jN);
 					}
 
-					dt[j].Ymean = newYmean;
+					dtm.dt.get(j).Ymean = newYmean;
 
 					// regularize the new parameters
-					dt[j].setRegularizer(emopt.regopt);
-					dt[j].regularize();			
+					setRegularizer(dtm.dt.get(j),emopt.regopt);
+					regularize(dtm.dt.get(j),false);			
 
 				}	
 			}
-			if (FlagVerbose >= 2)
-				cout<<endl;
+			if (FlagVerbose == Verbose_mode.VERBOSE)
+				System.out.println();
 
 			//%%% handle empty clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
 			//find the largest cluster and split it to fill the blank cluster
-			for(int j=0;j<K;j++)
+			for(j=0;j<K;j++)
 			{
-				if(blank[j])
+				if(blank.get(j) != 0.0)
 				{
-					if(FlagVerbose)
-						cout<<"Cluster "<<j<<"Is blank"<<endl;			
+					if(FlagVerbose != Verbose_mode.QUIET)
+						System.out.println("Cluster "+j+"Is blank");			
 
-					DytexSplitParams splitopt;				
+					DytexSplitParams splitopt = new DytexSplitParams();				
 					splitopt.crit=emopt.emptySplitOpt.crit;
 					splitopt.pert=emopt.emptySplitOpt.pert;
 					splitopt.mode=emopt.emptySplitOpt.mode;
 					splitopt.vars=emopt.emptySplitOpt.vars;
 					splitopt.ignore.clear();
 					splitopt.target=j+1;
-					int c1,c2;
-					dytex_mix_split(splitopt,c1,c2);
+					int c1[] = new int[1];
+					int c2[] = new int[1];
+					dytex_mix_split(dtm,splitopt,c1,c2);
 
-					blank[j]=0;						
+					blank.set(j,0.0);						
 				}
 			}	
 
-			elapsedtime=clock()-starttime;
-			if(FlagVerbose>=2)
+			elapsedtime=System.currentTimeMillis()-starttime;
+			if(FlagVerbose == Verbose_mode.VERBOSE)
 			{
-				cout<<"Elapsed Time: "<<elapsedtime<<endl;
+				System.out.println("Elapsed Time: " + elapsedtime + " milliseconds");
 			}
 
 			iter=iter+1;  //finish current EM iteration
 		}
 		
 		//End of EM loop
-		if(FlagVerbose>=1)
+		if(FlagVerbose != Verbose_mode.QUIET)
 		{
-			cout<<"alpha= ";
-			for(int i=0;i<alpha.size();i++)
-				cout<<alpha[i]<<"  ";
+			System.out.print("alpha= ");
+			for(i=0;i<dtm.alpha.size();i++)
+				System.out.print(dtm.alpha.get(i)+"  ");
 
-			cout<<endl;
-		}*/
+			System.out.println();
+		}
 		
 	}
 
@@ -8275,7 +8394,6 @@ public class libdt extends AlgorithmBase {
 	    		}
 
 	    		mu0=dt.mu0;
-	    		Mat tmpM;
 	    		switch(dt.S0.covopt)
 	    		{
 	    			case COV_DIAG:
@@ -8329,7 +8447,6 @@ public class libdt extends AlgorithmBase {
 	    	for (i = 0; i < tau; i++) {
 	    		xtt[i] = new Mat(dx,YN,CV_64F);
 	    	}
-	    	int sz2[]={tau,dx,dx};
 	    	Mat Vt1t[] = new Mat[tau];
 	    	for (i = 0; i < tau; i++) {
 	    		Vt1t[i] = new Mat(dx,dx,CV_64F);
@@ -8478,7 +8595,7 @@ public class libdt extends AlgorithmBase {
 
 	    	if(!doX)
 	    	{
-	    		L=L1;
+	    		copyTo(L1,L);
 	    		return;
 	    	}
 	    	else
@@ -8548,10 +8665,10 @@ public class libdt extends AlgorithmBase {
 	    		}
 
 	    		xt=xthatout;
-	    		Vt=Vthat;
-	    		Vt1=Vtt1hat;
+	    		copyTo(Vthat,Vt);
+	    		copyTo(Vtt1hat,Vt1);
 	    		if(doL)
-	    			L=L1;
+	    		    copyTo(L1,L);
 	        }
 	    }
 
