@@ -4128,7 +4128,7 @@ public class libdt extends AlgorithmBase {
 			this.type = type;
 			dims = 2;
 			size = new int[] { rows, cols };
-			if (type == CV_8U) {
+			if ((type == CV_8U) || (type == CV_8UC1)) {
 				byte2D = new byte[rows][cols];
 			} else if (type == CV_64F) {
 				double2D = new double[rows][cols];
@@ -4157,7 +4157,7 @@ public class libdt extends AlgorithmBase {
 				step[0] = 1;
 			}
 			if (dims == 2) {
-				if (type == CV_8U) {
+				if ((type == CV_8U) || (type == CV_8UC1)) {
 					byte2D = new byte[rows][cols];
 				} else if (type == CV_64F) {
 					double2D = new double[rows][cols];
@@ -4171,7 +4171,7 @@ public class libdt extends AlgorithmBase {
 				}
 			} // if (dims == 2)
 			else if (dims == 3) {
-				if (type == CV_8U) {
+				if ((type == CV_8U) || (type == CV_8UC1)) {
 					byte3D = new byte[depth][rows][cols];
 					step[1] = cols;
 				} else if (type == CV_64F) {
@@ -4245,7 +4245,7 @@ public class libdt extends AlgorithmBase {
 			this.type = type;
 			dims = 2;
 			size = new int[] { rows, cols };
-			if (type == CV_8U) {
+			if ((type == CV_8U) || (type == CV_8UC1)) {
 				byte2D = new byte[rows][cols];
 			} else if (type == CV_64F) {
 				double2D = new double[rows][cols];
@@ -4654,6 +4654,37 @@ public class libdt extends AlgorithmBase {
 		}
 		return sum;
 	}
+	
+	public int countNonZero(Mat A) {
+		int d,r,c;
+		int count = 0;
+		int rows = A.rows;
+		int cols = A.cols;
+		int dims = A.dims;
+		if (dims == 2) {
+		    for (r = 0; r < rows; r++) {
+		    	for (c = 0; c < cols; c++) {
+		    		if (A.double2D[r][c] != 0.0) {
+		    		    count++;	
+		    		}
+		    	}
+		    }
+		}
+		else {
+			int depth = A.depth;
+			for (d = 0; d < depth; d++) {
+				for (r = 0; r < rows; r++) {
+					for (c = 0; c < cols; c++) {
+						if (A.double3D[d][r][c] != 0.0) {
+			    		    count++;	
+			    		}
+					}
+				}
+			}
+		}
+		return count;
+	}
+
 
 	public Mat clone(Mat A) {
 		int d, r, c;
@@ -4742,6 +4773,11 @@ public class libdt extends AlgorithmBase {
 		 * ! \brief Class of each training video.
 		 */
 		public Vector<Integer> classes = new Vector<Integer>();
+		
+		/*!
+		 * \brief DytexKalmanFilter cache bank for computing log likelihood of new patches given this DTM.	 	 
+		 */
+		Vector<DytexKalmanFilter> kfb = new Vector<DytexKalmanFilter>();
 
 		public DytexMix() {
 
@@ -5756,6 +5792,7 @@ public class libdt extends AlgorithmBase {
 	 */
 	void learnDTM(VidSegm tvs, String vpath, boolean dosegm) {
 		// load training video
+		Mat smask[];
 		Mat img[] = loaddat(vpath, "t");
 
 		// Get the required video frames
@@ -5786,12 +5823,11 @@ public class libdt extends AlgorithmBase {
 		long e_time = System.currentTimeMillis() - s_time;
 		System.out.println("Total Time Taken :" + (double) e_time / 1000.0 + " seconds");
 
-		/*
-		 * if(dosegm) { //Do the initial segmentation Mat
-		 * smask=pbe.segm_mask(tvs.dtm.classes);
-		 * smask=maxvotefilt(smask,5,5,5,tvs.K);
-		 * colorMask(img,smask,tvs.initSegm,1); }
-		 */
+		if(dosegm) { //Do the initial segmentation Mat
+		    smask=segm_mask(pbe, tvs.dtm.classes);
+		    //smask=maxvotefilt(smask,5,5,5,tvs.K);
+		    //colorMask(img,smask,tvs.initSegm,1); 
+		}
 
 	}
 
@@ -7071,7 +7107,7 @@ public class libdt extends AlgorithmBase {
 		emopt.termvalue=emopt.termvalBest;
 		runEM(dtm,Yin,emopt);
 		//initialize kalman caches
-		/*setupKFB(Yin.get(0).length);*/
+		setupKFB(dtm, Yin.get(0).length);
 	}
 
 
@@ -8096,6 +8132,7 @@ public class libdt extends AlgorithmBase {
 		Yout = new Mat(Ytmp.rows, Ytmp.cols, CV_64F);
 		if (Ytmp.type == CV_8U) {
 			// cout << "llS convertTo float\n";
+			Yout.double2D = new double[Ytmp.rows][Ytmp.cols];
 			for (r = 0; r < Ytmp.rows; r++) {
 				for (c = 0; c < Ytmp.cols; c++) {
 					Yout.double2D[r][c] = (Ytmp.byte2D[r][c] & 0xff);
@@ -8270,10 +8307,248 @@ public class libdt extends AlgorithmBase {
 		class DytexKalmanFilter
 		{
 		  // cache for instantiated Kalman filter
-		  public Mat           cache_Kt;     /**< cache for an instantiated Kalman filter: Kalman gain matrices [n x m x tau]. */
+		  public Mat           cache_Kt[];     /**< cache for an instantiated Kalman filter: Kalman gain matrices [n x m x tau]. */
 		  public Mat           cache_detMt;  /**< cache for an instantiated Kalman filter: determinant term [1 x tau]. */
-		  public Mat           cache_invMt;  /**< cache for an instantiated Kalman filter: inverse covariance matrix [m x m x tau]. */
-		  public Dytex         cache_dt[];    /**< cache for an instantiated Kalman filter: DT reference (use a pointer). */
+		  public Mat           cache_invMt[];  /**< cache for an instantiated Kalman filter: inverse covariance matrix [m x m x tau]. */
+		  public Dytex         cache_dt;    /**< cache for an instantiated Kalman filter: DT reference (use a pointer). */
+		  
+		// note this requires that you keep dt around!
+		public DytexKalmanFilter(Dytex dt, int tau)
+		  {
+		    // initialize the Kalman cache
+		    cache_Kt       = create(tau, dt.dtopt.n, dt.dtopt.m, CV_64F);
+		    cache_detMt    = new Mat(1, tau, CV_64F);
+		    cache_invMt    = create(tau, dt.dtopt.m, dt.dtopt.m, CV_64F);
+		    cache_dt       = dt;
+
+		    // create cache
+		    loglike_internal(dt, null, null, tau, cache_Kt, cache_detMt, cache_invMt, false, kf_mode.KF_CACHE);
+		  }
+		
+		// do one of the following:
+	//   1) compute log-likelihood of videos under dt 
+	//   2) cache kalman filter matrices for a dt
+	//   3) compute log-likelihood using kalman filter cache
+	//
+	// result stored in lik (1 x size(videos))
+	// mahal=true will compute Mahalanobis distance instead LL
+	// this follows dytex_kalmanff_ll
+	// note: it computes the inverse directly, so not for big videos.
+//	       this is faster when the videos are small
+	void loglike_internal(Dytex dt, Vector<Mat> videos, Mat lik, 
+						 int cache_tau, Mat cache_Kt[], Mat cache_detMt, Mat cache_invMt[], 
+						 boolean mahal, kf_mode kfmode) {
+	  int i, r, c;
+
+	  // process videos (vectorize and subtract mean)
+	  int YN = (kfmode == kf_mode.KF_CACHE ? 0 : videos.size());
+
+	  Mat Y[] = new Mat[YN];
+	  for (i = 0; i < YN; i++) {
+		  Y[i] = new Mat();
+	  }
+	  //Mat Y[YN];
+	  int tau = 0;
+	  
+	  if (kfmode == kf_mode.KF_CACHE)
+	    tau = cache_tau;
+
+	  else {
+	    // process videos
+	    for (i=0; i<YN; i++) {
+	      processVideoTesting(dt,videos.get(i), Y[i]);
+	      
+	      // check that all tau are equal
+	      // [TODO: make it so we can handle different tau]
+	      if (i==0)
+		tau = Y[i].cols;
+	      else
+		    if (!(tau == Y[i].cols)) {
+		    	MipavUtil.displayError("!(tau == Y[i].cols) in loglike_internal");
+		    	System.exit(-1);
+		    }
+	    }  
+
+	    // make sure there is enough cache
+	    if (kfmode == kf_mode.KF_COMPUTE_WITH_CACHE)
+	      if(!(tau <= cache_Kt.length)) {
+	    	  MipavUtil.displayError("!(tau <= cache_kt.length) in loglike_internal)");
+	    	  System.exit(-1);
+	      }
+	  }
+
+	  // setup matrices for inversion lemma (when computing Kalman filter matrices)
+	  Mat iRf = null;
+	  Mat CRC = null;
+	  Mat RC = null;
+	  if (kfmode == kf_mode.KF_CACHE || kfmode == kf_mode.KF_COMPUTE_WITHOUT_CACHE) {
+	    iRf = new Mat(new Matrix(dt.R.mtx.double2D).inverse().getArray());
+		RC = times(iRf, dt.C);
+		CRC = times(transpose(dt.C),RC);
+	    //CovMatrix iR = dt.R.inv();   // inv(R)
+	    //iRf = iR.toFullMatrix();     // full inv(R)
+	    //iR.postmultiply(dt.C, RC);   // inv(R)*C
+	    //CRC = dt.C.t() * RC;         // C'*inv(R)*C
+	  }
+
+	  // initialize covariance matrices
+	  Mat Vt1t = dt.S0.mtx;  // Vt1t = S0
+	  Mat Vtt = new Mat(dt.dtopt.n, dt.dtopt.n, CV_64F);
+
+
+	  // initialize hidden states (if computing LL)
+	  Mat xtt = null;
+	  Mat YCx, Kt;
+	  Mat term2 = null;
+	  Mat icv = new Mat();
+	  Mat xt1t = new Mat();
+	  if (kfmode == kf_mode.KF_COMPUTE_WITH_CACHE || kfmode == kf_mode.KF_COMPUTE_WITHOUT_CACHE) {
+	    // xt1t = mu0
+	    if (YN == 1)
+	      copyTo(dt.mu0,xt1t);
+	    else
+	      repeat(dt.mu0, 1, YN, xt1t);
+	    
+	    xtt = new Mat(dt.dtopt.n, YN, CV_64F);
+	    lik.create(1, YN, CV_64F);
+	    term2 = new Mat(1, YN, CV_64F);
+	    YCx = new Mat(dt.dtopt.m, 1, CV_64F);
+	  }
+	  
+	  // initialize Kalman gain (if not cached)
+	  if ((kfmode == kf_mode.KF_CACHE) || (kfmode == kf_mode.KF_COMPUTE_WITHOUT_CACHE)) {
+	    Kt = new Mat(dt.dtopt.n, dt.dtopt.m, CV_64F);
+	    icv = new Mat(dt.dtopt.m, dt.dtopt.m, CV_64F);
+	  }
+
+	  double detterm = 0.0;  
+
+	  // run forward pass
+	  for (int t=0; t<tau; t++) {  
+
+	    /*
+	    cout << "--- t=" << t << " ---\n";
+	    cout << "xt1t = " << xt1t << "\n";
+	    cout << "Vt1t = " << Vt1t << "\n";
+	    waitKey(1000);
+	    */
+
+	    if (kfmode == kf_mode.KF_COMPUTE_WITH_CACHE) {
+	      // recall the cache
+	      Kt  = cache_Kt[t];
+	      icv = cache_invMt[t];
+	      detterm = cache_detMt.double2D[0][t];
+	      
+	    } else {
+	      // compute kalman gain, etc
+	      
+	      if (t>0) {
+		// update step:  Vt1t = A*Vtt*A' + Q;
+		Vt1t = plus(times(times(dt.A,Vtt),transpose(dt.A)),dt.Q.mtx);
+	      }
+
+	      // compute inverse
+	      switch(dt.dtopt.Ropt) {
+	      case COV_IID:
+	      case COV_DIAG:
+		// all zeros?
+		if (countNonZero(Vt1t) == 0) {
+		  //icv = iRf;
+		  copyTo(iRf,icv); // [TODO: make more efficient]
+		} else {
+		  // tmpS = inv(inv(Vt1t) + CRC);
+		  Mat Vt1tinv = new Mat(new Matrix(Vt1t.double2D).inverse().getArray());
+		  Mat tmpSinv = plus(Vt1tinv,CRC);
+		  Mat tmpS = new Mat(new Matrix(tmpSinv.double2D).inverse().getArray());
+		  //icv  = iRf - RC*tmpS*RC';
+		  icv = minus(iRf,times(times(RC,tmpS),transpose(RC)));
+		}
+		break;
+	      case COV_FULL:
+		// icv = inv(C*Vt1t*C' + dtkf.Rhat);
+	    Mat icvinv = plus(times(times(dt.C,Vt1t),transpose(dt.C)),dt.R.mtx);
+	    icv = new Mat(new Matrix(icvinv.double2D).inverse().getArray());
+		break;
+	      }
+
+	      // Kt  = Vt1t*C'*icv;
+	      Kt = times(times(Vt1t,transpose(dt.C)),icv);
+
+	      // Vtt = Vt1t - Kt*C*Vt1t;
+	      Vtt = minus(Vt1t,times(times(Kt,dt.C),Vt1t));
+	      
+	      if ((kfmode == kf_mode.KF_CACHE) || !mahal) {
+		// term1 = 0.5*logdet(icv);             % the logdet term
+	    Matrix icvMat = new Matrix(icv.double2D);
+	    double icvdet = icvMat.det();
+		detterm = 0.5*Math.log(icvdet);
+		// TODO: custom logdet function
+		
+		// term1 = term1 - 0.5*(dy*log(2*pi));  % the Gaussian constant
+		detterm -= 0.5*(dt.dtopt.m*Math.log(2*Math.PI));
+	      }
+
+	      // store cache
+	      if (kfmode == kf_mode.KF_CACHE) {
+		Mat tmp1 = cache_Kt[t];
+		copyTo(Kt,tmp1);
+		Mat tmp2 = cache_invMt[t];
+		copyTo(icv,tmp2);
+		cache_detMt.double2D[0][t] = detterm;
+	      }
+	    }
+
+	    if (kfmode == kf_mode.KF_COMPUTE_WITH_CACHE || kfmode == kf_mode.KF_COMPUTE_WITHOUT_CACHE) {
+	      if (t>0) {
+		// update step: xt1t = A*xtt;
+		xt1t = times(dt.A,xtt);
+	      }
+
+	      // TODO: can be sped up using Yit format?
+	      for (i=0; i<YN; i++) {
+		// YCx = Y(:,:,t) - C*xt1t;  
+	   
+		YCx =minus(col(Y[i],t),times(dt.C,col(xt1t,i)));
+		
+		// xtt = xt1t + Kt*YCx;
+		Mat rs = plus(col(xt1t,i),times(Kt,YCx));
+		for (r = 0; r < xtt.rows; r++) {
+		    xtt.double2D[r][i] = rs.double2D[r][0];	
+		}
+		
+		// mahal dist
+		// term2 = sum((icv*YCx).*YCx, 1);
+		rs = times(times(transpose(YCx),icv),YCx);
+		for (r = 0; r < term2.rows; r++) {
+			term2.double2D[r][i] = rs.double2D[r][0];
+		}
+	      }
+	    
+	      // compute Mahalanobis
+	      if (mahal) {
+		      lik = plus(lik,term2);
+		
+	      } else {
+		// compute Log-likelihood
+
+		// L     = L - 0.5*term2 + term1;
+	    	  for (r = 0; r < term2.rows; r++) {
+	    		  for (c = 0; c < term2.cols; c++) {
+	    			   lik.double2D[r][c] += -0.5*term2.double2D[r][c] + detterm;  
+	    		  }
+	    	  }
+	      }
+	    }
+
+	  } // end for t
+
+	  
+	  // clean up
+	  if( Y != null ) {
+		  Y = null;
+	  }
+	}
+
 		}
 		 
 			  //conditional state inference using Kalman smoothing filter
@@ -8671,5 +8946,391 @@ public class libdt extends AlgorithmBase {
 	    		    copyTo(L1,L);
 	        }
 	    }
+	    
+	    /*!
+	     * \brief
+	     * create cached Kalman filter for all DTs in the mixture.
+	     * 
+	     * \param tau
+	     * length to compute.
+	     *   
+	     * \see
+	     * DytexMix::getClasses(std::vector<Mat> Y,std::vector<int> & classes)
+	     */
+	    void setupKFB(DytexMix dtm, int tau)
+	    {
+	    	//Setup the kfb for each dt
+	    	dtm.kfb.clear();
+	    	for(int i=0;i<dtm.dt.size();i++)
+	    	{
+	    		DytexKalmanFilter kf = new DytexKalmanFilter(dtm.dt.get(i),tau);
+	    		dtm.kfb.add(kf);
+	    	}
+	    }
+	    
+	 // convert a video into a vector time-series, subtract the Ymean in the dytex
+	    void processVideoTesting(Dytex dt, Mat vin, Mat Yout) {
+	      int r,c;
+	      Mat Ytmp = null;
+	      
+	      switch(vin.dims) {
+	      case 3:
+	        // check video size
+	        if (!(dt.vrows == 0 && dt.vcols == 0)) {
+	          if (!(dt.vrows == vin.rows && dt.vcols == vin.cols)) {
+	        	  MipavUtil.displayError("!(dt.vrows == vin.rows && dt.vcols == vin.cols) in processingVideoTesting");
+	        	  System.exit(-1);
+	          }
+	        }
+	        // vectorize
+	        Ytmp = vectorize(vin, true);
+	        break;
+	        
+	      case 2:
+	        // already vectorized
+	        Ytmp = vin;
+	        break;
+	        
+	      default:
+	        MipavUtil.displayError("Unsupported video dims (color) in processVideoTesting");
+	        System.exit(-1);
+	      }
+	      
+	      //cout << "Ytmp: "; dumpMatSize(Ytmp);
+
+	      // --- check dimensions ---
+	      //CV_Assert(Ytmp.rows == Yout.rows);
+	      //CV_Assert(Ytmp.cols == Yout.cols);
+	        
+	      // --- convert to double/float ---
+	      if (Ytmp.type == CV_8U) {
+	        //cout << "llS convertTo float\n";
+	  			// cout << "llS convertTo float\n";
+	    		Yout.double2D = new double[Ytmp.rows][Ytmp.cols];
+	  			for (r = 0; r < Ytmp.rows; r++) {
+	  				for (c = 0; c < Ytmp.cols; c++) {
+	  					Yout.double2D[r][c] = (Ytmp.byte2D[r][c] & 0xff);
+	  				}
+	  			}	
+	      } else {
+	        copyTo(Ytmp,Yout); // copy to Yall
+	      }
+	        
+	      // --- subtract mean ---
+	      switch (dt.dtopt.Yopt) {
+	      case NONZERO_YMEAN:
+	        // subtract mean from Y
+	        for (int t=0; t<Yout.cols; t++) {
+	          for (r = 0; r < dt.Ymean.rows; r++) {
+	          Yout.double2D[r][t] -= dt.Ymean.double2D[r][0];
+	          }
+	        }
+	        break;
+	        
+	      case ZERO_YMEAN:
+	        // do nothing
+	        break;
+	      default:
+	        MipavUtil.displayError("bad Yopt");
+	        System.exit(-1);
+	      }
+	    }
+	    
+	    Mat[] segm_mask(PatchBatchExtractor pbe, Vector<Integer> oldclasses)
+	    {
+	    	int i;
+	    	Mat smask[];
+	    	int filledges=0;
+	    	//fill in implicit background class
+	    	Vector<Point3i> myloc = new Vector<Point3i>(); 
+	    	Vector<Integer> classes = new Vector<Integer>();
+	    	
+	    	myloc=pbe.locall;
+	    	int index=0;
+	    	for(i=0;i<pbe.locall_mask.size();i++)
+	    	{
+	    		if(pbe.locall_mask.get(i))
+	    		{
+	    			classes.add(oldclasses.get(index));
+	    			index++;
+	    		}
+	    		else
+	    		{
+	    			classes.add(0);
+	    		}
+	    	}
+
+	    	
+	    	// get locations
+	    Vector<Point3i> loc = new Vector<Point3i>();
+	    Point3i sum = null;
+	    	for(i=0;i<myloc.size();i++)
+	    	{
+	    		sum.x = myloc.get(i).x + pbe.coff.x;
+	    		sum.y = myloc.get(i).y + pbe.coff.y;
+	    		sum.z = myloc.get(i).z + pbe.coff.z;
+	    		loc.add(sum);
+	    	}
+	    	Point3i winsize=pbe.patopt.win;
+	    	Point3i step=pbe.patopt.step;
+
+	    	//check for single z-layer, and force mask to be 2d.
+	    	if(pbe.allz.size()==1)
+	    	{
+	    		for(i=0;i<loc.size();i++)
+	    			loc.get(i).z=0;
+
+	    		winsize.z=1;
+	    		step.z=1;
+	    		pbe.vidsize.z=1;
+	    	}
+
+	    	int numclasses = classes.get(0);
+	    	for (i = 1; i < classes.size(); i++)  {
+	    		if (classes.get(i) > numclasses) {
+	    			numclasses = classes.get(i);
+	    		}
+	    	}
+
+	    	
+	    	smask=create(pbe.vidsize.z,pbe.vidsize.y,pbe.vidsize.x,CV_8UC1);
+	    	int zsize=step.z;
+
+	    	Point3i rwin = null;
+	    	rwin.x=winsize.x/2;
+	    	rwin.y=winsize.y/2;
+	    	rwin.z=zsize/2;
+
+	    	Point2i box_y = new Point2i(-rwin.x,winsize.x-1-rwin.x);
+	    	Point2i box_x = new Point2i(-rwin.y,winsize.y-1-rwin.y);
+	    	Point2i box_z = new Point2i(-rwin.z,zsize-1-rwin.z);
+
+	    	int cy=rwin.x+1;
+	    	int cx=rwin.y+1;
+
+	    	//the structuring element
+	    	Mat se = new Mat(winsize.x,winsize.y,CV_8UC1);
+
+	    	//the distance matrix
+	    	Mat sed = new Mat(winsize.x,winsize.y,CV_64F);
+
+	    	Vector<Double> ssc = new Vector<Double>();
+	    	for(i=0;i<sed.rows;i++)
+	    		for(int j=0;j<sed.cols;j++)
+	    		{
+	    			sed.double2D[i][j]=Math.sqrt(  Math.pow((double)(i+1-cy),2) + Math.pow((double)(j+1-cx),2) );
+	    			ssc.add(sed.double2D[i][j]);
+	    		}
+	    		
+	    	//growing schedule
+	    	Collections.sort(ssc);
+	    	for (i = 1; i < ssc.size(); i++) {
+	    		if (ssc.get(i) == ssc.get(i-1)) {
+	    			ssc.remove(i);
+	    			i--;
+	    		}
+	    	}
+
+	    	//offsets
+	    	Vector<Integer> locoffs = new Vector<Integer>();
+	    	for(i=0;i<loc.size();i++)
+	    	{
+	    		int temp=loc.get(i).y-rwin.x+pbe.vidsize.y*(loc.get(i).x-rwin.y)+pbe.vidsize.y*pbe.vidsize.x*(loc.get(i).z-rwin.z);
+	    		locoffs.add(temp);
+	    	}
+
+	    	//classes
+	    	Vector<Integer> cs=classes;
+	    	Collections.sort(cs);
+	    	for (i = 1; i < cs.size(); i++) {
+	    		if (cs.get(i) == cs.get(i-1)) {
+	    			cs.remove(i);
+	    			i--;
+	    		}
+	    	}
+
+	    	for(int seri=0;seri<ssc.size();seri++)
+	    	{
+	    		System.out.println("segm_mask: nn fill "+ seri + "/" + ssc.size());
+	    		//build the structure element
+	    			
+	    		for(i=0;i<sed.rows;i++)
+	    			for(int j=0;j<sed.cols;j++)
+	    			{
+	    				if(sed.double2D[i][j]==ssc.get(seri))
+	    					se.byte2D[i][j]=1;
+	    				else
+	    					se.byte2D[i][j]=0;
+	    			}
+
+	    				
+	    			Mat se3[]=repeat(se,zsize);
+	    			int s1=se3.length;
+	    			int s2=se3[0].rows;
+	    			int s3=se3[0].cols;
+	    			Vector<Double> se3i = new Vector<Double>();
+	    			for(int kk=0;kk<s1;kk++)
+	    				for(int jj=0;jj<s3;jj++)
+	    					for(int ii=0;ii<s2;ii++)
+	    					{
+	    						if(se3[kk].byte2D[ii][jj]==1)
+	    						{
+	    							double temp=ii+1+jj*pbe.vidsize.y+kk*pbe.vidsize.y*pbe.vidsize.x;
+	    							se3i.add(temp);
+	    						}
+	    					}
+	    			for(i=0;i<classes.size();i++)
+	    			{
+	    				int c=classes.get(i);
+	    				int off=locoffs.get(i);
+
+	    				//find zero elements in smask that are active in se3
+	    				Vector<Integer> tempi = new Vector<Integer>();
+	    				for(int j=0;j<se3i.size();j++)
+	    				{
+	    					int temp=(int)(se3i.get(j)+off-1);
+	    					int fNo=temp/(smask[0].rows*smask[0].cols);
+	    					temp=temp-fNo*(smask[0].rows*smask[0].cols);
+	    					int colNo=temp/smask[0].rows;
+	    					int rowNo=temp%smask[0].rows;
+	    					if(smask[fNo].byte2D[rowNo][colNo]==0)
+	    						tempi.add(j);
+	    				}
+	    					
+	    				//if found any zero elements, 
+	    				for(int j=0;j<tempi.size();j++)
+	    				{
+	    					int temp=(int)(se3i.get(tempi.get(j))+off-1);
+	    					int fNo=temp/(smask[0].rows*smask[0].cols);
+	    					temp=temp-fNo*(smask[0].rows*smask[0].cols);
+	    					int colNo1=temp/smask[0].rows;
+	    					int rowNo1=temp%smask[0].rows;
+	    					// fill location
+	    					if( (c==1) || (c==2) )
+	    						c=c;
+	    					smask[fNo].byte2D[rowNo1][colNo1]=(byte)c;							
+	    				}
+
+	    			}
+	    			
+	    	}
+	    				
+	    	//%%% now fill in the borders if they are missing %%%
+	    	double minx = Double.MAX_VALUE;
+	    	double maxx = -Double.MAX_VALUE;
+	    	double miny = Double.MAX_VALUE;
+	    	double maxy = -Double.MAX_VALUE;
+	    	for (i = 0; i < pbe.allx.size(); i++) {
+	    		if (pbe.allx.get(i) < minx) {
+	    			minx = pbe.allx.get(i);
+	    		}
+	    		if (pbe.allx.get(i) > maxx) {
+	    			maxx = pbe.allx.get(i);
+	    		}
+	    	}
+	    	for (i = 0; i < pbe.ally.size(); i++) {
+	    		if (pbe.ally.get(i) < miny) {
+	    			miny = pbe.ally.get(i);
+	    		}
+	    		if (pbe.ally.get(i) > maxy) {
+	    			maxy = pbe.ally.get(i);
+	    		}
+	    	}
+	        minx=minx+pbe.coff.y+box_x.x;
+	    	maxx=maxx+pbe.coff.y+box_x.y+2;
+	    	miny=miny+pbe.coff.x+box_y.x;
+	    	maxy=maxy+pbe.coff.x+box_y.y+2;
+
+	    	if(1<=minx)
+	    	{
+	    		// fill in left edge
+	    		for(i=0;i<smask.length;i++)
+	    			for(int j=0;j<smask[0].rows;j++)
+	    				for(int k=0;k<minx;k++)
+	    					smask[i].byte2D[j][k]=smask[i].byte2D[j][(int)minx];
+
+	    	}
+
+	    	/*if(maxx<=vidsize.x)
+	    	{
+	    		//fill in right edge
+	    		for(int i=0;i<smask.size[0];i++)
+	    			for(int j=0;j<smask.size[1];j++)
+	    				for(int k=maxx-1;k<vidsize.x;k++)
+	    					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,j,maxx-2);
+
+	    	}
+
+	    	
+
+	    	if(1<=miny)
+	    	{
+	    		// fill in top edge
+	    		for(int i=0;i<smask.size[0];i++)
+	    			for(int j=0;j<miny;j++)
+	    				for(int k=0;k<smask.size[2];k++)
+	    					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,miny,k);
+
+	    	}
+
+	    	if(maxy<=vidsize.y)
+	    	{
+	    		// fill in bottom edge
+	    		for(int i=0;i<smask.size[0];i++)
+	    			for(int j=maxy-1;j<vidsize.y;j++)
+	    				for(int k=0;k<smask.size[2];k++)
+	    					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,maxy-2,k);
+
+	    	}
+
+	    			if(vidsize.z>1)
+	    			{
+	    				double minz=*min_element(allz.begin(),allz.end())+coff.z+box_z.x;
+	    				double maxz=*max_element(allz.begin(),allz.end())+coff.z+box_z.y+2;
+
+	    				if(1<=minz)
+	    				{
+	    					//fill in first frames
+	    					for(int i=0;i<minz;i++)
+	    						for(int j=0;j<smask.size[1];j++)
+	    							for(int k=0;k<smask.size[2];k++)
+	    							smask.at<uchar>(i,j,k)=smask.at<uchar>(minz,j,k);
+	    				}
+
+	    				if(maxz<=vidsize.z)
+	    				{
+	    					//fill in last frames
+	    					for(int i=maxz-1;i<vidsize.z;i++)
+	    						for(int j=0;j<smask.size[1];j++)
+	    							for(int k=0;k<smask.size[2];k++)
+	    							smask.at<uchar>(i,j,k)=smask.at<uchar>(maxz-2,j,k);
+	    				}
+	    			}*/
+
+
+	    /*			
+	    	FILE *fid=fopen("d:/bad/dump_mask_openCV.bin","wb");
+	    	for(int i=0;i<smask.size[0];i++)
+	    		for(int j=0;j<smask.size[2];j++)
+	    			for(int k=0;k<smask.size[1];k++)
+	    			{
+	    				double temp=smask.at<uchar>(i,k,j);
+	    				fwrite(&temp,8,1,fid);
+	    			}
+	    			fclose(fid);*/
+
+	    			/*if(smask.size[0]==1)
+	    			{
+	    				Mat tempM;
+	    				MatVid::frame(smask,0).copyTo(tempM);
+	    				return tempM;
+	    			}
+	    			else
+	    			{
+	    				return smask;
+	    			}*/
+	    	return null;
+	    }
+
 
 }
