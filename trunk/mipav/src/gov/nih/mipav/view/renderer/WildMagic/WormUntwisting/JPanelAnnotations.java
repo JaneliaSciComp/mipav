@@ -85,6 +85,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableRowSorter;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -215,7 +216,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
             if (fileName != null) {
                 voiDir = new String(directory + fileName);
-                System.err.println("Opening csv file " + voiDir );
+//                System.err.println("Opening csv file " + voiDir );
                 VOI annotations = LatticeModel.readAnnotationsCSV(voiDir);
                 if ( annotations != null && annotations.getCurves().size() > 0 ) {
                 	for ( int i = 0; i < annotations.getCurves().size(); i++) {
@@ -272,7 +273,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					int count = WormSegmentation.fill(imageA.GetImage(), minThreshold, maxThreshold, seedList, visited, mask);
 
 					
-					System.err.println("Segmentation results " + imageA.GetImage().getImageName() + "  " + count );
+//					System.err.println("Segmentation results " + imageA.GetImage().getImageName() + "  " + count );
 
 					// remove previous segmentation:
 			        if ( segmentationCurve != null ) {
@@ -301,7 +302,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				        FlyPathGraphSamples kFlyPathGraphSamples = kSkeleton.getPathGraph(1, 1);
 
 				        FlyPathGraphCurve kFlyPathGraphCurve = new FlyPathGraphCurve(kFlyPathGraphSamples, 0.07f, 2);
-				        System.err.println("Skelentonize " + kFlyPathGraphCurve.getNumBranches() );
+//				        System.err.println("Skelentonize " + kFlyPathGraphCurve.getNumBranches() );
 				        if ( kFlyPathGraphCurve.getNumBranches() > 0 ) {
 				        	Curve3f kCurve = kFlyPathGraphCurve.getCurvePosition(0);
 				        	int numVertex = 100;
@@ -485,7 +486,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						if ( text == null ) continue;
 						
-						System.err.println( text.getText() );
+//						System.err.println( text.getText() );
 						names.add(text.getText());
 						Vector3f pos = text.elementAt(0);
 						float value = imageA.GetImage().getFloat((int)pos.X, (int)pos.Y, (int)pos.Z);
@@ -583,7 +584,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
 	 */
 	public void tableChanged(TableModelEvent e) {
-		System.err.println("tableChanged");
+//		System.err.println("tableChanged");
 		// Track updates to the table and update the corresponding annotation.
 		// The user can change the annotation name and position (x,y,z) with table edits.
 		// Does not currently check type.
@@ -791,6 +792,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationTableModel.addTableModelListener(this);
 
 			annotationTable = new JTable(annotationTableModel);
+			annotationTable.setRowSorter(new TableRowSorter(annotationTableModel));
 			annotationTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 			annotationTable.addKeyListener(this);
 			annotationTable.addMouseListener(this);
@@ -808,6 +810,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationGroupTableModel.addTableModelListener(this);
 
 			annotationGroupTable = new JTable(annotationGroupTableModel);
+			annotationGroupTable.setRowSorter(new TableRowSorter(annotationGroupTableModel));
 			annotationGroupTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 			annotationGroupTable.addKeyListener(this);
 
@@ -1026,7 +1029,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 		ctrlKey = e.isControlDown();
 
-		System.err.println("keyTyped");
+//		System.err.println("keyTyped");
 		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
 			if ( voiManager != null )
 			{
@@ -1071,7 +1074,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			}
 		}
 		else if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
-			System.err.println("delete");
+//			System.err.println("delete");
 			if ( (e.getSource() == annotationTable) ) {
 				int row = annotationTable.getSelectedRow();
 				int col = annotationTable.getSelectedColumn();
@@ -1169,7 +1172,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent e) {}
+	public void mouseClicked(MouseEvent e) {
+//		System.err.println("mouseClicked " + ctrlKey );
+	}
 
 	@Override
 	public void mouseEntered(MouseEvent arg0) {
@@ -1185,13 +1190,34 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		//		System.err.println("mousePressed " + ctrlKey );
+//		System.err.println("mousePressed " + ctrlKey );
 		//		updateTableSelection();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {}
 
+	private VOIWormAnnotation getSelected(int row, int column, JTable table, VOI annotations) {
+		String name = new String ( table.getValueAt(row, column).toString() );
+		for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+			if ( text.getText().equals(name) ) {
+				return text;
+			}
+		}
+		return null;
+	}
+
+	private int getRow(JTable table, VOIWormAnnotation text) {
+		for ( int i = 0; i < table.getRowCount(); i++ ) {
+			String name = new String ( table.getValueAt(i, 0).toString() );
+			if ( text.getText().equals(name) ) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	private void updateTableSelection(ListSelectionEvent e) {
 
 		int numSelected = -1;
@@ -1202,7 +1228,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				// Updates the displayLabel checkbox based on which row of the table is current:
 				VOI annotations = voiManager.getAnnotations();
 				
-				System.err.println( voiManager + " " + imageA.GetImage().getImageName() );
+//				System.err.println( voiManager + " " + imageA.GetImage().getImageName() );
 
 				for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
@@ -1211,10 +1237,12 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 
 				for ( int i = 0; i < rows.length; i++ ) {
-					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(rows[i]);
-					text.setSelected( true );
-					text.updateSelected( imageA.GetImage() );
-					numSelected++;
+					VOIWormAnnotation text = getSelected(rows[i], 0, annotationTable, annotations ); //(VOIWormAnnotation) annotations.getCurves().elementAt(rows[i]);
+					if ( text != null ) {
+						text.setSelected( true );
+						text.updateSelected( imageA.GetImage() );
+						numSelected++;
+					}
 				}
 				imageA.GetImage().notifyImageDisplayListeners();
 			}
@@ -1233,15 +1261,19 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			annotationList.removeListSelectionListener(this);
 			annotationList.clearSelection();
 			for ( int i = 0; i < rows.length; i++ ) {
-				selectedPrefix = new String ( annotationGroupTableModel.getValueAt(rows[i], 0).toString() );
+				selectedPrefix = new String ( annotationGroupTable.getValueAt(rows[i], 0).toString() );
 
 				for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
 					VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
 					String prefix = getPrefix(text.getText());
 					if ( prefix.equals(selectedPrefix) ) {
+//						System.err.println("updateTableSelection " + prefix + " " + selectedPrefix );
 						text.setSelected(true);
 						text.updateSelected(imageA.GetImage());
-						annotationList.addSelectionInterval(j, j);
+						int tableRow = getRow(annotationTable, text);
+						if ( tableRow != -1 ) {
+							annotationList.addSelectionInterval(tableRow, tableRow);
+						}
 						numSelected++;
 					}
 				}
