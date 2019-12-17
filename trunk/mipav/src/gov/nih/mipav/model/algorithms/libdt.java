@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Point;
 import java.io.*;
 import java.util.*;
 import java.time.format.DateTimeFormatter;
@@ -4010,6 +4011,86 @@ public class libdt extends AlgorithmBase {
 
 			// sqrtmtx = null;
 		}
+		
+	}
+
+	// convert to full matrix, return it
+	Mat toFullMatrix(CovMatrix cov) {
+	  int r;
+	  Mat fmtx = new Mat();
+	  fmtx.create(cov.n, cov.n, CV_64F);
+	  switch(cov.covopt) {
+	  case COV_FULL:
+	    copyTo(cov.mtx,fmtx);
+	    break;
+	  case COV_DIAG:
+		  for (r = 0; r < cov.n; r++) {
+			  fmtx.double2D[r][r] = cov.mtx.double2D[r][0];
+		  }
+	    break;
+	  case COV_IID:
+		for (r = 0; r < cov.n; r++) {
+			fmtx.double2D[r][r] = cov.mtx.double2D[0][0];
+		}   
+	    break;
+	  default:
+	    MipavUtil.displayError("ERROR: invalid cov_type!");
+	    System.exit(-1);
+	  }
+	  return fmtx;
+	}
+	
+	// return the inverse of a covariance matrix
+	CovMatrix inv(CovMatrix cov) {
+      int r;
+	  CovMatrix out = new CovMatrix(cov.n, cov.covopt);
+
+	  switch(cov.covopt) {
+	  case COV_FULL:
+	    out.mtx = new Mat(new Matrix(cov.mtx.double2D).inverse().getArray());
+	    break;
+	  case COV_DIAG:
+		  for (r = 0; r < cov.n; r++) {
+			  out.mtx.double2D[r][0] = 1.0/cov.mtx.double2D[r][0];
+		  }
+	  case COV_IID:
+	    out.mtx.double2D[0][0] = 1.0/cov.mtx.double2D[0][0];
+	    break;
+	  default:
+	    MipavUtil.displayError("bad covopt");
+	    System.exit(-1);
+	  }
+
+	  return out;
+	}
+	
+	// dst = cov*src  (n x m) = (n x n) * (n x m)
+	void postmultiply(CovMatrix cov, Mat src, Mat dst) {
+	  int c;
+	  // allocate the output matrix
+	  if (!(src.rows == cov.n)) {
+		  MipavUtil.displayError("!(src.rows == cov.n) in postMultiply");
+		  System.exit(-1);
+	  }
+	  dst.create(cov.n, src.cols, CV_64F);
+	  switch(cov.covopt) {
+	  case COV_FULL:
+	    dst = times(cov.mtx,src);
+	    break;
+	  case COV_DIAG:
+	    copyTo(src,dst);
+	    scaleRows(dst, cov.mtx);
+	    break;
+	  case COV_IID:
+	    copyTo(src,dst);
+	    for (c = 0; c < src.cols; c++) {
+	        dst.double2D[0][c] *= cov.mtx.double2D[0][0];
+	    }
+	    break;
+	  default:
+	    MipavUtil.displayError("bad covopt");
+	    System.exit(-1);
+	  }
 	}
 
 	/**
@@ -4757,6 +4838,23 @@ public class libdt extends AlgorithmBase {
 				}
 			}
 		}
+	}
+	
+	// scale each row(i) by w(i)
+	void scaleRows(Mat m, Mat w) {
+	 int c;
+	 int wr,wc;
+	  if (!(m.rows == w.rows*w.cols)) {
+		  MipavUtil.displayError("!(m.rows == w.rows*w.cols) in scaleRows");
+		  System.exit(-1);
+	  }
+	  for (int i=0; i<m.rows; i++) {
+		wr = i/w.cols;
+		wc = i % w.cols;
+		for (c = 0; c < m.cols; c++) {
+	        m.double2D[i][c] *= w.double2D[wr][wc];
+		}
+	  }
 	}
 
 	public class DytexMix {
@@ -5825,7 +5923,7 @@ public class libdt extends AlgorithmBase {
 
 		if(dosegm) { //Do the initial segmentation Mat
 		    smask=segm_mask(pbe, tvs.dtm.classes);
-		    //smask=maxvotefilt(smask,5,5,5,tvs.K);
+		    smask=maxvotefilt(smask,5,5,5,tvs.K);
 		    //colorMask(img,smask,tvs.initSegm,1); 
 		}
 
@@ -8380,19 +8478,16 @@ public class libdt extends AlgorithmBase {
 	  // setup matrices for inversion lemma (when computing Kalman filter matrices)
 	  Mat iRf = null;
 	  Mat CRC = null;
-	  Mat RC = null;
+	  Mat RC = new Mat();
 	  if (kfmode == kf_mode.KF_CACHE || kfmode == kf_mode.KF_COMPUTE_WITHOUT_CACHE) {
-	    iRf = new Mat(new Matrix(dt.R.mtx.double2D).inverse().getArray());
-		RC = times(iRf, dt.C);
+	    CovMatrix iR = inv(dt.R);
+	    iRf = toFullMatrix(iR);
+	    postmultiply(iR,dt.C,RC);
 		CRC = times(transpose(dt.C),RC);
-	    //CovMatrix iR = dt.R.inv();   // inv(R)
-	    //iRf = iR.toFullMatrix();     // full inv(R)
-	    //iR.postmultiply(dt.C, RC);   // inv(R)*C
-	    //CRC = dt.C.t() * RC;         // C'*inv(R)*C
 	  }
 
 	  // initialize covariance matrices
-	  Mat Vt1t = dt.S0.mtx;  // Vt1t = S0
+	  Mat Vt1t = toFullMatrix(dt.S0);  // Vt1t = S0
 	  Mat Vtt = new Mat(dt.dtopt.n, dt.dtopt.n, CV_64F);
 
 
@@ -9251,13 +9346,13 @@ public class libdt extends AlgorithmBase {
 
 	    	}
 
-	    	/*if(maxx<=vidsize.x)
+	    	if(maxx<=pbe.vidsize.x)
 	    	{
 	    		//fill in right edge
-	    		for(int i=0;i<smask.size[0];i++)
-	    			for(int j=0;j<smask.size[1];j++)
-	    				for(int k=maxx-1;k<vidsize.x;k++)
-	    					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,j,maxx-2);
+	    		for(i=0;i<smask.length;i++)
+	    			for(int j=0;j<smask[0].rows;j++)
+	    				for(int k=(int)(maxx-1);k<pbe.vidsize.x;k++)
+	    					smask[i].byte2D[j][k]=smask[i].byte2D[j][(int)(maxx-2)];
 
 	    	}
 
@@ -9266,46 +9361,56 @@ public class libdt extends AlgorithmBase {
 	    	if(1<=miny)
 	    	{
 	    		// fill in top edge
-	    		for(int i=0;i<smask.size[0];i++)
+	    		for(i=0;i<smask.length;i++)
 	    			for(int j=0;j<miny;j++)
-	    				for(int k=0;k<smask.size[2];k++)
-	    					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,miny,k);
+	    				for(int k=0;k<smask[0].cols;k++)
+	    					smask[i].byte2D[j][k]=smask[i].byte2D[(int)miny][k];
 
 	    	}
 
-	    	if(maxy<=vidsize.y)
+	    	if(maxy<=pbe.vidsize.y)
 	    	{
 	    		// fill in bottom edge
-	    		for(int i=0;i<smask.size[0];i++)
-	    			for(int j=maxy-1;j<vidsize.y;j++)
-	    				for(int k=0;k<smask.size[2];k++)
-	    					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,maxy-2,k);
+	    		for(i=0;i<smask.length;i++)
+	    			for(int j=(int)(maxy-1);j<pbe.vidsize.y;j++)
+	    				for(int k=0;k<smask[0].cols;k++)
+	    					smask[i].byte2D[j][k]=smask[i].byte2D[(int)(maxy-2)][k];
 
 	    	}
 
-	    			if(vidsize.z>1)
+	    			if(pbe.vidsize.z>1)
 	    			{
-	    				double minz=*min_element(allz.begin(),allz.end())+coff.z+box_z.x;
-	    				double maxz=*max_element(allz.begin(),allz.end())+coff.z+box_z.y+2;
+	    				double minz = Double.MAX_VALUE;
+	    		    	double maxz = -Double.MAX_VALUE;
+	    		    	for (i = 0; i < pbe.allz.size(); i++) {
+	    		    		if (pbe.allz.get(i) < minz) {
+	    		    			minz = pbe.allz.get(i);
+	    		    		}
+	    		    		if (pbe.allz.get(i) > maxx) {
+	    		    			maxz = pbe.allz.get(i);
+	    		    		}
+	    		    	}
+	    				minz=minz+pbe.coff.z+box_z.x;
+	    				maxz=maxz+pbe.coff.z+box_z.y+2;
 
 	    				if(1<=minz)
 	    				{
 	    					//fill in first frames
-	    					for(int i=0;i<minz;i++)
-	    						for(int j=0;j<smask.size[1];j++)
-	    							for(int k=0;k<smask.size[2];k++)
-	    							smask.at<uchar>(i,j,k)=smask.at<uchar>(minz,j,k);
+	    					for(i=0;i<minz;i++)
+	    						for(int j=0;j<smask[0].rows;j++)
+	    							for(int k=0;k<smask[0].cols;k++)
+	    							smask[i].byte2D[j][k]=smask[(int)minz].byte2D[j][k];
 	    				}
 
-	    				if(maxz<=vidsize.z)
+	    				if(maxz<=pbe.vidsize.z)
 	    				{
 	    					//fill in last frames
-	    					for(int i=maxz-1;i<vidsize.z;i++)
-	    						for(int j=0;j<smask.size[1];j++)
-	    							for(int k=0;k<smask.size[2];k++)
-	    							smask.at<uchar>(i,j,k)=smask.at<uchar>(maxz-2,j,k);
+	    					for(i=(int)(maxz-1);i<pbe.vidsize.z;i++)
+	    						for(int j=0;j<smask[0].rows;j++)
+	    							for(int k=0;k<smask[0].cols;k++)
+	    							smask[i].byte2D[j][k]=smask[(int)(maxz-2)].byte2D[j][k];
 	    				}
-	    			}*/
+	    			}
 
 
 	    /*			
@@ -9319,7 +9424,7 @@ public class libdt extends AlgorithmBase {
 	    			}
 	    			fclose(fid);*/
 
-	    			/*if(smask.size[0]==1)
+	    			/*if(smask.length==1)
 	    			{
 	    				Mat tempM;
 	    				MatVid::frame(smask,0).copyTo(tempM);
@@ -9329,8 +9434,190 @@ public class libdt extends AlgorithmBase {
 	    			{
 	    				return smask;
 	    			}*/
-	    	return null;
+	    			return smask;
 	    }
+	    
+	    /*!
+	     * \brief
+	     * maximum vote filter.
+	     * 
+	     * \param I
+	     * input video.
+	     * 
+	     * \param sx
+	     * x filter size.
+	     * 
+	     * \param sy
+	     * y filter size.
+	     * 
+	     * \param sz
+	     * z filter size.
+	     * 
+	     * \param nclass
+	     * number of classes in the video.
+	     * 
+	     * \returns
+	     * filtered video.
+	     * 
+	     * Can be used to smooth out the segmentation results.
+	     *  
+	     * 
+	     * \see
+	     * segmentVideo.
+	     */
+	    Mat[] maxvotefilt(Mat I[],int sx,int sy,int sz,int numclass)
+	    {
+	    	//in case of 2d video, make it 2d
+	    	//if(I.dims==2)
+	    	//{
+	    	//	Mat tmp=MatVid::create(1,I.rows,I.cols,CV_8UC1);
+	    	//	Mat tmp2=MatVid::frame(tmp,0);
+	    	//	I.copyTo(tmp2);
+	    	//	I=tmp;
+	    	//}
+
+	    	//initializing filtered mask
+	    	Mat J[] = create(I.length,I[0].rows,I[0].cols,CV_8UC1);;
+
+	    	//filling some sizes
+	    	int rs1=sx/2;
+	    	int rs2=sy/2;
+	    	int rs3=sz/2;
+	    	Point2i box_y = new Point2i(-rs1,-rs1+sx-1);
+	    	Point2i box_x = new Point2i(-rs2,-rs2+sy-1);
+	    	Point2i box_z = new Point2i(0,0);
+	    	if(sz>0)
+	    	{
+	    		box_z.x=-rs3;
+	    		box_z.y=-rs3+sz-1;
+	    	}
+
+	    	//memory for each class
+	        Vector<Mat[]> count = new Vector<Mat[]>();
+	    	for(int i=0;i<numclass+1;i++)
+	    	{	
+	    		Mat tmp[] = create(I.length,I[0].rows,I[0].cols,CV_8UC1);
+	    		count.add(tmp);
+	    	}
+
+	    	//applying maxvote
+	    	/*for(int c=0;c<=numclass;c++)
+	    	{
+	    		Mat foo[]=create(I.length,I[0].rows,I[0].cols,CV_8UC1);		
+	    		for(int i=0;i<I.length;i++)
+	    		{
+	    			for(int j=0;j<I[0].rows;j++)
+	    			{
+	    				for(int k=0;k<I[0].cols;k++)
+	    				{
+	    					if(I[i].byte2D[j][k]==c)
+	    					{
+	    						foo[i].byte2D[j][k]=1;
+	    					}
+	    					else
+	    					{
+	    						foo[i].byte2D[j][k]=0;
+	    					}
+	    				}
+	    			}
+	    		}		
+	    		for(int z=box_z.x;z<=box_z.y;z++)
+	    		{
+	    			for(int y=box_y.x;y<=box_y.y;y++)
+	    			{
+	    				for(int x=box_x.x;x<=box_x.y;x++)
+	    				{
+	    					Point yind = new Point((y+1)>1?(y+1):1, (y+I[0].rows)<(I[0].rows)?(y+I[0].rows):(I[0].rows));
+	    					Point xind = new Point((x+1)>1?(x+1):1, (x+I[0].cols)<(I[0].cols)?(x+I[0].cols):(I[0].cols));
+	    					Point zind = new Point((z+1)>1?(z+1):1, (z+I.length)<(I.length)?(z+I.length):(I.length));
+
+	    					Point yind2 = new Point((-y+1)>1?(-y+1):1, (-y+I[0].rows)<(I[0].rows)?(-y+I[0].rows):(I[0].rows));
+	    					Point xind2 = new Point((-x+1)>1?(-x+1):1, (-x+I[0].cols)<(I[0].cols)?(-x+I[0].cols):(I[0].cols));
+	    					Point zind2 = new Point((-z+1)>1?(-z+1):1, (-z+I.length)<(I.length)?(-z+I.length):(I.length));
+
+	    					Vector<Integer> xxind = new Vector<Integer>();
+	    					Vector<Integer> yyind = new Vector<Integer>();
+	    					Vector<Integer> zzind = new Vector<Integer>();
+	    					Vector<Integer> xxind2 = new Vector<Integer>();
+	    					Vector<Integer> yyind2 = new Vector<Integer>();
+	    					Vector<Integer> zzind2 = new Vector<Integer>();
+
+	    					for(int i=xind.x;i<=xind.y;i++)
+	    						xxind.push_back(i);
+
+	    					for(int i=yind.x;i<=yind.y;i++)
+	    						yyind.push_back(i);
+
+	    					for(int i=zind.x;i<=zind.y;i++)
+	    						zzind.push_back(i);
+
+	    					for(int i=xind2.x;i<=xind2.y;i++)
+	    						xxind2.push_back(i);
+
+	    					for(int i=yind2.x;i<=yind2.y;i++)
+	    						yyind2.push_back(i);
+
+	    					for(int i=zind2.x;i<=zind2.y;i++)
+	    						zzind2.push_back(i);			
+
+	    					if(zzind.empty())
+	    						zzind.push_back(1);
+
+	    					if(zzind2.empty())
+	    						zzind2.push_back(1);
+
+
+	    					for(int kk=0;kk<zzind.size();kk++)
+	    					{
+	    						Mat tmp1=MatVid::frame(count[c],zzind[kk]-1);
+	    						Mat tmp2=tmp1(Range(yind.x-1,yind.y),Range(xind.x-1,xind.y));
+	    						Mat tmp3=MatVid::frame(foo,zzind2[kk]-1);
+	    						Mat tmp4=tmp3(Range(yind2.x-1,yind2.y),Range(xind2.x-1,xind2.y));
+	    						tmp2=tmp2+tmp4;
+	    					}
+
+	    				}
+	    			}
+	    		}
+	    	}
+
+	    	for(int i=0;i<count[0].size[0];i++)
+	    	{
+	    		for(int j=0;j<count[0].size[1];j++)
+	    		{
+	    			for(int k=0;k<count[0].size[2];k++)
+	    			{
+	    				unsigned char maxV=0;
+	    				int maxind=0;
+	    				for(int m=0;m<count.size();m++)
+	    				{
+	    					if(count[m].at<unsigned char>(i,j,k)>maxV)
+	    					{
+	    						maxV=count[m].at<unsigned char>(i,j,k);
+	    						maxind=m;
+	    					}
+	    				}
+
+	    				J.at<unsigned char>(i,j,k)=maxind;
+	    			}
+	    		}
+	    	}*/
+
+	    	//make 2d
+	    	//if(J.size[0]==1)
+	    	//{
+	    	//	Mat tmp=MatVid::frame(J,0);
+	    	//	Mat tmp2;
+	    	//	tmp.copyTo(tmp2);
+	    	//	return tmp2;
+	    	//}
+	    	//else
+	    	//{
+	    	//	return J;
+	    	//}
+	    	return J;
+	    }
+
 
 
 }
