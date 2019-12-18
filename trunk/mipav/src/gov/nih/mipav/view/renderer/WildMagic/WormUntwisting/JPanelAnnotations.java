@@ -136,6 +136,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JCheckBox displayMidline;
 	private JCheckBox displaySurface;
 	private JButton createCurve;
+	
+	private JPanelAnnotations sharedAnnotationPanel = null;
 
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
 		voiManager = voiInterface;
@@ -450,6 +452,17 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				voiManager.addSplineControlPts(controlPoints);
 			}
 		}
+		else if ( command.equals("match") ) {
+			if ( sharedAnnotationPanel != null ) {
+				VOIWormAnnotation text = sharedAnnotationPanel.getSelected();
+				VOIWormAnnotation localText = getSelected();
+				if ( text != null && localText != null ) {
+					localText.setText( text.getText() );
+					localText.updateText();
+					annotationChanged();
+				}
+			}
+		}
 	}
 
 	/* (non-Javadoc)
@@ -457,7 +470,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-		System.err.println("annotationChanged " + imageA.GetImage().getImageName() );
+//		System.err.println("annotationChanged " + imageA.GetImage().getImageName() );
 
 		if ( voiManager != null )
 		{
@@ -584,74 +597,86 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
 	 */
 	public void tableChanged(TableModelEvent e) {
-//		System.err.println("tableChanged");
+		System.err.println("tableChanged");
 		// Track updates to the table and update the corresponding annotation.
 		// The user can change the annotation name and position (x,y,z) with table edits.
 		// Does not currently check type.
-		int column = e.getColumn();
 		boolean isChecked = false;
 		boolean isClipped = false;
 		if ( voiManager != null && (e.getSource() == annotationTableModel) )
 		{
-			int row = e.getFirstRow();
+			int row = annotationTable.getSelectedRow();
+			int column = annotationTable.getSelectedColumn();
+			System.err.println(row + "  " + column );
+
+			String newName = null;
 			VOI annotations = voiManager.getAnnotations();
 			if ( (row >= 0) && (row < annotations.getCurves().size()) )
 			{
-				VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(row);
-				if ( column == 0 )
-				{
-					text.setText( annotationTableModel.getValueAt(row, column).toString() );
-					text.updateText();
-				}
-				else if ( column < 4 )
-				{
-					float value = Float.valueOf(annotationTableModel.getValueAt(row, column).toString());
-					if ( value >= 0 ) {
-						if ( column == 1 ) {
-							text.elementAt(0).X = value;
-							text.elementAt(1).X = value;
-						}
-						else if ( column == 2 ) {
-							text.elementAt(0).Y = value;
-							text.elementAt(1).Y = value;
-						}
-						else if ( column == 3 ) {
-							text.elementAt(0).Z = value;
-							text.elementAt(1).Z = value;
-						}
-						text.retwist(previewMode);
+				VOIWormAnnotation text = getSelected(currentName, annotations);
+				if ( text != null ) {
+					if ( column == 0 )
+					{
+						newName = new String( annotationTable.getValueAt(row, column).toString() );
+						text.setText( newName );
+						text.updateText();
 					}
-				}
-				else if ( annotationTableModel.getColumnName(column).equals("segment") )
-				{
-					try {
-						int value = Integer.valueOf(annotationTableModel.getValueAt(row, column).toString());
-						text.setLatticeSegment(value);
-					} catch ( java.lang.NumberFormatException error ) {
-						text.setLatticeSegment(-1);
+					else if ( column < 4 )
+					{
+						float value = Float.valueOf(annotationTable.getValueAt(row, column).toString());
+						if ( value >= 0 ) {
+							if ( column == 1 ) {
+								text.elementAt(0).X = value;
+								text.elementAt(1).X = value;
+							}
+							else if ( column == 2 ) {
+								text.elementAt(0).Y = value;
+								text.elementAt(1).Y = value;
+							}
+							else if ( column == 3 ) {
+								text.elementAt(0).Z = value;
+								text.elementAt(1).Z = value;
+							}
+							text.retwist(previewMode);
+						}
 					}
-				}
-				text.update();
-				if ( text.getVolumeVOI() != null ) {
-					isChecked = text.getVolumeVOI().GetDisplay();
-					isClipped = text.getVolumeVOI().GetClipped();
+					else if ( annotationTable.getColumnName(column).equals("segment") )
+					{
+						try {
+							int value = Integer.valueOf(annotationTable.getValueAt(row, column).toString());
+							text.setLatticeSegment(value);
+						} catch ( java.lang.NumberFormatException error ) {
+							text.setLatticeSegment(-1);
+						}
+					}
+					text.update();
+					if ( text.getVolumeVOI() != null ) {
+						isChecked = text.getVolumeVOI().GetDisplay();
+						isClipped = text.getVolumeVOI().GetClipped();
+					}
+					annotationChanged();
 				}
 			}
 
 			displayLabel.setSelected(isChecked);
 			volumeClip.setSelected(isClipped);
+			
+
+			currentAnnotationTableRow = -1;
+			currentName = new String(newName);
 		}
 		if ( voiManager != null && (e.getSource() == annotationGroupTableModel) )
 		{
 			int row = annotationGroupTable.getSelectedRow();
+			int column = annotationGroupTable.getSelectedColumn();
 			int segment = -1;
 			String newPrefix = "";
 			boolean nameChanged = false;
 			boolean segmentChanged = false;
 			if ( column == 0 ) {
 				// new name:
-				if ( annotationGroupTableModel.getValueAt(row, 0) != null ) {
-					newPrefix = new String ( annotationGroupTableModel.getValueAt(row, 0).toString() );
+				if ( annotationGroupTable.getValueAt(row, 0) != null ) {
+					newPrefix = new String ( annotationGroupTable.getValueAt(row, 0).toString() );
 					if ( selectedPrefix.equals("new row") ) 
 					{
 						selectedPrefix = new String(newPrefix);
@@ -666,7 +691,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			else if ( column == 1 ) {
 				// change the segment:
 				try {
-					segment = Integer.valueOf(annotationGroupTableModel.getValueAt(row, column).toString());
+					segment = Integer.valueOf(annotationGroupTable.getValueAt(row, column).toString());
 				} catch ( java.lang.NumberFormatException error ) {
 					// value erased:
 				}
@@ -695,11 +720,15 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		}
 	}
 
+	private int currentAnnotationTableRow = -1;
+	private String currentName;
+
 	/* (non-Javadoc)
 	 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
 	 */
 	public void valueChanged(ListSelectionEvent e) {
 
+//		System.err.println("valueChanged");
 		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
 			return;
 
@@ -710,16 +739,31 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				// Updates the displayLabel checkbox based on which row of the table is current:
 				VOI annotations = voiManager.getAnnotations();
 				int row = annotationTable.getSelectedRow();
+				int column = annotationTable.getSelectedColumn();
+//				System.err.println(row + "  " + column );
+				if ( row != currentAnnotationTableRow ) {
+					currentAnnotationTableRow = row;
+//					String selectedName = "";
+					VOIWormAnnotation text = getSelected(row, column, annotationTable, annotations);
+					if ( text != null ) {
+//						selectedName = new String(text.getText());
+//						System.err.println( " selectedName " + selectedName );
+					}
+					currentName = new String(text.getText());
+//					System.err.println( " current " + currentName );
+				}
 
 				boolean isChecked = true;
 				boolean isClipped = true;
 				if ( (annotations != null) && (row >= 0) ) {
 					if ( row < annotations.getCurves().size() ) {
-						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(row);
-						if ( text.getVolumeVOI() != null )
-						{
-							isChecked = text.getVolumeVOI().GetDisplay();
-							isClipped = text.getVolumeVOI().GetClipped();
+						VOIWormAnnotation text = getSelected(currentName, annotations);
+						if ( text != null ) {
+							if ( text.getVolumeVOI() != null )
+							{
+								isChecked = text.getVolumeVOI().GetDisplay();
+								isClipped = text.getVolumeVOI().GetClipped();
+							}
 						}
 					}
 				}
@@ -731,8 +775,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			if ( annotationGroupTable.getRowCount() > 0 ) {
 				int row = annotationGroupTable.getSelectedRow();
 				if ( row != -1 ) {
-					if ( annotationGroupTableModel.getValueAt(row, 0) != null ) {
-						selectedPrefix = new String ( annotationGroupTableModel.getValueAt(row, 0).toString() );
+					if ( annotationGroupTable.getValueAt(row, 0) != null ) {
+						selectedPrefix = new String ( annotationGroupTable.getValueAt(row, 0).toString() );
 						//						System.err.println("valueChanged " + row + "  " + selectedPrefix );
 						voiManager.setAnnotationPrefix( selectedPrefix );
 						boolean displayAll = true;
@@ -842,13 +886,21 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
     	gbc.gridheight = 1;
     	gbc.gridwidth = 1;
     	gbc.anchor = GridBagConstraints.WEST;
-    	gbc.fill = GridBagConstraints.HORIZONTAL;
+//    	gbc.fill = GridBagConstraints.HORIZONTAL;
     }
 	
 	/**
 	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
 	 */
 	public JSplitPane initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, VolumeImage image, boolean latticeMarkers )
+	{		
+		return initDisplayAnnotationsPanel(voiInterface, image, latticeMarkers, false);
+	}
+
+	/**
+	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
+	 */
+	public JSplitPane initDisplayAnnotationsPanel( VOILatticeManagerInterface voiInterface, VolumeImage image, boolean latticeMarkers, boolean matchImages )
 	{		
 		voiManager = voiInterface;
 		imageA = image;
@@ -974,7 +1026,23 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			// build the annotation table for the list of annotations:
 			buildAnnotationTable(latticeMarkers);
 			// add annotation table to a scroll pane:
-			JScrollPane kScrollPane = new JScrollPane(annotationTable);
+			JPanel panel = new JPanel( new GridBagLayout() );
+			initGB();
+			panel.add( annotationTable.getTableHeader(), gbc );
+			gbc.gridy++;
+			panel.add( annotationTable, gbc );
+			gbc.gridy++;
+			if ( matchImages ) {
+				JButton match = new JButton("match" );
+				match.addActionListener(this);
+				match.setActionCommand("match");
+				match.setPreferredSize(MipavUtil.defaultButtonSize);
+				match.setSize(MipavUtil.defaultButtonSize);
+				match.setMaximumSize(MipavUtil.defaultButtonSize);
+				panel.add(match, gbc );
+			}
+//			JScrollPane kScrollPane = new JScrollPane(annotationTable);
+			JScrollPane kScrollPane = new JScrollPane(panel);
 			Dimension size = kScrollPane.getPreferredSize();
 			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
@@ -1196,8 +1264,40 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	@Override
 	public void mouseReleased(MouseEvent e) {}
+	
+	public void setSharedAnnotationPanel( JPanelAnnotations panel ) {
+		sharedAnnotationPanel = panel;
+	}
+	
+	public VOIWormAnnotation getSelected() {
+
+		if ( annotationTable.getRowCount() > 0 ) {
+			int[] rows = annotationTable.getSelectedRows();
+
+			// Updates the displayLabel checkbox based on which row of the table is current:
+			VOI annotations = voiManager.getAnnotations();
+
+			for ( int i = 0; i < rows.length; i++ ) {
+				VOIWormAnnotation text = getSelected(rows[i], 0, annotationTable, annotations );
+				if ( text != null ) return text;
+			}
+		}
+		return null;
+	}
+
+	private VOIWormAnnotation getSelected( String name, VOI annotations) {
+		for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+			if ( text.getText().equals(name) ) {
+				return text;
+			}
+		}
+		return null;
+	}
 
 	private VOIWormAnnotation getSelected(int row, int column, JTable table, VOI annotations) {
+		if ( row < 0 || column  < 0 ) return null;
+		
 		String name = new String ( table.getValueAt(row, column).toString() );
 		for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 			VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);

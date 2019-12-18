@@ -2487,7 +2487,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		{
 			image.annotationPanelUI = new JPanelAnnotations(manager, renderer, image.volumeImage );
 		}
-		image.annotationPanelUI.initDisplayAnnotationsPanel(manager, image.volumeImage, true);
+		image.annotationPanelUI.initDisplayAnnotationsPanel(manager, image.volumeImage, true, (dualGPU != null));
 		
 		if ( dualGPU != null )
 		{
@@ -2517,6 +2517,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			annotationPanelSingle.add( leftImage.annotationPanelUI.getAnnotationsPanel(), BorderLayout.NORTH );
 			tabbedPane.addTab("Annotation", null, annotationPanelSingle);
 			pack();
+		}
+		if ( dualGPU != null )
+		{
+			if ( leftImage.annotationPanelUI != null && rightImage.annotationPanelUI != null ) {
+				leftImage.annotationPanelUI.setSharedAnnotationPanel( rightImage.annotationPanelUI );
+				rightImage.annotationPanelUI.setSharedAnnotationPanel( leftImage.annotationPanelUI );
+			}
 		}
 	}
 

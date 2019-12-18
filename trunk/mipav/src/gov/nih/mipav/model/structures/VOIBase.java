@@ -2605,7 +2605,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         m_bReloadPoints = true;
         if ( m_kVolumeVOI != null )
         {
-            m_kVolumeVOI.setVOI(this, true);
+            m_kVolumeVOI.setVOI(this);
         }
     }
 
