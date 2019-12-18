@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.*;
 
 import java.awt.Point;
@@ -64,6 +66,21 @@ public class libdt extends AlgorithmBase {
 	private final int CV_REDUCE_AVG = 1;
 	private final int CV_REDUCE_MAX = 2;
 	private final int CV_REDUCE_MIN = 3;
+	private final int MAXCOL = 12;
+	private Mat g_mask_lut[][] = new Mat[MAXCOL][3];
+	private double g_rgbtable[][] = new double[][]{ {1.0, 1.0, 1.0},  // 0: clear
+					 {1.0, 0.7, 0.7},  // 1: pink
+					 {0.7, 1.0, 0.7},  // 2: light green
+					 {0.7, 0.7, 1.0},  // 3: indigo
+					 {1.0, 1.0, 0.0},  // 4: yellow
+					 {1.0, 0.0, 1.0},  // 5: magenta
+					 {0.0, 1.0, 1.0},  // 6: cyan
+					 {1.0, 0.0, 0.0},  // 7: red
+					 {0.0, 1.0, 0.0},  // 8: green
+					 {0.0, 0.0, 1.0},  // 9: blue
+					 {0.5, 1.0, 1.0},  // 10: ?
+					 {1.0, 1.0, 1.0},  // 11: white
+	};
 	private boolean debug = true;
 
 	public libdt() {
@@ -4177,7 +4194,8 @@ public class libdt extends AlgorithmBase {
 		public int dims;
 		// ! the number of rows and columns or (-1, -1) when the array has more
 		// than 2 dimensions
-		public int depth, rows, cols, channels;
+		public int depth, rows, cols;
+		public int channels = 1;
 		public int size[];
 		public int type;
 		public int step[] = new int[3];
@@ -5924,7 +5942,7 @@ public class libdt extends AlgorithmBase {
 		if(dosegm) { //Do the initial segmentation Mat
 		    smask=segm_mask(pbe, tvs.dtm.classes);
 		    smask=maxvotefilt(smask,5,5,5,tvs.K);
-		    //colorMask(img,smask,tvs.initSegm,1); 
+		    colorMask(img,smask,tvs.initSegm,1); 
 		}
 
 	}
@@ -9467,6 +9485,7 @@ public class libdt extends AlgorithmBase {
 	     */
 	    Mat[] maxvotefilt(Mat I[],int sx,int sy,int sz,int numclass)
 	    {
+	    	int row,col;
 	    	//in case of 2d video, make it 2d
 	    	//if(I.dims==2)
 	    	//{
@@ -9501,7 +9520,7 @@ public class libdt extends AlgorithmBase {
 	    	}
 
 	    	//applying maxvote
-	    	/*for(int c=0;c<=numclass;c++)
+	    	for(int c=0;c<=numclass;c++)
 	    	{
 	    		Mat foo[]=create(I.length,I[0].rows,I[0].cols,CV_8UC1);		
 	    		for(int i=0;i<I.length;i++)
@@ -9543,37 +9562,47 @@ public class libdt extends AlgorithmBase {
 	    					Vector<Integer> zzind2 = new Vector<Integer>();
 
 	    					for(int i=xind.x;i<=xind.y;i++)
-	    						xxind.push_back(i);
+	    						xxind.add(i);
 
 	    					for(int i=yind.x;i<=yind.y;i++)
-	    						yyind.push_back(i);
+	    						yyind.add(i);
 
 	    					for(int i=zind.x;i<=zind.y;i++)
-	    						zzind.push_back(i);
+	    						zzind.add(i);
 
 	    					for(int i=xind2.x;i<=xind2.y;i++)
-	    						xxind2.push_back(i);
+	    						xxind2.add(i);
 
 	    					for(int i=yind2.x;i<=yind2.y;i++)
-	    						yyind2.push_back(i);
+	    						yyind2.add(i);
 
 	    					for(int i=zind2.x;i<=zind2.y;i++)
-	    						zzind2.push_back(i);			
+	    						zzind2.add(i);			
 
-	    					if(zzind.empty())
-	    						zzind.push_back(1);
+	    					if(zzind.isEmpty())
+	    						zzind.add(1);
 
-	    					if(zzind2.empty())
-	    						zzind2.push_back(1);
+	    					if(zzind2.isEmpty())
+	    						zzind2.add(1);
 
 
 	    					for(int kk=0;kk<zzind.size();kk++)
 	    					{
-	    						Mat tmp1=MatVid::frame(count[c],zzind[kk]-1);
-	    						Mat tmp2=tmp1(Range(yind.x-1,yind.y),Range(xind.x-1,xind.y));
-	    						Mat tmp3=MatVid::frame(foo,zzind2[kk]-1);
-	    						Mat tmp4=tmp3(Range(yind2.x-1,yind2.y),Range(xind2.x-1,xind2.y));
-	    						tmp2=tmp2+tmp4;
+	    						Mat tmp1=count.get(c)[zzind.get(kk)-1];
+	    						Mat tmp2 = new Mat(yind.y-yind.x+1,xind.y-xind.x+1,CV_8U);
+	    						for (row = yind.x-1; row < yind.y; row++) {
+	    							for (col = xind.x-1; col < xind.y; col++) {
+	    								tmp2.byte2D[row-(yind.x-1)][col-(xind.x-1)] = tmp1.byte2D[row][col];
+	    							}
+	    						}
+	    						Mat tmp3=foo[zzind2.get(kk)-1];
+	    						Mat tmp4 = new Mat(yind2.y-yind2.x+1,xind2.y-xind2.x+1,CV_8U);
+	    						for (row = yind2.x-1; row < yind2.y; row++) {
+	    						    for (col = xind2.x-1; col < xind2.y; col++) {
+	    						    	tmp4.byte2D[row-(yind2.x-1)][col-(xind2.x-1)] = tmp3.byte2D[row][col];
+	    						    }
+	    						}
+	    						tmp2=plus(tmp2,tmp4);
 	    					}
 
 	    				}
@@ -9581,27 +9610,27 @@ public class libdt extends AlgorithmBase {
 	    		}
 	    	}
 
-	    	for(int i=0;i<count[0].size[0];i++)
+	    	for(int i=0;i<count.get(0).length;i++)
 	    	{
-	    		for(int j=0;j<count[0].size[1];j++)
+	    		for(int j=0;j<count.get(0)[0].rows;j++)
 	    		{
-	    			for(int k=0;k<count[0].size[2];k++)
+	    			for(int k=0;k<count.get(0)[0].cols;k++)
 	    			{
-	    				unsigned char maxV=0;
+	    				short maxV=0;
 	    				int maxind=0;
 	    				for(int m=0;m<count.size();m++)
 	    				{
-	    					if(count[m].at<unsigned char>(i,j,k)>maxV)
+	    					if((count.get(m)[i].byte2D[j][k] & 0xff) >maxV)
 	    					{
-	    						maxV=count[m].at<unsigned char>(i,j,k);
+	    						maxV=(short)(count.get(m)[i].byte2D[j][k] & 0xff);
 	    						maxind=m;
 	    					}
 	    				}
 
-	    				J.at<unsigned char>(i,j,k)=maxind;
+	    				J[i].byte2D[j][k]=(byte)maxind;
 	    			}
 	    		}
-	    	}*/
+	    	}
 
 	    	//make 2d
 	    	//if(J.size[0]==1)
@@ -9618,6 +9647,282 @@ public class libdt extends AlgorithmBase {
 	    	return J;
 	    }
 
+	 // colorize an image based on a segmentation mask
+	 // (same as colormask.m)
+	 // TODO: add option to stop reindexing the mask (useful for consistent colors in videos)
+	 void colorMask(Mat img[], Mat mask[], Mat oimg, int border) {
+	   /*if (img[0].channels != 1) {
+	     MipavUtil.displayError("too many channels in colorMask");
+	     System.exit(-1);
+	   }
+	   if (mask[0].type != CV_8UC1) {
+	     MipavUtil.displayError("mask[0] not 8-bit in colorMask");
+	     System.exit(-1);
+	   }
 
+	   int mdims = mask[0].dims;
+	   int idims = img[0].dims;
+
+	   // check compatability of dimensions
+	   if ((mdims == 2) && (idims == 2) && (mask.length == 1) && (img.length == 1) && (mask.length == 1)) {
+	     if (img[0].rows != mask[0].rows) {
+	    	 MipavUtil.displayError("img[0].rows != mask[0].rows in colorMask");
+	    	 System.exit(-1);
+	     }
+	     if (img[0].cols == mask[0].cols) {
+	    	 MipavUtil.displayError("img[0].cols != mask[0].cols in colorMask");
+	    	 System.exit(-1);
+	     }
+	   } else if ((mdims == 2) && (idims == 2) && (mask.length == 1) && (img.length > 1) && (mask.length == 1)) {
+		   if (img[0].rows != mask[0].rows) {
+		    	 MipavUtil.displayError("img[0].rows != mask[0].rows in colorMask");
+		    	 System.exit(-1);
+		     }
+		     if (img[0].cols == mask[0].cols) {
+		    	 MipavUtil.displayError("img[0].cols != mask[0].cols in colorMask");
+		    	 System.exit(-1);
+		     } 
+	   } else if ((mdims == 2) && (idims == 2) && (mask.length == 1) && (img.length > 1) && (mask.length > 1)) {
+		   if (img.length != mask.length) {
+			   MipavUtil.displayError("img.length != mask.length in colorMask");
+			   System.exit(-1);
+		   }
+		   if (img[0].rows != mask[0].rows) {
+		    	 MipavUtil.displayError("img[0].rows != mask[0].rows in colorMask");
+		    	 System.exit(-1);
+		     }
+		     if (img[0].cols == mask[0].cols) {
+		    	 MipavUtil.displayError("img[0].cols != mask[0].cols in colorMask");
+		    	 System.exit(-1);
+		     } 
+	   } else {
+	     MipavUtil.displayError("Bad inputs in colorMask");
+	     System.exit(-1);
+	   }
+
+
+	   // build RGB tables (one time only)
+	   if (g_mask_lut[0][0] == null); {
+	     System.out.println("\n** building RGB tables **");
+	     
+	     for (int i=0; i<MAXCOL; i++) {
+	       for (int c=0; c<3; c++) {
+	    	 g_mask_lut[i][c] = new Mat();
+	         g_mask_lut[i][c].create(1,256,CV_8UC1);
+	         for (int p=0; p<256; p++) {
+	           g_mask_lut[i][c].byte2D[0][p] = (byte)(p*g_rgbtable[i][c]);
+	         }
+	       }
+	     }
+	   }
+
+	   // build list of mask values --> color
+	   byte mask_flag[] = new byte[256];
+	   byte mask_values[] = new byte[256];
+	   // initialize array
+	   for (int i=0; i<256; i++)
+	     mask_flag[i] = 0;
+
+	   // mark mask values
+	   if (mask.length == 1) {
+	     // mask image
+	     for (int y=0; y<mask[0].rows; y++)
+	       for (int x=0; x<mask[0].cols; x++)
+	         mask_flag[mask[0].byte2D[y][x] & 0xff] = 1;
+	   } else {
+	     // mask video
+	     for (int z=0; z<mask.length; z++) 
+	       for (int y=0; y<mask[0].rows; y++)
+	         for (int x=0; x<mask[0].cols; x++)
+	           mask_flag[mask[z].byte2D[y][x] & 0xff] = 1;  
+	   }
+	   
+	   // convert mask values to color index
+	   
+	   mask_flag[0] = 1;  //always one for the background
+
+	   int nummask = 0;
+	   
+
+	   for (int i=0; i<256; i++) {
+	     mask_values[i] = (byte)((mask_flag[i] != 0) ? (nummask++) % MAXCOL : 0);
+	     //cout << (int)(mask_values[i]) << " ";
+	   }
+	   
+	   //dumpMatSize(img);
+	   //dumpMatSize(mask);
+	   //cout << "nm = " << nummask << "\n";
+
+	   // allocate output video
+	   Mat bgr[][] = new Mat[3][img.length];
+	   for (int i = 0; i < 3; i++) {
+		   for (int j = 0; j < img.length; j++) {
+			   bgr[i][j] = new Mat();
+		   }
+	   }
+	   for (int i=0; i<3; i++) {
+	     if (img.length == 1)      // output image
+	       bgr[i][0].create(img[0].rows, img[0].cols, CV_8UC1);
+	     else       // output video
+	       for (int j = 0; j < img.length; j++) {
+	           bgr[i][j].create(img[0].rows, img[0].cols, CV_8UC1);  
+	       }
+	   }
+	   
+	   // use lookup table  
+	   if (img.length == 2) {
+	     // image
+	     for (int y=0; y<img[0].rows; y++) {
+	       for (int x=0; x<img[0].cols; x++) {
+	         int p = (img[0].byte2D[y][x] & 0xff);
+	         int m = (mask_values[mask[0].byte2D[y][x] & 0xff] & 0xff);
+	         for (int i=0; i<3; i++)
+	           bgr[2-i][0].byte2D[y][x] = g_mask_lut[m][i].byte2D[0][p];
+	       }
+	     }
+	   } else {
+	     // video
+	     for (int z=0; z<img.length; z++) {
+	       for (int y=0; y<img[0].rows; y++) {
+	         for (int x=0; x<img[0].cols; x++) {
+	           int p = (img[z].byte2D[y][x] & 0xff);
+	           int m;
+	           if (mask.length == 2)
+	             m = (mask_values[mask[0].byte2D[y][x] & 0xff] & 0xff);    // mask image
+	           else
+	             m = (mask_values[mask[z].byte2D[y][x] & 0xff] & 0xff);  // mask video
+	           for (int i=0; i<3; i++)
+	             bgr[2-i][z].byte2D[y][x] = g_mask_lut[m][i].byte2D[0][p];
+	         }
+	       }
+	     }
+	   }
+	   
+	   // make border
+	   if (border>0) {
+	     if (mask.length == 2) {
+	       // mask image & ...
+	       Mat bord = mask2Border(mask[0], border, mask_flag);
+	       if (img.length == 2) {
+	         // ...output image
+	         for (int i=0; i<3; i++)
+	           bitwise_or(bgr[i], bord, bgr[i]);
+	           
+	       } else {
+	         // ...output video
+	         for (int z=0; z<img.size[0]; z++) {
+	           for (int i=0; i<3; i++) {
+	             Mat tmp = MatVid::frame(bgr[i], z);
+	             bitwise_or(tmp, bord, tmp);
+	           }
+	         }
+	       }
+	         
+	     } else {
+	       // mask video
+	       for (int z=0; z<img.size[0]; z++) {
+	         Mat bord = mask2Border(MatVid::frame(mask, z), border, mask_flag);
+	         for (int i=0; i<3; i++) {
+	           Mat tmp = MatVid::frame(bgr[i], z);
+	           bitwise_or(tmp, bord, tmp);
+	         }        
+	       }
+	     }
+	   }
+
+	   // make color image
+	   merge(bgr, 3, oimg);*/
+	 }
+
+	 // mask_flag = unsigned char[256] w/ non-zero for present mask values
+	 Mat mask2Border(Mat mask, int border, byte mask_flag[]) {
+	   int r,c;
+	   int x,y;
+	   if (border <= 0) {
+		   MipavUtil.displayError("border = " + border + " in mask2Border");
+		   System.exit(-1);
+	   }
+	   
+	   Mat el;
+	   if (border == 1) {
+	     el = new Mat(2,2,CV_8UC1);
+	     for (r = 0; r < 2; r++) {
+	    	 for (c = 0; c < 2; c++) {
+	    		 el.byte2D[r][c] = 1;
+	    	 }
+	     }
+	   }
+	   else {
+	     //el = getStructuringElement(MORPH_ELLIPSE, Size(2*border+1, 2*border+1));
+		   double distance;
+		   double radius = (2.0*border+1.0)/2.0;
+		   el = new Mat(2*border+1,2*border+1,CV_8UC1);
+		   for (r = 0; r < 2*border+1; r++) {
+
+	            for (c = 0; c < 2*border+1; c++) {
+	                distance = Math.sqrt(((r - border) * (r - border)) + ((c - border) * (c - border)));
+
+	                if (distance < radius) {
+	                    el.byte2D[r][c] = 1;
+	                }
+	            }
+	        }
+	   }
+	   
+	   if (mask_flag == null) {
+	     MipavUtil.displayError("should provide mask_values in mask2Border");
+	     System.out.println();
+	   }
+	   
+	   Mat out = new Mat(mask.rows, mask.cols, CV_8UC1);
+	   int extents[] = new int[]{2*border+1,2*border+1};
+	   int length = (2*border+1)*(2*border+1);
+	   byte maskc[] = new byte[length];
+	   byte maskcd[] = new byte[length];
+	   ModelImage maskcImage = new ModelImage(ModelStorageBase.BYTE, extents, "maskcImage");
+	   AlgorithmMorphology2D algoMorph2D;
+	   
+	   for (c=0; c<256; c++) {
+	     if (mask_flag[c] != 0) {      
+	       //cout << "mask=" << c << "; ";
+	       // maskc = (mask == c);                // segment c
+	       for (y = 0; y < 2*border+1; y++) {
+	    	   for (x = 0; x < 2*border+1; x++) {
+	    		   if ((mask.byte2D[y][x] & 0xff) == c) {
+	    			   maskc[y*(2*border+1) + x] = 1;
+	    		   }
+	    		   else {
+	    			   maskc[y*(2*border+1) + x] = 0;
+	    		   }
+	    	   }
+	       }
+	       try {
+	    	   maskcImage.importData(0, maskc, true);
+	       }
+	       catch (IOException e) {
+	    	   MipavUtil.displayError("IOExcetpion " + e + " on maskcImage.importData(0, maskc, true)");
+	    	   System.exit(-1);
+	       }
+	       int itersDilate = 1;
+	       boolean entireImage = true;
+	       algoMorph2D = new AlgorithmMorphology2D(maskcImage,AlgorithmMorphology2D.SIZED_CIRCLE,(float)(2*border+1),AlgorithmMorphology2D.DILATE,
+	    		   itersDilate,0,0,0,entireImage);
+	       algoMorph2D.run();
+	       algoMorph2D.finalize();
+	       try {
+	           maskcImage.exportData(0, length, maskcd);
+	       }
+	       catch (IOException e) {
+	    	   MipavUtil.displayError("IOExcetpion " + e + " on maskcImage.exportData(0, length, maskcd)");
+	    	   System.exit(-1);
+	       }
+	       //dilate(maskc, maskcd, el);          // dilate slightly
+	       /*bitwise_xor(maskcd, maskc, maskcd); // take difference
+	       bitwise_or(out, maskcd, out);       // accumulate*/
+	     }
+	   }
+
+	   return out;
+	 }
 
 }
