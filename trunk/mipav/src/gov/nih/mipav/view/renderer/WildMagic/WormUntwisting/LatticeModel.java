@@ -578,6 +578,8 @@ public class LatticeModel {
 	}
 
 	protected ModelImage imageA;
+	private Vector3f imageDims;
+	
 	protected ModelImage seamCellImage;
 	// Set of two contours, each connected to the other pair-wise
 	protected VOI lattice = null;
@@ -731,7 +733,9 @@ public class LatticeModel {
 			}
 			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
 			String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
-			checkParentDir(parentDir);			
+			checkParentDir(parentDir);		
+			
+			imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
 		}
 	}
 
@@ -743,6 +747,7 @@ public class LatticeModel {
 	 */
 	public LatticeModel(final ModelImage imageA, final VOI lattice) {
 		this.imageA = imageA;
+		imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
 		String imageName = imageA.getImageName();
 		if (imageName.contains("_clone")) {
 			imageName = imageName.replaceAll("_clone", "");
@@ -1937,13 +1942,22 @@ public class LatticeModel {
 			final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
 			if ( text.isSelected() ) {
 				Vector3f diff = text.getSelectionOffset();
-				text.elementAt(0).copy(pt).sub(diff);
-				text.elementAt(1).copy(pt).sub(diff);
+//				System.err.println( pt );
+				
+				Vector3f newPt = Vector3f.sub(pt,  diff);
+				newPt.max( Vector3f.ZERO );
+				newPt.min( imageDims );
+
+				text.elementAt(0).copy(newPt);
+				text.elementAt(1).copy(newPt);
+				
+				
 				text.update();
 				text.updateSelected(imageA);
 				// point was modified so set the retwist flag:
 				text.retwist(previewMode);
 				modified = true;
+				
 			}
 		}
 		if ( modified ) {
@@ -3241,6 +3255,8 @@ public class LatticeModel {
 			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
 			String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
 			checkParentDir(parentDir);			
+			
+			imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
 		}
 	}
 
