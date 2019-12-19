@@ -55,6 +55,8 @@ public class libdt extends AlgorithmBase {
 	private final byte[] byteIntBuffer = new byte[4];
 	/** byte array for double * */
 	private final byte[] byteDoubleBuffer = new byte[8];
+	/** byte array for long * */
+    private final byte[] byteLongBuffer = new byte[8];
 	private final int CV_8U = 0;
 	private final int CV_8UC1 = 0;
 	private final int CV_8UC = 1;
@@ -2582,7 +2584,7 @@ public class libdt extends AlgorithmBase {
 				for (ch = 0; ch < channels; ch++) {
 					for (r = 0; r < rows; r++) {
 						for (c = 0; c < cols; c++) {
-							sub[d].double2DC[ch][r][c] = vid[d + dstart].double2DC[ch][r + rstart][c + cstart];
+							sub[d].double2DC[r][c][ch] = vid[d + dstart].double2DC[r + rstart][c + cstart][ch];
 						}
 					}
 				}
@@ -2597,7 +2599,7 @@ public class libdt extends AlgorithmBase {
 				for (ch = 0; ch < channels; ch++) {
 					for (r = 0; r < rows; r++) {
 						for (c = 0; c < cols; c++) {
-							sub[d].byte2DC[ch][r][c] = vid[d + dstart].byte2DC[ch][r + rstart][c + cstart];
+							sub[d].byte2DC[r][c][ch] = vid[d + dstart].byte2DC[r + rstart][c + cstart][ch];
 						}
 					}
 				}
@@ -2672,7 +2674,7 @@ public class libdt extends AlgorithmBase {
 				for (ch = 0; ch < channels; ch++) {
 					for (r = 0; r < rows; r++) {
 						for (c = 0; c < cols; c++) {
-							sub[d].double2DC[ch][r][c] = vid[d + dstart].double2DC[ch][r + rstart][c + cstart];
+							sub[d].double2DC[r][c][ch] = vid[d + dstart].double2DC[r + rstart][c + cstart][ch];
 						}
 					}
 				}
@@ -2687,7 +2689,7 @@ public class libdt extends AlgorithmBase {
 				for (ch = 0; ch < channels; ch++) {
 					for (r = 0; r < rows; r++) {
 						for (c = 0; c < cols; c++) {
-							sub[d].byte2DC[ch][r][c] = vid[d + dstart].byte2DC[ch][r + rstart][c + cstart];
+							sub[d].byte2DC[r][c][ch] = vid[d + dstart].byte2DC[r + rstart][c + cstart][ch];
 						}
 					}
 				}
@@ -2732,7 +2734,7 @@ public class libdt extends AlgorithmBase {
 				for (ch = 0; ch < vid[0].channels; ch++) {
 					for (r = 0; r < vid[0].rows; r++) {
 						for (c = 0; c < vid[0].cols; c++) {
-							sub[i].double2DC[ch][r][c] = vid[i + frange_start_inclusive].double2DC[ch][r][c];
+							sub[i].double2DC[r][c][ch] = vid[i + frange_start_inclusive].double2DC[r][c][ch];
 						}
 					}
 				}
@@ -2744,7 +2746,7 @@ public class libdt extends AlgorithmBase {
 				for (ch = 0; ch < vid[0].channels; ch++) {
 					for (r = 0; r < vid[0].rows; r++) {
 						for (c = 0; c < vid[0].cols; c++) {
-							sub[i].byte2DC[ch][r][c] = vid[i + frange_start_inclusive].byte2DC[ch][r][c];
+							sub[i].byte2DC[r][c][ch] = vid[i + frange_start_inclusive].byte2DC[r][c][ch];
 						}
 					}
 				}
@@ -4307,17 +4309,17 @@ public class libdt extends AlgorithmBase {
 			}
 			if (dims == 2) {
 				if (type == CV_8UC) {
-					byte2DC = new byte[channels][rows][cols];
+					byte2DC = new byte[rows][cols][channels];
 				} else if (type == CV_64FC) {
-					double2DC = new double[channels][rows][cols];
+					double2DC = new double[rows][cols][channels];
 				}
 			} // if (dims == 2)
 			else if (dims == 3) {
 				if (type == CV_8UC) {
-					byte3DC = new byte[channels][depth][rows][cols];
+					byte3DC = new byte[depth][rows][cols][channels];
 					step[1] = cols;
 				} else if (type == CV_64FC) {
-					double3DC = new double[channels][depth][rows][cols];
+					double3DC = new double[depth][rows][cols][channels];
 					step[1] = 8 * cols;
 				}
 			} // else if (dims == 3)
@@ -4374,16 +4376,16 @@ public class libdt extends AlgorithmBase {
 			}
 			if (dims == 2) {
 				if (type == CV_8UC) {
-					byte2DC = new byte[channels][rows][cols];
+					byte2DC = new byte[rows][cols][channels];
 				} else if (type == CV_64FC) {
-					double2DC = new double[channels][rows][cols];
+					double2DC = new double[rows][cols][channels];
 				}
 			} else if (dims == 3) {
 				if (type == CV_8UC) {
-					byte3DC = new byte[channels][depth][rows][cols];
+					byte3DC = new byte[depth][rows][cols][channels];
 					step[1] = cols;
 				} else if (type == CV_64FC) {
-					double3DC = new double[channels][depth][rows][cols];
+					double3DC = new double[depth][rows][cols][channels];
 					step[1] = 8 * cols * channels;
 				}
 			}
@@ -4925,6 +4927,39 @@ public class libdt extends AlgorithmBase {
 		dtm.classes.clear();
 		read("classes", dtm.classes);
 	}
+	
+	/*!
+	 * \brief
+	 * writes a DytexMix object with default name "DytexMix".
+	 * 
+	 * \param dtm
+	 * value of DytexMix.
+	 *  
+	 * \see
+	 * Bufferer::read(DytexMix &dtm) | Bufferer::write(const Dytex &dt)
+	 */
+	public void write(DytexMix dtm)
+	{		
+		long spos=writeHeader("DytexMix");
+		write(dtm.opt);
+
+		write("K",(int)dtm.alpha.size());		
+		//writing alpha
+		for(int i=0;i<dtm.alpha.size();i++)
+		{
+			write("alpha",dtm.alpha.get(i));		
+		}
+
+		//writing DTs
+		for(int i=0;i<dtm.dt.size();i++)
+		{
+			write(dtm.dt.get(i));		
+		}
+
+		/*write("classes",dtm.classes);*/
+
+		writeSize(spos);
+	}
 
 	public void read(String name, Vector<Integer> vec) {
 		readHeader(name);
@@ -4960,6 +4995,32 @@ public class libdt extends AlgorithmBase {
 		read("vrows", vcols);
 		dt.vcols = vcols[0];
 	}
+	
+	/*!
+	 * \brief
+	 * writes a Dytex object with default name "Dytex".
+	 * 
+	 * \param dt
+	 * value of Dytex.
+	 *  
+	 * \see
+	 * Bufferer::read(Dytex &dt) | Bufferer::write(const DytexMix &dtm)
+	 */
+	public void write(Dytex dt)
+	{
+		long spos=writeHeader("Dytex");
+		write(dt.dtopt); 
+		write("Ymean",dt.Ymean);
+		write("A",dt.A);
+		write("C",dt.C);
+		write("mu0",dt.mu0);
+		/*write(dt.R);
+		write(dt.Q);
+		write(dt.S0);*/
+		write("vrows",dt.vrows);
+		write("vrows",dt.vcols);
+		writeSize(spos);
+	}
 
 	public void read(CovMatrix cm) {
 		readHeader("CovMatrix");
@@ -4988,6 +5049,83 @@ public class libdt extends AlgorithmBase {
 			System.exit(-1);
 		}
 	}
+	
+	/*!
+	 * \brief
+	 * writes a 8-byte double object.
+	 * 
+	 * \param name
+	 * name of the object.
+	 * 
+	 * \param val
+	 * value of double.
+	 *  
+	 * \see
+	 * Bufferer::read(string name,double &val)
+	 */
+	public void write(String name,double val)
+	{
+		long spos=writeHeader(name);
+		try {
+		    writeDouble(val,endian);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("In write(String name,double val) IOException " + e);
+			System.exit(-1);
+		}
+		writeSize(spos);
+	}
+	
+	/**
+     * Writes a double as eight bytes to a file.
+     * 
+     * @param data Data to be written to file.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @exception IOException if there is an error writing the file
+     */
+    public final void writeDouble(final double data, final boolean bigEndian) throws IOException {
+
+        long tmpLong;
+
+        tmpLong = Double.doubleToLongBits(data);
+        writeLong(tmpLong, bigEndian);
+    }
+    
+    /**
+     * Writes a long as eight bytes to a file.
+     * 
+     * @param data Data to be written to file.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @exception IOException if there is an error writing the file
+     */
+    public final void writeLong(final long data, final boolean bigEndian) throws IOException {
+
+        if (bigEndian) {
+            byteLongBuffer[0] = (byte) (data >>> 56);
+            byteLongBuffer[1] = (byte) (data >>> 48);
+            byteLongBuffer[2] = (byte) (data >>> 40);
+            byteLongBuffer[3] = (byte) (data >>> 32);
+            byteLongBuffer[4] = (byte) (data >>> 24);
+            byteLongBuffer[5] = (byte) (data >>> 16);
+            byteLongBuffer[6] = (byte) (data >>> 8);
+            byteLongBuffer[7] = (byte) (data & 0xff);
+        } else {
+            byteLongBuffer[0] = (byte) (data & 0xff);
+            byteLongBuffer[1] = (byte) (data >>> 8);
+            byteLongBuffer[2] = (byte) (data >>> 16);
+            byteLongBuffer[3] = (byte) (data >>> 24);
+            byteLongBuffer[4] = (byte) (data >>> 32);
+            byteLongBuffer[5] = (byte) (data >>> 40);
+            byteLongBuffer[6] = (byte) (data >>> 48);
+            byteLongBuffer[7] = (byte) (data >>> 56);
+        }
+
+        raFile.write(byteLongBuffer);
+    }
 
 	public void read(String name, Mat mtx) {
 		boolean isempty[] = new boolean[1];
@@ -5081,6 +5219,131 @@ public class libdt extends AlgorithmBase {
 		}
 
 	}
+	
+	/*!
+	 * \brief
+	 * writes a openCV Mat object.
+	 * 
+	 * \param name
+	 * name of the object.
+	 * 
+	 * 2 & 3 dimensional mat with CV_64F, CV_8U and CV_64FC3 types are supported
+	 *
+	 * \param mtx
+	 * mat object to write.
+	 *  
+	 * \see
+	 * Bufferer::read(string name,Mat &mtx)
+	 */
+	public void write(String name,Mat mtx)
+	{
+		long spos=writeHeader(name);
+
+		boolean isempty;
+		if((mtx == null) || (total(mtx) == 0.0))
+		{
+			isempty=true;				
+			write("isempty",isempty);
+			writeSize(spos);
+			return;
+		}
+		isempty=false;
+		write("isempty",isempty);
+		/*CV_Assert((mtx.dims==3)||(mtx.dims==2));
+		CV_Assert( (mtx.type()==CV_64F) || (mtx.type()==CV_8U) || (mtx.type()==CV_64FC3));
+		Point3i dims(1,1,1);
+		
+		if(mtx.dims==2)
+		{
+			dims.y=mtx.rows;
+			dims.z=mtx.cols;
+		}
+		else 
+		{
+			dims.x=mtx.size[0];
+			dims.y=mtx.size[1];
+			dims.z=mtx.size[2];
+		}
+		int type=mtx.type();	
+		int els=mtx.elemSize();	
+		
+		buff.write((char*)(&type),4);	
+		write(dims);
+		buff.write((char*)(&els),4);
+		
+		//writing data
+		double tmpD;
+		Vec3d tmpDV;
+		unsigned char tmpU;
+		if(mtx.dims==2)
+		{
+			for(int i=0;i<mtx.rows;i++)
+			{
+				for(int j=0;j<mtx.cols;j++)
+				{
+					switch(type)
+					{
+					case CV_64F:
+						tmpD=mtx.at<double>(i,j);				
+						buff.write((char*)(&tmpD),8);				
+						break;
+					case CV_8U:
+						tmpU=mtx.at<unsigned char>(i,j);				
+						buff.write((char*)(&tmpU),1);				
+						break;
+				    case CV_64FC3:
+						tmpDV=mtx.at<Vec3d>(i,j);				
+						tmpD=tmpDV[0];
+						buff.write((char*)(&tmpD),8);	
+						tmpD=tmpDV[1];
+						buff.write((char*)(&tmpD),8);	
+						tmpD=tmpDV[2];
+						buff.write((char*)(&tmpD),8);								
+						break;
+					default:
+						CV_Error(-1,"type not handled yet");
+					}
+				}
+			}
+		}
+		else
+		{
+			for(int i=0;i<dims.x;i++)
+			{
+				for(int j=0;j<dims.y;j++)
+				{
+					for(int k=0;k<dims.z;k++)
+					{
+						switch(type)
+						{
+						case CV_64F:
+							tmpD=mtx.at<double>(i,j,k);				
+							buff.write((char*)(&tmpD),8);				
+							break;
+						case CV_8U:
+							tmpU=mtx.at<unsigned char>(i,j,k);				
+							buff.write((char*)(&tmpU),1);				
+							break;
+
+						case CV_64FC3:
+							tmpDV=mtx.at<Vec3d>(i,j,k);				
+							tmpD=tmpDV[0];
+							buff.write((char*)(&tmpD),8);	
+							tmpD=tmpDV[1];
+							buff.write((char*)(&tmpD),8);	
+							tmpD=tmpDV[2];
+							buff.write((char*)(&tmpD),8);								
+							break;
+						default:
+							CV_Error(-1,"type not handled yet");
+						}
+					}
+				}
+			}
+		}
+
+		writeSize(spos);*/
+	}
 
 	public void read(Point3i p) {
 		readHeader("Point3i");
@@ -5111,6 +5374,37 @@ public class libdt extends AlgorithmBase {
 		}
 		return;
 	}
+	
+	/*!
+	 * \brief
+	 * writes a 1-byte bool object.
+	 * 
+	 * \param name
+	 * name of the object.
+	 * 
+	 * \param val
+	 * value of bool.
+	 *  
+	 * \see
+	 * Bufferer::read(string name,bool &val)
+	 */
+	public void write(String name,boolean val)
+	{
+		long spos=writeHeader(name);
+		try {
+			if (!val) {
+				raFile.writeByte(0);
+			}
+			else {
+				raFile.writeByte(1);
+			}
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("In write(String name, boolean val) IOException " + e);
+			System.exit(-1);
+		}
+		writeSize(spos);
+	}
 
 	public void read(DytexOptions opt) {
 		readHeader("DytexOptions");
@@ -5128,6 +5422,27 @@ public class libdt extends AlgorithmBase {
 		read("Yopt", temp);
 		opt.Yopt = getYmean_type(temp[0]);
 	}
+	
+	/*!
+	 * \brief
+	 * writes a DytexOptions object with default name "DytexOptions".
+	 * 
+	 * \param opt
+	 * value of DytexOptions.
+	 *  
+	 * \see
+	 * Bufferer::read(DytexOptions &opt) | Bufferer::write(const DytexRegOptions &opt)
+	 */
+	public void write(DytexOptions opt)
+	{
+		long spos=writeHeader("DytexOptions");
+		write("n",opt.n);
+		write("m",opt.m);
+		write("Ropt",(byte)opt.Ropt.ordinal());
+		write("Sopt",(byte)opt.Sopt.ordinal());
+		write("Yopt",(byte)opt.Yopt.ordinal());
+		writeSize(spos);
+	}
 
 	public void read(String name, int val[]) {
 		readHeader(name);
@@ -5135,6 +5450,59 @@ public class libdt extends AlgorithmBase {
 			val[0] = getInt(endian);
 		} catch (IOException e) {
 			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+	}
+	
+	/*!
+	 * \brief
+	 * writes a 4-byte integer object.
+	 * 
+	 * \param name
+	 * name of the object.
+	 * 
+	 * \param val
+	 * value of integer.
+	 *  
+	 * \see
+	 * Bufferer::read(string name,int &val)
+	 */
+	public void write(String name,int val)
+	{
+		long spos=writeHeader(name);
+		try {
+		    writeInt(val,endian);
+		}
+		catch(IOException e) {
+			MipavUtil.displayError("In write(String name, int val) IOexception " + e);
+			System.exit(-1);
+		}
+		writeSize(spos);
+	}
+	
+	/*!
+	 * \brief
+	 *  writes size of the object.
+	 * 
+	 * \param spos
+	 * location in file where to write the size.
+	 *   
+	 * This function calculates and writes the size if the object from current location of file pointer and spos.
+	 *  
+	 * \see
+	 * Bufferer::writeHeader(const string &str)
+	 */
+	public void writeSize(long spos)
+	{
+		try {
+			long epos=raFile.getFilePointer();
+			int size=(int)(epos-spos-4);
+			raFile.seek(spos);
+			writeInt(size,endian);
+			raFile.seek(epos);  //REST BACK
+		}
+		catch(IOException e) {
+			MipavUtil.displayError("In writeSize IOException " + e);
 			System.exit(-1);
 		}
 	}
@@ -5148,6 +5516,32 @@ public class libdt extends AlgorithmBase {
 			System.exit(-1);
 		}
 
+	}
+	
+	/*!
+	 * \brief
+	 * writes a 1-byte char object.
+	 * 
+	 * \param name
+	 * name of the object.
+	 * 
+	 * \param val
+	 * value of char.
+	 *  
+	 * \see
+	 * Bufferer::read(string name,unsigned char &val)
+	 */
+	public void write(String name,byte val)
+	{
+		long spos=writeHeader(name);
+		try {
+		    raFile.writeByte(val);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("In write(String name,byte val) IOExcetpion " + e);
+			System.exit(-1);
+		}
+		writeSize(spos);
 	}
 
 	public void readHeader(String str) {
@@ -5227,6 +5621,68 @@ public class libdt extends AlgorithmBase {
 		}
 		// System.out.println("size = " + size);
 	}
+	
+	/*!
+	 * \brief
+	 * This function will Write a header for objects before writing their data.
+	 * 
+	 * \param str
+	 * name of the object to follow.
+	 * 
+	 * \returns
+	 * location in the file where to write the size of the object after counting its bytes at the end of writing process.
+	 * 
+	 * header consist of name of the object (a string), verion of the object (a string) and size of the objects (in bytes)
+	 * 
+	 * \see
+	 * Bufferer::readHeader(const string &str)
+	 */
+	public long writeHeader(String str)
+	{
+		byte buf[];
+		int zero = 0;
+		long spos = 0;
+		try {
+			raFile.write(str.getBytes());
+			raFile.writeByte(zero);
+			raFile.write((new String("1.0")).getBytes());
+			raFile.writeByte(zero);
+			spos=raFile.getFilePointer();
+			int dsize=0;
+			writeInt(dsize,endian); //Write dummy size
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("In writeHeader IOException " + e);
+			System.exit(-1);
+		}
+		return spos;
+	}
+	
+	/**
+     * Writes an int as four bytes to a file.
+     * 
+     * @param data Data to be written to file.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @exception IOException if there is an error writing the file
+     */
+    public final void writeInt(final int data, final boolean bigEndian) throws IOException {
+
+        if (bigEndian) {
+            byteIntBuffer[0] = (byte) (data >>> 24);
+            byteIntBuffer[1] = (byte) (data >>> 16);
+            byteIntBuffer[2] = (byte) (data >>> 8);
+            byteIntBuffer[3] = (byte) (data & 0xff);
+        } else {
+            byteIntBuffer[0] = (byte) (data & 0xff);
+            byteIntBuffer[1] = (byte) (data >>> 8);
+            byteIntBuffer[2] = (byte) (data >>> 16);
+            byteIntBuffer[3] = (byte) (data >>> 24);
+        }
+
+        raFile.write(byteIntBuffer);
+    }
 
 	private void resize(Vector<Mat> matVec, int n) {
 		if (matVec.size() < n) {
@@ -5313,76 +5769,107 @@ public class libdt extends AlgorithmBase {
 			return (Double.longBitsToDouble(tmpLong));
 		}
 	}
+	
+	/*!
+     * \brief
+     * main function for video segmentation using Dynamic textures.
+     * 
+     * \param argc
+     * number of input arguments.
+     * 
+     * \param argv
+     * only one argument i.e the path of the parameter file.
+     * 
+     */
+    // paramsFile "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/params.txt";
+    // paramsFile "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/riversteamfire/params.txt";
+    public int test_videoSegm(String paramFile)
+    {
+    	VidSeqSegmParams params = new VidSeqSegmParams();
+    		
+    	if(paramFile != null)
+    	{
+    		params.updateFromFile(paramFile);
+    	}
 
-	/*
-	 * ! \brief main function for video segmentation using Dynamic textures.
-	 * 
-	 * \param argc number of input arguments.
-	 * 
-	 * \param argv only one argument i.e the path of the parameter file.
-	 * 
-	 */
-	// paramsFile "C:/temporal
-	// texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/params.txt";
-	// paramsFile "C:/temporal
-	// texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/riversteamfire/params.txt";
-	public int test_videoSegm(String paramFile) {
-		VidSeqSegmParams params = new VidSeqSegmParams();
 
-		if (paramFile != null) {
-			params.updateFromFile(paramFile);
-		}
+    	//Train the DTM using traing video	
+    	String trainVidPath = params.vidpath;
 
-		// Train the DTM using traing video
-		String trainVidPath = params.vidpath;
+    	String trainDtmPath=params.savepath+params.savename+"/train.dtm";
 
-		String trainDtmPath = params.savepath + params.savename + "/train.dtm";
+        File file = new File(params.savepath); // param.savepath ends in File.separatorChar
+        if (!file.exists()) {
+            file.mkdir();
+        }
 
-		File file = new File(params.savepath); // param.savepath ends in
-												// File.separatorChar
-		if (!file.exists()) {
-			file.mkdir();
-		}
+    	File file2 = new File(params.savepath+params.savename+File.separatorChar);
+    	if (!file2.exists()) {
+    		file2.mkdir();
+    	}
+    	
+    	File file3 = new File(trainDtmPath);
+        if (!file3.exists())
+    	{
+        	try {
+        	    file3.createNewFile();
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("In test_videoSegm file3.createNewFile() IOException " + e);
+        		System.exit(-1);
+        	}
+        	try {
+                raFile = new RandomAccessFile(file3, "rw");
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("In test_videoSegm raFile = new RandomAccessFile(file3, \"rw\") IOException " + e);
+        		System.exit(-1);
+        	}
 
-		File file2 = new File(params.savepath + params.savename + File.separatorChar);
-		if (!file2.exists()) {
-			file2.mkdir();
-		}
+            
+    		//Do the training
+    		VidSegm tvs = new VidSegm(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,params.bkvar,params.K,
+    				params.n,params.reg,params.nfrm,params.bkvarf);		
+    		learnDTM(tvs,trainVidPath,false);
+    		//Bufferer buf(trainDtmPath,fstream::out | fstream::binary);
+    		write(tvs.dtm);		
+    		//buf.close();
+    	}
 
-		File file3 = new File(trainDtmPath);
-		/*
-		 * if (!file3.exists()) { //Do the training VidSegm tvs = new
-		 * VidSegm(params.winxy,params.winz,params.stepxy,params.stepz,params.
-		 * ntype,params.bkvar,params.K,
-		 * params.n,params.reg,params.nfrm,params.bkvarf);
-		 * learnDTM(tvs,trainVidPath,false); Bufferer
-		 * buf(trainDtmPath,fstream::out | fstream::binary); buf.write(tvs.dtm);
-		 * buf.close(); }
-		 * 
-		 * 
-		 * std::vector<string> paths; for(int i=0;i<params.totalvids;i++) { char
-		 * buff[200]; sprintf(buff,params.vidpath.c_str(),i); string
-		 * ipath(buff); paths.push_back(ipath); }
-		 * 
-		 * 
-		 * string vidPath2=params.savepath+params.savename+"/";
-		 * 
-		 * 
-		 * //load existing dtm DytexMix dtm; Bufferer
-		 * buf(trainDtmPath,fstream::in | fstream::binary); buf.read(dtm);
-		 * buf.close(); for(int p=0;p<dtm.dt.size();p++) {
-		 * dtm.dt[p].vrows=params.winxy; dtm.dt[p].vcols=params.winxy; }
-		 * 
-		 * VidSegm
-		 * vs(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,
-		 * params.bkvar,params.K,params.n,params.reg,params.nfrm,params.bkvarf);
-		 * vs.dtm=dtm;
-		 * vs.segmentVideoSequence(paths,params.stepxy2,params.stepz2,params.
-		 * filtxy,params.filtz,vidPath2);
-		 */
+    	
+    	/*std::vector<string> paths;	
+    	for(int i=0;i<params.totalvids;i++)
+    	{
+    		char buff[200];
+    		sprintf(buff,params.vidpath.c_str(),i);
+    		string ipath(buff);		
+    		paths.push_back(ipath);		
+    	}
+    	
+    	
+    	string vidPath2=params.savepath+params.savename+"/";
+    	
+    	
+    	//load existing	dtm	
+    	DytexMix dtm;
+    	Bufferer buf(trainDtmPath,fstream::in | fstream::binary);
+    	buf.read(dtm);	
+    	buf.close();
+    	for(int p=0;p<dtm.dt.size();p++)
+    	{
+    		dtm.dt[p].vrows=params.winxy;
+    		dtm.dt[p].vcols=params.winxy;
+    	}
 
-		return 1;
-	}
+    	VidSegm vs(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,params.bkvar,params.K,params.n,params.reg,params.nfrm,params.bkvarf);		
+    	vs.dtm=dtm;
+    	vs.segmentVideoSequence(paths,params.stepxy2,params.stepz2,params.filtxy,params.filtz,vidPath2);*/
+
+    	return 1;
+    }
+
+
+	
 
 	class VidSeqSegmParams {
 		public int inputType;
@@ -5799,7 +6286,7 @@ public class libdt extends AlgorithmBase {
 		/*
 		 * ! \brief initial training video segmentation.
 		 */
-		public Mat initSegm;
+		public Mat initSegm = new Mat();
 		/*
 		 * ! \brief patch options for dtm learning and segmentation.
 		 */
@@ -5907,6 +6394,7 @@ public class libdt extends AlgorithmBase {
 	 * \see segmentVideoSequence.
 	 */
 	void learnDTM(VidSegm tvs, String vpath, boolean dosegm) {
+		int i,j;
 		// load training video
 		Mat smask[];
 		Mat img[] = loaddat(vpath, "t");
@@ -6029,9 +6517,9 @@ public class libdt extends AlgorithmBase {
 						for (c = 0; c < cols; c++) {
 							chframe[j].byte2D[r][c] = buf[r * cols + c];
 							if (output[0].type == CV_8UC) {
-								output[i].byte2DC[j][r][c] = buf[r * cols + c];
+								output[i].byte2DC[r][c][j] = buf[r * cols + c];
 							} else if (output[0].type == CV_64FC) {
-								output[i].double2DC[j][r][c] = (double) (buf[r * cols + c] & 0xff);
+								output[i].double2DC[r][c][j] = (double) (buf[r * cols + c] & 0xff);
 							}
 						}
 					}
@@ -6045,7 +6533,7 @@ public class libdt extends AlgorithmBase {
 								MipavUtil.displayError(e + " ");
 								System.exit(-1);
 							}
-							output[i].double2DC[j][r][c] = chframe[j].double2D[r][c];
+							output[i].double2DC[r][c][j] = chframe[j].double2D[r][c];
 						}
 					}
 				}
@@ -6955,6 +7443,47 @@ public class libdt extends AlgorithmBase {
 					double p = vid[x].double2D[y][x];
 					tmp += p * p;
 				}
+		return tmp;
+	}
+	
+	double total(Mat vid) {
+		
+
+		double tmp = 0.0;
+		if (vid.type == CV_64F) {
+			if (vid.dims == 2) {
+			for (int y = 0; y < vid.rows; y++)
+				for (int x = 0; x < vid.cols; x++) {
+					double p = vid.double2D[y][x];
+					tmp += p;
+				}
+			}
+			else if (vid.dims == 3) {
+				for (int z = 0; z < vid.depth; z++)
+				for (int y = 0; y < vid.rows; y++)
+					for (int x = 0; x < vid.cols; x++) {
+						double p = vid.double3D[z][y][x];
+						tmp += p;
+					}	
+			}
+		}
+		if (vid.type == CV_8U) {
+			if (vid.dims == 2) {
+			for (int y = 0; y < vid.rows; y++)
+				for (int x = 0; x < vid.cols; x++) {
+					double p = vid.byte2D[y][x];
+					tmp += p;
+				}
+			}
+			else if (vid.dims == 3) {
+				for (int z = 0; z < vid.depth; z++)
+				for (int y = 0; y < vid.rows; y++)
+					for (int x = 0; x < vid.cols; x++) {
+						double p = vid.byte3D[z][y][x];
+						tmp += p;
+					}	
+			}
+		}
 		return tmp;
 	}
 
@@ -9651,7 +10180,8 @@ public class libdt extends AlgorithmBase {
 	 // (same as colormask.m)
 	 // TODO: add option to stop reindexing the mask (useful for consistent colors in videos)
 	 void colorMask(Mat img[], Mat mask[], Mat oimg, int border) {
-	   /*if (img[0].channels != 1) {
+	   int r,c,ch,z;
+	   if (img[0].channels != 1) {
 	     MipavUtil.displayError("too many channels in colorMask");
 	     System.exit(-1);
 	   }
@@ -9706,7 +10236,7 @@ public class libdt extends AlgorithmBase {
 	     System.out.println("\n** building RGB tables **");
 	     
 	     for (int i=0; i<MAXCOL; i++) {
-	       for (int c=0; c<3; c++) {
+	       for (c=0; c<3; c++) {
 	    	 g_mask_lut[i][c] = new Mat();
 	         g_mask_lut[i][c].create(1,256,CV_8UC1);
 	         for (int p=0; p<256; p++) {
@@ -9731,7 +10261,7 @@ public class libdt extends AlgorithmBase {
 	         mask_flag[mask[0].byte2D[y][x] & 0xff] = 1;
 	   } else {
 	     // mask video
-	     for (int z=0; z<mask.length; z++) 
+	     for (z=0; z<mask.length; z++) 
 	       for (int y=0; y<mask[0].rows; y++)
 	         for (int x=0; x<mask[0].cols; x++)
 	           mask_flag[mask[z].byte2D[y][x] & 0xff] = 1;  
@@ -9770,7 +10300,7 @@ public class libdt extends AlgorithmBase {
 	   }
 	   
 	   // use lookup table  
-	   if (img.length == 2) {
+	   if (img.length == 1) {
 	     // image
 	     for (int y=0; y<img[0].rows; y++) {
 	       for (int x=0; x<img[0].cols; x++) {
@@ -9782,7 +10312,7 @@ public class libdt extends AlgorithmBase {
 	     }
 	   } else {
 	     // video
-	     for (int z=0; z<img.length; z++) {
+	     for (z=0; z<img.length; z++) {
 	       for (int y=0; y<img[0].rows; y++) {
 	         for (int x=0; x<img[0].cols; x++) {
 	           int p = (img[z].byte2D[y][x] & 0xff);
@@ -9800,38 +10330,62 @@ public class libdt extends AlgorithmBase {
 	   
 	   // make border
 	   if (border>0) {
-	     if (mask.length == 2) {
+	     if (mask.length == 1) {
 	       // mask image & ...
 	       Mat bord = mask2Border(mask[0], border, mask_flag);
-	       if (img.length == 2) {
+	       if (img.length == 1) {
 	         // ...output image
-	         for (int i=0; i<3; i++)
-	           bitwise_or(bgr[i], bord, bgr[i]);
+	         for (int i=0; i<3; i++) {
+	          for (r = 0; r < img[0].rows; r++) {
+	        	  for (c = 0; c < img[0].cols; c++) {
+	        	      bgr[i][0].byte2D[r][c] = (byte)(bord.byte2D[r][c] | bord.byte2D[r][c]);
+	        	  }
+	          }
+	         }
 	           
 	       } else {
 	         // ...output video
-	         for (int z=0; z<img.size[0]; z++) {
+	         for (z=0; z<img.length; z++) {
 	           for (int i=0; i<3; i++) {
-	             Mat tmp = MatVid::frame(bgr[i], z);
-	             bitwise_or(tmp, bord, tmp);
+	             Mat tmp = bgr[i][z];
+	             for (r = 0; r < img[0].rows; r++) {
+	            	 for (c = 0; c < img[0].cols; c++) {
+	            		 tmp.byte2D[r][c] = (byte)(tmp.byte2D[r][c] | bord.byte2D[r][c]);
+	            	 }
+	             }
 	           }
 	         }
 	       }
 	         
 	     } else {
 	       // mask video
-	       for (int z=0; z<img.size[0]; z++) {
-	         Mat bord = mask2Border(MatVid::frame(mask, z), border, mask_flag);
+	       for (z=0; z<img.length; z++) {
+	         Mat bord = mask2Border(mask[z], border, mask_flag);
 	         for (int i=0; i<3; i++) {
-	           Mat tmp = MatVid::frame(bgr[i], z);
-	           bitwise_or(tmp, bord, tmp);
+	           Mat tmp = bgr[i][z];
+	           for (r = 0; r < img[0].rows; r++) {
+	            	 for (c = 0; c < img[0].cols; c++) {
+	            		 tmp.byte2D[r][c] = (byte)(tmp.byte2D[r][c] | bord.byte2D[r][c]);
+	            	 }
+	             }
 	         }        
 	       }
 	     }
 	   }
 
 	   // make color image
-	   merge(bgr, 3, oimg);*/
+	   int sz[] = new int[]{img.length,img[0].rows,img[0].cols};
+	   oimg.create(3,sz,CV_8UC,3);
+	   
+	   for (z = 0; z < img.length; z++) {
+		   for (r = 0; r < img[0].rows; r++) {
+			   for (c = 0; c < img[0].cols; c++) {
+				   for (ch = 0; ch < 3; ch++) {
+				       oimg.byte3DC[z][r][c][ch] = bgr[ch][z].byte2D[r][c]; 
+				   }
+			   }
+		   }
+	   }
 	 }
 
 	 // mask_flag = unsigned char[256] w/ non-zero for present mask values
@@ -9875,8 +10429,8 @@ public class libdt extends AlgorithmBase {
 	   }
 	   
 	   Mat out = new Mat(mask.rows, mask.cols, CV_8UC1);
-	   int extents[] = new int[]{2*border+1,2*border+1};
-	   int length = (2*border+1)*(2*border+1);
+	   int extents[] = new int[]{mask.rows,mask.cols};
+	   int length = mask.rows*mask.cols;
 	   byte maskc[] = new byte[length];
 	   byte maskcd[] = new byte[length];
 	   ModelImage maskcImage = new ModelImage(ModelStorageBase.BYTE, extents, "maskcImage");
@@ -9886,13 +10440,13 @@ public class libdt extends AlgorithmBase {
 	     if (mask_flag[c] != 0) {      
 	       //cout << "mask=" << c << "; ";
 	       // maskc = (mask == c);                // segment c
-	       for (y = 0; y < 2*border+1; y++) {
-	    	   for (x = 0; x < 2*border+1; x++) {
+	       for (y = 0; y < mask.rows; y++) {
+	    	   for (x = 0; x < mask.cols; x++) {
 	    		   if ((mask.byte2D[y][x] & 0xff) == c) {
-	    			   maskc[y*(2*border+1) + x] = 1;
+	    			   maskc[y*mask.cols + x] = 1;
 	    		   }
 	    		   else {
-	    			   maskc[y*(2*border+1) + x] = 0;
+	    			   maskc[y*mask.cols + x] = 0;
 	    		   }
 	    	   }
 	       }
@@ -9915,6 +10469,16 @@ public class libdt extends AlgorithmBase {
 	       catch (IOException e) {
 	    	   MipavUtil.displayError("IOExcetpion " + e + " on maskcImage.exportData(0, length, maskcd)");
 	    	   System.exit(-1);
+	       }
+	       for (r = 0; r < mask.rows; r++) {
+	    	   for (c = 0; c < mask.cols; c++) {
+	    		   maskcd[r*mask.cols+c] = (byte)(maskcd[r*mask.cols+c] ^ maskc[r*mask.cols+c]);
+	    	   }
+	       }
+	       for (r = 0; r < mask.rows; r++) {
+	    	   for (c = 0; c < mask.cols; c++) {
+	    		   out.byte2D[r][c] = (byte)(out.byte2D[r][c] | maskcd[r*mask.cols+c]);
+	    	   }
 	       }
 	       //dilate(maskc, maskcd, el);          // dilate slightly
 	       /*bitwise_xor(maskcd, maskc, maskcd); // take difference
