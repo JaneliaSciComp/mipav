@@ -1980,6 +1980,166 @@ public class FileIO {
                         dtiparams.setbValues(flBvalueArray);
                         dtiparams.setGradients(flGradientArray);
                     }
+                }  else if (image.is3DImage()) {
+                    // For Philip's DWI 3D/unsorted DICOM
+
+                    final Vector<Double> bValList = new Vector<Double>();
+                    final Vector<double[]> gradList = new Vector<double[]>();
+                    
+                    if ((String) tagTable.getValue("0018,9087") != null) {
+                        for (int i = 0; i < image.getExtents()[2]; i++) {
+                            final FileInfoDicom dicomSliceInfo = (FileInfoDicom) image.getFileInfo(i);
+
+                            // Get Bvalues from Philips Tags
+                            final FileDicomTagTable tagSliceTable = dicomSliceInfo.getTagTable();
+                            final String philipsBvalue = (String) tagSliceTable.getValue("0018,9087");
+                            
+                            boolean found = false;
+                            for (Double bVal : bValList) {
+                                if (bVal == Double.parseDouble(philipsBvalue)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                bValList.add(Double.parseDouble(philipsBvalue));
+                            }
+
+                            // Get Gradients from Philips Tags
+                            if ((String) tagTable.getValue("0018,9089") != null) {
+                                String philipsGrads = (String) tagSliceTable.getValue("0018,9089");
+                                philipsGrads = philipsGrads.trim();
+                                final String grads = philipsGrads.replace('\\', '\t');
+                                final String[] arr2 = grads.split("\t");
+                                
+                                found = false;
+                                for (double[] grad : gradList) {
+                                    if (grad[0] == Double.parseDouble(arr2[1]) 
+                                            && grad[1] == Double.parseDouble(arr2[2]) 
+                                            && grad[2] == Double.parseDouble(arr2[0])) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    double[] curGrad = new double[3];
+                                    curGrad[0] = Double.valueOf(arr2[1]);
+                                    curGrad[1] = Double.valueOf(arr2[2]);
+                                    curGrad[2] = Double.valueOf(arr2[0]);
+                                    gradList.add(curGrad);
+                                }
+                            }
+                        }
+                        
+                        double[] bValArr = new double[bValList.size()];
+                        for (int i = 0; i < bValList.size(); i++) {
+                            bValArr[i] = bValList.get(i);
+                        }
+                        
+                        double[][] gradArr = new double[gradList.size()][];
+                        for (int i = 0; i < gradList.size(); i++) {
+                            gradArr[i] = gradList.get(i);
+                        }
+
+                        dtiparams = new DTIParameters(gradArr.length);
+                        dtiparams.setNumVolumes(gradArr.length);
+                        dtiparams.setbValues(bValArr);
+                        dtiparams.setGradients(gradArr);
+                    } else if (tagTable.containsTag("0018,9117")) {
+                        for (int i = 0; i < image.getExtents()[2]; i++) {
+                            final FileInfoDicom dicomSliceInfo = (FileInfoDicom) image.getFileInfo(i);
+
+                            // Get Bvalues from Philips Tags
+                            final FileDicomTagTable tagSliceTable = dicomSliceInfo.getTagTable();
+                            
+                            Vector<FileDicomSQItem> seq = ((FileDicomSQ) tagSliceTable.getValue("0018,9117", false)).getSequence();
+                            for (FileDicomSQItem item : seq) {
+                                if (item.getTagList().containsKey(new FileDicomKey("0018,9087"))) {
+                                    final String philipsBvalue = ((String) item.getTagList().get(new FileDicomKey("0018,9087")).getValue(true)).trim();
+                            
+                                    boolean found = false;
+                                    for (Double bVal : bValList) {
+                                        if (bVal == Double.parseDouble(philipsBvalue)) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!found) {
+                                        bValList.add(Double.parseDouble(philipsBvalue));
+                                    }
+
+                                    // Get Gradients from Philips Tags
+                                    if (item.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
+                                        String philipsGrads = ((String) item.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                        final String grads = philipsGrads.replace('\\', '\t');
+                                        final String[] arr2 = grads.split("\t");
+                                
+                                        found = false;
+                                        for (double[] grad : gradList) {
+                                            if (grad[0] == Double.parseDouble(arr2[1]) 
+                                                    && grad[1] == Double.parseDouble(arr2[2]) 
+                                                    && grad[2] == Double.parseDouble(arr2[0])) {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!found) {
+                                            double[] curGrad = new double[3];
+                                            curGrad[0] = Double.valueOf(arr2[1]);
+                                            curGrad[1] = Double.valueOf(arr2[2]);
+                                            curGrad[2] = Double.valueOf(arr2[0]);
+                                            gradList.add(curGrad);
+                                        }
+                                    }
+
+                                
+                                    // DiffusionGradientDirectionSequence 0018,9076
+                                    if (item.getTagList().containsKey(new FileDicomKey("0018,9076"))) {
+                                        Vector<FileDicomSQItem> seqGrad = ((FileDicomSQ) item.getValue("0018,9076", false)).getSequence();
+                                        for (FileDicomSQItem itemGrad : seqGrad) {
+                                            if (itemGrad.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
+                                                String philipsGrads = ((String) itemGrad.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                                final String grads = philipsGrads.replace('\\', '\t');
+                                                final String[] arr2 = grads.split("\t");
+                                                
+                                                found = false;
+                                                for (double[] grad : gradList) {
+                                                    if (grad[0] == Double.parseDouble(arr2[1]) 
+                                                            && grad[1] == Double.parseDouble(arr2[2]) 
+                                                            && grad[2] == Double.parseDouble(arr2[0])) {
+                                                        found = true;
+                                                        break;
+                                                    }
+                                                }
+                                                if (!found) {
+                                                    double[] curGrad = new double[3];
+                                                    curGrad[0] = Double.valueOf(arr2[1]);
+                                                    curGrad[1] = Double.valueOf(arr2[2]);
+                                                    curGrad[2] = Double.valueOf(arr2[0]);
+                                                    gradList.add(curGrad);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        double[] bValArr = new double[bValList.size()];
+                        for (int i = 0; i < bValList.size(); i++) {
+                            bValArr[i] = bValList.get(i);
+                        }
+                        
+                        double[][] gradArr = new double[gradList.size()][];
+                        for (int i = 0; i < gradList.size(); i++) {
+                            gradArr[i] = gradList.get(i);
+                        }
+
+                        dtiparams = new DTIParameters(gradArr.length);
+                        dtiparams.setNumVolumes(gradArr.length);
+                        dtiparams.setbValues(bValArr);
+                        dtiparams.setGradients(gradArr);
+                    }
                 }
 
             }// if Philips
