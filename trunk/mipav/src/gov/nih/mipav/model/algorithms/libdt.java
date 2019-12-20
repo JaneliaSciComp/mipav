@@ -4198,6 +4198,7 @@ public class libdt extends AlgorithmBase {
 		// than 2 dimensions
 		public int depth, rows, cols;
 		public int channels = 1;
+		public int elemSize;
 		public int size[];
 		public int type;
 		public int step[] = new int[3];
@@ -4208,12 +4209,10 @@ public class libdt extends AlgorithmBase {
 		public byte byte2DC[][][];
 		public double double2D[][];
 		public double double2DC[][][];
-		public Vector3d Vector3d2D[][];
 		public byte byte3D[][][];
 		public byte byte3DC[][][][];
 		public double double3D[][][];
 		public double double3DC[][][][];
-		public Vector3d Vector3d3D[][][];
 
 		// ! pointer to the reference counter;
 		// when array points to user-allocated data, the pointer is NULL
@@ -4234,12 +4233,7 @@ public class libdt extends AlgorithmBase {
 			} else if (type == CV_64F) {
 				double2D = new double[rows][cols];
 			} else if (type == CV_64FC3) {
-				Vector3d2D = new Vector3d[rows][cols];
-				for (int x = 0; x < rows; x++) {
-					for (int y = 0; y < cols; y++) {
-						Vector3d2D[x][y] = new Vector3d();
-					}
-				}
+				double2DC = new double[rows][cols][3];
 			}
 		}
 
@@ -4263,12 +4257,7 @@ public class libdt extends AlgorithmBase {
 				} else if (type == CV_64F) {
 					double2D = new double[rows][cols];
 				} else if (type == CV_64FC3) {
-					Vector3d2D = new Vector3d[rows][cols];
-					for (x = 0; x < rows; x++) {
-						for (y = 0; y < cols; y++) {
-							Vector3d2D[x][y] = new Vector3d();
-						}
-					}
+					double2DC = new double[rows][cols][3];
 				}
 			} // if (dims == 2)
 			else if (dims == 3) {
@@ -4279,15 +4268,8 @@ public class libdt extends AlgorithmBase {
 					double3D = new double[depth][rows][cols];
 					step[1] = 8 * cols;
 				} else if (type == CV_64FC3) {
-					Vector3d3D = new Vector3d[depth][rows][cols];
+					double3DC = new double[depth][rows][cols][3];
 					step[1] = 24 * cols;
-					for (x = 0; x < depth; x++) {
-						for (y = 0; y < rows; y++) {
-							for (z = 0; z < cols; z++) {
-								Vector3d3D[x][y][z] = new Vector3d();
-							}
-						}
-					}
 				}
 			} // else if (dims == 3)
 		}
@@ -4351,12 +4333,7 @@ public class libdt extends AlgorithmBase {
 			} else if (type == CV_64F) {
 				double2D = new double[rows][cols];
 			} else if (type == CV_64FC3) {
-				Vector3d2D = new Vector3d[rows][cols];
-				for (x = 0; x < rows; x++) {
-					for (y = 0; y < cols; y++) {
-						Vector3d2D[x][y] = new Vector3d();
-					}
-				}
+				double2DC = new double[rows][cols][3];
 			}
 		}
 
@@ -4411,12 +4388,7 @@ public class libdt extends AlgorithmBase {
 				} else if (type == CV_64F) {
 					double2D = new double[rows][cols];
 				} else if (type == CV_64FC3) {
-					Vector3d2D = new Vector3d[rows][cols];
-					for (x = 0; x < rows; x++) {
-						for (y = 0; y < cols; y++) {
-							Vector3d2D[x][y] = new Vector3d();
-						}
-					}
+					double2DC = new double[rows][cols][3];
 				}
 			} // if (dims == 2)
 			else if (dims == 3) {
@@ -4427,15 +4399,8 @@ public class libdt extends AlgorithmBase {
 					double3D = new double[depth][rows][cols];
 					step[1] = 8 * cols;
 				} else if (type == CV_64FC3) {
-					Vector3d3D = new Vector3d[depth][rows][cols];
+					double3DC = new double[depth][rows][cols][3];
 					step[1] = 24 * cols;
-					for (x = 0; x < depth; x++) {
-						for (y = 0; y < rows; y++) {
-							for (z = 0; z < cols; z++) {
-								Vector3d3D[x][y][z] = new Vector3d();
-							}
-						}
-					}
 				}
 			} // else if (dims == 3)
 		}
@@ -4504,6 +4469,67 @@ public class libdt extends AlgorithmBase {
 					}
 				}
 			}
+		}
+		
+		public void release() {
+			if (dims == 2) {
+				if (type == CV_64F) {
+					for (int r = rows-1; r >= 0; r--) {
+						double2D[r] = null;
+					}
+					double2D = null;
+				}
+				else if (type == CV_64FC3) {
+					for (int r = rows-1; r >= 0; r--) {
+						for (int c = cols-1; c >= 0; c--) {
+							double2DC[r][c] = null;
+						}
+						double2DC[r] = null;
+					}
+					double2DC = null;
+				}
+				else if (type == CV_8U) {
+					for (int r = rows-1; r >= 0; r--) {
+						byte2D[r] = null;
+					}
+					byte2D = null;   	
+				}
+			} // if (dims == 2)
+			else if (dims == 3) {
+			    if (type == CV_64F) {
+			    	for (int d = depth-1; d >= 0; d--) {
+						for (int r = rows-1; r >= 0; r--) {
+							double3D[d][r] = null;
+						}
+						double3D[d] = null;
+					}
+					double3D = null;	
+			    }
+			    else if (type == CV_64FC3) {
+			    	for (int d = depth-1; d >= 0; d--) {
+			    		for (int r = rows-1; r >= 0; r--) {
+			    			for (int c = cols-1; c >= 0; c--) {
+			    				double3DC[d][r][c] = null;
+			    			}
+			    			double3DC[d][r] = null;
+			    		}
+			    		double3DC[d] = null;
+			    	}
+			    	double3DC = null;
+			    }
+			    else if (type == CV_8U) {
+			    	for (int d = depth-1; d >= 0; d--) {
+						for (int r = rows-1; r >= 0; r--) {
+							byte3D[d][r] = null;
+						}
+						byte3D[d] = null;
+					}
+					byte3D = null;		
+			    }
+			} // else if (dims == 3)
+			size = null;
+			step = null;
+			refcount = null;
 		}
 	}
 
@@ -4956,7 +4982,7 @@ public class libdt extends AlgorithmBase {
 			write(dtm.dt.get(i));		
 		}
 
-		/*write("classes",dtm.classes);*/
+		write("classes",dtm.classes);
 
 		writeSize(spos);
 	}
@@ -4977,6 +5003,44 @@ public class libdt extends AlgorithmBase {
 			System.exit(-1);
 		}
 	}
+	
+	/*!
+	 * \brief
+	 * Writes a vector of int.
+	 * 
+	 * \param name
+	 * name of the int vector object.
+	 * 
+	 * \param vec
+	 * list of ints.
+	 *  
+	 * \see
+	 *  Bufferer::read(string name,std::vector<int> &vec)
+	 */
+	public void write(String name,Vector<Integer> vec)
+	
+	{
+		long spos=writeHeader(name);		
+		int len=vec.size();
+
+		try {
+			writeInt(len,endian);
+	
+			for(int i=0;i<len;i++)
+			{
+				int temp=vec.get(i);
+				writeInt(temp,endian);
+			}
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("In write(String name, Vector<Integer> vec) IOException = " + e);
+			System.exit(-1);
+		}
+
+		writeSize(spos);
+	}
+	
+	
 
 	public void read(Dytex dt) {
 		readHeader("Dytex");
@@ -5014,9 +5078,9 @@ public class libdt extends AlgorithmBase {
 		write("A",dt.A);
 		write("C",dt.C);
 		write("mu0",dt.mu0);
-		/*write(dt.R);
+		write(dt.R);
 		write(dt.Q);
-		write(dt.S0);*/
+		write(dt.S0);
 		write("vrows",dt.vrows);
 		write("vrows",dt.vcols);
 		writeSize(spos);
@@ -5038,6 +5102,29 @@ public class libdt extends AlgorithmBase {
 		read("regval", regval);
 		cm.regval = regval[0];
 		read("mtx", cm.mtx);
+	}
+	
+	/*!
+	 * \brief
+	 * writes a CovMatrix object with default name "CovMatrix".
+	 * 
+	 * \param cm
+	 * value of CovMatrix.
+	 *  
+	 * \see
+	 * Bufferer::read(CovMatrix &cm)
+	 */
+	public void write(CovMatrix cm)
+	{
+		long spos=writeHeader("CovMatrix");
+
+		write("n",cm.n);
+		write("covopt",(byte)cm.covopt.ordinal());
+		write("regopt",(byte)cm.regopt.ordinal());
+		write("regval",cm.regval);
+		write("mtx",cm.mtx);
+
+		writeSize(spos);
 	}
 
 	public void read(String name, double val[]) {
@@ -5156,7 +5243,6 @@ public class libdt extends AlgorithmBase {
 			// reading data
 			double tmpD;
 			byte tmpU;
-			Vector3d tmpDV = new Vector3d();
 			if (dims.x == 1) {
 				for (int i = 0; i < dims.y; i++) {
 					for (int j = 0; j < dims.z; j++) {
@@ -5171,12 +5257,11 @@ public class libdt extends AlgorithmBase {
 							break;
 						case CV_64FC3:
 							tmpD = getDouble(endian);
-							tmpDV.x = tmpD;
+							mtx.double2DC[i][j][0] = tmpD;
 							tmpD = getDouble(endian);
-							tmpDV.y = tmpD;
+							mtx.double2DC[i][j][1] = tmpD;
 							tmpD = getDouble(endian);
-							tmpDV.z = tmpD;
-							mtx.Vector3d2D[i][j] = tmpDV;
+							mtx.double2DC[i][j][2] = tmpD;
 							break;
 						default:
 							MipavUtil.displayError("type not handled yet");
@@ -5199,12 +5284,11 @@ public class libdt extends AlgorithmBase {
 
 							case CV_64FC3:
 								tmpD = getDouble(endian);
-								tmpDV.x = tmpD;
+								mtx.double3DC[i][j][k][0] = tmpD;
 								tmpD = getDouble(endian);
-								tmpDV.y = tmpD;
+								mtx.double3DC[i][j][k][1] = tmpD;
 								tmpD = getDouble(endian);
-								tmpDV.z = tmpD;
-								mtx.Vector3d3D[i][j][k] = tmpDV;
+								mtx.double3DC[i][j][k][2] = tmpD;
 								break;
 							default:
 								MipavUtil.displayError("type not handled yet");
@@ -5249,9 +5333,15 @@ public class libdt extends AlgorithmBase {
 		}
 		isempty=false;
 		write("isempty",isempty);
-		/*CV_Assert((mtx.dims==3)||(mtx.dims==2));
-		CV_Assert( (mtx.type()==CV_64F) || (mtx.type()==CV_8U) || (mtx.type()==CV_64FC3));
-		Point3i dims(1,1,1);
+		if((mtx.dims<2)||(mtx.dims>3)) {
+			MipavUtil.displayError("mtx.dims = " + mtx.dims + " instead of the required 2 or 3");
+			System.exit(-1);
+		}
+		if(!( (mtx.type==CV_64F) || (mtx.type==CV_8U) || (mtx.type==CV_64FC3))) {
+			MipavUtil.displayError("mtx.type = " + mtx.type + " inastead of the required CV_64F, CV_8U, or CV_64FC3");
+			System.exit(-1);
+		}
+		Point3i dims = new Point3i(1,1,1);
 		
 		if(mtx.dims==2)
 		{
@@ -5264,85 +5354,89 @@ public class libdt extends AlgorithmBase {
 			dims.y=mtx.size[1];
 			dims.z=mtx.size[2];
 		}
-		int type=mtx.type();	
-		int els=mtx.elemSize();	
+		int type=mtx.type;	
+		int els=mtx.elemSize;	
 		
-		buff.write((char*)(&type),4);	
-		write(dims);
-		buff.write((char*)(&els),4);
-		
-		//writing data
-		double tmpD;
-		Vec3d tmpDV;
-		unsigned char tmpU;
-		if(mtx.dims==2)
-		{
-			for(int i=0;i<mtx.rows;i++)
+		try {
+			writeInt(type,endian);	
+			write(dims);
+			writeInt(els,endian);
+			
+			//writing data
+			double tmpD;
+			byte tmpU;
+			if(mtx.dims==2)
 			{
-				for(int j=0;j<mtx.cols;j++)
+				for(int i=0;i<mtx.rows;i++)
 				{
-					switch(type)
-					{
-					case CV_64F:
-						tmpD=mtx.at<double>(i,j);				
-						buff.write((char*)(&tmpD),8);				
-						break;
-					case CV_8U:
-						tmpU=mtx.at<unsigned char>(i,j);				
-						buff.write((char*)(&tmpU),1);				
-						break;
-				    case CV_64FC3:
-						tmpDV=mtx.at<Vec3d>(i,j);				
-						tmpD=tmpDV[0];
-						buff.write((char*)(&tmpD),8);	
-						tmpD=tmpDV[1];
-						buff.write((char*)(&tmpD),8);	
-						tmpD=tmpDV[2];
-						buff.write((char*)(&tmpD),8);								
-						break;
-					default:
-						CV_Error(-1,"type not handled yet");
-					}
-				}
-			}
-		}
-		else
-		{
-			for(int i=0;i<dims.x;i++)
-			{
-				for(int j=0;j<dims.y;j++)
-				{
-					for(int k=0;k<dims.z;k++)
+					for(int j=0;j<mtx.cols;j++)
 					{
 						switch(type)
 						{
 						case CV_64F:
-							tmpD=mtx.at<double>(i,j,k);				
-							buff.write((char*)(&tmpD),8);				
+							tmpD=mtx.double2D[i][j];				
+							writeDouble(tmpD,endian);				
 							break;
 						case CV_8U:
-							tmpU=mtx.at<unsigned char>(i,j,k);				
-							buff.write((char*)(&tmpU),1);				
+							tmpU=mtx.byte2D[i][j];				
+							raFile.writeByte(tmpU);				
 							break;
-
-						case CV_64FC3:
-							tmpDV=mtx.at<Vec3d>(i,j,k);				
-							tmpD=tmpDV[0];
-							buff.write((char*)(&tmpD),8);	
-							tmpD=tmpDV[1];
-							buff.write((char*)(&tmpD),8);	
-							tmpD=tmpDV[2];
-							buff.write((char*)(&tmpD),8);								
+					    case CV_64FC3:
+							tmpD=mtx.double2DC[i][j][0];				
+							writeDouble(tmpD,endian);	
+							tmpD=mtx.double2DC[i][j][1];
+							writeDouble(tmpD,endian);	
+							tmpD=mtx.double2DC[i][j][2];
+							writeDouble(tmpD,endian);								
 							break;
 						default:
-							CV_Error(-1,"type not handled yet");
+							MipavUtil.displayError("type not handled yet in write(String,Mat)");
+							System.exit(-1);
+						}
+					}
+				}
+			}
+			else
+			{
+				for(int i=0;i<dims.x;i++)
+				{
+					for(int j=0;j<dims.y;j++)
+					{
+						for(int k=0;k<dims.z;k++)
+						{
+							switch(type)
+							{
+							case CV_64F:
+								tmpD=mtx.double3D[i][j][k];				
+								writeDouble(tmpD,endian);				
+								break;
+							case CV_8U:
+								tmpU=mtx.byte3D[i][j][k];				
+								raFile.writeByte(tmpU);				
+								break;
+	
+							case CV_64FC3:
+								tmpD=mtx.double3DC[i][j][k][0];				
+								writeDouble(tmpD,endian);	
+								tmpD=mtx.double3DC[i][j][k][1];
+								writeDouble(tmpD,endian);	
+								tmpD=mtx.double3DC[i][j][k][2];
+								writeDouble(tmpD,endian);									
+								break;
+							default:
+								MipavUtil.displayError("type not handled yet in write(String,Mat)");
+								System.exit(-1);
+							}
 						}
 					}
 				}
 			}
 		}
-
-		writeSize(spos);*/
+		catch (IOException e) {
+		    MipavUtil.displayError("In write(String,Mat) IOException " + e);
+		    System.exit(-1);
+		}
+		writeSize(spos);
 	}
 
 	public void read(Point3i p) {
@@ -5356,6 +5450,25 @@ public class libdt extends AlgorithmBase {
 		p.y = y[0];
 		read("z", z);
 		p.z = z[0];
+	}
+	
+	/*!
+	 * \brief
+	 * writes a Point3i object with default name "Point3i".
+	 * 
+	 * \param p
+	 * value of Point3i.
+	 *  
+	 * \see
+	 * Bufferer::read(Point3i &p)
+	 */
+	public void write(Point3i p)
+	{	
+		long spos=writeHeader("Point3i");	
+		write("x",p.x);
+		write("y",p.y);
+		write("z",p.z);
+		writeSize(spos);
 	}
 
 	public void read(String name, boolean val[]) {
@@ -5834,36 +5947,53 @@ public class libdt extends AlgorithmBase {
     		//Bufferer buf(trainDtmPath,fstream::out | fstream::binary);
     		write(tvs.dtm);		
     		//buf.close();
+    		try {
+    		    raFile.close();
+    		}
+    		catch (IOException e) {
+        		MipavUtil.displayError("In test_videoSegm raFile.close() IOException " + e);
+        		System.exit(-1);
+        	}
     	}
 
     	
-    	/*std::vector<string> paths;	
+    	Vector<String> paths = new Vector<String>();	
     	for(int i=0;i<params.totalvids;i++)
-    	{
-    		char buff[200];
-    		sprintf(buff,params.vidpath.c_str(),i);
-    		string ipath(buff);		
-    		paths.push_back(ipath);		
+    	{	
+    		paths.add(String.format(params.vidpath,i)+null);		
     	}
     	
     	
-    	string vidPath2=params.savepath+params.savename+"/";
+    	String vidPath2=params.savepath+params.savename+"/";
     	
     	
     	//load existing	dtm	
-    	DytexMix dtm;
-    	Bufferer buf(trainDtmPath,fstream::in | fstream::binary);
-    	buf.read(dtm);	
-    	buf.close();
+    	DytexMix dtm = new DytexMix();
+    	File file4 = new File(trainDtmPath);
+    	try {
+            raFile = new RandomAccessFile(file4, "r");
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("In test_videoSegm raFile = new RandomAccessFile(file4, \"r\") IOException " + e);
+    		System.exit(-1);
+    	}
+    	read(dtm);
+    	try {
+		    raFile.close();
+		}
+		catch (IOException e) {
+    		MipavUtil.displayError("In test_videoSegm raFile.close() IOException " + e);
+    		System.exit(-1);
+    	}
     	for(int p=0;p<dtm.dt.size();p++)
     	{
-    		dtm.dt[p].vrows=params.winxy;
-    		dtm.dt[p].vcols=params.winxy;
+    		dtm.dt.get(p).vrows=params.winxy;
+    		dtm.dt.get(p).vcols=params.winxy;
     	}
 
-    	VidSegm vs(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,params.bkvar,params.K,params.n,params.reg,params.nfrm,params.bkvarf);		
+    	VidSegm vs = new VidSegm(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,params.bkvar,params.K,params.n,params.reg,params.nfrm,params.bkvarf);		
     	vs.dtm=dtm;
-    	vs.segmentVideoSequence(paths,params.stepxy2,params.stepz2,params.filtxy,params.filtz,vidPath2);*/
+    	segmentVideoSequence(vs, paths,params.stepxy2,params.stepz2,params.filtxy,params.filtz,vidPath2);
 
     	return 1;
     }
@@ -10487,6 +10617,464 @@ public class libdt extends AlgorithmBase {
 	   }
 
 	   return out;
+	 }
+	 
+	 /*!
+	  * \brief
+	  * segments a set of videos in a sequence.
+	  * 
+	  * \param path
+	  * path vector of all videos in order.
+	  * 
+	  * \param stepxy
+	  * segmentation step xy size.
+	  * 
+	  * \param stepz
+	  * segmentation step z size.
+	  * 
+	  * \param filtxy
+	  * max vote filter xy size.
+	  * 
+	  * \param filtz
+	  * max vote filter z size.
+	  * 
+	  * \param opath
+	  * path of the output video, mask files.
+	  * 
+	  * can also be used to segment just one video.
+	  * 
+	  * \remarks
+	  * dtm must be ready before calling this function.
+	  * 
+	  * \see
+	  * learnDTM.
+	  */
+	 public void segmentVideoSequence(VidSegm vs, Vector<String> paths,int stepxy,int stepz,int filtxy,int filtz,String vidPath2)
+	 {
+		/*int j;
+	 	//segment all videos in the sequence
+	 	for(int i=0;i<paths.size();i++)
+	 	{
+	 		System.out.println("Segmenting: " + paths.get(i));
+	 		Mat segMask;
+	 		Mat segVideo;
+
+	 		//first video in the sequence, special case
+	 		if(i==0)
+	 		{
+	 			Mat postFrames[];
+	 			//is there any next video in sequence
+	 			if(paths.size()>1)
+	 			{
+	 				Mat vid2[]=loaddat(paths.get(i+1),"t");				
+	 				int vsize=vid2.length;
+	 				postFrames = new Mat[vs.popt.win.z-stepz];
+	 				for (j = 0; j < postFrames.length; j++) {
+	 					postFrames[j] = new Mat();
+	 					copyTo(vid2[j],postFrames[j]);
+	 				}
+	 				for (j = 0; j < vid2.length; j++) {
+	 					vid2[j].release();
+	 				}
+	 				vid2 = null;
+	 			}
+	 			System.out.println("PostFrames :" + postFrames.length);
+	 			Mat vid1[]=loaddat(paths.get(i),"t");			
+	 			System.out.println("Vid1-Frames" + vid1.length);
+	 			Mat newVid[];
+	 			if(paths.size()>1)
+	 			{
+	 				newVid = new Mat[postFrames.length+vid1.length];
+	 				for (j = 0; j < newVid.length; j++) {
+	 					newVid[j] = new Mat(vid1[0].rows,vid1[0].cols,vid1[0].type);
+	 				}
+	 			}
+	 			else
+	 			{
+	 				newVid = new Mat[vid1.length];
+	 				for (j = 0; j < newVid.length; j++) {
+	 					newVid[j] = new Mat(vid1[0].rows,vid1[0].cols,vid1[0].type);
+	 				}
+	 			}
+	 			System.out.println("newVid-Frames" + newVid.length);
+
+	 			for (j = 0; j < vid1.length; j++) {
+	 				copyTo(vid1[j],newVid[j]);
+	 			}
+
+	 			if(paths.size()>1)
+	 			{
+	 				for (j = vid1.length; j < newVid.length; j++) {
+	 					copyTo(postFrames[j-vid1.length],newVid[j]);
+	 				}
+	 			}
+
+	 			int vid1size=vid1.length;
+	 			for (j = 0; j < vid1size; j++) {
+	 				vid1[j].release();
+	 			}
+	 			vid1 = null;
+
+	 			Mat segMask2 = new Mat();
+	 			Mat segVideo2;
+	 			segVideo2=segmentVideo(vs, newVid,stepxy,stepz,filtxy,filtz,segMask2);
+	 			(MatVid::subvid(segMask2,Range(0,vid1size),Range::all(),Range::all())).copyTo(segMask);
+	 			(MatVid::subvid(segVideo2,Range(0,vid1size),Range::all(),Range::all())).copyTo(segVideo);		
+
+	 		}
+	 		else if(i==(paths.size()-1)) //last video special case
+	 		{
+	 			Mat vid1=MatVid::loaddat(paths[i-1],"t");				
+	 			int vsize=vid1.size[0];
+	 			cout<<"Vid1-Frames"<<vid1.size[0]<<endl;
+	 			Mat tempM=MatVid::subvid(vid1,Range( (vsize-popt.win.z)+stepz,vsize),Range::all(),Range::all());
+	 			Mat preFrames;
+	 			tempM.copyTo(preFrames);
+	 			vid1.release();
+	 			cout<<"Pre-Frames"<<preFrames.size[0]<<endl;			
+
+	 			Mat vid2=MatVid::loaddat(paths[i],"t");	
+	 			cout<<"Vid2-Frames"<<vid2.size[0]<<endl;
+
+	 			Mat newVid=MatVid::create(preFrames.size[0]+vid2.size[0],vid2.size[1],vid2.size[2],vid1.type());
+	 			cout<<"neVid-Frames"<<newVid.size[0]<<endl;
+
+	 			Mat t1=MatVid::subvid(newVid,Range(0,preFrames.size[0]),Range::all(),Range::all());
+	 			preFrames.copyTo(t1);
+	 			Mat t2=MatVid::subvid(newVid,Range(preFrames.size[0],newVid.size[0]),Range::all(),Range::all());
+	 			vid2.copyTo(t2);
+	 						
+	 			vid2.release();
+	 			Mat segMask2,segVideo2;
+	 			segVideo2=segmentVideo(newVid,stepxy,stepz,filtxy,filtz,segMask2);
+	 						
+	 			(MatVid::subvid(segMask2,Range(preFrames.size[0],segMask2.size[0]),Range::all(),Range::all())).copyTo(segMask);
+	 			(MatVid::subvid(segVideo2,Range(preFrames.size[0],segVideo2.size[0]),Range::all(),Range::all())).copyTo(segVideo);
+	 			
+	 		}
+	 		else //rest of the videos
+	 		{
+	 			//PRe
+	 			Mat vid1=MatVid::loaddat(paths[i-1],"t");				
+	 			int vsize=vid1.size[0];
+	 			cout<<"Vid1-Frames"<<vid1.size[0]<<endl;
+	 			Mat tempM=MatVid::subvid(vid1,Range( (vsize-popt.win.z)+stepz,vsize),Range::all(),Range::all());
+	 			Mat preFrames;
+	 			tempM.copyTo(preFrames);
+	 			vid1.release();
+	 			cout<<"Pre-Frames"<<preFrames.size[0]<<endl;
+
+	 			//Post
+	 			Mat vid3=MatVid::loaddat(paths[i+1],"t");				
+	 			int vsize3=vid3.size[0];
+	 			cout<<"Vid3-Frames"<<vid3.size[0]<<endl;			
+	 			Mat tempM3=MatVid::subvid(vid3,Range(0,popt.win.z-stepz),Range::all(),Range::all());
+	 			Mat postFrames;
+	 			tempM3.copyTo(postFrames);			
+	 			vid3.release();
+	 			cout<<"Post-Frames"<<postFrames.size[0]<<endl;
+
+	 			
+	 			Mat vid2=MatVid::loaddat(paths[i],"t");	
+	 			cout<<"Vid2-Frames"<<vid2.size[0]<<endl;
+
+	 			Mat newVid=MatVid::create(preFrames.size[0]+vid2.size[0]+postFrames.size[0],vid2.size[1],vid2.size[2],vid1.type());
+	 			cout<<"neVid-Frames"<<newVid.size[0]<<endl;
+
+	 			Mat t1=MatVid::subvid(newVid,Range(0,preFrames.size[0]),Range::all(),Range::all());
+	 			preFrames.copyTo(t1);
+	 			Mat t2=MatVid::subvid(newVid,Range(preFrames.size[0],newVid.size[0]-postFrames.size[0]),Range::all(),Range::all());
+	 			vid2.copyTo(t2);
+	 			Mat t3=MatVid::subvid(newVid,Range(newVid.size[0]-postFrames.size[0],newVid.size[0]),Range::all(),Range::all());
+	 			postFrames.copyTo(t3);
+	 			
+	 			vid2.release();
+	 			Mat segMask2,segVideo2;
+	 			segVideo2=segmentVideo(newVid,stepxy,stepz,filtxy,filtz,segMask2);
+	 					
+	 			(MatVid::subvid(segMask2,Range(preFrames.size[0],segMask2.size[0]-postFrames.size[0]),Range::all(),Range::all())).copyTo(segMask);
+	 			(MatVid::subvid(segVideo2,Range(preFrames.size[0],segVideo2.size[0]-postFrames.size[0]),Range::all(),Range::all())).copyTo(segVideo);
+	 		}
+
+	 		//save things for current video segmentation in the output place
+	 		char carr[100];
+	 		sprintf(carr,"%d",i);
+	 		string vidid(carr);
+	 		string dirpath=vidPath2 + vidid + string("_segm");
+	 		PlatInd::makedir(dirpath);
+
+	 		string fpath=dirpath+string("/")+string("vid") + vidid+ string("_segm_");
+	 		Mat smask=segMask;	
+	 		
+	 		if(smask.dims==2)
+	 		{
+	 			Mat img=smask;
+
+	 			char buffer [100];
+	 			sprintf(buffer,"%03d",0);
+
+	 			string filename=fpath+buffer+".png";
+
+	 			Mat frame=Mat::zeros(img.rows,img.cols,CV_8UC1);
+	 			for(int j=0;j<img.rows;j++)
+	 				for(int k=0;k<img.cols;k++)
+	 				{
+	 					if(img.at<unsigned char>(j,k)==1)
+	 						frame.at<unsigned char>(j,k)=127;
+	 					else if(img.at<unsigned char>(j,k)==2)
+	 						frame.at<unsigned char>(j,k)=255;
+	 					else
+	 						frame.at<unsigned char>(j,k)=0;
+	 				}
+	 				imwrite(filename,frame);
+	 		}
+	 		else
+	 		{		
+	 			for(int m=0;m<smask.size[0];m++)
+	 			{
+	 				Mat img=MatVid::frame(smask,m);
+
+	 				char buffer [100];
+	 				sprintf(buffer,"%03d",m);
+
+	 				string filename=fpath+buffer+".png";
+
+	 				Mat frame=Mat::zeros(img.rows,img.cols,CV_8UC1);
+	 				for(int j=0;j<img.rows;j++)
+	 					for(int k=0;k<img.cols;k++)
+	 					{
+	 						if(img.at<unsigned char>(j,k)==1)
+	 							frame.at<unsigned char>(j,k)=127;
+	 						else if(img.at<unsigned char>(j,k)==2)
+	 							frame.at<unsigned char>(j,k)=255;
+	 						else
+	 							frame.at<unsigned char>(j,k)=0;
+	 					}
+	 					imwrite(filename,frame);
+
+	 			}
+	 		}
+	 		//save avi and dat for windows pc
+	 		#ifdef _WIN32
+	 			string avipath=vidPath2 + vidid + string(".avi");
+	 			string datpath=vidPath2 + vidid + string(".dat");
+	 			MatVid::saveavi(avipath,segVideo);
+	 			MatVid::savedat(datpath,segVideo,"unsigned_1");	
+	 		#endif
+	 	}*/
+	 }
+	 
+	 /*!
+	  * \brief
+	  * Memory efficient single video segmentation function
+	  * 
+	  * \param vid
+	  * video to segment.
+	  * 
+	  * \param stepxy
+	  * xy scale/step for patches.
+	  * 
+	  * \param stepz
+	  * z scale/setep for patches.
+	  * 
+	  * \param filtxy
+	  * xy size of the maxvote smoothing filter applied to the segmentation mask.
+	  * 
+	  * \param filtz
+	  * z size of the maxvote smoothing filter applied to the segmentation mask.
+	  * 
+	  * \param osmask
+	  * output segmentation mask.
+	  * 
+	  * \returns
+	  * color segmented video
+	  *   
+	  * Segments the video in chunks and saves classes and locations for producing overall segmentation mask and color segmentation .
+	  * 
+	  * \remarks
+	  * In general one should use segmentVideoSequence function and not call this directly.
+	  * 
+	  * \see
+	  * segmentVideoSequence.
+	  */
+	 Mat segmentVideo(VidSegm vs,Mat vid[],int stepxy,int stepz,int filtxy,int filtz, Mat osmask)
+	 {
+	 	//turn on segmentation timer for current video
+	 	/*long startTime = System.currentTimeMillis();
+
+	 	//reset current video segmentation results
+	 	Vector<Mat> patches = new Vector<Mat>();     	
+	 	vs.allclasses.clear();
+	 	vs.allx.clear();       
+	 	vs.ally.clear();       
+	 	vs.allz.clear();       	
+	 	vs.vidsize = new Point3i(vid.length, vid[0].rows, vid[0].cols);
+	 	vs.locall.clear();     
+	 	vs.locall_mask.clear();
+	 	
+	 	
+	 	//segmented video
+	 	Mat segm;
+	 	
+	 	//update patch option steps for segmentation
+	 	PatchOptions npopt(popt);
+	 	npopt.step=Point3i(stepxy,stepxy,stepz);
+	 	popt=npopt;
+
+	 	//initialize Kalman Cashe for the training mixture
+	 	dtm.setupKFB(popt.win.z);
+
+	 	//option for box segmenttaion; set to all video here
+	 	Range box_z = Range::all();
+	 	Range box_y = Range::all();
+	 	Range box_x = Range::all();
+	 		     
+	 	// internal bounding box size and offsets
+	 	Point3i vbox_size, vbox_off;
+	 	// subvideo from internal bounding box
+	 	Mat     boxvid;
+
+	 	// check bounding box: 
+	 	if ((box_z == Range::all()) && (box_y == Range::all()) && (box_z == Range::all())) 
+	 	{
+	 		// using full video
+	 		vbox_size = Point3i(vid.size[2], vid.size[1], vid.size[0]);
+	 		vbox_off  = Point3i(0, 0, 0);
+
+	 		boxvid = vid;
+	 	} 
+	 	else 
+	 	{
+	 		// using sub-video
+	 		Range   vbox_z, vbox_x, vbox_y;
+	 		// adjust box to align with patch locations
+	 		if (box_z == Range::all()) 
+	 		{
+	 			vbox_off.z  = 0;
+	 			vbox_size.z = vid.size[0];
+	 			vbox_z      = Range::all();
+	 		} 
+	 		else 
+	 		{
+	 			vbox_off.z  = (box_z.start % popt.step.z == 0 ? box_z.start : ((box_z.start/popt.step.z)+1)*popt.step.z);
+	 			vbox_size.z = box_z.end - vbox_off.z;
+	 			vbox_z      = Range(vbox_off.z, MIN(box_z.end+popt.win.z, vid.size[0]) );
+	 		}
+
+	 		if (box_y == Range::all()) 
+	 		{
+	 			vbox_off.y  = 0;
+	 			vbox_size.y = vid.size[1];
+	 			vbox_y      = Range::all();
+	 		} 
+	 		else 
+	 		{
+	 			vbox_off.y  = (box_y.start % popt.step.y == 0 ? box_y.start : ((box_y.start/popt.step.y)+1)*popt.step.y);
+	 			vbox_size.y = box_y.end - vbox_off.y;
+	 			vbox_y      = Range(vbox_off.y, MIN(box_y.end+popt.win.y, vid.size[1]) );
+	 		}
+	        
+	 		if (box_x == Range::all()) 
+	 		{
+	 			vbox_off.x  = 0;
+	 			vbox_size.x = vid.size[2];
+	 			vbox_x      = Range::all();
+	 		} 
+	 		else 
+	 		{
+	 			vbox_off.x  = (box_x.start % popt.step.x == 0 ? box_x.start : ((box_x.start/popt.step.x)+1)*popt.step.x);
+	 			vbox_size.x = box_x.end - vbox_off.x;
+	 			vbox_x      = Range(vbox_off.x, MIN(box_x.end+popt.win.x, vid.size[2]) );
+	 		}    
+
+	 		boxvid = MatVid::subvid(vid, vbox_z, vbox_y, vbox_x);  	
+	 	}
+	 	
+	 	// create the patch extractor
+	 	PatchExtractor pe(popt, boxvid.size[1], boxvid.size[2]);  
+	 	// copy some info
+	 	coff = pe.coff;
+	 	allx = pe.allx;
+	 	ally = pe.ally;
+	 	int xsize = allx.size();
+	 	int ysize = ally.size();
+
+	 	// figure out possible z
+	 	int zsize = (boxvid.size[0]-popt.win.z) / popt.step.z + 1;
+	 	allz.reserve(zsize);
+	 	for (int z=0; z<=boxvid.size[0]-popt.win.z; z+=popt.step.z) 
+	 	{
+	 		allz.push_back(z);
+	 	}
+	 	// offset allx, ally, allz
+	 	for (unsigned int i=0; i<allx.size(); i++)
+	 		allx[i] += vbox_off.x;
+	 	for (unsigned int i=0; i<ally.size(); i++)
+	 		ally[i] += vbox_off.y;
+	 	for (unsigned int i=0; i<allz.size(); i++)
+	 		allz[i] += vbox_off.z;
+
+	   
+	 	// loop through frames, segmentation in parts to save memory
+	 	int frame=0;
+	 	Mat clip;  
+	 	while (frame < boxvid.size[0]) 
+	 	{
+	 		// get next clip to add
+	 		int clipz = (frame == 0 ? popt.win.z : popt.step.z);
+
+	 		if (frame+clipz > boxvid.size[0]) 
+	 		{
+	 			break;
+	 		}
+	 		clip = MatVid::subvid(boxvid, Range(frame, frame+clipz), Range::all(), Range::all());
+	 		// add frames
+	 		if (!pe.addFrames(clip)) 
+	 		{
+	 			// we should not get here
+	 			CV_Error(-1, "something wrong!");
+
+	 		} 
+	 		else 
+	 		{
+	 			// now add to our patch vector
+	 			const vector<Mat> &mypat = pe.getPatches();  	 	    
+	 			for (unsigned int i=0; i<mypat.size(); i++) 
+	 			{
+	 				// create a copy of the patch
+	 				if(pe.locyx_mask[i]==true) //only valid patches
+	 				{			
+	 					Mat p;
+	 					mypat[i].copyTo(p);
+	 					patches.push_back(p);					
+	 				}
+	 				//save all locations
+	 				locall.push_back(Point3i(pe.locyx[i].x + vbox_off.x,pe.locyx[i].y + vbox_off.y, pe.locz       + vbox_off.z));
+	 				locall_mask.push_back(pe.locyx_mask[i]);		  
+	 			}
+	 			cout<<"Found Patches "<<patches.size()<<"/"<<mypat.size()<<endl;
+	 			//Keep classes and discard patches
+	 			std::vector<int> tmpclasses;
+	 			dtm.getClasses(patches,tmpclasses);
+	 			for(int cc=0;cc<patches.size();cc++)
+	 			{
+	 				allclasses.push_back(tmpclasses[cc]);
+	 			}
+	 			patches.clear();
+	 		}
+	 		frame += clipz;
+	 	}
+	 	//Get the segmentation mask
+	 	osmask=segm_mask();
+	 	//filter the mask
+	 	osmask=maxvotefilt(osmask,filtxy,filtxy,filtz,K);
+	 	//Get color segmentation
+	 	colorMask(vid,osmask,segm,1); 
+
+	 	int ttime=timerOff();
+	 	cout<<"segmentation time for cur video is: "<<ttime<<endl;
+	 	return segm;*/
+		 return null;
 	 }
 
 }
