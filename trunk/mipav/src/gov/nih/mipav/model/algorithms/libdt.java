@@ -6368,6 +6368,20 @@ public class libdt extends AlgorithmBase {
 			this.minvarf = minvarf;
 			checkValues();
 		}
+		
+		PatchOptions(PatchOptions src) {
+			win = new Point3i();
+			win.x = src.win.x;
+			win.y = src.win.y;
+			win.z = src.win.z;
+			step = new Point3i();
+			step.x = src.step.x;;
+			step.y = src.step.y;
+			step.z = src.step.z;
+			normopt = src.normopt;
+			minvar = src.minvar;
+			minvarf = src.minvarf;	
+		}
 
 		void checkValues() {
 			if (win.x <= 0) {
@@ -9100,6 +9114,14 @@ public class libdt extends AlgorithmBase {
 		    loglike_internal(dt, null, null, tau, cache_Kt, cache_detMt, cache_invMt, false, kf_mode.KF_CACHE);
 		  }
 		
+		private void loglike(Vector<Mat> videos, Mat lik, boolean mahal) {
+			  loglike_internal(cache_dt, videos, lik, 0, cache_Kt, cache_detMt, cache_invMt, mahal, kf_mode.KF_COMPUTE_WITH_CACHE);
+		}
+		
+		private void loglike(Dytex dt, Vector<Mat> videos, Mat lik, boolean mahal) {
+			  loglike_internal(dt, videos, lik, 0, null, null, null, mahal, kf_mode.KF_COMPUTE_WITHOUT_CACHE);
+	     }
+		
 		// do one of the following:
 	//   1) compute log-likelihood of videos under dt 
 	//   2) cache kalman filter matrices for a dt
@@ -10897,10 +10919,11 @@ public class libdt extends AlgorithmBase {
 	  * \see
 	  * segmentVideoSequence.
 	  */
-	 Mat segmentVideo(VidSegm vs,Mat vid[],int stepxy,int stepz,int filtxy,int filtz, Mat osmask)
+	 Mat segmentVideo(VidSegm vs,Mat vid[],int stepxy,int stepz,int filtxy,int filtz, Mat osmask[])
 	 {
+		int j;
 	 	//turn on segmentation timer for current video
-	 	/*long startTime = System.currentTimeMillis();
+	 	long startTime = System.currentTimeMillis();
 
 	 	//reset current video segmentation results
 	 	Vector<Mat> patches = new Vector<Mat>();     	
@@ -10914,167 +10937,555 @@ public class libdt extends AlgorithmBase {
 	 	
 	 	
 	 	//segmented video
-	 	Mat segm;
+	 	Mat segm = new Mat();
 	 	
 	 	//update patch option steps for segmentation
-	 	PatchOptions npopt(popt);
-	 	npopt.step=Point3i(stepxy,stepxy,stepz);
-	 	popt=npopt;
+	 	PatchOptions npopt = new PatchOptions(vs.popt);
+	 	npopt.step= new Point3i(stepxy,stepxy,stepz);
+	 	vs.popt=npopt;
 
-	 	//initialize Kalman Cashe for the training mixture
-	 	dtm.setupKFB(popt.win.z);
+	 	//initialize Kalman Cache for the training mixture
+	 	setupKFB(vs.dtm,vs.popt.win.z);
 
 	 	//option for box segmenttaion; set to all video here
-	 	Range box_z = Range::all();
-	 	Range box_y = Range::all();
-	 	Range box_x = Range::all();
+	 	//Range box_z = Range::all();
+	 	//Range box_y = Range::all();
+	 	//Range box_x = Range::all();
 	 		     
 	 	// internal bounding box size and offsets
 	 	Point3i vbox_size, vbox_off;
 	 	// subvideo from internal bounding box
-	 	Mat     boxvid;
+	 	Mat     boxvid[];
 
 	 	// check bounding box: 
-	 	if ((box_z == Range::all()) && (box_y == Range::all()) && (box_z == Range::all())) 
-	 	{
+	 	//if ((box_z == Range::all()) && (box_y == Range::all()) && (box_z == Range::all())) 
+	 	//{
 	 		// using full video
-	 		vbox_size = Point3i(vid.size[2], vid.size[1], vid.size[0]);
-	 		vbox_off  = Point3i(0, 0, 0);
+	 		vbox_size = new Point3i(vid.length, vid[0].rows, vid[0].cols);
+	 		vbox_off  = new Point3i(0, 0, 0);
 
 	 		boxvid = vid;
-	 	} 
-	 	else 
-	 	{
+	 	//} 
+	 	//else 
+	 	//{
 	 		// using sub-video
-	 		Range   vbox_z, vbox_x, vbox_y;
+	 		//Range   vbox_z, vbox_x, vbox_y;
 	 		// adjust box to align with patch locations
-	 		if (box_z == Range::all()) 
-	 		{
-	 			vbox_off.z  = 0;
-	 			vbox_size.z = vid.size[0];
-	 			vbox_z      = Range::all();
-	 		} 
-	 		else 
-	 		{
-	 			vbox_off.z  = (box_z.start % popt.step.z == 0 ? box_z.start : ((box_z.start/popt.step.z)+1)*popt.step.z);
-	 			vbox_size.z = box_z.end - vbox_off.z;
-	 			vbox_z      = Range(vbox_off.z, MIN(box_z.end+popt.win.z, vid.size[0]) );
-	 		}
+	 		//if (box_z == Range::all()) 
+	 		//{
+	 		//	vbox_off.z  = 0;
+	 		//	vbox_size.z = vid.size[0];
+	 		//	vbox_z      = Range::all();
+	 		//} 
+	 		//else 
+	 		//{
+	 		//	vbox_off.z  = (box_z.start % popt.step.z == 0 ? box_z.start : ((box_z.start/popt.step.z)+1)*popt.step.z);
+	 		//	vbox_size.z = box_z.end - vbox_off.z;
+	 		//	vbox_z      = Range(vbox_off.z, MIN(box_z.end+popt.win.z, vid.size[0]) );
+	 		//}
 
-	 		if (box_y == Range::all()) 
-	 		{
-	 			vbox_off.y  = 0;
-	 			vbox_size.y = vid.size[1];
-	 			vbox_y      = Range::all();
-	 		} 
-	 		else 
-	 		{
-	 			vbox_off.y  = (box_y.start % popt.step.y == 0 ? box_y.start : ((box_y.start/popt.step.y)+1)*popt.step.y);
-	 			vbox_size.y = box_y.end - vbox_off.y;
-	 			vbox_y      = Range(vbox_off.y, MIN(box_y.end+popt.win.y, vid.size[1]) );
-	 		}
+	 		//if (box_y == Range::all()) 
+	 		//{
+	 		//	vbox_off.y  = 0;
+	 		//	vbox_size.y = vid.size[1];
+	 		//	vbox_y      = Range::all();
+	 		//} 
+	 		//else 
+	 		//{
+	 		//	vbox_off.y  = (box_y.start % popt.step.y == 0 ? box_y.start : ((box_y.start/popt.step.y)+1)*popt.step.y);
+	 		//	vbox_size.y = box_y.end - vbox_off.y;
+	 		//	vbox_y      = Range(vbox_off.y, MIN(box_y.end+popt.win.y, vid.size[1]) );
+	 		//}
 	        
-	 		if (box_x == Range::all()) 
-	 		{
-	 			vbox_off.x  = 0;
-	 			vbox_size.x = vid.size[2];
-	 			vbox_x      = Range::all();
-	 		} 
-	 		else 
-	 		{
-	 			vbox_off.x  = (box_x.start % popt.step.x == 0 ? box_x.start : ((box_x.start/popt.step.x)+1)*popt.step.x);
-	 			vbox_size.x = box_x.end - vbox_off.x;
-	 			vbox_x      = Range(vbox_off.x, MIN(box_x.end+popt.win.x, vid.size[2]) );
-	 		}    
+	 		//if (box_x == Range::all()) 
+	 		//{
+	 		//	vbox_off.x  = 0;
+	 		//	vbox_size.x = vid.size[2];
+	 		//	vbox_x      = Range::all();
+	 		//} 
+	 		//else 
+	 		//{
+	 		//	vbox_off.x  = (box_x.start % popt.step.x == 0 ? box_x.start : ((box_x.start/popt.step.x)+1)*popt.step.x);
+	 		//	vbox_size.x = box_x.end - vbox_off.x;
+	 		//	vbox_x      = Range(vbox_off.x, MIN(box_x.end+popt.win.x, vid.size[2]) );
+	 		//}    
 
-	 		boxvid = MatVid::subvid(vid, vbox_z, vbox_y, vbox_x);  	
-	 	}
+	 		//boxvid = MatVid::subvid(vid, vbox_z, vbox_y, vbox_x);  	
+	 	//}
 	 	
 	 	// create the patch extractor
-	 	PatchExtractor pe(popt, boxvid.size[1], boxvid.size[2]);  
+	 	PatchExtractor pe = new PatchExtractor(vs.popt, boxvid[0].rows, boxvid[0].cols);  
 	 	// copy some info
-	 	coff = pe.coff;
-	 	allx = pe.allx;
-	 	ally = pe.ally;
-	 	int xsize = allx.size();
-	 	int ysize = ally.size();
+	 	vs.coff = pe.coff;
+	 	vs.allx = pe.allx;
+	 	vs.ally = pe.ally;
+	 	int xsize = vs.allx.size();
+	 	int ysize = vs.ally.size();
 
 	 	// figure out possible z
-	 	int zsize = (boxvid.size[0]-popt.win.z) / popt.step.z + 1;
-	 	allz.reserve(zsize);
-	 	for (int z=0; z<=boxvid.size[0]-popt.win.z; z+=popt.step.z) 
+	 	int zsize = (boxvid.length-vs.popt.win.z) / vs.popt.step.z + 1;
+	 	vs.allz.ensureCapacity(zsize);
+	 	for (int z=0; z<=boxvid.length-vs.popt.win.z; z+=vs.popt.step.z) 
 	 	{
-	 		allz.push_back(z);
+	 		vs.allz.add(z);
 	 	}
 	 	// offset allx, ally, allz
-	 	for (unsigned int i=0; i<allx.size(); i++)
-	 		allx[i] += vbox_off.x;
-	 	for (unsigned int i=0; i<ally.size(); i++)
-	 		ally[i] += vbox_off.y;
-	 	for (unsigned int i=0; i<allz.size(); i++)
-	 		allz[i] += vbox_off.z;
+	 	for (int i=0; i<vs.allx.size(); i++)
+	 		vs.allx.set(i,(vs.allx.get(i) +  vbox_off.x));
+	 	for (int i=0; i<vs.ally.size(); i++)
+	 		vs.ally.set(i,(vs.ally.get(i) +  vbox_off.y));
+	 	for (int i=0; i<vs.allz.size(); i++)
+	 		vs.allz.set(i,(vs.allz.get(i) + vbox_off.z));
 
 	   
 	 	// loop through frames, segmentation in parts to save memory
 	 	int frame=0;
-	 	Mat clip;  
-	 	while (frame < boxvid.size[0]) 
+	 	Mat clip[];  
+	 	while (frame < boxvid.length) 
 	 	{
 	 		// get next clip to add
-	 		int clipz = (frame == 0 ? popt.win.z : popt.step.z);
+	 		int clipz = (frame == 0 ? vs.popt.win.z : vs.popt.step.z);
 
-	 		if (frame+clipz > boxvid.size[0]) 
+	 		if (frame+clipz > boxvid.length) 
 	 		{
 	 			break;
 	 		}
-	 		clip = MatVid::subvid(boxvid, Range(frame, frame+clipz), Range::all(), Range::all());
+	 		clip = subvid(boxvid, frame, frame+clipz, 0, boxvid[0].rows, 0, boxvid[0].cols);
 	 		// add frames
-	 		if (!pe.addFrames(clip)) 
+	 		if (!addFrames(pe,clip)) 
 	 		{
 	 			// we should not get here
-	 			CV_Error(-1, "something wrong!");
-
+	 			MipavUtil.displayError("something wrong!");
+	 			System.exit(-1);
 	 		} 
 	 		else 
 	 		{
 	 			// now add to our patch vector
-	 			const vector<Mat> &mypat = pe.getPatches();  	 	    
-	 			for (unsigned int i=0; i<mypat.size(); i++) 
+	 			Vector<Mat[]> mypat = getPatches(pe); 
+	 			int mypatsize = 0;
+	 			for (int i=0; i<mypat.size(); i++) 
 	 			{
 	 				// create a copy of the patch
-	 				if(pe.locyx_mask[i]==true) //only valid patches
+	 				mypatsize += mypat.get(i).length;
+	 				if(pe.locyx_mask.get(i)) //only valid patches
 	 				{			
-	 					Mat p;
-	 					mypat[i].copyTo(p);
-	 					patches.push_back(p);					
+	 					Mat p[] = new Mat[mypat.get(i).length];
+	 					for (j = 0; j < p.length; j++) {
+	 						p[j] = new Mat();
+	 					} 
+	 					copyTo(mypat.get(i),p);
+	 					for (j = 0; j < p.length; j++) {
+	 					    patches.add(p[j]);	
+	 					}
 	 				}
 	 				//save all locations
-	 				locall.push_back(Point3i(pe.locyx[i].x + vbox_off.x,pe.locyx[i].y + vbox_off.y, pe.locz       + vbox_off.z));
-	 				locall_mask.push_back(pe.locyx_mask[i]);		  
+	 				vs.locall.add(new Point3i(pe.locyx.get(i).x + vbox_off.x,pe.locyx.get(i).y + vbox_off.y, pe.locz       + vbox_off.z));
+	 				vs.locall_mask.add(pe.locyx_mask.get(i));		  
 	 			}
-	 			cout<<"Found Patches "<<patches.size()<<"/"<<mypat.size()<<endl;
+	 			System.out.println("Found Patches " + patches.size() + "/" + mypatsize);
 	 			//Keep classes and discard patches
-	 			std::vector<int> tmpclasses;
-	 			dtm.getClasses(patches,tmpclasses);
+	 			Vector<Integer> tmpclasses = new Vector<Integer>();
+	 			getClasses(vs.dtm,patches,tmpclasses);
 	 			for(int cc=0;cc<patches.size();cc++)
 	 			{
-	 				allclasses.push_back(tmpclasses[cc]);
+	 				vs.allclasses.add(tmpclasses.get(cc));
 	 			}
 	 			patches.clear();
 	 		}
 	 		frame += clipz;
 	 	}
 	 	//Get the segmentation mask
-	 	osmask=segm_mask();
+	 	osmask=segm_mask(vs);
 	 	//filter the mask
-	 	osmask=maxvotefilt(osmask,filtxy,filtxy,filtz,K);
+	 	osmask=maxvotefilt(osmask,filtxy,filtxy,filtz,vs.K);
 	 	//Get color segmentation
 	 	colorMask(vid,osmask,segm,1); 
 
-	 	int ttime=timerOff();
-	 	cout<<"segmentation time for cur video is: "<<ttime<<endl;
-	 	return segm;*/
-		 return null;
+	 	long ttime= System.currentTimeMillis()-startTime;
+	 	System.out.println("segmentation time for cur video is: " + ttime + " milliseconds");
+	 	return segm;
+	 }
+	 
+	 /*!
+	  * \brief
+	  * Get classes for new patches given current DTM.
+	  * 
+	  * \param Y
+	  * list of input video patches.
+	  * 
+	  * \param classes
+	  * output vector which will have class id for each patch.
+	  * 
+	  * Computes classes for patches using log-likelihood of patches under dytex mixture (with caching) using kalman filter bank
+	  * It calculates LL(logliklihood under each component), Z(posterior probability for each component) and logZ (log of Z) 
+	  *
+	  * \remarks
+	  * make sure kfb cache is ready and setupKFB is called.
+	  * 
+	  * \see
+	  * getClasses(std::vector<Mat> Y, Mat &LLm) | setupKFB
+	  */
+	 public void getClasses(DytexMix dtm, Vector<Mat> Y, Vector<Integer> classes)
+	 {
+	 	int r,c;
+		 //check for valid input
+	 	int N=Y.size();
+	 	if(N==0)
+	 		return;
+	 	int K=dtm.dt.size();	
+	 	
+	 	Mat LL = new Mat(N,K,CV_64F);
+	 	Mat logZ = new Mat(N,K,CV_64F);
+	 	//compute logliklihood under each component
+	 	for(int i=0;i<K;i++)
+	 	{		
+	 		Mat tmpL = new Mat();
+	 		dtm.kfb.get(i).loglike(Y,tmpL,false);
+	 		Mat tempM=plus(transpose(tmpL),Math.log(dtm.alpha.get(i)));
+	 		for (r = 0; r < tempM.rows; r++) {
+	 			LL.double2D[r][i] = tempM.double2D[r][0];
+	 		}
+	 	}
+	 	//calculate log(sum(A)) using only log(A)
+	 	Mat tmp=logtrick(transpose(LL));
+	 	tmp=transpose(tmp);
+
+	 	//computing Z(posterior probability for each component) and logZ (log of Z)
+	 	for(int i=0;i<K;i++)
+	 	{
+	 		Mat tmpM=minus(col(LL,i),tmp);
+	 		for (r = 0; r < tmpM.rows; r++) {
+	 			logZ.double2D[r][i] = tmpM.double2D[r][0];
+	 		}
+	 	}
+	 	Mat Z = new Mat(logZ.rows, logZ.cols, CV_64F);
+	 	for (r = 0; r < logZ.rows; r++) {
+	 		for (c = 0; c < logZ.cols; c++) {
+	 			Z.double2D[r][c] = Math.exp(logZ.double2D[r][c]);
+	 		}
+	 	}
+
+	 	//get classes from max probability	
+	 	for(int i=0;i<Z.rows;i++)
+	 	{
+	 		double maxV = Z.double2D[i][0];
+	 		int maxL = 0;
+	 		for (c = 1; c < Z.cols; c++) {
+	 			if (Z.double2D[i][c] > maxV) {
+	 				maxV = Z.double2D[i][c];
+	 				maxL = c;
+	 			}
+	 		}
+	 		classes.add(maxL+1);
+	 	}
+	 }
+	 
+	 /*!
+	  * \brief
+	  * Computes segmentation mask using class and location info of patches.
+	  * 
+	  * \returns
+	  * segmentation mask for each frame of video
+	  *  
+	  * 
+	  * computes the mask using NN filling method.
+	  * 
+	  * \remarks
+	  * location and class infos must be filled before calling this function. Must be called after segmentvideo is called
+	  * 
+	  * \see
+	  * segmentVideo.
+	  */
+	 Mat[] segm_mask(VidSegm vs)
+	 {
+	 	//mask to return
+	 	Mat smask[];
+	 	
+	 	//fill in implicit background class	 
+	 	Vector<Integer> classes = new Vector<Integer>();		
+	 	int index=0;
+	 	for(int i=0;i<vs.locall_mask.size();i++)
+	 	{
+	 		if(vs.locall_mask.get(i))
+	 		{
+	 			classes.add(vs.allclasses.get(index));
+	 			index++;
+	 		}
+	 		else
+	 		{
+	 			classes.add(0);
+	 		}
+	 	}
+	 	
+	 	// get locations
+	 	Vector<Point3i> loc = new Vector<Point3i>();
+	 	for(int i=0;i<vs.locall.size();i++)
+	 	{
+	 		loc.add(new Point3i(vs.locall.get(i).x+vs.coff.x,vs.locall.get(i).y+vs.coff.y,vs.locall.get(i).z+vs.coff.z));
+	 	}
+	 	Point3i winsize=vs.popt.win;
+	 	Point3i step=vs.popt.step;
+
+	 	//check for single z-layer, and force mask to be 2d.
+	 	if(vs.allz.size()==1)
+	 	{
+	 		for(int i=0;i<loc.size();i++)
+	 			loc.get(i).z=0;
+
+	 		winsize.z=1;
+	 		step.z=1;
+	 		vs.vidsize.z=1;
+	 	}
+
+	 	//total classes
+	 	int numclasses = classes.get(0);
+	 	for (int i = 1; i < classes.size(); i++) {
+	 		if (classes.get(i) > numclasses) {
+	 			numclasses = classes.get(i);
+	 		}
+	 	}
+
+	 	//create blank mask and fill with zeros
+	 	smask=new Mat[vs.vidsize.z];
+	 	for (int i = 0; i < vs.vidsize.z; i++) {
+	 		smask[i] = new Mat(vs.vidsize.y,vs.vidsize.x,CV_8UC1);
+	 	}
+
+	 	//initialzie some sizes
+	 	int zsize=step.z;
+	 	Point3i rwin = new Point3i();
+	 	rwin.x=winsize.x/2;
+	 	rwin.y=winsize.y/2;
+	 	rwin.z=zsize/2;
+	 	Point2i box_y = new Point2i(-rwin.x,winsize.x-1-rwin.x);
+	 	Point2i box_x = new Point2i(-rwin.y,winsize.y-1-rwin.y);
+	 	Point2i box_z = new Point2i(-rwin.z,zsize-1-rwin.z);
+	 	int cy=rwin.x+1;
+	 	int cx=rwin.y+1;
+
+	 	//the structuring element
+	 	Mat se = new Mat(winsize.x,winsize.y,CV_8UC1);
+
+	 	//the distance matrix
+	 	Mat sed = new Mat(winsize.x,winsize.y,CV_64F);
+
+	 	Vector<Double> ssc = new Vector<Double>();
+	 	for(int i=0;i<sed.rows;i++)
+	 	{
+	 		for(int j=0;j<sed.cols;j++)
+	 		{
+	 			sed.double2D[i][j]=Math.sqrt(  Math.pow((double)(i+1-cy),2) + Math.pow((double)(j+1-cx),2) );
+	 			ssc.add(sed.double2D[i][j]);
+	 		}
+	 	}
+	 		
+	 	//growing schedule
+	 	Collections.sort(ssc);
+	 	for (int i = ssc.size() -1; i >= 1; i--) {
+	 		if (ssc.get(i) == ssc.get(i-1)) {
+	 			ssc.remove(i);
+	 		}
+	 	}
+
+	 	//offsets
+	 	Vector<Integer> locoffs = new Vector<Integer>();
+	 	for(int i=0;i<loc.size();i++)
+	 	{
+	 		int temp=loc.get(i).y-rwin.x+vs.vidsize.y*(loc.get(i).x-rwin.y)+vs.vidsize.y*vs.vidsize.x*(loc.get(i).z-rwin.z);
+	 		locoffs.add(temp);
+	 	}
+	 		
+	 	/*for(int seri=0;seri<ssc.size();seri++)
+	 	{
+	 		cout<<"segm_mask: nn fill "<<seri<<"/"<<ssc.size()<<endl;
+	 		//build the structure element
+	 			
+	 		for(int i=0;i<sed.rows;i++)
+	 		{
+	 			for(int j=0;j<sed.cols;j++)
+	 			{
+	 				if(sed.at<OPT_F_TYPE>(i,j)==ssc[seri])
+	 					se.at<uchar>(i,j)=1;
+	 				else
+	 					se.at<uchar>(i,j)=0;
+	 			}
+	 		}
+
+	 				
+	 		Mat se3=MatVid::repeat(se,zsize);
+	 		int s1=se3.size[0];
+	 		int s2=se3.size[1];
+	 		int s3=se3.size[2];
+	 		std::vector<double> se3i;
+	 		for(int kk=0;kk<s1;kk++)
+	 		{
+	 			for(int jj=0;jj<s3;jj++)
+	 			{
+	 				for(int ii=0;ii<s2;ii++)
+	 				{
+	 					if(se3.at<uchar>(kk,ii,jj)==1)
+	 					{
+	 						double temp=ii+1+jj*vidsize.y+kk*vidsize.y*vidsize.x;
+	 						se3i.push_back(temp);
+	 					}
+	 				}
+	 			}
+	 		}
+	 		for(int i=0;i<classes.size();i++)
+	 		{
+	 			int c=classes[i];
+	 			int off=locoffs[i];
+
+	 			//find zero elements in smask that are active in se3
+	 			std::vector<int> tempi;
+	 			for(int j=0;j<se3i.size();j++)
+	 			{
+	 				int temp=se3i[j]+off-1;
+	 				int fNo=temp/(smask.size[1]*smask.size[2]);
+	 				temp=temp-fNo*(smask.size[1]*smask.size[2]);
+	 				int colNo=temp/smask.size[1];
+	 				int rowNo=temp%smask.size[1];
+	 				if(smask.at<uchar>(fNo,rowNo,colNo)==0)
+	 					tempi.push_back(j);
+	 			}
+	 					
+	 			//if found any zero elements, 
+	 			for(int j=0;j<tempi.size();j++)
+	 			{
+	 				int temp=se3i[tempi[j]]+off-1;
+	 				int fNo=temp/(smask.size[1]*smask.size[2]);
+	 				temp=temp-fNo*(smask.size[1]*smask.size[2]);
+	 				int colNo1=temp/smask.size[1];
+	 				int rowNo1=temp%smask.size[1];
+	 				// fill location
+	 				if( (c==1) || (c==2) )
+	 					c=c;
+	 				smask.at<uchar>(fNo,rowNo1,colNo1)=c;							
+	 			}
+
+	 		}
+	 			
+	 	}
+	 				
+	 	//now fill in the borders if they are missing	
+	 	double minx=*min_element(allx.begin(),allx.end())+coff.y+box_x.x;
+	 	double maxx=*max_element(allx.begin(),allx.end())+coff.y+box_x.y+2;
+	 	double miny=*min_element(ally.begin(),ally.end())+coff.x+box_y.x;
+	 	double maxy=*max_element(ally.begin(),ally.end())+coff.x+box_y.y+2;
+
+	 	// fill in left edge
+	 	if(1<=minx)
+	 	{		
+	 		for(int i=0;i<smask.size[0];i++)
+	 		{
+	 			for(int j=0;j<smask.size[1];j++)
+	 			{
+	 				for(int k=0;k<minx;k++)
+	 				{
+	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,j,minx);
+	 				}
+	 			}
+	 		}
+
+	 	}
+
+	 	//fill in right edge
+	 	if(maxx<=vidsize.x)
+	 	{		
+	 		for(int i=0;i<smask.size[0];i++)
+	 		{
+	 			for(int j=0;j<smask.size[1];j++)
+	 			{
+	 				for(int k=maxx-1;k<vidsize.x;k++)
+	 				{
+	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,j,maxx-2);
+	 				}
+	 			}
+	 		}
+
+	 	}
+
+	 	
+	 	// fill in top edge
+	 	if(1<=miny)
+	 	{		
+	 		for(int i=0;i<smask.size[0];i++)
+	 		{
+	 			for(int j=0;j<miny;j++)
+	 			{
+	 				for(int k=0;k<smask.size[2];k++)
+	 				{
+	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,miny,k);
+	 				}
+	 			}
+	 		}
+	 	}
+
+	 	// fill in bottom edge
+	 	if(maxy<=vidsize.y)
+	 	{		
+	 		for(int i=0;i<smask.size[0];i++)
+	 		{
+	 			for(int j=maxy-1;j<vidsize.y;j++)
+	 			{
+	 				for(int k=0;k<smask.size[2];k++)
+	 				{
+	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,maxy-2,k);
+	 				}
+	 			}
+	 		}
+
+	 	}
+
+	 	if(vidsize.z>1)
+	 	{
+	 		double minz=*min_element(allz.begin(),allz.end())+coff.z+box_z.x;
+	 		double maxz=*max_element(allz.begin(),allz.end())+coff.z+box_z.y+2;
+
+	 		if(1<=minz)
+	 		{
+	 			//fill in first frames
+	 			for(int i=0;i<minz;i++)
+	 			{
+	 				for(int j=0;j<smask.size[1];j++)
+	 				{
+	 					for(int k=0;k<smask.size[2];k++)
+	 					{
+	 						smask.at<uchar>(i,j,k)=smask.at<uchar>(minz,j,k);
+	 					}
+	 				}
+	 			}
+	 		}
+
+	 		if(maxz<=vidsize.z)
+	 		{
+	 			//fill in last frames
+	 			for(int i=maxz-1;i<vidsize.z;i++)
+	 			{
+	 				for(int j=0;j<smask.size[1];j++)
+	 				{
+	 					for(int k=0;k<smask.size[2];k++)
+	 					{
+	 						smask.at<uchar>(i,j,k)=smask.at<uchar>(maxz-2,j,k);
+	 					}
+	 				}
+	 			}
+	 		}
+	 	}
+
+	 	//single frame mask; make it 2d
+	 	if(smask.size[0]==1)
+	 	{
+	 		Mat tempM;
+	 		MatVid::frame(smask,0).copyTo(tempM);
+	 		return tempM;
+	 	}
+	 	else
+	 	{
+	 		return smask;
+	 	}*/
+	 	return smask;
 	 }
 
+	 
 }
