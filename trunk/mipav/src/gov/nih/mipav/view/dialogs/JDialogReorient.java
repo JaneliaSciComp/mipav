@@ -135,6 +135,13 @@ public class JDialogReorient extends JDialogScriptableBase
         init();
 	}
 	
+    public JDialogReorient(ModelImage im) {
+		// super(theParentFrame, false);
+		image = im;
+        init();
+	}
+    
+    
     /**
      * Empty constructor needed for dynamic instantiation.
      */
