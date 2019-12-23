@@ -1401,4 +1401,423 @@ public class JDialogReorient extends JDialogScriptableBase
     public boolean isActionComplete() {
         return isComplete();
     }
+    
+    /**
+    * For prostate and knees projects, setting the axail orientation.  Auto processing pipeline, which runs from 
+    * MIPAV plugin commandline or JDialog calling.   
+    */
+   public void set_axial_orientation() {
+   	newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
+       newOrientBoxX.setEnabled(false);
+       newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
+       newOrientBoxY.setEnabled(false);
+       newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_I2S_TYPE);
+       newOrientBoxZ.setEnabled(false);
+   }
+   
+   /**
+    * For prostate and knees projects, setting the sagittal orientation. Auto processing pipeline, which runs from 
+    * MIPAV plugin commandline or JDialog calling.   
+    */
+   public void set_sagittal_orientation() {
+   	   newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
+          newOrientBoxX.setEnabled(false);
+          newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_S2I_TYPE);
+          newOrientBoxY.setEnabled(false);
+          newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
+          newOrientBoxZ.setEnabled(false);
+   }
+   
+   /**
+    * For prostate and knees projects, setting the coronal orientation. Auto processing pipeline, which runs from 
+    * MIPAV plugin commandline or JDialog calling.   
+    */
+   public void set_coronal_orientation() {
+   	 newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
+        newOrientBoxX.setEnabled(false);
+        newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_S2I_TYPE);
+        newOrientBoxY.setEnabled(false);
+        newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
+        newOrientBoxZ.setEnabled(false);    
+   }
+   
+   /**
+    * For prostate and knees projects, run the re-orientation algorithm to create three orthogonal images from either 
+    * axial image (prostate) or saggittal image(knees). Auto processing pipeline, which runs from 
+    * MIPAV plugin commandline or JDialog calling.  
+    */
+	public void doRun() { /**
+	     * For prostate and knees projects, run the re-orientation algorithm to create three orthogonal images from either 
+	     * axial image (prostate) or saggittal image(knees). Auto processing pipeline, which runs from 
+	     * MIPAV plugin commandline or JDialog calling.  
+	     */
+		if (setVariables()) { 
+			callAlgorithmRun();
+		}    
+	}
+
+	 /**
+    * For prostate and knees projects, run the re-orientation algorithm to create three orthogonal images from either 
+    * axial image (prostate) or saggittal image(knees). Auto processing pipeline, which runs from 
+    * MIPAV plugin commandline or JDialog calling.  
+    */
+	  protected void callAlgorithmRun() {
+	        int i, j;
+	        boolean found;
+	        int newOrient;
+	        float ri[] = new float[3];
+	        int   ni[] = new int[3];
+	        float r0[] = new float[3];
+	        int   n0[] = new int[3];
+	        float org[] = new float[3];
+			setVisible(false);
+			float origin[];
+			float newOrigin[];
+			float originalOr[] = new float[3];
+			float flippedOr[] = new float[3];
+			float xOr = 0.0f;
+		    float yOr = 0.0f;;
+		    float zOr = 0.0f;
+		    Vector3f position;
+		    Vector3f out;
+	        
+		    if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+		    	fileInfoNIFTI = (FileInfoNIFTI)(image.getFileInfo()[0].clone());
+		    }
+		    else {
+		        fileInfo = (FileInfoBase)(image.getFileInfo()[0].clone());
+		    }
+			
+			// set resampled resolutions, dimensions
+			ri[0] = image.getFileInfo()[0].getResolutions()[0];
+			ri[1] = image.getFileInfo()[0].getResolutions()[1];
+			ri[2] = image.getFileInfo()[0].getResolutions()[2];
+			
+			ni[0] = image.getExtents()[0];
+			ni[1] = image.getExtents()[1];
+			ni[2] = image.getExtents()[2];
+			
+			origin = image.getFileInfo()[0].getOrigin();
+			newOrigin = origin.clone();
+	        
+	        float r[] = new float[3];
+	        int   n[] = new int[3];
+	        for (i = 0; i <= 2; i++) {
+	            r[i] = ri[i];
+	            n[i] = ni[i];
+	        }
+			
+			if (resolutionIndex == 1) {
+	            // Finest cubic
+				float rn = Math.min(r[0],Math.min(r[1],r[2]));
+				n[0] = (int)Math.ceil(n[0]*r[0]/rn);
+				r[0] = rn;
+				n[1] = (int)Math.ceil(n[1]*r[1]/rn);
+				r[1] = rn;
+				n[2] = (int)Math.ceil(n[2]*r[2]/rn);
+				r[2] = rn;
+			} else if (resolutionIndex == 2) {
+	            // Coarsest cubic
+				float rn = Math.max(r[0],Math.max(r[1],r[2]));
+				n[0] = (int)Math.ceil(n[0]*r[0]/rn);
+				r[0] = rn;
+				n[1] = (int)Math.ceil(n[1]*r[1]/rn);
+				r[1] = rn;
+				n[2] = (int)Math.ceil(n[2]*r[2]/rn);
+				r[2] = rn;
+			} else if (resolutionIndex == 3) {
+	            // Same as template
+				r[0] = template.getFileInfo()[0].getResolutions()[0];
+				r[1] = template.getFileInfo()[0].getResolutions()[1];
+				r[2] = template.getFileInfo()[0].getResolutions()[2];
+				n[0] = template.getExtents()[0];
+				n[1] = template.getExtents()[1];
+				n[2] = template.getExtents()[2];
+			}
+	        
+	        double X[][] = new double[4][4];
+	        for (j = 0; j <= 2; j++) {
+	            switch (or[j]) {
+	                case FileInfoBase.ORI_R2L_TYPE:
+	                    found = false;
+	                    for (i = 0; (i <= 2) && (!found); i++) {
+	                        if (newOr[i] == FileInfoBase.ORI_R2L_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = false;
+	                            found = true;
+	                            X[i][j] = 1.0;
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                        else if (newOr[i] == FileInfoBase.ORI_L2R_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = true;
+	                            found = true;
+	                            X[i][j] = -1.0;
+	                            X[i][3] = ri[j]*(ni[j] - 1);
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                    }
+	                    break;
+	                case FileInfoBase.ORI_L2R_TYPE:
+	                    found = false;
+	                    for (i = 0; (i <= 2) && (!found); i++) {
+	                        if (newOr[i] == FileInfoBase.ORI_L2R_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = false;
+	                            found = true;
+	                            X[i][j] = 1.0;
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                        else if (newOr[i] == FileInfoBase.ORI_R2L_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = true;
+	                            found = true;
+	                            X[i][j] = -1.0;
+	                            X[i][3] = ri[j]*(ni[j] - 1);
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                    }
+	                    break;
+	                case FileInfoBase.ORI_A2P_TYPE:
+	                    found = false;
+	                    for (i = 0; (i <= 2) && (!found); i++) {
+	                        if (newOr[i] == FileInfoBase.ORI_A2P_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = false;
+	                            found = true;
+	                            X[i][j] = 1.0;
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                        else if (newOr[i] == FileInfoBase.ORI_P2A_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = true; /**
+	                             * For prostate and knees projects, run the re-orientation algorithm to create three orthogonal images from either 
+	                             * axial image (prostate) or saggittal image(knees). Auto processing pipeline, which runs from 
+	                             * MIPAV plugin commandline or JDialog calling.  
+	                             */
+	                            found = true;
+	                            X[i][j] = -1.0;
+	                            X[i][3] = ri[j]*(ni[j] - 1);
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                    }
+	                    break;
+	                case FileInfoBase.ORI_P2A_TYPE:
+	                    found = false;
+	                    for (i = 0; (i <= 2) && (!found); i++) {
+	                        if (newOr[i] == FileInfoBase.ORI_P2A_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = false;
+	                            found = true;
+	                            X[i][j] = 1.0;
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                        else if (newOr[i] == FileInfoBase.ORI_A2P_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = true;
+	                            found = true;
+	                            X[i][j] = -1.0;
+	                            X[i][3] = ri[j]*(ni[j] - 1);
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                    }
+	                    break;
+	                case FileInfoBase.ORI_I2S_TYPE:
+	                    found = false;
+	                    for (i = 0; (i <= 2) && (!found); i++) {
+	                        if (newOr[i] == FileInfoBase.ORI_I2S_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = false;
+	                            found = true;
+	                            X[i][j] = 1.0;
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                        else if (newOr[i] == FileInfoBase.ORI_S2I_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = true;
+	                            found = true;
+	                            X[i][j] = -1.0;
+	                            X[i][3] = ri[j]*(ni[j] - 1);
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                    }
+	                    break;
+	                case FileInfoBase.ORI_S2I_TYPE:
+	                    found = false;
+	                    for (i = 0; (i <= 2) && (!found); i++) {
+	                        if (newOr[i] == FileInfoBase.ORI_S2I_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = false;
+	                            found = true;
+	                            X[i][j] = 1.0;
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                        else if (newOr[i] == FileInfoBase.ORI_I2S_TYPE) {
+	                        	axisOrder[i] = j;
+	                        	axisFlip[i] = true;
+	                            found = true;
+	                            X[i][j] = -1.0;
+	                            X[i][3] = ri[j]*(ni[j] - 1);
+	                            r0[i] = r[j];
+	                            n0[i] = n[j];
+	                        }
+	                    }
+	                    break;
+	            }
+	        } // for (j = 0; j <= 2; j++)
+	        
+	        for (i = 0; i <= 2; i++) {
+	        	if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+	        		fileInfoNIFTI.setResolutions(r0[i], i);   
+	                fileInfoNIFTI.setExtents(n0[i], i);
+	                fileInfoNIFTI.setAxisOrientation(newOr[i], i);	
+	        	}
+	        	else {
+	                fileInfo.setResolutions(r0[i], i);   
+	                fileInfo.setExtents(n0[i], i);
+	                fileInfo.setAxisOrientation(newOr[i], i);
+	        	}
+	        }
+	        
+	        for (i = 0; i < 3; i++) {
+	            if (i == 0) {
+	            	originalOr[0] = 0.0f;
+	            	flippedOr[0] = ni[0] - 1;
+	            }
+	            else if (i == 1) {
+	            	originalOr[1] = 0.0f;
+	            	flippedOr[1] = ni[1] - 1;
+	            }
+	            else {
+	            	originalOr[2] = 0.0f;
+	            	flippedOr[2] = ni[2] - 1;
+	            }
+	        }
+	        
+	        for (i = 0; i < 3; i++) {
+	        	if (axisFlip[i]) {
+	        		if (axisOrder[i] == 0) {
+	        		    xOr = flippedOr[0];	
+	        		}
+	        		else if (axisOrder[i] == 1) {
+	        			yOr = flippedOr[1];
+	        		}
+	        		else {
+	        			zOr = flippedOr[2];
+	        		}
+	        	}
+	        	else {
+	        		if (axisOrder[i] == 0) {
+	        			xOr = originalOr[0];
+	        		}
+	        		else if (axisOrder[i] == 1) {
+	        			yOr = originalOr[1];
+	        		}
+	        		else {
+	        			zOr = originalOr[2];
+	        		}
+	        	}
+	        }
+	        
+	        position = new Vector3f(xOr, yOr, zOr);
+	        out = new Vector3f(position);
+	        MipavCoordinateSystems.fileToScanner(position, out, image);
+	        for (i = 0; i < 3; i++) {
+		        if ((or[i] == FileInfoBase.ORI_R2L_TYPE) || (or[i] == FileInfoBase.ORI_L2R_TYPE)) {
+		            org[i] = out.X;
+		        }
+		        else if ((or[i] == FileInfoBase.ORI_A2P_TYPE) || (or[i] == FileInfoBase.ORI_P2A_TYPE)) {
+		            org[i] = out.Y;
+		        }
+		        else {
+		            org[i] = out.Z;
+		        }
+	        }
+
+	        for (i = 0; i < 3; i++) {
+	            newOrigin[i] = org[axisOrder[i]];
+	            if (Math.abs(newOrigin[i]) < .000001f) {
+	                newOrigin[i] = 0f;
+	            }
+	        }
+	        
+	        if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+	        	fileInfoNIFTI.setOrigin(newOrigin);
+	        }
+	        else {
+	            fileInfo.setOrigin(newOrigin);
+	        }
+	        
+	        if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
+	            newOrient = FileInfoBase.AXIAL;
+	        }
+	        else if ((newOr[2] == FileInfoBase.ORI_A2P_TYPE) || (newOr[2] == FileInfoBase.ORI_P2A_TYPE)) {
+	            newOrient = FileInfoBase.CORONAL;
+	        }
+	        else if ((newOr[2] == FileInfoBase.ORI_L2R_TYPE) || (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
+	            newOrient = FileInfoBase.SAGITTAL;
+	        }
+	        else {
+	            newOrient = FileInfoBase.UNKNOWN_ORIENT;
+	        } 
+	        if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+	        	fileInfoNIFTI.setImageOrientation(newOrient);
+	        }
+	        else {
+	            fileInfo.setImageOrientation(newOrient);
+	        }
+			
+			TransMatrix transform = new TransMatrix(4);
+	        transform.setMatrix(0, 2, 0, 3, X);
+			
+			//System.out.println(transform.toString());
+			
+			int interp = AlgorithmTransform.TRILINEAR;
+			if (interpType.equals("Nearest Neighbor")) {
+	            interp = AlgorithmTransform.NEAREST_NEIGHBOR;
+	        } else if (interpType.equals("Trilinear")) {
+				interp = AlgorithmTransform.TRILINEAR;
+	        } else if (interpType.equals("Bspline 3rd order")) {
+	            interp = AlgorithmTransform.BSPLINE3;
+	        } else if (interpType.equals("Bspline 4th order")) {
+	            interp = AlgorithmTransform.BSPLINE4;
+	        } else if (interpType.equals("Cubic Lagrangian")) {
+	            interp = AlgorithmTransform.CUBIC_LAGRANGIAN;
+	        } else if (interpType.equals("Quintic Lagrangian")) {
+	            interp = AlgorithmTransform.QUINTIC_LAGRANGIAN;
+	        } else if (interpType.equals("Heptic Lagrangian")) {
+	            interp = AlgorithmTransform.HEPTIC_LAGRANGIAN;
+	        } else if  (interpType.equals("Windowed Sinc")) {
+	            interp = AlgorithmTransform.WSINC;
+	        }
+				
+			algoTrans = new AlgorithmTransform(image, transform, interp, r0[0], r0[1], r0[2], n0[0], n0[1], n0[2], 
+												true, false, false);
+			algoTrans.setUpdateOriginFlag(true);
+			
+			// This is very important. Adding this object as a listener allows
+	        // the algorithm to notify this object when it has completed of failed.
+	        // See algorithm performed event. This is made possible by implementing
+	        algoTrans.addListener(this);
+
+	        // createProgressBar(image.getImageName(), algoTrans);
+
+	        // Start the thread as a low priority because we wish to still have
+	        // user interface work fast
+	        algoTrans.run();
+	        
+	        // resultImage = algoTrans.getTransformedImage();
+	       
+	    } 
 }
