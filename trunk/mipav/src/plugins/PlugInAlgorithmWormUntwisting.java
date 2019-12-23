@@ -321,6 +321,7 @@ public class PlugInAlgorithmWormUntwisting
 						if ( mesh != null ) {
 							LatticeModel.saveTriMesh( wormImage, "model", "_mesh", mesh );
 							
+							
 				        	SurfaceState surface = new SurfaceState( mesh, mesh.GetName() );
 				        	VolumeImage volImage = new VolumeImage(false, wormImage, "", null, 0);
 							VolumeSurface volumeSurface = new VolumeSurface(volImage,
@@ -409,7 +410,7 @@ public class PlugInAlgorithmWormUntwisting
 					        	surfaceBlur.disposeLocal(false);
 					        	surfaceBlur = null;
 					        }
-					        
+					       
 							mesh.dispose();
 							mesh = null;
 							meshCount++;
