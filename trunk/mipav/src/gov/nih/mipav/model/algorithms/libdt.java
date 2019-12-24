@@ -3622,7 +3622,7 @@ public class libdt extends AlgorithmBase {
 	}
 
 	private void copyTo(Mat A, Mat B) {
-		int i, j;
+		int i, j, ch;
 		B.flags = A.flags;
 		B.dims = A.dims;
 		B.depth = A.depth;
@@ -3635,17 +3635,47 @@ public class libdt extends AlgorithmBase {
 			}
 		}
 		B.type = A.type;
-		if ((A.double2D != null) && (A.double2D[0] != null)) {
-			if ((B.double2D == null) || (B.double2D[0] == null) || (A.double2D.length != B.double2D.length)
-					|| (A.double2D[0].length != B.double2D[0].length)) {
-				B.double2D = new double[A.double2D.length][A.double2D[0].length];
-			}
-			for (i = 0; i < A.double2D.length; i++) {
-				for (j = 0; j < A.double2D[0].length; j++) {
-					B.double2D[i][j] = A.double2D[i][j];
+		if (A.type == CV_64F) {
+			if ((A.double2D != null) && (A.double2D[0] != null)) {
+				if ((B.double2D == null) || (B.double2D[0] == null) || (A.double2D.length != B.double2D.length)
+						|| (A.double2D[0].length != B.double2D[0].length)) {
+					B.double2D = new double[A.double2D.length][A.double2D[0].length];
+				}
+				for (i = 0; i < A.double2D.length; i++) {
+					for (j = 0; j < A.double2D[0].length; j++) {
+						B.double2D[i][j] = A.double2D[i][j];
+					}
 				}
 			}
-		}
+		} // if (A.type == CV_64F)
+		else if (A.type == CV_8U) {
+			if ((A.byte2D != null) && (A.byte2D[0] != null)) {
+				if ((B.byte2D == null) || (B.byte2D[0] == null) || (A.byte2D.length != B.byte2D.length)
+						|| (A.byte2D[0].length != B.byte2D[0].length)) {
+					B.byte2D = new byte[A.byte2D.length][A.byte2D[0].length];
+				}
+				for (i = 0; i < A.byte2D.length; i++) {
+					for (j = 0; j < A.byte2D[0].length; j++) {
+						B.byte2D[i][j] = A.byte2D[i][j];
+					}
+				}
+			}	
+		} // else if (A.type == CV_8U)
+		else if (A.type == CV_8UC) {
+			if ((A.byte2DC != null) && (A.byte2DC[0] != null)  && A.byte2DC[0][0] != null) {
+				if ((B.byte2DC == null) || (B.byte2DC[0] == null) || (B.byte2DC[0][0] == null) || (A.byte2DC.length != B.byte2DC.length)
+						|| (A.byte2DC[0].length != B.byte2DC[0].length) || (A.byte2DC[0][0].length != B.byte2DC[0][0].length)) {
+					B.byte2DC = new byte[A.byte2DC.length][A.byte2DC[0].length][A.byte2DC[0][0].length];
+				}
+				for (i = 0; i < A.byte2DC.length; i++) {
+					for (j = 0; j < A.byte2DC[0].length; j++) {
+						for (ch = 0; ch < A.byte2DC[0][0].length; ch++) {
+						    B.byte2DC[i][j][ch] = A.byte2DC[i][j][ch];
+						}
+					}
+				}
+			}	
+		} // else if (A.type == CV_8UC)
 	}
 
 	private void copyToDstColRange(Mat A, Mat B, int inclusiveStart, int exclusiveEnd) {
@@ -10673,18 +10703,18 @@ public class libdt extends AlgorithmBase {
 	  */
 	 public void segmentVideoSequence(VidSegm vs, Vector<String> paths,int stepxy,int stepz,int filtxy,int filtz,String vidPath2)
 	 {
-		/*int j;
+		int j;
 	 	//segment all videos in the sequence
 	 	for(int i=0;i<paths.size();i++)
 	 	{
 	 		System.out.println("Segmenting: " + paths.get(i));
-	 		Mat segMask;
-	 		Mat segVideo;
+	 		Mat segMask[];
+	 		Mat segVideo[];
 
 	 		//first video in the sequence, special case
 	 		if(i==0)
 	 		{
-	 			Mat postFrames[];
+	 			Mat postFrames[] = null;
 	 			//is there any next video in sequence
 	 			if(paths.size()>1)
 	 			{
@@ -10737,153 +10767,197 @@ public class libdt extends AlgorithmBase {
 	 			}
 	 			vid1 = null;
 
-	 			Mat segMask2 = new Mat();
-	 			Mat segVideo2;
+	 			Mat segMask2[] = new Mat[vs.vidsize.z];
+	 			for (j = 0; j < vs.vidsize.z; j++) {
+	 				segMask2[j] = new Mat();
+	 			}
+	 			Mat segVideo2[];
 	 			segVideo2=segmentVideo(vs, newVid,stepxy,stepz,filtxy,filtz,segMask2);
-	 			(MatVid::subvid(segMask2,Range(0,vid1size),Range::all(),Range::all())).copyTo(segMask);
-	 			(MatVid::subvid(segVideo2,Range(0,vid1size),Range::all(),Range::all())).copyTo(segVideo);		
+	 			segMask = new Mat[vid1size];
+	 			for (j = 0; j < vid1size; j++) {
+	 				segMask[j] = new  Mat();
+	 				copyTo(segMask2[j],segMask[j]);
+	 			}
+	 			segVideo = new Mat[vid1size];
+	 			for (j = 0; j < vid1size; j++) {
+	 				segVideo[j] = new Mat();
+	 				copyTo(segVideo2[j],segVideo[j]);
+	 			}		
 
 	 		}
 	 		else if(i==(paths.size()-1)) //last video special case
 	 		{
-	 			Mat vid1=MatVid::loaddat(paths[i-1],"t");				
-	 			int vsize=vid1.size[0];
-	 			cout<<"Vid1-Frames"<<vid1.size[0]<<endl;
-	 			Mat tempM=MatVid::subvid(vid1,Range( (vsize-popt.win.z)+stepz,vsize),Range::all(),Range::all());
-	 			Mat preFrames;
-	 			tempM.copyTo(preFrames);
-	 			vid1.release();
-	 			cout<<"Pre-Frames"<<preFrames.size[0]<<endl;			
+	 			Mat vid1[]=loaddat(paths.get(i-1),"t");				
+	 			int vsize=vid1.length;
+	 			System.out.println("Vid1-Frames " + vid1.length);
+	 			Mat preFrames[] = new Mat[vs.popt.win.z -stepz];
+	 			for (j = (vsize-vs.popt.win.z)+stepz; j < vsize; j++) {
+	 				preFrames[j-vsize+vs.popt.win.z-stepz] = new Mat();
+	 				copyTo(vid1[j],preFrames[j-vsize+vs.popt.win.z-stepz]);
+	 			}
+	 			for (j = 0; j < vid1.length; j++) {
+	 				vid1[j].release();
+	 			}
+	 			vid1 = null;
+	 			System.out.println("Pre-Frames " + preFrames.length);			
 
-	 			Mat vid2=MatVid::loaddat(paths[i],"t");	
-	 			cout<<"Vid2-Frames"<<vid2.size[0]<<endl;
+	 			Mat vid2[] = loaddat(paths.get(i),"t");	
+	 			System.out.println("Vid2-Frames " + vid2.length);
 
-	 			Mat newVid=MatVid::create(preFrames.size[0]+vid2.size[0],vid2.size[1],vid2.size[2],vid1.type());
-	 			cout<<"neVid-Frames"<<newVid.size[0]<<endl;
+	 			Mat newVid[] = new Mat[preFrames.length+vid2.length];
+	 			for (j = 0; j < newVid.length; j++) {
+	 				newVid[j] = new Mat(vid2[0].rows,vid2[0].cols,vid1[0].type);
+	 			}
+	 			System.out.println("neVid-Frames " + newVid.length);
 
-	 			Mat t1=MatVid::subvid(newVid,Range(0,preFrames.size[0]),Range::all(),Range::all());
-	 			preFrames.copyTo(t1);
-	 			Mat t2=MatVid::subvid(newVid,Range(preFrames.size[0],newVid.size[0]),Range::all(),Range::all());
-	 			vid2.copyTo(t2);
-	 						
-	 			vid2.release();
-	 			Mat segMask2,segVideo2;
-	 			segVideo2=segmentVideo(newVid,stepxy,stepz,filtxy,filtz,segMask2);
-	 						
-	 			(MatVid::subvid(segMask2,Range(preFrames.size[0],segMask2.size[0]),Range::all(),Range::all())).copyTo(segMask);
-	 			(MatVid::subvid(segVideo2,Range(preFrames.size[0],segVideo2.size[0]),Range::all(),Range::all())).copyTo(segVideo);
+	 			for (j = 0; j < preFrames.length; j++) {
+	 				copyTo(preFrames[j],newVid[j]);
+	 			}
+	 			for (j = 0; j < vid2.length; j++) {
+	 				copyTo(vid2[j],newVid[j+preFrames.length]);
+	 			}
+	 			
+	 			for (j = 0; j < vid2.length;j++) {
+	 				vid2[j].release();
+	 			}
+	 			vid2 = null;
+	 			Mat segVideo2[];
+	 			Mat segMask2[]  = new Mat[vs.vidsize.z];
+	 			for (j = 0; j < vs.vidsize.z; j++) {
+	 				segMask2[j] = new Mat();
+	 			}
+	 			segVideo2=segmentVideo(vs, newVid,stepxy,stepz,filtxy,filtz,segMask2);
+	 			
+	 			segMask = new Mat[segMask2.length-preFrames.length];
+	 			for (j = 0; j < segMask.length; j++) {
+	 				segMask[j] = new Mat();
+	 				copyTo(segMask2[j+preFrames.length],segMask[j]);
+	 			}
+	 			segVideo = new Mat[segVideo2.length-preFrames.length];
+	 			for (j = 0; j < segVideo.length; j++) {
+	 				segVideo[j] = new Mat();
+	 				copyTo(segVideo2[j+preFrames.length],segVideo[j]);
+	 			}
 	 			
 	 		}
 	 		else //rest of the videos
 	 		{
 	 			//PRe
-	 			Mat vid1=MatVid::loaddat(paths[i-1],"t");				
-	 			int vsize=vid1.size[0];
-	 			cout<<"Vid1-Frames"<<vid1.size[0]<<endl;
-	 			Mat tempM=MatVid::subvid(vid1,Range( (vsize-popt.win.z)+stepz,vsize),Range::all(),Range::all());
-	 			Mat preFrames;
-	 			tempM.copyTo(preFrames);
-	 			vid1.release();
-	 			cout<<"Pre-Frames"<<preFrames.size[0]<<endl;
+	 			Mat vid1[] =loaddat(paths.get(i-1),"t");				
+	 			int vsize=vid1.length;
+	 			System.out.println("Vid1-Frames " + vid1.length);
+	 			Mat preFrames[] = new Mat[vs.popt.win.z-stepz];
+	 			for (j = 0; j < preFrames.length; j++) {
+	 				preFrames[j] = new Mat();
+	 				copyTo(vid1[j+vsize-vs.popt.win.z+stepz],preFrames[j]);
+	 			}
+	 			for (j = 0; j < vid1.length; j++) {
+	 				vid1[j].release();
+	 			}
+	 			vid1 = null;
+	 			System.out.println("Pre-Frames " + preFrames.length);
 
 	 			//Post
-	 			Mat vid3=MatVid::loaddat(paths[i+1],"t");				
-	 			int vsize3=vid3.size[0];
-	 			cout<<"Vid3-Frames"<<vid3.size[0]<<endl;			
-	 			Mat tempM3=MatVid::subvid(vid3,Range(0,popt.win.z-stepz),Range::all(),Range::all());
-	 			Mat postFrames;
-	 			tempM3.copyTo(postFrames);			
-	 			vid3.release();
-	 			cout<<"Post-Frames"<<postFrames.size[0]<<endl;
+	 			Mat vid3[]=loaddat(paths.get(i+1),"t");				
+	 			int vsize3=vid3.length;
+	 			System.out.println("Vid3-Frames " + vid3.length);			
+	 			Mat postFrames[] = new Mat[vs.popt.win.z-stepz];
+	 			for (j = 0; j < postFrames.length; j++) {
+	 				postFrames[j] = new Mat();
+	 				copyTo(vid3[j],postFrames[j]);
+	 			}
+	 			for (j = 0; j < vid3.length; j++) {
+	 				vid3[j].release();
+	 			}
+	 			vid3 = null;
+	 			System.out.println("Post-Frames " + postFrames.length);
 
 	 			
-	 			Mat vid2=MatVid::loaddat(paths[i],"t");	
-	 			cout<<"Vid2-Frames"<<vid2.size[0]<<endl;
+	 			Mat vid2[] = loaddat(paths.get(i),"t");	
+	 			System.out.println("Vid2-Frames " + vid2.length);;
 
-	 			Mat newVid=MatVid::create(preFrames.size[0]+vid2.size[0]+postFrames.size[0],vid2.size[1],vid2.size[2],vid1.type());
-	 			cout<<"neVid-Frames"<<newVid.size[0]<<endl;
+	 			Mat newVid[] = new Mat[preFrames.length+vid2.length+postFrames.length];
+	 			for (j = 0; j < newVid.length; j++) {
+	 				newVid[j] = new Mat(vid2[0].rows,vid2[0].cols,vid1[0].type);
+	 			}
+	 			System.out.println("newVid-Frames " + newVid.length);
 
-	 			Mat t1=MatVid::subvid(newVid,Range(0,preFrames.size[0]),Range::all(),Range::all());
-	 			preFrames.copyTo(t1);
-	 			Mat t2=MatVid::subvid(newVid,Range(preFrames.size[0],newVid.size[0]-postFrames.size[0]),Range::all(),Range::all());
-	 			vid2.copyTo(t2);
-	 			Mat t3=MatVid::subvid(newVid,Range(newVid.size[0]-postFrames.size[0],newVid.size[0]),Range::all(),Range::all());
-	 			postFrames.copyTo(t3);
+	 			for (j = 0; j < preFrames.length; j++) {
+	 				copyTo(preFrames[j],newVid[j]);
+	 			}
+	 			for (j = 0; j < vid2.length; j++) {
+	 				copyTo(vid2[j],newVid[j+preFrames.length]);
+	 			}
+	 			for (j = 0; j < postFrames.length; j++) {
+	 				copyTo(postFrames[j],newVid[j + newVid.length-postFrames.length]);
+	 			}
 	 			
-	 			vid2.release();
-	 			Mat segMask2,segVideo2;
-	 			segVideo2=segmentVideo(newVid,stepxy,stepz,filtxy,filtz,segMask2);
+	 			for (j = 0; j < vid2.length;j++) {
+	 				vid2[j].release();
+	 			}
+	 			vid2 = null;
+	 			Mat segMask2[] = new Mat[vs.vidsize.z];
+	 			for (j = 0; j < vs.vidsize.z; j++) {
+	 				segMask2[j] = new Mat();
+	 			}
+	 			Mat segVideo2[];
+	 			segVideo2=segmentVideo(vs,newVid,stepxy,stepz,filtxy,filtz,segMask2);
 	 					
-	 			(MatVid::subvid(segMask2,Range(preFrames.size[0],segMask2.size[0]-postFrames.size[0]),Range::all(),Range::all())).copyTo(segMask);
-	 			(MatVid::subvid(segVideo2,Range(preFrames.size[0],segVideo2.size[0]-postFrames.size[0]),Range::all(),Range::all())).copyTo(segVideo);
+	 			segMask = new Mat[segMask2.length-postFrames.length-preFrames.length];
+	 			for (j = 0; j < segMask.length; j++) {
+	 				segMask[j] = new Mat();
+	 				copyTo(segMask2[j+preFrames.length],segMask[j]);
+	 			}
+	 			segVideo = new Mat[segVideo2.length-postFrames.length-preFrames.length];
+	 			for (j = 0; j < segVideo.length; j++) {
+	 				segVideo[j] = new Mat();
+	 				copyTo(segVideo2[j+preFrames.length],segVideo[j]);
+	 			}
 	 		}
 
 	 		//save things for current video segmentation in the output place
-	 		char carr[100];
-	 		sprintf(carr,"%d",i);
-	 		string vidid(carr);
-	 		string dirpath=vidPath2 + vidid + string("_segm");
-	 		PlatInd::makedir(dirpath);
+	 		byte carr[] = new byte[100];
+	 		String vidid = String.valueOf(i);
+	 		String dirpath=vidPath2 + vidid + "_segm" + +File.separatorChar;
+	 		File file = new File(dirpath); // param.savepath ends in File.separatorChar
+	        if (!file.exists()) {
+	            file.mkdir();
+	        }
 
-	 		string fpath=dirpath+string("/")+string("vid") + vidid+ string("_segm_");
-	 		Mat smask=segMask;	
+	 		String fpath=dirpath+"vid" + vidid+ "_segm_";
+	 		Mat smask[]=segMask;	
 	 		
-	 		if(smask.dims==2)
-	 		{
-	 			Mat img=smask;
-
-	 			char buffer [100];
-	 			sprintf(buffer,"%03d",0);
-
-	 			string filename=fpath+buffer+".png";
-
-	 			Mat frame=Mat::zeros(img.rows,img.cols,CV_8UC1);
-	 			for(int j=0;j<img.rows;j++)
-	 				for(int k=0;k<img.cols;k++)
-	 				{
-	 					if(img.at<unsigned char>(j,k)==1)
-	 						frame.at<unsigned char>(j,k)=127;
-	 					else if(img.at<unsigned char>(j,k)==2)
-	 						frame.at<unsigned char>(j,k)=255;
-	 					else
-	 						frame.at<unsigned char>(j,k)=0;
-	 				}
-	 				imwrite(filename,frame);
-	 		}
-	 		else
-	 		{		
-	 			for(int m=0;m<smask.size[0];m++)
+	 		
+	 			for(int m=0;m<smask.length;m++)
 	 			{
-	 				Mat img=MatVid::frame(smask,m);
+	 				Mat img=smask[m];
 
-	 				char buffer [100];
-	 				sprintf(buffer,"%03d",m);
+	 				String buffer = String.format("%03d",m);
 
-	 				string filename=fpath+buffer+".png";
+	 				String filename=fpath+buffer+".png";
 
-	 				Mat frame=Mat::zeros(img.rows,img.cols,CV_8UC1);
-	 				for(int j=0;j<img.rows;j++)
+	 				Mat frame= new Mat(img.rows,img.cols,CV_8UC1);
+	 				for(j=0;j<img.rows;j++)
 	 					for(int k=0;k<img.cols;k++)
 	 					{
-	 						if(img.at<unsigned char>(j,k)==1)
-	 							frame.at<unsigned char>(j,k)=127;
-	 						else if(img.at<unsigned char>(j,k)==2)
-	 							frame.at<unsigned char>(j,k)=255;
+	 						if(img.byte2D[j][k]==1)
+	 							frame.byte2D[j][k]=127;
+	 						else if(img.byte2D[j][k]==2)
+	 							frame.byte2D[j][k]=(byte)255;
 	 						else
-	 							frame.at<unsigned char>(j,k)=0;
+	 							frame.byte2D[j][k]=0;
 	 					}
-	 					imwrite(filename,frame);
+	 					//imwrite(filename,frame);
 
 	 			}
-	 		}
 	 		//save avi and dat for windows pc
-	 		#ifdef _WIN32
+	 		/*#ifdef _WIN32
 	 			string avipath=vidPath2 + vidid + string(".avi");
 	 			string datpath=vidPath2 + vidid + string(".dat");
 	 			MatVid::saveavi(avipath,segVideo);
 	 			MatVid::savedat(datpath,segVideo,"unsigned_1");	
-	 		#endif
-	 	}*/
+	 		#endif*/
+	 	}
 	 }
 	 
 	 /*!
@@ -10919,9 +10993,9 @@ public class libdt extends AlgorithmBase {
 	  * \see
 	  * segmentVideoSequence.
 	  */
-	 Mat segmentVideo(VidSegm vs,Mat vid[],int stepxy,int stepz,int filtxy,int filtz, Mat osmask[])
+	 Mat[] segmentVideo(VidSegm vs,Mat vid[],int stepxy,int stepz,int filtxy,int filtz, Mat osmaskout[])
 	 {
-		int j;
+		int j,z,r,c,ch;
 	 	//turn on segmentation timer for current video
 	 	long startTime = System.currentTimeMillis();
 
@@ -11025,7 +11099,7 @@ public class libdt extends AlgorithmBase {
 	 	// figure out possible z
 	 	int zsize = (boxvid.length-vs.popt.win.z) / vs.popt.step.z + 1;
 	 	vs.allz.ensureCapacity(zsize);
-	 	for (int z=0; z<=boxvid.length-vs.popt.win.z; z+=vs.popt.step.z) 
+	 	for (z=0; z<=boxvid.length-vs.popt.win.z; z+=vs.popt.step.z) 
 	 	{
 	 		vs.allz.add(z);
 	 	}
@@ -11095,15 +11169,31 @@ public class libdt extends AlgorithmBase {
 	 		frame += clipz;
 	 	}
 	 	//Get the segmentation mask
-	 	osmask=segm_mask(vs);
+	 	Mat osmask[]=segm_mask(vs);
 	 	//filter the mask
 	 	osmask=maxvotefilt(osmask,filtxy,filtxy,filtz,vs.K);
 	 	//Get color segmentation
-	 	colorMask(vid,osmask,segm,1); 
+	 	colorMask(vid,osmask,segm,1);
+	 	copyTo(osmask,osmaskout);
 
 	 	long ttime= System.currentTimeMillis()-startTime;
 	 	System.out.println("segmentation time for cur video is: " + ttime + " milliseconds");
-	 	return segm;
+	 	Mat outsegm[] = new Mat[vid.length];
+	 	int sz[] = new int[]{vid[0].rows,vid[0].cols};
+	 	for (j = 0; j < vid.length; j++) {
+	 		outsegm[j] = new Mat();
+	 		outsegm[j].create(2,sz,CV_8UC,3);
+	 	}
+	 	for (z = 0; z < vid.length; z++) {
+			   for (r = 0; r < vid[0].rows; r++) {
+				   for (c = 0; c < vid[0].cols; c++) {
+					   for (ch = 0; ch < 3; ch++) {
+			               outsegm[z].byte2DC[r][c][ch] = segm.byte3DC[z][r][c][ch]; 
+					   }
+				   }
+			   }
+		   }
+	 	return outsegm;
 	 }
 	 
 	 /*!
@@ -11295,94 +11385,117 @@ public class libdt extends AlgorithmBase {
 	 		locoffs.add(temp);
 	 	}
 	 		
-	 	/*for(int seri=0;seri<ssc.size();seri++)
+	 	for(int seri=0;seri<ssc.size();seri++)
 	 	{
-	 		cout<<"segm_mask: nn fill "<<seri<<"/"<<ssc.size()<<endl;
+	 		System.out.println("segm_mask: nn fill " + seri + "/" + ssc.size());
 	 		//build the structure element
 	 			
 	 		for(int i=0;i<sed.rows;i++)
 	 		{
 	 			for(int j=0;j<sed.cols;j++)
 	 			{
-	 				if(sed.at<OPT_F_TYPE>(i,j)==ssc[seri])
-	 					se.at<uchar>(i,j)=1;
+	 				if(sed.double2D[i][j]==ssc.get(seri))
+	 					se.byte2D[i][j]=1;
 	 				else
-	 					se.at<uchar>(i,j)=0;
+	 					se.byte2D[i][j]=0;
 	 			}
 	 		}
 
 	 				
-	 		Mat se3=MatVid::repeat(se,zsize);
-	 		int s1=se3.size[0];
-	 		int s2=se3.size[1];
-	 		int s3=se3.size[2];
-	 		std::vector<double> se3i;
+	 		Mat se3[] = new Mat[zsize];
+	 		for (int i = 0; i < zsize; i++) {
+	 			se3[i] = new Mat(se.rows,se.cols,CV_8U);
+	 		}
+	 		int s1=se3.length;
+	 		int s2=se3[0].rows;
+	 		int s3=se3[0].cols;
+	 		Vector<Double> se3i = new Vector<Double>();
 	 		for(int kk=0;kk<s1;kk++)
 	 		{
 	 			for(int jj=0;jj<s3;jj++)
 	 			{
 	 				for(int ii=0;ii<s2;ii++)
 	 				{
-	 					if(se3.at<uchar>(kk,ii,jj)==1)
+	 					if(se3[kk].byte2D[ii][jj]==1)
 	 					{
-	 						double temp=ii+1+jj*vidsize.y+kk*vidsize.y*vidsize.x;
-	 						se3i.push_back(temp);
+	 						double temp=ii+1+jj*vs.vidsize.y+kk*vs.vidsize.y*vs.vidsize.x;
+	 						se3i.add(temp);
 	 					}
 	 				}
 	 			}
 	 		}
 	 		for(int i=0;i<classes.size();i++)
 	 		{
-	 			int c=classes[i];
-	 			int off=locoffs[i];
+	 			int c=classes.get(i);
+	 			int off=locoffs.get(i);
 
 	 			//find zero elements in smask that are active in se3
-	 			std::vector<int> tempi;
+	 			Vector<Integer> tempi = new Vector<Integer>();
 	 			for(int j=0;j<se3i.size();j++)
 	 			{
-	 				int temp=se3i[j]+off-1;
-	 				int fNo=temp/(smask.size[1]*smask.size[2]);
-	 				temp=temp-fNo*(smask.size[1]*smask.size[2]);
-	 				int colNo=temp/smask.size[1];
-	 				int rowNo=temp%smask.size[1];
-	 				if(smask.at<uchar>(fNo,rowNo,colNo)==0)
-	 					tempi.push_back(j);
+	 				int temp=(int)(se3i.get(j)+off-1);
+	 				int fNo=temp/(smask[0].rows*smask[0].cols);
+	 				temp=temp-fNo*(smask[0].rows*smask[0].cols);
+	 				int colNo=temp/smask[0].rows;
+	 				int rowNo=temp%smask[0].rows;
+	 				if(smask[fNo].byte2D[rowNo][colNo]==0)
+	 					tempi.add(j);
 	 			}
 	 					
 	 			//if found any zero elements, 
 	 			for(int j=0;j<tempi.size();j++)
 	 			{
-	 				int temp=se3i[tempi[j]]+off-1;
-	 				int fNo=temp/(smask.size[1]*smask.size[2]);
-	 				temp=temp-fNo*(smask.size[1]*smask.size[2]);
-	 				int colNo1=temp/smask.size[1];
-	 				int rowNo1=temp%smask.size[1];
+	 				int temp=(int)(se3i.get(tempi.get(j))+off-1);
+	 				int fNo=temp/(smask[0].rows*smask[0].cols);
+	 				temp=temp-fNo*(smask[0].rows*smask[0].cols);
+	 				int colNo1=temp/smask[0].rows;
+	 				int rowNo1=temp%smask[0].rows;
 	 				// fill location
 	 				if( (c==1) || (c==2) )
 	 					c=c;
-	 				smask.at<uchar>(fNo,rowNo1,colNo1)=c;							
+	 				smask[fNo].byte2D[rowNo1][colNo1]=(byte)c;							
 	 			}
 
 	 		}
 	 			
 	 	}
 	 				
-	 	//now fill in the borders if they are missing	
-	 	double minx=*min_element(allx.begin(),allx.end())+coff.y+box_x.x;
-	 	double maxx=*max_element(allx.begin(),allx.end())+coff.y+box_x.y+2;
-	 	double miny=*min_element(ally.begin(),ally.end())+coff.x+box_y.x;
-	 	double maxy=*max_element(ally.begin(),ally.end())+coff.x+box_y.y+2;
+	 	//now fill in the borders if they are missing
+	 	double minallx = vs.allx.get(0);
+	 	double maxallx = vs.allx.get(0);
+	 	for (int i = 1; i < vs.allx.size(); i++) {
+	 		if (vs.allx.get(i) < minallx) {
+	 			minallx = vs.allx.get(i);
+	 		}
+	 		if (vs.allx.get(i) > maxallx) {
+	 			maxallx = vs.allx.get(i);
+	 		}
+	 	}
+	 	double minally = vs.ally.get(0);
+	 	double maxally = vs.ally.get(0);
+	 	for (int i = 1; i < vs.ally.size(); i++) {
+	 		if (vs.ally.get(i) < minally) {
+	 			minally = vs.ally.get(i);
+	 		}
+	 		if (vs.ally.get(i) > maxally) {
+	 			maxally = vs.ally.get(i);
+	 		}
+	 	}
+	 	double minx=minallx+vs.coff.y+box_x.x;
+	 	double maxx=maxallx+vs.coff.y+box_x.y+2;
+	 	double miny=minally+vs.coff.x+box_y.x;
+	 	double maxy=maxally+vs.coff.x+box_y.y+2;
 
 	 	// fill in left edge
 	 	if(1<=minx)
 	 	{		
-	 		for(int i=0;i<smask.size[0];i++)
+	 		for(int i=0;i<smask.length;i++)
 	 		{
-	 			for(int j=0;j<smask.size[1];j++)
+	 			for(int j=0;j<smask[0].rows;j++)
 	 			{
 	 				for(int k=0;k<minx;k++)
 	 				{
-	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,j,minx);
+	 					smask[i].byte2D[j][k]=smask[i].byte2D[j][(int)minx];
 	 				}
 	 			}
 	 		}
@@ -11390,15 +11503,15 @@ public class libdt extends AlgorithmBase {
 	 	}
 
 	 	//fill in right edge
-	 	if(maxx<=vidsize.x)
+	 	if(maxx<=vs.vidsize.x)
 	 	{		
-	 		for(int i=0;i<smask.size[0];i++)
+	 		for(int i=0;i<smask.length;i++)
 	 		{
-	 			for(int j=0;j<smask.size[1];j++)
+	 			for(int j=0;j<smask[0].rows;j++)
 	 			{
-	 				for(int k=maxx-1;k<vidsize.x;k++)
+	 				for(int k=(int)(maxx-1);k<vs.vidsize.x;k++)
 	 				{
-	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,j,maxx-2);
+	 					smask[i].byte2D[j][k]=smask[i].byte2D[j][(int)(maxx-2)];
 	 				}
 	 			}
 	 		}
@@ -11409,64 +11522,74 @@ public class libdt extends AlgorithmBase {
 	 	// fill in top edge
 	 	if(1<=miny)
 	 	{		
-	 		for(int i=0;i<smask.size[0];i++)
+	 		for(int i=0;i<smask.length;i++)
 	 		{
 	 			for(int j=0;j<miny;j++)
 	 			{
-	 				for(int k=0;k<smask.size[2];k++)
+	 				for(int k=0;k<smask[0].cols;k++)
 	 				{
-	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,miny,k);
+	 					smask[i].byte2D[j][k]=smask[i].byte2D[(int)miny][k];
 	 				}
 	 			}
 	 		}
 	 	}
 
 	 	// fill in bottom edge
-	 	if(maxy<=vidsize.y)
+	 	if(maxy<=vs.vidsize.y)
 	 	{		
-	 		for(int i=0;i<smask.size[0];i++)
+	 		for(int i=0;i<smask.length;i++)
 	 		{
-	 			for(int j=maxy-1;j<vidsize.y;j++)
+	 			for(int j=(int)(maxy-1);j<vs.vidsize.y;j++)
 	 			{
-	 				for(int k=0;k<smask.size[2];k++)
+	 				for(int k=0;k<smask[0].cols;k++)
 	 				{
-	 					smask.at<uchar>(i,j,k)=smask.at<uchar>(i,maxy-2,k);
+	 					smask[i].byte2D[j][k]=smask[i].byte2D[(int)(maxy-2)][k];
 	 				}
 	 			}
 	 		}
 
 	 	}
 
-	 	if(vidsize.z>1)
+	 	if(vs.vidsize.z>1)
 	 	{
-	 		double minz=*min_element(allz.begin(),allz.end())+coff.z+box_z.x;
-	 		double maxz=*max_element(allz.begin(),allz.end())+coff.z+box_z.y+2;
+	 		double minallz = vs.allz.get(0);
+		 	double maxallz = vs.allz.get(0);
+		 	for (int i = 1; i < vs.allz.size(); i++) {
+		 		if (vs.allz.get(i) < minallz) {
+		 			minallz = vs.allz.get(i);
+		 		}
+		 		if (vs.allz.get(i) > maxallz) {
+		 			maxallz = vs.allz.get(i);
+		 		}
+		 	}
+	 		double minz=minallz+vs.coff.z+box_z.x;
+	 		double maxz=maxallz+vs.coff.z+box_z.y+2;
 
 	 		if(1<=minz)
 	 		{
 	 			//fill in first frames
 	 			for(int i=0;i<minz;i++)
 	 			{
-	 				for(int j=0;j<smask.size[1];j++)
+	 				for(int j=0;j<smask[0].rows;j++)
 	 				{
-	 					for(int k=0;k<smask.size[2];k++)
+	 					for(int k=0;k<smask[0].cols;k++)
 	 					{
-	 						smask.at<uchar>(i,j,k)=smask.at<uchar>(minz,j,k);
+	 						smask[i].byte2D[j][k]=smask[(int)minz].byte2D[j][k];
 	 					}
 	 				}
 	 			}
 	 		}
 
-	 		if(maxz<=vidsize.z)
+	 		if(maxz<=vs.vidsize.z)
 	 		{
 	 			//fill in last frames
-	 			for(int i=maxz-1;i<vidsize.z;i++)
+	 			for(int i=(int)(maxz-1);i<vs.vidsize.z;i++)
 	 			{
-	 				for(int j=0;j<smask.size[1];j++)
+	 				for(int j=0;j<smask[0].rows;j++)
 	 				{
-	 					for(int k=0;k<smask.size[2];k++)
+	 					for(int k=0;k<smask[0].cols;k++)
 	 					{
-	 						smask.at<uchar>(i,j,k)=smask.at<uchar>(maxz-2,j,k);
+	 						smask[i].byte2D[j][k]=smask[(int)(maxz-2)].byte2D[j][k];
 	 					}
 	 				}
 	 			}
@@ -11474,16 +11597,6 @@ public class libdt extends AlgorithmBase {
 	 	}
 
 	 	//single frame mask; make it 2d
-	 	if(smask.size[0]==1)
-	 	{
-	 		Mat tempM;
-	 		MatVid::frame(smask,0).copyTo(tempM);
-	 		return tempM;
-	 	}
-	 	else
-	 	{
-	 		return smask;
-	 	}*/
 	 	return smask;
 	 }
 
