@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.*;
@@ -123,7 +124,7 @@ public class libdt extends AlgorithmBase {
 	public void test_HEM() {
 		File file;
 		System.out.println("Experiment started: " + getTime());
-		file = new File("C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/HEM/47fa110.dtm");
+		file = new File("C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/HEM/47fa110.dtm");
 		try {
 			raFile = new RandomAccessFile(file, "r");
 		} catch (FileNotFoundException e) {
@@ -3590,7 +3591,7 @@ public class libdt extends AlgorithmBase {
 	}
 
 	private void copyTo(Mat A[], Mat B[]) {
-		int i, j, n, d;
+		int i, j, n;
 		int num = A.length;
 		for (n = 0; n < num; n++) {
 			B[n].flags = A[n].flags;
@@ -4268,7 +4269,6 @@ public class libdt extends AlgorithmBase {
 		}
 
 		public Mat(int dims, int size[], int type) {
-			int x, y, z;
 			this.dims = dims;
 			this.size = size;
 			this.type = type;
@@ -4305,7 +4305,6 @@ public class libdt extends AlgorithmBase {
 		}
 
 		public Mat(int dims, int size[], int type, int channels) {
-			int x, y, z;
 			this.dims = dims;
 			this.size = size;
 			this.type = type;
@@ -4352,7 +4351,6 @@ public class libdt extends AlgorithmBase {
 		}
 
 		public void create(int rows, int cols, int type) {
-			int x, y;
 			this.rows = rows;
 			this.cols = cols;
 			this.type = type;
@@ -4399,7 +4397,6 @@ public class libdt extends AlgorithmBase {
 		}
 
 		public void create(int dims, int size[], int type) {
-			int x, y, z;
 			this.dims = dims;
 			this.size = size;
 			this.type = type;
@@ -5782,7 +5779,6 @@ public class libdt extends AlgorithmBase {
 	 */
 	public long writeHeader(String str)
 	{
-		byte buf[];
 		int zero = 0;
 		long spos = 0;
 		try {
@@ -5924,8 +5920,8 @@ public class libdt extends AlgorithmBase {
      * only one argument i.e the path of the parameter file.
      * 
      */
-    // paramsFile "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/params.txt";
-    // paramsFile "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/riversteamfire/params.txt";
+    // paramsFile "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/params.txt";
+    // paramsFile "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/riversteamfire/params.txt";
     public int test_videoSegm(String paramFile)
     {
     	VidSeqSegmParams params = new VidSeqSegmParams();
@@ -5954,6 +5950,7 @@ public class libdt extends AlgorithmBase {
     	File file3 = new File(trainDtmPath);
         if (!file3.exists())
     	{
+        	System.out.println("About to file3.createNewFile()");
         	try {
         	    file3.createNewFile();
         	}
@@ -5972,7 +5969,7 @@ public class libdt extends AlgorithmBase {
             
     		//Do the training
     		VidSegm tvs = new VidSegm(params.winxy,params.winz,params.stepxy,params.stepz,params.ntype,params.bkvar,params.K,
-    				params.n,params.reg,params.nfrm,params.bkvarf);		
+    				params.n,params.reg,params.nfrm,params.bkvarf);	
     		learnDTM(tvs,trainVidPath,false);
     		//Bufferer buf(trainDtmPath,fstream::out | fstream::binary);
     		write(tvs.dtm);		
@@ -6058,7 +6055,7 @@ public class libdt extends AlgorithmBase {
 		public VidSeqSegmParams() {
 			totalvids = 1;
 			inputType = 0;
-			vidpath = "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/ocean-fire-noborder.y";
+			vidpath = "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/ocean-fire-noborder.y";
 			trainvidnum = 1;
 			winxy = 5;
 			winz = 5;
@@ -6076,7 +6073,7 @@ public class libdt extends AlgorithmBase {
 			filtxy = 5;
 			filtz = 5;
 			fsave = true;
-			savepath = "C:/temporal texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/";
+			savepath = "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/";
 			savename = "rslt";
 		}
 
@@ -6164,10 +6161,16 @@ public class libdt extends AlgorithmBase {
 		private HashMap<String, String> contents = new HashMap<String, String>();
 		private String fName;
 
-		void removeComment(String line) {
+		String removeComment(String line) {
+			String retLine;
 			int pos = line.indexOf(';');
-			if (pos != -1)
-				line = line.substring(0, pos);
+			if (pos != -1) {
+				retLine = line.substring(0, pos);
+			}
+			else {
+				retLine = line;
+			}
+			return retLine;
 		}
 
 		boolean onlyWhitespace(String line) {
@@ -6287,11 +6290,11 @@ public class libdt extends AlgorithmBase {
 					if (temp.isEmpty())
 						continue;
 
-					removeComment(temp);
-					if (onlyWhitespace(temp))
+					String retTemp = removeComment(temp);
+					if (onlyWhitespace(retTemp))
 						continue;
 
-					parseLine(temp, lineNo);
+					parseLine(retTemp, lineNo);
 				}
 
 				raFile.close();
@@ -6311,7 +6314,7 @@ public class libdt extends AlgorithmBase {
 		}
 
 		int getIntValueOfKey(String key) {
-			String value = contents.get(key);
+			String value = contents.get(key).trim();
 			if (value != null) {
 				return Integer.valueOf(value).intValue();
 			} else {
@@ -6320,7 +6323,7 @@ public class libdt extends AlgorithmBase {
 		}
 
 		double getDoubleValueOfKey(String key) {
-			String value = contents.get(key);
+			String value = contents.get(key).trim();
 			if (value != null) {
 				return Double.valueOf(value).doubleValue();
 			} else {
@@ -6392,7 +6395,7 @@ public class libdt extends AlgorithmBase {
 			step = new Point3i();
 			step.x = stepxy;
 			step.y = stepxy;
-			step.z = step.z;
+			step.z = stepz;
 			this.normopt = normopt;
 			this.minvar = minvar;
 			this.minvarf = minvarf;
@@ -6568,7 +6571,6 @@ public class libdt extends AlgorithmBase {
 	 * \see segmentVideoSequence.
 	 */
 	void learnDTM(VidSegm tvs, String vpath, boolean dosegm) {
-		int i,j;
 		// load training video
 		Mat smask[];
 		Mat img[] = loaddat(vpath, "t");
@@ -6750,7 +6752,12 @@ public class libdt extends AlgorithmBase {
 			byte_order = "";
 			data_sets = 0.0;
 			channels = 0.0;
-			dimensions.clear();
+			if (dimensions != null) {
+			    dimensions.clear();
+			}
+			else {
+			    dimensions = new Vector<Double>();	
+			}
 			feature = "";
 			history = "";
 		}
@@ -6758,6 +6765,8 @@ public class libdt extends AlgorithmBase {
 
 	// equivalent to loaddatinfo matlab function
 	DatDescriptor loaddatinfo(String filename, int verbose) {
+		long fileLength = 0;
+		long position = 0;
 		// default descriptor
 		DatDescriptor desc = new DatDescriptor();
 		filename = filename + "/descriptor";
@@ -6768,11 +6777,29 @@ public class libdt extends AlgorithmBase {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
 		}
+		try {
+		    fileLength = raFile.length();
+		}
+		catch(IOException e) {
+			MipavUtil.displayError("IOException " + e);
+			System.exit(-1);
+		}
+				
 
 		// read and parse each line of the descriptor file
+		Vector<String> value = new Vector<String>();
 		while (true) {
 			String line, str, key, valuestr, temp, temp2;
-			Vector<String> value = new Vector<String>();
+			try {
+			    position = raFile.getFilePointer();
+			}
+			catch (IOException e) {
+				MipavUtil.displayError("IOException " + e);
+				System.exit(-1);	
+			}
+			if (position >= fileLength) {
+				break;
+			}
 
 			try {
 				line = raFile.readLine();
@@ -6780,12 +6807,13 @@ public class libdt extends AlgorithmBase {
 				break;
 			}
 
-			if (line == "")
+			if ((line == null) || (line == ""))
 				continue;
 
 			String ans[];
 			if ((line.charAt(0) == '(') && (line.charAt(line.length() - 1) == ')')) {
-				str = line.substring(1, line.length() - 2);
+				value.clear();
+				str = line.substring(1, line.length() - 1);
 				ans = strtok2(str, " ");
 				key = ans[0];
 				valuestr = ans[1];
@@ -6864,19 +6892,19 @@ public class libdt extends AlgorithmBase {
 
 		public PatchOptions patopt;
 		/** < patch options. */
-		public Vector<Point3i> loc;
+		public Vector<Point3i> loc = new Vector<Point3i>();
 		/** < coordinates of top-left of each patch. */
-		public Point3i coff;
+		public Point3i coff = new Point3i();
 		/** < offset to center of patch. */
-		public Vector<Integer> allx;
+		public Vector<Integer> allx = new Vector<Integer>();
 		/** < all x-locations on step grid. */
-		public Vector<Integer> ally;
+		public Vector<Integer> ally = new Vector<Integer>();
 		/** < all y-locations on step grid. */
-		public Vector<Integer> allz;
+		public Vector<Integer> allz = new Vector<Integer>();
 		/** < all z-locations on step grid. */
-		public Vector<Mat[]> patches;
+		public Vector<Mat[]> patches = new Vector<Mat[]>();
 		/** < vector of all patches, corresponding to loc. */
-		public Vector<Mat[]> patchesall;
+		public Vector<Mat[]> patchesall = new Vector<Mat[]>();
 		/** < vector of all patches, corresponding to loc. */
 		public Range box_x;
 		/** < bounding box (x) for patch locations (top-left corner). */
@@ -6884,11 +6912,11 @@ public class libdt extends AlgorithmBase {
 		/** < bounding box (y) for patch locations. */
 		public Range box_z;
 		/** < bounding box (z) for patch locations. */
-		public Point3i vidsize;
+		public Point3i vidsize = new Point3i();
 		/** < size of the video. */
-		public Vector<Point3i> locall;
+		public Vector<Point3i> locall = new Vector<Point3i>();
 		/** < coordinates of top-left of all patches. */
-		public Vector<Boolean> locall_mask;
+		public Vector<Boolean> locall_mask = new Vector<Boolean>();
 
 		/** < mask for all patches. */
 
@@ -6903,7 +6931,7 @@ public class libdt extends AlgorithmBase {
 				MipavUtil.displayError("vid.length < 2 in PatchBatchExtractor");
 				System.exit(-1);
 			}
-			int i;
+			int i, j;
 
 			// remember settings
 			this.box_x = box_x;
@@ -6912,8 +6940,8 @@ public class libdt extends AlgorithmBase {
 			this.vidsize = new Point3i(vid[0].size[1], vid[0].size[0], vid.length);
 
 			// internal bounding box size and offsets
-			Point3i vbox_size = null;
-			Point3i vbox_off = null;
+			Point3i vbox_size = new Point3i();
+			Point3i vbox_off = new Point3i();
 			// subvideo from internal bounding box
 			Mat boxvid[];
 
@@ -6994,7 +7022,7 @@ public class libdt extends AlgorithmBase {
 			}
 
 			// create the patch extractor
-			PatchExtractor pe = new PatchExtractor(patopt, boxvid[0].size[1], boxvid.length);
+			PatchExtractor pe = new PatchExtractor(patopt, boxvid[0].rows, boxvid[0].cols);
 
 			// copy some info
 			coff = pe.coff;
@@ -7068,6 +7096,9 @@ public class libdt extends AlgorithmBase {
 						if (pe.locyx_mask.get(i) == true) // only valid patches
 						{
 							Mat p[] = new Mat[mypat.get(i).length];
+							for (j = 0; j < p.length; j++) {
+								p[j] = new Mat();
+							}
 							copyTo(mypat.get(i), p);
 							patches.add(p);
 							// add the location (with possible offset)
@@ -7082,6 +7113,9 @@ public class libdt extends AlgorithmBase {
 
 						// save all patches
 						Mat p[] = new Mat[mypat.get(i).length];
+						for (j = 0; j < p.length; j++) {
+							p[j] = new Mat();
+						}
 						copyTo(mypat.get(i), p);
 						patchesall.add(p);
 					}
@@ -7172,7 +7206,7 @@ public class libdt extends AlgorithmBase {
 		/** < z location for next frame added. */
 		public int nextz;
 		/** < value of curz that will form a new patch. */
-		public Point3i coff;
+		public Point3i coff = new Point3i();
 		/** < offset to center of patch. */
 		public Vector<Integer> allx = new Vector<Integer>();
 		/** < all x-locations on step grid. */
@@ -7366,23 +7400,39 @@ public class libdt extends AlgorithmBase {
 		}
 
 		void reset() {
-			int i;
+			int i,r,c;
 			locz = -patopt.step.z;
 			curz = 0;
 			nextz = patopt.win.z;
 			if (vbuf != null) {
-				for (i = vbuf.length - 1; i >= 0; i--) {
-					vbuf[i] = null;
-				}
-			}
-			vbuf = null;
-			if (flag_zm) {
-				if (vbuf_zm != null) {
-					for (i = vbuf_zm.length - 1; i >= 0; i--) {
-						vbuf_zm[i] = null;
+				for (i = 0; i < vbuf.length; i++) {
+					for (r = 0; r < vbuf[i].rows; r++) {
+						for (c = 0; c < vbuf[i].cols; c++) {
+							if (vbuf[i].type == CV_64F) {
+					            vbuf[i].double2D[r][c] = 0.0;
+							}
+							else if (vbuf[i].type == CV_8U) {
+								vbuf[i].byte2D[r][c] = 0;
+							}
+						}
 					}
 				}
-				vbuf_zm = null;
+			}
+			if (flag_zm) {
+				if (vbuf_zm != null) {
+					for (i = 0; i < vbuf_zm.length; i++) {
+						for (r = 0; r < vbuf_zm[i].rows; r++) {
+							for (c = 0; c < vbuf_zm[i].cols; c++) {
+								if (vbuf_zm[i].type == CV_64F) {
+						            vbuf_zm[i].double2D[r][c] = 0.0;
+								}
+								else if (vbuf_zm[i].type == CV_8U) {
+									vbuf_zm[i].byte2D[r][c] = 0;
+								}
+							}
+						}
+					}	
+				}
 			}
 		}
 
@@ -7854,8 +7904,8 @@ public class libdt extends AlgorithmBase {
 	void learnWithSplitting(DytexMix dtm, Vector<Mat[]> Yin,EMOptions emopt)
 	{
 		int i,j;
-		double pert;	
-		pert=emopt.splitOpt.pert;
+		//double pert;	
+		//pert=emopt.splitOpt.pert;
 		//initialize splitting sequence
 		if(emopt.splitOpt.sched.isEmpty())
 		{
@@ -7982,7 +8032,7 @@ public class libdt extends AlgorithmBase {
 			dy=foo.rows;
 			if(yi==0)
 			{
-				int sz[]={tau,dy,N};				
+				//int sz[]={tau,dy,N};				
 				Y=create(tau,dy,N,foo.type); 
 			}
 			else
@@ -8116,7 +8166,7 @@ public class libdt extends AlgorithmBase {
 						Vtt1[i] = new Mat();
 					}
 					Mat tmpL = new Mat();
-					Dytex test1=dtm.dt.get(j);
+					//Dytex test1=dtm.dt.get(j);
 					//conditional state inference using Kalman smoothing filter
 					dytex_kalman(Y, dtm.dt.get(j), di3opt,xt,Vt,Vtt1,tmpL);	
 					xthat.add(xt);
@@ -9148,9 +9198,9 @@ public class libdt extends AlgorithmBase {
 			  loglike_internal(cache_dt, videos, lik, 0, cache_Kt, cache_detMt, cache_invMt, mahal, kf_mode.KF_COMPUTE_WITH_CACHE);
 		}
 		
-		private void loglike(Dytex dt, Vector<Mat> videos, Mat lik, boolean mahal) {
-			  loglike_internal(dt, videos, lik, 0, null, null, null, mahal, kf_mode.KF_COMPUTE_WITHOUT_CACHE);
-	     }
+		//private void loglike(Dytex dt, Vector<Mat> videos, Mat lik, boolean mahal) {
+		//	  loglike_internal(dt, videos, lik, 0, null, null, null, mahal, kf_mode.KF_COMPUTE_WITHOUT_CACHE);
+	     //}
 		
 		// do one of the following:
 	//   1) compute log-likelihood of videos under dt 
@@ -9293,6 +9343,9 @@ public class libdt extends AlgorithmBase {
 	    Mat icvinv = plus(times(times(dt.C,Vt1t),transpose(dt.C)),dt.R.mtx);
 	    icv = new Mat(new Matrix(icvinv.double2D).inverse().getArray());
 		break;
+	      case COV_ILLEGAL:
+	    	  MipavUtil.displayError("COV_ILLEGAL in loglike_internal");
+	    	  System.exit(-1);
 	      }
 
 	      // Kt  = Vt1t*C'*icv;
@@ -9427,7 +9480,7 @@ public class libdt extends AlgorithmBase {
 	    	int dx=C.cols;
 	    	int dy=C.rows;
 
-	    	Mat Cu;
+	    	//Mat Cu = null;
 	    	Mat Cs = null;
 	    	Mat Cv = null;
 	    	Mat R;
@@ -9465,8 +9518,8 @@ public class libdt extends AlgorithmBase {
 	    					SingularValueDecomposition svd = new SingularValueDecomposition(tmpM1Matrix);
 	    					Matrix matV = svd.getV();
 	    					double singularValues[] = svd.getSingularValues();
-	    					Matrix matU = svd.getU();
-	    					Cu = new Mat(matU.getArray());	
+	    					//Matrix matU = svd.getU();
+	    					//Cu = new Mat(matU.getArray());	
 	    					Cv= new Mat(matV.getArray());
 	    					Cs= new Mat(singularValues.length,singularValues.length,CV_64F);
 	    					for (r = 0; r < singularValues.length; r++) {
@@ -9555,10 +9608,10 @@ public class libdt extends AlgorithmBase {
 	    		Vtt[i] = new Mat(dx,dx,CV_64F);
 	    	}
 	    	
-	    	Mat Kt;
+	    	//Mat Kt;
 	    	if( (Ropt!=cov_type.COV_IID) && (Ropt!=cov_type.COV_DIAG) )
 	    	{
-	    		Kt=new Mat(dx,dy,CV_64F);
+	    		//Kt=new Mat(dx,dy,CV_64F);
 	    	}
 	    	Mat L1= new Mat(1,YN,CV_64F);
 
@@ -9864,7 +9917,7 @@ public class libdt extends AlgorithmBase {
 	    {
 	    	int i;
 	    	Mat smask[];
-	    	int filledges=0;
+	    	//int filledges=0;
 	    	//fill in implicit background class
 	    	Vector<Point3i> myloc = new Vector<Point3i>(); 
 	    	Vector<Integer> classes = new Vector<Integer>();
@@ -9887,7 +9940,7 @@ public class libdt extends AlgorithmBase {
 	    	
 	    	// get locations
 	    Vector<Point3i> loc = new Vector<Point3i>();
-	    Point3i sum = null;
+	    Point3i sum = new Point3i();
 	    	for(i=0;i<myloc.size();i++)
 	    	{
 	    		sum.x = myloc.get(i).x + pbe.coff.x;
@@ -9920,7 +9973,7 @@ public class libdt extends AlgorithmBase {
 	    	smask=create(pbe.vidsize.z,pbe.vidsize.y,pbe.vidsize.x,CV_8UC1);
 	    	int zsize=step.z;
 
-	    	Point3i rwin = null;
+	    	Point3i rwin = new Point3i();
 	    	rwin.x=winsize.x/2;
 	    	rwin.y=winsize.y/2;
 	    	rwin.z=zsize/2;
@@ -10031,7 +10084,7 @@ public class libdt extends AlgorithmBase {
 	    					int rowNo1=temp%smask[0].rows;
 	    					// fill location
 	    					if( (c==1) || (c==2) )
-	    						c=c;
+	    						//c=c;
 	    					smask[fNo].byte2D[rowNo1][colNo1]=(byte)c;							
 	    				}
 
@@ -10719,7 +10772,7 @@ public class libdt extends AlgorithmBase {
 	 			if(paths.size()>1)
 	 			{
 	 				Mat vid2[]=loaddat(paths.get(i+1),"t");				
-	 				int vsize=vid2.length;
+	 				//int vsize=vid2.length;
 	 				postFrames = new Mat[vs.popt.win.z-stepz];
 	 				for (j = 0; j < postFrames.length; j++) {
 	 					postFrames[j] = new Mat();
@@ -10798,7 +10851,6 @@ public class libdt extends AlgorithmBase {
 	 			for (j = 0; j < vid1.length; j++) {
 	 				vid1[j].release();
 	 			}
-	 			vid1 = null;
 	 			System.out.println("Pre-Frames " + preFrames.length);			
 
 	 			Mat vid2[] = loaddat(paths.get(i),"t");	
@@ -10854,13 +10906,12 @@ public class libdt extends AlgorithmBase {
 	 			for (j = 0; j < vid1.length; j++) {
 	 				vid1[j].release();
 	 			}
-	 			vid1 = null;
 	 			System.out.println("Pre-Frames " + preFrames.length);
 
 	 			//Post
 	 			Mat vid3[]=loaddat(paths.get(i+1),"t");				
 	 			int vsize3=vid3.length;
-	 			System.out.println("Vid3-Frames " + vid3.length);			
+	 			System.out.println("Vid3-Frames " + vsize3);			
 	 			Mat postFrames[] = new Mat[vs.popt.win.z-stepz];
 	 			for (j = 0; j < postFrames.length; j++) {
 	 				postFrames[j] = new Mat();
@@ -10916,15 +10967,14 @@ public class libdt extends AlgorithmBase {
 	 		}
 
 	 		//save things for current video segmentation in the output place
-	 		byte carr[] = new byte[100];
 	 		String vidid = String.valueOf(i);
 	 		String dirpath=vidPath2 + vidid + "_segm" + +File.separatorChar;
-	 		File file = new File(dirpath); // param.savepath ends in File.separatorChar
+	 		File file = new File(dirpath);
 	        if (!file.exists()) {
 	            file.mkdir();
 	        }
 
-	 		String fpath=dirpath+"vid" + vidid+ "_segm_";
+	 		//String fpath=dirpath+"vid" + vidid+ "_segm_";
 	 		Mat smask[]=segMask;	
 	 		
 	 		
@@ -10934,9 +10984,11 @@ public class libdt extends AlgorithmBase {
 
 	 				String buffer = String.format("%03d",m);
 
-	 				String filename=fpath+buffer+".png";
+	 				//String filename=fpath+buffer+".png";
 
 	 				Mat frame= new Mat(img.rows,img.cols,CV_8UC1);
+	 				int length = img.rows * img.cols;
+	 				short shortBuffer[] = new short[length];
 	 				for(j=0;j<img.rows;j++)
 	 					for(int k=0;k<img.cols;k++)
 	 					{
@@ -10946,9 +10998,25 @@ public class libdt extends AlgorithmBase {
 	 							frame.byte2D[j][k]=(byte)255;
 	 						else
 	 							frame.byte2D[j][k]=0;
+	 						shortBuffer[j*img.cols + k] = (short)(frame.byte2D[j][k] & 0xff);
 	 					}
 	 					//imwrite(filename,frame);
-
+	 				int extents[] = new int[]{img.rows,img.cols};
+	 			    ModelImage segmImage = new ModelImage(ModelStorageBase.UBYTE,extents,"vid"+vidid+"_segm_"+buffer);
+	 			    try {
+	 			    	segmImage.importData(0, shortBuffer, true);
+	 			    }
+	 			    catch (IOException e) {
+	 			    	MipavUtil.displayError("IOException " + e);
+	 			    	System.exit(-1);
+	 			    }
+                    boolean succeed = segmImage.saveImage(dirpath,"vid" + vidid+ "_segm_"+buffer+".png",FileUtility.PNG,true);
+                    if (!succeed) {
+                    	MipavUtil.displayError("segmImage.saveImage(dirpath,\"vid\" + vidid+ \"_segm_\"+buffer+\".png\",FileUtility.PNG,true) failed");
+                    	System.exit(-1);
+                    }
+                    segmImage.disposeLocal();
+                    segmImage = null;
 	 			}
 	 		//save avi and dat for windows pc
 	 		/*#ifdef _WIN32
@@ -11104,9 +11172,9 @@ public class libdt extends AlgorithmBase {
 	 		vs.allz.add(z);
 	 	}
 	 	// offset allx, ally, allz
-	 	for (int i=0; i<vs.allx.size(); i++)
+	 	for (int i=0; i<xsize; i++)
 	 		vs.allx.set(i,(vs.allx.get(i) +  vbox_off.x));
-	 	for (int i=0; i<vs.ally.size(); i++)
+	 	for (int i=0; i<ysize; i++)
 	 		vs.ally.set(i,(vs.ally.get(i) +  vbox_off.y));
 	 	for (int i=0; i<vs.allz.size(); i++)
 	 		vs.allz.set(i,(vs.allz.get(i) + vbox_off.z));
@@ -11451,8 +11519,8 @@ public class libdt extends AlgorithmBase {
 	 				int colNo1=temp/smask[0].rows;
 	 				int rowNo1=temp%smask[0].rows;
 	 				// fill location
-	 				if( (c==1) || (c==2) )
-	 					c=c;
+	 				//if( (c==1) || (c==2) )
+	 					//c=c;
 	 				smask[fNo].byte2D[rowNo1][colNo1]=(byte)c;							
 	 			}
 
