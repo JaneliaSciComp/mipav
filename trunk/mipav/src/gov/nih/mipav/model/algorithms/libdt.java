@@ -6650,11 +6650,21 @@ public class libdt extends AlgorithmBase {
 		}
 		if ((desc.data_type.equals("unsigned_1")) && (checkOptionInStr(opt, "t") != 0)) {
 			for (i = 0; i < tframes; i++) {
-				output[i].create(2, sz2D, CV_8UC, chns);
+				if (chns == 1) {
+					output[i].create(2,sz2D,CV_8U);
+				}
+				else {
+				    output[i].create(2, sz2D, CV_8UC, chns);
+				}
 			}
 		} else {
 			for (i = 0; i < tframes; i++) {
-				output[i].create(2, sz2D, CV_64FC, chns);
+				if (chns == 1) {
+					output[i].create(2, sz2D, CV_64F);
+				}
+				else {
+				    output[i].create(2, sz2D, CV_64FC, chns);
+				}
 			}
 		}
 
@@ -6973,7 +6983,6 @@ public class libdt extends AlgorithmBase {
 					vbox_off.y = 0;
 					vbox_size.y = vid[0].size[1];
 					vbox_y.all = true;
-					;
 				} else {
 					vbox_off.y = (box_y.start % patopt.step.y == 0 ? box_y.start
 							: ((box_y.start / patopt.step.y) + 1) * patopt.step.y);
@@ -7318,7 +7327,6 @@ public class libdt extends AlgorithmBase {
 
 			// reset the extractor
 			reset();
-
 			// initialize pointer to center frame
 			frame_center = vbuf[coff.z];
 
@@ -7996,6 +8004,7 @@ public class libdt extends AlgorithmBase {
 	 */
 	void runEM(DytexMix dtm, Vector<Mat[]> Yin, EMOptions emopt) {
 		int i,j,r,c;
+
 		long elapsedtime;	
 		//used to display info in change in classes during EM loop
 		int numlastclasses=5;			
@@ -8752,7 +8761,12 @@ public class libdt extends AlgorithmBase {
 		  }
 	    //System.out.println("Yall_p: " +  dumpMatSize(Yall_p));
 
-	    processVideoTraining(mydt, videos.get(p), Yall_p, tmp1);
+		processVideoTraining(mydt, videos.get(p), Yall_p, tmp1);
+	    for (r = 0; r < mydt.dtopt.m; r++) {
+			  for (c = inds[p]; c < inds[p+1]; c++) {
+				  Yall.double2D[r][c] = Yall_p.double2D[r][c-inds[p]];
+			  }
+		}
 
 	    // update accumulator
 	    if (mydt.dtopt.Yopt == Ymean_type.NONZERO_YMEAN) {
@@ -8780,6 +8794,7 @@ public class libdt extends AlgorithmBase {
 
 	  // --- do PCA on Yall ---
 	  Mat Xall;
+	  
 	  if (Yall.rows > Yall.cols) {
 	    // ... using SVD
 	    //cout << "lls:use SVD\n";
@@ -8804,13 +8819,11 @@ public class libdt extends AlgorithmBase {
 	    	}
 	    }
 		double singularValues[] = svd.getSingularValues();
-		double scaleFactor;
+		Mat tmpW = new Mat(mydt.dtopt.n,1,CV_64F);
 		for (r = 0; r < mydt.dtopt.n; r++) {
-		    scaleFactor = singularValues[r];
-		    for (c = 0; c < Xall.cols; c++) {
-		    	Xall.double2D[r][c] *= scaleFactor;
-		    }
+			tmpW.double2D[r][0] = singularValues[r];
 		}
+		scaleRows(Xall, tmpW);
 
 	    //Mat Xall2 = C.t()*Yall;   // X = C'*Yall    
 	    //cout << "Xall err=" << norm(Xall, Xall2) << "\n";
@@ -8853,13 +8866,9 @@ public class libdt extends AlgorithmBase {
 	  } else {
 	    // extract first X from each image and store in Xall0
 	    Mat Xall0 = new Mat(mydt.dtopt.n, nump, CV_64F);
-	    Mat Xall0c = new Mat(mydt.dtopt.n,1,CV_64F);
 	    for (int p=0; p<nump; p++) {
 	     for (r = 0; r < mydt.dtopt.n; r++) {
-	          Xall0c.double2D[r][0] = Xall0.double2D[r][p];
-	     }
-	     for (r = 0; r < mydt.dtopt.n; r++) {
-	          Xall0c.double2D[r][0] = Xall.double2D[r][inds[p]];
+	          Xall0.double2D[r][p] = Xall.double2D[r][inds[p]];
 	     }
 	    }
 	    // estimate the initial mean
@@ -8905,37 +8914,18 @@ public class libdt extends AlgorithmBase {
 
 	    // for each video
 	    for (int p=0; p<nump; p++) {
-	      Mat Phi1 = new Mat(Xall.rows,inds[p+1]-1-inds[p],CV_64F);
 	      for (r = 0; r < Xall.rows; r++) {
 	    	  for (c = inds[p]; c < inds[p+1]-1; c++) {
-	    		  Phi1.double2D[r][c-inds[p]] = Xall.double2D[r][c];
+	    		  Phi1all.double2D[r][c-p] = Xall.double2D[r][c];
 	    	  }
 	      }
-	      Mat pPhi1all = new Mat(Phi1all.rows,inds[p+1]-(p+1)-(inds[p]-p),CV_64F);
-	      for (r = 0; r < Phi1all.rows; r++) {
-	    	  for (c = inds[p]-p; c < inds[p+1]-(p+1); c++) {
-	    		  pPhi1all.double2D[r][c-(inds[p]-p)] = Phi1all.double2D[r][c];
-	    	  }
-	      }
-	      //cout << "Phi1: "; dumpMatSize(Phi1);
-	      //cout << "pPhi1all: "; dumpMatSize(pPhi1all);
-	      copyTo(Phi1,pPhi1all);
-	      
-	      Mat Phi2 = new Mat(Xall.rows,inds[p+1]-(inds[p]+1),CV_64F);
+	     
 	      for (r = 0; r < Xall.rows; r++) {
 	    	  for (c = inds[p]+1; c < inds[p+1]; c++) {
-	    		  Phi2.double2D[r][c-(inds[p]+1)] = Xall.double2D[r][c];
+	    		  Phi2all.double2D[r][c-p-1] = Xall.double2D[r][c];
 	    	  }
 	      }
-	      Mat pPhi2all = new Mat(Phi2all.rows,inds[p+1]-(p+1)-(inds[p]-p),CV_64F);
-	      for (r = 0; r < Phi2all.rows; r++) {
-	    	  for (c = inds[p]-p; c < inds[p+1]-(p+1); c++) {
-	    		  pPhi2all.double2D[r][c-(inds[p]-p)] = Phi2all.double2D[r][c];
-	    	  }
-	      }
-	      //cout << "Phi2: "; dumpMatSize(Phi2);
-	      //cout << "pPhi2all: "; dumpMatSize(pPhi2all);
-	      copyTo(Phi2,pPhi2all);
+	      
 	    } // for (int p=0; p<nump; p++)
 	  }
 
@@ -8998,10 +8988,8 @@ public class libdt extends AlgorithmBase {
 		// CV_Assert(Ytmp.cols == Yout.cols);
 
 		// --- convert to double/float ---
-		Yout = new Mat(Ytmp.rows, Ytmp.cols, CV_64F);
 		if (Ytmp.type == CV_8U) {
 			// cout << "llS convertTo float\n";
-			Yout.double2D = new double[Ytmp.rows][Ytmp.cols];
 			for (r = 0; r < Ytmp.rows; r++) {
 				for (c = 0; c < Ytmp.cols; c++) {
 					Yout.double2D[r][c] = (Ytmp.byte2D[r][c] & 0xff);
