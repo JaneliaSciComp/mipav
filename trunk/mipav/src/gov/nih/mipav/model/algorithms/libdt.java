@@ -5351,7 +5351,7 @@ public class libdt extends AlgorithmBase {
 		long spos=writeHeader(name);
 
 		boolean isempty;
-		if((mtx == null) || (total(mtx) == 0.0))
+		if((mtx == null) || (total(mtx) == 0))
 		{
 			isempty=true;				
 			write("isempty",isempty);
@@ -6581,7 +6581,7 @@ public class libdt extends AlgorithmBase {
 		}
 
 		System.out.println(
-				"Training video size frames: " + img.length + " rows: " + img[0].size[0] + " cols: " + img[0].size[1]);
+				"Training video size frames: " + img.length + " rows: " + img[0].rows + " cols: " + img[0].cols);
 
 		// Get patches
 		Range box_z = new Range();
@@ -6702,9 +6702,16 @@ public class libdt extends AlgorithmBase {
 					for (r = 0; r < rows; r++) {
 						for (c = 0; c < cols; c++) {
 							chframe[j].byte2D[r][c] = buf[r * cols + c];
-							if (output[0].type == CV_8UC) {
+							if (output[0].type == CV_8U) {
+								output[i].byte2D[r][c] = buf[r * cols + c];
+							}
+							else if (output[0].type == CV_8UC) {
 								output[i].byte2DC[r][c][j] = buf[r * cols + c];
-							} else if (output[0].type == CV_64FC) {
+							} 
+							else if (output[0].type == CV_64F) {
+								output[i].double2D[r][c] = (double) (buf[r * cols + c] & 0xff);
+							}
+							else if (output[0].type == CV_64FC) {
 								output[i].double2DC[r][c][j] = (double) (buf[r * cols + c] & 0xff);
 							}
 						}
@@ -6719,7 +6726,12 @@ public class libdt extends AlgorithmBase {
 								MipavUtil.displayError(e + " ");
 								System.exit(-1);
 							}
-							output[i].double2DC[r][c][j] = chframe[j].double2D[r][c];
+							if (output[0].type == CV_64F) {
+								output[i].double2D[r][c] = chframe[j].double2D[r][c];	
+							}
+							else if (output[0].type == CV_64FC) {
+							    output[i].double2DC[r][c][j] = chframe[j].double2D[r][c];
+							}
 						}
 					}
 				}
@@ -6947,7 +6959,7 @@ public class libdt extends AlgorithmBase {
 			this.box_x = box_x;
 			this.box_y = box_y;
 			this.box_z = box_z;
-			this.vidsize = new Point3i(vid[0].size[1], vid[0].size[0], vid.length);
+			this.vidsize = new Point3i(vid[0].cols, vid[0].rows, vid.length);
 
 			// internal bounding box size and offsets
 			Point3i vbox_size = new Point3i();
@@ -6958,7 +6970,7 @@ public class libdt extends AlgorithmBase {
 			// check bounding box:
 			if ((box_z.all) && (box_y.all) && (box_z.all)) {
 				// using full video
-				vbox_size = new Point3i(vid[0].size[1], vid[0].size[0], vid.length);
+				vbox_size = new Point3i(vid[0].cols, vid[0].rows, vid.length);
 				vbox_off = new Point3i(0, 0, 0);
 
 				boxvid = vid;
@@ -6981,24 +6993,24 @@ public class libdt extends AlgorithmBase {
 
 				if (box_y.all) {
 					vbox_off.y = 0;
-					vbox_size.y = vid[0].size[1];
+					vbox_size.y = vid[0].rows;
 					vbox_y.all = true;
 				} else {
 					vbox_off.y = (box_y.start % patopt.step.y == 0 ? box_y.start
 							: ((box_y.start / patopt.step.y) + 1) * patopt.step.y);
 					vbox_size.y = box_y.end - vbox_off.y;
-					vbox_y = new Range(vbox_off.y, Math.min(box_y.end + patopt.win.y, vid[0].size[1]));
+					vbox_y = new Range(vbox_off.y, Math.min(box_y.end + patopt.win.y, vid[0].rows));
 				}
 
 				if (box_x.all) {
 					vbox_off.x = 0;
-					vbox_size.x = vid.length;
+					vbox_size.x = vid[0].cols;
 					vbox_x.all = true;
 				} else {
 					vbox_off.x = (box_x.start % patopt.step.x == 0 ? box_x.start
 							: ((box_x.start / patopt.step.x) + 1) * patopt.step.x);
 					vbox_size.x = box_x.end - vbox_off.x;
-					vbox_x = new Range(vbox_off.x, Math.min(box_x.end + patopt.win.x, vid.length));
+					vbox_x = new Range(vbox_off.x, Math.min(box_x.end + patopt.win.x, vid[0].cols));
 				}
 
 				boxvid = subvid(vid, vbox_z, vbox_y, vbox_x);
@@ -7587,8 +7599,8 @@ public class libdt extends AlgorithmBase {
 
 				// compute variance for each pixel
 				Vector<Double> pixvar = new Vector<Double>();
-				for (int i = 0; i < mypat[0].size[1]; i++)
-					for (int j = 0; j < mypat[0].size[0]; j++) {
+				for (int i = 0; i < mypat[0].cols; i++)
+					for (int j = 0; j < mypat[0].rows; j++) {
 						// Mat
 						// tmpMd=MatVid::subvid(mypat,Range::all(),Range(j,j+1),Range(i,i+1));
 						Mat tmpM[] = subvid(mypat, new Range(pe.patopt.minvarf, pe.patopt.win.z - pe.patopt.minvarf),
@@ -7678,60 +7690,21 @@ public class libdt extends AlgorithmBase {
 		return tmp;
 	}
 	
-	double total(Mat vid) {
+	long total(Mat vid) {
 		
 
-		double tmp = 0.0;
-		if (vid.type == CV_64F) {
-			if (vid.dims == 2) {
-			for (int y = 0; y < vid.rows; y++)
-				for (int x = 0; x < vid.cols; x++) {
-					double p = vid.double2D[y][x];
-					tmp += p;
-				}
-			}
-			else if (vid.dims == 3) {
-				for (int z = 0; z < vid.depth; z++)
-				for (int y = 0; y < vid.rows; y++)
-					for (int x = 0; x < vid.cols; x++) {
-						double p = vid.double3D[z][y][x];
-						tmp += p;
-					}	
-			}
+		long tmp = 0;
+		if (vid.dims == 2) {
+			tmp = (long)vid.rows * (long)vid.cols;
 		}
-		if (vid.type == CV_8U) {
-			if (vid.dims == 2) {
-			for (int y = 0; y < vid.rows; y++)
-				for (int x = 0; x < vid.cols; x++) {
-					double p = vid.byte2D[y][x];
-					tmp += p;
-				}
-			}
-			else if (vid.dims == 3) {
-				for (int z = 0; z < vid.depth; z++)
-				for (int y = 0; y < vid.rows; y++)
-					for (int x = 0; x < vid.cols; x++) {
-						double p = vid.byte3D[z][y][x];
-						tmp += p;
-					}	
-			}
+		else if (vid.dims == 3) {
+			tmp = (long)vid.depth * (long)vid.rows * (long)vid.cols;
 		}
 		return tmp;
 	}
 
-	double total(Mat vid[]) {
-		if (vid[0].type != CV_64F) {
-			MipavUtil.displayError("vid[0].type is not the required CV_64F in norm2");
-			System.exit(-1);
-		}
-
-		double tmp = 0.0;
-		for (int z = 0; z < vid.length; z++)
-			for (int y = 0; y < vid[0].rows; y++)
-				for (int x = 0; x < vid[0].cols; x++) {
-					double p = vid[x].double2D[y][x];
-					tmp += p;
-				}
+	long total(Mat vid[]) {
+		long tmp = (long)vid.length * (long)vid[0].rows * (long)vid[0].cols;
 		return tmp;
 	}
 
