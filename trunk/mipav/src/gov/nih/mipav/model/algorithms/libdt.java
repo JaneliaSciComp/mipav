@@ -8904,7 +8904,25 @@ public class libdt extends AlgorithmBase {
 
 	  Mat iPhi1all;
 	  Matrix PhiallMat = new Matrix(Phi1all.double2D);
-	  iPhi1all = new Mat(PhiallMat.inverse().getArray());
+	  System.out.println("Phi1all.rows = " + Phi1all.rows);
+	  System.out.println("Phi1all.cols = " + Phi1all.cols);
+	  SingularValueDecomposition svd = new SingularValueDecomposition(PhiallMat);
+      Matrix uMat = svd.getU();
+      double singularValues[] = svd.getSingularValues();
+      Matrix vMat = svd.getV();
+      double W[][] = new double[singularValues.length][singularValues.length];
+      for (int i = 0; i < singularValues.length; i++) {
+      	if (singularValues[i] == 0) {
+      		W[i][i] = 0;
+      	}
+      	else {
+      		W[i][i] = 1.0/singularValues[i];
+      	}
+      }
+      Matrix wMat = new Matrix(W);
+      Matrix iPhallMat = (vMat.times(wMat)).times(uMat.transpose());
+      iPhi1all = new Mat(iPhallMat.getArray());
+	  //iPhi1all = new Mat(PhiallMat.inverse().getArray());
 	  mydt.A = times(Phi2all,iPhi1all);
 	  
 	  // --- estimate Q ---
