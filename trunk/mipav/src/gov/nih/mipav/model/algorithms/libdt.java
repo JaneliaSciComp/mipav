@@ -6968,7 +6968,7 @@ public class libdt extends AlgorithmBase {
 			Mat boxvid[];
 
 			// check bounding box:
-			if ((box_z.all) && (box_y.all) && (box_z.all)) {
+			if ((box_z.all) && (box_y.all) && (box_x.all)) {
 				// using full video
 				vbox_size = new Point3i(vid[0].cols, vid[0].rows, vid.length);
 				vbox_off = new Point3i(0, 0, 0);
