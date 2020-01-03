@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.jama.SVD;
 import gov.nih.mipav.view.*;
 
 import java.awt.Point;
@@ -7376,7 +7377,7 @@ public class libdt extends AlgorithmBase {
 			// yrange = 1:step(1):(sizey-winsize(1)+1);
 			// xrange = 1:step(2):(sizex-winsize(2)+1);
 
-			int ysize = (vrows - patopt.win.y) / patopt.step.y + 1;
+			int ysize = (vrows - patopt.win.y) / patopt.step.y + 1;;
 			int xsize = (vcols - patopt.win.x) / patopt.step.x + 1;
 			int maxsize = xsize * ysize;
 			locyx.ensureCapacity(maxsize);
@@ -8903,26 +8904,33 @@ public class libdt extends AlgorithmBase {
 	  }
 
 	  Mat iPhi1all;
-	  Matrix PhiallMat = new Matrix(Phi1all.double2D);
 	  System.out.println("Phi1all.rows = " + Phi1all.rows);
 	  System.out.println("Phi1all.cols = " + Phi1all.cols);
-	  SingularValueDecomposition svd = new SingularValueDecomposition(PhiallMat);
-      Matrix uMat = svd.getU();
-      double singularValues[] = svd.getSingularValues();
-      Matrix vMat = svd.getV();
-      double W[][] = new double[singularValues.length][singularValues.length];
-      for (int i = 0; i < singularValues.length; i++) {
-      	if (singularValues[i] == 0) {
-      		W[i][i] = 0;
-      	}
-      	else {
-      		W[i][i] = 1.0/singularValues[i];
-      	}
-      }
-      Matrix wMat = new Matrix(W);
-      Matrix iPhallMat = (vMat.times(wMat)).times(uMat.transpose());
-      iPhi1all = new Mat(iPhallMat.getArray());
-	  //iPhi1all = new Mat(PhiallMat.inverse().getArray());
+	  SVD svd = new SVD();
+	  double s[] = new double[Math.min(Phi1all.rows,Phi1all.cols)];
+	  double U[][] = new double[Phi1all.rows][Phi1all.rows];
+	  double VT[][] = new double[Math.min(Phi1all.rows,Phi1all.cols)][Phi1all.cols];
+	  int lwork = Math.max(3*Math.min(Phi1all.rows,Phi1all.cols)+Math.max(Phi1all.rows,Phi1all.cols),5*Math.min(Phi1all.rows,Phi1all.cols));
+	  double work[] = new double[lwork];
+	  int info[] = new int[1];
+	  svd.dgesvd('A','S',Phi1all.rows,Phi1all.cols,Phi1all.double2D.clone(),Phi1all.rows,s,U,Phi1all.rows,VT,Math.min(Phi1all.rows,Phi1all.cols),work,lwork,info);
+	  for (int i = 0; i < s.length; i++) {
+		  if (s[i] == 0.0) {
+			  s[i] = 0;
+		  }
+		  else {
+			  s[i] = 1/s[i];
+		  }
+	  }
+	  double sigma[][] = new double[s.length][s.length];
+	  for (int i = 0; i < s.length; i++) {
+		  sigma[i][i] = s[i];
+	  }
+	  Mat UMat = new Mat(U);
+	  Mat sigmaMat = new Mat(sigma);
+	  Mat VTMat = new Mat(VT);
+	  // Need to reverse row and column dimensions in iPhi1all
+	  iPhi1all = times(times(UMat,sigmaMat),VTMat);
 	  mydt.A = times(Phi2all,iPhi1all);
 	  
 	  // --- estimate Q ---
