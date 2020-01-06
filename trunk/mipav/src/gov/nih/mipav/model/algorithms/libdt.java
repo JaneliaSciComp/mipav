@@ -3934,6 +3934,10 @@ public class libdt extends AlgorithmBase {
 				Aval;
 
 		/** < Regularization value for S. */
+		
+		public DytexRegOptions() {
+			
+		}
 
 		public DytexRegOptions(cov_reg_type Ropt, double Rval, cov_reg_type Qopt, double Qval, cov_reg_type Sopt,
 				double Sval, cov_reg_type Aopt, double Aval) {
@@ -7792,7 +7796,7 @@ public class libdt extends AlgorithmBase {
 		/*
 		 * ! \brief regularization options. \see DytexRegOptions
 		 */
-		public DytexRegOptions regopt;
+		public DytexRegOptions regopt = new DytexRegOptions();
 		/*
 		 * ! \brief termination parameter.
 		 */
@@ -8930,7 +8934,7 @@ public class libdt extends AlgorithmBase {
 	  Mat sigmaMat = new Mat(sigma);
 	  Mat VTMat = new Mat(VT);
 	  // Need to reverse row and column dimensions in iPhi1all
-	  iPhi1all = times(times(UMat,sigmaMat),VTMat);
+	  iPhi1all = times(times(transpose(VTMat),sigmaMat),transpose(UMat));
 	  mydt.A = times(Phi2all,iPhi1all);
 	  
 	  // --- estimate Q ---
