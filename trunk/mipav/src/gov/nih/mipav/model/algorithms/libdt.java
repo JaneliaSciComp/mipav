@@ -7840,6 +7840,7 @@ public class libdt extends AlgorithmBase {
 		public EMOptions(int K, DytexRegOptions regopt, double termvalue, Verbose_mode verbose) {
 			// setting parameters
 			this.K = K;
+			this.regopt = regopt;
 			this.verbose = verbose;
 			this.termvalue = termvalue;
 			this.termvalBest = 1e-5;
@@ -9562,7 +9563,7 @@ public class libdt extends AlgorithmBase {
 	    	int tau=Y.length;
 
 	    	// explicitly subtract mean
-	    	if(opt.substring(0,1).equalsIgnoreCase("y"))
+	    	if((opt.length() >= 1) && (opt.substring(0,1).equalsIgnoreCase("y")))
 	    	{
 	    		for(int t=0;t<tau;t++)
 	    		{
@@ -9709,7 +9710,7 @@ public class libdt extends AlgorithmBase {
 	    				}
 	    								
 
-	    				tmpM = times(times(Phi,CYCx),CYCx);				
+	    				tmpM = elementTimes(times(Phi,CYCx),CYCx);				
 	    				Mat abc2 = new Mat();
 	    				reduce(tmpM,abc2,0,CV_REDUCE_SUM);
 	    				tmpM=abc2;
