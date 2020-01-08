@@ -821,7 +821,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     		activeImage.voiManager.setLattice(latticeVector);
     	}
 
-    	updateClipPanel(activeImage, activeRenderer, false);
+    	updateClipPanel(activeImage, activeRenderer, true);
 
     	if ( activeImage.annotations != null )
     	{
@@ -869,7 +869,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if ( nextBackFlag && (nextBackCount == 0) ) {
 
 			updateSurfacePanels();
-			updateClipPanel(activeImage, activeRenderer, false);
+			updateClipPanel(activeImage, activeRenderer, true);
 
 			updateHistoLUTPanels(activeImage);
 
@@ -912,7 +912,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     		displayModel.setSelected(activeImage.voiManager.isModelDisplayed());
     		displaySurface.setSelected( activeRenderer.getSurface("worm") != null );
     		updateSurfacePanels();
-    		updateClipPanel(activeImage, activeRenderer, false);
+    		updateClipPanel(activeImage, activeRenderer, true);
     		
     		updateHistoLUTPanels(activeImage);
     		
@@ -3263,7 +3263,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		else if ( resetRenderer )
 		{
-			integratedData.clipGUI.setRenderer(renderer);
+			integratedData.clipGUI.setRenderer(renderer, false);
 		}
 		
 		clipPanel.removeAll();			

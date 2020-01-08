@@ -712,20 +712,74 @@ public class JPanelClip_WM extends JInterfaceBase
         }
     }
 
-    public void setRenderer( VolumeTriPlanarRender rayBasedRenderWM ) {
-    	this.rayBasedRenderWM = rayBasedRenderWM; 
-        clipValue[CLIP_X_INV] = rayBasedRenderWM.getImage().getExtents()[0];
-        clipValue[CLIP_X] = 0;
-        clipValue[CLIP_Y_INV] = rayBasedRenderWM.getImage().getExtents()[1];
-        clipValue[CLIP_Y] = 0;
-        clipValue[CLIP_Z_INV] = rayBasedRenderWM.getImage().getExtents()[2];
-        clipValue[CLIP_Z] = 0;
-        clipValue[CLIP_EYE_INV] = rayBasedRenderWM.getImage().getExtents()[2];
-        clipValue[CLIP_EYE] = 0;
-        clipValue[CLIP_A] = clipValue[CLIP_X_INV];//(int)(Math.max( clipValue[CLIP_X_INV], Math.max( clipValue[CLIP_Y_INV], clipValue[CLIP_Z_INV]) ) );
+    public void setRenderer( VolumeTriPlanarRender rayBasedRenderWM )
+    {
+    	setRenderer(rayBasedRenderWM, true);
+    }
+    
+    public void setRenderer( VolumeTriPlanarRender rayBasedRenderWM, boolean rebuild ) {
 
-        // Build dialog.
-        init();
+    	this.rayBasedRenderWM = rayBasedRenderWM; 
+
+    	// Build dialog.
+    	if ( rebuild ) {
+    		clipValue[CLIP_X_INV] = rayBasedRenderWM.getImage().getExtents()[0];
+    		clipValue[CLIP_X] = 0;
+    		clipValue[CLIP_Y_INV] = rayBasedRenderWM.getImage().getExtents()[1];
+    		clipValue[CLIP_Y] = 0;
+    		clipValue[CLIP_Z_INV] = rayBasedRenderWM.getImage().getExtents()[2];
+    		clipValue[CLIP_Z] = 0;
+    		clipValue[CLIP_EYE_INV] = rayBasedRenderWM.getImage().getExtents()[2];
+    		clipValue[CLIP_EYE] = 0;
+    		clipValue[CLIP_A] = clipValue[CLIP_X_INV];//(int)(Math.max( clipValue[CLIP_X_INV], Math.max( clipValue[CLIP_Y_INV], clipValue[CLIP_Z_INV]) ) );
+
+    		init();
+    	}
+
+    	if ( rayBasedRenderWM != null ) {
+    		for ( int i = 0; i < 6; i++ )
+    		{
+    			clipValue[i] = clipSlider[i].getValue() - 1;
+    			clipText[i].setText(String.valueOf(clipValue[i] + 1));
+    			rayBasedRenderWM.setClipPlane( i, clipValue[i], enableClip[i].isSelected() );
+
+    			if (displayClip[i].isSelected())
+    			{
+    				clipColor[i].setEnabled(true);
+    				if ( rayBasedRenderWM != null )
+    				{
+    					rayBasedRenderWM.displayClipPlane( i, true, 
+    							new ColorRGB( clipColor[i].getBackground().getRed(),
+    									clipColor[i].getBackground().getGreen(),
+    									clipColor[i].getBackground().getBlue() ) );
+    				}
+    			}
+    			else
+    			{
+    				clipColor[i].setEnabled(false);
+    				if ( rayBasedRenderWM != null )
+    				{
+    					rayBasedRenderWM.displayClipPlane( i, false );
+    				}
+    			}
+    		}
+    		clipValue[CLIP_EYE] = clipSlider[CLIP_EYE].getValue() - 1;
+    		rayBasedRenderWM.setEyeClipPlane( clipValue[CLIP_EYE], displayClip[CLIP_EYE].isSelected(),
+    				enableClip[CLIP_EYE].isSelected());
+    		rayBasedRenderWM.setEyeClipPlane(clipValue[CLIP_EYE], displayClip[CLIP_EYE].isSelected(),
+    				enableClip[CLIP_EYE].isSelected());
+
+    		clipValue[CLIP_EYE_INV] = clipSlider[CLIP_EYE_INV].getValue() - 1;
+    		rayBasedRenderWM.setEyeInvClipPlane( clipValue[CLIP_EYE_INV],
+    				displayClip[CLIP_EYE_INV].isSelected(),
+    				enableClip[CLIP_EYE_INV].isSelected());
+    		rayBasedRenderWM.setEyeInvClipPlane(clipValue[CLIP_EYE_INV], displayClip[CLIP_EYE_INV].isSelected(),
+    				enableClip[CLIP_EYE_INV].isSelected());
+
+    		clipValue[CLIP_A] = clipSlider[CLIP_A].getValue() - 1;
+    		rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
+    		rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
+    	}
     }
 
     /**
