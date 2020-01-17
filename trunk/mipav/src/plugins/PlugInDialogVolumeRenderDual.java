@@ -997,14 +997,16 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	
 	private void closeAll()
 	{
-		for ( int i = 0; i < imageStack.length; i++ )
-		{
-			if ( imageStack[i].volumeImage != null )
+		if ( imageStack != null ) {
+			for ( int i = 0; i < imageStack.length; i++ )
 			{
-				imageStack[i].volumeImage.dispose();
-				imageStack[i].volumeImage = null;
-			}
-		}		
+				if ( imageStack[i].volumeImage != null )
+				{
+					imageStack[i].volumeImage.dispose();
+					imageStack[i].volumeImage = null;
+				}
+			}		
+		}
 
 		if ( leftRenderer != null )
 		{

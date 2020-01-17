@@ -2115,6 +2115,7 @@ public class LatticeModel {
 
 	public VOI retwistAnnotations(VOI lattice) {
 		setLattice(lattice);
+		if ( annotationVOIs == null ) return null;
 		for ( int i = annotationVOIs.getCurves().size() - 1; i >=0; i-- ) {
 
 			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
@@ -3135,8 +3136,6 @@ public class LatticeModel {
 				imageA.unregisterVOI(annotationsStraight);
 			}
 		}
-		annotationVOIs = newAnnotations;
-		annotationVOIs.setName("annotationVOIs");
 		clear3DSelection();
 
 		if (showSelected != null) {
@@ -3148,10 +3147,13 @@ public class LatticeModel {
 		showSelectedVOI = null;
 		clearAddLeftRightMarkers();		
 
+		annotationVOIs = newAnnotations;
 		if ( annotationVOIs == null )
 		{
 			return;
 		}
+		
+		annotationVOIs.setName("annotationVOIs");
 		if ( imageA.isRegistered(annotationVOIs) == -1 ) {
 			imageA.registerVOI(annotationVOIs);
 		}
