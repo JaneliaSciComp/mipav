@@ -682,11 +682,20 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 					// save twisted annotations and lattice:
 					previewImage.unregisterAllVOIs();
-					annotationsTwisted = new VOI(voiManager.getAnnotations());
+					VOI tmp = voiManager.getAnnotations();
+					if ( tmp != null ) {
+						annotationsTwisted = new VOI(tmp);
+					}
+					else {
+						annotationsTwisted = null;
+					}
 					latticeTwisted = new VOI(voiManager.getLattice());
-					voiManager.setPreviewMode(true, voiManager.getLatticeStraight(), voiManager.getAnnotationsStraight());
-					previewImage.registerVOI( voiManager.getAnnotationsStraight() );
-
+					VOI tmpStraight = voiManager.getAnnotationsStraight();
+					voiManager.setPreviewMode(true, voiManager.getLatticeStraight(), tmpStraight);
+					if ( tmpStraight != null ) {
+						previewImage.registerVOI( tmpStraight );
+					}
+					
 					initDisplayLatticePanel();
 					if ( annotationOpen ) {
 						initDisplayAnnotationsPanel( );
@@ -723,44 +732,50 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					if ( newLatticeTwisted != null ) {
 						latticeTwisted = newLatticeTwisted;
 					}
-					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-						VOIWormAnnotation textRT = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
-						boolean newAnnotation = true;
-						for ( int j = 0; j < annotationsTwisted.getCurves().size(); j++ ) {
-							VOIWormAnnotation textT = (VOIWormAnnotation) annotationsTwisted.getCurves().elementAt(j);
-							if ( textT.getText().equals(textRT.getText()) ) {
-								System.err.println( textT.getText() + "   " + textT.firstElement() + "  =>   " + textRT.firstElement() );
-								if ( textRT.modified() ) {
-									textT.firstElement().copy(textRT.firstElement());
-									textT.lastElement().copy(textRT.lastElement());
+					if ( annotations != null ) {
+						for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+							VOIWormAnnotation textRT = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+							boolean newAnnotation = true;
+							for ( int j = 0; j < annotationsTwisted.getCurves().size(); j++ ) {
+								VOIWormAnnotation textT = (VOIWormAnnotation) annotationsTwisted.getCurves().elementAt(j);
+								if ( textT.getText().equals(textRT.getText()) ) {
+									System.err.println( textT.getText() + "   " + textT.firstElement() + "  =>   " + textRT.firstElement() );
+									if ( textRT.modified() ) {
+										textT.firstElement().copy(textRT.firstElement());
+										textT.lastElement().copy(textRT.lastElement());
+									}
+									newAnnotation = false;
+									break;
 								}
-								newAnnotation = false;
-								break;
 							}
-						}
-						if ( newAnnotation ) {
-							// add any new annotations:
-							System.err.println( "New annotation " + textRT.getText() );
-							annotationsTwisted.getCurves().add( new VOIWormAnnotation(textRT));
+							if ( newAnnotation ) {
+								// add any new annotations:
+								System.err.println( "New annotation " + textRT.getText() );
+								annotationsTwisted.getCurves().add( new VOIWormAnnotation(textRT));
+							}
 						}
 					}
-					for ( int i = annotationsTwisted.getCurves().size() - 1; i >= 0; i-- ) {
-						VOIWormAnnotation textT = (VOIWormAnnotation) annotationsTwisted.getCurves().elementAt(i);
-						boolean deleteAnnotation = true;
-						for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
-							VOIWormAnnotation textRT = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
-							if ( textT.getText().equals(textRT.getText() ) ) {
-								deleteAnnotation = false;
-								break;
+					if ( annotationsTwisted != null ) {
+						for ( int i = annotationsTwisted.getCurves().size() - 1; i >= 0; i-- ) {
+							VOIWormAnnotation textT = (VOIWormAnnotation) annotationsTwisted.getCurves().elementAt(i);
+							boolean deleteAnnotation = true;
+							for ( int j = 0; j < annotations.getCurves().size(); j++ ) {
+								VOIWormAnnotation textRT = (VOIWormAnnotation) annotations.getCurves().elementAt(j);
+								if ( textT.getText().equals(textRT.getText() ) ) {
+									deleteAnnotation = false;
+									break;
+								}
 							}
-						}
-						if ( deleteAnnotation ) {
-							annotationsTwisted.getCurves().remove(i);
+							if ( deleteAnnotation ) {
+								annotationsTwisted.getCurves().remove(i);
+							}
 						}
 					}
 					voiManager.setPreviewMode(false, latticeTwisted, annotationsTwisted);
-					if ( wormImage.isRegistered(annotationsTwisted) == -1 ) {
-						wormImage.registerVOI( annotationsTwisted );
+					if ( annotationsTwisted != null ) {
+						if ( wormImage.isRegistered(annotationsTwisted) == -1 ) {
+							wormImage.registerVOI( annotationsTwisted );
+						}
 					}
 
 					initDisplayLatticePanel();
@@ -2962,8 +2977,70 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 	@Override
 	public void rendererConfigured(VolumeTriPlanarRenderBase renderer) {
-		// TODO Auto-generated method stub
+		updateClipPanel();
+
+		//		System.err.println( "algorithmPerformed" );
+		voiManager = new VOILatticeManagerInterface( null, volumeImage.GetImage(), null, 0, true, null );
+		volumeRenderer.setVOILatticeManager(voiManager);
+		if ( (editMode == EditSeamCells) || (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) || (editMode == IntegratedEditing) )
+		{
+			if ( annotations != null )
+			{
+				if ( annotations.size() > 0 )
+				{
+					voiManager.setAnnotations(annotations);
+					if ( (editMode == EditAnnotations1) || (editMode == EditAnnotations2) || (editMode == CheckSeam) || (editMode == IntegratedEditing) )
+					{
+						if ( finalLattice != null ) {
+							VOIVector latticeVector = new VOIVector();
+							latticeVector.add(finalLattice);
+							voiManager.setLattice(latticeVector);
+						}
+					}
+
+					for (int i = 0; i < annotations.elementAt(0).getCurves().size(); i++)
+					{
+						final VOIText text = (VOIText) annotations.elementAt(0).getCurves().elementAt(i);
+						text.createVolumeVOI( volumeImage, volumeRenderer.getTranslate() );    			
+					}
+				}
+			}
+			voiManager.editAnnotations(editMode == EditSeamCells);
+			voiManager.colorAnnotations(editMode == EditSeamCells);
+			// initialize the display panel for editing / displaying annotations:
+			initDisplayAnnotationsPanel();
+		}
+		else if ( editMode == EditLattice )
+		{
+			if ( potentialLattices != null )
+			{
+				if ( potentialLattices[0] != null )
+				{
+					voiManager.setLattice(potentialLattices[0]);
+				}
+			}
+			voiManager.editLattice();
+		}
+		else if ( editMode == ReviewResults )
+		{
+			volumeRenderer.resetAxisX();
+		}
+
+		if ( editMode == IntegratedEditing ) {
+			openNeuriteCurves();
+			initDisplayLatticePanel();
+			initDisplayCurvesPanel();
+			//			initDisplaySeamPanel();
+		}
+
+		volumeRenderer.displayVolumeSlices(false);
+		volumeRenderer.displayVolumeRaycast(true);
+		volumeRenderer.displayVOIs(true);
+		volumeRenderer.setVolumeBlend(.8f);
+		volumeRenderer.setABBlend(.8f);
+		//		volumeRenderer.initLUT();
 		
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
 	}
 
 	@Override

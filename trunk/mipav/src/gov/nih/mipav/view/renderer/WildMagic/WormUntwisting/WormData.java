@@ -106,7 +106,9 @@ public class WormData
 			if ( isStraight )
 			{
 				outputImagesDirectory = wormImage.getImageDirectory();
-				outputDirectory = outputImagesDirectory.replaceAll( "output_images", "");
+				if ( outputImagesDirectory != null && outputImagesDirectory.contains( "output_images" ) ) {
+					outputDirectory = outputImagesDirectory.replaceAll( "output_images", "");
+				}
 				outputDirectory = outputDirectory.substring(0, outputDirectory.length() - 2);
 			}
 			String parentDir = new String(wormImage.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
@@ -120,18 +122,14 @@ public class WormData
 				//				System.err.println( "WormData " + outputDirectory);
 				dir.mkdir();
 			}
-			dir = new File(outputImagesDirectory);
-			if ( !dir.exists() )
-			{
-				//				System.err.println( "WormData " + outputImagesDirectory);
-				dir.mkdir();
+			if ( outputImagesDirectory != null ) {
+				dir = new File(outputImagesDirectory);
+				if ( !dir.exists() )
+				{
+					//				System.err.println( "WormData " + outputImagesDirectory);
+					dir.mkdir();
+				}
 			}
-
-			float voxelResolution = wormImage.getResolutions(0)[0];
-			//			if ( voxelResolution != VoxelSize )
-			//			{
-			//				VoxelSize = voxelResolution;
-			//			}
 		}
 	}
 
