@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -106,6 +107,7 @@ public class FileJSON extends FileBase {
         int index;
         int index2;
         int index3;
+        int index4;
         int closingIndex;
         String description = null;
         String url = null;
@@ -267,15 +269,30 @@ public class FileJSON extends FileBase {
                         	index = s.indexOf("/");
     	                	index2 = s.lastIndexOf("/");
     	                	index3 = s.lastIndexOf(".");
-    	                	fDir = s.substring(index,index2+1);
-    	                	fName = s.substring(index2+1,index3);
-    	                	fileDirectoryVector.add(fDir);
+    	                	index4 = s.indexOf("\"");
+    	                	if ((index >= 0) && (index2 >= index)) {
+    	                	    fDir = s.substring(index,index2+1);
+    	                	    fName = s.substring(index2+1,index3);
+    	                	    fileDirectoryVector.add(fDir);
+    	                	}
+    	                	else if (index4 >= 0){
+    	                		fName = s.substring(index4+1,index3);
+    	                	}
+    	                	else {
+    	                		fName = s.substring(0,index3);
+    	                	}
     	                	fileNameVector.add(fName);
     	                	continue;
                         }
                         else if (s.trim().startsWith("\"height\":")) {
                         	index = s.indexOf(":");
-                        	s = s.substring(index+1).trim();
+                        	index2 = s.indexOf(",");
+                        	if (index2 >= index) {
+                        		s = s.substring(index+1,index2).trim();
+                        	}
+                        	else {
+                        	    s = s.substring(index+1).trim();
+                        	}
                         	try {
                         	    height = Integer.valueOf(s).intValue();
                         	}
@@ -288,7 +305,13 @@ public class FileJSON extends FileBase {
                         }
                         else if (s.trim().startsWith("\"width\":")) {
                         	index = s.indexOf(":");
-                        	s = s.substring(index+1).trim();
+                        	index2 = s.indexOf(",");
+                        	if (index2 >= index) {
+                        		s = s.substring(index+1,index2).trim();
+                        	}
+                        	else {
+                        	    s = s.substring(index+1).trim();
+                        	}
                         	try {
                         	    width = Integer.valueOf(s).intValue();
                         	}
@@ -355,10 +378,11 @@ public class FileJSON extends FileBase {
                     	    dimExtentsLUT = new int[2];
                             dimExtentsLUT[0] = 4;
                             dimExtentsLUT[1] = 256;
-                            LUT[lastimage_id] = new ModelLUT(ModelLUT.STRIPED, (lastid + 2), dimExtentsLUT);
-                            for (i = 1; i <= lastid + 1; i++) {
-                            	VOIVec.get(i-1).setColor(LUT[lastimage_id].getColor(i));
-                            } // for (i = 1; i <= lastid + 1; i++)
+                            // Color 0 is red = 0, green = 0, blue = 0
+                            LUT[lastimage_id] = new ModelLUT(ModelLUT.STRIPED, (lastid + 1), dimExtentsLUT);
+                            for (i = 0; i < lastid; i++) {
+                            	VOIVec.get(i).setColor(LUT[lastimage_id].getColor(i+1));
+                            } // for (i = 0; i < lastid; i++)
                             image[lastimage_id].addVOIs(VOIVec);
                     	    VOIVec.clear();
                     	}
@@ -366,7 +390,7 @@ public class FileJSON extends FileBase {
                     		buffer = new int[width*height];
                     	}
                     	for (i = 0; i < xvalVector.size(); i++) {
-                    		buffer[xvalVector.get(i) + width*yvalVector.get(i)] = (id + 1);
+                    		buffer[xvalVector.get(i) + width*yvalVector.get(i)] = id;
                     	}
                     	xvalVector.clear();
                     	yvalVector.clear();
@@ -434,7 +458,13 @@ public class FileJSON extends FileBase {
                     	} // if (s.trim().startsWith("\"segmentation\":"))
                     	else if (s.trim().startsWith("\"image_id\":"))	{
                     		index = s.indexOf(":");
-                    		s = s.substring(index+1).trim();
+                    		index2 = s.indexOf(",");
+                        	if (index2 >= index) {
+                        		s = s.substring(index+1,index2).trim();
+                        	}
+                        	else {
+                        	    s = s.substring(index+1).trim();
+                        	}
                     		try {
                     			image_id = Integer.valueOf(s).intValue();
                     		}
@@ -507,7 +537,7 @@ public class FileJSON extends FileBase {
                     	width = widthVector.get(image_id);
                     	height = heightVector.get(image_id);
                     	for (i = 0; i < xvalVector.size(); i++) {
-                    		buffer[xvalVector.get(i) + width*yvalVector.get(i)] = (id + 1);
+                    		buffer[xvalVector.get(i) + width*yvalVector.get(i)] = id;
                     	}
                     	xvalVector.clear();
                     	yvalVector.clear();
@@ -527,10 +557,10 @@ public class FileJSON extends FileBase {
                         dimExtentsLUT = new int[2];
                         dimExtentsLUT[0] = 4;
                         dimExtentsLUT[1] = 256;
-                        LUT[image_id] = new ModelLUT(ModelLUT.STRIPED, (id + 2), dimExtentsLUT);
-                        for (i = 1; i <= id + 1; i++) {	
-                        	VOIVec.get(i-1).setColor(LUT[image_id].getColor(i));
-                        } // for (i = 1; i <= id + 1; i++)
+                        LUT[image_id] = new ModelLUT(ModelLUT.STRIPED, (id + 1), dimExtentsLUT);
+                        for (i = 0; i < id; i++) {	
+                        	VOIVec.get(i).setColor(LUT[image_id].getColor(i+1));
+                        } // for (i = 0; i < id; i++)
                         image[image_id].addVOIs(VOIVec);
                 	    VOIVec.clear();
                     	break;
