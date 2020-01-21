@@ -559,7 +559,8 @@ public class WormData
 	}
 
 	public void saveSeamAnnotations(VOI annotations, boolean rename, boolean checkImage)
-	{		
+	{
+		if ( annotations == null ) return;
 		Vector<Vector3f> seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{

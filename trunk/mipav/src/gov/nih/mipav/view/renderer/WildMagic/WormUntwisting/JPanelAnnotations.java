@@ -613,6 +613,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			VOI annotations = voiManager.getAnnotations();
 			if ( (row >= 0) && (row < annotations.getCurves().size()) )
 			{
+				System.err.println("currentName " + currentName );
 				VOIWormAnnotation text = getSelected(currentName, annotations);
 				if ( text != null ) {
 					if ( column == 0 )
@@ -663,7 +664,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			
 
 			currentAnnotationTableRow = -1;
-			currentName = new String(newName);
+			if ( newName != null ) {
+				currentName = new String(newName);
+			}
 		}
 		if ( voiManager != null && (e.getSource() == annotationGroupTableModel) )
 		{
@@ -748,8 +751,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					if ( text != null ) {
 //						selectedName = new String(text.getText());
 //						System.err.println( " selectedName " + selectedName );
+						currentName = new String(text.getText());
 					}
-					currentName = new String(text.getText());
 //					System.err.println( " current " + currentName );
 				}
 
@@ -1074,7 +1077,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			
 
 			
-			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, listPanel, displayPanel );
+			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, listPanel, null );
 			annotationPanel.setOneTouchExpandable(true);
 			annotationPanel.setDividerSize(6);
 			annotationPanel.setContinuousLayout(true);
