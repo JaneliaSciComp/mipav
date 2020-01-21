@@ -137,7 +137,7 @@ public class libdt extends AlgorithmBase {
 	public void test_HEM() {
 		File file;
 		System.out.println("Experiment started: " + getTime());
-		file = new File("C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/HEM/47fa110.dtm");
+		file = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEM/47fa110.dtm");
 		try {
 			raFile = new RandomAccessFile(file, "r");
 		} catch (FileNotFoundException e) {
@@ -5808,6 +5808,8 @@ public class libdt extends AlgorithmBase {
 			writeInt(dsize,endian); //Write dummy size
 		}
 		catch (IOException e) {
+			int testme[] = new int[1];
+			testme[5] = 0;
 			MipavUtil.displayError("In writeHeader IOException " + e);
 			System.exit(-1);
 		}
@@ -5937,8 +5939,8 @@ public class libdt extends AlgorithmBase {
      * only one argument i.e the path of the parameter file.
      * 
      */
-    // paramsFile "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/params.txt";
-    // paramsFile "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/riversteamfire/params.txt";
+    // paramsFile "C:/libdt-v1.01/libdt-v1.01/testdata/vidsegm/ocean-fire-noborder/params.txt";
+    // paramsFile "C:/libdt-v1.01/libdt-v1.01/testdata/vidsegm/riversteamfire/params.txt";
     public int test_videoSegm(String paramFile)
     {
     	VidSeqSegmParams params = new VidSeqSegmParams();
@@ -5968,6 +5970,7 @@ public class libdt extends AlgorithmBase {
         if (!file3.exists())
     	{
         	System.out.println("About to file3.createNewFile()");
+        	System.out.println("trainDtmPath = " + trainDtmPath);
         	try {
         	    file3.createNewFile();
         	}
@@ -6004,7 +6007,7 @@ public class libdt extends AlgorithmBase {
     	Vector<String> paths = new Vector<String>();	
     	for(int i=0;i<params.totalvids;i++)
     	{	
-    		paths.add(String.format(params.vidpath,i)+null);		
+    		paths.add(String.format(params.vidpath,i));		
     	}
     	
     	
@@ -6072,7 +6075,7 @@ public class libdt extends AlgorithmBase {
 		public VidSeqSegmParams() {
 			totalvids = 1;
 			inputType = 0;
-			vidpath = "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/ocean-fire-noborder.y";
+			vidpath = "C:/libdt-v1.01/libdt-v1.01/testdata/vidsegm/ocean-fire-noborder/ocean-fire-noborder.y";
 			trainvidnum = 1;
 			winxy = 5;
 			winz = 5;
@@ -6090,7 +6093,7 @@ public class libdt extends AlgorithmBase {
 			filtxy = 5;
 			filtz = 5;
 			fsave = true;
-			savepath = "C:/temporal_texture/libdt-v1.0/libdt-v1.0/testdata/vidsegm/ocean-fire-noborder/";
+			savepath = "C:/libdt-v1.01/libdt-v1.01/testdata/vidsegm/ocean-fire-noborder/";
 			savename = "rslt";
 		}
 
@@ -6290,8 +6293,9 @@ public class libdt extends AlgorithmBase {
 
 		private void ExtractKeys() {
 			File file = new File(fName);
+			RandomAccessFile raFile2 = null;
 			try {
-				raFile = new RandomAccessFile(file, "r");
+				raFile2 = new RandomAccessFile(file, "r");
 			} catch (FileNotFoundException e) {
 				MipavUtil.displayError("CFG: File " + fName + " couldn't be found!\n");
 				System.exit(-1);
@@ -6299,10 +6303,10 @@ public class libdt extends AlgorithmBase {
 
 			int lineNo = 0;
 			try {
-				long fileLength = raFile.length();
-				while (raFile.getFilePointer() < fileLength - 1) {
+				long fileLength = raFile2.length();
+				while (raFile2.getFilePointer() < fileLength - 1) {
 					lineNo++;
-					String temp = raFile.readLine();
+					String temp = raFile2.readLine();
 
 					if (temp.isEmpty())
 						continue;
@@ -6314,7 +6318,7 @@ public class libdt extends AlgorithmBase {
 					parseLine(retTemp, lineNo);
 				}
 
-				raFile.close();
+				raFile2.close();
 			} catch (IOException e) {
 				System.err.println("In extractKeys " + e);
 				System.exit(-1);
@@ -6688,8 +6692,9 @@ public class libdt extends AlgorithmBase {
 		// reading data from file
 		filename = filename + "/data";
 		File ifile = new File(filename);
+		RandomAccessFile raFile3 = null;
 		try {
-			raFile = new RandomAccessFile(ifile, "r");
+			raFile3 = new RandomAccessFile(ifile, "r");
 		} catch (FileNotFoundException e) {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
@@ -6697,7 +6702,7 @@ public class libdt extends AlgorithmBase {
 		// read data from dat file
 
 		try {
-			raFile.seek(0L);
+			raFile3.seek(0L);
 		} catch (IOException e) {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
@@ -6710,7 +6715,7 @@ public class libdt extends AlgorithmBase {
 				// ifile.read ((char*)chframe[j].data, rows*cols*elbytes);
 				// //read one channel data from file
 				try {
-					raFile.read(buf);
+					raFile3.read(buf);
 				} catch (IOException e) {
 					MipavUtil.displayError(e + " ");
 					System.exit(-1);
@@ -6757,7 +6762,7 @@ public class libdt extends AlgorithmBase {
 		}
 
 		try {
-			raFile.close();
+			raFile3.close();
 		} catch (IOException e) {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
@@ -6810,14 +6815,15 @@ public class libdt extends AlgorithmBase {
 		DatDescriptor desc = new DatDescriptor();
 		filename = filename + "/descriptor";
 		File dfile = new File(filename);
+		RandomAccessFile raFile4 = null;
 		try {
-			raFile = new RandomAccessFile(dfile, "r");
+			raFile4 = new RandomAccessFile(dfile, "r");
 		} catch (FileNotFoundException e) {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
 		}
 		try {
-		    fileLength = raFile.length();
+		    fileLength = raFile4.length();
 		}
 		catch(IOException e) {
 			MipavUtil.displayError("IOException " + e);
@@ -6830,7 +6836,7 @@ public class libdt extends AlgorithmBase {
 		while (true) {
 			String line, str, key, valuestr, temp, temp2;
 			try {
-			    position = raFile.getFilePointer();
+			    position = raFile4.getFilePointer();
 			}
 			catch (IOException e) {
 				MipavUtil.displayError("IOException " + e);
@@ -6841,7 +6847,7 @@ public class libdt extends AlgorithmBase {
 			}
 
 			try {
-				line = raFile.readLine();
+				line = raFile4.readLine();
 			} catch (IOException e) {
 				break;
 			}
@@ -6886,7 +6892,7 @@ public class libdt extends AlgorithmBase {
 		}
 
 		try {
-			raFile.close();
+			raFile4.close();
 		} catch (IOException e) {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
@@ -7967,7 +7973,7 @@ public class libdt extends AlgorithmBase {
 				}
 				System.out.println("*** EM: K=" + dtm.dt.size() + "******************");
 			}
-			runEM(dtm,Yin,emopt);  //RUN EM uisng current Mixture		
+			runEM(dtm,Yin,emopt);  //RUN EM using current Mixture		
 			Kiter++;
 		}
 
@@ -8439,14 +8445,14 @@ public class libdt extends AlgorithmBase {
 						Mat myxcol1 = new Mat(myx.rows,myx.cols-1,CV_64F);
 						for (r = 0; r < myx.rows; r++) {
 							for (c = 1; c < myx.cols; c++) {
-								myxcol1.double2D[r][c-1] = myx.double2D[r][c]
-;							}
+								myxcol1.double2D[r][c-1] = myx.double2D[r][c];
+							}
 						}
 						Mat myxcol0 = new Mat(myx.rows,myx.cols-1,CV_64F);
 						for (r = 0; r < myx.rows; r++) {
 							for (c = 0; c < myx.cols-1; c++) {
-								myxcol0.double2D[r][c] = myx.double2D[r][c]
-;							}
+								myxcol0.double2D[r][c] = myx.double2D[r][c];
+							}
 						}
 						Mat tmp4 = times(myxcol1,transpose(myxcol0));
 						Psi = plus(Psi,times(plus(tmp3,tmp4),myz));
@@ -9620,16 +9626,15 @@ public class libdt extends AlgorithmBase {
 	    	Mat L1= new Mat(1,YN,CV_64F);
 
 	    	 //%%% initialize forward pass %%%%%%%%%%%%%%%%%%%%
-	    	Mat tmpM=xt1t[0];
+	    	Mat tmpM;
 	    	Mat tmpM2 = new Mat(dx,1,CV_64F);
 	    	for(i=0;i<YN;i++)
 	    	{
 	    		for (r = 0; r < dx; r++) {
-	    			tmpM.double2D[r][i] = mu0.double2D[r][0];
+	    			xt1t[0].double2D[r][i] = mu0.double2D[r][0];
 	    		}
 	    	}
-	    	tmpM=Vt1t[0];
-	    	copyTo(V0,tmpM);
+	    	copyTo(V0,Vt1t[0]);
 
 
 	    	Mat Phi = new Mat();
@@ -9638,13 +9643,11 @@ public class libdt extends AlgorithmBase {
 	    	{
 	    		if(t>0)
 	    		{
-	    			tmpM=xt1t[t];
 	    			tmpM2=times(A,xtt[t-1]);
-	    			copyTo(tmpM2,tmpM);
+	    			copyTo(tmpM2,xt1t[t]);
 
-	    			tmpM=Vt1t[t];
 	    			tmpM2=plus(times(times(A,Vtt[t-1]),transpose(A)),Q);
-	    			copyTo(tmpM2,tmpM);
+	    			copyTo(tmpM2,Vt1t[t]);
 	    		}
 
 	    		
@@ -9655,19 +9658,19 @@ public class libdt extends AlgorithmBase {
 	    			
 	    			//check if any element is zero 
 	    			boolean flag=true;
-	    			for(i=0;i<tmpM.rows;i++)
-	    				for(int j=0;j<tmpM.rows;j++)
+	    			for(i=0;i<Vt1t[t].rows;i++)
+	    				for(int j=0;j<Vt1t[t].rows;j++)
 	    				{
-	    					if(tmpM.double2D[i][j]!=0)
+	    					if(Vt1t[t].double2D[i][j]!=0)
 	    						flag=false;
 	    				}
 	    			if(flag==true)
 	    			{
-	    				copyTo(tmpM,Phi);
+	    				copyTo(Vt1t[t],Phi);
 	    			}
 	    			else
 	    			{
-	    				Mat tmpMinv = new Mat((new Matrix(tmpM.double2D)).inverse().getArray());
+	    				Mat tmpMinv = new Mat((new Matrix(Vt1t[t].double2D)).inverse().getArray());
 	    				tmpM2=plus(tmpMinv,CRC);
 	    				Mat tmpM3=new Mat((new Matrix(tmpM2.double2D)).inverse().getArray());
 	    			    copyTo(tmpM3,Phi);
@@ -9685,10 +9688,10 @@ public class libdt extends AlgorithmBase {
 	    			//% compute the log-likelihood efficiently: p(y_t | y_1,...,y_{t-1})
 	    			if(doL)
 	    			{
-	    				Q = times(times(times(times(Cs,transpose(Cv)),Vt1t[t]),Cv),Cs);
-	    				double[] eigenvalue = new double[Q.cols];
-	    				double[][] eigenvector = new double[Q.rows][Q.cols];
-	    				Eigenvalue.decompose(Q.double2D, eigenvector, eigenvalue);
+	    				Mat prod = times(times(times(times(Cs,transpose(Cv)),Vt1t[t]),Cv),Cs);
+	    				double[] eigenvalue = new double[prod.cols];
+	    				double[][] eigenvector = new double[prod.rows][prod.cols];
+	    				Eigenvalue.decompose(prod.double2D, eigenvector, eigenvalue);
 	    				double E;
 	    				double term1 = 0.0;
 	    				for (i = 0; i < eigenvalue.length; i++) {
@@ -9775,11 +9778,9 @@ public class libdt extends AlgorithmBase {
 	    		}
 
 	    		//initialize		
-	    		tmpM=xthat[tau-1];
-	    		copyTo(xtt[tau-1],tmpM);
+	    		copyTo(xtt[tau-1],xthat[tau-1]);
 
-	    		tmpM=Vthat[tau-1];
-	    		copyTo(Vtt[tau-1],tmpM);
+	    		copyTo(Vtt[tau-1],Vthat[tau-1]);
 	    		if( (Ropt==cov_type.COV_IID) || (Ropt==cov_type.COV_DIAG) )
 	    		{
 	    			Mat eyeMat = new Mat(dx,dx,CV_64F);
@@ -9787,7 +9788,6 @@ public class libdt extends AlgorithmBase {
 	    				eyeMat.double2D[i][i] = 1.0;
 	    			}
 	    			Vtt1hat[tau-2]=times(times(plus(minus(eyeMat,times(Vt1t[tau-1],CRC)),times(times(times(Vt1t[tau-1],CRC),Phi),CRC)),A),Vtt[tau-2]);
-	    			tmpM=Vtt1hat[tau-2];
 	    		}
 	    		else
 	    		{
@@ -9820,7 +9820,9 @@ public class libdt extends AlgorithmBase {
 	    			xthatout.add(tmpM);
 	    		}
 
-	    		xt=xthatout;
+	    		for (i = 0; i < xthatout.size(); i++) {
+	    			xt.add(xthatout.get(i));
+	    		}
 	    		copyTo(Vthat,Vt);
 	    		copyTo(Vtt1hat,Vt1);
 	    		if(doL)
@@ -10787,7 +10789,12 @@ public class libdt extends AlgorithmBase {
 	 				}
 	 				vid2 = null;
 	 			}
-	 			System.out.println("PostFrames :" + postFrames.length);
+	 			if (postFrames == null) {
+	 				System.out.println("PostFrames == null");
+	 			}
+	 			else {
+	 			    System.out.println("PostFrames :" + postFrames.length);
+	 			}
 	 			Mat vid1[]=loaddat(paths.get(i),"t");			
 	 			System.out.println("Vid1-Frames" + vid1.length);
 	 			Mat newVid[];
