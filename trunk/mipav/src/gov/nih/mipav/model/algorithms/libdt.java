@@ -48,6 +48,18 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * Modeling, clustering, and segmenting video with mixtures of dynamic textures.
+Antoni B. Chan and Nuno Vasconcelos,
+IEEE Trans. on Pattern Analysis and Machine Intelligence (TPAMI), 30(5):909-926, May 2008. 
+
+Clustering Dynamic Textures with the Hierarchical EM Algorithm for Modeling Video.
+Adeel Mumtaz, Emanuele Coviello, Gert R.G. Lanckriet, and Antoni B. Chan,
+IEEE Trans. on Pattern Analysis and Machine Intelligence (TPAMI), 35(7):1606-1621, Jul 2013. [appendix] 
+
+A Scalable and Accurate Descriptor for Dynamic Textures using Bag of System Trees.
+Adeel Mumtaz, Emanuele Coviello, Gert R.G. Lanckriet, and Antoni B. Chan,
+IEEE Trans. on Pattern Analysis and Machine Intelligence (TPAMI), 37(4):697-712, Apr 2015. [appendix] 
  */
 
 public class libdt extends AlgorithmBase {
@@ -8447,7 +8459,7 @@ public class libdt extends AlgorithmBase {
 						{
 						case COV_IID:
 
-							tmpM = times(myy,myy);
+							tmpM = elementTimes(myy,myy);
 							scatmp=sum(tmpM);
 							Lambda=plus(Lambda,(myz*scatmp));
 							break;
