@@ -147,25 +147,26 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 				if ( lattice.getCurves().size() == 2 ) {
 					VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
 					VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+					if ( left.size() == right.size() ) {
+						VOI seamLabels = wormData.segmentSeamFromLattice(voiManager.getLattice(), voiManager.getImage(), false);
+						int seamCount = 0;
+						for ( int i = 0; i < left.size(); i++ ) {
+							VOIWormAnnotation leftMarker = (VOIWormAnnotation) seamLabels.getCurves().elementAt(seamCount++);
+							VOIWormAnnotation rightMarker = (VOIWormAnnotation) seamLabels.getCurves().elementAt(seamCount++);
 
-					VOI seamLabels = wormData.segmentSeamFromLattice(voiManager.getLattice(), voiManager.getImage(), false);
-					int seamCount = 0;
-					for ( int i = 0; i < left.size(); i++ ) {
-						VOIWormAnnotation leftMarker = (VOIWormAnnotation) seamLabels.getCurves().elementAt(seamCount++);
-						VOIWormAnnotation rightMarker = (VOIWormAnnotation) seamLabels.getCurves().elementAt(seamCount++);
-						
-						annotationTableModel.addRow( new Object[]{leftMarker.getText(), leftMarker.elementAt(0).X, leftMarker.elementAt(0).Y, leftMarker.elementAt(0).Z,
-								rightMarker.getText(), rightMarker.elementAt(0).X, rightMarker.elementAt(0).Y, rightMarker.elementAt(0).Z} );
-					}					
+							annotationTableModel.addRow( new Object[]{leftMarker.getText(), leftMarker.elementAt(0).X, leftMarker.elementAt(0).Y, leftMarker.elementAt(0).Z,
+									rightMarker.getText(), rightMarker.elementAt(0).X, rightMarker.elementAt(0).Y, rightMarker.elementAt(0).Z} );
+						}					
 
-					annotationList.clearSelection();
-					Vector3f picked = voiManager.getLatticePickedPoint();
-					if ( picked != null ) {
-					for ( int i = 0; i < left.size(); i++ ) {
-						if ( left.elementAt(i).equals(picked) || right.elementAt(i).equals(picked) ) {
-							annotationList.addSelectionInterval(i, i);
+						annotationList.clearSelection();
+						Vector3f picked = voiManager.getLatticePickedPoint();
+						if ( picked != null ) {
+							for ( int i = 0; i < left.size(); i++ ) {
+								if ( left.elementAt(i).equals(picked) || right.elementAt(i).equals(picked) ) {
+									annotationList.addSelectionInterval(i, i);
+								}
+							}
 						}
-					}
 					}
 				}
 
