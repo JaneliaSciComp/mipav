@@ -3636,7 +3636,7 @@ public class libdt extends AlgorithmBase {
 	}
 
 	private void copyTo(Mat A, Mat B) {
-		int i, j, ch;
+		int i, j, k, ch;
 		B.flags = A.flags;
 		B.dims = A.dims;
 		B.depth = A.depth;
@@ -3649,47 +3649,85 @@ public class libdt extends AlgorithmBase {
 			}
 		}
 		B.type = A.type;
-		if (A.type == CV_64F) {
-			if ((A.double2D != null) && (A.double2D[0] != null)) {
-				if ((B.double2D == null) || (B.double2D[0] == null) || (A.double2D.length != B.double2D.length)
-						|| (A.double2D[0].length != B.double2D[0].length)) {
-					B.double2D = new double[A.double2D.length][A.double2D[0].length];
-				}
-				for (i = 0; i < A.double2D.length; i++) {
-					for (j = 0; j < A.double2D[0].length; j++) {
-						B.double2D[i][j] = A.double2D[i][j];
+		if (A.dims == 2) {
+			if (A.type == CV_64F) {
+				if ((A.double2D != null) && (A.double2D[0] != null)) {
+					if ((B.double2D == null) || (B.double2D[0] == null) || (A.double2D.length != B.double2D.length)
+							|| (A.double2D[0].length != B.double2D[0].length)) {
+						B.double2D = new double[A.double2D.length][A.double2D[0].length];
 					}
-				}
-			}
-		} // if (A.type == CV_64F)
-		else if (A.type == CV_8U) {
-			if ((A.byte2D != null) && (A.byte2D[0] != null)) {
-				if ((B.byte2D == null) || (B.byte2D[0] == null) || (A.byte2D.length != B.byte2D.length)
-						|| (A.byte2D[0].length != B.byte2D[0].length)) {
-					B.byte2D = new byte[A.byte2D.length][A.byte2D[0].length];
-				}
-				for (i = 0; i < A.byte2D.length; i++) {
-					for (j = 0; j < A.byte2D[0].length; j++) {
-						B.byte2D[i][j] = A.byte2D[i][j];
-					}
-				}
-			}	
-		} // else if (A.type == CV_8U)
-		else if (A.type == CV_8UC) {
-			if ((A.byte2DC != null) && (A.byte2DC[0] != null)  && A.byte2DC[0][0] != null) {
-				if ((B.byte2DC == null) || (B.byte2DC[0] == null) || (B.byte2DC[0][0] == null) || (A.byte2DC.length != B.byte2DC.length)
-						|| (A.byte2DC[0].length != B.byte2DC[0].length) || (A.byte2DC[0][0].length != B.byte2DC[0][0].length)) {
-					B.byte2DC = new byte[A.byte2DC.length][A.byte2DC[0].length][A.byte2DC[0][0].length];
-				}
-				for (i = 0; i < A.byte2DC.length; i++) {
-					for (j = 0; j < A.byte2DC[0].length; j++) {
-						for (ch = 0; ch < A.byte2DC[0][0].length; ch++) {
-						    B.byte2DC[i][j][ch] = A.byte2DC[i][j][ch];
+					for (i = 0; i < A.double2D.length; i++) {
+						for (j = 0; j < A.double2D[0].length; j++) {
+							B.double2D[i][j] = A.double2D[i][j];
 						}
 					}
 				}
-			}	
-		} // else if (A.type == CV_8UC)
+			} // if (A.type == CV_64F)
+			else if (A.type == CV_8U) {
+				if ((A.byte2D != null) && (A.byte2D[0] != null)) {
+					if ((B.byte2D == null) || (B.byte2D[0] == null) || (A.byte2D.length != B.byte2D.length)
+							|| (A.byte2D[0].length != B.byte2D[0].length)) {
+						B.byte2D = new byte[A.byte2D.length][A.byte2D[0].length];
+					}
+					for (i = 0; i < A.byte2D.length; i++) {
+						for (j = 0; j < A.byte2D[0].length; j++) {
+							B.byte2D[i][j] = A.byte2D[i][j];
+						}
+					}
+				}	
+			} // else if (A.type == CV_8U)
+			else if (A.type == CV_8UC) {
+				if ((A.byte2DC != null) && (A.byte2DC[0] != null)  && A.byte2DC[0][0] != null) {
+					if ((B.byte2DC == null) || (B.byte2DC[0] == null) || (B.byte2DC[0][0] == null) || (A.byte2DC.length != B.byte2DC.length)
+							|| (A.byte2DC[0].length != B.byte2DC[0].length) || (A.byte2DC[0][0].length != B.byte2DC[0][0].length)) {
+						B.byte2DC = new byte[A.byte2DC.length][A.byte2DC[0].length][A.byte2DC[0][0].length];
+					}
+					for (i = 0; i < A.byte2DC.length; i++) {
+						for (j = 0; j < A.byte2DC[0].length; j++) {
+							for (ch = 0; ch < A.byte2DC[0][0].length; ch++) {
+							    B.byte2DC[i][j][ch] = A.byte2DC[i][j][ch];
+							}
+						}
+					}
+				}	
+			} // else if (A.type == CV_8UC)
+		} // if (A.dims == 2)
+		else if (A.dims == 3) {
+			if (A.type == CV_64F) {
+				if ((A.double3D != null) && (A.double3D[0] != null) && (A.double3D[0][0] != null)) {
+					if ((B.double3D == null) || (B.double3D[0] == null) || (B.double3D[0][0] == null) ||
+							(A.double3D.length != B.double3D.length)
+							|| (A.double3D[0].length != B.double3D[0].length) ||
+							(A.double3D[0][0].length != B.double3D[0][0].length)) {
+						B.double3D = new double[A.double3D.length][A.double3D[0].length][A.double3D[0][0].length];
+					}
+					for (i = 0; i < A.double3D.length; i++) {
+						for (j = 0; j < A.double3D[0].length; j++) {
+							for (k = 0; k < A.double3D[0][0].length; k++) {
+							    B.double3D[i][j][k] = A.double3D[i][j][k];
+							}
+						}
+					}
+				}
+			} // if (A.type == CV_64F)	
+			else if (A.type == CV_8U) {
+				if ((A.byte3D != null) && (A.byte3D[0] != null) && (A.byte3D[0][0] != null)) {
+					if ((B.byte3D == null) || (B.byte3D[0] == null) || (B.byte3D[0][0] == null) ||
+							(A.byte3D.length != B.byte3D.length)
+							|| (A.byte3D[0].length != B.byte3D[0].length) ||
+							(A.byte3D[0][0].length != B.byte3D[0][0].length)) {
+						B.byte3D = new byte[A.byte3D.length][A.byte3D[0].length][A.byte3D[0][0].length];
+					}
+					for (i = 0; i < A.byte3D.length; i++) {
+						for (j = 0; j < A.byte3D[0].length; j++) {
+							for (k = 0; k < A.byte3D[0][0].length; k++) {
+							    B.byte3D[i][j][k] = A.byte3D[i][j][k];
+							}
+						}
+					}
+				}	
+			} // else if (A.type == CV_8U)
+		} // else if (A.dims == 3)
 	}
 
 	private void copyToDstColRange(Mat A, Mat B, int inclusiveStart, int exclusiveEnd) {
@@ -4591,10 +4629,19 @@ public class libdt extends AlgorithmBase {
 		int cols = A.cols;
 		int type = A.type;
 		Mat dest = new Mat(rows, cols, type);
-		for (r = 0; r < rows; r++) {
-			for (c = 0; c < cols; c++) {
-				dest.double2D[r][c] = A.double2D[r][c] + B.double2D[r][c];
+		if (type == CV_64F) {
+			for (r = 0; r < rows; r++) {
+				for (c = 0; c < cols; c++) {
+					dest.double2D[r][c] = A.double2D[r][c] + B.double2D[r][c];
+				}
 			}
+		}
+		else if (type == CV_8U) {
+			for (r = 0; r < rows; r++) {
+				for (c = 0; c < cols; c++) {
+					dest.byte2D[r][c] = (byte)((A.byte2D[r][c] & 0xff) + (B.byte2D[r][c] & 0xff));
+				}
+			}	
 		}
 		return dest;
 	}
@@ -6513,31 +6560,31 @@ public class libdt extends AlgorithmBase {
 		/*
 		 * ! \brief all x-locations on step grid.
 		 */
-		public Vector<Integer> allx;
+		public Vector<Integer> allx = new Vector<Integer>()	;
 		/*
 		 * ! \brief all y-locations on step grid.
 		 */
-		public Vector<Integer> ally;
+		public Vector<Integer> ally = new Vector<Integer>();
 		/*
 		 * ! \brief all z-locations on step grid.
 		 */
-		public Vector<Integer> allz;
+		public Vector<Integer> allz = new Vector<Integer>();
 		/*
 		 * ! \brief size of the video.
 		 */
-		public Point3i vidsize;
+		public Point3i vidsize = new Point3i();
 		/*
 		 * ! \brief coordinates of top-left of all patches.
 		 */
-		public Vector<Point3i> locall;
+		public Vector<Point3i> locall = new Vector<Point3i>();
 		/*
 		 * ! \brief mask for all patches.
 		 */
-		public Vector<Boolean> locall_mask;
+		public Vector<Boolean> locall_mask = new Vector<Boolean>();
 		/*
 		 * ! \brief classes for all valid patches.
 		 */
-		Vector<Integer> allclasses;
+		Vector<Integer> allclasses = new Vector<Integer>();
 
 		/*
 		 * ! \brief initialize a video segmentor object.
@@ -9377,10 +9424,8 @@ public class libdt extends AlgorithmBase {
 
 	      // store cache
 	      if (kfmode == kf_mode.KF_CACHE) {
-		Mat tmp1 = cache_Kt[t];
-		copyTo(Kt,tmp1);
-		Mat tmp2 = cache_invMt[t];
-		copyTo(icv,tmp2);
+		copyTo(Kt,cache_Kt[t]);
+		copyTo(icv,cache_invMt[t]);
 		cache_detMt.double2D[0][t] = detterm;
 	      }
 	    }
@@ -9395,7 +9440,7 @@ public class libdt extends AlgorithmBase {
 	      for (i=0; i<YN; i++) {
 		// YCx = Y(:,:,t) - C*xt1t;  
 	   
-		YCx =minus(col(Y[i],t),times(dt.C,col(xt1t,i)));
+	    YCx =minus(col(Y[i],t),times(dt.C,col(xt1t,i)));
 		
 		// xtt = xt1t + Kt*YCx;
 		Mat rs = plus(col(xt1t,i),times(Kt,YCx));
@@ -10431,11 +10476,37 @@ public class libdt extends AlgorithmBase {
 	     System.exit(-1);
 	   }
 
-	   int mdims = mask[0].dims;
-	   int idims = img[0].dims;
+	   int mdims;
+	   int mdepth = 1;
+	   if ((mask.length > 1) || (mask[0].dims == 3)) {
+		   mdims = 3;
+		   if (mask.length > 1) {
+			   mdepth = mask.length;
+		   }
+		   else if (mask[0].dims == 3) {
+			   mdepth = mask[0].depth;
+		   }
+	   }
+	   else {
+		   mdims = 2;
+	   }
+	   int idims;
+	   int idepth = 1;
+	   if ((img.length > 1) || (img[0].dims == 3)) {
+		   idims = 3;
+		   if (img.length > 1) {
+			   idepth = img.length;
+		   }
+		   else if (img[0].dims == 3) {
+			   idepth = img[0].depth;
+		   }
+	   }
+	   else {
+		   idims = 2;
+	   }
 
 	   // check compatability of dimensions
-	   if ((mdims == 2) && (idims == 2) && (mask.length == 1) && (img.length == 1) && (mask.length == 1)) {
+	   if (mdims == 2) {
 	     if (img[0].rows != mask[0].rows) {
 	    	 MipavUtil.displayError("img[0].rows != mask[0].rows in colorMask");
 	    	 System.exit(-1);
@@ -10444,19 +10515,10 @@ public class libdt extends AlgorithmBase {
 	    	 MipavUtil.displayError("img[0].cols != mask[0].cols in colorMask");
 	    	 System.exit(-1);
 	     }
-	   } else if ((mdims == 2) && (idims == 2) && (mask.length == 1) && (img.length > 1) && (mask.length == 1)) {
-		   if (img[0].rows != mask[0].rows) {
-		    	 MipavUtil.displayError("img[0].rows != mask[0].rows in colorMask");
-		    	 System.exit(-1);
-		     }
-		     if (img[0].cols == mask[0].cols) {
-		    	 MipavUtil.displayError("img[0].cols != mask[0].cols in colorMask");
-		    	 System.exit(-1);
-		     } 
-	   } else if ((mdims == 2) && (idims == 2) && (mask.length == 1) && (img.length > 1) && (mask.length > 1)) {
-		   if (img.length != mask.length) {
-			   MipavUtil.displayError("img.length != mask.length in colorMask");
-			   System.exit(-1);
+	   } else if ((mdims == 3) && (idims == 3)) {
+		   if (idepth != mdepth) {
+			   MipavUtil.displayError("img depth != mask depth in colorMask");
+			   System.exit(-1);		      
 		   }
 		   if (img[0].rows != mask[0].rows) {
 		    	 MipavUtil.displayError("img[0].rows != mask[0].rows in colorMask");
@@ -11074,7 +11136,7 @@ public class libdt extends AlgorithmBase {
 	  */
 	 Mat[] segmentVideo(VidSegm vs,Mat vid[],int stepxy,int stepz,int filtxy,int filtz, Mat osmaskout[])
 	 {
-		int j,z,r,c,ch;
+		int j,z,d,r,c,ch;
 	 	//turn on segmentation timer for current video
 	 	long startTime = System.currentTimeMillis();
 
@@ -11193,7 +11255,7 @@ public class libdt extends AlgorithmBase {
 	   
 	 	// loop through frames, segmentation in parts to save memory
 	 	int frame=0;
-	 	Mat clip[];  
+	 	Mat clip[]; 
 	 	while (frame < boxvid.length) 
 	 	{
 	 		// get next clip to add
@@ -11215,27 +11277,45 @@ public class libdt extends AlgorithmBase {
 	 		{
 	 			// now add to our patch vector
 	 			Vector<Mat[]> mypat = getPatches(pe); 
-	 			int mypatsize = 0;
 	 			for (int i=0; i<mypat.size(); i++) 
 	 			{
 	 				// create a copy of the patch
-	 				mypatsize += mypat.get(i).length;
 	 				if(pe.locyx_mask.get(i)) //only valid patches
-	 				{			
-	 					Mat p[] = new Mat[mypat.get(i).length];
-	 					for (j = 0; j < p.length; j++) {
-	 						p[j] = new Mat();
-	 					} 
-	 					copyTo(mypat.get(i),p);
-	 					for (j = 0; j < p.length; j++) {
-	 					    patches.add(p[j]);	
+	 				{	
+	 					if (mypat.get(i).length == 1) {
+	 					    Mat p = new Mat();
+	 					    copyTo(mypat.get(i)[0],p);
+	 					    patches.add(p);
+	 					}
+	 					else if (mypat.get(i).length > 1) {
+	 						int sz[] = new int[] {mypat.get(i).length,mypat.get(i)[0].rows,mypat.get(i)[0].cols};
+	 						Mat p3D = new Mat(3,sz,mypat.get(i)[0].type);
+	 						if (mypat.get(i)[0].type == CV_64F) {
+		 						for (d = 0; d < mypat.get(i).length; d++) {
+		 							for (r = 0; r < mypat.get(i)[0].rows; r++) {
+		 								for (c = 0; c < mypat.get(i)[0].cols; c++) {
+		 									p3D.double3D[d][r][c] = mypat.get(i)[d].double2D[r][c];
+	 	 								}
+		 							}
+		 						}
+	 						}
+	 						else if (mypat.get(i)[0].type == CV_8U) {
+	 							for (d = 0; d < mypat.get(i).length; d++) {
+		 							for (r = 0; r < mypat.get(i)[0].rows; r++) {
+		 								for (c = 0; c < mypat.get(i)[0].cols; c++) {
+		 									p3D.byte3D[d][r][c] = mypat.get(i)[d].byte2D[r][c];
+	 	 								}
+		 							}
+		 						}	
+	 						}
+	 						patches.add(p3D);
 	 					}
 	 				}
 	 				//save all locations
 	 				vs.locall.add(new Point3i(pe.locyx.get(i).x + vbox_off.x,pe.locyx.get(i).y + vbox_off.y, pe.locz       + vbox_off.z));
 	 				vs.locall_mask.add(pe.locyx_mask.get(i));		  
 	 			}
-	 			System.out.println("Found Patches " + patches.size() + "/" + mypatsize);
+	 			System.out.println("Found Patches " + patches.size() + "/" + mypat.size());
 	 			//Keep classes and discard patches
 	 			Vector<Integer> tmpclasses = new Vector<Integer>();
 	 			getClasses(vs.dtm,patches,tmpclasses);
