@@ -3619,17 +3619,33 @@ public class libdt extends AlgorithmBase {
 				}
 			}
 			B[n].type = A[n].type;
-			if ((A[n].double2D != null) && (A[n].double2D[0] != null)) {
-				if ((B[n].double2D == null) || (B[n].double2D[0] == null)
-						|| (A[n].double2D.length != B[n].double2D.length)
-						|| (A[n].double2D[0].length != B[n].double2D[0].length)) {
-					B[n].double2D = new double[A[n].double2D.length][A[n].double2D[0].length];
-				}
-				for (i = 0; i < A[n].double2D.length; i++) {
-					for (j = 0; j < A[n].double2D[0].length; j++) {
-						B[n].double2D[i][j] = A[n].double2D[i][j];
+			if (A[n].type == CV_64F) {
+				if ((A[n].double2D != null) && (A[n].double2D[0] != null)) {
+					if ((B[n].double2D == null) || (B[n].double2D[0] == null)
+							|| (A[n].double2D.length != B[n].double2D.length)
+							|| (A[n].double2D[0].length != B[n].double2D[0].length)) {
+						B[n].double2D = new double[A[n].double2D.length][A[n].double2D[0].length];
+					}
+					for (i = 0; i < A[n].double2D.length; i++) {
+						for (j = 0; j < A[n].double2D[0].length; j++) {
+							B[n].double2D[i][j] = A[n].double2D[i][j];
+						}
 					}
 				}
+			}
+			else if (A[n].type == CV_8U) {
+				if ((A[n].byte2D != null) && (A[n].byte2D[0] != null)) {
+					if ((B[n].byte2D == null) || (B[n].byte2D[0] == null)
+							|| (A[n].byte2D.length != B[n].byte2D.length)
+							|| (A[n].byte2D[0].length != B[n].byte2D[0].length)) {
+						B[n].byte2D = new byte[A[n].byte2D.length][A[n].byte2D[0].length];
+					}
+					for (i = 0; i < A[n].byte2D.length; i++) {
+						for (j = 0; j < A[n].byte2D[0].length; j++) {
+							B[n].byte2D[i][j] = A[n].byte2D[i][j];
+						}
+					}
+				}	
 			}
 		}
 
@@ -10311,7 +10327,7 @@ public class libdt extends AlgorithmBase {
 	    	//}
 
 	    	//initializing filtered mask
-	    	Mat J[] = create(I.length,I[0].rows,I[0].cols,CV_8UC1);;
+	    	Mat J[] = create(I.length,I[0].rows,I[0].cols,CV_8UC1);
 
 	    	//filling some sizes
 	    	int rs1=sx/2;
@@ -10524,7 +10540,7 @@ public class libdt extends AlgorithmBase {
 		    	 MipavUtil.displayError("img[0].rows != mask[0].rows in colorMask");
 		    	 System.exit(-1);
 		     }
-		     if (img[0].cols == mask[0].cols) {
+		     if (img[0].cols != mask[0].cols) {
 		    	 MipavUtil.displayError("img[0].cols != mask[0].cols in colorMask");
 		    	 System.exit(-1);
 		     } 
@@ -10857,7 +10873,7 @@ public class libdt extends AlgorithmBase {
 	 			else {
 	 			    System.out.println("PostFrames :" + postFrames.length);
 	 			}
-	 			Mat vid1[]=loaddat(paths.get(i),"t");			
+	 			Mat vid1[]=loaddat(paths.get(i),"t");
 	 			System.out.println("Vid1-Frames" + vid1.length);
 	 			Mat newVid[];
 	 			if(paths.size()>1)
@@ -10893,8 +10909,8 @@ public class libdt extends AlgorithmBase {
 	 			}
 	 			vid1 = null;
 
-	 			Mat segMask2[] = new Mat[vs.vidsize.z];
-	 			for (j = 0; j < vs.vidsize.z; j++) {
+	 			Mat segMask2[] = new Mat[newVid.length];
+	 			for (j = 0; j < newVid.length; j++) {
 	 				segMask2[j] = new Mat();
 	 			}
 	 			Mat segVideo2[];
@@ -10947,8 +10963,8 @@ public class libdt extends AlgorithmBase {
 	 			}
 	 			vid2 = null;
 	 			Mat segVideo2[];
-	 			Mat segMask2[]  = new Mat[vs.vidsize.z];
-	 			for (j = 0; j < vs.vidsize.z; j++) {
+	 			Mat segMask2[]  = new Mat[newVid.length];
+	 			for (j = 0; j < newVid.length; j++) {
 	 				segMask2[j] = new Mat();
 	 			}
 	 			segVideo2=segmentVideo(vs, newVid,stepxy,stepz,filtxy,filtz,segMask2);
@@ -11020,8 +11036,8 @@ public class libdt extends AlgorithmBase {
 	 				vid2[j].release();
 	 			}
 	 			vid2 = null;
-	 			Mat segMask2[] = new Mat[vs.vidsize.z];
-	 			for (j = 0; j < vs.vidsize.z; j++) {
+	 			Mat segMask2[] = new Mat[newVid.length];
+	 			for (j = 0; j < newVid.length; j++) {
 	 				segMask2[j] = new Mat();
 	 			}
 	 			Mat segVideo2[];
@@ -11050,7 +11066,6 @@ public class libdt extends AlgorithmBase {
 	 		//String fpath=dirpath+"vid" + vidid+ "_segm_";
 	 		Mat smask[]=segMask;	
 	 		
-	 		
 	 			for(int m=0;m<smask.length;m++)
 	 			{
 	 				Mat img=smask[m];
@@ -11065,12 +11080,15 @@ public class libdt extends AlgorithmBase {
 	 				for(j=0;j<img.rows;j++)
 	 					for(int k=0;k<img.cols;k++)
 	 					{
-	 						if(img.byte2D[j][k]==1)
+	 						if(img.byte2D[j][k]==1) {
 	 							frame.byte2D[j][k]=127;
-	 						else if(img.byte2D[j][k]==2)
+	 						}
+	 						else if(img.byte2D[j][k]==2) {
 	 							frame.byte2D[j][k]=(byte)255;
-	 						else
+	 						}
+	 						else {
 	 							frame.byte2D[j][k]=0;
+	 						}
 	 						shortBuffer[j*img.cols + k] = (short)(frame.byte2D[j][k] & 0xff);
 	 					}
 	 					//imwrite(filename,frame);
@@ -11083,9 +11101,9 @@ public class libdt extends AlgorithmBase {
 	 			    	MipavUtil.displayError("IOException " + e);
 	 			    	System.exit(-1);
 	 			    }
-                    boolean succeed = segmImage.saveImage(dirpath,"vid" + vidid+ "_segm_"+buffer+".png",FileUtility.PNG,true);
+                    boolean succeed = segmImage.saveImage(dirpath,"vid" + vidid+ "_segm_"+buffer+".tif",FileUtility.TIFF,true);
                     if (!succeed) {
-                    	MipavUtil.displayError("segmImage.saveImage(dirpath,\"vid\" + vidid+ \"_segm_\"+buffer+\".png\",FileUtility.PNG,true) failed");
+                    	MipavUtil.displayError("segmImage.saveImage(dirpath,\"vid\" + vidid+ \"_segm_\"+buffer+\".tif\",FileUtility.TIFF,true) failed");
                     	System.exit(-1);
                     }
                     segmImage.disposeLocal();
@@ -11146,7 +11164,7 @@ public class libdt extends AlgorithmBase {
 	 	vs.allx.clear();       
 	 	vs.ally.clear();       
 	 	vs.allz.clear();       	
-	 	vs.vidsize = new Point3i(vid.length, vid[0].rows, vid[0].cols);
+	 	vs.vidsize = new Point3i(vid[0].cols, vid[0].rows, vid.length);
 	 	vs.locall.clear();     
 	 	vs.locall_mask.clear();
 	 	
@@ -11176,7 +11194,7 @@ public class libdt extends AlgorithmBase {
 	 	//if ((box_z == Range::all()) && (box_y == Range::all()) && (box_z == Range::all())) 
 	 	//{
 	 		// using full video
-	 		vbox_size = new Point3i(vid.length, vid[0].rows, vid[0].cols);
+	 		vbox_size = new Point3i(vid[0].cols, vid[0].rows, vid.length);
 	 		vbox_off  = new Point3i(0, 0, 0);
 
 	 		boxvid = vid;
@@ -11564,6 +11582,11 @@ public class libdt extends AlgorithmBase {
 	 		Mat se3[] = new Mat[zsize];
 	 		for (int i = 0; i < zsize; i++) {
 	 			se3[i] = new Mat(se.rows,se.cols,CV_8U);
+	 			for (int j = 0; j < se.rows; j++) {
+	 				for (int k = 0; k < se.cols; k++) {
+	 					se3[i].byte2D[j][k] = se.byte2D[j][k];
+	 				}
+	 			}
 	 		}
 	 		int s1=se3.length;
 	 		int s2=se3[0].rows;
