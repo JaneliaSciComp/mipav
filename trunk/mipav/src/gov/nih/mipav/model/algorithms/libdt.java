@@ -7723,7 +7723,12 @@ public class libdt extends AlgorithmBase {
 		// process patches
 		switch (pe.patopt.normopt) {
 		case NORM_NONE:
-			// do nothing
+			for (int i = 0; i < pe.locyx.size(); i++) {
+				pe.patches.set(i,
+						subvid(pe.vbuf, new Range(0, pe.patopt.win.z),
+								new Range(pe.locyx.get(i).y, pe.locyx.get(i).y + pe.patopt.win.y),
+								new Range(pe.locyx.get(i).x, pe.locyx.get(i).x + pe.patopt.win.x)));
+			}
 			break;
 		case NORM_ZM:
 		case NORM_ZMUV: {
@@ -7736,9 +7741,19 @@ public class libdt extends AlgorithmBase {
 				Mat f = pe.vbuf[z];
 				pe.vbuf_zm[z] = minus(f, Ymean);
 			}
+			
+			if (pe.patopt.normopt == norm_type.NORM_ZM) {
+				// setup patches on the vbuf_zm buffer
+				for (int i = 0; i < pe.locyx.size(); i++) {
+					pe.patches.set(i,
+							subvid(pe.vbuf_zm, new Range(0, pe.patopt.win.z),
+									new Range(pe.locyx.get(i).y, pe.locyx.get(i).y + pe.patopt.win.y),
+									new Range(pe.locyx.get(i).x, pe.locyx.get(i).x + pe.patopt.win.x)));
+				}	
+			}
 
 			// also apply variance normalization
-			if (pe.patopt.normopt == norm_type.NORM_ZMUV) {
+			else if (pe.patopt.normopt == norm_type.NORM_ZMUV) {
 				// for each patch...
 				for (int i = 0; i < pe.locyx.size(); i++) {
 					// get the patch in zero-mean buffer
@@ -11413,6 +11428,7 @@ public class libdt extends AlgorithmBase {
 	 			LL.double2D[r][i] = tempM.double2D[r][0];
 	 		}
 	 	}
+	 	
 	 	//calculate log(sum(A)) using only log(A)
 	 	Mat tmp=logtrick(transpose(LL));
 	 	tmp=transpose(tmp);
@@ -11425,6 +11441,7 @@ public class libdt extends AlgorithmBase {
 	 			logZ.double2D[r][i] = tmpM.double2D[r][0];
 	 		}
 	 	}
+	 	
 	 	Mat Z = new Mat(logZ.rows, logZ.cols, CV_64F);
 	 	for (r = 0; r < logZ.rows; r++) {
 	 		for (c = 0; c < logZ.cols; c++) {
@@ -11639,7 +11656,6 @@ public class libdt extends AlgorithmBase {
 	 			}
 
 	 		}
-	 			
 	 	}
 	 				
 	 	//now fill in the borders if they are missing
