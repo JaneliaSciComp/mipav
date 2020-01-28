@@ -8407,7 +8407,7 @@ public class libdt extends AlgorithmBase {
 			//total soft assignments per cluster
 			Mat Nhat = new Mat();
 			reduce(Z,Nhat,0,CV_REDUCE_SUM);
-			tmp=divide(Nhat,((double)N));		
+			tmp=divide(Nhat,((double)N));
 			for(i=0;i<dtm.alpha.size();i++)
 				dtm.alpha.set(i,tmp.double2D[0][i]);
 
@@ -9143,22 +9143,10 @@ public class libdt extends AlgorithmBase {
 
 				// copy column-wise
 				for (int y = 0; y < myframe.cols; y++) {
-					// get column part in vv
-					Mat vvcol = new Mat(vid.size[1], 1, CV_64F);
-					for (r = y * vid.size[1]; r < (y + 1) * vid.size[1]; r++) {
-						vvcol.double2D[r - y * vid.size[1]][0] = vv.double2D[r][f];
-					}
-					// dumpMatSize(vvcol);
-
-					// get column part of frame
-					Mat mycol = new Mat(myframe.rows, 1, CV_64F);
+					
 					for (r = 0; r < myframe.rows; r++) {
-						mycol.double2D[r][0] = myframe.double2D[r][y];
+						vv.double2D[r+y*vid.size[1]][f] = myframe.double2D[r][y];
 					}
-					// dumpMatSize(mycol);
-
-					// copy
-					copyTo(mycol, vvcol);
 				}
 			}
 
@@ -9937,7 +9925,7 @@ public class libdt extends AlgorithmBase {
 	        // check video size
 	        if (!(dt.vrows == 0 && dt.vcols == 0)) {
 	          if (!(dt.vrows == vin.rows && dt.vcols == vin.cols)) {
-	        	  MipavUtil.displayError("!(dt.vrows == vin.rows && dt.vcols == vin.cols) in processingVideoTesting");
+	        	  MipavUtil.displayError("!(dt.vrows == vin.rows && dt.vcols == vin.cols) in processVideoTesting");
 	        	  System.exit(-1);
 	          }
 	        }
@@ -10890,6 +10878,7 @@ public class libdt extends AlgorithmBase {
 	 			}
 	 			Mat vid1[]=loaddat(paths.get(i),"t");
 	 			System.out.println("Vid1-Frames" + vid1.length);
+	 			
 	 			Mat newVid[];
 	 			if(paths.size()>1)
 	 			{
@@ -11072,10 +11061,15 @@ public class libdt extends AlgorithmBase {
 
 	 		//save things for current video segmentation in the output place
 	 		String vidid = String.valueOf(i);
-	 		String dirpath=vidPath2 + vidid + "_segm" + +File.separatorChar;
+	 		String dirpath=vidPath2 + vidid + "_segm" +File.separatorChar;
+	 		String videoPath = vidPath2 + vidid + File.separatorChar;
 	 		File file = new File(dirpath);
 	        if (!file.exists()) {
 	            file.mkdir();
+	        }
+	        File fileV = new File(videoPath);
+	        if (!fileV.exists()) {
+	            fileV.mkdir();    	
 	        }
 
 	 		//String fpath=dirpath+"vid" + vidid+ "_segm_";
@@ -11124,6 +11118,52 @@ public class libdt extends AlgorithmBase {
                     segmImage.disposeLocal();
                     segmImage = null;
 	 			}
+                    
+                    for (int m = 0; m < segVideo.length; m++) {
+                    	// From BGR
+                    	String buffer = String.format("%03d",m);
+                        int length = segVideo[m].rows * segVideo[m].cols;
+                        short redBuffer[] = new short[length];
+                        short greenBuffer[] = new short[length];
+                        short blueBuffer[] = new short[length];
+                        int extents[] = new int[] {segVideo[m].rows,segVideo[m].cols};
+                        for (j = 0; j < segVideo[m].rows; j++) {
+                        	for (int k = 0; k < segVideo[m].cols; k++) {
+                        		redBuffer[j*segVideo[m].cols + k] = (short)(segVideo[m].byte2DC[j][k][2] & 0xff);
+                        		greenBuffer[j*segVideo[m].cols + k] = (short)(segVideo[m].byte2DC[j][k][1] & 0xff);
+                        		blueBuffer[j*segVideo[m].cols + k] = (short)(segVideo[m].byte2DC[j][k][0] & 0xff);
+                        	}
+                        }
+                        ModelImage videoImage = new ModelImage(ModelStorageBase.ARGB,extents,"vid"+vidid+buffer);
+                        try {
+    	 			    	videoImage.importRGBData(1, 0, redBuffer, true);
+    	 			    }
+    	 			    catch (IOException e) {
+    	 			    	MipavUtil.displayError("IOException " + e);
+    	 			    	System.exit(-1);
+    	 			    }
+                        try {
+    	 			    	videoImage.importRGBData(2, 0, greenBuffer, true);
+    	 			    }
+    	 			    catch (IOException e) {
+    	 			    	MipavUtil.displayError("IOException " + e);
+    	 			    	System.exit(-1);
+    	 			    }
+                        try {
+    	 			    	videoImage.importRGBData(3, 0, blueBuffer, true);
+    	 			    }
+    	 			    catch (IOException e) {
+    	 			    	MipavUtil.displayError("IOException " + e);
+    	 			    	System.exit(-1);
+    	 			    }
+                        boolean succeed = videoImage.saveImage(videoPath,"vid" + vidid+buffer+".tif",FileUtility.TIFF,true);
+                        if (!succeed) {
+                        	MipavUtil.displayError("videoImage.saveImage(videoPath,\"vid\" + vidid+buffer+\".tif\",FileUtility.TIFF,true) failed");
+                        	System.exit(-1);
+                        }
+                        videoImage.disposeLocal();
+                        videoImage = null;
+                    }
 	 		//save avi and dat for windows pc
 	 		/*#ifdef _WIN32
 	 			string avipath=vidPath2 + vidid + string(".avi");
@@ -11362,6 +11402,7 @@ public class libdt extends AlgorithmBase {
 	 	}
 	 	//Get the segmentation mask
 	 	Mat osmask[]=segm_mask(vs);
+	 	
 	 	//filter the mask
 	 	osmask=maxvotefilt(osmask,filtxy,filtxy,filtz,vs.K);
 	 	//Get color segmentation
@@ -11418,9 +11459,10 @@ public class libdt extends AlgorithmBase {
 	 	
 	 	Mat LL = new Mat(N,K,CV_64F);
 	 	Mat logZ = new Mat(N,K,CV_64F);
+	 	
 	 	//compute logliklihood under each component
 	 	for(int i=0;i<K;i++)
-	 	{		
+	 	{
 	 		Mat tmpL = new Mat();
 	 		dtm.kfb.get(i).loglike(Y,tmpL,false);
 	 		Mat tempM=plus(transpose(tmpL),Math.log(dtm.alpha.get(i)));
@@ -11794,7 +11836,6 @@ public class libdt extends AlgorithmBase {
 	 		}
 	 	}
 
-	 	//single frame mask; make it 2d
 	 	return smask;
 	 }
 
