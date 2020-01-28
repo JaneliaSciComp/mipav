@@ -66,7 +66,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
     private int skullRemovalMaskThreshold = 70;
     
-    private int ventricalRemovalMaskThreshold = 95;
+    private float ventricleRemovalMeanThreshold = 0.4f;
     
     private int threshCloseIter;
     
@@ -143,7 +143,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     		int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj,
     		int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir, boolean pwiMultiThreading, boolean pwiCalculateCorrelation,
     		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs, boolean doArtifactCleanup, float artMean, float artCloseSize, int artCloseIter,
-    		boolean doPerfSymmetry, int minPerfSize) {
+    		boolean doPerfSymmetry, int minPerfSize, float ventThresh) {
         super();
         
         dwiImage = dwi;
@@ -187,6 +187,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         doPerfusionSymmetryRemoval = doPerfSymmetry;
         minPerfusionObjectSize = minPerfSize;
+        
+        ventricleRemovalMeanThreshold = ventThresh;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
     }
@@ -250,78 +252,6 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     }
                 }
                 
-                // get largest object after ventrical threshold (+some dilation) and save it for later pwi masking
-                pwiVentricleMaskImg = new ModelImage(ModelStorageBase.BOOLEAN, dwiImage.getExtents(), "pwi_brain_mask");
-                for (int i = 0; i < pwiVentricleMaskImg.getExtents()[2]; i++) {
-                    pwiVentricleMaskImg.setFileInfo(fInfo, i);
-                }
-                
-                for (int i = 0; i < volLength; i++) {
-                    if (dwiImage.getInt(i) > ventricalRemovalMaskThreshold) {
-                        pwiVentricleMaskImg.set(i, 1);
-                    } else {
-                        pwiVentricleMaskImg.set(i, 0);
-                    }
-                }
-                
-                // open - try to disconnect any artifacts from the brain mask
-                open(pwiVentricleMaskImg);
-                
-                // close
-                //close(skullMaskImg, 2, 2f, false);
-                
-                short[] maskBuffer = new short[volLength];
-                short[] processBuffer = new short[volLength];
-                try {
-                    pwiVentricleMaskImg.exportData(0, volLength, maskBuffer);
-                } catch (IOException error) {
-                    if (segImg != null) {
-                        segImg.disposeLocal();
-                        segImg = null;
-                    }
-                    
-                    maskBuffer = null;
-                    displayError("Error on brain mask export: " + pwiVentricleMaskImg.getImageName());
-                    setCompleted(false);
-                    return;
-                }
-                
-                MaskObject[] objects = findObjects(pwiVentricleMaskImg, maskBuffer, processBuffer, 100, 10000000);
-                
-                if (objects.length > 0) {
-                    MaskObject largest = objects[objects.length - 1];
-                    for (int i = 0; i < processBuffer.length; i++) {
-                        if (processBuffer[i] == largest.id) {
-                            maskBuffer[i] = 1;
-                        } else {
-                            maskBuffer[i] = 0;
-                        }
-                    }
-                }
-                
-                try {
-                    pwiVentricleMaskImg.importData(0, maskBuffer, true);
-                } catch (IOException error) {
-                    if (segImg != null) {
-                        segImg.disposeLocal();
-                        segImg = null;
-                    }
-                    
-                    if (pwiVentricleMaskImg != null) {
-                        pwiVentricleMaskImg.disposeLocal();
-                        pwiVentricleMaskImg = null;
-                    }
-                    
-                    maskBuffer = null;
-                    displayError("Error on pwi brain mask importData");
-                    setCompleted(false);
-                    return;
-                }
-                
-                //dilate(pwiBrainMaskImg, 0.5f);
-                
-                saveImageFile(pwiVentricleMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask", FileUtility.XML);
-                
                 // open - try to disconnect any artifacts from the brain mask
                 open(skullMaskImg);
                 
@@ -330,6 +260,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 
                 // fill holes
                 fillHoles(skullMaskImg);
+                
+                short[] maskBuffer = new short[volLength];
+                short[] processBuffer = new short[volLength];
                 
                 // select only largest object
                 try {
@@ -346,7 +279,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     return;
                 }
                 
-                objects = findObjects(skullMaskImg, maskBuffer, processBuffer, 100, 10000000);
+                MaskObject[] objects = findObjects(skullMaskImg, maskBuffer, processBuffer, 100, 10000000);
                 
                 if (objects.length > 0) {
                     MaskObject largest = objects[objects.length - 1];
@@ -573,7 +506,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             } else {
             	pwiImageName = "No PWI included in processing";
             }
-            if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), pwiImageName, adcImage.getResolutions(0))) {
+            if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), pwiImageName, adcImage)) {
                 if (segImg != null) {
                     segImg.disposeLocal();
                     segImg = null;
@@ -1405,12 +1338,15 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return true;
     }
     
-    private boolean saveCoreStats(final String outputDir, final String dwiFile, final String adcFile, final String pwiFile, final float[] imgResol) {
-        double voxelSize = imgResol[0] * imgResol[1] * imgResol[2];
+    private boolean saveCoreStats(final String outputDir, final String dwiFile, final String adcFile, final String pwiFile, final ModelImage img) {
+        //double voxelSize = imgResol[0] * imgResol[1] * imgResol[2];
+        double ccFactor = getResolutionFactorCC(img);
         
         final String statsFile = outputDir + File.separator + outputBasename + "_stats.table";
         
-        final String volUnitsStr = adcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+        //final String volUnitsStr = adcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+        
+        final String volUnitsStr = "CC";
         
         CSVPrinter csvPrinter = null;
         BufferedWriter bw = null;
@@ -1420,11 +1356,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             bw = new BufferedWriter(fw);
             
             csvPrinter = new CSVPrinter(bw, CSVFormat.TDF.withHeader("Base Dir", "DWI File", "ADC File", "PWI File",
-            		"Core Voxel Count (DWI+ADC)", "Core Volume (DWI+ADC) " + volUnitsStr,
-            		"Core Voxel Count (DWI+TMax+ADC)", "Core Volume (DWI+TMax+ADC) " + volUnitsStr,
-            		"Tmax > " + pwiThreshold + " Voxel Count", "Tmax > " + pwiThreshold + " Volume",
-            		"Perfusion mismatch (Perfusion - DWI+ADC)", "Perfusion ratio (DWI+ADC/DWI+ADC)",
-            		"Perfusion mismatch (Perfusion - DWI+Tmax+ADC)", "Perfusion ratio (DWI+Tmax+ADC/Perfusion)"));
+            		"Core Volume " + volUnitsStr,
+            		"Core Volume using Tmax " + volUnitsStr,
+            		"Tmax > " + pwiThreshold + " Volume",
+            		"Mismatch (Tmax - core)", "Mismatch Ratio)",
+            		"Mismatch (Tmax - core using Tmax)", "Mismatch Ratio"));
             
             double perfusionSize = 0;
             double dwiCore = 0;
@@ -1450,9 +1386,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 }
             }
             
-            double dwiCoreVol = dwiCore * voxelSize;
-            double pwiCoreVol = pwiCore * voxelSize;
-            double perfusionVol = perfusionSize * voxelSize;
+            double dwiCoreVol = dwiCore * ccFactor;
+            double pwiCoreVol = pwiCore * ccFactor;
+            double perfusionVol = perfusionSize * ccFactor;
             
             double perfusionMismatchDwi = perfusionSize - dwiCore;
             double perfusionRatioDwi = dwiCore / perfusionSize;
@@ -1460,7 +1396,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             double perfusionRatioPwi = pwiCore / perfusionSize;
             
             System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize);
-            csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCore, dwiCoreVol, pwiCore, pwiCoreVol, perfusionSize, perfusionVol, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);
+            csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCoreVol, pwiCoreVol, perfusionVol, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);
         } catch (final IOException e) {
             e.printStackTrace();
             MipavUtil.displayError("Error writing core stats file: " + statsFile);
@@ -1938,6 +1874,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             unregMaskImg = getPwiArtifactMask(firstPwiVol);
             pwiArtifactMaskImg = transformImage(unregMaskImg, adcImage, transform);
             saveImageFile(pwiArtifactMaskImg, coreOutputDir, outputBasename + "_pwi_brain_mask", FileUtility.XML);
+            
+            pwiVentricleMaskImg = getPwiVentricleMask(pwiArtifactMaskImg);
         }
         
         firstPwiVol.disposeLocal();
@@ -2231,12 +2169,12 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             maskImg.setFileInfo(fInfo, i);
         }
         
-        // calculate mean within the DWI-based ventricle mask - the whole volume was too low
+        // calculate mean within the DWI-based skull mask - the whole volume was too low
         double meanVal = 0;
         long total = 0;
         int voxelCount = 0;
         for (int i = 0; i < volLength; i++) {
-            if (pwiVentricleMaskImg.getBoolean(i) == true) {
+            if (skullMaskImg.getBoolean(i) == true) {
                 total += firstPwiImg.getInt(i);
                 voxelCount++;
             }
@@ -2312,6 +2250,99 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         //saveImageFile(maskImg, coreOutputDir, outputBasename + "_pwi_brain_mask", FileUtility.XML);
         
         return maskImg;
+    }
+    
+    private ModelImage getPwiVentricleMask(ModelImage fullBrainMask) {
+        // get largest object after ventricle threshold (+some dilation) and save it for later pwi masking
+        ModelImage ventMaskImg = new ModelImage(ModelStorageBase.BOOLEAN, fullBrainMask.getExtents(), "pwi_ventricle_mask");
+        
+        final int[] extents = fullBrainMask.getExtents();
+        final int sliceLength = extents[0] * extents[1];
+        final int volLength = sliceLength * extents[2];
+        final FileInfoBase fInfo = (FileInfoBase) fullBrainMask.getFileInfo(0).clone();
+        
+        for (int i = 0; i < ventMaskImg.getExtents()[2]; i++) {
+            ventMaskImg.setFileInfo(fInfo, i);
+        }
+        
+        // TODO
+        // calculate mean within the brain mask
+        double meanVal = 0;
+        long total = 0;
+        int voxelCount = 0;
+        for (int i = 0; i < volLength; i++) {
+            if (fullBrainMask.getBoolean(i) == true) {
+                total += dwiImage.getInt(i);
+                voxelCount++;
+            }
+        }
+        meanVal = total / voxelCount;
+        
+        double thresholdIntensity = meanVal * ventricleRemovalMeanThreshold;
+        
+        for (int i = 0; i < volLength; i++) {
+            //if (fullBrainMask.getBoolean(i) == true && dwiImage.getInt(i) > ventricleRemovalMaskThreshold) {
+            if (fullBrainMask.getBoolean(i) == true && dwiImage.getInt(i) > thresholdIntensity) {
+                ventMaskImg.set(i, 1);
+            } else {
+                ventMaskImg.set(i, 0);
+            }
+        }
+        
+        // open - try to disconnect any artifacts from the brain mask
+        open(ventMaskImg);
+        
+        // close
+        //close(ventMaskImg, 2, 2f, false);
+        
+        short[] maskBuffer = new short[volLength];
+        short[] processBuffer = new short[volLength];
+        try {
+            ventMaskImg.exportData(0, volLength, maskBuffer);
+        } catch (IOException error) {
+            if (ventMaskImg != null) {
+                ventMaskImg.disposeLocal();
+                ventMaskImg = null;
+            }
+            
+            maskBuffer = null;
+            displayError("Error on ventricle mask export: " + dwiImage.getImageName());
+            setCompleted(false);
+            return fullBrainMask;
+        }
+        
+        MaskObject[] objects = findObjects(ventMaskImg, maskBuffer, processBuffer, 100, 10000000);
+        
+        if (objects.length > 0) {
+            MaskObject largest = objects[objects.length - 1];
+            for (int i = 0; i < processBuffer.length; i++) {
+                if (processBuffer[i] == largest.id) {
+                    maskBuffer[i] = 1;
+                } else {
+                    maskBuffer[i] = 0;
+                }
+            }
+        }
+        
+        try {
+            ventMaskImg.importData(0, maskBuffer, true);
+        } catch (IOException error) {
+            if (ventMaskImg != null) {
+                ventMaskImg.disposeLocal();
+                ventMaskImg = null;
+            }
+            
+            maskBuffer = null;
+            displayError("Error on pwi brain mask importData");
+            setCompleted(false);
+            return fullBrainMask;
+        }
+        
+        //dilate(pwiBrainMaskImg, 0.5f);
+        
+        saveImageFile(ventMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask", FileUtility.XML);
+        
+        return ventMaskImg;
     }
     
     private void cleanupMask(ModelImage maskImg, boolean doSymmetryRemoval, int minObjSize) {
