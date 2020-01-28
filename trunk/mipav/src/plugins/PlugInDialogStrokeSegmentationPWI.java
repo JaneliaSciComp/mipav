@@ -127,6 +127,9 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private JTextField artifactCloseSizeField;
     private float artifactCloseSize = 6f;
     
+    private JTextField ventricleMeanThreshField;
+    private float ventricleMeanThresh = 0.4f;
+    
     private JCheckBox perfusionSymmetryRemovalCheckbox;
     private boolean doPerfusionSymmetryRemoval = true;
     
@@ -450,6 +453,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         doPerfusionSymmetryRemoval = perfusionSymmetryRemovalCheckbox.isSelected();
         minPerfusionObjectSize = Integer.parseInt(minPerfusionObjectSizeField.getText());
         
+        ventricleMeanThresh = Float.parseFloat(ventricleMeanThreshField.getText());
+        
         return true;
     }
 
@@ -464,7 +469,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             segAlgo = new PlugInAlgorithmStrokeSegmentationPWI(dwiImage, adcImage, pwiImage, adcThreshold, doFilter, doCerebellumSkip, cerebellumSkipSliceMax, 
             		doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, 
             		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles, doArtifactCleanup,
-            		meanThreshold, artifactCloseSize, artifactCloseIter, doPerfusionSymmetryRemoval, minPerfusionObjectSize);
+            		meanThreshold, artifactCloseSize, artifactCloseIter, doPerfusionSymmetryRemoval, minPerfusionObjectSize, ventricleMeanThresh);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -881,6 +886,22 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx++;
         mainPanel.add(minPerfusionObjectSizeField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        JLabel labelVentricleThreshold = new JLabel("Ventricle mask DWI intensity threshold");
+        labelVentricleThreshold.setForeground(Color.black);
+        labelVentricleThreshold.setFont(serif12);
+        mainPanel.add(labelVentricleThreshold, gbc);
+        
+        ventricleMeanThreshField = new JTextField(10);
+        ventricleMeanThreshField.setText("" + ventricleMeanThresh);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(ventricleMeanThreshField, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
