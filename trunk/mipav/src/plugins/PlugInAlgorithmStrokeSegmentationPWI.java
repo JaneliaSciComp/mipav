@@ -2280,6 +2280,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         double thresholdIntensity = meanVal * ventricleRemovalMeanThreshold;
         
+        System.err.println("Ventricle threshold: mean = " + meanVal + " threshold = " + thresholdIntensity);
+        
         for (int i = 0; i < volLength; i++) {
             //if (fullBrainMask.getBoolean(i) == true && dwiImage.getInt(i) > ventricleRemovalMaskThreshold) {
             if (fullBrainMask.getBoolean(i) == true && dwiImage.getInt(i) > thresholdIntensity) {
