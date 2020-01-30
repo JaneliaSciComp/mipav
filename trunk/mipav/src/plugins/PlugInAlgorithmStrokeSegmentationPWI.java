@@ -2340,6 +2340,26 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             return fullBrainMask;
         }
         
+        // TODO fill holes of ventMaskImg to get its outer boundary
+        ModelImage boundaryImg = (ModelImage) ventMaskImg.clone("pwi_ventricle_outer");
+        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_pre", FileUtility.XML);
+        close(boundaryImg, 2, 2f, false);
+        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_closed", FileUtility.XML);
+        fillHoles(boundaryImg);
+        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_filled", FileUtility.XML);
+        
+        // TODO find values included in the full brain mask, but not in the ventricle outer boundary (which we assume will be smaller)
+        for (int i = 0; i < volLength; i++) {
+            if (fullBrainMask.getBoolean(i) == true && boundaryImg.getBoolean(i) == false) {
+                ventMaskImg.set(i, 1);
+                boundaryImg.set(i, 1);
+            } else {
+                boundaryImg.set(i, 0);
+            }
+        }
+
+        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_add_bound", FileUtility.XML);
+        
         //dilate(pwiBrainMaskImg, 0.5f);
         
         saveImageFile(ventMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask", FileUtility.XML);
@@ -2381,8 +2401,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         int mirroredIndex = (iZ * sliceLength) + (iY * extents[0]) + (extents[0] - iX - 1);
                         
                         if (maskBuffer[index] > 0 && maskBuffer[mirroredIndex] > 0) {
-//                            threshBuffer[index] = 0;
-//                            threshBuffer[mirroredIndex] = 0;
+                            maskBuffer[index] = 0;
+                            maskBuffer[mirroredIndex] = 0;
                             
                             removedBuffer[index] = 1;
                             removedBuffer[mirroredIndex] = 1;
@@ -2416,14 +2436,17 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
             if (objects.length > 0) {
                 for (int i = 0; i < processBuffer.length; i++) {
+                    boolean found = false;
                     for (int curObjNum = 0; curObjNum < objects.length; curObjNum++) {
                         if (processBuffer[i] == objects[curObjNum].id) {
-                            maskBuffer[i] = 1;
-                            removedBuffer[i] = 0;
-                        } else {
-                            maskBuffer[i] = 0;
-                            removedBuffer[i] = 1;
+                            found = true;
+                            break;
                         }
+                    }
+                    
+                    if (found) {
+                        maskBuffer[i] = 1;
+                        removedBuffer[i] = 0;
                     }
                 }
             }
