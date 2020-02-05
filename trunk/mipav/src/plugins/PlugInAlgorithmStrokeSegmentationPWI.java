@@ -1359,8 +1359,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             		"Core Volume " + volUnitsStr,
             		"Core Volume using Tmax " + volUnitsStr,
             		"Tmax > " + pwiThreshold + " Volume",
-            		"Mismatch (Tmax - core)", "Mismatch Ratio)",
-            		"Mismatch (Tmax - core using Tmax)", "Mismatch Ratio"));
+            		"Mismatch (Tmax - core) " + volUnitsStr, "Mismatch Ratio (core / Tmax)",
+            		"Mismatch (Tmax - core using Tmax) " + volUnitsStr, "Mismatch Ratio (core using Tmax / Tmax)"));
             
             double perfusionSize = 0;
             double dwiCore = 0;
@@ -1378,7 +1378,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 } else if (coreSize > 0) {
                     if (passNum == 1) {
                     	dwiCore = coreSize;
-                    } else if (passNum == 3) {
+                    } else if (passNum == 4) {
                     	pwiCore = coreSize;
                     } else {
                     	System.err.println("Unexpected core pass value: " + passNum + " " + coreSize);
@@ -1390,9 +1390,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             double pwiCoreVol = pwiCore * ccFactor;
             double perfusionVol = perfusionSize * ccFactor;
             
-            double perfusionMismatchDwi = perfusionSize - dwiCore;
+            double perfusionMismatchDwi = (perfusionSize - dwiCore) * ccFactor;
             double perfusionRatioDwi = dwiCore / perfusionSize;
-            double perfusionMismatchPwi = perfusionSize - pwiCore;
+            double perfusionMismatchPwi = (perfusionSize - pwiCore) * ccFactor;
             double perfusionRatioPwi = pwiCore / perfusionSize;
             
             System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize);
