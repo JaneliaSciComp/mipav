@@ -405,11 +405,13 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 	            fireProgressStateChanged(85);
 	            
 	            // core pass done with a segImg that combines Tmax > 2 and DWI as search area
-	            ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiCoreSegThreshold);
+	            //ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiCoreSegThreshold);
+	            ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, skullMaskImg, pwiCoreSegThreshold);
 	            for (int i = 0; i < volLength; i++) {
 	                if ((dwiSegBuffer[i] != 0 || pwiSegImg.getInt(i) != 0)
 	                        && (pwiVentricleMaskImg != null && pwiVentricleMaskImg.getBoolean(i) == true)
-	                        && (pwiArtifactMaskImg != null && pwiArtifactMaskImg.getBoolean(i) == true)) {
+	                        && (skullMaskImg != null && skullMaskImg.getBoolean(i) == true)) {
+	                        /*&& (pwiArtifactMaskImg != null && pwiArtifactMaskImg.getBoolean(i) == true)) {*/
 	                    if (isADCFractional()) {
 	                        float adcFracThreshold = adcThreshold / 1000.0f;
 	                        if (adcVolForThresholding.getFloat(i) < adcFracThreshold) {
@@ -1871,16 +1873,18 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 
         ModelImage unregMaskImg = null;
         if (doArtifactCleanupWithMean) {
-            unregMaskImg = getPwiArtifactMask(firstPwiVol);
-            pwiArtifactMaskImg = transformImage(unregMaskImg, adcImage, transform);
-            saveImageFile(pwiArtifactMaskImg, coreOutputDir, outputBasename + "_pwi_brain_mask", FileUtility.XML);
+            //unregMaskImg = getPwiArtifactMask(firstPwiVol);
+            //pwiArtifactMaskImg = transformImage(unregMaskImg, adcImage, transform);
+            //saveImageFile(pwiArtifactMaskImg, coreOutputDir, outputBasename + "_pwi_brain_mask", FileUtility.XML);
             
-            pwiVentricleMaskImg = getPwiVentricleMask(pwiArtifactMaskImg);
+            //pwiVentricleMaskImg = getPwiVentricleMask(pwiArtifactMaskImg);
+            pwiVentricleMaskImg = getPwiVentricleMask(skullMaskImg);
         }
         
         firstPwiVol.disposeLocal();
         
-        ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiThreshold);
+        //ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiThreshold);
+        ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, skullMaskImg, pwiThreshold);
         cleanupMask(pwiSegImg, doPerfusionSymmetryRemoval, minPerfusionObjectSize);
         
         // combine perfusion mask with Tmax and save lightbox
