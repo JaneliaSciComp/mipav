@@ -9343,6 +9343,7 @@ public class libdt extends AlgorithmBase {
 
 	  // initialize covariance matrices
 	  Mat Vt1t = toFullMatrix(dt.S0);  // Vt1t = S0
+      
 	  Mat Vtt = new Mat(dt.dtopt.n, dt.dtopt.n, CV_64F);
 
 
@@ -9457,7 +9458,7 @@ public class libdt extends AlgorithmBase {
 
 	      // TODO: can be sped up using Yit format?
 	      for (i=0; i<YN; i++) {
-		// YCx = Y(:,:,t) - C*xt1t;  
+		// YCx = Y(:,:,t) - C*xt1t;
 	   
 	    YCx =minus(col(Y[i],t),times(dt.C,col(xt1t,i)));
 		
@@ -9863,12 +9864,12 @@ public class libdt extends AlgorithmBase {
 	    		{
 	    			tmpM=new Mat((new Matrix(Vt1t[t].double2D)).inverse().getArray());
 	    			Jt[t-1]=times(times(Vtt[t-1],transpose(A)),tmpM);			
-	    			xthat[t-1]= plus(xtt[t-1],times(Jt[t-1],(minus(xthat[t],times(A,xtt[t-1])))));
-	    			Vthat[t-1] = plus(Vtt[t-1],times(times(Jt[t-1],(minus(Vthat[t],Vt1t[t]))),transpose(Jt[t-1])));
+	    			xthat[t-1]= plus(xtt[t-1],times(Jt[t-1],minus(xthat[t],times(A,xtt[t-1]))));
+	    			Vthat[t-1] = plus(Vtt[t-1],times(times(Jt[t-1],minus(Vthat[t],Vt1t[t])),transpose(Jt[t-1])));
 	    			
 	    			if(t<tau-1)
 	    			{
-	    				Vtt1hat[t-1] = plus(times(Vtt[t],transpose(Jt[t-1])),times(times(Jt[t],(minus(Vtt1hat[t],times(A,Vtt[t])))),transpose(Jt[t-1])));
+	    				Vtt1hat[t-1] = plus(times(Vtt[t],transpose(Jt[t-1])),times(times(Jt[t],minus(Vtt1hat[t],times(A,Vtt[t]))),transpose(Jt[t-1])));
 	    			}
 	    			
 	    		}
@@ -11608,7 +11609,7 @@ public class libdt extends AlgorithmBase {
 	 	//growing schedule
 	 	Collections.sort(ssc);
 	 	for (int i = ssc.size() -1; i >= 1; i--) {
-	 		if (ssc.get(i) == ssc.get(i-1)) {
+	 		if (ssc.get(i).doubleValue() == ssc.get(i-1).doubleValue()) {
 	 			ssc.remove(i);
 	 		}
 	 	}
