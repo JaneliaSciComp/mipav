@@ -4187,7 +4187,7 @@ public class libdt extends AlgorithmBase {
 	
 	// dst = cov*src  (n x m) = (n x n) * (n x m)
 	void postmultiply(CovMatrix cov, Mat src, Mat dst) {
-	  int c;
+	  int r, c;
 	  // allocate the output matrix
 	  if (!(src.rows == cov.n)) {
 		  MipavUtil.displayError("!(src.rows == cov.n) in postMultiply");
@@ -4196,7 +4196,8 @@ public class libdt extends AlgorithmBase {
 	  dst.create(cov.n, src.cols, CV_64F);
 	  switch(cov.covopt) {
 	  case COV_FULL:
-	    dst = times(cov.mtx,src);
+	    Mat dst2 = times(cov.mtx,src);
+	    copyTo(dst2,dst);
 	    break;
 	  case COV_DIAG:
 	    copyTo(src,dst);
@@ -4204,8 +4205,10 @@ public class libdt extends AlgorithmBase {
 	    break;
 	  case COV_IID:
 	    copyTo(src,dst);
-	    for (c = 0; c < src.cols; c++) {
-	        dst.double2D[0][c] *= cov.mtx.double2D[0][0];
+	    for (r = 0; r < src.rows; r++) {
+		    for (c = 0; c < src.cols; c++) {
+		        dst.double2D[r][c] *= cov.mtx.double2D[0][0];
+		    }
 	    }
 	    break;
 	  default:
@@ -9338,6 +9341,12 @@ public class libdt extends AlgorithmBase {
 	    CovMatrix iR = inv(dt.R);
 	    iRf = toFullMatrix(iR);
 	    postmultiply(iR,dt.C,RC);
+	    for (r = 0; r < RC.rows; r++) {
+			for (c = 0; c < RC.cols; c++) {
+				Preferences.debug("RC.double2D["+r+"]["+c+"] = " + RC.double2D[r][c] + "\n",Preferences.DEBUG_ALGORITHM);
+				System.out.println("RC.double2D["+r+"]["+c+"] = " + RC.double2D[r][c]);
+			}
+		}
 		CRC = times(transpose(dt.C),RC);
 	  }
 
