@@ -10719,14 +10719,14 @@ public class libdt extends AlgorithmBase {
 		   }
 	   }
 	   
-	   //for (int i = 0; i < bin.length; i++) {
-		   //Preferences.debug("bin["+i+"] = " + bin[i] + "\n", Preferences.DEBUG_ALGORITHM);
-	   //}
+	   for (int i = 0; i < bin.length; i++) {
+		   Preferences.debug("bin["+i+"] = " + bin[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	   }
 	 }
 
 	 // mask_flag = unsigned char[256] w/ non-zero for present mask values
 	 Mat mask2Border(Mat mask, int border, byte mask_flag[]) {
-	   int r,c;
+	   int r,c,col;
 	   int x,y;
 	   if (border <= 0) {
 		   MipavUtil.displayError("border = " + border + " in mask2Border");
@@ -10790,30 +10790,36 @@ public class libdt extends AlgorithmBase {
 	    	   maskcImage.importData(0, maskc, true);
 	       }
 	       catch (IOException e) {
-	    	   MipavUtil.displayError("IOExcetpion " + e + " on maskcImage.importData(0, maskc, true)");
+	    	   MipavUtil.displayError("IOException " + e + " on maskcImage.importData(0, maskc, true)");
 	    	   System.exit(-1);
 	       }
 	       int itersDilate = 1;
 	       boolean entireImage = true;
+	       if (border == 1) {
+	    	   algoMorph2D = new AlgorithmMorphology2D(maskcImage,AlgorithmMorphology2D.CONNECTED4,0.0f,AlgorithmMorphology2D.DILATE,
+		    		   itersDilate,0,0,0,entireImage);   
+	       }
+	       else {
 	       algoMorph2D = new AlgorithmMorphology2D(maskcImage,AlgorithmMorphology2D.SIZED_CIRCLE,(float)(2*border+1),AlgorithmMorphology2D.DILATE,
 	    		   itersDilate,0,0,0,entireImage);
+	       }
 	       algoMorph2D.run();
 	       algoMorph2D.finalize();
 	       try {
 	           maskcImage.exportData(0, length, maskcd);
 	       }
 	       catch (IOException e) {
-	    	   MipavUtil.displayError("IOExcetpion " + e + " on maskcImage.exportData(0, length, maskcd)");
+	    	   MipavUtil.displayError("IOException " + e + " on maskcImage.exportData(0, length, maskcd)");
 	    	   System.exit(-1);
 	       }
 	       for (r = 0; r < mask.rows; r++) {
-	    	   for (c = 0; c < mask.cols; c++) {
-	    		   maskcd[r*mask.cols+c] = (byte)(maskcd[r*mask.cols+c] ^ maskc[r*mask.cols+c]);
+	    	   for (col = 0; col < mask.cols; col++) {
+	    		   maskcd[r*mask.cols+col] = (byte)(maskcd[r*mask.cols+col] ^ maskc[r*mask.cols+col]);
 	    	   }
 	       }
 	       for (r = 0; r < mask.rows; r++) {
-	    	   for (c = 0; c < mask.cols; c++) {
-	    		   out.byte2D[r][c] = (byte)(out.byte2D[r][c] | maskcd[r*mask.cols+c]);
+	    	   for (col = 0; col < mask.cols; col++) {
+	    		   out.byte2D[r][col] = (byte)(out.byte2D[r][col] | maskcd[r*mask.cols+col]);
 	    	   }
 	       }
 	       //dilate(maskc, maskcd, el);          // dilate slightly
