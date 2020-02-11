@@ -9341,12 +9341,6 @@ public class libdt extends AlgorithmBase {
 	    CovMatrix iR = inv(dt.R);
 	    iRf = toFullMatrix(iR);
 	    postmultiply(iR,dt.C,RC);
-	    for (r = 0; r < RC.rows; r++) {
-			for (c = 0; c < RC.cols; c++) {
-				Preferences.debug("RC.double2D["+r+"]["+c+"] = " + RC.double2D[r][c] + "\n",Preferences.DEBUG_ALGORITHM);
-				System.out.println("RC.double2D["+r+"]["+c+"] = " + RC.double2D[r][c]);
-			}
-		}
 		CRC = times(transpose(dt.C),RC);
 	  }
 
@@ -10447,6 +10441,11 @@ public class libdt extends AlgorithmBase {
 	    						    }
 	    						}
 	    						tmp2=plus(tmp2,tmp4);
+	    						for (row = yind.x-1; row < yind.y; row++) {
+	    							for (col = xind.x-1; col < xind.y; col++) {
+	    								tmp1.byte2D[row][col] = tmp2.byte2D[row-(yind.x-1)][col-(xind.x-1)];
+	    							}
+	    						}
 	    					}
 
 	    				}
@@ -11514,6 +11513,7 @@ public class libdt extends AlgorithmBase {
 	 		}
 	 		classes.add(maxL+1);
 	 	}
+	 	
 	 }
 	 
 	 /*!
