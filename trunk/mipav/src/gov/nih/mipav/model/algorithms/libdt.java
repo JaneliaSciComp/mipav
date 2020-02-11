@@ -10565,7 +10565,6 @@ public class libdt extends AlgorithmBase {
 	   // build RGB tables (one time only)
 	   if (g_mask_lut[0][0] == null); {
 	     System.out.println("\n** building RGB tables **");
-	     
 	     for (int i=0; i<MAXCOL; i++) {
 	       for (c=0; c<3; c++) {
 	    	 g_mask_lut[i][c] = new Mat();
@@ -10648,7 +10647,7 @@ public class libdt extends AlgorithmBase {
 	         for (int x=0; x<img[0].cols; x++) {
 	           int p = (img[z].byte2D[y][x] & 0xff);
 	           int m;
-	           if (mask.length == 2)
+	           if (mask.length == 1)
 	             m = (mask_values[mask[0].byte2D[y][x] & 0xff] & 0xff);    // mask image
 	           else
 	             m = (mask_values[mask[z].byte2D[y][x] & 0xff] & 0xff);  // mask video
@@ -10669,7 +10668,7 @@ public class libdt extends AlgorithmBase {
 	         for (int i=0; i<3; i++) {
 	          for (r = 0; r < img[0].rows; r++) {
 	        	  for (c = 0; c < img[0].cols; c++) {
-	        	      bgr[i][0].byte2D[r][c] = (byte)(bord.byte2D[r][c] | bord.byte2D[r][c]);
+	        	      bgr[i][0].byte2D[r][c] = (byte)(bgr[i][0].byte2D[r][c] | bord.byte2D[r][c]);
 	        	  }
 	          }
 	         }
@@ -10708,15 +10707,21 @@ public class libdt extends AlgorithmBase {
 	   int sz[] = new int[]{img.length,img[0].rows,img[0].cols};
 	   oimg.create(3,sz,CV_8UC,3);
 	   
+	   long bin[] = new long[256];
 	   for (z = 0; z < img.length; z++) {
 		   for (r = 0; r < img[0].rows; r++) {
 			   for (c = 0; c < img[0].cols; c++) {
 				   for (ch = 0; ch < 3; ch++) {
 				       oimg.byte3DC[z][r][c][ch] = bgr[ch][z].byte2D[r][c]; 
+				       bin[oimg.byte3DC[z][r][c][ch] & 0xff]++;
 				   }
 			   }
 		   }
 	   }
+	   
+	   //for (int i = 0; i < bin.length; i++) {
+		   //Preferences.debug("bin["+i+"] = " + bin[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	   //}
 	 }
 
 	 // mask_flag = unsigned char[256] w/ non-zero for present mask values
