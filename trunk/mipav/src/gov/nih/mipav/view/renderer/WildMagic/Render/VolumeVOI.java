@@ -906,6 +906,12 @@ public class VolumeVOI extends VolumeObject
 		kAttributes.SetTChannels(0, 3);
 
 		VertexBuffer kVBuffer = null;
+		if ( (m_kVOI.getType() == VOI.ANNOTATION) )
+		{
+			if ( m_kVOI.size() == 1 ) {
+				m_kVOI.add( new Vector3f( m_kVOI.elementAt(0) ) );
+			}
+		}
 		if ( m_kVOI.getType() == VOI.POINT )
 		{
 			kVBuffer = new VertexBuffer(kAttributes, 12 );
@@ -958,9 +964,6 @@ public class VolumeVOI extends VolumeObject
 
 		if ( (m_kVOI.getType() == VOI.ANNOTATION) )
 		{
-			if ( m_kVOI.size() == 1 ) {
-				m_kVOI.add( new Vector3f( m_kVOI.elementAt(0) ) );
-			}
 			textAnnotations( m_kVOI.get(1), m_kVOI.get(0) );
 			m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));
 		}

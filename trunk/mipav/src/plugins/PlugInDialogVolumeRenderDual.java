@@ -224,7 +224,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JPanel latticePanelSingle = null;
 	
 	private class IntegratedWormData {
-		private VOI finalLattice;
+		private VOIVector finalLattice;
 		private VOIVector annotations;
 		private WormData wormData;
 		private ModelImage wormImage;
@@ -237,7 +237,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private JPanelClip_WM clipGUI;
 
 		private VOI annotationsTwisted = null;
-		private VOI latticeTwisted = null;
+		private VOIVector latticeTwisted = null;
 		private boolean annotationOpen = true;
 
 		private JPanelCurves curvesPanelUI;
@@ -629,7 +629,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					else {
 						activeImage.annotationsTwisted = null;
 					}
-					activeImage.latticeTwisted = new VOI(activeImage.voiManager.getLattice());
+					activeImage.latticeTwisted = new VOIVector(activeImage.voiManager.getLattice());
 					activeImage.voiManager.setPreviewMode(true, activeImage.voiManager.getLatticeStraight(), activeImage.voiManager.getAnnotationsStraight());
 					if ( activeImage.voiManager.getAnnotationsStraight() != null ) {
 						activeImage.previewImage.registerVOI( activeImage.voiManager.getAnnotationsStraight() );
@@ -666,7 +666,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 					// restore twisted annotations and lattice:
 					activeImage.wormImage.unregisterAllVOIs();
-					VOI newLatticeTwisted = activeImage.voiManager.retwistLattice(activeImage.latticeTwisted);
+					VOIVector newLatticeTwisted = activeImage.voiManager.retwistLattice(activeImage.latticeTwisted);
 					VOI annotations = activeImage.voiManager.retwistAnnotations(activeImage.latticeTwisted);
 					if ( newLatticeTwisted != null ) {
 						activeImage.latticeTwisted = newLatticeTwisted;
@@ -838,12 +838,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     		activeImage.voiManager = new VOILatticeManagerInterface( null, activeRenderer.getVolumeImage().GetImage(), null, 0, true, null );
     	}
     	activeRenderer.setVOILatticeManager(activeImage.voiManager);
-    	if ( activeImage.finalLattice != null ) {
-    		VOIVector latticeVector = new VOIVector();
-    		latticeVector.add(activeImage.finalLattice);
-    		activeImage.voiManager.setLattice(latticeVector);
-    		activeImage.finalLattice = null;
-    	}
+
+		if ( editMode != EditSeamCells ) {
+			activeImage.voiManager.setLattice(activeImage.wormData.readFinalLattice());
+		}
 
     	updateClipPanel(activeImage, activeRenderer, true);
 
@@ -1381,6 +1379,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if ( voiFile.exists() )
 					{
 						imageA = openImage(voiFile, fileName);
+						System.err.println("Opening... " + fileName );
 					}
 					if ( voiFile2.exists() )
 					{
@@ -1460,6 +1459,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						leftImage.wormImage = imageA;
 					}
 					imageStack[i] = leftImage;	
+					System.err.println( "... adding " + i + " " + leftImage.wormImage.getImageName() );
 					
 					
 
@@ -1468,10 +1468,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					leftImage.wormData = new WormData(leftImage.wormImage);
 					latticeSelectionPanel.removeAll();
 					latticeSelectionPanel.setVisible(false);
-
-					if ( editMode != EditSeamCells ) {
-						leftImage.finalLattice = leftImage.wormData.readFinalLattice();
-					}
 
 					if ( editMode == EditLattice ) {
 
@@ -2630,17 +2626,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		gbc.gridx = 0;
 		segmentSeamCells = gui.buildRadioButton("1). segment seam cells", true );
 		segmentSeamCells.addActionListener(this);
-		panel.add(segmentSeamCells.getParent(), gbc);
-		gbc.gridy++;
+//		panel.add(segmentSeamCells.getParent(), gbc);
+//		gbc.gridy++;
 
 		gbc.gridx = 0;
 		buildLattice = gui.buildRadioButton("3). generate lattices", false );
 		buildLattice.addActionListener(this);
-		panel.add(buildLattice.getParent(), gbc);
-		gbc.gridy++;
+//		panel.add(buildLattice.getParent(), gbc);
+//		gbc.gridy++;
 
 		gbc.gridx = 0;
-		latticeStraighten = gui.buildRadioButton("6). straighten", false );
+		latticeStraighten = gui.buildRadioButton("straighten", false );
 		latticeStraighten.addActionListener(this);
 		panel.add(latticeStraighten.getParent(), gbc);
 		gbc.gridy++;
@@ -2706,11 +2702,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		editSeamCells.setEnabled(true);
 		editSeamCells.addActionListener(this);
 		editSeamCells.setActionCommand("editSeamCells");
-		panel.add(editSeamCells.getParent(), gbc);
-		gbc.gridy++;
+//		panel.add(editSeamCells.getParent(), gbc);
+//		gbc.gridy++;
 
 		gbc.gridx = 0;
-		editLattice = gui.buildRadioButton("4a). edit lattice", false );
+		editLattice = gui.buildRadioButton("edit lattice", false );
 		editLattice.setEnabled(true);
 		editLattice.addActionListener(this);
 		editLattice.setActionCommand("editLattice");
@@ -2722,8 +2718,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		checkSeamCells.setEnabled(true);
 		checkSeamCells.addActionListener(this);
 		checkSeamCells.setActionCommand("checkSeamCells");
-		panel.add(checkSeamCells.getParent(), gbc);
-		gbc.gridy++;
+//		panel.add(checkSeamCells.getParent(), gbc);
+//		gbc.gridy++;
 
 		gbc.gridx = 0;
 		integratedEdit = gui.buildRadioButton("Integrated Editing", false );
@@ -2733,7 +2729,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		gbc.gridy++;
 
 		gbc.gridx = 0;
-		reviewResults = gui.buildRadioButton("7). review straightened results", false );
+		reviewResults = gui.buildRadioButton("review straightened results", false );
 		reviewResults.setEnabled(false);
 		reviewResults.addActionListener(this);
 		reviewResults.setActionCommand("reviewResults");
@@ -2939,20 +2935,20 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		data.annotations = new VOIVector();
 
-		if ( editMode == EditSeamCells || editMode == CheckSeam ) {
-			if ( editMode == CheckSeam ) {
-				data.wormData.readNamedSeamCells();
-			}
-			else {
-				data.wormData.readSeamCells();
-			}
-			VOI markers = data.wormData.getSeamAnnotations();
-			if ( markers != null ) {
-				data.annotations.add( markers );
-				data.wormImage.registerVOI( markers );
-			}
-		}
-		else if ( editMode == IntegratedEditing ) {
+//		if ( editMode == EditSeamCells || editMode == CheckSeam ) {
+//			if ( editMode == CheckSeam ) {
+//				data.wormData.readNamedSeamCells();
+//			}
+//			else {
+//				data.wormData.readSeamCells();
+//			}
+//			VOI markers = data.wormData.getSeamAnnotations();
+//			if ( markers != null ) {
+//				data.annotations.add( markers );
+//				data.wormImage.registerVOI( markers );
+//			}
+//		}
+		if ( editMode == IntegratedEditing ) {
 			if ( data.wormData.integratedExists() ) {
 				VOI markers = data.wormData.getIntegratedMarkerAnnotations();
 				if ( markers != null ) {
@@ -3345,7 +3341,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			// save annotations not in splines:
 			activeImage.wormData.saveIntegratedMarkerAnnotations(activeImage.voiManager.getAnnotations());
 			// save named seam cells:
-			activeImage.wormData.segmentSeamFromLattice( activeImage.voiManager.getLattice(), activeImage.voiManager.getImage(), true);
+//			activeImage.wormData.segmentSeamFromLattice( activeImage.voiManager.getLattice(), activeImage.voiManager.getImage(), true);
 		}
 	}
 

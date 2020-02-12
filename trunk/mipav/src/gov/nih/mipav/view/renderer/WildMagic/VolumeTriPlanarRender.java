@@ -90,6 +90,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	protected RendererListener configuredListener = null;
 	protected boolean rightMousePressed = false;
 	protected boolean altPressed = false;
+	protected boolean shiftPressed = false;
     private VOILatticeManagerInterface m_kVOIInterface = null;
 	/**
 	 * Default Constructor.
@@ -1107,6 +1108,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 */
 	public void keyPressed( KeyEvent e )
 	{
+		shiftPressed = e.isShiftDown();
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.setShiftDown(shiftPressed);
+    	}
 		altPressed = e.isAltDown();
 		if ( is3DSelectionEnabled() )
 		{
@@ -1227,15 +1233,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 //			m_bPickPending = true;
 //		}
 //	}
+	
+	public void keyReleased(KeyEvent e) {
+
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.setShiftDown(e.isShiftDown());
+    	}
+		super.keyReleased(e);
+	}
 
 	public void mousePressed(MouseEvent e) {
 		super.mousePressed(e);
 		if (e.isControlDown() && is3DSelectionEnabled()) {
 			rightMousePressed = ((e.getModifiers() & InputEvent.BUTTON3_MASK) != 0);
 			altPressed = e.isAltDown();
+			shiftPressed = e.isShiftDown();
 //			if ( !isEditAnnotations() || !e.isAltDown() ) {
 			if ( !isEditAnnotations()  ) {
-				System.err.println("mousePresed clear3DSelection");
+//				System.err.println("mousePresed clear3DSelection");
 				clear3DSelection();
 			}
 			m_iXPick = e.getX();
@@ -1251,6 +1267,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		super.mouseReleased(e);
 		rightMousePressed = false;
 		altPressed = e.isAltDown();
+		shiftPressed = e.isShiftDown();
 		m_bMouseDrag = false;
 		setDefaultCursor();
 	}
@@ -1267,7 +1284,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     {
     	if ( m_kVOIInterface != null )
     	{
-    		return m_kVOIInterface.select3DMarker(startPt, endPt, pt, rightMouse, multiSelect);
+    		return m_kVOIInterface.select3DMarker(startPt, endPt, pt, rightMouse, multiSelect, shiftPressed);
     	}
     	return false;
     }
@@ -1280,13 +1297,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	}
     	return false;
     }
-    
-    public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect )
+
+    public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect, boolean isShift )
     {
     	if ( m_kVOIInterface != null )
     	{
-    		m_kVOIInterface.add3DMarker(textVOI, automaticLabel, multiSelect);
+    		m_kVOIInterface.add3DMarker(textVOI, automaticLabel, multiSelect, isShift);
     	}    	
+    }
+    
+    public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect )
+    {
+    	add3DMarker(textVOI, automaticLabel, multiSelect, false);
     }
 
 	/** Rotates the object with a virtual trackball:
@@ -1517,6 +1539,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							maxPt.copy(kPoint);
 							
 							boolean picked = false;
+//							System.err.println("mouse drag? " + m_bMouseDrag );
 							if ( !m_bMouseDrag ) {
 								picked = select3DMarker( null, null, maxPt, rightMousePressed, altPressed );
 							}
@@ -1564,6 +1587,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 								}
 								newTextVOI.getCurves().add(textVOI);
 								textVOI.setPlane( iPlane );
+//								System.err.println("shift down? " + shiftPressed );
 								add3DMarker( newTextVOI, doAutomaticLabels(), altPressed );
 							}
 							m_kVOIInterface.updateDisplay();
@@ -1698,6 +1722,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							if ( maxValue != -Float.MAX_VALUE )
 							{					
 								boolean picked = false;
+//								System.err.println( "mouse drag? " + m_bMouseDrag );
 								if ( !m_bMouseDrag ) {
 									// select or create a new marker:
 									picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed, altPressed );
@@ -1740,7 +1765,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 										textVOI.setText(annotationPrefix() + id);	
 									}
 									newTextVOI.getCurves().add(textVOI);
-									add3DMarker( newTextVOI, doAutomaticLabels(), altPressed );
+									add3DMarker( newTextVOI, doAutomaticLabels(), altPressed, shiftPressed );
 								}
 								m_kVOIInterface.updateDisplay();
 							}

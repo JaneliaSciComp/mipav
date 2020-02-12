@@ -303,7 +303,7 @@ public class PlugInAlgorithmWormUntwisting
 					FileIO fileIO = new FileIO();
 					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
 					WormData wormData = new WormData(wormImage); 
-					VOI lattice = wormData.readFinalLattice();
+					VOIVector lattice = wormData.readFinalLattice();
 					if ( lattice != null )
 					{				
 						LatticeModel model = new LatticeModel(wormImage);
@@ -575,7 +575,7 @@ public class PlugInAlgorithmWormUntwisting
 					FileIO fileIO = new FileIO();
 					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
 					WormData wormData = new WormData(wormImage); 
-					VOI lattice = wormData.readFinalLattice();
+					VOIVector lattice = wormData.readFinalLattice();
 					if ( lattice == null )
 					{
 						MipavUtil.displayError( "Error in reading lattice file" );
@@ -618,10 +618,10 @@ public class PlugInAlgorithmWormUntwisting
 						model.saveAnnotationStraight(wormImage, "straightened_seamcells", "straightened_seamcells.csv" );	
 					}
 					// untwist named seam cells:
-					wormData.readNamedSeamCells();
-					model.setMarkers( wormData.getSeamAnnotations() );
-					model.untwistMarkers(segmentLattice);	
-					model.saveAnnotationStraight(wormImage, "straightened_named_seamcells", "straightened_seamcells.csv" );	
+//					wormData.readNamedSeamCells();
+//					model.setMarkers( wormData.getSeamAnnotations() );
+//					model.untwistMarkers(segmentLattice);	
+//					model.saveAnnotationStraight(wormImage, "straightened_named_seamcells", "straightened_seamcells.csv" );	
 					
 					// Untwist annotations:
 					boolean integratedMarkers = true;

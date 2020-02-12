@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -185,9 +186,8 @@ public class LatticeModel {
 		File file = new File(fileName);
 		if ( file.exists() )
 		{		
-			VOIVector latticePairs = new VOIVector();
+			VOIVector lattice = new VOIVector();
 			short sID = 0;
-			//        	System.err.println( fileName );
 			FileReader fr;
 			try {
 				fr = new FileReader(file);
@@ -197,15 +197,14 @@ public class LatticeModel {
 				line = br.readLine();
 				//				System.err.println(line);
 
-				VOI lattice = new VOI( sID, "lattice", VOI.ANNOTATION, 0 );
-				lattice.setColor(new Color(0, 0, 255));
-				VOIContour left = new VOIContour(false);
-				left.update(new ColorRGBA(0, 0, 1, 1));
-				VOIContour right = new VOIContour(false);
-				right.update(new ColorRGBA(0, 0, 1, 1));
-				lattice.getCurves().add(left);
-				lattice.getCurves().add(right);
+				VOI left = new VOI(sID, "left", VOI.ANNOTATION, (float) Math.random());
+				left.setColor(new Color(0, 0, 255));
+				VOI right = new VOI(sID++, "right", VOI.ANNOTATION, (float) Math.random());
+				right.setColor(new Color(0, 0, 255));
+				lattice.add(left);
+				lattice.add(right);
 				int count = 1;
+				
 				while ( line != null && (line.length() > 1) )
 				{
 					String[] parsed = line.split( "," );
@@ -216,7 +215,13 @@ public class LatticeModel {
 						float x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 						float y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 						float z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
-						left.add( new Vector3f(x,y,z));
+						
+						VOIWormAnnotation leftAnnotation = new VOIWormAnnotation( new Vector3f(x,y,z) );
+						leftAnnotation.setText(name);
+						if ( name.contains("H") || name.contains("V") || name.contains("T") ) {
+							leftAnnotation.setSeamCell(true);
+						}
+						left.getCurves().add( leftAnnotation );
 						count++;
 					}
 					line = br.readLine();
@@ -230,7 +235,13 @@ public class LatticeModel {
 						float x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 						float y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 						float z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
-						right.add( new Vector3f(x,y,z));
+						
+						VOIWormAnnotation rightAnnotation = new VOIWormAnnotation( new Vector3f(x,y,z) );
+						rightAnnotation.setText(name);
+						if ( name.contains("H") || name.contains("V") || name.contains("T") ) {
+							rightAnnotation.setSeamCell(true);
+						}
+						right.getCurves().add( rightAnnotation );
 						count++;
 					}
 					line = br.readLine();
@@ -239,13 +250,27 @@ public class LatticeModel {
 				fr.close();
 				if ( count > 1 )
 				{
-					latticePairs.add(lattice);
-					for ( int i = 0; i < left.size(); i++ ) {
+					// create contour lines & pairs
 
-						final VOI marker = new VOI((short)(i+1), "pair_" + (i+1), VOI.POLYLINE, (float) Math.random());
+					VOI leftLattice = new VOI(sID++, "leftContour", VOI.POLYLINE, (float) Math.random());					
+					VOIContour leftC = new VOIContour(false);
+					leftLattice.getCurves().add(leftC);
+					lattice.add(leftLattice);
+					
+					VOI rightLattice = new VOI(sID++, "rightContour", VOI.POLYLINE, (float) Math.random());
+					VOIContour rightC = new VOIContour(false);
+					rightLattice.getCurves().add(rightC);
+					lattice.add(rightLattice);
+
+					for ( int i = 0; i < left.getCurves().size(); i++ ) {
+						leftC.add(left.getCurves().elementAt(i).elementAt(0));
+						rightC.add(left.getCurves().elementAt(i).elementAt(0));
+						
+						
+						final VOI marker = new VOI(sID++, "pair_" + (i+1), VOI.POLYLINE, (float) Math.random());
 						final VOIContour mainAxis = new VOIContour(false);
-						mainAxis.add(left.elementAt(i));
-						mainAxis.add(right.elementAt(i));
+						mainAxis.add(left.getCurves().elementAt(i).elementAt(0));
+						mainAxis.add(left.getCurves().elementAt(i).elementAt(0));
 						marker.getCurves().add(mainAxis);
 						marker.setColor(new Color(255, 255, 0));
 						mainAxis.update(new ColorRGBA(1, 1, 0, 1));
@@ -253,10 +278,10 @@ public class LatticeModel {
 							marker.setColor(new Color(0, 255, 0));
 							mainAxis.update(new ColorRGBA(0, 1, 0, 1));
 						}
-						latticePairs.add(marker);
+						lattice.add(marker);
 					}
-					return latticePairs;
 				}
+				return lattice;
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -378,14 +403,22 @@ public class LatticeModel {
 			else {
 				bw.write("name" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "," + "R" + "," + "G" + "," + "B" + "\n");
 			}
+			
 			for (int i = 0; i < annotations.getCurves().size(); i++) {
 
 				VOIWormAnnotation annotation = (VOIWormAnnotation)annotations.getCurves().elementAt(i);
 				if ( !isCurve && annotation.isCurveAnnotation() ) continue;
 				if ( isCurve && !annotation.isCurveAnnotation() ) continue;
+				if ( annotation.size() == 0 ) {
+					System.err.println("error");
+				}
 				Vector3f position = annotation.elementAt(0);
 				if ( saveLatticeSegment ) {
 					int segment = annotation.getLatticeSegment();
+					String text = annotation.getText();
+					if ( text.length() == 0 ) {
+						// generate the name:
+					}
 					if ( segment != -1 ) {
 						bw.write(annotation.getText() + "," + position.X + "," + position.Y + ","	+ position.Z + "," + annotation.getColorString() + "," + segment + "\n");
 					}
@@ -582,11 +615,13 @@ public class LatticeModel {
 	
 	protected ModelImage seamCellImage;
 	// Set of two contours, each connected to the other pair-wise
-	protected VOI lattice = null;
+	protected VOIVector lattice = null;
 	// left side of the lattice:
-	protected VOIContour left;
+	protected VOI left;
+//	protected VOIContour leftLattice;
 	// right side of the lattice:
-	protected VOIContour right;
+	protected VOI right;
+//	protected VOIContour rightLattice;
 	// horizontal bars connecting left and right lattice pairs:
 	private VOIVector latticeGrid;
 	// center points half-way between left and right sides of the lattice:
@@ -700,7 +735,7 @@ public class LatticeModel {
 
 	private VOI annotationsStraight = null;
 
-	private VOI latticeStraight = null;
+	private VOIVector latticeStraight = null;
 
 	private boolean previewMode = false;
 
@@ -745,7 +780,7 @@ public class LatticeModel {
 	 * @param imageA
 	 * @param lattice
 	 */
-	public LatticeModel(final ModelImage imageA, final VOI lattice) {
+	public LatticeModel(final ModelImage imageA, final VOIVector lattice) {
 		this.imageA = imageA;
 		imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
 		String imageName = imageA.getImageName();
@@ -758,16 +793,25 @@ public class LatticeModel {
 		this.lattice = lattice;
 
 		// Assume image is isotropic (square voxels).
-		if (lattice.getCurves().size() != 2) {
+		if (lattice.size() < 2) {
 			return;
 		}
-		left = (VOIContour) lattice.getCurves().elementAt(0);
-		right = (VOIContour) lattice.getCurves().elementAt(1);
-		if (left.size() != right.size()) {
+		left = (VOI) lattice.elementAt(0);
+		right = (VOI) lattice.elementAt(1);
+		if (left.getCurves().size() != right.getCurves().size()) {
 			return;
 		}
 
-		this.imageA.registerVOI(lattice);
+		if ( lattice.size() < 4 ) {
+			// create displayed contours for left / right:
+			makeLatticeContours();
+		}
+		if ( lattice.size() == 4 ) {
+			// displayed contours are lattice[2] and lattice[3]
+			this.imageA.registerVOI(lattice.elementAt(2));
+			this.imageA.registerVOI(lattice.elementAt(3));
+		}
+
 		updateLattice(true);
 	}
 
@@ -776,7 +820,7 @@ public class LatticeModel {
 	 * 
 	 * @param textVOI
 	 */
-	public void addAnnotation(final VOI textVOI, boolean multiSelect) {
+	public void addAnnotation(final VOI textVOI, boolean multiSelect ) {
 		if (annotationVOIs == null) {
 			final int colorID = 0;
 			annotationVOIs = new VOI((short) colorID, "annotationVOIs", VOI.ANNOTATION, -1.0f);
@@ -915,21 +959,40 @@ public class LatticeModel {
 	 * 
 	 * @param pt
 	 */
-	public void addLeftRightMarker(final Vector3f pt) {
+	public void addLeftRightMarker(final Vector3f pt, boolean isSeam ) {
 		if (lattice == null) {
-			final short id = (short) imageA.getVOIs().getUniqueID();
-			lattice = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
-
-			left = new VOIContour(false);
-			right = new VOIContour(false);
-			lattice.getCurves().add(left);
-			lattice.getCurves().add(right);
-
-			this.imageA.registerVOI(lattice);
+			lattice = new VOIVector();
 		}
-		if (left.size() == right.size()) {
-			left.add(new Vector3f(pt));
-			pickedPoint = left.lastElement();
+		if ( left == null ) {
+			short id = (short) imageA.getVOIs().getUniqueID();
+			left = new VOI(id, "left", VOI.ANNOTATION, (float) Math.random());
+			right = new VOI(id++, "right", VOI.ANNOTATION, (float) Math.random());
+			lattice.add(left);
+			lattice.add(right);
+		}
+		int seamCount = 0;
+		int otherCount = 0;
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			if ( ((VOIWormAnnotation)left.getCurves().elementAt(i)).isSeamCell() ) {
+				seamCount++;
+			}
+			else {
+				otherCount++;
+			}
+		}
+		if (left.getCurves().size() == right.getCurves().size()) {
+			VOIWormAnnotation annotation = new VOIWormAnnotation(new Vector3f(pt));
+			annotation.setSeamCell(isSeam);
+			if ( isSeam ) {
+				String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+				annotation.setText(name + "L");
+			}
+			else {
+				String name = "a" + otherCount;
+				annotation.setText(name + "L");
+			}
+			left.getCurves().add(annotation);
+			pickedPoint = left.getCurves().lastElement().elementAt(0);
 			// System.err.println( pt );
 
 			if (leftMarker == null) {
@@ -943,8 +1006,18 @@ public class LatticeModel {
 			}
 			return;
 		} else {
-			right.add(new Vector3f(pt));
-			pickedPoint = right.lastElement();
+			VOIWormAnnotation annotation = new VOIWormAnnotation(new Vector3f(pt));
+			annotation.setSeamCell(isSeam);
+			if ( isSeam ) {
+				String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+				annotation.setText(name + "R");
+			}
+			else {
+				String name = "a" + otherCount;
+				annotation.setText(name + "R");
+			}
+			right.getCurves().add(annotation);
+			pickedPoint = right.getCurves().lastElement().elementAt(0);
 			// System.err.println( pt );
 
 			if (rightMarker == null) {
@@ -1116,22 +1189,22 @@ public class LatticeModel {
 			}
 			if (deletedLeft || deletedRight) {
 				if (deletedLeft) {
-					left.remove(left.lastElement());
+					left.getCurves().remove(left.getCurves().lastElement());
 				}
 				if (deletedRight) {
-					right.remove(right.lastElement());
+					right.getCurves().remove(right.getCurves().lastElement());
 				}
 			} else {
-				final int leftIndex = left.indexOf(pickedPoint);
-				final int rightIndex = right.indexOf(pickedPoint);
+				final int leftIndex = findPoint(left, pickedPoint);
+				final int rightIndex = findPoint(right, pickedPoint);
 				if (leftIndex != -1) {
-					left.remove(leftIndex);
-					right.remove(leftIndex);
+					left.getCurves().remove(leftIndex);
+					right.getCurves().remove(leftIndex);
 					deletedLeft = true;
 					deletedRight = true;
 				} else if (rightIndex != -1) {
-					left.remove(rightIndex);
-					right.remove(rightIndex);
+					left.getCurves().remove(rightIndex);
+					right.getCurves().remove(rightIndex);
 					deletedLeft = true;
 					deletedRight = true;
 				}
@@ -1169,7 +1242,9 @@ public class LatticeModel {
 		}
 		if ( imageA != null )
 		{
-			imageA.unregisterVOI(lattice);
+			for ( int i = 0; i < lattice.size(); i++ ) {
+				imageA.unregisterVOI(lattice.elementAt(i));
+			}
 			imageA.unregisterVOI(displayContours);
 			imageA.unregisterVOI(leftLine);
 			imageA.unregisterVOI(rightLine);
@@ -1230,12 +1305,21 @@ public class LatticeModel {
 	}
 
 	public void flipLattice() {
-		Vector3f temp = new Vector3f();
-		for ( int i = 0; i < left.size(); i++ ) {
-			temp.copy(left.elementAt(i));
-			left.elementAt(i).copy(right.elementAt(i));
-			right.elementAt(i).copy(temp);
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			String label = text.getText();
+			label.replace("L", "R");
+			text.setText(label);
+			
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			label = text.getText();
+			label.replace("R", "L");
+			text.setText(label);
 		}
+		VOI temp = left;
+		left = right;
+		right = temp;
+		
 		updateLattice(true);
 	}
 
@@ -1522,7 +1606,7 @@ public class LatticeModel {
 
 	public String getAnnotationPrefix()
 	{
-		System.err.println("getAnnotationPrefix " + annotationPrefix);
+//		System.err.println("getAnnotationPrefix " + annotationPrefix);
 		return annotationPrefix;
 	}
 
@@ -1687,20 +1771,15 @@ public class LatticeModel {
 		return imageA;
 	}
 
-	public VOI getLattice() {
+	public VOIVector getLattice() {
 		return lattice;
 	}
 
-	public VOI getLatticeStraight()
+	public VOIVector getLatticeStraight()
 	{
 		return latticeStraight;
 	}
-
-	public VOIContour getLeft()
-	{
-		return left;
-	}
-
+	
 	public VOIContour getCenter()
 	{
 		return centerPositions;
@@ -1761,8 +1840,8 @@ public class LatticeModel {
 		}
 		int closestL = -1;
 		float minDistL = Float.MAX_VALUE;
-		for (int i = 0; i < left.size(); i++) {
-			final float distance = pt.distance(left.elementAt(i));
+		for (int i = 0; i < left.getCurves().size(); i++) {
+			final float distance = pt.distance(left.getCurves().elementAt(i).elementAt(0));
 			if (distance < minDistL) {
 				minDistL = distance;
 				if (minDistL <= 12) {
@@ -1773,8 +1852,8 @@ public class LatticeModel {
 		int closestR = -1;
 		float minDistR = Float.MAX_VALUE;
 		if (right != null) {
-			for (int i = 0; i < right.size(); i++) {
-				final float distance = pt.distance(right.elementAt(i));
+			for (int i = 0; i < right.getCurves().size(); i++) {
+				final float distance = pt.distance(right.getCurves().elementAt(i).elementAt(0));
 				if (distance < minDistR) {
 					minDistR = distance;
 					if (minDistR <= 12) {
@@ -1788,17 +1867,17 @@ public class LatticeModel {
 		if ( (closestL != -1) && (closestR != -1)) {
 			if (minDistL < minDistR) {
 				// System.err.println( "Picked Lattice Left " + closestL );
-				pickedPoint = left.elementAt(closestL);
+				pickedPoint = left.getCurves().elementAt(closestL).elementAt(0);
 			} else {
 				// System.err.println( "Picked Lattice Right " + closestR );
-				pickedPoint = right.elementAt(closestR);
+				pickedPoint = right.getCurves().elementAt(closestR).elementAt(0);
 			}
 		} else if (closestL != -1) {
 			// System.err.println( "Picked Lattice Left " + closestL );
-			pickedPoint = left.elementAt(closestL);
+			pickedPoint = left.getCurves().elementAt(closestL).elementAt(0);
 		} else if (closestR != -1) {
 			// System.err.println( "Picked Lattice Right " + closestR );
-			pickedPoint = right.elementAt(closestR);
+			pickedPoint = right.getCurves().elementAt(closestR).elementAt(0);
 		}
 
 		if (pickedPoint != null) {
@@ -1827,12 +1906,7 @@ public class LatticeModel {
 		}
 		return selectedAnnotations;
 	}
-
-	public VOIContour getRight()
-	{
-		return right;
-	}
-
+	
 	public VOI getSamplingPlanes( boolean scale )
 	{
 		final short sID = (short) (imageA.getVOIs().getUniqueID());
@@ -1983,8 +2057,8 @@ public class LatticeModel {
 		// if preview constrain lattice points to x,0,z coordinates:
 		if (pickedPoint != null) {
 			if ( previewMode ) {
-				final int leftIndex = left.indexOf(pickedPoint);
-				final int rightIndex = right.indexOf(pickedPoint);
+				final int leftIndex = findPoint(left, pickedPoint);
+				final int rightIndex = findPoint(right, pickedPoint);
 				if ( (leftIndex != -1) && !retwistLattice[0][leftIndex] ) {
 					retwistLattice[0][leftIndex] = true;
 				}
@@ -2057,8 +2131,8 @@ public class LatticeModel {
 		else if ( pickedPoint != null ) {
 
 			if ( previewMode ) {
-				final int leftIndex = left.indexOf(pickedPoint);
-				final int rightIndex = right.indexOf(pickedPoint);
+				final int leftIndex = findPoint(left, pickedPoint);
+				final int rightIndex = findPoint(right, pickedPoint);
 				if ( (leftIndex != -1) && !retwistLattice[0][leftIndex] ) {
 					retwistLattice[0][leftIndex] = true;
 				}
@@ -2113,7 +2187,7 @@ public class LatticeModel {
 	}
 
 
-	public VOI retwistAnnotations(VOI lattice) {
+	public VOI retwistAnnotations(VOIVector lattice) {
 		setLattice(lattice);
 		if ( annotationVOIs == null ) return null;
 		for ( int i = annotationVOIs.getCurves().size() - 1; i >=0; i-- ) {
@@ -2133,79 +2207,79 @@ public class LatticeModel {
 		return annotationVOIs;
 	}
 
-	public VOI retwistLattice(VOI lattice) {
-		VOI newLattice = null;
-		VOIContour left3D = null;
-		VOIContour right3D = null;
+	public VOIVector retwistLattice(VOIVector lattice) {
+		VOIVector newLattice = null;
+		VOI left3D = null;
+		VOI right3D = null;
 
 		for ( int i = 0; i < retwistLattice[0].length; i++ ) {
 			if ( retwistLattice[0][i] || retwistLattice[1][i] ) {
 				if ( newLattice == null ) {
 					// create a copy of the lattice so we can change it:
-					newLattice = new VOI(lattice);
-					left3D = (VOIContour) newLattice.getCurves().elementAt(0);
-					right3D = (VOIContour) newLattice.getCurves().elementAt(1);
+					newLattice = new VOIVector(lattice);
+					left3D = (VOI) newLattice.elementAt(0);
+					right3D = (VOI) newLattice.elementAt(1);
 				}
 			}
 			if ( retwistLattice[0][i] && retwistLattice[1][i] ) {
 				System.err.println("retwistLattice both " + i);
 				// both lattice pts changed:
-				Vector3f center = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+				Vector3f center = Vector3f.add( left.getCurves().elementAt(i).elementAt(0), right.getCurves().elementAt(i).elementAt(0) );
 				center.scale(0.5f);
-				Vector3f leftDir = Vector3f.sub(left.elementAt(i), center); 
+				Vector3f leftDir = Vector3f.sub(left.getCurves().elementAt(i).elementAt(0), center); 
 				float leftLength = leftDir.normalize();
-				Vector3f rightDir = Vector3f.sub(right.elementAt(i), center); 
+				Vector3f rightDir = Vector3f.sub(right.getCurves().elementAt(i).elementAt(0), center); 
 				float rightLength = rightDir.normalize();
 
-				Vector3f center3D =  Vector3f.add( left3D.elementAt(i), right3D.elementAt(i) );
+				Vector3f center3D =  Vector3f.add( left3D.getCurves().elementAt(i).elementAt(0), right3D.getCurves().elementAt(i).elementAt(0) );
 				center3D.scale(0.5f);
 
-				Vector3f leftDir3D = Vector3f.sub(left3D.elementAt(i), center3D); 
-				Vector3f rightDir3D = Vector3f.sub(right3D.elementAt(i), center3D); 
+				Vector3f leftDir3D = Vector3f.sub(left3D.getCurves().elementAt(i).elementAt(0), center3D); 
+				Vector3f rightDir3D = Vector3f.sub(right3D.getCurves().elementAt(i).elementAt(0), center3D); 
 
 				Vector3f newLeft = new Vector3f(center3D);
 				leftDir3D.normalize(); leftDir3D.scale(leftLength);
 				newLeft.add(leftDir3D);
-				left3D.elementAt(i).copy(newLeft);
+				left3D.getCurves().elementAt(i).elementAt(0).copy(newLeft);
 
 				Vector3f newRight = new Vector3f(center3D);
 				rightDir3D.normalize(); rightDir3D.scale(rightLength);
 				newRight.add(rightDir3D);
-				right3D.elementAt(i).copy(newRight);	
+				right3D.getCurves().elementAt(i).elementAt(0).copy(newRight);	
 			}
 			else if ( retwistLattice[0][i] ) {
 				// left lattice pt changed:
-				Vector3f center = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+				Vector3f center = Vector3f.add( left.getCurves().elementAt(i).elementAt(0), right.getCurves().elementAt(i).elementAt(0) );
 				center.scale(0.5f);
-				Vector3f leftDir = Vector3f.sub( left.elementAt(i), center); 
+				Vector3f leftDir = Vector3f.sub( left.getCurves().elementAt(i).elementAt(0), center); 
 				float leftLength = leftDir.normalize();
 
-				Vector3f center3D =  Vector3f.add( left3D.elementAt(i), right3D.elementAt(i) );
+				Vector3f center3D =  Vector3f.add( left3D.getCurves().elementAt(i).elementAt(0), right3D.getCurves().elementAt(i).elementAt(0) );
 				center3D.scale(0.5f);
 
-				Vector3f leftDir3D = Vector3f.sub(left3D.elementAt(i), center3D); 
+				Vector3f leftDir3D = Vector3f.sub(left3D.getCurves().elementAt(i).elementAt(0), center3D); 
 
 				Vector3f newLeft = new Vector3f(center3D);
 				leftDir3D.normalize(); leftDir3D.scale(leftLength);
 				newLeft.add(leftDir3D);
-				left3D.elementAt(i).copy(newLeft);
+				left3D.getCurves().elementAt(i).elementAt(0).copy(newLeft);
 			}
 			else if ( retwistLattice[1][i] ) {
 				// right lattice pt changed:
-				Vector3f center = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+				Vector3f center = Vector3f.add( left.getCurves().elementAt(i).elementAt(0), right.getCurves().elementAt(i).elementAt(0) );
 				center.scale(0.5f);
-				Vector3f rightDir = Vector3f.sub( right.elementAt(i), center); 
+				Vector3f rightDir = Vector3f.sub( right.getCurves().elementAt(i).elementAt(0), center); 
 				float rightLength = rightDir.normalize();
 
-				Vector3f center3D =  Vector3f.add( left3D.elementAt(i), right3D.elementAt(i) );
+				Vector3f center3D =  Vector3f.add( left3D.getCurves().elementAt(i).elementAt(0), right3D.getCurves().elementAt(i).elementAt(0) );
 				center3D.scale(0.5f);
 
-				Vector3f rightDir3D = Vector3f.sub(right3D.elementAt(i), center3D); 
+				Vector3f rightDir3D = Vector3f.sub(right3D.getCurves().elementAt(i).elementAt(0), center3D); 
 
 				Vector3f newRight = new Vector3f(center3D);
 				rightDir3D.normalize(); rightDir3D.scale(rightLength);
 				newRight.add(rightDir3D);
-				right3D.elementAt(i).copy(newRight);				
+				right3D.getCurves().elementAt(i).elementAt(0).copy(newRight);				
 			}
 		}
 
@@ -2257,9 +2331,6 @@ public class LatticeModel {
 		}
 		if (rightMarker != null) {
 			imageA.registerVOI(rightMarker);
-		}
-		if (lattice != null) {
-			imageA.registerVOI(lattice);
 		}
 		updateLattice(true);
 	}
@@ -2334,24 +2405,21 @@ public class LatticeModel {
 			clear3DSelection();
 
 			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
-			for ( int j = 0; j < left.size(); j++ )
+			for ( int j = 0; j < left.getCurves().size(); j++ )
 			{
-				VOIWormAnnotation text = new VOIWormAnnotation();
-				text.setText( "L" + j );
-				text.add(left.elementAt(j));
-				text.add(left.elementAt(j));
-				latticePoints.getCurves().add(text);
-
-				text = new VOIWormAnnotation();
-				text.setText( "R" + j );
-				text.add(right.elementAt(j));
-				text.add(right.elementAt(j));
-				latticePoints.getCurves().add(text);
+				latticePoints.getCurves().add(left.getCurves().elementAt(j));
+				latticePoints.getCurves().add(right.getCurves().elementAt(j));
 			}
 			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
 
 			imageA.unregisterAllVOIs();
-			imageA.registerVOI(lattice);
+			if ( lattice.size() != 4 ) {
+				makeLatticeContours();
+			}
+			if ( lattice.size() == 4 ) {
+				imageA.registerVOI(lattice.elementAt(2));
+				imageA.registerVOI(lattice.elementAt(3));
+			}
 			if (leftMarker != null) {
 				imageA.registerVOI(leftMarker);
 			}
@@ -2374,59 +2442,26 @@ public class LatticeModel {
 	 */
 	public void saveLattice(final String directory, final String fileName)
 	{
-		if ( lattice == null )
+		if ( left == null || right == null )
 		{
 			return;
 		}
-		if ( lattice.getCurves() == null )
-		{
-			return;
-		}
-		if ( lattice.getCurves().size() != 2 )
-		{
-			return;
-		}
-		if ( left.size() != right.size() )
+		if ( left.getCurves().size() != right.getCurves().size() )
 		{
 			return;
 		}
 		if (fileName != null)
 		{
+			renameLattice();
 			final String voiDir = new String(directory + fileName + File.separator);
 
-//			clear3DSelection();			
-
 			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
-			for ( int j = 0; j < left.size(); j++ )
+			for ( int j = 0; j < left.getCurves().size(); j++ )
 			{
-				VOIWormAnnotation text = new VOIWormAnnotation();
-				text.setText( "L" + j );
-				text.add(left.elementAt(j));
-				text.add(left.elementAt(j));
-				latticePoints.getCurves().add(text);
-
-				text = new VOIWormAnnotation();
-				text.setText( "R" + j );
-				text.add(right.elementAt(j));
-				text.add(right.elementAt(j));
-				latticePoints.getCurves().add(text);
+				latticePoints.getCurves().add(left.getCurves().elementAt(j));
+				latticePoints.getCurves().add(right.getCurves().elementAt(j));
 			}
 			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
-
-
-
-			//			imageA.unregisterAllVOIs();
-			//			imageA.registerVOI(lattice);
-			//			if (leftMarker != null) {
-			//				imageA.registerVOI(leftMarker);
-			//			}
-			//			if (rightMarker != null) {
-			//				imageA.registerVOI(rightMarker);
-			//			}
-			//			if (annotationVOIs != null) {
-			//				imageA.registerVOI(annotationVOIs);
-			//			}
-			//			updateLattice(true);
 		}
 	}
 	
@@ -2506,9 +2541,11 @@ public class LatticeModel {
 				final File lrFile = new File(voiDir + list[i]);
 				System.err.println( lrFile.getName() );
 				VOI annotations = LatticeModel.readAnnotationsCSV(voiDir + list[i]);
-				setMarkers(annotations);
-				untwistMarkers(useLatticeModel);	
-				saveAnnotationStraight(imageA, "straightened_neurites", "straightened_" + list[i] );	
+				if ( annotations != null ) {
+					setMarkers(annotations);
+					untwistMarkers(useLatticeModel);	
+					saveAnnotationStraight(imageA, "straightened_neurites", "straightened_" + list[i] );	
+				}
 			}
 		} 
 	}
@@ -2983,6 +3020,7 @@ public class LatticeModel {
 			return false;
 		}
 		VOIWormAnnotation nearest = findNearestAnnotation(startPt, endPt, pt);
+		System.err.println("selectAnnotation " + nearest );
 		if ( nearest == null ) {
 			return false;
 		}
@@ -3041,15 +3079,15 @@ public class LatticeModel {
 		return false;
 	}
 
-	public boolean selectLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt) {
+	public boolean selectLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean isSeam) {
 		if ( (lattice == null) || (left == null) || (right == null) ) {
 			return false;
 		}
 		pickedPoint = null;
 		int closestL = -1;
 		float minDistL = Float.MAX_VALUE;
-		for (int i = 0; i < left.size(); i++) {
-			final float distance = pt.distance(left.elementAt(i));
+		for (int i = 0; i < left.getCurves().size(); i++) {
+			final float distance = pt.distance(left.getCurves().elementAt(i).elementAt(0));
 			if (distance < minDistL) {
 				minDistL = distance;
 				if (minDistL <= 12) {
@@ -3059,8 +3097,8 @@ public class LatticeModel {
 		}
 		int closestR = -1;
 		float minDistR = Float.MAX_VALUE;
-		for (int i = 0; i < right.size(); i++) {
-			final float distance = pt.distance(right.elementAt(i));
+		for (int i = 0; i < right.getCurves().size(); i++) {
+			final float distance = pt.distance(right.getCurves().elementAt(i).elementAt(0));
 			if (distance < minDistR) {
 				minDistR = distance;
 				if (minDistR <= 12) {
@@ -3072,17 +3110,17 @@ public class LatticeModel {
 		if ( (closestL != -1) && (closestR != -1)) {
 			if (minDistL < minDistR) {
 				// System.err.println( "Picked Lattice Left " + closestL );
-				pickedPoint = left.elementAt(closestL);
+				pickedPoint = left.getCurves().elementAt(closestL).elementAt(0);
 			} else {
 				// System.err.println( "Picked Lattice Right " + closestR );
-				pickedPoint = right.elementAt(closestR);
+				pickedPoint = right.getCurves().elementAt(closestR).elementAt(0);
 			}
 		} else if (closestL != -1) {
 			// System.err.println( "Picked Lattice Left " + closestL );
-			pickedPoint = left.elementAt(closestL);
+			pickedPoint = left.getCurves().elementAt(closestL).elementAt(0);
 		} else if (closestR != -1) {
 			// System.err.println( "Picked Lattice Right " + closestR );
-			pickedPoint = right.elementAt(closestR);
+			pickedPoint = right.getCurves().elementAt(closestR).elementAt(0);
 		}
 		if (pickedPoint != null) {
 			updateLattice(false);
@@ -3091,20 +3129,20 @@ public class LatticeModel {
 		// look at the vector under the mouse and see which lattice point is closest...
 		final Segment3f mouseVector = new Segment3f(startPt, endPt);
 		float minDist = Float.MAX_VALUE;
-		for (int i = 0; i < left.size(); i++) {
-			DistanceVector3Segment3 dist = new DistanceVector3Segment3(left.elementAt(i), mouseVector);
+		for (int i = 0; i < left.getCurves().size(); i++) {
+			DistanceVector3Segment3 dist = new DistanceVector3Segment3(left.getCurves().elementAt(i).elementAt(0), mouseVector);
 			float distance = dist.Get();
 			if (distance < minDist) {
 				minDist = distance;
-				pickedPoint = left.elementAt(i);
+				pickedPoint = left.getCurves().elementAt(i).elementAt(0);
 			}
 		}
-		for ( int i = 0; i < right.size(); i++ ) {
-			DistanceVector3Segment3 dist = new DistanceVector3Segment3(right.elementAt(i), mouseVector);
+		for ( int i = 0; i < right.getCurves().size(); i++ ) {
+			DistanceVector3Segment3 dist = new DistanceVector3Segment3(right.getCurves().elementAt(i).elementAt(0), mouseVector);
 			float distance = dist.Get();
 			if (distance < minDist) {
 				minDist = distance;
-				pickedPoint = right.elementAt(i);
+				pickedPoint = right.getCurves().elementAt(i).elementAt(0);
 			}
 		}
 		if ( (pickedPoint != null) && (minDist <= 12)) {
@@ -3112,7 +3150,7 @@ public class LatticeModel {
 			return true;
 		}
 		if ( !previewMode ) {
-			return addInsertionPoint(startPt, endPt, pt);
+			return addInsertionPoint(startPt, endPt, pt, isSeam);
 		}
 		else {
 			return false;
@@ -3809,31 +3847,32 @@ public class LatticeModel {
 	 * 
 	 * @param newLattice
 	 */
-	public void setLattice(final VOI newLattice) {
+	public void setLattice(final VOIVector newLattice) {
 		if (lattice != null) {
-			imageA.unregisterVOI(lattice);
-			clearCurves(true);
+			for ( int i = 0; i < lattice.size(); i++ ) {
+				imageA.unregisterVOI(lattice.elementAt(i));
+			}
+			lattice.removeAllElements();
 		}
 		this.lattice = newLattice;
+		left = null;
+		right = null;
+		clearCurves(true);
 		if ( this.lattice == null )
 		{
-			left = null;
-			right = null;
-			clearCurves(true);
 			return;
 		}
 
 		// Assume image is isotropic (square voxels).
-		if (lattice.getCurves().size() != 2) {
+		if (lattice.size() < 2) {
 			return;
 		}
-		left = (VOIContour) lattice.getCurves().elementAt(0);
-		right = (VOIContour) lattice.getCurves().elementAt(1);
-		if (left.size() != right.size()) {
+		left = (VOI) lattice.elementAt(0);
+		right = (VOI) lattice.elementAt(1);
+		if (left.getCurves().size() != right.getCurves().size()) {
 			return;
 		}
 
-		this.imageA.registerVOI(lattice);
 		clear3DSelection();
 		clearAddLeftRightMarkers();
 		updateLattice(true);
@@ -4023,7 +4062,7 @@ public class LatticeModel {
 		return previewMode;
 	}
 
-	public void setPreviewMode( boolean preview, VOI lattice, VOI annotations )
+	public void setPreviewMode( boolean preview, VOIVector lattice, VOI annotations )
 	{
 		this.previewMode = preview;
 		setAnnotations(annotations);
@@ -4031,7 +4070,7 @@ public class LatticeModel {
 		if ( retwistLattice != null ) {
 			retwistLattice = null;
 		}
-		retwistLattice = new boolean[2][left.size()];
+		retwistLattice = new boolean[2][left.getCurves().size()];
 	}
 
 
@@ -4101,17 +4140,53 @@ public class LatticeModel {
 		return (imageA.isRegistered(samplingPlanes) != -1);
 	}
 
+	public void showLatticeLabels(boolean display) {
+
+		if ( display ) {
+			if ( imageA.isRegistered(left) == -1 ) {
+				imageA.registerVOI(left);
+			}
+			if ( imageA.isRegistered(right) == -1 ) {
+				imageA.registerVOI(right);
+			}
+		}
+		if ( !display ) {
+			if ( imageA.isRegistered(left) != -1 ) {
+				imageA.unregisterVOI(left);
+			}
+			if ( imageA.isRegistered(right) != -1 ) {
+				imageA.unregisterVOI(right);
+			}
+		}
+	}
+	
+	
 	/**
 	 * Turns on/off lattice display:
 	 */
 	public void showLattice(boolean display) {
-		if ( display && (imageA.isRegistered(lattice) == -1) ) {
-			imageA.registerVOI(lattice);
+		if ( lattice.size() == 2 ) makeLatticeContours();
+		if ( lattice.size() == 2 ) return;
+
+		VOI leftContour = lattice.elementAt(2);
+		VOI rightContour = lattice.elementAt(3);
+		
+		if ( display ) {
+			if ( imageA.isRegistered(leftContour) == -1 ) {
+				imageA.registerVOI(leftContour);
+			}
+			if ( imageA.isRegistered(rightContour) == -1 ) {
+				imageA.registerVOI(rightContour);
+			}
 			updateLattice(true);
 		}
-		if ( !display && (imageA.isRegistered(lattice) != -1) ) {
-			imageA.unregisterVOI(lattice);
-
+		if ( !display ) {
+			if ( imageA.isRegistered(leftContour) != -1 ) {
+				imageA.unregisterVOI(leftContour);
+			}
+			if ( imageA.isRegistered(rightContour) != -1 ) {
+				imageA.unregisterVOI(rightContour);
+			}
 			if (latticeGrid != null) {
 				for (int i = latticeGrid.size() - 1; i >= 0; i--) {
 					final VOI marker = latticeGrid.remove(i);
@@ -4133,7 +4208,7 @@ public class LatticeModel {
 
 
 
-	public void testLatticeConflicts( VOIContour leftIn, VOIContour rightIn, float[] intersectionCountResult )
+	public void testLatticeConflicts( VOI leftIn, VOI rightIn, float[] intersectionCountResult )
 	{		
 		left = leftIn;
 		right = rightIn;
@@ -4200,16 +4275,16 @@ public class LatticeModel {
 		conflicts = null;
 	}
 
-	public float[] testLatticeImage( VOIContour leftIn, VOIContour rightIn )
+	public float[] testLatticeImage( VOI leftIn, VOI rightIn )
 	{		
 		left = leftIn;
 		right = rightIn;
 
 		Vector<Integer> seamCellIds = new Vector<Integer>();
-		for ( int i = 0; i < left.size(); i++ )
+		for ( int i = 0; i < left.getCurves().size(); i++ )
 		{
-			Vector3f leftPt = left.elementAt(i);
-			Vector3f rightPt = right.elementAt(i);
+			Vector3f leftPt = left.getCurves().elementAt(i).elementAt(0);
+			Vector3f rightPt = right.getCurves().elementAt(i).elementAt(0);
 
 			if ( seamCellImage != null )
 			{
@@ -4956,7 +5031,7 @@ public class LatticeModel {
 
 		if ( seamCellImage != null )
 		{
-			seamCellIDs = new int[left.size()][2];
+			seamCellIDs = new int[left.getCurves().size()][2];
 		}
 
 		//		System.err.println( "generateCurves test angles" );
@@ -4978,18 +5053,18 @@ public class LatticeModel {
 		// 1. The center line of the worm is calculated from the midpoint between the left and right points of the
 		// lattice.
 		center = new VOIContour(false);
-		for (int i = 0; i < left.size(); i++)
+		for (int i = 0; i < left.getCurves().size(); i++)
 		{
-			final Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i));
+			final Vector3f centerPt = Vector3f.add(left.getCurves().elementAt(i).elementAt(0), right.getCurves().elementAt(i).elementAt(0));
 			centerPt.scale(0.5f);
 			center.add(centerPt);
 
 			if ( seamCellImage != null )
 			{
-				Vector3f leftPt = left.elementAt(i);
+				Vector3f leftPt = left.getCurves().elementAt(i).elementAt(0);
 				int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
 				seamCellIDs[i][0] = leftID;
-				Vector3f rightPt = right.elementAt(i);
+				Vector3f rightPt = right.getCurves().elementAt(i).elementAt(0);
 				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
 				seamCellIDs[i][1] = rightID;
 
@@ -5109,8 +5184,8 @@ public class LatticeModel {
 			int startIndex = splineRangeIndex[i];
 			int endIndex = splineRangeIndex[i+1];
 			//			System.err.println( startIndex + "   " + endIndex );
-			float startRadius = (left.elementAt(i).distance(right.elementAt(i)))/2f;
-			float endRadius = (left.elementAt(i+1).distance(right.elementAt(i+1)))/2f;
+			float startRadius = (left.getCurves().elementAt(i).elementAt(0).distance(right.getCurves().elementAt(i).elementAt(0)))/2f;
+			float endRadius = (left.getCurves().elementAt(i+1).elementAt(0).distance(right.getCurves().elementAt(i+1).elementAt(0)))/2f;
 			for ( int j = startIndex; j <= endIndex; j++ )
 			{
 				float interp = (j - startIndex) / (float)(endIndex - startIndex);
@@ -5119,9 +5194,9 @@ public class LatticeModel {
 				//				System.err.println( j + "     " + diameters[j] );
 			}
 
-			Vector3f startRight = Vector3f.sub( right.elementAt(i), left.elementAt(i) );
+			Vector3f startRight = Vector3f.sub( right.getCurves().elementAt(i).elementAt(0), left.getCurves().elementAt(i).elementAt(0) );
 			startRight.normalize();
-			Vector3f endRight = Vector3f.sub( right.elementAt(i+1), left.elementAt(i+1) );
+			Vector3f endRight = Vector3f.sub( right.getCurves().elementAt(i+1).elementAt(0), left.getCurves().elementAt(i+1).elementAt(0) );
 			endRight.normalize();
 
 			//			startRight.copy(Vector3f.UNIT_X);
@@ -5245,7 +5320,7 @@ public class LatticeModel {
 		}
 
 
-		latticeSlices = new int[left.size()];
+		latticeSlices = new int[left.getCurves().size()];
 		for ( int i = 0; i < afTimeC.length; i++ )
 		{
 			float min = Float.MAX_VALUE;
@@ -6572,7 +6647,7 @@ public class LatticeModel {
 	 * @param rightPairs
 	 * @param postFix
 	 */
-	protected void saveLatticeStatistics( String imageDir, final float length, final VOIContour left, final VOIContour right, final float[] leftPairs,
+	protected void saveLatticeStatistics( String imageDir, final float length, final VOI left, final VOI right, final float[] leftPairs,
 			final float[] rightPairs, final String postFix) {
 
 		String voiDir = imageDir;
@@ -6603,8 +6678,8 @@ public class LatticeModel {
 			bw.write("Total Length:," + VOILatticeManagerInterface.VoxelSize * length + "\n");
 			bw.newLine();
 			bw.write("pair" + "," + "diameter" + "," + "left distance" + "," + "right distance" + "\n");
-			for (int i = 0; i < left.size(); i++) {
-				bw.write(i + "," + VOILatticeManagerInterface.VoxelSize * left.elementAt(i).distance(right.elementAt(i)) + ","
+			for (int i = 0; i < left.getCurves().size(); i++) {
+				bw.write(i + "," + VOILatticeManagerInterface.VoxelSize * left.getCurves().elementAt(i).elementAt(0).distance(right.getCurves().elementAt(i).elementAt(0)) + ","
 						+ VOILatticeManagerInterface.VoxelSize * leftPairs[i] + "," + VOILatticeManagerInterface.VoxelSize * rightPairs[i] + "\n");
 			}
 			bw.newLine();
@@ -7715,13 +7790,24 @@ public class LatticeModel {
 	 * @param endPt
 	 * @param maxPt
 	 */
-	private boolean addInsertionPoint(final Vector3f startPt, final Vector3f endPt, final Vector3f maxPt) {
+	private boolean addInsertionPoint(final Vector3f startPt, final Vector3f endPt, final Vector3f maxPt, boolean isSeam) {
 		final Segment3f mouseVector = new Segment3f(startPt, endPt);
 		float minDistL = Float.MAX_VALUE;
 		int minIndexL = -1;
 		Vector3f newLeft = null;
-		for (int i = 0; i < left.size() - 1; i++) {
-			final Segment3f leftS = new Segment3f(left.elementAt(i), left.elementAt(i + 1));
+		int seamCount = 0;
+		int otherCount = 0;
+		for (int i = 0; i < left.getCurves().size() - 1; i++) {
+			if ( ((VOIWormAnnotation)left.getCurves().elementAt(i)).isSeamCell() ) {
+				seamCount++;
+			}
+			else {
+				otherCount++;
+			}
+			
+			VOIWormAnnotation leftPt = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			VOIWormAnnotation leftPtP1 = (VOIWormAnnotation) left.getCurves().elementAt(i+1);
+			final Segment3f leftS = new Segment3f( leftPt.elementAt(0), leftPtP1.elementAt(0));
 			final DistanceSegment3Segment3 dist = new DistanceSegment3Segment3(mouseVector, leftS);
 			final float distance = dist.Get();
 			if (distance < minDistL) {
@@ -7737,8 +7823,10 @@ public class LatticeModel {
 		float minDistR = Float.MAX_VALUE;
 		int minIndexR = -1;
 		Vector3f newRight = null;
-		for (int i = 0; i < right.size() - 1; i++) {
-			final Segment3f rightS = new Segment3f(right.elementAt(i), right.elementAt(i + 1));
+		for (int i = 0; i < right.getCurves().size() - 1; i++) {
+			VOIWormAnnotation rightPt = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			VOIWormAnnotation rightPtP1 = (VOIWormAnnotation) right.getCurves().elementAt(i+1);
+			final Segment3f rightS = new Segment3f(rightPt.elementAt(0), rightPtP1.elementAt(0));
 			final DistanceSegment3Segment3 dist = new DistanceSegment3Segment3(mouseVector, rightS);
 			final float distance = dist.Get();
 			if (distance < minDistR) {
@@ -7754,39 +7842,124 @@ public class LatticeModel {
 		if ( (minIndexL != -1) && (minIndexR != -1)) {
 			if (minDistL < minDistR) {
 				// System.err.println( "Add to left " + (minIndexL+1) );
-				left.add(minIndexL + 1, newLeft);
-				pickedPoint = left.elementAt(minIndexL + 1);
-				newRight = Vector3f.add(right.elementAt(minIndexL), right.elementAt(minIndexL + 1));
+				VOIWormAnnotation newLeftAnnotation = new VOIWormAnnotation(newLeft);
+				newLeftAnnotation.setSeamCell(isSeam);
+				if ( isSeam ) {
+					String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+					newLeftAnnotation.setText(name + "L");
+				}
+				else {
+					String name = "a" + otherCount;
+					newLeftAnnotation.setText(name + "L");
+				}
+				left.getCurves().add(minIndexL + 1, newLeftAnnotation);
+				pickedPoint = left.getCurves().elementAt(minIndexL + 1).elementAt(0);
+				
+				newRight = Vector3f.add(right.getCurves().elementAt(minIndexL).elementAt(0), right.getCurves().elementAt(minIndexL + 1).elementAt(0));
 				newRight.scale(0.5f);
-				right.add(minIndexL + 1, newRight);
+				VOIWormAnnotation newRightAnnotation = new VOIWormAnnotation(newRight);
+				newRightAnnotation.setSeamCell(isSeam);
+				if ( isSeam ) {
+					String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+					newRightAnnotation.setText(name + "RL");
+				}
+				else {
+					String name = "a" + otherCount;
+					newRightAnnotation.setText(name + "R");
+				}
+				right.getCurves().add(minIndexL + 1, newRightAnnotation);
 
 				updateLattice(true);
 			} else {
 				// System.err.println( "Add to right " + (minIndexR+1) );
-				right.add(minIndexR + 1, newRight);
-				pickedPoint = right.elementAt(minIndexR + 1);
-				newLeft = Vector3f.add(left.elementAt(minIndexR), left.elementAt(minIndexR + 1));
+				VOIWormAnnotation newRightAnnotation = new VOIWormAnnotation(newRight);
+				newRightAnnotation.setSeamCell(isSeam);
+				if ( isSeam ) {
+					String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+					newRightAnnotation.setText(name + "RL");
+				}
+				else {
+					String name = "a" + otherCount;
+					newRightAnnotation.setText(name + "R");
+				}
+				right.getCurves().add(minIndexR + 1, newRightAnnotation);
+				pickedPoint = right.getCurves().elementAt(minIndexR + 1).elementAt(0);
+				
+				
+				newLeft = Vector3f.add(left.getCurves().elementAt(minIndexR).elementAt(0), left.getCurves().elementAt(minIndexR + 1).elementAt(0));
 				newLeft.scale(0.5f);
-				left.add(minIndexR + 1, newLeft);
+				VOIWormAnnotation newLeftAnnotation = new VOIWormAnnotation(newLeft);
+				newLeftAnnotation.setSeamCell(isSeam);
+				if ( isSeam ) {
+					String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+					newLeftAnnotation.setText(name + "L");
+				}
+				else {
+					String name = "a" + otherCount;
+					newLeftAnnotation.setText(name + "L");
+				}
+				left.getCurves().add(minIndexR + 1, newLeftAnnotation);
 
 				updateLattice(true);
 			}
-		} else if ((minIndexL != -1) && ((minIndexL + 1) < right.size())) {
+		} else if ((minIndexL != -1) && ((minIndexL + 1) < right.getCurves().size())) {
 			// System.err.println( "Add to left " + (minIndexL+1) );
-			left.add(minIndexL + 1, newLeft);
-			pickedPoint = left.elementAt(minIndexL + 1);
-			newRight = Vector3f.add(right.elementAt(minIndexL), right.elementAt(minIndexL + 1));
+			VOIWormAnnotation newLeftAnnotation = new VOIWormAnnotation(newLeft);
+			newLeftAnnotation.setSeamCell(isSeam);
+			if ( isSeam ) {
+				String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+				newLeftAnnotation.setText(name + "L");
+			}
+			else {
+				String name = "a" + otherCount;
+				newLeftAnnotation.setText(name + "L");
+			}
+			left.getCurves().add(minIndexL + 1, newLeftAnnotation);
+			pickedPoint = left.getCurves().elementAt(minIndexL + 1).elementAt(0);
+			newRight = Vector3f.add(right.getCurves().elementAt(minIndexL).elementAt(0), right.getCurves().elementAt(minIndexL + 1).elementAt(0));
 			newRight.scale(0.5f);
-			right.add(minIndexL + 1, newRight);
+			VOIWormAnnotation newRightAnnotation = new VOIWormAnnotation(newRight);
+			newRightAnnotation.setSeamCell(isSeam);
+			if ( isSeam ) {
+				String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+				newRightAnnotation.setText(name + "RL");
+			}
+			else {
+				String name = "a" + otherCount;
+				newRightAnnotation.setText(name + "R");
+			}
+			right.getCurves().add(minIndexL + 1, newRightAnnotation);
 
 			updateLattice(true);
-		} else if (minIndexR != -1 && ((minIndexR + 1) < left.size())) {
+		} else if (minIndexR != -1 && ((minIndexR + 1) < left.getCurves().size())) {
 			// System.err.println( "Add to right " + (minIndexR+1) );
-			right.add(minIndexR + 1, newRight);
-			pickedPoint = right.elementAt(minIndexR + 1);
-			newLeft = Vector3f.add(left.elementAt(minIndexR), left.elementAt(minIndexR + 1));
+			VOIWormAnnotation newRightAnnotation = new VOIWormAnnotation(newRight);
+			newRightAnnotation.setSeamCell(isSeam);
+			if ( isSeam ) {
+				String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+				newRightAnnotation.setText(name + "RL");
+			}
+			else {
+				String name = "a" + otherCount;
+				newRightAnnotation.setText(name + "R");
+			}
+			right.getCurves().add(minIndexR + 1, newRightAnnotation);
+			pickedPoint = right.getCurves().elementAt(minIndexR + 1).elementAt(0);
+			
+			
+			newLeft = Vector3f.add(left.getCurves().elementAt(minIndexR).elementAt(0), left.getCurves().elementAt(minIndexR + 1).elementAt(0));
 			newLeft.scale(0.5f);
-			left.add(minIndexR + 1, newLeft);
+			VOIWormAnnotation newLeftAnnotation = new VOIWormAnnotation(newLeft);
+			newLeftAnnotation.setSeamCell(isSeam);
+			if ( isSeam ) {
+				String name = seamCount < 3 ? ("H" + seamCount) : (seamCount < 9) ? ("V" + (seamCount - 2)) : "T";
+				newLeftAnnotation.setText(name + "L");
+			}
+			else {
+				String name = "a" + otherCount;
+				newLeftAnnotation.setText(name + "L");
+			}
+			left.getCurves().add(minIndexR + 1, newLeftAnnotation);
 
 			updateLattice(true);
 		}
@@ -8155,14 +8328,14 @@ public class LatticeModel {
 	{
 		// Determine the distances between points on the lattice
 		// distances are along the curve, not straight-line distances:			
-		final float[] leftDistances = new float[left.size()];
-		final float[] rightDistances = new float[right.size()];
-		for ( int i = 0; i < left.size(); i++ )
+		final float[] leftDistances = new float[left.getCurves().size()];
+		final float[] rightDistances = new float[right.getCurves().size()];
+		for ( int i = 0; i < left.getCurves().size(); i++ )
 		{
 			leftDistances[i] = 0;
 			rightDistances[i] = 0;
 		}
-		for ( int i = 0; i < left.size() - 1; i++ )
+		for ( int i = 0; i < left.getCurves().size() - 1; i++ )
 		{
 			leftDistances[i] = 0;
 			rightDistances[i] = 0;
@@ -8841,80 +9014,78 @@ public class LatticeModel {
 		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
 
 		short id = (short) image.getVOIs().getUniqueID();
-		final VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
-		final VOIContour leftSide = new VOIContour(false);
-		final VOIContour rightSide = new VOIContour(false);
-		lattice.getCurves().add(leftSide);
-		lattice.getCurves().add(rightSide);
+		final VOIVector lattice = new VOIVector();
+		VOI leftSide = new VOI(id, "left", VOI.ANNOTATION, (float) Math.random());
+		VOI rightSide = new VOI(id++, "right", VOI.ANNOTATION, (float) Math.random());
+		lattice.add(leftSide);
+		lattice.add(rightSide);
 		float[] minDistance = new float[1];
-		for (int i = 0; i < left.size(); i++) {
+		for (int i = 0; i < left.getCurves().size(); i++) {
 
 			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(latticeSlices[i]);
 			for (int j = 0; j < 4; j++) {
 				corners[j] = kBox.elementAt(j);
 			}
 
-			final Vector3f leftPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, left.elementAt(i), minDistance );
-			final Vector3f rightPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, right.elementAt(i), minDistance );
+			final Vector3f leftPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, left.getCurves().elementAt(i).elementAt(0), minDistance );
+			final Vector3f rightPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, right.getCurves().elementAt(i).elementAt(0), minDistance );
 
 			//			System.err.println( i + " " + latticeSlices[i] + "    " + leftPt + "    " + rightPt );
 
-			leftSide.add(leftPt);
-			rightSide.add(rightPt);
+			VOIWormAnnotation leftAnnotation = new VOIWormAnnotation(left.getCurves().elementAt(i));
+			leftAnnotation.clear();
+			leftAnnotation.add(leftPt); leftAnnotation.add(leftPt);
+			leftSide.getCurves().add(leftAnnotation);
+
+			VOIWormAnnotation rightAnnotation = new VOIWormAnnotation(right.getCurves().elementAt(i));
+			rightAnnotation.clear();
+			rightAnnotation.add(leftPt); rightAnnotation.add(leftPt);
+			rightSide.getCurves().add(rightAnnotation);
 		}
-		final float[] leftDistances = new float[leftSide.size()];
-		final float[] rightDistances = new float[leftSide.size()];
-		for (int i = 0; i < leftSide.size(); i++) {
+		final float[] leftDistances = new float[leftSide.getCurves().size()];
+		final float[] rightDistances = new float[leftSide.getCurves().size()];
+		for (int i = 0; i < leftSide.getCurves().size(); i++) {
 			leftDistances[i] = 0;
 			rightDistances[i] = 0;
 		}
-		for (int i = 0; i < leftSide.size() -1; i++) {
-			leftDistances[i] = leftSide.elementAt(i).distance(leftSide.elementAt(i + 1));
-			rightDistances[i] = rightSide.elementAt(i).distance(rightSide.elementAt(i + 1));
+		for (int i = 0; i < leftSide.getCurves().size() -1; i++) {
+			leftDistances[i] = leftSide.getCurves().elementAt(i).elementAt(0).distance(leftSide.getCurves().elementAt(i + 1).elementAt(0));
+			rightDistances[i] = rightSide.getCurves().elementAt(i).elementAt(0).distance(rightSide.getCurves().elementAt(i + 1).elementAt(0));
 		}
-
-		resultImage.registerVOI(lattice);
-		lattice.setColor(new Color(0, 0, 255));
-		lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
-		lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
-		lattice.getCurves().elementAt(0).setClosed(false);
-		lattice.getCurves().elementAt(1).setClosed(false);
-
-		id = (short) image.getVOIs().getUniqueID();
-		for (int j = 0; j < leftSide.size(); j++) {
-			id = (short) image.getVOIs().getUniqueID();
-			final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
-			final VOIContour mainAxis = new VOIContour(false);
-			mainAxis.add(leftSide.elementAt(j));
-			mainAxis.add(rightSide.elementAt(j));
-			marker.getCurves().add(mainAxis);
-			marker.setColor(new Color(255, 255, 0));
-			mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-			if (j == 0) {
-				marker.setColor(new Color(0, 255, 0));
-				mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-			}
-			resultImage.registerVOI(marker);
-		}
+//
+//		resultImage.registerVOI(lattice);
+//		lattice.setColor(new Color(0, 0, 255));
+//		lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
+//		lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
+//		lattice.getCurves().elementAt(0).setClosed(false);
+//		lattice.getCurves().elementAt(1).setClosed(false);
+//
+//		id = (short) image.getVOIs().getUniqueID();
+//		for (int j = 0; j < leftSide.size(); j++) {
+//			id = (short) image.getVOIs().getUniqueID();
+//			final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
+//			final VOIContour mainAxis = new VOIContour(false);
+//			mainAxis.add(leftSide.elementAt(j));
+//			mainAxis.add(rightSide.elementAt(j));
+//			marker.getCurves().add(mainAxis);
+//			marker.setColor(new Color(255, 255, 0));
+//			mainAxis.update(new ColorRGBA(1, 1, 0, 1));
+//			if (j == 0) {
+//				marker.setColor(new Color(0, 255, 0));
+//				mainAxis.update(new ColorRGBA(0, 1, 0, 1));
+//			}
+//			resultImage.registerVOI(marker);
+//		}
 
 		voiDir = outputDirectory + File.separator + "straightened_lattice" + File.separator;
 		//		saveAllVOIsTo(voiDir, resultImage);
 
 
 		VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
-		for ( int j = 0; j < leftSide.size(); j++ )
+		for ( int j = 0; j < leftSide.getCurves().size(); j++ )
 		{
-			VOIWormAnnotation text = new VOIWormAnnotation();
-			text.setText( "L" + j );
-			text.add(leftSide.elementAt(j));
-			text.add(leftSide.elementAt(j));
-			latticePoints.getCurves().add(text);
-
-			text = new VOIWormAnnotation();
-			text.setText( "R" + j );
-			text.add(rightSide.elementAt(j));
-			text.add(rightSide.elementAt(j));
-			latticePoints.getCurves().add(text);
+			latticePoints.getCurves().add(leftSide.getCurves().elementAt(j));
+			latticePoints.getCurves().add(rightSide.getCurves().elementAt(j));
 		}
 		LatticeModel.saveAnnotationsAsCSV(voiDir, "straightened_lattice.csv", latticePoints);
 		saveLatticeStatistics(outputDirectory + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
@@ -9117,30 +9288,29 @@ public class LatticeModel {
 		}
 		// straighten lattice:
 		short id = (short) image.getVOIs().getUniqueID();
-		latticeStraight = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
-		final VOIContour leftSide = new VOIContour(false);
-		final VOIContour rightSide = new VOIContour(false);
-		latticeStraight.getCurves().add(leftSide);
-		latticeStraight.getCurves().add(rightSide);
+		latticeStraight = new VOIVector();
+		VOI leftSide = new VOI(id, "left", VOI.ANNOTATION, (float) Math.random());
+		VOI rightSide = new VOI(id++, "right", VOI.ANNOTATION, (float) Math.random());
+		latticeStraight.add(leftSide);
+		latticeStraight.add(rightSide);
 		float[] minDistance = new float[1];
-		for (int i = 0; i < left.size(); i++) {
+		for (int i = 0; i < left.getCurves().size(); i++) {
 
 			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(latticeSlices[i]);
 			for (int j = 0; j < 4; j++) {
 				corners[j] = kBox.elementAt(j);
 			}
 
-			final Vector3f leftPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, left.elementAt(i), minDistance );
-			final Vector3f rightPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, right.elementAt(i), minDistance );
-			leftSide.add(leftPt);
-			rightSide.add(rightPt);
+			final Vector3f leftPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, left.getCurves().elementAt(i).elementAt(0), minDistance );
+			VOIWormAnnotation leftAnnotation = new VOIWormAnnotation(left.getCurves().elementAt(i));
+			leftAnnotation.elementAt(0).copy(leftPt);
+			leftSide.getCurves().add(leftAnnotation);
+			
+			final Vector3f rightPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, right.getCurves().elementAt(i).elementAt(0), minDistance );
+			VOIWormAnnotation rightAnnotation = new VOIWormAnnotation(left.getCurves().elementAt(i));
+			rightAnnotation.elementAt(0).copy(rightPt);
+			rightSide.getCurves().add(rightAnnotation);
 		}
-		latticeStraight.setColor(new Color(0, 0, 255));
-		latticeStraight.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
-		latticeStraight.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
-		latticeStraight.getCurves().elementAt(0).setClosed(false);
-		latticeStraight.getCurves().elementAt(1).setClosed(false);
-
 
 		// straighten markers:
 		if ( annotationVOIs != null ) {
@@ -9492,6 +9662,50 @@ public class LatticeModel {
 			}
 		}
 	}
+	
+	private void makeLatticeContours() {
+		VOI leftLattice = null;
+		VOI rightLattice = null;
+		if ( lattice.size() == 4 ) {
+			rightLattice = lattice.remove(3);
+		}
+		if ( lattice.size() == 3 ) {
+			leftLattice = lattice.remove(2);
+		}
+		if ( leftLattice != null ) {
+			imageA.unregisterVOI(leftLattice);
+			leftLattice.getCurves().clear();
+		}
+		else {
+			final short id = (short) imageA.getVOIs().getUniqueID();
+			leftLattice = new VOI(id, "leftContour", VOI.POLYLINE, (float) Math.random());
+		}
+		if ( rightLattice != null ) {
+			imageA.unregisterVOI(rightLattice);
+			rightLattice.getCurves().clear();
+		}
+		else {
+			final short id = (short) imageA.getVOIs().getUniqueID();
+			rightLattice = new VOI(id, "rightContour", VOI.POLYLINE, (float) Math.random());
+		}
+
+		VOIContour leftC = new VOIContour(false);
+		leftLattice.getCurves().add(leftC);
+		lattice.add(leftLattice);
+		VOIContour rightC = new VOIContour(false);
+		rightLattice.getCurves().add(rightC);
+		lattice.add(rightLattice);
+
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			leftC.add(left.getCurves().elementAt(i).elementAt(0));
+		}
+		for ( int i = 0; i < right.getCurves().size(); i++ ) {
+			rightC.add(right.getCurves().elementAt(i).elementAt(0));
+		}
+		
+		imageA.notifyImageDisplayListeners();
+	}
+	
 	/**
 	 * Updates the lattice data structures for rendering whenever the user changes the lattice.
 	 * 
@@ -9501,9 +9715,16 @@ public class LatticeModel {
 		if (left == null || right == null) {
 			return;
 		}
-		if (right.size() == 0) {
+		if (right.getCurves().size() == 0) {
 			return;
 		}
+		
+		makeLatticeContours();
+		if ( lattice.size() == 4 ) {
+			this.imageA.registerVOI(lattice.elementAt(2));
+			this.imageA.registerVOI(lattice.elementAt(3));
+		}
+		
 		if (rebuild) {
 			// System.err.println( "new pt added" );
 			if (latticeGrid != null) {
@@ -9514,12 +9735,12 @@ public class LatticeModel {
 			} else {
 				latticeGrid = new VOIVector();
 			}
-			for (int j = 0; j < Math.min(left.size(), right.size()); j++) {
+			for (int j = 0; j < Math.min(left.getCurves().size(), right.getCurves().size()); j++) {
 				final short id = (short) imageA.getVOIs().getUniqueID();
 				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
 				final VOIContour mainAxis = new VOIContour(false);
-				mainAxis.add(left.elementAt(j));
-				mainAxis.add(right.elementAt(j));
+				mainAxis.add(left.getCurves().elementAt(j).elementAt(0));
+				mainAxis.add(right.getCurves().elementAt(j).elementAt(0));
 				marker.getCurves().add(mainAxis);
 				marker.setColor(new Color(255, 255, 0));
 				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
@@ -9533,8 +9754,8 @@ public class LatticeModel {
 		} else {
 			for (int i = 0; i < latticeGrid.size(); i++) {
 				final VOI marker = latticeGrid.elementAt(i);
-				marker.getCurves().elementAt(0).elementAt(0).copy(left.elementAt(i));
-				marker.getCurves().elementAt(0).elementAt(1).copy(right.elementAt(i));
+				marker.getCurves().elementAt(0).elementAt(0).copy(left.getCurves().elementAt(i).elementAt(0));
+				marker.getCurves().elementAt(0).elementAt(1).copy(right.getCurves().elementAt(i).elementAt(0));
 				marker.update();
 			}
 		}
@@ -9558,7 +9779,7 @@ public class LatticeModel {
 			}
 		}
 
-		if ( (left.size() == right.size()) && (left.size() >= 2)) {
+		if ( (left.getCurves().size() == right.getCurves().size()) && (left.getCurves().size() >= 2)) {
 			generateCurves(5, 10);
 			if (showContours) {
 				imageA.registerVOI(displayContours);
@@ -9588,15 +9809,21 @@ public class LatticeModel {
 		annotationVOIs = null;
 		leftMarker = null;
 		rightMarker = null;
+		VOI leftContour = null;
+		VOI rightContour = null;
 		VOIVector vois = imageA.getVOIs();
 		for (int i = 0; i < vois.size(); i++) {
 			final VOI voi = vois.elementAt(i);
 			final String name = voi.getName();
 			System.err.println( vois.elementAt(i).getName() );
-			if (name.contains("lattice")) {
-				lattice = voi;
-				left = (VOIContour) lattice.getCurves().elementAt(0);
-				right = (VOIContour) lattice.getCurves().elementAt(1);
+			if (name.equals("left")) {
+				left = voi;
+			} else if (name.equals("right")) {
+				right = voi;
+			} else if (name.equals("leftContour")) {
+				leftContour = voi;
+			} else if (name.equals("rightContour")) {
+				rightContour = voi;
 			} else if (name.equals("left line")) {
 				leftLine = voi;
 			} else if (name.equals("right line")) {
@@ -9622,6 +9849,13 @@ public class LatticeModel {
 				annotationVOIs = voi;
 			}
 		}
+		
+		lattice.clear();
+		lattice.add(left);
+		lattice.add(right);
+		if ( leftContour != null ) lattice.add(leftContour);
+		if ( rightContour != null ) lattice.add(rightContour);
+		
 		clear3DSelection();
 		colorAnnotations();
 		System.err.println("updateLinks " + (annotationVOIs != null) );
@@ -9693,14 +9927,14 @@ public class LatticeModel {
 				imageA.registerVOI(showSelectedVOI);
 			}
 
-			if ( (left != null) && (pickedPoint == left.lastElement()) ) {
+			if ( (left != null) && (pickedPoint == left.getCurves().lastElement().elementAt(0)) ) {
 				if ( leftMarker != null )
 				{
 					leftMarker.getCurves().elementAt(0).elementAt(0).copy(pickedPoint);
 					leftMarker.update();
 				}
 			}
-			else if ( (right != null) && (pickedPoint == right.lastElement()) ) {
+			else if ( (right != null) && (pickedPoint == right.getCurves().lastElement().elementAt(0)) ) {
 				if ( rightMarker != null )
 				{
 					rightMarker.getCurves().elementAt(0).elementAt(0).copy(pickedPoint);
@@ -9709,4 +9943,136 @@ public class LatticeModel {
 			}
 		}
 	}
+	
+	private int findPoint( VOI left, Vector3f pickedPoint) 
+	{
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			if ( pickedPoint == left.getCurves().elementAt(i).elementAt(0) )
+				return i;
+		}
+		return -1;
+	}
+	
+
+	public void renameLattice()
+	{
+		// check if lattice is already named, if so return as is:
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			if ( text.getText().contains("H") || text.getText().contains("V") || text.getText().contains("T") ) {
+				return;
+			}
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			if ( text.getText().contains("H") || text.getText().contains("V") || text.getText().contains("T") ) {
+				return;
+			}
+		}
+
+		float[] pairSort = new float[left.getCurves().size()];
+		// decide which 10 points are seam cells by taking max pair values
+		for ( int i = 0; i < left.getCurves().size() -1; i++ )
+		{
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			int x = (int) text.elementAt(0).X;
+			int y = (int) text.elementAt(0).Y;
+			int z = (int) text.elementAt(0).Z;
+			float value;
+			if ( imageA.isColorImage() ) 
+			{
+				value = imageA.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value = imageA.getFloat(x,y,z);
+			}
+
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			x = (int) text.elementAt(0).X;
+			y = (int) text.elementAt(0).Y;
+			z = (int) text.elementAt(0).Z;
+			if ( imageA.isColorImage() ) 
+			{
+				value += imageA.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value += imageA.getFloat(x,y,z);
+			}
+			pairSort[i] = value;
+		}
+		Arrays.sort(pairSort);
+
+		int pairCount = 0;
+		int extraCount = 0;
+		for ( int i = 0; i < left.getCurves().size(); i++ )
+		{
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			int x = (int) text.elementAt(0).X;
+			int y = (int) text.elementAt(0).Y;
+			int z = (int) text.elementAt(0).Z;
+			float value;
+			if ( imageA.isColorImage() ) 
+			{
+				value = imageA.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value = imageA.getFloat(x,y,z);
+			}
+			
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			x = (int) text.elementAt(0).X;
+			y = (int) text.elementAt(0).Y;
+			z = (int) text.elementAt(0).Z;
+			if ( imageA.isColorImage() ) 
+			{
+				value += imageA.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value += imageA.getFloat(x,y,z);
+			}
+
+			boolean isSeamPair = left.getCurves().size() <= 10;
+			if ( !isSeamPair )
+			{
+				// check if this pair has a high enough value to be added to the list of seam cells:
+				for ( int j = 0; j < Math.min(9, pairSort.length); j++ )
+				{
+					if ( value >= pairSort[(pairSort.length -1) - j] )
+					{
+//						System.err.println( value + "  " + pairSort[(pairSort.length -1) - j]);
+						isSeamPair = true;
+						break;
+					}
+				}
+			}
+			if ( isSeamPair )
+			{
+				String name = pairCount < 3 ? ("H" + pairCount) : (pairCount < 9) ? ("V" + (pairCount - 2)) : "T";
+				pairCount++;
+
+				// left seam cell:
+				text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+				text.setText( name + "L" );
+
+				// right seam cell:
+				text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+				text.setText( name + "R" );
+			}
+			else
+			{
+				String name = "a" + extraCount++;
+
+				// left seam cell:
+				text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+				text.setText( name + "L" );
+
+				// right seam cell:
+				text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+				text.setText( name + "R" );
+			}
+		}
+	}
+	
 }
