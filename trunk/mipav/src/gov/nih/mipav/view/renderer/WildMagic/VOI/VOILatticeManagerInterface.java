@@ -210,10 +210,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				latticeModel.showModel( );
 			}
 		}
-		else if ( command.equals("TestLattice") ) {
-			WormData wormData = new WormData( m_kImageA );
-			wormData.testLattice( latticeModel.getLeft(), latticeModel.getRight(), true );
-		} else if ( command.equals("StraightenLattice") ) {
+		else if ( command.equals("StraightenLattice") ) {
 			if ( latticeModel != null )
 			{
 				latticeModel.interpolateLattice( true, false, true, false );
@@ -411,7 +408,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	
 	public void setLattice( VOIVector lattice )
 	{
-		VOI newLattice = lattice.size() > 0 ? lattice.elementAt(0).getCurves() != null ? lattice.elementAt(0) : null : null;
 		boolean saveL = true;
 		if ( latticeModel == null )
 		{
@@ -422,7 +418,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		{
 			saveVOIs("loadLattice");
 		}
-		latticeModel.setLattice( newLattice );	
+		latticeModel.setLattice( lattice );	
 //		latticeModel.expandLattice();
 	}
 
@@ -500,6 +496,16 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect )
 	{
+		add3DMarker(textVOI, automaticLabel, multiSelect, false );
+	}
+
+	private boolean isShiftSelected = false;
+	public boolean isShift() { return isShiftSelected; }
+	public void setShiftDown( boolean isShift ) { isShiftSelected = isShift; }
+	
+	public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect, boolean isShift )
+	{
+		isShiftSelected = isShift;
 		if ( doAnnotations )
 		{
 			textVOI.setActive(automaticLabel);
@@ -517,7 +523,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		else
 		{
-			addLeftRightMarker(textVOI);
+			addLeftRightMarker(textVOI, isShift);
 		}
 	}
 
@@ -544,13 +550,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return mouseSelection3D;
 	}
 
-	public boolean select3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse, boolean multiSelect )
+	public boolean select3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse, boolean multiSelect, boolean isShift )
 	{
 		if ( doAnnotations )
 		{
 			return selectAnnotations(startPt, endPt, pt, rightMouse, multiSelect);
 		}
-		return selectLattice(startPt, endPt, pt);
+		return selectLattice(startPt, endPt, pt, isShift);
 	}
 
 	public boolean modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt )
@@ -736,6 +742,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}		
 	}
 	
+	public void showLatticeLabels( boolean display ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.showLatticeLabels(display);
+		}		
+	}
+	
 	public TriMesh generateTriMesh( int stepsize ) {
 		if ( latticeModel != null )
 		{
@@ -873,7 +886,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return latticeModel.getPicked();		
 	}
 	
-	public VOI getLattice()
+	public VOIVector getLattice()
 	{
 		if ( latticeModel == null )
 		{
@@ -883,7 +896,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	}
 
 	
-	public VOI getLatticeStraight()
+	public VOIVector getLatticeStraight()
 	{
 		if ( latticeModel == null )
 		{
@@ -902,14 +915,14 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	}
 
 	
-	public void setPreviewMode( boolean preview, VOI lattice, VOI annotations )
+	public void setPreviewMode( boolean preview, VOIVector lattice, VOI annotations )
 	{
 		clearUndoRedo();
 		latticeModel.setPreviewMode( preview, lattice, annotations );
 		saveVOIs("loadAnnotations");
 	}
 	
-	public VOI retwistAnnotations(VOI lattice) 
+	public VOI retwistAnnotations(VOIVector lattice) 
 	{
 		if ( latticeModel == null )
 		{
@@ -918,7 +931,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return latticeModel.retwistAnnotations(lattice);	
 	}
 	
-	public VOI retwistLattice(VOI lattice) 
+	public VOIVector retwistLattice(VOIVector lattice) 
 	{
 		if ( latticeModel == null )
 		{
@@ -926,8 +939,8 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		return latticeModel.retwistLattice(lattice);	
 	}
-
-	private void addLeftRightMarker( VOI textVOI )
+	
+	private void addLeftRightMarker( VOI textVOI, boolean isShift )
 	{       
 		if ( latticeModel == null )
 		{
@@ -948,7 +961,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			if ( pt == null )
 			{
 				saveVOIs("addLeftRightMarker");
-				latticeModel.addLeftRightMarker( textVOI.getCurves().elementAt(0).elementAt(0) );
+				latticeModel.addLeftRightMarker( textVOI.getCurves().elementAt(0).elementAt(0), isShift );
 			}
 		}
 	}
@@ -988,7 +1001,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return false;
 	}
 
-	private boolean selectLattice( Vector3f startPt, Vector3f endPt, Vector3f pt )
+	private boolean selectLattice( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean isShift )
 	{
 		if ( latticeModel != null )
 		{
@@ -997,7 +1010,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				movingPickedPoint = true;
 				saveVOIs("selectLattice");
 			}
-			return latticeModel.selectLattice(startPt, endPt, pt);
+			return latticeModel.selectLattice(startPt, endPt, pt, isShift);
 		}
 		return false;
 	}

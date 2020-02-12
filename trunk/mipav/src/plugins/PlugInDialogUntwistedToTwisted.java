@@ -243,7 +243,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 				// create wormData
 				WormData wormData = new WormData(image);
 				// read final lattice:
-				VOI lattice = wormData.readFinalLattice();
+				VOIVector lattice = wormData.readFinalLattice();
 				// create LatticeModel:
 				LatticeModel latticeModel = new LatticeModel(image, lattice);
 								

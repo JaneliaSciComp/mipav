@@ -269,6 +269,19 @@ public abstract class VOIBase extends Vector<Vector3f> {
         closed = bClosed;
         setClosed(closed);
     }
+    
+    public VOIBase( boolean bFixed, boolean bClosed, Vector3f kIn )
+    {
+    	this();
+    	if ( kIn != null )
+    	{
+    		add( new Vector3f( kIn ) );
+    	}
+    	lastPoint = size() - 1;
+    	fixed = bFixed;
+    	closed = bClosed;
+    	setClosed(closed);
+    }
 
 
     /**

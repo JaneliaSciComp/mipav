@@ -23,10 +23,15 @@ public class VOIWormAnnotation extends VOIText {
 	private VOIContour[] showSelected = null;
 	private Vector3f selectionOffset = null;
 	private boolean isCurveAnnotation = false;
+	private boolean isSeamCell = false;
 	
 	public VOIWormAnnotation() {
 		super();
 	}
+
+    public VOIWormAnnotation( Vector3f kPosition ) {
+    	super(kPosition);
+    }
 
     public VOIWormAnnotation( Vector<Vector3f> kPositions ) {
     	super(kPositions);
@@ -80,14 +85,22 @@ public class VOIWormAnnotation extends VOIText {
 		this.latticeSegment = segment;
 	}
 	
-	public boolean isCurveAnnotation() {
-		return isCurveAnnotation;
+	public boolean isSeamCell() {
+		return isSeamCell;
 	}
 	
+	public void setSeamCell( boolean isSeam ) {
+		isSeamCell = isSeam;
+	}
+
 	public void setCurveAnnotation( boolean isCurve ) {
 		isCurveAnnotation = isCurve;
 	}
-	
+
+	public boolean isCurveAnnotation() {
+		return isCurveAnnotation;
+	}
+
 	public void setSelected( boolean select ) {
 		this.selected = select;
 	}

@@ -27,6 +27,7 @@ This software may NOT be used for diagnostic purposes.
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
@@ -85,7 +86,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	private ListSelectionModel annotationList;
 	private JTable annotationTable;
 	private DefaultTableModel annotationTableModel;
-
+	
 	// table user-interface for editing the positions of the annotations:
 //	private ListSelectionModel annotationGroupList;
 //	private JTable annotationGroupTable;
@@ -108,7 +109,10 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 		String command = event.getActionCommand();
 		if ( command.equals("displayLabel") )
 		{
-			System.err.println("displayLabels");
+			if ( voiManager != null )
+			{
+				voiManager.showLatticeLabels( displaySeam.isSelected() );
+			}
 		}
 		else if ( command.equals("displayLattice") )
 		{
@@ -124,12 +128,10 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void latticeChanged() {
-//		System.err.println("latticeChanged");
-
 		if ( voiManager != null )
 		{
 			// get current annotations and update table:
-			VOI lattice = voiManager.getLattice();
+			VOIVector lattice = voiManager.getLattice();
 			// remove table listener during updates:
 			annotationTableModel.removeTableModelListener(this);
 			int numRows = annotationTableModel.getRowCount();
@@ -144,28 +146,36 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 //				annotationGroupTableModel.removeRow(i);
 //			}		
 			if ( lattice != null ) {
-				if ( lattice.getCurves().size() == 2 ) {
-					VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
-					VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
-					if ( left.size() == right.size() ) {
-						VOI seamLabels = wormData.segmentSeamFromLattice(voiManager.getLattice(), voiManager.getImage(), false);
-						int seamCount = 0;
-						for ( int i = 0; i < left.size(); i++ ) {
-							VOIWormAnnotation leftMarker = (VOIWormAnnotation) seamLabels.getCurves().elementAt(seamCount++);
-							VOIWormAnnotation rightMarker = (VOIWormAnnotation) seamLabels.getCurves().elementAt(seamCount++);
+				if ( lattice.size() >= 2 ) {
+					VOI left = lattice.elementAt(0);
+					VOI right = lattice.elementAt(1);
+					
+					// get picked point and index:
+					Vector3f picked = voiManager.getLatticePickedPoint();
+					int pickedIndex = -1;
+					if ( picked != null ) {
+						for ( int i = 0; i < left.getCurves().size(); i++ ) {
+							if ( left.getCurves().elementAt(i).elementAt(0).equals(picked) || right.getCurves().elementAt(i).elementAt(0).equals(picked) ) {
+								pickedIndex = i;
+								break;
+							}
+						}
+					}
+//					System.err.println("latticeChanged " + pickedIndex + " " + voiManager.isShift() );
+					
+					
+					if ( left.getCurves().size() == right.getCurves().size() ) {
+						for ( int i = 0; i < left.getCurves().size(); i++ ) {
+							VOIWormAnnotation leftMarker = (VOIWormAnnotation) left.getCurves().elementAt(i);
+							VOIWormAnnotation rightMarker = (VOIWormAnnotation) right.getCurves().elementAt(i);
 
 							annotationTableModel.addRow( new Object[]{leftMarker.getText(), leftMarker.elementAt(0).X, leftMarker.elementAt(0).Y, leftMarker.elementAt(0).Z,
 									rightMarker.getText(), rightMarker.elementAt(0).X, rightMarker.elementAt(0).Y, rightMarker.elementAt(0).Z} );
 						}					
 
 						annotationList.clearSelection();
-						Vector3f picked = voiManager.getLatticePickedPoint();
-						if ( picked != null ) {
-							for ( int i = 0; i < left.size(); i++ ) {
-								if ( left.elementAt(i).equals(picked) || right.elementAt(i).equals(picked) ) {
-									annotationList.addSelectionInterval(i, i);
-								}
-							}
+						if ( pickedIndex != -1 ) {
+							annotationList.addSelectionInterval(pickedIndex, pickedIndex);
 						}
 					}
 				}

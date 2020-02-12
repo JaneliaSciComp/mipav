@@ -100,6 +100,12 @@ public class VOIText extends VOIBase {
         super( false, false, kPositions );
         m_iVOIType = VOI.ANNOTATION;
     }
+    
+    public VOIText( Vector3f kPosition )
+    {
+        super( false, false, kPosition );
+        m_iVOIType = VOI.ANNOTATION;
+    }
 
     /**
      * Copy contructor.
