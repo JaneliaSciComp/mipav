@@ -10707,21 +10707,16 @@ public class libdt extends AlgorithmBase {
 	   int sz[] = new int[]{img.length,img[0].rows,img[0].cols};
 	   oimg.create(3,sz,CV_8UC,3);
 	   
-	   long bin[] = new long[256];
 	   for (z = 0; z < img.length; z++) {
 		   for (r = 0; r < img[0].rows; r++) {
 			   for (c = 0; c < img[0].cols; c++) {
 				   for (ch = 0; ch < 3; ch++) {
 				       oimg.byte3DC[z][r][c][ch] = bgr[ch][z].byte2D[r][c]; 
-				       bin[oimg.byte3DC[z][r][c][ch] & 0xff]++;
 				   }
 			   }
 		   }
 	   }
 	   
-	   for (int i = 0; i < bin.length; i++) {
-		   Preferences.debug("bin["+i+"] = " + bin[i] + "\n", Preferences.DEBUG_ALGORITHM);
-	   }
 	 }
 
 	 // mask_flag = unsigned char[256] w/ non-zero for present mask values
@@ -10786,32 +10781,50 @@ public class libdt extends AlgorithmBase {
 	    		   }
 	    	   }
 	       }
-	       try {
-	    	   maskcImage.importData(0, maskc, true);
-	       }
-	       catch (IOException e) {
-	    	   MipavUtil.displayError("IOException " + e + " on maskcImage.importData(0, maskc, true)");
-	    	   System.exit(-1);
-	       }
-	       int itersDilate = 1;
-	       boolean entireImage = true;
+	      
+	       
 	       if (border == 1) {
-	    	   algoMorph2D = new AlgorithmMorphology2D(maskcImage,AlgorithmMorphology2D.CONNECTED4,0.0f,AlgorithmMorphology2D.DILATE,
-		    		   itersDilate,0,0,0,entireImage);   
+	    	   // With a 2 by 2 structuring element expand to the right and bottom by 1 if possible
+	    	   for (y = 0; y < mask.rows; y++) {
+	    		   for (x = 0; x < mask.cols; x++) {
+	    			   if (maskc[y*mask.cols + x] == 1) {
+	    				   maskcd[y*mask.cols + x] = 1;
+		    			   if (y < mask.rows -1 ) {
+		    				   maskcd[(y+1)*mask.cols + x] = 1;
+		    			   }
+		    			   if (x < mask.cols - 1) {
+		    				   maskcd[y*mask.cols + x + 1] = 1;
+		    			   }
+		    			   if ((y < mask.rows-1) && (x < mask.cols - 1)) {
+		    				   maskcd[(y+1)*mask.cols + x + 1] = 1;
+		    			   }
+	    			   }
+	    		   }
+	    	   }
 	       }
 	       else {
-	       algoMorph2D = new AlgorithmMorphology2D(maskcImage,AlgorithmMorphology2D.SIZED_CIRCLE,(float)(2*border+1),AlgorithmMorphology2D.DILATE,
-	    		   itersDilate,0,0,0,entireImage);
+	    	   try {
+		    	   maskcImage.importData(0, maskc, true);
+		       }
+		       catch (IOException e) {
+		    	   MipavUtil.displayError("IOException " + e + " on maskcImage.importData(0, maskc, true)");
+		    	   System.exit(-1);
+		       }
+	    	   int itersDilate = 1;
+		       boolean entireImage = true;
+		       algoMorph2D = new AlgorithmMorphology2D(maskcImage,AlgorithmMorphology2D.SIZED_CIRCLE,(float)(2*border+1),AlgorithmMorphology2D.DILATE,
+		    		   itersDilate,0,0,0,entireImage);
+		       algoMorph2D.run();
+		       algoMorph2D.finalize();
+		       try {
+		           maskcImage.exportData(0, length, maskcd);
+		       }
+		       catch (IOException e) {
+		    	   MipavUtil.displayError("IOException " + e + " on maskcImage.exportData(0, length, maskcd)");
+		    	   System.exit(-1);
+		       }
 	       }
-	       algoMorph2D.run();
-	       algoMorph2D.finalize();
-	       try {
-	           maskcImage.exportData(0, length, maskcd);
-	       }
-	       catch (IOException e) {
-	    	   MipavUtil.displayError("IOException " + e + " on maskcImage.exportData(0, length, maskcd)");
-	    	   System.exit(-1);
-	       }
+	       
 	       for (r = 0; r < mask.rows; r++) {
 	    	   for (col = 0; col < mask.cols; col++) {
 	    		   maskcd[r*mask.cols+col] = (byte)(maskcd[r*mask.cols+col] ^ maskc[r*mask.cols+col]);
@@ -10820,6 +10833,9 @@ public class libdt extends AlgorithmBase {
 	       for (r = 0; r < mask.rows; r++) {
 	    	   for (col = 0; col < mask.cols; col++) {
 	    		   out.byte2D[r][col] = (byte)(out.byte2D[r][col] | maskcd[r*mask.cols+col]);
+	    		   if (out.byte2D[r][col] == 1) {
+	    			   out.byte2D[r][col] = (byte)255;
+	    		   }
 	    	   }
 	       }
 	       //dilate(maskc, maskcd, el);          // dilate slightly
