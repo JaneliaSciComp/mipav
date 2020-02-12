@@ -11110,7 +11110,6 @@ public class libdt extends AlgorithmBase {
 
 	 		//String fpath=dirpath+"vid" + vidid+ "_segm_";
 	 		Mat smask[]=segMask;	
-	 		
 	 			for(int m=0;m<smask.length;m++)
 	 			{
 	 				Mat img=smask[m];
@@ -11136,8 +11135,9 @@ public class libdt extends AlgorithmBase {
 	 						}
 	 						shortBuffer[j*img.cols + k] = (short)(frame.byte2D[j][k] & 0xff);
 	 					}
+	 				
 	 					//imwrite(filename,frame);
-	 				int extents[] = new int[]{img.rows,img.cols};
+	 				int extents[] = new int[]{img.cols,img.rows};
 	 			    ModelImage segmImage = new ModelImage(ModelStorageBase.UBYTE,extents,"vid"+vidid+"_segm_"+buffer);
 	 			    try {
 	 			    	segmImage.importData(0, shortBuffer, true);
@@ -11162,7 +11162,7 @@ public class libdt extends AlgorithmBase {
                         short redBuffer[] = new short[length];
                         short greenBuffer[] = new short[length];
                         short blueBuffer[] = new short[length];
-                        int extents[] = new int[] {segVideo[m].rows,segVideo[m].cols};
+                        int extents[] = new int[] {segVideo[m].cols,segVideo[m].rows};
                         for (j = 0; j < segVideo[m].rows; j++) {
                         	for (int k = 0; k < segVideo[m].cols; k++) {
                         		redBuffer[j*segVideo[m].cols + k] = (short)(segVideo[m].byte2DC[j][k][2] & 0xff);
