@@ -11640,13 +11640,33 @@ public class libdt extends AlgorithmBase {
 	 */
 	Vector<Vector<String> > readGtruthFile(String fpath)
 	{
+		String str;
+		int i;
+		FileInputStream fis = null;
 		Vector<Vector<String> > result = new Vector<Vector<String>>();
-		/*ifstream vlistf(fpath.c_str(), std::ifstream::in);
-		while(vlistf.good())
-		{
-			vector<string> line=getNextLineAndSplitIntoTokens(vlistf);
-			result.push_back(line);
-		}*/
+		Vector<String> line = new Vector<String>();
+		try {
+		    fis = new FileInputStream(fpath);
+		}
+		catch (FileNotFoundException e) {
+		    MipavUtil.displayError("In readGtruthFile " + e);
+		 	System.exit(-1);	
+		}
+        BufferedReader d = new BufferedReader(new InputStreamReader(fis));
+        try {
+	        while ((str = d.readLine()) != null) {
+	        	line.clear();
+	            String split[] = str.split(",");
+	            for (i = 0; i < split.length; i++) {
+	            	line.add(split[i]);
+	            }
+	            result.add(line);
+	        }
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("In readGtruthFile " + e);
+		 	System.exit(-1);		
+        }
 
 		return result;
 	}
