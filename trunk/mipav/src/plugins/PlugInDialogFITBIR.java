@@ -314,7 +314,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         "UT-Southwestern Medical Center",
         "VA-Pugent Sound Health Care System/University of Washington",};
 
-    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD", "NEI", "NTI"};
+    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD", "NEI", "NTI", "NIA", "NINDS", "NIH"};
 
     private static final String[] imagingStructurePrefixes;
     static {
