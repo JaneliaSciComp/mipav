@@ -894,6 +894,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		return latticeModel.getLattice();		
 	}
+	
+	public void renameLattice() {
+		if ( latticeModel != null )
+		{
+			latticeModel.renameLattice();
+		}
+	}
 
 	
 	public VOIVector getLatticeStraight()

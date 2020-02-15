@@ -909,7 +909,7 @@ public class VolumeVOI extends VolumeObject
 		if ( (m_kVOI.getType() == VOI.ANNOTATION) )
 		{
 			if ( m_kVOI.size() == 1 ) {
-				m_kVOI.add( new Vector3f( m_kVOI.elementAt(0) ) );
+				m_kVOI.add( m_kVOI.elementAt(0) );
 			}
 		}
 		if ( m_kVOI.getType() == VOI.POINT )
