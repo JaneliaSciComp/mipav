@@ -3849,7 +3849,7 @@ public class LatticeModel {
 	 * @param newLattice
 	 */
 	public void setLattice(final VOIVector newLattice) {
-		if (lattice != null) {
+		if ( (lattice != null) && (lattice != newLattice) ) {
 			for ( int i = 0; i < lattice.size(); i++ ) {
 				imageA.unregisterVOI(lattice.elementAt(i));
 			}
@@ -3880,6 +3880,7 @@ public class LatticeModel {
 		clear3DSelection();
 		clearAddLeftRightMarkers();
 		updateLattice(true);
+		showLatticeLabels(displayLatticeLabels);
 	}
 
 	public void setMarkers(VOI markerVOIs)
@@ -9308,12 +9309,14 @@ public class LatticeModel {
 
 			final Vector3f leftPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, left.getCurves().elementAt(i).elementAt(0), minDistance );
 			VOIWormAnnotation leftAnnotation = new VOIWormAnnotation(left.getCurves().elementAt(i));
-			leftAnnotation.elementAt(0).copy(leftPt);
+			leftAnnotation.clear();
+			leftAnnotation.add(leftPt);			
 			leftSide.getCurves().add(leftAnnotation);
 			
 			final Vector3f rightPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, right.getCurves().elementAt(i).elementAt(0), minDistance );
 			VOIWormAnnotation rightAnnotation = new VOIWormAnnotation(left.getCurves().elementAt(i));
-			rightAnnotation.elementAt(0).copy(rightPt);
+			rightAnnotation.clear();
+			rightAnnotation.add(rightPt);
 			rightSide.getCurves().add(rightAnnotation);
 		}
 

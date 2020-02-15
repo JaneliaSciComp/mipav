@@ -605,7 +605,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeRenderer.resetAxis();
 					activeRenderer.reCreateScene(activeImage.volumeImage);
 					updateClipPanel(activeImage, activeRenderer, true);
-					activeRenderer.resetAxisX();
+					activeRenderer.resetAxisXInv();
 					activeRenderer.removeSurface("worm");
 					activeRenderer.displaySurface(false);
 					updateHistoLUTPanels(activeImage);
