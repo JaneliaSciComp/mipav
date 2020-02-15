@@ -132,6 +132,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 		{
 			// get current annotations and update table:
 			VOIVector lattice = voiManager.getLattice();
+			voiManager.renameLattice();
 			// remove table listener during updates:
 			annotationTableModel.removeTableModelListener(this);
 			int numRows = annotationTableModel.getRowCount();

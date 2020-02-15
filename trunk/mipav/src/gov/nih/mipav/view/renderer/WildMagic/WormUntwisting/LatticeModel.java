@@ -1006,6 +1006,9 @@ public class LatticeModel {
 			}
 			return;
 		} else {
+			// adding to the right side - keep the last count values:
+			seamCount--;
+			otherCount--;
 			VOIWormAnnotation annotation = new VOIWormAnnotation(new Vector3f(pt));
 			annotation.setSeamCell(isSeam);
 			if ( isSeam ) {
@@ -1030,10 +1033,8 @@ public class LatticeModel {
 				rightMarker.update();
 			}
 		}
-		// if ( left.size() == right.size() && left.size() > 1 )
-		{
-			updateLattice(true);
-		}
+		updateLattice(true);
+		showLatticeLabels(displayLatticeLabels);
 	}
 
 	/**
@@ -3860,16 +3861,19 @@ public class LatticeModel {
 		clearCurves(true);
 		if ( this.lattice == null )
 		{
+			updateLattice(true);
 			return;
 		}
 
 		// Assume image is isotropic (square voxels).
 		if (lattice.size() < 2) {
+			updateLattice(true);
 			return;
 		}
 		left = (VOI) lattice.elementAt(0);
 		right = (VOI) lattice.elementAt(1);
 		if (left.getCurves().size() != right.getCurves().size()) {
+			updateLattice(true);
 			return;
 		}
 
@@ -4140,21 +4144,22 @@ public class LatticeModel {
 		return (imageA.isRegistered(samplingPlanes) != -1);
 	}
 
+	private boolean displayLatticeLabels = false;
 	public void showLatticeLabels(boolean display) {
-
+		displayLatticeLabels = display;
 		if ( display ) {
-			if ( imageA.isRegistered(left) == -1 ) {
+			if ( (left != null) && (imageA.isRegistered(left) == -1) ) {
 				imageA.registerVOI(left);
 			}
-			if ( imageA.isRegistered(right) == -1 ) {
+			if ( (right != null) && (imageA.isRegistered(right) == -1) ) {
 				imageA.registerVOI(right);
 			}
 		}
 		if ( !display ) {
-			if ( imageA.isRegistered(left) != -1 ) {
+			if ( (left != null) && (imageA.isRegistered(left) != -1) ) {
 				imageA.unregisterVOI(left);
 			}
-			if ( imageA.isRegistered(right) != -1 ) {
+			if ( (right != null) && (imageA.isRegistered(right) != -1) ) {
 				imageA.unregisterVOI(right);
 			}
 		}
@@ -9713,9 +9718,11 @@ public class LatticeModel {
 	 */
 	private void updateLattice(final boolean rebuild) {
 		if (left == null || right == null) {
+			updateLatticeListeners();
 			return;
 		}
 		if (right.getCurves().size() == 0) {
+			updateLatticeListeners();
 			return;
 		}
 		
@@ -9956,6 +9963,8 @@ public class LatticeModel {
 
 	public void renameLattice()
 	{
+		if ( left == null || right == null ) return;
+		
 		// check if lattice is already named, if so return as is:
 		for ( int i = 0; i < left.getCurves().size(); i++ ) {
 			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
