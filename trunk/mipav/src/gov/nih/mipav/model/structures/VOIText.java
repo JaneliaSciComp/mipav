@@ -105,6 +105,7 @@ public class VOIText extends VOIBase {
     {
         super( false, false, kPosition );
         m_iVOIType = VOI.ANNOTATION;
+        this.useMarker = false;  
     }
 
     /**

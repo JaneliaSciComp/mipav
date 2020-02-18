@@ -18,6 +18,7 @@ public class VOIWormAnnotation extends VOIText {
 	private boolean retwist = false;
 	private boolean modified = false;
 	private int latticeSegment = -1;
+	private int slice = -1;
 	private boolean selected = false;
 	private VOI showSelectedVOI = null;
 	private VOIContour[] showSelected = null;
@@ -30,7 +31,7 @@ public class VOIWormAnnotation extends VOIText {
 	}
 
     public VOIWormAnnotation( Vector3f kPosition ) {
-    	super(kPosition);
+    	super(kPosition);  
     }
 
     public VOIWormAnnotation( Vector<Vector3f> kPositions ) {
@@ -46,9 +47,9 @@ public class VOIWormAnnotation extends VOIText {
     	this.retwist = kVOI.retwist;
     	this.modified = kVOI.modified;
     	this.latticeSegment = kVOI.latticeSegment;
-//    	this.selected = kVOI.selected;
-//    	this.showSelectedVOI = new VOI(kVOI.showSelectedVOI);
-//    	this.selectionOffset = new Vector3f(kVOI.selectionOffset);
+    	this.slice = kVOI.slice;
+    	this.isCurveAnnotation = kVOI.isCurveAnnotation;
+    	this.isSeamCell = kVOI.isSeamCell;
     }
     
 	public VOIWormAnnotation clone() {
@@ -71,10 +72,20 @@ public class VOIWormAnnotation extends VOIText {
 	
 	public void retwist( boolean retwist ) {
 		this.retwist = retwist;
+		if ( retwist ) {
+			this.slice = (int) firstElement().Z;
+		}
+		else {
+			this.slice = -1;
+		}
 	}
 	
 	public boolean retwist() {
 		return this.retwist;
+	}
+	
+	public int getSlice() {
+		return this.slice;
 	}
 	
 	public int getLatticeSegment() {
