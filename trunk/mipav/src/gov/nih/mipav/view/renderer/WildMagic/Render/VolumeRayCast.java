@@ -844,7 +844,7 @@ public class VolumeRayCast extends VolumeObject
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
 
-        System.err.println( m_fX + "   " + m_fY + "   " + m_fZ );
+//        System.err.println( m_fX + "   " + m_fY + "   " + m_fZ );
         VertexBuffer pkVB = m_kMesh.VBuffer;
 //        IndexBuffer pkIB = m_kMesh.IBuffer;
 

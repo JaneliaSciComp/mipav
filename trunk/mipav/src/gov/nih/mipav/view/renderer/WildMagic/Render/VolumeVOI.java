@@ -367,9 +367,9 @@ public class VolumeVOI extends VolumeObject
 			m_bClipped = ( (test.X < m_kClip.X) || (test.X > m_kClipInv.X) || (test.Y < m_kClip.Y) || (test.Y > m_kClipInv.Y) || (test.Z < m_kClip.Z) || (test.Z > m_kClipInv.Z) );
 //    		test = m_kVOI.elementAt(1);
 //			m_bClipped |= ( (test.X < m_kClip.X) || (test.X > m_kClipInv.X) || (test.Y < m_kClip.Y) || (test.Y > m_kClipInv.Y) || (test.Z < m_kClip.Z) || (test.Z > m_kClipInv.Z) );
-			System.err.println( test );
-			System.err.println( m_kClip );
-			System.err.println( m_kClipInv );
+//			System.err.println( test );
+//			System.err.println( m_kClip );
+//			System.err.println( m_kClipInv );
     	}
     }
     

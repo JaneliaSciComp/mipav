@@ -217,6 +217,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 							text.setText( newName );
 							text.updateText();
 							text.update();
+							text.retwist(previewMode);
 						}
 					}
 					else 
@@ -248,6 +249,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 							text.setText( newName );
 							text.updateText();
 							text.update();
+							text.retwist(previewMode);
 						}
 					}
 					else 
