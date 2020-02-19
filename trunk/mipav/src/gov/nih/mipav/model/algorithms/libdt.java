@@ -11586,10 +11586,16 @@ public class libdt extends AlgorithmBase {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
 		}
-		/*learnTagDTM();
-		fs<<"annotating videos: "<<getTime()<<endl;
+		learnTagDTM();
+		try {
+		    raFile5.writeBytes("Annotating videos: " + getTime() + "\n");
+		}
+		catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
 		annotateVideos();
-		fs<<"Computing precisionr recall: "<<getTime()<<endl;
+		/*fs<<"Computing precisionr recall: "<<getTime()<<endl;
 		computePrecisionRecall();
 		printResults();*/
 		try {
@@ -11689,6 +11695,578 @@ public class libdt extends AlgorithmBase {
 				Preferences.debug("Base DTM exists for: " + ipath + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 		}
+	}
+	
+	/*!
+	 * \brief
+	 * Learn Tag DTMs for all tags and for all trials.
+	 * 
+	 */
+	void learnTagDTM()
+	{
+		File file = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/tagdtm/");
+		if (!file.exists()) {
+			file.mkdir();
+		}
+		
+		//reading ground truth
+		Vector<String> vlist = new Vector<String>();
+		Vector<Vector<String> > annlist = new Vector<Vector<String>>();
+		Vector<String> taglist = new Vector<String>();
+		readGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/dyntexgtruth.txt",vlist,annlist,taglist);
+
+		//reading trial info
+		Vector<Vector<Integer> > trainVidIds = new Vector<Vector<Integer>>();
+		Vector<Vector<Integer> > testVidIds = new Vector<Vector<Integer>>();
+		readTrialInfo("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/dyntexExperimentalSetup.txt",trainVidIds,testVidIds);
+
+		//tag models for each trial
+		for( int trial=0;trial<5;trial++)
+		{
+			System.out.println("trial = " + trial);
+			Preferences.debug("trial = " + trial + "\n", Preferences.DEBUG_ALGORITHM);
+			String trstr = String.valueOf(trial+1);
+
+			File file2 = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/tagdtm/trial" + trstr);
+			if (!file2.exists()) {
+				file2.mkdir();
+			}
+
+			for( int tagid=0;tagid<35;tagid++)
+			{
+				String opath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/tagdtm/trial" + trstr + "/" + taglist.get(tagid) + ".dtm";
+                File file3 = new File(opath);
+				if(!file3.exists()) //learn tag model
+				{
+					System.out.println("Learning Tag model: " + opath); 
+					Preferences.debug("Learning Tag model: " + opath + "\n", Preferences.DEBUG_ALGORITHM);
+					Vector<Integer> curTagIds=getTagVids(trainVidIds.get(trial),taglist.get(tagid),annlist);
+
+					//temp code
+					Vector<Vector<String> > tmp = new Vector<Vector<String>>();
+					for (int x=0;x<curTagIds.size();x++)
+					{
+						tmp.add(annlist.get(curTagIds.get(x)));
+					}
+
+					//aggregate Dts of all training videos labeled with this tag
+					DytexMix bDTM = new DytexMix();
+					for(int i=0;i<curTagIds.size();i++)
+					{
+						/*if( (curTagIds[i]==259) || (curTagIds[i]==332) ) //skip problem dtm 649i110 vid No 259
+							continue;  */
+
+
+						String dtmpt="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/basedtm/"+ vlist.get(curTagIds.get(i)) + ".dtm";
+						//save the DTM		
+						DytexMix vdtm = new DytexMix();
+						File file4 = new File(dtmpt);
+						try {
+							raFile = new RandomAccessFile(file4, "r");
+						} catch (FileNotFoundException e) {
+							MipavUtil.displayError(e + " ");
+							System.exit(-1);
+						}
+						read(vdtm);	
+						try {
+							raFile.close();
+						} catch (IOException e) {
+							MipavUtil.displayError("In learnTagDTM raFile.close() IOException " + e);
+							System.exit(-1);
+						}
+						
+
+						//put in the tag DTM
+						for(int j=0;j<vdtm.alpha.size();j++)
+						{
+							bDTM.alpha.add(vdtm.alpha.get(j));
+							bDTM.dt.add(vdtm.dt.get(j));
+						}
+					}
+					//normalize alpha
+					double alphaSum=0.0;
+					for(int i=0;i<bDTM.alpha.size();i++)
+					{
+						alphaSum=alphaSum+bDTM.alpha.get(i);
+					}
+					for(int i=0;i<bDTM.alpha.size();i++)
+					{
+						bDTM.alpha.set(i,bDTM.alpha.get(i)/alphaSum);
+					}
+				    bDTM.opt=bDTM.dt.get(0).dtopt;
+
+					
+
+					//reduce aggregated DT
+					int K=8;
+					DytexRegOptions ropt = new DytexRegOptions(cov_reg_type.COV_REG_MIN,0.01,cov_reg_type.COV_REG_MIN,0.01,cov_reg_type.COV_REG_MIN,0.01,cov_reg_type.COV_REG_ADD,0.999);
+					HEMOptions hopt = new HEMOptions(K,ropt,0.0001,Ymean_type.NONZERO_YMEAN,Verbose_mode.COMPACT);
+					for(int i=1;i<=K;i=i*2)
+					hopt.splitOpt.sched.add(i);
+		
+					long starttime = System.currentTimeMillis();
+					DytexMix emout=reduceWithSplitting(bDTM,hopt);
+					long elapsedtime = System.currentTimeMillis() - starttime;
+					System.out.println("Total Time Taken : " + elapsedtime + " milliseconds");
+					Preferences.debug("Total Time Taken : " + elapsedtime + " milliseconds\n", Preferences.DEBUG_ALGORITHM);
+
+					//save tag model
+					try {
+						raFile = new RandomAccessFile(file3, "rw");
+					} catch (IOException e) {
+						MipavUtil.displayError(
+								"In learnTagDTM raFile = new RandomAccessFile(file3, \"rw\") IOException " + e);
+						System.exit(-1);
+					}
+					write(emout);	
+					try {
+						raFile.close();
+					} catch (IOException e) {
+						MipavUtil.displayError("In learnTagDTM raFile.close() IOException " + e);
+						System.exit(-1);
+					}
+
+
+				}
+				else
+				{
+					System.out.println("Tag model Already exists: " + opath);
+					Preferences.debug("Tag model Already exists: " + opath + "\n", Preferences.DEBUG_ALGORITHM);
+				}
+					
+			}
+			System.out.println();
+			Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+		}
+	}
+	
+	/*!
+	 * \brief
+	 * Load ground truth annotation for all videos.
+	 * 
+	 */
+	void readGtruthFile(String fpath,Vector<String> vlist, Vector<Vector<String> > annlist,Vector<String> taglist)
+	{	
+		FileInputStream fis = null;
+		try {
+		    fis = new FileInputStream(fpath);
+		}
+		catch (FileNotFoundException e) {
+		    MipavUtil.displayError("In readGtruthFile " + e);
+		 	System.exit(-1);	
+		}
+        BufferedReader d = new BufferedReader(new InputStreamReader(fis));
+
+		//parsing gtruth file
+		String                line;
+		try {
+		    line = d.readLine();
+			line = d.readLine();
+			line=line.trim();
+			line=line.substring(1,line.length()-2);
+			int i;
+			char element;
+			String elementString;
+			String cell = null;
+			int commaIndex;
+			//Getting tag list
+		
+			for (i = 0; i < line.length(); i++) {
+			    element = line.charAt(i);
+			    if (Character.isLetterOrDigit(element)) {
+			    	elementString = line.substring(i,i+1);
+			    	if (cell == null) {
+			    		cell = elementString;
+			    	}
+			    	else {
+			    		cell = cell.concat(elementString);
+			    		if (i == line.length() -1) {
+			    			taglist.add(cell);
+			    		}
+			    	}
+			    }
+			    else if (cell != null) {
+			    	taglist.add(cell);
+			    	cell = null;
+			    }
+			}
+		
+
+		   line = d.readLine();	
+
+	        while ((line = d.readLine()) != null) {
+	        	if (line.isEmpty()) {
+	        		break;
+	        	}
+	        	if (line.substring(0,1).equalsIgnoreCase("#")) {
+	        		continue;
+	        	}
+	        	int spaceIndex = line.indexOf(" ");
+	        	int colonIndex = line.indexOf(":");
+	        	String cell2 = line.substring(spaceIndex+1,colonIndex);
+	        	// video name
+	        	vlist.add(cell2);
+	        	
+	        	int openingBracketIndex = line.indexOf("{");
+	        	int closingBracketIndex = line.indexOf("}");
+	        	line = line.substring(openingBracketIndex+1);
+	        	Vector<String> vidann = new Vector<String>();
+	        	String cell3;
+	            while ((commaIndex = line.indexOf(",")) != -1) {
+	                cell3 = line.substring(0,commaIndex);
+	                vidann.add(cell3);
+	                line = line.substring(commaIndex+1);
+	            }
+	            cell3 = line.substring(0,closingBracketIndex);
+	            vidann.add(cell3);
+	            annlist.add(vidann);
+	        }
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("In readGtruthFile " + e);
+		 	System.exit(-1);		
+        }
+	}
+	
+	/*!
+	 * \brief
+	 * Read Training and Test videos for each traial.
+	 * 
+	 */
+	void readTrialInfo(String fpath,Vector<Vector<Integer> > trainVidIds, Vector<Vector<Integer> > testVidIds)
+	{	
+		FileInputStream fis = null;
+		int openingBracketIndex;
+		int closingBracketIndex;
+		int commaIndex;
+		try {
+		    fis = new FileInputStream(fpath);
+		}
+		catch (FileNotFoundException e) {
+		    MipavUtil.displayError("In readTrialInfo " + e);
+		 	System.exit(-1);	
+		}
+        BufferedReader d = new BufferedReader(new InputStreamReader(fis));
+
+		//parsing gtruth file
+		String                line;
+		try {
+			for(int i=1;i<=5;i++)
+			{
+				while ((line = d.readLine()) != null) 
+				{		
+					line=line.trim();
+	
+					System.out.println("i = " + i);
+					Preferences.debug("i = " + i + "\n", Preferences.DEBUG_ALGORITHM);
+	
+					if(line.equalsIgnoreCase("Trial-"+String.valueOf(i)+":"))
+						break;
+				}
+	
+				//train Ids
+				line = d.readLine();
+				openingBracketIndex = line.indexOf("{");
+				closingBracketIndex = line.indexOf("}");
+				line = line.substring(openingBracketIndex+1);
+	        	Vector<Integer> ids = new Vector<Integer>();
+	        	String cell3;
+	            while ((commaIndex = line.indexOf(",")) != -1) {
+	                cell3 = line.substring(0,commaIndex);
+	                ids.add(Integer.valueOf(cell3).intValue() - 1);
+	                line = line.substring(commaIndex+1).trim();
+	            }
+	            cell3 = line.substring(0,closingBracketIndex);
+	            ids.add(Integer.valueOf(cell3).intValue() - 1);
+	            trainVidIds.add(ids);
+				
+				//test Ids
+	            line = d.readLine();
+				openingBracketIndex = line.indexOf("{");
+				closingBracketIndex = line.indexOf("}");
+				line = line.substring(openingBracketIndex+1);
+	        	Vector<Integer> ids2 = new Vector<Integer>();
+	        	String cell4;
+	            while ((commaIndex = line.indexOf(",")) != -1) {
+	                cell4 = line.substring(0,commaIndex);
+	                ids2.add(Integer.valueOf(cell4).intValue() - 1);
+	                line = line.substring(commaIndex+1).trim();
+	            }
+	            cell4 = line.substring(0,closingBracketIndex);
+	            ids2.add(Integer.valueOf(cell4).intValue() - 1);
+	            testVidIds.add(ids2);
+			}
+		}
+        catch (IOException e) {
+        	MipavUtil.displayError("In readTrialInfo " + e);
+		 	System.exit(-1);		
+        }
+	}
+	
+	/*!
+	 * \brief
+	 * List which videos are labeled with what tags for each trials.
+	 * 
+	 */
+	Vector<Integer> getTagVids(Vector<Integer> trainVidIds, String tag, Vector<Vector<String> > annlist)
+	{
+	    Vector<Integer> curTagIds = new Vector<Integer>();
+
+		for(int i=0;i<trainVidIds.size();i++)
+		{
+			int vidid=trainVidIds.get(i); //next video in training list
+
+			//boolean lab=false;
+			for(int j=0;j<annlist.get(vidid).size();j++) //look for anns of this video
+			{
+				if(annlist.get(vidid).get(j).equals(tag)) //check this video is labeled with tag or not
+				{
+					//lab=true;
+					curTagIds.add(vidid);
+					break;
+				}
+			}
+		}
+		return curTagIds;
+	}
+	
+	/*!
+	 * \brief
+	 * Get annotation for all videos and for all trials using SML-DTM algorithm.
+	 * 
+	 */
+	void annotateVideos()
+	{
+		/*int winxy=7;
+		int winz=20;
+		int stepxy=4;
+		int stepz=10;
+		norm_type ntype=norm_type.NORM_NONE;
+		double bkvar=-5;
+		int tau=20;
+		int numlabels=35;
+
+		File file = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/ann/");
+		if (!file.exists()) {
+			file.mkdir();
+		}
+		
+		//reading ground truth
+		Vector<String> vlist = new Vector<String>();
+		Vector<Vector<String> > annlist = new Vector<Vector<String>>();
+		Vector<String> taglist = new Vector<String>();
+		readGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/dyntexgtruth.txt",vlist,annlist,taglist);
+
+		//reading trial info
+		Vector<Vector<Integer> > trainVidIds = new Vector<Vector<Integer>>();
+		Vector<Vector<Integer> > testVidIds = new Vector<Vector<Integer>>();
+		readTrialInfo("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/dyntexExperimentalSetup.txt",trainVidIds,testVidIds);
+
+		//tag models for each trial
+		for( int trial=0;trial<5;trial++)
+		{
+			System.out.println("trial = " + trial);
+			Preferences.debug("trial = " + trial + "\n", Preferences.DEBUG_ALGORITHM);
+			String trstr = String.valueOf(trial+1);
+
+			File file2 = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/ann/trial" + trstr);
+			if (!file2.exists()) {
+			    file2.mkdir();	
+			}
+
+			//load all tag models for the trial
+			Vector<DytexMix> alltagdtm = new Vector<DytexMix>();
+			for( int tagid=0;tagid<numlabels;tagid++)
+			{
+				String tagpath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/tagdtm/trial" + trstr + "/" + taglist.get(tagid) + ".dtm";
+				DytexMix tmp = new DytexMix();
+				File file3 = new File(tagpath);
+				try {
+					raFile = new RandomAccessFile(file3, "r");
+				} catch (FileNotFoundException e) {
+					MipavUtil.displayError(e + " ");
+					System.exit(-1);
+				}
+				read(tmp);	
+				try {
+					raFile.close();
+				} catch (IOException e) {
+					MipavUtil.displayError("In annotateVideos raFile.close() IOException " + e);
+					System.exit(-1);
+				}
+				for(int p=0;p<tmp.dt.size();p++)
+				{
+					tmp.dt.get(p).vrows=winxy;
+					tmp.dt.get(p).vcols=winxy;
+				}			
+				alltagdtm.add(tmp);
+			}
+
+			for( int tagid=0;tagid<numlabels;tagid++)
+			{
+				setupKFB(alltagdtm.get(tagid),tau);
+			}
+
+
+
+			for( int vidid=0;vidid<vlist.size();vidid++)
+			{
+				String opath1="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/ann/trial" + trstr + "/" + vlist.get(vidid) + ".txt";
+				String opath2="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/ann/trial" + trstr + "/" + vlist.get(vidid) + ".bin";
+				String ipath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/" + vlist.get(vidid);
+
+				File file4 = new File(opath1);
+				if(!file4.exists()) //learn tag model
+				{
+					System.out.println("annotating: " + opath1);
+					Preferences.debug("annotating: " + opath1 + "\n", Preferences.DEBUG_ALGORITHM);
+					
+					//Getting patches
+					Mat img[]=loaddat(ipath,"t");	
+					PatchOptions popt = new PatchOptions(winxy,winz,stepxy,stepz,ntype,bkvar,0);
+					Range box_z = new Range();
+					box_z.all = true;
+					Range box_y = new Range();
+					box_y.all = true;
+					Range box_x = new Range();
+					box_x.all = true;
+					PatchBatchExtractor pbe = new PatchBatchExtractor(img, popt, box_z, box_y, box_x);
+					System.out.println("No of patches: " + pbe.patches.size());
+					Preferences.debug("No of patches: " + pbe.patches.size() + "\n", Preferences.DEBUG_ALGORITHM);
+					
+					//vector<Mat> tmppat(pbe.patches.begin(),pbe.patches.begin()+40);
+					//pbe.patches=tmppat;
+
+					 //computing likelihood for each patch for each label
+					Mat LL(pbe.patches.size(),numlabels,OPT_MAT_TYPE);
+					LL.setTo(0);
+					for(int j=0;j<numlabels;j++)
+					{
+						cout<<"computing like with tag "<<j<<endl;
+						Mat LLj;
+						alltagdtm[j].getClasses(pbe.patches,LLj);
+						Mat tmp;
+						if(LLj.cols>1)
+						{
+							Mat abc1=LLj.t();
+							tmp=DytexMix::logtrick(abc1);
+						}
+						else
+						{
+							tmp=LLj;						
+						}
+						Mat tmp2=tmp.t();
+						Mat a1=LL.col(j);
+						tmp2.copyTo(a1);
+					}				
+					
+					
+					//compute Z, etc.
+					Mat logZ(pbe.patches.size(),numlabels,OPT_MAT_TYPE);
+					logZ.setTo(0);
+					Mat tmp3 = DytexMix::logtrick(LL.t()).t();				 
+					for(int j=0;j<numlabels;j++)
+					{
+						Mat tmp4=LL.col(j) - tmp3;
+						Mat b1=logZ.col(j);
+						tmp4.copyTo(b1);				
+					}				
+					Mat Z;
+					exp(logZ,Z);
+	    
+	        
+					//average for each tag, and over time
+					Mat LLm;
+					reduce(LL, LLm, 0, CV_REDUCE_AVG);
+					LLm=LLm/winz;				
+	    
+					// compute semantic multinomial
+					Mat tmp5=DytexMix::logtrick(LLm.t());
+					Mat smn;
+					exp(LLm - tmp5.at<double>(1,1),smn);
+
+					
+					Mat smnlabmat,smnmat;
+					sortIdx(smn, smnlabmat, CV_SORT_EVERY_ROW + CV_SORT_DESCENDING);
+					cv::sort(smn, smnmat, CV_SORT_EVERY_ROW + CV_SORT_DESCENDING);
+					
+					std::vector<int> smnlab(35,0);
+					std::vector<double> smnval(35,0);				
+					smnlabmat.row(0).copyTo(smnlab);
+					smnmat.row(0).copyTo(smnval);
+					
+					
+					//save results
+					Bufferer buf2(opath2,fstream::out | fstream::binary);
+					buf2.write("smnlab",smnlab);	
+					buf2.write("smnval",smnval);	
+					buf2.close();
+
+					//write results in text file
+					ofstream of(opath1.c_str());				
+					of<<vlist[vidid]<<endl;
+					
+					//writing Gtruth
+					of<<"Gtruth: {";
+					for(int m=0;m<annlist[vidid].size();m++)
+					{
+						if( m<(annlist[vidid].size()-1) )
+						{
+							of<<annlist[vidid][m]<<", ";
+						}
+						else
+						{
+							of<<annlist[vidid][m]<<"}"<<endl;
+						}
+					}
+
+					//writing Results
+					of<<"DTM-HEM: {";
+					for(int m=0;m<35;m++)
+					{
+						if( m<34)
+						{
+							of<<taglist[smnlab[m]]<<", ";
+						}
+						else
+						{
+							of<<taglist[smnlab[m]]<<"}"<<endl;
+						}
+					}
+
+					//check test or train video
+					bool flag=false;
+					for(int xx=0;xx<trainVidIds[trial].size();xx++)
+					{
+						if(vidid==trainVidIds[trial][xx])
+						{
+							flag=true;
+							break;
+						}
+					}
+					
+					if(flag==true)
+					{
+						of<<"Train Video"<<endl;
+					}
+					else
+					{
+						of<<"Test Video"<<endl;
+					}
+					
+
+
+					of.close();
+					
+				}
+				else
+				{
+					cout<<"annotation Already exists: "<<opath1<<endl;
+				}
+					
+			}		
+		}*/
+
 	}
 
 	/*
