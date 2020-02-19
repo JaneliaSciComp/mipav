@@ -1361,8 +1361,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             		"Core Volume " + volUnitsStr,
             		"Core Volume using Tmax " + volUnitsStr,
             		"Tmax > " + pwiThreshold + " Volume",
-            		"Mismatch (Tmax - core) " + volUnitsStr, "Mismatch Ratio (core / Tmax)",
-            		"Mismatch (Tmax - core using Tmax) " + volUnitsStr, "Mismatch Ratio (core using Tmax / Tmax)"));
+            		"Mismatch (Tmax - core) " + volUnitsStr, "Mismatch Ratio (Tmax / core)",
+            		"Mismatch (Tmax - core using Tmax) " + volUnitsStr, "Mismatch Ratio (Tmax / core using Tmax)"));
             
             double perfusionSize = 0;
             double dwiCore = 0;
@@ -1393,9 +1393,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             double perfusionVol = perfusionSize * ccFactor;
             
             double perfusionMismatchDwi = (perfusionSize - dwiCore) * ccFactor;
-            double perfusionRatioDwi = dwiCore / perfusionSize;
+            double perfusionRatioDwi = perfusionSize / dwiCore;
             double perfusionMismatchPwi = (perfusionSize - pwiCore) * ccFactor;
-            double perfusionRatioPwi = pwiCore / perfusionSize;
+            double perfusionRatioPwi = perfusionSize / pwiCore;
             
             System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize);
             csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCoreVol, pwiCoreVol, perfusionVol, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);
