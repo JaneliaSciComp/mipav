@@ -294,6 +294,12 @@ public class WormData
 		}
 	}
 
+	public VOIVector readStraightLattice()
+	{
+		VOIVector voi = LatticeModel.readLatticeCSV(outputDirectory + File.separator + straightenedLattice + File.separator + "straightened_lattice.csv");
+		return voi;
+	}
+
 	public void openStraightSeamCells()
 	{
 		//		VOIVector lattice = new VOIVector();

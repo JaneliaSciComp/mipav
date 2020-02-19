@@ -56,6 +56,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelAnnotations;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelCurves;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelLattice;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
@@ -301,32 +302,32 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 				}
 				startButton.setEnabled(false);
-				if ( segmentSeamCells.isSelected() )
-				{
-					try {
-						// Batch Automatic Seam Cell Segmentation:
-						PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), minRadius, maxRadius );
-					} catch ( java.lang.OutOfMemoryError e ) {
-						MipavUtil.displayError( "Error: Not enough memory. Unable to finish seam cell segmentation." );
-						return;
-					}
-					segmentSeamCells.setSelected(false);
-					editSeamCells.setSelected(true);
-					startButton.setEnabled(true);
-				}
-				else if ( buildLattice.isSelected() )
-				{
-					try {
-						// Batch Automatic Lattice-Building
-						PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
-					} catch ( java.lang.OutOfMemoryError e ) {
-						MipavUtil.displayError( "Error: Not enough memory. Unable to finish automatic lattice-building." );
-						return;
-					}
-					editLattice.setSelected(true);
-					startButton.setEnabled(true);
-				}
-				else if ( latticeStraighten.isSelected() )
+//				if ( segmentSeamCells.isSelected() )
+//				{
+//					try {
+//						// Batch Automatic Seam Cell Segmentation:
+//						PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), minRadius, maxRadius );
+//					} catch ( java.lang.OutOfMemoryError e ) {
+//						MipavUtil.displayError( "Error: Not enough memory. Unable to finish seam cell segmentation." );
+//						return;
+//					}
+//					segmentSeamCells.setSelected(false);
+//					editSeamCells.setSelected(true);
+//					startButton.setEnabled(true);
+//				}
+//				else if ( buildLattice.isSelected() )
+//				{
+//					try {
+//						// Batch Automatic Lattice-Building
+//						PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
+//					} catch ( java.lang.OutOfMemoryError e ) {
+//						MipavUtil.displayError( "Error: Not enough memory. Unable to finish automatic lattice-building." );
+//						return;
+//					}
+//					editLattice.setSelected(true);
+//					startButton.setEnabled(true);
+//				}
+				if ( latticeStraighten.isSelected() )
 				{
 					try {
 						// Batch Untwisting:
@@ -374,17 +375,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 					startButton.setEnabled(true);
 				}
-				else if ( editSeamCells.isSelected() )
-				{
-					// Start seam cell editing:
-					editMode = EditSeamCells;
-					displayControls.setVisible(false);
-					displayModel.setVisible(false);
-					displaySurface.setVisible(false);
-					previewUntwisting.setVisible(false);
-					validate();
-					openAll();
-				}
+//				else if ( editSeamCells.isSelected() )
+//				{
+//					// Start seam cell editing:
+//					editMode = EditSeamCells;
+//					displayControls.setVisible(false);
+//					displayModel.setVisible(false);
+//					displaySurface.setVisible(false);
+//					previewUntwisting.setVisible(false);
+//					validate();
+//					openAll();
+//				}
 				else if ( editLattice.isSelected() )
 				{
 					// start lattice editing:
@@ -396,17 +397,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					validate();
 					openAll();
 				}
-				else if ( checkSeamCells.isSelected() )
-				{
-					// start lattice editing:
-					editMode = CheckSeam;
-					displayModel.setVisible(true);
-					displaySurface.setVisible(true);
-					previewUntwisting.setVisible(true);
-					displayControls.setVisible(false);
-					validate();
-					openAll();
-				}
+//				else if ( checkSeamCells.isSelected() )
+//				{
+//					// start lattice editing:
+//					editMode = CheckSeam;
+//					displayModel.setVisible(true);
+//					displaySurface.setVisible(true);
+//					previewUntwisting.setVisible(true);
+//					displayControls.setVisible(false);
+//					validate();
+//					openAll();
+//				}
 				else if ( integratedEdit.isSelected() )
 				{
 					// start lattice editing:
@@ -422,7 +423,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				{
 					// start viewing untwisted results:
 					editMode = ReviewResults;
-//					openStraightened();
+					displayModel.setVisible(true);
+					displaySurface.setVisible(true);
+					previewUntwisting.setVisible(true);
+					displayControls.setVisible(false);
+					validate();
+					openAll();
 				}
 			}
 
@@ -839,7 +845,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     	}
     	activeRenderer.setVOILatticeManager(activeImage.voiManager);
 
-		if ( editMode != EditSeamCells ) {
+		if ( editMode == ReviewResults ) {
+			activeImage.voiManager.setLattice(activeImage.wormData.readStraightLattice());
+		}
+		else {
 			activeImage.voiManager.setLattice(activeImage.wormData.readFinalLattice());
 		}
 
@@ -866,11 +875,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     	activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
     	activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
     	// initialize the display panel for editing / displaying annotations:
-    	if ( editMode != EditLattice ) {
-    		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-    	}
-
     	if ( editMode == EditLattice || editMode == IntegratedEditing ) {
+    		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
     		initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );    		
     	}
     	if ( editMode == IntegratedEditing ) {
@@ -886,6 +892,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		renderer.displayVOIs(true);
 		renderer.setVolumeBlend(.8f);
 		renderer.setABBlend(.8f);
+		if ( editMode == ReviewResults ) {
+			renderer.resetAxisXInv();
+		}
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		if ( dualGPU != null )
 			dualGPU.setDividerLocation(0.5);
@@ -1339,6 +1348,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				{	
 					String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 					File voiFile = new File(baseFileDir + File.separator + fileName);
+					if ( editMode == ReviewResults ) {
+						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
+						String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+						voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
+					}
 					if ( !voiFile.exists() )
 					{
 						includeRange.remove(i);
@@ -1367,7 +1382,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 					File voiFile = new File(baseFileDir + File.separator + fileName);
 					File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
-
+					if ( editMode == ReviewResults ) {
+						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
+						String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+						voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
+						voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
+					}
 					long memoryInUse = 0;
 					if ( i == 0 )
 					{
@@ -1474,14 +1495,16 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						latticeSelectionPanel.add(newLatticeButton);
 						latticeSelectionPanel.add(flipLatticeButton);
 					}
-					
-					latticeSelectionPanel.add(displayModel);
-					displayModel.setSelected(false);
-					latticeSelectionPanel.add(displaySurface);
-					displaySurface.setSelected(false);
-					latticeSelectionPanel.remove(previewUntwisting);
-					latticeSelectionPanel.add(previewUntwisting);
-					latticeSelectionPanel.setVisible(true);
+
+					if ( editMode != ReviewResults ) {
+						latticeSelectionPanel.add(displayModel);
+						displayModel.setSelected(false);
+						latticeSelectionPanel.add(displaySurface);
+						displaySurface.setSelected(false);
+						latticeSelectionPanel.remove(previewUntwisting);
+						latticeSelectionPanel.add(previewUntwisting);
+						latticeSelectionPanel.setVisible(true);
+					}
 
 					if ( leftImage.annotations != null )
 					{
@@ -1493,9 +1516,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					leftImage.voiManager = new VOILatticeManagerInterface( null, leftImage.volumeImage.GetImage(), null, 0, true, null );
 					
 					openAnnotations(leftImage, WormData.getOutputDirectory(voiFile, fileName), WormData.getOutputDirectory(voiFile2, fileName), editMode );
-					if ( editMode == IntegratedEditing ) {
-						openNeuriteCurves( leftImage );
-					}
+					openNeuriteCurves( leftImage );
+					
 					initHistoLUTPanel(leftImage);
 					progressBar.updateValueImmed(i);
 				}
@@ -1783,6 +1805,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			FileIO fileIO = new FileIO();
 			ModelImage image = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
 			image.calcMinMax();   
+			image.setResolutions( new float[] {1,1,1} );
 			return image;
 		}
 		return null;
@@ -2730,7 +2753,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 		gbc.gridx = 0;
 		reviewResults = gui.buildRadioButton("review straightened results", false );
-		reviewResults.setEnabled(false);
+		reviewResults.setEnabled(true);
 		reviewResults.addActionListener(this);
 		reviewResults.setActionCommand("reviewResults");
 		panel.add(reviewResults.getParent(), gbc);
@@ -2850,6 +2873,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	private void saveAll()
 	{
+		if ( editMode == ReviewResults ) return;
 		if ( imageStack != null )
 		{
 			for ( int i = 0; i < imageStack.length; i++ )
@@ -2859,31 +2883,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				saveIntegrated();
 			}
 		}
-	}
-
-	/**
-	 * Saves the annotations to the default edited file for the current image.
-	 */
-	private void saveAnnotations()
-	{
-		if ( activeImage.wormImage == null )
-		{
-			return;
-		}
-		if ( imageIndex >= includeRange.size() )
-		{
-			return;
-		}
-		if ( activeImage.wormData == null )
-		{
-			return;
-		}
-		if ( activeImage.voiManager == null )
-		{
-			return;
-		}
-
-		activeImage.wormData.saveMarkerAnnotations( activeImage.voiManager.getAnnotations() );
 	}
 
 	/**
@@ -2920,8 +2919,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	private void openNeuriteCurves( IntegratedWormData data ) {
-		if ( data.voiManager != null ) {
-			data.voiManager.openNeuriteCurves();
+		if ( editMode == IntegratedEditing ) {
+			if ( data.voiManager != null ) {
+				data.voiManager.openNeuriteCurves();
+			}
+		}
+		if ( editMode == ReviewResults ) {
+			LatticeModel.openStraightNeuriteCurves(data.wormImage);
 		}
 	}
 	
@@ -2935,19 +2939,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		data.annotations = new VOIVector();
 
-//		if ( editMode == EditSeamCells || editMode == CheckSeam ) {
-//			if ( editMode == CheckSeam ) {
-//				data.wormData.readNamedSeamCells();
-//			}
-//			else {
-//				data.wormData.readSeamCells();
-//			}
-//			VOI markers = data.wormData.getSeamAnnotations();
-//			if ( markers != null ) {
-//				data.annotations.add( markers );
-//				data.wormImage.registerVOI( markers );
-//			}
-//		}
 		if ( editMode == IntegratedEditing ) {
 			if ( data.wormData.integratedExists() ) {
 				VOI markers = data.wormData.getIntegratedMarkerAnnotations();
@@ -2969,6 +2960,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					data.wormImage.registerVOI( markers );
 				}
 			}
+		}
+		else if ( editMode == ReviewResults ) {
+			data.wormData.openStraightAnnotations();
 		}
 		if ( data.annotations.size() > 0 )
 			System.err.println( "openAnnotations " + data.wormImage.getImageName() + "   " + data.annotations.elementAt(0).getCurves().size() );
