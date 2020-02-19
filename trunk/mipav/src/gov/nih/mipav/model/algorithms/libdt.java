@@ -5092,6 +5092,57 @@ public class libdt extends AlgorithmBase {
 			System.exit(-1);
 		}
 	}
+	
+	/*!
+	 * \brief
+	 * reads a vector of strings from current location in file.
+	 * 
+	 * \param name
+	 * name of the string vector object to read.
+	 * 
+	 * \param vec
+	 * where to store the list of strings.
+	 *  
+	 * \see
+	 * Bufferer::write(string name,const std::vector<string> &vec)
+	 */
+	public void readVectorString(String name,Vector<String> vec)
+	{
+		vec.clear();
+		readHeader(name);		
+		int len;
+		int i;
+		char element;
+		String elementString;
+		String token = null;
+		try {
+			len = getInt(endian);
+
+			String temp = raFile.readLine();
+			for (i = 0; i < temp.length(); i++) {
+			    element = temp.charAt(i);
+			    if (Character.isLetterOrDigit(element)) {
+			    	elementString = temp.substring(i,i+1);
+			    	if (token == null) {
+			    		token = elementString;
+			    	}
+			    	else {
+			    		token = token.concat(elementString);
+			    		if (i == temp.length() -1) {
+			    			vec.add(token);
+			    		}
+			    	}
+			    }
+			    else if (token != null) {
+			    	vec.add(token);
+			    	token = null;
+			    }
+			}
+		} catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+	}
 
 	/*
 	 * ! \brief Writes a vector of int.
@@ -7981,7 +8032,8 @@ public class libdt extends AlgorithmBase {
 
 			if (FlagYmean == Ymean_type.NONZERO_YMEAN) {
 				Mat tmpM = new Mat();
-				reduce(foo, tmpM, 2, CV_REDUCE_AVG);
+				// Ymean in Dytex has a single column
+				reduce(foo, tmpM, 1, CV_REDUCE_AVG);
 				Ymean.add(tmpM);
 			}
 
@@ -11486,6 +11538,158 @@ public class libdt extends AlgorithmBase {
 
 		return smask;
 	}
+	
+	/*!
+	 * \brief
+	 * SML-DTM Video Annotation Experiment on DynTex Data Set.
+	 * 
+	 */
+	public void test_HEMDTM()
+	{
+		String opath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/log.txt";
+		File file5 = new File(opath);
+	 	RandomAccessFile raFile5 = null;
+	
+	 	try {
+	         raFile5 = new RandomAccessFile(file5, "rw");
+	 	}
+	 	catch (FileNotFoundException e) {
+	 		MipavUtil.displayError("In test_HEMDTM() raFile5 = new RandomAccessFile(file5, \"rw\") FileNotoundException " + e);
+	 		System.exit(-1);
+	 	}
+        try {
+        	raFile5.setLength(0L);
+        }
+        catch (IOException e) {
+	 		MipavUtil.displayError("In test_HEMDTM() raFile5.setLength(0L)  IOException " + e);
+	 		System.exit(-1);
+	 	}
+        try {
+        	raFile5.writeBytes("Experiment Started: " + getTime() + "\n");
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+        try {
+        	raFile5.writeBytes("Learning base DTs: " + getTime() + "\n");
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		learnBaseDTM();
+		try {
+		    raFile5.writeBytes("learning Tag DTs: " + getTime() + "\n");
+		}
+		catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		/*learnTagDTM();
+		fs<<"annotating videos: "<<getTime()<<endl;
+		annotateVideos();
+		fs<<"Computing precisionr recall: "<<getTime()<<endl;
+		computePrecisionRecall();
+		printResults();*/
+		try {
+        	raFile5.writeBytes("Experiment Finished: " + getTime() + "\n");
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+	 	try {
+			raFile5.close();
+		} catch (IOException e) {
+			MipavUtil.displayError("In test_BoS Classification() raFile5.close() IOException " + e);
+			System.exit(-1);
+		}
+	}
+	
+	/*!
+	 * \brief
+	 * Learn video level DTMs for all videos.
+	 * 
+	 */
+	void learnBaseDTM()
+	{
+		File file = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/basedtm/");
+		if (!file.exists()) {
+			file.mkdir();
+		}
+		//video list		
+		Vector<String> vlist = new Vector<String>();
+	    File file2 = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/list.vec");
+	    try {
+			raFile = new RandomAccessFile(file2, "r");
+		} catch (FileNotFoundException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		readVectorString("list",vlist);	
+		try {
+			raFile.close();
+		} catch (IOException e) {
+			MipavUtil.displayError("In learnBaseDTM raFile.close() IOException " + e);
+			System.exit(-1);
+		}
+		
+
+		//Setting DTM learning Options	
+		int winxy=7;
+		int winz=20;
+		int stepxy=4;
+		int stepz=10;
+		norm_type ntype=norm_type.NORM_NONE;
+		double bkvar=-5;
+		int K=16;
+		int n=10;
+		double reg=0.5;
+		
+		for(int i=0;i<vlist.size();i++)
+		{
+			String ipath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/" + vlist.get(i);
+			String opath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/basedtm/" + vlist.get(i) + ".dtm";					
+			
+			File file3 = new File(opath);
+			if(!file3.exists())
+			{
+				System.out.println("Generating BaseDTM for: " + ipath);
+				Preferences.debug("Generating BaseDTM for: " + ipath + "\n", Preferences.DEBUG_ALGORITHM);
+				try {
+					file3.createNewFile();
+				} catch (IOException e) {
+					MipavUtil.displayError("In learnBaseDTM file3.createNewFile() IOException " + e);
+					System.exit(-1);
+				}
+				try {
+					raFile = new RandomAccessFile(file3, "rw");
+				} catch (IOException e) {
+					MipavUtil.displayError(
+							"In learnBaseDTM raFile = new RandomAccessFile(file3, \"rw\") IOException " + e);
+					System.exit(-1);
+				}
+				//learn the model		
+				VidSegm vs = new VidSegm(winxy,winz,stepxy,stepz,ntype,bkvar,K,n,reg,0,0);		
+				learnDTM(vs,ipath,false);
+
+				//save the DTM		
+				write(vs.dtm);
+				try {
+					raFile.close();
+				} catch (IOException e) {
+					MipavUtil.displayError("In learnBaseDTM raFile.close() IOException " + e);
+					System.exit(-1);
+				}
+			}
+			else
+			{
+				System.out.println("Base DTM exists for: " + ipath);
+				Preferences.debug("Base DTM exists for: " + ipath + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+		}
+	}
 
 	/*
 	 * ! \brief UCLA9 Eight Class BoS Classification Experiment.
@@ -11525,7 +11729,7 @@ public class libdt extends AlgorithmBase {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
 		}
-	 	learnBaseDTM();
+	 	learnBaseDTMBoS();
 	 	try {
         	raFile5.writeBytes("Generating Base Codebook: " + getTime() + "\n");
         }
@@ -11567,14 +11771,14 @@ public class libdt extends AlgorithmBase {
 	 * learning video level DTms for all videos.
 	 * 
 	 */
-	void learnBaseDTM()
+	void learnBaseDTMBoS()
 	{
 		File file = new File("C:/libdt-v1.01/libdt-v1.01/testdata/BoS/ucla9c8/basedtm/");
 		if (!file.exists()) {
 			file.mkdir();
 		}
 		//video list	
-		Vector<Vector<String> > vlist=readGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/BoS/ucla9c8/gtruth/gtruth1.txt");
+		Vector<Vector<String> > vlist=readDyntexGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/BoS/ucla9c8/gtruth/gtruth1.txt");
 
 		//Setting DTM learning Options	
 		int winxy=5;
@@ -11638,9 +11842,15 @@ public class libdt extends AlgorithmBase {
 	 * Loading ground truth classification .
 	 * 
 	 */
-	Vector<Vector<String> > readGtruthFile(String fpath)
+	Vector<Vector<String> > readDyntexGtruthFile(String fpath)
 	{
+		// dyntexgtruth.txt rather than specified gtruth1.txt
+		// 0 is a number starting with 001 and ending with 337
+		// 1 is an alphanumeric video ID
+		// Between 1 and 7 Gtruth tags are present starting at 2 and going as high as 8
 		String str;
+		String element;
+		String str2;
 		int i;
 		FileInputStream fis = null;
 		Vector<Vector<String> > result = new Vector<Vector<String>>();
@@ -11656,11 +11866,31 @@ public class libdt extends AlgorithmBase {
         try {
 	        while ((str = d.readLine()) != null) {
 	        	line.clear();
-	            String split[] = str.split(",");
-	            for (i = 0; i < split.length; i++) {
-	            	line.add(split[i]);
-	            }
+	        	str2 = null;
+	        	if (str.substring(0,1).equalsIgnoreCase("#")) {
+	        		continue;
+	        	}
+	        	for (i = 0; i < str.length(); i++) {
+	        	    element = str.substring(i,i+1);
+	        	    if ((!element.equalsIgnoreCase(":"))  && (!element.equalsIgnoreCase("{")) && (!element.equalsIgnoreCase("}")) &&
+	        	    		(!element.equalsIgnoreCase(" ")) && (!element.equalsIgnoreCase(","))) {
+	        	        if (str2 == null) {
+	        	        	str2 = element;
+	        	        }
+	        	        else {
+	        	        	str2 = str2.concat(element);
+	        	        }
+	        	    }
+	        	    else if ((str2 != null) && ((element.equalsIgnoreCase(",")) || (element.equalsIgnoreCase(" ")) ||
+	        	    		element.equalsIgnoreCase("}"))) {
+	        	    	line.add(str2);
+	        	    	str2 = null;
+	        	    }
+	        	}
 	            result.add(line);
+	            //for (int j = 0; j < line.size(); j++) {
+	            	//Preferences.debug("j = " + j + " " + line.get(j) + "\n", Preferences.DEBUG_ALGORITHM);
+	            //}
 	        }
         }
         catch (IOException e) {
