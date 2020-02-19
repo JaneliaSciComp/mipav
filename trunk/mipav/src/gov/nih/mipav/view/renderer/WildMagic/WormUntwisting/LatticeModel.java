@@ -9028,12 +9028,12 @@ public class LatticeModel {
 
 			VOIWormAnnotation leftAnnotation = new VOIWormAnnotation((VOIWormAnnotation)left.getCurves().elementAt(i));
 			leftAnnotation.clear();
-			leftAnnotation.add(leftPt); leftAnnotation.add(leftPt);
+			leftAnnotation.add(leftPt); 
 			leftSide.getCurves().add(leftAnnotation);
 
 			VOIWormAnnotation rightAnnotation = new VOIWormAnnotation((VOIWormAnnotation)right.getCurves().elementAt(i));
 			rightAnnotation.clear();
-			rightAnnotation.add(leftPt); rightAnnotation.add(leftPt);
+			rightAnnotation.add(rightPt);
 			rightSide.getCurves().add(rightAnnotation);
 		}
 		final float[] leftDistances = new float[leftSide.getCurves().size()];

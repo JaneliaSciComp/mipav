@@ -910,9 +910,6 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		voiManager.addAnnotationListener(this);
 		if ( annotationPanel == null )
 		{			
-//			annotationPanel = new JPanel();
-//			annotationPanel.setLayout(new BorderLayout());
-			
 			initGB();
 			JPanel thresholdPanel = new JPanel(gbLayout);
 			thresholdPanel.setBorder(JDialogBase.buildTitledBorder("Threshold Segmentation"));
@@ -1077,16 +1074,12 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			
 
 			
-			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, listPanel, null );
+			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, listPanel, displayPanel );
 			annotationPanel.setOneTouchExpandable(true);
 			annotationPanel.setDividerSize(6);
 			annotationPanel.setContinuousLayout(true);
 			annotationPanel.setResizeWeight(0.5);
 			annotationPanel.setDividerLocation(0.5);
-			
-			
-//			annotationPanel.add(displayPanel, BorderLayout.SOUTH);
-			//			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
 		}
 
 		// Add the list of annotations to the table:
