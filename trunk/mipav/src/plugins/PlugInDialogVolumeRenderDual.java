@@ -881,6 +881,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     	}
     	if ( editMode == IntegratedEditing ) {
     		initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
+			activeImage.voiManager.editAnnotations(false);
     		//			initDisplaySeamPanel();
     	}
     	else if ( editMode == EditLattice ) {

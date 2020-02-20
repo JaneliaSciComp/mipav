@@ -2022,7 +2022,6 @@ public class LatticeModel {
 			final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
 			if ( text.isSelected() ) {
 				Vector3f diff = text.getSelectionOffset();
-//				System.err.println( pt );
 				
 				Vector3f newPt = Vector3f.sub(pt,  diff);
 				newPt.max( Vector3f.ZERO );
@@ -2040,6 +2039,7 @@ public class LatticeModel {
 				
 			}
 		}
+		
 		if ( modified ) {
 			updateAnnotationListeners();
 		}
@@ -8096,6 +8096,7 @@ public class LatticeModel {
 				}
 			}
 		}
+//		System.err.println("findNearestAnnotation " + minDist + "  " + pickedAnnotation );
 		if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
 		{
 			minDist = Float.MAX_VALUE;

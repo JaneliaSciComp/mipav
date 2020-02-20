@@ -121,7 +121,7 @@ public class VOIWormAnnotation extends VOIText {
 	}
 	
 	public void setSelectionOffset( Vector3f selection ) {
-		System.err.println( getText() + "  setSelectionOffset " + selection );
+//		System.err.println( getText() + "  setSelectionOffset " + selection );
 		this.selectionOffset = selection;
 	}
 	
