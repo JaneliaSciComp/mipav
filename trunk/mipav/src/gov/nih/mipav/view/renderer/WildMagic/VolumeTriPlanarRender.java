@@ -1819,6 +1819,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				}
 			}
 		}
+		m_bMouseDrag = false;
 	}
 
 	protected void update4D( boolean bForward )
