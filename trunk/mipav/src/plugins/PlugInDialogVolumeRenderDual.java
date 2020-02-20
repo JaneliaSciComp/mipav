@@ -102,6 +102,7 @@ import javax.swing.event.ChangeListener;
 
 import org.jocl.Sizeof;
 
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
@@ -249,6 +250,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private JRadioButton displayChannel1;
 		private JRadioButton displayChannel2;
 		private JRadioButton displayBothChannels;
+		
+		private Matrix3f volumeMatrix = new Matrix3f();
 		
 		public IntegratedWormData() {}
 	};
@@ -586,24 +589,27 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				}
 			}
 			else if ( command.equals("preview") )
-			{
+			{				
 				// disable controls:
 				doneButton.setEnabled(false);
 				nextButton.setEnabled(false);
 				backButton.setEnabled(false);
 				selectedTab = tabbedPane.getSelectedIndex();
-//				TransferFunction fn = null;
-//				TransferFunction blueFn = null;
-//				TransferFunction greenFn = null;
-//				if ( !activeImage.wormImage.isColorImage() ) {
-//					fn = new TransferFunction(((ModelLUT)activeImage.volumeImage.getLUT()).getTransferFunction());
-//				}
-//				else {
-//					fn = new TransferFunction(((ModelRGB)activeImage.volumeImage.getLUT()).getRedFunction());
-//					blueFn = new TransferFunction(((ModelRGB)activeImage.volumeImage.getLUT()).getBlueFunction());
-//					greenFn = new TransferFunction(((ModelRGB)activeImage.volumeImage.getLUT()).getGreenFunction());
-//				}
+				TransferFunction fn = null;
+				TransferFunction blueFn = null;
+				TransferFunction greenFn = null;
+				if ( !activeImage.wormImage.isColorImage() ) {
+					fn = new TransferFunction(((ModelLUT)activeImage.volumeImage.getLUT()).getTransferFunction());
+				}
+				else {
+					fn = new TransferFunction(((ModelRGB)activeImage.volumeImage.getLUT()).getRedFunction());
+					blueFn = new TransferFunction(((ModelRGB)activeImage.volumeImage.getLUT()).getBlueFunction());
+					greenFn = new TransferFunction(((ModelRGB)activeImage.volumeImage.getLUT()).getGreenFunction());
+				}
 				if ( previewUntwisting.getText().equals("preview") ) {
+					// save image orientation: 
+					activeImage.volumeMatrix = new Matrix3f(activeRenderer.GetSceneRotation());
+					
 					if ( activeImage.previewImage != null ) activeImage.previewImage.disposeLocal(false);
 					activeImage.previewImage = untwistingTest();	
 					activeImage.voiManager.setImage(activeImage.previewImage, null);	
@@ -616,14 +622,14 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeRenderer.displaySurface(false);
 					updateHistoLUTPanels(activeImage);
 					
-//					if ( !activeImage.wormImage.isColorImage() ) {
-//						((ModelLUT)activeImage.volumeImage.getLUT()).setTransferFunction(fn);
-//					}
-//					else {
-//						((ModelRGB)activeImage.volumeImage.getLUT()).setRedFunction(fn);
-//						((ModelRGB)activeImage.volumeImage.getLUT()).setBlueFunction(blueFn);
-//						((ModelRGB)activeImage.volumeImage.getLUT()).setGreenFunction(greenFn);						
-//					}
+					if ( !activeImage.wormImage.isColorImage() ) {
+						((ModelLUT)activeImage.volumeImage.getLUT()).setTransferFunction(fn);
+					}
+					else {
+						((ModelRGB)activeImage.volumeImage.getLUT()).setRedFunction(fn);
+						((ModelRGB)activeImage.volumeImage.getLUT()).setBlueFunction(blueFn);
+						((ModelRGB)activeImage.volumeImage.getLUT()).setGreenFunction(greenFn);						
+					}
 					activeImage.volumeImage.UpdateImages(activeImage.volumeImage.getLUT());
 					previewUntwisting.setText("return");
 
@@ -645,12 +651,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if ( activeImage.annotationOpen ) {
 						initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
 					}
-					//					if ( seamOpen ) {
-					//						initDisplaySeamPanel();
-					//					}
 					activeImage.annotationPanelUI.setPreviewMode(true);
-					activeImage.latticeTable.setPreviewMode(true);;
-					//					checkSeamPanel.setPreviewMode(true);
+					activeImage.latticeTable.setPreviewMode(true);
 				}
 				else {
 					previewUntwisting.setText("preview");		
@@ -658,16 +660,20 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeImage.volumeImage.UpdateData(activeImage.wormImage, activeImage.volumeImage.GetLUT(), true);
 					activeRenderer.resetAxis();
 					activeRenderer.reCreateScene(activeImage.volumeImage);
+
+					// reset image orientation: 
+					activeRenderer.SetSceneRotation(activeImage.volumeMatrix);
+					
 					updateClipPanel(activeImage, activeRenderer, true);
 					updateHistoLUTPanels( activeImage );
-//					if ( !activeImage.wormImage.isColorImage() ) {
-//						((ModelLUT)activeImage.volumeImage.getLUT()).setTransferFunction(fn);
-//					}
-//					else {
-//						((ModelRGB)activeImage.volumeImage.getLUT()).setRedFunction(fn);
-//						((ModelRGB)activeImage.volumeImage.getLUT()).setBlueFunction(blueFn);
-//						((ModelRGB)activeImage.volumeImage.getLUT()).setGreenFunction(greenFn);						
-//					}
+					if ( !activeImage.wormImage.isColorImage() ) {
+						((ModelLUT)activeImage.volumeImage.getLUT()).setTransferFunction(fn);
+					}
+					else {
+						((ModelRGB)activeImage.volumeImage.getLUT()).setRedFunction(fn);
+						((ModelRGB)activeImage.volumeImage.getLUT()).setBlueFunction(blueFn);
+						((ModelRGB)activeImage.volumeImage.getLUT()).setGreenFunction(greenFn);						
+					}
 					activeImage.volumeImage.UpdateImages(activeImage.volumeImage.getLUT());
 
 					// restore twisted annotations and lattice:
@@ -725,11 +731,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if ( activeImage.annotationOpen ) {
 						initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
 					}
-					//					if ( seamOpen ) {
-					//						initDisplaySeamPanel();
-					//					}
 					activeImage.annotationPanelUI.setPreviewMode(false);
-					//					checkSeamPanel.setPreviewMode(false);
 					activeImage.latticeTable.setPreviewMode(false);
 
 					doneButton.setEnabled(true);

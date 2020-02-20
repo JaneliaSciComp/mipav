@@ -922,7 +922,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         return true;
     }
     
-    protected Matrix3f GetSceneRotation()
+    public Matrix3f GetSceneRotation()
     {
         return m_spkScene.Local.GetRotate();
     }
@@ -969,7 +969,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         }
     }
     
-    protected void SetSceneRotation(Matrix3f kRotation)
+    public void SetSceneRotation(Matrix3f kRotation)
     {
         m_spkScene.Local.SetRotate(kRotation);
         UpdateSceneRotation();
