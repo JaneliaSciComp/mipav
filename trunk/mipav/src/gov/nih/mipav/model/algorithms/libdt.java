@@ -5095,6 +5095,39 @@ public class libdt extends AlgorithmBase {
 	
 	/*!
 	 * \brief
+	 * Writes a vector of double.
+	 * 
+	 * \param name
+	 * name of the double vector object.
+	 * 
+	 * \param vec
+	 * list of doubls.
+	 *  
+	 * \see
+	 *  Bufferer::read(string name,std::vector<double> &vec)
+	 */
+	public void writeVecDouble(String name, Vector<Double> vec)
+	{
+		long spos=writeHeader(name);		
+		int len=vec.size();
+		
+		try {
+			writeInt(len, endian);
+
+			for (int i = 0; i < len; i++) {
+				double temp = vec.get(i);
+				writeDouble(temp, endian);
+			}
+		} catch (IOException e) {
+			MipavUtil.displayError("In writeVecDouble(String name, Vector<Double> vec) IOException = " + e);
+			System.exit(-1);
+		}
+
+		writeSize(spos);
+	}
+	
+	/*!
+	 * \brief
 	 * reads a vector of strings from current location in file.
 	 * 
 	 * \param name
@@ -11182,6 +11215,44 @@ public class libdt extends AlgorithmBase {
 		}
 		return outsegm;
 	}
+	
+	/*!
+	 * \brief
+	 * Get log likelihhod for new patches given current DTM.
+	 * 
+	 * \param Y
+	 * list of input video patches.
+	 * 
+	 * \param LLm
+	 * log likelihhod of patches with each mixture component.
+	 * 
+	 * Same as the other overload but only calulates LL(logliklihood under each component)
+	 *
+	 * \remarks
+	 * make sure kfb cache is ready and setupKFB is called.
+	 * 
+	 * \see
+	 * DytexMix::getClasses(std::vector<Mat> Y,std::vector<int> & classes) | setupKFB
+	 */
+	public void getClasses(DytexMix dtm, Vector<Mat> Y, Mat LLm)
+	{
+		int r;
+		int N=Y.size();
+		int K=dtm.dt.size();	
+		Mat LL = new Mat(N,K,CV_64F);	
+		//compute logliklihood under each component
+		for(int i=0;i<K;i++)
+		{		
+			Mat tmpL = new Mat();
+			dtm.kfb.get(i).loglike(Y,tmpL,false);
+			Mat tempM = plus(transpose(tmpL), Math.log(dtm.alpha.get(i)));
+			for (r = 0; r < tempM.rows; r++) {
+				LL.double2D[r][i] = tempM.double2D[r][0];
+			}
+		}
+		//LLm=LL;
+		copyTo(LL,LLm);
+	}
 
 	/*
 	 * ! \brief Get classes for new patches given current DTM.
@@ -11595,8 +11666,14 @@ public class libdt extends AlgorithmBase {
 			System.exit(-1);
 		}
 		annotateVideos();
-		/*fs<<"Computing precisionr recall: "<<getTime()<<endl;
-		computePrecisionRecall();
+		try {
+			raFile5.writeBytes("Computing precision recall: " + getTime() + "\n");
+		}
+		catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		/*computePrecisionRecall();
 		printResults();*/
 		try {
         	raFile5.writeBytes("Experiment Finished: " + getTime() + "\n");
@@ -12037,7 +12114,7 @@ public class libdt extends AlgorithmBase {
 	 */
 	void annotateVideos()
 	{
-		/*int winxy=7;
+		int winxy=7;
 		int winz=20;
 		int stepxy=4;
 		int stepz=10;
@@ -12045,6 +12122,7 @@ public class libdt extends AlgorithmBase {
 		double bkvar=-5;
 		int tau=20;
 		int numlabels=35;
+		int d,r,c;
 
 		File file = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/ann/");
 		if (!file.exists()) {
@@ -12138,107 +12216,191 @@ public class libdt extends AlgorithmBase {
 					//pbe.patches=tmppat;
 
 					 //computing likelihood for each patch for each label
-					Mat LL(pbe.patches.size(),numlabels,OPT_MAT_TYPE);
-					LL.setTo(0);
+					Mat LL = new Mat(pbe.patches.size(),numlabels,CV_64F);
 					for(int j=0;j<numlabels;j++)
 					{
-						cout<<"computing like with tag "<<j<<endl;
-						Mat LLj;
-						alltagdtm[j].getClasses(pbe.patches,LLj);
+						System.out.println("computing like with tag " + j);
+						Preferences.debug("computing like with tag " + j + "\n", Preferences.DEBUG_ALGORITHM);
+						Mat LLj = new Mat();
+						Vector<Mat> pbeVec = new Vector<Mat>();
+						for (int i = 0; i < pbe.patches.size(); i++) {
+							int sz[] = new int[] {pbe.patches.get(i).length,pbe.patches.get(i)[0].rows,pbe.patches.get(i)[0].cols};
+						    Mat pbeMat = new Mat(3, sz, CV_64F);
+						    for (d = 0; d < pbe.patches.get(i).length; d++) {
+						    	for (r = 0; r < pbe.patches.get(i)[0].rows; r++) {
+						    		for (c = 0; c < pbe.patches.get(i)[0].cols; c++) {
+						    			pbeMat.double3D[d][r][c] = pbe.patches.get(i)[d].double2D[r][c];
+						    		}
+						    	}
+						    }
+						    pbeVec.add(pbeMat);
+						}
+						getClasses(alltagdtm.get(j),pbeVec,LLj);
 						Mat tmp;
 						if(LLj.cols>1)
 						{
-							Mat abc1=LLj.t();
-							tmp=DytexMix::logtrick(abc1);
+							Mat abc1=transpose(LLj);
+							tmp=logtrick(abc1);
 						}
 						else
 						{
 							tmp=LLj;						
 						}
-						Mat tmp2=tmp.t();
-						Mat a1=LL.col(j);
-						tmp2.copyTo(a1);
+						Mat tmp2=transpose(tmp);
+						for (r = 0; r < LL.rows; r++) {
+							LL.double2D[r][j] = tmp2.double2D[r][0];
+						}
 					}				
 					
 					
 					//compute Z, etc.
-					Mat logZ(pbe.patches.size(),numlabels,OPT_MAT_TYPE);
-					logZ.setTo(0);
-					Mat tmp3 = DytexMix::logtrick(LL.t()).t();				 
+					Mat logZ = new Mat(pbe.patches.size(),numlabels,CV_64F);
+					Mat tmp3 = transpose(logtrick(transpose(LL)));				 
 					for(int j=0;j<numlabels;j++)
 					{
-						Mat tmp4=LL.col(j) - tmp3;
-						Mat b1=logZ.col(j);
-						tmp4.copyTo(b1);				
+						for (r = 0; r < LL.rows; r++) {
+							logZ.double2D[r][j] = LL.double2D[r][j] - tmp3.double2D[r][0];
+						}
 					}				
-					Mat Z;
-					exp(logZ,Z);
+					Mat Z = new Mat(logZ.rows, logZ.cols, CV_64F);
+					for (r = 0; r < Z.rows; r++) {
+						for (c = 0; c < Z.cols; c++) {
+							Z.double2D[r][c] = Math.exp(logZ.double2D[r][c]);
+						}
+					}
 	    
 	        
 					//average for each tag, and over time
-					Mat LLm;
+					Mat LLm = new Mat();
 					reduce(LL, LLm, 0, CV_REDUCE_AVG);
-					LLm=LLm/winz;				
+					LLm = divide(LLm,winz);				
 	    
 					// compute semantic multinomial
-					Mat tmp5=DytexMix::logtrick(LLm.t());
-					Mat smn;
-					exp(LLm - tmp5.at<double>(1,1),smn);
-
+					Mat tmp5=logtrick(transpose(LLm));
+					Mat smn = new Mat(LLm.rows,LLm.cols,CV_64F);
+					for (r = 0; r < LLm.rows; r++) {
+						for (c = 0; c < LLm.cols; c++) {
+							smn.double2D[r][c] = Math.exp(LLm.double2D[r][c] - tmp5.double2D[1][1]);
+						}
+					}
 					
-					Mat smnlabmat,smnmat;
-					sortIdx(smn, smnlabmat, CV_SORT_EVERY_ROW + CV_SORT_DESCENDING);
-					cv::sort(smn, smnmat, CV_SORT_EVERY_ROW + CV_SORT_DESCENDING);
 					
-					std::vector<int> smnlab(35,0);
-					std::vector<double> smnval(35,0);				
-					smnlabmat.row(0).copyTo(smnlab);
-					smnmat.row(0).copyTo(smnval);
-					
+					ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
+					for (c = 0; c < smn.cols; c++) {
+						indexValueList.add(new indexValueItem(c, smn.double2D[0][c]));
+					}
+					Collections.sort(indexValueList, new indexValueComparator());
+					Vector<Integer> smnlab = new Vector<Integer>();
+					Vector<Double> smnval = new Vector<Double>();
+					for (c = 0; c < smn.cols; c++) {
+						indexValueItem item = indexValueList.get(c);
+						smnlab.add(item.getIndex());
+						smnval.add(item.getValue());
+					}
 					
 					//save results
-					Bufferer buf2(opath2,fstream::out | fstream::binary);
-					buf2.write("smnlab",smnlab);	
-					buf2.write("smnval",smnval);	
-					buf2.close();
+					File file5 = new File(opath2);
+					try {
+						raFile = new RandomAccessFile(file5, "rw");
+					} catch (IOException e) {
+						MipavUtil.displayError(
+								"In annotateVideos raFile = new RandomAccessFile(file5, \"rw\") IOException " + e);
+						System.exit(-1);
+					}
+					write("smnlab",smnlab);	
+					writeVecDouble("smnval",smnval);	
+					try {
+						raFile.close();
+					} catch (IOException e) {
+						MipavUtil.displayError("In annotateVideos raFile.close() IOException " + e);
+						System.exit(-1);
+					}
 
 					//write results in text file
-					ofstream of(opath1.c_str());				
-					of<<vlist[vidid]<<endl;
+					try {
+						raFile = new RandomAccessFile(file4, "rw");
+					} catch (IOException e) {
+						MipavUtil.displayError(
+								"In annotateVideos raFile = new RandomAccessFile(file4, \"rw\") IOException " + e);
+						System.exit(-1);
+					}
+					try {
+			        	raFile.writeBytes(vlist.get(vidid) + "\n");
+			        }
+			        catch (IOException e) {
+						MipavUtil.displayError(e + " ");
+						System.exit(-1);
+					}
 					
 					//writing Gtruth
-					of<<"Gtruth: {";
-					for(int m=0;m<annlist[vidid].size();m++)
+					try {
+					    raFile.writeBytes("Gtruth: {");
+					}
+					catch (IOException e) {
+						MipavUtil.displayError(e + " ");
+						System.exit(-1);
+					}
+					for(int m=0;m<annlist.get(vidid).size();m++)
 					{
-						if( m<(annlist[vidid].size()-1) )
+						if( m<(annlist.get(vidid).size()-1) )
 						{
-							of<<annlist[vidid][m]<<", ";
+							try {
+							    raFile.writeBytes(annlist.get(vidid).get(m) + ", ");
+							}
+							catch (IOException e) {
+								MipavUtil.displayError(e + " ");
+								System.exit(-1);
+							}
 						}
 						else
 						{
-							of<<annlist[vidid][m]<<"}"<<endl;
+							try {
+							    raFile.writeBytes(annlist.get(vidid).get(m) + "}" + "\n");
+							}
+							catch (IOException e) {
+								MipavUtil.displayError(e + " ");
+								System.exit(-1);
+							}
 						}
 					}
 
 					//writing Results
-					of<<"DTM-HEM: {";
+					try {
+					    raFile.writeBytes("DTM-HEM: {");
+					}
+					catch (IOException e) {
+						MipavUtil.displayError(e + " ");
+						System.exit(-1);
+					}
 					for(int m=0;m<35;m++)
 					{
 						if( m<34)
 						{
-							of<<taglist[smnlab[m]]<<", ";
+							try {
+							    raFile.writeBytes(taglist.get(smnlab.get(m)) + ", ");
+							}
+							catch (IOException e) {
+								MipavUtil.displayError(e + " ");
+								System.exit(-1);
+							}
 						}
 						else
 						{
-							of<<taglist[smnlab[m]]<<"}"<<endl;
+							try {
+							    raFile.writeBytes(taglist.get(smnlab.get(m)) + "}" + "\n");
+							}
+							catch (IOException e) {
+								MipavUtil.displayError(e + " ");
+								System.exit(-1);
+							}
 						}
 					}
 
 					//check test or train video
-					bool flag=false;
-					for(int xx=0;xx<trainVidIds[trial].size();xx++)
+					boolean flag=false;
+					for(int xx=0;xx<trainVidIds.get(trial).size();xx++)
 					{
-						if(vidid==trainVidIds[trial][xx])
+						if(vidid==trainVidIds.get(trial).get(xx))
 						{
 							flag=true;
 							break;
@@ -12247,26 +12409,95 @@ public class libdt extends AlgorithmBase {
 					
 					if(flag==true)
 					{
-						of<<"Train Video"<<endl;
+						try {
+						    raFile.writeBytes("Train Video" + "\n");
+						}
+						catch (IOException e) {
+							MipavUtil.displayError(e + " ");
+							System.exit(-1);
+						}
 					}
 					else
 					{
-						of<<"Test Video"<<endl;
+						try {
+						    raFile.writeBytes("Test Video" + "\n");
+						}
+						catch (IOException e) {
+							MipavUtil.displayError(e + " ");
+							System.exit(-1);
+						}
 					}
 					
 
 
-					of.close();
+					try {
+						raFile.close();
+					} catch (IOException e) {
+						MipavUtil.displayError("In annotateVideos raFile.close() IOException " + e);
+						System.exit(-1);
+					}
 					
 				}
 				else
 				{
-					cout<<"annotation Already exists: "<<opath1<<endl;
+					System.out.println("annotation Already exists: " + opath1);
+					Preferences.debug("annotation Already exists: " + opath1 + "\n", Preferences.DEBUG_ALGORITHM);
 				}
 					
 			}		
-		}*/
+		}
 
+	}
+	
+	private class indexValueComparator implements Comparator<indexValueItem> {
+
+        /**
+         * Sorts in descending order
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(indexValueItem o1, indexValueItem o2) {
+            double a = o1.getValue();
+            double b = o2.getValue();
+            int i = o1.getIndex();
+            int j = o2.getIndex();
+
+            if (a < b) {
+                return 1;
+            } else if (a > b) {
+                return -1;
+            } else if (i < j) {
+            	return 1;
+            } else if (i > j) {
+            	return -1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+	
+	private class indexValueItem {
+		private int index;
+		private double value;
+		
+		public indexValueItem(int index, double value) {
+			this.index = index;
+			this.value = value;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public double getValue() {
+			return value;
+		}
+		
+		
 	}
 
 	/*
@@ -12356,7 +12587,8 @@ public class libdt extends AlgorithmBase {
 			file.mkdir();
 		}
 		//video list	
-		Vector<Vector<String> > vlist=readDyntexGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/BoS/ucla9c8/gtruth/gtruth1.txt");
+		Vector<Vector<String>> vlist = new Vector<Vector<String>>();
+		//Vector<Vector<String> > vlist=readGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/BoS/ucla9c8/gtruth/gtruth1.txt");
 
 		//Setting DTM learning Options	
 		int winxy=5;
@@ -12415,67 +12647,4 @@ public class libdt extends AlgorithmBase {
 		}
 	}
 	
-	/*!
-	 * \brief
-	 * Loading ground truth classification .
-	 * 
-	 */
-	Vector<Vector<String> > readDyntexGtruthFile(String fpath)
-	{
-		// dyntexgtruth.txt rather than specified gtruth1.txt
-		// 0 is a number starting with 001 and ending with 337
-		// 1 is an alphanumeric video ID
-		// Between 1 and 7 Gtruth tags are present starting at 2 and going as high as 8
-		String str;
-		String element;
-		String str2;
-		int i;
-		FileInputStream fis = null;
-		Vector<Vector<String> > result = new Vector<Vector<String>>();
-		Vector<String> line = new Vector<String>();
-		try {
-		    fis = new FileInputStream(fpath);
-		}
-		catch (FileNotFoundException e) {
-		    MipavUtil.displayError("In readGtruthFile " + e);
-		 	System.exit(-1);	
-		}
-        BufferedReader d = new BufferedReader(new InputStreamReader(fis));
-        try {
-	        while ((str = d.readLine()) != null) {
-	        	line.clear();
-	        	str2 = null;
-	        	if (str.substring(0,1).equalsIgnoreCase("#")) {
-	        		continue;
-	        	}
-	        	for (i = 0; i < str.length(); i++) {
-	        	    element = str.substring(i,i+1);
-	        	    if ((!element.equalsIgnoreCase(":"))  && (!element.equalsIgnoreCase("{")) && (!element.equalsIgnoreCase("}")) &&
-	        	    		(!element.equalsIgnoreCase(" ")) && (!element.equalsIgnoreCase(","))) {
-	        	        if (str2 == null) {
-	        	        	str2 = element;
-	        	        }
-	        	        else {
-	        	        	str2 = str2.concat(element);
-	        	        }
-	        	    }
-	        	    else if ((str2 != null) && ((element.equalsIgnoreCase(",")) || (element.equalsIgnoreCase(" ")) ||
-	        	    		element.equalsIgnoreCase("}"))) {
-	        	    	line.add(str2);
-	        	    	str2 = null;
-	        	    }
-	        	}
-	            result.add(line);
-	            //for (int j = 0; j < line.size(); j++) {
-	            	//Preferences.debug("j = " + j + " " + line.get(j) + "\n", Preferences.DEBUG_ALGORITHM);
-	            //}
-	        }
-        }
-        catch (IOException e) {
-        	MipavUtil.displayError("In readGtruthFile " + e);
-		 	System.exit(-1);		
-        }
-
-		return result;
-	}
 }
