@@ -5128,6 +5128,42 @@ public class libdt extends AlgorithmBase {
 	
 	/*!
 	 * \brief
+	 * Writes a vector of vector of double.
+	 * 
+	 * \param name
+	 * name of the string vector object.
+	 * 
+	 * \param vec
+	 * vector of list of double.
+	 *  
+	 * \see
+	 * Bufferer::read(string name,std::vector<string> &vec)
+	 */
+	public void writeVecVecDouble(String name, Vector<Vector<Double> > vec)
+	{
+		long spos=writeHeader(name);		
+		int len=vec.size();
+		
+		try {
+			writeInt(len, endian);
+
+			for (int i = 0; i < len; i++) {
+				writeVecDouble("vec",vec.get(i));
+			}
+		} catch (IOException e) {
+			MipavUtil.displayError("In writeVecVecDouble(String name, Vector<Vector<Double>> vec) IOException = " + e);
+			System.exit(-1);
+		}
+
+		writeSize(spos);
+
+
+		
+
+	}
+	
+	/*!
+	 * \brief
 	 * reads a vector of strings from current location in file.
 	 * 
 	 * \param name
@@ -11673,8 +11709,8 @@ public class libdt extends AlgorithmBase {
 			MipavUtil.displayError(e + " ");
 			System.exit(-1);
 		}
-		/*computePrecisionRecall();
-		printResults();*/
+		computePrecisionRecall();
+		/*printResults();*/
 		try {
         	raFile5.writeBytes("Experiment Finished: " + getTime() + "\n");
         }
@@ -12498,6 +12534,225 @@ public class libdt extends AlgorithmBase {
 		}
 		
 		
+	}
+	
+	/*!
+	 * \brief
+	 * Compute Precision and Recall for all tags, levels and trials.
+	 * 
+	 */
+	void computePrecisionRecall()
+	{
+		File file = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/results/");
+		if (!file.exists()) {
+			file.mkdir();
+		}
+
+		//reading ground truth
+		Vector<String> vlist = new Vector<String>();
+		Vector<Vector<String> > annlist = new Vector<Vector<String>>();
+		Vector<String> taglist = new Vector<String>();
+		readGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/dyntexgtruth.txt",vlist,annlist,taglist);
+
+		//reading trial info
+		Vector<Vector<Integer> > trainVidIds = new Vector<Vector<Integer>>();
+		Vector<Vector<Integer> > testVidIds = new Vector<Vector<Integer>>();
+		readTrialInfo("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/dyntexExperimentalSetup.txt",trainVidIds,testVidIds);
+
+		int numlab=35;
+
+		//PR for each trial
+		for( int trial=0;trial<5;trial++)
+		{
+			System.out.println("trial = " + trial);
+			Preferences.debug("trial = " + trial + "\n",Preferences.DEBUG_ALGORITHM);
+			String trstr = String.valueOf(trial+1);
+
+			File file2 = new File("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/results/trial" + trstr);
+			if (!file2.exists()) {
+				file2.mkdir();
+			}
+			
+			String opath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/results/trial" + trstr + "/rslt.bin";
+			File file3 = new File(opath);
+			
+				if(!file.exists()) //learn tag model
+				{
+					System.out.println("Generating PR for trial: " + opath);
+					Preferences.debug("Generating PR for trial: " + opath + "\n", Preferences.DEBUG_ALGORITHM);
+
+					//loading HEM-DTM ann for alll videos
+					Vector<Vector<Integer> > smnlaball = new Vector<Vector<Integer>>();
+					for( int vidid=0;vidid<vlist.size();vidid++)
+					{					
+						String ipath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/ann/trial" + trstr + "/" + vlist.get(vidid) + ".bin";					
+						Vector<Integer> smnlab = new Vector<Integer>();
+						Vector<Double> smnval = new Vector<Double>();
+						File file4 = new File(ipath);
+						try {
+							raFile = new RandomAccessFile(file4, "r");
+						} catch (FileNotFoundException e) {
+							MipavUtil.displayError(e + " ");
+							System.exit(-1);
+						}
+						read("smnlab",smnlab);	
+						smnlaball.add(smnlab);
+						try {
+							raFile.close();
+						} catch (IOException e) {
+							MipavUtil.displayError("In compuutePrecisionRecall raFile.close() IOException " + e);
+							System.exit(-1);
+						}
+					}
+
+					//how many test videos are labeled with each tag cCount
+					Vector<Integer> cCount = new Vector<Integer>();
+					for (int i = 0; i <numlab; i++) {
+						cCount.add(0);
+					}
+					for( int tag=0;tag<numlab;tag++)
+					{
+						for( int vidid=0;vidid<testVidIds.get(trial).size();vidid++) //explore all test videos
+						{
+							int j=testVidIds.get(trial).get(vidid); //next test video
+
+							for(int numann=0;numann<annlist.get(j).size();numann++) //look at each lab
+							{
+								if(annlist.get(j).get(numann).equals(taglist.get(tag)))
+									cCount.set(tag, cCount.get(tag)+1);
+							}
+						}
+					}
+
+
+					//precison, recall at each level
+
+					Vector<Vector<Integer> >  allaCount = new Vector<Vector<Integer>>();
+					Vector<Vector<Integer> >  allbCount = new Vector<Vector<Integer>>();
+
+					for(int lev=0;lev<numlab;lev++)
+					{
+						Vector<Integer> aCount = new Vector<Integer>();
+						for (int i = 0; i < numlab; i++) {
+							aCount.add(0);
+						}
+						Vector<Integer> bCount = new Vector<Integer>();
+						for (int i = 0; i < numlab; i++) {
+							bCount.add(0);
+						}
+
+						//precison, recall at each tag
+						for( int tag=0;tag<numlab;tag++)
+						{					
+
+							for( int vidid=0;vidid<testVidIds.get(trial).size();vidid++) //explore all test videos
+							{
+								int j=testVidIds.get(trial).get(vidid); //next test video
+
+								for(int numann=0;numann<=lev;numann++) //look at each lab
+								{	
+									String nextlab=taglist.get(smnlaball.get(j).get(numann));
+									
+									if(nextlab.equals(taglist.get(tag)))
+									{
+										aCount.set(tag, aCount.get(tag) + 1);
+										//check if this video is labeled with this tag in gtruth
+										for(int numann2=0;numann2<annlist.get(j).size();numann2++) //look at each lab
+										{
+											if(annlist.get(j).get(numann2).equals(taglist.get(tag)))
+											bCount.set(tag, bCount.get(tag)+1);
+										}
+									}
+
+								}
+							}						
+
+						}
+						allaCount.add(aCount);
+						allbCount.add(bCount);
+					}
+
+					//precision, recall for all tags at each level				
+
+					Vector<Vector<Double>>  precision = new Vector<Vector<Double>>();
+					Vector<Vector<Double>>  recall = new Vector<Vector<Double>>();
+					Vector<Vector<Double>>  fmeasure = new Vector<Vector<Double>>();
+					
+
+					for(int lev=0;lev<numlab;lev++)
+					{					
+						Vector<Double> precisiontag = new Vector<Double>();
+						Vector<Double> recalltag = new Vector<Double>();
+						Vector<Double> fmeasuretag = new Vector<Double>();
+						for (int i = 0; i < 35; i++) {
+							precisiontag.add(0.0);
+							recalltag.add(0.0);
+							fmeasuretag.add(0.0);
+						}
+
+						//precison, recall at each tag
+						for( int tag=0;tag<numlab;tag++)
+						{				
+
+							recalltag.set(tag,(double)(allbCount.get(lev).get(tag))/(double)(cCount.get(tag)));
+
+							if(allaCount.get(lev).get(tag)!=0)
+							{
+								precisiontag.set(tag, (double)(allbCount.get(lev).get(tag))/(double)(allaCount.get(lev).get(tag)));
+								
+							}
+							else
+							{
+								precisiontag.set(tag,0.0);
+								
+							}
+
+							if( (precisiontag.get(tag)>0) && (recalltag.get(tag) >0) )
+							{
+								fmeasuretag.set(tag, (2 * precisiontag.get(tag) * recalltag.get(tag))/(precisiontag.get(tag)+recalltag.get(tag)));
+							}
+							else
+							{
+								fmeasuretag.set(tag,0.0);
+							}
+
+							
+							
+							
+						}
+
+						precision.add(precisiontag);
+						recall.add(recalltag);
+						fmeasure.add(fmeasuretag);
+					}
+
+					try {
+						raFile = new RandomAccessFile(file3, "rw");
+					} catch (IOException e) {
+						MipavUtil.displayError(
+								"In computePrecisionRecall raFile = new RandomAccessFile(file3, \"rw\") IOException " + e);
+						System.exit(-1);
+					}
+					writeVecVecDouble("precision",precision);					
+					writeVecVecDouble("recall",recall);
+					writeVecVecDouble("fmeasure",fmeasure);
+					try {
+						raFile.close();
+					} catch (IOException e) {
+						MipavUtil.displayError("In compuutePrecisionRecall raFile.close() IOException " + e);
+						System.exit(-1);
+					}
+
+				}
+				else
+				{
+					System.out.println("PR Already Exist: " + opath); 
+					Preferences.debug("PR Already Exist: " + opath + "\n", Preferences.DEBUG_ALGORITHM);
+				}
+		}
+
+
+
 	}
 
 	/*
