@@ -232,8 +232,6 @@ public class JDialogMemoryAllocation extends JDialogBase {
     public static File getStartupFile() throws FileNotFoundException {
         String app = getAppName();
         
-        System.err.println(app);
-        
         File startupFile = getVMOptionsStartupFile(app, false);
         if (startupFile != null) {
             vmType = VMConfigType.VMOPTIONS;
@@ -634,7 +632,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             }
         }
         
-        System.err.println(maxVal);
+        if (!maxVal.equals("")) System.err.println(maxVal);
         
         return maxVal;
     }
@@ -1193,7 +1191,6 @@ public class JDialogMemoryAllocation extends JDialogBase {
     
     protected void writeStartOptionsFile() throws IOException {
         String app = getAppName();
-        System.err.println(app);
         
         switch (vmType) {
             case VMOPTIONS:
