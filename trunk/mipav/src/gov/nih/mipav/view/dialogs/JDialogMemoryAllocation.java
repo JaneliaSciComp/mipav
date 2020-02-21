@@ -419,6 +419,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
             case PLIST:
                 maxVal = readPlistFileHeapMax(file);
                 break;
+            default:
+                System.err.println("No VM Type.");
         }
         
         System.err.println(maxVal);
@@ -625,6 +627,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 return maxVal;
             }
         }
+        
+        System.err.println(maxVal);
         
         return maxVal;
     }
