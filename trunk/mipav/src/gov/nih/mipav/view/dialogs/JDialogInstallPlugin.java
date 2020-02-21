@@ -182,6 +182,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	            try {
 	                //Class c = Class.forName(name);
 	                Class c = PluginUtil.loadPluginClass(name);
+	                
+	                if (c == null) {
+	                    System.err.println(name + " is null");
+	                }
 	                boolean isPlugin = isPluginClass(c);
 	
 	                if (isPlugin) {
@@ -209,7 +213,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 //	                System.out.println(name + " plugin file was not found.");
 //	                // name could not likely be resolved given the current classpath
 	            } catch (NoClassDefFoundError e) {
-	            	System.err.println(name + "plugin could not be loaded.");
+	            	System.err.println(name + " plugin could not be loaded.");
 	            }
             } else if(name.contains(".jar") && !checkUnpack.isSelected()) {
             	installSimpleName.add(name);
