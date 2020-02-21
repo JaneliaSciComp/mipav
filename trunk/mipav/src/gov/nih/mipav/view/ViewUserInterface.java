@@ -4302,7 +4302,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * <ol>
      * <li>splash screen</li>
-     * <li>checks the LAX</li>
+     * <li>checks the VM heap size max</li>
      * <li>sets the default directory</li>
      * <li>debug output</li>
      * <li>sets the TRIM</li>
@@ -4316,7 +4316,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @see #setDefaultDirectory(String)
      * @see #showSplashGraphics()
-     * @see #checkLaxAgainstPreferences()
+     * @see #checkHeapMaxAgainstPreferences()
      * @see Preferences#print()
      * @see #initPrefsTrim()
      */
@@ -4332,7 +4332,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         if (Preferences.is(Preferences.PREF_LAX_CHECK)) {
-            checkLaxAgainstPreferences();
+            checkHeapMaxAgainstPreferences();
         }
 
         if (Preferences.getProperty(Preferences.PREF_IMAGE_DIR) == null) {
@@ -4440,22 +4440,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Test for lax memory sizes being the same as last run in preferences: displays a user-warning that the preferences
-     * &amp; LAX files disagree and presents the JDialogMemoryAllocation dialog with "use preference" buttons to quicken
+     * Test for VM memory sizes being the same as last run in preferences: displays a user-warning that the preferences
+     * &amp; VM config files disagree and presents the JDialogMemoryAllocation dialog with "use preference" buttons to quicken
      * the matching process.
      * 
      * <p>
      * Note, this method does not throw any <code>NullPointerException</code>s.
      * </p>
      */
-    private void checkLaxAgainstPreferences() {
-        String[] mems = null;
-
+    private void checkHeapMaxAgainstPreferences() {
+        String heapMax = null;
+        
         try {
-            final File laxFile = JDialogMemoryAllocation.getStartupFile(this);
-            mems = JDialogMemoryAllocation.readStartupFile(laxFile);
+            final File startupFile = JDialogMemoryAllocation.getStartupFile(this);
+            heapMax = JDialogMemoryAllocation.readHeapMax(startupFile);
 
-            if (!Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(mems[1])) {
+            if (heapMax != null && !Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(heapMax)) {
                 if ( !MipavUtil.getForceQuiet()) {
                     MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n" + "those in the Preferences file.\n"
                             + "Memory Allocation will display so you can " + "ensure this is correct.");
@@ -4468,9 +4468,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
             // else sizes match; there are no problems
         } catch (final NullPointerException npe) { // prefs not found/invalid strings
-            // pref mem limit not set in prefs file, so use what's in the lax/plist
+            // pref mem limit not set in prefs file, so use what's in the vm config file
             //Preferences.setProperty(Preferences.PREF_STARTING_HEAP_SIZE, mems[0]);
-            Preferences.setProperty(Preferences.PREF_MAX_HEAP_SIZE, mems[1]);
+            if (heapMax != null) {
+                Preferences.setProperty(Preferences.PREF_MAX_HEAP_SIZE, heapMax);
+            }
             // if ( !GraphicsEnvironment.isHeadless() && !MipavUtil.getForceQuiet()) {
             // MipavUtil.displayWarning("Heap size settings in the "
             // + "environment startup file either do not match \n"
@@ -4482,12 +4484,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // + "those in the Preferences file, or are non-existant.\n"
             // + "Please change these settings in the mipav.lax file.");
             // }
-        } catch (final FileNotFoundException fnf) { // LAX not found
+        } catch (final FileNotFoundException fnf) {
+            // VM config file not found
             Preferences.debug(fnf.getLocalizedMessage() + "\n");
             // MipavUtil.displayWarning(fnf.getLocalizedMessage());
             System.err.println(fnf.getLocalizedMessage());
         } catch (final IOException io) {
-            MipavUtil.displayError("Error while checking starting options " + "file.");
+            MipavUtil.displayError("Error while checking starting options file.");
         }
     }
 
