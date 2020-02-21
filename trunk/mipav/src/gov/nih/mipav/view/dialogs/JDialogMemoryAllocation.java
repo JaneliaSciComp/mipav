@@ -73,7 +73,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
     private static final String laxExt = ".lax";
     private static final String plistExt = ".plist";
     
-    private static final String debugLauncherStr = "_debug";
+    private static final String debugLauncherStr = ".command";
     
     private static final String macAppVMOptions = "vmoptions.txt";
     
