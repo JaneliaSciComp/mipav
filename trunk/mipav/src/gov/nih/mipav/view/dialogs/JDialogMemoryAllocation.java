@@ -12,7 +12,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.Vector;
+import java.util.regex.*;
 
 import javax.swing.*;
 
@@ -35,22 +35,26 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1470759041555523857L;
-
-    /** Indicates that a particular file is a &quot;lax&quot;-format file. Literally, <code>LAX</code> */
-    private static final String laxType = "LAX";
-
-    /** Indicates that a particular file is a &quot;xml&quot;-format file. Literally, <code>XML</code> */
-    private static final String xmlType = "XML";
+    
+    public enum VMConfigType {
+        LAX(".lax"),
+        PLIST(".plist"),
+        VMOPTIONS(".vmoptions");
+        
+        private final String extension;
+        
+        VMConfigType(String ext) {
+            extension = ext;
+        }
+        
+        public String getExtention() {
+            return extension;
+        }
+    }
 
     // java startup options used in XML file
     /** Flag to the java-runtime (as used in the XML-files) to indicate a memory-option. Literally, <code>-X</code>. */
     private static final String optionFlag = "-X";
-
-    /**
-     * Flag to the java-runtime (as used in the XML-files) to indicate an initial heap-size memory-option. Literally,
-     * <code>ms</code>.
-     */
-    private static final String initHeapOption = "ms";
 
     /**
      * Flag to the java-runtime (as used in the XML-files) to indicate an maximum heap-size memory-option. Literally,
@@ -60,36 +64,25 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
     // as found in the lax file. Hope it doesn't change, or none of this will work
     /**
-     * Flag to the java-runtime (as used in the LAX-files) to indicate an initial heap-size memory-option. Literally,
-     * <code>lax.nl.java.option.java.heap.size.initial=</code>.
-     */
-    private static final String initHeapLAX = "lax.nl.java.option.java.heap.size.initial=";
-
-    /**
      * Flag to the java-runtime (as used in the LAX-files) to indicate an maximum heap-size memory-option. Literally,
      * <code>lax.nl.java.option.java.heap.size.max=</code>.
      */
     private static final String maxHeapLAX = "lax.nl.java.option.java.heap.size.max=";
-
-    /**
-     * Instead of setting the init heap to the max, instead use 300M.
-     */
-    private static final String DEFAULT_INIT_HEAP = "300";
+    
+    private static final String vmoptionsExt = ".vmoptions";
+    private static final String laxExt = ".lax";
+    private static final String plistExt = ".plist";
+    
+    private static final String debugLauncherStr = "_debug";
+    
+    private static final String macAppVMOptions = "vmoptions.txt";
+    
+    private static final int MIN_HEAP_SIZE = 300;
+    
+    private static VMConfigType vmType;
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
-
-    /** filename based on the application name: mipav.lax or iaso.lax. */
-    private final String filename = null;
-
-    /** DOCUMENT ME! */
-    private String fileType;
-
-    /** DOCUMENT ME! */
-    private JTextField initHeapText;
-
-    /** DOCUMENT ME! */
-    private Vector<String> laxContents = null;
 
     /** DOCUMENT ME! */
     private JTextField maxHeapText;
@@ -124,7 +117,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         // determine the file name based on the application name
         try {
-            startupFile = JDialogMemoryAllocation.getStartupFile(ViewUserInterface.getReference());
+            startupFile = JDialogMemoryAllocation.getStartupFile(userInterface);
         } catch (final FileNotFoundException fnf) {
             // MipavUtil.displayError(fnf.getLocalizedMessage());
             System.err.println(fnf.getLocalizedMessage());
@@ -132,11 +125,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             return;
         }
 
-        if (startupFile.getName().toLowerCase().endsWith("lax")) {
-            fileType = JDialogMemoryAllocation.laxType;
-        } else if (startupFile.getName().toLowerCase().endsWith("list")) {
-            fileType = JDialogMemoryAllocation.xmlType;
-        } else {
+        if (startupFile == null) {
             return;
         }
 
@@ -145,23 +134,17 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         try {
 
-            if ( !readStartupFile()) { // lax file holds java runtime startup info
+            if ( !setHeapMaxField()) {
                 dispose();
 
                 return;
             }
         } catch (final FileNotFoundException fnfe) {
-            String errMsg = "";
-
-            if (fnfe.getMessage() != null) {
-                errMsg = "\n" + fnfe.getMessage();
-            }
-
-            MipavUtil.displayError(filename + " not found!\n" + "Can't find the java run-time startup information." + errMsg);
+            MipavUtil.displayError("Error reading VM config file: " + fnfe.getLocalizedMessage());
 
             return;
         } catch (final IOException ioe) {
-            MipavUtil.displayError("IOException!");
+            MipavUtil.displayError("Error reading VM config file: " + ioe.getLocalizedMessage());
 
             return;
         }
@@ -203,33 +186,18 @@ public class JDialogMemoryAllocation extends JDialogBase {
         this.getContentPane().add(createInputPanel(true), BorderLayout.CENTER);
         this.getContentPane().add(buildButtons(true), BorderLayout.SOUTH);
 
-        if (startupFile.getName().toLowerCase().endsWith("lax")) {
-            fileType = JDialogMemoryAllocation.laxType;
-        } else if (startupFile.getName().toLowerCase().endsWith("list")) {
-            fileType = JDialogMemoryAllocation.xmlType;
-        } else {
-            return;
-        }
-
         try {
-
-            if ( !readStartupFile()) { // lax file holds java runtime startup info
+            if ( !setHeapMaxField()) { // lax file holds java runtime startup info
                 dispose();
 
                 return;
             }
         } catch (final FileNotFoundException fnfe) {
-            String errMsg = "";
-
-            if (fnfe.getMessage() != null) {
-                errMsg = "\n" + fnfe.getMessage();
-            }
-
-            MipavUtil.displayError(filename + " not found!\n" + "Can't find the java run-time startup information." + errMsg);
+            MipavUtil.displayError("Error reading VM config file: " + fnfe.getLocalizedMessage());
 
             return;
         } catch (final IOException ioe) {
-            MipavUtil.displayError("IOException! --JDialogMemoryAllocation");
+            MipavUtil.displayError("Error reading VM config file: " + ioe.getLocalizedMessage());
 
             return;
         }
@@ -237,7 +205,6 @@ public class JDialogMemoryAllocation extends JDialogBase {
         // this.setSize(350, 105);
         pack();
         setVisible(true);
-
     }
 
     // ~ Methods
@@ -263,6 +230,30 @@ public class JDialogMemoryAllocation extends JDialogBase {
      *             <code>null</code>.
      */
     public static File getStartupFile(final ViewUserInterface ui) throws FileNotFoundException {
+        String app = getAppName(ui);
+        
+        File startupFile = getVMOptionsStartupFile(app, false);
+        if (startupFile != null) {
+            vmType = VMConfigType.VMOPTIONS;
+            return startupFile;
+        }
+        
+        startupFile = getLaxStartupFile(app);
+        if (startupFile != null) {
+            vmType = VMConfigType.LAX;
+            return startupFile;
+        }
+        
+        startupFile = getPlistStartupFile(app);
+        if (startupFile != null) {
+            vmType = VMConfigType.PLIST;
+            return startupFile;
+        }
+        
+        return null;
+    }
+    
+    public static String getAppName(final ViewUserInterface ui) throws FileNotFoundException {
         String app = null;
         String tmp = null;
 
@@ -279,7 +270,53 @@ public class JDialogMemoryAllocation extends JDialogBase {
         } catch (final NullPointerException npe) {
             throw new FileNotFoundException("Startup filename cannot be found.");
         }
+        
+        return app;
+    }
+    
+    public static File getVMOptionsStartupFile(final String app, boolean debug) throws FileNotFoundException {
+        String appName = app;
+        if (debug) {
+            appName += debugLauncherStr;
+        }
 
+        String fName = new String(appName + vmoptionsExt);
+        String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+
+        if (startPath == null) {
+            fName = System.getProperty("mipav.file.vmoptions");
+            if (fName != null) {
+                Preferences.debug("JDialogMemoryAllocation: Looking for command line lax file: " + fName + "\n");
+                startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+            }
+        }
+
+        if (startPath == null) {
+            fName = new String(appName + ".app" + File.separator + "Contents" + File.separator + macAppVMOptions); // Macintosh!
+            Preferences.debug("JDialogMemoryAllocation: Looking for " + macAppVMOptions + " as the startfile: " + fName + "\n");
+            startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+
+            if (startPath == null) {
+                throw new FileNotFoundException("Starting options file cannot be found.  Check path and filename.");
+            }
+        }
+        
+        return new File(startPath, fName);
+    }
+    
+    /**
+     * This method returns the startup file which contains the MIPAV start-up options. For most systems, the options are
+     * kept in a file called &quot;mipav.lax&quot;. This method gets the application name (&quot;mipav&quot; or
+     * &quot;iaso&quot;) and looks for a .lax file with that name.
+     * 
+     * @param app   The application name.
+     * 
+     * @return DOCUMENT ME!
+     * 
+     * @throws FileNotFoundException when the app title is not in the preferences file or the ViewUserInterface is
+     *             <code>null</code>.
+     */
+    public static File getLaxStartupFile(final String app) throws FileNotFoundException {
         String fName = new String(app + ".lax");
         String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
 
@@ -303,26 +340,146 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         return new File(startPath, fName);
     }
-
+    
     /**
-     * Reads the InstallAnywhere startup file and returns the start up heap memory strings. Method can read either LAX
-     * (Window,UNIX) or Info preferences list (Mac OS X) file, finds only the two entries defined by
-     * {@link JDialogMemoryAllocation#initHeap} and {@link JDialogMemoryAllocation#maxHeap}. It returns the values of
-     * the associated entries in Megabytes.
+     * This method returns the startup file which contains the MIPAV start-up options. For most systems, the options are
+     * kept in a file called &quot;mipav.lax&quot;. For Macintosh OS 10 (X), the application in the application menu is
+     * actually a directory &quot;mipav.app&quot; In this case, the start-up file is in
+     * &quot;mipav.app/Contents/Info.plist&quot;. This method gets the application name (&quot;mipav&quot; or
+     * &quot;iaso&quot;) and looks for a .lax file with that name; if it cannot find a .lax file, it then looks for a
+     * file &quot;Info.plist&quot; in the directory with the name of the application (.app)/Contents/.
      * 
-     * @param lax The File referring to the InstallAnywhere startup options LAX or PLIST file
+     * <p>
+     * Ideally, the GetPath would look in application.app/Contents, but for now that location is found here.
+     * </p>
      * 
-     * @return String[0], the initial heap size-text, String[1], the maximum heap size-text
+     * @param app   The application name.
+     * 
+     * @return DOCUMENT ME!
+     * 
+     * @throws FileNotFoundException when the app title is not in the preferences file or the ViewUserInterface is
+     *             <code>null</code>.
+     */
+    public static File getPlistStartupFile(final String app) throws FileNotFoundException {
+        String fName = new String(app + ".lax");
+        String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+
+        if (startPath == null) {
+            fName = System.getProperty("mipav.file.lax");
+            if (fName != null) {
+                Preferences.debug("JDialogMemoryAllocation: Looking for command line lax file: " + fName + "\n");
+                startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+            }
+        }
+
+        if (startPath == null) {
+            fName = new String(app + ".app" + File.separator + "Contents" + File.separator + "Info.plist"); // Macintosh!
+            Preferences.debug("JDialogMemoryAllocation: Looking for Info.plist as the startfile: " + fName + "\n");
+            startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+
+            if (startPath == null) {
+                throw new FileNotFoundException("Starting options file cannot be found.  Check path and filename.");
+            }
+        }
+
+        return new File(startPath, fName);
+    }
+    
+    protected boolean setHeapMaxField() throws IOException, FileNotFoundException {
+        String maxVal = readHeapMax(startupFile);
+            
+        if (maxVal != null) {
+            maxHeapText.setText(maxVal);
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+    
+    public static String readHeapMax(final File file) throws IOException, FileNotFoundException {
+        if (file == null) {
+            return null;
+        }
+        
+        String maxVal = null;
+        switch (vmType) {
+            case VMOPTIONS:
+                maxVal = readVMOptionsFileHeapMax(file);
+                break;
+            case LAX:
+                maxVal = readLaxFileHeapMax(file);
+                break;
+            case PLIST:
+                maxVal = readPlistFileHeapMax(file);
+                break;
+        }
+        
+        return maxVal;
+    }
+    
+    protected static String readVMOptionsFileHeapMax(final File file) throws IOException, FileNotFoundException {
+        String maxVal = null;
+        
+        BufferedReader readFile;
+
+        if ( !file.canRead()) {
+            MipavUtil.displayError("Not able to read the InstallAnywhere start-" + "up file: " + file.getAbsolutePath() + "\n"
+                    + "To alter the memory allocation, either " + "set the permissions or \n" + "contact the system administrator.");
+            Preferences.debug("JDialogMemoryAllocation:Not able to read the " + "InstallAnywhere start-up file: " + file.getAbsolutePath() + "\n",
+                    Preferences.DEBUG_FILEIO);
+
+            return null; // no point in continuing if we can't do both
+        }
+        
+        if (!isVMOptionsFile(file)) {
+            return null;
+        }
+
+        Preferences.debug("JDialogMemoryAllocation: Reading from \"" + file.getAbsolutePath() + "\"\n", Preferences.DEBUG_MINOR);
+
+        readFile = new BufferedReader(new FileReader(file));
+        // FileNotFoundException thrown
+
+        String line;
+
+        // read vmoptions file
+        line = readFile.readLine(); // IOExcepotion thrown
+
+        // for each line of file, process to reset the init & max lines as
+        // they are found.
+        while (line != null) {
+            maxVal = JDialogMemoryAllocation.getVMOptionsMaxHeap(line);
+            
+            // get next line; add to list...
+            line = readFile.readLine();
+        }
+
+        readFile.close();
+
+        return maxVal;
+    }
+    
+    /**
+     * Reads the InstallAnywhere startup file and returns the start up heap memory string. Method can read LAX
+     * (Window,UNIX) finds the entry {@link JDialogMemoryAllocation#maxHeap}. It returns the values of
+     * the associated entry in Megabytes.
+     * 
+     * @param lax The File referring to the InstallAnywhere startup options LAX
+     * 
+     * @return The maximum heap size-text
      * 
      * @throws IOException when the LAX file cannot be read.
      * @throws FileNotFoundException When the LAX file cannot be found.
      */
-    public static String[] readStartupFile(final File lax) throws IOException, FileNotFoundException {
+    public static String readLaxFileHeapMax(final File lax) throws IOException, FileNotFoundException {
         String line;
-        final String[] heapMemories = new String[2];
+        String maxVal = null;
         BufferedReader readFile;
-        int i = 0;
-        String type = "";
+        
+        if (!JDialogMemoryAllocation.isLaxFile(lax)) {
+            return null;
+        }
 
         if ( !lax.canRead()) {
             throw new IOException(lax.getAbsolutePath() + " cannot be read.");
@@ -330,46 +487,164 @@ public class JDialogMemoryAllocation extends JDialogBase {
         final FileReader reader = new FileReader(lax);
         readFile = new BufferedReader(reader);
 
-        if (lax.getName().toLowerCase().endsWith("lax")) {
-            type = JDialogMemoryAllocation.laxType;
-        } else if (lax.getName().toLowerCase().endsWith("list")) {
-            type = JDialogMemoryAllocation.xmlType;
-        }
-
         // read lax file
         line = readFile.readLine(); // IOException thrown
 
         String[] lines = new String[2];
 
         while (line != null) {
+            lines = JDialogMemoryAllocation.interpretLAX(line);
 
-            if (type.equals(JDialogMemoryAllocation.laxType)) {
-                lines = JDialogMemoryAllocation.interpretLAX(line);
-
-                if (lines[1].equals(JDialogMemoryAllocation.initHeapLAX)) {
-                    heapMemories[0] = lines[0];
-                } else if (lines[1].equals(JDialogMemoryAllocation.maxHeapLAX)) {
-                    heapMemories[1] = lines[0];
-                }
-            } else if (type.equals(JDialogMemoryAllocation.xmlType)) {
-                lines = JDialogMemoryAllocation.interpretXML(line);
-
-                if (lines[1].equals(JDialogMemoryAllocation.initHeapOption)) {
-                    heapMemories[0] = lines[0];
-                } else if (lines[1].equals(JDialogMemoryAllocation.maxHeapOption)) {
-                    heapMemories[1] = lines[0];
-                }
+            if (lines[1].equals(JDialogMemoryAllocation.maxHeapLAX)) {
+                maxVal = lines[0];
             }
 
             // get next line; add to list...
             line = readFile.readLine();
-            i++;
         }
 
         readFile.close();
         reader.close();
 
-        return heapMemories;
+        return maxVal;
+    }
+    
+    /**
+     * Reads the InstallAnywhere startup file and returns the start up heap memory string. Method can reads Info 
+     * preferences list (Mac OS X) file, and finds {@link JDialogMemoryAllocation#maxHeap}. It returns the values of
+     * the associated entry in Megabytes.
+     * 
+     * @param lax The File referring to the InstallAnywhere startup options PLIST file
+     * 
+     * @return The maximum heap size-text
+     * 
+     * @throws IOException when the PLIST file cannot be read.
+     * @throws FileNotFoundException When the LAX PLIST cannot be found.
+     */
+    public static String readPlistFileHeapMax(final File file) throws IOException, FileNotFoundException {
+        String line;
+        String maxVal = null;
+        BufferedReader readFile;
+        
+        if (!JDialogMemoryAllocation.isPListFile(file)) {
+            return null;
+        }
+
+        if ( !file.canRead()) {
+            throw new IOException(file.getAbsolutePath() + " cannot be read.");
+        }
+        final FileReader reader = new FileReader(file);
+        readFile = new BufferedReader(reader);
+
+        // read plist file
+        line = readFile.readLine(); // IOException thrown
+
+        String[] lines = new String[2];
+
+        while (line != null) {
+            lines = JDialogMemoryAllocation.interpretXML(line);
+
+            if (lines[1].equals(JDialogMemoryAllocation.maxHeapOption)) {
+                maxVal = lines[0];
+            }
+
+            // get next line; add to list...
+            line = readFile.readLine();
+        }
+
+        readFile.close();
+        reader.close();
+
+        return maxVal;
+    }
+    
+    protected static String readFileContents(final File file) throws IOException, FileNotFoundException {
+        String fileContents = new String();
+        
+        BufferedReader readFile;
+
+        if ( !file.canRead()) {
+            MipavUtil.displayError("Not able to read the VM configuration file: " + file.getAbsolutePath() + "\n"
+                    + "To alter the memory allocation, either " + "set the permissions or \n" + "contact the system administrator.");
+            Preferences.debug("JDialogMemoryAllocation: Not able to read the VM configuration file: " + file.getAbsolutePath() + "\n",
+                    Preferences.DEBUG_FILEIO);
+
+            return null; // no point in continuing if we can't do both
+        }
+
+        Preferences.debug("JDialogMemoryAllocation: Reading from \"" + file.getAbsolutePath() + "\"\n", Preferences.DEBUG_MINOR);
+
+        readFile = new BufferedReader(new FileReader(file));
+        // FileNotFoundException thrown
+
+        String line;
+
+        // read vmoptions file
+        line = readFile.readLine(); // IOExcepotion thrown
+
+        // for each line of file, process to reset the init & max lines as
+        // they are found.
+        while (line != null) {
+            fileContents += line + System.lineSeparator();
+            
+            // get next line; add to list...
+            line = readFile.readLine();
+        }
+
+        readFile.close();
+
+        return fileContents;
+    }
+    
+    protected static final String getVMOptionsMaxHeap(final String line) {
+        String maxVal = "";
+        
+        Pattern pattern = Pattern.compile(optionFlag + maxHeapOption + "(\\d+)([MmGgKk]?)");
+        Matcher matcher = pattern.matcher(line);
+        
+        if (matcher.find()) {
+            String unit = matcher.group(2);
+            if (unit.equalsIgnoreCase("M")) {
+                maxVal = matcher.group(1);
+            } else if (unit.equalsIgnoreCase("G")) {
+                maxVal = convertGBytesToMBytes(matcher.group(1));
+            } else if (unit.equalsIgnoreCase("K")) {
+                maxVal = convertKBytesToMBytes(matcher.group(1));
+            } else if (unit.equals("")) {
+                maxVal = convertBytesToMBytes(matcher.group(1));
+            } else {
+                MipavUtil.displayError("Unrecognized unit (" + unit + ") in vmoptions file");
+                return maxVal;
+            }
+        }
+        
+        return maxVal;
+    }
+    
+    protected static final boolean isVMOptionsFile(final File file) {
+        if (file.getName().endsWith(vmoptionsExt)) {
+            return true;
+        } else if (file.getName().equalsIgnoreCase(macAppVMOptions)) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    protected static final boolean isLaxFile(final File file) {
+        if (file.getName().toUpperCase().endsWith(laxExt)) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    protected static final boolean isPListFile(final File file) {
+        if (file.getName().endsWith(plistExt)) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
@@ -384,21 +659,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         // ok: verify that max is at least as large init, then try to write.
         if (source == OKButton) {
-            long heapStart = 0;
             long heapMax = 0;
-
-            try {
-
-                // we are now setting the init to be the same as the Max
-                initHeapText.setText(maxHeapText.getText());
-                heapStart = Long.parseLong(initHeapText.getText());
-            } catch (final NumberFormatException nfe) {
-                initHeapText.selectAll();
-                JOptionPane.showMessageDialog(this, "Not a valid number.");
-                initHeapText.requestFocus();
-
-                return;
-            }
 
             try {
                 heapMax = Long.parseLong(maxHeapText.getText());
@@ -410,11 +671,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 return;
             }
 
-            if (heapStart <= heapMax) {
-
+            if (MIN_HEAP_SIZE <= heapMax) {
                 try {
-
-                    // then start writing init & max as we would expect
                     writeStartOptionsFile();
                 } catch (final IOException ioe) {
                     MipavUtil.displayError("Error writing to starting options file.  No changes were made.");
@@ -432,7 +690,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 }
 
                 // we are now setting the init to be the same as the Max
-                Preferences.setProperty(Preferences.PREF_STARTING_HEAP_SIZE, initHeapText.getText());
+                //Preferences.setProperty(Preferences.PREF_STARTING_HEAP_SIZE, initHeapText.getText());
                 Preferences.setProperty(Preferences.PREF_MAX_HEAP_SIZE, maxHeapText.getText());
 
                 final OperatingSystem os = OperatingSystem.getOS();
@@ -468,10 +726,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 return;
             } else { // max should be the largest possible value, and in this case was smaller
-                JOptionPane.showMessageDialog(this, "The initial heap size may be no larger than the maximum heap size!",
-                        "Initial heap size is larger than the maximum", JOptionPane.ERROR_MESSAGE);
-                initHeapText.requestFocus();
-                initHeapText.selectAll();
+                JOptionPane.showMessageDialog(this, "The maximum heap size must be higher than " + MIN_HEAP_SIZE + " megabytes.", "Maximum heap size too low", JOptionPane.ERROR_MESSAGE);
 
                 return;
             }
@@ -479,7 +734,6 @@ public class JDialogMemoryAllocation extends JDialogBase {
             dispose();
         } else if (source == usePreferencesButton) {
             // initHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
-            initHeapText.setText(DEFAULT_INIT_HEAP);
             maxHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
             OKButton.doClick();
         } else if (ae.getActionCommand().equals("Help")) {
@@ -550,6 +804,30 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         return (String.valueOf(megabyteValue));
     }
+    
+    /**
+     * convert the number given by the string (assuming it is a number indicating a quantity of bytes) to a number
+     * indicating a quantity of gigabytes. If the input is improperly formatted it throws a NumberFormatException.
+     * 
+     * @param byteString a number indicating a quantity of bytes
+     * 
+     * @return String a number indicating the rounded value of the input as a gigabyte
+     * 
+     * @throws NumberFormatException if the byteString cannot be represented as a number.
+     */
+    protected static String convertBytesToGBytes(final String byteString) throws NumberFormatException {
+        long byteValue;
+        long gigabyteValue;
+
+        if (byteString == null) {
+            return null;
+        }
+
+        byteValue = Long.parseLong(byteString.toString());
+        gigabyteValue = Math.round(byteValue / Math.pow(1024, 3));
+
+        return (String.valueOf(gigabyteValue));
+    }
 
     /**
      * convert the number given by the string (assuming it is a number indicating a quantity of kilabytes) to a number
@@ -574,6 +852,78 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         return (String.valueOf(megabyteValue));
     }
+    
+    /**
+     * convert the number given by the string (assuming it is a number indicating a quantity of megabytes) to a number
+     * indicating a quantity of gigabytes. If the input is improperly formatted it throws a NumberFormatException.
+     * 
+     * @param kilobyteString a number indicating a quantity of megabytes
+     * 
+     * @return String a number indicating the rounded value of the input in gigabytes
+     * 
+     * @throws NumberFormatException DOCUMENT ME!
+     */
+    protected static String convertMBytesToGBytes(final String megabyteString) throws NumberFormatException {
+        long megabyteValue;
+        long gigabyteValue;
+
+        if (megabyteString == null) {
+            return null;
+        }
+
+        megabyteValue = Long.parseLong(megabyteString.toString());
+        gigabyteValue = Math.round(megabyteValue / 1024);
+
+        return (String.valueOf(gigabyteValue));
+    }
+    
+    /**
+     * convert the number given by the string (assuming it is a number indicating a quantity of gigabytes) to a number
+     * indicating a quantity of megabytes. If the input is improperly formatted it throws a NumberFormatException.
+     * 
+     * @param kilobyteString a number indicating a quantity of gigabytes
+     * 
+     * @return String a number indicating the rounded value of the input in megabytes
+     * 
+     * @throws NumberFormatException DOCUMENT ME!
+     */
+    protected static String convertGBytesToMBytes(final String gigabyteString) throws NumberFormatException {
+        long megabyteValue;
+        long gigabyteValue;
+
+        if (gigabyteString == null) {
+            return null;
+        }
+
+        gigabyteValue = Long.parseLong(gigabyteString.toString());
+        megabyteValue = Math.round(gigabyteValue * 1024);
+
+        return (String.valueOf(megabyteValue));
+    }
+    
+    /**
+     * convert the number given by the string (assuming it is a number indicating a quantity of kilabytes) to a number
+     * indicating a quantity of gigabytes. If the input is improperly formatted it throws a NumberFormatException.
+     * 
+     * @param kilobyteString a number indicating a quantity of kilobytes
+     * 
+     * @return String a number indicating the rounded value of the input as gigabytes
+     * 
+     * @throws NumberFormatException DOCUMENT ME!
+     */
+    protected static String convertKBytesToGBytes(final String kilobyteString) throws NumberFormatException {
+        long gigabyteValue;
+        long kilobyteValue;
+
+        if (kilobyteString == null) {
+            return null;
+        }
+
+        kilobyteValue = Long.parseLong(kilobyteString.toString());
+        gigabyteValue = Math.round(kilobyteValue / Math.pow(1024, 2));
+
+        return (String.valueOf(gigabyteValue));
+    }
 
     /**
      * convert the number given by the string (assuming it is a number indicating a quantity of megabytes) to a number
@@ -595,6 +945,30 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         megabyteValue = Long.parseLong(megabyteString.toString());
         byteValue = Math.round(megabyteValue * Math.pow(1024, 2));
+
+        return (String.valueOf(byteValue));
+    }
+    
+    /**
+     * convert the number given by the string (assuming it is a number indicating a quantity of gigabytes) to a number
+     * indicating a quantity of bytes. If the input is improperly formatted it throws a NumberFormatException.
+     * 
+     * @param megabyteString a number indicating a quantity of gigabytes
+     * 
+     * @return String a number indicating the rounded value of the input as a byte
+     * 
+     * @throws NumberFormatException DOCUMENT ME!
+     */
+    protected static String convertGBytesToBytes(final String gigabyteString) throws NumberFormatException {
+        long gigabyteValue;
+        long byteValue;
+
+        if (gigabyteString == null) {
+            return null;
+        }
+
+        gigabyteValue = Long.parseLong(gigabyteString.toString());
+        byteValue = Math.round(gigabyteValue * Math.pow(1024, 3));
 
         return (String.valueOf(byteValue));
     }
@@ -621,31 +995,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         final String[] returnLine = new String[2];
         String memorySpec = "";
 
-        if (line.startsWith(JDialogMemoryAllocation.initHeapLAX)) {
-
-            try {
-
-                // initial heap size
-                if (line.endsWith("M") || line.endsWith("m")) {
-                    memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length(), line.length() - 1);
-                } else {
-                    memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line.substring(JDialogMemoryAllocation.initHeapLAX.length()));
-                }
-                // initOffset = lineNumber; // hang on to this offset
-                // initHeapText.setText(convertBytesToMBytes(line.substring(initHeapLAX.length())));
-            } catch (final NumberFormatException nfe) {
-                MipavUtil.displayError("Cannot convert initial memory value.\n" + "Substituting for a known acceptable value.");
-                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  " + "Substituting for a known acceptable value.\n", 3);
-
-                // initHeapText.setText("10"); // the known acceptable value (1 megabyte)
-                memorySpec = "10";
-            }
-
-            // return new String(initHeapLAX + convertMBytesToBytes(initHeapText.getText()));
-            returnLine[0] = memorySpec;
-            returnLine[1] = JDialogMemoryAllocation.initHeapLAX;
-        } else if (line.startsWith(JDialogMemoryAllocation.maxHeapLAX)) {
-
+        if (line.startsWith(JDialogMemoryAllocation.maxHeapLAX)) {
             try {
 
                 // max heap size
@@ -661,7 +1011,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " maximum memory value.  " + "Substituting for a known acceptable value.\n", 3);
 
                 // maxHeapText.setText("10"); // the known acceptable value (1 megabyte)
-                memorySpec = "10";
+                memorySpec = "" + MIN_HEAP_SIZE;
             }
 
             // return new String(maxHeapLAX + convertMBytesToBytes(maxHeapText.getText()));
@@ -696,51 +1046,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         final String[] returnLine = new String[2];
         String memorySpec = "";
 
-        if (line.indexOf(JDialogMemoryAllocation.optionFlag + JDialogMemoryAllocation.initHeapOption) != -1) { // "-Xms"
-
-            // this line should have a java option, so look for it
-            // "<string>-Xms999m</string>" is a good example of what we see here
-
-            // look for ^ms[0-9]*[km$].
-            final String javaOption = line.substring(line.indexOf(JDialogMemoryAllocation.initHeapOption), line.lastIndexOf("<")).toLowerCase();
-            // check on ending suffix: "", "k", "m" (bytes, kilobytes, megabytes)
-
-            final char sizeDescriptor = javaOption.charAt(javaOption.length() - 1); // descriptor can be "","k","m"
-
-            try {
-
-                switch (sizeDescriptor) {
-
-                // first 2 chars are heap option ('ms' or 'mx') and
-                // so memorySpec skips those two chars
-                    case 'k':
-                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption.length() - 1));
-                        ;
-                        break;
-
-                    case 'm':
-                        memorySpec = javaOption.substring(2, javaOption.length() - 1); // length-1 is size descriptor
-                        break;
-
-                    default:
-
-                        // assume that the last character was a
-                        // number. if it wasn't, the convert will
-                        // throw a NumberFormatException and we'll
-                        // take care of the problems there.
-                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption.length()));
-                        break;
-                }
-            } catch (final NumberFormatException nfe) {
-                MipavUtil.displayError("Cannot convert initial memory value.\n" + "Substituting for a known acceptable value.");
-                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  " + "Substituting for a known acceptable value.\n", 3);
-                memorySpec = "10"; // the known acceptable value (1 megabyte)
-            }
-
-            // initOffset = lineNumber;
-            returnLine[0] = memorySpec;
-            returnLine[1] = JDialogMemoryAllocation.initHeapOption;
-        } else if (line.indexOf(JDialogMemoryAllocation.optionFlag + JDialogMemoryAllocation.maxHeapOption) != -1) { // "-Xmx"
+        if (line.indexOf(JDialogMemoryAllocation.optionFlag + JDialogMemoryAllocation.maxHeapOption) != -1) { // "-Xmx"
 
             // this line should have a java option, so look for it
             // "<string>-Xms999m</string>" is a good example of what we see here
@@ -783,7 +1089,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " maximum memory value.  " + "Substituting for a known acceptable value.\n", 3);
 
                 // initHeapText.setText("1"); // the known acceptable value (1 megabyte)
-                memorySpec = "10";
+                memorySpec = "" + MIN_HEAP_SIZE;
             }
 
             // initOffset = lineNumber;
@@ -817,52 +1123,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         mainPanel.setLayout(gbl);
 
         gbc.anchor = GridBagConstraints.NORTHWEST;
-
-        // make content, place into layout
-        // initial heap value
-        final JLabel initHeapLabel = new JLabel("Initial heap size:");
-        initHeapLabel.setFont(serif12);
-        initHeapLabel.setForeground(Color.black);
-        initHeapLabel.setRequestFocusEnabled(false);
-        gbc.gridwidth = 2;
-
-        // gbl.setConstraints(initHeapLabel, gbc);
-        // mainPanel.add(initHeapLabel);
-        // mainPanel.add(Box.createHorizontalStrut(10)); // text/label spacer
-        if (usePrefs) {
-            JLabel initPref;
-
-            try {
-                initPref = new JLabel("(" + Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE) + ")");
-                initPref.setFont(serif12);
-                initPref.setRequestFocusEnabled(false);
-                // gbl.setConstraints(initPref, gbc);
-                // mainPanel.add(initPref);
-                // mainPanel.add(Box.createHorizontalStrut(10)); // label spacer
-            } catch (final NullPointerException npe) {
-                MipavUtil.displayError("null pointer when making prefrences starting heap property label");
-            }
-        }
-
-        initHeapText = new JTextField(5); // init value from file
-        initHeapText.setHorizontalAlignment(SwingConstants.RIGHT);
-        initHeapText.addActionListener(this);
-        MipavUtil.makeNumericsOnly(initHeapText, false);
-        gbc.gridwidth = 1;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // gbl.setConstraints(initHeapText, gbc);
-        // mainPanel.add(initHeapText);
-        // mainPanel.add(Box.createHorizontalStrut(5));
-        JLabel units = new JLabel("megabytes"); // show units
-        units.setFont(serif12);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        // gbl.setConstraints(units, gbc);
-        // mainPanel.add(units);
-
+        
         // max heap value
         final JLabel maxHeapLabel = new JLabel("Maximum heap size:");
         maxHeapLabel.setFont(serif12);
@@ -902,7 +1163,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(Box.createHorizontalStrut(5));
-        units = new JLabel("megabytes"); // show units
+        JLabel units = new JLabel("megabytes"); // show units
         units.setFont(serif12);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(units, gbc);
@@ -910,78 +1171,71 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         return mainPanel;
     }
-
+    
+    protected void writeStartOptionsFile() throws IOException {
+        String app = getAppName(ViewUserInterface.getReference());
+        
+        switch (vmType) {
+            case VMOPTIONS:
+                File vmoptionsFile = getVMOptionsStartupFile(app, false);
+                if (vmoptionsFile != null) {
+                    writeVMOptionsFile(vmoptionsFile);
+                }
+                vmoptionsFile = getVMOptionsStartupFile(app, true);
+                if (vmoptionsFile != null) {
+                    writeVMOptionsFile(vmoptionsFile);
+                }
+                break;
+            case LAX:
+                writeLaxOptionsFile();
+                break;
+            case PLIST:
+                writePlistOptionsFile();
+                break;
+        }
+    }
+    
     /**
-     * Reads the startup file that has already been found. Searches for, and sets the values of if found, the initial
-     * &amp; maximum heap text fields. If the Preferences indicate that debug is on, the entire startup file is
-     * displayed to verify that the dialog indicates what is in the file.
+     * Write out changes to the vmoptions file used to set the VM max heap size.
      * 
-     * @return if the file can be read from & written to.
-     * 
-     * @exception IOException FileNotFoundException
-     * @throws FileNotFoundException DOCUMENT ME!
+     * @throws IOException DOCUMENT ME!
      */
-    protected boolean readStartupFile() throws IOException, FileNotFoundException {
-        int i = 0; // counter
-        BufferedReader readFile;
+    protected void writeVMOptionsFile(final File vmoptionsFile) throws IOException {
 
-        if ( !startupFile.canRead()) {
-            MipavUtil.displayError("Not able to read the InstallAnywhere start-" + "up file: " + startupFile.getAbsolutePath() + "\n"
-                    + "To alter the memory allocation, either " + "set the permissions or \n" + "contact the system administrator.");
-            Preferences.debug("JDialogMemoryAllocation:Not able to read the " + "InstallAnywhere start-up file: " + startupFile.getAbsolutePath() + "\n",
-                    Preferences.DEBUG_FILEIO);
-
-            return false; // no point in continuing if we can't do both
+        // temporarily leave this in the "reading" path until
+        // we can figure out how to tell installAnywhere where
+        // this file is!
+        if (vmoptionsFile == null) {
+            throw new IOException("Unable to open VMOptions file for writing.");
         }
 
-        Preferences.debug("JDialogMemoryAllocation: Reading from \"" + startupFile.getAbsolutePath() + "\"\n", Preferences.DEBUG_MINOR);
+        // System.out.println(startupFile.toURI());
+        // System.out.println(startupFile.getParentFile().toURI());
 
-        readFile = new BufferedReader(new FileReader(startupFile));
-        // FileNotFoundException thrown
+        if ( !vmoptionsFile.canWrite()) {
+            MipavUtil.displayError("Not allowed to alter the java runtime start up file.\n"
+                    + "To alter the memory allocation, either set the permissions or \n" + "contact the system administrator.");
 
-        laxContents = new Vector<String>();
+            return;
+        }
+        
+        String vmoptionsContents = readFileContents(vmoptionsFile);
 
-        String line;
+        // make sure we actually got data from the read first!
+        if (vmoptionsContents == null) {
+            MipavUtil.displayError("Problem reading vmoptions file.  Unable to save new contents.\n"
+                    + "To alter the memory allocation, either set the permissions or \n" + "contact the system administrator.");
 
-        // read lax file
-        line = readFile.readLine(); // IOExcepotion thrown
-
-        String[] lines = new String[2];
-
-        // for each line of file, process to reset the init & max lines as
-        // they are found.
-        while (line != null) {
-
-            // add line to end of manual file buffer
-            laxContents.addElement(line);
-
-            if (fileType.equals(JDialogMemoryAllocation.laxType)) {
-                lines = JDialogMemoryAllocation.interpretLAX(line);
-
-                if (lines[1].equals(JDialogMemoryAllocation.initHeapLAX)) {
-                    initHeapText.setText(lines[0]);
-                } else if (lines[1].equals(JDialogMemoryAllocation.maxHeapLAX)) {
-                    maxHeapText.setText(lines[0]);
-                }
-            } else if (fileType.equals(JDialogMemoryAllocation.xmlType)) {
-                lines = JDialogMemoryAllocation.interpretXML(line);
-
-                if (lines[1].equals(JDialogMemoryAllocation.initHeapOption)) {
-                    initHeapText.setText(lines[0]);
-                } else if (lines[1].equals(JDialogMemoryAllocation.maxHeapOption)) {
-                    maxHeapText.setText(lines[0]);
-                }
-
-            }
-
-            // get next line; add to list...
-            line = readFile.readLine();
-            i++;
+            return;
         }
 
-        readFile.close();
+        final BufferedWriter outFile = new BufferedWriter(new FileWriter(vmoptionsFile));
 
-        return true;
+        vmoptionsContents.replaceAll(optionFlag + maxHeapOption + "\\d+[MmKkGg]?", optionFlag + maxHeapOption + maxHeapText.getText() + "M");
+        
+        outFile.write(vmoptionsContents);
+
+        outFile.close();
     }
 
     /**
@@ -993,13 +1247,13 @@ public class JDialogMemoryAllocation extends JDialogBase {
      * 
      * @throws IOException DOCUMENT ME!
      */
-    protected void writeStartOptionsFile() throws IOException {
+    protected void writePlistOptionsFile() throws IOException {
 
         // temporarily leave this in the "reading" path until
         // we can figure out how to tell installAnywhere where
         // this file is!
         if (startupFile == null) {
-            throw new IOException("Unable to open " + startupFile.getAbsolutePath() + " for writing.");
+            throw new IOException("Unable to open PList file for writing.");
         }
 
         // System.out.println(startupFile.toURI());
@@ -1011,6 +1265,57 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
             return;
         }
+        
+        String plistContents = readFileContents(startupFile);
+
+        // make sure we actually got data from the read first!
+        if (plistContents == null) {
+            MipavUtil.displayError("Problem reading lax file.  Unable to save new contents.\n"
+                    + "To alter the memory allocation, either set the permissions or \n" + "contact the system administrator.");
+
+            return;
+        }
+
+        final BufferedWriter outFile = new BufferedWriter(new FileWriter(startupFile));
+
+        //line = "\t\t\t\t" + "<string>-Xmx" + maxHeapText.getText() + "M</string>";
+        plistContents.replaceAll(optionFlag + maxHeapOption + "\\d+[MmKkGg]?", optionFlag + maxHeapOption + maxHeapText.getText() + "M");
+
+        outFile.write(plistContents);
+        outFile.newLine();
+
+        outFile.close();
+    }
+    
+    /**
+     * write startup options file which is used during InstallAnywhere to run the executable. The starting options file
+     * it writes out is the one which would be native to the system (that is, on Windows or UNIX systems, the startup
+     * file is a LAX file; on the Macintosh OS 10 systems, it is the Info.plist file) as determined when by {@see
+     * getStartupFile} during dialog instantiation. This method writes initHeapText and maxHeapText to the appropriate
+     * start and max values.
+     * 
+     * @throws IOException DOCUMENT ME!
+     */
+    protected void writeLaxOptionsFile() throws IOException {
+
+        // temporarily leave this in the "reading" path until
+        // we can figure out how to tell installAnywhere where
+        // this file is!
+        if (startupFile == null) {
+            throw new IOException("Unable to open LAX file for writing.");
+        }
+
+        // System.out.println(startupFile.toURI());
+        // System.out.println(startupFile.getParentFile().toURI());
+
+        if ( !startupFile.canWrite()) {
+            MipavUtil.displayError("Not allowed to alter the java runtime start up file.\n"
+                    + "To alter the memory allocation, either set the permissions or \n" + "contact the system administrator.");
+
+            return;
+        }
+        
+        String laxContents = readFileContents(startupFile);
 
         // make sure we actually got data from the read first!
         if (laxContents == null) {
@@ -1022,44 +1327,11 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         final BufferedWriter outFile = new BufferedWriter(new FileWriter(startupFile));
 
-        int i;
-        String line;
-
-        for (i = 0; i < laxContents.size(); i++) {
-            line = laxContents.elementAt(i);
-
-            if (fileType == JDialogMemoryAllocation.laxType) {
-
-                if (line.indexOf(JDialogMemoryAllocation.initHeapLAX) != -1) {
-
-                    try {
-                        line = JDialogMemoryAllocation.initHeapLAX + JDialogMemoryAllocation.convertMBytesToBytes(initHeapText.getText());
-                    } catch (final NumberFormatException nfe) {
-                        MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n" + "Substituting for a known acceptable value.");
-                        line = JDialogMemoryAllocation.initHeapLAX + "10"; // the known acceptable value (1 megabyte)
-                    }
-                } else if (line.indexOf(JDialogMemoryAllocation.maxHeapLAX) != -1) {
-
-                    try {
-                        line = JDialogMemoryAllocation.maxHeapLAX + JDialogMemoryAllocation.convertMBytesToBytes(maxHeapText.getText());
-                    } catch (final NumberFormatException nfe) {
-                        MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n" + "Substituting for a known acceptable value.");
-                        line = JDialogMemoryAllocation.maxHeapLAX + "10"; // the known acceptable value (1 megabyte)
-                    }
-                }
-            } else if (fileType == JDialogMemoryAllocation.xmlType) {
-
-                if (line.indexOf(JDialogMemoryAllocation.initHeapOption) != -1) {
-                    line = "\t\t\t\t" + "<string>-Xms" + initHeapText.getText() + "M</string>";
-                } else if (line.indexOf(JDialogMemoryAllocation.maxHeapOption) != -1) {
-                    line = "\t\t\t\t" + "<string>-Xmx" + maxHeapText.getText() + "M</string>";
-                }
-            }
-
-            outFile.write(line);
-            outFile.newLine();
-        }
-
+        //line = JDialogMemoryAllocation.maxHeapLAX + maxHeapText.getText() + "M";
+        laxContents.replaceAll(JDialogMemoryAllocation.maxHeapLAX + "\\d+[MmKkGg]?", optionFlag + maxHeapOption + maxHeapText.getText() + "M");
+        
+        outFile.write(laxContents);
+        
         outFile.close();
     }
 

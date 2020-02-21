@@ -1258,7 +1258,7 @@ public class MipavUtil extends JComponent {
     }
 
     /**
-     * Sets whether all MIPAV error/warning/info messages should be suppressed (used to skip lax/plist warning on
+     * Sets whether all MIPAV error/warning/info messages should be suppressed (used to skip vm heap max size/plist warning on
      * startup).
      * 
      * @param force Should mipav suppress all errors

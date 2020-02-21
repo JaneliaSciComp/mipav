@@ -157,7 +157,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private final JPanel otherPanel;
 
     /** DOCUMENT ME! */
-    private JCheckBox performLaxCheck;
+    private JCheckBox performHeapMaxCheck;
 
     /** DOCUMENT ME! */
     private JComboBox pointVOIChoices;
@@ -385,7 +385,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeGpuCompEnabledOptions(gbc, gbl);
         makeSaveDefaultsOptions(gbc, gbl);
         makeProvenanceOptions(gbc, gbl);
-        makeLaxCheckOptions(gbc, gbl);
+        makeHeapMaxCheckOptions(gbc, gbl);
         makeCheckOnCloseFrameOptions(gbc, gbl);
         makeLoggingOptions(gbc, gbl);
         makeOutputWindowOptions(gbc, gbl);
@@ -565,7 +565,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             }
 
             Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(checkOnFrameClose.isSelected()));
-            Preferences.setProperty(Preferences.PREF_LAX_CHECK, String.valueOf(performLaxCheck.isSelected()));
+            Preferences.setProperty(Preferences.PREF_LAX_CHECK, String.valueOf(performHeapMaxCheck.isSelected()));
             Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, String.valueOf(voiColorChoices.getSelectedIndex()));
             Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_COLOR, MipavUtil.makeColorString(intensityLabelColor));
             Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR, MipavUtil.makeColorString(intensityLabelBackgroundColor));
@@ -1666,23 +1666,23 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     /**
-     * Makes the "Perform LAX check" option line in the globalChangesPanel If checked, the initial heap size and maximum
-     * heap size in the LAX startup file is checked against what is in the preferences for this option. If unchecked, it
+     * Makes the "VM Heap Max/Preferences memory check" option line in the globalChangesPanel If checked, the initial heap size and maximum
+     * heap size in the VM startup file is checked against what is in the preferences for this option. If unchecked, it
      * signifies that no check should be made.
      * 
      * @param gbc the constraints used in the globalChangesPanel
      * @param gbl the layout used in the globablChangesPanel
      */
-    protected void makeLaxCheckOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        performLaxCheck = new JCheckBox("LAX/Preferences memory check");
-        performLaxCheck.setFont(MipavUtil.font12);
-        performLaxCheck.setForeground(Color.black);
-        performLaxCheck.addActionListener(this);
+    protected void makeHeapMaxCheckOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
+        performHeapMaxCheck = new JCheckBox("VM Heap Max/Preferences memory check");
+        performHeapMaxCheck.setFont(MipavUtil.font12);
+        performHeapMaxCheck.setForeground(Color.black);
+        performHeapMaxCheck.addActionListener(this);
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(performLaxCheck, gbc);
-        otherPanel.add(performLaxCheck);
+        gbl.setConstraints(performHeapMaxCheck, gbc);
+        otherPanel.add(performHeapMaxCheck);
 
         // preset the choices.
         if ( !Preferences.isPreferenceSet(Preferences.PREF_LAX_CHECK)) {
@@ -1690,7 +1690,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         }
 
         final boolean flag = Preferences.is(Preferences.PREF_LAX_CHECK);
-        performLaxCheck.setSelected(flag);
+        performHeapMaxCheck.setSelected(flag);
     }
 
     /**
