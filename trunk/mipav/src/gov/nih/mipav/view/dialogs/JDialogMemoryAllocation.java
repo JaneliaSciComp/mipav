@@ -270,7 +270,9 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 app = tmp.toLowerCase();
             }
         } catch (final NullPointerException npe) {
-            throw new FileNotFoundException("Startup filename cannot be found.");
+            FileNotFoundException e = new FileNotFoundException("Startup filename cannot be found.");
+            e.initCause(npe);
+            throw e;
         }
         
         return app;
