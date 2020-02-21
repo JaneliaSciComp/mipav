@@ -232,6 +232,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
     public static File getStartupFile(final ViewUserInterface ui) throws FileNotFoundException {
         String app = getAppName(ui);
         
+        System.err.println(app);
+        
         File startupFile = getVMOptionsStartupFile(app, false);
         if (startupFile != null) {
             vmType = VMConfigType.VMOPTIONS;
@@ -279,6 +281,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         if (debug) {
             appName += debugLauncherStr;
         }
+        
+        System.err.println(appName);
 
         String fName = new String(appName + vmoptionsExt);
         String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
@@ -300,6 +304,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 throw new FileNotFoundException("Starting options file cannot be found.  Check path and filename.");
             }
         }
+        
+        System.err.println(new File(startPath, fName).getAbsolutePath());
         
         return new File(startPath, fName);
     }
@@ -414,6 +420,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 maxVal = readPlistFileHeapMax(file);
                 break;
         }
+        
+        System.err.println(maxVal);
         
         return maxVal;
     }
@@ -676,6 +684,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                     writeStartOptionsFile();
                 } catch (final IOException ioe) {
                     MipavUtil.displayError("Error writing to starting options file.  No changes were made.");
+                    ioe.printStackTrace();
                     dispose();
 
                     return;
@@ -1174,6 +1183,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
     
     protected void writeStartOptionsFile() throws IOException {
         String app = getAppName(ViewUserInterface.getReference());
+        System.err.println(app);
         
         switch (vmType) {
             case VMOPTIONS:
