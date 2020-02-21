@@ -4108,7 +4108,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         try {
-            final File plistFile = JDialogMemoryAllocation.getStartupFile(this);
+            final File plistFile = JDialogMemoryAllocation.getStartupFile();
 
             // MIPAV will only check the info-file if MIPAV doesn't start with
             // java version 1.4; if it doesn't, we assume that we are Java 1.3
@@ -4452,7 +4452,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         String heapMax = null;
         
         try {
-            final File startupFile = JDialogMemoryAllocation.getStartupFile(this);
+            final File startupFile = JDialogMemoryAllocation.getStartupFile();
             heapMax = JDialogMemoryAllocation.readHeapMax(startupFile);
 
             if (heapMax != null && !Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(heapMax)) {

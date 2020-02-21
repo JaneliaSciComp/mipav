@@ -117,7 +117,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         // determine the file name based on the application name
         try {
-            startupFile = JDialogMemoryAllocation.getStartupFile(userInterface);
+            startupFile = JDialogMemoryAllocation.getStartupFile();
         } catch (final FileNotFoundException fnf) {
             // MipavUtil.displayError(fnf.getLocalizedMessage());
             System.err.println(fnf.getLocalizedMessage());
@@ -173,7 +173,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         // determine the file name based on the application name
         try {
-            startupFile = JDialogMemoryAllocation.getStartupFile(ui);
+            startupFile = JDialogMemoryAllocation.getStartupFile();
         } catch (final FileNotFoundException fnf) {
             // MipavUtil.displayError(fnf.getLocalizedMessage());
             System.err.println(fnf.getLocalizedMessage());
@@ -229,8 +229,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
      * @throws FileNotFoundException when the app title is not in the preferences file or the ViewUserInterface is
      *             <code>null</code>.
      */
-    public static File getStartupFile(final ViewUserInterface ui) throws FileNotFoundException {
-        String app = getAppName(ui);
+    public static File getStartupFile() throws FileNotFoundException {
+        String app = getAppName();
         
         System.err.println(app);
         
@@ -255,12 +255,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
         return null;
     }
     
-    public static String getAppName(final ViewUserInterface ui) throws FileNotFoundException {
+    public static String getAppName() throws FileNotFoundException {
         String app = null;
         String tmp = null;
 
         try {
-            tmp = ui.getAppTitle();
+            tmp = Preferences.getProperty("ApplicationTitle");
 
             final int index = tmp.indexOf(':');
 
@@ -425,7 +425,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 System.err.println("No VM Type.");
         }
         
-        System.err.println(maxVal);
+        if (!maxVal.equals("")) System.err.println(maxVal);
         
         return maxVal;
     }
@@ -1192,7 +1192,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
     }
     
     protected void writeStartOptionsFile() throws IOException {
-        String app = getAppName(ViewUserInterface.getReference());
+        String app = getAppName();
         System.err.println(app);
         
         switch (vmType) {
