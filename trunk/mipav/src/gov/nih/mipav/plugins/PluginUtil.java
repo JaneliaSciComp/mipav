@@ -42,7 +42,7 @@ public class PluginUtil {
      * @return True, if the given class is a MIPAV/ImageJ plugin.
      */
     public static final boolean isPluginClass(Class<?> c) {
-        return isMipavPluginClass(c) || isImageJPluginClass(c);
+        return c != null && (isMipavPluginClass(c) || isImageJPluginClass(c));
     }
     
     /**
@@ -51,11 +51,15 @@ public class PluginUtil {
      * @return True, if the given class is a MIPAV plugin.
      */
     public static final boolean isMipavPluginClass(Class<?> c) {
-        for (Class<?> inter : c.getInterfaces()) {
-            if (inter.equals(PlugInAlgorithm.class) || inter.equals(PlugInGeneric.class) || inter.equals(PlugInFile.class)
-                    || inter.equals(PlugIn.class) || inter.equals(PlugInView.class)) {
-                return true;
+        try {
+            for (Class<?> inter : c.getInterfaces()) {
+                if (inter.equals(PlugInAlgorithm.class) || inter.equals(PlugInGeneric.class) || inter.equals(PlugInFile.class)
+                        || inter.equals(PlugIn.class) || inter.equals(PlugInView.class)) {
+                    return true;
+                }
             }
+        } catch (Exception e) {
+            System.err.println(c.getName());
         }
         
         return false;
