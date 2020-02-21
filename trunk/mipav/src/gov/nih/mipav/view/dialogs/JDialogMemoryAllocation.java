@@ -1155,7 +1155,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             JLabel maxPref;
 
             try {
-                maxPref = new JLabel("(" + Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE) + ")");
+                maxPref = new JLabel("(Preferences: " + Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE) + ")");
                 maxPref.setFont(serif12);
 
                 // maxPref.setForeground(Color.DARK_GRAY);
