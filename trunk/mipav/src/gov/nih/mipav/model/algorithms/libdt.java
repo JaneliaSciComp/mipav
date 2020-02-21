@@ -5095,6 +5095,38 @@ public class libdt extends AlgorithmBase {
 	
 	/*!
 	 * \brief
+	 * reads a vector of double from current location in file.
+	 * 
+	 * \param name
+	 * name of the double vector object to read.
+	 * 
+	 * \param vec
+	 * where to store the list of doubls.
+	 *  
+	 * \see
+	 * Bufferer::write(string name,const std::vector<string> &vec)
+	 */
+	void readVecDouble(String name, Vector<Double> vec)
+	{
+		readHeader(name);		
+		int len;
+		try {
+			len = getInt(endian);
+
+			for (int i = 0; i < len; i++) {
+				double temp;
+				temp = getDouble(endian);
+				vec.add(temp);
+			}
+		} catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		
+	}
+	
+	/*!
+	 * \brief
 	 * Writes a vector of double.
 	 * 
 	 * \param name
@@ -5124,6 +5156,39 @@ public class libdt extends AlgorithmBase {
 		}
 
 		writeSize(spos);
+	}
+	
+	/*!
+	 * \brief
+	 * reads a vector of vector of double from current location in file.
+	 * 
+	 * \param name
+	 * name of the int vector object to read.
+	 * 
+	 * \param vec
+	 * where to store the list of double.
+	 *  
+	 * \see
+	 * Bufferer::write(string name,const std::vector<string> &vec)
+	 */
+	void readVecVecDouble(String name, Vector<Vector<Double> > vec)
+	{
+		vec.clear();
+		readHeader(name);		
+		int len;
+		try {
+			len = getInt(endian);
+
+			for (int i = 0; i < len; i++) {
+				Vector<Double> temp = new Vector<Double>();
+				readVecDouble("vec",temp);
+				vec.add(temp);
+			}
+		} catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		
 	}
 	
 	/*!
@@ -5948,7 +6013,7 @@ public class libdt extends AlgorithmBase {
 	private void resizeDouble(Vector<Double> doubleVec, int n) {
 		if (doubleVec.size() < n) {
 			while (doubleVec.size() < n) {
-				doubleVec.add(new Double(0.0));
+				doubleVec.add(0.0);
 			}
 		} else if (doubleVec.size() > n) {
 			while (doubleVec.size() > n) {
@@ -11710,7 +11775,7 @@ public class libdt extends AlgorithmBase {
 			System.exit(-1);
 		}
 		computePrecisionRecall();
-		/*printResults();*/
+		printResults();
 		try {
         	raFile5.writeBytes("Experiment Finished: " + getTime() + "\n");
         }
@@ -12587,7 +12652,7 @@ public class libdt extends AlgorithmBase {
 					{					
 						String ipath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/ann/trial" + trstr + "/" + vlist.get(vidid) + ".bin";					
 						Vector<Integer> smnlab = new Vector<Integer>();
-						Vector<Double> smnval = new Vector<Double>();
+						//Vector<Double> smnval = new Vector<Double>();
 						File file4 = new File(ipath);
 						try {
 							raFile = new RandomAccessFile(file4, "r");
@@ -12600,7 +12665,7 @@ public class libdt extends AlgorithmBase {
 						try {
 							raFile.close();
 						} catch (IOException e) {
-							MipavUtil.displayError("In compuutePrecisionRecall raFile.close() IOException " + e);
+							MipavUtil.displayError("In computePrecisionRecall raFile.close() IOException " + e);
 							System.exit(-1);
 						}
 					}
@@ -12739,7 +12804,7 @@ public class libdt extends AlgorithmBase {
 					try {
 						raFile.close();
 					} catch (IOException e) {
-						MipavUtil.displayError("In compuutePrecisionRecall raFile.close() IOException " + e);
+						MipavUtil.displayError("In computePrecisionRecall raFile.close() IOException " + e);
 						System.exit(-1);
 					}
 
@@ -12753,6 +12818,306 @@ public class libdt extends AlgorithmBase {
 
 
 
+	}
+	
+	/*!
+	 * \brief
+	 * Print video annotation result to file and screen.
+	 * 
+	 */
+	void printResults()
+	{
+		//reading ground truth
+		Vector<String> vlist = new Vector<String>();
+		Vector<Vector<String> > annlist = new Vector<Vector<String>>();
+		Vector<String> taglist = new Vector<String>();
+		readGtruthFile("C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/videos/dyntexgtruth.txt",vlist,annlist,taglist);
+
+		int printorder[]=new int[]{23, 22, 14, 5, 9, 3, 1, 8, 18, 15, 26, 12, 21, 10, 17, 24, 7, 13, 0, 27, 6, 11, 19, 4, 25, 2, 16, 20, 29, 32, 34, 31, 33, 30, 28};
+
+		String ofs = "C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/results/results.txt";
+		File file = new File(ofs);
+
+		//PR for each trial
+		Vector<Vector<Double> >  avgprecision = new Vector<Vector<Double>>();
+		Vector<Vector<Double> >  avgrecall = new Vector<Vector<Double>>();
+		Vector<Vector<Double> >  avgfmeasure = new Vector<Vector<Double>>();
+
+
+		//avgf(level)=(2*avgprec(level)*avgreca(level))/(avgprec(level)+avgreca(level));
+
+		//average across trials
+		for( int trial=0;trial<5;trial++)
+		{
+			System.out.println("trial = " + trial);
+			Preferences.debug("trial = " + trial + "\n", Preferences.DEBUG_ALGORITHM);
+			String trstr = String.valueOf(trial+1);		
+			String ipath="C:/libdt-v1.01/libdt-v1.01/testdata/HEMDTM/dyntex337/results/trial" + trstr + "/rslt.bin";
+
+			Vector<Vector<Double> >  precision = new Vector<Vector<Double>>();
+			Vector<Vector<Double> >  recall = new Vector<Vector<Double>>();		
+			Vector<Vector<Double> >  fmeasure = new Vector<Vector<Double>>();	
+
+			File file2 = new File(ipath);
+			try {
+				raFile = new RandomAccessFile(file2, "r");
+			} catch (FileNotFoundException e) {
+				MipavUtil.displayError(e + " ");
+				System.exit(-1);
+			}
+			readVecVecDouble("precision",precision);					
+			readVecVecDouble("recall",recall);
+			readVecVecDouble("fmeasure",fmeasure);
+			try {
+				raFile.close();
+			} catch (IOException e) {
+				MipavUtil.displayError("In printResults raFile.close() IOException " + e);
+				System.exit(-1);
+			}
+
+			if(trial==0)
+			{
+				avgprecision=precision;
+				avgrecall= recall;
+				avgfmeasure= fmeasure;
+			}
+			else
+			{
+				for (int i=0;i<35;i++)  //levels
+				{
+					avgprecision.set(i , plus(avgprecision.get(i),precision.get(i)));
+					avgrecall.set(i, plus(avgrecall.get(i),recall.get(i)));
+					avgfmeasure.set(i, plus(avgfmeasure.get(i),fmeasure.get(i)));
+					
+				}
+			}
+		}
+
+		for (int i=0;i<35;i++)  //levels
+		{
+			for (int j=0;j<35;j++)
+			{
+				avgprecision.get(i).set(j,avgprecision.get(i).get(j)/5);
+				avgrecall.get(i).set(j,avgrecall.get(i).get(j)/5);
+				avgfmeasure.get(i).set(j,avgfmeasure.get(i).get(j)/5);
+			}
+		}
+
+		Vector<Double> alltagavgprecision = new Vector<Double>();
+		Vector<Double> alltagavgrecall = new Vector<Double>();
+		Vector<Double> alltagavgfmeasure = new Vector<Double>();
+		for (int i = 0; i < 35; i++) {
+			alltagavgprecision.add(0.0);
+			alltagavgrecall.add(0.0);
+			alltagavgfmeasure.add(0.0);
+		}
+
+		for (int i=0;i<35;i++)  //levels
+		{
+			double sum=0;
+			double sum2=0;
+			double sum3=0;
+			for (int j=0;j<35;j++)
+			{
+				sum=sum+avgprecision.get(i).get(j);
+				sum2=sum2+avgrecall.get(i).get(j);
+				sum3=sum3+avgfmeasure.get(i).get(j);
+				
+			}
+			sum=sum/35;
+			sum2=sum2/35;
+			sum3=sum3/35;
+
+			alltagavgprecision.set(i,sum);
+			alltagavgrecall.set(i,sum2);
+			alltagavgfmeasure.set(i,sum3);
+		}
+
+		//printing precision recall at level 3 for all tags
+		try {
+			raFile = new RandomAccessFile(file, "rw");
+		} catch (FileNotFoundException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		System.out.println("Precison, Recall and Fmeasure at level 3 for all tags:");
+		Preferences.debug("Precison, Recall and Fmeasure at level 3 for all tags:\n", Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes("Precison, Recall and Fmeasure at level 3 for all tags:\n");
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		//int fw=20;
+		int levlp=2;
+		String output = String.format("%-20s%-20s%-20s%-20s%n", "Tag Name ", "Precision ", "Recall ", "F-Measure ");
+		System.out.print(output);
+		Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes(output);
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+
+		double avgprocessp=0;
+		double avgprocessr=0;
+		double avgprocessf=0;
+
+		double avgstrutp=0;
+		double avgstrutr=0;
+		double avgstrutf=0;
+
+		for (int i=0;i<35;i ++)
+		{
+			
+			int j=printorder[i];
+
+			if(i<28)
+			{
+				avgprocessp=avgprocessp+avgprecision.get(levlp).get(j);
+				avgprocessr=avgprocessr+avgrecall.get(levlp).get(j);
+				avgprocessf=avgprocessf+avgfmeasure.get(levlp).get(j);
+			}
+			else
+			{
+				avgstrutp=avgstrutp+avgprecision.get(levlp).get(j);
+				avgstrutr=avgstrutr+avgrecall.get(levlp).get(j);
+				avgstrutf=avgstrutf+avgfmeasure.get(levlp).get(j);
+			}
+
+			output = String.format("%-20s%-20.3f%-20.3f%-20.3f%n", taglist.get(j),avgprecision.get(levlp).get(j),avgrecall.get(levlp).get(j),avgfmeasure.get(levlp).get(j));
+			System.out.print(output);
+			Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+			try {
+	        	raFile.writeBytes(output);
+	        }
+	        catch (IOException e) {
+				MipavUtil.displayError(e + " ");
+				System.exit(-1);
+			}
+		}
+
+		avgprocessp=avgprocessp/28;
+		avgprocessr=avgprocessr/28;
+		avgprocessf=avgprocessf/28;
+		avgstrutp=avgstrutp/7;
+		avgstrutr=avgstrutr/7;
+		avgstrutf=avgstrutf/7;
+
+		output = String.format("%-20s%-20.3f%-20.3f%-20.3f%n", "Process", avgprocessp, avgprocessr, avgprocessf);
+		System.out.print(output);
+		Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes(output);
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		output = String.format("%-20s%-20.3f%-20.3f%-20.3f%n", "Structural", avgstrutp, avgstrutr, avgstrutf);  
+		System.out.print(output);
+		Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes(output);
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		
+
+		//printing Average precison, recall and F-measure at level 3
+
+		System.out.println("Average Precison, Recall and Fmeasure at level 3:");
+		Preferences.debug("Average Precison, Recall and Fmeasure at level 3:\n",Preferences.DEBUG_ALGORITHM);
+		try {
+			raFile.writeBytes("Average Precison, Recall and Fmeasure at level 3:\n");	
+		}
+		catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+
+		output = String.format("%-s%-20s%-20s%n", "Average Precision ", "Average Recall ", "Average F-Measure ");
+		System.out.print(output);
+		Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes(output);
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+		output = String.format("%-20.3f%-20.3f%-20.3f%n", alltagavgprecision.get(levlp),alltagavgrecall.get(levlp), alltagavgfmeasure.get(levlp));
+		System.out.print(output);
+		Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes(output);
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+
+		System.out.println("Average Precison, Recall and Fmeasure at all levels ");
+		Preferences.debug("Average Precison, Recall and Fmeasure at all levels \n", Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes("Average Precison, Recall and Fmeasure at all levels \n");
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+
+		output = String.format("%-20s%-20s%-20s%-20s%n", "Level: ", "Average Precision ", "Average Recall ", "Average F-Measure ");
+		System.out.print(output);
+		Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+		try {
+        	raFile.writeBytes(output);
+        }
+        catch (IOException e) {
+			MipavUtil.displayError(e + " ");
+			System.exit(-1);
+		}
+
+		for (int i=0;i<35;i++)
+		{
+			output = String.format("%-20d%-20.3f%-20.3f%-20.3f%n", (i+1), alltagavgprecision.get(i), alltagavgrecall.get(i), alltagavgfmeasure.get(i));
+			System.out.print(output);
+			Preferences.debug(output,Preferences.DEBUG_ALGORITHM);
+			try {
+	        	raFile.writeBytes(output);
+	        }
+	        catch (IOException e) {
+				MipavUtil.displayError(e + " ");
+				System.exit(-1);
+			}
+			
+		}
+
+		try {
+			raFile.close();
+		} catch (IOException e) {
+			MipavUtil.displayError("In printResults raFile.close() IOException " + e);
+			System.exit(-1);
+		}
+
+	}
+	
+	Vector<Double> plus(Vector<Double>a, Vector<Double>b) {
+		int i;
+		if (a.size() != b.size()) {
+			MipavUtil.displayError("a.size() != b.size() in Vector<Double> plus");
+			System.exit(-1);
+		}
+		Vector<Double>result = new Vector<Double>();
+		for (i = 0; i <a.size(); i++) {
+			result.add(a.get(i)+b.get(i));
+		}
+		return result;
 	}
 
 	/*
