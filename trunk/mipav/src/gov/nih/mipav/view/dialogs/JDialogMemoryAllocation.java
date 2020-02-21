@@ -459,7 +459,11 @@ public class JDialogMemoryAllocation extends JDialogBase {
         // for each line of file, process to reset the init & max lines as
         // they are found.
         while (line != null) {
-            maxVal = JDialogMemoryAllocation.getVMOptionsMaxHeap(line);
+            String val = JDialogMemoryAllocation.getVMOptionsMaxHeap(line);
+            
+            if (val != null && !val.trim().equals("")) {
+                maxVal = val;
+            }
             
             // get next line; add to list...
             line = readFile.readLine();
@@ -609,7 +613,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
     protected static final String getVMOptionsMaxHeap(final String line) {
         String maxVal = "";
         
-        Pattern pattern = Pattern.compile(optionFlag + maxHeapOption + "(\\d+)([MmGgKk]?)");
+        Pattern pattern = Pattern.compile("^" + optionFlag + maxHeapOption + "(\\d+)([MmGgKk]?)");
         Matcher matcher = pattern.matcher(line);
         
         if (matcher.find()) {
@@ -1245,9 +1249,13 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         final BufferedWriter outFile = new BufferedWriter(new FileWriter(vmoptionsFile));
 
-        vmoptionsContents.replaceAll(optionFlag + maxHeapOption + "\\d+[MmKkGg]?", optionFlag + maxHeapOption + maxHeapText.getText() + "M");
+        String newContents = replacePatternMultiline("^" + optionFlag + maxHeapOption + "\\d+[MmKkGg]?", vmoptionsContents, optionFlag + maxHeapOption + maxHeapText.getText() + "M");
         
-        outFile.write(vmoptionsContents);
+        if (newContents != null) {
+            outFile.write(newContents);
+        } else {
+            MipavUtil.displayError("Error editing the vmoptions file contents. No change has been made.");
+        }
 
         outFile.close();
     }
@@ -1293,11 +1301,14 @@ public class JDialogMemoryAllocation extends JDialogBase {
         final BufferedWriter outFile = new BufferedWriter(new FileWriter(startupFile));
 
         //line = "\t\t\t\t" + "<string>-Xmx" + maxHeapText.getText() + "M</string>";
-        plistContents.replaceAll(optionFlag + maxHeapOption + "\\d+[MmKkGg]?", optionFlag + maxHeapOption + maxHeapText.getText() + "M");
-
-        outFile.write(plistContents);
-        outFile.newLine();
-
+        String newContents = replacePatternMultiline("^" + optionFlag + maxHeapOption + "\\d+[MmKkGg]?", plistContents, optionFlag + maxHeapOption + maxHeapText.getText() + "M");
+        
+        if (newContents != null) {
+            outFile.write(newContents);
+        } else {
+            MipavUtil.displayError("Error editing the plist file contents. No change has been made.");
+        }
+        
         outFile.close();
     }
     
@@ -1342,11 +1353,25 @@ public class JDialogMemoryAllocation extends JDialogBase {
         final BufferedWriter outFile = new BufferedWriter(new FileWriter(startupFile));
 
         //line = JDialogMemoryAllocation.maxHeapLAX + maxHeapText.getText() + "M";
-        laxContents.replaceAll(JDialogMemoryAllocation.maxHeapLAX + "\\d+[MmKkGg]?", optionFlag + maxHeapOption + maxHeapText.getText() + "M");
+        String newContents = replacePatternMultiline("^" + JDialogMemoryAllocation.maxHeapLAX + "\\d+[MmKkGg]?", laxContents, JDialogMemoryAllocation.maxHeapLAX + maxHeapText.getText() + "M");
         
-        outFile.write(laxContents);
+        if (newContents != null) {
+            outFile.write(newContents);
+        } else {
+            MipavUtil.displayError("Error editing the lax file contents. No change has been made.");
+        }
         
         outFile.close();
     }
 
+    protected static String replacePatternMultiline(final String regex, final String origStr, final String replaceVal) {
+        Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
+        Matcher matcher = pattern.matcher(origStr);
+        
+        if (matcher.find()) {
+            return matcher.replaceAll(replaceVal);
+        }
+        
+        return null;
+    }
 }
