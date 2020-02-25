@@ -194,7 +194,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
 	 */
 	public void tableChanged(TableModelEvent e) {
-		System.err.println("tableChanged");
+//		System.err.println("tableChanged");
 		// Track updates to the table and update the corresponding annotation.
 		// The user can change the annotation name and position (x,y,z) with table edits.
 		// Does not currently check type.
@@ -202,7 +202,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 		{
 			int row = annotationTable.getSelectedRow();
 			int column = annotationTable.getSelectedColumn();
-			System.err.println(row + "  " + column );
+//			System.err.println(row + "  " + column );
 
 			String newName = null;
 			VOIVector lattice = voiManager.getLattice();
@@ -214,6 +214,13 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 					if ( column == 0 ) {
 						if ( text != null ) {
 							newName = new String( annotationTable.getValueAt(row, column).toString() );
+
+							if ( newName.contains("H") || newName.contains("V") || newName.contains("T")  || newName.contains("Q") ) {
+								text.setSeamCell(true);
+							}
+							else {
+								text.setSeamCell(false);
+							}
 							text.setText( newName );
 							text.updateText();
 							text.update();
@@ -246,6 +253,13 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 					if ( column == 4 ) {
 						if ( text != null ) {
 							newName = new String( annotationTable.getValueAt(row, column).toString() );
+							if ( newName.contains("H") || newName.contains("V") || newName.contains("T")  || newName.contains("Q") ) {
+								text.setSeamCell(true);
+							}
+							else {
+								text.setSeamCell(false);
+							}
+
 							text.setText( newName );
 							text.updateText();
 							text.update();

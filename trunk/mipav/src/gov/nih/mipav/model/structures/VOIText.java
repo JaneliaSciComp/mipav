@@ -71,8 +71,6 @@ public class VOIText extends VOIBase {
     /** If this is set to true, a draggable arrow will be displayed */
     private boolean useMarker = true;
 
-    private boolean display = true;
-
     private ArrayList<String> comments = new ArrayList<String>();
     
     /**
@@ -360,20 +358,6 @@ public class VOIText extends VOIBase {
      */
     public void setUseMarker(boolean mark) {
     	this.useMarker = mark;
-    }
-    
-    /**
-     * Turns the display setting on/off for the 
-     * VolumeVOI displayed in the volume renderer.
-     * @param show
-     */
-    public void display( boolean show ) {
-    	this.display = show;
-    	if ( m_kVolumeVOI != null )
-    	{
-    		m_kVolumeVOI.SetDisplay(this.display);
-    		m_kVolumeVOI.needsUpdate(true);
-    	}
     }
 
     public boolean getDisplay( ) {

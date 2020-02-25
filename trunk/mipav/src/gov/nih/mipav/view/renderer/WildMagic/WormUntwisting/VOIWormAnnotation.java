@@ -44,6 +44,8 @@ public class VOIWormAnnotation extends VOIText {
     
     public VOIWormAnnotation( VOIWormAnnotation kVOI ) {
     	super(kVOI);
+    	// remove all but first element:
+    	for ( int i = 1; i < size(); i++ ) remove(i);
     	this.retwist = kVOI.retwist;
     	this.modified = kVOI.modified;
     	this.latticeSegment = kVOI.latticeSegment;
