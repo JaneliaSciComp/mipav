@@ -667,6 +667,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	protected void redoVOIs()
 	{
+		movingPickedPoint = false;
 		if ( m_kRedoList.isEmpty() )
 		{
 			return;
@@ -690,7 +691,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	protected void undoVOIs()
 	{
-		System.err.println("undoVOIs " + m_kUndoList.size() );
+		movingPickedPoint = false;
 		if ( m_kUndoList.size() <= 0 )
 		{
 			return;

@@ -2947,7 +2947,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				VOI markers = data.wormData.getIntegratedMarkerAnnotations();
 				if ( markers != null ) {
 					data.annotations.add( markers );
-					data.wormImage.registerVOI( markers );
 				}
 			}
 			else {
@@ -2955,12 +2954,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				VOI markers = data.wormData.getMarkerAnnotations(dir1);
 				if ( markers != null ) {
 					data.annotations.add( markers );
-					data.wormImage.registerVOI( markers );
 				}
 				markers = data.wormData.getMarkerAnnotations(dir2);
 				if ( markers != null ) {
 					data.annotations.add( markers );
-					data.wormImage.registerVOI( markers );
 				}
 			}
 		}
@@ -3276,7 +3273,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private boolean seamOpen = false;
 	public void stateChanged(ChangeEvent arg0) {
 		if ( arg0.getSource() == tabbedPane ) {
-			System.err.println( tabbedPane.getSelectedIndex() + "  " + tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()) );
+//			System.err.println( tabbedPane.getSelectedIndex() + "  " + tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()) );
 			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Lattice" ) ) {
 				activeImage.voiManager.editLattice();
 				initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );

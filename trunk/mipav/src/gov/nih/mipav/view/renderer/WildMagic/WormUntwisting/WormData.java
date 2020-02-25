@@ -209,7 +209,7 @@ public class WormData
 		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv");
 
 		if ( markerAnnotations == null )
-			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
+			markerAnnotations = new VOI( (short)0, "annotationVOIs", VOI.ANNOTATION, 0 );
 		return markerAnnotations;
 	}
 
@@ -218,7 +218,7 @@ public class WormData
 		System.err.println("getMarkerAnnotations");
 		VOI markerAnnotations = readMarkers();
 		if ( markerAnnotations == null )
-			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
+			markerAnnotations = new VOI( (short)0, "annotationVOIs", VOI.ANNOTATION, 0 );
 		return markerAnnotations;
 	}
 
@@ -227,7 +227,7 @@ public class WormData
 		System.err.println("getMarkerAnnotations " + outputDir);
 		VOI markerAnnotations = readMarkers(outputDir);
 		if ( markerAnnotations == null )
-			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
+			markerAnnotations = new VOI( (short)0, "annotationVOIs", VOI.ANNOTATION, 0 );
 		return markerAnnotations;
 	}
 

@@ -192,6 +192,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     
     /** initialize subtype to unknown **/
     private int subtype = UNKNOWN_SUBTYPE;
+    /** displays the voi in the volume renderer: */
+    protected boolean display = true;
     
     /**
      * Sorts the edge crossing points in place.
@@ -831,7 +833,23 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public VolumeVOI createVolumeVOI(VolumeImage kVolumeImage, Vector3f kTranslate)
     {
         m_kVolumeVOI = new VolumeVOI( kVolumeImage, kTranslate, this, m_kColor );
+		m_kVolumeVOI.SetDisplay(this.display);
+		m_kVolumeVOI.needsUpdate(true);
         return m_kVolumeVOI;
+    }
+    
+    /**
+     * Turns the display setting on/off for the 
+     * VolumeVOI displayed in the volume renderer.
+     * @param show
+     */
+    public void display( boolean show ) {
+    	this.display = show;
+    	if ( m_kVolumeVOI != null )
+    	{
+    		m_kVolumeVOI.SetDisplay(this.display);
+    		m_kVolumeVOI.needsUpdate(true);
+    	}
     }
 
     

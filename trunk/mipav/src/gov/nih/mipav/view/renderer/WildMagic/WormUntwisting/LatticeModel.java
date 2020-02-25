@@ -95,7 +95,7 @@ public class LatticeModel {
 				String line = br.readLine();
 				line = br.readLine();
 
-				VOI annotationVOIs = new VOI( sID, fileName, VOI.ANNOTATION, 0 );
+				VOI annotationVOIs = new VOI( sID, "annotationVOIs", VOI.ANNOTATION, 0 );
 				int count = 1;
 				while ( line != null && (line.length() > 1) )
 				{
@@ -799,6 +799,10 @@ public class LatticeModel {
 			return;
 		}
 
+		this.imageA.registerVOI(left);
+		this.imageA.registerVOI(right);
+		showLatticeLabels(false);
+		
 		if ( lattice.size() < 4 ) {
 			// create displayed contours for left / right:
 //			makeLatticeContours();
@@ -1030,6 +1034,8 @@ public class LatticeModel {
 				rightMarker.update();
 			}
 		}
+		// rename cells if seam count > 10 to include Q cells:
+		updateSeamCount();
 		updateLattice(true);
 		showLatticeLabels(displayLatticeLabels);
 	}
@@ -2067,15 +2073,9 @@ public class LatticeModel {
 				final int rightIndex = findPoint(right, pickedPoint);
 				if ( leftIndex != -1 ) {
 					((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).retwist(true);
-					System.err.println(((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).getText());
-					System.err.println(((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).firstElement());
-					System.err.println(((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).lastElement());
 				}
 				if ( rightIndex != -1 ) {
 					((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).retwist(true);
-					System.err.println(((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).getText());
-					System.err.println(((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).firstElement());
-					System.err.println(((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).lastElement());
 				}
 				pickedPoint.X = pt.X;
 				pickedPoint.Y = pt.Y;
@@ -2083,19 +2083,7 @@ public class LatticeModel {
 				
 			}
 			else {
-				final int leftIndex = findPoint(left, pickedPoint);
-				final int rightIndex = findPoint(right, pickedPoint);
-				if ( leftIndex != -1 ) {
-					System.err.println(((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).getText());
-					System.err.println(((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).firstElement());
-					System.err.println(((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).lastElement());
-				}
-				if ( rightIndex != -1 ) {
-					System.err.println(((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).getText());
-					System.err.println(((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).firstElement());
-					System.err.println(((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).lastElement());
-				}
-				pickedPoint.X = pt.X;
+//				pickedPoint.X = pt.X;
 				pickedPoint.copy(pt);
 			}
 			updateLattice(false);
@@ -2238,7 +2226,7 @@ public class LatticeModel {
 		for ( int i = 0; i < left3D.getCurves().size(); i++ ) {
 
 			VOIWormAnnotation text = (VOIWormAnnotation) left3D.getCurves().elementAt(i);
-			System.err.print( i + "  " + text.getText() + "  " );
+//			System.err.print( i + "  " + text.getText() + "  " );
 			if ( text.retwist() ) {
 				if ( !latticeInterpolationInit ) {
 					initializeInterpolation(false);
@@ -2255,7 +2243,7 @@ public class LatticeModel {
 			}
 
 			text = (VOIWormAnnotation) right3D.getCurves().elementAt(i);
-			System.err.println( text.getText() );
+//			System.err.println( text.getText() );
 			if ( text.retwist() ) {
 				if ( !latticeInterpolationInit ) {
 					initializeInterpolation(false);
@@ -3214,7 +3202,6 @@ public class LatticeModel {
 	 * @param newAnnotations
 	 */
 	public void addAnnotations(final VOI newAnnotations) {
-		System.err.println( "addAnnotations " + imageA.getImageName() + " " + newAnnotations.getCurves().size() );
 		if ( newAnnotations.getCurves().size() == 0 ) return;
 		if (annotationVOIs == null) {
 			annotationVOIs = newAnnotations;
@@ -3865,6 +3852,10 @@ public class LatticeModel {
 			return;
 		}
 
+		imageA.registerVOI(left);
+		imageA.registerVOI(right);
+		showLatticeLabels(false);
+
 		clear3DSelection();
 		clearAddLeftRightMarkers();
 		updateLattice(true);
@@ -4136,21 +4127,12 @@ public class LatticeModel {
 	private boolean displayLatticeLabels = false;
 	public void showLatticeLabels(boolean display) {
 		displayLatticeLabels = display;
-		if ( display ) {
-			if ( (left != null) && (imageA.isRegistered(left) == -1) ) {
-				imageA.registerVOI(left);
-			}
-			if ( (right != null) && (imageA.isRegistered(right) == -1) ) {
-				imageA.registerVOI(right);
-			}
-		}
-		if ( !display ) {
-			if ( (left != null) && (imageA.isRegistered(left) != -1) ) {
-				imageA.unregisterVOI(left);
-			}
-			if ( (right != null) && (imageA.isRegistered(right) != -1) ) {
-				imageA.unregisterVOI(right);
-			}
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			text.display(displayLatticeLabels);
+			
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			text.display(displayLatticeLabels);
 		}
 	}
 	
@@ -5062,7 +5044,7 @@ public class LatticeModel {
 				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
 				seamCellIDs[i][1] = rightID;
 
-				System.err.println( "left " + leftID + " right " + rightID );
+//				System.err.println( "left " + leftID + " right " + rightID );
 			}
 		}
 
@@ -7788,6 +7770,7 @@ public class LatticeModel {
 		final Segment3f mouseVector = new Segment3f(startPt, endPt);
 		float minDistL = Float.MAX_VALUE;
 		int minIndexL = -1;
+		int minSeamL = -1;
 		Vector3f newLeft = null;
 		int seamCount = 0;
 		int otherCount = 0;
@@ -7809,6 +7792,7 @@ public class LatticeModel {
 				if (minDistL <= 12) {
 					// System.err.println( dist.GetSegment0Parameter() + " " + dist.GetSegment1Parameter() );
 					minIndexL = i;
+					minSeamL = seamCount;
 					//					newLeft = Vector3f.add(leftS.Center, Vector3f.scale(dist.GetSegment1Parameter(), leftS.Direction));
 					newLeft = new Vector3f(maxPt);
 				}
@@ -7816,6 +7800,7 @@ public class LatticeModel {
 		}
 		float minDistR = Float.MAX_VALUE;
 		int minIndexR = -1;
+		int minSeamR = -1;
 		Vector3f newRight = null;
 		for (int i = 0; i < right.getCurves().size() - 1; i++) {
 			VOIWormAnnotation rightPt = (VOIWormAnnotation) right.getCurves().elementAt(i);
@@ -7828,6 +7813,7 @@ public class LatticeModel {
 				if (minDistR <= 12) {
 					// System.err.println( dist.GetSegment0Parameter() + " " + dist.GetSegment1Parameter() );
 					minIndexR = i;
+					minSeamR = seamCount;
 					//					newRight = Vector3f.add(rightS.Center, Vector3f.scale(dist.GetSegment1Parameter(), rightS.Direction));
 					newRight = new Vector3f(maxPt);
 				}
@@ -7835,6 +7821,7 @@ public class LatticeModel {
 		}
 		if ( (minIndexL != -1) && (minIndexR != -1)) {
 			if (minDistL < minDistR) {
+				seamCount = minSeamL + 1;
 				// System.err.println( "Add to left " + (minIndexL+1) );
 				VOIWormAnnotation newLeftAnnotation = new VOIWormAnnotation(newLeft);
 				newLeftAnnotation.setSeamCell(isSeam);
@@ -7862,9 +7849,11 @@ public class LatticeModel {
 					newRightAnnotation.setText(name + "R");
 				}
 				right.getCurves().add(minIndexL + 1, newRightAnnotation);
-
+				updateSeamCount();
 				updateLattice(true);
+				showLatticeLabels(displayLatticeLabels);
 			} else {
+				seamCount = minSeamR + 1;
 				// System.err.println( "Add to right " + (minIndexR+1) );
 				VOIWormAnnotation newRightAnnotation = new VOIWormAnnotation(newRight);
 				newRightAnnotation.setSeamCell(isSeam);
@@ -7893,10 +7882,12 @@ public class LatticeModel {
 					newLeftAnnotation.setText(name + "L");
 				}
 				left.getCurves().add(minIndexR + 1, newLeftAnnotation);
-
+				updateSeamCount();
 				updateLattice(true);
+				showLatticeLabels(displayLatticeLabels);
 			}
 		} else if ((minIndexL != -1) && ((minIndexL + 1) < right.getCurves().size())) {
+			seamCount = minSeamL + 1;
 			// System.err.println( "Add to left " + (minIndexL+1) );
 			VOIWormAnnotation newLeftAnnotation = new VOIWormAnnotation(newLeft);
 			newLeftAnnotation.setSeamCell(isSeam);
@@ -7923,9 +7914,11 @@ public class LatticeModel {
 				newRightAnnotation.setText(name + "R");
 			}
 			right.getCurves().add(minIndexL + 1, newRightAnnotation);
-
+			updateSeamCount();
 			updateLattice(true);
+			showLatticeLabels(displayLatticeLabels);
 		} else if (minIndexR != -1 && ((minIndexR + 1) < left.getCurves().size())) {
+			seamCount = minSeamR + 1;
 			// System.err.println( "Add to right " + (minIndexR+1) );
 			VOIWormAnnotation newRightAnnotation = new VOIWormAnnotation(newRight);
 			newRightAnnotation.setSeamCell(isSeam);
@@ -7955,7 +7948,10 @@ public class LatticeModel {
 			}
 			left.getCurves().add(minIndexR + 1, newLeftAnnotation);
 
+			// rename cells if seam count > 10 to include Q cells:
+			updateSeamCount();
 			updateLattice(true);
+			showLatticeLabels(displayLatticeLabels);
 		}
 		else
 		{
@@ -9192,7 +9188,7 @@ public class LatticeModel {
 				}
 				tryCount++;
 			}
-			System.err.println( markerNames.elementAt(i) + "   " + minSlice + "   " + minUntwist );
+//			System.err.println( markerNames.elementAt(i) + "   " + minSlice + "   " + minUntwist );
 
 		}
 
@@ -9828,7 +9824,7 @@ public class LatticeModel {
 		for (int i = 0; i < vois.size(); i++) {
 			final VOI voi = vois.elementAt(i);
 			final String name = voi.getName();
-			System.err.println( vois.elementAt(i).getName() );
+//			System.err.println( vois.elementAt(i).getName() );
 			if (name.equals("left")) {
 				left = voi;
 			} else if (name.equals("right")) {
@@ -9853,12 +9849,13 @@ public class LatticeModel {
 				showSelectedVOI = voi;
 				imageA.unregisterVOI(showSelectedVOI);
 				showSelectedVOI = null;
-				System.err.println("updateLinks showSelected ");
+//				System.err.println("updateLinks showSelected ");
 			} else if (name.equals("leftMarker")) {
 				leftMarker = voi;
 			} else if (name.equals("rightMarker")) {
 				rightMarker = voi;
 			} else if (name.contains("annotationVOIs")) {
+//				System.err.println("updateLinks update annotations: " + name );
 				annotationVOIs = voi;
 			}
 		}
@@ -9871,7 +9868,7 @@ public class LatticeModel {
 		
 		clear3DSelection();
 		colorAnnotations();
-		System.err.println("updateLinks " + (annotationVOIs != null) );
+//		System.err.println("updateLinks " + (annotationVOIs != null) );
 		if ( annotationVOIs != null ) {
 			//			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
 			//				final VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
@@ -9882,6 +9879,7 @@ public class LatticeModel {
 			//			}
 		}
 		updateLattice(true);
+		showLatticeLabels(displayLatticeLabels);
 
 		vois = imageA.getVOIs();
 		for (int i = 0; i < vois.size(); i++) {
@@ -9966,7 +9964,56 @@ public class LatticeModel {
 		return -1;
 	}
 	
-
+	private void updateSeamCount() {
+		int totalSeamCount = 0;
+		int seamCount = 0;
+		int nonSeamCount = 0;
+		if (left.getCurves().size() == right.getCurves().size()) {
+			totalSeamCount = 0;
+			for ( int i = 0; i < left.getCurves().size(); i++ ) {
+				if ( ((VOIWormAnnotation)left.getCurves().elementAt(i)).isSeamCell() ) {
+					totalSeamCount++;
+				}
+			}
+			for ( int i = 0; i < left.getCurves().size(); i++ ) {
+				VOIWormAnnotation leftAnnotation = ((VOIWormAnnotation)left.getCurves().elementAt(i));
+				VOIWormAnnotation rightAnnotation = ((VOIWormAnnotation)right.getCurves().elementAt(i));
+				if ( leftAnnotation.isSeamCell() ) {
+					seamCount++;
+				}
+				else {
+					nonSeamCount++;
+				}
+				String name = "";
+				if ( totalSeamCount <= 10 ) {
+					// H0-H1-H2-V1-V2-V3-V4-V5-V6-T 
+					if ( leftAnnotation.isSeamCell() ) {
+						name = seamCount < 4 ? ("H" + (seamCount-1)) : (seamCount < 9) ? ("V" + (seamCount - 3)) : "T";
+					}
+					else {
+						name = "a" + nonSeamCount;
+					}
+				}
+				else if ( totalSeamCount > 10 ) {
+					// H0-H1-H2-V1-V2-V3-V4-Q-V5-V6-T 
+					if ( leftAnnotation.isSeamCell() ) {
+						name = seamCount < 4 ? ("H" + (seamCount-1)) : (seamCount < 8) ? ("V" + (seamCount - 3)) : (seamCount == 8) ? "Q" : (seamCount < 11) ? ("V" + (seamCount - 4)) : "T";
+					}
+					else {
+						name = "a" + nonSeamCount;
+					}
+				}
+				leftAnnotation.setText( name + "L" );
+				leftAnnotation.updateText();
+				leftAnnotation.update();
+				
+				rightAnnotation.setText( name + "R" );
+				rightAnnotation.updateText();
+				rightAnnotation.update();
+			}
+		}
+	}
+	
 	public void renameLattice()
 	{
 		if ( left == null || right == null ) return;
