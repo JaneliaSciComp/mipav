@@ -616,9 +616,11 @@ public class LatticeModel {
 	protected VOIVector lattice = null;
 	// left side of the lattice:
 	protected VOI left;
+	protected VOI leftContour;
 //	protected VOIContour leftLattice;
 	// right side of the lattice:
 	protected VOI right;
+	protected VOI rightContour;
 //	protected VOIContour rightLattice;
 	// horizontal bars connecting left and right lattice pairs:
 	private VOIVector latticeGrid;
@@ -803,16 +805,6 @@ public class LatticeModel {
 		this.imageA.registerVOI(right);
 		showLatticeLabels(false);
 		
-		if ( lattice.size() < 4 ) {
-			// create displayed contours for left / right:
-//			makeLatticeContours();
-		}
-		if ( lattice.size() == 4 ) {
-			// displayed contours are lattice[2] and lattice[3]
-			this.imageA.registerVOI(lattice.elementAt(2));
-			this.imageA.registerVOI(lattice.elementAt(3));
-		}
-
 		updateLattice(true);
 	}
 
@@ -1253,6 +1245,8 @@ public class LatticeModel {
 			imageA.unregisterVOI(leftLine);
 			imageA.unregisterVOI(rightLine);
 			imageA.unregisterVOI(centerLine);
+			imageA.unregisterVOI(leftContour);
+			imageA.unregisterVOI(rightContour);
 			clear3DSelection();
 		}
 
@@ -1261,6 +1255,8 @@ public class LatticeModel {
 		lattice = null;
 		left = null;
 		right = null;
+		leftContour = null;
+		rightContour = null;
 		center = null;
 		afTimeC = null;
 		allTimes = null;
@@ -2390,13 +2386,7 @@ public class LatticeModel {
 			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
 
 			imageA.unregisterAllVOIs();
-			if ( lattice.size() != 4 ) {
-//				makeLatticeContours();
-			}
-			if ( lattice.size() == 4 ) {
-				imageA.registerVOI(lattice.elementAt(2));
-				imageA.registerVOI(lattice.elementAt(3));
-			}
+			
 			if (leftMarker != null) {
 				imageA.registerVOI(leftMarker);
 			}
@@ -4140,29 +4130,23 @@ public class LatticeModel {
 	/**
 	 * Turns on/off lattice display:
 	 */
-	public void showLattice(boolean display) {
-//		if ( lattice.size() == 2 ) makeLatticeContours();
-//		if ( lattice.size() == 2 ) return;
-//
-//		VOI leftContour = lattice.elementAt(2);
-//		VOI rightContour = lattice.elementAt(3);
-		
+	public void showLattice(boolean display) {		
 		if ( display ) {
-//			if ( imageA.isRegistered(leftContour) == -1 ) {
-//				imageA.registerVOI(leftContour);
-//			}
-//			if ( imageA.isRegistered(rightContour) == -1 ) {
-//				imageA.registerVOI(rightContour);
-//			}
+			if ( leftContour != null ) {
+				imageA.registerVOI(leftContour);
+			}
+			if ( rightContour != null ) {
+				imageA.registerVOI(rightContour);
+			}
 			updateLattice(true);
 		}
 		if ( !display ) {
-//			if ( imageA.isRegistered(leftContour) != -1 ) {
-//				imageA.unregisterVOI(leftContour);
-//			}
-//			if ( imageA.isRegistered(rightContour) != -1 ) {
-//				imageA.unregisterVOI(rightContour);
-//			}
+			if ( leftContour != null ) {
+				imageA.unregisterVOI(leftContour);
+			}
+			if ( rightContour != null ) {
+				imageA.unregisterVOI(rightContour);
+			}
 			if (latticeGrid != null) {
 				for (int i = latticeGrid.size() - 1; i >= 0; i--) {
 					final VOI marker = latticeGrid.remove(i);
@@ -9669,39 +9653,30 @@ public class LatticeModel {
 			}
 		}
 	}
-	
+		
 	private void makeLatticeContours() {
-		VOI leftLattice = null;
-		VOI rightLattice = null;
-		if ( lattice.size() == 4 ) {
-			rightLattice = lattice.remove(3);
-		}
-		if ( lattice.size() == 3 ) {
-			leftLattice = lattice.remove(2);
-		}
-		if ( leftLattice != null ) {
-			imageA.unregisterVOI(leftLattice);
-			leftLattice.getCurves().clear();
+		if ( leftContour != null ) {
+			imageA.unregisterVOI(leftContour);
+			leftContour.getCurves().clear();
 		}
 		else {
 			final short id = (short) imageA.getVOIs().getUniqueID();
-			leftLattice = new VOI(id, "leftContour", VOI.POLYLINE, (float) Math.random());
+			leftContour = new VOI(id, "leftContour", VOI.POLYLINE, (float) Math.random());
 		}
-		if ( rightLattice != null ) {
-			imageA.unregisterVOI(rightLattice);
-			rightLattice.getCurves().clear();
+		if ( rightContour != null ) {
+			imageA.unregisterVOI(rightContour);
+			rightContour.getCurves().clear();
 		}
 		else {
 			final short id = (short) imageA.getVOIs().getUniqueID();
-			rightLattice = new VOI(id, "rightContour", VOI.POLYLINE, (float) Math.random());
+			rightContour = new VOI(id, "rightContour", VOI.POLYLINE, (float) Math.random());
 		}
 
 		VOIContour leftC = new VOIContour(false);
-		leftLattice.getCurves().add(leftC);
-		lattice.add(leftLattice);
+		leftContour.getCurves().add(leftC);
+		
 		VOIContour rightC = new VOIContour(false);
-		rightLattice.getCurves().add(rightC);
-		lattice.add(rightLattice);
+		rightContour.getCurves().add(rightC);
 
 		for ( int i = 0; i < left.getCurves().size(); i++ ) {
 			leftC.add(left.getCurves().elementAt(i).elementAt(0));
@@ -9709,7 +9684,16 @@ public class LatticeModel {
 		for ( int i = 0; i < right.getCurves().size(); i++ ) {
 			rightC.add(right.getCurves().elementAt(i).elementAt(0));
 		}
+
+		leftContour.setColor(new Color(0, 0, 255));
+		leftC.update(new ColorRGBA(0, 0, 1, 1));
 		
+		rightContour.setColor(new Color(0, 0, 255));
+		rightC.update(new ColorRGBA(0, 0, 1, 1));
+
+		imageA.registerVOI(leftContour);
+		imageA.registerVOI(rightContour);
+			
 		imageA.notifyImageDisplayListeners();
 	}
 	
@@ -9728,11 +9712,7 @@ public class LatticeModel {
 			return;
 		}
 		
-//		makeLatticeContours();
-		if ( lattice.size() == 4 ) {
-			this.imageA.registerVOI(lattice.elementAt(2));
-			this.imageA.registerVOI(lattice.elementAt(3));
-		}
+		makeLatticeContours();
 		
 		if (rebuild) {
 			// System.err.println( "new pt added" );
@@ -9818,8 +9798,6 @@ public class LatticeModel {
 		annotationVOIs = null;
 		leftMarker = null;
 		rightMarker = null;
-		VOI leftContour = null;
-		VOI rightContour = null;
 		VOIVector vois = imageA.getVOIs();
 		for (int i = 0; i < vois.size(); i++) {
 			final VOI voi = vois.elementAt(i);
@@ -9859,12 +9837,12 @@ public class LatticeModel {
 				annotationVOIs = voi;
 			}
 		}
+		imageA.unregisterVOI(leftContour);
+		imageA.unregisterVOI(rightContour);
 		
 		lattice.clear();
 		lattice.add(left);
 		lattice.add(right);
-		if ( leftContour != null ) lattice.add(leftContour);
-		if ( rightContour != null ) lattice.add(rightContour);
 		
 		clear3DSelection();
 		colorAnnotations();
