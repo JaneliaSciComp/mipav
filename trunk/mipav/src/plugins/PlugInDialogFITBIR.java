@@ -3044,6 +3044,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         final int numDataStructs = structTableModel.getRowCount();
         
+        if (numDataStructs == 0) {
+            MipavUtil.displayError("No images records are ready for package generation.  If you loaded an input CSV, check any error output/logs for image read errors.");
+            return;
+        }
+        
         final int progressInc = 95 / numDataStructs;
         final int rowsPerInc = (numDataStructs / 95) + 1;
 
@@ -7266,12 +7271,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 ageVal = null;
             }
             if (isValueSet(ageVal)) {
-                final float ageInMonths = Float.parseFloat(convertDicomAgeToBRICS(ageVal));
-                if (ageInMonths != 0) {
-                    final String ageInYears = String.valueOf(ageInMonths / 12);
-                    
-                    extractedFields.put("AgeVal", String.valueOf(ageInMonths));
-                    extractedFields.put("AgeYrs", ageInYears);
+                final String ageStr = convertDicomAgeToBRICS(ageVal);
+                if (isValueSet(ageStr)) {
+                    final float ageInMonths = Float.parseFloat(ageStr);
+                    if (ageInMonths != 0) {
+                        final String ageInYears = String.valueOf(ageInMonths / 12);
+                        
+                        extractedFields.put("AgeVal", String.valueOf(ageInMonths));
+                        extractedFields.put("AgeYrs", ageInYears);
+                    }
                 }
             }
             
