@@ -232,19 +232,39 @@ public class JDialogMemoryAllocation extends JDialogBase {
     public static File getStartupFile() throws FileNotFoundException {
         String app = getAppName();
         
-        File startupFile = getVMOptionsStartupFile(app, false);
+        File startupFile = null;
+        
+        try {
+            startupFile = getVMOptionsStartupFile(app, false);
+        } catch (FileNotFoundException e) {
+            // did not find vmoptions file, try to file the old lax or plist config
+            startupFile = null;
+            System.err.println("vmoptions file: " + e.getLocalizedMessage() + " Checking old LAX config file.");
+        }
         if (startupFile != null) {
             vmType = VMConfigType.VMOPTIONS;
             return startupFile;
         }
-        
-        startupFile = getLaxStartupFile(app);
+    
+        try {
+            startupFile = getLaxStartupFile(app);
+        } catch (FileNotFoundException e) {
+            // did not find vmoptions file, try to file the old plist config
+            startupFile = null;
+            System.err.println("lax file: " + e.getLocalizedMessage() + " Checking old Plist config file.");
+        }
         if (startupFile != null) {
             vmType = VMConfigType.LAX;
             return startupFile;
         }
         
-        startupFile = getPlistStartupFile(app);
+        try {
+            startupFile = getPlistStartupFile(app);
+        } catch (FileNotFoundException e) {
+            // couldn't find any config file - may be dev environment/JWS
+            startupFile = null;
+            System.err.println("No VM configuration file found.  Disregard if MIPAV is running via a development environment or Java Web Start.");
+        }
         if (startupFile != null) {
             vmType = VMConfigType.PLIST;
             return startupFile;
@@ -325,6 +345,9 @@ public class JDialogMemoryAllocation extends JDialogBase {
     public static File getLaxStartupFile(final String app) throws FileNotFoundException {
         String fName = new String(app + ".lax");
         String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+        
+        System.err.println(fName);
+        System.err.println(startPath);
 
         if (startPath == null) {
             fName = System.getProperty("mipav.file.lax");
@@ -343,6 +366,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 throw new FileNotFoundException("Starting options file cannot be found.  Check path and filename.");
             }
         }
+        
+        System.err.println(new File(startPath, fName).getAbsolutePath());
 
         return new File(startPath, fName);
     }
@@ -408,6 +433,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
             return null;
         }
         
+        System.err.println(vmType.toString());
+        
         String maxVal = null;
         switch (vmType) {
             case VMOPTIONS:
@@ -423,7 +450,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 System.err.println("No VM Type.");
         }
         
-        if (!maxVal.equals("")) System.err.println(maxVal);
+        if (maxVal != null && !maxVal.equals("")) System.err.println(maxVal);
         
         return maxVal;
     }
@@ -638,7 +665,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
     }
     
     protected static final boolean isVMOptionsFile(final File file) {
-        if (file.getName().endsWith(vmoptionsExt)) {
+        if (file.getName().toLowerCase().endsWith(vmoptionsExt)) {
             return true;
         } else if (file.getName().equalsIgnoreCase(macAppVMOptions)) {
             return true;
@@ -648,7 +675,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
     }
     
     protected static final boolean isLaxFile(final File file) {
-        if (file.getName().toUpperCase().endsWith(laxExt)) {
+        if (file.getName().toLowerCase().endsWith(laxExt)) {
             return true;
         }
         
@@ -656,7 +683,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
     }
     
     protected static final boolean isPListFile(final File file) {
-        if (file.getName().endsWith(plistExt)) {
+        if (file.getName().toLowerCase().endsWith(plistExt)) {
             return true;
         }
         
