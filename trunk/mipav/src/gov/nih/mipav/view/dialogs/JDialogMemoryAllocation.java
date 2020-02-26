@@ -356,16 +356,6 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 startPath = GetPath.getPath(fName, Purpose.FOR_READING);
             }
         }
-
-        if (startPath == null) {
-            fName = new String(app + ".app" + File.separator + "Contents" + File.separator + "Info.plist"); // Macintosh!
-            Preferences.debug("JDialogMemoryAllocation: Looking for Info.plist as the startfile: " + fName + "\n");
-            startPath = GetPath.getPath(fName, Purpose.FOR_READING);
-
-            if (startPath == null) {
-                throw new FileNotFoundException("Starting options file cannot be found.  Check path and filename.");
-            }
-        }
         
         System.err.println(new File(startPath, fName).getAbsolutePath());
 
@@ -392,17 +382,9 @@ public class JDialogMemoryAllocation extends JDialogBase {
      *             <code>null</code>.
      */
     public static File getPlistStartupFile(final String app) throws FileNotFoundException {
-        String fName = new String(app + ".lax");
-        String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
-
-        if (startPath == null) {
-            fName = System.getProperty("mipav.file.lax");
-            if (fName != null) {
-                Preferences.debug("JDialogMemoryAllocation: Looking for command line lax file: " + fName + "\n");
-                startPath = GetPath.getPath(fName, Purpose.FOR_READING);
-            }
-        }
-
+        String fName = null;
+        String startPath = null;
+        
         if (startPath == null) {
             fName = new String(app + ".app" + File.separator + "Contents" + File.separator + "Info.plist"); // Macintosh!
             Preferences.debug("JDialogMemoryAllocation: Looking for Info.plist as the startfile: " + fName + "\n");
