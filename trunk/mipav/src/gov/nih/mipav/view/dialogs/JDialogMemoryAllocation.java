@@ -302,7 +302,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             appName += debugLauncherStr;
         }
         
-        System.err.println(appName);
+        //System.err.println(appName);
 
         String fName = new String(appName + vmoptionsExt);
         String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
@@ -325,7 +325,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             }
         }
         
-        System.err.println(new File(startPath, fName).getAbsolutePath());
+        //System.err.println(new File(startPath, fName).getAbsolutePath());
         
         return new File(startPath, fName);
     }
@@ -346,8 +346,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         String fName = new String(app + ".lax");
         String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
         
-        System.err.println(fName);
-        System.err.println(startPath);
+        //System.err.println(fName);
+        //System.err.println(startPath);
 
         if (startPath == null) {
             fName = System.getProperty("mipav.file.lax");
@@ -355,9 +355,13 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 Preferences.debug("JDialogMemoryAllocation: Looking for command line lax file: " + fName + "\n");
                 startPath = GetPath.getPath(fName, Purpose.FOR_READING);
             }
+            
+            if (startPath == null) {
+                throw new FileNotFoundException("Starting options file cannot be found.  Check path and filename.");
+            }
         }
         
-        System.err.println(new File(startPath, fName).getAbsolutePath());
+        //System.err.println(new File(startPath, fName).getAbsolutePath());
 
         return new File(startPath, fName);
     }
@@ -415,7 +419,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             return null;
         }
         
-        System.err.println(vmType.toString());
+        //System.err.println(vmType.toString());
         
         String maxVal = null;
         switch (vmType) {
@@ -432,7 +436,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 System.err.println("No VM Type.");
         }
         
-        if (maxVal != null && !maxVal.equals("")) System.err.println(maxVal);
+        //if (maxVal != null && !maxVal.equals("")) System.err.println(maxVal);
         
         return maxVal;
     }
@@ -641,7 +645,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             }
         }
         
-        if (!maxVal.equals("")) System.err.println(maxVal);
+        //if (!maxVal.equals("")) System.err.println(maxVal);
         
         return maxVal;
     }
@@ -1309,7 +1313,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         final BufferedWriter outFile = new BufferedWriter(new FileWriter(startupFile));
 
         //line = "\t\t\t\t" + "<string>-Xmx" + maxHeapText.getText() + "M</string>";
-        String newContents = replacePatternMultiline("^" + optionFlag + maxHeapOption + "\\d+[MmKkGg]?", plistContents, optionFlag + maxHeapOption + maxHeapText.getText() + "M");
+        String newContents = replacePatternMultiline(optionFlag + maxHeapOption + "\\d+[MmKkGg]?", plistContents, optionFlag + maxHeapOption + maxHeapText.getText() + "M");
         
         if (newContents != null) {
             outFile.write(newContents);
