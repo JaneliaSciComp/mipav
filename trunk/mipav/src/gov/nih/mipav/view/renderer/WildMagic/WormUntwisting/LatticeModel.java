@@ -3168,7 +3168,6 @@ public class LatticeModel {
 			final Color c = text.getColor();
 			//			System.err.println( text.getText() + "  " + text.getColor() );
 			text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
-			text.elementAt(1).copy(text.elementAt(0));
 			//			text.elementAt(1).add(6, 0, 0);
 			text.setUseMarker(false);
 
@@ -3823,6 +3822,8 @@ public class LatticeModel {
 		this.lattice = newLattice;
 		left = null;
 		right = null;
+		leftContour = null;
+		rightContour = null;
 		clearCurves(true);
 		if ( this.lattice == null )
 		{
@@ -9657,7 +9658,9 @@ public class LatticeModel {
 	private void makeLatticeContours() {
 		if ( leftContour != null ) {
 			imageA.unregisterVOI(leftContour);
-			leftContour.getCurves().clear();
+			if ( leftContour.getCurves() != null ) {
+				leftContour.getCurves().clear();
+			}
 		}
 		else {
 			final short id = (short) imageA.getVOIs().getUniqueID();
@@ -9665,7 +9668,9 @@ public class LatticeModel {
 		}
 		if ( rightContour != null ) {
 			imageA.unregisterVOI(rightContour);
-			rightContour.getCurves().clear();
+			if ( leftContour.getCurves() != null ) {
+				rightContour.getCurves().clear();
+			}
 		}
 		else {
 			final short id = (short) imageA.getVOIs().getUniqueID();
