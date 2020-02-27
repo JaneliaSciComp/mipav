@@ -2419,14 +2419,20 @@ public class LatticeModel {
 		}
 		if (fileName != null)
 		{
+			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
 			renameLattice();
+			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
 			final String voiDir = new String(directory + fileName + File.separator);
 
 			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
 			for ( int j = 0; j < left.getCurves().size(); j++ )
 			{
-				latticePoints.getCurves().add(left.getCurves().elementAt(j));
-				latticePoints.getCurves().add(right.getCurves().elementAt(j));
+				latticePoints.getCurves().add(new VOIWormAnnotation(left.getCurves().elementAt(j)));
+				latticePoints.getCurves().add(new VOIWormAnnotation(right.getCurves().elementAt(j)));
+			}
+			if ( latticePoints.getCurves().size() == 0 ) {
+				System.err.println( "saveLattice " + latticePoints.getCurves().size() );
+				return;
 			}
 			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
 		}
