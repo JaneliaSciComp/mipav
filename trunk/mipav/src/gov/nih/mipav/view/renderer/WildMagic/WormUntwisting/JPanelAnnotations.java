@@ -137,6 +137,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JCheckBox displaySurface;
 	private JButton createCurve;
 	
+	private JTextField searchField;
+	private Dimension searchFieldSize;
+	
 	private JPanelAnnotations sharedAnnotationPanel = null;
 
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
@@ -1028,6 +1031,15 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			// add annotation table to a scroll pane:
 			JPanel panel = new JPanel( new GridBagLayout() );
 			initGB();
+			// create search bar:
+			searchField = new JTextField("Search annotations");
+			searchField.setFont(MipavUtil.font12I);
+			searchField.addKeyListener(this);
+			searchField.addMouseListener(this);
+
+	        
+			panel.add(searchField, gbc);
+			gbc.gridy++;
 			panel.add( annotationTable.getTableHeader(), gbc );
 			gbc.gridy++;
 			panel.add( annotationTable, gbc );
@@ -1090,6 +1102,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	private boolean ctrlKey = false;
 	public void keyTyped(KeyEvent e) {
+		if ( e.getSource() == searchField ) {
+			System.err.println( "keyTyped " + searchField.getText() );
+		}
 
 		ctrlKey = e.isControlDown();
 
@@ -1181,6 +1196,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	@Override
 	public void keyPressed(KeyEvent e) {
+		if ( e.getSource() == searchField ) {
+			System.err.println( "keyPressed " + searchField.getText() );
+		}
 		ctrlKey = e.isControlDown();
 	}
 
@@ -1236,9 +1254,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent e) {
-//		System.err.println("mouseClicked " + ctrlKey );
-	}
+	public void mouseClicked(MouseEvent e) {}
 
 	@Override
 	public void mouseEntered(MouseEvent arg0) {
@@ -1254,8 +1270,12 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-//		System.err.println("mousePressed " + ctrlKey );
-		//		updateTableSelection();
+		if ( e.getSource() == searchField ) {
+			searchFieldSize = searchField.getSize();
+			searchField.setMinimumSize(searchFieldSize);
+			searchField.setPreferredSize(searchFieldSize);
+			searchField.setText("");
+		}
 	}
 
 	@Override
