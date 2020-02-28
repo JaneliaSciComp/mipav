@@ -814,7 +814,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             buttonWeightInput.setEnabled(weightRadio.isSelected());
 
             if (weightRadio.isSelected()) {
-                comboBoxDOF.setSelectedIndex(3);
+                comboBoxDOF.setSelectedIndex(4);
             } // if (weightRadio.isSelected())
         } // else if ((event.getSource() == weightRadio) || (event.getSource() == noneRadio) ||
 
