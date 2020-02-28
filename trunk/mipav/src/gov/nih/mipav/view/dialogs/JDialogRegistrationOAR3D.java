@@ -1786,11 +1786,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         comboBoxDOF.setFont(MipavUtil.font12);
         comboBoxDOF.setBackground(Color.white);
         comboBoxDOF.setToolTipText("Degrees of freedom");
+        comboBoxDOF.addItem("Translation only - 3");
         comboBoxDOF.addItem("Rigid - 6");
         comboBoxDOF.addItem("Global rescale - 7");
         comboBoxDOF.addItem("Specific rescale - 9");
         comboBoxDOF.addItem("Affine - 12");
-        comboBoxDOF.setSelectedIndex(3);
+        comboBoxDOF.setSelectedIndex(4);
         comboBoxDOF.addItemListener(this);
 
         final JLabel labelCost = new JLabel("Cost function:");
@@ -2701,18 +2702,22 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         switch (comboBoxDOF.getSelectedIndex()) {
 
             case 0:
+        	    DOF = 3;
+        	    break;
+        	    
+            case 1:
                 DOF = 6;
                 break;
 
-            case 1:
+            case 2:
                 DOF = 7;
                 break;
 
-            case 2:
+            case 3:
                 DOF = 9;
                 break;
 
-            case 3:
+            case 4:
                 DOF = 12;
                 break;
 
