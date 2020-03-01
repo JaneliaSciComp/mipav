@@ -1103,7 +1103,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private boolean ctrlKey = false;
 	public void keyTyped(KeyEvent e) {
 		if ( e.getSource() == searchField ) {
-			System.err.println( "keyTyped " + searchField.getText() );
+			String searchText = searchField.getText();			
+			for ( int i = 0; i < annotationTable.getRowCount(); i++ ) {
+				String label = new String ( annotationTable.getValueAt(i, 0).toString() );
+				if ( label.equals(searchText) ) {
+					annotationTable.setRowSelectionInterval(i, i);
+//					System.err.println( "keyTyped " + searchField.getText() + " matches " + label );
+				}
+			}
 		}
 
 		ctrlKey = e.isControlDown();
@@ -1197,7 +1204,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if ( e.getSource() == searchField ) {
-			System.err.println( "keyPressed " + searchField.getText() );
+			String searchText = searchField.getText();			
+			for ( int i = 0; i < annotationTable.getRowCount(); i++ ) {
+				String label = new String ( annotationTable.getValueAt(i, 0).toString() );
+				if ( label.equals(searchText) ) {
+					annotationTable.setRowSelectionInterval(i, i);
+//					System.err.println( "keyTyped " + searchField.getText() + " matches " + label );
+				}
+			}
 		}
 		ctrlKey = e.isControlDown();
 	}
