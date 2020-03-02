@@ -545,24 +545,46 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
         interp = _interp;
         resRef = refImage.getFileInfo(0).getResolutions();
         resInput = inputImage.getFileInfo(0).getResolutions();
-        rotateBeginX = _rotateBeginX;
-        rotateEndX = _rotateEndX;
-        coarseRateX = _coarseRateX;
-        fineRateX = _fineRateX;
-        coarseNumX = (int) ( (_rotateEndX - rotateBeginX) / coarseRateX) + 1;
-        fineNumX = (int) ( (_rotateEndX - rotateBeginX) / fineRateX) + 1;
-        rotateBeginY = _rotateBeginY;
-        rotateEndY = _rotateEndY;
-        coarseRateY = _coarseRateY;
-        fineRateY = _fineRateY;
-        coarseNumY = (int) ( (_rotateEndY - rotateBeginY) / coarseRateY) + 1;
-        fineNumY = (int) ( (_rotateEndY - rotateBeginY) / fineRateY) + 1;
-        rotateBeginZ = _rotateBeginZ;
-        rotateEndZ = _rotateEndZ;
-        coarseRateZ = _coarseRateZ;
-        fineRateZ = _fineRateZ;
-        coarseNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / coarseRateZ) + 1;
-        fineNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / fineRateZ) + 1;
+        if (DOF == 3) {
+        	rotateBeginX = 0.0f;
+	        rotateEndX = 0.0f;
+	        coarseRateX = 0.0f;
+	        fineRateX = 0.0f;
+	        coarseNumX = 1;
+	        fineNumX = 1;
+	        rotateBeginY = 0.0f;
+	        rotateEndY = 0.0f;
+	        coarseRateY = 0.0f;
+	        fineRateY = 0.0f;
+	        coarseNumY = 1;
+	        fineNumY = 1;
+	        rotateBeginZ = 0.0f;
+	        rotateEndZ = 0.0f;
+	        coarseRateZ = 0.0f;
+	        fineRateZ = 0.0f;
+	        coarseNumZ = 1;
+	        fineNumZ = 1;
+        } // if (DOF == 3)
+        else { // DOF > 3
+	        rotateBeginX = _rotateBeginX;
+	        rotateEndX = _rotateEndX;
+	        coarseRateX = _coarseRateX;
+	        fineRateX = _fineRateX;
+	        coarseNumX = (int) ( (_rotateEndX - rotateBeginX) / coarseRateX) + 1;
+	        fineNumX = (int) ( (_rotateEndX - rotateBeginX) / fineRateX) + 1;
+	        rotateBeginY = _rotateBeginY;
+	        rotateEndY = _rotateEndY;
+	        coarseRateY = _coarseRateY;
+	        fineRateY = _fineRateY;
+	        coarseNumY = (int) ( (_rotateEndY - rotateBeginY) / coarseRateY) + 1;
+	        fineNumY = (int) ( (_rotateEndY - rotateBeginY) / fineRateY) + 1;
+	        rotateBeginZ = _rotateBeginZ;
+	        rotateEndZ = _rotateEndZ;
+	        coarseRateZ = _coarseRateZ;
+	        fineRateZ = _fineRateZ;
+	        coarseNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / coarseRateZ) + 1;
+	        fineNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / fineRateZ) + 1;
+        } // else DOF > 3
         
         maxResol = _maxResol;
         doSubsample = _doSubsample;
@@ -2258,9 +2280,16 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
                     initial[2] = rotateBeginZ + (k * fineRateZ);
 
                     // sets up translation and global scaling factors
-                    factorX = (i * fineRateX) / coarseRateX;
-                    factorY = (j * fineRateY) / coarseRateY;
-                    factorZ = (k * fineRateZ) / coarseRateZ;
+                    if (DOF == 3) {
+                        factorX = 0.0;
+                        factorY = 0.0;
+                        factorZ = 0.0;
+                    }
+                    else {
+                        factorX = (i * fineRateX) / coarseRateX;
+                        factorY = (j * fineRateY) / coarseRateY;
+                        factorZ = (k * fineRateZ) / coarseRateZ;
+                    }
                     interpolate(factorX, factorY, factorZ, initial, transforms, (DOF > 6));
                     initial[7] = initial[8] = initial[6];
                     costs[index] = elsunc.measureCost(initial);
