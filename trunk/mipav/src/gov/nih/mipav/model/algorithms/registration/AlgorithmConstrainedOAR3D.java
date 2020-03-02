@@ -397,24 +397,46 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         resInput = inputImage.getFileInfo(0).getResolutions();
 
         // set up rotation parameters - range, number of increments, limits, etc
-        rotateBeginX = _rotateBeginX;
-        rotateRangeX = _rotateRangeX;
-        coarseNumX = _nCoarseX + 1;
-        rotateBeginY = _rotateBeginY;
-        rotateRangeY = _rotateRangeY;
-        coarseNumY = _nCoarseY + 1;
-        rotateBeginZ = _rotateBeginZ;
-        rotateRangeZ = _rotateRangeZ;
-        coarseNumZ = _nCoarseZ + 1;
-        fineNumX = 4 * coarseNumX;
-        fineNumY = 4 * coarseNumY;
-        fineNumZ = 4 * coarseNumZ;
-        coarseRateX = rotateRangeX / (float) coarseNumX;
-        coarseRateY = rotateRangeY / (float) coarseNumY;
-        coarseRateZ = rotateRangeZ / (float) coarseNumZ;
-        fineRateX = rotateRangeX / (float) fineNumX;
-        fineRateY = rotateRangeY / (float) fineNumY;
-        fineRateZ = rotateRangeZ / (float) fineNumZ;
+        if (DOF == 3) {
+        	rotateBeginX = 0.0f;
+	        rotateRangeX = 0.0f;
+	        coarseNumX = 1;
+	        rotateBeginY = 0.0f;
+	        rotateRangeY = 0.0f;
+	        coarseNumY = 1;
+	        rotateBeginZ = 0.0f;
+	        rotateRangeZ = 0.0f;
+	        coarseNumZ = 1;
+	        fineNumX = 1;
+	        fineNumY = 1;
+	        fineNumZ = 1;
+	        coarseRateX = 0.0f;
+	        coarseRateY = 0.0f;
+	        coarseRateZ = 0.0f;
+	        fineRateX = 0.0f;
+	        fineRateY = 0.0f;
+	        fineRateZ = 0.0f;	
+        }
+        else {
+	        rotateBeginX = _rotateBeginX;
+	        rotateRangeX = _rotateRangeX;
+	        coarseNumX = _nCoarseX + 1;
+	        rotateBeginY = _rotateBeginY;
+	        rotateRangeY = _rotateRangeY;
+	        coarseNumY = _nCoarseY + 1;
+	        rotateBeginZ = _rotateBeginZ;
+	        rotateRangeZ = _rotateRangeZ;
+	        coarseNumZ = _nCoarseZ + 1;
+	        fineNumX = 4 * coarseNumX;
+	        fineNumY = 4 * coarseNumY;
+	        fineNumZ = 4 * coarseNumZ;
+	        coarseRateX = rotateRangeX / (float) coarseNumX;
+	        coarseRateY = rotateRangeY / (float) coarseNumY;
+	        coarseRateZ = rotateRangeZ / (float) coarseNumZ;
+	        fineRateX = rotateRangeX / (float) fineNumX;
+	        fineRateY = rotateRangeY / (float) fineNumY;
+	        fineRateZ = rotateRangeZ / (float) fineNumZ;
+        }
         limits = new float[2][6];
         limits[0][0] = rotateBeginX;
         limits[1][0] = rotateBeginX + rotateRangeX;
@@ -2438,17 +2460,32 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
             fireProgressStateChanged(10 + ((i + 1) * 5 / fineNumX));
             initial[0] = rotateBeginX + (i * fineRateX);
-            factorX = (i * fineRateX) / coarseRateX;
+            if (DOF == 3) {
+            	factorX = 0.0;
+            }
+            else {
+            	factorX = (i * fineRateX) / coarseRateX;
+            }
 
             for (int j = 0; (j < fineNumY) && !threadStopped; j++) {
                 initial[1] = rotateBeginY + (j * fineRateY);
-                factorY = (j * fineRateY) / coarseRateY;
+                if (DOF == 3) {
+                	factorY = 0.0;
+                }
+                else {  
+                    factorY = (j * fineRateY) / coarseRateY;
+                }
 
                 for (int k = 0; (k < fineNumZ) && !threadStopped; k++) {
                     initial[2] = rotateBeginZ + (k * fineRateZ);
                     initial[7] = initial[8] = initial[6];
 
-                    factorZ = (k * fineRateZ) / coarseRateZ;
+                    if (DOF == 3) {  
+                        factorZ = 0.0;    
+                    }
+                    else {
+                    	factorZ = (k * fineRateZ) / coarseRateZ;	
+                    }
                     interpolate(factorX, factorY, factorZ, initial, transforms, (DOF > 6));
 
                     if (testBounds3D(initial, initialMessage)) {
