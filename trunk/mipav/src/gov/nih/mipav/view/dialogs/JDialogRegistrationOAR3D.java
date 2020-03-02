@@ -788,22 +788,24 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         if (event.getSource() == transformCheckbox) {
             comboBoxInterp2.setEnabled(transformCheckbox.isSelected());
             labelInterp2.setEnabled(transformCheckbox.isSelected());
-        } else if (event.getSource() == fastModeCheckbox) {
+        } else if ((event.getSource() == fastModeCheckbox) || (event.getSource() == comboBoxDOF)) {
 
             // enable or disable search variables
             fastMode = fastModeCheckbox.isSelected();
-            rotateBeginTextX.setEnabled( !fastModeCheckbox.isSelected());
-            rotateEndTextX.setEnabled( !fastModeCheckbox.isSelected());
-            coarseRateTextX.setEnabled( !fastModeCheckbox.isSelected());
-            fineRateTextX.setEnabled( !fastModeCheckbox.isSelected());
-            rotateBeginTextY.setEnabled( !fastModeCheckbox.isSelected());
-            rotateEndTextY.setEnabled( !fastModeCheckbox.isSelected());
-            coarseRateTextY.setEnabled( !fastModeCheckbox.isSelected());
-            fineRateTextY.setEnabled( !fastModeCheckbox.isSelected());
-            rotateBeginTextZ.setEnabled( !fastModeCheckbox.isSelected());
-            rotateEndTextZ.setEnabled( !fastModeCheckbox.isSelected());
-            coarseRateTextZ.setEnabled( !fastModeCheckbox.isSelected());
-            fineRateTextZ.setEnabled( !fastModeCheckbox.isSelected());
+            boolean translationOnlyMode = (comboBoxDOF.getSelectedIndex()  == 0);
+            boolean enableRotation = (!fastMode) && (!translationOnlyMode);
+            rotateBeginTextX.setEnabled(enableRotation);
+            rotateEndTextX.setEnabled(enableRotation);
+            coarseRateTextX.setEnabled(enableRotation);
+            fineRateTextX.setEnabled(enableRotation);
+            rotateBeginTextY.setEnabled(enableRotation);
+            rotateEndTextY.setEnabled(enableRotation);
+            coarseRateTextY.setEnabled(enableRotation);
+            fineRateTextY.setEnabled(enableRotation);
+            rotateBeginTextZ.setEnabled(enableRotation);
+            rotateEndTextZ.setEnabled(enableRotation);
+            coarseRateTextZ.setEnabled(enableRotation);
+            fineRateTextZ.setEnabled(enableRotation);
         } else if (event.getSource() == calcCOGCheckbox) {
 
             // enable or disable search variables
