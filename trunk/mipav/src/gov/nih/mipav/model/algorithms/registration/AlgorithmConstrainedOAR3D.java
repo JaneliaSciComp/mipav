@@ -3478,7 +3478,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
             for (int i = 3; i < 6; i++) {
                 s += " Translations : ";
-                s += (initial[i] * resRef[i - 3]) + " ";
+                s += initial[i] + " ";
                 s += "\n";
             }
 
