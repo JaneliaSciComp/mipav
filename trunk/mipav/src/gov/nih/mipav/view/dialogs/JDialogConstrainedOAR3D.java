@@ -787,24 +787,26 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         if (event.getSource() == transformCheckbox) {
             comboBoxInterp2.setEnabled(transformCheckbox.isSelected());
             labelInterp2.setEnabled(transformCheckbox.isSelected());
-        } else if (event.getSource() == fastModeCheckbox) {
+        } else if ((event.getSource() == fastModeCheckbox) || (event.getSource() == comboBoxDOF)) {
 
             // enable or disable search variables
             fastMode = fastModeCheckbox.isSelected();
-            rotateBeginTextX.setEnabled(!fastModeCheckbox.isSelected());
-            rotateEndTextX.setEnabled(!fastModeCheckbox.isSelected());
-            numberCoarseTextX.setEnabled(!fastModeCheckbox.isSelected());
+            boolean translationOnlyMode = (comboBoxDOF.getSelectedIndex()  == 0);
+            boolean enableRotation = (!fastMode) && (!translationOnlyMode);
+            rotateBeginTextX.setEnabled(enableRotation);
+            rotateEndTextX.setEnabled(enableRotation);
+            numberCoarseTextX.setEnabled(enableRotation);
 
-            // fineRateTextX.setEnabled(!fastModeCheckbox.isSelected());
-            rotateBeginTextY.setEnabled(!fastModeCheckbox.isSelected());
-            rotateEndTextY.setEnabled(!fastModeCheckbox.isSelected());
-            numberCoarseTextY.setEnabled(!fastModeCheckbox.isSelected());
+            // fineRateTextX.setEnabled(enableRotation);
+            rotateBeginTextY.setEnabled(enableRotation);
+            rotateEndTextY.setEnabled(enableRotation);
+            numberCoarseTextY.setEnabled(enableRotation);
 
-            // fineRateTextY.setEnabled(!fastModeCheckbox.isSelected());
-            rotateBeginTextZ.setEnabled(!fastModeCheckbox.isSelected());
-            rotateEndTextZ.setEnabled(!fastModeCheckbox.isSelected());
-            numberCoarseTextZ.setEnabled(!fastModeCheckbox.isSelected());
-            // fineRateTextZ.setEnabled(!fastModeCheckbox.isSelected());
+            // fineRateTextY.setEnabled(enableRotation);
+            rotateBeginTextZ.setEnabled(enableRotation);
+            rotateEndTextZ.setEnabled(enableRotation);
+            numberCoarseTextZ.setEnabled(enableRotation);
+            // fineRateTextZ.setEnabled(enableRotation);
         } else if (event.getSource() == calcCOGCheckbox) {
 
             // enable or disable search variables
@@ -815,7 +817,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             buttonWeightInput.setEnabled(weightRadio.isSelected());
 
             if (weightRadio.isSelected()) {
-                comboBoxDOF.setSelectedIndex(3);
+                comboBoxDOF.setSelectedIndex(4);
             } // if (weightRadio.isSelected())
         } // else if ((event.getSource() == weightRadio) || (event.getSource() == noneRadio) ||
 
@@ -1951,11 +1953,12 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         comboBoxDOF.setFont(MipavUtil.font12);
         comboBoxDOF.setBackground(Color.white);
         comboBoxDOF.setToolTipText("Degrees of freedom");
+        comboBoxDOF.addItem("Translation only - 3");
         comboBoxDOF.addItem("Rigid - 6");
         comboBoxDOF.addItem("Global rescale - 7");
         comboBoxDOF.addItem("Specific rescale - 9");
         comboBoxDOF.addItem("Affine - 12");
-        comboBoxDOF.setSelectedIndex(3);
+        comboBoxDOF.setSelectedIndex(4);
         comboBoxDOF.addItemListener(this);
 
         JLabel labelCost = new JLabel("Cost function:");
@@ -2753,18 +2756,22 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         switch (comboBoxDOF.getSelectedIndex()) {
 
             case 0:
+    	        DOF = 3;
+    	         break;
+        
+            case 1:
                 DOF = 6;
                 break;
 
-            case 1:
+            case 2:
                 DOF = 7;
                 break;
 
-            case 2:
+            case 3:
                 DOF = 9;
                 break;
 
-            case 3:
+            case 4:
                 DOF = 12;
                 break;
 
