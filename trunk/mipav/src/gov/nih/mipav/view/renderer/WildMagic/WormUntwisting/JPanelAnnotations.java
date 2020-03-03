@@ -576,8 +576,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						if ( text.isSelected() ) {
-							annotationList.addSelectionInterval(i, i);
-							annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
+							int tableRow = getRow(annotationTable, text);
+							if ( tableRow != -1 ) {
+								annotationList.addSelectionInterval(tableRow, tableRow);
+								annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(tableRow, 0, true)) );
+							}
 						}
 					}
 				}
@@ -1037,10 +1040,10 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			searchField = new JTextField("Search annotations");
 			searchField.setFont(MipavUtil.font12I);
 			searchField.addKeyListener(this);
-			searchField.addMouseListener(this);
-
-	        
+			searchField.addMouseListener(this);	        
 			panel.add(searchField, gbc);
+			
+			
 			gbc.gridy++;
 			panel.add( annotationTable.getTableHeader(), gbc );
 			gbc.gridy++;
