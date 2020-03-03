@@ -56,6 +56,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -576,6 +577,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						if ( text.isSelected() ) {
 							annotationList.addSelectionInterval(i, i);
+							annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 						}
 					}
 				}
@@ -1103,11 +1105,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private boolean ctrlKey = false;
 	public void keyTyped(KeyEvent e) {
 		if ( e.getSource() == searchField ) {
-			String searchText = searchField.getText();			
+			String searchText = searchField.getText();	
+			searchText = searchText.toLowerCase();
 			for ( int i = 0; i < annotationTable.getRowCount(); i++ ) {
 				String label = new String ( annotationTable.getValueAt(i, 0).toString() );
+				label = label.toLowerCase();
 				if ( label.equals(searchText) ) {
 					annotationTable.setRowSelectionInterval(i, i);
+					annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 //					System.err.println( "keyTyped " + searchField.getText() + " matches " + label );
 				}
 			}
@@ -1211,6 +1216,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				label = label.toLowerCase();
 				if ( label.equals(searchText) ) {
 					annotationTable.setRowSelectionInterval(i, i);
+					annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 //					System.err.println( "keyTyped " + searchField.getText() + " matches " + label );
 				}
 			}
@@ -1405,6 +1411,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						int tableRow = getRow(annotationTable, text);
 						if ( tableRow != -1 ) {
 							annotationList.addSelectionInterval(tableRow, tableRow);
+							annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(tableRow, 0, true)) );
 						}
 						numSelected++;
 					}
