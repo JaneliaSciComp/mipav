@@ -90,6 +90,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 
@@ -226,6 +227,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private float m_fOpacity = 1f;
     /** Set to true if this VOIManagerInterface is used for the GPU-based Volume Renderer */
     private boolean m_bGPURenderer = false;
+    protected VolumeTriPlanarRenderBase renderer;
     /** VOI Properties dialog -- from the popup menu or drop-down menu. */
     protected JDialogVOIStats m_kVOIDialog;
     
@@ -2731,6 +2733,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         Color color = Color.getHSBColor(presetHue, 1.0f, 1.0f);
         setButtonColor(toolbarBuilder.getVOIColorButton(), color );
     }
+    
+    public void setRenderer( VolumeTriPlanarRenderBase renderer ) {
+    	this.renderer = renderer;
+    }
 
     /**
      * Called from the VOIManager when a new VOI is selected by the mouse.
@@ -3542,6 +3548,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         //}
     	try { 
     		VOISaveState kVOIState = new VOISaveState();
+
+//    		VOIVector vois = m_kImageA.getVOIs();
+//			System.err.println( "getVOIState" );
+//    		for (int i = 0; i < vois.size(); i++) {
+//    			System.err.println( i + "   " + vois.elementAt(i).getName() );
+//    		}
+    		
+    		
     		kVOIState.voiVectorA = m_kImageA.getVOIsCopy();
     		if ( m_kImageB != null )
     		{
