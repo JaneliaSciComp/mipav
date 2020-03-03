@@ -935,6 +935,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	public void setVOILatticeManager( VOILatticeManagerInterface newVOIInterface )
 	{
 		m_kVOIInterface = newVOIInterface;
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.setRenderer(this);
+    	}
 	}
 	
     public void clear3DSelection()

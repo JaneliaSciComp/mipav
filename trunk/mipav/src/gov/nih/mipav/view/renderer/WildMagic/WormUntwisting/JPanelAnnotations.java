@@ -1204,9 +1204,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if ( e.getSource() == searchField ) {
-			String searchText = searchField.getText();			
+			String searchText = searchField.getText();
+			searchText = searchText.toLowerCase();
 			for ( int i = 0; i < annotationTable.getRowCount(); i++ ) {
 				String label = new String ( annotationTable.getValueAt(i, 0).toString() );
+				label = label.toLowerCase();
 				if ( label.equals(searchText) ) {
 					annotationTable.setRowSelectionInterval(i, i);
 //					System.err.println( "keyTyped " + searchField.getText() + " matches " + label );

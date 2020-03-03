@@ -643,9 +643,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 					activeImage.latticeTwisted = new VOIVector(activeImage.voiManager.getLattice());
 					activeImage.voiManager.setPreviewMode(true, activeImage.voiManager.getLatticeStraight(), activeImage.voiManager.getAnnotationsStraight());
-					if ( activeImage.voiManager.getAnnotationsStraight() != null ) {
-						activeImage.previewImage.registerVOI( activeImage.voiManager.getAnnotationsStraight() );
-					}
 
 					initDisplayLatticePanel(activeRenderer, activeImage.voiManager, activeImage);
 					if ( activeImage.annotationOpen ) {
@@ -723,9 +720,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						}
 					}
 					activeImage.voiManager.setPreviewMode(false, activeImage.latticeTwisted, activeImage.annotationsTwisted);
-					if ( activeImage.annotationsTwisted != null && activeImage.wormImage.isRegistered(activeImage.annotationsTwisted) == -1 ) {
-						activeImage.wormImage.registerVOI( activeImage.annotationsTwisted );
-					}
 
 					initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );
 					if ( activeImage.annotationOpen ) {

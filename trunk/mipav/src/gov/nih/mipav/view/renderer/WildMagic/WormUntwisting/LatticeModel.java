@@ -354,7 +354,7 @@ public class LatticeModel {
 	 * @param annotations
 	 */
 	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, boolean isCurve )
-	{
+	{		
 		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
 		//		System.err.println("Saving annotations list: " + dir + "  " + fileName );
 		int numSaved = 0;
@@ -371,13 +371,12 @@ public class LatticeModel {
 			file.delete();
 			file = new File(fileDir + File.separator + fileName);
 		}
-
-
+		
 		if ( annotations == null )
 			return;
 		if ( annotations.getCurves().size() == 0 )
 			return;
-
+		
 		try {
 			boolean saveLatticeSegment = false;
 			int curveAnnotationCount = 0;
@@ -392,6 +391,10 @@ public class LatticeModel {
 			}
 			// only write out annotations that aren't part of a curve segment:
 			if ( !isCurve && (curveAnnotationCount == annotations.getCurves().size()) ) return;
+			
+
+			
+			System.err.println( "saveAnnotationsAsCSV " + (annotations.getCurves().size() - curveAnnotationCount) );
 			
 			final FileWriter fw = new FileWriter(file);
 			final BufferedWriter bw = new BufferedWriter(fw);
@@ -2148,7 +2151,7 @@ public class LatticeModel {
 					((VOIWormAnnotation)left.getCurves().elementAt(leftIndex)).retwist(true);
 				}
 				if ( rightIndex != -1 ) {
-					((VOIWormAnnotation)right.getCurves().elementAt(leftIndex)).retwist(true);
+					((VOIWormAnnotation)right.getCurves().elementAt(rightIndex)).retwist(true);
 				}
 //				pickedPoint.X += direction.X;
 				pickedPoint.add(direction);
@@ -9810,6 +9813,7 @@ public class LatticeModel {
 		leftMarker = null;
 		rightMarker = null;
 		VOIVector vois = imageA.getVOIs();
+//		System.err.println( "updateLinks " + vois.size() );
 		for (int i = 0; i < vois.size(); i++) {
 			final VOI voi = vois.elementAt(i);
 			final String name = voi.getName();
@@ -9844,7 +9848,7 @@ public class LatticeModel {
 			} else if (name.equals("rightMarker")) {
 				rightMarker = voi;
 			} else if (name.contains("annotationVOIs")) {
-//				System.err.println("updateLinks update annotations: " + name );
+//				System.err.println("updateLinks update annotations: " + name + "   " + annotationVOIs );
 				annotationVOIs = voi;
 			}
 		}

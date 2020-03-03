@@ -455,8 +455,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			latticeModel = new LatticeModel( m_kImageA );
 			saveA = false;
 		}
+		System.err.println("addAnnotations");
 		if ( saveA )
 		{
+			System.err.println("saveVOIs");
 			saveVOIs("addAnnotations");
 		}
 		latticeModel.addAnnotations( newAnnotationVOI );
