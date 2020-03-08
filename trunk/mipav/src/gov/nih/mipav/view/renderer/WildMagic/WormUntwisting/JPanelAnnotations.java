@@ -80,6 +80,8 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -97,7 +99,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
-public class JPanelAnnotations extends JInterfaceBase implements ActionListener, AnnotationListener, TableModelListener, ListSelectionListener, KeyListener, ChangeListener, MouseListener {
+public class JPanelAnnotations extends JInterfaceBase implements ActionListener, AnnotationListener, TableModelListener, ListSelectionListener, KeyListener, ChangeListener, MouseListener, DocumentListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -1039,6 +1041,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			// create search bar:
 			searchField = new JTextField("Search annotations");
 			searchField.setFont(MipavUtil.font12I);
+			searchField.getDocument().addDocumentListener(this);
 			searchField.addKeyListener(this);
 			searchField.addMouseListener(this);	        
 			panel.add(searchField, gbc);
@@ -1106,21 +1109,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	}
 
 	private boolean ctrlKey = false;
+	private int searchIndex = 0;
 	public void keyTyped(KeyEvent e) {
-		if ( e.getSource() == searchField ) {
-			String searchText = searchField.getText();	
-			searchText = searchText.toLowerCase();
-			for ( int i = 0; i < annotationTable.getRowCount(); i++ ) {
-				String label = new String ( annotationTable.getValueAt(i, 0).toString() );
-				label = label.toLowerCase();
-				if ( label.equals(searchText) ) {
-					annotationTable.setRowSelectionInterval(i, i);
-					annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
-//					System.err.println( "keyTyped " + searchField.getText() + " matches " + label );
-				}
-			}
-		}
-
 		ctrlKey = e.isControlDown();
 
 //		System.err.println("keyTyped");
@@ -1211,19 +1201,6 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		if ( e.getSource() == searchField ) {
-			String searchText = searchField.getText();
-			searchText = searchText.toLowerCase();
-			for ( int i = 0; i < annotationTable.getRowCount(); i++ ) {
-				String label = new String ( annotationTable.getValueAt(i, 0).toString() );
-				label = label.toLowerCase();
-				if ( label.equals(searchText) ) {
-					annotationTable.setRowSelectionInterval(i, i);
-					annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
-//					System.err.println( "keyTyped " + searchField.getText() + " matches " + label );
-				}
-			}
-		}
 		ctrlKey = e.isControlDown();
 	}
 
@@ -1424,6 +1401,76 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			imageA.GetImage().notifyImageDisplayListeners();
 		}
 		createCurve.setEnabled(numSelected > 1);
+	}
+
+	@Override
+	public void insertUpdate(DocumentEvent e) {
+//		System.err.println("insertUpdate " + searchField.getText());
+		searchText();
+	}
+
+	@Override
+	public void removeUpdate(DocumentEvent e) {
+//		System.err.println("removeUpdate " + searchField.getText());
+		searchText();
+	}
+
+	@Override
+	public void changedUpdate(DocumentEvent e) {
+//		System.err.println("changedUpdate " + searchField.getText());
+		searchText();
+	}
+	
+	private void searchText() {
+
+		String searchText = searchField.getText();	
+		searchText = searchField.getText();	
+		System.err.println("keyTyped " + searchText + " list size = " + annotationTable.getRowCount());
+		searchText = searchText.toLowerCase();
+		searchText = searchText.trim();
+		boolean found = false;
+		for ( int i = 0; i < annotationTable.getRowCount(); i++ ) {
+			String label = new String ( annotationTable.getValueAt(i, 0).toString() );
+			label = label.trim();
+			label = label.toLowerCase();
+//			System.err.println( "   " + i + "  " + searchText + "   " + label.equals(searchText) + "   " + label );
+			if ( label.equals(searchText) ) {
+				found = true;
+				annotationTable.setRowSelectionInterval(i, i);
+				annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
+				searchIndex = 0;
+				break;
+			}
+		}
+		if ( !found ) {
+			for ( int i = searchIndex; i < annotationTable.getRowCount(); i++ ) {
+				String label = new String ( annotationTable.getValueAt(i, 0).toString() );
+				label = label.trim();
+				label = label.toLowerCase();
+				if ( label.startsWith(searchText) ) {
+					found = true;
+					annotationTable.setRowSelectionInterval(i, i);
+					annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
+					searchIndex = i+1;
+					break;
+				}
+			}
+			if ( !found ) {
+				searchIndex = 0;
+				for ( int i = searchIndex; i < annotationTable.getRowCount(); i++ ) {
+					String label = new String ( annotationTable.getValueAt(i, 0).toString() );
+					label = label.trim();
+					label = label.toLowerCase();
+					if ( label.startsWith(searchText) ) {
+						found = true;
+						annotationTable.setRowSelectionInterval(i, i);
+						annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
+						searchIndex = i+1;
+						break;
+					}
+				}
+			}
+		}
 	}
 	
 }

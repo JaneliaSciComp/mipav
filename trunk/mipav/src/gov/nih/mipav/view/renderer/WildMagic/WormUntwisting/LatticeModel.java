@@ -4126,6 +4126,7 @@ public class LatticeModel {
 
 	private boolean displayLatticeLabels = false;
 	public void showLatticeLabels(boolean display) {
+		if ( left == null ) return;
 		displayLatticeLabels = display;
 		for ( int i = 0; i < left.getCurves().size(); i++ ) {
 			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
