@@ -33,6 +33,8 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private double outputVal;
+    
+    private boolean entireImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -44,12 +46,14 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
      * @param  input      double input value to replace
      * @param  output     double value to replace with
      */
-    public AlgorithmReplaceValue(ModelImage destImage, ModelImage srcImage, Vector<Values> input, double output) {
+    public AlgorithmReplaceValue(ModelImage destImage, ModelImage srcImage, Vector<Values> input, double output, boolean entireImage) {
         super(destImage, srcImage);
 
         // this.inputVal = input;
         this.outputVal = output;
         // System.out.println(" input = " + input );
+        
+        this.entireImage = entireImage;
 
         inputRanges = input;
 
@@ -124,6 +128,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
         int buffIndex;
 
         int start;
+        int maskStart;
 
         fireProgressStateChanged(srcImage.getImageName(), "Replacing values...");
         
@@ -139,42 +144,45 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
             for (zIndex = 0; zIndex < z; zIndex++) {
                 start = (tIndex * volume) + (zIndex * length);
+                maskStart = zIndex * length;
 
                 try {
                     srcImage.exportData(start, length, buffer);
 
                     for (buffIndex = 0; buffIndex < length; buffIndex++) {
+                    	if (entireImage || mask.get(maskStart + buffIndex)) {
 
-                        if ((counter % mod) == 0) {
-                            fireProgressStateChanged(Math.round((float) counter / ((length * t * z) - 1) * 100));
-                        }
-
-                        for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
-                            values = (Values) inputRanges.elementAt(rangeCounter);
-
-                            if (values.isRange) {
-
-                                if ((buffer[buffIndex] >= values.firstVal) && (buffer[buffIndex] <= values.secondVal)) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-                            } else {
-
-                                if (buffer[buffIndex] == values.firstVal) {
-                                    buffer[buffIndex] = outputVal;
-                                } else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
-                                    buffer[buffIndex] = outputVal;
-                                } else if ((buffer[buffIndex] == Double.POSITIVE_INFINITY) &&
-                                               (values.firstVal == Double.POSITIVE_INFINITY)) {
-                                    buffer[buffIndex] = outputVal;
-                                } else if ((buffer[buffIndex] == Double.NEGATIVE_INFINITY) &&
-                                               (values.firstVal == Double.NEGATIVE_INFINITY)) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-
-                            }
-                        }
-
-                        counter++;
+	                        if ((counter % mod) == 0) {
+	                            fireProgressStateChanged(Math.round((float) counter / ((length * t * z) - 1) * 100));
+	                        }
+	
+	                        for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
+	                            values = (Values) inputRanges.elementAt(rangeCounter);
+	
+	                            if (values.isRange) {
+	
+	                                if ((buffer[buffIndex] >= values.firstVal) && (buffer[buffIndex] <= values.secondVal)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                }
+	                            } else {
+	
+	                                if (buffer[buffIndex] == values.firstVal) {
+	                                    buffer[buffIndex] = outputVal;
+	                                } else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                } else if ((buffer[buffIndex] == Double.POSITIVE_INFINITY) &&
+	                                               (values.firstVal == Double.POSITIVE_INFINITY)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                } else if ((buffer[buffIndex] == Double.NEGATIVE_INFINITY) &&
+	                                               (values.firstVal == Double.NEGATIVE_INFINITY)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                }
+	
+	                            }
+	                        }
+	
+	                        counter++;
+	                    }
                     }
 
                     destImage.importData(start, buffer, false);
@@ -221,6 +229,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
         int buffIndex;
 
         int start;
+        int maskStart;
 
         fireProgressStateChanged(srcImage.getImageName(), "Replacing values...");
         
@@ -240,42 +249,45 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
 
                 start = (tIndex * volume) + (zIndex * length);
+                maskStart = zIndex * length;
 
                 try {
                     srcImage.exportData(start, length, buffer);
 
                     for (buffIndex = 0; buffIndex < length; buffIndex++) {
+                    	if (entireImage || mask.get(maskStart + buffIndex)) {
 
-                        if ((counter % mod) == 0) {
-                            fireProgressStateChanged(Math.round((float) counter / ((length * t * z) - 1) * 100));
-                        }
-
-                        for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
-                            values = (Values) inputRanges.elementAt(rangeCounter);
-
-                            if (values.isRange) {
-
-                                if ((buffer[buffIndex] >= values.firstVal) && (buffer[buffIndex] <= values.secondVal)) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-                            } else {
-
-                                if (buffer[buffIndex] == values.firstVal) {
-                                    buffer[buffIndex] = outputVal;
-                                } else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
-                                    buffer[buffIndex] = outputVal;
-                                } else if ((buffer[buffIndex] == Double.POSITIVE_INFINITY) &&
-                                               (values.firstVal == Double.POSITIVE_INFINITY)) {
-                                    buffer[buffIndex] = outputVal;
-                                } else if ((buffer[buffIndex] == Double.NEGATIVE_INFINITY) &&
-                                               (values.firstVal == Double.NEGATIVE_INFINITY)) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-
-                            }
-                        }
-
-                        counter++;
+	                        if ((counter % mod) == 0) {
+	                            fireProgressStateChanged(Math.round((float) counter / ((length * t * z) - 1) * 100));
+	                        }
+	
+	                        for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
+	                            values = (Values) inputRanges.elementAt(rangeCounter);
+	
+	                            if (values.isRange) {
+	
+	                                if ((buffer[buffIndex] >= values.firstVal) && (buffer[buffIndex] <= values.secondVal)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                }
+	                            } else {
+	
+	                                if (buffer[buffIndex] == values.firstVal) {
+	                                    buffer[buffIndex] = outputVal;
+	                                } else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                } else if ((buffer[buffIndex] == Double.POSITIVE_INFINITY) &&
+	                                               (values.firstVal == Double.POSITIVE_INFINITY)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                } else if ((buffer[buffIndex] == Double.NEGATIVE_INFINITY) &&
+	                                               (values.firstVal == Double.NEGATIVE_INFINITY)) {
+	                                    buffer[buffIndex] = outputVal;
+	                                }
+	
+	                            }
+	                        }
+	
+	                        counter++;
+	                    }
                     }
 
                     srcImage.importData(start, buffer, false);
