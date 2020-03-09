@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -35,6 +36,8 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
 
     /** DOCUMENT ME! */
     private int displayLoc;
+    
+    private boolean entireImage;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -74,6 +77,8 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
 
     /** DOCUMENT ME! */
     private JTextField userDefinedField;
+    
+    private JPanelAlgorithmOutputOptions outputOptionsPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -179,9 +184,13 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
         if (displayLoc == NEW) {
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(image.getImageName() + "_replace_val");
-            algoReplace = new AlgorithmReplaceValue(resultImage, image, rangesVector, outputVal);
+            algoReplace = new AlgorithmReplaceValue(resultImage, image, rangesVector, outputVal, entireImage);
         } else {
-            algoReplace = new AlgorithmReplaceValue(null, image, rangesVector, outputVal);
+            algoReplace = new AlgorithmReplaceValue(null, image, rangesVector, outputVal, entireImage);
+        }
+        
+        if ( !entireImage) {
+            algoReplace.setMask(image.generateVOIMask());
         }
 
         algoReplace.addListener(this);
@@ -215,12 +224,17 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         parentFrame = image.getParentFrame();
+        
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
 
-        if (scriptParameters.doOutputNewImage()) {
-            displayLoc = NEW;
-        } else {
+        if (!outputOptionsPanel.isOutputNewImageSet()) {
             displayLoc = REPLACE;
+        } else {
+            displayLoc = NEW;
         }
+        
+        entireImage = outputOptionsPanel.isProcessWholeImageSet();
 
         if (scriptParameters.getParams().containsParameter("replace_value")) {
             inputVal = scriptParameters.getParams().getDouble("replace_value");
@@ -238,7 +252,9 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), false);
 
         if (setChoiceButton.isSelected()) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("replace_value", inputVal));
@@ -312,34 +328,14 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
         gbc.gridy = 0;
         outputPanel.add(outputField, gbc);
 
-        // Destination panel of VOI
-        JPanel destinationPanel = new JPanel(new GridLayout(2, 1));
-        destinationPanel.setForeground(Color.gray);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        ButtonGroup destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage); // Only if the image is unlocked can it be replaced.
-
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
         centerPanel.add(mainPanel);
         centerPanel.add(outputPanel);
-        centerPanel.add(destinationPanel);
+        centerPanel.add(outputOptionsPanel);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildButtons());
@@ -425,11 +421,13 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
      */
     private boolean setVariables() {
 
-        if (replaceImage.isSelected()) {
+        if (!outputOptionsPanel.isOutputNewImageSet()) {
             displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
+        } else {
             displayLoc = NEW;
         }
+        
+        entireImage = outputOptionsPanel.isProcessWholeImageSet();
 
         outputVal = Double.parseDouble(outputField.getText());
 
@@ -549,6 +547,7 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
             table.put(new ParameterDouble("replace_value", 0));
             table.put(new ParameterDouble("replace_with_value", 0));
             table.put(new ParameterString("replace_value_range", ""));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
