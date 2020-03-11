@@ -119,6 +119,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	// table user-interface for editing the positions of the annotations:
 	private ListSelectionModel annotationList;
 	private JTable annotationTable;
+	private JScrollPane kScrollPane;
 	private DefaultTableModel annotationTableModel;
 	private boolean useLatticeMarkers = false;
 
@@ -1038,16 +1039,6 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			// add annotation table to a scroll pane:
 			JPanel panel = new JPanel( new GridBagLayout() );
 			initGB();
-			// create search bar:
-			searchField = new JTextField("Search annotations");
-			searchField.setFont(MipavUtil.font12I);
-			searchField.getDocument().addDocumentListener(this);
-			searchField.addKeyListener(this);
-			searchField.addMouseListener(this);	        
-			panel.add(searchField, gbc);
-			
-			
-			gbc.gridy++;
 			panel.add( annotationTable.getTableHeader(), gbc );
 			gbc.gridy++;
 			panel.add( annotationTable, gbc );
@@ -1061,21 +1052,30 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				match.setMaximumSize(MipavUtil.defaultButtonSize);
 				panel.add(match, gbc );
 			}
-//			JScrollPane kScrollPane = new JScrollPane(annotationTable);
-			JScrollPane kScrollPane = new JScrollPane(panel);
+			kScrollPane = new JScrollPane(panel);
 			Dimension size = kScrollPane.getPreferredSize();
 			//			System.err.println( size.width + " " + size.height );
 			size.height /= 2;
 			kScrollPane.setPreferredSize( size );
 			kScrollPane.setBorder(JDialogBase.buildTitledBorder( imageA.GetImage().getImageName() + " Annotation list"));
 
-
+			JPanel scrollContainer = new JPanel(new BorderLayout());
+			// create search bar:
+			searchField = new JTextField("Search annotations");
+			searchField.setFont(MipavUtil.font12I);
+			searchField.getDocument().addDocumentListener(this);
+			searchField.addKeyListener(this);
+			searchField.addMouseListener(this);	        
+			scrollContainer.add(searchField, BorderLayout.NORTH);
+			scrollContainer.add(kScrollPane, BorderLayout.CENTER);
+			
+			
 			// add annotation table to a scroll pane:
 			JScrollPane kScrollPaneGroup = new JScrollPane(annotationGroupTable);
-			size = kScrollPaneGroup.getPreferredSize();
+//			size = kScrollPaneGroup.getPreferredSize();
 			//			System.err.println( size.width + " " + size.height );
-			size.height /= 2;
-			kScrollPaneGroup.setPreferredSize( size );
+//			size.height /= 2;
+//			kScrollPaneGroup.setPreferredSize( size );
 			kScrollPaneGroup.setBorder(JDialogBase.buildTitledBorder( imageA.GetImage().getImageName() + " Group list"));
 
 			JSplitPane displayPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, thresholdPanel, labelPanel );
@@ -1085,7 +1085,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayPanel.setResizeWeight(0.5);
 			displayPanel.setDividerLocation(0.5);
 			
-			JSplitPane listPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, kScrollPane, kScrollPaneGroup );
+			JSplitPane listPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, scrollContainer, kScrollPaneGroup );
 			listPanel.setOneTouchExpandable(true);
 			listPanel.setDividerSize(6);
 			listPanel.setContinuousLayout(true);
@@ -1113,6 +1113,10 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	public void keyTyped(KeyEvent e) {
 		ctrlKey = e.isControlDown();
 
+		if ( e.getSource() == searchField ) {
+			searchText();
+		}
+		
 //		System.err.println("keyTyped");
 		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
 			if ( voiManager != null )
@@ -1270,9 +1274,11 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 	}
 
+	private boolean firstClick = true;
 	@Override
 	public void mousePressed(MouseEvent e) {
-		if ( e.getSource() == searchField ) {
+		if ( firstClick && (e.getSource() == searchField) ) {
+			firstClick = false;
 			searchFieldSize = searchField.getSize();
 			searchField.setMinimumSize(searchFieldSize);
 			searchField.setPreferredSize(searchFieldSize);
@@ -1425,7 +1431,6 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 
 		String searchText = searchField.getText();	
 		searchText = searchField.getText();	
-		System.err.println("keyTyped " + searchText + " list size = " + annotationTable.getRowCount());
 		searchText = searchText.toLowerCase();
 		searchText = searchText.trim();
 		boolean found = false;
@@ -1437,6 +1442,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			if ( label.equals(searchText) ) {
 				found = true;
 				annotationTable.setRowSelectionInterval(i, i);
+//				kScrollPane.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 				annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 				searchIndex = 0;
 				break;
@@ -1450,6 +1456,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				if ( label.startsWith(searchText) ) {
 					found = true;
 					annotationTable.setRowSelectionInterval(i, i);
+//					kScrollPane.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 					annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 					searchIndex = i+1;
 					break;
@@ -1464,6 +1471,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					if ( label.startsWith(searchText) ) {
 						found = true;
 						annotationTable.setRowSelectionInterval(i, i);
+//						kScrollPane.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 						annotationTable.scrollRectToVisible( new Rectangle(annotationTable.getCellRect(i, 0, true)) );
 						searchIndex = i+1;
 						break;
