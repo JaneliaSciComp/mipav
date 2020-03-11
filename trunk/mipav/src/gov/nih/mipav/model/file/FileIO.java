@@ -1828,7 +1828,7 @@ public class FileIO {
                             final FileInfoDicom dicom3dInfo = (FileInfoDicom) image.getFileInfo(i);
                             final FileDicomTagTable tag3dTable = dicom3dInfo.getTagTable();
                             final String siemenBvalue = (String) tag3dTable.getValue("0019,100C");
-                            flBvalueArray[i] = Double.parseDouble(siemenBvalue);
+                            flBvalueArray[i] = getDoubleValOrAsciiVal(siemenBvalue);
 
                             if ((String) tagTable.getValue("0019,1027") != null) {
                                 String siemenBmatrix = (String) dicom3dInfo.getTagTable().getValue("0019,1027");
@@ -1874,7 +1874,7 @@ public class FileIO {
                             // Get Bvalues from Siemens Tags
                             final FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
                             final String siemenBvalue = (String) tag4dTable.getValue("0019,100C");
-                            flBvalueArray[i] = Double.parseDouble(siemenBvalue);
+                            flBvalueArray[i] = getDoubleValOrAsciiVal(siemenBvalue);
 
                             // Get B-matrix from Siemen's Tags
                             if ((String) tagTable.getValue("0019,1027") != null) {
@@ -1923,7 +1923,7 @@ public class FileIO {
                             // Get Bvalues from Philips Tags
                             final FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
                             final String philipsBvalue = (String) tag4dTable.getValue("0018,9087");
-                            flBvalueArray[i] = Double.parseDouble(philipsBvalue);
+                            flBvalueArray[i] = getDoubleValOrAsciiVal(philipsBvalue);
 
                             // Get Gradients from Philips Tags
                             if ((String) tagTable.getValue("0018,9089") != null) {
@@ -1949,7 +1949,7 @@ public class FileIO {
                             for (FileDicomSQItem item : seq) {
                                 if (item.getTagList().containsKey(new FileDicomKey("0018,9087"))) {
                                     String philipsBvalue = ((String) item.getTagList().get(new FileDicomKey("0018,9087")).getValue(true)).trim();
-                                    flBvalueArray[i] = Double.parseDouble(philipsBvalue);
+                                    flBvalueArray[i] = getDoubleValOrAsciiVal(philipsBvalue);
                                 }
                                 
                                 if (item.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
@@ -1996,13 +1996,13 @@ public class FileIO {
                             
                             boolean found = false;
                             for (Double bVal : bValList) {
-                                if (bVal == Double.parseDouble(philipsBvalue)) {
+                                if (bVal == getDoubleValOrAsciiVal(philipsBvalue)) {
                                     found = true;
                                     break;
                                 }
                             }
                             if (!found) {
-                                bValList.add(Double.parseDouble(philipsBvalue));
+                                bValList.add(getDoubleValOrAsciiVal(philipsBvalue));
                             }
 
                             // Get Gradients from Philips Tags
@@ -2059,13 +2059,13 @@ public class FileIO {
                             
                                     boolean found = false;
                                     for (Double bVal : bValList) {
-                                        if (bVal == Double.parseDouble(philipsBvalue)) {
+                                        if (bVal == getDoubleValOrAsciiVal(philipsBvalue)) {
                                             found = true;
                                             break;
                                         }
                                     }
                                     if (!found) {
-                                        bValList.add(Double.parseDouble(philipsBvalue));
+                                        bValList.add(getDoubleValOrAsciiVal(philipsBvalue));
                                     }
 
                                     // Get Gradients from Philips Tags
@@ -18361,6 +18361,25 @@ public class FileIO {
         public float getLocation() {
             return location;
         }
+    }
+    
+    private double getDoubleValOrAsciiVal(final String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return Double.parseDouble(convertNumbersToStr(value));
+        }
+    }
+    
+    private String convertNumbersToStr(final String dicomNumberString) {
+        String intNumStr = "";
+        String[] charNumArr = dicomNumberString.split("\\\\");
+        for (String chStr : charNumArr) {
+            int chInt = Integer.parseInt(chStr); 
+            intNumStr += Character.toString((char) chInt);
+        }
+        
+        return intNumStr.trim();
     }
 
 }
