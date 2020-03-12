@@ -174,7 +174,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.setForeground(Color.black);
         inputPanel.setBorder(buildTitledBorder("Input parameters"));
         
-        pwiImageFileDirectoryText = gui.buildFileField("Directory containing pwi image file: ", " ", false, JFileChooser.DIRECTORIES_ONLY);
+        pwiImageFileDirectoryText = gui.buildFileField("Directory containing pwi image file: ", "", false, JFileChooser.DIRECTORIES_ONLY);
         inputPanel.add(pwiImageFileDirectoryText.getParent(), gbc);
         
         gbc.gridx = 0;
