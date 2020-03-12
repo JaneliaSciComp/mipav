@@ -43,6 +43,7 @@ import gov.nih.mipav.util.DoubleDouble;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentBase;
+import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.io.File;
@@ -80,6 +81,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private double Psvd = 0.1;
     
     private boolean autoAIFCalculation = true;
+    
+    private boolean plotAIF = true;
     
     private boolean multiThreading = true;
     
@@ -125,7 +128,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      *
      */
     public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean calculateMaskingThreshold, int masking_threshold,
-    		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
+    		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
     		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase) {
         //super(resultImage, srcImg);
@@ -137,6 +140,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.TSP_iter = TSP_iter;
     	this.Psvd = Psvd;
     	this.autoAIFCalculation = autoAIFCalculation;
+    	this.plotAIF = plotAIF;
     	this.multiThreading = multiThreading;
     	this.search = search;
     	this.calculateCorrelation = calculateCorrelation;
@@ -1049,6 +1053,28 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	Ca[t] = -TE*Math.log(S[t]/S[0]);
 	    }
 	    Ca[0] = 0;
+	    if (plotAIF) {
+	    	float xInit[] = new float[tDim];
+	    	float yInit[] = new float[tDim];
+	    	for (t = 0; t < tDim; t++) {
+	    		xInit[t] = (float)t;
+	    		yInit[t] = (float)Ca[t];
+	    	}
+	    	String title = "AIF";
+	    	String labelX = "Scan time";
+	    	String labelY = "Change in MR Contrast";
+	    	boolean visible = false;
+	    	ViewJFrameGraph vGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, visible);
+	    	try {
+	    	  vGraph.save(outputFilePath + outputPrefix + "AIF.plt");
+	    	}
+	    	catch (IOException e) {
+                MipavUtil.displayError("Error: " + e + "\n");
+                setCompleted(false);
+                return;
+            }
+	    	vGraph.dispose();
+	    } // if (plotAIF)
 	    
 	    // Assemble prefiltered 'a' matrix from Ca
 	    // zero pad Ca
