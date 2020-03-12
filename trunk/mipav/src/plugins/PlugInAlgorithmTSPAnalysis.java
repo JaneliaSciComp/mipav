@@ -424,7 +424,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	setCompleted(false);
         	return;
         }
-    	// Uae echo time in milliseconds
+    	// Use echo time in milliseconds
     	TE = Double.valueOf(TEString.trim()).doubleValue();
     	//System.out.println("TE = " + TE);
         if (tagTable.getValue("0020,0105") != null) {
@@ -1057,11 +1057,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	float xInit[] = new float[tDim];
 	    	float yInit[] = new float[tDim];
 	    	for (t = 0; t < tDim; t++) {
-	    		xInit[t] = (float)t;
+	    		xInit[t] = delT * t;
 	    		yInit[t] = (float)Ca[t];
 	    	}
 	    	String title = "AIF";
-	    	String labelX = "Scan time";
+	    	String labelX = "Scan time in seconds";
 	    	String labelY = "Change in MR Contrast";
 	    	boolean visible = false;
 	    	ViewJFrameGraph vGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, visible);
