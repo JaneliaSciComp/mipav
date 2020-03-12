@@ -63,6 +63,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private boolean autoAIFCalculation = true;
 	
+	private JCheckBox plotAIFCheckBox;
+	
+	private boolean plotAIF = true;
+	
 	private JCheckBox multiThreadingEnabledCheckBox;
 	
 	private boolean multiThreading;
@@ -275,6 +279,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(pickButton, gbc);
         
         gbc.gridy = 9;
+        plotAIFCheckBox = new JCheckBox("Plot AIF");
+        plotAIFCheckBox.setFont(MipavUtil.font12);
+        plotAIFCheckBox.setSelected(true);
+        inputPanel.add(plotAIFCheckBox, gbc);
+        
+        gbc.gridy = 10;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -289,7 +299,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         searchGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
         search2DElsuncButton.setFont(serif12);
         search2DElsuncButton.setForeground(Color.black);
@@ -297,7 +307,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DElsuncButton);
         inputPanel.add(search2DElsuncButton, gbc);   
         
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
         search1DElsuncButton.setFont(serif12);
         search1DElsuncButton.setForeground(Color.black);
@@ -305,7 +315,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search1DElsuncButton);
         inputPanel.add(search1DElsuncButton, gbc);
         
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
@@ -313,7 +323,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
         
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
         search2DNelderMeadButton.setFont(serif12);
         search2DNelderMeadButton.setForeground(Color.black);
@@ -321,19 +331,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNelderMeadButton);
         inputPanel.add(search2DNelderMeadButton, gbc);
         
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         correlationCheckBox = new JCheckBox("Correlation maps calculated", true);
         correlationCheckBox.setFont(MipavUtil.font12);
         correlationCheckBox.setForeground(Color.black);
         inputPanel.add(correlationCheckBox, gbc);
         
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         CBFCBVMTTCheckBox = new JCheckBox("CBF, CBV, and MTT calculated", true);
         CBFCBVMTTCheckBox.setFont(MipavUtil.font12);
         CBFCBVMTTCheckBox.setForeground(Color.black);
         inputPanel.add(CBFCBVMTTCheckBox, gbc);
         
-        gbc.gridy = 16;
+        gbc.gridy = 17;
         boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
         boundsCheckBox.setFont(MipavUtil.font12);
         boundsCheckBox.setForeground(Color.black);
@@ -396,7 +406,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         try {
 
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, calculateMaskingThreshold, masking_threshold,
-            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, multiThreading, search, calculateCorrelation,
+            		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
             		calculateCBFCBVMTT, calculateBounds, fileNameBase);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -443,6 +453,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	TSP_iter = scriptParameters.getParams().getInt("iter");
     	Psvd = scriptParameters.getParams().getDouble("psv");
     	autoAIFCalculation = scriptParameters.getParams().getBoolean("auto_AIF");
+    	plotAIF = scriptParameters.getParams().getBoolean("plot_AIF");
     	multiThreading = scriptParameters.getParams().getBoolean("multi_thread");
     	search = scriptParameters.getParams().getInt("search_pars");
     	calculateCorrelation = scriptParameters.getParams().getBoolean("calc_correlation");
@@ -462,6 +473,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("iter", TSP_iter));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("psv", Psvd));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("auto_AIF", autoAIFCalculation));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("plot_AIF", plotAIF));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("multi_thread", multiThreading));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("search_pars", search));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_correlation", calculateCorrelation));
@@ -565,6 +577,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	}
     	
     	autoAIFCalculation = autoButton.isSelected();
+    	plotAIF = plotAIFCheckBox.isSelected();
     	multiThreading = multiThreadingEnabledCheckBox.isSelected();
     	if (search2DElsuncButton.isSelected()) {
     		search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
