@@ -25,7 +25,7 @@ import javax.swing.event.*;
  * @version  1.0 Aug 1, 1999
  * @author   Neva Cherniavsky (primary)
  * @author   Harman Singh
- * @see      ViewJComponentGraph
+aev* @see      ViewJComponentGraph
  */
 
 public class ViewJFrameGraph extends JFrame
@@ -905,6 +905,100 @@ public class ViewJFrameGraph extends JFrame
             this.dispose();
         } else {
             setVisible(true);
+        }
+
+    }
+    
+    /**
+     * Constructor Constructs the frame, with the graph component in one panel and the user options in the other. Draws
+     * initial default graph of desired function / intensity plot.
+     *
+     * @param  xInit   the array of x coordinates to be plotted in the graph
+     * @param  yInit   the array of y coordinates to be plotted in the graph
+     * @param  title   the title of the frame
+     * @param  labelX  x axis label
+     * @param  labelY  y aixs label
+     */
+    public ViewJFrameGraph(float[] xInit, float[] yInit, String title, String labelX, String labelY, boolean visible) {
+        super(title);
+
+        ViewJComponentFunct[] functArray;
+        ViewJComponentFunct[] fittedFuncts;
+
+        voi = null;
+        setBounds(0, 0, 500, 400);
+
+        float[] x = new float[xInit.length];
+        float[] y = new float[xInit.length];
+
+        for (int i = 0; i < xInit.length; i++) {
+            x[i] = xInit[i];
+            y[i] = yInit[i];
+        }
+
+        try {
+            mainPanel = new JPanel();
+            mainPanel.setBounds(0, 0, getSize().width, getSize().height);
+            graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
+            functArray = new ViewJComponentFunct[1];
+            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi,null); // empty function
+            fittedFuncts = new ViewJComponentFunct[1];
+            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi,null); // empty function
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
+
+            return;
+        }
+
+        addNotify();
+        setResizable(true);
+
+        try {
+            setIconImage(MipavUtil.getIconImage("graph.gif"));
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage() +
+                               ">.  Check that this file is available.\n");
+        }
+
+        // setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        mainPanel.setLayout(null);
+        mainPanel.setBackground(Color.lightGray);
+        mainPanel.setForeground(Color.black);
+
+        graph.setFuncts(functArray);
+        graph.setFittedFuncts(fittedFuncts);
+
+        graph.calculateDefaultRangeDomain();
+        graph.setDefaultRangeDomain();
+
+        buildMenu();
+
+        graph.setNumberOfXGridLines(4); // draws default number of grid lines
+        graph.setNumberOfYGridLines(4);
+        graph.setTitle(title); // sets title above graph to same as window title
+        graph.setLabels(labelX, labelY);
+        graph.setBackground(Color.red);
+
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
+        graph.setGridlinesVisible(true);
+        graph.setMinorTickMarksVisible(true);
+
+        mainPanel.add(graph);
+
+        getContentPane().add(mainPanel);
+        setJMenuBar(openingMenuBar);
+
+        addComponentListener(this);
+        addWindowListener(this);
+
+        if (xInit.length != yInit.length) { // must be pairs of x and y coordinates, or the graph cannot be drawn
+            MipavUtil.displayError("X and Y Arrays must be of equal length");
+            this.dispose();
+        } else {
+            setVisible(visible);
         }
 
     }
@@ -4199,7 +4293,7 @@ public class ViewJFrameGraph extends JFrame
             pjob.end();
         }
     }
-
+    
     /**
      * Saves this graph as Excel data so that Excel can read in the data and graph it as an Excel file. The file can
      * also be saved to be viewed at a later time with MIPAV
@@ -4240,6 +4334,58 @@ public class ViewJFrameGraph extends JFrame
             } else {
                 return;
             }
+        } catch (NullPointerException e) {
+            return;
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: ViewJComponentGraph.save");
+
+            return;
+        }
+
+        String s;
+        int len = -1;
+
+        for (int i = 0; i < graph.getFuncts().length; i++) {
+
+            if (len < graph.getFuncts()[i].getXs().length) {
+                len = graph.getFuncts()[i].getXs().length;
+            }
+        }
+
+        for (int i = 0; i < len; i++) {
+
+            for (int j = 0; j < graph.getFuncts().length; j++) { // writes to the file the pairs of x and y coordinates
+                s = Float.toString(graph.getFuncts()[j].getXs()[i]);
+                outstream.write(s);
+                outstream.write('\t');
+                s = Float.toString(graph.getFuncts()[j].getYs()[i]);
+                outstream.write(s);
+                if (j == graph.getFuncts().length - 1) {
+                    outstream.write('\n');
+                }
+                else {
+                    outstream.write('\t');
+                }
+            }
+        }
+
+        outstream.close();
+    }
+
+    /**
+     * Saves this graph as Excel data so that Excel can read in the data and graph it as an Excel file. The file can
+     * also be saved to be viewed at a later time with MIPAV
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public void save(String fileName) throws IOException {
+        FileWriter outstream = null;
+
+        try {
+
+            
+                outstream = new FileWriter(fileName);
+           
         } catch (NullPointerException e) {
             return;
         } catch (OutOfMemoryError error) {
