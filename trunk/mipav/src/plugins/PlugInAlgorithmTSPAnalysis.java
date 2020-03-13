@@ -55,11 +55,16 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.imageio.ImageIO;
+
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 
 
 
@@ -1063,10 +1068,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	String title = "AIF";
 	    	String labelX = "Scan time in seconds";
 	    	String labelY = "Change in MR Contrast";
-	    	boolean visible = false;
+	    	boolean visible = true;
 	    	ViewJFrameGraph vGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, visible);
 	    	try {
 	    	  vGraph.save(outputFilePath + outputPrefix + "AIF.plt");
+	    	  Component component = vGraph.getComponent(0);
+	    	  Rectangle rect = component.getBounds();
+	    	  String format = "png";
+  	          BufferedImage captureImage =
+  	                new BufferedImage(rect.width, rect.height,
+  	                                    BufferedImage.TYPE_INT_ARGB);
+  	          component.paint(captureImage.getGraphics());
+  	 
+  	          ImageIO.write(captureImage, format, new File(outputFilePath + outputPrefix + "AIF.png"));
 	    	}
 	    	catch (IOException e) {
                 MipavUtil.displayError("Error: " + e + "\n");
@@ -3138,4 +3152,5 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         
         return new File(dir + File.separator + fileBasename + ext);
     }
-}
+    
+    }
