@@ -124,12 +124,18 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private ModelImage TmaxImage;
 //    private ModelImage delay_mapImage;
     
+    private File aifFile = null;
+    private File sliceAifFile = null;
+    
     private String outputFilePath = null;
     private String outputPrefix = "";
     
     private FileIO fileIO = null;
     
     private int saveFileFormat = FileUtility.NIFTI;
+    
+    // used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
+    private boolean doSaveAllOutputs = true;
 	
     /**
      * Constructor.
@@ -1126,7 +1132,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
   	                                    BufferedImage.TYPE_INT_ARGB);
   	          component.paint(captureImage.getGraphics());
   	 
-  	          ImageIO.write(captureImage, format, new File(outputFilePath + outputPrefix + "AIF.png"));
+  	          aifFile = new File(outputFilePath + outputPrefix + "AIF.png");
+  	          ImageIO.write(captureImage, format, aifFile);
   	          vGraph.dispose();
   	          
   	          short shortBuffer[] = new short[length];
@@ -1163,7 +1170,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	  	                                    BufferedImage.TYPE_INT_ARGB);
 	  	        component.paint(captureImage.getGraphics());
 	  	 
-	  	        ImageIO.write(captureImage, format, new File(outputFilePath + outputPrefix + "sliceAIF.png"));
+	  	        sliceAifFile = new File(outputFilePath + outputPrefix + "sliceAIF.png");
+	  	        ImageIO.write(captureImage, format, sliceAifFile);
 	  	        vFrame.dispose();
 	    	}
 	    	catch (IOException e) {
@@ -3189,6 +3197,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         return TmaxImage;
     }
     
+    public File getAifFile() {
+        return aifFile;
+    }
+    
+    public File getSliceAifFile() {
+        return sliceAifFile;
+    }
+    
 //    public ModelImage getDelayMapImage() {
 //        return delay_mapImage;
 //    }
@@ -3201,14 +3217,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         outputPrefix = prefix;
     }
     
+    public void setSaveAllOutputs(boolean saveAll) {
+        doSaveAllOutputs = saveAll;
+    }
+    
     private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
+        return saveImageFile(img, dir, fileBasename, fileType, false);
+    }
+    
+    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType, boolean alwaysSave) {
         if (fileIO == null) {
             fileIO = new FileIO();
             fileIO.setQuiet(true);
         }
         
         // if no directory specified, skip writing out images
-        if (dir == null) {
+        // or if option is set and this is a file that is optionally written out
+        if (dir == null || (!alwaysSave && !doSaveAllOutputs)) {
         	return null;
         }
         

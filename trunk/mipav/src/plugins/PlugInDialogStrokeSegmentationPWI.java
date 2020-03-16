@@ -310,7 +310,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             double resFactorCC = PlugInAlgorithmStrokeSegmentationPWI.getResolutionFactorCC(adcImage);
             
             if (listenerParent != null) {
-                listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), segAlgo.getPerfusionObjectSizeTable(), resFactorCC);
+                listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), segAlgo.getTmaxTables(), resFactorCC);
             }
 
             if (segAlgo.isCompleted()) {

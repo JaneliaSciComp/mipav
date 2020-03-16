@@ -31,8 +31,6 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private ModelImage pwiImage;
     private ModelImage TmaxRegImage;
     
-    private int pwiThreshold = 6;
-    
     private int pwiCoreSegThreshold = 2;
     
     private ModelImage adcVolForThresholding;
@@ -102,7 +100,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
     private Color coreLightboxColor = Color.RED;
     
-    private Color pwiLightboxColor = Color.BLUE;
+    private static final int[] pwiThreshList = new int[] {4, 6, 10};
     
 //    private File threshLightboxFile;
 //    private File coreLightboxFile;
@@ -118,12 +116,14 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private float coreSelectionDistWeight = 1f;
     private float coreSelectionSizeWeight = 1 - coreSelectionDistWeight;
     
-    boolean havePWI = true;
+    private PlugInAlgorithmTSPAnalysis tspAlgo = null;
     
-    boolean doPwiMultiThreading = true;
-    boolean doPwiCalculateCorrelation = false;
-    boolean doPwiCalculateCBFCBVMTT = false;
-    boolean doPwiSaveOutputs = false;
+    private boolean havePWI = true;
+    
+    private boolean doPwiMultiThreading = true;
+    private boolean doPwiCalculateCorrelation = false;
+    private boolean doPwiCalculateCBFCBVMTT = false;
+    private boolean doPwiSaveOutputs = false;
     
     private boolean doArtifactCleanupWithMean = true;
     private float artifactMeanThreshold = 0.5f;
@@ -474,6 +474,25 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 if (lightboxPass2 != null) {
                     lightboxFileList.add(lightboxPass2);
                 }
+                
+                File aifFile = tspAlgo.getAifFile();
+                File sliceAifFile = tspAlgo.getSliceAifFile();
+                if (aifFile != null) {
+                    lightboxFileList.add(aifFile);
+                    Vector<MaskObject> maskList = new Vector<MaskObject>();
+                    MaskObject obj = new MaskObject(0, (short) 0, 0);
+                    obj.setDwiNoObject();
+                    maskList.add(obj);
+                    lightboxObjectTable.put(aifFile, maskList);
+                }
+                if (sliceAifFile != null) {
+                    lightboxFileList.add(sliceAifFile);
+                    Vector<MaskObject> maskList = new Vector<MaskObject>();
+                    MaskObject obj = new MaskObject(0, (short) 0, 0);
+                    obj.setDwiNoObject();
+                    maskList.add(obj);
+                    lightboxObjectTable.put(sliceAifFile, maskList);
+                }
             }
             
     //        // distance-based selection (if small core)
@@ -595,6 +614,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         dwiImage = null;
         adcImage = null;
         pwiImage = null;
+        if (tspAlgo != null) {
+            tspAlgo.finalize();
+        }
         super.finalize();
     }
     
@@ -1268,7 +1290,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         public int coreSize = 0;
         
-        public int perfusionSize = 0;
+        public Hashtable<Integer, Integer> tmaxSizeMap = new Hashtable<Integer, Integer>();
         
         public boolean isDwi = false;
 
@@ -1290,7 +1312,6 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         	index = -1;
         	size = -1;
         	coreSize = -1;
-        	perfusionSize = -1;
         	isDwi = true;
         }
         
@@ -1298,8 +1319,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             coreSize = core;
         }
         
-        public void setPerfusionSize(final int size) {
-        	perfusionSize = size;
+        public void setPerfusionSize(final int tmaxVal, final int size) {
+        	tmaxSizeMap.put(tmaxVal, size);
         }
     }
     
@@ -1360,11 +1381,14 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             csvPrinter = new CSVPrinter(bw, CSVFormat.TDF.withHeader("Base Dir", "DWI File", "ADC File", "PWI File",
             		"Core Volume " + volUnitsStr,
             		"Core Volume using Tmax " + volUnitsStr,
-            		"Tmax > " + pwiThreshold + " Volume",
-            		"Mismatch (Tmax - core) " + volUnitsStr, "Mismatch Ratio (Tmax / core)",
-            		"Mismatch (Tmax - core using Tmax) " + volUnitsStr, "Mismatch Ratio (Tmax / core using Tmax)"));
+            		"Tmax > " + pwiThreshList[0] + "s Volume",
+            		"Tmax > " + pwiThreshList[1] + "s Volume",
+            		"Tmax > " + pwiThreshList[2] + "s Volume",
+            		"Hypoperfusion Index (Tmax > 10s / Tmax > 6s)",
+            		"Mismatch (Tmax > 6s - core) " + volUnitsStr, "Mismatch Ratio (Tmax > 6s / core)",
+            		"Mismatch (Tmax > 6s - core using Tmax) " + volUnitsStr, "Mismatch Ratio (Tmax > 6s / core using Tmax)"));
             
-            double perfusionSize = 0;
+            double[] perfusionSize = new double[pwiThreshList.length];
             double dwiCore = 0;
             double pwiCore = 0;
             
@@ -1373,11 +1397,17 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 int passNum = i + 1;
                 
                 int coreSize = getCoreSize(getLightboxFileList().get(i));
-                int perfSize = getPerfusionSize(getLightboxFileList().get(i));
+
+                boolean isPerf = false;
+                for (int perfIndex = 0; perfIndex < pwiThreshList.length; perfIndex++) {
+                    int perfSize = getPerfusionSize(getLightboxFileList().get(i), pwiThreshList[perfIndex]);
+                    if (perfSize > 0) {
+                        isPerf = true;
+                        perfusionSize[perfIndex] = perfSize;
+                    }
+                }
                 
-                if (perfSize > 0) {
-                	perfusionSize = perfSize;
-                } else if (coreSize > 0) {
+                if (!isPerf && coreSize > 0) {
                     if (passNum == 1) {
                     	dwiCore = coreSize;
                     } else if (passNum == 4) {
@@ -1390,15 +1420,28 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             double dwiCoreVol = dwiCore * ccFactor;
             double pwiCoreVol = pwiCore * ccFactor;
-            double perfusionVol = perfusionSize * ccFactor;
+            double perfusionVol0 = perfusionSize[0] * ccFactor;
+            double perfusionVol1 = perfusionSize[1] * ccFactor;
+            double perfusionVol2 = perfusionSize[2] * ccFactor;
             
-            double perfusionMismatchDwi = (perfusionSize - dwiCore) * ccFactor;
-            double perfusionRatioDwi = perfusionSize / dwiCore;
-            double perfusionMismatchPwi = (perfusionSize - pwiCore) * ccFactor;
-            double perfusionRatioPwi = perfusionSize / pwiCore;
+            double hypoperfusionIndex = 0;
+            if (perfusionSize[1] > 0) {
+                hypoperfusionIndex = perfusionSize[2] / perfusionSize[1];
+            }
             
-            System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize);
-            csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCoreVol, pwiCoreVol, perfusionVol, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);
+            double perfusionMismatchDwi = 0;
+            double perfusionRatioDwi = 0;
+            double perfusionMismatchPwi = 0;
+            double perfusionRatioPwi = 0;
+            if (perfusionSize[1] > 0) {
+                perfusionMismatchDwi = (perfusionSize[1] - dwiCore) * ccFactor;
+                perfusionRatioDwi = perfusionSize[1] / dwiCore;
+                perfusionMismatchPwi = (perfusionSize[1] - pwiCore) * ccFactor;
+                perfusionRatioPwi = perfusionSize[1] / pwiCore;
+            }
+            
+            System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize[1]);
+            csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCoreVol, pwiCoreVol, perfusionVol0, perfusionVol1, perfusionVol2, hypoperfusionIndex, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);
         } catch (final IOException e) {
             e.printStackTrace();
             MipavUtil.displayError("Error writing core stats file: " + statsFile);
@@ -1421,6 +1464,105 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         return true;
+    }
+    
+    private ModelImage generateLightbox(final ModelImage imgA, final ModelImage mask, float blendingOpacity, boolean isTmax) {
+        ModelImage lightbox = null;
+        
+        ModelImage newRGB;
+        if (imgA.isColorImage()) {
+            newRGB = (ModelImage) imgA.clone();
+        } else {
+            if (!isTmax) {
+                newRGB = new ModelImage(ModelImage.ARGB, imgA.getExtents(), imgA.getImageName());
+                final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imgA, imgA, imgA, newRGB, true, true, 255.0f, true);
+                mathAlgo.run();
+            } else {
+                float tmaxWin = 10;
+                float tmaxLev = 1;
+                
+                ModelLUT tmaxLUT = new ModelLUT();
+                TransferFunction tf = new TransferFunction();
+                float[] tfX = new float[] {0, 0, 6, (int)imgA.getMax()};
+                float[] tfY = new float[] {255, 153, 0, 0};
+//              float[] tfX = new float[4];
+//              float[] tfY = new float[4];
+//              JDialogWinLevel.calcWinLevTransferFunction(imgA, tmaxWin, tmaxLev, tfX, tfY);
+                tf.importArrays(tfX, tfY, tfX.length);
+                tmaxLUT.setTransferFunction(tf);
+                
+                ModelImage newImg = (ModelImage) imgA.clone();
+                
+                for (int i = 0; i < imgA.getSize(); i++) {
+                    int indexA = (int) (tf.getRemappedValue(imgA.getInt(i), (int)imgA.getMax()) + 0.5f);
+                    newImg.set(i, indexA);
+                }
+                
+                newImg.calcMinMax();
+                
+                //AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(newImg, ModelImage.UBYTE, newImg.getMin(), newImg.getMax(), 0, 255, false);
+                //changeTypeAlgo.run();
+                
+                //saveImageFile(newImg, coreOutputDir, outputBasename + "_PWI_Tmax_reg_rgb_remap", FileUtility.XML);
+                
+                newRGB = new ModelImage(ModelImage.ARGB, newImg.getExtents(), newImg.getImageName());
+                final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImg, newImg, newImg, newRGB, true, true, 255.0f, true, true);
+                mathAlgo.run();
+                
+                //saveImageFile(newRGB, coreOutputDir, outputBasename + "_PWI_Tmax_reg_rgb", FileUtility.XML);
+                
+                newImg.disposeLocal();
+                
+//              ViewJFrameImage frame = new ViewJFrameImage(newRGB);
+//              frame.setActiveImage(ViewJFrameImage.IMAGE_A);
+            }
+        }
+        
+        if (mask != null) {
+            // set any values to fully red if set in the mask
+            for (int i = 0; i < mask.getDataSize(); i++) {
+                int val = mask.getInt(i);
+                
+                if (val > 0 && mapTmaxColor(val) != null) {
+                    Color c = mapTmaxColor(val);
+                    
+                    // TODO set value with opacity blending
+                    newRGB.setC(i, 1, c.getRed());
+                    newRGB.setC(i, 2, c.getGreen());
+                    newRGB.setC(i, 3, c.getBlue());
+                }
+            }
+        }
+        
+        // TODO change based on x/y dim size
+        final int zoomPercent = 125;
+        
+        // TODO change based on slice num
+        final int columns = 8;
+        final int rows = 5;
+        
+        final int rBorderVal = 0;
+        final int gBorderVal = 0;
+        final int bBorderVal = 0;
+        final int borderThick = 0;
+        
+        int startSlice = 0;
+        int endSlice = imgA.getExtents()[2] - 1;
+        LightboxGenerator lightGen;
+
+        try {
+            lightGen = new LightboxGenerator(newRGB, startSlice, endSlice, zoomPercent, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+            lightGen.run();
+            lightbox = lightGen.getImage();
+            
+            lightbox.calcMinMax();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        
+        newRGB.disposeLocal();
+        
+        return lightbox;
     }
     
     private ModelImage generateLightbox(final ModelImage imgA, final ModelImage mask, Color maskColor, float blendingOpacity, boolean isTmax) {
@@ -1532,10 +1674,18 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return sizeTable;
     }
     
-    public Hashtable<File, Double> getPerfusionObjectSizeTable() {
+    public Hashtable<Integer, Hashtable<File, Double>> getTmaxTables() {
+        Hashtable<Integer, Hashtable<File, Double>> tmaxTable = new Hashtable<Integer, Hashtable<File, Double>>();
+        for (int thresh : pwiThreshList) {
+            tmaxTable.put(thresh, getPerfusionObjectSizeTable(thresh));
+        }
+        return tmaxTable;
+    }
+    
+    public Hashtable<File, Double> getPerfusionObjectSizeTable(final int tmax) {
         Hashtable<File, Double> sizeTable = new Hashtable<File, Double>();
         for (File file : lightboxObjectTable.keySet()) {
-            sizeTable.put(file, Double.valueOf(getPerfusionSize(file)));
+            sizeTable.put(file, Double.valueOf(getPerfusionSize(file, tmax)));
         }
         
         return sizeTable;
@@ -1550,10 +1700,12 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return totalSize;
     }
     
-    public int getPerfusionSize(File lightboxFile) {
+    public int getPerfusionSize(File lightboxFile, int tmax) {
     	int totalSize = 0;
     	for (MaskObject obj : lightboxObjectTable.get(lightboxFile)) {
-            totalSize += obj.perfusionSize;
+    	    if (obj != null && obj.tmaxSizeMap != null && obj.tmaxSizeMap.get(tmax) != null) {
+    	        totalSize += obj.tmaxSizeMap.get(tmax);
+    	    }
         }
         
         return totalSize;
@@ -1838,14 +1990,12 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
         
-        PlugInAlgorithmTSPAnalysis tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, calculateMaskingThreshold, masking_threshold,
+        tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, calculateMaskingThreshold, masking_threshold,
                 TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, doPwiMultiThreading, search, doPwiCalculateCorrelation, doPwiCalculateCBFCBVMTT, calculateBounds);
         
-        if (doPwiSaveOutputs) {
-        	tspAlgo.setOutputFilePath(coreOutputDir);
-        } else {
-        	tspAlgo.setOutputFilePath(null);
-        }
+        tspAlgo.setSaveAllOutputs(doPwiSaveOutputs);
+    	tspAlgo.setOutputFilePath(coreOutputDir);
+        
         tspAlgo.setOutputPrefix(new File(coreOutputDir).getName() + "_" + outputLabel + "_PWI_");
         
         linkProgressToAlgorithm(tspAlgo);
@@ -1884,25 +2034,32 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         firstPwiVol.disposeLocal();
         
         //ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiThreshold);
-        ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, skullMaskImg, pwiThreshold);
+        ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, skullMaskImg, pwiThreshList);
         cleanupMask(pwiSegImg, doPerfusionSymmetryRemoval, minPerfusionObjectSize);
         
         // combine perfusion mask with Tmax and save lightbox
-        ModelImage perfLightbox = generateLightbox(TmaxRegImage, pwiSegImg, pwiLightboxColor, lightboxOpacity, true);
+        ModelImage perfLightbox = generateLightbox(TmaxRegImage, pwiSegImg, lightboxOpacity, true);
         
         File lightboxFile = saveImageFile(perfLightbox, coreOutputDir, outputBasename + "_Tmax_perfusion_lightbox", FileUtility.PNG, false);
         
         if (lightboxFile != null) {
-        	int size = 0;
+            int[] tmaxSizes = new int[pwiThreshList.length];
+        	int totalSize = 0;
         	for (int i = 0; i < pwiSegImg.getDataSize(); i++) {
-        		if (pwiSegImg.getInt(i) != 0) {
-        			size++;
-        		}
+        	    for (int threshIndex = 0; threshIndex < pwiThreshList.length; threshIndex++) {
+        	        int thresh = pwiThreshList[threshIndex];
+        	        if (pwiSegImg.getInt(i) == thresh) {
+        	            tmaxSizes[threshIndex]++;
+        	            totalSize++;
+        	        }
+        	    }
         	}
         	
         	Vector<MaskObject> maskList = new Vector<MaskObject>();
-            MaskObject obj = new MaskObject(0, (short) 0, size);
-            obj.setPerfusionSize(size);
+            MaskObject obj = new MaskObject(0, (short) 0, totalSize);
+            for (int threshIndex = 0; threshIndex < pwiThreshList.length; threshIndex++) {
+                obj.setPerfusionSize(pwiThreshList[threshIndex], tmaxSizes[threshIndex]);
+            }
             maskList.add(obj);
             
             lightboxObjectTable.put(lightboxFile, maskList);
@@ -1947,6 +2104,34 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         saveImageFile(pwiSegImg, coreOutputDir, outputBasename + "_PWI_Tmax_thresh_" + thresh + "s", FileUtility.XML);
+        
+        return pwiSegImg;
+    }
+    
+    private ModelImage getTmaxSeg(ModelImage tmaxImg, ModelImage ventricleImg, ModelImage artifactImg, int[] threshList) {
+        final int[] extents = tmaxImg.getExtents();
+        final int sliceLength = extents[0] * extents[1];
+        final int volLength = sliceLength * extents[2];
+        final FileInfoBase fInfo = (FileInfoBase) tmaxImg.getFileInfo(0).clone();
+        
+        ModelImage pwiSegImg = new ModelImage(ModelImage.UBYTE, tmaxImg.getExtents(), tmaxImg.getImageName() + "_seg_multi_threshold");
+        for (int i = 0; i < pwiSegImg.getExtents()[2]; i++) {
+            pwiSegImg.setFileInfo(fInfo, i);
+        }
+        
+        Arrays.sort(threshList);
+        
+        for (int i = 0; i < volLength; i++) {
+            if ((ventricleImg != null && ventricleImg.getBoolean(i) == true) && (artifactImg != null && artifactImg.getBoolean(i) == true)) {
+                for (int thresh : threshList) {
+                    if (tmaxImg.getInt(i) > thresh) {
+                        pwiSegImg.set(i, thresh);
+                    }
+                }
+            }
+        }
+        
+        saveImageFile(pwiSegImg, coreOutputDir, outputBasename + "_PWI_Tmax_thresh_multi", FileUtility.XML);
         
         return pwiSegImg;
     }
@@ -2434,6 +2619,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 }
             }
             
+            short[] finalBuffer = new short[volLength];
+            for (int i = 0; i < maskBuffer.length; i++) {
+                finalBuffer[i] = maskBuffer[i];
+            }
+            
             short[] processBuffer = new short[volLength];
     
             MaskObject[] objects = findObjects(maskImg, maskBuffer, processBuffer, minObjSize, 10000000);
@@ -2451,12 +2641,23 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     if (found) {
                         maskBuffer[i] = 1;
                         removedBuffer[i] = 0;
+                    } else {
+                        maskBuffer[i] = 0;
+                        removedBuffer[i] = 1;
                     }
                 }
             }
             
+            for (int i = 0; i < maskBuffer.length; i++) {
+                if (maskBuffer[i] == 0) {
+                    finalBuffer[i] = 0;
+                }
+            }
+            maskBuffer = null;
+            maskBuffer = finalBuffer;
+            
             try {
-                maskImg.importData(0, maskBuffer, true);
+                maskImg.importData(0, finalBuffer, true);
             } catch (IOException error) {
                 maskBuffer = null;
                 displayError("Error on mask cleanup importData");
@@ -2488,5 +2689,17 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         saveImageFile(maskImg, coreOutputDir, outputBasename + "_mask_cleaned", FileUtility.XML);
+    }
+    
+    private static final Color mapTmaxColor(final int tmaxVal) {
+        if (tmaxVal == pwiThreshList[0]) {
+            return Color.BLUE;
+        } else if (tmaxVal == pwiThreshList[1]) {
+            return Color.GREEN;
+        } else if (tmaxVal == pwiThreshList[2]) {
+            return Color.RED;
+        } else {
+            return null;
+        }
     }
 }
