@@ -2762,9 +2762,12 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         		for (y = 0; y < yDim; y++) {
         			ini = x + y * xDim;
         			outi = y + x * yDim;
-            	    red[outi] = buffer[4*ini+1];
-            	    green[outi] = buffer[4*ini+2];
-            	    blue[outi] = buffer[4*ini+3];
+            	    //red[outi] = buffer[4*ini+1];
+            	    //green[outi] = buffer[4*ini+2];
+            	    //blue[outi] = buffer[4*ini+3];
+        			red[ini] = buffer[4*ini+1];
+        			green[ini] = buffer[4*ini+2];
+        			blue[ini] = buffer[4*ini+1];
         		}
             }
             weights[0] = 0.0146;
@@ -2796,9 +2799,12 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         		for (y = 0; y < yDim; y++) {
         			ini = x + y * xDim;
         			outi = y + x * yDim;
-        			red[outi] = buffer[ini];
-        			green[outi] = buffer[ini];
-        			blue[outi] = buffer[ini];
+        			//red[outi] = buffer[ini];
+        			//green[outi] = buffer[ini];
+        			//blue[outi] = buffer[ini];
+        			red[ini] = buffer[ini];
+        			green[ini] = buffer[ini];
+        			blue[ini] = buffer[ini];
         		}
         	}
         	weights[0] = 0.0245;
@@ -3479,7 +3485,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		double tg3[][][], int textons[], 
     		double red[], double green[], double blue[]) {
         // Compute pb
-    	mex_pb_parts_final_selected(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb3, cgb3, tg1, tg2, tg3, textons, red, green, blue);
+    	mex_pb_parts_final_selected(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, red, green, blue);
     }
     
     private double[][] fitparab(double z[][], double ra, double rb, double theta, double filt[][][]) {
