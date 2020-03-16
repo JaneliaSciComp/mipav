@@ -965,10 +965,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double xsum = 0.0;
 		double ysum = 0.0;
 		double zsum = 0.0;
+		double xsumsquared = 0.0;
+		double ysumsquared = 0.0;
+		double zsumsquared = 0.0;
 		int sumcount = 0;
 		double xmean = 0.0;
 		double ymean = 0.0;
 		double zmean = 0.0;
+		double xstd = 0.0;
+		double ystd = 0.0;
+		double zstd = 0.0;
     	if (autoAIFCalculation) {
 	    	// Auto AIF Calculation
 	    	// AIF is average signal of pixels with the largest SI deviations
@@ -1013,6 +1019,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 									xsum += x;
 									ysum += y;
 									zsum += z;
+									xsumsquared += (x*x);
+									ysumsquared += (y*y);
+									zsumsquared += (z*z);
 								}
 								data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);
 							    sumt += data_norm;
@@ -1025,7 +1034,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		        	xmean = xsum/sumcount;
 		        	ymean = ysum/sumcount;
 		        	zmean = zsum/sumcount;
-		        }
+		        	if (sumcount > 1) {
+		        	    xstd = Math.sqrt((xsumsquared - xsum*xsum/sumcount)/(sumcount - 1.0));
+		        	    ystd = Math.sqrt((ysumsquared - ysum*ysum/sumcount)/(sumcount - 1.0));
+		        	    zstd = Math.sqrt((zsumsquared - zsum*zsum/sumcount)/(sumcount - 1.0));
+		        	    System.out.println("AIF selection point standard deviations in voxels:");
+		        	    System.out.println("x standard deviation = " + xstd);
+		        	    System.out.println("y standard deviation = " + ystd);
+		        	    System.out.println("z standard deviation = " + zstd);
+		        	} // if (sumcount > 1)
+		        	else if (sumcount == 1) {
+		        		System.out.println("AIF selection is based on only 1 voxel");
+		        	}
+		        } // if (t == 0)
 		        autoaif[t] = (double)sumt/(double)countt;
 		        if (autoaif[t] < minautoaif) {
 		        	minautoaif = autoaif[t];
@@ -1074,6 +1095,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    zmean = 9;
 		    ymean = yS;
 		    xmean = xS;
+		    sumcount = 1;
     	} // else pick image pixel corresponding to AIF
 	    
 	    // Calculate AIF as amount of contrast agent as estimated from R2
