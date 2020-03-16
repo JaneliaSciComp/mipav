@@ -105,8 +105,13 @@ public class ViewFileChooserBase {
         this.saveAs = isSaveAs;
 
         if (openDialog) {
+            boolean prevFileChooserRO = UIManager.getBoolean("FileChooser.readOnly");
+            UIManager.put("FileChooser.readOnly", Boolean.TRUE);
 
             chooser = new JFileChooser();
+            
+            UIManager.put("FileChooser.readOnly", prevFileChooserRO);
+            
             chooser.setMultiSelectionEnabled(true);
             chooser.setFont(MipavUtil.defaultMenuFont);
 
