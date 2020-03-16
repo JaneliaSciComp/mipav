@@ -39,6 +39,8 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.util.DoubleDouble;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -60,6 +62,7 @@ import javax.imageio.ImageIO;
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -959,6 +962,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				}
 			}	
 		} // for (z = 0; z < zDim; z++)
+    	double xsum = 0.0;
+		double ysum = 0.0;
+		double zsum = 0.0;
+		int sumcount = 0;
+		double xmean = 0.0;
+		double ymean = 0.0;
+		double zmean = 0.0;
     	if (autoAIFCalculation) {
 	    	// Auto AIF Calculation
 	    	// AIF is average signal of pixels with the largest SI deviations
@@ -998,12 +1008,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					for (y = 0; y < yDim; y++) {
 						for (x = 0; x < xDim; x++) {
 							if (peaks[z][y][x] < peaks_threshold) {
+								if (t == 0) {
+									sumcount++;
+									xsum += x;
+									ysum += y;
+									zsum += z;
+								}
 								data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);
 							    sumt += data_norm;
 							    countt++;
 							}
 						}
 					}
+		        }
+		        if (t == 0) {
+		        	xmean = xsum/sumcount;
+		        	ymean = ysum/sumcount;
+		        	zmean = zsum/sumcount;
 		        }
 		        autoaif[t] = (double)sumt/(double)countt;
 		        if (autoaif[t] < minautoaif) {
@@ -1050,6 +1071,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    for (t = 0; t < tDim; t++) {
 		    	S[t] = data[9][yS][xS][t];
 		    }
+		    zmean = 9;
+		    ymean = yS;
+		    xmean = xS;
     	} // else pick image pixel corresponding to AIF
 	    
 	    // Calculate AIF as amount of contrast agent as estimated from R2
@@ -1081,13 +1105,51 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
   	          component.paint(captureImage.getGraphics());
   	 
   	          ImageIO.write(captureImage, format, new File(outputFilePath + outputPrefix + "AIF.png"));
+  	          vGraph.dispose();
+  	          
+  	          short shortBuffer[] = new short[length];
+		      for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		shortBuffer[x + y * xDim] = data[(int)Math.round(zmean)][y][x][0];
+		    	}
+		       }
+		       extents2D = new int[]{xDim,yDim};
+		       ModelImage AIFImage = new ModelImage(ModelStorageBase.SHORT,extents2D,"AIFImage");
+			    try {
+			    	AIFImage.importData(0, shortBuffer, true);
+			    }
+			    catch (IOException e) {
+			    	MipavUtil.displayError("IOException on shortImage.importData");
+			    	setCompleted(false);
+			    	return;
+			    }
+			    VOI newPtVOI = new VOI((short) 0, "pointAIF.voi", VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.RED);
+                float xArr[] = new float[] {(float)xmean};
+                float yArr[] = new float[] {(float)ymean};
+                float zArr[] = new float[] {0.0f};
+                newPtVOI.importCurve(xArr, yArr, zArr);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel("AIF Point");
+                AIFImage.registerVOI(newPtVOI);
+			    ViewJFrameImage vFrame = new ViewJFrameImage(AIFImage);
+			    component = vFrame.getComponent(0);
+			    rect = component.getBounds();
+		    	format = "png";
+	  	        captureImage =
+	  	                new BufferedImage(rect.width, rect.height,
+	  	                                    BufferedImage.TYPE_INT_ARGB);
+	  	        component.paint(captureImage.getGraphics());
+	  	 
+	  	        ImageIO.write(captureImage, format, new File(outputFilePath + outputPrefix + "sliceAIF.png"));
+	  	        vFrame.dispose();
 	    	}
 	    	catch (IOException e) {
                 MipavUtil.displayError("Error: " + e + "\n");
                 setCompleted(false);
                 return;
             }
-	    	vGraph.dispose();
+	    	
 	    } // if (plotAIF)
 	    
 	    // Assemble prefiltered 'a' matrix from Ca
