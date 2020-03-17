@@ -346,6 +346,8 @@ public class LatticeModel {
 		LatticeModel.saveAnnotationsAsCSV(dir,fileName, annotations, false);
 	}
 	
+	
+	
 	/**
 	 * Saves the input annotations to the CSV file in the following format:
 	 * name,x,y,z
@@ -366,16 +368,28 @@ public class LatticeModel {
 		} else { // voiFileDir does not exist
 			fileDir.mkdir();
 		}
+		
 		File file = new File(fileDir + File.separator + fileName);
 		if (file.exists()) {
+			if ( annotations == null || annotations.getCurves().size() == 0 ) {
+	            int result = JOptionPane.showConfirmDialog(null, "No annotations found, delete annotations File from: " + fileDir + "?", "Delete Annotations", JOptionPane.YES_NO_OPTION);
+	            System.err.println( "Delete answer " + (result == JOptionPane.YES_OPTION) );
+	            if (result != JOptionPane.YES_OPTION) {
+	            	return;
+	            }
+			}
 			file.delete();
 			file = new File(fileDir + File.separator + fileName);
 		}
 		
-		if ( annotations == null )
+		if ( annotations == null ) {
+			System.err.println("annotations null");
 			return;
-		if ( annotations.getCurves().size() == 0 )
+		}
+		if ( annotations.getCurves().size() == 0 ) {
+			System.err.println("annotations size = 0");
 			return;
+		}
 		
 		try {
 			boolean saveLatticeSegment = false;
@@ -394,7 +408,7 @@ public class LatticeModel {
 			
 
 			
-			System.err.println( "saveAnnotationsAsCSV " + (annotations.getCurves().size() - curveAnnotationCount) );
+//			System.err.println( "saveAnnotationsAsCSV " + (annotations.getCurves().size() - curveAnnotationCount) );
 			
 			final FileWriter fw = new FileWriter(file);
 			final BufferedWriter bw = new BufferedWriter(fw);
@@ -441,11 +455,12 @@ public class LatticeModel {
 			e.printStackTrace();
 		}
 		Preferences.debug("Annotation written: " + numSaved + "\n", Preferences.DEBUG_ALGORITHM );
-		System.err.println( "saveAnnotationsAsCSV " + fileName + "  " + numSaved );
+//		System.err.println( "saveAnnotationsAsCSV " + fileName + "  " + numSaved );
 	}
 
-	protected static Vector3f inverseDiagonal( int slice, int extent, Vector3f[] verts, Vector3f target ) 
+	protected static Vector3f inverseDiagonal( ModelImage image, int slice, int extent, Vector3f[] verts, Vector3f target ) 
 	{
+		final int[] dimExtents = image.getExtents();
 		final int iBound = extent;
 		final int jBound = extent;
 
@@ -498,17 +513,18 @@ public class LatticeModel {
 				final int kIndex = Math.round(z);
 
 				// Bounds checking:
-				//				if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
-				//						|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) ) {
-				//
-				//					// do nothing
-				//				} else {
-				pt.set(i, j, slice);
-				float dist = pt.distance(target);
-				if ( dist < minDistance )
-				{
-					minDistance = dist;
-					closest.set(iIndex, jIndex, kIndex);
+				if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+						|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) ) {
+
+					// do nothing
+				} else {
+					pt.set(i, j, slice);
+					float dist = pt.distance(target);
+					if ( dist < minDistance )
+					{
+						minDistance = dist;
+						closest.set(iIndex, jIndex, kIndex);
+					}
 				}
 				//				}
 				/*
@@ -770,7 +786,9 @@ public class LatticeModel {
 			}
 			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
 			String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
-			checkParentDir(parentDir);		
+			if ( !imageName.contains("straightened" ) ) {
+				checkParentDir(parentDir);
+			}
 			
 			imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
 		}
@@ -1795,6 +1813,22 @@ public class LatticeModel {
 	{
 		return centerPositions;
 	}
+	
+	public int getLatticeCurveLength()
+	{
+		if ( centerPositions == null ) return 0;
+		return centerPositions.size();
+	}
+
+	// return position: lookat, up, right
+	public Vector3f[] getBasisVectors(int i) {
+		if ( centerPositions == null ) return null;
+		return new Vector3f[] {
+				centerPositions.elementAt(i), 
+				normalVectors.elementAt(i),
+				upVectors.elementAt(i),
+				rightVectors.elementAt(i) };
+	}
 
 	public VOIContour getLeftCurve()
 	{
@@ -2262,65 +2296,6 @@ public class LatticeModel {
 		return newLattice;
 	}
 
-	/**
-	 * Enables the user to save annotations to a user-selected file.
-	 */
-	public void saveAnnotations() {
-		final JFileChooser chooser = new JFileChooser();
-
-		if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-			chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-		} else {
-			chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-		}
-
-		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		final int returnVal = chooser.showSaveDialog(null);
-
-		String fileName = null, directory = null, voiDir;
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			fileName = chooser.getSelectedFile().getName();
-			directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-			Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, "true");
-			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-		}
-
-		if (fileName != null) {
-			voiDir = new String(directory + fileName + File.separator);
-			saveAnnotations(voiDir);
-			updateLattice(true);
-		}
-	}
-
-	public void saveAnnotations( String voiDir )
-	{
-		clear3DSelection();
-
-		imageA.unregisterAllVOIs();
-		imageA.registerVOI(annotationVOIs);
-		saveAllVOIsTo(voiDir, imageA);
-
-		imageA.unregisterAllVOIs();
-		imageA.registerVOI(annotationVOIs);
-		if (leftMarker != null) {
-			imageA.registerVOI(leftMarker);
-		}
-		if (rightMarker != null) {
-			imageA.registerVOI(rightMarker);
-		}
-		updateLattice(true);
-	}
-
-	/**
-	 * Saves the current annotations.
-	 * @param dir
-	 * @param fileName
-//	 */
-//	public void saveAnnotationsAsCSV(final String dir, final String fileName)
-//	{
-//		saveAnnotationsAsCSV(dir, fileName, annotationVOIs);
-//	}
-
 	public void saveAnnotationStraight(final ModelImage image, String fileDirName, String fileName )
 	{
 		String imageName = image.getImageName();
@@ -2422,9 +2397,9 @@ public class LatticeModel {
 		}
 		if (fileName != null)
 		{
-			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
+//			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
 			renameLattice();
-			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
+//			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
 			final String voiDir = new String(directory + fileName + File.separator);
 
 			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
@@ -2434,7 +2409,7 @@ public class LatticeModel {
 				latticePoints.getCurves().add(new VOIWormAnnotation(right.getCurves().elementAt(j)));
 			}
 			if ( latticePoints.getCurves().size() == 0 ) {
-				System.err.println( "saveLattice " + latticePoints.getCurves().size() );
+//				System.err.println( "saveLattice " + latticePoints.getCurves().size() );
 				return;
 			}
 			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
@@ -4143,12 +4118,6 @@ public class LatticeModel {
 	 */
 	public void showLattice(boolean display) {		
 		if ( display ) {
-			if ( leftContour != null ) {
-				imageA.registerVOI(leftContour);
-			}
-			if ( rightContour != null ) {
-				imageA.registerVOI(rightContour);
-			}
 			updateLattice(true);
 		}
 		if ( !display ) {
@@ -4175,6 +4144,10 @@ public class LatticeModel {
 			}
 			imageA.notifyImageDisplayListeners();
 		}
+//		VOIVector vois = imageA.getVOIs();
+//		for (int i = 0; i < vois.size(); i++) {
+//			System.err.println( vois.elementAt(i).getName() );
+//		}
 	}
 
 
@@ -8193,7 +8166,7 @@ public class LatticeModel {
 			corners[j] = kBox.elementAt(j);
 		}
 
-		return inverseDiagonal(slice, 2*extent, corners, annotation.firstElement() );
+		return inverseDiagonal(imageA, slice, 2*extent, corners, annotation.firstElement() );
 	}
 
 
@@ -9076,6 +9049,20 @@ public class LatticeModel {
 		LatticeModel.saveAnnotationsAsCSV(voiDir, "straightened_lattice.csv", latticePoints);
 		saveLatticeStatistics(outputDirectory + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
 
+
+		String voiSeamDir = outputDirectory + File.separator + "straightened_named_seamcells" + File.separator;
+		latticePoints.getCurves().clear();
+		for ( int j = 0; j < leftSide.getCurves().size(); j++ )
+		{
+			VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) leftSide.getCurves().elementAt(j);
+			VOIWormAnnotation rightAnnotation = (VOIWormAnnotation) rightSide.getCurves().elementAt(j);
+			if ( leftAnnotation.isSeamCell() || rightAnnotation.isSeamCell() ) {
+				latticePoints.getCurves().add(leftAnnotation);
+				latticePoints.getCurves().add(rightAnnotation);
+			}
+		}
+		LatticeModel.saveAnnotationsAsCSV(voiSeamDir, "straightened_seamcells.csv", latticePoints);
+		
 		transformedOrigin = new Vector3f( center );
 
 		resultImage.disposeLocal(false);

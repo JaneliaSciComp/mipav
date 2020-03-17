@@ -1538,6 +1538,47 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		InitializeObjectMotion(m_spkScene);
 	}
 	
+	private Vector3f cameraPosition;
+	public void setView( Vector3f[] basisVectors ) {
+		System.err.println( "eye " + m_spkCamera.GetLocation() );
+		System.err.println( "look at " + m_spkCamera.GetDVector() );
+		System.err.println( "up " + m_spkCamera.GetUVector() );
+		System.err.println( "right " + m_spkCamera.GetRVector() );
+		
+		System.err.println( "trackball " + m_spkScene.Local.GetRotate() + "  " + m_spkScene.Local.GetTranslate() );
+		
+		Matrix3f kTrackRotate = new Matrix3f();
+		kTrackRotate.set(
+				basisVectors[3].X,
+                basisVectors[2].X,
+                basisVectors[1].X,
+                basisVectors[3].Y,
+                basisVectors[2].Y,
+                basisVectors[1].Y,
+                basisVectors[3].Z,
+                basisVectors[2].Z,
+                basisVectors[1].Z);
+		m_spkScene.Local.SetRotateCopy(kTrackRotate);
+		
+		System.err.println( "basis " + m_spkScene.Local.GetRotate() );
+		
+		
+//		if ( basisVectors != null && basisVectors.length == 4 ) {
+//			Vector3f pos = new Vector3f( basisVectors[0] );
+//			m_kVolumeRayCast.volumeToLocalCoords( pos );
+//			cameraPosition = new Vector3f(m_spkCamera.GetLocation());
+//	        m_spkCamera.SetLocation(pos);
+//	        System.err.println("setView " + cameraPosition + "   " + pos );
+////			m_spkCamera.SetFrame(basisVectors[0], basisVectors[1], basisVectors[2], basisVectors[3]);
+//		}
+	}
+	
+	public void resetView( ) {
+		if ( cameraPosition != null ) {
+			m_spkCamera.SetLocation(cameraPosition);
+		}
+	}
+	
 	public void init()
 	{
 		m_bInit = false;

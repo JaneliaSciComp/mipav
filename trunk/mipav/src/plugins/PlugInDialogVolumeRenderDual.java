@@ -183,6 +183,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JButton previewUntwisting;
 	private JCheckBox displayModel;
 	private JCheckBox displaySurface;
+	
+	private int previewCount = 0;
 
 	private JButton nextButton;
 	private int nextDirection = 1;
@@ -444,6 +446,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
 			{
+				nextButton.setEnabled(false);
+				backButton.setEnabled(false);
 				nextBackFlag = true;
 				IntegratedWormData activeTemp = activeImage;
 				saveAll();
@@ -478,6 +482,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
 			else if ( command.equals("back") )
 			{
+				nextButton.setEnabled(false);
+				backButton.setEnabled(false);
 				nextBackFlag = true;
 				IntegratedWormData activeTemp = activeImage;
 				saveAll();
@@ -607,6 +613,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					greenFn = new TransferFunction(((ModelRGB)activeImage.volumeImage.getLUT()).getGreenFunction());
 				}
 				if ( previewUntwisting.getText().equals("preview") ) {
+					previewCount++;
 					// save image orientation: 
 					activeImage.volumeMatrix = new Matrix3f(activeRenderer.GetSceneRotation());
 					
@@ -645,13 +652,14 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeImage.voiManager.setPreviewMode(true, activeImage.voiManager.getLatticeStraight(), activeImage.voiManager.getAnnotationsStraight());
 
 					initDisplayLatticePanel(activeRenderer, activeImage.voiManager, activeImage);
-					if ( activeImage.annotationOpen ) {
+//					if ( activeImage.annotationOpen ) {
 						initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-					}
+//					}
 					activeImage.annotationPanelUI.setPreviewMode(true);
 					activeImage.latticeTable.setPreviewMode(true);
 				}
 				else {
+					previewCount--;
 					previewUntwisting.setText("preview");		
 					activeImage.voiManager.setImage(activeImage.wormImage, null);	
 					activeImage.volumeImage.UpdateData(activeImage.wormImage, activeImage.volumeImage.GetLUT(), true);
@@ -728,9 +736,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeImage.annotationPanelUI.setPreviewMode(false);
 					activeImage.latticeTable.setPreviewMode(false);
 
-					doneButton.setEnabled(true);
-					nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
-					backButton.setEnabled( imageIndex > 0 );	
+					if ( previewCount == 0 ) {
+						doneButton.setEnabled(true);
+						nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
+						backButton.setEnabled( imageIndex > 0 );
+					}
 				}
 				tabbedPane.setSelectedIndex(0);
 				tabbedPane.setSelectedIndex(selectedTab);
@@ -741,8 +751,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				imageIndex = Math.min( includeRange.size() - 1, imageIndex );
 				imageIndex = Math.max( 0, imageIndex );
 
-				backButton.setEnabled( imageIndex > 0 );
-				nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
+				if ( previewCount == 0 ) {
+					backButton.setEnabled( imageIndex > 0 );
+					nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
+				}
 			}
 //			if ( latticeChoices != null )
 //			{
@@ -893,9 +905,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			renderer.resetAxisXInv();
 		}
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
-		if ( dualGPU != null )
+		if ( dualGPU != null ) {
 			dualGPU.setDividerLocation(0.5);
-		integratedPanel.setDividerLocation(0.25);
+			integratedPanel.setDividerLocation(0.3);
+		}
+		else {
+			integratedPanel.setDividerLocation(0.5);
+		}
 		updateHistoLUTPanels(activeImage);
 		
 		System.err.println("rendererConfigured");
@@ -923,6 +939,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
         	}
 			nextBackFlag = false;
 		}
+		if ( previewCount == 0 ) {
+			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
+			backButton.setEnabled( imageIndex > 0 );
+		}
 	}
 	
 	
@@ -945,6 +965,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     	
     	if ( previousActive != activeRenderer ) {
     		
+    		VOIVector vois = activeImage.wormImage.getVOIs();
+    		for (int i = 0; i < vois.size(); i++) {
+    			System.err.println( vois.elementAt(i).getName() );
+    		}
+    		
     		if ( activeImage.voiManager.isPreview() ) {
         		previewUntwisting.setText("return");
     		}
@@ -959,17 +984,21 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     		updateHistoLUTPanels(activeImage);
     		
 
-			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Annotation" ) ) {
-				activeImage.voiManager.editAnnotations(false);
-				initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-				activeImage.annotationOpen = true;
-			}
+//			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Annotation" ) ) {
+//				activeImage.voiManager.editAnnotations(false);
+//				initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
+//				activeImage.annotationOpen = true;
+//			}
 			
 			if ( editMode == EditLattice ) {
 				leftImage.voiManager.editLattice();
 				rightImage.voiManager.editLattice();
 			}
     	}
+		if ( previewCount == 0 ) {
+			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
+			backButton.setEnabled( imageIndex > 0 );
+		}
     }
 
 
@@ -1346,9 +1375,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 					File voiFile = new File(baseFileDir + File.separator + fileName);
 					if ( editMode == ReviewResults ) {
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
-						String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+						fileName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
+						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
 						voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
 					}
 					if ( !voiFile.exists() )
@@ -1380,9 +1409,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					File voiFile = new File(baseFileDir + File.separator + fileName);
 					File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
 					if ( editMode == ReviewResults ) {
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
-						String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+						fileName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
+						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
 						voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
 						voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
 					}
@@ -2873,9 +2902,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if ( editMode == ReviewResults ) return;
 		if ( imageStack != null )
 		{
-			for ( int i = 0; i < imageStack.length; i++ )
+			int endIndex = dualGPU == null ? imageIndex + 1 : imageIndex + 2;
+			for ( int i = imageIndex; i < endIndex; i++ )
 			{
-				System.err.println("saveAll " + i);
+//				System.err.println("saveAll " + i);
 				activeImage = imageStack[i];
 				saveIntegrated();
 			}

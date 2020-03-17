@@ -490,7 +490,7 @@ public class WormData
 
 	public void saveIntegratedMarkerAnnotations(VOI annotations)
 	{		
-		System.err.println("saveIntegratedMarkerAnnotations");
+//		System.err.println("saveIntegratedMarkerAnnotations");
 		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + integratedAnnotationOutput + File.separator, "annotations.csv", annotations);
 	}
 

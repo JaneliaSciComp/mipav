@@ -618,12 +618,7 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
     }
-    
-    public void SetClipEllipsoid( Ellipsoid3f ellipsoid, boolean bEnable )
-    {
-    	m_kVolumeShaderEffect.SetClipEllipsoid(ellipsoid, bEnable);
-    }
-    
+        
     public void SetClipSphere( Vector3f center, Vector3f scale, float radius, boolean bEnable )
     {
     	if ( m_kVolumeShaderEffect != null ) {
