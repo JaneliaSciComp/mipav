@@ -33,6 +33,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -177,6 +178,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					for ( int i = 0; i < annotations.getCurves().size(); i++ )
 					{
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+						System.err.println( text.getText() + "  " + text.getDisplay() );
 						text.display(true);
 					}
 				}
@@ -477,8 +479,13 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-//		System.err.println("annotationChanged " + imageA.GetImage().getImageName() );
+		System.err.println("annotationChanged " + imageA.GetImage().getImageName() );
 
+		VOIVector vois = imageA.GetImage().getVOIs();
+		for (int i = 0; i < vois.size(); i++) {
+			System.err.println( vois.elementAt(i).getName() );
+		}
+		
 		if ( voiManager != null )
 		{
 			// get current annotations and update table:
@@ -506,7 +513,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						if ( text == null ) continue;
 						
-//						System.err.println( text.getText() );
+						System.err.println( "      " + text.getText() );
 						names.add(text.getText());
 						Vector3f pos = text.elementAt(0);
 						float value = imageA.GetImage().getFloat((int)pos.X, (int)pos.Y, (int)pos.Z);

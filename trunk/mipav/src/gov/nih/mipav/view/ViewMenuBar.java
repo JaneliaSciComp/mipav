@@ -1360,12 +1360,7 @@ public class ViewMenuBar {
 												new ButtonGroup()),
 								menuBuilder.buildRadioButtonMenuItem("Edit Annotations", "EditAnnotations", false),
 								menuBuilder.buildMenuItem("Open Annotations", "OpenAnnotations", 0, null,
-										false)/*
-												 * , menuBuilder.buildMenuItem(
-												 * "Save Annotations",
-												 * "SaveAnnotations", 0, null,
-												 * false)
-												 */
+										false)
 				}), menuBuilder.makeMenu("Worm Neurite", true,
 						new JMenuItem[] { menuBuilder.buildMenuItem("Open Neurite", "OpenNeurite", 0, null, false), }),
 						menuBuilder.makeMenu("Worm VOI", true, new JMenuItem[] { 

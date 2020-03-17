@@ -111,12 +111,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				openAnnotations(directory, fileName);
 			}
 		} 
-		else if ( command.equals("SaveAnnotations") ) {
-			if ( latticeModel != null )
-			{
-				latticeModel.saveAnnotations( );
-			}
-		}
 		else if ( command.equals("OpenNeurite") ) {
 			// get the voi directory
 			String fileName = null;
@@ -455,10 +449,8 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			latticeModel = new LatticeModel( m_kImageA );
 			saveA = false;
 		}
-		System.err.println("addAnnotations");
 		if ( saveA )
 		{
-			System.err.println("saveVOIs");
 			saveVOIs("addAnnotations");
 		}
 		latticeModel.addAnnotations( newAnnotationVOI );
@@ -751,6 +743,17 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			latticeModel.showLatticeLabels(display);
 		}		
 	}
+
+	public void setRendererView(int position) {
+		if ( latticeModel != null )
+		{
+			renderer.setView(latticeModel.getBasisVectors(position));
+		}		
+	}
+
+	public void resetRendererView() {
+		renderer.resetView();
+	}
 	
 	public TriMesh generateTriMesh( int stepsize ) {
 		if ( latticeModel != null )
@@ -905,6 +908,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 
+	public int getLatticeCurveLength() {
+		if ( latticeModel != null )
+		{
+			latticeModel.getLatticeCurveLength();
+		}
+		return 0;
+	}
 	
 	public VOIVector getLatticeStraight()
 	{

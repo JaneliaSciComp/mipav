@@ -67,14 +67,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform vec4 clipEyeInv;" + "\n"
     	+ "" + "\n";
     
-    private static String clipEllipsoidParameters = ""
-        + "uniform vec4 ellipsoidCenter;" + "\n"
-        + "uniform vec4 ellipsoidAxis0;" + "\n"
-        + "uniform vec4 ellipsoidAxis1;" + "\n"
-        + "uniform vec4 ellipsoidAxis2;" + "\n"
-        + "uniform vec4 ellipsoidExtent;" + "\n"
-        + "" + "\n";
-    
     private static String clipSphereParameters = ""
             + "uniform vec4 sphereCenter;" + "\n"
             + "uniform vec4 sphereScale;" + "\n"
@@ -713,11 +705,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	checkPixelProgram();
     }
     
-    public void SetClipEllipsoid(Ellipsoid3f ellipsoid, boolean bEnable ) {
-    	super.SetClipEllipsoid(ellipsoid, bEnable);
-    	checkPixelProgram();
-    }
-    
     public void SetClipSphere(Vector3f center, Vector3f scale, float radius, boolean bEnable ) {
     	super.SetClipSphere(center, scale, radius, bEnable);
     	checkPixelProgram();
@@ -978,10 +965,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		text += clipAEParameters;
     	}
-    	if ( isClipEllipsoid() )
-    	{
-    		text += clipEllipsoidParameters;
-    	}
     	if ( isClipSphere() )
     	{
     		text += clipSphereParameters;
@@ -1016,10 +999,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		if ( isClipAE() )
     		{
         		text += clipAESetup;    			
-    		}
-    		if ( isClipEllipsoid() )
-    		{
-    			text += clipEllipsoidSetup;
     		}
     		if ( isClipSphere() )
     		{

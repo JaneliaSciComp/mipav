@@ -67,7 +67,7 @@ import javax.swing.table.TableCellEditor;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-public class JPanelLattice extends JInterfaceBase implements ActionListener, LatticeListener, TableModelListener, KeyListener, MouseListener, ListSelectionListener {
+public class JPanelLattice extends JInterfaceBase implements ActionListener, LatticeListener, TableModelListener, KeyListener, MouseListener, ListSelectionListener, ChangeListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -81,18 +81,18 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	// turns on/off displaying individual annotations
 	private JCheckBox displaySeam;
 	private JCheckBox displayLattice;
-//	private JCheckBox displayGroupLabel;
+	//	private JCheckBox displayGroupLabel;
 	// table user-interface for editing the positions of the annotations:
 	private ListSelectionModel annotationList;
 	private JTable annotationTable;
 	private DefaultTableModel annotationTableModel;
 	
-	// table user-interface for editing the positions of the annotations:
-//	private ListSelectionModel annotationGroupList;
-//	private JTable annotationGroupTable;
-//	private DefaultTableModel annotationGroupTableModel;
-//	private String selectedPrefix = null;
-	
+	// latice - based clipping:
+	private JCheckBox viewPoint;
+	private JSlider latticePosition;
+	private JCheckBox clipLattice;
+	private JSlider clipDistance;
+
 
 	public JPanelLattice( VOILatticeManagerInterface voiInterface, ModelImage image ) {
 		voiManager = voiInterface;
@@ -121,6 +121,15 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 				voiManager.showLattice( displayLattice.isSelected() );
 			}
 		}
+		else if ( command.equals("viewPoint") ) {
+			if ( viewPoint.isSelected() ) {
+				setRendererView(latticePosition.getValue());
+			}
+			else {
+				voiManager.resetRendererView();
+			}
+		}
+		else if ( command.equals("clipLattice") ) {}
 	}
 
 	/* (non-Javadoc)
@@ -140,12 +149,12 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			for ( int i = numRows -1; i >= 0; i-- ) {
 				annotationTableModel.removeRow(i);
 			}		
-			
+
 			if ( lattice != null ) {
 				if ( lattice.size() >= 2 ) {
 					VOI left = lattice.elementAt(0);
 					VOI right = lattice.elementAt(1);
-					
+
 					// get picked point and index:
 					Vector3f picked = voiManager.getLatticePickedPoint();
 					int pickedIndex = -1;
@@ -157,9 +166,9 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 							}
 						}
 					}
-//					System.err.println("latticeChanged " + pickedIndex + " " + voiManager.isShift() );
-					
-					
+					//					System.err.println("latticeChanged " + pickedIndex + " " + voiManager.isShift() );
+
+
 					if ( left.getCurves().size() == right.getCurves().size() ) {
 						for ( int i = 0; i < left.getCurves().size(); i++ ) {
 							VOIWormAnnotation leftMarker = (VOIWormAnnotation) left.getCurves().elementAt(i);
@@ -194,7 +203,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
 	 */
 	public void tableChanged(TableModelEvent e) {
-//		System.err.println("tableChanged");
+		//		System.err.println("tableChanged");
 		// Track updates to the table and update the corresponding annotation.
 		// The user can change the annotation name and position (x,y,z) with table edits.
 		// Does not currently check type.
@@ -202,7 +211,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 		{
 			int row = annotationTable.getSelectedRow();
 			int column = annotationTable.getSelectedColumn();
-//			System.err.println(row + "  " + column );
+			//			System.err.println(row + "  " + column );
 
 			String newName = null;
 			VOIVector lattice = voiManager.getLattice();
@@ -286,7 +295,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			}
 		}
 	}
-	
+
 	public void valueChanged(ListSelectionEvent e) {
 		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
 			return;
@@ -312,7 +321,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			annotationTableModel.addColumn("x");
 			annotationTableModel.addColumn("y");
 			annotationTableModel.addColumn("z");
-			
+
 			annotationTableModel.addTableModelListener(this);
 
 			annotationTable = new JTable(annotationTableModel);
@@ -344,20 +353,47 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			GridBagConstraints gbcC = new GridBagConstraints();
 
 			JPanel labelPanel = new JPanel(gbc);
+			labelPanel.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Display"));
 			gbcC.gridx = 0;			gbcC.gridy = 0;
-//			 Display checkbox for displaying individual annotations:
+			//			 Display checkbox for displaying individual annotations:
 			displaySeam = new JCheckBox("Display Labels", false);
 			displaySeam.addActionListener(this);
 			displaySeam.setActionCommand("displayLabel");
 			labelPanel.add( displaySeam, gbcC );
-			
+
 			displayLattice = new JCheckBox("Display Lattice", true);
 			displayLattice.addActionListener(this);
 			displayLattice.setActionCommand("displayLattice");
 			gbcC.gridy++;
 			labelPanel.add( displayLattice, gbcC );
 
-			labelPanel.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Display"));
+			gbcC.gridx = 0;			gbcC.gridy = 0;
+			JPanel clipPanel = new JPanel(gbc);
+			clipPanel.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Lattice clipping"));
+			viewPoint = new JCheckBox("view", false);
+			viewPoint.addActionListener(this);
+			viewPoint.setActionCommand("viewPoint");
+			clipPanel.add( viewPoint, gbcC );
+			gbcC.gridx++;
+			latticePosition = new JSlider(0, voiManager.getLatticeCurveLength(), 0);
+			latticePosition.addChangeListener(this);
+			clipPanel.add( latticePosition, gbcC );
+			gbcC.gridy++;
+
+			gbcC.gridx = 0;
+			clipLattice = new JCheckBox("clip", false);
+			clipLattice.addActionListener(this);
+			clipLattice.setActionCommand("clipLattice");
+			clipPanel.add( clipLattice, gbcC );
+			gbcC.gridx++;
+			clipDistance = new JSlider(0, 10, 5);
+			clipDistance.addChangeListener(this);
+			clipPanel.add( clipDistance, gbcC );
+			gbcC.gridy++;
+
+			JPanel panels = new JPanel(new BorderLayout());
+			panels.add(labelPanel, BorderLayout.NORTH);
+//			panels.add(clipPanel, BorderLayout.CENTER);
 
 			// build the annotation table for the list of annotations:
 			buildAnnotationTable();
@@ -369,8 +405,8 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			kScrollPane.setPreferredSize( size );
 			kScrollPane.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Lattice"));
 
-	
-			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, kScrollPane, labelPanel );
+
+			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, kScrollPane, panels );
 			annotationPanel.setOneTouchExpandable(true);
 			annotationPanel.setDividerSize(6);
 			annotationPanel.setContinuousLayout(true);
@@ -387,92 +423,92 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	private boolean ctrlKey = false;
 	public void keyTyped(KeyEvent e) {
 
-//		ctrlKey = e.isControlDown();
-//
-//		System.err.println("keyTyped");
-//		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
-//			if ( voiManager != null )
-//			{
-//				if ( (e.getSource() == annotationTable) ) {
-//					// add a new annotation by tabbing:
-//					int row = annotationTable.getSelectedRow();
-//					int col = annotationTable.getSelectedColumn();
-//					if ( (row == 0)  && (col == 0) ) {
-//
-//						VOIWormAnnotation text = new VOIWormAnnotation();
-//						text.setText("center" );
-//						int dimX = imageA.getExtents()[0];
-//						int dimY = imageA.getExtents()[1];
-//						int dimZ = imageA.getExtents()[2];
-//						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-//						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-//
-//						short id = (short) imageA.getVOIs().getUniqueID();
-//						int colorID = 0;
-//						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-//						newTextVOI.getCurves().add(text);
-//
-//						voiManager.clear3DSelection();
-//						voiManager.addAnnotation( newTextVOI );
-//						voiManager.clear3DSelection();
-//						int nRows = annotationTable.getRowCount();
-//						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
-//					}
-//				}
-////				else if ( e.getSource() == annotationGroupTable ) {
-////					int row = annotationGroupTable.getSelectedRow();
-////					int col = annotationGroupTable.getSelectedColumn();
-////					if ( (row == 0)  && (col == 0) ) {
-////						annotationGroupTableModel.removeTableModelListener(this);
-////						annotationGroupTableModel.addRow( new Object[]{  } );
-////						annotationGroupTableModel.addTableModelListener(this);
-////
-////						int nRows = annotationGroupTable.getRowCount();
-////						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
-////					}	
-////				}
-//			}
-//		}
-//		else if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
-//			System.err.println("delete");
-//			if ( (e.getSource() == annotationTable) ) {
-//				int row = annotationTable.getSelectedRow();
-//				int col = annotationTable.getSelectedColumn();
-//				if ( col == 0 && row >= 0 )
-//				{
-//					TableCellEditor editor = annotationTable.getCellEditor();
-//					if ( editor != null )
-//						editor.stopCellEditing();
-//					voiManager.deleteSelectedPoint();
-//					int nRows = annotationTable.getRowCount();
-//					if ( row < nRows ) {
-//						annotationTable.setRowSelectionInterval(row, row);
-//					}
-//					else if ( nRows > 0 ) {
-//						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
-//					}
-//				}
-//			}
-////			else if ( (e.getSource() == annotationGroupTable) ) {
-////				int row = annotationGroupTable.getSelectedRow();
-////				int col = annotationGroupTable.getSelectedColumn();
-////				if ( col == 0 && row >= 0 )
-////				{
-////					TableCellEditor editor = annotationGroupTable.getCellEditor();
-////					if ( editor != null )
-////						editor.stopCellEditing();
-////
-////					voiManager.deleteSelectedPoint();
-////					int nRows = annotationGroupTable.getRowCount();
-////					if ( row < nRows ) {
-////						annotationGroupTable.setRowSelectionInterval(row, row);
-////					}
-////					else if ( nRows > 0 ) {
-////						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
-////					}
-////				}
-////			}
-//		}
+		//		ctrlKey = e.isControlDown();
+		//
+		//		System.err.println("keyTyped");
+		//		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
+		//			if ( voiManager != null )
+		//			{
+		//				if ( (e.getSource() == annotationTable) ) {
+		//					// add a new annotation by tabbing:
+		//					int row = annotationTable.getSelectedRow();
+		//					int col = annotationTable.getSelectedColumn();
+		//					if ( (row == 0)  && (col == 0) ) {
+		//
+		//						VOIWormAnnotation text = new VOIWormAnnotation();
+		//						text.setText("center" );
+		//						int dimX = imageA.getExtents()[0];
+		//						int dimY = imageA.getExtents()[1];
+		//						int dimZ = imageA.getExtents()[2];
+		//						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+		//						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+		//
+		//						short id = (short) imageA.getVOIs().getUniqueID();
+		//						int colorID = 0;
+		//						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+		//						newTextVOI.getCurves().add(text);
+		//
+		//						voiManager.clear3DSelection();
+		//						voiManager.addAnnotation( newTextVOI );
+		//						voiManager.clear3DSelection();
+		//						int nRows = annotationTable.getRowCount();
+		//						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+		//					}
+		//				}
+		////				else if ( e.getSource() == annotationGroupTable ) {
+		////					int row = annotationGroupTable.getSelectedRow();
+		////					int col = annotationGroupTable.getSelectedColumn();
+		////					if ( (row == 0)  && (col == 0) ) {
+		////						annotationGroupTableModel.removeTableModelListener(this);
+		////						annotationGroupTableModel.addRow( new Object[]{  } );
+		////						annotationGroupTableModel.addTableModelListener(this);
+		////
+		////						int nRows = annotationGroupTable.getRowCount();
+		////						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
+		////					}	
+		////				}
+		//			}
+		//		}
+		//		else if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
+		//			System.err.println("delete");
+		//			if ( (e.getSource() == annotationTable) ) {
+		//				int row = annotationTable.getSelectedRow();
+		//				int col = annotationTable.getSelectedColumn();
+		//				if ( col == 0 && row >= 0 )
+		//				{
+		//					TableCellEditor editor = annotationTable.getCellEditor();
+		//					if ( editor != null )
+		//						editor.stopCellEditing();
+		//					voiManager.deleteSelectedPoint();
+		//					int nRows = annotationTable.getRowCount();
+		//					if ( row < nRows ) {
+		//						annotationTable.setRowSelectionInterval(row, row);
+		//					}
+		//					else if ( nRows > 0 ) {
+		//						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+		//					}
+		//				}
+		//			}
+		////			else if ( (e.getSource() == annotationGroupTable) ) {
+		////				int row = annotationGroupTable.getSelectedRow();
+		////				int col = annotationGroupTable.getSelectedColumn();
+		////				if ( col == 0 && row >= 0 )
+		////				{
+		////					TableCellEditor editor = annotationGroupTable.getCellEditor();
+		////					if ( editor != null )
+		////						editor.stopCellEditing();
+		////
+		////					voiManager.deleteSelectedPoint();
+		////					int nRows = annotationGroupTable.getRowCount();
+		////					if ( row < nRows ) {
+		////						annotationGroupTable.setRowSelectionInterval(row, row);
+		////					}
+		////					else if ( nRows > 0 ) {
+		////						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
+		////					}
+		////				}
+		////			}
+		//		}
 	}
 
 	@Override
@@ -557,7 +593,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 					text.setSelected( false );
 					text.updateSelected( imageA );
 				}
-				
+
 				if ( column < 4 ) {
 					VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(row);
 
@@ -573,6 +609,24 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 				imageA.notifyImageDisplayListeners();
 			}
 		}
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		Object source = e.getSource();
+		if ( source == latticePosition ) {
+			int value = latticePosition.getValue();
+			System.err.println("stateChanged " + value);
+			setRendererView(value);
+		}
+		if ( source == clipDistance ) {
+			int value = clipDistance.getValue();
+			System.err.println("stateChanged " + value);
+		}
+	}
+	
+	private void setRendererView(int position) {
+		voiManager.setRendererView(position);
 	}
 
 }
