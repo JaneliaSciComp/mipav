@@ -1251,7 +1251,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                 } else if (passNum == 1) {
                     reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
                 }
-            } else if (lightboxFileList.size() == 4) {
+            } else if (lightboxFileList.size() == 6) {
                 // core no PWI, perfusion, core w/ PWI, dwi
                 
                 if (passNum == 1) {
@@ -1264,6 +1264,10 @@ public class StrokeSegmentationDicomReceiverPWI {
                     passDescr = "ADC image with core segmentation" + passDetails;
                 } else if (passNum == 3) {
                     passDescr = "DWI image";
+                } else if (passNum == 5) {
+                    passDescr = "AIF curve";
+                } else if (passNum == 6) {
+                    passDescr = "AIF location";
                 }
                 
                 reportTxt += "<h3>" + passDescr + "</h3>\n";
