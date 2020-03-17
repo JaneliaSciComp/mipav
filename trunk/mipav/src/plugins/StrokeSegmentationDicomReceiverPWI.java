@@ -1278,7 +1278,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                     
                     if (passNum == 1) {
                         if (tmaxTable.get(6).get(lightboxFileList.get(1)) > 0) {
-                            double perfVol = tmaxTable.get(6).get(lightboxFileList.get(1)).doubleValue();
+                            double perfVol = tmaxTable.get(6).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(8).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(10).get(lightboxFileList.get(1)).doubleValue();
                             
                             double noPwiCore = coreObjectTable.get(lightboxFileList.get(0)).doubleValue();
                             double noPwiCoreDiff = (perfVol - noPwiCore) * resFactorCC;
@@ -1289,7 +1289,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                         }
                     } else if (passNum == 4) {
                         if (tmaxTable.get(6).get(lightboxFileList.get(1)) > 0) {
-                            double perfVol = tmaxTable.get(6).get(lightboxFileList.get(1)).doubleValue();
+                            double perfVol = tmaxTable.get(6).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(8).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(10).get(lightboxFileList.get(1)).doubleValue();
                             
                             double pwiCore = coreObjectTable.get(lightboxFileList.get(3)).doubleValue();
                             double pwiCoreDiff = (perfVol - pwiCore) * resFactorCC;
@@ -1300,15 +1300,17 @@ public class StrokeSegmentationDicomReceiverPWI {
                         }
                     }
                 } else if (tmaxTable.get(6).get(lightboxFileList.get(i)) > 0) {
-                    double[] perfVolList = new double[3];
-                    perfVolList[0] = tmaxTable.get(4).get(lightboxFileList.get(i)).doubleValue();
-                    perfVolList[1] = tmaxTable.get(6).get(lightboxFileList.get(i)).doubleValue();
-                    perfVolList[2] = tmaxTable.get(10).get(lightboxFileList.get(i)).doubleValue();
+                    double[] perfVolList = new double[4];
+                    perfVolList[3] = tmaxTable.get(10).get(lightboxFileList.get(i)).doubleValue();
+                    perfVolList[2] = perfVolList[3] + tmaxTable.get(8).get(lightboxFileList.get(i)).doubleValue();
+                    perfVolList[1] = perfVolList[2] + tmaxTable.get(6).get(lightboxFileList.get(i)).doubleValue();
+                    perfVolList[0] = perfVolList[1] + tmaxTable.get(4).get(lightboxFileList.get(i)).doubleValue();
                     
                     reportTxt += "<p>" + "<b>" + "Tmax > 4 volume (mL): " + "</b>" + format.format(perfVolList[0] * resFactorCC) + "</p>\n";
                     reportTxt += "<p>" + "<b>" + "Tmax > 6 volume (mL): " + "</b>" + format.format(perfVolList[1] * resFactorCC) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Tmax > 10 volume (mL): " + "</b>" + format.format(perfVolList[2] * resFactorCC) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Hypoperfusion Index (Tmax > 10s / Tmax > 6s): " + "</b>" + format.format(perfVolList[2] / perfVolList[1]) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 8 volume (mL): " + "</b>" + format.format(perfVolList[2] * resFactorCC) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 10 volume (mL): " + "</b>" + format.format(perfVolList[3] * resFactorCC) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Hypoperfusion Index (Tmax > 10s / Tmax > 6s): " + "</b>" + format.format(perfVolList[3] / perfVolList[1]) + "</p>\n";
                 } else if (passNum == 1 || passNum == 4) {
                     reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
                 } else if (passNum == 2) {

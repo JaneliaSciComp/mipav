@@ -100,7 +100,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
     private Color coreLightboxColor = Color.RED;
     
-    private static final int[] pwiThreshList = new int[] {4, 6, 10};
+    private static final int[] pwiThreshList = new int[] {4, 6, 8, 10};
     
 //    private File threshLightboxFile;
 //    private File coreLightboxFile;
@@ -1384,6 +1384,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             		"Tmax > " + pwiThreshList[0] + "s Volume",
             		"Tmax > " + pwiThreshList[1] + "s Volume",
             		"Tmax > " + pwiThreshList[2] + "s Volume",
+            		"Tmax > " + pwiThreshList[3] + "s Volume",
             		"Hypoperfusion Index (Tmax > 10s / Tmax > 6s)",
             		"Mismatch (Tmax > 6s - core) " + volUnitsStr, "Mismatch Ratio (Tmax > 6s / core)",
             		"Mismatch (Tmax > 6s - core using Tmax) " + volUnitsStr, "Mismatch Ratio (Tmax > 6s / core using Tmax)"));
@@ -1399,8 +1400,14 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 int coreSize = getCoreSize(getLightboxFileList().get(i));
 
                 boolean isPerf = false;
-                for (int perfIndex = 0; perfIndex < pwiThreshList.length; perfIndex++) {
+                for (int perfIndex = pwiThreshList.length - 1; perfIndex <= 0; perfIndex--) {
                     int perfSize = getPerfusionSize(getLightboxFileList().get(i), pwiThreshList[perfIndex]);
+                    
+                    // add in previous higher thresholds, if we're not at the highest threshold already
+                    if (perfIndex + 1 < pwiThreshList.length) {
+                        perfSize += perfusionSize[perfIndex + 1];
+                    }
+                    
                     if (perfSize > 0) {
                         isPerf = true;
                         perfusionSize[perfIndex] = perfSize;
@@ -1423,10 +1430,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             double perfusionVol0 = perfusionSize[0] * ccFactor;
             double perfusionVol1 = perfusionSize[1] * ccFactor;
             double perfusionVol2 = perfusionSize[2] * ccFactor;
+            double perfusionVol3 = perfusionSize[3] * ccFactor;
             
             double hypoperfusionIndex = 0;
             if (perfusionSize[1] > 0) {
-                hypoperfusionIndex = perfusionSize[2] / perfusionSize[1];
+                hypoperfusionIndex = perfusionSize[3] / perfusionSize[1];
             }
             
             double perfusionMismatchDwi = 0;
@@ -1441,7 +1449,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
             
             System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize[1]);
-            csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCoreVol, pwiCoreVol, perfusionVol0, perfusionVol1, perfusionVol2, hypoperfusionIndex, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);
+            csvPrinter.printRecord(outputDir, dwiFile, adcFile, pwiFile, dwiCoreVol, pwiCoreVol, perfusionVol0, perfusionVol1, perfusionVol2, perfusionVol3, hypoperfusionIndex, perfusionMismatchDwi, perfusionRatioDwi, perfusionMismatchPwi, perfusionRatioPwi);
         } catch (final IOException e) {
             e.printStackTrace();
             MipavUtil.displayError("Error writing core stats file: " + statsFile);
@@ -2697,7 +2705,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         } else if (tmaxVal == pwiThreshList[1]) {
             return Color.GREEN;
         } else if (tmaxVal == pwiThreshList[2]) {
-            return Color.RED;
+            return Color.YELLOW;
+        } else if (tmaxVal == pwiThreshList[3]) {
+                return Color.RED;
         } else {
             return null;
         }
