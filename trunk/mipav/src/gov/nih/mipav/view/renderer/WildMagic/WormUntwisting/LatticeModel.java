@@ -2205,7 +2205,8 @@ public class LatticeModel {
 	}
 
 
-	public VOI retwistAnnotations(VOIVector lattice) {
+	public VOI retwistAnnotations(VOIVector lattice) {	
+		
 		setLattice(lattice);
 		if ( annotationVOIs == null ) return null;
 		for ( int i = annotationVOIs.getCurves().size() - 1; i >=0; i-- ) {
@@ -2221,11 +2222,12 @@ public class LatticeModel {
 				text.modified(true);
 				System.err.println( "RETWIST ANNOTATIONS " + text.getText() );
 			}
-		}
+		}	
 		return annotationVOIs;
 	}
 
 	public VOIVector retwistLattice(VOIVector lattice) {
+		
 		VOIVector newLattice = null;
 		VOI left3D = null;
 		VOI right3D = null;
@@ -3797,12 +3799,18 @@ public class LatticeModel {
 	 * @param newLattice
 	 */
 	public void setLattice(final VOIVector newLattice) {
-		if ( (lattice != null) && (lattice != newLattice) ) {
+		
+		if ( lattice != null ) {
 			for ( int i = 0; i < lattice.size(); i++ ) {
 				imageA.unregisterVOI(lattice.elementAt(i));
 			}
-			lattice.removeAllElements();
-		}
+			if ( leftContour != null )  imageA.unregisterVOI(leftContour);
+			if ( rightContour != null ) imageA.unregisterVOI(rightContour);
+			if ( lattice != newLattice ) {
+				lattice.removeAllElements();
+			}
+		}		
+		
 		this.lattice = newLattice;
 		left = null;
 		right = null;
@@ -4028,8 +4036,8 @@ public class LatticeModel {
 	public void setPreviewMode( boolean preview, VOIVector lattice, VOI annotations )
 	{
 		this.previewMode = preview;
-		setAnnotations(annotations);
 		setLattice(lattice);
+		setAnnotations(annotations);
 	}
 
 
@@ -5053,7 +5061,7 @@ public class LatticeModel {
 		float length = centerSpline.GetLength(0, 1) / stepSize;
 		//		System.err.println( "Generate Curves " + length );
 		int maxLength = (int)Math.ceil(length);
-		float step = 1;
+		float step = stepSize;
 		if ( maxLength != length )
 		{
 			step = stepSize * (length / maxLength);

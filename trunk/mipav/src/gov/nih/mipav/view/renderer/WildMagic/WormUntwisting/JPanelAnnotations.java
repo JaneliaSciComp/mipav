@@ -480,11 +480,6 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 */
 	public void annotationChanged() {
 		System.err.println("annotationChanged " + imageA.GetImage().getImageName() );
-
-		VOIVector vois = imageA.GetImage().getVOIs();
-		for (int i = 0; i < vois.size(); i++) {
-			System.err.println( vois.elementAt(i).getName() );
-		}
 		
 		if ( voiManager != null )
 		{
@@ -513,7 +508,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
 						if ( text == null ) continue;
 						
-						System.err.println( "      " + text.getText() );
+//						System.err.println( "      " + text.getText() );
 						names.add(text.getText());
 						Vector3f pos = text.elementAt(0);
 						float value = imageA.GetImage().getFloat((int)pos.X, (int)pos.Y, (int)pos.Z);
