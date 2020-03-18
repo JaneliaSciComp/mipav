@@ -22,11 +22,15 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
+import gov.nih.mipav.model.GaussianKernelFactory;
+import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
 import gov.nih.mipav.model.algorithms.NelderMead;
 import gov.nih.mipav.model.algorithms.Statistics;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
@@ -76,6 +80,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private String pwiImageFileDirectory;
     private ModelImage pwiImage = null;
+    private float xysigma = 5.0f;
     
     private boolean calculateMaskingThreshold = true;
     
@@ -141,12 +146,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      * Constructor.
      *
      */
-    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean calculateMaskingThreshold, int masking_threshold,
+    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, float xysigma, boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
     		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
+    	this.xysigma = xysigma;
     	outputFilePath = pwiImageFileDirectory;
     	this.calculateMaskingThreshold = calculateMaskingThreshold;
     	this.masking_threshold = masking_threshold;
@@ -545,7 +551,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
 						for (t = 0; t < tDim; t++) {
-							data[z][y][x][t] = buffer[x + y*xDim + t*length + z*tDim*length];
+							if (t == 0) {
+							    data[z][y][x][t] =(short)Math.round( (3.0*buffer[x + y*xDim + t*length + z*tDim*length] + 
+							    		buffer[x + y*xDim + (t+1)*length + z*tDim*length])/4.0);
+							}
+							else if (t == tDim-1) {
+								data[z][y][x][t] =(short)Math.round( (buffer[x + y*xDim + (t-1)*length + z*tDim*length] + 
+							    		3.0*buffer[x + y*xDim + t*length + z*tDim*length])/4.0);	
+							}
+							else {
+								data[z][y][x][t] =(short)Math.round( (buffer[x + y*xDim + (t-1)*length + z*tDim*length] + 
+							    		3.0*buffer[x + y*xDim + t*length + z*tDim*length] + 
+							    		buffer[x + y*xDim + (t+1)*length + z*tDim*length])/5.0);		
+							}
 						}
 					}
 				}
@@ -556,23 +574,92 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
 						for (t = 0; t < tDim; t++) {
-						    data[z][y][x][t] = buffer[x + y*xDim + z*length + t*volume];
+							if (t == 0) {
+						        data[z][y][x][t] = (short)Math.round( (3.0*buffer[x + y*xDim + z*length + t*volume] +
+						    		buffer[x + y*xDim + z*length + (t+1)*volume])/4.0);
+							}
+							else if (t == tDim-1) {
+								data[z][y][x][t] = (short)Math.round( (buffer[x + y*xDim + z*length + (t-1)*volume] +
+							    		3.0*buffer[x + y*xDim + z*length + t*volume])/4.0);	
+							}
+							else {
+								data[z][y][x][t] = (short)Math.round( (buffer[x + y*xDim + z*length + (t-1)*volume] +
+							    		3.0*buffer[x + y*xDim + z*length + t*volume] + 
+							    		buffer[x + y*xDim + z*length + (t+1)*volume])/5.0);		
+							}
 						}
 					}
 				}
 			}	
     	}
     	
+    	fireProgressStateChanged("2D Gaussian blurring  ...");
+        fireProgressStateChanged(15);
+    	float outputBuffer[];
+    	float inputBuffer[] = new float[length];
+    	extents2D = new int[] {xDim,yDim};
+    	float[] sigmas = new float[] {xysigma, xysigma};
+    	GaussianKernelFactory kernelFactory = GaussianKernelFactory.getInstance(sigmas);
+    	kernelFactory.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
+    	Kernel gaussianKernel = kernelFactory.createKernel();
+    	boolean color = false;
+    	for (z = 0; z < zDim; z++) {
+    		for (t = 0; t < tDim; t++) {
+    			for (y = 0; y < yDim; y++) {
+    				for (x = 0; x < xDim; x++) {
+    					inputBuffer[x + y * xDim] = data[z][y][x][t];
+    				}
+    			}
+    			
+    			AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
+    					inputBuffer, extents2D, gaussianKernel.getData(), color);
+                convolver.run();
+    	        if (threadStopped) {
+    	            setCompleted(false);
+    	            finalize();
+
+    	            return;
+    	        }
+    	        
+    	        outputBuffer = convolver.getOutputBuffer();
+    	        if (threadStopped) {
+    	            setCompleted(false);
+    	            finalize();
+
+    	            return;
+    	        }
+    	        
+    	        for (y = 0; y < yDim; y++) {
+    				for (x = 0; x < xDim; x++) {
+    					data[z][y][x][t] = (short)Math.round(outputBuffer[x + y*xDim]);
+    				}
+    			}
+    	        convolver.finalize();
+    		}
+    	}
+    	
     	if (calculateMaskingThreshold) {
     		long dataSum = 0;
-    		for (i = 0; i < dataSize; i++) {
-    			dataSum += buffer[i];
+    		for (z = 0; z < zDim; z++) {
+        		for (t = 0; t < tDim; t++) {
+        			for (y = 0; y < yDim; y++) {
+        				for (x = 0; x < xDim; x++) {
+    			            dataSum = dataSum + data[z][y][x][t];
+        				}
+        			}
+        		}
     		}
     		double mean = (double)dataSum/(double)dataSize;
     		double squareSum = 0.0;
-    		for (i = 0; i < dataSize; i++) {
-    			double difference = buffer[i] - mean;
-    			squareSum += (difference * difference);
+    		for (z = 0; z < zDim; z++) {
+        		for (t = 0; t < tDim; t++) {
+        			for (y = 0; y < yDim; y++) {
+        				for (x = 0; x < xDim; x++) {
+    			            double difference = data[z][y][x][t] - mean;
+    			            squareSum += (difference * difference);
+        				}
+        			}
+        		}
     		}
     		double stdDev = Math.sqrt(squareSum/(double)(dataSize-1));
     		masking_threshold = (int)Math.round(mean + 0.5 * stdDev);
@@ -1071,7 +1158,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		sliceBuffer[x + y * xDim] = data[9][y][x][0];
 		    	}
 		    }
-		    extents2D = new int[]{xDim,yDim};
 		    accessLock.lock();
 		    pickImage = new ModelImage(ModelStorageBase.INTEGER,extents2D,"pickImage");
 		    try {
@@ -1136,8 +1222,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
   	          ImageIO.write(captureImage, format, aifFile);
   	          vGraph.dispose();
   	          
-  	          short shortBuffer[] = new short[length];
-		      for (y = 0; y < yDim; y++) {
+		      short shortBuffer[] = new short[length];
+  	          for (y = 0; y < yDim; y++) {
 		    	for (x = 0; x < xDim; x++) {
 		    		shortBuffer[x + y * xDim] = data[(int)Math.round(zmean)][y][x][0];
 		    	}
