@@ -98,7 +98,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new AlgorithmGaussianBlur object.
+     * Creates a new AlgorithmBilateralFilter object.
      *
      * @param  srcImg    DOCUMENT ME!
      * @param  sigmas    DOCUMENT ME!
