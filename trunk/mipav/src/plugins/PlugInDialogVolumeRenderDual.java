@@ -90,6 +90,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
@@ -913,9 +914,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedPanel.setDividerLocation(0.5);
 		}
 		updateHistoLUTPanels(activeImage);
-		
-		System.err.println("rendererConfigured");
-		
+				
 		nextBackCount--;
 		if ( nextBackFlag && (nextBackCount == 0) ) {
 
@@ -964,12 +963,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     	}    	
     	
     	if ( previousActive != activeRenderer ) {
-    		
-    		VOIVector vois = activeImage.wormImage.getVOIs();
-    		for (int i = 0; i < vois.size(); i++) {
-    			System.err.println( vois.elementAt(i).getName() );
-    		}
-    		
+    		    		
     		if ( activeImage.voiManager.isPreview() ) {
         		previewUntwisting.setText("return");
     		}
@@ -1209,6 +1203,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	public void windowClosing(final WindowEvent event)
 	{
+		if ( editMode == IntegratedEditing || editMode == EditLattice ) {
+			int result = JOptionPane.showConfirmDialog(null, "Save changes before closing?", "Save", JOptionPane.YES_NO_OPTION);
+			if (result == JOptionPane.YES_OPTION) {
+				saveAll();
+			}
+		}
+
 		if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
 				&& ViewUserInterface.getReference().isPlugInFrameVisible() )
 		{
@@ -3243,7 +3244,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		else if ( resetRenderer )
 		{
-			integratedData.clipGUI.setRenderer(renderer, false);
+			integratedData.clipGUI.setRenderer(renderer, resetRenderer);
 		}
 		
 		clipPanel.removeAll();			
