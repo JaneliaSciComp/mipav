@@ -1293,6 +1293,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         public Hashtable<Integer, Integer> tmaxSizeMap = new Hashtable<Integer, Integer>();
         
         public boolean isDwi = false;
+        
+        public boolean isPerfusion = false;
 
         /**
          * Creates a new intObject object.
@@ -1313,6 +1315,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         	size = -1;
         	coreSize = -1;
         	isDwi = true;
+        	isPerfusion = false;
         }
         
         public void setCoreSize(final int core) {
@@ -1320,6 +1323,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         public void setPerfusionSize(final int tmaxVal, final int size) {
+            isPerfusion = true;
         	tmaxSizeMap.put(tmaxVal, size);
         }
     }
@@ -1399,28 +1403,30 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 
                 int coreSize = getCoreSize(getLightboxFileList().get(i));
 
-                boolean isPerf = false;
-                for (int perfIndex = pwiThreshList.length - 1; perfIndex <= 0; perfIndex--) {
-                    int perfSize = getPerfusionSize(getLightboxFileList().get(i), pwiThreshList[perfIndex]);
-                    
-                    // add in previous higher thresholds, if we're not at the highest threshold already
-                    if (perfIndex + 1 < pwiThreshList.length) {
-                        perfSize += perfusionSize[perfIndex + 1];
+                if (isPerfusionLightbox(getLightboxFileList().get(i))) {
+                    System.err.println("file:\t" + getLightboxFileList().get(i));
+                    for (int perfIndex = pwiThreshList.length - 1; perfIndex >= 0; perfIndex--) {
+                        int perfSize = getPerfusionSize(getLightboxFileList().get(i), pwiThreshList[perfIndex]);
+                        
+                        // add in previous higher thresholds, if we're not at the highest threshold already
+                        if (perfIndex + 1 < pwiThreshList.length) {
+                            perfSize += perfusionSize[perfIndex + 1];
+                        }
+                        
+                        if (perfSize > 0) {
+                            perfusionSize[perfIndex] = perfSize;
+                            System.err.println("perfSize " + perfIndex + " " + pwiThreshList[perfIndex] + ":\t" + perfSize);
+                        }
                     }
-                    
-                    if (perfSize > 0) {
-                        isPerf = true;
-                        perfusionSize[perfIndex] = perfSize;
-                    }
-                }
-                
-                if (!isPerf && coreSize > 0) {
-                    if (passNum == 1) {
-                    	dwiCore = coreSize;
-                    } else if (passNum == 4) {
-                    	pwiCore = coreSize;
-                    } else {
-                    	System.err.println("Unexpected core pass value: " + passNum + " " + coreSize);
+                } else {
+                    if (coreSize > 0) {
+                        if (passNum == 1) {
+                        	dwiCore = coreSize;
+                        } else if (passNum == 4) {
+                        	pwiCore = coreSize;
+                        } else {
+                        	System.err.println("Unexpected core pass value: " + passNum + " " + coreSize);
+                        }
                     }
                 }
             }
@@ -1717,6 +1723,16 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         return totalSize;
+    }
+    
+    public boolean isPerfusionLightbox(File lightboxFile) {
+        for (MaskObject obj : lightboxObjectTable.get(lightboxFile)) {
+            if (obj.isPerfusion) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     private void fillHoles(ModelImage img) {
