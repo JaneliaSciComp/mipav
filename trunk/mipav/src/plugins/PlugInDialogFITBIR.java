@@ -23,6 +23,7 @@ import gov.nih.tbi.repository.model.SubmissionType;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.io.*;
 import java.nio.file.Files;
@@ -38,6 +39,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -61,6 +63,9 @@ import com.ice.tar.TarEntry;
 import com.ice.tar.TarInputStream;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
+
+import ar.com.hjg.pngj.*;
+import ar.com.hjg.pngj.chunks.*;
 
 
 public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
@@ -3163,7 +3168,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 printlnToLog("Creating thumbnail image:\t" + outputSubDir + outputFileNameBase + ".jpg");
                 progressBar.setMessage("Creating thumbnail for record #" + (i+1));
 
-                MemoryImageSource thumbnailImageData = imgFileInfo.getThumbnailImgData();
+                MemoryImageSource thumbnailImageData = getThumbnailSource(imgFileInfo.getThumbnailImgData());
 
                 if (thumbnailImageData != null) {
                     final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputSubDir, true);
@@ -3942,9 +3947,50 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             jimiException.printStackTrace();
 
             return false;
+        } catch (final NoSuchMethodError e) {
+            System.err.println("JIMI write failed. Switching to ImageIO writer.");
+            e.printStackTrace();
+            
+            BufferedImage bimg = toBufferedImage(createImage(imgData));
+            try {
+                if (!ImageIO.write(bimg, "JPG", new File(name))) {
+                    MipavUtil.displayError("Failed to write thumbnail image: " + name);
+                }
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            
+            //e.printStackTrace();
+            return false;
         }
 
         return true;
+    }
+    
+    /**
+     * Converts a given Image into a BufferedImage
+     *
+     * @param img The Image to be converted
+     * @return The converted BufferedImage
+     */
+    public static BufferedImage toBufferedImage(Image img)
+    {
+        if (img instanceof BufferedImage)
+        {
+            return (BufferedImage) img;
+        }
+
+        // Create a buffered image with transparency
+        BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_RGB);
+
+        // Draw the image on to the buffered image
+        Graphics2D bGr = bimage.createGraphics();
+        bGr.drawImage(img, 0, 0, null);
+        bGr.dispose();
+
+        // Return the buffered image
+        return bimage;
     }
 
     /**
@@ -3954,7 +4000,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * 
      * @return The image data, ready for rendering/JIMI writing.
      */
-    private MemoryImageSource createThumbnailDataForWriting(final ModelImage image) {
+    private ThumbnailData createThumbnailDataForWriting(final ModelImage image) {
         if (image == null) {
             return null;
         }
@@ -4017,7 +4063,24 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        return new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
+        //return new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
+        return new ThumbnailData(image.getExtents()[0], image.getExtents()[1], paintBuffer);
+    }
+    
+    private MemoryImageSource getThumbnailSource(final ThumbnailData thumbData) {
+        return new MemoryImageSource(thumbData.width, thumbData.height, thumbData.thumbnailBuffer, 0, thumbData.width);
+    }
+    
+    private class ThumbnailData {
+        public int width;
+        public int height;
+        public int[] thumbnailBuffer;
+        
+        public ThumbnailData(int w, int h, int[] buff) {
+            width = w;
+            height = h;
+            thumbnailBuffer = buff;
+        }
     }
 
     @Override
@@ -8909,7 +8972,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     public class ImgFileInfo {
         public List<String> origFiles;
 
-        public MemoryImageSource thumbnailImgData;
+        public ThumbnailData thumbnailImgData;
 
         public boolean isMultifile;
 
@@ -8923,7 +8986,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.imgFilePath = imgFilePath;
         }*/
 
-        public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final int format, final MemoryImageSource thumbnailImgData) {
+        public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final int format, final ThumbnailData thumbnailImgData) {
             super();
             this.origFiles = origFiles;
             this.thumbnailImgData = thumbnailImgData;
@@ -8940,11 +9003,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.origFiles = origFiles;
         }
 
-        public MemoryImageSource getThumbnailImgData() {
+        public ThumbnailData getThumbnailImgData() {
             return thumbnailImgData;
         }
 
-        public void setThumbnailImgData(final MemoryImageSource thumbnailImgData) {
+        public void setThumbnailImgData(final ThumbnailData thumbnailImgData) {
             this.thumbnailImgData = thumbnailImgData;
         }
 
