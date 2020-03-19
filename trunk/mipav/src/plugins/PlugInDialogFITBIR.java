@@ -64,9 +64,6 @@ import com.ice.tar.TarInputStream;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
 
-import ar.com.hjg.pngj.*;
-import ar.com.hjg.pngj.chunks.*;
-
 
 public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
         PreviewImageContainer, WindowListener {
