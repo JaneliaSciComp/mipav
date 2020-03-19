@@ -1100,6 +1100,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    peaks_threshold = peaks_mean - 4.0*peaks_std;
 		    autoaif = new double[tDim];
 		    minautoaif = Double.MAX_VALUE;
+		    int numcountt = 0;
 		    for (t = 0; t < tDim; t++) {
 		        sumt = 0;
 		        countt = 0;
@@ -1136,16 +1137,22 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		        	    System.out.println("y standard deviation = " + ystd);
 		        	    System.out.println("z standard deviation = " + zstd);
 		        	} // if (sumcount > 1)
-		        	else if (sumcount == 1) {
-		        		System.out.println("AIF selection is based on only 1 voxel");
-		        	}
 		        } // if (t == 0)
+		        if (countt == 0) {
+		        	System.err.println("No AIF selection pixels found for t = " + t);
+		        	numcountt++;
+		        }
 		        autoaif[t] = (double)sumt/(double)countt;
 		        if (autoaif[t] < minautoaif) {
 		        	minautoaif = autoaif[t];
 		        }
 		    } // for (t = 0; t < tDim; t++)
 		    // time signal from mri
+		    if (numcountt > 0) {
+		    	 MipavUtil.displayError("No AIF selection pixels found at " + numcountt + " out of " + tDim + " times");
+		    	 setCompleted(false);
+		    	 return;
+		    }
 		    for (t = 0; t < tDim; t++) {
 		    	S[t] = autoaif[t] - minautoaif + 1;
 		    }
