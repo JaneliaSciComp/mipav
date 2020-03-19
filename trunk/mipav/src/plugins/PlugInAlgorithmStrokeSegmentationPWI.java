@@ -1404,7 +1404,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 int coreSize = getCoreSize(getLightboxFileList().get(i));
 
                 if (isPerfusionLightbox(getLightboxFileList().get(i))) {
-                    System.err.println("file:\t" + getLightboxFileList().get(i));
+                    //System.err.println("file:\t" + getLightboxFileList().get(i));
                     for (int perfIndex = pwiThreshList.length - 1; perfIndex >= 0; perfIndex--) {
                         int perfSize = getPerfusionSize(getLightboxFileList().get(i), pwiThreshList[perfIndex]);
                         
@@ -1415,7 +1415,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         
                         if (perfSize > 0) {
                             perfusionSize[perfIndex] = perfSize;
-                            System.err.println("perfSize " + perfIndex + " " + pwiThreshList[perfIndex] + ":\t" + perfSize);
+                            //System.err.println("perfSize " + perfIndex + " " + pwiThreshList[perfIndex] + ":\t" + perfSize);
                         }
                     }
                 } else {
