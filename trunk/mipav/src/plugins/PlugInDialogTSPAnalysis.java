@@ -32,6 +32,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private JTextField baseText;
 	
+	private JCheckBox spatialSmoothingCheckBox;
+	
+	private boolean spatialSmoothing = true;
+	
+	private JLabel sigmaLabel;
+	
 	private JTextField sigmaText;
 	
 	private float xysigma = 5.0f;
@@ -152,6 +158,9 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         		boundsCheckBox.setEnabled(false);
         		boundsCheckBox.setSelected(false);
         	}
+        } else if (source == spatialSmoothingCheckBox) {
+        	sigmaLabel.setEnabled(spatialSmoothingCheckBox.isSelected());
+        	sigmaText.setEnabled(spatialSmoothingCheckBox.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -201,7 +210,15 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         gbc.gridx = 0;
         gbc.gridy = 2;
-        JLabel sigmaLabel = new JLabel("xy Gaussian blur sigma in millimeters");
+        spatialSmoothingCheckBox = new JCheckBox("Perform spatial smoothing");
+        spatialSmoothingCheckBox.setSelected(true);
+        spatialSmoothingCheckBox.setFont(MipavUtil.font12);
+        spatialSmoothingCheckBox.setForeground(Color.black);
+        spatialSmoothingCheckBox.addActionListener(this);
+        inputPanel.add(spatialSmoothingCheckBox, gbc);
+        
+        gbc.gridy = 3;
+        sigmaLabel = new JLabel("xy Gaussian blur sigma in millimeters");
         sigmaLabel.setFont(serif12);
         sigmaLabel.setForeground(Color.black);
         inputPanel.add(sigmaLabel, gbc);
@@ -214,7 +231,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(sigmaText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         calculateMaskingCheckBox = new JCheckBox("Calculate masking threshold from mean and standard deviation");
         calculateMaskingCheckBox.setSelected(true);
         calculateMaskingCheckBox.setFont(MipavUtil.font12);
@@ -223,7 +240,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(calculateMaskingCheckBox, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         masking_thresholdLabel = new JLabel("Masking threshold");
         masking_thresholdLabel.setFont(serif12);
         masking_thresholdLabel.setForeground(Color.black);
@@ -239,7 +256,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(masking_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
         TSP_thresholdLabel.setFont(serif12);
         TSP_thresholdLabel.setForeground(Color.black);
@@ -253,7 +270,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         JLabel TSP_iterLabel = new JLabel("TSP iterations");
         TSP_iterLabel.setFont(serif12);
         TSP_iterLabel.setForeground(Color.black);
@@ -267,7 +284,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_iterText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         JLabel PsvdLabel = new JLabel("Psvd");
         PsvdLabel.setFont(serif12);
         PsvdLabel.setForeground(Color.black);
@@ -282,27 +299,27 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         AIFGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         autoButton = new JRadioButton("Auto AIF Calculation", true);
         autoButton.setFont(serif12);
         autoButton.setForeground(Color.black);
         AIFGroup.add(autoButton);
         inputPanel.add(autoButton, gbc);
         
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         pickButton = new JRadioButton("Pick image pixel corresponding to AIF", false);
         pickButton.setFont(serif12);
         pickButton.setForeground(Color.black);
         AIFGroup.add(pickButton);
         inputPanel.add(pickButton, gbc);
         
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         plotAIFCheckBox = new JCheckBox("Plot AIF");
         plotAIFCheckBox.setFont(MipavUtil.font12);
         plotAIFCheckBox.setSelected(true);
         inputPanel.add(plotAIFCheckBox, gbc);
         
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -317,7 +334,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         searchGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
         search2DElsuncButton.setFont(serif12);
         search2DElsuncButton.setForeground(Color.black);
@@ -325,7 +342,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DElsuncButton);
         inputPanel.add(search2DElsuncButton, gbc);   
         
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
         search1DElsuncButton.setFont(serif12);
         search1DElsuncButton.setForeground(Color.black);
@@ -333,7 +350,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search1DElsuncButton);
         inputPanel.add(search1DElsuncButton, gbc);
         
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
@@ -341,7 +358,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
         
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
         search2DNelderMeadButton.setFont(serif12);
         search2DNelderMeadButton.setForeground(Color.black);
@@ -349,19 +366,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNelderMeadButton);
         inputPanel.add(search2DNelderMeadButton, gbc);
         
-        gbc.gridy = 16;
+        gbc.gridy = 17;
         correlationCheckBox = new JCheckBox("Correlation maps calculated", true);
         correlationCheckBox.setFont(MipavUtil.font12);
         correlationCheckBox.setForeground(Color.black);
         inputPanel.add(correlationCheckBox, gbc);
         
-        gbc.gridy = 17;
+        gbc.gridy = 18;
         CBFCBVMTTCheckBox = new JCheckBox("CBF, CBV, and MTT calculated", true);
         CBFCBVMTTCheckBox.setFont(MipavUtil.font12);
         CBFCBVMTTCheckBox.setForeground(Color.black);
         inputPanel.add(CBFCBVMTTCheckBox, gbc);
         
-        gbc.gridy = 18;
+        gbc.gridy = 19;
         boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
         boundsCheckBox.setFont(MipavUtil.font12);
         boundsCheckBox.setForeground(Color.black);
@@ -423,7 +440,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 
         try {
 
-            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, xysigma, calculateMaskingThreshold, masking_threshold,
+            TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, xysigma,
+            		calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
             		calculateCBFCBVMTT, calculateBounds, fileNameBase);
 
@@ -465,6 +483,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     protected void setGUIFromParams() {
     	pwiImageFileDirectory = scriptParameters.getParams().getString("pwiImageFileDirectory");
+    	spatialSmoothing = scriptParameters.getParams().getBoolean("spatial_smoothing");
     	xysigma = scriptParameters.getParams().getFloat("xy_sigma");
     	calculateMaskingThreshold = scriptParameters.getParams().getBoolean("calc_mask_thresh");
     	masking_threshold = scriptParameters.getParams().getInt("mask_thresh");
@@ -486,6 +505,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.getParams().put(ParameterFactory.newParameter("pwiImageFileDirectory", pwiImageFileDirectory));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("spatial_smoothing", spatialSmoothing));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("xy_sigma", xysigma));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_mask_thresh", calculateMaskingThreshold));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_thresh", masking_threshold));
@@ -513,22 +533,25 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     		return false;
     	}
     	
-    	tmpStr = sigmaText.getText();
-    	try {
-    		xysigma = Float.valueOf(tmpStr).floatValue();
-    	}
-    	catch (NumberFormatException e) {
-    	    MipavUtil.displayError("sigma text does not have a proper float");
-    	    sigmaText.requestFocus();
-    	    sigmaText.selectAll();
-    	    return false;
-    	}
-    	if (xysigma < 0) {
-    		MipavUtil.displayError("xysigma must be at least 0");
-    		sigmaText.requestFocus();
-    	    sigmaText.selectAll();
-    	    return false;
-    	}
+    	spatialSmoothing = spatialSmoothingCheckBox.isSelected();
+    	if (spatialSmoothing) {
+	    	tmpStr = sigmaText.getText();
+	    	try {
+	    		xysigma = Float.valueOf(tmpStr).floatValue();
+	    	}
+	    	catch (NumberFormatException e) {
+	    	    MipavUtil.displayError("sigma text does not have a proper float");
+	    	    sigmaText.requestFocus();
+	    	    sigmaText.selectAll();
+	    	    return false;
+	    	}
+	    	if (xysigma < 0) {
+	    		MipavUtil.displayError("xysigma must be at least 0");
+	    		sigmaText.requestFocus();
+	    	    sigmaText.selectAll();
+	    	    return false;
+	    	}
+    	} // if (spatialSmoothing)
     	
     	calculateMaskingThreshold = calculateMaskingCheckBox.isSelected();
     	if (!calculateMaskingThreshold) {
