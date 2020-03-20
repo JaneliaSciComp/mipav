@@ -80,6 +80,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private String pwiImageFileDirectory;
     private ModelImage pwiImage = null;
+    private boolean spatialSmoothing = true;
     private float xysigma = 5.0f;
     
     private boolean calculateMaskingThreshold = true;
@@ -146,12 +147,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      * Constructor.
      *
      */
-    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, float xysigma, boolean calculateMaskingThreshold, int masking_threshold,
+    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean spatialSmoothing, float xysigma, 
+    		boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
     		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
+    	this.spatialSmoothing = spatialSmoothing;
     	this.xysigma = xysigma;
     	outputFilePath = pwiImageFileDirectory;
     	this.calculateMaskingThreshold = calculateMaskingThreshold;
@@ -593,50 +596,52 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			}	
     	}
     	
-    	fireProgressStateChanged("2D Gaussian blurring  ...");
-        fireProgressStateChanged(15);
-    	float outputBuffer[];
-    	float inputBuffer[] = new float[length];
     	extents2D = new int[] {xDim,yDim};
-    	float[] sigmas = new float[] {xysigma, xysigma};
-    	GaussianKernelFactory kernelFactory = GaussianKernelFactory.getInstance(sigmas);
-    	kernelFactory.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
-    	Kernel gaussianKernel = kernelFactory.createKernel();
-    	boolean color = false;
-    	for (z = 0; z < zDim; z++) {
-    		for (t = 0; t < tDim; t++) {
-    			for (y = 0; y < yDim; y++) {
-    				for (x = 0; x < xDim; x++) {
-    					inputBuffer[x + y * xDim] = data[z][y][x][t];
-    				}
-    			}
-    			
-    			AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
-    					inputBuffer, extents2D, gaussianKernel.getData(), color);
-                convolver.run();
-    	        if (threadStopped) {
-    	            setCompleted(false);
-    	            finalize();
-
-    	            return;
-    	        }
-    	        
-    	        outputBuffer = convolver.getOutputBuffer();
-    	        if (threadStopped) {
-    	            setCompleted(false);
-    	            finalize();
-
-    	            return;
-    	        }
-    	        
-    	        for (y = 0; y < yDim; y++) {
-    				for (x = 0; x < xDim; x++) {
-    					data[z][y][x][t] = (short)Math.round(outputBuffer[x + y*xDim]);
-    				}
-    			}
-    	        convolver.finalize();
-    		}
-    	}
+    	if (spatialSmoothing) {
+	    	fireProgressStateChanged("2D Gaussian blurring  ...");
+	        fireProgressStateChanged(15);
+	    	float outputBuffer[];
+	    	float inputBuffer[] = new float[length];
+	    	float[] sigmas = new float[] {xysigma, xysigma};
+	    	GaussianKernelFactory kernelFactory = GaussianKernelFactory.getInstance(sigmas);
+	    	kernelFactory.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
+	    	Kernel gaussianKernel = kernelFactory.createKernel();
+	    	boolean color = false;
+	    	for (z = 0; z < zDim; z++) {
+	    		for (t = 0; t < tDim; t++) {
+	    			for (y = 0; y < yDim; y++) {
+	    				for (x = 0; x < xDim; x++) {
+	    					inputBuffer[x + y * xDim] = data[z][y][x][t];
+	    				}
+	    			}
+	    			
+	    			AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
+	    					inputBuffer, extents2D, gaussianKernel.getData(), color);
+	                convolver.run();
+	    	        if (threadStopped) {
+	    	            setCompleted(false);
+	    	            finalize();
+	
+	    	            return;
+	    	        }
+	    	        
+	    	        outputBuffer = convolver.getOutputBuffer();
+	    	        if (threadStopped) {
+	    	            setCompleted(false);
+	    	            finalize();
+	
+	    	            return;
+	    	        }
+	    	        
+	    	        for (y = 0; y < yDim; y++) {
+	    				for (x = 0; x < xDim; x++) {
+	    					data[z][y][x][t] = (short)Math.round(outputBuffer[x + y*xDim]);
+	    				}
+	    			}
+	    	        convolver.finalize();
+	    		}
+	    	}
+    	} // if (spatialSmoothing)
     	
     	if (calculateMaskingThreshold) {
     		long dataSum = 0;
