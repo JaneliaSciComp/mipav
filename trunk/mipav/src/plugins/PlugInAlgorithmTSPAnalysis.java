@@ -81,7 +81,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private String pwiImageFileDirectory;
     private ModelImage pwiImage = null;
     private boolean spatialSmoothing = true;
-    private float xysigma = 5.0f;
+    private float sigmax = 5.0f;
+    private float sigmay = 5.0f;
     
     private boolean calculateMaskingThreshold = true;
     
@@ -147,7 +148,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      * Constructor.
      *
      */
-    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean spatialSmoothing, float xysigma, 
+    public PlugInAlgorithmTSPAnalysis(String pwiImageFileDirectory, boolean spatialSmoothing, float sigmax, float sigmay, 
     		boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
@@ -155,7 +156,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.spatialSmoothing = spatialSmoothing;
-    	this.xysigma = xysigma;
+    	this.sigmax = sigmax;
+    	this.sigmay = sigmay;
     	outputFilePath = pwiImageFileDirectory;
     	this.calculateMaskingThreshold = calculateMaskingThreshold;
     	this.masking_threshold = masking_threshold;
@@ -602,7 +604,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        fireProgressStateChanged(15);
 	    	float outputBuffer[];
 	    	float inputBuffer[] = new float[length];
-	    	float[] sigmas = new float[] {xysigma, xysigma};
+	    	float[] sigmas = new float[] {sigmax, sigmay};
 	    	GaussianKernelFactory kernelFactory = GaussianKernelFactory.getInstance(sigmas);
 	    	kernelFactory.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
 	    	Kernel gaussianKernel = kernelFactory.createKernel();
