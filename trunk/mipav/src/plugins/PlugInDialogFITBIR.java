@@ -2129,7 +2129,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
         
         int numDirections = 0;
-        HashMap<Integer,Integer> bvalList = new HashMap<Integer,Integer>();
+        HashMap<Double,Integer> bvalList = new HashMap<Double,Integer>();
         
         HashMap<String, String> deTable = new HashMap<String, String>();
 
@@ -2142,10 +2142,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 while ((line = bufferedReader.readLine()) != null) {
                     String[] split = line.split(" ");
                     for (String valStr : split) {
-                        Integer val = new Integer(valStr);
+                        Double val = new Double(valStr);
                         
                         // only non-zero bvals be counted as part of directions
-                        if (!val.equals(new Integer(0))) {
+                        if (!val.equals(new Double(0))) {
                             numDirections++;
                         }
                         if (bvalList.containsKey(val)) {
@@ -2172,7 +2172,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             deTable.put(groupName + "ImgDiffusionDirCt", "" + numDirections);
             
             int bvalCount = 0;
-            Integer[] bvals = (Integer[]) bvalList.keySet().toArray(new Integer[0]);
+            Double[] bvals = (Double[]) bvalList.keySet().toArray(new Double[0]);
             Arrays.sort(bvals);
             for (int i = 0; i < bvals.length; i++) {
                 if (bvals[i] != 0) {
@@ -3946,7 +3946,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return false;
         } catch (final NoSuchMethodError e) {
             System.err.println("JIMI write failed. Switching to ImageIO writer.");
-            e.printStackTrace();
+            //e.printStackTrace();
+            
+            BufferedImage bimg = toBufferedImage(createImage(imgData));
+            try {
+                if (!ImageIO.write(bimg, "JPG", new File(name))) {
+                    MipavUtil.displayError("Failed to write thumbnail image: " + name);
+                }
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            
+            //e.printStackTrace();
+            return false;
+        } catch (final NoClassDefFoundError e) {
+            System.err.println("JIMI write failed. Switching to ImageIO writer.");
+            //e.printStackTrace();
             
             BufferedImage bimg = toBufferedImage(createImage(imgData));
             try {
