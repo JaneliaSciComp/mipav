@@ -80,7 +80,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private String pwiImageFileDirectory;
     private ModelImage pwiImage = null;
-    private boolean spatialSmoothing = true;
+    private boolean spatialSmoothing = false;
     private float sigmax = 5.0f;
     private float sigmay = 5.0f;
     
