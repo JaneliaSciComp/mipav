@@ -34,7 +34,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private JCheckBox spatialSmoothingCheckBox;
 	
-	private boolean spatialSmoothing = true;
+	private boolean spatialSmoothing = false;
 	
 	private JLabel sigmaXLabel;
 	
@@ -219,7 +219,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         gbc.gridx = 0;
         gbc.gridy = 2;
         spatialSmoothingCheckBox = new JCheckBox("Perform spatial smoothing");
-        spatialSmoothingCheckBox.setSelected(true);
+        spatialSmoothingCheckBox.setSelected(false);
         spatialSmoothingCheckBox.setFont(MipavUtil.font12);
         spatialSmoothingCheckBox.setForeground(Color.black);
         spatialSmoothingCheckBox.addActionListener(this);
@@ -229,6 +229,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         sigmaXLabel = new JLabel("Gaussian blur sigma X in millimeters");
         sigmaXLabel.setFont(serif12);
         sigmaXLabel.setForeground(Color.black);
+        sigmaXLabel.setEnabled(false);
         inputPanel.add(sigmaXLabel, gbc);
         
         gbc.gridx = 1;
@@ -236,6 +237,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         sigmaXText.setText("5.0");
         sigmaXText.setFont(serif12);
         sigmaXText.setForeground(Color.black);
+        sigmaXText.setEnabled(false);
         inputPanel.add(sigmaXText, gbc);
         
         gbc.gridx = 0;
@@ -243,6 +245,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         sigmaYLabel = new JLabel("Gaussian blur sigma Y in millimeters");
         sigmaYLabel.setFont(serif12);
         sigmaYLabel.setForeground(Color.black);
+        sigmaYLabel.setEnabled(false);
         inputPanel.add(sigmaYLabel, gbc);
         
         gbc.gridx = 1;
@@ -250,6 +253,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         sigmaYText.setText("5.0");
         sigmaYText.setFont(serif12);
         sigmaYText.setForeground(Color.black);
+        sigmaYText.setEnabled(false);
         inputPanel.add(sigmaYText, gbc);
         
         gbc.gridx = 0;
