@@ -1,5 +1,7 @@
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 
+import gov.nih.mipav.model.scripting.VariableTable;
+
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -62,7 +64,9 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
     
     private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
     
-    private static final String configFileName = "stroke_seg_listener.properties";
+    private static final String defaultConfigFileName = "stroke_seg_listener.properties";
+    
+    private static final String coreListenerConfigFileVar = "CoreListenerConfigFile";
 
     public PlugInDialogStrokeSegmentationListenerPWI() {
         if (JDialogStandalonePlugin.isExitRequired()) {
@@ -418,14 +422,20 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
     }
     
     private boolean readListenerConfig() {
+        String configFile = defaultConfigFileName;
         try {
-            final InputStream in = getClass().getResourceAsStream(configFileName);
+            if (VariableTable.getReference().isVariableSet(coreListenerConfigFileVar)) {
+                configFile = VariableTable.getReference().interpolate(coreListenerConfigFileVar);
+                System.err.println("Overriden CoreTool listener config file: " + configFile);
+            }
+            
+            final InputStream in = getClass().getResourceAsStream(configFile);
             if (in != null) {
                 final Properties prop = new Properties();
                 try {
                     prop.load(in);
                 } catch (final IOException e) {
-                    Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+                    Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFile + "\n", Preferences.DEBUG_MINOR);
                     e.printStackTrace();
                     if (in != null) {
                         in.close();
@@ -475,7 +485,7 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
             }
         } catch (IOException e) {
             e.printStackTrace();
-            log("Error loading listener properties file: " + configFileName);
+            log("Error loading listener properties file: " + configFile);
             return false;
         }
     }
