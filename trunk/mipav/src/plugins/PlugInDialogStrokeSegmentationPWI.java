@@ -115,6 +115,17 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private JCheckBox pwiSaveOutputFilesCheckbox;
     private boolean doPwiSaveOutputFiles = false;
     
+    private JCheckBox spatialSmoothingCheckBox;
+    private boolean spatialSmoothing = false;
+    
+    private JLabel sigmaXLabel;
+    private JTextField sigmaXText;
+    private float sigmax = 5.0f;
+    
+    private JLabel sigmaYLabel;
+    private JTextField sigmaYText;
+    private float sigmay = 5.0f;
+    
     private JCheckBox artifactCleanupCheckbox;
     private boolean doArtifactCleanup = true;
     
@@ -263,6 +274,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
             if (setVariables()) {
@@ -290,6 +302,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             // nothing to do
         } else if (command.equals("Cancel")) {
             this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        } else if (source == spatialSmoothingCheckBox) {
+            sigmaXLabel.setEnabled(spatialSmoothingCheckBox.isSelected());
+            sigmaXText.setEnabled(spatialSmoothingCheckBox.isSelected());
+            sigmaYLabel.setEnabled(spatialSmoothingCheckBox.isSelected());
+            sigmaYText.setEnabled(spatialSmoothingCheckBox.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -445,6 +462,44 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         doPwiCalcCBFCBVMTT = pwiCalcCBFCBVMTTCheckbox.isSelected();
         doPwiSaveOutputFiles = pwiSaveOutputFilesCheckbox.isSelected();
         
+        spatialSmoothing = spatialSmoothingCheckBox.isSelected();
+        if (spatialSmoothing) {
+            String tmpStr = sigmaXText.getText();
+            try {
+                sigmax = Float.valueOf(tmpStr).floatValue();
+            }
+            catch (NumberFormatException e) {
+                MipavUtil.displayError("sigmax text does not have a proper float");
+                sigmaXText.requestFocus();
+                sigmaXText.selectAll();
+                return false;
+            }
+            if (sigmax < 0) {
+                MipavUtil.displayError("sigmax must be at least 0");
+                sigmaXText.requestFocus();
+                sigmaXText.selectAll();
+                return false;
+            }
+            
+            tmpStr = sigmaYText.getText();
+            try {
+                sigmay = Float.valueOf(tmpStr).floatValue();
+            }
+            catch (NumberFormatException e) {
+                MipavUtil.displayError("sigmay text does not have a proper float");
+                sigmaYText.requestFocus();
+                sigmaYText.selectAll();
+                return false;
+            }
+            if (sigmay < 0) {
+                MipavUtil.displayError("sigmay must be at least 0");
+                sigmaYText.requestFocus();
+                sigmaYText.selectAll();
+                return false;
+            }
+
+        } // if (spatialSmoothing)
+        
         doArtifactCleanup = artifactCleanupCheckbox.isSelected();
         meanThreshold = Float.parseFloat(meanThresholdField.getText());
         artifactCloseIter = Integer.parseInt(artifactCloseIterField.getText());
@@ -465,11 +520,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     protected void callAlgorithm() {
 
         try {
-            // TODO
             segAlgo = new PlugInAlgorithmStrokeSegmentationPWI(dwiImage, adcImage, pwiImage, adcThreshold, doFilter, doCerebellumSkip, cerebellumSkipSliceMax, 
             		doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, 
-            		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles, doArtifactCleanup,
-            		meanThreshold, artifactCloseSize, artifactCloseIter, doPerfusionSymmetryRemoval, minPerfusionObjectSize, ventricleMeanThresh);
+            		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles, spatialSmoothing, 
+            		sigmax, sigmay, doArtifactCleanup, meanThreshold, artifactCloseSize, artifactCloseIter, doPerfusionSymmetryRemoval, minPerfusionObjectSize,
+            		ventricleMeanThresh);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -544,6 +599,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         doPwiCalcCorrMap = scriptParameters.getParams().getBoolean("do_pwi_calc_corr_map");
         doPwiCalcCBFCBVMTT = scriptParameters.getParams().getBoolean("do_pwi_calc_cbf_cbv_mtt");
         doPwiSaveOutputFiles = scriptParameters.getParams().getBoolean("do_pwi_save_output_files");
+        spatialSmoothing = scriptParameters.getParams().getBoolean("do_pwi_spatial_smoothing");
         
         doArtifactCleanup = scriptParameters.getParams().getBoolean("do_pwi_artifact_cleanup");
         meanThreshold = scriptParameters.getParams().getInt("pwi_mean_thresh_val");
@@ -576,6 +632,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_calc_corr_map", doPwiCalcCorrMap));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_calc_cbf_cbv_mtt", doPwiCalcCBFCBVMTT));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_save_output_files", doPwiSaveOutputFiles));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_spatial_smoothing", spatialSmoothing));
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_pwi_artifact_cleanup", doArtifactCleanup));
         scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_mean_thresh_val", meanThreshold));
@@ -804,6 +861,45 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         pwiSaveOutputFilesCheckbox.setForeground(Color.black);
         pwiSaveOutputFilesCheckbox.setFont(serif12);
         mainPanel.add(pwiSaveOutputFilesCheckbox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        spatialSmoothingCheckBox = new JCheckBox("Perform PWI spatial smoothing", spatialSmoothing);
+        spatialSmoothingCheckBox.setFont(MipavUtil.font12);
+        spatialSmoothingCheckBox.setForeground(Color.black);
+        spatialSmoothingCheckBox.addActionListener(this);
+        mainPanel.add(spatialSmoothingCheckBox, gbc);
+        
+        gbc.gridy++;
+        sigmaXLabel = new JLabel("PWI Gaussian blur sigma X in millimeters");
+        sigmaXLabel.setFont(serif12);
+        sigmaXLabel.setForeground(Color.black);
+        sigmaXLabel.setEnabled(spatialSmoothing);
+        mainPanel.add(sigmaXLabel, gbc);
+        
+        gbc.gridx++;
+        sigmaXText = new JTextField(10);
+        sigmaXText.setText("" + sigmax);
+        sigmaXText.setFont(serif12);
+        sigmaXText.setForeground(Color.black);
+        sigmaXText.setEnabled(spatialSmoothing);
+        mainPanel.add(sigmaXText, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        sigmaYLabel = new JLabel("PWI Gaussian blur sigma Y in millimeters");
+        sigmaYLabel.setFont(serif12);
+        sigmaYLabel.setForeground(Color.black);
+        sigmaYLabel.setEnabled(spatialSmoothing);
+        mainPanel.add(sigmaYLabel, gbc);
+        
+        gbc.gridx = 1;
+        sigmaYText = new JTextField(10);
+        sigmaYText.setText("" + sigmay);
+        sigmaYText.setFont(serif12);
+        sigmaYText.setForeground(Color.black);
+        sigmaYText.setEnabled(spatialSmoothing);
+        mainPanel.add(sigmaYText, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
