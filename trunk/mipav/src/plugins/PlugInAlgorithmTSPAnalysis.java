@@ -174,7 +174,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.fileNameBase = fileNameBase;
     }
     
-    public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean calculateMaskingThreshold, int masking_threshold,
+    public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean spatialSmoothing, float sigmax, float sigmay, 
+            boolean calculateMaskingThreshold, int masking_threshold,
             double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation,
             boolean multiThreading, int search, boolean calculateCorrelation,
             boolean calculateCBFCBVMTT, boolean calculateBounds) {
@@ -182,6 +183,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         this.pwiImageFileDirectory = pwiImage.getImageDirectory();
         this.pwiImage = pwiImage;
         outputFilePath = pwiImageFileDirectory;
+        this.spatialSmoothing = spatialSmoothing;
+        this.sigmax = sigmax;
+        this.sigmay = sigmay;
         this.calculateMaskingThreshold = calculateMaskingThreshold;
         this.masking_threshold = masking_threshold;
         this.TSP_threshold = TSP_threshold;

@@ -16,6 +16,7 @@ import java.awt.Color;
 import java.io.*;
 import java.util.*;
 
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import org.apache.commons.csv.*;
@@ -125,6 +126,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private boolean doPwiCalculateCBFCBVMTT = false;
     private boolean doPwiSaveOutputs = false;
     
+    private boolean doPwiSpatialSmoothing = false;
+    private float pwiSigmax = 5.0f;
+    private float pwiSigmay = 5.0f;
+    
     private boolean doArtifactCleanupWithMean = true;
     private float artifactMeanThreshold = 0.5f;
     private float artifactCloseSize = 6f;
@@ -142,8 +147,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     public PlugInAlgorithmStrokeSegmentationPWI(ModelImage dwi, ModelImage adc, ModelImage pwi, int threshold, boolean anisoFilter, boolean cerebellumSkip,
     		int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj,
     		int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir, boolean pwiMultiThreading, boolean pwiCalculateCorrelation,
-    		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs, boolean doArtifactCleanup, float artMean, float artCloseSize, int artCloseIter,
-    		boolean doPerfSymmetry, int minPerfSize, float ventThresh) {
+    		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs, boolean spatialSmoothing, float sigmax, float sigmay, boolean doArtifactCleanup,
+    		float artMean, float artCloseSize, int artCloseIter, boolean doPerfSymmetry, int minPerfSize, float ventThresh) {
         super();
         
         dwiImage = dwi;
@@ -179,6 +184,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         doPwiCalculateCorrelation = pwiCalculateCorrelation;
         doPwiCalculateCBFCBVMTT = pwiCalculateCorrelation;
         doPwiSaveOutputs = pwiSaveOutputs;
+        
+        doPwiSpatialSmoothing = spatialSmoothing;
+        pwiSigmax = sigmax;
+        pwiSigmay = sigmay;
         
         doArtifactCleanupWithMean = doArtifactCleanup;
         artifactMeanThreshold = artMean;
@@ -2014,7 +2023,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
         
-        tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, calculateMaskingThreshold, masking_threshold,
+        tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, doPwiSpatialSmoothing, pwiSigmax, pwiSigmay, calculateMaskingThreshold, masking_threshold,
                 TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, doPwiMultiThreading, search, doPwiCalculateCorrelation, doPwiCalculateCBFCBVMTT, calculateBounds);
         
         tspAlgo.setSaveAllOutputs(doPwiSaveOutputs);
