@@ -223,16 +223,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private String cmdLineCsvVar = "BricsCsvFile";
     private String cmdLineOutputVar = "BricsOutputDir";
     private String cmdLineCsvExitVar = "BricsExit";
+    
     private boolean cmdLineCsvExit = false;
     private boolean cmdLineCsvFlag = false;
     private String cmdLineCsvFile = null;
     private String cmdLineOutputDir = null;
-    private File logFile = null;
-    private PrintStream logFileOut = null;
+    
+    private File mainLogFile = null;
+    private PrintStream mainLogFileOut = null;
+    
     private PrintStream logOnlyOut = null;
     private PrintStream logOnlyErr = null;
-    private File errorFile = null;
-    private PrintStream errorFileOut = null;
+    
+    private File readErrorFile = null;
+    private PrintStream readErrorFileOut = null;
+    
+    private File piiWarningFile = null;
+    private PrintStream piiWarningFileOut = null;
     
     private boolean bidsPackageFlag = false;
 
@@ -537,16 +544,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     new File(outputDirBase).mkdirs();
                 }
                 
-                logFile = new File(outputDirBase + "log_file_output.log");
-                logFile.createNewFile();
-                errorFile = new File(outputDirBase + "log_file_error.log");
-                errorFile.createNewFile();
+                mainLogFile = new File(outputDirBase + "log_file_output.log");
+                mainLogFile.createNewFile();
+                readErrorFile = new File(outputDirBase + "log_image_read_error.log");
+                readErrorFile.createNewFile();
+                piiWarningFile = new File(outputDirBase + "log_pii_warnings.log");
+                piiWarningFile.createNewFile();
 
-                logFileOut = new PrintStream(new FileOutputStream(logFile, true));
-                errorFileOut = new PrintStream(new FileOutputStream(errorFile, true));
+                mainLogFileOut = new PrintStream(new FileOutputStream(mainLogFile, true));
+                readErrorFileOut = new PrintStream(new FileOutputStream(readErrorFile, true));
+                piiWarningFileOut = new PrintStream(new FileOutputStream(piiWarningFile, true));
                 
-                logOnlyOut = new CmdLineOutputStream(System.out, logFileOut);
-                logOnlyErr = new CmdLineOutputStream(System.err, logFileOut);
+                logOnlyOut = new CmdLineOutputStream(System.out, mainLogFileOut);
+                logOnlyErr = new CmdLineOutputStream(System.err, mainLogFileOut);
                 
                 System.setOut(logOnlyOut);
                 System.setErr(logOnlyErr);
@@ -597,14 +607,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	            // reset the outputs
 	            System.setOut(System.out);
 	            System.setErr(System.err);
-	            if (logFileOut != null) {
-	                logFileOut.close();
-	                logFileOut = null;
+	            if (mainLogFileOut != null) {
+	                mainLogFileOut.close();
+	                mainLogFileOut = null;
 	            }
-	            if (errorFileOut != null) {
-	                errorFileOut.close();
-	                errorFileOut = null;
+	            if (readErrorFileOut != null) {
+	                readErrorFileOut.close();
+	                readErrorFileOut = null;
 	            }
+	            if (piiWarningFileOut != null) {
+	                piiWarningFileOut.close();
+	                piiWarningFileOut = null;
+                }
 	            
 	            if (cmdLineCsvExit) {
 	                System.exit(0);
@@ -613,14 +627,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	// reset the outputs
 	            System.setOut(System.out);
 	            System.setErr(System.err);
-	            if (logFileOut != null) {
-	                logFileOut.close();
-	                logFileOut = null;
+	            if (mainLogFileOut != null) {
+	                mainLogFileOut.close();
+	                mainLogFileOut = null;
 	            }
-	            if (errorFileOut != null) {
-	                errorFileOut.close();
-	                errorFileOut = null;
+	            if (readErrorFileOut != null) {
+	                readErrorFileOut.close();
+	                readErrorFileOut = null;
 	            }
+	            if (piiWarningFileOut != null) {
+                    piiWarningFileOut.close();
+                    piiWarningFileOut = null;
+                }
             }
         }
     }
@@ -2629,8 +2647,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
                 System.out.println("Reading CSV row " + i + " of " + recordList.size());
                 
-                if (errorFileOut != null) {
-                    errorFileOut.println("Reading CSV row " + i + " of " + recordList.size());
+                if (readErrorFileOut != null) {
+                    readErrorFileOut.println("Reading CSV row " + i + " of " + recordList.size());
                 }
                 
                 InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
@@ -2668,9 +2686,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 } else if (problemTags != null && problemTags.size() > 0) {
                     // when running from the cmd line, still make note of problematic tags in output
                     System.err.println("Tags potentially containing PII/PHI found (" + csvProblemFileDirList.get(j) + File.separator + csvProblemFileNameList.get(j) + ":");
+                    piiWarningFileOut.println("Tags potentially containing PII/PHI found (" + csvProblemFileDirList.get(j) + File.separator + csvProblemFileNameList.get(j) + ":");
                     System.err.format("%-14s%-40s%s%n", "DICOM tag", "Name", "Value");
+                    piiWarningFileOut.format("%-14s%-40s%s%n", "DICOM tag", "Name", "Value");
                     for (FileDicomTag tag : problemTags) {
                         System.err.format("%-14s%-40s%s%n", tag.getKey().toString(), tag.getName(), (String) tag.getValue(true));
+                    }
+                    for (FileDicomTag tag : problemTags) {
+                        piiWarningFileOut.format("%-14s%-40s%s%n", tag.getKey().toString(), tag.getName(), (String) tag.getValue(true));
                     }
                 }
             }
@@ -6481,8 +6504,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                    Preferences.setDebugLevels(new boolean[] {true, true, true, true, true});
                     
                     if (cmdLineCsvFlag) {
-                        PrintStream stdoutStream = new CmdLineOutputStream(System.out, errorFileOut);
-                        PrintStream stderrStream = new CmdLineOutputStream(System.err, errorFileOut);
+                        PrintStream stdoutStream = new CmdLineOutputStream(System.out, readErrorFileOut);
+                        PrintStream stderrStream = new CmdLineOutputStream(System.err, readErrorFileOut);
                         
                         System.setOut(stdoutStream);
                         System.setErr(stderrStream);
@@ -7528,13 +7551,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     } else {
                         System.err.println("No DICOM embedded DTI bval information found.");
                         if (cmdLineCsvFlag) {
-                            errorFileOut.println("No DICOM embedded DTI bval information found.");
+                            readErrorFileOut.println("No DICOM embedded DTI bval information found.");
                         }
                     }
                 } else {
                 	System.err.println("No DICOM embedded DTI information found.");
             		if (cmdLineCsvFlag) {
-            			errorFileOut.println("No DICOM embedded DTI information found.");
+            			readErrorFileOut.println("No DICOM embedded DTI information found.");
             		}
                 }
             }
@@ -9247,7 +9270,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     		MipavUtil.displayError(msg);
     	} else {
     		System.err.println(msg);
-    		errorFileOut.println(msg);
+    		readErrorFileOut.println(msg);
     	}
     }
     
