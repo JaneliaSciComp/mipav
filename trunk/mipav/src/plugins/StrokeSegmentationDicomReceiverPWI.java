@@ -1230,6 +1230,10 @@ public class StrokeSegmentationDicomReceiverPWI {
         for (int i = 0; i < lightboxFileList.size(); i++) {
             int passNum = i + 1;
             
+            // TODO Marie doesn't want the Core calculations/images incorporating the Tmax > 6 data included in the report
+            if (passNum == 4) {
+                reportTxt += "<!--\n";
+            }
             
             String passDescr = "";
             String passDetails = "";
@@ -1258,7 +1262,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                     passDetails = "";
                     passDescr = "ADC image with core segmentation" + passDetails;
                 } else if (passNum == 2) {
-                    passDescr = "PWI Tmax > 6s";
+                    passDescr = "PWI Tmax";
                 } else if (passNum == 4) {
                     passDetails = " -- considering Tmax lesion";
                     passDescr = "ADC image with core segmentation" + passDetails;
@@ -1320,6 +1324,11 @@ public class StrokeSegmentationDicomReceiverPWI {
             
             //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='ADC volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
             reportTxt += "<img src='" + reportCidBase + passNum + "' alt='" + passDescr + "'/>\n";
+         
+            // TODO Marie doesn't want the Core calculations/images incorporating the Tmax > 6 data included in the report
+            if (passNum == 4) {
+                reportTxt += "-->\n";
+            }
         }
         
 //        reportTxt += "<h3>" + "ADC image with thresholded regions prior to core volume calculation" + "</h3>\n";
