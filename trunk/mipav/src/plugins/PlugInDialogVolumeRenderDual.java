@@ -90,6 +90,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -3174,7 +3175,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	 */
 	private void initHistoLUTPanel( IntegratedWormData integratedData )
 	{
-		integratedData.colorChannelPanel = new JPanel(new GridLayout(3,1));
+		GridBagConstraints gbc = new GridBagConstraints();
+    	gbc.gridx = 0;
+    	gbc.gridy = 0;
+    	gbc.weightx = 1;
+    	gbc.weighty = 0;
+    	gbc.anchor = GridBagConstraints.WEST;
+		integratedData.colorChannelPanel = new JPanel(new GridBagLayout());
 		if ( integratedData.wormImage.isColorImage() ) {
 			ButtonGroup group = new ButtonGroup();
 			integratedData.displayChannel1 = gui.buildRadioButton("Channel 1", false);
@@ -3183,7 +3190,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedData.displayChannel1.setVisible(true);
 			integratedData.displayChannel1.setEnabled(true);
 			group.add(integratedData.displayChannel1);
-			integratedData.colorChannelPanel.add(integratedData.displayChannel1);
+			integratedData.colorChannelPanel.add(integratedData.displayChannel1, gbc);
+			gbc.gridy++;
 
 			integratedData.displayChannel2 = gui.buildRadioButton("Channel 2", false);
 			integratedData.displayChannel2.addActionListener(this);
@@ -3191,7 +3199,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedData.displayChannel2.setVisible(true);
 			integratedData.displayChannel2.setEnabled(true);
 			group.add(integratedData.displayChannel2);
-			integratedData.colorChannelPanel.add(integratedData.displayChannel2);
+			integratedData.colorChannelPanel.add(integratedData.displayChannel2, gbc);
+			gbc.gridy++;
 
 			integratedData.displayBothChannels = gui.buildRadioButton("Display Both Channels", true);
 			integratedData.displayBothChannels.addActionListener(this);
@@ -3199,7 +3208,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedData.displayBothChannels.setVisible(true);
 			integratedData.displayBothChannels.setEnabled(true);
 			group.add(integratedData.displayBothChannels);
-			integratedData.colorChannelPanel.add(integratedData.displayBothChannels);
+			integratedData.colorChannelPanel.add(integratedData.displayBothChannels, gbc);
+
+			gbc.gridy++;
+	    	gbc.weighty = 1;
+			integratedData.colorChannelPanel.add(new JLabel(""), gbc);
 		}
 
 		integratedData.volOpacityPanel = new JPanelVolumeOpacity(integratedData.volumeImage.GetImage(), null, null, null, true);
