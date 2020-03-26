@@ -736,45 +736,27 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 					activeImage.annotationPanelUI.setPreviewMode(false);
 					activeImage.latticeTable.setPreviewMode(false);
-
-					if ( previewCount == 0 ) {
-						doneButton.setEnabled(true);
-						nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
-						backButton.setEnabled( imageIndex > 0 );
-					}
 				}
 				tabbedPane.setSelectedIndex(0);
 				tabbedPane.setSelectedIndex(selectedTab);
 			}
-			if ( includeRange != null )
-			{
-				int nextStep = dualGPU == null ? 1 : 2;
-				imageIndex = Math.min( includeRange.size() - 1, imageIndex );
-				imageIndex = Math.max( 0, imageIndex );
+		}
+		if ( includeRange != null )
+		{
+			int nextStep = dualGPU == null ? 1 : 2;
+			imageIndex = Math.min( includeRange.size() - 1, imageIndex );
+			imageIndex = Math.max( 0, imageIndex );
 
-				if ( previewCount == 0 ) {
-					backButton.setEnabled( imageIndex > 0 );
-					nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
-				}
+			if ( previewCount == 0 ) {
+				backButton.setEnabled( imageIndex > 0 );
+				nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
+				doneButton.setEnabled( true );
 			}
-//			if ( latticeChoices != null )
-//			{
-//				if ( activeImage.voiManager != null )
-//				{
-//					activeImage.voiManager.clear3DSelection();
-//				}
-//				for ( int i = 0; i < latticeChoices.length; i++ )
-//				{
-//					if ( (source == latticeChoices[i]) && (latticeChoices[i].isSelected()) )
-//					{
-//						if ( activeImage.voiManager != null )
-//						{
-//							//							System.err.println( "Switching lattices to " + i );
-//							activeImage.voiManager.setLattice(potentialLattices[i]);
-//						}
-//					}
-//				}
-//			}
+			else {
+				doneButton.setEnabled( false );
+				backButton.setEnabled( false );
+				nextButton.setEnabled( false );
+			}					 
 		}
 		if (command.equals("close"))
 		{			
@@ -938,9 +920,19 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
         	}
 			nextBackFlag = false;
 		}
+		int nextStep = dualGPU == null ? 1 : 2;
+		imageIndex = Math.min( includeRange.size() - 1, imageIndex );
+		imageIndex = Math.max( 0, imageIndex );
+
 		if ( previewCount == 0 ) {
-			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
 			backButton.setEnabled( imageIndex > 0 );
+			nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
+			doneButton.setEnabled( true );
+		}
+		else {
+			doneButton.setEnabled( false );
+			backButton.setEnabled( false );
+			nextButton.setEnabled( false );
 		}
 	}
 	
@@ -989,9 +981,19 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				rightImage.voiManager.editLattice();
 			}
     	}
+		int nextStep = dualGPU == null ? 1 : 2;
+		imageIndex = Math.min( includeRange.size() - 1, imageIndex );
+		imageIndex = Math.max( 0, imageIndex );
+
 		if ( previewCount == 0 ) {
-			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
 			backButton.setEnabled( imageIndex > 0 );
+			nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
+			doneButton.setEnabled( true );
+		}
+		else {
+			doneButton.setEnabled( false );
+			backButton.setEnabled( false );
+			nextButton.setEnabled( false );
 		}
     }
 
@@ -1618,8 +1620,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					dualGPU.setVisible(true);
 				}
 			}
+			int nextStep = dualGPU == null ? 1 : 2;
 			doneButton.setEnabled(true);
-			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
+			nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
 			backButton.setEnabled( imageIndex > 0 );
 		}	
 		return success;
