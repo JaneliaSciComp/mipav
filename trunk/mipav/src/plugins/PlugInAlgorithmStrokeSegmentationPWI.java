@@ -31,6 +31,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
     private ModelImage pwiImage;
     private ModelImage TmaxRegImage;
+    private ModelImage TmaxUnregImage;
+    
+    private TransMatrix tmaxToAdcTransform;
+    private TransMatrix adcToTmaxTransform;
     
     private int pwiCoreSegThreshold = 2;
     
@@ -42,6 +46,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private ModelImage pwiArtifactMaskImg = null;
     
     private ModelImage pwiVentricleMaskImg = null;
+    
+    private ModelImage unregSkullMaskImg = null;
+    
+    private ModelImage unregVentrImg = null;
     
     private int adcThreshold;
     
@@ -415,7 +423,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 	            
 	            // core pass done with a segImg that combines Tmax > 2 and DWI as search area
 	            //ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiCoreSegThreshold);
-	            ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, skullMaskImg, pwiCoreSegThreshold);
+	            ModelImage unregPwiSegImg = getTmaxSeg(TmaxUnregImage, unregVentrImg, unregSkullMaskImg, pwiCoreSegThreshold);
+	            ModelImage pwiSegImg = transformImage(unregPwiSegImg, adcImage, tmaxToAdcTransform);
 	            for (int i = 0; i < volLength; i++) {
 	                if ((dwiSegBuffer[i] != 0 || pwiSegImg.getInt(i) != 0)
 	                        && (pwiVentricleMaskImg != null && pwiVentricleMaskImg.getBoolean(i) == true)
@@ -441,6 +450,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 	            }
 	            
 	            pwiSegImg.disposeLocal();
+	            unregPwiSegImg.disposeLocal();
 	            
 	            try {
 	                segImg.importData(0, coreSegBuffer, true);
@@ -551,6 +561,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 skullMaskImg = null;
             }
             
+            if (unregSkullMaskImg != null) {
+                unregSkullMaskImg.disposeLocal();
+                unregSkullMaskImg = null;
+            }
+            
             if (pwiArtifactMaskImg != null) {
                 pwiArtifactMaskImg.disposeLocal();
                 pwiArtifactMaskImg = null;
@@ -559,6 +574,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             if (pwiVentricleMaskImg != null) {
                 pwiVentricleMaskImg.disposeLocal();
                 pwiVentricleMaskImg = null;
+            }
+            
+            if (unregVentrImg != null) {
+                unregVentrImg.disposeLocal();
+                unregVentrImg = null;
             }
             
             if (segImg != null) {
@@ -571,6 +591,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             if (TmaxRegImage != null) {
             	TmaxRegImage.disposeLocal();
+            }
+            
+            if (TmaxUnregImage != null) {
+                TmaxUnregImage.disposeLocal();
             }
             
             setCompleted(true);
@@ -587,6 +611,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 skullMaskImg = null;
             }
             
+            if (unregSkullMaskImg != null) {
+                unregSkullMaskImg.disposeLocal();
+                unregSkullMaskImg = null;
+            }
+            
             if (pwiArtifactMaskImg != null) {
                 pwiArtifactMaskImg.disposeLocal();
                 pwiArtifactMaskImg = null;
@@ -595,6 +624,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             if (pwiVentricleMaskImg != null) {
                 pwiVentricleMaskImg.disposeLocal();
                 pwiVentricleMaskImg = null;
+            }
+            
+            if (unregVentrImg != null) {
+                unregVentrImg.disposeLocal();
+                unregVentrImg = null;
             }
             
             if (dwiLightbox != null) {
@@ -609,6 +643,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             if (TmaxRegImage != null) {
             	TmaxRegImage.disposeLocal();
+            }
+            
+            if (TmaxUnregImage != null) {
+                TmaxUnregImage.disposeLocal();
             }
             
             setCompleted(false);
@@ -1489,7 +1527,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return true;
     }
     
-    private ModelImage generateLightbox(final ModelImage imgA, final ModelImage mask, float blendingOpacity, boolean isTmax) {
+    private ModelImage generateLightbox(final ModelImage imgA, final ModelImage mask, float blendingOpacity, boolean isTmax, TransMatrix transform) {
         ModelImage lightbox = null;
         
         ModelImage newRGB;
@@ -1557,12 +1595,21 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
         }
         
+        saveImageFile(newRGB, coreOutputDir, outputBasename + "_pwi_rgb_lightbox_unreg", FileUtility.XML);
+        
+        ModelImage lightboxReg = transformImage(newRGB, adcImage, transform);
+        saveImageFile(lightboxReg, coreOutputDir, outputBasename + "_pwi_rgb_lightbox_reg", FileUtility.XML);
+        
         // TODO change based on x/y dim size
         final int zoomPercent = 125;
         
-        // TODO change based on slice num
-        final int columns = 8;
-        final int rows = 5;
+        final int columns = 5;
+        int rows;
+        if (newRGB.getExtents()[2] % 5 == 0) {
+            rows = newRGB.getExtents()[2] / 5;
+        } else {
+            rows = (newRGB.getExtents()[2] / 5) + 1;
+        }
         
         final int rBorderVal = 0;
         final int gBorderVal = 0;
@@ -1584,6 +1631,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         newRGB.disposeLocal();
+        lightboxReg.disposeLocal();
         
         return lightbox;
     }
@@ -1657,8 +1705,13 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         final int zoomPercent = 125;
         
         // TODO change based on slice num
-        final int columns = 8;
-        final int rows = 5;
+        final int columns = 5;
+        int rows;
+        if (newRGB.getExtents()[2] % 5 == 0) {
+            rows = newRGB.getExtents()[2] / 5;
+        } else {
+            rows = (newRGB.getExtents()[2] / 5) + 1;
+        }
         
         final int rBorderVal = 0;
         final int gBorderVal = 0;
@@ -2038,7 +2091,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         tspAlgo.run();
         
-        ModelImage TmaxUnregImage = tspAlgo.getTmaxImage();
+        TmaxUnregImage = tspAlgo.getTmaxImage();
         
         saveImageFile(TmaxUnregImage, coreOutputDir, outputBasename + "_PWI_Tmax", FileUtility.XML);
         
@@ -2048,13 +2101,17 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         // register PWI seg to ADC since it is lower res
         ModelImage firstPwiVol = getFirstVolume(pwiImg);
-        TransMatrix transform = getRegistrationTransform(firstPwiVol, adcImage, TmaxUnregImage);
-        TmaxRegImage = transformImage(TmaxUnregImage, adcImage, transform);
-        saveImageFile(TmaxRegImage, coreOutputDir, outputBasename + "_PWI_Tmax_reg", FileUtility.XML);
+        
+        tmaxToAdcTransform = getRegistrationTransform(firstPwiVol, adcImage, TmaxUnregImage);
+        tmaxToAdcTransform.saveMatrix(this.coreOutputDir + File.separator + outputBasename + "_matrix.mat");
+        adcToTmaxTransform = tmaxToAdcTransform.clone();
+        adcToTmaxTransform.Inverse();
+        
+        //TmaxRegImage = transformImage(TmaxUnregImage, adcImage, transform);
+        //saveImageFile(TmaxRegImage, coreOutputDir, outputBasename + "_PWI_Tmax_reg", FileUtility.XML);
         
         System.err.println("PWI seg registration time elapsed: " + (System.currentTimeMillis() - regStartTime) / 1000.0f);
 
-        ModelImage unregMaskImg = null;
         if (doArtifactCleanupWithMean) {
             //unregMaskImg = getPwiArtifactMask(firstPwiVol);
             //pwiArtifactMaskImg = transformImage(unregMaskImg, adcImage, transform);
@@ -2062,16 +2119,27 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             //pwiVentricleMaskImg = getPwiVentricleMask(pwiArtifactMaskImg);
             pwiVentricleMaskImg = getPwiVentricleMask(skullMaskImg);
+            unregVentrImg = transformImage(pwiVentricleMaskImg, TmaxUnregImage, adcToTmaxTransform);
+            saveImageFile(unregVentrImg, coreOutputDir, outputBasename + "_vent_unreg", FileUtility.XML);
         }
         
         firstPwiVol.disposeLocal();
         
+        unregSkullMaskImg = transformImage(skullMaskImg, TmaxUnregImage, adcToTmaxTransform);
+        saveImageFile(unregSkullMaskImg, coreOutputDir, outputBasename + "_skull_unreg", FileUtility.XML);
+        
         //ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, pwiArtifactMaskImg, pwiThreshold);
-        ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, skullMaskImg, pwiThreshList);
+        //ModelImage pwiSegImg = getTmaxSeg(TmaxRegImage, pwiVentricleMaskImg, skullMaskImg, pwiThreshList);
+        ModelImage pwiSegImg = getTmaxSeg(TmaxUnregImage, unregVentrImg, unregSkullMaskImg, pwiThreshList);
+        
+        saveImageFile(TmaxUnregImage, coreOutputDir, outputBasename + "_pwi_seg_multi_unreg", FileUtility.XML);
+//        TmaxRegImage = transformImage(TmaxUnregImage, adcImage, transform);
+//        saveImageFile(TmaxRegImage, coreOutputDir, outputBasename + "_pwi_seg_multi_reg", FileUtility.XML);
+        
         cleanupMask(pwiSegImg, doPerfusionSymmetryRemoval, minPerfusionObjectSize);
         
         // combine perfusion mask with Tmax and save lightbox
-        ModelImage perfLightbox = generateLightbox(TmaxRegImage, pwiSegImg, lightboxOpacity, true);
+        ModelImage perfLightbox = generateLightbox(TmaxUnregImage, pwiSegImg, lightboxOpacity, true, tmaxToAdcTransform);
         
         File lightboxFile = saveImageFile(perfLightbox, coreOutputDir, outputBasename + "_Tmax_perfusion_lightbox", FileUtility.PNG, false);
         
@@ -2099,14 +2167,6 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         perfLightbox.disposeLocal();
-        
-        if (TmaxUnregImage != null) {
-        	TmaxUnregImage.disposeLocal();
-        }
-        
-        if (unregMaskImg != null) {
-            unregMaskImg.disposeLocal();
-        }
         
         if (pwiSegImg != null) {
         	pwiSegImg.disposeLocal();
