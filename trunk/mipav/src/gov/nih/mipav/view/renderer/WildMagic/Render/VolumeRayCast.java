@@ -618,11 +618,18 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
     }
-        
+
     public void SetClipSphere( Vector3f center, Vector3f scale, float radius, boolean bEnable )
     {
     	if ( m_kVolumeShaderEffect != null ) {
     		m_kVolumeShaderEffect.SetClipSphere(center, scale, radius, bEnable);
+    	}
+    }
+
+    public void SetClipOBB( Vector3f center, Vector3f scale, Vector3f[] axes, float[] extents, boolean bEnable )
+    {
+    	if ( m_kVolumeShaderEffect != null ) {
+    		m_kVolumeShaderEffect.SetClipOBB(center, scale, axes, extents, bEnable);
     	}
     }
 

@@ -71,6 +71,15 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
             + "uniform vec4 sphereCenter;" + "\n"
             + "uniform vec4 sphereScale;" + "\n"
         + "" + "\n";
+    
+    private static String clipOBBParameters = ""
+            + "uniform vec4 sphereCenter;" + "\n"
+            + "uniform vec4 sphereScale;" + "\n"
+            + "uniform vec4 obbClipAxis0;" + "\n"
+            + "uniform vec4 obbClipAxis1;" + "\n"
+            + "uniform vec4 obbClipAxis2;" + "\n"
+            + "uniform vec4 obbClipExtent;" + "\n"
+        + "" + "\n";
     		
     
 //    private static String filterParameters = ""
@@ -402,6 +411,29 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "     bClipped = 1.0;" + "\n"
     	+ "   }" + "\n"
     	+ "}" + "\n";
+    
+
+    private static String clipOBBSetup = ""
+        + "if ( bClipped != 1.0 ) {" + "\n"
+    	+ "   vec3 scaleP = position.xyz * sphereScale.xyz;" + "\n"
+    	+ "   vec3 diff = scaleP.xyz - sphereCenter.xyz;" + "\n"
+    	+ "   float clipOBB = dot( diff, obbClipAxis0.xyz);" + "\n"
+    	+ "   if ( abs(clipOBB) > obbClipExtent.r ) {" + "\n"
+    	+ "     bClipped = 1.0;" + "\n"
+    	+ "   }" + "\n"
+    	+ "   if ( bClipped != 1.0 ) {" + "\n"
+    	+ "      clipOBB = dot( diff, obbClipAxis1.xyz);" + "\n"
+    	+ "      if ( abs(clipOBB) > obbClipExtent.g ) {" + "\n"
+    	+ "         bClipped = 1.0;" + "\n"
+    	+ "      }" + "\n"
+    	+ "   }" + "\n"
+    	+ "   if ( bClipped != 1.0 ) {" + "\n"
+    	+ "      clipOBB = dot( diff, obbClipAxis2.xyz);" + "\n"
+    	+ "      if ( abs(clipOBB) > obbClipExtent.b ) {" + "\n"
+    	+ "         bClipped = 1.0;" + "\n"
+    	+ "      }" + "\n"
+    	+ "   }" + "\n"
+    	+ "}" + "\n";
 
     public static String surfaceInit = ""
     	+ "vec4 LocalMaterialDiffuse = MaterialDiffuse;" + "\n"
@@ -710,6 +742,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	checkPixelProgram();
     }
 
+    
+    public void SetClipOBB( Vector3f center, Vector3f scale, Vector3f[] axes, float[] extents, boolean bEnable ) {
+    	super.SetClipOBB(center, scale, axes, extents, bEnable);
+    	checkPixelProgram();
+    }
+
     public void SetGradientMagnitude(boolean bShow)
     {
     	m_bGradientMag = bShow;
@@ -969,6 +1007,10 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		text += clipSphereParameters;
     	}
+    	if ( isClipOBB() )
+    	{
+    		text += clipOBBParameters;
+    	}
     	//if ( (m_afBlendParam[0] != 1.0) )
     	{
     		text += blendParameters;
@@ -1004,6 +1046,10 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		{
     			text += clipSphereSetup;
     		}
+        	if ( isClipOBB() )
+        	{
+        		text += clipOBBSetup;
+        	}
     	}
     	if ( (m_afDoClip[0] != 0) )
     	{

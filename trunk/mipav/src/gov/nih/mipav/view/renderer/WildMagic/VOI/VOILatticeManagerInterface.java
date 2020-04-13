@@ -744,16 +744,16 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}		
 	}
 
-	public void setRendererView(int position) {
+	public void setLatticeClip(boolean clip, int position) {
 		if ( latticeModel != null )
 		{
-			renderer.setView(latticeModel.getBasisVectors(position));
+//			latticeModel.showMarker(position);
+			float extent = latticeModel.getDiameter(position);
+//			latticeModel.getCenter().getVolumeVOI().setVolumeClip(clip);
+			renderer.setLatticeClip(clip, latticeModel.getCenter(position), latticeModel.getBasisVectors(position), new float[] {extent,extent,10});
 		}		
 	}
 
-	public void resetRendererView() {
-		renderer.resetView();
-	}
 	
 	public TriMesh generateTriMesh( int stepsize ) {
 		if ( latticeModel != null )
@@ -911,7 +911,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	public int getLatticeCurveLength() {
 		if ( latticeModel != null )
 		{
-			latticeModel.getLatticeCurveLength();
+			return latticeModel.getLatticeCurveLength();
 		}
 		return 0;
 	}

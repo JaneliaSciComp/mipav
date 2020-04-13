@@ -1669,19 +1669,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 //										continue;
 //									}
 								}
-								if ( ellipsoidClip != null ) {
-									test.copy( p0 );
-									m_kVolumeRayCast.volumeToLocalCoords( test );
-									
-//									Vector3f scale = new Vector3f(m_kVolumeImageA.GetScaleX()/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
-//											m_kVolumeImageA.GetScaleY()/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
-//											m_kVolumeImageA.GetScaleZ()/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
-//									test = Vector3f.mult( p0, scale);
-									if ( !ellipsoidClipLocal.Contains(test) ) {
-										continue;
-									}
-//									System.err.println( i + " " + test );
-								}
 								float value;
 								if ( m_kVolumeImageA.GetImage().isColorImage() )
 								{
@@ -1889,13 +1876,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				if ( kCurves != null ) {
 				for (int k = 0; k < kCurves.size(); k++) {
 					VOIBase kVOI3D = kCurves.get(k);
-					bUpdateVOIs |= drawVOI(kVOI3D, this, m_kVolumeImageA,
-							m_kTranslate);
+					boolean draw = true;
+					if ( latticeClip && kVOI3D instanceof VOIWormAnnotation ) {
+						draw = clipAnnotations( (VOIWormAnnotation)kVOI3D);
+					}
+					if ( draw ) {
+						bUpdateVOIs |= drawVOI(kVOI3D, this, m_kVolumeImageA,
+								m_kTranslate);
+					}
 				}
 				}
 			}
 		}
-		if ( clipVOI ) {
+		if ( clipVOI || latticeClip ) {
 			applyClipFilter(true);
 		}
 		else {
