@@ -1817,17 +1817,41 @@ public class LatticeModel {
 	public int getLatticeCurveLength()
 	{
 		if ( centerPositions == null ) return 0;
+		System.err.println("getLatticeCurveLength " + centerPositions.size());
 		return centerPositions.size();
 	}
 
-	// return position: lookat, up, right
+	// return position
+	public Vector3f getCenter(int i) {
+		if ( centerPositions == null ) return null;
+		return new Vector3f(centerPositions.elementAt(i));
+	}
+	
+	private VOIWormAnnotation latticepositionMarker = null;
+	public void showMarker(int i) {
+		Vector3f pos = new Vector3f(centerPositions.elementAt(i));
+		if ( latticepositionMarker == null ) {
+
+			latticepositionMarker = new VOIWormAnnotation();
+			latticepositionMarker.setText("latticeCenterLine");
+			latticepositionMarker.add( new Vector3f(pos) );
+			annotationVOIs.getCurves().add(latticepositionMarker);
+		}
+		latticepositionMarker.firstElement().copy(pos);
+		latticepositionMarker.update();
+	}
+	
+	public int getDiameter(int i) {
+		return (int) (wormDiameters.elementAt(i).intValue());
+	}
+	
+	// return lookat, up, right
 	public Vector3f[] getBasisVectors(int i) {
 		if ( centerPositions == null ) return null;
-		return new Vector3f[] {
-				centerPositions.elementAt(i), 
-				normalVectors.elementAt(i),
-				upVectors.elementAt(i),
-				rightVectors.elementAt(i) };
+		return new Vector3f[] { 
+				new Vector3f(rightVectors.elementAt(i)),
+				new Vector3f(upVectors.elementAt(i)),
+				new Vector3f(normalVectors.elementAt(i))};
 	}
 
 	public VOIContour getLeftCurve()

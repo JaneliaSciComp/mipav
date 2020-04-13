@@ -121,15 +121,10 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 				voiManager.showLattice( displayLattice.isSelected() );
 			}
 		}
-		else if ( command.equals("viewPoint") ) {
-			if ( viewPoint.isSelected() ) {
-				setRendererView(latticePosition.getValue());
-			}
-			else {
-				voiManager.resetRendererView();
-			}
+		else if ( command.equals("clipLattice") ) {
+			int value = clipDistance.getValue();
+			setLatticeClip( clipLattice.isSelected(), value );
 		}
-		else if ( command.equals("clipLattice") ) {}
 	}
 
 	/* (non-Javadoc)
@@ -370,15 +365,6 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			gbcC.gridx = 0;			gbcC.gridy = 0;
 			JPanel clipPanel = new JPanel(gbc);
 			clipPanel.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Lattice clipping"));
-			viewPoint = new JCheckBox("view", false);
-			viewPoint.addActionListener(this);
-			viewPoint.setActionCommand("viewPoint");
-			clipPanel.add( viewPoint, gbcC );
-			gbcC.gridx++;
-			latticePosition = new JSlider(0, voiManager.getLatticeCurveLength(), 0);
-			latticePosition.addChangeListener(this);
-			clipPanel.add( latticePosition, gbcC );
-			gbcC.gridy++;
 
 			gbcC.gridx = 0;
 			clipLattice = new JCheckBox("clip", false);
@@ -386,14 +372,15 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			clipLattice.setActionCommand("clipLattice");
 			clipPanel.add( clipLattice, gbcC );
 			gbcC.gridx++;
-			clipDistance = new JSlider(0, 10, 5);
+			int max = Math.max(0, voiManager.getLatticeCurveLength() -1);
+			clipDistance = new JSlider(0, max, 0);
 			clipDistance.addChangeListener(this);
 			clipPanel.add( clipDistance, gbcC );
 			gbcC.gridy++;
 
 			JPanel panels = new JPanel(new BorderLayout());
 			panels.add(labelPanel, BorderLayout.NORTH);
-//			panels.add(clipPanel, BorderLayout.CENTER);
+			panels.add(clipPanel, BorderLayout.CENTER);
 
 			// build the annotation table for the list of annotations:
 			buildAnnotationTable();
@@ -614,19 +601,21 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
-		if ( source == latticePosition ) {
-			int value = latticePosition.getValue();
-			System.err.println("stateChanged " + value);
-			setRendererView(value);
-		}
+//		if ( source == latticePosition ) {
+//			int value = latticePosition.getValue();
+//			setLatticeClip( clipLattice.isSelected(), value );
+//		}
 		if ( source == clipDistance ) {
+			if ( clipDistance.getMaximum() == 0 ) {
+				clipDistance.setMaximum(voiManager.getLatticeCurveLength() - 1);
+			}
 			int value = clipDistance.getValue();
-			System.err.println("stateChanged " + value);
+			voiManager.setLatticeClip(clipLattice.isSelected(), value);
 		}
 	}
 	
-	private void setRendererView(int position) {
-		voiManager.setRendererView(position);
+	private void setLatticeClip(boolean clip, int position) {
+		voiManager.setLatticeClip(clip, position);
 	}
 
 }

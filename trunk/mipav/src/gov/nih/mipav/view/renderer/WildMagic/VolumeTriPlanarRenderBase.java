@@ -40,6 +40,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 
 import java.awt.BorderLayout;
@@ -1037,7 +1038,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			kVolumeVOI = kVOI.createVolumeVOI(kVolumeImage, kTranslate);
 			bReturn = true;
 		}
-
+		// update rotation:
+		kVolumeVOI.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+		kVolumeVOI.GetScene().UpdateGS();
+		
 		kVolumeVOI.showTextBox(true);
 		kVolumeVOI.setZCompare(true);
 		kDisplay.addVolumeVOI(kVolumeVOI);
@@ -4132,10 +4136,15 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
     }
 
     protected Vector3f sphereClip = null;
-    protected Vector3f sphereClipLocal = null;
+//    protected Vector3f sphereClipLocal = null;
     protected float sphereRadius = 0.5f;
-    protected Ellipsoid3f ellipsoidClip = null;
-    protected Ellipsoid3f ellipsoidClipLocal = null;
+    
+    protected boolean latticeClip = false;
+    protected Vector3f latticeClipPos = null;
+    protected Vector3f[] latticeClipAxes = null;
+    protected float[] latticeClipExtents = null;
+    protected Box3f latticeClipBox = null;
+    
     protected void applyClipFilter(boolean clip) {
 		if (m_kVolumeRayCast == null) {
 			return;
@@ -4143,29 +4152,27 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		if ( !clip )
 		{
 //			m_kVolumeRayCast.SetClipEllipsoid( null, false );
-			m_kVolumeRayCast.SetClipSphere( null, null, 0, false );
+			m_kVolumeRayCast.SetClipSphere( null, null, 0, false );		
+			m_kVolumeRayCast.SetClipOBB( null, null, null, null, false);
 			return;
 		}
 		
 		if ( sphereClip == null ) {
 			sphereClip = new Vector3f();
-			sphereClipLocal = new Vector3f();
+//			sphereClipLocal = new Vector3f();
 		}
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.elementAt(i) instanceof VolumeVOI) {
 				VolumeVOI voi = (VolumeVOI)m_kDisplayList.elementAt(i);
 				if ( voi.getVOI().getType() == VOI.ANNOTATION ) {
 					if ( voi.GetClipped() && (voi.GetClipRadius() != 0) ) {
-						sphereClipLocal.copy(voi.GetBillboardPosition());
+//						sphereClipLocal.copy(voi.GetBillboardPosition());
 
 						// in 0-1 texture coordinates:
 						Vector3f texCoords = new Vector3f(voi.getVOI().elementAt(0));
 						Vector3f scale = new Vector3f((m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
 								(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
 								(m_kVolumeImageA.GetImage().getExtents()[2] - 1));
-//						texCoords.scale( 1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
-//								1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
-//								1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
 						sphereClip.copy(texCoords);
 						m_kVolumeRayCast.SetClipSphere( sphereClip, scale, voi.GetClipRadius(), true );
 						break;
@@ -4174,68 +4181,39 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			}
 		}
 
-//		if ( ellipsoidClip == null ) {
-//			System.err.println("creating oriented ellipse");
-//			ellipsoidClip =  new Ellipsoid3f( new Vector3f( .5f, .5f, .5f ), new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{.5f, .5f, .5f} );
-//			Vector3f center = new Vector3f(m_kVolumeRayCast.GetTranslate() ); center.neg();
-//			ellipsoidClipLocal =  new Ellipsoid3f( center, new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{m_fX, m_fY, m_fZ} );
-//
-////			System.err.println( center );
-//			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
-//		}
-//
-//		for (int i = 0; i < m_kDisplayList.size(); i++) {
-//			if (m_kDisplayList.elementAt(i) instanceof VolumeVOI) {
-//				VolumeVOI voi = (VolumeVOI)m_kDisplayList.elementAt(i);
-//				if ( voi.getVOI().getType() == VOI.ANNOTATION ) {
-//					if ( voi.GetClipped() ) {
-//						ellipsoidClipLocal.Center.copy(voi.GetBillboardPosition());
-//						//					ellipsoidClipLocal.Center.neg();
-//
-//						// in 0-1 texture coordinates:
-//						Vector3f texCoords = new Vector3f(voi.getVOI().elementAt(0));
-//						texCoords.scale( 1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
-//								1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
-//								1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
-//						ellipsoidClip.Center.copy(texCoords);
-//						m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
-//						break;
-//					}
-//				}
-//			}
-//		}
-		
-		
-//		if ( increase )
-//		{
-//			ellipsoidClip.Extent[0] *= .99;
-//			ellipsoidClip.Extent[1] *= .99;
-//			ellipsoidClip.Extent[2] *= .99;
-//			if ( ellipsoidClip.Extent[0] < (0.05 * m_fX) || ellipsoidClip.Extent[1] < (0.05 * m_fY) || ellipsoidClip.Extent[2] < (0.05 * m_fZ) ) {
-//				ellipsoidClip.Extent[0] = (float) (0.05 * m_fX);
-//				ellipsoidClip.Extent[1] = (float) (0.05 * m_fY);
-//				ellipsoidClip.Extent[2] = (float) (0.05 * m_fZ);
-//			}
-//			ellipsoidClipLocal.Extent = ellipsoidClip.Extent;
-////			System.err.println(ellipsoidClip.Extent[0] + "  " + ellipsoidClip.Extent[1] + "  " + ellipsoidClip.Extent[2] );
-//			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
-//		}
-//		else
-//		{
-//			ellipsoidClip.Extent[0] *= 1.01;
-//			ellipsoidClip.Extent[1] *= 1.01;
-//			ellipsoidClip.Extent[2] *= 1.01;
-////			ellipsoidClip.Extent[0] = Math.min( ellipsoidClip.Extent[0], orientedBox.Extent[0] );
-////			ellipsoidClip.Extent[1] = Math.min( ellipsoidClip.Extent[1], orientedBox.Extent[1] );
-////			ellipsoidClip.Extent[2] = Math.min( ellipsoidClip.Extent[2], orientedBox.Extent[2] );
-////			System.err.println(ellipsoidClip.Extent[0] + "  " + ellipsoidClip.Extent[1] + "  " + ellipsoidClip.Extent[2] );
-//			if ( ellipsoidClip.Extent[0] > m_fX || ellipsoidClip.Extent[1] > m_fY || ellipsoidClip.Extent[2] > m_fZ ) {
-//				ellipsoidClip.Extent[0] = m_fX;
-//				ellipsoidClip.Extent[1] = m_fY;
-//				ellipsoidClip.Extent[2] = m_fZ;
-//			}
-//			ellipsoidClipLocal.Extent = ellipsoidClip.Extent;
-//			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
-//		}
+
+		if ( latticeClip ) {
+			// in 0-1 texture coordinates:
+			Vector3f texCoords = new Vector3f( latticeClipPos );
+			Vector3f scale = new Vector3f((m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
+					(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
+					(m_kVolumeImageA.GetImage().getExtents()[2] - 1));
+			sphereClip.copy(texCoords);
+			m_kVolumeRayCast.SetClipOBB( sphereClip, scale, latticeClipAxes, latticeClipExtents, true );
+		}
+		else {
+			m_kVolumeRayCast.SetClipOBB( null, null, null, null, false);
+		}
+    }
+    
+    public void setLatticeClip( boolean clip, Vector3f pos, Vector3f[] axes, float[] extents ) {
+    	latticeClip = clip;
+    	latticeClipAxes = axes;
+    	latticeClipExtents = extents;
+    	latticeClipPos = pos;
+    	latticeClipBox = new Box3f(pos, axes, extents);
+    	
+    	for ( int i = 0; i < latticeClipAxes.length; i++ ) {
+    		latticeClipAxes[i].normalize();
+    	}
+    }
+    
+    protected boolean clipAnnotations( VOIWormAnnotation text ) {
+    	if ( latticeClipBox != null ) {
+    		boolean inBox = ContBox3f.InBox( text.elementAt(0), latticeClipBox );
+//        	System.err.println( text.getText() + " " + inBox );
+        	return inBox;
+    	}
+    	return true;
     }
 }

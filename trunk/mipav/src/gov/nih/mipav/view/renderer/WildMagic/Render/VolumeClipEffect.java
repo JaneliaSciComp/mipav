@@ -54,6 +54,12 @@ public abstract class VolumeClipEffect extends ShaderEffect
     protected boolean m_bClipSphere = false;
     protected float[] m_afClipSphereCenter = {0,0,0,0};
     protected float[] m_afClipSphereScale = {0,0,0,0};
+    protected float[] m_afClipOBBAxis0 = {0,0,0,0};
+    protected float[] m_afClipOBBAxis1 = {0,0,0,0};
+    protected float[] m_afClipOBBAxis2 = {0,0,0,0};
+    protected float[] m_afClipOBBExtent = {0,0,0,0};
+
+    protected boolean m_bClipOBB = false;
 
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
@@ -106,6 +112,22 @@ public abstract class VolumeClipEffect extends ShaderEffect
         if ( pkCProgram.GetUC("sphereScale") != null ) 
         {
             pkCProgram.GetUC("sphereScale").SetDataSource(m_afClipSphereScale);
+        }
+        if ( pkCProgram.GetUC("obbClipAxis0") != null ) 
+        {
+            pkCProgram.GetUC("obbClipAxis0").SetDataSource(m_afClipOBBAxis0);
+        }
+        if ( pkCProgram.GetUC("obbClipAxis1") != null ) 
+        {
+            pkCProgram.GetUC("obbClipAxis1").SetDataSource(m_afClipOBBAxis1);
+        }
+        if ( pkCProgram.GetUC("obbClipAxis2") != null ) 
+        {
+            pkCProgram.GetUC("obbClipAxis2").SetDataSource(m_afClipOBBAxis2);
+        }
+        if ( pkCProgram.GetUC("obbClipExtent") != null ) 
+        {
+            pkCProgram.GetUC("obbClipExtent").SetDataSource(m_afClipOBBExtent);
         }
         super.OnLoadPrograms( iPass, pkVProgram, pkPProgram, pkCProgram );
     }
@@ -200,7 +222,28 @@ public abstract class VolumeClipEffect extends ShaderEffect
     	m_afClipSphereScale[0] = scale.X;    	m_afClipSphereScale[1] = scale.Y;    	m_afClipSphereScale[2] = scale.Z;
 
         m_afDoClip[0] = (bEnable) ? 1 : m_afDoClip[0];
+    }
+    
+    public void SetClipOBB( Vector3f center, Vector3f scale, Vector3f[] axes, float[] extents, boolean bEnable )
+    {
+    	if ( !bEnable ) {
+    		m_bClipOBB = false;
+            m_afDoClip[0] = (bEnable) ? 1 : m_afDoClip[0];
+    		return;
+    	}
     	
+		m_bClipOBB = bEnable;
+       	m_afClipSphereCenter[0] = center.X;    	m_afClipSphereCenter[1] = center.Y;    	m_afClipSphereCenter[2] = center.Z;
+    	m_afClipSphereScale[0] = scale.X;    	m_afClipSphereScale[1] = scale.Y;    	m_afClipSphereScale[2] = scale.Z;
+
+
+    	m_afClipOBBAxis0[0] = axes[0].X;    	m_afClipOBBAxis0[1] = axes[0].Y;    	m_afClipOBBAxis0[2] = axes[0].Z;
+    	m_afClipOBBAxis1[0] = axes[1].X;    	m_afClipOBBAxis1[1] = axes[1].Y;    	m_afClipOBBAxis1[2] = axes[1].Z;
+    	m_afClipOBBAxis2[0] = axes[2].X;    	m_afClipOBBAxis2[1] = axes[2].Y;    	m_afClipOBBAxis2[2] = axes[2].Z;
+    	
+    	m_afClipOBBExtent[0] = extents[0];    	m_afClipOBBExtent[1] = extents[1];    	m_afClipOBBExtent[2] = extents[2];    	
+
+        m_afDoClip[0] = (bEnable) ? 1 : m_afDoClip[0];
     }
         
     public void setVolumeMatrix( float[] volumeMatrix )
@@ -230,6 +273,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
     public boolean isClipSphere()
     {
     	return m_bClipSphere;
+    } 
+    
+    public boolean isClipOBB()
+    {
+    	return m_bClipOBB;
     }
     
     public Vector3f getClip()
