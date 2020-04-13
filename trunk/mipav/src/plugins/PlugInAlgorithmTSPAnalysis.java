@@ -1211,7 +1211,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    // Calculate AIF as amount of contrast agent as estimated from R2
 	    Ca = new double[tDim];
 	    for (t = 1; t < tDim; t++) {
-	    	Ca[t] = -TE*Math.log(S[t]/S[0]);
+	    	Ca[t] = -(1.0/TE)*Math.log(S[t]/S[0]);
 	    }
 	    Ca[0] = 0;
 	    if (plotAIF) {
