@@ -31,6 +31,7 @@ import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavInitGPU;
+import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -1668,6 +1669,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 //									if ( !ellipsoidClipLocal.Contains(test) ) {
 //										continue;
 //									}
+								}
+								if ( latticeClip && (latticeClipBox != null) ) {
+									if ( !ContBox3f.InBox( p0, latticeClipBox ) ) {
+										continue;
+									}
 								}
 								float value;
 								if ( m_kVolumeImageA.GetImage().isColorImage() )
