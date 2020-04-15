@@ -410,8 +410,6 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         boundsCheckBox.setForeground(Color.black);
         inputPanel.add(boundsCheckBox, gbc);
         
-        getContentPane().add(inputPanel, BorderLayout.NORTH);
-
         // Build the Panel that holds the OK and CANCEL Buttons
         JPanel OKCancelPanel = new JPanel();
 
@@ -422,11 +420,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         // size and place the CANCEL button
         buildCancelButton();
         OKCancelPanel.add(cancelButton, BorderLayout.EAST);
-        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(inputPanel, BorderLayout.NORTH);
+        mainPanel.add(OKCancelPanel, BorderLayout.SOUTH);
+        
+        JScrollPane scrollPane = new JScrollPane(mainPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        getContentPane().add(scrollPane);
 
         pack();
         setVisible(true);
-        setResizable(false);
+        setResizable(true);
         System.gc();
     }
 
