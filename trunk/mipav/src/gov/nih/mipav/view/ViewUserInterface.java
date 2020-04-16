@@ -1299,9 +1299,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         if (al instanceof ViewUserInterface) {
-            final Component[] comps = menu.getMenuComponents();
+            Component[] comps = menu.getMenuComponents();
             for (final Component c : comps) {
-                if (c.getName().equalsIgnoreCase("Algorithm")) {
+                if (c.getName() != null && c.getName().equalsIgnoreCase("Algorithm")) {
                     final Component[] algComps = ((JMenu) c).getMenuComponents();
                     for (final Component alg : algComps) {
                         alg.setEnabled(false);

@@ -315,7 +315,7 @@ public class ViewMenuBuilder {
      * @return JMenu the menu that is built
      */
     public static JMenu buildMenu(String text, int mnemonic, boolean iconPadding) {
-        JMenu menu = new JMenu();
+        JMenu menu = new JScrollMenu();
 
         if (mnemonic != 0) {
             menu.setMnemonic(mnemonic);
@@ -1368,7 +1368,7 @@ public class ViewMenuBuilder {
                     y = new BoxLayout(bar, BoxLayout.Y_AXIS);
                     bar.setLayout(y);
                     bar.setFocusable(true);
-                    JMenu menu = new JMenu();
+                    JMenu menu = new JScrollMenu();
                     
                     int height = 4;
                     int width = parent.getWidth()+5;
