@@ -143,6 +143,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     // used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
     private boolean doSaveAllOutputs = true;
+    
+    private boolean experimentalAIF = false;
 	
     /**
      * Constructor.
@@ -152,7 +154,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		boolean calculateMaskingThreshold, int masking_threshold,
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
-    		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase) {
+    		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase,
+    		boolean experimentalAIF) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.spatialSmoothing = spatialSmoothing;
@@ -172,6 +175,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.calculateCBFCBVMTT = calculateCBFCBVMTT;
     	this.calculateBounds = calculateBounds;
     	this.fileNameBase = fileNameBase;
+    	this.experimentalAIF = experimentalAIF;
     }
     
     public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean spatialSmoothing, float sigmax, float sigmay, 
@@ -262,6 +266,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	short data_norm;
     	short peaks[][][];
     	short ttp[][][];
+    	float fwhm[][][];
     	short minpeaks;
     	short minttp;
     	double peaks_mean;
@@ -341,6 +346,24 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	boolean Philips = true;
     	String subfolder = null;
     	String subsubfolder = null;
+    	short preBelowHalfTime;
+    	double preHalfTime;
+    	short preAboveHalfTime;
+    	short postBelowHalfTime;
+    	double postHalfTime;
+    	short postAboveHalfTime;
+    	double preBelowHalfIntensity;
+    	double preAboveHalfIntensity;
+    	double postBelowHalfIntensity;
+    	double postAboveHalfIntensity;
+    	double fraction;
+    	double delR2[];
+    	double maxpeaks;
+    	float logpeaks[][][];
+    	double meanpeaks;
+    	double meanttp;
+    	double meanfwhm;
+    	long numUsed;
     	
     	if (test) {
     		testxcorr();
@@ -1049,6 +1072,126 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	S = new double[tDim];
     	peaks = new short[zDim][yDim][xDim];
     	ttp = new short[zDim][yDim][xDim];
+    	if (experimentalAIF) {
+	    	fwhm = new float[zDim][yDim][xDim];
+	    	delR2 = new double[tDim];
+	    	logpeaks = new float[zDim][yDim][xDim];
+	    	meanpeaks = 0.0;
+	    	meanttp = 0.0;
+	    	meanfwhm = 0.0;
+	    	numUsed = 0;
+	    	for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					xloop: for (x = 0; x < xDim; x++) {
+						for (t = 0; t < tDim; t++) {
+							if (data[z][y][x][t] == 0) {
+								logpeaks[z][y][x] = Float.NaN;
+								ttp[z][y][x] = Short.MIN_VALUE;
+								fwhm[z][y][x] = Float.NaN;
+								continue xloop;
+							}
+						}
+						maxpeaks = -Double.MAX_VALUE;
+						minttp = Short.MAX_VALUE;
+						for (t = 0; t < tDim; t++) {
+							delR2[t] = -(1.0/TE)*Math.log((double)data[z][y][x][t]/(double)data[z][y][x][0]);
+							if (delR2[t] > maxpeaks) {
+								maxpeaks = delR2[t];
+								minttp = (short)(t+1);
+							}
+						}
+						logpeaks[z][y][x] = (float)maxpeaks;
+						meanpeaks += maxpeaks;
+						ttp[z][y][x] = minttp;
+						meanttp += minttp;
+						preBelowHalfTime = Short.MAX_VALUE;
+						preBelowHalfIntensity = -Double.MAX_VALUE;
+						preHalfTime = -Double.MAX_VALUE;
+						preAboveHalfTime = Short.MAX_VALUE;
+						preAboveHalfIntensity = -Double.MAX_VALUE;
+						postAboveHalfTime = Short.MAX_VALUE;
+						postAboveHalfIntensity = -Double.MAX_VALUE;
+						postHalfTime = -Double.MAX_VALUE;
+						postBelowHalfTime = Short.MAX_VALUE;
+						postBelowHalfIntensity = -Double.MAX_VALUE;
+						for (t = 0; t < (minttp-1); t++) {
+						    if (delR2[t] < maxpeaks/2.0) {
+						    	preBelowHalfTime = (short)t;
+						    	preBelowHalfIntensity = delR2[t];
+						    }
+						    else if ((preHalfTime == -Double.MAX_VALUE) && (delR2[t] == maxpeaks/2.0)) {
+						    	preHalfTime = (double)t;
+						    }
+						    else if ((preAboveHalfTime == Short.MAX_VALUE) && (delR2[t] > maxpeaks/2.0)) {
+						    	preAboveHalfTime = (short)t;
+						    	preAboveHalfIntensity = delR2[t];
+						    }
+						}
+						if ((preBelowHalfTime == Short.MAX_VALUE) && (preHalfTime == -Double.MAX_VALUE)) {
+							// Never was less than half peak value before peak value occurred
+							logpeaks[z][y][x] = Float.NaN;
+							ttp[z][y][x] = Short.MIN_VALUE;
+							fwhm[z][y][x] = Float.NaN;
+							continue xloop;
+						}
+						for (t = minttp; t < tDim; t++) {
+							if (delR2[t] > maxpeaks/2.0) {
+								postAboveHalfTime = (short)t;
+								postAboveHalfIntensity = delR2[t];
+							}
+							else if ((postHalfTime == -Double.MAX_VALUE) && (delR2[t] == maxpeaks/2.0)) {
+								postHalfTime = (double)t;
+							}
+							else if ((postBelowHalfTime == Short.MAX_VALUE) && (delR2[t] < maxpeaks/2.0)) {
+								postBelowHalfTime = (short)t;
+								postBelowHalfIntensity = delR2[t];
+							}
+						} // for (t = minttp; t < tDim; t++)
+						if ((postBelowHalfTime == Short.MAX_VALUE) && (postHalfTime == -Double.MAX_VALUE)) {
+							// Never was less than half peak value after peak value occurred
+							logpeaks[z][y][x] = Float.NaN;
+							ttp[z][y][x] = Short.MIN_VALUE;
+							fwhm[z][y][x] = Float.NaN;
+							continue xloop;
+						}
+						if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime != Short.MAX_VALUE)) {
+							fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/
+									   (preAboveHalfIntensity - preBelowHalfIntensity);
+						    preHalfTime = preBelowHalfTime	+ fraction*(preAboveHalfTime - preBelowHalfTime);
+						}
+						else if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime == Short.MAX_VALUE)) {
+							// No point more than half peak value before the peak
+							fraction = (maxpeaks/2.0)/(maxpeaks - preBelowHalfIntensity);
+							// Since of fraction of 1 time unit
+							preHalfTime = preBelowHalfTime + fraction;
+						}
+						if ((postHalfTime == -Double.MAX_VALUE) && (postAboveHalfTime != Short.MAX_VALUE)) {
+						    fraction = (postAboveHalfIntensity - maxpeaks/2.0)/
+						    		   (postAboveHalfIntensity - postBelowHalfIntensity);
+						    postHalfTime = postAboveHalfTime + fraction*(postBelowHalfTime - postAboveHalfTime);
+						}
+						else if ((postHalfTime == -Double.MAX_VALUE) && (postAboveHalfTime == Short.MAX_VALUE)) {
+							// No point more than half peak value after the peak
+							fraction = (maxpeaks/2.0)/(maxpeaks - postBelowHalfIntensity);
+							// Since of fraction of 1 time unit
+							postHalfTime = minttp-1 + fraction;
+						}
+						fwhm[z][y][x] = (float)(postHalfTime - preHalfTime);
+						meanfwhm += (postHalfTime - preHalfTime);
+						numUsed++;
+					} // for (x = 0; x < xDim; x++)
+				} // for (y = 0; y < yDim; y++)	
+			} // for (z = 0; z < zDim; z++)
+	    	meanpeaks = meanpeaks/numUsed;
+	        meanttp = meanttp/numUsed;
+	    	meanfwhm = meanfwhm/numUsed;
+	    	System.out.println(numUsed + " used out of " + volume + " voxels");
+	    	System.out.println("meanpeaks = " + meanpeaks);
+	    	System.out.println("meanttp = " + meanttp);
+	    	System.out.println("meanfwhm = " + meanfwhm);
+	    	logpeaks = null;
+	    	fwhm = null;
+    	} // if (experimentalAIF)
     	for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
@@ -1063,8 +1206,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					}
 					peaks[z][y][x] = minpeaks;
 					ttp[z][y][x] = minttp;
-				}
-			}	
+				} // for (x = 0; x < xDim; x++)
+			} // for (y = 0; y < yDim; y++)	
 		} // for (z = 0; z < zDim; z++)
     	double xsum = 0.0;
 		double ysum = 0.0;
