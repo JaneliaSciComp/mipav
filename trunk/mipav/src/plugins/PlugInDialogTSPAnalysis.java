@@ -113,6 +113,9 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private String fileNameBase = "IM";
 	
+	private JCheckBox experimentalAIFCheckBox;
+	private boolean experimentalAIF = false;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -410,6 +413,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         boundsCheckBox.setForeground(Color.black);
         inputPanel.add(boundsCheckBox, gbc);
         
+        gbc.gridy = 21;
+        experimentalAIFCheckBox = new JCheckBox("Experimental AIF enabled", false);
+        experimentalAIFCheckBox.setFont(MipavUtil.font12);
+        experimentalAIFCheckBox.setForeground(Color.black);
+        inputPanel.add(experimentalAIFCheckBox, gbc);
+        
         // Build the Panel that holds the OK and CANCEL Buttons
         JPanel OKCancelPanel = new JPanel();
 
@@ -475,7 +484,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, sigmax,
             		sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
-            		calculateCBFCBVMTT, calculateBounds, fileNameBase);
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalAIF);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -530,6 +539,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateCorrelation = scriptParameters.getParams().getBoolean("calc_correlation");
     	calculateCBFCBVMTT = scriptParameters.getParams().getBoolean("calc_CBFCBVMTT");
     	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
+    	experimentalAIF = scriptParameters.getParams().getBoolean("experimental_aif");
     }
     
     /**
@@ -553,6 +563,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_correlation", calculateCorrelation));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_CBFCBVMTT", calculateCBFCBVMTT));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("experimental_aif", experimentalAIF));
     }
     
     private boolean setVariables() {
@@ -709,6 +720,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateCBFCBVMTT = CBFCBVMTTCheckBox.isSelected();
     	
     	calculateBounds = boundsCheckBox.isSelected();
+    	
+    	experimentalAIF = experimentalAIFCheckBox.isSelected();
     	return true;
     }
 
