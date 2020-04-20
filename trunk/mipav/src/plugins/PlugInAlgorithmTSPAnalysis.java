@@ -26,6 +26,7 @@ import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
+import gov.nih.mipav.model.algorithms.DAgostinosKsquaredTest;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
 import gov.nih.mipav.model.algorithms.NelderMead;
@@ -364,6 +365,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double meanttp;
     	double meanfwhm;
     	long numUsed;
+    	double normalSource[];
+    	int index;
+    	double result[] = new double[1];
     	
     	if (test) {
     		testxcorr();
@@ -431,7 +435,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         	folder = new File(pwiImageFileDirectory);
         	
         	String fileList[] = new String[selectedFileNumber];
-        	int index = 0;
+        	index = 0;
         	for (File fileEntry : folder.listFiles()) {
         		if (!fileEntry.isDirectory()) {
         			if (fileEntry.getName().length() > fileNameBase.length()) {
@@ -1189,8 +1193,49 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	System.out.println("meanpeaks = " + meanpeaks);
 	    	System.out.println("meanttp = " + meanttp);
 	    	System.out.println("meanfwhm = " + meanfwhm);
+	    	normalSource = new double[(int)numUsed];
+	    	index = 0;
+	    	for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+					  if (!Float.isNaN(logpeaks[z][y][x])) {
+						  normalSource[index++] = logpeaks[z][y][x];
+					  }
+					}
+				}
+	    	}
+	    	DAgostinosKsquaredTest dkt = new DAgostinosKsquaredTest(normalSource, result);
+	    	dkt.run();
+	    	System.out.println("For logpeaks D'Agostino's K-squared test yields " + result[0]);
 	    	logpeaks = null;
+	    	index = 0;
+	    	for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+					  if (!(ttp[z][y][x] == Short.MIN_VALUE)) {
+						  normalSource[index++] = (double)ttp[z][y][x];
+					  }
+					}
+				}
+	    	}
+	    	dkt = new DAgostinosKsquaredTest(normalSource, result);
+	    	dkt.run();
+	    	System.out.println("For ttp D'Agostino's K-squared test yields " + result[0]);
+	    	index = 0;
+	    	for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+					  if (!Float.isNaN(fwhm[z][y][x])) {
+						  normalSource[index++] = fwhm[z][y][x];
+					  }
+					}
+				}
+	    	}
+	    	dkt = new DAgostinosKsquaredTest(normalSource, result);
+	    	dkt.run();
+	    	System.out.println("For fwhm D'Agostino's K-squared test yields " + result[0]);
 	    	fwhm = null;
+	    	normalSource = null;
     	} // if (experimentalAIF)
     	for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
