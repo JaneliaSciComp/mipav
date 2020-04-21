@@ -132,6 +132,15 @@ public class DAgostinosKsquaredTest {
         
         result[0] = Z1g1*Z1g1 + Z2g2*Z2g2;
     }
+    
+    public void selfTest() {
+    	// From www.statext.com/practice/NormalityTest04.php
+    	x = new double[] {303,338,406,457,461,469,474,489,515,583};
+    	result = new double[1];
+    	run();
+    	System.out.println("Obtained Ksquared value = " + result[0]);
+    	System.out.println("Correct Ksquared value = 0.66");
+    }
 
 
 }
