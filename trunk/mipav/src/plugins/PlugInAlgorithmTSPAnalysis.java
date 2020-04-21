@@ -365,9 +365,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double meanttp;
     	double meanfwhm;
     	long numUsed;
-    	double normalSource[];
+    	//double normalSource[];
     	int index;
-    	double result[] = new double[1];
+    	//double result[] = new double[1];
+    	double globalmaxpeaks;
+    	short globalminttp;
+    	double globalminfwhm;
+    	double maxdelpeaks;
+    	double mindelttp;
+    	double mindelfwhm;
+    	
     	
     	if (test) {
     		testxcorr();
@@ -1084,6 +1091,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	meanttp = 0.0;
 	    	meanfwhm = 0.0;
 	    	numUsed = 0;
+	    	globalmaxpeaks = -Double.MAX_VALUE;
+	    	globalminttp = Short.MIN_VALUE;
+	    	globalminfwhm = -Double.MAX_VALUE;
+	    	
 	    	for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
 					xloop: for (x = 0; x < xDim; x++) {
@@ -1183,6 +1194,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						fwhm[z][y][x] = (float)(postHalfTime - preHalfTime);
 						meanfwhm += (postHalfTime - preHalfTime);
 						numUsed++;
+						if (logpeaks[z][y][z] > globalmaxpeaks) {
+							globalmaxpeaks = logpeaks[z][y][x];
+						}
+						if (ttp[z][y][x] < globalminttp) {
+							globalminttp = ttp[z][y][x];
+						}
+						if (fwhm[z][y][z] < globalminfwhm) {
+							globalminfwhm = fwhm[z][y][x];
+						}
 					} // for (x = 0; x < xDim; x++)
 				} // for (y = 0; y < yDim; y++)	
 			} // for (z = 0; z < zDim; z++)
@@ -1193,7 +1213,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	System.out.println("meanpeaks = " + meanpeaks);
 	    	System.out.println("meanttp = " + meanttp);
 	    	System.out.println("meanfwhm = " + meanfwhm);
-	    	normalSource = new double[(int)numUsed];
+	    	System.out.println("globalmaxpeaks = " + globalmaxpeaks);
+	    	System.out.println("globalminttp = " + globalminttp);
+	    	System.out.println("globalminfwhm = " + globalminfwhm);
+	    	maxdelpeaks = globalmaxpeaks - meanpeaks;
+	    	mindelttp = globalminttp - meanttp;
+	    	mindelfwhm = globalminfwhm - meanttp;
+	    	System.out.println("maxdelpeaks = " + maxdelpeaks);
+	    	System.out.println("mindelttp = " + mindelttp);
+	    	System.out.println("mindelfwhm = " + mindelfwhm);
+	    	/*normalSource = new double[(int)numUsed];
 	    	index = 0;
 	    	for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
@@ -1207,7 +1236,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	DAgostinosKsquaredTest dkt = new DAgostinosKsquaredTest(normalSource, result);
 	    	dkt.run();
 	    	System.out.println("For logpeaks D'Agostino's K-squared test yields " + result[0]);
-	    	logpeaks = null;
 	    	index = 0;
 	    	for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
@@ -1234,8 +1262,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	dkt = new DAgostinosKsquaredTest(normalSource, result);
 	    	dkt.run();
 	    	System.out.println("For fwhm D'Agostino's K-squared test yields " + result[0]);
-	    	fwhm = null;
-	    	normalSource = null;
+	    	normalSource = null; */
+	    	logpeaks = null;
+	    	fwhm  = null;
     	} // if (experimentalAIF)
     	for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
