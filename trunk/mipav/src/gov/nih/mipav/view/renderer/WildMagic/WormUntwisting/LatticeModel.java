@@ -2413,33 +2413,7 @@ public class LatticeModel {
 	 */
 	public void saveLattice(final String directory, final String fileName)
 	{
-		if ( left == null || right == null )
-		{
-			return;
-		}
-		if ( left.getCurves().size() != right.getCurves().size() )
-		{
-			return;
-		}
-		if (fileName != null)
-		{
-//			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
-			renameLattice();
-//			System.err.println( "saveLattice " + left.getCurves().size() + " " + right.getCurves().size() );
-			final String voiDir = new String(directory + fileName + File.separator);
-
-			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
-			for ( int j = 0; j < left.getCurves().size(); j++ )
-			{
-				latticePoints.getCurves().add(new VOIWormAnnotation(left.getCurves().elementAt(j)));
-				latticePoints.getCurves().add(new VOIWormAnnotation(right.getCurves().elementAt(j)));
-			}
-			if ( latticePoints.getCurves().size() == 0 ) {
-//				System.err.println( "saveLattice " + latticePoints.getCurves().size() );
-				return;
-			}
-			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
-		}
+		saveLattice(directory, fileName, lattice );
 	}
 	
 	
@@ -9082,7 +9056,7 @@ public class LatticeModel {
 		saveLatticeStatistics(outputDirectory + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
 
 
-		String voiSeamDir = outputDirectory + File.separator + "straightened_named_seamcells" + File.separator;
+		String voiSeamDir = outputDirectory + File.separator + "straightened_seamcells" + File.separator;
 		latticePoints.getCurves().clear();
 		for ( int j = 0; j < leftSide.getCurves().size(); j++ )
 		{
@@ -10130,10 +10104,12 @@ public class LatticeModel {
 				// left seam cell:
 				text = (VOIWormAnnotation) left.getCurves().elementAt(i);
 				text.setText( name + "L" );
+				text.setSeamCell(true);
 
 				// right seam cell:
 				text = (VOIWormAnnotation) right.getCurves().elementAt(i);
 				text.setText( name + "R" );
+				text.setSeamCell(true);
 			}
 			else
 			{
@@ -10150,4 +10126,182 @@ public class LatticeModel {
 		}
 	}
 	
+	public static boolean renameLattice( ModelImage image, VOIVector latticeVector)
+	{
+		if ( latticeVector.size() < 2 ) return false;
+		
+		VOI left = latticeVector.elementAt(0);
+		VOI right = latticeVector.elementAt(1);
+		if ( left == null || right == null ) return false;
+		
+		// check if lattice is already named, if so return as is:
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			if ( text.getText().contains("H") || text.getText().contains("V") || text.getText().contains("T") ) {
+				return false;
+			}
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			if ( text.getText().contains("H") || text.getText().contains("V") || text.getText().contains("T") ) {
+				return false;
+			}
+		}
+
+		boolean rename = false;
+		float[] pairSort = new float[left.getCurves().size()];
+		// decide which 10 points are seam cells by taking max pair values
+		for ( int i = 0; i < left.getCurves().size() -1; i++ )
+		{
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			int x = (int) text.elementAt(0).X;
+			int y = (int) text.elementAt(0).Y;
+			int z = (int) text.elementAt(0).Z;
+			float value;
+			if ( image.isColorImage() ) 
+			{
+				value = image.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value = image.getFloat(x,y,z);
+			}
+
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			x = (int) text.elementAt(0).X;
+			y = (int) text.elementAt(0).Y;
+			z = (int) text.elementAt(0).Z;
+			if ( image.isColorImage() ) 
+			{
+				value += image.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value += image.getFloat(x,y,z);
+			}
+			pairSort[i] = value;
+		}
+		Arrays.sort(pairSort);
+
+		int pairCount = 0;
+		int extraCount = 0;
+		for ( int i = 0; i < left.getCurves().size(); i++ )
+		{
+			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			int x = (int) text.elementAt(0).X;
+			int y = (int) text.elementAt(0).Y;
+			int z = (int) text.elementAt(0).Z;
+			float value;
+			if ( image.isColorImage() ) 
+			{
+				value = image.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value = image.getFloat(x,y,z);
+			}
+			
+			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			x = (int) text.elementAt(0).X;
+			y = (int) text.elementAt(0).Y;
+			z = (int) text.elementAt(0).Z;
+			if ( image.isColorImage() ) 
+			{
+				value += image.getFloatC(x,y,z,2);
+			}
+			else
+			{
+				value += image.getFloat(x,y,z);
+			}
+
+			boolean isSeamPair = left.getCurves().size() <= 10;
+			if ( !isSeamPair )
+			{
+				// check if this pair has a high enough value to be added to the list of seam cells:
+				for ( int j = 0; j < Math.min(9, pairSort.length); j++ )
+				{
+					if ( value >= pairSort[(pairSort.length -1) - j] )
+					{
+//						System.err.println( value + "  " + pairSort[(pairSort.length -1) - j]);
+						isSeamPair = true;
+						break;
+					}
+				}
+			}
+			if ( isSeamPair )
+			{
+				rename = true;
+				String name = pairCount < 3 ? ("H" + pairCount) : (pairCount < 9) ? ("V" + (pairCount - 2)) : "T";
+				pairCount++;
+
+				// left seam cell:
+				text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+				text.setText( name + "L" );
+				text.setSeamCell(true);
+
+				// right seam cell:
+				text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+				text.setText( name + "R" );
+				text.setSeamCell(true);
+			}
+			else
+			{
+				String name = "a" + extraCount++;
+
+				// left seam cell:
+				text = (VOIWormAnnotation) left.getCurves().elementAt(i);
+				text.setText( name + "L" );
+
+				// right seam cell:
+				text = (VOIWormAnnotation) right.getCurves().elementAt(i);
+				text.setText( name + "R" );
+			}
+		}
+		return rename;
+	}
+
+	public static void saveLattice(final String directory, final String fileName, VOIVector latticeVector )
+	{
+		if ( latticeVector.size() < 2 ) return;
+		
+		VOI left = latticeVector.elementAt(0);
+		VOI right = latticeVector.elementAt(1);
+		
+		if ( left == null || right == null )
+		{
+			return;
+		}
+		if ( left.getCurves().size() != right.getCurves().size() )
+		{
+			return;
+		}
+		if (fileName != null)
+		{
+			final String voiDir = new String(directory + fileName + File.separator);
+
+			VOI latticePoints = new VOI( (short)0, "lattice", VOI.ANNOTATION, 0);
+			for ( int j = 0; j < left.getCurves().size(); j++ )
+			{
+				latticePoints.getCurves().add(new VOIWormAnnotation((VOIWormAnnotation)left.getCurves().elementAt(j)));
+				latticePoints.getCurves().add(new VOIWormAnnotation((VOIWormAnnotation)right.getCurves().elementAt(j)));
+			}
+			if ( latticePoints.getCurves().size() == 0 ) {
+//				System.err.println( "saveLattice " + latticePoints.getCurves().size() );
+				return;
+			}
+			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
+			
+			// save seam-cells derived from lattice:
+			String voiSeamDir = directory + "seam_cell_final" + File.separator;
+			latticePoints.getCurves().clear();
+			for ( int j = 0; j < left.getCurves().size(); j++ )
+			{
+				VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) left.getCurves().elementAt(j);
+				VOIWormAnnotation rightAnnotation = (VOIWormAnnotation) right.getCurves().elementAt(j);
+				if ( leftAnnotation.isSeamCell() || rightAnnotation.isSeamCell() ) {
+					latticePoints.getCurves().add(leftAnnotation);
+					latticePoints.getCurves().add(rightAnnotation);
+				}
+			}
+			LatticeModel.saveAnnotationsAsCSV(voiSeamDir, "seam_cells.csv", latticePoints);
+		}
+	}
 }
