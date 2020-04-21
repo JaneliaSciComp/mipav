@@ -343,6 +343,9 @@ public class WormData
 			//			VOIVector finalLattice = new VOIVector();
 			//			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
 			VOIVector finalLattice = LatticeModel.readLatticeCSV(outputDirectory + File.separator + editLatticeOutput + File.separator + "lattice.csv");
+			if ( LatticeModel.renameLattice(wormImage, finalLattice) || !checkSeamCells() ) {
+				LatticeModel.saveLattice(outputDirectory + File.separator, editLatticeOutput, finalLattice);
+			}
 			return finalLattice;
 		}
 		// try reading one of the generated lattices:
@@ -394,6 +397,12 @@ public class WormData
 		return annotations;
 	}
 
+	private boolean checkSeamCells() {
+
+		File file = new File(outputDirectory + File.separator + editSeamCellOutput + File.separator + "seam_cells.csv");
+		return file.exists();
+	}
+	
 	public Vector<Vector3f> readSeamCells()
 	{	
 		//		seamEdited = false;
