@@ -202,6 +202,8 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 		// Track updates to the table and update the corresponding annotation.
 		// The user can change the annotation name and position (x,y,z) with table edits.
 		// Does not currently check type.
+		boolean leftChanged = false;
+		boolean rightChanged = false;
 		if ( voiManager != null && (e.getSource() == annotationTableModel) )
 		{
 			int row = annotationTable.getSelectedRow();
@@ -217,6 +219,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 					VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(row);
 					if ( column == 0 ) {
 						if ( text != null ) {
+							leftChanged = true;
 							newName = new String( annotationTable.getValueAt(row, column).toString() );
 
 							if ( newName.contains("H") || newName.contains("V") || newName.contains("T")  || newName.contains("Q") ) {
@@ -256,6 +259,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 					VOIWormAnnotation text = (VOIWormAnnotation) right.getCurves().elementAt(row);
 					if ( column == 4 ) {
 						if ( text != null ) {
+							rightChanged = true;
 							newName = new String( annotationTable.getValueAt(row, column).toString() );
 							if ( newName.contains("H") || newName.contains("V") || newName.contains("T")  || newName.contains("Q") ) {
 								text.setSeamCell(true);
@@ -288,6 +292,9 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 					}
 				}
 			}
+		}
+		if ( leftChanged || rightChanged ) {
+			renameLattice(leftChanged, rightChanged);
 		}
 	}
 
@@ -616,6 +623,150 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	
 	private void setLatticeClip(boolean clip, int position) {
 		voiManager.setLatticeClip(clip, position);
+	}
+	
+	private void renameLattice(boolean leftChanged, boolean rightChanged) {
+
+		VOIVector lattice = voiManager.getLattice();
+		VOI left = lattice.elementAt(0);
+		VOI right = lattice.elementAt(1);
+
+		int aCount = -1;
+		int aCountPrev = -1;
+		int aRename = -1;
+		int aRenameStartValue = -1;
+		int hCount = -1;
+		int hCountPrev = -1;
+		int hRename = -1;
+		int hRenameStartValue = -1;
+		int vCount = -1;
+		int vCountPrev = -1;
+		int vRename = -1;
+		int vRenameStartValue = -1;
+		boolean changed = false;
+		// check if lattice is already named, if so return as is:
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) left.getCurves().elementAt(i);
+			String leftText = leftAnnotation.getText();
+			VOIWormAnnotation rightAnnotation = (VOIWormAnnotation) right.getCurves().elementAt(i);
+			String rightText = rightAnnotation.getText();
+			
+			// make sure the pairs match names:
+			String testLeft = leftText.replace("L", "");
+			String testRight = rightText.replace("R", "");
+			if ( !testLeft.equals(testRight) ) {
+				if ( leftChanged ) {
+					// match right to left:
+					testRight = leftText.replace("L", "R");
+					rightAnnotation.setText(testRight);
+					rightAnnotation.updateText();
+					rightAnnotation.update();
+					rightAnnotation.retwist(previewMode);
+					changed = true;
+				}
+				else if ( rightChanged ) {
+					// match left to right:
+					testLeft = rightText.replace("R", "L");
+					leftAnnotation.setText(testLeft);
+					leftAnnotation.updateText();
+					leftAnnotation.update();
+					leftAnnotation.retwist(previewMode);
+					changed = true;
+				}
+			}
+			
+			// get the number from the names:
+			leftText = leftAnnotation.getText();
+			int value = 0;
+			for ( int j = 0; j < leftText.length(); j++ ) {
+				if ( Character.isDigit(leftText.charAt(j)) ) {
+					value += 10 * value + Integer.parseInt(leftText.substring(j, j+1));
+				}
+			}
+//			System.err.println( leftText + "   " + value );
+			if ( leftText.startsWith("a") ) {
+				aCountPrev = aCount;
+				aCount = value;
+				if ( (aCount - aCountPrev) != 1 ) {
+					// rename a starting at index i:
+					aRename = i;
+					aRenameStartValue = aCountPrev + 1;
+				}
+			}
+			else if ( leftText.startsWith("H") ) {
+				hCountPrev = hCount;
+				hCount = value;
+				if ( (hCount - hCountPrev) != 1 ) {
+					// rename a starting at index i:
+					hRename = i;
+					hRenameStartValue = hCountPrev + 1;
+				}
+			}
+			else if ( leftText.startsWith("V") ) {
+				vCountPrev = vCount;
+				vCount = value;
+				if ( (vCount - vCountPrev) != 1 ) {
+					// rename a starting at index i:
+					vRename = i;
+					vRenameStartValue = vCountPrev + 1;
+				}
+			}
+		}
+		if ( (aRename != -1) || (aRename != -1) || (vRename != -1) ) {
+
+			for ( int i = 0; i < left.getCurves().size(); i++ ) {
+				VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) left.getCurves().elementAt(i);
+				String leftText = leftAnnotation.getText();
+				VOIWormAnnotation rightAnnotation = (VOIWormAnnotation) right.getCurves().elementAt(i);
+				String rightText = rightAnnotation.getText();
+				if ( (aRename != -1) && (i >= aRename) && leftText.startsWith("a") ) {
+					leftAnnotation.setText("a" + aRenameStartValue + "L");
+					leftAnnotation.updateText();
+					leftAnnotation.update();
+					leftAnnotation.retwist(previewMode);
+					
+					rightAnnotation.setText("a" + aRenameStartValue + "R");
+					rightAnnotation.updateText();
+					rightAnnotation.update();
+					rightAnnotation.retwist(previewMode);
+					
+					aRenameStartValue++;
+					changed = true;
+				}
+				if ( (hRename != -1) && (i >= hRename) && leftText.startsWith("H") ) {
+
+					leftAnnotation.setText("H" + hRenameStartValue + "L" );
+					leftAnnotation.updateText();
+					leftAnnotation.update();
+					leftAnnotation.retwist(previewMode);
+					
+					rightAnnotation.setText("H" + hRenameStartValue + "R" );
+					rightAnnotation.updateText();
+					rightAnnotation.update();
+					rightAnnotation.retwist(previewMode);
+					
+					hRenameStartValue++;
+					changed = true;
+				}
+				if ( (vRename != -1) && (i >= vRename) && leftText.startsWith("V") ) {
+
+					leftAnnotation.setText("V" + vRenameStartValue + "L" );
+					leftAnnotation.updateText();
+					leftAnnotation.update();
+					leftAnnotation.retwist(previewMode);
+					
+					rightAnnotation.setText("V" + vRenameStartValue + "R" );
+					rightAnnotation.updateText();
+					rightAnnotation.update();
+					rightAnnotation.retwist(previewMode);
+					
+					vRenameStartValue++;
+					changed = true;
+				}
+			}
+		}
+		
+		if ( changed ) latticeChanged();
 	}
 
 }
