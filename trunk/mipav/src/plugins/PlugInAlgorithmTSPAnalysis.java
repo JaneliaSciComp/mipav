@@ -55,6 +55,10 @@ import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -374,7 +378,34 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double maxdelpeaks;
     	double mindelttp;
     	double mindelfwhm;
-    	
+    	double k1;
+    	double k2;
+    	double k3;
+    	float c;
+    	float cmin;
+    	float cmax;
+    	ArrayList <indexValueItem> indexValueList = null;
+    	int numAdjacentNeeded;
+    	int numAdjacentFound;
+    	Vector<Short>xVal;
+    	Vector<Short>yVal;
+    	Vector<Short>zVal;
+    	int bottomIndex;
+    	int topIndex;
+    	int currentIndex;
+    	indexValueItem item;
+    	int sliceIndex;
+    	Vector<Short>xLink;
+    	Vector<Short>yLink;
+    	Vector<Short>zLink;
+    	int currentIndex2;
+    	short xTry;
+    	short yTry;
+    	short zTry;
+    	short xHave;
+    	short yHave;
+    	short zHave;
+    	int linkSum;
     	
     	if (test) {
     		testxcorr();
@@ -1092,8 +1123,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	meanfwhm = 0.0;
 	    	numUsed = 0;
 	    	globalmaxpeaks = -Double.MAX_VALUE;
-	    	globalminttp = Short.MIN_VALUE;
-	    	globalminfwhm = -Double.MAX_VALUE;
+	    	globalminttp = Short.MAX_VALUE;
+	    	globalminfwhm = Double.MAX_VALUE;
 	    	
 	    	for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
@@ -1194,13 +1225,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						fwhm[z][y][x] = (float)(postHalfTime - preHalfTime);
 						meanfwhm += (postHalfTime - preHalfTime);
 						numUsed++;
-						if (logpeaks[z][y][z] > globalmaxpeaks) {
+						if (logpeaks[z][y][x] > globalmaxpeaks) {
 							globalmaxpeaks = logpeaks[z][y][x];
 						}
 						if (ttp[z][y][x] < globalminttp) {
 							globalminttp = ttp[z][y][x];
 						}
-						if (fwhm[z][y][z] < globalminfwhm) {
+						if (fwhm[z][y][x] < globalminfwhm) {
 							globalminfwhm = fwhm[z][y][x];
 						}
 					} // for (x = 0; x < xDim; x++)
@@ -1218,10 +1249,107 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	System.out.println("globalminfwhm = " + globalminfwhm);
 	    	maxdelpeaks = globalmaxpeaks - meanpeaks;
 	    	mindelttp = globalminttp - meanttp;
-	    	mindelfwhm = globalminfwhm - meanttp;
+	    	mindelfwhm = globalminfwhm - meanfwhm;
 	    	System.out.println("maxdelpeaks = " + maxdelpeaks);
 	    	System.out.println("mindelttp = " + mindelttp);
 	    	System.out.println("mindelfwhm = " + mindelfwhm);
+	    	k1 = 1.0/maxdelpeaks;
+	    	k2 = 1.0/mindelttp;
+	    	k3 = 1.0/mindelfwhm;
+	    	indexValueList = new ArrayList<indexValueItem>();
+	    	cmin = Float.MAX_VALUE;
+	    	cmax = -Float.MAX_VALUE;
+	    	for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+					    if (!Float.isNaN(logpeaks[z][y][x])) {
+					    	c = (float)(k1*(logpeaks[z][y][x] - meanpeaks) + k2*(ttp[z][y][x] - meanttp) + 
+					    			k3*(fwhm[z][y][x] - meanfwhm));
+					    	if (c < cmin) {
+					    		cmin = c;
+					    	}
+					    	if (c > cmax) {
+					    		cmax = c;
+					    	}
+					    	index = x + y*xDim + z*length;
+					    	indexValueList.add(new indexValueItem(index, c));
+					    }
+					}
+				}
+	    	}
+	    	Collections.sort(indexValueList, new indexValueComparator());
+	    	System.out.println("cmin = " + cmin);
+	    	System.out.println("cmax = " + cmax);
+	    	/*indexValueItem item = indexValueList.get(0);
+	    	System.out.println("index = " + item.getIndex() + " value = " + item.getValue());
+	    	item = indexValueList.get(indexValueList.size()-1);
+	    	System.out.println("index = " + item.getIndex() + " value = " + item.getValue());*/
+	    	// Real-Time Diffusion-Perfusion Mismatch Analysis in Acute Stroke:
+	    	// "Specifically, we use a cluster of at least three adjacent values for a
+	    	// pixel size of 1.88 x 1.88 mm. and six adjacent locations for a pixel size
+	    	// of 0.94 x 0.94 mm."
+	    	xVal = new Vector<Short>();
+	    	yVal = new Vector<Short>();
+	    	zVal = new Vector<Short>();
+	    	xLink = new Vector<Short>();
+	    	yLink = new Vector<Short>();
+	    	zLink = new Vector<Short>();
+	    	numAdjacentNeeded = 6;
+	    	topIndex = (int)(numUsed - 1);
+	    	bottomIndex = (int)(numUsed - numAdjacentNeeded);
+	    	for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--) {
+    	        item = indexValueList.get(currentIndex);
+    	        index = item.getIndex();
+    	        zVal.insertElementAt((short)(index/length),0);
+    	        sliceIndex = index % length;
+    	        yVal.insertElementAt((short)(sliceIndex/xDim),0);
+    	        xVal.insertElementAt((short)(sliceIndex%xDim),0);
+    	    } // for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--)
+	    	numAdjacentFound = 0;
+	    	bigLoop: while (numAdjacentFound < numAdjacentNeeded) {
+	    	        zLink.clear();
+	    	        zLink.add(zVal.get(0));
+	    	        yLink.clear();
+	    	        yLink.add(yVal.get(0));
+	    	        xLink.clear();
+	    	        xLink.add(xVal.get(0));
+	    	        for (currentIndex = bottomIndex+1; currentIndex <= topIndex; currentIndex++) {
+	    	            zTry = zVal.get(currentIndex-bottomIndex);
+	    	            yTry = yVal.get(currentIndex-bottomIndex);
+	    	            xTry = xVal.get(currentIndex-bottomIndex);
+	    	            for (currentIndex2 = 0; currentIndex2 < zLink.size(); currentIndex2++) {
+	    	                zHave = zLink.get(currentIndex2);
+	    	                yHave = yLink.get(currentIndex2);
+	    	                xHave = xLink.get(currentIndex2);
+	    	                linkSum = Math.abs(zTry-zHave) + Math.abs(yTry-yHave) + Math.abs(xTry-xHave);
+	    	                if (linkSum == 1) {
+	    	                	zLink.add(zTry);
+	    	                	yLink.add(yTry);
+	    	                	xLink.add(xTry);
+	    	                }
+	    	            } // for (currentIndex2 = 0; currentIndex2 < zLink.size(); currentIndex2++)
+	    	        } // for (currentIndex = bottomIndex+1; currentIndex <= topIndex; currentIndex++)
+	    	        numAdjacentFound = zLink.size();
+	    	        if ((numAdjacentFound < numAdjacentNeeded) && (bottomIndex > 0)) {
+		    	        bottomIndex--;	
+		    	        item = indexValueList.get(bottomIndex);
+		    	        index = item.getIndex();
+		    	        zVal.insertElementAt((short)(index/length),0);
+		    	        sliceIndex = index % length;
+		    	        yVal.insertElementAt((short)(sliceIndex/xDim),0);
+		    	        xVal.insertElementAt((short)(sliceIndex%xDim),0);
+	    	        }
+	    	        else if ((numAdjacentFound < numAdjacentNeeded) && (bottomIndex == 0)) {
+	    	        	System.out.println("Experimental AIF unexpectedly failed");
+	    	        	setCompleted(false);
+	    	        	return;
+	    	        }
+	    	} // while(numAdjacentFound < numAdjacentNeeded)
+	    	System.out.println("Number adjacent found = " + numAdjacentFound);
+	    	for (z = 0; z < zVal.size(); z++) {
+	    		System.out.println("Point " + (z+1) + " has x = " + xVal.get(z) + " y = " + yVal.get(z) + " z = " + zVal.get(z));
+	    	}
+	    	
 	    	/*normalSource = new double[(int)numUsed];
 	    	index = 0;
 	    	for (z = 0; z < zDim; z++) {
@@ -1239,7 +1367,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	index = 0;
 	    	for (z = 0; z < zDim; z++) {
 				for (y = 0; y < yDim; y++) {
-					for (x = 0; x < xDim; x++) {
+					for (x = 0;T x < xDim; x++) {
 					  if (!(ttp[z][y][x] == Short.MIN_VALUE)) {
 						  normalSource[index++] = (double)ttp[z][y][x];
 					  }
@@ -1265,6 +1393,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	normalSource = null; */
 	    	logpeaks = null;
 	    	fwhm  = null;
+	    	indexValueList = null;
     	} // if (experimentalAIF)
     	for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
@@ -3582,5 +3711,56 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         
         return new File(dir + File.separator + fileBasename + ext);
     }
+    
+    private class indexValueComparator implements Comparator<indexValueItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(indexValueItem o1, indexValueItem o2) {
+            float a = o1.getValue();
+            float b = o2.getValue();
+            int i = o1.getIndex();
+            int j = o2.getIndex();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else if (i < j) {
+            	return -1;
+            } else if (i > j) {
+            	return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+    
+    private class indexValueItem {
+		private int index;
+		private float value;
+		
+		public indexValueItem(int index, float value) {
+			this.index = index;
+			this.value = value;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public float getValue() {
+			return value;
+		}
+		
+		
+	}
     
     }
