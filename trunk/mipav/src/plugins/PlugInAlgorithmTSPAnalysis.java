@@ -406,6 +406,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	short yHave;
     	short zHave;
     	int linkSum;
+    	boolean valNumUsed[];
+    	int currentValNum;
+    	boolean valueAdded;
+    	int currentTopIndex;
+    	int currentValTop;
     	
     	if (test) {
     		testxcorr();
@@ -969,7 +974,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     			    else if (delay_map[z][y][x] < tDim - 40) {
     			    	delay_map[z][y][x] = (short)(tDim - 40);
     			    }
-    			    // Dealy delT mutliplication to point of image readin so we can use a short array
+    			    // Delay delT mutliplication to point of image readin so we can use a short array
     			    //delay_map[z][y][x] = (delay_map[z][y][x] - tDim) * delT;
     			    delay_map[z][y][x] = (short)(delay_map[z][y][x] - tDim);
     			    if (calculateCorrelation) {
@@ -1294,6 +1299,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	xLink = new Vector<Short>();
 	    	yLink = new Vector<Short>();
 	    	zLink = new Vector<Short>();
+	    	valNumUsed = new boolean[(int)numUsed];
 	    	numAdjacentNeeded = 6;
 	    	topIndex = (int)(numUsed - 1);
 	    	bottomIndex = (int)(numUsed - numAdjacentNeeded);
@@ -1307,43 +1313,62 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	    } // for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--)
 	    	numAdjacentFound = 0;
 	    	bigLoop: while (numAdjacentFound < numAdjacentNeeded) {
+	    		for (currentTopIndex = topIndex; currentTopIndex >= bottomIndex + numAdjacentNeeded-1; currentTopIndex--) {
+	    		    for (i = 0; i < valNumUsed.length; i++) {
+	    		    	valNumUsed[i] = false;
+	    		    }
+	    		    currentValTop = zVal.size()-1-(topIndex-currentTopIndex);
 	    	        zLink.clear();
-	    	        zLink.add(zVal.get(0));
+	    	        zLink.add(zVal.get(currentValTop));
 	    	        yLink.clear();
-	    	        yLink.add(yVal.get(0));
+	    	        yLink.add(yVal.get(currentValTop));
 	    	        xLink.clear();
-	    	        xLink.add(xVal.get(0));
-	    	        for (currentIndex = bottomIndex+1; currentIndex <= topIndex; currentIndex++) {
-	    	            zTry = zVal.get(currentIndex-bottomIndex);
-	    	            yTry = yVal.get(currentIndex-bottomIndex);
-	    	            xTry = xVal.get(currentIndex-bottomIndex);
-	    	            for (currentIndex2 = 0; currentIndex2 < zLink.size(); currentIndex2++) {
-	    	                zHave = zLink.get(currentIndex2);
-	    	                yHave = yLink.get(currentIndex2);
-	    	                xHave = xLink.get(currentIndex2);
-	    	                linkSum = Math.abs(zTry-zHave) + Math.abs(yTry-yHave) + Math.abs(xTry-xHave);
-	    	                if (linkSum == 1) {
-	    	                	zLink.add(zTry);
-	    	                	yLink.add(yTry);
-	    	                	xLink.add(xTry);
-	    	                }
-	    	            } // for (currentIndex2 = 0; currentIndex2 < zLink.size(); currentIndex2++)
-	    	        } // for (currentIndex = bottomIndex+1; currentIndex <= topIndex; currentIndex++)
-	    	        numAdjacentFound = zLink.size();
-	    	        if ((numAdjacentFound < numAdjacentNeeded) && (bottomIndex > 0)) {
-		    	        bottomIndex--;	
-		    	        item = indexValueList.get(bottomIndex);
-		    	        index = item.getIndex();
-		    	        zVal.insertElementAt((short)(index/length),0);
-		    	        sliceIndex = index % length;
-		    	        yVal.insertElementAt((short)(sliceIndex/xDim),0);
-		    	        xVal.insertElementAt((short)(sliceIndex%xDim),0);
-	    	        }
-	    	        else if ((numAdjacentFound < numAdjacentNeeded) && (bottomIndex == 0)) {
-	    	        	System.out.println("Experimental AIF unexpectedly failed");
-	    	        	setCompleted(false);
-	    	        	return;
-	    	        }
+	    	        xLink.add(xVal.get(currentValTop));
+	    	        valNumUsed[currentValTop] = true;
+	    	        valueAdded = true;
+	    	        while (valueAdded) {
+	    	        	valueAdded = false;
+		    	        for (currentIndex = currentTopIndex-1; currentIndex >= bottomIndex; currentIndex--) {
+		    	        	currentValNum = zVal.size() - 1 - (topIndex - currentIndex);
+		    	        	if (!valNumUsed[currentValNum]) {
+			    	            zTry = zVal.get(currentValNum);
+			    	            yTry = yVal.get(currentValNum);
+			    	            xTry = xVal.get(currentValNum);
+			    	            for (currentIndex2 = 0; (currentIndex2 < zLink.size()) && (!valNumUsed[currentValNum]); currentIndex2++) {
+			    	                zHave = zLink.get(currentIndex2);
+			    	                yHave = yLink.get(currentIndex2);
+			    	                xHave = xLink.get(currentIndex2);
+			    	                linkSum = Math.abs(zTry-zHave) + Math.abs(yTry-yHave) + Math.abs(xTry-xHave);
+			    	                if (linkSum == 1) {
+			    	                	zLink.add(zTry);
+			    	                	yLink.add(yTry);
+			    	                	xLink.add(xTry);
+			    	                	numAdjacentFound = zLink.size();
+			    	 	    	        if (numAdjacentFound >= numAdjacentNeeded) {
+			    	 	    	        	break bigLoop;
+			    	 	    	        }
+			    	                	valNumUsed[currentValNum] = true;
+			    	                	valueAdded = true;
+			    	                }
+			    	            } // for (currentIndex2 = 0; currentIndex2 < zLink.size(); currentIndex2++)
+		    	        	} // if (!valNumUsed(currentValNum)
+		    	        } // for for (currentIndex = currentTopIndex-1; currentIndex >= bottomIndex; currentIndex--)
+	    	        } // while (valueAdded)
+	    		} // for (currentTopIndex = topIndex; currentTopIndex >= bottomIndex + numAdjacentNeeded-1; currentTopIndex--)
+	    		if (bottomIndex > 0) {
+	    	        bottomIndex--;	
+	    	        item = indexValueList.get(bottomIndex);
+	    	        index = item.getIndex();
+	    	        zVal.insertElementAt((short)(index/length),0);
+	    	        sliceIndex = index % length;
+	    	        yVal.insertElementAt((short)(sliceIndex/xDim),0);
+	    	        xVal.insertElementAt((short)(sliceIndex%xDim),0);
+    	        }
+    	        else {
+    	        	System.out.println("Experimental AIF unexpectedly failed");
+    	        	setCompleted(false);
+    	        	return;
+    	        }
 	    	} // while(numAdjacentFound < numAdjacentNeeded)
 	    	System.out.println("Number adjacent found = " + numAdjacentFound);
 	    	for (z = 0; z < zVal.size(); z++) {
