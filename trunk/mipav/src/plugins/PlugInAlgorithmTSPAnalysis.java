@@ -1423,16 +1423,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		            ExperimentalAIFImage.registerVOI(newPtVOI[i]);
 			    }
 			    ViewJFrameImage vFrame = new ViewJFrameImage(ExperimentalAIFImage);
-			    component = vFrame.getComponent(0);
-			    rect = component.getBounds();
-		    	format = "png";
-	  	        captureImage =
+			    Component component = vFrame.getComponent(0);
+			    Rectangle rect = component.getBounds();
+		    	String format = "png";
+	  	        BufferedImage captureImage =
 	  	                new BufferedImage(rect.width, rect.height,
 	  	                                    BufferedImage.TYPE_INT_ARGB);
 	  	        component.paint(captureImage.getGraphics());
 	  	 
-	  	        sliceAifFile = new File(outputFilePath + outputPrefix + "sliceAIF.png");
-	  	        ImageIO.write(captureImage, format, sliceAifFile);
+	  	        File sliceExperimentalAifFile = new File(outputFilePath + outputPrefix + "sliceExperimentalAIF.png");
+	  	        try {
+	  	            ImageIO.write(captureImage, format, sliceExperimentalAifFile);
+	  	        }
+	  	        catch (IOException e) {
+	  	        	MipavUtil.displayError("Error: " + e + "\n");
+	                setCompleted(false);
+	                return;	
+	  	        }
 	  	        vFrame.dispose();
 	    	
 	    	
