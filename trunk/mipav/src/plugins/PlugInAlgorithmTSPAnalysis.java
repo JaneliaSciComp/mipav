@@ -369,6 +369,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double meanttp;
     	double meanfwhm;
     	long numUsed;
+    	int numZUsed[];
     	//double normalSource[];
     	int index;
     	//double result[] = new double[1];
@@ -384,20 +385,18 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	float c;
     	float cmin;
     	float cmax;
-    	ArrayList <indexValueItem> indexValueList = null;
+    	ArrayList <indexValueItem> indexValueList[] = null;
     	int numAdjacentNeeded;
     	int numAdjacentFound;
     	Vector<Short>xVal;
     	Vector<Short>yVal;
-    	Vector<Short>zVal;
     	int bottomIndex;
     	int topIndex;
     	int currentIndex;
     	indexValueItem item;
     	int sliceIndex;
-    	Vector<Short>xLink;
-    	Vector<Short>yLink;
-    	Vector<Short>zLink;
+    	Vector<Short>xLink[];
+    	Vector<Short>yLink[];
     	int currentIndex2;
     	short xTry;
     	short yTry;
@@ -411,6 +410,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	boolean valueAdded;
     	int currentTopIndex;
     	int currentValTop;
+    	double highestCSum[];
+    	int highestZ;
+    	double highestZCSum;
     	
     	if (test) {
     		testxcorr();
@@ -1127,6 +1129,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	meanttp = 0.0;
 	    	meanfwhm = 0.0;
 	    	numUsed = 0;
+	    	numZUsed = new int[zDim];
 	    	globalmaxpeaks = -Double.MAX_VALUE;
 	    	globalminttp = Short.MAX_VALUE;
 	    	globalminfwhm = Double.MAX_VALUE;
@@ -1230,6 +1233,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						fwhm[z][y][x] = (float)(postHalfTime - preHalfTime);
 						meanfwhm += (postHalfTime - preHalfTime);
 						numUsed++;
+						numZUsed[z]++;
 						if (logpeaks[z][y][x] > globalmaxpeaks) {
 							globalmaxpeaks = logpeaks[z][y][x];
 						}
@@ -1261,7 +1265,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	k1 = 1.0/maxdelpeaks;
 	    	k2 = 1.0/mindelttp;
 	    	k3 = 1.0/mindelfwhm;
-	    	indexValueList = new ArrayList<indexValueItem>();
+	    	indexValueList = new ArrayList[zDim];
+	    	for (z = 0; z < zDim; z++) {
+	    		indexValueList[z] = new ArrayList<indexValueItem>();
+	    	}
 	    	cmin = Float.MAX_VALUE;
 	    	cmax = -Float.MAX_VALUE;
 	    	for (z = 0; z < zDim; z++) {
@@ -1276,13 +1283,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					    	if (c > cmax) {
 					    		cmax = c;
 					    	}
-					    	index = x + y*xDim + z*length;
-					    	indexValueList.add(new indexValueItem(index, c));
+					    	index = x + y*xDim;
+					    	indexValueList[z].add(new indexValueItem(index, c));
 					    }
 					}
 				}
 	    	}
-	    	Collections.sort(indexValueList, new indexValueComparator());
+	    	for ( z = 0; z < zDim; z++) {
+	    	    Collections.sort(indexValueList[z], new indexValueComparator());
+	    	}
 	    	System.out.println("cmin = " + cmin);
 	    	System.out.println("cmax = " + cmax);
 	    	/*indexValueItem item = indexValueList.get(0);
@@ -1295,85 +1304,137 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	// of 0.94 x 0.94 mm."
 	    	xVal = new Vector<Short>();
 	    	yVal = new Vector<Short>();
-	    	zVal = new Vector<Short>();
-	    	xLink = new Vector<Short>();
-	    	yLink = new Vector<Short>();
-	    	zLink = new Vector<Short>();
-	    	valNumUsed = new boolean[(int)numUsed];
-	    	numAdjacentNeeded = 6;
-	    	topIndex = (int)(numUsed - 1);
-	    	bottomIndex = (int)(numUsed - numAdjacentNeeded);
-	    	for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--) {
-    	        item = indexValueList.get(currentIndex);
-    	        index = item.getIndex();
-    	        zVal.insertElementAt((short)(index/length),0);
-    	        sliceIndex = index % length;
-    	        yVal.insertElementAt((short)(sliceIndex/xDim),0);
-    	        xVal.insertElementAt((short)(sliceIndex%xDim),0);
-    	    } // for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--)
-	    	numAdjacentFound = 0;
-	    	bigLoop: while (numAdjacentFound < numAdjacentNeeded) {
-	    		for (currentTopIndex = topIndex; currentTopIndex >= bottomIndex + numAdjacentNeeded-1; currentTopIndex--) {
-	    		    for (i = 0; i < valNumUsed.length; i++) {
-	    		    	valNumUsed[i] = false;
-	    		    }
-	    		    currentValTop = zVal.size()-1-(topIndex-currentTopIndex);
-	    	        zLink.clear();
-	    	        zLink.add(zVal.get(currentValTop));
-	    	        yLink.clear();
-	    	        yLink.add(yVal.get(currentValTop));
-	    	        xLink.clear();
-	    	        xLink.add(xVal.get(currentValTop));
-	    	        valNumUsed[currentValTop] = true;
-	    	        valueAdded = true;
-	    	        while (valueAdded) {
-	    	        	valueAdded = false;
-		    	        for (currentIndex = currentTopIndex-1; currentIndex >= bottomIndex; currentIndex--) {
-		    	        	currentValNum = zVal.size() - 1 - (topIndex - currentIndex);
-		    	        	if (!valNumUsed[currentValNum]) {
-			    	            zTry = zVal.get(currentValNum);
-			    	            yTry = yVal.get(currentValNum);
-			    	            xTry = xVal.get(currentValNum);
-			    	            for (currentIndex2 = 0; (currentIndex2 < zLink.size()) && (!valNumUsed[currentValNum]); currentIndex2++) {
-			    	                zHave = zLink.get(currentIndex2);
-			    	                yHave = yLink.get(currentIndex2);
-			    	                xHave = xLink.get(currentIndex2);
-			    	                linkSum = Math.abs(zTry-zHave) + Math.abs(yTry-yHave) + Math.abs(xTry-xHave);
-			    	                if (linkSum == 1) {
-			    	                	zLink.add(zTry);
-			    	                	yLink.add(yTry);
-			    	                	xLink.add(xTry);
-			    	                	numAdjacentFound = zLink.size();
-			    	 	    	        if (numAdjacentFound >= numAdjacentNeeded) {
-			    	 	    	        	break bigLoop;
-			    	 	    	        }
-			    	                	valNumUsed[currentValNum] = true;
-			    	                	valueAdded = true;
-			    	                }
-			    	            } // for (currentIndex2 = 0; currentIndex2 < zLink.size(); currentIndex2++)
-		    	        	} // if (!valNumUsed(currentValNum)
-		    	        } // for for (currentIndex = currentTopIndex-1; currentIndex >= bottomIndex; currentIndex--)
-	    	        } // while (valueAdded)
-	    		} // for (currentTopIndex = topIndex; currentTopIndex >= bottomIndex + numAdjacentNeeded-1; currentTopIndex--)
-	    		if (bottomIndex > 0) {
-	    	        bottomIndex--;	
-	    	        item = indexValueList.get(bottomIndex);
-	    	        index = item.getIndex();
-	    	        zVal.insertElementAt((short)(index/length),0);
-	    	        sliceIndex = index % length;
-	    	        yVal.insertElementAt((short)(sliceIndex/xDim),0);
-	    	        xVal.insertElementAt((short)(sliceIndex%xDim),0);
-    	        }
-    	        else {
-    	        	System.out.println("Experimental AIF unexpectedly failed");
-    	        	setCompleted(false);
-    	        	return;
-    	        }
-	    	} // while(numAdjacentFound < numAdjacentNeeded)
-	    	System.out.println("Number adjacent found = " + numAdjacentFound);
-	    	for (z = 0; z < zVal.size(); z++) {
-	    		System.out.println("Point " + (z+1) + " has x = " + xVal.get(z) + " y = " + yVal.get(z) + " z = " + zVal.get(z));
+	    	xLink = new Vector[zDim];
+	    	yLink = new Vector[zDim];
+	    	for (z = 0; z < zDim; z++) {
+	    		xLink[z] = new Vector<Short>();
+	    		yLink[z] = new Vector<Short>();
 	    	}
+	    	
+	    	numAdjacentNeeded = 6;
+	    	highestCSum = new double[zDim];
+	    	for (z = 0; z < zDim; z++) {
+	    		xVal.clear();
+	    		yVal.clear();
+	    		valNumUsed = new boolean[(int)numZUsed[z]];
+	    		topIndex = (int)(numZUsed[z] - 1);
+		    	bottomIndex = (int)(numZUsed[z] - numAdjacentNeeded);
+		    	for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--) {
+	    	        item = indexValueList[z].get(currentIndex);
+	    	        index = item.getIndex();
+	    	        yVal.insertElementAt((short)(index/xDim),0);
+	    	        xVal.insertElementAt((short)(index%xDim),0);
+	    	    } // for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--)
+		    	numAdjacentFound = 0;
+		    	bigLoop: while (numAdjacentFound < numAdjacentNeeded) {
+		    		for (currentTopIndex = topIndex; currentTopIndex >= bottomIndex + numAdjacentNeeded-1; currentTopIndex--) {
+		    		    for (i = 0; i < valNumUsed.length; i++) {
+		    		    	valNumUsed[i] = false;
+		    		    }
+		    		    currentValTop = yVal.size()-1-(topIndex-currentTopIndex);
+		    	        yLink[z].clear();
+		    	        yLink[z].add(yVal.get(currentValTop));
+		    	        xLink[z].clear();
+		    	        xLink[z].add(xVal.get(currentValTop));
+		    	        highestCSum[z] = indexValueList[z].get(currentTopIndex).getValue();
+		    	        valNumUsed[currentValTop] = true;
+		    	        valueAdded = true;
+		    	        while (valueAdded) {
+		    	        	valueAdded = false;
+			    	        for (currentIndex = currentTopIndex-1; currentIndex >= bottomIndex; currentIndex--) {
+			    	        	currentValNum = yVal.size() - 1 - (topIndex - currentIndex);
+			    	        	if (!valNumUsed[currentValNum]) {
+				    	            yTry = yVal.get(currentValNum);
+				    	            xTry = xVal.get(currentValNum);
+				    	            for (currentIndex2 = 0; (currentIndex2 < yLink[z].size()) && (!valNumUsed[currentValNum]); currentIndex2++) {
+				    	                yHave = yLink[z].get(currentIndex2);
+				    	                xHave = xLink[z].get(currentIndex2);
+				    	                linkSum = Math.abs(yTry-yHave) + Math.abs(xTry-xHave);
+				    	                if (linkSum == 1) {
+				    	                	yLink[z].add(yTry);
+				    	                	xLink[z].add(xTry);
+				    	                	highestCSum[z] += indexValueList[z].get(currentIndex).getValue();
+				    	                	numAdjacentFound = yLink[z].size();
+				    	 	    	        if (numAdjacentFound >= numAdjacentNeeded) {
+				    	 	    	        	break bigLoop;
+				    	 	    	        }
+				    	                	valNumUsed[currentValNum] = true;
+				    	                	valueAdded = true;
+				    	                }
+				    	            } // for (currentIndex2 = 0; currentIndex2 < yLink[z].size(); currentIndex2++)
+			    	        	} // if (!valNumUsed(currentValNum)
+			    	        } // for for (currentIndex = currentTopIndex-1; currentIndex >= bottomIndex; currentIndex--)
+		    	        } // while (valueAdded)
+		    		} // for (currentTopIndex = topIndex; currentTopIndex >= bottomIndex + numAdjacentNeeded-1; currentTopIndex--)
+		    		if (bottomIndex > 0) {
+		    	        bottomIndex--;	
+		    	        item = indexValueList[z].get(bottomIndex);
+		    	        index = item.getIndex();
+		    	        yVal.insertElementAt((short)(index/xDim),0);
+		    	        xVal.insertElementAt((short)(index%xDim),0);
+	    	        }
+	    	        else {
+	    	        	highestCSum[z] = -Double.MAX_VALUE;
+	    	        	break bigLoop;
+	    	        }
+		    	} // bigLoop: while(numAdjacentFound < numAdjacentNeeded)
+	    	} // for (z = 0; z < zDim; z++)
+	    	highestZCSum = -Double.MAX_VALUE;
+	    	highestZ = -1;
+	    	for (z = 0; z < zDim; z++) {
+	    	    if (highestCSum[z] > highestZCSum) {
+	    	    	highestZ = z;
+	    	    	highestZCSum = highestCSum[z];
+	    	    }
+	    	}
+	    	
+	    	System.out.println("Sum of highest " + numAdjacentNeeded + " adjacent pixels occurs in slice " + highestZ);
+	    	System.out.println("The pixels are at locations:");
+	    	for (i = 0; i < numAdjacentNeeded; i++) {
+	    		System.out.println(" x = " + xLink[highestZ].get(i) + " y = " + yLink[highestZ].get(i));
+	    	}
+	    	
+	    	short shortBuffer[] = new short[length];
+	          for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		shortBuffer[x + y * xDim] = data[highestZ][y][x][0];
+		    	}
+		       }
+		       extents2D = new int[]{xDim,yDim};
+		       ModelImage ExperimentalAIFImage = new ModelImage(ModelStorageBase.SHORT,extents2D,"ExperimentalAIFImage");
+			    try {
+			    	ExperimentalAIFImage.importData(0, shortBuffer, true);
+			    }
+			    catch (IOException e) {
+			    	MipavUtil.displayError("IOException on ExperimentalAIFImage.importData");
+			    	setCompleted(false);
+			    	return;
+			    }
+			    VOI newPtVOI[] = new VOI[numAdjacentNeeded];
+			    for (i = 0; i < numAdjacentNeeded; i++) {
+			        newPtVOI[i] = new VOI((short) i, "pointAIF"+(i+1)+".voi", VOI.POINT, -1.0f);
+		            newPtVOI[i].setColor(Color.RED);
+		            float xArr[] = new float[] {(float)xLink[highestZ].get(i)};
+		            float yArr[] = new float[] {(float)yLink[highestZ].get(i)};
+		            float zArr[] = new float[] {(float)highestZ};
+		            newPtVOI[i].importCurve(xArr, yArr, zArr);
+		            ((VOIPoint) (newPtVOI[i].getCurves().elementAt(0))).setFixed(true);
+		            ((VOIPoint) (newPtVOI[i].getCurves().elementAt(0))).setLabel("AIF Point"+(i+1));
+		            ExperimentalAIFImage.registerVOI(newPtVOI[i]);
+			    }
+			    ViewJFrameImage vFrame = new ViewJFrameImage(ExperimentalAIFImage);
+			    component = vFrame.getComponent(0);
+			    rect = component.getBounds();
+		    	format = "png";
+	  	        captureImage =
+	  	                new BufferedImage(rect.width, rect.height,
+	  	                                    BufferedImage.TYPE_INT_ARGB);
+	  	        component.paint(captureImage.getGraphics());
+	  	 
+	  	        sliceAifFile = new File(outputFilePath + outputPrefix + "sliceAIF.png");
+	  	        ImageIO.write(captureImage, format, sliceAifFile);
+	  	        vFrame.dispose();
+	    	
 	    	
 	    	/*normalSource = new double[(int)numUsed];
 	    	index = 0;
