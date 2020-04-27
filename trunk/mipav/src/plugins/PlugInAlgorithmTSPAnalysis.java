@@ -355,6 +355,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double preHalfTime;
     	short preAboveHalfTime;
     	short postBelowHalfTime;
+    	short startAbove;
+    	short startBelow;
     	double postHalfTime;
     	short postAboveHalfTime;
     	double preBelowHalfIntensity;
@@ -1168,6 +1170,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						postHalfTime = -Double.MAX_VALUE;
 						postBelowHalfTime = Short.MAX_VALUE;
 						postBelowHalfIntensity = -Double.MAX_VALUE;
+						startAbove = Short.MAX_VALUE;
+						startBelow = Short.MAX_VALUE;
 						for (t = 0; t < (minttp-1); t++) {
 						    if (delR2[t] < maxpeaks/2.0) {
 						    	preBelowHalfTime = (short)t;
@@ -1176,7 +1180,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						    else if ((preHalfTime == -Double.MAX_VALUE) && (delR2[t] == maxpeaks/2.0)) {
 						    	preHalfTime = (double)t;
 						    }
-						    else if ((preAboveHalfTime == Short.MAX_VALUE) && (delR2[t] > maxpeaks/2.0)) {
+						}
+						if ((preHalfTime != -Double.MAX_VALUE) && (preBelowHalfTime != Short.MAX_VALUE) && (preBelowHalfTime > preHalfTime)) {
+							preHalfTime = -Double.MAX_VALUE;
+						}
+						if (preHalfTime != -Double.MAX_VALUE) {
+							startAbove = (short)Math.round(preHalfTime + 1);
+						}
+						else if (preBelowHalfTime != Short.MAX_VALUE) {
+							startAbove = (short)(preBelowHalfTime + 1);
+						}
+						// If a notch in the prepeak curve occurs, find preAboveHalf after the notch.
+						for (t = startAbove; t < (minttp-1); t++) {
+						    if ((preAboveHalfTime == Short.MAX_VALUE) && (delR2[t] > maxpeaks/2.0)) {
 						    	preAboveHalfTime = (short)t;
 						    	preAboveHalfIntensity = delR2[t];
 						    }
@@ -1196,11 +1212,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							else if ((postHalfTime == -Double.MAX_VALUE) && (delR2[t] == maxpeaks/2.0)) {
 								postHalfTime = (double)t;
 							}
-							else if ((postBelowHalfTime == Short.MAX_VALUE) && (delR2[t] < maxpeaks/2.0)) {
+						}
+						if ((postHalfTime != -Double.MAX_VALUE) && (postAboveHalfTime != Short.MAX_VALUE) && (postAboveHalfTime > postHalfTime)) {
+							postHalfTime = -Double.MAX_VALUE;
+						}
+						if (postHalfTime != -Double.MAX_VALUE) {
+							startBelow = (short)Math.round(postHalfTime + 1);
+						}
+						else if (postAboveHalfTime != Short.MAX_VALUE) {
+							startBelow = (short)(postAboveHalfTime + 1);
+						}
+						// If a notch in the postpeak curve occurs, find postBelowHalf after the notch.
+						for (t = startBelow; t < tDim; t++) {
+							if ((postBelowHalfTime == Short.MAX_VALUE) && (delR2[t] < maxpeaks/2.0)) {
 								postBelowHalfTime = (short)t;
 								postBelowHalfIntensity = delR2[t];
 							}
-						} // for (t = minttp; t < tDim; t++)
+						} // for (t = startAbove; t < tDim; t++)
 						if ((postBelowHalfTime == Short.MAX_VALUE) && (postHalfTime == -Double.MAX_VALUE)) {
 							// Never was less than half peak value after peak value occurred
 							logpeaks[z][y][x] = Float.NaN;
