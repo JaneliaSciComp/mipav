@@ -1136,7 +1136,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	globalminttp = Short.MAX_VALUE;
 	    	globalminfwhm = Double.MAX_VALUE;
 	    	
-	    	for (z = 0; z < zDim; z++) {
+	    	for (z = 4; z <= 8; z++) {
 				for (y = 0; y < yDim; y++) {
 					xloop: for (x = 0; x < xDim; x++) {
 						for (t = 0; t < tDim; t++) {
@@ -1273,7 +1273,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						}
 					} // for (x = 0; x < xDim; x++)
 				} // for (y = 0; y < yDim; y++)	
-			} // for (z = 0; z < zDim; z++)
+			} // for (z = 4; z <= 8; z++)
 	    	meanpeaks = meanpeaks/numUsed;
 	        meanttp = meanttp/numUsed;
 	    	meanfwhm = meanfwhm/numUsed;
@@ -1294,12 +1294,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	k2 = 1.0/mindelttp;
 	    	k3 = 1.0/mindelfwhm;
 	    	indexValueList = new ArrayList[zDim];
-	    	for (z = 0; z < zDim; z++) {
+	    	for (z = 4; z <= 8; z++) {
 	    		indexValueList[z] = new ArrayList<indexValueItem>();
 	    	}
 	    	cmin = Float.MAX_VALUE;
 	    	cmax = -Float.MAX_VALUE;
-	    	for (z = 0; z < zDim; z++) {
+	    	for (z = 4; z <= 8; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
 					    if (!Float.isNaN(logpeaks[z][y][x])) {
@@ -1317,7 +1317,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					}
 				}
 	    	}
-	    	for ( z = 0; z < zDim; z++) {
+	    	for ( z = 4; z <= 8; z++) {
 	    	    Collections.sort(indexValueList[z], new indexValueComparator());
 	    	}
 	    	System.out.println("cmin = " + cmin);
@@ -1334,14 +1334,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	yVal = new Vector<Short>();
 	    	xLink = new Vector[zDim];
 	    	yLink = new Vector[zDim];
-	    	for (z = 0; z < zDim; z++) {
+	    	for (z = 4; z <= 8; z++) {
 	    		xLink[z] = new Vector<Short>();
 	    		yLink[z] = new Vector<Short>();
 	    	}
 	    	
 	    	numAdjacentNeeded = 6;
 	    	highestCSum = new double[zDim];
-	    	for (z = 0; z < zDim; z++) {
+	    	for (z = 4; z <= 8; z++) {
 	    		xVal.clear();
 	    		yVal.clear();
 	    		valNumUsed = new boolean[(int)numZUsed[z]];
@@ -1406,10 +1406,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	        	break bigLoop;
 	    	        }
 		    	} // bigLoop: while(numAdjacentFound < numAdjacentNeeded)
-	    	} // for (z = 0; z < zDim; z++)
+	    	} // for (z = 4; z <= 8; z++)
 	    	highestZCSum = -Double.MAX_VALUE;
 	    	highestZ = -1;
-	    	for (z = 0; z < zDim; z++) {
+	    	for (z = 4; z <= 8; z++) {
 	    	    if (highestCSum[z] > highestZCSum) {
 	    	    	highestZ = z;
 	    	    	highestZCSum = highestCSum[z];
@@ -1640,7 +1640,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    sliceBuffer = new int[length];
 		    for (y = 0; y < yDim; y++) {
 		    	for (x = 0; x < xDim; x++) {
-		    		sliceBuffer[x + y * xDim] = data[9][y][x][0];
+		    		sliceBuffer[x + y * xDim] = data[8][y][x][0];
 		    	}
 		    }
 		    accessLock.lock();
