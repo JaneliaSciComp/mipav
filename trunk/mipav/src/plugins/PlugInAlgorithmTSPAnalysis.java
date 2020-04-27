@@ -1667,9 +1667,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    pickImage = null;
 		    System.out.println("xS = " + xS + " yS = " + yS);
 		    for (t = 0; t < tDim; t++) {
-		    	S[t] = data[9][yS][xS][t];
+		    	S[t] = data[8][yS][xS][t];
 		    }
-		    zmean = 9;
+		    zmean = 8;
 		    ymean = yS;
 		    xmean = xS;
 		    sumcount = 1;
