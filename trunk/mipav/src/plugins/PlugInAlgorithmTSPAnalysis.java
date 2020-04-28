@@ -1143,6 +1143,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 				for (y = 0; y < yDim; y++) {
 					xloop: for (x = 0; x < xDim; x++) {
+						// Remove background around brain
+						// This does not work must have a more sophisticated background stripping.
+						/*if (data[z][y][x][0] < 1000) {
+							logpeaks[z][y][x] = Float.NaN;
+							ttp[z][y][x] = Short.MIN_VALUE;
+							fwhm[z][y][x] = Float.NaN;
+							continue xloop;
+						}*/
 						for (t = 0; t < tDim; t++) {
 							if (data[z][y][x][t] == 0) {
 								logpeaks[z][y][x] = Float.NaN;
@@ -1473,7 +1481,31 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	                return;	
 	  	        }
 	  	        vFrame.dispose();
+	  	        float fbuffer[] = new float[length];
 	    	
+	  	      ModelImage logpeaksImage = new ModelImage(ModelStorageBase.FLOAT, extents2D, "logpeaks");
+		    	for (x = 0; x < xDim; x++) {
+		    		for (y = 0; y < yDim; y++) {
+		    		    fbuffer[x + y*xDim] = logpeaks[highestZ][y][x];
+		    		}
+		    	}
+		    	try {
+		    		logpeaksImage.importData(0, fbuffer, true);
+		    	}
+		    	catch (IOException e) {
+		    		MipavUtil.displayError("IOException on logpeaksImage");
+		    		setCompleted(false);
+		    		return;
+		    	}
+		    	fileInfo = logpeaksImage.getFileInfo();
+		    	fileInfo[0].setResolutions(resolutions);
+		    	fileInfo[0].setUnitsOfMeasure(units);
+		        fileInfo[0].setDataType(ModelStorageBase.FLOAT);
+		    	
+		    	saveImageFile(logpeaksImage, outputFilePath, outputPrefix + "logpeaks", saveFileFormat);
+		        
+		    	logpeaksImage.disposeLocal();
+		    	logpeaksImage = null;
 	    	
 	    	/*normalSource = new double[(int)numUsed];
 	    	index = 0;
