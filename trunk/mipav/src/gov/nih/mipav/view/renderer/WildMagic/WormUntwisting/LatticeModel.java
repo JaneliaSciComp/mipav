@@ -179,8 +179,11 @@ public class LatticeModel {
 		return null;
 	}
 
-
 	public static VOIVector readLatticeCSV(String fileName) {
+		return readLatticeCSV(fileName, false);
+	}
+
+	public static VOIVector readLatticeCSV(String fileName, boolean saveSeamCells ) {
 		File file = new File(fileName);
 		if ( file.exists() )
 		{		
@@ -9958,7 +9961,8 @@ public class LatticeModel {
 		if (left.getCurves().size() == right.getCurves().size()) {
 			totalSeamCount = 0;
 			for ( int i = 0; i < left.getCurves().size(); i++ ) {
-				if ( ((VOIWormAnnotation)left.getCurves().elementAt(i)).isSeamCell() ) {
+				VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) left.getCurves().elementAt(i);
+				if ( leftAnnotation.isSeamCell() ) {
 					totalSeamCount++;
 				}
 			}
@@ -9975,10 +9979,10 @@ public class LatticeModel {
 				if ( totalSeamCount <= 10 ) {
 					// H0-H1-H2-V1-V2-V3-V4-V5-V6-T 
 					if ( leftAnnotation.isSeamCell() ) {
-						name = seamCount < 4 ? ("H" + (seamCount-1)) : (seamCount < 9) ? ("V" + (seamCount - 3)) : "T";
+						name = seamCount < 4 ? ("H" + (seamCount-1)) : (seamCount <= 9) ? ("V" + (seamCount - 3)) : "T";
 					}
 					else {
-						name = "a" + nonSeamCount;
+						name = "a" + (nonSeamCount-1);
 					}
 				}
 				else if ( totalSeamCount > 10 ) {
@@ -9987,7 +9991,7 @@ public class LatticeModel {
 						name = seamCount < 4 ? ("H" + (seamCount-1)) : (seamCount < 8) ? ("V" + (seamCount - 3)) : (seamCount == 8) ? "Q" : (seamCount < 11) ? ("V" + (seamCount - 4)) : "T";
 					}
 					else {
-						name = "a" + nonSeamCount;
+						name = "a" + (nonSeamCount-1);
 					}
 				}
 				leftAnnotation.setText( name + "L" );
@@ -10001,132 +10005,7 @@ public class LatticeModel {
 		}
 	}
 	
-	public void renameLattice()
-	{
-		if ( left == null || right == null ) return;
-		
-		// check if lattice is already named, if so return as is:
-		for ( int i = 0; i < left.getCurves().size(); i++ ) {
-			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
-			if ( text.getText().contains("H") || text.getText().contains("V") || text.getText().contains("T") ) {
-				return;
-			}
-			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
-			if ( text.getText().contains("H") || text.getText().contains("V") || text.getText().contains("T") ) {
-				return;
-			}
-		}
-
-		float[] pairSort = new float[left.getCurves().size()];
-		// decide which 10 points are seam cells by taking max pair values
-		for ( int i = 0; i < left.getCurves().size() -1; i++ )
-		{
-			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
-			int x = (int) text.elementAt(0).X;
-			int y = (int) text.elementAt(0).Y;
-			int z = (int) text.elementAt(0).Z;
-			float value;
-			if ( imageA.isColorImage() ) 
-			{
-				value = imageA.getFloatC(x,y,z,2);
-			}
-			else
-			{
-				value = imageA.getFloat(x,y,z);
-			}
-
-			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
-			x = (int) text.elementAt(0).X;
-			y = (int) text.elementAt(0).Y;
-			z = (int) text.elementAt(0).Z;
-			if ( imageA.isColorImage() ) 
-			{
-				value += imageA.getFloatC(x,y,z,2);
-			}
-			else
-			{
-				value += imageA.getFloat(x,y,z);
-			}
-			pairSort[i] = value;
-		}
-		Arrays.sort(pairSort);
-
-		int pairCount = 0;
-		int extraCount = 0;
-		for ( int i = 0; i < left.getCurves().size(); i++ )
-		{
-			VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(i);
-			int x = (int) text.elementAt(0).X;
-			int y = (int) text.elementAt(0).Y;
-			int z = (int) text.elementAt(0).Z;
-			float value;
-			if ( imageA.isColorImage() ) 
-			{
-				value = imageA.getFloatC(x,y,z,2);
-			}
-			else
-			{
-				value = imageA.getFloat(x,y,z);
-			}
-			
-			text = (VOIWormAnnotation) right.getCurves().elementAt(i);
-			x = (int) text.elementAt(0).X;
-			y = (int) text.elementAt(0).Y;
-			z = (int) text.elementAt(0).Z;
-			if ( imageA.isColorImage() ) 
-			{
-				value += imageA.getFloatC(x,y,z,2);
-			}
-			else
-			{
-				value += imageA.getFloat(x,y,z);
-			}
-
-			boolean isSeamPair = left.getCurves().size() <= 10;
-			if ( !isSeamPair )
-			{
-				// check if this pair has a high enough value to be added to the list of seam cells:
-				for ( int j = 0; j < Math.min(9, pairSort.length); j++ )
-				{
-					if ( value >= pairSort[(pairSort.length -1) - j] )
-					{
-//						System.err.println( value + "  " + pairSort[(pairSort.length -1) - j]);
-						isSeamPair = true;
-						break;
-					}
-				}
-			}
-			if ( isSeamPair )
-			{
-				String name = pairCount < 3 ? ("H" + pairCount) : (pairCount < 9) ? ("V" + (pairCount - 2)) : "T";
-				pairCount++;
-
-				// left seam cell:
-				text = (VOIWormAnnotation) left.getCurves().elementAt(i);
-				text.setText( name + "L" );
-				text.setSeamCell(true);
-
-				// right seam cell:
-				text = (VOIWormAnnotation) right.getCurves().elementAt(i);
-				text.setText( name + "R" );
-				text.setSeamCell(true);
-			}
-			else
-			{
-				String name = "a" + extraCount++;
-
-				// left seam cell:
-				text = (VOIWormAnnotation) left.getCurves().elementAt(i);
-				text.setText( name + "L" );
-
-				// right seam cell:
-				text = (VOIWormAnnotation) right.getCurves().elementAt(i);
-				text.setText( name + "R" );
-			}
-		}
-	}
-	
-	public static boolean renameLattice( ModelImage image, VOIVector latticeVector)
+	public static boolean renameLatticeOnLoad( ModelImage image, VOIVector latticeVector)
 	{
 		if ( latticeVector.size() < 2 ) return false;
 		
