@@ -10095,7 +10095,7 @@ public class LatticeModel {
 			if ( !isSeamPair )
 			{
 				// check if this pair has a high enough value to be added to the list of seam cells:
-				for ( int j = 0; j < Math.min(9, pairSort.length); j++ )
+				for ( int j = 0; j < Math.min(10, pairSort.length); j++ )
 				{
 					if ( value >= pairSort[(pairSort.length -1) - j] )
 					{
