@@ -25,6 +25,7 @@ This software may NOT be used for diagnostic purposes.
 import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmBrainExtractor;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.algorithms.DAgostinosKsquaredTest;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
@@ -52,6 +53,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentBase;
 import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.dialogs.JDialogExtractBrain;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,6 +72,7 @@ import javax.imageio.ImageIO;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -417,6 +420,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double highestZCSum;
     	int lowestArterialZ;
         int highestArterialZ;
+        int numArterialZ;
     	
     	if (test) {
     		testxcorr();
@@ -1126,19 +1130,54 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	peaks = new short[zDim][yDim][xDim];
     	ttp = new short[zDim][yDim][xDim];
     	if (experimentalAIF) {
-	    	fwhm = new float[zDim][yDim][xDim];
+    		lowestArterialZ = 4;
+	    	highestArterialZ = 10;
+	    	numArterialZ = highestArterialZ - lowestArterialZ + 1;
+	    	fwhm = new float[numArterialZ][yDim][xDim];
 	    	delR2 = new double[tDim];
-	    	logpeaks = new float[zDim][yDim][xDim];
+	    	logpeaks = new float[numArterialZ][yDim][xDim];
 	    	meanpeaks = 0.0;
 	    	meanttp = 0.0;
 	    	meanfwhm = 0.0;
 	    	numUsed = 0;
-	    	numZUsed = new int[zDim];
+	    	numZUsed = new int[numArterialZ];
 	    	globalmaxpeaks = -Double.MAX_VALUE;
 	    	globalminttp = Short.MAX_VALUE;
 	    	globalminfwhm = Double.MAX_VALUE;
-	    	lowestArterialZ = 4;
-	    	highestArterialZ = 10;
+	    	
+	    	ModelImage volumeImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "volume");
+	    	fileInfo = volumeImage.getFileInfo();
+	    	for (i = 0; i < zDim; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.SHORT);
+	    	}
+	    	short shortVolume[] = new short[volume];
+	    	int orientation = FileInfoBase.AXIAL;
+	    	boolean useSphere = false;
+	    	Vector3f initCenterPoint;
+	    	boolean justEllipse = false;
+	    	AlgorithmBrainExtractor extractBrainAlgo;
+	    	for (t = 0; t < tDim; t++) {
+	    	    for (z = 0; z < zDim; z++) {
+	    	    	for (y = 0; y < yDim; y++) {
+	    	    		for (x = 0; x < xDim; x++) {
+	    	    			shortVolume[x + y*xDim + z*length] = data[z][y][x][t];
+	    	    		}
+	    	    	}
+	    	    }
+	    	    try {
+	    	    	volumeImage.importData(0, shortVolume, true);
+	    	    }
+	    	    catch(IOException e) {
+	    	    	MipavUtil.displayError("IOException on volumeImage.importData");
+	        		setCompleted(false);
+	        		return;	
+	    	    }
+	    	    initCenterPoint = JDialogExtractBrain.computeCenter(volumeImage, orientation, useSphere);
+	    	    extractBrainAlgo = new AlgorithmBrainExtractor(volumeImage, orientation, justEllipse,
+	    	    		useSphere, initCenterPoint);
+	    	}
 	    	
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 				for (y = 0; y < yDim; y++) {
