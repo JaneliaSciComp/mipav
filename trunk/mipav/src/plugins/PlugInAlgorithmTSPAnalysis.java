@@ -1158,6 +1158,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	Vector3f initCenterPoint;
 	    	boolean justEllipse = false;
 	    	AlgorithmBrainExtractor extractBrainAlgo;
+	    	int nIterations = 500; // 100-2000
+	    	int depth = 5; // 3-19
+	    	float imageRatio = 0.1f; // 0.01-0.5
+	    	float stiffness = 0.15f; // 0.01-0.5
+	    	boolean secondStageErosion = false;
+	    	boolean extractToPaint = false;
+	    	short dataArterial[][][][] = new short[numArterialZ][yDim][xDim][tDim];
 	    	for (t = 0; t < tDim; t++) {
 	    	    for (z = 0; z < zDim; z++) {
 	    	    	for (y = 0; y < yDim; y++) {
@@ -1177,6 +1184,28 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	    initCenterPoint = JDialogExtractBrain.computeCenter(volumeImage, orientation, useSphere);
 	    	    extractBrainAlgo = new AlgorithmBrainExtractor(volumeImage, orientation, justEllipse,
 	    	    		useSphere, initCenterPoint);
+	    	    extractBrainAlgo.setIterations(nIterations);
+	    	    extractBrainAlgo.setMaxDepth(depth);
+	    	    extractBrainAlgo.setImageRatio(imageRatio);
+	    	    extractBrainAlgo.setStiffness(stiffness);
+	    	    extractBrainAlgo.setSecondStageErosion(secondStageErosion);
+	    	    extractBrainAlgo.setExtractPaint(extractToPaint);
+	    	    extractBrainAlgo.run();
+	    	    try {
+	        		volumeImage.exportData(0,  volume, shortVolume);
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("IOException on volumeImage.exportData");
+	        		setCompleted(false);
+	        		return;
+	        	}
+	    	    for (z = lowestArterialZ; z <= highestArterialZ; z++) {
+	    	    	for (y = 0; y < yDim; y++) {
+	    	    	    for (x = 0; x < xDim; x++) {
+	    	    	    	dataArterial[z-lowestArterialZ][y][x][t] = shortVolume[x + y*xDim + z*length];
+	    	    	    }
+	    	    	}
+	    	    }
 	    	}
 	    	
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
@@ -1191,23 +1220,24 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							continue xloop;
 						}*/
 						for (t = 0; t < tDim; t++) {
-							if (data[z][y][x][t] == 0) {
-								logpeaks[z][y][x] = Float.NaN;
+							if (dataArterial[z-lowestArterialZ][y][x][t] == 0) {
+								logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
 								ttp[z][y][x] = Short.MIN_VALUE;
-								fwhm[z][y][x] = Float.NaN;
+								fwhm[z-lowestArterialZ][y][x] = Float.NaN;
 								continue xloop;
 							}
 						}
 						maxpeaks = -Double.MAX_VALUE;
 						minttp = Short.MAX_VALUE;
 						for (t = 0; t < tDim; t++) {
-							delR2[t] = -(1.0/TE)*Math.log((double)data[z][y][x][t]/(double)data[z][y][x][0]);
+							delR2[t] = -(1.0/TE)*Math.log((double)dataArterial[z-lowestArterialZ][y][x][t]/
+									(double)dataArterial[z-lowestArterialZ][y][x][0]);
 							if (delR2[t] > maxpeaks) {
 								maxpeaks = delR2[t];
 								minttp = (short)(t+1);
 							}
 						}
-						logpeaks[z][y][x] = (float)maxpeaks;
+						logpeaks[z-lowestArterialZ][y][x] = (float)maxpeaks;
 						meanpeaks += maxpeaks;
 						ttp[z][y][x] = minttp;
 						meanttp += minttp;
@@ -1250,9 +1280,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						}
 						if ((preBelowHalfTime == Short.MAX_VALUE) && (preHalfTime == -Double.MAX_VALUE)) {
 							// Never was less than half peak value before peak value occurred
-							logpeaks[z][y][x] = Float.NaN;
+							logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
 							ttp[z][y][x] = Short.MIN_VALUE;
-							fwhm[z][y][x] = Float.NaN;
+							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
 							continue xloop;
 						}
 						for (t = minttp; t < tDim; t++) {
@@ -1282,9 +1312,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						} // for (t = startAbove; t < tDim; t++)
 						if ((postBelowHalfTime == Short.MAX_VALUE) && (postHalfTime == -Double.MAX_VALUE)) {
 							// Never was less than half peak value after peak value occurred
-							logpeaks[z][y][x] = Float.NaN;
+							logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
 							ttp[z][y][x] = Short.MIN_VALUE;
-							fwhm[z][y][x] = Float.NaN;
+							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
 							continue xloop;
 						}
 						if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime != Short.MAX_VALUE)) {
@@ -1309,18 +1339,18 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							// Since of fraction of 1 time unit
 							postHalfTime = minttp-1 + fraction;
 						}
-						fwhm[z][y][x] = (float)(postHalfTime - preHalfTime);
+						fwhm[z-lowestArterialZ][y][x] = (float)(postHalfTime - preHalfTime);
 						meanfwhm += (postHalfTime - preHalfTime);
 						numUsed++;
-						numZUsed[z]++;
-						if (logpeaks[z][y][x] > globalmaxpeaks) {
-							globalmaxpeaks = logpeaks[z][y][x];
+						numZUsed[z-lowestArterialZ]++;
+						if (logpeaks[z-lowestArterialZ][y][x] > globalmaxpeaks) {
+							globalmaxpeaks = logpeaks[z-lowestArterialZ][y][x];
 						}
 						if (ttp[z][y][x] < globalminttp) {
 							globalminttp = ttp[z][y][x];
 						}
-						if (fwhm[z][y][x] < globalminfwhm) {
-							globalminfwhm = fwhm[z][y][x];
+						if (fwhm[z-lowestArterialZ][y][x] < globalminfwhm) {
+							globalminfwhm = fwhm[z-lowestArterialZ][y][x];
 						}
 					} // for (x = 0; x < xDim; x++)
 				} // for (y = 0; y < yDim; y++)	
@@ -1344,18 +1374,19 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	k1 = 1.0/maxdelpeaks;
 	    	k2 = 1.0/mindelttp;
 	    	k3 = 1.0/mindelfwhm;
-	    	indexValueList = new ArrayList[zDim];
+	    	indexValueList = new ArrayList[numArterialZ];
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
-	    		indexValueList[z] = new ArrayList<indexValueItem>();
+	    		indexValueList[z-lowestArterialZ] = new ArrayList<indexValueItem>();
 	    	}
 	    	cmin = Float.MAX_VALUE;
 	    	cmax = -Float.MAX_VALUE;
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    if (!Float.isNaN(logpeaks[z][y][x])) {
-					    	c = (float)(k1*(logpeaks[z][y][x] - meanpeaks) + k2*(ttp[z][y][x] - meanttp) + 
-					    			k3*(fwhm[z][y][x] - meanfwhm));
+					    if (!Float.isNaN(logpeaks[z-lowestArterialZ][y][x])) {
+					    	c = (float)(k1*(logpeaks[z-lowestArterialZ][y][x] - meanpeaks)
+					    			+ k2*(ttp[z][y][x] - meanttp) + 
+					    			k3*(fwhm[z-lowestArterialZ][y][x] - meanfwhm));
 					    	if (c < cmin) {
 					    		cmin = c;
 					    	}
@@ -1363,13 +1394,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					    		cmax = c;
 					    	}
 					    	index = x + y*xDim;
-					    	indexValueList[z].add(new indexValueItem(index, c));
+					    	indexValueList[z-lowestArterialZ].add(new indexValueItem(index, c));
 					    }
 					}
 				}
 	    	}
 	    	for ( z = lowestArterialZ; z <= highestArterialZ; z++) {
-	    	    Collections.sort(indexValueList[z], new indexValueComparator());
+	    	    Collections.sort(indexValueList[z-lowestArterialZ], new indexValueComparator());
 	    	}
 	    	System.out.println("cmin = " + cmin);
 	    	System.out.println("cmax = " + cmax);
@@ -1383,23 +1414,25 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	// of 0.94 x 0.94 mm."
 	    	xVal = new Vector<Short>();
 	    	yVal = new Vector<Short>();
-	    	xLink = new Vector[zDim];
-	    	yLink = new Vector[zDim];
+	    	xLink = new Vector[numArterialZ];
+	    	yLink = new Vector[numArterialZ];
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
-	    		xLink[z] = new Vector<Short>();
-	    		yLink[z] = new Vector<Short>();
+	    		xLink[z-lowestArterialZ] = new Vector<Short>();
+	    		yLink[z-lowestArterialZ] = new Vector<Short>();
 	    	}
 	    	
 	    	numAdjacentNeeded = 6;
-	    	highestCSum = new double[zDim];
+	    	highestCSum = new double[numArterialZ];
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
+	    		highestCSum[z - lowestArterialZ] = -Double.MAX_VALUE;
+	    		if (numZUsed[z-lowestArterialZ] >= numAdjacentNeeded) {
 	    		xVal.clear();
 	    		yVal.clear();
-	    		valNumUsed = new boolean[(int)numZUsed[z]];
-	    		topIndex = (int)(numZUsed[z] - 1);
-		    	bottomIndex = (int)(numZUsed[z] - numAdjacentNeeded);
+	    		valNumUsed = new boolean[(int)numZUsed[z-lowestArterialZ]];
+	    		topIndex = (int)(numZUsed[z-lowestArterialZ] - 1);
+		    	bottomIndex = (int)(numZUsed[z-lowestArterialZ] - numAdjacentNeeded);
 		    	for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--) {
-	    	        item = indexValueList[z].get(currentIndex);
+	    	        item = indexValueList[z-lowestArterialZ].get(currentIndex);
 	    	        index = item.getIndex();
 	    	        yVal.insertElementAt((short)(index/xDim),0);
 	    	        xVal.insertElementAt((short)(index%xDim),0);
@@ -1411,11 +1444,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		    	valNumUsed[i] = false;
 		    		    }
 		    		    currentValTop = yVal.size()-1-(topIndex-currentTopIndex);
-		    	        yLink[z].clear();
-		    	        yLink[z].add(yVal.get(currentValTop));
-		    	        xLink[z].clear();
-		    	        xLink[z].add(xVal.get(currentValTop));
-		    	        highestCSum[z] = indexValueList[z].get(currentTopIndex).getValue();
+		    	        yLink[z-lowestArterialZ].clear();
+		    	        yLink[z-lowestArterialZ].add(yVal.get(currentValTop));
+		    	        xLink[z-lowestArterialZ].clear();
+		    	        xLink[z-lowestArterialZ].add(xVal.get(currentValTop));
+		    	        highestCSum[z-lowestArterialZ] = indexValueList[z-lowestArterialZ].get(currentTopIndex).getValue();
 		    	        valNumUsed[currentValTop] = true;
 		    	        valueAdded = true;
 		    	        while (valueAdded) {
@@ -1425,58 +1458,59 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			    	        	if (!valNumUsed[currentValNum]) {
 				    	            yTry = yVal.get(currentValNum);
 				    	            xTry = xVal.get(currentValNum);
-				    	            for (currentIndex2 = 0; (currentIndex2 < yLink[z].size()) && (!valNumUsed[currentValNum]); currentIndex2++) {
-				    	                yHave = yLink[z].get(currentIndex2);
-				    	                xHave = xLink[z].get(currentIndex2);
+				    	            for (currentIndex2 = 0; (currentIndex2 < yLink[z-lowestArterialZ].size()) && (!valNumUsed[currentValNum]); currentIndex2++) {
+				    	                yHave = yLink[z-lowestArterialZ].get(currentIndex2);
+				    	                xHave = xLink[z-lowestArterialZ].get(currentIndex2);
 				    	                linkSum = Math.abs(yTry-yHave) + Math.abs(xTry-xHave);
 				    	                if (linkSum == 1) {
-				    	                	yLink[z].add(yTry);
-				    	                	xLink[z].add(xTry);
-				    	                	highestCSum[z] += indexValueList[z].get(currentIndex).getValue();
-				    	                	numAdjacentFound = yLink[z].size();
+				    	                	yLink[z-lowestArterialZ].add(yTry);
+				    	                	xLink[z-lowestArterialZ].add(xTry);
+				    	                	highestCSum[z-lowestArterialZ] += indexValueList[z-lowestArterialZ].get(currentIndex).getValue();
+				    	                	numAdjacentFound = yLink[z-lowestArterialZ].size();
 				    	 	    	        if (numAdjacentFound >= numAdjacentNeeded) {
 				    	 	    	        	break bigLoop;
 				    	 	    	        }
 				    	                	valNumUsed[currentValNum] = true;
 				    	                	valueAdded = true;
 				    	                }
-				    	            } // for (currentIndex2 = 0; currentIndex2 < yLink[z].size(); currentIndex2++)
+				    	            } // for (currentIndex2 = 0; currentIndex2 < yLink[z-lowestArterialZ].size(); currentIndex2++)
 			    	        	} // if (!valNumUsed(currentValNum)
 			    	        } // for for (currentIndex = currentTopIndex-1; currentIndex >= bottomIndex; currentIndex--)
 		    	        } // while (valueAdded)
 		    		} // for (currentTopIndex = topIndex; currentTopIndex >= bottomIndex + numAdjacentNeeded-1; currentTopIndex--)
 		    		if (bottomIndex > 0) {
 		    	        bottomIndex--;	
-		    	        item = indexValueList[z].get(bottomIndex);
+		    	        item = indexValueList[z-lowestArterialZ].get(bottomIndex);
 		    	        index = item.getIndex();
 		    	        yVal.insertElementAt((short)(index/xDim),0);
 		    	        xVal.insertElementAt((short)(index%xDim),0);
 	    	        }
 	    	        else {
-	    	        	highestCSum[z] = -Double.MAX_VALUE;
+	    	        	highestCSum[z-lowestArterialZ] = -Double.MAX_VALUE;
 	    	        	break bigLoop;
 	    	        }
 		    	} // bigLoop: while(numAdjacentFound < numAdjacentNeeded)
+	    		} // if (numZUsed[z-lowestArterialZ] >= numAdjacentNeeded) {
 	    	} // for (z = lowsetArterialZ; z <= highestArterialZ; z++)
 	    	highestZCSum = -Double.MAX_VALUE;
 	    	highestZ = -1;
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
-	    	    if (highestCSum[z] > highestZCSum) {
+	    	    if (highestCSum[z-lowestArterialZ] > highestZCSum) {
 	    	    	highestZ = z;
-	    	    	highestZCSum = highestCSum[z];
+	    	    	highestZCSum = highestCSum[z-lowestArterialZ];
 	    	    }
 	    	}
 	    	
 	    	System.out.println("Sum of highest " + numAdjacentNeeded + " adjacent pixels occurs in slice " + highestZ);
 	    	System.out.println("The pixels are at locations:");
 	    	for (i = 0; i < numAdjacentNeeded; i++) {
-	    		System.out.println(" x = " + xLink[highestZ].get(i) + " y = " + yLink[highestZ].get(i));
+	    		System.out.println(" x = " + xLink[highestZ-lowestArterialZ].get(i) + " y = " + yLink[highestZ-lowestArterialZ].get(i));
 	    	}
 	    	
 	    	short shortBuffer[] = new short[length];
 	          for (y = 0; y < yDim; y++) {
 		    	for (x = 0; x < xDim; x++) {
-		    		shortBuffer[x + y * xDim] = data[highestZ][y][x][0];
+		    		shortBuffer[x + y * xDim] = dataArterial[highestZ-lowestArterialZ][y][x][0];
 		    	}
 		       }
 		       extents2D = new int[]{xDim,yDim};
@@ -1493,8 +1527,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			    for (i = 0; i < numAdjacentNeeded; i++) {
 			        newPtVOI[i] = new VOI((short) i, "pointAIF"+(i+1)+".voi", VOI.POINT, -1.0f);
 		            newPtVOI[i].setColor(Color.RED);
-		            float xArr[] = new float[] {(float)xLink[highestZ].get(i)};
-		            float yArr[] = new float[] {(float)yLink[highestZ].get(i)};
+		            float xArr[] = new float[] {(float)xLink[highestZ-lowestArterialZ].get(i)};
+		            float yArr[] = new float[] {(float)yLink[highestZ-lowestArterialZ].get(i)};
 		            float zArr[] = new float[] {0.0f};
 		            newPtVOI[i].importCurve(xArr, yArr, zArr);
 		            ((VOIPoint) (newPtVOI[i].getCurves().elementAt(0))).setFixed(true);
@@ -1525,7 +1559,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	  	      ModelImage logpeaksImage = new ModelImage(ModelStorageBase.FLOAT, extents2D, "logpeaks");
 		    	for (x = 0; x < xDim; x++) {
 		    		for (y = 0; y < yDim; y++) {
-		    		    fbuffer[x + y*xDim] = logpeaks[highestZ][y][x];
+		    		    fbuffer[x + y*xDim] = logpeaks[highestZ-lowestArterialZ][y][x];
 		    		}
 		    	}
 		    	try {
