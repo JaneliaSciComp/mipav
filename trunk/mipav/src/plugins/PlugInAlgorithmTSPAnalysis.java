@@ -1182,6 +1182,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        		return;	
 	    	    }
 	    	    initCenterPoint = JDialogExtractBrain.computeCenter(volumeImage, orientation, useSphere);
+	    	    // Default AlgorithmBrainExtractor settings decrease usage from 325377 out of
+	    	    // 458752 voxels to 69 out of 458752 voxels.
 	    	    extractBrainAlgo = new AlgorithmBrainExtractor(volumeImage, orientation, justEllipse,
 	    	    		useSphere, initCenterPoint);
 	    	    extractBrainAlgo.setIterations(nIterations);
@@ -1354,11 +1356,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						}
 					} // for (x = 0; x < xDim; x++)
 				} // for (y = 0; y < yDim; y++)	
+				System.out.println("For z = " + z + ", " + numZUsed[z-lowestArterialZ] + " out of " + length +
+						" pixels");
 			} // for (z = lowestArterialZ; z <= highestArterialZ; z++)
 	    	meanpeaks = meanpeaks/numUsed;
 	        meanttp = meanttp/numUsed;
 	    	meanfwhm = meanfwhm/numUsed;
-	    	System.out.println(numUsed + " used out of " + volume + " voxels");
+	    	System.out.println(numUsed + " used out of " + (numArterialZ * length) + " voxels");
 	    	System.out.println("meanpeaks = " + meanpeaks);
 	    	System.out.println("meanttp = " + meanttp);
 	    	System.out.println("meanfwhm = " + meanfwhm);
