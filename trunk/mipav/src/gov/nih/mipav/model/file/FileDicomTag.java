@@ -552,101 +552,107 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
             Object[] nAr = null;
             Number[] nArFinal = null;
             Number n = null;
-            if (value instanceof Object[]) {
-                nAr = (Object[]) value;
-            } else if (value instanceof int[]) {
-                nAr = new Integer[ ((int[]) value).length];
-                for (int i = 0; i < ((int[]) value).length; i++) {
-                    nAr[i] = Integer.valueOf( ((int[]) value)[i]);
-                }
-            } else if (value instanceof short[]) {
-                nAr = new Short[ ((short[]) value).length];
-                for (int i = 0; i < ((short[]) value).length; i++) {
-                    nAr[i] = Short.valueOf( ((short[]) value)[i]);
-                }
-            } else if (value instanceof long[]) {
-                nAr = new Long[ ((long[]) value).length];
-                for (int i = 0; i < ((long[]) value).length; i++) {
-                    nAr[i] = Long.valueOf( ((long[]) value)[i]);
-                }
-            } else if (value instanceof double[]) {
-                nAr = new Double[ ((double[]) value).length];
-                for (int i = 0; i < ((double[]) value).length; i++) {
-                    nAr[i] = Double.valueOf( ((double[]) value)[i]);
-                }
-            } else if (value instanceof float[]) {
-                nAr = new Float[ ((float[]) value).length];
-                for (int i = 0; i < ((float[]) value).length; i++) {
-                    nAr[i] = Float.valueOf( ((float[]) value)[i]);
-                }
-            } else if (value instanceof byte[]) {
-                nAr = new Byte[ ((byte[]) value).length];
-                for (int i = 0; i < ((byte[]) value).length; i++) {
-                    nAr[i] = Byte.valueOf( ((byte[]) value)[i]);
-                }
-            }
-
-            switch ( ((NumType) type.getType())) {
-
-                case SHORT:
-                    if (nAr != null) {
-                        if (nAr instanceof Short[]) {
-                            nArFinal = (Short[]) nAr;
-                        } else {
-                            nArFinal = new Short[nAr.length];
-                            for (int i = 0; i < nAr.length; i++) {
-                                nArFinal[i] = Short.valueOf(nAr[i].toString());
-                            }
-                        }
-                    } else {
-                        n = Short.valueOf(value.toString());
+            
+            try {
+                if (value instanceof Object[]) {
+                    nAr = (Object[]) value;
+                } else if (value instanceof int[]) {
+                    nAr = new Integer[ ((int[]) value).length];
+                    for (int i = 0; i < ((int[]) value).length; i++) {
+                        nAr[i] = Integer.valueOf( ((int[]) value)[i]);
                     }
-                    break;
-
-                case LONG:
-                    if (nAr != null) {
-                        if (nAr instanceof Integer[]) {
-                            nArFinal = (Integer[]) nAr;
-                        } else {
-                            nArFinal = new Integer[nAr.length];
-                            for (int i = 0; i < nAr.length; i++) {
-                                nArFinal[i] = Integer.valueOf(nAr[i].toString());
-                            }
-                        }
-                    } else {
-                        n = Integer.valueOf(value.toString());
+                } else if (value instanceof short[]) {
+                    nAr = new Short[ ((short[]) value).length];
+                    for (int i = 0; i < ((short[]) value).length; i++) {
+                        nAr[i] = Short.valueOf( ((short[]) value)[i]);
                     }
-                    break;
-
-                case FLOAT:
-                    if (nAr != null) {
-                        if (nAr instanceof Float[]) {
-                            nArFinal = (Float[]) nAr;
-                        } else {
-                            nArFinal = new Float[nAr.length];
-                            for (int i = 0; i < nAr.length; i++) {
-                                nArFinal[i] = Float.valueOf(nAr[i].toString());
-                            }
-                        }
-                    } else {
-                        n = Float.valueOf(value.toString());
+                } else if (value instanceof long[]) {
+                    nAr = new Long[ ((long[]) value).length];
+                    for (int i = 0; i < ((long[]) value).length; i++) {
+                        nAr[i] = Long.valueOf( ((long[]) value)[i]);
                     }
-                    break;
-
-                case DOUBLE:
-                    if (nAr != null) {
-                        if (nAr instanceof Double[]) {
-                            nArFinal = (Double[]) nAr;
-                        } else {
-                            nArFinal = new Double[nAr.length];
-                            for (int i = 0; i < nAr.length; i++) {
-                                nArFinal[i] = Double.valueOf(nAr[i].toString());
-                            }
-                        }
-                    } else {
-                        n = Double.valueOf(value.toString());
+                } else if (value instanceof double[]) {
+                    nAr = new Double[ ((double[]) value).length];
+                    for (int i = 0; i < ((double[]) value).length; i++) {
+                        nAr[i] = Double.valueOf( ((double[]) value)[i]);
                     }
-                    break;
+                } else if (value instanceof float[]) {
+                    nAr = new Float[ ((float[]) value).length];
+                    for (int i = 0; i < ((float[]) value).length; i++) {
+                        nAr[i] = Float.valueOf( ((float[]) value)[i]);
+                    }
+                } else if (value instanceof byte[]) {
+                    nAr = new Byte[ ((byte[]) value).length];
+                    for (int i = 0; i < ((byte[]) value).length; i++) {
+                        nAr[i] = Byte.valueOf( ((byte[]) value)[i]);
+                    }
+                }
+    
+                switch ( ((NumType) type.getType())) {
+    
+                    case SHORT:
+                        if (nAr != null) {
+                            if (nAr instanceof Short[]) {
+                                nArFinal = (Short[]) nAr;
+                            } else {
+                                nArFinal = new Short[nAr.length];
+                                for (int i = 0; i < nAr.length; i++) {
+                                    nArFinal[i] = Short.valueOf(nAr[i].toString());
+                                }
+                            }
+                        } else {
+                            n = Short.valueOf(value.toString());
+                        }
+                        break;
+    
+                    case LONG:
+                        if (nAr != null) {
+                            if (nAr instanceof Integer[]) {
+                                nArFinal = (Integer[]) nAr;
+                            } else {
+                                nArFinal = new Integer[nAr.length];
+                                for (int i = 0; i < nAr.length; i++) {
+                                    nArFinal[i] = Integer.valueOf(nAr[i].toString());
+                                }
+                            }
+                        } else {
+                            n = Integer.valueOf(value.toString());
+                        }
+                        break;
+    
+                    case FLOAT:
+                        if (nAr != null) {
+                            if (nAr instanceof Float[]) {
+                                nArFinal = (Float[]) nAr;
+                            } else {
+                                nArFinal = new Float[nAr.length];
+                                for (int i = 0; i < nAr.length; i++) {
+                                    nArFinal[i] = Float.valueOf(nAr[i].toString());
+                                }
+                            }
+                        } else {
+                            n = Float.valueOf(value.toString());
+                        }
+                        break;
+    
+                    case DOUBLE:
+                        if (nAr != null) {
+                            if (nAr instanceof Double[]) {
+                                nArFinal = (Double[]) nAr;
+                            } else {
+                                nArFinal = new Double[nAr.length];
+                                for (int i = 0; i < nAr.length; i++) {
+                                    nArFinal[i] = Double.valueOf(nAr[i].toString());
+                                }
+                            }
+                        } else {
+                            n = Double.valueOf(value.toString());
+                        }
+                        break;
+                }
+            } catch (NumberFormatException nfe) {
+                setValue("", 0);
+                return;
             }
 
             if (nArFinal != null) {
