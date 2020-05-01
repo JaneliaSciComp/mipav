@@ -26,6 +26,7 @@ import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmBrainExtractor;
+import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.algorithms.DAgostinosKsquaredTest;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
@@ -1153,7 +1154,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		fileInfo[i].setDataType(ModelStorageBase.SHORT);
 	    	}
 	    	short shortVolume[] = new short[volume];
-	    	int orientation = FileInfoBase.AXIAL;
+	    	/*int orientation = FileInfoBase.AXIAL;
 	    	boolean useSphere = false;
 	    	Vector3f initCenterPoint;
 	    	boolean justEllipse = false;
@@ -1163,7 +1164,21 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	float imageRatio = 0.1f; // 0.01-0.5
 	    	float stiffness = 0.15f; // 0.01-0.5
 	    	boolean secondStageErosion = false;
-	    	boolean extractToPaint = false;
+	    	boolean extractToPaint = false;*/
+	    	AlgorithmBrainSurfaceExtractor extractBrainSurfaceAlgo;
+	    	int filterIterations = 3; // 1-5
+	    	float filterGaussianStdDev = 0.5f; // 0.1-50
+	    	float edgeKernelSize = 0.62f;
+	    	boolean erosion25D = false;
+	    	int erosionIterations = 1;
+	    	float closeKernelSize = 6.625f;
+	    	int closeIterations = 1;
+	    	boolean showIntermediateImages = false;
+	    	boolean fillHoles = true;
+	    	boolean useSeparable = true;
+	    	boolean extractPaint = false;
+	    	ModelImage resultImage;
+	    	
 	    	short dataArterial[][][][] = new short[numArterialZ][yDim][xDim][tDim];
 	    	for (t = 0; t < tDim; t++) {
 	    	    for (z = 0; z < zDim; z++) {
@@ -1181,7 +1196,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        		setCompleted(false);
 	        		return;	
 	    	    }
-	    	    initCenterPoint = JDialogExtractBrain.computeCenter(volumeImage, orientation, useSphere);
+	    	    /*initCenterPoint = JDialogExtractBrain.computeCenter(volumeImage, orientation, useSphere);
 	    	    // Default AlgorithmBrainExtractor settings decrease usage from 325377 out of
 	    	    // 458752 voxels to 69 out of 458752 voxels.
 	    	    extractBrainAlgo = new AlgorithmBrainExtractor(volumeImage, orientation, justEllipse,
@@ -1198,6 +1213,21 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        	}
 	        	catch (IOException e) {
 	        		MipavUtil.displayError("IOException on volumeImage.exportData");
+	        		setCompleted(false);
+	        		return;
+	        	}*/
+	    	    // Default AlgorithmBrainSurfaceExtractor settings decrease usage from 325377 out of
+	    	    // 458752 voxels to 90165 out of 458752 voxels.
+	    	    extractBrainSurfaceAlgo = new AlgorithmBrainSurfaceExtractor(volumeImage, filterIterations,
+	    	    		filterGaussianStdDev, edgeKernelSize, erosion25D, erosionIterations, closeKernelSize,
+	    	    		closeIterations, showIntermediateImages, fillHoles, useSeparable, extractPaint);
+	    	    extractBrainSurfaceAlgo.run();
+	    	    resultImage = extractBrainSurfaceAlgo.getResultImage();
+	    	    try {
+	        		resultImage.exportData(0,  volume, shortVolume);
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("IOException on resultImage.exportData");
 	        		setCompleted(false);
 	        		return;
 	        	}
