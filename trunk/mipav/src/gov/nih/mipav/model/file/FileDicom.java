@@ -1170,6 +1170,10 @@ public class FileDicom extends FileDicomBase {
             Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue + " Explicit VR - Big Endian \n", Preferences.DEBUG_FILEIO);
 
             fileInfo.setEndianess(FileBase.BIG_ENDIAN);
+            
+            // also setting original endianess, since only the 0002 group is little endian
+            fileInfo.setOriginalEndianess(FileBase.BIG_ENDIAN);
+            
             fileInfo.setVr_type(VRtype.EXPLICIT);
             encapsulated = false;
         } else if (strValue.trim().startsWith("1.2.840.10008.1.2.4.")) { // JPEG
