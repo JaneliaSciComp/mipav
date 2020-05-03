@@ -181,9 +181,16 @@ public class FileJP2 extends FileBase implements ActionListener{
 	    //pl.put("nocolorspace","on");
 	    pl.put("verbose","off");
 	    //dec = new DecoderRAW(pl);
-	    DecoderRAWColor dec = new DecoderRAWColor(pl);
-	    inStream = new BEByteArrayInputStream(imageData);
-	    slc = dec.run1Slice(inStream);
+	    if (imageType == ModelStorageBase.ARGB) {
+	       DecoderRAWColor dec = new DecoderRAWColor(pl);
+	       inStream = new BEByteArrayInputStream(imageData);
+	       slc = dec.run1Slice(inStream);
+	    }
+	    else {
+	    	DecoderRAW dec = new DecoderRAW(pl);
+		    inStream = new BEByteArrayInputStream(imageData);
+		    slc = dec.run1Slice(inStream);	
+	    }
 	    Coord nT = slc.getNumTiles(null);
 	    DataBlkInt db = new DataBlkInt();
 	    /*dataType = db.getDataType();
@@ -230,7 +237,10 @@ public class FileJP2 extends FileBase implements ActionListener{
         	fb = new int[1];
         	fb[0] = slc.getFixedPoint(0);
         	levShift = new int[1];
-        	levShift[0] = 1 << (slc.getNomRangeBits(0)-1);
+        	if ((imageType == ModelStorageBase.UBYTE) || (imageType == ModelStorageBase.USHORT) ||
+        			(imageType == ModelStorageBase.UINTEGER)) {
+        	    levShift[0] = 1 << (slc.getNomRangeBits(0)-1);
+        	}
         }
         int[] barr = null;
         for(int y=0; y<nT.y; y++){
@@ -351,7 +361,7 @@ public class FileJP2 extends FileBase implements ActionListener{
         	vals = db.data;
         }
 	
-	    return vals;
+        return vals;
     }
 
     /**
