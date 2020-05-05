@@ -1541,6 +1541,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		System.out.println(" x = " + xLink[highestZ-lowestArterialZ].get(i) + " y = " + yLink[highestZ-lowestArterialZ].get(i));
 	    	}
 	    	
+	    	int xv0 = xLink[highestZ-lowestArterialZ].get(0);
+	    	int yv0 = yLink[highestZ-lowestArterialZ].get(0);
+	    	System.out.println("Time for voi 0 = " + (ttp[highestZ][yv0][xv0]-1));
+	    	for (t = 0; t < tDim; t++) {
+	    		System.out.println("At time " + t + " data = " + data[highestZ][yv0][xv0][t]);
+	    	}
+	    	System.out.println("logpeaks for voi 0 = " + logpeaks[highestZ - lowestArterialZ][yv0][xv0]);
+	    	System.out.println("fwhm for voi 0 = " + fwhm[highestZ - lowestArterialZ][yv0][xv0]);
+	    	
 	    	short shortBuffer[] = new short[length];
 	          for (y = 0; y < yDim; y++) {
 		    	for (x = 0; x < xDim; x++) {
