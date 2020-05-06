@@ -58,6 +58,7 @@ import gov.nih.mipav.view.dialogs.JDialogExtractBrain;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1270,9 +1271,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							}
 						}
 						logpeaks[z-lowestArterialZ][y][x] = (float)maxpeaks;
-						meanpeaks += maxpeaks;
 						ttp[z][y][x] = minttp;
-						meanttp += minttp;
 						preBelowHalfTime = Short.MAX_VALUE;
 						preBelowHalfIntensity = -Double.MAX_VALUE;
 						preHalfTime = -Double.MAX_VALUE;
@@ -1290,7 +1289,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						    	preBelowHalfTime = (short)t;
 						    	preBelowHalfIntensity = delR2[t];
 						    }
-						    else if ((preHalfTime == -Double.MAX_VALUE) && (delR2[t] == maxpeaks/2.0)) {
+						    else if (delR2[t] == maxpeaks/2.0) {
 						    	preHalfTime = (double)t;
 						    }
 						}
@@ -1322,7 +1321,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 								postAboveHalfTime = (short)t;
 								postAboveHalfIntensity = delR2[t];
 							}
-							else if ((postHalfTime == -Double.MAX_VALUE) && (delR2[t] == maxpeaks/2.0)) {
+							else if (delR2[t] == maxpeaks/2.0) {
 								postHalfTime = (double)t;
 							}
 						}
@@ -1372,6 +1371,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							postHalfTime = minttp-1 + fraction;
 						}
 						fwhm[z-lowestArterialZ][y][x] = (float)(postHalfTime - preHalfTime);
+						meanpeaks += maxpeaks;
+						meanttp += minttp;
 						meanfwhm += (postHalfTime - preHalfTime);
 						numUsed++;
 						numZUsed[z-lowestArterialZ]++;
@@ -1433,9 +1434,63 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					}
 				}
 	    	}
+	    	RandomAccessFile raFile = null;
+	    	try {
+		    	File highestCFile = new File(outputFilePath + outputPrefix + "highestCvalues.txt");
+		        raFile = new RandomAccessFile(highestCFile, "rw");
+		        // Necessary so that if this is an overwritten file there isn't any
+		        // junk at the end
+		        raFile.setLength(0);
+	    	}
+	    	catch (IOException e) {
+	    	    System.err.println(e);
+	    	    setCompleted(false);
+	    	    return;
+	    	}
 	    	for ( z = lowestArterialZ; z <= highestArterialZ; z++) {
 	    	    Collections.sort(indexValueList[z-lowestArterialZ], new indexValueComparator());
+	    	    try {
+	    	        raFile.writeBytes("\n\n Slice z = " +z + " has " + indexValueList[z-lowestArterialZ].size() + 
+	    	        		" pixels");
+	    	    }
+	    	    catch(IOException e) {
+	    	    	System.err.println(e);
+	    	    	setCompleted(false);
+	    	    	return;
+	    	    }
+	    	    topIndex = (int)(numZUsed[z-lowestArterialZ] - 1);
+	    	    for (i = topIndex; i >= Math.max(topIndex-99, 0); i--) {
+	    	    	item = indexValueList[z-lowestArterialZ].get(i);
+	    	        index = item.getIndex();
+	    	        int ypos = index/xDim;
+	    	        int xpos = index%xDim;
+	    	        c = item.getValue();
+	    	        try {
+		    	        raFile.writeBytes("\n x = " + xpos + " y = " + ypos + " c = " + c);
+		    	    }
+		    	    catch(IOException e) {
+		    	    	System.err.println(e);
+		    	    	setCompleted(false);
+		    	    	return;
+		    	    }
+	    	    }
 	    	}
+	    	try {
+    	        raFile.writeBytes("\n");
+    	    }
+    	    catch(IOException e) {
+    	    	System.err.println(e);
+    	    	setCompleted(false);
+    	    	return;
+    	    }
+	    	try {
+    	        raFile.close();
+    	    }
+    	    catch(IOException e) {
+    	    	System.err.println(e);
+    	    	setCompleted(false);
+    	    	return;
+    	    }
 	    	System.out.println("cmin = " + cmin);
 	    	System.out.println("cmax = " + cmax);
 	    	/*indexValueItem item = indexValueList.get(0);
