@@ -75,6 +75,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private JRadioButton autoButton;
 	
+	private JRadioButton autoRAPIDButton;
+	
 	private JRadioButton pickButton;
 	
 	private boolean autoAIFCalculation = true;
@@ -113,8 +115,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private String fileNameBase = "IM";
 	
-	private JCheckBox experimentalAIFCheckBox;
-	private boolean experimentalAIF = false;
+	private boolean experimentalRAPIDAIF = false;
 	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
@@ -336,19 +337,26 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(autoButton, gbc);
         
         gbc.gridy = 11;
+        autoRAPIDButton = new JRadioButton("Experiemtnal RAPID auto AIF Calculation", false);
+        autoRAPIDButton.setFont(serif12);
+        autoRAPIDButton.setForeground(Color.black);
+        AIFGroup.add(autoRAPIDButton);
+        inputPanel.add(autoRAPIDButton, gbc);
+        
+        gbc.gridy = 12;
         pickButton = new JRadioButton("Pick image pixel corresponding to AIF", false);
         pickButton.setFont(serif12);
         pickButton.setForeground(Color.black);
         AIFGroup.add(pickButton);
         inputPanel.add(pickButton, gbc);
         
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         plotAIFCheckBox = new JCheckBox("Plot AIF");
         plotAIFCheckBox.setFont(MipavUtil.font12);
         plotAIFCheckBox.setSelected(true);
         inputPanel.add(plotAIFCheckBox, gbc);
         
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -363,7 +371,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         searchGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
         search2DElsuncButton.setFont(serif12);
         search2DElsuncButton.setForeground(Color.black);
@@ -371,7 +379,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DElsuncButton);
         inputPanel.add(search2DElsuncButton, gbc);   
         
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
         search1DElsuncButton.setFont(serif12);
         search1DElsuncButton.setForeground(Color.black);
@@ -379,7 +387,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search1DElsuncButton);
         inputPanel.add(search1DElsuncButton, gbc);
         
-        gbc.gridy = 16;
+        gbc.gridy = 17;
         search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
@@ -387,7 +395,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
         
-        gbc.gridy = 17;
+        gbc.gridy = 18;
         search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
         search2DNelderMeadButton.setFont(serif12);
         search2DNelderMeadButton.setForeground(Color.black);
@@ -395,29 +403,23 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNelderMeadButton);
         inputPanel.add(search2DNelderMeadButton, gbc);
         
-        gbc.gridy = 18;
+        gbc.gridy = 19;
         correlationCheckBox = new JCheckBox("Correlation maps calculated", true);
         correlationCheckBox.setFont(MipavUtil.font12);
         correlationCheckBox.setForeground(Color.black);
         inputPanel.add(correlationCheckBox, gbc);
         
-        gbc.gridy = 19;
+        gbc.gridy = 20;
         CBFCBVMTTCheckBox = new JCheckBox("CBF, CBV, and MTT calculated", true);
         CBFCBVMTTCheckBox.setFont(MipavUtil.font12);
         CBFCBVMTTCheckBox.setForeground(Color.black);
         inputPanel.add(CBFCBVMTTCheckBox, gbc);
         
-        gbc.gridy = 20;
+        gbc.gridy = 21;
         boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
         boundsCheckBox.setFont(MipavUtil.font12);
         boundsCheckBox.setForeground(Color.black);
         inputPanel.add(boundsCheckBox, gbc);
-        
-        gbc.gridy = 21;
-        experimentalAIFCheckBox = new JCheckBox("Experimental AIF enabled", false);
-        experimentalAIFCheckBox.setFont(MipavUtil.font12);
-        experimentalAIFCheckBox.setForeground(Color.black);
-        inputPanel.add(experimentalAIFCheckBox, gbc);
         
         // Build the Panel that holds the OK and CANCEL Buttons
         JPanel OKCancelPanel = new JPanel();
@@ -484,7 +486,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, sigmax,
             		sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
-            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalAIF);
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -539,7 +541,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateCorrelation = scriptParameters.getParams().getBoolean("calc_correlation");
     	calculateCBFCBVMTT = scriptParameters.getParams().getBoolean("calc_CBFCBVMTT");
     	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
-    	experimentalAIF = scriptParameters.getParams().getBoolean("experimental_aif");
+    	experimentalRAPIDAIF = scriptParameters.getParams().getBoolean("experimental_aif");
     }
     
     /**
@@ -563,7 +565,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_correlation", calculateCorrelation));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_CBFCBVMTT", calculateCBFCBVMTT));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
-    	scriptParameters.getParams().put(ParameterFactory.newParameter("experimental_aif", experimentalAIF));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("experimental_aif", experimentalRAPIDAIF));
     }
     
     private boolean setVariables() {
@@ -700,6 +702,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	}
     	
     	autoAIFCalculation = autoButton.isSelected();
+    	experimentalRAPIDAIF = autoRAPIDButton.isSelected();
     	plotAIF = plotAIFCheckBox.isSelected();
     	multiThreading = multiThreadingEnabledCheckBox.isSelected();
     	if (search2DElsuncButton.isSelected()) {
@@ -721,7 +724,6 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	
     	calculateBounds = boundsCheckBox.isSelected();
     	
-    	experimentalAIF = experimentalAIFCheckBox.isSelected();
     	return true;
     }
 
