@@ -7365,8 +7365,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final FileInfoDicom fileInfoDicom = (FileInfoDicom) fInfo;
 
             String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
+            
+            int birthYear = 0;
+            String birthDate = getTagValue(fileInfoDicom, "0010,0030");
+            if (isValueSet(birthDate)) {
+                String[] splitStr = birthDate.trim().split("/");
+                if (splitStr.length == 3) {
+                    birthYear = Integer.parseInt(splitStr[2]);
+                }
+            }
+            
             // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
-            if (isValueSet(ageVal) && (ageVal.equalsIgnoreCase("135Y") || ageVal.startsWith("X"))) {
+            if (isValueSet(ageVal) && (ageVal.equalsIgnoreCase("135Y") || (ageVal.equalsIgnoreCase("100Y") && birthYear >= 1910) || ageVal.startsWith("X"))) {
                 ageVal = null;
             }
             if (isValueSet(ageVal)) {
@@ -7384,7 +7394,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             
             String siteName = getTagValue(fileInfoDicom, "0008,0080");
             // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
-            if (isValueSet(siteName) && siteName.trim().equalsIgnoreCase("Institution")) {
+            if (isValueSet(siteName) && (siteName.trim().equalsIgnoreCase("Institution") || siteName.trim().equalsIgnoreCase("GENERIC INSTITUTION") || siteName.trim().toLowerCase().contains("anonymous"))) {
                 siteName = "";
             }
             extractedFields.put("SiteName", siteName);
