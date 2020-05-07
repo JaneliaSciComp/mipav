@@ -1131,7 +1131,38 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	S = new double[tDim];
     	peaks = new short[zDim][yDim][xDim];
     	ttp = new short[zDim][yDim][xDim];
-    	if (experimentalAIF) {
+    	
+    	for (z = 0; z < zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					minpeaks = Short.MAX_VALUE;
+					minttp = Short.MAX_VALUE;
+					for (t = 0; t < tDim; t++) {
+						data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
+						if (data_norm < minpeaks) {
+							minpeaks = data_norm;
+							minttp = (short)(t+1);
+						}
+					}
+					peaks[z][y][x] = minpeaks;
+					ttp[z][y][x] = minttp;
+				} // for (x = 0; x < xDim; x++)
+			} // for (y = 0; y < yDim; y++)	
+		} // for (z = 0; z < zDim; z++)
+    	double xsum = 0.0;
+		double ysum = 0.0;
+		double zsum = 0.0;
+		double xsumsquared = 0.0;
+		double ysumsquared = 0.0;
+		double zsumsquared = 0.0;
+		int sumcount = 0;
+		double xmean = 0.0;
+		double ymean = 0.0;
+		double zmean = 0.0;
+		double xstd = 0.0;
+		double ystd = 0.0;
+		double zstd = 0.0;
+		if (experimentalAIF) {
     		lowestArterialZ = 4;
 	    	highestArterialZ = 10;
 	    	numArterialZ = highestArterialZ - lowestArterialZ + 1;
@@ -1244,14 +1275,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 				for (y = 0; y < yDim; y++) {
 					xloop: for (x = 0; x < xDim; x++) {
-						// Remove background around brain
-						// This does not work must have a more sophisticated background stripping.
-						/*if (data[z][y][x][0] < 1000) {
-							logpeaks[z][y][x] = Float.NaN;
-							ttp[z][y][x] = Short.MIN_VALUE;
-							fwhm[z][y][x] = Float.NaN;
-							continue xloop;
-						}*/
 						for (t = 0; t < tDim; t++) {
 							if (dataArterial[z-lowestArterialZ][y][x][t] == 0) {
 								logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
@@ -1408,7 +1431,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	System.out.println("mindelttp = " + mindelttp);
 	    	System.out.println("mindelfwhm = " + mindelfwhm);
 	    	k1 = 1.0/maxdelpeaks;
-	    	k2 = 1.0/mindelttp;
+	    	k2 = 3.5/mindelttp;
 	    	k3 = 1.0/mindelfwhm;
 	    	indexValueList = new ArrayList[numArterialZ];
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
@@ -1597,16 +1620,79 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		System.out.println(" x = " + xLink[highestZ-lowestArterialZ].get(i) + " y = " + yLink[highestZ-lowestArterialZ].get(i));
 	    	}
 	    	
-	    	int xv0 = xLink[highestZ-lowestArterialZ].get(0);
-	    	int yv0 = yLink[highestZ-lowestArterialZ].get(0);
-	    	System.out.println("Time for voi 0 = " + (ttp[highestZ][yv0][xv0]-1));
+	    	int xv = xLink[highestZ-lowestArterialZ].get(0);
+	    	int yv = yLink[highestZ-lowestArterialZ].get(0);
+	    	/*System.out.println("Time for voi 0 = " + (ttp[highestZ][yv][xv]-1));
 	    	for (t = 0; t < tDim; t++) {
-	    		System.out.println("At time " + t + " data = " + data[highestZ][yv0][xv0][t]);
+	    		System.out.println("At time " + t + " data = " + data[highestZ][yv][xv][t]);
 	    	}
-	    	System.out.println("logpeaks for voi 0 = " + logpeaks[highestZ - lowestArterialZ][yv0][xv0]);
-	    	System.out.println("fwhm for voi 0 = " + fwhm[highestZ - lowestArterialZ][yv0][xv0]);
+	    	System.out.println("logpeaks for voi 0 = " + logpeaks[highestZ - lowestArterialZ][yv][xv]);
+	    	System.out.println("fwhm for voi 0 = " + fwhm[highestZ - lowestArterialZ][yv][xv]);*/
 	    	
-	    	short shortBuffer[] = new short[length];
+	    	autoaif = new double[tDim];
+		    minautoaif = Double.MAX_VALUE;
+		    int numcountt = 0;
+		    for (t = 0; t < tDim; t++) {
+		        sumt = 0;
+		        countt = 0;
+		        for (i = 0; i < numAdjacentNeeded; i++) {
+		        	x = xLink[highestZ-lowestArterialZ].get(i);
+		        	y = yLink[highestZ-lowestArterialZ].get(i);
+					if (t == 0) {
+						sumcount++;
+						xsum += x;
+						ysum += y;
+						xsumsquared += (x*x);
+						ysumsquared += (y*y);
+					}
+					data_norm = (short)(data[highestZ][y][x][t] - data[highestZ][y][x][0]);
+				    sumt += data_norm;
+				    countt++;
+		        } //for (i = 0; i < numAdjacentNeeded; i++) {
+		        if (t == 0) {
+		        	xmean = xsum/sumcount;
+		        	ymean = ysum/sumcount;
+		        	zmean = highestZ;
+		        	
+		        } // if (t == 0)
+		        if (countt == 0) {
+		        	System.err.println("No AIF selection pixels found for t = " + t);
+		        	numcountt++;
+		        }
+		        autoaif[t] = (double)sumt/(double)countt;
+		        if (autoaif[t] < minautoaif) {
+		        	minautoaif = autoaif[t];
+		        }
+		    } // for (t = 0; t < tDim; t++)
+		    // time signal from mri
+		    if (numcountt > 0) {
+		    	 MipavUtil.displayError("No AIF selection pixels found at " + numcountt + " out of " + tDim + " times");
+		    	 setCompleted(false);
+		    	 return;
+		    }
+		    for (t = 0; t < tDim; t++) {
+		    	S[t] = autoaif[t] - minautoaif + 1;
+		    }
+		    
+		    for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+						minpeaks = Short.MAX_VALUE;
+						minttp = Short.MAX_VALUE;
+						for (t = 0; t < tDim; t++) {
+							data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
+							if (data_norm < minpeaks) {
+								minpeaks = data_norm;
+								minttp = (short)(t+1);
+							}
+						}
+						peaks[z][y][x] = minpeaks;
+						ttp[z][y][x] = minttp;
+					} // for (x = 0; x < xDim; x++)
+				} // for (y = 0; y < yDim; y++)	
+			} // for (z = 0; z < zDim; z++)
+	    	
+	    	/*short shortBuffer[] = new short[length];
 	          for (y = 0; y < yDim; y++) {
 		    	for (x = 0; x < xDim; x++) {
 		    		shortBuffer[x + y * xDim] = dataArterial[highestZ-lowestArterialZ][y][x][0];
@@ -1677,7 +1763,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    	saveImageFile(logpeaksImage, outputFilePath, outputPrefix + "logpeaks", saveFileFormat);
 		        
 		    	logpeaksImage.disposeLocal();
-		    	logpeaksImage = null;
+		    	logpeaksImage = null;*/
 	    	
 	    	/*normalSource = new double[(int)numUsed];
 	    	index = 0;
@@ -1724,37 +1810,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	fwhm  = null;
 	    	indexValueList = null;
     	} // if (experimentalAIF)
-    	for (z = 0; z < zDim; z++) {
-			for (y = 0; y < yDim; y++) {
-				for (x = 0; x < xDim; x++) {
-					minpeaks = Short.MAX_VALUE;
-					minttp = Short.MAX_VALUE;
-					for (t = 0; t < tDim; t++) {
-						data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
-						if (data_norm < minpeaks) {
-							minpeaks = data_norm;
-							minttp = (short)(t+1);
-						}
-					}
-					peaks[z][y][x] = minpeaks;
-					ttp[z][y][x] = minttp;
-				} // for (x = 0; x < xDim; x++)
-			} // for (y = 0; y < yDim; y++)	
-		} // for (z = 0; z < zDim; z++)
-    	double xsum = 0.0;
-		double ysum = 0.0;
-		double zsum = 0.0;
-		double xsumsquared = 0.0;
-		double ysumsquared = 0.0;
-		double zsumsquared = 0.0;
-		int sumcount = 0;
-		double xmean = 0.0;
-		double ymean = 0.0;
-		double zmean = 0.0;
-		double xstd = 0.0;
-		double ystd = 0.0;
-		double zstd = 0.0;
-    	if (autoAIFCalculation) {
+		else if (autoAIFCalculation) {
 	    	// Auto AIF Calculation
 	    	// AIF is average signal of pixels with the largest SI deviations
 	    	// (4 std) from baseline (likely to be large vessels)
