@@ -1316,31 +1316,32 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
 							continue xloop;
 						}
-						for (t = minttp; t < tDim; t++) {
-							if (delR2[t] > maxpeaks/2.0) {
-								postAboveHalfTime = (short)t;
-								postAboveHalfIntensity = delR2[t];
-							}
-							else if (delR2[t] == maxpeaks/2.0) {
-								postHalfTime = (double)t;
-							}
+						for (t = tDim-1; t > minttp-1; t--) {
+							if (delR2[t] < maxpeaks/2.0) {
+						    	postBelowHalfTime = (short)t;
+						    	postBelowHalfIntensity = delR2[t];
+						    }
+						    else if (delR2[t] == maxpeaks/2.0) {
+						    	postHalfTime = (double)t;
+						    }
+							
 						}
-						if ((postHalfTime != -Double.MAX_VALUE) && (postAboveHalfTime != Short.MAX_VALUE) && (postAboveHalfTime > postHalfTime)) {
+						if ((postHalfTime != -Double.MAX_VALUE) && (postBelowHalfTime != Short.MAX_VALUE) && (postBelowHalfTime < postHalfTime)) {
 							postHalfTime = -Double.MAX_VALUE;
 						}
 						if (postHalfTime != -Double.MAX_VALUE) {
-							startBelow = (short)Math.round(postHalfTime + 1);
+							startAbove = (short)Math.round(postHalfTime - 1);
 						}
 						else if (postAboveHalfTime != Short.MAX_VALUE) {
-							startBelow = (short)(postAboveHalfTime + 1);
+							startAbove = (short)(postAboveHalfTime - 1);
 						}
 						// If a notch in the postpeak curve occurs, find postBelowHalf after the notch.
-						for (t = startBelow; t < tDim; t++) {
-							if ((postBelowHalfTime == Short.MAX_VALUE) && (delR2[t] < maxpeaks/2.0)) {
-								postBelowHalfTime = (short)t;
-								postBelowHalfIntensity = delR2[t];
-							}
-						} // for (t = startAbove; t < tDim; t++)
+						for (t = startAbove; t >= minttp; t--) {
+							if ((postAboveHalfTime == Short.MAX_VALUE) && (delR2[t] > maxpeaks/2.0)) {
+						    	postAboveHalfTime = (short)t;
+						    	postAboveHalfIntensity = delR2[t];
+						    }
+						} // for (t = startAbove; t >= minttp; t--)
 						if ((postBelowHalfTime == Short.MAX_VALUE) && (postHalfTime == -Double.MAX_VALUE)) {
 							// Never was less than half peak value after peak value occurred
 							logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
@@ -1355,7 +1356,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						}
 						else if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime == Short.MAX_VALUE)) {
 							// No point more than half peak value before the peak
-							fraction = (maxpeaks/2.0)/(maxpeaks - preBelowHalfIntensity);
+							fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/(maxpeaks - preBelowHalfIntensity);
 							// Since of fraction of 1 time unit
 							preHalfTime = preBelowHalfTime + fraction;
 						}
