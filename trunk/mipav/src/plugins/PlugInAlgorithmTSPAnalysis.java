@@ -22,40 +22,13 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
-import gov.nih.mipav.model.GaussianKernelFactory;
-import gov.nih.mipav.model.Kernel;
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmBrainExtractor;
-import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
-import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
-import gov.nih.mipav.model.algorithms.DAgostinosKsquaredTest;
-import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
-import gov.nih.mipav.model.algorithms.NMSimplex;
-import gov.nih.mipav.model.algorithms.NelderMead;
-import gov.nih.mipav.model.algorithms.Statistics;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
-import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileDicomTag;
-import gov.nih.mipav.model.file.FileDicomTagTable;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileTypeTable;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileWriteOptions;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIPoint;
-import gov.nih.mipav.util.DoubleDouble;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJComponentBase;
-import gov.nih.mipav.view.ViewJFrameGraph;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.dialogs.JDialogExtractBrain;
-
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -74,19 +47,40 @@ import javax.imageio.ImageIO;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
+import gov.nih.mipav.model.GaussianKernelFactory;
+import gov.nih.mipav.model.Kernel;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
+import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
+import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
+import gov.nih.mipav.model.algorithms.NMSimplex;
+import gov.nih.mipav.model.algorithms.NelderMead;
+import gov.nih.mipav.model.algorithms.Statistics;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagTable;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileTypeTable;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.util.DoubleDouble;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJComponentBase;
+import gov.nih.mipav.view.ViewJFrameGraph;
+import gov.nih.mipav.view.ViewJFrameImage;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
 
 
 
-
-public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseListener {
+public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseListener, MouseMotionListener {
     
     private String pwiImageFileDirectory;
     private ModelImage pwiImage = null;
@@ -1927,6 +1921,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			}
 		    accessLock.unlock();
 		    pickImage.getParentFrame().getComponentImage().removeMouseListener(this);
+		    pickImage.getParentFrame().dispose();
 		    pickImage.disposeLocal();
 		    pickImage = null;
 		    System.out.println("xS = " + xS + " yS = " + yS);
@@ -3654,6 +3649,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	public void mouseExited(MouseEvent event) {
 		
 	}
+	
+    public void mouseMoved(MouseEvent event) {
+		
+	}
+    
+    public void mouseDragged(MouseEvent event) {
+    	
+    }
 	
 	public void testxcorr() {
         int i;
