@@ -24,7 +24,14 @@ This software may NOT be used for diagnostic purposes.
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -44,6 +51,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -69,13 +84,16 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.DoubleDouble;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentBase;
 import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 
 
@@ -149,6 +167,31 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private boolean doSaveAllOutputs = true;
     
     private boolean experimentalAIF = false;
+    
+    private JDialog pickImageDialog = null;
+    
+    private JButton OKButton = null;
+    
+    private boolean pressedOK = false;
+    
+    private VOI AIFVOI = null;
+    
+    private JComboBox zSliceComboBox = null;
+    
+    private int xDim;
+	private int yDim;
+    
+    private int zDim;
+    
+    private ViewJFrameImage pickFrame = null;
+    
+    private int length;
+    
+    private short data[][][][] = null;
+    
+    private int extents2D[] = null;
+    
+    private int zSlice;
 	
     /**
      * Constructor.
@@ -212,19 +255,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-    	int xDim;
-    	int yDim;
     	int tDim;
     	float delT;
-        short data[][][][];
     	double TE;
     	short Tmax[][][];
     	double CBV[][][] = null;
     	double CBF[][][] = null;
     	double MTT[][][] = null;
     	//double chiSquared[][][];
-    	int zDim;
-    	int length;
     	int volume;
     	int dataSize;
     	int extents[] = new int[4];
@@ -283,7 +321,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double S[];
     	double Ca[];
     	int sliceBuffer[];
-    	int extents2D[];
     	double CaPad[];
     	double a[][];
     	double D[][];
@@ -1895,24 +1932,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	} // if (autoAIFCalculation)
     	else {
 		    // Pick image pixel corresponding to AIF
-		    sliceBuffer = new int[length];
-		    for (y = 0; y < yDim; y++) {
-		    	for (x = 0; x < xDim; x++) {
-		    		sliceBuffer[x + y * xDim] = data[8][y][x][0];
-		    	}
-		    }
+    		createPickImageDialog(this);
+
+            while (!pressedOK) {
+
+                try {
+                    sleep(5L);
+                } catch (InterruptedException error) { }
+            }
+		    
 		    accessLock.lock();
-		    pickImage = new ModelImage(ModelStorageBase.INTEGER,extents2D,"pickImage");
-		    try {
-		    	pickImage.importData(0, sliceBuffer, true);
-		    }
-		    catch (IOException e) {
-		    	MipavUtil.displayError("IOException on pickImage.importData");
-		    	setCompleted(false);
-		    	return;
-		    }
-		    new ViewJFrameImage(pickImage);
-		    pickImage.getParentFrame().getComponentImage().addMouseListener(this);
+		    pickFrame.getComponentImage().addMouseListener(this);
 		    try {
 			    canProcessMouseClick.await();
 			}
@@ -1920,15 +1950,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				e.printStackTrace();
 			}
 		    accessLock.unlock();
-		    pickImage.getParentFrame().getComponentImage().removeMouseListener(this);
-		    pickImage.getParentFrame().dispose();
+		    pickFrame.getComponentImage().removeMouseListener(this);
+		    pickFrame.dispose();
 		    pickImage.disposeLocal();
 		    pickImage = null;
 		    System.out.println("xS = " + xS + " yS = " + yS);
 		    for (t = 0; t < tDim; t++) {
-		    	S[t] = data[8][yS][xS][t];
+		    	S[t] = data[zSlice][yS][xS][t];
 		    }
-		    zmean = 8;
+		    zmean = zSlice;
 		    ymean = yS;
 		    xmean = xS;
 		    sumcount = 1;
@@ -4150,5 +4180,123 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		
 		
 	}
+    
+    private void createPickImageDialog(ActionListener al) {
+    	int i;
+        JPanel panel;
+        TitledBorder border;
+        Font serif12, serif12B;
+        JLabel label1;
+        JLabel label2;
+
+        pickImageDialog = new JDialog(ViewUserInterface.getReference().getActiveImageFrame(), "Press OK to continue", false);
+        pickImageDialog.setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) -
+                                  (pickImageDialog.getBounds().width / 2),
+                                  (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -
+                                  (pickImageDialog.getBounds().height / 2));
+        pickImageDialog.getContentPane().setLayout(new GridBagLayout());
+
+        pickImageDialog.setSize(300, 160);
+
+        serif12 = MipavUtil.font12;
+        serif12B = MipavUtil.font12B;
+
+        panel = new JPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        panel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.setForeground(Color.black);
+        border = new TitledBorder("Instructions");
+        border.setTitleColor(Color.black);
+        border.setBorder(new EtchedBorder());
+        border.setTitleFont(serif12B);
+        panel.setBorder(border);
+        pickImageDialog.getContentPane().add(panel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        label2 = new JLabel("Select the z slice that contains the AIF point");
+        label2.setForeground(Color.black);
+        label2.setFont(serif12);
+        panel.add(label2, gbc);
+        
+        gbc.gridx = 1;
+        zSliceComboBox = new JComboBox<String>();
+        zSliceComboBox.setFont(serif12);
+        zSliceComboBox.setBackground(Color.white);
+
+        
+        for (i = 0; i < zDim; i++) {
+            zSliceComboBox.addItem("Slice " + i);
+        }
+        zSliceComboBox.addActionListener(this);
+        panel.add(zSliceComboBox, gbc);
+
+        JPanel buttonPanel = new JPanel();
+        OKButton = new JButton("OK");
+        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        OKButton.setFont(serif12B);
+        OKButton.addActionListener(al);
+        buttonPanel.add(OKButton);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        pickImageDialog.getContentPane().add(buttonPanel, gbc);
+        pickImageDialog.setResizable(true);
+        pickImageDialog.setVisible(true);
+
+    }
+    
+    /**
+     * Calls various methods depending on the action.
+     *
+     * @param  event  event that triggered function
+     */
+    public void actionPerformed(ActionEvent event) {
+        int x, y;
+        Object source = event.getSource();
+
+        if (source == OKButton) {
+             pickImageDialog.dispose();
+             pressedOK = true;
+        }
+        else if (source == zSliceComboBox) {
+        	if (pickFrame != null) {
+        		pickFrame.dispose();
+        	}
+        	if (pickImage != null) {
+        		pickImage.disposeLocal();
+        		pickImage = null;
+        	}
+        	int sliceBuffer[] = new int[length];
+        	zSlice = zSliceComboBox.getSelectedIndex();
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		sliceBuffer[x + y * xDim] = data[zSlice][y][x][0];
+		    	}
+		    }
+		    
+		    pickImage = new ModelImage(ModelStorageBase.INTEGER,extents2D,"pickImage");
+		    try {
+		    	pickImage.importData(0, sliceBuffer, true);
+		    }
+		    catch (IOException e) {
+		    	MipavUtil.displayError("IOException on pickImage.importData");
+		    	setCompleted(false);
+		    	return;
+		    }
+		    pickFrame = new ViewJFrameImage(pickImage);	
+        }
+    }
     
     }
