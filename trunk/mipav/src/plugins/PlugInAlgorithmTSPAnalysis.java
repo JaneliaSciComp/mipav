@@ -192,6 +192,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private int extents2D[] = null;
     
     private int zSlice;
+    
+    private String caseString = "EVTcase1.txt";
+    private int ax = 114;
+    private int ay = 104;
+    private double azd = -1.138;
+    private int az = 7;
+    private int vx = 120;
+    private int vy = 217;
+    private double vzd = 5.829;
+    private int vz = 9;
+    
 	
     /**
      * Constructor.
@@ -417,6 +428,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double maxdelpeaks;
     	double mindelttp;
     	double mindelfwhm;
+    	
     	double k1;
     	double k2;
     	double k3;
@@ -454,6 +466,26 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	int lowestArterialZ;
         int highestArterialZ;
         int numArterialZ;
+        boolean lookForZSlices = false;
+        RandomAccessFile raAVFile = null;
+        boolean findAVInfo = true;
+        if (findAVInfo) {
+	    	try {
+		    	File avFile = new File(outputFilePath + outputPrefix + caseString);
+		        raAVFile = new RandomAccessFile(avFile, "rw");
+		        // Necessary so that if this is an overwritten file there isn't any
+		        // junk at the end
+		        raAVFile.setLength(0);
+		        raAVFile.writeBytes(caseString + "\n");
+		        raAVFile.writeBytes("AIF x = " + ax + " y = " + ay + " z = " + az + "\n");
+		        raAVFile.writeBytes("VOF x = " + vx + " y = " + vy + " z = " + vz + "\n");
+	    	}
+	    	catch (IOException e) {
+	    	    System.err.println(e);
+	    	    setCompleted(false);
+	    	    return;
+	    	}
+        } // if (findAVInfo)
     	
     	if (test) {
     		testxcorr();
@@ -620,6 +652,68 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         resolutions[2] = delZ;
         resolutions3D[2] = delZ;
         //System.out.println("zDim = " + zDim + " tDim = " + tDim);
+        if (lookForZSlices) {
+        	FileDicomTag tag = tagTable.get(new FileDicomKey("0020,0032"));
+        	String orientation = (String)tag.getValue(false);
+
+            if (orientation == null) {
+            	setCompleted(false);
+                return;
+            }
+
+            int index1 = -1, index2 = -1;
+
+            for (i = 0; i < orientation.length(); i++) {
+
+                if (orientation.charAt(i) == '\\') {
+
+                    if (index1 == -1) {
+                        index1 = i;
+                    } else {
+                        index2 = i;
+                    }
+                }
+            }
+
+            double coord[] = new double[3];
+            coord[0] = Double.valueOf(orientation.substring(0, index1)).doubleValue();
+            coord[1] = Double.valueOf(orientation.substring(index1 + 1, index2)).doubleValue();
+            coord[2] = Double.valueOf(orientation.substring(index2 + 1)).doubleValue();
+            
+            tag = tagTableLast.get(new FileDicomKey("0020,0032"));
+        	orientation = (String)tag.getValue(false);
+
+            if (orientation == null) {
+            	setCompleted(false);
+                return;
+            }
+
+            index1 = -1; index2 = -1;
+
+            for (i = 0; i < orientation.length(); i++) {
+
+                if (orientation.charAt(i) == '\\') {
+
+                    if (index1 == -1) {
+                        index1 = i;
+                    } else {
+                        index2 = i;
+                    }
+                }
+            }
+
+            double coordLast[] = new double[3];
+            coordLast[0] = Double.valueOf(orientation.substring(0, index1)).doubleValue();
+            coordLast[1] = Double.valueOf(orientation.substring(index1 + 1, index2)).doubleValue();
+            coordLast[2] = Double.valueOf(orientation.substring(index2 + 1)).doubleValue();
+            double zchange = (coordLast[2] - coord[2])/(zDim - 1);
+            double aslice = (azd - coord[2])/zchange;
+            double vslice = (vzd - coord[2])/zchange;
+            System.out.println("aslice = " + aslice);
+            System.out.println("vslice = " + vslice);
+            setCompleted(false);
+            return;
+        }
         if (tagTable.getValue("0018,0080") != null) {
         	// Repetition time in milliseconds
         	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0080"));
@@ -1200,6 +1294,27 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	fwhm = new float[numArterialZ][yDim][xDim];
 	    	delR2 = new double[tDim];
 	    	logpeaks = new float[numArterialZ][yDim][xDim];
+	    	double peakssum = 0;
+	    	double ttpsum = 0;
+	    	double fwhmsum = 0;
+	    	double peakssquaresum = 0;
+	    	double ttpsquaresum = 0;
+	    	double fwhmsquaresum = 0;
+	    	double peaksstd = 0;
+	    	double ttpstd = 0;
+	    	double fwhmstd = 0;
+	    	double globalmincorr = Double.MAX_VALUE;
+	    	double globalmaxcorr = -Double.MAX_VALUE;
+	    	double globalmincorr2 = Double.MAX_VALUE;
+	    	double globalmaxcorr2 = -Double.MAX_VALUE;
+	    	double corrsum = 0;
+	    	double corr2sum = 0;
+	    	double corrsquaresum = 0;
+	    	double corr2squaresum = 0;
+	    	double corrstd = 0;
+	    	double corr2std = 0;
+	    	double meancorr = 0;
+	    	double meancorr2 = 0;
 	    	meanpeaks = 0.0;
 	    	meanttp = 0.0;
 	    	meanfwhm = 0.0;
@@ -1208,6 +1323,50 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	globalmaxpeaks = -Double.MAX_VALUE;
 	    	globalminttp = Short.MAX_VALUE;
 	    	globalminfwhm = Double.MAX_VALUE;
+	    	Vector<Double>peaksVector = new Vector<Double>();
+	    	Vector<Short>ttpVector = new Vector<Short>();
+	    	Vector<Double>fwhmVector = new Vector<Double>();
+	    	Vector<Double>corrVector = new Vector<Double>();
+	    	Vector<Double>corr2Vector = new Vector<Double>();
+	    	double aifpeaks = 0;
+	    	short aifttp = 0;
+	    	double aiffwhm = 0;
+	    	double aifcorr = 0;
+	    	double aifcorr2 = 0;
+	    	double fractionaifpeaksmeantomax = 0;
+	    	double fractionaifttpmeantomin = 0;
+	    	double fractionaiffwhmmeantomin = 0;
+	    	double vofpeaks = 0;
+	    	short vofttp = 0;
+	    	double voffwhm = 0;
+	    	double vofcorr = 0;
+	    	double vofcorr2 = 0;
+	    	double fractionvofpeaksmeantomax = 0;
+	    	double fractionvofttpmeantomin = 0;
+	    	double fractionvoffwhmmeantomin = 0;
+	    	double aifpeaksstdfrommean = 0;
+	    	double aifttpstdfromean = 0;
+	    	double aiffhwmstdfrommean = 0;
+	    	double vofpeaksstdfrommean = 0;
+	    	double vofttpstdfromean = 0;
+	    	double voffhwmstdfrommean = 0;
+	    	double aifpeakscumdistr = 0;
+	    	double aifttpcumdistr = 0;
+	    	double aiffwhmcumdistr = 0;
+	    	double vofpeakscumdistr = 0;
+	    	double vofttpcumdistr = 0;
+	    	double voffwhmcumdistr = 0;
+	    	double aifcorrstdfrommean = 0;
+	    	double aifcorr2stdfrommean = 0;
+	    	double vofcorrstdfrommean = 0;
+	    	double vofcorr2stdfrommean = 0;
+	    	double aifcorrcumdistr = 0;
+	    	double aifcorr2cumdistr = 0;
+	    	double vofcorrcumdistr = 0;
+	    	double vofcorr2cumdistr = 0;
+	    	boolean found;
+	    	int aifpeaksIndex = 0;
+	    	int vofpeaksIndex = 0;
 	    	
 	    	ModelImage volumeImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "volume");
 	    	fileInfo = volumeImage.getFileInfo();
@@ -1426,9 +1585,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							postHalfTime = minttp-1 + fraction;
 						}
 						fwhm[z-lowestArterialZ][y][x] = (float)(postHalfTime - preHalfTime);
-						meanpeaks += maxpeaks;
-						meanttp += minttp;
-						meanfwhm += (postHalfTime - preHalfTime);
+						peakssum += maxpeaks;
+						peakssquaresum += maxpeaks*maxpeaks;
+						peaksVector.add(maxpeaks);
+						ttpsum += minttp;
+						ttpsquaresum += (double)minttp*(double)minttp;
+						ttpVector.add(minttp);
+						fwhmsum += (postHalfTime - preHalfTime);
+						fwhmsquaresum += (postHalfTime - preHalfTime)*(postHalfTime-preHalfTime);
+						fwhmVector.add(postHalfTime-preHalfTime);
 						numUsed++;
 						numZUsed[z-lowestArterialZ]++;
 						if (logpeaks[z-lowestArterialZ][y][x] > globalmaxpeaks) {
@@ -1440,14 +1605,68 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						if (fwhm[z-lowestArterialZ][y][x] < globalminfwhm) {
 							globalminfwhm = fwhm[z-lowestArterialZ][y][x];
 						}
+						if (calculateCorrelation) {
+							corrsum += corrmap[z][y][x];
+							corrsquaresum += corrmap[z][y][x] * corrmap[z][y][x];
+							corrVector.add(corrmap[z][y][x]);
+							if (corrmap[z][y][x] < globalmincorr) {
+							    globalmincorr = corrmap[z][y][x];	
+							}
+							if (corrmap[z][y][x] > globalmaxcorr) {
+								globalmaxcorr = corrmap[z][y][x];
+							}
+							corr2sum += corr_map2[z][y][x];
+							corr2squaresum += corr_map2[z][y][x]*corr_map2[z][y][x];
+							corr2Vector.add(corr_map2[z][y][x]);
+							if (corr_map2[z][y][x] < globalmincorr2) {
+							    globalmincorr2 = corr_map2[z][y][x];	
+							}
+							if (corr_map2[z][y][x] > globalmaxcorr2) {
+								globalmaxcorr2 = corr_map2[z][y][x];
+							}
+						} // if (calculateCorrelation)
 					} // for (x = 0; x < xDim; x++)
 				} // for (y = 0; y < yDim; y++)	
 				System.out.println("For z = " + z + ", " + numZUsed[z-lowestArterialZ] + " out of " + length +
 						" pixels");
 			} // for (z = lowestArterialZ; z <= highestArterialZ; z++)
-	    	meanpeaks = meanpeaks/numUsed;
-	        meanttp = meanttp/numUsed;
-	    	meanfwhm = meanfwhm/numUsed;
+	    	meanpeaks = peakssum/numUsed;
+	    	peaksstd = Math.sqrt((peakssquaresum - numUsed*meanpeaks*meanpeaks)/(numUsed - 1.0));
+	    	aifpeaks = logpeaks[az-lowestArterialZ][ay][ax];
+	        vofpeaks = logpeaks[vz - lowestArterialZ][vy][vx];
+	        fractionaifpeaksmeantomax = (aifpeaks - meanpeaks)/(globalmaxpeaks - meanpeaks);
+	        fractionvofpeaksmeantomax = (vofpeaks - meanpeaks)/(globalmaxpeaks - meanpeaks);
+	        aifpeaksstdfrommean = (aifpeaks - meanpeaks)/peaksstd;
+	        vofpeaksstdfrommean = (vofpeaks - meanpeaks)/peaksstd;
+	        Collections.sort(peaksVector);
+	        found = true;
+	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	            if (aifpeaks <= peaksVector.get(i))	{
+	            	aifpeaksIndex = i;
+	            	found = false;
+	            }
+	        }
+	        aifpeakscumdistr = (double)aifpeaksIndex/(double)(numUsed-1);
+	        found = true;
+	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	            if (vofpeaks <= peaksVector.get(i))	{
+	            	vofpeaksIndex = i;
+	            	found = false;
+	            }
+	        }
+	        vofpeakscumdistr = (double)vofpeaksIndex/(double)(numUsed-1);
+	        meanttp = ttpsum/numUsed;
+	        ttpstd = Math.sqrt((ttpsquaresum - numUsed*meanttp*meanttp)/(numUsed - 1.0));
+	        aifttp = ttp[az][ay][ax];
+	        vofttp = ttp[vz][vy][vx];
+	    	meanfwhm =fwhmsum/numUsed;
+	    	fwhmstd = Math.sqrt((fwhmsquaresum - numUsed*meanfwhm*meanfwhm)/(numUsed - 1.0));
+	    	if (calculateCorrelation) {
+	    		meancorr = corrsum/numUsed;
+	    		corrstd = Math.sqrt((corrsquaresum - numUsed*meancorr*meancorr)/(numUsed - 1.0));
+	    		meancorr2 = corr2sum/numUsed;
+	    		corr2std = Math.sqrt((corr2squaresum - numUsed*meancorr2*meancorr2)/(numUsed - 1.0));
+	    	}
 	    	System.out.println(numUsed + " used out of " + (numArterialZ * length) + " voxels");
 	    	System.out.println("meanpeaks = " + meanpeaks);
 	    	System.out.println("meanttp = " + meanttp);
