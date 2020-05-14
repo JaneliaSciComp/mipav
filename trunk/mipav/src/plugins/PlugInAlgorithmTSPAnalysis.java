@@ -1345,11 +1345,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	double fractionvofttpmeantomin = 0;
 	    	double fractionvoffwhmmeantomin = 0;
 	    	double aifpeaksstdfrommean = 0;
-	    	double aifttpstdfromean = 0;
-	    	double aiffhwmstdfrommean = 0;
+	    	double aifttpstdfrommean = 0;
+	    	double aiffwhmstdfrommean = 0;
 	    	double vofpeaksstdfrommean = 0;
-	    	double vofttpstdfromean = 0;
-	    	double voffhwmstdfrommean = 0;
+	    	double vofttpstdfrommean = 0;
+	    	double voffwhmstdfrommean = 0;
 	    	double aifpeakscumdistr = 0;
 	    	double aifttpcumdistr = 0;
 	    	double aiffwhmcumdistr = 0;
@@ -1367,6 +1367,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	boolean found;
 	    	int aifpeaksIndex = 0;
 	    	int vofpeaksIndex = 0;
+	    	int aifttpIndex = 0;
+	    	int vofttpIndex = 0;
+	    	int aiffwhmIndex = 0;
+	    	int voffwhmIndex = 0;
+	    	int aifcorrIndex = 0;
+	    	int vofcorrIndex = 0;
+	    	int aifcorr2Index = 0;
+	    	int vofcorr2Index = 0;
 	    	
 	    	ModelImage volumeImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "volume");
 	    	fileInfo = volumeImage.getFileInfo();
@@ -1641,7 +1649,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        Collections.sort(peaksVector);
 	        found = true;
 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
-	            if (aifpeaks <= peaksVector.get(i))	{
+	            if (peaksVector.get(i) <= aifpeaks)	{
 	            	aifpeaksIndex = i;
 	            	found = false;
 	            }
@@ -1649,7 +1657,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        aifpeakscumdistr = (double)aifpeaksIndex/(double)(numUsed-1);
 	        found = true;
 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
-	            if (vofpeaks <= peaksVector.get(i))	{
+	            if (peaksVector.get(i) <= vofpeaks)	{
 	            	vofpeaksIndex = i;
 	            	found = false;
 	            }
@@ -1659,13 +1667,99 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        ttpstd = Math.sqrt((ttpsquaresum - numUsed*meanttp*meanttp)/(numUsed - 1.0));
 	        aifttp = ttp[az][ay][ax];
 	        vofttp = ttp[vz][vy][vx];
+	        fractionaifttpmeantomin = (aifttp - meanttp)/(globalminttp - meanttp);
+	        fractionvofttpmeantomin = (vofttp - meanttp)/(globalminttp - meanttp);
+	        aifttpstdfrommean = (aifttp - meanttp)/ttpstd;
+	        vofttpstdfrommean = (vofttp - meanttp)/ttpstd;
+	        Collections.sort(ttpVector);
+	        found = true;
+	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	            if (ttpVector.get(i) <= aifttp)	{
+	            	aifttpIndex = i;
+	            	found = false;
+	            }
+	        }
+	        aifttpcumdistr = (double)aifttpIndex/(double)(numUsed-1);
+	        found = true;
+	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	            if (ttpVector.get(i) <= vofttp)	{
+	            	vofttpIndex = i;
+	            	found = false;
+	            }
+	        }
+	        vofttpcumdistr = (double)vofttpIndex/(double)(numUsed-1);
 	    	meanfwhm =fwhmsum/numUsed;
 	    	fwhmstd = Math.sqrt((fwhmsquaresum - numUsed*meanfwhm*meanfwhm)/(numUsed - 1.0));
+	    	aiffwhm = fwhm[az-lowestArterialZ][ay][ax];
+	    	voffwhm = fwhm[vz-lowestArterialZ][vy][vx];
+	    	fractionaiffwhmmeantomin = (aiffwhm - meanfwhm)/(globalminfwhm - meanfwhm);
+	        fractionvoffwhmmeantomin = (voffwhm - meanfwhm)/(globalminfwhm - meanfwhm);
+	        aiffwhmstdfrommean = (aiffwhm - meanfwhm)/fwhmstd;
+	        voffwhmstdfrommean = (voffwhm - meanfwhm)/fwhmstd;
+	        Collections.sort(fwhmVector);
+	        found = true;
+	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	            if (fwhmVector.get(i) <= aiffwhm)	{
+	            	aiffwhmIndex = i;
+	            	found = false;
+	            }
+	        }
+	        aiffwhmcumdistr = (double)aiffwhmIndex/(double)(numUsed-1);
+	        found = true;
+	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	            if (fwhmVector.get(i) <= voffwhm)	{
+	            	voffwhmIndex = i;
+	            	found = false;
+	            }
+	        }
+	        voffwhmcumdistr = (double)voffwhmIndex/(double)(numUsed-1);
 	    	if (calculateCorrelation) {
 	    		meancorr = corrsum/numUsed;
 	    		corrstd = Math.sqrt((corrsquaresum - numUsed*meancorr*meancorr)/(numUsed - 1.0));
+	    		aifcorr = corrmap[az][ay][ax];
+	    		vofcorr = corrmap[vz][vy][vx];
+	    		aifcorrstdfrommean = (aifcorr - meancorr)/corrstd;
+	 	        vofcorrstdfrommean = (vofcorr - meancorr)/corrstd;
+	 	        Collections.sort(corrVector);
+	 	        found = true;
+	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	            if (corrVector.get(i) <= aifcorr)	{
+	 	            	aifcorrIndex = i;
+	 	            	found = false;
+	 	            }
+	 	        }
+	 	        aifcorrcumdistr = (double)aifcorrIndex/(double)(numUsed-1);
+	 	        found = true;
+	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	            if (corrVector.get(i) <= vofcorr)	{
+	 	            	vofcorrIndex = i;
+	 	            	found = false;
+	 	            }
+	 	        }
+	 	        vofcorrcumdistr = (double)vofcorrIndex/(double)(numUsed-1);
 	    		meancorr2 = corr2sum/numUsed;
 	    		corr2std = Math.sqrt((corr2squaresum - numUsed*meancorr2*meancorr2)/(numUsed - 1.0));
+	    		aifcorr2 = corr_map2[az][ay][ax];
+	    		vofcorr2 = corr_map2[vz][vy][vx];
+	    		aifcorr2stdfrommean = (aifcorr2 - meancorr2)/corr2std;
+	 	        vofcorr2stdfrommean = (vofcorr2 - meancorr2)/corr2std;
+	 	        Collections.sort(corr2Vector);
+	 	        found = true;
+	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	            if (corr2Vector.get(i) <= aifcorr2)	{
+	 	            	aifcorr2Index = i;
+	 	            	found = false;
+	 	            }
+	 	        }
+	 	        aifcorr2cumdistr = (double)aifcorr2Index/(double)(numUsed-1);
+	 	        found = true;
+	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	            if (corr2Vector.get(i) <= vofcorr2)	{
+	 	            	vofcorr2Index = i;
+	 	            	found = false;
+	 	            }
+	 	        }
+	 	        vofcorr2cumdistr = (double)vofcorr2Index/(double)(numUsed-1);
 	    	}
 	    	System.out.println(numUsed + " used out of " + (numArterialZ * length) + " voxels");
 	    	System.out.println("meanpeaks = " + meanpeaks);
