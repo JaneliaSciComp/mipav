@@ -1768,6 +1768,80 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	System.out.println("globalmaxpeaks = " + globalmaxpeaks);
 	    	System.out.println("globalminttp = " + globalminttp);
 	    	System.out.println("globalminfwhm = " + globalminfwhm);
+	    	if (findAVInfo) {
+	    		try {
+	    	    raAVFile.writeBytes("AlgorithmBrainSurfaceExtractor is used to strip away voxels surrounding the brain\n");
+	    	    raAVFile.writeBytes("For z slices going from " + lowestArterialZ + " to " + highestArterialZ + "\n");
+	    	    raAVFile.writeBytes("For each surviving voxel for which all data time values are nonzero perform:\n");
+	    	    raAVFile.writeBytes("For each z,y,x for each t find delR2[t] = -(1/TE)*log(data[t]/data[0])\n");
+	    	    raAVFile.writeBytes("At the t value that generates the maximum delR2[t] find:\n");
+	    	    raAVFile.writeBytes("peak[z][y][x] containing the maximum delR2[t] value\n");
+	    	    raAVFile.writeBytes("Time to pulse ttp[z][y][x] which contains the t+1 at which the peak occurred\n");
+	    	    raAVFile.writeBytes("Full width at half maximum fwhm[z][y][x] which contains the peak width\n");
+	    	    raAVFile.writeBytes("Peaks which do not fall to half height on both sides are skipped\n");
+	    	    raAVFile.writeBytes("AIF and VOF should tend to maximum peak, minimum ttp, and minimum fwhm\n");
+	    		raAVFile.writeBytes(numUsed + " used out of " + (numArterialZ * length) + " voxels\n\n");	
+	    		raAVFile.writeBytes("mean peak value = " + meanpeaks + "\n");
+	    		raAVFile.writeBytes("maximum peak value = " + globalmaxpeaks + "\n");
+	    		raAVFile.writeBytes("peak standard deviation = " + peaksstd + "\n");
+	    		raAVFile.writeBytes("AIF peak value = " + aifpeaks + "\n");
+	    		raAVFile.writeBytes("AIF peak is " + fractionaifpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
+	    		raAVFile.writeBytes("AIF peak is " + aifpeaksstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("AIF peak is at " + aifpeakscumdistr + " of the peaks cumulative distribution function\n");
+	    		raAVFile.writeBytes("VOF peak value = " + vofpeaks + "\n");
+	    		raAVFile.writeBytes("VOF peak is " + fractionvofpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
+	    		raAVFile.writeBytes("VOF peak is " + vofpeaksstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("VOF peak is at " + vofpeakscumdistr + " of the peaks cumulative distribution function\n\n");
+	    		raAVFile.writeBytes("mean ttp value = " + meanttp + "\n");
+	    		raAVFile.writeBytes("minimum ttp value = " + globalminttp + "\n");
+	    		raAVFile.writeBytes("ttp standard deviation = " + ttpstd + "\n");
+	    		raAVFile.writeBytes("AIF ttp value = " + aifttp + "\n");
+	    		raAVFile.writeBytes("AIF ttp is " + fractionaifttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
+	    		raAVFile.writeBytes("AIF ttp is " + aifttpstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("AIF ttp is at " + aifttpcumdistr + " of the ttp cumulative distribution function\n");
+	    		raAVFile.writeBytes("VOF ttp value = " + vofttp + "\n");
+	    		raAVFile.writeBytes("VOF ttp is " + fractionvofttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
+	    		raAVFile.writeBytes("VOF ttp is " + vofttpstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("VOF ttp is at " + vofttpcumdistr + " of the ttp cumulative distribution function\n\n");
+	    		raAVFile.writeBytes("mean fwhm value = " + meanfwhm + "\n");
+	    		raAVFile.writeBytes("minimum fwhm value = " + globalminfwhm + "\n");
+	    		raAVFile.writeBytes("fwhm standard deviation = " + fwhmstd + "\n");
+	    		raAVFile.writeBytes("AIF fwhm value = " + aiffwhm + "\n");
+	    		raAVFile.writeBytes("AIF fwhm is " + fractionaiffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
+	    		raAVFile.writeBytes("AIF fwhm is " + aiffwhmstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("AIF fwhm is at " + aiffwhmcumdistr + " of the fwhm cumulative distribution function\n");
+	    		raAVFile.writeBytes("VOF fwhm value = " + voffwhm + "\n");
+	    		raAVFile.writeBytes("VOF fwhm is " + fractionvoffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
+	    		raAVFile.writeBytes("VOF fwhm is " + voffwhmstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("VOF fwhm is at " + voffwhmcumdistr + " of the fwhm cumulative distribution function\n\n");
+	    		if (calculateCorrelation) {
+	    		    raAVFile.writeBytes("corr is without AIF delay compensation\n");
+	    		    raAVFile.writeBytes("corr2 is with AIF delay compensation\n\n");
+	    		    raAVFile.writeBytes("mean corr = " + meancorr + "\n");
+	    		    raAVFile.writeBytes("minimum corr = " + globalmincorr + "\n");
+	    		    raAVFile.writeBytes("maximum corr = " + globalmaxcorr + "\n");
+	    		    raAVFile.writeBytes("corr standard deviation = " + corrstd + "\n");
+	    		    raAVFile.writeBytes("AIF corr value = " + aifcorr + "\n");
+		    		raAVFile.writeBytes("AIF corr is " + aifcorrstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("AIF corr is at " + aifcorrcumdistr + " of the corr cumulative distribution function\n");
+		    		raAVFile.writeBytes("VOF corr value = " + vofcorr + "\n");
+		    		raAVFile.writeBytes("VOF corr is " + vofcorrstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("VOF corr is at " + vofcorrcumdistr + " of the corr cumulative distribution function\n\n");
+		    		raAVFile.writeBytes("AIF corr2 value = " + aifcorr2 + "\n");
+		    		raAVFile.writeBytes("AIF corr2 is " + aifcorr2stdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("AIF corr2 is at " + aifcorr2cumdistr + " of the corr2 cumulative distribution function\n");
+		    		raAVFile.writeBytes("VOF corr2 value = " + vofcorr2 + "\n");
+		    		raAVFile.writeBytes("VOF corr2 is " + vofcorr2stdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("VOF corr2 is at " + vofcorr2cumdistr + " of the corr2 cumulative distribution function\n\n");
+	    		} // if (calculateCorrelation)
+	    		raAVFile.close();
+	    		}
+	    		catch (IOException e) {
+		    	    System.err.println(e);
+		    	    setCompleted(false);
+		    	    return;
+		    	}
+	    	} // if (findAVInfo)
 	    	maxdelpeaks = globalmaxpeaks - meanpeaks;
 	    	mindelttp = globalminttp - meanttp;
 	    	mindelfwhm = globalminfwhm - meanfwhm;
