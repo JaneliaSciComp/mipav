@@ -196,11 +196,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private String caseString = "EVTcase1.txt";
     private int ax = 114;
     private int ay = 104;
-    private double azd = -1.138;
+    private double azd = -6.853;
     private int az = 7;
     private int vx = 120;
     private int vy = 217;
-    private double vzd = 5.829;
+    private double vzd = 6.157;
     private int vz = 9;
     
 	
@@ -1318,8 +1318,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	meanpeaks = 0.0;
 	    	meanttp = 0.0;
 	    	meanfwhm = 0.0;
-	    	numUsed = 0;
-	    	numZUsed = new int[numArterialZ];
+	    	int numpeakUsed = 0;
+	    	int numfwhmUsed = 0;
+	    	int numcorrUsed = 0;
+	    	int numZpeakUsed[] = new int[numArterialZ];
+	    	int numZfwhmUsed[] = new int[numArterialZ];
 	    	globalmaxpeaks = -Double.MAX_VALUE;
 	    	globalminttp = Short.MAX_VALUE;
 	    	globalminfwhm = Double.MAX_VALUE;
@@ -1410,6 +1413,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	ModelImage resultImage;
 	    	
 	    	short dataArterial[][][][] = new short[numArterialZ][yDim][xDim][tDim];
+	    	boolean dataHasZeroValue[][][] = new boolean[numArterialZ][yDim][xDim];
+	    	boolean prePeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
+	    	boolean postPeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	for (t = 0; t < tDim; t++) {
 	    	    for (z = 0; z < zDim; z++) {
 	    	    	for (y = 0; y < yDim; y++) {
@@ -1478,6 +1484,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 								logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
 								ttp[z][y][x] = Short.MIN_VALUE;
 								fwhm[z-lowestArterialZ][y][x] = Float.NaN;
+								dataHasZeroValue[z-lowestArterialZ][y][x] = true;
 								continue xloop;
 							}
 						}
@@ -1532,10 +1539,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						}
 						if ((preBelowHalfTime == Short.MAX_VALUE) && (preHalfTime == -Double.MAX_VALUE)) {
 							// Never was less than half peak value before peak value occurred
-							logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
-							ttp[z][y][x] = Short.MIN_VALUE;
 							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
-							continue xloop;
+							prePeakTooHigh[z-lowestArterialZ][y][x] = true;
 						}
 						for (t = tDim-1; t > minttp-1; t--) {
 							if (delR2[t] < maxpeaks/2.0) {
@@ -1565,12 +1570,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						} // for (t = startAbove; t >= minttp; t--)
 						if ((postBelowHalfTime == Short.MAX_VALUE) && (postHalfTime == -Double.MAX_VALUE)) {
 							// Never was less than half peak value after peak value occurred
-							logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
-							ttp[z][y][x] = Short.MIN_VALUE;
 							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
-							continue xloop;
+							postPeakTooHigh[z-lowestArterialZ][y][x] = true;
 						}
-						if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime != Short.MAX_VALUE)) {
+						else if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime != Short.MAX_VALUE)) {
 							fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/
 									   (preAboveHalfIntensity - preBelowHalfIntensity);
 						    preHalfTime = preBelowHalfTime	+ fraction*(preAboveHalfTime - preBelowHalfTime);
@@ -1592,26 +1595,31 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							// Since of fraction of 1 time unit
 							postHalfTime = minttp-1 + fraction;
 						}
-						fwhm[z-lowestArterialZ][y][x] = (float)(postHalfTime - preHalfTime);
+						
 						peakssum += maxpeaks;
 						peakssquaresum += maxpeaks*maxpeaks;
 						peaksVector.add(maxpeaks);
 						ttpsum += minttp;
 						ttpsquaresum += (double)minttp*(double)minttp;
 						ttpVector.add(minttp);
-						fwhmsum += (postHalfTime - preHalfTime);
-						fwhmsquaresum += (postHalfTime - preHalfTime)*(postHalfTime-preHalfTime);
-						fwhmVector.add(postHalfTime-preHalfTime);
-						numUsed++;
-						numZUsed[z-lowestArterialZ]++;
+						numpeakUsed++;
+						numZpeakUsed[z-lowestArterialZ]++;
 						if (logpeaks[z-lowestArterialZ][y][x] > globalmaxpeaks) {
 							globalmaxpeaks = logpeaks[z-lowestArterialZ][y][x];
 						}
 						if (ttp[z][y][x] < globalminttp) {
 							globalminttp = ttp[z][y][x];
 						}
-						if (fwhm[z-lowestArterialZ][y][x] < globalminfwhm) {
-							globalminfwhm = fwhm[z-lowestArterialZ][y][x];
+						if ((!prePeakTooHigh[z-lowestArterialZ][y][x]) && (!postPeakTooHigh[z-lowestArterialZ][y][x])) {
+							fwhm[z-lowestArterialZ][y][x] = (float)(postHalfTime - preHalfTime);
+							fwhmsum += (postHalfTime - preHalfTime);
+							fwhmsquaresum += (postHalfTime - preHalfTime)*(postHalfTime-preHalfTime);
+							fwhmVector.add(postHalfTime-preHalfTime);
+							if (fwhm[z-lowestArterialZ][y][x] < globalminfwhm) {
+								globalminfwhm = fwhm[z-lowestArterialZ][y][x];
+							}
+							numfwhmUsed++;
+							numZfwhmUsed[z-lowestArterialZ]++;
 						}
 						if (calculateCorrelation) {
 							corrsum += corrmap[z][y][x];
@@ -1635,11 +1643,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						} // if (calculateCorrelation)
 					} // for (x = 0; x < xDim; x++)
 				} // for (y = 0; y < yDim; y++)	
-				System.out.println("For z = " + z + ", " + numZUsed[z-lowestArterialZ] + " out of " + length +
-						" pixels");
+				System.out.println("For z = " + z + ", " + numZpeakUsed[z-lowestArterialZ] + " out of " + length +
+						" pixels used for peak and ttp values");
+				System.out.println("For z = " + z + ", " + numZfwhmUsed[z-lowestArterialZ] + " out of " + length +
+						" pixels used for fwhm values");
 			} // for (z = lowestArterialZ; z <= highestArterialZ; z++)
-	    	meanpeaks = peakssum/numUsed;
-	    	peaksstd = Math.sqrt((peakssquaresum - numUsed*meanpeaks*meanpeaks)/(numUsed - 1.0));
+	    	meanpeaks = peakssum/numpeakUsed;
+	    	peaksstd = Math.sqrt((peakssquaresum - numpeakUsed*meanpeaks*meanpeaks)/(numpeakUsed - 1.0));
 	    	aifpeaks = logpeaks[az-lowestArterialZ][ay][ax];
 	        vofpeaks = logpeaks[vz - lowestArterialZ][vy][vx];
 	        fractionaifpeaksmeantomax = (aifpeaks - meanpeaks)/(globalmaxpeaks - meanpeaks);
@@ -1648,23 +1658,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        vofpeaksstdfrommean = (vofpeaks - meanpeaks)/peaksstd;
 	        Collections.sort(peaksVector);
 	        found = true;
-	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	            if (peaksVector.get(i) <= aifpeaks)	{
 	            	aifpeaksIndex = i;
 	            	found = false;
 	            }
 	        }
-	        aifpeakscumdistr = (double)aifpeaksIndex/(double)(numUsed-1);
+	        aifpeakscumdistr = (double)aifpeaksIndex/(double)(numpeakUsed-1);
 	        found = true;
-	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	            if (peaksVector.get(i) <= vofpeaks)	{
 	            	vofpeaksIndex = i;
 	            	found = false;
 	            }
 	        }
-	        vofpeakscumdistr = (double)vofpeaksIndex/(double)(numUsed-1);
-	        meanttp = ttpsum/numUsed;
-	        ttpstd = Math.sqrt((ttpsquaresum - numUsed*meanttp*meanttp)/(numUsed - 1.0));
+	        vofpeakscumdistr = (double)vofpeaksIndex/(double)(numpeakUsed-1);
+	        meanttp = ttpsum/numpeakUsed;
+	        ttpstd = Math.sqrt((ttpsquaresum - numpeakUsed*meanttp*meanttp)/(numpeakUsed - 1.0));
 	        aifttp = ttp[az][ay][ax];
 	        vofttp = ttp[vz][vy][vx];
 	        fractionaifttpmeantomin = (aifttp - meanttp)/(globalminttp - meanttp);
@@ -1673,23 +1683,23 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        vofttpstdfrommean = (vofttp - meanttp)/ttpstd;
 	        Collections.sort(ttpVector);
 	        found = true;
-	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	            if (ttpVector.get(i) <= aifttp)	{
 	            	aifttpIndex = i;
 	            	found = false;
 	            }
 	        }
-	        aifttpcumdistr = (double)aifttpIndex/(double)(numUsed-1);
+	        aifttpcumdistr = (double)aifttpIndex/(double)(numpeakUsed-1);
 	        found = true;
-	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	            if (ttpVector.get(i) <= vofttp)	{
 	            	vofttpIndex = i;
 	            	found = false;
 	            }
 	        }
-	        vofttpcumdistr = (double)vofttpIndex/(double)(numUsed-1);
-	    	meanfwhm =fwhmsum/numUsed;
-	    	fwhmstd = Math.sqrt((fwhmsquaresum - numUsed*meanfwhm*meanfwhm)/(numUsed - 1.0));
+	        vofttpcumdistr = (double)vofttpIndex/(double)(numpeakUsed-1);
+	    	meanfwhm =fwhmsum/numfwhmUsed;
+	    	fwhmstd = Math.sqrt((fwhmsquaresum - numfwhmUsed*meanfwhm*meanfwhm)/(numfwhmUsed - 1.0));
 	    	aiffwhm = fwhm[az-lowestArterialZ][ay][ax];
 	    	voffwhm = fwhm[vz-lowestArterialZ][vy][vx];
 	    	fractionaiffwhmmeantomin = (aiffwhm - meanfwhm)/(globalminfwhm - meanfwhm);
@@ -1698,70 +1708,71 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        voffwhmstdfrommean = (voffwhm - meanfwhm)/fwhmstd;
 	        Collections.sort(fwhmVector);
 	        found = true;
-	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	        for (i = (int)(numfwhmUsed-1); i >= 0 && found; i--) {
 	            if (fwhmVector.get(i) <= aiffwhm)	{
 	            	aiffwhmIndex = i;
 	            	found = false;
 	            }
 	        }
-	        aiffwhmcumdistr = (double)aiffwhmIndex/(double)(numUsed-1);
+	        aiffwhmcumdistr = (double)aiffwhmIndex/(double)(numfwhmUsed-1);
 	        found = true;
-	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	        for (i = (int)(numfwhmUsed-1); i >= 0 && found; i--) {
 	            if (fwhmVector.get(i) <= voffwhm)	{
 	            	voffwhmIndex = i;
 	            	found = false;
 	            }
 	        }
-	        voffwhmcumdistr = (double)voffwhmIndex/(double)(numUsed-1);
+	        voffwhmcumdistr = (double)voffwhmIndex/(double)(numfwhmUsed-1);
 	    	if (calculateCorrelation) {
-	    		meancorr = corrsum/numUsed;
-	    		corrstd = Math.sqrt((corrsquaresum - numUsed*meancorr*meancorr)/(numUsed - 1.0));
+	    		meancorr = corrsum/numpeakUsed;
+	    		corrstd = Math.sqrt((corrsquaresum - numpeakUsed*meancorr*meancorr)/(numpeakUsed - 1.0));
 	    		aifcorr = corrmap[az][ay][ax];
 	    		vofcorr = corrmap[vz][vy][vx];
 	    		aifcorrstdfrommean = (aifcorr - meancorr)/corrstd;
 	 	        vofcorrstdfrommean = (vofcorr - meancorr)/corrstd;
 	 	        Collections.sort(corrVector);
 	 	        found = true;
-	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	 	            if (corrVector.get(i) <= aifcorr)	{
 	 	            	aifcorrIndex = i;
 	 	            	found = false;
 	 	            }
 	 	        }
-	 	        aifcorrcumdistr = (double)aifcorrIndex/(double)(numUsed-1);
+	 	        aifcorrcumdistr = (double)aifcorrIndex/(double)(numpeakUsed-1);
 	 	        found = true;
-	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	 	            if (corrVector.get(i) <= vofcorr)	{
 	 	            	vofcorrIndex = i;
 	 	            	found = false;
 	 	            }
 	 	        }
-	 	        vofcorrcumdistr = (double)vofcorrIndex/(double)(numUsed-1);
-	    		meancorr2 = corr2sum/numUsed;
-	    		corr2std = Math.sqrt((corr2squaresum - numUsed*meancorr2*meancorr2)/(numUsed - 1.0));
+	 	        vofcorrcumdistr = (double)vofcorrIndex/(double)(numpeakUsed-1);
+	    		meancorr2 = corr2sum/numpeakUsed;
+	    		corr2std = Math.sqrt((corr2squaresum - numpeakUsed*meancorr2*meancorr2)/(numpeakUsed - 1.0));
 	    		aifcorr2 = corr_map2[az][ay][ax];
 	    		vofcorr2 = corr_map2[vz][vy][vx];
 	    		aifcorr2stdfrommean = (aifcorr2 - meancorr2)/corr2std;
 	 	        vofcorr2stdfrommean = (vofcorr2 - meancorr2)/corr2std;
 	 	        Collections.sort(corr2Vector);
 	 	        found = true;
-	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	 	            if (corr2Vector.get(i) <= aifcorr2)	{
 	 	            	aifcorr2Index = i;
 	 	            	found = false;
 	 	            }
 	 	        }
-	 	        aifcorr2cumdistr = (double)aifcorr2Index/(double)(numUsed-1);
+	 	        aifcorr2cumdistr = (double)aifcorr2Index/(double)(numpeakUsed-1);
 	 	        found = true;
-	 	        for (i = (int)(numUsed-1); i >= 0 && found; i--) {
+	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
 	 	            if (corr2Vector.get(i) <= vofcorr2)	{
 	 	            	vofcorr2Index = i;
 	 	            	found = false;
 	 	            }
 	 	        }
-	 	        vofcorr2cumdistr = (double)vofcorr2Index/(double)(numUsed-1);
+	 	        vofcorr2cumdistr = (double)vofcorr2Index/(double)(numpeakUsed-1);
 	    	}
-	    	System.out.println(numUsed + " used out of " + (numArterialZ * length) + " voxels");
+	    	System.out.println(numpeakUsed + " used out of " + (numArterialZ * length) + " voxels for peak and ttp");
+	    	System.out.println(numfwhmUsed + " used out of " + (numArterialZ * length) + " voxels for fwhm");
 	    	System.out.println("meanpeaks = " + meanpeaks);
 	    	System.out.println("meanttp = " + meanttp);
 	    	System.out.println("meanfwhm = " + meanfwhm);
@@ -1780,40 +1791,81 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	    raAVFile.writeBytes("Full width at half maximum fwhm[z][y][x] which contains the peak width\n");
 	    	    raAVFile.writeBytes("Peaks which do not fall to half height on both sides are skipped\n");
 	    	    raAVFile.writeBytes("AIF and VOF should tend to maximum peak, minimum ttp, and minimum fwhm\n");
-	    		raAVFile.writeBytes(numUsed + " used out of " + (numArterialZ * length) + " voxels\n\n");	
+	    		raAVFile.writeBytes(numpeakUsed + " used out of " + (numArterialZ * length) + " voxels for peak and ttp\n");	
+	    		raAVFile.writeBytes(numfwhmUsed + " used out of " + (numArterialZ * length) + " voxels for fwhm\n\n");	
 	    		raAVFile.writeBytes("mean peak value = " + meanpeaks + "\n");
 	    		raAVFile.writeBytes("maximum peak value = " + globalmaxpeaks + "\n");
 	    		raAVFile.writeBytes("peak standard deviation = " + peaksstd + "\n");
-	    		raAVFile.writeBytes("AIF peak value = " + aifpeaks + "\n");
-	    		raAVFile.writeBytes("AIF peak is " + fractionaifpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
-	    		raAVFile.writeBytes("AIF peak is " + aifpeaksstdfrommean + " standard deviations from the mean\n");
-	    		raAVFile.writeBytes("AIF peak is at " + aifpeakscumdistr + " of the peaks cumulative distribution function\n");
-	    		raAVFile.writeBytes("VOF peak value = " + vofpeaks + "\n");
-	    		raAVFile.writeBytes("VOF peak is " + fractionvofpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
-	    		raAVFile.writeBytes("VOF peak is " + vofpeaksstdfrommean + " standard deviations from the mean\n");
-	    		raAVFile.writeBytes("VOF peak is at " + vofpeakscumdistr + " of the peaks cumulative distribution function\n\n");
+	    		if (dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
+	    			raAVFile.writeBytes("No AIF peak, ttp, fwhm, and corr values because of a zero data value at 1 or more time points at AIF location\n");
+	    		}
+	    		else {
+		    		raAVFile.writeBytes("AIF peak value = " + aifpeaks + "\n");
+		    		raAVFile.writeBytes("AIF peak is " + fractionaifpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
+		    		raAVFile.writeBytes("AIF peak is " + aifpeaksstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("AIF peak is at " + aifpeakscumdistr + " of the peaks cumulative distribution function\n");
+	    		}
+	    		if (dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
+	    			raAVFile.writeBytes("No VOF peak, ttp, and fwhm values because of a zero data value at 1 or more time points at VOF location\n");
+	    		}
+	    		else {
+			    	raAVFile.writeBytes("VOF peak value = " + vofpeaks + "\n");
+		    		raAVFile.writeBytes("VOF peak is " + fractionvofpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
+		    		raAVFile.writeBytes("VOF peak is " + vofpeaksstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("VOF peak is at " + vofpeakscumdistr + " of the peaks cumulative distribution function\n\n");
+	    		}
 	    		raAVFile.writeBytes("mean ttp value = " + meanttp + "\n");
 	    		raAVFile.writeBytes("minimum ttp value = " + globalminttp + "\n");
 	    		raAVFile.writeBytes("ttp standard deviation = " + ttpstd + "\n");
-	    		raAVFile.writeBytes("AIF ttp value = " + aifttp + "\n");
-	    		raAVFile.writeBytes("AIF ttp is " + fractionaifttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
-	    		raAVFile.writeBytes("AIF ttp is " + aifttpstdfrommean + " standard deviations from the mean\n");
-	    		raAVFile.writeBytes("AIF ttp is at " + aifttpcumdistr + " of the ttp cumulative distribution function\n");
-	    		raAVFile.writeBytes("VOF ttp value = " + vofttp + "\n");
-	    		raAVFile.writeBytes("VOF ttp is " + fractionvofttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
-	    		raAVFile.writeBytes("VOF ttp is " + vofttpstdfrommean + " standard deviations from the mean\n");
-	    		raAVFile.writeBytes("VOF ttp is at " + vofttpcumdistr + " of the ttp cumulative distribution function\n\n");
+	    		if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
+		    		raAVFile.writeBytes("AIF ttp value = " + aifttp + "\n");
+		    		raAVFile.writeBytes("AIF ttp is " + fractionaifttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
+		    		raAVFile.writeBytes("AIF ttp is " + aifttpstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("AIF ttp is at " + aifttpcumdistr + " of the ttp cumulative distribution function\n");
+	    		}
+	    		if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
+		    		raAVFile.writeBytes("VOF ttp value = " + vofttp + "\n");
+		    		raAVFile.writeBytes("VOF ttp is " + fractionvofttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
+		    		raAVFile.writeBytes("VOF ttp is " + vofttpstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("VOF ttp is at " + vofttpcumdistr + " of the ttp cumulative distribution function\n\n");
+	    		}
 	    		raAVFile.writeBytes("mean fwhm value = " + meanfwhm + "\n");
 	    		raAVFile.writeBytes("minimum fwhm value = " + globalminfwhm + "\n");
 	    		raAVFile.writeBytes("fwhm standard deviation = " + fwhmstd + "\n");
-	    		raAVFile.writeBytes("AIF fwhm value = " + aiffwhm + "\n");
-	    		raAVFile.writeBytes("AIF fwhm is " + fractionaiffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
-	    		raAVFile.writeBytes("AIF fwhm is " + aiffwhmstdfrommean + " standard deviations from the mean\n");
-	    		raAVFile.writeBytes("AIF fwhm is at " + aiffwhmcumdistr + " of the fwhm cumulative distribution function\n");
-	    		raAVFile.writeBytes("VOF fwhm value = " + voffwhm + "\n");
-	    		raAVFile.writeBytes("VOF fwhm is " + fractionvoffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
-	    		raAVFile.writeBytes("VOF fwhm is " + voffwhmstdfrommean + " standard deviations from the mean\n");
-	    		raAVFile.writeBytes("VOF fwhm is at " + voffwhmcumdistr + " of the fwhm cumulative distribution function\n\n");
+	    		if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
+	    			if (prePeakTooHigh[az-lowestArterialZ][ay][ax] && postPeakTooHigh[az-lowestArterialZ][ay][ax]) {
+	    			    raAVFile.writeBytes("No AIF fwhm value because never fall to half peak value either before or after the peak\n");	
+	    			}
+	    			else if (prePeakTooHigh[az-lowestArterialZ][ay][ax]) {
+	    				raAVFile.writeBytes("No AIF fwhm value because never fall to half peak value before the peak\n");
+	    			}
+	    			else if (postPeakTooHigh[az-lowestArterialZ][ay][ax]) {
+	    				raAVFile.writeBytes("No AIF fwhm value because never fall to half peak value after the peak\n");
+	    			}
+	    			else {
+			    		raAVFile.writeBytes("AIF fwhm value = " + aiffwhm + "\n");
+			    		raAVFile.writeBytes("AIF fwhm is " + fractionaiffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
+			    		raAVFile.writeBytes("AIF fwhm is " + aiffwhmstdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("AIF fwhm is at " + aiffwhmcumdistr + " of the fwhm cumulative distribution function\n");
+	    		    }
+	    		}
+	    		if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
+	    			if (prePeakTooHigh[vz-lowestArterialZ][vy][vx] && postPeakTooHigh[vz-lowestArterialZ][vy][vx]) {
+	    			    raAVFile.writeBytes("No VOF fwhm value because never fall to half peak value either before or after the peak\n");	
+	    			}
+	    			else if (prePeakTooHigh[vz-lowestArterialZ][vy][vx]) {
+	    				raAVFile.writeBytes("No VOF fwhm value because never fall to half peak value before the peak\n");
+	    			}
+	    			else if (postPeakTooHigh[vz-lowestArterialZ][vy][vx]) {
+	    				raAVFile.writeBytes("No VOF fwhm value because never fall to half peak value after the peak\n");
+	    			}
+	    			else {  
+			    		raAVFile.writeBytes("VOF fwhm value = " + voffwhm + "\n");
+			    		raAVFile.writeBytes("VOF fwhm is " + fractionvoffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
+			    		raAVFile.writeBytes("VOF fwhm is " + voffwhmstdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("VOF fwhm is at " + voffwhmcumdistr + " of the fwhm cumulative distribution function\n\n");
+	    			}
+	    		}
 	    		if (calculateCorrelation) {
 	    		    raAVFile.writeBytes("corr is without AIF delay compensation\n");
 	    		    raAVFile.writeBytes("corr2 is with AIF delay compensation\n\n");
@@ -1821,18 +1873,26 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		    raAVFile.writeBytes("minimum corr = " + globalmincorr + "\n");
 	    		    raAVFile.writeBytes("maximum corr = " + globalmaxcorr + "\n");
 	    		    raAVFile.writeBytes("corr standard deviation = " + corrstd + "\n");
-	    		    raAVFile.writeBytes("AIF corr value = " + aifcorr + "\n");
-		    		raAVFile.writeBytes("AIF corr is " + aifcorrstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("AIF corr is at " + aifcorrcumdistr + " of the corr cumulative distribution function\n");
-		    		raAVFile.writeBytes("VOF corr value = " + vofcorr + "\n");
-		    		raAVFile.writeBytes("VOF corr is " + vofcorrstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("VOF corr is at " + vofcorrcumdistr + " of the corr cumulative distribution function\n\n");
-		    		raAVFile.writeBytes("AIF corr2 value = " + aifcorr2 + "\n");
-		    		raAVFile.writeBytes("AIF corr2 is " + aifcorr2stdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("AIF corr2 is at " + aifcorr2cumdistr + " of the corr2 cumulative distribution function\n");
-		    		raAVFile.writeBytes("VOF corr2 value = " + vofcorr2 + "\n");
-		    		raAVFile.writeBytes("VOF corr2 is " + vofcorr2stdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("VOF corr2 is at " + vofcorr2cumdistr + " of the corr2 cumulative distribution function\n\n");
+	    		    if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
+		    		    raAVFile.writeBytes("AIF corr value = " + aifcorr + "\n");
+			    		raAVFile.writeBytes("AIF corr is " + aifcorrstdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("AIF corr is at " + aifcorrcumdistr + " of the corr cumulative distribution function\n");
+	    		    }
+	    		    if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
+			    		raAVFile.writeBytes("VOF corr value = " + vofcorr + "\n");
+			    		raAVFile.writeBytes("VOF corr is " + vofcorrstdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("VOF corr is at " + vofcorrcumdistr + " of the corr cumulative distribution function\n\n");
+	    		    }
+		    		if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
+			    		raAVFile.writeBytes("AIF corr2 value = " + aifcorr2 + "\n");
+			    		raAVFile.writeBytes("AIF corr2 is " + aifcorr2stdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("AIF corr2 is at " + aifcorr2cumdistr + " of the corr2 cumulative distribution function\n");
+		    		}
+		    		if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
+			    		raAVFile.writeBytes("VOF corr2 value = " + vofcorr2 + "\n");
+			    		raAVFile.writeBytes("VOF corr2 is " + vofcorr2stdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("VOF corr2 is at " + vofcorr2cumdistr + " of the corr2 cumulative distribution function\n\n");
+		    		}
 	    		} // if (calculateCorrelation)
 	    		raAVFile.close();
 	    		}
@@ -1860,7 +1920,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-					    if (!Float.isNaN(logpeaks[z-lowestArterialZ][y][x])) {
+					    if (!Float.isNaN(fwhm[z-lowestArterialZ][y][x])) {
 					    	c = (float)(k1*(logpeaks[z-lowestArterialZ][y][x] - meanpeaks)
 					    			+ k2*(ttp[z][y][x] - meanttp) + 
 					    			k3*(fwhm[z-lowestArterialZ][y][x] - meanfwhm));
@@ -1900,7 +1960,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	    	setCompleted(false);
 	    	    	return;
 	    	    }
-	    	    topIndex = (int)(numZUsed[z-lowestArterialZ] - 1);
+	    	    topIndex = (int)(numZfwhmUsed[z-lowestArterialZ] - 1);
 	    	    for (i = topIndex; i >= Math.max(topIndex-99, 0); i--) {
 	    	    	item = indexValueList[z-lowestArterialZ].get(i);
 	    	        index = item.getIndex();
@@ -1956,12 +2016,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	highestCSum = new double[numArterialZ];
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 	    		highestCSum[z - lowestArterialZ] = -Double.MAX_VALUE;
-	    		if (numZUsed[z-lowestArterialZ] >= numAdjacentNeeded) {
+	    		if (numZfwhmUsed[z-lowestArterialZ] >= numAdjacentNeeded) {
 	    		xVal.clear();
 	    		yVal.clear();
-	    		valNumUsed = new boolean[(int)numZUsed[z-lowestArterialZ]];
-	    		topIndex = (int)(numZUsed[z-lowestArterialZ] - 1);
-		    	bottomIndex = (int)(numZUsed[z-lowestArterialZ] - numAdjacentNeeded);
+	    		valNumUsed = new boolean[(int)numZfwhmUsed[z-lowestArterialZ]];
+	    		topIndex = (int)(numZfwhmUsed[z-lowestArterialZ] - 1);
+		    	bottomIndex = (int)(numZfwhmUsed[z-lowestArterialZ] - numAdjacentNeeded);
 		    	for (currentIndex = topIndex; currentIndex >= bottomIndex; currentIndex--) {
 	    	        item = indexValueList[z-lowestArterialZ].get(currentIndex);
 	    	        index = item.getIndex();
