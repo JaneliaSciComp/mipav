@@ -1558,8 +1558,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						if (postHalfTime != -Double.MAX_VALUE) {
 							startAbove = (short)Math.round(postHalfTime - 1);
 						}
-						else if (postAboveHalfTime != Short.MAX_VALUE) {
-							startAbove = (short)(postAboveHalfTime - 1);
+						else if (postBelowHalfTime != Short.MAX_VALUE) {
+							startAbove = (short)(postBelowHalfTime - 1);
+						}
+						else {
+							startAbove = Short.MIN_VALUE;
 						}
 						// If a notch in the postpeak curve occurs, find postBelowHalf after the notch.
 						for (t = startAbove; t >= minttp; t--) {
@@ -1573,7 +1576,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
 							postPeakTooHigh[z-lowestArterialZ][y][x] = true;
 						}
-						else if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime != Short.MAX_VALUE)) {
+						if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime != Short.MAX_VALUE)) {
 							fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/
 									   (preAboveHalfIntensity - preBelowHalfIntensity);
 						    preHalfTime = preBelowHalfTime	+ fraction*(preAboveHalfTime - preBelowHalfTime);
