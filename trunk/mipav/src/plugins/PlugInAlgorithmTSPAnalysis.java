@@ -1416,7 +1416,17 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	boolean dataHasZeroValue[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean prePeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean postPeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
+	        Vector<Short>preExtractorAIFZeros = new Vector<Short>();
+	        Vector<Short>preExtractorVOFZeros = new Vector<Short>();
+	        Vector<Short>postExtractorAIFZeros = new Vector<Short>();
+	        Vector<Short>postExtractorVOFZeros = new Vector<Short>();
 	    	for (t = 0; t < tDim; t++) {
+	    		if (data[az][ay][ax][t] == 0) {
+	    			preExtractorAIFZeros.add((short)t);
+	    		}
+	    		if (data[vz][vy][vx][t] == 0) {
+	    			preExtractorVOFZeros.add((short)t);
+	    		}
 	    	    for (z = 0; z < zDim; z++) {
 	    	    	for (y = 0; y < yDim; y++) {
 	    	    		for (x = 0; x < xDim; x++) {
@@ -1467,6 +1477,12 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        		setCompleted(false);
 	        		return;
 	        	}
+	    	    if (shortVolume[ax + ay*xDim + az*length] == 0) {
+	    	    	postExtractorAIFZeros.add((short)t);
+	    	    }
+	    	    if (shortVolume[vx + vy*xDim + vz*length] == 0) {
+	    	    	postExtractorVOFZeros.add((short)t);
+	    	    }
 	    	    for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 	    	    	for (y = 0; y < yDim; y++) {
 	    	    	    for (x = 0; x < xDim; x++) {
@@ -1799,6 +1815,58 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    		raAVFile.writeBytes("mean peak value = " + meanpeaks + "\n");
 	    		raAVFile.writeBytes("maximum peak value = " + globalmaxpeaks + "\n");
 	    		raAVFile.writeBytes("peak standard deviation = " + peaksstd + "\n");
+	    		if (preExtractorAIFZeros.size() > 0) {
+	    			raAVFile.writeBytes("Before Brain Surface Extractor AIF location has zeros at "+
+	    		          preExtractorAIFZeros.size() + " out of " + tDim + " time points:\n");
+	    		    if (preExtractorAIFZeros.size() == 1) {
+	    		    	raAVFile.writeBytes(preExtractorAIFZeros.get(0) + "\n");
+	    		    }
+	    		    else {
+	    		    	for (i = 0; i < preExtractorAIFZeros.size()-1; i++) {
+	    		    		raAVFile.writeBytes(preExtractorAIFZeros.get(i) + ",");
+	    		    	}
+	    		    	raAVFile.writeBytes(preExtractorAIFZeros.get(preExtractorAIFZeros.size()-1) + "\n");
+	    		    }
+	    		}
+	    		if (preExtractorVOFZeros.size() > 0) {
+	    			raAVFile.writeBytes("Before Brain Surface Extractor VOF location has zeros at "+
+	    		          preExtractorVOFZeros.size() + " out of " + tDim + " time points:\n");
+	    		    if (preExtractorVOFZeros.size() == 1) {
+	    		    	raAVFile.writeBytes(preExtractorVOFZeros.get(0) + "\n");
+	    		    }
+	    		    else {
+	    		    	for (i = 0; i < preExtractorVOFZeros.size()-1; i++) {
+	    		    		raAVFile.writeBytes(preExtractorVOFZeros.get(i) + ",");
+	    		    	}
+	    		    	raAVFile.writeBytes(preExtractorVOFZeros.get(preExtractorVOFZeros.size()-1) + "\n");
+	    		    }
+	    		}
+	    		if (postExtractorAIFZeros.size() > 0) {
+	    			raAVFile.writeBytes("After Brain Surface Extractor AIF location has zeros at "+
+	    		          postExtractorAIFZeros.size() + " out of "  + tDim + " time points:\n");
+	    		    if (postExtractorAIFZeros.size() == 1) {
+	    		    	raAVFile.writeBytes(postExtractorAIFZeros.get(0) + "\n");
+	    		    }
+	    		    else {
+	    		    	for (i = 0; i < postExtractorAIFZeros.size()-1; i++) {
+	    		    		raAVFile.writeBytes(postExtractorAIFZeros.get(i) + ",");
+	    		    	}
+	    		    	raAVFile.writeBytes(postExtractorAIFZeros.get(postExtractorAIFZeros.size()-1) + "\n");
+	    		    }
+	    		}
+	    		if (postExtractorVOFZeros.size() > 0) {
+	    			raAVFile.writeBytes("After Brain Surface Extractor VOF location has zeros at "+
+	    		          postExtractorVOFZeros.size() + " out of " + tDim + " time points:\n");
+	    		    if (postExtractorVOFZeros.size() == 1) {
+	    		    	raAVFile.writeBytes(postExtractorVOFZeros.get(0) + "\n");
+	    		    }
+	    		    else {
+	    		    	for (i = 0; i < postExtractorVOFZeros.size()-1; i++) {
+	    		    		raAVFile.writeBytes(postExtractorVOFZeros.get(i) + ",");
+	    		    	}
+	    		    	raAVFile.writeBytes(postExtractorVOFZeros.get(postExtractorVOFZeros.size()-1) + "\n");
+	    		    }
+	    		}
 	    		if (dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
 	    			raAVFile.writeBytes("No AIF peak, ttp, fwhm, and corr values because of a zero data value at 1 or more time points at AIF location\n");
 	    		}
