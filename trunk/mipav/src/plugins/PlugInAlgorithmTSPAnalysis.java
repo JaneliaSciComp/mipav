@@ -168,6 +168,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private boolean experimentalAIF = false;
     
+    // For AlgorithmBrainSurfaceExtractor, smaller values erode less
+    private float edgeKernelSize = 0.50f;
+    
     private JDialog pickImageDialog = null;
     
     private JButton OKButton = null;
@@ -193,15 +196,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private int zSlice;
     
-    private String caseString = "EVTcase1.txt";
-    private int ax = 114;
-    private int ay = 104;
-    private double azd = -6.853;
+    private String caseString = "EVTcase2.txt";
+    private int ax = 98;
+    private int ay = 103;
+    private double azd = -9.32;
     private int az = 7;
-    private int vx = 120;
-    private int vy = 217;
-    private double vzd = 6.157;
-    private int vz = 9;
+    private int vx = 128;
+    private int vy = 212;
+    private double vzd = -9.32;
+    private int vz = 7;
     
 	
     /**
@@ -213,7 +216,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
     		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase,
-    		boolean experimentalAIF) {
+    		boolean experimentalAIF, float edgeKernelSize) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.spatialSmoothing = spatialSmoothing;
@@ -234,6 +237,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.calculateBounds = calculateBounds;
     	this.fileNameBase = fileNameBase;
     	this.experimentalAIF = experimentalAIF;
+    	this.edgeKernelSize = edgeKernelSize;
     }
     
     public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean spatialSmoothing, float sigmax, float sigmay, 
@@ -1401,7 +1405,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	AlgorithmBrainSurfaceExtractor extractBrainSurfaceAlgo;
 	    	int filterIterations = 3; // 1-5
 	    	float filterGaussianStdDev = 0.5f; // 0.1-50
-	    	float edgeKernelSize = 0.62f;
 	    	boolean erosion25D = false;
 	    	int erosionIterations = 1;
 	    	float closeKernelSize = 6.625f;
@@ -2550,6 +2553,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	  	 
 	  	        sliceAifFile = new File(outputFilePath + outputPrefix + "sliceAIF.png");
 	  	        ImageIO.write(captureImage, format, sliceAifFile);
+	  	        captureImage.flush();
+	  	        AIFImage.disposeLocal();
 	  	        vFrame.dispose();
 	    	}
 	    	catch (IOException e) {
