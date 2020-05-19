@@ -196,14 +196,14 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private int zSlice;
     
-    private String caseString = "EVTcase3.txt";
-    private int ax = 149;
-    private int ay = 103;
-    private double azd = 46.918;
-    private int az = 8;
-    private int vx = 120;
-    private int vy = 202;
-    private double vzd = 46.918;
+    private String caseString = "EVTcase24.txt";
+    private int ax = 108;
+    private int ay = 82;
+    private double azd = -1.138;
+    private int az = 7;
+    private int vx = 97;
+    private int vy = 162;
+    private double vzd = 5.829;
     private int vz = 8;
     
 	
@@ -472,7 +472,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         int numArterialZ;
         boolean lookForZSlices = false;
         RandomAccessFile raAVFile = null;
-        boolean findAVInfo = true;
+        boolean findAVInfo = false;
         if (findAVInfo) {
 	    	try {
 		    	File avFile = new File(outputFilePath + outputPrefix + caseString);
