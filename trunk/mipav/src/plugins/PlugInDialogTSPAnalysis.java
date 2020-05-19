@@ -73,6 +73,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private ButtonGroup AIFGroup;
 	
+	private JLabel edgeLabel;
+	
+	private JTextField edgeText;
+	
+	private float edgeKernelSize = 0.50f;
+	
 	private JRadioButton autoButton;
 	
 	private JRadioButton autoRAPIDButton;
@@ -173,6 +179,9 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         	sigmaXText.setEnabled(spatialSmoothingCheckBox.isSelected());
         	sigmaYLabel.setEnabled(spatialSmoothingCheckBox.isSelected());
         	sigmaYText.setEnabled(spatialSmoothingCheckBox.isSelected());
+        } else if ((source == autoButton) || (source == autoRAPIDButton) || (source == pickButton)) {
+        	edgeLabel.setEnabled(autoRAPIDButton.isSelected());
+        	edgeText.setEnabled(autoRAPIDButton.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -334,6 +343,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         autoButton.setFont(serif12);
         autoButton.setForeground(Color.black);
         AIFGroup.add(autoButton);
+        autoButton.addActionListener(this);
         inputPanel.add(autoButton, gbc);
         
         gbc.gridy = 11;
@@ -341,22 +351,40 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         autoRAPIDButton.setFont(serif12);
         autoRAPIDButton.setForeground(Color.black);
         AIFGroup.add(autoRAPIDButton);
+        autoRAPIDButton.addActionListener(this);
         inputPanel.add(autoRAPIDButton, gbc);
         
         gbc.gridy = 12;
+        edgeLabel = new JLabel("Brain surface extractor edge kernel size");
+        edgeLabel.setFont(serif12);
+        edgeLabel.setForeground(Color.black);
+        edgeLabel.setEnabled(false);
+        inputPanel.add(edgeLabel, gbc);
+        
+        gbc.gridx = 1;
+        edgeText = new JTextField(10);
+        edgeText.setText("0.5");
+        edgeText.setFont(serif12);
+        edgeText.setForeground(Color.black);
+        edgeText.setEnabled(false);
+        inputPanel.add(edgeText, gbc);   
+        
+        gbc.gridx = 0;
+        gbc.gridy = 13;
         pickButton = new JRadioButton("Pick image pixel corresponding to AIF", false);
         pickButton.setFont(serif12);
         pickButton.setForeground(Color.black);
         AIFGroup.add(pickButton);
+        pickButton.addActionListener(this);
         inputPanel.add(pickButton, gbc);
         
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         plotAIFCheckBox = new JCheckBox("Plot AIF");
         plotAIFCheckBox.setFont(MipavUtil.font12);
         plotAIFCheckBox.setSelected(true);
         inputPanel.add(plotAIFCheckBox, gbc);
         
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -371,7 +399,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         searchGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
         search2DElsuncButton.setFont(serif12);
         search2DElsuncButton.setForeground(Color.black);
@@ -379,7 +407,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DElsuncButton);
         inputPanel.add(search2DElsuncButton, gbc);   
         
-        gbc.gridy = 16;
+        gbc.gridy = 17;
         search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
         search1DElsuncButton.setFont(serif12);
         search1DElsuncButton.setForeground(Color.black);
@@ -387,7 +415,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search1DElsuncButton);
         inputPanel.add(search1DElsuncButton, gbc);
         
-        gbc.gridy = 17;
+        gbc.gridy = 18;
         search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
@@ -395,7 +423,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
         
-        gbc.gridy = 18;
+        gbc.gridy = 19;
         search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
         search2DNelderMeadButton.setFont(serif12);
         search2DNelderMeadButton.setForeground(Color.black);
@@ -403,19 +431,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNelderMeadButton);
         inputPanel.add(search2DNelderMeadButton, gbc);
         
-        gbc.gridy = 19;
+        gbc.gridy = 20;
         correlationCheckBox = new JCheckBox("Correlation maps calculated", true);
         correlationCheckBox.setFont(MipavUtil.font12);
         correlationCheckBox.setForeground(Color.black);
         inputPanel.add(correlationCheckBox, gbc);
         
-        gbc.gridy = 20;
+        gbc.gridy = 21;
         CBFCBVMTTCheckBox = new JCheckBox("CBF, CBV, and MTT calculated", true);
         CBFCBVMTTCheckBox.setFont(MipavUtil.font12);
         CBFCBVMTTCheckBox.setForeground(Color.black);
         inputPanel.add(CBFCBVMTTCheckBox, gbc);
         
-        gbc.gridy = 21;
+        gbc.gridy = 22;
         boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
         boundsCheckBox.setFont(MipavUtil.font12);
         boundsCheckBox.setForeground(Color.black);
@@ -486,7 +514,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, sigmax,
             		sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
-            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF);
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF, edgeKernelSize);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -542,6 +570,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateCBFCBVMTT = scriptParameters.getParams().getBoolean("calc_CBFCBVMTT");
     	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
     	experimentalRAPIDAIF = scriptParameters.getParams().getBoolean("experimental_aif");
+    	edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel");
     }
     
     /**
@@ -566,6 +595,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_CBFCBVMTT", calculateCBFCBVMTT));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("experimental_aif", experimentalRAPIDAIF));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel", edgeKernelSize));
     }
     
     private boolean setVariables() {
@@ -703,6 +733,24 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	
     	autoAIFCalculation = autoButton.isSelected();
     	experimentalRAPIDAIF = autoRAPIDButton.isSelected();
+    	if (experimentalRAPIDAIF) {
+    		tmpStr = edgeText.getText();
+        	try {
+        		edgeKernelSize = Float.valueOf(tmpStr).floatValue();
+        	}
+        	catch (NumberFormatException e) {
+        	    MipavUtil.displayError("Edge kernel text does not have a proper float number");
+        	    edgeText.requestFocus();
+        	    edgeText.selectAll();
+        	    return false;
+        	}
+        	if (edgeKernelSize <= 0) {
+        		MipavUtil.displayError("Edge kernel size must be at greater than 0");
+        		edgeText.requestFocus();
+        	    edgeText.selectAll();
+        	    return false;
+        	}	
+    	}
     	plotAIF = plotAIFCheckBox.isSelected();
     	multiThreading = multiThreadingEnabledCheckBox.isSelected();
     	if (search2DElsuncButton.isSelected()) {
