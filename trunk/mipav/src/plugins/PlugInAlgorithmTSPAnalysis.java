@@ -196,15 +196,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private int zSlice;
     
-    private String caseString = "EVTcase2.txt";
-    private int ax = 98;
+    private String caseString = "EVTcase3.txt";
+    private int ax = 149;
     private int ay = 103;
-    private double azd = -9.32;
-    private int az = 7;
-    private int vx = 128;
-    private int vy = 212;
-    private double vzd = -9.32;
-    private int vz = 7;
+    private double azd = 46.918;
+    private int az = 8;
+    private int vx = 120;
+    private int vy = 202;
+    private double vzd = 46.918;
+    private int vz = 8;
     
 	
     /**
@@ -2542,17 +2542,28 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel("AIF Point");
                 AIFImage.registerVOI(newPtVOI);
+                System.out.println("About to create vFrame");
 			    ViewJFrameImage vFrame = new ViewJFrameImage(AIFImage);
+			    System.out.println("About to getComponent");
 			    component = vFrame.getComponent(0);
+			    System.out.println("About to get rect");
 			    rect = component.getBounds();
 		    	format = "png";
+		    	System.out.println("About to make captureImage");
 	  	        captureImage =
 	  	                new BufferedImage(rect.width, rect.height,
 	  	                                    BufferedImage.TYPE_INT_ARGB);
+	  	        System.out.println("About to paint component");
 	  	        component.paint(captureImage.getGraphics());
-	  	 
+	  	        
+	  	        System.out.println("About to create File");
 	  	        sliceAifFile = new File(outputFilePath + outputPrefix + "sliceAIF.png");
-	  	        ImageIO.write(captureImage, format, sliceAifFile);
+	  	        boolean foundWriter = ImageIO.write(captureImage, format, sliceAifFile);
+	  	        if (!foundWriter) {
+	  	        	System.err.println("No appropriate writer for sliceAIF.png");
+	  	        	setCompleted(false);
+	  	        	return;
+	  	        }
 	  	        captureImage.flush();
 	  	        AIFImage.disposeLocal();
 	  	        vFrame.dispose();
