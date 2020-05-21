@@ -491,7 +491,10 @@ private void buildPelvisDialog() {
     	voiList[2][10] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.BLUE);
     	voiList[2][11] = new PlugInSelectableVOI542a("Right Sartorius", true, 1, 2, true, true, imageSize, 13, Color.BLUE);
     	
-        titles = new String[3];
+    	//Subcutaneous area has pelvis as child
+    	voiList[0][1].addChild(voiList[0][0]);
+    	
+    	titles = new String[3];
         titles[0] = "Pelvis";
         titles[1] = "Tissue";
         titles[2] = "Muscles"; 
