@@ -1016,6 +1016,15 @@ public class VolumeSurface extends VolumeObject
         m_kLightShaderTransparent.SetClipArb(afEquation, bEnable);
     }
 
+    /** Sets arbitrary clipping for the VolumeShaderEffect.
+     * @param afEquation the arbitrary-clip plane equation.
+     */
+    public void SetClipArbInv( float[] afEquation, boolean bEnable )
+    {
+        m_kLightShader.SetClipArbInv(afEquation, bEnable);
+        m_kLightShaderTransparent.SetClipArbInv(afEquation, bEnable);
+    }
+
     
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation the eye clipping equation.

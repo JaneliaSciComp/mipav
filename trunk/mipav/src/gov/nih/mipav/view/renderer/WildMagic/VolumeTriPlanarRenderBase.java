@@ -148,7 +148,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 	/** Arbitrary clip plane equation: */
 	protected float[] m_afArbEquation = new float[4];
+	protected float[] m_afArbEquationInv = new float[4];
 	protected Vector4f m_kArbitraryClip;
+	protected Vector4f m_kArbitraryClipInv;
 	/** Enable Arbitrary clip plane: */
 	protected boolean m_bArbClipOn = false;
 
@@ -1075,7 +1077,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 		if (!bEnable) {
 			setArbitraryClipPlane(
-					(m_kVolumeImageA.GetImage().getExtents()[0] - 1), bEnable);
+					(m_kVolumeImageA.GetImage().getExtents()[0] - 1), bEnable, (m_kVolumeImageA.GetImage().getExtents()[0] - 1));
 		}
 	}
 
@@ -1744,7 +1746,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 *            the MouseEvent
 	 */
 	public void mouseDragged(MouseEvent e) {
-
+	
 		if (!getSculptEnabled()) {
 			if (!e.isControlDown() && ((e.getModifiers() & InputEvent.BUTTON3_MASK) == 0)) {
 				// left-mouse rotate; middle mouse zoom:
@@ -2130,11 +2132,13 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 * @param f4
 	 *            clip position (same value as aSlice in JPanelClip)
 	 */
-	public void setArbitraryClipPlane(float f4, boolean bEnable) {
+	public void setArbitraryClipPlane(float f4, boolean bEnable, float thickness) {
 		int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
 		f4 /= (aiExtents[0] - 1);
+		thickness /= (aiExtents[0] - 1);
 		// f4 /= (m_kVolumeImageA.GetMaxExtent() -1);
 		m_kArbitraryClip = new Vector4f(1, 0, 0, f4);
+		m_kArbitraryClipInv = new Vector4f(1, 0, 0, f4 - thickness);
 		doClip(bEnable);
 	}
 
@@ -2489,6 +2493,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				((VolumeSurface) m_kDisplayList.get(i)).SetClipEye(afEquation,
 						bEnable);
 			}
+			if (m_kDisplayList.get(i) instanceof VolumeVOI) {
+				((VolumeVOI) m_kDisplayList.get(i)).SetClipEye(afEquation,
+						bEnable);
+			}
 		}
 	}
 
@@ -2530,6 +2538,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.get(i) instanceof VolumeSurface) {
 				((VolumeSurface) m_kDisplayList.get(i)).SetClipEyeInv(
+						afEquation, bEnable);
+			}
+			if (m_kDisplayList.get(i) instanceof VolumeVOI) {
+				((VolumeVOI) m_kDisplayList.get(i)).SetClipEyeInv(
 						afEquation, bEnable);
 			}
 		}
@@ -3318,6 +3330,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			return;
 		}
 		Vector3f center = m_kVolumeClip.SetArbPlane(m_kArbitraryClip.W);
+		Vector3f centerInv = m_kVolumeClip.GetArbInverse(m_kArbitraryClipInv.W);
 
 		// Rotate normal vector:
 		Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
@@ -3337,15 +3350,31 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		center.set(center.X / m_fX, center.Y / m_fY, center.Z / m_fZ);
 		center.add(new Vector3f(.5f, .5f, .5f));
 		m_afArbEquation[3] = kNormal.dot(center);
+		
+		for ( int i = 0; i < m_afArbEquation.length; i++ ) {
+			m_afArbEquationInv[i] = m_afArbEquation[i];
+		}
+		centerInv.add(m_kTranslate);
+		centerInv = kClipRotate.mult(centerInv);
+		centerInv.set(centerInv.X / m_fX, centerInv.Y / m_fY, centerInv.Z / m_fZ);
+		centerInv.add(new Vector3f(.5f, .5f, .5f));
+		m_afArbEquationInv[3] = kNormal.dot(centerInv);
 
 		// Update shader with rotated normal and distance:
 		if (m_kVolumeRayCast != null) {
 			m_kVolumeRayCast.SetClipArb(m_afArbEquation, bEnable);
+			m_kVolumeRayCast.SetClipArbInv(m_afArbEquationInv, bEnable);
 		}
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.get(i) instanceof VolumeSurface) {
 				((VolumeSurface) m_kDisplayList.get(i)).SetClipArb(
 						m_afArbEquation, bEnable);
+				((VolumeSurface) m_kDisplayList.get(i)).SetClipArbInv(
+						m_afArbEquationInv, bEnable);
+			}
+			if (m_kDisplayList.get(i) instanceof VolumeVOI) {
+				((VolumeVOI) m_kDisplayList.get(i)).SetClipArb(
+						m_afArbEquation, m_afArbEquationInv, bEnable);
 			}
 		}
 	}

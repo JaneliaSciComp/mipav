@@ -283,6 +283,17 @@ public class VolumeClip extends VolumeObject
     	center.scale( 1f/(float)m_akPolyline[CLIP_A].VBuffer.GetVertexQuantity() );
     	return center;
     }
+    
+    public Vector3f GetArbInverse( float fX )
+    {
+        Vector3f center = new Vector3f( fX*m_fX, 0, 0 ) ;
+        center.add( fX*m_fX, 0, m_fZ ) ;
+        center.add( fX*m_fX, m_fY, m_fZ ) ;
+        center.add( fX*m_fX, m_fY, 0 ) ;
+    	center.scale( 1f/4f );
+    	return center;
+    }
+    
     /**
      * Sets the axis-aligned clip plane clipping position.
      * @param iWhich one of the 6 clip planes

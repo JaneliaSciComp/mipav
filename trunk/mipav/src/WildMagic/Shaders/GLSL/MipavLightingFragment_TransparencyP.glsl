@@ -430,6 +430,7 @@ uniform float clipYInv;
 uniform float clipZ;
 uniform float clipZInv;
 uniform vec4 clipArb;
+uniform vec4 clipArbInv;
 uniform vec4 clipEye;
 uniform vec4 clipEyeInv;
 
@@ -507,7 +508,7 @@ void p_MipavLightingFragment_TransparencyP()
                 float fDot = dot( aPosition.xyz, clipEye.xyz );
                 float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
                 float fDotArb = dot( varTexCoord.xyz, clipArb.xyz );
-                if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
+                if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) || (fDotArb < clipArbInv.w) )
                 {
                     bClipped = true;
                 }

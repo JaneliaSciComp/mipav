@@ -18,6 +18,7 @@ import gov.nih.mipav.model.structures.VOIText;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
@@ -371,7 +372,59 @@ public class VolumeVOI extends VolumeObject
 //			System.err.println( m_kClip );
 //			System.err.println( m_kClipInv );
     	}
+    } 
+
+    public void SetClipEye( float[] afEquation, boolean bEnable )
+    {
+		if ( (m_kVOI.getType() != VOI.ANNOTATION) ) return;
+		
+    	Vector3f kExtentsScale = new Vector3f(1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
+                1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
+                1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
+    	Vector3f texCoord = Vector3f.mult(m_kVOI.elementAt(0), kExtentsScale);
+
+    	float fDotArb = texCoord.X * afEquation[0] + texCoord.Y * afEquation[1] + texCoord.Z * afEquation[2];
+//    	m_bClipped = ( fDotArb < afEquation[3] ); 
+	}
+    
+    public void SetClipEyeInv( float[] afEquation, boolean bEnable )
+    {
+		if ( (m_kVOI.getType() != VOI.ANNOTATION) ) return;
+		
+    	Vector3f kExtentsScale = new Vector3f(1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
+                1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
+                1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
+    	Vector3f texCoord = Vector3f.mult(m_kVOI.elementAt(0), kExtentsScale);
+
+    	float fDotArb = texCoord.X * afEquation[0] + texCoord.Y * afEquation[1] + texCoord.Z * afEquation[2];
+//    	m_bClipped = ( fDotArb > afEquation[3] );    	
     }
+	
+    public void SetClipArb( float[] afEquation, float[] afEquationInv, boolean bEnable )
+    {
+    	if ( (m_kVOI.getType() != VOI.ANNOTATION) ) return;
+
+    	Vector3f kExtentsScale = new Vector3f(1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
+    			1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
+    			1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
+    	Vector3f texCoord = Vector3f.mult(m_kVOI.elementAt(0), kExtentsScale);
+
+    	float fDotArb = texCoord.X * afEquation[0] + texCoord.Y * afEquation[1] + texCoord.Z * afEquation[2];
+    	m_bClipped = bEnable && ( (fDotArb > afEquation[3]) || (fDotArb < afEquationInv[3]) );
+    }
+    
+    // eye clipping and arbitrary clipping:
+//    vec4 aPosition = vec4(0,0,0,0);
+//    aPosition.xyz = varTexCoord.xyz - (.5,.5,.5);
+//    aPosition = WVPMatrix*aPosition;
+//    aPosition.xyz = aPosition.xyz + (.5,.5,.5);
+//    float fDot = dot( aPosition.xyz, clipEye.xyz );
+//    float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
+//    float fDotArb = dot( varTexCoord.xyz, clipArb.xyz );
+//    if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
+//    {
+//        bClipped = true;
+//    }
     
     public void setVolumeClip(boolean clip)
     {

@@ -382,60 +382,53 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 					startButton.setEnabled(true);
 				}
-//				else if ( editSeamCells.isSelected() )
-//				{
-//					// Start seam cell editing:
-//					editMode = EditSeamCells;
-//					displayControls.setVisible(false);
-//					displayModel.setVisible(false);
-//					displaySurface.setVisible(false);
-//					previewUntwisting.setVisible(false);
-//					validate();
-//					openAll();
-//				}
 				else if ( editLattice.isSelected() )
 				{
 					// start lattice editing:
 					editMode = EditLattice;
-					displayModel.setVisible(true);
-					displaySurface.setVisible(true);
-					previewUntwisting.setVisible(true);
-					displayControls.setVisible(false);
-					validate();
-					openAll();
+					if ( openHyperStack() ) {
+						displayModel.setVisible(true);
+						displaySurface.setVisible(true);
+						previewUntwisting.setVisible(true);
+						displayControls.setVisible(false);
+						validate();
+					}
+					else {					
+						editMode = EditNONE;
+						startButton.setEnabled(true);
+					}				
 				}
-//				else if ( checkSeamCells.isSelected() )
-//				{
-//					// start lattice editing:
-//					editMode = CheckSeam;
-//					displayModel.setVisible(true);
-//					displaySurface.setVisible(true);
-//					previewUntwisting.setVisible(true);
-//					displayControls.setVisible(false);
-//					validate();
-//					openAll();
-//				}
 				else if ( integratedEdit.isSelected() )
 				{
 					// start lattice editing:
 					editMode = IntegratedEditing;
-					displayModel.setVisible(true);
-					displaySurface.setVisible(true);
-					previewUntwisting.setVisible(true);
-					displayControls.setVisible(false);
-					validate();
-					openAll();
+					if ( openHyperStack() ) {
+						displayModel.setVisible(true);
+						displaySurface.setVisible(true);
+						previewUntwisting.setVisible(true);
+						displayControls.setVisible(false);
+						validate();
+					}
+					else {
+						editMode = EditNONE;
+						startButton.setEnabled(true);
+					}
 				}
 				else if ( reviewResults.isSelected() )
 				{
 					// start viewing untwisted results:
 					editMode = ReviewResults;
-					displayModel.setVisible(true);
-					displaySurface.setVisible(true);
-					previewUntwisting.setVisible(true);
-					displayControls.setVisible(false);
-					validate();
-					openAll();
+					if ( openHyperStack() ) {
+						displayModel.setVisible(true);
+						displaySurface.setVisible(true);
+						previewUntwisting.setVisible(true);
+						displayControls.setVisible(false);
+						validate();
+					}
+					else {
+						editMode = EditNONE;
+						startButton.setEnabled(true);
+					}
 				}
 			}
 
@@ -1943,13 +1936,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 	*/
 
-	/**
-	 * Opens the current image and lattice for viewing/editing.
-	 */
-	protected void openAll()
-	{
-		if ( !openHyperStack() ) return;
-	}
 
 	/**
 	 *  Opens the current image and seam cells for viewing/editing.
@@ -3325,33 +3311,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
 			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Annotation" ) ) {
 				activeImage.voiManager.editAnnotations(false);
-				//				if ( annotationOpen ) return;
-				//				if ( seamOpen ) {
-				//					// save seam cells
-				//					seamCellBackUp = new VOI(voiManager.getAnnotations());
-				//					seamOpen = false;
-				//				}
-				//				// display annotations
-				//				voiManager.setAnnotations(annotationBackUp);
 				initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
 				activeImage.annotationOpen = true;
 			}
-			//			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Seam Cells" ) ) {
-			//				voiManager.editLattice();
-			//				if ( seamOpen ) return;
-			//				if ( annotationOpen ) {
-			//					// save annotations
-			//					annotationBackUp = new VOI(voiManager.getAnnotations());
-			//					annotationOpen = false;
-			//				}
-			//				if ( seamCellBackUp == null ) {
-			//					// display seam cells
-			//					seamCellBackUp = wormData.segmentSeamFromLattice(voiManager.getLattice());
-			//				}
-			//				voiManager.setAnnotations(seamCellBackUp);
-			//				initDisplaySeamPanel();
-			//				seamOpen = true;
-			//			}
+			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Clip" ) ) {
+				activeImage.voiManager.editClip();
+			} 
 		}
 	}
 

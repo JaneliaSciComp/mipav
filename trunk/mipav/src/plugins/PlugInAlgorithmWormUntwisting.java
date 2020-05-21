@@ -271,7 +271,10 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
 	public static void createMaximumProjectionAVI( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName)
-	{
+	{			
+		
+		if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+		
 		// register images and save output files:
 		registerImages(batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileName);
 		// calculate the maximum projection of each image and save the image stack:
@@ -290,7 +293,9 @@ public class PlugInAlgorithmWormUntwisting
 	{
 		int meshCount = 0;
 		if ( includeRange != null )
-		{			
+		{						
+			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+
 			ModelImage wormImage = null;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
@@ -444,7 +449,9 @@ public class PlugInAlgorithmWormUntwisting
 			final int xSize, final int ySize, final int zSize )
 	{
 		if ( includeRange != null )
-		{			
+		{						
+			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.xml";
@@ -563,6 +570,7 @@ public class PlugInAlgorithmWormUntwisting
 		ModelImage nucleiImage = null;
 		if ( includeRange != null )
 		{
+			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				//    	    		String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
@@ -1443,6 +1451,24 @@ public class PlugInAlgorithmWormUntwisting
         return resultImageG;
 	}
 
+	private static boolean checkFilePaths(final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName ) {
+
+		// count images to make sure all exist:
+		for ( int i = includeRange.size() - 1; i >= 0; i-- )
+		{	
+			String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+			File voiFile = new File(baseFileDir + File.separator + fileName);
+			if ( !voiFile.exists() )
+			{
+				includeRange.remove(i);
+			}
+		}
+		if ( includeRange.size() == 0 ) {
+			MipavUtil.displayError("No images available, check file path");
+			return false;
+		}
+		return true;
+	}
 
 	public PlugInAlgorithmWormUntwisting()	{}
 

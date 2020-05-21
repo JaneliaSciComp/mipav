@@ -60,6 +60,8 @@ public class JPanelClip_WM extends JInterfaceBase
     private JSlider[] clipSlider = new JSlider[MAX_CLIP_PLANES];
 
     private JButton[] clipColor = new JButton[MAX_CLIP_PLANES];
+    
+    private JSlider thicknessSlider;
 
     private JButton[] extract = new JButton[MAX_CLIP_PLANES];
 
@@ -198,7 +200,7 @@ public class JPanelClip_WM extends JInterfaceBase
         cpGBC.weightx = 100;
         cpGBC.weighty = 100;
         clipPanel[i] = new JPanel();
-        clipPanel[i].setBounds(10, 100, 100, 120);
+        clipPanel[i].setBounds(10, 100, 100, 200);
         clipPanel[i].setLayout(cpGBL);
 
         enableClip[i] = new JCheckBox();
@@ -227,7 +229,7 @@ public class JPanelClip_WM extends JInterfaceBase
         {
             clipSlider[i].setValue(0);
         }
-        clipSlider[i].addChangeListener(this);
+        clipSlider[i].addChangeListener(this);  
 
         labelStart[i] = new JLabel("1");
         labelStart[i].setForeground(Color.black);
@@ -250,6 +252,23 @@ public class JPanelClip_WM extends JInterfaceBase
         clipSlider[i].setLabelTable(labelTable);
         clipSlider[i].setPaintLabels(true);
         addControlPanel(clipPanel[i], clipSlider[i], cpGBC, 2, 1, 8, 1);
+        // add thickness slider for A panel:
+        if ( kName.contains("A") ) {
+            cpGBC.fill = GridBagConstraints.BOTH;
+            JLabel thickness = new JLabel("thickness");
+            thickness.setForeground(Color.black);
+            thickness.setFont(MipavUtil.font12);
+            addControlPanel(clipPanel[i], thickness, cpGBC, 0, 2, 2, 1);
+            
+            thicknessSlider = new JSlider(1, iMax, iMax);
+            thicknessSlider.setFont(MipavUtil.font12);
+            thicknessSlider.setMinorTickSpacing(iMax / 10);
+            thicknessSlider.setPaintTicks(true);
+            thicknessSlider.setVisible(true);
+            thicknessSlider.setEnabled(false);
+            thicknessSlider.addChangeListener(this);
+            addControlPanel(clipPanel[i], thicknessSlider, cpGBC, 2, 2, 8, 1);
+        }
 
         clipText[i] = new JTextField(String.valueOf(iMax), 4);
         clipText[i].setFont(MipavUtil.font12);
@@ -261,7 +280,7 @@ public class JPanelClip_WM extends JInterfaceBase
         displayClip[i] = new JCheckBox(kName + " Frame");
         displayClip[i].setFont(MipavUtil.font12);
         displayClip[i].addActionListener(this);
-        addControlPanel(clipPanel[i], displayClip[i], cpGBC, 0, 2, 1, 1);
+        addControlPanel(clipPanel[i], displayClip[i], cpGBC, 0, 3, 1, 1);
 
         clipColor[i] = new JButton();
         clipColor[i].setPreferredSize(new Dimension(25, 25));
@@ -269,7 +288,8 @@ public class JPanelClip_WM extends JInterfaceBase
         clipColor[i].addActionListener(this);
         clipColor[i].setBackground(kColor);
         clipColor[i].setEnabled(false);
-        addControlPanel(clipPanel[i], clipColor[i], cpGBC, 1, 2, 2, 1);
+        addControlPanel(clipPanel[i], clipColor[i], cpGBC, 1, 3, 2, 1);
+              	
         tabbedPane.addTab(kName, null, clipPanel[i]);
     }
 
@@ -350,7 +370,8 @@ public class JPanelClip_WM extends JInterfaceBase
             clipValue[CLIP_A] = clipSlider[CLIP_A].getValue() - 1;
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
+            	float thickness = thicknessSlider.getValue();
+                rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected(), thickness);
                 rayBasedRenderWM.enableArbitraryClipPlane( enableClip[CLIP_A].isSelected(), displayClip[CLIP_A].isSelected(),
                                                            new ColorRGB( clipColor[CLIP_A].getBackground().getRed(),
                                                                          clipColor[CLIP_A].getBackground().getGreen(),
@@ -419,8 +440,9 @@ public class JPanelClip_WM extends JInterfaceBase
             }
             if ( rayBasedRenderWM != null )
             {
+            	float thickness = thicknessSlider.getValue();
                 clipValue[CLIP_A] = clipSlider[CLIP_A].getValue() - 1;
-                rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
+                rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected(), thickness);
                 rayBasedRenderWM.enableArbitraryClipPlane( enableClip[CLIP_A].isSelected(), displayClip[CLIP_A].isSelected(),
                                                            new ColorRGB( clipColor[CLIP_A].getBackground().getRed(),
                                                                          clipColor[CLIP_A].getBackground().getGreen(),
@@ -578,7 +600,8 @@ public class JPanelClip_WM extends JInterfaceBase
                 }
                 else if ( i == CLIP_A )
                 {
-                    rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
+                	float thickness = thicknessSlider.getValue();
+                    rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected(), thickness);
                 }
                 else
                 {
@@ -776,9 +799,9 @@ public class JPanelClip_WM extends JInterfaceBase
     		rayBasedRenderWM.setEyeInvClipPlane(clipValue[CLIP_EYE_INV], displayClip[CLIP_EYE_INV].isSelected(),
     				enableClip[CLIP_EYE_INV].isSelected());
 
+        	float thickness = thicknessSlider.getValue();
     		clipValue[CLIP_A] = clipSlider[CLIP_A].getValue() - 1;
-    		rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
-    		rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
+    		rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected(), thickness);
     	}
     }
 
@@ -792,6 +815,9 @@ public class JPanelClip_WM extends JInterfaceBase
         labelStart[i].setEnabled(flag);
         labelMid[i].setEnabled(flag);
         labelEnd[i].setEnabled(flag);
+        if ( i == CLIP_A ) {
+        	thicknessSlider.setEnabled(flag);
+        }
     }
 
 
@@ -826,10 +852,11 @@ public class JPanelClip_WM extends JInterfaceBase
             rayBasedRenderWM.setEyeInvClipPlane(clipValue[CLIP_EYE_INV], displayClip[CLIP_EYE_INV].isSelected(),
                     enableClip[CLIP_EYE_INV].isSelected());
         }
-        else if ( source == clipSlider[CLIP_A] )
+        else if ( (source == clipSlider[CLIP_A]) || (source == thicknessSlider) )
         {
+        	float thickness = thicknessSlider.getValue();
             clipValue[CLIP_A] = clipSlider[CLIP_A].getValue() - 1;
-            rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected());
+            rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected(), thickness);        	
         }
     }
 
