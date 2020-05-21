@@ -66,6 +66,7 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
@@ -1654,12 +1655,23 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									clip.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
 									Vector3f clipInv = m_kVolumeRayCast.GetShaderEffect().getClipInv();
 									clipInv.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
-									
+									// axis aligned clipping:
 									if ( (test.X < clip.X) || (test.X > clipInv.X) || (test.Y < clip.Y) || (test.Y > clipInv.Y) || (test.Z < clip.Z) || (test.Z > clipInv.Z) )
 									{
 										continue;
 									}
-									
+									// arbitrary clip plane:
+									Vector4f clipA = m_kVolumeRayCast.GetShaderEffect().getClipArb();
+									Vector4f clipAInv = m_kVolumeRayCast.GetShaderEffect().getClipArbInv();
+							    	Vector3f kExtentsScale = new Vector3f(1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
+							                1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
+							                1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
+							    	Vector3f texCoord = Vector3f.mult(test, kExtentsScale);
+							    	float fDotArb = texCoord.X * clipA.X + texCoord.Y * clipA.Y + texCoord.Z * clipA.Z;
+							    	if ( fDotArb > clipA.W || fDotArb < clipAInv.W )
+							    	{
+										continue;
+									}
 								}
 								if ( sphereClip != null )
 								{

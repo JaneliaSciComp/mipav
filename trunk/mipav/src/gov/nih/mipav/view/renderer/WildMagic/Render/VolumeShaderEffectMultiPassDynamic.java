@@ -62,7 +62,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform float clipZInv;" + "\n";
     
     private static String clipAEParameters = ""
-    	+ "uniform vec4 clipArb;" + "\n"
+        + "uniform vec4 clipArb;" + "\n"
+        + "uniform vec4 clipArbInv;" + "\n"
     	+ "uniform vec4 clipEye;" + "\n"
     	+ "uniform vec4 clipEyeInv;" + "\n"
     	+ "" + "\n";
@@ -381,7 +382,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   float fDot = dot( aPosition.xyz, clipEye.xyz );" + "\n"
     	+ "   float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );" + "\n"
     	+ "   float fDotArb = dot( position.xyz, clipArb.xyz );" + "\n"
-    	+ "   if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) ) {" + "\n"
+    	+ "   if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w)  || (fDotArb < clipArbInv.w) ) {" + "\n"
     	+ "      bClipped = 1.0;" + "\n"
     	+ "   }" + "\n"
     	+ "}" + "\n";

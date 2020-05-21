@@ -602,6 +602,14 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetClipArb(afEquation, bEnable);
     }
+
+    /** Sets arbitrary clipping for the VolumeShaderEffect.
+     * @param afEquation the arbitrary-clip plane equation.
+     */
+    public void SetClipArbInv( float[] afEquation, boolean bEnable )
+    {
+        m_kVolumeShaderEffect.SetClipArbInv(afEquation, bEnable);
+    }
            
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation the eye clipping equation.

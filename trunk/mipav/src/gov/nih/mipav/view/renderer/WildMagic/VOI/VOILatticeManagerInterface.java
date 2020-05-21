@@ -363,6 +363,9 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		doAnnotations = false;
 	}
+	public void editClip() {
+		mouseSelection3D = false;
+	}
 	
 	public void openLattice( String directory, String fileName )
 	{
