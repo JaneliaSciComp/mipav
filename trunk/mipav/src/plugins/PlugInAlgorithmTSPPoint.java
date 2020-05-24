@@ -103,6 +103,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     private String pwiImageFileDirectory;
     private ModelImage pwiImage = null;
     private ModelImage maskImage = null;
+    private String outputFileName = null;
     private int xLoc;
     private int yLoc;
     private int zLoc;
@@ -201,22 +202,12 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     
     private int zSlice;
     
-    private String caseString = "EVTcase24.txt";
-    private int ax = 108;
-    private int ay = 82;
-    private double azd = -1.138;
-    private int az = 7;
-    private int vx = 97;
-    private int vy = 162;
-    private double vzd = 5.829;
-    private int vz = 8;
-    
 	
     /**
      * Constructor.
      *
      */
-    public PlugInAlgorithmTSPPoint(String pwiImageFileDirectory, ModelImage maskImage,
+    public PlugInAlgorithmTSPPoint(String pwiImageFileDirectory, String outputFileName, ModelImage maskImage,
     		int xLoc, int yLoc, int zLoc,
     		boolean spatialSmoothing, float sigmax, float sigmay, 
     		double TSP_threshold, int TSP_iter, 
@@ -224,6 +215,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     		String fileNameBase) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
+    	this.outputFileName = outputFileName;
     	this.maskImage = maskImage;
     	this.xLoc = xLoc;
     	this.yLoc = yLoc;
@@ -448,14 +440,13 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
         boolean findAVInfo = false;
         if (findAVInfo) {
 	    	try {
-		    	File avFile = new File(outputFilePath + outputPrefix + caseString);
+		    	File avFile = new File(outputFilePath + outputPrefix + outputFileName);
 		        raAVFile = new RandomAccessFile(avFile, "rw");
 		        // Necessary so that if this is an overwritten file there isn't any
 		        // junk at the end
 		        raAVFile.setLength(0);
-		        raAVFile.writeBytes(caseString + "\n");
-		        raAVFile.writeBytes("AIF x = " + ax + " y = " + ay + " z = " + az + "\n");
-		        raAVFile.writeBytes("VOF x = " + vx + " y = " + vy + " z = " + vz + "\n");
+		        raAVFile.writeBytes(outputFileName + "\n");
+		        raAVFile.writeBytes("x = " + xLoc + " y = " + yLoc + " z = " + zLoc + "\n");
 	    	}
 	    	catch (IOException e) {
 	    	    System.err.println(e);
@@ -684,10 +675,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
             coordLast[1] = Double.valueOf(orientation.substring(index1 + 1, index2)).doubleValue();
             coordLast[2] = Double.valueOf(orientation.substring(index2 + 1)).doubleValue();
             double zchange = (coordLast[2] - coord[2])/(zDim - 1);
-            double aslice = (azd - coord[2])/zchange;
-            double vslice = (vzd - coord[2])/zchange;
-            System.out.println("aslice = " + aslice);
-            System.out.println("vslice = " + vslice);
+            double pslice = (zLoc - coord[2])/zchange;
+            System.out.println("slice = " + pslice);
             setCompleted(false);
             return;
         }
@@ -1308,53 +1297,30 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	Vector<Double>fwhmVector = new Vector<Double>();
 	    	Vector<Double>corrVector = new Vector<Double>();
 	    	Vector<Double>corr2Vector = new Vector<Double>();
-	    	double aifpeaks = 0;
-	    	short aifttp = 0;
-	    	double aiffwhm = 0;
-	    	double aifcorr = 0;
-	    	double aifcorr2 = 0;
-	    	double fractionaifpeaksmeantomax = 0;
-	    	double fractionaifttpmeantomin = 0;
-	    	double fractionaiffwhmmeantomin = 0;
-	    	double vofpeaks = 0;
-	    	short vofttp = 0;
-	    	double voffwhm = 0;
-	    	double vofcorr = 0;
-	    	double vofcorr2 = 0;
-	    	double fractionvofpeaksmeantomax = 0;
-	    	double fractionvofttpmeantomin = 0;
-	    	double fractionvoffwhmmeantomin = 0;
-	    	double aifpeaksstdfrommean = 0;
-	    	double aifttpstdfrommean = 0;
-	    	double aiffwhmstdfrommean = 0;
-	    	double vofpeaksstdfrommean = 0;
-	    	double vofttpstdfrommean = 0;
-	    	double voffwhmstdfrommean = 0;
-	    	double aifpeakscumdistr = 0;
-	    	double aifttpcumdistr = 0;
-	    	double aiffwhmcumdistr = 0;
-	    	double vofpeakscumdistr = 0;
-	    	double vofttpcumdistr = 0;
-	    	double voffwhmcumdistr = 0;
-	    	double aifcorrstdfrommean = 0;
-	    	double aifcorr2stdfrommean = 0;
-	    	double vofcorrstdfrommean = 0;
-	    	double vofcorr2stdfrommean = 0;
-	    	double aifcorrcumdistr = 0;
-	    	double aifcorr2cumdistr = 0;
-	    	double vofcorrcumdistr = 0;
-	    	double vofcorr2cumdistr = 0;
+	    	double pointpeaks = 0;
+	    	short pointttp = 0;
+	    	double pointfwhm = 0;
+	    	double pointcorr = 0;
+	    	double pointcorr2 = 0;
+	    	double fractionpointpeaksmeantomax = 0;
+	    	double fractionpointttpmeantomin = 0;
+	    	double fractionpointfwhmmeantomin = 0;
+	    	double pointpeaksstdfrommean = 0;
+	    	double pointttpstdfrommean = 0;
+	    	double pointfwhmstdfrommean = 0;
+	    	double pointpeakscumdistr = 0;
+	    	double pointttpcumdistr = 0;
+	    	double pointfwhmcumdistr = 0;
+	    	double pointcorrstdfrommean = 0;
+	    	double pointcorr2stdfrommean = 0;
+	    	double pointcorrcumdistr = 0;
+	    	double pointcorr2cumdistr = 0;
 	    	boolean found;
-	    	int aifpeaksIndex = 0;
-	    	int vofpeaksIndex = 0;
-	    	int aifttpIndex = 0;
-	    	int vofttpIndex = 0;
-	    	int aiffwhmIndex = 0;
-	    	int voffwhmIndex = 0;
-	    	int aifcorrIndex = 0;
-	    	int vofcorrIndex = 0;
-	    	int aifcorr2Index = 0;
-	    	int vofcorr2Index = 0;
+	    	int pointpeaksIndex = 0;
+	    	int pointttpIndex = 0;
+	    	int pointfwhmIndex = 0;
+	    	int pointcorrIndex = 0;
+	    	int pointcorr2Index = 0;
 	    	
 	    	ModelImage volumeImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "volume");
 	    	fileInfo = volumeImage.getFileInfo();
@@ -1392,16 +1358,11 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	boolean dataHasZeroValue[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean prePeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean postPeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
-	        Vector<Short>preExtractorAIFZeros = new Vector<Short>();
-	        Vector<Short>preExtractorVOFZeros = new Vector<Short>();
-	        Vector<Short>postExtractorAIFZeros = new Vector<Short>();
-	        Vector<Short>postExtractorVOFZeros = new Vector<Short>();
+	        Vector<Short>preExtractorPointZeros = new Vector<Short>();
+	        Vector<Short>postExtractorPointZeros = new Vector<Short>();
 	    	for (t = 0; t < tDim; t++) {
-	    		if (data[az][ay][ax][t] == 0) {
-	    			preExtractorAIFZeros.add((short)t);
-	    		}
-	    		if (data[vz][vy][vx][t] == 0) {
-	    			preExtractorVOFZeros.add((short)t);
+	    		if (data[zLoc][yLoc][xLoc][t] == 0) {
+	    			preExtractorPointZeros.add((short)t);
 	    		}
 	    	    for (z = 0; z < zDim; z++) {
 	    	    	for (y = 0; y < yDim; y++) {
@@ -1453,11 +1414,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	        		setCompleted(false);
 	        		return;
 	        	}
-	    	    if (shortVolume[ax + ay*xDim + az*length] == 0) {
-	    	    	postExtractorAIFZeros.add((short)t);
-	    	    }
-	    	    if (shortVolume[vx + vy*xDim + vz*length] == 0) {
-	    	    	postExtractorVOFZeros.add((short)t);
+	    	    if (shortVolume[xLoc + yLoc*xDim + zLoc*length] == 0) {
+	    	    	postExtractorPointZeros.add((short)t);
 	    	    }
 	    	    for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 	    	    	for (y = 0; y < yDim; y++) {
@@ -1645,126 +1603,74 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 			} // for (z = lowestArterialZ; z <= highestArterialZ; z++)
 	    	meanpeaks = peakssum/numpeakUsed;
 	    	peaksstd = Math.sqrt((peakssquaresum - numpeakUsed*meanpeaks*meanpeaks)/(numpeakUsed - 1.0));
-	    	aifpeaks = logpeaks[az-lowestArterialZ][ay][ax];
-	        vofpeaks = logpeaks[vz - lowestArterialZ][vy][vx];
-	        fractionaifpeaksmeantomax = (aifpeaks - meanpeaks)/(globalmaxpeaks - meanpeaks);
-	        fractionvofpeaksmeantomax = (vofpeaks - meanpeaks)/(globalmaxpeaks - meanpeaks);
-	        aifpeaksstdfrommean = (aifpeaks - meanpeaks)/peaksstd;
-	        vofpeaksstdfrommean = (vofpeaks - meanpeaks)/peaksstd;
+	    	pointpeaks = logpeaks[zLoc-lowestArterialZ][yLoc][xLoc];
+	        fractionpointpeaksmeantomax = (pointpeaks - meanpeaks)/(globalmaxpeaks - meanpeaks);
+	        pointpeaksstdfrommean = (pointpeaks - meanpeaks)/peaksstd;
 	        Collections.sort(peaksVector);
 	        found = true;
 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	            if (peaksVector.get(i) <= aifpeaks)	{
-	            	aifpeaksIndex = i;
+	            if (peaksVector.get(i) <= pointpeaks)	{
+	            	pointpeaksIndex = i;
 	            	found = false;
 	            }
 	        }
-	        aifpeakscumdistr = (double)aifpeaksIndex/(double)(numpeakUsed-1);
-	        found = true;
-	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	            if (peaksVector.get(i) <= vofpeaks)	{
-	            	vofpeaksIndex = i;
-	            	found = false;
-	            }
-	        }
-	        vofpeakscumdistr = (double)vofpeaksIndex/(double)(numpeakUsed-1);
+	        pointpeakscumdistr = (double)pointpeaksIndex/(double)(numpeakUsed-1);
 	        meanttp = ttpsum/numpeakUsed;
 	        ttpstd = Math.sqrt((ttpsquaresum - numpeakUsed*meanttp*meanttp)/(numpeakUsed - 1.0));
-	        aifttp = ttp[az][ay][ax];
-	        vofttp = ttp[vz][vy][vx];
-	        fractionaifttpmeantomin = (aifttp - meanttp)/(globalminttp - meanttp);
-	        fractionvofttpmeantomin = (vofttp - meanttp)/(globalminttp - meanttp);
-	        aifttpstdfrommean = (aifttp - meanttp)/ttpstd;
-	        vofttpstdfrommean = (vofttp - meanttp)/ttpstd;
+	        pointttp = ttp[zLoc][yLoc][xLoc];
+	        fractionpointttpmeantomin = (pointttp - meanttp)/(globalminttp - meanttp);
+	        pointttpstdfrommean = (pointttp - meanttp)/ttpstd;
 	        Collections.sort(ttpVector);
 	        found = true;
 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	            if (ttpVector.get(i) <= aifttp)	{
-	            	aifttpIndex = i;
+	            if (ttpVector.get(i) <= pointttp)	{
+	            	pointttpIndex = i;
 	            	found = false;
 	            }
 	        }
-	        aifttpcumdistr = (double)aifttpIndex/(double)(numpeakUsed-1);
-	        found = true;
-	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	            if (ttpVector.get(i) <= vofttp)	{
-	            	vofttpIndex = i;
-	            	found = false;
-	            }
-	        }
-	        vofttpcumdistr = (double)vofttpIndex/(double)(numpeakUsed-1);
+	        pointttpcumdistr = (double)pointttpIndex/(double)(numpeakUsed-1);
 	    	meanfwhm =fwhmsum/numfwhmUsed;
 	    	fwhmstd = Math.sqrt((fwhmsquaresum - numfwhmUsed*meanfwhm*meanfwhm)/(numfwhmUsed - 1.0));
-	    	aiffwhm = fwhm[az-lowestArterialZ][ay][ax];
-	    	voffwhm = fwhm[vz-lowestArterialZ][vy][vx];
-	    	fractionaiffwhmmeantomin = (aiffwhm - meanfwhm)/(globalminfwhm - meanfwhm);
-	        fractionvoffwhmmeantomin = (voffwhm - meanfwhm)/(globalminfwhm - meanfwhm);
-	        aiffwhmstdfrommean = (aiffwhm - meanfwhm)/fwhmstd;
-	        voffwhmstdfrommean = (voffwhm - meanfwhm)/fwhmstd;
+	    	pointfwhm = fwhm[zLoc-lowestArterialZ][yLoc][xLoc];
+	    	fractionpointfwhmmeantomin = (pointfwhm - meanfwhm)/(globalminfwhm - meanfwhm);
+	        pointfwhmstdfrommean = (pointfwhm - meanfwhm)/fwhmstd;
 	        Collections.sort(fwhmVector);
 	        found = true;
 	        for (i = (int)(numfwhmUsed-1); i >= 0 && found; i--) {
-	            if (fwhmVector.get(i) <= aiffwhm)	{
-	            	aiffwhmIndex = i;
+	            if (fwhmVector.get(i) <= pointfwhm)	{
+	            	pointfwhmIndex = i;
 	            	found = false;
 	            }
 	        }
-	        aiffwhmcumdistr = (double)aiffwhmIndex/(double)(numfwhmUsed-1);
-	        found = true;
-	        for (i = (int)(numfwhmUsed-1); i >= 0 && found; i--) {
-	            if (fwhmVector.get(i) <= voffwhm)	{
-	            	voffwhmIndex = i;
-	            	found = false;
-	            }
-	        }
-	        voffwhmcumdistr = (double)voffwhmIndex/(double)(numfwhmUsed-1);
+	        pointfwhmcumdistr = (double)pointfwhmIndex/(double)(numfwhmUsed-1);
 	    	if (calculateCorrelation) {
 	    		meancorr = corrsum/numpeakUsed;
 	    		corrstd = Math.sqrt((corrsquaresum - numpeakUsed*meancorr*meancorr)/(numpeakUsed - 1.0));
-	    		aifcorr = corrmap[az][ay][ax];
-	    		vofcorr = corrmap[vz][vy][vx];
-	    		aifcorrstdfrommean = (aifcorr - meancorr)/corrstd;
-	 	        vofcorrstdfrommean = (vofcorr - meancorr)/corrstd;
+	    		pointcorr = corrmap[zLoc][yLoc][xLoc];
+	    		pointcorrstdfrommean = (pointcorr - meancorr)/corrstd;
 	 	        Collections.sort(corrVector);
 	 	        found = true;
 	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	 	            if (corrVector.get(i) <= aifcorr)	{
-	 	            	aifcorrIndex = i;
+	 	            if (corrVector.get(i) <= pointcorr)	{
+	 	            	pointcorrIndex = i;
 	 	            	found = false;
 	 	            }
 	 	        }
-	 	        aifcorrcumdistr = (double)aifcorrIndex/(double)(numpeakUsed-1);
-	 	        found = true;
-	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	 	            if (corrVector.get(i) <= vofcorr)	{
-	 	            	vofcorrIndex = i;
-	 	            	found = false;
-	 	            }
-	 	        }
-	 	        vofcorrcumdistr = (double)vofcorrIndex/(double)(numpeakUsed-1);
+	 	        pointcorrcumdistr = (double)pointcorrIndex/(double)(numpeakUsed-1);
 	    		meancorr2 = corr2sum/numpeakUsed;
 	    		corr2std = Math.sqrt((corr2squaresum - numpeakUsed*meancorr2*meancorr2)/(numpeakUsed - 1.0));
-	    		aifcorr2 = corr_map2[az][ay][ax];
-	    		vofcorr2 = corr_map2[vz][vy][vx];
-	    		aifcorr2stdfrommean = (aifcorr2 - meancorr2)/corr2std;
-	 	        vofcorr2stdfrommean = (vofcorr2 - meancorr2)/corr2std;
+	    		pointcorr2 = corr_map2[zLoc][yLoc][xLoc];
+	    		pointcorr2stdfrommean = (pointcorr2 - meancorr2)/corr2std;
 	 	        Collections.sort(corr2Vector);
 	 	        found = true;
 	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	 	            if (corr2Vector.get(i) <= aifcorr2)	{
-	 	            	aifcorr2Index = i;
+	 	            if (corr2Vector.get(i) <= pointcorr2)	{
+	 	            	pointcorr2Index = i;
 	 	            	found = false;
 	 	            }
 	 	        }
-	 	        aifcorr2cumdistr = (double)aifcorr2Index/(double)(numpeakUsed-1);
+	 	        pointcorr2cumdistr = (double)pointcorr2Index/(double)(numpeakUsed-1);
 	 	        found = true;
-	 	        for (i = (int)(numpeakUsed-1); i >= 0 && found; i--) {
-	 	            if (corr2Vector.get(i) <= vofcorr2)	{
-	 	            	vofcorr2Index = i;
-	 	            	found = false;
-	 	            }
-	 	        }
-	 	        vofcorr2cumdistr = (double)vofcorr2Index/(double)(numpeakUsed-1);
 	    	}
 	    	System.out.println(numpeakUsed + " used out of " + (numArterialZ * length) + " voxels for peak and ttp");
 	    	System.out.println(numfwhmUsed + " used out of " + (numArterialZ * length) + " voxels for fwhm");
@@ -1776,7 +1682,6 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	System.out.println("globalminfwhm = " + globalminfwhm);
 	    	if (findAVInfo) {
 	    		try {
-	    	    raAVFile.writeBytes("AlgorithmBrainSurfaceExtractor is used to strip away voxels surrounding the brain\n");
 	    	    raAVFile.writeBytes("For z slices going from " + lowestArterialZ + " to " + highestArterialZ + "\n");
 	    	    raAVFile.writeBytes("For each surviving voxel for which all data time values are nonzero perform:\n");
 	    	    raAVFile.writeBytes("For each z,y,x for each t find delR2[t] = -(1/TE)*log(data[t]/data[0])\n");
@@ -1791,127 +1696,69 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    		raAVFile.writeBytes("mean peak value = " + meanpeaks + "\n");
 	    		raAVFile.writeBytes("maximum peak value = " + globalmaxpeaks + "\n");
 	    		raAVFile.writeBytes("peak standard deviation = " + peaksstd + "\n");
-	    		if (preExtractorAIFZeros.size() > 0) {
-	    			raAVFile.writeBytes("Before Brain Surface Extractor AIF location has zeros at "+
-	    		          preExtractorAIFZeros.size() + " out of " + tDim + " time points:\n");
-	    		    if (preExtractorAIFZeros.size() == 1) {
-	    		    	raAVFile.writeBytes(preExtractorAIFZeros.get(0) + "\n");
+	    		if (preExtractorPointZeros.size() > 0) {
+	    			raAVFile.writeBytes("Before masking point location has zeros at "+
+	    		          preExtractorPointZeros.size() + " out of " + tDim + " time points:\n");
+	    		    if (preExtractorPointZeros.size() == 1) {
+	    		    	raAVFile.writeBytes(preExtractorPointZeros.get(0) + "\n");
 	    		    }
 	    		    else {
-	    		    	for (i = 0; i < preExtractorAIFZeros.size()-1; i++) {
-	    		    		raAVFile.writeBytes(preExtractorAIFZeros.get(i) + ",");
+	    		    	for (i = 0; i < preExtractorPointZeros.size()-1; i++) {
+	    		    		raAVFile.writeBytes(preExtractorPointZeros.get(i) + ",");
 	    		    	}
-	    		    	raAVFile.writeBytes(preExtractorAIFZeros.get(preExtractorAIFZeros.size()-1) + "\n");
+	    		    	raAVFile.writeBytes(preExtractorPointZeros.get(preExtractorPointZeros.size()-1) + "\n");
 	    		    }
 	    		}
-	    		if (preExtractorVOFZeros.size() > 0) {
-	    			raAVFile.writeBytes("Before Brain Surface Extractor VOF location has zeros at "+
-	    		          preExtractorVOFZeros.size() + " out of " + tDim + " time points:\n");
-	    		    if (preExtractorVOFZeros.size() == 1) {
-	    		    	raAVFile.writeBytes(preExtractorVOFZeros.get(0) + "\n");
+	    		if (postExtractorPointZeros.size() > 0) {
+	    			raAVFile.writeBytes("After masking point location has zeros at "+
+	    		          postExtractorPointZeros.size() + " out of "  + tDim + " time points:\n");
+	    		    if (postExtractorPointZeros.size() == 1) {
+	    		    	raAVFile.writeBytes(postExtractorPointZeros.get(0) + "\n");
 	    		    }
 	    		    else {
-	    		    	for (i = 0; i < preExtractorVOFZeros.size()-1; i++) {
-	    		    		raAVFile.writeBytes(preExtractorVOFZeros.get(i) + ",");
+	    		    	for (i = 0; i < postExtractorPointZeros.size()-1; i++) {
+	    		    		raAVFile.writeBytes(postExtractorPointZeros.get(i) + ",");
 	    		    	}
-	    		    	raAVFile.writeBytes(preExtractorVOFZeros.get(preExtractorVOFZeros.size()-1) + "\n");
+	    		    	raAVFile.writeBytes(postExtractorPointZeros.get(postExtractorPointZeros.size()-1) + "\n");
 	    		    }
 	    		}
-	    		if (postExtractorAIFZeros.size() > 0) {
-	    			raAVFile.writeBytes("After Brain Surface Extractor AIF location has zeros at "+
-	    		          postExtractorAIFZeros.size() + " out of "  + tDim + " time points:\n");
-	    		    if (postExtractorAIFZeros.size() == 1) {
-	    		    	raAVFile.writeBytes(postExtractorAIFZeros.get(0) + "\n");
-	    		    }
-	    		    else {
-	    		    	for (i = 0; i < postExtractorAIFZeros.size()-1; i++) {
-	    		    		raAVFile.writeBytes(postExtractorAIFZeros.get(i) + ",");
-	    		    	}
-	    		    	raAVFile.writeBytes(postExtractorAIFZeros.get(postExtractorAIFZeros.size()-1) + "\n");
-	    		    }
-	    		}
-	    		if (postExtractorVOFZeros.size() > 0) {
-	    			raAVFile.writeBytes("After Brain Surface Extractor VOF location has zeros at "+
-	    		          postExtractorVOFZeros.size() + " out of " + tDim + " time points:\n");
-	    		    if (postExtractorVOFZeros.size() == 1) {
-	    		    	raAVFile.writeBytes(postExtractorVOFZeros.get(0) + "\n");
-	    		    }
-	    		    else {
-	    		    	for (i = 0; i < postExtractorVOFZeros.size()-1; i++) {
-	    		    		raAVFile.writeBytes(postExtractorVOFZeros.get(i) + ",");
-	    		    	}
-	    		    	raAVFile.writeBytes(postExtractorVOFZeros.get(postExtractorVOFZeros.size()-1) + "\n");
-	    		    }
-	    		}
-	    		if (dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
-	    			raAVFile.writeBytes("No AIF peak, ttp, fwhm, and corr values because of a zero data value at 1 or more time points at AIF location\n");
+	    		if (dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
+	    			raAVFile.writeBytes("No point peak, ttp, fwhm, and corr values because of a zero data value at 1 or more time points at input point location\n");
 	    		}
 	    		else {
-		    		raAVFile.writeBytes("AIF peak value = " + aifpeaks + "\n");
-		    		raAVFile.writeBytes("AIF peak is " + fractionaifpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
-		    		raAVFile.writeBytes("AIF peak is " + aifpeaksstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("AIF peak is at " + aifpeakscumdistr + " of the peaks cumulative distribution function\n");
-	    		}
-	    		if (dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
-	    			raAVFile.writeBytes("No VOF peak, ttp, and fwhm values because of a zero data value at 1 or more time points at VOF location\n");
-	    		}
-	    		else {
-			    	raAVFile.writeBytes("VOF peak value = " + vofpeaks + "\n");
-		    		raAVFile.writeBytes("VOF peak is " + fractionvofpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
-		    		raAVFile.writeBytes("VOF peak is " + vofpeaksstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("VOF peak is at " + vofpeakscumdistr + " of the peaks cumulative distribution function\n\n");
+		    		raAVFile.writeBytes("Point peak value = " + pointpeaks + "\n");
+		    		raAVFile.writeBytes("Point peak is " + fractionpointpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
+		    		raAVFile.writeBytes("Point peak is " + pointpeaksstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("Point peak is at " + pointpeakscumdistr + " of the peaks cumulative distribution function\n");
 	    		}
 	    		raAVFile.writeBytes("mean ttp value = " + meanttp + "\n");
 	    		raAVFile.writeBytes("minimum ttp value = " + globalminttp + "\n");
 	    		raAVFile.writeBytes("ttp standard deviation = " + ttpstd + "\n");
-	    		if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
-		    		raAVFile.writeBytes("AIF ttp value = " + aifttp + "\n");
-		    		raAVFile.writeBytes("AIF ttp is " + fractionaifttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
-		    		raAVFile.writeBytes("AIF ttp is " + aifttpstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("AIF ttp is at " + aifttpcumdistr + " of the ttp cumulative distribution function\n");
-	    		}
-	    		if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
-		    		raAVFile.writeBytes("VOF ttp value = " + vofttp + "\n");
-		    		raAVFile.writeBytes("VOF ttp is " + fractionvofttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
-		    		raAVFile.writeBytes("VOF ttp is " + vofttpstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("VOF ttp is at " + vofttpcumdistr + " of the ttp cumulative distribution function\n\n");
+	    		if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
+		    		raAVFile.writeBytes("Point ttp value = " + pointttp + "\n");
+		    		raAVFile.writeBytes("Point ttp is " + fractionpointttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
+		    		raAVFile.writeBytes("Point ttp is " + pointttpstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("Point ttp is at " + pointttpcumdistr + " of the ttp cumulative distribution function\n");
 	    		}
 	    		raAVFile.writeBytes("mean fwhm value = " + meanfwhm + "\n");
 	    		raAVFile.writeBytes("minimum fwhm value = " + globalminfwhm + "\n");
 	    		raAVFile.writeBytes("fwhm standard deviation = " + fwhmstd + "\n");
-	    		if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
-	    			if (prePeakTooHigh[az-lowestArterialZ][ay][ax] && postPeakTooHigh[az-lowestArterialZ][ay][ax]) {
-	    			    raAVFile.writeBytes("No AIF fwhm value because never fall to half peak value either before or after the peak\n");	
+	    		if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
+	    			if (prePeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc] && postPeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
+	    			    raAVFile.writeBytes("No point fwhm value because never fall to half peak value either before or after the peak\n");	
 	    			}
-	    			else if (prePeakTooHigh[az-lowestArterialZ][ay][ax]) {
-	    				raAVFile.writeBytes("No AIF fwhm value because never fall to half peak value before the peak\n");
+	    			else if (prePeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
+	    				raAVFile.writeBytes("No point fwhm value because never fall to half peak value before the peak\n");
 	    			}
-	    			else if (postPeakTooHigh[az-lowestArterialZ][ay][ax]) {
-	    				raAVFile.writeBytes("No AIF fwhm value because never fall to half peak value after the peak\n");
+	    			else if (postPeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
+	    				raAVFile.writeBytes("No point fwhm value because never fall to half peak value after the peak\n");
 	    			}
 	    			else {
-			    		raAVFile.writeBytes("AIF fwhm value = " + aiffwhm + "\n");
-			    		raAVFile.writeBytes("AIF fwhm is " + fractionaiffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
-			    		raAVFile.writeBytes("AIF fwhm is " + aiffwhmstdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("AIF fwhm is at " + aiffwhmcumdistr + " of the fwhm cumulative distribution function\n");
+			    		raAVFile.writeBytes("Point fwhm value = " + pointfwhm + "\n");
+			    		raAVFile.writeBytes("Point fwhm is " + fractionpointfwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
+			    		raAVFile.writeBytes("Point fwhm is " + pointfwhmstdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("Point fwhm is at " + pointfwhmcumdistr + " of the fwhm cumulative distribution function\n");
 	    		    }
-	    		}
-	    		if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
-	    			if (prePeakTooHigh[vz-lowestArterialZ][vy][vx] && postPeakTooHigh[vz-lowestArterialZ][vy][vx]) {
-	    			    raAVFile.writeBytes("No VOF fwhm value because never fall to half peak value either before or after the peak\n");	
-	    			}
-	    			else if (prePeakTooHigh[vz-lowestArterialZ][vy][vx]) {
-	    				raAVFile.writeBytes("No VOF fwhm value because never fall to half peak value before the peak\n");
-	    			}
-	    			else if (postPeakTooHigh[vz-lowestArterialZ][vy][vx]) {
-	    				raAVFile.writeBytes("No VOF fwhm value because never fall to half peak value after the peak\n");
-	    			}
-	    			else {  
-			    		raAVFile.writeBytes("VOF fwhm value = " + voffwhm + "\n");
-			    		raAVFile.writeBytes("VOF fwhm is " + fractionvoffwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
-			    		raAVFile.writeBytes("VOF fwhm is " + voffwhmstdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("VOF fwhm is at " + voffwhmcumdistr + " of the fwhm cumulative distribution function\n\n");
-	    			}
 	    		}
 	    		if (calculateCorrelation) {
 	    		    raAVFile.writeBytes("corr is without AIF delay compensation\n");
@@ -1920,25 +1767,15 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    		    raAVFile.writeBytes("minimum corr = " + globalmincorr + "\n");
 	    		    raAVFile.writeBytes("maximum corr = " + globalmaxcorr + "\n");
 	    		    raAVFile.writeBytes("corr standard deviation = " + corrstd + "\n");
-	    		    if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
-		    		    raAVFile.writeBytes("AIF corr value = " + aifcorr + "\n");
-			    		raAVFile.writeBytes("AIF corr is " + aifcorrstdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("AIF corr is at " + aifcorrcumdistr + " of the corr cumulative distribution function\n");
+	    		    if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
+		    		    raAVFile.writeBytes("Point corr value = " + pointcorr + "\n");
+			    		raAVFile.writeBytes("Point corr is " + pointcorrstdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("Point corr is at " + pointcorrcumdistr + " of the corr cumulative distribution function\n");
 	    		    }
-	    		    if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
-			    		raAVFile.writeBytes("VOF corr value = " + vofcorr + "\n");
-			    		raAVFile.writeBytes("VOF corr is " + vofcorrstdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("VOF corr is at " + vofcorrcumdistr + " of the corr cumulative distribution function\n\n");
-	    		    }
-		    		if (!dataHasZeroValue[az-lowestArterialZ][ay][ax]) {
-			    		raAVFile.writeBytes("AIF corr2 value = " + aifcorr2 + "\n");
-			    		raAVFile.writeBytes("AIF corr2 is " + aifcorr2stdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("AIF corr2 is at " + aifcorr2cumdistr + " of the corr2 cumulative distribution function\n");
-		    		}
-		    		if (!dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
-			    		raAVFile.writeBytes("VOF corr2 value = " + vofcorr2 + "\n");
-			    		raAVFile.writeBytes("VOF corr2 is " + vofcorr2stdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("VOF corr2 is at " + vofcorr2cumdistr + " of the corr2 cumulative distribution function\n\n");
+		    		if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
+			    		raAVFile.writeBytes("Point corr2 value = " + pointcorr2 + "\n");
+			    		raAVFile.writeBytes("Point corr2 is " + pointcorr2stdfrommean + " standard deviations from the mean\n");
+			    		raAVFile.writeBytes("Point corr2 is at " + pointcorr2cumdistr + " of the corr2 cumulative distribution function\n");
 		    		}
 	    		} // if (calculateCorrelation)
 	    		raAVFile.close();
