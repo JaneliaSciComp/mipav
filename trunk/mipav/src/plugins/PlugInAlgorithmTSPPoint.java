@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Vector;
@@ -111,10 +112,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     private float sigmax = 5.0f;
     private float sigmay = 5.0f;
     
-    private boolean calculateMaskingThreshold = true;
-    
-    // Thresholding to mask out image pixels not corresponding to brain tissue
-    private int masking_threshold = 600;
+    // Zero out all points not desired with an external mask image
+    private int masking_threshold = 1;
     
     private double TSP_threshold = 0.8;
     
@@ -122,7 +121,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     
     private double Psvd = 0.1;
     
-    private boolean autoAIFCalculation = true;
+    private boolean autoAIFCalculation = false;
     
     private boolean plotAIF = true;
     
@@ -172,7 +171,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     // used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
     private boolean doSaveAllOutputs = true;
     
-    private boolean experimentalAIF = false;
+    private boolean experimentalAIF = true;
     
     // For AlgorithmBrainSurfaceExtractor, smaller values erode less
     private float edgeKernelSize = 0.50f;
@@ -437,7 +436,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
         int numArterialZ;
         boolean lookForZSlices = false;
         RandomAccessFile raAVFile = null;
-        boolean findAVInfo = false;
+        boolean findAVInfo = true;
         if (findAVInfo) {
 	    	try {
 		    	File avFile = new File(outputFilePath + outputPrefix + outputFileName);
@@ -719,6 +718,58 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	    image3D = null;
     	}
     	
+    	if (maskImage.getNDims() != 3) {
+            MipavUtil.displayError("Dimensions of mask image is " + maskImage.getNDims() + 
+            		" instead of the required 3");
+            setCompleted(false);
+            return;
+        }
+    	
+    	if (maskImage.getExtents()[0] != xDim) {
+    		MipavUtil.displayError("The maskImage has xDim = " + maskImage.getExtents()[0] +
+    				" instead of the required " + xDim);
+    		setCompleted(false);
+    		return;
+    	}
+    	
+    	if (maskImage.getExtents()[1] != yDim) {
+    		MipavUtil.displayError("The maskImage has yDim = " + maskImage.getExtents()[1] +
+    				" instead of the required " + yDim);
+    		setCompleted(false);
+    		return;
+    	}
+    	
+    	if (maskImage.getExtents()[2] != zDim) {
+    		MipavUtil.displayError("The maskImage has zDim = " + maskImage.getExtents()[2] +
+    				" instead of the required " + zDim);
+    		setCompleted(false);
+    		return;
+    	}
+        
+        mask = new BitSet(volume);
+        dbuffer = new double[volume];
+
+        try {
+            maskImage.exportData(0, volume, dbuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException on maskImage.exportData");
+            setCompleted(false);
+            return;
+        }
+        maskImage.disposeLocal();
+        maskImage = null;
+
+        for (i = 0; i < volume; i++) {
+
+            if (buffer[i] > 0) {
+                mask.set(i);
+            } else {
+                mask.clear(i);
+            }
+        }
+   
+
+    	
     	data = new short[zDim][yDim][xDim][tDim];
     	// Start TSP processing
     	brain_mask = new short[tDim];
@@ -727,13 +778,20 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	// Normalize PWI by subtracting off pre_contrast (first) image
     	// Loop over time dimension to calculate whole brain average perfusion time signal
     	
-		
+		int zIndex;
+		int yIndex;
     	if (Philips) {
 	    	for (z = 0; z < zDim; z++) {
+	    		zIndex = z*length;
 				for (y = 0; y < yDim; y++) {
+					yIndex = zIndex + y*xDim;
 					for (x = 0; x < xDim; x++) {
+						index = yIndex + x;
 						for (t = 0; t < tDim; t++) {
-							if (t == 0) {
+							if (!mask.get(index)) {
+								data[z][y][x][t] = 0;
+							}
+							else if (t == 0) {
 							    data[z][y][x][t] =(short)Math.round( (3.0*buffer[x + y*xDim + t*length + z*tDim*length] + 
 							    		buffer[x + y*xDim + (t+1)*length + z*tDim*length])/4.0);
 							}
@@ -753,10 +811,16 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	}
     	else {
     		for (z = 0; z < zDim; z++) {
+    			zIndex = z * length;
 				for (y = 0; y < yDim; y++) {
+					yIndex = zIndex + y*xDim;
 					for (x = 0; x < xDim; x++) {
+						index = yIndex + x;
 						for (t = 0; t < tDim; t++) {
-							if (t == 0) {
+							if (!mask.get(index)) {
+								data[z][y][x][t] = 0;
+							}
+							else if (t == 0) {
 						        data[z][y][x][t] = (short)Math.round( (3.0*buffer[x + y*xDim + z*length + t*volume] +
 						    		buffer[x + y*xDim + z*length + (t+1)*volume])/4.0);
 							}
@@ -776,6 +840,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	}
     	
     	extents2D = new int[] {xDim,yDim};
+    	int index2D;
     	if (spatialSmoothing) {
 	    	fireProgressStateChanged("2D Gaussian blurring  ...");
 	        fireProgressStateChanged(15);
@@ -786,16 +851,28 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	kernelFactory.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
 	    	Kernel gaussianKernel = kernelFactory.createKernel();
 	    	boolean color = false;
+	    	BitSet sliceMask = new BitSet(length);
 	    	for (z = 0; z < zDim; z++) {
+	    		zIndex = z*length;
 	    		for (t = 0; t < tDim; t++) {
 	    			for (y = 0; y < yDim; y++) {
+	    				yIndex = zIndex + y*xDim;
 	    				for (x = 0; x < xDim; x++) {
+	    					index = yIndex + x;
+	    					index2D = x + y*xDim;
+	    					if (mask.get(index)) {
+	    					    sliceMask.set(index2D);	
+	    					}
+	    					else {
+	    						sliceMask.clear(index2D);
+	    					}
 	    					inputBuffer[x + y * xDim] = data[z][y][x][t];
 	    				}
 	    			}
 	    			
 	    			AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
 	    					inputBuffer, extents2D, gaussianKernel.getData(), color);
+	    			convolver.setMask(sliceMask);
 	                convolver.run();
 	    	        if (threadStopped) {
 	    	            setCompleted(false);
@@ -821,33 +898,6 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    		}
 	    	}
     	} // if (spatialSmoothing)
-    	
-    	if (calculateMaskingThreshold) {
-    		long dataSum = 0;
-    		for (z = 0; z < zDim; z++) {
-        		for (t = 0; t < tDim; t++) {
-        			for (y = 0; y < yDim; y++) {
-        				for (x = 0; x < xDim; x++) {
-    			            dataSum = dataSum + data[z][y][x][t];
-        				}
-        			}
-        		}
-    		}
-    		double mean = (double)dataSum/(double)dataSize;
-    		double squareSum = 0.0;
-    		for (z = 0; z < zDim; z++) {
-        		for (t = 0; t < tDim; t++) {
-        			for (y = 0; y < yDim; y++) {
-        				for (x = 0; x < xDim; x++) {
-    			            double difference = data[z][y][x][t] - mean;
-    			            squareSum += (difference * difference);
-        				}
-        			}
-        		}
-    		}
-    		double stdDev = Math.sqrt(squareSum/(double)(dataSize-1));
-    		masking_threshold = (int)Math.round(mean + 0.5 * stdDev);
-    	} // if (calculateMaskingThreshold)
     	
 		
 		sum = new long[tDim];
@@ -1096,12 +1146,11 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	
     	// Write images and clean up variable
     	
-    	fireProgressStateChanged("Writing first set of images");
-        fireProgressStateChanged(70);
-    	dbuffer = new double[volume];
+    	//fireProgressStateChanged("Writing first set of images");
+        //fireProgressStateChanged(70);
     	FileInfoBase fileInfo[];
     	
-    	if (calculateCorrelation) {
+    	/*if (calculateCorrelation) {
 	    	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
 	    	for (x = 0; x < xDim; x++) {
 	    		for (y = 0; y < yDim; y++) {
@@ -1214,7 +1263,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	saveImageFile(delay_mapImage, outputFilePath, outputPrefix + "delay_map", saveFileFormat);
     	
     	delay_mapImage.disposeLocal();
-    	delay_mapImage = null;
+    	delay_mapImage = null;*/
     	
     	// Deconvolution analysis
     	fireProgressStateChanged("Deconvolution analysis");
@@ -1322,115 +1371,21 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	int pointcorrIndex = 0;
 	    	int pointcorr2Index = 0;
 	    	
-	    	ModelImage volumeImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "volume");
-	    	fileInfo = volumeImage.getFileInfo();
-	    	for (i = 0; i < zDim; i++) {
-	    		fileInfo[i].setResolutions(resolutions3D);
-	    		fileInfo[i].setUnitsOfMeasure(units3D);
-	    		fileInfo[i].setDataType(ModelStorageBase.SHORT);
-	    	}
-	    	short shortVolume[] = new short[volume];
-	    	/*int orientation = FileInfoBase.AXIAL;
-	    	boolean useSphere = false;
-	    	Vector3f initCenterPoint;
-	    	boolean justEllipse = false;
-	    	AlgorithmBrainExtractor extractBrainAlgo;
-	    	int nIterations = 500; // 100-2000
-	    	int depth = 5; // 3-19
-	    	float imageRatio = 0.1f; // 0.01-0.5
-	    	float stiffness = 0.15f; // 0.01-0.5
-	    	boolean secondStageErosion = false;
-	    	boolean extractToPaint = false;*/
-	    	AlgorithmBrainSurfaceExtractor extractBrainSurfaceAlgo;
-	    	int filterIterations = 3; // 1-5
-	    	float filterGaussianStdDev = 0.5f; // 0.1-50
-	    	boolean erosion25D = false;
-	    	int erosionIterations = 1;
-	    	float closeKernelSize = 6.625f;
-	    	int closeIterations = 1;
-	    	boolean showIntermediateImages = false;
-	    	boolean fillHoles = true;
-	    	boolean useSeparable = true;
-	    	boolean extractPaint = false;
-	    	ModelImage resultImage;
-	    	
-	    	short dataArterial[][][][] = new short[numArterialZ][yDim][xDim][tDim];
 	    	boolean dataHasZeroValue[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean prePeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean postPeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
-	        Vector<Short>preExtractorPointZeros = new Vector<Short>();
-	        Vector<Short>postExtractorPointZeros = new Vector<Short>();
+	        Vector<Short>pointZeros = new Vector<Short>();
 	    	for (t = 0; t < tDim; t++) {
 	    		if (data[zLoc][yLoc][xLoc][t] == 0) {
-	    			preExtractorPointZeros.add((short)t);
+	    			pointZeros.add((short)t);
 	    		}
-	    	    for (z = 0; z < zDim; z++) {
-	    	    	for (y = 0; y < yDim; y++) {
-	    	    		for (x = 0; x < xDim; x++) {
-	    	    			shortVolume[x + y*xDim + z*length] = data[z][y][x][t];
-	    	    		}
-	    	    	}
-	    	    }
-	    	    try {
-	    	    	volumeImage.importData(0, shortVolume, true);
-	    	    }
-	    	    catch(IOException e) {
-	    	    	MipavUtil.displayError("IOException on volumeImage.importData");
-	        		setCompleted(false);
-	        		return;	
-	    	    }
-	    	    /*initCenterPoint = JDialogExtractBrain.computeCenter(volumeImage, orientation, useSphere);
-	    	    // Default AlgorithmBrainExtractor settings decrease usage from 325377 out of
-	    	    // 458752 voxels to 69 out of 458752 voxels.
-	    	    extractBrainAlgo = new AlgorithmBrainExtractor(volumeImage, orientation, justEllipse,
-	    	    		useSphere, initCenterPoint);
-	    	    extractBrainAlgo.setIterations(nIterations);
-	    	    extractBrainAlgo.setMaxDepth(depth);
-	    	    extractBrainAlgo.setImageRatio(imageRatio);
-	    	    extractBrainAlgo.setStiffness(stiffness);
-	    	    extractBrainAlgo.setSecondStageErosion(secondStageErosion);
-	    	    extractBrainAlgo.setExtractPaint(extractToPaint);
-	    	    extractBrainAlgo.run();
-	    	    try {
-	        		volumeImage.exportData(0,  volume, shortVolume);
-	        	}
-	        	catch (IOException e) {
-	        		MipavUtil.displayError("IOException on volumeImage.exportData");
-	        		setCompleted(false);
-	        		return;
-	        	}*/
-	    	    // Default AlgorithmBrainSurfaceExtractor settings decrease usage from 325377 out of
-	    	    // 458752 voxels to 90165 out of 458752 voxels.
-	    	    extractBrainSurfaceAlgo = new AlgorithmBrainSurfaceExtractor(volumeImage, filterIterations,
-	    	    		filterGaussianStdDev, edgeKernelSize, erosion25D, erosionIterations, closeKernelSize,
-	    	    		closeIterations, showIntermediateImages, fillHoles, useSeparable, extractPaint);
-	    	    extractBrainSurfaceAlgo.run();
-	    	    resultImage = extractBrainSurfaceAlgo.getResultImage();
-	    	    try {
-	        		resultImage.exportData(0,  volume, shortVolume);
-	        	}
-	        	catch (IOException e) {
-	        		MipavUtil.displayError("IOException on resultImage.exportData");
-	        		setCompleted(false);
-	        		return;
-	        	}
-	    	    if (shortVolume[xLoc + yLoc*xDim + zLoc*length] == 0) {
-	    	    	postExtractorPointZeros.add((short)t);
-	    	    }
-	    	    for (z = lowestArterialZ; z <= highestArterialZ; z++) {
-	    	    	for (y = 0; y < yDim; y++) {
-	    	    	    for (x = 0; x < xDim; x++) {
-	    	    	    	dataArterial[z-lowestArterialZ][y][x][t] = shortVolume[x + y*xDim + z*length];
-	    	    	    }
-	    	    	}
-	    	    }
 	    	}
 	    	
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 				for (y = 0; y < yDim; y++) {
 					xloop: for (x = 0; x < xDim; x++) {
 						for (t = 0; t < tDim; t++) {
-							if (dataArterial[z-lowestArterialZ][y][x][t] == 0) {
+							if (data[z][y][x][t] == 0) {
 								logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
 								ttp[z][y][x] = Short.MIN_VALUE;
 								fwhm[z-lowestArterialZ][y][x] = Float.NaN;
@@ -1441,8 +1396,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 						maxpeaks = -Double.MAX_VALUE;
 						minttp = Short.MAX_VALUE;
 						for (t = 0; t < tDim; t++) {
-							delR2[t] = -(1.0/TE)*Math.log((double)dataArterial[z-lowestArterialZ][y][x][t]/
-									(double)dataArterial[z-lowestArterialZ][y][x][0]);
+							delR2[t] = -(1.0/TE)*Math.log((double)data[z][y][x][t]/
+									(double)data[z][y][x][0]);
 							if (delR2[t] > maxpeaks) {
 								maxpeaks = delR2[t];
 								minttp = (short)(t+1);
@@ -1696,30 +1651,17 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    		raAVFile.writeBytes("mean peak value = " + meanpeaks + "\n");
 	    		raAVFile.writeBytes("maximum peak value = " + globalmaxpeaks + "\n");
 	    		raAVFile.writeBytes("peak standard deviation = " + peaksstd + "\n");
-	    		if (preExtractorPointZeros.size() > 0) {
-	    			raAVFile.writeBytes("Before masking point location has zeros at "+
-	    		          preExtractorPointZeros.size() + " out of " + tDim + " time points:\n");
-	    		    if (preExtractorPointZeros.size() == 1) {
-	    		    	raAVFile.writeBytes(preExtractorPointZeros.get(0) + "\n");
+	    		if (pointZeros.size() > 0) {
+	    			raAVFile.writeBytes("Point location has zeros at "+
+	    		         pointZeros.size() + " out of " + tDim + " time points:\n");
+	    		    if (pointZeros.size() == 1) {
+	    		    	raAVFile.writeBytes(pointZeros.get(0) + "\n");
 	    		    }
 	    		    else {
-	    		    	for (i = 0; i < preExtractorPointZeros.size()-1; i++) {
-	    		    		raAVFile.writeBytes(preExtractorPointZeros.get(i) + ",");
+	    		    	for (i = 0; i < pointZeros.size()-1; i++) {
+	    		    		raAVFile.writeBytes(pointZeros.get(i) + ",");
 	    		    	}
-	    		    	raAVFile.writeBytes(preExtractorPointZeros.get(preExtractorPointZeros.size()-1) + "\n");
-	    		    }
-	    		}
-	    		if (postExtractorPointZeros.size() > 0) {
-	    			raAVFile.writeBytes("After masking point location has zeros at "+
-	    		          postExtractorPointZeros.size() + " out of "  + tDim + " time points:\n");
-	    		    if (postExtractorPointZeros.size() == 1) {
-	    		    	raAVFile.writeBytes(postExtractorPointZeros.get(0) + "\n");
-	    		    }
-	    		    else {
-	    		    	for (i = 0; i < postExtractorPointZeros.size()-1; i++) {
-	    		    		raAVFile.writeBytes(postExtractorPointZeros.get(i) + ",");
-	    		    	}
-	    		    	raAVFile.writeBytes(postExtractorPointZeros.get(postExtractorPointZeros.size()-1) + "\n");
+	    		    	raAVFile.writeBytes(pointZeros.get(pointZeros.size()-1) + "\n");
 	    		    }
 	    		}
 	    		if (dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
@@ -1785,6 +1727,104 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		    	    setCompleted(false);
 		    	    return;
 		    	}
+	    		for (t = 0; t < tDim; t++) {
+			    	S[t] = data[zLoc][yLoc][xLoc][t];
+			    }
+			    zmean = zLoc;
+			    ymean = yLoc;
+			    xmean = xLoc;
+			    sumcount = 1;
+			    Ca = new double[tDim];
+			    for (t = 1; t < tDim; t++) {
+			    	Ca[t] = -(1.0/TE)*Math.log(S[t]/S[0]);
+			    }
+			    Ca[0] = 0;
+			    if (plotAIF) {
+			    	float xInit[] = new float[tDim];
+			    	float yInit[] = new float[tDim];
+			    	for (t = 0; t < tDim; t++) {
+			    		xInit[t] = delT * t;
+			    		yInit[t] = (float)Ca[t];
+			    	}
+			    	String title = "x"+xLoc+"y"+yLoc+"z"+zLoc;
+			    	String labelX = "Scan time in seconds";
+			    	String labelY = "Change in MR Contrast";
+			    	boolean visible = true;
+			    	ViewJFrameGraph vGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, visible);
+			    	try {
+			    	  vGraph.save(outputFilePath + outputPrefix + "x"+xLoc+"y"+yLoc+"z"+zLoc+".plt");
+			    	  Component component = vGraph.getComponent(0);
+			    	  Rectangle rect = component.getBounds();
+			    	  String format = "png";
+		  	          BufferedImage captureImage =
+		  	                new BufferedImage(rect.width, rect.height,
+		  	                                    BufferedImage.TYPE_INT_ARGB);
+		  	          component.paint(captureImage.getGraphics());
+		  	 
+		  	          File pointFile = new File(outputFilePath + outputPrefix + "x"+xLoc+"y"+yLoc+"z"+zLoc+".png");
+		  	          ImageIO.write(captureImage, format, pointFile);
+		  	          vGraph.dispose();
+		  	          
+				      short shortBuffer[] = new short[length];
+		  	          for (y = 0; y < yDim; y++) {
+				    	for (x = 0; x < xDim; x++) {
+				    		shortBuffer[x + y * xDim] = data[zLoc][y][x][0];
+				    	}
+				       }
+				       extents2D = new int[]{xDim,yDim};
+				       ModelImage pointImage = new ModelImage(ModelStorageBase.SHORT,extents2D,"pointImage");
+					    try {
+					    	pointImage.importData(0, shortBuffer, true);
+					    }
+					    catch (IOException e) {
+					    	MipavUtil.displayError("IOException on pointImage.importData");
+					    	setCompleted(false);
+					    	return;
+					    }
+					    VOI newPtVOI = new VOI((short) 0, "point.voi", VOI.POINT, -1.0f);
+		                newPtVOI.setColor(Color.RED);
+		                float xArr[] = new float[] {(float)xLoc};
+		                float yArr[] = new float[] {(float)yLoc};
+		                float zArr[] = new float[] {0.0f};
+		                newPtVOI.importCurve(xArr, yArr, zArr);
+		                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+		                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel("Point");
+		                pointImage.registerVOI(newPtVOI);
+		                System.out.println("About to create vFrame");
+					    ViewJFrameImage vFrame = new ViewJFrameImage(pointImage);
+					    System.out.println("About to getComponent");
+					    component = vFrame.getComponent(0);
+					    System.out.println("About to get rect");
+					    rect = component.getBounds();
+				    	format = "png";
+				    	System.out.println("About to make captureImage");
+			  	        captureImage =
+			  	                new BufferedImage(rect.width, rect.height,
+			  	                                    BufferedImage.TYPE_INT_ARGB);
+			  	        System.out.println("About to paint component");
+			  	        component.paint(captureImage.getGraphics());
+			  	        
+			  	        System.out.println("About to create File");
+			  	        File slicePointFile = new File(outputFilePath + outputPrefix + "slicex"+xLoc+"y"+yLoc+"z"+zLoc+".png");
+			  	        boolean foundWriter = ImageIO.write(captureImage, format, slicePointFile);
+			  	        if (!foundWriter) {
+			  	        	System.err.println("No appropriate writer for slicex"+xLoc+"y"+yLoc+"z"+zLoc+".png");
+			  	        	setCompleted(false);
+			  	        	return;
+			  	        }
+			  	        captureImage.flush();
+			  	        pointImage.disposeLocal();
+			  	        vFrame.dispose();
+			    	}
+			    	catch (IOException e) {
+		                MipavUtil.displayError("Error: " + e + "\n");
+		                setCompleted(false);
+		                return;
+		            }
+			    	
+			    } // if (plotAIF)
+			    setCompleted(true);
+			    return;
 	    	} // if (findAVInfo)
 	    	maxdelpeaks = globalmaxpeaks - meanpeaks;
 	    	mindelttp = globalminttp - meanttp;
