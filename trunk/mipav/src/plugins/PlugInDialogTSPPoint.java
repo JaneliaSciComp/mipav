@@ -369,6 +369,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         TSP_iterText.setForeground(Color.black);
         inputPanel.add(TSP_iterText, gbc);
         
+        gbc.gridx = 0;
         gbc.gridy = 11;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
