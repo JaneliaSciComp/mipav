@@ -66,7 +66,6 @@ import Jama.SingularValueDecomposition;
 import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
@@ -85,9 +84,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIPoint;
-import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.DoubleDouble;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -168,9 +165,6 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	private boolean doSaveAllOutputs = true;
 
 	private boolean experimentalAIF = true;
-
-	// For AlgorithmBrainSurfaceExtractor, smaller values erode less
-	private float edgeKernelSize = 0.50f;
 
 	private JDialog pickImageDialog = null;
 
@@ -1816,7 +1810,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 			  	        File slicePointFile = new File(outputFilePath + outputPrefix + "slice" + outputFileBaseName+".png");
 			  	        boolean foundWriter = ImageIO.write(captureImage, format, slicePointFile);
 			  	        if (!foundWriter) {
-			  	        	System.err.println("No appropriate writer for slicex"+outputFileBaseName+".png");
+			  	        	System.err.println("No appropriate writer for slice"+outputFileBaseName+".png");
 			  	        	setCompleted(false);
 			  	        	return;
 			  	        }
