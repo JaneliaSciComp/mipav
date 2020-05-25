@@ -37,10 +37,6 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
 	
 	private JTextField baseText;
 	
-	private JTextField outputText;
-	
-	private String outputFileName;
-	
 	private JButton maskButton;
 	
 	private String maskFileDir;
@@ -265,21 +261,6 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         
         gbc.gridx = 0;
         gbc.gridy = 3;
-        JLabel outputLabel = new JLabel("Output text file name");
-        outputLabel.setFont(serif12);
-        outputLabel.setForeground(Color.black);
-        outputLabel.setEnabled(false);
-        inputPanel.add(outputLabel, gbc);
-        
-        gbc.gridx = 1;
-        outputText = new JTextField(20);
-        outputText.setText("selectedPoint.txt");
-        outputText.setFont(serif12);
-        outputText.setForeground(Color.black);
-        inputPanel.add(outputText, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 4;
         JLabel xLabel = new JLabel("Voxel x location");
         xLabel.setFont(serif12);
         xLabel.setForeground(Color.black);
@@ -293,7 +274,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(xText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 4;
         JLabel yLabel = new JLabel("Voxel y location");
         yLabel.setFont(serif12);
         yLabel.setForeground(Color.black);
@@ -307,7 +288,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(yText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 5;
         JLabel zLabel = new JLabel("Voxel z location");
         zLabel.setFont(serif12);
         zLabel.setForeground(Color.black);
@@ -321,7 +302,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(zText, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 6;
         spatialSmoothingCheckBox = new JCheckBox("Perform spatial smoothing");
         spatialSmoothingCheckBox.setSelected(false);
         spatialSmoothingCheckBox.setFont(MipavUtil.font12);
@@ -329,7 +310,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         spatialSmoothingCheckBox.addActionListener(this);
         inputPanel.add(spatialSmoothingCheckBox, gbc);
         
-        gbc.gridy = 8;
+        gbc.gridy = 7;
         sigmaXLabel = new JLabel("Gaussian blur sigma X in millimeters");
         sigmaXLabel.setFont(serif12);
         sigmaXLabel.setForeground(Color.black);
@@ -345,7 +326,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(sigmaXText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         sigmaYLabel = new JLabel("Gaussian blur sigma Y in millimeters");
         sigmaYLabel.setFont(serif12);
         sigmaYLabel.setForeground(Color.black);
@@ -361,7 +342,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(sigmaYText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 9;
         JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
         TSP_thresholdLabel.setFont(serif12);
         TSP_thresholdLabel.setForeground(Color.black);
@@ -375,7 +356,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(TSP_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 10;
         JLabel TSP_iterLabel = new JLabel("TSP iterations");
         TSP_iterLabel.setFont(serif12);
         TSP_iterLabel.setForeground(Color.black);
@@ -388,7 +369,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         TSP_iterText.setForeground(Color.black);
         inputPanel.add(TSP_iterText, gbc);
         
-        gbc.gridy = 12;
+        gbc.gridy = 11;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -469,7 +450,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
 
         try {
 
-            TSPPointAlgo = new PlugInAlgorithmTSPPoint(pwiImageFileDirectory, outputFileName, maskImage, 
+            TSPPointAlgo = new PlugInAlgorithmTSPPoint(pwiImageFileDirectory, maskImage, 
             		xLoc, yLoc, zLoc, spatialSmoothing, sigmax, sigmay,
             		TSP_threshold, TSP_iter, multiThreading, calculateCorrelation,
             		fileNameBase);
@@ -513,7 +494,6 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     protected void setGUIFromParams() {
     	pwiImageFileDirectory = scriptParameters.getParams().getString("pwiImageFileDirectory");
     	fileNameBase = scriptParameters.getParams().getString("file_name_base");
-    	outputFileName = scriptParameters.getParams().getString("output_file_name");
     	maskFileName = scriptParameters.getParams().getString("mask_file_name");
     	maskFileDir = scriptParameters.getParams().getString("mask_file_dir");
     	if (maskFileName == null) {
@@ -548,7 +528,6 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.getParams().put(ParameterFactory.newParameter("pwiImageFileDirectory", pwiImageFileDirectory));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("file_name_base", fileNameBase));
-    	scriptParameters.getParams().put(ParameterFactory.newParameter("output_file_name", outputFileName));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_file_name", maskFileName));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_file_dir", maskFileDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("x_loc", xLoc));
@@ -577,14 +556,6 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     	if (maskImage == null) {
     		MipavUtil.displayError("No mask Image has been selected");
     		return false;
-    	}
-    	
-    	outputFileName = outputText.getText();
-    	if (outputFileName == null) {
-    		MipavUtil.displayError("Output file name location is empty");
-     	    outputText.requestFocus();
-     	    outputText.selectAll();
-     	    return false;	
     	}
     	
     	tmpStr = xText.getText();
