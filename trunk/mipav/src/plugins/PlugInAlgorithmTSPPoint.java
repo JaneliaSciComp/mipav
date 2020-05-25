@@ -96,141 +96,132 @@ import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
-
-
-
 public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListener, MouseMotionListener {
-    
-    private String pwiImageFileDirectory;
-    private ModelImage pwiImage = null;
-    private ModelImage maskImage = null;
-    private String outputFileName = null;
-    private int xLoc;
-    private int yLoc;
-    private int zLoc;
-    private boolean spatialSmoothing = false;
-    private float sigmax = 5.0f;
-    private float sigmay = 5.0f;
-    
-    // Zero out all points not desired with an external mask image
-    private int masking_threshold = 1;
-    
-    private double TSP_threshold = 0.8;
-    
-    private int TSP_iter = 4;
-    
-    private double Psvd = 0.1;
-    
-    private boolean autoAIFCalculation = false;
-    
-    private boolean plotAIF = true;
-    
-    private boolean multiThreading = true;
-    
-    public static final int ELSUNC_2D_SEARCH = 1;
-	
-    public static final int ELSUNC_1D_SEARCH = 2;
-	
-    public static final int NMSIMPLEX_2D_SEARCH = 3;
-	
-    public static final int NELDERMEAD_2D_SEARCH = 4;
-	
+
+	private String pwiImageFileDirectory;
+	private ModelImage pwiImage = null;
+	private ModelImage maskImage = null;
+	private String outputFileBaseName = null;
+	private int xLoc;
+	private int yLoc;
+	private int zLoc;
+	private boolean spatialSmoothing = false;
+	private float sigmax = 5.0f;
+	private float sigmay = 5.0f;
+
+	// Zero out all points not desired with an external mask image
+	private int masking_threshold = 1;
+
+	private double TSP_threshold = 0.8;
+
+	private int TSP_iter = 4;
+
+	private double Psvd = 0.1;
+
+	private boolean autoAIFCalculation = false;
+
+	private boolean plotAIF = true;
+
+	private boolean multiThreading = true;
+
+	public static final int ELSUNC_2D_SEARCH = 1;
+
+	public static final int ELSUNC_1D_SEARCH = 2;
+
+	public static final int NMSIMPLEX_2D_SEARCH = 3;
+
+	public static final int NELDERMEAD_2D_SEARCH = 4;
+
 	private int search = ELSUNC_2D_SEARCH;
-	
+
 	private boolean calculateCorrelation = true;
-	
+
 	private boolean calculateCBFCBVMTT = true;
-	
+
 	private boolean calculateBounds = false;
-	
+
 	private String fileNameBase = "IM";
-    
-    private ModelImage pickImage;
-    
-    private final Lock accessLock = new ReentrantLock();
-    private final Condition canProcessMouseClick = accessLock.newCondition();
+
+	private ModelImage pickImage;
+
+	private final Lock accessLock = new ReentrantLock();
+	private final Condition canProcessMouseClick = accessLock.newCondition();
 	private int xS;
 	private int yS;
 	private double D_inv[][];
-	
+
 //    private ModelImage MTTImage;
-    private ModelImage TmaxImage;
+	private ModelImage TmaxImage;
 //    private ModelImage delay_mapImage;
-    
-    
-    private File aifFile = null;
-    private File sliceAifFile = null;
-    
-    private String outputFilePath = null;
-    private String outputPrefix = "";
-    
-    private FileIO fileIO = null;
-    
-    private int saveFileFormat = FileUtility.NIFTI;
-    
-    // used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
-    private boolean doSaveAllOutputs = true;
-    
-    private boolean experimentalAIF = true;
-    
-    // For AlgorithmBrainSurfaceExtractor, smaller values erode less
-    private float edgeKernelSize = 0.50f;
-    
-    private JDialog pickImageDialog = null;
-    
-    private JButton OKButton = null;
-    
-    private boolean pressedOK = false;
-    
-    private VOI AIFVOI = null;
-    
-    private JComboBox zSliceComboBox = null;
-    
-    private int xDim;
+
+	private File aifFile = null;
+	private File sliceAifFile = null;
+
+	private String outputFilePath = null;
+	private String outputPrefix = "";
+
+	private FileIO fileIO = null;
+
+	private int saveFileFormat = FileUtility.NIFTI;
+
+	// used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
+	private boolean doSaveAllOutputs = true;
+
+	private boolean experimentalAIF = true;
+
+	// For AlgorithmBrainSurfaceExtractor, smaller values erode less
+	private float edgeKernelSize = 0.50f;
+
+	private JDialog pickImageDialog = null;
+
+	private JButton OKButton = null;
+
+	private boolean pressedOK = false;
+
+	private VOI AIFVOI = null;
+
+	private JComboBox zSliceComboBox = null;
+
+	private int xDim;
 	private int yDim;
-    
-    private int zDim;
-    
-    private ViewJFrameImage pickFrame = null;
-    
-    private int length;
-    
-    private short data[][][][] = null;
-    
-    private int extents2D[] = null;
-    
-    private int zSlice;
-    
-	
-    /**
-     * Constructor.
-     *
-     */
-    public PlugInAlgorithmTSPPoint(String pwiImageFileDirectory, String outputFileName, ModelImage maskImage,
-    		int xLoc, int yLoc, int zLoc,
-    		boolean spatialSmoothing, float sigmax, float sigmay, 
-    		double TSP_threshold, int TSP_iter, 
-    		boolean multiThreading, boolean calculateCorrelation, 
-    		String fileNameBase) {
-        //super(resultImage, srcImg);
-    	this.pwiImageFileDirectory = pwiImageFileDirectory;
-    	this.outputFileName = outputFileName;
-    	this.maskImage = maskImage;
-    	this.xLoc = xLoc;
-    	this.yLoc = yLoc;
-    	this.zLoc = zLoc;
-    	this.spatialSmoothing = spatialSmoothing;
-    	this.sigmax = sigmax;
-    	this.sigmay = sigmay;
-    	outputFilePath = pwiImageFileDirectory;
-    	this.TSP_threshold = TSP_threshold;
-    	this.TSP_iter = TSP_iter;
-    	this.multiThreading = multiThreading;
-    	this.calculateCorrelation = calculateCorrelation;
-    	this.fileNameBase = fileNameBase;
-    }
-    
-    /**
+
+	private int zDim;
+
+	private ViewJFrameImage pickFrame = null;
+
+	private int length;
+
+	private short data[][][][] = null;
+
+	private int extents2D[] = null;
+
+	private int zSlice;
+
+	/**
+	 * Constructor.
+	 *
+	 */
+	public PlugInAlgorithmTSPPoint(String pwiImageFileDirectory, ModelImage maskImage, int xLoc, int yLoc, int zLoc,
+			boolean spatialSmoothing, float sigmax, float sigmay, double TSP_threshold, int TSP_iter,
+			boolean multiThreading, boolean calculateCorrelation, String fileNameBase) {
+		// super(resultImage, srcImg);
+		this.pwiImageFileDirectory = pwiImageFileDirectory;
+		this.maskImage = maskImage;
+		this.xLoc = xLoc;
+		this.yLoc = yLoc;
+		this.zLoc = zLoc;
+		this.spatialSmoothing = spatialSmoothing;
+		this.sigmax = sigmax;
+		this.sigmay = sigmay;
+		outputFilePath = pwiImageFileDirectory;
+		this.TSP_threshold = TSP_threshold;
+		this.TSP_iter = TSP_iter;
+		this.multiThreading = multiThreading;
+		this.calculateCorrelation = calculateCorrelation;
+		this.fileNameBase = fileNameBase;
+	}
+
+	/**
      * Starts the algorithm.
      */
     public void runAlgorithm() {
@@ -437,14 +428,15 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
         boolean lookForZSlices = false;
         RandomAccessFile raAVFile = null;
         boolean findAVInfo = true;
+        outputFileBaseName = "x"+xLoc+"y"+yLoc+"z"+zLoc;
         if (findAVInfo) {
 	    	try {
-		    	File avFile = new File(outputFilePath + outputPrefix + outputFileName);
+		    	File avFile = new File(outputFilePath + outputPrefix + outputFileBaseName + ".txt");
 		        raAVFile = new RandomAccessFile(avFile, "rw");
 		        // Necessary so that if this is an overwritten file there isn't any
 		        // junk at the end
 		        raAVFile.setLength(0);
-		        raAVFile.writeBytes(outputFileName + "\n");
+		        raAVFile.writeBytes(outputFileBaseName + ".txt\n");
 		        raAVFile.writeBytes("x = " + xLoc + " y = " + yLoc + " z = " + zLoc + "\n");
 	    	}
 	    	catch (IOException e) {
@@ -709,6 +701,22 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	}
     	catch (IOException e) {
     		MipavUtil.displayError("IOException on image3D.exportData");
+    		setCompleted(false);
+    		return;
+    	}
+    	
+    	if (xLoc > (xDim-1)) {
+    		MipavUtil.displayError("X position of " + xLoc + " is erroneously greater than (xDim-1) = " + (xDim-1));
+    		setCompleted(false);
+    		return;
+    	}
+    	if (yLoc > (yDim-1)) {
+    		MipavUtil.displayError("Y position of " + yLoc + " is erroneously greater than (yDim-1) = " + (yDim-1));
+    		setCompleted(false);
+    		return;
+    	}
+    	if (zLoc > (zDim-1)) {
+    		MipavUtil.displayError("Z position of " + zLoc + " is erroneously greater than (zDim-1) = " + (zDim-1));
     		setCompleted(false);
     		return;
     	}
@@ -1303,8 +1311,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		double ystd = 0.0;
 		double zstd = 0.0;
 		if (experimentalAIF) {
-    		lowestArterialZ = 4;
-	    	highestArterialZ = 10;
+    		lowestArterialZ = Math.min(4,zLoc);
+	    	highestArterialZ = Math.max(10, zLoc);
 	    	numArterialZ = highestArterialZ - lowestArterialZ + 1;
 	    	fwhm = new float[numArterialZ][yDim][xDim];
 	    	delR2 = new double[tDim];
@@ -1746,13 +1754,13 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 			    		xInit[t] = delT * t;
 			    		yInit[t] = (float)Ca[t];
 			    	}
-			    	String title = "x"+xLoc+"y"+yLoc+"z"+zLoc;
+			    	String title = outputFileBaseName;
 			    	String labelX = "Scan time in seconds";
 			    	String labelY = "Change in MR Contrast";
 			    	boolean visible = true;
 			    	ViewJFrameGraph vGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, visible);
 			    	try {
-			    	  vGraph.save(outputFilePath + outputPrefix + "x"+xLoc+"y"+yLoc+"z"+zLoc+".plt");
+			    	  vGraph.save(outputFilePath + outputPrefix + outputFileBaseName + ".plt");
 			    	  Component component = vGraph.getComponent(0);
 			    	  Rectangle rect = component.getBounds();
 			    	  String format = "png";
@@ -1761,7 +1769,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		  	                                    BufferedImage.TYPE_INT_ARGB);
 		  	          component.paint(captureImage.getGraphics());
 		  	 
-		  	          File pointFile = new File(outputFilePath + outputPrefix + "x"+xLoc+"y"+yLoc+"z"+zLoc+".png");
+		  	          File pointFile = new File(outputFilePath + outputPrefix + outputFileBaseName +".png");
 		  	          ImageIO.write(captureImage, format, pointFile);
 		  	          vGraph.dispose();
 		  	          
@@ -1805,10 +1813,10 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 			  	        component.paint(captureImage.getGraphics());
 			  	        
 			  	        System.out.println("About to create File");
-			  	        File slicePointFile = new File(outputFilePath + outputPrefix + "slicex"+xLoc+"y"+yLoc+"z"+zLoc+".png");
+			  	        File slicePointFile = new File(outputFilePath + outputPrefix + "slice" + outputFileBaseName+".png");
 			  	        boolean foundWriter = ImageIO.write(captureImage, format, slicePointFile);
 			  	        if (!foundWriter) {
-			  	        	System.err.println("No appropriate writer for slicex"+xLoc+"y"+yLoc+"z"+zLoc+".png");
+			  	        	System.err.println("No appropriate writer for slicex"+outputFileBaseName+".png");
 			  	        	setCompleted(false);
 			  	        	return;
 			  	        }
@@ -3078,621 +3086,621 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	
     	setCompleted(true); 
     } // end runAlgorithm()
-    
-    public class corr1Calc implements Runnable {
-    	int xDim;
-        int yDim;
-        int tDim;
-        short brain_mask_norm[][][];
-        short delay_map[][];
-        double corr_map2[][] = null;
-        double temp_mean[];
-        
-        public corr1Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][], 
-        		double corr_map2[][], double temp_mean[]) {
-        	this.xDim = xDim;
-        	this.yDim = yDim;
-        	this.tDim = tDim;
-        	this.brain_mask_norm = brain_mask_norm;
-        	this.delay_map = delay_map;
-        	if (calculateCorrelation) {
-        	    this.corr_map2 = corr_map2;
-        	}
-        	this.temp_mean = temp_mean;
-        }
-        
-        public void run() {
-        	int i, x, y, t;
-        	long sum;
-        	double temp[];
-        	double maxTemp;
-        	int maxIndex;
-        	double cc;
-        	for (y = 0; y < yDim; y++) {
-    			for (x = 0; x < xDim; x++) {
-    				sum = 0;
-    				for (t = 1; t < tDim; t++) {
-    					sum += brain_mask_norm[y][x][t];
-    				}
-    				if (sum != 0) {
-    				    temp = xcorrbias(brain_mask_norm[y][x], temp_mean);
-    				    maxTemp = -Double.MAX_VALUE;
-    				    maxIndex = -1;
-    				    for (i = 0; i < temp.length; i++) {
-    				    	if (temp[i] > maxTemp) {
-    				    		maxTemp = temp[i];
-    				    		maxIndex = i+1;
-    				    	}
-    				    }
-    				    delay_map[y][x] = (short)maxIndex;
-    				    if (calculateCorrelation) {
-	    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
-	    				    corr_map2[y][x] = cc;
-    				    }
-    				} // if (sum != 0)
-    			}
-    		}	
-        }
-    }
-    
-    public class corr2Calc implements Runnable {
-    	int xDim;
-        int yDim;
-        int tDim;
-        short brain_mask_norm[][][];
-        short delay_map[][];
-        short peaks_map[][];
-        double corrmap[][];
-        double corr_map2[][];
-        double temp_mean[];
-        
-        public corr2Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][], 
-        		short peaks_map[][], double corrmap[][], double corr_map2[][], double temp_mean[]) {
-        	this.xDim = xDim;
-        	this.yDim = yDim;
-        	this.tDim = tDim;
-        	this.brain_mask_norm = brain_mask_norm;
-        	this.delay_map = delay_map;
-        	this.peaks_map = peaks_map;
-        	if (calculateCorrelation) {
-	        	this.corrmap = corrmap;
-	        	this.corr_map2 = corr_map2;
-        	}
-        	this.temp_mean = temp_mean;
-        }
-        
-        public void run() {
-        	int i, x, y, t;
-        	long sum;
-        	double temp[];
-        	double maxTemp;
-        	short maxIndex;
-        	double cc;
-        	short maxPeak;
-        	
-        	for (y = 0; y < yDim; y++) {
-    			for (x = 0; x < xDim; x++) {
-    				sum = 0;
-    				for (t = 1; t < tDim; t++) {
-    					sum += brain_mask_norm[y][x][t];
-    				}
-    				if (sum != 0) {
-    				    temp = xcorrbias(brain_mask_norm[y][x], temp_mean);
-    				    maxTemp = -Double.MAX_VALUE;
-    				    maxIndex = -1;
-    				    for (i = 0; i < temp.length; i++) {
-    				    	if (temp[i] > maxTemp) {
-    				    		maxTemp = temp[i];
-    				    		maxIndex = (short)(i+1);
-    				    	}
-    				    }
-    				    delay_map[y][x] = maxIndex;
-    				    maxPeak = Short.MIN_VALUE;
-    				    for (t = 0; t < tDim; t++) {
-    				    	if (Math.abs(brain_mask_norm[y][x][t]) > maxPeak) {
-    				    		maxPeak = (short)Math.abs(brain_mask_norm[y][x][t]);
-    				    	}
-    				    }
-    				    peaks_map[y][x] = (short)maxPeak;
-    				    if (calculateCorrelation) {
-	    				    cc = corrcoef(brain_mask_norm[y][x], temp_mean);
-	    				    corrmap[y][x] = cc;
-	    				    cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
-	    				    corr_map2[y][x] = cc;
-    				    }
-    				} // if (sum != 0)
-    			}
-    		}
-        	
-        }
-    }
-    
-    public class endCalc implements Runnable {
-    	// The global D_inv is shared by all these Runnable routines.
-    	// All other variables are unique.
-    	int search;
-        int xDim;
-        int yDim;
-        int tDim;
-        float delT;
-        double TE;
-        double masking_threshold;
-        short data[][][];
-        double CBV[][];
-        double CBF[][];
-        double MTT[][];
-        short Tmax[][];
-        double p0MaxDistFromValue[][];
-        double p1MaxDistFromValue[][];
-        double t975;
-        //double chiSquared[][];
-    	
-    	public endCalc(int search, int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
-    			short data[][][], double CBV[][], double CBF[][], double MTT[][], short Tmax[][],
-    			double p0MaxDistFromValue[][], double p1MaxDistFromValue[][], double t975/*,
-    			double chiSquared[][]*/) {
-    		this.search = search;
-        	this.xDim = xDim;
-        	this.yDim = yDim;
-        	this.tDim = tDim;
-        	this.delT = delT;
-        	this.TE = TE;
-        	this.masking_threshold = masking_threshold;
-        	this.data = data;
-        	this.Tmax = Tmax;
-        	if (calculateCBFCBVMTT) {
-	        	this.CBV = CBV;
-	        	this.CBF = CBF;
-	        	this.MTT = MTT;
-        	}
-        	if (calculateBounds) {
-        	    this.p0MaxDistFromValue = p0MaxDistFromValue;
-        	    this.p1MaxDistFromValue = p1MaxDistFromValue;
-        	    this.t975 = t975;
-        	}
-        	//this.chiSquared = chiSquared;
-        }
-    	
-    	public void run() {
-    		double x0[];
-            double xdata[];
-            int i;
-            double C[];
-            double b[];
-            int dim = 2;
-            double eps = 1.0e-8;
-            double scale = 1.0;
-            boolean display = false;
-            xdata = new double[2*tDim];
-            for (i = 0; i < 2*tDim; i++) {
-            	xdata[i] = i * delT;
-            }
-            C = new double[2*tDim];
-            b = new double[2*tDim];
-            int y;
-            int x;
-            int t;
-            double S[] = new double[tDim];
-            int j;
-            double sumb;
-            double rcbf;
-            expfun1D minsearch1D;
-            expfun2D minsearch2D;
-            expfunNM minsearchNM;
-            expfunNM2 minsearchNM2;
-        	int n = 2;
-        	double tolx = 1.0E-8;
-        	double tolf = 1.0E-8;
-        	int max_iter = 5000;
-        	int max_eval = 5000;
-        	boolean verbose = false;
-        	int exitStatus;
-        	double p[] = new double[2];
-        	double num;
-        	double denom;
-        	double num1;
-        	double denom1;
-        	int nPts;
-        	double covarMat[][] = null;
-        	double errorSumOfSquares;
-        	double s2;
-        	double arr2D[][] = new double[2][2];
-        	double det;
-        	double invDiag2D[] = new double[2];
-        	double se0;
-        	double se1;
-        	double diff;
-        	double expval;
-        	if (calculateBounds) {
-		    	covarMat = new double[2*tDim][2];
-		    }
-            // Iterate
-        	for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
-        			if ((search == ELSUNC_2D_SEARCH) || (search == NMSIMPLEX_2D_SEARCH) || (search == NELDERMEAD_2D_SEARCH)) {
-                    	x0 = new double[]{0.1,4};
-                    }
-                    else {
-            		    x0 = new double[]{4};
-                    }
-        		    if (data[y][x][0] >= masking_threshold) {
-        		        // time signal from mri
-        		    	for (t = 0; t < tDim; t++) {
-        		    		S[t] = data[y][x][t];
-        		    	}
-        		    	// Calculate amount of contrast agent as estimated from R2
-        		    	for (t = 0; t < tDim; t++) {
-        		    		C[t] = -TE*Math.log(S[t]/S[0]);
-        		    	}
-        		    	// Solve for residual function
-        		    	for (i = 0; i < 2*tDim; i++) {
-        		    		b[i] = 0;
-        		    		// Second half of C is zeros
-        		    		for (j = 0; j < tDim; j++) {
-        		    		    b[i] += D_inv[i][j] * C[j];	
-        		    		}
-        		    	} // for (i = 0; i < 2*tDim; i++)
-        		    	sumb = 0;
-        		    	for (i = 0; i < 2*tDim; i++) {
-        		    		sumb += b[i];
-        		    	}
-        		    	if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb))) {
-        		    	    rcbf = -Double.MAX_VALUE;
-        		    	    Tmax[y][x] = -1;
-        		    	    for (i = 0; i < b.length/4; i++) {
-        		    	    	if (b[i] > rcbf) {
-        		    	    		rcbf = b[i];
-        		    	    		Tmax[y][x] = (short)(i+1);
-        		    	    	}
-        		    	    }
-        		    	    if (calculateCBFCBVMTT || calculateBounds) {
-        		    	    // Shift b to have a peak at origin for fitting
-	        		    	    b = circshift(b,-Tmax[y][x]);
-	        		    	    if (search == ELSUNC_2D_SEARCH) {
-	        		    	    	minsearch2D = new expfun2D(x0, b, xdata);
-		        		    	    minsearch2D.driver();
-		        		    	    exitStatus = minsearch2D.getExitStatus();
-		        		    	    p = minsearch2D.getParameters();
-		        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
-		        		    	    	// Normal termination
-		        		    	    	if (calculateCBFCBVMTT) {
-			        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-			        					    CBF[y][x] = p[0];
-			        					    // relCBF is max value of residual function.  Should be similar to CBF,
-			        					    // but may be different.
-			        					    //relCBF[x][y][z] = rcbf;
-			        					    MTT[y][x] = p[1];
-			        					    CBV[y][x] = rcbf * p[1];
-		        		    	    	}
-		        					    //chiSquared[y][x] = minsearch.getChiSquared();
-		        					    if (calculateBounds) {
-				    					    nPts = xdata.length;
-				    					    errorSumOfSquares = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	expval =  Math.exp(-1.0/p[1]*xdata[i]);
-				    						    covarMat[i][0] = Math.exp(-1.0/p[1]*xdata[i]);
-				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
-				    						    diff = (p[0]*expval) - b[i];
-				    						    errorSumOfSquares += (diff * diff);
-				    						}
-				    					    s2 = errorSumOfSquares/(nPts - 2);
-				    					    arr2D[0][0] = 0.0;
-				    					    arr2D[0][1] = 0.0;
-				    					    arr2D[1][0] = 0.0;
-				    					    arr2D[1][1] = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-				    					    }
-				    					    arr2D[1][0] = arr2D[0][1];
-				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-				    					    if (det != 0.0) {
-					    					    invDiag2D[0] = arr2D[1][1]/det;
-					    					    invDiag2D[1] = arr2D[0][0]/det;
-					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[y][x] = t975 * se0;
-					    					    }
-					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {   
-					    					        p1MaxDistFromValue[y][x] = t975 * se1;
-					    					    }
-				    					    } // if (det != 0.0)
-			    					    } // if (calculateBounds)
-		        		    	    }	
-	        		    	    } // if (search == ELSUNC_2D_SEARCH)
-	        		    	    else if (search == NMSIMPLEX_2D_SEARCH) {
-	        		    	    	minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
-	            		    	    minsearchNM.driver();
-	            		    	    if ((x0[1] > 0) && (x0[1] < 75)) {
-	            		    	    	// Normal termination
-	            		    	    	if (calculateCBFCBVMTT) {
-		            		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-		            					    CBF[y][x] = x0[0];
-		            					    // relCBF is max value of residual function.  Should be similar to CBF,
-		            					    // but may be different.
-		            					    //relCBF[x][y][z] = rcbf;
-		            					    MTT[y][x] = x0[1];
-		            					    CBV[y][x] = rcbf * x0[1];
-	            		    	    	}
-	            					    if (calculateBounds) {
-				    					    nPts = xdata.length;
-				    					    errorSumOfSquares = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	expval = Math.exp(-1.0/x0[1]*xdata[i]);
-				    						    covarMat[i][0] = expval;
-				    						    covarMat[i][1] = xdata[i]/(x0[1]*x0[1])*x0[0]*expval;
-				    						    diff = (x0[0]*expval) - b[i];
-				    						    errorSumOfSquares += (diff * diff);
-				    						}
-				    					    s2 = errorSumOfSquares/(nPts - 2);
-				    					    arr2D[0][0] = 0.0;
-				    					    arr2D[0][1] = 0.0;
-				    					    arr2D[1][0] = 0.0;
-				    					    arr2D[1][1] = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-				    					    }
-				    					    arr2D[1][0] = arr2D[0][1];
-				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-				    					    if (det != 0.0) {
-					    					    invDiag2D[0] = arr2D[1][1]/det;
-					    					    invDiag2D[1] = arr2D[0][0]/det;
-					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[y][x] = t975 * se0;
-					    					    }
-					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[y][x] = t975 * se1;
-					    					    }
-				    					    } // if (det != 0.0)
-			    					    } // if (calculateBounds)
-	            		    	    }
-	        		    	    } //  else if (search == NMSIMPLEX_2D_SEARCH)
-	        		    	    else if (search == NELDERMEAD_2D_SEARCH) {
-		    		    	    	minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
-		    		    	    	minsearchNM2.driver();
-		    		    	    	p = minsearchNM2.getSolX();
-		    		    	    	if ((p[1] > 0) && (p[1] < 75)) {
-			    		    	    	// Normal termination
-		    		    	    		if (calculateCBFCBVMTT) {
-				    		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-				    					    CBF[y][x] = p[0];
-				    					    // relCBF is max value of residual function.  Should be similar to CBF,
-				    					    // but may be different.
-				    					    //relCBF[x][y][z] = rcbf;
-				    					    MTT[y][x] = p[1];
-				    					    CBV[y][x] = rcbf * p[1];
-		    		    	    		}
-			    					    //chiSquared[y][x] = minsearch.getChiSquared();
-			    					    if (calculateBounds) {
-				    					    nPts = xdata.length;
-				    					    errorSumOfSquares = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	expval = Math.exp(-1.0/p[1]*xdata[i]);
-				    						    covarMat[i][0] = expval;
-				    						    covarMat[i][1] = xdata[i]/(p[1]*p[1])*p[0]*expval;
-				    						    diff = (p[0]*expval) - b[i];
-				    						    errorSumOfSquares += (diff * diff);
-				    						}
-				    					    s2 = errorSumOfSquares/(nPts - 2);
-				    					    arr2D[0][0] = 0.0;
-				    					    arr2D[0][1] = 0.0;
-				    					    arr2D[1][0] = 0.0;
-				    					    arr2D[1][1] = 0.0;
-				    					    for (i = 0; i < nPts; i++) {
-				    					    	arr2D[0][0] += covarMat[i][0]*covarMat[i][0];
-				    					    	arr2D[0][1] += covarMat[i][0]*covarMat[i][1];
-				    					    	arr2D[1][1] += covarMat[i][1]*covarMat[i][1];
-				    					    }
-				    					    arr2D[1][0] = arr2D[0][1];
-				    					    det = arr2D[0][0]*arr2D[1][1] - arr2D[0][1]*arr2D[1][0];
-				    					    if (det != 0.0) {
-					    					    invDiag2D[0] = arr2D[1][1]/det;
-					    					    invDiag2D[1] = arr2D[0][0]/det;
-					    					    se0 = Math.sqrt(invDiag2D[0]*s2);
-					    					    se1 = Math.sqrt(invDiag2D[1]*s2);
-					    					    if ((!Double.isInfinite(se0))  && (!Double.isNaN(se0))) {
-					    					        p0MaxDistFromValue[y][x] = t975 * se0;
-					    					    }
-					    					    if ((!Double.isInfinite(se1))  && (!Double.isNaN(se1))) {
-					    					        p1MaxDistFromValue[y][x] = t975 * se1;
-					    					    }
-				    					    } // if (det != 0.0)
-			    					    } // if (calculateBounds)
-			    		    	    }	
-		    		    	    } // else if (search == NELDERMEAD_2D_SEARCH)
-	        		    	    else if (calculateCBFCBVMTT) { // 1D search
-		        		    	    minsearch1D = new expfun1D(x0, b, xdata);
-		        		    	    minsearch1D.driver();
-		        		    	    exitStatus = minsearch1D.getExitStatus();
-		        		    	    p[1] = minsearch1D.getParameters()[0];
-		        		    	    if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
-		        		    	    	// Normal termination
-		        		    	    	num1 = 0.0;
-		        		    	    	denom1 = 0.0;
-		        		    	    	for (i = 0; i < 2*tDim; i++) {
-		                		    	    num = Math.exp(-xdata[i]/p[1]);
-		            						denom = num * num;
-		                                    num1 += b[i]*num;
-		                                    denom1 += denom;
-		        		    	    	}
-		        		    	    	p[0] = num1/denom1;
-		        		    	    	// p[0] corresponds to CBF, p[1] corresponds to MTT
-		        					    CBF[y][x] = p[0];
-		        					    // relCBF is max value of residual function.  Should be similar to CBF,
-		        					    // but may be different.
-		        					    //relCBF[x][y][z] = rcbf;
-		        					    MTT[y][x] = p[1];
-		        					    CBV[y][x] = rcbf * p[1];
-		        					    //chiSquared[y][x] = minsearch.getChiSquared();
-		        		    	    }
-	        		    	    } // 1D search
-        		    	    } // if (calculateCBFCBVMTT || calculateBounds)
-        		    	} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
-        		    } // if ((data[y][x][0] >= masking_threshold)
-        		} // for (x = 0; x < xDim; x++)
-        	} // for (y = 0; y < yDim; y++)
-    	}
-    }
-    
-    
-    public void testexpfun() {
-    	expfun1D minsearch1D;
-    	expfun2D minsearch2D;
-    	expfunNM minsearchNM;
-    	expfunNM2 minsearchNM2;
-    	int exitStatus;
-    	double p[] = new double[2];
-    	double num;
-    	double denom;
-    	double num1;
-    	double denom1;
-    	int i;
-    	double x0[] = new double[]{4};
-    	double b[] = new double[]{0.07, 0.06};
-    	double xdata[] = new double[]{5.0,6.0};
-    	minsearch1D = new expfun1D(x0, b, xdata);
- 	    minsearch1D.driver();
- 	    exitStatus = minsearch1D.getExitStatus();	
- 	    System.out.println("1D exitStatus = " + exitStatus);
- 	    p[1] = minsearch1D.getParameters()[0];
- 	   num1 = 0.0;
-   	   denom1 = 0.0;
-   	   for (i = 0; i < 2; i++) {
-   	       num = Math.exp(-xdata[i]/p[1]);
-		   denom = num * num;
-           num1 += b[i]*num;
-           denom1 += denom;
-	   	}
-	   	p[0] = num1/denom1;
- 	    System.out.println("1D p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
- 	    System.out.println("1D p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
- 	    
- 	    b = new double[10];
- 	    xdata = new double[10];
- 	    for (i = 0; i < 10; i++) {
- 	    	xdata[i] = i;
- 	    	b[i] = 0.133*Math.exp(-i/5.67);
- 	    }
- 	   minsearch1D = new expfun1D(x0, b, xdata);
-	    minsearch1D.driver();
-	    exitStatus = minsearch1D.getExitStatus();	
-	    System.out.println("1D exitStatus = " + exitStatus);
-	    p[1] = minsearch1D.getParameters()[0];
-	   num1 = 0.0;
-  	   denom1 = 0.0;
-  	   for (i = 0; i < 10; i++) {
-  	       num = Math.exp(-xdata[i]/p[1]);
-		   denom = num * num;
-          num1 += b[i]*num;
-          denom1 += denom;
-	   	}
-	   	p[0] = num1/denom1;
-	    System.out.println("1D p[0] = " + p[0] + " answer = 0.133");
-	    System.out.println("1D p[1] = " + p[1] + " answer = 5.67");
-	    
-	    x0 = new double[]{0.1,4};
-	    b = new double[]{0.07, 0.06};
-        xdata = new double[]{5.0,6.0};
-    	minsearch2D = new expfun2D(x0, b, xdata);
- 	    minsearch2D.driver();
- 	    exitStatus = minsearch2D.getExitStatus();	
- 	    System.out.println("2D exitStatus = " + exitStatus);
- 	    p = minsearch2D.getParameters();
- 	    System.out.println("2D p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
- 	    System.out.println("2D p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
- 	    
- 	    b = new double[10];
- 	    xdata = new double[10];
- 	    for (i = 0; i < 10; i++) {
- 	    	xdata[i] = i;
- 	    	b[i] = 0.133*Math.exp(-i/5.67);
- 	    }
- 	    minsearch2D = new expfun2D(x0, b, xdata);
-	    minsearch2D.driver();
-	    exitStatus = minsearch2D.getExitStatus();	
-	    p = minsearch2D.getParameters();
-	    System.out.println("2D exitStatus = " + exitStatus);
-	    System.out.println("2D p[0] = " + p[0] + " answer = 0.133");
-	    System.out.println("2D p[1] = " + p[1] + " answer = 5.67");
-	    
-	    int dim = 2;
-        double eps = 1.0e-8;
-        double scale = 1.0;
-        boolean display = false;
-	    x0 = new double[]{0.1,4};
-	    b = new double[]{0.07, 0.06};
-        xdata = new double[]{5.0,6.0};
-	    minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
-	    minsearchNM.driver();
-	    System.out.println("2D NMSimplex x0[0] = " + x0[0] + " MATLAB answer = 0.151297958944948");
- 	    System.out.println("2D NMSimplex x0[1] = " + x0[1] + " MATLAB answer = 6.48713976636383");
-	    
-	    x0 = new double[]{0.1,4};
-	    b = new double[10];
- 	    xdata = new double[10];
- 	    for (i = 0; i < 10; i++) {
- 	    	xdata[i] = i;
- 	    	b[i] = 0.133*Math.exp(-i/5.67);
- 	    }
- 	    minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
-	    minsearchNM.driver();
-	    System.out.println("2D NMSimplex x0[0] = " +x0[0] + " answer = 0.133");
-	    System.out.println("2D NMSimplex x0[1] = " +x0[1] + " answer = 5.67");
-	    
-	    int n = 2;
-	    double tolx = 1.0E-8;
-	    double tolf = 1.0E-8;
-	    int max_iter = 5000;
-	    int max_eval = 5000;
-	    boolean verbose = false;
-	    x0 = new double[]{0.1,4};
-	    b = new double[]{0.07, 0.06};
-        xdata = new double[]{5.0,6.0};
-        minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
-        minsearchNM2.driver();
-        p = minsearchNM2.getSolX();
-        System.out.println("NelderMead p[0] = " + p[0] +  " MATLAB answer = 0.151297958944948");
-	    System.out.println("NelderMead p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
-	    
-	    x0 = new double[]{0.1,4};
-	    b = new double[10];
- 	    xdata = new double[10];
- 	    for (i = 0; i < 10; i++) {
- 	    	xdata[i] = i;
- 	    	b[i] = 0.133*Math.exp(-i/5.67);
- 	    }
- 	   minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
-       minsearchNM2.driver();
-       p = minsearchNM2.getSolX();
-       System.out.println("NelderMead p[0] = " + p[0] + " answer = 0.133");
-	   System.out.println("NelderMead p[1] = " + p[1] + " answer = 5.67");
+
+	public class corr1Calc implements Runnable {
+		int xDim;
+		int yDim;
+		int tDim;
+		short brain_mask_norm[][][];
+		short delay_map[][];
+		double corr_map2[][] = null;
+		double temp_mean[];
+
+		public corr1Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][],
+				double corr_map2[][], double temp_mean[]) {
+			this.xDim = xDim;
+			this.yDim = yDim;
+			this.tDim = tDim;
+			this.brain_mask_norm = brain_mask_norm;
+			this.delay_map = delay_map;
+			if (calculateCorrelation) {
+				this.corr_map2 = corr_map2;
+			}
+			this.temp_mean = temp_mean;
+		}
+
+		public void run() {
+			int i, x, y, t;
+			long sum;
+			double temp[];
+			double maxTemp;
+			int maxIndex;
+			double cc;
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					sum = 0;
+					for (t = 1; t < tDim; t++) {
+						sum += brain_mask_norm[y][x][t];
+					}
+					if (sum != 0) {
+						temp = xcorrbias(brain_mask_norm[y][x], temp_mean);
+						maxTemp = -Double.MAX_VALUE;
+						maxIndex = -1;
+						for (i = 0; i < temp.length; i++) {
+							if (temp[i] > maxTemp) {
+								maxTemp = temp[i];
+								maxIndex = i + 1;
+							}
+						}
+						delay_map[y][x] = (short) maxIndex;
+						if (calculateCorrelation) {
+							cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
+							corr_map2[y][x] = cc;
+						}
+					} // if (sum != 0)
+				}
+			}
+		}
 	}
-    
-    class expfun1D extends NLConstrainedEngine {
-    	double b[];
-    	double xdata[];
-        public expfun1D(double x0[], double b[], double xdata[]) {
-        	// nPoints, params
-        	super(1, 1);
-        	this.b = b;
-        	this.xdata = xdata;
-        	
-        	bounds = 0; // bounds = 0 means unconstrained
-        	//bl[0] = 1.0E-10;
-        	//bu[0] = 74.999999;
+
+	public class corr2Calc implements Runnable {
+		int xDim;
+		int yDim;
+		int tDim;
+		short brain_mask_norm[][][];
+		short delay_map[][];
+		short peaks_map[][];
+		double corrmap[][];
+		double corr_map2[][];
+		double temp_mean[];
+
+		public corr2Calc(int xDim, int yDim, int tDim, short brain_mask_norm[][][], short delay_map[][],
+				short peaks_map[][], double corrmap[][], double corr_map2[][], double temp_mean[]) {
+			this.xDim = xDim;
+			this.yDim = yDim;
+			this.tDim = tDim;
+			this.brain_mask_norm = brain_mask_norm;
+			this.delay_map = delay_map;
+			this.peaks_map = peaks_map;
+			if (calculateCorrelation) {
+				this.corrmap = corrmap;
+				this.corr_map2 = corr_map2;
+			}
+			this.temp_mean = temp_mean;
+		}
+
+		public void run() {
+			int i, x, y, t;
+			long sum;
+			double temp[];
+			double maxTemp;
+			short maxIndex;
+			double cc;
+			short maxPeak;
+
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					sum = 0;
+					for (t = 1; t < tDim; t++) {
+						sum += brain_mask_norm[y][x][t];
+					}
+					if (sum != 0) {
+						temp = xcorrbias(brain_mask_norm[y][x], temp_mean);
+						maxTemp = -Double.MAX_VALUE;
+						maxIndex = -1;
+						for (i = 0; i < temp.length; i++) {
+							if (temp[i] > maxTemp) {
+								maxTemp = temp[i];
+								maxIndex = (short) (i + 1);
+							}
+						}
+						delay_map[y][x] = maxIndex;
+						maxPeak = Short.MIN_VALUE;
+						for (t = 0; t < tDim; t++) {
+							if (Math.abs(brain_mask_norm[y][x][t]) > maxPeak) {
+								maxPeak = (short) Math.abs(brain_mask_norm[y][x][t]);
+							}
+						}
+						peaks_map[y][x] = (short) maxPeak;
+						if (calculateCorrelation) {
+							cc = corrcoef(brain_mask_norm[y][x], temp_mean);
+							corrmap[y][x] = cc;
+							cc = corrcoef(circshift(brain_mask_norm[y][x], -maxIndex + tDim), temp_mean);
+							corr_map2[y][x] = cc;
+						}
+					} // if (sum != 0)
+				}
+			}
+
+		}
+	}
+
+	public class endCalc implements Runnable {
+		// The global D_inv is shared by all these Runnable routines.
+		// All other variables are unique.
+		int search;
+		int xDim;
+		int yDim;
+		int tDim;
+		float delT;
+		double TE;
+		double masking_threshold;
+		short data[][][];
+		double CBV[][];
+		double CBF[][];
+		double MTT[][];
+		short Tmax[][];
+		double p0MaxDistFromValue[][];
+		double p1MaxDistFromValue[][];
+		double t975;
+		// double chiSquared[][];
+
+		public endCalc(int search, int xDim, int yDim, int tDim, float delT, double TE, double masking_threshold,
+				short data[][][], double CBV[][], double CBF[][], double MTT[][], short Tmax[][],
+				double p0MaxDistFromValue[][], double p1MaxDistFromValue[][], double t975/*
+																							 * , double chiSquared[][]
+																							 */) {
+			this.search = search;
+			this.xDim = xDim;
+			this.yDim = yDim;
+			this.tDim = tDim;
+			this.delT = delT;
+			this.TE = TE;
+			this.masking_threshold = masking_threshold;
+			this.data = data;
+			this.Tmax = Tmax;
+			if (calculateCBFCBVMTT) {
+				this.CBV = CBV;
+				this.CBF = CBF;
+				this.MTT = MTT;
+			}
+			if (calculateBounds) {
+				this.p0MaxDistFromValue = p0MaxDistFromValue;
+				this.p1MaxDistFromValue = p1MaxDistFromValue;
+				this.t975 = t975;
+			}
+			// this.chiSquared = chiSquared;
+		}
+
+		public void run() {
+			double x0[];
+			double xdata[];
+			int i;
+			double C[];
+			double b[];
+			int dim = 2;
+			double eps = 1.0e-8;
+			double scale = 1.0;
+			boolean display = false;
+			xdata = new double[2 * tDim];
+			for (i = 0; i < 2 * tDim; i++) {
+				xdata[i] = i * delT;
+			}
+			C = new double[2 * tDim];
+			b = new double[2 * tDim];
+			int y;
+			int x;
+			int t;
+			double S[] = new double[tDim];
+			int j;
+			double sumb;
+			double rcbf;
+			expfun1D minsearch1D;
+			expfun2D minsearch2D;
+			expfunNM minsearchNM;
+			expfunNM2 minsearchNM2;
+			int n = 2;
+			double tolx = 1.0E-8;
+			double tolf = 1.0E-8;
+			int max_iter = 5000;
+			int max_eval = 5000;
+			boolean verbose = false;
+			int exitStatus;
+			double p[] = new double[2];
+			double num;
+			double denom;
+			double num1;
+			double denom1;
+			int nPts;
+			double covarMat[][] = null;
+			double errorSumOfSquares;
+			double s2;
+			double arr2D[][] = new double[2][2];
+			double det;
+			double invDiag2D[] = new double[2];
+			double se0;
+			double se1;
+			double diff;
+			double expval;
+			if (calculateBounds) {
+				covarMat = new double[2 * tDim][2];
+			}
+			// Iterate
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					if ((search == ELSUNC_2D_SEARCH) || (search == NMSIMPLEX_2D_SEARCH)
+							|| (search == NELDERMEAD_2D_SEARCH)) {
+						x0 = new double[] { 0.1, 4 };
+					} else {
+						x0 = new double[] { 4 };
+					}
+					if (data[y][x][0] >= masking_threshold) {
+						// time signal from mri
+						for (t = 0; t < tDim; t++) {
+							S[t] = data[y][x][t];
+						}
+						// Calculate amount of contrast agent as estimated from R2
+						for (t = 0; t < tDim; t++) {
+							C[t] = -TE * Math.log(S[t] / S[0]);
+						}
+						// Solve for residual function
+						for (i = 0; i < 2 * tDim; i++) {
+							b[i] = 0;
+							// Second half of C is zeros
+							for (j = 0; j < tDim; j++) {
+								b[i] += D_inv[i][j] * C[j];
+							}
+						} // for (i = 0; i < 2*tDim; i++)
+						sumb = 0;
+						for (i = 0; i < 2 * tDim; i++) {
+							sumb += b[i];
+						}
+						if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb))) {
+							rcbf = -Double.MAX_VALUE;
+							Tmax[y][x] = -1;
+							for (i = 0; i < b.length / 4; i++) {
+								if (b[i] > rcbf) {
+									rcbf = b[i];
+									Tmax[y][x] = (short) (i + 1);
+								}
+							}
+							if (calculateCBFCBVMTT || calculateBounds) {
+								// Shift b to have a peak at origin for fitting
+								b = circshift(b, -Tmax[y][x]);
+								if (search == ELSUNC_2D_SEARCH) {
+									minsearch2D = new expfun2D(x0, b, xdata);
+									minsearch2D.driver();
+									exitStatus = minsearch2D.getExitStatus();
+									p = minsearch2D.getParameters();
+									if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
+										// Normal termination
+										if (calculateCBFCBVMTT) {
+											// p[0] corresponds to CBF, p[1] corresponds to MTT
+											CBF[y][x] = p[0];
+											// relCBF is max value of residual function. Should be similar to CBF,
+											// but may be different.
+											// relCBF[x][y][z] = rcbf;
+											MTT[y][x] = p[1];
+											CBV[y][x] = rcbf * p[1];
+										}
+										// chiSquared[y][x] = minsearch.getChiSquared();
+										if (calculateBounds) {
+											nPts = xdata.length;
+											errorSumOfSquares = 0.0;
+											for (i = 0; i < nPts; i++) {
+												expval = Math.exp(-1.0 / p[1] * xdata[i]);
+												covarMat[i][0] = Math.exp(-1.0 / p[1] * xdata[i]);
+												covarMat[i][1] = xdata[i] / (p[1] * p[1]) * p[0] * expval;
+												diff = (p[0] * expval) - b[i];
+												errorSumOfSquares += (diff * diff);
+											}
+											s2 = errorSumOfSquares / (nPts - 2);
+											arr2D[0][0] = 0.0;
+											arr2D[0][1] = 0.0;
+											arr2D[1][0] = 0.0;
+											arr2D[1][1] = 0.0;
+											for (i = 0; i < nPts; i++) {
+												arr2D[0][0] += covarMat[i][0] * covarMat[i][0];
+												arr2D[0][1] += covarMat[i][0] * covarMat[i][1];
+												arr2D[1][1] += covarMat[i][1] * covarMat[i][1];
+											}
+											arr2D[1][0] = arr2D[0][1];
+											det = arr2D[0][0] * arr2D[1][1] - arr2D[0][1] * arr2D[1][0];
+											if (det != 0.0) {
+												invDiag2D[0] = arr2D[1][1] / det;
+												invDiag2D[1] = arr2D[0][0] / det;
+												se0 = Math.sqrt(invDiag2D[0] * s2);
+												se1 = Math.sqrt(invDiag2D[1] * s2);
+												if ((!Double.isInfinite(se0)) && (!Double.isNaN(se0))) {
+													p0MaxDistFromValue[y][x] = t975 * se0;
+												}
+												if ((!Double.isInfinite(se1)) && (!Double.isNaN(se1))) {
+													p1MaxDistFromValue[y][x] = t975 * se1;
+												}
+											} // if (det != 0.0)
+										} // if (calculateBounds)
+									}
+								} // if (search == ELSUNC_2D_SEARCH)
+								else if (search == NMSIMPLEX_2D_SEARCH) {
+									minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
+									minsearchNM.driver();
+									if ((x0[1] > 0) && (x0[1] < 75)) {
+										// Normal termination
+										if (calculateCBFCBVMTT) {
+											// p[0] corresponds to CBF, p[1] corresponds to MTT
+											CBF[y][x] = x0[0];
+											// relCBF is max value of residual function. Should be similar to CBF,
+											// but may be different.
+											// relCBF[x][y][z] = rcbf;
+											MTT[y][x] = x0[1];
+											CBV[y][x] = rcbf * x0[1];
+										}
+										if (calculateBounds) {
+											nPts = xdata.length;
+											errorSumOfSquares = 0.0;
+											for (i = 0; i < nPts; i++) {
+												expval = Math.exp(-1.0 / x0[1] * xdata[i]);
+												covarMat[i][0] = expval;
+												covarMat[i][1] = xdata[i] / (x0[1] * x0[1]) * x0[0] * expval;
+												diff = (x0[0] * expval) - b[i];
+												errorSumOfSquares += (diff * diff);
+											}
+											s2 = errorSumOfSquares / (nPts - 2);
+											arr2D[0][0] = 0.0;
+											arr2D[0][1] = 0.0;
+											arr2D[1][0] = 0.0;
+											arr2D[1][1] = 0.0;
+											for (i = 0; i < nPts; i++) {
+												arr2D[0][0] += covarMat[i][0] * covarMat[i][0];
+												arr2D[0][1] += covarMat[i][0] * covarMat[i][1];
+												arr2D[1][1] += covarMat[i][1] * covarMat[i][1];
+											}
+											arr2D[1][0] = arr2D[0][1];
+											det = arr2D[0][0] * arr2D[1][1] - arr2D[0][1] * arr2D[1][0];
+											if (det != 0.0) {
+												invDiag2D[0] = arr2D[1][1] / det;
+												invDiag2D[1] = arr2D[0][0] / det;
+												se0 = Math.sqrt(invDiag2D[0] * s2);
+												se1 = Math.sqrt(invDiag2D[1] * s2);
+												if ((!Double.isInfinite(se0)) && (!Double.isNaN(se0))) {
+													p0MaxDistFromValue[y][x] = t975 * se0;
+												}
+												if ((!Double.isInfinite(se1)) && (!Double.isNaN(se1))) {
+													p1MaxDistFromValue[y][x] = t975 * se1;
+												}
+											} // if (det != 0.0)
+										} // if (calculateBounds)
+									}
+								} // else if (search == NMSIMPLEX_2D_SEARCH)
+								else if (search == NELDERMEAD_2D_SEARCH) {
+									minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b,
+											xdata);
+									minsearchNM2.driver();
+									p = minsearchNM2.getSolX();
+									if ((p[1] > 0) && (p[1] < 75)) {
+										// Normal termination
+										if (calculateCBFCBVMTT) {
+											// p[0] corresponds to CBF, p[1] corresponds to MTT
+											CBF[y][x] = p[0];
+											// relCBF is max value of residual function. Should be similar to CBF,
+											// but may be different.
+											// relCBF[x][y][z] = rcbf;
+											MTT[y][x] = p[1];
+											CBV[y][x] = rcbf * p[1];
+										}
+										// chiSquared[y][x] = minsearch.getChiSquared();
+										if (calculateBounds) {
+											nPts = xdata.length;
+											errorSumOfSquares = 0.0;
+											for (i = 0; i < nPts; i++) {
+												expval = Math.exp(-1.0 / p[1] * xdata[i]);
+												covarMat[i][0] = expval;
+												covarMat[i][1] = xdata[i] / (p[1] * p[1]) * p[0] * expval;
+												diff = (p[0] * expval) - b[i];
+												errorSumOfSquares += (diff * diff);
+											}
+											s2 = errorSumOfSquares / (nPts - 2);
+											arr2D[0][0] = 0.0;
+											arr2D[0][1] = 0.0;
+											arr2D[1][0] = 0.0;
+											arr2D[1][1] = 0.0;
+											for (i = 0; i < nPts; i++) {
+												arr2D[0][0] += covarMat[i][0] * covarMat[i][0];
+												arr2D[0][1] += covarMat[i][0] * covarMat[i][1];
+												arr2D[1][1] += covarMat[i][1] * covarMat[i][1];
+											}
+											arr2D[1][0] = arr2D[0][1];
+											det = arr2D[0][0] * arr2D[1][1] - arr2D[0][1] * arr2D[1][0];
+											if (det != 0.0) {
+												invDiag2D[0] = arr2D[1][1] / det;
+												invDiag2D[1] = arr2D[0][0] / det;
+												se0 = Math.sqrt(invDiag2D[0] * s2);
+												se1 = Math.sqrt(invDiag2D[1] * s2);
+												if ((!Double.isInfinite(se0)) && (!Double.isNaN(se0))) {
+													p0MaxDistFromValue[y][x] = t975 * se0;
+												}
+												if ((!Double.isInfinite(se1)) && (!Double.isNaN(se1))) {
+													p1MaxDistFromValue[y][x] = t975 * se1;
+												}
+											} // if (det != 0.0)
+										} // if (calculateBounds)
+									}
+								} // else if (search == NELDERMEAD_2D_SEARCH)
+								else if (calculateCBFCBVMTT) { // 1D search
+									minsearch1D = new expfun1D(x0, b, xdata);
+									minsearch1D.driver();
+									exitStatus = minsearch1D.getExitStatus();
+									p[1] = minsearch1D.getParameters()[0];
+									if ((exitStatus >= 0) && (p[1] > 0) && (p[1] < 75)) {
+										// Normal termination
+										num1 = 0.0;
+										denom1 = 0.0;
+										for (i = 0; i < 2 * tDim; i++) {
+											num = Math.exp(-xdata[i] / p[1]);
+											denom = num * num;
+											num1 += b[i] * num;
+											denom1 += denom;
+										}
+										p[0] = num1 / denom1;
+										// p[0] corresponds to CBF, p[1] corresponds to MTT
+										CBF[y][x] = p[0];
+										// relCBF is max value of residual function. Should be similar to CBF,
+										// but may be different.
+										// relCBF[x][y][z] = rcbf;
+										MTT[y][x] = p[1];
+										CBV[y][x] = rcbf * p[1];
+										// chiSquared[y][x] = minsearch.getChiSquared();
+									}
+								} // 1D search
+							} // if (calculateCBFCBVMTT || calculateBounds)
+						} // if ((!Double.isNaN(sumb)) && (!Double.isInfinite(sumb)))
+					} // if ((data[y][x][0] >= masking_threshold)
+				} // for (x = 0; x < xDim; x++)
+			} // for (y = 0; y < yDim; y++)
+		}
+	}
+
+	public void testexpfun() {
+		expfun1D minsearch1D;
+		expfun2D minsearch2D;
+		expfunNM minsearchNM;
+		expfunNM2 minsearchNM2;
+		int exitStatus;
+		double p[] = new double[2];
+		double num;
+		double denom;
+		double num1;
+		double denom1;
+		int i;
+		double x0[] = new double[] { 4 };
+		double b[] = new double[] { 0.07, 0.06 };
+		double xdata[] = new double[] { 5.0, 6.0 };
+		minsearch1D = new expfun1D(x0, b, xdata);
+		minsearch1D.driver();
+		exitStatus = minsearch1D.getExitStatus();
+		System.out.println("1D exitStatus = " + exitStatus);
+		p[1] = minsearch1D.getParameters()[0];
+		num1 = 0.0;
+		denom1 = 0.0;
+		for (i = 0; i < 2; i++) {
+			num = Math.exp(-xdata[i] / p[1]);
+			denom = num * num;
+			num1 += b[i] * num;
+			denom1 += denom;
+		}
+		p[0] = num1 / denom1;
+		System.out.println("1D p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
+		System.out.println("1D p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
+
+		b = new double[10];
+		xdata = new double[10];
+		for (i = 0; i < 10; i++) {
+			xdata[i] = i;
+			b[i] = 0.133 * Math.exp(-i / 5.67);
+		}
+		minsearch1D = new expfun1D(x0, b, xdata);
+		minsearch1D.driver();
+		exitStatus = minsearch1D.getExitStatus();
+		System.out.println("1D exitStatus = " + exitStatus);
+		p[1] = minsearch1D.getParameters()[0];
+		num1 = 0.0;
+		denom1 = 0.0;
+		for (i = 0; i < 10; i++) {
+			num = Math.exp(-xdata[i] / p[1]);
+			denom = num * num;
+			num1 += b[i] * num;
+			denom1 += denom;
+		}
+		p[0] = num1 / denom1;
+		System.out.println("1D p[0] = " + p[0] + " answer = 0.133");
+		System.out.println("1D p[1] = " + p[1] + " answer = 5.67");
+
+		x0 = new double[] { 0.1, 4 };
+		b = new double[] { 0.07, 0.06 };
+		xdata = new double[] { 5.0, 6.0 };
+		minsearch2D = new expfun2D(x0, b, xdata);
+		minsearch2D.driver();
+		exitStatus = minsearch2D.getExitStatus();
+		System.out.println("2D exitStatus = " + exitStatus);
+		p = minsearch2D.getParameters();
+		System.out.println("2D p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
+		System.out.println("2D p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
+
+		b = new double[10];
+		xdata = new double[10];
+		for (i = 0; i < 10; i++) {
+			xdata[i] = i;
+			b[i] = 0.133 * Math.exp(-i / 5.67);
+		}
+		minsearch2D = new expfun2D(x0, b, xdata);
+		minsearch2D.driver();
+		exitStatus = minsearch2D.getExitStatus();
+		p = minsearch2D.getParameters();
+		System.out.println("2D exitStatus = " + exitStatus);
+		System.out.println("2D p[0] = " + p[0] + " answer = 0.133");
+		System.out.println("2D p[1] = " + p[1] + " answer = 5.67");
+
+		int dim = 2;
+		double eps = 1.0e-8;
+		double scale = 1.0;
+		boolean display = false;
+		x0 = new double[] { 0.1, 4 };
+		b = new double[] { 0.07, 0.06 };
+		xdata = new double[] { 5.0, 6.0 };
+		minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
+		minsearchNM.driver();
+		System.out.println("2D NMSimplex x0[0] = " + x0[0] + " MATLAB answer = 0.151297958944948");
+		System.out.println("2D NMSimplex x0[1] = " + x0[1] + " MATLAB answer = 6.48713976636383");
+
+		x0 = new double[] { 0.1, 4 };
+		b = new double[10];
+		xdata = new double[10];
+		for (i = 0; i < 10; i++) {
+			xdata[i] = i;
+			b[i] = 0.133 * Math.exp(-i / 5.67);
+		}
+		minsearchNM = new expfunNM(x0, dim, eps, scale, display, b, xdata);
+		minsearchNM.driver();
+		System.out.println("2D NMSimplex x0[0] = " + x0[0] + " answer = 0.133");
+		System.out.println("2D NMSimplex x0[1] = " + x0[1] + " answer = 5.67");
+
+		int n = 2;
+		double tolx = 1.0E-8;
+		double tolf = 1.0E-8;
+		int max_iter = 5000;
+		int max_eval = 5000;
+		boolean verbose = false;
+		x0 = new double[] { 0.1, 4 };
+		b = new double[] { 0.07, 0.06 };
+		xdata = new double[] { 5.0, 6.0 };
+		minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+		minsearchNM2.driver();
+		p = minsearchNM2.getSolX();
+		System.out.println("NelderMead p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
+		System.out.println("NelderMead p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
+
+		x0 = new double[] { 0.1, 4 };
+		b = new double[10];
+		xdata = new double[10];
+		for (i = 0; i < 10; i++) {
+			xdata[i] = i;
+			b[i] = 0.133 * Math.exp(-i / 5.67);
+		}
+		minsearchNM2 = new expfunNM2(x0, n, tolx, tolf, max_iter, max_eval, verbose, b, xdata);
+		minsearchNM2.driver();
+		p = minsearchNM2.getSolX();
+		System.out.println("NelderMead p[0] = " + p[0] + " answer = 0.133");
+		System.out.println("NelderMead p[1] = " + p[1] + " answer = 5.67");
+	}
+
+	class expfun1D extends NLConstrainedEngine {
+		double b[];
+		double xdata[];
+
+		public expfun1D(double x0[], double b[], double xdata[]) {
+			// nPoints, params
+			super(1, 1);
+			this.b = b;
+			this.xdata = xdata;
+
+			bounds = 0; // bounds = 0 means unconstrained
+			// bl[0] = 1.0E-10;
+			// bu[0] = 74.999999;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
-        	
-        	
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
@@ -3703,9 +3711,9 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 			for (int i = 0; i < x0.length; i++) {
 				gues[i] = x0[i];
 			}
-        }
-        
-        /**
+		}
+
+		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
@@ -3716,32 +3724,23 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		 * Display results of displaying exponential fitting parameters.
 		 */
 		public void dumpResults() {
-			Preferences
-					.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n",
-							Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("Number of iterations: " + String.valueOf(iters)
-					+ "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
-					+ "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a0 " + String.valueOf(a[0]) + "\n",
+			Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a1 " + String.valueOf(a[1]) + "\n",
-					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
 		}
-		
+
 		/**
 		 * Fit to function.
 		 * 
-		 * @param a
-		 *            The x value of the data point.
-		 * @param residuals
-		 *            The best guess parameter values.
-		 * @param covarMat
-		 *            The derivative values of y with respect to fitting
-		 *            parameters.
+		 * @param a         The x value of the data point.
+		 * @param residuals The best guess parameter values.
+		 * @param covarMat  The derivative values of y with respect to fitting
+		 *                  parameters.
 		 */
-		public void fitToFunction(double[] a, double[] residuals,
-				double[][] covarMat) {
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
 			int ctrl;
 			int i;
 			double num1;
@@ -3762,26 +3761,26 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 			double sum8;
 			double ratio1;
 			double ratio2;
-			
+
 			try {
 				ctrl = ctrlMat[0];
 
 				if ((ctrl == -1) || (ctrl == 1)) {
-                    // Monoexponential decay 
+					// Monoexponential decay
 					num1 = 0.0;
 					denom1 = 0.0;
 					num2 = 0.0;
 					denom2 = 0.0;
 					for (i = 0; i < xdata.length; i++) {
-					    //residuals[i] = (a[0]*Math.exp(-1/a[1]*xdata[i])) - b[i];
-						num = Math.exp(-xdata[i]/a[0]);
+						// residuals[i] = (a[0]*Math.exp(-1/a[1]*xdata[i])) - b[i];
+						num = Math.exp(-xdata[i] / a[0]);
 						denom = num * num;
-                        num1 += b[i]*num;
-                        denom1 += denom;
-                        num2 += b[i]*xdata[i]*num;
-                        denom2 += xdata[i]*denom;
+						num1 += b[i] * num;
+						denom1 += denom;
+						num2 += b[i] * xdata[i] * num;
+						denom2 += xdata[i] * denom;
 					}
-					residuals[0] = num1/denom1 - num2/denom2;
+					residuals[0] = num1 / denom1 - num2 / denom2;
 				} // if ((ctrl == -1) || (ctrl == 1))
 
 				// Calculate the Jacobian analytically
@@ -3795,85 +3794,68 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 					sum7 = 0.0;
 					sum8 = 0.0;
 					for (i = 0; i < xdata.length; i++) {
-					    e1 = Math.exp(-xdata[i]/a[0]);
-					    e2 = e1 * e1;
-					    sum1 += e2;
-					    sum2 += (xdata[i]/(a[0]*a[0]))*b[i]*e1;
-					    sum3 += b[i]*e1;
-					    sum4 += 2.0*(xdata[i]/(a[0]*a[0]))*e2;
-					    sum5 += e2*xdata[i];
-					    sum6 += ((xdata[i]*xdata[i])/(a[0]*a[0]))*b[i]*e1;
-					    sum7 += b[i]*e1*xdata[i];
-					    sum8 += 2.0*((xdata[i]*xdata[i])/(a[0]*a[0]))*e2;
+						e1 = Math.exp(-xdata[i] / a[0]);
+						e2 = e1 * e1;
+						sum1 += e2;
+						sum2 += (xdata[i] / (a[0] * a[0])) * b[i] * e1;
+						sum3 += b[i] * e1;
+						sum4 += 2.0 * (xdata[i] / (a[0] * a[0])) * e2;
+						sum5 += e2 * xdata[i];
+						sum6 += ((xdata[i] * xdata[i]) / (a[0] * a[0])) * b[i] * e1;
+						sum7 += b[i] * e1 * xdata[i];
+						sum8 += 2.0 * ((xdata[i] * xdata[i]) / (a[0] * a[0])) * e2;
 					}
-					ratio1 = (sum1 * sum2 - sum3 * sum4)/(sum1 * sum1);
-					ratio2 = (sum5 * sum6 - sum7 * sum8)/(sum5 * sum5);
+					ratio1 = (sum1 * sum2 - sum3 * sum4) / (sum1 * sum1);
+					ratio2 = (sum5 * sum6 - sum7 * sum8) / (sum5 * sum5);
 					covarMat[0][0] = ratio1 - ratio2;
 				}
 			} catch (Exception e) {
-				Preferences.debug("function error: " + e.getMessage() + "\n",
-						Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 
 			return;
 		}
-    }
+	}
 
-    
-    /*public void testexpfun() {
-    	int i;
-    	expfun minsearch;
-    	int exitStatus;
-    	double p[];
-    	double x0[] = new double[]{0.1,4};
-    	double b[] = new double[]{0.07, 0.06};
-    	double xdata[] = new double[]{5.0,6.0};
-    	 minsearch = new expfun(x0, b, xdata);
- 	    minsearch.driver();
- 	    exitStatus = minsearch.getExitStatus();	
- 	    System.out.println("exitStatus = " + exitStatus);
- 	    p = minsearch.getParameters();
- 	    System.out.println("p[0] = " + p[0] + " MATLAB answer = 0.151297958944948");
- 	    System.out.println("p[1] = " + p[1] + " MATLAB answer = 6.48713976636383");
- 	    
- 	    b = new double[10];
- 	    xdata = new double[10];
- 	    for (i = 0; i < 10; i++) {
- 	    	xdata[i] = i;
- 	    	b[i] = 0.133*Math.exp(-i/5.67);
- 	    }
- 	   minsearch = new expfun(x0, b, xdata);
-	    minsearch.driver();
-	    exitStatus = minsearch.getExitStatus();	
-	    System.out.println("exitStatus = " + exitStatus);
-	    p = minsearch.getParameters();
-	    System.out.println("p[0] = " + p[0] + " answer = 0.133");
-	    System.out.println("p[1] = " + p[1] + " answer = 5.67");
-    }*/
-    
-    class expfun2D extends NLConstrainedEngine {
-    	double b[];
-    	double xdata[];
-        public expfun2D(double x0[], double b[], double xdata[]) {
-        	// nPoints, params
-        	super(b.length, x0.length);
-        	this.b = b;
-        	this.xdata = xdata;
-        	
-        	bounds = 0; // bounds = 0 means unconstrained
-        	//bl[0] = -Double.MAX_VALUE;
-        	//bu[0] = Double.MAX_VALUE;
-        	//bl[1] = 1.0E-10;
-        	//bu[1] = 74.999999;
+	/*
+	 * public void testexpfun() { int i; expfun minsearch; int exitStatus; double
+	 * p[]; double x0[] = new double[]{0.1,4}; double b[] = new double[]{0.07,
+	 * 0.06}; double xdata[] = new double[]{5.0,6.0}; minsearch = new expfun(x0, b,
+	 * xdata); minsearch.driver(); exitStatus = minsearch.getExitStatus();
+	 * System.out.println("exitStatus = " + exitStatus); p =
+	 * minsearch.getParameters(); System.out.println("p[0] = " + p[0] +
+	 * " MATLAB answer = 0.151297958944948"); System.out.println("p[1] = " + p[1] +
+	 * " MATLAB answer = 6.48713976636383");
+	 * 
+	 * b = new double[10]; xdata = new double[10]; for (i = 0; i < 10; i++) {
+	 * xdata[i] = i; b[i] = 0.133*Math.exp(-i/5.67); } minsearch = new expfun(x0, b,
+	 * xdata); minsearch.driver(); exitStatus = minsearch.getExitStatus();
+	 * System.out.println("exitStatus = " + exitStatus); p =
+	 * minsearch.getParameters(); System.out.println("p[0] = " + p[0] +
+	 * " answer = 0.133"); System.out.println("p[1] = " + p[1] + " answer = 5.67");
+	 * }
+	 */
 
-        	
+	class expfun2D extends NLConstrainedEngine {
+		double b[];
+		double xdata[];
+
+		public expfun2D(double x0[], double b[], double xdata[]) {
+			// nPoints, params
+			super(b.length, x0.length);
+			this.b = b;
+			this.xdata = xdata;
+
+			bounds = 0; // bounds = 0 means unconstrained
+			// bl[0] = -Double.MAX_VALUE;
+			// bu[0] = Double.MAX_VALUE;
+			// bl[1] = 1.0E-10;
+			// bu[1] = 74.999999;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
-        	
-        	
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
@@ -3884,123 +3866,111 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 			for (int i = 0; i < x0.length; i++) {
 				gues[i] = x0[i];
 			}
-        }
-        
-        /**
+		}
+
+		/**
 		 * Starts the analysis.
 		 */
-		/*public void driver() {
-			super.driver();
-		}*/
+		/*
+		 * public void driver() { super.driver(); }
+		 */
 
 		/**
 		 * Display results of displaying exponential fitting parameters.
 		 */
 		public void dumpResults() {
-			Preferences
-					.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n",
-							Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("Number of iterations: " + String.valueOf(iters)
-					+ "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
-					+ "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a0 " + String.valueOf(a[0]) + "\n",
+			Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a1 " + String.valueOf(a[1]) + "\n",
-					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
 		}
-		
-		public void fitToFunction(double[] a, double[] residuals,
-				double[][] covarMat) {
+
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
 			int ctrl;
 			int i;
-			
-			
+
 			try {
 				ctrl = ctrlMat[0];
 
 				if ((ctrl == -1) || (ctrl == 1)) {
-                    // Monoexponential decay
+					// Monoexponential decay
 					for (i = 0; i < nPts; i++) {
-					    residuals[i] = (a[0]*Math.exp(-1/a[1]*xdata[i])) - b[i];
+						residuals[i] = (a[0] * Math.exp(-1 / a[1] * xdata[i])) - b[i];
 					}
 				} // if ((ctrl == -1) || (ctrl == 1))
 
 				// Calculate the Jacobian analytically
 				else if (ctrl == 2) {
 					for (i = 0; i < nPts; i++) {
-					    covarMat[i][0] = Math.exp(-1.0/a[1]*xdata[i]);
-					    covarMat[i][1] = xdata[i]/(a[1]*a[1])*a[0]*Math.exp(-1.0/a[1]*xdata[i]);
+						covarMat[i][0] = Math.exp(-1.0 / a[1] * xdata[i]);
+						covarMat[i][1] = xdata[i] / (a[1] * a[1]) * a[0] * Math.exp(-1.0 / a[1] * xdata[i]);
 					}
 				}
 			} catch (Exception e) {
-				Preferences.debug("function error: " + e.getMessage() + "\n",
-						Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 
 			return;
 		}
 
-		
-		
-    }
-    
-    class expfunNM extends NMSimplex {
-    	double b[];
-    	double xdata[];
-    	//int dim = 2;
-		//double eps = 1.0e-4;
-		//double scale = 1.0;
-		//boolean display = false;
-        public expfunNM(double x0[], int dim, double eps, double scale, boolean display, double b[], double xdata[]) {
-        	super(x0,dim,eps,scale,display);
-        	this.b = b;
-        	this.xdata = xdata;	
-        }
-        
-        public double evalObjfun(double x[]){
-        	int i;
-        	int nPts = b.length;
-        	double diff;
-        	double sum = 0.0;
-        	// Monoexponential decay
+	}
+
+	class expfunNM extends NMSimplex {
+		double b[];
+		double xdata[];
+
+		// int dim = 2;
+		// double eps = 1.0e-4;
+		// double scale = 1.0;
+		// boolean display = false;
+		public expfunNM(double x0[], int dim, double eps, double scale, boolean display, double b[], double xdata[]) {
+			super(x0, dim, eps, scale, display);
+			this.b = b;
+			this.xdata = xdata;
+		}
+
+		public double evalObjfun(double x[]) {
+			int i;
+			int nPts = b.length;
+			double diff;
+			double sum = 0.0;
+			// Monoexponential decay
 			for (i = 0; i < nPts; i++) {
-			    diff = (x[0]*Math.exp(-1/x[1]*xdata[i])) - b[i];
-			    sum += diff*diff;
+				diff = (x[0] * Math.exp(-1 / x[1] * xdata[i])) - b[i];
+				sum += diff * diff;
 			}
 			return sum;
-        }
-        
-        
-   		public void getConstrainedValues(double x[], int n) {
-   	        /*if (x[1] < 1.0E-10) {
-   	        	x[1] = 1.0E-10;
-   	        }
-   	        else if (x[1] > 74.999999) {
-   	        	x[1] = 74.999999;
-   	        }*/
-   		}
-   		
-   		/**
+		}
+
+		public void getConstrainedValues(double x[], int n) {
+			/*
+			 * if (x[1] < 1.0E-10) { x[1] = 1.0E-10; } else if (x[1] > 74.999999) { x[1] =
+			 * 74.999999; }
+			 */
+		}
+
+		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
 			super.driver();
 		}
-    }
-    
-    
-    
-    class expfunNM2 extends NelderMead  {
-    	double b[];
-    	double xdata[];
-    	public expfunNM2(double x0[], int n, double tolx, double tolf, int max_iter, int max_eval, boolean verbose, double b[], double xdata[]) {
-    		super(n, x0, tolx, tolf, max_iter, max_eval, verbose);
-    		this.b = b;
-    		this.xdata = xdata;
-    	}
-    	
-    	/**
+	}
+
+	class expfunNM2 extends NelderMead {
+		double b[];
+		double xdata[];
+
+		public expfunNM2(double x0[], int n, double tolx, double tolf, int max_iter, int max_eval, boolean verbose,
+				double b[], double xdata[]) {
+			super(n, x0, tolx, tolf, max_iter, max_eval, verbose);
+			this.b = b;
+			this.xdata = xdata;
+		}
+
+		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
@@ -4010,423 +3980,369 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		@Override
 		public void cost_function(int n, NelderMead.point_t point) {
 			int i;
-        	int nPts = b.length;
-        	double diff;
-        	double sum = 0.0;
-        	// Monoexponential decay
+			int nPts = b.length;
+			double diff;
+			double sum = 0.0;
+			// Monoexponential decay
 			for (i = 0; i < nPts; i++) {
-			    diff = (point.x[0]*Math.exp(-1/point.x[1]*xdata[i])) - b[i];
-			    sum += diff*diff;
+				diff = (point.x[0] * Math.exp(-1 / point.x[1] * xdata[i])) - b[i];
+				sum += diff * diff;
 			}
 			point.fx = sum;
 			return;
-			
-		}
-    }
 
-    
-    public void mouseClicked(MouseEvent mouseEvent) {
-	     ViewJComponentBase vBase= (ViewJComponentBase)pickImage.getParentFrame().getComponentImage();
+		}
+	}
+
+	public void mouseClicked(MouseEvent mouseEvent) {
+		ViewJComponentBase vBase = (ViewJComponentBase) pickImage.getParentFrame().getComponentImage();
 		try {
 
-		   xS = Math.round((mouseEvent.getX() / (vBase.getZoomX() * vBase.getResolutionX())) - 0.5f);
-           yS = Math.round((mouseEvent.getY() / (vBase.getZoomY() * vBase.getResolutionY())) - 0.5f);
+			xS = Math.round((mouseEvent.getX() / (vBase.getZoomX() * vBase.getResolutionX())) - 0.5f);
+			yS = Math.round((mouseEvent.getY() / (vBase.getZoomY() * vBase.getResolutionY())) - 0.5f);
 
-           if ((xS < 0) || (xS >= pickImage.getExtents()[0]) || (yS < 0) || (yS >= pickImage.getExtents()[1])) {
-               return;
-           }
+			if ((xS < 0) || (xS >= pickImage.getExtents()[0]) || (yS < 0) || (yS >= pickImage.getExtents()[1])) {
+				return;
+			}
 
-          
-       } catch (OutOfMemoryError error) {
-           System.gc();
-           MipavUtil.displayError("Out of memory: PlugInAlgorithmTSPAnalysis.mouseClicked");
+		} catch (OutOfMemoryError error) {
+			System.gc();
+			MipavUtil.displayError("Out of memory: PlugInAlgorithmTSPAnalysis.mouseClicked");
 
-           return;
-       }
-	        accessLock.lock();
-		    canProcessMouseClick.signalAll();
-		    accessLock.unlock();
+			return;
+		}
+		accessLock.lock();
+		canProcessMouseClick.signalAll();
+		accessLock.unlock();
 	}
-    
-    public void mousePressed(MouseEvent event) {
-		
+
+	public void mousePressed(MouseEvent event) {
+
 	}
-	
+
 	public void mouseReleased(MouseEvent event) {
-		
+
 	}
-	
+
 	public void mouseEntered(MouseEvent event) {
-		
+
 	}
-	
+
 	public void mouseExited(MouseEvent event) {
-		
+
 	}
-	
-    public void mouseMoved(MouseEvent event) {
-		
+
+	public void mouseMoved(MouseEvent event) {
+
 	}
-    
-    public void mouseDragged(MouseEvent event) {
-    	
-    }
-	
+
+	public void mouseDragged(MouseEvent event) {
+
+	}
+
 	public void testxcorr() {
-        int i;
-		int x[] = new int[]{1,2,3,4};
-		double y[] = new double[]{1,2,1,-1};
+		int i;
+		int x[] = new int[] { 1, 2, 3, 4 };
+		double y[] = new double[] { 1, 2, 1, -1 };
 		// Answer from MATLAB
-		double answer[] = new double[]{-0.25,-0.25,0.25,1.0,3.0,2.75,1.0};
+		double answer[] = new double[] { -0.25, -0.25, 0.25, 1.0, 3.0, 2.75, 1.0 };
 		double result[] = xcorrbias(x, y);
 		for (i = 0; i < 7; i++) {
-			System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);
+			System.out.println("result[" + i + "] = " + result[i] + " answer[" + i + "] = " + answer[i]);
 		}
-	    x = new int[]{-34, 56, 98, -11, 45, 9};
-		y = new double[]{3.4, -2.7, 9.0, -6.1, 3.8, 4.8};
-		answer = new double[]{-27.2000,   23.2667,  148.4333,  -54.6667,   28.7000,  149.4167,  -68.9167,  118.8333,  -12.9833,   21.4500,    5.1000};
-		result = xcorrbias(x,y);
+		x = new int[] { -34, 56, 98, -11, 45, 9 };
+		y = new double[] { 3.4, -2.7, 9.0, -6.1, 3.8, 4.8 };
+		answer = new double[] { -27.2000, 23.2667, 148.4333, -54.6667, 28.7000, 149.4167, -68.9167, 118.8333, -12.9833,
+				21.4500, 5.1000 };
+		result = xcorrbias(x, y);
 		for (i = 0; i < 11; i++) {
-			System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);
+			System.out.println("result[" + i + "] = " + result[i] + " answer[" + i + "] = " + answer[i]);
 		}
 	}
-    
-    /*private double[] xcorrbias(int x[], double y[]) {
-    	int i;
-    	int m;
-    	int n;
-        int N = Math.max(x.length, y.length);
-        double xArr[] = new double[N];
-        double yArr[] = new double[N];
-        for (i = 0; i < x.length; i++) {
-        	xArr[i] = x[i];
-        }
-        for (i = 0; i < y.length; i++) {
-        	yArr[i] = y[i];
-        }
-        double cout[] = new double[2*N-1];
-        for (m = N-1; m >= 1; m--) {
-            for (n = 0; n <= N-m-1; n++) {
-                cout[N-1-m] += yArr[n+m]*xArr[n];	
-            }
-        }
-        for (m = 0; m <= N-1; m++) {
-        	for (n = 0; n <= N-m-1; n++) {
-        		cout[N-1+m] += xArr[n+m]*yArr[n];
-        	}
-        }
-        for (i = 0; i < 2*N-1; i++) {
-        	cout[i] = cout[i]/N;
-        }
-        return cout;
-    }*/
-	
-	private double[] xcorrbias(short x[], double y[]) {
-    	int i;
-    	int m;
-    	int n;
-        int N = Math.max(x.length, y.length);
-        DoubleDouble xArr[] = new DoubleDouble[N];
-        DoubleDouble yArr[] = new DoubleDouble[N];
-        for (i = 0; i < x.length; i++) {
-        	xArr[i] = DoubleDouble.valueOf((double)x[i]);
-        }
-        for (i = 0; i < y.length; i++) {
-        	yArr[i] = DoubleDouble.valueOf(y[i]);
-        }
-        DoubleDouble coutDD[] = new DoubleDouble[2*N-1];
-        double cout[] = new double[2*N-1];
-        for (i = 0; i < 2*N-1; i++) {
-        	coutDD[i] = DoubleDouble.valueOf(0.0);
-        }
-        for (m = N-1; m >= 1; m--) {
-            for (n = 0; n <= N-m-1; n++) {
-                coutDD[N-1-m] = coutDD[N-1-m].add(yArr[n+m].multiply(xArr[n]));	
-            }
-        }
-        for (m = 0; m <= N-1; m++) {
-        	for (n = 0; n <= N-m-1; n++) {
-        		coutDD[N-1+m] = coutDD[N-1+m].add(xArr[n+m].multiply(yArr[n]));
-        	}
-        }
-        DoubleDouble NDD = DoubleDouble.valueOf((double)N);
-        for (i = 0; i < 2*N-1; i++) {
-        	cout[i] = (coutDD[i].divide(NDD)).doubleValue();
-        }
-        return cout;
-    }
-    
-    private double[] xcorrbias(int x[], double y[]) {
-    	int i;
-    	int m;
-    	int n;
-        int N = Math.max(x.length, y.length);
-        DoubleDouble xArr[] = new DoubleDouble[N];
-        DoubleDouble yArr[] = new DoubleDouble[N];
-        for (i = 0; i < x.length; i++) {
-        	xArr[i] = DoubleDouble.valueOf((double)x[i]);
-        }
-        for (i = 0; i < y.length; i++) {
-        	yArr[i] = DoubleDouble.valueOf(y[i]);
-        }
-        DoubleDouble coutDD[] = new DoubleDouble[2*N-1];
-        double cout[] = new double[2*N-1];
-        for (i = 0; i < 2*N-1; i++) {
-        	coutDD[i] = DoubleDouble.valueOf(0.0);
-        }
-        for (m = N-1; m >= 1; m--) {
-            for (n = 0; n <= N-m-1; n++) {
-                coutDD[N-1-m] = coutDD[N-1-m].add(yArr[n+m].multiply(xArr[n]));	
-            }
-        }
-        for (m = 0; m <= N-1; m++) {
-        	for (n = 0; n <= N-m-1; n++) {
-        		coutDD[N-1+m] = coutDD[N-1+m].add(xArr[n+m].multiply(yArr[n]));
-        	}
-        }
-        DoubleDouble NDD = DoubleDouble.valueOf((double)N);
-        for (i = 0; i < 2*N-1; i++) {
-        	cout[i] = (coutDD[i].divide(NDD)).doubleValue();
-        }
-        return cout;
-    }
-    
-    /*private double[] xcorrbiasfft(int x[], double y[]) {
-		int i;
-    	FFTUtility fft;
-        int convLength = x.length + y.length - 1;
-        double xArr[] = new double[convLength];
-        double xImagArr[] = new double[convLength];
-        double yArr[] = new double[convLength];
-        double yImagArr[] = new double[convLength];
-        double cout[] = new double[convLength];
-        double cImagout[] = new double[convLength];
-        int N = x.length;
-        for (i = 0; i < x.length; i++) {
-        	xArr[i] = x[i];
-        }
-        for (i = 0; i < y.length; i++) {
-        	yArr[i] = y[i];
-        }
-        // Instantiate the 1d FFT routine
- 		// -1 for forward transform
- 		fft = new FFTUtility(xArr, xImagArr, 1,convLength, 1, -1,
- 				FFTUtility.FFT);
- 		fft.setShowProgress(false);
- 		fft.run();
- 		fft.finalize();
- 		fft = null;
- 		fft = new FFTUtility(yArr, yImagArr, 1,convLength, 1, -1,
- 				FFTUtility.FFT);
- 		fft.setShowProgress(false);
- 		fft.run();
- 		fft.finalize();
- 		fft = null;
- 		for (i = 0; i < convLength; i++) {
- 			cout[i] = xArr[i]*yArr[i] + xImagArr[i]*yImagArr[i];
- 			cImagout[i] = -xArr[i]*yImagArr[i] + xImagArr[i]*yArr[i];
- 		}
- 	    // +1 for backward transform
-		fft = new FFTUtility(cout, cImagout, 1, convLength, 1, 1,
-				FFTUtility.FFT);
-		fft.setShowProgress(false);		
-		fft.run();
-		fft.finalize();
-		fft = null;
-		for (i = 0; i < convLength; i++) {
-			cout[i] = cout[i]/N;
-		}
-		cout = circshift(cout,N-1);
-		return cout;
-	}*/
-    
-    public void testcircshift() {
-    	int i;
-    	int x[] = new int[]{0,1,2,3,4,5};
-    	int result[] = circshift(x, 3);
-    	int answer[] = new int[]{3,4,5,0,1,2};
-    	for (i = 0; i < 6; i++) {
-    		System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);	
-    	}
-    	result = circshift(x, 0);
-    	answer = new int[]{0, 1, 2, 3, 4, 5};
-    	for (i = 0; i < 6; i++) {
-    		System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);	
-    	}
-    	result = circshift(x,-3);
-    	answer = new int[]{3, 4, 5, 0, 1, 2};
-    	for (i = 0; i < 6; i++) {
-    		System.out.println("result["+i+"] = " + result[i] + " answer["+i+"] = " + answer[i]);	
-    	}
-    }
-    
-    private int[] circshift(short x[], int n) {
-    	int i;
-    	n = n % x.length;
-    	int y[] = new int[x.length];
-    	if (n > 0) {
-    	    for (i = 0; i < n; i++) {
-    	    	y[i] = x[x.length - (n - i)];
-    	    }
-    	    for (i = n; i < x.length; i++) {
-    	    	y[i] = x[i-n];
-    	    }
-    	}
-    	else if (n == 0) {
-    		for (i = 0; i < x.length; i++) {
-    			y[i] = x[i];
-    		}
-    	}
-    	else {
-    		n = -n;
-    		for (i = 0; i < n; i++) {
-    			y[x.length - (n - i)] = x[i];
-    		}
-    		for (i = n; i < x.length; i++) {
-    			y[i-n] = x[i];
-    		}
-    	}
-    	return y;
-    }
-    
-    private int[] circshift(int x[], int n) {
-    	int i;
-    	n = n % x.length;
-    	int y[] = new int[x.length];
-    	if (n > 0) {
-    	    for (i = 0; i < n; i++) {
-    	    	y[i] = x[x.length - (n - i)];
-    	    }
-    	    for (i = n; i < x.length; i++) {
-    	    	y[i] = x[i-n];
-    	    }
-    	}
-    	else if (n == 0) {
-    		for (i = 0; i < x.length; i++) {
-    			y[i] = x[i];
-    		}
-    	}
-    	else {
-    		n = -n;
-    		for (i = 0; i < n; i++) {
-    			y[x.length - (n - i)] = x[i];
-    		}
-    		for (i = n; i < x.length; i++) {
-    			y[i-n] = x[i];
-    		}
-    	}
-    	return y;
-    }
-    
-    private double[] circshift(double x[], int n) {
-    	int i;
-    	n = n % x.length;
-    	double y[] = new double[x.length];
-    	if (n > 0) {
-    	    for (i = 0; i < n; i++) {
-    	    	y[i] = x[x.length - (n - i)];
-    	    }
-    	    for (i = n; i < x.length; i++) {
-    	    	y[i] = x[i-n];
-    	    }
-    	}
-    	else if (n == 0) {
-    		for (i = 0; i < x.length; i++) {
-    			y[i] = x[i];
-    		}
-    	}
-    	else {
-    		n = -n;
-    		for (i = 0; i < n; i++) {
-    			y[x.length - (n - i)] = x[i];
-    		}
-    		for (i = n; i < x.length; i++) {
-    			y[i-n] = x[i];
-    		}
-    	}
-    	return y;
-    }
-    
-    public void testcorrcoef() {
-    	int x[] = new int[]{1, 5, 6, 9, -8, 11};
-    	double y[] = new double[]{9.7, 3.1, 6.2, -1.2, 0.0, 3.5};
-    	double answer = 0.035919004668078;
-    	double result = corrcoef(x, y);
-    	System.out.println("result = " + result + " answer = " + answer);
-    }
-    
-    private double corrcoef(short x[], double y[]) {
-    	int N = x.length;
-    	int i;
-    	double sumX = 0;
-    	double sumY = 0;
-    	double meanX;
-    	double meanY;
-    	double diffX;
-    	double diffY;
-    	double diffXSquaredSum = 0;
-    	double diffYSquaredSum = 0;
-    	double stdX;
-    	double stdY;
-    	double cf = 0;
-    	for (i = 0; i < N; i++) {
-    	    sumX += x[i];
-    	    sumY += y[i];
-    	}
-    	meanX = sumX/N;
-    	meanY = sumY/N;
-    	for (i = 0; i < N; i++) {
-    	    diffX = x[i] - meanX;
-    	    diffXSquaredSum += diffX*diffX;
-    	    diffY = y[i] - meanY;
-    	    diffYSquaredSum += diffY*diffY;
-    	    cf += diffX * diffY;
-    	}
-    	stdX = Math.sqrt(diffXSquaredSum/(N-1));
-    	stdY = Math.sqrt(diffYSquaredSum/(N-1));
-    	cf = cf/(stdX * stdY * (N-1));
-    	return cf;
-    }
-    
-    private double corrcoef(int x[], double y[]) {
-    	int N = x.length;
-    	int i;
-    	double sumX = 0;
-    	double sumY = 0;
-    	double meanX;
-    	double meanY;
-    	double diffX;
-    	double diffY;
-    	double diffXSquaredSum = 0;
-    	double diffYSquaredSum = 0;
-    	double stdX;
-    	double stdY;
-    	double cf = 0;
-    	for (i = 0; i < N; i++) {
-    	    sumX += x[i];
-    	    sumY += y[i];
-    	}
-    	meanX = sumX/N;
-    	meanY = sumY/N;
-    	for (i = 0; i < N; i++) {
-    	    diffX = x[i] - meanX;
-    	    diffXSquaredSum += diffX*diffX;
-    	    diffY = y[i] - meanY;
-    	    diffYSquaredSum += diffY*diffY;
-    	    cf += diffX * diffY;
-    	}
-    	stdX = Math.sqrt(diffXSquaredSum/(N-1));
-    	stdY = Math.sqrt(diffYSquaredSum/(N-1));
-    	cf = cf/(stdX * stdY * (N-1));
-    	return cf;
-    }
 
-    /**
-     * Prepares this class for destruction.
-     */
-    public void finalize() {
-        super.finalize();
-        
+	/*
+	 * private double[] xcorrbias(int x[], double y[]) { int i; int m; int n; int N
+	 * = Math.max(x.length, y.length); double xArr[] = new double[N]; double yArr[]
+	 * = new double[N]; for (i = 0; i < x.length; i++) { xArr[i] = x[i]; } for (i =
+	 * 0; i < y.length; i++) { yArr[i] = y[i]; } double cout[] = new double[2*N-1];
+	 * for (m = N-1; m >= 1; m--) { for (n = 0; n <= N-m-1; n++) { cout[N-1-m] +=
+	 * yArr[n+m]*xArr[n]; } } for (m = 0; m <= N-1; m++) { for (n = 0; n <= N-m-1;
+	 * n++) { cout[N-1+m] += xArr[n+m]*yArr[n]; } } for (i = 0; i < 2*N-1; i++) {
+	 * cout[i] = cout[i]/N; } return cout; }
+	 */
+
+	private double[] xcorrbias(short x[], double y[]) {
+		int i;
+		int m;
+		int n;
+		int N = Math.max(x.length, y.length);
+		DoubleDouble xArr[] = new DoubleDouble[N];
+		DoubleDouble yArr[] = new DoubleDouble[N];
+		for (i = 0; i < x.length; i++) {
+			xArr[i] = DoubleDouble.valueOf((double) x[i]);
+		}
+		for (i = 0; i < y.length; i++) {
+			yArr[i] = DoubleDouble.valueOf(y[i]);
+		}
+		DoubleDouble coutDD[] = new DoubleDouble[2 * N - 1];
+		double cout[] = new double[2 * N - 1];
+		for (i = 0; i < 2 * N - 1; i++) {
+			coutDD[i] = DoubleDouble.valueOf(0.0);
+		}
+		for (m = N - 1; m >= 1; m--) {
+			for (n = 0; n <= N - m - 1; n++) {
+				coutDD[N - 1 - m] = coutDD[N - 1 - m].add(yArr[n + m].multiply(xArr[n]));
+			}
+		}
+		for (m = 0; m <= N - 1; m++) {
+			for (n = 0; n <= N - m - 1; n++) {
+				coutDD[N - 1 + m] = coutDD[N - 1 + m].add(xArr[n + m].multiply(yArr[n]));
+			}
+		}
+		DoubleDouble NDD = DoubleDouble.valueOf((double) N);
+		for (i = 0; i < 2 * N - 1; i++) {
+			cout[i] = (coutDD[i].divide(NDD)).doubleValue();
+		}
+		return cout;
+	}
+
+	private double[] xcorrbias(int x[], double y[]) {
+		int i;
+		int m;
+		int n;
+		int N = Math.max(x.length, y.length);
+		DoubleDouble xArr[] = new DoubleDouble[N];
+		DoubleDouble yArr[] = new DoubleDouble[N];
+		for (i = 0; i < x.length; i++) {
+			xArr[i] = DoubleDouble.valueOf((double) x[i]);
+		}
+		for (i = 0; i < y.length; i++) {
+			yArr[i] = DoubleDouble.valueOf(y[i]);
+		}
+		DoubleDouble coutDD[] = new DoubleDouble[2 * N - 1];
+		double cout[] = new double[2 * N - 1];
+		for (i = 0; i < 2 * N - 1; i++) {
+			coutDD[i] = DoubleDouble.valueOf(0.0);
+		}
+		for (m = N - 1; m >= 1; m--) {
+			for (n = 0; n <= N - m - 1; n++) {
+				coutDD[N - 1 - m] = coutDD[N - 1 - m].add(yArr[n + m].multiply(xArr[n]));
+			}
+		}
+		for (m = 0; m <= N - 1; m++) {
+			for (n = 0; n <= N - m - 1; n++) {
+				coutDD[N - 1 + m] = coutDD[N - 1 + m].add(xArr[n + m].multiply(yArr[n]));
+			}
+		}
+		DoubleDouble NDD = DoubleDouble.valueOf((double) N);
+		for (i = 0; i < 2 * N - 1; i++) {
+			cout[i] = (coutDD[i].divide(NDD)).doubleValue();
+		}
+		return cout;
+	}
+
+	/*
+	 * private double[] xcorrbiasfft(int x[], double y[]) { int i; FFTUtility fft;
+	 * int convLength = x.length + y.length - 1; double xArr[] = new
+	 * double[convLength]; double xImagArr[] = new double[convLength]; double yArr[]
+	 * = new double[convLength]; double yImagArr[] = new double[convLength]; double
+	 * cout[] = new double[convLength]; double cImagout[] = new double[convLength];
+	 * int N = x.length; for (i = 0; i < x.length; i++) { xArr[i] = x[i]; } for (i =
+	 * 0; i < y.length; i++) { yArr[i] = y[i]; } // Instantiate the 1d FFT routine
+	 * // -1 for forward transform fft = new FFTUtility(xArr, xImagArr,
+	 * 1,convLength, 1, -1, FFTUtility.FFT); fft.setShowProgress(false); fft.run();
+	 * fft.finalize(); fft = null; fft = new FFTUtility(yArr, yImagArr,
+	 * 1,convLength, 1, -1, FFTUtility.FFT); fft.setShowProgress(false); fft.run();
+	 * fft.finalize(); fft = null; for (i = 0; i < convLength; i++) { cout[i] =
+	 * xArr[i]*yArr[i] + xImagArr[i]*yImagArr[i]; cImagout[i] = -xArr[i]*yImagArr[i]
+	 * + xImagArr[i]*yArr[i]; } // +1 for backward transform fft = new
+	 * FFTUtility(cout, cImagout, 1, convLength, 1, 1, FFTUtility.FFT);
+	 * fft.setShowProgress(false); fft.run(); fft.finalize(); fft = null; for (i =
+	 * 0; i < convLength; i++) { cout[i] = cout[i]/N; } cout = circshift(cout,N-1);
+	 * return cout; }
+	 */
+
+	public void testcircshift() {
+		int i;
+		int x[] = new int[] { 0, 1, 2, 3, 4, 5 };
+		int result[] = circshift(x, 3);
+		int answer[] = new int[] { 3, 4, 5, 0, 1, 2 };
+		for (i = 0; i < 6; i++) {
+			System.out.println("result[" + i + "] = " + result[i] + " answer[" + i + "] = " + answer[i]);
+		}
+		result = circshift(x, 0);
+		answer = new int[] { 0, 1, 2, 3, 4, 5 };
+		for (i = 0; i < 6; i++) {
+			System.out.println("result[" + i + "] = " + result[i] + " answer[" + i + "] = " + answer[i]);
+		}
+		result = circshift(x, -3);
+		answer = new int[] { 3, 4, 5, 0, 1, 2 };
+		for (i = 0; i < 6; i++) {
+			System.out.println("result[" + i + "] = " + result[i] + " answer[" + i + "] = " + answer[i]);
+		}
+	}
+
+	private int[] circshift(short x[], int n) {
+		int i;
+		n = n % x.length;
+		int y[] = new int[x.length];
+		if (n > 0) {
+			for (i = 0; i < n; i++) {
+				y[i] = x[x.length - (n - i)];
+			}
+			for (i = n; i < x.length; i++) {
+				y[i] = x[i - n];
+			}
+		} else if (n == 0) {
+			for (i = 0; i < x.length; i++) {
+				y[i] = x[i];
+			}
+		} else {
+			n = -n;
+			for (i = 0; i < n; i++) {
+				y[x.length - (n - i)] = x[i];
+			}
+			for (i = n; i < x.length; i++) {
+				y[i - n] = x[i];
+			}
+		}
+		return y;
+	}
+
+	private int[] circshift(int x[], int n) {
+		int i;
+		n = n % x.length;
+		int y[] = new int[x.length];
+		if (n > 0) {
+			for (i = 0; i < n; i++) {
+				y[i] = x[x.length - (n - i)];
+			}
+			for (i = n; i < x.length; i++) {
+				y[i] = x[i - n];
+			}
+		} else if (n == 0) {
+			for (i = 0; i < x.length; i++) {
+				y[i] = x[i];
+			}
+		} else {
+			n = -n;
+			for (i = 0; i < n; i++) {
+				y[x.length - (n - i)] = x[i];
+			}
+			for (i = n; i < x.length; i++) {
+				y[i - n] = x[i];
+			}
+		}
+		return y;
+	}
+
+	private double[] circshift(double x[], int n) {
+		int i;
+		n = n % x.length;
+		double y[] = new double[x.length];
+		if (n > 0) {
+			for (i = 0; i < n; i++) {
+				y[i] = x[x.length - (n - i)];
+			}
+			for (i = n; i < x.length; i++) {
+				y[i] = x[i - n];
+			}
+		} else if (n == 0) {
+			for (i = 0; i < x.length; i++) {
+				y[i] = x[i];
+			}
+		} else {
+			n = -n;
+			for (i = 0; i < n; i++) {
+				y[x.length - (n - i)] = x[i];
+			}
+			for (i = n; i < x.length; i++) {
+				y[i - n] = x[i];
+			}
+		}
+		return y;
+	}
+
+	public void testcorrcoef() {
+		int x[] = new int[] { 1, 5, 6, 9, -8, 11 };
+		double y[] = new double[] { 9.7, 3.1, 6.2, -1.2, 0.0, 3.5 };
+		double answer = 0.035919004668078;
+		double result = corrcoef(x, y);
+		System.out.println("result = " + result + " answer = " + answer);
+	}
+
+	private double corrcoef(short x[], double y[]) {
+		int N = x.length;
+		int i;
+		double sumX = 0;
+		double sumY = 0;
+		double meanX;
+		double meanY;
+		double diffX;
+		double diffY;
+		double diffXSquaredSum = 0;
+		double diffYSquaredSum = 0;
+		double stdX;
+		double stdY;
+		double cf = 0;
+		for (i = 0; i < N; i++) {
+			sumX += x[i];
+			sumY += y[i];
+		}
+		meanX = sumX / N;
+		meanY = sumY / N;
+		for (i = 0; i < N; i++) {
+			diffX = x[i] - meanX;
+			diffXSquaredSum += diffX * diffX;
+			diffY = y[i] - meanY;
+			diffYSquaredSum += diffY * diffY;
+			cf += diffX * diffY;
+		}
+		stdX = Math.sqrt(diffXSquaredSum / (N - 1));
+		stdY = Math.sqrt(diffYSquaredSum / (N - 1));
+		cf = cf / (stdX * stdY * (N - 1));
+		return cf;
+	}
+
+	private double corrcoef(int x[], double y[]) {
+		int N = x.length;
+		int i;
+		double sumX = 0;
+		double sumY = 0;
+		double meanX;
+		double meanY;
+		double diffX;
+		double diffY;
+		double diffXSquaredSum = 0;
+		double diffYSquaredSum = 0;
+		double stdX;
+		double stdY;
+		double cf = 0;
+		for (i = 0; i < N; i++) {
+			sumX += x[i];
+			sumY += y[i];
+		}
+		meanX = sumX / N;
+		meanY = sumY / N;
+		for (i = 0; i < N; i++) {
+			diffX = x[i] - meanX;
+			diffXSquaredSum += diffX * diffX;
+			diffY = y[i] - meanY;
+			diffYSquaredSum += diffY * diffY;
+			cf += diffX * diffY;
+		}
+		stdX = Math.sqrt(diffXSquaredSum / (N - 1));
+		stdY = Math.sqrt(diffYSquaredSum / (N - 1));
+		cf = cf / (stdX * stdY * (N - 1));
+		return cf;
+	}
+
+	/**
+	 * Prepares this class for destruction.
+	 */
+	public void finalize() {
+		super.finalize();
+
 //        if (delay_mapImage != null) {
 //            delay_mapImage.disposeLocal();
 //            delay_mapImage = null;
@@ -4435,252 +4351,249 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 //            MTTImage.disposeLocal();
 //            MTTImage = null;
 //        }
-        if (TmaxImage != null) {
-            TmaxImage.disposeLocal();
-            TmaxImage = null;
-        }
-    }
+		if (TmaxImage != null) {
+			TmaxImage.disposeLocal();
+			TmaxImage = null;
+		}
+	}
 
 //    public ModelImage getMTTImage() {
 //        return MTTImage;
 //    }
-    
-    public ModelImage getTmaxImage() {
-        return TmaxImage;
-    }
-    
-    public File getAifFile() {
-        return aifFile;
-    }
-    
-    public File getSliceAifFile() {
-        return sliceAifFile;
-    }
-    
+
+	public ModelImage getTmaxImage() {
+		return TmaxImage;
+	}
+
+	public File getAifFile() {
+		return aifFile;
+	}
+
+	public File getSliceAifFile() {
+		return sliceAifFile;
+	}
+
 //    public ModelImage getDelayMapImage() {
 //        return delay_mapImage;
 //    }
-    
-    public void setOutputFilePath(String path) {
-        outputFilePath = path;
-    }
-    
-    public void setOutputPrefix(String prefix) {
-        outputPrefix = prefix;
-    }
-    
-    public void setSaveAllOutputs(boolean saveAll) {
-        doSaveAllOutputs = saveAll;
-    }
-    
-    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
-        return saveImageFile(img, dir, fileBasename, fileType, false);
-    }
-    
-    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType, boolean alwaysSave) {
-        if (fileIO == null) {
-            fileIO = new FileIO();
-            fileIO.setQuiet(true);
-        }
-        
-        // if no directory specified, skip writing out images
-        // or if option is set and this is a file that is optionally written out
-        if (dir == null || (!alwaysSave && !doSaveAllOutputs)) {
-        	return null;
-        }
-        
-        FileWriteOptions opts = new FileWriteOptions(true);
-        opts.setFileDirectory(dir);
 
-        if (img.getNDims() == 3) {
-            opts.setBeginSlice(0);
-            opts.setEndSlice(img.getExtents()[2] - 1);
-        } else if (img.getNDims() == 4) {
-            opts.setBeginSlice(0);
-            opts.setEndSlice(img.getExtents()[2] - 1);
-            opts.setBeginTime(0);
-            opts.setEndTime(img.getExtents()[3] - 1);
-        }
+	public void setOutputFilePath(String path) {
+		outputFilePath = path;
+	}
 
-        opts.setFileType(fileType);
-        final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
-        opts.setFileName(fileBasename + ext);
+	public void setOutputPrefix(String prefix) {
+		outputPrefix = prefix;
+	}
 
-        opts.setOptionsSet(true);
-        opts.setMultiFile(false);
-        
-        fileIO.writeImage(img, opts, false, false);
-        
-        return new File(dir + File.separator + fileBasename + ext);
-    }
-    
-    private class indexValueComparator implements Comparator<indexValueItem> {
+	public void setSaveAllOutputs(boolean saveAll) {
+		doSaveAllOutputs = saveAll;
+	}
 
-        /**
-         * DOCUMENT ME!
-         * 
-         * @param o1 DOCUMENT ME!
-         * @param o2 DOCUMENT ME!
-         * 
-         * @return DOCUMENT ME!
-         */
-        public int compare(indexValueItem o1, indexValueItem o2) {
-            float a = o1.getValue();
-            float b = o2.getValue();
-            int i = o1.getIndex();
-            int j = o2.getIndex();
+	private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
+		return saveImageFile(img, dir, fileBasename, fileType, false);
+	}
 
-            if (a < b) {
-                return -1;
-            } else if (a > b) {
-                return 1;
-            } else if (i < j) {
-            	return -1;
-            } else if (i > j) {
-            	return 1;
-            } else {
-                return 0;
-            }
-        }
+	private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType,
+			boolean alwaysSave) {
+		if (fileIO == null) {
+			fileIO = new FileIO();
+			fileIO.setQuiet(true);
+		}
 
-    }
-    
-    private class indexValueItem {
+		// if no directory specified, skip writing out images
+		// or if option is set and this is a file that is optionally written out
+		if (dir == null || (!alwaysSave && !doSaveAllOutputs)) {
+			return null;
+		}
+
+		FileWriteOptions opts = new FileWriteOptions(true);
+		opts.setFileDirectory(dir);
+
+		if (img.getNDims() == 3) {
+			opts.setBeginSlice(0);
+			opts.setEndSlice(img.getExtents()[2] - 1);
+		} else if (img.getNDims() == 4) {
+			opts.setBeginSlice(0);
+			opts.setEndSlice(img.getExtents()[2] - 1);
+			opts.setBeginTime(0);
+			opts.setEndTime(img.getExtents()[3] - 1);
+		}
+
+		opts.setFileType(fileType);
+		final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
+		opts.setFileName(fileBasename + ext);
+
+		opts.setOptionsSet(true);
+		opts.setMultiFile(false);
+
+		fileIO.writeImage(img, opts, false, false);
+
+		return new File(dir + File.separator + fileBasename + ext);
+	}
+
+	private class indexValueComparator implements Comparator<indexValueItem> {
+
+		/**
+		 * DOCUMENT ME!
+		 * 
+		 * @param o1 DOCUMENT ME!
+		 * @param o2 DOCUMENT ME!
+		 * 
+		 * @return DOCUMENT ME!
+		 */
+		public int compare(indexValueItem o1, indexValueItem o2) {
+			float a = o1.getValue();
+			float b = o2.getValue();
+			int i = o1.getIndex();
+			int j = o2.getIndex();
+
+			if (a < b) {
+				return -1;
+			} else if (a > b) {
+				return 1;
+			} else if (i < j) {
+				return -1;
+			} else if (i > j) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+
+	}
+
+	private class indexValueItem {
 		private int index;
 		private float value;
-		
+
 		public indexValueItem(int index, float value) {
 			this.index = index;
 			this.value = value;
 		}
-		
+
 		public int getIndex() {
 			return index;
 		}
-		
+
 		public float getValue() {
 			return value;
 		}
-		
-		
+
 	}
-    
-    private void createPickImageDialog(ActionListener al) {
-    	int i;
-        JPanel panel;
-        TitledBorder border;
-        Font serif12, serif12B;
-        JLabel label1;
-        JLabel label2;
 
-        pickImageDialog = new JDialog(ViewUserInterface.getReference().getActiveImageFrame(), "Press OK to continue", false);
-        pickImageDialog.setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) -
-                                  (pickImageDialog.getBounds().width / 2),
-                                  (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -
-                                  (pickImageDialog.getBounds().height / 2));
-        pickImageDialog.getContentPane().setLayout(new GridBagLayout());
+	private void createPickImageDialog(ActionListener al) {
+		int i;
+		JPanel panel;
+		TitledBorder border;
+		Font serif12, serif12B;
+		JLabel label1;
+		JLabel label2;
 
-        pickImageDialog.setSize(300, 160);
+		pickImageDialog = new JDialog(ViewUserInterface.getReference().getActiveImageFrame(), "Press OK to continue",
+				false);
+		pickImageDialog.setLocation(
+				(Toolkit.getDefaultToolkit().getScreenSize().width / 2) - (pickImageDialog.getBounds().width / 2),
+				(Toolkit.getDefaultToolkit().getScreenSize().height / 2) - (pickImageDialog.getBounds().height / 2));
+		pickImageDialog.getContentPane().setLayout(new GridBagLayout());
 
-        serif12 = MipavUtil.font12;
-        serif12B = MipavUtil.font12B;
+		pickImageDialog.setSize(300, 160);
 
-        panel = new JPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-        panel.setLayout(new GridBagLayout());
+		serif12 = MipavUtil.font12;
+		serif12B = MipavUtil.font12B;
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.setForeground(Color.black);
-        border = new TitledBorder("Instructions");
-        border.setTitleColor(Color.black);
-        border.setBorder(new EtchedBorder());
-        border.setTitleFont(serif12B);
-        panel.setBorder(border);
-        pickImageDialog.getContentPane().add(panel, gbc);
+		panel = new JPanel();
+		panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+		panel.setLayout(new GridBagLayout());
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        label2 = new JLabel("Select the z slice that contains the AIF point");
-        label2.setForeground(Color.black);
-        label2.setFont(serif12);
-        panel.add(label2, gbc);
-        
-        gbc.gridx = 1;
-        zSliceComboBox = new JComboBox<String>();
-        zSliceComboBox.setFont(serif12);
-        zSliceComboBox.setBackground(Color.white);
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 1;
+		gbc.insets = new Insets(3, 3, 3, 3);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		panel.setForeground(Color.black);
+		border = new TitledBorder("Instructions");
+		border.setTitleColor(Color.black);
+		border.setBorder(new EtchedBorder());
+		border.setTitleFont(serif12B);
+		panel.setBorder(border);
+		pickImageDialog.getContentPane().add(panel, gbc);
 
-        
-        for (i = 0; i < zDim; i++) {
-            zSliceComboBox.addItem("Slice " + i);
-        }
-        zSliceComboBox.addActionListener(this);
-        panel.add(zSliceComboBox, gbc);
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		label2 = new JLabel("Select the z slice that contains the AIF point");
+		label2.setForeground(Color.black);
+		label2.setFont(serif12);
+		panel.add(label2, gbc);
 
-        JPanel buttonPanel = new JPanel();
-        OKButton = new JButton("OK");
-        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        OKButton.setFont(serif12B);
-        OKButton.addActionListener(al);
-        buttonPanel.add(OKButton);
+		gbc.gridx = 1;
+		zSliceComboBox = new JComboBox<String>();
+		zSliceComboBox.setFont(serif12);
+		zSliceComboBox.setBackground(Color.white);
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        pickImageDialog.getContentPane().add(buttonPanel, gbc);
-        pickImageDialog.setResizable(true);
-        pickImageDialog.setVisible(true);
+		for (i = 0; i < zDim; i++) {
+			zSliceComboBox.addItem("Slice " + i);
+		}
+		zSliceComboBox.addActionListener(this);
+		panel.add(zSliceComboBox, gbc);
 
-    }
-    
-    /**
-     * Calls various methods depending on the action.
-     *
-     * @param  event  event that triggered function
-     */
-    public void actionPerformed(ActionEvent event) {
-        int x, y;
-        Object source = event.getSource();
+		JPanel buttonPanel = new JPanel();
+		OKButton = new JButton("OK");
+		OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+		OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+		OKButton.setFont(serif12B);
+		OKButton.addActionListener(al);
+		buttonPanel.add(OKButton);
 
-        if (source == OKButton) {
-             pickImageDialog.dispose();
-             pressedOK = true;
-        }
-        else if (source == zSliceComboBox) {
-        	if (pickFrame != null) {
-        		pickFrame.dispose();
-        	}
-        	if (pickImage != null) {
-        		pickImage.disposeLocal();
-        		pickImage = null;
-        	}
-        	int sliceBuffer[] = new int[length];
-        	zSlice = zSliceComboBox.getSelectedIndex();
-		    for (y = 0; y < yDim; y++) {
-		    	for (x = 0; x < xDim; x++) {
-		    		sliceBuffer[x + y * xDim] = data[zSlice][y][x][0];
-		    	}
-		    }
-		    
-		    pickImage = new ModelImage(ModelStorageBase.INTEGER,extents2D,"pickImage");
-		    try {
-		    	pickImage.importData(0, sliceBuffer, true);
-		    }
-		    catch (IOException e) {
-		    	MipavUtil.displayError("IOException on pickImage.importData");
-		    	setCompleted(false);
-		    	return;
-		    }
-		    pickFrame = new ViewJFrameImage(pickImage);	
-        }
-    }
-    
-    }
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		pickImageDialog.getContentPane().add(buttonPanel, gbc);
+		pickImageDialog.setResizable(true);
+		pickImageDialog.setVisible(true);
+
+	}
+
+	/**
+	 * Calls various methods depending on the action.
+	 *
+	 * @param event event that triggered function
+	 */
+	public void actionPerformed(ActionEvent event) {
+		int x, y;
+		Object source = event.getSource();
+
+		if (source == OKButton) {
+			pickImageDialog.dispose();
+			pressedOK = true;
+		} else if (source == zSliceComboBox) {
+			if (pickFrame != null) {
+				pickFrame.dispose();
+			}
+			if (pickImage != null) {
+				pickImage.disposeLocal();
+				pickImage = null;
+			}
+			int sliceBuffer[] = new int[length];
+			zSlice = zSliceComboBox.getSelectedIndex();
+			for (y = 0; y < yDim; y++) {
+				for (x = 0; x < xDim; x++) {
+					sliceBuffer[x + y * xDim] = data[zSlice][y][x][0];
+				}
+			}
+
+			pickImage = new ModelImage(ModelStorageBase.INTEGER, extents2D, "pickImage");
+			try {
+				pickImage.importData(0, sliceBuffer, true);
+			} catch (IOException e) {
+				MipavUtil.displayError("IOException on pickImage.importData");
+				setCompleted(false);
+				return;
+			}
+			pickFrame = new ViewJFrameImage(pickImage);
+		}
+	}
+
+}
