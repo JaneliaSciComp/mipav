@@ -1825,6 +1825,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		            }
 			    	
 			    } // if (plotAIF)
+			    System.out.println("Finished run");
 			    setCompleted(true);
 			    return;
 	    	} // if (findAVInfo)
