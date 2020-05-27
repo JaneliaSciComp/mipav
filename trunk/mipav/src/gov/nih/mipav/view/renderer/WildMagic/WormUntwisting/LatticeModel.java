@@ -10007,6 +10007,7 @@ public class LatticeModel {
 	
 	public static boolean renameLatticeOnLoad( ModelImage image, VOIVector latticeVector)
 	{
+		if ( latticeVector == null ) return false;
 		if ( latticeVector.size() < 2 ) return false;
 		
 		VOI left = latticeVector.elementAt(0);
