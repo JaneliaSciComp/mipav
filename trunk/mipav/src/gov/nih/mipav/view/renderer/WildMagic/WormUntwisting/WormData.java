@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.WormUntwisting;
 
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
@@ -10,6 +11,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
@@ -343,6 +345,38 @@ public class WormData
 			//			VOIVector finalLattice = new VOIVector();
 			//			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
 			VOIVector finalLattice = LatticeModel.readLatticeCSV(outputDirectory + File.separator + editLatticeOutput + File.separator + "lattice.csv");
+			if ( (finalLattice == null) || (finalLattice.size() < 2) ) {
+
+				finalLattice = new VOIVector();
+				short sID = 0;
+				VOI left = new VOI(sID, "left", VOI.ANNOTATION, (float) Math.random());
+				left.setColor(new Color(0, 0, 255));
+				VOI right = new VOI(sID++, "right", VOI.ANNOTATION, (float) Math.random());
+				right.setColor(new Color(0, 0, 255));
+				finalLattice.add(left);
+				finalLattice.add(right);
+				// try reading .xml:
+				FileVOI fileVOI;
+				try {
+					fileVOI = new FileVOI( "lattice.xml", fileName, wormImage);
+					VOI[] vois = fileVOI.readVOI(false);
+					if ( vois != null && vois[0] != null ) {
+						if ( vois[0].getCurves() != null && vois[0].getCurves().size() == 2 ) {
+							for ( int i = 0; i < vois[0].getCurves().elementAt(0).size(); i++ ) {
+								VOIWormAnnotation annotation = new VOIWormAnnotation( vois[0].getCurves().elementAt(0).elementAt(i) );
+								left.getCurves().add( annotation );
+
+								annotation = new VOIWormAnnotation( vois[0].getCurves().elementAt(1).elementAt(i) );
+								right.getCurves().add( annotation );
+							}
+						}
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
 			if ( LatticeModel.renameLatticeOnLoad(wormImage, finalLattice) || !checkSeamCells() ) {
 				LatticeModel.saveLattice(outputDirectory + File.separator, editLatticeOutput, finalLattice);
 			}
