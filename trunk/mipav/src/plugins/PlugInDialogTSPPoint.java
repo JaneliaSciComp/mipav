@@ -29,23 +29,11 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
 	
 	private PlugInAlgorithmTSPPoint TSPPointAlgo = null;
 	
-	private ViewUserInterface UI;
-	
 	private JTextField pwiImageFileDirectoryText;
 
 	private String pwiImageFileDirectory;
 	
 	private JTextField baseText;
-	
-	private JButton maskButton;
-	
-	private String maskFileDir;
-
-    private String maskFileName;
-
-    private ModelImage maskImage = null;
-	
-	private JTextField maskText;
 	
 	private JTextField xText;
 	
@@ -74,6 +62,17 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
 	private JTextField sigmaYText;
 	
 	private float sigmay = 5.0f;
+	
+    private JCheckBox calculateMaskingCheckBox;
+	
+	private boolean calculateMaskingThreshold = true;
+	
+	private JLabel masking_thresholdLabel;
+	
+	private JTextField masking_thresholdText;
+	
+	// Threshold to mask out image pixels not corresponding to brain tissues
+	private int masking_threshold = 600;
 	
 	private JTextField TSP_thresholdText;
 	
@@ -132,71 +131,14 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (source == calculateMaskingCheckBox) {
+            masking_thresholdLabel.setEnabled(!calculateMaskingCheckBox.isSelected());
+       	    masking_thresholdText.setEnabled(!calculateMaskingCheckBox.isSelected());
         } else if (source == spatialSmoothingCheckBox) {
         	sigmaXLabel.setEnabled(spatialSmoothingCheckBox.isSelected());
         	sigmaXText.setEnabled(spatialSmoothingCheckBox.isSelected());
         	sigmaYLabel.setEnabled(spatialSmoothingCheckBox.isSelected());
         	sigmaYText.setEnabled(spatialSmoothingCheckBox.isSelected());
-        } else if (command.equals("Mask")) {
-
-            try {
-                JFileChooser chooser = new JFileChooser();
-
-                UI = ViewUserInterface.getReference();
-
-                if (UI.getDefaultDirectory() != null) {
-                    File file = new File(UI.getDefaultDirectory());
-
-                    if (file != null) {
-                        chooser.setCurrentDirectory(file);
-                    } else {
-                        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                    }
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
-
-                chooser.setDialogTitle("Open mask file");
-                maskFileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-
-                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
-
-                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    maskFileName = chooser.getSelectedFile().getName();
-                    maskFileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                    UI.setDefaultDirectory(maskFileDir);
-                } else {
-                    maskFileName = null;
-                }
-
-                if (maskFileName != null) {
-                    maskText.setText(maskFileName);
-                } else {
-                    maskText.setText("");
-                }
-                if (maskFileName == null) {
-                    System.err.println("maskFileName is null");
-
-                    return;
-                }
-                
-                if (maskFileDir == null) {
-                	System.err.println("maskFileDir is null");
-                }
-
-                FileIO fileIO = new FileIO();
-
-                maskImage = fileIO.readImage(maskFileName, maskFileDir, false, null);
-            } catch (OutOfMemoryError e) {
-                MipavUtil.displayError("Out of memory in PlugInDialogTSPPoint.");
-
-                return;
-            }
         } else {
             super.actionPerformed(event);
         }
@@ -246,21 +188,6 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         
         gbc.gridx = 0;
         gbc.gridy = 2;
-        maskButton = new JButton("Choose mask file");
-        maskButton.setForeground(Color.black);
-        maskButton.setFont(serif12);
-        maskButton.addActionListener(this);
-        maskButton.setActionCommand("Mask");
-        gbc.gridwidth = 1;
-        inputPanel.add(maskButton, gbc);
-
-        gbc.gridx = 1;
-        maskText = new JTextField();
-        maskText.setFont(serif12);
-        inputPanel.add(maskText, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
         JLabel xLabel = new JLabel("Voxel x location");
         xLabel.setFont(serif12);
         xLabel.setForeground(Color.black);
@@ -274,7 +201,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(xText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 3;
         JLabel yLabel = new JLabel("Voxel y location");
         yLabel.setFont(serif12);
         yLabel.setForeground(Color.black);
@@ -288,7 +215,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(yText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 4;
         JLabel zLabel = new JLabel("Voxel z location");
         zLabel.setFont(serif12);
         zLabel.setForeground(Color.black);
@@ -302,7 +229,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(zText, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 5;
         spatialSmoothingCheckBox = new JCheckBox("Perform spatial smoothing");
         spatialSmoothingCheckBox.setSelected(false);
         spatialSmoothingCheckBox.setFont(MipavUtil.font12);
@@ -310,7 +237,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         spatialSmoothingCheckBox.addActionListener(this);
         inputPanel.add(spatialSmoothingCheckBox, gbc);
         
-        gbc.gridy = 7;
+        gbc.gridy = 6;
         sigmaXLabel = new JLabel("Gaussian blur sigma X in millimeters");
         sigmaXLabel.setFont(serif12);
         sigmaXLabel.setForeground(Color.black);
@@ -326,7 +253,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(sigmaXText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 7;
         sigmaYLabel = new JLabel("Gaussian blur sigma Y in millimeters");
         sigmaYLabel.setFont(serif12);
         sigmaYLabel.setForeground(Color.black);
@@ -342,7 +269,32 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(sigmaYText, gbc);
         
         gbc.gridx = 0;
+        gbc.gridy = 8;
+        calculateMaskingCheckBox = new JCheckBox("Calculate masking threshold from mean and standard deviation");
+        calculateMaskingCheckBox.setSelected(true);
+        calculateMaskingCheckBox.setFont(MipavUtil.font12);
+        calculateMaskingCheckBox.setForeground(Color.black);
+        calculateMaskingCheckBox.addActionListener(this);
+        inputPanel.add(calculateMaskingCheckBox, gbc);
+        
+        gbc.gridx = 0;
         gbc.gridy = 9;
+        masking_thresholdLabel = new JLabel("Masking threshold");
+        masking_thresholdLabel.setFont(serif12);
+        masking_thresholdLabel.setForeground(Color.black);
+        masking_thresholdLabel.setEnabled(false);
+        inputPanel.add(masking_thresholdLabel, gbc);
+        
+        gbc.gridx = 1;
+        masking_thresholdText = new JTextField(10);
+        masking_thresholdText.setText("600");
+        masking_thresholdText.setFont(serif12);
+        masking_thresholdText.setForeground(Color.black);
+        masking_thresholdText.setEnabled(false);
+        inputPanel.add(masking_thresholdText, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 10;
         JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
         TSP_thresholdLabel.setFont(serif12);
         TSP_thresholdLabel.setForeground(Color.black);
@@ -356,7 +308,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(TSP_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         JLabel TSP_iterLabel = new JLabel("TSP iterations");
         TSP_iterLabel.setFont(serif12);
         TSP_iterLabel.setForeground(Color.black);
@@ -370,7 +322,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(TSP_iterText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -451,8 +403,8 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
 
         try {
 
-            TSPPointAlgo = new PlugInAlgorithmTSPPoint(pwiImageFileDirectory, maskImage, 
-            		xLoc, yLoc, zLoc, spatialSmoothing, sigmax, sigmay,
+            TSPPointAlgo = new PlugInAlgorithmTSPPoint(pwiImageFileDirectory,
+            		xLoc, yLoc, zLoc, spatialSmoothing, sigmax, sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, multiThreading, calculateCorrelation,
             		fileNameBase);
 
@@ -495,27 +447,14 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     protected void setGUIFromParams() {
     	pwiImageFileDirectory = scriptParameters.getParams().getString("pwiImageFileDirectory");
     	fileNameBase = scriptParameters.getParams().getString("file_name_base");
-    	maskFileName = scriptParameters.getParams().getString("mask_file_name");
-    	maskFileDir = scriptParameters.getParams().getString("mask_file_dir");
-    	if (maskFileName == null) {
-            System.err.println("maskFileName is null");
-
-            return;
-        }
-        
-        if (maskFileDir == null) {
-        	System.err.println("maskFileDir is null");
-        }
-
-        FileIO fileIO = new FileIO();
-
-        maskImage = fileIO.readImage(maskFileName, maskFileDir, false, null);
         xLoc = scriptParameters.getParams().getInt("x_loc");
         yLoc = scriptParameters.getParams().getInt("y_loc");
         zLoc = scriptParameters.getParams().getInt("z_loc");
     	spatialSmoothing = scriptParameters.getParams().getBoolean("spatial_smoothing");
     	sigmax = scriptParameters.getParams().getFloat("x_sigma");
     	sigmay = scriptParameters.getParams().getFloat("y_sigma");
+    	calculateMaskingThreshold = scriptParameters.getParams().getBoolean("calc_mask_thresh");
+    	masking_threshold = scriptParameters.getParams().getInt("mask_thresh");
     	TSP_threshold = scriptParameters.getParams().getDouble("TSP_thresh");
     	TSP_iter = scriptParameters.getParams().getInt("iter");
     	multiThreading = scriptParameters.getParams().getBoolean("multi_thread");
@@ -529,13 +468,13 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.getParams().put(ParameterFactory.newParameter("pwiImageFileDirectory", pwiImageFileDirectory));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("file_name_base", fileNameBase));
-    	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_file_name", maskFileName));
-    	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_file_dir", maskFileDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("x_loc", xLoc));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("y_loc", yLoc));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("z_loc", zLoc));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("x_sigma", sigmax));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("y_sigma", sigmay));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_mask_thresh", calculateMaskingThreshold));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("mask_thresh", masking_threshold));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("TSP_thresh", TSP_threshold));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("iter", TSP_iter));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("multi_thread", multiThreading));
@@ -551,11 +490,6 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     		MipavUtil.displayError("The file name base is empty");
     		baseText.requestFocus();
     		baseText.selectAll();
-    		return false;
-    	}
-    	
-    	if (maskImage == null) {
-    		MipavUtil.displayError("No mask Image has been selected");
     		return false;
     	}
     	
@@ -648,7 +582,31 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
 
     	} // if (spatialSmoothing)
     	
-    	
+    	calculateMaskingThreshold = calculateMaskingCheckBox.isSelected();
+    	if (!calculateMaskingThreshold) {
+	    	tmpStr = masking_thresholdText.getText();
+	    	try {
+	    		masking_threshold = Integer.valueOf(tmpStr).intValue();
+	    	}
+	    	catch (NumberFormatException e) {
+	    	    MipavUtil.displayError("masking_threshold text does not have a proper integer");
+	    	    masking_thresholdText.requestFocus();
+	    	    masking_thresholdText.selectAll();
+	    	    return false;
+	    	}
+	    	if (masking_threshold < 0) {
+	    		MipavUtil.displayError("masking_threshold must be at least 0");
+	    		masking_thresholdText.requestFocus();
+	    	    masking_thresholdText.selectAll();
+	    	    return false;
+	    	}
+	    	if (masking_threshold > 65535) {
+	    		MipavUtil.displayError("masking_threshold cannot exceed 65535");
+	    		masking_thresholdText.requestFocus();
+	    	    masking_thresholdText.selectAll();
+	    	    return false;
+	    	}
+    	}
     	
     	tmpStr = TSP_thresholdText.getText();
     	try {
