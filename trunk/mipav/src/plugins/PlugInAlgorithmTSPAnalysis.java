@@ -2476,8 +2476,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    pickImage.disposeLocal();
 		    pickImage = null;
 		    System.out.println("xS = " + xS + " yS = " + yS);
-		    for (t = 0; t < tDim; t++) {
-		    	S[t] = data[zSlice][yS][xS][t];
+		    short mindata = Short.MAX_VALUE;
+    		for (t = 0; t < tDim; t++) {
+    			if (data[zSlice][yS][xS][t] < mindata) {
+    				mindata = data[zSlice][yS][xS][t];
+    			}
+    		}
+		   
+		    // Needed so that negative and zero values of S[t] can never be passed into a logarithm generating Ca[t].
+    		for (t = 0; t < tDim; t++) {
+		    	S[t] = data[zSlice][yS][xS][t] - mindata + 1;
 		    }
 		    zmean = zSlice;
 		    ymean = yS;
