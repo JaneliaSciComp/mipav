@@ -105,9 +105,11 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	private boolean spatialSmoothing = false;
 	private float sigmax = 5.0f;
 	private float sigmay = 5.0f;
-
-	// Zero out all points not desired with an external mask image
-	private int masking_threshold = 1;
+	
+    private boolean calculateMaskingThreshold = true;
+    
+    // Thresholding to mask out image pixels not corresponding to brain tissue
+    private int masking_threshold = 600;
 
 	private double TSP_threshold = 0.8;
 
@@ -195,18 +197,20 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	 * Constructor.
 	 *
 	 */
-	public PlugInAlgorithmTSPPoint(String pwiImageFileDirectory, ModelImage maskImage, int xLoc, int yLoc, int zLoc,
-			boolean spatialSmoothing, float sigmax, float sigmay, double TSP_threshold, int TSP_iter,
+	public PlugInAlgorithmTSPPoint(String pwiImageFileDirectory, int xLoc, int yLoc, int zLoc,
+			boolean spatialSmoothing, float sigmax, float sigmay, 
+			boolean calculateMaskingThreshold, int masking_threshold, double TSP_threshold, int TSP_iter,
 			boolean multiThreading, boolean calculateCorrelation, String fileNameBase) {
 		// super(resultImage, srcImg);
 		this.pwiImageFileDirectory = pwiImageFileDirectory;
-		this.maskImage = maskImage;
 		this.xLoc = xLoc;
 		this.yLoc = yLoc;
 		this.zLoc = zLoc;
 		this.spatialSmoothing = spatialSmoothing;
 		this.sigmax = sigmax;
 		this.sigmay = sigmay;
+		this.calculateMaskingThreshold = calculateMaskingThreshold;
+		this.masking_threshold = masking_threshold;
 		outputFilePath = pwiImageFileDirectory;
 		this.TSP_threshold = TSP_threshold;
 		this.TSP_iter = TSP_iter;
@@ -720,58 +724,6 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	    image3D = null;
     	}
     	
-    	if (maskImage.getNDims() != 3) {
-            MipavUtil.displayError("Dimensions of mask image is " + maskImage.getNDims() + 
-            		" instead of the required 3");
-            setCompleted(false);
-            return;
-        }
-    	
-    	if (maskImage.getExtents()[0] != xDim) {
-    		MipavUtil.displayError("The maskImage has xDim = " + maskImage.getExtents()[0] +
-    				" instead of the required " + xDim);
-    		setCompleted(false);
-    		return;
-    	}
-    	
-    	if (maskImage.getExtents()[1] != yDim) {
-    		MipavUtil.displayError("The maskImage has yDim = " + maskImage.getExtents()[1] +
-    				" instead of the required " + yDim);
-    		setCompleted(false);
-    		return;
-    	}
-    	
-    	if (maskImage.getExtents()[2] != zDim) {
-    		MipavUtil.displayError("The maskImage has zDim = " + maskImage.getExtents()[2] +
-    				" instead of the required " + zDim);
-    		setCompleted(false);
-    		return;
-    	}
-        
-        mask = new BitSet(volume);
-        dbuffer = new double[volume];
-
-        try {
-            maskImage.exportData(0, volume, dbuffer);
-        } catch (IOException e) {
-            MipavUtil.displayError("IOException on maskImage.exportData");
-            setCompleted(false);
-            return;
-        }
-        maskImage.disposeLocal();
-        maskImage = null;
-
-        for (i = 0; i < volume; i++) {
-
-            if (buffer[i] > 0) {
-                mask.set(i);
-            } else {
-                mask.clear(i);
-            }
-        }
-   
-
-    	
     	data = new short[zDim][yDim][xDim][tDim];
     	// Start TSP processing
     	brain_mask = new short[tDim];
@@ -780,20 +732,12 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	// Normalize PWI by subtracting off pre_contrast (first) image
     	// Loop over time dimension to calculate whole brain average perfusion time signal
     	
-		int zIndex;
-		int yIndex;
     	if (Philips) {
 	    	for (z = 0; z < zDim; z++) {
-	    		zIndex = z*length;
 				for (y = 0; y < yDim; y++) {
-					yIndex = zIndex + y*xDim;
 					for (x = 0; x < xDim; x++) {
-						index = yIndex + x;
 						for (t = 0; t < tDim; t++) {
-							if (!mask.get(index)) {
-								data[z][y][x][t] = 0;
-							}
-							else if (t == 0) {
+							if (t == 0) {
 							    data[z][y][x][t] =(short)Math.round( (3.0*buffer[x + y*xDim + t*length + z*tDim*length] + 
 							    		buffer[x + y*xDim + (t+1)*length + z*tDim*length])/4.0);
 							}
@@ -813,16 +757,10 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	}
     	else {
     		for (z = 0; z < zDim; z++) {
-    			zIndex = z * length;
 				for (y = 0; y < yDim; y++) {
-					yIndex = zIndex + y*xDim;
 					for (x = 0; x < xDim; x++) {
-						index = yIndex + x;
 						for (t = 0; t < tDim; t++) {
-							if (!mask.get(index)) {
-								data[z][y][x][t] = 0;
-							}
-							else if (t == 0) {
+							if (t == 0) {
 						        data[z][y][x][t] = (short)Math.round( (3.0*buffer[x + y*xDim + z*length + t*volume] +
 						    		buffer[x + y*xDim + z*length + (t+1)*volume])/4.0);
 							}
@@ -853,28 +791,16 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	kernelFactory.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
 	    	Kernel gaussianKernel = kernelFactory.createKernel();
 	    	boolean color = false;
-	    	BitSet sliceMask = new BitSet(length);
 	    	for (z = 0; z < zDim; z++) {
-	    		zIndex = z*length;
 	    		for (t = 0; t < tDim; t++) {
 	    			for (y = 0; y < yDim; y++) {
-	    				yIndex = zIndex + y*xDim;
 	    				for (x = 0; x < xDim; x++) {
-	    					index = yIndex + x;
-	    					index2D = x + y*xDim;
-	    					if (mask.get(index)) {
-	    					    sliceMask.set(index2D);	
-	    					}
-	    					else {
-	    						sliceMask.clear(index2D);
-	    					}
 	    					inputBuffer[x + y * xDim] = data[z][y][x][t];
 	    				}
 	    			}
 	    			
 	    			AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
 	    					inputBuffer, extents2D, gaussianKernel.getData(), color);
-	    			convolver.setMask(sliceMask);
 	                convolver.run();
 	    	        if (threadStopped) {
 	    	            setCompleted(false);
@@ -901,7 +827,64 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	}
     	} // if (spatialSmoothing)
     	
-		
+    	if (calculateMaskingThreshold) {
+    		long dataSum = 0;
+    		for (z = 0; z < zDim; z++) {
+        		for (t = 0; t < tDim; t++) {
+        			for (y = 0; y < yDim; y++) {
+        				for (x = 0; x < xDim; x++) {
+    			            dataSum = dataSum + data[z][y][x][t];
+        				}
+        			}
+        		}
+    		}
+    		double mean = (double)dataSum/(double)dataSize;
+    		double squareSum = 0.0;
+    		for (z = 0; z < zDim; z++) {
+        		for (t = 0; t < tDim; t++) {
+        			for (y = 0; y < yDim; y++) {
+        				for (x = 0; x < xDim; x++) {
+    			            double difference = data[z][y][x][t] - mean;
+    			            squareSum += (difference * difference);
+        				}
+        			}
+        		}
+    		}
+    		double stdDev = Math.sqrt(squareSum/(double)(dataSize-1));
+    		masking_threshold = (int)Math.round(mean + 0.5 * stdDev);
+    	} // if (calculateMaskingThreshold)
+    	
+    	boolean locReachesThreshold = false;
+    	short maxThresholdReached = Short.MIN_VALUE;
+    	for (t = 0; t < tDim; t++) {
+    		if (data[zLoc][yLoc][xLoc][t] > maxThresholdReached) {
+    			maxThresholdReached = data[zLoc][yLoc][xLoc][t];
+    		}
+    		if (data[zLoc][yLoc][xLoc][t] >= masking_threshold) {
+    			locReachesThreshold = true;
+    			break;
+    		}
+    	}
+    	
+    	if (!locReachesThreshold) {
+    		MipavUtil.displayError("The specified data location only reaches " + maxThresholdReached + 
+    				" instead of the masking_threshold = " + masking_threshold);
+    		setCompleted(false);
+    		return;
+    	}
+    	boolean thresholdMet[][][] = new boolean[zDim][yDim][xDim];
+    	for (z = 0; z < zDim; z++) {
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				for (t = 0; t < tDim && (!thresholdMet[z][y][x]); t++) {
+    				    if (data[z][y][x][t] >= masking_threshold) {
+    				    	thresholdMet[z][y][x] = true; 
+    				    }
+    				}
+    			}
+    		}
+    	}
+    	
 		sum = new long[tDim];
 		count = new int[tDim];
     	for (z = 0; z < zDim; z++) {
@@ -1151,6 +1134,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
     	//fireProgressStateChanged("Writing first set of images");
         //fireProgressStateChanged(70);
     	FileInfoBase fileInfo[];
+    	dbuffer = new double[volume];
     	
     	/*if (calculateCorrelation) {
 	    	corr_map2Image = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "corr_map2");
@@ -1373,7 +1357,6 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	int pointcorrIndex = 0;
 	    	int pointcorr2Index = 0;
 	    	
-	    	boolean dataHasZeroValue[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean prePeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
 	    	boolean postPeakTooHigh[][][] = new boolean[numArterialZ][yDim][xDim];
 	        Vector<Short>pointZeros = new Vector<Short>();
@@ -1386,20 +1369,23 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	for (z = lowestArterialZ; z <= highestArterialZ; z++) {
 				for (y = 0; y < yDim; y++) {
 					xloop: for (x = 0; x < xDim; x++) {
-						for (t = 0; t < tDim; t++) {
-							if (data[z][y][x][t] == 0) {
-								logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
-								ttp[z][y][x] = Short.MIN_VALUE;
-								fwhm[z-lowestArterialZ][y][x] = Float.NaN;
-								dataHasZeroValue[z-lowestArterialZ][y][x] = true;
-								continue xloop;
-							}
+						if (!thresholdMet[z][y][x]) {
+							logpeaks[z-lowestArterialZ][y][x] = Float.NaN;
+							ttp[z][y][x] = Short.MIN_VALUE;
+							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
+							continue xloop;
 						}
 						maxpeaks = -Double.MAX_VALUE;
 						minttp = Short.MAX_VALUE;
+						short mindata = Short.MAX_VALUE;
 						for (t = 0; t < tDim; t++) {
-							delR2[t] = -(1.0/TE)*Math.log((double)data[z][y][x][t]/
-									(double)data[z][y][x][0]);
+							if (data[z][y][x][t] < mindata) {
+								mindata = data[z][y][x][t];
+							}
+						}
+						for (t = 0; t < tDim; t++) {
+							delR2[t] = -(1.0/TE)*Math.log((double)(data[z][y][x][t] - mindata + 1)/
+									(double)(data[z][y][x][0] - mindata + 1));
 							if (delR2[t] > maxpeaks) {
 								maxpeaks = delR2[t];
 								minttp = (short)(t+1);
@@ -1640,8 +1626,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    	if (findAVInfo) {
 	    		try {
 	    	    raAVFile.writeBytes("For z slices going from " + lowestArterialZ + " to " + highestArterialZ + "\n");
-	    	    raAVFile.writeBytes("For each surviving voxel for which all data time values are nonzero perform:\n");
-	    	    raAVFile.writeBytes("For each z,y,x for each t find delR2[t] = -(1/TE)*log(data[t]/data[0])\n");
+	    	    raAVFile.writeBytes("For each voxel for which at least one time has data[z][y][x][t] >= masking_threshold:\n");
+	    	    raAVFile.writeBytes("For each z,y,x for each t find delR2[t] = -(1/TE)*log((data[t] - min(data[t]) + 1)/(data[0] - min(data[t] + 1))\n");
 	    	    raAVFile.writeBytes("At the t value that generates the maximum delR2[t] find:\n");
 	    	    raAVFile.writeBytes("peak[z][y][x] containing the maximum delR2[t] value\n");
 	    	    raAVFile.writeBytes("Time to pulse ttp[z][y][x] which contains the t+1 at which the peak occurred\n");
@@ -1666,44 +1652,41 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    		    	raAVFile.writeBytes(pointZeros.get(pointZeros.size()-1) + "\n");
 	    		    }
 	    		}
-	    		if (dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
-	    			raAVFile.writeBytes("No point peak, ttp, fwhm, and corr values because of a zero data value at 1 or more time points at input point location\n");
-	    		}
-	    		else {
-		    		raAVFile.writeBytes("Point peak value = " + pointpeaks + "\n");
-		    		raAVFile.writeBytes("Point peak is " + fractionpointpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
-		    		raAVFile.writeBytes("Point peak is " + pointpeaksstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("Point peak is at " + pointpeakscumdistr + " of the peaks cumulative distribution function\n");
-	    		}
+	    		
+	    		raAVFile.writeBytes("Point peak value = " + pointpeaks + "\n");
+	    		raAVFile.writeBytes("Point peak is " + fractionpointpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
+	    		raAVFile.writeBytes("Point peak is " + pointpeaksstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("Point peak is at " + pointpeakscumdistr + " of the peaks cumulative distribution function\n");
+	    		
 	    		raAVFile.writeBytes("mean ttp value = " + meanttp + "\n");
 	    		raAVFile.writeBytes("minimum ttp value = " + globalminttp + "\n");
 	    		raAVFile.writeBytes("ttp standard deviation = " + ttpstd + "\n");
-	    		if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
-		    		raAVFile.writeBytes("Point ttp value = " + pointttp + "\n");
-		    		raAVFile.writeBytes("Point ttp is " + fractionpointttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
-		    		raAVFile.writeBytes("Point ttp is " + pointttpstdfrommean + " standard deviations from the mean\n");
-		    		raAVFile.writeBytes("Point ttp is at " + pointttpcumdistr + " of the ttp cumulative distribution function\n");
-	    		}
+	    	
+	    		raAVFile.writeBytes("Point ttp value = " + pointttp + "\n");
+	    		raAVFile.writeBytes("Point ttp is " + fractionpointttpmeantomin + " fraction of the way from ttp mean to ttp min\n");
+	    		raAVFile.writeBytes("Point ttp is " + pointttpstdfrommean + " standard deviations from the mean\n");
+	    		raAVFile.writeBytes("Point ttp is at " + pointttpcumdistr + " of the ttp cumulative distribution function\n");
+	    		
 	    		raAVFile.writeBytes("mean fwhm value = " + meanfwhm + "\n");
 	    		raAVFile.writeBytes("minimum fwhm value = " + globalminfwhm + "\n");
 	    		raAVFile.writeBytes("fwhm standard deviation = " + fwhmstd + "\n");
-	    		if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
-	    			if (prePeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc] && postPeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
-	    			    raAVFile.writeBytes("No point fwhm value because never fall to half peak value either before or after the peak\n");	
-	    			}
-	    			else if (prePeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
-	    				raAVFile.writeBytes("No point fwhm value because never fall to half peak value before the peak\n");
-	    			}
-	    			else if (postPeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
-	    				raAVFile.writeBytes("No point fwhm value because never fall to half peak value after the peak\n");
-	    			}
-	    			else {
-			    		raAVFile.writeBytes("Point fwhm value = " + pointfwhm + "\n");
-			    		raAVFile.writeBytes("Point fwhm is " + fractionpointfwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
-			    		raAVFile.writeBytes("Point fwhm is " + pointfwhmstdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("Point fwhm is at " + pointfwhmcumdistr + " of the fwhm cumulative distribution function\n");
-	    		    }
-	    		}
+	    	
+    			if (prePeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc] && postPeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
+    			    raAVFile.writeBytes("No point fwhm value because never fall to half peak value either before or after the peak\n");	
+    			}
+    			else if (prePeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
+    				raAVFile.writeBytes("No point fwhm value because never fall to half peak value before the peak\n");
+    			}
+    			else if (postPeakTooHigh[zLoc-lowestArterialZ][yLoc][xLoc]) {
+    				raAVFile.writeBytes("No point fwhm value because never fall to half peak value after the peak\n");
+    			}
+    			else {
+		    		raAVFile.writeBytes("Point fwhm value = " + pointfwhm + "\n");
+		    		raAVFile.writeBytes("Point fwhm is " + fractionpointfwhmmeantomin + " fraction of the way from fwhm mean to fwhm min\n");
+		    		raAVFile.writeBytes("Point fwhm is " + pointfwhmstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("Point fwhm is at " + pointfwhmcumdistr + " of the fwhm cumulative distribution function\n");
+    		    }
+	    		
 	    		if (calculateCorrelation) {
 	    		    raAVFile.writeBytes("corr is without AIF delay compensation\n");
 	    		    raAVFile.writeBytes("corr2 is with AIF delay compensation\n\n");
@@ -1711,16 +1694,15 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    		    raAVFile.writeBytes("minimum corr = " + globalmincorr + "\n");
 	    		    raAVFile.writeBytes("maximum corr = " + globalmaxcorr + "\n");
 	    		    raAVFile.writeBytes("corr standard deviation = " + corrstd + "\n");
-	    		    if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
-		    		    raAVFile.writeBytes("Point corr value = " + pointcorr + "\n");
-			    		raAVFile.writeBytes("Point corr is " + pointcorrstdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("Point corr is at " + pointcorrcumdistr + " of the corr cumulative distribution function\n");
-	    		    }
-		    		if (!dataHasZeroValue[zLoc-lowestArterialZ][yLoc][xLoc]) {
-			    		raAVFile.writeBytes("Point corr2 value = " + pointcorr2 + "\n");
-			    		raAVFile.writeBytes("Point corr2 is " + pointcorr2stdfrommean + " standard deviations from the mean\n");
-			    		raAVFile.writeBytes("Point corr2 is at " + pointcorr2cumdistr + " of the corr2 cumulative distribution function\n");
-		    		}
+	    		   
+	    		    raAVFile.writeBytes("Point corr value = " + pointcorr + "\n");
+		    		raAVFile.writeBytes("Point corr is " + pointcorrstdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("Point corr is at " + pointcorrcumdistr + " of the corr cumulative distribution function\n");
+		    
+		    		raAVFile.writeBytes("Point corr2 value = " + pointcorr2 + "\n");
+		    		raAVFile.writeBytes("Point corr2 is " + pointcorr2stdfrommean + " standard deviations from the mean\n");
+		    		raAVFile.writeBytes("Point corr2 is at " + pointcorr2cumdistr + " of the corr2 cumulative distribution function\n");
+		    		
 	    		} // if (calculateCorrelation)
 	    		raAVFile.close();
 	    		}
@@ -1729,8 +1711,15 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		    	    setCompleted(false);
 		    	    return;
 		    	}
+	    		short mindata = Short.MAX_VALUE;
 	    		for (t = 0; t < tDim; t++) {
-			    	S[t] = data[zLoc][yLoc][xLoc][t];
+	    			if (data[zLoc][yLoc][xLoc][t] < mindata) {
+	    				mindata = data[zLoc][yLoc][xLoc][t];
+	    			}
+	    		}
+	    		// Needed to prevent zeros from appearing in log expression for Ca[t]
+	    		for (t = 0; t < tDim; t++) {
+			    	S[t] = data[zLoc][yLoc][xLoc][t] - mindata + 1;
 			    }
 			    zmean = zLoc;
 			    ymean = yLoc;
