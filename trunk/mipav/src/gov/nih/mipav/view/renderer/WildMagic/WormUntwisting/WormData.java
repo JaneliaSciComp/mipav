@@ -346,37 +346,15 @@ public class WormData
 			//			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
 			VOIVector finalLattice = LatticeModel.readLatticeCSV(outputDirectory + File.separator + editLatticeOutput + File.separator + "lattice.csv");
 			if ( (finalLattice == null) || (finalLattice.size() < 2) ) {
-
-				finalLattice = new VOIVector();
-				short sID = 0;
-				VOI left = new VOI(sID, "left", VOI.ANNOTATION, (float) Math.random());
-				left.setColor(new Color(0, 0, 255));
-				VOI right = new VOI(sID++, "right", VOI.ANNOTATION, (float) Math.random());
-				right.setColor(new Color(0, 0, 255));
-				finalLattice.add(left);
-				finalLattice.add(right);
-				// try reading .xml:
-				FileVOI fileVOI;
-				try {
-					fileVOI = new FileVOI( "lattice.xml", fileName, wormImage);
-					VOI[] vois = fileVOI.readVOI(false);
-					if ( vois != null && vois[0] != null ) {
-						if ( vois[0].getCurves() != null && vois[0].getCurves().size() == 2 ) {
-							for ( int i = 0; i < vois[0].getCurves().elementAt(0).size(); i++ ) {
-								VOIWormAnnotation annotation = new VOIWormAnnotation( vois[0].getCurves().elementAt(0).elementAt(i) );
-								left.getCurves().add( annotation );
-
-								annotation = new VOIWormAnnotation( vois[0].getCurves().elementAt(1).elementAt(i) );
-								right.getCurves().add( annotation );
-							}
-						}
+				finalLattice = readLegacyLattice(fileName);
+				if ( finalLattice == null ) {
+					String latticeDir = outputDirectory + File.separator + "lattice" + File.separator;
+					outputFileDir = new File(fileName);
+					if ( outputFileDir.exists() ) {
+						finalLattice = readLegacyLattice(latticeDir);
 					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
 			}
-			
 			if ( LatticeModel.renameLatticeOnLoad(wormImage, finalLattice) || !checkSeamCells() ) {
 				LatticeModel.saveLattice(outputDirectory + File.separator, editLatticeOutput, finalLattice);
 			}
@@ -395,6 +373,43 @@ public class WormData
 		return null;
 	}
 
+	private VOIVector readLegacyLattice(String fileName) {
+
+		File latticeFile = new File(fileName + "lattice.xml");
+		if ( !latticeFile.exists() ) return null;
+			
+		VOIVector finalLattice = new VOIVector();
+		
+		short sID = 0;
+		VOI left = new VOI(sID, "left", VOI.ANNOTATION, (float) Math.random());
+		left.setColor(new Color(0, 0, 255));
+		VOI right = new VOI(sID++, "right", VOI.ANNOTATION, (float) Math.random());
+		right.setColor(new Color(0, 0, 255));
+		finalLattice.add(left);
+		finalLattice.add(right);
+		// try reading .xml:
+		FileVOI fileVOI;
+		try {
+			fileVOI = new FileVOI( "lattice.xml", fileName, wormImage);
+			VOI[] vois = fileVOI.readVOI(false);
+			if ( vois != null && vois[0] != null ) {
+				if ( vois[0].getCurves() != null && vois[0].getCurves().size() == 2 ) {
+					for ( int i = 0; i < vois[0].getCurves().elementAt(0).size(); i++ ) {
+						VOIWormAnnotation annotation = new VOIWormAnnotation( vois[0].getCurves().elementAt(0).elementAt(i) );
+						left.getCurves().add( annotation );
+
+						annotation = new VOIWormAnnotation( vois[0].getCurves().elementAt(1).elementAt(i) );
+						right.getCurves().add( annotation );
+					}
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return finalLattice;
+	}
+	
 	private VOI readMarkers()
 	{
 		//		VOI markerAnnotations = null;
