@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import java.awt.Color;
+
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
@@ -184,6 +186,42 @@ public class VolumeClip extends VolumeObject
         super.dispose(kRenderer);
     }
 
+    public boolean[] getDisplay() {
+    	return new boolean[] { m_abDisplayPolyline[CLIP_X], m_abDisplayPolyline[CLIP_Y], m_abDisplayPolyline[CLIP_Z] };
+    }
+    
+    public boolean[] getDisplayInv() {
+    	return new boolean[] { m_abDisplayPolyline[CLIP_X_INV], m_abDisplayPolyline[CLIP_Y_INV], m_abDisplayPolyline[CLIP_Z_INV] };
+    }
+
+	public Color[] getClipColor() {
+		Color[] colors = new Color[6];
+    	ColorRGB kColor = new ColorRGB();
+        m_akPolyline[CLIP_X].VBuffer.GetColor3( 0, 0, kColor );
+        colors[0] = new Color( kColor.R*255, kColor.G*255, kColor.B*255);
+        m_akPolyline[CLIP_X_INV].VBuffer.GetColor3( 0, 0, kColor );
+        colors[1] = new Color( kColor.R*255, kColor.G*255, kColor.B*255);
+
+        m_akPolyline[CLIP_Y].VBuffer.GetColor3( 0, 0, kColor );
+        colors[2] = new Color( kColor.R*255, kColor.G*255, kColor.B*255);
+        m_akPolyline[CLIP_Y_INV].VBuffer.GetColor3( 0, 0, kColor );
+        colors[3] = new Color( kColor.R*255, kColor.G*255, kColor.B*255);
+        
+        m_akPolyline[CLIP_Z].VBuffer.GetColor3( 0, 0, kColor );
+        colors[4] = new Color( kColor.R*255, kColor.G*255, kColor.B*255);
+        m_akPolyline[CLIP_Z_INV].VBuffer.GetColor3( 0, 0, kColor );
+        colors[5] = new Color( kColor.R*255, kColor.G*255, kColor.B*255);
+        return colors;
+	}
+	
+    public boolean[] getDisplayEye() {
+    	return new boolean[] { m_abDisplayPolyline[CLIP_EYE], m_abDisplayPolyline[CLIP_EYE_INV] };
+    }
+    
+    public boolean getDisplayArb() {
+    	return m_abDisplayPolyline[CLIP_A];
+    }
+    
     /** Returns the value of the specified axis-aligend clip plane.
      * @param iWhich one of the 6 clip planes
      * @return the value of the specified axis-aligend clip plane.

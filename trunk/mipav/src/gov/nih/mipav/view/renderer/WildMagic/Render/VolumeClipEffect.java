@@ -304,6 +304,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
     	return new Vector3f( m_aafClipData[CLIP_X][0], m_aafClipData[CLIP_Y][0], m_aafClipData[CLIP_Z][0] );
     }
     
+    public boolean[] getClipEnable()
+    {
+    	return new boolean[]{ m_afClipAll[CLIP_X], m_afClipAll[CLIP_Y], m_afClipAll[CLIP_Z] };
+    }
+    
     public Vector4f getClipEye()
     {
     	return new Vector4f( m_aafClipData[CLIP_EYE][0], m_aafClipData[CLIP_EYE][1], m_aafClipData[CLIP_EYE][2], m_aafClipData[CLIP_EYE][3] );
@@ -329,6 +334,12 @@ public abstract class VolumeClipEffect extends ShaderEffect
     	return new Vector3f( m_aafClipData[CLIP_X_INV][0], 
     			m_aafClipData[CLIP_Y_INV][0], m_aafClipData[CLIP_Z_INV][0] );
     }
+    
+    public boolean[] getClipInvEnable()
+    {
+    	return new boolean[]{ m_afClipAll[CLIP_X_INV], m_afClipAll[CLIP_Y_INV], m_afClipAll[CLIP_Z_INV] };
+    }
+    
     
     public boolean isClip()
     {

@@ -146,6 +146,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private Dimension searchFieldSize;
 	
 	private JPanelAnnotations sharedAnnotationPanel = null;
+	private JSplitPane annotationListPanel = null;
 
 	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
 		voiManager = voiInterface;
@@ -479,8 +480,6 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	 * Updates the annotation table with the current annotations.
 	 */
 	public void annotationChanged() {
-		System.err.println("annotationChanged " + imageA.GetImage().getImageName() );
-		
 		if ( voiManager != null )
 		{
 			// get current annotations and update table:
@@ -1087,16 +1086,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayPanel.setResizeWeight(0.5);
 			displayPanel.setDividerLocation(0.5);
 			
-			JSplitPane listPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, scrollContainer, kScrollPaneGroup );
-			listPanel.setOneTouchExpandable(true);
-			listPanel.setDividerSize(6);
-			listPanel.setContinuousLayout(true);
-			listPanel.setResizeWeight(0.5);
-			listPanel.setDividerLocation(0.5);
+			annotationListPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, scrollContainer, kScrollPaneGroup );
+			annotationListPanel.setOneTouchExpandable(true);
+			annotationListPanel.setDividerSize(6);
+			annotationListPanel.setContinuousLayout(true);
+			annotationListPanel.setResizeWeight(0.5);
+			annotationListPanel.setDividerLocation(1.0);
 			
-
-			
-			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, listPanel, displayPanel );
+			annotationPanel = new JSplitPane( JSplitPane.VERTICAL_SPLIT, annotationListPanel, displayPanel );
 			annotationPanel.setOneTouchExpandable(true);
 			annotationPanel.setDividerSize(6);
 			annotationPanel.setContinuousLayout(true);
@@ -1108,6 +1105,13 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 		annotationChanged();
 
 		return annotationPanel;
+	}
+	
+	private boolean configured = false;
+	public void configureListPanel() {
+		if ( configured ) return;
+		configured = true;
+		annotationListPanel.setDividerLocation(0.8);
 	}
 
 	private boolean ctrlKey = false;
