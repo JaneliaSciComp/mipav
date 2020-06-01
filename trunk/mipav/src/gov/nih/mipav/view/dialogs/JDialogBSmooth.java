@@ -57,6 +57,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
     private AlgorithmBSmooth smoothAlgo;
     
     private AlgorithmEllipticFourierDescriptors ellipticAlgo;
+    
+    private AlgorithmMinimumPerimeterPolygon mppAlgo;
 
     /** DOCUMENT ME! */
     private JTextField textInterpNPts;
@@ -78,7 +80,11 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
     
     private JRadioButton ellipticButton;
     
+    private JRadioButton minimumPerimeterPolygonButton;
+    
     private boolean doEllipticFourierDescription = false;
+    
+    private boolean doMinimumPerimeterPolygon = false;
 
     /** DOCUMENT ME! */
     private Color voiColor;
@@ -218,13 +224,20 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         int i;
         int newPts;
         int coefficients;
+        int squareCellLength;
 
-        if ((source == BSplineButton) || (source == ellipticButton)) {
+        if ((source == BSplineButton) || (source == ellipticButton) || (source == minimumPerimeterPolygonButton)) {
         	if (ellipticButton.isSelected()) {
         		trimCheckBox.setSelected(false);
         		trimCheckBox.setEnabled(false);
         		labelInterpNPts.setText("Number of coefficients (<= " + String.valueOf(nPoints/2) + ")");
         		textInterpNPts.setText(String.valueOf(Math.max(1,nPoints/4)));
+        	}
+        	else if (minimumPerimeterPolygonButton.isSelected()) {
+        		trimCheckBox.setSelected(false);
+        		trimCheckBox.setEnabled(false);
+        		labelInterpNPts.setText("Square cell length");
+        		textInterpNPts.setText("2");
         	}
         	else {
         		trimCheckBox.setEnabled(true);
@@ -235,6 +248,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         else if (source == OKButton) {
         	
         	doEllipticFourierDescription = ellipticButton.isSelected();
+        	
+        	doMinimumPerimeterPolygon = minimumPerimeterPolygonButton.isSelected();
 
             removeOriginal = removeOriginalCheckBox.isSelected();
             
@@ -292,6 +307,58 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 	                return;
 	            }
             } // if (doEllipticFourierDescription)
+            else if (doMinimumPerimeterPolygon) {
+            	if (testParameter(tmpStr, 2.0, Math.min(image.getExtents()[0], image.getExtents()[1]))) {
+	                squareCellLength = Integer.valueOf(tmpStr).intValue();
+	            } else {
+	                textInterpNPts.requestFocus();
+	                textInterpNPts.selectAll();
+	
+	                return;
+	            }  
+            	
+            	try {
+            		// No need to make new image space because the user has choosen to replace the source image
+	                // Make the algorithm class
+	                mppAlgo = new AlgorithmMinimumPerimeterPolygon(image, VOIs.VOIAt(groupNum), squareCellLength);
+	
+	                // This is very important. Adding this object as a listener allows the algorithm to
+	                // notify this object when it has completed of failed. See algorithm performed event.
+	                // This is made possible by implementing AlgorithmedPerformed interface
+	                mppAlgo.addListener(this);
+	
+	                // Hide the dialog since the algorithm is about to run.
+	                setVisible(false);
+	
+	                // These next lines set the titles in all frames where the source image is displayed to
+	                // "locked - " image name so as to indicate that the image is now read/write locked!
+	                // The image frames are disabled and then unregisted from the userinterface until the
+	                // algorithm has completed.
+	                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+	                titles = new String[imageFrames.size()];
+	
+	                for (i = 0; i < imageFrames.size(); i++) {
+	                	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+	                	{
+	                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+	                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+	                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+	                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	                	}
+	                }
+	
+	                // Start the thread as a low priority because we wish to still have user interface.
+	                if (mppAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                    MipavUtil.displayError("A thread is already running on this object");
+	                }
+            		
+            	}
+            	catch (OutOfMemoryError x) {
+	                MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
+	
+	                return;
+	            }
+            } // if (doMinimumPerimeterPolygon)
             else {
 
 	            trim = trimCheckBox.isSelected();
@@ -376,14 +443,19 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         int nContours;
 
         // ViewJFrameImage imageFrame = null;
-        if ((algorithm instanceof AlgorithmBSmooth) || (algorithm instanceof AlgorithmEllipticFourierDescriptors)) {
+        if ((algorithm instanceof AlgorithmBSmooth) || (algorithm instanceof AlgorithmEllipticFourierDescriptors) ||
+        		(algorithm instanceof AlgorithmMinimumPerimeterPolygon)) {
 
-            if (((!doEllipticFourierDescription) && (smoothAlgo.isCompleted())) || 
-            		((doEllipticFourierDescription) && (ellipticAlgo.isCompleted()))) {
+            if (((!doEllipticFourierDescription) && (!doMinimumPerimeterPolygon) && smoothAlgo.isCompleted()) || 
+            		(doEllipticFourierDescription && ellipticAlgo.isCompleted()) ||
+            		(doMinimumPerimeterPolygon && mppAlgo.isCompleted() )) {
 
                 // The algorithm has completed and produced a
             	if (doEllipticFourierDescription) {
             		resultVOI = ellipticAlgo.getResultVOI();
+            	}
+            	else if (doMinimumPerimeterPolygon) {
+            		resultVOI = mppAlgo.getResultVOI();
             	}
             	else {
                     resultVOI = smoothAlgo.getResultVOI();
@@ -441,7 +513,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         setForeground(Color.black);
         setTitle("Smooth VOI");
 
-        JPanel imageVOIPanel = new JPanel(new GridLayout(4, 1));
+        JPanel imageVOIPanel = new JPanel(new GridLayout(5, 1));
         imageVOIPanel.setForeground(Color.black);
         imageVOIPanel.setBorder(buildTitledBorder("VOI Options"));
 
@@ -487,6 +559,14 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         ellipticButton.addActionListener(this);
         smoothGroup.add(ellipticButton);
         imageVOIPanel.add(ellipticButton);
+        
+        minimumPerimeterPolygonButton = new JRadioButton("Smooth with minimum perimeter polygon");
+        minimumPerimeterPolygonButton.setFont(serif12);
+        minimumPerimeterPolygonButton.setForeground(Color.black);
+        minimumPerimeterPolygonButton.setSelected(false);
+        minimumPerimeterPolygonButton.addActionListener(this);
+        smoothGroup.add(minimumPerimeterPolygonButton);
+        imageVOIPanel.add(minimumPerimeterPolygonButton);
 
         JPanel paramPanel = new JPanel(new GridLayout(1, 2));
         paramPanel.setForeground(Color.black);
