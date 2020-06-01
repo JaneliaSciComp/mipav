@@ -230,7 +230,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JPanel latticePanelSingle = null;
 	
 	private class IntegratedWormData {
-		private VOIVector finalLattice;
 		private VOIVector annotations;
 		private WormData wormData;
 		private ModelImage wormImage;
@@ -256,6 +255,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private JRadioButton displayBothChannels;
 		
 		private Matrix3f volumeMatrix = new Matrix3f();
+		private Matrix3f clipArb = null;
+		private boolean clipArbOn = false;
+		
+		private int currentTab = -1;
 		
 		public IntegratedWormData() {}
 	};
@@ -441,6 +444,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
 			{
+				activeImage.clipArb = activeRenderer.getArbitratyClip();
+				activeImage.clipArbOn = activeRenderer.getArbitratyClipOn();
+				activeImage.currentTab = tabbedPane.getSelectedIndex();
+				
 				nextButton.setEnabled(false);
 				backButton.setEnabled(false);
 				nextBackFlag = true;
@@ -477,6 +484,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
 			else if ( command.equals("back") )
 			{
+				activeImage.clipArb = activeRenderer.getArbitratyClip();
+				activeImage.clipArbOn = activeRenderer.getArbitratyClipOn();
+				activeImage.currentTab = tabbedPane.getSelectedIndex();
+				
 				nextButton.setEnabled(false);
 				backButton.setEnabled(false);
 				nextBackFlag = true;
@@ -799,7 +810,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	public void rendererConfigured(VolumeTriPlanarRenderBase renderer)
 	{       
-
 		if ( (annotationList != null) && (annotationNames != null) && (triVolume != null) )
 		{
 			triVolume.addVOIS( annotationList, annotationNames );
@@ -836,9 +846,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		else {
 			activeImage.voiManager.setLattice(activeImage.wormData.readFinalLattice());
 		}
-
-    	updateClipPanel(activeImage, activeRenderer, true);
-
+		
     	if ( activeImage.annotations != null )
     	{
     		if ( activeImage.annotations.size() > 0 )
@@ -860,16 +868,15 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     	activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
     	activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
     	// initialize the display panel for editing / displaying annotations:
-    	if ( editMode == EditLattice || editMode == IntegratedEditing ) {
-    		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-    		initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );    		
-    	}
     	if ( editMode == IntegratedEditing ) {
     		initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
+    		initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage ); 
+    		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
 			activeImage.voiManager.editAnnotations(false);
     		//			initDisplaySeamPanel();
     	}
     	else if ( editMode == EditLattice ) {
+    		initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );    		
     		activeImage.voiManager.editLattice();
     	}
 		
@@ -885,35 +892,45 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if ( dualGPU != null ) {
 			dualGPU.setDividerLocation(0.5);
 			integratedPanel.setDividerLocation(0.3);
+			if ( leftImage != null && leftImage.annotationPanelUI != null )   leftImage.annotationPanelUI.configureListPanel();
+			if ( rightImage != null && rightImage.annotationPanelUI != null ) rightImage.annotationPanelUI.configureListPanel();
+			if ( activeImage != null && activeImage.annotationPanelUI != null ) activeImage.annotationPanelUI.configureListPanel();
 		}
 		else {
 			integratedPanel.setDividerLocation(0.5);
+			if ( activeImage != null && activeImage.annotationPanelUI != null ) activeImage.annotationPanelUI.configureListPanel();
 		}
 		updateHistoLUTPanels(activeImage);
-				
-		nextBackCount--;
-		if ( nextBackFlag && (nextBackCount == 0) ) {
+    	updateClipPanel(activeImage, activeRenderer, true);
+		updateSurfacePanels();
 
-			updateSurfacePanels();
-			updateClipPanel(activeImage, activeRenderer, true);
-
-			updateHistoLUTPanels(activeImage);
-
-			if ( editMode == IntegratedEditing || editMode == EditLattice ) {
-				initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );
-			}
-			if ( editMode == IntegratedEditing ) {
-				initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
-			}
-
-        	activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
-        	activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
-        	if ( editMode != EditLattice ) {
-        		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-    			activeImage.annotationOpen = true;
-        	}
-			nextBackFlag = false;
+		if ( activeImage.currentTab != -1 ) {
+			tabbedPane.setSelectedIndex( activeImage.currentTab );
 		}
+				
+//		nextBackCount--;
+//		if ( nextBackFlag && (nextBackCount == 0) ) {
+//
+//			updateSurfacePanels();
+//			updateClipPanel(activeImage, activeRenderer, true);
+//
+//			updateHistoLUTPanels(activeImage);
+//
+//			if ( editMode == IntegratedEditing || editMode == EditLattice ) {
+//				initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );
+//			}
+//			if ( editMode == IntegratedEditing ) {
+//				initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
+//			}
+//
+//        	activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
+//        	activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
+//        	if ( editMode != EditLattice ) {
+//        		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
+//    			activeImage.annotationOpen = true;
+//        	}
+//			nextBackFlag = false;
+//		}
 		int nextStep = dualGPU == null ? 1 : 2;
 		imageIndex = Math.min( includeRange.size() - 1, imageIndex );
 		imageIndex = Math.max( 0, imageIndex );
@@ -959,20 +976,16 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     		displayModel.setSelected(activeImage.voiManager.isModelDisplayed());
     		displaySurface.setSelected( activeRenderer.getSurface("worm") != null );
     		updateSurfacePanels();
-    		updateClipPanel(activeImage, activeRenderer, true);
-    		
+    		updateClipPanel(activeImage, activeRenderer, true);    		
     		updateHistoLUTPanels(activeImage);
     		
-
-//			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Annotation" ) ) {
-//				activeImage.voiManager.editAnnotations(false);
-//				initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-//				activeImage.annotationOpen = true;
-//			}
-			
 			if ( editMode == EditLattice ) {
 				leftImage.voiManager.editLattice();
 				rightImage.voiManager.editLattice();
+			}
+			if ( activeImage.currentTab != -1 ) {
+				tabbedPane.setSelectedIndex( activeImage.currentTab );
+				stateChanged(null);
 			}
     	}
 		int nextStep = dualGPU == null ? 1 : 2;
@@ -2355,11 +2368,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		opacityPanel = new JPanel();
 		clipPanel = new JPanel();
 		tabbedPane = new JTabbedPane();
-		tabbedPane.addChangeListener(this);
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
 		tabbedPane.addTab("Clip", null, clipPanel);
 		tabbedPane.setVisible(false);
+		tabbedPane.addChangeListener(this);
 
 		displayControls = new JPanel(new BorderLayout());
 		displayControls.add(dialogGUI.getContentPane(), BorderLayout.NORTH );
@@ -3246,12 +3259,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		else if ( resetRenderer )
 		{
-			integratedData.clipGUI.setRenderer(renderer, resetRenderer);
+			integratedData.clipGUI.setRenderer(renderer, false);
 		}
 		
 		clipPanel.removeAll();			
 		clipPanel.add( integratedData.clipGUI.getMainPanel() );
-		clipPanel.revalidate();
+		integratedData.clipGUI.getMainPanel().repaint();
+		clipPanel.validate();
+		
+		if ( integratedData.clipArb != null ) {
+			renderer.setArbitratyClip(integratedData.clipArb, integratedData.clipArbOn);
+		}
 	}
 
 	private JPanelLights_WM lightsPanel = null;
@@ -3299,25 +3317,24 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private VOI seamCellBackUp = null;
 	private boolean seamOpen = false;
 	public void stateChanged(ChangeEvent arg0) {
-		if ( arg0.getSource() == tabbedPane ) {
-//			System.err.println( tabbedPane.getSelectedIndex() + "  " + tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()) );
-			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Lattice" ) ) {
-				activeImage.voiManager.editLattice();
-				initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );
-			}
-			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Curves" ) ) {
-				activeImage.voiManager.editAnnotations(false);
-				initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
-			}
-			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Annotation" ) ) {
-				activeImage.voiManager.editAnnotations(false);
-				initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-				activeImage.annotationOpen = true;
-			}
-			if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Clip" ) ) {
-				activeImage.voiManager.editClip();
-			} 
+		//			System.err.println( tabbedPane.getSelectedIndex() + "  " + tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()) );
+		if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Lattice" ) ) {
+			activeImage.voiManager.editLattice();
+			initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );
 		}
+		if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Curves" ) ) {
+			activeImage.voiManager.editAnnotations(false);
+			initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
+		}
+		if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Annotation" ) ) {
+			activeImage.voiManager.editAnnotations(false);
+			initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
+			activeImage.annotationOpen = true;
+		}
+		if ( tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()).equals("Clip" ) ) {
+			activeImage.voiManager.editClip();
+		} 
+		activeImage.currentTab = tabbedPane.getSelectedIndex();
 	}
 
 	private void saveIntegrated() {

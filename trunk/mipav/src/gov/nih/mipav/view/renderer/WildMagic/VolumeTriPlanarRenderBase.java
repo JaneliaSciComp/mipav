@@ -44,6 +44,7 @@ import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -1243,6 +1244,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		return new Matrix3f(m_kVolumeClip.ArbRotate().Local.GetRotate());
 	}
 
+	public boolean getArbitratyClipOn() {
+		return m_bArbClipOn;
+	}
+
 	/**
 	 * Returns the container for this object. The container has a scroll pane
 	 * and slider for the depth.
@@ -2147,6 +2152,12 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		doClip(m_bArbClipOn);
 	}
 
+	public void setArbitratyClip(Matrix3f kRotate, boolean on) {
+		m_bArbClipOn = on;
+		m_kVolumeClip.ArbRotate().Local.SetRotate(kRotate);
+		doClip(m_bArbClipOn);
+	}
+
 	/**
 	 * Turn backface culling on/off for the given surface.
 	 * 
@@ -2240,6 +2251,76 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 	}
 
+	public Vector3f getClip() {
+		if ( m_kVolumeRayCast != null ) {
+			int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+			Vector3f clip = m_kVolumeRayCast.GetShaderEffect().getClip();
+			clip.scale( aiExtents[0] - 1, aiExtents[1] - 1, aiExtents[2] - 2 );
+			return clip;
+		}
+		return null;
+	}
+
+	public boolean[] getClipEnable() {
+
+		if ( m_kVolumeRayCast != null ) {
+			return m_kVolumeRayCast.GetShaderEffect().getClipEnable();
+		}
+		return null;
+	}
+
+	public boolean[] getClipAEEnable() {
+
+		if ( m_kVolumeRayCast != null ) {
+			return m_kVolumeRayCast.GetShaderEffect().getClipEnable();
+		}
+		return null;
+	}
+	
+	public boolean[] getClipDisplay() {
+
+		if ( m_kVolumeClip != null ) {
+			return m_kVolumeClip.getDisplay();
+		}
+		return null;
+	}
+	
+	public Vector3f getClipInv() {
+		if ( m_kVolumeRayCast != null ) {
+			int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+			Vector3f clipInv = m_kVolumeRayCast.GetShaderEffect().getClipInv();
+			clipInv.scale( aiExtents[0] - 1, aiExtents[1] - 1, aiExtents[2] - 2 );
+			return clipInv;
+		}
+		return null;
+	}
+	
+	public boolean[] getClipInvEnable() {
+
+		if ( m_kVolumeRayCast != null ) {
+			return m_kVolumeRayCast.GetShaderEffect().getClipInvEnable();
+		}
+		return null;
+	}
+	
+	public boolean[] getClipInvDisplay() {
+
+		if ( m_kVolumeClip != null ) {
+			return m_kVolumeClip.getDisplayInv();
+		}
+		return null;
+	}
+	
+	public Color[] getClipColor() {
+
+		if ( m_kVolumeClip != null ) {
+			return m_kVolumeClip.getClipColor();
+		}
+		return null;
+	}
+	
+	
+	
 	/**
 	 * Called from JPanelClip. Sets the axis-aligned clip plane.
 	 * 

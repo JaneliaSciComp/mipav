@@ -713,9 +713,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		System.err.println( m_kPShaderCMP.GetProgram().GetProgramText() );
     	}
     }
-    
+
     public void SetClip(int iWhich, float data, boolean bEnable)
-    {
+    {   
     	super.SetClip(iWhich, data, bEnable );
     	checkPixelProgram();
     }

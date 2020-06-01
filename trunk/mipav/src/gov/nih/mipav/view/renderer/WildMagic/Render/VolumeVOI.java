@@ -179,7 +179,7 @@ public class VolumeVOI extends VolumeObject
 	 */
 	public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
 	{
-		if ( !m_bDisplay || !bSolid || m_bClipped)
+		if ( !m_bDisplay || !bSolid || m_bClipped || m_bClippedA)
 		{
 			return;
 		}
@@ -332,6 +332,7 @@ public class VolumeVOI extends VolumeObject
 	private Vector3f m_kClip = null;
 	private Vector3f m_kClipInv = null;
 	private boolean m_bClipped = false;
+	private boolean m_bClippedA = false;
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip the clipping parameters for axis-aligned clipping.
      */
@@ -365,7 +366,7 @@ public class VolumeVOI extends VolumeObject
 				break;
 			}
     		Vector3f test = m_kVOI.elementAt(0);
-			m_bClipped = ( (test.X < m_kClip.X) || (test.X > m_kClipInv.X) || (test.Y < m_kClip.Y) || (test.Y > m_kClipInv.Y) || (test.Z < m_kClip.Z) || (test.Z > m_kClipInv.Z) );
+			m_bClipped = bEnable && ( (test.X < m_kClip.X) || (test.X > m_kClipInv.X) || (test.Y < m_kClip.Y) || (test.Y > m_kClipInv.Y) || (test.Z < m_kClip.Z) || (test.Z > m_kClipInv.Z) );
 //    		test = m_kVOI.elementAt(1);
 //			m_bClipped |= ( (test.X < m_kClip.X) || (test.X > m_kClipInv.X) || (test.Y < m_kClip.Y) || (test.Y > m_kClipInv.Y) || (test.Z < m_kClip.Z) || (test.Z > m_kClipInv.Z) );
 //			System.err.println( test );
@@ -410,7 +411,7 @@ public class VolumeVOI extends VolumeObject
     	Vector3f texCoord = Vector3f.mult(m_kVOI.elementAt(0), kExtentsScale);
 
     	float fDotArb = texCoord.X * afEquation[0] + texCoord.Y * afEquation[1] + texCoord.Z * afEquation[2];
-    	m_bClipped = bEnable && ( (fDotArb > afEquation[3]) || (fDotArb < afEquationInv[3]) );
+    	m_bClippedA = bEnable && ( (fDotArb > afEquation[3]) || (fDotArb < afEquationInv[3]) );
     }
     
     // eye clipping and arbitrary clipping:
@@ -1017,7 +1018,10 @@ public class VolumeVOI extends VolumeObject
 
 		if ( (m_kVOI.getType() == VOI.ANNOTATION) )
 		{
-			textAnnotations( m_kVOI.get(1), m_kVOI.get(0) );
+			if ( m_kVOI.size() == 1 ) {
+				m_kVOI.add( m_kVOI.elementAt(0) );
+			}
+			textAnnotations( m_kVOI.elementAt(1), m_kVOI.elementAt(0) );
 			m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));
 		}
 

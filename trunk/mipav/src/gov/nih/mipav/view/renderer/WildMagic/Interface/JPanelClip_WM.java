@@ -31,6 +31,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -132,44 +133,7 @@ public class JPanelClip_WM extends JInterfaceBase
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        String command = event.getActionCommand();
-
-//        if ((source == extractButtonA) || (source == extractButtonS)) {
-            // extract arbitrary clipping plane.
-/*
-            Vector3f[] pts;
-
-            pts = getAClipPlanePts();
-
-            ModelImage img = renderBase.getImageA();
-            float[] plane = img.getPlane(pts[0], pts[1], pts[2], pts[3]);
-
-            int length = (int)
-                             Math.round(Math.sqrt(((pts[2].x - pts[0].x) * (pts[2].x - pts[0].x)) +
-                                                  ((pts[2].y - pts[0].y) * (pts[2].y - pts[0].y)) +
-                                                  ((pts[2].z - pts[0].z) * (pts[2].z - pts[0].z))));
-            int width = (int)
-                            Math.round(Math.sqrt(((pts[1].x - pts[0].x) * (pts[1].x - pts[0].x)) +
-                                                 ((pts[1].y - pts[0].y) * (pts[1].y - pts[0].y)) +
-                                                 ((pts[1].z - pts[0].z) * (pts[1].z - pts[0].z))));
-
-            int[] ext = new int[2];
-
-            ext[0] = width;
-            ext[1] = length;
-
-            ModelImage resultImage = new ModelImage(renderBase.getImageA().getType(), ext, "Image plane");
-
-            try {
-                resultImage.importData(0, plane, true);
-            } catch (IOException er) {
-                return;
-            }
-
-            new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-            plane = null;
-            */
-
+        
         if (source instanceof JButton) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener((JButton) source),
                                                  new CancelListener());
@@ -310,6 +274,24 @@ public class JPanelClip_WM extends JInterfaceBase
             {
                 rayBasedRenderWM.enableClipPlane( i, enableClip[i].isSelected(), displayClip[i].isSelected() );
             }
+        }
+    }
+    
+    private void enableListeners(boolean listen) {
+
+    	for ( int i = 0; i < MAX_CLIP_PLANES; i++ ) {
+    		if ( !listen ) {
+    			clipSlider[i].removeChangeListener(this);
+    			enableClip[i].removeActionListener(this);
+    			displayClip[i].removeActionListener(this);
+    			clipColor[i].removeActionListener(this);	
+    		}     
+    		else {
+    			clipSlider[i].addChangeListener(this);
+    			enableClip[i].addActionListener(this);
+    			displayClip[i].addActionListener(this);
+    			clipColor[i].addActionListener(this);	
+    		}
         }
     }
 
@@ -758,13 +740,15 @@ public class JPanelClip_WM extends JInterfaceBase
 
     		init();
     	}
-
+    	enableListeners(false);
     	if ( rayBasedRenderWM != null ) {
     		for ( int i = 0; i < 6; i++ )
     		{
     			clipValue[i] = clipSlider[i].getValue() - 1;
     			clipText[i].setText(String.valueOf(clipValue[i] + 1));
-    			rayBasedRenderWM.setClipPlane( i, clipValue[i], enableClip[i].isSelected() );
+    			if ( enableClip[i].isSelected() ) {
+    				rayBasedRenderWM.setClipPlane( i, clipValue[i], enableClip[i].isSelected() );
+    			}
 
     			if (displayClip[i].isSelected())
     			{
@@ -786,23 +770,36 @@ public class JPanelClip_WM extends JInterfaceBase
     				}
     			}
     		}
+    		
     		clipValue[CLIP_EYE] = clipSlider[CLIP_EYE].getValue() - 1;
     		rayBasedRenderWM.setEyeClipPlane( clipValue[CLIP_EYE], displayClip[CLIP_EYE].isSelected(),
     				enableClip[CLIP_EYE].isSelected());
-    		rayBasedRenderWM.setEyeClipPlane(clipValue[CLIP_EYE], displayClip[CLIP_EYE].isSelected(),
-    				enableClip[CLIP_EYE].isSelected());
+    		rayBasedRenderWM.enableEyeClipPlane( enableClip[CLIP_EYE].isSelected(), displayClip[CLIP_EYE].isSelected(),
+    				new ColorRGB( clipColor[CLIP_EYE].getBackground().getRed(),
+    						clipColor[CLIP_EYE].getBackground().getGreen(),
+    						clipColor[CLIP_EYE].getBackground().getBlue() ) );
 
     		clipValue[CLIP_EYE_INV] = clipSlider[CLIP_EYE_INV].getValue() - 1;
     		rayBasedRenderWM.setEyeInvClipPlane( clipValue[CLIP_EYE_INV],
     				displayClip[CLIP_EYE_INV].isSelected(),
     				enableClip[CLIP_EYE_INV].isSelected());
-    		rayBasedRenderWM.setEyeInvClipPlane(clipValue[CLIP_EYE_INV], displayClip[CLIP_EYE_INV].isSelected(),
-    				enableClip[CLIP_EYE_INV].isSelected());
+    		rayBasedRenderWM.enableEyeInvClipPlane( enableClip[CLIP_EYE_INV].isSelected(), 
+    				displayClip[CLIP_EYE_INV].isSelected(),
+    				new ColorRGB( clipColor[CLIP_EYE_INV].getBackground().getRed(),
+    						clipColor[CLIP_EYE_INV].getBackground().getGreen(),
+    						clipColor[CLIP_EYE_INV].getBackground().getBlue() ) );
+
 
         	float thickness = thicknessSlider.getValue();
     		clipValue[CLIP_A] = clipSlider[CLIP_A].getValue() - 1;
-    		rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected(), thickness);
+            rayBasedRenderWM.setArbitraryClipPlane(clipValue[CLIP_A], enableClip[CLIP_A].isSelected(), thickness);
+            rayBasedRenderWM.enableArbitraryClipPlane( enableClip[CLIP_A].isSelected(), displayClip[CLIP_A].isSelected(),
+                                                       new ColorRGB( clipColor[CLIP_A].getBackground().getRed(),
+                                                                     clipColor[CLIP_A].getBackground().getGreen(),
+                                                                     clipColor[CLIP_A].getBackground().getBlue() ) );
+
     	}
+    	enableListeners(true);
     }
 
     /**
