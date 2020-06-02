@@ -101,32 +101,16 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	
 	            if (((VOIContour) (contours.elementAt(elementNum))).isActive()) {
 	                int nPoints = contours.elementAt(elementNum).size();
-	                //System.err.println("Element number is: " + elementNum);
+	                System.out.println("Original contour has " + nPoints + " points");
 	                    float[] xPoints = new float[nPoints];
 	                    float[] yPoints = new float[nPoints];
 	                    Vector<Integer> ulx = new Vector<Integer>();
 	                    Vector<Integer> uly = new Vector<Integer>();
 	              
 	                    float zPoint = contours.elementAt(elementNum).elementAt(0).Z;
-	                    //Find upperMost, leftMost vertex;
-	                    int ulVertex = -1;
-	                    float leftMost = Float.MAX_VALUE;
-	                    float upperMost = Float.MAX_VALUE;
-	                    for (i = 0; i < nPoints; i++) {
-	                        xPoints[i] = contours.elementAt(elementNum).elementAt(i).X;
-	                        yPoints[i] = contours.elementAt(elementNum).elementAt(i).Y;
-	                        if (yPoints[i] < upperMost) {
-	                        	ulVertex = i;
-	                        	upperMost = yPoints[i];
-	                        	leftMost = xPoints[i];
-	                        }
-	                        else if ((yPoints[i] == upperMost) && (xPoints[i] < leftMost)) {
-	                        	ulVertex = i;
-	                        	leftMost = xPoints[i];
-	                        }
-	                    }
 	                    // Algorithm proceeds counterclockwise starting with the upper leftmost point
-	                    ((VOIContour) (contours.elementAt(elementNum))).makeCounterClockwise(ulVertex);
+	                    ((VOIContour) (contours.elementAt(elementNum))).makeCounterClockwise();
+	                    
 	                    Vector<Integer>newX = new Vector<Integer>();
 	                    Vector<Integer>newY = new Vector<Integer>();
 	                    Vector<Boolean>isWVertex = new Vector<Boolean>();
@@ -141,12 +125,28 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                        	uly.add(ypos);
 	                        }
 	                    }
+	                    //Find upperMost, leftMost vertex;
+	                    int ulVertex = -1;
+	                    int leftMost = Integer.MAX_VALUE;
+	                    int upperMost = Integer.MAX_VALUE;
+	                    for (i = 0; i < ulx.size(); i++) {
+	                        if (uly.get(i) < upperMost) {
+	                        	ulVertex = i;
+	                        	upperMost = uly.get(i);
+	                        	leftMost = ulx.get(i);
+	                        }
+	                        else if ((uly.get(i) == upperMost) && (ulx.get(i) < leftMost)) {
+	                        	ulVertex = i;
+	                        	leftMost = ulx.get(i);
+	                        }
+	                    }
+	                    System.out.println("ulx has " + ulx.size() + " points");
 	                    // The first vertex is always a convex w vertex of the mpp
-                        newX.add(ulx.get(0)+squareCellLength);
-                    	newY.add(uly.get(0)+squareCellLength);
+                        newX.add(ulx.get(ulVertex)+squareCellLength);
+                    	newY.add(uly.get(ulVertex)+squareCellLength);
                     	isWVertex.add(true);
                     	boolean isNorth1, isEast1, isSouth1, isWest1, isNorth2, isEast2, isSouth2, isWest2;
-	                    for (i = 1; i < ulx.size(); i++) {
+	                    for (i = ulVertex+1; i < ulx.size(); i++) {
 	                        isNorth1 = (uly.get(i) < uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
 	                        isEast1 = (ulx.get(i) > ulx.get(i-1)) && (uly.get(i) == uly.get(i-1));
 	                        isSouth1 = (uly.get(i) > uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
@@ -163,17 +163,114 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                            isSouth2 = (uly.get(0) > uly.get(i)) && (ulx.get(0) == ulx.get(i));
 	                            isWest2 = (ulx.get(0) < ulx.get(i)) && (uly.get(0) == uly.get(i));	
 	                        }
-	                        if ((isWest1 && isSouth2) || (isSouth1 && isEast2) || (isEast1 && isNorth2) || (isNorth1 && isWest2)) {
+	                        if (isWest1 && isSouth2) {
 	                        	newX.add(ulx.get(i)+squareCellLength);
 	                        	newY.add(uly.get(i)+squareCellLength);
 	                        	isWVertex.add(true);	
 	                        }
-	                        else if ((isSouth1 && isWest2) || (isEast1 && isSouth2) || (isNorth1 && isEast2) || (isWest1 && isNorth2)) {
+	                        else if (isSouth1 && isEast2) {
+	                        	newX.add(ulx.get(i)+squareCellLength);
+	                        	newY.add(uly.get(i));
+	                        	isWVertex.add(true);		
+	                        }
+	                        else if (isEast1 && isNorth2) {
+	                        	newX.add(ulx.get(i));
+	                        	newY.add(uly.get(i));
+	                        	isWVertex.add(true);	
+	                        }
+	                        else if (isNorth1 && isWest2) {
+	                        	newX.add(ulx.get(i));
+	                        	newY.add(uly.get(i)+squareCellLength);
+	                        	isWVertex.add(true);	
+	                        }
+	                        else if (isSouth1 && isWest2) {
 	                        	newX.add(ulx.get(i));
 	                        	newY.add(uly.get(i));
 	                        	isWVertex.add(false);
 	                        }
+	                        else if (isEast1 && isSouth2) {
+	                        	newX.add(ulx.get(i));
+	                        	newY.add(uly.get(i)+squareCellLength);
+	                        	isWVertex.add(false);	
+	                        }
+	                        else if (isNorth1 && isEast2) {
+	                        	newX.add(ulx.get(i)+squareCellLength);
+	                        	newY.add(uly.get(i)+squareCellLength);
+	                        	isWVertex.add(false);	
+	                        }
+	                        else if (isWest1 && isNorth2) {
+	                        	newX.add(ulx.get(i)+squareCellLength);
+	                        	newY.add(uly.get(i));
+	                        	isWVertex.add(false);	
+	                        }
 	                    }
+	                    for (i = 0; i < ulVertex; i++) {
+	                    	if (i == 0) {
+	                    		isNorth1 = (uly.get(i) < uly.get(uly.size()-1)) && (ulx.get(i) == ulx.get(ulx.size()-1));
+		                        isEast1 = (ulx.get(i) > ulx.get(ulx.size()-1)) && (uly.get(i) == uly.get(uly.size()-1));
+		                        isSouth1 = (uly.get(i) > uly.get(uly.size()-1)) && (ulx.get(i) == ulx.get(ulx.size()-1));
+		                        isWest1 = (ulx.get(i) < ulx.get(ulx.size()-1)) && (uly.get(i) == uly.get(uly.size()-1));	
+	                    	}
+	                    	else {
+		                        isNorth1 = (uly.get(i) < uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
+		                        isEast1 = (ulx.get(i) > ulx.get(i-1)) && (uly.get(i) == uly.get(i-1));
+		                        isSouth1 = (uly.get(i) > uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
+		                        isWest1 = (ulx.get(i) < ulx.get(i-1)) && (uly.get(i) == uly.get(i-1));
+	                    	}
+	                        if (i < ulx.size()-1) {
+	                            isNorth2 = (uly.get(i+1) < uly.get(i)) && (ulx.get(i+1) == ulx.get(i));
+	                            isEast2 = (ulx.get(i+1) > ulx.get(i)) && (uly.get(i+1) == uly.get(i));
+	                            isSouth2 = (uly.get(i+1) > uly.get(i)) && (ulx.get(i+1) == ulx.get(i));
+	                            isWest2 = (ulx.get(i+1) < ulx.get(i)) && (uly.get(i+1) == uly.get(i));
+	                        }
+	                        else {
+	                        	isNorth2 = (uly.get(0) < uly.get(i)) && (ulx.get(0) == ulx.get(i));
+	                            isEast2 = (ulx.get(0) > ulx.get(i)) && (uly.get(0) == uly.get(i));
+	                            isSouth2 = (uly.get(0) > uly.get(i)) && (ulx.get(0) == ulx.get(i));
+	                            isWest2 = (ulx.get(0) < ulx.get(i)) && (uly.get(0) == uly.get(i));	
+	                        }
+	                        if (isWest1 && isSouth2) {
+	                        	newX.add(ulx.get(i)+squareCellLength);
+	                        	newY.add(uly.get(i)+squareCellLength);
+	                        	isWVertex.add(true);	
+	                        }
+	                        else if (isSouth1 && isEast2) {
+	                        	newX.add(ulx.get(i)+squareCellLength);
+	                        	newY.add(uly.get(i));
+	                        	isWVertex.add(true);		
+	                        }
+	                        else if (isEast1 && isNorth2) {
+	                        	newX.add(ulx.get(i));
+	                        	newY.add(uly.get(i));
+	                        	isWVertex.add(true);	
+	                        }
+	                        else if (isNorth1 && isWest2) {
+	                        	newX.add(ulx.get(i));
+	                        	newY.add(uly.get(i)+squareCellLength);
+	                        	isWVertex.add(true);	
+	                        }
+	                        else if (isSouth1 && isWest2) {
+	                        	newX.add(ulx.get(i));
+	                        	newY.add(uly.get(i));
+	                        	isWVertex.add(false);
+	                        }
+	                        else if (isEast1 && isSouth2) {
+	                        	newX.add(ulx.get(i));
+	                        	newY.add(uly.get(i)+squareCellLength);
+	                        	isWVertex.add(false);	
+	                        }
+	                        else if (isNorth1 && isEast2) {
+	                        	newX.add(ulx.get(i)+squareCellLength);
+	                        	newY.add(uly.get(i)+squareCellLength);
+	                        	isWVertex.add(false);	
+	                        }
+	                        else if (isWest1 && isNorth2) {
+	                        	newX.add(ulx.get(i)+squareCellLength);
+	                        	newY.add(uly.get(i));
+	                        	isWVertex.add(false);	
+	                        }
+	                    }
+	                    System.out.println("newX has " + newX.size() + " points");
 	                    for (i = 0; i < newX.size(); i++) {
 	                    	for (j = i+1; j < newX.size(); j++) {
 	                    		if ((newX.get(i)).equals(newX.get(j))&&(newY.get(i)).equals(newY.get(j))) {
@@ -183,6 +280,21 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                    		}
 	                    	}
 	                    }
+	                    boolean test = false;
+	                    if (test) {
+	                    	// Figure 12.8 in Digital Image Processing
+	                        // Test newX and newY to VX and VY
+	                    	newX.clear();
+	                    	newY.clear();
+	                    	isWVertex.clear();
+	                    	newX.add(4);
+	                    	newY.add(1);
+	                    	isWVertex.add(true);
+	                    	newX.add(3);
+	                    	newY.add(2);
+	                    	isWVertex.add(false);
+	                    	
+	                    } // if (test)
 	                    Vector<Integer>VX = new Vector<Integer>();
 	                    Vector<Integer>VY = new Vector<Integer>();
 	                    VX.add(newX.get(0));
@@ -227,6 +339,7 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 		                    }
 		                    k++;
 	                    } // while (k < newX.size())
+	                    System.out.println("VX has " + VX.size() + " points");
 	            
 	                    VOIContour resultContour = new VOIContour( false, contours.elementAt(elementNum).isClosed());
 	                   for (i = 0; i < VX.size(); i++) {
