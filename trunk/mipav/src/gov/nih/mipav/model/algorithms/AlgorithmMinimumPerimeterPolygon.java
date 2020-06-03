@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 import java.util.*;
 
@@ -284,6 +285,7 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                    if (test) {
 	                    	// Figure 12.8 in Digital Image Processing
 	                        // Test newX and newY to VX and VY
+	                    	// newX and newY transition to VX and VY agrees with Figure 12.8.
 	                    	newX.clear();
 	                    	newY.clear();
 	                    	isWVertex.clear();
@@ -293,7 +295,78 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                    	newX.add(3);
 	                    	newY.add(2);
 	                    	isWVertex.add(false);
-	                    	
+	                    	newX.add(3);
+	                    	newY.add(3);
+	                    	isWVertex.add(true);
+	                    	newX.add(2);
+	                    	newY.add(3);
+	                    	isWVertex.add(false);
+	                    	newX.add(1);
+	                    	newY.add(4);
+	                    	isWVertex.add(true);
+	                    	newX.add(1);
+	                    	newY.add(7);
+	                    	isWVertex.add(true);
+	                    	newX.add(2);
+	                    	newY.add(8);
+	                    	isWVertex.add(false);
+	                    	newX.add(2);
+	                    	newY.add(9);
+	                    	isWVertex.add(false);
+	                    	newX.add(1);
+	                    	newY.add(10);
+	                    	isWVertex.add(true);
+	                    	newX.add(1);
+	                    	newY.add(14);
+	                    	isWVertex.add(true);
+	                    	newX.add(3);
+	                    	newY.add(14);
+	                    	isWVertex.add(true);
+	                    	newX.add(4);
+	                    	newY.add(12);
+	                    	isWVertex.add(false);
+	                    	newX.add(5);
+	                    	newY.add(12);
+	                    	isWVertex.add(false);
+	                    	newX.add(6);
+	                    	newY.add(14);
+	                    	isWVertex.add(true);
+	                    	newX.add(9);
+	                    	newY.add(14);
+	                    	isWVertex.add(true);
+	                    	newX.add(10);
+	                    	newY.add(13);
+	                    	isWVertex.add(false);
+	                    	newX.add(11);
+	                    	newY.add(12);
+	                    	isWVertex.add(true);
+	                    	newX.add(11);
+	                    	newY.add(8);
+	                    	isWVertex.add(true);
+	                    	newX.add(9);
+	                    	newY.add(8);
+	                    	isWVertex.add(true);
+	                    	newX.add(8);
+	                    	newY.add(9);
+	                    	isWVertex.add(false);
+	                    	newX.add(7);
+	                    	newY.add(9);
+	                    	isWVertex.add(false);
+	                    	newX.add(7);
+	                    	newY.add(6);
+	                    	isWVertex.add(false);
+	                    	newX.add(10);
+	                    	newY.add(5);
+	                    	isWVertex.add(true);
+	                    	newX.add(10);
+	                    	newY.add(3);
+	                    	isWVertex.add(true);
+	                    	newX.add(7);
+	                    	newY.add(2);
+	                    	isWVertex.add(false);
+	                    	newX.add(6);
+	                    	newY.add(1);
+	                    	isWVertex.add(true);
 	                    } // if (test)
 	                    Vector<Integer>VX = new Vector<Integer>();
 	                    Vector<Integer>VY = new Vector<Integer>();
@@ -306,7 +379,9 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                    int WCX = VLX;
 	                    int WCY = VLY;
 	                    int k = 1;
-	                    while (k < newX.size()) {
+	                    int VLindex = 0;
+	                    boolean reachedZero = false;
+	                    while (true) {
 		                    int VkX = newX.get(k);
 		                    int VkY = newY.get(k);
 		                    double detVWV = det(VLX,WCX,VkX,VLY,WCY,VkY);
@@ -314,12 +389,22 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 		                    if (detVWV > 1.0E-8) {
 		                      VX.add(WCX);
 		                      VY.add(WCY);
+		                      if (reachedZero) {
+		                    	  break;
+		                      }
 		                      VLX = WCX;
 		                      VLY = WCY;
 		                      BCX = VLX;
 		                      BCY = VLY;
+		                      if (VLindex == newX.size()-1) {
+			                        k = 0;
+			                        reachedZero = true;
+			                    }
+			                    else {
+			                    	k = VLindex+1;
+			                    }
 		                    }
-		                    else if ((detVWV <= 0) && (detVBV >= 0)) {
+		                    else if ((detVWV <= 1.0E-8) && (detVBV >= -1.0E-8)) {
 		                        if (isWVertex.get(k)) {
 		                        	WCX = VkX;
 		                        	WCY = VkY;
@@ -328,18 +413,63 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 		                        	BCX = VkX;
 		                        	BCY = VkY;
 		                        }
+		                        VLindex = k;
+		                        if (k == newX.size() -1) {
+		                        	k = 0;
+		                        	reachedZero = true;
+		                        }
+		                        else {
+		                        	k++;
+		                        }
 		                    }
 		                    else if (detVBV < -1.0E-8) {
 		                    	VX.add(BCX);
 			                    VY.add(BCY);
+			                    if (reachedZero) {
+			                    	break;
+			                    }
 			                    VLX = BCX;
 			                    VLY = BCY;
 			                    WCX = VLX;
 			                    WCY = VLY;
+			                    if (VLindex == newX.size()-1) {
+			                        k = 0;
+			                        reachedZero = true;
+			                    }
+			                    else {
+			                    	k = VLindex+1;
+			                    }
 		                    }
-		                    k++;
-	                    } // while (k < newX.size())
+	                    } // while (true)
 	                    System.out.println("VX has " + VX.size() + " points");
+	                    if (test) {
+	                    	for (i = 0; i < VX.size(); i++) {
+	                    		System.out.println("i = " + i + " VX = " + VX.get(i) + " VY = " + VY.get(i));
+	                    	}
+                    		System.out.println("Expected answer has 22 points");
+                    		System.out.println("i = 0 VX = 4 VY = 1");
+                    		System.out.println("i = 1 VX = 1 VY = 4");
+                    		System.out.println("i = 2 VX = 1 VY = 7");
+                    		System.out.println("i = 3 VX = 2 VY = 8");
+                    		System.out.println("i = 4 VX = 2 VY = 9");
+                    		System.out.println("i = 5 VX = 1 VY = 10");
+                    		System.out.println("i = 6 VX = 1 VY = 14");
+                    		System.out.println("i = 7 VX = 3 VY = 14");
+                    		System.out.println("i = 8 VX = 4 VY = 12");
+                    		System.out.println("i = 9 VX = 5 VY = 12");
+                    		System.out.println("i = 10 VX = 6 VY = 14");
+                    		System.out.println("i = 11 VX = 9 VY = 14");
+                    		System.out.println("i = 12 VX = 11 VY = 12");
+                    		System.out.println("i = 13 VX = 11 VY = 8");
+                    		System.out.println("i = 14 VX = 9 VY = 8");
+                    		System.out.println("i = 15 VX = 8 VY = 9");
+                    		System.out.println("i = 16 VX = 7 VY = 9");
+                    		System.out.println("i = 17 VX = 7 VY = 6");
+                    		System.out.println("i = 18 VX = 10 VY = 5");
+                    		System.out.println("i = 19 VX = 10 VY = 3");
+                    		System.out.println("i = 20 VX = 7 VY = 2");
+                    		System.out.println("i = 21 VX = 6 VY = 1");
+	                    }
 	            
 	                    VOIContour resultContour = new VOIContour( false, contours.elementAt(elementNum).isClosed());
 	                   for (i = 0; i < VX.size(); i++) {
@@ -388,7 +518,7 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	    // all three points are collinear
 	    
 	    determinant = (x1-x3)*(y2-y3) - (x2-x3)*(y1-y3);
-	    return determinant;    
+	    return -determinant;    
 	} // det
 
 }
