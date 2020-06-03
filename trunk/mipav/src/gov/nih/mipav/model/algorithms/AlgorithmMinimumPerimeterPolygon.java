@@ -116,14 +116,108 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                    Vector<Integer>newY = new Vector<Integer>();
 	                    Vector<Boolean>isWVertex = new Vector<Boolean>();
 	                    int xpos, ypos;
+	                    int lastxpos = -1;
+	                    int lastypos = -1; 
+	                    int north = 1;
+	                    int east = 2;
+	                    int south = 3;
+	                    int west = 4;
+	                    int dir = south;
+	                    int delx;
+	                    int dely;
+	                    int numx;
+	                    int numy;
 	                    for (i = 0; i < xPoints.length; i++) {
 	                    	xPoints[i] = contours.elementAt(elementNum).elementAt(i).X;
 	                        yPoints[i] = contours.elementAt(elementNum).elementAt(i).Y;	
 	                        xpos = squareCellLength*(int)(Math.floor(xPoints[i]/squareCellLength));
 	                        ypos = squareCellLength*(int)(Math.floor(yPoints[i]/squareCellLength));
-	                        if ((i == 0) || (xpos != ulx.get(ulx.size()-1)) || (ypos != uly.get(uly.size()-1))) {
+	                        if (i == 0) {
 	                        	ulx.add(xpos);
 	                        	uly.add(ypos);
+	                        	lastxpos = xpos;
+	                        	lastypos = ypos;
+	                        	dir = south;
+	                        }
+	                        else if ((xpos != lastxpos) || (ypos != lastypos)) {
+	                        	delx = xpos - lastxpos;
+	                        	dely = ypos - lastypos;
+	                        	numx = Math.abs(delx/squareCellLength);
+	                        	numy = Math.abs(dely/squareCellLength);
+                        	    if ((dir == north) || (dir == south)) {
+                        	    	if (ypos > lastypos) {
+	                        	    	for (j = 1; j <=  numy; j++) {
+	                        	    	    ypos = lastypos + j*squareCellLength;
+	                        	    	    ulx.add(lastxpos);
+	                        	    	    uly.add(ypos);
+	                        	    	}
+                        	    	}
+                        	    	else {
+                        	    		for (j = 1; j <=  numy; j++) {
+	                        	    	    ypos = lastypos - j*squareCellLength;
+	                        	    	    ulx.add(lastxpos);
+	                        	    	    uly.add(ypos);
+	                        	    	}	
+                        	    	}
+                        	    	if (xpos > lastxpos) {
+	                        	    	for (j = 1; j <=  numx; j++) {
+	                        	    	    xpos = lastxpos + j*squareCellLength;
+	                        	    	    ulx.add(xpos);
+	                        	    	    uly.add(ypos);
+	                        	    	}
+                        	    	}
+                        	    	else {
+                        	    		for (j = 1; j <=  numx; j++) {
+	                        	    	    xpos = lastxpos - j*squareCellLength;
+	                        	    	    ulx.add(xpos);
+	                        	    	    uly.add(ypos);
+	                        	    	}	
+                        	    	}
+                        	    } // if ((dir == north) || (dir == south))
+                        	    else {
+                        	    	if (xpos > lastxpos) {
+	                        	    	for (j = 1; j <=  numx; j++) {
+	                        	    	    xpos = lastxpos + j*squareCellLength;
+	                        	    	    ulx.add(xpos);
+	                        	    	    uly.add(lastypos);
+	                        	    	}
+                        	    	}
+                        	    	else {
+                        	    		for (j = 1; j <=  numx; j++) {
+	                        	    	    xpos = lastxpos - j*squareCellLength;
+	                        	    	    ulx.add(xpos);
+	                        	    	    uly.add(lastypos);
+	                        	    	}	
+                        	    	}
+                        	    	if (ypos > lastypos) {
+	                        	    	for (j = 1; j <=  numy; j++) {
+	                        	    	    ypos = lastypos + j*squareCellLength;
+	                        	    	    ulx.add(xpos);
+	                        	    	    uly.add(ypos);
+	                        	    	}
+                        	    	}
+                        	    	else {
+                        	    		for (j = 1; j <=  numy; j++) {
+	                        	    	    ypos = lastypos - j*squareCellLength;
+	                        	    	    ulx.add(xpos);
+	                        	    	    uly.add(ypos);
+	                        	    	}	
+                        	    	}
+                        	    }
+	                        	lastxpos = xpos;
+	                        	lastypos = ypos;
+	                        	if ((ulx.get(ulx.size()-1) - ulx.get(ulx.size()-2)) == squareCellLength) {
+	                        		dir = west;
+	                        	}
+	                        	else if ((ulx.get(ulx.size()-1) - ulx.get(ulx.size()-2)) == -squareCellLength) {
+	                        		dir = east;
+	                        	}
+	                        	else if ((uly.get(uly.size()-1) - uly.get(uly.size()-2)) == squareCellLength) {
+	                        		dir = south;
+	                        	}
+	                        	else if ((uly.get(uly.size()-1) - uly.get(uly.size()-2)) == -squareCellLength) {
+	                        		dir = north;
+	                        	}
 	                        }
 	                    }
 	                    //Find upperMost, leftMost vertex;
@@ -146,23 +240,24 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
                         newX.add(ulx.get(ulVertex)+squareCellLength);
                     	newY.add(uly.get(ulVertex)+squareCellLength);
                     	isWVertex.add(true);
+                    	
                     	boolean isNorth1, isEast1, isSouth1, isWest1, isNorth2, isEast2, isSouth2, isWest2;
 	                    for (i = ulVertex+1; i < ulx.size(); i++) {
-	                        isNorth1 = (uly.get(i) < uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
-	                        isEast1 = (ulx.get(i) > ulx.get(i-1)) && (uly.get(i) == uly.get(i-1));
-	                        isSouth1 = (uly.get(i) > uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
-	                        isWest1 = (ulx.get(i) < ulx.get(i-1)) && (uly.get(i) == uly.get(i-1));
+	                        isNorth1 = (uly.get(i) < uly.get(i-1)) && (ulx.get(i).equals(ulx.get(i-1)));
+	                        isEast1 = (ulx.get(i) > ulx.get(i-1)) && (uly.get(i).equals(uly.get(i-1)));
+	                        isSouth1 = (uly.get(i) > uly.get(i-1)) && (ulx.get(i).equals(ulx.get(i-1)));
+	                        isWest1 = (ulx.get(i) < ulx.get(i-1)) && (uly.get(i).equals(uly.get(i-1)));
 	                        if (i < ulx.size()-1) {
-	                            isNorth2 = (uly.get(i+1) < uly.get(i)) && (ulx.get(i+1) == ulx.get(i));
-	                            isEast2 = (ulx.get(i+1) > ulx.get(i)) && (uly.get(i+1) == uly.get(i));
-	                            isSouth2 = (uly.get(i+1) > uly.get(i)) && (ulx.get(i+1) == ulx.get(i));
-	                            isWest2 = (ulx.get(i+1) < ulx.get(i)) && (uly.get(i+1) == uly.get(i));
+	                            isNorth2 = (uly.get(i+1) < uly.get(i)) && (ulx.get(i+1).equals(ulx.get(i)));
+	                            isEast2 = (ulx.get(i+1) > ulx.get(i)) && (uly.get(i+1).equals(uly.get(i)));
+	                            isSouth2 = (uly.get(i+1) > uly.get(i)) && (ulx.get(i+1).equals(ulx.get(i)));
+	                            isWest2 = (ulx.get(i+1) < ulx.get(i)) && (uly.get(i+1).equals(uly.get(i)));
 	                        }
 	                        else {
-	                        	isNorth2 = (uly.get(0) < uly.get(i)) && (ulx.get(0) == ulx.get(i));
-	                            isEast2 = (ulx.get(0) > ulx.get(i)) && (uly.get(0) == uly.get(i));
-	                            isSouth2 = (uly.get(0) > uly.get(i)) && (ulx.get(0) == ulx.get(i));
-	                            isWest2 = (ulx.get(0) < ulx.get(i)) && (uly.get(0) == uly.get(i));	
+	                        	isNorth2 = (uly.get(0) < uly.get(i)) && (ulx.get(0).equals(ulx.get(i)));
+	                            isEast2 = (ulx.get(0) > ulx.get(i)) && (uly.get(0).equals(uly.get(i)));
+	                            isSouth2 = (uly.get(0) > uly.get(i)) && (ulx.get(0).equals(ulx.get(i)));
+	                            isWest2 = (ulx.get(0) < ulx.get(i)) && (uly.get(0).equals(uly.get(i)));	
 	                        }
 	                        if (isWest1 && isSouth2) {
 	                        	newX.add(ulx.get(i)+squareCellLength);
@@ -207,28 +302,28 @@ public class AlgorithmMinimumPerimeterPolygon extends AlgorithmBase {
 	                    }
 	                    for (i = 0; i < ulVertex; i++) {
 	                    	if (i == 0) {
-	                    		isNorth1 = (uly.get(i) < uly.get(uly.size()-1)) && (ulx.get(i) == ulx.get(ulx.size()-1));
-		                        isEast1 = (ulx.get(i) > ulx.get(ulx.size()-1)) && (uly.get(i) == uly.get(uly.size()-1));
-		                        isSouth1 = (uly.get(i) > uly.get(uly.size()-1)) && (ulx.get(i) == ulx.get(ulx.size()-1));
-		                        isWest1 = (ulx.get(i) < ulx.get(ulx.size()-1)) && (uly.get(i) == uly.get(uly.size()-1));	
+	                    		isNorth1 = (uly.get(i) < uly.get(uly.size()-1)) && (ulx.get(i).equals(ulx.get(ulx.size()-1)));
+		                        isEast1 = (ulx.get(i) > ulx.get(ulx.size()-1)) && (uly.get(i).equals(uly.get(uly.size()-1)));
+		                        isSouth1 = (uly.get(i) > uly.get(uly.size()-1)) && (ulx.get(i).equals(ulx.get(ulx.size()-1)));
+		                        isWest1 = (ulx.get(i) < ulx.get(ulx.size()-1)) && (uly.get(i).equals(uly.get(uly.size()-1)));	
 	                    	}
 	                    	else {
-		                        isNorth1 = (uly.get(i) < uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
-		                        isEast1 = (ulx.get(i) > ulx.get(i-1)) && (uly.get(i) == uly.get(i-1));
-		                        isSouth1 = (uly.get(i) > uly.get(i-1)) && (ulx.get(i) == ulx.get(i-1));
-		                        isWest1 = (ulx.get(i) < ulx.get(i-1)) && (uly.get(i) == uly.get(i-1));
+		                        isNorth1 = (uly.get(i) < uly.get(i-1)) && (ulx.get(i).equals(ulx.get(i-1)));
+		                        isEast1 = (ulx.get(i) > ulx.get(i-1)) && (uly.get(i).equals(uly.get(i-1)));
+		                        isSouth1 = (uly.get(i) > uly.get(i-1)) && (ulx.get(i).equals(ulx.get(i-1)));
+		                        isWest1 = (ulx.get(i) < ulx.get(i-1)) && (uly.get(i).equals(uly.get(i-1)));
 	                    	}
 	                        if (i < ulx.size()-1) {
-	                            isNorth2 = (uly.get(i+1) < uly.get(i)) && (ulx.get(i+1) == ulx.get(i));
-	                            isEast2 = (ulx.get(i+1) > ulx.get(i)) && (uly.get(i+1) == uly.get(i));
-	                            isSouth2 = (uly.get(i+1) > uly.get(i)) && (ulx.get(i+1) == ulx.get(i));
-	                            isWest2 = (ulx.get(i+1) < ulx.get(i)) && (uly.get(i+1) == uly.get(i));
+	                            isNorth2 = (uly.get(i+1) < uly.get(i)) && (ulx.get(i+1).equals(ulx.get(i)));
+	                            isEast2 = (ulx.get(i+1) > ulx.get(i)) && (uly.get(i+1).equals(uly.get(i)));
+	                            isSouth2 = (uly.get(i+1) > uly.get(i)) && (ulx.get(i+1).equals(ulx.get(i)));
+	                            isWest2 = (ulx.get(i+1) < ulx.get(i)) && (uly.get(i+1).equals(uly.get(i)));
 	                        }
 	                        else {
-	                        	isNorth2 = (uly.get(0) < uly.get(i)) && (ulx.get(0) == ulx.get(i));
-	                            isEast2 = (ulx.get(0) > ulx.get(i)) && (uly.get(0) == uly.get(i));
-	                            isSouth2 = (uly.get(0) > uly.get(i)) && (ulx.get(0) == ulx.get(i));
-	                            isWest2 = (ulx.get(0) < ulx.get(i)) && (uly.get(0) == uly.get(i));	
+	                        	isNorth2 = (uly.get(0) < uly.get(i)) && (ulx.get(0).equals(ulx.get(i)));
+	                            isEast2 = (ulx.get(0) > ulx.get(i)) && (uly.get(0).equals(uly.get(i)));
+	                            isSouth2 = (uly.get(0) > uly.get(i)) && (ulx.get(0).equals(ulx.get(i)));
+	                            isWest2 = (ulx.get(0) < ulx.get(i)) && (uly.get(0).equals(uly.get(i)));	
 	                        }
 	                        if (isWest1 && isSouth2) {
 	                        	newX.add(ulx.get(i)+squareCellLength);
