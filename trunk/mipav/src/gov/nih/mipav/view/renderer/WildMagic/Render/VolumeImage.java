@@ -1333,7 +1333,7 @@ public class VolumeImage implements Serializable {
 	 * @param reload
 	 */
 	public void UpdateData(final ModelImage kImage, ModelLUT kLUT, boolean reload) {
-		if ( kLUT == null )
+		if ( kLUT == null && !kImage.isColorImage())
 		{
 			UpdateData(kImage, reload);
 			return;
