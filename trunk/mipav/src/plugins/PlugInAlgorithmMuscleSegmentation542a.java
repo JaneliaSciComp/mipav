@@ -388,8 +388,8 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
     	voiList[2][7] = new PlugInSelectableVOI542a("Right Rectus", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
     	voiList[2][8] = new PlugInSelectableVOI542a("Aortic Calcium", true, 5, 2, true, true, imageSize, 13, Color.MAGENTA);
         
-    	//Subcutaneous area has abdomen as child
-    	voiList[0][1].addChild(voiList[0][0]);
+    	//Abdomen has subcutaneous area as child
+    	voiList[0][0].addChild(voiList[0][1]);
     	//Liver has liver cysts as child
     	voiList[1][1].addChild(voiList[1][2]);
     	
@@ -491,8 +491,8 @@ private void buildPelvisDialog() {
     	voiList[2][10] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.BLUE);
     	voiList[2][11] = new PlugInSelectableVOI542a("Right Sartorius", true, 1, 2, true, true, imageSize, 13, Color.BLUE);
     	
-    	//Subcutaneous area has pelvis as child
-    	voiList[0][1].addChild(voiList[0][0]);
+    	// Pelvis has subcutaneous area as child
+    	voiList[0][0].addChild(voiList[0][1]);
     	
     	titles = new String[3];
         titles[0] = "Pelvis";
@@ -552,8 +552,8 @@ private void buildChestDialog() {
     	voiList[2][6] = new PlugInSelectableVOI542a("Left Latissimus Dorsi", true, 1, 2, true, true, imageSize, 10, Color.CYAN);
     	voiList[2][7] = new PlugInSelectableVOI542a("Right Latissimus Dorsi", true, 1, 2, true, true, imageSize, 11, Color.CYAN);
         
-    	//Subcutaneous area has chest as child
-    	voiList[0][1].addChild(voiList[0][0]);
+    	// Chest has subcutaneous area as child
+    	voiList[0][0].addChild(voiList[0][1]);
     	    	
         titles = new String[3];
         titles[0] = "Chest";
