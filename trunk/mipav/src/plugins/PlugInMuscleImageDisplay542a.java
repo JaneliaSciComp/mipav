@@ -1,4 +1,4 @@
-//MIPAV is freely available from http://mipav.cit.nih.gov
+//MIPAV is freely available from http://mipav.cit.nih.govv
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
 //EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
@@ -189,6 +189,8 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
     
     /** Whether the algorithm is being run in standAlone mode.*/
     private boolean standAlone;
+    
+    private boolean dofull = true;
     
     /**All MuscleCalculations currently in progress. */
     private ArrayList<MuscleCalculation540a> muscleCalcList;
@@ -394,7 +396,16 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	    }
 	    progressBar.updateValue(5);
 	    imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay542a.VOI_DIR;
-	    
+	    int index = imageDir.indexOf("full");
+        if (index >= 0) {
+        	dofull = true;
+        }
+        else {
+        	index = imageDir.indexOf("1_2");
+        	if (index >= 0) {
+        		dofull = false;
+        	}
+        }
 	    //Propagate children relationship backwards
 	    setDependents();
 	}
@@ -5686,12 +5697,38 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 			double fatAreaLarge = fatArea;
 			double leanAreaLarge = leanArea; 
 			double totalAreaLarge = totalAreaCount;
+			double meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
+			double meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
+		    double meanTotalH = getMeanH(v2, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
 			//corrected area = abs(oldArea - sum(residual areas))
 			for(int j=0; j<children.length; j++) {
 				fatArea = Math.abs(fatArea - children[j].getFatArea(sliceNumber));
 				partialArea = Math.abs(partialArea - children[j].getPartialArea(sliceNumber));
 				leanArea = Math.abs(leanArea - children[j].getLeanArea(sliceNumber));
 				totalAreaCount = Math.abs(totalAreaCount - children[j].getTotalArea(sliceNumber));
+				if ((!dofull) && (name.equalsIgnoreCase("Subcutaneous area")) && ((children[j].getName().equalsIgnoreCase("Abdomen")) ||
+						(children[j].getName().equalsIgnoreCase("Chest"))|| (children[j].getName().equalsIgnoreCase("Pelvis")))) {
+					double meanSC1_2FatHResidual = children[j].getFatArea(sliceNumber)*children[j].getMeanFatH(sliceNumber) -
+							fatAreaLarge*meanFatH;
+					double meanSC1_2LeanHResidual = children[j].getLeanArea(sliceNumber)*children[j].getMeanLeanH(sliceNumber) -
+							leanAreaLarge*meanLeanH;
+					double meanSC1_2TotalHResidual = children[j].getTotalArea(sliceNumber)*children[j].getMeanTotalH(sliceNumber) -
+							totalAreaLarge*meanTotalH;
+					children[j].setMeanFatH((children[j].getMeanFatH(sliceNumber)*children[j].getFatArea(sliceNumber) +
+							meanSC1_2FatHResidual)/(children[j].getFatArea(sliceNumber) + fatArea),sliceNumber);
+					children[j].setMeanLeanH((children[j].getMeanLeanH(sliceNumber)*children[j].getLeanArea(sliceNumber) +
+							meanSC1_2LeanHResidual)/(children[j].getLeanArea(sliceNumber) + leanArea),sliceNumber);
+					children[j].setMeanTotalH((children[j].getMeanTotalH(sliceNumber)*children[j].getTotalArea(sliceNumber) +
+							meanSC1_2TotalHResidual)/(children[j].getTotalArea(sliceNumber) + totalAreaCount),sliceNumber);
+					children[j].setFatArea(children[j].getFatArea(sliceNumber) + fatArea, sliceNumber);
+					children[j].setPartialArea(children[j].getPartialArea(sliceNumber) + partialArea, sliceNumber);
+					children[j].setLeanArea(children[j].getLeanArea(sliceNumber) + leanArea, sliceNumber);
+					children[j].setTotalArea(children[j].getTotalArea(sliceNumber) + totalAreaCount, sliceNumber);
+					fatArea *= 2;
+					partialArea *= 2;
+					leanArea *= 2;
+					totalAreaCount *= 2;
+				}
 			}
 			
 			temp.setFatArea(fatArea, sliceNumber);
@@ -5700,9 +5737,6 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 			temp.setTotalArea(totalAreaCount, sliceNumber);
 			
 			
-			double meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
-			double meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
-		    double meanTotalH = getMeanH(v2, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
 		    double meanFatHResidual = 0;
 		    double meanLeanHResidual = 0;
 		    double meanTotalHResidual = 0;
