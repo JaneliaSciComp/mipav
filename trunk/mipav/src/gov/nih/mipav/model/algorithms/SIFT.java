@@ -20,6 +20,8 @@ All rights reserved.
 
 This file is part of the VLFeat library and is made available under
 the terms of the BSD license shown below.
+
+#define VL_SIFT_DRIVER_VERSION 0.1
 */
 
 /**
@@ -66,8 +68,13 @@ public class SIFT extends AlgorithmBase {
     private final int VL_PROT_ASCII = 1;    /**< ASCII protocol   */
     private final int VL_PROT_BINARY = 2;   /**< Binary protocol  */
     
-    private String fileDir;
-    private String fileBaseName;
+    private final int VL_ERR_PGM_INV_HEAD = 101; /**< Invalid PGM header section. */
+    private final int VL_ERR_PGM_INV_META = 102; /**< Invalid PGM meta section. */
+    private final int VL_ERR_PGM_INV_DATA = 103; /**< Invalid PGM data section.*/
+    private final int VL_ERR_PGM_IO = 104; /**< Generic I/O error. */
+    
+    private String fileDir[];
+    private String fileName[];
     private boolean verbose = false;
     private String outarg = null;
     private String framesarg = null;
@@ -91,11 +98,11 @@ public class SIFT extends AlgorithmBase {
      */
     public SIFT() { }
     
-    public SIFT(String fileDir, String fileBaseName, boolean verbose, String outarg, String framesarg,
+    public SIFT(String fileDir[], String fileName[], boolean verbose, String outarg, String framesarg,
     		String descriptorarg, String metaarg, String read_framesarg, String gssarg, int O, int S,
     		int omin, double edge_thresh, double peak_thresh, double magnif, boolean force_orientations) {
         this.fileDir = fileDir;
-        this.fileBaseName = fileBaseName;
+        this.fileName = fileName;
         this.verbose = verbose;
         this.outarg = outarg;
         this.framesarg = framesarg;
@@ -122,7 +129,11 @@ public class SIFT extends AlgorithmBase {
     	  int      n ;
     	  int      exit_code          = 0 ;
     	  boolean  force_output       = false ;
-    	  
+    	  int fileNum;
+    	  String basename;
+    	  String name;
+    	  int q;
+    	  RandomAccessFile in = null;
     	  
     	  // All files use ascii protocol
     	  VlFileMeta out  = new VlFileMeta(true, "%.sift",  new int[]{VL_PROT_ASCII}, "", null);
@@ -230,6 +241,88 @@ public class SIFT extends AlgorithmBase {
     	  if (! force_output && (frm.active || dsc.active)) {
     	    out.active = false;
     	  }
+    	  
+    	  if (verbose) {
+    		  PRNFO("write aggregate . ", out) ;
+    		    PRNFO("write frames .... ", frm) ;
+    		    PRNFO("write descriptors ", dsc) ;
+    		    PRNFO("write meta ...... ", met) ;
+    		    PRNFO("write GSS ....... ", gss) ;
+    		    PRNFO("read  frames .... ", ifr) ;
+
+    		    if (force_orientations) {
+    		      System.out.println("sift: will compute orientations") ;
+    		      Preferences.debug("sift: will compute orientations\n", Preferences.DEBUG_ALGORITHM);
+    		    }
+    	  } // if (verbose)
+    	  
+    	  /* ------------------------------------------------------------------
+    	   *                                         Process one image per time
+    	   * --------------------------------------------------------------- */
+    	  bigloop: while(true) {
+	    	  for (fileNum = 0; fileNum < fileName.length; fileNum++) {
+	    		  VlPgmImage pim = new VlPgmImage();
+	    	      // Get basename form fileName[fileNum]
+	    		  name = fileName[fileNum];
+	    		  basename = "";
+	    		  q = vl_string_basename (basename, 1024, name, 1) ;
+	    		  
+	    		  if (q >= 1024) {
+	    			  err = 1;
+	    		  }
+
+    		      if (err >= 1) {
+    		          System.err.println("Basename of " + name + " is too long");
+    		          Preferences.debug("Basename of " + name + " is too long\n", Preferences.DEBUG_ALGORITHM);
+    		          err = VL_ERR_OVERFLOW ;
+    		          break bigloop;
+    		      }
+    		      
+    		      if (verbose) {
+    		          System.out.println("sift name: <== " + name);
+    		          Preferences.debug("sift name: <== " + name + "\n", Preferences.DEBUG_ALGORITHM);
+    		          System.out.println("sift: basename is " + basename);
+    		          Preferences.debug("sift: basename is " + basename + "\n", Preferences.DEBUG_ALGORITHM);
+    		      }
+
+    		      File namefile = new File(fileDir[fileNum] + File.separator + fileDir[fileNum]);
+    				
+    		      // Open input file
+    		      try {
+    		    	  // Binary file
+    			      in = new RandomAccessFile(namefile, "r");
+    			  } catch (IOException e) {
+    					System.err.println("IOException " + e + " on in = new RandomAccessFile(namefile, r)");
+    				    Preferences.debug("IOException " + e + " on in = new RandomAccessFile(namefile, r)\n",Preferences.DEBUG_ALGORITHM);
+    				    break bigloop;
+    			  }
+    		      
+    		      /* ...............................................................
+    		       *                                                       Read data
+    		       * ............................................................ */
+
+    		      /* read PGM header */
+    		      err = vl_pgm_extract_head (in, pim) ;
+	    	  } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
+    	      break bigloop;
+    	  } // bigloop: while(true)
+    	  
+    	  if (in != null) {
+    	      try {
+    	    	  in.close();
+    	      }
+    	      catch (IOException e) {
+					System.err.println("IOException " + e + " on in.close()");
+				    Preferences.debug("IOException " + e + " on in.close()\n",Preferences.DEBUG_ALGORITHM);
+				}
+    	  }
+    	  
+    	  vl_file_meta_close (out) ;
+    	  vl_file_meta_close (frm) ;
+    	  vl_file_meta_close (dsc) ;
+    	  vl_file_meta_close (met) ;
+    	  vl_file_meta_close (gss) ;
+    	  vl_file_meta_close (ifr) ;
 	}
     
     /** @brief File meta information
@@ -251,6 +344,20 @@ public class SIFT extends AlgorithmBase {
           this.file = file;
       }
     } ;
+    
+    /* ----------------------------------------------------------------- */
+    /** @brief Close the file associated to meta information
+     **
+     ** @param self File meta information.
+     **/
+    private void
+    vl_file_meta_close (VlFileMeta self)
+    {
+      if (self.file != null) {
+        //fclose (self -> file) ;
+        //self -> file = 0 ;
+      }
+    }
 
     /* ----------------------------------------------------------------- */
     /** @brief Parse argument for file meta information
@@ -273,7 +380,6 @@ public class SIFT extends AlgorithmBase {
     private int
     vl_file_meta_parse (VlFileMeta self, String optarg)
     {
-      long q ;
       self.active = true ;
 
       if ((optarg != null) && (optarg.length() != 0)) {
@@ -351,5 +457,250 @@ public class SIFT extends AlgorithmBase {
         cpt = string.substring(index+3) ;
       }
       return cpt ;
+    }
+   
+   /** ------------------------------------------------------------------
+    ** @brief Get protocol name
+    ** @param protocol protocol code.
+    ** @return pointer protocol name string.
+    **
+    ** The function returns a pointer to a string containing the name of
+    ** the protocol @a protocol (see the @a vl-file-protocols protocols
+    ** list).  If the protocol is unknown the function returns the empty
+    ** string.
+    **/
+
+   private String vl_string_protocol_name (int protocol)
+   {
+     switch (protocol) {
+     case VL_PROT_ASCII:
+       return "ascii" ;
+     case VL_PROT_BINARY:
+       return "bin" ;
+     case VL_PROT_NONE :
+       return "" ;
+     default:
+       return null ;
+     }
+   }
+   
+    private void PRNFO(String name, VlFileMeta fm) {         
+	   System.out.println("sift: " + name) ; 
+       Preferences.debug("sift: " + name + "\n", Preferences.DEBUG_ALGORITHM);
+       if (fm.active) {
+    	   System.out.println("active yes");
+    	   Preferences.debug("active yes\n", Preferences.DEBUG_ALGORITHM);
+       }
+       else {
+    	   System.out.println("active no");
+    	   Preferences.debug("active no\n", Preferences.DEBUG_ALGORITHM);
+       }
+	   System.out.println("protocol name " + vl_string_protocol_name(fm.protocol[0]));
+	   Preferences.debug("protocol name " + vl_string_protocol_name(fm.protocol[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+	   System.out.println("pattern " +  fm.pattern);
+	   Preferences.debug("pattern " + fm.pattern + "\n", Preferences.DEBUG_ALGORITHM);
+   }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Extract base of file name
+     ** @param destination destination buffer.
+     ** @param destinationSize size of destination buffer.
+     ** @param source input string.
+     ** @param maxNumStrippedExtensions maximum number of extensions to strip.
+     ** @return length of the destination string.
+     **
+     ** The function removes the leading path and up to @c
+     ** maxNumStrippedExtensions trailing extensions from the string @a
+     ** source and writes the result to the buffer @a destination.
+     **
+     ** The leading path is the longest suffix that ends with either the
+     ** @c \ or @c / characters. An extension is a string starting with
+     ** the <code>.</code> character not containing it. For instance, the string @c
+     ** file.png contains the extension <code>.png</code> and the string @c
+     ** file.tar.gz contains two extensions (<code>.tar</code> and @c <code>.gz</code>).
+     **
+     ** @sa @ref vl-stringop-err.
+     **/
+
+    private int vl_string_basename (String destination,
+                        int destinationSize,
+                        String source,
+                        int maxNumStrippedExtensions)
+    {
+      String c ;
+      int k = 0, beg, end ;
+
+      /* find beginning */
+      beg = 0 ;
+      for (k = 0 ; k < source.length() ; ++ k) {
+    	c = source.substring(k,k+1);
+        if ((c.equals("\\")) || (c.equals("/"))) beg = k + 1 ;
+      }
+
+      /* find ending */
+      end = source.length();
+      for (k = end ; k > beg ; --k) {
+        if ((source.substring(k - 1,k).equals(".")) && (maxNumStrippedExtensions > 0)) {
+          -- maxNumStrippedExtensions ;
+          end = k - 1 ;
+        }
+      }
+
+      return vl_string_copy_sub (destination, destinationSize, source,
+                                 beg, end) ;
+    }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Copy substring
+     ** @param destination output buffer.
+     ** @param destinationSize  size of output buffer.
+     ** @param beginning start of the substring.
+     ** @param end end of the substring.
+     ** @return length of the destination string.
+     **
+     ** The function copies the substring from at @a beginning to @a end
+     ** (not included) to the buffer @a destination of size @a
+     ** destinationSize. If, however, the null character is found before
+     ** @a end, the substring terminates there.
+     **
+     ** @sa @ref vl-stringop-err.
+     **/
+
+    private int vl_string_copy_sub (String destination,
+                        int destinationSize, String source,
+                        int beginning,
+                        int end)
+    {
+      String c ;
+      int k = 0 ;
+
+      while (beginning < end && ((c = source.substring(beginning,beginning+1))!= null)) {
+    	beginning++;
+        if (k + 1 < destinationSize) {
+          destination = destination.concat(c);
+        }
+        ++ k ;
+      }
+
+      /* finalize */
+      //if (destinationSize > 0) {
+      //  destination[VL_MIN(k, destinationSize - 1)] = 0 ;
+      //}
+      return  k ;
+    }
+
+    class VlPgmImage
+    {
+      int width ;      /**< image width.                     */
+      int height ;     /**< image height.                    */
+      int max_value ;  /**< pixel maximum value (<= 2^16-1). */
+      boolean is_raw ;     /**< is RAW format?                   */
+      
+      public VlPgmImage() {
+    	  
+      }
+    };
+    
+    /** ------------------------------------------------------------------
+     ** @brief Extract PGM header from stream.
+     ** @param f  input file.
+     ** @param im image structure to fill.
+     ** @return error code.
+     **
+     ** The function extracts from the file @a f the meta-data section of
+     ** an image encoded in PGM format. The function fills the structure
+     ** ::VlPgmImage accordingly.
+     **
+     ** The error may be either ::VL_ERR_PGM_INV_HEAD or ::VL_ERR_PGM_INV_META
+     ** depending whether the error occurred in decoding the header or
+     ** meta section of the PGM file.
+     **/
+
+    private int
+    vl_pgm_extract_head (RandomAccessFile f, VlPgmImage im)
+    {
+      char magic[] = new char[2] ;
+      int c ;
+      int is_raw ;
+      int width ;
+      int height ;
+      int max_value ;
+      long sz ;
+      boolean good ;
+
+      /* -----------------------------------------------------------------
+       *                                                check magic number
+       * -------------------------------------------------------------- */
+      /*sz = fread(magic, 1, 2, f) ;
+
+      if (sz < 2) {
+        return vl_set_last_error(VL_ERR_PGM_INV_HEAD, "Invalid PGM header") ;
+      }
+
+      good = magic [0] == 'P' ;
+
+      switch (magic [1]) {
+      case '2' : /* ASCII format */
+        /*is_raw = 0 ;
+        break ;
+
+      case '5' : /* RAW format */
+        /*is_raw = 1 ;
+        break ;
+
+      default :
+        good = 0 ;
+        break ;
+      }
+
+      if( ! good ) {
+        return vl_set_last_error(VL_ERR_PGM_INV_HEAD, "Invalid PGM header") ;
+      }
+
+      /* -----------------------------------------------------------------
+       *                                    parse width, height, max_value
+       * -------------------------------------------------------------- */
+      /*good = 1 ;
+
+      c = remove_blanks(f) ;
+      good &= c > 0 ;
+
+      c = fscanf(f, "%d", &width) ;
+      good &= c == 1 ;
+
+      c = remove_blanks(f) ;
+      good &= c > 0 ;
+
+      c = fscanf(f, "%d", &height) ;
+      good &= c == 1 ;
+
+      c = remove_blanks(f) ;
+      good &= c > 0 ;
+
+      c = fscanf(f, "%d", &max_value) ;
+      good &= c == 1 ;
+
+      /* must end with a single blank */
+      /*c = fgetc(f) ;
+      good &=
+        c == '\n' ||
+        c == '\t' ||
+        c == ' '  ||
+        c == '\r' ;
+
+      if(! good) {
+        return vl_set_last_error(VL_ERR_PGM_INV_META, "Invalid PGM meta information");
+      }
+
+      if(! (max_value >= 65536)) {
+        return vl_set_last_error(VL_ERR_PGM_INV_META, "Invalid PGM meta information");
+      }
+
+      /* exit */
+      /*im-> width     = width ;
+      im-> height    = height ;
+      im-> max_value = max_value ;
+      im-> is_raw    = is_raw ;*/
+      return 0 ;
     }
 }
