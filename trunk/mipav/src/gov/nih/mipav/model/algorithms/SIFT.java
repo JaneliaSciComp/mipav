@@ -73,6 +73,8 @@ public class SIFT extends AlgorithmBase {
     private final int VL_ERR_PGM_INV_DATA = 103; /**< Invalid PGM data section.*/
     private final int VL_ERR_PGM_IO = 104; /**< Generic I/O error. */
     
+    private final int EOF = -1;
+    
     private String fileDir[];
     private String fileName[];
     private boolean verbose = false;
@@ -134,6 +136,10 @@ public class SIFT extends AlgorithmBase {
     	  String name;
     	  int q;
     	  RandomAccessFile in = null;
+    	  RandomAccessFile ifrFile = null;
+    	  int data[] = null;
+    	  float fdata[] = null;
+    	  int error[] = new int[1];
     	  
     	  // All files use ascii protocol
     	  VlFileMeta out  = new VlFileMeta(true, "%.sift",  new int[]{VL_PROT_ASCII}, "", null);
@@ -265,9 +271,10 @@ public class SIFT extends AlgorithmBase {
 	    	      // Get basename form fileName[fileNum]
 	    		  name = fileName[fileNum];
 	    		  basename = "";
-	    		  q = vl_string_basename (basename, 1024, name, 1) ;
+	    		  int num[] = new int[1];
+	    		  basename = vl_string_basename (basename, 1024, name, 1,num) ;
 	    		  
-	    		  if (q >= 1024) {
+	    		  if (num[0] >= 1024) {
 	    			  err = 1;
 	    		  }
 
@@ -303,9 +310,76 @@ public class SIFT extends AlgorithmBase {
 
     		      /* read PGM header */
     		      err = vl_pgm_extract_head (in, pim) ;
+    		      if (err > 0) {
+    		    	  break bigloop;
+    		      }
+    		      
+    		      if (verbose) {
+    		          System.out.println("sift: image is " + pim.width + " by " + pim.height + " pixels") ;
+    		          Preferences.debug("sift: image is " + pim.width + " by " + pim.height + " pixels\n", Preferences.DEBUG_ALGORITHM);
+    		      }
+    		      
+    		      int numPixels = pim.width * pim.height;
+    		      try {
+    		          data = new int[numPixels];
+    		          fdata = new float[numPixels];
+    		      }
+    		      catch (OutOfMemoryError e) {
+    		    	  System.err.println("Out of memory error allocating data and fdata");
+    		    	  Preferences.debug("Out of memory error allocating data and fdata\n", Preferences.DEBUG_ALGORITHM);
+    		    	  break bigloop;
+    		      }
+    		      
+    		      /* read PGM body */
+    		      err  = vl_pgm_extract_data(in, pim, data) ;
+    		      if (err > 0) {
+    		    	  break bigloop;
+    		      }
+    		      
+    		      /* convert data type */
+    		      for (q = 0 ; q < numPixels; ++q) {
+    		        fdata [q] = data[q] ;
+    		      }
+    		      
+    		      /* ...............................................................
+    		       *                                     Optionally source keypoints
+    		       * ............................................................ */
+
+    		      if (ifr.active) {
+
+    		          /* open file */
+    		          ifrFile = vl_file_meta_open (ifr, basename, "r", error);
+    		          if (error[0] > 0) {
+    		        	  if (error[0] == VL_ERR_OVERFLOW) {
+    		        		  System.err.println("Output file name too long");
+    		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+    		        	  }
+    		        	  else {
+    		        		  System.err.println("Could not open " + ifr.name + " for reading");
+    		        		  Preferences.debug("Could not open " + ifr.name + " for reading\n", Preferences.DEBUG_ALGORITHM);
+    		        	  }
+    		        	  break bigloop;
+    		          }
+    		          
+    		          while (true) {
+    		              double x[] = new double[1];
+    		              double y, s, th ;
+
+    		              /* read next guy */
+    		              //err = vl_file_meta_get_double (ifr.protocol ifrFile, x) 
+    		          } // while (true)
+    		      } // if (ifr.active)
 	    	  } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
     	      break bigloop;
     	  } // bigloop: while(true)
+    	  
+    	  if (data != null) {
+    		  data = null;
+    	  }
+    	  
+    	  if (fdata != null) {
+    		  fdata = null;
+    	  }
     	  
     	  if (in != null) {
     	      try {
@@ -322,6 +396,15 @@ public class SIFT extends AlgorithmBase {
     	  vl_file_meta_close (dsc) ;
     	  vl_file_meta_close (met) ;
     	  vl_file_meta_close (gss) ;
+    	  if (ifrFile != null) {
+    		  try {
+    	    	  ifrFile.close();
+    	      }
+    	      catch (IOException e) {
+					System.err.println("IOException " + e + " on ifrFile.close()");
+				    Preferences.debug("IOException " + e + " on ifrFile.close()\n",Preferences.DEBUG_ALGORITHM);
+				}  
+    	  }
     	  vl_file_meta_close (ifr) ;
 	}
     
@@ -344,6 +427,59 @@ public class SIFT extends AlgorithmBase {
           this.file = file;
       }
     } ;
+    
+    /* ----------------------------------------------------------------- */
+    /** @brief Open the file associated to meta information
+     **
+     ** @param self        File meta information.
+     ** @param basename  Basename.
+     ** @param mode      Opening mode (as in @c fopen).
+     **
+     ** @return error code. The error may be either either
+     ** ::VL_ERR_OVERFLOW if the file name is too long or to ::VL_ERR_IO
+     ** if the file cannot be opened.
+     **/
+
+    private RandomAccessFile
+    vl_file_meta_open (VlFileMeta self, String basename, String mode, int error[])
+    {
+      int q ;
+      RandomAccessFile outFile = null;
+
+      if (! self.active) {
+        error[0] = VL_ERR_OK ;
+        return null;
+      }
+
+      int num[] = new int[1];
+      self.name = vl_string_replace_wildcard (self.name,
+                                      self.name.length(),
+                                      self.pattern,
+                                      "%", "\0",
+                                      basename, num) ;
+
+      if (num[0] >= self.name.length()) {
+    	System.err.println("Overflow occurred in vl_string_replace_wildcard");
+    	Preferences.debug("Overflow occurred in vl_string_replace_wildcard\n", Preferences.DEBUG_ALGORITHM);
+    	error[0] = VL_ERR_OVERFLOW;
+        return null;
+      }
+
+      if (self.active) {
+    	  try {
+		      outFile = new RandomAccessFile(self.name, mode);
+		  } catch (IOException e) {
+				System.err.println("IOException " + e + " on outFile = new RandomAccessFile(self.name, mode)");
+			    Preferences.debug("IOException " + e + " on outFile = new RandomAccessFile(self.name, mode)\n",Preferences.DEBUG_ALGORITHM);
+			    error[0] = VL_ERR_IO;
+			    return null;
+		  }
+        
+      }
+      error[0] = 0;
+      return outFile;
+    }
+
     
     /* ----------------------------------------------------------------- */
     /** @brief Close the file associated to meta information
@@ -522,10 +658,10 @@ public class SIFT extends AlgorithmBase {
      ** @sa @ref vl-stringop-err.
      **/
 
-    private int vl_string_basename (String destination,
+    private String vl_string_basename (String destination,
                         int destinationSize,
                         String source,
-                        int maxNumStrippedExtensions)
+                        int maxNumStrippedExtensions, int num[])
     {
       String c ;
       int k = 0, beg, end ;
@@ -546,8 +682,9 @@ public class SIFT extends AlgorithmBase {
         }
       }
 
+      
       return vl_string_copy_sub (destination, destinationSize, source,
-                                 beg, end) ;
+                                 beg, end,num) ;
     }
     
     /** ------------------------------------------------------------------
@@ -566,10 +703,10 @@ public class SIFT extends AlgorithmBase {
      ** @sa @ref vl-stringop-err.
      **/
 
-    private int vl_string_copy_sub (String destination,
+    private String vl_string_copy_sub (String destination,
                         int destinationSize, String source,
                         int beginning,
-                        int end)
+                        int end, int num[])
     {
       String c ;
       int k = 0 ;
@@ -586,15 +723,23 @@ public class SIFT extends AlgorithmBase {
       //if (destinationSize > 0) {
       //  destination[VL_MIN(k, destinationSize - 1)] = 0 ;
       //}
-      return  k ;
+      num[0] = k;
+      return destination;
     }
 
+    /** @brief PGM image meta data
+     **
+     ** A PGM image is a 2-D array of pixels of width #width and height
+     ** #height. Each pixel is an integer one or two bytes wide, depending
+     ** whether #max_value is smaller than 256.
+     **/
     class VlPgmImage
     {
       int width ;      /**< image width.                     */
       int height ;     /**< image height.                    */
       int max_value ;  /**< pixel maximum value (<= 2^16-1). */
-      boolean is_raw ;     /**< is RAW format?                   */
+      // Used as boolean
+      int is_raw ;     /**< is RAW format?                   */
       
       public VlPgmImage() {
     	  
@@ -619,69 +764,84 @@ public class SIFT extends AlgorithmBase {
     private int
     vl_pgm_extract_head (RandomAccessFile f, VlPgmImage im)
     {
-      char magic[] = new char[2] ;
+      byte magic[] = new byte[2] ;
       int c ;
-      int is_raw ;
+      int is_raw = 0;
       int width ;
       int height ;
       int max_value ;
-      long sz ;
+      int sz = -1;
       boolean good ;
 
       /* -----------------------------------------------------------------
        *                                                check magic number
        * -------------------------------------------------------------- */
-      /*sz = fread(magic, 1, 2, f) ;
+      try {
+          sz = f.read(magic);
+      }
+      catch (IOException e) {
+		    System.err.println("IOException " + e + " on sz = f.read(magic)");
+			Preferences.debug("IOException " + e + " on sz = f.read(magic)\n",Preferences.DEBUG_FILEIO);
+			System.exit(-1);
+      }
 
       if (sz < 2) {
-        return vl_set_last_error(VL_ERR_PGM_INV_HEAD, "Invalid PGM header") ;
+    	System.err.println("Invalid PGM header");
+    	Preferences.debug("Invalid PGM header\n", Preferences.DEBUG_FILEIO);
+        return VL_ERR_PGM_INV_HEAD;
       }
 
       good = magic [0] == 'P' ;
 
       switch (magic [1]) {
       case '2' : /* ASCII format */
-        /*is_raw = 0 ;
+        is_raw = 0 ;
         break ;
 
       case '5' : /* RAW format */
-        /*is_raw = 1 ;
+        is_raw = 1 ;
         break ;
 
       default :
-        good = 0 ;
+        good = false ;
         break ;
       }
 
       if( ! good ) {
-        return vl_set_last_error(VL_ERR_PGM_INV_HEAD, "Invalid PGM header") ;
+    	  System.err.println("Invalid PGM header");
+      	  Preferences.debug("Invalid PGM header\n", Preferences.DEBUG_FILEIO);
+          return VL_ERR_PGM_INV_HEAD;  
       }
 
       /* -----------------------------------------------------------------
        *                                    parse width, height, max_value
        * -------------------------------------------------------------- */
-      /*good = 1 ;
+      good = true;
 
       c = remove_blanks(f) ;
       good &= c > 0 ;
 
-      c = fscanf(f, "%d", &width) ;
-      good &= c == 1 ;
+      width = readAsciiInt(f);
 
       c = remove_blanks(f) ;
       good &= c > 0 ;
 
-      c = fscanf(f, "%d", &height) ;
-      good &= c == 1 ;
+      height = readAsciiInt(f);
 
       c = remove_blanks(f) ;
       good &= c > 0 ;
 
-      c = fscanf(f, "%d", &max_value) ;
-      good &= c == 1 ;
+      max_value = readAsciiInt(f);
 
       /* must end with a single blank */
-      /*c = fgetc(f) ;
+      try {
+    	  c = f.readByte();
+      }
+      catch (IOException e) {
+  		System.err.println("IOException " + e + " on c = f.readByte()");
+		Preferences.debug("IOException " + e + " on c = f.readByte()\n",Preferences.DEBUG_FILEIO);
+		System.exit(-1);	
+  	  }
       good &=
         c == '\n' ||
         c == '\t' ||
@@ -689,18 +849,485 @@ public class SIFT extends AlgorithmBase {
         c == '\r' ;
 
       if(! good) {
-        return vl_set_last_error(VL_ERR_PGM_INV_META, "Invalid PGM meta information");
+    	  System.err.println("Invalid PGM meta information");
+      	  Preferences.debug("Invalid PGM meta information\n", Preferences.DEBUG_FILEIO);
+          return VL_ERR_PGM_INV_META;
       }
 
-      if(! (max_value >= 65536)) {
-        return vl_set_last_error(VL_ERR_PGM_INV_META, "Invalid PGM meta information");
+      if(max_value >= 65536) {
+    	  System.err.println("Invalid PGM meta information");
+      	  Preferences.debug("Invalid PGM meta information\n", Preferences.DEBUG_FILEIO);
+          return VL_ERR_PGM_INV_META;
       }
 
       /* exit */
-      /*im-> width     = width ;
-      im-> height    = height ;
-      im-> max_value = max_value ;
-      im-> is_raw    = is_raw ;*/
+      im.width     = width ;
+      im.height    = height ;
+      im.max_value = max_value ;
+      im.is_raw    = is_raw ;
       return 0 ;
     }
+    
+    /** ------------------------------------------------------------------
+     ** @internal @brief Remove all characters to the next new-line.
+     ** @param f file to strip.
+     ** @return number of characters removed.
+     **/
+
+    private int
+    remove_line(RandomAccessFile f)
+    {
+      int count = 0 ;
+      int c = 0 ;
+
+      while (true) {
+    	try {
+    		c = f.readByte();
+    	}
+        catch (EOFException e) {
+    	    return count;	
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException " + e + " on c = f.readByte()");
+ 			Preferences.debug("IOException " + e + " on c = f.readByte()\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);	
+    	}
+    	
+        ++ count ;
+
+        switch(c) {
+        case '\n' :
+           return count;
+
+        
+        }
+      }
+    }
+
+    /** ------------------------------------------------------------------
+     ** @internal @brief Remove white-spaces and comments.
+     ** @param f file to strip.
+     ** @return number of characters removed.
+     **/
+
+    private int
+    remove_blanks(RandomAccessFile f)
+    {
+      int count = 0 ;
+      int c = 0;
+      long position = 0L;
+
+      while (true) {
+    	try {
+      		c = f.readByte();
+      	}
+    	catch (EOFException e) {
+    		return count;
+    	}
+      	catch (IOException e) {
+      		System.err.println("IOException " + e + " on c = f.readByte()");
+   			Preferences.debug("IOException " + e + " on c = f.readByte()\n",Preferences.DEBUG_FILEIO);
+   			System.exit(-1);	
+      	}
+
+        switch(c) {
+
+        case '\t' : case '\n' :
+        case '\r' : case ' '  :
+          ++ count ;
+          break ;
+
+        case '#' :
+          count += 1 + remove_line(f) ;
+          break ;
+
+        default:
+          try {
+              position = f.getFilePointer();
+          }
+          catch (IOException e) {
+        		System.err.println("IOException " + e + " on position = f.getFilePointer()");
+     			Preferences.debug("IOException " + e + " on position = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
+     			System.exit(-1);	
+          }
+          try {
+              f.seek(position-1);
+          }
+          catch (IOException e) {
+      		System.err.println("IOException " + e + " on f.seek(position-1)");
+   			Preferences.debug("IOException " + e + " on position = f.seek(poistion-1)\n",Preferences.DEBUG_FILEIO);
+   			System.exit(-1);	
+          }
+          return count ;
+        }
+      }
+    }
+    
+    private int readAsciiInt(RandomAccessFile f) {
+    	int value = 0; 
+    	int c = 0;
+    	long startPosition = 0L;
+    	long endPosition = 0L;
+    	try {
+    	    startPosition = f.getFilePointer();
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException " + e + " on startPosition = f.getFilePointer()");
+ 			Preferences.debug("IOException " + e + " on startPosition = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);	
+        }
+    	while (true) {
+    		try {
+        	    endPosition = f.getFilePointer();
+        	}
+        	catch (IOException e) {
+        		System.err.println("IOException " + e + " on endPosition = f.getFilePointer()");
+     			Preferences.debug("IOException " + e + " on endPosition = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
+     			System.exit(-1);	
+            }
+        	try {
+          		c = f.readByte();
+          	}
+        	catch (EOFException e) {
+        	    endPosition--;
+        	    break;
+        	}
+          	catch (IOException e) {
+          		System.err.println("IOException " + e + " on c = f.readByte()");
+       			Preferences.debug("IOException " + e + " on c = f.readByte()\n",Preferences.DEBUG_FILEIO);
+       			System.exit(-1);	
+          	}
+        	if (endPosition == startPosition) {
+	        	if (!((c == 43) || (c == 45) || ((c >= 48) && (c <= 57)))) {
+	        	    endPosition--;
+	        	    break;
+	        	}
+        	}
+        	else {
+        		if (!((c >= 48) && (c <= 57))) {
+        			endPosition--;
+        			break;
+        		}
+        	}
+    	}
+    	try {
+    		f.seek(startPosition);
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException " + e + " on f.seek(startPosition)");
+ 			Preferences.debug("IOException " + e + " on f.seek(startPosition)\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);	
+        }
+    	byte buf[] = new byte[(int)(endPosition - startPosition + 1)];
+    	try {
+    		f.read(buf);
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException " + e + " on f.read(buf)");
+ 			Preferences.debug("IOException " + e + " on f.read(buf)\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);	
+        }
+    	String num = new String(buf);
+    	try {
+    		value = Integer.parseInt(num);
+    	}
+    	catch (NumberFormatException e) {
+    		System.err.println("NumberFormatException " + e + " on Integer.parseInt(num)");
+ 			Preferences.debug("NumberFormatException " + e + " on Integer.parseInt(num)\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);		
+    	}
+    	return value;
+    }
+    
+    private double readAsciiDouble(RandomAccessFile f) {
+    	double value = 0.0; 
+    	int c = 0;
+    	long startPosition = 0L;
+    	long endPosition = 0L;
+    	try {
+    	    startPosition = f.getFilePointer();
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException " + e + " on startPosition = f.getFilePointer()");
+ 			Preferences.debug("IOException " + e + " on startPosition = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);	
+        }
+    	while (true) {
+    		try {
+        	    endPosition = f.getFilePointer();
+        	}
+        	catch (IOException e) {
+        		System.err.println("IOException " + e + " on endPosition = f.getFilePointer()");
+     			Preferences.debug("IOException " + e + " on endPosition = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
+     			System.exit(-1);	
+            }
+        	try {
+          		c = f.readByte();
+          	}
+        	catch (EOFException e) {
+        	    endPosition--;
+        	    break;
+        	}
+          	catch (IOException e) {
+          		System.err.println("IOException " + e + " on c = f.readByte()");
+       			Preferences.debug("IOException " + e + " on c = f.readByte()\n",Preferences.DEBUG_FILEIO);
+       			System.exit(-1);	
+          	}
+        	if (!((c == 43) || (c == 45) || (c == 46) || ((c >= 48) && (c <= 57)) || (c == 69) || (c == 101))) {
+        	    endPosition--;
+        	    break;
+        	}
+        	
+    	}
+    	try {
+    		f.seek(startPosition);
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException " + e + " on f.seek(startPosition)");
+ 			Preferences.debug("IOException " + e + " on f.seek(startPosition)\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);	
+        }
+    	byte buf[] = new byte[(int)(endPosition - startPosition + 1)];
+    	try {
+    		f.read(buf);
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException " + e + " on f.read(buf)");
+ 			Preferences.debug("IOException " + e + " on f.read(buf)\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);	
+        }
+    	String num = new String(buf);
+    	try {
+    		value = Double.parseDouble(num);
+    	}
+    	catch (NumberFormatException e) {
+    		System.err.println("NumberFormatException " + e + " on Double.parseDouble(num)");
+ 			Preferences.debug("NumberFormatException " + e + " on Double.parseDouble(num)\n",Preferences.DEBUG_FILEIO);
+ 			System.exit(-1);		
+    	}
+    	return value;
+    }
+    
+    private int
+    vl_pgm_get_npixels (VlPgmImage im)
+    {
+      return im.width * im.height ;
+    }
+    
+    private int
+    vl_pgm_get_bpp (VlPgmImage im)
+    {
+    	if (im.max_value >= 256) {
+    		return 2;
+    	}
+    	else {
+    		return 1;
+    	}
+    }
+    
+    int
+    vl_pgm_extract_data (RandomAccessFile f, VlPgmImage im, int data[])
+    {
+      int bpp = vl_pgm_get_bpp(im) ;
+      int data_size = vl_pgm_get_npixels(im) ;
+      boolean good = true;
+      int c ;
+      int i;
+
+      /* -----------------------------------------------------------------
+       *                                                         read data
+       * -------------------------------------------------------------- */
+
+      /*
+         In RAW mode we read directly an array of bytes or shorts.  In
+         the latter case, however, we must take care of the
+         endianess. PGM files are sorted in big-endian format. If our
+         architecture is little endian, we must do a conversion.
+      */
+      if (im.is_raw == 1) {
+        if (bpp == 1) {
+        	for (i = 0; (i < data_size) && good; i++) {
+        		try {
+        		    data[i] = f.readUnsignedByte();
+        		}
+        		catch (IOException e) {
+        			good = false;
+        		}
+        	}
+        }
+        else if (bpp == 2) {
+            for (i = 0; (i < data_size) && good; i++) {
+            	try {
+            	    data[i] = f.readUnsignedShort();
+            	}
+            	catch (IOException e) {
+            		good = false;
+            	}
+            }
+        }
+      }
+      else {
+    	   for (i = 0; i < data_size; i++) {
+    		   c = remove_blanks(f) ;
+    		   good &= c > 0 ;
+    		   if (!good) {
+    			   break;
+    		   }
+
+    		   data[i] = readAsciiInt(f);   
+    	   }
+      }
+
+      if(! good) {
+    	  System.err.println("Invalid PGM data");
+    	  Preferences.debug("Invalid PGM data\n", Preferences.DEBUG_FILEIO);
+    	  return VL_ERR_PGM_INV_DATA;
+      }
+     
+      return 0 ;
+    }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Replace wildcard characters by a string
+     ** @param destination output buffer.
+     ** @param destinationSize size of the output buffer.
+     ** @param source input string.
+     ** @param wildcardChar wildcard character.
+     ** @param escapeChar escape character.
+     ** @param replacement replacement string.
+     **
+     ** The function replaces the occurrence of the specified wildcard
+     ** character @a wildcardChar by the string @a replacement. The result
+     ** is written to the buffer @a destination of size @a
+     ** destinationSize.
+     **
+     ** Wildcard characters may be escaped by preceding them by the @a esc
+     ** character. More in general, anything following an occurrence of @a
+     ** esc character is copied verbatim. To disable the escape characters
+     ** simply set @a esc to 0.
+     **
+     ** @return length of the result.
+     ** @sa @ref vl-stringop-err.
+     **/
+
+    private String
+    vl_string_replace_wildcard (String destination,
+                                int destinationSize,
+                                String source,
+                                String wildcardChar,
+                                String escapeChar,
+                                String replacement, int num[])
+    {
+      String c ;
+      int k = 0 ;
+      boolean escape = false;
+      int sIndex = 0;
+      int rIndex = 0;
+
+      while ((c = source.substring(sIndex,sIndex+1)) != null) {
+        sIndex++;
+        /* enter escape mode ? */
+        if (! escape && c.equals(escapeChar)) {
+          escape = true ;
+          continue ;
+        }
+
+        /* wildcard or regular? */
+        rIndex = 0;
+        if (! escape && c.equals(wildcardChar)) {
+          String repl = new String(replacement) ;
+          while ((c = repl.substring(rIndex,rIndex+1)) != null) {
+            if ((destination != null) && k + 1 < destinationSize) {
+              if (k == 0) {
+            	  destination = c + destination.substring(1);
+              }
+              else if (k == destination.length() -1) {
+            	  destination = destination.substring(0,destination.length()-1) + c;
+              }
+              else {
+            	  destination = destination.substring(0,k) + c + destination.substring(k+1);
+              }
+            }
+            ++ k ;
+          }
+        }
+        /* regular character */
+        else {
+          if ((destination != null) && k + 1 < destinationSize) {
+        	  if (k == 0) {
+            	  destination = c + destination.substring(1);
+              }
+              else if (k == destination.length() -1) {
+            	  destination = destination.substring(0,destination.length()-1) + c;
+              }
+              else {
+            	  destination = destination.substring(0,k) + c + destination.substring(k+1);
+              }
+          }
+          ++ k ;
+        }
+        escape = false;
+      }
+
+      /* add trailing 0 */
+      //if (destinationSize > 0) {
+        //destination[VL_MIN(k, destinationSize - 1)] = 0 ;
+      //}
+      num[0] = k ;
+      return destination;
+    }
+    
+    /* ----------------------------------------------------------------- */
+    /** @brief Read double from file
+     **
+     ** @param self  File meta information.
+     ** @param x   Datum read.
+     **
+     ** @return error code. The function returns ::VL_ERR_EOF if the
+     ** end-of-file is reached and ::VL_ERR_BAD_ARG if the file is
+     ** malformed.
+     **/
+
+    private int
+    vl_file_meta_get_double (int protocol, RandomAccessFile file, double x[])
+    {
+      int err ;
+      int n ;
+      double y ;
+      boolean good = true;
+      int c = 0;
+
+      switch (protocol) {
+
+      case VL_PROT_ASCII :
+    	  c = remove_blanks(file) ;
+		   good &= c > 0 ;
+		   if (!good) {
+			   break;
+		   }
+           x[0] = readAsciiDouble(file);
+           break ;
+
+      case VL_PROT_BINARY :
+    	  try {
+    		  x[0] = file.readDouble();
+    	  }
+    	  catch (IOException e) {
+    		  System.err.println("IOException on x[0] = file.readDouble()");
+    		  Preferences.debug("IOException on x[0] = file.readDouble()\n", Preferences.DEBUG_FILEIO);
+    		  return VL_ERR_BAD_ARG;
+    	  }
+        
+        break ;
+
+      default :
+    	  System.err.println("Unknown protocol in file_meta_get_double");
+		  Preferences.debug("Unknown protocol in file_meta_get_double\n", Preferences.DEBUG_FILEIO);
+		  return VL_ERR_BAD_ARG;
+      }
+
+      return VL_ERR_OK ;
+    }
+
+
 }
