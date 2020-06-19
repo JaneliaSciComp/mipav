@@ -6212,22 +6212,22 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                             addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+6) {
                             rowData[count] = dec.format(((PlugInSelectableVOI542a)voi).getTotalArea());
-                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH(slice);
+                            addAmount = ((PlugInSelectableVOI542a)voi).getTotalArea();
                         } else if(k == VOIStatisticList.statisticDescription.length+7) {
                             rowData[count] = dec.format(((PlugInSelectableVOI542a)voi).getFatArea());
-                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH(slice);
+                            addAmount = ((PlugInSelectableVOI542a)voi).getFatArea();
                         } else if(k == VOIStatisticList.statisticDescription.length+8) {
                             rowData[count] = dec.format(((PlugInSelectableVOI542a)voi).getLeanArea());
-                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH(slice);
+                            addAmount = ((PlugInSelectableVOI542a)voi).getLeanArea();
                         } else if(k == VOIStatisticList.statisticDescription.length+9) {
                             rowData[count] = dec.format(((PlugInSelectableVOI542a)voi).getMeanTotalH());
-                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH(slice);
+                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanTotalH();
                         } else if(k == VOIStatisticList.statisticDescription.length+10) {
                             rowData[count] = dec.format(((PlugInSelectableVOI542a)voi).getMeanFatH());
-                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH(slice);
+                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanFatH();
                         } else if(k == VOIStatisticList.statisticDescription.length+11) {
                             rowData[count] = dec.format(((PlugInSelectableVOI542a)voi).getMeanLeanH());
-                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH(slice);
+                            addAmount = ((PlugInSelectableVOI542a)voi).getMeanLeanH();
                         }
                         
                         if(showTotals) {
