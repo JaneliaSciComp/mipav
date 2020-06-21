@@ -402,14 +402,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	boolean Philips = true;
     	String subfolder = null;
     	String subsubfolder = null;
-    	short preBelowHalfTime;
+    	short preBelowOrEqualHalfTime;
     	double preHalfTime;
-    	short preAboveHalfTime;
-    	short postBelowHalfTime;
-    	short startAbove;
-    	short startBelow;
+    	short postBelowOrEqualHalfTime;
     	double postHalfTime;
-    	short postAboveHalfTime;
     	double preBelowHalfIntensity;
     	double preAboveHalfIntensity;
     	double postBelowHalfIntensity;
@@ -1519,103 +1515,53 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						}
 						logpeaks[z-lowestArterialZ][y][x] = (float)maxpeaks;
 						ttp[z][y][x] = minttp;
-						preBelowHalfTime = Short.MAX_VALUE;
+						preBelowOrEqualHalfTime = Short.MAX_VALUE;
 						preBelowHalfIntensity = -Double.MAX_VALUE;
 						preHalfTime = -Double.MAX_VALUE;
-						preAboveHalfTime = Short.MAX_VALUE;
 						preAboveHalfIntensity = -Double.MAX_VALUE;
-						postAboveHalfTime = Short.MAX_VALUE;
 						postAboveHalfIntensity = -Double.MAX_VALUE;
 						postHalfTime = -Double.MAX_VALUE;
-						postBelowHalfTime = Short.MAX_VALUE;
+						postBelowOrEqualHalfTime = Short.MAX_VALUE;
 						postBelowHalfIntensity = -Double.MAX_VALUE;
-						startAbove = Short.MAX_VALUE;
-						startBelow = Short.MAX_VALUE;
 						for (t = 0; t < (minttp-1); t++) {
-						    if (delR2[t] < maxpeaks/2.0) {
-						    	preBelowHalfTime = (short)t;
+						    if (delR2[t] <= maxpeaks/2.0) {
+						    	preBelowOrEqualHalfTime = (short)t;
 						    	preBelowHalfIntensity = delR2[t];
-						    }
-						    else if (delR2[t] == maxpeaks/2.0) {
-						    	preHalfTime = (double)t;
+						    	preAboveHalfIntensity = delR2[t+1];
 						    }
 						}
-						if ((preHalfTime != -Double.MAX_VALUE) && (preBelowHalfTime != Short.MAX_VALUE) && (preBelowHalfTime > preHalfTime)) {
-							preHalfTime = -Double.MAX_VALUE;
-						}
-						if (preHalfTime != -Double.MAX_VALUE) {
-							startAbove = (short)Math.round(preHalfTime + 1);
-						}
-						else if (preBelowHalfTime != Short.MAX_VALUE) {
-							startAbove = (short)(preBelowHalfTime + 1);
-						}
-						// If a notch in the prepeak curve occurs, find preAboveHalf after the notch.
-						for (t = startAbove; t < (minttp-1); t++) {
-						    if ((preAboveHalfTime == Short.MAX_VALUE) && (delR2[t] > maxpeaks/2.0)) {
-						    	preAboveHalfTime = (short)t;
-						    	preAboveHalfIntensity = delR2[t];
-						    }
-						}
-						if ((preBelowHalfTime == Short.MAX_VALUE) && (preHalfTime == -Double.MAX_VALUE)) {
+						if (preBelowOrEqualHalfTime == Short.MAX_VALUE) {
 							// Never was less than half peak value before peak value occurred
 							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
 							prePeakTooHigh[z-lowestArterialZ][y][x] = true;
 						}
 						for (t = tDim-1; t > minttp-1; t--) {
-							if (delR2[t] < maxpeaks/2.0) {
-						    	postBelowHalfTime = (short)t;
+							if (delR2[t] <= maxpeaks/2.0) {
+						    	postBelowOrEqualHalfTime = (short)t;
 						    	postBelowHalfIntensity = delR2[t];
+						    	postAboveHalfIntensity = delR2[t-1];
 						    }
-						    else if (delR2[t] == maxpeaks/2.0) {
-						    	postHalfTime = (double)t;
-						    }
-							
-						}
-						if ((postHalfTime != -Double.MAX_VALUE) && (postBelowHalfTime != Short.MAX_VALUE) && (postBelowHalfTime < postHalfTime)) {
-							postHalfTime = -Double.MAX_VALUE;
-						}
-						if (postHalfTime != -Double.MAX_VALUE) {
-							startAbove = (short)Math.round(postHalfTime - 1);
-						}
-						else if (postBelowHalfTime != Short.MAX_VALUE) {
-							startAbove = (short)(postBelowHalfTime - 1);
-						}
-						else {
-							startAbove = Short.MIN_VALUE;
-						}
-						// If a notch in the postpeak curve occurs, find postBelowHalf after the notch.
-						for (t = startAbove; t >= minttp; t--) {
-							if ((postAboveHalfTime == Short.MAX_VALUE) && (delR2[t] > maxpeaks/2.0)) {
-						    	postAboveHalfTime = (short)t;
-						    	postAboveHalfIntensity = delR2[t];
-						    }
-						} // for (t = startAbove; t >= minttp; t--)
-						if ((postBelowHalfTime == Short.MAX_VALUE) && (postHalfTime == -Double.MAX_VALUE)) {
+						} 
+						if (postBelowOrEqualHalfTime == Short.MAX_VALUE) {
 							// Never was less than half peak value after peak value occurred
 							fwhm[z-lowestArterialZ][y][x] = Float.NaN;
 							postPeakTooHigh[z-lowestArterialZ][y][x] = true;
 						}
-						if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime != Short.MAX_VALUE)) {
+						if (preBelowHalfIntensity == maxpeaks/2.0) {
+							preHalfTime = preBelowOrEqualHalfTime;
+						}
+						else {
 							fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/
 									   (preAboveHalfIntensity - preBelowHalfIntensity);
-						    preHalfTime = preBelowHalfTime	+ fraction*(preAboveHalfTime - preBelowHalfTime);
+						    preHalfTime = preBelowOrEqualHalfTime	+ fraction;
 						}
-						else if ((preHalfTime == -Double.MAX_VALUE) && (preAboveHalfTime == Short.MAX_VALUE)) {
-							// No point more than half peak value before the peak
-							fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/(maxpeaks - preBelowHalfIntensity);
-							// Since of fraction of 1 time unit
-							preHalfTime = preBelowHalfTime + fraction;
+						if (postBelowHalfIntensity == maxpeaks/2.0) {
+							postHalfTime = postBelowOrEqualHalfTime;
 						}
-						if ((postHalfTime == -Double.MAX_VALUE) && (postAboveHalfTime != Short.MAX_VALUE)) {
-						    fraction = (postAboveHalfIntensity - maxpeaks/2.0)/
+						else  {
+						    fraction = (maxpeaks/2.0 - postBelowHalfIntensity)/
 						    		   (postAboveHalfIntensity - postBelowHalfIntensity);
-						    postHalfTime = postAboveHalfTime + fraction*(postBelowHalfTime - postAboveHalfTime);
-						}
-						else if ((postHalfTime == -Double.MAX_VALUE) && (postAboveHalfTime == Short.MAX_VALUE)) {
-							// No point more than half peak value after the peak
-							fraction = (maxpeaks/2.0)/(maxpeaks - postBelowHalfIntensity);
-							// Since of fraction of 1 time unit
-							postHalfTime = minttp-1 + fraction;
+						    postHalfTime = postBelowOrEqualHalfTime - fraction;
 						}
 						
 						peakssum += maxpeaks;
