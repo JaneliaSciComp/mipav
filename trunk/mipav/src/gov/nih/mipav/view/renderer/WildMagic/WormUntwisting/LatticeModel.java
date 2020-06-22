@@ -219,7 +219,7 @@ public class LatticeModel {
 						
 						VOIWormAnnotation leftAnnotation = new VOIWormAnnotation( new Vector3f(x,y,z) );
 						leftAnnotation.setText(name);
-						if ( name.contains("H") || name.contains("V") || name.contains("T") ) {
+						if ( name.contains("H") || name.contains("V") || name.contains("Q") || name.contains("T") ) {
 							leftAnnotation.setSeamCell(true);
 						}
 						left.getCurves().add( leftAnnotation );
