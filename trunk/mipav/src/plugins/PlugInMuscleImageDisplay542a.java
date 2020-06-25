@@ -154,6 +154,8 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
     /**The directory of the current image.*/
     private String imageDir;
     
+    private boolean haveDoneHalfSubcutaneous[] = null;
+    
     /**Whether the previously called VOI was modified and needs to be saved to the file system.*/
     private boolean voiChangeState = false;
 
@@ -404,6 +406,13 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         	index = imageDir.indexOf("1_2");
         	if (index >= 0) {
         		dofull = false;
+        		int nDims = getImageA().getNDims();
+        		if (nDims == 2) {
+        			haveDoneHalfSubcutaneous = new boolean[2];
+        		}
+        		else {
+        			haveDoneHalfSubcutaneous = new boolean[getImageA().getExtents()[2] + 1];
+        		}
         	}
         }
 	    //Propagate children relationship backwards
@@ -5688,6 +5697,10 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 		 */
 		private void performCalculations(VOI v2, int sliceNumber, double multiplier) {
 			PlugInSelectableVOI542a temp = voiBuffer.get(name);
+			if ((haveDoneHalfSubcutaneous != null) && (haveDoneHalfSubcutaneous[sliceNumber+1]) && ((name.equalsIgnoreCase("Abdomen")) ||
+					(name.equalsIgnoreCase("Chest")) || (name.equalsIgnoreCase("Pelvis")))) {
+				return;
+			}
 			PlugInSelectableVOI542a[] children = temp.getChildren();
 			//note that even for 3D images this will still be called area, even though refers to volume
 			double fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier;
@@ -5728,6 +5741,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 					partialArea *= 2;
 					leanArea *= 2;
 					totalAreaCount *= 2;
+					haveDoneHalfSubcutaneous[sliceNumber+1] = true;
 				}
 			}
 			
