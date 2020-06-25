@@ -5697,7 +5697,8 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 		 */
 		private void performCalculations(VOI v2, int sliceNumber, double multiplier) {
 			PlugInSelectableVOI542a temp = voiBuffer.get(name);
-			if ((haveDoneHalfSubcutaneous != null) && (haveDoneHalfSubcutaneous[sliceNumber+1]) && ((name.equalsIgnoreCase("Abdomen")) ||
+			if ((haveDoneHalfSubcutaneous != null) && (haveDoneHalfSubcutaneous[sliceNumber+1]) && 
+					((name.equalsIgnoreCase("Subcutaneous area")) || (name.equalsIgnoreCase("Abdomen")) ||
 					(name.equalsIgnoreCase("Chest")) || (name.equalsIgnoreCase("Pelvis")))) {
 				return;
 			}
