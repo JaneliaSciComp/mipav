@@ -199,11 +199,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     private String caseString = "EVTcase24.txt";
     private int ax = 108;
     private int ay = 82;
-    private double azd = -1.138;
+    private double azd = -6.853;
     private int az = 7;
     private int vx = 97;
     private int vy = 162;
-    private double vzd = 5.829;
+    private double vzd = 6.157;
     private int vz = 8;
     
 	
@@ -808,6 +808,34 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				}
 			}	
     	}
+    	
+    	if (findAVInfo) {
+    	    short minAIFValue = Short.MAX_VALUE;
+    	    int AIFttp = -1;
+    	    for (t = 0; t < tDim; t++) {
+    	    	if (data[az][ay][ax][t] < minAIFValue) {
+    	    		minAIFValue = data[az][ay][ax][t];
+    	    		AIFttp = (t+1);
+    	    	}
+    	    }
+    	    try {
+	    	    raAVFile.writeBytes("AIF ttp (t+1) = " + AIFttp + " right after data read in\n");
+	    	    short minVOFValue = Short.MAX_VALUE;
+	    	    int VOFttp = -1;
+	    	    for (t = 0; t < tDim; t++) {
+	    	    	if (data[vz][vy][vx][t] < minVOFValue) {
+	    	    		minVOFValue = data[vz][vy][vx][t];
+	    	    		VOFttp = (t+1);
+	    	    	}
+	    	    }
+	    	    raAVFile.writeBytes("VOF ttp (t+1) = " + VOFttp + " right after data read in\n");
+	    	}
+    	    catch (IOException e) {
+	    	    System.err.println(e);
+	    	    setCompleted(false);
+	    	    return;
+	    	}
+    	} // if (findAVInfo)
     	
     	extents2D = new int[] {xDim,yDim};
     	if (spatialSmoothing) {
@@ -1419,6 +1447,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	        Vector<Short>preExtractorVOFZeros = new Vector<Short>();
 	        Vector<Short>postExtractorAIFZeros = new Vector<Short>();
 	        Vector<Short>postExtractorVOFZeros = new Vector<Short>();
+	        double delaR2[] = new double[tDim];
+	        double delvR2[] = new double[tDim];
 	    	for (t = 0; t < tDim; t++) {
 	    		if (data[az][ay][ax][t] == 0) {
 	    			preExtractorAIFZeros.add((short)t);
@@ -1512,6 +1542,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 								maxpeaks = delR2[t];
 								minttp = (short)(t+1);
 							}
+						}
+						if ((x == ax) && (y == ay) && (z == az)) {
+						    for (t = 0; t < tDim; t++) {
+						    	delaR2[t] = delR2[t];
+						    }
+						}
+						if ((x == vx) && (y == vy) && (z == vz)) {
+						    for (t = 0; t < tDim; t++) {
+						    	delvR2[t] = delR2[t];
+						    }
 						}
 						logpeaks[z-lowestArterialZ][y][x] = (float)maxpeaks;
 						ttp[z][y][x] = minttp;
@@ -1824,6 +1864,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		raAVFile.writeBytes("AIF peak is " + fractionaifpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
 		    		raAVFile.writeBytes("AIF peak is " + aifpeaksstdfrommean + " standard deviations from the mean\n");
 		    		raAVFile.writeBytes("AIF peak is at " + aifpeakscumdistr + " of the peaks cumulative distribution function\n");
+		    		for (t = 0; t < tDim; t++) {
+		    			raAVFile.writeBytes("delaR2["+t+"] = " + delaR2[t] + "\n");
+		    		}
 	    		}
 	    		if (dataHasZeroValue[vz-lowestArterialZ][vy][vx]) {
 	    			raAVFile.writeBytes("No VOF peak, ttp, and fwhm values because of a zero data value at 1 or more time points at VOF location\n");
@@ -1833,6 +1876,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		    		raAVFile.writeBytes("VOF peak is " + fractionvofpeaksmeantomax + " fraction of the way from peak mean to peak max\n");
 		    		raAVFile.writeBytes("VOF peak is " + vofpeaksstdfrommean + " standard deviations from the mean\n");
 		    		raAVFile.writeBytes("VOF peak is at " + vofpeakscumdistr + " of the peaks cumulative distribution function\n\n");
+		    		for (t = 0; t < tDim; t++) {
+		    			raAVFile.writeBytes("delvR2["+t+"] = " + delvR2[t] + "\n");
+		    		}
 	    		}
 	    		raAVFile.writeBytes("mean ttp value = " + meanttp + "\n");
 	    		raAVFile.writeBytes("minimum ttp value = " + globalminttp + "\n");
