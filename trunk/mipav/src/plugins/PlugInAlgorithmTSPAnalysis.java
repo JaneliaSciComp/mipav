@@ -71,6 +71,7 @@ import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
 import gov.nih.mipav.model.algorithms.NelderMead;
 import gov.nih.mipav.model.algorithms.Statistics;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmN4MRIBiasFieldCorrectionFilter;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
@@ -171,6 +172,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     // For AlgorithmBrainSurfaceExtractor, smaller values erode less
     private float edgeKernelSize = 0.50f;
     
+    private boolean doN4MRIBiasFieldCorrection = false;
+    
     private JDialog pickImageDialog = null;
     
     private JButton OKButton = null;
@@ -196,15 +199,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private int zSlice;
     
-    private String caseString = "EVTcase24.txt";
-    private int ax = 108;
-    private int ay = 82;
+    private String caseString = "EVTcase1.txt";
+    private int ax = 114;
+    private int ay = 104;
     private double azd = -6.853;
     private int az = 7;
-    private int vx = 97;
-    private int vy = 162;
+    private int vx = 120;
+    private int vy = 217;
     private double vzd = 6.157;
-    private int vz = 8;
+    private int vz = 9;
     
 	
     /**
@@ -216,7 +219,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
     		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase,
-    		boolean experimentalAIF, float edgeKernelSize) {
+    		boolean experimentalAIF, float edgeKernelSize, boolean doN4MRIBiasFieldCorrection) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.spatialSmoothing = spatialSmoothing;
@@ -238,6 +241,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.fileNameBase = fileNameBase;
     	this.experimentalAIF = experimentalAIF;
     	this.edgeKernelSize = edgeKernelSize;
+    	this.doN4MRIBiasFieldCorrection = doN4MRIBiasFieldCorrection;
     }
     
     public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean spatialSmoothing, float sigmax, float sigmay, 
@@ -469,6 +473,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         boolean lookForZSlices = false;
         RandomAccessFile raAVFile = null;
         boolean findAVInfo = false;
+        
         if (findAVInfo) {
 	    	try {
 		    	File avFile = new File(outputFilePath + outputPrefix + caseString);
@@ -836,6 +841,59 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	    return;
 	    	}
     	} // if (findAVInfo)
+    	
+    	if (doN4MRIBiasFieldCorrection) {
+    	    ModelImage N4SourceImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "N4SourceImage");
+    	    ModelImage N4ResultImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "N4ResultImage");
+    	    ModelImage fieldImage = null;
+    	    int maximumIterations = 50;
+    	    double convergenceThreshold = 0.001;
+    	    double biasFieldFullWidthAtHalfMaximum = 0.15;
+    	    double WienerFilterNoise = 0.01;
+    	    int fittingLevels = 4;
+    	    int controlPoints = 4;
+    	    ModelImage confidenceImage = null;
+    	    boolean entireN4Image = true;
+    	    buffer = new short[volume];
+    	    for (t = 0; t < tDim; t++) {
+	        	for (x = 0; x < xDim; x++) {
+	        		for (y = 0; y < yDim; y++) {
+	        			for (z = 0; z < zDim; z++) {
+	        				buffer[x + y*xDim + z*length] = data[z][y][x][t];
+	        			}
+	        		}
+	        	}
+	        	try {
+	        		N4SourceImage.importData(0, buffer, true);
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("IOException on N4SourceImage");
+	        		setCompleted(false);
+	        		return;
+	        	}
+	        	AlgorithmN4MRIBiasFieldCorrectionFilter N4Algo = new AlgorithmN4MRIBiasFieldCorrectionFilter(N4ResultImage,
+	        			fieldImage, N4SourceImage, maximumIterations, convergenceThreshold, biasFieldFullWidthAtHalfMaximum,
+	        			WienerFilterNoise, fittingLevels, controlPoints, confidenceImage, entireN4Image); 
+	        	N4Algo.run();
+	        	try {
+	        		N4ResultImage.exportData(0,  volume, buffer);
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("IOException on N4ResultImage.exportData");
+	        		setCompleted(false);
+	        		return;
+	        	}
+	        	for (x = 0; x < xDim; x++) {
+	        		for (y = 0; y < yDim; y++) {
+	        			for (z = 0; z < zDim; z++) {
+	        				data[z][y][x][t] = buffer[x + y*xDim + z*length];
+	        			}
+	        		}
+	        	}
+    	    } // for (t = 0; t < tDim; t++)
+    	    N4SourceImage.disposeLocal();
+    	    N4ResultImage.disposeLocal();
+    	} // if (doN4MRIBiasFieldCorrection)
     	
     	extents2D = new int[] {xDim,yDim};
     	if (spatialSmoothing) {
