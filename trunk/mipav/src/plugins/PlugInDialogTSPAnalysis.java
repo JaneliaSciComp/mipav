@@ -567,7 +567,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     protected void setGUIFromParams() {
     	pwiImageFileDirectory = scriptParameters.getParams().getString("pwiImageFileDirectory");
-    	spatialSmoothing = scriptParameters.getParams().getBoolean("doN4");
+    	doN4MRIBiasFieldCorrection = scriptParameters.getParams().getBoolean("doN4");
     	spatialSmoothing = scriptParameters.getParams().getBoolean("spatial_smoothing");
     	sigmax = scriptParameters.getParams().getFloat("x_sigma");
     	sigmay = scriptParameters.getParams().getFloat("y_sigma");
