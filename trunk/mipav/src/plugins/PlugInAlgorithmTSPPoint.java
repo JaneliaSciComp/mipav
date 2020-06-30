@@ -71,6 +71,7 @@ import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
 import gov.nih.mipav.model.algorithms.NMSimplex;
 import gov.nih.mipav.model.algorithms.NelderMead;
 import gov.nih.mipav.model.algorithms.Statistics;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmN4MRIBiasFieldCorrectionFilter;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
@@ -184,6 +185,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	private int zDim;
 
 	private ViewJFrameImage pickFrame = null;
+	
+	private boolean doN4MRIBiasFieldCorrection = false;
 
 	private int length;
 
@@ -200,7 +203,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	public PlugInAlgorithmTSPPoint(String pwiImageFileDirectory, int xLoc, int yLoc, int zLoc,
 			boolean spatialSmoothing, float sigmax, float sigmay, 
 			boolean calculateMaskingThreshold, int masking_threshold, double TSP_threshold, int TSP_iter,
-			boolean multiThreading, boolean calculateCorrelation, String fileNameBase) {
+			boolean multiThreading, boolean calculateCorrelation, String fileNameBase, boolean doN4MRIBiasFieldCorrection) {
 		// super(resultImage, srcImg);
 		this.pwiImageFileDirectory = pwiImageFileDirectory;
 		this.xLoc = xLoc;
@@ -217,6 +220,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 		this.multiThreading = multiThreading;
 		this.calculateCorrelation = calculateCorrelation;
 		this.fileNameBase = fileNameBase;
+		this.doN4MRIBiasFieldCorrection = doN4MRIBiasFieldCorrection;
 	}
 
 	/**
@@ -774,6 +778,59 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 				}
 			}	
     	}
+    	
+    	if (doN4MRIBiasFieldCorrection) {
+    	    ModelImage N4SourceImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "N4SourceImage");
+    	    ModelImage N4ResultImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "N4ResultImage");
+    	    ModelImage fieldImage = null;
+    	    int maximumIterations = 50;
+    	    double convergenceThreshold = 0.001;
+    	    double biasFieldFullWidthAtHalfMaximum = 0.15;
+    	    double WienerFilterNoise = 0.01;
+    	    int fittingLevels = 4;
+    	    int controlPoints = 4;
+    	    ModelImage confidenceImage = null;
+    	    boolean entireN4Image = true;
+    	    buffer = new short[volume];
+    	    for (t = 0; t < tDim; t++) {
+	        	for (x = 0; x < xDim; x++) {
+	        		for (y = 0; y < yDim; y++) {
+	        			for (z = 0; z < zDim; z++) {
+	        				buffer[x + y*xDim + z*length] = data[z][y][x][t];
+	        			}
+	        		}
+	        	}
+	        	try {
+	        		N4SourceImage.importData(0, buffer, true);
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("IOException on N4SourceImage");
+	        		setCompleted(false);
+	        		return;
+	        	}
+	        	AlgorithmN4MRIBiasFieldCorrectionFilter N4Algo = new AlgorithmN4MRIBiasFieldCorrectionFilter(N4ResultImage,
+	        			fieldImage, N4SourceImage, maximumIterations, convergenceThreshold, biasFieldFullWidthAtHalfMaximum,
+	        			WienerFilterNoise, fittingLevels, controlPoints, confidenceImage, entireN4Image); 
+	        	N4Algo.run();
+	        	try {
+	        		N4ResultImage.exportData(0,  volume, buffer);
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("IOException on N4ResultImage.exportData");
+	        		setCompleted(false);
+	        		return;
+	        	}
+	        	for (x = 0; x < xDim; x++) {
+	        		for (y = 0; y < yDim; y++) {
+	        			for (z = 0; z < zDim; z++) {
+	        				data[z][y][x][t] = buffer[x + y*xDim + z*length];
+	        			}
+	        		}
+	        	}
+    	    } // for (t = 0; t < tDim; t++)
+    	    N4SourceImage.disposeLocal();
+    	    N4ResultImage.disposeLocal();
+    	} // if (doN4MRIBiasFieldCorrection)
     	
     	extents2D = new int[] {xDim,yDim};
     	int index2D;
