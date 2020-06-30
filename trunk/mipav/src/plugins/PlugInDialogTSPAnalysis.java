@@ -123,6 +123,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private boolean experimentalRAPIDAIF = false;
 	
+	private JCheckBox N4CheckBox;
+	
+	private boolean doN4MRIBiasFieldCorrection = false;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -216,7 +220,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(pwiImageFileDirectoryText.getParent(), gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy++;
         JLabel baseLabel = new JLabel("Base name in selected files");
         baseLabel.setFont(serif12);
         baseLabel.setForeground(Color.black);
@@ -230,7 +234,16 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(baseText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy++;
+        N4CheckBox = new JCheckBox("Perform N4 MRI Bias Field Correction");
+        N4CheckBox.setSelected(false);
+        N4CheckBox.setFont(MipavUtil.font12);
+        N4CheckBox.setForeground(Color.black);
+        N4CheckBox.addActionListener(this);
+        inputPanel.add(N4CheckBox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
         spatialSmoothingCheckBox = new JCheckBox("Perform spatial smoothing");
         spatialSmoothingCheckBox.setSelected(false);
         spatialSmoothingCheckBox.setFont(MipavUtil.font12);
@@ -238,7 +251,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         spatialSmoothingCheckBox.addActionListener(this);
         inputPanel.add(spatialSmoothingCheckBox, gbc);
         
-        gbc.gridy = 3;
+        gbc.gridy++;
         sigmaXLabel = new JLabel("Gaussian blur sigma X in millimeters");
         sigmaXLabel.setFont(serif12);
         sigmaXLabel.setForeground(Color.black);
@@ -254,7 +267,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(sigmaXText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy++;
         sigmaYLabel = new JLabel("Gaussian blur sigma Y in millimeters");
         sigmaYLabel.setFont(serif12);
         sigmaYLabel.setForeground(Color.black);
@@ -270,7 +283,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(sigmaYText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy++;
         calculateMaskingCheckBox = new JCheckBox("Calculate masking threshold from mean and standard deviation");
         calculateMaskingCheckBox.setSelected(true);
         calculateMaskingCheckBox.setFont(MipavUtil.font12);
@@ -279,7 +292,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(calculateMaskingCheckBox, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy++;
         masking_thresholdLabel = new JLabel("Masking threshold");
         masking_thresholdLabel.setFont(serif12);
         masking_thresholdLabel.setForeground(Color.black);
@@ -295,7 +308,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(masking_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy++;
         JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
         TSP_thresholdLabel.setFont(serif12);
         TSP_thresholdLabel.setForeground(Color.black);
@@ -309,7 +322,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy++;
         JLabel TSP_iterLabel = new JLabel("TSP iterations");
         TSP_iterLabel.setFont(serif12);
         TSP_iterLabel.setForeground(Color.black);
@@ -323,7 +336,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(TSP_iterText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy++;
         JLabel PsvdLabel = new JLabel("Psvd");
         PsvdLabel.setFont(serif12);
         PsvdLabel.setForeground(Color.black);
@@ -338,7 +351,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         AIFGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy++;
         autoButton = new JRadioButton("Auto AIF Calculation", true);
         autoButton.setFont(serif12);
         autoButton.setForeground(Color.black);
@@ -346,7 +359,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         autoButton.addActionListener(this);
         inputPanel.add(autoButton, gbc);
         
-        gbc.gridy = 11;
+        gbc.gridy++;
         autoRAPIDButton = new JRadioButton("Experiemental RAPID auto AIF Calculation", false);
         autoRAPIDButton.setFont(serif12);
         autoRAPIDButton.setForeground(Color.black);
@@ -354,7 +367,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         autoRAPIDButton.addActionListener(this);
         inputPanel.add(autoRAPIDButton, gbc);
         
-        gbc.gridy = 12;
+        gbc.gridy++;
         edgeLabel = new JLabel("Brain surface extractor edge kernel size");
         edgeLabel.setFont(serif12);
         edgeLabel.setForeground(Color.black);
@@ -370,7 +383,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(edgeText, gbc);   
         
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy++;
         pickButton = new JRadioButton("Pick image pixel corresponding to AIF", false);
         pickButton.setFont(serif12);
         pickButton.setForeground(Color.black);
@@ -378,13 +391,13 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         pickButton.addActionListener(this);
         inputPanel.add(pickButton, gbc);
         
-        gbc.gridy = 14;
+        gbc.gridy++;
         plotAIFCheckBox = new JCheckBox("Plot AIF");
         plotAIFCheckBox.setFont(MipavUtil.font12);
         plotAIFCheckBox.setSelected(true);
         inputPanel.add(plotAIFCheckBox, gbc);
         
-        gbc.gridy = 15;
+        gbc.gridy++;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -399,7 +412,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         searchGroup = new ButtonGroup();
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy++;
         search2DElsuncButton = new JRadioButton("2D Elsunc search", true);
         search2DElsuncButton.setFont(serif12);
         search2DElsuncButton.setForeground(Color.black);
@@ -407,7 +420,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DElsuncButton);
         inputPanel.add(search2DElsuncButton, gbc);   
         
-        gbc.gridy = 17;
+        gbc.gridy++;
         search1DElsuncButton = new JRadioButton("1D Elsunc search", false);
         search1DElsuncButton.setFont(serif12);
         search1DElsuncButton.setForeground(Color.black);
@@ -415,7 +428,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search1DElsuncButton);
         inputPanel.add(search1DElsuncButton, gbc);
         
-        gbc.gridy = 18;
+        gbc.gridy++;
         search2DNMSimplexButton = new JRadioButton("2D Michael Hutt NMSimplex search", false);
         search2DNMSimplexButton.setFont(serif12);
         search2DNMSimplexButton.setForeground(Color.black);
@@ -423,7 +436,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNMSimplexButton);
         inputPanel.add(search2DNMSimplexButton, gbc);
         
-        gbc.gridy = 19;
+        gbc.gridy++;
         search2DNelderMeadButton = new JRadioButton("2D Matteo Magioni NelderMead search", false);
         search2DNelderMeadButton.setFont(serif12);
         search2DNelderMeadButton.setForeground(Color.black);
@@ -431,19 +444,19 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         searchGroup.add(search2DNelderMeadButton);
         inputPanel.add(search2DNelderMeadButton, gbc);
         
-        gbc.gridy = 20;
+        gbc.gridy++;
         correlationCheckBox = new JCheckBox("Correlation maps calculated", true);
         correlationCheckBox.setFont(MipavUtil.font12);
         correlationCheckBox.setForeground(Color.black);
         inputPanel.add(correlationCheckBox, gbc);
         
-        gbc.gridy = 21;
+        gbc.gridy++;
         CBFCBVMTTCheckBox = new JCheckBox("CBF, CBV, and MTT calculated", true);
         CBFCBVMTTCheckBox.setFont(MipavUtil.font12);
         CBFCBVMTTCheckBox.setForeground(Color.black);
         inputPanel.add(CBFCBVMTTCheckBox, gbc);
         
-        gbc.gridy = 22;
+        gbc.gridy++;
         boundsCheckBox = new JCheckBox("Bounds calculation enabled", false);
         boundsCheckBox.setFont(MipavUtil.font12);
         boundsCheckBox.setForeground(Color.black);
@@ -514,7 +527,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, sigmax,
             		sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
-            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF, edgeKernelSize);
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -554,6 +567,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     protected void setGUIFromParams() {
     	pwiImageFileDirectory = scriptParameters.getParams().getString("pwiImageFileDirectory");
+    	spatialSmoothing = scriptParameters.getParams().getBoolean("doN4");
     	spatialSmoothing = scriptParameters.getParams().getBoolean("spatial_smoothing");
     	sigmax = scriptParameters.getParams().getFloat("x_sigma");
     	sigmay = scriptParameters.getParams().getFloat("y_sigma");
@@ -579,6 +593,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     @Override
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.getParams().put(ParameterFactory.newParameter("pwiImageFileDirectory", pwiImageFileDirectory));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("doN4", doN4MRIBiasFieldCorrection));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("spatial_smoothing", spatialSmoothing));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("x_sigma", sigmax));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("y_sigma", sigmay));
@@ -609,6 +624,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     		baseText.selectAll();
     		return false;
     	}
+    	
+    	doN4MRIBiasFieldCorrection = N4CheckBox.isSelected();
     	
     	spatialSmoothing = spatialSmoothingCheckBox.isSelected();
     	if (spatialSmoothing) {
