@@ -92,6 +92,10 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
 	
 	private String fileNameBase = "IM";
 	
+	private JCheckBox N4CheckBox;
+	
+	private boolean doN4MRIBiasFieldCorrection = false;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -173,7 +177,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(pwiImageFileDirectoryText.getParent(), gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy++;
         JLabel baseLabel = new JLabel("Base name in selected files");
         baseLabel.setFont(serif12);
         baseLabel.setForeground(Color.black);
@@ -187,7 +191,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(baseText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy++;
         JLabel xLabel = new JLabel("Voxel x location");
         xLabel.setFont(serif12);
         xLabel.setForeground(Color.black);
@@ -201,7 +205,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(xText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy++;
         JLabel yLabel = new JLabel("Voxel y location");
         yLabel.setFont(serif12);
         yLabel.setForeground(Color.black);
@@ -215,7 +219,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(yText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy++;
         JLabel zLabel = new JLabel("Voxel z location");
         zLabel.setFont(serif12);
         zLabel.setForeground(Color.black);
@@ -227,9 +231,18 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         zText.setFont(serif12);
         zText.setForeground(Color.black);
         inputPanel.add(zText, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        N4CheckBox = new JCheckBox("Perform N4 MRI Bias Field Correction");
+        N4CheckBox.setSelected(false);
+        N4CheckBox.setFont(MipavUtil.font12);
+        N4CheckBox.setForeground(Color.black);
+        N4CheckBox.addActionListener(this);
+        inputPanel.add(N4CheckBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy++;
         spatialSmoothingCheckBox = new JCheckBox("Perform spatial smoothing");
         spatialSmoothingCheckBox.setSelected(false);
         spatialSmoothingCheckBox.setFont(MipavUtil.font12);
@@ -237,7 +250,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         spatialSmoothingCheckBox.addActionListener(this);
         inputPanel.add(spatialSmoothingCheckBox, gbc);
         
-        gbc.gridy = 6;
+        gbc.gridy++;
         sigmaXLabel = new JLabel("Gaussian blur sigma X in millimeters");
         sigmaXLabel.setFont(serif12);
         sigmaXLabel.setForeground(Color.black);
@@ -253,7 +266,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(sigmaXText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy++;
         sigmaYLabel = new JLabel("Gaussian blur sigma Y in millimeters");
         sigmaYLabel.setFont(serif12);
         sigmaYLabel.setForeground(Color.black);
@@ -269,7 +282,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(sigmaYText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy++;
         calculateMaskingCheckBox = new JCheckBox("Calculate masking threshold from mean and standard deviation");
         calculateMaskingCheckBox.setSelected(true);
         calculateMaskingCheckBox.setFont(MipavUtil.font12);
@@ -278,7 +291,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(calculateMaskingCheckBox, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy++;
         masking_thresholdLabel = new JLabel("Masking threshold");
         masking_thresholdLabel.setFont(serif12);
         masking_thresholdLabel.setForeground(Color.black);
@@ -294,7 +307,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(masking_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy++;
         JLabel TSP_thresholdLabel = new JLabel("TSP threshold");
         TSP_thresholdLabel.setFont(serif12);
         TSP_thresholdLabel.setForeground(Color.black);
@@ -308,7 +321,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(TSP_thresholdText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy++;
         JLabel TSP_iterLabel = new JLabel("TSP iterations");
         TSP_iterLabel.setFont(serif12);
         TSP_iterLabel.setForeground(Color.black);
@@ -322,7 +335,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         inputPanel.add(TSP_iterText, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy++;
         if (ThreadUtil.getAvailableCores() > 1) {
             multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         }
@@ -335,7 +348,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         multiThreadingEnabledCheckBox.setEnabled(ThreadUtil.getAvailableCores() > 1);
         inputPanel.add(multiThreadingEnabledCheckBox, gbc);
         
-        gbc.gridy = 13;
+        gbc.gridy++;
         correlationCheckBox = new JCheckBox("Correlation maps calculated", true);
         correlationCheckBox.setFont(MipavUtil.font12);
         correlationCheckBox.setForeground(Color.black);
@@ -406,7 +419,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
             TSPPointAlgo = new PlugInAlgorithmTSPPoint(pwiImageFileDirectory,
             		xLoc, yLoc, zLoc, spatialSmoothing, sigmax, sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, multiThreading, calculateCorrelation,
-            		fileNameBase);
+            		fileNameBase, doN4MRIBiasFieldCorrection);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -450,6 +463,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
         xLoc = scriptParameters.getParams().getInt("x_loc");
         yLoc = scriptParameters.getParams().getInt("y_loc");
         zLoc = scriptParameters.getParams().getInt("z_loc");
+        doN4MRIBiasFieldCorrection = scriptParameters.getParams().getBoolean("doN4");
     	spatialSmoothing = scriptParameters.getParams().getBoolean("spatial_smoothing");
     	sigmax = scriptParameters.getParams().getFloat("x_sigma");
     	sigmay = scriptParameters.getParams().getFloat("y_sigma");
@@ -471,6 +485,8 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     	scriptParameters.getParams().put(ParameterFactory.newParameter("x_loc", xLoc));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("y_loc", yLoc));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("z_loc", zLoc));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("doN4", doN4MRIBiasFieldCorrection));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("spatial_smoothing", spatialSmoothing));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("x_sigma", sigmax));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("y_sigma", sigmay));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_mask_thresh", calculateMaskingThreshold));
@@ -544,6 +560,7 @@ public class PlugInDialogTSPPoint extends JDialogStandaloneScriptablePlugin impl
     	    return false;
     	}
     	
+    	doN4MRIBiasFieldCorrection = N4CheckBox.isSelected();
     	spatialSmoothing = spatialSmoothingCheckBox.isSelected();
     	if (spatialSmoothing) {
 	    	tmpStr = sigmaXText.getText();
