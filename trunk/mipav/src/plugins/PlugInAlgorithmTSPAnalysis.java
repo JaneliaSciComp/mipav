@@ -2247,8 +2247,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 						xsumsquared += (x*x);
 						ysumsquared += (y*y);
 					}
-					data_norm = (short)(data[highestZ][y][x][t] - data[highestZ][y][x][0]);
-				    sumt += data_norm;
+				    sumt += data[highestZ][y][x][t];
 				    countt++;
 		        } //for (i = 0; i < numAdjacentNeeded; i++) {
 		        if (t == 0) {
@@ -2281,10 +2280,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					for (x = 0; x < xDim; x++) {
 						minpeaks = Short.MAX_VALUE;
 						minttp = Short.MAX_VALUE;
-						for (t = 0; t < tDim; t++) {
-							data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
-							if (data_norm < minpeaks) {
-								minpeaks = data_norm;
+						for (t = 0; t < tDim; t++) {	
+							if (data[z][y][x][t] < minpeaks) {
+								minpeaks = data[z][y][x][t];
 								minttp = (short)(t+1);
 							}
 						}
@@ -2461,8 +2459,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 									ysumsquared += (y*y);
 									zsumsquared += (z*z);
 								}
-								data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);
-							    sumt += data_norm;
+							    sumt += data[z][y][x][t];
 							    countt++;
 							}
 						}
