@@ -1316,10 +1316,9 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 				for (x = 0; x < xDim; x++) {
 					minpeaks = Short.MAX_VALUE;
 					minttp = Short.MAX_VALUE;
-					for (t = 0; t < tDim; t++) {
-						data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
-						if (data_norm < minpeaks) {
-							minpeaks = data_norm;
+					for (t = 0; t < tDim; t++) {	
+						if (data[z][y][x][t] < minpeaks) {
+							minpeaks = data[z][y][x][t];
 							minttp = (short)(t+1);
 						}
 					}
@@ -2077,9 +2076,8 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 						minpeaks = Short.MAX_VALUE;
 						minttp = Short.MAX_VALUE;
 						for (t = 0; t < tDim; t++) {
-							data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
-							if (data_norm < minpeaks) {
-								minpeaks = data_norm;
+							if (data[z][y][x][t] < minpeaks) {
+								minpeaks = data[z][y][x][t];
 								minttp = (short)(t+1);
 							}
 						}
@@ -2256,8 +2254,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 									ysumsquared += (y*y);
 									zsumsquared += (z*z);
 								}
-								data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);
-							    sumt += data_norm;
+							    sumt += data[z][y][x][t];
 							    countt++;
 							}
 						}
