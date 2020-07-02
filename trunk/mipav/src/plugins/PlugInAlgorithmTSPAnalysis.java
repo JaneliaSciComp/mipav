@@ -467,8 +467,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	double highestCSum[];
     	int highestZ;
     	double highestZCSum;
-    	int lowestArterialZ;
-        int highestArterialZ;
+    	int lowestArterialZ = 4;
+        int highestArterialZ = 10;
         int numArterialZ;
         boolean lookForZSlices = false;
         RandomAccessFile raAVFile = null;
@@ -815,25 +815,170 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	
     	if (findAVInfo) {
-    	    short minAIFValue = Short.MAX_VALUE;
-    	    int AIFttp = -1;
-    	    for (t = 0; t < tDim; t++) {
-    	    	if (data[az][ay][ax][t] < minAIFValue) {
-    	    		minAIFValue = data[az][ay][ax][t];
-    	    		AIFttp = (t+1);
-    	    	}
-    	    }
-    	    try {
-	    	    raAVFile.writeBytes("AIF ttp (t+1) = " + AIFttp + " right after data read in\n");
-	    	    short minVOFValue = Short.MAX_VALUE;
+    		try {
+	    		short minValue;
+	    		int timetopeak;
+	    		int numValues = 0;
+	    		long totalminttp = 0;
+	    		double totalMaxPeaks = 0;
+	    		double meanMaxPeaks = 0.0;
+	    		double meanminttp = 0.0;
+	    		double fullwhm;
+	    		double AIFfwhm = Double.NaN;
+	    		double VOFfwhm = Double.NaN;
+	    		double totalfwhm = 0.0;
+	    		meanfwhm = 0.0;
+	    		double maxAIFValue = -Double.MAX_VALUE;
+	    	    int AIFttp = -1;
+	    	    double maxVOFValue = -Double.MAX_VALUE;
 	    	    int VOFttp = -1;
-	    	    for (t = 0; t < tDim; t++) {
-	    	    	if (data[vz][vy][vx][t] < minVOFValue) {
-	    	    		minVOFValue = data[vz][vy][vx][t];
-	    	    		VOFttp = (t+1);
-	    	    	}
+	    	    boolean prepeaktoohigh;
+	    	    boolean AIFPrePeakTooHigh = false;
+	    	    boolean VOFPrePeakTooHigh = false;
+	    	    boolean postpeaktoohigh;
+	    	    boolean AIFPostPeakTooHigh = false;
+	    	    boolean VOFPostPeakTooHigh = false;
+	    	    delR2 = new double[tDim];
+	    	    long numfwhmValues = 0;
+	    		for (z = lowestArterialZ; z <= highestArterialZ; z++) {
+					for (y = 0; y < yDim; y++) {
+						xloop: for (x = 0; x < xDim; x++) {
+							for (t = 0; t < tDim; t++) {
+								if (data[z][y][x][t] == 0) {
+								    continue xloop;	
+								}
+							}
+							maxpeaks = -Double.MAX_VALUE;
+							minttp = Short.MAX_VALUE;
+							for (t = 0; t < tDim; t++) {
+								delR2[t] = -(1.0/TE)*Math.log((double)data[z][y][x][t]/
+										(double)data[z][y][x][0]);
+								if (delR2[t] > maxpeaks) {
+									maxpeaks = delR2[t];
+									minttp = (short)(t+1);
+								}
+							}
+							preBelowOrEqualHalfTime = Short.MAX_VALUE;
+							preBelowHalfIntensity = -Double.MAX_VALUE;
+							preHalfTime = -Double.MAX_VALUE;
+							preAboveHalfIntensity = -Double.MAX_VALUE;
+							postAboveHalfIntensity = -Double.MAX_VALUE;
+							postHalfTime = -Double.MAX_VALUE;
+							postBelowOrEqualHalfTime = Short.MAX_VALUE;
+							postBelowHalfIntensity = -Double.MAX_VALUE;
+							for (t = 0; t < (minttp-1); t++) {
+							    if (delR2[t] <= maxpeaks/2.0) {
+							    	preBelowOrEqualHalfTime = (short)t;
+							    	preBelowHalfIntensity = delR2[t];
+							    	preAboveHalfIntensity = delR2[t+1];
+							    }
+							}
+							if (preBelowOrEqualHalfTime == Short.MAX_VALUE) {
+								// Never was less than half peak value before peak value occurred
+								fullwhm = Float.NaN;
+								prepeaktoohigh = true;
+							}
+							else {
+								prepeaktoohigh = false;
+							}
+							for (t = tDim-1; t > minttp-1; t--) {
+								if (delR2[t] <= maxpeaks/2.0) {
+							    	postBelowOrEqualHalfTime = (short)t;
+							    	postBelowHalfIntensity = delR2[t];
+							    	postAboveHalfIntensity = delR2[t-1];
+							    }
+							} 
+							if (postBelowOrEqualHalfTime == Short.MAX_VALUE) {
+								// Never was less than half peak value after peak value occurred
+								fullwhm = Float.NaN;
+								postpeaktoohigh = true;
+							}
+							else {
+								postpeaktoohigh = false;
+							}
+							if (preBelowHalfIntensity == maxpeaks/2.0) {
+								preHalfTime = preBelowOrEqualHalfTime;
+							}
+							else {
+								fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/
+										   (preAboveHalfIntensity - preBelowHalfIntensity);
+							    preHalfTime = preBelowOrEqualHalfTime	+ fraction;
+							}
+							if (postBelowHalfIntensity == maxpeaks/2.0) {
+								postHalfTime = postBelowOrEqualHalfTime;
+							}
+							else  {
+							    fraction = (maxpeaks/2.0 - postBelowHalfIntensity)/
+							    		   (postAboveHalfIntensity - postBelowHalfIntensity);
+							    postHalfTime = postBelowOrEqualHalfTime - fraction;
+							}
+							if ((!prepeaktoohigh) && (!postpeaktoohigh)) {
+							    fullwhm = postHalfTime - preHalfTime;
+							    totalfwhm += fullwhm;
+							    numfwhmValues++;
+							}
+							else {
+								fullwhm = Double.NaN;
+							}
+							
+							numValues++;
+	                        totalMaxPeaks += maxpeaks;
+	                        totalminttp += minttp;
+	                        
+	                        if ((x == ax) && (y == ay) && (z == az)) {
+	                        	maxAIFValue = maxpeaks;
+	                        	AIFttp = minttp;
+	                        	AIFPrePeakTooHigh = prepeaktoohigh;
+	                        	AIFPostPeakTooHigh = postpeaktoohigh;
+	                        	AIFfwhm = fullwhm;
+	                        }
+	                        
+	                        if ((x == vx) && (y == vy) && (z == vz)) {
+	                        	maxVOFValue = maxpeaks;
+	                        	VOFttp = minttp;
+	                        	VOFPrePeakTooHigh = prepeaktoohigh;
+	                        	VOFPostPeakTooHigh = postpeaktoohigh;
+	                        	VOFfwhm = fullwhm;
+	                        }
+						}
+					}
+	    		}
+	    		meanMaxPeaks = totalMaxPeaks/(double)numValues;
+	    		meanminttp = (double)totalminttp/(double)numValues;
+	    		meanfwhm = totalfwhm/numfwhmValues;
+	    		raAVFile.writeBytes("mean maximum peak = " + meanMaxPeaks + " right after data read in\n");
+	    		raAVFile.writeBytes("mean ttp (t+1) = " + meanminttp + " right after data read in\n");
+	    		raAVFile.writeBytes("mean fwhm = " + meanfwhm + " right after data read in\n");
+	    		
+	    	    raAVFile.writeBytes("AIF maximum peak = " + maxAIFValue + " right after data read in\n");
+	    	    raAVFile.writeBytes("AIF ttp (t+1) = " + AIFttp + " right after data read in\n");
+	    	    if ((!AIFPrePeakTooHigh) && (!AIFPostPeakTooHigh)) {
+	    	    	raAVFile.writeBytes("AIF fwhm = " + AIFfwhm + " right after data read in\n");	
 	    	    }
+	    	    else if (AIFPrePeakTooHigh && AIFPostPeakTooHigh) {
+	    	    	raAVFile.writeBytes("AIF fhwm not found because does not fall to half peak level either before or after the peak right after data read in\n");
+	    	    }
+	    	    else if (AIFPrePeakTooHigh) {
+	    	    	raAVFile.writeBytes("AIF fhwm not found because does not fall to half peak level before the peak right after data read in\n");	
+	    	    }
+	    	    else {
+	    	    	raAVFile.writeBytes("AIF fhwm not found because does not fall to half peak level after the peak right after data read in\n");
+	    	    }
+	    	  
+	    	    raAVFile.writeBytes("VOF maximum peak = " + maxVOFValue + " right after data read in\n");
 	    	    raAVFile.writeBytes("VOF ttp (t+1) = " + VOFttp + " right after data read in\n");
+	    	    if ((!VOFPrePeakTooHigh) && (!VOFPostPeakTooHigh)) {
+	    	    	raAVFile.writeBytes("VOF fwhm = " + VOFfwhm + " right after data read in\n");	
+	    	    }
+	    	    else if (VOFPrePeakTooHigh && VOFPostPeakTooHigh) {
+	    	    	raAVFile.writeBytes("VOF fhwm not found because does not fall to half peak level either before or after the peak right after data read in\n");
+	    	    }
+	    	    else if (VOFPrePeakTooHigh) {
+	    	    	raAVFile.writeBytes("VOF fhwm not found because does not fall to half peak level before the peak right after data read in\n");	
+	    	    }
+	    	    else {
+	    	    	raAVFile.writeBytes("VOF fhwm not found because does not fall to half peak level after the peak right after data read in\n");
+	    	    }
 	    	}
     	    catch (IOException e) {
 	    	    System.err.println(e);
