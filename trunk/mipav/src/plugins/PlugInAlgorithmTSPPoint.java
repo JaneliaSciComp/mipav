@@ -737,19 +737,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
 						for (t = 0; t < tDim; t++) {
-							if (t == 0) {
-							    data[z][y][x][t] =(short)Math.round( (3.0*buffer[x + y*xDim + t*length + z*tDim*length] + 
-							    		buffer[x + y*xDim + (t+1)*length + z*tDim*length])/4.0);
-							}
-							else if (t == tDim-1) {
-								data[z][y][x][t] =(short)Math.round( (buffer[x + y*xDim + (t-1)*length + z*tDim*length] + 
-							    		3.0*buffer[x + y*xDim + t*length + z*tDim*length])/4.0);	
-							}
-							else {
-								data[z][y][x][t] =(short)Math.round( (buffer[x + y*xDim + (t-1)*length + z*tDim*length] + 
-							    		3.0*buffer[x + y*xDim + t*length + z*tDim*length] + 
-							    		buffer[x + y*xDim + (t+1)*length + z*tDim*length])/5.0);		
-							}
+							data[z][y][x][t] = buffer[x + y*xDim + t*length + z*tDim*length];
 						}
 					}
 				}
@@ -760,24 +748,100 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
 						for (t = 0; t < tDim; t++) {
-							if (t == 0) {
-						        data[z][y][x][t] = (short)Math.round( (3.0*buffer[x + y*xDim + z*length + t*volume] +
-						    		buffer[x + y*xDim + z*length + (t+1)*volume])/4.0);
-							}
-							else if (t == tDim-1) {
-								data[z][y][x][t] = (short)Math.round( (buffer[x + y*xDim + z*length + (t-1)*volume] +
-							    		3.0*buffer[x + y*xDim + z*length + t*volume])/4.0);	
-							}
-							else {
-								data[z][y][x][t] = (short)Math.round( (buffer[x + y*xDim + z*length + (t-1)*volume] +
-							    		3.0*buffer[x + y*xDim + z*length + t*volume] + 
-							    		buffer[x + y*xDim + z*length + (t+1)*volume])/5.0);		
-							}
+							data[z][y][x][t] = buffer[x + y*xDim + z*length + t*volume];
 						}
 					}
 				}
 			}	
     	}
+    	
+    	// If a maximum peak has a fwhm < 1.0 indicating a noise spike, set that time value equal to the average of the neighboring 2 channels.
+		double fullwhm;
+		meanfwhm = 0.0;
+	    boolean prepeaktoohigh;
+	    boolean postpeaktoohigh;
+	    delR2 = new double[tDim];
+		for (z = 0; z <= zDim; z++) {
+			for (y = 0; y < yDim; y++) {
+				xloop: for (x = 0; x < xDim; x++) {
+					for (t = 0; t < tDim; t++) {
+						if (data[z][y][x][t] == 0) {
+						    continue xloop;	
+						}
+					}
+					maxpeaks = -Double.MAX_VALUE;
+					minttp = Short.MAX_VALUE;
+					for (t = 0; t < tDim; t++) {
+						delR2[t] = -(1.0/TE)*Math.log((double)data[z][y][x][t]/
+								(double)data[z][y][x][0]);
+						if (delR2[t] > maxpeaks) {
+							maxpeaks = delR2[t];
+							minttp = (short)(t+1);
+						}
+					}
+					preBelowOrEqualHalfTime = Short.MAX_VALUE;
+					preBelowHalfIntensity = -Double.MAX_VALUE;
+					preHalfTime = -Double.MAX_VALUE;
+					preAboveHalfIntensity = -Double.MAX_VALUE;
+					postAboveHalfIntensity = -Double.MAX_VALUE;
+					postHalfTime = -Double.MAX_VALUE;
+					postBelowOrEqualHalfTime = Short.MAX_VALUE;
+					postBelowHalfIntensity = -Double.MAX_VALUE;
+					for (t = 0; t < (minttp-1); t++) {
+					    if (delR2[t] <= maxpeaks/2.0) {
+					    	preBelowOrEqualHalfTime = (short)t;
+					    	preBelowHalfIntensity = delR2[t];
+					    	preAboveHalfIntensity = delR2[t+1];
+					    }
+					}
+					if (preBelowOrEqualHalfTime == Short.MAX_VALUE) {
+						// Never was less than half peak value before peak value occurred
+						fullwhm = Float.NaN;
+						prepeaktoohigh = true;
+					}
+					else {
+						prepeaktoohigh = false;
+					}
+					for (t = tDim-1; t > minttp-1; t--) {
+						if (delR2[t] <= maxpeaks/2.0) {
+					    	postBelowOrEqualHalfTime = (short)t;
+					    	postBelowHalfIntensity = delR2[t];
+					    	postAboveHalfIntensity = delR2[t-1];
+					    }
+					} 
+					if (postBelowOrEqualHalfTime == Short.MAX_VALUE) {
+						// Never was less than half peak value after peak value occurred
+						fullwhm = Float.NaN;
+						postpeaktoohigh = true;
+					}
+					else {
+						postpeaktoohigh = false;
+					}
+					if (preBelowHalfIntensity == maxpeaks/2.0) {
+						preHalfTime = preBelowOrEqualHalfTime;
+					}
+					else {
+						fraction = (maxpeaks/2.0 - preBelowHalfIntensity)/
+								   (preAboveHalfIntensity - preBelowHalfIntensity);
+					    preHalfTime = preBelowOrEqualHalfTime	+ fraction;
+					}
+					if (postBelowHalfIntensity == maxpeaks/2.0) {
+						postHalfTime = postBelowOrEqualHalfTime;
+					}
+					else  {
+					    fraction = (maxpeaks/2.0 - postBelowHalfIntensity)/
+					    		   (postAboveHalfIntensity - postBelowHalfIntensity);
+					    postHalfTime = postBelowOrEqualHalfTime - fraction;
+					}
+					if ((!prepeaktoohigh) && (!postpeaktoohigh)) {
+					    fullwhm = postHalfTime - preHalfTime;
+					    if (fullwhm < 1.0) {
+					    	data[z][y][x][minttp-1] = (short)(Math.round(0.5*(data[z][y][x][minttp-2] + data[z][y][x][minttp])));
+					    }
+					}
+				}
+			}
+		}
     	
     	if (doN4MRIBiasFieldCorrection) {
     	    ModelImage N4SourceImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "N4SourceImage");
@@ -1137,7 +1201,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	        				    delay_map[z][y][x] = (short)maxIndex;
 	        				    maxPeak = Short.MIN_VALUE;
 	        				    for (t = 0; t < tDim; t++) {
-	        				    	if (Math.abs(brain_mask_norm[z][y][x][t]) > maxPeak) {
+	        				    	if ((Math.abs(brain_mask_norm[z][y][x][t]) > maxPeak) && (t >= 3)) {
 	        				    		maxPeak = (short)Math.abs(brain_mask_norm[z][y][x][t]);
 	        				    	}
 	        				    }
@@ -1318,7 +1382,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 					minttp = Short.MAX_VALUE;
 					for (t = 0; t < tDim; t++) {
 						data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
-						if (data_norm < minpeaks) {
+						if ((data_norm < minpeaks) && (t >= 3)) {
 							minpeaks = data_norm;
 							minttp = (short)(t+1);
 						}
@@ -1439,7 +1503,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 						for (t = 0; t < tDim; t++) {
 							delR2[t] = -(1.0/TE)*Math.log((double)(data[z][y][x][t] - mindata + 1)/
 									(double)(data[z][y][x][0] - mindata + 1));
-							if (delR2[t] > maxpeaks) {
+							if ((delR2[t] > maxpeaks) && (t >= 3)) {
 								maxpeaks = delR2[t];
 								minttp = (short)(t+1);
 							}
@@ -2078,7 +2142,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 						minttp = Short.MAX_VALUE;
 						for (t = 0; t < tDim; t++) {
 							data_norm = (short)(data[z][y][x][t] - data[z][y][x][0]);	
-							if (data_norm < minpeaks) {
+							if ((data_norm < minpeaks) && (t >= 3)) {
 								minpeaks = data_norm;
 								minttp = (short)(t+1);
 							}
@@ -3183,7 +3247,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 						delay_map[y][x] = maxIndex;
 						maxPeak = Short.MIN_VALUE;
 						for (t = 0; t < tDim; t++) {
-							if (Math.abs(brain_mask_norm[y][x][t]) > maxPeak) {
+							if ((Math.abs(brain_mask_norm[y][x][t]) > maxPeak) && (t >= 3)) {
 								maxPeak = (short) Math.abs(brain_mask_norm[y][x][t]);
 							}
 						}
