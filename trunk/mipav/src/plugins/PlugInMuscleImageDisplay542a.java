@@ -5396,6 +5396,27 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 					DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 					Date date = new Date();
 					DecimalFormat dec = new DecimalFormat("0.0000");
+					// patient directory
+					String fileDir = fileInfo.getFileDirectory();
+	                int index = fileDir.lastIndexOf(File.separator);
+	                String fileParent = null;
+	                if (index == -1) {
+	                	fileParent = fileDir;   
+	                }
+	                else if (index == (fileDir.length()-1)) {
+	                	fileDir = fileDir.substring(0,index);
+	                	index = fileDir.lastIndexOf(File.separator);
+	                    if (index == -1) {
+	                    	fileParent = fileDir;
+	                    }
+	                    else {
+	                    	fileParent = fileDir.substring(index+1);
+	                    }
+	                }
+	                else {
+	                	fileParent = fileDir.substring(index+1);
+	                }
+	                sliceStr[i] += (fileParent != null ? fileParent.trim() : "0")+"\t";
 					//patient id
 					String id = (String)fileInfo.getTagTable().getValue("0010,0020");
 					sliceStr[i] += (id != null ? id.trim() : "0")+"\t";
@@ -6112,6 +6133,26 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
             
             if(getActiveImage().getFileInfo()[0] instanceof FileInfoDicom) {
                 FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
+                String fileDir = fileInfo.getFileDirectory();
+                int index = fileDir.lastIndexOf(File.separator);
+                String fileParent = null;
+                if (index == -1) {
+                	fileParent = fileDir;   
+                }
+                else if (index == (fileDir.length()-1)) {
+                	fileDir = fileDir.substring(0,index);
+                	index = fileDir.lastIndexOf(File.separator);
+                    if (index == -1) {
+                    	fileParent = fileDir;
+                    }
+                    else {
+                    	fileParent = fileDir.substring(index+1);
+                    }
+                }
+                else {
+                	fileParent = fileDir.substring(index+1);
+                }
+                fileParent = fileParent != null && fileParent.length() > 0 ? fileParent.trim() : "Unknown";
                 String id = (String)fileInfo.getTagTable().getValue("0010,0020");
                 id = id != null && id.length() > 0 ? id.trim() : "Removed";
                 
@@ -6132,7 +6173,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                 String userName = System.getProperty("user.name");
                 userName = userName != null ? userName.trim() : "Unknown";
                 
-                kl.append("#\tPatient ID:\t").append(id).append("\tPatient DOB:\t").append(dob).append("\tScan date:\t").append(scanDate).append("\n");
+                kl.append("#\tDirectory:\t").append(fileParent).append("\tPatient ID:\t").append(id).append("\tPatient DOB:\t").append(dob).append("\tScan date:\t").append(scanDate).append("\n");
                 kl.append("#").append("\tSlice:\t").append(sliceNumber).append("\tAnalyst:\t").append(userName).append("\tAnalysis Date:\t").append(analysisDate).append("\n");
             }
             kl.append(buffer);
