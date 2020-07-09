@@ -1,11 +1,13 @@
 package gov.nih.mipav.model.algorithms;
 
-
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * This is a port of
@@ -93,7 +95,12 @@ public class SIFT extends AlgorithmBase {
     private double   edge_thresh  = -1 ;
     private double   peak_thresh  = -1 ;
     private double   magnif       = -1 ;
-    private boolean force_orientations = false ;	
+    private boolean force_orientations = false ;
+    
+    private int NBP = 4;
+    private int EXPN_SZ  = 256;          /**< ::fast_expn table size @internal */
+    private double EXPN_MAX = 25.0;         /**< ::fast_expn table max  @internal */
+    private double expn_tab[] = new double[EXPN_SZ+1] ; /**< ::fast_expn table   
 	
 	/**
      * SIFT - default constructor.
@@ -137,6 +144,10 @@ public class SIFT extends AlgorithmBase {
     	  int q;
     	  RandomAccessFile in = null;
     	  RandomAccessFile ifrFile = null;
+    	  RandomAccessFile outFile = null;
+    	  RandomAccessFile frmFile = null;
+    	  RandomAccessFile dscFile = null;
+    	  RandomAccessFile metFile = null;
     	  int data[] = null;
     	  float fdata[] = null;
     	  int error[] = new int[1];
@@ -268,7 +279,11 @@ public class SIFT extends AlgorithmBase {
     	  bigloop: while(true) {
 	    	  for (fileNum = 0; fileNum < fileName.length; fileNum++) {
 	    		  VlPgmImage pim = new VlPgmImage();
-	    	      // Get basename form fileName[fileNum]
+	    		  VlSiftFilt      filt =null; 
+	    		  ArrayList <double[]> ikeys = new ArrayList<double[]>();
+	    		  int nikeys = 0;
+	    		  int ikeys_size = 0;
+	    	      // Get basename from fileName[fileNum]
 	    		  name = fileName[fileNum];
 	    		  basename = "";
 	    		  int num[] = new int[1];
@@ -363,12 +378,206 @@ public class SIFT extends AlgorithmBase {
     		          
     		          while (true) {
     		              double x[] = new double[1];
-    		              double y, s, th ;
+    		              double y[] = new double[1];
+    		              double s[] = new double[1];
+    		              double th[] = new double[1];
 
     		              /* read next guy */
-    		              //err = vl_file_meta_get_double (ifr.protocol ifrFile, x) 
+    		              err = vl_file_meta_get_double (ifr.protocol[0], ifrFile, x);
+    		              if (err == VL_ERR_EOF) break;
+    		              if (err > 0) {
+    		            	  System.err.println(ifr.name + " malformed");
+    		            	  Preferences.debug(ifr.name + " malformed\n", Preferences.DEBUG_ALGORITHM);
+    		            	  err = VL_ERR_IO;
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_get_double(ifr.protocol[0], ifrFile, y); 
+    		              if (err > 0) {
+    		            	  System.err.println(ifr.name + " malformed");
+    		            	  Preferences.debug(ifr.name + " malformed\n", Preferences.DEBUG_ALGORITHM);
+    		            	  err = VL_ERR_IO;
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_get_double(ifr.protocol[0], ifrFile, s); 
+    		              if (err > 0) {
+    		            	  System.err.println(ifr.name + " malformed");
+    		            	  Preferences.debug(ifr.name + " malformed\n", Preferences.DEBUG_ALGORITHM);
+    		            	  err = VL_ERR_IO;
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_get_double (ifr.protocol[0], ifrFile, th);
+    		              if (err == VL_ERR_EOF) break;
+    		              if (err > 0) {
+    		            	  System.err.println(ifr.name + " malformed");
+    		            	  Preferences.debug(ifr.name + " malformed\n", Preferences.DEBUG_ALGORITHM);
+    		            	  err = VL_ERR_IO;
+    		            	  break bigloop;
+    		              }
+    		              
+    		              /* make enough space */
+    		              
+    		              
+    		              /* add the guy to the buffer */
+    		              double key[] = new double[] {x[0],y[0],s[0],th[0]};
+    		              ikeys.add(key);
+
+    		              ++ nikeys ;
     		          } // while (true)
+    		          
+    		          /* now order by scale */
+    		          /* ----------------------------------------------------------------- */
+    		          /** @brief Keypoint ordering
+    		           ** @internal
+    		           **/
+    		          //int
+    		          //korder (void const* a, void const* b) {
+    		            //double x = ((double*) a) [2] - ((double*) b) [2] ;
+    		            //if (x < 0) return -1 ;
+    		            //if (x > 0) return +1 ;
+    		            //return 0 ;
+    		          //}
+    		          // Now order by scale
+    		          Collections.sort(ikeys, new ikeysComparator());
+
+    		          if (verbose) {
+    		            System.out.println("sift: read " + nikeys + " keypoints from " + ifr.name);
+    		            Preferences.debug("sift: read " + nikeys + " keypoints from " + ifr.name + "\n", Preferences.DEBUG_ALGORITHM);
+    		          }
+
+    		          /* close file */
+    		          if (ifrFile != null) {
+    		    		  try {
+    		    	    	  ifrFile.close();
+    		    	      }
+    		    	      catch (IOException e) {
+    							System.err.println("IOException " + e + " on ifrFile.close()");
+    						    Preferences.debug("IOException " + e + " on ifrFile.close()\n",Preferences.DEBUG_ALGORITHM);
+    						}  
+    		    	  }
+    		    	  vl_file_meta_close (ifr) ;
     		      } // if (ifr.active)
+    		      
+    		      /* ...............................................................
+    		       *                                               Open output files
+    		       * ............................................................ */
+
+    		      outFile = vl_file_meta_open (out, basename, "rw",error) ;
+    		      if (error[0] > 0) {
+		        	  if (error[0] == VL_ERR_OVERFLOW) {
+		        		  System.err.println("Output file name too long");
+		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  else {
+		        		  System.err.println("Could not open " + out.name + " for writing");
+		        		  Preferences.debug("Could not open " + out.name + " for writing\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  break bigloop;
+		          }
+    		      dscFile = vl_file_meta_open (dsc, basename, "rw",error) ;
+    		      if (error[0] > 0) {
+		        	  if (error[0] == VL_ERR_OVERFLOW) {
+		        		  System.err.println("Output file name too long");
+		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  else {
+		        		  System.err.println("Could not open " + dsc.name + " for writing");
+		        		  Preferences.debug("Could not open " + dsc.name + " for writing\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  break bigloop;
+		          }
+    		      frmFile = vl_file_meta_open (frm, basename, "rw",error) ;
+    		      if (error[0] > 0) {
+		        	  if (error[0] == VL_ERR_OVERFLOW) {
+		        		  System.err.println("Output file name too long");
+		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  else {
+		        		  System.err.println("Could not open " + frm.name + " for writing");
+		        		  Preferences.debug("Could not open " + frm.name + " for writing\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  break bigloop;
+		          }
+    		      metFile = vl_file_meta_open (met, basename, "rw", error) ;
+    		      if (error[0] > 0) {
+		        	  if (error[0] == VL_ERR_OVERFLOW) {
+		        		  System.err.println("Output file name too long");
+		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  else {
+		        		  System.err.println("Could not open " + met.name + " for writing");
+		        		  Preferences.debug("Could not open " + met.name + " for writing\n", Preferences.DEBUG_ALGORITHM);
+		        	  }
+		        	  break bigloop;
+		          }
+    		      if (verbose) {
+    		        if (out.active) {
+    		        	System.out.println("sift: writing all ....... to " + out.name);
+    		        	Preferences.debug("sift: writing all ....... to " + out.name + "\n", Preferences.DEBUG_ALGORITHM);
+    		        }
+    		        if (frm.active) {
+    		        	System.out.println("sift: writing frames .... to " + frm.name);
+    		        	Preferences.debug("sift: writing frames .... to " + frm.name + "\n", Preferences.DEBUG_ALGORITHM);
+    		        }
+    		        if (dsc.active) {
+    		        	System.out.println("sift: writing descriptors to " + dsc.name);
+    		        	Preferences.debug("sift: writing descriptors to " + dsc.name + "\n", Preferences.DEBUG_ALGORITHM);
+    		        }
+    		        if (met.active) {
+    		        	System.out.println("sift: writing meta ...... to " + met.name);
+    		        	Preferences.debug("sift: writing meta ...... to " + met.name + "\n", Preferences.DEBUG_ALGORITHM);
+    		        }
+    		      } // if (verbose)
+    		      
+    		      /* ...............................................................
+    		       *                                                     Make filter
+    		       * ............................................................ */
+
+    		      filt = vl_sift_new (pim.width, pim.height, O, S, omin) ;
+    		      
+    		      if (filt  == null) {
+      		        System.err.println("Could not create SIFT filter.") ;
+      		        Preferences.debug("Could not create SIFT filter\n", Preferences.DEBUG_ALGORITHM);
+      		        err = VL_ERR_ALLOC ;
+      		        break bigloop;
+      		      }
+
+    		      if (edge_thresh >= 0) filt.edge_thresh = edge_thresh;
+    		      if (peak_thresh >= 0) filt.peak_thresh = peak_thresh;
+    		      if (magnif      >= 0) filt.magnif = magnif;
+
+    		      if (verbose) {
+    		        System.out.println("sift: filter settings:") ;
+    		        Preferences.debug("sift: filter settings:\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:   number of octaves = " + filt.O);
+    		        Preferences.debug("sift:   number of octaves = " + filt.O + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:   number of levels per octave = " + filt.S);
+    		        Preferences.debug("sift:   number of levels per octave = " + filt.S + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:   index of the first octave = " + filt.o_min) ;
+    		        Preferences.debug("sift:   index of the first octave = " + filt.o_min + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:   edge threshold = " + filt.edge_thresh);
+    		        Preferences.debug("sift:   edge threshold = " + filt.edge_thresh + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:   peak threshold = " + filt.peak_thresh);
+    		        Preferences.debug("sift:   peak threshold = " + filt.peak_thresh + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:   magnification factor = " + filt.magnif);
+    		        Preferences.debug("sift:   magnification factor = " + filt.magnif + "\n", Preferences.DEBUG_ALGORITHM);
+    		        if (ikeys != null) {
+    		        	System.out.println("sift: will source frames? yes");
+    		        	Preferences.debug("sift: will source frames? yes\n", Preferences.DEBUG_ALGORITHM);
+    		        }
+    		        else {
+    		        	System.out.println("sift: will source frames? no");
+    		        	Preferences.debug("sift: will source frames? no\n", Preferences.DEBUG_ALGORITHM);	
+    		        }
+    		        if (force_orientations) {
+    		            System.out.println("sift: will force orientations? yes");
+    		            Preferences.debug("sift: will force orientations? yes\n", Preferences.DEBUG_ALGORITHM);
+    		        }
+    		        else {
+    		        	System.out.println("sift: will force orientations? no");
+    		            Preferences.debug("sift: will force orientations? no\n", Preferences.DEBUG_ALGORITHM);      	
+    		        }
+    		      }
+
 	    	  } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
     	      break bigloop;
     	  } // bigloop: while(true)
@@ -391,9 +600,45 @@ public class SIFT extends AlgorithmBase {
 				}
     	  }
     	  
+    	  if (outFile != null) {
+    		  try {
+    	    	  outFile.close();
+    	      }
+    	      catch (IOException e) {
+					System.err.println("IOException " + e + " on outFile.close()");
+				    Preferences.debug("IOException " + e + " on outFile.close()\n",Preferences.DEBUG_ALGORITHM);
+				}  
+    	  }
     	  vl_file_meta_close (out) ;
+    	  if (frmFile != null) {
+    		  try {
+    	    	  frmFile.close();
+    	      }
+    	      catch (IOException e) {
+					System.err.println("IOException " + e + " on frmFile.close()");
+				    Preferences.debug("IOException " + e + " on frmFile.close()\n",Preferences.DEBUG_ALGORITHM);
+				}  
+    	  }
     	  vl_file_meta_close (frm) ;
+    	  if (dscFile != null) {
+    		  try {
+    	    	  dscFile.close();
+    	      }
+    	      catch (IOException e) {
+					System.err.println("IOException " + e + " on dscFile.close()");
+				    Preferences.debug("IOException " + e + " on dscFile.close()\n",Preferences.DEBUG_ALGORITHM);
+				}  
+    	  }
     	  vl_file_meta_close (dsc) ;
+    	  if (metFile != null) {
+    		  try {
+    	    	  metFile.close();
+    	      }
+    	      catch (IOException e) {
+					System.err.println("IOException " + e + " on metFile.close()");
+				    Preferences.debug("IOException " + e + " on metFile.close()\n",Preferences.DEBUG_ALGORITHM);
+				}  
+    	  }
     	  vl_file_meta_close (met) ;
     	  vl_file_meta_close (gss) ;
     	  if (ifrFile != null) {
@@ -744,6 +989,75 @@ public class SIFT extends AlgorithmBase {
       public VlPgmImage() {
     	  
       }
+    };
+    
+        class VlSiftKeypoint
+    {
+      int o ;           /**< o coordinate (octave). */
+
+      int ix ;          /**< Integer unnormalized x coordinate. */
+      int iy ;          /**< Integer unnormalized y coordinate. */
+      int is ;          /**< Integer s coordinate. */
+
+      float x ;     /**< x coordinate. */
+      float y ;     /**< y coordinate. */
+      float s ;     /**< s coordinate. */
+      float sigma ; /**< scale. */
+      
+      public VlSiftKeypoint() {
+    	  
+      }
+    };
+    
+    /** ------------------------------------------------------------------
+     ** @brief SIFT filter
+     **
+     ** This filter implements the SIFT detector and descriptor.
+     **/
+
+     class VlSiftFilt
+    {
+      double sigman ;       /**< nominal image smoothing. */
+      double sigma0 ;       /**< smoothing of pyramid base. */
+      double sigmak ;       /**< k-smoothing */
+      double dsigma0 ;      /**< delta-smoothing. */
+
+      int width ;           /**< image width. */
+      int height ;          /**< image height. */
+      int O ;               /**< number of octaves. */
+      int S ;               /**< number of levels per octave. */
+      int o_min ;           /**< minimum octave index. */
+      int s_min ;           /**< minimum level index. */
+      int s_max ;           /**< maximum level index. */
+      int o_cur ;           /**< current octave. */
+
+      float temp[] ;   /**< temporary pixel buffer. */
+      float octave[] ; /**< current GSS data. */
+      float dog[] ;    /**< current DoG data. */
+      int octave_width ;    /**< current octave width. */
+      int octave_height ;   /**< current octave height. */
+
+      float gaussFilter[] ;  /**< current Gaussian filter */
+      double gaussFilterSigma ;   /**< current Gaussian filter std */
+      long gaussFilterWidth ;  /**< current Gaussian filter width */
+
+      VlSiftKeypoint keys ;/**< detected keypoints. */
+      int nkeys ;           /**< number of detected keypoints. */
+      int keys_res ;        /**< size of the keys buffer. */
+
+      double peak_thresh ;  /**< peak threshold. */
+      double edge_thresh ;  /**< edge threshold. */
+      double norm_thresh ;  /**< norm threshold. */
+      double magnif ;       /**< magnification factor. */
+      double windowSize ;   /**< size of Gaussian window (in spatial bins) */
+
+      float grad[];   /**< GSS gradient data. */
+      int grad_o ;          /**< GSS gradient data octave. */
+      
+      public VlSiftFilt() {
+    	  
+      }
+
     };
     
     /** ------------------------------------------------------------------
@@ -1328,6 +1642,124 @@ public class SIFT extends AlgorithmBase {
 
       return VL_ERR_OK ;
     }
+    
+    private class ikeysComparator implements Comparator<double[]> {
 
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(double o1[], double o2[]) {
+            double a = o1[2];
+            double b = o2[2];
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+    
+    private double log2(double x) {
+    	return (Math.log(x)/Math.log(2));
+    }
+    
+    /** @brief Signed left shift operation
+     ** @param x value.
+     ** @param n number of shift positions.
+     ** @return @c x << n .
+     ** The macro is equivalent to the builtin @c << operator, but it
+     ** supports negative shifts too.
+     **/
+    private int VL_SHIFT_LEFT(int x,int n) {
+    	int result;
+    	if (n >= 0) {
+    		result = x << n;
+    	}
+    	else {
+    		result = x >> (-n);
+    	}
+    	return result;
+    }
+    
+    private void
+    fast_expn_init ()
+    {
+      int k  ;
+      for(k = 0 ; k < EXPN_SZ + 1 ; ++ k) {
+        expn_tab [k] = Math.exp (- (double) k * (EXPN_MAX / EXPN_SZ)) ;
+      }
+    }
+    
+    VlSiftFilt
+    vl_sift_new (int width, int height,
+                 int noctaves, int nlevels,
+                 int o_min)
+    {
+      VlSiftFilt f = new VlSiftFilt();
+
+      int w   = VL_SHIFT_LEFT (width,  -o_min) ;
+      int h   = VL_SHIFT_LEFT (height, -o_min) ;
+      int nel = w * h ;
+
+      /* negative value O => calculate max. value */
+      if (noctaves < 0) {
+        noctaves = Math.max ((int)Math.floor (log2 (Math.min(width, height))) - o_min - 3, 1) ;
+      }
+
+      f.width   = width ;
+      f.height  = height ;
+      f.O       = noctaves ;
+      f.S       = nlevels ;
+      f.o_min   = o_min ;
+      f.s_min   = -1 ;
+      f.s_max   = nlevels + 1 ;
+      f.o_cur   = o_min ;
+
+      f.temp    = new float[nel] ;
+      f.octave  = new float[nel
+                            * (f.s_max - f.s_min + 1)  ] ;
+      f.dog     = new float[nel
+                            * (f.s_max - f.s_min    )  ] ;
+      f.grad    = new float[nel * 2
+                            * (f.s_max - f.s_min    )  ] ;
+
+      f.sigman  = 0.5 ;
+      f.sigmak  = Math.pow (2.0, 1.0 / nlevels) ;
+      f.sigma0  = 1.6 * f.sigmak ;
+      f.dsigma0 = f.sigma0 * Math.sqrt (1.0 - 1.0 / (f.sigmak*f.sigmak)) ;
+
+      f.gaussFilter = null ;
+      f.gaussFilterSigma = 0 ;
+      f.gaussFilterWidth = 0 ;
+
+      f.octave_width  = 0 ;
+      f.octave_height = 0 ;
+
+      f.keys     = null;
+      f.nkeys    = 0 ;
+      f.keys_res = 0 ;
+
+      f.peak_thresh = 0.0 ;
+      f.edge_thresh = 10.0 ;
+      f.norm_thresh = 0.0 ;
+      f.magnif      = 3.0 ;
+      f.windowSize  = NBP / 2 ;
+
+      f.grad_o  = o_min - 1 ;
+
+      /* initialize fast_expn stuff */
+      fast_expn_init () ;
+
+      return f ;
+    }
 
 }
