@@ -101,6 +101,13 @@ public class SIFT extends AlgorithmBase {
     private int EXPN_SZ  = 256;          /**< ::fast_expn table size @internal */
     private double EXPN_MAX = 25.0;         /**< ::fast_expn table max  @internal */
     private double expn_tab[] = new double[EXPN_SZ+1] ; /**< ::fast_expn table   
+    
+    /** @name Image convolution flags
+ ** @{ */
+    private int VL_PAD_BY_ZERO   =    (0x0 << 0); /**< @brief Pad with zeroes. */
+    private int VL_PAD_BY_CONTINUITY = (0x1 << 0); /**< @brief Pad by continuity. */
+    private int VL_PAD_MASK = (0x3);     /**< @brief Padding field selector. */
+    private int VL_TRANSPOSE = (0x1 << 2); /**< @brief Transpose result. */
 	
 	/**
      * SIFT - default constructor.
@@ -280,7 +287,9 @@ public class SIFT extends AlgorithmBase {
 	    	  for (fileNum = 0; fileNum < fileName.length; fileNum++) {
 	    		  VlPgmImage pim = new VlPgmImage();
 	    		  VlSiftFilt      filt =null; 
-	    		  ArrayList <double[]> ikeys = new ArrayList<double[]>();
+	    		  int i;
+	    		  boolean first;
+	    		  ArrayList <double[]> ikeys = null;
 	    		  int nikeys = 0;
 	    		  int ikeys_size = 0;
 	    	      // Get basename from fileName[fileNum]
@@ -419,6 +428,9 @@ public class SIFT extends AlgorithmBase {
     		              
     		              /* add the guy to the buffer */
     		              double key[] = new double[] {x[0],y[0],s[0],th[0]};
+    		              if (ikeys == null) {
+    		            	  ikeys = new ArrayList<double[]>();
+    		              }
     		              ikeys.add(key);
 
     		              ++ nikeys ;
@@ -576,7 +588,60 @@ public class SIFT extends AlgorithmBase {
     		        	System.out.println("sift: will force orientations? no");
     		            Preferences.debug("sift: will force orientations? no\n", Preferences.DEBUG_ALGORITHM);      	
     		        }
-    		      }
+    		      } // if (verbose)
+    		      
+    		      /* ...............................................................
+    		       *                                             Process each octave
+    		       * ............................................................ */
+    		      i     = 0 ;
+    		      first = true ;
+    		      while (true) {
+    		        VlSiftKeypoint keys = null ;
+    		        int                   nkeys ;
+
+    		        /* calculate the GSS for the next octave .................... */
+    		        if (first) {
+    		          first = false ;
+    		          err = vl_sift_process_first_octave (filt, fdata) ;
+    		        } else {
+    		          err = vl_sift_process_next_octave  (filt) ;
+    		        }
+
+    		        if (err > 0) {
+    		          err = VL_ERR_OK ;
+    		          break ;
+    		        }
+
+    		        if (verbose) {
+    		          System.out.println("sift: GSS octave " + filt.o_cur + " computed");
+    		          Preferences.debug("sift: GSS octave " + filt.o_cur + " computed\n", Preferences.DEBUG_ALGORITHM);
+    		        }
+
+    		        /* optionally save GSS */
+    		        if (gss.active) {
+    		          err = save_gss (filt, gss, basename, verbose) ;
+    		          if (err > 0) {
+    		            System.err.println("Could not write GSS to PGM file.") ;
+    		            Preferences.debug("Could not write GSS to PGM file.\n", Preferences.DEBUG_ALGORITHM);
+    		            break bigloop;
+    		          }
+    		        }
+    		        
+    		        /* run detector ............................................. */
+    		        if (ikeys == null) {
+    		          /*vl_sift_detect (filt) ;
+
+    		          keys  = vl_sift_get_keypoints     (filt) ;
+    		          nkeys = vl_sift_get_nkeypoints (filt) ;
+    		          i     = 0 ;
+
+    		          if (verbose) {
+    		            printf ("sift: detected %d (unoriented) keypoints\n", nkeys) ;
+    		          }*/
+    		        } else {
+    		          nkeys = nikeys ;
+    		        }
+    		      } // while (true)
 
 	    	  } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
     	      break bigloop;
@@ -1039,7 +1104,7 @@ public class SIFT extends AlgorithmBase {
 
       float gaussFilter[] ;  /**< current Gaussian filter */
       double gaussFilterSigma ;   /**< current Gaussian filter std */
-      long gaussFilterWidth ;  /**< current Gaussian filter width */
+      int gaussFilterWidth ;  /**< current Gaussian filter width */
 
       VlSiftKeypoint keys ;/**< detected keypoints. */
       int nkeys ;           /**< number of detected keypoints. */
@@ -1761,5 +1826,620 @@ public class SIFT extends AlgorithmBase {
 
       return f ;
     }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Start processing a new image
+     **
+     ** @param f  SIFT filter.
+     ** @param im image data.
+     **
+     ** The function starts processing a new image by computing its
+     ** Gaussian scale space at the lower octave. It also empties the
+     ** internal keypoint buffer.
+     **
+     ** @return error code. The function returns ::VL_ERR_EOF if there are
+     ** no more octaves to process.
+     **
+     ** @sa ::vl_sift_process_next_octave().
+     **/
+    
+    private void
+    copy_and_upsample_rows
+    (float dst[], int dstIndex,
+     float src[], int srcIndex, int width, int height)
+    {
+      int x, y ;
+      float a, b ;
 
+      for(y = 0 ; y < height ; ++y) {
+        b = a = src[srcIndex++] ;
+        for(x = 0 ; x < width - 1 ; ++x) {
+          b = src[srcIndex++] ;
+          dst[dstIndex] = a ;             dstIndex += height ;
+          dst[dstIndex] = (float)(0.5 * (a + b)) ; dstIndex += height ;
+          a = b ;
+        }
+        dst[dstIndex] = b ; dstIndex += height ;
+        dst[dstIndex] = b ; dstIndex += height ;
+        dstIndex += 1 - width * 2 * height ;
+      }
+    }
+    
+    /** ------------------------------------------------------------------
+     ** @internal
+     ** @brief Copy and downsample an image
+     **
+     ** @param dst    output imgae buffer.
+     ** @param src    input  image buffer.
+     ** @param width  input  image width.
+     ** @param height input  image height.
+     ** @param d      octaves (non negative).
+     **
+     ** The function downsamples the image @a d times, reducing it to @c
+     ** 1/2^d of its original size. The parameters @a width and @a height
+     ** are the size of the input image. The destination image @a dst is
+     ** assumed to be <code>floor(width/2^d)</code> pixels wide and
+     ** <code>floor(height/2^d)</code> pixels high.
+     **/
+
+    private void
+    copy_and_downsample
+    (float       dst[], int dstIndex,
+     float src[], int srcIndex,
+     int width, int height, int d)
+    {
+      int x, y ;
+
+      d = 1 << d ; /* d = 2^d */
+      for(y = 0 ; y < height ; y+=d) {
+        int srcrowp = y * width ;
+        for(x = 0 ; x < width - (d-1) ; x+=d) {
+          dst[dstIndex++] = src[srcIndex + srcrowp] ;
+          srcrowp += d ;
+        }
+      }
+    }
+    
+    /** @fn vl_imconvcol_vd(double*,vl_size,double const*,vl_size,vl_size,vl_size,double const*,vl_index,vl_index,int,unsigned int)
+     ** @brief Convolve image along columns
+     **
+     ** @param dst destination image.
+     ** @param dst_stride width of the destination image including padding.
+     ** @param src source image.
+     ** @param src_width width of the source image.
+     ** @param src_height height of the source image.
+     ** @param src_stride width of the source image including padding.
+     ** @param filt filter kernel.
+     ** @param filt_begin coordinate of the first filter element.
+     ** @param filt_end coordinate of the last filter element.
+     ** @param step sub-sampling step.
+     ** @param flags operation modes.
+     **
+     ** The function convolves the column of the image @a src by the
+     ** filter @a filt and saves the result to the image @a dst. The size
+     ** of @a dst must be equal to the size of @a src.  Formally, this
+     ** results in the calculation
+     **
+     ** @f[
+     ** \mathrm{dst} [x,y] = \sum_{p=y-\mathrm{filt\_end}}^{y-\mathrm{filt\_begin}}
+     ** \mathrm{src}[x,y] \mathrm{filt}[y - p - \mathrm{filt\_begin}]
+     ** @f]
+     **
+     ** The function subsamples the image along the columns according to
+     ** the parameter @a step. Setting @a step to 1 (one) computes the
+     ** elements @f$\mathrm{dst}[x,y]@f$ for all pairs (x,0), (x,1), (x,2)
+     ** and so on. Setting @a step two 2 (two) computes only (x,0), (x,2)
+     ** and so on (in this case the height of the destination image is
+     ** <code>floor(src_height/step)+1)</code>.
+     **
+     ** Calling twice the function can be used to compute 2-D separable
+     ** convolutions.  Use the flag ::VL_TRANSPOSE to transpose the result
+     ** (in this case @a dst has transposed dimension as well).
+     **
+     ** The function allows the support of the filter to be any range.
+     ** Usually the support is <code>@a filt_end = -@a filt_begin</code>.
+     **
+     ** The convolution operation may pick up values outside the image
+     ** boundary. To cope with this edge cases, the function either pads
+     ** the image by zero (::VL_PAD_BY_ZERO) or with the values at the
+     ** boundary (::VL_PAD_BY_CONTINUITY).
+     **/
+
+    /** @fn vl_imconvcol_vf(float*,vl_size,float const*,vl_size,vl_size,vl_size,float const*,vl_index,vl_index,int,unsigned int)
+     ** @see ::vl_imconvcol_vd
+     **/
+
+    private void vl_imconvcol_vf
+    (float dst[], int dst_index, int dst_stride,
+     float src[], int src_index,
+     int src_width, int src_height,int src_stride,
+     float filt[], int filt_begin, int filt_end,
+     int step, int flags)
+    {
+      int x = 0 ;
+      int y ;
+      int dheight = (src_height - 1) / step + 1 ;
+      boolean transp = ((flags & VL_TRANSPOSE) != 0) ;
+      boolean zeropad = (flags & VL_PAD_MASK) == VL_PAD_BY_ZERO ;
+
+      /* let filt point to the last sample of the filter */
+      int filt_index = filt_end - filt_begin ;
+
+      while (x < src_width) {
+        /* Calculate dest[x,y] = sum_p image[x,p] filt[y - p]
+         * where supp(filt) = [filt_begin, filt_end] = [fb,fe].
+         *
+         * CHUNK_A: y - fe <= p < 0
+         *          completes VL_MAX(fe - y, 0) samples
+         * CHUNK_B: VL_MAX(y - fe, 0) <= p < VL_MIN(y - fb, height - 1)
+         *          completes fe - VL_MAX(fb, height - y) + 1 samples
+         * CHUNK_C: completes all samples
+         */
+        int filti ;
+        int stop ;
+
+        for (y = 0 ; y < src_height ; y += step) {
+          float acc = 0 ;
+          float v = 0, c ;
+          int srci;
+
+          filti = filt_index ;
+          stop = filt_end - y ;
+          srci = x + src_index - stop * src_stride ;
+
+          if (stop > 0) {
+            if (zeropad) {
+              v = 0 ;
+            } else {
+              v = src[src_index + x] ;
+            }
+            while (filti > filt_index - stop) {
+              c = filt[filti--] ;
+              acc += v * c ;
+              srci += src_stride ;
+            }
+          }
+
+          stop = filt_end - Math.max(filt_begin, y - src_height + 1) + 1 ;
+          while (filti > filt_index - stop) {
+            v = src[srci] ;
+            c = filt[filti--] ;
+            acc += v * c ;
+            srci += src_stride ;
+          }
+
+          if (zeropad) v = 0 ;
+
+          stop = filt_end - filt_begin + 1 ;
+          while (filti > filt_index - stop) {
+            c = filt[filti--] ;
+            acc += v * c ;
+          }
+
+          if (transp) {
+            dst[dst_index] = acc ; dst_index += 1 ;
+          } else {
+            dst[dst_index] = acc ; dst_index += dst_stride ;
+          }
+        } /* next y */
+        if (transp) {
+          dst_index += 1 * dst_stride - dheight * 1 ;
+        } else {
+          dst_index += 1 * 1 - dheight * dst_stride ;
+        }
+        x += 1 ;
+      } /* next x */
+    }
+
+    
+    /** ------------------------------------------------------------------
+     ** @internal
+     ** @brief Smooth an image
+     ** @param self        SIFT filter.
+     ** @param outputImage output imgae buffer.
+     ** @param tempImage   temporary image buffer.
+     ** @param inputImage  input image buffer.
+     ** @param width       input image width.
+     ** @param height      input image height.
+     ** @param sigma       smoothing.
+     **/
+
+    private void
+    _vl_sift_smooth (VlSiftFilt self,
+                     float outputImage[], int output_index,
+                     float tempImage[],
+                     float inputImage[], int input_index,
+                     int width,
+                     int height,
+                     double sigma)
+    {
+      int j;
+      /* prepare Gaussian filter */
+      if (self.gaussFilterSigma != sigma) {
+        float acc = 0 ;
+        if (self.gaussFilter != null) {
+        	self.gaussFilter = null;
+        }
+        self.gaussFilterWidth = Math.max((int)Math.ceil(4.0 * sigma), 1) ;
+        self.gaussFilterSigma = sigma ;
+        self.gaussFilter = new float[(int)(2 * self.gaussFilterWidth + 1)]; ;
+
+        for (j = 0 ; j < 2 * self.gaussFilterWidth + 1 ; ++j) {
+          float d = (float)(j - self.gaussFilterWidth) / ((float)sigma) ;
+          self.gaussFilter[j] = (float) Math.exp (- 0.5 * (d*d)) ;
+          acc += self.gaussFilter[j] ;
+        }
+        for (j = 0 ; j < 2 * self.gaussFilterWidth + 1 ; ++j) {
+          self.gaussFilter[j] /= acc ;
+        }
+      }
+
+      if (self.gaussFilterWidth == 0) {
+    	int length = width * height;
+    	for (j = 0; j < length; j++) {
+    		outputImage[output_index + j] = inputImage[input_index + j];
+    	}
+        return ;
+      }
+
+      int temp_index = 0;
+      
+      vl_imconvcol_vf (tempImage, temp_index, height,
+                       inputImage, input_index, width, height, width,
+                       self.gaussFilter,
+                       - self.gaussFilterWidth, self.gaussFilterWidth,
+                       1, VL_PAD_BY_CONTINUITY | VL_TRANSPOSE) ;
+
+      vl_imconvcol_vf (outputImage, output_index, width,
+                       tempImage, temp_index, height, width, height,
+                       self.gaussFilter,
+                       - self.gaussFilterWidth, self.gaussFilterWidth,
+                       1, VL_PAD_BY_CONTINUITY | VL_TRANSPOSE) ;
+    }
+
+
+    private int
+    vl_sift_process_first_octave (VlSiftFilt f, float im[])
+    {
+      int i, o, s, h, w ;
+      double sa, sb ;
+      float octave[] ;
+
+      /* shortcuts */
+      float temp[]   = f.temp ;
+      int width           = f.width ;
+      int height          = f.height ;
+      int o_min           = f.o_min ;
+      int s_min           = f.s_min ;
+      int s_max           = f.s_max ;
+      double sigma0       = f.sigma0 ;
+      double sigmak       = f.sigmak ;
+      double sigman       = f.sigman ;
+      double dsigma0      = f.dsigma0 ;
+
+      /* restart from the first */
+      f.o_cur = o_min ;
+      f.nkeys = 0 ;
+      w = f.octave_width  = VL_SHIFT_LEFT(f.width,  - f.o_cur) ;
+      h = f.octave_height = VL_SHIFT_LEFT(f.height, - f.o_cur) ;
+
+      /* is there at least one octave? */
+      if (f.O == 0)
+        return VL_ERR_EOF ;
+
+      /* ------------------------------------------------------------------
+       *                     Compute the first sublevel of the first octave
+       * --------------------------------------------------------------- */
+
+      /*
+       * If the first octave has negative index, we upscale the image; if
+       * the first octave has positive index, we downscale the image; if
+       * the first octave has index zero, we just copy the image.
+       */
+
+      int octave_index[] = new int[1];
+      octave = vl_sift_get_octave (f, s_min, octave_index) ;
+
+      if (o_min < 0) {
+        /* double once */
+    	int temp_index = 0;
+    	int im_index = 0;
+        copy_and_upsample_rows (temp,   temp_index, im,   im_index, width,      height) ;
+        copy_and_upsample_rows (octave, octave_index[0], temp, temp_index, height, 2 * width ) ;
+
+        /* double more */
+        for(o = -1 ; o > o_min ; --o) {
+          copy_and_upsample_rows (temp, temp_index, octave, octave_index[0],
+                                  width << -o,      height << -o ) ;
+          copy_and_upsample_rows (octave, octave_index[0], temp, temp_index,
+                                  width << -o, 2 * (height << -o)) ;
+        }
+      }
+      else if (o_min > 0) {
+        /* downsample */
+    	int im_index = 0;
+        copy_and_downsample (octave, octave_index[0], im, im_index, width, height, o_min) ;
+      }
+      else {
+        /* direct copy */
+    	int length = width * height;
+    	for (i = 0; i < length; i++) {
+    		octave[i + octave_index[0]] = im[i];
+    	}
+      }
+
+      /*
+       * Here we adjust the smoothing of the first level of the octave.
+       * The input image is assumed to have nominal smoothing equal to
+       * f->simgan.
+       */
+
+      sa = sigma0 * Math.pow (sigmak,   s_min) ;
+      sb = sigman * Math.pow (2.0,    - o_min) ;
+
+      if (sa > sb) {
+        double sd = Math.sqrt (sa*sa - sb*sb) ;
+        _vl_sift_smooth (f, octave, octave_index[0], temp, octave, octave_index[0], w, h, sd) ;
+      }
+
+      /* -----------------------------------------------------------------
+       *                                          Compute the first octave
+       * -------------------------------------------------------------- */
+
+      for(s = s_min + 1 ; s <= s_max ; ++s) {
+        double sd = dsigma0 * Math.pow (sigmak, s) ;
+        int output_index[] = new int[1];
+        float output_octave[] = vl_sift_get_octave(f, s, output_index);
+        int input_index[] = new int[1];
+        float input_octave[] = vl_sift_get_octave(f, s-1, input_index);
+        _vl_sift_smooth (f, output_octave, output_index[0], temp,
+                         input_octave, input_index[0], w, h, sd) ;
+      }
+
+      return VL_ERR_OK ;
+    }
+
+    /** ------------------------------------------------------------------
+     ** @brief Get current octave data
+     ** @param f SIFT filter.
+     ** @param s level index.
+     **
+     ** The level index @a s ranges in the interval <tt>s_min = -1</tt>
+     ** and <tt> s_max = S + 2</tt>, where @c S is the number of levels
+     ** per octave.
+     **
+     ** @return pointer to the octave data for level @a s.
+     **/
+
+    private float[]
+    vl_sift_get_octave (VlSiftFilt f, int s, int octave_index[])
+    {
+      int w =  f.octave_width;
+      int h = f.octave_height;
+      octave_index[0] = w * h * (s - f.s_min);
+      return f.octave ;
+    }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Process next octave
+     **
+     ** @param f SIFT filter.
+     **
+     ** The function computes the next octave of the Gaussian scale space.
+     ** Notice that this clears the record of any feature detected in the
+     ** previous octave.
+     **
+     ** @return error code. The function returns the error
+     ** ::VL_ERR_EOF when there are no more octaves to process.
+     **
+     ** @sa ::vl_sift_process_first_octave().
+     **/
+
+    private int
+    vl_sift_process_next_octave (VlSiftFilt f)
+    {
+
+      int s, h, w, s_best ;
+      double sa, sb ;
+      float octave[], pt[] ;
+      int octave_index[] = new int[1];
+      int pt_index[] = new int[1];
+
+      /* shortcuts */
+      float temp[]   = f.temp ;
+      int O               = f.O ;
+      int S               = f.S ;
+      int o_min           = f.o_min ;
+      int s_min           = f.s_min ;
+      int s_max           = f.s_max ;
+      double sigma0       = f.sigma0 ;
+      double sigmak       = f.sigmak ;
+      double dsigma0      = f.dsigma0 ;
+
+      /* is there another octave ? */
+      if (f.o_cur == o_min + O - 1)
+        return VL_ERR_EOF ;
+
+      /* retrieve base */
+      s_best = Math.min(s_min + S, s_max) ;
+      w      = f.octave_width ;
+      h      = f.octave_height ;
+      pt     = vl_sift_get_octave        (f, s_best, pt_index) ;
+      octave = vl_sift_get_octave        (f, s_min, octave_index) ;
+
+      /* next octave */
+      copy_and_downsample (octave, octave_index[0], pt, pt_index[0], w, h, 1) ;
+
+      f.o_cur            += 1 ;
+      f.nkeys             = 0 ;
+      w = f.octave_width  = VL_SHIFT_LEFT(f.width,  - f.o_cur) ;
+      h = f.octave_height = VL_SHIFT_LEFT(f.height, - f.o_cur) ;
+
+      sa = sigma0 * Math.pow (sigmak, s_min     ) ;
+      sb = sigma0 * Math.pow (sigmak, s_best - S) ;
+
+      if (sa > sb) {
+        double sd = Math.sqrt (sa*sa - sb*sb) ;
+        _vl_sift_smooth (f, octave, octave_index[0], temp, octave, octave_index[0], w, h, sd) ;
+      }
+
+      /* ------------------------------------------------------------------
+       *                                                        Fill octave
+       * --------------------------------------------------------------- */
+
+      for(s = s_min + 1 ; s <= s_max ; ++s) {
+        double sd = dsigma0 * Math.pow (sigmak, s) ;
+        int output_index[] = new int[1];
+        float output_octave[] = vl_sift_get_octave(f, s, output_index);
+        int input_index[] = new int[1];
+        float input_octave[] = vl_sift_get_octave(f, s-1, input_index);
+        _vl_sift_smooth (f, output_octave, output_index[0], temp,
+                         input_octave, input_index[0], w, h, sd) ;
+      }
+
+      return VL_ERR_OK ;
+    }
+
+    /* ----------------------------------------------------------------- */
+    /** @brief Save octave on disk
+     ** @internal
+     **/
+    private int
+    save_gss (VlSiftFilt filt, VlFileMeta fm, String basename,
+              boolean verbose)
+    {
+      String tmpString;
+      int S = filt.S ;
+      int i ;
+      int s, err = 0 ;
+      int w, h ;
+      int o = filt.o_cur ;
+      VlPgmImage pim = new VlPgmImage();
+      byte buffer[] = null;
+      int q ;
+
+      if (! fm.active) {
+        return VL_ERR_OK ;
+      }
+
+      w = filt.octave_width ;
+      h = filt.octave_height;
+
+      pim.width     = w ;
+      pim.height    = h ;
+      pim.max_value = 255 ;
+      pim.is_raw    = 1 ;
+
+      try {
+          buffer = new byte[w * h];
+      }
+      catch (OutOfMemoryError e) {
+    	  err = VL_ERR_ALLOC;
+    	  vl_file_meta_close (fm) ;
+          return err ;
+      }
+
+      q = basename.length();
+      
+
+      for (s = 0 ; s < S ; ++s) {
+    	int pt_index[] = new int[1];
+        float pt[] = vl_sift_get_octave (filt, s, pt_index) ;
+
+        /* conversion */
+        int length = w * h;
+        for (i = 0 ; i < length; ++i) {
+          float value = pt[pt_index[0] + i];
+          if (value < 0) {
+              buffer[i] = (byte) (value - 0.5f);
+          } else {
+              buffer[i] = (byte) (value + 0.5f);
+          }
+        }
+
+        /* save */
+        String oString;
+        if (o < 10) {
+        	oString = "_0"+String.valueOf(o);
+        }
+        else {
+        	oString = "_"+String.valueOf(o);
+        }
+       
+        String sString;
+        if (s < 10) {
+        	sString = "_00"+String.valueOf(s);
+        }
+        else if (s < 100) {
+        	sString = "_0"+String.valueOf(s);
+        }
+        else {
+        	sString = "_"+String.valueOf(s);
+        }
+        tmpString = basename + oString + sString;
+        
+
+        int error[] = new int[1];
+        RandomAccessFile fmFile = vl_file_meta_open (fm, tmpString, "rw",error) ;
+        if (error[0] > 0) {
+        	buffer = null;
+        	vl_file_meta_close (fm) ;
+            return error[0];
+        }
+
+        err = vl_pgm_insert (fmFile, pim, buffer) ; 
+
+        buffer = null;
+        if (fmFile != null) {
+  		  try {
+  	    	  fmFile.close();
+  	      }
+  	      catch (IOException e) {
+					System.err.println("IOException " + e + " on fmFile.close()");
+				    Preferences.debug("IOException " + e + " on fmFile.close()\n",Preferences.DEBUG_ALGORITHM);
+	      }  
+  	    }
+        vl_file_meta_close (fm) ;
+        if (err > 0) {
+        	return err;
+        }
+        
+        if (verbose) {
+            System.out.println("sift: saved gss level to " + fm.name) ;
+            Preferences.debug("sift: saved gss level to " + fm.name + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+      }
+
+      return err ;
+    }
+    
+    private int
+    vl_pgm_insert(RandomAccessFile f, VlPgmImage im, byte data[])
+    {
+      int bpp = vl_pgm_get_bpp (im) ;
+      int data_size = vl_pgm_get_npixels (im) ;
+      int c ;
+
+      /* write preamble */
+      String preambleString = "P5\n"+String.valueOf(im.width)+"\n"+String.valueOf(im.height)+"\n"+String.valueOf(im.max_value)+"\n";
+      byte preambleBytes[] = preambleString.getBytes();
+      try {
+    	  f.write(preambleBytes);
+      }
+      catch (IOException e) {
+    	 System.err.println("IOException " + e);
+    	 Preferences.debug("IOEXcedption " + e + "\n", Preferences.DEBUG_ALGORITHM);
+    	 return VL_ERR_PGM_IO;
+      }
+      try {
+    	  f.write(data);
+      }
+      catch (IOException e) {
+    	 System.err.println("IOException " + e);
+    	 Preferences.debug("IOEXcedption " + e + "\n", Preferences.DEBUG_ALGORITHM);
+    	 return VL_ERR_PGM_IO;
+      }
+      
+      return 0 ;
+    }
 }
