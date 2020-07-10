@@ -813,7 +813,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    boolean VOFPostPeakTooHigh = false;
 	    delR2 = new double[tDim];
 	    long numfwhmValues = 0;
-		for (z = 0; z <= zDim; z++) {
+		for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
 				xloop: for (x = 0; x < xDim; x++) {
 					for (t = 0; t < tDim; t++) {
