@@ -761,7 +761,7 @@ public class PlugInAlgorithmTSPPoint extends AlgorithmBase implements MouseListe
 	    boolean prepeaktoohigh;
 	    boolean postpeaktoohigh;
 	    delR2 = new double[tDim];
-		for (z = 0; z <= zDim; z++) {
+		for (z = 0; z < zDim; z++) {
 			for (y = 0; y < yDim; y++) {
 				xloop: for (x = 0; x < xDim; x++) {
 					for (t = 0; t < tDim; t++) {
