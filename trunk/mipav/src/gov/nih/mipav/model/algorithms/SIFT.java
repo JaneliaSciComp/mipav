@@ -108,6 +108,11 @@ public class SIFT extends AlgorithmBase {
     private int VL_PAD_BY_CONTINUITY = (0x1 << 0); /**< @brief Pad by continuity. */
     private int VL_PAD_MASK = (0x3);     /**< @brief Padding field selector. */
     private int VL_TRANSPOSE = (0x1 << 2); /**< @brief Transpose result. */
+    
+    private double VL_EPSILON_D = 2.220446049250313e-16;
+    
+    /** @internal @brief Use bilinear interpolation to compute orientations */
+    private boolean VL_SIFT_BILINEAR_ORIENTATIONS = true;
 	
 	/**
      * SIFT - default constructor.
@@ -596,7 +601,7 @@ public class SIFT extends AlgorithmBase {
     		      i     = 0 ;
     		      first = true ;
     		      while (true) {
-    		        VlSiftKeypoint keys = null ;
+    		        VlSiftKeypoint keys[] = null ;
     		        int                   nkeys ;
 
     		        /* calculate the GSS for the next octave .................... */
@@ -629,18 +634,55 @@ public class SIFT extends AlgorithmBase {
     		        
     		        /* run detector ............................................. */
     		        if (ikeys == null) {
-    		          /*vl_sift_detect (filt) ;
+    		          vl_sift_detect (filt) ;
 
-    		          keys  = vl_sift_get_keypoints     (filt) ;
-    		          nkeys = vl_sift_get_nkeypoints (filt) ;
+    		          keys  = filt.keys;
+    		          nkeys = filt.nkeys ;
     		          i     = 0 ;
 
     		          if (verbose) {
-    		            printf ("sift: detected %d (unoriented) keypoints\n", nkeys) ;
-    		          }*/
+    		            System.out.println("sift: detected " + nkeys + " (unoriented) keypoints") ;
+    		            Preferences.debug("sift: detected " + nkeys + " (unoriented) keypoints\n", Preferences.DEBUG_ALGORITHM);
+    		          }
     		        } else {
     		          nkeys = nikeys ;
     		        }
+    		        
+
+    		        /* for each keypoint ........................................ */
+    		        for (; i < nkeys ; ++i) {
+    		          double                angles[] = new double[4] ;
+    		          int                   nangles ;
+    		          VlSiftKeypoint        ik = new VlSiftKeypoint();
+    		          VlSiftKeypoint k ;
+
+    		          /* obtain keypoint orientations ........................... */
+    		          if (ikeys != null) {
+    		            vl_sift_keypoint_init (filt, ik,
+    		            		               ikeys.get(i)[0],
+    		                                   ikeys.get(i)[1],
+    		                                   ikeys.get(i)[2]) ;
+
+    		            if (ik.o != filt.o_cur) {
+    		              break ;
+    		            }
+
+    		            k          = ik ;
+
+    		            /* optionally compute orientations too */
+    		            if (force_orientations) {
+    		              nangles = vl_sift_calc_keypoint_orientations
+    		                (filt, angles, k) ;
+    		            } else {
+    		              angles [0] = ikeys.get(i)[3] ;
+    		              nangles    = 1 ;
+    		            }
+    		          } else {
+    		            k = keys[i] ;
+    		            nangles = vl_sift_calc_keypoint_orientations
+    		              (filt, angles, k) ;
+    		          }
+    		        } // for (; i < nkeys ; ++i)
     		      } // while (true)
 
 	    	  } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
@@ -1106,7 +1148,7 @@ public class SIFT extends AlgorithmBase {
       double gaussFilterSigma ;   /**< current Gaussian filter std */
       int gaussFilterWidth ;  /**< current Gaussian filter width */
 
-      VlSiftKeypoint keys ;/**< detected keypoints. */
+      VlSiftKeypoint keys[] ;/**< detected keypoints. */
       int nkeys ;           /**< number of detected keypoints. */
       int keys_res ;        /**< size of the keys buffer. */
 
@@ -2442,4 +2484,735 @@ public class SIFT extends AlgorithmBase {
       
       return 0 ;
     }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Detect keypoints
+     **
+     ** The function detect keypoints in the current octave filling the
+     ** internal keypoint buffer. Keypoints can be retrieved by
+     ** ::vl_sift_get_keypoints().
+     **
+     ** @param f SIFT filter.
+     **/
+
+    private void
+    vl_sift_detect (VlSiftFilt f)
+    {
+      float dog[]   = f.dog ;
+      int          s_min = f.s_min ;
+      int          s_max = f.s_max ;
+      int          w     = f.octave_width ;
+      int          h     = f.octave_height ;
+      double       te    = f.edge_thresh ;
+      double       tp    = f.peak_thresh ;
+
+      final int xo    = 1 ;      /* x-stride */
+      final int yo    = w ;      /* y-stride */
+      final int so    = w * h ;  /* s-stride */
+
+      double       xper  = Math.pow (2.0, f.o_cur) ;
+
+      int x, y, s, i, ii, jj ;
+      float pt[], v ;
+      VlSiftKeypoint k = new VlSiftKeypoint() ;
+
+      /* clear current list */
+      f.nkeys = 0 ;
+
+      /* compute difference of gaussian (DoG) */
+      pt = f.dog ;
+      int pt_index = 0;
+      for (s = s_min ; s <= s_max - 1 ; ++s) {
+    	int src_a_index[] = new int[1];
+        float src_a[] = vl_sift_get_octave (f, s, src_a_index    ) ;
+        int src_b_index[] = new int[1];
+        float src_b[] = vl_sift_get_octave (f, s + 1, src_b_index) ;
+        int end_a = src_a_index[0] + w * h ;
+        while (src_a_index[0] != end_a) {
+          pt[pt_index++] = src_b[src_b_index[0]++] - src_a[src_a_index[0]++] ;
+        }
+      }
+
+      /* -----------------------------------------------------------------
+       *                                          Find local maxima of DoG
+       * -------------------------------------------------------------- */
+
+      /* start from dog [1,1,s_min+1] */
+      pt = dog;
+      pt_index = xo + yo + so;
+
+      for(s = s_min + 1 ; s <= s_max - 2 ; ++s) {
+        for(y = 1 ; y < h - 1 ; ++y) {
+          for(x = 1 ; x < w - 1 ; ++x) {
+            v = pt[pt_index] ;
+
+           if (( v >= 0.8 * tp &&
+              v > pt[pt_index + xo] &&
+              v > pt[pt_index - xo] &&                       
+              v > pt[pt_index + so] &&                       
+              v > pt[pt_index - so] &&                       
+              v > pt[pt_index + yo] &&                       
+              v > pt[pt_index - yo] &&                       
+                                                        
+              v > pt[pt_index + yo + xo] &&                  
+              v > pt[pt_index + yo - xo] &&                  
+              v > pt[pt_index - yo + xo] &&                  
+              v > pt[pt_index - yo - xo] &&                  
+                                                        
+              v > pt[pt_index + xo      + so] &&             
+              v > pt[pt_index - xo      + so] &&             
+              v > pt[pt_index + yo      + so] &&             
+              v > pt[pt_index - yo      + so] &&             
+              v > pt[pt_index + yo + xo + so] &&             
+              v > pt[pt_index + yo - xo + so] &&             
+              v > pt[pt_index - yo + xo + so] &&             
+              v > pt[pt_index - yo - xo + so] &&             
+                                                        
+              v > pt[pt_index + xo      - so] &&             
+              v > pt[pt_index - xo      - so] &&             
+              v > pt[pt_index + yo      - so] &&             
+              v > pt[pt_index - yo      - so] &&             
+              v > pt[pt_index + yo + xo - so] &&             
+              v > pt[pt_index + yo - xo - so] &&            
+              v > pt[pt_index - yo + xo - so] &&             
+              v > pt[pt_index - yo - xo - so] ) ||
+            
+            ( v <= -0.8 * tp &&                
+            v < pt[pt_index + xo] &&                       
+            v < pt[pt_index - xo] &&                       
+            v < pt[pt_index + so] &&                       
+            v < pt[pt_index - so] &&                       
+            v < pt[pt_index + yo] &&                       
+            v < pt[pt_index - yo] &&                       
+                                                      
+            v < pt[pt_index + yo + xo] &&                  
+            v < pt[pt_index + yo - xo] &&                  
+            v < pt[pt_index - yo + xo] &&                  
+            v < pt[pt_index - yo - xo] &&                  
+                                                      
+            v < pt[pt_index + xo      + so] &&             
+            v < pt[pt_index - xo      + so] &&             
+            v < pt[pt_index + yo      + so] &&             
+            v < pt[pt_index - yo      + so] &&             
+            v < pt[pt_index + yo + xo + so] &&             
+            v < pt[pt_index + yo - xo + so] &&             
+            v < pt[pt_index - yo + xo + so] &&             
+            v < pt[pt_index - yo - xo + so] &&             
+                                                      
+            v < pt[pt_index + xo      - so] &&             
+            v < pt[pt_index - xo      - so] &&             
+            v < pt[pt_index + yo      - so] &&             
+            v < pt[pt_index - yo      - so] &&             
+            v < pt[pt_index + yo + xo - so] &&             
+            v < pt[pt_index + yo - xo - so] &&             
+            v < pt[pt_index - yo + xo - so] &&             
+            v < pt[pt_index - yo - xo - so] )) {
+
+              /* make room for more keypoints */
+              if (f.nkeys >= f.keys_res) {
+                f.keys_res += 500 ;
+                if (f.keys != null) {
+                  int keysLength = f.keys.length;
+                  VlSiftKeypoint tempKeys[] = new VlSiftKeypoint[keysLength];
+                  for (i = 0; i < keysLength; i++) {
+                	  tempKeys[i] = new VlSiftKeypoint();
+                	  tempKeys[i].o = f.keys[i].o;
+                	  tempKeys[i].ix = f.keys[i].ix;
+                	  tempKeys[i].iy = f.keys[i].iy;
+                	  tempKeys[i].is = f.keys[i].is;
+                	  tempKeys[i].x = f.keys[i].x;
+                	  tempKeys[i].y = f.keys[i].y;
+                	  tempKeys[i].s = f.keys[i].s;
+                	  tempKeys[i].sigma = f.keys[i].sigma;
+                	  f.keys[i] = null;
+                  }
+                  f.keys = null;
+                  f.keys = new VlSiftKeypoint[f.keys_res];
+                  for (i = 0; i < keysLength; i++) {
+                	  f.keys[i] = new VlSiftKeypoint();
+                	  f.keys[i].o = tempKeys[i].o;
+                	  f.keys[i].ix = tempKeys[i].ix;
+                	  f.keys[i].iy = tempKeys[i].iy;
+                	  f.keys[i].is = tempKeys[i].is;
+                	  f.keys[i].x = tempKeys[i].x;
+                	  f.keys[i].y = tempKeys[i].y;
+                	  f.keys[i].s = tempKeys[i].s;
+                	  f.keys[i].sigma = tempKeys[i].sigma;
+                	  tempKeys[i] = null;
+                  }
+                  tempKeys = null;
+                  for (i = keysLength; i < f.keys_res; i++) {
+                	  f.keys[i] = new VlSiftKeypoint();
+                  }
+                } else {
+                  f.keys = new VlSiftKeypoint[f.keys_res] ;
+                  for (i = 0; i < f.keys_res; i++) {
+                	  f.keys[i] = new VlSiftKeypoint();
+                  }
+                }
+              }
+
+              k = f.keys[f.nkeys ++] ;
+
+              k.ix = x ;
+              k.iy = y ;
+              k.is = s ;
+            }
+            pt_index += 1 ;
+          }
+          pt_index += 2 ;
+        }
+        pt_index += 2 * yo ;
+      }
+
+      /* -----------------------------------------------------------------
+       *                                               Refine local maxima
+       * -------------------------------------------------------------- */
+
+      /* this pointer is used to write the keypoints back */
+      int k_index = 0;
+      k = f.keys[k_index] ;
+
+      for (i = 0 ; i < f.nkeys ; ++i) {
+
+        x = f.keys [i] .ix ;
+        y = f.keys [i] .iy ;
+        s = f.keys [i]. is ;
+
+        double Dx=0,Dy=0,Ds=0,Dxx=0,Dyy=0,Dss=0,Dxy=0,Dxs=0,Dys=0 ;
+        double A[] = new double [3*3];
+        double b[] = new double [3] ;
+
+        int dx = 0 ;
+        int dy = 0 ;
+
+        int iter, j ;
+
+        for (iter = 0 ; iter < 5 ; ++iter) {
+
+          x += dx ;
+          y += dy ;
+
+          pt = dog;
+          pt_index = xo * x
+            + yo * y
+            + so * (s - s_min) ;
+
+          /* compute the gradient */
+          Dx = 0.5 * (pt[pt_index + xo] -pt[pt_index -xo]);
+          Dy = 0.5 * (pt[pt_index + yo] - pt[pt_index - yo]);
+          Ds = 0.5 * (pt[pt_index + so] - pt[pt_index - so]);
+
+          /* compute the Hessian */
+          Dxx = (pt[pt_index + xo] + pt[pt_index - xo] - 2.0 * pt[pt_index]);
+          Dyy = (pt[pt_index + yo] + pt[pt_index - yo] - 2.0 * pt[pt_index]);
+          Dss = (pt[pt_index + so] + pt[pt_index - so] - 2.0 * pt[pt_index]);
+
+          Dxy = 0.25 * (pt[pt_index + xo + yo] + pt[pt_index - xo - yo] - pt[pt_index - xo + yo] - pt[pt_index + xo - yo]);
+          Dxs = 0.25 * (pt[pt_index + xo + so] + pt[pt_index - xo - so] - pt[pt_index - xo + so] - pt[pt_index + xo - so]);
+          Dys = 0.25 * (pt[pt_index + yo + so] + pt[pt_index - yo - so] - pt[pt_index - yo + so] - pt[pt_index + yo - so]);
+
+          /* solve linear system ....................................... */
+          A[0] = Dxx;
+          A[4] = Dyy;
+          A[8] = Dss;
+          A[3] = A[1] = Dxy;
+          A[6] = A[2] = Dxs;
+          A[7] = A[5] = Dys;
+
+          b[0] = - Dx ;
+          b[1] = - Dy ;
+          b[2] = - Ds ;
+
+          /* Gauss elimination */
+          for(j = 0 ; j < 3 ; ++j) {
+            double maxa    = 0 ;
+            double maxabsa = 0 ;
+            int    maxi    = -1 ;
+            double tmp ;
+
+            /* look for the maximally stable pivot */
+            for (i = j ; i < 3 ; ++i) {
+              double a = A[i + 3*j];
+              double absa = Math.abs(a) ;
+              if (absa > maxabsa) {
+                maxa    = a ;
+                maxabsa = absa ;
+                maxi    = i ;
+              }
+            }
+
+            /* if singular give up */
+            if (maxabsa < 1e-10f) {
+              b[0] = 0 ;
+              b[1] = 0 ;
+              b[2] = 0 ;
+              break ;
+            }
+
+            i = maxi ;
+
+            /* swap j-th row with i-th row and normalize j-th row */
+            for(jj = j ; jj < 3 ; ++jj) {
+              tmp = A[i+3*jj] ; A[i+3*jj] = A[j+3*jj] ; A[j+3*jj] = tmp ;
+              A[j+3*jj] /= maxa ;
+            }
+            tmp = b[j] ; b[j] = b[i] ; b[i] = tmp ;
+            b[j] /= maxa ;
+
+            /* elimination */
+            for (ii = j+1 ; ii < 3 ; ++ii) {
+              double xd = A[ii+3*j] ;
+              for (jj = j ; jj < 3 ; ++jj) {
+                A[ii+3*jj] -= xd * A[j+3*jj] ;
+              }
+              b[ii] -= xd * b[j] ;
+            }
+          }
+
+          /* backward substitution */
+          for (i = 2 ; i > 0 ; --i) {
+            double xd = b[i] ;
+            for (ii = i-1 ; ii >= 0 ; --ii) {
+              b[ii] -= xd * A[ii+3*i] ;
+            }
+          }
+
+          /* .......................................................... */
+          /* If the translation of the keypoint is big, move the keypoint
+           * and re-iterate the computation. Otherwise we are all set.
+           */
+
+          dx= ((b[0] >  0.6 && x < w - 2) ?  1 : 0)
+            + ((b[0] < -0.6 && x > 1    ) ? -1 : 0) ;
+
+          dy= ((b[1] >  0.6 && y < h - 2) ?  1 : 0)
+            + ((b[1] < -0.6 && y > 1    ) ? -1 : 0) ;
+
+          if (dx == 0 && dy == 0) break ;
+        }
+
+        /* check threshold and other conditions */
+        {
+          double val   = pt[pt_index]
+            + 0.5 * (Dx * b[0] + Dy * b[1] + Ds * b[2]) ;
+          double score = (Dxx+Dyy)*(Dxx+Dyy) / (Dxx*Dyy - Dxy*Dxy) ;
+          double xn = x + b[0] ;
+          double yn = y + b[1] ;
+          double sn = s + b[2] ;
+
+          boolean good =
+            Math.abs (val)  > tp                  &&
+            score           < (te+1)*(te+1)/te    &&
+            score           >= 0                  &&
+            Math.abs (b[0]) <  1.5                &&
+            Math.abs (b[1]) <  1.5                &&
+            Math.abs (b[2]) <  1.5                &&
+            xn              >= 0                  &&
+            xn              <= w - 1              &&
+            yn              >= 0                  &&
+            yn              <= h - 1              &&
+            sn              >= s_min              &&
+            sn              <= s_max ;
+
+          if (good) {
+            k.o     = f.o_cur ;
+            k.ix    = x ;
+            k.iy    = y ;
+            k.is    = s ;
+            k.s     = (float)sn ;
+            k.x     = (float)(xn * xper) ;
+            k.y     = (float)(yn * xper) ;
+            k.sigma = (float)(f.sigma0 * Math.pow (2.0, sn/f.S) * xper) ;
+            k = f.keys[++k_index] ;
+          }
+
+        } /* done checking */
+      } /* next keypoint to refine */
+
+      /* update keypoint count */
+      f.nkeys = k_index;
+    }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Initialize a keypoint from its position and scale
+     **
+     ** @param f     SIFT filter.
+     ** @param k     SIFT keypoint (output).
+     ** @param x     x coordinate of the keypoint center.
+     ** @param y     y coordinate of the keypoint center.
+     ** @param sigma keypoint scale.
+     **
+     ** The function initializes a keypoint structure @a k from
+     ** the location @a x
+     ** and @a y and the scale @a sigma of the keypoint. The keypoint structure
+     ** maps the keypoint to an octave and scale level of the discretized
+     ** Gaussian scale space, which is required for instance to compute the
+     ** keypoint SIFT descriptor.
+     **
+     ** @par Algorithm
+     **
+     ** The formula linking the keypoint scale sigma to the octave and
+     ** scale indexes is
+     **
+     ** @f[ \sigma(o,s) = \sigma_0 2^{o+s/S} @f]
+     **
+     ** In addition to the scale index @e s (which can be fractional due
+     ** to scale interpolation) a keypoint has an integer scale index @e
+     ** is too (which is the index of the scale level where it was
+     ** detected in the DoG scale space). We have the constraints (@ref
+     ** sift-tech-detector see also the "SIFT detector"):
+     **
+     ** - @e o is integer in the range @f$ [o_\mathrm{min},
+     **   o_{\mathrm{min}}+O-1] @f$.
+     ** - @e is is integer in the range @f$ [s_\mathrm{min}+1,
+     **   s_\mathrm{max}-2] @f$.  This depends on how the scale is
+     **   determined during detection, and must be so here because
+     **   gradients are computed only for this range of scale levels
+     **   and are required for the calculation of the SIFT descriptor.
+     ** - @f$ |s - is| < 0.5 @f$ for detected keypoints in most cases due
+     **   to the interpolation technique used during detection. However
+     **   this is not necessary.
+     **
+     ** Thus octave o represents scales @f$ \{ \sigma(o, s) : s \in
+     ** [s_\mathrm{min}+1-.5, s_\mathrm{max}-2+.5] \} @f$. Note that some
+     ** scales may be represented more than once. For each scale, we
+     ** select the largest possible octave that contains it, i.e.
+     **
+     ** @f[
+     **  o(\sigma)
+     **  = \max \{ o \in \mathbb{Z} :
+     **    \sigma_0 2^{\frac{s_\mathrm{min}+1-.5}{S}} \leq \sigma \}
+     **  = \mathrm{floor}\,\left[
+     **    \log_2(\sigma / \sigma_0) - \frac{s_\mathrm{min}+1-.5}{S}\right]
+     ** @f]
+     **
+     ** and then
+     **
+     ** @f[
+     ** s(\sigma) = S  \left[\log_2(\sigma / \sigma_0) - o(\sigma)\right],
+     ** \quad
+     ** is(\sigma) = \mathrm{round}\,(s(\sigma))
+     ** @f]
+     **
+     ** In practice, both @f$ o(\sigma) @f$ and @f$ is(\sigma) @f$ are
+     ** clamped to their feasible range as determined by the SIFT filter
+     ** parameters.
+     **/
+
+    private void
+    vl_sift_keypoint_init (VlSiftFilt f,
+                           VlSiftKeypoint k,
+                           double x,
+                           double y,
+                           double sigma)
+    {
+      int    o, ix, iy, is ;
+      double s, phi, xper ;
+
+      phi = log2 ((sigma + VL_EPSILON_D) / f.sigma0) ;
+      o   = (int)Math.floor (phi -  ((double) f.s_min + 0.5) / f.S) ;
+      o   = Math.min(o, f.o_min + f.O - 1) ;
+      o   = Math.max (o, f.o_min           ) ;
+      s   = f.S * (phi - o) ;
+
+      is  = (int)(s + 0.5) ;
+      is  = Math.min(is, f.s_max - 2) ;
+      is  = Math.max(is, f.s_min + 1) ;
+
+      xper = Math.pow (2.0, o) ;
+      ix   = (int)(x / xper + 0.5) ;
+      iy   = (int)(y / xper + 0.5) ;
+
+      k.o  = o ;
+
+      k.ix = ix ;
+      k.iy = iy ;
+      k.is = is ;
+
+      k.x = (float)x ;
+      k.y = (float)y ;
+      k.s = (float)s ;
+
+      k.sigma = (float)sigma ;
+    }
+
+    /** ------------------------------------------------------------------
+     ** @brief Calculate the keypoint orientation(s)
+     **
+     ** @param f        SIFT filter.
+     ** @param angles   orientations (output).
+     ** @param k        keypoint.
+     **
+     ** The function computes the orientation(s) of the keypoint @a k.
+     ** The function returns the number of orientations found (up to
+     ** four). The orientations themselves are written to the vector @a
+     ** angles.
+     **
+     ** @remark The function requires the keypoint octave @a k->o to be
+     ** equal to the filter current octave ::vl_sift_get_octave. If this
+     ** is not the case, the function returns zero orientations.
+     **
+     ** @remark The function requires the keypoint scale level @c k->s to
+     ** be in the range @c s_min+1 and @c s_max-2 (where usually @c
+     ** s_min=0 and @c s_max=S+2). If this is not the case, the function
+     ** returns zero orientations.
+     **
+     ** @return number of orientations found.
+     **/
+
+    private int
+    vl_sift_calc_keypoint_orientations (VlSiftFilt f,
+                                        double angles [],
+                                        VlSiftKeypoint k)
+    {
+      final double winf   = 1.5 ;
+      double       xper   = Math.pow (2.0, f.o_cur) ;
+
+      int          w      = f.octave_width ;
+      int          h      = f.octave_height ;
+      final int    xo     = 2 ;         /* x-stride */
+      final int    yo     = 2 * w ;     /* y-stride */
+      final int    so     = 2 * w * h ; /* s-stride */
+      double       x      = k.x     / xper ;
+      double       y      = k.y     / xper ;
+      double       sigma  = k.sigma / xper ;
+
+      int          xi     = (int) (x + 0.5) ;
+      int          yi     = (int) (y + 0.5) ;
+      int          si     = k.is ;
+
+      final double sigmaw = winf * sigma ;
+      int          W      = Math.max((int)Math.floor (3.0 * sigmaw), 1) ;
+
+      int          nangles= 0 ;
+
+      int nbins = 36;
+
+      double hist[] = new double [nbins];
+      double maxh ;
+      float pt[] ;
+      int xs, ys, iter, i ;
+
+      /* skip if the keypoint octave is not current */
+      if(k.o != f.o_cur)
+        return 0 ;
+
+      /* skip the keypoint if it is out of bounds */
+      if(xi < 0            ||
+         xi > w - 1        ||
+         yi < 0            ||
+         yi > h - 1        ||
+         si < f.s_min + 1 ||
+         si > f.s_max - 2  ) {
+        return 0 ;
+      }
+
+      /* make gradient up to date */
+      update_gradient (f) ;
+
+      /* compute orientation histogram */
+      int pt_index = xo*xi + yo*yi + so*(si - f.s_min - 1) ;
+      pt = f.grad;
+
+      for(ys  =  Math.max (- W,       - yi) ;
+          ys <=  Math.min (+ W, h - 1 - yi) ; ++ys) {
+
+        for(xs  = Math.max (- W,       - xi) ;
+            xs <= Math.min (+ W, w - 1 - xi) ; ++xs) {
+
+
+          double dx = (double)(xi + xs) - x;
+          double dy = (double)(yi + ys) - y;
+          double r2 = dx*dx + dy*dy ;
+          double wgt, mod, ang, fbin ;
+
+          /* limit to a circular window */
+          if (r2 >= W*W + 0.6) continue ;
+
+          wgt  = Math.exp (r2 / (2*sigmaw*sigmaw)) ;
+          mod  = pt[pt_index + xs*xo + ys*yo    ] ;
+          ang  = pt[pt_index + xs*xo + ys*yo + 1] ;
+          fbin = nbins * ang / (2 * Math.PI) ;
+
+    if (VL_SIFT_BILINEAR_ORIENTATIONS)
+          {
+            int bin = (int) Math.floor (fbin - 0.5) ;
+            double rbin = fbin - bin - 0.5 ;
+            hist [(bin + nbins) % nbins] += (1 - rbin) * mod * wgt ;
+            hist [(bin + 1    ) % nbins] += (    rbin) * mod * wgt ;
+          }
+    else
+          {
+            int    bin  = (int)Math.floor (fbin) ;
+            bin = (int)Math.floor (nbins * ang / (2*Math.PI)) ;
+            hist [(bin) % nbins] += mod * wgt ;
+          }
+
+        } /* for xs */
+      } /* for ys */
+
+      /* smooth histogram */
+      for (iter = 0; iter < 6; iter ++) {
+        double prev  = hist [nbins - 1] ;
+        double first = hist [0] ;
+        for (i = 0; i < nbins - 1; i++) {
+          double newh = (prev + hist[i] + hist[(i+1) % nbins]) / 3.0;
+          prev = hist[i] ;
+          hist[i] = newh ;
+        }
+        hist[i] = (prev + hist[i] + first) / 3.0 ;
+      }
+
+      /* find the histogram maximum */
+      maxh = 0 ;
+      for (i = 0 ; i < nbins ; ++i)
+        maxh = Math.max (maxh, hist [i]) ;
+
+      /* find peaks within 80% from max */
+      nangles = 0 ;
+      for(i = 0 ; i < nbins ; ++i) {
+        double h0 = hist [i] ;
+        double hm = hist [(i - 1 + nbins) % nbins] ;
+        double hp = hist [(i + 1 + nbins) % nbins] ;
+
+        /* is this a peak? */
+        if (h0 > 0.8*maxh && h0 > hm && h0 > hp) {
+
+          /* quadratic interpolation */
+          double di = - 0.5 * (hp - hm) / (hp + hm - 2 * h0) ;
+          double th = 2 * Math.PI * (i + di + 0.5) / nbins ;
+          angles [ nangles++ ] = th ;
+          if( nangles == 4 )
+            return nangles ;
+        }
+      }
+     enough_angles:
+      return nangles ;
+    }
+    
+    /** ------------------------------------------------------------------
+     ** @internal
+     ** @brief Update gradients to current GSS octave
+     **
+     ** @param f SIFT filter.
+     **
+     ** The function makes sure that the gradient buffer is up-to-date
+     ** with the current GSS data.
+     **
+     ** @remark The minimum octave size is 2x2xS.
+     **/
+
+    private void
+    update_gradient (VlSiftFilt f)
+    {
+      int       s_min = f.s_min ;
+      int       s_max = f.s_max ;
+      int       w     = f.octave_width ;
+      int       h     = f.octave_height ;
+      final int xo    = 1 ;
+      final int yo    = w ;
+      final int so    = h * w ;
+      int y, s ;
+
+      if (f.grad_o == f.o_cur) return ;
+
+      for (s  = s_min + 1 ;
+           s <= s_max - 2 ; ++ s) {
+
+        float src[], grad[], gx, gy ;
+        int end;
+
+        int src_index[] = new int[1];
+        src  = vl_sift_get_octave (f,s,src_index) ;
+        int grad_index = 2 * so * (s - s_min - 1);
+        grad = f.grad;
+
+        /* first pixel of the first row */
+        gx = src[src_index[0]+xo] - src[src_index[0]] ;
+        gy = src[src_index[0]+yo] - src[src_index[0]] ;
+        grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+        grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+        src_index[0]++ ;  
+
+        /* middle pixels of the  first row */
+        end = (src_index[0] - 1) + w - 1 ;
+        while (src_index[0] < end) {
+          gx = (float)(0.5 * (src[src_index[0]+xo] - src[src_index[0]-xo])) ;
+          gy =        src[src_index[0]+yo] - src[src_index[0]] ;
+          grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+          grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+          src_index[0]++ ;  
+        }
+
+        /* last pixel of the first row */
+        gx = src[src_index[0]]   - src[src_index[0]-xo] ;
+        gy = src[src_index[0]+yo] - src[src_index[0]] ;
+        grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+        grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+        src_index[0]++ ;  
+
+        for (y = 1 ; y < h -1 ; ++y) {
+
+          /* first pixel of the middle rows */
+          gx =        src[src_index[0]+xo] - src[src_index[0]] ;
+          gy = (float)(0.5 * (src[src_index[0]+yo] - src[src_index[0]-yo])) ;
+          grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+          grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+          src_index[0]++ ;  
+
+          /* middle pixels of the middle rows */
+          end = (src_index[0] - 1) + w - 1 ;
+          while (src_index[0] < end) {
+            gx = (float)(0.5 * (src[src_index[0]+xo] - src[src_index[0]-xo])) ;
+            gy = (float)(0.5 * (src[src_index[0]+yo] - src[src_index[0]-yo])) ;
+            grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+            grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+            src_index[0]++ ;  
+          }
+
+          /* last pixel of the middle row */
+          gx =        src[src_index[0]]   - src[src_index[0]-xo] ;
+          gy = (float)(0.5 * (src[src_index[0]+yo] - src[src_index[0]-yo])) ;
+          grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+          grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+          src_index[0]++ ;
+        }
+
+        /* first pixel of the last row */
+        gx = src[src_index[0]+xo] - src[src_index[0]] ;
+        gy = src[src_index[0]] - src[src_index[0]-yo] ;
+        grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+        grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+        src_index[0]++ ;
+
+        /* middle pixels of the last row */
+        end = (src_index[0] - 1) + w - 1 ;
+        while (src_index[0] < end) {
+          gx = (float)(0.5 * (src[src_index[0]+xo] - src[src_index[0]-xo])) ;
+          gy =        src[src_index[0]]   - src[src_index[0]-yo] ;
+          grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+          grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+          src_index[0]++ ;
+        }
+
+        /* last pixel of the last row */
+        gx = src[src_index[0]]   - src[src_index[0]-xo] ;
+        gy = src[src_index[0]]   - src[src_index[0]-yo] ;
+        grad[grad_index++] = (float)Math.sqrt (gx*gx + gy*gy) ;
+        grad[grad_index++] = vl_mod_2pi_f  ((float) (Math.atan2 (gy, gx) + 2*Math.PI)) ; 
+        src_index[0]++ ;
+      }
+      f.grad_o = f.o_cur ;
+    }
+    
+    private float
+    vl_mod_2pi_f (float x)
+    {
+      while (x > (float)(2 * Math.PI)) x -= (float) (2 * Math.PI) ;
+      while (x < 0.0F) x += (float) (2 * Math.PI);
+      return x ;
+    }
+    
+    
 }
