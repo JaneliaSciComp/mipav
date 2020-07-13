@@ -97,6 +97,7 @@ public class SIFT extends AlgorithmBase {
     private double   magnif       = -1 ;
     private boolean force_orientations = false ;
     
+    private int NBO = 8;
     private int NBP = 4;
     private int EXPN_SZ  = 256;          /**< ::fast_expn table size @internal */
     private double EXPN_MAX = 25.0;         /**< ::fast_expn table max  @internal */
@@ -109,6 +110,7 @@ public class SIFT extends AlgorithmBase {
     private int VL_PAD_MASK = (0x3);     /**< @brief Padding field selector. */
     private int VL_TRANSPOSE = (0x1 << 2); /**< @brief Transpose result. */
     
+    private float VL_EPSILON_F = 1.19209290E-07F;
     private double VL_EPSILON_D = 2.220446049250313e-16;
     
     /** @internal @brief Use bilinear interpolation to compute orientations */
@@ -288,15 +290,16 @@ public class SIFT extends AlgorithmBase {
     	  /* ------------------------------------------------------------------
     	   *                                         Process one image per time
     	   * --------------------------------------------------------------- */
-    	  bigloop: while(true) {
-	    	  for (fileNum = 0; fileNum < fileName.length; fileNum++) {
+    	  
+	       for (fileNum = 0; fileNum < fileName.length; fileNum++) {
+	    	  ArrayList <double[]> ikeys = null;
+	    	  int nikeys = 0;
+    		  int ikeys_size = 0;
+    		  VlSiftFilt      filt =null; 
+	    	  bigloop: while(true) {
 	    		  VlPgmImage pim = new VlPgmImage();
-	    		  VlSiftFilt      filt =null; 
 	    		  int i;
 	    		  boolean first;
-	    		  ArrayList <double[]> ikeys = null;
-	    		  int nikeys = 0;
-	    		  int ikeys_size = 0;
 	    	      // Get basename from fileName[fileNum]
 	    		  name = fileName[fileNum];
 	    		  basename = "";
@@ -682,12 +685,177 @@ public class SIFT extends AlgorithmBase {
     		            nangles = vl_sift_calc_keypoint_orientations
     		              (filt, angles, k) ;
     		          }
+    		          
+    		          /* for each orientation ................................... */
+    		          for (q = 0 ; q < nangles ; ++q) {
+    		            float descr[] = new float [128] ;
+
+    		            /* compute descriptor (if necessary) */
+    		            if (out.active || dsc.active) {
+    		              vl_sift_calc_keypoint_descriptor
+    		                (filt, descr, k, angles [q]) ;
+    		            }
+
+    		            if (out.active) {
+    		              int l ;
+    		              err = vl_file_meta_put_double(out.protocol[0], outFile, (double)k.x);
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_put_double(out.protocol[0], outFile, (double)k.y);
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_put_double(out.protocol[0], outFile, (double)k.sigma);
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_put_double(out.protocol[0], outFile, angles[q]);
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              for (l = 0 ; l < 128 ; ++l) {
+    		            	if (descr[l] < 0) {
+    		            		err = vl_file_meta_put_uint8(out.protocol[0], outFile, (byte)(512.0 * descr[l] - 0.5));
+    		            	}
+    		            	else {
+    		            		err = vl_file_meta_put_uint8(out.protocol[0], outFile, (byte)(512.0 * descr[l] + 0.5));	
+    		            	}
+    		            	if (err != 0) {
+    		            		break bigloop;
+    		            	}
+    		              }
+    		              if (out.protocol[0] == VL_PROT_ASCII) {
+    		            	  try {
+    		            		  outFile.writeByte(10); // 10 is ascii for new line
+    		            	  }
+    		            	  catch (IOException e) {
+    		            		  System.err.println("IOException " + e + " writing newline to outFile");
+    		            		  Preferences.debug("IOException " + e + " writing newline to outFile\n", Preferences.DEBUG_ALGORITHM);
+    		            		  break bigloop;
+    		            	  }
+    		              }
+    		            }
+
+    		            if (frm.active) {
+    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, (double)k. x     ) ;
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, (double)k. y     ) ;
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, (double)k. sigma     ) ;
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile,angles[q]     ) ;
+    		              if (err != 0) {
+    		            	  break bigloop;
+    		              }
+    		              if (frm.protocol[0] == VL_PROT_ASCII) {
+    		            	  try {
+    		            		  frmFile.writeByte(10); // 10 is ascii for new line
+    		            	  }
+    		            	  catch (IOException e) {
+    		            		  System.err.println("IOException " + e + " writing newline to frmFile");
+    		            		  Preferences.debug("IOException " + e + " writing newline to frmFile\n", Preferences.DEBUG_ALGORITHM);
+    		            		  break bigloop;
+    		            	  }
+    		              }
+    		            }
+
+    		            if (dsc.active) {
+    		              int l ;
+    		              for (l = 0 ; l < 128 ; ++l) {
+    		                double x = 512.0 * descr[l] ;
+    		                x = (x < 255.0) ? x : 255.0 ;
+    		                if (x < 0) {
+    		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x - 0.5));
+    		            	}
+    		            	else {
+    		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x + 0.5));	
+    		            	}
+    		            	if (err != 0) {
+    		            		break bigloop;
+    		            	}
+    		              }
+    		              if (dsc.protocol[0] == VL_PROT_ASCII) {
+    		            	  try {
+    		            		  dscFile.writeByte(10); // 10 is ascii for new line
+    		            	  }
+    		            	  catch (IOException e) {
+    		            		  System.err.println("IOException " + e + " writing newline to dscFile");
+    		            		  Preferences.debug("IOException " + e + " writing newline to dscFile\n", Preferences.DEBUG_ALGORITHM);
+    		            		  break bigloop;
+    		            	  }
+    		              }
+    		            }
+    		          }
     		        } // for (; i < nkeys ; ++i)
     		      } // while (true)
 
-	    	  } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
-    	      break bigloop;
+    		      /* ...............................................................
+    		       *                                                       Finish up
+    		       * ............................................................ */
+
+    		      if (met.active) {
+    		    	  byte metBytes[];
+    		    	  metBytes = "<sift\n".getBytes();
+    		          try {
+    		        	  metFile.write(metBytes);
+    		          }
+    		          catch (IOException e) {
+    		        	  System.err.println("IOException " + e + " writing <sift\n to metFile");
+    		        	  Preferences.debug("IOException " + e + " writing <sift\n to metFile\n", Preferences.DEBUG_ALGORITHM);
+    		        	  break bigloop;
+    		          }
+    		        if (dsc.active) {
+    		          metBytes = ("  descriptors = " + dsc.name + "\n").getBytes();
+    		          try {
+    		        	  metFile.write(metBytes);
+    		          }
+    		          catch (IOException e) {
+    		        	  System.err.println("IOException " + e + " writing  descriptors = dsc.name to metFile");
+    		        	  Preferences.debug("IOException " + e + " writing descriptors = dsc.name to metFile\n", Preferences.DEBUG_ALGORITHM);
+    		        	  break bigloop;
+    		          }
+    		        }
+    		        if (frm.active) {
+    		          metBytes = ("  frames = " + frm.name + "\n").getBytes();
+    		          try {
+    		        	  metFile.write(metBytes);
+    		          }
+    		          catch (IOException e) {
+    		        	  System.err.println("IOException " + e + " writing  frames = frm.name to metFile");
+    		        	  Preferences.debug("IOException " + e + " writing frames = frm.name to metFile\n", Preferences.DEBUG_ALGORITHM);
+    		        	  break bigloop;
+    		          }
+    		        }
+    		        metBytes = ">\n".getBytes();
+    		        try {
+  		        	  metFile.write(metBytes);
+  		          }
+  		          catch (IOException e) {
+  		        	  System.err.println("IOException " + e + " writing >\n to metFile");
+  		        	  Preferences.debug("IOException " + e + " writing >\n to metFile\n", Preferences.DEBUG_ALGORITHM);
+  		        	  break bigloop;
+  		          }
+    		      }
+    		      break bigloop;
     	  } // bigloop: while(true)
+	       
+	      if (ikeys != null) {
+	    	  ikeys.clear();
+	    	  ikeys = null;
+	    	  ikeys_size = nikeys = 0 ;
+	      }
+	      
+	      /* release filter */
+	      if (filt != null) {
+	        vl_sift_delete (filt) ;
+	      }
     	  
     	  if (data != null) {
     		  data = null;
@@ -758,6 +926,7 @@ public class SIFT extends AlgorithmBase {
 				}  
     	  }
     	  vl_file_meta_close (ifr) ;
+	   } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
 	}
     
     /** @brief File meta information
@@ -3214,5 +3383,376 @@ public class SIFT extends AlgorithmBase {
       return x ;
     }
     
+    /** ------------------------------------------------------------------
+     ** @brief Compute the descriptor of a keypoint
+     **
+     ** @param f        SIFT filter.
+     ** @param descr    SIFT descriptor (output)
+     ** @param k        keypoint.
+     ** @param angle0   keypoint direction.
+     **
+     ** The function computes the SIFT descriptor of the keypoint @a k of
+     ** orientation @a angle0. The function fills the buffer @a descr
+     ** which must be large enough to hold the descriptor.
+     **
+     ** The function assumes that the keypoint is on the current octave.
+     ** If not, it does not do anything.
+     **/
+
+    private void
+    vl_sift_calc_keypoint_descriptor (VlSiftFilt f,
+                                      float descr[],
+                                      VlSiftKeypoint k,
+                                      double angle0)
+    {
+      /*
+         The SIFT descriptor is a three dimensional histogram of the
+         position and orientation of the gradient.  There are NBP bins for
+         each spatial dimension and NBO bins for the orientation dimension,
+         for a total of NBP x NBP x NBO bins.
+
+         The support of each spatial bin has an extension of SBP = 3sigma
+         pixels, where sigma is the scale of the keypoint.  Thus all the
+         bins together have a support SBP x NBP pixels wide. Since
+         weighting and interpolation of pixel is used, the support extends
+         by another half bin. Therefore, the support is a square window of
+         SBP x (NBP + 1) pixels. Finally, since the patch can be
+         arbitrarily rotated, we need to consider a window 2W += sqrt(2) x
+         SBP x (NBP + 1) pixels wide.
+      */
+
+      final double magnif      = f.magnif ;
+
+      double       xper        = Math.pow (2.0, f.o_cur) ;
+
+      int          w           = f.octave_width ;
+      int          h           = f.octave_height ;
+      final int    xo          = 2 ;         /* x-stride */
+      final int    yo          = 2 * w ;     /* y-stride */
+      final int    so          = 2 * w * h ; /* s-stride */
+      double       x           = k.x     / xper ;
+      double       y           = k.y     / xper ;
+      double       sigma       = k.sigma / xper ;
+
+      int          xi          = (int) (x + 0.5) ;
+      int          yi          = (int) (y + 0.5) ;
+      int          si          = k.is ;
+
+      final double st0         = Math.sin (angle0) ;
+      final double ct0         = Math.cos (angle0) ;
+      final double SBP         = magnif * sigma + VL_EPSILON_D ;
+      final int W           = (int)Math.floor
+        (Math.sqrt(2.0) * SBP * (NBP + 1) / 2.0 + 0.5) ;
+
+      final int binto = 1 ;          /* bin theta-stride */
+      final int binyo = NBO * NBP ;  /* bin y-stride */
+      final int binxo = NBO ;        /* bin x-stride */
+
+      int bin, dxi, dyi ;
+      int i;
+      int pt_index;
+      float pt[] ;
+      int dpt_index;
+      float dpt[] ;
+
+      /* check bounds */
+      if(k.o  != f.o_cur        ||
+         xi    <  0               ||
+         xi    >= w               ||
+         yi    <  0               ||
+         yi    >= h -    1        ||
+         si    <  f.s_min + 1    ||
+         si    >  f.s_max - 2     )
+        return ;
+
+      /* synchronize gradient buffer */
+      update_gradient (f) ;
+
+      /* VL_PRINTF("W = %d ; magnif = %g ; SBP = %g\n", W,magnif,SBP) ; */
+
+      /* clear descriptor */
+      int length = NBO * NBP * NBP;
+      for (i = 0; i < length; i++) {
+          descr[i] = 0.0f;  
+      }
+
+      /* Center the scale space and the descriptor on the current keypoint.
+       * Note that dpt is pointing to the bin of center (SBP/2,SBP/2,0).
+       */
+      pt_index = xi*xo + yi*yo + (si - f.s_min - 1)*so ;
+      pt  = f.grad;
+      dpt_index = (NBP/2) * binyo + (NBP/2) * binxo ;
+      dpt = descr;
+
+      /*
+       * Process pixels in the intersection of the image rectangle
+       * (1,1)-(M-1,N-1) and the keypoint bounding box.
+       */
+      for(dyi =  Math.max (- W, 1 - yi    ) ;
+          dyi <= Math.min (+ W, h - yi - 2) ; ++ dyi) {
+
+        for(dxi =  Math.max (- W, 1 - xi    ) ;
+            dxi <= Math.min (+ W, w - xi - 2) ; ++ dxi) {
+
+          /* retrieve */
+          float mod   = pt[pt_index + dxi*xo + dyi*yo + 0 ] ;
+          float angle = pt[pt_index + dxi*xo + dyi*yo + 1 ] ;
+          float theta = vl_mod_2pi_f((float) (angle - angle0) );
+
+          /* fractional displacement */
+          float dx = (float)(xi + dxi - x);
+          float dy = (float)(yi + dyi - y);
+
+          /* get the displacement normalized w.r.t. the keypoint
+             orientation and extension */
+          float nx = (float)(( ct0 * dx + st0 * dy) / SBP) ;
+          float ny = (float)((-st0 * dx + ct0 * dy) / SBP) ;
+          float nt = (float)(NBO * theta / (2 * Math.PI)) ;
+
+          /* Get the Gaussian weight of the sample. The Gaussian window
+           * has a standard deviation equal to NBP/2. Note that dx and dy
+           * are in the normalized frame, so that -NBP/2 <= dx <=
+           * NBP/2. */
+          final float wsigma = (float)f.windowSize ;
+          float win = (float)Math.exp
+            ((nx*nx + ny*ny)/(2.0 * wsigma * wsigma)) ;
+
+          /* The sample will be distributed in 8 adjacent bins.
+             We start from the ``lower-left'' bin. */
+          int         binx = (int)Math.floor (nx - 0.5) ;
+          int         biny = (int)Math.floor(ny - 0.5) ;
+          int         bint = (int)Math.floor(nt) ;
+          float rbinx = (float)(nx - (binx + 0.5)) ;
+          float rbiny = (float)(ny - (biny + 0.5)) ;
+          float rbint = nt - bint ;
+          int         dbinx ;
+          int         dbiny ;
+          int         dbint ;
+
+          /* Distribute the current sample into the 8 adjacent bins*/
+          for(dbinx = 0 ; dbinx < 2 ; ++dbinx) {
+            for(dbiny = 0 ; dbiny < 2 ; ++dbiny) {
+              for(dbint = 0 ; dbint < 2 ; ++dbint) {
+
+                if (binx + dbinx >= - (NBP/2) &&
+                    binx + dbinx <    (NBP/2) &&
+                    biny + dbiny >= - (NBP/2) &&
+                    biny + dbiny <    (NBP/2) ) {
+                  float weight = win
+                    * mod
+                    * Math.abs (1 - dbinx - rbinx)
+                    * Math.abs (1 - dbiny - rbiny)
+                    * Math.abs (1 - dbint - rbint) ;
+
+                  dpt[dpt_index + (binx+dbinx)*binxo + (biny+dbiny)*binyo + ((bint+dbint) % NBO)*binto] += weight ;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      /* Standard SIFT descriptors are normalized, truncated and normalized again */
+      if(true) {
+
+        /* Normalize the histogram to L2 unit length. */
+        float norm = normalize_histogram (descr, 0, NBO*NBP*NBP) ;
+
+        /* Set the descriptor to zero if it is lower than our norm_threshold */
+        if((f.norm_thresh != 0) && (norm < f.norm_thresh)) {
+            for(bin = 0; bin < NBO*NBP*NBP ; ++ bin)
+                descr [bin] = 0;
+        }
+        else {
+
+          /* Truncate at 0.2. */
+          for(bin = 0; bin < NBO*NBP*NBP ; ++ bin) {
+            if (descr [bin] > 0.2) descr [bin] = 0.2f;
+          }
+
+          /* Normalize again. */
+          normalize_histogram (descr, 0, NBO*NBP*NBP) ;
+        }
+      }
+
+    }
     
+    /** ------------------------------------------------------------------
+     ** @internal
+     ** @brief Normalizes in norm L_2 a descriptor
+     ** @param begin begin of histogram.
+     ** @param end   end of histogram.
+     **/
+
+    private float
+    normalize_histogram
+    (float buf[], int begin, int end)
+    {
+      int iter ;
+      float  norm = 0.0f ;
+
+      for (iter = begin ; iter != end ; ++ iter)
+        norm += (buf[iter]) * (buf[iter]) ;
+
+      norm = (float)(Math.sqrt(norm) + VL_EPSILON_F) ;
+
+      for (iter = begin; iter != end ; ++ iter)
+        buf[iter] /= norm ;
+
+      return norm;
+    }
+    
+    /* ----------------------------------------------------------------- */
+    /** @brief Write double to file
+     **
+     ** @param self   File meta information.
+     ** @param x    Datum to write.
+     **
+     ** @return error code. The function returns ::VL_ERR_ALLOC if the
+     ** datum cannot be written.
+     **/
+
+    private int
+    vl_file_meta_put_double (int protocol, RandomAccessFile file, double x)
+    {
+      int err ;
+      int n ;
+      double y ;
+
+      switch (protocol) {
+
+      case VL_PROT_ASCII :
+    	byte xBytes[] = (String.valueOf(x) + " ").getBytes();
+        try {
+        	file.write(xBytes);
+        }
+        catch (IOException e) {
+        	System.err.println("IOException " + e + " in vl_file_meta_put_double");
+        	Preferences.debug("IOException " + e + " in vl_file_meta_put_double\n", Preferences.DEBUG_ALGORITHM);
+        	return VL_ERR_ALLOC;
+        }
+        break ;
+
+      case VL_PROT_BINARY :
+    	try {
+    		file.writeDouble(x);
+    	}
+    	catch (IOException e) {
+        	System.err.println("IOException " + e + " in vl_file_meta_put_double");
+        	Preferences.debug("IOException " + e + " in vl_file_meta_put_double\n", Preferences.DEBUG_ALGORITHM);
+        	return VL_ERR_ALLOC;
+        }
+      }
+        
+      return VL_ERR_OK ;
+    }
+
+    /* ----------------------------------------------------------------- */
+    /** @brief Write uint8 to file
+     **
+     ** @param self   File meta information.
+     ** @param x    Datum to write.
+     **
+     ** @return error code. The function returns ::VL_ERR_ALLOC if the
+     ** datum cannot be written.
+     **/
+
+    private int vl_file_meta_put_uint8 (int protocol, RandomAccessFile file, byte x)
+    {
+      int n ;
+      int err ;
+
+      switch (protocol) {
+
+      case VL_PROT_ASCII :
+    	byte xBytes[] = (String.valueOf(x & 0xff) + " ").getBytes();
+    	try {
+        	file.write(xBytes);
+        }
+        catch (IOException e) {
+        	System.err.println("IOException " + e + " in vl_file_meta_put_uint8");
+        	Preferences.debug("IOException " + e + " in vl_file_meta_put_uint8\n", Preferences.DEBUG_ALGORITHM);
+        	return VL_ERR_ALLOC;
+        }
+        break ;
+
+      case VL_PROT_BINARY :
+    	try {
+    		file.writeByte(x);
+    	}
+    	catch (IOException e) {
+        	System.err.println("IOException " + e + " in vl_file_meta_put_uint8");
+        	Preferences.debug("IOException " + e + " in vl_file_meta_put_uint8\n", Preferences.DEBUG_ALGORITHM);
+        	return VL_ERR_ALLOC;
+        }
+      }
+       
+
+      return VL_ERR_OK ;
+    }
+    
+    /** ------------------------------------------------------------------
+     ** @brief Host <-> big endian transformation for 8-bytes value
+     **
+     ** @param dst destination 8-byte buffer.
+     ** @param src source 8-byte bufffer.
+     ** @see @ref host-arch-endianness.
+     **/
+
+    /*VL_INLINE void
+    vl_swap_host_big_endianness_8 (void *dst, void* src)
+    {
+      char *dst_ = (char*) dst ;
+      char *src_ = (char*) src ;
+    #if defined(VL_ARCH_BIG_ENDIAN)
+        dst_ [0] = src_ [0] ;
+        dst_ [1] = src_ [1] ;
+        dst_ [2] = src_ [2] ;
+        dst_ [3] = src_ [3] ;
+        dst_ [4] = src_ [4] ;
+        dst_ [5] = src_ [5] ;
+        dst_ [6] = src_ [6] ;
+        dst_ [7] = src_ [7] ;
+    #else
+        dst_ [0] = src_ [7] ;
+        dst_ [1] = src_ [6] ;
+        dst_ [2] = src_ [5] ;
+        dst_ [3] = src_ [4] ;
+        dst_ [4] = src_ [3] ;
+        dst_ [5] = src_ [2] ;
+        dst_ [6] = src_ [1] ;
+        dst_ [7] = src_ [0] ;
+    #endif
+    }*/
+    
+    private void
+    vl_sift_delete (VlSiftFilt f)
+    {
+      int i;
+      if (f != null) {
+        if (f.keys != null) {
+            for (i = 0; i < f.keys.length; i++) {
+            	f.keys[i] = null;
+            }
+            f.keys = null;
+        }
+        if (f.grad != null) {
+        	f.grad = null;
+        }
+        if (f.dog != null) {
+        	f.dog = null;
+        }
+        if (f.octave != null) {
+        	f.octave = null;
+        }
+        if (f.temp != null) {
+        	f.temp = null;
+        };
+        if (f.gaussFilter != null) {
+        	f.gaussFilter = null;
+        }
+        f = null;
+      }
+    }
+
 }
