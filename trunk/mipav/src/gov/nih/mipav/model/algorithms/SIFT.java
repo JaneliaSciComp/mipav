@@ -87,14 +87,14 @@ public class SIFT extends AlgorithmBase {
     private String read_framesarg = null;
     private String gssarg = null;
     // Octaves
-    private int O = -1;
+    private int O = 3;
     // Levels
     private int S = 3;
     // first_octave
-    private int  omin = -1 ;
-    private double   edge_thresh  = -1 ;
-    private double   peak_thresh  = -1 ;
-    private double   magnif       = -1 ;
+    private int  omin = 0 ;
+    private double   edge_thresh  = 10 ;
+    private double   peak_thresh  = 0;
+    private double   magnif       = 3.0 ;
     private boolean force_orientations = false ;
     
     private int NBO = 8;
