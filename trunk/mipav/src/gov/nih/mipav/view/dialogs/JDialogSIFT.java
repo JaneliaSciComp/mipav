@@ -2,13 +2,11 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -63,7 +61,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     
     private int srcNumber = 1;
     
-    private DefaultListModel model;
+    private DefaultListModel<String> model;
     
     private JList imageList;
     
@@ -157,7 +155,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         labelFirstOctave.setFont(serif12);
 
         textFirstOctave = new JTextField(5);
-        textFirstOctave.setText("3");
+        textFirstOctave.setText("0");
         textFirstOctave.setFont(serif12);
         
         labelEdgeThresh = new JLabel("Edge threshold");
@@ -286,9 +284,9 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         imagePanel = new JPanel(new BorderLayout());
         imagePanel.setBorder(buildTitledBorder("Load Image(s)"));
 
-        model = new DefaultListModel();
+        model = new DefaultListModel<String>();
         model.addElement(fileDir[0] + fileName[0]);
-        imageList = new JList(model);
+        imageList = new JList<>(model);
         imageList.setVisibleRowCount(6);
         imageList.setPreferredSize(new Dimension(300, 120));
         imageList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -449,6 +447,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
      * @return  The image.
      */
     private void selectFileName() {
+    	int i;
         JFileChooser chooser = null;
         selectedFileName = null;
         selectedDirectory = null;
@@ -484,7 +483,17 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 selectedFileName = chooser.getSelectedFile().getName();
                 selectedDirectory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                if ((selectedFileName != null) && (selectedDirectory != null)) {
+	                for (i = 0; i < fileName.length; i++) {
+	                	if ((selectedFileName.equals(fileName[i])) && (selectedDirectory.equals(fileDir[i]))) {
+	                		System.err.println("This file has already been selected");
+	                		selectedFileName = null;
+	                		selectedDirectory = null;
+	                		return;
+	                	}
+	                }
                 userInterface.setDefaultDirectory(selectedDirectory);
+                }
             } else {
                 return;
             }
@@ -645,11 +654,40 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     }
     
     protected void setGUIFromParams() {
-    	
+    	int i;
+    	int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");	
+    	fileDir = new String[numInputImages];
+    	fileName = new String[numInputImages];
+    	for (i = 0; i < numInputImages; i++) {
+    		 fileDir[i] = scriptParameters.getParams().getString("file_dir"+String.valueOf(i));
+    		 fileName[i] = scriptParameters.getParams().getString("file_name"+String.valueOf(i));
+    	}
+    	verbose = scriptParameters.getParams().getBoolean("verbosity");
+    	O = scriptParameters.getParams().getInt("octaves");
+    	S = scriptParameters.getParams().getInt("levels");
+    	omin = scriptParameters.getParams().getInt("first_octave");
+    	edge_thresh = scriptParameters.getParams().getDouble("edge");
+    	peak_thresh = scriptParameters.getParams().getDouble("peak");
+    	magnif = scriptParameters.getParams().getDouble("magnification");
+    	force_orientations = scriptParameters.getParams().getBoolean("orientations");
     }
     
-    protected void storeParamsFromGUI() {
+    protected void storeParamsFromGUI() throws ParserException {
+    	int i;
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", fileDir.length));	
     	
+    	for (i = 0; i < fileDir.length; i++) {
+    		scriptParameters.getParams().put(ParameterFactory.newParameter("file_dir"+String.valueOf(i), fileDir[i]));	
+    		scriptParameters.getParams().put(ParameterFactory.newParameter("file_name"+String.valueOf(i), fileName[i]));	
+    	}
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("verbosity", verbose));	
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("octaves", O));	
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("levels", S));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("first_octave", omin));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("edge", edge_thresh));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("peak", peak_thresh));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("magnification", magnif));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("orientations", force_orientations));
     }
 
 }
