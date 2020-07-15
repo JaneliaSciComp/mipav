@@ -410,7 +410,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
 								menuBuilder.buildMenuItem("Texture segmentation", "TextureSegmentation", 0, null,
 										false),
-
+                        
 						menuBuilder.makeMenu("Threshold", false, new JMenuItem[] {
 								menuBuilder.buildMenuItem("Threshold using min/max", "threshMinMax", 0, null, false),
 								menuBuilder.buildMenuItem("Theshold using standard deviation", "threshStdDev", 0, null,
@@ -554,6 +554,7 @@ public class ViewMenuBar {
 										false) }),
 						// menuBuilder.buildMenuItem("MRI combined info",
 						// "MRICorrection", 0, null, false)}),
+						menuBuilder.buildMenuItem("SIFT", "sift", 0, null, false),
 						menuBuilder
 								.makeMenu("SNR", false,
 										new JMenuItem[] {
@@ -1454,6 +1455,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
 		if (numberOfDimensions == 4) {
+			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("Center of mass", false);
 			menuBuilder.setMenuItemEnabled("Density based clustering", false);
 			menuBuilder.setMenuItemEnabled("Edge detection", false);
@@ -1575,6 +1577,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
+			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
@@ -1623,6 +1626,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 			menuBuilder.setMenuItemEnabled("Graph Based", false);
 		} else if (numberOfDimensions == 2) {
+			menuBuilder.setMenuItemEnabled("SIFT", true);
 			menuBuilder.setMenuItemEnabled("Align patient position", false);
 			menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
 			menuBuilder.setMenuItemEnabled("Animate", false);
@@ -1691,6 +1695,7 @@ public class ViewMenuBar {
 		}
 
 		if (ModelImage.isColorImage(type)) {
+			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
 			menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
 			menuBuilder.setMenuItemEnabled("Density based clustering", false);
