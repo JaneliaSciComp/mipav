@@ -80,6 +80,8 @@ public class SIFT extends AlgorithmBase {
     private String fileDir[];
     private String fileName[];
     private boolean verbose = false;
+    // arg sets protocol[0], which is default ascii to ascii or binary
+    // and the pattern which is the basename.prefix
     private String outarg = null;
     private String framesarg = null;
     private String descriptorarg = null;
@@ -324,7 +326,7 @@ public class SIFT extends AlgorithmBase {
     		          Preferences.debug("sift: basename is " + basename + "\n", Preferences.DEBUG_ALGORITHM);
     		      }
 
-    		      File namefile = new File(fileDir[fileNum] + File.separator + fileDir[fileNum]);
+    		      File namefile = new File(fileDir[fileNum] + File.separator + fileName[fileNum]);
     				
     		      // Open input file
     		      try {
