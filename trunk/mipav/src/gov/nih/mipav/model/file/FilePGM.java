@@ -163,6 +163,10 @@ public class FilePGM extends FileBase {
         }
         fileInfo.setDataType(imageType);
         image = new ModelImage(imageType, extents, fileInfo.getFileName());
+        for (i = 0; i < image.getFileInfo().length; i++) {
+        	image.getFileInfo()[i].setFileName(fileName);
+        	image.getFileInfo()[i].setFileDirectory(fileDir);
+        }
         if (format == BINARY_FORMAT) {
         	
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
