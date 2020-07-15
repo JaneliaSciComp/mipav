@@ -1182,6 +1182,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // JDialogMSFuzzyCMeans fcm =
             new JDialogMSFuzzyCMeans(this, getActiveImage());
+        } else if (command.equals("sift")) {
+        	new JDialogSIFT(this, getActiveImage());
         } else if (command.equals("N3Correction")) {
 
             // JDialogIHN3Correction N3 =
