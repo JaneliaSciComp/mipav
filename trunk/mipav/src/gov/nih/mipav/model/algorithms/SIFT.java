@@ -385,8 +385,8 @@ public class SIFT extends AlgorithmBase {
     		          ifrFile = vl_file_meta_open (ifr, basename, "r", error);
     		          if (error[0] > 0) {
     		        	  if (error[0] == VL_ERR_OVERFLOW) {
-    		        		  System.err.println("Output file name too long");
-    		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+    		        		  System.err.println("ifrFile file name too long");
+    		        		  Preferences.debug("ifrFile file name too long\n", Preferences.DEBUG_ALGORITHM);
     		        	  }
     		        	  else {
     		        		  System.err.println("Could not open " + ifr.name + " for reading");
@@ -486,8 +486,8 @@ public class SIFT extends AlgorithmBase {
     		      outFile = vl_file_meta_open (out, basename, "rw",error) ;
     		      if (error[0] > 0) {
 		        	  if (error[0] == VL_ERR_OVERFLOW) {
-		        		  System.err.println("Output file name too long");
-		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        		  System.err.println("outFile file name too long");
+		        		  Preferences.debug("outFile file name too long\n", Preferences.DEBUG_ALGORITHM);
 		        	  }
 		        	  else {
 		        		  System.err.println("Could not open " + out.name + " for writing");
@@ -498,8 +498,8 @@ public class SIFT extends AlgorithmBase {
     		      dscFile = vl_file_meta_open (dsc, basename, "rw",error) ;
     		      if (error[0] > 0) {
 		        	  if (error[0] == VL_ERR_OVERFLOW) {
-		        		  System.err.println("Output file name too long");
-		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        		  System.err.println("dscFile file name too long");
+		        		  Preferences.debug("dscFile file name too long\n", Preferences.DEBUG_ALGORITHM);
 		        	  }
 		        	  else {
 		        		  System.err.println("Could not open " + dsc.name + " for writing");
@@ -510,8 +510,8 @@ public class SIFT extends AlgorithmBase {
     		      frmFile = vl_file_meta_open (frm, basename, "rw",error) ;
     		      if (error[0] > 0) {
 		        	  if (error[0] == VL_ERR_OVERFLOW) {
-		        		  System.err.println("Output file name too long");
-		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        		  System.err.println("frmFile file name too long");
+		        		  Preferences.debug("frmFile file name too long\n", Preferences.DEBUG_ALGORITHM);
 		        	  }
 		        	  else {
 		        		  System.err.println("Could not open " + frm.name + " for writing");
@@ -522,8 +522,8 @@ public class SIFT extends AlgorithmBase {
     		      metFile = vl_file_meta_open (met, basename, "rw", error) ;
     		      if (error[0] > 0) {
 		        	  if (error[0] == VL_ERR_OVERFLOW) {
-		        		  System.err.println("Output file name too long");
-		        		  Preferences.debug("Output file name too long\n", Preferences.DEBUG_ALGORITHM);
+		        		  System.err.println("metFile file name too long");
+		        		  Preferences.debug("metFile file name too long\n", Preferences.DEBUG_ALGORITHM);
 		        	  }
 		        	  else {
 		        		  System.err.println("Could not open " + met.name + " for writing");
@@ -929,6 +929,9 @@ public class SIFT extends AlgorithmBase {
     	  }
     	  vl_file_meta_close (ifr) ;
 	   } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
+	   System.out.println("Run completed");
+	   Preferences.debug("Run completed\n", Preferences.DEBUG_ALGORITHM);
+	   setCompleted(true);
 	}
     
     /** @brief File meta information
@@ -978,10 +981,13 @@ public class SIFT extends AlgorithmBase {
       self.name = vl_string_replace_wildcard (self.name,
                                       self.name.length(),
                                       self.pattern,
-                                      "%", "\0",
+                                      "%", "\\",
                                       basename, num) ;
 
-      if (num[0] >= self.name.length()) {
+      if (num[0] > self.name.length()) {
+    	System.err.println("self.name = " + self.name);
+    	System.err.println("num[0] = " + num[0]);
+    	System.err.println("self.name.length() = " + self.name.length());
     	System.err.println("Overflow occurred in vl_string_replace_wildcard");
     	Preferences.debug("Overflow occurred in vl_string_replace_wildcard\n", Preferences.DEBUG_ALGORITHM);
     	error[0] = VL_ERR_OVERFLOW;
@@ -998,6 +1004,17 @@ public class SIFT extends AlgorithmBase {
 			    return null;
 		  }
         
+      }
+      if (mode.equals("rw")) {
+    	  try {
+    		  outFile.setLength(0);
+    	  }
+    	  catch (IOException e) {
+    		  System.err.println("IOException " + e + " on outFile.setLength(0)");
+			    Preferences.debug("IOException " + e + " on outFile.setLength(0)\n",Preferences.DEBUG_ALGORITHM);
+			    error[0] = VL_ERR_IO;
+			    return null;  
+    	  }
       }
       error[0] = 0;
       return outFile;
@@ -1816,7 +1833,8 @@ public class SIFT extends AlgorithmBase {
       int sIndex = 0;
       int rIndex = 0;
 
-      while ((c = source.substring(sIndex,sIndex+1)) != null) {
+      while (sIndex < source.length()) {
+    	c = source.substring(sIndex,sIndex+1);
         sIndex++;
         /* enter escape mode ? */
         if (! escape && c.equals(escapeChar)) {
@@ -1828,16 +1846,28 @@ public class SIFT extends AlgorithmBase {
         rIndex = 0;
         if (! escape && c.equals(wildcardChar)) {
           String repl = new String(replacement) ;
-          while ((c = repl.substring(rIndex,rIndex+1)) != null) {
-            if ((destination != null) && k + 1 < destinationSize) {
+          while (rIndex < repl.length()) {
+        	c = repl.substring(rIndex,rIndex+1);
+        	rIndex++;
+            if (destination != null) {
               if (k == 0) {
-            	  destination = c + destination.substring(1);
+            	  if (destination.length() >= 2) {
+            	      destination = c + destination.substring(1);
+            	  }
+            	  else {
+            		  destination = c;
+            	  }
               }
               else if (k == destination.length() -1) {
             	  destination = destination.substring(0,destination.length()-1) + c;
               }
               else {
-            	  destination = destination.substring(0,k) + c + destination.substring(k+1);
+            	  if (destination.length() >= (k+2)) {
+            	      destination = destination.substring(0,k) + c + destination.substring(k+1);
+            	  }
+            	  else {
+            		  destination = destination.substring(0,k) + c;
+            	  }
               }
             }
             ++ k ;
@@ -1845,15 +1875,25 @@ public class SIFT extends AlgorithmBase {
         }
         /* regular character */
         else {
-          if ((destination != null) && k + 1 < destinationSize) {
+          if (destination != null) {
         	  if (k == 0) {
-            	  destination = c + destination.substring(1);
+        		  if (destination.length() >= 2) {
+            	      destination = c + destination.substring(1);
+            	  }
+            	  else {
+            		  destination = c;
+            	  }
               }
               else if (k == destination.length() -1) {
             	  destination = destination.substring(0,destination.length()-1) + c;
               }
               else {
-            	  destination = destination.substring(0,k) + c + destination.substring(k+1);
+            	  if (destination.length() >= (k+2)) {
+            	      destination = destination.substring(0,k) + c + destination.substring(k+1);
+            	  }
+            	  else {
+            		  destination = destination.substring(0,k) + c;
+            	  }
               }
           }
           ++ k ;
@@ -2683,7 +2723,7 @@ public class SIFT extends AlgorithmBase {
 
       double       xper  = Math.pow (2.0, f.o_cur) ;
 
-      int x, y, s, i, ii, jj ;
+      int x, y, s, i, ii, jj, i2 ;
       float pt[], v ;
       VlSiftKeypoint k = new VlSiftKeypoint() ;
 
@@ -2903,13 +2943,13 @@ public class SIFT extends AlgorithmBase {
             double tmp ;
 
             /* look for the maximally stable pivot */
-            for (i = j ; i < 3 ; ++i) {
-              double a = A[i + 3*j];
+            for (i2 = j ; i2 < 3 ; ++i2) {
+              double a = A[i2 + 3*j];
               double absa = Math.abs(a) ;
               if (absa > maxabsa) {
                 maxa    = a ;
                 maxabsa = absa ;
-                maxi    = i ;
+                maxi    = i2 ;
               }
             }
 
@@ -2921,14 +2961,14 @@ public class SIFT extends AlgorithmBase {
               break ;
             }
 
-            i = maxi ;
+            i2 = maxi ;
 
             /* swap j-th row with i-th row and normalize j-th row */
             for(jj = j ; jj < 3 ; ++jj) {
-              tmp = A[i+3*jj] ; A[i+3*jj] = A[j+3*jj] ; A[j+3*jj] = tmp ;
+              tmp = A[i2+3*jj] ; A[i2+3*jj] = A[j+3*jj] ; A[j+3*jj] = tmp ;
               A[j+3*jj] /= maxa ;
             }
-            tmp = b[j] ; b[j] = b[i] ; b[i] = tmp ;
+            tmp = b[j] ; b[j] = b[i2] ; b[i2] = tmp ;
             b[j] /= maxa ;
 
             /* elimination */
@@ -2942,10 +2982,10 @@ public class SIFT extends AlgorithmBase {
           }
 
           /* backward substitution */
-          for (i = 2 ; i > 0 ; --i) {
-            double xd = b[i] ;
-            for (ii = i-1 ; ii >= 0 ; --ii) {
-              b[ii] -= xd * A[ii+3*i] ;
+          for (i2 = 2 ; i2 > 0 ; --i2) {
+            double xd = b[i2] ;
+            for (ii = i2-1 ; ii >= 0 ; --ii) {
+              b[ii] -= xd * A[ii+3*i2] ;
             }
           }
 
