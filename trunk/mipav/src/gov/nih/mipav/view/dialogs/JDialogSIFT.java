@@ -54,6 +54,9 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private boolean force_orientations = false ;
     private boolean writeFrames = false;
     private boolean readFrames = false;
+    private boolean writeDescriptor = false;
+    private boolean writeMeta = false;
+    private boolean writeGss = false;
     
     private boolean changeRemoveIndex = true;
     
@@ -106,6 +109,12 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private JCheckBox writeFramesCheckBox;
     
     private JCheckBox readFramesCheckBox;
+    
+    private JCheckBox writeDescriptorCheckBox;
+    
+    private JCheckBox writeMetaCheckBox;
+    
+    private JCheckBox writeGssCheckBox;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -204,6 +213,18 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         readFramesCheckBox.setFont(serif12);
         readFramesCheckBox.setSelected(false);
         
+        writeDescriptorCheckBox = new JCheckBox("Write descriptor (.descr)");
+        writeDescriptorCheckBox.setFont(serif12);
+        writeDescriptorCheckBox.setSelected(false);
+        
+        writeMetaCheckBox = new JCheckBox("Write meta (.meta)");
+        writeMetaCheckBox.setFont(serif12);
+        writeMetaCheckBox.setSelected(false);
+        
+        writeGssCheckBox = new JCheckBox("Write gss (_gss.pgm)");
+        writeGssCheckBox.setFont(serif12);
+        writeGssCheckBox.setSelected(false);
+        
         JPanel upperPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -288,6 +309,18 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         gbc.gridy = 9;
         gbc.gridwidth = 2;
         upperPanel.add(readFramesCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 10;
+        gbc.gridwidth = 2;
+        upperPanel.add(writeDescriptorCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 11;
+        gbc.gridwidth = 2;
+        upperPanel.add(writeMetaCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 12;
+        gbc.gridwidth = 2;
+        upperPanel.add(writeGssCheckBox, gbc);
         
         paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -567,7 +600,8 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         SIFTAlgo = new SIFT(fileDir, fileName, verbose, outarg, framesarg,
         		descriptorarg, metaarg, read_framesarg, gssarg, O, S,
         		omin, edge_thresh, peak_thresh, magnif, force_orientations,
-        		writeFrames, readFrames);
+        		writeFrames, readFrames, writeDescriptor, writeMeta,
+        		writeGss);
         
         createProgressBar(fileName[0], SIFTAlgo);
 
@@ -677,6 +711,12 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         
         readFrames = readFramesCheckBox.isSelected();
         
+        writeDescriptor = writeDescriptorCheckBox.isSelected();
+        
+        writeMeta = writeMetaCheckBox.isSelected();
+        
+        writeGss = writeGssCheckBox.isSelected();
+        
         return true;
     }
     
@@ -699,6 +739,9 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     	force_orientations = scriptParameters.getParams().getBoolean("orientations");
     	writeFrames = scriptParameters.getParams().getBoolean("write_frames");
     	readFrames = scriptParameters.getParams().getBoolean("read_frames");
+    	writeDescriptor = scriptParameters.getParams().getBoolean("write_descriptor");
+    	writeMeta = scriptParameters.getParams().getBoolean("write_meta");
+    	writeGss = scriptParameters.getParams().getBoolean("write_gss");
     }
     
     protected void storeParamsFromGUI() throws ParserException {
@@ -719,6 +762,9 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     	scriptParameters.getParams().put(ParameterFactory.newParameter("orientations", force_orientations));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("write_frames", writeFrames));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("read_frames", readFrames));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("write_descriptor", writeDescriptor));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("write_meta", writeMeta));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("write_gss", writeGss));
     }
 
 }
