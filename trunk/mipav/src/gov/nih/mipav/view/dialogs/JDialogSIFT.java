@@ -52,6 +52,8 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private double   peak_thresh  = 0 ;
     private double   magnif       = 3.0 ;
     private boolean force_orientations = false ;
+    private boolean writeFrames = false;
+    private boolean readFrames = false;
     
     private boolean changeRemoveIndex = true;
     
@@ -100,6 +102,10 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private JCheckBox orientationsCheckBox;
     
     private JCheckBox verboseCheckBox;
+    
+    private JCheckBox writeFramesCheckBox;
+    
+    private JCheckBox readFramesCheckBox;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -190,6 +196,14 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         verboseCheckBox.setFont(serif12);
         verboseCheckBox.setSelected(false);
         
+        writeFramesCheckBox = new JCheckBox("Write frames (.frame)");
+        writeFramesCheckBox.setFont(serif12);
+        writeFramesCheckBox.setSelected(false);
+        
+        readFramesCheckBox = new JCheckBox("Read frames (.frame)");
+        readFramesCheckBox.setFont(serif12);
+        readFramesCheckBox.setSelected(false);
+        
         JPanel upperPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -266,6 +280,14 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         gbc.gridy = 7;
         gbc.gridwidth = 2;
         upperPanel.add(verboseCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        gbc.gridwidth = 2;
+        upperPanel.add(writeFramesCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.gridwidth = 2;
+        upperPanel.add(readFramesCheckBox, gbc);
         
         paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -544,7 +566,8 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     protected void callAlgorithm() {
         SIFTAlgo = new SIFT(fileDir, fileName, verbose, outarg, framesarg,
         		descriptorarg, metaarg, read_framesarg, gssarg, O, S,
-        		omin, edge_thresh, peak_thresh, magnif, force_orientations);
+        		omin, edge_thresh, peak_thresh, magnif, force_orientations,
+        		writeFrames, readFrames);
         
         createProgressBar(fileName[0], SIFTAlgo);
 
@@ -650,6 +673,10 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         
         verbose = verboseCheckBox.isSelected();
         
+        writeFrames = writeFramesCheckBox.isSelected();
+        
+        readFrames = readFramesCheckBox.isSelected();
+        
         return true;
     }
     
@@ -670,6 +697,8 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     	peak_thresh = scriptParameters.getParams().getDouble("peak");
     	magnif = scriptParameters.getParams().getDouble("magnification");
     	force_orientations = scriptParameters.getParams().getBoolean("orientations");
+    	writeFrames = scriptParameters.getParams().getBoolean("write_frames");
+    	readFrames = scriptParameters.getParams().getBoolean("read_frames");
     }
     
     protected void storeParamsFromGUI() throws ParserException {
@@ -688,6 +717,8 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     	scriptParameters.getParams().put(ParameterFactory.newParameter("peak", peak_thresh));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("magnification", magnif));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("orientations", force_orientations));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("write_frames", writeFrames));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("read_frames", readFrames));
     }
 
 }
