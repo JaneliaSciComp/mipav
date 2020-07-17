@@ -101,6 +101,9 @@ public class SIFT extends AlgorithmBase {
     private boolean force_orientations = false;
     private boolean writeFrames = false;
     private boolean readFrames = false;
+    private boolean writeDescriptor = false;
+    private boolean writeMeta = false;
+    private boolean writeGss = false;
     
     private int NBO = 8;
     private int NBP = 4;
@@ -129,7 +132,8 @@ public class SIFT extends AlgorithmBase {
     public SIFT(String fileDir[], String fileName[], boolean verbose, String outarg, String framesarg,
     		String descriptorarg, String metaarg, String read_framesarg, String gssarg, int O, int S,
     		int omin, double edge_thresh, double peak_thresh, double magnif, boolean force_orientations,
-    		boolean writeFrames, boolean readFrames) {
+    		boolean writeFrames, boolean readFrames, boolean writeDescriptor, boolean writeMeta,
+    		boolean writeGss) {
         this.fileDir = fileDir;
         this.fileName = fileName;
         this.verbose = verbose;
@@ -148,6 +152,9 @@ public class SIFT extends AlgorithmBase {
         this.force_orientations = force_orientations;
         this.writeFrames = writeFrames;
         this.readFrames = readFrames;
+        this.writeDescriptor = writeDescriptor;
+        this.writeMeta = writeMeta;
+        this.writeGss = writeGss;
     }
 
 
@@ -182,9 +189,27 @@ public class SIFT extends AlgorithmBase {
     	  else {
     		  frm  = new VlFileMeta(false, "%.frame", new int[]{VL_PROT_ASCII}, "", null);    
     	  }
-    	  VlFileMeta dsc  = new VlFileMeta(false, "%.descr", new int[]{VL_PROT_ASCII}, "", null);
-    	  VlFileMeta met  = new VlFileMeta(false, "%.meta",  new int[]{VL_PROT_ASCII}, "", null);
-    	  VlFileMeta gss  = new VlFileMeta(false, "%_gss.pgm",   new int[]{VL_PROT_ASCII}, "", null);
+    	  VlFileMeta dsc;
+    	  if (writeDescriptor) {
+    		  dsc  = new VlFileMeta(true, "%.descr", new int[]{VL_PROT_ASCII}, "", null);  
+    	  }
+    	  else {
+    	      dsc  = new VlFileMeta(false, "%.descr", new int[]{VL_PROT_ASCII}, "", null);
+    	  }
+    	  VlFileMeta met;
+    	  if (writeMeta) {
+    		  met  = new VlFileMeta(true, "%.meta",  new int[]{VL_PROT_ASCII}, "", null);  
+    	  }
+    	  else {
+    	      met  = new VlFileMeta(false, "%.meta",  new int[]{VL_PROT_ASCII}, "", null);
+    	  }
+    	  VlFileMeta gss;
+    	  if (writeGss) {
+    		  gss  = new VlFileMeta(true, "%_gss.pgm",   new int[]{VL_PROT_ASCII}, "", null);  
+    	  }
+    	  else {
+    	      gss  = new VlFileMeta(false, "%_gss.pgm",   new int[]{VL_PROT_ASCII}, "", null);
+    	  }
     	  VlFileMeta ifr;
     	  if (readFrames) {
     		  ifr  = new VlFileMeta(true, "%.frame", new int[]{VL_PROT_ASCII}, "", null);  
@@ -2678,7 +2703,6 @@ public class SIFT extends AlgorithmBase {
 
         err = vl_pgm_insert (fmFile, pim, buffer) ; 
 
-        buffer = null;
         if (fmFile != null) {
   		  try {
   	    	  fmFile.close();
@@ -2690,6 +2714,7 @@ public class SIFT extends AlgorithmBase {
   	    }
         vl_file_meta_close (fm) ;
         if (err > 0) {
+        	buffer = null;
         	return err;
         }
         
@@ -2699,6 +2724,7 @@ public class SIFT extends AlgorithmBase {
         }
       }
 
+      buffer = null;
       return err ;
     }
     
@@ -2717,7 +2743,7 @@ public class SIFT extends AlgorithmBase {
       }
       catch (IOException e) {
     	 System.err.println("IOException " + e);
-    	 Preferences.debug("IOEXcedption " + e + "\n", Preferences.DEBUG_ALGORITHM);
+    	 Preferences.debug("IOException " + e + "\n", Preferences.DEBUG_ALGORITHM);
     	 return VL_ERR_PGM_IO;
       }
       try {
@@ -2725,7 +2751,7 @@ public class SIFT extends AlgorithmBase {
       }
       catch (IOException e) {
     	 System.err.println("IOException " + e);
-    	 Preferences.debug("IOEXcedption " + e + "\n", Preferences.DEBUG_ALGORITHM);
+    	 Preferences.debug("IOException " + e + "\n", Preferences.DEBUG_ALGORITHM);
     	 return VL_ERR_PGM_IO;
       }
       
