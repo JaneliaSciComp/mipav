@@ -79,6 +79,7 @@ public class SIFT extends AlgorithmBase {
     
     private String fileDir[];
     private String fileName[];
+    private int fileNum;
     private boolean verbose = false;
     // arg sets protocol[0], which is default ascii to ascii or binary
     // and the pattern which is the basename.prefix
@@ -97,7 +98,9 @@ public class SIFT extends AlgorithmBase {
     private double   edge_thresh  = 10 ;
     private double   peak_thresh  = 0;
     private double   magnif       = 3.0 ;
-    private boolean force_orientations = false ;
+    private boolean force_orientations = false;
+    private boolean writeFrames = false;
+    private boolean readFrames = false;
     
     private int NBO = 8;
     private int NBP = 4;
@@ -125,7 +128,8 @@ public class SIFT extends AlgorithmBase {
     
     public SIFT(String fileDir[], String fileName[], boolean verbose, String outarg, String framesarg,
     		String descriptorarg, String metaarg, String read_framesarg, String gssarg, int O, int S,
-    		int omin, double edge_thresh, double peak_thresh, double magnif, boolean force_orientations) {
+    		int omin, double edge_thresh, double peak_thresh, double magnif, boolean force_orientations,
+    		boolean writeFrames, boolean readFrames) {
         this.fileDir = fileDir;
         this.fileName = fileName;
         this.verbose = verbose;
@@ -142,6 +146,8 @@ public class SIFT extends AlgorithmBase {
         this.peak_thresh = peak_thresh;
         this.magnif = magnif;
         this.force_orientations = force_orientations;
+        this.writeFrames = writeFrames;
+        this.readFrames = readFrames;
     }
 
 
@@ -154,7 +160,6 @@ public class SIFT extends AlgorithmBase {
     	  int      n ;
     	  int      exit_code          = 0 ;
     	  boolean  force_output       = false ;
-    	  int fileNum;
     	  String basename;
     	  String name;
     	  int q;
@@ -170,11 +175,23 @@ public class SIFT extends AlgorithmBase {
     	  
     	  // All files use ascii protocol
     	  VlFileMeta out  = new VlFileMeta(true, "%.sift",  new int[]{VL_PROT_ASCII}, "", null);
-    	  VlFileMeta frm  = new VlFileMeta(false, "%.frame", new int[]{VL_PROT_ASCII}, "", null);
+    	  VlFileMeta frm;
+    	  if (writeFrames) {
+    		  frm  = new VlFileMeta(true, "%.frame", new int[]{VL_PROT_ASCII}, "", null);  
+    	  }
+    	  else {
+    		  frm  = new VlFileMeta(false, "%.frame", new int[]{VL_PROT_ASCII}, "", null);    
+    	  }
     	  VlFileMeta dsc  = new VlFileMeta(false, "%.descr", new int[]{VL_PROT_ASCII}, "", null);
     	  VlFileMeta met  = new VlFileMeta(false, "%.meta",  new int[]{VL_PROT_ASCII}, "", null);
-    	  VlFileMeta gss  = new VlFileMeta(false, "%.pgm",   new int[]{VL_PROT_ASCII}, "", null);
-    	  VlFileMeta ifr  = new VlFileMeta(false, "%.frame", new int[]{VL_PROT_ASCII}, "", null);
+    	  VlFileMeta gss  = new VlFileMeta(false, "%_gss.pgm",   new int[]{VL_PROT_ASCII}, "", null);
+    	  VlFileMeta ifr;
+    	  if (readFrames) {
+    		  ifr  = new VlFileMeta(true, "%.frame", new int[]{VL_PROT_ASCII}, "", null);  
+    	  }
+    	  else {
+    	      ifr  = new VlFileMeta(false, "%.frame", new int[]{VL_PROT_ASCII}, "", null);
+    	  }
     	  
     	  if ((outarg != null) && (outarg.length() > 0)) {
     	     err = vl_file_meta_parse (out, outarg) ;
@@ -445,6 +462,7 @@ public class SIFT extends AlgorithmBase {
 
     		              ++ nikeys ;
     		          } // while (true)
+    		          
     		          
     		          /* now order by scale */
     		          /* ----------------------------------------------------------------- */
@@ -996,7 +1014,7 @@ public class SIFT extends AlgorithmBase {
 
       if (self.active) {
     	  try {
-		      outFile = new RandomAccessFile(self.name, mode);
+		      outFile = new RandomAccessFile(fileDir[fileNum] + File.separator + self.name, mode);
 		  } catch (IOException e) {
 				System.err.println("IOException " + e + " on outFile = new RandomAccessFile(self.name, mode)");
 			    Preferences.debug("IOException " + e + " on outFile = new RandomAccessFile(self.name, mode)\n",Preferences.DEBUG_ALGORITHM);
@@ -1427,18 +1445,19 @@ public class SIFT extends AlgorithmBase {
        * -------------------------------------------------------------- */
       good = true;
 
-      c = remove_blanks(f) ;
-      good &= c > 0 ;
+      int err[] = new int[1];
+      c = remove_blanks(f,err) ;
+      good &= ((c > 0) && (err[0] == VL_ERR_OK));
 
       width = readAsciiInt(f);
 
-      c = remove_blanks(f) ;
-      good &= c > 0 ;
+      c = remove_blanks(f,err) ;
+      good &= ((c > 0) && (err[0] == VL_ERR_OK)) ;
 
       height = readAsciiInt(f);
 
-      c = remove_blanks(f) ;
-      good &= c > 0 ;
+      c = remove_blanks(f,err) ;
+      good &= ((c > 0) && (err[0] == VL_ERR_OK)) ;
 
       max_value = readAsciiInt(f);
 
@@ -1520,23 +1539,26 @@ public class SIFT extends AlgorithmBase {
      **/
 
     private int
-    remove_blanks(RandomAccessFile f)
+    remove_blanks(RandomAccessFile f, int err[])
     {
       int count = 0 ;
       int c = 0;
       long position = 0L;
+      err[0] = 0;
 
       while (true) {
     	try {
       		c = f.readByte();
       	}
     	catch (EOFException e) {
+    		err[0] = VL_ERR_EOF;
     		return count;
     	}
       	catch (IOException e) {
       		System.err.println("IOException " + e + " on c = f.readByte()");
    			Preferences.debug("IOException " + e + " on c = f.readByte()\n",Preferences.DEBUG_FILEIO);
-   			System.exit(-1);	
+   			err[0] = VL_ERR_IO;
+   			return count;
       	}
 
         switch(c) {
@@ -1557,7 +1579,8 @@ public class SIFT extends AlgorithmBase {
           catch (IOException e) {
         		System.err.println("IOException " + e + " on position = f.getFilePointer()");
      			Preferences.debug("IOException " + e + " on position = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
-     			System.exit(-1);	
+     			err[0] = VL_ERR_IO;
+     			return count;
           }
           try {
               f.seek(position-1);
@@ -1565,7 +1588,8 @@ public class SIFT extends AlgorithmBase {
           catch (IOException e) {
       		System.err.println("IOException " + e + " on f.seek(position-1)");
    			Preferences.debug("IOException " + e + " on position = f.seek(poistion-1)\n",Preferences.DEBUG_FILEIO);
-   			System.exit(-1);	
+   			err[0] = VL_ERR_IO;
+   			return count;
           }
           return count ;
         }
@@ -1648,18 +1672,20 @@ public class SIFT extends AlgorithmBase {
     	return value;
     }
     
-    private double readAsciiDouble(RandomAccessFile f) {
+    private double readAsciiDouble(RandomAccessFile f, int err[]) {
     	double value = 0.0; 
     	int c = 0;
     	long startPosition = 0L;
     	long endPosition = 0L;
+    	err[0] = 0;
     	try {
     	    startPosition = f.getFilePointer();
     	}
     	catch (IOException e) {
     		System.err.println("IOException " + e + " on startPosition = f.getFilePointer()");
  			Preferences.debug("IOException " + e + " on startPosition = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
- 			System.exit(-1);	
+ 			err[0] = VL_ERR_IO;
+ 			return Double.NaN;
         }
     	while (true) {
     		try {
@@ -1668,19 +1694,25 @@ public class SIFT extends AlgorithmBase {
         	catch (IOException e) {
         		System.err.println("IOException " + e + " on endPosition = f.getFilePointer()");
      			Preferences.debug("IOException " + e + " on endPosition = f.getFilePointer()\n",Preferences.DEBUG_FILEIO);
-     			System.exit(-1);	
+     			err[0] = VL_ERR_IO;
+     			return Double.NaN;
             }
         	try {
           		c = f.readByte();
           	}
         	catch (EOFException e) {
+        		if (endPosition == startPosition) {
+        			err[0] = VL_ERR_EOF;
+        			return  Double.NaN;
+        		}
         	    endPosition--;
         	    break;
         	}
           	catch (IOException e) {
           		System.err.println("IOException " + e + " on c = f.readByte()");
        			Preferences.debug("IOException " + e + " on c = f.readByte()\n",Preferences.DEBUG_FILEIO);
-       			System.exit(-1);	
+       			err[0] = VL_ERR_IO;
+       			return Double.NaN;
           	}
         	if (!((c == 43) || (c == 45) || (c == 46) || ((c >= 48) && (c <= 57)) || (c == 69) || (c == 101))) {
         	    endPosition--;
@@ -1694,7 +1726,8 @@ public class SIFT extends AlgorithmBase {
     	catch (IOException e) {
     		System.err.println("IOException " + e + " on f.seek(startPosition)");
  			Preferences.debug("IOException " + e + " on f.seek(startPosition)\n",Preferences.DEBUG_FILEIO);
- 			System.exit(-1);	
+ 			err[0] = VL_ERR_IO;
+ 			return Double.NaN;
         }
     	byte buf[] = new byte[(int)(endPosition - startPosition + 1)];
     	try {
@@ -1703,7 +1736,8 @@ public class SIFT extends AlgorithmBase {
     	catch (IOException e) {
     		System.err.println("IOException " + e + " on f.read(buf)");
  			Preferences.debug("IOException " + e + " on f.read(buf)\n",Preferences.DEBUG_FILEIO);
- 			System.exit(-1);	
+ 			err[0] = VL_ERR_IO;
+ 			return Double.NaN;
         }
     	String num = new String(buf);
     	try {
@@ -1712,7 +1746,8 @@ public class SIFT extends AlgorithmBase {
     	catch (NumberFormatException e) {
     		System.err.println("NumberFormatException " + e + " on Double.parseDouble(num)");
  			Preferences.debug("NumberFormatException " + e + " on Double.parseDouble(num)\n",Preferences.DEBUG_FILEIO);
- 			System.exit(-1);		
+ 		    err[0] = VL_ERR_BAD_ARG;
+ 		    return Double.NaN;
     	}
     	return value;
     }
@@ -1776,8 +1811,12 @@ public class SIFT extends AlgorithmBase {
         }
       }
       else {
+    	   int err[] = new int[1];
     	   for (i = 0; i < data_size; i++) {
-    		   c = remove_blanks(f) ;
+    		   c = remove_blanks(f,err) ;
+    		   if (err[0] != VL_ERR_OK) {
+    			   break;
+    		   }
     		   good &= c > 0 ;
     		   if (!good) {
     			   break;
@@ -1923,22 +1962,19 @@ public class SIFT extends AlgorithmBase {
     private int
     vl_file_meta_get_double (int protocol, RandomAccessFile file, double x[])
     {
-      int err ;
-      int n ;
-      double y ;
-      boolean good = true;
       int c = 0;
 
       switch (protocol) {
 
       case VL_PROT_ASCII :
-    	  c = remove_blanks(file) ;
-		   good &= c > 0 ;
-		   if (!good) {
-			   break;
-		   }
-           x[0] = readAsciiDouble(file);
-           break ;
+    	  int err[] = new int[1];
+    	  c = remove_blanks(file, err) ;
+		  if (err[0] != VL_ERR_OK) {
+			  return err[0];
+		  }
+		   
+          x[0] = readAsciiDouble(file, err);
+          return err[0];
 
       case VL_PROT_BINARY :
     	  try {
