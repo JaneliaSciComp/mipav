@@ -166,7 +166,7 @@ public class SIFT extends AlgorithmBase {
      **/
     public void runAlgorithm() {
     	
-    	  boolean testMosaic = true;
+    	  boolean testMosaic = false;
     	  if (testMosaic) {
     		  ModelImage out = sift_mosaic(null, null);
     		  setCompleted(true);
