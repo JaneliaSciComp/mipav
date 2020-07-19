@@ -1,5 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -161,6 +165,13 @@ public class SIFT extends AlgorithmBase {
     /** @brief SIFT driver entry point
      **/
     public void runAlgorithm() {
+    	
+    	  boolean testMosaic = true;
+    	  if (testMosaic) {
+    		  ModelImage out = sift_mosaic(null, null);
+    		  setCompleted(true);
+    		  return;
+    	  }
 
     	  int  err    = VL_ERR_OK ;
     	  String err_msg;
@@ -383,39 +394,42 @@ public class SIFT extends AlgorithmBase {
     		      /* ...............................................................
     		       *                                                       Read data
     		       * ............................................................ */
+    		      int fileType = FileUtility.getFileTypeFromStr(basename);
+    		      if (fileType == FileUtility.PGM) {
 
-    		      /* read PGM header */
-    		      err = vl_pgm_extract_head (in, pim) ;
-    		      if (err > 0) {
-    		    	  break bigloop;
-    		      }
-    		      
-    		      if (verbose) {
-    		          System.out.println("sift: image is " + pim.width + " by " + pim.height + " pixels") ;
-    		          Preferences.debug("sift: image is " + pim.width + " by " + pim.height + " pixels\n", Preferences.DEBUG_ALGORITHM);
-    		      }
-    		      
-    		      int numPixels = pim.width * pim.height;
-    		      try {
-    		          data = new int[numPixels];
-    		          fdata = new float[numPixels];
-    		      }
-    		      catch (OutOfMemoryError e) {
-    		    	  System.err.println("Out of memory error allocating data and fdata");
-    		    	  Preferences.debug("Out of memory error allocating data and fdata\n", Preferences.DEBUG_ALGORITHM);
-    		    	  break bigloop;
-    		      }
-    		      
-    		      /* read PGM body */
-    		      err  = vl_pgm_extract_data(in, pim, data) ;
-    		      if (err > 0) {
-    		    	  break bigloop;
-    		      }
-    		      
-    		      /* convert data type */
-    		      for (q = 0 ; q < numPixels; ++q) {
-    		        fdata [q] = data[q] ;
-    		      }
+	    		      /* read PGM header */
+	    		      err = vl_pgm_extract_head (in, pim) ;
+	    		      if (err > 0) {
+	    		    	  break bigloop;
+	    		      }
+	    		      
+	    		      if (verbose) {
+	    		          System.out.println("sift: image is " + pim.width + " by " + pim.height + " pixels") ;
+	    		          Preferences.debug("sift: image is " + pim.width + " by " + pim.height + " pixels\n", Preferences.DEBUG_ALGORITHM);
+	    		      }
+	    		      
+	    		      int numPixels = pim.width * pim.height;
+	    		      try {
+	    		          data = new int[numPixels];
+	    		          fdata = new float[numPixels];
+	    		      }
+	    		      catch (OutOfMemoryError e) {
+	    		    	  System.err.println("Out of memory error allocating data and fdata");
+	    		    	  Preferences.debug("Out of memory error allocating data and fdata\n", Preferences.DEBUG_ALGORITHM);
+	    		    	  break bigloop;
+	    		      }
+	    		      
+	    		      /* read PGM body */
+	    		      err  = vl_pgm_extract_data(in, pim, data) ;
+	    		      if (err > 0) {
+	    		    	  break bigloop;
+	    		      }
+	    		      
+	    		      /* convert data type */
+	    		      for (q = 0 ; q < numPixels; ++q) {
+	    		        fdata [q] = data[q] ;
+	    		      }
+    		      } // if (fileType == FileUtility.PGM)
     		      
     		      /* ...............................................................
     		       *                                     Optionally source keypoints
@@ -3857,6 +3871,137 @@ public class SIFT extends AlgorithmBase {
         }
         f = null;
       }
+    }
+    
+    private ModelImage sift_mosaic(ModelImage im1, ModelImage im2) {
+       // SIFT_MOSAIC Demonstrates matching two images using SIFT and RANSAC
+    
+       //   SIFT_MOSAIC demonstrates matching two images based on SIFT
+       //   features and RANSAC and computing their mosaic.
+   
+       //   SIFT_MOSAIC by itself runs the algorithm on two standard test
+       //   images. Use SIFT_MOSAIC(IM1,IM2) to compute the mosaic of two
+       //   custom images IM1 and IM2.
+       AlgorithmChangeType changeAlgo;
+       ModelImage im1g;
+       ModelImage im2g;
+
+       if (im1 == null) {
+    	      final FileIO io = new FileIO();
+    	      io.setQuiet(true);
+              io.setSuppressProgressBar(true);
+    	      im1 = io.readImage("C:" + File.separator + "SIFT" + File.separator + "vlfeat-0.9.21" + File.separator + "vlfeat-0.9.21" +
+              File.separator + "data" + File.separator + "river1.jpg");
+    	      im2 = io.readImage("C:" + File.separator + "SIFT" + File.separator + "vlfeat-0.9.21" + File.separator + "vlfeat-0.9.21" +
+    	              File.separator + "data" + File.separator + "river2.jpg");
+       }
+       
+       // make images float with minimum == 0 and maximum = 1
+       if (((im1.getType() != ModelStorageBase.FLOAT) && (im1.getType() != ModelStorageBase.ARGB_FLOAT)) ||
+    		   (im1.getMin() < 0) || (im1.getMax() != 1)) {
+           if (im1.isColorImage()) {
+        	    changeAlgo = new AlgorithmChangeType(im1,ModelStorageBase.ARGB_FLOAT, im1.getMin(), im1.getMax(), im1.getMin()/im1.getMax(), 1.0, true);   
+           }
+           else if (im1.getMin() >= 0) {
+        	   changeAlgo = new AlgorithmChangeType(im1,ModelStorageBase.FLOAT, im1.getMin(), im1.getMax(), im1.getMin()/im1.getMax(), 1.0, true);   
+           }
+           else {
+        	   changeAlgo = new AlgorithmChangeType(im1,ModelStorageBase.FLOAT, im1.getMin(), im1.getMax(), 0.0, 1.0, true);   
+           }
+           changeAlgo.run();
+       }
+       
+       if (((im2.getType() != ModelStorageBase.FLOAT) && (im2.getType() != ModelStorageBase.ARGB_FLOAT)) ||
+    		   (im2.getMin() < 0) || (im2.getMax() != 1)) {
+           if (im1.isColorImage()) {
+        	    changeAlgo = new AlgorithmChangeType(im2,ModelStorageBase.ARGB_FLOAT, im2.getMin(), im2.getMax(), im2.getMin()/im2.getMax(), 1.0, true);   
+           }
+           else if (im2.getMin() >= 0) {
+        	   changeAlgo = new AlgorithmChangeType(im2,ModelStorageBase.FLOAT, im2.getMin(), im2.getMax(), im2.getMin()/im2.getMax(), 1.0, true);   
+           }
+           else {
+        	   changeAlgo = new AlgorithmChangeType(im2,ModelStorageBase.FLOAT, im2.getMin(), im2.getMax(), 0.0, 1.0, true);   
+           }
+           changeAlgo.run();
+       }
+       
+       // make grayscale
+       AlgorithmRGBtoGray gAlgo;
+       boolean intensityAverage = false;
+       float threshold = 0.0f;
+       boolean thresholdAverage = false;
+       boolean equalRange = true;
+       float redValue = 0.2989f;
+       float greenValue = 0.5870f;
+       float blueValue = 0.1140f;
+       // minR, minG, minB, maxR, maxG, maxB not used
+       float minR = 0.0f;
+       float minG = 0.0f;
+       float minB = 0.0f;
+       float maxR = 255.0f;
+       float maxG = 255.0f;
+       float maxB = 255.0f;
+       if (im1.isColorImage()) {
+    	   im1g = new ModelImage(ModelStorageBase.FLOAT, im1.getExtents(), im1.getImageName() + "_gray");
+    	   if (im1.getMinR() == im1.getMaxR()) {
+				redValue = 0.0f;
+				greenValue = 0.5f;
+				blueValue = 0.5f;
+			} else if (im1.getMinG() == im1.getMaxG()) {
+				redValue = 0.5f;
+				greenValue = 0.0f;
+				blueValue = 0.5f;
+			} else if (im1.getMinB() == im1.getMaxB()) {
+				redValue = 0.5f;
+				greenValue = 0.5f;
+				blueValue = 0.0f;
+			} 
+    	   
+			gAlgo = new AlgorithmRGBtoGray(im1g, im1,
+					redValue, greenValue, blueValue, thresholdAverage,
+					threshold, intensityAverage, equalRange, minR, maxR,
+					minG, maxG, minB, maxB);
+			gAlgo.run();
+			gAlgo.finalize();
+       }
+       else {
+    	   im1g = im1;
+       }
+       if (im2.isColorImage()) {
+    	   im2g = new ModelImage(ModelStorageBase.FLOAT, im2.getExtents(), im2.getImageName() + "_gray");
+    	   if (im2.getMinR() == im2.getMaxR()) {
+				redValue = 0.0f;
+				greenValue = 0.5f;
+				blueValue = 0.5f;
+			} else if (im2.getMinG() == im2.getMaxG()) {
+				redValue = 0.5f;
+				greenValue = 0.0f;
+				blueValue = 0.5f;
+			} else if (im2.getMinB() == im2.getMaxB()) {
+				redValue = 0.5f;
+				greenValue = 0.5f;
+				blueValue = 0.0f;
+			} 
+    	   
+			gAlgo = new AlgorithmRGBtoGray(im2g, im2,
+					redValue, greenValue, blueValue, thresholdAverage,
+					threshold, intensityAverage, equalRange, minR, maxR,
+					minG, maxG, minB, maxB);
+			gAlgo.run();
+			gAlgo.finalize();
+       }
+       else {
+    	   im2g = im2;
+       }
+
+       // --------------------------------------------------------------------
+       //                                                         SIFT matches
+       // --------------------------------------------------------------------
+
+       //[f1,d1] = vl_sift(im1g) ;
+       //[f2,d2] = vl_sift(im2g) ;
+    
+       return null;
     }
 
 }
