@@ -9152,6 +9152,7 @@ public class FileIO {
         final FileInfoBase[] fileInfo = modelImage.getFileInfo();
 
         for (int j = 0; j < fileInfo.length; j++) {
+        	fileInfo[j].setFileName(fileName);
             fileInfo[j].setFileDirectory(fileDir);
             fileInfo[j].setFileFormat(FileUtility.JIMI);
             modelImage.setFileInfo(fileInfo[j], j);
