@@ -57,6 +57,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private boolean writeDescriptor = false;
     private boolean writeMeta = false;
     private boolean writeGss = false;
+    private boolean  mosaic = false;
     
     private boolean changeRemoveIndex = true;
     
@@ -115,6 +116,8 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private JCheckBox writeMetaCheckBox;
     
     private JCheckBox writeGssCheckBox;
+    
+    private JCheckBox mosaicCheckBox;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -148,6 +151,11 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         setForeground(Color.black);
 
         setTitle("Scale Invariant Feature Transform (SIFT)");
+        
+        mosaicCheckBox = new JCheckBox("Merge 2 images into 1 mosaic image");
+        mosaicCheckBox.setFont(serif12);
+        mosaicCheckBox.setSelected(false);
+        mosaicCheckBox.addActionListener(this);
         
         labelNOctaves = new JLabel("Number of octaves");
         labelNOctaves.setForeground(Color.black);
@@ -228,97 +236,100 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         JPanel upperPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
-
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(mosaicCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
         upperPanel.add(labelNOctaves, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 1;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textNOctaves, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelNLevels, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textNLevels, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelFirstOctave, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textFirstOctave, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelEdgeThresh, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textEdgeThresh, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelPeakThresh, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textPeakThresh, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelMagnification, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textMagnification, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 2;
         upperPanel.add(orientationsCheckBox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridwidth = 2;
         upperPanel.add(verboseCheckBox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.gridwidth = 2;
         upperPanel.add(writeFramesCheckBox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         gbc.gridwidth = 2;
         upperPanel.add(readFramesCheckBox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         gbc.gridwidth = 2;
         upperPanel.add(writeDescriptorCheckBox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         gbc.gridwidth = 2;
         upperPanel.add(writeMetaCheckBox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         gbc.gridwidth = 2;
         upperPanel.add(writeGssCheckBox, gbc);
         
@@ -394,6 +405,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         int i, j;
 
@@ -485,6 +497,17 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if (source.equals(mosaicCheckBox)) {
+        	if (mosaicCheckBox.isSelected()) {
+        		writeFramesCheckBox.setSelected(true);
+        		writeFramesCheckBox.setEnabled(false);
+        		writeDescriptorCheckBox.setSelected(true);
+        		writeDescriptorCheckBox.setEnabled(false);
+        	}
+        	else {
+        		writeFramesCheckBox.setEnabled(true);
+        		writeDescriptorCheckBox.setEnabled(true);
+        	}
         } else if (command.equals("Cancel")) {
             dispose();
         
@@ -597,7 +620,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     }
     
     protected void callAlgorithm() {
-        SIFTAlgo = new SIFT(fileDir, fileName, verbose, outarg, framesarg,
+        SIFTAlgo = new SIFT(fileDir, fileName, mosaic, verbose, outarg, framesarg,
         		descriptorarg, metaarg, read_framesarg, gssarg, O, S,
         		omin, edge_thresh, peak_thresh, magnif, force_orientations,
         		writeFrames, readFrames, writeDescriptor, writeMeta,
@@ -636,6 +659,14 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     
     private boolean setVariables() {
         String tmpStr;
+        
+        mosaic = mosaicCheckBox.isSelected();
+        if (mosaic) {
+        	if (fileName.length != 2) {
+        	    MipavUtil.displayError("When merge is selected must have exactly 2 files");
+        	    return false;
+        	}
+        }
         
         tmpStr = textNOctaves.getText();
 
@@ -729,6 +760,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     		 fileDir[i] = scriptParameters.getParams().getString("file_dir"+String.valueOf(i));
     		 fileName[i] = scriptParameters.getParams().getString("file_name"+String.valueOf(i));
     	}
+    	mosaic = scriptParameters.getParams().getBoolean("merge");
     	verbose = scriptParameters.getParams().getBoolean("verbosity");
     	O = scriptParameters.getParams().getInt("octaves");
     	S = scriptParameters.getParams().getInt("levels");
@@ -752,6 +784,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     		scriptParameters.getParams().put(ParameterFactory.newParameter("file_dir"+String.valueOf(i), fileDir[i]));	
     		scriptParameters.getParams().put(ParameterFactory.newParameter("file_name"+String.valueOf(i), fileName[i]));	
     	}
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("merge", mosaic));	
     	scriptParameters.getParams().put(ParameterFactory.newParameter("verbosity", verbose));	
     	scriptParameters.getParams().put(ParameterFactory.newParameter("octaves", O));	
     	scriptParameters.getParams().put(ParameterFactory.newParameter("levels", S));
