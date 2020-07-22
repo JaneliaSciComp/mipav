@@ -84,6 +84,7 @@ public class SIFT extends AlgorithmBase {
     private String fileDir[];
     private String fileName[];
     private int fileNum;
+    private boolean mosaic = false;
     private boolean verbose = false;
     // arg sets protocol[0], which is default ascii to ascii or binary
     // and the pattern which is the basename.prefix
@@ -133,13 +134,14 @@ public class SIFT extends AlgorithmBase {
      */
     public SIFT() { }
     
-    public SIFT(String fileDir[], String fileName[], boolean verbose, String outarg, String framesarg,
+    public SIFT(String fileDir[], String fileName[], boolean mosaic, boolean verbose, String outarg, String framesarg,
     		String descriptorarg, String metaarg, String read_framesarg, String gssarg, int O, int S,
     		int omin, double edge_thresh, double peak_thresh, double magnif, boolean force_orientations,
     		boolean writeFrames, boolean readFrames, boolean writeDescriptor, boolean writeMeta,
     		boolean writeGss) {
         this.fileDir = fileDir;
         this.fileName = fileName;
+        this.mosaic = mosaic;
         this.verbose = verbose;
         this.outarg = outarg;
         this.framesarg = framesarg;
@@ -166,13 +168,7 @@ public class SIFT extends AlgorithmBase {
      **/
     public void runAlgorithm() {
     	
-    	  boolean testMosaic = false;
-    	  if (testMosaic) {
-    		  ModelImage out = sift_mosaic(null, null);
-    		  setCompleted(true);
-    		  return;
-    	  }
-
+    	  
     	  int  err    = VL_ERR_OK ;
     	  String err_msg;
     	  int      n ;
@@ -190,6 +186,7 @@ public class SIFT extends AlgorithmBase {
     	  int data[] = null;
     	  float fdata[] = null;
     	  int error[] = new int[1];
+    	  int numPixels;
     	  
     	  // All files use ascii protocol
     	  VlFileMeta out  = new VlFileMeta(true, "%.sift",  new int[]{VL_PROT_ASCII}, "", null);
@@ -342,6 +339,11 @@ public class SIFT extends AlgorithmBase {
     		    }
     	  } // if (verbose)
     	  
+	      final FileIO io = new FileIO();
+	      io.setQuiet(true);
+          io.setSuppressProgressBar(true);
+
+    	  
     	  /* ------------------------------------------------------------------
     	   *                                         Process one image per time
     	   * --------------------------------------------------------------- */
@@ -395,7 +397,7 @@ public class SIFT extends AlgorithmBase {
     		       *                                                       Read data
     		       * ............................................................ */
     		      int fileType = FileUtility.getFileTypeFromStr(basename);
-    		      if (fileType == FileUtility.PGM) {
+    		      if ((fileType == FileUtility.PGM) && (!mosaic)) {
 
 	    		      /* read PGM header */
 	    		      err = vl_pgm_extract_head (in, pim) ;
@@ -408,7 +410,7 @@ public class SIFT extends AlgorithmBase {
 	    		          Preferences.debug("sift: image is " + pim.width + " by " + pim.height + " pixels\n", Preferences.DEBUG_ALGORITHM);
 	    		      }
 	    		      
-	    		      int numPixels = pim.width * pim.height;
+	    		      numPixels = pim.width * pim.height;
 	    		      try {
 	    		          data = new int[numPixels];
 	    		          fdata = new float[numPixels];
@@ -429,7 +431,104 @@ public class SIFT extends AlgorithmBase {
 	    		      for (q = 0 ; q < numPixels; ++q) {
 	    		        fdata [q] = data[q] ;
 	    		      }
-    		      } // if (fileType == FileUtility.PGM)
+    		      } // if ((fileType == FileUtility.PGM) 
+    		      else { // (fileType != FileUtility.PGM) || mosaic
+    		    	  ModelImage img;
+    	    	      ModelImage im = io.readImage(fileDir[fileNum] + File.separator + fileName[fileNum]); 
+    	    	      pim.width = im.getExtents()[0];
+    	    	      pim.height = im.getExtents()[1];
+    	    	      if (verbose) {
+	    		          System.out.println("sift: image is " + pim.width + " by " + pim.height + " pixels") ;
+	    		          Preferences.debug("sift: image is " + pim.width + " by " + pim.height + " pixels\n", Preferences.DEBUG_ALGORITHM);
+	    		      }
+    	    	      
+    	    	       if (mosaic) {
+    	    	       // make images float with minimum == 0 and maximum = 1
+	    	    	       AlgorithmChangeType changeAlgo;
+	    	    	       if (((im.getType() != ModelStorageBase.FLOAT) && (im.getType() != ModelStorageBase.ARGB_FLOAT)) ||
+	    	    	    		   (im.getMin() < 0) || (im.getMax() != 1)) {
+	    	    	           if (im.isColorImage()) {
+	    	    	        	    changeAlgo = new AlgorithmChangeType(im,ModelStorageBase.ARGB_FLOAT, im.getMin(), im.getMax(), im.getMin()/im.getMax(), 1.0, true);   
+	    	    	           }
+	    	    	           else if (im.getMin() >= 0) {
+	    	    	        	   changeAlgo = new AlgorithmChangeType(im,ModelStorageBase.FLOAT, im.getMin(), im.getMax(), im.getMin()/im.getMax(), 1.0, true);   
+	    	    	           }
+	    	    	           else {
+	    	    	        	   changeAlgo = new AlgorithmChangeType(im,ModelStorageBase.FLOAT, im.getMin(), im.getMax(), 0.0, 1.0, true);   
+	    	    	           }
+	    	    	           changeAlgo.run();
+	    	    	       }
+    	    	       } // if (mosaic)
+    	    	      
+    	    	       // make grayscale
+    	    	       AlgorithmRGBtoGray gAlgo;
+    	    	       boolean intensityAverage = false;
+    	    	       float threshold = 0.0f;
+    	    	       boolean thresholdAverage = false;
+    	    	       boolean equalRange = true;
+    	    	       float redValue = 0.2989f;
+    	    	       float greenValue = 0.5870f;
+    	    	       float blueValue = 0.1140f;
+    	    	       // minR, minG, minB, maxR, maxG, maxB not used
+    	    	       float minR = 0.0f;
+    	    	       float minG = 0.0f;
+    	    	       float minB = 0.0f;
+    	    	       float maxR = 255.0f;
+    	    	       float maxG = 255.0f;
+    	    	       float maxB = 255.0f;
+    	    	       if (im.isColorImage()) {
+    	    	    	   img = new ModelImage(ModelStorageBase.FLOAT, im.getExtents(), im.getImageName() + "_gray");
+    	    	    	   if (im.getMinR() == im.getMaxR()) {
+    	    					redValue = 0.0f;
+    	    					greenValue = 0.5f;
+    	    					blueValue = 0.5f;
+    	    				} else if (im.getMinG() == im.getMaxG()) {
+    	    					redValue = 0.5f;
+    	    					greenValue = 0.0f;
+    	    					blueValue = 0.5f;
+    	    				} else if (im.getMinB() == im.getMaxB()) {
+    	    					redValue = 0.5f;
+    	    					greenValue = 0.5f;
+    	    					blueValue = 0.0f;
+    	    				} 
+    	    	    	   
+    	    				gAlgo = new AlgorithmRGBtoGray(img, im,
+    	    						redValue, greenValue, blueValue, thresholdAverage,
+    	    						threshold, intensityAverage, equalRange, minR, maxR,
+    	    						minG, maxG, minB, maxB);
+    	    				gAlgo.run();
+    	    				gAlgo.finalize();
+    	    	       }
+    	    	       else {
+    	    	    	   img = im;
+    	    	       }
+	    		      
+	    		      numPixels = pim.width * pim.height;
+	    		      try {
+	    		          fdata = new float[numPixels];
+	    		      }
+	    		      catch (OutOfMemoryError e) {
+	    		    	  System.err.println("Out of memory error allocating fdata");
+	    		    	  Preferences.debug("Out of memory error allocating fdata\n", Preferences.DEBUG_ALGORITHM);
+	    		    	  break bigloop;
+	    		      }
+	    		      try {
+	    		    	  img.exportData(0, numPixels, fdata);
+	    		      }
+	    		      catch (IOException e) {
+	    		    	  System.err.println("IOException on img.exportData(0, numPixels, fdata");
+	    		    	  Preferences.debug("IOException on img.exportData(0, numPixels, fdata)\n", Preferences.DEBUG_ALGORITHM);
+	    		    	  break bigloop;
+	    		      }
+	    		      im.disposeLocal();
+	    		      im = null;
+	    		      
+	    		      if (img != null) {
+	    		    	  img.disposeLocal();
+	    		    	  im = null;
+	    		      }
+    		      } // else (fileType != FileUtility.PGM) || mosaic
+    		      
     		      
     		      /* ...............................................................
     		       *                                     Optionally source keypoints
@@ -986,6 +1085,28 @@ public class SIFT extends AlgorithmBase {
     	  }
     	  vl_file_meta_close (ifr) ;
 	   } // for (fileNum = 0; fileNum < fileName.length; fileNum++)
+	       
+	   if (mosaic) {
+		   
+		   // SIFT_MOSAIC Demonstrates matching two images using SIFT and RANSAC
+		    
+	       //   SIFT_MOSAIC demonstrates matching two images based on SIFT
+	       //   features and RANSAC and computing their mosaic.
+	   
+	       //   SIFT_MOSAIC by itself runs the algorithm on two standard test
+	       //   images. Use SIFT_MOSAIC(IM1,IM2) to compute the mosaic of two
+	       //   custom images IM1 and IM2.
+		   
+		   
+		   // --------------------------------------------------------------------
+	       //                                                         SIFT matches
+	       // --------------------------------------------------------------------
+
+	       //[f1,d1] = vl_sift(im1g) ;
+	       //[f2,d2] = vl_sift(im2g) ;
+	    
+	   } // if (mosaic)
+	   
 	   System.out.println("Run completed");
 	   Preferences.debug("Run completed\n", Preferences.DEBUG_ALGORITHM);
 	   setCompleted(true);
@@ -3873,135 +3994,6 @@ public class SIFT extends AlgorithmBase {
       }
     }
     
-    private ModelImage sift_mosaic(ModelImage im1, ModelImage im2) {
-       // SIFT_MOSAIC Demonstrates matching two images using SIFT and RANSAC
-    
-       //   SIFT_MOSAIC demonstrates matching two images based on SIFT
-       //   features and RANSAC and computing their mosaic.
    
-       //   SIFT_MOSAIC by itself runs the algorithm on two standard test
-       //   images. Use SIFT_MOSAIC(IM1,IM2) to compute the mosaic of two
-       //   custom images IM1 and IM2.
-       AlgorithmChangeType changeAlgo;
-       ModelImage im1g;
-       ModelImage im2g;
-
-       if (im1 == null) {
-    	      final FileIO io = new FileIO();
-    	      io.setQuiet(true);
-              io.setSuppressProgressBar(true);
-    	      im1 = io.readImage("C:" + File.separator + "SIFT" + File.separator + "vlfeat-0.9.21" + File.separator + "vlfeat-0.9.21" +
-              File.separator + "data" + File.separator + "river1.jpg");
-    	      im2 = io.readImage("C:" + File.separator + "SIFT" + File.separator + "vlfeat-0.9.21" + File.separator + "vlfeat-0.9.21" +
-    	              File.separator + "data" + File.separator + "river2.jpg");
-       }
-       
-       // make images float with minimum == 0 and maximum = 1
-       if (((im1.getType() != ModelStorageBase.FLOAT) && (im1.getType() != ModelStorageBase.ARGB_FLOAT)) ||
-    		   (im1.getMin() < 0) || (im1.getMax() != 1)) {
-           if (im1.isColorImage()) {
-        	    changeAlgo = new AlgorithmChangeType(im1,ModelStorageBase.ARGB_FLOAT, im1.getMin(), im1.getMax(), im1.getMin()/im1.getMax(), 1.0, true);   
-           }
-           else if (im1.getMin() >= 0) {
-        	   changeAlgo = new AlgorithmChangeType(im1,ModelStorageBase.FLOAT, im1.getMin(), im1.getMax(), im1.getMin()/im1.getMax(), 1.0, true);   
-           }
-           else {
-        	   changeAlgo = new AlgorithmChangeType(im1,ModelStorageBase.FLOAT, im1.getMin(), im1.getMax(), 0.0, 1.0, true);   
-           }
-           changeAlgo.run();
-       }
-       
-       if (((im2.getType() != ModelStorageBase.FLOAT) && (im2.getType() != ModelStorageBase.ARGB_FLOAT)) ||
-    		   (im2.getMin() < 0) || (im2.getMax() != 1)) {
-           if (im1.isColorImage()) {
-        	    changeAlgo = new AlgorithmChangeType(im2,ModelStorageBase.ARGB_FLOAT, im2.getMin(), im2.getMax(), im2.getMin()/im2.getMax(), 1.0, true);   
-           }
-           else if (im2.getMin() >= 0) {
-        	   changeAlgo = new AlgorithmChangeType(im2,ModelStorageBase.FLOAT, im2.getMin(), im2.getMax(), im2.getMin()/im2.getMax(), 1.0, true);   
-           }
-           else {
-        	   changeAlgo = new AlgorithmChangeType(im2,ModelStorageBase.FLOAT, im2.getMin(), im2.getMax(), 0.0, 1.0, true);   
-           }
-           changeAlgo.run();
-       }
-       
-       // make grayscale
-       AlgorithmRGBtoGray gAlgo;
-       boolean intensityAverage = false;
-       float threshold = 0.0f;
-       boolean thresholdAverage = false;
-       boolean equalRange = true;
-       float redValue = 0.2989f;
-       float greenValue = 0.5870f;
-       float blueValue = 0.1140f;
-       // minR, minG, minB, maxR, maxG, maxB not used
-       float minR = 0.0f;
-       float minG = 0.0f;
-       float minB = 0.0f;
-       float maxR = 255.0f;
-       float maxG = 255.0f;
-       float maxB = 255.0f;
-       if (im1.isColorImage()) {
-    	   im1g = new ModelImage(ModelStorageBase.FLOAT, im1.getExtents(), im1.getImageName() + "_gray");
-    	   if (im1.getMinR() == im1.getMaxR()) {
-				redValue = 0.0f;
-				greenValue = 0.5f;
-				blueValue = 0.5f;
-			} else if (im1.getMinG() == im1.getMaxG()) {
-				redValue = 0.5f;
-				greenValue = 0.0f;
-				blueValue = 0.5f;
-			} else if (im1.getMinB() == im1.getMaxB()) {
-				redValue = 0.5f;
-				greenValue = 0.5f;
-				blueValue = 0.0f;
-			} 
-    	   
-			gAlgo = new AlgorithmRGBtoGray(im1g, im1,
-					redValue, greenValue, blueValue, thresholdAverage,
-					threshold, intensityAverage, equalRange, minR, maxR,
-					minG, maxG, minB, maxB);
-			gAlgo.run();
-			gAlgo.finalize();
-       }
-       else {
-    	   im1g = im1;
-       }
-       if (im2.isColorImage()) {
-    	   im2g = new ModelImage(ModelStorageBase.FLOAT, im2.getExtents(), im2.getImageName() + "_gray");
-    	   if (im2.getMinR() == im2.getMaxR()) {
-				redValue = 0.0f;
-				greenValue = 0.5f;
-				blueValue = 0.5f;
-			} else if (im2.getMinG() == im2.getMaxG()) {
-				redValue = 0.5f;
-				greenValue = 0.0f;
-				blueValue = 0.5f;
-			} else if (im2.getMinB() == im2.getMaxB()) {
-				redValue = 0.5f;
-				greenValue = 0.5f;
-				blueValue = 0.0f;
-			} 
-    	   
-			gAlgo = new AlgorithmRGBtoGray(im2g, im2,
-					redValue, greenValue, blueValue, thresholdAverage,
-					threshold, intensityAverage, equalRange, minR, maxR,
-					minG, maxG, minB, maxB);
-			gAlgo.run();
-			gAlgo.finalize();
-       }
-       else {
-    	   im2g = im2;
-       }
-
-       // --------------------------------------------------------------------
-       //                                                         SIFT matches
-       // --------------------------------------------------------------------
-
-       //[f1,d1] = vl_sift(im1g) ;
-       //[f2,d2] = vl_sift(im2g) ;
-    
-       return null;
-    }
 
 }
