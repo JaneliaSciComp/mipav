@@ -1695,7 +1695,6 @@ public class ViewMenuBar {
 		}
 
 		if (ModelImage.isColorImage(type)) {
-			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
 			menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
 			menuBuilder.setMenuItemEnabled("Density based clustering", false);
