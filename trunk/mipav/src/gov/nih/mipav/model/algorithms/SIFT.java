@@ -10,9 +10,14 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Random;
 import java.util.Vector;
+
+import Jama.Matrix;
+import Jama.SingularValueDecomposition;
 
 /**
  * This is a port of
@@ -198,6 +203,9 @@ public class SIFT extends AlgorithmBase {
     	  double frmArray[] = null;
     	  int i;
     	  int j;
+    	  int t;
+    	  int i2;
+    	  int j2;
     	  
     	  if (mosaic) {
     		  d1 = new Vector<double[]>();
@@ -965,10 +973,10 @@ public class SIFT extends AlgorithmBase {
     		              }
     		              for (l = 0 ; l < 128 ; ++l) {
     		                double x = 512.0 * descr[l] ;
-    		                x = (x < 255.0) ? x : 255.0 ;
     		                if (mosaic) {
     		                	dscArray[l] = x;
     		                }
+    		                x = (x < 255.0) ? x : 255.0;
     		                if (x < 0) {
     		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x - 0.5));
     		            	}
@@ -1226,26 +1234,124 @@ public class SIFT extends AlgorithmBase {
 	       //                                        RANSAC with homography model
 	       // --------------------------------------------------------------------
 
-	       /*clear H score ok ;
-	       for t = 1:100
-	         // estimate homograpyh
-	         subset = vl_colsubset(1:numMatches, 4) ;
-	         A = [] ;
-	         for i = subset
-	           A = cat(1, A, kron(X1(:,i)', vl_hat(X2(:,i)))) ;
-	         end
-	         [U,S,V] = svd(A) ;
-	         H{t} = reshape(V(:,9),3,3) ;
+	       // clear H score ok means H, score, and ok are removed from memory
+	       double hat[][] = new double[3][3];
+	       double A[][] = null;
+	       double kron[][] = new double[3][9];
+	       double Atemp[][];
+	       double H[][][] = new double[100][3][3];
+	       int ok[][] = new int[100][];
+	       int score[] = new int[100];
+	       int maxScore = -1;
+	       int bestScoreIndex = -1;
+	       double Hbest[][];
+	       int okbest[];
+	       for (t = 0; t < 100; t++) {
+	         // estimate homograpy
+	    	 // VL_COLSUBSET Select a given number of columns
+	    	 //   Y = VL_COLSUBSET(X, N) returns a random subset Y of N columns of
+	    	 //   X. The selection is order-preserving and without replacement. 
+	    	 // p = randperm(n) returns a row vector containing a random permutation of the integers from 1 to n without repeating elements.
+	         // subset = vl_colsubset(1:numMatches, 4) ;
+	    	 int arr[] = new int[numMatches];
+	    	 for (i = 0; i < numMatches; i++) {
+	    		 arr[i] = i;
+	    	 }
+	    	 randomize(arr);
+	    	 int subset[] = new int[4];
+	    	 for (i = 0; i < 4; i++) {
+	    		 subset[i] = arr[i];
+	    	 }
+	    	 Arrays.sort(subset);
+	         A = null;
+	         for (j = 0; j < 4; j++) {
+	           i = subset[j];
+	           // Concatenate rows
+	           // H = VL_HAT(OM) returns the skew symmetric matrix by taking the "hat"
+               // of the 3D vector OM.
+               hat = new double[][] {{0.0,-X2[2][i],X2[1][i]},{X2[2][i],0.0,-X2[0][i]},{-X2[1][i],X2[0][i],0.0}};
+               for (i2 = 0; i2 < 3; i2++) {
+            	   for (j2 = 0; j2 < 3; j2++) {
+            		   kron[i2][j2] = X1[0][i]* hat[i2][j2];
+            		   kron[i2][j2+3] = X1[1][i] * hat[i2][j2];
+            		   kron[i2][j2+6] = X1[2][i] * hat[i2][j2];
+            	   }
+               }
+               if (j == 0) {
+            	   A = new double[3][9];
+            	   for (i2 = 0; i2 < 3; i2++) {
+            		   for (j2 = 0; j2 < 9; j2++) {
+            			   A[i2][j2] = kron[i2][j2];
+            		   }
+            	   }
+               }
+               else {
+                  Atemp = new double[3*j][9];
+                  for (i2 = 0; i2 < 3*j; i2++) {
+                	  for (j2 = 0; j2 < 9; j2++) {
+                		  Atemp[i2][j2] = A[i2][j2];
+                	  }
+                  }
+                  for (i2 = 0; i2 < A.length; i2++) {
+                	  A[i2] = null;
+                  }
+                  A = null;
+                  A = new double[3*j+3][9];
+                  for (i2 = 0; i2 < 3*j; i2++) {
+                	  for (j2 = 0; j2 < 9; j2++) {
+                		  A[i2][j2] = Atemp[i2][j2];
+                	  }
+                  }
+                  for (i2 = 0; i2 < Atemp.length; i2++) {
+                	  Atemp[i2] = null;
+                  }
+                  Atemp = null;
+                  for (i2 = 0; i2 < 3; i2++) {
+                	  for (j2 = 0; j2 < 9; j2++) {
+                		  A[3*j+i2][j2] = kron[i2][j2];
+                	  }
+                  }
+               }
+	         } // for (j = 0; j < 4; j++)
+	         Matrix AMat;
+	         SingularValueDecomposition svd;
+	         // Do the SVD
+	         AMat = new Matrix(A);
+	         svd = new SingularValueDecomposition(AMat);
+	         Matrix VMat = svd.getV();
+	         double V[][] = VMat.getArray();
+	         for (i2 = 0; i2 < 3; i2++) {
+	        	 H[t][i2][0] = V[i2][8];
+	        	 H[t][i2][1] = V[i2+3][8];
+	        	 H[t][i2][2] = V[i2+6][8];
+	         }
 
 	         // score homography
-	         X2_ = H{t} * X1 ;
-	         du = X2_(1,:)./X2_(3,:) - X2(1,:)./X2(3,:) ;
-	         dv = X2_(2,:)./X2_(3,:) - X2(2,:)./X2(3,:) ;
-	         ok{t} = (du.*du + dv.*dv) < 6*6 ;
-	         score(t) = sum(ok{t}) ;
-	       end
+	         Matrix HMat = new Matrix(H[t]);
+	         Matrix X1Mat = new Matrix(X1);
+	         double X2_[][] = (HMat.times(X1Mat)).getArray();
+	         double du[] = new double[numMatches];
+	         double dv[] = new double[numMatches];
+	         ok[t] = new int[numMatches];
+	         for (i2 = 0; i2 < numMatches; i2++) {
+	        	 du[i2] = X2_[0][i2]/X2_[2][i2] - X2[0][i2]/X2[2][i2];
+	        	 dv[i2] = X2_[1][i2]/X2_[2][i2] - X2[1][i2]/X2[2][i2];
+	        	 if ((du[i2]*du[i2] + dv[i2]*dv[i2]) < 6*6) {
+	        		 ok[t][i2] = 1;
+	        		 score[t]++;
+	        	 }
+	         }
+	         
+	         if (score[t] > maxScore) {
+	        	 maxScore = score[t];
+	        	 bestScoreIndex = t;
+	         }
+	         
+	       } // for (t = 0; t < 100; t++)
 
-	       [score, best] = max(score) ;
+	       Hbest = H[bestScoreIndex];
+	       okbest = ok[bestScoreIndex];
+	       /*[score, best] = max(score) ;
 	       H = H{best} ;
 	       ok = ok{best} ;*/
 	   } // if (mosaic)
@@ -1254,6 +1360,29 @@ public class SIFT extends AlgorithmBase {
 	   Preferences.debug("Run completed\n", Preferences.DEBUG_ALGORITHM);
 	   setCompleted(true);
 	}
+    
+    // A Function to generate a random permutation of arr[] 
+    private void randomize( int arr[]) 
+    { 
+    	int n = arr.length;
+        // Creating a object for Random class 
+        Random r = new Random(); 
+          
+        // Start from the last element and swap one by one. We don't 
+        // need to run for the first element that's why i > 0 
+        for (int i = n-1; i > 0; i--) { 
+              
+            // Pick a random index from 0 to i 
+            int j = r.nextInt(i+1); 
+              
+            // Swap arr[i] with the element at random index 
+            int temp = arr[i]; 
+            arr[i] = arr[j]; 
+            arr[j] = temp; 
+        } 
+        // Prints the random array 
+        //System.out.println(Arrays.toString(arr)); 
+    }
     
     /** @brief File meta information
      **/
