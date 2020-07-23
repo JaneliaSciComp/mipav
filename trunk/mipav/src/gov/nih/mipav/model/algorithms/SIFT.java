@@ -12,6 +12,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Vector;
 
 /**
  * This is a port of
@@ -187,6 +188,23 @@ public class SIFT extends AlgorithmBase {
     	  float fdata[] = null;
     	  int error[] = new int[1];
     	  int numPixels;
+    	  Vector<double[]> d1 = null;
+    	  Vector<double[]> d2 = null;
+    	  Vector<double[]> f1 = null;
+    	  Vector<double[]> f2 = null;
+    	  ModelImage im1 = null;
+    	  ModelImage im2 = null;
+    	  double dscArray[] = null;
+    	  double frmArray[] = null;
+    	  int i;
+    	  int j;
+    	  
+    	  if (mosaic) {
+    		  d1 = new Vector<double[]>();
+    		  d2 = new Vector<double[]>();
+    		  f1 = new Vector<double[]>();
+    		  f2 = new Vector<double[]>();
+    	  } // if (mosaic)
     	  
     	  // All files use ascii protocol
     	  VlFileMeta out  = new VlFileMeta(true, "%.sift",  new int[]{VL_PROT_ASCII}, "", null);
@@ -355,7 +373,6 @@ public class SIFT extends AlgorithmBase {
     		  VlSiftFilt      filt =null; 
 	    	  bigloop: while(true) {
 	    		  VlPgmImage pim = new VlPgmImage();
-	    		  int i;
 	    		  boolean first;
 	    	      // Get basename from fileName[fileNum]
 	    		  name = fileName[fileNum];
@@ -520,13 +537,21 @@ public class SIFT extends AlgorithmBase {
 	    		    	  Preferences.debug("IOException on img.exportData(0, numPixels, fdata)\n", Preferences.DEBUG_ALGORITHM);
 	    		    	  break bigloop;
 	    		      }
-	    		      im.disposeLocal();
-	    		      im = null;
-	    		      
-	    		      if (img != null) {
+	    		      if (im.isColorImage()) {
 	    		    	  img.disposeLocal();
-	    		    	  im = null;
+	    		    	  img = null;
 	    		      }
+	    		      if (!mosaic) {
+	    		          im.disposeLocal();
+	    		          im = null;
+	    		      }
+	    		      else if (fileNum == 0) {
+	    		    	  im1 = im;
+	    		      }
+	    		      else {
+	    		    	  im2 = im;
+	    		      }
+	    		      
     		      } // else (fileType != FileUtility.PGM) || mosaic
     		      
     		      
@@ -856,15 +881,15 @@ public class SIFT extends AlgorithmBase {
 
     		            if (out.active) {
     		              int l ;
-    		              err = vl_file_meta_put_double(out.protocol[0], outFile, (double)k.x);
+    		              err = vl_file_meta_put_double(out.protocol[0], outFile, k.x);
     		              if (err != 0) {
     		            	  break bigloop;
     		              }
-    		              err = vl_file_meta_put_double(out.protocol[0], outFile, (double)k.y);
+    		              err = vl_file_meta_put_double(out.protocol[0], outFile, k.y);
     		              if (err != 0) {
     		            	  break bigloop;
     		              }
-    		              err = vl_file_meta_put_double(out.protocol[0], outFile, (double)k.sigma);
+    		              err = vl_file_meta_put_double(out.protocol[0], outFile, k.sigma);
     		              if (err != 0) {
     		            	  break bigloop;
     		              }
@@ -896,15 +921,24 @@ public class SIFT extends AlgorithmBase {
     		            }
 
     		            if (frm.active) {
-    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, (double)k. x     ) ;
+    		              if (mosaic) {
+    		                  frmArray = new double[] {k.x, k.y, k.sigma, angles[q]};
+    		                  if (fileNum == 0) {
+    		                	  f1.add(frmArray);
+    		                  }
+    		                  else {
+    		                	  f2.add(frmArray);
+    		                  }
+    		              }
+    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. x     ) ;
     		              if (err != 0) {
     		            	  break bigloop;
     		              }
-    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, (double)k. y     ) ;
+    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. y     ) ;
     		              if (err != 0) {
     		            	  break bigloop;
     		              }
-    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, (double)k. sigma     ) ;
+    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. sigma     ) ;
     		              if (err != 0) {
     		            	  break bigloop;
     		              }
@@ -926,9 +960,15 @@ public class SIFT extends AlgorithmBase {
 
     		            if (dsc.active) {
     		              int l ;
+    		              if (mosaic) {
+    		            	  dscArray = new double[128];
+    		              }
     		              for (l = 0 ; l < 128 ; ++l) {
     		                double x = 512.0 * descr[l] ;
     		                x = (x < 255.0) ? x : 255.0 ;
+    		                if (mosaic) {
+    		                	dscArray[l] = x;
+    		                }
     		                if (x < 0) {
     		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x - 0.5));
     		            	}
@@ -938,6 +978,14 @@ public class SIFT extends AlgorithmBase {
     		            	if (err != 0) {
     		            		break bigloop;
     		            	}
+    		              }
+    		              if (mosaic) {
+    		            	  if (fileNum == 0) {
+    		            		  d1.add(dscArray);
+    		            	  }
+    		            	  else {
+    		            		  d2.add(dscArray);
+    		            	  }
     		              }
     		              if (dsc.protocol[0] == VL_PROT_ASCII) {
     		            	  try {
@@ -1104,7 +1152,102 @@ public class SIFT extends AlgorithmBase {
 
 	       //[f1,d1] = vl_sift(im1g) ;
 	       //[f2,d2] = vl_sift(im2g) ;
-	    
+		   
+		   //[matches, scores] = vl_ubcmatch(d1,d2) ;
+		   // VL_UBCMATCH  Match SIFT features
+		   //   MATCHES = VL_UBCMATCH(DESCR1, DESCR2) matches the two sets of SIFT
+		   //   descriptors DESCR1 and DESCR2.
+		   //
+		   //   [MATCHES,SCORES] = VL_UBCMATCH(DESCR1, DESCR2) returns the matches and
+		   //   also the squared Euclidean distance between the matches.
+		   //
+		   //   The function uses the algorithm suggested by D. Lowe [1] to reject
+		   //   matches that are too ambiguous.
+		   double thresh = 1.5;
+		   int K1 = d1.size();
+		   int K2 = d2.size();
+		   Vector<Integer>matches1 = new Vector<Integer>();
+		   Vector<Integer>matches2 = new Vector<Integer>();
+		   Vector<Double>scores = new Vector<Double>();
+		   int numMatches = 0;
+
+	       for (i = 0; i < K1; i++) {
+               double best = Double.MAX_VALUE;                                     
+               double second_best = Double.MAX_VALUE;                            
+               int bestk = -1 ;                                                  
+                     
+               /* For each point P2[k2] in the second image... */                
+               for (j =  0 ; j < K2 ; j++) {
+                   int bin = 0;
+                   double acc = 0.0;
+                   for (bin = 0; bin < 128; bin++) {
+                	   double delta = d1.get(i)[bin] - d2.get(j)[bin];
+                	   acc += delta * delta;
+                	   if (acc >= second_best) {
+                		   break;
+                	   }
+                   } // for (bin = 0; bin < 128; bin++)
+                   
+                   /* Filter the best and second best matching point. */          
+                   if(acc < best) {                                              
+                     second_best = best ;                                        
+                     best = acc ;                                              
+                     bestk = j;                                              
+                   } else if(acc < second_best) { 
+                     second_best = acc ; 
+                   }
+               } // for (j = 0; j < K2; j++)  
+               
+               /* Lowe's method: accept the match only if unique. */            
+               if(thresh * best < second_best &&                
+                  bestk != -1) {                                               
+                 matches1.add(i);                                     
+                 matches2.add(bestk);                                 
+                 scores.add(best);                                 
+                 numMatches++ ;                                             
+               }                      
+	       } // for (i = 0; i < K1; i++)
+	       
+	       double X1[][] = new double[3][matches1.size()];
+	       double X2[][] = new double[3][matches2.size()];
+	       for (i = 0; i < matches1.size(); i++) {
+	    	   X1[0][i] = f1.get(matches1.get(i))[0];
+	    	   X1[1][i] = f1.get(matches1.get(i))[1];
+	    	   X1[2][i] = 1.0;
+	       }
+	       
+	       for (i = 0; i < matches2.size(); i++) {
+	    	   X2[0][i] = f2.get(matches2.get(i))[0];
+	    	   X2[1][i] = f2.get(matches2.get(i))[1];
+	    	   X2[2][i] = 1.0;
+	       }
+	       
+	       // --------------------------------------------------------------------
+	       //                                        RANSAC with homography model
+	       // --------------------------------------------------------------------
+
+	       /*clear H score ok ;
+	       for t = 1:100
+	         // estimate homograpyh
+	         subset = vl_colsubset(1:numMatches, 4) ;
+	         A = [] ;
+	         for i = subset
+	           A = cat(1, A, kron(X1(:,i)', vl_hat(X2(:,i)))) ;
+	         end
+	         [U,S,V] = svd(A) ;
+	         H{t} = reshape(V(:,9),3,3) ;
+
+	         // score homography
+	         X2_ = H{t} * X1 ;
+	         du = X2_(1,:)./X2_(3,:) - X2(1,:)./X2(3,:) ;
+	         dv = X2_(2,:)./X2_(3,:) - X2(2,:)./X2(3,:) ;
+	         ok{t} = (du.*du + dv.*dv) < 6*6 ;
+	         score(t) = sum(ok{t}) ;
+	       end
+
+	       [score, best] = max(score) ;
+	       H = H{best} ;
+	       ok = ok{best} ;*/
 	   } // if (mosaic)
 	   
 	   System.out.println("Run completed");
@@ -1472,10 +1615,10 @@ public class SIFT extends AlgorithmBase {
       int iy ;          /**< Integer unnormalized y coordinate. */
       int is ;          /**< Integer s coordinate. */
 
-      float x ;     /**< x coordinate. */
-      float y ;     /**< y coordinate. */
-      float s ;     /**< s coordinate. */
-      float sigma ; /**< scale. */
+      double x ;     /**< x coordinate. */
+      double y ;     /**< y coordinate. */
+      double s ;     /**< s coordinate. */
+      double sigma ; /**< scale. */
       
       public VlSiftKeypoint() {
     	  
