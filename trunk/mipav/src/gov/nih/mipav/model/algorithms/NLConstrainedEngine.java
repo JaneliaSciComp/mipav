@@ -600,7 +600,7 @@ public abstract class NLConstrainedEngine {
     
     private boolean testMode = false; 
     
-    private boolean  analyticalJacobian = true;
+    protected boolean  analyticalJacobian = true;
     
     private int testCase;
     
