@@ -1246,6 +1246,7 @@ public class SIFT extends AlgorithmBase {
 	       int bestScoreIndex = -1;
 	       double Hbest[][];
 	       int okbest[];
+	       int numMatchesBest;
 	       for (t = 0; t < 100; t++) {
 	         // estimate homograpy
 	    	 // VL_COLSUBSET Select a given number of columns
@@ -1351,15 +1352,167 @@ public class SIFT extends AlgorithmBase {
 
 	       Hbest = H[bestScoreIndex];
 	       okbest = ok[bestScoreIndex];
+	       numMatchesBest = okbest.length;
 	       /*[score, best] = max(score) ;
 	       H = H{best} ;
 	       ok = ok{best} ;*/
+	       
+	       // --------------------------------------------------------------------
+	       //                                                  Optional refinement
+	       // --------------------------------------------------------------------
+
+	       /*function err = residual(H)
+	        u = H(1) * X1(1,ok) + H(4) * X1(2,ok) + H(7) ;
+	        v = H(2) * X1(1,ok) + H(5) * X1(2,ok) + H(8) ;
+	        d = H(3) * X1(1,ok) + H(6) * X1(2,ok) + 1 ;
+	        du = X2(1,ok) - u ./ d ;
+	        dv = X2(2,ok) - v ./ d ;
+	        err = sum(du.*du + dv.*dv) ;
+	       end
+
+	       if exist('fminsearch') == 2
+	         H = H / H(3,3) ;
+	         opts = optimset('Display', 'none', 'TolFun', 1e-8, 'TolX', 1e-8) ;
+	         H(1:8) = fminsearch(@residual, H(1:8)', opts) ;
+	       else
+	         warning('Refinement disabled as fminsearch was not found.') ;
+	       end*/
 	   } // if (mosaic)
 	   
 	   System.out.println("Run completed");
 	   Preferences.debug("Run completed\n", Preferences.DEBUG_ALGORITHM);
 	   setCompleted(true);
 	}
+    
+    class FitMosaicModel extends NLConstrainedEngine {
+    	private double H1;
+    	private double H2;
+    	private double H3;
+    	private double H4;
+    	private double H5;
+    	private double H6;
+    	private double H7;
+    	private double H8;
+    	
+    	private int ok[];
+    	private double X1[][];
+    	private double X2[][];
+    	private int numMatches;
+    	double u[];
+    	double v[];
+    	double d[];
+    	
+    	public FitMosaicModel(int nPts, double H[][], int ok[], double X1[][], double X2[][]) {
+    		
+    		super(nPts, 8);
+    		H1 = H[0][0];
+    		H2 = H[1][0];
+    		H3 = H[2][0];
+    		H4 = H[0][1];
+    		H5 = H[1][1];
+    		H6 = H[2][1];
+    		H7 = H[0][2];
+    		H8 = H[1][2];
+    		this.ok = ok;
+    		this.X1 = X1;
+    		this.X2 = X2;
+    		numMatches = ok.length;
+    		u = new double[numMatches];
+    		v = new double[numMatches];
+    		d = new double[numMatches];
+    		
+    		bounds = 0; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            gues[0] = H[0][0];
+            gues[1] = H[1][0];
+            gues[2] = H[2][0];
+            gues[3] = H[0][1];
+            gues[4] = H[1][1];
+            gues[5] = H[2][1];
+            gues[6] = H[0][2];
+            gues[7] = H[1][2];
+
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            // internalScaling = true;
+            // Suppress diagnostic messages
+            outputMes = false;
+            parameterConvergence = 1.0E-8;
+            maxIterations = 200;
+    		
+    	}
+    	
+    	/**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying SM2 fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitMosaicdModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[0][0] " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[1][0] " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[2][0] " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[0][1] " + String.valueOf(a[3]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[1][1] " + String.valueOf(a[4]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[2][1] " + String.valueOf(a[5]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[0][2] " + String.valueOf(a[6]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("H[1][2] " + String.valueOf(a[7]) + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        /**
+         * 
+         * 
+         * @param a The best guess parameter values.
+         * @param residuals ymodel - yData.
+         * @param covarMat The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+            int ctrl;
+            int i;
+            
+            try {
+                ctrl = ctrlMat[0];
+                if ( (ctrl == -1) || (ctrl == 1)) {
+                    H1 = a[0];
+                    H2 = a[1];
+                    H3 = a[2];
+                    H4 = a[3];
+                    H5 = a[4];
+                    H6 = a[5];
+                    H7 = a[6];
+                    H8 = a[7];
+                    for (i = 0; i < numMatches; i++) {
+                    	u[i] = H1 * X1[0][ok[i]] + H4 * X1[1][ok[i]] + H7 ;	
+                    	v[i] = H2 * X1[0][ok[i]] + H5 * X1[1][ok[i]] + H8 ;
+            	        d[i] = H3 * X1[0][ok[i]] + H6 * X1[1][ok[i]] + 1 ;
+            	        residuals[i] = X2[0][ok[i]] - u[i]/ d[i] ;
+            	        residuals[numMatches+i] = X2[1][ok[i]] - v[i]/ d[i] ;
+                    }
+                }
+                else if (ctrl == 2) {
+                    // Calculate the Jacobian analytically
+                }
+            }
+            catch (final Exception exc) {
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+
+            return;
+        }
+    	
+    }
     
     // A Function to generate a random permutation of arr[] 
     private void randomize( int arr[]) 
