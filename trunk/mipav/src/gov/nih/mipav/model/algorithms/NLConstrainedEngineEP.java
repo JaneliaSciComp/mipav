@@ -573,7 +573,7 @@ public abstract class NLConstrainedEngineEP {
     
     private boolean testMode = false; 
     
-    private boolean  analyticalJacobian = true;
+    protected boolean  analyticalJacobian = true;
     
     private int testCase;
     
