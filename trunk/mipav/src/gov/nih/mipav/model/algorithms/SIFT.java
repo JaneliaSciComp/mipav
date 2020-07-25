@@ -1360,6 +1360,90 @@ public class SIFT extends AlgorithmBase {
 	       // --------------------------------------------------------------------
 	       //                                                  Optional refinement
 	       // --------------------------------------------------------------------
+	       if (Hbest[2][2] == 0.0) {
+	    	   System.out.println("Cannot perform optional refinement because Hbest[2][2] == 0");
+	    	   Preferences.debug("Cannot perform optional refinement because Hbest[2][2] == 0\n", Preferences.DEBUG_ALGORITHM);
+	       }
+	       else {
+		       Hbest[0][0] = Hbest[0][0]/Hbest[2][2];
+		       Hbest[0][1] = Hbest[0][1]/Hbest[2][2];
+		       Hbest[0][2] = Hbest[0][2]/Hbest[2][2];
+		       Hbest[1][0] = Hbest[1][0]/Hbest[2][2];
+		       Hbest[1][1] = Hbest[1][1]/Hbest[2][2];
+		       Hbest[1][2] = Hbest[1][2]/Hbest[2][2];
+		       Hbest[2][0] = Hbest[2][0]/Hbest[2][2];
+		       Hbest[2][1] = Hbest[2][1]/Hbest[2][2];
+		       Hbest[2][2] = 1.0;
+		       System.out.println("Before Optimization:");
+		       Preferences.debug("Before Optimization:\n", Preferences.DEBUG_ALGORITHM);
+		       for (i = 0; i < 3; i++) {
+		    	   for (j = 0; j < 3; j++) {
+		    	       System.out.println("Hbest["+i+"]["+j+"] = " + Hbest[i][j]);  
+		    	       Preferences.debug("Hbest["+i+"]["+j+"] = " + Hbest[i][j] + "\n", Preferences.DEBUG_ALGORITHM);
+		    	   }
+		       }
+		       
+		       FitMosaicModel mModel = new FitMosaicModel(2*maxScore, Hbest, okbest, X1, X2);
+		       mModel.driver();
+		       mModel.dumpTestResults();
+		       int exitStatus = mModel.getExitStatus();
+		       if (exitStatus < 0) {
+			       if (exitStatus == -1) {
+		                System.err.println("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or");
+		                System.err.println("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry");
+		            } 
+		            else if (exitStatus == -2) {
+		            	System.err.println("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations");
+		            }
+		            else if (exitStatus == -3) {
+		            	System.err.println("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite");
+		            }
+		            else if (exitStatus == -4) {
+		            	System.err.println("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that");
+		            }
+		            else if (exitStatus == -5) {
+		            	System.err.println("Abnormal termination because an undamped step with Newtons method is a failure");
+		            }
+		            else if (exitStatus == -6) {
+		            	System.err.println("Abnormal termination because the latest search direction computed using subspace minimization");
+		            	System.err.println("was not a descent direction (probably caused by a wrongly computed Jacobian)");
+		            }
+		            else if (exitStatus == -7) {
+		            	System.err.println("Abnormal termination because there is only one feasible point,");
+		            	System.err.println("namely X(I) = BL(I) = BU(I), I = 1,2,...,N");
+		            }
+		            else if (exitStatus == -8) {
+		            	System.err.println("Abnormal termination due to driver error");
+		            }
+		            else {
+		            	System.err.println("Exit status = " + exitStatus);
+		            }
+		       }
+		       else { // no errors in optimization
+			       double params[] = mModel.getParameters();
+			       Hbest[0][0] = params[0];
+			       Hbest[1][0] = params[1];
+			       Hbest[2][0] = params[2];
+			       Hbest[0][1] = params[3];
+			       Hbest[1][1] = params[4];
+			       Hbest[2][1] = params[5];
+			       Hbest[0][2] = params[6];
+			       Hbest[1][2] = params[7];
+			       
+			       System.out.println("After Optimization:");
+			       Preferences.debug("After Optimization:\n", Preferences.DEBUG_ALGORITHM);
+			       for (i = 0; i < 3; i++) {
+			    	   for (j = 0; j < 3; j++) {
+			    	       System.out.println("Hbest["+i+"]["+j+"] = " + Hbest[i][j]);  
+			    	       Preferences.debug("Hbest["+i+"]["+j+"] = " + Hbest[i][j] + "\n", Preferences.DEBUG_ALGORITHM);
+			    	   }
+			       }
+			       double chiSquared = mModel.getChiSquared();
+			       System.out.println("Chi squared for optimization = " + chiSquared);
+			       int iterations = mModel.getIterations();
+			       System.out.println("Optimization ran for " + iterations + " iterations");
+		       }
+	       }
 
 	       /*function err = residual(H)
 	        u = H(1) * X1(1,ok) + H(4) * X1(2,ok) + H(7) ;
@@ -1385,41 +1469,18 @@ public class SIFT extends AlgorithmBase {
 	}
     
     class FitMosaicModel extends NLConstrainedEngine {
-    	private double H1;
-    	private double H2;
-    	private double H3;
-    	private double H4;
-    	private double H5;
-    	private double H6;
-    	private double H7;
-    	private double H8;
-    	
     	private int ok[];
     	private double X1[][];
     	private double X2[][];
     	private int numMatches;
-    	double u[];
-    	double v[];
-    	double d[];
     	
     	public FitMosaicModel(int nPts, double H[][], int ok[], double X1[][], double X2[][]) {
     		
     		super(nPts, 8);
-    		H1 = H[0][0];
-    		H2 = H[1][0];
-    		H3 = H[2][0];
-    		H4 = H[0][1];
-    		H5 = H[1][1];
-    		H6 = H[2][1];
-    		H7 = H[0][2];
-    		H8 = H[1][2];
     		this.ok = ok;
     		this.X1 = X1;
     		this.X2 = X2;
     		numMatches = ok.length;
-    		u = new double[numMatches];
-    		v = new double[numMatches];
-    		d = new double[numMatches];
     		
     		bounds = 0; // bounds = 0 means unconstrained
 
@@ -1441,9 +1502,10 @@ public class SIFT extends AlgorithmBase {
             // Jacobian scaled to have unit length include the following line.
             // internalScaling = true;
             // Suppress diagnostic messages
+            analyticalJacobian = true;
             outputMes = false;
             parameterConvergence = 1.0E-8;
-            maxIterations = 200;
+            maxIterations = 2000;
     		
     	}
     	
@@ -1481,6 +1543,16 @@ public class SIFT extends AlgorithmBase {
         public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
             int ctrl;
             int i;
+            int j;
+            double u,v,d,du,dv;
+            double H1;
+        	double H2;
+        	double H3;
+        	double H4;
+        	double H5;
+        	double H6;
+        	double H7;
+        	double H8;
             
             try {
                 ctrl = ctrlMat[0];
@@ -1493,16 +1565,54 @@ public class SIFT extends AlgorithmBase {
                     H6 = a[5];
                     H7 = a[6];
                     H8 = a[7];
-                    for (i = 0; i < numMatches; i++) {
-                    	u[i] = H1 * X1[0][ok[i]] + H4 * X1[1][ok[i]] + H7 ;	
-                    	v[i] = H2 * X1[0][ok[i]] + H5 * X1[1][ok[i]] + H8 ;
-            	        d[i] = H3 * X1[0][ok[i]] + H6 * X1[1][ok[i]] + 1 ;
-            	        residuals[i] = X2[0][ok[i]] - u[i]/ d[i] ;
-            	        residuals[numMatches+i] = X2[1][ok[i]] - v[i]/ d[i] ;
+                    for (i = 0, j = 0; i < numMatches; i++) {
+                    	if (ok[i] == 1) {
+                    	    u = H1 * X1[0][i] + H4 * X1[1][i] + H7 ;	
+                    	    v = H2 * X1[0][i] + H5 * X1[1][i] + H8 ;
+            	            d = H3 * X1[0][i] + H6 * X1[1][i] + 1 ;
+            	            residuals[j++] = X2[0][i] - u/ d ;
+            	            residuals[j++] = X2[1][i] - v/ d ;
+                    	}
                     }
                 }
                 else if (ctrl == 2) {
                     // Calculate the Jacobian analytically
+                	if (analyticalJacobian) {
+                		H1 = a[0];
+                        H2 = a[1];
+                        H3 = a[2];
+                        H4 = a[3];
+                        H5 = a[4];
+                        H6 = a[5];
+                        H7 = a[6];
+                        H8 = a[7];
+                        for (i = 0, j = 0; i < numMatches; i++) {
+                        	if (ok[i] == 1) {
+                        	    u = H1 * X1[0][i] + H4 * X1[1][i] + H7 ;	
+                        	    v = H2 * X1[0][i] + H5 * X1[1][i] + H8 ;
+                	            d = H3 * X1[0][i] + H6 * X1[1][i] + 1 ;
+                	            covarMat[j][0] = -X1[0][i]/d;
+                	            covarMat[j][1] = 0.0;
+                	            covarMat[j][2] = (u * X1[0][i])/(d * d);
+                	            covarMat[j][3] = -X1[1][i]/d;
+                	            covarMat[j][4] = 0.0;
+                	            covarMat[j][5] = (u * X1[1][i])/(d*d);
+                	            covarMat[j][6] = -1.0/d;
+                	            covarMat[j++][7] = 0.0;
+                	            covarMat[j][0] = 0.0;
+                	            covarMat[j][1] = -X1[0][i]/d;
+                	            covarMat[j][2] = (v * X1[0][i])/(d*d);
+                	            covarMat[j][3] = 0.0;
+                	            covarMat[j][4] = -X1[1][i]/d;
+                	            covarMat[j][5] = (v * X1[1][i])/(d * d);
+                	            covarMat[j][6] = 0.0;
+                	            covarMat[j++][7] = -1.0/d;
+                        	}
+                        }	
+                	}
+                	else {
+                		ctrlMat[0] = 0;
+                	}
                 }
             }
             catch (final Exception exc) {
