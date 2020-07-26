@@ -8,7 +8,9 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Color;
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,6 +20,7 @@ import java.util.Vector;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * This is a port of
@@ -1444,23 +1447,271 @@ public class SIFT extends AlgorithmBase {
 			       System.out.println("Optimization ran for " + iterations + " iterations");
 		       }
 	       }
+	       
+	       // --------------------------------------------------------------------
+	       //                                                         Show matches
+	       // --------------------------------------------------------------------
 
-	       /*function err = residual(H)
-	        u = H(1) * X1(1,ok) + H(4) * X1(2,ok) + H(7) ;
-	        v = H(2) * X1(1,ok) + H(5) * X1(2,ok) + H(8) ;
-	        d = H(3) * X1(1,ok) + H(6) * X1(2,ok) + 1 ;
-	        du = X2(1,ok) - u ./ d ;
-	        dv = X2(2,ok) - v ./ d ;
-	        err = sum(du.*du + dv.*dv) ;
-	       end
-
-	       if exist('fminsearch') == 2
-	         H = H / H(3,3) ;
-	         opts = optimset('Display', 'none', 'TolFun', 1e-8, 'TolX', 1e-8) ;
-	         H(1:8) = fminsearch(@residual, H(1:8)', opts) ;
-	       else
-	         warning('Refinement disabled as fminsearch was not found.') ;
-	       end*/
+           int dh1 = Math.max(im2.getExtents()[1] - im1.getExtents()[1], 0);
+           int dh2 = Math.max(im1.getExtents()[1] - im2.getExtents()[1], 0);
+           int showExtents[] = new int[] {im1.getExtents()[0] + im2.getExtents()[0],
+        		                          Math.max(im1.getExtents()[1],im2.getExtents()[1])};
+           ModelImage tentativeImage = null;
+           ModelImage inlinerImage = null;
+           int length1 = im1.getExtents()[0]*im1.getExtents()[1];
+           int length2 = im2.getExtents()[0]*im2.getExtents()[1];
+           int showLength = showExtents[0] * showExtents[1];
+           DecimalFormat kDecimalFormat = new DecimalFormat("#%");
+           double percentage = (double)maxScore / (double)numMatchesBest;
+           if (im1.isColorImage() || im2.isColorImage()) {
+        	   float redBuffer1[] = new float[length1];
+        	   float greenBuffer1[] = new float[length1];
+        	   float blueBuffer1[] = new float[length1];
+        	   float redBuffer2[] = new float[length2];
+        	   float greenBuffer2[] = new float[length2];
+        	   float blueBuffer2[] = new float[length2];
+        	   float redBufferShow[] = new float[showLength];
+        	   float greenBufferShow[] = new float[showLength];
+        	   float blueBufferShow[] = new float[showLength];
+               tentativeImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, showExtents, String.valueOf(numMatchesBest) + " tentative matches");
+               inlinerImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, showExtents, String.valueOf(maxScore) + " (" + kDecimalFormat.format(percentage) +
+               		 ") inliner matches out of " + String.valueOf(numMatchesBest));
+               if (im1.isColorImage()) {
+            	   try {
+            		   im1.exportRGBData(1,0,length1, redBuffer1);   
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im1.exportRGBData(1,0,length1, redBuffer1)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+            	   try {
+            		   im1.exportRGBData(2,0,length1, greenBuffer1);   
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im1.exportRGBData(2,0,length1, greenBuffer1)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+            	   try {
+            		   im1.exportRGBData(3,0,length1, blueBuffer1);   
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im1.exportRGBData(3,0,length1, blueBuffer1)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+               }
+               else {
+            	   try {
+            	      im1.exportData(0, length1, redBuffer1);
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im1.exporData(0,length1, redBuffer1)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+            	   for (i = 0; i < length1; i++) {
+            		   greenBuffer1[i] = redBuffer1[i];
+            		   blueBuffer1[i] = redBuffer1[i];
+            	   }
+               }
+               if (im2.isColorImage()) {
+            	   try {
+            		   im2.exportRGBData(1,0,length2, redBuffer2);   
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im2.exportRGBData(1,0,length2, redBuffer2)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+            	   try {
+            		   im2.exportRGBData(2,0,length2, greenBuffer2);   
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im2.exportRGBData(2,0,length2, greenBuffer2)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+            	   try {
+            		   im2.exportRGBData(3,0,length2, blueBuffer2);   
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im2.exportRGBData(3,0,length2, blueBuffer2)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+               }
+               else {
+            	   try {
+            	      im2.exportData(0, length2, redBuffer2);
+            	   }
+            	   catch (IOException e) {
+            		   System.err.println("IOException on im2.exporData(0,length2, redBuffer2)");
+            		   setCompleted(false);
+            		   return;
+            	   }
+            	   for (i = 0; i < length2; i++) {
+            		   greenBuffer2[i] = redBuffer2[i];
+            		   blueBuffer2[i] = redBuffer2[i];
+            	   }
+               }
+               for (j = 0; j < im1.getExtents()[1]; j++) {
+            	   for (i = 0; i < im1.getExtents()[0]; i++) {
+            		   redBufferShow[i + j*showExtents[0]] = redBuffer1[i + j*im1.getExtents()[0]];
+            		   greenBufferShow[i + j*showExtents[0]] = greenBuffer1[i + j*im1.getExtents()[0]];
+            		   blueBufferShow[i + j*showExtents[0]] = blueBuffer1[i + j*im1.getExtents()[0]];
+            	   }
+               }
+               
+               for (j = 0; j < im2.getExtents()[1]; j++) {
+            	   for (i = 0; i < im2.getExtents()[0]; i++) {
+            		   redBufferShow[i + im1.getExtents()[0] + j*showExtents[0]] = redBuffer2[i + j*im2.getExtents()[0]];
+            		   greenBufferShow[i + im1.getExtents()[0] + j*showExtents[0]] = greenBuffer2[i + j*im2.getExtents()[0]];
+            		   blueBufferShow[i + im1.getExtents()[0] + j*showExtents[0]] = blueBuffer2[i + j*im2.getExtents()[0]];
+            	   }
+               }
+               
+               try {
+            	   tentativeImage.importRGBData(1,0,redBufferShow, false);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on tentativeImage.importRGBData(1,0,redBufferShow,false");
+            	   setCompleted(false);
+            	   return;
+               }
+               try {
+            	   tentativeImage.importRGBData(2,0,greenBufferShow, false);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on tentativeImage.importRGBData(2,0,greenBufferShow,false");
+            	   setCompleted(false);
+            	   return;
+               }
+               try {
+            	   tentativeImage.importRGBData(3,0,blueBufferShow, false);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on tentativeImage.importRGBData(3,0,blueBufferShow,false");
+            	   setCompleted(false);
+            	   return;
+               }
+               tentativeImage.calcMinMax();
+               
+               try {
+            	   inlinerImage.importRGBData(1,0,redBufferShow, false);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on inlinerImage.importRGBData(1,0,redBufferShow,false");
+            	   setCompleted(false);
+            	   return;
+               }
+               try {
+            	   inlinerImage.importRGBData(2,0,greenBufferShow, false);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on inlinerImage.importRGBData(2,0,greenBufferShow,false");
+            	   setCompleted(false);
+            	   return;
+               }
+               try {
+            	   inlinerImage.importRGBData(3,0,blueBufferShow, false);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on inlinerImage.importRGBData(3,0,blueBufferShow,false");
+            	   setCompleted(false);
+            	   return;
+               }
+               inlinerImage.calcMinMax();
+           } // if (im1.isColorImage() || im2.isColorImage())
+           else { // 2 grayscale images
+        	   double grayBuffer1[] = new double[length1];
+        	   double grayBuffer2[] = new double[length2];
+        	   double grayBufferShow[] = new double[showLength];
+               tentativeImage = new ModelImage(ModelStorageBase.DOUBLE, showExtents, String.valueOf(numMatchesBest) + " tentative matches");
+               inlinerImage = new ModelImage(ModelStorageBase.DOUBLE, showExtents, String.valueOf(maxScore) + " (" + kDecimalFormat.format(percentage) +
+               		 ") inliner matches out of " + String.valueOf(numMatchesBest));
+               
+        	   try {
+        	      im1.exportData(0, length1, grayBuffer1);
+        	   }
+        	   catch (IOException e) {
+        		   System.err.println("IOException on im1.exporData(0,length1, grayBuffer1)");
+        		   setCompleted(false);
+        		   return;
+        	   }
+            	   
+               
+        	   try {
+        	      im2.exportData(0, length2, grayBuffer2);
+        	   }
+        	   catch (IOException e) {
+        		   System.err.println("IOException on im2.exporData(0,length2, grayBuffer2)");
+        		   setCompleted(false);
+        		   return;
+        	   }
+            	   
+               for (j = 0; j < im1.getExtents()[1]; j++) {
+            	   for (i = 0; i < im1.getExtents()[0]; i++) {
+            		   grayBufferShow[i + j*showExtents[0]] = grayBuffer1[i + j*im1.getExtents()[0]];
+            	   }
+               }
+               
+               for (j = 0; j < im2.getExtents()[1]; j++) {
+            	   for (i = 0; i < im2.getExtents()[0]; i++) {
+            		   grayBufferShow[i + im1.getExtents()[0] + j*showExtents[0]] = grayBuffer2[i + j*im2.getExtents()[0]];
+            	   }
+               }
+               
+               try {
+            	   tentativeImage.importData(0,grayBufferShow, true);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on tentativeImage.importData(0,grayBufferShow,true");
+            	   setCompleted(false);
+            	   return;
+               }
+               
+               try {
+            	   inlinerImage.importData(0,grayBufferShow, true);
+               }
+               catch (IOException e) {
+            	   System.err.println("IOException on inlinerImage.importData(0,grayBufferShow,true");
+            	   setCompleted(false);
+            	   return;
+               }
+           } // else 2 grayscale images
+           
+        VOI lineVOI = new VOI((short)tentativeImage.getVOIs().size(), "line", VOI.LINE, 0);
+   		lineVOI.setColor(Color.blue);
+   		int o = im1.getExtents()[0];
+   		for (i = 0; i < numMatchesBest; i++) {
+   			VOILine tentativeLine = new VOILine();
+   			tentativeLine.add(new Vector3f((float)f1.get(matches1.get(i))[0],(float)f1.get(matches1.get(i))[1],0.0f));
+   			tentativeLine.add(new Vector3f((float)(f2.get(matches2.get(i))[0] + o),(float)f2.get(matches2.get(i))[1],0.0f));
+   			lineVOI.importCurve(tentativeLine);
+   		}
+   		VOIVector voiVectorLines = new VOIVector();
+   		voiVectorLines.add(lineVOI);
+   		
+   		tentativeImage.addVOIs(voiVectorLines);
+   		new ViewJFrameImage(tentativeImage);
+   		
+   		VOI lineVOI2 = new VOI((short)inlinerImage.getVOIs().size(), "line", VOI.LINE, 0);
+   		lineVOI2.setColor(Color.blue);
+   		for (i = 0; i < numMatchesBest; i++) {
+   			if (okbest[i]  == 1) {
+	   			VOILine inlinerLine = new VOILine();
+	   			inlinerLine.add(new Vector3f((float)f1.get(matches1.get(i))[0],(float)f1.get(matches1.get(i))[1],0.0f));
+	   			inlinerLine.add(new Vector3f((float)(f2.get(matches2.get(i))[0] + o),(float)f2.get(matches2.get(i))[1],0.0f));
+	   			lineVOI2.importCurve(inlinerLine);
+   			}
+   		}
+   		VOIVector voiVectorLines2 = new VOIVector();
+   		voiVectorLines2.add(lineVOI2);
+   		
+   		inlinerImage.addVOIs(voiVectorLines2);
+   		new ViewJFrameImage(inlinerImage);
 	   } // if (mosaic)
 	   
 	   System.out.println("Run completed");
