@@ -1712,6 +1712,110 @@ public class SIFT extends AlgorithmBase {
    		
    		inlinerImage.addVOIs(voiVectorLines2);
    		new ViewJFrameImage(inlinerImage);
+   		
+   		// --------------------------------------------------------------------
+   		//                                                               Mosaic
+   		// --------------------------------------------------------------------
+   		
+   		double x2 = (double)im2.getExtents()[0];
+   		double y2 = (double)im2.getExtents()[1];
+   		double box2[][] = new double[][] {{1.0,x2,x2, 1.0},
+   		                                  	{1.0, 1.0, y2, y2},
+   		                                  	{ 1.0, 1.0, 1.0, 1.0}};
+   		                                  	
+   		double detH = Hbest[0][0]*(Hbest[1][1]*Hbest[2][2] - Hbest[2][1]*Hbest[1][2])
+                    - Hbest[0][1]*(Hbest[1][0]*Hbest[2][2] - Hbest[2][0]*Hbest[1][2])
+                    + Hbest[0][2]*(Hbest[1][0]*Hbest[2][1] - Hbest[2][0]*Hbest[1][1]);
+   		if (detH == 0.0) {
+   			System.err.println("Cannot find inverse of Hbest because determinant of Hbest equals 0");
+   			setCompleted(false);
+   			return;
+   		}
+   		double HT[][] = new double[][] {{Hbest[0][0],Hbest[1][0],Hbest[2][0]},
+   			                                    {Hbest[0][1],Hbest[1][1],Hbest[2][1]},
+   			                                    {Hbest[0][2],Hbest[1][2],Hbest[2][2]}};
+   			                                    
+   		double adj[][] = new double[3][3];
+   		adj[0][0] = (HT[1][1]*HT[2][2] - HT[2][1]*HT[2][1]);
+   		adj[0][1] = -(HT[1][0]*HT[2][2] - HT[2][0]*HT[1][2]);
+   		adj[0][2] = (HT[1][0]*HT[2][1] - HT[2][0]*HT[1][1]);
+   		adj[1][0] = -(HT[0][1]*HT[2][2] - HT[2][1]*HT[0][2]);
+   		adj[1][1] = (HT[0][0]*HT[2][2] - HT[2][0]*HT[0][2]);
+   		adj[1][2] = -(HT[0][0]*HT[2][1] - HT[2][0]*HT[0][1]);
+   		adj[2][0] = (HT[0][1]*HT[1][2] - HT[1][1]*HT[0][2]);
+   		adj[2][1] = -(HT[0][0]*HT[1][2] - HT[1][0]*HT[0][2]);
+   		adj[2][2] = (HT[0][0]*HT[1][1] - HT[1][0]*HT[0][1]);
+   		double invH[][] = new double[3][3];
+   		for (i = 0; i < 3; i++) {
+   			for (j = 0; j < 3; j++) {
+   				invH[i][j] = adj[i][j]/detH;
+   			}
+   		}
+   		Matrix invHMat = new Matrix(invH);
+   		Matrix box2Mat = new Matrix(box2);
+   		double box2_[][] = (invHMat.times(box2Mat)).getArray();
+        for (i = 0; i < 4; i++) {
+        	box2_[0][i] = box2_[0][i]/box2_[2][i];
+        	box2_[1][i] = box2_[1][i]/box2_[2][i];
+        }
+   		double minur = 1.0;
+   		double maxur = (double)im1.getExtents()[0];
+   		double minvr = 1.0;
+   		double maxvr = (double)im1.getExtents()[1];
+   		for (i = 0; i < 4; i++) {
+   			if (box2_[0][i] < minur) {
+   				minur = box2_[0][i];
+   			}
+   			if (box2_[0][i] > maxur) {
+   				maxur = box2_[0][i];
+   			}
+   			if (box2_[1][i] < minvr) {
+   				minvr = box2_[1][i];
+   			}
+   			if (box2_[1][i] > maxvr) {
+   				maxvr = box2_[1][i];
+   			}
+   		}
+   		Vector<Double>uvec = new Vector<Double>();
+   		double uval;
+   		for (uval = minur; uval <= maxur; uval += 1.0) {
+   			uvec.add(uval);
+   		}
+   		int numu = uvec.size();
+   		Vector<Double>vvec = new Vector<Double>();
+   		double vval;
+   		for (vval = minvr; vval <= maxvr; vval += 1.0) {
+   			vvec.add(vval);
+   		}
+   		int numv = vvec.size();
+   		
+   		double u[][] = new double[numv][numu];
+   		double v[][] = new double[numv][numu];
+   		for (j = 0; j < numv; j++) {
+   			for (i = 0; i < numu; i++) {
+   				u[j][i] = uvec.get(i);
+   				v[j][i] = vvec.get(j);
+   			}
+   		}
+
+   		/*im1_ = vl_imwbackward(im2double(im1),u,v) ;
+
+   		z_ = H(3,1) * u + H(3,2) * v + H(3,3) ;
+   		u_ = (H(1,1) * u + H(1,2) * v + H(1,3)) ./ z_ ;
+   		v_ = (H(2,1) * u + H(2,2) * v + H(2,3)) ./ z_ ;
+   		im2_ = vl_imwbackward(im2double(im2),u_,v_) ;
+
+   		mass = ~isnan(im1_) + ~isnan(im2_) ;
+   		im1_(isnan(im1_)) = 0 ;
+   		im2_(isnan(im2_)) = 0 ;
+   		mosaic = (im1_ + im2_) ./ mass ;
+
+   		figure(2) ; clf ;
+   		imagesc(mosaic) ; axis image off ;
+   		title('Mosaic') ;
+
+   		if nargout == 0, clear mosaic ; end*/
+
 	   } // if (mosaic)
 	   
 	   System.out.println("Run completed");
