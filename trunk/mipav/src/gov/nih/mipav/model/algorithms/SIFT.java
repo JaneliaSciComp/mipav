@@ -209,6 +209,7 @@ public class SIFT extends AlgorithmBase {
     	  int t;
     	  int i2;
     	  int j2;
+    	  int index;
     	  
     	  if (mosaic) {
     		  d1 = new Vector<double[]>();
@@ -1463,13 +1464,21 @@ public class SIFT extends AlgorithmBase {
            int showLength = showExtents[0] * showExtents[1];
            DecimalFormat kDecimalFormat = new DecimalFormat("#%");
            double percentage = (double)maxScore / (double)numMatchesBest;
+           float redBuffer1[] = null;
+    	   float greenBuffer1[] = null;
+    	   float blueBuffer1[] = null;
+    	   float redBuffer2[] = null;
+    	   float greenBuffer2[] = null;
+    	   float blueBuffer2[] = null;
+    	   double grayBuffer1[] = null;
+    	   double grayBuffer2[] = null;
            if (im1.isColorImage() || im2.isColorImage()) {
-        	   float redBuffer1[] = new float[length1];
-        	   float greenBuffer1[] = new float[length1];
-        	   float blueBuffer1[] = new float[length1];
-        	   float redBuffer2[] = new float[length2];
-        	   float greenBuffer2[] = new float[length2];
-        	   float blueBuffer2[] = new float[length2];
+        	   redBuffer1 = new float[length1];
+        	   greenBuffer1 = new float[length1];
+        	   blueBuffer1 = new float[length1];
+        	   redBuffer2 = new float[length2];
+        	   greenBuffer2 = new float[length2];
+        	   blueBuffer2 = new float[length2];
         	   float redBufferShow[] = new float[showLength];
         	   float greenBufferShow[] = new float[showLength];
         	   float blueBufferShow[] = new float[showLength];
@@ -1625,8 +1634,8 @@ public class SIFT extends AlgorithmBase {
                inlinerImage.calcMinMax();
            } // if (im1.isColorImage() || im2.isColorImage())
            else { // 2 grayscale images
-        	   double grayBuffer1[] = new double[length1];
-        	   double grayBuffer2[] = new double[length2];
+        	   grayBuffer1 = new double[length1];
+        	   grayBuffer2 = new double[length2];
         	   double grayBufferShow[] = new double[showLength];
                tentativeImage = new ModelImage(ModelStorageBase.DOUBLE, showExtents, String.valueOf(numMatchesBest) + " tentative matches");
                inlinerImage = new ModelImage(ModelStorageBase.DOUBLE, showExtents, String.valueOf(maxScore) + " (" + kDecimalFormat.format(percentage) +
@@ -1736,7 +1745,7 @@ public class SIFT extends AlgorithmBase {
    			                                    {Hbest[0][2],Hbest[1][2],Hbest[2][2]}};
    			                                    
    		double adj[][] = new double[3][3];
-   		adj[0][0] = (HT[1][1]*HT[2][2] - HT[2][1]*HT[2][1]);
+   		adj[0][0] = (HT[1][1]*HT[2][2] - HT[2][1]*HT[1][2]);
    		adj[0][1] = -(HT[1][0]*HT[2][2] - HT[2][0]*HT[1][2]);
    		adj[0][2] = (HT[1][0]*HT[2][1] - HT[2][0]*HT[1][1]);
    		adj[1][0] = -(HT[0][1]*HT[2][2] - HT[2][1]*HT[0][2]);
@@ -1752,6 +1761,16 @@ public class SIFT extends AlgorithmBase {
    			}
    		}
    		Matrix invHMat = new Matrix(invH);
+   		boolean testInverse = false;
+   		if (testInverse) {
+   			Matrix HMat = new Matrix(Hbest);
+   			double check[][] = (HMat.times(invHMat)).getArray();
+   			for (i = 0; i < 3; i++) {
+   	   			for (j = 0; j < 3; j++) {
+   	   				System.out.println("check["+i+"]["+j+"] = " + check[i][j]);
+   	   			}
+   	   		}
+   		}
    		Matrix box2Mat = new Matrix(box2);
    		double box2_[][] = (invHMat.times(box2Mat)).getArray();
         for (i = 0; i < 4; i++) {
@@ -1793,35 +1812,329 @@ public class SIFT extends AlgorithmBase {
    		double v[][] = new double[numv][numu];
    		for (j = 0; j < numv; j++) {
    			for (i = 0; i < numu; i++) {
-   				u[j][i] = uvec.get(i);
-   				v[j][i] = vvec.get(j);
+   				u[j][i] = uvec.get(i)-1.0;
+   				v[j][i] = vvec.get(j)-1.0;
    			}
    		}
+   		
+   		int N = im1.getExtents()[0];
+   		int M = im1.getExtents()[1];
+   		int xr[] = new int[N];
+   		for (i = 0; i < N; i++) {
+   			xr[i] = i;
+   		}
+   		int yr[] = new int[M];
+   		for (i = 0; i < M; i++) {
+   			yr[i] = i;
+   		}
+   		float wred1[] = null;
+   		float wgreen1[] = null;
+   		float wblue1[] = null;
+   		float wred2[] = null;
+   		float wgreen2[] = null;
+   		float wblue2[] = null;
+   		double wgray1[] = null;
+   		double wgray2[] = null;
+   		if (im1.isColorImage() || im2.isColorImage()) {
+   		    wred1 = vl_imwbackwardmx(xr, yr, redBuffer1, u, v, M, N);
+   		    wgreen1 = vl_imwbackwardmx(xr, yr, greenBuffer1, u, v, M, N);
+   		    wblue1 = vl_imwbackwardmx(xr, yr, blueBuffer1, u, v, M, N);
+   		}
+   		else {
+   			wgray1 = vl_imwbackwardmx(xr, yr, grayBuffer1, u, v, M, N);
+   		}
+   		
+   		double z_[][] = new double[numv][numu];
+   		double u_[][] = new double[numv][numu];
+   		double v_[][] = new double[numv][numu];
+   		for (j = 0; j < numv; j++) {
+   			for (i = 0; i < numu; i++) {
+   				z_[j][i] = Hbest[2][0] * u[j][i] + Hbest[2][1] * v[j][i] + Hbest[2][2];
+   				u_[j][i] = Hbest[0][0] * u[j][i] + Hbest[0][1] * v[j][i] + Hbest[0][2];
+   				u_[j][i] = u_[j][i]/z_[j][i];
+   				v_[j][i] = Hbest[1][0] * u[j][i] + Hbest[1][1] * v[j][i] + Hbest[1][2];
+   				v_[j][i] = v_[j][i]/z_[j][i];
+   			}
+   		}
+   		
+   		N = im2.getExtents()[0];
+   		M = im2.getExtents()[1];
+   		xr = new int[N];
+   		for (i = 0; i < N; i++) {
+   			xr[i] = i;
+   		}
+   		yr = new int[M];
+   		for (i = 0; i < M; i++) {
+   			yr[i] = i;
+   		}
+   		if (im1.isColorImage() || im2.isColorImage()) {
+   		    wred2 = vl_imwbackwardmx(xr, yr, redBuffer2, u_, v_, M, N);
+   		    wgreen2 = vl_imwbackwardmx(xr, yr, greenBuffer2, u_, v_, M, N);
+   		    wblue2 = vl_imwbackwardmx(xr, yr, blueBuffer2, u_, v_, M, N);
+   		}
+   		else {
+   			wgray2 = vl_imwbackwardmx(xr, yr, grayBuffer2, u_, v_, M, N);
+   		}
+   		
+   		ModelImage mosaicImage = null;
+   		int mosaicExtents[] = new int[]{numu,numv};
+   		if (im1.isColorImage() || im2.isColorImage()) {
+   			float redMosaic[] = new float[numv * numu];
+   			float greenMosaic[] = new float[numv * numu];
+   			float blueMosaic[] = new float[numv * numu];
+   			for (j = 0; j < numv; j++) {
+   				for (i = 0; i < numu; i++) {
+   				    index = i + j * numu;
+   				    if (Float.isNaN(wred1[index])  && Float.isNaN(wred2[index])) {
+   				    	redMosaic[index] = Float.NaN;
+   				    }
+   				    else if (Float.isNaN(wred1[index])) {
+   				    	redMosaic[index] = wred2[index];
+   				    }
+   				    else if (Float.isNaN(wred2[index])) {
+   				    	redMosaic[index] = wred1[index];
+   				    }
+   				    else {
+   				    	redMosaic[index] = (wred1[index] + wred2[index])/2.0f;
+   				    }
+   				    if (Float.isNaN(wgreen1[index])  && Float.isNaN(wgreen2[index])) {
+				    	greenMosaic[index] = Float.NaN;
+				    }
+				    else if (Float.isNaN(wgreen1[index])) {
+				    	greenMosaic[index] = wgreen2[index];
+				    }
+				    else if (Float.isNaN(wgreen2[index])) {
+				    	greenMosaic[index] = wgreen1[index];
+				    }
+				    else {
+				    	greenMosaic[index] = (wgreen1[index] + wgreen2[index])/2.0f;
+				    }
+   				    if (Float.isNaN(wblue1[index])  && Float.isNaN(wblue2[index])) {
+				    	blueMosaic[index] = Float.NaN;
+				    }
+				    else if (Float.isNaN(wblue1[index])) {
+				    	blueMosaic[index] = wblue2[index];
+				    }
+				    else if (Float.isNaN(wblue2[index])) {
+				    	blueMosaic[index] = wblue1[index];
+				    }
+				    else {
+				    	blueMosaic[index] = (wblue1[index] + wblue2[index])/2.0f;
+				    }
+   				}
+   			}
+   			mosaicImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, mosaicExtents, "Mosaic");
+   			try {
+         	   mosaicImage.importRGBData(1,0,redMosaic, false);
+            }
+            catch (IOException e) {
+         	   System.err.println("IOException on mosaicImage.importRGBData(1,0,redMosaic,false");
+         	   setCompleted(false);
+         	   return;
+            }
+   			try {
+          	   mosaicImage.importRGBData(2,0,greenMosaic, false);
+            }
+            catch (IOException e) {
+          	   System.err.println("IOException on mosaicImage.importRGBData(2,0,greenMosaic,false");
+          	   setCompleted(false);
+          	   return;
+            }
+   		    try {
+          	   mosaicImage.importRGBData(3,0,blueMosaic, false);
+            }
+            catch (IOException e) {
+          	   System.err.println("IOException on mosaicImage.importRGBData(3,0,blueMosaic,false");
+          	   setCompleted(false);
+          	   return;
+            }
+   		    mosaicImage.calcMinMax();
+   		} // if (im1.isColorImage() || im2.isColorImage())
+   		else { // grayscale images
+   			double grayMosaic[] = new double[numv * numu];
+   			for (j = 0; j < numv; j++) {
+   				for (i = 0; i < numu; i++) {
+   				    index = i + j * numu;
+   				    if (Double.isNaN(wgray1[index])  && Double.isNaN(wgray2[index])) {
+   				    	grayMosaic[index] = Double.NaN;
+   				    }
+   				    else if (Double.isNaN(wgray1[index])) {
+   				    	grayMosaic[index] = wgray2[index];
+   				    }
+   				    else if (Double.isNaN(wgray2[index])) {
+   				    	grayMosaic[index] = wgray1[index];
+   				    }
+   				    else {
+   				    	grayMosaic[index] = (wgray1[index] + wgray2[index])/2.0;
+   				    }
+   				}
+   			}
+   			mosaicImage = new ModelImage(ModelStorageBase.DOUBLE, mosaicExtents, "Mosaic");
+   			try {
+           	   mosaicImage.importData(0,grayMosaic, true);
+            }
+            catch (IOException e) {
+           	   System.err.println("IOException on mosaicImage.importData(0,grayMosaic,true");
+           	   setCompleted(false);
+           	   return;
+            }
+   		} // else grayscale images
+   		
+   		new ViewJFrameImage(mosaicImage);
 
-   		/*im1_ = vl_imwbackward(im2double(im1),u,v) ;
-
-   		z_ = H(3,1) * u + H(3,2) * v + H(3,3) ;
-   		u_ = (H(1,1) * u + H(1,2) * v + H(1,3)) ./ z_ ;
-   		v_ = (H(2,1) * u + H(2,2) * v + H(2,3)) ./ z_ ;
-   		im2_ = vl_imwbackward(im2double(im2),u_,v_) ;
-
-   		mass = ~isnan(im1_) + ~isnan(im2_) ;
-   		im1_(isnan(im1_)) = 0 ;
-   		im2_(isnan(im2_)) = 0 ;
-   		mosaic = (im1_ + im2_) ./ mass ;
-
-   		figure(2) ; clf ;
-   		imagesc(mosaic) ; axis image off ;
-   		title('Mosaic') ;
-
-   		if nargout == 0, clear mosaic ; end*/
-
-	   } // if (mosaic)
+ 	   } // if (mosaic)
 	   
 	   System.out.println("Run completed");
 	   Preferences.debug("Run completed\n", Preferences.DEBUG_ALGORITHM);
 	   setCompleted(true);
 	}
+    
+    private float[] vl_imwbackwardmx(int X_pt[], int Y_pt[], float I_pt[], double iwXp_pt[][], double iwYp_pt[][], int M, int N) {
+    	int Mp = iwXp_pt.length;
+    	int Np = iwXp_pt[0].length;
+    	float wI_pt[] = new float[Mp * Np];
+    	
+    	int Xmin = X_pt [0] ;
+    	int Xmax = X_pt [N - 1] ;
+    	int Ymin = Y_pt [0] ;
+        int Ymax = Y_pt [M - 1] ;
+        int ip;
+        int jp;
+        
+        /* optimized for only image output */
+        for(jp = 0 ; jp < Np ; ++jp) {
+          for(ip = 0 ; ip < Mp ; ++ip) {
+    	/* Search for the four neighbors of the backprojected point. */
+    	double x = iwXp_pt[ip][jp];
+    	double y = iwYp_pt[ip][jp];
+    	double z = Double.NaN ;
+
+    	/* This messy code allows the identity transformation
+    	 * to be processed as expected. */
+    	if(x >= Xmin && x <= Xmax &&
+    	   y >= Ymin && y <= Ymax) {
+    	  int j = findNeighbor(x, X_pt, N) ;
+    	  int i = findNeighbor(y, Y_pt, M) ;
+
+    	  /* Weights. */
+    	  double x0 = X_pt[j] ;
+    	  double x1 = (j < N-1) ? X_pt[j+1] : x0 + 1;
+    	  double y0 = Y_pt[i] ;
+    	  double y1 = (i < M-1) ? Y_pt[i+1] : y0 + 1;
+    	  double wx = (x-x0)/(x1-x0) ;
+    	  double wy = (y-y0)/(y1-y0) ;
+
+    	  /* Load all possible neighbors. */
+    	  double z00 = 0.0 ;
+    	  double z10 = 0.0 ;
+    	  double z01 = 0.0 ;
+    	  double z11 = 0.0 ;
+
+    	  if(j > -1) {
+    	    if(i > -1 ) z00 = I_pt[j + i*N];
+    	    if(i < M-1) z10 = I_pt[j + (i+1)*N];
+    	  } 
+
+    	  if(j < N-1) {
+    	    if(i > -1 ) z01 = I_pt[j + 1 + i*N];
+    	    if(i < M-1) z11 = I_pt[j + 1 + (i+1)*N] ;
+    	  }
+
+    	  /* Bilinear interpolation. */
+    	  z =
+    	    (1 - wy) * ((1-wx) * z00 + wx * z01) +
+    	    (    wy) * ((1-wx) * z10 + wx * z11) ;
+    	}
+
+    	  wI_pt[jp + ip*Np] = (float)z ;
+          }
+        }
+    	return wI_pt;
+    }
+    
+    private int findNeighbor(double x, int X[], int K) {
+      int i = 0 ;
+      int j = K - 1 ;
+      int pivot = 0 ;
+      int y = 0 ;
+      if(x <  X[i]) return i-1 ;
+      if(x >= X[j]) return j ;
+
+      while(i < j - 1) {
+        pivot = (i+j) >> 1 ;
+        y = X[pivot] ;
+        /*mexPrintf("%d %d %d %f %f\n",i,j,pivot,x,y) ;*/
+        if(x < y) {
+          j = pivot ;
+        } else {
+          i = pivot ;
+        }
+      }
+      return i ;
+    }
+    
+    private double[] vl_imwbackwardmx(int X_pt[], int Y_pt[], double I_pt[], double iwXp_pt[][], double iwYp_pt[][], int M, int N) {
+    	int Mp = iwXp_pt.length;
+    	int Np = iwXp_pt[0].length;
+    	double wI_pt[] = new double[Mp * Np];
+    	
+    	int Xmin = X_pt [0] ;
+    	int Xmax = X_pt [N - 1] ;
+    	int Ymin = Y_pt [0] ;
+        int Ymax = Y_pt [M - 1] ;
+        int ip;
+        int jp;
+        
+        /* optimized for only image output */
+        for(jp = 0 ; jp < Np ; ++jp) {
+          for(ip = 0 ; ip < Mp ; ++ip) {
+    	/* Search for the four neighbors of the backprojected point. */
+    	double x = iwXp_pt[ip][jp];
+    	double y = iwYp_pt[ip][jp];
+    	double z = Double.NaN ;
+
+    	/* This messy code allows the identity transformation
+    	 * to be processed as expected. */
+    	if(x >= Xmin && x <= Xmax &&
+    	   y >= Ymin && y <= Ymax) {
+    	  int j = findNeighbor(x, X_pt, N) ;
+    	  int i = findNeighbor(y, Y_pt, M) ;
+
+    	  /* Weights. */
+    	  double x0 = X_pt[j] ;
+    	  double x1 = (j < N-1) ? X_pt[j+1] : x0 + 1;
+    	  double y0 = Y_pt[i] ;
+    	  double y1 = (i < M-1) ? Y_pt[i+1] : y0 + 1;
+    	  double wx = (x-x0)/(x1-x0) ;
+    	  double wy = (y-y0)/(y1-y0) ;
+
+    	  /* Load all possible neighbors. */
+    	  double z00 = 0.0 ;
+    	  double z10 = 0.0 ;
+    	  double z01 = 0.0 ;
+    	  double z11 = 0.0 ;
+
+    	  if(j > -1) {
+    	    if(i > -1 ) z00 = I_pt[j + i*N];
+    	    if(i < M-1) z10 = I_pt[j + (i+1)*N];
+    	  } 
+
+    	  if(j < N-1) {
+    	    if(i > -1 ) z01 = I_pt[j + 1 + i*N];
+    	    if(i < M-1) z11 = I_pt[j + 1 + (i+1)*N] ;
+    	  }
+
+    	  /* Bilinear interpolation. */
+    	  z =
+    	    (1 - wy) * ((1-wx) * z00 + wx * z01) +
+    	    (    wy) * ((1-wx) * z10 + wx * z11) ;
+    	}
+
+    	  wI_pt[jp + ip*Np] = z ;
+          }
+        }
+    	return wI_pt;
+    }
     
     class FitMosaicModel extends NLConstrainedEngine {
     	private int ok[];
