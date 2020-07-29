@@ -3009,6 +3009,7 @@ public class FileIO {
                 case FileUtility.DICOM:
                     final FileDicom readSrcDicom = new FileDicom(fileName, fileDir); // FileDicom does not extend
                                                                                      // FileBase
+                    readSrcDicom.setHeaderOnlyRead(true);
                     success = readSrcDicom.readHeader(true);
                     if (success) {
                         fileInfo = readSrcDicom.getFileInfo();

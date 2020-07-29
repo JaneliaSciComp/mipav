@@ -445,7 +445,16 @@ public class FileDicomBase {
      */
     public int locateImageTag(final int offset, final int imageNumber, final int b3) {
         // if receiving a dicom via network, we're only interested in the tags, not the image
-        if (isDicomRecv) {
+        if (isHeaderOnlyRead()) {
+            try{
+                if (raFile != null) {
+                    fLength = raFile.length();
+                }
+            } catch (final IOException ioE) {
+                ioE.printStackTrace();
+                return -1;
+            }
+            
             return -1;
         }
 
@@ -667,7 +676,7 @@ public class FileDicomBase {
 
         // setting the tag buffer only happens in the dicom receiver, which only cares about the tags, not the image
         // data - so that will be skipped later in the header read
-        isDicomRecv = true;
+        setHeaderOnlyRead(true);
     }
 
     /**
@@ -851,5 +860,26 @@ public class FileDicomBase {
     protected final void skipBytes(final int value) {
         bPtr = bPtr + value;
     }
+    
+    /**
+     * Returns whether this Dicom read is only interested in the header tags and not the image data (if it exists).
+     * Used by dcm recv and in cases like spectroscopy where there isn't a true image, but some tags may contain 
+     * data that triggers the image search parameters ("7F" hex value, etc.).
+     * 
+     * @return Whether the image data should be searched for or otherwise read.
+     */
+    public boolean isHeaderOnlyRead() {
+        return isDicomRecv;
+    }
 
+    /**
+     * Sets whether this Dicom read is only interested in the header tags and not the image data (if it exists).
+     * Used by dcm recv and in cases like spectroscopy where there isn't a true image, but some tags may contain 
+     * data that triggers the image search parameters ("7F" hex value, etc.).
+     * 
+     * @param isHeaderOnly  Whether we are only interested in reading the tags from the header, not the image data.
+     */
+    public void setHeaderOnlyRead(final boolean isHeaderOnly) {
+        isDicomRecv = true;
+    }
 }
