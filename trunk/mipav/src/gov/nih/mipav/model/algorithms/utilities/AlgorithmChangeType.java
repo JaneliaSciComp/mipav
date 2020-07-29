@@ -217,7 +217,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         try {
 
             if (srcImage.getType() != newType.getLegacyNum()) {
-                srcImage.reallocate(newType.getLegacyNum());
+                srcImage.reallocate(newType.getLegacyNum(), false);
             }
 
             srcImage.importData(0, buffer, true);
@@ -380,7 +380,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
         try {
             if (srcImage.getType() != newType.getLegacyNum()) {
-                srcImage.reallocate(newType.getLegacyNum());
+                srcImage.reallocate(newType.getLegacyNum(), false);
             }
             srcImage.importData(0, buffer, true);
         } catch (IOException error) {
