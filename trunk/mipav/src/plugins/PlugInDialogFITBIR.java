@@ -65,12 +65,12 @@ import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
 
 
-public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
-        PreviewImageContainer, WindowListener {
+public class PlugInDialogFITBIR extends JFrame
+        implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener, PreviewImageContainer, WindowListener {
     private static final long serialVersionUID = -5516621806537554154L;
 
     private final Font serif12 = MipavUtil.font12, serif12B = MipavUtil.font12B;
-    
+
     private WidgetFactory.ScrollTextArea logOutputArea;
 
     private JScrollPane listPane;
@@ -209,7 +209,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private final ArrayList<String> tempDirs = new ArrayList<String>();
 
     private boolean isFinished = false;
-    
+
     /** Map between file paths and DTI info extracted from their DICOM headers. */
     private Hashtable<String, DTIParameters> dicomDtiHeaderData = new Hashtable<String, DTIParameters>();
 
@@ -218,29 +218,38 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * = image
      */
     private int resolveConflictsUsing = RESOLVE_CONFLICT_ASK;
-    
+
     // variables for auto-running on a csv from the command line and logging to files
     private String cmdLineCsvVar = "BricsCsvFile";
+
     private String cmdLineOutputVar = "BricsOutputDir";
+
     private String cmdLineCsvExitVar = "BricsExit";
-    
+
     private boolean cmdLineCsvExit = false;
+
     private boolean cmdLineCsvFlag = false;
+
     private String cmdLineCsvFile = null;
+
     private String cmdLineOutputDir = null;
-    
+
     private File mainLogFile = null;
+
     private PrintStream mainLogFileOut = null;
-    
+
     private PrintStream logOnlyOut = null;
+
     private PrintStream logOnlyErr = null;
-    
+
     private File readErrorFile = null;
+
     private PrintStream readErrorFileOut = null;
-    
+
     private File piiWarningFile = null;
+
     private PrintStream piiWarningFileOut = null;
-    
+
     private boolean bidsPackageFlag = false;
 
     private static final int RESOLVE_CONFLICT_ASK = 0;
@@ -264,13 +273,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final String ELEM_YES_SPECIFY_SUFFIX = "ST";
 
     private static final String GUID_ELEMENT_NAME = "GUID";
-    
+
     private static final String SPECTROSCOPY_FS_SUFFIX = "spectroscopy";
-    
+
     private static final String MRI_FS_NAME = "imagingmr";
-    
+
     private static final String FMRI_FS_SUFFIX = "functionalmr";
-    
+
     private static final String DTI_FS_SUFFIX = "diffusion";
 
     private static final String IMG_IMAGE_INFO_GROUP = "Image Information";
@@ -280,14 +289,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final String IMG_PREVIEW_ELEMENT_NAME = "ImgPreviewFile";
 
     private static final String IMG_HASH_CODE_ELEMENT_NAME = "ImgFileHashCode";
-    
+
     private static final String IMG_DIFF_GROUP = "Diffusion Direction Data";
-    
+
     private static final String IMG_DIFF_BVAL_ELEMENT_NAME = "ImgDiffusionBValFile";
+
     private static final String IMG_DIFF_BVEC_ELEMENT_NAME = "ImgDiffusionBVecFile";
-    
+
     private static final String IMG_MR_GROUP = "Magnetic Resonance Information";
-    
+
     private static final String IMG_PULSE_SEQ_ELEMENT_NAME = "ImgPulseSeqTyp";
 
     private static final String recordIndicatorColumn = "record";
@@ -298,30 +308,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final String SITE_NAME_ELEMENT_NAME = "SiteName";
 
-    private static final String[] PDBP_ALLOWED_SITE_NAMES = {
-        "Brigham and Women's",
-        "Cleveland Clinic",
-        "Columbia University",
-        "Emory University",
-        "Florida Atlantic University",
-        "Johns Hopkins University",
-        "Mayo Clinic-FL",
-        "Mayo Clinic-MN",
-        "Northwestern University",
-        "Pennsylvania State University (Hershey)",
-        "Pacific Northwest National Laboratory",
-        "Rush University",
-        "Thomas Jefferson University",
-        "University of Alabama (Birmingham)",
-        "University of California San Diego",
-        "University of Florida (Gainesville)",
-        "University of Michigan",
-        "University of North Carolina",
-        "University of Pennsylvania",
-        "University of Pittsburgh",
-        "University of Washington",
-        "UT-Southwestern Medical Center",
-        "VA-Pugent Sound Health Care System/University of Washington",};
+    private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women's", "Cleveland Clinic", "Columbia University", "Emory University", "Florida Atlantic University",
+            "Johns Hopkins University", "Mayo Clinic-FL", "Mayo Clinic-MN", "Northwestern University", "Pennsylvania State University (Hershey)",
+            "Pacific Northwest National Laboratory", "Rush University", "Thomas Jefferson University", "University of Alabama (Birmingham)", "University of California San Diego",
+            "University of Florida (Gainesville)", "University of Michigan", "University of North Carolina", "University of Pennsylvania", "University of Pittsburgh",
+            "University of Washington", "UT-Southwestern Medical Center", "VA-Pugent Sound Health Care System/University of Washington",};
 
     private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD", "NEI", "NTI", "NIA", "NINDS", "NIH"};
 
@@ -337,7 +328,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
 
     private JDialog deidentDialog;
-    
+
     private boolean csvDeidentDontAsk = false;
 
     public static final String[] anonymizeTagIDs = {
@@ -398,10 +389,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             // "0040,A124", // UID
             "0040,A730", // content sequence
 
-    // "0088,0140", // storage media file-set UID
+            // "0088,0140", // storage media file-set UID
 
-    // "3006,0024", // referenced frame of reference UID
-    // "3006,00C2", // related frame of reference UID
+            // "3006,0024", // referenced frame of reference UID
+            // "3006,00C2", // related frame of reference UID
     };
 
     /**
@@ -409,11 +400,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     public static final String PRIVACY_NOTICE = "BRICS is a collaborative environment with privacy rules that pertain to the collection\n"
             + "and display of imaging data. Before accessing and using BRICS, please ensure that you\n"
-            + "familiarize yourself with our privacy rules, available through the BRICS Rules of Behavior\n" + "document and supporting documentation.\n"
-            + "\n" + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
+            + "familiarize yourself with our privacy rules, available through the BRICS Rules of Behavior\n" + "document and supporting documentation.\n" + "\n"
+            + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
             + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research.\n"
-            + "This information may be disclosed to researchers for research purposes, and to system \n"
-            + "administrators for evaluation and data normalization.\n" + "\n"
+            + "This information may be disclosed to researchers for research purposes, and to system \n" + "administrators for evaluation and data normalization.\n" + "\n"
             + "Rules governing submission of this information are based on the data sharing rules defined in\n"
             + "the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing requirements,\n"
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
@@ -472,37 +462,37 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         init();
         setVisible(true);
         validate();
-        
+
         // if run from the command line with some variables set via the -d option, auto-load the csv
         if (VariableTable.getReference().isVariableSet(cmdLineCsvVar)) {
             cmdLineCsvFlag = true;
             cmdLineCsvFile = VariableTable.getReference().interpolate(cmdLineCsvVar);
             System.err.println("Command line CSV: " + cmdLineCsvFile);
-            
-            if (!(new File(cmdLineCsvFile).exists())) {
-            	MipavUtil.displayError("Command line CSV not found: " + cmdLineCsvFile);
-            	if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
+
+            if ( ! (new File(cmdLineCsvFile).exists())) {
+                MipavUtil.displayError("Command line CSV not found: " + cmdLineCsvFile);
+                if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
                     System.gc();
                     System.exit(0);
                 } else {
                     return;
                 }
             }
-            
+
             if (VariableTable.getReference().isVariableSet(cmdLineOutputVar)) {
                 cmdLineOutputDir = VariableTable.getReference().interpolate(cmdLineOutputVar);
                 System.err.println("Command line output dir: " + cmdLineOutputDir);
             }
-            
+
             if (VariableTable.getReference().isVariableSet(cmdLineCsvExitVar)) {
                 cmdLineCsvExit = Boolean.parseBoolean(VariableTable.getReference().interpolate(cmdLineCsvExitVar));
                 System.err.println("Exit after generation: " + cmdLineCsvExit);
             }
         }
-        
-        if (!cmdLineCsvFlag) {
-            final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.PRIVACY_NOTICE, "Image Submission Package Creation Tool",
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+        if ( !cmdLineCsvFlag) {
+            final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.PRIVACY_NOTICE, "Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
 
             if (response == JOptionPane.NO_OPTION) {
                 if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
@@ -512,22 +502,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     return;
                 }
             }
-            
+
             final Thread thread = new FormListRESTThread(this);
             thread.start();
         } else {
             final Thread thread = new FormListRESTThread(this);
             thread.run();
-            
+
             csvFile = new File(cmdLineCsvFile);
-            
+
             // change output dir
             if (cmdLineOutputDir != null) {
                 // revert to default if there is a problem with the output dir
-                if (!(new File(cmdLineOutputDir)).exists()) {
+                if ( ! (new File(cmdLineOutputDir)).exists()) {
                     System.err.println("Command line output dir does not exist (" + cmdLineOutputDir + "), reverting to default.");
                     outputDirBase = getNonCollidingNumberedFilePath(outputDirBase + File.separator + csvFile.getName(), 2) + File.separator;
-                } else if (!(new File(cmdLineOutputDir)).canWrite()) {
+                } else if ( ! (new File(cmdLineOutputDir)).canWrite()) {
                     System.err.println("Command line output dir is not writable (" + cmdLineOutputDir + "), reverting to default.");
                     outputDirBase = getNonCollidingNumberedFilePath(outputDirBase + File.separator + csvFile.getName(), 2) + File.separator;
                 } else {
@@ -543,7 +533,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 if ( !new File(outputDirBase).exists()) {
                     new File(outputDirBase).mkdirs();
                 }
-                
+
                 mainLogFile = new File(outputDirBase + "log_file_output.log");
                 mainLogFile.createNewFile();
                 readErrorFile = new File(outputDirBase + "log_image_read_error.log");
@@ -554,21 +544,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 mainLogFileOut = new PrintStream(new FileOutputStream(mainLogFile, true));
                 readErrorFileOut = new PrintStream(new FileOutputStream(readErrorFile, true));
                 piiWarningFileOut = new PrintStream(new FileOutputStream(piiWarningFile, true));
-                
+
                 logOnlyOut = new CmdLineOutputStream(System.out, mainLogFileOut);
                 logOnlyErr = new CmdLineOutputStream(System.err, mainLogFileOut);
-                
+
                 System.setOut(logOnlyOut);
                 System.setErr(logOnlyErr);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            
+
             readCSVFile();
 
             csvFileDir = csvFile.getAbsolutePath() + File.separator;
             Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
-            
+
             // generate files
             fileWriterWorkerThread = new javax.swing.SwingWorker<Object, Object>() {
                 @Override
@@ -594,48 +584,48 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             boolean readyForSub = checkRecordsForSubmission();
 
             if (readyForSub) {
-	            removeStructButton.setEnabled(false);
-	            finishButton.setEnabled(false);
-	            outputDirButton.setEnabled(false);
-	            addStructButton.setEnabled(false);
-	            editDataElementsButton.setEnabled(false);
-	            loadCSVButton.setEnabled(false);
-	            selectBIDSButton.setEnabled(false);
-	
-	            fileWriterWorkerThread.run();
-	            
-	            // reset the outputs
-	            System.setOut(System.out);
-	            System.setErr(System.err);
-	            if (mainLogFileOut != null) {
-	                mainLogFileOut.close();
-	                mainLogFileOut = null;
-	            }
-	            if (readErrorFileOut != null) {
-	                readErrorFileOut.close();
-	                readErrorFileOut = null;
-	            }
-	            if (piiWarningFileOut != null) {
-	                piiWarningFileOut.close();
-	                piiWarningFileOut = null;
+                removeStructButton.setEnabled(false);
+                finishButton.setEnabled(false);
+                outputDirButton.setEnabled(false);
+                addStructButton.setEnabled(false);
+                editDataElementsButton.setEnabled(false);
+                loadCSVButton.setEnabled(false);
+                selectBIDSButton.setEnabled(false);
+
+                fileWriterWorkerThread.run();
+
+                // reset the outputs
+                System.setOut(System.out);
+                System.setErr(System.err);
+                if (mainLogFileOut != null) {
+                    mainLogFileOut.close();
+                    mainLogFileOut = null;
                 }
-	            
-	            if (cmdLineCsvExit) {
-	                System.exit(0);
-	            }
+                if (readErrorFileOut != null) {
+                    readErrorFileOut.close();
+                    readErrorFileOut = null;
+                }
+                if (piiWarningFileOut != null) {
+                    piiWarningFileOut.close();
+                    piiWarningFileOut = null;
+                }
+
+                if (cmdLineCsvExit) {
+                    System.exit(0);
+                }
             } else {
-            	// reset the outputs
-	            System.setOut(System.out);
-	            System.setErr(System.err);
-	            if (mainLogFileOut != null) {
-	                mainLogFileOut.close();
-	                mainLogFileOut = null;
-	            }
-	            if (readErrorFileOut != null) {
-	                readErrorFileOut.close();
-	                readErrorFileOut = null;
-	            }
-	            if (piiWarningFileOut != null) {
+                // reset the outputs
+                System.setOut(System.out);
+                System.setErr(System.err);
+                if (mainLogFileOut != null) {
+                    mainLogFileOut.close();
+                    mainLogFileOut = null;
+                }
+                if (readErrorFileOut != null) {
+                    readErrorFileOut.close();
+                    readErrorFileOut = null;
+                }
+                if (piiWarningFileOut != null) {
                     piiWarningFileOut.close();
                     piiWarningFileOut = null;
                 }
@@ -763,26 +753,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 boolean readyForSub = checkRecordsForSubmission();
 
                 if (readyForSub) {
-	                // fine so far, ask if the user is done
-	                int response;
-	                if (!cmdLineCsvFlag) {
-	                    response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
-	                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-	                } else {
-	                    response = JOptionPane.YES_OPTION;
-	                }
-	
-	                if (response == JOptionPane.YES_OPTION) {
-	                    removeStructButton.setEnabled(false);
-	                    finishButton.setEnabled(false);
-	                    outputDirButton.setEnabled(false);
-	                    addStructButton.setEnabled(false);
-	                    editDataElementsButton.setEnabled(false);
-	                    loadCSVButton.setEnabled(false);
-	                    selectBIDSButton.setEnabled(false);
-	
-	                    fileWriterWorkerThread.execute();
-	                }
+                    // fine so far, ask if the user is done
+                    int response;
+                    if ( !cmdLineCsvFlag) {
+                        response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?", JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+                    } else {
+                        response = JOptionPane.YES_OPTION;
+                    }
+
+                    if (response == JOptionPane.YES_OPTION) {
+                        removeStructButton.setEnabled(false);
+                        finishButton.setEnabled(false);
+                        outputDirButton.setEnabled(false);
+                        addStructButton.setEnabled(false);
+                        editDataElementsButton.setEnabled(false);
+                        loadCSVButton.setEnabled(false);
+                        selectBIDSButton.setEnabled(false);
+
+                        fileWriterWorkerThread.execute();
+                    }
                 }
             }
         } else if (command.equalsIgnoreCase("EditDataElements")) {
@@ -855,14 +845,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     @Override
     public void windowOpened(final WindowEvent e) {}
-    
+
     private File findBIDSRootDir(final File selectedDir) {
         File rootDir = null;
-        
+
         File[] dirFiles = selectedDir.listFiles();
         for (int i = 0; rootDir == null && i < dirFiles.length; i++) {
             File file = dirFiles[i];
-            if (!isFileToIgnore(file)) {
+            if ( !isFileToIgnore(file)) {
                 if (file.isDirectory()) {
                     rootDir = findBIDSRootDir(file);
                     break;
@@ -874,36 +864,37 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
         }
-        
+
         return rootDir;
     }
-    
+
     private final boolean isFileToIgnore(final File file) {
         if (file.getName().equalsIgnoreCase(".DS_Store") || file.getName().equalsIgnoreCase("__MACOSX")) {
             return true;
         }
-        
+
         return false;
     }
-    
+
     private final boolean isBIDSKeyFile(final File file) {
-        if (file.getName().equalsIgnoreCase("participants.tsv") || file.getName().equalsIgnoreCase("dataset_description.json") || file.getName().substring(0, 3).equalsIgnoreCase("SUB")) {
+        if (file.getName().equalsIgnoreCase("participants.tsv") || file.getName().equalsIgnoreCase("dataset_description.json")
+                || file.getName().substring(0, 3).equalsIgnoreCase("SUB")) {
             return true;
         }
-        
+
         return false;
     }
 
     private boolean processBIDSDirectories(final File selectedDir) {
         File bidsDir = findBIDSRootDir(selectedDir);
-        
+
         if (bidsDir == null) {
             MipavUtil.displayError("No BIDS root directory found in selected path: " + selectedDir);
             return false;
         }
-        
+
         BIDSPackage bidsPackage = new BIDSPackage(bidsDir);
-        
+
         final ViewJProgressBar progressBar = new ViewJProgressBar("Reading BIDS directories", "Reading BIDS directories...", 0, 100, false);
         progressBar.setVisible(true);
         progressBar.updateValue(5);
@@ -918,18 +909,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 bidsPackage.setParticipantsFile(bidsDirFiles[i]);
             } else if ( (bidsDirFiles[i].isFile()) && (bidsDirFiles[i].getName().equalsIgnoreCase("dataset_description.json"))) {
                 bidsPackage.setDatasetDescriptionFile(bidsDirFiles[i]);
-            } else if ( bidsDirFiles[i].isFile() && bidsDirFiles[i].getName().endsWith(".json")) {
+            } else if (bidsDirFiles[i].isFile() && bidsDirFiles[i].getName().endsWith(".json")) {
                 bidsPackage.addAdditionalFile(bidsDirFiles[i]);
-            } else if ( bidsDirFiles[i].isFile() && (bidsDirFiles[i].getName().endsWith("_tsv") || bidsDirFiles[i].getName().endsWith(".tsv"))) {
+            } else if (bidsDirFiles[i].isFile() && (bidsDirFiles[i].getName().endsWith("_tsv") || bidsDirFiles[i].getName().endsWith(".tsv"))) {
                 bidsPackage.addAdditionalFile(bidsDirFiles[i]);
-            } else if ( bidsDirFiles[i].isFile() && (bidsDirFiles[i].getName().endsWith(".bval") || bidsDirFiles[i].getName().endsWith(".bvec"))) {
+            } else if (bidsDirFiles[i].isFile() && (bidsDirFiles[i].getName().endsWith(".bval") || bidsDirFiles[i].getName().endsWith(".bvec"))) {
                 bidsPackage.addAdditionalFile(bidsDirFiles[i]);
             }
         }
 
         progressBar.setMessage("Reading participants.tsv");
         progressBar.updateValue(10);
-        
+
         if (bidsPackage.getParticipantsFile() != null) {
             Reader tsvIn;
             Iterable<CSVRecord> participantRecords = null;
@@ -964,7 +955,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (BIDSSubject subj : bidsPackage.getSubjectList()) {
                 File[] subjFiles = subj.getSubjectDirFile().listFiles();
                 Arrays.sort(subjFiles, new fileComparator());
-                
+
                 for (int i = 0; i < subjFiles.length; i++) {
                     if ( (subjFiles[i].isDirectory()) && (subjFiles[i].getName().substring(0, 3).equalsIgnoreCase("SES"))) {
                         subj.addSession(new BIDSSession(subj, subjFiles[i]));
@@ -1069,10 +1060,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //            }
 //            printlnToLog(subject_id_read + " subject id read from _sessions.tsv files in subject subdirectories");
 //        } // if (totalSubjectSessionsTSVFiles > 0)
-        
+
         progressBar.setMessage("Sorting files");
         progressBar.updateValue(15);
-        
+
         int totalScanNum = 0;
 
         for (BIDSSubject subj : bidsPackage.getSubjectList()) {
@@ -1083,13 +1074,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if (curSessionFile.isDirectory()) {
                         BIDSScanType scanType = BIDSScanType.valueOf(curSessionFile.getName());
                         BIDSScanCategory newScanCat = new BIDSScanCategory(session, curSessionFile, scanType);
-                        
+
                         File[] scanCatFileArray = curSessionFile.listFiles();
                         Arrays.sort(scanCatFileArray, new fileComparator());
                         Vector<File> scanCatFileList = new Vector<File>(Arrays.asList(scanCatFileArray));
-                        
+
                         Vector<File> remainingFiles = new Vector<File>(scanCatFileList);
-                        
+
                         // find all the image files
                         Vector<File> imageFiles = new Vector<File>();
                         for (File curScanCatFile : scanCatFileList) {
@@ -1098,36 +1089,36 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 remainingFiles.removeElement(curScanCatFile);
                             }
                         }
-                        
+
                         // for each image, find similar files and add them as new scans
                         for (File imgFile : imageFiles) {
                             String imgFileBasename = imgFile.getName().substring(0, imgFile.getName().indexOf(".nii"));
-                            
+
                             BIDSScan newScan = new BIDSScan(newScanCat, imgFile);
-                            
+
                             for (File nonImgFile : scanCatFileList) {
                                 String nonImgFileName = nonImgFile.getName();
                                 if (nonImgFileName.startsWith(imgFileBasename)) {
                                     if (nonImgFileName.endsWith(".json")) {
                                         newScan.setScanJsonFile(nonImgFile);
                                         remainingFiles.removeElement(nonImgFile);
-                                    } else if (!imgFile.equals(nonImgFile)) {
+                                    } else if ( !imgFile.equals(nonImgFile)) {
                                         newScan.addAdditionalFile(nonImgFile);
                                         remainingFiles.removeElement(nonImgFile);
                                     }
                                 }
                             }
-                            
+
                             newScanCat.addScan(newScan);
-                            
+
                             totalScanNum++;
                         }
-                        
+
                         // add other files as category aux files
                         for (File file : remainingFiles) {
                             newScanCat.addAdditionalFile(file);
                         }
-                        
+
                         session.addScanCategory(newScanCat);
                     } else if (curSessionFile.getName().toLowerCase().endsWith(".tsv")) {
                         session.addAdditionalFile(curSessionFile);
@@ -1138,13 +1129,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         progressBar.setMessage("Reading images");
         progressBar.updateValue(20);
-        
+
         int progressPerScan = (int) (80.0 / totalScanNum);
-        
+
         Vector<Vector<FileDicomTag>> problemTagList = new Vector<Vector<FileDicomTag>>();
         Vector<String> problemFileDirList = new Vector<String>();
         Vector<String> problemFileNameList = new Vector<String>();
-        
+
         bidsPackageFlag = true;
 
         int curScanNum = 0;
@@ -1154,19 +1145,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     for (BIDSScan scan : scanCat.getScanList()) {
                         ArrayList<ArrayList<String>> record;
                         InfoDialog csvDialog;
-                        
+
                         curScanNum++;
                         progressBar.setMessage("Processing scan " + curScanNum + " of " + totalScanNum);
                         progressBar.updateValue(20 + (progressPerScan * curScanNum));
-                        
+
                         switch (scan.getParent().getScanType()) {
                             case ANAT:
                             case anat:
                                 // builds class var csvFieldNames and returns record list to match
                                 record = buildInputCSVRowFromBIDS(scan);
-                                
+
                                 csvDialog = new InfoDialog(this, "ImagingMR", false, false, record);
-                                
+
                                 // change i counter to 0-based for problem lists
                                 problemTagList.add(csvDialog.getProblemTags());
                                 problemFileDirList.add(csvDialog.getProblemFileDir());
@@ -1179,20 +1170,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 record = buildInputCSVRowFromBIDS(scan);
 
                                 csvDialog = new InfoDialog(this, "ImagingDiffusion", false, false, record);
-                                
+
                                 // change i counter to 0-based for problem lists
                                 problemTagList.add(csvDialog.getProblemTags());
                                 problemFileDirList.add(csvDialog.getProblemFileDir());
                                 problemFileNameList.add(csvDialog.getProblemFileName());
-                                
+
                                 break;
                             case FUNC:
                             case func:
                                 // builds class var csvFieldNames and returns record list to match
                                 record = buildInputCSVRowFromBIDS(scan);
-                                
+
                                 csvDialog = new InfoDialog(this, "ImagingFunctionalMR", false, false, record);
-                                
+
                                 // change i counter to 0-based for problem lists
                                 problemTagList.add(csvDialog.getProblemTags());
                                 problemFileDirList.add(csvDialog.getProblemFileDir());
@@ -1207,13 +1198,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
         }
-        
+
         // after all the fake CSVs are loaded, check for de-identification issues
         for (int j = 0; j < problemTagList.size(); j++) {
             final Vector<FileDicomTag> problemTags = problemTagList.get(j);
             if (problemTags != null) {
                 boolean isDeidentified = deidentificationDialogDicom(problemFileDirList.get(j), problemFileNameList.get(j), problemTags, true);
-                
+
                 // if the user certified that all data is okay, stop checking
                 if (csvDeidentDontAsk) {
                     break;
@@ -1225,7 +1216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
         }
-        
+
 //
 //        if (funcNumber > 0) {
 //            found = false;
@@ -1499,23 +1490,24 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return true;
     }
-    
+
     @SuppressWarnings("unused")
     private class BIDSPackage {
         private File baseDir;
 
         private File participantsFile;
-        
+
         private File datasetDescriptionFile;
+
         private JSONObject datasetDescriptionJson;
-        
+
         private Vector<BIDSSubject> subjectList;
-        
+
         private Vector<File> additionalFileList;
-        
+
         public BIDSPackage(File baseDir) {
             super();
-            
+
             subjectList = new Vector<BIDSSubject>();
             this.baseDir = baseDir;
             this.additionalFileList = new Vector<File>();
@@ -1563,18 +1555,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setSubjectList(Vector<BIDSSubject> subjectList) {
             this.subjectList = subjectList;
         }
-        
+
         public void addSubject(BIDSSubject subject) {
             this.subjectList.add(subject);
         }
-        
+
         public BIDSSubject getSubject(String subjectID) {
             for (BIDSSubject subj : subjectList) {
                 if (subj.getSubjectDirFile().getName().equalsIgnoreCase(subjectID)) {
                     return subj;
                 }
             }
-            
+
             return null;
         }
 
@@ -1585,38 +1577,40 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setAdditionalFileList(Vector<File> additionalFileList) {
             this.additionalFileList = additionalFileList;
         }
-        
+
         public void addAdditionalFile(File file) {
             this.additionalFileList.add(file);
         }
     }
-    
+
     @SuppressWarnings("unused")
     private class BIDSSubject {
         private BIDSPackage parent;
-        
+
         private File subjectDirFile;
-        
+
         private Vector<BIDSSession> sessionList;
-        
+
         private String subjectID;
+
         private String guid;
+
         private String age;
-        
+
         private Vector<File> additionalFileList;
-        
+
         public BIDSSubject(BIDSPackage parent) {
             super();
             this.parent = parent;
             this.sessionList = new Vector<BIDSSession>();
             this.additionalFileList = new Vector<File>();
         }
-        
+
         public BIDSSubject(BIDSPackage parent, File subjectDir) {
             this(parent);
             this.subjectDirFile = subjectDir;
         }
-        
+
         public void addSession(BIDSSession newSession) {
             sessionList.add(newSession);
         }
@@ -1636,11 +1630,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setGuid(String guid) {
             this.guid = guid;
         }
-        
+
         public String getAge() {
             return age;
         }
-        
+
         public void setAge(String age) {
             this.age = age;
         }
@@ -1652,7 +1646,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setSubjectDirFile(File subjectDirFile) {
             this.subjectDirFile = subjectDirFile;
         }
-        
+
         public void addAdditionalFile(File file) {
             this.additionalFileList.add(file);
         }
@@ -1672,7 +1666,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setAdditionalFileList(Vector<File> additionalFileList) {
             this.additionalFileList = additionalFileList;
         }
-        
+
         public BIDSPackage getParent() {
             return parent;
         }
@@ -1681,27 +1675,27 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.parent = parent;
         }
     }
-    
+
     @SuppressWarnings("unused")
     private class BIDSSession {
         private BIDSSubject parent;
-        
+
         private File sessionDirFile;
-        
+
         private Vector<BIDSScanCategory> scanCategoryList;
-        
+
         private Vector<File> additionalFileList;
-        
+
         public BIDSSession(BIDSSubject parent) {
             super();
             this.parent = parent;
             this.scanCategoryList = new Vector<BIDSScanCategory>();
             this.additionalFileList = new Vector<File>();
         }
-        
+
         public BIDSSession(BIDSSubject parent, File sessionDir) {
             this(parent);
-            
+
             this.sessionDirFile = sessionDir;
         }
 
@@ -1712,7 +1706,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setScanCategoryList(Vector<BIDSScanCategory> scanCatList) {
             this.scanCategoryList = scanCatList;
         }
-        
+
         public void addScanCategory(BIDSScanCategory newScanCat) {
             this.scanCategoryList.add(newScanCat);
         }
@@ -1724,7 +1718,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setSessionDirFile(File sessionDirFile) {
             this.sessionDirFile = sessionDirFile;
         }
-        
+
         public Vector<File> getAdditionalFileList() {
             return additionalFileList;
         }
@@ -1732,11 +1726,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setAdditionalFileList(Vector<File> additionalFileList) {
             this.additionalFileList = additionalFileList;
         }
-        
+
         public void addAdditionalFile(File file) {
             this.additionalFileList.add(file);
         }
-        
+
         public BIDSSubject getParent() {
             return parent;
         }
@@ -1744,38 +1738,39 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setParent(BIDSSubject parent) {
             this.parent = parent;
         }
-        
+
         public BIDSPackage getPackage() {
             return parent.getParent();
         }
     }
-    
+
     @SuppressWarnings("unused")
     private class BIDSScanCategory {
         private BIDSSession parent;
-        
+
         private File scanCategoryDirFile;
+
         private BIDSScanType scanType;
-        
+
         private Vector<BIDSScan> scanList;
-        
+
         private Vector<File> additionalFileList;
-        
+
         public BIDSScanCategory(BIDSSession parent, File scanCatDir) {
             super();
-            
+
             this.parent = parent;
             scanCategoryDirFile = scanCatDir;
             scanList = new Vector<BIDSScan>();
             additionalFileList = new Vector<File>();
         }
-        
+
         public BIDSScanCategory(BIDSSession parent, File scanCatDir, BIDSScanType scanType) {
             this(parent, scanCatDir);
-            
+
             this.scanType = scanType;
         }
-        
+
         public BIDSScanType getScanType() {
             return scanType;
         }
@@ -1783,15 +1778,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setScanType(BIDSScanType scanType) {
             this.scanType = scanType;
         }
-        
+
         public void setScanType(String scanDir) {
             this.scanType = BIDSScanType.valueOf(scanDir);
         }
-        
+
         public void addAdditionalFile(File file) {
             this.additionalFileList.add(file);
         }
-        
+
         public Vector<File> getAdditionalFileList() {
             return additionalFileList;
         }
@@ -1815,11 +1810,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setScanList(Vector<BIDSScan> scanList) {
             this.scanList = scanList;
         }
-        
+
         public void addScan(BIDSScan scan) {
             this.scanList.add(scan);
         }
-        
+
         public BIDSSession getParent() {
             return parent;
         }
@@ -1827,40 +1822,41 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setParent(BIDSSession parent) {
             this.parent = parent;
         }
-        
+
         public BIDSPackage getPackage() {
             return parent.getPackage();
         }
-        
+
         public BIDSSubject getSubject() {
             return parent.getParent();
         }
     }
-    
+
     @SuppressWarnings("unused")
     private class BIDSScan {
         private BIDSScanCategory parent;
-        
+
         private File scanJsonFile;
+
         private JSONObject scanJson;
-        
+
         private File scanImgFile;
-        
+
         private Vector<File> additionalFileList;
-        
+
         public BIDSScan(BIDSScanCategory parent) {
             super();
-            
+
             this.parent = parent;
             additionalFileList = new Vector<File>();
         }
-        
+
         public BIDSScan(BIDSScanCategory parent, File imgFile) {
             this(parent);
-            
+
             scanImgFile = imgFile;
         }
-        
+
         public BIDSScan(BIDSScanCategory parent, File scanJsonFile, File scanImgFile) {
             this(parent, scanImgFile);
             this.scanJsonFile = scanJsonFile;
@@ -1892,11 +1888,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setScanJson(JSONObject scanJson) {
             this.scanJson = scanJson;
         }
-        
+
         public void addAdditionalFile(File file) {
             this.additionalFileList.add(file);
         }
-        
+
         public Vector<File> getAdditionalFileList() {
             return additionalFileList;
         }
@@ -1912,61 +1908,61 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setParent(BIDSScanCategory parent) {
             this.parent = parent;
         }
-        
+
         public BIDSPackage getPackage() {
             return parent.getPackage();
         }
-        
+
         public BIDSSubject getSubject() {
             return parent.getSubject();
         }
-        
+
         public BIDSSession getSession() {
             return parent.getParent();
         }
     }
-    
+
     @SuppressWarnings("unused")
     private enum BIDSScanType {
         anat("anat"), ANAT("anat"), dwi("dwi"), DWI("dwi"), func("func"), FUNC("func"), fmap("fmap"), FMAP("fmap");
-        
+
         private final String dirName;
-        
+
         BIDSScanType(final String dir) {
             dirName = dir;
         }
-        
+
         public String getDirectoryName() {
             return dirName;
         }
     }
-    
+
     private ArrayList<ArrayList<String>> buildInputCSVRowFromBIDS(BIDSScan scan) {
         csvFieldNames = new ArrayList<String>();
-        
+
         ArrayList<ArrayList<String>> record = new ArrayList<ArrayList<String>>();
-        
+
         ArrayList<String> recordRepeat = new ArrayList<String>();
-        
+
         record.add(recordRepeat);
-        
+
         addCSVEntry(recordRepeat, "Main.GUID", scan.getSubject().getGuid());
-        
+
         addCSVEntry(recordRepeat, "Main.SubjectIDNum", scan.getSubject().getSubjectID());
-        
+
         addCSVEntry(recordRepeat, "Main.AgeYrs", scan.getSubject().getAge());
-        
+
 //      "InstitutionName": "CTE_MAYO",
         addCSVEntry(scan.getScanJson(), "InstitutionName", recordRepeat, "Main.SiteName");
-        
+
         addCSVEntry(recordRepeat, "Image Information.ImgFile", scan.getScanImgFile().getAbsolutePath());
-        
+
         readGlobalFieldsFromJson(recordRepeat, scan.getPackage().getDatasetDescriptionJson());
-        
+
         readGenericFieldsFromJson(recordRepeat, scan.getScanJson());
-        
+
         readMRFieldsFromJson(recordRepeat, scan.getScanJson(), scan.getScanImgFile().getName());
-        
+
         switch (scan.getParent().getScanType()) {
             case DWI:
             case dwi:
@@ -1981,43 +1977,76 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             default:
                 break;
         }
-        
+
         return record;
     }
-    
+
     private void readGlobalFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
         addCSVEntry(jsonData, "ImgQAQCPerfInd", recordRepeat, "Image QA & QC.ImgQAQCPerfInd");
     }
-    
+
+    private void readGlobalFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData) {
+        addExtractedField(jsonData, "ImgQAQCPerfInd", extractedFields, "Image QA & QC.ImgQAQCPerfInd");
+    }
+
     private void readGenericFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
 //      "Manufacturer": "Siemens",
 //      "ManufacturersModelName": "Skyra",
 //      "SoftwareVersions": "syngo_MR_E11",
 //      "SliceThickness": 1,
-        
+
 //      "SpacingBetweenSlices": 2,
-        
+
         String groupName = "Image Information.";
-        
+
         addCSVEntry(jsonData, "BodyPartExamined", recordRepeat, groupName + "ImgAntmicSite");
-        
+
         addCSVEntry(jsonData, "Manufacturer", recordRepeat, groupName + "ImgScannerManufName");
-        
+
         addCSVEntry(jsonData, "ManufacturersModelName", recordRepeat, groupName + "ImgScannerModelName");
-        
+
         addCSVEntry(jsonData, "SoftwareVersions", recordRepeat, groupName + "ImgScannerSftwrVrsnNum");
-        
+
         String jsonContents = jsonData.toString();
-        
+
         addCSVEntry(recordRepeat, groupName + "ImgNotesTxt", jsonContents);
-        
+
         groupName = "Image pixel information and dimensions.";
-        
+
         addCSVEntry(jsonData, "SliceThickness", recordRepeat, groupName + "ImgSliceThicknessVal");
-        
+
         addCSVEntry(jsonData, "SpacingBetweenSlices", recordRepeat, groupName + "ImgGapBetwnSlicesMeasr");
     }
-    
+
+    private void readGenericFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData) {
+//      "Manufacturer": "Siemens",
+//      "ManufacturersModelName": "Skyra",
+//      "SoftwareVersions": "syngo_MR_E11",
+//      "SliceThickness": 1,
+
+//      "SpacingBetweenSlices": 2,
+
+        String groupName = "Image Information.";
+
+        addExtractedField(jsonData, "BodyPartExamined", extractedFields, groupName + "ImgAntmicSite");
+
+        addExtractedField(jsonData, "Manufacturer", extractedFields, groupName + "ImgScannerManufName");
+
+        addExtractedField(jsonData, "ManufacturersModelName", extractedFields, groupName + "ImgScannerModelName");
+
+        addExtractedField(jsonData, "SoftwareVersions", extractedFields, groupName + "ImgScannerSftwrVrsnNum");
+
+        String jsonContents = jsonData.toString();
+
+        addExtractedField(extractedFields, groupName + "ImgNotesTxt", jsonContents);
+
+        groupName = "Image pixel information and dimensions.";
+
+        addExtractedField(jsonData, "SliceThickness", extractedFields, groupName + "ImgSliceThicknessVal");
+
+        addExtractedField(jsonData, "SpacingBetweenSlices", extractedFields, groupName + "ImgGapBetwnSlicesMeasr");
+    }
+
     private void readMRFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData, String imgFileName) {
 //            "MagneticFieldStrength": 3,
 //            "SeriesDescription": "SAG_3D_T2_FLAIR",
@@ -2039,85 +2068,164 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //            "ParallelReductionFactorInPlane": 2,
 //            "PixelBandwidth": 750,
 //            "InPlanePhaseEncodingDirectionDICOM": "ROW",
-        
+
 //        "EffectiveEchoSpacing": 0.00047001,
-        
+
         String groupName = "Magnetic Resonance Information.";
 
         // TODO BIDS now has PulseSequenceType, but it probably requires mapping
-        
+
         String pulseSeq = getJsonString(jsonData, "ImgPulseSeqTyp");
-        if (!isValueSet(pulseSeq)) {
+        if ( !isValueSet(pulseSeq)) {
             // guess value based on the image file name
             pulseSeq = guessPulseSeqFromFileName(imgFileName);
         }
-        
+
         // set either through json value or file name guessing
         if (isValueSet(pulseSeq)) {
             csvFieldNames.add(groupName + "ImgPulseSeqTyp");
             recordRepeat.add(pulseSeq);
         }
-        
+
         csvFieldNames.add(groupName + "ImgScannerStrgthVal");
         recordRepeat.add(convertMagFieldStrengthToBRICS(getJsonString(jsonData, "MagneticFieldStrength")));
-        
+
         // convert all times from sec to millisec?
         addCSVEntryMillisec(jsonData, "EchoTime", recordRepeat, groupName + "ImgEchoDur");
-        
+
         addCSVEntryMillisec(jsonData, "RepetitionTime", recordRepeat, groupName + "ImgRepetitionGapVal");
-        
+
         addCSVEntryMillisec(jsonData, "InversionTime", recordRepeat, groupName + "ImgInversionTime");
-        
+
         addCSVEntry(jsonData, "FlipAngle", recordRepeat, groupName + "ImgFlipAngleMeasr");
-        
+
         String partialFourier = getJsonString(jsonData, "PartialFourier");
         if (partialFourier != null && !partialFourier.equals("")) {
             csvFieldNames.add(groupName + "ImgPhasPartialFourierInd");
             recordRepeat.add("Yes");
-            
+
             csvFieldNames.add(groupName + "ImgPhasPartialFourierVal");
             recordRepeat.add(partialFourier);
         }
-        
+
         addCSVEntry(jsonData, "BaseResolution", recordRepeat, groupName + "ImgBaseResolutionVal");
-        
+
         addCSVEntry(jsonData, "PercentPhaseFOV", recordRepeat, groupName + "ImgPhasResltnPercentVal");
-        
+
         addCSVEntryMillisec(jsonData, "EffectiveEchoSpacing", recordRepeat, groupName + "ImgEchoSpcVal");
-        
+
         addCSVEntry(jsonData, "EchoTrainLength", recordRepeat, groupName + "ImgEchoTrainLngthMeasr");
-        
+
         addCSVEntry(jsonData, "InPlanePhaseEncodingDirectionDICOM", recordRepeat, groupName + "ImgPhasEncdeDirctTxt");
-        
+
         // TODO - ?
 //        addCSVEntry(jsonData, "PhaseEncodingDirection", recordRepeat, groupName + "");
-        
+
         groupName = "Magnetic Resonance RF Coil.";
-        
+
         addCSVEntry(jsonData, "ReceiveCoilName", recordRepeat, groupName + "ImgRFCoilName");
     }
-    
+
+    private void readMRFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData, String imgFileName) {
+//      "MagneticFieldStrength": 3,
+//      "SeriesDescription": "SAG_3D_T2_FLAIR",
+//      "ProtocolName": "SAG_3D_T2_FLAIR",
+//      "EchoTime": 0.388,
+//      "RepetitionTime": 5,
+//      "InversionTime": 1.8,
+//      "FlipAngle": 120,
+//      "PartialFourier": 1,
+//      "BaseResolution": 256,
+//      "PhaseResolution": 1,
+//      "ReceiveCoilName": "HeadNeck_20",
+//      "ReceiveCoilActiveElements": "HE1-4;NE1,2",
+//      "PercentPhaseFOV": 100,
+//      "EchoTrainLength": 251,
+//      "PhaseEncodingSteps": 229,
+//      "AcquisitionMatrixPE": 256,
+//      "ReconMatrixPE": 256,
+//      "ParallelReductionFactorInPlane": 2,
+//      "PixelBandwidth": 750,
+//      "InPlanePhaseEncodingDirectionDICOM": "ROW",
+
+//  "EffectiveEchoSpacing": 0.00047001,
+
+        String groupName = "Magnetic Resonance Information.";
+
+        // TODO BIDS now has PulseSequenceType, but it probably requires mapping
+
+        String pulseSeq = getJsonString(jsonData, "ImgPulseSeqTyp");
+        if ( !isValueSet(pulseSeq)) {
+            // guess value based on the image file name
+            pulseSeq = guessPulseSeqFromFileName(imgFileName);
+        }
+
+        // set either through json value or file name guessing
+        if (isValueSet(pulseSeq)) {
+            extractedFields.put(groupName + "ImgPulseSeqTyp", pulseSeq);
+        }
+
+        extractedFields.put(groupName + "ImgScannerStrgthVal", convertMagFieldStrengthToBRICS(getJsonString(jsonData, "MagneticFieldStrength")));
+
+        // convert all times from sec to millisec?
+        addExtractedFieldMillisec(jsonData, "EchoTime", extractedFields, groupName + "ImgEchoDur");
+
+        addExtractedFieldMillisec(jsonData, "RepetitionTime", extractedFields, groupName + "ImgRepetitionGapVal");
+
+        addExtractedFieldMillisec(jsonData, "InversionTime", extractedFields, groupName + "ImgInversionTime");
+
+        addExtractedField(jsonData, "FlipAngle", extractedFields, groupName + "ImgFlipAngleMeasr");
+
+        String partialFourier = getJsonString(jsonData, "PartialFourier");
+        if (partialFourier != null && !partialFourier.equals("")) {
+            extractedFields.put(groupName + "ImgPhasPartialFourierInd", "Yes");
+
+            extractedFields.put(groupName + "ImgPhasPartialFourierVal", partialFourier);
+        }
+
+        addExtractedField(jsonData, "BaseResolution", extractedFields, groupName + "ImgBaseResolutionVal");
+
+        addExtractedField(jsonData, "PercentPhaseFOV", extractedFields, groupName + "ImgPhasResltnPercentVal");
+
+        addExtractedFieldMillisec(jsonData, "EffectiveEchoSpacing", extractedFields, groupName + "ImgEchoSpcVal");
+
+        addExtractedField(jsonData, "EchoTrainLength", extractedFields, groupName + "ImgEchoTrainLngthMeasr");
+
+        addExtractedField(jsonData, "InPlanePhaseEncodingDirectionDICOM", extractedFields, groupName + "ImgPhasEncdeDirctTxt");
+
+        // TODO - ?
+        // addCSVEntry(jsonData, "PhaseEncodingDirection", extractedFields, groupName + "");
+
+        groupName = "Magnetic Resonance RF Coil.";
+
+        addExtractedField(jsonData, "ReceiveCoilName", extractedFields, groupName + "ImgRFCoilName");
+    }
+
     private void readDwiFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
         // TODO - nothing to extract right now?
     }
-    
+
+    private void readDwiFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData) {
+        // TODO - nothing to extract right now?
+    }
+
     private void setBvalBvecFields(ArrayList<String> recordRepeat, Vector<File> fileList) {
         String groupName = IMG_DIFF_GROUP + ".";
-        
+
         File bvalFile = null;
         File bvecFile = null;
-        
+
         Vector<File> otherFiles = new Vector<File>();
         for (File file : fileList) {
-            if (file.getName().endsWith(".bval" )) {
+            if (file.getName().endsWith(".bval")) {
                 bvalFile = file;
-            } else if (file.getName().endsWith(".bvec" )) {
+            } else if (file.getName().endsWith(".bvec")) {
                 bvecFile = file;
             } else {
                 otherFiles.add(file);
             }
         }
-        
+
         if (bvalFile != null) {
             HashMap<String, String> deTable = readBvalFile(bvalFile);
             for (String deName : deTable.keySet()) {
@@ -2125,30 +2233,30 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     addCSVEntry(recordRepeat, deName, deTable.get(deName));
                 }
             }
-            
+
             addCSVEntry(recordRepeat, groupName + IMG_DIFF_BVAL_ELEMENT_NAME, bvalFile.getAbsolutePath());
         }
-        
+
         if (bvecFile != null) {
             addCSVEntry(recordRepeat, groupName + IMG_DIFF_BVEC_ELEMENT_NAME, bvalFile.getAbsolutePath());
         }
-        
+
         // TODO - need to handle any additional files and put into Diffusion Derived Data.ImgFile?
         for (File file : otherFiles) {
             System.err.println("DWI other file:\t" + file);
         }
     }
-    
+
     private HashMap<String, String> readBvalFile(File bvalFile) {
         String groupName = IMG_DIFF_GROUP + ".";
 
         if (bvalFile == null) {
             return null;
         }
-        
+
         int numDirections = 0;
-        HashMap<Double,Integer> bvalList = new HashMap<Double,Integer>();
-        
+        HashMap<Double, Integer> bvalList = new HashMap<Double, Integer>();
+
         HashMap<String, String> deTable = new HashMap<String, String>();
 
         if (bvalFile != null) {
@@ -2157,13 +2265,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 reader = new FileReader(bvalFile);
                 BufferedReader bufferedReader = new BufferedReader(reader);
                 String line;
-                while ((line = bufferedReader.readLine()) != null) {
+                while ( (line = bufferedReader.readLine()) != null) {
                     String[] split = line.split(" ");
                     for (String valStr : split) {
                         Double val = new Double(valStr);
-                        
+
                         // only non-zero bvals be counted as part of directions
-                        if (!val.equals(new Double(0))) {
+                        if ( !val.equals(new Double(0))) {
                             numDirections++;
                         }
                         if (bvalList.containsKey(val)) {
@@ -2173,29 +2281,29 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                     }
                 }
-                
+
                 reader.close();
             } catch (IOException e) {
                 e.printStackTrace();
-                
+
                 if (reader != null) {
                     try {
                         reader.close();
                     } catch (IOException e1) {}
                 }
-                
+
                 return null;
             }
-            
+
             deTable.put(groupName + "ImgDiffusionDirCt", "" + numDirections);
-            
+
             int bvalCount = 0;
             Double[] bvals = (Double[]) bvalList.keySet().toArray(new Double[0]);
             Arrays.sort(bvals);
             for (int i = 0; i < bvals.length; i++) {
                 if (bvals[i] != 0) {
                     bvalCount++;
-                    
+
                     if (bvalCount == 1) {
                         deTable.put(groupName + "ImgDiffusionFirstBVal", "" + bvals[i]);
                     } else if (bvalCount == 2) {
@@ -2215,10 +2323,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
             deTable.put(groupName + "ImgDiffusionBValCt", "" + bvalCount);
         }
-        
+
         return deTable;
     }
-    
+
     private void readFuncFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
 //        "TaskName":"Resting State",
 //        "SliceTiming": [
@@ -2261,17 +2369,65 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                        1.2075  ],
 
         String groupName = "fMRI Information.";
-        
+
         String taskType = mapTaskNameBIDS(getJsonString(jsonData, "TaskName"));
 
         addCSVEntry(recordRepeat, groupName + "ImgFMRITaskTyp", taskType);
     }
-    
+
+    private void readFuncFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData) {
+//      "TaskName":"Resting State",
+//      "SliceTiming": [
+//                      0,
+//                      1.275,
+//                      0.0675,
+//                      1.3425,
+//                      0.135,
+//                      1.4075,
+//                      0.2025,
+//                      1.475,
+//                      0.27,
+//                      1.5425,
+//                      0.335,
+//                      1.61,
+//                      0.4025,
+//                      1.6775,
+//                      0.47,
+//                      1.7425,
+//                      0.5375,
+//                      1.81,
+//                      0.605,
+//                      1.8775,
+//                      0.6725,
+//                      1.945,
+//                      0.7375,
+//                      2.0125,
+//                      0.805,
+//                      2.0775,
+//                      0.8725,
+//                      2.145,
+//                      0.94,
+//                      2.2125,
+//                      1.0075,
+//                      2.28,
+//                      1.0725,
+//                      2.3475,
+//                      1.14,
+//                      2.415,
+//                      1.2075  ],
+
+        String groupName = "fMRI Information.";
+
+        String taskType = mapTaskNameBIDS(getJsonString(jsonData, "TaskName"));
+
+        addExtractedField(extractedFields, groupName + "ImgFMRITaskTyp", taskType);
+    }
+
     private String mapTaskNameBIDS(String taskName) {
         if (taskName == null || taskName.equals("")) {
             return null;
         }
-        
+
 //        Affective Stroop
 //        Autobiographical Memory
 //        Classical Conditioning
@@ -2286,9 +2442,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //        Stop-Signal
 //        Visual Attention
 //        Visual Attention/Inhibition of Return
-        
+
         String lowerTaskName = taskName.toLowerCase();
-        
+
         if (lowerTaskName.contains("n back") || lowerTaskName.contains("n-back")) {
             return "N-back";
         } else if (lowerTaskName.startsWith("rest")) {
@@ -2297,22 +2453,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return taskName;
         }
     }
-    
+
     private void setAdditionalFuncFiles(ArrayList<ArrayList<String>> record, Vector<File> files) {
         // if no files, exit
         if (files.size() == 0) {
             return;
         }
-        
+
         String groupName = "fMRI Auxiliary Files.";
         String auxFileDeName = "ImgFMRIAuxFile";
-        
+
         csvFieldNames.add(groupName + auxFileDeName);
-        
+
         int curRowIndex = 0;
         for (File file : files) {
             // TODO: try to determine the ImgFMRIAuxFileTyp from the file name
-            
+
             // if the row already exists in the record, add the file path to the end
             if (record.get(curRowIndex) != null) {
                 record.get(curRowIndex).add(file.getAbsolutePath());
@@ -2323,25 +2479,25 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (int i = 0; i < csvFieldNames.size(); i++) {
                     repeatRow.add("");
                 }
-                
+
                 repeatRow.add(file.getAbsolutePath());
                 record.add(repeatRow);
             }
-            
+
             curRowIndex++;
         }
     }
-    
+
     private boolean addCSVEntry(ArrayList<String> recordRepeat, String bricsCsvFieldName, String value) {
         if (value != null && !value.equals("")) {
             csvFieldNames.add(bricsCsvFieldName);
             recordRepeat.add(value);
             return true;
         }
-        
+
         return false;
     }
-    
+
     private boolean addCSVEntry(JSONObject jsonData, String jsonFieldName, ArrayList<String> recordRepeat, String bricsCsvFieldName) {
         String val = getJsonString(jsonData, jsonFieldName);
         if (val != null && !val.equals("")) {
@@ -2349,51 +2505,80 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             recordRepeat.add(val);
             return true;
         }
-        
+
         return false;
     }
-    
+
     private boolean addCSVEntryMillisec(JSONObject jsonData, String jsonFieldName, ArrayList<String> recordRepeat, String bricsCsvFieldName) {
         double val = getJsonDouble(jsonData, jsonFieldName);
-        if (!Double.isNaN(val)) {
+        if ( !Double.isNaN(val)) {
             csvFieldNames.add(bricsCsvFieldName);
             recordRepeat.add("" + (1000.0 * val));
             return true;
         }
-        
+
         return false;
     }
-    
+
+    private boolean addExtractedField(HashMap<String, String> extractedFields, String bricsCsvFieldName, String value) {
+        if (value != null && !value.equals("")) {
+            extractedFields.put(bricsCsvFieldName, value);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean addExtractedField(JSONObject jsonData, String jsonFieldName, HashMap<String, String> extractedFields, String bricsCsvFieldName) {
+        String val = getJsonString(jsonData, jsonFieldName);
+        if (val != null && !val.equals("")) {
+            extractedFields.put(bricsCsvFieldName, val);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean addExtractedFieldMillisec(JSONObject jsonData, String jsonFieldName, HashMap<String, String> extractedFields, String bricsCsvFieldName) {
+        double val = getJsonDouble(jsonData, jsonFieldName);
+        if ( !Double.isNaN(val)) {
+            extractedFields.put(bricsCsvFieldName, "" + (1000.0 * val));
+            return true;
+        }
+
+        return false;
+    }
+
     private double getJsonDouble(JSONObject jsonData, String fieldName) {
         double val = Double.NaN;
-        
+
         try {
             val = jsonData.getDouble(fieldName);
         } catch (final JSONException e) {
-            //System.err.println("JSONException retrieving (" + fieldName + ") " + e);
+            // System.err.println("JSONException retrieving (" + fieldName + ") " + e);
         }
-        
+
         return val;
     }
-    
+
     private String getJsonString(JSONObject jsonData, String fieldName) {
         String val = null;
-        
+
         try {
             val = jsonData.getString(fieldName);
         } catch (final JSONException e) {
-            //System.err.println("JSONException retrieving (" + fieldName + ") " + e);
+            // System.err.println("JSONException retrieving (" + fieldName + ") " + e);
         }
-        
+
         return val;
     }
-    
+
     private String getFileAsString(final File file) {
         String fileContents = null;
         RandomAccessFile raFile = null;
         long fileLength;
         byte[] bufferByte;
-        
+
         try {
             raFile = new RandomAccessFile(file, "r");
         } catch (final FileNotFoundException e) {
@@ -2401,7 +2586,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             e.printStackTrace();
             return null;
         }
-        
+
         try {
             fileLength = raFile.length();
         } catch (final IOException e) {
@@ -2414,7 +2599,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } catch (final IOException closeE) {}
             return null;
         }
-        
+
         bufferByte = new byte[(int) fileLength];
         try {
             raFile.read(bufferByte);
@@ -2428,9 +2613,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } catch (final IOException closeE) {}
             return null;
         }
-        
+
         fileContents = new String(bufferByte, 0, (int) fileLength).trim();
-        
+
         try {
             raFile.close();
         } catch (final IOException e) {
@@ -2443,16 +2628,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } catch (final IOException closeE) {}
             return null;
         }
-        
+
         return fileContents;
     }
-    
+
     private JSONObject readJsonFile(final File jsonFile) {
         JSONObject jsonObject = null;
-        
+
         String fileContents = getFileAsString(jsonFile);
-        
-        if (!fileContents.startsWith("{") || !fileContents.endsWith("}")) {
+
+        if ( !fileContents.startsWith("{") || !fileContents.endsWith("}")) {
             return null;
         }
 
@@ -2463,7 +2648,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             e.printStackTrace();
             return null;
         }
-        
+
         return jsonObject;
     }
 
@@ -2506,7 +2691,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             // List of records, each record consisting of 1+ lines, split into field values
             final ArrayList<ArrayList<ArrayList<String>>> recordList = new ArrayList<ArrayList<ArrayList<String>>>();
-            
+
             FormStructure dataStructure = null;
             for (final FormStructure ds : dataStructureList) {
                 if (ds.getShortName().equalsIgnoreCase(dsName)) {
@@ -2524,44 +2709,43 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             csvFieldNames = new ArrayList<String>(csvFieldNamesWithRecord.length - 1);
             int recordFieldIndex = -1;
             for (int i = 0; i < csvFieldNamesWithRecord.length; i++) {
-                if (csvFieldNamesWithRecord[i].equalsIgnoreCase(recordIndicatorColumn)
-                        || csvFieldNamesWithRecord[i].equalsIgnoreCase("\"" + recordIndicatorColumn + "\"")) {
+                if (csvFieldNamesWithRecord[i].equalsIgnoreCase(recordIndicatorColumn) || csvFieldNamesWithRecord[i].equalsIgnoreCase("\"" + recordIndicatorColumn + "\"")) {
                     recordFieldIndex = i;
                 } else {
                     // don't add fields without a name (error in the middle of the CSV, ignore at the end)
                     if ( !csvFieldNamesWithRecord[i].trim().equals("")) {
-                    	String csvField = csvFieldNamesWithRecord[i].trim().replaceAll("^\"|\"$", "");
-                    	
+                        String csvField = csvFieldNamesWithRecord[i].trim().replaceAll("^\"|\"$", "");
+
                         // if the names are surrounded by quotes, remove them before adding.
                         csvFieldNames.add(csvField);
-                        
+
                         // check that the field name matches one of the group/de combos from the form structure
-                    	final String[] deGroupAndName = splitFieldString(csvField);
-                    	
-                    	boolean foundField = false;
-                    	
-                    	// all data elements belong to a group. if there is no group, this is always an error
-                    	if (deGroupAndName.length == 2) {
-                        	DE_SEARCH:
-                        	for (RepeatableGroup group : dataStructure.getRepeatableGroups()) {
-                        		if (group.getName().equalsIgnoreCase(deGroupAndName[0])) {
-                        			for (MapElement de : group.getDataElements()) {
-                        				if (de.getStructuralDataElement().getName().equalsIgnoreCase(deGroupAndName[1])) {
-                        					foundField = true;
-                        					break DE_SEARCH;
-                        				}
-                        			}
-                        		}
-                        	}
-                        	
-                        	if (!foundField) {
-                        		MipavUtil.displayError("Unrecogzied data element in CSV: " + csvField + ".  Check that all group and data element names match those in " + dsName);
-                        		return false;
-                        	}
-                    	} else {
-                    		MipavUtil.displayError("Data element without a specified group in CSV: " + csvField + ".  Check " + dsName + " in the Data Dictionary to find the appropriate group.");
-                    		return false;
-                    	}
+                        final String[] deGroupAndName = splitFieldString(csvField);
+
+                        boolean foundField = false;
+
+                        // all data elements belong to a group. if there is no group, this is always an error
+                        if (deGroupAndName.length == 2) {
+                            DE_SEARCH: for (RepeatableGroup group : dataStructure.getRepeatableGroups()) {
+                                if (group.getName().equalsIgnoreCase(deGroupAndName[0])) {
+                                    for (MapElement de : group.getDataElements()) {
+                                        if (de.getStructuralDataElement().getName().equalsIgnoreCase(deGroupAndName[1])) {
+                                            foundField = true;
+                                            break DE_SEARCH;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if ( !foundField) {
+                                MipavUtil.displayError("Unrecogzied data element in CSV: " + csvField + ".  Check that all group and data element names match those in " + dsName);
+                                return false;
+                            }
+                        } else {
+                            MipavUtil.displayError(
+                                    "Data element without a specified group in CSV: " + csvField + ".  Check " + dsName + " in the Data Dictionary to find the appropriate group.");
+                            return false;
+                        }
                     } else {
                         // ignore if no more real field names (and no data values for the column). otherwise show error
                         boolean allEmpty = true;
@@ -2646,11 +2830,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (final ArrayList<ArrayList<String>> record : recordList) {
                 progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
                 System.out.println("Reading CSV row " + i + " of " + recordList.size());
-                
+
                 if (readErrorFileOut != null) {
                     readErrorFileOut.println("Reading CSV row " + i + " of " + recordList.size());
                 }
-                
+
                 InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
                 if (progressInc > 0) {
                     progressBar.updateValue(progressBar.getValue() + progressInc);
@@ -2671,9 +2855,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             for (int j = 0; j < csvProblemTagList.size(); j++) {
                 final Vector<FileDicomTag> problemTags = csvProblemTagList.get(j);
-                if (problemTags != null  && !cmdLineCsvFlag) {
+                if (problemTags != null && !cmdLineCsvFlag) {
                     boolean isDeidentified = deidentificationDialogDicom(csvProblemFileDirList.get(j), csvProblemFileNameList.get(j), problemTags, true);
-                    
+
                     // if the user certified that all data is okay, stop checking
                     if (csvDeidentDontAsk) {
                         break;
@@ -2700,7 +2884,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             progressBar.dispose();
 
-            
         } catch (final Exception e) {
             e.printStackTrace();
             return false;
@@ -2713,7 +2896,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     e.printStackTrace();
                 }
             }
-            
+
             if (br != null) {
                 try {
                     br.close();
@@ -2854,9 +3037,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         logOutputArea.setBorder(JDialogBase.buildTitledBorder("Output log"));
         logOutputArea.getTextArea().setEditable(false);
         logOutputArea.getTextArea().setRows(10);
-        
+
         final JPanel outputDirPanel = new JPanel();
-        
+
         final JLabel outputDirLabel = new JLabel("Output Directory for Validation Tool ");
         outputDirLabel.setFont(serif12B);
         outputDirTextField = new JTextField(30);
@@ -2864,7 +3047,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         outputDirTextField.setToolTipText(outputDirBase);
         outputDirTextField.setText(outputDirBase);
         outputDirTextField.setFont(serif12);
-        
+
         outputDirButton = new JButton("Browse");
         outputDirButton.addActionListener(this);
         outputDirButton.setToolTipText("Choose Output Directory for Validation Tool files");
@@ -2959,10 +3142,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             percentSizer.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
             // Resample image size based on percent inputted
-            final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,
-                    (float) (origImage.getResolutions(0)[0] / (percentage * .01)), (float) (origImage.getResolutions(0)[1] / (percentage * .01)),
-                    (int) (origImage.getExtents()[0] * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01), origImage.getUnitsOfMeasure(),
-                    false, true, false, true, origImage.getImageCentermm(false));
+            final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1, (float) (origImage.getResolutions(0)[0] / (percentage * .01)),
+                    (float) (origImage.getResolutions(0)[1] / (percentage * .01)), (int) (origImage.getExtents()[0] * percentage * .01),
+                    (int) (origImage.getExtents()[1] * percentage * .01), origImage.getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false));
             transformer.addProgressChangeListener(listener);
             transformer.runAlgorithm();
             thumbnailImage = transformer.getTransformedImage();
@@ -2992,8 +3174,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             try {
                 // Make algorithm
-                lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false,
-                        borderThick);
+                lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
                 lightGen.addProgressChangeListener(listener);
                 lightGen.run();
                 thumbnailImage = lightGen.getImage();
@@ -3035,8 +3216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
             try {
                 // Make algorithm
-                lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false,
-                        borderThick);
+                lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
                 lightGen.addProgressChangeListener(listener);
                 lightGen.run();
                 thumbnailImage = lightGen.getImage();
@@ -3057,7 +3237,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * Create the ZIP(s) containing the original image files and the meta-data for each image dataset.
      */
     private void createSubmissionFiles() {
-        
+
         final ViewJProgressBar progressBar = new ViewJProgressBar("Generating output package", "Creating output CSV file(s)", 0, 100, false);
         progressBar.setVisible(true);
         progressBar.updateValue(5);
@@ -3068,12 +3248,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         final int numDataStructs = structTableModel.getRowCount();
-        
+
         if (numDataStructs == 0) {
             MipavUtil.displayError("No images records are ready for package generation.  If you loaded an input CSV, check any error output/logs for image read errors.");
             return;
         }
-        
+
         final int progressInc = 95 / numDataStructs;
         final int rowsPerInc = (numDataStructs / 95) + 1;
 
@@ -3166,8 +3346,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if ( !outputSubDirFile.exists()) {
                 outputSubDirFile.mkdirs();
             }
-            
-            progressBar.setMessage("Creating submission files for record #" + (i+1));
+
+            progressBar.setMessage("Creating submission files for record #" + (i + 1));
             if (progressInc > 0) {
                 progressBar.updateValue(progressBar.getValue() + progressInc);
             } else if ( (i % rowsPerInc) == 0) {
@@ -3179,20 +3359,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (isImagingStructure(dsName) && imgFileInfo != null) {
 
                 // this means we are working with the image datastructure
-                printlnToLog("Creating submission file for record #" + (i+1) + ": " + name);
+                printlnToLog("Creating submission file for record #" + (i + 1) + ": " + name);
 
                 // printlnToLog("Opening: " + imageFile + ", multifile: " + multifiles.get(i));
 
                 final List<String> origFiles = imgFileInfo.getOrigFiles();
 
-                printlnToLog("Creating thumbnail image:\t" + outputSubDir + outputFileNameBase + ".jpg");
-                progressBar.setMessage("Creating thumbnail for record #" + (i+1));
+                if (imgFileInfo.getThumbnailImgData() != null) {
+                    printlnToLog("Creating thumbnail image:\t" + outputSubDir + outputFileNameBase + ".jpg");
+                    progressBar.setMessage("Creating thumbnail for record #" + (i + 1));
 
-                MemoryImageSource thumbnailImageData = getThumbnailSource(imgFileInfo.getThumbnailImgData());
+                    MemoryImageSource thumbnailImageData = getThumbnailSource(imgFileInfo.getThumbnailImgData());
 
-                if (thumbnailImageData != null) {
-                    final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputSubDir, true);
-                    writeThumbnailJIMI(thumbnailImageData, opts);
+                    if (thumbnailImageData != null) {
+                        final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputSubDir, true);
+                        writeThumbnailJIMI(thumbnailImageData, opts);
+                    }
                 }
 
                 String imagePath = null;
@@ -3202,21 +3384,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         final File srcFile = new File(imgFileInfo.getImgFilePath());
                         final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
                         printlnToLog("Copying original image zip file into output directory:\t" + destFile.getAbsolutePath());
-                        progressBar.setMessage("Copying zip file for record #" + (i+1));
+                        progressBar.setMessage("Copying zip file for record #" + (i + 1));
                         FileUtils.copyFile(srcFile, destFile);
                         imagePath = destFile.getAbsolutePath();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy image zip file into output directory");
                         e.printStackTrace();
                     }
-                } else if ( ( (imgFileInfo.getImgFilePath().endsWith(".tar.gz") || imgFileInfo.getImgFilePath().endsWith(".tgz")) && new File(
-                        imgFileInfo.getImgFilePath()).exists())) {
+                } else if ( ( (imgFileInfo.getImgFilePath().endsWith(".tar.gz") || imgFileInfo.getImgFilePath().endsWith(".tgz"))
+                        && new File(imgFileInfo.getImgFilePath()).exists())) {
                     // the files were already tarballed - so don't zip again. copy to output dir
                     try {
                         final File srcFile = new File(imgFileInfo.getImgFilePath());
                         final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
                         printlnToLog("Copying original image tarball file into output directory:\t" + destFile.getAbsolutePath());
-                        progressBar.setMessage("Copying tarball file for record #" + (i+1));
+                        progressBar.setMessage("Copying tarball file for record #" + (i + 1));
                         FileUtils.copyFile(srcFile, destFile);
                         imagePath = destFile.getAbsolutePath();
                     } catch (final IOException e) {
@@ -3228,22 +3410,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     try {
                         final File srcFile = new File(imgFileInfo.getOrigFiles().get(0));
                         File destFile;
-                        
-                        // make sure the single file we're copying over has an extension.  
+
+                        // make sure the single file we're copying over has an extension.
                         // a bug in the validation tool requires that 'Triplanar' type data elements have an extension
                         if (FilenameUtils.getExtension(srcFile.getName()).equals("")) {
                             String ext = FileTypeTable.getFileTypeInfo(imgFileInfo.getFileFormat()).getDefaultExtension();
                             if (ext == null || ext.equals("")) {
                                 ext = ".ima";
                             }
-                            
+
                             destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName() + ext);
                         } else {
                             destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
                         }
-                        
+
                         printlnToLog("Copying original image file into output directory:\t" + destFile.getAbsolutePath());
-                        progressBar.setMessage("Copying image file for record #" + (i+1));
+                        progressBar.setMessage("Copying image file for record #" + (i + 1));
                         FileUtils.copyFile(srcFile, destFile);
                         imagePath = destFile.getAbsolutePath();
                     } catch (final IOException e) {
@@ -3254,7 +3436,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     // need to create a zip file with the original image files
                     try {
                         String zipFilePath = outputSubDir + outputFileNameBase + ".zip";
-                        
+
                         // if MR, try to put the pulse sequence type into the zip name
                         if (isMRImagingStructure(dsName)) {
                             // TODO
@@ -3270,7 +3452,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     if (found) {
                                         break;
                                     }
-                                    
+
                                     for (final DataElementValue deVal : repeat.getDataElements()) {
                                         if (isPulseSeqTag(deVal)) {
                                             pulseSeq = "_" + cleanPulseSeqVal(deVal.getValue());
@@ -3280,12 +3462,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     }
                                 }
                             }
-                            
+
                             zipFilePath = outputSubDir + outputFileNameBase + pulseSeq + ".zip";
                         }
-                        
+
                         printlnToLog("Creating ZIP file (" + origFiles.size() + " files):\t" + zipFilePath);
-                        progressBar.setMessage("Creating ZIP file for record #" + (i+1));
+                        progressBar.setMessage("Creating ZIP file for record #" + (i + 1));
 //                        for (final String file : origFiles) {
 //                            printlnToLog("Adding file to ZIP:\t" + file);
 //                        }
@@ -3324,7 +3506,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             if (isMainImagingFileElement(deVal)) {
                                 deVal.setValue(imagePath);
                             } else if (deVal.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
-                                deVal.setValue(structOutputBaseNameList.get(dsName.toLowerCase()) + File.separator + outputFileNameBase + ".jpg");
+                                if (imgFileInfo.getThumbnailImgData() != null) {
+                                    deVal.setValue(structOutputBaseNameList.get(dsName.toLowerCase()) + File.separator + outputFileNameBase + ".jpg");
+                                } else {
+                                    // if no preview is generated, set it to blank to avoid the "Automatically
+                                    // generated..." message from being written - ie for spectroscopy
+                                    deVal.setValue("");
+                                }
                             } else if (deVal.getName().equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME) && hashCode != null) {
                                 deVal.setValue(hashCode);
                             } else if ( (deVal.getDataElementInfo().getType() == DataType.FILE || deVal.getDataElementInfo().getType() == DataType.TRIPLANAR)
@@ -3335,9 +3523,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     // if the user selected multiple files, zip them all up
                                     try {
                                         final String[] filePaths = srcFileValue.split(BROWSE_NONIMG_DELIM);
-                                        
-                                        String newZipPath = outputSubDir + outputFileNameBase + "_" + group.getName() + "_" + repeat.getRepeatNumber() + "_" + deVal.getName() + ".zip";
-                                        
+
+                                        String newZipPath = outputSubDir + outputFileNameBase + "_" + group.getName() + "_" + repeat.getRepeatNumber() + "_" + deVal.getName()
+                                                + ".zip";
+
                                         // if MR, try to put the pulse sequence type into the zip name
                                         if (isMRImagingStructure(dsName)) {
                                             String pulseSeq = "";
@@ -3350,19 +3539,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                                     }
                                                 }
                                             }
-                                            
+
                                             newZipPath = outputSubDir + outputFileNameBase + pulseSeq + ".zip";
                                         }
-                                        
-                                        
-                                        
+
                                         final List<String> filePathList = new ArrayList<String>();
                                         for (final String file : filePaths) {
 //                                            printlnToLog("Adding file to ZIP:\t" + file);
                                             filePathList.add(file);
                                         }
                                         printlnToLog("Creating ZIP of attached files for (" + filePathList.size() + " files):\t" + newZipPath);
-                                        progressBar.setMessage("Creating ZIP file for record #" + (i+1));
+                                        progressBar.setMessage("Creating ZIP file for record #" + (i + 1));
                                         makeZipFile(newZipPath, filePathList);
 
                                         // now that the zip file is created, set the de value to the zip file path
@@ -3378,7 +3565,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     try {
                                         final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
                                         printlnToLog("Copying attached file into output directory:\t" + destFile.getAbsolutePath());
-                                        progressBar.setMessage("Copying attached file for record #" + (i+1));
+                                        progressBar.setMessage("Copying attached file for record #" + (i + 1));
                                         FileUtils.copyFile(srcFile, destFile);
                                         deVal.setValue(destFile.getAbsolutePath());
                                     } catch (final IOException e) {
@@ -3415,7 +3602,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // this means that this is another data structure besides image
 
                 printlnToLog("Creating submission file for " + name);
-                progressBar.setMessage("Creating submission files for record #" + (i+1));
+                progressBar.setMessage("Creating submission files for record #" + (i + 1));
 
                 // if the data_structure contains image_file or
                 // image_thumbnail_file, just copy them over to submission
@@ -3518,8 +3705,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 if (copyToImageThumbnailPath.contains(File.separator)) {
                     // make directories
-                    final String dir = outputDirBase + File.separator
-                            + copyToImageThumbnailPath.substring(0, copyToImageThumbnailPath.lastIndexOf(File.separator));
+                    final String dir = outputDirBase + File.separator + copyToImageThumbnailPath.substring(0, copyToImageThumbnailPath.lastIndexOf(File.separator));
                     final File f1 = new File(dir);
                     f1.mkdirs();
 
@@ -3597,7 +3783,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 }
 
                                 printlnToLog("Copying " + f.getName() + " to " + destFile.getAbsolutePath());
-                                progressBar.setMessage("Copying attached files for record #" + (i+1));
+                                progressBar.setMessage("Copying attached files for record #" + (i + 1));
 
                                 try {
                                     final InputStream in = new FileInputStream(f);
@@ -3662,7 +3848,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 bw.write(csvStructRowData.get(lowerName));
 
                 // System.out.println(csvStructRowData.get(lowerName) +
-                // "  ||||  ");
+                // " |||| ");
 
                 bw.close();
             }
@@ -3680,7 +3866,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // Do nothing
             }
         }
-        
+
         progressBar.dispose();
 
         printlnToLog("*** Submission pre-processing complete. ***");
@@ -3729,7 +3915,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 Collections.sort(deList, dataElementCompare);
 
                 for (final DataElementValue deVal : deList) {
-                    //final String deName = deVal.getName();
+                    // final String deName = deVal.getName();
                     String value = deVal.getValue();
 
                     // final File f = new File(value);
@@ -3969,51 +4155,49 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return false;
         } catch (final NoSuchMethodError e) {
             System.err.println("JIMI write failed. Switching to ImageIO writer.");
-            //e.printStackTrace();
-            
+            // e.printStackTrace();
+
             BufferedImage bimg = toBufferedImage(createImage(imgData));
             try {
-                if (!ImageIO.write(bimg, "JPG", new File(name))) {
+                if ( !ImageIO.write(bimg, "JPG", new File(name))) {
                     MipavUtil.displayError("Failed to write thumbnail image: " + name);
                 }
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
-            
-            //e.printStackTrace();
+
+            // e.printStackTrace();
             return false;
         } catch (final NoClassDefFoundError e) {
             System.err.println("JIMI write failed. Switching to ImageIO writer.");
-            //e.printStackTrace();
-            
+            // e.printStackTrace();
+
             BufferedImage bimg = toBufferedImage(createImage(imgData));
             try {
-                if (!ImageIO.write(bimg, "JPG", new File(name))) {
+                if ( !ImageIO.write(bimg, "JPG", new File(name))) {
                     MipavUtil.displayError("Failed to write thumbnail image: " + name);
                 }
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
-            
-            //e.printStackTrace();
+
+            // e.printStackTrace();
             return false;
         }
 
         return true;
     }
-    
+
     /**
      * Converts a given Image into a BufferedImage
      *
      * @param img The Image to be converted
      * @return The converted BufferedImage
      */
-    public static BufferedImage toBufferedImage(Image img)
-    {
-        if (img instanceof BufferedImage)
-        {
+    public static BufferedImage toBufferedImage(Image img) {
+        if (img instanceof BufferedImage) {
             return (BufferedImage) img;
         }
 
@@ -4099,19 +4283,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        //return new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
+        // return new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0,
+        // image.getExtents()[0]);
         return new ThumbnailData(image.getExtents()[0], image.getExtents()[1], paintBuffer);
     }
-    
+
     private MemoryImageSource getThumbnailSource(final ThumbnailData thumbData) {
         return new MemoryImageSource(thumbData.width, thumbData.height, thumbData.thumbnailBuffer, 0, thumbData.width);
     }
-    
+
     private class ThumbnailData {
         public int width;
+
         public int height;
+
         public int[] thumbnailBuffer;
-        
+
         public ThumbnailData(int w, int h, int[] buff) {
             width = w;
             height = h;
@@ -4638,15 +4825,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return "";
     }
-    
+
     private static final int determineModality(int curModality, String structName) {
         int newModality = curModality;
-        
+
         final String upperStructureName = structName.toUpperCase();
-        
+
         // if no modality, try to guess from structure being used
         if (curModality == FileInfoBase.UNKNOWN_MODALITY) {
-            
+
             if (upperStructureName.endsWith("IMAGINGMR")) {
                 newModality = FileInfoBase.MAGNETIC_RESONANCE;
             } else if (upperStructureName.endsWith("IMAGINGCT")) {
@@ -4664,26 +4851,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             // some PDBP/LBP SPECT data reports as the dicom modality "nuclear medicine"
             newModality = FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY;
         }
-        
+
         return newModality;
     }
-    
+
     private static final String getModalityString(final FileInfoBase fInfo, final String structName) {
         int modality = fInfo.getModality();
-        
+
         modality = determineModality(modality, structName);
-        
+
         return FileInfoBase.getModalityStr(modality);
     }
-    
+
     private static final boolean isMRModality(final FileInfoBase fInfo, final String structName) {
         return getModalityString(fInfo, structName).equalsIgnoreCase("magnetic resonance");
     }
-    
+
     private static final boolean isCTModality(final FileInfoBase fInfo, final String structName) {
         return getModalityString(fInfo, structName).equalsIgnoreCase("computed tomography");
     }
-    
+
     private static final String getFileFormatString(final FileInfoBase fInfo) {
         final int fileFormatInt = fInfo.getFileFormat();
         String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
@@ -4692,14 +4879,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (fileFormatString.equalsIgnoreCase("mat")) {
             fileFormatString = "matlab";
         }
-        
+
         return fileFormatString;
     }
-    
+
     private static final boolean isDicomFormat(final FileInfoBase fInfo) {
         return getFileFormatString(fInfo).equalsIgnoreCase("dicom");
     }
-    
+
     private static final boolean isNiftiFormat(final FileInfoBase fInfo) {
         return getFileFormatString(fInfo).equalsIgnoreCase("nifti");
     }
@@ -4785,7 +4972,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return model;
     }
-    
+
     /**
      * Attempts to convert from the DICOM body part to BRICS anatomic site permissible values. If nothing matches,
      * return the original name.
@@ -4808,9 +4995,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (bodyPart.equalsIgnoreCase("TSPINE")) {
             return "Thoracic spine";
         }
-        
-        // DICOM: SKULL, CSPINE, TSPINE, LSPINE, SSPINE, COCCYX, CHEST, CLAVICLE, BREAST, ABDOMEN, PELVIS, HIP, SHOULDER, ELBOW, KNEE, ANKLE, HAND, FOOT, EXTREMITY, HEAD, HEART, NECK, LEG, ARM, JAW
-        
+
+        // DICOM: SKULL, CSPINE, TSPINE, LSPINE, SSPINE, COCCYX, CHEST, CLAVICLE, BREAST, ABDOMEN, PELVIS, HIP,
+        // SHOULDER, ELBOW, KNEE, ANKLE, HAND, FOOT, EXTREMITY, HEAD, HEART, NECK, LEG, ARM, JAW
+
         // BRICS: Brain, Calf, Cervical spine, Lumbar spine, Thigh, Thoracic spine
 
         return bodyPart;
@@ -4948,18 +5136,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final JList<String> list = (JList<String>) comp;
                 final ListModel<String> listModel = list.getModel();
 
-                boolean found = false;
                 int otherSpecifyIndex = -1;
                 boolean foundOtherInDE = false;
 
                 // values are assumed to never contain semi-colons since that's the delimiter
                 final String[] valueSplit = value.split(MULTI_SELECT_VALUE_DELIM);
 
+                String otherSpecifyValue = "";
                 final ArrayList<Integer> selectedIndicies = new ArrayList<Integer>();
                 for (final String val : valueSplit) {
+                    boolean found = false;
                     for (int k = 0; k < listModel.getSize(); k++) {
                         final String item = (String) listModel.getElementAt(k);
-                        if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                        if ( !foundOtherInDE && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
                             foundOtherInDE = true;
                             otherSpecifyIndex = k;
                         }
@@ -4972,16 +5161,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
 
                     if ( !found) {
-                        if (foundOtherInDE) {
-                            selectedIndicies.add(otherSpecifyIndex);
-                            if (deVal.getOtherSpecifyField() != null) {
-                                deVal.getOtherSpecifyField().setText(val);
-                            }
-                            System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
+                        if (otherSpecifyValue.equals("")) {
+                            otherSpecifyValue = val;
                         } else {
-                            System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
+                            otherSpecifyValue += MULTI_SELECT_VALUE_DELIM + val;
                         }
                     }
+                }
+
+                if (foundOtherInDE && !otherSpecifyValue.equals("")) {
+                    selectedIndicies.add(otherSpecifyIndex);
+                    if (deVal.getOtherSpecifyField() != null) {
+                        deVal.getOtherSpecifyField().setText(otherSpecifyValue);
+                    }
+                    System.err.println("Other specify\t" + deVal.getName() + "\t\t" + otherSpecifyValue);
+                } else if ( !foundOtherInDE && !otherSpecifyValue.equals("")) {
+                    System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + otherSpecifyValue);
                 }
 
                 final int[] intArray = new int[selectedIndicies.size()];
@@ -5007,8 +5202,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.FREE_FORM && deVal.getComp() instanceof JComboBox) {
             final JComboBox<String> combo = (JComboBox<String>) deVal.getComp();
             for (int i = 0; i < combo.getItemCount(); i++) {
-                if ( combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
-                        || combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                if (combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                     return true;
                 }
             }
@@ -5021,13 +5215,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * Returns whether this field is a new other specify field.
      */
     private static final boolean isNewOtherSpecifyField(final DataElementValue deVal) {
-        if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.SINGLE
-                || deVal.getDataElementInfo().getRestrictions() == InputRestrictions.MULTIPLE) {
+        if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.SINGLE || deVal.getDataElementInfo().getRestrictions() == InputRestrictions.MULTIPLE) {
             if (deVal.getComp() instanceof JComboBox) {
                 final JComboBox<String> combo = (JComboBox<String>) deVal.getComp();
                 for (int i = 0; i < combo.getItemCount(); i++) {
-                    if ( combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
-                            || combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                    if (combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || combo.getItemAt(i).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                         return true;
                     }
                 }
@@ -5068,7 +5260,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (csvValue != null) {
             csvValue = csvValue.trim();
         }
-        
+
         // TODO why tie checks to field names
 
         if (headerValue != null && !headerValue.trim().equals("")) {
@@ -5263,12 +5455,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return false;
     }
-    
+
     private static final boolean isBValFileElement(final String groupName, final String deName) {
         if (groupName.equalsIgnoreCase(IMG_DIFF_GROUP) && deName.equalsIgnoreCase(IMG_DIFF_BVAL_ELEMENT_NAME)) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -5305,44 +5497,44 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return false;
     }
-    
+
     private static final boolean isMRImagingStructure(final String structureName) {
-        if (!isImagingStructure(structureName)) {
+        if ( !isImagingStructure(structureName)) {
             return false;
         }
-        
+
         return structureName.equalsIgnoreCase(MRI_FS_NAME);
     }
-    
+
     private static final boolean isPulseSeqTag(final DataElementValue deVal) {
         return deVal.getGroupName().equalsIgnoreCase(IMG_MR_GROUP) && deVal.getName().equalsIgnoreCase(IMG_PULSE_SEQ_ELEMENT_NAME);
     }
-    
+
     private static final String cleanPulseSeqVal(final String value) {
         return value.replace('/', '-').replace(' ', '_').replace(',', '_');
     }
-    
+
     private static final boolean isSpectroscopyImagingStructure(final String structureName) {
-        if (!isImagingStructure(structureName)) {
+        if ( !isImagingStructure(structureName)) {
             return false;
         }
-        
+
         return structureName.toLowerCase().endsWith(SPECTROSCOPY_FS_SUFFIX);
     }
-    
+
     private static final boolean isFMRIImagingStructure(final String structureName) {
-        if (!isImagingStructure(structureName)) {
+        if ( !isImagingStructure(structureName)) {
             return false;
         }
-        
+
         return structureName.toLowerCase().endsWith(FMRI_FS_SUFFIX);
     }
-    
+
     private static final boolean isDtiImagingStructure(final String structureName) {
-        if (!isImagingStructure(structureName)) {
+        if ( !isImagingStructure(structureName)) {
             return false;
         }
-        
+
         return structureName.toLowerCase().endsWith(DTI_FS_SUFFIX);
     }
 
@@ -5449,8 +5641,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         private static final long serialVersionUID = -7905716122046419275L;
 
         @Override
-        public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row,
-                final int column) {
+        public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row, final int column) {
             final Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -5516,7 +5707,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     return tip;
                 }
             };
-            
+
             structsTable.setFont(serif12);
             structsTable.getTableHeader().setFont(serif12B);
 
@@ -5640,8 +5831,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             // structsTable.setAutoCreateRowSorter(true);
             // structsTable.getRowSorter().toggleSortOrder(0);
 
-            structsScrollPane = new JScrollPane(structsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            structsScrollPane = new JScrollPane(structsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             structsScrollPane.setPreferredSize(new Dimension(600, 300));
 
@@ -5797,8 +5987,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final JPanel mainPanel = new JPanel(new GridBagLayout());
 
             dsMainPanel = new JPanel(new GridBagLayout());
-            final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             final GridBagConstraints gbc = new GridBagConstraints();
 
@@ -5839,14 +6028,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
 
                             if (de != null) {
-                                // if another DE was appended, make sure that each record matches the new total length even if it did not have a value for the new DE
+                                // if another DE was appended, make sure that each record matches the new total length
+                                // even if it did not have a value for the new DE
                                 for (final ArrayList<String> values : record) {
                                     int fieldDiff = csvFieldNames.size() - record.size();
                                     for (int j = 0; j < fieldDiff; j++) {
                                         values.add("");
                                     }
                                 }
-                                
+
                                 for (final ArrayList<String> values : record) {
                                     // check value not empty and check type of field for date
                                     if ( !values.get(i).trim().equals("") && de.getType().equals(DataType.DATE)) {
@@ -5942,7 +6132,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final ArrayList<String> repeatValues = record.get(curRepeatNum);
 
                     ModelImage srcImage = null;
-                    
+
                     int curConflictSelection = resolveConflictsUsing;
 
                     // if image file set in this repeat, read in the image
@@ -5955,10 +6145,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         } else {
                             srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
                         }
-                        
+
                         if (srcImage != null) {
                             setFormImpliedRecordDataElements(fsData, srcImage, repeatValues);
-                            
+
                             // basic check that image data is de-identified
                             problemTags = deidentificationCheckDicomTags(srcImage.getFileInfo());
                             problemTagsFileDir = srcImage.getFileInfo(0).getFileDirectory();
@@ -5990,7 +6180,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if (curConflictSelection == RESOLVE_CONFLICT_CSV && srcImage != null) {
                         populateFields(fsData, srcImage, srcImage.getFileInfo(0));
                     }
-                    
+
                     File bvalFile = null;
 
                     for (int i = 0; i < csvFieldNames.size(); i++) {
@@ -6015,7 +6205,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
                                         final JTextField t = (JTextField) comp;
                                         t.setText(value);
-                                        
+
                                         if (isBValFileElement(deGroupAndName[0], deGroupAndName[1])) {
                                             bvalFile = new File(value);
                                         }
@@ -6043,19 +6233,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         final JList<String> list = (JList<String>) comp;
                                         final ListModel<String> listModel = list.getModel();
 
-                                        boolean found = false;
                                         int otherSpecifyIndex = -1;
                                         boolean foundOtherInDE = false;
 
                                         // values are assumed to never contain semi-colons since that's the delimiter
                                         final String[] valueSplit = value.split(MULTI_SELECT_VALUE_DELIM);
 
+                                        String otherSpecifyValue = "";
                                         final ArrayList<Integer> selectedIndicies = new ArrayList<Integer>();
                                         for (final String val : valueSplit) {
+                                            boolean found = false;
                                             for (int k = 0; k < listModel.getSize(); k++) {
                                                 final String item = (String) listModel.getElementAt(k);
-                                                if ( !foundOtherInDE
-                                                        && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
+                                                if ( !foundOtherInDE && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
                                                     foundOtherInDE = true;
                                                     otherSpecifyIndex = k;
                                                 }
@@ -6068,16 +6258,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                             }
 
                                             if ( !found) {
-                                                if (foundOtherInDE) {
-                                                    selectedIndicies.add(otherSpecifyIndex);
-                                                    if (deVal.getOtherSpecifyField() != null) {
-                                                        deVal.getOtherSpecifyField().setText(val);
-                                                    }
-                                                    System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
+                                                if (otherSpecifyValue.equals("")) {
+                                                    otherSpecifyValue = val;
                                                 } else {
-                                                    System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
+                                                    otherSpecifyValue += MULTI_SELECT_VALUE_DELIM + val;
                                                 }
                                             }
+                                        }
+
+                                        if (foundOtherInDE && !otherSpecifyValue.equals("")) {
+                                            selectedIndicies.add(otherSpecifyIndex);
+                                            if (deVal.getOtherSpecifyField() != null) {
+                                                deVal.getOtherSpecifyField().setText(otherSpecifyValue);
+                                            }
+                                            System.err.println("Other specify\t" + deVal.getName() + "\t\t" + otherSpecifyValue);
+                                        } else if ( !foundOtherInDE && !otherSpecifyValue.equals("")) {
+                                            System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + otherSpecifyValue);
                                         }
 
                                         final int[] intArray = new int[selectedIndicies.size()];
@@ -6097,11 +6293,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         }
                     }
-                    
+
                     // TODO if bval file given, try to read additional info
                     if (bvalFile != null) {
                         HashMap<String, String> bvalDeTable = readBvalFile(bvalFile);
-                            
+
                         if (bvalDeTable == null) {
                             MipavUtil.displayWarning("Unable to read contents of BVal file: " + bvalFile.getAbsolutePath());
                         } else {
@@ -6117,7 +6313,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         }
                     }
-                    
+
 //                    // TODO for MR-based data, try to set pulse sequence type for the first repeat based on available info, if not set already. check that srcImage is not null to only do it on the main row
 //                    if (srcImage != null && fsData.isGroupRepeatSet(IMG_MR_GROUP, 0)) {
 //                        for (final DataElementValue deVal : fsData.getGroupRepeat(IMG_MR_GROUP, 0).getDataElements()) {
@@ -6188,19 +6384,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         final JList<String> list = (JList<String>) comp;
                                         final ListModel<String> listModel = list.getModel();
 
-                                        boolean found = false;
                                         int otherSpecifyIndex = -1;
                                         boolean foundOtherInDE = false;
 
                                         // values are assumed to never contain semi-colons since that's the delimiter
                                         final String[] valueSplit = value.split(MULTI_SELECT_VALUE_DELIM);
 
+                                        String otherSpecifyValue = "";
                                         final ArrayList<Integer> selectedIndicies = new ArrayList<Integer>();
                                         for (final String val : valueSplit) {
+                                            boolean found = false;
                                             for (int k = 0; k < listModel.getSize(); k++) {
                                                 final String item = (String) listModel.getElementAt(k);
-                                                if ( !foundOtherInDE
-                                                        && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
+                                                if ( !foundOtherInDE && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
                                                     foundOtherInDE = true;
                                                     otherSpecifyIndex = k;
                                                 }
@@ -6213,16 +6409,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                             }
 
                                             if ( !found) {
-                                                if (foundOtherInDE) {
-                                                    selectedIndicies.add(otherSpecifyIndex);
-                                                    if (deVal.getOtherSpecifyField() != null) {
-                                                        deVal.getOtherSpecifyField().setText(val);
-                                                    }
-                                                    System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
+                                                if (otherSpecifyValue.equals("")) {
+                                                    otherSpecifyValue = val;
                                                 } else {
-                                                    System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
+                                                    otherSpecifyValue += MULTI_SELECT_VALUE_DELIM + val;
                                                 }
                                             }
+                                        }
+
+                                        if (foundOtherInDE && !otherSpecifyValue.equals("")) {
+                                            selectedIndicies.add(otherSpecifyIndex);
+                                            if (deVal.getOtherSpecifyField() != null) {
+                                                deVal.getOtherSpecifyField().setText(otherSpecifyValue);
+                                            }
+                                            System.err.println("Other specify\t" + deVal.getName() + "\t\t" + otherSpecifyValue);
+                                        } else if ( !foundOtherInDE && !otherSpecifyValue.equals("")) {
+                                            System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + otherSpecifyValue);
                                         }
 
                                         final int[] intArray = new int[selectedIndicies.size()];
@@ -6280,18 +6482,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         private ModelImage readImgFromCSV(final String parentDir, final String imageFile) {
             String filePath;
             boolean isMultifile;
-            
+
             final FileIO fileIO = new FileIO();
-            
+
             // fileIO.setQuiet(true);
             if (cmdLineCsvFlag) {
                 fileIO.setQuiet(true);
             }
-            
+
             ModelImage srcImage = null;
             validFile = true;
             File origSrcFile;
-            
+
             boolean isSpectroscopy = isSpectroscopyImagingStructure(dataStructureName);
             FileInfoBase[] spectroscopyHeaderList = null;
 
@@ -6301,10 +6503,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     String destName = imageFile.replace("/", File.separator);
                     destName = destName.replace("\\", File.separator);
                     destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName.lastIndexOf("."));
-                    
+
                     // String destDirName =
-                    //final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
-                    
+                    // final String tempDir = parentDir + File.separator + destName + "_temp_" +
+                    // System.currentTimeMillis();
+
                     final String tempDir = Files.createTempDirectory(destName + "_unzip_").toString();
                     tempDirs.add(tempDir);
 
@@ -6388,8 +6591,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     destName = destName.replace("\\", File.separator);
                     destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName.lastIndexOf(".t"));
                     // String destDirName =
-                    
-                    //final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
+
+                    // final String tempDir = parentDir + File.separator + destName + "_temp_" +
+                    // System.currentTimeMillis();
                     final String tempDir = Files.createTempDirectory(destName + "_unzip_").toString();
                     tempDirs.add(tempDir);
 
@@ -6475,7 +6679,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     break;
                                 }
                             }
-                            
+
                             if (origSrcFile.isDirectory()) {
                                 logError("No files found in specified image directory (those starting with '.' excluded): " + filePath);
                                 validFile = false;
@@ -6494,35 +6698,35 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         isMultifile = false;
                     }
                 }
-                
-                if (!isSpectroscopy) {
+
+                if ( !isSpectroscopy) {
                     final File file = new File(filePath);
-                    
+
                     System.out.println(file);
-                    
+
 //                    boolean[] prevDebugLvls = Preferences.getDebugLevels();
 //                    Preferences.setDebugLevels(new boolean[] {true, true, true, true, true});
-                    
+
                     if (cmdLineCsvFlag) {
                         PrintStream stdoutStream = new CmdLineOutputStream(System.out, readErrorFileOut);
                         PrintStream stderrStream = new CmdLineOutputStream(System.err, readErrorFileOut);
-                        
+
                         System.setOut(stdoutStream);
                         System.setErr(stderrStream);
                     }
-                    
+
                     srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
-                    
-                    if (cmdLineCsvFlag) {                            
+
+                    if (cmdLineCsvFlag) {
                         System.setOut(logOnlyOut);
                         System.setErr(logOnlyErr);
                     }
-                    
+
 //                    Preferences.setDebugLevels(prevDebugLvls);
 
                     if (srcImage == null) {
                         // if cmd line, highlight failure
-                    	logError("Unable to open image file specified: " + imageFile);
+                        logError("Unable to open image file specified: " + imageFile);
                         validFile = false;
                         return null;
                     }
@@ -6549,8 +6753,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         final int selectedRow = structTable.getSelectedRow();
                         previewImages.set(selectedRow, previewImg);
                         previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                        structRowImgFileInfoList.set(selectedRow, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile,
-                                FileUtility.getFileNameList(srcImage), srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
+                        structRowImgFileInfoList.set(selectedRow, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(srcImage),
+                                srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
                     } else {
                         final int size = previewImages.size();
                         previewImages.set(size - 1, previewImg);
@@ -6571,22 +6775,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     // if spectroscopy, only read image header, not the data and skip preview image
                     final File file = new File(filePath);
                     System.out.println(file);
-                    
+
                     int[] extents = new int[] {256, 256};
-                    
+
                     if (isMultifile) {
                         String[] fileList = FileUtility.getFileList(file.getParent() + File.separator, file.getName(), false);
-                        
+
                         spectroscopyHeaderList = new FileInfoBase[fileList.length];
-                        
+
                         for (int i = 0; i < fileList.length; i++) {
                             spectroscopyHeaderList[i] = fileIO.readHeader(file.getParent() + File.separator + fileList[i], isMultifile);
-                            
+
                             if (spectroscopyHeaderList[i] instanceof FileInfoDicom) {
                                 ((FileInfoDicom) spectroscopyHeaderList[i]).setInfoFromTags();
-                                
-                                String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0010");
-                                String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0011");
+
+                                String rowStr = (String) ((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0010");
+                                String colStr = (String) ((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0011");
                                 if (rowStr != null && colStr != null) {
                                     int rows = Integer.parseInt(rowStr);
                                     int cols = Integer.parseInt(colStr);
@@ -6598,12 +6802,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     } else {
                         spectroscopyHeaderList = new FileInfoBase[1];
                         spectroscopyHeaderList[0] = fileIO.readHeader(file.getAbsolutePath(), isMultifile);
-                        
+
                         if (spectroscopyHeaderList[0] instanceof FileInfoDicom) {
                             ((FileInfoDicom) spectroscopyHeaderList[0]).setInfoFromTags();
-                            
-                            String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0010");
-                            String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0011");
+
+                            String rowStr = (String) ((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0010");
+                            String colStr = (String) ((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0011");
                             if (rowStr != null && colStr != null) {
                                 int rows = Integer.parseInt(rowStr);
                                 int cols = Integer.parseInt(colStr);
@@ -6612,11 +6816,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         }
                     }
-                    
+
                     srcImage = new ModelImage(spectroscopyHeaderList[0].getDataType(), extents, file.getName());
                     srcImage.setFileInfo(spectroscopyHeaderList);
-                    
-                    ModelImage blankImg = ViewUserInterface.getReference().createBlankImage(spectroscopyHeaderList[0], false, false);
+
+                    ModelImage blankImg = ViewUserInterface.getReference().createBlankImage((FileInfoDicom) spectroscopyHeaderList[0].clone(), false, false);
 
                     previewImg = new ViewJComponentPreviewImage(blankImg, extents, owner);
                     int slice = 0;
@@ -6651,17 +6855,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         structRowImgFileInfoList.set(size - 1, imgInfo);
                     }
 
+                    // cleanup blank thumbnail modelimage
+                    if (blankImg != null) {
+                        blankImg.disposeLocal();
+                        blankImg = null;
+                    }
+
                     previewImgPanel.validate();
                     previewImgPanel.repaint();
                 }
             } catch (final FileNotFoundException e) {
-            	// if cmd line, output error but continue
-        		logError("The system cannot find the file specified: " + imageFile);
+                // if cmd line, output error but continue
+                logError("The system cannot find the file specified: " + imageFile);
                 e.printStackTrace();
                 validFile = false;
             } catch (final NullPointerException e) {
-            	// if cmd line, output error but continue
-            	logError("Unable to open image file specified: " + imageFile);
+                // if cmd line, output error but continue
+                logError("Unable to open image file specified: " + imageFile);
                 e.printStackTrace();
                 validFile = false;
             } catch (final Exception e) {
@@ -6814,8 +7024,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         final JButton browseButton = new JButton("Browse");
                         browseButton.setFont(serif12B);
                         browseButton.addActionListener(this);
-                        browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_"
-                                + deInfo.getName());
+                        browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_" + deInfo.getName());
                         elementPanel.add(browseButton, egbc);
                     } else {
                         egbc.gridwidth = 2;
@@ -6952,8 +7161,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
 //                    }
                     if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                        tooltip += "<p><b>Guidelines & Instructions:</b></br>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false)
+                                + "</p>";
                     }
                     if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
                         tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
@@ -6995,8 +7204,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
 //                        }
                         if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                            tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                    + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                            tooltip += "<p><b>Guidelines & Instructions:</b></br>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false)
+                                    + "</p>";
                         }
                         if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
                             tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
@@ -7043,8 +7252,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
 //                        }
                         if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                            tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                    + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                            tooltip += "<p><b>Guidelines & Instructions:</b></br>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false)
+                                    + "</p>";
                         }
                         if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
                             tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
@@ -7070,8 +7279,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                     tooltip += "</p>";
 
-                    if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC)
-                            || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
+                    if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC) || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
                         if (de.getStructuralDataElement().getMinimumValue() != null || de.getStructuralDataElement().getMaximumValue() != null) {
                             tooltip += "<p>";
                             if (de.getStructuralDataElement().getMinimumValue() != null) {
@@ -7092,8 +7300,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
 //                    }
                     if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                        tooltip += "<p><b>Guidelines & Instructions:</b></br>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false)
+                                + "</p>";
                     }
                     if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
                         tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
@@ -7158,20 +7366,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (int i = 0; i < csvFieldNames.size(); i++) {
                 String fieldNameWithGroup = csvFieldNames.get(i);
                 String csvVal = repeatValues.get(i).trim();
-                
+
                 String groupName = getFieldGroup(fieldNameWithGroup);
                 String fieldName = getFieldName(fieldNameWithGroup);
 
                 if ( !csvVal.equals("")) {
                     if (extractedFields.containsKey(fieldName)) {
                         String extractedVal = extractedFields.get(fieldName);
-                        
+
                         if (isValueSet(extractedVal)) {
-                            if (!csvVal.equalsIgnoreCase(extractedVal)) {
+                            if ( !csvVal.equalsIgnoreCase(extractedVal)) {
                                 // some float fields entered as ints need to be parsed
                                 try {
                                     float val = Float.parseFloat(csvVal);
-                                    if (!String.valueOf(val).equalsIgnoreCase(extractedVal)) {
+                                    if ( !String.valueOf(val).equalsIgnoreCase(extractedVal)) {
                                         // mismatched numbers, add to conflict list
                                         csvFList.add(fieldName);
                                         csvPList.add(csvVal);
@@ -7199,13 +7407,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         message = message + fieldName + " : " + "      csv:" + param + "     header:" + headerInfo + "\n";
                     }
-                    
+
                     // when running from the command line, note the conflict but use the CSV
                     if (cmdLineCsvFlag) {
                         System.err.println(message);
                         return RESOLVE_CONFLICT_CSV;
                     }
-                    
+
                     if (bidsPackageFlag) {
                         System.err.println(message);
                         return RESOLVE_CONFLICT_CSV;
@@ -7247,7 +7455,40 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
          */
         public void populateFields(final FormStructureData fsData, final ModelImage img, final FileInfoBase fInfo) {
             HashMap<String, String> extractedFields = extractHeaderInfo(img, fInfo);
-            
+
+            // TODO if nifti, check for matching json file
+            if (fInfo.getFileName().toLowerCase().endsWith(".nii") || fInfo.getFileName().toLowerCase().endsWith(".nii.gz")) {
+                String dir = img.getImageDirectory();
+                String name = fInfo.getFileName();
+                String jsonName = name.replaceAll("(.nii|.nii.gz)$", ".json");
+                File jsonFile = new File(dir + File.separator + jsonName);
+                boolean foundJson = false;
+                if (jsonFile.exists() && jsonFile.canRead()) {
+                    foundJson = true;
+                } else {
+                    if (jsonName.contains("_defaced")) {
+                        jsonName = jsonName.replaceFirst("_defaced", "");
+                        jsonFile = new File(dir + File.separator + jsonName);
+
+                        if (jsonFile.exists() && jsonFile.canRead()) {
+                            foundJson = true;
+                        }
+                    }
+                }
+
+                if (foundJson) {
+                    JSONObject scanJson = readJsonFile(jsonFile);
+
+                    if (scanJson != null) {
+                        readGlobalFieldsFromJson(extractedFields, scanJson);
+                        readGenericFieldsFromJson(extractedFields, scanJson);
+                        readMRFieldsFromJson(extractedFields, scanJson, name);
+                        readDwiFieldsFromJson(extractedFields, scanJson);
+                        readFuncFieldsFromJson(extractedFields, scanJson);
+                    }
+                }
+            }
+
             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                 for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
                     for (final DataElementValue deVal : repeat.getDataElements()) {
@@ -7259,33 +7500,38 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             if (isValueSet(extVal)) {
                                 setElementComponentValue(deVal, extVal);
                             }
+                        } else if (extractedFields != null && extractedFields.containsKey(group.getName() + "." + deName)) {
+                            String extVal = extractedFields.get(group.getName() + "." + deName);
+                            if (isValueSet(extVal)) {
+                                setElementComponentValue(deVal, extVal);
+                            }
                         }
                     }
                 }
             }
         }
-        
+
         private HashMap<String, String> extractHeaderInfo(ModelImage img, FileInfoBase fInfo) {
             HashMap<String, String> extractedFields = new HashMap<String, String>();
-            
+
             if (isDicomFormat(fInfo)) {
                 FileInfoDicom fileInfoDicom = (FileInfoDicom) fInfo;
-                
+
                 extractDicomHeaderInfo(extractedFields, fileInfoDicom);
-                
+
                 extractDicomMRHeaderInfo(extractedFields, img, fileInfoDicom);
-                
+
                 extractDicomCTHeaderInfo(extractedFields, fileInfoDicom);
             } else if (isNiftiFormat(fInfo)) {
                 extractNiftiHeaderInfo(extractedFields, (FileInfoNIFTI) fInfo);
             }
-            
+
             // extract basic info after formats so that contrast info can be used for modality options
             extractBasicHeaderInfo(extractedFields, img, fInfo);
-            
+
             return extractedFields;
         }
-        
+
         private void extractBasicHeaderInfo(HashMap<String, String> extractedFields, ModelImage img, FileInfoBase fInfo) {
             int[] exts = null;
             if (img != null) {
@@ -7293,22 +7539,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } else {
                 exts = fInfo.getExtents();
             }
-            
+
             final float[] res = fInfo.getResolutions();
             final int[] units = fInfo.getUnitsOfMeasure();
 
             final float sliceThickness = fInfo.getSliceThickness();
             final int orient = fInfo.getImageOrientation();
             final String orientStr = FileInfoBase.getImageOrientationStr(orient);
-            
+
             String fileFormatString = getFileFormatString(fInfo);
             String modalityString = getModalityString(fInfo, dataStructureName);
-            
+
             boolean contrastUsed = false;
             if (extractedFields != null && extractedFields.containsKey("ImgContrastAgentUsedInd")) {
                 contrastUsed = extractedFields.get("ImgContrastAgentUsedInd").equalsIgnoreCase("Yes");
             }
-            
+
             if (exts != null) {
                 extractedFields.put("ImgDimensionTyp", exts.length + "D");
                 extractedFields.put("ImgDim1ExtentVal", String.valueOf(exts[0]));
@@ -7321,7 +7567,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 //                extractedFields.put("ImgDim5ExtentVal", String.valueOf(exts[4]));
             }
-            
+
             if (exts != null && units != null) {
                 extractedFields.put("ImgDim1UoMVal", Unit.getUnitFromLegacyNum(units[0]).toString());
                 extractedFields.put("ImgDim2UoMVal", Unit.getUnitFromLegacyNum(units[1]).toString());
@@ -7332,11 +7578,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     extractedFields.put("ImgDim4UoMVal", Unit.getUnitFromLegacyNum(units[3]).toString());
                 }
 //                extractedFields.put("ImgDim5UoMVal", Unit.getUnitFromLegacyNum(units[4]).toString());
-                if (!extractedFields.containsKey("ImgDim4ExtentTyp") && exts.length > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
+                if ( !extractedFields.containsKey("ImgDim4ExtentTyp") && exts.length > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
                     extractedFields.put("ImgDim4ExtentTyp", "Time");
                 }
             }
-            
+
             if (exts != null && res != null) {
                 extractedFields.put("ImgDim1ResolVal", String.valueOf(res[0]));
                 extractedFields.put("ImgDim2ResolVal", String.valueOf(res[1]));
@@ -7348,24 +7594,24 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 //                extractedFields.put("ImgDim5ResolVal", String.valueOf(res[4]));
             }
-            
+
             extractedFields.put("ImgModltyTyp", convertModalityToBRICS(modalityString, contrastUsed));
             extractedFields.put("ImgFileFormatTyp", fileFormatString);
-            
+
             if (sliceThickness > 0) {
                 extractedFields.put("ImgSliceThicknessVal", String.valueOf(sliceThickness));
             }
-            
+
             if (orient != FileInfoBase.UNKNOWN_ORIENT) {
                 extractedFields.put("ImgSliceOrientTyp", orientStr);
             }
         }
-        
+
         private void extractDicomHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fInfo) {
             final FileInfoDicom fileInfoDicom = (FileInfoDicom) fInfo;
 
             String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
-            
+
             int birthYear = 0;
             String birthDate = getTagValue(fileInfoDicom, "0010,0030");
             if (isValueSet(birthDate)) {
@@ -7374,7 +7620,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     birthYear = Integer.parseInt(splitStr[2]);
                 }
             }
-            
+
             // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
             if (isValueSet(ageVal) && (ageVal.equalsIgnoreCase("135Y") || (ageVal.equalsIgnoreCase("100Y") && birthYear >= 1910) || ageVal.startsWith("X"))) {
                 ageVal = null;
@@ -7385,35 +7631,36 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final float ageInMonths = Float.parseFloat(ageStr);
                     if (ageInMonths != 0) {
                         final String ageInYears = String.valueOf(ageInMonths / 12);
-                        
+
                         extractedFields.put("AgeVal", String.valueOf(ageInMonths));
                         extractedFields.put("AgeYrs", ageInYears);
                     }
                 }
             }
-            
+
             String siteName = getTagValue(fileInfoDicom, "0008,0080");
             // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
-            if (isValueSet(siteName) && (siteName.trim().equalsIgnoreCase("Institution") || siteName.trim().equalsIgnoreCase("GENERIC INSTITUTION") || siteName.trim().toLowerCase().contains("anonymous"))) {
+            if (isValueSet(siteName) && (siteName.trim().equalsIgnoreCase("Institution") || siteName.trim().equalsIgnoreCase("GENERIC INSTITUTION")
+                    || siteName.trim().toLowerCase().contains("anonymous"))) {
                 siteName = "";
             }
             extractedFields.put("SiteName", siteName);
-            
+
             String visitDate = getTagValue(fileInfoDicom, "0008,0020");
             extractedFields.put("VisitDate", convertDateToISOFormat(visitDate));
             extractedFields.put("ImgStdyDateTime", convertDateTimeToISOFormat(visitDate, getTagValue(fileInfoDicom, "0008,0030")));
             extractedFields.put("ImgSliceOverSampVal", getTagValue(fileInfoDicom, "0018,0093"));
             extractedFields.put("ImgGapBetwnSlicesMeasr", getTagValue(fileInfoDicom, "0018,0088"));
             extractedFields.put("ImgAntmicSite", convertDicomBodyPartToBRICS(getTagValue(fileInfoDicom, "0018,0015")));
-            
+
             extractedFields.put("ImgFOVMeasrDescTxt", getTagValue(fileInfoDicom, "0018,1100"));
             extractedFields.put("ImgScannerManufName", convertManufNameToBRICS(getTagValue(fileInfoDicom, "0008,0070")));
             extractedFields.put("ImgScannerSftwrVrsnNum", getTagValue(fileInfoDicom, "0018,1020"));
             extractedFields.put("ImgHeadPostnTxt", getTagValue(fileInfoDicom, "0018,5100"));
-            
+
             extractedFields.put("ImgScannerModelName", convertModelNameToBRICS(getTagValue(fileInfoDicom, "0008,1090")));
             extractedFields.put("ImgBandwidthVal", getTagValue(fileInfoDicom, "0018,0095"));
-            
+
             String patientName = getTagValue(fileInfoDicom, "0010,0010");
             String patientID = getTagValue(fileInfoDicom, "0010,0020");
             if (isGuid(patientID)) {
@@ -7425,7 +7672,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String contrastAgent = getTagValue(fileInfoDicom, "0018,0010");
             String contrastMethod = getTagValue(fileInfoDicom, "0018,1040");
             if (isValueSet(contrastMethod)) {
-                //System.err.println(patientName + "\tContrast route: " + contrastMethod);
+                // System.err.println(patientName + "\tContrast route: " + contrastMethod);
                 if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
                     contrastMethod = "Infusion";
                 }
@@ -7453,7 +7700,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 extractedFields.put("ImgRepetitionGapVal", getTagValue(fileInfoDicom, "0018,0080"));
                 extractedFields.put("ImgScannerStrgthVal", convertMagFieldStrengthToBRICS(getTagValue(fileInfoDicom, "0018,0087")));
                 extractedFields.put("ImgFlipAngleMeasr", getTagValue(fileInfoDicom, "0018,1314"));
-                
+
                 extractedFields.put("ImgMRIT1T2SeqName", getTagValue(fileInfoDicom, "0018,0024"));
                 extractedFields.put("ImgInversionTime", getTagValue(fileInfoDicom, "0018,0082"));
                 extractedFields.put("ImgEchoTrainLngthMeasr", getTagValue(fileInfoDicom, "0018,0091"));
@@ -7466,30 +7713,30 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 if (isValueSet(scanOptions) && scanOptions.contains("FC")) {
                     extractedFields.put("ImgFlowCompnsatnInd", "Yes");
                 }
-                
+
                 extractDicomDtiHeaderInfo(extractedFields, img, fileInfoDicom);
-                
+
                 extractDicomFMRIHeaderInfo(extractedFields, fileInfoDicom);
-                
+
                 extractDicomSpectroscopyHeaderInfo(extractedFields, fileInfoDicom);
             }
         }
-        
+
         private void extractDicomSpectroscopyHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isSpectroscopyImagingStructure(fsData.getStructInfo().getShortName())) {
                 // TODO
-                
+
                 String seriesDesc = getTagValue(fileInfoDicom, "0008,103E");
                 String protocolName = getTagValue(fileInfoDicom, "0018,1030");
-                
-                if ((isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("PRESS")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("PRESS"))) {
+
+                if ( (isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("PRESS")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("PRESS"))) {
                     extractedFields.put("ImgPulseSeqTyp", "PRESS");
-                } else if ((isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("ISIS")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("ISIS"))) {
+                } else if ( (isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("ISIS")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("ISIS"))) {
                     extractedFields.put("ImgPulseSeqTyp", "ISIS");
-                } else if ((isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("STEAM")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("STEAM"))) {
+                } else if ( (isValueSet(seriesDesc) && seriesDesc.toUpperCase().contains("STEAM")) || (isValueSet(protocolName) && protocolName.toUpperCase().contains("STEAM"))) {
                     extractedFields.put("ImgPulseSeqTyp", "STEAM");
                 }
-                
+
                 String baselineCorrection = getTagValue(fileInfoDicom, "0018,9067");
                 if (isValueSet(baselineCorrection)) {
                     if (baselineCorrection.equalsIgnoreCase("yes")) {
@@ -7498,43 +7745,44 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         extractedFields.put("ImgB0SuscDistortCorrInd", "No");
                     }
                 }
-                
+
                 String waterRefPhaseCor = getTagValue(fileInfoDicom, "0018,9199");
                 String spectSelectedSuppr = getTagValue(fileInfoDicom, "0018,9025");
-                if ((isValueSet(waterRefPhaseCor) && waterRefPhaseCor.equalsIgnoreCase("yes")) || (isValueSet(spectSelectedSuppr) && spectSelectedSuppr.equalsIgnoreCase("water"))) {
+                if ( (isValueSet(waterRefPhaseCor) && waterRefPhaseCor.equalsIgnoreCase("yes"))
+                        || (isValueSet(spectSelectedSuppr) && spectSelectedSuppr.equalsIgnoreCase("water"))) {
                     extractedFields.put("SpectroscopyPostPrResidWRemInd", "Yes");
                 }
             }
         }
-        
+
         private void extractDicomDtiHeaderInfo(HashMap<String, String> extractedFields, ModelImage img, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
 //                if (img.getExtents().length > 3) {
 //                    extractedFields.put("ImgDim4ExtentTyp", "DTI directions");
 //                }
-            
+
                 // if reading the dicom filled in the dti params, use them to fill in the direction info
                 DTIParameters dtiParam = img.getDTIParameters();
-                
+
                 if (dtiParam != null) {
-                	// save extracted dti info for later verification before submission file generation
+                    // save extracted dti info for later verification before submission file generation
                     dicomDtiHeaderData.put(img.getImageDirectory() + File.separator + img.getImageFileName(), dtiParam);
-                	
+
                     double[] bvals = dtiParam.getbValues();
-                    
+
                     if (bvals != null) {
                         ArrayList<Double> seenBvals = new ArrayList<Double>();
-                        
+
                         int numDirections = 0;
                         int bvalCount = 0;
                         Arrays.sort(bvals);
                         for (int i = 0; i < bvals.length; i++) {
                             if (bvals[i] != 0) {
                                 numDirections++;
-                                
-                                if (!seenBvals.contains(bvals[i])) {
+
+                                if ( !seenBvals.contains(bvals[i])) {
                                     bvalCount++;
-                                    
+
                                     if (bvalCount == 1) {
                                         extractedFields.put("ImgDiffusionFirstBVal", "" + bvals[i]);
                                     } else if (bvalCount == 2) {
@@ -7550,13 +7798,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     } else {
                                         System.err.println("Found more than 6 bVals: " + bvalCount + " " + bvals[i]);
                                     }
-                                    
+
                                     seenBvals.add(bvals[i]);
                                 }
                             }
                         }
                         extractedFields.put("ImgDiffusionBValCt", "" + bvalCount);
-                        
+
                         extractedFields.put("ImgDiffusionDirCt", "" + numDirections);
                     } else {
                         System.err.println("No DICOM embedded DTI bval information found.");
@@ -7565,14 +7813,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                     }
                 } else {
-                	System.err.println("No DICOM embedded DTI information found.");
-            		if (cmdLineCsvFlag) {
-            			readErrorFileOut.println("No DICOM embedded DTI information found.");
-            		}
+                    System.err.println("No DICOM embedded DTI information found.");
+                    if (cmdLineCsvFlag) {
+                        readErrorFileOut.println("No DICOM embedded DTI information found.");
+                    }
                 }
             }
         }
-        
+
         private void extractDicomFMRIHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
                 String seriesDescription = getTagValue(fileInfoDicom, "0008,103E");
@@ -7581,14 +7829,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
         }
-        
+
         private void extractDicomCTHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
             if (isCTModality(fileInfoDicom, fsData.getStructInfo().getShortName())) {
                 extractedFields.put("ImgCTkVp", getTagValue(fileInfoDicom, "0018,0060"));
                 extractedFields.put("ImgCTmA", getTagValue(fileInfoDicom, "0018,1151"));
             }
         }
-        
+
         private void extractNiftiHeaderInfo(HashMap<String, String> extractedFields, FileInfoNIFTI fInfo) {
             // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
             final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) fInfo;
@@ -7598,16 +7846,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             extractedFields.put("ImgScannerModelName", convertNiftiDescToBRICSModel(description));
             extractedFields.put("ImgScannerSftwrVrsnNum", convertNiftiDescToBRICSVer(description));
         }
-        
+
         private String extractPulseSequence(FormStructureData fsData, ModelImage img, FileInfoBase fileInfo) {
             if (isMRModality(fileInfo, fsData.getStructInfo().getShortName()) && isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
                 return "DTI";
             } else if (isMRModality(fileInfo, fsData.getStructInfo().getShortName()) && isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
                 return "fMRI";
             }
-            
+
             // TODO use other information to guess MR pulse sequence?
-            
+
             return null;
         }
 
@@ -7650,8 +7898,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         errors.append(" - " + errs.get(i) + "\n");
                     }
                     final Object[] options = {"Fix now", "Fix later"};
-                    fixErrors = JOptionPane.showOptionDialog(null, errors.toString(), "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
-                            options, options[0]);
+                    fixErrors = JOptionPane.showOptionDialog(null, errors.toString(), "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options,
+                            options[0]);
                     isComplete = false;
                 }
 
@@ -7691,15 +7939,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // System.out.println(dataStructureName);
                 if (isImagingStructure(dataStructureName) && isMainImagingFileElement(groupName, deName)) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-                    
-                    //fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
+
+                    // fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
                     fileChooser.setMulti(true);
 
                     final JFileChooser chooser = fileChooser.getFileChooser();
                     chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
 
                     int filter = ViewImageFileFilter.ALL;
-                    
+
 //                    try {
 //                        filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
 //                    } catch (final NumberFormatException nfe) {
@@ -7743,10 +7991,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         ModelImage srcImage = null;
                         boolean isDeidentified = false;
-                        
+
                         boolean isSpectroscopy = isSpectroscopyImagingStructure(dataStructureName);
                         FileInfoBase[] spectroscopyHeaderList = null;
-                        
+
                         if (file.getName().endsWith(".zip") || file.getName().endsWith(".tar.gz") || file.getName().endsWith(".tgz")) {
                             // if the user selects a zip file containing a dataset, try to open it as if pointed to from
                             // CSV
@@ -7755,72 +8003,72 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             final FileIO fileIO = new FileIO();
                             fileIO.setQuiet(true);
 
-                            if (!isSpectroscopy) {
+                            if ( !isSpectroscopy) {
                                 srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultiFile, null);
 
                                 final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
-    
+
                                 previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
                                 int slice = 0;
                                 if ( !srcImage.is2DImage()) {
                                     slice = (srcImage.getExtents()[2] / 2);
                                 }
                                 previewImg.createImg(slice);
-    
+
                                 previewImgPanel.removeAll();
                                 previewImgPanel.repaint();
-    
+
                                 previewImgPanel.add(previewImg);
-    
+
                                 addedPreviewImage = true;
-    
+
                                 ModelImage thumbnailImage = createThumbnailImage(srcImage);
-    
+
                                 if (launchedFromInProcessState) {
                                     final int selectedRow = structTable.getSelectedRow();
                                     previewImages.set(selectedRow, previewImg);
                                     previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-    
+
                                     ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
                                             srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
-    
+
                                     structRowImgFileInfoList.set(selectedRow, imgInfo);
                                 } else {
                                     final int size = previewImages.size();
                                     previewImages.set(size - 1, previewImg);
                                     previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
-    
+
                                     ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
                                             srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
-    
+
                                     structRowImgFileInfoList.set(size - 1, imgInfo);
                                 }
-    
+
                                 // cleanup thumbnail modelimage
                                 if (thumbnailImage != null) {
                                     thumbnailImage.disposeLocal();
                                     thumbnailImage = null;
                                 }
-    
+
                                 previewImgPanel.validate();
                                 previewImgPanel.repaint();
                             } else {
                                 // TODO: read spect header, map onto data elements
                                 int[] extents = new int[] {256, 256};
-                                
+
                                 if (isMultiFile) {
                                     String[] fileList = FileUtility.getFileList(file.getParent() + File.separator, file.getName(), false);
-                                    
+
                                     spectroscopyHeaderList = new FileInfoBase[fileList.length];
-                                    
+
                                     for (int i = 0; i < fileList.length; i++) {
                                         spectroscopyHeaderList[i] = fileIO.readHeader(file.getParent() + File.separator + fileList[i], isMultiFile);
-                                        
+
                                         if (spectroscopyHeaderList[i] instanceof FileInfoDicom) {
                                             ((FileInfoDicom) spectroscopyHeaderList[i]).setInfoFromTags();
-                                            
-                                            String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0010");
-                                            String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0011");
+
+                                            String rowStr = (String) ((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0010");
+                                            String colStr = (String) ((FileInfoDicom) spectroscopyHeaderList[i]).getTagTable().getValue("0028,0011");
                                             if (rowStr != null && colStr != null) {
                                                 int rows = Integer.parseInt(rowStr);
                                                 int cols = Integer.parseInt(colStr);
@@ -7832,12 +8080,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 } else {
                                     spectroscopyHeaderList = new FileInfoBase[1];
                                     spectroscopyHeaderList[0] = fileIO.readHeader(file.getAbsolutePath(), isMultiFile);
-                                    
+
                                     if (spectroscopyHeaderList[0] instanceof FileInfoDicom) {
                                         ((FileInfoDicom) spectroscopyHeaderList[0]).setInfoFromTags();
-                                        
-                                        String rowStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0010");
-                                        String colStr = (String)((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0011");
+
+                                        String rowStr = (String) ((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0010");
+                                        String colStr = (String) ((FileInfoDicom) spectroscopyHeaderList[0]).getTagTable().getValue("0028,0011");
                                         if (rowStr != null && colStr != null) {
                                             int rows = Integer.parseInt(rowStr);
                                             int cols = Integer.parseInt(colStr);
@@ -7846,42 +8094,48 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
                                     }
                                 }
-                                
+
                                 ModelImage blankImg = ViewUserInterface.getReference().createBlankImage(spectroscopyHeaderList[0], false, false);
-    
+
                                 previewImg = new ViewJComponentPreviewImage(blankImg, extents, owner);
                                 int slice = 0;
                                 previewImg.createImg(slice);
-    
+
                                 previewImgPanel.removeAll();
                                 previewImgPanel.repaint();
-    
+
                                 previewImgPanel.add(previewImg);
-    
+
                                 addedPreviewImage = true;
-    
+
 //                                ModelImage thumbnailImage = createThumbnailImage(srcImage);
-    
+
                                 if (launchedFromInProcessState) {
                                     final int selectedRow = structTable.getSelectedRow();
                                     previewImages.set(selectedRow, previewImg);
                                     previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-    
+
                                     ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(spectroscopyHeaderList),
                                             spectroscopyHeaderList[0].getFileFormat(), null);
-    
+
                                     structRowImgFileInfoList.set(selectedRow, imgInfo);
                                 } else {
                                     final int size = previewImages.size();
                                     previewImages.set(size - 1, previewImg);
                                     previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
-    
+
                                     ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(spectroscopyHeaderList),
                                             spectroscopyHeaderList[0].getFileFormat(), null);
-    
+
                                     structRowImgFileInfoList.set(size - 1, imgInfo);
                                 }
-    
+
+                                // cleanup blank thumbnail modelimage
+                                if (blankImg != null) {
+                                    blankImg.disposeLocal();
+                                    blankImg = null;
+                                }
+
                                 previewImgPanel.validate();
                                 previewImgPanel.repaint();
                             }
@@ -7891,8 +8145,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             // basic check that image data is de-identified
                             Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(srcImage.getFileInfo());
                             if (problemTags != null) {
-                                isDeidentified = deidentificationDialogDicom(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getFileInfo(0).getFileName(),
-                                        problemTags, false);
+                                isDeidentified = deidentificationDialogDicom(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getFileInfo(0).getFileName(), problemTags, false);
+                            } else {
+                                // either no problem tags found, or non-dicom format
+                                isDeidentified = true;
                             }
 
                             if (isDeidentified) {
@@ -7924,8 +8180,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             // basic check that image data is de-identified
                             Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(spectroscopyHeaderList);
                             if (problemTags != null) {
-                                isDeidentified = deidentificationDialogDicom(spectroscopyHeaderList[0].getFileDirectory(), spectroscopyHeaderList[0].getFileName(),
-                                        problemTags, false);
+                                isDeidentified = deidentificationDialogDicom(spectroscopyHeaderList[0].getFileDirectory(), spectroscopyHeaderList[0].getFileName(), problemTags,
+                                        false);
+                            } else {
+                                // either no problem tags found, or non-dicom format
+                                isDeidentified = true;
                             }
 
                             if (isDeidentified) {
@@ -7961,9 +8220,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final int returnValue = chooser.showOpenDialog(this);
                     if (returnValue == JFileChooser.APPROVE_OPTION) {
                         final File file = chooser.getSelectedFile();
-                        
+
                         HashMap<String, String> bvalDeTable = readBvalFile(file);
-                        
+
                         if (bvalDeTable == null) {
                             MipavUtil.displayWarning("Unable to read contents of BVal file: " + file.getAbsolutePath());
                         } else {
@@ -8046,8 +8305,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final String[] commandSplit = command.split("_-_");
                 final String groupName = commandSplit[1];
 
-                final int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove the last repeat?", "Remove repeat?",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                final int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove the last repeat?", "Remove repeat?", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
 
                 if (response == JOptionPane.YES_OPTION) {
                     final GroupRepeat lastRepeat = fsData.getCurrentGroupRepeat(groupName);
@@ -8154,12 +8413,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 try {
                                     final float floatValue = Float.valueOf(value.trim()).floatValue();
                                     if (deInfo.getMinimumValue() != null && floatValue < deInfo.getMinimumValue().floatValue()) {
-                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
-                                                + deInfo.getMaximumValue().floatValue());
+                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to " + deInfo.getMaximumValue().floatValue());
                                         errors.add(deVal);
                                     } else if (deInfo.getMaximumValue() != null && floatValue > deInfo.getMaximumValue().floatValue()) {
-                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
-                                                + deInfo.getMaximumValue().floatValue());
+                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to " + deInfo.getMaximumValue().floatValue());
                                         errors.add(deVal);
                                     }
                                 } catch (final NumberFormatException e) {
@@ -8338,7 +8595,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final Vector<FileDicomTag> deidentificationCheckDicomTags(FileInfoBase[] fInfoList) {
         FileInfoBase fInfo = fInfoList[0];
-        
+
         if (fInfo instanceof FileInfoDicom) {
             Vector<FileDicomTag> problemTags = new Vector<FileDicomTag>();
             // for (FileInfoBase fInfo : img.getFileInfo()) {
@@ -8363,16 +8620,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private boolean deidentificationDialogDicom(String fDir, String fName, Vector<FileDicomTag> problemTags, boolean fromCsv) {
         if (problemTags != null) {
             if (problemTags.size() > 0) {
-                String disclaimerText = new String(
-                        "<html>"
-                                + "The table below lists fields in the loaded image data with potential Personally Identifiable Information (PII) or Protected Health Information."
-                                + "<br><br>"
-                                + "Please review all the fields below.  If any fields contain PII/PHI, exit the Imaging Tool and fully de-identify your image data."
-                                + "<br><br>"
-                                + "There may be fields in your data that contain PII/PHI that are not highlighted in this table.  DICOM private tags, and sequence tags are not examined."
-                                + "<br><br>"
-                                + "<b>Remember, <em>YOU</em> are responible for the de-identification of all submitted data.</b>  This table is for informational purposes only."
-                                + "<br><br>" + "Base file loaded:" + "<br>" + fDir + fName + "</html>");
+                String disclaimerText = new String("<html>"
+                        + "The table below lists fields in the loaded image data with potential Personally Identifiable Information (PII) or Protected Health Information."
+                        + "<br><br>" + "Please review all the fields below.  If any fields contain PII/PHI, exit the Imaging Tool and fully de-identify your image data."
+                        + "<br><br>"
+                        + "There may be fields in your data that contain PII/PHI that are not highlighted in this table.  DICOM private tags, and sequence tags are not examined."
+                        + "<br><br>"
+                        + "<b>Remember, <em>YOU</em> are responible for the de-identification of all submitted data.</b>  This table is for informational purposes only."
+                        + "<br><br>" + "Base file loaded:" + "<br>" + fDir + fName + "</html>");
                 JLabel disclaimerLabel = new JLabel(disclaimerText);
                 disclaimerLabel.setFont(serif12);
 
@@ -8431,13 +8686,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 gbc.weighty = 1;
                 gbc.gridy++;
                 dialogPanel.add(new JScrollPane(table), gbc);
-                
+
                 if (fromCsv) {
-                    JCheckBox csvOptionCheckbox = new JCheckBox("Do not ask again for images in this CSV/BIDS dataset.  I have reviewed all of them for PII/PHI.", csvDeidentDontAsk);
+                    JCheckBox csvOptionCheckbox = new JCheckBox("Do not ask again for images in this CSV/BIDS dataset.  I have reviewed all of them for PII/PHI.",
+                            csvDeidentDontAsk);
                     csvOptionCheckbox.setFont(serif12B);
                     csvOptionCheckbox.setActionCommand("dontAskPII");
                     csvOptionCheckbox.addActionListener(this);
-                    
+
                     gbc.weightx = 0;
                     gbc.weighty = 0;
                     gbc.gridy++;
@@ -8464,7 +8720,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return true;
     }
-    
+
     private static final String getTagValue(FileInfoDicom fInfo, String tag) {
         return (String) (fInfo.getTagTable().getValue(tag));
     }
@@ -8645,7 +8901,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
     }
-    
+
     /**
      * Class that connects to BRICS data dictionary web service (via RESTful API) to retrieve the data elements for a
      * given form structure.
@@ -8873,8 +9129,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private int repeatNumber;
 
-        public GroupRepeat(final RepeatableGroup groupInfo, final FormStructureData parentStruct, final Vector<DataElementValue> dataElements,
-                final int repeatNumber) {
+        public GroupRepeat(final RepeatableGroup groupInfo, final FormStructureData parentStruct, final Vector<DataElementValue> dataElements, final int repeatNumber) {
             this.groupInfo = groupInfo;
             this.parentStruct = parentStruct;
             this.dataElements = dataElements;
@@ -8984,8 +9239,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         public boolean isDataElementInForm(final String groupName, final String deName) {
-            return (structInfo.getRepeatableGroupByName(groupName) != null)
-                    && (structInfo.getRepeatableGroupByName(groupName).getMapElementByName(deName) != null);
+            return (structInfo.getRepeatableGroupByName(groupName) != null) && (structInfo.getRepeatableGroupByName(groupName).getMapElementByName(deName) != null);
         }
     }
 
@@ -9002,8 +9256,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             // sanity check before casts
             if (source instanceof JComboBox) {
-                otherSpecifyField.setVisible( ((JComboBox<String>) source).getSelectedItem().equals(VALUE_OTHER_SPECIFY)
-                        || ((JComboBox<String>) source).getSelectedItem().equals(VALUE_YES_SPECIFY));
+                otherSpecifyField.setVisible(
+                        ((JComboBox<String>) source).getSelectedItem().equals(VALUE_OTHER_SPECIFY) || ((JComboBox<String>) source).getSelectedItem().equals(VALUE_YES_SPECIFY));
                 final Window parentWindow = SwingUtilities.getWindowAncestor(otherSpecifyField);
                 // don't force the re-packing if the window hasn't been shown/created yet (as in CSV read)
                 if (parentWindow != null) {
@@ -9023,14 +9277,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public boolean isMultifile;
 
         public String imgFilePath;
-        
+
         public int fileFormat;
 
-/*        public ImgFileInfo(final String imgFilePath, final boolean isMultifile) {
-            super();
-            this.isMultifile = isMultifile;
-            this.imgFilePath = imgFilePath;
-        }*/
+        /*
+         * public ImgFileInfo(final String imgFilePath, final boolean isMultifile) { super(); this.isMultifile =
+         * isMultifile; this.imgFilePath = imgFilePath; }
+         */
 
         public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final int format, final ThumbnailData thumbnailImgData) {
             super();
@@ -9072,46 +9325,46 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setImgFilePath(final String imgFilePath) {
             this.imgFilePath = imgFilePath;
         }
-        
+
         public int getFileFormat() {
             return fileFormat;
         }
-        
+
         public void setFileFormat(final int format) {
             fileFormat = format;
         }
-        
+
         public String getFileFormatString() {
             return FileUtility.getFileTypeStr(fileFormat);
         }
     }
-    
+
     private boolean loadDicomDir(FileDicomTagTable tagTable) {
         // choose DICOMDIR file and load it
-        
+
         FileDicom dicomDirReader;
-        
+
         JFileChooser chooser;
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
             chooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
         } else {
             chooser = new JFileChooser(System.getProperties().getProperty("user.dir"));
         }
-        
+
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setDialogTitle("Open the DICOMDIR file.");
 
         int returnValue = chooser.showOpenDialog(this);
         File file = null;
-        
+
         if (returnValue == ViewFileChooserSubsample.APPROVE_OPTION) {
             file = chooser.getSelectedFile();
         }
 
         if (file != null) {
-            if  (file.getName().toLowerCase().startsWith("dicomdir")) {
+            if (file.getName().toLowerCase().startsWith("dicomdir")) {
                 try {
-                    dicomDirReader = new FileDicom(file.getName(), file.getParent()+File.separatorChar);
+                    dicomDirReader = new FileDicom(file.getName(), file.getParent() + File.separatorChar);
                     dicomDirReader.readHeader(true);
                 } catch (IOException e) {
                     MipavUtil.displayError(e.toString());
@@ -9124,76 +9377,71 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else {
             return false;
         }
-        
+
         // get DICOMDIR info and parse into individual volumes/series
-        
+
         FileDicomSQ dirInfo = dicomDirReader.getDirFileInfo();
         FileInfoDicom dicomInfo = (FileInfoDicom) dicomDirReader.getFileInfo();
-        
+
         DefaultMutableTreeNode base = new DefaultMutableTreeNode("DICOMDIR");
         DefaultMutableTreeNode patient = null;
         DefaultMutableTreeNode study = null;
         DefaultMutableTreeNode series = null;
         DefaultMutableTreeNode image = null;
-        
+
         final String itemTypeTag = "0004,1430";
-        
+
         Vector<DicomDirItem> dicomDirEntries = new Vector<DicomDirItem>();
         DicomDirItem curItem = null;
-        
-        for(int i = 0; i < dirInfo.getSequenceLength(); i++){
-            String currentItemType = dirInfo.getItem(i).get(itemTypeTag).getValue(true).toString(); 
+
+        for (int i = 0; i < dirInfo.getSequenceLength(); i++) {
+            String currentItemType = dirInfo.getItem(i).get(itemTypeTag).getValue(true).toString();
             if (currentItemType.startsWith("PATIENT")) {
                 curItem = new DicomDirItem();
                 curItem.setPatient(dirInfo.getItem(i).get("0010,0020").getValue(true).toString());
                 dicomDirEntries.add(curItem);
-            } else if(currentItemType.startsWith("STUDY")) {
+            } else if (currentItemType.startsWith("STUDY")) {
                 curItem.setStudy(dirInfo.getItem(i).get("0020,0010").getValue(true).toString());
             } else if (currentItemType.startsWith("SERIES")) {
                 curItem.setSeries(dirInfo.getItem(i).get("0020,0011").getValue(true).toString());
-            } else if(currentItemType.startsWith("IMAGE")) {
+            } else if (currentItemType.startsWith("IMAGE")) {
                 curItem.addImageFile(dirInfo.getItem(i).get("0004,1500").getValue(true).toString());
             }
         }
-        
+
         base.toString();
-        
-/*        current = (FileDicomTagTable) currentNode.getUserObject();
-        String currentItemType = current.get("0004,1430").getValue(true).toString(); 
-        if (currentItemType.startsWith("PATIENT"))
-        {
-            return "Patient- " +current.get("0010,0020").getValue(true).toString();
-        }
-        else if(currentItemType.startsWith("STUDY"))
-        {
-            return "Study " +current.get("0020,0010").getValue(true).toString().trim() +
-            " (UID-" + current.get("0020,000D").getValue(true).toString().trim()+")";
-        }
-        else if (currentItemType.startsWith("SERIES"))
-        {
-            return "Series " +current.get("0020,0011").getValue(true).toString().trim() +
-            " (UID-" + current.get("0020,000E").getValue(true).toString().trim()+")";
-        }
-        else if(currentItemType.startsWith("IMAGE"))
-        {
-            return "Image " +current.get("0020,0013").getValue(true).toString() +
-            " (" + current.get("0004,1500").getValue(true).toString().trim()+")";
-        }*/
-        
+
+        /*
+         * current = (FileDicomTagTable) currentNode.getUserObject(); String currentItemType =
+         * current.get("0004,1430").getValue(true).toString(); if (currentItemType.startsWith("PATIENT")) { return
+         * "Patient- " +current.get("0010,0020").getValue(true).toString(); } else
+         * if(currentItemType.startsWith("STUDY")) { return "Study "
+         * +current.get("0020,0010").getValue(true).toString().trim() + " (UID-" +
+         * current.get("0020,000D").getValue(true).toString().trim()+")"; } else if
+         * (currentItemType.startsWith("SERIES")) { return "Series "
+         * +current.get("0020,0011").getValue(true).toString().trim() + " (UID-" +
+         * current.get("0020,000E").getValue(true).toString().trim()+")"; } else if(currentItemType.startsWith("IMAGE"))
+         * { return "Image " +current.get("0020,0013").getValue(true).toString() + " (" +
+         * current.get("0004,1500").getValue(true).toString().trim()+")"; }
+         */
+
         return true;
     }
-    
+
     private class DicomDirItem {
         private String patient;
+
         private String study;
+
         private String series;
+
         private Vector<String> imageFiles;
-        
+
         public DicomDirItem() {
             super();
             this.imageFiles = new Vector<String>();
         }
-        
+
         public DicomDirItem(String patient, String study, String series) {
             super();
             this.patient = patient;
@@ -9201,7 +9449,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.series = series;
             this.imageFiles = new Vector<String>();
         }
-        
+
         public DicomDirItem(String patient, String study, String series, Vector<String> imageFiles) {
             super();
             this.patient = patient;
@@ -9241,55 +9489,54 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setImageFiles(final Vector<String> imageFiles) {
             this.imageFiles = imageFiles;
         }
-        
+
         public void addImageFile(final String file) {
             imageFiles.add(file);
         }
     }
-    
+
     private class CmdLineOutputStream extends PrintStream {
         PrintStream logFileStream;
-        
+
         public CmdLineOutputStream(PrintStream out, PrintStream logStream) {
             super(out);
-            
+
             logFileStream = logStream;
         }
-        
+
 //        public CmdLineOutputStream(PrintStream out1, PrintStream out2) {
 //            super(out1);
 //            this.out = out2;
 //        }
-        
+
         public void write(byte buf[], int off, int len) {
             try {
                 super.write(buf, off, len);
                 logFileStream.write(buf, off, len);
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         }
-        
+
         public void flush() {
             super.flush();
             logFileStream.flush();
         }
     }
-    
+
     private void logError(String msg) {
-    	if (!cmdLineCsvFlag) {
-    		MipavUtil.displayError(msg);
-    	} else {
-    		System.err.println(msg);
-    		readErrorFileOut.println(msg);
-    	}
+        if ( !cmdLineCsvFlag) {
+            MipavUtil.displayError(msg);
+        } else {
+            System.err.println(msg);
+            readErrorFileOut.println(msg);
+        }
     }
-    
+
     private boolean checkRecordsForSubmission() {
-    	// check that required fields have some value
+        // check that required fields have some value
         final int numRows = structTableModel.getRowCount();
         for (int i = 0; i < numRows; i++) {
             if ( ((String) structTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
-                MipavUtil.displayError("Record " + (i+1) + ": Not all required fields have values");
+                MipavUtil.displayError("Record " + (i + 1) + ": Not all required fields have values");
                 return false;
             }
         }
@@ -9298,18 +9545,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         for (int i = 0; i < numRows; i++) {
             final String struct = (String) structTableModel.getValueAt(i, 0);
             if (struct.endsWith(STRUCT_GUID_SEPERATOR + "UNKNOWNGUID")) {
-                MipavUtil.displayError("Record " + (i+1) + ": No GUID specified");
+                MipavUtil.displayError("Record " + (i + 1) + ": No GUID specified");
                 return false;
             } else {
                 final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
                 if ( !isGuid(guidTester)) {
-                    MipavUtil.displayError("Record " + (i+1) + ": GUID value does not match the allow GUID format (" + guidTester + ")");
+                    MipavUtil.displayError("Record " + (i + 1) + ": GUID value does not match the allow GUID format (" + guidTester + ")");
                     return false;
                 }
             }
         }
-        
-        // check that any field with an 'Other, specify' or 'Yes, specify' value in a required field has something in the sister field
+
+        // check that any field with an 'Other, specify' or 'Yes, specify' value in a required field has something in
+        // the sister field
         for (int i = 0; i < numRows; i++) {
             final FormStructureData fsData = fsDataList.get(i);
             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
@@ -9323,20 +9571,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 if (selectedVal.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || selectedVal.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                                     // check for a value in the matching OTH field in the same group
                                     if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
-                                        MipavUtil.displayError("Record " + (i+1) + ": 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
+                                        MipavUtil.displayError("Record " + (i + 1) + ": 'Other, specify' or 'Yes, specify' field value found without specified value ("
+                                                + deVal.getGroupName() + "." + deVal.getName() + ")");
                                         return false;
                                     }
                                 }
                             } else if (comp instanceof JList) {
                                 final JList<String> list = (JList<String>) comp;
-                                
+
                                 List<String> selectedValList = list.getSelectedValuesList();
-                                
+
                                 for (final String val : selectedValList) {
                                     if (val.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || val.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                                         // check for a value in the matching OTH field in the same group
                                         if (deVal.getOtherSpecifyField() == null || deVal.getOtherSpecifyField().getText().equals("")) {
-                                            MipavUtil.displayError("Record " + (i+1) + ": Required 'Other, specify' or 'Yes, specify' field value found without specified value (" + deVal.getGroupName() + "." + deVal.getName() + ")");
+                                            MipavUtil.displayError("Record " + (i + 1) + ": Required 'Other, specify' or 'Yes, specify' field value found without specified value ("
+                                                    + deVal.getGroupName() + "." + deVal.getName() + ")");
                                             return false;
                                         }
                                     }
@@ -9347,64 +9597,64 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
         }
-        
+
         // if DTI, check that the dicoms have the gradient info, etc or bval/bvec files are attached
         // TODO verify that all the most common DICOM DTI tags are being checked in the DICOM reader
         for (int i = 0; i < numRows; i++) {
             final FormStructureData fsData = fsDataList.get(i);
             if (isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
-	            boolean rowHasDtiInfo = false;
-	            String imgFile = null;
-	            boolean foundBval = false;
-	            boolean foundBvec = false;
-	            BVALVEC_SEARCH:
-	            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-	            	if (group.getName().equals(IMG_DIFF_GROUP)) {
-		                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
-		                    for (final DataElementValue deVal : repeat.getDataElements()) {
-		                    	// require that both bval and bvec fields are filled
-		                    	if (deVal.getName().equals(IMG_DIFF_BVAL_ELEMENT_NAME) && new File(deVal.getValue()).exists()) {
-		                    		if (foundBvec) {
-		                    			rowHasDtiInfo = true;
-		                    			break BVALVEC_SEARCH;
-		                    		} else {
-		                    			foundBval = true;
-		                    		}
-		                    	} else if (deVal.getName().equals(IMG_DIFF_BVEC_ELEMENT_NAME) && new File(deVal.getValue()).exists()) {
-		                    		if (foundBval) {
-		                    			rowHasDtiInfo = true;
-		                    			break BVALVEC_SEARCH;
-		                    		} else {
-		                    			foundBvec = true;
-		                    		}
-		                    	}
-		                    }
-		                }
-	            	}
-	            }
-	            
-	            ImgFileInfo imgInfo = structRowImgFileInfoList.get(i);
-	            imgFile = imgInfo.getOrigFiles().get(0);
-	            
-	            // check dicom header for different manuf gradient/etc tags - may need to save this when doing initial img extraction
- 	            if (imgFile != null && dicomDtiHeaderData.containsKey(imgFile)) {
-	            	// TODO what values should be checked?
-	            	DTIParameters dtiParam = dicomDtiHeaderData.get(imgFile);
-	            	if (dtiParam != null && dtiParam.getbValues() != null && (dtiParam.getbMatrixVals() != null || dtiParam.getGradients() != null)) {
-	            		rowHasDtiInfo = true;
-	            	}
-	            }
-	            
-	            if (!rowHasDtiInfo) {
-	            	MipavUtil.displayError("Record " + (i+1) + ": No DTI B-value/Gradient/Matrix information found in image header or bval/bvec files");
-	            	return false;
-	            }
+                boolean rowHasDtiInfo = false;
+                String imgFile = null;
+                boolean foundBval = false;
+                boolean foundBvec = false;
+                BVALVEC_SEARCH: for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                    if (group.getName().equals(IMG_DIFF_GROUP)) {
+                        for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                            for (final DataElementValue deVal : repeat.getDataElements()) {
+                                // require that both bval and bvec fields are filled
+                                if (deVal.getName().equals(IMG_DIFF_BVAL_ELEMENT_NAME) && new File(deVal.getValue()).exists()) {
+                                    if (foundBvec) {
+                                        rowHasDtiInfo = true;
+                                        break BVALVEC_SEARCH;
+                                    } else {
+                                        foundBval = true;
+                                    }
+                                } else if (deVal.getName().equals(IMG_DIFF_BVEC_ELEMENT_NAME) && new File(deVal.getValue()).exists()) {
+                                    if (foundBval) {
+                                        rowHasDtiInfo = true;
+                                        break BVALVEC_SEARCH;
+                                    } else {
+                                        foundBvec = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ImgFileInfo imgInfo = structRowImgFileInfoList.get(i);
+                imgFile = imgInfo.getOrigFiles().get(0);
+
+                // check dicom header for different manuf gradient/etc tags - may need to save this when doing initial
+                // img extraction
+                if (imgFile != null && dicomDtiHeaderData.containsKey(imgFile)) {
+                    // TODO what values should be checked?
+                    DTIParameters dtiParam = dicomDtiHeaderData.get(imgFile);
+                    if (dtiParam != null && dtiParam.getbValues() != null && (dtiParam.getbMatrixVals() != null || dtiParam.getGradients() != null)) {
+                        rowHasDtiInfo = true;
+                    }
+                }
+
+                if ( !rowHasDtiInfo) {
+                    MipavUtil.displayError("Record " + (i + 1) + ": No DTI B-value/Gradient/Matrix information found in image header or bval/bvec files");
+                    return false;
+                }
             }
         }
-        
+
         return true;
     }
-    
+
     private void setFormImpliedRecordDataElements(final FormStructureData fsData, final ModelImage img, final ArrayList<String> repeatValues) {
         if (isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
             // TODO
@@ -9417,8 +9667,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 }
             }
-            
-            if (!foundDE) {
+
+            if ( !foundDE) {
                 csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
                 repeatValues.add("fMRI");
             }
@@ -9433,8 +9683,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 }
             }
-            
-            if (!foundDE) {
+
+            if ( !foundDE) {
                 csvFieldNames.add(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME);
                 repeatValues.add("DTI");
             }
@@ -9449,15 +9699,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                     }
                 }
-                
-                if (!foundDE) {
+
+                if ( !foundDE) {
                     csvFieldNames.add("Image pixel information and dimensions" + "." + "ImgDim4ExtentTyp");
                     repeatValues.add("DTI directions");
                 }
             }
         }
     }
-    
+
     private String guessPulseSeqFromFileName(final String imgFileName) {
         // TODO pulse seq from BIDS spec not mapped yet:
 //        T1 Rho map  T1rho   Quantitative T1rho brain imaging
@@ -9465,9 +9715,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 //        T2 map  T2map   quantitative T2 map
 //        Proton density map  PDmap   
 //        Angiography angio   
-        
+
         String pulseSeq = null;
-        
+
         if (imgFileName.contains("_T1w.")) {
             pulseSeq = "T1";
         } else if (imgFileName.contains("_inplaneT1.")) {
@@ -9487,27 +9737,27 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (imgFileName.contains("_PDT2.")) {
             pulseSeq = "PD/T2W FSE";
         }
-        
+
         return pulseSeq;
     }
-    
+
     private String getNonCollidingNumberedFilePath(String file, int digits) {
         int num = 1;
-        
+
         File curFile = null;
-        
+
         boolean done = false;
-        while (!done) {
+        while ( !done) {
             String paddedNum = String.format("%02d", num);
             curFile = new File(file + "__" + paddedNum);
-            
+
             if (curFile.exists()) {
                 num++;
             } else {
                 done = true;
             }
         }
-        
+
         return curFile.getPath();
     }
 }
