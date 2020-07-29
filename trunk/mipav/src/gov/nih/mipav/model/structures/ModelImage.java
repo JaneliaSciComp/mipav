@@ -2678,13 +2678,23 @@ public class ModelImage extends ModelStorageBase {
 
         return newMatrix;
     }
-
+    
     /**
      * Reallocates ModelImage with new type and all image data lost.
      * 
      * @param type new type of image that is to be allocated
      */
     public void reallocate(final int type) {
+    	reallocate(type, true);
+    }
+
+    /**
+     * Reallocates ModelImage with new type and all image data lost.
+     * 
+     * @param type new type of image that is to be allocated
+     * @param useDisplayError if true, MipavUtil.displayError, if false, System.err.println
+     */
+    public void reallocate(final int type, boolean useDisplayError) {
         final int[] dimExtents = getExtents();
         int length = dimExtents[0]*dimExtents[1];
         int originalType = this.getFileInfo()[0].getDataType();
@@ -2788,7 +2798,12 @@ public class ModelImage extends ModelStorageBase {
                 niftiBits = (short)128;
                 break;
             default:
-            	MipavUtil.displayError("Illegal NIFTI data type");
+            	if (useDisplayError) {
+            	    MipavUtil.displayError("Illegal NIFTI data type");
+            	}
+            	else {
+            		System.err.println(DataType.getDataType(type).toString() + " is an illegal data type in NIFTI.  Save in another file format");
+            	}
             	return;
             
     }
@@ -2853,7 +2868,12 @@ public class ModelImage extends ModelStorageBase {
                 break;
 
             case ModelStorageBase.LONG:
-                MipavUtil.displayError("LONG data type illegal in Analyze");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("LONG data type illegal in Analyze");
+            	}
+            	else {
+            		System.err.println("LONG data type is illegal in Analyze.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.FLOAT:
@@ -2881,7 +2901,12 @@ public class ModelImage extends ModelStorageBase {
             	return;
 
             default:
-            	MipavUtil.displayError("Illegal Analyze data type");
+            	if (useDisplayError) {
+            	    MipavUtil.displayError("Illegal Analyze data type");
+            	}
+            	else {
+            		System.err.println(DataType.getDataType(type).toString() + " is an illegal data type in Analyze.  Save in another file format");
+            	}
             	return;
             
         } 
@@ -2945,7 +2970,12 @@ public class ModelImage extends ModelStorageBase {
                 break;
 
             case ModelStorageBase.LONG:
-                MipavUtil.displayError("LONG data type illegal in SPM");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("LONG data type illegal in SPM");
+            	}
+            	else {
+            		System.err.println("LONG data type is an illegal data type in SPM.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.FLOAT:
@@ -2973,7 +3003,12 @@ public class ModelImage extends ModelStorageBase {
             	return;
 
             default:
-            	MipavUtil.displayError("Illegal SPM data type");
+            	if (useDisplayError) {
+            	    MipavUtil.displayError("Illegal SPM data type");
+            	}
+            	else {
+            		System.err.println(DataType.getDataType(type).toString() + " is an illegal data type in SPM.  Save in another file format");
+            	}
             	return;
             
         } 
@@ -3017,7 +3052,12 @@ public class ModelImage extends ModelStorageBase {
             switch (type) {
 
             case ModelStorageBase.BOOLEAN:
-                MipavUtil.displayError("BOOLEAN illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("BOOLEAN illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("BOOLEAN illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.BYTE:
@@ -3055,7 +3095,12 @@ public class ModelImage extends ModelStorageBase {
                 break;
                
             case ModelStorageBase.LONG:
-                MipavUtil.displayError("LONG illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("LONG illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("LONG illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.FLOAT:
@@ -3071,18 +3116,33 @@ public class ModelImage extends ModelStorageBase {
                 break;
 
             case ModelStorageBase.ARGB: 
-                MipavUtil.displayError("ARGB illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("ARGB illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("ARGB illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.COMPLEX:
-                MipavUtil.displayError("COMPLEX illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("COMPLEX illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("COMPLEX illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.DCOMPLEX:
                 MipavUtil.displayError("DCOMPLEX illegal Minc data type");
                 return;
             default:
-            	MipavUtil.displayError("Illegal Minc data type");
+            	if (useDisplayError) {
+            	    MipavUtil.displayError("Illegal Minc data type");
+            	}
+            	else {
+            		System.err.println(DataType.getDataType(type).toString() + " is an illegal data type in Minc.  Save in another file format");
+            	}
             	return;
             }
             while ((length % 4) != 0) {
@@ -3271,7 +3331,12 @@ public class ModelImage extends ModelStorageBase {
             switch (type) {
 
             case ModelStorageBase.BOOLEAN:
-                MipavUtil.displayError("BOOLEAN illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("BOOLEAN illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("BOOLEAN illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.BYTE:
@@ -3309,7 +3374,12 @@ public class ModelImage extends ModelStorageBase {
                 break;
                
             case ModelStorageBase.LONG:
-                MipavUtil.displayError("LONG illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("LONG illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("LONG illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.FLOAT:
@@ -3325,18 +3395,33 @@ public class ModelImage extends ModelStorageBase {
                 break;
 
             case ModelStorageBase.ARGB: 
-                MipavUtil.displayError("ARGB illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("ARGB illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("ARGB illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.COMPLEX:
-                MipavUtil.displayError("COMPLEX illegal Minc data type");
+            	if (useDisplayError) {
+                    MipavUtil.displayError("COMPLEX illegal Minc data type");
+            	}
+            	else {
+            		System.err.println("COMPLEX illegal Minc data type.  Save in another file format");
+            	}
                 return;
 
             case ModelStorageBase.DCOMPLEX:
                 MipavUtil.displayError("DCOMPLEX illegal Minc data type");
                 return;
             default:
-            	MipavUtil.displayError("Illegal Minc data type");
+            	if (useDisplayError) {
+            	    MipavUtil.displayError("Illegal Minc data type");
+            	}
+            	else {
+            		System.err.println(DataType.getDataType(type).toString() + " is an illegal data type in Minc.  Save in another file format");
+            	}
             	return;
             }
             
@@ -3432,7 +3517,12 @@ public class ModelImage extends ModelStorageBase {
                 break;
 
             default:
-            	MipavUtil.displayError("Illegal Dicom data type");
+            	if (useDisplayError) {
+            	    MipavUtil.displayError("Illegal Dicom data type");
+            	}
+            	else {
+            		System.err.println(DataType.getDataType(type).toString() + " is an illegal data type in Dicom.  Save in another file format");
+            	}
             	return;
     }
 
