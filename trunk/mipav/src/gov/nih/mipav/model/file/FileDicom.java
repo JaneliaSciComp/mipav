@@ -751,8 +751,9 @@ public class FileDicom extends FileDicomBase {
                     break;
                 }
             } catch (final Exception e) {
-                e.printStackTrace();
                 Preferences.debug("Error parsing tag: " + key + "\n", Preferences.DEBUG_FILEIO);
+                System.err.println("Error parsing tag: " + key);
+                e.printStackTrace();
                 System.err.println(tagTable.toString());
                 exceptionCount++;
                 // Prevent infinite looping
