@@ -1980,6 +1980,11 @@ public class SIFT extends AlgorithmBase {
             }
    		} // else grayscale images
    		
+   		im1.disposeLocal();
+   		im1 = null;
+   		im2.disposeLocal();
+   		im2 = null;
+   		
    		new ViewJFrameImage(mosaicImage);
 
  	   } // if (mosaic)
