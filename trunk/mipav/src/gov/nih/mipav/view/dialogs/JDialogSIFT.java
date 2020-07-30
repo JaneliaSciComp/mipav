@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoMATLAB;
+import gov.nih.mipav.model.file.FileInfoNIFTI;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -150,6 +152,15 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         fileName = new String[1];
         fileDir[0] = im.getFileInfo()[0].getFileDirectory();
         fileName[0] = im.getFileInfo()[0].getFileName();
+        if (im.getFileInfo()[0] instanceof FileInfoMATLAB) {
+            String sourceFile = ((FileInfoMATLAB)im.getFileInfo()[0]).getSourceFile();
+            if (sourceFile != null) {
+            	int index = sourceFile.lastIndexOf(File.separator);
+            	if (index >= 0) {
+            		fileName[0] = sourceFile.substring(index+1);
+            	}
+            }
+        }
         userInterface = ViewUserInterface.getReference();
         init();
     }
