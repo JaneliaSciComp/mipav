@@ -800,8 +800,8 @@ public class SIFT extends AlgorithmBase {
     		        System.out.println("sift:   edge threshold = " + filt.edge_thresh);
     		        Preferences.debug("sift:   edge threshold = " + filt.edge_thresh + "\n", Preferences.DEBUG_ALGORITHM);
     		        System.out.println("sift:   peak threshold = " + filt.peak_thresh);
-    		        Preferences.debug("sift:   peak threshold = " + filt.norm_thresh + "\n", Preferences.DEBUG_ALGORITHM);
-    		        System.out.println("sift:  norm threshold = " + filt.peak_thresh);
+    		        Preferences.debug("sift:   peak threshold = " + filt.peak_thresh + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:  norm threshold = " + filt.norm_thresh);
     		        Preferences.debug("sift:   norm threshold = " + filt.norm_thresh + "\n", Preferences.DEBUG_ALGORITHM);
     		        System.out.println("sift:   magnification factor = " + filt.magnif);
     		        Preferences.debug("sift:   magnification factor = " + filt.magnif + "\n", Preferences.DEBUG_ALGORITHM);
