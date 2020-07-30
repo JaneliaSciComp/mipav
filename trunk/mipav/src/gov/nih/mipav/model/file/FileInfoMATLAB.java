@@ -125,4 +125,8 @@ public class FileInfoMATLAB extends FileInfoBase {
     public void setSourceFile(String sourceFile) {
     	this.sourceFile = sourceFile;
     }
+    
+    public String getSourceFile() {
+    	return sourceFile;
+    }
 }
