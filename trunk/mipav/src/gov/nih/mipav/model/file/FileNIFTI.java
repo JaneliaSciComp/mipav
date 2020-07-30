@@ -10110,6 +10110,7 @@ public class FileNIFTI extends FileBase {
         if (options.isMultiFile()) {
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0));
+            rawFile.setNumChannels(3);
             rawFile.setZeroLengthFlag(true);
             linkProgress(rawFile);
 
@@ -10141,6 +10142,7 @@ public class FileNIFTI extends FileBase {
             try {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                rawFile.setNumChannels(3);
                 rawFile.setZeroLengthFlag(true);
                 linkProgress(rawFile);
 
