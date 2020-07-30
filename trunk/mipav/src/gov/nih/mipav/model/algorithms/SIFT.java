@@ -114,7 +114,16 @@ public class SIFT extends AlgorithmBase {
     // Set the minimum l2-norm of the descriptors before
     // normalization. Descriptors below the threshold are set to zero.
     private double   norm_thresh = 0;
+    // Set the descriptor magnification factor. The scale of the
+    //     keypoint is multiplied by this factor to obtain the width (in
+    //     pixels) of the spatial bins. For instance, if there are there
+    //     are 4 spatial bins along each spatial direction, the
+    //     ``side'' of the descriptor is approximatively 4 * MAGNIF.
     private double   magnif       = 3.0 ;
+    // Set the variance of the Gaussian window that determines the
+    // descriptor support. It is expressend in units of spatial
+    // bins.
+    private double   window_size = 2.0;
     private boolean force_orientations = false;
     private boolean writeFrames = false;
     private boolean readFrames = false;
@@ -148,7 +157,7 @@ public class SIFT extends AlgorithmBase {
     
     public SIFT(String fileDir[], String fileName[], boolean mosaic, boolean verbose, String outarg, String framesarg,
     		String descriptorarg, String metaarg, String read_framesarg, String gssarg, int O, int S,
-    		int omin, double edge_thresh, double peak_thresh, double norm_thresh, double magnif, boolean force_orientations,
+    		int omin, double edge_thresh, double peak_thresh, double norm_thresh, double magnif, double window_size, boolean force_orientations,
     		boolean writeFrames, boolean readFrames, boolean writeDescriptor, boolean writeMeta,
     		boolean writeGss) {
         this.fileDir = fileDir;
@@ -168,6 +177,7 @@ public class SIFT extends AlgorithmBase {
         this.peak_thresh = peak_thresh;
         this.norm_thresh = norm_thresh;
         this.magnif = magnif;
+        this.window_size = window_size;
         this.force_orientations = force_orientations;
         this.writeFrames = writeFrames;
         this.readFrames = readFrames;
@@ -353,6 +363,12 @@ public class SIFT extends AlgorithmBase {
     	  
     	  if (magnif < 1) {
     		  MipavUtil.displayError("magnif = " + magnif + " must not be less than 1");
+    		  setCompleted(false);
+    		  return;
+    	  }
+    	  
+    	  if (window_size <= 0.0) {
+    		  MipavUtil.displayError("window_size = " + window_size + " must be greater than 0");
     		  setCompleted(false);
     		  return;
     	  }
@@ -770,6 +786,7 @@ public class SIFT extends AlgorithmBase {
     		      if (peak_thresh >= 0) filt.peak_thresh = peak_thresh;
     		      if (norm_thresh >= 0) filt.norm_thresh = norm_thresh;
     		      if (magnif      >= 0) filt.magnif = magnif;
+    		      if (window_size > 0)  filt.window_size = window_size;
 
     		      if (verbose) {
     		        System.out.println("sift: filter settings:") ;
@@ -783,9 +800,13 @@ public class SIFT extends AlgorithmBase {
     		        System.out.println("sift:   edge threshold = " + filt.edge_thresh);
     		        Preferences.debug("sift:   edge threshold = " + filt.edge_thresh + "\n", Preferences.DEBUG_ALGORITHM);
     		        System.out.println("sift:   peak threshold = " + filt.peak_thresh);
-    		        Preferences.debug("sift:   peak threshold = " + filt.peak_thresh + "\n", Preferences.DEBUG_ALGORITHM);
+    		        Preferences.debug("sift:   peak threshold = " + filt.norm_thresh + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:  norm threshold = " + filt.peak_thresh);
+    		        Preferences.debug("sift:   norm threshold = " + filt.norm_thresh + "\n", Preferences.DEBUG_ALGORITHM);
     		        System.out.println("sift:   magnification factor = " + filt.magnif);
     		        Preferences.debug("sift:   magnification factor = " + filt.magnif + "\n", Preferences.DEBUG_ALGORITHM);
+    		        System.out.println("sift:   window size = " + filt.window_size);
+    		        Preferences.debug("sift:   window size = " + filt.window_size + "\n", Preferences.DEBUG_ALGORITHM);
     		        if (ikeys != null) {
     		        	System.out.println("sift: will source frames? yes");
     		        	Preferences.debug("sift: will source frames? yes\n", Preferences.DEBUG_ALGORITHM);
@@ -2741,7 +2762,7 @@ public class SIFT extends AlgorithmBase {
       double edge_thresh ;  /**< edge threshold. */
       double norm_thresh ;  /**< norm threshold. */
       double magnif ;       /**< magnification factor. */
-      double windowSize ;   /**< size of Gaussian window (in spatial bins) */
+      double window_size ;   /**< size of Gaussian window (in spatial bins) */
 
       float grad[];   /**< GSS gradient data. */
       int grad_o ;          /**< GSS gradient data octave. */
@@ -3485,7 +3506,7 @@ public class SIFT extends AlgorithmBase {
       f.edge_thresh = 10.0 ;
       f.norm_thresh = 0.0 ;
       f.magnif      = 3.0 ;
-      f.windowSize  = NBP / 2 ;
+      f.window_size  = NBP / 2 ;
 
       f.grad_o  = o_min - 1 ;
 
@@ -4971,7 +4992,7 @@ public class SIFT extends AlgorithmBase {
            * has a standard deviation equal to NBP/2. Note that dx and dy
            * are in the normalized frame, so that -NBP/2 <= dx <=
            * NBP/2. */
-          final float wsigma = (float)f.windowSize ;
+          final float wsigma = (float)f.window_size ;
           float win = (float)Math.exp
             ((nx*nx + ny*ny)/(2.0 * wsigma * wsigma)) ;
 
