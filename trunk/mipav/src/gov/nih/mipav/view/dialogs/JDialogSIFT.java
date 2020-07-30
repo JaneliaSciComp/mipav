@@ -50,6 +50,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private int  omin = 0 ;
     private double   edge_thresh  = 10 ;
     private double   peak_thresh  = 0 ;
+    private double   norm_thresh = 0;
     private double   magnif       = 3.0 ;
     private boolean force_orientations = false ;
     private boolean writeFrames = false;
@@ -98,6 +99,10 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     private JLabel labelPeakThresh;
     
     private JTextField textPeakThresh;
+    
+    private JLabel labelNormThresh;
+    
+    private JTextField textNormThresh;
     
     private JLabel labelMagnification;
     
@@ -196,6 +201,14 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         textPeakThresh = new JTextField(10);
         textPeakThresh.setText("0.0");
         textPeakThresh.setFont(serif12);
+        
+        labelNormThresh = new JLabel("Norm threshold");
+        labelNormThresh.setForeground(Color.black);
+        labelNormThresh.setFont(serif12);
+
+        textNormThresh = new JTextField(10);
+        textNormThresh.setText("0.0");
+        textNormThresh.setFont(serif12);
         
         labelMagnification = new JLabel("Magnification factor");
         labelMagnification.setForeground(Color.black);
@@ -298,38 +311,48 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         gbc.gridy = 6;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
-        upperPanel.add(labelMagnification, gbc);
+        upperPanel.add(labelNormThresh, gbc);
         gbc.gridx = 1;
         gbc.gridy = 6;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        upperPanel.add(textMagnification, gbc);
+        upperPanel.add(textNormThresh, gbc);
         gbc.gridx = 0;
         gbc.gridy = 7;
-        gbc.gridwidth = 2;
-        upperPanel.add(orientationsCheckBox, gbc);
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(labelMagnification, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 7;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textMagnification, gbc);
         gbc.gridx = 0;
         gbc.gridy = 8;
         gbc.gridwidth = 2;
-        upperPanel.add(verboseCheckBox, gbc);
+        upperPanel.add(orientationsCheckBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 9;
         gbc.gridwidth = 2;
-        upperPanel.add(writeFramesCheckBox, gbc);
+        upperPanel.add(verboseCheckBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 10;
         gbc.gridwidth = 2;
-        upperPanel.add(readFramesCheckBox, gbc);
+        upperPanel.add(writeFramesCheckBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 11;
         gbc.gridwidth = 2;
-        upperPanel.add(writeDescriptorCheckBox, gbc);
+        upperPanel.add(readFramesCheckBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 12;
         gbc.gridwidth = 2;
-        upperPanel.add(writeMetaCheckBox, gbc);
+        upperPanel.add(writeDescriptorCheckBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 13;
+        gbc.gridwidth = 2;
+        upperPanel.add(writeMetaCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 14;
         gbc.gridwidth = 2;
         upperPanel.add(writeGssCheckBox, gbc);
         
@@ -622,7 +645,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     protected void callAlgorithm() {
         SIFTAlgo = new SIFT(fileDir, fileName, mosaic, verbose, outarg, framesarg,
         		descriptorarg, metaarg, read_framesarg, gssarg, O, S,
-        		omin, edge_thresh, peak_thresh, magnif, force_orientations,
+        		omin, edge_thresh, peak_thresh, norm_thresh, magnif, force_orientations,
         		writeFrames, readFrames, writeDescriptor, writeMeta,
         		writeGss);
         
@@ -723,6 +746,17 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
             return false;
         }
         
+        tmpStr = textNormThresh.getText();
+
+        if (testParameter(tmpStr, 0.0, 1000.0)) {
+            norm_thresh = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textNormThresh.requestFocus();
+            textNormThresh.selectAll();
+
+            return false;
+        }
+        
         tmpStr = textMagnification.getText();
 
         if (testParameter(tmpStr, 1.0, 1000.0)) {
@@ -767,6 +801,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     	omin = scriptParameters.getParams().getInt("first_octave");
     	edge_thresh = scriptParameters.getParams().getDouble("edge");
     	peak_thresh = scriptParameters.getParams().getDouble("peak");
+    	norm_thresh = scriptParameters.getParams().getDouble("norm");
     	magnif = scriptParameters.getParams().getDouble("magnification");
     	force_orientations = scriptParameters.getParams().getBoolean("orientations");
     	writeFrames = scriptParameters.getParams().getBoolean("write_frames");
@@ -791,6 +826,7 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
     	scriptParameters.getParams().put(ParameterFactory.newParameter("first_octave", omin));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("edge", edge_thresh));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("peak", peak_thresh));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("norm", norm_thresh));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("magnification", magnif));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("orientations", force_orientations));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("write_frames", writeFrames));
