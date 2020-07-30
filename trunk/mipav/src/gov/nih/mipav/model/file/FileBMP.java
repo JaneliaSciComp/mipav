@@ -66,7 +66,7 @@ public class FileBMP extends FileBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * LIFF reader/writer constructor.
+     * BMP reader/writer constructor.
      *
      * @param      fileName  file name
      * @param      fileDir   file directory
@@ -130,7 +130,7 @@ public class FileBMP extends FileBase {
     }
     
     /**
-     * Reads the LIFF header which indicates endianess, the TIFF magic number, and the offset in bytes of the first IFD.
+     * Reads the BMP header which indicates endianess, the TIFF magic number, and the offset in bytes of the first IFD.
      * It then reads all the IFDs. This method then opens a Model of an image and imports the the images one slice at a
      * time. Image slices are separated by an IFD.
      *
