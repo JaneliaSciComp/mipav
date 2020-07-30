@@ -111,6 +111,9 @@ public class SIFT extends AlgorithmBase {
     private int  omin = 0 ;
     private double   edge_thresh  = 10 ;
     private double   peak_thresh  = 0;
+    // Set the minimum l2-norm of the descriptors before
+    // normalization. Descriptors below the threshold are set to zero.
+    private double   norm_thresh = 0;
     private double   magnif       = 3.0 ;
     private boolean force_orientations = false;
     private boolean writeFrames = false;
@@ -145,7 +148,7 @@ public class SIFT extends AlgorithmBase {
     
     public SIFT(String fileDir[], String fileName[], boolean mosaic, boolean verbose, String outarg, String framesarg,
     		String descriptorarg, String metaarg, String read_framesarg, String gssarg, int O, int S,
-    		int omin, double edge_thresh, double peak_thresh, double magnif, boolean force_orientations,
+    		int omin, double edge_thresh, double peak_thresh, double norm_thresh, double magnif, boolean force_orientations,
     		boolean writeFrames, boolean readFrames, boolean writeDescriptor, boolean writeMeta,
     		boolean writeGss) {
         this.fileDir = fileDir;
@@ -163,6 +166,7 @@ public class SIFT extends AlgorithmBase {
         this.omin = omin;
         this.edge_thresh = edge_thresh;
         this.peak_thresh = peak_thresh;
+        this.norm_thresh = norm_thresh;
         this.magnif = magnif;
         this.force_orientations = force_orientations;
         this.writeFrames = writeFrames;
@@ -337,6 +341,12 @@ public class SIFT extends AlgorithmBase {
     	  
     	  if (peak_thresh < 0) {
     		  MipavUtil.displayError("peak_thresh = " + peak_thresh + " must not be less than 0");
+    		  setCompleted(false);
+    		  return;
+    	  }
+    	  
+    	  if (norm_thresh < 0) {
+    		  MipavUtil.displayError("norm_thresh = " + norm_thresh + " must not be less than 0");
     		  setCompleted(false);
     		  return;
     	  }
@@ -758,6 +768,7 @@ public class SIFT extends AlgorithmBase {
 
     		      if (edge_thresh >= 0) filt.edge_thresh = edge_thresh;
     		      if (peak_thresh >= 0) filt.peak_thresh = peak_thresh;
+    		      if (norm_thresh >= 0) filt.norm_thresh = norm_thresh;
     		      if (magnif      >= 0) filt.magnif = magnif;
 
     		      if (verbose) {
