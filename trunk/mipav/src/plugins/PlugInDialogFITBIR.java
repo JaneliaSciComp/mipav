@@ -408,6 +408,8 @@ public class PlugInDialogFITBIR extends JFrame
             + "the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing requirements,\n"
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
+    
+    private static final String defaultFormDiseaseVar = "BricsDisease";
 
     private static final Comparator<DataElementValue> dataElementCompare = new Comparator<DataElementValue>() {
         @Override
@@ -5656,7 +5658,7 @@ public class PlugInDialogFITBIR extends JFrame
 
     }
 
-    private class ChooseDataStructDialog extends JDialog implements ActionListener {
+    private class ChooseDataStructDialog extends JDialog implements ActionListener, ItemListener {
         private static final long serialVersionUID = 4199199899439094828L;
 
         private final PlugInDialogFITBIR owner;
@@ -5664,6 +5666,8 @@ public class PlugInDialogFITBIR extends JFrame
         private ViewTableModel structsModel;
 
         private JTable structsTable;
+        
+        private TableRowSorter<TableModel> structsSorter;
 
         private final ArrayList<String> descAL = new ArrayList<String>();
 
@@ -5683,11 +5687,11 @@ public class PlugInDialogFITBIR extends JFrame
             this.owner = owner;
 
             init();
-
         }
 
         private void init() {
             setTitle("Choose Form Structure");
+            
             final int numColumns = 5;
             final String[] columnNames = {"Name", "Description", "Version", "Status", "Disease"};
             structsModel = new ViewTableModel();
@@ -5834,6 +5838,54 @@ public class PlugInDialogFITBIR extends JFrame
             structsScrollPane = new JScrollPane(structsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             structsScrollPane.setPreferredSize(new Dimension(600, 300));
+            
+            structsSorter = new TableRowSorter<TableModel>(structsModel);
+            structsTable.setRowSorter(structsSorter);
+            
+            final TreeSet<String> uniqueDiseaseList = new TreeSet<String>(new AlphabeticalComparator());
+            for (final String diseaseEntry : diseaseAL) {
+                String[] diseaseList = diseaseEntry.split(", ");
+                for (final String disease : diseaseList) {
+                    if (!uniqueDiseaseList.contains(disease)) {
+                        uniqueDiseaseList.add(disease);
+                    }
+                }
+            }
+            
+            JPanel diseaseFilterPanel = new JPanel();
+            JLabel diseaseFilterLabel = new JLabel("Display form structures from ");
+            diseaseFilterLabel.setFont(MipavUtil.font12);
+            JComboBox<String> diseaseFilterCombo = new JComboBox<String>();
+            diseaseFilterCombo.setName("DiseaseFilter");
+            diseaseFilterCombo.setFont(MipavUtil.font12);
+            
+            diseaseFilterCombo.addItem("All Diseases");
+            for (final String element : uniqueDiseaseList) {
+                final String item = element.trim();
+                diseaseFilterCombo.addItem(item);
+            }
+            
+            diseaseFilterCombo.addItemListener(this);
+            
+            int selectedIndex = 0;
+            if (VariableTable.getReference().isVariableSet(defaultFormDiseaseVar)) {
+                String selectedDisease = VariableTable.getReference().interpolate(defaultFormDiseaseVar);
+                
+                if (selectedDisease != null && !selectedDisease.trim().equals("")) {
+                    System.err.println("Default form structure disease specified: " + selectedDisease);
+                    
+                    for (int i = 0; i < diseaseFilterCombo.getItemCount(); i++) {
+                        if (diseaseFilterCombo.getItemAt(i).contains(selectedDisease)) {
+                            selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            diseaseFilterCombo.setSelectedIndex(selectedIndex);
+            
+            diseaseFilterPanel.add(diseaseFilterLabel);
+            diseaseFilterPanel.add(diseaseFilterCombo);
 
             final JPanel OKPanel = new JPanel();
             final JButton OKButton = new JButton("Add");
@@ -5844,6 +5896,8 @@ public class PlugInDialogFITBIR extends JFrame
             OKButton.setFont(serif12B);
 
             OKPanel.add(OKButton);
+            
+            getContentPane().add(diseaseFilterPanel, BorderLayout.NORTH);
 
             getContentPane().add(structsScrollPane, BorderLayout.CENTER);
 
@@ -5856,7 +5910,6 @@ public class PlugInDialogFITBIR extends JFrame
             MipavUtil.centerInWindow(owner, this);
 
             setVisible(true);
-
         }
 
         /**
@@ -5883,6 +5936,30 @@ public class PlugInDialogFITBIR extends JFrame
             public int compare(final String a, final String b) {
                 return (a.toLowerCase().compareTo(b.toLowerCase()));
 
+            }
+        }
+
+        /* (non-Javadoc)
+         * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+         */
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            Component source = (Component) e.getSource();
+            if (source.getName().equals("DiseaseFilter")) {
+                JComboBox<String> cb = (JComboBox<String>) source;
+                String selectedDisease = (String) cb.getSelectedItem();
+
+                if (selectedDisease.equals("All Diseases")) {
+                    structsSorter.setRowFilter(null);
+                } else {
+                    RowFilter<Object,Object> filter = new RowFilter<Object,Object> () {
+                       public boolean include(Entry<? extends Object, ? extends Object> entry) {
+                           String diseaseVal = entry.getStringValue(4);
+                           return diseaseVal.contains(selectedDisease);
+                       }
+                    };
+                    structsSorter.setRowFilter(filter);
+                }
             }
         }
     }
