@@ -3575,14 +3575,20 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         final JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildButtons());
-
-        getContentPane().add(tabbedPane);
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(tabbedPane, BorderLayout.NORTH);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        JScrollPane scrollPane = new JScrollPane(mainPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        getContentPane().add(scrollPane);
 
         comboBoxInterp.setSelectedIndex(1);
         pack();
         setVisible(true);
-        setResizable(false);
+        setResizable(true);
 
     }
 
