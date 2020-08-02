@@ -149,7 +149,6 @@ public class SIFT extends AlgorithmBase {
     
     /** @internal @brief Use bilinear interpolation to compute orientations */
     private boolean VL_SIFT_BILINEAR_ORIENTATIONS = true;
-    private boolean register = true;
 	
 	/**
      * SIFT - default constructor.
@@ -1862,12 +1861,15 @@ public class SIFT extends AlgorithmBase {
    		    	// do nothing
    		    }
    		    else if (firstX == 0) {
+   		    	registerXDim++;
    		    	lastX++;
    		    }
    		    else if (lastX == uvec.size()-1) {
+   		    	registerXDim++;
    		    	firstX--;
    		    }
    		    else {
+   		    	registerXDim++;
    		        if ((uvec.get(firstX)-1.0) > (im1.getExtents()[0]-1-(uvec.get(lastX)-1))) {
    		            firstX--;	
    		        }
@@ -1882,12 +1884,15 @@ public class SIFT extends AlgorithmBase {
    		    	// do nothing
    		    }
    		    else if (firstY == 0) {
+   		    	registerYDim++;
    		    	lastY++;
    		    }
    		    else if (lastY == vvec.size()-1) {
+   		    	registerYDim++;
    		    	firstY--;
    		    }
    		    else {
+   		    	registerYDim++;
    		        if ((vvec.get(firstY)-1.0) > (im1.getExtents()[1]-1-(vvec.get(lastY)-1))) {
    		            firstY--;	
    		        }
@@ -1896,6 +1901,8 @@ public class SIFT extends AlgorithmBase {
    		        }
    		    }
    		}
+   		int registerExtents[] = new int[] {registerXDim, registerYDim};
+   		int registerLength = registerXDim * registerYDim;
    		
    		double u[][] = new double[numv][numu];
    		double v[][] = new double[numv][numu];
@@ -1966,7 +1973,9 @@ public class SIFT extends AlgorithmBase {
    		}
    		
    		ModelImage mosaicImage = null;
+   		ModelImage registerImage = null;
    		int mosaicExtents[] = new int[]{numu,numv};
+   		int regIndex;
    		if (im1.isColorImage() || im2.isColorImage()) {
    			float redMosaic[] = new float[numv * numu];
    			float greenMosaic[] = new float[numv * numu];
@@ -2038,6 +2047,60 @@ public class SIFT extends AlgorithmBase {
           	   return;
             }
    		    mosaicImage.calcMinMax();
+   		    
+   		    redMosaic = new float[registerLength];
+			greenMosaic = new float[registerLength];
+			blueMosaic = new float[registerLength];
+			for (j = firstY; j <= lastY; j++) {
+				for (i = firstX; i <= lastX; i++) {
+					index = i + j * numu;
+				    regIndex = i-firstX + (j-firstY) * registerXDim;
+				    if (Float.isNaN(wred2[index])) {
+				    	redMosaic[regIndex] = Float.NaN;
+				    }
+				    else {
+				    	redMosaic[regIndex] = wred2[index];
+				    }
+				    if (Float.isNaN(wgreen2[index])) {
+				    	greenMosaic[regIndex] = Float.NaN;
+				    }
+				    else {
+				    	greenMosaic[regIndex] = wgreen2[index];
+				    }
+				    if (Float.isNaN(wblue2[index])) {
+				    	blueMosaic[regIndex] = Float.NaN;
+				    }
+				    else {
+				    	blueMosaic[regIndex] = wblue2[index];
+				    }
+				}
+			}
+			registerImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, registerExtents, im2.getImageName() + "_registeredto_"+ im1.getImageName());
+			try {
+	      	   registerImage.importRGBData(1,0,redMosaic, false);
+	         }
+	         catch (IOException e) {
+	      	   System.err.println("IOException on registerImage.importRGBData(1,0,redMosaic,false");
+	      	   setCompleted(false);
+	      	   return;
+	         }
+				try {
+	       	   registerImage.importRGBData(2,0,greenMosaic, false);
+	         }
+	         catch (IOException e) {
+	       	   System.err.println("IOException on registerImage.importRGBData(2,0,greenMosaic,false");
+	       	   setCompleted(false);
+	       	   return;
+	         }
+			    try {
+	       	   registerImage.importRGBData(3,0,blueMosaic, false);
+	         }
+	         catch (IOException e) {
+	       	   System.err.println("IOException on registerImage.importRGBData(3,0,blueMosaic,false");
+	       	   setCompleted(false);
+	       	   return;
+	         }
+		    registerImage.calcMinMax();
    		} // if (im1.isColorImage() || im2.isColorImage())
    		else { // grayscale images
    			double grayMosaic[] = new double[numv * numu];
@@ -2067,6 +2130,29 @@ public class SIFT extends AlgorithmBase {
            	   setCompleted(false);
            	   return;
             }
+   			
+   			grayMosaic = new double[registerLength];
+   			for (j = firstY; j <= lastY; j++) {
+				for (i = firstX; i <= lastX; i++) {
+					index = i + j * numu;
+				    regIndex = i-firstX + (j-firstY) * registerXDim;
+				    if (Double.isNaN(wgray2[index])) {
+				    	grayMosaic[regIndex] = Double.NaN;
+				    }
+				    else {
+				    	grayMosaic[regIndex] = wgray2[index];
+				    }
+				}
+			}
+   			registerImage = new ModelImage(ModelStorageBase.DOUBLE, registerExtents, im2.getImageName() + "_registeredto_"+ im1.getImageName());
+   			try {
+           	   registerImage.importData(0,grayMosaic, true);
+            }
+            catch (IOException e) {
+           	   System.err.println("IOException on registerImage.importData(0,grayMosaic,true");
+           	   setCompleted(false);
+           	   return;
+            }
    		} // else grayscale images
    		
    		im1.disposeLocal();
@@ -2075,6 +2161,7 @@ public class SIFT extends AlgorithmBase {
    		im2 = null;
    		
    		new ViewJFrameImage(mosaicImage);
+   		new ViewJFrameImage(registerImage);
 
  	   } // if (mosaic)
 	   
