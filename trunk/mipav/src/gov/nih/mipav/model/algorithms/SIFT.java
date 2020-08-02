@@ -149,6 +149,7 @@ public class SIFT extends AlgorithmBase {
     
     /** @internal @brief Use bilinear interpolation to compute orientations */
     private boolean VL_SIFT_BILINEAR_ORIENTATIONS = true;
+    private boolean register = true;
 	
 	/**
      * SIFT - default constructor.
@@ -1829,16 +1830,72 @@ public class SIFT extends AlgorithmBase {
    		}
    		Vector<Double>uvec = new Vector<Double>();
    		double uval;
+   		int firstX = -1;
+   		int lastX = -1;
    		for (uval = minur; uval <= maxur; uval += 1.0) {
    			uvec.add(uval);
+   			if ((firstX == -1) && ((uval-1) >= 0.0)) {
+   				firstX = uvec.size() - 1;
+   			}
+   			if ((uval-1) <= im1.getExtents()[0]-1) {
+   				lastX = uvec.size()-1;
+   			}
    		}
    		int numu = uvec.size();
+   		int firstY = -1;
+   		int lastY = -1;
    		Vector<Double>vvec = new Vector<Double>();
    		double vval;
    		for (vval = minvr; vval <= maxvr; vval += 1.0) {
    			vvec.add(vval);
+   			if ((firstY == -1) && ((vval-1) >= 0.0)) {
+   				firstY = vvec.size() - 1;
+   			}
+   			if ((vval-1) <= im1.getExtents()[1]-1) {
+   				lastY = vvec.size()-1;
+   			}
    		}
    		int numv = vvec.size();
+   		int registerXDim = lastX - firstX + 1;
+   		if (registerXDim == im1.getExtents()[0]-1) {
+   		    if ((firstX == 0) && (lastX == uvec.size()-1)) {
+   		    	// do nothing
+   		    }
+   		    else if (firstX == 0) {
+   		    	lastX++;
+   		    }
+   		    else if (lastX == uvec.size()-1) {
+   		    	firstX--;
+   		    }
+   		    else {
+   		        if ((uvec.get(firstX)-1.0) > (im1.getExtents()[0]-1-(uvec.get(lastX)-1))) {
+   		            firstX--;	
+   		        }
+   		        else {
+   		        	lastX++;
+   		        }
+   		    }
+   		}
+   		int registerYDim = lastY - firstY + 1;
+   		if (registerYDim == im1.getExtents()[1]-1) {
+   		    if ((firstY == 0) && (lastY == vvec.size()-1)) {
+   		    	// do nothing
+   		    }
+   		    else if (firstY == 0) {
+   		    	lastY++;
+   		    }
+   		    else if (lastY == vvec.size()-1) {
+   		    	firstY--;
+   		    }
+   		    else {
+   		        if ((vvec.get(firstY)-1.0) > (im1.getExtents()[1]-1-(vvec.get(lastY)-1))) {
+   		            firstY--;	
+   		        }
+   		        else {
+   		        	lastY++;
+   		        }
+   		    }
+   		}
    		
    		double u[][] = new double[numv][numu];
    		double v[][] = new double[numv][numu];
