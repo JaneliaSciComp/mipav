@@ -178,7 +178,6 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
         mosaicCheckBox = new JCheckBox("Merge 2 images into 1 mosaic image");
         mosaicCheckBox.setFont(serif12);
         mosaicCheckBox.setSelected(false);
-        mosaicCheckBox.addActionListener(this);
         
         labelRegister = new JLabel("and register image 2 unto image 1");
         labelRegister.setForeground(Color.black);
@@ -564,17 +563,6 @@ public class JDialogSIFT extends JDialogScriptableBase implements AlgorithmInter
             if (setVariables()) {
                 callAlgorithm();
             }
-        } else if (source.equals(mosaicCheckBox)) {
-        	if (mosaicCheckBox.isSelected()) {
-        		writeFramesCheckBox.setSelected(true);
-        		writeFramesCheckBox.setEnabled(false);
-        		writeDescriptorCheckBox.setSelected(true);
-        		writeDescriptorCheckBox.setEnabled(false);
-        	}
-        	else {
-        		writeFramesCheckBox.setEnabled(true);
-        		writeDescriptorCheckBox.setEnabled(true);
-        	}
         } else if (command.equals("Cancel")) {
             dispose();
         
