@@ -193,9 +193,6 @@ public class SIFT extends AlgorithmBase {
     	
     	  
     	  int  err    = VL_ERR_OK ;
-    	  String err_msg;
-    	  int      n ;
-    	  int      exit_code          = 0 ;
     	  boolean  force_output       = false ;
     	  String basename;
     	  String name;
@@ -918,7 +915,7 @@ public class SIFT extends AlgorithmBase {
     		            float descr[] = new float [128] ;
 
     		            /* compute descriptor (if necessary) */
-    		            if (out.active || dsc.active) {
+    		            if (mosaic || out.active || dsc.active) {
     		              vl_sift_calc_keypoint_descriptor
     		                (filt, descr, k, angles [q]) ;
     		            }
@@ -964,7 +961,7 @@ public class SIFT extends AlgorithmBase {
     		              }
     		            }
 
-    		            if (frm.active) {
+    		            if (frm.active || mosaic) {
     		              if (mosaic) {
     		                  frmArray = new double[] {k.x, k.y, k.sigma, angles[q]};
     		                  if (fileNum == 0) {
@@ -974,35 +971,37 @@ public class SIFT extends AlgorithmBase {
     		                	  f2.add(frmArray);
     		                  }
     		              }
-    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. x     ) ;
-    		              if (err != 0) {
-    		            	  break bigloop;
-    		              }
-    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. y     ) ;
-    		              if (err != 0) {
-    		            	  break bigloop;
-    		              }
-    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. sigma     ) ;
-    		              if (err != 0) {
-    		            	  break bigloop;
-    		              }
-    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile,angles[q]     ) ;
-    		              if (err != 0) {
-    		            	  break bigloop;
-    		              }
-    		              if (frm.protocol[0] == VL_PROT_ASCII) {
-    		            	  try {
-    		            		  frmFile.writeByte(10); // 10 is ascii for new line
-    		            	  }
-    		            	  catch (IOException e) {
-    		            		  System.err.println("IOException " + e + " writing newline to frmFile");
-    		            		  Preferences.debug("IOException " + e + " writing newline to frmFile\n", Preferences.DEBUG_ALGORITHM);
-    		            		  break bigloop;
-    		            	  }
-    		              }
-    		            }
+    		              if (frm.active) {
+	    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. x     ) ;
+	    		              if (err != 0) {
+	    		            	  break bigloop;
+	    		              }
+	    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. y     ) ;
+	    		              if (err != 0) {
+	    		            	  break bigloop;
+	    		              }
+	    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile, k. sigma     ) ;
+	    		              if (err != 0) {
+	    		            	  break bigloop;
+	    		              }
+	    		              err = vl_file_meta_put_double (frm.protocol[0], frmFile,angles[q]     ) ;
+	    		              if (err != 0) {
+	    		            	  break bigloop;
+	    		              }
+	    		              if (frm.protocol[0] == VL_PROT_ASCII) {
+	    		            	  try {
+	    		            		  frmFile.writeByte(10); // 10 is ascii for new line
+	    		            	  }
+	    		            	  catch (IOException e) {
+	    		            		  System.err.println("IOException " + e + " writing newline to frmFile");
+	    		            		  Preferences.debug("IOException " + e + " writing newline to frmFile\n", Preferences.DEBUG_ALGORITHM);
+	    		            		  break bigloop;
+	    		            	  }
+	    		              }
+    		              } // if (frm.active)
+    		            } // if (frm.active || mosaic)
 
-    		            if (dsc.active) {
+    		            if (mosaic || dsc.active) {
     		              int l ;
     		              if (mosaic) {
     		            	  dscArray = new double[128];
@@ -1012,17 +1011,19 @@ public class SIFT extends AlgorithmBase {
     		                if (mosaic) {
     		                	dscArray[l] = x;
     		                }
-    		                x = (x < 255.0) ? x : 255.0;
-    		                if (x < 0) {
-    		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x - 0.5));
-    		            	}
-    		            	else {
-    		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x + 0.5));	
-    		            	}
-    		            	if (err != 0) {
-    		            		break bigloop;
-    		            	}
-    		              }
+    		                if (dsc.active) {
+	    		                x = (x < 255.0) ? x : 255.0;
+	    		                if (x < 0) {
+	    		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x - 0.5));
+	    		            	}
+	    		            	else {
+	    		            		err = vl_file_meta_put_uint8(dsc.protocol[0], dscFile, (byte)(x + 0.5));	
+	    		            	}
+	    		            	if (err != 0) {
+	    		            		break bigloop;
+	    		            	}
+    		                } // if (dsc.active)
+    		              } // for (l = 0; l  128; l++)
     		              if (mosaic) {
     		            	  if (fileNum == 0) {
     		            		  d1.add(dscArray);
@@ -1031,16 +1032,18 @@ public class SIFT extends AlgorithmBase {
     		            		  d2.add(dscArray);
     		            	  }
     		              }
-    		              if (dsc.protocol[0] == VL_PROT_ASCII) {
-    		            	  try {
-    		            		  dscFile.writeByte(10); // 10 is ascii for new line
-    		            	  }
-    		            	  catch (IOException e) {
-    		            		  System.err.println("IOException " + e + " writing newline to dscFile");
-    		            		  Preferences.debug("IOException " + e + " writing newline to dscFile\n", Preferences.DEBUG_ALGORITHM);
-    		            		  break bigloop;
-    		            	  }
-    		              }
+    		              if (dsc.active) {
+	    		              if (dsc.protocol[0] == VL_PROT_ASCII) {
+	    		            	  try {
+	    		            		  dscFile.writeByte(10); // 10 is ascii for new line
+	    		            	  }
+	    		            	  catch (IOException e) {
+	    		            		  System.err.println("IOException " + e + " writing newline to dscFile");
+	    		            		  Preferences.debug("IOException " + e + " writing newline to dscFile\n", Preferences.DEBUG_ALGORITHM);
+	    		            		  break bigloop;
+	    		            	  }
+	    		              }
+    		              } // if (dsc.active)
     		            }
     		          }
     		        } // for (; i < nkeys ; ++i)
