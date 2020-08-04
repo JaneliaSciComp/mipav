@@ -95,6 +95,10 @@ public class SIFT3D extends AlgorithmBase {
 		int mem_flags;
 		//Kernels kernels;
 		int valid;		// Is this struct valid?
+		
+		public CL_data() {
+			
+		}
 	};
 	
 	/* Struct to hold a dense matrix in row-major order */
@@ -104,12 +108,20 @@ public class SIFT3D extends AlgorithmBase {
 			double data_double[];
 			float  data_float[];
 			int data_int[];
+			
+			public u() {
+				
+			}
 		};
 		int size;		// Size of the buffer, in bytes
 		int num_cols;           // Number of columns 
 		int num_rows;           // Number of rows	
 	    int static_mem;         // Flag for statically-allocated memory
 		Mat_rm_type type;       // DOUBLE, FLOAT, or INT
+		
+		public Mat_rm() {
+			
+		}
 
 	};
 	
@@ -129,6 +141,10 @@ public class SIFT3D extends AlgorithmBase {
 	    int xs, ys, zs;      // Stride in x, y, and z
 	    int nc;                 // The number of channels
 		int cl_valid;		// If TRUE, cl_image is valid
+		
+		public Image() {
+			
+		}
 
 	};
 	
@@ -140,6 +156,10 @@ public class SIFT3D extends AlgorithmBase {
 		int dim;	// dimensionality, e.g. 3 for MRI
 		int width;	// number of weights				
 		int symmetric;	// enable symmetric optimizations: FALSE or TRUE
+		
+		public Sep_FIR_filter() {
+			
+		}
 
 	};
 	
@@ -148,6 +168,9 @@ public class SIFT3D extends AlgorithmBase {
 
 		double sigma;
 		Sep_FIR_filter f = new Sep_FIR_filter();
+		public Gauss_filter() {
+			
+		}
 
 	};
 	
@@ -158,6 +181,9 @@ public class SIFT3D extends AlgorithmBase {
 		Gauss_filter gauss_octave[];	// Array of kernels for one octave
 		int num_filters;		// Number of filters for one octave
 		int first_level;                // Index of the first scale level
+		public GSS_filters() {
+			
+		}
 
 	};
 	
@@ -184,6 +210,9 @@ public class SIFT3D extends AlgorithmBase {
 		int num_octaves;
 		int first_level;
 		int num_levels;
+		public Pyramid() {
+			
+		}
 
 	};
 	
@@ -193,6 +222,10 @@ public class SIFT3D extends AlgorithmBase {
 		float mag;	// Magnitude
 		float po;	// Polar angle, [0, pi)
 		float az;	// Azimuth angle, [0, 2pi)
+		
+		public Svec() {
+			
+		}
 
 	};
 	
@@ -202,6 +235,10 @@ public class SIFT3D extends AlgorithmBase {
 		float x;
 		float y;
 		float z;
+		
+		public Cvec() {
+			
+		}
 
 	};
 	
@@ -211,8 +248,204 @@ public class SIFT3D extends AlgorithmBase {
 		//void *buf;			// Buffer
 		int num;			// Number of elements currently in buffer
 		int buf_size;	        // Buffer capacity, in bytes
+		
+		public Slab() {
+			
+		}
 
 	};
+	
+	/* Struct defining a keypoint in 3D space. */
+    class Keypoint {
+
+		float r_data[] = new float[IM_NDIMS * IM_NDIMS];	// Memory for matrix R, do not use this
+		Mat_rm R = new Mat_rm();				// Rotation matrix into Keypoint space
+		double xd, yd, zd;			// sub-pixel x, y, z
+		double  sd;				// absolute scale
+		int o, s;			        // pyramid indices 
+		
+		public Keypoint() {
+			
+		}
+
+	};
+	
+	/* Struct to hold keypoints */
+	class Keypoint_store {
+		
+		Keypoint buf[];
+		Slab slab = new Slab();
+		int nx, ny, nz;		// dimensions of first octave
+		
+		public Keypoint_store() {
+			
+		}
+
+	};
+	
+	/* Struct defining an orientation histogram in
+	 * spherical coordinates. */
+	class Hist {
+		float bins[] = new float[HIST_NUMEL];
+		
+		public Hist() {
+			
+		}
+	};
+	
+	/* Triangle */
+	class Tri {
+		Cvec v[] = new Cvec[] {new Cvec(), new Cvec(), new Cvec()}; // Vertices
+		int idx[] = new int[3]; // Index of each vertex in the solid
+		
+		public Tri() {
+			
+		}
+	};
+
+	/* Triangle mesh */
+	class Mesh {
+		Tri tri[]; 	// Triangles
+		int num;	// Number of triangles
+		
+		public Mesh() {
+			
+		}
+	};
+	
+	/* Struct defining a 3D SIFT descriptor */
+	class SIFT3D_Descriptor {
+
+		Hist hists[] = new Hist[DESC_NUM_TOTAL_HIST]; // Array of orientation histograms
+		double xd, yd, zd, sd;	// sub-pixel [x, y, z], absolute scale
+		
+		public SIFT3D_Descriptor() {
+			for (int i = 0; i < DESC_NUM_TOTAL_HIST; i++) {
+				hists[i] = new Hist();
+			}
+		}
+
+	};
+	
+	/* Struct to hold SIFT3D descriptors */
+	class SIFT3D_Descriptor_store {
+
+		SIFT3D_Descriptor buf[];
+		int num;
+		int nx, ny, nz;			// Image dimensions
+		
+		public SIFT3D_Descriptor_store() {
+			
+		}
+
+	};
+	
+	/* Struct to hold all parameters and internal data of the 
+	 * SIFT3D algorithms */
+	class SIFT3DC {
+
+	        // Triange mesh
+		Mesh mesh = new Mesh();
+
+	        // Filters for computing the GSS pyramid
+		GSS_filters gss = new GSS_filters();
+
+		// Other OpenCL kernels
+		//SIFT_cl_kernels kernels;
+
+		// Gaussian pyramid
+		Pyramid gpyr = new Pyramid();
+
+		// DoG pyramid
+		Pyramid dog = new Pyramid();
+
+		// Image to process
+		Image im = new Image();
+
+		// Parameters
+		double peak_thresh; // Keypoint peak threshold
+		double corner_thresh; // Keypoint corner threshold
+	    int dense_rotate; // If true, dense descriptors are rotation-invariant
+	    
+	    public SIFT3DC() {
+	    	
+	    }
+
+	};
+	
+	/* Geometric transformations that can be applied by this library. */
+	enum tform_type {
+		AFFINE,         // Affine (linear + constant)
+		TPS             // Thin-plate spline	
+	};
+
+	/* Interpolation algorithms that can be used by this library. */
+	enum interp_type {
+	        LINEAR,         // N-linear interpolation
+	        LANCZOS2        // Lanczos kernel, a = 2
+	};
+	
+	/* Virtual function table for Tform class */
+	/*typedef struct _Tform_vtable {
+
+	        int (*copy)(const void *const, void *const);
+
+	        void (*apply_xyz)(const void *const, const double, const double, 
+	                const double, double *const, double *const, double *const);
+
+	        int (*apply_Mat_rm)(const void *const, const Mat_rm *const, 
+	                Mat_rm *const);
+
+	        size_t (*get_size)(void);
+
+	        int (*write)(const char *, const void *const);
+	       
+	        void (*cleanup)(void *const);
+
+	} Tform_vtable;*/
+	
+	/* "Abstract class" of transformations */
+	class Tform {
+	        tform_type type; // The specific type, e.g. Affine, TPS
+	        //const Tform_vtable *vtable; // Table of virtual functions
+	        
+	        public Tform() {
+	        	
+	        }
+	};
+	
+	/* Struct to hold an affine transformation */
+	class Affine {
+	    Tform tform = new Tform();    // Abstract parent class
+		Mat_rm A = new Mat_rm();	// Transformation matrix, x' = Ax
+		
+		public Affine() {
+			
+		}
+	};
+	
+	/* Struct to hold a thin-plate spline */
+	class Tps {
+	    Tform tform = new Tform();       // Abstract parent class
+		Mat_rm params = new Mat_rm();	// Transformation matrix, dim * number of control point + dim +1
+		Mat_rm kp_src = new Mat_rm();	// Control point matrix, number of control point * dim
+		int dim; 	// Dimensionality, e.g. 3
+		
+		public Tps() {
+			
+		}
+	};
+	
+	/* Struct to hold RANSAC parameters */
+	class Ransac {
+	 	double err_thresh; //error threshold for RANSAC inliers
+		int num_iter; //number of RANSAC iterations
+		
+		public Ransac() {
+			
+		}
+	};
+
 
 	
 	/**
