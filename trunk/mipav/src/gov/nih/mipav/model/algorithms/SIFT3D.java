@@ -1,7 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.Preferences;
 
-    /* This is a port of SIFT3D is an analogue of the scale-invariant feature transform (SIFT) for three-dimensional images.
+/* This is a port of SIFT3D is an analogue of the scale-invariant feature transform (SIFT) for three-dimensional images.
      *  It leverages volumetric data and real-world units to detect keypoints and extract a robust description of their content.
      *  It can also perform 3D image registration by matching SIFT3D features and fitting geometric transformations with the RANSAC algorithm.
      *  
@@ -33,6 +34,7 @@ public class SIFT3D extends AlgorithmBase {
 	private double SIFT3D_nn_thresh_default; // Default matching threshold
 	private double SIFT3D_err_thresh_default;
 	private int SIFT3D_num_iter_default;
+	private boolean useOCL = false;
 
 	// Return codes
 	private final int SIFT3D_SINGULAR = 1;
@@ -103,6 +105,7 @@ public class SIFT3D extends AlgorithmBase {
 	private final double max_eig_ratio =  0.90;	// Maximum ratio of eigenvalue magnitudes
 	private final double ori_grad_thresh = 1E-10;   // Minimum norm of average gradient
 	private final double FLT_EPSILON = 1.192092896E-7; // 2**(-23)
+	private final double DBL_EPSILON = 2.2204460e-16;
 	private final double bary_eps = FLT_EPSILON * 1E1;	// Error tolerance for barycentric coordinates
 	private final double ori_sig_fctr = 1.5;        // Ratio of window parameter to keypoint scale
 	private final double ori_rad_fctr =  3.0; // Ratio of window radius to parameter
@@ -134,6 +137,25 @@ public class SIFT3D extends AlgorithmBase {
 	class Kernels {
 	  int downsample_2x_3d;
 	};
+	
+	/*#pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
+
+	sampler_t sampler_downsample_2x = CLK_NORMALIZED_COORDS_FALSE |
+					  CLK_ADDRESS_CLAMP_TO_EDGE |
+					  CLK_FILTER_NEAEREST;
+
+	kernel void downsample_2x_3d(__read_only image3d_t src,
+							 	 __write_only image3d_t dst) {
+
+		int x, y, z;
+		float4 out;
+
+		x = get_global_id(0);
+		y = get_global_id(1);
+		z = get_global_id(2);
+		out = read_imagef(src, sampler_downsample_2x, (int4) (x, y, z, 0) * 2);
+		write_imagef(dst, (int4) (x, y, z, 0), out);
+	}*/
 	
 	/* Struct to hold OpenCL data about the user system */
 	class CL_data {
@@ -530,10 +552,11 @@ public class SIFT3D extends AlgorithmBase {
     public SIFT3D() { }
     
     public SIFT3D(double SIFT3D_nn_thresh_default, double SIFT3D_err_thresh_default,
-    		int SIFT3D_num_iter_default) {
+    		int SIFT3D_num_iter_default, boolean useOCL) {
     	this.SIFT3D_nn_thresh_default = SIFT3D_nn_thresh_default;
     	this.SIFT3D_err_thresh_default = SIFT3D_err_thresh_default;
     	this.SIFT3D_num_iter_default = SIFT3D_num_iter_default;
+    	this.useOCL = useOCL;
     }
     
     public void runAlgorithm() {
@@ -569,7 +592,7 @@ public class SIFT3D extends AlgorithmBase {
     
     /* Initialize the values of im so that it can be used by the
      * resize function. Does not allocate memory. */
-    void init_im(Image im)
+    private void init_im(Image im)
     {
     	im.data = null;
     	im.cl_valid = SIFT3D_FALSE;
@@ -591,7 +614,7 @@ public class SIFT3D extends AlgorithmBase {
     /* Initialize an Affine struct. This initializes
      * all fields, and allocates memory for the inner
      * matrix, initializing it to zero. */
-    int init_Affine(Affine affine, int dim)
+    private int init_Affine(Affine affine, int dim)
     {
     	int status;
 
@@ -621,7 +644,7 @@ public class SIFT3D extends AlgorithmBase {
      *      set_zero - If true, initializes the elements to zero.
      *
      * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
-    int init_Mat_rm(Mat_rm mat, int num_rows, int num_cols,
+    private int init_Mat_rm(Mat_rm mat, int num_rows, int num_cols,
                     Mat_rm_type type, int set_zero) {
             int status;
             mat.type = type;
@@ -659,7 +682,7 @@ public class SIFT3D extends AlgorithmBase {
      * 
      * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise.
      */
-    int resize_Mat_rm(Mat_rm mat) {
+    private int resize_Mat_rm(Mat_rm mat) {
 
         int type_size, total_size;
 
@@ -719,7 +742,7 @@ public class SIFT3D extends AlgorithmBase {
     
     /* De-allocate the memory for a Mat_rm struct, unless it was initialized in
      * static mode. */
-    void cleanup_Mat_rm(Mat_rm mat) {
+    private void cleanup_Mat_rm(Mat_rm mat) {
 
         if (mat.data_double == null)
             return;
@@ -732,7 +755,7 @@ public class SIFT3D extends AlgorithmBase {
         }
     }
     
-    int zero_Mat_rm(Mat_rm mat) {
+    private int zero_Mat_rm(Mat_rm mat) {
     	final Mat_rm_type type = mat.type;
     	final int num_rows = mat.num_rows;
         final int num_cols = mat.num_cols;
@@ -774,7 +797,7 @@ public class SIFT3D extends AlgorithmBase {
     }
     
     /* Free the memory associated with an Affine transformation. */
-    void cleanup_Affine(Affine aff)
+    private void cleanup_Affine(Affine aff)
     {
 
     	cleanup_Mat_rm(aff.A);
@@ -782,7 +805,7 @@ public class SIFT3D extends AlgorithmBase {
     
     /* Initialize a Reg_SIFT3D struct with the default parameters. This must be
      * called before the struct can be used. */
-    int init_Reg_SIFT3D(Reg_SIFT3D reg) {
+    private int init_Reg_SIFT3D(Reg_SIFT3D reg) {
         int status;
         reg.nn_thresh = SIFT3D_nn_thresh_default;
     	init_SIFT3D_Descriptor_store(reg.desc_src);
@@ -809,18 +832,18 @@ public class SIFT3D extends AlgorithmBase {
     /* Initialize a SIFT_Descriptor_store for first use.
      * This does not need to be called to reuse the store
      * for a new image. */
-    void init_SIFT3D_Descriptor_store(SIFT3D_Descriptor_store desc) {
+    private void init_SIFT3D_Descriptor_store(SIFT3D_Descriptor_store desc) {
     	desc.buf = null;
     }
     
     /* Initialize a RANSAC struct with the default parameters */
-    void init_Ransac(Ransac ran)
+    private void init_Ransac(Ransac ran)
     {
     	ran.err_thresh = SIFT3D_err_thresh_default;
     	ran.num_iter = SIFT3D_num_iter_default;
     }
     
-    int init_SIFT3D(SIFT3DC sift3d) {
+    private int init_SIFT3D(SIFT3DC sift3d) {
     	int status;
 
         Pyramid dog = sift3d.dog;
@@ -848,18 +871,23 @@ public class SIFT3D extends AlgorithmBase {
 		    return SIFT3D_FAILURE;
 	    }
 
-	// init static OpenCL programs and contexts, if support is enabled
-	/*if (init_cl_SIFT3D(sift3d))
-		return SIFT3D_FAILURE;
+	    // init static OpenCL programs and contexts, if support is enabled
+	    status = init_cl_SIFT3D(sift3d);
+	    if (status == SIFT3D_FAILURE) {
+		    return SIFT3D_FAILURE;
+	    }
 
-	// Initialize the image data
-	init_im(&sift3d->im);
+	    // Initialize the image data
+	    init_im(sift3d.im);
 
-	// Save data
-	dog->first_level = gpyr->first_level = -1;
-        sift3d->dense_rotate = dense_rotate;
-        if (set_sigma_n_SIFT3D(sift3d, sigma_n) ||
-                set_sigma0_SIFT3D(sift3d, sigma0) ||
+	    // Save data
+	    dog.first_level = gpyr.first_level = -1;
+        sift3d.dense_rotate = dense_rotate;
+        status = set_sigma_n_SIFT3D(sift3d, sigma_n);
+        if (status == SIFT3D_FAILURE) {
+        	return SIFT3D_FAILURE;
+        }
+                /*set_sigma0_SIFT3D(sift3d, sigma0) ||
                 set_peak_thresh_SIFT3D(sift3d, peak_thresh) ||
                 set_corner_thresh_SIFT3D(sift3d, corner_thresh) ||
                 set_num_kp_levels_SIFT3D(sift3d, num_kp_levels))
@@ -870,7 +898,7 @@ public class SIFT3D extends AlgorithmBase {
     
     /* Initialize a Pyramid for use. Must be called before a Pyramid can be used
      * in any other functions. */
-    void init_Pyramid(Pyramid pyr)
+    private void init_Pyramid(Pyramid pyr)
     {
     	pyr.levels = null;
         pyr.first_level = 0;
@@ -882,7 +910,7 @@ public class SIFT3D extends AlgorithmBase {
     
     /* Initialize a GSS filters stuct. This must be called before gss can be
      * used in any other functions. */
-    void init_GSS_filters(GSS_filters gss)
+    private void init_GSS_filters(GSS_filters gss)
     {
     	gss.num_filters = -1;
     	gss.gauss_octave = null;
@@ -893,8 +921,11 @@ public class SIFT3D extends AlgorithmBase {
 
     	Mat_rm V = new Mat_rm();
     	Mat_rm F = new Mat_rm();
-    	Cvec temp1, temp2, temp3, n;
-    	float mag;
+    	Cvec temp1 = new Cvec();
+    	Cvec temp2 = new Cvec();
+    	Cvec temp3 = new Cvec();
+    	Cvec n = new Cvec();
+    	double mag;
     	int i, j;
     	int status;
 
@@ -957,7 +988,7 @@ public class SIFT3D extends AlgorithmBase {
    
      
     	// Populate the triangle struct for each face
-    	/*for (i = 0; i < ICOS_NFACES; i++) {
+    	for (i = 0; i < ICOS_NFACES; i++) {
             mesh.tri[i] = new Tri();
     		Tri tri = mesh.tri[i];	
     		Cvec v[] = tri.v;
@@ -970,42 +1001,52 @@ public class SIFT3D extends AlgorithmBase {
     			tri.idx[j] = (int)(F.data_double[i][j]);
 
     			// Initialize the vector
-    			v[j].x = (int)(V.data_double[tri.idx[j]][0]);
-    			v[j].y = (int)(V.data_double[tri.idx[j]][1]);
-    			v[j].z = (int)(V.data_double[tri.idx[j]][2]);;
+    			v[j].x = V.data_double[tri.idx[j]][0];
+    			v[j].y = V.data_double[tri.idx[j]][1];
+    			v[j].z = V.data_double[tri.idx[j]][2];
 
     			// Normalize to unit length
-    			mag = SIFT3D_CVEC_L2_NORM(v + j);
-    			assert(fabsf(mag - mag_expected) < 1E-10);
-    			SIFT3D_CVEC_SCALE(v + j, 1.0f / mag);
+    			mag = SIFT3D_CVEC_L2_NORM(v[j]);
+    			if (Math.abs(mag - mag_expected) >= 1.0E-10) {
+    				System.err.println("Math.abs(mag - mag_expected) >= 1.0E-10 in init_geometry");
+    				return SIFT3D_FAILURE;
+    			}
+    			SIFT3D_CVEC_SCALE(v[j], 1.0f / mag);
     		}
 
     		// Compute the normal vector at v[0] as  (V2 - V1) X (V1 - V0)
-    		SIFT3D_CVEC_OP(v + 2, v + 1, -, &temp1);
-    		SIFT3D_CVEC_OP(v + 1, v, -, &temp2);
-    		SIFT3D_CVEC_CROSS(&temp1, &temp2, &n);
+    		SIFT3D_CVEC_MINUS(v[2], v[1], temp1);
+    		SIFT3D_CVEC_MINUS(v[1], v[0], temp2);
+    		SIFT3D_CVEC_CROSS(temp1, temp2, n);
 
     		// Ensure this vector is facing outward from the origin
-    		if (SIFT3D_CVEC_DOT(&n, v) < 0) {
+    		if (SIFT3D_CVEC_DOT(n, v[0]) < 0) {
     			// Swap two vertices
     			temp1 = v[0];
     			v[0] = v[1];
     			v[1] = temp1;
 
     			// Compute the normal again
-    			SIFT3D_CVEC_OP(v + 2, v + 1, -, &temp1);
-    			SIFT3D_CVEC_OP(v + 1, v, -, &temp2);
-    			SIFT3D_CVEC_CROSS(&temp1, &temp2, &n);
+    			SIFT3D_CVEC_MINUS(v[2], v[1], temp1);
+    			SIFT3D_CVEC_MINUS(v[1], v[0], temp2);
+    			SIFT3D_CVEC_CROSS(temp1, temp2, n);
     		}
-    		assert(SIFT3D_CVEC_DOT(&n, v) >= 0);
+    		if (SIFT3D_CVEC_DOT(n, v[0]) < 0) {
+    			System.err.println("SIFT3D_CVEC_DOT(n, v[0]) < 0 in init_geometry");
+				return SIFT3D_FAILURE;	
+    		}
 
     		// Ensure the triangle is equilateral
-    		SIFT3D_CVEC_OP(v + 2, v, -, &temp3);
-    		assert(fabsf(SIFT3D_CVEC_L2_NORM(&temp1) - 
-                            SIFT3D_CVEC_L2_NORM(&temp2)) < 1E-10);
-    		assert(fabsf(SIFT3D_CVEC_L2_NORM(&temp1) - 
-                            SIFT3D_CVEC_L2_NORM(&temp3)) < 1E-10);
-    	}*/	
+    		SIFT3D_CVEC_MINUS(v[2], v[0], temp3);
+    		if (Math.abs(SIFT3D_CVEC_L2_NORM(temp1) - SIFT3D_CVEC_L2_NORM(temp2)) >= 1E-10) {
+    			System.err.println("Math.abs(SIFT3D_CVEC_L2_NORM(temp1) - SIFT3D_CVEC_L2_NORM(temp2)) >= 1E-10 in init_geometry");
+				return SIFT3D_FAILURE;		
+    		}
+    		if (Math.abs(SIFT3D_CVEC_L2_NORM(temp1) - SIFT3D_CVEC_L2_NORM(temp3)) >= 1E-10) {
+    			System.err.println("Math.abs(SIFT3D_CVEC_L2_NORM(temp1) - SIFT3D_CVEC_L2_NORM(temp3)) >= 1E-10 in init_geometry");
+				return SIFT3D_FAILURE;		
+    		}
+    	}
     	
     	return SIFT3D_SUCCESS;
     }
@@ -1051,5 +1092,257 @@ public class SIFT3D extends AlgorithmBase {
     	mesh.tri = null;
     	mesh.num = -1;
     }
+    
+    // Return the L2 norm of a Cartesian coordinate vector
+    private double SIFT3D_CVEC_L2_NORM(Cvec cvec) {
+    	return Math.sqrt(cvec.x * cvec.x + cvec.y * cvec.y +
+    	cvec.z * cvec.z);
+    }
+    
+    // Scale a Cartesian coordinate vector by a constant factor
+    private void SIFT3D_CVEC_SCALE(Cvec cvec, double a) {
+        cvec.x = cvec.x * a;
+        cvec.y = cvec.y * a;
+        cvec.z = cvec.z * a;
+    }
+    
+    // Operate element-wise on two Cartesian coordinate vectors, cc = ca - cb
+    private void SIFT3D_CVEC_MINUS(Cvec ca, Cvec cb, Cvec cc) {
+        cc.x = ca.x - cb.x;
+        cc.y = ca.y - cb.y;
+        cc.z = ca.z - cb.z;
+    }
+    
+	 // Take the cross product of two Cartesian coordinate
+	 // vectors, as out = in1 X in2
+	 private void SIFT3D_CVEC_CROSS(Cvec in1, Cvec in2, Cvec out) { 
+	 	out.x = in1.y * in2.z - in1.z * in2.y; 
+	 	out.y = in1.z * in2.x - in1.x * in2.z; 
+	 	out.z = in1.x * in2.y - in1.y * in2.x; 
+	 } 
+	 
+	// Return the dot product of two Cartesian coordinate 
+	// vectors
+	private double SIFT3D_CVEC_DOT(Cvec in1, Cvec in2) {
+		return (in1.x * in2.x + in1.y * in2.y + in1.z * in2.z);
+	}
+	
+	/* Initializes the OpenCL data for this SIFT3D struct. This
+	 * increments the reference counts for shared data. */
+	private int init_cl_SIFT3D(SIFT3DC sift3d) {
+		if (useOCL && (Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable()) ) {
+		/*cl_image_format image_format;
+
+		// Initialize basic OpenCL platform and context info
+		image_format.image_channel_order = CL_R;
+		image_format.image_channel_data_type = CL_FLOAT;
+		if (init_cl(&cl_data, PLATFORM_NAME_NVIDIA, CL_DEVICE_TYPE_GPU,
+	 		    CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
+	                    image_format))
+			return SIFT3D_FAILURE;
+
+		// Load and compile the downsampling kernel
+        */
+		}
+		return SIFT3D_SUCCESS;
+	}
+
+	/* Sets the nominal scale parameter of the input data, checking that it is 
+	 * nonnegative. */
+	private int set_sigma_n_SIFT3D(SIFT3DC sift3d, double sigma_n) {
+
+	        final double sigma0 = sift3d.gpyr.sigma0;
+
+	        if (sigma_n < 0.0) {
+	                System.err.println("SIFT3D sigma_n must be nonnegative. Provided sigma_n : " + sigma_n);
+	                return SIFT3D_FAILURE;
+	        }
+
+	        return set_scales_SIFT3D(sift3d, sigma0, sigma_n);
+	}
+	
+	/* Helper function to set the scale parameters for a SIFT3D struct. */
+	private int set_scales_SIFT3D(SIFT3DC sift3d, double sigma0, double sigma_n) {
+            int status;
+	        Pyramid gpyr = sift3d.gpyr;
+	        Pyramid dog = sift3d.dog;
+	        GSS_filters gss = sift3d.gss;
+
+	        // Set the scales for the GSS and DOG pyramids
+	        status = set_scales_Pyramid(sigma0, sigma_n, gpyr);
+	        if (status == SIFT3D_FAILURE) {
+	        	return SIFT3D_FAILURE;
+	        }
+	        status = set_scales_Pyramid(sigma0, sigma_n, dog);
+	        if (status == SIFT3D_FAILURE) {
+	            return SIFT3D_FAILURE;
+	        }
+
+	        // Do nothing more if we have no image
+	        if (sift3d.im.data == null) {
+	            return SIFT3D_SUCCESS;
+	        }
+
+	        // Recompute the filters
+		    return make_gss(gss, gpyr);
+	}
+	
+	/* Set the scale-space parameters on a Pyramid struct. Operates on all levels
+	 * of the pyramid. This function is called automatically by resize_Pyramid.
+	 *
+	 * Parameters:
+	 *  -sigma0: The scale parameter of level 0, octave 0
+	 *  -sigma_n: The nominal scale parameter of images being transfomed into
+	 *      this pyramid struct. 
+	 *  -Pyr: The Pyramid to be modified. */
+	private int set_scales_Pyramid(double sigma0, double sigma_n, Pyramid pyr) {
+
+	        int o, s;
+
+	        final int num_kp_levels = pyr.num_kp_levels;
+	        final Image first_level = 
+	                SIFT3D_PYR_IM_GET(pyr, pyr.first_octave, pyr.first_level);
+
+	        // Compute the scales of each level
+	        // Loop through all levels of a given pyramid
+        	for (o = pyr.first_octave; o <= SIFT3D_PYR_LAST_OCTAVE(pyr); 
+                        o++) { 
+	        	for (s = pyr.first_level; s <= SIFT3D_PYR_LAST_LEVEL(pyr); 
+	                        s++) {
+
+	                // Compute the scale 
+	                Image level = SIFT3D_PYR_IM_GET(pyr, o, s);
+	                final double scale = 
+	                        sigma0 * Math.pow(2.0, o + (double) s / num_kp_levels);
+
+	                // Verify that sigma_n is not too large
+	                if (o == pyr.first_octave && s == pyr.first_level && 
+	                        scale < sigma_n) {
+	                        System.err.println("set_scales_Pyramid: sigma_n too large\n"+
+	                                "for these settings. Max allowed: " + (scale - DBL_EPSILON));
+	                        return SIFT3D_FAILURE;
+	                }
+
+	                // Save the scale
+	                level.s = scale;
+	        	}
+        	}
+
+	        // Store the parameters
+	        pyr.sigma0 = sigma0;
+	        pyr.sigma_n = sigma_n;
+
+	        return SIFT3D_SUCCESS;
+	}
+	
+	// Get a pointer to an image struct at pyramid level [o, s]
+	private Image SIFT3D_PYR_IM_GET(Pyramid pyr, int o, int s) {
+		 return pyr.levels[(o - pyr.first_octave) *
+							pyr.num_levels + (s - pyr.first_level)];
+	}
+	
+	// Get the index of the last octave of a Pyramid struct
+	private int SIFT3D_PYR_LAST_OCTAVE(Pyramid pyr) {
+        return (pyr.first_octave + pyr.num_octaves - 1);
+	}
+
+	// Get the index of the last level of a Pyramid struct
+	private int SIFT3D_PYR_LAST_LEVEL(Pyramid pyr) {
+	    return (pyr.first_level + pyr.num_levels - 1);
+	}
+	
+	/* Create GSS filters to create the given scale-space 
+	 * pyramid. */
+	int make_gss(GSS_filters gss, Pyramid pyr)
+	{
+
+		Image cur, next;
+		int o, s, i;
+
+		final int dim = 3;
+
+		final int num_filters = pyr.num_levels - 1;
+		final int first_level = pyr.first_level;
+		final int last_level = SIFT3D_PYR_LAST_LEVEL(pyr);
+
+		// Verify inputs
+		if (num_filters < 1) {
+			System.err.println("make_gss: pyr has only " + pyr.num_levels + " levels, must have at least 2");
+			return SIFT3D_FAILURE;
+		}
+
+		// Free all previous data, if any
+		cleanup_GSS_filters(gss);
+		init_GSS_filters(gss);
+
+		// Copy pyramid parameters
+		gss.num_filters = num_filters;
+		gss.first_level = first_level;
+
+		// Allocate the filter array (num_filters cannot be zero)
+		gss.gauss_octave = new Gauss_filter[num_filters];
+		for (i = 0; i < num_filters; i++) {
+			gss.gauss_octave[i] = new Gauss_filter();
+		}
+
+		// Make the filter for the very first blur
+		next = SIFT3D_PYR_IM_GET(pyr, pyr.first_octave, first_level);
+		/*if (init_Gauss_incremental_filter(&gss->first_gauss, pyr->sigma_n,
+						  next->s, dim))
+			return SIFT3D_FAILURE;
+
+		// Make one octave of filters (num_levels - 1)
+		o = pyr->first_octave;
+		for (s = first_level; s < last_level; s++) {
+			cur = SIFT3D_PYR_IM_GET(pyr, o, s);
+			next = SIFT3D_PYR_IM_GET(pyr, o, s + 1);
+			if (init_Gauss_incremental_filter(SIFT3D_GAUSS_GET(gss, s),
+							  cur->s, next->s, dim))
+				return SIFT3D_FAILURE;
+		}*/
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Free all memory associated with the GSS filters. gss cannot be reused
+	 * unless it is reinitialized. */
+	private void cleanup_GSS_filters(GSS_filters gss)
+	{
+
+		int i;
+
+		final int num_filters = gss.num_filters;
+
+		// We are done if gss has no filters
+		if (num_filters < 1)
+			return;
+
+		// Free the first filter
+		cleanup_Gauss_filter(gss.first_gauss);
+
+		// Free the octave filters
+		for (i = 0; i < num_filters; i++) {
+			Gauss_filter g = gss.gauss_octave[i];
+			cleanup_Gauss_filter(g);
+		}
+
+		// Free the octave filter buffer
+		gss.gauss_octave = null;
+	}
+	
+	/* Free a Gauss_filter */
+	private void cleanup_Gauss_filter(Gauss_filter gauss)
+	{
+		cleanup_Sep_FIR_filter(gauss.f);
+	}
+	
+	/* Free a Sep_FIR_Filter. */
+	private void cleanup_Sep_FIR_filter(Sep_FIR_filter f)
+	{
+
+		if (f.kernel != null) {
+			f.kernel = null;
+		}
+	}
 
 }
