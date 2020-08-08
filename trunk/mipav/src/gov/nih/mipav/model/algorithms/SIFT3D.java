@@ -1,5 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.io.IOException;
+
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.Preferences;
 
 /* This is a port of SIFT3D is an analogue of the scale-invariant feature transform (SIFT) for three-dimensional images.
@@ -30,11 +33,15 @@ import gov.nih.mipav.view.Preferences;
      */
 
 public class SIFT3D extends AlgorithmBase {
-	
+	/** This image is to registered to the reference image. */
+    private ModelImage inputImage;
+    /** The inputImage will be registered to this reference image. */
+    private ModelImage refImage;
 	private double SIFT3D_nn_thresh_default; // Default matching threshold
 	private double SIFT3D_err_thresh_default;
 	private int SIFT3D_num_iter_default;
 	private boolean useOCL = false;
+	private double SIFT3D_GAUSS_WIDTH_FCTR = 3.0;
 
 	// Return codes
 	private final int SIFT3D_SINGULAR = 1;
@@ -551,12 +558,26 @@ public class SIFT3D extends AlgorithmBase {
      */
     public SIFT3D() { }
     
-    public SIFT3D(double SIFT3D_nn_thresh_default, double SIFT3D_err_thresh_default,
-    		int SIFT3D_num_iter_default, boolean useOCL) {
+    /**
+     * @param  imageA        Reference image (register input image to reference image).
+     * @param  imageB        Input image (register input image to reference image).
+     * @param SIFT3D_nn_thresh_default
+     * @param SIFT3D_err_thresh_default
+     * @param SIFT3D_num_iter_default
+     * @param useOCL
+     * @param SIFT3D_GAUSS_WIDTH_FCTR
+     */
+    public SIFT3D(ModelImage imageA, ModelImage imageB,
+    		double SIFT3D_nn_thresh_default, double SIFT3D_err_thresh_default,
+    		int SIFT3D_num_iter_default, boolean useOCL, double SIFT3D_GAUSS_WIDTH_FCTR) {
+    	super(null, imageB);
+        refImage = imageA;
+        inputImage = imageB;
     	this.SIFT3D_nn_thresh_default = SIFT3D_nn_thresh_default;
     	this.SIFT3D_err_thresh_default = SIFT3D_err_thresh_default;
     	this.SIFT3D_num_iter_default = SIFT3D_num_iter_default;
     	this.useOCL = useOCL;
+    	this.SIFT3D_GAUSS_WIDTH_FCTR = SIFT3D_GAUSS_WIDTH_FCTR;
     }
     
     public void runAlgorithm() {
@@ -564,6 +585,8 @@ public class SIFT3D extends AlgorithmBase {
     	/* This illustrates how to use Reg_SIFT3D within a function, freeing all memory
     	 * afterwards. */
     	int status;
+    	int t;
+    	int i;
     	
     	Image src = new Image();
     	Image ref = new Image();
@@ -587,6 +610,91 @@ public class SIFT3D extends AlgorithmBase {
             setCompleted(false);
             return;
 	    }
+	    
+	    // Read the images
+	    // nifti.c and dicom.cpp does not support color reading
+	    // Check the dimensionality. 4D is interpreted as a 3D array with
+        // multiple channels.
+	    src.ux = (double)inputImage.getFileInfo()[0].getResolutions()[0];
+	    src.uy = (double)inputImage.getFileInfo()[0].getResolutions()[1];
+	    src.uz = (double)inputImage.getFileInfo()[0].getResolutions()[2];
+	    src.nx = inputImage.getExtents()[0];
+	    src.ny = inputImage.getExtents()[1];
+	    src.nz = inputImage.getExtents()[2];
+	    src.nc = 1;
+	    if (inputImage.getNDims() == 4) {
+	    	src.nc = inputImage.getExtents()[3];
+	    }
+	    int srcVolume = src.nx * src.ny * src.nz;
+	    im_default_stride(src);
+		im_resize(src);
+		if (src.nc == 1) {
+			try {
+				inputImage.exportData(0, srcVolume, src.data);
+			}
+			catch(IOException e) {
+				setCompleted(false);
+				return;
+			}
+		}
+		else {
+			double data2[] = new double[srcVolume];
+			for (t = 0; t < src.nc; t++) {
+				try {
+				    inputImage.exportData(t*srcVolume, srcVolume, data2);
+				}
+				catch(IOException e) {
+					setCompleted(false);
+					return;
+				}
+				for (i = 0; i < srcVolume; i++) {
+					src.data[i*src.nc + t] = data2[i];
+				}
+			}
+			data2 = null;
+		}
+		
+		ref.ux = (double)refImage.getFileInfo()[0].getResolutions()[0];
+	    ref.uy = (double)refImage.getFileInfo()[0].getResolutions()[1];
+	    ref.uz = (double)refImage.getFileInfo()[0].getResolutions()[2];
+	    ref.nx = refImage.getExtents()[0];
+	    ref.ny = refImage.getExtents()[1];
+	    ref.nz = refImage.getExtents()[2];
+	    ref.nc = 1;
+	    if (refImage.getNDims() == 4) {
+	    	ref.nc = refImage.getExtents()[3];
+	    }
+	    int refVolume = ref.nx * ref.ny * ref.nz;
+	    im_default_stride(ref);
+		im_resize(ref);
+		if (ref.nc == 1) {
+			try {
+				refImage.exportData(0, refVolume, ref.data);
+			}
+			catch(IOException e) {
+				setCompleted(false);
+				return;
+			}
+		}
+		else {
+			double data2[] = new double[refVolume];
+			for (t = 0; t < ref.nc; t++) {
+				try {
+				    refImage.exportData(t*refVolume, refVolume, data2);
+				}
+				catch(IOException e) {
+					setCompleted(false);
+					return;
+				}
+				for (i = 0; i < refVolume; i++) {
+					ref.data[i*ref.nc + t] = data2[i];
+				}
+			}
+			data2 = null;
+		}
+        /*if (im_read(src_path, &src) ||
+                im_read(ref_path, &ref))
+                goto demo_quit;*/
     	
     }
     
@@ -887,13 +995,24 @@ public class SIFT3D extends AlgorithmBase {
         if (status == SIFT3D_FAILURE) {
         	return SIFT3D_FAILURE;
         }
-                /*set_sigma0_SIFT3D(sift3d, sigma0) ||
-                set_peak_thresh_SIFT3D(sift3d, peak_thresh) ||
-                set_corner_thresh_SIFT3D(sift3d, corner_thresh) ||
-                set_num_kp_levels_SIFT3D(sift3d, num_kp_levels))
-                return SIFT3D_FAILURE;*/
+        status = set_sigma0_SIFT3D(sift3d, sigma0);
+        if (status == SIFT3D_FAILURE) {
+        	return SIFT3D_FAILURE;
+        }
+        status = set_peak_thresh_SIFT3D(sift3d, peak_thresh);
+        if (status == SIFT3D_FAILURE) {
+        	return SIFT3D_FAILURE;
+        }
+        status = set_corner_thresh_SIFT3D(sift3d, corner_thresh);
+        if (status == SIFT3D_FAILURE) {
+        	return SIFT3D_FAILURE;
+        }
+        status = set_num_kp_levels_SIFT3D(sift3d, num_kp_levels);
+        if (status == SIFT3D_FAILURE) {
+        	return SIFT3D_FAILURE;
+        }
 
-	return SIFT3D_SUCCESS;
+	    return SIFT3D_SUCCESS;
     }
     
     /* Initialize a Pyramid for use. Must be called before a Pyramid can be used
@@ -1258,6 +1377,7 @@ public class SIFT3D extends AlgorithmBase {
 
 		Image cur, next;
 		int o, s, i;
+		int status;
 
 		final int dim = 3;
 
@@ -1287,19 +1407,21 @@ public class SIFT3D extends AlgorithmBase {
 
 		// Make the filter for the very first blur
 		next = SIFT3D_PYR_IM_GET(pyr, pyr.first_octave, first_level);
-		/*if (init_Gauss_incremental_filter(&gss->first_gauss, pyr->sigma_n,
-						  next->s, dim))
+		status = init_Gauss_incremental_filter(gss.first_gauss, pyr.sigma_n,next.s, dim);
+		if (status == SIFT3D_FAILURE) {
 			return SIFT3D_FAILURE;
+		}
 
 		// Make one octave of filters (num_levels - 1)
-		o = pyr->first_octave;
+		o = pyr.first_octave;
 		for (s = first_level; s < last_level; s++) {
 			cur = SIFT3D_PYR_IM_GET(pyr, o, s);
 			next = SIFT3D_PYR_IM_GET(pyr, o, s + 1);
-			if (init_Gauss_incremental_filter(SIFT3D_GAUSS_GET(gss, s),
-							  cur->s, next->s, dim))
+			status = init_Gauss_incremental_filter(SIFT3D_GAUSS_GET(gss, s),cur.s, next.s, dim);
+			if (status == SIFT3D_FAILURE) {
 				return SIFT3D_FAILURE;
-		}*/
+			}
+		}
 
 		return SIFT3D_SUCCESS;
 	}
@@ -1343,6 +1465,578 @@ public class SIFT3D extends AlgorithmBase {
 		if (f.kernel != null) {
 			f.kernel = null;
 		}
+	}
+	
+	// Get a pointer to the incremental Gaussian filter for level s
+	private Gauss_filter SIFT3D_GAUSS_GET(GSS_filters gss, int s) {
+		return gss.gauss_octave[s - gss.first_level];
+	}
+	
+	/* Initialize a Gaussian filter to go from scale s_cur to s_next. */
+	int init_Gauss_incremental_filter(Gauss_filter gauss,
+					  double s_cur, double s_next,
+					  int dim)
+	{
+		double sigma;
+		int status;
+
+		if (s_cur > s_next) {
+	                System.err.println("init_Gauss_incremental_filter: s_cur = " + s_cur + " > s_next = " + s_next);
+	                return SIFT3D_FAILURE;
+	        }
+		if (dim <= 0) {
+			System.err.println("dim = " + dim + " but must be > 0 in init_Gauss_incremental filter");
+			return SIFT3D_FAILURE;
+		}
+
+		// Compute filter width parameter (sigma)
+		sigma = Math.sqrt(s_next * s_next - s_cur * s_cur);
+
+		// Initialize filter kernel
+		status = init_Gauss_filter(gauss, sigma, dim);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Initialize a normalized Gaussian filter, of the given sigma.
+	 * If SIFT3D_GAUSS_WIDTH_FCTR is defined, use that value for
+	 * the ratio between the width of the filter and sigma. Otherwise,
+	 * use the default value 3.0 
+	 */
+	private int init_Gauss_filter(Gauss_filter gauss, double sigma, int dim)
+	{
+
+		double kernel[];
+		double x;
+		double acc;
+		int i;
+		int status;
+
+		final int half_width = sigma > 0 ? 
+	                Math.max((int)Math.ceil(sigma * SIFT3D_GAUSS_WIDTH_FCTR), 1) :1;
+		final int width = 2 * half_width + 1;
+
+		// Initialize intermediates 
+		try {
+			kernel = new double[width];
+		}
+		catch (OutOfMemoryError e) {
+			System.err.println("Out of memory error on kernel = new double[width] init_Gauss_filter");
+			return SIFT3D_FAILURE;
+		}
+
+		// Calculate coefficients
+		acc = 0;
+		for (i = 0; i < width; i++) {
+			// distance away from center of filter
+			x = (double)i - half_width;
+
+			// (x / sigma)^2 = x*x / (sigma*sigma)
+			x /= sigma + DBL_EPSILON;
+
+			// exponentiate result
+			kernel[i] = Math.exp(-0.5 * x * x);
+
+			// sum of all kernel elements
+			acc += kernel[i];
+		}
+
+		// normalize kernel to sum to 1
+		for (i = 0; i < width; i++) {
+			kernel[i] /= acc;
+		}
+
+		// Save the filter data 
+		gauss.sigma = sigma;
+		status = init_Sep_FIR_filter(gauss.f, dim, width, kernel,SIFT3D_TRUE);
+		if (status == SIFT3D_FAILURE) {
+			kernel = null;
+			return SIFT3D_FAILURE;
+		}          
+
+	    return SIFT3D_SUCCESS;
+	}
+	
+	/* Initialize a separable FIR filter struct with the given parameters. If OpenCL
+	 * support is enabled and initialized, this creates a program to apply it with
+	 * separable filters.  
+	 *
+	 * Note that the kernel data will be copied, so the user can free it without 
+	 * affecting f. */
+	private int init_Sep_FIR_filter(Sep_FIR_filter f, int dim, int width,
+				double kernel[], int symmetric)
+	{
+
+	    int i;    
+		final int kernel_size = width;
+
+	        // Save the data
+		f.dim = dim;
+		f.width = width;
+		f.symmetric = symmetric;
+
+	        // Allocate the kernel memory
+		try {
+			f.kernel = new double[kernel_size];
+		}
+		catch (OutOfMemoryError e) {
+			System.err.println("init_Sep_FIT_filter: out of memory");
+			return SIFT3D_FAILURE;
+		}
+	       
+
+	        // Copy the kernel data
+	   for (i = 0; i < kernel_size; i++) {
+		   f.kernel[i] = kernel[i];
+	   }
+
+	/*#ifdef SIFT3D_USE_OPENCL
+		{
+			char src[1 << 15];
+			char *template;
+			cl_program program;
+			cl_int err;
+			float k;
+			int i;
+
+			const char *path = SEP_FIR_3D_PATH;
+			const int half_width = f->half_width;
+
+			// Load the template
+			if ((template = read_file(path)) == NULL) {
+				printf("init_Sep_FIR_Filter: error reading path %s \n",
+				       path);
+				return SIFT3D_FAILURE;
+			}
+			sprintf(src, "%s\n", template);
+
+			// Write the unrolled kernel
+			for (i = -half_width; i < half_width; i++) {
+				k = f->kernel[i];
+				sprintf(src, "acc += %.16f * "
+					"read_imagef(src, sampler, center + d_xyz * %d); \n",
+					k, i);
+			}
+
+			// Write the ending
+			sprintf(src,
+				"write_imagef(dst, sampler, (float4) center); \n } \n");
+
+			// Compile the program  
+			if (compile_cl_program_from_source(&program, cl_data.context,
+							   cl_data.devices,
+							   cl_data.num_devices,
+							   (char **)&src, 1))
+				return SIFT3D_FAILURE;
+			f->cl_apply_unrolled =
+			    clCreateKernel(program, "sep_fir_3d", &err);
+			check_cl_error(err, "init_Sep_FIR_Filter: create kernel");
+			clReleaseProgram(program);
+		}
+	#endif*/
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Sets the scale parameter of the first level of octave 0, checking that it
+	 * is nonnegative. */
+	private int set_sigma0_SIFT3D(SIFT3DC sift3d, double sigma0) {
+
+	        final double sigma_n = sift3d.gpyr.sigma_n;
+
+	        if (sigma0 < 0.0) {
+	                System.err.println("SIFT3D sigma0 must be nonnegative. Provided sigm0 : " + sigma0);
+	                return SIFT3D_FAILURE; 
+	        } 
+
+	        return set_scales_SIFT3D(sift3d, sigma0, sigma_n);
+	}
+	
+	/* Sets the peak threshold, checking that it is in the interval (0, inf) */
+	private int set_peak_thresh_SIFT3D(SIFT3DC sift3d, double peak_thresh) {
+	        if (peak_thresh <= 0.0 || peak_thresh > 1) {
+	                System.err.println("SIFT3D peak_thresh must be in the interval (0, 1]. Provided peak_thresh: " + peak_thresh);
+	                return SIFT3D_FAILURE;
+	        }
+
+	        sift3d.peak_thresh = peak_thresh;
+	        return SIFT3D_SUCCESS;
+	}
+
+	/* Sets the corner threshold, checking that it is in the interval [0, 1]. */
+	private int set_corner_thresh_SIFT3D(SIFT3DC sift3d, double corner_thresh) {
+
+	        if (corner_thresh < 0.0 || corner_thresh > 1.0) {
+	                System.err.println("SIFT3D corner_thresh must be in the interval [0, 1]. Provided corner_thresh: " + corner_thresh);
+	                return SIFT3D_FAILURE;
+	        }
+
+	        sift3d.corner_thresh = corner_thresh;
+	        return SIFT3D_SUCCESS;
+	}
+
+	/* Sets the number of levels per octave. This function will resize the
+	 * internal data. */
+	private int set_num_kp_levels_SIFT3D(SIFT3DC sift3d, int num_kp_levels) {
+
+	        final Pyramid gpyr = sift3d.gpyr;
+
+	        return resize_SIFT3D(sift3d, num_kp_levels);
+	}
+	
+	/* Resize a SIFT3D struct, allocating temporary storage and recompiling the 
+	 * filters. Does nothing unless set_im_SIFT3D was previously called. */
+	private int resize_SIFT3D(SIFT3DC sift3d, int num_kp_levels) {
+            int status;
+	        int num_octaves; 
+
+	        final Image im = sift3d.im;
+	        Pyramid gpyr = sift3d.gpyr;
+	        Pyramid dog = sift3d.dog;
+		    final int num_dog_levels = num_kp_levels + 2;
+		    final int num_gpyr_levels = num_dog_levels + 1;
+	        final int first_octave = 0;
+	        final int first_level = -1;
+
+		// Compute the meximum allowed number of octaves
+		if (im.data != null) {
+	        // The minimum size of a pyramid level is 8 in any dimension
+			final int last_octave = 
+	                        (int) log2((double) Math.min(Math.min(im.nx, im.ny), 
+	                        im.nz)) - 3 - first_octave;
+
+	                // Verify octave parameters
+	                if (last_octave < first_octave) {
+	                        System.err.println("resize_SIFT3D: input image is too small:");
+	                        System.err.println("Must have at least 8 voxels in each dimension");
+	                        return SIFT3D_FAILURE;
+	                }
+
+	                num_octaves = last_octave - first_octave + 1;
+		} else {
+	                num_octaves = 0;
+	        }
+
+		// Resize the pyramid
+		status = resize_Pyramid(im, first_level, num_kp_levels,
+	                num_gpyr_levels, first_octave, num_octaves, gpyr);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+		status = resize_Pyramid(im, first_level, num_kp_levels, 
+	                num_dog_levels, first_octave, num_octaves, dog);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+	        // Do nothing more if we have no image
+	        if (im.data == null) {
+	                return SIFT3D_SUCCESS;
+	        }
+
+		// Compute the Gaussian filters
+		status = make_gss(sift3d.gss, sift3d.gpyr);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	private double log2(double x) {
+    	return (Math.log(x)/Math.log(2));
+    }
+
+	/* Resize a scale-space pyramid according to the size of base image im.
+	 *
+	 * Parameters:
+	 *  -im: An image with the desired dimensions and units at octave 0
+	 *  -first_level: The index of the first pyramid level per octave
+	 *  -num_kp_levels: The number of levels per octave in which keypoints are 
+	 *      detected
+	 *  -num_levels: The total number of levels. Must be greater than or equal to
+	 *      num_kp_levels.
+	 *  -first_octave: The index of the first octave (0 is the base)
+	 *  -num_octaves: The total number of octaves 
+	 *  -sigma0: The scale parameter of level 0, octave 0
+	 *  -sigma_n: The nominal scale of the image im.
+	 *  -pyr: The Pyramid to be resized.
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
+	int resize_Pyramid(Image im, int first_level, 
+	        int num_kp_levels, int num_levels,
+	        int first_octave, int num_octaves, 
+	        Pyramid pyr) {
+
+	    int status;    
+		double units[] = new double[IM_NDIMS];
+	        int dims[] = new int[IM_NDIMS];
+		double factor;
+		int i, o, s;
+
+		final double sigma0 = pyr.sigma0;
+		final double sigma_n = pyr.sigma_n;
+	    final int old_num_total_levels = pyr.num_levels * pyr.num_octaves;
+		final int num_total_levels = num_levels * num_octaves;
+
+	        // Verify inputs
+	        if (num_levels < num_kp_levels) {
+	                System.err.println("resize_Pyramid: num_levels = " + num_levels + 
+	                		" < num_kp_levels = " + num_kp_levels);
+	                return SIFT3D_FAILURE;
+	        }
+
+	        // Store the new parameters
+	        pyr.first_level = first_level;
+	        pyr.num_kp_levels = num_kp_levels;
+	        pyr.first_octave = first_octave;
+	        pyr.num_octaves = num_octaves;
+	        pyr.num_levels = num_levels;
+
+	        // Clean up old levels which are no longer needed 
+	        for (i = num_total_levels; i < old_num_total_levels; i++) {
+	                Image level = pyr.levels[i];
+	                im_free(level);
+	        }
+
+		// Resize the outer array
+	        if (num_total_levels != 0) {
+	        	pyr.levels = new Image[num_total_levels];
+	        	for (i = 0; i < num_total_levels; i++) {
+	        		try {
+	        		    pyr.levels[i] = new Image();
+	        		}
+	        		catch (OutOfMemoryError e) {
+	        			return SIFT3D_FAILURE;
+	        		}
+	        	}
+	        }
+
+		// We have nothing more to do if there are no levels
+		if (num_total_levels == 0) {
+			return SIFT3D_SUCCESS;
+		}
+
+	        // Initalize new levels
+	        for (i = old_num_total_levels; i < num_total_levels; i++) {
+	                Image level = pyr.levels[i];
+	                init_im(level);
+	        }
+
+	        // We have nothing more to do if the image is empty
+	        if (im.data == null) {
+	                return SIFT3D_SUCCESS;
+	        }
+
+		// Calculate base image dimensions and units
+		factor = Math.pow(2.0, -first_octave);
+	        for (i = 0; i < IM_NDIMS; i++) {
+	        	    if (i == 0) {
+	                    dims[i] = (int) ((double) im.nx * factor);
+	                    units[i] = im.ux * factor;
+	        	    }
+	        	    else if (i == 1) {
+	        	    	dims[i] = (int) ((double) im.ny * factor);
+	                    units[i] = im.uy * factor;	
+	        	    }
+	        	    else {
+	        	    	dims[i] = (int) ((double) im.nz * factor);
+	                    units[i] = im.uz * factor;	
+	        	    }    
+	        }
+
+		// Initialize each level separately
+	     // Loop through all levels of a given pyramid
+        	for (o = pyr.first_octave; o <= SIFT3D_PYR_LAST_OCTAVE(pyr); 
+                        o++) { 
+	        	for (s = pyr.first_level; s <= SIFT3D_PYR_LAST_LEVEL(pyr); 
+	                        s++) {
+	                        // Initialize Image fields
+	                        Image level = SIFT3D_PYR_IM_GET(pyr, o, s);
+	                        im.nx = dims[0];
+	                        im.ny = dims[1];
+	                        im.nz = dims[2];
+	                        im.ux = units[0];
+	                        im.uy = units[1];
+	                        im.uz = units[2];
+		                level.nc = im.nc;
+		                im_default_stride(level);
+
+	                        // Re-size data memory
+	                        status = im_resize(level);
+	                        if (status == SIFT3D_FAILURE) {
+	                                return SIFT3D_FAILURE;
+	                        }
+
+	        	}
+
+		        // Adjust dimensions and recalculate image size
+	                for (i = 0; i < IM_NDIMS; i++) {
+	                        dims[i] /= 2;
+	                        units[i] *= 2;
+	                }
+
+        	} 
+
+	        // Set the scales for the new levels
+	        return set_scales_Pyramid(pyr.sigma0, pyr.sigma_n, pyr);
+	}
+	
+	/* Clean up memory for an Image */
+	private void im_free(Image im)
+	{
+		if (im.data != null)
+			im.data = null;
+	}
+	
+	/* Calculate the strides of an image object in the default
+	 * manner. The following parameters must be initialized:
+	 * -nx
+	 * -ny
+	 * -nz
+	 * -nc
+	 * If a dimension is not used, its size should be set
+	 * to 1. */
+	private void im_default_stride(Image im)
+	{
+
+	        int prod;
+		int i;
+
+		prod = im.nc;
+		im.xs = prod;
+
+		for (i = 1; i < IM_NDIMS; i++) {
+			if (i == 1) {
+			    prod *= im.nx;
+			    im.ys = prod;
+			}
+			else {
+				prod *= im.ny;
+				im.zs = prod;
+			}
+		}
+	}
+	
+	/* Resize an image according to the current nx, ny,
+	 * and nz. Does not modify scale space information or
+	 * strides. Prior to calling this function, use init_im(im)
+	 * and initialize the following fields:
+	 * -nx
+	 * -ny
+	 * -nz
+	 * -nc
+	 * -xs (can be set by im_default_stride(im)) 
+	 * -ys (can be set by im_default_stride(im)) 
+	 * -zs (can be set by im_default_stride(im)) 
+	 *
+	 * All of this initialization can also be done with
+	 * init_im_with_dims(), which calls this function.
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise.
+	 */
+	private int im_resize(Image im)
+	{
+
+		int i;
+		int dim;
+
+		//FIXME: This will not work for strange strides
+		final int size = im.nx * im.ny * im.nz * im.nc;
+
+		// Verify inputs
+		for (i = 0; i < IM_NDIMS; i++) {
+
+			if (i == 0) {
+				dim = im.nx;
+				if (im.nx == 0) {
+					System.err.println("im_resize: invalid im.nx = 0");
+					return SIFT3D_FAILURE;
+				}
+			}
+			else if (i == 1) {
+				dim = im.ny;
+				if (im.ny == 0) {
+					System.err.println("im_resize: invalid im.ny = 0");
+					return SIFT3D_FAILURE;
+				}
+			}
+			else {
+				dim = im.nz;
+				if (im.nz == 0) {
+					System.err.println("im_resize: invalid im.nz = 0");
+					return SIFT3D_FAILURE;
+				}
+			}
+		}
+		if (im.nc < 1) {
+			System.err.println("im_resize: invalid number of channels im.nc: " + im.nc);
+			return SIFT3D_FAILURE;
+		}
+
+	        // Do nothing if the size has not changed
+	        if (im.size == size) {
+	            return SIFT3D_SUCCESS;
+	        }
+		im.size = size;
+
+		// Allocate new memory
+		im.data = null;
+		try {
+		    im.data = new double[size];
+		}
+		catch (OutOfMemoryError e) {
+			System.err.println("Out of memory error on im.data = new double[size] in im_resize");
+			return SIFT3D_FAILURE;
+		}
+
+	/*#ifdef SIFT3D_USE_OPENCL
+		{
+			cl_int err;
+			int initialized;
+
+			if (cl_data.valid) {
+				initialized = (im->data != NULL);
+
+				// Destroy the old image
+				if (initialized && im->cl_valid)
+					clReleaseMemObject(im->cl_image);
+
+				// Init an OpenCL image
+				if (im->nz > 0) {
+					im->cl_image = clCreateImage2D(cl_data.context,
+								       cl_data.
+								       mem_flags,
+								       &cl_data.
+								       image_format,
+								       im->nx, im->ny,
+								       im->ys,
+								       im->data, &err);
+				} else {
+					im->cl_image = clCreateImage3D(cl_data.context,
+								       cl_data.
+								       mem_flags,
+								       &cl_data.
+								       image_format,
+								       im->nx, im->ny,
+								       im->nz,
+								       im->ys,
+								       im->zs,
+								       im->data, &err);
+				}
+
+				if (err != CL_SUCCESS) {
+					im->cl_valid = SIFT3D_FALSE;
+					return SIFT3D_FAILURE;
+				}
+
+				im->cl_valid = SIFT3D_TRUE;
+			}
+		}
+	#endif*/
+		return size != 0 && im.data == null ? SIFT3D_FAILURE : SIFT3D_SUCCESS;
 	}
 
 }
