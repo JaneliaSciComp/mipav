@@ -42,6 +42,9 @@ public class SIFT3D extends AlgorithmBase {
 	private int SIFT3D_num_iter_default;
 	private boolean useOCL = false;
 	private double SIFT3D_GAUSS_WIDTH_FCTR = 3.0;
+	// Set SIFT3D_MATCH_MAX_DIST <= 0.0 to avoid using in int match_desc()
+	private double SIFT3D_MATCH_MAX_DIST = 0.0;
+	//private double SIFT3D_MATCH_MAX_DIST = 0.3; // Maximum distance between matching features 
 
 	// Return codes
 	private final int SIFT3D_SINGULAR = 1;
@@ -67,7 +70,7 @@ public class SIFT3D extends AlgorithmBase {
 	private int NBINS_AZ = 8;		// Number of bins for azimuthal angles
 	private int NBINS_PO = 4;		// Number of bins for polar angles
 	private int NHIST_PER_DIM = 4; // Number of SIFT descriptor histograms per dimension 
-	//#define ICOS_HIST			// Icosahedral gradient histogram
+	private boolean ICOS_HIST = true;  // Icosahedral gradient histogram
 
 	/* Constants */
 	private int IM_NDIMS = 3; // Number of dimensions in an Image
@@ -87,7 +90,6 @@ public class SIFT3D extends AlgorithmBase {
 	
 	/* Implementation options */
 	//#define SIFT3D_ORI_SOLID_ANGLE_WEIGHT // Weight bins by solid angle
-	//#define SIFT3D_MATCH_MAX_DIST 0.3 // Maximum distance between matching features 
 	//#define CUBOID_EXTREMA // Search for extrema in a cuboid region
 
 	/* Internal return codes */
@@ -569,7 +571,8 @@ public class SIFT3D extends AlgorithmBase {
      */
     public SIFT3D(ModelImage imageA, ModelImage imageB,
     		double SIFT3D_nn_thresh_default, double SIFT3D_err_thresh_default,
-    		int SIFT3D_num_iter_default, boolean useOCL, double SIFT3D_GAUSS_WIDTH_FCTR) {
+    		int SIFT3D_num_iter_default, boolean useOCL, double SIFT3D_GAUSS_WIDTH_FCTR,
+    		double SIFT3D_MATCH_MAX_DIST, boolean ICOS_HIST) {
     	super(null, imageB);
         refImage = imageA;
         inputImage = imageB;
@@ -578,6 +581,18 @@ public class SIFT3D extends AlgorithmBase {
     	this.SIFT3D_num_iter_default = SIFT3D_num_iter_default;
     	this.useOCL = useOCL;
     	this.SIFT3D_GAUSS_WIDTH_FCTR = SIFT3D_GAUSS_WIDTH_FCTR;
+    	this.SIFT3D_MATCH_MAX_DIST = SIFT3D_MATCH_MAX_DIST;
+    	this.ICOS_HIST = ICOS_HIST;
+    	
+    	// The number of elements in a gradient histogram
+    	if (ICOS_HIST) {
+    	    HIST_NUMEL = ICOS_NVERT;
+    	}
+    	else {
+    	    HIST_NUMEL = (NBINS_AZ * NBINS_PO);
+    	}
+    	
+    	DESC_NUMEL = DESC_NUM_TOTAL_HIST * HIST_NUMEL;
     }
     
     public void runAlgorithm() {
@@ -633,6 +648,12 @@ public class SIFT3D extends AlgorithmBase {
 				inputImage.exportData(0, srcVolume, src.data);
 			}
 			catch(IOException e) {
+				// Clean up
+		        im_free(src);
+		        im_free(ref);
+		        im_free(warped);
+		        cleanup_Reg_SIFT3D(reg);
+		        cleanup_Affine(affine);
 				setCompleted(false);
 				return;
 			}
@@ -644,6 +665,13 @@ public class SIFT3D extends AlgorithmBase {
 				    inputImage.exportData(t*srcVolume, srcVolume, data2);
 				}
 				catch(IOException e) {
+					// Clean up
+			        im_free(src);
+			        im_free(ref);
+			        im_free(warped);
+			        cleanup_Reg_SIFT3D(reg);
+			        cleanup_Affine(affine);
+			        data2 = null;
 					setCompleted(false);
 					return;
 				}
@@ -672,6 +700,12 @@ public class SIFT3D extends AlgorithmBase {
 				refImage.exportData(0, refVolume, ref.data);
 			}
 			catch(IOException e) {
+				// Clean up
+		        im_free(src);
+		        im_free(ref);
+		        im_free(warped);
+		        cleanup_Reg_SIFT3D(reg);
+		        cleanup_Affine(affine);
 				setCompleted(false);
 				return;
 			}
@@ -683,6 +717,13 @@ public class SIFT3D extends AlgorithmBase {
 				    refImage.exportData(t*refVolume, refVolume, data2);
 				}
 				catch(IOException e) {
+					// Clean up
+			        im_free(src);
+			        im_free(ref);
+			        im_free(warped);
+			        cleanup_Reg_SIFT3D(reg);
+			        cleanup_Affine(affine);
+			        data2 = null;
 					setCompleted(false);
 					return;
 				}
@@ -692,9 +733,19 @@ public class SIFT3D extends AlgorithmBase {
 			}
 			data2 = null;
 		}
-        /*if (im_read(src_path, &src) ||
-                im_read(ref_path, &ref))
-                goto demo_quit;*/
+		
+		// Match features and solve for an affine transformation
+        status = register_SIFT3D(reg, affine);
+        if (status == SIFT3D_FAILURE) {
+        	// Clean up
+	        im_free(src);
+	        im_free(ref);
+	        im_free(warped);
+	        cleanup_Reg_SIFT3D(reg);
+	        cleanup_Affine(affine);
+			setCompleted(false);
+			return;	
+        }
     	
     }
     
@@ -2038,5 +2089,319 @@ public class SIFT3D extends AlgorithmBase {
 	#endif*/
 		return size != 0 && im.data == null ? SIFT3D_FAILURE : SIFT3D_SUCCESS;
 	}
+	
+	/* Free all memory associated with a Reg_SIFT3D struct. reg cannot be reused
+	 * unless it is reinitialized. */
+	private void cleanup_Reg_SIFT3D(Reg_SIFT3D reg) {
+
+	        cleanup_SIFT3D_Descriptor_store(reg.desc_src);
+	        cleanup_SIFT3D_Descriptor_store(reg.desc_ref);
+	        cleanup_SIFT3D(reg.sift3d); 
+	        cleanup_Mat_rm(reg.match_src);
+	        cleanup_Mat_rm(reg.match_ref);
+	}
+	
+	/* Free all memory associated with a SIFT3D_Descriptor_store. desc
+	 * cannot be used after calling this function, unless re-initialized. */
+	private void cleanup_SIFT3D_Descriptor_store(SIFT3D_Descriptor_store desc) {
+	        desc.buf = null;
+	}
+	
+	/* Free all memory associated with a SIFT3D struct. sift3d cannot be reused
+	 * unless it is reinitialized. */
+	private void cleanup_SIFT3D(SIFT3DC sift3d) {
+
+		// Clean up the image copy
+		im_free(sift3d.im);
+
+	        // Clean up the pyramids
+	        cleanup_Pyramid(sift3d.gpyr);
+	        cleanup_Pyramid(sift3d.dog);
+
+	        // Clean up the GSS filters
+	        cleanup_GSS_filters(sift3d.gss);
+
+	        // Clean up the triangle mesh 
+	        cleanup_Mesh(sift3d.mesh);
+
+	/*#ifdef USE_OPENCL
+	        // Clean up the OpenCL kernels
+	        cleanup_SIFT3D_cl_kernels(&sift3d->kernels);
+	#endif*/
+	}
+	
+	/* Release all memory associated with a Pyramid. pyr cannot be used again,
+	 * unless it is reinitialized. */
+	private void cleanup_Pyramid(Pyramid pyr)
+	{
+
+		int o, s;
+
+		// We are done if there are no levels
+		if (pyr.levels == null)
+			return;
+
+		// Free the levels
+		// Loop through all levels of a given pyramid
+    	for (o = pyr.first_octave; o <= SIFT3D_PYR_LAST_OCTAVE(pyr); 
+                    o++) { 
+        	for (s = pyr.first_level; s <= SIFT3D_PYR_LAST_LEVEL(pyr); 
+                        s++) {
+				Image level = SIFT3D_PYR_IM_GET(pyr, o, s);
+				im_free(level);
+        	}
+    	}
+
+		// Free the pyramid level buffer
+		pyr.levels = null;
+	}
+	
+	/* Release all memory associated with a triangle mesh. mesh cannot be reused
+	 * before it is reinitialized. */
+	private void cleanup_Mesh(Mesh mesh)
+	{
+		mesh.tri = null;
+	}
+	
+	/* Run the registration procedure. 
+	 *
+	 * Parameters: 
+	 *   reg: The struct holding registration state.
+	 *   tform: The output transformation. If NULL, this function only performs
+	 *     feature matching.
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
+	private int register_SIFT3D(Reg_SIFT3D reg, Affine tform) {
+
+	    int status;    
+		Mat_rm match_src_mm = new Mat_rm();
+		Mat_rm match_ref_mm = new Mat_rm();
+	        int matches[];
+	        int i, j;
+
+	        Ransac ran = reg.ran;
+	        Mat_rm match_src = reg.match_src;
+	        Mat_rm match_ref = reg.match_ref;
+	        final double nn_thresh = reg.nn_thresh;
+	        SIFT3D_Descriptor_store desc_src = reg.desc_src;
+	        SIFT3D_Descriptor_store desc_ref = reg.desc_ref;
+
+		// Verify inputs
+		if (desc_src.num <= 0) {
+			System.err.println("register_SIFT3D: no source image descriptors are available");
+			return SIFT3D_FAILURE;
+		}
+		if (desc_ref.num <= 0) {
+			System.err.println("register_SIFT3D: no reference image descriptors are available");
+			return SIFT3D_FAILURE;
+		}
+
+	        // Initialize intermediates
+	        status = init_Mat_rm(match_src_mm, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+	        if (status == SIFT3D_FAILURE) {
+	        	 System.err.println("register_SIFT3D: match_src_mm failed initialization");
+	             return SIFT3D_FAILURE;	
+	        }
+		    status = init_Mat_rm(match_ref_mm, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		    if (status == SIFT3D_FAILURE) {
+	            System.err.println("register_SIFT3D: match_ref_mm failed initialization");
+	            return SIFT3D_FAILURE;
+	        }
+
+		// Match features
+	    matches = new int[desc_src.num];
+		status = SIFT3D_nn_match(desc_src, desc_ref, nn_thresh, matches);
+		if (status == SIFT3D_FAILURE) {
+			System.err.println("register_SIFT3D: failed to match descriptors");
+			matches = null;
+		    cleanup_Mat_rm(match_src_mm); 
+		    cleanup_Mat_rm(match_ref_mm); 
+		    return SIFT3D_FAILURE;
+	    }
+
+	        // Convert matches to coordinate matrices
+		/*if (SIFT3D_matches_to_Mat_rm(desc_src, desc_ref, matches,
+					     match_src, match_ref)) {
+			SIFT3D_ERR("register_SIFT3D: failed to extract "
+	                        "coordinate matrices \n");
+	                goto register_SIFT3D_quit;
+	        }
+
+	        // Quit if no tform was provided
+	        if (tform == NULL)
+	                goto register_SIFT3D_success;
+
+	        // Convert the coordinate matrices to real-world units
+	        if (im2mm(match_src, reg->src_units, &match_src_mm) ||
+	            im2mm(match_ref, reg->ref_units, &match_ref_mm))
+	                goto register_SIFT3D_quit;
+
+		// Find the transformation in real-world units
+		if (find_tform_ransac(ran, &match_src_mm, &match_ref_mm, tform))
+	                goto register_SIFT3D_quit;
+
+	        // Convert the transformation back to image space
+	        if (mm2im(reg->src_units, reg->ref_units, tform))
+	                goto register_SIFT3D_quit;
+
+	register_SIFT3D_success:
+	        // Clean up
+	        free(matches);
+	        cleanup_Mat_rm(&match_src_mm);
+	        cleanup_Mat_rm(&match_ref_mm);*/
+
+		return SIFT3D_SUCCESS;
+
+	/*register_SIFT3D_quit:
+	        free(matches);
+	        cleanup_Mat_rm(&match_src_mm); 
+	        cleanup_Mat_rm(&match_ref_mm); 
+	        return SIFT3D_FAILURE;*/
+	}
+
+	/* Perform nearest neighbor matching on two sets of 
+	 * SIFT descriptors.
+	 *
+	 * This function will reallocate *matches. As such, *matches must be either
+	 * NULL or a pointer to previously-allocated array. Upon successful exit,
+	 * *matches is an array of size d1->num.
+	 * 
+	 * On return, the ith element of matches contains the index in d2 of the match
+	 * corresponding to the ith descriptor in d1, or -1 if no match was found.
+	 *
+	 * You might consider using SIFT3D_matches_to_Mat_rm to convert the matches to
+	 * coordinate matrices. */
+	private int SIFT3D_nn_match(SIFT3D_Descriptor_store d1,
+			    SIFT3D_Descriptor_store d2,
+			    double nn_thresh, int matches[]) {
+	
+		int i;
+	
+		final int num = d1.num;
+	
+	        // Verify inputs
+		if (num < 1) {
+			System.err.println("SIFT3D_nn_match: invalid number of descriptors in d1: " + num);
+			return SIFT3D_FAILURE;
+		}
+	
+		// Must allocate matches before routine entry
+		// Resize the matches array (num cannot be zero)
+		/*if ((*matches = (int *) SIFT3D_safe_realloc(*matches, 
+			num * sizeof(int))) == NULL) {
+		    SIFT3D_ERR("_SIFT3D_nn_match: out of memory! \n");
+		    return SIFT3D_FAILURE;
+		}*/
+	
+		for (i = 0; i < d1.num; i++) {
+		    // Mark -1 to signal there is no match
+		    matches[i] = -1;
+		}
+		
+		// Exhaustive search for matches
+	//#pragma omp parallel for
+		for (i = 0; i < num; i++) {
+	
+	                SIFT3D_Descriptor desc1 = d1.buf[i];
+	
+	                // Forward matching pass
+	                matches[i] = match_desc(desc1, d2, nn_thresh);
+	
+	                // We are done if there was no match
+	                if (matches[i] < 0)
+	                        continue;
+	
+	                // Check for forward-backward consistency
+	                if (match_desc(d2.buf[matches[i]], d1, nn_thresh) != i) {
+	                        matches[i] = -1;
+	                }
+	        }
+	
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Helper function to match desc against the descriptors in store. Returns the
+	 * index of the match, or -1 if none was found. */
+	private int match_desc(SIFT3D_Descriptor desc,
+	        SIFT3D_Descriptor_store store, double nn_thresh) {
+
+		final SIFT3D_Descriptor desc_best;
+	        double ssd_best, ssd_nearest;
+	        int i;
+
+	if (SIFT3D_MATCH_MAX_DIST > 0.0) {
+	        Cvec dims = new Cvec();
+	        Cvec dmatch = new Cvec();
+	        double dist_match;
+					
+	        // Compute spatial distance rejection threshold
+	        dims.x = (double) store.nx;	
+	        dims.y = (double) store.ny;	
+	        dims.z = (double) store.nz;	
+	        final double diag = SIFT3D_CVEC_L2_NORM(dims);	
+	        final double dist_thresh = diag * SIFT3D_MATCH_MAX_DIST;
+	} // if (SIFT3D_MATCH_MAX_DIST > 0.0)
+
+	        // Linear search for the best and second-best SSD matches 
+	        ssd_best = ssd_nearest = Double.MAX_VALUE;
+	        desc_best = null;
+	      /*  for (i = 0; i < store.num; i++) { 
+
+	                double ssd;
+	                int j;
+
+	                SIFT3D_Descriptor desc2 = store.buf[i];
+
+	                // Compute the SSD of the two descriptors
+	                ssd = 0.0;
+	                for (j = 0; j < DESC_NUM_TOTAL_HIST; j++) {
+
+	                        int a, p;
+
+	                        Hist hist1 = desc.hists[j];
+	                        Hist hist2 = desc2.hists[j];
+
+	                        HIST_LOOP_START(a, p)
+	                                const double diff = 
+	                                        (double) HIST_GET(hist1, a, p) -
+	                                        (double) HIST_GET(hist2, a, p);
+	                                        ssd += diff * diff;
+	                        HIST_LOOP_END
+
+	                        // Early termination
+	                        if (ssd > ssd_nearest)
+	                                break;
+	                }
+
+	                // Compare to the best matches
+	                if (ssd < ssd_best) {
+	                        desc_best = desc2; 
+	                        ssd_nearest = ssd_best;
+	                        ssd_best = ssd;
+	                } else  {
+	                        ssd_nearest = SIFT3D_MIN(ssd_nearest, ssd);
+	                }
+	        }
+
+	        // Reject a match if the nearest neighbor is too close
+	        if (ssd_best / ssd_nearest > nn_thresh * nn_thresh)
+	                        return -1;
+
+	    if (SIFT3D_MATCH_MAX_DIST > 0.0) {
+	        // Compute the spatial distance of the match
+	        dmatch.x = (float) desc_best->xd - desc1->xd; 
+	        dmatch.y = (float) desc_best->yd - desc1->yd; 
+	        dmatch.z = (float) desc_best->zd - desc1->zd; 
+	        dist_match = (double) SIFT3D_CVEC_L2_NORM(&dmatch);
+
+	        // Reject matches of great distance
+	        if (dist_match > dist_thresh)
+	                return -1;
+	    } // if (SIFT3D_MATCH_MAX_DIST > 0.0)
+	        // The match was a success
+	        return desc_best - store->buf;*/
+	        return 0;
+	}
+
 
 }
