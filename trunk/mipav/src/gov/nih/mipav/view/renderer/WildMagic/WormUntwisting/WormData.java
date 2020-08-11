@@ -334,8 +334,12 @@ public class WormData
 		}
 		return latticeList;
 	}
-
 	public VOIVector readFinalLattice()
+	{
+		return readFinalLattice(false);
+	}
+
+	public VOIVector readFinalLattice(boolean convertLegacyXML)
 	{
 		// try reading the edited lattice:
 		String fileName = outputDirectory + File.separator + editLatticeOutput + File.separator;
@@ -345,7 +349,7 @@ public class WormData
 			//			VOIVector finalLattice = new VOIVector();
 			//			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
 			VOIVector finalLattice = LatticeModel.readLatticeCSV(outputDirectory + File.separator + editLatticeOutput + File.separator + "lattice.csv");
-			if ( (finalLattice == null) || (finalLattice.size() < 2) ) {
+			if ( (finalLattice == null) || (finalLattice.size() < 2) || convertLegacyXML) {
 				finalLattice = readLegacyLattice(fileName);
 				if ( finalLattice == null ) {
 					String latticeDir = outputDirectory + File.separator + "lattice" + File.separator;
