@@ -196,6 +196,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	private PlugInDialogVolumeRenderDual parent;
 	private JTextField rangeFusionText;
+	private JCheckBox loadLegacyLatticeCheck;
 
 	private JRadioButton integratedEdit;
 	private JRadioButton reviewResults;
@@ -432,6 +433,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						editMode = EditNONE;
 						startButton.setEnabled(true);
 					}
+				}
+				else {
+					MipavUtil.displayInfo("Please select an action" );
+					startButton.setEnabled(true);
 				}
 			}
 
@@ -845,7 +850,14 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			activeImage.voiManager.setLattice(activeImage.wormData.readStraightLattice());
 		}
 		else {
-			activeImage.voiManager.setLattice(activeImage.wormData.readFinalLattice());
+			if ( loadLegacyLatticeCheck.isSelected() ) {
+				activeImage.wormImage.setResolutions(originalResolutions);
+			}
+			activeImage.voiManager.setLattice(activeImage.wormData.readFinalLattice(loadLegacyLatticeCheck.isSelected()));
+
+			if ( loadLegacyLatticeCheck.isSelected() ) {
+				activeImage.wormImage.setResolutions(new float[] {1f,1f,1});
+			}
 		}
 		
     	if ( activeImage.annotations != null )
@@ -1835,6 +1847,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	 */
 
+	private float[] originalResolutions;
 	protected ModelImage openImage( File imageFile, String fileName )
 	{
 
@@ -1843,6 +1856,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			FileIO fileIO = new FileIO();
 			ModelImage image = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
 			image.calcMinMax();   
+			originalResolutions = image.getResolutions(0).clone();
 			image.setResolutions( new float[] {1,1,1} );
 			return image;
 		}
@@ -2327,6 +2341,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", " ");
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
+		gbc.gridy++;
+
+		loadLegacyLatticeCheck = gui.buildCheckBox( "convert legacy lattice.xml", false);
+		inputsPanel.add(loadLegacyLatticeCheck.getParent(), gbc);
 		gbc.gridy++;
 
 		JPanel startPanel = new JPanel();
