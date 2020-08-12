@@ -134,6 +134,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	public void latticeChanged() {
 		if ( voiManager != null )
 		{
+			voiManager.setLatticeChanged();
 			// get current annotations and update table:
 			VOIVector lattice = voiManager.getLattice();
 			

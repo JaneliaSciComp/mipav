@@ -636,6 +636,7 @@ public class LatticeModel {
 	protected ModelImage seamCellImage;
 	// Set of two contours, each connected to the other pair-wise
 	protected VOIVector lattice = null;
+	private boolean latticeChanged = false;
 	// left side of the lattice:
 	protected VOI left;
 	protected VOI leftContour;
@@ -1803,6 +1804,14 @@ public class LatticeModel {
 		return imageA;
 	}
 
+	public boolean getLatticeChanged() {
+		return latticeChanged;
+	}
+
+	public void setLatticeChanged() {
+		latticeChanged = true;
+	}
+	
 	public VOIVector getLattice() {
 		return lattice;
 	}
@@ -4828,9 +4837,7 @@ public class LatticeModel {
 	 */
 	public ModelImage untwistTest()
 	{
-		//		if ( !latticeInterpolationInit ) {
 		initializeInterpolation(false);
-		//		}
 		final int[] resultExtents = new int[] {((2 * extent)), ((2 * extent)), samplingPlanes.getCurves().size()};
 		return untwistTest(imageA, resultExtents);
 
@@ -9401,76 +9408,6 @@ public class LatticeModel {
 					annotationsStraight.getCurves().add(newText);
 				}
 			}
-
-
-			//			
-			//			int failCount = 0;
-			//			for ( int i = 0; i < markerCenters.size(); i++ )
-			//			{
-			//				int latticeSegment = markerLatticeSegments.elementAt(i);
-			//				int startIndex = 0;
-			//				int endIndex = size;
-			//				if ( (latticeSegment > 0) && (latticeSegment < splineRangeIndex.length) ) {
-			//					startIndex = splineRangeIndex[latticeSegment-1];
-			//					endIndex = splineRangeIndex[latticeSegment];
-			//				}
-			//
-			//				float minUntwist = Float.MAX_VALUE;
-			//				int minSlice = -1;
-			//				Vector3f minPt = new Vector3f();
-			//				float minFail = Float.MAX_VALUE;
-			//				Vector3f minFailPt = new Vector3f();
-			//				while ( minSlice == -1 && tryCount < 3 ) {
-			//					for ( int j = startIndex; j < endIndex; j++ )
-			//					{			
-			//						// Calculate the straightened marker location:
-			//						VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
-			//						for (int k = 0; k < 4; k++) {
-			//							corners[k] = kBox.elementAt(k);
-			//						}
-			//						Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i), minDistance );
-			//						
-			////						if ( minDistance[0] < (tryCount * 5) ) {
-			////							System.err.println("unTwistTest: marker        " + markerNames.elementAt(i) + "  " + j + " " + minDistance[0] + "  " +
-			////									( (contours[j] != null) && contours[j].contains( markerPt.X, markerPt.Y ) ) );
-			////						}
-			//						if ( minDistance[0] < minFail ) {
-			//							minFail = minDistance[0];
-			//							minFailPt.copy(markerPt);
-			//						}
-			//
-			//						// If it is inside the skin marker contour:
-			//						if ( ( minDistance[0] < (tryCount * 5) ) && ((contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y )) )
-			//						{
-			//							if ( minDistance[0] < minUntwist ) {
-			//								minUntwist = minDistance[0];
-			//								minSlice = j;
-			//								minPt.copy(markerPt);
-			//							}
-			//						}
-			//					}
-			//					if ( minSlice != -1 ) {
-			//						VOIWormAnnotation text = new VOIWormAnnotation();
-			//						text.setText(markerNames.elementAt(i));
-			//						text.add( new Vector3f(minPt) );
-			//						text.add( new Vector3f(minPt) );
-			//						annotationsStraight.getCurves().add(text);
-			//					}
-			//					tryCount++;
-			//				}
-			//				if ( minSlice == -1 ) {
-			//					failList += markerNames.elementAt(i) + "\n";
-			//					failCount++;
-			//					System.err.println( markerNames.elementAt(i) + " FAIL  " + minSlice + "   " + minUntwist );
-			//					VOIWormAnnotation text = new VOIWormAnnotation();
-			//					text.setText(markerNames.elementAt(i));
-			//					text.add( new Vector3f(minFailPt) );
-			//					text.add( new Vector3f(minFailPt) );
-			//					text.setColor(Color.red);
-			//					annotationsStraight.getCurves().add(text);
-			//				}
-			//				
-			//			}
 			if ( failCount > 0 ) {
 				MipavUtil.displayInfo(failList);
 			}
@@ -10140,7 +10077,7 @@ public class LatticeModel {
 
 	public static void saveLattice(final String directory, final String fileName, VOIVector latticeVector )
 	{
-		if ( latticeVector.size() < 2 ) return;
+		if ( (latticeVector == null) || (latticeVector.size() < 2) ) return;
 		
 		VOI left = latticeVector.elementAt(0);
 		VOI right = latticeVector.elementAt(1);
