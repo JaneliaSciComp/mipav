@@ -352,17 +352,20 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	public boolean isEmpty(){
 		return keyList.isEmpty();
 	}
+	
+	public void addKeysToAllowList(ArrayList<FileDicomKey> keys, ArrayList<String> names){
+        for(int i=0;i<keys.size();i++){
+            FileDicomKey k = keys.get(i);
+            String group = k.getGroup();
+            String element = k.getElement();
+            String name = names.get(i);
+            addKey(group, element, name);
+        }
+    }
 
+	/** @deprecated {@link JPanelAnonymizePanelTags#addKeysToAllowList(ArrayList<FileDicomKey>,ArrayList<String>)}*/
 	public void addWhiteListedKeys(ArrayList<FileDicomKey> keys, ArrayList<String> names){
-		
-		for(int i=0;i<keys.size();i++){
-			FileDicomKey k = keys.get(i);
-			String group = k.getGroup();
-			String element = k.getElement();
-			String name = names.get(i);
-			addKey(group, element, name);
-		}
-		
+	    addKeysToAllowList(keys, names);
 	}
 	
 	/**
@@ -501,16 +504,16 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		JPanel listPanel = new JPanel(new GridBagLayout());
 		listPanel.setForeground(Color.black);
 		
-		JLabel listLabel = new JLabel("DICOM private key whitelist - All others will be removed");
+		JLabel listLabel = new JLabel("DICOM private key allow list - All others will be removed");
 		listLabel.setFont(serif12b);
 		
 		listModel = new DefaultListModel();
 		
-		JList whiteList = new JList(listModel);
-		whiteList.setFont(serif12);
-		//whiteList.setVisibleRowCount(10);
+		JList allowList = new JList(listModel);
+		allowList.setFont(serif12);
+		//allowList.setVisibleRowCount(10);
 		
-		JScrollPane scrollPane = new JScrollPane(whiteList);
+		JScrollPane scrollPane = new JScrollPane(allowList);
 		
 		gbc.gridx = 0;
 		gbc.gridy = 0;

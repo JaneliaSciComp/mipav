@@ -1441,7 +1441,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	}
     	
     	if(privateKeys.size()>0)
-    		privateTagsPanel.addWhiteListedKeys(privateKeys, privateKeyTags);
+    		privateTagsPanel.addKeysToAllowList(privateKeys, privateKeyTags);
     	if(publicKeys.size()>0)
     		publicTagsPanel.setSelectedKeys(publicKeys);
     	
