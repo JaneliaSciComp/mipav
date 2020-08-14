@@ -1,8 +1,13 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
+import java.util.Random;
+import java.util.Vector;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.Preferences;
 
 /* This is a port of SIFT3D is an analogue of the scale-invariant feature transform (SIFT) for three-dimensional images.
@@ -44,7 +49,9 @@ public class SIFT3D extends AlgorithmBase {
 	private double SIFT3D_GAUSS_WIDTH_FCTR = 3.0;
 	// Set SIFT3D_MATCH_MAX_DIST <= 0.0 to avoid using in int match_desc()
 	private double SIFT3D_MATCH_MAX_DIST = 0.0;
-	//private double SIFT3D_MATCH_MAX_DIST = 0.3; // Maximum distance between matching features 
+	//private double SIFT3D_MATCH_MAX_DIST = 0.3; // Maximum distance between matching features
+	private boolean SIFT3D_RANSAC_REFINE = true;	// Use least-squares refinement in RANSAC
+
 
 	// Return codes
 	private final int SIFT3D_SINGULAR = 1;
@@ -572,7 +579,7 @@ public class SIFT3D extends AlgorithmBase {
     public SIFT3D(ModelImage imageA, ModelImage imageB,
     		double SIFT3D_nn_thresh_default, double SIFT3D_err_thresh_default,
     		int SIFT3D_num_iter_default, boolean useOCL, double SIFT3D_GAUSS_WIDTH_FCTR,
-    		double SIFT3D_MATCH_MAX_DIST, boolean ICOS_HIST) {
+    		double SIFT3D_MATCH_MAX_DIST, boolean ICOS_HIST, boolean SIFT3D_RANSAC_REFINE) {
     	super(null, imageB);
         refImage = imageA;
         inputImage = imageB;
@@ -583,6 +590,7 @@ public class SIFT3D extends AlgorithmBase {
     	this.SIFT3D_GAUSS_WIDTH_FCTR = SIFT3D_GAUSS_WIDTH_FCTR;
     	this.SIFT3D_MATCH_MAX_DIST = SIFT3D_MATCH_MAX_DIST;
     	this.ICOS_HIST = ICOS_HIST;
+    	this.SIFT3D_RANSAC_REFINE = SIFT3D_RANSAC_REFINE;
     	
     	// The number of elements in a gradient histogram
     	if (ICOS_HIST) {
@@ -746,6 +754,18 @@ public class SIFT3D extends AlgorithmBase {
 			setCompleted(false);
 			return;	
         }
+        
+        /*// Write the transformation to a file 
+        if (write_tform(affine_path, &affine))
+                goto demo_quit;
+
+        // Warp the source image
+        if (im_inv_transform(&affine, &src, LINEAR, SIFT3D_TRUE, &warped))
+                goto demo_quit;
+
+        // Write the warped image to a file
+        if (im_write(warped_path, &warped))
+                goto demo_quit;*/
     	
     }
     
@@ -847,7 +867,6 @@ public class SIFT3D extends AlgorithmBase {
 
         final int num_rows = mat.num_rows;
         final int num_cols = mat.num_cols;
-        double data[][] = mat.data_double;
         final int numel = num_rows * num_cols;
         final Mat_rm_type type = mat.type;
 
@@ -889,7 +908,7 @@ public class SIFT3D extends AlgorithmBase {
 
         // Re-allocate the memory
         try {
-        	data = new double[num_rows][num_cols];
+        	mat.data_double = new double[num_rows][num_cols];
         }
         catch (OutOfMemoryError e) {
             mat.size = 0;
@@ -1370,8 +1389,8 @@ public class SIFT3D extends AlgorithmBase {
 	        int o, s;
 
 	        final int num_kp_levels = pyr.num_kp_levels;
-	        final Image first_level = 
-	                SIFT3D_PYR_IM_GET(pyr, pyr.first_octave, pyr.first_level);
+	        //final Image first_level = 
+	                //SIFT3D_PYR_IM_GET(pyr, pyr.first_octave, pyr.first_level);
 
 	        // Compute the scales of each level
 	        // Loop through all levels of a given pyramid
@@ -1732,7 +1751,7 @@ public class SIFT3D extends AlgorithmBase {
 	 * internal data. */
 	private int set_num_kp_levels_SIFT3D(SIFT3DC sift3d, int num_kp_levels) {
 
-	        final Pyramid gpyr = sift3d.gpyr;
+	        //final Pyramid gpyr = sift3d.gpyr;
 
 	        return resize_SIFT3D(sift3d, num_kp_levels);
 	}
@@ -1827,8 +1846,6 @@ public class SIFT3D extends AlgorithmBase {
 		double factor;
 		int i, o, s;
 
-		final double sigma0 = pyr.sigma0;
-		final double sigma_n = pyr.sigma_n;
 	    final int old_num_total_levels = pyr.num_levels * pyr.num_octaves;
 		final int num_total_levels = num_levels * num_octaves;
 
@@ -1992,7 +2009,6 @@ public class SIFT3D extends AlgorithmBase {
 	{
 
 		int i;
-		int dim;
 
 		//FIXME: This will not work for strange strides
 		final int size = im.nx * im.ny * im.nz * im.nc;
@@ -2001,21 +2017,18 @@ public class SIFT3D extends AlgorithmBase {
 		for (i = 0; i < IM_NDIMS; i++) {
 
 			if (i == 0) {
-				dim = im.nx;
 				if (im.nx == 0) {
 					System.err.println("im_resize: invalid im.nx = 0");
 					return SIFT3D_FAILURE;
 				}
 			}
 			else if (i == 1) {
-				dim = im.ny;
 				if (im.ny == 0) {
 					System.err.println("im_resize: invalid im.ny = 0");
 					return SIFT3D_FAILURE;
 				}
 			}
 			else {
-				dim = im.nz;
 				if (im.nz == 0) {
 					System.err.println("im_resize: invalid im.nz = 0");
 					return SIFT3D_FAILURE;
@@ -2173,11 +2186,11 @@ public class SIFT3D extends AlgorithmBase {
 	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
 	private int register_SIFT3D(Reg_SIFT3D reg, Affine tform) {
 
-	    int status;    
+	    int status; 
+	    int status_out[] = new int[1];
 		Mat_rm match_src_mm = new Mat_rm();
 		Mat_rm match_ref_mm = new Mat_rm();
 	        int matches[];
-	        int i, j;
 
 	        Ransac ran = reg.ran;
 	        Mat_rm match_src = reg.match_src;
@@ -2209,9 +2222,8 @@ public class SIFT3D extends AlgorithmBase {
 	        }
 
 		// Match features
-	    matches = new int[desc_src.num];
-		status = SIFT3D_nn_match(desc_src, desc_ref, nn_thresh, matches);
-		if (status == SIFT3D_FAILURE) {
+		matches = SIFT3D_nn_match(desc_src, desc_ref, nn_thresh, status_out);
+		if (status_out[0] == SIFT3D_FAILURE) {
 			System.err.println("register_SIFT3D: failed to match descriptors");
 			matches = null;
 		    cleanup_Mat_rm(match_src_mm); 
@@ -2220,43 +2232,63 @@ public class SIFT3D extends AlgorithmBase {
 	    }
 
 	        // Convert matches to coordinate matrices
-		/*if (SIFT3D_matches_to_Mat_rm(desc_src, desc_ref, matches,
-					     match_src, match_ref)) {
-			SIFT3D_ERR("register_SIFT3D: failed to extract "
-	                        "coordinate matrices \n");
-	                goto register_SIFT3D_quit;
-	        }
+		status = SIFT3D_matches_to_Mat_rm(desc_src, desc_ref, matches,match_src, match_ref);
+		if (status == SIFT3D_FAILURE) {
+			System.err.println("register_SIFT3D: failed to extract coordinate matrices");
+			matches = null;
+		    cleanup_Mat_rm(match_src_mm); 
+		    cleanup_Mat_rm(match_ref_mm); 
+		    return SIFT3D_FAILURE;
+	    }
 
-	        // Quit if no tform was provided
-	        if (tform == NULL)
-	                goto register_SIFT3D_success;
+        // Quit if no tform was provided
+        if (tform == null) {
+        	matches = null;
+		    cleanup_Mat_rm(match_src_mm); 
+		    cleanup_Mat_rm(match_ref_mm); 
+		    return SIFT3D_SUCCESS;
+        }
 
-	        // Convert the coordinate matrices to real-world units
-	        if (im2mm(match_src, reg->src_units, &match_src_mm) ||
-	            im2mm(match_ref, reg->ref_units, &match_ref_mm))
-	                goto register_SIFT3D_quit;
+        // Convert the coordinate matrices to real-world units
+        status = im2mm(match_src, reg.src_units, match_src_mm);
+        if (status == SIFT3D_FAILURE) {
+			matches = null;
+		    cleanup_Mat_rm(match_src_mm); 
+		    cleanup_Mat_rm(match_ref_mm); 
+		    return SIFT3D_FAILURE;
+	    }
+
+        status = im2mm(match_ref, reg.ref_units, match_ref_mm);
+        if (status == SIFT3D_FAILURE) {
+			matches = null;
+		    cleanup_Mat_rm(match_src_mm); 
+		    cleanup_Mat_rm(match_ref_mm); 
+		    return SIFT3D_FAILURE;
+	    }        
 
 		// Find the transformation in real-world units
-		if (find_tform_ransac(ran, &match_src_mm, &match_ref_mm, tform))
-	                goto register_SIFT3D_quit;
+		status = find_tform_ransac(ran, match_src_mm, match_ref_mm, tform);
+		if (status == SIFT3D_FAILURE) {
+			matches = null;
+		    cleanup_Mat_rm(match_src_mm); 
+		    cleanup_Mat_rm(match_ref_mm); 
+		    return SIFT3D_FAILURE;
+	    }   
 
-	        // Convert the transformation back to image space
-	        if (mm2im(reg->src_units, reg->ref_units, tform))
-	                goto register_SIFT3D_quit;
-
-	register_SIFT3D_success:
-	        // Clean up
-	        free(matches);
-	        cleanup_Mat_rm(&match_src_mm);
-	        cleanup_Mat_rm(&match_ref_mm);*/
-
+	    // Convert the transformation back to image space
+	    status = mm2im(reg.src_units, reg.ref_units, tform);
+	    if (status == SIFT3D_FAILURE) {
+			matches = null;
+		    cleanup_Mat_rm(match_src_mm); 
+		    cleanup_Mat_rm(match_ref_mm); 
+		    return SIFT3D_FAILURE;
+	    }  
+	    
+	    
+	    matches = null;
+	    cleanup_Mat_rm(match_src_mm); 
+	    cleanup_Mat_rm(match_ref_mm); 
 		return SIFT3D_SUCCESS;
-
-	/*register_SIFT3D_quit:
-	        free(matches);
-	        cleanup_Mat_rm(&match_src_mm); 
-	        cleanup_Mat_rm(&match_ref_mm); 
-	        return SIFT3D_FAILURE;*/
 	}
 
 	/* Perform nearest neighbor matching on two sets of 
@@ -2271,27 +2303,29 @@ public class SIFT3D extends AlgorithmBase {
 	 *
 	 * You might consider using SIFT3D_matches_to_Mat_rm to convert the matches to
 	 * coordinate matrices. */
-	private int SIFT3D_nn_match(SIFT3D_Descriptor_store d1,
+	private int[] SIFT3D_nn_match(SIFT3D_Descriptor_store d1,
 			    SIFT3D_Descriptor_store d2,
-			    double nn_thresh, int matches[]) {
+			    double nn_thresh, int status_out[]) {
 	
 		int i;
-	
+	    int matches[] = null;
 		final int num = d1.num;
 	
 	        // Verify inputs
 		if (num < 1) {
 			System.err.println("SIFT3D_nn_match: invalid number of descriptors in d1: " + num);
-			return SIFT3D_FAILURE;
+			status_out[0] = SIFT3D_FAILURE;
+			return null;
 		}
-	
-		// Must allocate matches before routine entry
-		// Resize the matches array (num cannot be zero)
-		/*if ((*matches = (int *) SIFT3D_safe_realloc(*matches, 
-			num * sizeof(int))) == NULL) {
-		    SIFT3D_ERR("_SIFT3D_nn_match: out of memory! \n");
-		    return SIFT3D_FAILURE;
-		}*/
+		
+		try {
+			matches = new int[num];
+		}
+		catch (OutOfMemoryError e) {
+			System.err.println("SIFT3D_nn_match: out of memory!");
+			status_out[0] = SIFT3D_FAILURE;
+			return null;
+		}
 	
 		for (i = 0; i < d1.num; i++) {
 		    // Mark -1 to signal there is no match
@@ -2317,7 +2351,8 @@ public class SIFT3D extends AlgorithmBase {
 	                }
 	        }
 	
-		return SIFT3D_SUCCESS;
+		status_out[0] = SIFT3D_SUCCESS;
+		return matches;
 	}
 	
 	/* Helper function to match desc against the descriptors in store. Returns the
@@ -2325,32 +2360,36 @@ public class SIFT3D extends AlgorithmBase {
 	private int match_desc(SIFT3D_Descriptor desc,
 	        SIFT3D_Descriptor_store store, double nn_thresh) {
 
-		final SIFT3D_Descriptor desc_best;
+		    SIFT3D_Descriptor desc_best;
 	        double ssd_best, ssd_nearest;
 	        int i;
-
+            Cvec dims = null;
+            Cvec dmatch = null;
+            double dist_thresh = 0.0;
 	if (SIFT3D_MATCH_MAX_DIST > 0.0) {
-	        Cvec dims = new Cvec();
-	        Cvec dmatch = new Cvec();
-	        double dist_match;
+	        dims = new Cvec();
+	        dmatch = new Cvec();
 					
 	        // Compute spatial distance rejection threshold
 	        dims.x = (double) store.nx;	
 	        dims.y = (double) store.ny;	
 	        dims.z = (double) store.nz;	
 	        final double diag = SIFT3D_CVEC_L2_NORM(dims);	
-	        final double dist_thresh = diag * SIFT3D_MATCH_MAX_DIST;
+	        dist_thresh = diag * SIFT3D_MATCH_MAX_DIST;
 	} // if (SIFT3D_MATCH_MAX_DIST > 0.0)
 
 	        // Linear search for the best and second-best SSD matches 
 	        ssd_best = ssd_nearest = Double.MAX_VALUE;
 	        desc_best = null;
-	      /*  for (i = 0; i < store.num; i++) { 
+	        int desc2_index = -1;
+	        int desc_best_index = -1;
+	        for (i = 0; i < store.num; i++) { 
 
 	                double ssd;
 	                int j;
 
 	                SIFT3D_Descriptor desc2 = store.buf[i];
+	                desc2_index = i;
 
 	                // Compute the SSD of the two descriptors
 	                ssd = 0.0;
@@ -2360,13 +2399,23 @@ public class SIFT3D extends AlgorithmBase {
 
 	                        Hist hist1 = desc.hists[j];
 	                        Hist hist2 = desc2.hists[j];
-
-	                        HIST_LOOP_START(a, p)
-	                                const double diff = 
-	                                        (double) HIST_GET(hist1, a, p) -
-	                                        (double) HIST_GET(hist2, a, p);
-	                                        ssd += diff * diff;
-	                        HIST_LOOP_END
+	                        
+	                     // Loop over all bins in a gradient histogram. If ICOS_HIST is defined, p
+	                     // is not referenced
+	                     if (ICOS_HIST) {
+	                     	for (a = 0; a < HIST_NUMEL; a++) {
+	                     		double diff = hist1.bins[a] - hist2.bins[a];
+                                ssd += diff * diff;
+	                     	}
+	                     }
+	                     else {
+	                     	for (p = 0; p < NBINS_PO; p++) {
+	                     	    for (a = 0; a < NBINS_AZ; a++) {
+	                     	    	double diff = hist1.bins[a + p * NBINS_AZ] - hist2.bins[a + p * NBINS_AZ];
+	                                ssd += diff * diff;	
+	                     	    }
+	                     	}
+	                     }
 
 	                        // Early termination
 	                        if (ssd > ssd_nearest)
@@ -2376,10 +2425,11 @@ public class SIFT3D extends AlgorithmBase {
 	                // Compare to the best matches
 	                if (ssd < ssd_best) {
 	                        desc_best = desc2; 
+	                        desc_best_index = desc2_index;
 	                        ssd_nearest = ssd_best;
 	                        ssd_best = ssd;
 	                } else  {
-	                        ssd_nearest = SIFT3D_MIN(ssd_nearest, ssd);
+	                        ssd_nearest = Math.min(ssd_nearest, ssd);
 	                }
 	        }
 
@@ -2389,18 +2439,1327 @@ public class SIFT3D extends AlgorithmBase {
 
 	    if (SIFT3D_MATCH_MAX_DIST > 0.0) {
 	        // Compute the spatial distance of the match
-	        dmatch.x = (float) desc_best->xd - desc1->xd; 
-	        dmatch.y = (float) desc_best->yd - desc1->yd; 
-	        dmatch.z = (float) desc_best->zd - desc1->zd; 
-	        dist_match = (double) SIFT3D_CVEC_L2_NORM(&dmatch);
+	        dmatch.x = desc_best.xd - desc.xd; 
+	        dmatch.y = desc_best.yd - desc.yd; 
+	        dmatch.z = desc_best.zd - desc.zd; 
+	        double dist_match = SIFT3D_CVEC_L2_NORM(dmatch);
 
 	        // Reject matches of great distance
 	        if (dist_match > dist_thresh)
 	                return -1;
 	    } // if (SIFT3D_MATCH_MAX_DIST > 0.0)
 	        // The match was a success
-	        return desc_best - store->buf;*/
-	        return 0;
+	        return desc_best_index;
+	}
+	
+	/* Convert a list of matches to matrices of point coordinates.
+	 * Only valid matches will be included in the output matrices.
+	 *
+	 * The format of "matches" is specified in SIFT3D_nn_match.
+	 *
+	 * All matrices must be initialized prior to calling this function.
+	 *
+	 * Output format:
+	 *  m x 3 matrices [x11 y11 z11] [x21 y21 z21]
+	 * 		   |x12 y12 z12| |x22 y22 z22|
+	 *		        ...	      ...
+	 * 		   [x1N y1N z1N] [x2N y2N z2N] 
+	 *
+	 * Where points on corresponding rows are matches. */
+	private int SIFT3D_matches_to_Mat_rm(SIFT3D_Descriptor_store d1,
+				     SIFT3D_Descriptor_store d2,
+				     int matches[],
+				     Mat_rm match1, 
+				     Mat_rm match2) {
+		int status;
+	    int i, num_matches;
+
+	    final int num = d1.num;
+
+	    // Resize matrices 
+	    match1.num_rows = match2.num_rows = d1.num;
+	    match1.num_cols = match2.num_cols = 3;
+	    match1.type = match2.type = Mat_rm_type.SIFT3D_DOUBLE;
+	    status = resize_Mat_rm(match1); 
+	    if (status == SIFT3D_FAILURE) {
+	    	return SIFT3D_FAILURE;
+	    }
+	    status = resize_Mat_rm(match2);
+	    if (status == SIFT3D_FAILURE) {
+		    return SIFT3D_FAILURE;
+	    }
+
+	    // Populate the matrices
+	    num_matches = 0;
+	    for (i = 0; i < num; i++) {
+
+		    SIFT3D_Descriptor desc1 = d1.buf[i];
+		    SIFT3D_Descriptor desc2 = d2.buf[matches[i]];
+
+		    if (matches[i] == -1)
+			    continue;
+
+		    // Save the match
+		    match1.data_double[num_matches][0] = desc1.xd; 
+		    match1.data_double[num_matches][1] = desc1.yd; 
+		    match1.data_double[num_matches][2] = desc1.zd; 
+		    match2.data_double[num_matches][0] = desc2.xd; 
+		    match2.data_double[num_matches][1] = desc2.yd; 
+		    match2.data_double[num_matches][2] = desc2.zd; 
+		    num_matches++;
+	    }
+
+	    // Release extra memory
+	    match1.num_rows = match2.num_rows = num_matches;
+	    status = resize_Mat_rm(match1);
+	    if (status == SIFT3D_FAILURE) {
+	    	return SIFT3D_FAILURE;
+	    }
+	    status = resize_Mat_rm(match2);
+	    if (status == SIFT3D_FAILURE) {
+		    return SIFT3D_FAILURE;
+	    }
+	    
+	    return SIFT3D_SUCCESS;
+	}
+	
+	/* Convert an [mxIM_NDIMS] coordinate matrix from image space to mm. 
+	 *
+	 * Parameters:
+	 *   im: The input coordinate matrix, in image space. 
+	 *   units: An array of length IM_NDIMS giving the units of image space.
+	 *   mm: The output coordinate matrix, in mm.
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise.
+	 */
+	private int im2mm(Mat_rm im, double units[], 
+	        Mat_rm mm) {
+
+	    int status;    
+		int row, col;
+
+	        // Verify inputs
+	        if (im.num_cols != IM_NDIMS) {
+	                System.err.println("im2mm: input must have IM_NDIMS columns.");
+	                return SIFT3D_FAILURE;
+	        }
+	        if (im.type != Mat_rm_type.SIFT3D_DOUBLE) {
+	                System.err.println("im2mm: input must have type double.");
+	                return SIFT3D_FAILURE;
+	        }
+
+	        // Copy the input 
+	        status = copy_Mat_rm(im, mm);
+	        if (status == SIFT3D_FAILURE) {
+	            return SIFT3D_FAILURE;
+	        }
+
+	        // Convert the units
+	        for (row = 0; row < mm.num_rows; row++) {
+	        	for (col = 0; col < mm.num_cols; col++) {
+	                mm.data_double[row][col] *= units[col];
+	        	}
+	        }
+
+	        return SIFT3D_SUCCESS;
+	}
+	
+	/* Copies a matrix. dst will be resized. */
+	private int copy_Mat_rm(Mat_rm src, Mat_rm dst)
+	{
+		int status;
+		int r,c;
+
+		// Resize dst
+		dst.type = src.type;
+		dst.num_rows = src.num_rows;
+		dst.num_cols = src.num_cols;
+		status = resize_Mat_rm(dst);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Copy the data (use memmove because of static mode)
+		for (r = 0; r < src.num_rows; r++) {
+			for (c = 0; c < src.num_cols; c++) {
+				dst.data_double[r][c] = src.data_double[r][c];
+			}
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Fit a transformation from ref to src points, using random sample concensus 
+	 * (RANSAC).
+	 * 
+	 * Parameters:
+	 *   ran - Struct storing RANSAC parameters.
+	 *   src - The [mxn] source points.
+	 *   ref - The [mxn] reference points.
+	 *   tform - The output transform. Must be initialized with init_from prior to 
+	 *           calling this function. 
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
+	private int find_tform_ransac(Ransac ran, Mat_rm src, 
+	        Mat_rm ref, Affine tform)
+	{
+        int status;
+        int status_out[] = new int[1];
+		Mat_rm ref_cset = new Mat_rm();
+		Mat_rm src_cset = new Mat_rm();
+		Affine tform_cur = new Affine();
+		int cset[], cset_best[];
+		int i, j, dim, num_terms, len_best, min_num_inliers;
+		int len[] = new int[1];
+
+		final int num_iter = ran.num_iter;
+		final int num_pts = src.num_rows;
+		//const size_t tform_size = tform_get_size(tform);
+		//const tform_type type = tform_get_type(tform);
+
+		// Initialize data structures
+		cset = cset_best = null;
+		len_best = 0;
+		status = init_Affine(tform_cur, IM_NDIMS);
+		if (status == SIFT3D_FAILURE) {
+			// Clean up and return an error
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}
+		status = init_Mat_rm(src_cset, len_best, IM_NDIMS, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		if (status == SIFT3D_FAILURE) {
+			// Clean up and return an error
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}
+		 
+		status = init_Mat_rm(ref_cset, len_best, IM_NDIMS, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		if (status == SIFT3D_FAILURE) {
+			// Clean up and return an error
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}
+
+		// initialize type-specific variables
+	        dim = tform.A.num_rows;
+			num_terms = dim + 1;
+			min_num_inliers = 5;
+		
+		if (num_pts < num_terms) {
+			System.err.println("Not enough matched points");
+			// Clean up and return an error
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}
+		// Ransac iterations
+		for (i = 0; i < num_iter; i++) {
+			do {
+				cset = ransac(src, ref, ran, tform_cur, cset, len,status_out);
+			} while (status_out[0] == SIFT3D_SINGULAR);
+
+			if (status_out[0] == SIFT3D_FAILURE) {
+				if (cset != null)
+					cset = null;
+				if (cset_best != null)
+					cset_best = null;
+				cleanup_Affine(tform_cur);
+				if (tform_cur != null) {
+					tform_cur = null;
+				}
+			    cleanup_Mat_rm(ref_cset);
+			    cleanup_Mat_rm(src_cset);
+				return SIFT3D_FAILURE;	
+			}
+
+			if (len[0] > len_best) {
+				len_best = len[0];
+				try {
+					cset_best = new int[len[0]];
+				}
+				catch (OutOfMemoryError e) {
+					if (cset != null)
+						cset = null;
+					if (cset_best != null)
+						cset_best = null;
+					cleanup_Affine(tform_cur);
+					if (tform_cur != null) {
+						tform_cur = null;
+					}
+				    cleanup_Mat_rm(ref_cset);
+				    cleanup_Mat_rm(src_cset);
+					return SIFT3D_FAILURE;		
+				}
+			    status = copy_Affine(tform_cur, tform);
+			    if (status == SIFT3D_FAILURE) {
+					// Clean up and return an error
+					if (cset != null)
+						cset = null;
+					if (cset_best != null)
+						cset_best = null;
+					cleanup_Affine(tform_cur);
+					if (tform_cur != null) {
+						tform_cur = null;
+					}
+				    cleanup_Mat_rm(ref_cset);
+				    cleanup_Mat_rm(src_cset);
+					return SIFT3D_FAILURE;	
+				}	
+			    for (i = 0; i < len[0]; i++) {
+			    	cset_best[i] = cset[i];
+			    }
+			}
+		}
+
+		// Check if the minimum number of inliers was found
+		if (len_best < min_num_inliers) {
+			System.err.println("find_tform_ransac: No good model was found!");
+			if (cset != null)
+				cset = null;
+			if (cset_best != null)
+				cset_best = null;
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}
+
+		// Resize the concensus set matrices
+	    src_cset.num_rows = ref_cset.num_rows = len_best;
+	    status = resize_Mat_rm(src_cset);
+	    if (status == SIFT3D_FAILURE) {
+			// Clean up and return an error
+			if (cset != null)
+				cset = null;
+			if (cset_best != null)
+				cset_best = null;
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}	
+	    status = resize_Mat_rm(ref_cset);
+	    if (status == SIFT3D_FAILURE) {
+			// Clean up and return an error
+			if (cset != null)
+				cset = null;
+			if (cset_best != null)
+				cset_best = null;
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}	
+
+		// Extract the concensus set
+	    for (i = 0; i < src_cset.num_rows; i++) {
+	    	for (j = 0; j < src_cset.num_cols; j++) {
+	    		int idx = cset_best[i];
+	    		src_cset.data_double[i][j] = src.data_double[idx][j];
+	    		ref_cset.data_double[i][j] = ref.data_double[idx][j];
+	    	}
+	    }
+
+	    if (SIFT3D_RANSAC_REFINE) {
+		// Refine with least squares
+		switch (solve_system(src_cset, ref_cset, tform_cur)) {
+		case SIFT3D_SUCCESS:
+			// Copy the refined transformation to the output
+			status = copy_Affine(tform_cur, tform);
+			if (status == SIFT3D_FAILURE) {
+				// Clean up and return an error
+				if (cset != null)
+					cset = null;
+				if (cset_best != null)
+					cset_best = null;
+				cleanup_Affine(tform_cur);
+				if (tform_cur != null) {
+					tform_cur = null;
+				}
+			    cleanup_Mat_rm(ref_cset);
+			    cleanup_Mat_rm(src_cset);
+				return SIFT3D_FAILURE;	
+			}	
+			break;
+		case SIFT3D_SINGULAR:
+			// Stick with the old transformation 
+			System.out.println("find_tform_ransac: warning: least-squares refinement ");
+			System.out.println("abandoned due to numerical precision");
+			break;
+		default:
+			// Clean up and return an error
+			if (cset != null)
+				cset = null;
+			if (cset_best != null)
+				cset_best = null;
+			cleanup_Affine(tform_cur);
+			if (tform_cur != null) {
+				tform_cur = null;
+			}
+		    cleanup_Mat_rm(ref_cset);
+		    cleanup_Mat_rm(src_cset);
+			return SIFT3D_FAILURE;	
+		}
+	    } // if (SIFT3D_RANSAC_REFINE) 
+
+	        // Clean up
+	    if (cset != null)
+			cset = null;
+		if (cset_best != null)
+			cset_best = null;
+		cleanup_Affine(tform_cur);
+		if (tform_cur != null) {
+			tform_cur = null;
+		}
+	    cleanup_Mat_rm(ref_cset);
+	    cleanup_Mat_rm(src_cset);
+		return SIFT3D_SUCCESS;
+
+	
+	}
+
+	/* Perform one iteration of RANSAC. 
+	 *
+	 * Parameters:
+	 *  src - The source points.
+	 *  ref - The reference points.
+	 *  tform - The output transformation. Must be initialized.
+	 *  cset - An array in which to store the concensus set. The value *cset must
+	 *         either be NULL, or a pointer to a previously allocated block.
+	 *  len - A location in which to store the length of the cset. 
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_SINGULAR if the system is 
+	 * near singular, and SIFT3D_FAILURE otherwise. 
+	 * Returns cset_out*/
+	private int[] ransac(Mat_rm src, Mat_rm ref, 
+	        Ransac ran, Affine tform, int cset[], int len[], int status_out[])
+	{
+	    int rand_indices[] = null;
+		Mat_rm src_rand = new Mat_rm();
+	    Mat_rm ref_rand = new Mat_rm();
+		int i, j, num_rand, cset_len;
+
+		final double err_thresh = ran.err_thresh;
+		final double err_thresh_sq = err_thresh * err_thresh;
+		final int num_pts = src.num_rows;
+	    final int num_dim = src.num_cols;
+		//const tform_type type = tform_get_type(tform);
+
+		// Verify inputs
+		if (src.type != Mat_rm_type.SIFT3D_DOUBLE || src.type != ref.type) {
+			System.err.println("ransac: all matrices must have type double");
+			status_out[0] = SIFT3D_FAILURE;
+			return null;
+		}
+		if (src.num_rows != ref.num_rows || src.num_cols != ref.num_cols) {
+			System.err.println("ransac: src and ref must have the same dimensions");
+			status_out[0] = SIFT3D_FAILURE;
+			return null;
+		}
+
+	    // Get the number of points for this transform
+	    num_rand = tform.A.num_rows + 1;
+
+		// Initialize intermediates
+		init_Mat_rm(src_rand, num_rand, num_dim, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		init_Mat_rm(ref_rand, num_rand, num_dim, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+
+	    // Draw random point indices
+	    rand_indices = n_choose_k(num_pts, num_rand, status_out);
+	    if (status_out[0] == SIFT3D_FAILURE) {
+	    	if (rand_indices != null) {
+                rand_indices = null;
+	    	}
+	        cleanup_Mat_rm(src_rand);
+	        cleanup_Mat_rm(ref_rand);
+	        return null;
+	    }
+
+	        // Copy the random points
+	    for (i = 0; i < src_rand.num_rows; i++) {
+	    	for (j = 0; j < src_rand.num_cols; j++) {
+	                int rand_idx = rand_indices[i];
+	                src_rand.data_double[i][j] = src.data_double[rand_idx][j];
+	                ref_rand.data_double[i][j] = ref.data_double[rand_idx][j];
+	    	}
+	    }
+
+	        // Fit a transform to the random points
+		switch (solve_system(src_rand, ref_rand, tform)) {
+		case SIFT3D_SUCCESS:
+			break;
+		case SIFT3D_SINGULAR:
+			if (rand_indices != null) {
+                rand_indices = null;
+	    	}
+	        cleanup_Mat_rm(src_rand);
+	        cleanup_Mat_rm(ref_rand);
+	        status_out[0] = SIFT3D_SINGULAR;
+	        return null;
+		default:
+			if (rand_indices != null) {
+                rand_indices = null;
+	    	}
+	        cleanup_Mat_rm(src_rand);
+	        cleanup_Mat_rm(ref_rand);
+	        status_out[0] = SIFT3D_FAILURE;
+	        return null;
+		}
+
+		// Extract the consensus set
+		cset_len = 0;
+		Vector<Integer>csetVec = new Vector<Integer>();
+		for (i = 0; i < num_pts; i++) {
+
+			// Calculate the error
+			double err_sq = tform_err_sq(tform, src, ref, i);
+
+			// Reject points below the error threshold
+			if (err_sq > err_thresh_sq)
+				continue;
+
+			// Add to the consensus set (++cset_len cannot be zero)
+			
+			csetVec.add(i);
+			++cset_len;
+
+		}
+
+		// Return the new length of cset
+		len[0] = cset_len;
+		int cset_out[] = new int[cset_len];
+		for (i = 0; i < cset_len; i++) {
+			cset_out[i] = csetVec.get(i);
+		}
+		csetVec.clear();
+		if (rand_indices != null) {
+            rand_indices = null;
+    	}
+        cleanup_Mat_rm(src_rand);
+        cleanup_Mat_rm(ref_rand);
+		status_out[0] = SIFT3D_SUCCESS;
+		return cset_out;
+	}
+	
+	/* Returns an array of k integers, (uniformly) randomly chosen from the 
+	 * integers 0 through n - 1.
+	 *
+	 * The value of *ret must either be NULL, or a pointer to a previously
+	 * allocated block. On successful return, *ret contains the k random integers.
+	 *
+	 * Returns SIFT3D_SUCCESS on succes, SIFT3D_FAILURE otherwise. */
+	private int[] n_choose_k(int n, int k, int status_out[]) {
+
+	        int i;
+	        int ret[] = null;
+
+	        // Verify inputs
+	        if (n < k || k < 1) {
+	            status_out[0] = SIFT3D_FAILURE;
+	            return null;
+	        }
+
+	        // Allocate the array of k elements
+	        // Must allocate ret before entry into routine
+	        int retn[] = null;
+	        try {
+	            retn = new int[n];
+	        }
+	        catch (OutOfMemoryError e) {
+	            status_out[0] = SIFT3D_FAILURE;
+	            return null;
+	        }
+	        //if ((*ret = malloc(n * sizeof(int))) == NULL)
+	                //goto n_choose_k_fail;
+
+	        // Initialize the array of indices
+	        for (i = 0; i < n; i++) {
+	                retn[i] = i;
+	        }
+
+	        // Randomize the first k indices using Knuth shuffles
+	        // Creating a object for Random class 
+	        Random r = new Random();
+	        for (i = 0; i < k; i++) {
+	        	    // Pick a random index from 0 to n - i - 1
+	                int j = r.nextInt(n-i);
+	                int rand_idx = i + j;
+                    int temp = retn[i];
+	                retn[i] = retn[rand_idx];
+	                retn[rand_idx] = temp;
+	        }
+	        
+	        try {
+	            ret = new int[k];
+	        }
+	        catch (OutOfMemoryError e) {
+	            status_out[0] = SIFT3D_FAILURE;
+	            return null;
+	        }
+
+	        for (i = 0; i < k; i++) {
+	        	ret[i] = retn[i];
+	        }
+	        retn = null;
+
+	        status_out[0] = SIFT3D_SUCCESS;
+	        return ret;
+	}
+	
+	/* Solve for a transformation struct. 
+	 *
+	 * Paramters:
+	 *   src - See ransac().
+	 *   ref - See ransac()
+	 *   tform - See ransac()
+	 *
+	 * Returns SIFT3D_SUCCESS, SIFT3D_SINGULAR, or SIFT3D_FAILURE. See ransac() for
+	 * interpretation. */
+	private int solve_system(Mat_rm src, Mat_rm ref, Affine  tform)
+	{
+		//const tform_type type = tform_get_type(tform);
+
+		//Mat_rm *kp_ref;
+		Mat_rm ref_sys = new Mat_rm();
+	    Mat_rm X = new Mat_rm();
+		int dim, ret;
+
+		init_Mat_rm(ref_sys, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		init_Mat_rm(X, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+
+		//construct source matrix and initialize reference vector
+	    dim = tform.A.num_rows;
+	    make_affine_matrix(ref, dim, ref_sys);
+			
+
+		// solve for the coefficients                   
+	    ret = ref_sys.num_rows == ref_sys.num_cols ?
+	    solve_Mat_rm(ref_sys, src, -1.0, X) :
+	    solve_Mat_rm_ls(ref_sys, src, X);
+
+		switch (ret) {
+		case SIFT3D_SUCCESS:
+			break;
+		case SIFT3D_SINGULAR:
+			cleanup_Mat_rm(ref_sys);
+			cleanup_Mat_rm(X);
+			return SIFT3D_SINGULAR;
+		default:
+			cleanup_Mat_rm(ref_sys);
+			cleanup_Mat_rm(X);
+			return SIFT3D_FAILURE;
+		}
+
+		
+		Mat_rm X_trans = new Mat_rm();
+
+		init_Mat_rm(X_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+
+		ret = transpose_Mat_rm(X, X_trans);
+		if (ret == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(X_trans);
+			cleanup_Mat_rm(ref_sys);
+			cleanup_Mat_rm(X);
+			return SIFT3D_FAILURE;
+		}
+		ret = Affine_set_mat(X_trans, tform);
+
+		cleanup_Mat_rm(X_trans);
+
+		if (ret == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(ref_sys);
+			cleanup_Mat_rm(X);
+			return SIFT3D_FAILURE;
+		}
+
+			
+
+	        // Clean up
+		cleanup_Mat_rm(ref_sys);
+		cleanup_Mat_rm(X);
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	//make the system matrix for affine
+	private int make_affine_matrix(Mat_rm pts_in, int dim, Mat_rm mat_out)
+	{
+        int status;
+		int i, j;
+
+		final int num_rows = pts_in.num_rows;
+
+		mat_out.type = Mat_rm_type.SIFT3D_DOUBLE;
+		mat_out.num_rows = num_rows;
+		mat_out.num_cols = dim + 1;
+		status = resize_Mat_rm(mat_out);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		for (i = 0; i < num_rows; i++) {
+
+			//Add one row to the matrix
+			for (j = 0; j < dim; j++) {
+				mat_out.data_double[i][j] = pts_in.data_double[i][j];
+			}
+			mat_out.data_double[i][dim] = 1.0;
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Solves the system AX=B exactly. A must be a square matrix.
+	 * This function first computes the reciprocal condition number of A.
+	 * If it is below the parameter "limit", it returns SIFT3D_SINGULAR. If limit 
+	 * is less than 0, a default value of 100 * eps is used.
+	 *
+	 * The system is solved by LU decomposition.
+	 * 
+	 * This function returns an error if A and B do not have valid dimensions. 
+	 * This function resizes X to [nx1] and changes the type to match B. 
+	 * All matrices must be initialized prior to calling this function.
+	 * All matrices must have type double.
+	 */
+	int solve_Mat_rm(Mat_rm A, Mat_rm B, 
+	        double limit, Mat_rm X)
+	{
+        int status;
+		Mat_rm A_trans = new Mat_rm();
+		Mat_rm B_trans = new Mat_rm();
+		double work[] = null;
+		int ipiv[] = null;
+		int iwork[] = null;
+		double limit_arg, anorm;
+		double rcond[] = new double[1];
+		int info[] = new int[1];
+
+		final int m = A.num_rows;
+		final int n = A.num_cols;
+		final int nrhs = B.num_cols;
+		final int lda = m;
+		final int ldb = B.num_rows;
+		final char norm_type = '1';
+		final char trans = 'N';
+
+		// Default parameters
+		if (limit < 0) {
+			limit_arg = 100.0 * DBL_EPSILON;
+		}
+		else {
+			limit_arg = limit;
+		}
+
+		// Verify inputs
+		if (m != n || ldb != m) {
+			System.err.println("solve_Mat_rm: invalid dimensions!");
+			return SIFT3D_FAILURE;
+		}
+		if (A.type != Mat_rm_type.SIFT3D_DOUBLE || B.type != Mat_rm_type.SIFT3D_DOUBLE) {
+			System.out.println("solve_mat_rm: All matrices must have type double");
+			return SIFT3D_FAILURE;
+		}
+		// Initialize intermediate matrices and buffers
+		status = init_Mat_rm(A_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		if (status == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+		status = init_Mat_rm(B_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		if (status == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;		
+		}
+		try {
+		    work = new double[4*n];
+		    iwork = new int[n];
+		    ipiv = new int[m];
+		}
+		catch (OutOfMemoryError e) {
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;			
+		}
+
+		// Transpose matrices for LAPACK
+		status = transpose_Mat_rm(A, A_trans);
+		if (status == SIFT3D_FAILURE) {
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;		
+		}
+		status = transpose_Mat_rm(B, B_trans);
+		if (status == SIFT3D_FAILURE) {
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;		
+		}
+
+
+		// Compute the L1-norm of A
+		GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+		LinearEquations2 le2 = new LinearEquations2();
+		anorm = ge.dlange(norm_type, m, n, A_trans.data_double, lda, work);
+
+		// Compute the LU decomposition of A in place
+		le2.dgetrf(m, n, A_trans.data_double, lda, ipiv, info);
+		if (info[0] < 0) {
+			System.err.println("solve_Mat_rm: LAPACK dgetrf error code " + info[0]);
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		} else if (info[0] > 0) {
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_SINGULAR;
+		}
+		// Compute the reciprocal condition number of A
+		le2.dgecon(norm_type, n, A_trans.data_double, lda, anorm, rcond,
+			work, iwork, info);
+		if (info[0] < 0) {
+			System.err.println("solve_Mat_rm: LAPACK dgecon error code = " + info[0]);
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+		// Return if A is singular
+		if (rcond[0] < limit_arg) {
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_SINGULAR;
+		}
+
+		// Solve the system 
+		le2.dgetrs(trans, n, nrhs, A_trans.data_double, lda, ipiv,
+			B_trans.data_double, ldb, info);
+
+		// Check for errors
+		if (info[0] < 0) {
+			System.err.println("solve_Mat_rm: LAPACK dgetrs error code " + info[0]);
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+		// Transpose results
+		status = transpose_Mat_rm(B_trans, X);
+		if (status == SIFT3D_FAILURE) {
+			if (ipiv != null) {
+				ipiv = null;
+			}
+			if (work != null) {
+				work = null;
+			}
+			if (iwork != null) {
+				iwork = null;
+			}
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+
+		if (ipiv != null) {
+			ipiv = null;
+		}
+		if (work != null) {
+			work = null;
+		}
+		if (iwork != null) {
+			iwork = null;
+		}
+		cleanup_Mat_rm(A_trans);
+		cleanup_Mat_rm(B_trans);
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Tranposes a matrix. Resizes dst with the type of src. 
+	 * All matrices must be initialized prior to calling this function. */
+	private int transpose_Mat_rm(Mat_rm src, Mat_rm dst)
+	{
+
+		int status;
+		int i, j;
+
+		// Verify inputs
+		if (src.num_rows < 1 || src.num_cols < 1)
+			return SIFT3D_FAILURE;
+
+		// Resize the output
+		dst.type = src.type;
+		dst.num_rows = src.num_cols;
+		dst.num_cols = src.num_rows;
+		status = resize_Mat_rm(dst);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+	   
+	    if (src.type == Mat_rm_type.SIFT3D_DOUBLE) {
+	        for (i = 0; i < src.num_rows; i++) {
+	    	   for (j = 0; j < src.num_cols; j++) {
+	    	    	dst.data_double[j][i] = src.data_double[i][j];
+	    	    }
+	        }
+	    }
+	    else if (src.type == Mat_rm_type.SIFT3D_FLOAT) {
+	    	for (i = 0; i < src.num_rows; i++) {
+		        for (j = 0; j < src.num_cols; j++) {
+		    	    	dst.data_float[j][i] = src.data_float[i][j];
+		    	}
+		    }
+	    }
+	    else if (src.type == Mat_rm_type.SIFT3D_INT) {
+	    	for (i = 0; i < src.num_rows; i++) {
+		        for (j = 0; j < src.num_cols; j++) {
+		    	    	dst.data_int[j][i] = src.data_int[i][j];
+		    	}
+		    }	    	
+	    }
+	    else {
+	    	System.err.println("transpose_Mat_rm: unknown type");
+	        return SIFT3D_FAILURE;
+	    }
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Solves the system AX=B by least-squares.
+	 *
+	 * A least-norm solution is computed using the singular 
+	 * value decomposition. A need not be full-rank.
+	 * 
+	 * This function returns an error if A and B do not have valid dimensions. 
+	 * This function resizes X to [nx1] and changes the type to match B. 
+	 * All matrices must be initialized prior to calling this funciton.
+	 * All matrices must have type double.
+	 */
+	int solve_Mat_rm_ls(Mat_rm A, Mat_rm B, 
+	        Mat_rm X)
+	{
+        int status;
+		Mat_rm A_trans = new Mat_rm();
+		Mat_rm B_trans = new Mat_rm();
+		double s[], work[];
+		double lwork_ret[] = new double[1];
+		int info[] = new int[1];
+		int rank[] = new int[1];
+		int lwork;
+		int i, j;
+
+		final double rcond = -1;
+		final int m = A.num_rows;
+		final int n = A.num_cols;
+		final int nrhs = B.num_cols;
+		final int lda = m;
+		final int ldb = B.num_rows;
+		final int lwork_query = -1;
+
+		// Verify inputs 
+		if (m != ldb) {
+			System.err.println("solve_Mat_rm_ls: invalid dimensions");
+			return SIFT3D_FAILURE;
+		}
+		if (A.type != Mat_rm_type.SIFT3D_DOUBLE || B.type != Mat_rm_type.SIFT3D_DOUBLE) {
+			System.err.println("solve_mat_rm_ls: All matrices must have type double");
+			return SIFT3D_FAILURE;
+		}
+		// Resize the output 
+		X.type = Mat_rm_type.SIFT3D_DOUBLE;
+		X.num_rows = A.num_cols;
+		X.num_cols = B.num_cols;
+		status = resize_Mat_rm(X);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Initialize intermediate matrices and buffers
+		status = init_Mat_rm(A_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		if (status == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+		status = init_Mat_rm(B_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		if (status == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+		try {
+			s = new double[Math.max(m,n)];
+		}
+		catch (OutOfMemoryError e) {
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+
+		// Transpose matrices for LAPACK
+		status = transpose_Mat_rm(A, A_trans);
+		if (status == SIFT3D_FAILURE) {
+			if (s != null)
+				s = null;
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;		
+		}
+	    status = transpose_Mat_rm(B, B_trans);
+	    if (status == SIFT3D_FAILURE) {
+			if (s != null)
+				s = null;
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;		
+		}
+
+		// Get the size of the workspace
+	    GeneralizedInverse2 ge2 = new GeneralizedInverse2();
+		ge2.dgelss(m, n, nrhs, A_trans.data_double, lda,
+			B_trans.data_double, ldb, s, rcond, rank, lwork_ret,
+			lwork_query, info);
+		if (info[0] != 0) {
+	        System.err.println("solve_mat_rm: LAPACK dgelss work query error code = " + info[0]);
+		}
+		lwork = (int)lwork_ret[0];
+
+		// Allocate the workspace
+		try {
+			work = new double[lwork];
+		}
+		catch (OutOfMemoryError e) {
+			if (s != null)
+				s = null;
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+
+		// Solve the system
+		ge2.dgelss(m, n, nrhs, A_trans.data_double, lda,
+			B_trans.data_double, ldb, s, rcond, rank, work, lwork,
+			info);
+		if (info[0] != 0) {
+			System.err.println("solve_mat_rm: LAPACK dgelss error code = " + info[0]);
+			if (s != null)
+				s = null;
+			if (work != null)
+				work = null;
+			cleanup_Mat_rm(A_trans);
+			cleanup_Mat_rm(B_trans);
+			return SIFT3D_FAILURE;	
+		}
+		// Transpose results to the new leading dimension
+		for (i = 0; i < X.num_rows; i++) {
+			for (j = 0; j < X.num_cols; j++) {
+				X.data_double[i][j] = B_trans.data_double[j][i];
+			}
+		}
+		
+		if (s != null)
+			s = null;
+		if (work != null)
+			work = null;
+		cleanup_Mat_rm(A_trans);
+		cleanup_Mat_rm(B_trans);
+		return SIFT3D_SUCCESS;
+	}
+
+	/* Set an Affine transform to the given matrix.
+	 * mat is copied. mat must be an n x (n + 1) matrix, where
+	 * n is the dimensionality of the transformation. */
+	private int Affine_set_mat(Mat_rm mat, Affine affine)
+	{
+
+		// Verify inputs
+		if (mat.num_cols != mat.num_rows + 1 || mat.num_rows < 2)
+			return SIFT3D_FAILURE;
+
+		return convert_Mat_rm(mat, affine.A, Mat_rm_type.SIFT3D_DOUBLE);
+	}
+	
+	/* Convert a matrix to a different type. in and out may be the same pointer.
+	 * 
+	 * This function resizes out.
+	 * 
+	 * All matrices must be initialized prior to calling this function. */
+	private int convert_Mat_rm(Mat_rm in, Mat_rm out,
+			   Mat_rm_type type)
+	{
+
+		int status;
+		int i, j;
+
+		// Resize the output
+		out.num_rows = in.num_rows;
+		out.num_cols = in.num_cols;
+		out.type = type;
+		status = resize_Mat_rm(out);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+		
+		if (in.type == Mat_rm_type.SIFT3D_DOUBLE) {
+		    if (out.type == Mat_rm_type.SIFT3D_FLOAT) {
+		        for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_float[i][j] = (float)in.data_double[i][j];
+		        	}
+		        }
+		    }
+		    else if (out.type == Mat_rm_type.SIFT3D_INT) {
+		    	for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_int[i][j] = (int)in.data_double[i][j];
+		        	}
+		        }	
+		    }
+		}
+		else if (in.type == Mat_rm_type.SIFT3D_FLOAT) {
+            if (out.type == Mat_rm_type.SIFT3D_DOUBLE) {
+            	for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_double[i][j] = (double)in.data_float[i][j];
+		        	}
+		        }   	
+		    }
+		    else if (out.type == Mat_rm_type.SIFT3D_INT) {
+		    	for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_int[i][j] = (int)in.data_float[i][j];
+		        	}
+		        }   		
+		    }	
+		}
+		else if (in.type == Mat_rm_type.SIFT3D_INT) {
+            if (out.type == Mat_rm_type.SIFT3D_DOUBLE) {
+            	for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_double[i][j] = (double)in.data_int[i][j];
+		        	}
+		        }   		
+		    }
+		    else if (out.type == Mat_rm_type.SIFT3D_FLOAT) {
+		    	for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_float[i][j] = (float)in.data_int[i][j];
+		        	}
+		        }   	
+		    }	
+		}
+		else {
+			System.err.println("convert_Mat_rm: unknown type of input matrix");
+	        return SIFT3D_FAILURE;	
+		}
+
+	    return SIFT3D_SUCCESS;
+	}
+	
+	//Find the SSD error for the i'th point
+	private double tform_err_sq(Affine tform, Mat_rm src, 
+	        Mat_rm ref, int i)
+	{
+
+		double err = 0.0;
+		//Initialization
+		//in -- inputs coordinates of source points
+		//out -- registered points
+		//r -- reference points (ground truth)
+		double x_in, y_in, z_in, x_r, y_r, z_r;
+		double x_out[] = new double[1];
+		double y_out[] = new double[1];
+		double z_out[] = new double[1];
+
+		//Find the source point
+		x_in = ref.data_double[i][0];
+		y_in = ref.data_double[i][1];
+		z_in = ref.data_double[i][2];
+
+		//Register
+		apply_Affine_xyz(tform, x_in, y_in, z_in, x_out, y_out, z_out);
+
+		//Find the reference point
+		x_r = src.data_double[i][0];
+		y_r = src.data_double[i][1];
+		z_r = src.data_double[i][2];
+
+		//Find the SSD error
+		err = (x_r - x_out[0]) * (x_r - x_out[0]) + (y_r - y_out[0]) * (y_r - y_out[0]) +
+		    (z_r - z_out[0]) * (z_r - z_out[0]);
+
+		//return the result 
+		return err;
+	}
+	
+	/* Apply an Affine transformation to an [x, y, z] triple. */
+	private void apply_Affine_xyz(Affine affine, double x_in,
+				     double y_in, double z_in,
+				     double x_out[], double y_out[],
+				     double z_out[])
+	{
+
+		final Mat_rm A = affine.A;
+		if (affine.A.num_rows != 3) {
+			System.err.println("In apply_Affine_xyz affine.A.num_rows = " + affine.A.num_rows + " instead of the required 3");
+			return;
+		}
+		x_out[0] = A.data_double[0][0] * x_in +
+		    A.data_double[0][1] * y_in +
+		    A.data_double[0][2] * z_in +
+		    A.data_double[0][3];
+		y_out[0] = A.data_double[1][0] * x_in +
+		    A.data_double[1][1] * y_in +
+		    A.data_double[1][2] * z_in +
+		    A.data_double[1][3];
+		z_out[0] = A.data_double[2][0] * x_in +
+		    A.data_double[2][1] * y_in +
+		    A.data_double[2][2] * z_in +
+		    A.data_double[2][3];
+	}
+	
+	/* Deep copy of one Affine to another. Both must be initialized. */
+	private int copy_Affine(Affine src, Affine dst)
+	{
+
+		return Affine_set_mat(src.A, dst);
+	}
+	
+	/* Convert a transformation from mm to image space.
+	 *
+	 * Parameters:
+	 *   tform: The transformation, which shall be modified.
+	 *   src_units: The units of the source image, array of length IM_NDIMS.
+	 *   ref_units: As src_units, but for the reference image.
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise.
+	 */
+	private int mm2im(double src_units[], double ref_units[],
+	        Affine aff) {
+
+	        
+            int i, j;
+
+            Mat_rm A = aff.A;
+
+            // Verify the dimensions
+            if (A.num_rows != IM_NDIMS) {
+                    System.err.println("mm2im: Invalid transform dimensionality: " + A.num_rows);
+                    return SIFT3D_FAILURE;
+            }
+
+            // Convert the Affine transformation matrix in-place
+            for (i = 0; i < A.num_rows; i++) {
+            	for (j = 0; j < A.num_cols; j++) {
+            		// Invert the input transformation ref->mm
+                    A.data_double[i][j] *= 
+                            j < IM_NDIMS ? ref_units[j] : 1.0;
+
+                    // Invert the output transformation src->mm
+                    A.data_double[i][j] /= 
+                            src_units[i];	
+            	}
+            }
+	                
+	        return SIFT3D_SUCCESS; 
 	}
 
 
