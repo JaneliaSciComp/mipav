@@ -274,7 +274,7 @@ public class PlugInDialogFITBIR extends JFrame
 
     private static final String GUID_ELEMENT_NAME = "GUID";
 
-    private static final String SPECTROSCOPY_FS_SUFFIX = "spectroscopy";
+    private static final String SPECTROSCOPY_FS_SUFFIX = "spectrosc";
 
     private static final String MRI_FS_NAME = "imagingmr";
 
@@ -5521,7 +5521,7 @@ public class PlugInDialogFITBIR extends JFrame
             return false;
         }
 
-        return structureName.toLowerCase().endsWith(SPECTROSCOPY_FS_SUFFIX);
+        return structureName.toLowerCase().contains(SPECTROSCOPY_FS_SUFFIX);
     }
 
     private static final boolean isFMRIImagingStructure(final String structureName) {
