@@ -9,12 +9,15 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.zip.GZIPOutputStream;
 
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /* This is a port of SIFT3D is an analogue of the scale-invariant feature transform (SIFT) for three-dimensional images.
@@ -610,7 +613,7 @@ public class SIFT3D extends AlgorithmBase {
     	}
     	
     	DESC_NUMEL = DESC_NUM_TOTAL_HIST * HIST_NUMEL;
-    	String fileDir = inputImage.getFileInfo(0).getFileDirectory();
+    	fileDir = inputImage.getFileInfo(0).getFileDirectory();
     }
     
     public void runAlgorithm() {
@@ -619,15 +622,16 @@ public class SIFT3D extends AlgorithmBase {
     	 * afterwards. */
     	
     	/* Example file paths */
-        String ref_path = "1.nii.gz";
-    	String src_path = "2.nii.gz";
-    	String match_path = "1_2_matches.nii.gz";
-    	String warped_path = "2_warped.nii.gz";
+        //String ref_path = "1.nii.gz";
+    	//String src_path = "2.nii.gz";
+    	//String match_path = "1_2_matches.nii.gz";
+    	//String warped_path = "2_warped.nii.gz";
     	String affine_path = "1_2_affine.csv.gz";
 
     	int status;
     	int t;
     	int i;
+    	double data2[] = null;
     	
     	Image src = new Image();
     	Image ref = new Image();
@@ -685,7 +689,7 @@ public class SIFT3D extends AlgorithmBase {
 			}
 		}
 		else {
-			double data2[] = new double[srcVolume];
+			data2 = new double[srcVolume];
 			for (t = 0; t < src.nc; t++) {
 				try {
 				    inputImage.exportData(t*srcVolume, srcVolume, data2);
@@ -737,7 +741,7 @@ public class SIFT3D extends AlgorithmBase {
 			}
 		}
 		else {
-			double data2[] = new double[refVolume];
+			data2 = new double[refVolume];
 			for (t = 0; t < ref.nc; t++) {
 				try {
 				    refImage.exportData(t*refVolume, refVolume, data2);
@@ -799,9 +803,68 @@ public class SIFT3D extends AlgorithmBase {
 			return;	
         }        
 
-        // Write the warped image to a file
-        /*if (im_write(warped_path, &warped))
-                goto demo_quit;*/
+        int warpedExtents[] = new int[inputImage.getNDims()];
+        for (i = 0; i < inputImage.getNDims(); i++) {
+        	warpedExtents[i] = inputImage.getExtents()[i];
+        }
+        ModelImage warpedImage = new ModelImage(ModelStorageBase.DOUBLE, warpedExtents, inputImage.getImageName() + "_warped");
+        if (warpedImage.getNDims() == 3) {
+        	try {
+        		warpedImage.importData(0, warped.data, true);
+        	}
+        	catch(IOException e) {
+        		System.err.println("IOException on warpedImage.importData(0, warped.data, true");
+        		// Clean up
+		        im_free(src);
+		        im_free(ref);
+		        im_free(warped);
+		        cleanup_Reg_SIFT3D(reg);
+		        cleanup_Affine(affine);
+		        data2 = null;
+				setCompleted(false);
+				return;
+        	}
+        }
+        else if (warpedImage.getNDims() == 4) {
+        	data2 = new double[srcVolume];
+        	for (t = 0; t < warpedExtents[3]; t++) {
+        		for (i = 0; i < srcVolume; i++) {
+				    data2[i] = warped.data[i*warped.nc + t];
+			    }
+				try {
+				    warpedImage.importData(t*srcVolume, data2, false);
+				}
+				catch(IOException e) {
+					// Clean up
+			        im_free(src);
+			        im_free(ref);
+			        im_free(warped);
+			        cleanup_Reg_SIFT3D(reg);
+			        cleanup_Affine(affine);
+			        data2 = null;
+					setCompleted(false);
+					return;
+				}
+				data2 = null;
+				warpedImage.calcMinMax();
+        	}
+        }
+        FileInfoBase fileInfo[] = warpedImage.getFileInfo();
+        for (i = 0; i < fileInfo.length; i++) {
+        	fileInfo[i].setExtents(warpedExtents);
+        	fileInfo[i].setResolutions(inputImage.getFileInfo()[i].getResolutions());
+        	fileInfo[i].setUnitsOfMeasure(inputImage.getFileInfo()[i].getUnitsOfMeasure());
+        }
+        new ViewJFrameImage(warpedImage);
+        
+        // Clean up
+        im_free(src);
+        im_free(ref);
+        im_free(warped);
+        cleanup_Reg_SIFT3D(reg);
+        cleanup_Affine(affine);
+		setCompleted(true);
+		return;	
     	
     }
     
@@ -4163,7 +4226,5 @@ public class SIFT3D extends AlgorithmBase {
 		double pi_x = Math.PI * x;
 		return a * Math.sin(pi_x) * Math.sin(pi_x / a) / (pi_x * pi_x);
 	}
-
-	
 
 }
