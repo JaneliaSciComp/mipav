@@ -787,11 +787,20 @@ public class SIFT3D extends AlgorithmBase {
         }
 
         // Warp the source image
-        /*if (im_inv_transform(&affine, &src, LINEAR, SIFT3D_TRUE, &warped))
-                goto demo_quit;
+        status = im_inv_transform(affine, src, interp_type.LINEAR, SIFT3D_TRUE, warped);
+        if (status == SIFT3D_FAILURE) {
+        	// Clean up
+	        im_free(src);
+	        im_free(ref);
+	        im_free(warped);
+	        cleanup_Reg_SIFT3D(reg);
+	        cleanup_Affine(affine);
+			setCompleted(false);
+			return;	
+        }        
 
         // Write the warped image to a file
-        if (im_write(warped_path, &warped))
+        /*if (im_write(warped_path, &warped))
                 goto demo_quit;*/
     	
     }
@@ -3897,73 +3906,264 @@ public class SIFT3D extends AlgorithmBase {
                 return SIFT3D_FAILURE;
             }
 		} else {
-			 File file = new File(fileDir + File.separator + path);
-		        try {
-		            raFile = new RandomAccessFile(file, "rw");
-		        }
-		        catch (FileNotFoundException e) {
-		        	return SIFT3D_FAILURE;
-		        }
+			File file = new File(fileDir + File.separator + path);
+	        try {
+	            raFile = new RandomAccessFile(file, "rw");
+	        }
+	        catch (FileNotFoundException e) {
+	        	return SIFT3D_FAILURE;
+	        }
 
-		        // Necessary so that if this is an overwritten file there isn't any
-		        // junk at the end
-		        try {
-		            raFile.setLength(0);
-		        }
-		        catch (IOException e) {
-		        	return SIFT3D_FAILURE;
-		        }
-		        if (mat.type == Mat_rm_type.SIFT3D_DOUBLE) {
-		            for (i = 0; i < mat.num_rows; i++) {
-		            	for (j = 0; j < mat.num_cols; j++) {
-		            		String delim = j < mat.num_cols-1 ? "," : "\n";
-		            		String value = String.valueOf(mat.data_double[i][j]) + delim;
-		            		try {
-		            			raFile.write(value.getBytes());
-		            		}
-		            		catch (IOException e) {
-		            			return SIFT3D_FAILURE;
-		            		}
-		            	}
-		            }
-		        }
-		        else if (mat.type == Mat_rm_type.SIFT3D_FLOAT) {
-		        	for (i = 0; i < mat.num_rows; i++) {
-		            	for (j = 0; j < mat.num_cols; j++) {
-		            		String delim = j < mat.num_cols-1 ? "," : "\n";
-		            		String value = String.valueOf(mat.data_float[i][j]) + delim;
-		            		try {
-		            			raFile.write(value.getBytes());
-		            		}
-		            		catch (IOException e) {
-		            			return SIFT3D_FAILURE;
-		            		}
-		            	}
-		            }	
-		        }
-		        else if (mat.type == Mat_rm_type.SIFT3D_INT) {
-		        	for (i = 0; i < mat.num_rows; i++) {
-		            	for (j = 0; j < mat.num_cols; j++) {
-		            		String delim = j < mat.num_cols-1 ? "," : "\n";
-		            		String value = String.valueOf(mat.data_int[i][j]) + delim;
-		            		try {
-		            			raFile.write(value.getBytes());
-		            		}
-		            		catch (IOException e) {
-		            			return SIFT3D_FAILURE;
-		            		}
-		            	}
-		            }	
-		        }
-		        try {
-		        	raFile.close();
-		        }
-		        catch (IOException e) {
-		        	return SIFT3D_FAILURE;
-		        }
+	        // Necessary so that if this is an overwritten file there isn't any
+	        // junk at the end
+	        try {
+	            raFile.setLength(0);
+	        }
+	        catch (IOException e) {
+	        	return SIFT3D_FAILURE;
+	        }
+	        if (mat.type == Mat_rm_type.SIFT3D_DOUBLE) {
+	            for (i = 0; i < mat.num_rows; i++) {
+	            	for (j = 0; j < mat.num_cols; j++) {
+	            		String delim = j < mat.num_cols-1 ? "," : "\n";
+	            		String value = String.valueOf(mat.data_double[i][j]) + delim;
+	            		try {
+	            			raFile.write(value.getBytes());
+	            		}
+	            		catch (IOException e) {
+	            			return SIFT3D_FAILURE;
+	            		}
+	            	}
+	            }
+	        }
+	        else if (mat.type == Mat_rm_type.SIFT3D_FLOAT) {
+	        	for (i = 0; i < mat.num_rows; i++) {
+	            	for (j = 0; j < mat.num_cols; j++) {
+	            		String delim = j < mat.num_cols-1 ? "," : "\n";
+	            		String value = String.valueOf(mat.data_float[i][j]) + delim;
+	            		try {
+	            			raFile.write(value.getBytes());
+	            		}
+	            		catch (IOException e) {
+	            			return SIFT3D_FAILURE;
+	            		}
+	            	}
+	            }	
+	        }
+	        else if (mat.type == Mat_rm_type.SIFT3D_INT) {
+	        	for (i = 0; i < mat.num_rows; i++) {
+	            	for (j = 0; j < mat.num_cols; j++) {
+	            		String delim = j < mat.num_cols-1 ? "," : "\n";
+	            		String value = String.valueOf(mat.data_int[i][j]) + delim;
+	            		try {
+	            			raFile.write(value.getBytes());
+	            		}
+	            		catch (IOException e) {
+	            			return SIFT3D_FAILURE;
+	            		}
+	            	}
+	            }	
+	        }
+	        try {
+	        	raFile.close();
+	        }
+	        catch (IOException e) {
+	        	return SIFT3D_FAILURE;
+	        }
 		}
 		return SIFT3D_SUCCESS;
 
 	}
+	
+	/* Transform an image according to the inverse of the provided tform. 
+	 * 
+	 * Paramters:
+	 *   tform: The transformation. 
+	 *   src: The input image.
+	 *   interp: The type of interpolation.
+	 *   resize: If true, resizes the dst to be the same size as src. Otherwise,
+	 *     uses the dimensions of dst. 
+	 *   dst: The output image.
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
+	private int im_inv_transform(Affine tform, Image src,
+			     interp_type interp, int resize, 
+	                     Image dst)
+	{
+		int status;
+		int x, y, z, c;
+		double transx[] = new double[1];
+		double transy[] = new double[1];
+		double transz[] = new double[1];
+
+		// Optionally resize the output image
+		if (resize == SIFT3D_TRUE) {
+		    status = im_copy_dims(src, dst);
+		    if (status == SIFT3D_FAILURE) {
+			    return SIFT3D_FAILURE;
+		    }
+		}
+		
+		if (interp == interp_type.LINEAR) {
+		    for (z = 0; z < dst.nz; z++) {
+		    	for (y = 0; y < dst.ny; y++) {
+		    		for (x = 0; x < dst.nx; x++) {
+		    			apply_Affine_xyz(tform, (double)x, (double)y, (double)z, transx, transy, transz);
+		    			for (c = 0; c < dst.nc; c++) {
+		    			    dst.data[x * dst.xs + y * dst.ys + z * dst.zs + c] = resample_linear(src, transx[0], transy[0], transz[0], c);	
+		    			}
+		    		}
+		    	}
+		    }
+		}
+		else if (interp == interp_type.LANCZOS2) {
+			for (z = 0; z < dst.nz; z++) {
+		    	for (y = 0; y < dst.ny; y++) {
+		    		for (x = 0; x < dst.nx; x++) {
+		    			apply_Affine_xyz(tform, (double)x, (double)y, (double)z, transx, transy, transz);
+		    			for (c = 0; c < dst.nc; c++) {
+		    			    dst.data[x * dst.xs + y * dst.ys + z * dst.zs + c] = resample_lanczos2(src, transx[0], transy[0], transz[0], c);	
+		    			}
+		    		}
+		    	}
+		    }	
+		}
+		else {
+			System.err.println("im_inv_transform: unrecognized interpolation type");
+				return SIFT3D_FAILURE;	
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Copy an image's dimensions and stride into another. 
+	 * This function resizes dst.
+	 * 
+	 * @param src The source image.
+	 * @param dst The destination image.
+	 * @return Returns SIFT3D_SUCCESS or SIFT3D_FAILURE.
+	 */
+	private int im_copy_dims(Image src, Image dst)
+	{
+	        if (src.data == null)
+	                return SIFT3D_FAILURE;
+
+		dst.nx = src.nx;
+		dst.ny = src.ny;
+		dst.nz = src.nz;
+		dst.xs = src.xs;
+		dst.ys = src.ys;
+		dst.zs = src.zs;
+		dst.nc = src.nc;
+	    dst.ux = src.ux;
+	    dst.uy = src.uy;
+	    dst.uz = src.uz;
+
+		return im_resize(dst);
+	}
+	
+	/* Helper routine for image transformation. Performs trilinear
+	 * interpolation, setting out-of-bounds voxels to zero. */
+	private double resample_linear(Image in, double x,
+				      double y, double z, int c)
+	{
+
+		// Detect out-of-bounds
+		if (x < 0 || x > in.nx - 1 ||
+		    y < 0 || y > in.ny - 1 || z < 0 || z > in.nz - 1)
+			return 0.0;
+
+		int fx = (int)Math.floor(x);
+		int fy = (int)Math.floor(y);
+		int fz = (int)Math.floor(z);
+		int cx = (int)Math.ceil(x);
+		int cy = (int)Math.ceil(y);
+		int cz = (int)Math.ceil(z);
+
+		double dist_x = x - fx;
+		double dist_y = y - fy;
+		double dist_z = z - fz;
+
+		double c0 = in.data[fx * in.xs + fy * in.ys + fz * in.zs + c];
+		double c1 = in.data[fx * in.xs + cy * in.ys + fz * in.zs + c];
+		double c2 = in.data[cx * in.xs + fy * in.ys + fz * in.zs + c];
+		double c3 = in.data[cx * in.xs + cy * in.ys + fz * in.zs + c];
+		double c4 = in.data[fx * in.xs + fy * in.ys + cz * in.zs + c];
+		double c5 = in.data[fx * in.xs + cy * in.ys + cz * in.zs + c];
+		double c6 = in.data[cx * in.xs + fy * in.ys + cz * in.zs + c];
+		double c7 = in.data[cx * in.xs + cy * in.ys + cz * in.zs + c];
+
+		double out = c0 * (1.0 - dist_x) * (1.0 - dist_y) * (1.0 - dist_z)
+		    + c1 * (1.0 - dist_x) * dist_y * (1.0 - dist_z)
+		    + c2 * dist_x * (1.0 - dist_y) * (1.0 - dist_z)
+		    + c3 * dist_x * dist_y * (1.0 - dist_z)
+		    + c4 * (1.0 - dist_x) * (1.0 - dist_y) * dist_z
+		    + c5 * (1.0 - dist_x) * dist_y * dist_z
+		    + c6 * dist_x * (1.0 - dist_y) * dist_z
+		    + c7 * dist_x * dist_y * dist_z;
+
+		return out;
+	}
+	
+	/* Helper routine to resample an image at a point, using the Lanczos kernel */
+	private double resample_lanczos2(Image im, double x,
+					double y, double z, int c)
+	{
+
+		double val;
+		int xs, ys, zs;
+
+		//TODO: faster separable implementation
+
+		// Kernel parameter
+		final double a = 2;
+
+		// Check bounds
+		final double xMin = 0;
+		final double yMin = 0;
+		final double zMin = 0;
+		final double xMax = im.nx - 1;
+		final double yMax = im.ny - 1;
+		final double zMax = im.nz - 1;
+		if (x < xMin || y < yMin || z < zMin ||
+		    x > xMax || y > yMax || z > zMax)
+			return 0.0;
+
+		// Window 
+		final int x_start = (int)Math.max(Math.floor(x) - a, xMin);
+		final int x_end = (int)Math.min(Math.floor(x) + a, xMax);
+		final int y_start = (int)Math.max(Math.floor(y) - a, yMin);
+		final int y_end = (int)Math.min(Math.floor(y) + a, yMax);
+		final int z_start = (int)Math.max(Math.floor(z) - a, zMin);
+		final int z_end = (int)Math.min(Math.floor(z) + a, zMax);
+
+		// Iterate through the window 
+		val = 0.0;
+		for (zs = z_start; zs <= z_end; zs++) {
+			for (ys = y_start; ys <= y_end; ys++) {
+				for (xs = x_start; xs <= x_end; xs++) {
+
+	                // Evaluate the kernel
+					double xw = Math.abs((double)xs - x) + DBL_EPSILON;
+					double yw = Math.abs((double)ys - y) + DBL_EPSILON;
+					double zw = Math.abs((double)zs - z) + DBL_EPSILON;
+					double kernel = lanczos(xw, a) * lanczos(yw, a) * lanczos(zw, a);
+			
+					// Accumulate
+					val += kernel * im.data[xs * im.xs + ys * im.ys + zs * im.zs + c];
+				}
+		    }
+		}
+		return val;
+	}
+
+	/* Lanczos kernel function */
+	private double lanczos(double x, double a)
+	{
+		double pi_x = Math.PI * x;
+		return a * Math.sin(pi_x) * Math.sin(pi_x / a) / (pi_x * pi_x);
+	}
+
+	
 
 }
