@@ -52,9 +52,10 @@ public class SIFT3D extends AlgorithmBase {
     private ModelImage inputImage;
     /** The inputImage will be registered to this reference image. */
     private ModelImage refImage;
-	private double SIFT3D_nn_thresh_default; // Default matching threshold
-	private double SIFT3D_err_thresh_default;
-	private int SIFT3D_num_iter_default;
+    private ModelImage warpedImage = null;
+	private double SIFT3D_nn_thresh_default = 0.8; // Default matching threshold
+	private double SIFT3D_err_thresh_default = 5.0;
+	private int SIFT3D_num_iter_default = 500;
 	private boolean useOCL = false;
 	private double SIFT3D_GAUSS_WIDTH_FCTR = 3.0;
 	// Set SIFT3D_MATCH_MAX_DIST <= 0.0 to avoid using in int match_desc()
@@ -807,7 +808,7 @@ public class SIFT3D extends AlgorithmBase {
         for (i = 0; i < inputImage.getNDims(); i++) {
         	warpedExtents[i] = inputImage.getExtents()[i];
         }
-        ModelImage warpedImage = new ModelImage(ModelStorageBase.DOUBLE, warpedExtents, inputImage.getImageName() + "_warped");
+        warpedImage = new ModelImage(ModelStorageBase.DOUBLE, warpedExtents, inputImage.getImageName() + "_warped");
         if (warpedImage.getNDims() == 3) {
         	try {
         		warpedImage.importData(0, warped.data, true);
@@ -4225,6 +4226,10 @@ public class SIFT3D extends AlgorithmBase {
 	{
 		double pi_x = Math.PI * x;
 		return a * Math.sin(pi_x) * Math.sin(pi_x / a) / (pi_x * pi_x);
+	}
+	
+	public ModelImage getResultImage( ) {
+		return warpedImage;
 	}
 
 }
