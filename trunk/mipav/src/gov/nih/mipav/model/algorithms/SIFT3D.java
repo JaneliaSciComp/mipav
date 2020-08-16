@@ -1,14 +1,21 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Random;
 import java.util.Vector;
+import java.util.zip.GZIPOutputStream;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 
 /* This is a port of SIFT3D is an analogue of the scale-invariant feature transform (SIFT) for three-dimensional images.
      *  It leverages volumetric data and real-world units to detect keypoints and extract a robust description of their content.
@@ -51,6 +58,8 @@ public class SIFT3D extends AlgorithmBase {
 	private double SIFT3D_MATCH_MAX_DIST = 0.0;
 	//private double SIFT3D_MATCH_MAX_DIST = 0.3; // Maximum distance between matching features
 	private boolean SIFT3D_RANSAC_REFINE = true;	// Use least-squares refinement in RANSAC
+	private String fileDir = null;
+	private String ext_gz = "gz";
 
 
 	// Return codes
@@ -601,12 +610,21 @@ public class SIFT3D extends AlgorithmBase {
     	}
     	
     	DESC_NUMEL = DESC_NUM_TOTAL_HIST * HIST_NUMEL;
+    	String fileDir = inputImage.getFileInfo(0).getFileDirectory();
     }
     
     public void runAlgorithm() {
     	// Example of registering two images.
     	/* This illustrates how to use Reg_SIFT3D within a function, freeing all memory
     	 * afterwards. */
+    	
+    	/* Example file paths */
+        String ref_path = "1.nii.gz";
+    	String src_path = "2.nii.gz";
+    	String match_path = "1_2_matches.nii.gz";
+    	String warped_path = "2_warped.nii.gz";
+    	String affine_path = "1_2_affine.csv.gz";
+
     	int status;
     	int t;
     	int i;
@@ -755,12 +773,21 @@ public class SIFT3D extends AlgorithmBase {
 			return;	
         }
         
-        /*// Write the transformation to a file 
-        if (write_tform(affine_path, &affine))
-                goto demo_quit;
+        // Write the transformation to a file 
+        status = write_Affine(affine_path, affine);
+        if (status == SIFT3D_FAILURE) {
+        	// Clean up
+	        im_free(src);
+	        im_free(ref);
+	        im_free(warped);
+	        cleanup_Reg_SIFT3D(reg);
+	        cleanup_Affine(affine);
+			setCompleted(false);
+			return;	
+        }
 
         // Warp the source image
-        if (im_inv_transform(&affine, &src, LINEAR, SIFT3D_TRUE, &warped))
+        /*if (im_inv_transform(&affine, &src, LINEAR, SIFT3D_TRUE, &warped))
                 goto demo_quit;
 
         // Write the warped image to a file
@@ -3761,6 +3788,182 @@ public class SIFT3D extends AlgorithmBase {
 	                
 	        return SIFT3D_SUCCESS; 
 	}
+	
+	/* Write an affine transformation to a file. */
+	private int write_Affine(String path, Affine affine)
+	{
+		return write_Mat_rm(path, affine.A);
+	}
 
+	/* Write a matrix to a .csv or .csv.gz file. */
+	private int write_Mat_rm(String path, Mat_rm mat)
+	{
+
+		GZIPOutputStream gzout;
+		String ext = null;
+		int i, j;
+		boolean compress;
+		RandomAccessFile raFile = null;
+		byte buf[];
+		int gzipLen;
+       
+
+		// Get the file extension
+        int index = path.lastIndexOf(".");
+        if (index == -1) {
+        	ext = null;
+        }
+        else {
+        	ext = path.substring(index+1);
+        }
+
+		// Check if we need to compress the file
+        if (ext != null) {
+		    compress = ext.equalsIgnoreCase(ext_gz);
+        }
+        else {
+        	compress = false;
+        }
+
+		// Open the file
+		if (compress) {
+			try {
+                // Create the GZIP output stream
+                gzout = new GZIPOutputStream(new FileOutputStream(fileDir + File.separator + path));
+            } catch (final IOException e) {
+                MipavUtil.displayError("IOException on new GZIPOutputStream");
+                return SIFT3D_FAILURE;
+            }
+			if (mat.type == Mat_rm_type.SIFT3D_DOUBLE) {
+	            for (i = 0; i < mat.num_rows; i++) {
+	            	for (j = 0; j < mat.num_cols; j++) {
+	            		String delim = j < mat.num_cols-1 ? "," : "\n";
+	            		String value = String.valueOf(mat.data_double[i][j]) + delim;
+	            		buf = value.getBytes();
+	            		gzipLen = buf.length;
+	            		 try {
+                             gzout.write(buf, 0, gzipLen);
+                         } catch (final IOException e) {
+                             System.err.println("IOException on byte transfer to gzip file");
+                             return SIFT3D_FAILURE;
+                         }
+	            	}
+	            }
+	        }
+			else if (mat.type == Mat_rm_type.SIFT3D_FLOAT) {
+	            for (i = 0; i < mat.num_rows; i++) {
+	            	for (j = 0; j < mat.num_cols; j++) {
+	            		String delim = j < mat.num_cols-1 ? "," : "\n";
+	            		String value = String.valueOf(mat.data_float[i][j]) + delim;
+	            		buf = value.getBytes();
+	            		gzipLen = buf.length;
+	            		 try {
+                             gzout.write(buf, 0, gzipLen);
+                         } catch (final IOException e) {
+                             System.err.println("IOException on byte transfer to gzip file");
+                             return SIFT3D_FAILURE;
+                         }
+	            	}
+	            }
+	        }
+			else if (mat.type == Mat_rm_type.SIFT3D_INT) {
+	            for (i = 0; i < mat.num_rows; i++) {
+	            	for (j = 0; j < mat.num_cols; j++) {
+	            		String delim = j < mat.num_cols-1 ? "," : "\n";
+	            		String value = String.valueOf(mat.data_int[i][j]) + delim;
+	            		buf = value.getBytes();
+	            		gzipLen = buf.length;
+	            		 try {
+                             gzout.write(buf, 0, gzipLen);
+                         } catch (final IOException e) {
+                             System.err.println("IOException on byte transfer to gzip file");
+                             return SIFT3D_FAILURE;
+                         }
+	            	}
+	            }
+	        }
+			
+			 // complete the gzip file
+            try {
+                gzout.finish();
+            } catch (final IOException e) {
+                MipavUtil.displayError("IOException on gzout.finish()");
+                return  SIFT3D_FAILURE;
+            }
+            try {
+                gzout.close();
+            } catch (final IOException e) {
+                MipavUtil.displayError("IOException on gzout.close()");
+                return SIFT3D_FAILURE;
+            }
+		} else {
+			 File file = new File(fileDir + File.separator + path);
+		        try {
+		            raFile = new RandomAccessFile(file, "rw");
+		        }
+		        catch (FileNotFoundException e) {
+		        	return SIFT3D_FAILURE;
+		        }
+
+		        // Necessary so that if this is an overwritten file there isn't any
+		        // junk at the end
+		        try {
+		            raFile.setLength(0);
+		        }
+		        catch (IOException e) {
+		        	return SIFT3D_FAILURE;
+		        }
+		        if (mat.type == Mat_rm_type.SIFT3D_DOUBLE) {
+		            for (i = 0; i < mat.num_rows; i++) {
+		            	for (j = 0; j < mat.num_cols; j++) {
+		            		String delim = j < mat.num_cols-1 ? "," : "\n";
+		            		String value = String.valueOf(mat.data_double[i][j]) + delim;
+		            		try {
+		            			raFile.write(value.getBytes());
+		            		}
+		            		catch (IOException e) {
+		            			return SIFT3D_FAILURE;
+		            		}
+		            	}
+		            }
+		        }
+		        else if (mat.type == Mat_rm_type.SIFT3D_FLOAT) {
+		        	for (i = 0; i < mat.num_rows; i++) {
+		            	for (j = 0; j < mat.num_cols; j++) {
+		            		String delim = j < mat.num_cols-1 ? "," : "\n";
+		            		String value = String.valueOf(mat.data_float[i][j]) + delim;
+		            		try {
+		            			raFile.write(value.getBytes());
+		            		}
+		            		catch (IOException e) {
+		            			return SIFT3D_FAILURE;
+		            		}
+		            	}
+		            }	
+		        }
+		        else if (mat.type == Mat_rm_type.SIFT3D_INT) {
+		        	for (i = 0; i < mat.num_rows; i++) {
+		            	for (j = 0; j < mat.num_cols; j++) {
+		            		String delim = j < mat.num_cols-1 ? "," : "\n";
+		            		String value = String.valueOf(mat.data_int[i][j]) + delim;
+		            		try {
+		            			raFile.write(value.getBytes());
+		            		}
+		            		catch (IOException e) {
+		            			return SIFT3D_FAILURE;
+		            		}
+		            	}
+		            }	
+		        }
+		        try {
+		        	raFile.close();
+		        }
+		        catch (IOException e) {
+		        	return SIFT3D_FAILURE;
+		        }
+		}
+		return SIFT3D_SUCCESS;
+
+	}
 
 }
