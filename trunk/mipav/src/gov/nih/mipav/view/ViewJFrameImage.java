@@ -1673,7 +1673,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage().getNDims() == 3) {
                 new JDialogRegistrationBSpline(this, getActiveImage(), null);
             }
-        } else if (command.equals("SIFT34DReg")) {
+        } else if (command.equals("SIFT3DReg")) {
 
             if (isMultipleImages() == true) {
 
