@@ -400,7 +400,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
             if ( !name.equals(image.getImageName())) {
                 final ModelImage img = userInterface.getRegisteredImageByName(name);
 
-                if ( (img.getNDims() >= 3) && (!img.isColorImage()) && (!img.isComplexImage())
+                if ( (img.getNDims() == 3) && (!img.isColorImage()) && (!img.isComplexImage())
                         && (userInterface.getFrameContainingImage(img) != null)) {
                     comboBox.addItem(name);
                 }
