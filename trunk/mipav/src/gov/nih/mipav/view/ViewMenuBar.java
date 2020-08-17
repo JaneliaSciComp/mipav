@@ -378,7 +378,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null,
 										false),
 								menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
-								menuBuilder.buildMenuItem("SIFT registration 3D or 4D", "SIFT34DReg", 0, null, false),
+								menuBuilder.buildMenuItem("SIFT registration 3D", "SIFT3DReg", 0, null, false),
 								menuBuilder.buildMenuItem("VABRA", "VABRA", 0, null, false),
 								menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),
 						// menuBuilder.buildMenuItem("REGTEST", "REGTEST", 0,
@@ -1457,7 +1457,7 @@ public class ViewMenuBar {
 
 		if (numberOfDimensions == 4) {
 			menuBuilder.setMenuItemEnabled("SIFT", false);
-			menuBuilder.setMenuItemEnabled("SIFT registration 3D or 4D", true);
+			menuBuilder.setMenuItemEnabled("SIFT registration 3D", false);
 			menuBuilder.setMenuItemEnabled("Center of mass", false);
 			menuBuilder.setMenuItemEnabled("Density based clustering", false);
 			menuBuilder.setMenuItemEnabled("Edge detection", false);
@@ -1580,7 +1580,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
 			menuBuilder.setMenuItemEnabled("SIFT", false);
-			menuBuilder.setMenuItemEnabled("SIFT registration 3D or 4D", true);
+			menuBuilder.setMenuItemEnabled("SIFT registration 3D", true);
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
@@ -1630,7 +1630,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Graph Based", false);
 		} else if (numberOfDimensions == 2) {
 			menuBuilder.setMenuItemEnabled("SIFT", true);
-			menuBuilder.setMenuItemEnabled("SIFT registration 3D or 4D",false);
+			menuBuilder.setMenuItemEnabled("SIFT registration 3D",false);
 			menuBuilder.setMenuItemEnabled("Align patient position", false);
 			menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
 			menuBuilder.setMenuItemEnabled("Animate", false);
@@ -1706,7 +1706,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Brain tools", false);
 			menuBuilder.setMenuItemEnabled("FFT", false);
 			menuBuilder.setMenuItemEnabled("SWI", false);
-			menuBuilder.setMenuItemEnabled("SIFT registration 3D or 4D",false);
+			menuBuilder.setMenuItemEnabled("SIFT registration 3D",false);
 			menuBuilder.setMenuItemEnabled("Canny", false);
 			menuBuilder.setMenuItemEnabled("Entropic", false);
 			menuBuilder.setMenuItemEnabled("Phase congruency", false);
