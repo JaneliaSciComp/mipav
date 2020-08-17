@@ -565,10 +565,12 @@ public class SIFT3D extends AlgorithmBase {
 
 	        double src_units[] = new double[IM_NDIMS];
 	        double ref_units[] = new double[IM_NDIMS];
-	        SIFT3DC sift3d;
-	        Ransac ran;
-	        SIFT3D_Descriptor_store desc_src, desc_ref;
-	        Mat_rm match_src, match_ref;
+	        SIFT3DC sift3d = new SIFT3DC();
+	        Ransac ran = new Ransac();
+	        SIFT3D_Descriptor_store desc_src = new SIFT3D_Descriptor_store();
+	        SIFT3D_Descriptor_store desc_ref = new SIFT3D_Descriptor_store();
+	        Mat_rm match_src = new Mat_rm();
+	        Mat_rm match_ref = new Mat_rm();
 	        double nn_thresh;
 	        int verbose;
 
@@ -1220,7 +1222,7 @@ public class SIFT3D extends AlgorithmBase {
 
     	Mesh mesh = sift3d.mesh;
 
-    	/* Verices of a regular icosahedron inscribed in the unit sphere. */
+    	/* Vertices of a regular icosahedron inscribed in the unit sphere. */
     	final double vert[][] = {  {0,  1,  gr},
     			        {0, -1,  gr},
     			        {0,  1, -gr},
