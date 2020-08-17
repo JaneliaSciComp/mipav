@@ -285,7 +285,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         JPanel upperPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -299,6 +299,85 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(comboBoxImage, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        upperPanel.add(labelMatchingThreshold, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textMatchingThreshold, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(labelErrorThreshold, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textErrorThreshold, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(labelNumberIterations, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textNumberIterations, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(labelGaussianWidth, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textGaussianWidth, gbc);
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(matchCheckBox, gbc);
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(labelMatch, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textMatch, gbc);
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(icosahedralCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(refineCheckBox, gbc);
+        
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(upperPanel, BorderLayout.NORTH);
+        mainPanel.add(buildButtons(), BorderLayout.SOUTH);
+        
+        JScrollPane scrollPane = new JScrollPane(mainPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        getContentPane().add(scrollPane);
+
+        pack();
+        setVisible(true);
     }
     
     /**
@@ -332,15 +411,95 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
     }
     
     private boolean setVariables() {
+    	String tmpStr;
+    	baseImage = userInterface.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+    	
+    	tmpStr = textMatchingThreshold.getText();
+
+        if (testParameter(tmpStr, 1.0E-3, 1000.0)) {
+        	SIFT3D_nn_thresh_default = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textMatchingThreshold.requestFocus();
+            textMatchingThreshold.selectAll();
+            return false;
+        }
+        
+        tmpStr = textErrorThreshold.getText();
+
+        if (testParameter(tmpStr, 1.0E-3, 1000.0)) {
+        	SIFT3D_err_thresh_default = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textErrorThreshold.requestFocus();
+            textErrorThreshold.selectAll();
+            return false;
+        }
+        
+        tmpStr = textNumberIterations.getText();
+
+        if (testParameter(tmpStr, 1, 1000000)) {
+        	SIFT3D_num_iter_default = Integer.valueOf(tmpStr).intValue();
+        } else {
+            textNumberIterations.requestFocus();
+            textNumberIterations.selectAll();
+            return false;
+        }
+        
+        tmpStr = textGaussianWidth.getText();
+
+        if (testParameter(tmpStr, 1.0E-3, 1000.0)) {
+        	SIFT3D_GAUSS_WIDTH_FCTR = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textGaussianWidth.requestFocus();
+            textGaussianWidth.selectAll();
+            return false;
+        }
+        
+        if (!matchCheckBox.isSelected()) {
+        	SIFT3D_MATCH_MAX_DIST = 0.0;	
+        }
+        else {
+        	tmpStr = textMatch.getText();
+
+            if (testParameter(tmpStr, 1.0E-3, 1000.0)) {
+            	SIFT3D_MATCH_MAX_DIST = Double.valueOf(tmpStr).doubleValue();
+            } else {
+                textMatch.requestFocus();
+                textMatch.selectAll();
+                return false;
+            }	
+        }
+        
+        ICOS_HIST = icosahedralCheckBox.isSelected();
+        
+        SIFT3D_RANSAC_REFINE = refineCheckBox.isSelected();
+        
     	return true;
+
     }
     
     protected void setGUIFromParams() {
-    	
+    	matchImage = scriptParameters.retrieveInputImage();
+    	userInterface = ViewUserInterface.getReference();
+    	baseImage = scriptParameters.retrieveImage("base_image");
+    	SIFT3D_nn_thresh_default = scriptParameters.getParams().getDouble("nn_thresh");
+    	SIFT3D_err_thresh_default = scriptParameters.getParams().getDouble("err_thresh");
+    	SIFT3D_num_iter_default = scriptParameters.getParams().getInt("num_iter");
+    	SIFT3D_GAUSS_WIDTH_FCTR = scriptParameters.getParams().getDouble("Gauss_width");
+    	SIFT3D_MATCH_MAX_DIST = scriptParameters.getParams().getDouble("max_dist");
+    	ICOS_HIST = scriptParameters.getParams().getBoolean("icos");
+    	SIFT3D_RANSAC_REFINE = scriptParameters.getParams().getBoolean("refine");
     }
     
     protected void storeParamsFromGUI() throws ParserException {
-    	
+    	scriptParameters.storeInputImage(matchImage);
+        scriptParameters.storeImage(baseImage, "base_image");	
+        scriptParameters.getParams().put(ParameterFactory.newParameter("nn_thresh", SIFT3D_nn_thresh_default));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("err_thresh", SIFT3D_err_thresh_default));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_iter", SIFT3D_num_iter_default));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("Gauss_width", SIFT3D_GAUSS_WIDTH_FCTR));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_dist", SIFT3D_MATCH_MAX_DIST));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("icos", ICOS_HIST));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("refine", SIFT3D_RANSAC_REFINE));
     }
 
     
