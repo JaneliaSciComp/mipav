@@ -143,7 +143,8 @@ public class SIFT3D extends AlgorithmBase {
 	private final double trunc_thresh = 0.2f * 128.0f / DESC_NUMEL; // Descriptor truncation threshold
 
 	/* Internal math constants */
-	private final double gr = 1.6180339887; // Golden ratio
+	//private final double gr = 1.6180339887; // Golden ratio
+	private final double gr = (1.0 + Math.sqrt(5.0))/2.0;
 	
 	/* Supported image file formats */
 	private enum im_format {
@@ -1302,7 +1303,7 @@ public class SIFT3D extends AlgorithmBase {
     				System.err.println("Math.abs(mag - mag_expected) >= 1.0E-10 in init_geometry");
     				return SIFT3D_FAILURE;
     			}
-    			SIFT3D_CVEC_SCALE(v[j], 1.0f / mag);
+    			SIFT3D_CVEC_SCALE(v[j], 1.0 / mag);
     		}
 
     		// Compute the normal vector at v[0] as  (V2 - V1) X (V1 - V0)
@@ -1313,16 +1314,24 @@ public class SIFT3D extends AlgorithmBase {
     		// Ensure this vector is facing outward from the origin
     		if (SIFT3D_CVEC_DOT(n, v[0]) < 0) {
     			// Swap two vertices
-    			temp1 = v[0];
-    			v[0] = v[1];
-    			v[1] = temp1;
-
+    			temp1.x = v[0].x;
+    			temp1.y = v[0].y;
+    			temp1.z = v[0].z;
+    			v[0].x = v[1].x;
+    			v[0].y = v[1].y;
+    			v[0].z = v[1].z;
+    			v[1].x = temp1.x;
+                v[1].y = temp1.y;
+                v[1].z = temp1.z;
     			// Compute the normal again
     			SIFT3D_CVEC_MINUS(v[2], v[1], temp1);
     			SIFT3D_CVEC_MINUS(v[1], v[0], temp2);
     			SIFT3D_CVEC_CROSS(temp1, temp2, n);
     		}
     		if (SIFT3D_CVEC_DOT(n, v[0]) < 0) {
+    	    //if (SIFT3D_CVEC_DOT(n, v[0]) < -1.0E-12) {
+    			double dotprod = SIFT3D_CVEC_DOT(n, v[0]);
+    			System.err.println("dotprod = " + dotprod);
     			System.err.println("SIFT3D_CVEC_DOT(n, v[0]) < 0 in init_geometry");
 				return SIFT3D_FAILURE;	
     		}
@@ -1330,6 +1339,10 @@ public class SIFT3D extends AlgorithmBase {
     		// Ensure the triangle is equilateral
     		SIFT3D_CVEC_MINUS(v[2], v[0], temp3);
     		if (Math.abs(SIFT3D_CVEC_L2_NORM(temp1) - SIFT3D_CVEC_L2_NORM(temp2)) >= 1E-10) {
+    			double norm_temp1 = SIFT3D_CVEC_L2_NORM(temp1);
+    			double norm_temp2 = SIFT3D_CVEC_L2_NORM(temp2);
+    			System.err.println("norm_temp1 = " + norm_temp1);
+    			System.err.println("norm_temp2 = " + norm_temp2);
     			System.err.println("Math.abs(SIFT3D_CVEC_L2_NORM(temp1) - SIFT3D_CVEC_L2_NORM(temp2)) >= 1E-10 in init_geometry");
 				return SIFT3D_FAILURE;		
     		}
