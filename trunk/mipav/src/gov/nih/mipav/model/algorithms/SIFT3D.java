@@ -62,6 +62,7 @@ public class SIFT3D extends AlgorithmBase {
 	private double SIFT3D_MATCH_MAX_DIST = 0.0;
 	//private double SIFT3D_MATCH_MAX_DIST = 0.3; // Maximum distance between matching features
 	private boolean SIFT3D_RANSAC_REFINE = true;	// Use least-squares refinement in RANSAC
+	private boolean CUBOID_EXTREMA = false; // Search for extrema in a cuboid region
 	private String fileDir = null;
 	private String ext_gz = "gz";
 
@@ -110,7 +111,6 @@ public class SIFT3D extends AlgorithmBase {
 	
 	/* Implementation options */
 	//#define SIFT3D_ORI_SOLID_ANGLE_WEIGHT // Weight bins by solid angle
-	//#define CUBOID_EXTREMA // Search for extrema in a cuboid region
 
 	/* Internal return codes */
 	private final int REJECT = 1;
@@ -341,7 +341,7 @@ public class SIFT3D extends AlgorithmBase {
 	/* Slab allocation struct */
 	class Slab {
 
-		//void *buf;			// Buffer
+		Keypoint buf[];			// Buffer
 		int num;			// Number of elements currently in buffer
 		int buf_size;	        // Buffer capacity, in bytes
 		
@@ -595,7 +595,8 @@ public class SIFT3D extends AlgorithmBase {
     public SIFT3D(ModelImage imageA, ModelImage imageB,
     		double SIFT3D_nn_thresh_default, double SIFT3D_err_thresh_default,
     		int SIFT3D_num_iter_default, boolean useOCL, double SIFT3D_GAUSS_WIDTH_FCTR,
-    		double SIFT3D_MATCH_MAX_DIST, boolean ICOS_HIST, boolean SIFT3D_RANSAC_REFINE) {
+    		double SIFT3D_MATCH_MAX_DIST, boolean ICOS_HIST, boolean SIFT3D_RANSAC_REFINE,
+    		boolean CUBOID_EXTREMA) {
     	super(null, imageB);
         refImage = imageA;
         inputImage = imageB;
@@ -607,6 +608,7 @@ public class SIFT3D extends AlgorithmBase {
     	this.SIFT3D_MATCH_MAX_DIST = SIFT3D_MATCH_MAX_DIST;
     	this.ICOS_HIST = ICOS_HIST;
     	this.SIFT3D_RANSAC_REFINE = SIFT3D_RANSAC_REFINE;
+    	this.CUBOID_EXTREMA = CUBOID_EXTREMA;
     	
     	// The number of elements in a gradient histogram
     	if (ICOS_HIST) {
@@ -664,6 +666,7 @@ public class SIFT3D extends AlgorithmBase {
 	    // nifti.c and dicom.cpp does not support color reading
 	    // Check the dimensionality. 4D is interpreted as a 3D array with
         // multiple channels.
+	    // But SIFT3D_detect_keypoints only accepts single channels
 	    src.ux = (double)inputImage.getFileInfo()[0].getResolutions()[0];
 	    src.uy = (double)inputImage.getFileInfo()[0].getResolutions()[1];
 	    src.uz = (double)inputImage.getFileInfo()[0].getResolutions()[2];
@@ -767,6 +770,31 @@ public class SIFT3D extends AlgorithmBase {
 			}
 			data2 = null;
 		}
+		
+		// Set the images
+        status = set_src_Reg_SIFT3D(reg, src);
+        if (status == SIFT3D_FAILURE) {
+        	// Clean up
+	        im_free(src);
+	        im_free(ref);
+	        im_free(warped);
+	        cleanup_Reg_SIFT3D(reg);
+	        cleanup_Affine(affine);
+			setCompleted(false);
+			return;	
+        }
+        
+        status = set_ref_Reg_SIFT3D(reg, ref);
+        if (status == SIFT3D_FAILURE) {
+        	// Clean up
+	        im_free(src);
+	        im_free(ref);
+	        im_free(warped);
+	        cleanup_Reg_SIFT3D(reg);
+	        cleanup_Affine(affine);
+			setCompleted(false);
+			return;	
+        }
 		
 		// Match features and solve for an affine transformation
         status = register_SIFT3D(reg, affine);
@@ -4245,6 +4273,1260 @@ public class SIFT3D extends AlgorithmBase {
 	
 	public ModelImage getResultImage( ) {
 		return warpedImage;
+	}
+	
+	/* Set the source image. This makes a deep copy of the data, so you are free
+	 * to modify src after calling this function. */
+	private int set_src_Reg_SIFT3D(Reg_SIFT3D reg, Image src) {
+	        return set_im_Reg_SIFT3D(reg, src, reg.src_units, reg.desc_src);
+	}
+
+	/* The same as set_source_Reg_SIFT3D, but sets the reference image. */
+	private int set_ref_Reg_SIFT3D(Reg_SIFT3D reg, Image ref) {
+	        return set_im_Reg_SIFT3D(reg, ref, reg.ref_units, reg.desc_ref);
+	}
+	
+	/* Helper function for set_src_Reg_SIFT3D and set_ref_Reg_SIFT3D.
+	 * 
+	 * Parameters:
+	 *   reg - The Reg_SIFT3D struct.
+	 *   im - The image, either source or reference.
+	 *   units - The units array in Reg_SIFT3D to be modified.
+	 *   desc - The descriptor store in Reg_SIFT3D to be modified.
+	 * 
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
+	private int set_im_Reg_SIFT3D(Reg_SIFT3D reg, Image im,
+	        double units[], SIFT3D_Descriptor_store desc) {
+		    
+            int status;
+	        Keypoint_store kp = new Keypoint_store(); 
+
+	        SIFT3DC sift3d = reg.sift3d; 
+
+	        /* Initialize intermediates */ 
+	        init_Keypoint_store(kp); 
+
+	        /* Save the units */ 
+	        units[0] = im.ux;
+	        units[1] = im.uy;
+	        units[2] = im.uz;
+
+	        /* Detect keypoints */ 
+		    status = SIFT3D_detect_keypoints(sift3d, im, kp);
+		    if (status == SIFT3D_FAILURE) {
+			    System.err.println("im_Reg_SIFT3D: failed to detect keypoints"); 
+	            cleanup_Keypoint_store(kp);
+	            return SIFT3D_FAILURE;
+	        } 
+
+	        /* Extract descriptors */ 
+		    //status = SIFT3D_extract_descriptors(sift3d, kp, desc); 
+		    if (status == SIFT3D_FAILURE) {
+	            System.err.println("im_Reg_SIFT3D: failed to extract descriptors"); 
+	            cleanup_Keypoint_store(kp);
+	            return SIFT3D_FAILURE;
+	        } 
+
+	        /* Clean up */ 
+	        cleanup_Keypoint_store(kp); 
+
+	        return SIFT3D_SUCCESS; 
+	} 
+	
+	/* Initialize a Keypoint_store for first use.
+	 * This does not need to be called to reuse the store
+	 * for a new image. */
+	private void init_Keypoint_store(Keypoint_store kp) {
+		init_Slab(kp.slab);
+		kp.buf = kp.slab.buf;
+	}
+	
+	/* Initialize a Slab for first use */
+	private void init_Slab(Slab slab) {
+	    slab.buf_size = slab.num = 0;
+	    slab.buf = null;
+	}
+	
+	/* Free all memory associated with a Keypoint_store. kp cannot be
+	 * used after calling this function, unless re-initialized. */
+	private void cleanup_Keypoint_store(Keypoint_store kp) {
+	        cleanup_Slab(kp.slab);
+	}
+	
+	/* Free all memory associated with a slab. Slab cannot be re-used after 
+	 * calling this function, unless re-initialized. */
+	private void cleanup_Slab(Slab slab)
+	{
+	        if (slab.buf != null)
+		        slab.buf = null;
+	}
+	
+	/* Detect keypoint locations and orientations. You must initialize
+	 * the SIFT3D struct, image, and keypoint store with the appropriate
+	 * functions prior to calling this function. */
+	private int SIFT3D_detect_keypoints(SIFT3DC sift3d, Image im,
+				    Keypoint_store kp) {
+
+	        int status;
+		    // Verify inputs
+	        if (im.nc != 1) {
+	            System.err.println("SIFT3D_detect_keypoints: invalid number of image channels: " + im.nc);
+	            System.err.println("Only single-channel images are supported");
+	            return SIFT3D_FAILURE;
+	        }
+
+	        // Set the image       
+	        status = set_im_SIFT3D(sift3d, im);
+	        if (status == SIFT3D_FAILURE) {
+	            return SIFT3D_FAILURE;
+	        }
+
+		// Build the GSS pyramid
+		status = build_gpyr(sift3d);
+		if (status == SIFT3D_FAILURE) {
+            return SIFT3D_FAILURE;
+        }
+
+		// Build the DoG pyramid
+		status = build_dog(sift3d);
+		if (status == SIFT3D_FAILURE) {
+            return SIFT3D_FAILURE;
+		}
+
+		// Detect extrema
+		status = detect_extrema(sift3d, kp);
+		if (status == SIFT3D_FAILURE) {
+            return SIFT3D_FAILURE;
+		}
+
+		// Assign orientations
+		//status = assign_orientations(sift3d, kp);
+		if (status == SIFT3D_FAILURE) {
+            return SIFT3D_FAILURE;
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+
+	/* Helper routine to begin processing a new image. If the dimensions differ
+	 * from the last one, this function resizes the SIFT3D struct. */
+	private int set_im_SIFT3D(SIFT3DC sift3d, Image im) {
+
+	    int status;    
+		int dims_old[] = new int[IM_NDIMS];
+	        int i;
+
+		    final double data_old[] = sift3d.im.data;
+	        final Pyramid gpyr = sift3d.gpyr;
+	        final int first_octave = sift3d.gpyr.first_octave;
+	        final int num_kp_levels = gpyr.num_kp_levels;
+
+	        // Make a temporary copy the previous image dimensions
+	        dims_old[0] = sift3d.im.nx;
+	        dims_old[1] = sift3d.im.ny;
+	        dims_old[2] = sift3d.im.nz;
+
+	        // Make a copy of the input image
+	        status = im_copy_data(im, sift3d.im);
+	        if (status == SIFT3D_FAILURE) {
+	            return SIFT3D_FAILURE;
+	        }
+
+	        // Scale the input image to [-1, 1]
+	        im_scale(sift3d.im);
+
+	        // Resize the internal data, if necessary
+	        if (data_old == null) {
+	        	return SIFT3D_FAILURE;
+	        }
+	        if ((dims_old[0] != sift3d.im.nx) || (dims_old[1] != sift3d.im.ny) || (dims_old[2] != sift3d.im.nz)) {
+	        	return SIFT3D_FAILURE;
+	        }
+	        status = resize_SIFT3D(sift3d, num_kp_levels);
+	        if (status == SIFT3D_FAILURE) {
+	        	return SIFT3D_FAILURE;
+	        }
+	                
+	        return SIFT3D_SUCCESS;
+	}
+	
+	/* Copy an image's data into another. This function
+	 * changes the dimensions and stride of dst,
+	 * and allocates memory. */
+	private int im_copy_data(Image src, Image dst)
+	{
+
+		int status;
+		int x, y, z, c;
+
+	        // Return if src has no data 
+	        if (src.data == null)
+	                return SIFT3D_FAILURE;
+
+		// Return if src and dst are the same
+		if (dst.data == src.data)
+			return SIFT3D_SUCCESS;
+
+		// Resize dst
+		status = im_copy_dims(src, dst);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Copy data
+		for (z = 0; z < dst.nz; z++) {
+			for (y = 0; y < dst.ny; y++) {
+				for (x = 0; x < dst.nx; x++) {
+					for (c = 0; c < dst.nc; c++) {
+					    dst.data[z*dst.zs + y*dst.ys + x*dst.xs + c] = src.data[z*src.zs + y*src.ys + x*src.xs + c];
+					}
+				}
+			}
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+
+	private double im_max_abs(Image im) {
+
+        double max;
+        int x, y, z, c;
+
+	max = 0.0;
+	for (z = 0; z < im.nz; z++) {
+		for (y = 0; y < im.ny; y++) {
+			for (x = 0; x < im.nx; x++) {
+				for (c = 0; c < im.nc; c++) {
+				    double samp = Math.abs(im.data[z*im.zs + y*im.ys + x*im.xs + c]);
+				    max = Math.max(max,samp);
+				}
+			}
+		}
+	}
+
+        return max;
+}
+
+	/* Scale an image to the [-1, 1] range, where
+	 * the largest absolute value is 1. */
+	private void im_scale(Image im)
+	{
+	
+		int x, y, z, c;
+	
+	        // Find the maximum absolute value
+		    final double max = im_max_abs(im);
+	        if (max == 0.0)
+		        return;
+	
+		// Divide by the max
+	        for (z = 0; z < im.nz; z++) {
+	    		for (y = 0; y < im.ny; y++) {
+	    			for (x = 0; x < im.nx; x++) {
+	    				for (c = 0; c < im.nc; c++) {
+	    				    im.data[z*im.zs + y*im.ys + x*im.xs + c] /= max;
+	    				}
+	    			}
+	    		}
+	    	}
+		
+	}
+	
+	/* Build the GSS pyramid on a single CPU thread */
+	private int build_gpyr(SIFT3DC sift3d) {
+
+	    int status;
+		Image prev;
+		Sep_FIR_filter f;
+		Image cur;
+		int o, s;
+
+		Pyramid gpyr = sift3d.gpyr;
+		final GSS_filters gss = sift3d.gss;
+		final int s_start = gpyr.first_level + 1;
+		final int s_end = SIFT3D_PYR_LAST_LEVEL(gpyr);
+		final int o_start = gpyr.first_octave;
+		final int o_end = SIFT3D_PYR_LAST_OCTAVE(gpyr);
+	    final double unit = 1.0;
+
+		// Build the first image
+		cur = SIFT3D_PYR_IM_GET(gpyr, o_start, s_start - 1);
+		prev = sift3d.im;
+	/*#ifdef SIFT3D_USE_OPENCL
+		if (im_load_cl(cur, SIFT3D_FALSE))
+			return SIFT3D_FAILURE;	
+	#endif*/
+
+		f = gss.first_gauss.f;
+		status = apply_Sep_FIR_filter(prev, cur, f, unit);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Build the rest of the pyramid
+		for (o = o_start; o <= o_end; o++) {
+			for (s = s_start; s <= s_end; s++) {
+				cur = SIFT3D_PYR_IM_GET(gpyr, o, s);
+				prev = SIFT3D_PYR_IM_GET(gpyr, o, s - 1);
+				f = gss.gauss_octave[s].f;
+				status = apply_Sep_FIR_filter(prev, cur, f, unit);
+				if (status == SIFT3D_FAILURE) {
+					return SIFT3D_FAILURE;
+				}
+	/*#ifdef SIFT3D_USE_OPENCL
+				if (im_read_back(cur, SIFT3D_FALSE))
+					return SIFT3D_FAILURE;
+	#endif*/
+			}
+			// Downsample
+			if (o != o_end) {
+
+	                        final int downsample_level = 
+	                                Math.max(s_end - 2, gpyr.first_level);
+
+				prev = SIFT3D_PYR_IM_GET(gpyr, o, downsample_level);
+				cur = SIFT3D_PYR_IM_GET(gpyr, o + 1, s_start - 1);
+
+	            if (Math.abs(prev.s - cur.s) >= FLT_EPSILON) {
+	            	System.err.println("if (Math.abs(prev.s - cur.s) >= FLT_EPSILON)");
+	            	return SIFT3D_FAILURE;
+	            }
+
+				status = im_downsample_2x(prev, cur);
+				if (status == SIFT3D_FAILURE) {
+					return SIFT3D_FAILURE;
+				}
+
+			}
+		}
+
+	/*#ifdef SIFT3D_USE_OPENCL
+		clFinish_all();
+	#endif*/
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Apply a separable filter in multiple dimensions. This function resamples the
+	 * input to have the same units as f, then resamples the output to the
+	 * original units.
+	 *
+	 * Parameters:
+	 *  -src: The input image.
+	 *  -dst: The filtered image.
+	 *  -f: The filter to apply.
+	 *  -unit: The physical units of the filter kernel. Use -1.0 for the default,
+	 *      which is the same units as src.
+	 *
+	 * Return: SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
+	private int apply_Sep_FIR_filter(Image src, Image dst,
+				 Sep_FIR_filter f, double unit)
+	{
+        int status;
+		Image temp = new Image();
+		Image cur_src, cur_dst;
+		int i;
+
+	        final double unit_default = -1.0;
+
+	        // Verify inputs
+	        if (unit < 0 && unit != unit_default) {
+	           System.err.println("apply_Sep_FIR_filter: invalid unit: " + unit);
+	           System.err.println("use " + unit_default + " for default");
+	           return SIFT3D_FAILURE;
+	        }
+
+	        // Resize the output
+	        status = im_copy_dims(src, dst);
+	        if (status == SIFT3D_FAILURE) {
+	            return SIFT3D_FAILURE; 
+	        }
+
+		// Allocate temporary storage
+		init_im(temp);
+		status = im_copy_data(src, temp);
+		if (status == SIFT3D_FAILURE) {
+			im_free(temp);
+			return SIFT3D_FAILURE;
+		}
+
+	/*#define SWAP_BUFFERS \
+	    if (cur_dst == &temp) { \
+	    cur_src = &temp; \
+	    cur_dst = dst; \
+	    } else { \
+	    cur_src = dst; \
+	    cur_dst = &temp; \
+	    }*/
+
+		// Apply in n dimensions
+		cur_src = src;
+		cur_dst = temp;
+		double unit_arg;
+		for (i = 0; i < IM_NDIMS; i++) {
+
+	                // Check for default parameters
+			        if (i == 0) { 
+	                unit_arg = unit == unit_default ?
+	                        src.ux : unit;
+			        }
+			        else if (i == 1) {
+			        	unit_arg = unit == unit_default ?
+		                        src.uy : unit;	
+			        }
+			        else {
+			        	unit_arg = unit == unit_default ?
+		                        src.uz : unit;
+			        }
+
+	//#ifdef SIFT3D_USE_OPENCL
+	//                convolve_sep(cur_src, cur_dst, f, i, unit_arg);
+	//		SWAP_BUFFERS
+	//#else
+	                // Transpose so that the filter dimension is x
+	                if (i != 0) {
+	                   status = im_permute(cur_src, 0, i, cur_dst);
+	                   if (status == SIFT3D_FAILURE) {
+	                	   im_free(temp);
+	                	   return SIFT3D_FAILURE;
+	                   }
+	                   if (cur_dst == temp) {
+	               	    cur_src = temp;
+	               	    cur_dst = dst;
+	               	    } else {
+	               	    cur_src = dst;
+	               	    cur_dst = temp;
+	               	    }
+	                }
+
+			// Apply the filter
+			convolve_sep(cur_src, cur_dst, f, 0, unit_arg);
+			if (cur_dst == temp) {
+       	    cur_src = temp;
+       	    cur_dst = dst;
+       	    } else {
+       	    cur_src = dst;
+       	    cur_dst = temp;
+       	    }
+
+	                // Transpose back
+	                if (i != 0) {
+				        status = im_permute(cur_src, 0, i, cur_dst);
+				        if (status == SIFT3D_FAILURE) {
+		                	   im_free(temp);
+		                	   return SIFT3D_FAILURE;
+		                   }
+		                   if (cur_dst == temp) {
+		               	    cur_src = temp;
+		               	    cur_dst = dst;
+		               	    } else {
+		               	    cur_src = dst;
+		               	    cur_dst = temp;
+		               	    }
+
+			}
+	//#endif
+		}
+
+		// Swap back
+		if (cur_dst == temp) {
+       	    cur_src = temp;
+       	    cur_dst = dst;
+       	    } else {
+       	    cur_src = dst;
+       	    cur_dst = temp;
+       	    };
+
+	//#undef SWAP_BUFFERS
+
+		// Copy result to dst, if necessary
+		if (cur_dst != dst) {
+			status = im_copy_data(cur_dst, dst);
+			if (status == SIFT3D_FAILURE) {
+         	   im_free(temp);
+         	   return SIFT3D_FAILURE;
+            }
+		}
+
+		// Clean up
+		im_free(temp);
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Permute the dimensions of an image.
+	 *
+	 * Arguments: 
+	 * src - input image (initialized)
+	 * dim1 - input permutation dimension (x = 0, y = 1, z = 2)
+	 * dim2 - output permutation dimension (x = 0, y = 1, z = 2)
+	 * dst - output image (initialized)
+	 * 
+	 * example:
+	 * im_permute(src, dst, 0, 1) -- permute x with y in src
+	 *                              and save to dst
+	 */
+	private int im_permute(Image src, int dim1, int dim2,
+			 Image dst)
+	{
+		int status;
+		int x, y, z, c;
+
+		// Verify inputs
+		if (dim1 < 0 || dim2 < 0 || dim1 > 3 || dim2 > 3) {
+			System.err.println("im_permute: invalid dimensions: dim1 = " + dim1 + " dim2 = " + dim2);
+			return SIFT3D_FAILURE;
+		}
+
+		// Check for the trivial case
+		if (dim1 == dim2) {
+			return im_copy_data(src, dst);
+	    }
+
+	        // Permute the units
+		    dst.ux = src.ux;
+		    dst.uy = src.uy;
+		    dst.uz = src.uz;
+	        if (dim1 == 0) {
+	        	if (dim2 == 1) {
+	        		dst.ux = src.uy;
+	        		dst.uy = src.ux;
+	        	}
+	        	else if (dim2 == 2) {
+	        		dst.ux = src.uz;
+	        		dst.uz = src.ux;
+	        	}
+	        }
+	        else if (dim1 == 1) {
+	        	if (dim2 == 0) {
+	        		dst.uy = src.ux;
+	        		dst.ux = src.uy;
+	        	}
+	        	else if (dim2 == 2) {
+	        		dst.uy = src.uz;
+	        		dst.uz = src.uy;
+	        	}
+	        }
+	        else if (dim1 == 2) {
+	        	if (dim2 == 0) {
+	        	    dst.uz = src.ux;
+	        	    dst.ux = src.uz;
+	        	}
+	        	else if (dim2 == 1) {
+	        		dst.uz = src.uy;
+	        		dst.uy = src.uz;
+	        	}
+	        }
+	        
+		// Resize the output
+	        dst.nx = src.nx;
+		    dst.ny = src.ny;
+		    dst.nz = src.nz;
+	        if (dim1 == 0) {
+	        	if (dim2 == 1) {
+	        		dst.nx = src.ny;
+	        		dst.ny = src.nx;
+	        	}
+	        	else if (dim2 == 2) {
+	        		dst.nx = src.nz;
+	        		dst.nz = src.nx;
+	        	}
+	        }
+	        else if (dim1 == 1) {
+	        	if (dim2 == 0) {
+	        		dst.ny = src.nx;
+	        		dst.nx = src.ny;
+	        	}
+	        	else if (dim2 == 2) {
+	        		dst.ny = src.nz;
+	        		dst.nz = src.ny;
+	        	}
+	        }
+	        else if (dim1 == 2) {
+	        	if (dim2 == 0) {
+	        	    dst.nz = src.nx;
+	        	    dst.nx = src.nz;
+	        	}
+	        	else if (dim2 == 1) {
+	        		dst.nz = src.ny;
+	        		dst.ny = src.nz;
+	        	}
+	        }
+	        
+		
+		dst.nc = src.nc;
+		im_default_stride(dst);
+		status = im_resize(dst);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Transpose the data
+		for (z = 0; z < dst.nz; z++) {
+			for (y = 0; y < dst.ny; y++) {
+				for (x = 0; x < dst.nx; x++) {
+					for (c = 0; c < dst.nc; c++) {
+						int src_coords[] = new int[]{x, y, z};
+		                int temp;
+
+		                // Permute the coordinates
+		                temp = src_coords[dim1];
+		                src_coords[dim1] = src_coords[dim2];
+		                src_coords[dim2] = temp;
+
+		                // Copy the datum
+		                dst.data[x*dst.xs + y*dst.ys + z*dst.zs + c] = src.data[src_coords[0]*src.xs + src_coords[1]*src.ys + src_coords[2]*src.zs + c];	
+					}
+				}
+			}
+		}
+
+	        return SIFT3D_SUCCESS;
+	}
+
+	/* Horizontally convolves a separable filter with an image, 
+	 * on CPU. Currently only works in 3D.
+	 * 
+	 * This function chooses among the best variant of convolve_sep* based on
+	 * compilation options and filter parameters.
+	 * 
+	 * Parameters: 
+	 * src - input image (initialized)
+	 * dst - output image (initialized) 
+	    int x, y, z;
+	 * f - filter to be applied
+	 * dim - dimension in which to convolve
+	 * unit - the spacing of the filter coefficients
+	 */
+	private int convolve_sep(Image src,
+				Image dst, Sep_FIR_filter f,
+				int dim, double unit) {
+
+	//#ifdef SIFT3D_USE_OPENCL
+	//        return convolve_sep_cl(src, dst, f, dim, unit);
+	//#else
+		return (f.symmetric != 0) ? 
+	                convolve_sep_sym(src, dst, f, dim, unit) : 
+	                convolve_sep_gen(src, dst, f, dim, unit);
+	//#endif
+	}
+	
+	/* Convolve_sep for symmetric filters. */
+	private int convolve_sep_sym(Image src, Image dst,
+				    Sep_FIR_filter f, int dim,
+	                            double unit)
+	{
+
+		// TODO: Symmetry-specific function
+		return convolve_sep_gen(src, dst, f, dim, unit);
+	}
+	
+	/* Convolve_sep for general filters */
+	private int convolve_sep_gen(Image src,
+				Image dst, Sep_FIR_filter f,
+				int dim, double unit)
+	{
+		int status;
+		int x, y, z, c, d;
+
+		final int half_width = f.width / 2;
+		final int nx = src.nx;
+		final int ny = src.ny;
+		final int nz = src.nz;
+	    final double conv_eps = 0.1;
+	    final int dim_end;
+	    final double unit_factor;
+	    if (dim == 0) {
+	    	dim_end = src.nx -1;
+	    	unit_factor = unit / src.ux;
+	    }
+	    else if (dim == 1) {
+	    	dim_end = src.ny - 1;
+	    	unit_factor = unit/ src.uy;
+	    }
+	    else {
+	    	dim_end = src.nz - 1;
+	    	unit_factor = unit / src.uz;
+	    }
+	        final int unit_half_width = 
+	                (int) Math.ceil(half_width * unit_factor);
+	        int start[] = {0, 0, 0};
+	        int end[] = {nx - 1, ny - 1, nz - 1};
+
+	        // Compute starting and ending points for the convolution dimension
+	        start[dim] += unit_half_width;
+	        end[dim] -= unit_half_width + 1;
+
+		//TODO: Convert this to convolve_x, which only convolves in x,
+		// then make a wrapper to restride, transpose, convolve x, and transpose 
+		// back
+
+		// Resize the output, with the default stride
+	    status = im_copy_dims(src, dst);
+	    if (status == SIFT3D_FAILURE) {
+	        return SIFT3D_FAILURE;
+	    }
+		im_default_stride(dst);
+		status = im_resize(dst);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Initialize the output to zeros
+		im_zero(dst);
+
+		// First pass: process the interior
+	//#pragma omp parallel for private(x) private(y) private(c)
+		for (z = start[2]; z <= end[2]; z++) {
+			for (y = start[1]; y <= end[1]; y++) {
+				for (x = start[0]; x <= end[0]; x++) {
+					for (c = 0; c < dst.nc; c++) {
+
+	                double coords[] = { x, y, z };
+
+	                for (d = -half_width; d <= half_width; d++) {
+
+	                        final double tap = f.kernel[d + half_width];
+	                        final double step = d * unit_factor;
+
+	                        // Adjust the sampling coordinates
+	                        coords[dim] -= step;
+
+	                        // Sample
+	                        SAMP_AND_ACC(src, dst, tap, coords, x, y, z, c, dim);
+
+	                        // Reset the sampling coordinates
+	                        coords[dim] += step;
+	                }	
+					}
+				}
+			}
+		}
+		
+
+	        // Second pass: process the boundaries
+	//#pragma omp parallel for private(x) private(y) private(c)
+	        for (z = 0; z < dst.nz; z++) {
+	        	for (y = 0; y < dst.ny; y++) {
+	        		for (x = 0; x < dst.nx; x++) {
+	        			for (c = 0; c < dst.nc; c++) {
+	        				final int i_coords[] = { x, y, z };
+
+	    	                // Skip pixels we have already processed
+	    	                if (i_coords[dim] >= start[dim] && i_coords[dim] <= end[dim]) 
+	    	                        continue;
+
+	    	                // Process the boundary pixel
+	    	                for (d = -half_width; d <= half_width; d++) {
+
+	    	                        double coords[] = new double[]{ x, y, z };
+	    	                        double tap = f.kernel[d + half_width];
+	    	                        double step = d * unit_factor;
+
+	    	                        // Adjust the sampling coordinates
+	    	                        coords[dim] -= step;
+
+	    	                        // Mirror coordinates
+	    	                        if ((int) coords[dim] < 0) {
+	    	                                coords[dim] = -coords[dim];
+	    	                                assert((int) coords[dim] >= 0);
+	    	                        } else if ((int) coords[dim] >= dim_end) {
+	    	                                coords[dim] = 2.0 * dim_end - coords[dim] -    
+	    	                                        conv_eps;
+	    	                                assert((int) coords[dim] < dim_end);
+	    	                        }
+
+	    	                        // Sample
+	    	                        SAMP_AND_ACC(src, dst, tap, coords, x, y, z, c, dim);
+	    	                }
+	
+	        			}
+	        		}
+	        	}
+	        }
+
+	        return SIFT3D_SUCCESS;
+	}
+	
+	private void SAMP_AND_ACC(Image src, Image dst, double tap, double coords[], int x, int y, int z, int c, int dim) 
+	{ 
+        double frac;
+
+        final int idx_lo[] = new int[]{(int)coords[0], (int)coords[1], (int)coords[2]};
+        int idx_hi[] = new int[]{idx_lo[0], idx_lo[1], idx_lo[2]};
+
+        /* Convert the physical coordinates to integer indices*/ 
+        idx_hi[dim] += 1; 
+        frac = (coords)[dim] - (float) idx_lo[dim]; 
+
+        /* Sample with linear interpolation */ 
+        dst.data[x*dst.xs + y*dst.ys + z*dst.zs + c] += tap *
+                ((1.0f - frac) *
+                src.data[idx_lo[0]*src.xs + idx_lo[1]*src.ys + idx_lo[2]*src.zs + c] +
+                frac *
+                src.data[idx_hi[0]*src.xs + idx_hi[1]*src.ys + idx_hi[2]*src.zs + c]);
+}
+	
+	/* Zero an image. */
+	private void im_zero(Image im)
+	{
+
+		int x, y, z, c;
+
+		for (z = 0; z < im.nz; z++) {
+			for (y = 0; y < im.ny; y++) {
+				for (x = 0; x < im.nx; x++) {
+					for (c = 0; c < im.nc; c++) {
+						im.data[x*im.xs + y*im.ys + z*im.zs + c] = 0.0;
+					}
+				}
+			}
+		}
+	}
+	
+	/* Downsample an image by a factor of 2 in each dimension.
+	 * This function initializes dst with the proper 
+	 * dimensions, and allocates memory. */
+	private int im_downsample_2x(Image src, Image dst)
+	{
+
+		int status;
+		int x, y, z, c;
+
+		// Initialize dst
+		dst.nx = (int)Math.floor((double)src.nx / 2.0);
+		dst.ny = (int)Math.floor((double)src.ny / 2.0);
+		dst.nz = (int)Math.floor((double)src.nz / 2.0);
+		dst.nc = src.nc;
+		im_default_stride(dst);
+		status = im_resize(dst);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Downsample
+		for (z = 0; z < dst.nz; z++) {
+			for (y = 0; y < dst.ny; y++) {
+				for (x = 0; x < dst.nx; x++) {
+					for (c = 0; c < dst.nc; c++) {
+						final int src_x = x << 1;
+						final int src_y = y << 1;
+						final int src_z = z << 1;
+
+						dst.data[x*dst.xs + y*dst.ys + z*dst.zs + c] = 
+								src.data[src_x*src.xs + src_y*src.ys + src_z*src.zs + c];	
+					}
+				}
+			}
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	private int build_dog(SIFT3DC sift3d) {
+
+		int status;
+		Image gpyr_cur, gpyr_next, dog_level;
+		int o, s;
+
+		Pyramid dog = sift3d.dog;
+		Pyramid gpyr = sift3d.gpyr;
+
+		for (o = dog.first_octave; o <= SIFT3D_PYR_LAST_OCTAVE(dog); o++) {
+	        for (s = dog.first_level; s <= SIFT3D_PYR_LAST_LEVEL(dog); s++) {
+				gpyr_cur = SIFT3D_PYR_IM_GET(gpyr, o, s);
+				gpyr_next = SIFT3D_PYR_IM_GET(gpyr, o, s + 1);			
+				dog_level = SIFT3D_PYR_IM_GET(dog, o, s);
+				
+				status = im_subtract(gpyr_cur, gpyr_next, dog_level);
+				if (status == SIFT3D_FAILURE) {
+					return SIFT3D_FAILURE;
+				}
+	        }
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Subtract src2 from src1, saving the result in
+	 * dst.
+	 * Resizes dst. 
+	 */
+	private int im_subtract(Image src1, Image src2, Image dst)
+	{
+
+		int status;
+		int x, y, z, c;
+
+		// Verify inputs
+		if (src1.nx != src2.nx ||
+		    src1.ny != src2.ny ||
+		    src1.nz != src2.nz || src1.nc != src2.nc)
+			return SIFT3D_FAILURE;
+
+		// Resize the output image
+		status = im_copy_dims(src1, dst);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		for (z = 0; z < dst.nz; z++) {
+			for (y = 0; y < dst.ny; y++) {
+				for (x = 0; x < dst.nx; x++) {
+					for (c = 0; c < dst.nc; c++) {
+						dst.data[x*dst.xs + y*dst.ys + z*dst.zs + c] =
+		                src1.data[x*src1.xs + y*src1.ys + z*src1.zs + c] -
+		                src2.data[x*src2.xs + y*src2.ys + z*src2.zs + c];
+					}
+				}
+			}
+		}
+		
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Detect local extrema */
+	private int detect_extrema(SIFT3DC sift3d, Keypoint_store kp) {
+
+		int status;
+		Image cur, prev, next;
+		Keypoint key;
+		double pcur, dogmax, peak_thresh;
+		int o, s, x, y, z, x_start, x_end, y_start, y_end, z_start,
+			z_end, num;
+
+		final Pyramid dog = sift3d.dog;
+		final int o_start = dog.first_octave;
+		final int o_end = SIFT3D_PYR_LAST_OCTAVE(dog);
+		final int s_start = dog.first_level + 1;
+		final int s_end = SIFT3D_PYR_LAST_LEVEL(dog) - 1;
+
+		// Verify the inputs
+		if (dog.num_levels < 3) {
+			System.err.println("detect_extrema: Requires at least 3 levels per octave,");
+		    System.err.println("provided only " + dog.num_levels);
+			return SIFT3D_FAILURE;
+		}
+
+		// Initialize dimensions of keypoint store
+		cur = SIFT3D_PYR_IM_GET(dog, o_start, s_start);
+		kp.nx = cur.nx;
+		kp.ny = cur.ny;
+		kp.nz = cur.nz;
+
+		num = 0;
+		for (o = o_start; o <= o_end; o++) {
+			for (s = s_start; s <= s_end; s++) {
+
+			// Select current and neighboring levels
+			prev = SIFT3D_PYR_IM_GET(dog, o, s - 1);
+			cur = SIFT3D_PYR_IM_GET(dog, o, s);
+			next = SIFT3D_PYR_IM_GET(dog, o, s + 1);
+
+			// Find maximum DoG value at this level
+			dogmax = 0.0;
+			for (z = 0; z < cur.nz; z++) {
+				for (y = 0; y < cur.ny; y++) {
+					for (x = 0; x < cur.nx; x++) {
+						dogmax = Math.max(dogmax, 
+                                Math.abs(cur.data[x*cur.xs + y*cur.ys + z*cur.zs]));
+	
+					}
+				}
+			}
+				
+			// Adjust threshold
+			peak_thresh = sift3d.peak_thresh * dogmax;
+
+			// Loop through all non-boundary pixels
+			x_start = y_start = z_start = 1;
+			x_end = cur.nx - 2;
+			y_end = cur.ny - 2;
+			z_end = cur.nz - 2;
+			for (z = z_start; z <= z_end; z++) {
+				for (y = y_start; y <= y_end; y++) {
+					for (x = x_start; x <= x_end; x++) {
+						// Sample the center value
+						pcur = cur.data[x*cur.xs + y*cur.ys + z*cur.zs];
+
+						// Apply the peak threshold
+						if ((pcur > peak_thresh || pcur < -peak_thresh) && ((
+							// Compare to the neighbors
+							CMP_PREV_GT(prev, x, y, z, pcur) &&
+							CMP_CUR_GT(cur, x, y, z, pcur) &&
+							CMP_NEXT_GT(next, x, y, z, pcur)
+							) || (
+							CMP_PREV_LT(prev, x, y, z, pcur) &&
+							CMP_CUR_LT(cur, x, y, z, pcur) &&
+							CMP_NEXT_LT(next, x, y, z, pcur))))
+							{
+
+			                                // Add a keypoint candidate
+			                                num++;
+			                                status = resize_Keypoint_store(kp, num);
+			                                if (status == SIFT3D_FAILURE) {
+			                                        return SIFT3D_FAILURE;
+			                                }
+			                                key = kp.buf[num - 1];
+			                                status = init_Keypoint(key);
+			                                if (status == SIFT3D_FAILURE) {
+			                                        return SIFT3D_FAILURE;
+			                                }
+			                                key.o = o;
+			                                key.s = s;
+			                                key.sd = cur.s;
+							key.xd = (double) x;
+							key.yd = (double) y;
+							key.zd = (double) z;
+			                        }	
+					}
+				}
+			}
+				
+			}
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	private boolean CMP_PREV_GT(Image im, int x, int y, int z, double val) {
+		if (CUBOID_EXTREMA) {
+			return CMP_CUBE_GT(im, x, y, z, SIFT3D_FALSE, val);
+		}
+		else {
+			return (val > im.data[x*im.xs + y*im.ys + z*im.zs]);
+		}
+		
+	}
+	
+	private boolean CMP_PREV_LT(Image im, int x, int y, int z, double val) {
+		if (CUBOID_EXTREMA) {
+			return CMP_CUBE_LT(im, x, y, z, SIFT3D_FALSE, val);
+		}
+		else {
+			return (val < im.data[x*im.xs + y*im.ys + z*im.zs]);
+		}
+		
+	}
+	
+	private boolean CMP_CUR_GT(Image im, int x, int y, int z, double val) {
+		if (CUBOID_EXTREMA) {
+			return CMP_CUBE_GT(im, x, y, z, SIFT3D_TRUE, val);
+		}
+		else {
+			return((val >  im.data[(x+1)*im.xs + y*im.ys + z*im.zs]) &&
+					(val >  im.data[(x-1)*im.xs + y*im.ys + z*im.zs]) &&
+					(val >  im.data[x*im.xs + (y+1)*im.ys + z*im.zs]) &&
+					(val >  im.data[x*im.xs + (y-1)*im.ys + z*im.zs]) &&
+					(val >  im.data[x*im.xs + y*im.ys + (z-1)*im.zs]) &&
+					(val >  im.data[x*im.xs + y*im.ys + (z+1)*im.zs]));	
+		}
+	}
+	
+	private boolean CMP_CUR_LT(Image im, int x, int y, int z, double val) {
+		if (CUBOID_EXTREMA) {
+			return CMP_CUBE_LT(im, x, y, z, SIFT3D_TRUE, val);
+		}
+		else {
+			return((val <  im.data[(x+1)*im.xs + y*im.ys + z*im.zs]) &&
+					(val <  im.data[(x-1)*im.xs + y*im.ys + z*im.zs]) &&
+					(val <  im.data[x*im.xs + (y+1)*im.ys + z*im.zs]) &&
+					(val <  im.data[x*im.xs + (y-1)*im.ys + z*im.zs]) &&
+					(val <  im.data[x*im.xs + y*im.ys + (z-1)*im.zs]) &&
+					(val <  im.data[x*im.xs + y*im.ys + (z+1)*im.zs]));	
+		}
+	}
+	
+	 private boolean CMP_NEXT_GT(Image im, int x, int y, int z, double val) {
+		 if (CUBOID_EXTREMA) {
+			 return CMP_CUBE_GT(im, x, y, z, SIFT3D_FALSE, val);
+		 }
+		 else {
+			 return CMP_PREV_GT(im, x, y, z, val); 
+		 }
+	 }
+	 
+	 private boolean CMP_NEXT_LT(Image im, int x, int y, int z, double val) {
+		 if (CUBOID_EXTREMA) {
+			 return CMP_CUBE_LT(im, x, y, z, SIFT3D_FALSE, val);
+		 }
+		 else {
+			 return CMP_PREV_LT(im, x, y, z, val); 
+		 }
+	 }
+	
+	private boolean CMP_CUBE_GT(Image im, int x, int y, int z, int IGNORESELF, double val) {
+			return ((val > im.data[x*im.xs + y*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + y*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + y*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[x*im.xs + (y-1)*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[x*im.xs + (y+1)*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + (y-1)*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + (y-1)*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + (y+1)*im.ys + (z-1)*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + (y+1)*im.ys + (z-1)*im.zs]) && 
+			        ((val > im.data[x*im.xs + y*im.ys + z*im.zs]) || (IGNORESELF != 0) ) &&
+					(val > im.data[(x-1)*im.xs + y*im.ys + z*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + y*im.ys + z*im.zs]) && 
+					(val > im.data[x*im.xs + (y-1)*im.ys + z*im.zs]) && 
+					(val > im.data[x*im.xs + (y+1)*im.ys + z*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + (y-1)*im.ys + z*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + (y-1)*im.ys + z*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + (y+1)*im.ys + z*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + (y+1)*im.ys + z*im.zs]) && 
+					(val > im.data[x*im.xs + y*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + y*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + y*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[x*im.xs + (y-1)*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[x*im.xs + (y+1)*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + (y-1)*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + (y-1)*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[(x-1)*im.xs + (y+1)*im.ys + (z+1)*im.zs]) && 
+					(val > im.data[(x+1)*im.xs + (y+1)*im.ys + (z+1)*im.zs]));
+	}
+	
+	private boolean CMP_CUBE_LT(Image im, int x, int y, int z, int IGNORESELF, double val) {
+		return ((val < im.data[x*im.xs + y*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + y*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + y*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[x*im.xs + (y-1)*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[x*im.xs + (y+1)*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + (y-1)*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + (y-1)*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + (y+1)*im.ys + (z-1)*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + (y+1)*im.ys + (z-1)*im.zs]) && 
+		        ((val < im.data[x*im.xs + y*im.ys + z*im.zs]) || (IGNORESELF != 0) ) &&
+				(val < im.data[(x-1)*im.xs + y*im.ys + z*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + y*im.ys + z*im.zs]) && 
+				(val < im.data[x*im.xs + (y-1)*im.ys + z*im.zs]) && 
+				(val < im.data[x*im.xs + (y+1)*im.ys + z*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + (y-1)*im.ys + z*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + (y-1)*im.ys + z*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + (y+1)*im.ys + z*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + (y+1)*im.ys + z*im.zs]) && 
+				(val < im.data[x*im.xs + y*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + y*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + y*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[x*im.xs + (y-1)*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[x*im.xs + (y+1)*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + (y-1)*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + (y-1)*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[(x-1)*im.xs + (y+1)*im.ys + (z+1)*im.zs]) && 
+				(val < im.data[(x+1)*im.xs + (y+1)*im.ys + (z+1)*im.zs]));
+    }
+	
+	/* Make room for at least num Keypoint structs in kp. 
+	 * 
+	 * Note: This function must re-initialize some internal data if it was moved. 
+	 * This does not affect the end user, but it affects the implementation of 
+	 * init_Keypoint. */
+	private int resize_Keypoint_store(Keypoint_store kp,int num) {
+
+	    int status;
+		Keypoint[] buf_old = kp.slab.buf;
+
+	        // Resize the internal memory
+		SIFT3D_RESIZE_SLAB(kp.slab, num);
+		kp.buf = kp.slab.buf; 
+
+	        // If the size has changed, re-initialize the keypoints
+	        if (buf_old != kp.slab.buf) { 
+	                int i; 
+	                for (i = 0; i < kp.slab.num; i++) { 
+	                        Keypoint key = kp.buf[i]; 
+	                        status = init_Keypoint(key);
+	                        if (status == SIFT3D_FAILURE) {
+	                                return SIFT3D_FAILURE; 
+	                        }
+	                } 
+	        } 
+
+	        return SIFT3D_SUCCESS;
+	}
+	
+	/* Resize a slab. If SIFT3D_SLAB_SIZE is defined, add
+	* elements in increments of that number. Otherwise,
+	* use a default of 500. This macro is meant to be
+	* used whether or not the slab buffer actually needs
+	* resizing -- it checks for that. */
+	private void SIFT3D_RESIZE_SLAB(Slab slab, int num_new) {
+		    int SIFT3D_SLAB_LEN = 500;
+		    int i, j, r, c;
+	        final int slabs_new = (num_new + SIFT3D_SLAB_LEN - 1) / 
+	                        SIFT3D_SLAB_LEN;
+	        final int size_new = slabs_new * SIFT3D_SLAB_LEN;
+
+		if (size_new != slab.buf_size) {
+	
+			/* Re-initialize if the new size is 0 */ 
+			if (size_new == 0) { 
+				cleanup_Slab(slab); 
+				init_Slab(slab);
+			/* Else allocate new memory */ 
+			}
+			else {
+				Keypoint kb[] = new Keypoint[size_new];
+				for (i = 0; i < size_new; i++) {
+					kb[i] = new Keypoint();
+					if (i < slab.buf.length) {
+					    for (j = 0; j < IM_NDIMS*IM_NDIMS; j++) {
+					    	kb[i].r_data[j] = slab.buf[i].r_data[j];
+					    }
+					    kb[i].R.num_rows = slab.buf[i].R.num_rows;
+					    kb[i].R.num_cols = slab.buf[i].R.num_cols;
+					    kb[i].R.size = slab.buf[i].R.size;
+					    kb[i].R.static_mem = slab.buf[i].R.static_mem;
+					    kb[i].R.type = slab.buf[i].R.type;
+					    if (kb[i].R.type == Mat_rm_type.SIFT3D_DOUBLE) {
+					        kb[i].R.data_double = new double[kb[i].R.num_rows][kb[i].R.num_cols];
+					        for (r = 0; r < kb[i].R.num_rows; r++) {
+					        	for (c = 0; c < kb[i].R.num_cols; c++) {
+					        		kb[i].R.data_double[r][c] = slab.buf[i].R.data_double[r][c];
+					        	}
+					        }
+					    }
+					    else if (kb[i].R.type == Mat_rm_type.SIFT3D_FLOAT) {
+					        kb[i].R.data_float = new float[kb[i].R.num_rows][kb[i].R.num_cols];
+					        for (r = 0; r < kb[i].R.num_rows; r++) {
+					        	for (c = 0; c < kb[i].R.num_cols; c++) {
+					        		kb[i].R.data_float[r][c] = slab.buf[i].R.data_float[r][c];
+					        	}
+					        }
+					    }
+					    else if (kb[i].R.type == Mat_rm_type.SIFT3D_INT) {
+					        kb[i].R.data_int = new int[kb[i].R.num_rows][kb[i].R.num_cols];
+					        for (r = 0; r < kb[i].R.num_rows; r++) {
+					        	for (c = 0; c < kb[i].R.num_cols; c++) {
+					        		kb[i].R.data_int[r][c] = slab.buf[i].R.data_int[r][c];
+					        	}
+					        }
+					    }
+					    kb[i].xd = slab.buf[i].xd;
+					    kb[i].yd = slab.buf[i].yd;
+					    kb[i].zd = slab.buf[i].zd;
+					    kb[i].sd = slab.buf[i].sd;
+					    kb[i].o = slab.buf[i].o;
+					    kb[i].s = slab.buf[i].s;
+					}
+				} 
+				slab.buf = kb;
+			}
+			slab.buf_size = size_new;
+		} 
+		slab.num = num_new;
+	}
+
+	/* Initialize a Keypoint struct for use. This sets up the internal pointers,
+	 * and nothing else. If called on a valid Keypoint struct, it has no effect. */
+	private int init_Keypoint(Keypoint key) {
+	        // Initialize the orientation matrix with static memory
+		    double rarr[][] = new double[IM_NDIMS][IM_NDIMS];
+		    for (int r = 0; r < IM_NDIMS; r++) {
+		    	for (int c = 0; c < IM_NDIMS; c++) {
+		    		rarr[r][c] = key.r_data[r*IM_NDIMS + c];
+		    	}
+		    }
+	        return init_Mat_rm_p(key.R, rarr, IM_NDIMS, IM_NDIMS, 
+			Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
 	}
 
 }
