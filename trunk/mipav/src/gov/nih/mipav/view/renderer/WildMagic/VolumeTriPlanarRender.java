@@ -2952,7 +2952,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 			for ( int i = 0; i < currentTime.getCurves().size(); i++ )
 			{
-				VOIText text = (VOIText) currentTime.getCurves().elementAt(i);
+				VOIText text = (VOIText) currentTime.getCurves().elementAt(i);				
 				VolumeSurface surface = annotationSpheres.get(text.getText());
 				if ( surface != null )
 				{
@@ -2960,12 +2960,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					if ( display )
 					{
 						Vector3f position = new Vector3f(text.elementAt(0));
-						if ( !position.equals( Vector3f.ZERO ) &&
-							 (position.X >= 0) && (position.X < dimX) && (position.Y >= 0) && (position.Y < dimY) && 
-							 (position.Z >= 0) && (position.Z < dimZ) )
-						{
-							surface.SetTranslateVolumeCoords( position );							
-						}						
+						position.X = (float) Math.floor(position.X);
+						position.Y = (float) Math.floor(position.Y);
+						position.Z = (float) Math.floor(position.Z);
+						surface.SetTranslateVolumeCoords( position );
 					}
 					Color color = text.getColor();
 					surface.SetColor( new ColorRGB( color.getRed()/255.0f, 
@@ -2983,7 +2981,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					{
 						if ( display )
 						{
-							displayedText.getVolumeVOI().SetBillboardPosition( text.elementAt(1) );				
+							displayedText.getVolumeVOI().SetBillboardPosition( text.elementAt(0) );	
 						}
 						displayedText.getVolumeVOI().SetDisplay(display);
 					}
