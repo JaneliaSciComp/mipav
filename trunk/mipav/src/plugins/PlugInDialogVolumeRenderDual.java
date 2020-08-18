@@ -83,7 +83,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -306,6 +310,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						// Launch the animation tool
 						this.setVisible(false);
 						annotationAnimationFromSpreadSheet();
+						return;
 					}
 					else {
 						MipavUtil.displayError( "Please specify a range of images." );
@@ -449,6 +454,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
 			{
+//				testPython();
+				
 				activeImage.clipArb = activeRenderer.getArbitratyClip();
 				activeImage.clipArbOn = activeRenderer.getArbitratyClipOn();
 				activeImage.currentTab = tabbedPane.getSelectedIndex();
@@ -1002,10 +1009,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
     	}
 		int nextStep = dualGPU == null ? 1 : 2;
-		imageIndex = Math.min( includeRange.size() - 1, imageIndex );
-		imageIndex = Math.max( 0, imageIndex );
+		if ( includeRange != null ) {
+			imageIndex = Math.min( includeRange.size() - 1, imageIndex );
+			imageIndex = Math.max( 0, imageIndex );
+		}
 
-		if ( previewCount == 0 ) {
+		if ( previewCount == 0 && (includeRange != null) ) {
 			backButton.setEnabled( imageIndex > 0 );
 			nextButton.setEnabled( imageIndex < (includeRange.size() - nextStep));
 			doneButton.setEnabled( true );
@@ -1351,6 +1360,44 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 	 */
 
+    private List<String> readProcessOutput(InputStream inputStream) throws IOException {
+        try (BufferedReader output = new BufferedReader(new InputStreamReader(inputStream))) {
+            return output.lines()
+                .collect(Collectors.toList());
+        }
+    }
+	
+	public void givenPythonScript_whenPythonProcessInvoked_thenSuccess() throws Exception {
+	    ProcessBuilder processBuilder = new ProcessBuilder("python", baseFileDir + File.separator  + "hello.py" );
+	    processBuilder.redirectErrorStream(true);
+	 
+	    Process process = processBuilder.start();		
+        List<String> results = readProcessOutput(process.getInputStream());
+
+	    System.err.println(results.size());
+	    for ( int i = 0; i < results.size(); i++ ) {
+	    	System.err.println(i + " " + results.get(i) );
+	    }
+	    
+//	    assertThat("Results should not be empty", results, is(not(empty())));
+//	    assertThat("Results should contain output of script: ", results, hasItem(
+//	      containsString("Hello Baeldung Readers!!")));
+	 
+	    int exitCode = process.waitFor();
+	    System.err.println(exitCode);
+//	    assertEquals("No errors should be detected", 0, exitCode);
+	}
+
+	private void testPython() {
+		try {
+			System.err.println("Calling Python?");
+			givenPythonScript_whenPythonProcessInvoked_thenSuccess();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
 	 * @return untwisted image.
@@ -2258,8 +2305,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			annotationNames.add( new String(text.getText()) );
 		}
 
-		//		System.err.println( min );
-		//		System.err.println( max );
+//		System.err.println( min );
+//		System.err.println( max );
 
 		extents[0] = (int)Math.max( 30, (max.X - min.X) + 10);
 		extents[1] = (int)Math.max( 30, (max.Y - min.Y) + 10);
