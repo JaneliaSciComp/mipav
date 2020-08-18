@@ -63,6 +63,8 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
 	//private double SIFT3D_MATCH_MAX_DIST = 0.3; // Maximum distance between matching features
 	private boolean ICOS_HIST = true;  // Icosahedral gradient histogram
 	private boolean SIFT3D_RANSAC_REFINE = true;	// Use least-squares refinement in RANSAC
+	private boolean CUBOID_EXTREMA = false; // Search for extrema in a cuboid region
+	
 	
 	private JLabel labelMatchingThreshold;
 	
@@ -89,6 +91,8 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
 	private JCheckBox icosahedralCheckBox;
 	
 	private JCheckBox refineCheckBox;
+	
+	private JCheckBox cuboidCheckBox;
     
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
@@ -191,7 +195,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
     protected void callAlgorithm() {
     	reg3D = new SIFT3D(baseImage, matchImage, SIFT3D_nn_thresh_default, SIFT3D_err_thresh_default,
     			SIFT3D_num_iter_default, useOCL, SIFT3D_GAUSS_WIDTH_FCTR,
-        		SIFT3D_MATCH_MAX_DIST, ICOS_HIST, SIFT3D_RANSAC_REFINE);
+        		SIFT3D_MATCH_MAX_DIST, ICOS_HIST, SIFT3D_RANSAC_REFINE, CUBOID_EXTREMA);
     	
     	reg3D.addListener(this);
     	
@@ -282,6 +286,10 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         refineCheckBox.setFont(serif12);
         refineCheckBox.setSelected(true);
         
+        cuboidCheckBox = new JCheckBox("Search for extrema in cuboid region");
+        cuboidCheckBox.setFont(serif12);
+        cuboidCheckBox.setSelected(false);
+        
         JPanel upperPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -365,6 +373,11 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(refineCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(cuboidCheckBox, gbc);
         
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
@@ -473,6 +486,8 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         
         SIFT3D_RANSAC_REFINE = refineCheckBox.isSelected();
         
+        CUBOID_EXTREMA = cuboidCheckBox.isSelected();
+        
     	return true;
 
     }
@@ -488,6 +503,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
     	SIFT3D_MATCH_MAX_DIST = scriptParameters.getParams().getDouble("max_dist");
     	ICOS_HIST = scriptParameters.getParams().getBoolean("icos");
     	SIFT3D_RANSAC_REFINE = scriptParameters.getParams().getBoolean("refine");
+    	CUBOID_EXTREMA = scriptParameters.getParams().getBoolean("cuboid");
     }
     
     protected void storeParamsFromGUI() throws ParserException {
@@ -500,6 +516,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_dist", SIFT3D_MATCH_MAX_DIST));
         scriptParameters.getParams().put(ParameterFactory.newParameter("icos", ICOS_HIST));
         scriptParameters.getParams().put(ParameterFactory.newParameter("refine", SIFT3D_RANSAC_REFINE));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cuboid", CUBOID_EXTREMA));
     }
 
     
