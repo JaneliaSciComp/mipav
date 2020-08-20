@@ -61,8 +61,11 @@ public class SIFT3D extends AlgorithmBase {
 	// Set SIFT3D_MATCH_MAX_DIST <= 0.0 to avoid using in int match_desc()
 	private double SIFT3D_MATCH_MAX_DIST = 0.0;
 	//private double SIFT3D_MATCH_MAX_DIST = 0.3; // Maximum distance between matching features
+	private boolean ICOS_HIST = true;  // Icosahedral gradient histogram
 	private boolean SIFT3D_RANSAC_REFINE = true;	// Use least-squares refinement in RANSAC
 	private boolean CUBOID_EXTREMA = false; // Search for extrema in a cuboid region
+	private boolean SIFT3D_ORI_SOLID_ANGLE_WEIGHT = false; // Weight bins by solid angle
+	                                                       // Can only be used if ICOS_HIST = false
 	private String fileDir = null;
 	private String ext_gz = "gz";
 
@@ -91,12 +94,14 @@ public class SIFT3D extends AlgorithmBase {
 	private int NBINS_AZ = 8;		// Number of bins for azimuthal angles
 	private int NBINS_PO = 4;		// Number of bins for polar angles
 	private int NHIST_PER_DIM = 4; // Number of SIFT descriptor histograms per dimension 
-	private boolean ICOS_HIST = true;  // Icosahedral gradient histogram
 
 	/* Constants */
 	private int IM_NDIMS = 3; // Number of dimensions in an Image
 	private int ICOS_NFACES = 20; // Number of faces in an icosahedron
 	private int ICOS_NVERT = 12; // Number of vertices in an icosahedron
+	
+    private double SIFT3D_AZ_MAX_F = 2.0 * Math.PI; // Maximum azimuth
+	private double SIFT3D_PO_MAX_F = Math.PI; // Maximum polar angle
 	
 	// The number of elements in a gradient histogram
 	//#ifdef ICOS_HIST
@@ -108,9 +113,6 @@ public class SIFT3D extends AlgorithmBase {
 	/* Derived constants */
 	private int DESC_NUM_TOTAL_HIST = (NHIST_PER_DIM * NHIST_PER_DIM * NHIST_PER_DIM);
 	private int DESC_NUMEL = (DESC_NUM_TOTAL_HIST * HIST_NUMEL);
-	
-	/* Implementation options */
-	//#define SIFT3D_ORI_SOLID_ANGLE_WEIGHT // Weight bins by solid angle
 
 	/* Internal return codes */
 	private final int REJECT = 1;
@@ -354,7 +356,7 @@ public class SIFT3D extends AlgorithmBase {
 	/* Struct defining a keypoint in 3D space. */
     class Keypoint {
 
-		double r_data[] = new double[IM_NDIMS * IM_NDIMS];	// Memory for matrix R, do not use this
+		double r_data[][] = new double[IM_NDIMS][IM_NDIMS];	// Memory for matrix R, do not use this
 		Mat_rm R = new Mat_rm();				// Rotation matrix into Keypoint space
 		double xd, yd, zd;			// sub-pixel x, y, z
 		double  sd;				// absolute scale
@@ -596,7 +598,7 @@ public class SIFT3D extends AlgorithmBase {
     		double SIFT3D_nn_thresh_default, double SIFT3D_err_thresh_default,
     		int SIFT3D_num_iter_default, boolean useOCL, double SIFT3D_GAUSS_WIDTH_FCTR,
     		double SIFT3D_MATCH_MAX_DIST, boolean ICOS_HIST, boolean SIFT3D_RANSAC_REFINE,
-    		boolean CUBOID_EXTREMA) {
+    		boolean CUBOID_EXTREMA, boolean SIFT3D_ORI_SOLID_ANGLE_WEIGHT) {
     	super(null, imageB);
         refImage = imageA;
         inputImage = imageB;
@@ -609,6 +611,7 @@ public class SIFT3D extends AlgorithmBase {
     	this.ICOS_HIST = ICOS_HIST;
     	this.SIFT3D_RANSAC_REFINE = SIFT3D_RANSAC_REFINE;
     	this.CUBOID_EXTREMA = CUBOID_EXTREMA;
+    	this.SIFT3D_ORI_SOLID_ANGLE_WEIGHT = SIFT3D_ORI_SOLID_ANGLE_WEIGHT;
     	
     	// The number of elements in a gradient histogram
     	if (ICOS_HIST) {
@@ -775,6 +778,7 @@ public class SIFT3D extends AlgorithmBase {
         status = set_src_Reg_SIFT3D(reg, src);
         if (status == SIFT3D_FAILURE) {
         	// Clean up
+        	System.err.println("Failed in set_src_Reg_SIFT3D(reg, src)");
 	        im_free(src);
 	        im_free(ref);
 	        im_free(warped);
@@ -787,6 +791,7 @@ public class SIFT3D extends AlgorithmBase {
         status = set_ref_Reg_SIFT3D(reg, ref);
         if (status == SIFT3D_FAILURE) {
         	// Clean up
+        	System.err.println("Failed in set_src_Reg_SIFT3D(reg, ref)");
 	        im_free(src);
 	        im_free(ref);
 	        im_free(warped);
@@ -1445,6 +1450,13 @@ public class SIFT3D extends AlgorithmBase {
         cc.z = ca.z - cb.z;
     }
     
+ // Operate element-wise on two Cartesian coordinate vectors, cc = ca + cb
+    private void SIFT3D_CVEC_PLUS(Cvec ca, Cvec cb, Cvec cc) {
+        cc.x = ca.x + cb.x;
+        cc.y = ca.y + cb.y;
+        cc.z = ca.z + cb.z;
+    }
+    
 	 // Take the cross product of two Cartesian coordinate
 	 // vectors, as out = in1 X in2
 	 private void SIFT3D_CVEC_CROSS(Cvec in1, Cvec in2, Cvec out) { 
@@ -1936,11 +1948,13 @@ public class SIFT3D extends AlgorithmBase {
 		status = resize_Pyramid(im, first_level, num_kp_levels,
 	                num_gpyr_levels, first_octave, num_octaves, gpyr);
 		if (status == SIFT3D_FAILURE) {
+			System.err.println("In resize_SIFT3D failed on resize_Pyramid for gpyr");
 			return SIFT3D_FAILURE;
 		}
 		status = resize_Pyramid(im, first_level, num_kp_levels, 
 	                num_dog_levels, first_octave, num_octaves, dog);
 		if (status == SIFT3D_FAILURE) {
+			System.err.println("In resize_SIFT3D failed on resize_Pyramid for dog");
 			return SIFT3D_FAILURE;
 		}
 
@@ -1952,6 +1966,7 @@ public class SIFT3D extends AlgorithmBase {
 		// Compute the Gaussian filters
 		status = make_gss(sift3d.gss, sift3d.gpyr);
 		if (status == SIFT3D_FAILURE) {
+			System.err.println("In resize_SIFT3D failed on make_gss");
 			return SIFT3D_FAILURE;
 		}
 
@@ -2066,12 +2081,12 @@ public class SIFT3D extends AlgorithmBase {
 	                        s++) {
 	                        // Initialize Image fields
 	                        Image level = SIFT3D_PYR_IM_GET(pyr, o, s);
-	                        im.nx = dims[0];
-	                        im.ny = dims[1];
-	                        im.nz = dims[2];
-	                        im.ux = units[0];
-	                        im.uy = units[1];
-	                        im.uz = units[2];
+	                        level.nx = dims[0];
+	                        level.ny = dims[1];
+	                        level.nz = dims[2];
+	                        level.ux = units[0];
+	                        level.uy = units[1];
+	                        level.uz = units[2];
 		                level.nc = im.nc;
 		                im_default_stride(level);
 
@@ -4320,7 +4335,7 @@ public class SIFT3D extends AlgorithmBase {
 	        } 
 
 	        /* Extract descriptors */ 
-		    //status = SIFT3D_extract_descriptors(sift3d, kp, desc); 
+		    status = SIFT3D_extract_descriptors(sift3d, kp, desc); 
 		    if (status == SIFT3D_FAILURE) {
 	            System.err.println("im_Reg_SIFT3D: failed to extract descriptors"); 
 	            cleanup_Keypoint_store(kp);
@@ -4378,30 +4393,35 @@ public class SIFT3D extends AlgorithmBase {
 	        // Set the image       
 	        status = set_im_SIFT3D(sift3d, im);
 	        if (status == SIFT3D_FAILURE) {
+	        	System.err.println("SIFT3D_detect_keypoints failed on set_im_SIFT3D(sift3d, im)");
 	            return SIFT3D_FAILURE;
 	        }
 
 		// Build the GSS pyramid
 		status = build_gpyr(sift3d);
 		if (status == SIFT3D_FAILURE) {
+			System.err.println("SIFT3D_detect_keypoints failed on build_gpyr(sift3d)");
             return SIFT3D_FAILURE;
         }
 
 		// Build the DoG pyramid
 		status = build_dog(sift3d);
 		if (status == SIFT3D_FAILURE) {
+			System.err.println("SIFT3D_detect_keypoints failed on build_dog(sift3d)");
             return SIFT3D_FAILURE;
 		}
 
 		// Detect extrema
 		status = detect_extrema(sift3d, kp);
 		if (status == SIFT3D_FAILURE) {
+			System.err.println("SIFT3D_detect_keypoints failed on detect_extrema(sift3d, kp)");
             return SIFT3D_FAILURE;
 		}
 
 		// Assign orientations
-		//status = assign_orientations(sift3d, kp);
+		status = assign_orientations(sift3d, kp);
 		if (status == SIFT3D_FAILURE) {
+			System.err.println("SIFT3D_detect_keypoints failed on assign_orientations(sift3d, kp)");
             return SIFT3D_FAILURE;
 		}
 
@@ -4413,22 +4433,14 @@ public class SIFT3D extends AlgorithmBase {
 	private int set_im_SIFT3D(SIFT3DC sift3d, Image im) {
 
 	    int status;    
-		int dims_old[] = new int[IM_NDIMS];
-	        int i;
 
-		    final double data_old[] = sift3d.im.data;
 	        final Pyramid gpyr = sift3d.gpyr;
-	        final int first_octave = sift3d.gpyr.first_octave;
 	        final int num_kp_levels = gpyr.num_kp_levels;
-
-	        // Make a temporary copy the previous image dimensions
-	        dims_old[0] = sift3d.im.nx;
-	        dims_old[1] = sift3d.im.ny;
-	        dims_old[2] = sift3d.im.nz;
 
 	        // Make a copy of the input image
 	        status = im_copy_data(im, sift3d.im);
 	        if (status == SIFT3D_FAILURE) {
+	        	System.err.println("In set_im_SIFT3D failed on im_copy_data(im, sift3d.im)");
 	            return SIFT3D_FAILURE;
 	        }
 
@@ -4436,14 +4448,10 @@ public class SIFT3D extends AlgorithmBase {
 	        im_scale(sift3d.im);
 
 	        // Resize the internal data, if necessary
-	        if (data_old == null) {
-	        	return SIFT3D_FAILURE;
-	        }
-	        if ((dims_old[0] != sift3d.im.nx) || (dims_old[1] != sift3d.im.ny) || (dims_old[2] != sift3d.im.nz)) {
-	        	return SIFT3D_FAILURE;
-	        }
+	     
 	        status = resize_SIFT3D(sift3d, num_kp_levels);
 	        if (status == SIFT3D_FAILURE) {
+	        	System.err.println("In set_im_SIFT3D failed on resize_SIFT3D(sift3d, num_kp_levels)");
 	        	return SIFT3D_FAILURE;
 	        }
 	                
@@ -5449,8 +5457,9 @@ public class SIFT3D extends AlgorithmBase {
 	* used whether or not the slab buffer actually needs
 	* resizing -- it checks for that. */
 	private void SIFT3D_RESIZE_SLAB(Slab slab, int num_new) {
+		    int status;
 		    int SIFT3D_SLAB_LEN = 500;
-		    int i, j, r, c;
+		    int i, j, k, r, c;
 	        final int slabs_new = (num_new + SIFT3D_SLAB_LEN - 1) / 
 	                        SIFT3D_SLAB_LEN;
 	        final int size_new = slabs_new * SIFT3D_SLAB_LEN;
@@ -5467,45 +5476,15 @@ public class SIFT3D extends AlgorithmBase {
 				Keypoint kb[] = new Keypoint[size_new];
 				for (i = 0; i < size_new; i++) {
 					kb[i] = new Keypoint();
-					if (i < slab.buf.length) {
-					    for (j = 0; j < IM_NDIMS*IM_NDIMS; j++) {
-					    	kb[i].r_data[j] = slab.buf[i].r_data[j];
-					    }
-					    kb[i].R.num_rows = slab.buf[i].R.num_rows;
-					    kb[i].R.num_cols = slab.buf[i].R.num_cols;
-					    kb[i].R.size = slab.buf[i].R.size;
-					    kb[i].R.static_mem = slab.buf[i].R.static_mem;
-					    kb[i].R.type = slab.buf[i].R.type;
-					    if (kb[i].R.type == Mat_rm_type.SIFT3D_DOUBLE) {
-					        kb[i].R.data_double = new double[kb[i].R.num_rows][kb[i].R.num_cols];
-					        for (r = 0; r < kb[i].R.num_rows; r++) {
-					        	for (c = 0; c < kb[i].R.num_cols; c++) {
-					        		kb[i].R.data_double[r][c] = slab.buf[i].R.data_double[r][c];
-					        	}
-					        }
-					    }
-					    else if (kb[i].R.type == Mat_rm_type.SIFT3D_FLOAT) {
-					        kb[i].R.data_float = new float[kb[i].R.num_rows][kb[i].R.num_cols];
-					        for (r = 0; r < kb[i].R.num_rows; r++) {
-					        	for (c = 0; c < kb[i].R.num_cols; c++) {
-					        		kb[i].R.data_float[r][c] = slab.buf[i].R.data_float[r][c];
-					        	}
-					        }
-					    }
-					    else if (kb[i].R.type == Mat_rm_type.SIFT3D_INT) {
-					        kb[i].R.data_int = new int[kb[i].R.num_rows][kb[i].R.num_cols];
-					        for (r = 0; r < kb[i].R.num_rows; r++) {
-					        	for (c = 0; c < kb[i].R.num_cols; c++) {
-					        		kb[i].R.data_int[r][c] = slab.buf[i].R.data_int[r][c];
-					        	}
-					        }
-					    }
-					    kb[i].xd = slab.buf[i].xd;
-					    kb[i].yd = slab.buf[i].yd;
-					    kb[i].zd = slab.buf[i].zd;
-					    kb[i].sd = slab.buf[i].sd;
-					    kb[i].o = slab.buf[i].o;
-					    kb[i].s = slab.buf[i].s;
+					if (slab.buf != null) {
+						if (i < slab.buf.length) {
+							status = copy_Keypoint(slab.buf[i], kb[i]);
+							if (status == SIFT3D_FAILURE) {
+								System.err.println("In SIFT3D_RESIZE_SLAB SIFT3D_FAILURE on copy_Keypoint");
+								return;
+							}
+						    
+						}
 					}
 				} 
 				slab.buf = kb;
@@ -5519,14 +5498,1264 @@ public class SIFT3D extends AlgorithmBase {
 	 * and nothing else. If called on a valid Keypoint struct, it has no effect. */
 	private int init_Keypoint(Keypoint key) {
 	        // Initialize the orientation matrix with static memory
-		    double rarr[][] = new double[IM_NDIMS][IM_NDIMS];
-		    for (int r = 0; r < IM_NDIMS; r++) {
-		    	for (int c = 0; c < IM_NDIMS; c++) {
-		    		rarr[r][c] = key.r_data[r*IM_NDIMS + c];
-		    	}
-		    }
-	        return init_Mat_rm_p(key.R, rarr, IM_NDIMS, IM_NDIMS, 
+	        return init_Mat_rm_p(key.R, key.r_data, IM_NDIMS, IM_NDIMS, 
 			Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
 	}
+	
+	/* Assign rotation matrices to the keypoints. 
+	 * 
+	 * Note that this stage will modify kp, likely
+	 * rejecting some keypoints as orientationally
+	 * unstable. */
+	private int assign_orientations(SIFT3DC sift3d, 
+				       Keypoint_store kp) {
 
+		int status;
+		Keypoint kp_pos[];
+		int num;
+		int i, err; 
+		int r,c;
+
+		// Iterate over the keypoints 
+	        err = SIFT3D_SUCCESS;
+	//#pragma omp parallel for
+		for (i = 0; i < kp.slab.num; i++) {
+
+			Keypoint key = kp.buf[i];
+			final Image level = 
+	                        SIFT3D_PYR_IM_GET(sift3d.gpyr, key.o, key.s);
+	                Mat_rm R = key.R;
+	                Cvec vcenter = new Cvec();
+	                vcenter.x = key.xd;
+	                vcenter.y = key.yd;
+	                vcenter.z = key.zd;
+	                double sigma = ori_sig_fctr * key.sd;
+
+			// Compute dominant orientations
+	        // assert(R->u.data_float == key->r_data);
+	        for (r = 0; r < IM_NDIMS; r++) {
+	        	for (c = 0; c < IM_NDIMS; c++) {
+	        		if (R.data_double[r][c] != key.r_data[r][c]) {
+	        			System.err.println("In assign_orientations found R.data_double != key.r_data");
+	        			return SIFT3D_FAILURE;
+	        		}
+	        	}
+	        }
+			switch (assign_orientation_thresh(level, vcenter, sigma,
+	                                       sift3d.corner_thresh, R)) {
+				case SIFT3D_SUCCESS:
+					// Continue processing this keypoint
+					break;
+				case REJECT:
+					// Mark this keypoint as invalid
+	                                key.xd = key.yd = key.zd = -1.0;
+	                                continue;
+				default:
+					// Any other return value is an error
+	                                err = SIFT3D_FAILURE;
+	                                continue;
+			}
+			
+		}
+
+	        // Check for errors
+	        if (err != 0) return err;
+
+	        // Rebuild the keypoint buffer in place
+		    num = 0; 
+	        for (i = 0; i < kp.slab.num; i++) {
+
+			Keypoint key = kp.buf[i];
+
+	                // Check if the keypoint is valid
+	                if (key.xd < 0.0)
+	                        continue;
+
+	                // Copy this keypoint to the next available spot
+	                status = copy_Keypoint(key, kp.buf[num]);
+	                if (status == SIFT3D_FAILURE) {
+	                        return SIFT3D_FAILURE;
+	                }
+	               
+	                num++;
+	        }
+
+		// Release unneeded keypoint memory
+	        return resize_Keypoint_store(kp, num);
+	}
+	
+	/* Copy one Keypoint struct into another. */
+	int copy_Keypoint(Keypoint src, Keypoint dst) {
+
+	        // Copy the shallow data 
+	        dst.xd = src.xd;
+	        dst.yd = src.yd;
+	        dst.zd = src.zd;
+	        dst.sd = src.sd;
+	        dst.o = src.o;
+	        dst.s = src.s;
+	        for (int r = 0; r < IM_NDIMS; r++) {
+	        	for (int c = 0; c < IM_NDIMS; c++) {
+	        		dst.r_data[r][c] = src.r_data[r][c];
+	        	}
+	        }
+
+	        // Copy the orienation matrix
+	        return copy_Mat_rm(src.R, dst.R);
+	}
+	
+	/* Helper function to call assign_eig_ori, and reject keypoints with
+	 * confidence below the parameter "thresh." All other parameters are the same.
+	 * All return values are the same, except REJECT is returned if 
+	 * conf < thresh. */
+	private int assign_orientation_thresh(Image im, 
+	        Cvec vcenter, double sigma, double thresh,
+	        Mat_rm R) {
+
+	        double conf[] = new double[1];
+	        int ret;
+
+	        ret = assign_eig_ori(im, vcenter, sigma, R, conf);
+
+	        return ret == SIFT3D_SUCCESS ? 
+	                (conf[0] < thresh ? REJECT : SIFT3D_SUCCESS) : ret;
+	}
+
+
+	/* Assign an orientation to a point in an image.
+	 *
+	 * Parameters:
+	 *   -im: The image data.
+	 *   -vcenter: The center of the window, in image space.
+	 *   -sigma: The scale parameter. The width of the window is a constant
+	 *      multiple of this.
+	 *   -R: The place to write the rotation matrix.
+	 */
+	private int assign_eig_ori(Image im, Cvec vcenter,
+	                          double sigma, Mat_rm R, 
+	                          double conf[]) {
+
+	    int status;
+		Cvec v[] = new Cvec[2];
+	    v[0] = new Cvec();
+	    v[1] = new Cvec();
+	    Mat_rm A = new Mat_rm();
+	    Mat_rm L = new Mat_rm();
+	    Mat_rm Q = new Mat_rm();
+	    Cvec vdisp = new Cvec();
+	    Cvec vd_win = new Cvec();
+	    Cvec vr = new Cvec();
+	    double d, cos_ang, abs_cos_ang, corner_score;
+	    double weight, sq_dist, sgn;
+	    int i, x, y, z, m;
+	  
+	    final double win_radius = sigma * ori_rad_fctr; 
+
+	    // Verify inputs
+	    if (!SIFT3D_IM_CONTAINS_CVEC(im, vcenter)) {
+	        System.err.println("assign_eig_ori: vcenter (" + vcenter.x + ", " + vcenter.y + ", " + vcenter.z+") lies ");
+	        System.err.println("outside the boundaries of im [" + im.nx + " x " + im.ny + " x " + im.nz + "]"); 
+	        return SIFT3D_FAILURE;
+	    }
+	    if (sigma < 0) {
+	        System.err.println("assign_eig_ori: invalid sigma: " + sigma);
+	        return SIFT3D_FAILURE;
+	    }
+
+	    // Initialize the intermediates
+	    status = init_Mat_rm(A, 3, 3, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_TRUE);
+	    if (status == SIFT3D_FAILURE) {
+	        return SIFT3D_FAILURE;
+	    }
+	    status = init_Mat_rm(L, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_TRUE);
+	    if (status == SIFT3D_FAILURE) {
+	    	 if (conf != null)
+	 	        conf[0] = 0.0;
+	 	    cleanup_Mat_rm(A);
+	 	    cleanup_Mat_rm(Q);
+	 	    cleanup_Mat_rm(L);
+	 	    return SIFT3D_FAILURE;
+	    }
+		status = init_Mat_rm(Q, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_TRUE);
+		if (status == SIFT3D_FAILURE) {
+	    	 if (conf != null)
+	 	        conf[0] = 0.0;
+	 	    cleanup_Mat_rm(A);
+	 	    cleanup_Mat_rm(Q);
+	 	    cleanup_Mat_rm(L);
+	 	    return SIFT3D_FAILURE;
+	    }
+
+	    // Resize the output
+	    R.num_rows = R.num_cols = IM_NDIMS;
+	    R.type = Mat_rm_type.SIFT3D_DOUBLE;
+	    status = resize_Mat_rm(R);
+	    if (status == SIFT3D_FAILURE) {
+	    	 if (conf != null)
+	 	        conf[0] = 0.0;
+	 	    cleanup_Mat_rm(A);
+	 	    cleanup_Mat_rm(Q);
+	 	    cleanup_Mat_rm(L);
+	 	    return SIFT3D_FAILURE;
+	    }
+
+	    // Form the structure tensor and window gradient
+	    vd_win.x = 0.0;
+	    vd_win.y = 0.0;
+	    vd_win.z = 0.0;
+	    final double uxf = im.ux;
+        final double uyf = im.uy;
+        final double uzf = im.uz;
+	    final int x_start = (int)Math.max(Math.floor(vcenter.x - win_radius / uxf), 1);
+	    final int x_end   = (int)Math.min(Math.ceil(vcenter.x + win_radius / uxf),
+                im.nx - 2);
+	    final int y_start = (int)Math.max(Math.floor(vcenter.y - win_radius / uyf), 1);
+	    final int y_end   = (int)Math.min(Math.ceil(vcenter.y + win_radius / uyf),
+                im.ny - 2);
+        final int z_start = (int)Math.max(Math.floor(vcenter.z - win_radius / uzf), 1);
+	    final int z_end   = (int)Math.min(Math.ceil(vcenter.z + win_radius / uzf),
+                im.nz - 2); 
+	    Cvec vd = new Cvec();
+	    for (z = z_start; z <= z_end; z++) {
+	    	for (y = y_start; y <= y_end; y++) {
+	    		for (x = x_start; x <= x_end; x++) {
+                vdisp.x = (x - vcenter.x) * uxf;
+                vdisp.y = (y - vcenter.y) * uyf;
+                vdisp.z = (z - vcenter.z) * uzf;
+                sq_dist = SIFT3D_CVEC_L2_NORM_SQ(vdisp);
+                if (sq_dist > win_radius * win_radius) 
+	                continue; 
+	        
+
+		// Compute Gaussian weighting, ignoring the constant factor
+		weight = Math.exp(-0.5 * sq_dist / (sigma * sigma));		
+
+		// Get the gradient	
+		IM_GET_GRAD_ISO(im, x, y, z, 0, vd);
+
+		// Update the structure tensor
+		A.data_double[0][0] += vd.x * vd.x * weight;
+		A.data_double[0][1] += vd.x * vd.y * weight;
+		A.data_double[0][2] += vd.x * vd.z * weight;
+		A.data_double[1][1] += vd.y * vd.y * weight;
+		A.data_double[1][2] += vd.y * vd.z * weight;
+		A.data_double[2][2] += vd.z * vd.z * weight;
+
+		// Update the window gradient
+	    SIFT3D_CVEC_SCALE(vd, weight);
+		SIFT3D_CVEC_PLUS(vd_win, vd, vd_win);
+
+	    		}
+	    	}
+	    }
+
+	    // Fill in the remaining elements
+	    A.data_double[1][0] = A.data_double[0][1];
+	    A.data_double[2][0] = A.data_double[0][2];
+	    A.data_double[2][1] = A.data_double[1][2];
+
+	    // Reject keypoints with weak gradient 
+	    if (SIFT3D_CVEC_L2_NORM_SQ(vd_win) < ori_grad_thresh) {
+	    	if (conf != null)
+		        conf[0] = 0.0;
+		    cleanup_Mat_rm(A);
+		    cleanup_Mat_rm(Q);
+		    cleanup_Mat_rm(L);
+		    return REJECT;
+	    } 
+
+	    // Get the eigendecomposition
+	    status = eigen_Mat_rm(A, Q, L);
+	    if (status == SIFT3D_FAILURE) {
+	    	 if (conf != null)
+	 	        conf[0] = 0.0;
+	 	    cleanup_Mat_rm(A);
+	 	    cleanup_Mat_rm(Q);
+	 	    cleanup_Mat_rm(L);
+	 	    return SIFT3D_FAILURE;
+	    }
+
+	    // Ensure we have distinct eigenvalues
+	    m = L.num_rows;
+	    if (m != 3) {
+	    	if (conf != null)
+		        conf[0] = 0.0;
+		    cleanup_Mat_rm(A);
+		    cleanup_Mat_rm(Q);
+		    cleanup_Mat_rm(L);
+		    return REJECT;
+	    }
+
+	    // Test the eigenvectors for stability
+	    for (i = 0; i < m - 1; i++) {
+			if (Math.abs(L.data_double[i][0] /
+				 L.data_double[i + 1][0]) > max_eig_ratio) {
+				if (conf != null)
+			        conf[0] = 0.0;
+			    cleanup_Mat_rm(A);
+			    cleanup_Mat_rm(Q);
+			    cleanup_Mat_rm(L);
+			    return REJECT;
+			}
+	    }
+
+	    // Assign signs to the first n - 1 vectors
+	    corner_score = Double.MAX_VALUE;
+	    for (i = 0; i < m - 1; i++) {
+
+		final int eig_idx = m - i - 1;
+
+		// Get an eigenvector, in descending order
+		vr.x = Q.data_double[0][eig_idx];
+		vr.y = Q.data_double[1][eig_idx];
+		vr.z = Q.data_double[2][eig_idx];
+
+		// Get the directional derivative
+		d = SIFT3D_CVEC_DOT(vd_win, vr);
+
+	        // Get the cosine of the angle between the eigenvector and the gradient
+	        cos_ang = d / (SIFT3D_CVEC_L2_NORM(vr) * SIFT3D_CVEC_L2_NORM(vd_win));
+	        abs_cos_ang = Math.abs(cos_ang);
+
+	        // Compute the corner confidence score
+	        corner_score = Math.min(corner_score, abs_cos_ang);
+
+		// Get the sign of the derivative
+	        sgn = d > 0.0 ? 1.0 : -1.0;
+
+		// Enforce positive directional derivative
+		SIFT3D_CVEC_SCALE(vr, sgn);
+
+		// Add the vector to the rotation matrix
+		R.data_double[0][i] = vr.x;
+		R.data_double[1][i] = vr.y;
+		R.data_double[2][i] = vr.z;
+
+		// Save this vector for later use
+		v[i] = vr;
+	    }
+
+	    // Take the cross product of the first two vectors
+	    SIFT3D_CVEC_CROSS(v[0], v[1], vr);
+
+	    // Add the last vector
+	    R.data_double[0][2] = vr.x;
+	    R.data_double[1][2] = vr.y;
+	    R.data_double[2][2] = vr.z;
+
+	    // Optionally write back the corner score
+	    if (conf != null)
+	        conf[0] = corner_score;
+
+	    cleanup_Mat_rm(A);
+	    cleanup_Mat_rm(Q);
+	    cleanup_Mat_rm(L);
+	    return SIFT3D_SUCCESS; 
+	}
+  
+	// Evaluates to true (nonzero) if im contains cvec, false otherwise
+	private boolean SIFT3D_IM_CONTAINS_CVEC(Image im, Cvec cvec) {
+	       return ((cvec.x >= 0) && (cvec.y >= 0) && (cvec.z >= 0) &&
+	        (cvec.x < im.nx) &&
+	        (cvec.y < im.ny) &&
+	        (cvec.z < im.nz));
+	}
+	
+	// Return the square of the  L2 norm of a Cartesian coordinate vector
+	private double SIFT3D_CVEC_L2_NORM_SQ(Cvec cvec) {
+		return(cvec.x * cvec.x + cvec.y * cvec.y +
+		cvec.z * cvec.z);
+	}
+	
+	// As SIFT3D_IM_GET_GRAD, but with physical units (1, 1, 1)
+	private void IM_GET_GRAD_ISO(Image im, int x, int y, int z, int c, Cvec vd) {
+	        SIFT3D_IM_GET_GRAD(im, x, y, z, c, vd);
+	        vd.x *=  1.0 / im.ux;
+	        vd.y *= 1.0 / im.uy;
+	        vd.z *= 1.0 / im.uz;
+	}
+	
+	/* Take the Cartesian gradient of an image at [x, y, z, c]. The voxel cannot be
+	 * on the boundary. */
+	private void SIFT3D_IM_GET_GRAD(Image im, int x, int y, int z, int c, Cvec vd) {
+			vd.x = 0.5 * (im.data[(x+1)*im.xs + y*im.ys + z*im.zs + c] -
+					im.data[(x-1)*im.xs + y*im.ys + z*im.zs + c]);
+			vd.y = 0.5 * (im.data[x*im.xs + (y+1)*im.ys + z*im.zs + c] -
+					im.data[x*im.xs + (y-1)*im.ys + z*im.zs + c]);
+			vd.z = 0.5 * (im.data[x*im.xs + y*im.ys + (z+1)*im.zs + c] -
+					im.data[x*im.xs + y*im.ys + (z-1)*im.zs + c]);
+	}
+	
+	/* Computes the eigendecomposition of a real symmetric matrix, 
+	 * A = Q * diag(L) * Q', where Q is a real orthogonal matrix and L is a real 
+	 * diagonal matrix.
+	 *
+	 * A must be an [nxn] matrix. Q is [nxm], where m is in the interval [1, n],
+	 * depending on the values of A. L is [nx1], where the first m elements are
+	 * sorted in ascending order. The remaining n - m elements are zero. 
+	 * 
+	 * If Q is NULL, the eigenvectors will not be computed.
+	 *
+	 * The eigendecomposition is computed by divide and conquer.
+	 * 
+	 * This function resizes all non-null outputs and sets their type to double.
+	 *
+	 * This function does not ensure that A is symmetric.
+	 *
+	 * All matrices must be initialized prior to calling this funciton.
+	 * All matrices must have type double.
+	 *
+	 * Note: This function computes all of the eigenvalues, to a high degree of 
+	 * accuracy. A faster implementation is possible if you do not need high
+	 * precision, or if you do not need all of the eigenvalues, or if you do not 
+	 * need eigenvalues outside of some interval. 
+	 */
+	private int eigen_Mat_rm(Mat_rm A, Mat_rm Q, Mat_rm L)
+	{
+        int status;
+		Mat_rm A_trans = new Mat_rm();
+		double work[];
+		int iwork[];
+		double lwork_ret;
+		int info[] = new int[1];
+		int lwork, liwork;
+
+		final char jobz = Q == null ? 'N' : 'V';
+		final char uplo = 'U';
+		final int n = A.num_cols;
+		final int lda = n;
+		final int lwork_query = -1;
+		final int liwork_query = -1;
+
+		// Verify inputs
+		if (A.num_rows != n) {
+			System.err.println("eigen_Mat_rm: A be square");
+			return SIFT3D_FAILURE;
+		}
+		if (A.type != Mat_rm_type.SIFT3D_DOUBLE) {
+			System.err.println("eigen_Mat_rm: A must have type double");
+			return SIFT3D_FAILURE;
+		}
+		// Resize outputs
+		L.num_rows = n;
+		L.num_cols = 1;
+		L.type = Mat_rm_type.SIFT3D_DOUBLE;
+		status = resize_Mat_rm(L);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+		// Initialize intermediate matrices and buffers
+		work = null;
+		iwork = null;
+		status = init_Mat_rm(A_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+		if (status == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(A_trans);
+			return SIFT3D_FAILURE;
+		}
+
+		// Copy the input matrix (A = A')
+		status = copy_Mat_rm(A, A_trans);
+		if (status == SIFT3D_FAILURE) {
+			cleanup_Mat_rm(A_trans);
+			return SIFT3D_FAILURE;
+		}
+
+		// Query for the workspace sizes
+		/*dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
+			&lwork_ret, &lwork_query, &liwork, &liwork_query, &info);
+
+		if ((int32_t) info) {
+			printf
+			    ("eigen_Mat_rm: LAPACK dsyevd workspace query error code %d",
+			     info);
+			goto EIGEN_MAT_RM_QUIT;
+		}
+		// Allocate work spaces 
+		lwork = (fortran_int) lwork_ret;
+		if ((work = (double *)malloc(lwork * sizeof(double))) == NULL ||
+		    (iwork =
+		     (fortran_int *) malloc(liwork * sizeof(fortran_int))) == NULL)
+			goto EIGEN_MAT_RM_QUIT;
+
+		// Compute the eigendecomposition
+		dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
+			work, &lwork, iwork, &liwork, &info);
+
+		if ((int32_t) info) {
+			printf("eigen_Mat_rm: LAPACK dsyevd error code %d", (int) info);
+			goto EIGEN_MAT_RM_QUIT;
+		}
+		// Optionally return the eigenvectors
+		if (Q != NULL && transpose_Mat_rm(&A_trans, Q))
+			goto EIGEN_MAT_RM_QUIT;
+
+		free(work);
+		free(iwork);
+		cleanup_Mat_rm(&A_trans);*/
+		return SIFT3D_SUCCESS;
+
+	 /*EIGEN_MAT_RM_QUIT:
+		if (work != NULL)
+			free(work);
+		if (iwork != NULL)
+			free(iwork);
+		cleanup_Mat_rm(&A_trans);
+		return SIFT3D_FAILURE;*/
+	}
+
+	/* Extract SIFT3D descriptors from a list of keypoints. Uses the Gaussian
+	 * scale-space pyramid from the previous call to SIFT3D_detect_keypoints on
+	 * this SIFT3D struct. To extract from an image, see 
+	 * SIFT3D_extract_raw_descriptors. 
+	 *
+	 * Note: To check if SIFT3D_detect_keypoints has been called on this struct,
+	 * use SIFT3D_have_gpyr.
+	 *
+	 * Parameters:
+	 *  sift3d - (initialized) struct defining the algorithm parameters. Must have
+	 *      been used in some previous call to SIFT3D_detect_keypoints.
+	 *  kp - keypoint list populated by a feature detector 
+	 *  desc - (initialized) struct to hold the descriptors
+	 *
+	 * Return value:
+	 *  Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise.
+	 */
+	private int SIFT3D_extract_descriptors(SIFT3DC sift3d, 
+	        Keypoint_store kp, 
+	        SIFT3D_Descriptor_store desc) {
+
+		int status;
+		// Verify inputs
+		status = verify_keys(kp, sift3d.im);
+		if (status == SIFT3D_FAILURE) {
+			return SIFT3D_FAILURE;
+		}
+
+	        // Check if a Gaussian scale-space pyramid is available for processing
+	        status = SIFT3D_have_gpyr(sift3d);
+	        if (status == SIFT3D_FAILURE) {
+	                System.err.println("SIFT3D_extract_descriptors: no Gaussian pyramid is ");
+	                System.err.println("available. Make sure SIFT3D_detect_keypoints was ");
+	                System.err.println("called prior to calling this function.");
+	                return SIFT3D_FAILURE;
+	        }
+
+	        // Extract features
+	        status = _SIFT3D_extract_descriptors(sift3d, sift3d.gpyr, kp, desc);
+	        if (status == SIFT3D_FAILURE) {
+	                return SIFT3D_FAILURE;
+	        }
+
+	        return SIFT3D_SUCCESS;
+	}
+	
+	/* Verify that keypoints kp are valid in image im. Returns SIFT3D_SUCCESS if
+	 * valid, SIFT3D_FAILURE otherwise. */
+	private int verify_keys(Keypoint_store kp, Image im) {
+
+	        int i;
+
+		final int num = kp.slab.num;
+
+		// Check the number of keypoints
+		if (num < 1) {
+			System.err.println("verify_keys: invalid number of keypoints: " + num);
+			return SIFT3D_FAILURE;
+		}
+
+		// Check each keypoint
+	        for (i = 0; i < num; i++) {
+
+	                Keypoint key = kp.buf[i];
+
+	                double octave_factor = Math.pow(2.0, key.o);
+
+	                if (key.xd < 0 ||
+	                        key.yd < 0 ||
+	                        key.zd < 0 ||
+	                        key.xd * octave_factor >= (double)im.nx || 
+	                        key.yd * octave_factor >= (double)im.ny || 
+	                        key.zd * octave_factor >= (double) im.nz) {
+	                        System.err.println("verify_keys: keypoint " + i + " (" +key.xd + ", " + key.yd + ", " + key.zd + ") ");
+	                        System.err.println("octave " + key.o + " exceeds image dimensions ");
+	                        System.err.println("(" + im.nx + ", " +  im.ny + ", " + im.nz + ")");
+	                        return SIFT3D_FAILURE; 
+	                }
+
+	                if (key.sd <= 0) {
+	                        System.err.println("verify_keys: keypoint " + i + " has invalid scale " + key.sd);
+	                        return SIFT3D_FAILURE;
+	                }
+	        }
+
+	        return SIFT3D_SUCCESS;
+	}
+	
+	/* Check if the Gaussian scale-space pyramid in a SIFT3D struct is valid. This
+	 * shall return SIFT3D_TRUE if the struct was initialized, and 
+	 * SIFT3D_detect_keypoints has been successfully called on it since 
+	 * initialization. 
+	 *
+	 * Note: sift3d must be initialized before calling this function. */
+	private int SIFT3D_have_gpyr(SIFT3DC sift3d) {
+
+	        final Pyramid gpyr = sift3d.gpyr;
+
+	        if (gpyr.levels != null && gpyr.num_levels != 0 && 
+	                gpyr.num_octaves != 0) {
+	        	return SIFT3D_SUCCESS;
+	        }
+	        else {
+	        	return SIFT3D_FAILURE;
+	        }
+	}
+	
+	/* Helper funciton to extract SIFT3D descriptors from a list of keypoints and 
+	 * an image. Called by SIFT3D_extract_descriptors and 
+	 * SIFT3D_extract_raw_descriptors.
+	 *
+	 * parameters:
+	 *  sift3d - (initialized) struct defining the algorithm parameters
+	 *  gpyr - A Gaussian Scale-Space pyramid containing the image data
+	 *  kp - keypoint list populated by a feature detector 
+	 *  desc - (initialized) struct to hold the descriptors
+	 *  use_gpyr - see im for details */
+	private int _SIFT3D_extract_descriptors(SIFT3DC sift3d, 
+	        Pyramid gpyr, Keypoint_store kp, 
+	        SIFT3D_Descriptor_store desc) {
+
+		int status;
+		int i, ret;
+
+		final Image first_level = 
+	                SIFT3D_PYR_IM_GET(gpyr, gpyr.first_octave, gpyr.first_level);
+
+		final int num = kp.slab.num;
+
+		// Initialize the metadata 
+		desc.nx = first_level.nx;	
+		desc.ny = first_level.ny;	
+		desc.nz = first_level.nz;	
+
+		// Resize the descriptor store
+	    status = resize_SIFT3D_Descriptor_store(desc, num);
+	    if (status == SIFT3D_FAILURE) {
+	                return SIFT3D_FAILURE;
+	    }
+
+	        // Extract the descriptors
+	        ret = SIFT3D_SUCCESS;
+	//#pragma omp parallel for
+		for (i = 0; i < desc.num; i++) {
+
+	                Keypoint key = kp.buf[i];
+			SIFT3D_Descriptor descrip = desc.buf[i];
+			Image level = 
+	                        SIFT3D_PYR_IM_GET(gpyr, key.o, key.s);
+
+			status = extract_descrip(sift3d, level, key, descrip);
+			if (status == SIFT3D_FAILURE) {
+	               ret = SIFT3D_FAILURE;
+	         }
+		}	
+
+		return ret;
+	}
+
+	/* Resize a SIFT3D_Descriptor_store to hold n descriptors. Must be initialized
+	 * prior to calling this function. num must be positive.
+	 *
+	 * Returns SIFT3D_SUCCESS on success, SIFT3D_FAILURE otherwise. */
+	private int resize_SIFT3D_Descriptor_store(SIFT3D_Descriptor_store desc,
+	        int num) {
+
+	        if (num < 1) {
+	                System.err.println("resize_SIFT3D_Descriptor_store: invalid size: " + num);
+	                return SIFT3D_FAILURE;
+	        }
+
+		    SIFT3D_Descriptor newbuf[] = new SIFT3D_Descriptor[num];
+		    for (int i = 0; i < num; i++) {
+		    	newbuf[i] = new SIFT3D_Descriptor();
+		    	if (i < desc.buf.length) {
+		    	    newbuf[i].xd = desc.buf[i].xd;
+		    	    newbuf[i].yd = desc.buf[i].yd;
+		    	    newbuf[i].zd = desc.buf[i].zd;
+		    	    newbuf[i].sd = desc.buf[i].sd;
+		    	    for (int j = 0; j < DESC_NUM_TOTAL_HIST; j++) {
+		    	        for (int k = 0; k < HIST_NUMEL; k++) {
+		    	        	newbuf[i].hists[j].bins[k] = desc.buf[i].hists[j].bins[k];
+		    	        }
+		    	    }
+		    	}
+		    }
+	        desc.buf = newbuf;
+
+		desc.num = num;
+	        return SIFT3D_SUCCESS;
+	}
+	
+	/* Helper routine to extract a single SIFT3D descriptor */
+	private int extract_descrip(SIFT3DC sift3d, Image im,
+		   Keypoint key, SIFT3D_Descriptor desc) {
+
+	    int status;
+		double buf[][] = new double[IM_NDIMS][IM_NDIMS];
+	    Mat_rm Rt = new Mat_rm();
+		Cvec vcenter = new Cvec();
+		Cvec vim = new Cvec();
+		Cvec vkp = new Cvec();
+		Cvec vbins = new Cvec();
+		Cvec grad = new Cvec();
+		Cvec grad_rot = new Cvec();
+		Hist hist;
+		double weight, sq_dist;
+		int i, x, y, z, a, p;
+
+		// Compute basic parameters 
+	    final double sigma = key.sd * desc_sig_fctr;
+		final double win_radius = desc_rad_fctr * sigma;
+		final double desc_half_width = win_radius / Math.sqrt(2);
+		final double desc_width = 2.0 * desc_half_width;
+	    final double desc_hist_width = desc_width / NHIST_PER_DIM;
+		final double desc_bin_fctr = 1.0 / desc_hist_width;
+		final double coord_factor = Math.pow(2.0, key.o);
+
+	        // Invert the rotation matrix
+	    status = init_Mat_rm_p(Rt, buf, IM_NDIMS, IM_NDIMS, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
+	    if (status == SIFT3D_FAILURE) {
+	    	return SIFT3D_FAILURE;
+	    }
+	    status = transpose_Mat_rm(key.R, Rt);
+	    if (status == SIFT3D_FAILURE) {
+	        return SIFT3D_FAILURE;
+	    }
+
+		// Zero the descriptor
+		for (i = 0; i < DESC_NUM_TOTAL_HIST; i++) {
+			hist = desc.hists[i];
+	                hist_zero(hist);
+		}
+
+		// Iterate over a sphere window in real-world coordinates 
+		vcenter.x = key.xd;
+		vcenter.y = key.yd;
+		vcenter.z = key.zd;
+		final double uxf = im.ux;
+        final double uyf = im.uy;
+        final double uzf = im.uz;
+	    final int x_start = (int)Math.max(Math.floor(vcenter.x - win_radius / uxf), 1);
+	    final int x_end   = (int)Math.min(Math.ceil(vcenter.x + win_radius / uxf),
+                im.nx - 2);
+	    final int y_start = (int)Math.max(Math.floor(vcenter.y - win_radius / uyf), 1);
+	    final int y_end   = (int)Math.min(Math.ceil(vcenter.y + win_radius / uyf),
+                im.ny - 2);
+        final int z_start = (int)Math.max(Math.floor(vcenter.z - win_radius / uzf), 1);
+	    final int z_end   = (int)Math.min(Math.ceil(vcenter.z + win_radius / uzf),
+                im.nz - 2); 
+	    for (z = z_start; z <= z_end; z++) {
+	    	for (y = y_start; y <= y_end; y++) {
+	    		for (x = x_start; x <= x_end; x++) {
+                vim.x = (x - vcenter.x) * uxf;
+                vim.y = (y - vcenter.y) * uyf;
+                vim.z = (z - vcenter.z) * uzf;
+                sq_dist = SIFT3D_CVEC_L2_NORM_SQ(vim);
+                if (sq_dist > win_radius * win_radius) 
+	                continue; 
+
+			// Rotate to keypoint space
+			SIFT3D_MUL_MAT_RM_CVEC(Rt, vim, vkp);		
+
+			// Compute spatial bins
+			vbins.x = (vkp.x + desc_half_width) * desc_bin_fctr;
+			vbins.y = (vkp.y + desc_half_width) * desc_bin_fctr;
+			vbins.z = (vkp.z + desc_half_width) * desc_bin_fctr;
+
+			// Reject points outside the rectangular descriptor 
+			if (vbins.x < 0 || vbins.y < 0 || vbins.z < 0 ||
+				vbins.x >= (float) NHIST_PER_DIM ||
+				vbins.y >= (float) NHIST_PER_DIM ||
+				vbins.z >= (float) NHIST_PER_DIM)
+				continue;
+
+			// Take the gradient
+			IM_GET_GRAD_ISO(im, x, y, z, 0, grad);
+
+			// Apply a Gaussian window
+			weight = Math.exp(-0.5 * sq_dist / (sigma * sigma));
+			SIFT3D_CVEC_SCALE(grad, weight);
+
+	                // Rotate the gradient to keypoint space
+			SIFT3D_MUL_MAT_RM_CVEC(Rt, grad, grad_rot);
+
+			// Finally, accumulate bins by 5x linear interpolation
+			SIFT3D_desc_acc_interp(sift3d, vbins, grad_rot, desc);
+	    		}
+	    	}
+	    }
+
+		// Histogram refinement steps
+		for (i = 0; i < DESC_NUM_TOTAL_HIST; i++) {
+			refine_Hist(desc.hists[i]);
+		}
+
+		// Normalize the descriptor
+		normalize_desc(desc);
+
+		// Truncate
+		for (i = 0; i < DESC_NUM_TOTAL_HIST; i++) {
+			hist = desc.hists[i];
+			
+			 if (ICOS_HIST) {
+	            	for (a = 0; a < HIST_NUMEL; a++) {
+	            	    hist.bins[a] = Math.min(hist.bins[a], trunc_thresh);	
+	            	}
+	            }
+	            else {
+	            	for (p = 0; p < NBINS_PO; p++) {
+	            		for (a = 0; a < NBINS_AZ; a++) {
+	            		    hist.bins[a + p * NBINS_AZ]	= Math.min(hist.bins[a + p * NBINS_AZ], trunc_thresh);
+	            		}
+	            	}
+	            }
+		}
+
+		// Normalize again
+		normalize_desc(desc);
+
+		// Save the descriptor location in the original image
+		// coordinates
+		desc.xd = key.xd * coord_factor;
+		desc.yd = key.yd * coord_factor;
+		desc.zd = key.zd * coord_factor;
+		desc.sd = key.sd;
+
+	        return SIFT3D_SUCCESS;
+	}
+	
+	/* Set a histogram to zero */
+	private void hist_zero(Hist hist) {
+
+	        int a, p;
+            if (ICOS_HIST) {
+            	for (a = 0; a < HIST_NUMEL; a++) {
+            	    hist.bins[a] = 0.0;	
+            	}
+            }
+            else {
+            	for (p = 0; p < NBINS_PO; p++) {
+            		for (a = 0; a < NBINS_AZ; a++) {
+            		    hist.bins[a + p * NBINS_AZ]	= 0.0;
+            		}
+            	}
+            }
+	}
+
+	/* Computes v_out = mat * v_in. Note that mat must be of FLOAT
+	 * type, since this is the only type available for vectors. 
+	 * Also note that mat must be (3 x 3). */
+	private void SIFT3D_MUL_MAT_RM_CVEC(Mat_rm mat, Cvec v_in, Cvec v_out) {
+		v_out.x = mat.data_double[0][0] * v_in.x +
+		    	     mat.data_double[0][1] * v_in.y +
+	                 mat.data_double[0][2] * v_in.z;
+		
+		v_out.y = mat.data_double[1][0] * v_in.x +
+	              mat.data_double[1][1] * v_in.y +
+	              mat.data_double[1][2] * v_in.z;
+		
+		v_out.z = mat.data_double[2][0] * v_in.x + 
+	              mat.data_double[2][1] * v_in.y +
+	              mat.data_double[2][2] * v_in.z;
+	}
+	
+	/* Helper routine to interpolate over the histograms of a
+	 * SIFT3D descriptor. */
+	private void SIFT3D_desc_acc_interp(SIFT3DC sift3d, 
+					Cvec vbins, 
+				    Cvec grad,
+					SIFT3D_Descriptor desc) {
+
+		int status;
+		Cvec dvbins = new Cvec();
+		Hist hist;
+		double weight;
+		int dx, dy, dz, x, y, z;
+
+	//#ifdef ICOS_HIST
+		Cvec bary = new Cvec();
+		double mag = 0.0;
+		int bin[] = new int[1];;	
+	//#else
+		Svec sbins = null;
+		Svec dsbins = null;
+		int da, dp, a, p;
+	//#endif
+		Mesh mesh = null;
+
+		final int y_stride = NHIST_PER_DIM;
+		final int z_stride = NHIST_PER_DIM * NHIST_PER_DIM; 
+
+		// Compute difference from integer bin values
+		dvbins.x = vbins.x - Math.floor(vbins.x);
+		dvbins.y = vbins.y - Math.floor(vbins.y);
+		dvbins.z = vbins.z - Math.floor(vbins.z);
+
+		// Compute the histogram bin
+	if (ICOS_HIST) {
+		mesh = sift3d.mesh;
+
+		// Get the index of the intersecting face 
+		status = icos_hist_bin(sift3d, grad, bary, bin);
+		if (status == SIFT3D_FAILURE) {
+			return;
+		}
+		
+		// Get the magnitude of the vector
+		mag = SIFT3D_CVEC_L2_NORM(grad);
+	}
+
+	else {
+		sbins = new Svec();
+		dsbins = new Svec();
+		status = Cvec_to_sbins(grad, sbins);
+		if (status == SIFT3D_FAILURE) {
+			return;
+		}
+		dsbins.az = sbins.az - Math.floor(sbins.az);
+		dsbins.po = sbins.po - Math.floor(sbins.po);
+	}
+		
+		for (dx = 0; dx < 2; dx++) {
+		for (dy = 0; dy < 2; dy++) {
+	        for (dz = 0; dz < 2; dz++) {
+
+	                x = (int) vbins.x + dx;
+	                y = (int) vbins.y + dy;
+	                z = (int) vbins.z + dz;
+
+	                // Check boundaries
+	                if (x < 0 || x >= NHIST_PER_DIM ||
+	                        y < 0 || y >= NHIST_PER_DIM ||
+	                        z < 0 || z >= NHIST_PER_DIM)
+	                        continue;
+
+	                // Get the histogram
+	                hist = desc.hists[x + y * y_stride + z * z_stride];	
+
+	                if (x + y * y_stride + z * z_stride >= DESC_NUM_TOTAL_HIST) {
+	                	System.err.println("In SIFT3D_desc_acc_interp x + y * y_stride + z * z_stride >= DESC_NUM_TOTAL_HIST");
+	                	return;
+	                }
+	                
+
+	                // Get the spatial interpolation weight
+	                weight = ((dx == 0) ? (1.0f - dvbins.x) : dvbins.x) *
+	                        ((dy == 0) ? (1.0f - dvbins.y) : dvbins.y) *
+	                        ((dz == 0) ? (1.0f - dvbins.z) : dvbins.z);
+
+	                /* Add the value into the histogram */
+	if (ICOS_HIST) {
+	                if (HIST_NUMEL != ICOS_NVERT) {
+	                	System.err.println("In SIFT3D_desc_acc_interp HIST_NUMEL != ICOS_NVERT");
+	                	return;
+	                }
+	                if (bin[0] < 0 || bin[0] >= ICOS_NFACES) {
+	                    System.err.println("In SIFT3D_desc_acc_interp bin[0] < 0 || bin[0] >= ICOS_NFACES");
+	                    return;
+	                }
+
+	                // Interpolate over three vertices
+	                hist.bins[mesh.tri[bin[0]].idx[0]] += mag * weight * bary.x;
+	                hist.bins[mesh.tri[bin[0]].idx[1]] += mag * weight * bary.y;
+	                hist.bins[mesh.tri[bin[0]].idx[2]] += mag * weight * bary.z; 
+	}
+	else {
+	                // Iterate over all angles
+	                for (dp = 0; dp < 2; dp ++) {
+	                for (da = 0; da < 2; da ++) {
+
+	                        a = ((int) sbins.az + da) % NBINS_AZ;
+	                        p = (int) sbins.po + dp;
+	                        if (p >= NBINS_PO) {
+	                                // See HIST_GET_PO
+	                                a = (a + NBINS_AZ / 2) % NBINS_AZ;
+	                                p = NBINS_PO - 1;
+	                        }
+			
+	                        if (a < 0) {
+	                        	System.err.println("In SIFT3D_desc_acc_interp a < 0");
+	                        	return;
+	                        }
+	                        if (a >= NBINS_AZ) {
+	                        	System.err.println("In SIFT3D_desc_acc_interp a >= NBINS_AZ");
+	                        	return;
+	                        }
+	                        if (p < 0) {
+	                        	System.err.println("In SIFT3D_desc_acc_interp p < 0");
+	                        	return;
+	                        }
+	                        if (p >= NBINS_PO) {
+	                        	System.err.println("In SIFT3D_desc_acc_interp p >= NBINS_PO");
+	                        	return;
+	                        }
+
+	                        hist.bins[a + p * NBINS_AZ] += sbins.mag * weight *
+	                                ((da == 0) ? (1.0 - dsbins.az) : dsbins.az) *
+	                                ((dp == 0) ? (1.0 - dsbins.po) : dsbins.po);
+	                }}
+	}
+		}}}
+
+	}
+	
+	/* Get the bin and barycentric coordinates of a vector in the icosahedral 
+	 * histogram. */
+	//SIFT3D_IGNORE_UNUSED
+	private int icos_hist_bin(SIFT3DC sift3d,
+				   Cvec x, Cvec bary,
+				   int bin[]) { 
+
+		int status;
+		double k[] = new double[1];
+		int i;
+
+		final Mesh mesh = sift3d.mesh;
+
+		// Check for very small vectors
+		if (SIFT3D_CVEC_L2_NORM_SQ(x) < bary_eps)
+			return SIFT3D_FAILURE;
+
+		// Iterate through the faces
+		for (i = 0; i < ICOS_NFACES; i++) {
+
+			Tri tri = mesh.tri[i];
+
+			// Convert to barycentric coordinates
+			status = cart2bary(x, tri, bary, k);
+			if (status == SIFT3D_FAILURE) {
+				continue;
+			}
+
+			// Test for intersection
+			if (bary.x < -bary_eps || bary.y < -bary_eps ||
+			    bary.z < -bary_eps || k[0] < 0)
+				continue;
+
+			// Save the bin
+			bin[0] = i;
+
+			// No other triangles will be intersected
+			return SIFT3D_SUCCESS;
+		}	
+
+		// Unreachable code
+		System.err.println("SIFT3D_FALSE from unreachable code icos_hist_bin");
+		return SIFT3D_FAILURE;
+	}
+	
+	/* Convert Cartesian coordinates to barycentric. bary is set to all zeros if
+	 * the problem is unstable. 
+	 *
+	 * The output value k is the constant by which the ray is multiplied to
+	 * intersect the supporting plane of the triangle.
+	 *
+	 * This code uses the Moller-Trumbore algorithm. */
+	private int cart2bary(Cvec cart, Tri tri, 
+			      Cvec bary, double k[]) {
+
+		Cvec e1 = new Cvec();
+		Cvec e2 = new Cvec();
+		Cvec t = new Cvec();
+		Cvec p = new Cvec();
+		Cvec q = new Cvec();
+		double det, det_inv;
+
+		final Cvec v[] = tri.v;
+
+		SIFT3D_CVEC_MINUS(v[1], v[0], e1);
+		SIFT3D_CVEC_MINUS(v[2], v[0], e2);
+		SIFT3D_CVEC_CROSS(cart, e2, p);
+		det = SIFT3D_CVEC_DOT(e1, p);
+
+		// Reject unstable points
+		if (Math.abs(det) < bary_eps) {
+			return SIFT3D_FAILURE;
+		}
+
+		det_inv = 1.0 / det;
+
+		t = v[0];
+		SIFT3D_CVEC_SCALE(t, -1.0);	
+
+		SIFT3D_CVEC_CROSS(t, e1, q);
+
+		bary.y = det_inv * SIFT3D_CVEC_DOT(t, p);	
+		bary.z = det_inv * SIFT3D_CVEC_DOT(cart, q);
+		bary.x = 1.0 - bary.y - bary.z;
+
+		k[0] = SIFT3D_CVEC_DOT(e2, q) * det_inv;
+
+	//#ifndef NDEBUG
+		Cvec temp1, temp2, temp3;
+	        double residual;
+
+	        if (Double.isNaN(bary.x) || Double.isNaN(bary.y) || Double.isNaN(bary.z)) {
+	                System.err.println("cart2bary: invalid bary (" + bary.x + ", " + bary.y + ", " + bary.z + ")");
+	                return SIFT3D_FAILURE;
+	                //exit(1);
+	        }
+
+		// Verify k * c = bary->x * v1 + bary->y * v2 + bary->z * v3
+		temp1 = v[0];
+		temp2 = v[1];
+		temp3 = v[2];
+		SIFT3D_CVEC_SCALE(temp1, bary.x);
+		SIFT3D_CVEC_SCALE(temp2, bary.y);	
+		SIFT3D_CVEC_SCALE(temp3, bary.z);	
+		SIFT3D_CVEC_PLUS(temp1, temp2, temp1);
+		SIFT3D_CVEC_PLUS(temp1, temp3, temp1);
+		SIFT3D_CVEC_SCALE(temp1, 1.0 / k[0]);
+		SIFT3D_CVEC_MINUS(temp1, cart, temp1);
+	        residual = SIFT3D_CVEC_L2_NORM(temp1);
+		if (residual > bary_eps) {
+	                System.err.println("cart2bary: residual: " + residual);
+	                return SIFT3D_FAILURE;
+	                //exit(1);
+	        }
+	//#endif
+		return SIFT3D_SUCCESS;
+	}
+	
+	/* Bin a Cartesian gradient into Spherical gradient bins */
+	//SIFT3D_IGNORE_UNUSED
+	private int Cvec_to_sbins(Cvec vd, Svec bins) {
+
+		// Convert to spherical coordinates
+		SIFT3D_CVEC_TO_SVEC(vd, bins);
+		//FIXME: Is this needed? SIFT3D_CVEC_TO_SVEC cannot divide by zero
+		if (bins.mag < FLT_EPSILON * 1E2)
+			return SIFT3D_FAILURE;
+
+		// Compute bins
+		bins.az *= (double) NBINS_AZ / SIFT3D_AZ_MAX_F; 
+		bins.po *= (double) NBINS_PO / SIFT3D_PO_MAX_F;
+
+		if (bins.az >= NBINS_AZ) {
+			System.err.println("In Cvec_to_sbins bins.az >= NBIBS_AZ");
+			return SIFT3D_FAILURE;
+		}
+		if (bins.po >= NBINS_PO) {
+			System.err.println("in Cvec_to_sbins bins.po >= NBINS_PO");
+			return SIFT3D_FAILURE;
+		}
+
+		return SIFT3D_SUCCESS;
+	}
+	
+	// Convert a vector from Cartesian to Spherical coordinates.
+	private void SIFT3D_CVEC_TO_SVEC(Cvec cvec, Svec svec) {
+		svec.mag = Math.sqrt(cvec.x * cvec.x + cvec.y * cvec.y +
+							cvec.z * cvec.z);
+		svec.az = fmodf(Math.atan2(cvec.y, cvec.x) + SIFT3D_AZ_MAX_F,
+						  SIFT3D_AZ_MAX_F);
+		svec.po = fmodf(Math.acos(cvec.z / (svec.mag + FLT_EPSILON)),
+			     SIFT3D_PO_MAX_F);
+	}
+	
+	private double fmodf(double in1, double in2) {
+		if (in2 == 0.0) {
+			return Double.NaN;
+		}
+		else {
+			double intdiv = Math.floor(Math.abs(in1/in2));
+			double intprod;
+			if (((in1 > 0) && (in2 > 0)) || ((in1 < 0) && (in2 < 0))) {
+				intprod = in2 * intdiv;
+			}
+			else {
+			    intprod = -in2 * intdiv;
+			}
+			double result = in1 - intprod;
+			return result;
+		}
+	}
+	
+	/* Refine a gradient histogram with optional operations,
+	 * such as solid angle weighting. */
+	private void refine_Hist(Hist hist) {
+
+	if (!ICOS_HIST) {
+
+	if (SIFT3D_ORI_SOLID_ANGLE_WEIGHT) {	
+		double po;
+		int a, p;
+		// TODO: could accelerate this with a lookup table		
+
+		// Weight by the solid angle of the bins, ignoring constants
+		for (p = 0; p < NBINS_PO; p++) {
+    		for (a = 0; a < NBINS_AZ; a++) {
+			po = p * SIFT3D_PO_MAX_F / NBINS_PO;
+		 hist.bins[a + p * NBINS_AZ] /= Math.cos(po) - Math.cos(po + 
+				SIFT3D_PO_MAX_F / NBINS_PO);
+    		}
+		}
+		}
+
+	} // if (!ICOS_HIST)
+
+	}
+	
+	/* Normalize a descriptor */
+	private void normalize_desc(SIFT3D_Descriptor desc) {
+
+		double norm; 
+		int i, a, p;
+
+		norm = 0.0;
+		double el;
+		for (i = 0; i < DESC_NUM_TOTAL_HIST; i++) { 
+
+	               Hist hist = desc.hists[i];
+ 
+			if (ICOS_HIST) {
+            	for (a = 0; a < HIST_NUMEL; a++) {
+            	    el = hist.bins[a];	
+            	    norm += el * el;
+            	}
+            }
+            else {
+            	for (p = 0; p < NBINS_PO; p++) {
+            		for (a = 0; a < NBINS_AZ; a++) {
+            		    el = hist.bins[a + p * NBINS_AZ];
+            		    norm += el * el;
+            		}
+            	}
+            }
+		}
+
+		norm = Math.sqrt(norm) + DBL_EPSILON; 
+
+		for (i = 0; i < DESC_NUM_TOTAL_HIST; i++) {
+
+	                Hist hist = desc.hists[i];
+			        double norm_inv = 1.0 / norm; 
+
+			 if (ICOS_HIST) {
+	            	for (a = 0; a < HIST_NUMEL; a++) {
+	            	    hist.bins[a] *= norm_inv;	
+	            	}
+	            }
+	            else {
+	            	for (p = 0; p < NBINS_PO; p++) {
+	            		for (a = 0; a < NBINS_AZ; a++) {
+	            		    hist.bins[a + p * NBINS_AZ]	*= norm_inv;
+	            		}
+	            	}
+	            }
+			
+		}
+	}
+
+	
 }
