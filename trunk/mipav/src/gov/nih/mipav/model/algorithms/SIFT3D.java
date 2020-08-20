@@ -18,7 +18,6 @@ import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 
 /* This is a port of SIFT3D is an analogue of the scale-invariant feature transform (SIFT) for three-dimensional images.
      *  It leverages volumetric data and real-world units to detect keypoints and extract a robust description of their content.
@@ -5913,10 +5912,11 @@ public class SIFT3D extends AlgorithmBase {
 	private int eigen_Mat_rm(Mat_rm A, Mat_rm Q, Mat_rm L)
 	{
         int status;
+        int i;
 		Mat_rm A_trans = new Mat_rm();
 		double work[];
 		int iwork[];
-		double lwork_ret;
+		double lwork_ret[] = new double[1];
 		int info[] = new int[1];
 		int lwork, liwork;
 
@@ -5960,48 +5960,71 @@ public class SIFT3D extends AlgorithmBase {
 			cleanup_Mat_rm(A_trans);
 			return SIFT3D_FAILURE;
 		}
+		
+		GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
 
 		// Query for the workspace sizes
+		double w[] = new double[n];
+		ge.dsyev(jobz, uplo, n, A_trans.data_double,lda,w,lwork_ret,lwork_query,info);
 		/*dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
-			&lwork_ret, &lwork_query, &liwork, &liwork_query, &info);
+			&lwork_ret, &lwork_query, &liwork, &liwork_query, &info);*/
 
-		if ((int32_t) info) {
-			printf
-			    ("eigen_Mat_rm: LAPACK dsyevd workspace query error code %d",
-			     info);
-			goto EIGEN_MAT_RM_QUIT;
+		if (info[0] != 0) {
+			System.err.println("eigen_Mat_rm: LAPACK dsyev workspace query error code " + info[0]);
+			w = null;
+			cleanup_Mat_rm(A_trans);
+			return SIFT3D_FAILURE;
 		}
 		// Allocate work spaces 
-		lwork = (fortran_int) lwork_ret;
-		if ((work = (double *)malloc(lwork * sizeof(double))) == NULL ||
+		lwork = (int)lwork_ret[0];
+		try {
+			work = new double[lwork];
+		}
+		catch (OutOfMemoryError e) {
+			System.err.println("eigen_Mat_rm: Out of memory error on work = new double[lwork]");
+			w = null;
+			cleanup_Mat_rm(A_trans);
+			return SIFT3D_FAILURE;
+		}
+		/*if ((work = (double *)malloc(lwork * sizeof(double))) == NULL ||
 		    (iwork =
 		     (fortran_int *) malloc(liwork * sizeof(fortran_int))) == NULL)
-			goto EIGEN_MAT_RM_QUIT;
+			goto EIGEN_MAT_RM_QUIT;*/
 
 		// Compute the eigendecomposition
-		dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
-			work, &lwork, iwork, &liwork, &info);
+		ge.dsyev(jobz, uplo, n, A_trans.data_double, lda, w, work, lwork, info);
+		/*dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
+			work, &lwork, iwork, &liwork, &info);*/
 
-		if ((int32_t) info) {
-			printf("eigen_Mat_rm: LAPACK dsyevd error code %d", (int) info);
-			goto EIGEN_MAT_RM_QUIT;
+		if (info[0] != 0) {
+			System.err.println("eigen_Mat_rm: LAPACK dsyev error code" + info[0]);
+			w = null;
+			work = null;
+			cleanup_Mat_rm(A_trans);
+			return SIFT3D_FAILURE;
 		}
+		for (i = 0; i < n; i++) {
+			L.data_double[i][0] = w[i];
+		}
+		w = null;
 		// Optionally return the eigenvectors
-		if (Q != NULL && transpose_Mat_rm(&A_trans, Q))
-			goto EIGEN_MAT_RM_QUIT;
+		if (Q != null) {
+			status = transpose_Mat_rm(A_trans, Q);
+			if (status == SIFT3D_FAILURE) {
+				System.err.println("eigen_Mat_rm: failure on transpose_Mat_rm(A_trans, Q)");
+				w = null;
+				work = null;
+				cleanup_Mat_rm(A_trans);
+				return SIFT3D_FAILURE;	
+			}
+		}
+		
 
-		free(work);
-		free(iwork);
-		cleanup_Mat_rm(&A_trans);*/
+		work = null;
+		cleanup_Mat_rm(A_trans);
 		return SIFT3D_SUCCESS;
 
-	 /*EIGEN_MAT_RM_QUIT:
-		if (work != NULL)
-			free(work);
-		if (iwork != NULL)
-			free(iwork);
-		cleanup_Mat_rm(&A_trans);
-		return SIFT3D_FAILURE;*/
+	 
 	}
 
 	/* Extract SIFT3D descriptors from a list of keypoints. Uses the Gaussian
@@ -6178,16 +6201,18 @@ public class SIFT3D extends AlgorithmBase {
 		    SIFT3D_Descriptor newbuf[] = new SIFT3D_Descriptor[num];
 		    for (int i = 0; i < num; i++) {
 		    	newbuf[i] = new SIFT3D_Descriptor();
-		    	if (i < desc.buf.length) {
-		    	    newbuf[i].xd = desc.buf[i].xd;
-		    	    newbuf[i].yd = desc.buf[i].yd;
-		    	    newbuf[i].zd = desc.buf[i].zd;
-		    	    newbuf[i].sd = desc.buf[i].sd;
-		    	    for (int j = 0; j < DESC_NUM_TOTAL_HIST; j++) {
-		    	        for (int k = 0; k < HIST_NUMEL; k++) {
-		    	        	newbuf[i].hists[j].bins[k] = desc.buf[i].hists[j].bins[k];
-		    	        }
-		    	    }
+		    	if (desc.buf != null) {
+			    	if (i < desc.buf.length) {
+			    	    newbuf[i].xd = desc.buf[i].xd;
+			    	    newbuf[i].yd = desc.buf[i].yd;
+			    	    newbuf[i].zd = desc.buf[i].zd;
+			    	    newbuf[i].sd = desc.buf[i].sd;
+			    	    for (int j = 0; j < DESC_NUM_TOTAL_HIST; j++) {
+			    	        for (int k = 0; k < HIST_NUMEL; k++) {
+			    	        	newbuf[i].hists[j].bins[k] = desc.buf[i].hists[j].bins[k];
+			    	        }
+			    	    }
+			    	}
 		    	}
 		    }
 	        desc.buf = newbuf;
