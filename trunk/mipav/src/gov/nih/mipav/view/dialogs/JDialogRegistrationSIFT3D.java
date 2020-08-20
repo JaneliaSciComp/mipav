@@ -64,7 +64,8 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
 	private boolean ICOS_HIST = true;  // Icosahedral gradient histogram
 	private boolean SIFT3D_RANSAC_REFINE = true;	// Use least-squares refinement in RANSAC
 	private boolean CUBOID_EXTREMA = false; // Search for extrema in a cuboid region
-	
+	private boolean SIFT3D_ORI_SOLID_ANGLE_WEIGHT = false; // Weight bins by solid angle
+    // Can only be used if ICOS_HIST = false
 	
 	private JLabel labelMatchingThreshold;
 	
@@ -93,6 +94,8 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
 	private JCheckBox refineCheckBox;
 	
 	private JCheckBox cuboidCheckBox;
+	
+	private JCheckBox solidCheckBox;
     
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
@@ -146,6 +149,14 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         } else if (source == matchCheckBox) {
             labelMatch.setEnabled(matchCheckBox.isSelected());
             textMatch.setEnabled(matchCheckBox.isSelected());
+        } else if (source == icosahedralCheckBox) {
+        	if (icosahedralCheckBox.isSelected()) {
+        		solidCheckBox.setSelected(false);
+        		solidCheckBox.setEnabled(false);
+        	}
+        	else {
+        		solidCheckBox.setEnabled(true);
+        	}
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -195,7 +206,8 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
     protected void callAlgorithm() {
     	reg3D = new SIFT3D(baseImage, matchImage, SIFT3D_nn_thresh_default, SIFT3D_err_thresh_default,
     			SIFT3D_num_iter_default, useOCL, SIFT3D_GAUSS_WIDTH_FCTR,
-        		SIFT3D_MATCH_MAX_DIST, ICOS_HIST, SIFT3D_RANSAC_REFINE, CUBOID_EXTREMA);
+        		SIFT3D_MATCH_MAX_DIST, ICOS_HIST, SIFT3D_RANSAC_REFINE, CUBOID_EXTREMA,
+        		SIFT3D_ORI_SOLID_ANGLE_WEIGHT);
     	
     	reg3D.addListener(this);
     	
@@ -281,6 +293,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         icosahedralCheckBox = new JCheckBox("Use icosahedral gradient histogram");
         icosahedralCheckBox.setFont(serif12);
         icosahedralCheckBox.setSelected(true);
+        icosahedralCheckBox.addActionListener(this);
         
         refineCheckBox = new JCheckBox("Use least squares refinement in RANSAC");
         refineCheckBox.setFont(serif12);
@@ -289,6 +302,11 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         cuboidCheckBox = new JCheckBox("Search for extrema in cuboid region");
         cuboidCheckBox.setFont(serif12);
         cuboidCheckBox.setSelected(false);
+        
+        solidCheckBox = new JCheckBox("Weight bins by solid angle");
+        solidCheckBox.setFont(serif12);
+        solidCheckBox.setSelected(false);
+        solidCheckBox.setEnabled(false);
         
         JPanel upperPanel = new JPanel(new GridBagLayout());
 
@@ -378,6 +396,11 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(cuboidCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 10;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(solidCheckBox, gbc);
         
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
@@ -488,6 +511,8 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         
         CUBOID_EXTREMA = cuboidCheckBox.isSelected();
         
+        SIFT3D_ORI_SOLID_ANGLE_WEIGHT = solidCheckBox.isSelected();
+        
     	return true;
 
     }
@@ -504,6 +529,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
     	ICOS_HIST = scriptParameters.getParams().getBoolean("icos");
     	SIFT3D_RANSAC_REFINE = scriptParameters.getParams().getBoolean("refine");
     	CUBOID_EXTREMA = scriptParameters.getParams().getBoolean("cuboid");
+    	SIFT3D_ORI_SOLID_ANGLE_WEIGHT = scriptParameters.getParams().getBoolean("solid");
     }
     
     protected void storeParamsFromGUI() throws ParserException {
@@ -517,6 +543,7 @@ public class JDialogRegistrationSIFT3D extends JDialogScriptableBase implements 
         scriptParameters.getParams().put(ParameterFactory.newParameter("icos", ICOS_HIST));
         scriptParameters.getParams().put(ParameterFactory.newParameter("refine", SIFT3D_RANSAC_REFINE));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cuboid", CUBOID_EXTREMA));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("solid", SIFT3D_ORI_SOLID_ANGLE_WEIGHT));
     }
 
     
