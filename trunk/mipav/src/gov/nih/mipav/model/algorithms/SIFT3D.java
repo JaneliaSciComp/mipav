@@ -790,7 +790,7 @@ public class SIFT3D extends AlgorithmBase {
         status = set_ref_Reg_SIFT3D(reg, ref);
         if (status == SIFT3D_FAILURE) {
         	// Clean up
-        	System.err.println("Failed in set_src_Reg_SIFT3D(reg, ref)");
+        	System.err.println("Failed in set_ref_Reg_SIFT3D(reg, ref)");
 	        im_free(src);
 	        im_free(ref);
 	        im_free(warped);
@@ -2649,12 +2649,12 @@ public class SIFT3D extends AlgorithmBase {
 	    // Populate the matrices
 	    num_matches = 0;
 	    for (i = 0; i < num; i++) {
+	    	
+	    	if (matches[i] == -1)
+			    continue;
 
 		    SIFT3D_Descriptor desc1 = d1.buf[i];
 		    SIFT3D_Descriptor desc2 = d2.buf[matches[i]];
-
-		    if (matches[i] == -1)
-			    continue;
 
 		    // Save the match
 		    match1.data_double[num_matches][0] = desc1.xd; 
@@ -6162,7 +6162,9 @@ public class SIFT3D extends AlgorithmBase {
 		desc.nz = first_level.nz;	
 
 		// Resize the descriptor store
+		System.err.println("Started resize_SIFT3D_Descriptor_store");
 	    status = resize_SIFT3D_Descriptor_store(desc, num);
+	    System.err.println("Finished resize_SIFT3D_Descriptor_store");
 	    if (status == SIFT3D_FAILURE) {
 	                return SIFT3D_FAILURE;
 	    }
@@ -6171,13 +6173,15 @@ public class SIFT3D extends AlgorithmBase {
 	        ret = SIFT3D_SUCCESS;
 	//#pragma omp parallel for
 		for (i = 0; i < desc.num; i++) {
+			System.err.println("i = " + i);
 
 	                Keypoint key = kp.buf[i];
 			SIFT3D_Descriptor descrip = desc.buf[i];
 			Image level = 
 	                        SIFT3D_PYR_IM_GET(gpyr, key.o, key.s);
-
+			System.err.println("Started extract_descrip");
 			status = extract_descrip(sift3d, level, key, descrip);
+			System.err.println("Finished extract_descrip");
 			if (status == SIFT3D_FAILURE) {
 	               ret = SIFT3D_FAILURE;
 	         }
@@ -6564,8 +6568,9 @@ public class SIFT3D extends AlgorithmBase {
 
 			// Test for intersection
 			if (bary.x < -bary_eps || bary.y < -bary_eps ||
-			    bary.z < -bary_eps || k[0] < 0)
+			    bary.z < -bary_eps || k[0] < 0) {
 				continue;
+			}
 
 			// Save the bin
 			bin[0] = i;
