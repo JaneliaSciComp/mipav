@@ -2881,8 +2881,8 @@ public class SIFT3D extends AlgorithmBase {
 				    cleanup_Mat_rm(src_cset);
 					return SIFT3D_FAILURE;	
 				}	
-			    for (i = 0; i < len[0]; i++) {
-			    	cset_best[i] = cset[i];
+			    for (j = 0; j < len[0]; j++) {
+			    	cset_best[j] = cset[j];
 			    }
 			}
 		}
@@ -6162,9 +6162,7 @@ public class SIFT3D extends AlgorithmBase {
 		desc.nz = first_level.nz;	
 
 		// Resize the descriptor store
-		System.err.println("Started resize_SIFT3D_Descriptor_store");
 	    status = resize_SIFT3D_Descriptor_store(desc, num);
-	    System.err.println("Finished resize_SIFT3D_Descriptor_store");
 	    if (status == SIFT3D_FAILURE) {
 	                return SIFT3D_FAILURE;
 	    }
@@ -6173,19 +6171,16 @@ public class SIFT3D extends AlgorithmBase {
 	        ret = SIFT3D_SUCCESS;
 	//#pragma omp parallel for
 		for (i = 0; i < desc.num; i++) {
-			System.err.println("i = " + i);
 
 	                Keypoint key = kp.buf[i];
 			SIFT3D_Descriptor descrip = desc.buf[i];
 			Image level = 
 	                        SIFT3D_PYR_IM_GET(gpyr, key.o, key.s);
-			System.err.println("Started extract_descrip");
 			status = extract_descrip(sift3d, level, key, descrip);
-			System.err.println("Finished extract_descrip");
 			if (status == SIFT3D_FAILURE) {
 	               ret = SIFT3D_FAILURE;
 	         }
-		}	
+		}
 
 		return ret;
 	}
@@ -6554,6 +6549,7 @@ public class SIFT3D extends AlgorithmBase {
 		// Check for very small vectors
 		if (SIFT3D_CVEC_L2_NORM_SQ(x) < bary_eps)
 			return SIFT3D_FAILURE;
+		
 
 		// Iterate through the faces
 		for (i = 0; i < ICOS_NFACES; i++) {
@@ -6580,7 +6576,7 @@ public class SIFT3D extends AlgorithmBase {
 		}	
 
 		// Unreachable code
-		System.err.println("SIFT3D_FALSE from unreachable code icos_hist_bin");
+		System.err.println("SIFT3D_FAILURE from unreachable code icos_hist_bin");
 		return SIFT3D_FAILURE;
 	}
 	
@@ -6594,6 +6590,7 @@ public class SIFT3D extends AlgorithmBase {
 	private int cart2bary(Cvec cart, Tri tri, 
 			      Cvec bary, double k[]) {
 
+		int i;
 		Cvec e1 = new Cvec();
 		Cvec e2 = new Cvec();
 		Cvec t = new Cvec();
@@ -6601,7 +6598,19 @@ public class SIFT3D extends AlgorithmBase {
 		Cvec q = new Cvec();
 		double det, det_inv;
 
-		final Cvec v[] = tri.v;
+		Cvec v[] = new Cvec[3];
+		for (i = 0; i < 3; i++) {
+			v[i] = new Cvec();
+		}
+		v[0].x = tri.v[0].x;
+		v[0].y = tri.v[0].y;
+		v[0].z = tri.v[0].z;
+		v[1].x = tri.v[1].x;
+		v[1].y = tri.v[1].y;
+		v[1].z = tri.v[1].z;
+		v[2].x = tri.v[2].x;
+		v[2].y = tri.v[2].y;
+		v[2].z = tri.v[2].z;
 
 		SIFT3D_CVEC_MINUS(v[1], v[0], e1);
 		SIFT3D_CVEC_MINUS(v[2], v[0], e2);
@@ -6615,7 +6624,9 @@ public class SIFT3D extends AlgorithmBase {
 
 		det_inv = 1.0 / det;
 
-		t = v[0];
+		t.x = v[0].x;
+		t.y = v[0].y;
+		t.z = v[0].z;
 		SIFT3D_CVEC_SCALE(t, -1.0);	
 
 		SIFT3D_CVEC_CROSS(t, e1, q);
