@@ -998,7 +998,8 @@ public class SIFT3D extends AlgorithmBase {
      */
     private int resize_Mat_rm(Mat_rm mat) {
 
-        int type_size, total_size;
+        int r,c;
+    	int type_size, total_size;
 
         final int num_rows = mat.num_rows;
         final int num_cols = mat.num_cols;
@@ -1040,6 +1041,20 @@ public class SIFT3D extends AlgorithmBase {
     	cleanup_Mat_rm(mat);
     	return init_Mat_rm(mat, num_rows, num_cols, type, SIFT3D_FALSE);
         }
+        
+        int oldr_num = 0;
+        int oldc_num = 0;
+        double old_data[][] = null;
+        if ((mat.data_double != null) && (mat.data_double[0] != null)  ) {
+	        oldr_num = mat.data_double.length;
+	        oldc_num = mat.data_double[0].length;
+	        old_data = new double[oldr_num][oldc_num];
+	        for (r = 0; r < oldr_num; r++) {
+	        	for (c = 0; c < oldc_num; c++) {
+	        		old_data[r][c] = mat.data_double[r][c];
+	        	}
+	        }
+        }
 
         // Re-allocate the memory
         try {
@@ -1048,6 +1063,21 @@ public class SIFT3D extends AlgorithmBase {
         catch (OutOfMemoryError e) {
             mat.size = 0;
             return SIFT3D_FAILURE;
+        }
+        
+        if (old_data != null) {
+	        int rcopy = Math.min(oldr_num, num_rows);
+	        int ccopy = Math.min(oldc_num, num_cols);
+	        for (r = 0; r < rcopy; r++) {
+	        	for (c = 0; c < ccopy; c++) {
+	        		mat.data_double[r][c] = old_data[r][c];
+	        	}
+	        }
+	        
+	        for (r = 0; r < oldr_num; r++) {
+	        	old_data[r] = null;
+	        }
+	        old_data = null;
         }
 
         return SIFT3D_SUCCESS;
