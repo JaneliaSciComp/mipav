@@ -3443,10 +3443,12 @@ public class SIFT3D extends AlgorithmBase {
 		// Compute the L1-norm of A
 		GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
 		LinearEquations2 le2 = new LinearEquations2();
-		anorm = ge.dlange(norm_type, m, n, A_trans.data_double, lda, work);
+		//anorm = ge.dlange(norm_type, m, n, A_trans.data_double, lda, work);
+		anorm = ge.dlange(norm_type, m, n, A.data_double, lda, work);
 
 		// Compute the LU decomposition of A in place
-		le2.dgetrf(m, n, A_trans.data_double, lda, ipiv, info);
+		//le2.dgetrf(m, n, A_trans.data_double, lda, ipiv, info);
+		le2.dgetrf(m, n, A.data_double, lda, ipiv, info);
 		if (info[0] < 0) {
 			System.err.println("solve_Mat_rm: LAPACK dgetrf error code " + info[0]);
 			if (ipiv != null) {
@@ -3476,8 +3478,10 @@ public class SIFT3D extends AlgorithmBase {
 			return SIFT3D_SINGULAR;
 		}
 		// Compute the reciprocal condition number of A
-		le2.dgecon(norm_type, n, A_trans.data_double, lda, anorm, rcond,
-			work, iwork, info);
+		//le2.dgecon(norm_type, n, A_trans.data_double, lda, anorm, rcond,
+			//work, iwork, info);
+		le2.dgecon(norm_type, n, A.data_double, lda, anorm, rcond,
+				work, iwork, info);
 		if (info[0] < 0) {
 			System.err.println("solve_Mat_rm: LAPACK dgecon error code = " + info[0]);
 			if (ipiv != null) {
@@ -3510,8 +3514,10 @@ public class SIFT3D extends AlgorithmBase {
 		}
 
 		// Solve the system 
-		le2.dgetrs(trans, n, nrhs, A_trans.data_double, lda, ipiv,
-			B_trans.data_double, ldb, info);
+		//le2.dgetrs(trans, n, nrhs, A_trans.data_double, lda, ipiv,
+			//B_trans.data_double, ldb, info);
+		le2.dgetrs(trans, n, nrhs, A.data_double, lda, ipiv,
+				B.data_double, ldb, info);
 
 		// Check for errors
 		if (info[0] < 0) {
@@ -3530,7 +3536,8 @@ public class SIFT3D extends AlgorithmBase {
 			return SIFT3D_FAILURE;	
 		}
 		// Transpose results
-		status = transpose_Mat_rm(B_trans, X);
+		//status = transpose_Mat_rm(B_trans, X);
+		status = copy_Mat_rm(B, X);
 		if (status == SIFT3D_FAILURE) {
 			if (ipiv != null) {
 				ipiv = null;
@@ -3701,9 +3708,12 @@ public class SIFT3D extends AlgorithmBase {
 
 		// Get the size of the workspace
 	    GeneralizedInverse2 ge2 = new GeneralizedInverse2();
-		ge2.dgelss(m, n, nrhs, A_trans.data_double, lda,
-			B_trans.data_double, ldb, s, rcond, rank, lwork_ret,
-			lwork_query, info);
+		//ge2.dgelss(m, n, nrhs, A_trans.data_double, lda,
+			//B_trans.data_double, ldb, s, rcond, rank, lwork_ret,
+			//work_query, info);
+		ge2.dgelss(m, n, nrhs, A.data_double, lda,
+				B.data_double, ldb, s, rcond, rank, lwork_ret,
+				lwork_query, info);
 		if (info[0] != 0) {
 	        System.err.println("solve_mat_rm: LAPACK dgelss work query error code = " + info[0]);
 		}
@@ -3722,9 +3732,12 @@ public class SIFT3D extends AlgorithmBase {
 		}
 
 		// Solve the system
-		ge2.dgelss(m, n, nrhs, A_trans.data_double, lda,
-			B_trans.data_double, ldb, s, rcond, rank, work, lwork,
-			info);
+		//ge2.dgelss(m, n, nrhs, A_trans.data_double, lda,
+			//B_trans.data_double, ldb, s, rcond, rank, work, lwork,
+			//info);
+		ge2.dgelss(m, n, nrhs, A.data_double, lda,
+				B.data_double, ldb, s, rcond, rank, work, lwork,
+				info);
 		if (info[0] != 0) {
 			System.err.println("solve_mat_rm: LAPACK dgelss error code = " + info[0]);
 			if (s != null)
@@ -3738,7 +3751,8 @@ public class SIFT3D extends AlgorithmBase {
 		// Transpose results to the new leading dimension
 		for (i = 0; i < X.num_rows; i++) {
 			for (j = 0; j < X.num_cols; j++) {
-				X.data_double[i][j] = B_trans.data_double[j][i];
+				//X.data_double[i][j] = B_trans.data_double[j][i];
+				X.data_double[i][j] = B.data_double[i][j];
 			}
 		}
 		
@@ -5995,7 +6009,7 @@ public class SIFT3D extends AlgorithmBase {
 
 		// Query for the workspace sizes
 		double w[] = new double[n];
-		ge.dsyev(jobz, uplo, n, A_trans.data_double,lda,w,lwork_ret,lwork_query,info);
+		ge.dsyev(jobz, uplo, n, A.data_double,lda,w,lwork_ret,lwork_query,info);
 		/*dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
 			&lwork_ret, &lwork_query, &liwork, &liwork_query, &info);*/
 
@@ -6022,7 +6036,7 @@ public class SIFT3D extends AlgorithmBase {
 			goto EIGEN_MAT_RM_QUIT;*/
 
 		// Compute the eigendecomposition
-		ge.dsyev(jobz, uplo, n, A_trans.data_double, lda, w, work, lwork, info);
+		ge.dsyev(jobz, uplo, n, A.data_double, lda, w, work, lwork, info);
 		/*dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
 			work, &lwork, iwork, &liwork, &info);*/
 
@@ -6039,7 +6053,8 @@ public class SIFT3D extends AlgorithmBase {
 		w = null;
 		// Optionally return the eigenvectors
 		if (Q != null) {
-			status = transpose_Mat_rm(A_trans, Q);
+			//status = transpose_Mat_rm(A_trans, Q);
+			status = copy_Mat_rm(A, Q);
 			if (status == SIFT3D_FAILURE) {
 				System.err.println("eigen_Mat_rm: failure on transpose_Mat_rm(A_trans, Q)");
 				w = null;
