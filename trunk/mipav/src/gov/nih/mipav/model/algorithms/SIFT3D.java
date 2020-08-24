@@ -3092,8 +3092,8 @@ public class SIFT3D extends AlgorithmBase {
 
 	        // Copy the random points
 	    for (i = 0; i < src_rand.num_rows; i++) {
+	    	int rand_idx = rand_indices[i];
 	    	for (j = 0; j < src_rand.num_cols; j++) {
-	                int rand_idx = rand_indices[i];
 	                src_rand.data_double[i][j] = src.data_double[rand_idx][j];
 	                ref_rand.data_double[i][j] = ref.data_double[rand_idx][j];
 	    	}
@@ -3129,7 +3129,7 @@ public class SIFT3D extends AlgorithmBase {
 			// Calculate the error
 			double err_sq = tform_err_sq(tform, src, ref, i);
 
-			// Reject points below the error threshold
+			// Reject points above the error threshold
 			if (err_sq > err_thresh_sq)
 				continue;
 
@@ -3277,6 +3277,7 @@ public class SIFT3D extends AlgorithmBase {
 			cleanup_Mat_rm(X);
 			return SIFT3D_FAILURE;
 		}
+		
 		ret = Affine_set_mat(X_trans, tform);
 
 		cleanup_Mat_rm(X_trans);
@@ -3778,7 +3779,7 @@ public class SIFT3D extends AlgorithmBase {
 		return convert_Mat_rm(mat, affine.A, Mat_rm_type.SIFT3D_DOUBLE);
 	}
 	
-	/* Convert a matrix to a different type. in and out may be the same pointer.
+	/* Copy to a matrix of a same or different different type. in and out may be the same pointer.
 	 * 
 	 * This function resizes out.
 	 * 
@@ -3800,7 +3801,14 @@ public class SIFT3D extends AlgorithmBase {
 		}
 		
 		if (in.type == Mat_rm_type.SIFT3D_DOUBLE) {
-		    if (out.type == Mat_rm_type.SIFT3D_FLOAT) {
+			if (out.type == Mat_rm_type.SIFT3D_DOUBLE) {
+            	for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_double[i][j] = in.data_double[i][j];
+		        	}
+		        }   	
+		    }
+			else if (out.type == Mat_rm_type.SIFT3D_FLOAT) {
 		        for (i = 0; i < in.num_rows; i++) {
 		        	for (j = 0; j < in.num_cols; j++) {
 		        		out.data_float[i][j] = (float)in.data_double[i][j];
@@ -3822,6 +3830,13 @@ public class SIFT3D extends AlgorithmBase {
 		        		out.data_double[i][j] = (double)in.data_float[i][j];
 		        	}
 		        }   	
+		    }
+            else if (out.type == Mat_rm_type.SIFT3D_FLOAT) {
+		        for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_float[i][j] = in.data_float[i][j];
+		        	}
+		        }
 		    }
 		    else if (out.type == Mat_rm_type.SIFT3D_INT) {
 		    	for (i = 0; i < in.num_rows; i++) {
@@ -3845,6 +3860,13 @@ public class SIFT3D extends AlgorithmBase {
 		        		out.data_float[i][j] = (float)in.data_int[i][j];
 		        	}
 		        }   	
+		    }
+		    else if (out.type == Mat_rm_type.SIFT3D_INT) {
+		    	for (i = 0; i < in.num_rows; i++) {
+		        	for (j = 0; j < in.num_cols; j++) {
+		        		out.data_int[i][j] = in.data_int[i][j];
+		        	}
+		        }   		
 		    }	
 		}
 		else {
