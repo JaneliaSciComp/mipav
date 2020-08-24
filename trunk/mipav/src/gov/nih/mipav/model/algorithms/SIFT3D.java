@@ -843,7 +843,7 @@ public class SIFT3D extends AlgorithmBase {
         for (i = 0; i < inputImage.getNDims(); i++) {
         	warpedExtents[i] = inputImage.getExtents()[i];
         }
-        warpedImage = new ModelImage(ModelStorageBase.DOUBLE, warpedExtents, inputImage.getImageName() + "_warped");
+        warpedImage = new ModelImage(ModelStorageBase.DOUBLE, warpedExtents, inputImage.getImageName() + "_affine_reg");
         if (warpedImage.getNDims() == 3) {
         	try {
         		warpedImage.importData(0, warped.data, true);
@@ -891,7 +891,6 @@ public class SIFT3D extends AlgorithmBase {
         	fileInfo[i].setResolutions(inputImage.getFileInfo()[i].getResolutions());
         	fileInfo[i].setUnitsOfMeasure(inputImage.getFileInfo()[i].getUnitsOfMeasure());
         }
-        new ViewJFrameImage(warpedImage);
         
         // Clean up
         im_free(src);
@@ -3341,8 +3340,6 @@ public class SIFT3D extends AlgorithmBase {
 	        double limit, Mat_rm X)
 	{
         int status;
-		Mat_rm A_trans = new Mat_rm();
-		Mat_rm B_trans = new Mat_rm();
 		double work[] = null;
 		int ipiv[] = null;
 		int iwork[] = null;
@@ -3376,18 +3373,7 @@ public class SIFT3D extends AlgorithmBase {
 			return SIFT3D_FAILURE;
 		}
 		// Initialize intermediate matrices and buffers
-		status = init_Mat_rm(A_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
-		if (status == SIFT3D_FAILURE) {
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;	
-		}
-		status = init_Mat_rm(B_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
-		if (status == SIFT3D_FAILURE) {
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;		
-		}
+		
 		try {
 		    work = new double[4*n];
 		    iwork = new int[n];
@@ -3403,52 +3389,15 @@ public class SIFT3D extends AlgorithmBase {
 			if (iwork != null) {
 				iwork = null;
 			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;			
 		}
-
-		// Transpose matrices for LAPACK
-		status = transpose_Mat_rm(A, A_trans);
-		if (status == SIFT3D_FAILURE) {
-			if (ipiv != null) {
-				ipiv = null;
-			}
-			if (work != null) {
-				work = null;
-			}
-			if (iwork != null) {
-				iwork = null;
-			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;		
-		}
-		status = transpose_Mat_rm(B, B_trans);
-		if (status == SIFT3D_FAILURE) {
-			if (ipiv != null) {
-				ipiv = null;
-			}
-			if (work != null) {
-				work = null;
-			}
-			if (iwork != null) {
-				iwork = null;
-			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;		
-		}
-
 
 		// Compute the L1-norm of A
 		GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
 		LinearEquations2 le2 = new LinearEquations2();
-		//anorm = ge.dlange(norm_type, m, n, A_trans.data_double, lda, work);
 		anorm = ge.dlange(norm_type, m, n, A.data_double, lda, work);
 
 		// Compute the LU decomposition of A in place
-		//le2.dgetrf(m, n, A_trans.data_double, lda, ipiv, info);
 		le2.dgetrf(m, n, A.data_double, lda, ipiv, info);
 		if (info[0] < 0) {
 			System.err.println("solve_Mat_rm: LAPACK dgetrf error code " + info[0]);
@@ -3461,8 +3410,6 @@ public class SIFT3D extends AlgorithmBase {
 			if (iwork != null) {
 				iwork = null;
 			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;	
 		} else if (info[0] > 0) {
 			if (ipiv != null) {
@@ -3474,13 +3421,9 @@ public class SIFT3D extends AlgorithmBase {
 			if (iwork != null) {
 				iwork = null;
 			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_SINGULAR;
 		}
 		// Compute the reciprocal condition number of A
-		//le2.dgecon(norm_type, n, A_trans.data_double, lda, anorm, rcond,
-			//work, iwork, info);
 		le2.dgecon(norm_type, n, A.data_double, lda, anorm, rcond,
 				work, iwork, info);
 		if (info[0] < 0) {
@@ -3494,8 +3437,6 @@ public class SIFT3D extends AlgorithmBase {
 			if (iwork != null) {
 				iwork = null;
 			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;	
 		}
 		// Return if A is singular
@@ -3509,14 +3450,10 @@ public class SIFT3D extends AlgorithmBase {
 			if (iwork != null) {
 				iwork = null;
 			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_SINGULAR;
 		}
 
 		// Solve the system 
-		//le2.dgetrs(trans, n, nrhs, A_trans.data_double, lda, ipiv,
-			//B_trans.data_double, ldb, info);
 		le2.dgetrs(trans, n, nrhs, A.data_double, lda, ipiv,
 				B.data_double, ldb, info);
 
@@ -3532,8 +3469,6 @@ public class SIFT3D extends AlgorithmBase {
 			if (iwork != null) {
 				iwork = null;
 			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;	
 		}
 		// Transpose results
@@ -3549,8 +3484,6 @@ public class SIFT3D extends AlgorithmBase {
 			if (iwork != null) {
 				iwork = null;
 			}
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;	
 		}
 
@@ -3563,8 +3496,6 @@ public class SIFT3D extends AlgorithmBase {
 		if (iwork != null) {
 			iwork = null;
 		}
-		cleanup_Mat_rm(A_trans);
-		cleanup_Mat_rm(B_trans);
 		return SIFT3D_SUCCESS;
 	}
 	
@@ -3632,8 +3563,6 @@ public class SIFT3D extends AlgorithmBase {
 	        Mat_rm X)
 	{
         int status;
-		Mat_rm A_trans = new Mat_rm();
-		Mat_rm B_trans = new Mat_rm();
 		double s[], work[];
 		double lwork_ret[] = new double[1];
 		int info[] = new int[1];
@@ -3667,44 +3596,11 @@ public class SIFT3D extends AlgorithmBase {
 			return SIFT3D_FAILURE;
 		}
 
-		// Initialize intermediate matrices and buffers
-		status = init_Mat_rm(A_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
-		if (status == SIFT3D_FAILURE) {
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;	
-		}
-		status = init_Mat_rm(B_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
-		if (status == SIFT3D_FAILURE) {
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;	
-		}
 		try {
 			s = new double[Math.max(m,n)];
 		}
 		catch (OutOfMemoryError e) {
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;	
-		}
-
-		// Transpose matrices for LAPACK
-		status = transpose_Mat_rm(A, A_trans);
-		if (status == SIFT3D_FAILURE) {
-			if (s != null)
-				s = null;
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;		
-		}
-	    status = transpose_Mat_rm(B, B_trans);
-	    if (status == SIFT3D_FAILURE) {
-			if (s != null)
-				s = null;
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
-			return SIFT3D_FAILURE;		
 		}
 
 		// Get the size of the workspace
@@ -3727,15 +3623,10 @@ public class SIFT3D extends AlgorithmBase {
 		catch (OutOfMemoryError e) {
 			if (s != null)
 				s = null;
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;	
 		}
 
 		// Solve the system
-		//ge2.dgelss(m, n, nrhs, A_trans.data_double, lda,
-			//B_trans.data_double, ldb, s, rcond, rank, work, lwork,
-			//info);
 		ge2.dgelss(m, n, nrhs, A.data_double, lda,
 				B.data_double, ldb, s, rcond, rank, work, lwork,
 				info);
@@ -3745,14 +3636,11 @@ public class SIFT3D extends AlgorithmBase {
 				s = null;
 			if (work != null)
 				work = null;
-			cleanup_Mat_rm(A_trans);
-			cleanup_Mat_rm(B_trans);
 			return SIFT3D_FAILURE;	
 		}
 		// Transpose results to the new leading dimension
 		for (i = 0; i < X.num_rows; i++) {
 			for (j = 0; j < X.num_cols; j++) {
-				//X.data_double[i][j] = B_trans.data_double[j][i];
 				X.data_double[i][j] = B.data_double[i][j];
 			}
 		}
@@ -3761,8 +3649,6 @@ public class SIFT3D extends AlgorithmBase {
 			s = null;
 		if (work != null)
 			work = null;
-		cleanup_Mat_rm(A_trans);
-		cleanup_Mat_rm(B_trans);
 		return SIFT3D_SUCCESS;
 	}
 
@@ -5979,12 +5865,10 @@ public class SIFT3D extends AlgorithmBase {
 	{
         int status;
         int i;
-		Mat_rm A_trans = new Mat_rm();
 		double work[];
-		int iwork[];
 		double lwork_ret[] = new double[1];
 		int info[] = new int[1];
-		int lwork, liwork;
+		int lwork;
 
 		final char jobz = Q == null ? 'N' : 'V';
 		final char uplo = 'U';
@@ -6013,32 +5897,16 @@ public class SIFT3D extends AlgorithmBase {
 
 		// Initialize intermediate matrices and buffers
 		work = null;
-		iwork = null;
-		status = init_Mat_rm(A_trans, 0, 0, Mat_rm_type.SIFT3D_DOUBLE, SIFT3D_FALSE);
-		if (status == SIFT3D_FAILURE) {
-			cleanup_Mat_rm(A_trans);
-			return SIFT3D_FAILURE;
-		}
-
-		// Copy the input matrix (A = A')
-		status = copy_Mat_rm(A, A_trans);
-		if (status == SIFT3D_FAILURE) {
-			cleanup_Mat_rm(A_trans);
-			return SIFT3D_FAILURE;
-		}
 		
 		GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
 
 		// Query for the workspace sizes
 		double w[] = new double[n];
 		ge.dsyev(jobz, uplo, n, A.data_double,lda,w,lwork_ret,lwork_query,info);
-		/*dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
-			&lwork_ret, &lwork_query, &liwork, &liwork_query, &info);*/
 
 		if (info[0] != 0) {
 			System.err.println("eigen_Mat_rm: LAPACK dsyev workspace query error code " + info[0]);
 			w = null;
-			cleanup_Mat_rm(A_trans);
 			return SIFT3D_FAILURE;
 		}
 		// Allocate work spaces 
@@ -6049,24 +5917,16 @@ public class SIFT3D extends AlgorithmBase {
 		catch (OutOfMemoryError e) {
 			System.err.println("eigen_Mat_rm: Out of memory error on work = new double[lwork]");
 			w = null;
-			cleanup_Mat_rm(A_trans);
 			return SIFT3D_FAILURE;
 		}
-		/*if ((work = (double *)malloc(lwork * sizeof(double))) == NULL ||
-		    (iwork =
-		     (fortran_int *) malloc(liwork * sizeof(fortran_int))) == NULL)
-			goto EIGEN_MAT_RM_QUIT;*/
 
 		// Compute the eigendecomposition
 		ge.dsyev(jobz, uplo, n, A.data_double, lda, w, work, lwork, info);
-		/*dsyevd_(&jobz, &uplo, &n, A_trans.u.data_double, &lda, L->u.data_double,
-			work, &lwork, iwork, &liwork, &info);*/
 
 		if (info[0] != 0) {
 			System.err.println("eigen_Mat_rm: LAPACK dsyev error code" + info[0]);
 			w = null;
 			work = null;
-			cleanup_Mat_rm(A_trans);
 			return SIFT3D_FAILURE;
 		}
 		for (i = 0; i < n; i++) {
@@ -6075,20 +5935,17 @@ public class SIFT3D extends AlgorithmBase {
 		w = null;
 		// Optionally return the eigenvectors
 		if (Q != null) {
-			//status = transpose_Mat_rm(A_trans, Q);
 			status = copy_Mat_rm(A, Q);
 			if (status == SIFT3D_FAILURE) {
-				System.err.println("eigen_Mat_rm: failure on transpose_Mat_rm(A_trans, Q)");
+				System.err.println("eigen_Mat_rm: failure on copy_Mat_rm(A, Q)");
 				w = null;
 				work = null;
-				cleanup_Mat_rm(A_trans);
 				return SIFT3D_FAILURE;	
 			}
 		}
 		
 
 		work = null;
-		cleanup_Mat_rm(A_trans);
 		return SIFT3D_SUCCESS;
 
 	 
