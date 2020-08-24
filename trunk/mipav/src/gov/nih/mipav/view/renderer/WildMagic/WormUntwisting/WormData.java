@@ -204,6 +204,14 @@ public class WormData
 		File file = new File(outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv");
 		return file.exists();
 	}
+
+	public String getIntegratedMarkerAnnotationsPath() {
+		return (outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv");
+	}
+
+	public String getStraightAnnotationsPath() {
+		return (outputDirectory + File.separator + straightenedAnnotations + File.separator + "straightened_annotations.csv");
+	}
 	
 	public VOI getIntegratedMarkerAnnotations()
 	{

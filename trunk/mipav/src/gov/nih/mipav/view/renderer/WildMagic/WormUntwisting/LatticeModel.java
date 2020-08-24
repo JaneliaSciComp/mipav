@@ -4831,6 +4831,13 @@ public class LatticeModel {
 		untwistMarkers(imageA, resultExtents);
 	}
 
+	public void untwistMarkers() {
+		setMarkers(annotationVOIs);
+		untwistMarkers(true);	
+		saveAnnotationStraight(imageA, "straightened_annotations", "straightened_annotations.csv" );	
+	}
+	
+	
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
 	 * @return untwisted image.
@@ -4839,7 +4846,7 @@ public class LatticeModel {
 	{
 		initializeInterpolation(false);
 		final int[] resultExtents = new int[] {((2 * extent)), ((2 * extent)), samplingPlanes.getCurves().size()};
-		return untwistTest(imageA, resultExtents);
+		return untwistTest(imageA, true, resultExtents);
 
 	}
 
@@ -9105,8 +9112,7 @@ public class LatticeModel {
 		}
 		int size = samplingPlanes.getCurves().size();
 
-
-		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
+        ModelImage contourImage = null;
 		VOIVector contourVector = new VOIVector();
 		if ( latticeContours != null ) {
 			System.err.println("using lattice contours");
@@ -9114,20 +9120,22 @@ public class LatticeModel {
 		}
 		else {
 			// Load skin marker contours:
+			System.err.println(outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 			FileIO fileIO = new FileIO();
-			ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
-			loadAllVOIsFrom(resultImage, voiDir, true, contourVector, false);
-			resultImage.disposeLocal(false);
-			System.err.println("reading lattice contours");
+			contourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 		}
 
-		VOIContour[] contours = new VOIContour[size];
-		for ( int i = 0; i < contourVector.elementAt(0).getCurves().size(); i++ )
-		{	
-			VOIContour contour = (VOIContour)contourVector.elementAt(0).getCurves().elementAt(i);
-			int index = (int) contour.elementAt(0).Z;
-			contours[index] =  contour;
-			//			contours[i].update();
+		VOIContour[] contours = null;
+		if ( contourVector.size() > 0 ) {
+			for ( int i = 0; i < contourVector.elementAt(0).getCurves().size(); i++ )
+			{	
+				if ( contours == null ) {
+					contours = new VOIContour[size];
+				}
+				VOIContour contour = (VOIContour)contourVector.elementAt(0).getCurves().elementAt(i);
+				int index = (int) contour.elementAt(0).Z;
+				contours[index] =  contour;
+			}
 		}
 
 
@@ -9162,20 +9170,33 @@ public class LatticeModel {
 						corners[k] = kBox.elementAt(k);
 					}
 					Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i), minDistance );
-					//					if ( minDistance[0] < (tryCount * 5) ) {
-					//						System.err.println("unTwistTest: marker        " + markerNames.elementAt(i) + "  " + j + " " + minDistance[0] + "  " +
-					//								( (contours[j] != null) && contours[j].contains( markerPt.X, markerPt.Y ) ) );
-					//					}
 
 					// If it is inside the skin marker contour:
-					if ( ( minDistance[0] < (tryCount * 5) ) && ((contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y )) )
+					if ( contours == null && contourImage != null )
 					{
-						if ( minDistance[0] < minUntwist ) {
-							minUntwist = minDistance[0];
-							minSlice = j;
-							minPt.copy(markerPt);
-						}
+						if ( ( minDistance[0] < (tryCount * 5) ) && 
+								contourImage.getFloat( (int)markerPt.X, (int)markerPt.Y, j) != 0 )
+						{
+							if ( minDistance[0] < minUntwist ) {
+								minUntwist = minDistance[0];
+								minSlice = j;
+								minPt.copy(markerPt);
+							}
+						}						
+
 					}
+					else
+					{
+						if ( ( minDistance[0] < (tryCount * 5) ) && ((contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y )) )
+						{
+							if ( minDistance[0] < minUntwist ) {
+								minUntwist = minDistance[0];
+								minSlice = j;
+								minPt.copy(markerPt);
+							}
+						}						
+					}
+
 				}
 				if ( minSlice != -1 ) {
 					VOIWormAnnotation text = new VOIWormAnnotation();
@@ -9190,7 +9211,12 @@ public class LatticeModel {
 
 		}
 
-
+		if ( contourImage != null ) {
+			contourImage.disposeLocal(false);
+			contourImage = null;
+		}
+		
+		
 		System.err.println( "untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
 
@@ -9204,7 +9230,7 @@ public class LatticeModel {
 	 * @param image
 	 * @param resultExtents
 	 */
-	private ModelImage untwistTest(final ModelImage image, final int[] resultExtents)
+	private ModelImage untwistTest(final ModelImage image, boolean straightenImage, final int[] resultExtents)
 	{
 		System.err.println("untwistTest "  + paddingFactor );
 		long time = System.currentTimeMillis();
@@ -9214,20 +9240,22 @@ public class LatticeModel {
 		if (imageName.contains("_clone")) {
 			imageName = imageName.replaceAll("_clone", "");
 		}
-		ModelImage resultImage;
-		if ( image.isColorImage() )
-		{
-			resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_unmasked.xml");
+		ModelImage resultImage = null;
+		if ( straightenImage ) {
+			if ( image.isColorImage() )
+			{
+				resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_unmasked.xml");
+			}
+			else
+			{
+				resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_unmasked.xml");
+			}	
+			resultImage.setResolutions(new float[] {1, 1, 1});
 		}
-		else
-		{
-			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_unmasked.xml");
-		}	
-		resultImage.setResolutions(new float[] {1, 1, 1});
 
 
-		int dimX = (resultImage.getExtents()[0]);
-		int dimY = (resultImage.getExtents()[1]);
+		int dimX = resultExtents[0];
+		int dimY = resultExtents[1];
 		int dimZ = size;
 		Vector3f center = new Vector3f( dimX/2f, dimY/2f, 0f );
 
@@ -9272,13 +9300,15 @@ public class LatticeModel {
 			}
 			latticeContours.getCurves().add( contour );
 
-
-			float radiusSq = radius*radius;
-
-			writeDiagonalTest(image, resultImage, 0, i, resultExtents, corners, radiusSq);
+			if ( straightenImage ) {
+				float radiusSq = radius*radius;
+				writeDiagonalTest(image, resultImage, 0, i, resultExtents, corners, radiusSq);
+			}
 		}
-		if ( resultImage.getMin() > 0 ) {
-			resultImage.setMin(0);
+		if ( straightenImage ) {
+			if ( resultImage.getMin() > 0 ) {
+				resultImage.setMin(0);
+			}
 		}
 		// straighten lattice:
 		short id = (short) image.getVOIs().getUniqueID();

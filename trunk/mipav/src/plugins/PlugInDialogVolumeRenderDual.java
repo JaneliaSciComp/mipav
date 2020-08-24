@@ -23,6 +23,7 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************
  ******************************************************************/
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.OpenCLInfo;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.FileIO;
@@ -186,6 +187,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	private JButton newLatticeButton; 
 	private JButton flipLatticeButton; 
+	private JButton predict;
 	private JButton previewUntwisting;
 	private JCheckBox displayModel;
 	private JCheckBox displaySurface;
@@ -414,6 +416,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if ( openHyperStack() ) {
 						displayModel.setVisible(true);
 						displaySurface.setVisible(true);
+						predict.setVisible(true);
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						validate();
@@ -453,9 +456,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			// Edit mode, next and back open the next or previous image in the
 			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
-			{
-//				testPython();
-				
+			{				
 				activeImage.clipArb = activeRenderer.getArbitratyClip();
 				activeImage.clipArbOn = activeRenderer.getArbitratyClipOn();
 				activeImage.currentTab = tabbedPane.getSelectedIndex();
@@ -611,6 +612,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						activeRenderer.displaySurface(false);						
 					}
 				}
+			}
+			else if ( command.equals("predict") )
+			{				
+				runPython();
 			}
 			else if ( command.equals("preview") )
 			{				
@@ -1368,16 +1373,24 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
     }
 	
 	public void givenPythonScript_whenPythonProcessInvoked_thenSuccess() throws Exception {
-	    ProcessBuilder processBuilder = new ProcessBuilder("python", baseFileDir + File.separator  + "hello.py" );
+		
+//		System.err.println( "python" + baseFileDir + File.separator  + "track_MIPAV.py" + " " + 
+//				leftImage.wormData.getStraightAnnotationsPath() + "  " + rightImage.wormData.getStraightAnnotationsPath() + "  " +
+//	    		leftImage.wormData.getAnnotationsPath() + "  " +  rightImage.wormData.getAnnotationsPath() );
+		
+		
+	    ProcessBuilder processBuilder = new ProcessBuilder("python", baseFileDir + File.separator  + "track_MIPAV.py",
+	    		leftImage.wormData.getStraightAnnotationsPath(), rightImage.wormData.getStraightAnnotationsPath(),
+	    		leftImage.wormData.getIntegratedMarkerAnnotationsPath(), rightImage.wormData.getIntegratedMarkerAnnotationsPath() );
 	    processBuilder.redirectErrorStream(true);
 	 
 	    Process process = processBuilder.start();		
         List<String> results = readProcessOutput(process.getInputStream());
 
-	    System.err.println(results.size());
-	    for ( int i = 0; i < results.size(); i++ ) {
-	    	System.err.println(i + " " + results.get(i) );
-	    }
+//	    System.err.println(results.size());
+//	    for ( int i = 0; i < results.size(); i++ ) {
+//	    	System.err.println(i + " " + results.get(i) );
+//	    }
 	    
 //	    assertThat("Results should not be empty", results, is(not(empty())));
 //	    assertThat("Results should contain output of script: ", results, hasItem(
@@ -1387,11 +1400,60 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	    System.err.println(exitCode);
 //	    assertEquals("No errors should be detected", 0, exitCode);
 	}
-
-	private void testPython() {
+	
+	private void runPython() {
+		// save the anotations for the leftImage:
+		if ( (leftImage.wormData != null) && (leftImage.voiManager != null) ) {
+			// save annotations not in splines:
+			leftImage.wormData.saveIntegratedMarkerAnnotations(leftImage.voiManager.getAnnotations());
+		}
+		
+		// delete the predicted files for the right image:
+		String fileName = rightImage.wormData.getOutputDirectory() + File.separator + 
+				"prediction" + File.separator + "predicted_straightened_annotations.csv";
+		File file = new File(fileName);
+		if ( file.exists() ) {
+			file.delete();
+		}
+		fileName = rightImage.wormData.getOutputDirectory() + File.separator + 
+				"prediction" + File.separator + "predicted_annotations.csv";
+		file = new File(fileName);
+		if ( file.exists() ) {
+			file.delete();
+		}
+		
+		// when user presses 'predict'
+		// prototype:
+		// 1. straighten both left/right images
+		leftImage.voiManager.untwistMarkers();
+		if ( rightImage != null ) {
+			rightImage.voiManager.untwistMarkers();
+		}
+		// 2. call track_MIPAV.py on the four straightened images
 		try {
 			System.err.println("Calling Python?");
 			givenPythonScript_whenPythonProcessInvoked_thenSuccess();
+
+			// wait for file: 
+			int count = 100;
+			while ( count > 0 && !file.exists() ) {
+				try {
+					System.err.println("file doesn't exist yet:");
+					wait(100);
+					count--;
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if ( file.exists() ) {
+				System.err.println( "file exists length = " + file.length() );
+				// 3. delete annotations from right image & load predictions		
+				loadPredicted(rightImage);
+			}
+			else {
+				MipavUtil.displayError("prediction failed");
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -1581,27 +1643,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					
 
 					leftImage.wormImage.setImageName( leftImage.wormImage.getImageName().replace("_rgb", ""));
-//					clearPotentialLattices();
 					leftImage.wormData = new WormData(leftImage.wormImage);
-					latticeSelectionPanel.removeAll();
-					latticeSelectionPanel.setVisible(false);
-
-					if ( editMode == EditLattice ) {
-
-						latticeSelectionPanel.add(newLatticeButton);
-						latticeSelectionPanel.add(flipLatticeButton);
-					}
-
-					if ( editMode != ReviewResults ) {
-						latticeSelectionPanel.add(displayModel);
-						displayModel.setSelected(false);
-						latticeSelectionPanel.add(displaySurface);
-						displaySurface.setSelected(false);
-						latticeSelectionPanel.remove(previewUntwisting);
-						latticeSelectionPanel.add(previewUntwisting);
-						latticeSelectionPanel.setVisible(true);
-					}
-
+					
 					if ( leftImage.annotations != null )
 					{
 						leftImage.annotations.clear();
@@ -1668,6 +1711,31 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				}
 	    		activeImage = leftImage;
 	    		activeRenderer = leftRenderer;
+	    		
+				latticeSelectionPanel.removeAll();
+				latticeSelectionPanel.setVisible(false);
+
+				if ( editMode == EditLattice ) {
+
+					latticeSelectionPanel.add(newLatticeButton);
+					latticeSelectionPanel.add(flipLatticeButton);
+				}
+
+				if ( editMode != ReviewResults ) {
+					latticeSelectionPanel.add(displayModel);
+					displayModel.setSelected(false);
+					latticeSelectionPanel.add(displaySurface);
+					displaySurface.setSelected(false);
+					if ( editMode == IntegratedEditing && (dualGPU != null)) {
+						latticeSelectionPanel.remove(predict);
+						latticeSelectionPanel.add(predict);
+					}
+					latticeSelectionPanel.remove(previewUntwisting);
+					latticeSelectionPanel.add(previewUntwisting);
+					latticeSelectionPanel.setVisible(true);
+				}
+
+	    		
 	    		
 				gpuPanel.setVisible(true);
 				tabbedPane.setVisible(true);
@@ -2382,7 +2450,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		inputsPanel.add(baseFileLocText2.getParent(), gbc);
 		gbc.gridy++;
 
-		baseFileNameText = gui.buildField("Base images name: ", "Decon");
+		baseFileNameText = gui.buildField("Base images name: ", "Decon_reg");
 		inputsPanel.add(baseFileNameText.getParent(), gbc);
 		gbc.gridy++;
 
@@ -2543,6 +2611,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		displaySurface.setVisible(false);
 		displaySurface.setEnabled(true);
 		latticeSelectionPanel.add(displaySurface);
+
+		predict = gui.buildButton("predict");
+		predict.addActionListener(this);
+		predict.setActionCommand("predict");
+		predict.setVisible(false);
+		predict.setEnabled(true);
+		latticeSelectionPanel.add(predict);
 
 		previewUntwisting = gui.buildButton("preview");
 		previewUntwisting.addActionListener(this);
@@ -3023,6 +3098,33 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		if ( editMode == ReviewResults ) {
 			LatticeModel.openStraightNeuriteCurves(data.wormImage);
+		}
+	}
+	
+	private void loadPredicted(IntegratedWormData data) {
+
+		if ( data.annotations != null )
+		{
+			data.annotations.clear();
+			data.annotations = null;
+		}
+		data.annotations = new VOIVector();
+		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(data.wormData.getOutputDirectory() + File.separator + 
+				"prediction" + File.separator + "predicted_annotations.csv");
+		if ( markerAnnotations != null ) {
+			System.err.println( markerAnnotations + "  " + markerAnnotations.getCurves().size() );
+			data.annotations.add( markerAnnotations );
+			data.voiManager.addAnnotations(data.annotations);
+			data.annotations = null;
+			
+	    	VOI annotations = data.voiManager.getAnnotations();
+	    	if ( annotations != null ) {
+	    		for (int i = 0; i < annotations.getCurves().size(); i++)
+	    		{
+	    			final VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+	    			text.createVolumeVOI( data.volumeImage, activeRenderer.getTranslate() );    			
+	    		}
+	    	}
 		}
 	}
 	
