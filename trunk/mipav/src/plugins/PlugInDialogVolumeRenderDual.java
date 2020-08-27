@@ -3112,6 +3112,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(data.wormData.getOutputDirectory() + File.separator + 
 				"prediction" + File.separator + "predicted_annotations.csv");
 		if ( markerAnnotations != null ) {
+			data.voiManager.deleteAnnotations();
 			System.err.println( markerAnnotations + "  " + markerAnnotations.getCurves().size() );
 			data.annotations.add( markerAnnotations );
 			data.voiManager.addAnnotations(data.annotations);
