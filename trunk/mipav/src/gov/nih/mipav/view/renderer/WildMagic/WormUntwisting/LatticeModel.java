@@ -2987,6 +2987,7 @@ public class LatticeModel {
 		if ( nearest == null ) {
 			return false;
 		}
+		boolean repeat = false;
 		if ( !rightMouse ) {
 			// toggle nearest selection:
 			nearest.setSelected( !nearest.isSelected() );
@@ -3017,7 +3018,19 @@ public class LatticeModel {
 			if ( nearest.isSelected() && (selectedAnnotations.size() == 1) )
 			{
 				// rename add notes, etc.:
+				String oldName = new String(nearest.getText());
 				new JDialogAnnotation(imageA, annotationVOIs, annotationVOIs.getCurves().indexOf(nearest), true, true);
+				String newName = new String(nearest.getText());
+				for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+					if ( annotationVOIs.getCurves().elementAt(i) != nearest ) {
+						VOIWormAnnotation current = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+						if ( current.getText().contentEquals(newName) ) {
+							MipavUtil.displayError( "Name already exists " + newName );
+							nearest.setText(oldName);
+							repeat = true;
+						}
+					}
+				}
 				nearest.updateText();
 				colorAnnotations();
 			}
@@ -3033,7 +3046,9 @@ public class LatticeModel {
 					}
 				}
 			}
-
+			if ( repeat ) {
+				return selectAnnotation(startPt, endPt, pt, rightMouse, multiSelect);
+			}
 			imageA.notifyImageDisplayListeners();
 			updateAnnotationListeners();
 			return true;
