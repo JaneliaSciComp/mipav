@@ -377,8 +377,6 @@ public class PlugInDialogFITBIR extends JFrame
             + "the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing requirements,\n"
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
-    
-    private static final String defaultFormDiseaseVar = "BricsDisease";
 
     private static final Comparator<DataElementValue> dataElementCompare = new Comparator<DataElementValue>() {
         @Override
@@ -5839,17 +5837,14 @@ public class PlugInDialogFITBIR extends JFrame
             diseaseFilterCombo.addItemListener(this);
             
             int selectedIndex = 0;
-            if (VariableTable.getReference().isVariableSet(defaultFormDiseaseVar)) {
-                String selectedDisease = VariableTable.getReference().interpolate(defaultFormDiseaseVar);
+            String selectedDisease = getDiseaseSelection();
+            if (selectedDisease != null && !selectedDisease.trim().equals("")) {
+                System.err.println("Default form structure disease specified: " + selectedDisease);
                 
-                if (selectedDisease != null && !selectedDisease.trim().equals("")) {
-                    System.err.println("Default form structure disease specified: " + selectedDisease);
-                    
-                    for (int i = 0; i < diseaseFilterCombo.getItemCount(); i++) {
-                        if (diseaseFilterCombo.getItemAt(i).contains(selectedDisease)) {
-                            selectedIndex = i;
-                            break;
-                        }
+                for (int i = 0; i < diseaseFilterCombo.getItemCount(); i++) {
+                    if (diseaseFilterCombo.getItemAt(i).contains(selectedDisease)) {
+                        selectedIndex = i;
+                        break;
                     }
                 }
             }
@@ -9842,6 +9837,19 @@ public class PlugInDialogFITBIR extends JFrame
             String bricsEnv = VariableTable.getReference().interpolate(dictionaryEnvCmdLineVar);
             System.err.println("Command line BRICS environment: " + bricsEnv);
             selectedDictionaryEnv = BricsEnv.valueOf(bricsEnv);
+        }
+    }
+    
+    protected String getDiseaseSelection() {
+        switch (selectedDictionaryInstance) {
+            case PDBP:
+                return "Parkinson's Disease";
+            case FITBIR:
+            case NEI:
+            case CiSTAR:
+            case NTI:
+            default:
+                return "All Diseases";
         }
     }
 
