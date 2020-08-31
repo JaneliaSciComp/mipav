@@ -49,6 +49,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import org.apache.commons.csv.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
@@ -2602,11 +2603,49 @@ public class PlugInDialogFITBIR extends JFrame
 
         return fileContents;
     }
+    
+    private String getFileAsString(final InputStream stream) {
+        String fileContents = null;
+        
+        try {
+            fileContents = IOUtils.toString(stream);
+        } catch (final IOException e) {
+            System.err.println("Error reading JSON stream");
+            e.printStackTrace();
+            return null;
+        }
+
+        if (fileContents == null) {
+            return null;
+        }
+        
+        return fileContents.trim();
+    }
 
     private JSONObject readJsonFile(final File jsonFile) {
         JSONObject jsonObject = null;
 
         String fileContents = getFileAsString(jsonFile);
+
+        if ( !fileContents.startsWith("{") || !fileContents.endsWith("}")) {
+            return null;
+        }
+
+        try {
+            jsonObject = new JSONObject(fileContents);
+        } catch (final JSONException e) {
+            System.err.println("JSONException " + e + " on new JSONObject(jsonString)");
+            e.printStackTrace();
+            return null;
+        }
+
+        return jsonObject;
+    }
+    
+    private JSONObject readJsonFile(final InputStream inputStream) {
+        JSONObject jsonObject = null;
+
+        String fileContents = getFileAsString(inputStream);
 
         if ( !fileContents.startsWith("{") || !fileContents.endsWith("}")) {
             return null;
@@ -9857,9 +9896,9 @@ public class PlugInDialogFITBIR extends JFrame
         if (dictionaryConfigTable == null) {
             dictionaryConfigTable = new HashMap<String, DictionaryConfigItem>();
             
-            final File dictFile = new File(getClass().getResource(jsonConfigFileName).getFile());
-            if (dictFile != null) {
-                JSONObject dictJson = readJsonFile(dictFile);
+            final InputStream jsonStream = getClass().getResourceAsStream(jsonConfigFileName);
+            if (jsonStream != null) {
+                JSONObject dictJson = readJsonFile(jsonStream);
                 
                 Iterator<String> keys = dictJson.keys();
                 while (keys.hasNext()) {
