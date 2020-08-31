@@ -53,8 +53,7 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.bouncycastle.util.encoders.Hex;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import org.codehaus.jettison.json.*;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -130,75 +129,45 @@ public class PlugInDialogFITBIR extends JFrame
     private JLabel previewImgBrightnessLabel, previewImgContrastLabel;
 
     private JSlider previewImgBrightnessSlider, previewImgContrastSlider;
-
-    /** Dev data dictionary server. */
-    @SuppressWarnings("unused")
-    private static final String ddDevServer = "http://fitbir-dd-dev.cit.nih.gov/";
-
-    /** Dev portal auth server. */
-    @SuppressWarnings("unused")
-    private static final String authDevServer = "http://fitbir-portal-dev.cit.nih.gov/";
-
-    /** Stage data dictionary server. */
-    @SuppressWarnings("unused")
-    private static final String ddStageServer = "http://fitbir-dd-stage.cit.nih.gov/";
-
-    /** Stage portal auth server. */
-    @SuppressWarnings("unused")
-    private static final String authStageServer = "http://fitbir-portal-stage.cit.nih.gov/";
-
-    /** Demo data dictionary server. */
-    @SuppressWarnings("unused")
-    private static final String ddDemoServer = "http://fitbir-dd-demo.cit.nih.gov/";
-
-    /** Demo portal auth server. */
-    @SuppressWarnings("unused")
-    private static final String authDemoServer = "http://fitbir-portal-demo.cit.nih.gov/";
-
-    /** Prod data dictionary server. */
-    private static final String ddProdServer = "https://dictionary.fitbir.nih.gov/";
-
-    /** Prod portal auth server. */
-    private static final String authProdServer = "https://fitbir.nih.gov/";
-
-    /** File name of server configuration. */
-    private static final String configFileName = "brics_config.properties";
-
-    /** Property for reading the dd environment name from the brics config file. */
-    private static final String ddEnvNameProp = "ddEnvName";
-
-    /** Property for reading the dd server url from the brics config file. */
-    private static final String ddServerURLProp = "ddServerURL";
-
-    /** Property for reading the auth server url from the brics config file. */
-    private static final String authServerURLProp = "authServerURL";
-
-    /** Property for reading the dd authentication user name from the brics config file. */
-    private static final String ddAuthUserProp = "ddAuthUser";
-
-    /** Property for reading the dd authentication password from the brics config file. */
-    private static final String ddAuthPassProp = "ddAuthPass";
+    
+    private static final String jsonConfigFileName = "brics_config.json";
 
     /**
      * Property for reading whether to use the (slower) authenticated web service, which allows testing against draft
      * forms.
      */
     private static final String ddUseAuthServiceProp = "ddUseAuthService";
-
-    /** DD server environment name (Prod, Demo, Stage, or Dev). */
-    private static String ddEnvName = "Prod";
-
+    
     /** Full data dictionary server url */
-    private static String ddServerURL = ddProdServer;
+    private static String ddServerURL = null;
 
     /** Full authentication server url */
-    private static String authServerURL = authProdServer;
+    private static String authServerURL = null;
 
     private static String ddAuthUser = "";
 
     private static String ddAuthPass = "";
 
     private static boolean ddUseAuthService = false;
+    
+    // TODO add all instances
+    private enum BricsInstance {
+        FITBIR, PDBP, NEI, CiSTAR, NTI;
+    }
+    
+    private enum BricsEnv {
+        Prod, Demo, Stage, UAT, Dev;
+    }
+    
+    private BricsInstance selectedDictionaryInstance = BricsInstance.FITBIR;
+    
+    private BricsEnv selectedDictionaryEnv = BricsEnv.Prod;
+    
+    protected HashMap<String, DictionaryConfigItem> dictionaryConfigTable = null;
+    
+    protected static final String dictionaryInstanceCmdLineVar = "BricsInstance";
+    
+    protected static final String dictionaryEnvCmdLineVar = "BricsEnvironment";
 
     private List<FormStructure> dataStructureList;
 
@@ -459,7 +428,9 @@ public class PlugInDialogFITBIR extends JFrame
 
         // try to read the server config from disk, if it is there.
         // otherwise the value set above at initialization is used.
-        readConfig();
+        //readConfig();
+        readCmdLineDictionarySelection();
+        readDictionaryConfig();
 
         init();
         setVisible(true);
@@ -2947,7 +2918,7 @@ public class PlugInDialogFITBIR extends JFrame
     }
 
     private void init() {
-        setTitle("Image Submission Package Creation Tool - " + pluginVersion + " (" + ddEnvName + ")");
+        setTitle("Image Submission Package Creation Tool - " + pluginVersion + " (" + selectedDictionaryInstance + " - "+ selectedDictionaryEnv + ")");
 
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -4528,34 +4499,34 @@ public class PlugInDialogFITBIR extends JFrame
         return brightnessContrastPanel;
     }
 
-    /**
-     * Tries to read server configuration from brics config file on local disk.
-     */
-    private void readConfig() {
-        final InputStream in = getClass().getResourceAsStream(configFileName);
-        if (in != null) {
-            final Properties prop = new Properties();
-            try {
-                prop.load(in);
-            } catch (final IOException e) {
-                Preferences.debug("Unable to load BRICS preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
-                e.printStackTrace();
-            }
-            // use pre-set, hardcoded values as defaults if properties are not found
-            ddEnvName = prop.getProperty(ddEnvNameProp, ddEnvName);
-            System.out.println("ddEnvName:\t" + ddEnvName);
-            authServerURL = prop.getProperty(authServerURLProp, authServerURL);
-            System.out.println("authServer:\t" + authServerURL);
-            ddServerURL = prop.getProperty(ddServerURLProp, ddServerURL);
-            System.out.println("ddServer:\t" + ddServerURL);
-            ddAuthUser = prop.getProperty(ddAuthUserProp, ddAuthUser);
-            System.out.println("ddAuthUser:\t" + ddAuthUser);
-            ddAuthPass = prop.getProperty(ddAuthPassProp, ddAuthPass);
-            System.out.println("ddAuthPass:\t" + ddAuthPass);
-            ddUseAuthService = Boolean.parseBoolean(prop.getProperty(ddUseAuthServiceProp, "" + ddUseAuthService));
-            System.out.println("ddUseAuthService:\t" + ddUseAuthService);
-        }
-    }
+//    /**
+//     * Tries to read server configuration from brics config file on local disk.
+//     */
+//    private void readConfig() {
+//        final InputStream in = getClass().getResourceAsStream(configFileName);
+//        if (in != null) {
+//            final Properties prop = new Properties();
+//            try {
+//                prop.load(in);
+//            } catch (final IOException e) {
+//                Preferences.debug("Unable to load BRICS preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+//                e.printStackTrace();
+//            }
+//            // use pre-set, hardcoded values as defaults if properties are not found
+//            ddEnvName = prop.getProperty(ddEnvNameProp, ddEnvName);
+//            System.out.println("ddEnvName:\t" + ddEnvName);
+//            authServerURL = prop.getProperty(authServerURLProp, authServerURL);
+//            System.out.println("authServer:\t" + authServerURL);
+//            ddServerURL = prop.getProperty(ddServerURLProp, ddServerURL);
+//            System.out.println("ddServer:\t" + ddServerURL);
+//            ddAuthUser = prop.getProperty(ddAuthUserProp, ddAuthUser);
+//            System.out.println("ddAuthUser:\t" + ddAuthUser);
+//            ddAuthPass = prop.getProperty(ddAuthPassProp, ddAuthPass);
+//            System.out.println("ddAuthPass:\t" + ddAuthPass);
+//            ddUseAuthService = Boolean.parseBoolean(prop.getProperty(ddUseAuthServiceProp, "" + ddUseAuthService));
+//            System.out.println("ddUseAuthService:\t" + ddUseAuthService);
+//        }
+//    }
 
     /**
      * Checks if the given string starts with an allowed GUID prefix.
@@ -8908,6 +8879,12 @@ public class PlugInDialogFITBIR extends JFrame
 
                 // should have already read in the config file (moved from here to be before the GUI init() call)
 
+                if (ddServerURL == null || authServerURL == null) {
+                    DictionaryConfigItem config = getDictionaryConfig(selectedDictionaryInstance, selectedDictionaryEnv);
+                    ddServerURL = config.ddServer;
+                    authServerURL = config.authServer;
+                }
+                
                 WebClient client;
                 if (ddUseAuthService) {
                     client = WebClient.create(ddServerURL + ddAuthBase);
@@ -9019,6 +8996,12 @@ public class PlugInDialogFITBIR extends JFrame
 
                 // should have already read in the config file (moved from here to be before the GUI init() call)
 
+                if (ddServerURL == null || authServerURL == null) {
+                    DictionaryConfigItem config = getDictionaryConfig(selectedDictionaryInstance, selectedDictionaryEnv);
+                    ddServerURL = config.ddServer;
+                    authServerURL = config.authServer;
+                }
+                
                 WebClient client;
                 client = WebClient.create(ddServerURL + ddRequestBase + "/" + formStructName);
 
@@ -9836,5 +9819,77 @@ public class PlugInDialogFITBIR extends JFrame
         }
 
         return curFile.getPath();
+    }
+
+    private class DictionaryConfigItem {
+        public String ddServer;
+        public String authServer;
+        
+        public DictionaryConfigItem(final String dd, final String auth) {
+            ddServer = dd;
+            authServer = auth;
+        }
+    }
+    
+    protected void readCmdLineDictionarySelection() {
+        if (VariableTable.getReference().isVariableSet(dictionaryInstanceCmdLineVar)) {
+            String bricsInstance = VariableTable.getReference().interpolate(dictionaryInstanceCmdLineVar);
+            System.err.println("Command line BRICS instance: " + bricsInstance);
+            selectedDictionaryInstance = BricsInstance.valueOf(bricsInstance);
+        }
+        
+        if (VariableTable.getReference().isVariableSet(dictionaryEnvCmdLineVar)) {
+            String bricsEnv = VariableTable.getReference().interpolate(dictionaryEnvCmdLineVar);
+            System.err.println("Command line BRICS environment: " + bricsEnv);
+            selectedDictionaryEnv = BricsEnv.valueOf(bricsEnv);
+        }
+    }
+
+    protected void readDictionaryConfig() {
+        if (dictionaryConfigTable == null) {
+            dictionaryConfigTable = new HashMap<String, DictionaryConfigItem>();
+            
+            final File dictFile = new File(getClass().getResource(jsonConfigFileName).getFile());
+            if (dictFile != null) {
+                JSONObject dictJson = readJsonFile(dictFile);
+                
+                Iterator<String> keys = dictJson.keys();
+                while (keys.hasNext()) {
+                    String name = keys.next();
+                    try {
+                        JSONObject serverVals = dictJson.getJSONArray(name).getJSONObject(0);
+                        
+                        String ddServ = serverVals.getString("dictionaryServer");
+                        String authServ = serverVals.getString("authServer");
+                        
+                        if (ddServ != null && authServ != null) {
+                            dictionaryConfigTable.put(name, new DictionaryConfigItem(ddServ, authServ));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+    
+    protected DictionaryConfigItem getDictionaryConfig(final BricsInstance instance, final BricsEnv env) {
+//        BricsEnv env = BricsEnv.Prod;
+//        for (BricsEnv e : BricsEnv.values()) {
+//            if (envName.equalsIgnoreCase(e.toString())) {
+//                env = e;
+//            }
+//        }
+//        
+//        BricsInstance instance = BricsInstance.FITBIR;
+//        for (BricsInstance inst : BricsInstance.values()) {
+//            if (instanceName.equalsIgnoreCase(inst.toString())) {
+//                instance = inst;
+//            }
+//        }
+        
+        DictionaryConfigItem item = dictionaryConfigTable.get(instance.toString() + "_" + env.toString());
+        
+        return item;
     }
 }
