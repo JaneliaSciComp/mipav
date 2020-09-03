@@ -75,6 +75,21 @@ public class LatticeModel {
 	{
 		return ( (c1.getRed() == c2.getRed()) && (c1.getGreen() == c2.getGreen()) && (c1.getBlue() == c2.getBlue()) );
 	}
+	
+	public static String checkName(String name, String original, int count, VOI annotationVOIs) {
+		if ( annotationVOIs == null ) return name;
+		if ( annotationVOIs.getCurves() == null ) return name;
+		if ( annotationVOIs.getCurves().size() == 0 ) return name;
+		
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+			if ( text.getText().contentEquals(name) ) {
+				name = original + "_" + count++;
+				return checkName(name, original, count, annotationVOIs);
+			}
+		}
+		return name;
+	}
 
 	/**
 	 * Read a list of annotations from a CSV file: name,x,y,z,radius (optional)
@@ -94,7 +109,7 @@ public class LatticeModel {
 				BufferedReader br = new BufferedReader(fr);
 				String line = br.readLine();
 				line = br.readLine();
-
+				String renameString = "";
 				VOI annotationVOIs = new VOI( sID, "annotationVOIs", VOI.ANNOTATION, 0 );
 				int count = 1;
 				while ( line != null && (line.length() > 1) )
@@ -111,7 +126,11 @@ public class LatticeModel {
 							// name, position and color
 							int parsedIndex = 0;
 							String name = String.valueOf( parsed[parsedIndex++] );
-							text.setText(name);
+							String name1 = checkName(name, new String(name), 1, annotationVOIs);
+							if ( !name.equals(name1) ) {
+								renameString += name + "->" + name1 + "\n";
+							}
+							text.setText(name1);
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
@@ -135,7 +154,11 @@ public class LatticeModel {
 							// name, position and radius:
 							int parsedIndex = 0;
 							String name = String.valueOf( parsed[parsedIndex++] );
-							text.setText(name);
+							String name1 = checkName(name, new String(name), 1, annotationVOIs);
+							if ( !name.equals(name1) ) {
+								renameString += name + "->" + name1 + "\n";
+							}
+							text.setText(name1);
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
@@ -161,6 +184,9 @@ public class LatticeModel {
 						count++;
 					}
 					line = br.readLine();
+				}
+				if ( renameString.length() > 0 ) {
+					MipavUtil.displayError( "Renamed duplicate annotations:\n" + renameString );
 				}
 				fr.close();
 				if ( count > 1 )
@@ -636,7 +662,6 @@ public class LatticeModel {
 	protected ModelImage seamCellImage;
 	// Set of two contours, each connected to the other pair-wise
 	protected VOIVector lattice = null;
-	private boolean latticeChanged = false;
 	// left side of the lattice:
 	protected VOI left;
 	protected VOI leftContour;
@@ -1803,14 +1828,6 @@ public class LatticeModel {
 	{
 		return imageA;
 	}
-
-	public boolean getLatticeChanged() {
-		return latticeChanged;
-	}
-
-	public void setLatticeChanged() {
-		latticeChanged = true;
-	}
 	
 	public VOIVector getLattice() {
 		return lattice;
@@ -2506,7 +2523,7 @@ public class LatticeModel {
 				VOI annotations = LatticeModel.readAnnotationsCSV(voiDir + list[i]);
 				if ( annotations != null ) {
 					setMarkers(annotations);
-					untwistMarkers(useLatticeModel);	
+					untwistMarkers(true);	
 					saveAnnotationStraight(imageA, "straightened_neurites", "straightened_" + list[i] );	
 				}
 			}
@@ -4831,7 +4848,7 @@ public class LatticeModel {
 	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straightened
 	 *            image.
 	 */
-	public void untwistMarkers(boolean useLatticeModel) {
+	public void untwistMarkers(boolean untwistAll) {
 		if ( markerCenters == null ) {
 			return;
 		}
@@ -4846,7 +4863,7 @@ public class LatticeModel {
 		untwistMarkers(imageA, resultExtents);
 	}
 
-	public void untwistMarkers() {
+	public void untwistMarkers() {		
 		setMarkers(annotationVOIs);
 		untwistMarkers(true);	
 		saveAnnotationStraight(imageA, "straightened_annotations", "straightened_annotations.csv" );	
@@ -9237,6 +9254,174 @@ public class LatticeModel {
 
 	}
 
+	public void untwistAnnotations()
+	{
+		String voiDir = outputDirectory + File.separator + "straightened_annotations" + File.separator + "straightened_annotations.csv";
+		File file = new File(voiDir);
+		
+		// if the lattice has changed untwist the image and generate the contours and contour image again:
+		boolean untwistAll = !file.exists();
+		if ( latticeChanged() || untwistAll ) 
+		{
+			System.err.println( "lattice changed" );
+			initializeInterpolation(true);
+			untwistImage( true );
+			segmentLattice(imageA, true, paddingFactor, false);
+			System.err.println( outputDirectory + File.separator + WormData.editLatticeOutput );
+			saveLattice( outputDirectory + File.separator, WormData.editLatticeOutput );
+			untwistAll = true;
+		}		
+		else if ( !latticeInterpolationInit ) {
+			initializeInterpolation(false);
+		}
+
+		// load the straightened annotations - if they exist.
+		if ( file.exists() && !untwistAll ) {
+			// load the existing annotation file - use it to determine which annotations need untwisting.
+			VOI originalAnnotation = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + WormData.integratedAnnotationOutput + File.separator + "annotations.csv");
+			
+			// look for changes in annotations - build list to untwist:
+			VOI changed = annotationChanged( annotationVOIs, originalAnnotation );
+			if ( changed.getCurves().size() == 0 && !untwistAll ) {
+				return;
+			}
+			// annotations have changed: save them to disk:
+			saveAnnotationsAsCSV(outputDirectory + File.separator + WormData.integratedAnnotationOutput + File.separator, "annotations.csv", annotationVOIs);
+
+			VOI originalStraight = LatticeModel.readAnnotationsCSV(voiDir);
+
+			// delete changed annotations from original straight, untwist & add to original straight:
+		}
+		
+		final int[] resultExtents = new int[] {((2 * extent)), ((2 * extent)), samplingPlanes.getCurves().size()};
+		
+		String imageName = imageA.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		if ( samplingPlanes == null )
+		{
+			samplingPlanes = loadSamplePlanes( outputDirectory + File.separator );
+		}
+		if ( wormDiameters == null )
+		{
+			wormDiameters = loadDiameters( outputDirectory + File.separator );
+		}
+		int size = samplingPlanes.getCurves().size();
+
+        ModelImage contourImage = null;
+		VOIVector contourVector = new VOIVector();
+		if ( latticeContours != null ) {
+			System.err.println("using lattice contours");
+			contourVector.add(latticeContours);
+		}
+		else {
+			// Load skin marker contours:
+			System.err.println(outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
+			FileIO fileIO = new FileIO();
+			contourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
+		}
+
+		VOIContour[] contours = null;
+		if ( contourVector.size() > 0 ) {
+			for ( int i = 0; i < contourVector.elementAt(0).getCurves().size(); i++ )
+			{	
+				if ( contours == null ) {
+					contours = new VOIContour[size];
+				}
+				VOIContour contour = (VOIContour)contourVector.elementAt(0).getCurves().elementAt(i);
+				int index = (int) contour.elementAt(0).Z;
+				contours[index] =  contour;
+			}
+		}
+
+
+		final Vector3f[] corners = new Vector3f[4];		
+		float[] minDistance = new float[1];
+		annotationsStraight = new VOI( (short)0, "straightened annotations", VOI.ANNOTATION, 0 );
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+		{
+			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+
+			int latticeSegment = -1; //markerLatticeSegments.elementAt(i);
+			int startIndex = 0;
+			int endIndex = size;
+			if ( (latticeSegment > 0) && (latticeSegment < splineRangeIndex.length) ) {
+				startIndex = splineRangeIndex[latticeSegment-1];
+				endIndex = splineRangeIndex[latticeSegment];
+			}
+
+			float minUntwist = Float.MAX_VALUE;
+			int minSlice = -1;
+			Vector3f minPt = new Vector3f();
+			int tryCount = 0;
+			int slice = -1; //markerSlices.elementAt(i);
+			if (slice != -1 ) {
+				startIndex = slice;
+				endIndex = slice+1;
+			}
+			while ( minSlice == -1 && tryCount < 3 ) {
+				for ( int j = startIndex; j < endIndex; j++ )
+				{			
+					// Calculate the straightened marker location:
+					VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+					for (int k = 0; k < 4; k++) {
+						corners[k] = kBox.elementAt(k);
+					}
+					Vector3f markerPt = writeDiagonal(imageA, j, resultExtents, corners, text.elementAt(0), minDistance );
+
+					// If it is inside the skin marker contour:
+					if ( contours == null && contourImage != null )
+					{
+						if ( ( minDistance[0] < (tryCount * 5) ) && 
+								contourImage.getFloat( (int)markerPt.X, (int)markerPt.Y, j) != 0 )
+						{
+							if ( minDistance[0] < minUntwist ) {
+								minUntwist = minDistance[0];
+								minSlice = j;
+								minPt.copy(markerPt);
+							}
+						}						
+
+					}
+					else
+					{
+						if ( ( minDistance[0] < (tryCount * 5) ) && ((contours[j] == null) || contours[j].contains( markerPt.X, markerPt.Y )) )
+						{
+							if ( minDistance[0] < minUntwist ) {
+								minUntwist = minDistance[0];
+								minSlice = j;
+								minPt.copy(markerPt);
+							}
+						}						
+					}
+
+				}
+				if ( minSlice != -1 ) {
+					VOIWormAnnotation textStraight = new VOIWormAnnotation();
+					textStraight.setSeamCell(text.isSeamCell());
+					textStraight.setText(text.getText());
+					textStraight.add( new Vector3f(minPt) );
+					textStraight.add( new Vector3f(minPt) );
+					annotationsStraight.getCurves().add(textStraight);
+				}
+				tryCount++;
+			}
+//			System.err.println( markerNames.elementAt(i) + "   " + minSlice + "   " + minUntwist );
+
+		}
+
+		if ( contourImage != null ) {
+			contourImage.disposeLocal(false);
+			contourImage = null;
+		}
+		
+		// save annotations:
+		saveAnnotationsAsCSV(outputDirectory + File.separator + WormData.integratedAnnotationOutput + File.separator, "annotations.csv", annotationVOIs);
+		// save straight annotations:
+		saveAnnotationStraight(imageA, "straightened_annotations", "straightened_annotations.csv" );	
+	}
+
 
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
@@ -10165,5 +10350,91 @@ public class LatticeModel {
 			}
 			LatticeModel.saveAnnotationsAsCSV(voiSeamDir, "seam_cells.csv", latticePoints);
 		}
+	}
+	
+
+	private VOI annotationChanged( VOI annotationsNew, VOI annotationOld ) {
+		VOI annotationsChangeList = new VOI( (short)0, "changed annotations", VOI.ANNOTATION, 0 );
+		
+		for ( int i = 0; i < annotationsNew.getCurves().size(); i++ ) {
+        	VOIWormAnnotation annotation = (VOIWormAnnotation) annotationsNew.getCurves().elementAt(i);
+        	// find match by name:
+        	boolean found = false;
+    		for ( int j = 0; j < annotationOld.getCurves().size(); j++ ) {
+            	VOIWormAnnotation orig = (VOIWormAnnotation) annotationOld.getCurves().elementAt(j);
+            	if ( annotation.getText().equals(orig.getText()) ) {
+
+                	Vector3f ptO = new Vector3f(annotation.elementAt(0));
+                	ptO.X = Math.round(ptO.X);
+                	ptO.Y = Math.round(ptO.Y);
+                	ptO.Z = Math.round(ptO.Z);
+                	
+                	Vector3f pt = new Vector3f(orig.elementAt(0));
+                	pt.X = Math.round(pt.X);
+                	pt.Y = Math.round(pt.Y);
+                	pt.Z = Math.round(pt.Z);
+                	
+                	if ( !pt.equals(ptO) ) {
+                		// point changed position - add to change list: 
+                		annotationsChangeList.getCurves().add(annotation);
+                	}
+            		found = true;
+            		break;
+            	}
+    		}
+    		if ( !found ) {
+        		// new point - add to change list: 
+        		annotationsChangeList.getCurves().add(annotation);
+    		}
+		}
+		
+		return annotationsChangeList;
+	}
+	
+	private boolean latticeChanged() {
+		
+		VOIVector finalLattice = readLatticeCSV(outputDirectory + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
+        if ( finalLattice.size() < 2 ) 
+        	return true;
+
+		VOI leftOrig = (VOI) finalLattice.elementAt(0);
+		VOI rightOrig = (VOI) finalLattice.elementAt(1);
+		
+		if ( leftOrig.getCurves().size() != left.getCurves().size() || rightOrig.getCurves().size() != right.getCurves().size() ) 
+			return true;
+		
+		for ( int i = 0; i < leftOrig.getCurves().size(); i++ ) {
+        	VOIWormAnnotation leftPtOrig = (VOIWormAnnotation) leftOrig.getCurves().elementAt(i);
+        	VOIWormAnnotation leftPt = (VOIWormAnnotation) left.getCurves().elementAt(i);
+
+        	Vector3f ptO = new Vector3f(leftPtOrig.elementAt(0));
+        	ptO.X = Math.round(ptO.X);
+        	ptO.Y = Math.round(ptO.Y);
+        	ptO.Z = Math.round(ptO.Z);
+        	
+        	Vector3f pt = new Vector3f(leftPt.elementAt(0));
+        	pt.X = Math.round(pt.X);
+        	pt.Y = Math.round(pt.Y);
+        	pt.Z = Math.round(pt.Z);
+        	
+        	if ( !pt.equals(ptO) ) 
+        		return true;
+
+        	VOIWormAnnotation rightPtOrig = (VOIWormAnnotation) rightOrig.getCurves().elementAt(i);
+        	VOIWormAnnotation rightPt = (VOIWormAnnotation) right.getCurves().elementAt(i);
+        	ptO = new Vector3f(rightPtOrig.elementAt(0));
+        	ptO.X = Math.round(ptO.X);
+        	ptO.Y = Math.round(ptO.Y);
+        	ptO.Z = Math.round(ptO.Z);
+        	
+        	pt = new Vector3f(rightPt.elementAt(0));
+        	pt.X = Math.round(pt.X);
+        	pt.Y = Math.round(pt.Y);
+        	pt.Z = Math.round(pt.Z);
+        	
+        	if ( !pt.equals(ptO) ) 
+        		return true;
+        }
+		return false;
 	}
 }

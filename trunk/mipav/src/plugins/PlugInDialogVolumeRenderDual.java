@@ -162,7 +162,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JPanel inputsPanel;
 	private JPanel optionsPanel;
 	private JPanel displayControls;
-//	private JRadioButton[] latticeChoices;
+	//	private JRadioButton[] latticeChoices;
 	private JPanel latticeSelectionPanel;
 	private JRadioButton latticeStraighten;
 
@@ -191,7 +191,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JButton previewUntwisting;
 	private JCheckBox displayModel;
 	private JCheckBox displaySurface;
-	
+
 	private int previewCount = 0;
 
 	private JButton nextButton;
@@ -220,7 +220,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JPanel annotationPanelSingle;
 	private JSplitPane curvePanel;
 	private JPanel curvePanelSingle;
-	
+
 
 	private Container volumePanel;
 	private JSplitPane integratedPanel;
@@ -235,7 +235,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private Vector<String> annotationNames;
 	private JSplitPane latticePanel = null;
 	private JPanel latticePanelSingle = null;
-	
+
 	private class IntegratedWormData {
 		private VOIVector annotations;
 		private WormData wormData;
@@ -253,29 +253,29 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private boolean annotationOpen = true;
 
 		private JPanelCurves curvesPanelUI;
-		
+
 		private JPanelLattice latticeTable = null;
-		
+
 		private JPanel colorChannelPanel;
 		private JRadioButton displayChannel1;
 		private JRadioButton displayChannel2;
 		private JRadioButton displayBothChannels;
-		
+
 		private Matrix3f volumeMatrix = new Matrix3f();
 		private Matrix3f clipArb = null;
 		private boolean clipArbOn = false;
-		
+
 		private int currentTab = -1;
-		
+
 		public IntegratedWormData() {}
 	};
-	
+
 	// hyperstack arrays:
 	private IntegratedWormData[] imageStack = null;
 	private IntegratedWormData leftImage = null;
 	private IntegratedWormData rightImage = null;
 	private IntegratedWormData activeImage = null;
-	
+
 	private Dimension currentSize = null;
 
 
@@ -293,13 +293,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	{
 		String command = event.getActionCommand();
 		Object source = event.getSource();
-		
+
 
 		if ( currentSize == null ) {
 			currentSize = new Dimension(getSize());
 			System.err.println(currentSize);
 		}
-		
+
 		if ( editMode == EditNONE )
 		{
 			setVariables();
@@ -320,31 +320,31 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 				}
 				startButton.setEnabled(false);
-//				if ( segmentSeamCells.isSelected() )
-//				{
-//					try {
-//						// Batch Automatic Seam Cell Segmentation:
-//						PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), minRadius, maxRadius );
-//					} catch ( java.lang.OutOfMemoryError e ) {
-//						MipavUtil.displayError( "Error: Not enough memory. Unable to finish seam cell segmentation." );
-//						return;
-//					}
-//					segmentSeamCells.setSelected(false);
-//					editSeamCells.setSelected(true);
-//					startButton.setEnabled(true);
-//				}
-//				else if ( buildLattice.isSelected() )
-//				{
-//					try {
-//						// Batch Automatic Lattice-Building
-//						PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
-//					} catch ( java.lang.OutOfMemoryError e ) {
-//						MipavUtil.displayError( "Error: Not enough memory. Unable to finish automatic lattice-building." );
-//						return;
-//					}
-//					editLattice.setSelected(true);
-//					startButton.setEnabled(true);
-//				}
+				//				if ( segmentSeamCells.isSelected() )
+				//				{
+				//					try {
+				//						// Batch Automatic Seam Cell Segmentation:
+				//						PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), minRadius, maxRadius );
+				//					} catch ( java.lang.OutOfMemoryError e ) {
+				//						MipavUtil.displayError( "Error: Not enough memory. Unable to finish seam cell segmentation." );
+				//						return;
+				//					}
+				//					segmentSeamCells.setSelected(false);
+				//					editSeamCells.setSelected(true);
+				//					startButton.setEnabled(true);
+				//				}
+				//				else if ( buildLattice.isSelected() )
+				//				{
+				//					try {
+				//						// Batch Automatic Lattice-Building
+				//						PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
+				//					} catch ( java.lang.OutOfMemoryError e ) {
+				//						MipavUtil.displayError( "Error: Not enough memory. Unable to finish automatic lattice-building." );
+				//						return;
+				//					}
+				//					editLattice.setSelected(true);
+				//					startButton.setEnabled(true);
+				//				}
 				if ( latticeStraighten.isSelected() )
 				{
 					try {
@@ -460,7 +460,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.clipArb = activeRenderer.getArbitratyClip();
 				activeImage.clipArbOn = activeRenderer.getArbitratyClipOn();
 				activeImage.currentTab = tabbedPane.getSelectedIndex();
-				
+
 				nextButton.setEnabled(false);
 				backButton.setEnabled(false);
 				nextBackFlag = true;
@@ -471,7 +471,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				imageIndex++;
 				if (dualGPU != null ) {
 					nextBackCount = 2;
-										
+
 					System.err.println( imageIndex );
 					rightImage = imageStack[imageIndex + 1];
 
@@ -500,7 +500,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.clipArb = activeRenderer.getArbitratyClip();
 				activeImage.clipArbOn = activeRenderer.getArbitratyClipOn();
 				activeImage.currentTab = tabbedPane.getSelectedIndex();
-				
+
 				nextButton.setEnabled(false);
 				backButton.setEnabled(false);
 				nextBackFlag = true;
@@ -511,7 +511,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				imageIndex--;
 				if (dualGPU != null ) {
 					nextBackCount = 2;
-										
+
 					System.err.println( imageIndex );
 					rightImage = imageStack[imageIndex + 1];
 
@@ -639,12 +639,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					previewCount++;
 					// save image orientation: 
 					activeImage.volumeMatrix = new Matrix3f(activeRenderer.GetSceneRotation());
-					
+
 					if ( activeImage.previewImage != null ) activeImage.previewImage.disposeLocal(false);
 					activeImage.previewImage = untwistingTest();	
 					activeImage.voiManager.setImage(activeImage.previewImage, null);	
 					activeImage.volumeImage.UpdateData(activeImage.previewImage, activeImage.volumeImage.GetLUT(), true);
-					
+
 					activeRenderer.resetAxis();
 					activeRenderer.reCreateScene(activeImage.volumeImage);
 					updateClipPanel(activeImage, activeRenderer, true);
@@ -652,7 +652,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeRenderer.removeSurface("worm");
 					activeRenderer.displaySurface(false);
 					updateHistoLUTPanels(activeImage);
-					
+
 					if ( !activeImage.wormImage.isColorImage() ) {
 						((ModelLUT)activeImage.volumeImage.getLUT()).setTransferFunction(fn);
 					}
@@ -676,9 +676,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeImage.voiManager.setPreviewMode(true, activeImage.voiManager.getLatticeStraight(), activeImage.voiManager.getAnnotationsStraight());
 
 					initDisplayLatticePanel(activeRenderer, activeImage.voiManager, activeImage);
-//					if ( activeImage.annotationOpen ) {
-						initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-//					}
+					//					if ( activeImage.annotationOpen ) {
+					initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
+					//					}
 					activeImage.annotationPanelUI.setPreviewMode(true);
 					activeImage.latticeTable.setPreviewMode(true);
 				}
@@ -692,7 +692,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 					// reset image orientation: 
 					activeRenderer.SetSceneRotation(activeImage.volumeMatrix);
-					
+
 					updateClipPanel(activeImage, activeRenderer, true);
 					updateHistoLUTPanels( activeImage );
 					if ( !activeImage.wormImage.isColorImage() ) {
@@ -835,28 +835,28 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			triVolume.display3DWindowOnly();
 			return;
 		}
-		
-    	if ( leftRenderer == renderer ) 
-    	{
-    		activeRenderer = leftRenderer;
-    		activeImage = leftImage;
-    		leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName(), Color.red));
-    		if ( rightDisplayPanel != null ) {
-    			rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName()));
-    		}
-    	}
-    	else if ( rightRenderer != null && rightRenderer == renderer ) {
-    		activeRenderer = rightRenderer;
-    		activeImage = rightImage;
-    		leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName()));
-    		rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName(), Color.red));
-    	}    	
-    			
 
-    	if ( activeImage.voiManager == null ) {
-    		activeImage.voiManager = new VOILatticeManagerInterface( null, activeRenderer.getVolumeImage().GetImage(), null, 0, true, null );
-    	}
-    	activeRenderer.setVOILatticeManager(activeImage.voiManager);
+		if ( leftRenderer == renderer ) 
+		{
+			activeRenderer = leftRenderer;
+			activeImage = leftImage;
+			leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName(), Color.red));
+			if ( rightDisplayPanel != null ) {
+				rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName()));
+			}
+		}
+		else if ( rightRenderer != null && rightRenderer == renderer ) {
+			activeRenderer = rightRenderer;
+			activeImage = rightImage;
+			leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName()));
+			rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName(), Color.red));
+		}    	
+
+
+		if ( activeImage.voiManager == null ) {
+			activeImage.voiManager = new VOILatticeManagerInterface( null, activeRenderer.getVolumeImage().GetImage(), null, 0, true, null );
+		}
+		activeRenderer.setVOILatticeManager(activeImage.voiManager);
 
 		if ( editMode == ReviewResults ) {
 			activeImage.voiManager.setLattice(activeImage.wormData.readStraightLattice());
@@ -871,40 +871,40 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.wormImage.setResolutions(new float[] {1f,1f,1});
 			}
 		}
-		
-    	if ( activeImage.annotations != null )
-    	{
-    		if ( activeImage.annotations.size() > 0 )
-    		{
-    			activeImage.voiManager.addAnnotations(activeImage.annotations);
-    		}
-    		activeImage.annotations = null;
-    	}
-    	VOI annotations = activeImage.voiManager.getAnnotations();
-    	if ( annotations != null ) {
-    		for (int i = 0; i < annotations.getCurves().size(); i++)
-    		{
-    			final VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-    			text.createVolumeVOI( activeImage.volumeImage, activeRenderer.getTranslate() );    			
-    		}
-    	}
 
-    	activeRenderer.displayVOIs(true);
-    	activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
-    	activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
-    	// initialize the display panel for editing / displaying annotations:
-    	if ( editMode == IntegratedEditing ) {
-    		initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
-    		initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage ); 
-    		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
+		if ( activeImage.annotations != null )
+		{
+			if ( activeImage.annotations.size() > 0 )
+			{
+				activeImage.voiManager.addAnnotations(activeImage.annotations);
+			}
+			activeImage.annotations = null;
+		}
+		VOI annotations = activeImage.voiManager.getAnnotations();
+		if ( annotations != null ) {
+			for (int i = 0; i < annotations.getCurves().size(); i++)
+			{
+				final VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+				text.createVolumeVOI( activeImage.volumeImage, activeRenderer.getTranslate() );    			
+			}
+		}
+
+		activeRenderer.displayVOIs(true);
+		activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
+		activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
+		// initialize the display panel for editing / displaying annotations:
+		if ( editMode == IntegratedEditing ) {
+			initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
+			initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage ); 
+			initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
 			activeImage.voiManager.editAnnotations(false);
-    		//			initDisplaySeamPanel();
-    	}
-    	else if ( editMode == EditLattice ) {
-    		initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );    		
-    		activeImage.voiManager.editLattice();
-    	}
-		
+			//			initDisplaySeamPanel();
+		}
+		else if ( editMode == EditLattice ) {
+			initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );    		
+			activeImage.voiManager.editLattice();
+		}
+
 		renderer.displayVolumeSlices(false);
 		renderer.displayVolumeRaycast(true);
 		renderer.displayVOIs(true);
@@ -926,36 +926,36 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			if ( activeImage != null && activeImage.annotationPanelUI != null ) activeImage.annotationPanelUI.configureListPanel();
 		}
 		updateHistoLUTPanels(activeImage);
-    	updateClipPanel(activeImage, activeRenderer, true);
+		updateClipPanel(activeImage, activeRenderer, true);
 		updateSurfacePanels();
 
 		if ( activeImage.currentTab != -1 ) {
 			tabbedPane.setSelectedIndex( activeImage.currentTab );
 		}
-				
-//		nextBackCount--;
-//		if ( nextBackFlag && (nextBackCount == 0) ) {
-//
-//			updateSurfacePanels();
-//			updateClipPanel(activeImage, activeRenderer, true);
-//
-//			updateHistoLUTPanels(activeImage);
-//
-//			if ( editMode == IntegratedEditing || editMode == EditLattice ) {
-//				initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );
-//			}
-//			if ( editMode == IntegratedEditing ) {
-//				initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
-//			}
-//
-//        	activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
-//        	activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
-//        	if ( editMode != EditLattice ) {
-//        		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
-//    			activeImage.annotationOpen = true;
-//        	}
-//			nextBackFlag = false;
-//		}
+
+		//		nextBackCount--;
+		//		if ( nextBackFlag && (nextBackCount == 0) ) {
+		//
+		//			updateSurfacePanels();
+		//			updateClipPanel(activeImage, activeRenderer, true);
+		//
+		//			updateHistoLUTPanels(activeImage);
+		//
+		//			if ( editMode == IntegratedEditing || editMode == EditLattice ) {
+		//				initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage );
+		//			}
+		//			if ( editMode == IntegratedEditing ) {
+		//				initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage );
+		//			}
+		//
+		//        	activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
+		//        	activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
+		//        	if ( editMode != EditLattice ) {
+		//        		initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager, activeImage );
+		//    			activeImage.annotationOpen = true;
+		//        	}
+		//			nextBackFlag = false;
+		//		}
 		int nextStep = dualGPU == null ? 1 : 2;
 		imageIndex = Math.min( includeRange.size() - 1, imageIndex );
 		imageIndex = Math.max( 0, imageIndex );
@@ -971,39 +971,39 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			nextButton.setEnabled( false );
 		}
 	}
-	
-	
+
+
 	public void setActiveRenderer(VolumeTriPlanarRenderBase renderer) {
 		VolumeTriPlanarRenderBase previousActive = activeRenderer;
-    	if ( leftRenderer == renderer ) 
-    	{
-    		activeRenderer = leftRenderer;
-    		leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName(), Color.red));
-    		if ( rightDisplayPanel != null )
-    			rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName()));
-    		activeImage = leftImage;
-    	}
-    	else if ( rightRenderer != null && rightRenderer == renderer ) {
-    		activeRenderer = rightRenderer;
-    		leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName()));
-    		rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName(), Color.red));
-    		activeImage = rightImage;
-    	}    	
-    	
-    	if ( previousActive != activeRenderer ) {
-    		    		
-    		if ( activeImage.voiManager.isPreview() ) {
-        		previewUntwisting.setText("return");
-    		}
-    		else {
-    			previewUntwisting.setText("preview");		
-    		}
-    		displayModel.setSelected(activeImage.voiManager.isModelDisplayed());
-    		displaySurface.setSelected( activeRenderer.getSurface("worm") != null );
-    		updateSurfacePanels();
-    		updateClipPanel(activeImage, activeRenderer, true);    		
-    		updateHistoLUTPanels(activeImage);
-    		
+		if ( leftRenderer == renderer ) 
+		{
+			activeRenderer = leftRenderer;
+			leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName(), Color.red));
+			if ( rightDisplayPanel != null )
+				rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName()));
+			activeImage = leftImage;
+		}
+		else if ( rightRenderer != null && rightRenderer == renderer ) {
+			activeRenderer = rightRenderer;
+			leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName()));
+			rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName(), Color.red));
+			activeImage = rightImage;
+		}    	
+
+		if ( previousActive != activeRenderer ) {
+
+			if ( activeImage.voiManager.isPreview() ) {
+				previewUntwisting.setText("return");
+			}
+			else {
+				previewUntwisting.setText("preview");		
+			}
+			displayModel.setSelected(activeImage.voiManager.isModelDisplayed());
+			displaySurface.setSelected( activeRenderer.getSurface("worm") != null );
+			updateSurfacePanels();
+			updateClipPanel(activeImage, activeRenderer, true);    		
+			updateHistoLUTPanels(activeImage);
+
 			if ( editMode == EditLattice ) {
 				leftImage.voiManager.editLattice();
 				rightImage.voiManager.editLattice();
@@ -1012,7 +1012,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				tabbedPane.setSelectedIndex( activeImage.currentTab );
 				stateChanged(null);
 			}
-    	}
+		}
 		int nextStep = dualGPU == null ? 1 : 2;
 		if ( includeRange != null ) {
 			imageIndex = Math.min( includeRange.size() - 1, imageIndex );
@@ -1029,7 +1029,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			backButton.setEnabled( false );
 			nextButton.setEnabled( false );
 		}
-    }
+	}
 
 
 	public void dispose()
@@ -1046,7 +1046,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	public void enableNext( int mode )
 	{
 		closeAll();
-		
+
 		if ( mode == EditSeamCells )
 		{
 			buildLattice.setSelected(true);
@@ -1068,7 +1068,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			calcMaxProjection.setSelected(true);
 		}
 		imageIndex = 0;
-		
+
 		editMode = EditNONE;
 		batchProgress.setValue(0);
 		batchProgress.update(batchProgress.getGraphics());
@@ -1080,7 +1080,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		tabbedPane.addTab("Opacity", null, opacityPanel);
 		tabbedPane.addTab("Clip", null, clipPanel);
 		tabbedPane.addChangeListener(this);
-		
+
 		startButton.setEnabled(true);
 		if ( latticeSelectionPanel != null )
 		{
@@ -1093,7 +1093,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		setSize(currentSize);
 		pack();
 	}
-	
+
 	private void closeAll()
 	{
 		tabbedPane.setVisible(false);
@@ -1102,13 +1102,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		activeRenderer = null;
 		activeImage = null;
 		gpuPanel.removeAll();
-		
+
 		lightsPanel = null;
 		annotationPanels = null;
 		latticePanel = null;
 		curvePanel = null;
-		
-		
+
+
 		if ( leftRenderer != null )
 		{
 			leftRenderer.dispose();
@@ -1154,7 +1154,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}	
 			imageStack = null;
 		}
-		
+
 		if ( includeRange != null )
 		{
 			includeRange.clear();
@@ -1190,7 +1190,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 	@Override
 	public boolean updateImages() {
-//		System.err.println("updateImages " + activeImage.volumeImage.getLUT() );
+		//		System.err.println("updateImages " + activeImage.volumeImage.getLUT() );
 		if ( activeImage.volumeImage != null )
 		{
 			activeImage.volumeImage.UpdateImages(activeImage.volumeImage.getLUT());
@@ -1198,7 +1198,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			{
 				activeRenderer.setRGBTA( (ModelRGB)activeImage.volumeImage.getLUT() );
 			}
-			
+
 		}
 		return false;
 	}
@@ -1365,91 +1365,116 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 	 */
 
-    private List<String> readProcessOutput(InputStream inputStream) throws IOException {
-        try (BufferedReader output = new BufferedReader(new InputStreamReader(inputStream))) {
-            return output.lines()
-                .collect(Collectors.toList());
-        }
-    }
-	
-	public void givenPythonScript_whenPythonProcessInvoked_thenSuccess() throws Exception {
-		
-//		System.err.println( "python" + baseFileDir + File.separator  + "track_MIPAV.py" + " " + 
-//				leftImage.wormData.getStraightAnnotationsPath() + "  " + rightImage.wormData.getStraightAnnotationsPath() + "  " +
-//	    		leftImage.wormData.getAnnotationsPath() + "  " +  rightImage.wormData.getAnnotationsPath() );
-		
-		
-	    ProcessBuilder processBuilder = new ProcessBuilder("python", baseFileDir + File.separator  + "track_MIPAV.py",
-	    		leftImage.wormData.getStraightAnnotationsPath(), rightImage.wormData.getStraightAnnotationsPath(),
-	    		leftImage.wormData.getIntegratedMarkerAnnotationsPath(), rightImage.wormData.getIntegratedMarkerAnnotationsPath() );
-	    processBuilder.redirectErrorStream(true);
-	 
-	    Process process = processBuilder.start();		
-        List<String> results = readProcessOutput(process.getInputStream());
-
-//	    System.err.println(results.size());
-//	    for ( int i = 0; i < results.size(); i++ ) {
-//	    	System.err.println(i + " " + results.get(i) );
-//	    }
-	    
-//	    assertThat("Results should not be empty", results, is(not(empty())));
-//	    assertThat("Results should contain output of script: ", results, hasItem(
-//	      containsString("Hello Baeldung Readers!!")));
-	 
-	    int exitCode = process.waitFor();
-	    System.err.println(exitCode);
-//	    assertEquals("No errors should be detected", 0, exitCode);
-	}
-	
-	private void runPython() {
-		// save the anotations for the leftImage:
-		if ( (leftImage.wormData != null) && (leftImage.voiManager != null) ) {
-			// save annotations not in splines:
-			leftImage.wormData.saveIntegratedMarkerAnnotations(leftImage.voiManager.getAnnotations());
+	private List<String> readProcessOutput(InputStream inputStream) throws IOException {
+		try (BufferedReader output = new BufferedReader(new InputStreamReader(inputStream))) {
+			return output.lines()
+					.collect(Collectors.toList());
 		}
+	}
+
+	public boolean trackMIPAV_Python() throws Exception {
+
+		//		System.err.println( "python" + baseFileDir + File.separator  + "track_MIPAV.py" + " " + 
+		//				leftImage.wormData.getStraightAnnotationsPath() + "  " + rightImage.wormData.getStraightAnnotationsPath() + "  " +
+		//	    		leftImage.wormData.getAnnotationsPath() + "  " +  rightImage.wormData.getAnnotationsPath() );
+
+
+		ProcessBuilder processBuilder = new ProcessBuilder("python", baseFileDir + File.separator  + "track_MIPAV.py",
+				leftImage.wormData.getStraightAnnotationsPath(), rightImage.wormData.getStraightAnnotationsPath(),
+				leftImage.wormData.getIntegratedMarkerAnnotationsPath(), rightImage.wormData.getIntegratedMarkerAnnotationsPath() );
+		processBuilder.redirectErrorStream(true);
+
+		Process process = processBuilder.start();		
+		List<String> results = readProcessOutput(process.getInputStream());
+		int exitCode = process.waitFor();
+		if ( exitCode != 0 ) {
+			String error = "Python error - track_MIPAV:\n";
+			for ( int i = 0; i < results.size(); i++ ) {
+				error += results.get(i) + "\n";
+			}
+			MipavUtil.displayError(error);
+		}
+		return exitCode == 0;
+	}
+
+	public boolean restraightenMIPAV_Python(IntegratedWormData data) throws Exception {
+
+		//		System.err.println( "python" + baseFileDir + File.separator  + "track_MIPAV.py" + " " + 
+		//				leftImage.wormData.getStraightAnnotationsPath() + "  " + rightImage.wormData.getStraightAnnotationsPath() + "  " +
+		//	    		leftImage.wormData.getAnnotationsPath() + "  " +  rightImage.wormData.getAnnotationsPath() );
+
+		String predictedTwisted = data.wormData.getOutputDirectory() + File.separator + 
+				"prediction" + File.separator + "predicted_annotations.csv";
+		String predictedStraight = data.wormData.getOutputDirectory() + File.separator + 
+				"prediction" + File.separator + "predicted_straightened_annotations.csv";
 		
+		File file = new File(predictedTwisted); if ( !file.exists() ) return true;
+		file = new File(predictedStraight); if ( !file.exists() ) return true;
+
+		ProcessBuilder processBuilder = new ProcessBuilder("python", baseFileDir + File.separator  + "restraighten_MIPAV.py",
+				predictedStraight, predictedTwisted, rightImage.wormData.getIntegratedMarkerAnnotationsPath() );
+		processBuilder.redirectErrorStream(true);
+
+		Process process = processBuilder.start();		
+		List<String> results = readProcessOutput(process.getInputStream());
+		int exitCode = process.waitFor();
+		if ( exitCode != 0 ) {
+			String error = "Python error - restraighten_MIPAV:\n";
+			for ( int i = 0; i < results.size(); i++ ) {
+				error += results.get(i) + "\n";
+			}
+			MipavUtil.displayError(error);
+		}
+		return exitCode == 0;
+	}
+
+	private void runPython() {
 		// delete the predicted files for the right image:
 		String fileName = rightImage.wormData.getOutputDirectory() + File.separator + 
 				"prediction" + File.separator + "predicted_straightened_annotations.csv";
 		File file = new File(fileName);
-		if ( file.exists() ) {
-			file.delete();
-		}
+//		if ( file.exists() ) {
+//			file.delete();
+//		}
 		fileName = rightImage.wormData.getOutputDirectory() + File.separator + 
 				"prediction" + File.separator + "predicted_annotations.csv";
 		file = new File(fileName);
-		if ( file.exists() ) {
-			file.delete();
-		}
-		
+//		if ( file.exists() ) {
+//			file.delete();
+//		}
+
 		// when user presses 'predict'
 		// prototype:
 		// 1. straighten both left/right images
-		leftImage.voiManager.untwistMarkers();
+		leftImage.voiManager.untwistAnnotations();
 		if ( rightImage != null ) {
-			rightImage.voiManager.untwistMarkers();
+			rightImage.voiManager.untwistAnnotations();
 		}
 		// 2. call track_MIPAV.py on the four straightened images
 		try {
 			System.err.println("Calling Python?");
-			givenPythonScript_whenPythonProcessInvoked_thenSuccess();
-
-			// wait for file: 
-			int count = 100;
-			while ( count > 0 && !file.exists() ) {
-				try {
-					System.err.println("file doesn't exist yet:");
-					wait(100);
-					count--;
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			restraightenMIPAV_Python(rightImage);
+			if ( trackMIPAV_Python() ) {
+				// wait for file: 
+				int count = 100;
+				while ( count > 0 && !file.exists() ) {
+					try {
+						System.err.println("file doesn't exist yet:");
+						wait(100);
+						count--;
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
-			}
-			if ( file.exists() ) {
-				System.err.println( "file exists length = " + file.length() );
-				// 3. delete annotations from right image & load predictions		
-				loadPredicted(rightImage);
+				if ( file.exists() ) {
+					System.err.println( "file exists length = " + file.length() );
+					// 3. delete annotations from right image & load predictions		
+					loadPredicted(rightImage);
+				}
+				else {
+					MipavUtil.displayError("prediction failed");
+				}
 			}
 			else {
 				MipavUtil.displayError("prediction failed");
@@ -1459,7 +1484,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
 	 * @return untwisted image.
@@ -1478,7 +1503,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	 */
 	private boolean checkGPUMemory(int sizeA, int sizeB) {	
 		long[] maxMemSizeArray = new long[2];
-		
+
 		OpenCLInfo.getMaxMemSize(CL_DEVICE_TYPE_GPU, maxMemSizeArray);
 		long memoryUsed = sizeA * 4 + sizeB * 4;	
 		long maxAllocSize = maxMemSizeArray[0];
@@ -1623,7 +1648,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 
 					leftImage = new IntegratedWormData();
-					
+
 					thresholdImage(imageA, imageB);
 					if ( imageB != null )
 					{
@@ -1639,12 +1664,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 					imageStack[i] = leftImage;	
 					System.err.println( "... adding " + i + " " + leftImage.wormImage.getImageName() );
-					
-					
+
+
 
 					leftImage.wormImage.setImageName( leftImage.wormImage.getImageName().replace("_rgb", ""));
 					leftImage.wormData = new WormData(leftImage.wormImage);
-					
+
 					if ( leftImage.annotations != null )
 					{
 						leftImage.annotations.clear();
@@ -1653,10 +1678,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 					leftImage.volumeImage = new VolumeImage(false, leftImage.wormImage, "A", null, 0, false);
 					leftImage.voiManager = new VOILatticeManagerInterface( null, leftImage.volumeImage.GetImage(), null, 0, true, null );
-					
+
 					openAnnotations(leftImage, WormData.getOutputDirectory(voiFile, fileName), WormData.getOutputDirectory(voiFile2, fileName), editMode );
 					openNeuriteCurves( leftImage );
-					
+
 					initHistoLUTPanel(leftImage);
 					progressBar.updateValueImmed(i);
 				}
@@ -1681,11 +1706,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					leftDisplayPanel = new JPanel(new BorderLayout());
 					leftDisplayPanel.add(leftRenderer.GetCanvas(), BorderLayout.CENTER);
 					leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName(), Color.red));
-					
+
 					rightDisplayPanel = new JPanel(new BorderLayout());
 					rightDisplayPanel.add(rightRenderer.GetCanvas(), BorderLayout.CENTER);					
 					rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName()));
-					
+
 					dualGPU = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, leftDisplayPanel, rightDisplayPanel );
 					dualGPU.setOneTouchExpandable(true);
 					dualGPU.setDividerSize(6);
@@ -1694,7 +1719,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					dualGPU.setDividerLocation(0.5);
 					dualGPU.setVisible(true);
 					gpuPanel.add( dualGPU, BorderLayout.CENTER );
-					
+
 
 					//Provide minimum sizes for the two components in the split pane
 					Dimension minimumSize = new Dimension(100, 50);
@@ -1709,9 +1734,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName()));
 					gpuPanel.add(leftDisplayPanel, BorderLayout.CENTER);
 				}
-	    		activeImage = leftImage;
-	    		activeRenderer = leftRenderer;
-	    		
+				activeImage = leftImage;
+				activeRenderer = leftRenderer;
+
 				latticeSelectionPanel.removeAll();
 				latticeSelectionPanel.setVisible(false);
 
@@ -1735,8 +1760,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					latticeSelectionPanel.setVisible(true);
 				}
 
-	    		
-	    		
+
+
 				gpuPanel.setVisible(true);
 				tabbedPane.setVisible(true);
 				volumePanel.setVisible(true);
@@ -1745,7 +1770,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					rightRenderer.startAnimator(true);   
 				}
 				leftRenderer.startAnimator(true);   
-				
+
 				if ( dualGPU != null ) {
 					dualGPU.setOneTouchExpandable(true);
 					dualGPU.setDividerSize(6);
@@ -1762,7 +1787,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}	
 		return success;
 	}
-	
+
 	private void thresholdImage(ModelImage imageA, ModelImage imageB )
 	{
 		if ( thresholdImageCheck.isSelected() )
@@ -1784,7 +1809,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
 		}
 	}
-	
+
 	private ModelImage combineImages(ModelImage imageA, ModelImage imageB) {
 
 		ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, imageA.getExtents(),
@@ -1796,9 +1821,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imageB, imageA, blank, displayImage, true, false, 255, true, true);
 		mathAlgo.run();
 
-//		ModelImage.saveImage(displayImage, displayImage.getImageName(), imageFile.getParent() + File.separator);
+		//		ModelImage.saveImage(displayImage, displayImage.getImageName(), imageFile.getParent() + File.separator);
 		blank.disposeLocal(false);
-		
+
 		return displayImage;
 	}
 
@@ -1978,9 +2003,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		return null;
 	}
 
-	
-	
-	
+
+
+
 	/**
 	 * Opens the current image and lattice for viewing/editing.
 	protected void openLattice()
@@ -2077,7 +2102,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			potentialLattices = null;
 		}	
 	}
-	*/
+	 */
 
 
 	/**
@@ -2373,8 +2398,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			annotationNames.add( new String(text.getText()) );
 		}
 
-//		System.err.println( min );
-//		System.err.println( max );
+		//		System.err.println( min );
+		//		System.err.println( max );
 
 		extents[0] = (int)Math.max( 30, (max.X - min.X) + 10);
 		extents[1] = (int)Math.max( 30, (max.Y - min.Y) + 10);
@@ -2528,9 +2553,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		integratedPanel.setResizeWeight(0);
 		integratedPanel.setDividerLocation(0.25);
 
-//		JPanel integratedPanel = new JPanel( new BorderLayout() );
-//		integratedPanel.add( scroller, BorderLayout.WEST );
-//		integratedPanel.add( volumePanel, BorderLayout.EAST );
+		//		JPanel integratedPanel = new JPanel( new BorderLayout() );
+		//		integratedPanel.add( scroller, BorderLayout.WEST );
+		//		integratedPanel.add( volumePanel, BorderLayout.EAST );
 		getContentPane().add(integratedPanel, BorderLayout.CENTER);
 
 		setLocation(0, 0);
@@ -2577,13 +2602,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 		ButtonGroup latticeGroup = new ButtonGroup();
 		latticeSelectionPanel = new JPanel();
-//		latticeChoices = new JRadioButton[5];
-//		for ( int i = 0; i < latticeChoices.length; i++ )
-//		{
-//			latticeChoices[i] = gui.buildRadioButton("lattice_" + (i+1), i==0 );
-//			latticeChoices[i].addActionListener(this);
-//			latticeGroup.add(latticeChoices[i]);
-//		}
+		//		latticeChoices = new JRadioButton[5];
+		//		for ( int i = 0; i < latticeChoices.length; i++ )
+		//		{
+		//			latticeChoices[i] = gui.buildRadioButton("lattice_" + (i+1), i==0 );
+		//			latticeChoices[i].addActionListener(this);
+		//			latticeGroup.add(latticeChoices[i]);
+		//		}
 		newLatticeButton = gui.buildButton("new lattice");
 		newLatticeButton.addActionListener(this);
 		newLatticeButton.setActionCommand("newLattice");
@@ -2625,18 +2650,18 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		previewUntwisting.setVisible(false);
 		previewUntwisting.setEnabled(true);
 		latticeSelectionPanel.add(previewUntwisting);
-		
+
 		backNextPanel.add( latticeSelectionPanel );
 		latticeSelectionPanel.setVisible(false);
 
 		gpuPanel = new JPanel(new BorderLayout());
-//		final int imagePanelWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.5f);
-//		final int imagePanelHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.5f);
+		//		final int imagePanelWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.5f);
+		//		final int imagePanelHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.5f);
 
-//		gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-//		gpuPanel.setMinimumSize(new Dimension(imagePanelWidth, imagePanelHeight));
-//		gpuPanel.setBorder(JDialogBase.buildTitledBorder("Volume Display"));
-		
+		//		gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
+		//		gpuPanel.setMinimumSize(new Dimension(imagePanelWidth, imagePanelHeight));
+		//		gpuPanel.setBorder(JDialogBase.buildTitledBorder("Volume Display"));
+
 
 		dialogGUI.getContentPane().add(gpuPanel, BorderLayout.CENTER);
 		dialogGUI.getContentPane().add(backNextPanel, BorderLayout.SOUTH);
@@ -2656,7 +2681,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			image.annotationPanelUI = new JPanelAnnotations(manager, renderer, image.volumeImage );
 		}
 		image.annotationPanelUI.initDisplayAnnotationsPanel(manager, image.volumeImage, true, (dualGPU != null));
-		
+
 		if ( dualGPU != null )
 		{
 			if ( leftImage.annotationPanelUI != null && rightImage.annotationPanelUI != null ) {
@@ -2705,7 +2730,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			image.curvesPanelUI = new JPanelCurves(image.voiManager, renderer, image.volumeImage );
 		}
 		image.curvesPanelUI.initDisplayCurvesPanel(image.voiManager, image.volumeImage, true);
-		
+
 		if ( dualGPU != null )
 		{
 			if ( leftImage.curvesPanelUI != null && rightImage.curvesPanelUI != null ) {
@@ -2741,12 +2766,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	private void initDisplayLatticePanel( VolumeTriPlanarRender renderer, VOILatticeManagerInterface manager, IntegratedWormData image ) 
 	{
-//		System.err.println("initDisplayLatticePanel");
+		//		System.err.println("initDisplayLatticePanel");
 		if ( image.latticeTable == null ) {
 			image.latticeTable = new JPanelLattice(image.voiManager, image.volumeImage.GetImage());
 		}
 		image.latticeTable.initDisplayAnnotationsPanel(image.voiManager, image.volumeImage.GetImage());		
-		
+
 		if ( dualGPU != null )
 		{
 			if ( leftImage.latticeTable != null && rightImage.latticeTable != null ) {
@@ -2820,14 +2845,14 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		gbc.gridx = 0;
 		segmentSeamCells = gui.buildRadioButton("1). segment seam cells", true );
 		segmentSeamCells.addActionListener(this);
-//		panel.add(segmentSeamCells.getParent(), gbc);
-//		gbc.gridy++;
+		//		panel.add(segmentSeamCells.getParent(), gbc);
+		//		gbc.gridy++;
 
 		gbc.gridx = 0;
 		buildLattice = gui.buildRadioButton("3). generate lattices", false );
 		buildLattice.addActionListener(this);
-//		panel.add(buildLattice.getParent(), gbc);
-//		gbc.gridy++;
+		//		panel.add(buildLattice.getParent(), gbc);
+		//		gbc.gridy++;
 
 		gbc.gridx = 0;
 		latticeStraighten = gui.buildRadioButton("straighten", false );
@@ -2896,8 +2921,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		editSeamCells.setEnabled(true);
 		editSeamCells.addActionListener(this);
 		editSeamCells.setActionCommand("editSeamCells");
-//		panel.add(editSeamCells.getParent(), gbc);
-//		gbc.gridy++;
+		//		panel.add(editSeamCells.getParent(), gbc);
+		//		gbc.gridy++;
 
 		gbc.gridx = 0;
 		editLattice = gui.buildRadioButton("edit lattice", false );
@@ -2912,8 +2937,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		checkSeamCells.setEnabled(true);
 		checkSeamCells.addActionListener(this);
 		checkSeamCells.setActionCommand("checkSeamCells");
-//		panel.add(checkSeamCells.getParent(), gbc);
-//		gbc.gridy++;
+		//		panel.add(checkSeamCells.getParent(), gbc);
+		//		gbc.gridy++;
 
 		gbc.gridx = 0;
 		integratedEdit = gui.buildRadioButton("Integrated Editing", false );
@@ -3050,7 +3075,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			int endIndex = dualGPU == null ? imageIndex + 1 : imageIndex + 2;
 			for ( int i = imageIndex; i < endIndex; i++ )
 			{
-//				System.err.println("saveAll " + i);
+				//				System.err.println("saveAll " + i);
 				activeImage = imageStack[i];
 				saveIntegrated();
 			}
@@ -3100,7 +3125,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			LatticeModel.openStraightNeuriteCurves(data.wormImage);
 		}
 	}
-	
+
 	private void loadPredicted(IntegratedWormData data) {
 
 		if ( data.annotations != null )
@@ -3117,18 +3142,18 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			data.annotations.add( markerAnnotations );
 			data.voiManager.addAnnotations(data.annotations);
 			data.annotations = null;
-			
-	    	VOI annotations = data.voiManager.getAnnotations();
-	    	if ( annotations != null ) {
-	    		for (int i = 0; i < annotations.getCurves().size(); i++)
-	    		{
-	    			final VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-	    			text.createVolumeVOI( data.volumeImage, activeRenderer.getTranslate() );    			
-	    		}
-	    	}
+
+			VOI annotations = data.voiManager.getAnnotations();
+			if ( annotations != null ) {
+				for (int i = 0; i < annotations.getCurves().size(); i++)
+				{
+					final VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+					text.createVolumeVOI( data.volumeImage, activeRenderer.getTranslate() );    			
+				}
+			}
 		}
 	}
-	
+
 	private void openAnnotations(IntegratedWormData data, String dir1, String dir2, int editMode )
 	{
 		System.err.println( "openAnnotations " + data.wormImage.getImageName()  );
@@ -3164,7 +3189,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if ( data.annotations.size() > 0 )
 			System.err.println( "openAnnotations " + data.wormImage.getImageName() + "   " + data.annotations.elementAt(0).getCurves().size() );
 	}
-/*
+	/*
 	private void openSeamCellAnnotations()
 	{
 		if ( annotations != null )
@@ -3226,7 +3251,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
 		}	
 	}
-	*/
+	 */
 
 	/**
 	 * Saves the seam cells to the default edited file for the current image.
@@ -3344,11 +3369,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private void initHistoLUTPanel( IntegratedWormData integratedData )
 	{
 		GridBagConstraints gbc = new GridBagConstraints();
-    	gbc.gridx = 0;
-    	gbc.gridy = 0;
-    	gbc.weightx = 1;
-    	gbc.weighty = 0;
-    	gbc.anchor = GridBagConstraints.WEST;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weightx = 1;
+		gbc.weighty = 0;
+		gbc.anchor = GridBagConstraints.WEST;
 		integratedData.colorChannelPanel = new JPanel(new GridBagLayout());
 		if ( integratedData.wormImage.isColorImage() ) {
 			ButtonGroup group = new ButtonGroup();
@@ -3379,7 +3404,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedData.colorChannelPanel.add(integratedData.displayBothChannels, gbc);
 
 			gbc.gridy++;
-	    	gbc.weighty = 1;
+			gbc.weighty = 1;
 			integratedData.colorChannelPanel.add(new JLabel(""), gbc);
 		}
 
@@ -3389,7 +3414,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 		integratedData.volumeImage.UpdateImages(kTransfer, 0, null);
 
-//		System.err.println( "initHistoLUTPanel " + integratedData.volumeImage.getLUT() );
+		//		System.err.println( "initHistoLUTPanel " + integratedData.volumeImage.getLUT() );
 		integratedData.lutHistogramPanel = new JFrameHistogram(this, integratedData.volumeImage.GetImage(), null, integratedData.volumeImage.getLUT(), null);
 		integratedData.lutHistogramPanel.histogramLUT(true, false, true);
 		if ( integratedData.volumeImage.GetImage().isColorImage() ) {
@@ -3397,18 +3422,18 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		integratedData.volumeImage.GetImage().addImageDisplayListener(this);
 	}
-	
-	
+
+
 
 	private void updateHistoLUTPanels( IntegratedWormData integratedData )
 	{
-//		System.err.println("updateHistoLUTPanels " + integratedData.wormImage.getImageName() + "  " + integratedData.lutHistogramPanel.getContainingPanel() );
+		//		System.err.println("updateHistoLUTPanels " + integratedData.wormImage.getImageName() + "  " + integratedData.lutHistogramPanel.getContainingPanel() );
 		opacityPanel.removeAll();
 		opacityPanel.add( integratedData.volOpacityPanel.getMainPanel() );
 		if ( tabbedPane.getSelectedComponent() == opacityPanel ) {
 			integratedData.volOpacityPanel.getCompA().showHistogram();
 		}
-		
+
 		lutPanel.removeAll();
 		lutPanel.add(integratedData.lutHistogramPanel.getContainingPanel(), BorderLayout.NORTH);
 		lutPanel.add(integratedData.colorChannelPanel, BorderLayout.CENTER);
@@ -3417,8 +3442,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		lutPanel.revalidate();
 	}
-	
-	
+
+
 
 	private void updateClipPanel( IntegratedWormData integratedData, VolumeTriPlanarRender renderer, boolean resetRenderer )
 	{
@@ -3430,12 +3455,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		{
 			integratedData.clipGUI.setRenderer(renderer, false);
 		}
-		
+
 		clipPanel.removeAll();			
 		clipPanel.add( integratedData.clipGUI.getMainPanel() );
 		integratedData.clipGUI.getMainPanel().repaint();
 		clipPanel.validate();
-		
+
 		if ( integratedData.clipArb != null ) {
 			renderer.setArbitratyClip(integratedData.clipArb, integratedData.clipArbOn);
 		}
@@ -3480,7 +3505,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		latticeContainer.add(lattice);
 		return latticeContainer;
 	}
-	*/
+	 */
 
 	private VOI annotationBackUp = null;
 	private VOI seamCellBackUp = null;
@@ -3517,17 +3542,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			saveLattice();
 			return;
 		}
-		
+
 		// save lattice:
 		saveLattice();
 		// save any splines created from annotations - those annotations are saved separately so not untwisted twice:
 		saveSplineCurves();
-		
+
 		if ( (activeImage.wormData != null) && (activeImage.voiManager != null) ) {
 			// save annotations not in splines:
 			activeImage.wormData.saveIntegratedMarkerAnnotations(activeImage.voiManager.getAnnotations());
 			// save named seam cells:
-//			activeImage.wormData.segmentSeamFromLattice( activeImage.voiManager.getLattice(), activeImage.voiManager.getImage(), true);
+			//			activeImage.wormData.segmentSeamFromLattice( activeImage.voiManager.getLattice(), activeImage.voiManager.getImage(), true);
 		}
 	}
 

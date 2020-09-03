@@ -629,7 +629,7 @@ public class PlugInAlgorithmWormUntwisting
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
-						model.untwistMarkers(segmentLattice);	
+						model.untwistMarkers(true);	
 						model.saveAnnotationStraight(wormImage, "straightened_annotations", "straightened_annotations.csv" );	
 					}
 					System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
