@@ -435,6 +435,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		if ( latticeModel == null ) return;
 		latticeModel.untwistMarkers();		
 	}
+
+	public void untwistAnnotations()
+	{
+		if ( latticeModel == null ) return;
+		latticeModel.untwistAnnotations();		
+	}
 	
 	public void openAnnotations( String directory, String fileName )
 	{
@@ -900,15 +906,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		return latticeModel.getPicked();		
 	}
-	
-	public void setLatticeChanged() {
-
-		if ( latticeModel != null )
-		{
-			latticeModel.setLatticeChanged();
-		}	
-	}
-	
+		
 	public VOIVector getLattice()
 	{
 		if ( latticeModel == null )

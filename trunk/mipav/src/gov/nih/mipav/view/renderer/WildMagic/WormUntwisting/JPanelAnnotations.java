@@ -631,8 +631,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					if ( column == 0 )
 					{
 						newName = new String( annotationTable.getValueAt(row, column).toString() );
-						text.setText( newName );
-						text.updateText();
+						VOIWormAnnotation test = getSelected(newName, annotations);
+						if ( test != null && test != text ) {
+							MipavUtil.displayError("Annotation with name: " + newName + " already exists" );
+						}
+						else if ( test != text ) {
+							text.setText( newName );
+							text.updateText();
+						}
 					}
 					else if ( column < 4 )
 					{
