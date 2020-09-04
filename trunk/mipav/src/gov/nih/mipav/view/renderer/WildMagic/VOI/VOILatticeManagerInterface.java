@@ -436,10 +436,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.untwistMarkers();		
 	}
 
-	public void untwistAnnotations()
+	public ModelImage untwistAnnotations(ModelImage image)
 	{
-		if ( latticeModel == null ) return;
-		latticeModel.untwistAnnotations();		
+		if ( latticeModel == null ) return image;
+		return latticeModel.untwistAnnotations(image);		
 	}
 	
 	public void openAnnotations( String directory, String fileName )
