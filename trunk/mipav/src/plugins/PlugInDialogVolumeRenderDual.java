@@ -241,6 +241,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private WormData wormData;
 		private ModelImage wormImage;
 		private ModelImage previewImage;
+		private ModelImage contourImage;
 		private VolumeImage volumeImage;
 		private VOILatticeManagerInterface voiManager;
 		private JPanelVolumeOpacity volOpacityPanel;
@@ -1142,6 +1143,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					imageStack[i].wormImage.disposeLocal(false);
 					imageStack[i].wormImage = null;
 				}
+				if ( imageStack[i].contourImage != null )
+				{
+					imageStack[i].contourImage.disposeLocal(false);
+					imageStack[i].contourImage = null;
+				}
 				if ( imageStack[i].wormData != null )
 				{
 					imageStack[i].wormData.dispose();
@@ -1432,32 +1438,37 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		// delete the predicted files for the right image:
 		String fileName = rightImage.wormData.getOutputDirectory() + File.separator + 
 				"prediction" + File.separator + "predicted_straightened_annotations.csv";
-		File file = new File(fileName);
-//		if ( file.exists() ) {
-//			file.delete();
-//		}
+		File straightFile = new File(fileName);
+		if ( straightFile.exists() ) {
+			straightFile.delete();
+		}
 		fileName = rightImage.wormData.getOutputDirectory() + File.separator + 
 				"prediction" + File.separator + "predicted_annotations.csv";
-		file = new File(fileName);
-//		if ( file.exists() ) {
-//			file.delete();
-//		}
+		File twistedFile = new File(fileName);
+		if ( twistedFile.exists() ) {
+			twistedFile.delete();
+		}
 
 		// when user presses 'predict'
 		// prototype:
-		// 1. straighten both left/right images
-		leftImage.voiManager.untwistAnnotations();
-		if ( rightImage != null ) {
-			rightImage.voiManager.untwistAnnotations();
+		// 1. straighten the right image - left annotations remain fixed:
+		ModelImage contourImage = rightImage.voiManager.untwistAnnotations(rightImage.contourImage);
+		if ( rightImage.contourImage != null && rightImage.contourImage != contourImage ) {
+			rightImage.contourImage.disposeLocal(false);
+			rightImage.contourImage = null;
 		}
+		rightImage.contourImage = contourImage;
+		
 		// 2. call track_MIPAV.py on the four straightened images
 		try {
 			System.err.println("Calling Python?");
-			restraightenMIPAV_Python(rightImage);
+//			if ( !changed ) {
+//				restraightenMIPAV_Python(rightImage);
+//			}
 			if ( trackMIPAV_Python() ) {
 				// wait for file: 
 				int count = 100;
-				while ( count > 0 && !file.exists() ) {
+				while ( count > 0 && !twistedFile.exists() ) {
 					try {
 						System.err.println("file doesn't exist yet:");
 						wait(100);
@@ -1467,8 +1478,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						e.printStackTrace();
 					}
 				}
-				if ( file.exists() ) {
-					System.err.println( "file exists length = " + file.length() );
+				if ( twistedFile.exists() ) {
+					System.err.println( "file exists length = " + twistedFile.length() );
 					// 3. delete annotations from right image & load predictions		
 					loadPredicted(rightImage);
 				}
