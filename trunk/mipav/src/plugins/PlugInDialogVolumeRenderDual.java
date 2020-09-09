@@ -203,6 +203,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private PlugInDialogVolumeRenderDual parent;
 	private JTextField rangeFusionText;
 	private JCheckBox loadLegacyLatticeCheck;
+	private JCheckBox loadLegacyAnnotationsCheck;
 
 	private JRadioButton integratedEdit;
 	private JRadioButton reviewResults;
@@ -2494,6 +2495,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
 		gbc.gridy++;
 
+		loadLegacyAnnotationsCheck = gui.buildCheckBox( "convert legacy annotationVOIs.lbl", false);
+		inputsPanel.add(loadLegacyAnnotationsCheck.getParent(), gbc);
+		gbc.gridy++;
+
 		loadLegacyLatticeCheck = gui.buildCheckBox( "convert legacy lattice.xml", false);
 		inputsPanel.add(loadLegacyLatticeCheck.getParent(), gbc);
 		gbc.gridy++;
@@ -3183,6 +3188,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				}
 			}
 			else {
+				if ( loadLegacyAnnotationsCheck.isSelected() ) {
+					data.wormImage.setResolutions(originalResolutions);
+				}
+				
 				// read the original imageA/imageB markers - saved to the new integrated dir
 				VOI markers = data.wormData.getMarkerAnnotations(dir1);
 				if ( markers != null ) {
@@ -3192,6 +3201,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				if ( markers != null ) {
 					data.annotations.add( markers );
 				}
+
+				if ( loadLegacyAnnotationsCheck.isSelected() ) {
+					data.wormImage.setResolutions(new float[] {1f,1f,1});
+				}
+				
+				data.wormData.saveIntegratedMarkerAnnotations(data.voiManager.getAnnotations());
 			}
 		}
 		else if ( editMode == ReviewResults ) {
