@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -234,8 +235,27 @@ public class WormData
 
 	public VOI getMarkerAnnotations(String outputDir)
 	{
-		System.err.println("getMarkerAnnotations " + outputDir);
-		VOI markerAnnotations = readMarkers(outputDir);
+		System.err.println("getMarkerAnnotations " + outputDirectory);
+		VOI markerAnnotations = readMarkers(outputDirectory);
+		if ( markerAnnotations == null )
+		{
+			FileVOI fileVOI;
+			try {
+				fileVOI = new FileVOI( "annotationVOIs.lbl", outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
+				VOI[] vois = fileVOI.readVOI(true);
+				if ( vois != null ) {
+					markerAnnotations = new VOI( (short)0, "annotationVOIs", VOI.ANNOTATION, 0 );
+					for ( int i = 0; i < vois[0].getCurves().size(); i++ ) {
+						VOIText text = (VOIText) vois[0].getCurves().elementAt(i);
+						markerAnnotations.getCurves().add( new VOIWormAnnotation(text));
+					}
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		if ( markerAnnotations == null )
 			markerAnnotations = new VOI( (short)0, "annotationVOIs", VOI.ANNOTATION, 0 );
 		return markerAnnotations;
