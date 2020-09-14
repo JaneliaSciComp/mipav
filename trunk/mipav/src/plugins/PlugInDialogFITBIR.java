@@ -151,9 +151,8 @@ public class PlugInDialogFITBIR extends JFrame
 
     private static boolean ddUseAuthService = false;
     
-    // TODO add all instances
     private enum BricsInstance {
-        FITBIR, PDBP, NEI, CiSTAR, NTI;
+        FITBIR, PDBP, NEI_BRICS, NINR, CNRM, CISTAR, GRDR, COVID19, NTRR;
     }
     
     private enum BricsEnv {
@@ -171,6 +170,8 @@ public class PlugInDialogFITBIR extends JFrame
     protected static final String dictionaryEnvCmdLineVar = "BricsEnvironment";
 
     private List<FormStructure> dataStructureList;
+    
+    private int chosenDiseaseFilterIndex = -1;
 
     private File csvFile;
 
@@ -5873,11 +5874,9 @@ public class PlugInDialogFITBIR extends JFrame
                 diseaseFilterCombo.addItem(item);
             }
             
-            diseaseFilterCombo.addItemListener(this);
-            
             int selectedIndex = 0;
             String selectedDisease = getDiseaseSelection();
-            if (selectedDisease != null && !selectedDisease.trim().equals("")) {
+            if (chosenDiseaseFilterIndex == -1 && selectedDisease != null && !selectedDisease.trim().equals("")) {
                 System.err.println("Default form structure disease specified: " + selectedDisease);
                 
                 for (int i = 0; i < diseaseFilterCombo.getItemCount(); i++) {
@@ -5886,8 +5885,24 @@ public class PlugInDialogFITBIR extends JFrame
                         break;
                     }
                 }
+                diseaseFilterCombo.setSelectedIndex(selectedIndex);
+
+                if (selectedDisease.equals("All Diseases")) {
+                    structsSorter.setRowFilter(null);
+                } else {
+                    RowFilter<Object,Object> filter = new RowFilter<Object,Object> () {
+                       public boolean include(Entry<? extends Object, ? extends Object> entry) {
+                           String diseaseVal = entry.getStringValue(4);
+                           return diseaseVal.contains(selectedDisease);
+                       }
+                    };
+                    structsSorter.setRowFilter(filter);
+                }
+            } else {
+                diseaseFilterCombo.setSelectedIndex(chosenDiseaseFilterIndex);
             }
-            diseaseFilterCombo.setSelectedIndex(selectedIndex);
+            
+            diseaseFilterCombo.addItemListener(this);
             
             diseaseFilterPanel.add(diseaseFilterLabel);
             diseaseFilterPanel.add(diseaseFilterCombo);
@@ -5926,8 +5941,9 @@ public class PlugInDialogFITBIR extends JFrame
             if (command.equalsIgnoreCase("ChooseStructOK")) {
                 final int selectedRow = structsTable.getSelectedRow();
                 if (selectedRow != -1) {
+                    final int selectedModelRow = structsTable.convertRowIndexToModel(selectedRow);
                     this.dispose();
-                    final String dsName = (String) structsModel.getValueAt(selectedRow, 0);
+                    final String dsName = (String) structsModel.getValueAt(selectedModelRow, 0);
                     new InfoDialog(owner, dsName, false, true, null);
                 }
             }
@@ -5953,6 +5969,7 @@ public class PlugInDialogFITBIR extends JFrame
             if (source.getName().equals("DiseaseFilter")) {
                 JComboBox<String> cb = (JComboBox<String>) source;
                 String selectedDisease = (String) cb.getSelectedItem();
+                chosenDiseaseFilterIndex = cb.getSelectedIndex();
 
                 if (selectedDisease.equals("All Diseases")) {
                     structsSorter.setRowFilter(null);
@@ -8915,8 +8932,19 @@ public class PlugInDialogFITBIR extends JFrame
 
                 if (ddServerURL == null || authServerURL == null) {
                     DictionaryConfigItem config = getDictionaryConfig(selectedDictionaryInstance, selectedDictionaryEnv);
-                    ddServerURL = config.ddServer;
-                    authServerURL = config.authServer;
+                    
+                    if (config.ddServer.equals("") || config.authServer.equals("")) {
+                        MipavUtil.displayError("No BRICS Data Dictionary configuration found for instance " + selectedDictionaryInstance + " " + selectedDictionaryEnv + ".");
+                        parent.dispose();
+                        if (JDialogStandalonePlugin.isExitRequired()) {
+                            System.gc();
+                            System.exit(0);
+                        }
+                        return;
+                    } else {
+                        ddServerURL = config.ddServer;
+                        authServerURL = config.authServer;
+                    }
                 }
                 
                 WebClient client;
@@ -9032,8 +9060,19 @@ public class PlugInDialogFITBIR extends JFrame
 
                 if (ddServerURL == null || authServerURL == null) {
                     DictionaryConfigItem config = getDictionaryConfig(selectedDictionaryInstance, selectedDictionaryEnv);
-                    ddServerURL = config.ddServer;
-                    authServerURL = config.authServer;
+                    
+                    if (config.ddServer.equals("") || config.authServer.equals("")) {
+                        MipavUtil.displayError("No BRICS Data Dictionary configuration found for instance " + selectedDictionaryInstance + " " + selectedDictionaryEnv + ".");
+                        parent.dispose();
+                        if (JDialogStandalonePlugin.isExitRequired()) {
+                            System.gc();
+                            System.exit(0);
+                        }
+                        return;
+                    } else {
+                        ddServerURL = config.ddServer;
+                        authServerURL = config.authServer;
+                    }
                 }
                 
                 WebClient client;
@@ -9866,17 +9905,79 @@ public class PlugInDialogFITBIR extends JFrame
     }
     
     protected void readCmdLineDictionarySelection() {
+        String errorMessage = "";
+        
         if (VariableTable.getReference().isVariableSet(dictionaryInstanceCmdLineVar)) {
             String bricsInstance = VariableTable.getReference().interpolate(dictionaryInstanceCmdLineVar);
             System.err.println("Command line BRICS instance: " + bricsInstance);
-            selectedDictionaryInstance = BricsInstance.valueOf(bricsInstance);
+            
+            try {
+                BricsInstance inst = getBricsInstanceFromString(bricsInstance);
+                selectedDictionaryInstance = inst;
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+                System.err.println("Using default BRICS instance: " + selectedDictionaryInstance);
+                errorMessage += " Instance: " + bricsInstance;
+            }
         }
         
         if (VariableTable.getReference().isVariableSet(dictionaryEnvCmdLineVar)) {
             String bricsEnv = VariableTable.getReference().interpolate(dictionaryEnvCmdLineVar);
             System.err.println("Command line BRICS environment: " + bricsEnv);
-            selectedDictionaryEnv = BricsEnv.valueOf(bricsEnv);
+            
+            try {
+                BricsEnv env = getBricsEnvFromString(bricsEnv);
+                selectedDictionaryEnv = env;
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+                System.err.println("Using default BRICS environment: " + selectedDictionaryEnv);
+                errorMessage += " Environment: " + bricsEnv;
+            }
         }
+        
+        if (!errorMessage.equals("")) {
+            MipavUtil.displayError("Unrecognized BRICS Data Dictionary selection." + errorMessage + ". Using " + selectedDictionaryInstance + " " + selectedDictionaryEnv + ".");
+        }
+    }
+    
+    protected static BricsInstance getBricsInstanceFromString(final String inst) {
+        if (inst.equalsIgnoreCase(BricsInstance.FITBIR.toString())) {
+            return BricsInstance.FITBIR;
+        } else if (inst.equalsIgnoreCase(BricsInstance.PDBP.toString()) || inst.equalsIgnoreCase("PD")) {
+            return BricsInstance.PDBP;
+        } else if (inst.equalsIgnoreCase(BricsInstance.NEI_BRICS.toString()) || inst.equalsIgnoreCase("NEI")) {
+            return BricsInstance.NEI_BRICS;
+        } else if (inst.equalsIgnoreCase(BricsInstance.NINR.toString()) || inst.equalsIgnoreCase("cdRNS")) {
+            return BricsInstance.NINR;
+        } else if (inst.equalsIgnoreCase(BricsInstance.CNRM.toString())) {
+            return BricsInstance.CNRM;
+        } else if (inst.equalsIgnoreCase(BricsInstance.CISTAR.toString())) {
+            return BricsInstance.CISTAR;
+        } else if (inst.equalsIgnoreCase(BricsInstance.GRDR.toString()) || inst.equalsIgnoreCase("GSDR")) {
+            return BricsInstance.GRDR;
+        } else if (inst.equalsIgnoreCase(BricsInstance.COVID19.toString()) || inst.equalsIgnoreCase("COVID")) {
+            return BricsInstance.COVID19;
+        } else if (inst.equalsIgnoreCase(BricsInstance.NTRR.toString()) || inst.equalsIgnoreCase("NTI")) {
+            return BricsInstance.NTRR;
+        }
+        
+        throw new IllegalArgumentException("Unknown BRICS instance selection string: " + inst);
+    }
+    
+    protected static BricsEnv getBricsEnvFromString(final String env) {
+        if (env.equalsIgnoreCase(BricsEnv.Prod.toString())) {
+            return BricsEnv.Prod;
+        } else if (env.equalsIgnoreCase(BricsEnv.Demo.toString())) {
+            return BricsEnv.Demo;
+        } else if (env.equalsIgnoreCase(BricsEnv.Stage.toString())) {
+            return BricsEnv.Stage;
+        } else if (env.equalsIgnoreCase(BricsEnv.UAT.toString())) {
+            return BricsEnv.UAT;
+        } else if (env.equalsIgnoreCase(BricsEnv.Dev.toString())) {
+            return BricsEnv.Dev;
+        }
+        
+        throw new IllegalArgumentException("Unknown BRICS environment selection string: " + env);
     }
     
     protected String getDiseaseSelection() {
@@ -9884,9 +9985,13 @@ public class PlugInDialogFITBIR extends JFrame
             case PDBP:
                 return "Parkinson's Disease";
             case FITBIR:
-            case NEI:
-            case CiSTAR:
-            case NTI:
+            case NEI_BRICS:
+            case NINR:
+            case CNRM:
+            case CISTAR:
+            case GRDR:
+            case COVID19:
+            case NTRR:
             default:
                 return "All Diseases";
         }

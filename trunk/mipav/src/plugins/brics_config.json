@@ -27,105 +27,209 @@
 	 
 	 "PDBP_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionary.fitbir.nih.gov/",
-	 	"authServer": "https://fitbir.nih.gov/"
+	 	"dictionaryServer": "https://dictionary.pdbp.ninds.nih.gov/",
+	 	"authServer": "https://pdbp.ninds.nih.gov/"
 	 }],
 	 "PDBP_Demo": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-demo.cit.nih.gov/",
-	 	"authServer": "https://fitbir-demo.cit.nih.gov/"
+	 	"dictionaryServer": "https://pdbp-dd-demo.cit.nih.gov/",
+	 	"authServer": "https://pdbp-demo.cit.nih.gov/"
 	 }],
 	 "PDBP_Stage": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-stage.cit.nih.gov/",
-	 	"authServer": "https://fitbir-stage.cit.nih.gov/"
+	 	"dictionaryServer": "https://pdbp-dd-stage.cit.nih.gov/",
+	 	"authServer": "https://pdbp-stage.cit.nih.gov/"
 	 }],
 	 "PDBP_UAT": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-uat.cit.nih.gov/",
-	 	"authServer": "https://fitbir-uat.cit.nih.gov/"
+	 	"dictionaryServer": "https://pdbp-dd-uat.cit.nih.gov/",
+	 	"authServer": "https://pdbp-uat.cit.nih.gov/"
 	 }],
 	 "PDBP_Dev": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-dev.cit.nih.gov/",
-	 	"authServer": "https://fitbir-dev.cit.nih.gov/"
+	 	"dictionaryServer": "https://pdbp-dd-dev.cit.nih.gov/",
+	 	"authServer": "https://pdbp-dev.cit.nih.gov/"
 	 }],
 	 
-	 "NEI_Prod": [
+	 "NEI_BRICS_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionary.fitbir.nih.gov/",
-	 	"authServer": "https://fitbir.nih.gov/"
+	 	"dictionaryServer": "https://dictionarybrics.nei.nih.gov/",
+	 	"authServer": "https://brics.nei.nih.gov/"
 	 }],
-	 "NEI_Demo": [
+	 "NEI_BRICS_Demo": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-demo.cit.nih.gov/",
-	 	"authServer": "https://fitbir-demo.cit.nih.gov/"
+	 	"dictionaryServer": "https://bricsnei-dd-demo.cit.nih.gov/",
+	 	"authServer": "https://bricsnei-demo.cit.nih.gov/"
 	 }],
-	 "NEI_Stage": [
+	 "NEI_BRICS_Stage": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-stage.cit.nih.gov/",
-	 	"authServer": "https://fitbir-stage.cit.nih.gov/"
+	 	"dictionaryServer": "https://bricsnei-dd-stage.cit.nih.gov/",
+	 	"authServer": "https://bricsnei-stage.cit.nih.gov/"
 	 }],
-	 "NEI_UAT": [
+	 "NEI_BRICS_UAT": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-uat.cit.nih.gov/",
-	 	"authServer": "https://fitbir-uat.cit.nih.gov/"
+	 	"dictionaryServer": "",
+	 	"authServer": ""
 	 }],
-	 "NEI_Dev": [
+	 "NEI_BRICS_Dev": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-dev.cit.nih.gov/",
-	 	"authServer": "https://fitbir-dev.cit.nih.gov/"
-	 }],
-	 
-	 "CiSTAR_Prod": [
-	 {
-	 	"dictionaryServer": "https://dictionary.fitbir.nih.gov/",
-	 	"authServer": "https://fitbir.nih.gov/"
-	 }],
-	 "CiSTAR_Demo": [
-	 {
-	 	"dictionaryServer": "https://fitbir-dd-demo.cit.nih.gov/",
-	 	"authServer": "https://fitbir-demo.cit.nih.gov/"
-	 }],
-	 "CiSTAR_Stage": [
-	 {
-	 	"dictionaryServer": "https://fitbir-dd-stage.cit.nih.gov/",
-	 	"authServer": "https://fitbir-stage.cit.nih.gov/"
-	 }],
-	 "CiSTAR_UAT": [
-	 {
-	 	"dictionaryServer": "https://fitbir-dd-uat.cit.nih.gov/",
-	 	"authServer": "https://fitbir-uat.cit.nih.gov/"
-	 }],
-	 "CiSTAR_Dev": [
-	 {
-	 	"dictionaryServer": "https://fitbir-dd-dev.cit.nih.gov/",
-	 	"authServer": "https://fitbir-dev.cit.nih.gov/"
+	 	"dictionaryServer": "",
+	 	"authServer": ""
 	 }],
 	 
-	 "NTI_Prod": [
+	 "NINR_Prod": [
+	 {
+	 	"dictionaryServer": "https://dictionary.cdrns.nih.gov/",
+	 	"authServer": "https://cdrns.nih.gov/"
+	 }],
+	 "NINR_Demo": [
+	 {
+	 	"dictionaryServer": "https://cdrns-dd-demo.cit.nih.gov/",
+	 	"authServer": "https://cdrns-demo.cit.nih.gov"
+	 }],
+	 "NINR_Stage": [
+	 {
+	 	"dictionaryServer": "https://cdrns-dd-stage.cit.nih.gov/",
+	 	"authServer": "https://cdrns-stage.cit.nih.gov"
+	 }],
+	 "NINR_UAT": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "NINR_Dev": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 
+	 "CNRM_Prod": [
+	 {
+	 	"dictionaryServer": "https://dictionary.cnrm-dr.nih.gov/",
+	 	"authServer": "https://cnrm-dr.nih.gov/"
+	 }],
+	 "CNRM_Demo": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "CNRM_Stage": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "CNRM_UAT": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "CNRM_Dev": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 
+	 "CISTAR_Prod": [
+	 {
+	 	"dictionaryServer": "https://cistar-dd.ninds.nih.gov/",
+	 	"authServer": "https://cistar.ninds.nih.gov/"
+	 }],
+	 "CISTAR_Demo": [
+	 {
+	 	"dictionaryServer": "https://cistar-dd-demo.ninds.nih.gov/",
+	 	"authServer": "https://cistar-demo.ninds.nih.gov/"
+	 }],
+	 "CISTAR_Stage": [
+	 {
+	 	"dictionaryServer": "https://cistar-dd-stage.cit.nih.gov/",
+	 	"authServer": "https://cistar-stage.cit.nih.gov/"
+	 }],
+	 "CISTAR_UAT": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "CISTAR_Dev": [
+	 {
+	 	"dictionaryServer": "https://cistar-dd-dev.ninds.nih.gov/",
+	 	"authServer": "https://cistar-dev.ninds.nih.gov/"
+	 }],
+	 
+	 "GRDR_Prod": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "GRDR_Demo": [
+	 {
+	 	"dictionaryServer": "https://gsdr-dd-demo.ninds.nih.gov/",
+	 	"authServer": "https://gsdr-demo.ninds.nih.gov"
+	 }],
+	 "GRDR_Stage": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "GRDR_UAT": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "GRDR_Dev": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 
+	 "COVID19_Prod": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "COVID19_Demo": [
+	 {
+	 	"dictionaryServer": "https://covid19-dd-demo.cit.nih.gov/",
+	 	"authServer": "https://covid19-demo.cit.nih.gov"
+	 }],
+	 "COVID19_Stage": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "COVID19_UAT": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 "COVID19_Dev": [
+	 {
+	 	"dictionaryServer": "",
+	 	"authServer": ""
+	 }],
+	 
+	 "NTRR_Prod": [
 	 {
 	 	"dictionaryServer": "https://dictionary.ntrr-nti.org/",
 	 	"authServer": "https://ntrr-nti.org/"
 	 }],
-	 "NTI_Demo": [
+	 "NTRR_Demo": [
 	 {
 	 	"dictionaryServer": "https://dictionarydemo.ntrr-nti.org/",
 	 	"authServer": "https://demo.ntrr-nti.org/"
 	 }],
-	 "NTI_Stage": [
+	 "NTRR_Stage": [
 	 {
 	 	"dictionaryServer": "https://dictionarystage.ntrr-nti.org/",
 	 	"authServer": "https://stage.ntrr-nti.org/"
 	 }],
-	 "NTI_UAT": [
+	 "NTRR_UAT": [
 	 {
-	 	"dictionaryServer": "https://dictionaryuat.ntrr-nti.org/",
-	 	"authServer": "https://uat.ntrr-nti.org/"
+	 	"dictionaryServer": "",
+	 	"authServer": ""
 	 }],
-	 "NTI_Dev": [
+	 "NTRR_Dev": [
 	 {
-	 	"dictionaryServer": "https://dictionarydev.ntrr-nti.org/",
-	 	"authServer": "https://dev.ntrr-nti.org/"
+	 	"dictionaryServer": "",
+	 	"authServer": ""
 	 }]
 }
