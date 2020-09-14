@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import Jama.Matrix;
+
 /**
 LsqFit.jl is licensed under the MIT License:
 
@@ -73,10 +75,10 @@ end
     protected double upper[] = null;
     
     /** integer scalar containing the number of data points. */
-    protected int nPts;
+    protected int m; 
 
     /** variables integer scalar containing the number of unknowns. */
-    protected int param;
+    protected int n; // x.length
 	
 	/**
      * fitToFunction communicates
@@ -94,7 +96,155 @@ end
      */
     public abstract void fitToJacobian(double[] x, double[][] jacobian);
     
-    private void levenberg_marquardt(double initial_x[]) {
+    private void levenberg_marquardt(double initial_x[], double tdata[], double ydata[]) {
+    	// tdata independent variable of length m
+    	// ydata measured dependent variable of length m
+    	int i, r, c;
+    	// int n = initial_x.length;
+    	int f_calls = 0;
+    	int df_calls = 0;
+    	double x_f[] = new double[n];
+    	double x_df[] = new double[n];
+    	double residuals[] = new double[m]; // model[i] - ydata[i]
+    	
+    	double J[][] = new double[m][n];
+    	
+    	// First evaluation
+    	/*value_jacobian!!(df, initial_x)
+    	value_jacobian!!(obj, x) = value_jacobian!!(obj, obj.F, obj.DF, x)
+    			function value_jacobian!!(obj, F, J, x)
+    			    obj.fdf(F, J, x)
+    			    copyto!(obj.x_f, x)
+    			    copyto!(obj.x_df, x)
+    			    obj.f_calls .+= 1
+    			    obj.df_calls .+= 1
+    			    obj.df_calls
+    			    F, J
+    			end*/
+    	/*# Given callables to calculate objectives and partial first derivatives
+    	# create a function that calculates both.
+    	function make_fdf(x, F, f!, j!)
+    	    function fj!(fx, jx, x)
+    	        j!(jx, x)
+    	        return f!(fx, x)
+    	    end
+    	end*/
+        f_calls += 1;
+        df_calls += 1;
+        for (i = 0; i < n; i++) {
+        	x_f[i] = initial_x[i];
+        	x_df[i] = initial_x[i];
+        }
+        if (testMode) {
+        	fitToTestFunction(initial_x, residuals);
+        	fitToTestJacobian(initial_x, J);
+        }
+        else {
+        	fitToFunction(initial_x, residuals);
+        	fitToJacobian(initial_x, J);
+        }
+        
+        if (Double.isFinite(tau)) {
+            Matrix JMat = new Matrix(J);
+            double JtJ[][] = ((JMat.transpose()).times(JMat)).getArray();
+            double maxVal = -Double.MAX_VALUE;
+            for (r = 0; r < n; r++) {
+            	for (c = 0; c < n; c++) {
+            		if (JtJ[r][c] > maxVal) {
+            			maxVal = JtJ[r][c];
+            		}
+            	}
+            }
+            lambda = tau * maxVal;
+        }
+        
+        // check parameters
+        if ((lower != null) && (lower.length != n)) {
+        	System.err.println("lower must either be null or have a length equal to the number of parameters");
+        	return;
+        }
+        if ((upper != null) && (upper.length != n)) {
+        	System.err.println("upper must either be null or have a length equal to the number of parameters");
+        	return;
+        }
+        if (lower != null) {
+        	for (i = 0; i < n; i++) {
+        		if (initial_x[i] < lower[i]) {
+        			System.err.println("initial_x["+i+"] must be >= lower["+i+"]");
+        			return;
+        		}
+        	}
+        	
+        }
+        if (upper != null) {
+        	for (i = 0; i < n; i++) {
+        		if (initial_x[i] > upper[i]) {
+        			System.err.println("initial_x["+i+"] must be <= upper["+i+"]");
+        			return;
+        		}
+        	}
+        	
+        }
+        
+        if (min_step_quality < 0) {
+        	System.err.println("min_step_quality must be >= 0");
+        	return;
+        }
+        if (min_step_quality >= 1) {
+        	System.err.println("min_step_quality must be < 1");
+        	return;
+        }
+        
+        if (good_step_quality <= 0) {
+        	System.err.println("good_step_quality must be > 0");
+        	return; 
+        }
+        if (good_step_quality > 1) {
+        	System.err.println("good_step_quality must be <= 1");
+        	return;
+        }
+        if (min_step_quality >= good_step_quality) {
+        	System.err.println("min_step_quality must be < good_step_quality");
+        	return;
+        }
+        
+        // other constants
+        double MAX_LAMBDA = 1e16; // minimum trust region radius
+        double MIN_LAMBDA = 1e-16; // maximum trust region radius
+        double MIN_DIAGONAL = 1e-6; // lower bound on values of diagonal matrix used to regularize the trust region step
+        
+        boolean converged = false;
+        boolean x_converged = false;
+        boolean g_converged = false;
+        int iterCt = 0;
+        double x[] = new double[n];
+        double delta_x[] = new double[n];
+        for (i = 0; i < n; i++) {
+        	x[i] = initial_x[i];
+        	delta_x[i] = initial_x[i];
+        }
+        double a[] = new double[n];
+        
+        double trial_f[] = new double[m];
+        double residual = 0.0;
+        for (i = 0; i < m; i++) {
+        	residual += (residuals[i]*residuals[i]);
+        }
+        
+        // Create buffers
+        double JJ[][] = new double[n][n];
+        double n_buffer[] = new double[n];
+        double Jdelta_buffer[] = new double[m];
+        double dir_deriv[] = new double[m];
+        double v[] = new double[n];
+    	
+    }
+    
+    private void fitToTestJacobian(double x[], double J[][]) {
+    	
+    }
+    
+    private void fitToTestFunction(double x[], double residuals[]) {
     	
     }
 
