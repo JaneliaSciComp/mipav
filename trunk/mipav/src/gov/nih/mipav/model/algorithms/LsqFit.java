@@ -1,12 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
-import java.util.Vector;
-
 import Jama.Matrix;
 import gov.nih.mipav.view.Preferences;
 
 /**
 LsqFit.jl is licensed under the MIT License:
+Returns the argmin over x of `sum(f(x).^2)` using the Levenberg-Marquardt
+algorithm, and an estimate of the Jacobian of `f` at x.
 
 > Copyright (c) 2012: John Myles White and other contributors.
 > 
@@ -84,17 +84,162 @@ end
     protected int n; // x.length
     protected double initial_x[];
     
-    int iterCt = 0;
-    double x[] = null;
-    double residuals[] = null;
-    boolean converged;
+    private int iterCt = 0;
+    private double x[] = null;
+    private double residuals[] = null;
+    private boolean converged;
+    private double tdata[];
+    private double ydata[];
+    private int testCase;
+    
+    private final int DRAPER24D = 0;
     
     public LsqFit(int nPts, double initial_x[]) {
     	m = nPts;
     	n = initial_x.length;
     	this.initial_x = initial_x;
     }
+    
+    /**
+     * To run LsqFit() use:
+    
+    boolean fullTest = true;
+	if (fullTest) {
+    	FitAll fa = new FitAll();
+    	return;
+    }
+    
+    class FitAll extends LsqFit {
+
+        
+        public FitAll() {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super();
+
+            
+        }
+
+       
+        public void fitToFunction(double[] x, double[] residuals) {
+            
+
+            return;
+        }
+        
+        public void fitToJacobian(double[] x, double[][] jacobian) {
+        	return;
+        }
+    }
+    */
 	
+    
+    public LsqFit() {
+    	int i;
+    	testMode = true;
+    	// Below is an example used to fit y = a0 - a1*(a2**x)
+    	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
+    	// Norman R. Draper and Harry Smith */
+    	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
+    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n", Preferences.DEBUG_ALGORITHM);
+    	testMode = true;
+    	testCase = DRAPER24D;
+    	m = 5;
+    	n = 3;
+        tdata = new double[5];
+        ydata = new double[m];
+        initial_x = new double[n];
+        tdata[0] = 0.0;
+        tdata[1] = 1.0;
+        tdata[2] = 2.0;
+        tdata[3] = 3.0;
+        tdata[4] = 4.0;
+        ydata[0] = 44.4;
+        ydata[1] = 54.6;
+        ydata[2] = 63.8;
+        ydata[3] = 65.7;
+        ydata[4] = 68.9;
+        initial_x[0] = 0.0;
+        initial_x[1] = 10.0;
+        initial_x[2] = 0.2;
+        
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = -1000.0;
+        upper[0] = 1000.0;
+
+        // Constrain a1
+        lower[1] = -1000.0;
+        upper[1] = 1000.0;
+
+        // Constrain a2
+        lower[2] = 0.0;
+        upper[2] = 1.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);	
+    }
+    
+    private void dumpTestResults() {
+    	 int i;
+    	 Preferences.debug("Number of iterations: " + String.valueOf(iterCt) + "\n", Preferences.DEBUG_ALGORITHM);
+         for (i = 0; i < n; i++) {
+             Preferences.debug("x[" + i + "] = " + String.valueOf(x[i]) + "\n", Preferences.DEBUG_ALGORITHM);
+         }
+         double residual = 0.0;
+         for (i = 0; i < m; i++) {
+         	residual += (residuals[i]*residuals[i]);
+         }
+         Preferences.debug("residual = " + residual + "\n", Preferences.DEBUG_ALGORITHM);
+         Preferences.debug("converged = " + converged + "\n", Preferences.DEBUG_ALGORITHM);
+    }
+    
+    public void fitToTestFunction(double[] x, double[] residuals) {
+        int i;
+        double ymodel = 0.0;
+
+        try {
+            switch (testCase) {
+            case DRAPER24D:
+
+                // evaluate the residuals[i] = ymodel[i] - ydata[i]
+                for (i = 0; i < m; i++) {
+                    ymodel = x[0] - (x[1] * Math.pow(x[2], tdata[i]));
+                    residuals[i] = ymodel - ydata[i];
+                }
+                break;
+            } // switch (testCase)
+        } catch (Exception e) {
+            Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        return;
+    }
+    
+    private void fitToTestJacobian(double x[], double J[][]) {
+        int i;
+        try {
+            switch (testCase) {
+            case DRAPER24D:
+            	for (i = 0; i < m; i++) {
+                    J[i][0] = 1.0;
+                    J[i][1] = -Math.pow(x[2], tdata[i]);
+                    if (i == 0) {
+                    	J[i][2] = 0.0;
+                    }
+                    else {
+                        J[i][2] = -tdata[i] * x[1] * Math.pow(x[2], tdata[i] - 1.0);
+                    }
+                }
+                break;
+            } // switch (testCase)
+        } catch (Exception e) {
+            Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        return;
+    }
 	/**
      * fitToFunction communicates
      *
@@ -112,6 +257,7 @@ end
     public abstract void fitToJacobian(double[] x, double[][] jacobian);
     
     private void driver() {
+    	// driver is an implementation of the code in levenberg_marquardt.jl
     	// tdata independent variable of length m
     	// ydata measured dependent variable of length m
     	int i, r, c;
@@ -514,13 +660,6 @@ end
     	
     }
     
-    private void fitToTestJacobian(double x[], double J[][]) {
-    	
-    }
-    
-    private void fitToTestFunction(double x[], double residuals[]) {
-    	
-    }
     
     public int getIterations() {
     	return iterCt;
