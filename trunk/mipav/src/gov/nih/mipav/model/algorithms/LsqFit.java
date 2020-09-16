@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import Jama.Matrix;
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.LinearEquations;
 import gov.nih.mipav.view.Preferences;
 
 /**
@@ -76,6 +78,7 @@ end
     protected boolean show_trace = false; // print a status summary on each iteration if true
     protected double lower[] = null; // bound solution to these limits
     protected double upper[] = null;
+    protected boolean geodesicAcceleration = false; // requires hessian matrix
     
     /** integer scalar containing the number of data points. */
     protected int m; 
@@ -129,6 +132,11 @@ end
         
         public void fitToJacobian(double[] x, double[][] jacobian) {
         	return;
+        }
+        
+        public void fitToHessian(double[] x, double[][][] hessian) {
+        // n,n,m hessian
+            return;
         }
     }
     */
@@ -240,6 +248,46 @@ end
 
         return;
     }
+    
+    private void fitToTestHessian(double x[], double hessian[][][]) {
+        int i;
+        try {
+            switch (testCase) {
+            case DRAPER24D:
+            	for (i = 0; i < m; i++) {
+                    hessian[0][0][i] = 0.0;
+                    hessian[0][1][i] = 0.0;
+                    hessian[0][2][i] = 0.0;
+                    hessian[1][0][i] = 0.0;
+                    hessian[1][1][i] = 0.0;
+                    if (i == 0) {
+                    	hessian[1][2][i] = 0.0;
+                    }
+                    else {
+                    	hessian[1][2][i] = -tdata[i] * Math.pow(x[2], tdata[i] - 1.0);
+                    }
+                    hessian[2][0][i] = 0.0;
+                    if (i == 0) {
+                    	hessian[2][1][i] = 0.0;
+                    }
+                    else {
+                    	hessian[2][1][i] = -tdata[i] * Math.pow(x[2], tdata[i] - 1.0);
+                    }
+                    if ((i == 0) || (i == 1)) {
+                    	hessian[2][2][i] = 0.0;
+                    }
+                    else {
+                    	hessian[2][2][i] = -tdata[i] * (tdata[i] - 1.0) * x[1] * Math.pow(x[2], tdata[i] - 2.0);
+                    }
+                }
+                break;
+            } // switch (testCase)
+        } catch (Exception e) {
+            Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        return;
+    }
 	/**
      * fitToFunction communicates
      *
@@ -255,6 +303,8 @@ end
      * @param  Jacobian   DOCUMENT ME!
      */
     public abstract void fitToJacobian(double[] x, double[][] jacobian);
+    
+    public abstract void fitToHessian(double[] x, double[][][] hessian);
     
     private void driver() {
     	// driver is an implementation of the code in levenberg_marquardt.jl
@@ -502,21 +552,62 @@ end
             	}
             }
             
-            /*
-            if avv! != nothing
-                #GEODESIC ACCELERATION PART
-                avv!(dir_deriv, x, v)
-                mul!(a, transpose(J), dir_deriv)
-                rmul!(a, -1) #we multiply by -1 before the decomposition/division
-                LAPACK.potrf!('U', JJ) #in place cholesky decomposition
-                LAPACK.potrs!('U', JJ, a) #divides a by JJ, taking into account the fact that JJ is now the `U` cholesky decoposition of what it was before
-                rmul!(a, 0.5)
-                delta_x .= v .+ a
-                #end of the GEODESIC ACCELERATION PART
-            else
-            */
-            delta_x = v;
-            // end
+            if (geodesicAcceleration) {
+                double hessian[][][] = new double[n][n][m];
+                if (testMode) {
+                	fitToTestHessian(x, hessian);
+                }
+                else {
+                	fitToHessian(x, hessian);
+                }
+                double tmp[] = new double[n];
+                for (i = 0; i < m; i++) {
+                    for (r = 0; r < n; r++) {
+                    	tmp[r] = 0;
+                    	for (c = 0; c < n; c++) {
+                    	    tmp[r] += (hessian[r][c][i]*v[c]);	
+                    	}	
+                    }
+                    dir_deriv[i] = 0.0;
+                    for (r = 0; r < n; r++) {
+                    	dir_deriv[i] += (v[r]*tmp[r]);
+                    }
+                }
+                double a1[][] = new double[n][1];
+                for (c = 0; c < n; c++) {
+                	a1[c][0] = 0.0;
+                	for (r = 0; r < m; r++) {
+                		a1[c][0] += (J[r][c]*dir_deriv[r]);
+                	}
+                }
+                for (i = 0; i < n; i++) {
+                	a1[i][0] *= -1;
+                }
+                GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+                int info[] = new int[1];
+                ge.dpotrf('U',n,JJ,n,info); // cholesky decomposition
+                if (info[0] < 0) {
+                	System.err.println("In ge.dpotrf argument " + (-i) + " had an illegal value");
+                	return;
+                }
+                if (info[0] > 0) {
+                	System.err.println("in ge.dpotrf the leading minor of order i is not positive definite, and the factorization could not be completed");
+                	return;
+                }
+                LinearEquations le = new LinearEquations();
+                le.dpotrs('U',n,1,JJ,n,a1,n,info); // divides a by JJ, taking into account the fact that JJ is now the `U` cholesky decoposition of what it was before
+                if (info[0] < 0) {
+                	System.err.println("In le.dpotrs argument " + (-i) + " had an illegal value");
+                	return;
+                }
+                for (i = 0; i < n; i++) {
+                	a1[i][0] *= 0.5;
+                	 delta_x[i] = v[i] + a1[i][0];
+                }
+            } // if (geodesicAcceleration)
+            else {
+                delta_x = v;
+            }
 
             // apply box constraints
             if (lower != null) {
