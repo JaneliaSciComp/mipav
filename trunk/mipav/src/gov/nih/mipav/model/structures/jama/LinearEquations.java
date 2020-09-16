@@ -3853,7 +3853,7 @@ public class LinearEquations implements java.io.Serializable {
            = 0: successful exit
            < 0: if info[0] = -i, the i-th argument had an illegal value
      */
-    private void dpotrs(char uplo, int n, int nrhs, double[][] A, int lda, double[][] B, int ldb, int info[]) {
+    public void dpotrs(char uplo, int n, int nrhs, double[][] A, int lda, double[][] B, int ldb, int info[]) {
         boolean upper;
         
         // Test the input parameters.
