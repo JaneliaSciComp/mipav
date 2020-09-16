@@ -24482,7 +24482,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            If info[0] = i, the leading minor of order i is not positive definite, and the factorization could not
      *            be completed.
      */
-    private void dpotrf(final char uplo, final int n, final double[][] A, final int lda, final int[] info) {
+    public void dpotrf(final char uplo, final int n, final double[][] A, final int lda, final int[] info) {
         boolean upper;
         String name;
         int nb;
