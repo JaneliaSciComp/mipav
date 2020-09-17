@@ -65,7 +65,7 @@ public abstract class LsqFit {
 
 end
 */
-	private boolean testMode = false;
+	private boolean testMode = true;
 	protected double x_tol =1e-8; // search tolerance in x
 	protected double g_tol = 1e-12; //  search tolerance in gradient
 	protected int maxIter = 1000; // maximum number of iterations
@@ -87,7 +87,7 @@ end
     protected int n; // x.length
     protected double initial_x[];
     
-    private int iterCt = 0;
+    private int iterCt;
     private double x[] = null;
     private double residuals[] = null;
     private boolean converged;
@@ -96,6 +96,10 @@ end
     private int testCase;
     
     private final int DRAPER24D = 0;
+    
+    private final int BARD = 8;
+    
+    private final int HOCK25 = 25;
     
     public LsqFit(int nPts, double initial_x[]) {
     	m = nPts;
@@ -149,6 +153,7 @@ end
     	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
     	// Norman R. Draper and Harry Smith */
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
+    	// Works with geodesicAcceleration true and false in 11 and 15 iterations
     	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
@@ -186,7 +191,157 @@ end
         upper[2] = 1.0;
         driver();
         dumpTestResults();
-        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);	
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example used to fit y = (a0 * log(0.01*i)**(a1) + a2
+    	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
+    	// Variant of test example 25 from Hock and Schittkowski
+        // geodesicAcceleration = false does not converge and geodesicAcceleration = true converges to incorrect values
+        Preferences.debug("Test example 25 from Hock and Schittkowski constrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = (a0 * log(0.01*i)**(a1) + a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = HOCK25;
+        m = 99;
+        n = 3;
+    	tdata = new double[99];
+    	ydata = new double[m];
+    	initial_x = new double[n];
+    	for (i = 1; i <= 99; i++) {
+    		tdata[i-1] = 0.01 * i;
+    		ydata[i-1] = Math.pow((-50.0 * Math.log(tdata[i-1])),2.0/3.0) + 25.0;
+    	}
+    	initial_x[0] = -100.0;
+    	initial_x[1] = 1.0/3.0;
+    	initial_x[2] = 12.5;
+    	
+        lower = new double[n];
+        upper = new double[n];
+        // Constrain a[0]
+        lower[0] = -200.0;
+        upper[0] = -0.1;
+
+        // Constrain a[1]
+        lower[1] = 0.0;
+        upper[1] = 5.0;
+
+        // Constrain a[2]
+        lower[2] = 0.0;
+        upper[2] = 25.6;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Unconstrained only should work at the standard  starting point.  This is
+        // because a[1] is a root in the denominator and so with unconstrained for large
+        // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
+        // should work at 10.0 * starting point and at 100.0 * starting point.
+        // BARD unconstrained converges to correct value for geodesicAcceleration = false in 6 iterations;
+        Preferences.debug("Bard function standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BARD;
+        m = 15;
+        n = 3;
+        tdata = new double[15];
+        for (i = 1; i <= 15; i++) {
+        	tdata[i-1] = i;
+        }
+        ydata = new double[]{0.14, 0.18, 0.22, 0.25, 0.29, 0.32, 0.35, 0.39, 
+        		               0.37, 0.58, 0.73, 0.96, 1.34, 2.10, 4.39};
+        initial_x = new double[n];
+        initial_x[0] = 1.0;
+        initial_x[1] = 1.0;
+        initial_x[2] = 1.0;
+        lower = null;
+        upper = null;
+        
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Unconstrained should only work at the standard  starting point.  This is as expected
+        // because a[1] is a root in the denominator and so with unconstrained for large
+        // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
+        // should work at 10.0 * starting point and at 100.0 * starting point.
+        // BARD constrained at 10 * standard starting point converges to correct value for geodesicAcceleration = false in 27 iterations;
+        Preferences.debug("Bard function 10 * standard starting point constrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BARD;
+        m = 15;
+        n = 3;
+        tdata = new double[15];
+        for (i = 1; i <= 15; i++) {
+        	tdata[i-1] = i;
+        }
+        ydata = new double[]{0.14, 0.18, 0.22, 0.25, 0.29, 0.32, 0.35, 0.39, 
+        		               0.37, 0.58, 0.73, 0.96, 1.34, 2.10, 4.39};
+        initial_x = new double[n];
+        initial_x[0] = 10.0;
+        initial_x[1] = 10.0;
+        initial_x[2] = 10.0;
+        
+        
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 0.0;
+        upper[0] = 20.0;
+        lower[1] = 0.1;
+        upper[1] = 20.0;
+        lower[2] = 0.0;
+        upper[2] = 20.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Unconstrained should only work at the standard  starting point.  This is as expected
+        // because a[1] is a root in the denominator and so with unconstrained for large
+        // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
+        // should work at 10.0 * starting point and at 100.0 * starting point.
+        // BARD constrained at 100 * standard starting point converges to correct value for geodesicAcceleration = false in 12 iterations;
+        Preferences.debug("Bard function 100 * standard starting point constrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BARD;
+        m = 15;
+        n = 3;
+        tdata = new double[15];
+        for (i = 1; i <= 15; i++) {
+        	tdata[i-1] = i;
+        }
+        ydata = new double[]{0.14, 0.18, 0.22, 0.25, 0.29, 0.32, 0.35, 0.39, 
+        		               0.37, 0.58, 0.73, 0.96, 1.34, 2.10, 4.39};
+        initial_x = new double[n];
+        initial_x[0] = 100.0;
+        initial_x[1] = 100.0;
+        initial_x[2] = 100.0;
+        
+        
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 0.0;
+        upper[0] = 200.0;
+        lower[1] = 0.1;
+        upper[1] = 200.0;
+        lower[2] = 0.0;
+        upper[2] = 200.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
     }
     
     private void dumpTestResults() {
@@ -217,6 +372,22 @@ end
                     residuals[i] = ymodel - ydata[i];
                 }
                 break;
+                
+            case HOCK25:
+            	// evaluate the residuals[i] = ymodel[i] - ydata[i]
+            	for (i = 0; i < m; i++) {
+                    ymodel = Math.pow((x[0] * Math.log(tdata[i])),x[1]) + x[2];
+                    residuals[i] = ymodel - ydata[i];
+                }
+            	break;
+            case BARD:
+            	// evaluate the residuals[i] = ymodel[i] - ydata[i]
+                for (i = 0; i < m; i++) {
+                    ymodel = x[0] + tdata[i]/(x[1]*(16.0 - tdata[i]) 
+                    		 + x[2]*Math.min(tdata[i], 16.0 - tdata[i]));
+                    residuals[i] = ymodel - ydata[i];
+                }
+                break;
             } // switch (testCase)
         } catch (Exception e) {
             Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
@@ -241,6 +412,24 @@ end
                     }
                 }
                 break;
+            case HOCK25:
+            	// Calculate the Jacobian analytically
+                for (i = 0; i < m; i++) {
+                    J[i][0] = x[1]*Math.pow((x[0] * Math.log(tdata[i])),x[1]-1.0) * Math.log(tdata[i]);
+                    J[i][1] = Math.log(x[0] * Math.log(tdata[i])) * Math.pow((x[0] * Math.log(tdata[i])),x[1]);
+                    J[i][2] = 1.0;
+                }
+                break;
+            case BARD:
+            	double denom;
+                    // Calculate the Jacobian analytically
+                    for (i = 0; i < m; i++) {
+                    	denom = (x[1]*(16.0 - tdata[i]) + x[2]*Math.min(tdata[i], 16.0 - tdata[i]));
+                        J[i][0] = 1.0;
+                        J[i][1] = -tdata[i]*(16.0 - tdata[i])/(denom*denom);
+                        J[i][2] = -tdata[i]*Math.min(tdata[i], 16.0 - tdata[i])/(denom*denom);
+                    }
+                    break;
             } // switch (testCase)
         } catch (Exception e) {
             Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
@@ -281,6 +470,21 @@ end
                     }
                 }
                 break;
+            case HOCK25:
+            	for (i = 0; i < m; i++) {
+            	    hessian[0][0][i] = x[1]*(x[1]-1.0)*Math.pow((x[0] * Math.log(tdata[i])),x[1]-2.0) * Math.log(tdata[i]) * Math.log(tdata[i]);
+            	    hessian[0][1][i] = Math.pow((x[0] * Math.log(tdata[i])),x[1]-1.0) * Math.log(tdata[i]) +
+            	    		           x[1] *  Math.log(x[0] * Math.log(tdata[i])) * Math.pow((x[0] * Math.log(tdata[i])),x[1]-1.0) * Math.log(tdata[i]);
+            	    hessian[0][2][i] = 0.0;
+            	    hessian[1][0][i] = x[1]*Math.pow((x[0] * Math.log(tdata[i])),x[1]-1.0) * Math.log(tdata[i]) * Math.log(x[0] * Math.log(tdata[i])) +
+            	    		           (1.0/x[0]) * Math.pow((x[0] * Math.log(tdata[i])),x[1]);
+            	    hessian[1][1][i] = Math.log(x[0] * Math.log(tdata[i])) * Math.log(x[0] * Math.log(tdata[i])) * Math.pow((x[0] * Math.log(tdata[i])),x[1]);
+            	    hessian[1][2][i] = 0.0;
+            	    hessian[2][0][i] = 0.0;
+            	    hessian[2][1][i] = 0.0;
+            	    hessian[2][2][i] = 0.0;
+            	}
+            	break;
             } // switch (testCase)
         } catch (Exception e) {
             Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
@@ -317,6 +521,7 @@ end
     	double x_f[] = new double[n];
     	double x_df[] = new double[n];
     	residuals = new double[m]; // model[i] - ydata[i]
+    	iterCt = 0;
     	
     	double J[][] = new double[m][n];
     	
