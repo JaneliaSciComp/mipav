@@ -2956,7 +2956,7 @@ public class PlugInDialogFITBIR extends JFrame
     }
 
     private void init() {
-        setTitle("Image Submission Package Creation Tool - " + pluginVersion + " (" + selectedDictionaryInstance + " - "+ selectedDictionaryEnv + ")");
+        setTitle("Image Submission Package Creation Tool - " + pluginVersion + " (" + getDisplayStrFromBricsInstance(selectedDictionaryInstance) + " - "+ selectedDictionaryEnv + ")");
 
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -9937,6 +9937,31 @@ public class PlugInDialogFITBIR extends JFrame
         
         if (!errorMessage.equals("")) {
             MipavUtil.displayError("Unrecognized BRICS Data Dictionary selection." + errorMessage + ". Using " + selectedDictionaryInstance + " " + selectedDictionaryEnv + ".");
+        }
+    }
+    
+    protected static String getDisplayStrFromBricsInstance(final BricsInstance inst) {
+        switch (inst) {
+            case FITBIR:
+                return "FITBIR";
+            case PDBP:
+                return "PDBP";
+            case NEI_BRICS:
+                return "NEI";
+            case NINR:
+                return "cdRNS";
+            case CNRM:
+                return "CASA";
+            case CISTAR:
+                return "CiSTAR";
+            case GRDR:
+                return "GSDR";
+            case COVID19:
+                return "COVID-19";
+            case NTRR:
+                return "NTRR";
+            default:
+                return inst.toString();
         }
     }
     
