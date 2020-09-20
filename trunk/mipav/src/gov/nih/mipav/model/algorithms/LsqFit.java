@@ -117,7 +117,17 @@ end
     
     private final int BROWN_AND_DENNIS = 16;
     
+    private final int OSBORNE1 = 17;
+   
+    private final int OSBORNE2 = 19;
+    
+    private final int WATSON = 20;
+    
     private final int HOCK25 = 25;
+    
+    private final int BROWN_ALMOST_LINEAR = 27;
+    
+    private final int LINEAR_FULL_RANK = 32;
     
     public LsqFit(int nPts, double initial_x[]) {
     	m = nPts;
@@ -423,7 +433,7 @@ end
         
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // KOWALIK_AND_OSBORNED at 100 * standard starting point constrained converges to incorrect values
+        // KOWALIK_AND_OSBORNE at 100 * standard starting point constrained converges to incorrect values
         // Number of iterations: 22
         // x[0] = 0.08664898048513225
         // x[1] = 0.0156044353981859
@@ -918,7 +928,7 @@ end
         // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
         // ti = 0.2*i for i = 1 to 20
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-     // BROWN_AND_DENNIS at 10 * standard starting point unconstrained converges to correct values in 6667 iterations
+        // BROWN_AND_DENNIS at 10 * standard starting point unconstrained converges to correct values in 6667 iterations
         Preferences.debug("Brown and Dennis function at 10 * standard starting point unconstrained\n", 
         		Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", Preferences.DEBUG_ALGORITHM);
@@ -935,6 +945,342 @@ end
         initial_x[1] = 50.0;
         initial_x[2] = -50.0;
         initial_x[3] = -10.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
+        // ti = 0.2*i for i = 1 to 20
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // BROWN_AND_DENNIS at 100 * standard starting point unconstrained converges to correct values in 5212 iterations
+        Preferences.debug("Brown and Dennis function at 100 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BROWN_AND_DENNIS;
+        m = 20;
+        n = 4;
+        initial_x = new double[n];
+        initial_x[0] = 2500.0;
+        initial_x[1] = 500.0;
+        initial_x[2] = -500.0;
+        initial_x[3] = -100.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // OSBORNE1 converges to correct values in 61 iterations
+        Preferences.debug("Osborne 1 function unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.37541, a1 = 1.9358, a2 = -1.4647, a3 = 0.012868, a4 = 0.022123\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 5.46489E-5\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = OSBORNE1;
+        m = 33;
+        n = 5;
+        tdata = new double[33];
+        for (i = 1; i <= 33; i++) {
+        	tdata[i-1] = 10.0*(i-1);
+        }
+        ydata = new double[]{0.844, 0.908, 0.932, 0.936, 0.925, 0.908, 0.881, 0.850, 0.818,
+        		  0.784, 0.751, 0.718, 0.685, 0.658, 0.628, 0.603, 0.580, 0.558, 0.538, 0.522,
+        		  0.506, 0.490, 0.478, 0.467, 0.457, 0.448, 0.438, 0.431, 0.424, 0.420, 0.414,
+        		  0.411, 0.406};
+        initial_x = new double[n];
+        initial_x[0] = 0.5;
+        initial_x[1] = 1.5;
+        initial_x[2] = -1.0;
+        initial_x[3] = 0.01;
+        initial_x[4] = 0.02;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) 
+        // + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // OSBORNE2 converges to the correct values in 15 iterations
+        Preferences.debug("Osborne 2 function unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) \n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("    + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 4.01377E-2\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = OSBORNE2;
+        m = 65;
+        n = 11;
+        tdata = new double[65];
+        for (i = 1; i <= 65; i++) {
+        	tdata[i-1] = (i-1)/10.0;
+        }
+        ydata = new double[]{1.366, 1.191, 1.112, 1.013, 0.991, 0.885, 0.831, 0.847, 0.786,
+        		  0.725, 0.746, 0.679, 0.608, 0.655, 0.616, 0.606, 0.602, 0.626, 0.651, 0.724,
+        		  0.649, 0.649, 0.694, 0.644, 0.624, 0.661, 0.612, 0.558, 0.533, 0.495, 0.500,
+        		  0.423, 0.395, 0.375, 0.372, 0.391, 0.396, 0.405, 0.428, 0.429, 0.523, 0.562,
+        		  0.607, 0.653, 0.672, 0.708, 0.633, 0.668, 0.645, 0.632, 0.591, 0.559, 0.597,
+        		  0.625, 0.739, 0.710, 0.729, 0.720, 0.636, 0.581, 0.428, 0.292, 0.162, 0.098,
+        		  0.054};
+        initial_x = new double[n];
+        initial_x[0] = 1.3;
+        initial_x[1] = 0.65;
+        initial_x[2] = 0.65;
+        initial_x[3] = 0.7;
+        initial_x[4] = 0.6;
+        initial_x[5] = 3.0;
+        initial_x[6] = 5.0;
+        initial_x[7] = 7.0;
+        initial_x[8] = 2.0;
+        initial_x[9] = 4.5;
+        initial_x[10] = 5.5;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Watson function with 6 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // WATSON with 6 parameters converges to the correct values in 13 iterations.
+        Preferences.debug("Watson with 6 parameters at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 2.28767E-3\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = WATSON;
+        m = 31;
+        n = 6;
+        // Guess all parameters are 0.0.
+        initial_x = new double[n];
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Watson function with 9 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // WATSON with 9 parameters converges to the correct values in 15 iterations.
+        Preferences.debug("Watson with 9 parameters at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 1.39976E-6\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = WATSON;
+        m = 31;
+        n = 9;
+        // Guess all parameters are 0.0.
+        initial_x = new double[n];
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Watson function with 12 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // WATSON with 12 parameters converges to the correct values in 18 iterations.
+        Preferences.debug("Watson with 12 parameters at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 4.72238E-10\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = WATSON;
+        m = 31;
+        n = 12;
+        // Guess all parameters are 0.0.
+        initial_x = new double[n];
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // BROWN_ALMOST_LINEAR with 10 parameters at standard starting point unconstrained converges to 10 1's with residual = 0 in 11 iterations
+        Preferences.debug("Brown almost linear with 10 parameters at standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        m = 10;
+        n = 10;
+        // Guess all parameters are 0.5
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 0.5;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Correct answer with
+        // Number of iterations: 25
+        // x[0] = 0.9794303033491398
+        // x[1] = 0.9794303033491398
+        // x[2] = 0.9794303033491388
+        // x[3] = 0.9794303033491389
+        // x[4] = 0.9794303033491396
+        // x[5] = 0.9794303033491399
+        // x[6] = 0.9794303033491389
+        // x[7] = 0.9794303033491399
+        // x[8] = 0.9794303033491397
+        // x[9] = 1.2056969665086188
+        // residual = 4.0598903980903047E-25
+        // converged = true
+        Preferences.debug("Brown almost linear with 10 parameters at 10 * standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        m = 10;
+        n = 10;
+        // Guess all parameters are 5.0
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 5.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Correct answer with
+        // Number of iterations: 39
+        // x[0] = 0.9794303033498627
+        // x[1] = 0.9794303033498621
+        // x[2] = 0.9794303033498617
+        // x[3] = 0.9794303033498627
+        // x[4] = 0.979430303349863
+        // x[5] = 0.9794303033498626
+        // x[6] = 0.9794303033498623
+        // x[7] = 0.9794303033498619
+        // x[8] = 0.9794303033498621
+        // x[9] = 1.2056969665013773
+        // residual = 1.3065508742723008E-29
+        // converged = true
+        Preferences.debug("Brown almost linear with 10 parameters at 100 * standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        m = 10;
+        n = 10;
+        // Guess all parameters are 50.0
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 50.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Brown almost linear function with 30 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to 30 1's in 15 iterations with resdual =  5.725139530714027E-26.
+        Preferences.debug("Brown almost linear with 30 parameters at standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        m = 30;
+        n = 30;
+        // Guess all parameters are 0.5
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 0.5;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Brown almost linear function with 40 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to 40 1's in 14 iterations with residual = 1.0197259795145985E-28.
+        Preferences.debug("Brown almost linear with 40 parameters at standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        m = 40;
+        n = 40;
+        // Guess all parameters are 0.5
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 0.5;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Linear full rank with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct values in 7 iterations
+        Preferences.debug("Linear full rank function with 5 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = LINEAR_FULL_RANK;
+        m = 10;
+        n = 5;
+        // Guess all parameters are 1
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Linear full rank with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct values in 7 iterations
+        Preferences.debug("Linear full rank function with 5 parameters and 50 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = LINEAR_FULL_RANK;
+        m = 50;
+        n = 5;
+        // Guess all parameters are 1
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0;
+        }
         lower = null;
         upper = null;
         driver();
@@ -961,6 +1307,7 @@ end
         int i;
         double ymodel = 0.0;
         double t[];
+        double sumParam;
 
         try {
             switch (testCase) {
@@ -1058,7 +1405,75 @@ end
         		    residuals[i] = part1*part1 + part2*part2;
         		}
             	break;
+            case OSBORNE1:
+            	// evaluate the residuals[i] = ymodel[i] - ydata[i]
+                for (i = 0; i < m; i++) {
+                    ymodel = x[0] + x[1]*Math.exp(-x[3]*tdata[i]) + x[2]*Math.exp(-x[4]*tdata[i]);
+                    residuals[i] = ymodel - ydata[i];
+                }
+            	break;
+            case OSBORNE2:
+            	// evaluate the residuals[i] = ymodel[i] - ydata[i]
+                for (i = 0; i < m; i++) {
+                    ymodel = x[0]*Math.exp(-x[4]*tdata[i]) 
+                           + x[1]*Math.exp(-x[5]*(tdata[i] - x[8])*(tdata[i] - x[8]))
+                           + x[2]*Math.exp(-x[6]*(tdata[i] - x[9])*(tdata[i] - x[9]))
+                           + x[3]*Math.exp(-x[7]*(tdata[i] - x[10])*(tdata[i] - x[10]));
+                    residuals[i] = ymodel - ydata[i];
+                }
+            	break;
+            case WATSON:
+            	double sum1;
+        		double sum2;
+        		t = new double[29];
+        		int j;
+        	    for (i = 0; i < 31; i++) {
+        	    	if (i < 29) {
+        	            t[i] = (i+1.0)/29.0;
+            	        sum1 = 0.0;
+            	        for (j = 2; j <= n; j++) {
+            	            sum1 += (j - 1.0)*x[j-1]*Math.pow(t[i], j-2.0);	
+            	        }
+            	        sum2 = 0.0;
+            	        for (j = 1; j <= n; j++) {
+            	            sum2 += x[j-1]*Math.pow(t[i], j-1.0);	
+            	        }
+        	        	residuals[i] = sum1 - sum2*sum2 - 1.0;
+        	        }
+        	        else if (i == 29) {
+        	        	residuals[i] = x[0];
+        	        }
+        	        else if (i == 30) {
+        	        	residuals[i] = x[1] - x[0]*x[0] - 1.0; 
+        	        }
+        	    }
+            	break;
+            case BROWN_ALMOST_LINEAR:
+            	sumParam = 0.0;
+    			double prodParam = 1.0;
+    			for (i = 0; i < m; i++) {
+    				sumParam += x[i];
+    				prodParam *= x[i];
+    			}
+    		    for (i = 0; i < m -1; i++) {
+    		    	residuals[i] = x[i] + sumParam - (m + 1.0);
+    		    } // for (i = 0; i < m - 1; i++)
+    		    residuals[m-1] = prodParam - 1.0;	
+            	break;
+            case LINEAR_FULL_RANK:
+            	sumParam = 0.0;
+        	    for (i = 0 ; i < n; i++) {
+        	    	sumParam += x[i];
+        	    }
+        	    for (i = 0; i < n; i++) {
+        	    	residuals[i] = x[i] - 2.0 * sumParam / m - 1.0;
+        	    }
+        	    for (i = n; i < m; i++) {
+        	    	residuals[i] = -2.0 * sumParam / m - 1.0;
+        	    }
+            	break;
             } // switch (testCase)
+            
         } catch (Exception e) {
             Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
         }
@@ -1068,6 +1483,7 @@ end
     
     private void fitToTestJacobian(double x[], double J[][]) {
         int i;
+        int j;
         double denom;
         double top;
         double exponent;
@@ -1193,6 +1609,106 @@ end
     		        J[i][2] = 2.0*part2;
     		        J[i][3] = 2.0*part2*Math.sin(t[i]);
         		}
+            	break;
+            case OSBORNE1:
+            	for (i = 0; i < m; i++) {
+                    J[i][0] = 1.0;
+                    J[i][1] = Math.exp(-x[3]*tdata[i]);
+                    J[i][2] = Math.exp(-x[4]*tdata[i]);
+                    J[i][3] = -x[1]*tdata[i]*Math.exp(-x[3]*tdata[i]);
+                    J[i][4] = -x[2]*tdata[i]*Math.exp(-x[4]*tdata[i]);
+                }
+            	break;
+            case OSBORNE2:
+            	// Calculate the Jacobian analytically
+                for (i = 0; i < m; i++) {
+                    J[i][0] = Math.exp(-x[4]*tdata[i]);
+                    J[i][1] = Math.exp(-x[5]*(tdata[i] - x[8])*(tdata[i] - x[8]));
+                    J[i][2] = Math.exp(-x[6]*(tdata[i] - x[9])*(tdata[i] - x[9]));
+                    J[i][3] = Math.exp(-x[7]*(tdata[i] - x[10])*(tdata[i] - x[10]));
+                    J[i][4] = -x[0]*tdata[i]*Math.exp(-x[4]*tdata[i]) ;
+                    J[i][5] = -x[1]*(tdata[i] - x[8])*(tdata[i] - x[8])
+                                     *Math.exp(-x[5]*(tdata[i] - x[8])*(tdata[i] - x[8]));
+                    J[i][6] = -x[2]*(tdata[i] - x[9])*(tdata[i] - x[9])
+                                     *Math.exp(-x[6]*(tdata[i] - x[9])*(tdata[i] - x[9]));
+                    J[i][7] = -x[3]*(tdata[i] - x[10])*(tdata[i] - x[10])
+                                     *Math.exp(-x[7]*(tdata[i] - x[10])*(tdata[i] - x[10]));
+                    J[i][8] = 2.0*x[1]*x[5]*(tdata[i] - x[8])
+                                     *Math.exp(-x[5]*(tdata[i] - x[8])*(tdata[i] - x[8]));
+                    J[i][9] = 2.0*x[2]*x[6]*(tdata[i] - x[9])
+                                     *Math.exp(-x[6]*(tdata[i] - x[9])*(tdata[i] - x[9]));
+                    J[i][10] = 2.0*x[3]*x[7]*(tdata[i] - x[10])
+                                      *Math.exp(-x[7]*(tdata[i] - x[10])*(tdata[i] - x[10]));
+                }
+            	break;
+            case WATSON:
+            	double sum2;
+        		t = new double[29];
+        	    for (i = 0; i < 31; i++) {
+        	    	if (i < 29) {
+        	            t[i] = (i+1.0)/29.0;
+        	            sum2 = 0.0;
+            	        for (j = 1; j <= n; j++) {
+            	            sum2 += x[j-1]*Math.pow(t[i], j-1.0);	
+            	        }
+        	            J[i][0] = -2.0*sum2;
+        	            for (j = 2; j <= n; j++) {
+        	            	J[i][j-1] = (j-1.0)*Math.pow(t[i],j-2.0) - 2.0*sum2*Math.pow(t[i],j-1.0);
+        	            }
+        	    	} // if (i < 29)
+        	    	else if (i == 29) {
+        	    		J[i][0] = 1.0;
+        	    		for (j = 1; j < n; j++) {
+        	    			J[i][j] = 0.0;
+        	    		}
+        	    	}
+        	    	else if (i == 30) {
+        	    		J[i][0] = -2.0*x[0];
+        	    		J[i][1] = 1.0;
+        	    		for (j = 2; j < n; j++) {
+        	    			J[i][j] = 0.0;
+        	    		}
+        	    	}
+        	    } // for (i = 0; i < 31; i++)
+            	break;
+            case BROWN_ALMOST_LINEAR:
+            	double prodParam;
+    			for (i = 0; i < m - 1; i++) {
+    				for (j = 0; j < m; j++) {
+    				    if (i == j) {
+    				    	J[i][j] = 2.0;
+    				    }
+    				    else {
+    				    	J[i][j] = 1.0;
+    				    }
+    				}
+    			}
+    			for (i = 0; i < m; i++) {
+    				prodParam = 1.0;
+    				for (j = 0; j < m; j++) {
+    					if (i != j) {
+    						prodParam = prodParam*x[j];
+    					}
+    				}
+    			    J[m-1][i] = prodParam;	
+    			}
+            	break;
+            case LINEAR_FULL_RANK:
+            	for (i = 0; i < n; i++) {
+        		    for (j = 0; j < n; j++) {
+        		        if (i == j) {
+        		        	J[i][j] = 1.0 - 2.0/m;
+        		        }
+        		        else {
+        		        	J[i][j] = -2.0/m;
+        		        }
+        		    }
+        		} // for (i = 0; i < param; i++)
+        		for (i = n; i < m; i++) {
+        			for (j = 0; j < n; j++) {
+        			    J[i][j] = -2.0/m;
+        			}
+        		} // for (i = n; i < m; i++)
             	break;
             } // switch (testCase)
         } catch (Exception e) {
