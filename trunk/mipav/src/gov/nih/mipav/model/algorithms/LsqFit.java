@@ -129,6 +129,30 @@ end
     
     private final int LINEAR_FULL_RANK = 32;
     
+    private final int LINEAR_RANK1 = 33;
+    
+    private final int LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS = 34;
+    
+    private final int CHEBYQUAD = 35;
+    
+    private final int LEVMAR_ROSENBROCK = 50;
+    
+    private final int MODIFIED_ROSENBROCK = 51;
+    
+    private final int POWELL_2_PARAMETER = 52;
+    
+    private final int WOOD = 53;
+    
+    private final int HOCK1 = 61;
+    
+    private final int HOCK21_MODIFIED = 62;
+    
+    private final int HATFLDB = 63;
+    
+    private final int HATFLDC = 64;
+    
+    private final int EQUILIBRIUM_COMBUSTION = 65;
+    
     public LsqFit(int nPts, double initial_x[]) {
     	m = nPts;
     	n = initial_x.length;
@@ -732,6 +756,20 @@ end
         // Below is an example to fit y = a0*exp[a1/(x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         // MEYER at 10 * standard starting point constrained exits when finding matrix JJ singular when trying to invert
+        // Changing initial_lambda to 1.0 causes convergence to incorrect values:
+        // Number of iterations: 25
+        // x[0] = 1.0
+        // x[1] = 100.0
+        // x[2] = 100.0
+        // residual = 3.890044452557155E9
+        // converged = true
+        // Changing initial_lambda to 1.0E-9 results in a correct solution:
+        // Number of iterations: 239
+        // x[0] = 0.005609636383286036
+        // x[1] = 6181.346359304068
+        // x[2] = 345.2236350621298
+        // residual = 87.94585517086705
+        // converged = true
         Preferences.debug("Meyer function 10 * standard starting point constrained\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Y = a0*exp[a1/(x + a2)]\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n", Preferences.DEBUG_ALGORITHM);
@@ -756,7 +794,7 @@ end
         lower[1] = 100.0;
         upper[1] = 100000.0;
         lower[2] = 100.0;
-        upper[2] = 3000.0;                                             
+        upper[2] = 3000.0;
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
@@ -1286,6 +1324,404 @@ end
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is the test to fit the Linear rank 1 function with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Correctly converges to residual = 15/7 = 2.142857 in 6 iterations
+        Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 1 to param of j*x[j] = 3/(2*nPts + 1)\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = LINEAR_RANK1;
+        m = 10;
+        n = 5;
+        // Guess all parameters are 1
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is the test to fit the Linear rank 1 function with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Correctly converges to residual = 12.1287 in 6 iterations
+        Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 1 to param of j*x[j] = 3/(2*nPts + 1)\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = LINEAR_RANK1;
+        m = 50;
+        n = 5;
+        // Guess all parameters are 1
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Correctly converges to residual = 3.6470588 in 6 iterations.
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 2 to param-1 of j*x[j] = 3/(2*nPts - 3)\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
+        m = 10;
+        n = 5;
+        // Guess all parameters are 1
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Correctly converges to 13.628865979 in 6 iterations
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 2 to param-1 of j*x[j] = 3/(2*nPts - 3)\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
+        m = 50;
+        n = 5;
+        // Guess all parameters are 1
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Chebyquad function with 1 parameter and 8 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 1 parameter and 8 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared equals about 3.55 variable a0\n", Preferences.DEBUG_ALGORITHM);
+        // initial_x[0] = 0.0 -> residual = 3.550391 x[0] = 0.01826873 in 14 iterations
+        // initial_x[0] = 0.05 -> residual = 3.491482 x[0] = 0.1024086 in 30 iterations
+        // initial_x[0] = 0.5 -> residual = 3.557893 x[0] = 0.5 in 1 iteration
+        // initial_x[0] = 1.0 -> residual = 3.550391 x[0] = 0.9817312 in 13 iterations
+        testMode = true;
+        testCase = CHEBYQUAD;
+        m = 8;
+        n = 1;
+        initial_x = new double[n];
+        initial_x[0] = 1.0;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 0.0;
+        upper[0] = 1.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Chebyquad function with 8 parameters and 8 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // residual = 3.51687E-3 in 59 iterations
+        Preferences.debug("Chebyquad function with 8 parameters and 8 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 3.51687E-3\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = CHEBYQUAD;
+        m = 8;
+        n = 8;
+        initial_x = new double[n];
+        for (i = 1; i <= n; i++) {
+            initial_x[i-1] = i/(n + 1.0);
+        }
+        lower = new double[n];
+        upper = new double[n];
+        for (i = 0; i < n; i++) {
+            lower[i] = 0.0;
+            upper[i] = 1.0;
+        }
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Chebyquad function with 9 parameters and 9 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 9 parameters and 9 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        // Actual residual value was 1.7467E-24 in 14 iterations
+        testMode = true;
+        testCase = CHEBYQUAD;
+        m = 9;
+        n = 9;
+        initial_x = new double[n];
+        for (i = 1; i <= n; i++) {
+            initial_x[i-1] = i/(n + 1.0);
+        }
+        lower = new double[n];
+        upper = new double[n];
+        for (i = 0; i < n; i++) {
+            lower[i] = 0.0;
+            upper[i] = 1.0;
+        }
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Below is an example to fit the Chebyquad function with 10 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Residual = 6.50395E-3 in 31 iterations
+        Preferences.debug("Chebyquad function with 10 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 6.50395E-3\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = CHEBYQUAD;
+        m = 10;
+        n = 10;
+        initial_x = new double[n];
+        for (i = 1; i <= n; i++) {
+            initial_x[i-1] = i/(n + 1.0);
+        }
+        lower = new double[n];
+        upper = new double[n];
+        for (i = 0; i < n; i++) {
+            lower[i] = 0.0;
+            upper[i] = 1.0;
+        }
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Converges to incorrect values
+        // Number of iterations: 3434
+        // x[0] = -1.0775294083763476
+        // x[1] = 1.16106962906314
+        // residual = 37.25792946722536
+        // converged = true
+        Preferences.debug("Rosenbrock function used as LEVMAR example standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = ((1.0 - a0)*(1.0 - a0) + 105.0*(a1 - a0*a0)*(a1 - a0*a0));\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = y(0)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = LEVMAR_ROSENBROCK;
+        m = 2;
+        n = 2;
+        initial_x = new double[n];
+        initial_x[0] = -1.2;
+        initial_x[1] = 1.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Does not converge to an answer
+        // Number of iterations: 100000
+        // x[0] = 1.8887516473664823
+        // x[1] = 2.0337494109576155E-4
+        // residual = 93.76366048170557
+        // converged = false
+        Preferences.debug("Powell's 2 parameter function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10.0*a0/(a0 + 0.1) + 2*a1*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer a0 = 0 a1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = POWELL_2_PARAMETER;
+        m = 2;
+        n = 2;
+        initial_x = new double[n];
+        initial_x[0] = 3.0;
+        initial_x[1] = 1.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Converges to correct values with residual = 10000 in 47 iterations
+        Preferences.debug("Modified Rosenbrock function unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = MODIFIED_ROSENBROCK;
+        m = 3;
+        n = 2;
+        initial_x = new double[n];
+        initial_x[0] = -1.2;
+        initial_x[1] = 1.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Converges to correct values in 80 iterations
+        Preferences.debug("Wood's function\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has a0 = a1 = a2 = a3 = 1\n", Preferences.DEBUG_ALGORITHM);
+    	testMode = true;
+    	testCase = WOOD;
+        m = 6;
+        n = 4;
+        initial_x = new double[n];
+        initial_x[0] = -3.0;
+        initial_x[1] = -1.0;
+        initial_x[2] = -3.0;
+        initial_x[3] = -1.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+         
+        // Converges to correct values in 41 iterations
+        Preferences.debug("Hock - Schittkowski problem #1\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has a0 = a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+    	testMode = true;
+    	testCase = HOCK1;
+    	m = 2;
+    	n = 2;
+    	initial_x = new double[n];
+    	initial_x[0] = -2.0;
+    	initial_x[1] = 1.0;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = -Double.MAX_VALUE;
+        lower[1] = -1.5;
+        upper[0] = Double.MAX_VALUE;
+        upper[1] = Double.MAX_VALUE;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Take answer as correct
+        // Number of iterations: 7
+        // x[0] = 2.0
+        // x[1] = -4.0868223095102246E-11
+        // residual = 0.04000000000000001
+        // converged = true
+        Preferences.debug("Hock - Schittkowski problem #21 modified\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 2.0 a1 = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = HOCK21_MODIFIED;
+        m = 2;
+        n = 2;
+        initial_x = new double[n];
+        //initial_x[0] = -1.0;
+        // Cannot have initial_x[0] < lower[0] so must modify initial_x[0] from original specifications
+        initial_x[0] = 5.0;
+        initial_x[1] = -1.0;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 2.0;
+        lower[1] = -50.0;
+        upper[0] = 50.0;
+        upper[1] = 50.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Converges to incorrect values
+        // Number of iterations: 15
+        // x[0] = 0.9999999999556595
+        // x[1] = 0.8
+        // x[2] = 0.9778329884865306
+        // x[3] = 0.9561573533724991
+        // residual = 0.04681159553142556
+        // converged = true
+        Preferences.debug("hatfldb problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = HATFLDB;
+        m = 4;
+        n = 4;
+        initial_x = new double[n];
+        initial_x[0] = 0.1;
+        initial_x[1] = 0.1;
+        initial_x[2] = 0.1;
+        initial_x[3] = 0.1;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 0.0;
+        lower[1] = 0.0;
+        lower[2] = 0.0;
+        lower[3] = 0.0;
+        upper[0] = Double.MAX_VALUE;
+        upper[1] = 0.8;
+        upper[2] = Double.MAX_VALUE;
+        upper[3] = Double.MAX_VALUE;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Converges to correct values in 8 iterations
+        Preferences.debug("hatfldc problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 1.0 a1 = 1.0 a2 = 1.0 a3 = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = HATFLDC;
+        m = 4;
+        n = 4;
+        initial_x = new double[n];
+        initial_x[0] = 0.9;
+        initial_x[1] = 0.9;
+        initial_x[2] = 0.9;
+        initial_x[3] = 0.9;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 0.0;
+        lower[1] = 0.0;
+        lower[2] = 0.0;
+        lower[3] = 0.0;
+        upper[0] = 10.0;
+        upper[1] = 10.0;
+        upper[2] = 10.0;
+        upper[3] = 10.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        // Converges to correct values in 285 iterations
+        Preferences.debug("Equilibrium combustion problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 0.0034 a1 = 31.3265 a2 = 0.0684 a3 = 0.8595 a4 = 0.0370\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = EQUILIBRIUM_COMBUSTION;
+        m = 5;
+        n = 5;
+        initial_x = new double[n];
+        initial_x[0] = 1.0E-4;
+        initial_x[1] = 1.0E-4;
+        initial_x[2] = 1.0E-4;
+        initial_x[3] = 1.0E-4;
+        initial_x[4] = 1.0E-4;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 1.0E-4;
+        lower[1] = 1.0E-4;
+        lower[2] = 1.0E-4;
+        lower[3] = 1.0E-4;
+        lower[4] = 1.0E-4;
+        upper[0] = 100.0;
+        upper[1] = 100.0;
+        upper[2] = 100.0;
+        upper[3] = 100.0;
+        upper[4] = 100.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     }
     
     private void dumpTestResults() {
@@ -1308,6 +1744,7 @@ end
         double ymodel = 0.0;
         double t[];
         double sumParam;
+        double sumTerm;
 
         try {
             switch (testCase) {
@@ -1472,6 +1909,102 @@ end
         	    	residuals[i] = -2.0 * sumParam / m - 1.0;
         	    }
             	break;
+            case LINEAR_RANK1:
+            	sumTerm = 0.0;
+        	    for (i = 0; i < n; i++) {
+        	    	sumTerm += (i+1.0)*x[i];
+        	    }
+        	    for (i = 0; i < m; i++) {
+        	    	residuals[i] = (i+1.0)*sumTerm - 1.0;
+        	    }
+        	    break;
+            case LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS:
+        	    sumTerm = 0.0;
+        	    residuals[0] = -1.0;
+        	    residuals[m-1] = -1.0;
+        	    for (i = 1; i < n-1; i++) {
+        	    	sumTerm += (i+1.0)*x[i];
+        	    }
+        	    for (i = 1; i < m-1; i++) {
+        	    	residuals[i] = i*sumTerm - 1.0;
+        	    }
+        	    break;
+            case CHEBYQUAD:
+            	double chebySum;
+        	    for (i = 1; i <= m; i++) {
+        	        chebySum = 0.0;
+        	        for (j = 0; j < n; j++) {
+        	        	chebySum += shiftedChebyshev(x[j],i);
+        	        }
+        	        if ((i % 2) == 1) {
+        	        	residuals[i-1] = chebySum/n;
+        	        }
+        	        else {
+        	        	residuals[i-1] = chebySum/n + 1.0/(i*i - 1.0);
+        	        }
+        	    }
+            	break;
+            case LEVMAR_ROSENBROCK:
+            	residuals[0] = ((1.0 - x[0])*(1.0 - x[0]) 
+		    			+ 105.0*(x[1]- x[0]*x[0])*(x[1] - x[0]*x[0]));
+        		residuals[1] = residuals[0];
+            	break;
+            case POWELL_2_PARAMETER:
+            	residuals[0] = x[0];
+		    	residuals[1] = 10.0*x[0]/(x[0] + 0.1) + 2.0*x[1]*x[1];	
+            	break;
+            case MODIFIED_ROSENBROCK:
+            	residuals[0] = 10.0*(x[1] - x[0]*x[0]);
+		    	residuals[1] = 1.0 - x[0];
+		    	residuals[2] = 100.0;
+            	break;
+            case WOOD:
+            	 residuals[0] = 10.0*(x[1] - x[0]*x[0]);
+                 residuals[1] = 1.0 - x[0];
+                 residuals[2] = Math.sqrt(90.0)*(x[3] - x[2]*x[2]);
+                 residuals[3] = 1.0 - x[2];
+                 residuals[4] = Math.sqrt(10.0)*(x[1] + x[3] - 2.0);
+                 residuals[5] = (x[1] - x[3])/Math.sqrt(10.0);
+            	 break;
+            case HOCK1:
+            	residuals[0] = 10.0*(x[1] - x[0]*x[0]);
+        	    residuals[1] = 1.0 - x[0];
+            	break;
+            case HOCK21_MODIFIED:
+            	residuals[0] = x[0]/10.0;
+        	    residuals[1] = x[1];
+            	break;
+            case HATFLDB:
+            	residuals[0] = x[0] - 1.0;
+        		for (i = 1; i < n; i++) {
+        			residuals[i] = x[i-1] - Math.sqrt(x[i]);
+        		}
+            	break;
+            case HATFLDC:
+            	residuals[0] = x[0] - 1.0;
+        		for (i = 1; i < n-1; i++) {
+        			residuals[i] = x[i-1] - Math.sqrt(x[i]);
+        		}
+        		residuals[n-1] = x[n-1] - 1.0;
+            	break;
+            case EQUILIBRIUM_COMBUSTION:
+            	double R, R5, R6, R7, R8, R9, R10;
+
+      		  R=10;
+      		  R5=0.193;
+      		  R6=4.10622*1e-4;
+      		  R7=5.45177*1e-4;
+      		  R8=4.4975*1e-7;
+      		  R9=3.40735*1e-5;
+      		  R10=9.615*1e-7;
+
+      		  residuals[0]=x[0]*x[1]+x[0]-3*x[4];
+      		  residuals[1]=2*x[0]*x[1]+x[0]+3*R10*x[1]*x[1]+x[1]*x[2]*x[2]+R7*x[1]*x[2]+R9*x[1]*x[3]+R8*x[1]-R*x[4];
+      		  residuals[2]=2*x[1]*x[2]*x[2]+R7*x[1]*x[2]+2*R5*x[2]*x[2]+R6*x[2]-8*x[4];
+      		  residuals[3]=R9*x[1]*x[3]+2*x[3]*x[3]-4*R*x[4];
+      		  residuals[4]=x[0]*x[1]+x[0]+R10*x[1]*x[1]+x[1]*x[2]*x[2]+R7*x[1]*x[2]
+      		              +R9*x[1]*x[3]+R8*x[1]+R5*x[2]*x[2]+R6*x[2]+x[3]*x[3]-1.0;	
+              break;
             } // switch (testCase)
             
         } catch (Exception e) {
@@ -1710,6 +2243,167 @@ end
         			}
         		} // for (i = n; i < m; i++)
             	break;
+            case LINEAR_RANK1:
+            	for (i = 0; i < m; i++) {
+    		    	for (j = 0; j < n; j++) {
+    		    		J[i][j] = (i+1.0)*(j+1.0);
+    		    	}
+    		    }
+            	break;
+            case LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS:
+            	for (j = 0; j < n; j++) {
+    				J[0][j] = 0.0;
+    				J[m-1][j] = 0.0;
+    			}
+    		    for (i = 1; i < m-1; i++) {
+    		    	J[i][0] = 0.0;
+    		    	J[i][n-1] = 0.0;
+    		    	for (j = 1; j < n-1; j++) {
+    		    		J[i][j] = i*(j+1.0);
+    		    	}
+    		    }
+            	break;
+            case CHEBYQUAD:
+            	for (i = 1; i <= m; i++) {
+        		    for (j = 0; j < n; j++) {
+        		    	J[i-1][j] = shiftedChebyshevDerivative(x[j],i)/n;
+        		    }
+        		}
+            	break;
+            case LEVMAR_ROSENBROCK:
+            	J[0][0] = (-2.0 + 2.0*x[0] - 4.0*105.0*(x[1] - x[0]*x[0])*x[0]);
+	        	J[0][1] = (2*105.0*(x[1] - x[0]*x[0]));
+	        	J[1][0] = (-2.0 + 2.0*x[0] - 4.0*105.0*(x[1] - x[0]*x[0])*x[0]);
+	        	J[1][1] = (2*105.0*(x[1] - x[0]*x[0]));
+            	break;
+            case POWELL_2_PARAMETER:
+            	J[0][0] = 1.0;
+	        	J[0][1] = 0.0;
+	        	J[1][0] = 1.0/((x[0] + 0.1)*(x[0] + 0.1));
+	        	J[1][1] = 4.0*x[1];
+            	break;
+            case MODIFIED_ROSENBROCK:
+            	J[0][0] = -20.0*x[0];
+	        	J[0][1] = 10.0;
+	        	J[1][0] = -1.0;
+	        	J[1][1] = 0.0;
+	        	J[2][0] = 0.0;
+	        	J[2][1] = 0.0;	
+            	break;
+            case WOOD:
+            	J[0][0] = -20.0*x[0];
+	   		     J[0][1] = 10.0;
+	   		     J[0][2] = 0.0;
+	   		     J[0][3] = 0.0;
+	   		     J[1][0] = -1.0;
+	   		     J[1][1] = 0.0;
+	   		     J[1][2] = 0.0;
+	   		     J[1][3] = 0.0;
+	   		     J[2][0] = 0.0;
+	   		     J[2][1] = 0.0;
+	   		     J[2][2] = -2.0*Math.sqrt(90.0)*x[2];
+	   		     J[2][3] = Math.sqrt(90.0);
+	   		     J[3][0] = 0.0;
+	   		     J[3][1] = 0.0;
+	   		     J[3][2] = -1.0;
+	   		     J[3][3] = 0.0;
+	   		     J[4][0] = 0.0;
+	   		     J[4][1] = Math.sqrt(10.0);
+	   		     J[4][2] = 0.0;
+	   		     J[4][3] = Math.sqrt(10.0);
+	   		     J[5][0] = 0.0;
+	   		     J[5][1] = 1.0/Math.sqrt(10.0);
+	   		     J[5][2] = 0.0;
+	   		     J[5][3] = -1.0/Math.sqrt(10.0);
+            	break;
+            case HOCK1:
+            	J[0][0] = -20.0*x[0];
+    		    J[0][1] = 10.0;
+    		    J[1][0] = -1.0;
+    		    J[1][1] = 0.0;
+            	break;
+            case HOCK21_MODIFIED:
+            	J[0][0] = 0.1;
+    		    J[0][1] = 0.0;
+    		    J[1][0] = 0.0;
+    		    J[1][1] = 1.0;
+            	break;
+            case HATFLDB:
+            	J[0][0] = 1.0;
+    		    J[0][1] = 0.0;
+    		    J[0][2] = 0.0;
+    		    J[0][3] = 0.0;
+    		    J[1][0] = 1.0;
+    		    J[1][1] = -0.5/Math.sqrt(x[1]);
+    		    J[1][2] = 0.0;
+    		    J[1][3] = 0.0;
+    		    J[2][0] = 0.0;
+    		    J[2][1] = 1.0;
+    		    J[2][2] = -0.5/Math.sqrt(x[2]);
+    		    J[2][3] = 0.0;
+    		    J[3][0] = 0.0;
+    		    J[3][1] = 0.0;
+    		    J[3][2] = 1.0;
+    		    J[3][3] = -0.5/Math.sqrt(x[3]);
+            	break;
+            case HATFLDC:
+            	J[0][0] = 1.0;
+     		    J[0][1] = 0.0;
+     		    J[0][2] = 0.0;
+     		    J[0][3] = 0.0;
+     		    J[1][0] = 1.0;
+     		    J[1][1] = -0.5/Math.sqrt(x[1]);
+     		    J[1][2] = 0.0;
+     		    J[1][3] = 0.0;
+     		    J[2][0] = 0.0;
+     		    J[2][1] = 1.0;
+     		    J[2][2] = -0.5/Math.sqrt(x[2]);
+     		    J[2][3] = 0.0;
+     		    J[3][0] = 0.0;
+     		    J[3][1] = 0.0;
+     		    J[3][2] = 0.0;
+     		    J[3][3] = 1.0;
+            	break;
+            case EQUILIBRIUM_COMBUSTION:
+            	double R, R5, R6, R7, R8, R9, R10;
+
+    			  R=10;
+    			  R5=0.193;
+    			  R6=4.10622*1e-4;
+    			  R7=5.45177*1e-4;
+    			  R8=4.4975*1e-7;
+    			  R9=3.40735*1e-5;
+    			  R10=9.615*1e-7;
+
+    			  for (i = 0; i < m; i++) {
+    				  for (j = 0; j < n; j++) {
+    					  J[i][j] = 0.0;
+    				  }
+    			  }
+
+    			  J[0][0] = x[1]+1;
+    			  J[0][1] = x[0];
+    			  J[0][4]=-3;
+
+    			  J[1][0]=2*x[1]+1;
+    			  J[1][1]=2*x[0]+6*R10*x[1]+x[2]*x[2]+R7*x[2]+R9*x[3]+R8;
+    			  J[1][2]=2*x[1]*x[2]+R7*x[1];
+    			  J[1][3]=R9*x[1];
+    			  J[1][4]=-R;
+
+    			  J[2][1]=2*x[2]*x[2]+R7*x[2];
+    			  J[2][2]=4*x[1]*x[2]+R7*x[1]+4*R5*x[2]+R6;
+    			  J[2][4]=-8;
+
+    			  J[3][1]=R9*x[3];
+    			  J[3][3]=R9*x[1]+4*x[3];
+    			  J[3][4]=-4*R;
+
+    			  J[4][0]=x[1]+1;
+    			  J[4][1]=x[0]+2*R10*x[1]+x[2]*x[2]+R7*x[2]+R9*x[3]+R8;
+    			  J[4][2]=2*x[1]*x[2]+R7*x[1]+2*R5*x[2]+R6;
+    			  J[4][3]=R9*x[1]+2*x[3];	
+            	break;
             } // switch (testCase)
         } catch (Exception e) {
             Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
@@ -1772,6 +2466,178 @@ end
 
         return;
     }
+    
+ // Shifted Chebyshev polynomial
+    // Used over the half interval 0 <= x <= 1 instead of the full Chebyshev interval of -1 <= x <= 1
+    private double shiftedChebyshev(double x, int n) {
+    	// T*n+1(x) = (4x-2)*T*n(x) - T*n-1(x), where T* represents a shifted Chebyshev polynomial
+    	double sc = 1.0;
+    	double x2, x3, x4, x5, x6, x7, x8, x9, x10;
+    	switch (n) {
+    	    case 0:
+    	    	sc = 1.0;
+    	    	break;
+    	    case 1:
+    	        sc = 2.0*x - 1.0;
+    	        break;
+    	    case 2:
+    	    	x2 = x*x;
+    	    	sc = 8.0*x2 - 8.0*x + 1.0;
+    	    	break;
+    	    case 3:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	sc = 32.0*x3 - 48.0*x2 + 18.0*x - 1.0;
+    	    	break;
+    	    case 4:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	sc = 128.0*x4 - 256.0*x3 + 160.0*x2 - 32.0*x + 1.0;
+    	    	break;
+    	    case 5:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	sc = 512.0*x5 - 1280.0*x4 + 1120.0*x3 - 400.0*x2 + 50.0*x - 1.0;
+    	    	break;
+    	    case 6:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	sc = 2048.0*x6 - 6144.0*x5 + 6912.0*x4 - 3584.0*x3 + 840.0*x2 - 72.0*x + 1.0;
+    	    	break;
+    	    case 7:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	sc = 8192.0*x7 - 28672.0*x6 + 39424.0*x5 - 26880.0*x4 + 9408.0*x3 - 1568.0*x2 + 98.0*x - 1.0;
+    	    	break;
+    	    case 8:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	sc = 32768.0*x8 - 131072.0*x7 + 212992.0*x6 - 180224.0*x5 + 84480.0*x4 - 21504.0*x3
+    	    	     + 2688.0*x2 - 128.0*x + 1.0;
+    	    	break;
+    	    case 9:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	x9 = x8*x;
+    	    	sc = 131072.0*x9 - 589824.0*x8 + 1105920.0*x7 - 1118208.0*x6 + 658944.0*x5
+    	    	     - 228096.0*x4 + 44352.0*x3 - 4320.0*x2 + 162.0*x - 1.0;
+    	    	break;
+    	    case 10:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	x9 = x8*x;
+    	    	x10 = x9*x;
+    	    	sc = 524288.0*x10 - 2621440.0*x9 + 5570560.0*x8 - 6553600.0*x7 + 4659200.0*x6
+    	    	     - 2050048.0*x5 + 549120.0*x4 - 84480.0*x3 + 6600.0*x2 - 200.0*x + 1.0;
+    	} // switch (n)
+    	return sc;
+    } // private double shiftedChebyshev
+    
+ // Shifted Chebyshev polynomial derivative
+    private double shiftedChebyshevDerivative(double x, int n) {
+    	double sc = 0.0;
+    	double x2, x3, x4, x5, x6, x7, x8, x9;
+    	switch (n) {
+    	    case 0:
+    	    	sc = 0.0;
+    	    	break;
+    	    case 1:
+    	    	sc = 2.0;
+    	        break;
+    	    case 2:
+    	    	sc = 16.0*x - 8.0;
+    	    	break;
+    	    case 3:
+    	    	x2 = x*x;
+    	    	sc = 96.0*x2 - 96.0*x + 18.0;
+    	    	break;
+    	    case 4:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	sc = 512.0*x3 - 768.0*x2 + 320.0*x - 32.0;
+    	    	break;
+    	    case 5:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	sc = 2560.0*x4 - 5120.0*x3 + 3360.0*x2 - 800.0*x + 50.0;
+    	    	break;
+    	    case 6:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	sc = 12288.0*x5 - 30720.0*x4 + 27648.0*x3 - 10752.0*x2 + 1680.0*x - 72.0;
+    	    	break;
+    	    case 7:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	sc = 57344.0*x6 - 172032.0*x5 + 197120.0*x4 - 107520.0*x3 + 28224.0*x2 - 3136.0*x + 98.0;
+    	    	break;
+    	    case 8:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	sc = 262144.0*x7 - 917504.0*x6 + 1277952.0*x5 - 901120.0*x4 + 337920.0*x3
+    	    	     - 64512.0*x2 + 5376.0*x - 128.0;
+    	    	break;
+    	    case 9:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	sc = 1179648.0*x8 - 4718592.0*x7 + 7741440.0*x6 - 6709248.0*x5 + 3294720.0*x4
+    	    	     - 912384.0*x3 + 133056.0*x2 - 8640.0*x + 162.0;
+    	    	break;
+    	    case 10:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	x9 = x8*x;
+    	    	sc = 5242880.0*x9 - 23592960.0*x8 + 44564480.0*x7 - 45875200.0*x6 + 27955200.0*x5
+    	    	     - 10250240.0*x4 + 2196480.0*x3 - 253440.0*x2 + 13200.0*x - 200.0;
+    	} // switch (n)
+    	return sc;
+    } // private double shiftedChebyshevDerivative
+    
 	/**
      * fitToFunction communicates
      *
@@ -1858,16 +2724,19 @@ end
         // check parameters
         if ((lower != null) && (lower.length != n)) {
         	System.err.println("lower must either be null or have a length equal to the number of parameters");
+        	Preferences.debug("lower must either be null or have a length equal to the number of parameters\n", Preferences.DEBUG_ALGORITHM);
         	return;
         }
         if ((upper != null) && (upper.length != n)) {
         	System.err.println("upper must either be null or have a length equal to the number of parameters");
+        	Preferences.debug("upper must either be null or have a length equal to the number of parameters\n", Preferences.DEBUG_ALGORITHM);
         	return;
         }
         if (lower != null) {
         	for (i = 0; i < n; i++) {
         		if (initial_x[i] < lower[i]) {
         			System.err.println("initial_x["+i+"] must be >= lower["+i+"]");
+        			Preferences.debug("initial_x["+i+"] must be >= lower["+i+"]\n", Preferences.DEBUG_ALGORITHM);
         			return;
         		}
         	}
@@ -1877,6 +2746,7 @@ end
         	for (i = 0; i < n; i++) {
         		if (initial_x[i] > upper[i]) {
         			System.err.println("initial_x["+i+"] must be <= upper["+i+"]");
+        			Preferences.debug("initial_x["+i+"] must be <= upper["+i+"]\n", Preferences.DEBUG_ALGORITHM);
         			return;
         		}
         	}
@@ -1885,23 +2755,28 @@ end
         
         if (min_step_quality < 0) {
         	System.err.println("min_step_quality must be >= 0");
+        	Preferences.debug("min_step_quality must be >= 0\n", Preferences.DEBUG_ALGORITHM);
         	return;
         }
         if (min_step_quality >= 1) {
         	System.err.println("min_step_quality must be < 1");
+        	Preferences.debug("min_step_quality must be < 1\n", Preferences.DEBUG_ALGORITHM);
         	return;
         }
         
         if (good_step_quality <= 0) {
         	System.err.println("good_step_quality must be > 0");
+        	Preferences.debug("good_step_quality must be > 0\n", Preferences.DEBUG_ALGORITHM);
         	return; 
         }
         if (good_step_quality > 1) {
         	System.err.println("good_step_quality must be <= 1");
+        	Preferences.debug("good_step_quality must be <= 1\n", Preferences.DEBUG_ALGORITHM);
         	return;
         }
         if (min_step_quality >= good_step_quality) {
         	System.err.println("min_step_quality must be < good_step_quality");
+        	Preferences.debug("min_step_quality must be < good_step_quality\n", Preferences.DEBUG_ALGORITHM);
         	return;
         }
         
@@ -2082,16 +2957,20 @@ end
                 ge.dpotrf('U',n,JJ,n,info); // cholesky decomposition
                 if (info[0] < 0) {
                 	System.err.println("In ge.dpotrf argument " + (-i) + " had an illegal value");
+                	Preferences.debug("In ge.dpotrf argument " + (-i) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
                 	return;
                 }
                 if (info[0] > 0) {
                 	System.err.println("in ge.dpotrf the leading minor of order i is not positive definite, and the factorization could not be completed");
+                	Preferences.debug("in ge.dpotrf the leading minor of order i is not positive definite, and the factorization could not be completed\n",
+                			Preferences.DEBUG_ALGORITHM);
                 	return;
                 }
                 LinearEquations le = new LinearEquations();
                 le.dpotrs('U',n,1,JJ,n,a1,n,info); // divides a by JJ, taking into account the fact that JJ is now the `U` cholesky decoposition of what it was before
                 if (info[0] < 0) {
                 	System.err.println("In le.dpotrs argument " + (-i) + " had an illegal value");
+                	Preferences.debug("In le.dpotrs argument " + (-i) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
                 	return;
                 }
                 for (i = 0; i < n; i++) {
