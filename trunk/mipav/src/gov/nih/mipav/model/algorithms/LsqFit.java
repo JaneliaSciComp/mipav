@@ -137,6 +137,8 @@ end
     
     private final int WATSON = 20;
     
+    private final int PENALTY_FUNCTION_I = 23;
+    
     private final int HOCK25 = 25;
     
     private final int BROWN_ALMOST_LINEAR = 27;
@@ -211,6 +213,14 @@ end
 	
     
     public LsqFit() {
+    	// Problems not handled correctly by LsqFit with initial lambda = 10 but handled correctly by ELSUNC port NLConstrainedEngine:
+    	// 1.) KOWALIK_AND_OSBORNE at 100 * standard starting point constrained converges to incorrect values
+    	// 2.) MEYER at 18 * standard starting point constrained exits due to singular matrix
+    	// 3.) BOX_3D converges to incorrect values
+    	// 4.) LEVMAR_ROSENBROCK converges to incorrect values
+    	// 5.) POWELL_2_PARAMETER does not converge to an answer
+    	// 6.) HATFLDB converges to incorrect values
+    	// 7.) PENALTY_FUNCTION_I does not converge
     	int i;
     	testMode = true;
     	// Below is an example used to fit y = a0 - a1*(a2**x)
@@ -1861,6 +1871,32 @@ end
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Penalty function I with n = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 2.24997...E-5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Penalty function I does not converge:
+        // Number of iterations: 100000
+        // x[0] = 0.001536280090449339
+        // x[1] = 0.9943055509283468
+        // x[2] = 2.4148771867824728
+        // x[3] = 3.5744519759012867
+        // residual = 374.3059110827778
+        // converged = false 
+        // Works with ELSUNC port
+        testMode = true;
+        testCase = PENALTY_FUNCTION_I;
+        m = 5;
+        n = 4;
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = i+1;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     }
     
     private void dumpTestResults() {
@@ -2173,6 +2209,15 @@ end
             	for (i = 0; i < m; i++) {
             		residuals[i] = x[2]*Math.exp(-tdata[i]*x[0]) - x[3]*Math.exp(-tdata[i]*x[1])
             				+ x[5]*Math.exp(-tdata[i]*x[4]) - ydata[i];
+            	}
+            	break;
+            case PENALTY_FUNCTION_I:
+            	for (i = 0; i < n; i++) {
+            		residuals[i] = Math.sqrt(1.0E-5)*(x[i] - 1.0);
+            	}
+            	residuals[n] = -0.25;
+            	for (j = 0; j < n; j++) {
+            		residuals[n] += (x[j]*x[j]);
             	}
             	break;
             } // switch (testCase)
@@ -2623,6 +2668,19 @@ end
             		J[i][3] = -Math.exp(-tdata[i]*x[1]);
             		J[i][4] = -tdata[i]*x[5]*Math.exp(-tdata[i]*x[4]);
             		J[i][5] = Math.exp(-tdata[i]*x[4]);
+            	}
+            	break;
+            case PENALTY_FUNCTION_I:
+            	for (i = 0; i < n; i++) {
+            		for (j = 0; j < n; j++) {
+            		    J[i][j] = 0.0;
+            		}
+            	}
+            	for (i = 0; i < n; i++) {
+            		J[i][i] = Math.sqrt(1.0E-5);
+            	}
+            	for (j = 0; j < n; j++) {
+            		J[n][j] = 2*x[j];
             	}
             	break;
             } // switch (testCase)
