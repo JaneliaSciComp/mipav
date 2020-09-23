@@ -101,23 +101,37 @@ end
     
     private final int FREUDENSTEIN_AND_ROTH = 2;
     
+    private final int POWELL_BADLY_SCALED = 3;
+    
+    private final int BROWN_BADLY_SCALED = 4;
+    
+    private final int BEALE = 5;
+    
     private final int JENNRICH_AND_SAMPSON = 6;
     
     private final int HELICAL_VALLEY = 7;
     
     private final int BARD = 8;
     
+    private final int GAUSSIAN = 9;
+    
     private final int MEYER = 10;
+    
+    private final int GULF_RESEARCH_AND_DEVELOPMENT = 11;
     
     private final int BOX_3D = 12;
     
     private final int POWELL_SINGULAR = 13;
+    
+    private final int WOOD = 14;
     
     private final int KOWALIK_AND_OSBORNE = 15;
     
     private final int BROWN_AND_DENNIS = 16;
     
     private final int OSBORNE1 = 17;
+    
+    private final int BIGGS_EXP6 = 18;
    
     private final int OSBORNE2 = 19;
     
@@ -140,8 +154,6 @@ end
     private final int MODIFIED_ROSENBROCK = 51;
     
     private final int POWELL_2_PARAMETER = 52;
-    
-    private final int WOOD = 53;
     
     private final int HOCK1 = 61;
     
@@ -1571,7 +1583,7 @@ end
         
         // Converges to correct values in 80 iterations
         Preferences.debug("Wood's function\n", Preferences.DEBUG_ALGORITHM);
-    	Preferences.debug("Correct answer has a0 = a1 = a2 = a3 = 1\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has chi-squared = 0 at a0 = a1 = a2 = a3 = 1\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
     	testCase = WOOD;
         m = 6;
@@ -1719,6 +1731,133 @@ end
         upper[2] = 100.0;
         upper[3] = 100.0;
         upper[4] = 100.0;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Beale problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 3 a1 = 0.5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct answer in 8 iterations
+        testMode = true;
+        testCase = BEALE;
+        m = 3;
+        n = 2;
+        ydata = new double[] {1.5, 2.25, 2.625};
+        initial_x = new double[n];
+        initial_x[0] = 1.0;
+        initial_x[1] = 1.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Powell badly scaled problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1.098...E-5 a1 = 9.106...\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct answer in 294 iterations
+        testMode = true;
+        testCase = POWELL_BADLY_SCALED;
+        m = 2;
+        n = 2;
+        initial_x= new double[n];
+        initial_x[0] = 0;
+        initial_x[1] = 1;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Brown badly scaled problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1.0E6 a1 = 2.0E-6\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct answer in 11 iterations
+        testMode = true;
+        testCase = BROWN_BADLY_SCALED;
+        m = 3;
+        n = 2;
+        initial_x = new double[n];
+        initial_x[0] = 1.0;
+        initial_x[1] = 1.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Gaussian problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 1.12793...E-8\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct answer in 7 iterations
+        testMode = true;
+        testCase = GAUSSIAN;
+        m = 15;
+        n = 3;
+        tdata = new double[15];
+        for (i = 0; i < 15; i++) {
+        	tdata[i] = (7.0 - i)/2.0;
+        }
+        ydata = new double[] {0.0009,0.0044,0.0175,0.0540,0.1295,0.2420,0.3521,0.3989,
+        		0.3521,0.2420,0.1295,0.0540,0.0175,0.0044,0.0009};
+        initial_x = new double[n];
+        initial_x[0] = 0.4;
+        initial_x[1] = 1.0;
+        initial_x[2] = 0.0;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Gulf research and development problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answser is chi-squared = 0 at a0 = 50 a1 = 25 a2 = 1.5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to the correct values in 1821 iterations
+        testMode = true;
+        testCase = GULF_RESEARCH_AND_DEVELOPMENT;
+        m = 3;
+        n = 3;
+        tdata = new double[] {0.01,0.02,0.03};
+        ydata = new double[m];
+        double exp = 2.0/3.0;
+        for (i = 0; i < m; i++) {
+            ydata[i] = 25.0 + Math.pow((-50.0*Math.log(tdata[i])),exp);	
+        }
+        initial_x = new double[n];
+        initial_x[0] = 5.0;
+        initial_x[1] = 2.5;
+        initial_x[2] = 0.15;
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Biggs EXP6 problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has 2 minima with chi-squared = 0 and  chi-squared = 5.65565...E-3\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to chi-squared = 0 solution in 70 iterations
+        testMode = true;
+        testCase = BIGGS_EXP6;
+        m = 13;
+        n = 6;
+        tdata = new double[m];
+        ydata = new double[m];
+        for (i = 0; i < m; i++) {
+        	tdata[i] = 0.1*(i+1.0);
+        	ydata[i] = Math.exp(-tdata[i]) - 5.0 * Math.exp(-10.0 * tdata[i]) + 3.0 * Math.exp(-4.0 * tdata[i]);
+        }
+        initial_x = new double[n];
+        initial_x[0] = 1.0;
+        initial_x[1] = 2.0;
+        initial_x[2] = 1.0;
+        initial_x[3] = 1.0;
+        initial_x[4] = 1.0;
+        initial_x[5] = 1.0;
+        lower = null;
+        upper = null;
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
@@ -2005,6 +2144,37 @@ end
       		  residuals[4]=x[0]*x[1]+x[0]+R10*x[1]*x[1]+x[1]*x[2]*x[2]+R7*x[1]*x[2]
       		              +R9*x[1]*x[3]+R8*x[1]+R5*x[2]*x[2]+R6*x[2]+x[3]*x[3]-1.0;	
               break;
+            case BEALE:
+            	residuals[0] = x[0] - x[0]*x[1] - ydata[0];
+            	residuals[1] = x[0] - x[0]*x[1]*x[1] - ydata[1];
+            	residuals[2] = x[0] - x[0]*x[1]*x[1]*x[1] - ydata[2];
+            	break;
+            case POWELL_BADLY_SCALED:
+            	residuals[0] = 1.0E4*x[0]*x[1] - 1.0;
+            	residuals[1] = Math.exp(-x[0]) + Math.exp(-x[1]) - 1.0001; 
+            	break;
+            case BROWN_BADLY_SCALED:
+            	residuals[0] = x[0] - 1.0E6;
+            	residuals[1] = x[1] - 2.0E-6;
+            	residuals[2] = x[0]*x[1] - 2.0;
+            	break;
+            case GAUSSIAN:
+            	for (i = 0; i < m; i++) {
+            		double diff = tdata[i] - x[2];
+            	    residuals[i] = x[0]*Math.exp(-x[1]*diff*diff/2.0) - ydata[i];
+            	}
+            	break;
+            case GULF_RESEARCH_AND_DEVELOPMENT:
+            	for (i = 0; i < m ; i++) {
+            		residuals[i] = Math.exp(-Math.pow((Math.abs(ydata[i]-x[1])),x[2])/x[0]) - tdata[i];
+            	}
+            	break;
+            case BIGGS_EXP6:
+            	for (i = 0; i < m; i++) {
+            		residuals[i] = x[2]*Math.exp(-tdata[i]*x[0]) - x[3]*Math.exp(-tdata[i]*x[1])
+            				+ x[5]*Math.exp(-tdata[i]*x[4]) - ydata[i];
+            	}
+            	break;
             } // switch (testCase)
             
         } catch (Exception e) {
@@ -2403,6 +2573,57 @@ end
     			  J[4][1]=x[0]+2*R10*x[1]+x[2]*x[2]+R7*x[2]+R9*x[3]+R8;
     			  J[4][2]=2*x[1]*x[2]+R7*x[1]+2*R5*x[2]+R6;
     			  J[4][3]=R9*x[1]+2*x[3];	
+            	break;
+            case BEALE:
+            	J[0][0] = 1 - x[1];
+            	J[0][1] = -x[0];
+            	J[1][0] = 1 - x[1]*x[1];
+            	J[1][1] = -2.0*x[0]*x[1];
+            	J[2][0] = 1 - x[1]*x[1]*x[1];
+            	J[2][1] = -3*x[0]*x[1]*x[1];
+            	break;
+            case POWELL_BADLY_SCALED:
+            	J[0][0] = 1.0E4*x[1];
+            	J[0][1] = 1.0E4*x[0];
+            	J[1][0] = -Math.exp(-x[0]);
+            	J[1][1] = -Math.exp(-x[1]);
+            	break;
+            case BROWN_BADLY_SCALED:
+            	J[0][0] = 1.0;
+            	J[0][1] = 0.0;
+            	J[1][1] = 0.0;
+            	J[1][1] = 1.0;
+            	J[2][0] = x[1];
+            	J[2][1] = x[0];
+            	break;
+            case GAUSSIAN:
+            	for (i = 0; i < m; i++) {
+            		double diff = tdata[i] - x[2];
+            		J[i][0] = Math.exp(-x[1]*diff*diff/2.0);
+            		J[i][1] = (-x[0]*diff*diff/2.0)*Math.exp(-x[1]*diff*diff/2.0);
+            		J[i][2] = x[0]*x[1]*diff*Math.exp(-x[1]*diff*diff/2.0);
+            	}
+            	break;
+            case GULF_RESEARCH_AND_DEVELOPMENT:
+            	for (i = 0; i < m; i++) {
+            		double absVal = Math.abs(ydata[i] - x[1]);
+            		double abspow = Math.pow(absVal, x[2]);
+            		double absdiv = abspow/x[0];
+            		double absexp = Math.exp(-absdiv);
+            		J[i][0] = abspow * absexp/(x[0]*x[0]);
+            		J[i][1] = -x[2]*absexp*abspow/(x[0]*(x[1] - ydata[i]));
+            		J[i][2] = -abspow * Math.log(absVal) * absexp/x[0];
+            	}
+            	break;
+            case BIGGS_EXP6:
+            	for (i = 0; i < m; i++) {
+            		J[i][0] = -tdata[i]*x[2]*Math.exp(-tdata[i]*x[0]);
+            		J[i][1] = tdata[i]*x[3]*Math.exp(-tdata[i]*x[1]);
+            		J[i][2] = Math.exp(-tdata[i]*x[0]);
+            		J[i][3] = -Math.exp(-tdata[i]*x[1]);
+            		J[i][4] = -tdata[i]*x[5]*Math.exp(-tdata[i]*x[4]);
+            		J[i][5] = Math.exp(-tdata[i]*x[4]);
+            	}
             	break;
             } // switch (testCase)
         } catch (Exception e) {
