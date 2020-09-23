@@ -102,6 +102,15 @@ import gov.nih.mipav.view.*;
  *  HATFLDB OK.
  *  HATFLDC OK.
  *  EQUILIBRIUM_COMBUSTION OK.
+ *  BEALE OK
+ *  POWELL_BADLY_SCALED OK.
+ *  BROWN_BADLY_SCALED OK
+ *  GAUSSIAN OK
+ *  GULF_RESEARCH_AND_DEVELOPMENT OK with 2 different chi-squared = 0 solutions.  One for Internal scaling = true and one
+ *  for internal scaling = false.  a0 = 50, a1 = 25, a2 = 1.5 with internal scaling = false and a0 = 0.213460 a1 = 61.4657
+ *  a2 = -0.1769447 with internal scaling = true.
+    BIGGS_EXP6 OK with chi-squared = 0 solution.
+ *  PENALTY_FUNCTION_I OK.
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -131,7 +140,7 @@ import gov.nih.mipav.view.*;
  * parameters.  @return      The calculated y value.
  */
 /*public void fitToFunction(double a[], double residuals[],
- *                          double covarMat[][]) { int ctrl; int i; double ymodel = 0.0; double e1, e2;
+ *                          double jacobian[][]) { int ctrl; int i; double ymodel = 0.0; double e1, e2;
  *
  *         try {               ctrl = ctrlMat[0];               if ((ctrl == -1) || (ctrl == 1)) {                 //
  * evaluate the residuals[i] = ymodel[i] - ySeries[i]                 for (i = 0; i < nPts; i++) {
@@ -139,9 +148,9 @@ import gov.nih.mipav.view.*;
  * a[0])*Math.exp(a[2]*xSeries[i]));                   residuals[i] = ymodel - ySeries[i];                 }
  *   } // if ((ctrl == -1) || (ctrl == 1))               else if (ctrl == 2) {                 // Calculate the Jacobian
  * analytically                 for (i = 0; i < nPts; i++) {                   e1 = Math.exp(a[1]*xSeries[i]);
- *         e2 = Math.exp(a[2]*xSeries[i]);                   covarMat[i][0] = (1.0 - a[3])*(-e1 + e2);
- * covarMat[i][1] = -(1.0 - a[3])*a[0]*xSeries[i]*e1;                   covarMat[i][2] = -(1.0 - a[3])*(1.0 -
- * a[0])*xSeries[i]*e2;                   covarMat[i][3] = a[0]*e1 + (1.0 - a[0])*e2;                 }               }
+ *         e2 = Math.exp(a[2]*xSeries[i]);                   jacobian[i][0] = (1.0 - a[3])*(-e1 + e2);
+ * jacobian[i][1] = -(1.0 - a[3])*a[0]*xSeries[i]*e1;                   jacobian[i][2] = -(1.0 - a[3])*(1.0 -
+ * a[0])*xSeries[i]*e2;                   jacobian[i][3] = a[0]*e1 + (1.0 - a[0])*e2;                 }               }
  * // else if (ctrl == 2)               // To calculate the Jacobian numerically just set               // ctrlMat[0] =
  * 0 and return               else if (ctrl == 2) {                 ctrlMat[0] = 0;               } // else if (ctrl ==
  * 2)         }         catch (Exception e) {                 Preferences.debug("function error: " + e.getMessage() +
@@ -194,15 +203,15 @@ import gov.nih.mipav.view.*;
  * @return  The calculated y value.
  */
 /* public void fitToFunction(double a[], double residuals[],
- *                           double covarMat[][]) {  int ctrl;  int i;  double ymodel = 0.0;  double e1, e2;
+ *                           double jacobian[][]) {  int ctrl;  int i;  double ymodel = 0.0;  double e1, e2;
  *
  *          try {                ctrl = ctrlMat[0];                if ((ctrl == -1) || (ctrl == 1)) {
  * // evaluate the residuals[i] = ymodel[i] - ySeries[i]                  for (i = 0; i < nPts; i++) {
  *  ymodel = a[0] - a[1]*Math.pow(a[2],xSeries[i]);                    residuals[i] = ymodel - ySeries[i];
  *    }                } // if ((ctrl == -1) || (ctrl == 1))                else if (ctrl == 2) {                  //
  * Calculate the Jacobian analytically                  for (i = 0; i < nPts; i++) {                    e1 =
- * Math.exp(a[1]*xSeries[i]);                    e2 = Math.exp(a[2]*xSeries[i]);                    covarMat[i][0] =
- * 1.0;                    covarMat[i][1] = -Math.pow(a[2],xSeries[i]);                    covarMat[i][2] =
+ * Math.exp(a[1]*xSeries[i]);                    e2 = Math.exp(a[2]*xSeries[i]);                    jacobian[i][0] =
+ * 1.0;                    jacobian[i][1] = -Math.pow(a[2],xSeries[i]);                    jacobian[i][2] =
  * -xSeries[i]*a[1]*Math.pow(a[2],xSeries[i] - 1.0);                  }                } // else if (ctrl == 2)
  *       // To calculate the Jacobian numerically just set                // ctrlMat[0] = 0 and return
  * else if (ctrl == 2) {                  ctrlMat[0] = 0;                } // else if (ctrl == 2)          }
@@ -293,7 +302,7 @@ public abstract class NLConstrainedEngine {
      * 2D array of doubles of dimension nPts by max(4,param) containing the main part of the covariance matrix
      * (Jtranspose * J)inverse, where J is the Jacobian matrix computed at a.
      */
-    protected double[][] covarMat;
+    protected double[][] jacobian;
 
     /** Wrapper for ctrl or lctrl communication with driver. */
     protected int[] ctrlMat = new int[1];
@@ -390,7 +399,7 @@ public abstract class NLConstrainedEngine {
      * certain point a and return the residuals = yfit - yseries in the array residuals if the functions are computable.
      * If not successful and ctrl was set to 1, set ctrl = -1. If not successful and ctrl was set to -1, set ctrl < -10.
      * If ctrl = 2 and the Jacobian is supplied analytically, calculate the Jacobian = Jij = dymodi/daj. The Jacobian is
-     * placed in matrix covarMat. If the Jacobian cannot be calculated, set ctrl < -10. If you wish to compute the
+     * placed in matrix jacobian. If the Jacobian cannot be calculated, set ctrl < -10. If you wish to compute the
      * Jacobian numerically on return, set ctrl = 0.
      */
     private int ctrl;
@@ -610,17 +619,29 @@ public abstract class NLConstrainedEngine {
     
     private final int FREUDENSTEIN_AND_ROTH = 2;
     
+    private final int POWELL_BADLY_SCALED = 3;
+    
+    private final int BROWN_BADLY_SCALED = 4;
+    
+    private final int BEALE = 5;
+    
     private final int JENNRICH_AND_SAMPSON = 6;
     
     private final int HELICAL_VALLEY = 7;
+    
+    private final int GAUSSIAN = 9;
     
     private final int BARD = 8;
     
     private final int MEYER = 10;
     
+    private final int GULF_RESEARCH_AND_DEVELOPMENT = 11;
+    
     private final int BOX_3D = 12;
     
     private final int POWELL_SINGULAR = 13;
+    
+    private final int WOOD = 14;
     
     private final int KOWALIK_AND_OSBORNE = 15;
     
@@ -628,9 +649,13 @@ public abstract class NLConstrainedEngine {
     
     private final int OSBORNE1 = 17;
     
+    private final int BIGGS_EXP6 = 18;
+    
     private final int OSBORNE2 = 19;
     
     private final int WATSON = 20;
+    
+    private final int PENALTY_FUNCTION_I = 23;
     
     private final int HOCK25 = 25;
     
@@ -649,8 +674,6 @@ public abstract class NLConstrainedEngine {
     private final int MODIFIED_ROSENBROCK = 51;
     
     private final int POWELL_2_PARAMETER = 52;
-    
-    private final int WOOD = 53;
     
     private final int HOCK1 = 61;
     
@@ -2269,6 +2292,172 @@ public abstract class NLConstrainedEngine {
         bu[3] = 100.0;
         bu[4] = 100.0;
         driverCalls();
+        
+        Preferences.debug("Beale problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 3 a1 = 0.5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = BEALE;
+        nPts = 3;
+        param = 2;
+        ySeries = new double[] {1.5, 2.25, 2.625};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 1.0;
+        gues[1] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Powell badly scaled problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1.098...E-5 a1 = 9.106...\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = POWELL_BADLY_SCALED;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0;
+        gues[1] = 1;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Brown badly scaled problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1.0E6 a1 = 2.0E-6\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = BROWN_BADLY_SCALED;
+        nPts = 3;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 1.0;
+        gues[1] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Gaussian problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 1.12793...E-8\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = GAUSSIAN;
+        nPts = 15;
+        param = 3;
+        xSeries = new double[15];
+        for (i = 0; i < 15; i++) {
+        	xSeries[i] = (7.0 - i)/2.0;
+        }
+        ySeries = new double[] {0.0009,0.0044,0.0175,0.0540,0.1295,0.2420,0.3521,0.3989,
+        		0.3521,0.2420,0.1295,0.0540,0.0175,0.0044,0.0009};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.4;
+        gues[1] = 1.0;
+        gues[2] = 0.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Gulf research and development problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answser is chi-squared = 0 at a0 = 50 a1 = 25 a2 = 1.5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = GULF_RESEARCH_AND_DEVELOPMENT;
+        nPts = 3;
+        param = 3;
+        xSeries = new double[] {0.01,0.02,0.03};
+        ySeries = new double[nPts];
+        double exp = 2.0/3.0;
+        for (i = 0; i < nPts; i++) {
+            ySeries[i] = 25.0 + Math.pow((-50.0*Math.log(xSeries[i])),exp);	
+        }
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 5.0;
+        gues[1] = 2.5;
+        gues[2] = 0.15;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Biggs EXP6 problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has 2 minima with chi-squared = 0 and  chi-squared = 5.65565...E-3\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = BIGGS_EXP6;
+        nPts = 13;
+        param = 6;
+        xSeries = new double[nPts];
+        ySeries = new double[nPts];
+        for (i = 0; i < nPts; i++) {
+        	xSeries[i] = 0.1*(i+1.0);
+        	ySeries[i] = Math.exp(-xSeries[i]) - 5.0 * Math.exp(-10.0 * xSeries[i]) + 3.0 * Math.exp(-4.0 * xSeries[i]);
+        }
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 1.0;
+        gues[1] = 2.0;
+        gues[2] = 1.0;
+        gues[3] = 1.0;
+        gues[4] = 1.0;
+        gues[5] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Penalty function I with param = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 2.24997...E-5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = PENALTY_FUNCTION_I;
+        nPts = 5;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = i + 1.0;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -2314,7 +2503,7 @@ public abstract class NLConstrainedEngine {
             gues = new double[param];
 
             int covar2 = Math.max(4, param);
-            covarMat = new double[nPts][covar2];
+            jacobian = new double[nPts][covar2];
         } catch (OutOfMemoryError error) { }
     }
     
@@ -2349,7 +2538,7 @@ public abstract class NLConstrainedEngine {
         }
 
        
-        public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+        public void fitToFunction(double[] a, double[] residuals, double[][] jacobian) {
             
 
             return;
@@ -2396,14 +2585,14 @@ public abstract class NLConstrainedEngine {
                 a = new double[param];
 
                 int covar2 = Math.max(4, param);
-                covarMat = new double[nPts][covar2];
+                jacobian = new double[nPts][covar2];
             } catch (OutOfMemoryError error) { }
 
             
         }
     
         
-        public void fitToTestFunction(double[] a, double[] residuals, double[][] covarMat) {
+        public void fitToTestFunction(double[] a, double[] residuals, double[][] jacobian) {
             int ctrl;
             int i;
             double ymodel = 0.0;
@@ -2424,13 +2613,13 @@ public abstract class NLConstrainedEngine {
 	                    if (analyticalJacobian) {
 		                    // Calculate the Jacobian analytically
 		                    for (i = 0; i < nPts; i++) {
-		                        covarMat[i][0] = 1.0;
-		                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
+		                        jacobian[i][0] = 1.0;
+		                        jacobian[i][1] = -Math.pow(a[2], xSeries[i]);
 		                        if (i == 0) {
-		                        	covarMat[i][2] = 0.0;
+		                        	jacobian[i][2] = 0.0;
 		                        }
 		                        else {
-		                            covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+		                            jacobian[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
 		                        }
 		                    }
 	                    }
@@ -2453,9 +2642,9 @@ public abstract class NLConstrainedEngine {
                         if (analyticalJacobian) {
 	                        // Calculate the Jacobian analytically
 	                        for (i = 0; i < nPts; i++) {
-	                            covarMat[i][0] = a[1]*Math.pow((a[0] * Math.log(xSeries[i])),a[1]-1.0) * Math.log(xSeries[i]);
-	                            covarMat[i][1] = Math.log(a[0] * Math.log(xSeries[i])) * Math.pow((a[0] * Math.log(xSeries[i])),a[1]);
-	                            covarMat[i][2] = 1.0;
+	                            jacobian[i][0] = a[1]*Math.pow((a[0] * Math.log(xSeries[i])),a[1]-1.0) * Math.log(xSeries[i]);
+	                            jacobian[i][1] = Math.log(a[0] * Math.log(xSeries[i])) * Math.pow((a[0] * Math.log(xSeries[i])),a[1]);
+	                            jacobian[i][2] = 1.0;
 	                        }
                         }
                         else {
@@ -2480,9 +2669,9 @@ public abstract class NLConstrainedEngine {
 	                        // Calculate the Jacobian analytically
 	                        for (i = 0; i < nPts; i++) {
 	                        	denom = (a[1]*(16.0 - xSeries[i]) + a[2]*Math.min(xSeries[i], 16.0 - xSeries[i]));
-	                            covarMat[i][0] = 1.0;
-	                            covarMat[i][1] = -xSeries[i]*(16.0 - xSeries[i])/(denom*denom);
-	                            covarMat[i][2] = -xSeries[i]*Math.min(xSeries[i], 16.0 - xSeries[i])/(denom*denom);
+	                            jacobian[i][0] = 1.0;
+	                            jacobian[i][1] = -xSeries[i]*(16.0 - xSeries[i])/(denom*denom);
+	                            jacobian[i][2] = -xSeries[i]*Math.min(xSeries[i], 16.0 - xSeries[i])/(denom*denom);
 	                        }
                         }
                         else {
@@ -2509,10 +2698,10 @@ public abstract class NLConstrainedEngine {
 	                        for (i = 0; i < nPts; i++) {
 	                        	denom = (xSeries[i]*xSeries[i] + a[2]*xSeries[i] + a[3]);
 	                        	top = (xSeries[i]*xSeries[i] + a[1]*xSeries[i]);
-	                            covarMat[i][0] = top/denom;
-	                            covarMat[i][1] = a[0]*xSeries[i]/denom;
-	                            covarMat[i][2] = -a[0]*xSeries[i]*top/(denom*denom);
-	                            covarMat[i][3] = -a[0]*top/(denom*denom);
+	                            jacobian[i][0] = top/denom;
+	                            jacobian[i][1] = a[0]*xSeries[i]/denom;
+	                            jacobian[i][2] = -a[0]*xSeries[i]*top/(denom*denom);
+	                            jacobian[i][3] = -a[0]*top/(denom*denom);
 	                        }
                         }
                         else {
@@ -2528,10 +2717,10 @@ public abstract class NLConstrainedEngine {
                 	} // if ((ctrl == -1) || (ctrl == 1))
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		    covarMat[0][0] = -20.0*a[0];
-                		    covarMat[0][1] = 10.0;
-                		    covarMat[1][0] = -1.0;
-                		    covarMat[1][1] = 0.0;
+                		    jacobian[0][0] = -20.0*a[0];
+                		    jacobian[0][1] = 10.0;
+                		    jacobian[1][0] = -1.0;
+                		    jacobian[1][1] = 0.0;
                 		}
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -2546,10 +2735,10 @@ public abstract class NLConstrainedEngine {
                 	} // if ((ctrl == -1) || (ctrl == 1))
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		    covarMat[0][0] = 1.0;
-                		    covarMat[0][1] = 10.0*a[1] - 3.0*a[1]*a[1] - 2.0;
-                		    covarMat[1][0] = 1.0;
-                		    covarMat[1][1] = 3.0*a[1]*a[1] + 2.0*a[1] - 14.0;
+                		    jacobian[0][0] = 1.0;
+                		    jacobian[0][1] = 10.0*a[1] - 3.0*a[1]*a[1] - 2.0;
+                		    jacobian[1][0] = 1.0;
+                		    jacobian[1][1] = 3.0*a[1]*a[1] + 2.0*a[1] - 14.0;
                 		}
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -2566,8 +2755,8 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 	    if (analyticalJacobian) {
                 	        for (i = 0; i < 10; i++) {
-                	    	    covarMat[i][0] = -Math.exp((i+1.0)*a[0])*(i + 1.0);
-                	    	    covarMat[i][1] = -Math.exp((i+1.0)*a[1])*(i + 1.0);
+                	    	    jacobian[i][0] = -Math.exp((i+1.0)*a[0])*(i + 1.0);
+                	    	    jacobian[i][1] = -Math.exp((i+1.0)*a[1])*(i + 1.0);
                 	        }
                 	    }
                 	    else {
@@ -2599,15 +2788,15 @@ public abstract class NLConstrainedEngine {
                 		if (analyticalJacobian) {
                 			double tmp;
                 			tmp = a[0]*a[0] + a[1]*a[1];
-                		    covarMat[0][0] = (50.0*a[1])/(Math.PI * tmp);
-                			covarMat[0][1] = (-50.0*a[0])/(Math.PI * tmp);
-                			covarMat[0][2] = 10.0;
-                			covarMat[1][0]= 10.0*a[0]/Math.sqrt(tmp);
-                			covarMat[1][1] = 10.0*a[1]/Math.sqrt(tmp);
-                			covarMat[1][2] = 0.0;
-                			covarMat[2][0] = 0.0;
-                			covarMat[2][1] = 0.0;
-                			covarMat[2][2] = 1.0;
+                		    jacobian[0][0] = (50.0*a[1])/(Math.PI * tmp);
+                			jacobian[0][1] = (-50.0*a[0])/(Math.PI * tmp);
+                			jacobian[0][2] = 10.0;
+                			jacobian[1][0]= 10.0*a[0]/Math.sqrt(tmp);
+                			jacobian[1][1] = 10.0*a[1]/Math.sqrt(tmp);
+                			jacobian[1][2] = 0.0;
+                			jacobian[2][0] = 0.0;
+                			jacobian[2][1] = 0.0;
+                			jacobian[2][2] = 1.0;
                 		}
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -2630,9 +2819,9 @@ public abstract class NLConstrainedEngine {
 	                        // Calculate the Jacobian analytically
 	                        for (i = 0; i < nPts; i++) {
 	                        	exponent = Math.exp(a[1]/(xSeries[i] + a[2]));
-	                            covarMat[i][0] = exponent;
-	                            covarMat[i][1] = (a[0]/(xSeries[i] + a[2]))* exponent;
-	                            covarMat[i][2] = -(a[0]*a[1]/((xSeries[i] + a[2])*(xSeries[i] + a[2]))) * exponent;
+	                            jacobian[i][0] = exponent;
+	                            jacobian[i][1] = (a[0]/(xSeries[i] + a[2]))* exponent;
+	                            jacobian[i][2] = -(a[0]*a[1]/((xSeries[i] + a[2])*(xSeries[i] + a[2]))) * exponent;
 	                        }
                         }
                         else {
@@ -2655,9 +2844,9 @@ public abstract class NLConstrainedEngine {
                 			double t[] = new double[10];
                 			for (i = 0; i <10; i++) {
                     		    t[i] = 0.1*(i+1.0);	
-                    		    covarMat[i][0] = -t[i]*Math.exp(-a[0]*t[i]);
-                    		    covarMat[i][1] = t[i]*Math.exp(-a[1]*t[i]);
-                    		    covarMat[i][2] = Math.exp(-10.0*t[i]) - Math.exp(-t[i]);
+                    		    jacobian[i][0] = -t[i]*Math.exp(-a[0]*t[i]);
+                    		    jacobian[i][1] = t[i]*Math.exp(-a[1]*t[i]);
+                    		    jacobian[i][2] = Math.exp(-10.0*t[i]) - Math.exp(-t[i]);
                     		}	
                 		}
                 		else {
@@ -2675,22 +2864,22 @@ public abstract class NLConstrainedEngine {
                 	} // if ((ctrl == -1) || (ctrl == 1))
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		    covarMat[0][0] = 1.0;
-                		    covarMat[0][1] = 10.0;
-                		    covarMat[0][2] = 0.0;
-                		    covarMat[0][3] = 0.0;
-                		    covarMat[1][0] = 0.0;
-                		    covarMat[1][1] = 0.0;
-                		    covarMat[1][2] = Math.sqrt(5.0);
-                		    covarMat[1][3] = -Math.sqrt(5.0);
-                		    covarMat[2][0] = 0.0;
-                		    covarMat[2][1] = 2.0*a[1] - 4.0*a[2];
-                		    covarMat[2][2] = 8.0*a[2] - 4.0*a[1];
-                		    covarMat[2][3] = 0.0;
-                		    covarMat[3][0] = 2.0*Math.sqrt(10.0)*a[0] - 2.0*Math.sqrt(10.0)*a[3];
-                		    covarMat[3][1] = 0.0;
-                		    covarMat[3][2] = 0.0;
-                		    covarMat[3][3] = 2.0*Math.sqrt(10.0)*a[3] - 2.0*Math.sqrt(10.0)*a[0];
+                		    jacobian[0][0] = 1.0;
+                		    jacobian[0][1] = 10.0;
+                		    jacobian[0][2] = 0.0;
+                		    jacobian[0][3] = 0.0;
+                		    jacobian[1][0] = 0.0;
+                		    jacobian[1][1] = 0.0;
+                		    jacobian[1][2] = Math.sqrt(5.0);
+                		    jacobian[1][3] = -Math.sqrt(5.0);
+                		    jacobian[2][0] = 0.0;
+                		    jacobian[2][1] = 2.0*a[1] - 4.0*a[2];
+                		    jacobian[2][2] = 8.0*a[2] - 4.0*a[1];
+                		    jacobian[2][3] = 0.0;
+                		    jacobian[3][0] = 2.0*Math.sqrt(10.0)*a[0] - 2.0*Math.sqrt(10.0)*a[3];
+                		    jacobian[3][1] = 0.0;
+                		    jacobian[3][2] = 0.0;
+                		    jacobian[3][3] = 2.0*Math.sqrt(10.0)*a[3] - 2.0*Math.sqrt(10.0)*a[0];
                 		}
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -2719,10 +2908,10 @@ public abstract class NLConstrainedEngine {
                     		    t[i] = 0.2*(i+1.0);
                     		    part1 = a[0] + a[1]*t[i] - Math.exp(t[i]);
                     		    part2 = a[2] + a[3]*Math.sin(t[i]) - Math.cos(t[i]);
-                		        covarMat[i][0] = 2.0*part1;
-                		        covarMat[i][1] = 2.0*part1*t[i];
-                		        covarMat[i][2] = 2.0*part2;
-                		        covarMat[i][3] = 2.0*part2*Math.sin(t[i]);
+                		        jacobian[i][0] = 2.0*part1;
+                		        jacobian[i][1] = 2.0*part1*t[i];
+                		        jacobian[i][2] = 2.0*part2;
+                		        jacobian[i][3] = 2.0*part2*Math.sin(t[i]);
                     		}
                 		}
                 		else {
@@ -2744,11 +2933,11 @@ public abstract class NLConstrainedEngine {
                         if (analyticalJacobian) {
 	                        // Calculate the Jacobian analytically
 	                        for (i = 0; i < nPts; i++) {
-	                            covarMat[i][0] = 1.0;
-	                            covarMat[i][1] = Math.exp(-a[3]*xSeries[i]);
-	                            covarMat[i][2] = Math.exp(-a[4]*xSeries[i]);
-	                            covarMat[i][3] = -a[1]*xSeries[i]*Math.exp(-a[3]*xSeries[i]);
-	                            covarMat[i][4] = -a[2]*xSeries[i]*Math.exp(-a[4]*xSeries[i]);
+	                            jacobian[i][0] = 1.0;
+	                            jacobian[i][1] = Math.exp(-a[3]*xSeries[i]);
+	                            jacobian[i][2] = Math.exp(-a[4]*xSeries[i]);
+	                            jacobian[i][3] = -a[1]*xSeries[i]*Math.exp(-a[3]*xSeries[i]);
+	                            jacobian[i][4] = -a[2]*xSeries[i]*Math.exp(-a[4]*xSeries[i]);
 	                        }
                         }
                         else {
@@ -2773,22 +2962,22 @@ public abstract class NLConstrainedEngine {
                         if (analyticalJacobian) {
 	                        // Calculate the Jacobian analytically
 	                        for (i = 0; i < nPts; i++) {
-	                            covarMat[i][0] = Math.exp(-a[4]*xSeries[i]);
-	                            covarMat[i][1] = Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]));
-	                            covarMat[i][2] = Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]));
-	                            covarMat[i][3] = Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
-	                            covarMat[i][4] = -a[0]*xSeries[i]*Math.exp(-a[4]*xSeries[i]) ;
-	                            covarMat[i][5] = -a[1]*(xSeries[i] - a[8])*(xSeries[i] - a[8])
+	                            jacobian[i][0] = Math.exp(-a[4]*xSeries[i]);
+	                            jacobian[i][1] = Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]));
+	                            jacobian[i][2] = Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]));
+	                            jacobian[i][3] = Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
+	                            jacobian[i][4] = -a[0]*xSeries[i]*Math.exp(-a[4]*xSeries[i]) ;
+	                            jacobian[i][5] = -a[1]*(xSeries[i] - a[8])*(xSeries[i] - a[8])
 	                                             *Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]));
-	                            covarMat[i][6] = -a[2]*(xSeries[i] - a[9])*(xSeries[i] - a[9])
+	                            jacobian[i][6] = -a[2]*(xSeries[i] - a[9])*(xSeries[i] - a[9])
 	                                             *Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]));
-	                            covarMat[i][7] = -a[3]*(xSeries[i] - a[10])*(xSeries[i] - a[10])
+	                            jacobian[i][7] = -a[3]*(xSeries[i] - a[10])*(xSeries[i] - a[10])
 	                                             *Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
-	                            covarMat[i][8] = 2.0*a[1]*a[5]*(xSeries[i] - a[8])
+	                            jacobian[i][8] = 2.0*a[1]*a[5]*(xSeries[i] - a[8])
 	                                             *Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]));
-	                            covarMat[i][9] = 2.0*a[2]*a[6]*(xSeries[i] - a[9])
+	                            jacobian[i][9] = 2.0*a[2]*a[6]*(xSeries[i] - a[9])
 	                                             *Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]));
-	                            covarMat[i][10] = 2.0*a[3]*a[7]*(xSeries[i] - a[10])
+	                            jacobian[i][10] = 2.0*a[3]*a[7]*(xSeries[i] - a[10])
 	                                              *Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
 	                        }
                         }
@@ -2837,22 +3026,22 @@ public abstract class NLConstrainedEngine {
     	                	        for (j = 1; j <= param; j++) {
     	                	            sum2 += a[j-1]*Math.pow(t[i], j-1.0);	
     	                	        }
-                    	            covarMat[i][0] = -2.0*sum2;
+                    	            jacobian[i][0] = -2.0*sum2;
                     	            for (j = 2; j <= param; j++) {
-                    	            	covarMat[i][j-1] = (j-1.0)*Math.pow(t[i],j-2.0) - 2.0*sum2*Math.pow(t[i],j-1.0);
+                    	            	jacobian[i][j-1] = (j-1.0)*Math.pow(t[i],j-2.0) - 2.0*sum2*Math.pow(t[i],j-1.0);
                     	            }
                     	    	} // if (i < 29)
                     	    	else if (i == 29) {
-                    	    		covarMat[i][0] = 1.0;
+                    	    		jacobian[i][0] = 1.0;
                     	    		for (j = 1; j < param; j++) {
-                    	    			covarMat[i][j] = 0.0;
+                    	    			jacobian[i][j] = 0.0;
                     	    		}
                     	    	}
                     	    	else if (i == 30) {
-                    	    		covarMat[i][0] = -2.0*a[0];
-                    	    		covarMat[i][1] = 1.0;
+                    	    		jacobian[i][0] = -2.0*a[0];
+                    	    		jacobian[i][1] = 1.0;
                     	    		for (j = 2; j < param; j++) {
-                    	    			covarMat[i][j] = 0.0;
+                    	    			jacobian[i][j] = 0.0;
                     	    		}
                     	    	}
                     	    } // for (i = 0; i < 31; i++)
@@ -2882,10 +3071,10 @@ public abstract class NLConstrainedEngine {
                 			for (i = 0; i < nPts - 1; i++) {
                 				for (int j = 0; j < nPts; j++) {
                 				    if (i == j) {
-                				    	covarMat[i][j] = 2.0;
+                				    	jacobian[i][j] = 2.0;
                 				    }
                 				    else {
-                				    	covarMat[i][j] = 1.0;
+                				    	jacobian[i][j] = 1.0;
                 				    }
                 				}
                 			}
@@ -2896,7 +3085,7 @@ public abstract class NLConstrainedEngine {
                 						prodParam = prodParam*a[j];
                 					}
                 				}
-                			    covarMat[nPts-1][i] = prodParam;	
+                			    jacobian[nPts-1][i] = prodParam;	
                 			}
                 		} // if (analyticalJacobian)
                 		else {
@@ -2923,16 +3112,16 @@ public abstract class NLConstrainedEngine {
 	                		for (i = 0; i < param; i++) {
 	                		    for (int j = 0; j < param; j++) {
 	                		        if (i == j) {
-	                		        	covarMat[i][j] = 1.0 - 2.0/nPts;
+	                		        	jacobian[i][j] = 1.0 - 2.0/nPts;
 	                		        }
 	                		        else {
-	                		        	covarMat[i][j] = -2.0/nPts;
+	                		        	jacobian[i][j] = -2.0/nPts;
 	                		        }
 	                		    }
 	                		} // for (i = 0; i < param; i++)
 	                		for (i = param; i < nPts; i++) {
 	                			for (int j = 0; j < param; j++) {
-	                			    covarMat[i][j] = -2.0/nPts;
+	                			    jacobian[i][j] = -2.0/nPts;
 	                			}
 	                		} // for (i = param; i < nPts; i++)
                 		} // if (analyticalJacobian)
@@ -2956,7 +3145,7 @@ public abstract class NLConstrainedEngine {
                 		if (analyticalJacobian) {
                 		    for (i = 0; i < nPts; i++) {
                 		    	for (int j = 0; j < param; j++) {
-                		    		covarMat[i][j] = (i+1.0)*(j+1.0);
+                		    		jacobian[i][j] = (i+1.0)*(j+1.0);
                 		    	}
                 		    }
                 		} // if (analyticalJacobian)
@@ -2981,14 +3170,14 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
                 			for (int j = 0; j < param; j++) {
-                				covarMat[0][j] = 0.0;
-                				covarMat[nPts-1][j] = 0.0;
+                				jacobian[0][j] = 0.0;
+                				jacobian[nPts-1][j] = 0.0;
                 			}
                 		    for (i = 1; i < nPts-1; i++) {
-                		    	covarMat[i][0] = 0.0;
-                		    	covarMat[i][param-1] = 0.0;
+                		    	jacobian[i][0] = 0.0;
+                		    	jacobian[i][param-1] = 0.0;
                 		    	for (int j = 1; j < param-1; j++) {
-                		    		covarMat[i][j] = i*(j+1.0);
+                		    		jacobian[i][j] = i*(j+1.0);
                 		    	}
                 		    }
                 		} // if (analyticalJacobian)
@@ -3018,7 +3207,7 @@ public abstract class NLConstrainedEngine {
                 		if (analyticalJacobian) {
 	                		for (i = 1; i <= nPts; i++) {
 	                		    for (int j = 0; j < param; j++) {
-	                		    	covarMat[i-1][j] = shiftedChebyshevDerivative(a[j],i)/param;
+	                		    	jacobian[i-1][j] = shiftedChebyshevDerivative(a[j],i)/param;
 	                		    }
 	                		}
                 		} // if (analyticalJacobian)
@@ -3036,10 +3225,10 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                			covarMat[0][0] = (-2.0 + 2.0*a[0] - 4.0*105.0*(a[1] - a[0]*a[0])*a[0]);
-            	        	covarMat[0][1] = (2*105.0*(a[1] - a[0]*a[0]));
-            	        	covarMat[1][0] = (-2.0 + 2.0*a[0] - 4.0*105.0*(a[1] - a[0]*a[0])*a[0]);
-            	        	covarMat[1][1] = (2*105.0*(a[1] - a[0]*a[0]));	
+                			jacobian[0][0] = (-2.0 + 2.0*a[0] - 4.0*105.0*(a[1] - a[0]*a[0])*a[0]);
+            	        	jacobian[0][1] = (2*105.0*(a[1] - a[0]*a[0]));
+            	        	jacobian[1][0] = (-2.0 + 2.0*a[0] - 4.0*105.0*(a[1] - a[0]*a[0])*a[0]);
+            	        	jacobian[1][1] = (2*105.0*(a[1] - a[0]*a[0]));	
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3054,10 +3243,10 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                			covarMat[0][0] = 1.0;
-            	        	covarMat[0][1] = 0.0;
-            	        	covarMat[1][0] = 1.0/((a[0] + 0.1)*(a[0] + 0.1));
-            	        	covarMat[1][1] = 4.0*a[1];	
+                			jacobian[0][0] = 1.0;
+            	        	jacobian[0][1] = 0.0;
+            	        	jacobian[1][0] = 1.0/((a[0] + 0.1)*(a[0] + 0.1));
+            	        	jacobian[1][1] = 4.0*a[1];	
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3073,12 +3262,12 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                			covarMat[0][0] = -20.0*a[0];
-            	        	covarMat[0][1] = 10.0;
-            	        	covarMat[1][0] = -1.0;
-            	        	covarMat[1][1] = 0.0;
-            	        	covarMat[2][0] = 0.0;
-            	        	covarMat[2][1] = 0.0;	
+                			jacobian[0][0] = -20.0*a[0];
+            	        	jacobian[0][1] = 10.0;
+            	        	jacobian[1][0] = -1.0;
+            	        	jacobian[1][1] = 0.0;
+            	        	jacobian[2][0] = 0.0;
+            	        	jacobian[2][1] = 0.0;	
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3097,30 +3286,30 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		     covarMat[0][0] = -20.0*a[0];
-                		     covarMat[0][1] = 10.0;
-                		     covarMat[0][2] = 0.0;
-                		     covarMat[0][3] = 0.0;
-                		     covarMat[1][0] = -1.0;
-                		     covarMat[1][1] = 0.0;
-                		     covarMat[1][2] = 0.0;
-                		     covarMat[1][3] = 0.0;
-                		     covarMat[2][0] = 0.0;
-                		     covarMat[2][1] = 0.0;
-                		     covarMat[2][2] = -2.0*Math.sqrt(90.0)*a[2];
-                		     covarMat[2][3] = Math.sqrt(90.0);
-                		     covarMat[3][0] = 0.0;
-                		     covarMat[3][1] = 0.0;
-                		     covarMat[3][2] = -1.0;
-                		     covarMat[3][3] = 0.0;
-                		     covarMat[4][0] = 0.0;
-                		     covarMat[4][1] = Math.sqrt(10.0);
-                		     covarMat[4][2] = 0.0;
-                		     covarMat[4][3] = Math.sqrt(10.0);
-                		     covarMat[5][0] = 0.0;
-                		     covarMat[5][1] = 1.0/Math.sqrt(10.0);
-                		     covarMat[5][2] = 0.0;
-                		     covarMat[5][3] = -1.0/Math.sqrt(10.0);
+                		     jacobian[0][0] = -20.0*a[0];
+                		     jacobian[0][1] = 10.0;
+                		     jacobian[0][2] = 0.0;
+                		     jacobian[0][3] = 0.0;
+                		     jacobian[1][0] = -1.0;
+                		     jacobian[1][1] = 0.0;
+                		     jacobian[1][2] = 0.0;
+                		     jacobian[1][3] = 0.0;
+                		     jacobian[2][0] = 0.0;
+                		     jacobian[2][1] = 0.0;
+                		     jacobian[2][2] = -2.0*Math.sqrt(90.0)*a[2];
+                		     jacobian[2][3] = Math.sqrt(90.0);
+                		     jacobian[3][0] = 0.0;
+                		     jacobian[3][1] = 0.0;
+                		     jacobian[3][2] = -1.0;
+                		     jacobian[3][3] = 0.0;
+                		     jacobian[4][0] = 0.0;
+                		     jacobian[4][1] = Math.sqrt(10.0);
+                		     jacobian[4][2] = 0.0;
+                		     jacobian[4][3] = Math.sqrt(10.0);
+                		     jacobian[5][0] = 0.0;
+                		     jacobian[5][1] = 1.0/Math.sqrt(10.0);
+                		     jacobian[5][2] = 0.0;
+                		     jacobian[5][3] = -1.0/Math.sqrt(10.0);
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3135,10 +3324,10 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		    covarMat[0][0] = -20.0*a[0];
-                		    covarMat[0][1] = 10.0;
-                		    covarMat[1][0] = -1.0;
-                		    covarMat[1][1] = 0.0;
+                		    jacobian[0][0] = -20.0*a[0];
+                		    jacobian[0][1] = 10.0;
+                		    jacobian[1][0] = -1.0;
+                		    jacobian[1][1] = 0.0;
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3153,10 +3342,10 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		    covarMat[0][0] = 0.1;
-                		    covarMat[0][1] = 0.0;
-                		    covarMat[1][0] = 0.0;
-                		    covarMat[1][1] = 1.0;
+                		    jacobian[0][0] = 0.1;
+                		    jacobian[0][1] = 0.0;
+                		    jacobian[1][0] = 0.0;
+                		    jacobian[1][1] = 1.0;
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3173,22 +3362,22 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		    covarMat[0][0] = 1.0;
-                		    covarMat[0][1] = 0.0;
-                		    covarMat[0][2] = 0.0;
-                		    covarMat[0][3] = 0.0;
-                		    covarMat[1][0] = 1.0;
-                		    covarMat[1][1] = -0.5/Math.sqrt(a[1]);
-                		    covarMat[1][2] = 0.0;
-                		    covarMat[1][3] = 0.0;
-                		    covarMat[2][0] = 0.0;
-                		    covarMat[2][1] = 1.0;
-                		    covarMat[2][2] = -0.5/Math.sqrt(a[2]);
-                		    covarMat[2][3] = 0.0;
-                		    covarMat[3][0] = 0.0;
-                		    covarMat[3][1] = 0.0;
-                		    covarMat[3][2] = 1.0;
-                		    covarMat[3][3] = -0.5/Math.sqrt(a[3]);
+                		    jacobian[0][0] = 1.0;
+                		    jacobian[0][1] = 0.0;
+                		    jacobian[0][2] = 0.0;
+                		    jacobian[0][3] = 0.0;
+                		    jacobian[1][0] = 1.0;
+                		    jacobian[1][1] = -0.5/Math.sqrt(a[1]);
+                		    jacobian[1][2] = 0.0;
+                		    jacobian[1][3] = 0.0;
+                		    jacobian[2][0] = 0.0;
+                		    jacobian[2][1] = 1.0;
+                		    jacobian[2][2] = -0.5/Math.sqrt(a[2]);
+                		    jacobian[2][3] = 0.0;
+                		    jacobian[3][0] = 0.0;
+                		    jacobian[3][1] = 0.0;
+                		    jacobian[3][2] = 1.0;
+                		    jacobian[3][3] = -0.5/Math.sqrt(a[3]);
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3206,22 +3395,22 @@ public abstract class NLConstrainedEngine {
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                		    covarMat[0][0] = 1.0;
-                		    covarMat[0][1] = 0.0;
-                		    covarMat[0][2] = 0.0;
-                		    covarMat[0][3] = 0.0;
-                		    covarMat[1][0] = 1.0;
-                		    covarMat[1][1] = -0.5/Math.sqrt(a[1]);
-                		    covarMat[1][2] = 0.0;
-                		    covarMat[1][3] = 0.0;
-                		    covarMat[2][0] = 0.0;
-                		    covarMat[2][1] = 1.0;
-                		    covarMat[2][2] = -0.5/Math.sqrt(a[2]);
-                		    covarMat[2][3] = 0.0;
-                		    covarMat[3][0] = 0.0;
-                		    covarMat[3][1] = 0.0;
-                		    covarMat[3][2] = 0.0;
-                		    covarMat[3][3] = 1.0;
+                		    jacobian[0][0] = 1.0;
+                		    jacobian[0][1] = 0.0;
+                		    jacobian[0][2] = 0.0;
+                		    jacobian[0][3] = 0.0;
+                		    jacobian[1][0] = 1.0;
+                		    jacobian[1][1] = -0.5/Math.sqrt(a[1]);
+                		    jacobian[1][2] = 0.0;
+                		    jacobian[1][3] = 0.0;
+                		    jacobian[2][0] = 0.0;
+                		    jacobian[2][1] = 1.0;
+                		    jacobian[2][2] = -0.5/Math.sqrt(a[2]);
+                		    jacobian[2][3] = 0.0;
+                		    jacobian[3][0] = 0.0;
+                		    jacobian[3][1] = 0.0;
+                		    jacobian[3][2] = 0.0;
+                		    jacobian[3][3] = 1.0;
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -3263,32 +3452,192 @@ public abstract class NLConstrainedEngine {
 
                 			  for (i = 0; i < nPts; i++) {
                 				  for (j = 0; j < param; j++) {
-                					  covarMat[i][j] = 0.0;
+                					  jacobian[i][j] = 0.0;
                 				  }
                 			  }
 
-                			  covarMat[0][0]=a[1]+1;
-                			  covarMat[0][1] = a[0];
-                			  covarMat[0][4]=-3;
+                			  jacobian[0][0]=a[1]+1;
+                			  jacobian[0][1] = a[0];
+                			  jacobian[0][4]=-3;
 
-                			  covarMat[1][0]=2*a[1]+1;
-                			  covarMat[1][1]=2*a[0]+6*R10*a[1]+a[2]*a[2]+R7*a[2]+R9*a[3]+R8;
-                			  covarMat[1][2]=2*a[1]*a[2]+R7*a[1];
-                			  covarMat[1][3]=R9*a[1];
-                			  covarMat[1][4]=-R;
+                			  jacobian[1][0]=2*a[1]+1;
+                			  jacobian[1][1]=2*a[0]+6*R10*a[1]+a[2]*a[2]+R7*a[2]+R9*a[3]+R8;
+                			  jacobian[1][2]=2*a[1]*a[2]+R7*a[1];
+                			  jacobian[1][3]=R9*a[1];
+                			  jacobian[1][4]=-R;
 
-                			  covarMat[2][1]=2*a[2]*a[2]+R7*a[2];
-                			  covarMat[2][2]=4*a[1]*a[2]+R7*a[1]+4*R5*a[2]+R6;
-                			  covarMat[2][4]=-8;
+                			  jacobian[2][1]=2*a[2]*a[2]+R7*a[2];
+                			  jacobian[2][2]=4*a[1]*a[2]+R7*a[1]+4*R5*a[2]+R6;
+                			  jacobian[2][4]=-8;
 
-                			  covarMat[3][1]=R9*a[3];
-                			  covarMat[3][3]=R9*a[1]+4*a[3];
-                			  covarMat[3][4]=-4*R;
+                			  jacobian[3][1]=R9*a[3];
+                			  jacobian[3][3]=R9*a[1]+4*a[3];
+                			  jacobian[3][4]=-4*R;
 
-                			  covarMat[4][0]=a[1]+1;
-                			  covarMat[4][1]=a[0]+2*R10*a[1]+a[2]*a[2]+R7*a[2]+R9*a[3]+R8;
-                			  covarMat[4][2]=2*a[1]*a[2]+R7*a[1]+2*R5*a[2]+R6;
-                			  covarMat[4][3]=R9*a[1]+2*a[3];	
+                			  jacobian[4][0]=a[1]+1;
+                			  jacobian[4][1]=a[0]+2*R10*a[1]+a[2]*a[2]+R7*a[2]+R9*a[3]+R8;
+                			  jacobian[4][2]=2*a[1]*a[2]+R7*a[1]+2*R5*a[2]+R6;
+                			  jacobian[4][3]=R9*a[1]+2*a[3];	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case BEALE:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = a[0] - a[0]*a[1] - ySeries[0];
+                    	residuals[1] = a[0] - a[0]*a[1]*a[1] - ySeries[1];
+                    	residuals[2] = a[0] - a[0]*a[1]*a[1]*a[1] - ySeries[2];	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			jacobian[0][0] = 1 - a[1];
+                        	jacobian[0][1] = -a[0];
+                        	jacobian[1][0] = 1 - a[1]*a[1];
+                        	jacobian[1][1] = -2.0*a[0]*a[1];
+                        	jacobian[2][0] = 1 - a[1]*a[1]*a[1];
+                        	jacobian[2][1] = -3*a[0]*a[1]*a[1];	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case POWELL_BADLY_SCALED:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = 1.0E4*a[0]*a[1] - 1.0;
+                    	residuals[1] = Math.exp(-a[0]) + Math.exp(-a[1]) - 1.0001; 	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			jacobian[0][0] = 1.0E4*a[1];
+                        	jacobian[0][1] = 1.0E4*a[0];
+                        	jacobian[1][0] = -Math.exp(-a[0]);
+                        	jacobian[1][1] = -Math.exp(-a[1]);	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case BROWN_BADLY_SCALED:
+                    if ((ctrl == -1) || (ctrl == 1)) {
+                    	residuals[0] = a[0] - 1.0E6;
+                    	residuals[1] = a[1] - 2.0E-6;
+                    	residuals[2] = a[0]*a[1] - 2.0;	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			jacobian[0][0] = 1.0;
+                        	jacobian[0][1] = 0.0;
+                        	jacobian[1][1] = 0.0;
+                        	jacobian[1][1] = 1.0;
+                        	jacobian[2][0] = a[1];
+                        	jacobian[2][1] = a[0];	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case GAUSSIAN:
+                    if ((ctrl == -1) || (ctrl == 1)) {
+                    	for (i = 0; i < nPts; i++) {
+	                    	double diff = xSeries[i] - a[2];
+	                	    residuals[i] = a[0]*Math.exp(-a[1]*diff*diff/2.0) - ySeries[i];	
+                    	}
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		double diff = xSeries[i] - a[2];
+                        		jacobian[i][0] = Math.exp(-a[1]*diff*diff/2.0);
+                        		jacobian[i][1] = (-a[0]*diff*diff/2.0)*Math.exp(-a[1]*diff*diff/2.0);
+                        		jacobian[i][2] = a[0]*a[1]*diff*Math.exp(-a[1]*diff*diff/2.0);
+                        	}	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case GULF_RESEARCH_AND_DEVELOPMENT:
+                    if ((ctrl == -1) || (ctrl == 1)) {
+                    	for (i = 0; i < nPts; i++) {
+                    		residuals[i] = Math.exp(-Math.pow((Math.abs(ySeries[i]-a[1])),a[2])/a[0]) - xSeries[i];
+                    	}	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		double absVal = Math.abs(ySeries[i] - a[1]);
+                        		double abspow = Math.pow(absVal, a[2]);
+                        		double absdiv = abspow/a[0];
+                        		double absexp = Math.exp(-absdiv);
+                        		jacobian[i][0] = abspow * absexp/(a[0]*a[0]);
+                        		jacobian[i][1] = -a[2]*absexp*abspow/(a[0]*(a[1] - ySeries[i]));
+                        		jacobian[i][2] = -abspow * Math.log(absVal) * absexp/a[0];
+                        	}	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case BIGGS_EXP6:
+                    if ((ctrl == -1) || (ctrl == 1)) {
+                    	for (i = 0; i < nPts; i++) {
+                    		residuals[i] = a[2]*Math.exp(-xSeries[i]*a[0]) - a[3]*Math.exp(-xSeries[i]*a[1])
+                    				+ a[5]*Math.exp(-xSeries[i]*a[4]) - ySeries[i];
+                    	}	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		jacobian[i][0] = -xSeries[i]*a[2]*Math.exp(-xSeries[i]*a[0]);
+                        		jacobian[i][1] = xSeries[i]*a[3]*Math.exp(-xSeries[i]*a[1]);
+                        		jacobian[i][2] = Math.exp(-xSeries[i]*a[0]);
+                        		jacobian[i][3] = -Math.exp(-xSeries[i]*a[1]);
+                        		jacobian[i][4] = -xSeries[i]*a[5]*Math.exp(-xSeries[i]*a[4]);
+                        		jacobian[i][5] = Math.exp(-xSeries[i]*a[4]);
+                        	}	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case PENALTY_FUNCTION_I:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		for (i = 0; i < param; i++) {
+                    		residuals[i] = Math.sqrt(1.0E-5)*(a[i] - 1.0);
+                    	}
+                    	residuals[param] = -0.25;
+                    	for (i = 0; i < param; i++) {
+                    		residuals[param] += (a[i]*a[i]);
+                    	}	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < param; i++) {
+                        		for (int j = 0; j < param; j++) {
+                        		    jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                        	for (i = 0; i < param; i++) {
+                        		jacobian[i][i] = Math.sqrt(1.0E-5);
+                        	}
+                        	for (i = 0; i < param; i++) {
+                        		jacobian[param][i] = 2*a[i];
+                        	}    
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -4062,9 +4411,9 @@ public abstract class NLConstrainedEngine {
      *
      * @param  a          DOCUMENT ME!
      * @param  residuals  DOCUMENT ME!
-     * @param  covarMat   DOCUMENT ME!
+     * @param  jacobian   DOCUMENT ME!
      */
-    public abstract void fitToFunction(double[] a, double[] residuals, double[][] covarMat);
+    public abstract void fitToFunction(double[] a, double[] residuals, double[][] jacobian);
 
     /**
      * driver.
@@ -4136,20 +4485,20 @@ public abstract class NLConstrainedEngine {
             }
 
             // COMPENSATE FOR THE INTERNAL SCALING BY FORMING
-            // covarMat = D*covarMat*D
+            // jacobian = D*jacobian*D
             // WHERE D IS A DIAGONAL MATRIX
 
             for (j = 0; j < param; j++) {
 
                 for (k = 0; k < param; k++) {
-                    covarMat[k][j] = covarMat[k][j] * diag[j];
+                    jacobian[k][j] = jacobian[k][j] * diag[j];
                 } // for (k = 0; k < param; k++)
             } // for (j = 0; j < param; j++)
 
             for (i = 0; i < param; i++) {
 
                 for (k = 0; k < param; k++) {
-                    covarMat[i][k] = covarMat[i][k] * diag[i];
+                    jacobian[i][k] = jacobian[i][k] * diag[i];
                 } // for (k = 0; k < param; k++)
             } // for (i = 0; i < param; i++)
 
@@ -4760,12 +5109,12 @@ public abstract class NLConstrainedEngine {
         // v[]    DOUBLE 1D ARRAY OF DIMENSION nPts CONTAINING
         // THE ORTHOGONAL PROJECTION OF residuals ONTO THE SPACE SPANNED BY
         // THE COLUMNS OF THE JACOBIAN J
-        // covarMat DOUBLE 2D ARRAY OF DIMENSION nPts*param
+        // jacobian DOUBLE 2D ARRAY OF DIMENSION nPts*param
         // CONTAINING THE MATRIX R FROM THE
         // DECOMPOSITION    T
         // Q *J*D*E = (R)
         // (0)           (1)
-        // IN THE UPPER TRIANGLE OF covarMat
+        // IN THE UPPER TRIANGLE OF jacobian
         // WHERE
         // Q IS ORTHOGONAL (nPts*nPts)
         // J IS THE JACOBIAN (nPts*param) AT THE TERMINATING POINT
@@ -4817,7 +5166,7 @@ public abstract class NLConstrainedEngine {
         // OF THE JACOBIAN J  (IF kod = -1 ON RETURN)
         // UNCHANGED IF kod = 2 ON RETURN
         // CONTAINS THE VECTOR OF RESIDUALS IF kod = -2 ON RETURN
-        // covarMat[][] UNCHANGED IF kod = -1 ON RETURN
+        // jacobian[][] UNCHANGED IF kod = -1 ON RETURN
         // COMPLETELY DESTROYED IF ABS(kod)=2 ON RETURN
         // w0      UNCHANGED IF kod=-1 ON RETURN
         // COMPLETELY DESTROYED IF ABS(kod)=2 ON RETURN
@@ -5068,26 +5417,26 @@ public abstract class NLConstrainedEngine {
         boolean sing;
         double temp, tolr;
 
-        // FORM THE INVERSE OF covarMat IN THE FULL UPPER TRIANGLE OF covarMat.
+        // FORM THE INVERSE OF jacobian IN THE FULL UPPER TRIANGLE OF jacobian.
 
-        tolr = tolerance * Math.abs(covarMat[0][0]);
+        tolr = tolerance * Math.abs(jacobian[0][0]);
         l = -1;
 
         for (k = 0; k < param; k++) {
 
-            if (Math.abs(covarMat[k][k]) <= tolr) {
+            if (Math.abs(jacobian[k][k]) <= tolr) {
                 break;
             }
 
-            covarMat[k][k] = 1.0 / covarMat[k][k];
+            jacobian[k][k] = 1.0 / jacobian[k][k];
             km1 = k - 1;
 
             for (j = 0; j <= km1; j++) {
-                temp = covarMat[k][k] * covarMat[j][k];
-                covarMat[j][k] = 0.0;
+                temp = jacobian[k][k] * jacobian[j][k];
+                jacobian[j][k] = 0.0;
 
                 for (i = 0; i <= j; i++) {
-                    covarMat[i][k] = covarMat[i][k] - (temp * covarMat[i][j]);
+                    jacobian[i][k] = jacobian[i][k] - (temp * jacobian[i][j]);
                 } // for (i = 0; i <= j; i++)
             } // for (j = 0; j <= km1; j++)
 
@@ -5095,29 +5444,29 @@ public abstract class NLConstrainedEngine {
         } // for (k = 0; k < param; k++)
 
         // FORM THE FULL UPPER TRIANGLE OF THE INVERSE OF
-        // (covarMat TRANSPOSE)* covarMat
-        // IN THE FULL UPPER TRIANGLE OF covarMat.
+        // (jacobian TRANSPOSE)* jacobian
+        // IN THE FULL UPPER TRIANGLE OF jacobian.
 
         for (k = 0; k <= l; k++) {
             km1 = k - 1;
 
             for (j = 0; j <= km1; j++) {
-                temp = covarMat[j][k];
+                temp = jacobian[j][k];
 
                 for (i = 0; i <= j; i++) {
-                    covarMat[i][j] = covarMat[i][j] + (temp * covarMat[i][k]);
+                    jacobian[i][j] = jacobian[i][j] + (temp * jacobian[i][k]);
                 } // for (i = 0; i <= j; i++)
             } // for (j = 0; j <= km1; j++)
 
-            temp = covarMat[k][k];
+            temp = jacobian[k][k];
 
             for (i = 0; i <= k; i++) {
-                covarMat[i][k] = temp * covarMat[i][k];
+                jacobian[i][k] = temp * jacobian[i][k];
             } // for (i = 0; i <= k; i++)
         } // for (k = 0; k <= l; k++)
 
         // FORM THE FULL LOWER TRIANGLE OF THE COVARIANCE MATRIX
-        // IN THE STRICT LOWER TRIANGLE OF covarMat AND IN dx
+        // IN THE STRICT LOWER TRIANGLE OF jacobian AND IN dx
 
         for (j = 0; j < param; j++) {
             jj = pivit[j];
@@ -5126,32 +5475,32 @@ public abstract class NLConstrainedEngine {
             for (i = 0; i <= j; i++) {
 
                 if (sing) {
-                    covarMat[i][j] = 0.0;
+                    jacobian[i][j] = 0.0;
                 }
 
                 ii = pivit[i];
 
                 if (ii > jj) {
-                    covarMat[ii][jj] = covarMat[i][j];
+                    jacobian[ii][jj] = jacobian[i][j];
                 }
 
                 if (ii < jj) {
-                    covarMat[jj][ii] = covarMat[i][j];
+                    jacobian[jj][ii] = jacobian[i][j];
                 }
             } // for (i = 0; i <= j; i++)
 
-            dx[jj] = covarMat[j][j];
+            dx[jj] = jacobian[j][j];
         } // for (j = 0; j < param; j++)
 
-        // SYMMETRIZE THE COVARIANCE MATRIX IN covarMat.
+        // SYMMETRIZE THE COVARIANCE MATRIX IN jacobian.
 
         for (j = 0; j < param; j++) {
 
             for (i = 0; i <= j; i++) {
-                covarMat[i][j] = covarMat[j][i];
+                jacobian[i][j] = jacobian[j][i];
             } // for (i = 0; i <= j; i++)
 
-            covarMat[j][j] = dx[j];
+            jacobian[j][j] = dx[j];
         } // for (j = 0; j < param; j++)
 
         return;
@@ -5175,12 +5524,12 @@ public abstract class NLConstrainedEngine {
         // fsum CONTAINS THE SUM OF SQUARES AT CURRENT POINT
         // residuals CONTAINS THE VECTOR OF RESIDUALS AT CURRENT POINT
         // nPts CONTAINS LENGTH OF THE ARRAYS residuals, v, and w1
-        // covarMat[][] double  2D ARRAY OF DIMENSION nPts*param
+        // jacobian[][] double  2D ARRAY OF DIMENSION nPts*param
         // CONTAINING THE MATRIX R FROM THE
         // DECOMPOSITION    T
         // Q *J*D*E = (R)
         // (0)
-        // IN THE UPPER TRIANGLE OF covarMat
+        // IN THE UPPER TRIANGLE OF jacobian
         // WHERE
         // Q IS ORTHOGONAL (nPts*nPts)
         // J IS THE JACOBIAN (nPts*param) AT THE TERMINATING POINT
@@ -5239,7 +5588,7 @@ public abstract class NLConstrainedEngine {
                 w1[i] = -residuals[i];
             }
 
-            sqrsl(covarMat, nPts, prank[0], w0, w1, dummy, w1, dummy, dummy, dummy, 1000);
+            sqrsl(jacobian, nPts, prank[0], w0, w1, dummy, w1, dummy, dummy, dummy, 1000);
 
             // COMPUTE ESTIMATES OF STEPLENGTHS w1[i] AND PROGRESS WORK[i]
 
@@ -5247,9 +5596,9 @@ public abstract class NLConstrainedEngine {
             j = pivit[0];
 
             if (!internalScaling) {
-                w1[0] = w1[0] / covarMat[0][0];
+                w1[0] = w1[0] / jacobian[0][0];
             } else {
-                w1[0] = w1[0] * diag[j] / covarMat[0][0];
+                w1[0] = w1[0] * diag[j] / jacobian[0][0];
             }
 
             for (i = 1; i < prank[0]; i++) {
@@ -5257,9 +5606,9 @@ public abstract class NLConstrainedEngine {
 
                 if (internalScaling) {
                     j = pivit[i];
-                    w1[i] = w1[i] * diag[j] / covarMat[i][i];
+                    w1[i] = w1[i] * diag[j] / jacobian[i][i];
                 } else {
-                    w1[i] = w1[i] / covarMat[i][i];
+                    w1[i] = w1[i] / jacobian[i][i];
                 }
 
                 temp[0] = w1[i - 1];
@@ -6105,7 +6454,7 @@ mainLoop:
 
         // residuals  CONTAINS THE VECTOR OF RESIDUALS AT CURRENT POINT
         // nPts IS THE LENGTH OF THE ARRAYS residuals,V AND w1
-        // covarMat CONTAINS THE MATRIX R IN THE UPPER TRIANGLE AND
+        // jacobian CONTAINS THE MATRIX R IN THE UPPER TRIANGLE AND
         // INFORMATION NEEDED TO FORM MATRIX Q IN THE LOWER PART
         // param IS THE LENGTH OF THE ARRAYS DIAG,pivit,w0 AND DX
         // internalScaling = false IF DIAGONAL MATRIX D IS THE UNIT MATRIX
@@ -6147,7 +6496,7 @@ mainLoop:
         // T
         // COMPUTE THE SOLUTION DX,THE PROJECTION  -V  AND w1 = -Q * residuals
 
-        sqrsl(covarMat, nPts, prank[0], w0, w1, dummy, w1, dx, dummy, v, 1101);
+        sqrsl(jacobian, nPts, prank[0], w0, w1, dummy, w1, dx, dummy, v, 1101);
         temp = dnrm2(prank[0], w1, 1);
         d1sqs = temp * temp;
 
@@ -6333,7 +6682,7 @@ mainLoop:
 
         // ON RETURN
 
-        // covarMat CONTAINS THE APPROXIMATE JACOBIAN IN THE nPts*param UPPER PART
+        // jacobian CONTAINS THE APPROXIMATE JACOBIAN IN THE nPts*param UPPER PART
         // errorStatus CONTAINS A USER STOP INDICATOR OR ZERO
 
         int i, j;
@@ -6350,10 +6699,10 @@ mainLoop:
             jacCtrl[0] = -1;
             ctrlMat[0] = jacCtrl[0];
             if (testMode) {
-            	fitToTestFunction(a, w1, covarMat);
+            	fitToTestFunction(a, w1, jacobian);
             }
             else {
-                fitToFunction(a, w1, covarMat);
+                fitToFunction(a, w1, jacobian);
             }
             jacCtrl[0] = ctrlMat[0];
 
@@ -6363,7 +6712,7 @@ mainLoop:
             }
 
             for (i = 0; i < nPts; i++) {
-                covarMat[i][j] = (w1[i] - residuals[i]) / deltaj;
+                jacobian[i][j] = (w1[i] - residuals[i]) / deltaj;
             } // for (i = 0; i < nPts; i++)
 
             a[j] = xtemp;
@@ -6379,12 +6728,12 @@ mainLoop:
      */
     private void jtrj(int nn) {
         // T
-        // FORM THE nn by nn SYMMETRIC MATRIX  covarMat *covarMat
-        // AND STORE IN covarMat
+        // FORM THE nn by nn SYMMETRIC MATRIX  jacobian *jacobian
+        // AND STORE IN jacobian
 
         // T
-        // FIRST FORM THE LOWER PART OF covarMat *covarMat
-        // AND STORE IN THE LOWER PART OF covarMat
+        // FIRST FORM THE LOWER PART OF jacobian *jacobian
+        // AND STORE IN THE LOWER PART OF jacobian
 
         int i, j, k;
         double sum;
@@ -6392,20 +6741,20 @@ mainLoop:
         for (j = 0; j < nn; j++) {
 
             for (i = 0; i < nn; i++) {
-                w0[i] = covarMat[i][j];
+                w0[i] = jacobian[i][j];
             }
 
             for (k = j; k < nn; k++) {
                 sum = 0.0;
 
                 for (i = 0; i <= j; i++) {
-                    sum = sum + (covarMat[i][k] * w0[i]);
+                    sum = sum + (jacobian[i][k] * w0[i]);
                 }
-                covarMat[k][j] = sum;
+                jacobian[k][j] = sum;
             } // for (k = j; k < nn; k++)
         } // for (j = 0; j < nn; j++)
 
-        // MOVE THE LOWER PART OF covarMat TO THE UPPER PART OF covarMat
+        // MOVE THE LOWER PART OF jacobian TO THE UPPER PART OF jacobian
 
         if (nn == 1) {
             return;
@@ -6415,7 +6764,7 @@ mainLoop:
             k = i - 1;
 
             for (j = 0; j <= k; j++) {
-                covarMat[j][i] = covarMat[i][j];
+                jacobian[j][i] = jacobian[i][j];
             } // for (j = 0; j <= k; j++)
         } // for (i = 1; i < nn; i++)
 
@@ -6853,13 +7202,13 @@ mainLoop:
      * DOCUMENT ME!
      */
     private void lsunc() {
-        // covarMat[][] 2D double ARRAY OF DIMENSION nPts *MAX(4,param)
-        // IF exitStatus < 0 ON RETURN ARRAY covarMat IS UNDEFINED
-        // OTHERWISE covarMat CONTAINS THE MATRIX R FROM THE
+        // jacobian[][] 2D double ARRAY OF DIMENSION nPts *MAX(4,param)
+        // IF exitStatus < 0 ON RETURN ARRAY jacobian IS UNDEFINED
+        // OTHERWISE jacobian CONTAINS THE MATRIX R FROM THE
         // DECOMPOSITION    T
         // Q *J*D*E = (R)
         // (0)
-        // IN THE UPPER TRIANGLE OF covarMat
+        // IN THE UPPER TRIANGLE OF jacobian
         // WHERE
         // Q IS ORTHOGONAL (nPts*nPts)
         // J IS THE JACOBIAN (nPts*param) AT THE TERMINATING POINT
@@ -6965,10 +7314,10 @@ mainLoop:
         ctrl = 1;
         ctrlMat[0] = ctrl;
         if (testMode) {
-        	fitToTestFunction(a, residuals, covarMat);
+        	fitToTestFunction(a, residuals, jacobian);
         }
         else {
-            fitToFunction(a, residuals, covarMat);
+            fitToFunction(a, residuals, jacobian);
         }
         ctrl = ctrlMat[0];
 
@@ -7403,7 +7752,7 @@ mainLoop:
      */
     private void newunc() {
         // COMPUTE THE JACOBIAN OF residuals(a) AT THE CURRENT POINT AND
-        // STORE IN ARRAY covarMat
+        // STORE IN ARRAY jacobian
 
         // ON ENTRY
 
@@ -7414,7 +7763,7 @@ mainLoop:
 
         // ON RETURN
 
-        // covarMat CONTAINS THE nPts*param JACOBIAN MATRIX
+        // jacobian CONTAINS THE nPts*param JACOBIAN MATRIX
         // funcEval CONTAINS THE TOTAL NO.OF FUNCTION EVALUATIONS DONE SO FAR
         // jacobianEval CONTAINS NO. OF FUNCTION EVALUATIONS CAUSED BY COMPUTING
         // THE JACOBIAN WITH DIFFERENCE METHODS
@@ -7429,10 +7778,10 @@ mainLoop:
 
         ctrlMat[0] = newuncCtrl[0];
         if (testMode) {
-        	fitToTestFunction(a, residuals, covarMat);
+        	fitToTestFunction(a, residuals, jacobian);
         }
         else {
-            fitToFunction(a, residuals, covarMat);
+            fitToFunction(a, residuals, jacobian);
         }
         newuncCtrl[0] = ctrlMat[0];
 
@@ -7943,7 +8292,7 @@ mainLoop:
         // T
         // FORM  dx:= -(R :0)*w1
         // THE nn by nn UPPER TRIANGULAR MATRIX R IS CONTAINED IN THE UPPER
-        // LEFT TRIANGLE OF ARRAY covarMat
+        // LEFT TRIANGLE OF ARRAY jacobian
 
         int i, j;
 
@@ -7951,7 +8300,7 @@ mainLoop:
             dx[j] = 0.0;
 
             for (i = 0; i <= j; i++) {
-                dx[j] = dx[j] - (covarMat[i][j] * w1[i]);
+                dx[j] = dx[j] - (jacobian[i][j] * w1[i]);
             }
         } // for (j = 0; j < nn; j++)
 
@@ -7984,13 +8333,13 @@ mainLoop:
     private void scaunc() {
         // If internalScaling is false,
         // THEN NO SCALING IS DONE
-        // ELSE SCALE THE nPts*param MATRIX covarMat
+        // ELSE SCALE THE nPts*param MATRIX jacobian
         // SO THAT EACH COLUMN HAS UNIT LENGTH
 
         // ON RETURN
 
-        // CNORM SET TO THE MAXIMUM COLUMN LENGTH OF THE MATRIX covarMat
-        // IF SCALING IS DONE  covarMat := covarMat*D WHERE D IS A DIAGONAL MATRIX
+        // CNORM SET TO THE MAXIMUM COLUMN LENGTH OF THE MATRIX jacobian
+        // IF SCALING IS DONE  jacobian := jacobian*D WHERE D IS A DIAGONAL MATRIX
         // WITH DIAGONAL ELEMENTS D(I)=1/LENGTH(I) WHERE LENGTH(I)
         // IS THE LENGTH OF COLUMN NO. I UNLESS LENGTH(I)=0
         // WHEN D(I) IS SET TO 1.0
@@ -8006,7 +8355,7 @@ mainLoop:
         for (j = 0; j < param; j++) {
 
             for (k = 0; k < nPts; k++) {
-                covarPart[k] = covarMat[k][j];
+                covarPart[k] = jacobian[k][j];
             }
 
             colj = dnrm2(nPts, covarPart, 1);
@@ -8024,7 +8373,7 @@ mainLoop:
             }
 
             for (k = 0; k < nPts; k++) {
-                covarMat[k][j] = covarMat[k][j] / colj;
+                jacobian[k][j] = jacobian[k][j] / colj;
             }
 
             diag[j] = 1.0 / colj;
@@ -8052,15 +8401,15 @@ mainLoop:
          *
          * ON ENTRY
          *
-         * covarMat    CONTAINS THE MATRIX WHOSE DECOMPOSITION IS TO    BE COMPUTED.  ONLT THE UPPER HALF OF covarMat NEED
-         * BE STORED.    THE LOWER PART OF THE ARRAY covarMat IS NOT REFERENCED.
+         * jacobian    CONTAINS THE MATRIX WHOSE DECOMPOSITION IS TO    BE COMPUTED.  ONLT THE UPPER HALF OF jacobian NEED
+         * BE STORED.    THE LOWER PART OF THE ARRAY jacobian IS NOT REFERENCED.
          *
          * nn  INTEGER.    nn IS THE ORDER OF THE MATRIX.
          *
          * w0 double    w0 IS A WORK ARRAY.
          *
          * jpvt   INTEGER(nn).       jpvt CONTAINS INTEGERS THAT CONTROL THE SELECTION       OF THE PIVOT ELEMENTS, IF
-         * PIVOTING HAS BEEN REQUESTED.       EACH DIAGONAL ELEMENT covarMat(K,K)       IS PLACED IN ONE OF THREE
+         * PIVOTING HAS BEEN REQUESTED.       EACH DIAGONAL ELEMENT jacobian(K,K)       IS PLACED IN ONE OF THREE
          * CLASSES ACCORDING TO THE       VALUE OF JPVT(K).
          *
          *     IF JPVT(K) .GT. 0, THEN X(K) IS AN INITIAL                               ELEMENT.
@@ -8070,26 +8419,26 @@ mainLoop:
          *     IF JPVT(K) .LT. 0, THEN X(K) IS A FINAL ELEMENT.
          *
          *  BEFORE THE DECOMPOSITION IS COMPUTED, INITIAL ELEMENTS    ARE MOVED BY SYMMETRIC ROW AND COLUMN INTERCHANGES
-         * TO    THE BEGINNING OF THE ARRAY covarMat AND FINAL    ELEMENTS TO THE END.  BOTH INITIAL AND FINAL ELEMENTS
+         * TO    THE BEGINNING OF THE ARRAY jacobian AND FINAL    ELEMENTS TO THE END.  BOTH INITIAL AND FINAL ELEMENTS
          *   ARE FROZEN IN PLACE DURING THE COMPUTATION AND ONLY    FREE ELEMENTS ARE MOVED.  AT THE K-TH STAGE OF THE
-         *  REDUCTION, IF covarMat(K,K) IS OCCUPIED BY A FREE ELEMENT    IT IS INTERCHANGED WITH THE LARGEST FREE
-         * ELEMENT    covarMat(L,L) WITH L .GE. K.  JPVT IS NOT REFERENCED IF    JOB .EQ. 0.
+         *  REDUCTION, IF jacobian(K,K) IS OCCUPIED BY A FREE ELEMENT    IT IS INTERCHANGED WITH THE LARGEST FREE
+         * ELEMENT    jacobian(L,L) WITH L .GE. K.  JPVT IS NOT REFERENCED IF    JOB .EQ. 0.
          *
          * JOB     INTEGER.    JOB IS AN INTEGER THAT INITIATES COLUMN PIVOTING.    IF JOB .EQ. 0, NO PIVOTING IS DONE.
          * IF JOB .NE. 0, PIVOTING IS DONE.
          *
          * ON RETURN
          *
-         * covarMat      covarMat CONTAINS IN ITS UPPER HALF THE CHOLESKY FACTOR    OF THE MATRIX covarMat AS IT HAS BEEN
+         * jacobian      jacobian CONTAINS IN ITS UPPER HALF THE CHOLESKY FACTOR    OF THE MATRIX jacobian AS IT HAS BEEN
          * PERMUTED BY PIVOTING.
          *
-         * JPVT   JPVT(J) CONTAINS THE INDEX OF THE DIAGONAL ELEMENT    OF covarMat THAT WAS MOVED INTO THE J-TH POSITION,
+         * JPVT   JPVT(J) CONTAINS THE INDEX OF THE DIAGONAL ELEMENT    OF jacobian THAT WAS MOVED INTO THE J-TH POSITION,
          *    PROVIDED PIVOTING WAS REQUESTED.
          *
          * INFO   CONTAINS THE (INDEX+1) OF THE LAST POSITIVE DIAGONAL    ELEMENT OF THE CHOLESKY FACTOR.
          *
          * FOR POSITIVE DEFINITE MATRICES INFO = nn IS THE NORMAL RETURN. FOR PIVOTING WITH POSITIVE SEMIDEFINITE
-         * MATRICES INFO WILL IN GENERAL BE LESS THAN nn.  HOWEVER, INFO MAY BE GREATER THAN THE RANK OF covarMat,
+         * MATRICES INFO WILL IN GENERAL BE LESS THAN nn.  HOWEVER, INFO MAY BE GREATER THAN THE RANK OF jacobian,
          * SINCE ROUNDING ERROR CAN CAUSE AN OTHERWISE ZERO ELEMENT TO BE POSITIVE. INDEFINITE SYSTEMS WILL ALWAYS
          * CAUSE INFO TO BE LESS THAN nn. */
 
@@ -8128,31 +8477,31 @@ mainLoop:
                 }
 
                 for (i = 0; i <= (pl - 1); i++) {
-                    temp = covarMat[i][k];
-                    covarMat[i][k] = covarMat[i][pl];
-                    covarMat[i][pl] = temp;
+                    temp = jacobian[i][k];
+                    jacobian[i][k] = jacobian[i][pl];
+                    jacobian[i][pl] = temp;
                 }
 
-                temp = covarMat[k][k];
-                covarMat[k][k] = covarMat[pl][pl];
-                covarMat[pl][pl] = temp;
+                temp = jacobian[k][k];
+                jacobian[k][k] = jacobian[pl][pl];
+                jacobian[pl][pl] = temp;
                 plp1 = pl + 1;
 
                 for (j = plp1; j < nn; j++) {
 
                     if (j < k) {
-                        temp = covarMat[pl][j];
-                        covarMat[pl][j] = covarMat[j][k];
-                        covarMat[j][k] = temp;
+                        temp = jacobian[pl][j];
+                        jacobian[pl][j] = jacobian[j][k];
+                        jacobian[j][k] = temp;
                     } else {
 
                         if (j == k) {
                             continue;
                         }
 
-                        temp = covarMat[k][j];
-                        covarMat[k][j] = covarMat[pl][j];
-                        covarMat[pl][j] = temp;
+                        temp = jacobian[k][j];
+                        jacobian[k][j] = jacobian[pl][j];
+                        jacobian[pl][j] = temp;
                     }
                 } // for (j = plp1; j < nn; j++)
 
@@ -8179,31 +8528,31 @@ mainLoop:
                 }
 
                 for (i = 0; i <= (k - 1); i++) {
-                    temp = covarMat[i][k];
-                    covarMat[i][k] = covarMat[i][pu];
-                    covarMat[i][pu] = temp;
+                    temp = jacobian[i][k];
+                    jacobian[i][k] = jacobian[i][pu];
+                    jacobian[i][pu] = temp;
                 }
 
-                temp = covarMat[k][k];
-                covarMat[k][k] = covarMat[pu][pu];
-                covarMat[pu][pu] = temp;
+                temp = jacobian[k][k];
+                jacobian[k][k] = jacobian[pu][pu];
+                jacobian[pu][pu] = temp;
                 kp1 = k + 1;
 
                 for (j = kp1; j < nn; j++) {
 
                     if (j < pu) {
-                        temp = covarMat[k][j];
-                        covarMat[k][j] = covarMat[j][pu];
-                        covarMat[j][pu] = temp;
+                        temp = jacobian[k][j];
+                        jacobian[k][j] = jacobian[j][pu];
+                        jacobian[j][pu] = temp;
                     } else {
 
                         if (j == pu) {
                             continue;
                         }
 
-                        temp = covarMat[k][j];
-                        covarMat[k][j] = covarMat[pu][j];
-                        covarMat[pu][j] = temp;
+                        temp = jacobian[k][j];
+                        jacobian[k][j] = jacobian[pu][j];
+                        jacobian[pu][j] = temp;
                     }
                 } // for (j = kp1; j < nn; j++) {
 
@@ -8220,7 +8569,7 @@ mainLoop:
 
             // REDUCTION LOOP.
 
-            maxdia = covarMat[k][k];
+            maxdia = jacobian[k][k];
             kp1 = k + 1;
             maxl = k;
 
@@ -8230,10 +8579,10 @@ mainLoop:
 
                 for (l = kp1; l <= pu; l++) {
 
-                    if (covarMat[l][l] > maxdia) {
-                        maxdia = covarMat[l][l];
+                    if (jacobian[l][l] > maxdia) {
+                        maxdia = jacobian[l][l];
                         maxl = l;
-                    } // if (covarMat[l][l] > maxdia)
+                    } // if (jacobian[l][l] > maxdia)
                 } // for (l = kp1; l <= pu; l++)
             } // if ((k >= pl) && (k < pu))
 
@@ -8252,13 +8601,13 @@ mainLoop:
                 km1 = k - 1;
 
                 for (i = 0; i <= km1; i++) {
-                    temp = covarMat[i][k];
-                    covarMat[i][k] = covarMat[i][maxl];
-                    covarMat[i][maxl] = temp;
+                    temp = jacobian[i][k];
+                    jacobian[i][k] = jacobian[i][maxl];
+                    jacobian[i][maxl] = temp;
                 }
 
-                covarMat[maxl][maxl] = covarMat[k][k];
-                covarMat[k][k] = maxdia;
+                jacobian[maxl][maxl] = jacobian[k][k];
+                jacobian[k][k] = maxdia;
                 jp = jpvt[maxl];
                 jpvt[maxl] = jpvt[k];
                 jpvt[k] = jp;
@@ -8266,31 +8615,31 @@ mainLoop:
 
             // REDUCTION STEP. PIVOTING IS CONTAINED ACROSS THE ROWS.
 
-            w0[k] = Math.sqrt(covarMat[k][k]);
-            covarMat[k][k] = w0[k];
+            w0[k] = Math.sqrt(jacobian[k][k]);
+            jacobian[k][k] = w0[k];
 
             for (j = kp1; j < nn; j++) {
 
                 if (k != maxl) {
 
                     if (j < maxl) {
-                        temp = covarMat[k][j];
-                        covarMat[k][j] = covarMat[j][maxl];
-                        covarMat[j][maxl] = temp;
+                        temp = jacobian[k][j];
+                        jacobian[k][j] = jacobian[j][maxl];
+                        jacobian[j][maxl] = temp;
                     } // if (j < maxl)
                     else if (j != maxl) {
-                        temp = covarMat[k][j];
-                        covarMat[k][j] = covarMat[maxl][j];
-                        covarMat[maxl][j] = temp;
+                        temp = jacobian[k][j];
+                        jacobian[k][j] = jacobian[maxl][j];
+                        jacobian[maxl][j] = temp;
                     } // else if (j != maxl)
                 } // if (k != maxl)
 
-                covarMat[k][j] = covarMat[k][j] / w0[k];
-                w0[j] = covarMat[k][j];
-                temp = -covarMat[k][j];
+                jacobian[k][j] = jacobian[k][j] / w0[k];
+                w0[j] = jacobian[k][j];
+                temp = -jacobian[k][j];
 
                 for (i = 0; i <= j-k-1; i++) {
-                    covarMat[kp1+i][j] = covarMat[kp1+i][j] + (temp * w0[kp1+i]);
+                    jacobian[kp1+i][j] = jacobian[kp1+i][j] + (temp * w0[kp1+i]);
                 } // for (i = 0; i <= j-k-1; i++)
             } // for (j = kp1; j < nn; j++)
         } // for (k = 0; k < nn; k++)
@@ -8330,12 +8679,12 @@ mainLoop:
         // residuals[] CONTAINS THE VECTOR OF RESIDUALS AT CURRENT POINT
         // v[] CONTAINS THE ORTHOGONAL PROJECTION OF -residuals ONTO THE
         // SPACE SPANNED BY THE COLUMNS THE JACOBIAN AT CURRENT POINT
-        // covarMat[][] double 2D array OF DIMENSION nPts*param
+        // jacobian[][] double 2D array OF DIMENSION nPts*param
         // CONTAINING THE MATRIX R FROM THE
         // DECOMPOSITION    T
         // Q *J*D*E = (R)
         // (0)           (2)
-        // IN THE UPPER TRIANGLE OF covarMat
+        // IN THE UPPER TRIANGLE OF jacobian
         // WHERE
         // Q IS ORTHOGONAL (nPts*nPts)
         // J IS THE JACOBIAN (nPts*param) AT THE CURRENT POINT
@@ -8352,7 +8701,7 @@ mainLoop:
         // THE COMPUTED SOLUTION dx OF SYSTEM (1)
         // w0[] COMPLETELY DESTROYED
         // v[] COMPLETELY DESTROYED
-        // covarMat[][] COMPLETELY DESTROYED
+        // jacobian[][] COMPLETELY DESTROYED
         // errorStatus CONTAINS = -3 IF THE MATRIX gmat IN SYSTEM (1)
         // IS NOT POSITIVE DEFINITE
         // < -10 IF A USER STOP IS INDICATED
@@ -8385,25 +8734,25 @@ mainLoop:
         // FIRST FORM Q *residuals BY USING SQRSL AND STORE IN w1
 
         nn = param - constraintAct;
-        sqrsl(covarMat, nPts, nn, w0, residuals, dummy, w1, dummy, dummy, dummy, 1000);
+        sqrsl(jacobian, nPts, nn, w0, residuals, dummy, w1, dummy, dummy, dummy, 1000);
 
         // T
         // FORM  -(R :0)*w1 AND STORE IN dx
 
         rtrw1(nn);
         // T
-        // FORM  covarMat = R *R
+        // FORM  jacobian = R *R
 
         jtrj(nn);
         /*Preferences.debug("R(tr)*R\n", Preferences.DEBUG_ALGORITHM);
-         * for (i = 0; i < nn; i++) { for (j = 0; j < nn; j++) {     Preferences.debug(covarMat[i][j] + " ", 
+         * for (i = 0; i < nn; i++) { for (j = 0; j < nn; j++) {     Preferences.debug(jacobian[i][j] + " ", 
          * Preferences.DEBUG_ALGORITHM); }
          * Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);}*/
 
         // COMPUTE HESSIANS G   AND FORM FINAL MATRIX gmat OF SYSTEM (2)
         // K
 
-        // THE 4 FIRST COLUMNS OF ARRAY covarMat ARE USED AS WORKING STORAGE
+        // THE 4 FIRST COLUMNS OF ARRAY jacobian ARE USED AS WORKING STORAGE
         // INSIDE THE ROUTINE HESS
 
         errorStatus = 0;
@@ -8438,32 +8787,32 @@ mainLoop:
         } // if (internalScaling)
 
         // DO THE PIVOTING OF COLUMNS AND ROWS IN MATRIX gmat
-        // AND ADD TO MATRIX covarMat
+        // AND ADD TO MATRIX jacobian
         for (i = 0; i < nn; i++) {
             l = pivit[i];
 
             for (j = i; j < nn; j++) {
                 k = pivit[j];
-                covarMat[i][j] = covarMat[i][j] + gmat[l][k];
+                jacobian[i][j] = jacobian[i][j] + gmat[l][k];
                 // write(10,*) GMAT(L,K)
             } // for (j = i; j < nn; j++)
         } // for (i = 0; i < nn; i++)
 
-        // PERFORM CHOLESKY DECOMPOSITION OF MATRIX covarMat
+        // PERFORM CHOLESKY DECOMPOSITION OF MATRIX jacobian
 
         schdc(nn, idummy, 0);
         errorStatus = 0;
 
         if (nn != info) {
 
-            // MATRIX covarMat IS NOT POSITIVE DEFINITE
+            // MATRIX jacobian IS NOT POSITIVE DEFINITE
             errorStatus = -3;
 
             return;
         } // if (nn != info)
 
         // T    T
-        // SOLVE SYSTEM   covarMat*DY = -(R 0)*Q *residuals
+        // SOLVE SYSTEM   jacobian*DY = -(R 0)*Q *residuals
 
         sposl(nn);
 
@@ -8534,7 +8883,7 @@ mainLoop:
 	        }
         }
 
-        // Compute Jacobian at the current point and store in covarMat
+        // Compute Jacobian at the current point and store in jacobian
         imax = -1;
         errorStatus = 0;
         newunc();
@@ -8548,7 +8897,7 @@ mainLoop:
             g[i] = 0.0;
 
             for (j = 0; j < nPts; j++) {
-                g[i] = g[i] + (covarMat[j][i] * residuals[j]);
+                g[i] = g[i] + (jacobian[j][i] * residuals[j]);
             }
         }
 
@@ -8622,7 +8971,7 @@ mainLoop:
             w1[i] = -residuals[i];
         }
 
-        sqrsl(covarMat, nPts, param, w0, w1, dummy, w1, w2, dummy, dummy, 1000);
+        sqrsl(jacobian, nPts, param, w0, w1, dummy, w1, w2, dummy, dummy, 1000);
 
         // Try each bounded column to see what predicted reduction it gives
 
@@ -8679,7 +9028,7 @@ mainLoop:
 
                 // Zero the kth column below its (param - constraintAct)+1 element
                 for (j = 0; j < param; j++) {
-                    work[j] = covarMat[j][k];
+                    work[j] = jacobian[j][k];
 
                     if (j > k) {
                         work[j] = 0.0;
@@ -8717,10 +9066,10 @@ mainLoop:
                 if (outputMes) {
 	                Preferences.debug("SOLIUC: work[kk] = " + work[kk] + "\n", Preferences.DEBUG_ALGORITHM);
 	                Preferences.debug("SOLIUC:tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
-	                Preferences.debug("SOLIUC:covarMat[0][0] = " + covarMat[0][0] + "\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("SOLIUC:jacobian[0][0] = " + jacobian[0][0] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                if (Math.abs(work[kk]) <= (tol * Math.abs(covarMat[0][0]))) {
+                if (Math.abs(work[kk]) <= (tol * Math.abs(jacobian[0][0]))) {
                     continue;
                 }
 
@@ -8792,7 +9141,7 @@ mainLoop:
             if (kmax != kk) {
 
                 for (j = 0; j < param; j++) {
-                    work[j] = covarMat[j][kmax];
+                    work[j] = jacobian[j][kmax];
 
                     if (j > kmax) {
                         work[j] = 0.0;
@@ -8835,13 +9184,13 @@ mainLoop:
 
             // V := Q*H*(D1)
             // ( 0)
-            sqrsl(covarMat, nPts, param, w0, w2, v, dummy, dummy, dummy, dummy, 10000);
+            sqrsl(jacobian, nPts, param, w0, w2, v, dummy, dummy, dummy, dummy, 10000);
 
             // Move column kmax to column kk
             if (kmax != kk) {
 
                 for (jj = 0; jj <= kk; jj++) {
-                    covarMat[jj][kk] = work[jj];
+                    jacobian[jj][kk] = work[jj];
                 }
             } // if (kmax != kk)
 
@@ -8890,11 +9239,11 @@ mainLoop:
      */
     private void sposl(int nn) {
         // SPOSL SOLVES THE REAL SYMMETRIC POSITIVE DEFINITE SYSTEM
-        // covarMat * X = dx
+        // jacobian * X = dx
 
         // ON ENTRY
 
-        // covarMat double[nn][nn]
+        // jacobian double[nn][nn]
 
         // dx double[nn]
         // THE RIGHT HAND SIDE VECTOR.
@@ -8920,21 +9269,21 @@ mainLoop:
             t = 0.0;
 
             for (j = 0; j <= (k - 1); j++) {
-                t = t + covarMat[j][k] * dx[j];
+                t = t + jacobian[j][k] * dx[j];
             }
 
-            dx[k] = (dx[k] - t) / covarMat[k][k];
+            dx[k] = (dx[k] - t) / jacobian[k][k];
         } // for (k = 0; k < nn; k++)
 
         // SOLVE R*X = Y
 
         for (kb = 1; kb <= nn; kb++) {
             k = nn - kb;
-            dx[k] = dx[k] / covarMat[k][k];
+            dx[k] = dx[k] / jacobian[k][k];
             t = -dx[k];
 
             for (j = 0; j <= (k - 1); j++) {
-                dx[j] = dx[j] + (t * covarMat[j][k]);
+                dx[j] = dx[j] + (t * jacobian[j][k]);
             }
         } // for (kb = 1; kb <= nn; kb++)
 
@@ -9618,7 +9967,7 @@ mainLoop:
         // = 1 IF GAUSS-NEWTON DIRECTION
         // = -1 IF SUBSPACE DIRECTION
         // = -2 IF NEWTON DIRECTION
-        // pseudoRank INTEGER SCALAR CONTAINING PSEUDO RANK OF MATRIX covarMat
+        // pseudoRank INTEGER SCALAR CONTAINING PSEUDO RANK OF MATRIX jacobian
         // bl[] double 1D ARRAY OF DIMENSION param CONTAINING
         // THE LOWER BOUNDS OF THE UNKNOWNS
         // bu[] double 1D ARRAY OF DIMENSION param CONTAINING
@@ -9835,9 +10184,9 @@ mainLoop:
     private void strsl(int prank[], double[] b) {
         // STRSL SOLVES SYSTEMS OF THE FORM
 
-        // covarMat * X = B
+        // jacobian * X = B
 
-        // WHERE covarMat IS AN UPPER TRIANGULAR MATRIX OF ORDER pseudoRank
+        // WHERE jacobian IS AN UPPER TRIANGULAR MATRIX OF ORDER pseudoRank
 
         // ON RETURN
 
@@ -9854,7 +10203,7 @@ mainLoop:
 
         for (info = 0; info < prank[0]; info++) {
 
-            if (covarMat[info][info] == 0.0) {
+            if (jacobian[info][info] == 0.0) {
             	info++;
                 return;
             }
@@ -9863,19 +10212,19 @@ mainLoop:
         info = 0;
 
 
-        // SOLVE covarMat*X=B FOR covarMat UPPER TRIANGULAR.
+        // SOLVE jacobian*X=B FOR jacobian UPPER TRIANGULAR.
 
-        b[prank[0] - 1] = b[prank[0] - 1] / covarMat[prank[0] - 1][prank[0] - 1];
+        b[prank[0] - 1] = b[prank[0] - 1] / jacobian[prank[0] - 1][prank[0] - 1];
 
         for (jj = 2; jj <= prank[0]; jj++) {
             j = prank[0] - jj;
             temp = -b[j + 1];
 
             for (k = 0; k <= j; k++) {
-                b[k] = b[k] + (temp * covarMat[k][j + 1]);
+                b[k] = b[k] + (temp * jacobian[k][j + 1]);
             }
 
-            b[j] = b[j] / covarMat[j][j];
+            b[j] = b[j] / jacobian[j][j];
         }
 
         return;
@@ -9907,12 +10256,12 @@ mainLoop:
         // dxnorm CONTAINS THE NORM OF THE GN-DIRECTION CONTAINED IN dx
         // residuals CONTAINS THE VECTOR OF RESIDUALS AT CURRENT POINT
         // nPts CONTAINS LENGTH OF THE ARRAYS residuals, v, and w1
-        // covarMat[][] DOUBLE 2D ARRAY OF DIMENSION nPts*param
+        // jacobian[][] DOUBLE 2D ARRAY OF DIMENSION nPts*param
         // CONTAINING THE MATRIX R FROM THE
         // DECOMPOSITION    T
         // Q *J*D*E = (R)
         // (0)
-        // IN THE UPPER TRIANGLE OF covarMat
+        // IN THE UPPER TRIANGLE OF jacobian
         // WHERE
         // Q IS ORTHOGONAL (nPts*nPts)
         // J IS THE JACOBIAN (nPts*param) AT THE TERMINATING POINT
@@ -10230,19 +10579,19 @@ mainLoop:
      * @return  DOCUMENT ME!
      */
     private void triunc(double tol, int constraintAct, int prank[]) {
-        // MAKE A QR-DECOMPOSITION OF THE nPts*param MATRIX covarMat BY USING THE ROUTINE SQRDC FROM LINPACK I.E.
-        // DETEMINE MATRICES Q,E,R SO THAT      T                                          Q *covarMat*E = (R)
+        // MAKE A QR-DECOMPOSITION OF THE nPts*param MATRIX jacobian BY USING THE ROUTINE SQRDC FROM LINPACK I.E.
+        // DETEMINE MATRICES Q,E,R SO THAT      T                                          Q *jacobian*E = (R)
         //                                                (0) WHERE  Q IS nPts*nPts ORTHOGONAL E IS param*param
         // PERMUTATION MATRIX R IS param*param UPPER TRIANGULAR
 
         // ON ENTRY
 
-        // residuals[]  contains the right hand side in covarMat*dx = residuals
-        // covarMat[][] CONTAINS THE nPts*param MATRIX TO DECOMPOSE
+        // residuals[]  contains the right hand side in jacobian*dx = residuals
+        // jacobian[][] CONTAINS THE nPts*param MATRIX TO DECOMPOSE
         // nPts    NO. OF ROWS IN MATRIX C
         // param   NO. OF COLUMNS IN MATRIX C
         // tol  A SMALL POSITIVE VALUE USED TO DETERMINE PSEUDO RANK OF
-        // MATRIX covarMat  (SEE pseudoRank)
+        // MATRIX jacobian  (SEE pseudoRank)
         // constraintAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
         // aset[] INTEGER 1D ARRAY OF DIMENSION param CONTAINING A CODE
         // WHICH INDICATES WHETHER AN UNKNOWN IS ACTIVE OR NOT.
@@ -10252,7 +10601,7 @@ mainLoop:
 
         // ON RETURN
 
-        // THE ARRAYS covarMat,pivit AND w0 CONTAIN THE CORRESPONDING OUTPUT FROM
+        // THE ARRAYS jacobian,pivit AND w0 CONTAIN THE CORRESPONDING OUTPUT FROM
         // LINPACK ROUTINE SQRDC
         // ABS(R[0,0]) >= ABS(R[1,1]) >=.......>=ABS(R[param-1,param-1])
 
@@ -10275,14 +10624,14 @@ mainLoop:
             }
         } // for (i = 0; i < param; i++)
 
-        // DECOMPOSE MATRIX covarMat
+        // DECOMPOSE MATRIX jacobian
 
-        sqrdc(covarMat, nPts, param, w0, pivit, 1);
+        sqrdc(jacobian, nPts, param, w0, pivit, 1);
 
         // DETERMINE PSEUDO RANK
 
         k = -1;
-        r11 = Math.abs(covarMat[0][0]);
+        r11 = Math.abs(jacobian[0][0]);
         nn = param - constraintAct;
 
         if (nn == 0) {
@@ -10292,7 +10641,7 @@ mainLoop:
 
         for (i = 0; i < nn; i++) {
 
-            if (Math.abs(covarMat[i][i]) >= tol) {
+            if (Math.abs(jacobian[i][i]) >= tol) {
                 k = i;
             }
         } // for (i = 0; i < nn; i++)
@@ -10301,7 +10650,7 @@ mainLoop:
 
             for (j = 0; j < nn; j++) {
 
-                if (Math.abs(covarMat[j][j]) <= (tol * r11)) {
+                if (Math.abs(jacobian[j][j]) <= (tol * r11)) {
                     break;
                 }
 
