@@ -151,12 +151,11 @@ public class PlugInDialogStrokeSegmentationSIR extends JDialogStandaloneScriptab
     
     private boolean isDicomListenerRun = false;
     
-    // TODO
-    private StrokeSegmentationDicomReceiverPWI listenerParent;
+    private StrokeSegmentationDicomReceiverSIR listenerParent;
     
-    private static final String svnVersion = "$Rev:$";
+    private static final String svnVersion = "$Rev$";
 
-    private static final String svnLastUpdate = "$Date:$";
+    private static final String svnLastUpdate = "$Date$";
     
     private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
     
@@ -205,7 +204,7 @@ public class PlugInDialogStrokeSegmentationSIR extends JDialogStandaloneScriptab
     /**
      * Constructor for DICOM catcher.
      */
-    public PlugInDialogStrokeSegmentationSIR(final StrokeSegmentationDicomReceiverPWI parent, final String dicomDir, boolean noFlair) {
+    public PlugInDialogStrokeSegmentationSIR(final StrokeSegmentationDicomReceiverSIR parent, final String dicomDir, boolean noFlair) {
         super(false);
 
         setVisible(false);
