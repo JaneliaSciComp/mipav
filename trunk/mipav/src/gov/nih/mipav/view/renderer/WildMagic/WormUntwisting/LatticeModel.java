@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -386,6 +387,15 @@ public class LatticeModel {
 	 */
 	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, boolean isCurve )
 	{		
+		// load the existing annotation file - use it to determine which annotations need untwisting.
+		VOI originalAnnotation = LatticeModel.readAnnotationsCSV(dir + File.separator + fileName );
+
+		if ( originalAnnotation != null ) {
+			// look for changes in annotations - build list to untwist:
+			VOI changed = annotationChanged( annotations, originalAnnotation );
+			if ( changed.getCurves().size() == 0 ) return;
+		}
+		
 		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
 		//		System.err.println("Saving annotations list: " + dir + "  " + fileName );
 		int numSaved = 0;
@@ -2442,7 +2452,9 @@ public class LatticeModel {
 	 */
 	public void saveLattice(final String directory, final String fileName)
 	{
-		saveLattice(directory, fileName, lattice );
+		if ( latticeChanged() ) {
+			saveLattice(directory, fileName, lattice );
+		}
 	}
 	
 	
@@ -9273,11 +9285,17 @@ public class LatticeModel {
 		long contourChanged = contourFile.lastModified();
 		
 		ModelImage currentContourImage = contourImage;
-		if ( latticeChanged < contourChanged ) {
+		if ( latticeChanged > contourChanged ) {
+//			Date latticeDate = new Date(latticeChanged);
+//			Date contourDate = new Date(contourChanged);
+//			System.err.println( lattice.getPath() + "  " + latticeDate );
+//			System.err.println( contourFile.getPath() + "  " + contourDate );
+//			System.err.println( (latticeChanged < contourChanged) );
+			
 			// lattice was changed more recently than the contour image - restraighten all.
 			untwistAll = true;
 		}		
-		if ( latticeChanged() || untwistAll ) 
+		if ( untwistAll || latticeChanged() ) 
 		{
 			System.err.println( "lattice changed" );
 			initializeInterpolation(true);
@@ -9313,8 +9331,9 @@ public class LatticeModel {
 
 		VOI originalStraight = null;
 		// if the twisted file has changed since straightened - then straighten all:
-		if ( twistedChanged < straightChanged ) {
+		if ( twistedChanged > straightChanged ) {
 			untwistAll = true;
+			System.err.println("annotations changed");
 		}		
 		// load the straightened annotations - if they exist.
 		if ( file.exists() && !untwistAll ) {	
@@ -9399,7 +9418,7 @@ public class LatticeModel {
 			}
 		}
 		else {
-			System.err.println("untwisting some...");
+			System.err.println("untwisting some... " + changed.getCurves().size() );
 
 			// remove change from original straight:
 			for ( int i = 0; i < changed.getCurves().size(); i++ ) {      
@@ -10439,7 +10458,7 @@ public class LatticeModel {
 	}
 	
 
-	private VOI annotationChanged( VOI annotationsNew, VOI annotationOld ) {
+	private static VOI annotationChanged( VOI annotationsNew, VOI annotationOld ) {
 		VOI annotationsChangeList = new VOI( (short)0, "changed annotations", VOI.ANNOTATION, 0 );
 		
 		for ( int i = 0; i < annotationsNew.getCurves().size(); i++ ) {
