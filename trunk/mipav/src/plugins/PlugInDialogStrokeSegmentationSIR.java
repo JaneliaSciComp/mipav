@@ -1442,37 +1442,51 @@ public class PlugInDialogStrokeSegmentationSIR extends JDialogStandaloneScriptab
                             String seriesDesc = (String)((FileInfoDicom)img.getFileInfo(0)).getTagTable().getValue("0008,103E");
                             String protocolName = (String)((FileInfoDicom)img.getFileInfo(0)).getTagTable().getValue("0018,1030");
                             
-                            for (String val : imageType.split("\\\\")) {
-                                if (isADC(val)) {
-                                    // some studies are transmitted with both 'reg' and unmodified versions of the data
-                                    // choose the 'reg' version if we previously found a different ADC series 
-                                    if (foundADC && isRegisteredVol(seriesDesc, protocolName)) {
-                                        adcPath = file.getAbsolutePath();
-                                        adcImageMultifile = true;
-                                        foundADC = true;
-                                        break;
-                                    } else if (!foundADC) {
-                                        // new ADC volume, and we hadn't encountered one before
-                                        adcPath = file.getAbsolutePath();
-                                        adcImageMultifile = true;
-                                        foundADC = true;
-                                        break;
-                                    }
-                                } else if (isDWI(val)) {
-                                    // some studies are transmitted with both 'reg' and unmodified versions of the data
-                                    // choose the 'reg' version if we previously found a different ADC series 
-                                    if (foundDWI && isRegisteredVol(seriesDesc, protocolName)) {
-                                        dwiPath = file.getAbsolutePath();
-                                        dwiImageMultifile = true;
-                                        foundDWI = true;
-                                        break;
-                                    } else if (!foundDWI) {
-                                        // new ADC volume, and we hadn't encountered one before
-                                        dwiPath = file.getAbsolutePath();
-                                        dwiImageMultifile = true;
-                                        foundDWI = true;
-                                        break;
-                                    }
+                            if (isFlair(seriesDesc)) {
+                                // some studies are transmitted with both 'reg' and unmodified versions of the data
+                                // choose the 'reg' version if we previously found a different FLAIR series 
+                                if (foundFlair && isRegisteredVol(seriesDesc, protocolName)) {
+                                    flairPath = file.getAbsolutePath();
+                                    flairImageMultifile = true;
+                                    foundFlair = true;
+                                } else if (!foundFlair) {
+                                    // new FLAIR volume, and we hadn't encountered one before
+                                    flairPath = file.getAbsolutePath();
+                                    flairImageMultifile = true;
+                                    foundFlair = true;
+                                }
+                            } else {
+                                for (String val : imageType.split("\\\\")) {
+                                    if (isADC(val)) {
+                                        // some studies are transmitted with both 'reg' and unmodified versions of the data
+                                        // choose the 'reg' version if we previously found a different ADC series 
+                                        if (foundADC && isRegisteredVol(seriesDesc, protocolName)) {
+                                            adcPath = file.getAbsolutePath();
+                                            adcImageMultifile = true;
+                                            foundADC = true;
+                                            break;
+                                        } else if (!foundADC) {
+                                            // new ADC volume, and we hadn't encountered one before
+                                            adcPath = file.getAbsolutePath();
+                                            adcImageMultifile = true;
+                                            foundADC = true;
+                                            break;
+                                        }
+                                    } else if (isDWI(val)) {
+                                        // some studies are transmitted with both 'reg' and unmodified versions of the data
+                                        // choose the 'reg' version if we previously found a different ADC series 
+                                        if (foundDWI && isRegisteredVol(seriesDesc, protocolName)) {
+                                            dwiPath = file.getAbsolutePath();
+                                            dwiImageMultifile = true;
+                                            foundDWI = true;
+                                            break;
+                                        } else if (!foundDWI) {
+                                            // new ADC volume, and we hadn't encountered one before
+                                            dwiPath = file.getAbsolutePath();
+                                            dwiImageMultifile = true;
+                                            foundDWI = true;
+                                            break;
+                                        }
 //                                } else if (isPWI(val)) {
 //                                    // some studies are transmitted with both 'reg' and unmodified versions of the data
 //                                    // choose the 'reg' version if we previously found a different PWI series 
@@ -1488,20 +1502,6 @@ public class PlugInDialogStrokeSegmentationSIR extends JDialogStandaloneScriptab
 //                                        foundPWI = true;
 //                                        break;
 //                                    }
-                                } else if (isFlair(val)) {
-                                    // some studies are transmitted with both 'reg' and unmodified versions of the data
-                                    // choose the 'reg' version if we previously found a different FLAIR series 
-                                    if (foundFlair && isRegisteredVol(seriesDesc, protocolName)) {
-                                        flairPath = file.getAbsolutePath();
-                                        flairImageMultifile = true;
-                                        foundFlair = true;
-                                        break;
-                                    } else if (!foundFlair) {
-                                        // new FLAIR volume, and we hadn't encountered one before
-                                        flairPath = file.getAbsolutePath();
-                                        flairImageMultifile = true;
-                                        foundFlair = true;
-                                        break;
                                     }
                                 }
                             }
@@ -1542,7 +1542,7 @@ public class PlugInDialogStrokeSegmentationSIR extends JDialogStandaloneScriptab
 //        return (imgType.equalsIgnoreCase("FFE") || imgType.equalsIgnoreCase("M_FFE") || imgType.equalsIgnoreCase("PERFUSION"));
 //    }
     
-    public static final boolean isFlair(final String imgType) {
-        return (imgType.equalsIgnoreCase("FLAIR"));
+    public static final boolean isFlair(final String seriesDesc) {
+        return (seriesDesc.toUpperCase().contains("FLAIR"));
     }
 }
