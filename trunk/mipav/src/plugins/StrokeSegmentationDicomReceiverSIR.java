@@ -363,29 +363,30 @@ public class StrokeSegmentationDicomReceiverSIR {
                             foundRegSeries = true;
                         }
                         
-                        for (String val : imageTypes) {
-                            if (PlugInDialogStrokeSegmentationSIR.isADC(val)) {
-                                adcFiles.add(file);
-                                adcAttrList.add(attr);
-                                foundADC = true;
-                                break;
-                            } else if (PlugInDialogStrokeSegmentationSIR.isDWI(val)) {
-                                dwiFiles.add(file);
-                                dwiAttrList.add(attr);
-                                foundDWI = true;
-                                break;
-                            } else if (PlugInDialogStrokeSegmentationSIR.isFlair(val)) {
-                                flairFiles.add(file);
-                                flairAttrList.add(attr);
-                                foundFlair = true;
-                                break;
-                            }
+                        if (PlugInDialogStrokeSegmentationSIR.isFlair(seriesDesc)) {
+                            flairFiles.add(file);
+                            flairAttrList.add(attr);
+                            foundFlair = true;
+                        } else {
+                            for (String val : imageTypes) {
+                                if (PlugInDialogStrokeSegmentationSIR.isADC(val)) {
+                                    adcFiles.add(file);
+                                    adcAttrList.add(attr);
+                                    foundADC = true;
+                                    break;
+                                } else if (PlugInDialogStrokeSegmentationSIR.isDWI(val)) {
+                                    dwiFiles.add(file);
+                                    dwiAttrList.add(attr);
+                                    foundDWI = true;
+                                    break;
+                                }
 //                            } else if (PlugInDialogStrokeSegmentationPWI.isPWI(val)) {
 //                                pwiFiles.add(file);
 //                                pwiAttrList.add(attr);
 //                                foundPWI = true;
 //                                break;
 //                            }
+                            }
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
