@@ -111,6 +111,136 @@ import gov.nih.mipav.view.*;
  *  a2 = -0.1769447 with internal scaling = true.
     BIGGS_EXP6 OK with chi-squared = 0 solution.
  *  PENALTY_FUNCTION_I OK.
+ *  PENALTY_FUNCTION_II OK with param = 4
+ *  PENALTY_FUNCtion_II with param = 10 does not converge with maxIterations = 10000000 and answers for 1 million and 10 
+ *  million iterations are absolutely identical. 3 of the 4 chi-squared are very close to the ideal value of 2.93660E-4,
+ *  but the parameter values are very different from those of LsqFit
+ *  Penalty function II with n = 10
+Correct answer has chi-squared = 2.93660...E-4
+Internal scaling = false Numerical Jacobian used
+Number of iterations: 10000001
+Chi-squared: 3.002492168567197E-4
+a0 = 0.19999478546758126
+a1 = 0.0285365606599054
+a2 = 0.0661059212513758
+a3 = -0.06063192219725466
+a4 = 0.011713447587566012
+a5 = -0.10468516690043322
+a6 = 0.003491439920141337
+a7 = 0.16492949984502547
+a8 = -0.12287151714301903
+a9 = 0.6037703429348312
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+Internal scaling = false Analytical Jacobian used
+Number of iterations: 10000001
+Chi-squared: 3.002490822745956E-4
+a0 = 0.19999478551035854
+a1 = 0.028536576799087537
+a2 = 0.06610600170915126
+a3 = -0.06062135848171171
+a4 = 0.011712303116841793
+a5 = -0.10468509711590496
+a6 = 0.003492247333546361
+a7 = 0.1649393712385019
+a8 = -0.12287155953972051
+a9 = 0.6037703119174397
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+Internal scaling = true Numerical Jacobian used
+Number of iterations: 10000001
+Chi-squared: 2.9662353438340074E-4
+a0 = 0.19999862278572708
+a1 = 0.12496487646412854
+a2 = 0.13120817726447517
+a3 = 0.018132972808236815
+a4 = 0.018127174175692026
+a5 = 0.1409409655828402
+a6 = 0.14542549939273094
+a7 = 0.1482077910196497
+a8 = 0.1573085327414286
+a9 = 0.13474946583534053
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+Internal scaling = true Analytical Jacobian used
+Number of iterations: 10000001
+Chi-squared: 93.31972019208233
+a0 = 0.3556963276923803
+a1 = 0.006794612320859872
+a2 = 0.48666671368513836
+a3 = 0.48977452708819397
+a4 = 0.5040227691859763
+a5 = 0.5140827273508548
+a6 = 0.5292962647299809
+a7 = 0.5373587032812943
+a8 = 0.5662756606604831
+a9 = 0.5878469281964818
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+
+
+Correct answer has chi-squared = 2.93660...E-4
+Internal scaling = false Numerical Jacobian used
+Number of iterations: 1000001
+Chi-squared: 3.002492168567197E-4
+a0 = 0.19999478546758126
+a1 = 0.0285365606599054
+a2 = 0.0661059212513758
+a3 = -0.06063192219725466
+a4 = 0.011713447587566012
+a5 = -0.10468516690043322
+a6 = 0.003491439920141337
+a7 = 0.16492949984502547
+a8 = -0.12287151714301903
+a9 = 0.6037703429348312
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+Internal scaling = false Analytical Jacobian used
+Number of iterations: 1000001
+Chi-squared: 3.002490822745956E-4
+a0 = 0.19999478551035854
+a1 = 0.028536576799087537
+a2 = 0.06610600170915126
+a3 = -0.06062135848171171
+a4 = 0.011712303116841793
+a5 = -0.10468509711590496
+a6 = 0.003492247333546361
+a7 = 0.1649393712385019
+a8 = -0.12287155953972051
+a9 = 0.6037703119174397
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+Internal scaling = true Numerical Jacobian used
+Number of iterations: 1000001
+Chi-squared: 2.9662353438340074E-4
+a0 = 0.19999862278572708
+a1 = 0.12496487646412854
+a2 = 0.13120817726447517
+a3 = 0.018132972808236815
+a4 = 0.018127174175692026
+a5 = 0.1409409655828402
+a6 = 0.14542549939273094
+a7 = 0.1482077910196497
+a8 = 0.1573085327414286
+a9 = 0.13474946583534053
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+Internal scaling = true Analytical Jacobian used
+Number of iterations: 1000001
+Chi-squared: 93.31972019208233
+a0 = 0.3556963276923803
+a1 = 0.006794612320859872
+a2 = 0.48666671368513836
+a3 = 0.48977452708819397
+a4 = 0.5040227691859763
+a5 = 0.5140827273508548
+a6 = 0.5292962647299809
+a7 = 0.5373587032812943
+a8 = 0.5662756606604831
+a9 = 0.5878469281964818
+Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
+
+VARIABLY_DIMENSIONED_FUNCTION OK.
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -605,6 +735,14 @@ public abstract class NLConstrainedEngine {
     /** DOCUMENT ME! */
     private double x1Minrm, x2Minrm, x3Minrm;
     
+    private double sqrtem5 = Math.sqrt(1.0E-5);
+    
+    private double p1sqrtem5 = 0.1 * sqrtem5;
+    
+    private double exp0p1 = Math.exp(0.1);
+    
+    private double expap1[] = null;
+    
     protected boolean outputMes = false;
     
     private boolean testMode = false; 
@@ -657,7 +795,9 @@ public abstract class NLConstrainedEngine {
     
     private final int PENALTY_FUNCTION_I = 23;
     
-    private final int HOCK25 = 25;
+    private final int PENALTY_FUNCTION_II = 24;
+    
+    private final int VARIABLY_DIMENSIONED_FUNCTION = 25;
     
     private final int BROWN_ALMOST_LINEAR = 27;
     
@@ -668,6 +808,8 @@ public abstract class NLConstrainedEngine {
     private final int LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS = 34;
     
     private final int CHEBYQUAD = 35;
+    
+    private final int HOCK25 = 45;
     
     private final int LEVMAR_ROSENBROCK = 50;
     
@@ -691,7 +833,7 @@ public abstract class NLConstrainedEngine {
     	int i;
     	// Below is an example used to fit y = a0 - a1*(a2**x)
     	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
-    	// Norman R. Draper and Harry Smith */
+    	// Norman R. Draper and Harry Smith 
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
     	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
@@ -2458,6 +2600,102 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
+        Preferences.debug("Penalty function I with n = 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 7.08765...E-5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = PENALTY_FUNCTION_I;
+        nPts = 11;
+        param = 10;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = i+1;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Penalty function II with param = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 8.94441...E-6\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = PENALTY_FUNCTION_II;
+        nPts = 8;
+        param = 4;
+        ySeries = new double[nPts];
+        for (i = 0; i < nPts; i++) {
+        	ySeries[i] = Math.exp(i/10.0) + Math.exp((i+1.0)/10.0);
+        }
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = 0.5;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        expap1 = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Penalty function II with n = 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 2.93660...E-4\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = PENALTY_FUNCTION_II;
+        nPts = 20;
+        param = 10;
+        ySeries = new double[nPts];
+        for (i = 0; i < nPts; i++) {
+        	ySeries[i] = Math.exp(i/10.0) + Math.exp((i+1.0)/10.0);
+        }
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = 0.5;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        expap1 = new double[param];
+        driverCalls();
+        expap1 = null;
+        
+        Preferences.debug("Variably dimensioned function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1 a1 = 1 a2 = 1 a3 = 1\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges correctly in 9 iterations
+        testMode = true;
+        testCase = VARIABLY_DIMENSIONED_FUNCTION;
+        nPts = 6;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0 - (i+1.0)/param;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -2474,7 +2712,7 @@ public abstract class NLConstrainedEngine {
             this.nPts = nPts;
             this.param = param;
 
-            maxIterations = 200 * param;
+            maxIterations = 10000 * param;
             bl = new double[param];
             bu = new double[param];
             residuals = new double[nPts];
@@ -2559,7 +2797,7 @@ public abstract class NLConstrainedEngine {
         	try {
                 
 
-                maxIterations = 4000 * param;
+                maxIterations = 100000 * param;
                 residuals = new double[nPts];
                 pivit = new int[param];
                 aset = new int[param];
@@ -3618,7 +3856,7 @@ public abstract class NLConstrainedEngine {
                 case PENALTY_FUNCTION_I:
                 	if ((ctrl == -1) || (ctrl == 1)) {
                 		for (i = 0; i < param; i++) {
-                    		residuals[i] = Math.sqrt(1.0E-5)*(a[i] - 1.0);
+                    		residuals[i] = sqrtem5*(a[i] - 1.0);
                     	}
                     	residuals[param] = -0.25;
                     	for (i = 0; i < param; i++) {
@@ -3633,11 +3871,94 @@ public abstract class NLConstrainedEngine {
                         		}
                         	}
                         	for (i = 0; i < param; i++) {
-                        		jacobian[i][i] = Math.sqrt(1.0E-5);
+                        		jacobian[i][i] = sqrtem5;
                         	}
                         	for (i = 0; i < param; i++) {
                         		jacobian[param][i] = 2*a[i];
                         	}    
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case PENALTY_FUNCTION_II:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		for (i = 0; i < param; i++) {
+                			expap1[i] = Math.exp(0.1*a[i]);
+                		}
+                		residuals[0] = a[0] - 0.2;
+                    	for (i = 1; i <= param-1; i++) {
+                    		residuals[i] = sqrtem5*(expap1[i] + expap1[i-1] - ySeries[i]); 
+                    	}
+                    	for (i = param; i < 2*param-1; i++) { 
+                    		residuals[i] = sqrtem5*(expap1[i-param+1] - exp0p1);
+                    	}
+                    	residuals[2*param-1] = -1.0;
+                    	for (i = 1; i <= param; i++) {
+                    		residuals[2*param-1] += (param-i+1)*a[i-1]*a[i-1];
+                    	}	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < param; i++) {
+                    			expap1[i] = Math.exp(0.1*a[i]);
+                    		}
+                			for (i = 0; i < nPts; i++) {
+                        		for (int j = 0; j < param; j++) {
+                        			jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                        	jacobian[0][0] = 1.0;
+                        	for (i = 1; i <= param-1; i++) {
+                        		jacobian[i][i-1] = p1sqrtem5*expap1[i-1];
+                        		jacobian[i][i] = p1sqrtem5*expap1[i];
+                        	}
+                        	for (i = param; i < 2*param-1; i++) {
+                        		jacobian[i][i-param+1] = p1sqrtem5*expap1[i-param+1];
+                        	}
+                        	for (i = 1; i <= param; i++) {
+                        		jacobian[2*param-1][i-1] = (param-i+1)*2.0*a[i-1];
+                        	}	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case VARIABLY_DIMENSIONED_FUNCTION:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		for (i = 0; i < param; i++) {
+                    		residuals[i] = a[i] - 1.0;
+                    	}
+                    	residuals[param] = 0.0;
+                    	for (i = 1; i <= param; i++) {
+                    		residuals[param] += i*(a[i-1] - 1.0);
+                    	}
+                    	residuals[param+1] = residuals[param]*residuals[param];	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			double residualsparam = 0.0;
+                        	for (i = 1; i <= param; i++) {
+                        		residualsparam += i*(a[i-1] - 1.0);
+                        	}
+                        	for (i = 0; i < nPts; i++) {
+                        		for (int j = 0; j < param; j++) {
+                        			jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                        	for (i = 0; i < param; i++) {
+                        		jacobian[i][i] = 1.0;
+                        	}
+                        	for (i = 0; i < param; i++) {
+                        		jacobian[param][i] = i+1;
+                        	}
+                        	for (i = 0; i < param; i++) {
+                        		jacobian[param+1][i] = 2.0*(i+1)*residualsparam;
+                        	}	
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
