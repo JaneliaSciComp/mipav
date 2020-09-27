@@ -147,6 +147,8 @@ end
     
     private final int VARIABLY_DIMENSIONED_FUNCTION = 25;
     
+    private final int TRIGONOMETRIC = 26;
+    
     private final int BROWN_ALMOST_LINEAR = 27;
     
     private final int LINEAR_FULL_RANK = 32;
@@ -230,6 +232,7 @@ end
     	// BOX_3D converges correctly for initial_lambda = 1.0E-2
     	// 4.) LEVMAR_ROSENBROCK converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
     	// 5.) HATFLDB converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
+    	// 6.) TRIGONOMETRIC converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
     	// Problems handled correctly by LsqFit with initial lambda = 10 but not handled correctly by ELSUNC port NLConstrainedEngine
     	// 1.) PENALTY_FUNCTION_II with n = 10 yields chi-squared = 2.9334573252876657E-4 while ELSUNC port with internal scaling = true
     	//     and numerical Jacobian yields slightly higher chi-squared = 2.9662353438340074E-4.
@@ -1992,6 +1995,32 @@ end
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Trigonometric function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 with a0 = 0.08918066 a1 = 0.09406982 a2 = 0.10034911 a3 = 0.38088103\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to incorrect values
+        // Number of iterations: 209
+        // x[0] = 0.14716366941527287
+        // x[1] = 0.1621445717724061
+        // x[2] = 0.429434652714779
+        // x[3] = 0.21674374255177303
+        // residual = 3.254317856424979E-4
+        // converged = true
+        testMode = true;
+        testCase = TRIGONOMETRIC;
+        m = 4;
+        n = 4;
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0/n;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     }
     
     private void dumpTestResults() {
@@ -2340,6 +2369,15 @@ end
             		residuals[n] += i*(x[i-1] - 1.0);
             	}
             	residuals[n+1] = residuals[n]*residuals[n];
+            	break;
+            case TRIGONOMETRIC:
+            	double firstPart = n;
+            	for (i = 0; i < n; i++) {
+            		firstPart -= Math.cos(x[i]);
+            	}
+            	for (i = 0; i < n; i++) {
+            		residuals[i] = firstPart + (i + 1.0)*(1.0 - Math.cos(x[i])) - Math.sin(x[i]);
+            	}
             	break;
             } // switch (testCase)
             
@@ -2843,6 +2881,16 @@ end
             	}
             	for (i = 0; i < n; i++) {
             		J[n+1][i] = 2.0*(i+1)*residualsn;
+            	}
+            	break;
+            case TRIGONOMETRIC:
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = Math.sin(x[i]);
+            		}
+            	}
+            	for (i = 0; i < n; i++) {
+            		J[i][i] += (i + 1.0)*Math.sin(x[i]) - Math.cos(x[i]);
             	}
             	break;
             } // switch (testCase)
