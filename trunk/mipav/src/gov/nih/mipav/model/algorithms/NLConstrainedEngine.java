@@ -241,6 +241,46 @@ a9 = 0.5878469281964818
 Abnormal termination because the number of iterations has exceeded the maximum allowed iterations
 
 VARIABLY_DIMENSIONED_FUNCTION OK.
+TRIGONOMETRIC OK
+Internal scaling = false Numerical Jacobian used
+Number of iterations: 5
+Chi-squared: 1.142776084941917E-15
+a0 = 0.08918061051299953
+a1 = 0.09406976489199986
+a2 = 0.10034904968474631
+a3 = 0.38088098474194093
+Normal termination because we are computing at noise level
+The last steps were computed with no trouble (Gauss-Newton the last 3 steps)
+
+Internal scaling = false Analytical Jacobian used
+Number of iterations: 23
+Chi-squared: 8.719183630300321E-15
+a0 = 0.08918066404325345
+a1 = 0.09406982283498819
+a2 = 0.10034911410583434
+a3 = 0.3808810322278159
+Normal termination because we are computing at noise level
+The steplength was not unit in both the last two steps
+
+Internal scaling = true Numerical Jacobian used
+Number of iterations: 5
+Chi-squared: 1.1427597720291614E-15
+a0 = 0.08918061051326497
+a1 = 0.0940697648919004
+a2 = 0.10034904968492026
+a3 = 0.3808809847417249
+Normal termination because we are computing at noise level
+The last steps were computed with no trouble (Gauss-Newton the last 3 steps)
+
+Internal scaling = true Analytical Jacobian used
+Number of iterations: 23
+Chi-squared: 8.719183598995605E-15
+a0 = 0.0891806640432534
+a1 = 0.09406982283498815
+a2 = 0.10034911410583447
+a3 = 0.3808810322278161
+Normal termination because we are computing at noise level
+The steplength was not unit in both the last two steps
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -798,6 +838,8 @@ public abstract class NLConstrainedEngine {
     private final int PENALTY_FUNCTION_II = 24;
     
     private final int VARIABLY_DIMENSIONED_FUNCTION = 25;
+    
+    private final int TRIGONOMETRIC = 26;
     
     private final int BROWN_ALMOST_LINEAR = 27;
     
@@ -2696,6 +2738,27 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
+        Preferences.debug("Trigonometric function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = TRIGONOMETRIC;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0/param;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -3958,6 +4021,33 @@ public abstract class NLConstrainedEngine {
                         	}
                         	for (i = 0; i < param; i++) {
                         		jacobian[param+1][i] = 2.0*(i+1)*residualsparam;
+                        	}	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case TRIGONOMETRIC:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		double firstPart = param;
+                    	for (i = 0; i < param; i++) {
+                    		firstPart -= Math.cos(a[i]);
+                    	}
+                    	for (i = 0; i < param; i++) {
+                    		residuals[i] = firstPart + (i + 1.0)*(1.0 - Math.cos(a[i])) - Math.sin(a[i]);
+                    	}	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		for (int j = 0; j < param; j++) {
+                        			jacobian[i][j] = Math.sin(a[i]);
+                        		}
+                        	}
+                        	for (i = 0; i < param; i++) {
+                        		jacobian[i][i] += (i + 1.0)*Math.sin(a[i]) - Math.cos(a[i]);
                         	}	
                 		} // if (analyticalJacobian)
                 		else {
