@@ -68,10 +68,10 @@ end
 	private boolean testMode = true;
 	protected double x_tol =1e-8; // search tolerance in x
 	protected double g_tol = 1e-12; //  search tolerance in gradient
-	protected int maxIter = 100000; // maximum number of iterations
+	protected int maxIter = 100000000; // maximum number of iterations
     protected double min_step_quality = 1e-3; // for steps below this quality, the trust region is shrinked
     protected double good_step_quality = 0.75; // for steps above this quality, the trust region is expanded
-	protected double initial_lambda = 10; // (inverse of) initial trust region radius
+	protected double initial_lambda = 10.0; // (inverse of) initial trust region radius
     protected double tau = Double.POSITIVE_INFINITY; // set initial trust region radius using the heuristic : tau*maximum(jacobian(df)'*jacobian(df))
 	protected double lambda_increase = 10.0; // lambda` is multiplied by this factor after step below min quality
 	protected double lambda_decrease = 0.1; // lambda` is multiplied by this factor after good quality steps
@@ -93,6 +93,10 @@ end
     private boolean converged;
     private double tdata[];
     private double ydata[];
+    private double sqrtem5 = Math.sqrt(1.0E-5);
+    private double p1sqrtem5 = 0.1 * sqrtem5;
+    private double expap1[] = null;
+    private double exp0p1 = Math.exp(0.1);
     private int testCase;
     
     private final int DRAPER24D = 0;
@@ -139,7 +143,9 @@ end
     
     private final int PENALTY_FUNCTION_I = 23;
     
-    private final int HOCK25 = 25;
+    private final int PENALTY_FUNCTION_II = 24;
+    
+    private final int VARIABLY_DIMENSIONED_FUNCTION = 25;
     
     private final int BROWN_ALMOST_LINEAR = 27;
     
@@ -150,6 +156,8 @@ end
     private final int LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS = 34;
     
     private final int CHEBYQUAD = 35;
+    
+    private final int HOCK25 = 45;
     
     private final int LEVMAR_ROSENBROCK = 50;
     
@@ -215,17 +223,21 @@ end
     public LsqFit() {
     	// Problems not handled correctly by LsqFit with initial lambda = 10 but handled correctly by ELSUNC port NLConstrainedEngine:
     	// 1.) KOWALIK_AND_OSBORNE at 100 * standard starting point constrained converges to incorrect values
-    	// 2.) MEYER at 18 * standard starting point constrained exits due to singular matrix
+    	// Works for initial_lambda = 1.0E-3
+    	// 2.) MEYER at 10 * standard starting point constrained exits due to singular matrix
+    	// Converges to correct values for initial_lambda = 1.0E-8 in 238 iterations.
     	// 3.) BOX_3D converges to incorrect values
-    	// 4.) LEVMAR_ROSENBROCK converges to incorrect values
-    	// 5.) POWELL_2_PARAMETER does not converge to an answer
-    	// 6.) HATFLDB converges to incorrect values
-    	// 7.) PENALTY_FUNCTION_I does not converge
+    	// BOX_3D converges correctly for initial_lambda = 1.0E-2
+    	// 4.) LEVMAR_ROSENBROCK converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
+    	// 5.) HATFLDB converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
+    	// Problems handled correctly by LsqFit with initial lambda = 10 but not handled correctly by ELSUNC port NLConstrainedEngine
+    	// 1.) PENALTY_FUNCTION_II with n = 10 yields chi-squared = 2.9334573252876657E-4 while ELSUNC port with internal scaling = true
+    	//     and numerical Jacobian yields slightly higher chi-squared = 2.9662353438340074E-4.
     	int i;
-    	testMode = true;
+    
     	// Below is an example used to fit y = a0 - a1*(a2**x)
     	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
-    	// Norman R. Draper and Harry Smith */
+    	// Norman R. Draper and Harry Smith
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works with geodesicAcceleration true and false in 11 and 15 iterations
     	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
@@ -785,13 +797,7 @@ end
         // x[2] = 100.0
         // residual = 3.890044452557155E9
         // converged = true
-        // Changing initial_lambda to 1.0E-9 results in a correct solution:
-        // Number of iterations: 239
-        // x[0] = 0.005609636383286036
-        // x[1] = 6181.346359304068
-        // x[2] = 345.2236350621298
-        // residual = 87.94585517086705
-        // converged = true
+        // Changing initial_lambda to 1.0E-8 results in a correct solution in 238 iterations
         Preferences.debug("Meyer function 10 * standard starting point constrained\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Y = a0*exp[a1/(x + a2)]\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n", Preferences.DEBUG_ALGORITHM);
@@ -1552,16 +1558,16 @@ end
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
         
-        // Does not converge to an answer
-        // Number of iterations: 100000
-        // x[0] = 1.8887516473664823
-        // x[1] = 2.0337494109576155E-4
-        // residual = 93.76366048170557
-        // converged = false
         Preferences.debug("Powell's 2 parameter function\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(0) = a0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(0) = 10.0*a0/(a0 + 0.1) + 2*a1*a1\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer a0 = 0 a1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        // Answer taken as correct
+        // Number of iterations: 13027567
+        // x[0] = -3.8277962611875006E-13
+        // x[1] = -4.375559467834932E-6
+        // residual = 1.466912945940288E-25
+        // converged = true
         testMode = true;
         testCase = POWELL_2_PARAMETER;
         m = 2;
@@ -1665,7 +1671,7 @@ end
         // residual = 0.04681159553142556
         // converged = true
         Preferences.debug("hatfldb problem\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("Correct answer has a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0.0055728 with a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HATFLDB;
         m = 4;
@@ -1875,14 +1881,7 @@ end
         Preferences.debug("Penalty function I with n = 4\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer has chi-squared = 2.24997...E-5\n", Preferences.DEBUG_ALGORITHM);
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // Penalty function I does not converge:
-        // Number of iterations: 100000
-        // x[0] = 0.001536280090449339
-        // x[1] = 0.9943055509283468
-        // x[2] = 2.4148771867824728
-        // x[3] = 3.5744519759012867
-        // residual = 374.3059110827778
-        // converged = false 
+        // Penalty function I with n = 4 converges with 841996 iterations.
         // Works with ELSUNC port
         testMode = true;
         testCase = PENALTY_FUNCTION_I;
@@ -1891,6 +1890,102 @@ end
         initial_x = new double[n];
         for (i = 0; i < n; i++) {
         	initial_x[i] = i+1;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Penalty function I with n = 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 7.08765...E-5\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges correctly in 2592432 iterations
+        testMode = true;
+        testCase = PENALTY_FUNCTION_I;
+        m = 11;
+        n = 10;
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = i+1;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Penalty function II with n = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 8.94441...E-6\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct values in 469 iterations
+        testMode = true;
+        testCase = PENALTY_FUNCTION_II;
+        m = 8;
+        n = 4;
+        ydata = new double[m];
+        for (i = 0; i < m; i++) {
+        	ydata[i] = Math.exp(i/10.0) + Math.exp((i+1.0)/10.0);
+        }
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 0.5;
+        }
+        lower = null;
+        upper = null;
+        expap1 = new double[n];
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Penalty function II with n = 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 2.93660...E-4\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Penalty function II with n = 10 converges with 644573 iterations:
+        // Number of iterations: 644573
+        // x[0] = 0.19998276968815284
+        // x[1] = 0.012390339348010785
+        // x[2] = 0.021522271428805872
+        // x[3] = 0.033825939069065704
+        // x[4] = 0.05137426095496671
+        // x[5] = 0.0774702442696175
+        // x[6] = 0.11875450811732874
+        // x[7] = 0.1907641081535566
+        // x[8] = 0.3424961158007975
+        // x[9] = 0.37542238457853844
+        // residual = 2.9334573252876657E-4
+        // converged = true
+        testMode = true;
+        testCase = PENALTY_FUNCTION_II;
+        m = 20;
+        n = 10;
+        ydata = new double[m];
+        for (i = 0; i < m; i++) {
+        	ydata[i] = Math.exp(i/10.0) + Math.exp((i+1.0)/10.0);
+        }
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 0.5;
+        }
+        lower = null;
+        upper = null;
+        expap1 = new double[n];
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        expap1 = null;
+        
+        Preferences.debug("Variably dimensioned function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1 a1 = 1 a2 = 1 a3 = 1\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges correctly in 9 iterations
+        testMode = true;
+        testCase = VARIABLY_DIMENSIONED_FUNCTION;
+        m = 6;
+        n = 4;
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = 1.0 - (i+1.0)/n;
         }
         lower = null;
         upper = null;
@@ -2213,12 +2308,38 @@ end
             	break;
             case PENALTY_FUNCTION_I:
             	for (i = 0; i < n; i++) {
-            		residuals[i] = Math.sqrt(1.0E-5)*(x[i] - 1.0);
+            		residuals[i] = sqrtem5*(x[i] - 1.0);
             	}
             	residuals[n] = -0.25;
             	for (j = 0; j < n; j++) {
             		residuals[n] += (x[j]*x[j]);
             	}
+            	break;
+            case PENALTY_FUNCTION_II:
+            	for (i = 0; i < n; i++) {
+            		expap1[i] = Math.exp(0.1*x[i]);
+            	}
+            	residuals[0] = x[0] - 0.2;
+            	for (i = 1; i <= n-1; i++) {
+            		residuals[i] = sqrtem5*(expap1[i] + expap1[i-1] - ydata[i]); 
+            	}
+            	for (i = n; i < 2*n-1; i++) { 
+            		residuals[i] = sqrtem5*(expap1[i-n+1] - exp0p1);
+            	}
+            	residuals[2*n-1] = -1.0;
+            	for (i = 1; i <= n; i++) {
+            		residuals[2*n-1] += (n-i+1)*x[i-1]*x[i-1];
+            	}
+            	break;
+            case VARIABLY_DIMENSIONED_FUNCTION:
+            	for (i = 0; i < n; i++) {
+            		residuals[i] = x[i] - 1.0;
+            	}
+            	residuals[n] = 0.0;
+            	for (i = 1; i <= n; i++) {
+            		residuals[n] += i*(x[i-1] - 1.0);
+            	}
+            	residuals[n+1] = residuals[n]*residuals[n];
             	break;
             } // switch (testCase)
             
@@ -2677,10 +2798,51 @@ end
             		}
             	}
             	for (i = 0; i < n; i++) {
-            		J[i][i] = Math.sqrt(1.0E-5);
+            		J[i][i] = sqrtem5;
             	}
             	for (j = 0; j < n; j++) {
             		J[n][j] = 2*x[j];
+            	}
+            	break;
+            case PENALTY_FUNCTION_II:
+            	for (i = 0; i < n; i++) {
+            		expap1[i] = Math.exp(0.1*x[i]);
+            	}
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = 0.0;
+            		}
+            	}
+            	J[0][0] = 1.0;
+            	for (i = 1; i <= n-1; i++) {
+            		J[i][i-1] = p1sqrtem5*expap1[i-1];
+            		J[i][i] = p1sqrtem5*expap1[i];
+            	}
+            	for (i = n; i < 2*n-1; i++) {
+            		J[i][i-n+1] = p1sqrtem5*expap1[i-n+1];
+            	}
+            	for (i = 1; i <= n; i++) {
+            		J[2*n-1][i-1] = (n-i+1)*2.0*x[i-1];
+            	}
+            	break;
+            case VARIABLY_DIMENSIONED_FUNCTION:
+            	double residualsn = 0.0;
+            	for (i = 1; i <= n; i++) {
+            		residualsn += i*(x[i-1] - 1.0);
+            	}
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = 0.0;
+            		}
+            	}
+            	for (i = 0; i < n; i++) {
+            		J[i][i] = 1.0;
+            	}
+            	for (i = 0; i < n; i++) {
+            		J[n][i] = i+1;
+            	}
+            	for (i = 0; i < n; i++) {
+            		J[n+1][i] = 2.0*(i+1)*residualsn;
             	}
             	break;
             } // switch (testCase)
