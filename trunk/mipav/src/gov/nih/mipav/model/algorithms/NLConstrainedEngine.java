@@ -281,6 +281,9 @@ a2 = 0.10034911410583447
 a3 = 0.3808810322278161
 Normal termination because we are computing at noise level
 The steplength was not unit in both the last two steps
+DISCRETE_BOUNDARY_VALUE OK
+DISCRETE_INTEGRAL OK
+BROYDEN_TRIDIAGONAL OK
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -843,6 +846,12 @@ public abstract class NLConstrainedEngine {
     
     private final int BROWN_ALMOST_LINEAR = 27;
     
+    private final int DISCRETE_BOUNDARY_VALUE = 28;
+    
+    private final int DISCRETE_INTEGRAL = 29;
+    
+    private final int BROYDEN_TRIDIAGONAL = 30;
+    
     private final int LINEAR_FULL_RANK = 32;
     
     private final int LINEAR_RANK1 = 33;
@@ -873,6 +882,7 @@ public abstract class NLConstrainedEngine {
 
     public NLConstrainedEngine() {
     	int i;
+    	double h;
     	// Below is an example used to fit y = a0 - a1*(a2**x)
     	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
     	// Norman R. Draper and Harry Smith 
@@ -2759,6 +2769,78 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
+        Preferences.debug("Discrete boundary value function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = DISCRETE_BOUNDARY_VALUE;
+        nPts = 4;
+        param = 4;
+        h = 1.0/(param + 1.0);
+        xSeries = new double[param];
+        for (i = 0; i < param; i++) {
+        	xSeries[i] = (i + 1.0)*h;
+        }
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = xSeries[i] * (xSeries[i] - 1.0);
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Discrete integral function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = DISCRETE_INTEGRAL;
+        nPts = 4;
+        param = 4;
+        h = 1.0/(param + 1.0);
+        xSeries = new double[param];
+        for (i = 0; i < param; i++) {
+        	xSeries[i] = (i + 1.0)*h;
+        }
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = xSeries[i] * (xSeries[i] - 1.0);
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Broyden tridiagonal function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = BROYDEN_TRIDIAGONAL;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = -1;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -2896,6 +2978,9 @@ public abstract class NLConstrainedEngine {
         public void fitToTestFunction(double[] a, double[] residuals, double[][] jacobian) {
             int ctrl;
             int i;
+            int j;
+            double h;
+            double prod;
             double ymodel = 0.0;
 
             try {
@@ -3293,7 +3378,6 @@ public abstract class NLConstrainedEngine {
                 		double sum1;
                 		double sum2;
                 		double t[] = new double[29];
-                		int j;
                 	    for (i = 0; i < 31; i++) {
                 	    	if (i < 29) {
                 	            t[i] = (i+1.0)/29.0;
@@ -3319,7 +3403,6 @@ public abstract class NLConstrainedEngine {
                 		if (analyticalJacobian) {
                     		double sum2;
                     		double t[] = new double[29];
-                    		int j;
                     	    for (i = 0; i < 31; i++) {
                     	    	if (i < 29) {
                     	            t[i] = (i+1.0)/29.0;
@@ -3370,7 +3453,7 @@ public abstract class NLConstrainedEngine {
                 		if (analyticalJacobian) {
                 			double prodParam;
                 			for (i = 0; i < nPts - 1; i++) {
-                				for (int j = 0; j < nPts; j++) {
+                				for (j = 0; j < nPts; j++) {
                 				    if (i == j) {
                 				    	jacobian[i][j] = 2.0;
                 				    }
@@ -3381,7 +3464,7 @@ public abstract class NLConstrainedEngine {
                 			}
                 			for (i = 0; i < nPts; i++) {
                 				prodParam = 1.0;
-                				for (int j = 0; j < nPts; j++) {
+                				for (j = 0; j < nPts; j++) {
                 					if (i != j) {
                 						prodParam = prodParam*a[j];
                 					}
@@ -3411,7 +3494,7 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
 	                		for (i = 0; i < param; i++) {
-	                		    for (int j = 0; j < param; j++) {
+	                		    for (j = 0; j < param; j++) {
 	                		        if (i == j) {
 	                		        	jacobian[i][j] = 1.0 - 2.0/nPts;
 	                		        }
@@ -3421,7 +3504,7 @@ public abstract class NLConstrainedEngine {
 	                		    }
 	                		} // for (i = 0; i < param; i++)
 	                		for (i = param; i < nPts; i++) {
-	                			for (int j = 0; j < param; j++) {
+	                			for (j = 0; j < param; j++) {
 	                			    jacobian[i][j] = -2.0/nPts;
 	                			}
 	                		} // for (i = param; i < nPts; i++)
@@ -3445,7 +3528,7 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
                 		    for (i = 0; i < nPts; i++) {
-                		    	for (int j = 0; j < param; j++) {
+                		    	for (j = 0; j < param; j++) {
                 		    		jacobian[i][j] = (i+1.0)*(j+1.0);
                 		    	}
                 		    }
@@ -3470,14 +3553,14 @@ public abstract class NLConstrainedEngine {
                 	} // if ((ctrl == -1) || (ctrl == 1)
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                			for (int j = 0; j < param; j++) {
+                			for (j = 0; j < param; j++) {
                 				jacobian[0][j] = 0.0;
                 				jacobian[nPts-1][j] = 0.0;
                 			}
                 		    for (i = 1; i < nPts-1; i++) {
                 		    	jacobian[i][0] = 0.0;
                 		    	jacobian[i][param-1] = 0.0;
-                		    	for (int j = 1; j < param-1; j++) {
+                		    	for (j = 1; j < param-1; j++) {
                 		    		jacobian[i][j] = i*(j+1.0);
                 		    	}
                 		    }
@@ -3493,7 +3576,7 @@ public abstract class NLConstrainedEngine {
                 		double chebySum;
                 	    for (i = 1; i <= nPts; i++) {
                 	        chebySum = 0.0;
-                	        for (int j = 0; j < param; j++) {
+                	        for (j = 0; j < param; j++) {
                 	        	chebySum += shiftedChebyshev(a[j],i);
                 	        }
                 	        if ((i % 2) == 1) {
@@ -3507,7 +3590,7 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
 	                		for (i = 1; i <= nPts; i++) {
-	                		    for (int j = 0; j < param; j++) {
+	                		    for (j = 0; j < param; j++) {
 	                		    	jacobian[i-1][j] = shiftedChebyshevDerivative(a[j],i)/param;
 	                		    }
 	                		}
@@ -3741,7 +3824,6 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
                 			double R, R5, R6, R7, R8, R9, R10;
-                			int j;
 
                 			  R=10;
                 			  R5=0.193;
@@ -3929,7 +4011,7 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
                 			for (i = 0; i < param; i++) {
-                        		for (int j = 0; j < param; j++) {
+                        		for (j = 0; j < param; j++) {
                         		    jacobian[i][j] = 0.0;
                         		}
                         	}
@@ -3969,7 +4051,7 @@ public abstract class NLConstrainedEngine {
                     			expap1[i] = Math.exp(0.1*a[i]);
                     		}
                 			for (i = 0; i < nPts; i++) {
-                        		for (int j = 0; j < param; j++) {
+                        		for (j = 0; j < param; j++) {
                         			jacobian[i][j] = 0.0;
                         		}
                         	}
@@ -4009,7 +4091,7 @@ public abstract class NLConstrainedEngine {
                         		residualsparam += i*(a[i-1] - 1.0);
                         	}
                         	for (i = 0; i < nPts; i++) {
-                        		for (int j = 0; j < param; j++) {
+                        		for (j = 0; j < param; j++) {
                         			jacobian[i][j] = 0.0;
                         		}
                         	}
@@ -4042,13 +4124,133 @@ public abstract class NLConstrainedEngine {
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
                 			for (i = 0; i < nPts; i++) {
-                        		for (int j = 0; j < param; j++) {
+                        		for (j = 0; j < param; j++) {
                         			jacobian[i][j] = Math.sin(a[i]);
                         		}
                         	}
                         	for (i = 0; i < param; i++) {
                         		jacobian[i][i] += (i + 1.0)*Math.sin(a[i]) - Math.cos(a[i]);
                         	}	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case DISCRETE_BOUNDARY_VALUE:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		h = 1.0/(param + 1.0);
+                    	prod = (a[0] + xSeries[0] + 1);
+                    	prod = h*h*prod*prod*prod/2.0;
+                    	residuals[0] = 2.0*a[0] - a[1] + prod;
+                    	for (i = 1; i < param-1; i++) {
+                    		prod = (a[i] + xSeries[i] + 1);
+                    		prod = h*h*prod*prod*prod/2.0;
+                    		residuals[i] = 2*a[i] - a[i-1] - a[i+1] + prod;
+                    	}
+                    	prod = (a[param-1] + xSeries[param-1] + 1);
+                    	prod = h*h*prod*prod*prod/2.0;
+                    	residuals[param-1] = 2.0*a[param-1] - a[param-2] + prod;	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		for (j = 0; j < param; j++) {
+                        			jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                        	h = 1.0/(param + 1.0);
+                        	prod = (a[0] + xSeries[0] + 1);
+                        	prod = h*h*prod*prod*prod/2.0;
+                        	jacobian[0][0] = 2.0 + 3.0*h*h*prod*prod/2.0;
+                        	jacobian[0][1] = -1.0;
+                        	for (i = 1; i < param-1; i++) {
+                        		prod = (a[i] + xSeries[i] + 1);
+                        		prod = h*h*prod*prod*prod/2.0;
+                        		jacobian[i][i-1] = -1.0;
+                        		jacobian[i][i] = 2.0 + 3.0*h*h*prod*prod/2.0;
+                        		jacobian[i][i+1] = -1.0;
+                        	}
+                        	prod = (a[param-1] + xSeries[param-1] + 1);
+                        	prod = h*h*prod*prod*prod/2.0;
+                        	jacobian[param-1][param-2] = -1.0;
+                        	jacobian[param-1][param-1] = 2.0 + 3.0*h*h*prod*prod/2.0;	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case DISCRETE_INTEGRAL:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		h = 1.0/(param+1.0);
+                        double cubed[] = new double[param];
+                        for (i = 0; i < param; i++) {
+                            prod = (a[i] + xSeries[i] + 1.0);
+                            cubed[i] = prod*prod*prod;
+                        }
+                        for (i = 0; i < param; i++) {
+                             double firstSum = 0.0;
+                             for (j = 0; j <= i; j++) {
+                            	 firstSum += xSeries[j]*cubed[j];
+                             }
+                             double secondSum = 0.0;
+                             for (j = i+1; j < param; j++) {
+                            	 secondSum += (1.0 - xSeries[j])*cubed[j];
+                             }
+                             residuals[i] = a[i] + h * ((1.0 - xSeries[i])*firstSum + xSeries[i]*secondSum)/2.0;
+                        }	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			h = 1.0/(param+1.0);
+                            double squared[] = new double[param];
+                            for (i = 0; i < param; i++) {
+                            	prod = (a[i] + xSeries[i] + 1.0);
+                            	squared[i] = 3.0*prod*prod;
+                            }
+                            for (i = 0; i < param; i++) {
+                            	for (j = 0; j < i; j++) {
+                            		jacobian[i][j] = h*(1.0 - xSeries[i])*xSeries[j]*squared[j]/2.0;
+                            	}
+                            	jacobian[i][i] = 1.0 + h*(1.0 - xSeries[i])*xSeries[i]*squared[i]/2.0;
+                            	for (j = i+1; j < param; j++) {
+                            		jacobian[i][j] = h*xSeries[i]*(1.0 - xSeries[j])*squared[j]/2.0;
+                            	}
+                            }	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case BROYDEN_TRIDIAGONAL:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = (3.0 - 2.0*a[0])*a[0] - 2.0*a[1] + 1.0;
+                    	for (i = 1; i < param-1; i++) {
+                    		residuals[i] = (3.0 - 2.0*a[i])*a[i] - a[i-1] - 2.0*a[i+1] + 1.0;
+                    	}
+                    	residuals[param-1] = (3.0 - 2.0*a[param-1])*a[param-1] - a[param-2] + 1.0;	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		for (j = 0; j < param; j++) {
+                        			jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                        	jacobian[0][0] = 3.0 - 4.0*a[0];
+                        	jacobian[0][1] = -2.0;
+                        	for (i = 1; i < param-1; i++) {
+                        		jacobian[i][i-1] = -1.0;
+                        		jacobian[i][i] = 3.0 - 4.0*a[i];
+                        		jacobian[i][i+1] = -2.0;
+                        	}
+                        	jacobian[param-1][param-2] = -1.0;
+                        	jacobian[param-1][param-1] = 3.0 - 4.0*a[param-1];		
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically

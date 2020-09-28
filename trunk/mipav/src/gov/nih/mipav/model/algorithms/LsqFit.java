@@ -151,6 +151,12 @@ end
     
     private final int BROWN_ALMOST_LINEAR = 27;
     
+    private final int DISCRETE_BOUNDARY_VALUE = 28;
+    
+    private final int DISCRETE_INTEGRAL = 29;
+    
+    private final int BROYDEN_TRIDIAGONAL = 30;
+    
     private final int LINEAR_FULL_RANK = 32;
     
     private final int LINEAR_RANK1 = 33;
@@ -237,6 +243,7 @@ end
     	// 1.) PENALTY_FUNCTION_II with n = 10 yields chi-squared = 2.9334573252876657E-4 while ELSUNC port with internal scaling = true
     	//     and numerical Jacobian yields slightly higher chi-squared = 2.9662353438340074E-4.
     	int i;
+    	double h;
     
     	// Below is an example used to fit y = a0 - a1*(a2**x)
     	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
@@ -2021,6 +2028,91 @@ end
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Discrete boundary value function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct values:
+        // Number of iterations: 18
+        // x[0] = -0.08764857861802242
+        // x[1] = -0.1477703375274261
+        // x[2] = -0.16862019244169632
+        // x[3] = -0.13081644975260917
+        // residual = 2.000512033308401E-20
+        // converged = true
+        testMode = true;
+        testCase = DISCRETE_BOUNDARY_VALUE;
+        m = 4;
+        n = 4;
+        h = 1.0/(n + 1.0);
+        tdata = new double[n];
+        for (i = 0; i < n; i++) {
+        	tdata[i] = (i + 1.0)*h;
+        }
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = tdata[i] * (tdata[i] - 1.0);
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Discrete integral function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct values:
+        // Number of iterations: 7
+        // x[0] = -0.08764857853130449
+        // x[1] = -0.1477703373755027
+        // x[2] = -0.16862019227230715
+        // x[3] = -0.13081644963523895
+        // residual = 4.8148248609680896E-33
+        // converged = true
+        testMode = true;
+        testCase = DISCRETE_INTEGRAL;
+        m = 4;
+        n = 4;
+        h = 1.0/(n + 1.0);
+        tdata = new double[n];
+        for (i = 0; i < n; i++) {
+        	tdata[i] = (i + 1.0)*h;
+        }
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = tdata[i] * (tdata[i] - 1.0);
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Broyden tridiagonal function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct values:
+        // Number of iterations: 8
+        // x[0] = -0.5545767268878384
+        // x[1] = -0.6394204363373857
+        // x[2] = -0.5907007854680518
+        // x[3] = -0.4152683779859582
+        // residual = 2.465190328815662E-31
+        // converged = true
+        testMode = true;
+        testCase = BROYDEN_TRIDIAGONAL;
+        m = 4;
+        n = 4;
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = -1;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     }
     
     private void dumpTestResults() {
@@ -2044,6 +2136,8 @@ end
         double t[];
         double sumParam;
         double sumTerm;
+        double h;
+        double prod;
 
         try {
             switch (testCase) {
@@ -2379,6 +2473,46 @@ end
             		residuals[i] = firstPart + (i + 1.0)*(1.0 - Math.cos(x[i])) - Math.sin(x[i]);
             	}
             	break;
+            case DISCRETE_BOUNDARY_VALUE:
+            	h = 1.0/(n + 1.0);
+            	prod = (x[0] + tdata[0] + 1);
+            	prod = h*h*prod*prod*prod/2.0;
+            	residuals[0] = 2.0*x[0] - x[1] + prod;
+            	for (i = 1; i < n-1; i++) {
+            		prod = (x[i] + tdata[i] + 1);
+            		prod = h*h*prod*prod*prod/2.0;
+            		residuals[i] = 2*x[i] - x[i-1] - x[i+1] + prod;
+            	}
+            	prod = (x[n-1] + tdata[n-1] + 1);
+            	prod = h*h*prod*prod*prod/2.0;
+            	residuals[n-1] = 2.0*x[n-1] - x[n-2] + prod;
+            	break;
+            case DISCRETE_INTEGRAL:
+                h = 1.0/(n+1.0);
+                double cubed[] = new double[n];
+                for (i = 0; i < n; i++) {
+                    prod = (x[i] + tdata[i] + 1.0);
+                    cubed[i] = prod*prod*prod;
+                }
+                for (i = 0; i < n; i++) {
+                     double firstSum = 0.0;
+                     for (j = 0; j <= i; j++) {
+                    	 firstSum += tdata[j]*cubed[j];
+                     }
+                     double secondSum = 0.0;
+                     for (j = i+1; j < n; j++) {
+                    	 secondSum += (1.0 - tdata[j])*cubed[j];
+                     }
+                     residuals[i] = x[i] + h * ((1.0 - tdata[i])*firstSum + tdata[i]*secondSum)/2.0;
+                }
+                break;
+            case BROYDEN_TRIDIAGONAL:
+            	residuals[0] = (3.0 - 2.0*x[0])*x[0] - 2.0*x[1] + 1.0;
+            	for (i = 1; i < n-1; i++) {
+            		residuals[i] = (3.0 - 2.0*x[i])*x[i] - x[i-1] - 2.0*x[i+1] + 1.0;
+            	}
+            	residuals[n-1] = (3.0 - 2.0*x[n-1])*x[n-1] - x[n-2] + 1.0;
+            	break;
             } // switch (testCase)
             
         } catch (Exception e) {
@@ -2395,6 +2529,7 @@ end
         double top;
         double exponent;
         double t[];
+        double h;
         try {
             switch (testCase) {
             case DRAPER24D:
@@ -2892,6 +3027,62 @@ end
             	for (i = 0; i < n; i++) {
             		J[i][i] += (i + 1.0)*Math.sin(x[i]) - Math.cos(x[i]);
             	}
+            	break;
+            case DISCRETE_BOUNDARY_VALUE:
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = 0.0;
+            		}
+            	}
+            	h = 1.0/(n + 1.0);
+            	double prod = (x[0] + tdata[0] + 1);
+            	prod = h*h*prod*prod*prod/2.0;
+            	J[0][0] = 2.0 + 3.0*h*h*prod*prod/2.0;
+            	J[0][1] = -1.0;
+            	for (i = 1; i < n-1; i++) {
+            		prod = (x[i] + tdata[i] + 1);
+            		prod = h*h*prod*prod*prod/2.0;
+            		J[i][i-1] = -1.0;
+            		J[i][i] = 2.0 + 3.0*h*h*prod*prod/2.0;
+            		J[i][i+1] = -1.0;
+            	}
+            	prod = (x[n-1] + tdata[n-1] + 1);
+            	prod = h*h*prod*prod*prod/2.0;
+            	J[n-1][n-2] = -1.0;
+            	J[n-1][n-1] = 2.0 + 3.0*h*h*prod*prod/2.0;
+            	break;
+            case DISCRETE_INTEGRAL:
+            	h = 1.0/(n+1.0);
+                double squared[] = new double[n];
+                for (i = 0; i < n; i++) {
+                	prod = (x[i] + tdata[i] + 1.0);
+                	squared[i] = 3.0*prod*prod;
+                }
+                for (i = 0; i < n; i++) {
+                	for (j = 0; j < i; j++) {
+                		J[i][j] = h*(1.0 - tdata[i])*tdata[j]*squared[j]/2.0;
+                	}
+                	J[i][i] = 1.0 + h*(1.0 - tdata[i])*tdata[i]*squared[i]/2.0;
+                	for (j = i+1; j < n; j++) {
+                		J[i][j] = h*tdata[i]*(1.0 - tdata[j])*squared[j]/2.0;
+                	}
+                }
+            	break;
+            case BROYDEN_TRIDIAGONAL:
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = 0.0;
+            		}
+            	}
+            	J[0][0] = 3.0 - 4.0*x[0];
+            	J[0][1] = -2.0;
+            	for (i = 1; i < n-1; i++) {
+            		J[i][i-1] = -1.0;
+            		J[i][i] = 3.0 - 4.0*x[i];
+            		J[i][i+1] = -2.0;
+            	}
+            	J[n-1][n-2] = -1.0;
+            	J[n-1][n-1] = 3.0 - 4.0*x[n-1];
             	break;
             } // switch (testCase)
         } catch (Exception e) {
