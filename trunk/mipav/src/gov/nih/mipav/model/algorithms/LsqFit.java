@@ -95,6 +95,8 @@ end
     private double ydata[];
     private double sqrtem5 = Math.sqrt(1.0E-5);
     private double p1sqrtem5 = 0.1 * sqrtem5;
+    private double sqrt5 = Math.sqrt(5.0);
+    private double sqrt10 = Math.sqrt(10.0);
     private double expap1[] = null;
     private double exp0p1 = Math.exp(0.1);
     private int testCase;
@@ -141,6 +143,10 @@ end
     
     private final int WATSON = 20;
     
+    private final int EXTENDED_ROSENBROCK = 21;
+    
+    private final int EXTENDED_POWELL_SINGULAR = 22;
+    
     private final int PENALTY_FUNCTION_I = 23;
     
     private final int PENALTY_FUNCTION_II = 24;
@@ -156,6 +162,8 @@ end
     private final int DISCRETE_INTEGRAL = 29;
     
     private final int BROYDEN_TRIDIAGONAL = 30;
+    
+    private final int BROYDEN_BANDED = 31;
     
     private final int LINEAR_FULL_RANK = 32;
     
@@ -2113,6 +2121,85 @@ end
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Broyden banded function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct answer with:
+        // Number of iterations: 8
+        // x[0] = -0.42830282801513087
+        // x[1] = -0.4765928135144501
+        // x[2] = -0.5201429526416614
+        // x[3] = -0.5201429526416614
+        // residual = 1.4251881588465545E-31
+        // converged = true
+        testMode = true;
+        testCase = BROYDEN_BANDED;
+        m = 4;
+        n = 4;
+        initial_x = new double[n];
+        for (i = 0; i < n; i++) {
+        	initial_x[i] = -1;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Extended Rosenbrock function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1 a1 = 1 a2 = 1 a3 = 1\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Converges to correct values:
+        // Number of iterations: 9
+        // x[0] = 0.9999999999999811
+        // x[1] = 0.999999999999981
+        // x[2] = 0.9999999999999811
+        // x[3] = 0.999999999999981
+        // residual = 7.1490519535654195E-28
+        // converged = true
+        testMode = true;
+        testCase = EXTENDED_ROSENBROCK;
+        m = 4;
+        n = 4;
+        initial_x = new double[n];
+        for (i = 0; i < n; i += 2) {
+        	initial_x[i] = -1.2;
+        	initial_x[i+1] = 1.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Extended Powell singular function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0 a1 = 0 a2 = 0 a3 = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // Take answer as correct:
+        // Number of iterations: 18
+        // x[0] = 3.815409897647058E-5
+        // x[1] = -3.815409897647058E-6
+        // x[2] = 1.6144508147380283E-5
+        // x[3] = 1.6144508147380283E-5
+        // residual = 4.045836991704215E-18
+        // converged = true
+        testMode = true;
+        testCase = EXTENDED_POWELL_SINGULAR;
+        m = 4;
+        n = 4;
+        initial_x = new double[n];
+        for (i = 0; i < n; i += 4) {
+        	initial_x[i] = 3.0;
+        	initial_x[i+1] = -1.0;
+        	initial_x[i+2] = 0.0;
+        	initial_x[i+3] = 1.0;
+        }
+        lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     }
     
     private void dumpTestResults() {
@@ -2512,6 +2599,37 @@ end
             		residuals[i] = (3.0 - 2.0*x[i])*x[i] - x[i-1] - 2.0*x[i+1] + 1.0;
             	}
             	residuals[n-1] = (3.0 - 2.0*x[n-1])*x[n-1] - x[n-2] + 1.0;
+            	break;
+            case BROYDEN_BANDED:
+            	int ml = 5;
+            	int mu = 1;
+            	for (i = 0; i < n; i++) {
+            	    double sum = 0.0;
+            	    int lowBound = Math.max(0,i-ml);
+            	    int highBound = Math.min(n-1,i + mu);
+            	    for (j = lowBound; j <= highBound; j++) {
+            	    	if (i != j) {
+            	    		sum += x[j]*(1.0 + x[j]);
+            	    	}
+            	    }
+            	    residuals[i] = x[i]*(2.0 + 5.0*x[i]*x[i]) + 1.0 - sum;
+            	}
+            	break;
+            case EXTENDED_ROSENBROCK:
+            	for (i = 0; i < n; i += 2) {
+            		residuals[i] = 10.0*(x[i+1] - x[i]);
+            		residuals[i+1] = 1.0 - x[i];
+            	}
+            	break;
+            case EXTENDED_POWELL_SINGULAR:
+            	for (i = 0; i < n; i += 4) {
+            		residuals[i] = x[i] + 10.0*x[i+1];
+            		residuals[i+1] = sqrt5*(x[i+2] - x[i+3]);
+            		double diff = x[i+1] - 2.0*x[i+2];
+            		residuals[i+2] = diff * diff;
+            		diff = x[i] - x[i+3];
+            		residuals[i+3] = sqrt10*diff*diff;
+            	}
             	break;
             } // switch (testCase)
             
@@ -3083,6 +3201,57 @@ end
             	}
             	J[n-1][n-2] = -1.0;
             	J[n-1][n-1] = 3.0 - 4.0*x[n-1];
+            	break;
+            case BROYDEN_BANDED:
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = 0.0;
+            		}
+            	}
+            	int ml = 5;
+            	int mu = 1;
+            	for (i = 0; i < n; i++) {
+            		double sum = 0.0;
+            		int lowBound = Math.max(0,i-ml);
+            		int highBound = Math.min(n-1,i+mu);
+            		for (j = lowBound; j <= highBound; j++) {
+            			if (i != j) {
+            				J[i][j] = -1.0 - 2.0*x[j];
+            			}
+            		}
+            		J[i][i] = 2.0 + 15.0*x[i]*x[i];
+            	}
+            	break;
+            case EXTENDED_ROSENBROCK:
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = 0.0;
+            		}
+            	}
+            	for (i = 0; i < n; i += 2) {
+            		J[i][i] = -10.0;
+            		J[i][i+1] = 10.0;
+            		J[i+1][i] = -1.0;
+            	}
+            	break;
+            case EXTENDED_POWELL_SINGULAR:
+            	for (i = 0; i < m; i++) {
+            		for (j = 0; j < n; j++) {
+            			J[i][j] = 0;
+            		}
+            	}
+            	for (i = 0; i < n; i += 4) {
+            		J[i][i] = 1.0;
+            		J[i][i+1] = 10.0;
+            		J[i+1][i+2] = sqrt5;
+            		J[i+1][i+3] = -sqrt5;
+            		double diff = x[i+1] - 2.0*x[i+2];
+            		J[i+2][i+1] = 2.0 * diff;
+            		J[i+2][i+2] = -4.0 * diff;
+            		diff = x[i] - x[i+3];
+            		J[i+3][i] = 2.0*sqrt10*diff;
+            		J[i+3][i+3] = -2.0*sqrt10*diff;
+            	}
             	break;
             } // switch (testCase)
         } catch (Exception e) {
