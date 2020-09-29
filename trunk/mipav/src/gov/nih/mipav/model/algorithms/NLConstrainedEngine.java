@@ -284,6 +284,9 @@ The steplength was not unit in both the last two steps
 DISCRETE_BOUNDARY_VALUE OK
 DISCRETE_INTEGRAL OK
 BROYDEN_TRIDIAGONAL OK
+BROYDEN_BANDED OK
+EXTENDED_ROSENBROCK OK
+EXTENDED_POWELL_SINGULAR OK
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -784,6 +787,10 @@ public abstract class NLConstrainedEngine {
     
     private double exp0p1 = Math.exp(0.1);
     
+    private double sqrt5 = Math.sqrt(5.0);
+    
+    private double sqrt10 = Math.sqrt(10.0);
+    
     private double expap1[] = null;
     
     protected boolean outputMes = false;
@@ -836,6 +843,10 @@ public abstract class NLConstrainedEngine {
     
     private final int WATSON = 20;
     
+    private final int EXTENDED_ROSENBROCK = 21;
+    
+    private final int EXTENDED_POWELL_SINGULAR = 22;
+    
     private final int PENALTY_FUNCTION_I = 23;
     
     private final int PENALTY_FUNCTION_II = 24;
@@ -851,6 +862,8 @@ public abstract class NLConstrainedEngine {
     private final int DISCRETE_INTEGRAL = 29;
     
     private final int BROYDEN_TRIDIAGONAL = 30;
+    
+    private final int BROYDEN_BANDED = 31;
     
     private final int LINEAR_FULL_RANK = 32;
     
@@ -2841,6 +2854,74 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
+        Preferences.debug("Broyden banded function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = BROYDEN_BANDED;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i++) {
+        	gues[i] = -1;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Extended Rosenbrock function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1 a1 = 1 a2 = 1 a3 = 1\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        testMode = true;
+        testCase = EXTENDED_ROSENBROCK;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i += 2) {
+        	gues[i] = -1.2;
+        	gues[i+1] = 1.0;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
+        Preferences.debug("Extended Powell singular function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0 a1 = 0 a2 = 0 a3 = 0\n", Preferences.DEBUG_ALGORITHM);
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // converged = true
+        testMode = true;
+        testCase = EXTENDED_POWELL_SINGULAR;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        for (i = 0; i < param; i += 4) {
+        	gues[i] = 3.0;
+        	gues[i+1] = -1.0;
+        	gues[i+2] = 0.0;
+        	gues[i+3] = 1.0;
+        }
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -4251,6 +4332,112 @@ public abstract class NLConstrainedEngine {
                         	}
                         	jacobian[param-1][param-2] = -1.0;
                         	jacobian[param-1][param-1] = 3.0 - 4.0*a[param-1];		
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case BROYDEN_BANDED:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		int ml = 5;
+                    	int mu = 1;
+                    	for (i = 0; i < param; i++) {
+                    	    double sum = 0.0;
+                    	    int lowBound = Math.max(0,i-ml);
+                    	    int highBound = Math.min(param-1,i + mu);
+                    	    for (j = lowBound; j <= highBound; j++) {
+                    	    	if (i != j) {
+                    	    		sum += a[j]*(1.0 + a[j]);
+                    	    	}
+                    	    }
+                    	    residuals[i] = a[i]*(2.0 + 5.0*a[i]*a[i]) + 1.0 - sum;
+                    	}
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		for (j = 0; j < param; j++) {
+                        			jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                			int ml = 5;
+                        	int mu = 1;
+                        	for (i = 0; i < param; i++) {
+                        		double sum = 0.0;
+                        		int lowBound = Math.max(0,i-ml);
+                        		int highBound = Math.min(param-1,i+mu);
+                        		for (j = lowBound; j <= highBound; j++) {
+                        			if (i != j) {
+                        				jacobian[i][j] = -1.0 - 2.0*a[j];
+                        			}
+                        		}
+                        		jacobian[i][i] = 2.0 + 15.0*a[i]*a[i];
+                        	}
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case EXTENDED_ROSENBROCK:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		for (i = 0; i < param; i += 2) {
+                    		residuals[i] = 10.0*(a[i+1] - a[i]);
+                    		residuals[i+1] = 1.0 - a[i];
+                    	}	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		for (j = 0; j < param; j++) {
+                        			jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                			for (i = 0; i < param; i += 2) {
+                        		jacobian[i][i] = -10.0;
+                        		jacobian[i][i+1] = 10.0;
+                        		jacobian[i+1][i] = -1.0;
+                        	}
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case EXTENDED_POWELL_SINGULAR:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		for (i = 0; i < param; i += 4) {
+                    		residuals[i] = a[i] + 10.0*a[i+1];
+                    		residuals[i+1] = sqrt5*(a[i+2] - a[i+3]);
+                    		double diff = a[i+1] - 2.0*a[i+2];
+                    		residuals[i+2] = diff * diff;
+                    		diff = a[i] - a[i+3];
+                    		residuals[i+3] = sqrt10*diff*diff;
+                    	}	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (i = 0; i < nPts; i++) {
+                        		for (j = 0; j < param; j++) {
+                        			jacobian[i][j] = 0.0;
+                        		}
+                        	}
+                			for (i = 0; i < param; i += 4) {
+                        		jacobian[i][i] = 1.0;
+                        		jacobian[i][i+1] = 10.0;
+                        		jacobian[i+1][i+2] = sqrt5;
+                        		jacobian[i+1][i+3] = -sqrt5;
+                        		double diff = a[i+1] - 2.0*a[i+2];
+                        		jacobian[i+2][i+1] = 2.0 * diff;
+                        		jacobian[i+2][i+2] = -4.0 * diff;
+                        		diff = a[i] - a[i+3];
+                        		jacobian[i+3][i] = 2.0*sqrt10*diff;
+                        		jacobian[i+3][i+3] = -2.0*sqrt10*diff;
+                        	}
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
