@@ -140,11 +140,11 @@ public class FitRayleigh extends NLFittedFunction {
 
         Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("a0 " + String.valueOf(a[0]) + " +/- " + String.valueOf(Math.sqrt(covarMat[0][0])) + "\n",
+        Preferences.debug("a0 " + String.valueOf(a[0]) + " +/- " + String.valueOf(Math.sqrt(jacobian[0][0])) + "\n",
         		Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(covarMat[1][1])) + "\n\n", 
+        Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(jacobian[1][1])) + "\n\n", 
         		Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("a2 " + String.valueOf(a[2]) + " +/- " + String.valueOf(Math.sqrt(covarMat[2][2])) + "\n\n", 
+        Preferences.debug("a2 " + String.valueOf(a[2]) + " +/- " + String.valueOf(Math.sqrt(jacobian[2][2])) + "\n\n", 
                 Preferences.DEBUG_ALGORITHM);
 
     }
@@ -153,9 +153,9 @@ public class FitRayleigh extends NLFittedFunction {
      * Fit Rayleigh to function.
      * @param a The best guess parameter values.
      * @param residuals ymodel - yData.
-     * @param covarMat The derivative values of y with respect to fitting parameters.
+     * @param jacobian The derivative values of y with respect to fitting parameters.
      */
-    public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+    public void fitToFunction(final double[] a, final double[] residuals, final double[][] jacobian) {
         int ctrl;
         int j;
         double ymod = 0;
@@ -187,14 +187,14 @@ public class FitRayleigh extends NLFittedFunction {
                         diff = xSeries[j] - a[0];
                         diffSquared = diff * diff;
                         expon = Math.exp(-diffSquared/a[1]);
-                        covarMat[j][0] = a[2]*(2.0/a[1])*expon*((2.0*diffSquared/a[1]) - 1.0); // a0 partial derivative
-                        covarMat[j][1] = a[2]*(2.0*diff/(a[1]*a[1]))*expon*((diffSquared/a[1]) - 1.0); // a1 partial derivative
-                        covarMat[j][2] = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
+                        jacobian[j][0] = a[2]*(2.0/a[1])*expon*((2.0*diffSquared/a[1]) - 1.0); // a0 partial derivative
+                        jacobian[j][1] = a[2]*(2.0*diff/(a[1]*a[1]))*expon*((diffSquared/a[1]) - 1.0); // a1 partial derivative
+                        jacobian[j][2] = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
                     }
                     else {
-                        covarMat[j][0] = 0.0;
-                        covarMat[j][1] = 0.0;
-                        covarMat[j][2] = 0.0;
+                        jacobian[j][0] = 0.0;
+                        jacobian[j][1] = 0.0;
+                        jacobian[j][2] = 0.0;
                     }
                 }
             }
