@@ -86,9 +86,9 @@ public class FitLine extends NLFittedFunction {
 
         Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("a0 " + String.valueOf(a[0]) + " +/- " + String.valueOf(Math.sqrt(covarMat[0][0])) + "\n",
+        Preferences.debug("a0 " + String.valueOf(a[0]) + " +/- " + String.valueOf(Math.sqrt(jacobian[0][0])) + "\n",
         		Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(covarMat[1][1])) + "\n\n", 
+        Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(jacobian[1][1])) + "\n\n", 
         		Preferences.DEBUG_ALGORITHM);
 
     }
@@ -97,9 +97,9 @@ public class FitLine extends NLFittedFunction {
      * Fit line to function.
      * @param a The best guess parameter values.
      * @param residuals ymodel - yData.
-     * @param covarMat The derivative values of y with respect to fitting parameters.
+     * @param jacobian The derivative values of y with respect to fitting parameters.
      */
-    public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+    public void fitToFunction(final double[] a, final double[] residuals, final double[][] jacobian) {
         int ctrl;
         int j;
         double ymod = 0;
@@ -119,8 +119,8 @@ public class FitLine extends NLFittedFunction {
             else if (ctrl == 2) {
                 // Calculate the Jacobian analytically
                 for (j = 0; j < nPts; j++) {
-                	covarMat[j][0] = 1; // a0 partial derivative
-                	covarMat[j][1] = xSeries[j]; // a1 partial derivative
+                	jacobian[j][0] = 1; // a0 partial derivative
+                	jacobian[j][1] = xSeries[j]; // a1 partial derivative
                 }
             }
             // Calculate the Jacobian numerically
