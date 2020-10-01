@@ -593,7 +593,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             }
                         }
                         
-                        if ((vr2.equals(VR.DS)) && (dispString.length() > 16) && (num == 1)) {
+                        if ((vr2.equals(VR.DS)) && (dispString.length() > 16) && (num == 1) && !dispString.equalsIgnoreCase("no value available")) {
                         	BigDecimal bd = new BigDecimal(dispString);
                         	int j = 0;
                         	while (dispString.length() > 16) {
@@ -645,7 +645,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         dispString = dispString.substring(0, dispString.indexOf(c));
                     }
                 }
-                if ((vr.equals(VR.DS)) && (dispString.length() > 16) && (num == 1)) {
+                if ((vr.equals(VR.DS)) && (dispString.length() > 16) && (num == 1) && !dispString.equalsIgnoreCase("no value available")) {
                 	BigDecimal bd = new BigDecimal(dispString);
                 	int i = 0;
                 	while (dispString.length() > 16) {

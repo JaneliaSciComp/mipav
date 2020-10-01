@@ -7555,7 +7555,7 @@ public class PlugInDialogFITBIR extends JFrame
         public void populateFields(final FormStructureData fsData, final ModelImage img, final FileInfoBase fInfo) {
             HashMap<String, String> extractedFields = extractHeaderInfo(img, fInfo);
 
-            // TODO if nifti, check for matching json file
+            // if nifti, check for matching json file
             if (fInfo.getFileName().toLowerCase().endsWith(".nii") || fInfo.getFileName().toLowerCase().endsWith(".nii.gz")) {
                 String dir = img.getImageDirectory();
                 String name = fInfo.getFileName();
@@ -7576,6 +7576,8 @@ public class PlugInDialogFITBIR extends JFrame
                 }
 
                 if (foundJson) {
+                    System.out.println("Found matching json file for NIfTI image.  Loading metadata from " + jsonFile);
+                    
                     JSONObject scanJson = readJsonFile(jsonFile);
 
                     if (scanJson != null) {
@@ -7697,7 +7699,7 @@ public class PlugInDialogFITBIR extends JFrame
             extractedFields.put("ImgModltyTyp", convertModalityToBRICS(modalityString, contrastUsed));
             extractedFields.put("ImgFileFormatTyp", fileFormatString);
 
-            if (sliceThickness > 0) {
+            if (sliceThickness > 0 && sliceThickness <= 99) {
                 extractedFields.put("ImgSliceThicknessVal", String.valueOf(sliceThickness));
             }
 
