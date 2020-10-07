@@ -66,6 +66,7 @@ public abstract class LsqFit {
 end
 */
 	private boolean testMode = true;
+	protected boolean useNumericalJacobian = false;
 	protected double x_tol =1e-8; // search tolerance in x
 	protected double g_tol = 1e-12; //  search tolerance in gradient
 	protected int maxIter = 100000000; // maximum number of iterations
@@ -79,6 +80,36 @@ end
     protected double lower[] = null; // bound solution to these limits
     protected double upper[] = null;
     protected boolean geodesicAcceleration = false; // requires hessian matrix
+    // epsilon = D1MACH(4)
+    // Machine epsilon is the smallest positive epsilon such that
+    // (1.0 + epsilon) != 1.0.
+    // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+    double epsilon = 2.2204460e-16;
+    // epsilon is called the largest relative spacing
+    // autodiff = :finite
+    // construct Jacobian function, which uses finite difference method
+    //function finitediff_fdtype(autodiff)
+    //if autodiff == :finiteforward
+    //    fdtype = Val{:forward}
+    //elseif autodiff == :finitecomplex
+    //    fdtype = Val{:complex}
+    //elseif any(autodiff .== (:finite, :central, :finitecentral))
+    //    fdtype = Val{:central}
+    // end
+    // fdtype
+// end
+//    @inline function default_relstep(::Val{fdtype}, ::Type{T}) where {fdtype,T<:Number}
+//    if fdtype==:forward
+//        return sqrt(eps(real(T)))
+//    elseif fdtype==:central
+//        return cbrt(eps(real(T)))
+//    elseif fdtype==:hcentral
+//        eps(T)^(1/4)
+//    else
+//        return one(real(T))
+//    end
+//end
+    double default_relstep = Math.pow(epsilon,1.0/3.0);
     
     /** integer scalar containing the number of data points. */
     protected int m; 
@@ -191,6 +222,8 @@ end
     
     private final int EQUILIBRIUM_COMBUSTION = 65;
     
+    private final int HOCK3 = 1003;
+    
     public LsqFit(int nPts, double initial_x[]) {
     	m = nPts;
     	n = initial_x.length;
@@ -247,6 +280,8 @@ end
     	// 4.) LEVMAR_ROSENBROCK converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
     	// 5.) HATFLDB converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
     	// 6.) TRIGONOMETRIC converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
+    	// 7.) Hock - Schittkowski problem #3 does not converge with either analytical or numerical Jacobian, while ELSUNC port fails for
+    	//     analytical Jacobian but works for numerical Jacobian.
     	// Problems handled correctly by LsqFit with initial lambda = 10 but not handled correctly by ELSUNC port NLConstrainedEngine
     	// 1.) PENALTY_FUNCTION_II with n = 10 yields chi-squared = 2.9334573252876657E-4 while ELSUNC port with internal scaling = true
     	//     and numerical Jacobian yields slightly higher chi-squared = 2.9662353438340074E-4.
@@ -258,6 +293,7 @@ end
     	// Norman R. Draper and Harry Smith
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works with geodesicAcceleration true and false in 11 and 15 iterations
+    	// Works with useNumericalJacobian in 15 iterations
     	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
@@ -301,6 +337,7 @@ end
     	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
     	// Variant of test example 25 from Hock and Schittkowski
         // geodesicAcceleration = false converges to correct values in 38 iterataions and geodesicAcceleration = true converges to correct values in 16 iterations
+    	// For numerical Jacobian converges in 38 iterations
         Preferences.debug("Test example 25 from Hock and Schittkowski constrained\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y = (a0 * log(0.01*i)**(a1) + a2\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n", Preferences.DEBUG_ALGORITHM);
@@ -1552,12 +1589,18 @@ end
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
         
-        // Converges to incorrect values
+        // Converges to incorrect values for analytical Jacobian:
         // Number of iterations: 3434
         // x[0] = -1.0775294083763476
         // x[1] = 1.16106962906314
         // residual = 37.25792946722536
         // converged = true
+    	// Convereges to incorrect values for numerical Jacobian:
+    	// Number of iterations: 1679
+    	// x[0] = -1.0771967088673695
+    	// x[1] = 1.1603527535810096
+    	// residual = 37.23406897696807
+    	// converged = true
         Preferences.debug("Rosenbrock function used as LEVMAR example standard starting point unconstrained\n", 
         		Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(0) = ((1.0 - a0)*(1.0 - a0) + 105.0*(a1 - a0*a0)*(a1 - a0*a0));\n", Preferences.DEBUG_ALGORITHM);
@@ -1680,7 +1723,7 @@ end
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
         
-        // Converges to incorrect values
+        // Converges to incorrect values with analytical Jacobian:
         // Number of iterations: 15
         // x[0] = 0.9999999999556595
         // x[1] = 0.8
@@ -1688,6 +1731,14 @@ end
         // x[3] = 0.9561573533724991
         // residual = 0.04681159553142556
         // converged = true
+    	// Converges to incorrect values with numerical Jacobian:
+    	// Number of iterations: 15
+    	// x[0] = 0.9999999999556595
+    	// x[1] = 0.8
+    	// x[2] = 0.9778329884806848
+    	// x[3] = 0.9561573533610663
+    	// residual = 0.04681159553030911
+    	// converged = true
         Preferences.debug("hatfldb problem\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer has chi-squared = 0.0055728 with a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
@@ -1712,6 +1763,7 @@ end
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
         
         // Converges to correct values in 8 iterations
         Preferences.debug("hatfldc problem\n", Preferences.DEBUG_ALGORITHM);
@@ -2015,13 +2067,21 @@ end
         Preferences.debug("Correct answer has chi-squared = 0 with a0 = 0.08918066 a1 = 0.09406982 a2 = 0.10034911 a3 = 0.38088103\n", 
         		Preferences.DEBUG_ALGORITHM);
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // Converges to incorrect values
+        // Converges to incorrect values with analytical Jacobian:
         // Number of iterations: 209
         // x[0] = 0.14716366941527287
         // x[1] = 0.1621445717724061
         // x[2] = 0.429434652714779
         // x[3] = 0.21674374255177303
         // residual = 3.254317856424979E-4
+        // converged = true
+        // Converges to incorrect values with numercial Jacobian:
+        // Number of iterations: 144
+        // x[0] = 0.14548619264621257
+        // x[1] = 0.1601815063429719
+        // x[2] = 0.424955089015904
+        // x[3] = 0.21684663356814113
+        // residual = 3.028241148870453E-4
         // converged = true
         testMode = true;
         testCase = TRIGONOMETRIC;
@@ -2197,6 +2257,37 @@ end
         }
         lower = null;
         upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Hock - Schittkowski problem #3\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has chi-squared = 0 with a0 = a1 = 0\n", Preferences.DEBUG_ALGORITHM);
+    	// HOCK3 does not converge with analytical Jacobian:
+    	// Number of iterations: 100000000
+    	// x[0] = 0.41654249140882627
+    	// x[1] = 0.0
+    	// residual = 1.735076471490721E-6
+    	// converged = false
+    	// HOCK3 does not converge with numerical Jacobian:
+    	// Number of iterations: 100000000
+    	// x[0] = 0.41654257732933964
+    	// x[1] = 0.0
+    	// residual = 1.735077187281689E-6
+    	// converged = false
+    	testMode = true;
+    	testCase = HOCK3;
+    	m = 2;
+    	n = 2;
+    	initial_x = new double[n];
+    	initial_x[0] = 10.0;
+    	initial_x[1] = 1.0;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = -Double.MAX_VALUE;
+        lower[1] = 0.0;
+        upper[0] = Double.MAX_VALUE;
+        upper[1] = Double.MAX_VALUE;
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
@@ -2630,6 +2721,10 @@ end
             		diff = x[i] - x[i+3];
             		residuals[i+3] = sqrt10*diff*diff;
             	}
+            	break;
+            case HOCK3:
+            	residuals[0] = sqrtem5*(x[1] - x[0]);
+            	residuals[1] = Math.sqrt(x[1]);
             	break;
             } // switch (testCase)
             
@@ -3253,6 +3348,12 @@ end
             		J[i+3][i+3] = -2.0*sqrt10*diff;
             	}
             	break;
+            case HOCK3:
+            	J[0][0] = -sqrtem5;
+            	J[0][1] = sqrtem5;
+            	J[1][0] = 0;
+            	J[1][1] = 0.5/Math.sqrt(x[1]);
+            	break;
             } // switch (testCase)
         } catch (Exception e) {
             Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
@@ -3487,6 +3588,41 @@ end
     	return sc;
     } // private double shiftedChebyshevDerivative
     
+    private void fitToNumericalJacobian(double xinit[], double[][] jacobian) {
+    	int i, j;
+        double relstep = default_relstep;
+        double absstep = relstep;
+        double residualsplus[] = new double[m];
+        double residualsminus[] = new double[m];
+        double eps;
+        double x[] = new double[xinit.length];
+        for (i = 0; i < n; i++) {
+        	x[i] = xinit[i];
+        }
+        for (j = 0; j < n; j++) {
+    		eps = Math.max(relstep*Math.abs(x[j]), absstep);
+    		x[j] = xinit[j] + eps;
+    		if (testMode) {
+    		    fitToTestFunction(x, residualsplus)	;
+    		}
+    		else {
+    		    fitToFunction(x, residualsplus);	
+    		}
+    		x[j] = xinit[j] - eps;
+    		if (testMode) {
+    			fitToTestFunction(x, residualsminus);
+    		}
+    		else {
+    			fitToFunction(x, residualsminus);
+    		}
+    		x[j] = xinit[j];
+    		for (i = 0; i < m; i++) {
+    			jacobian[i][j] = (residualsplus[i] - residualsminus[i])/(2.0 * eps);
+    		}
+        }
+        
+    }
+    
 	/**
      * fitToFunction communicates
      *
@@ -3549,11 +3685,21 @@ end
         }
         if (testMode) {
         	fitToTestFunction(initial_x, residuals);
-        	fitToTestJacobian(initial_x, J);
+        	if (useNumericalJacobian) {
+        		fitToNumericalJacobian(initial_x, J);
+        	}
+        	else {
+        	    fitToTestJacobian(initial_x, J);
+        	}
         }
         else {
         	fitToFunction(initial_x, residuals);
-        	fitToJacobian(initial_x, J);
+        	if (useNumericalJacobian) {
+        		fitToNumericalJacobian(initial_x, J);
+        	}
+        	else {
+        	    fitToJacobian(initial_x, J);
+        	}
         }
         
         if (Double.isFinite(tau)) {
@@ -3710,7 +3856,10 @@ end
                 for (i = 0; i < n; i++) {
                 	x_df[i] = x[i];
                 }
-                if (testMode) {
+                if (useNumericalJacobian) {
+                	fitToNumericalJacobian(x, J);
+                }
+                else if (testMode) {
                 	fitToTestJacobian(x, J);
                 }
                 else {
