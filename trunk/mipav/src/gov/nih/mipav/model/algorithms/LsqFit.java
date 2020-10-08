@@ -66,8 +66,8 @@ public abstract class LsqFit {
 
 end
 */
-	private boolean testMode = true;
-	protected boolean useNumericalJacobian = false;
+	private boolean testMode = false;
+	protected boolean useNumerical = false;
 	protected double x_tol =1e-8; // search tolerance in x
 	protected double g_tol = 1e-12; //  search tolerance in gradient
 	protected int maxIter = 100000000; // maximum number of iterations
@@ -295,7 +295,7 @@ end
     	// Norman R. Draper and Harry Smith
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works with geodesicAcceleration true and false in 11 and 15 iterations
-    	// Works with useNumericalJacobian in 15 iterations
+    	// Works with useNumerical with geodesicAcceleration true and false in 11 and 15 iterations
     	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
@@ -339,7 +339,7 @@ end
     	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
     	// Variant of test example 25 from Hock and Schittkowski
         // geodesicAcceleration = false converges to correct values in 38 iterataions and geodesicAcceleration = true converges to correct values in 16 iterations
-    	// For numerical Jacobian converges in 38 iterations
+    	// For numerical converges in 38 and 16 iterations
         Preferences.debug("Test example 25 from Hock and Schittkowski constrained\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y = (a0 * log(0.01*i)**(a1) + a2\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n", Preferences.DEBUG_ALGORITHM);
@@ -381,7 +381,8 @@ end
         // because a[1] is a root in the denominator and so with unconstrained for large
         // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
         // should work at 10.0 * starting point and at 100.0 * starting point.
-        // BARD unconstrained converges to correct value for geodesicAcceleration = false in 9 iterations;
+        // BARD unconstrained converges to correct value for geodesicAcceleration = false in 9 iterations
+    	// Correct value for numerical with geodesicAcceleration = true in 10 iterations
         Preferences.debug("Bard function standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n", Preferences.DEBUG_ALGORITHM);
@@ -488,6 +489,7 @@ end
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         // KOWALIK_AND_OSBORNE unconstrained converged to the right answer in 31 iterations
+    	// Correct answer with numerical and geodesicAcceleration = true in 30 iterations
         Preferences.debug("Kowalik and Osborne function standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n", 
@@ -3625,6 +3627,88 @@ end
         
     }
     
+    private void fitToNumericalHessian(double xinit[], double hessian[][][]) {
+    	int i, j,k;
+        double relstep = default_relstep;
+        double absstep = relstep;
+        double residualsxpp[] = new double[m];
+        double residualsxpm[] = new double[m];
+        double residualsxmm[] = new double[m];
+        double residualsxmp[] = new double[m];
+        double residualsx[] = new double[m];
+        double epsi;
+        double epsj;
+        double x[] = new double[xinit.length];
+        for (i = 0; i < n; i++) {
+        	x[i] = xinit[i];
+        }
+        for (i = 0; i < n; i++) {
+        	epsi = Math.max(relstep*Math.abs(x[i]), absstep);
+    		x[i] = xinit[i] + epsi;
+    		if (testMode) {
+    		    fitToTestFunction(x, residualsxpp)	;
+    		}
+    		else {
+    		    fitToFunction(x, residualsxpp);	
+    		}
+    		x[i] = xinit[i] - epsi;
+    		if (testMode) {
+    			fitToTestFunction(x, residualsxmm);
+    		}
+    		else {
+    			fitToFunction(x, residualsxmm);
+    		}
+    		x[i] = xinit[i];
+    		if (testMode) {
+    			fitToTestFunction(x, residualsx);
+    		}
+    		else {
+    			fitToFunction(x, residualsx);
+    		}
+    		for (k = 0; k < m; k++) {
+    			hessian[i][i][k] = (residualsxpp[k] - 2.0*residualsx[k] + residualsxmm[k])/(epsi*epsi);
+    		}
+    		for (j = i+1; j < n; j++) {
+    			epsj = Math.max(relstep*Math.abs(x[j]), absstep);
+    			x[i] = xinit[i] + epsi;
+    			x[j] = xinit[j] + epsj;
+    			if (testMode) {
+        		    fitToTestFunction(x, residualsxpp)	;
+        		}
+        		else {
+        		    fitToFunction(x, residualsxpp);	
+        		}
+    			x[j] = xinit[j] - epsj;
+    			if (testMode) {
+        		    fitToTestFunction(x, residualsxpm)	;
+        		}
+        		else {
+        		    fitToFunction(x, residualsxpm);	
+        		}
+    			x[i] = xinit[i] - epsi;
+    			if (testMode) {
+        		    fitToTestFunction(x, residualsxmm)	;
+        		}
+        		else {
+        		    fitToFunction(x, residualsxmm);	
+        		}
+    			x[j] = xinit[j] + epsj;
+    			if (testMode) {
+        		    fitToTestFunction(x, residualsxmp)	;
+        		}
+        		else {
+        		    fitToFunction(x, residualsxmp);	
+        		}
+    			x[i] = xinit[i];
+    			x[j] = xinit[j];
+    			for (k = 0; k < m; k++) {
+        			hessian[i][j][k] = (residualsxpp[k] - residualsxpm[k] + - residualsxmp[k] + residualsxmm[k])/(4.0*epsi*epsj);
+        			hessian[j][i][k] = hessian[i][j][k];
+        		}
+    		}
+        }
+    }
+    
 	/**
      * fitToFunction communicates
      *
@@ -3687,7 +3771,7 @@ end
         }
         if (testMode) {
         	fitToTestFunction(initial_x, residuals);
-        	if (useNumericalJacobian) {
+        	if (useNumerical) {
         		fitToNumericalJacobian(initial_x, J);
         	}
         	else {
@@ -3696,7 +3780,7 @@ end
         }
         else {
         	fitToFunction(initial_x, residuals);
-        	if (useNumericalJacobian) {
+        	if (useNumerical) {
         		fitToNumericalJacobian(initial_x, J);
         	}
         	else {
@@ -3858,7 +3942,7 @@ end
                 for (i = 0; i < n; i++) {
                 	x_df[i] = x[i];
                 }
-                if (useNumericalJacobian) {
+                if (useNumerical) {
                 	fitToNumericalJacobian(x, J);
                 }
                 else if (testMode) {
@@ -3923,7 +4007,10 @@ end
             
             if (geodesicAcceleration) {
                 double hessian[][][] = new double[n][n][m];
-                if (testMode) {
+                if (useNumerical) {
+                	fitToNumericalHessian(x, hessian);
+                }
+                else if (testMode) {
                 	fitToTestHessian(x, hessian);
                 }
                 else {
