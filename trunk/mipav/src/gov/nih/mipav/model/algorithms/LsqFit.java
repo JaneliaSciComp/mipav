@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import Jama.Matrix;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations;
 import gov.nih.mipav.view.Preferences;
 
@@ -121,6 +122,7 @@ end
     private int iterCt;
     private double x[] = null;
     private double residuals[] = null;
+    private double J[][] = null;
     private boolean converged;
     private double tdata[];
     private double ydata[];
@@ -3655,7 +3657,7 @@ end
     	iterCt = 0;
     	double lambda = initial_lambda;
     	
-    	double J[][] = new double[m][n];
+    	J = new double[m][n];
     	
     	// First evaluation
     	/*value_jacobian!!(df, initial_x)
@@ -4147,6 +4149,60 @@ end
     
     public boolean getConverged() {
     	return converged;
+    }
+    
+    public double[][] getCovariance() {
+    	int i,j,k;
+    	// Only used if no weights are present
+    	// dof is only valid if the number of data points exceeds the number of parameters
+    	int dof = m - n;
+    	double rss = 0.0;
+    	for (i = 0; i < m; i++) {
+    	    rss += residuals[i]*residuals[i];	
+    	}
+    	double mse = rss/dof;
+    	// compute the covariance matrix from the QR decomposition
+    	GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    	// Here Math.min(m,n) = n
+    	double tau[] = new double[Math.min(m,n)];
+    	int lwork = -1; // output optimal lwork in work[0]
+    	double work[] = new double[Math.max(1,lwork)];
+    	int info[] = new int[1];
+    	double JCopy[][] = new double[m][n];
+    	for (i = 0; i < m; i++) {
+    		for (j = 0; j < n; j++) {
+    			JCopy[i][j] = J[i][j];
+    		}
+    	}
+     	ge.dgeqrf(m,n,JCopy,m,tau,work,lwork,info);
+    	if (info[0] < 0) {
+    		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork = -1");
+    		return null;
+    	}
+    	int optimallwork = (int)work[0];
+    	ge.dgeqrf(m,n,JCopy,m,tau,work,optimallwork,info);
+    	if (info[0] < 0) {
+    		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork " + optimallwork);
+    		return null;
+    	}
+    	double R[][] = new double[Math.min(m,n)][n];
+    	for (i = 0; i < n; i++) {
+    		for (j = i; j < n; j++) {
+    			R[i][j] = JCopy[i][j];
+    		}	
+    	}
+    	GeneralizedInverse2 ge2 = new GeneralizedInverse2(R, n, n);
+        double Rinv[][] = ge2.pinv();
+        double covar[][] = new double[n][n];
+        for (i = 0; i < n; i++) {
+        	for (j = 0; j < n; j++) {
+        		for (k = 0; k < n; k++) {
+        			covar[i][j] += Rinv[i][k] * Rinv[j][k];
+        		}
+        		covar[i][j] *= mse;
+        	}
+        }
+        return covar;
     }
 
 	
