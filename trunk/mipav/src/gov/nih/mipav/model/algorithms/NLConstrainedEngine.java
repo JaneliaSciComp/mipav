@@ -287,6 +287,9 @@ BROYDEN_TRIDIAGONAL OK
 BROYDEN_BANDED OK
 EXTENDED_ROSENBROCK OK
 EXTENDED_POWELL_SINGULAR OK
+HOCK3 OK for numerical Jacobian fails with NaN output exit = -12 for analytical Jacobian
+HOCK4 OK for numerical Jacobian fails with NaN output exit = -12 for analytical Jacobian
+MADSEN OK
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -890,6 +893,12 @@ public abstract class NLConstrainedEngine {
     private final int HATFLDC = 64;
     
     private final int EQUILIBRIUM_COMBUSTION = 65;
+    
+    private final int MADSEN = 66;
+    
+    private final int HOCK3 = 1003;
+    
+    private final int HOCK4 = 1004;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2922,6 +2931,71 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
+        Preferences.debug("Hock - Schittkowski problem #3\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has chi-squared = 0 with a0 = a1 = 0\n", Preferences.DEBUG_ALGORITHM);
+    	testMode = true;
+    	testCase = HOCK3;
+    	nPts = 2;
+    	param = 2;
+    	gues = new double[param];
+    	fitTestModel();
+    	gues[0] = 10.0;
+    	gues[1] = 1.0;
+    	bounds = 2; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = -Double.MAX_VALUE;
+        bl[1] = 0.0;
+        bu[0] = Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        driverCalls();
+        
+        Preferences.debug("Hock - Schittkowski problem #4\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has chi-squared = 8/3 with a0 = 1 a1 = 0\n", Preferences.DEBUG_ALGORITHM);
+    	testMode = true;
+    	testCase = HOCK4;
+    	nPts = 2;
+    	param = 2;
+    	gues = new double[param];
+    	fitTestModel();
+    	gues[0] = 1.125;
+    	gues[1] = 0.125;
+    	bounds = 2; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 1.0;
+        bl[1] = 0.0;
+        bu[0] = Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        driverCalls();
+        
+        Preferences.debug("Madsen\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has a0 = 0.155437, a1 = -0.694564\n", Preferences.DEBUG_ALGORITHM);
+    	testMode = true;
+    	testCase = MADSEN;
+    	nPts = 3;
+    	param = 2;
+    	gues = new double[param];
+    	fitTestModel();
+    	gues[0] = 3.0;
+    	gues[1] = 1.0;
+    	bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -4438,6 +4512,63 @@ public abstract class NLConstrainedEngine {
                         		jacobian[i+3][i] = 2.0*sqrt10*diff;
                         		jacobian[i+3][i+3] = -2.0*sqrt10*diff;
                         	}
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case HOCK3:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = sqrtem5*(a[1] - a[0]);
+                    	residuals[1] = Math.sqrt(a[1]);	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                        	jacobian[0][0] = -sqrtem5;
+                        	jacobian[0][1] = sqrtem5;
+                        	jacobian[1][0] = 0;
+                        	jacobian[1][1] = 0.5/Math.sqrt(a[1]);
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case HOCK4:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = Math.pow(a[0] + 1.0,1.5)/Math.sqrt(3.0);
+                    	residuals[1] = Math.sqrt(a[1]);	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                        	jacobian[0][0] = 1.5*Math.sqrt((a[0] + 1.0)/3.0);
+                        	jacobian[0][1] = 0;
+                        	jacobian[1][0] = 0;
+                        	jacobian[1][1] = 0.5/Math.sqrt(a[1]);
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case MADSEN:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = a[0]*a[0] + a[1]*a[1] + a[0]*a[1];
+                    	residuals[1] = Math.sin(a[0]);
+                    	residuals[2] = Math.cos(a[1]);
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			jacobian[0][0] = 2.0*a[0] + a[1];
+                        	jacobian[0][1] = 2.0*a[1] + a[0];
+                        	jacobian[1][0] = Math.cos(a[0]);
+                        	jacobian[1][1] = 0.0;
+                        	jacobian[2][0] = 0.0;
+                        	jacobian[2][1] = -Math.sin(a[1]);
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically

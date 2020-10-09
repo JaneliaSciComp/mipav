@@ -224,7 +224,11 @@ end
     
     private final int EQUILIBRIUM_COMBUSTION = 65;
     
+    private final int MADSEN = 66;
+    
     private final int HOCK3 = 1003;
+    
+    private final int HOCK4 = 1004;
     
     public LsqFit(int nPts, double initial_x[]) {
     	m = nPts;
@@ -284,6 +288,8 @@ end
     	// 6.) TRIGONOMETRIC converges to incorrect values for initial_lambda = every power of 10 from MIN_LAMBDA to MAX_LAMBDA.
     	// 7.) Hock - Schittkowski problem #3 does not converge with either analytical or numerical Jacobian, while ELSUNC port fails for
     	//     analytical Jacobian but works for numerical Jacobian.
+    	// 8.) Hock_Schittkowksi problem #4 converges to correct values for analytical and numerical but does not recognize convergence,
+    	//     while ELSUNC port fails for analytical Jacobian but works for numerical Jacobian.
     	// Problems handled correctly by LsqFit with initial lambda = 10 but not handled correctly by ELSUNC port NLConstrainedEngine
     	// 1.) PENALTY_FUNCTION_II with n = 10 yields chi-squared = 2.9334573252876657E-4 while ELSUNC port with internal scaling = true
     	//     and numerical Jacobian yields slightly higher chi-squared = 2.9662353438340074E-4.
@@ -2295,6 +2301,53 @@ end
         driver();
         dumpTestResults();
         Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Hock - Schittkowski problem #4\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has chi-squared = 8/3 with a0 = 1 a1 = 0\n", Preferences.DEBUG_ALGORITHM);
+    	// Analytical converges correctly but does not recognize convergence
+        // Number of iterations: 100000000
+    	// x[0] = 1.0
+    	// x[1] = 0.0
+    	// residual = 2.6666666666666674
+    	// converged = false
+    	// Numerical converges correctly but does not recognize convergence
+    	// Number of iterations: 100000000
+    	// x[0] = 1.0
+    	// x[1] = 4.497427430472101E-11
+    	// residual = 2.6666666667116417
+    	// converged = false
+    	testMode = true;
+    	testCase = HOCK4;
+    	m = 2;
+    	n = 2;
+    	initial_x = new double[n];
+    	initial_x[0] = 1.125;
+    	initial_x[1] = 0.125;
+        lower = new double[n];
+        upper = new double[n];
+        lower[0] = 1.0;
+        lower[1] = 0.0;
+        upper[0] = Double.MAX_VALUE;
+        upper[1] = Double.MAX_VALUE;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        
+        Preferences.debug("Madsen\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 0.155437, a1 = -0.694564\n", Preferences.DEBUG_ALGORITHM);
+        // Analytical converges in 52 iterations
+        testMode = true;
+    	testCase = MADSEN;
+    	m = 3;
+    	n = 2;
+    	initial_x = new double[n];
+    	initial_x[0] = 3.0;
+    	initial_x[1] = 1.0;
+    	lower = null;
+        upper = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     }
     
     private void dumpTestResults() {
@@ -2729,6 +2782,15 @@ end
             case HOCK3:
             	residuals[0] = sqrtem5*(x[1] - x[0]);
             	residuals[1] = Math.sqrt(x[1]);
+            	break;
+            case HOCK4:
+            	residuals[0] = Math.pow(x[0] + 1.0,1.5)/Math.sqrt(3.0);
+            	residuals[1] = Math.sqrt(x[1]);
+            	break;
+            case MADSEN:
+            	residuals[0] = x[0]*x[0] + x[1]*x[1] + x[0]*x[1];
+            	residuals[1] = Math.sin(x[0]);
+            	residuals[2] = Math.cos(x[1]);
             	break;
             } // switch (testCase)
             
@@ -3357,6 +3419,20 @@ end
             	J[0][1] = sqrtem5;
             	J[1][0] = 0;
             	J[1][1] = 0.5/Math.sqrt(x[1]);
+            	break;
+            case HOCK4:
+            	J[0][0] = 1.5*Math.sqrt((x[0] + 1.0)/3.0);
+            	J[0][1] = 0.0;
+            	J[1][0] = 0.0;
+            	J[1][1] = 0.5/Math.sqrt(x[1]);
+            	break;
+            case MADSEN:
+            	J[0][0] = 2.0*x[0] + x[1];
+            	J[0][1] = 2.0*x[1] + x[0];
+            	J[1][0] = Math.cos(x[0]);
+            	J[1][1] = 0.0;
+            	J[2][0] = 0.0;
+            	J[2][1] = -Math.sin(x[1]);
             	break;
             } // switch (testCase)
         } catch (Exception e) {
