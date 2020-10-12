@@ -72,6 +72,13 @@ public abstract class CeresSolver {
 	  private int DYNAMIC = -1;
 	//};
 	  
+	  private void runExample() {
+		// auto-differentiation to obtain the derivative (jacobian).
+		  CostFunction cost_function =
+		      new AutoDiffCostFunction(1, 1,0,0,0,0,0,0,0,0,0);
+
+	  }
+	  
 	// A templated cost functor that implements the residual r = 10 -
 	// x. The method operator() is templated so that we can then use an
 	// automatic differentiation wrapper around it to generate its
@@ -320,7 +327,7 @@ public abstract class CeresSolver {
 		// Takes ownership of functor. Uses the template-provided value for the
 		// number of residuals ("kNumResiduals").
 		public AutoDiffCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4,
-				int N5, int N6, int N7, int N8, int N9, int N10) {
+				int N5, int N6, int N7, int N8, int N9) {
 			super(kNumResiduals, N0, N1, N2, N3,
 		            N4, N5, N6, N7, N8, N9);
 			//this.functor_ = functor;
@@ -335,7 +342,7 @@ public abstract class CeresSolver {
 		  // This allows for having autodiff cost functions which return varying
 		  // numbers of residuals at runtime.
 		  public AutoDiffCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4,
-					int N5, int N6, int N7, int N8, int N9, int N10, int num_residuals) {
+					int N5, int N6, int N7, int N8, int N9, int num_residuals) {
 			  super(kNumResiduals, N0, N1, N2, N3,
 			            N4, N5, N6, N7, N8, N9, num_residuals);
 			//this.functor_ = functor;
@@ -346,6 +353,16 @@ public abstract class CeresSolver {
 		    
 		  }
 
+	}
+	
+	class Problem {
+		public Problem() {
+			
+		}
+		
+		public void AddResidualBlock(double x0[]) {
+			
+		}
 	}
 	
 }
