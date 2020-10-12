@@ -1,5 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Vector;
 
 import Jama.Matrix;
@@ -72,10 +76,22 @@ public abstract class CeresSolver {
 	  private int DYNAMIC = -1;
 	//};
 	  
+	// Argument type used in interfaces that can optionally take ownership
+	// of a passed in argument. If TAKE_OWNERSHIP is passed, the called
+	// object takes ownership of the pointer argument, and will call
+	// delete on it upon completion.
+	enum Ownership {
+	  DO_NOT_TAKE_OWNERSHIP,
+	  TAKE_OWNERSHIP
+	};
+	  
 	  private void runExample() {
+		double x[] = new double[] {0.5};
 		// auto-differentiation to obtain the derivative (jacobian).
 		  CostFunction cost_function =
 		      new AutoDiffCostFunction(1, 1,0,0,0,0,0,0,0,0,0);
+		  Problem problem = new Problem();
+		  problem.AddResidualBlock(cost_function, null, x);
 
 	  }
 	  
@@ -355,14 +371,198 @@ public abstract class CeresSolver {
 
 	}
 	
-	class Problem {
-		public Problem() {
+	class LossFunction {
+		public LossFunction() {
 			
+		}
+	}
+	
+	class Problem extends ProblemImpl {
+		public Problem() {
+		    super();	
 		}
 		
-		public void AddResidualBlock(double x0[]) {
-			
+		
+	}
+	
+	class ProblemImpl {
+		private Vector<double[]>residual_parameters_;
+		protected Options options_;
+		public ProblemImpl() {
+		    residual_parameters_ = new Vector<double[]>(10);
+		    options_ = new Options();
 		}
+		
+		
+		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, double x0[]) {
+			  residual_parameters_.clear();
+			  residual_parameters_.add(x0);
+			  return AddResidualBlock(cost_function, loss_function, residual_parameters_);
+		}
+		
+		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<double[]> parameter_blocks) {
+			int i,j;
+			if (cost_function == null) {
+				System.err.println("cost_function is null in AddResidualBlock");
+				return null;
+			}
+			if (parameter_blocks.size() != cost_function.parameter_block_sizes().size()) {
+				System.err.println("parameters_blocks.size() != cost_function.parameter_block_sizes().size() in AddResidualBlock");
+				return null;
+			}
+			
+			// Check the sizes match.
+			Vector<Integer> parameter_block_sizes =
+			      cost_function.parameter_block_sizes();
+			
+			if (!options_.disable_all_safety_checks) {
+			    if (parameter_block_sizes.size() != parameter_blocks.size()) {
+			        System.err.println("Number of blocks input is different than the number of blocks ");
+			        System.err.println("that the cost function expects in AddResidualBlock");
+			        return null;
+			    }
+
+			    // Check for duplicate parameter blocks.
+			    double sorted_parameter_blocks[][] = new double[parameter_blocks.size()][];
+			    int indexArray[] = new int[parameter_blocks.size()];
+			    ArrayList<indexBlockSize> indexBlockSizeArrayList = new ArrayList<indexBlockSize>();
+            	for (i = 0; i < parameter_blocks.size(); i++) {
+            		indexBlockSizeArrayList.add(new indexBlockSize(i, parameter_blocks.get(i).length));
+            	}
+            	Collections.sort(indexBlockSizeArrayList, new indexBlockSizeComparator());
+            	for (i = 0; i < indexBlockSizeArrayList.size(); i++) {
+            		indexBlockSize iBS = indexBlockSizeArrayList.get(i);
+            		int index = iBS.getIndex();
+            		indexArray[i] = index;
+            		sorted_parameter_blocks[i] = parameter_blocks.get(index).clone();
+            		Arrays.sort(sorted_parameter_blocks[i]);
+            	}
+            	boolean foundEquals = false;
+            	for (i = 1; i < sorted_parameter_blocks.length; i++) {
+            		if (sorted_parameter_blocks[i].length == sorted_parameter_blocks[i-1].length) {
+            		    boolean equal = true;
+            		    for (j = 0; j < sorted_parameter_blocks[i].length; j++) {
+            		    	if (sorted_parameter_blocks[i][j] != sorted_parameter_blocks[i-1][j]) {
+            		    		equal = false;
+            		    	}
+            		    }
+            		    if (equal) {
+            		    	System.err.println("Duplicate parameter blocks in a residual parameter are not allowed.");
+            		    	System.err.println("Parameter blocks " + indexArray[i-1] + " and " + indexArray[i] + " are duplicates.");
+            		    }
+            		}
+            	}
+            	if (foundEquals) {
+            		return null;
+            	}
+			  }
+              return null; // temporary place holder
+
+	
+		}
+		
+		class ResidualBlock {
+			public ResidualBlock() {
+				
+			}
+		}
+		
+		class Options {
+			// These flags control whether the Problem object owns the cost
+		    // functions, loss functions, and parameterizations passed into
+		    // the Problem. If set to TAKE_OWNERSHIP, then the problem object
+		    // will delete the corresponding cost or loss functions on
+		    // destruction. The destructor is careful to delete the pointers
+		    // only once, since sharing cost/loss/parameterizations is
+		    // allowed.
+		    public Ownership cost_function_ownership;
+		    public Ownership loss_function_ownership;
+		    public Ownership local_parameterization_ownership;
+		    
+		    // The increase in memory usage is twofold: an additonal hash set per
+		    // parameter block containing all the residuals that depend on the parameter
+		    // block; and a hash set in the problem containing all residuals.
+		    public boolean enable_fast_removal;
+
+		    // By default, Ceres performs a variety of safety checks when constructing
+		    // the problem. There is a small but measurable performance penalty to
+		    // these checks, typically around 5% of construction time. If you are sure
+		    // your problem construction is correct, and 5% of the problem construction
+		    // time is truly an overhead you want to avoid, then you can set
+		    // disable_all_safety_checks to true.
+		    //
+		    // WARNING: Do not set this to true, unless you are absolutely sure of what
+		    // you are doing.
+		    public boolean disable_all_safety_checks;
+
+		    // A Ceres global context to use for solving this problem. This may help to
+		    // reduce computation time as Ceres can reuse expensive objects to create.
+		    // The context object can be NULL, in which case Ceres may create one.
+		    //
+		    // Ceres does NOT take ownership of the pointer.
+		    public Context context;
+			public Options() {
+				cost_function_ownership = Ownership.TAKE_OWNERSHIP;
+		        loss_function_ownership = Ownership.TAKE_OWNERSHIP;
+		        local_parameterization_ownership = Ownership.TAKE_OWNERSHIP;
+		        enable_fast_removal = false;
+		        disable_all_safety_checks = false;
+		        context = null;	
+			}
+		}
+		
+		class Context {
+			public Context() {
+				
+			}
+		}
+		
+		
+	}
+	
+	private class indexBlockSizeComparator implements Comparator<indexBlockSize> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(indexBlockSize o1, indexBlockSize o2) {
+        	int a = o1.getBlockSize();
+            int b = o2.getBlockSize();
+            if (a < b) {
+            	return -1;
+            }
+            else if (a > b) {
+            	return 1;
+            }
+            else {
+            	return 0;
+            }
+        }
+	}
+        
+    private class indexBlockSize {
+		private int index;
+		private int blockSize;
+		
+		public indexBlockSize(int index, int blockSize) {
+			this.index = index;
+			this.blockSize = blockSize;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public int getBlockSize() {
+			return blockSize;
+		}
+		
+		
 	}
 	
 }
