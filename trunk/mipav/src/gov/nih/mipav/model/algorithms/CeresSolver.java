@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.TreeMap;
+import java.util.Map;
 import java.util.Vector;
 
 import Jama.Matrix;
@@ -60,6 +62,12 @@ information.
  */
 
 public abstract class CeresSolver {
+	// It is a near impossibility that user code generates this exact
+	// value in normal operation, thus we will use it to fill arrays
+	// before passing them to user code. If on return an element of the
+	// array still contains this value, we will assume that the user code
+	// did not write to that memory location.
+	private final double kImpossibleValue = 1e302;
 	private boolean testMode = false;
 	double epsilon = 2.2204460e-16;
 	double default_relstep = Math.pow(epsilon,1.0/3.0);
@@ -86,7 +94,7 @@ public abstract class CeresSolver {
 	};
 	  
 	  private void runExample() {
-		double x[] = new double[] {0.5};
+		double x = 0.5;
 		// auto-differentiation to obtain the derivative (jacobian).
 		  CostFunction cost_function =
 		      new AutoDiffCostFunction(1, 1,0,0,0,0,0,0,0,0,0);
@@ -386,22 +394,26 @@ public abstract class CeresSolver {
 	}
 	
 	class ProblemImpl {
-		private Vector<double[]>residual_parameters_;
+		private Vector<Double>residual_parameters_;
+		
+		private TreeMap<Double, ParameterBlock> parameter_block_map_;
 		protected Options options_;
 		public ProblemImpl() {
-		    residual_parameters_ = new Vector<double[]>(10);
+		    residual_parameters_ = new Vector<Double>(10);
 		    options_ = new Options();
+		    parameter_block_map_ = new TreeMap<Double, ParameterBlock>();
 		}
 		
 		
-		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, double x0[]) {
+		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, double x0) {
 			  residual_parameters_.clear();
 			  residual_parameters_.add(x0);
 			  return AddResidualBlock(cost_function, loss_function, residual_parameters_);
 		}
 		
-		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<double[]> parameter_blocks) {
+		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<Double> parameter_blocks) {
 			int i,j;
+			int arraySize;
 			if (cost_function == null) {
 				System.err.println("cost_function is null in AddResidualBlock");
 				return null;
@@ -423,32 +435,21 @@ public abstract class CeresSolver {
 			    }
 
 			    // Check for duplicate parameter blocks.
-			    double sorted_parameter_blocks[][] = new double[parameter_blocks.size()][];
-			    int indexArray[] = new int[parameter_blocks.size()];
-			    ArrayList<indexBlockSize> indexBlockSizeArrayList = new ArrayList<indexBlockSize>();
-            	for (i = 0; i < parameter_blocks.size(); i++) {
-            		indexBlockSizeArrayList.add(new indexBlockSize(i, parameter_blocks.get(i).length));
-            	}
-            	Collections.sort(indexBlockSizeArrayList, new indexBlockSizeComparator());
-            	for (i = 0; i < indexBlockSizeArrayList.size(); i++) {
-            		indexBlockSize iBS = indexBlockSizeArrayList.get(i);
-            		int index = iBS.getIndex();
-            		indexArray[i] = index;
-            		sorted_parameter_blocks[i] = parameter_blocks.get(index).clone();
-            		Arrays.sort(sorted_parameter_blocks[i]);
-            	}
+			    ArrayList<indexValue> sortedList = new ArrayList<indexValue>();
+			    for (i = 0; i < parameter_blocks.size(); i++) {
+			    	sortedList.add(new indexValue(i,parameter_blocks.get(i)));
+			    }
+                Collections.sort(sortedList, new indexValueComparator());
+            	boolean equal = false;
             	boolean foundEquals = false;
-            	for (i = 1; i < sorted_parameter_blocks.length; i++) {
-            		if (sorted_parameter_blocks[i].length == sorted_parameter_blocks[i-1].length) {
-            		    boolean equal = true;
-            		    for (j = 0; j < sorted_parameter_blocks[i].length; j++) {
-            		    	if (sorted_parameter_blocks[i][j] != sorted_parameter_blocks[i-1][j]) {
-            		    		equal = false;
-            		    	}
-            		    }
+            	for (i = 1; i < sortedList.size(); i++) {
+            		equal = false;
+            		if (sortedList.get(i).getValue() == sortedList.get(i-1).getValue()) {
+            		    equal = true;
+            		    foundEquals = true;
             		    if (equal) {
             		    	System.err.println("Duplicate parameter blocks in a residual parameter are not allowed.");
-            		    	System.err.println("Parameter blocks " + indexArray[i-1] + " and " + indexArray[i] + " are duplicates.");
+            		    	System.err.println("Parameter blocks " + sortedList.get(i-1).getIndex() + " and " + sortedList.get(i).getIndex() + " are duplicates.");
             		    }
             		}
             	}
@@ -456,15 +457,249 @@ public abstract class CeresSolver {
             		return null;
             	}
 			  }
+			
+			// Add parameter blocks and convert the double*'s to parameter blocks.
+			Vector<ParameterBlock> parameter_block_ptrs = new Vector<ParameterBlock>(parameter_blocks.size());
+			  for (i = 0; i < parameter_blocks.size(); ++i) {
+			    parameter_block_ptrs.add(i,
+			        InternalAddParameterBlock(parameter_blocks.get(i),
+			                                  parameter_block_sizes.get(i)));
+			  }
+
               return null; // temporary place holder
 
 	
 		}
 		
+		ParameterBlock InternalAddParameterBlock(Double values, int size) {
+
+			  if (values == null) {
+				  System.err.println("Null pointer passed to AddParameterBlock for a parameter with size " + size);
+				  return null;
+			  }
+
+			  // Ignore the request if there is a block for the given pointer already.
+	          if (parameter_block_map_.containsKey(values)) {
+	        	  if (!options_.disable_all_safety_checks) {
+	        	      int existing_size = parameter_block_map_.get(values).Size();
+	        	      if (size != existing_size) {
+	        	          System.err.println("Tried adding a parameter block with the same Double, ");
+	        	          System.err.println(values.doubleValue() + " twice, but with different block sizes. Original ");
+	        	          System.err.println("size was " + existing_size + " but new size is " + size);
+	        	          return null;
+	        	      }
+	        	    }
+	        	    return parameter_block_map_.get(values);
+	          }
+	          
+	          if (!options_.disable_all_safety_checks) {
+	        	    // Before adding the parameter block, also check that it doesn't alias any
+	        	    // other parameter blocks.
+	        	    if (!parameter_block_map_.isEmpty()) {
+	        	      /*ParameterMap::iterator lb = parameter_block_map_.lower_bound(values);
+
+	        	      // If lb is not the first block, check the previous block for aliasing.
+	        	      if (lb != parameter_block_map_.begin()) {
+	        	        ParameterMap::iterator previous = lb;
+	        	        --previous;
+	        	        CheckForNoAliasing(previous->first,
+	        	                           previous->second->Size(),
+	        	                           values,
+	        	                           size);
+	        	      }
+
+	        	      // If lb is not off the end, check lb for aliasing.
+	        	      if (lb != parameter_block_map_.end()) {
+	        	        CheckForNoAliasing(lb->first,
+	        	                           lb->second->Size(),
+	        	                           values,
+	        	                           size);
+	        	      }*/
+	        	    }
+	        	  }
+	          return null; // temporary placeholder
+
+		}
+	}
+		
 		class ResidualBlock {
 			public ResidualBlock() {
 				
 			}
+		}
+		
+		class ParameterBlock {
+			  int i, j;
+			  private double user_state_[];
+			  private int size_;
+			  boolean is_constant_;
+			  LocalParameterization local_parameterization_;
+
+			  // The "state" of the parameter. These fields are only needed while the
+			  // solver is running. While at first glance using mutable is a bad idea, this
+			  // ends up simplifying the internals of Ceres enough to justify the potential
+			  // pitfalls of using "mutable."
+			  double state_[];
+			  double local_parameterization_jacobian_[];
+			  //mutable scoped_array<double> local_parameterization_jacobian_;
+
+			  // The index of the parameter. This is used by various other parts of Ceres to
+			  // permit switching from a ParameterBlock* to an index in another array.
+			  int index_;
+
+			  // The offset of this parameter block inside a larger state vector.
+			  int state_offset_;
+
+			  // The offset of this parameter block inside a larger delta vector.
+			  int delta_offset_;
+			
+			// Create a parameter block with the user state, size, and index specified.
+			  // The size is the size of the parameter block and the index is the position
+			  // of the parameter block inside a Program (if any).
+			  public ParameterBlock(double user_state[], int size, int index) {
+			    Init(user_state, size, index, null);
+			  }
+
+			  public ParameterBlock(double user_state[],
+			                 int size,
+			                 int index,
+			                 LocalParameterization local_parameterization) {
+			    Init(user_state, size, index, local_parameterization);
+			  }
+			
+			// The size of the parameter block.
+			public int Size() { return size_; }
+			
+			public int LocalSize() {
+			    return (local_parameterization_ == null)
+			        ? size_
+			        : local_parameterization_.LocalSize();
+			  }
+			
+			 // Set the parameterization. The parameterization can be set exactly once;
+			  // multiple calls to set the parameterization to different values will crash.
+			  // It is an error to pass NULL for the parameterization. The parameter block
+			  // does not take ownership of the parameterization.
+			  public void SetParameterization(LocalParameterization new_parameterization) {
+			    if (new_parameterization == null) {
+			    	System.err.println("NULL parameterization invalid.");
+			    	return;
+			    }
+			    // Nothing to do if the new parameterization is the same as the
+			    // old parameterization.
+			    if (new_parameterization == local_parameterization_) {
+			      return;
+			    }
+
+			    if (local_parameterization_ != null) {
+			        System.err.println("Can't re-set the local parameterization; it leads to ");
+			        System.err.println("ambiguous ownership. Current local parameterization is: " + local_parameterization_);
+			        return;
+			    }
+
+			    if (new_parameterization.GlobalSize() != size_) {
+			        System.err.println("Invalid parameterization for parameter block. The parameter block ");
+			        System.err.println("has size " + size_ + " while the parameterization has a global ");
+			        System.err.println("size of " + new_parameterization.GlobalSize() + ". Did you ");
+			        System.err.println("accidentally use the wrong parameter block or parameterization?");
+			        return;
+			    }
+
+			    if(new_parameterization.LocalSize() <= 0) {
+			        System.err.println("Invalid parameterization. Parameterizations must have a positive ");
+			        System.err.println("dimensional tangent space.");
+			        return;
+			    }
+
+			    local_parameterization_ = new_parameterization;
+			    //local_parameterization_jacobian_.reset(
+			    local_parameterization_jacobian_ =
+			        new double[local_parameterization_.GlobalSize() *
+			                   local_parameterization_.LocalSize()];
+			    if(!UpdateLocalParameterizationJacobian()) {
+			        System.err.println("Local parameterization Jacobian computation failed for x: ");
+			        for (i = 0; i < size_-1; i++) {
+			        System.err.print(state_[i] + " ");	
+			        }
+			        System.err.println(state_[size_-1]);
+			    }
+			  }
+
+			
+			void Init(double user_state[],
+		            int size,
+		            int index,
+		            LocalParameterization local_parameterization) {
+		    user_state_ = user_state;
+		    size_ = size;
+		    index_ = index;
+		    is_constant_ = false;
+		    state_ = user_state_;
+
+		    local_parameterization_ = null;
+		    if (local_parameterization != null) {
+		      SetParameterization(local_parameterization);
+		    }
+
+		    state_offset_ = -1;
+		    delta_offset_ = -1;
+		  }
+			
+			boolean UpdateLocalParameterizationJacobian() {
+			    if (local_parameterization_ == null) {
+			      return true;
+			    }
+
+			    // Update the local to global Jacobian. In some cases this is
+			    // wasted effort; if this is a bottleneck, we will find a solution
+			    // at that time.
+
+			    int jacobian_size = Size() * LocalSize();
+			    // jacobian is a row-major GlobalSize() x LocalSize() matrix.
+			    InvalidateArray(jacobian_size,
+			                    local_parameterization_jacobian_);
+			    if (!local_parameterization_.ComputeJacobian(
+			            state_,
+			            local_parameterization_jacobian_)) {
+			      System.err.println("Local parameterization Jacobian computation failed for x:");
+			      for (i = 0; i < size_-1; i++) {
+				        System.err.print(state_[i] + " ");	
+				  }
+				  System.err.println(state_[size_-1]);
+			      return false;
+			    }
+
+			    if (!IsArrayValid(jacobian_size, local_parameterization_jacobian_)) {
+			      System.err.println("Local parameterization Jacobian computation returned");
+			      System.err.println("an invalid matrix for x: ");
+			      for (i = 0; i < size_-1; i++) {
+				        System.err.print(state_[i] + " ");	
+				  }
+				  System.err.println(state_[size_-1]);
+			      System.err.println("\n Jacobian matrix : ");
+			      for (i = 0; i < size_; i++) {
+			          for (j = 0; j < LocalSize()-1; j++) {
+			        	  System.err.print(local_parameterization_jacobian_[i * size_ + j] + " ");
+			          }
+			          System.err.println(local_parameterization_jacobian_[i * size_ + LocalSize()-1]);
+			      }
+			      return false;
+			    }
+			    return true;
+			  }
+		}
+		
+		// The class LocalParameterization defines the function Plus and its
+		// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
+		abstract class LocalParameterization {
+			  // jacobian is a row-major GlobalSize() x LocalSize() matrix.
+			  public abstract boolean ComputeJacobian(double x[], double jacobian[]);
+			  
+			  // Size of x.
+			  public abstract int GlobalSize();
+
+			  // Size of delta.
+			  public abstract int LocalSize();
 		}
 		
 		class Options {
@@ -517,10 +752,30 @@ public abstract class CeresSolver {
 			}
 		}
 		
+		void InvalidateArray(int size, double x[]) {
+			  if (x != null) {
+			    for (int i = 0; i < size; ++i) {
+			      x[i] = kImpossibleValue;
+			    }
+			  }
+		}
 		
-	}
+		boolean IsArrayValid(int size, double x[]) {
+			  if (x != null) {
+			    for (int i = 0; i < size; ++i) {
+			      if (!Double.isFinite(x[i]) || (x[i] == kImpossibleValue))  {
+			        return false;
+			      }
+			    }
+			  }
+			  return true;
+		}
+
+		
+		
+	} // public abstract class CeresSolver
 	
-	private class indexBlockSizeComparator implements Comparator<indexBlockSize> {
+	class indexValueComparator implements Comparator<indexValue> {
 
         /**
          * DOCUMENT ME!
@@ -530,9 +785,9 @@ public abstract class CeresSolver {
          * 
          * @return DOCUMENT ME!
          */
-        public int compare(indexBlockSize o1, indexBlockSize o2) {
-        	int a = o1.getBlockSize();
-            int b = o2.getBlockSize();
+        public int compare(indexValue o1, indexValue o2) {
+        	double a = o1.getValue();
+            double b = o2.getValue();
             if (a < b) {
             	return -1;
             }
@@ -545,27 +800,27 @@ public abstract class CeresSolver {
         }
 	}
         
-    private class indexBlockSize {
+    class indexValue {
 		private int index;
-		private int blockSize;
+		private double value;
 		
-		public indexBlockSize(int index, int blockSize) {
+		public indexValue(int index, double value) {
 			this.index = index;
-			this.blockSize = blockSize;
+			this.value = value;
 		}
 		
 		public int getIndex() {
 			return index;
 		}
 		
-		public int getBlockSize() {
-			return blockSize;
+		public double getValue() {
+			return value;
 		}
+
 		
 		
 	}
 	
-}
 
 
 
