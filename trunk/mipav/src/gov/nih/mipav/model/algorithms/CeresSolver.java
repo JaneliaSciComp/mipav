@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 import Jama.Matrix;
@@ -94,7 +98,8 @@ public abstract class CeresSolver {
 	};
 	  
 	  private void runExample() {
-		double x = 0.5;
+		ArrayList<Double>x = new ArrayList<Double>();
+		x.add(0.5);
 		// auto-differentiation to obtain the derivative (jacobian).
 		  CostFunction cost_function =
 		      new AutoDiffCostFunction(1, 1,0,0,0,0,0,0,0,0,0);
@@ -393,25 +398,45 @@ public abstract class CeresSolver {
 		
 	}
 	
+	class Program {
+		// The Program does not own the ParameterBlock or ResidualBlock objects.
+		  private Vector<ParameterBlock> parameter_blocks_;
+		  private Vector<ResidualBlock> residual_blocks_;	
+		  public Program() {
+			  parameter_blocks_ = new Vector<ParameterBlock>();
+			  residual_blocks_ = new Vector<ResidualBlock>();
+		  }
+	}
+	
 	class ProblemImpl {
-		private Vector<Double>residual_parameters_;
-		
-		private TreeMap<Double, ParameterBlock> parameter_block_map_;
+		private Vector<ArrayList<Double>>residual_parameters_;
+		private Program program_;
+		// Must ArrayList<Double> rather than the C++ double[] as keys in a TreeMap
+		private TreeMap<ArrayList<Double>, ParameterBlock> parameter_block_map_;
 		protected Options options_;
+		// Iff enable_fast_removal is enabled, contains the current residual blocks.
+		private HashSet<ResidualBlock> residual_block_set_;
+		private HashMap<CostFunction, Integer> cost_function_ref_count_;
+		private HashMap<LossFunction, Integer> loss_function_ref_count_;
+		private int count;
 		public ProblemImpl() {
-		    residual_parameters_ = new Vector<Double>(10);
+		    residual_parameters_ = new Vector<ArrayList<Double>>(10);
 		    options_ = new Options();
-		    parameter_block_map_ = new TreeMap<Double, ParameterBlock>();
+		    program_ = new Program();
+		    parameter_block_map_ = new TreeMap<ArrayList<Double>, ParameterBlock>();
+		    residual_block_set_ = new HashSet<ResidualBlock>();
+		    cost_function_ref_count_ = new HashMap<CostFunction, Integer>();
+		    loss_function_ref_count_ = new HashMap<LossFunction, Integer>();
 		}
 		
 		
-		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, double x0) {
+		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, ArrayList<Double> x0) {
 			  residual_parameters_.clear();
 			  residual_parameters_.add(x0);
 			  return AddResidualBlock(cost_function, loss_function, residual_parameters_);
 		}
 		
-		public ResidualBlock[] AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<Double> parameter_blocks) {
+		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<ArrayList<Double>> parameter_blocks) {
 			int i,j;
 			int arraySize;
 			if (cost_function == null) {
@@ -433,30 +458,18 @@ public abstract class CeresSolver {
 			        System.err.println("that the cost function expects in AddResidualBlock");
 			        return null;
 			    }
+			}
 
 			    // Check for duplicate parameter blocks.
-			    ArrayList<indexValue> sortedList = new ArrayList<indexValue>();
+			    // That is, parameter blocks pointing to the same memory location
 			    for (i = 0; i < parameter_blocks.size(); i++) {
-			    	sortedList.add(new indexValue(i,parameter_blocks.get(i)));
+			    	for (j = i+1; j < parameter_blocks.size(); j++) {
+			    		if (parameter_blocks.get(i) == parameter_blocks.get(j)) {
+			    			System.err.println("Duplicate parameter blocks in a residual parameter are not allowed.");
+            		    	System.err.println("Parameter blocks " + i + " and " + j + " are duplicates.");	
+			    		}
+			    	}
 			    }
-                Collections.sort(sortedList, new indexValueComparator());
-            	boolean equal = false;
-            	boolean foundEquals = false;
-            	for (i = 1; i < sortedList.size(); i++) {
-            		equal = false;
-            		if (sortedList.get(i).getValue() == sortedList.get(i-1).getValue()) {
-            		    equal = true;
-            		    foundEquals = true;
-            		    if (equal) {
-            		    	System.err.println("Duplicate parameter blocks in a residual parameter are not allowed.");
-            		    	System.err.println("Parameter blocks " + sortedList.get(i-1).getIndex() + " and " + sortedList.get(i).getIndex() + " are duplicates.");
-            		    }
-            		}
-            	}
-            	if (foundEquals) {
-            		return null;
-            	}
-			  }
 			
 			// Add parameter blocks and convert the double*'s to parameter blocks.
 			Vector<ParameterBlock> parameter_block_ptrs = new Vector<ParameterBlock>(parameter_blocks.size());
@@ -465,13 +478,59 @@ public abstract class CeresSolver {
 			        InternalAddParameterBlock(parameter_blocks.get(i),
 			                                  parameter_block_sizes.get(i)));
 			  }
+			  
+			  if (!options_.disable_all_safety_checks) {
+				    // Check that the block sizes match the block sizes expected by the
+				    // cost_function.
+				    for (i = 0; i < parameter_block_ptrs.size(); ++i) {
+				      if (cost_function.parameter_block_sizes().get(i) !=
+				               parameter_block_ptrs.get(i).Size()) {
+				          System.err.println("The cost function expects parameter block " + i);
+				          System.err.println(" of size " + cost_function.parameter_block_sizes().get(i));
+				          System.err.println(" but was given a block of size " + parameter_block_ptrs.get(i).Size());
+				      }
+				    }
+				  }
+			  
+			  ResidualBlock new_residual_block =
+				      new ResidualBlock(cost_function,
+				                        loss_function,
+				                        parameter_block_ptrs,
+				                        program_.residual_blocks_.size());
 
-              return null; // temporary place holder
+			// Add dependencies on the residual to the parameter blocks.
+			  if (options_.enable_fast_removal) {
+			    for (i = 0; i < parameter_blocks.size(); ++i) {
+			      parameter_block_ptrs.get(i).AddResidualBlock(new_residual_block);
+			    }
+			  }
+
+			  program_.residual_blocks_.add(new_residual_block);
+			  
+			  if (options_.enable_fast_removal) {
+				    residual_block_set_.add(new_residual_block);
+			  }
+			  
+			  if (options_.cost_function_ownership == Ownership.TAKE_OWNERSHIP) {
+				    // Increment the reference count, creating an entry in the table if
+				    // needed. Note: C++ maps guarantee that new entries have default
+				    // constructed values; this implies integers are zero initialized.
+				    count = cost_function_ref_count_.get(cost_function);
+				    cost_function_ref_count_.put(cost_function, count + 1);
+				  }
+
+			  if (options_.loss_function_ownership == Ownership.TAKE_OWNERSHIP &&
+				      loss_function != null) {
+				  count = loss_function_ref_count_.get(loss_function);
+				  loss_function_ref_count_.put(loss_function, count + 1);
+		      }
+
+				  return new_residual_block;
 
 	
 		}
 		
-		ParameterBlock InternalAddParameterBlock(Double values, int size) {
+		ParameterBlock InternalAddParameterBlock(ArrayList<Double> values, int size) {
 
 			  if (values == null) {
 				  System.err.println("Null pointer passed to AddParameterBlock for a parameter with size " + size);
@@ -483,8 +542,8 @@ public abstract class CeresSolver {
 	        	  if (!options_.disable_all_safety_checks) {
 	        	      int existing_size = parameter_block_map_.get(values).Size();
 	        	      if (size != existing_size) {
-	        	          System.err.println("Tried adding a parameter block with the same Double, ");
-	        	          System.err.println(values.doubleValue() + " twice, but with different block sizes. Original ");
+	        	          System.err.println("Tried adding a parameter block with the same ArrayList<Double>, ");
+	        	          System.err.println(" twice, but with different block sizes. Original ");
 	        	          System.err.println("size was " + existing_size + " but new size is " + size);
 	        	          return null;
 	        	      }
@@ -492,54 +551,68 @@ public abstract class CeresSolver {
 	        	    return parameter_block_map_.get(values);
 	          }
 	          
-	          if (!options_.disable_all_safety_checks) {
-	        	    // Before adding the parameter block, also check that it doesn't alias any
-	        	    // other parameter blocks.
-	        	    if (!parameter_block_map_.isEmpty()) {
-	        	      /*ParameterMap::iterator lb = parameter_block_map_.lower_bound(values);
+	          
+	        	    
+	          // Pass the index of the new parameter block as well to keep the index in
+	          // sync with the position of the parameter in the program's parameter vector.
+	          ParameterBlock new_parameter_block =
+	              new ParameterBlock(values, size, program_.parameter_blocks_.size());
 
-	        	      // If lb is not the first block, check the previous block for aliasing.
-	        	      if (lb != parameter_block_map_.begin()) {
-	        	        ParameterMap::iterator previous = lb;
-	        	        --previous;
-	        	        CheckForNoAliasing(previous->first,
-	        	                           previous->second->Size(),
-	        	                           values,
-	        	                           size);
-	        	      }
+	          // For dynamic problems, add the list of dependent residual blocks, which is
+	          // empty to start.
+	          if (options_.enable_fast_removal) {
+	            new_parameter_block.EnableResidualBlockDependencies();
+	          }
+	          parameter_block_map_.put(values,new_parameter_block);
+	          program_.parameter_blocks_.add(new_parameter_block);
+	          return new_parameter_block;
 
-	        	      // If lb is not off the end, check lb for aliasing.
-	        	      if (lb != parameter_block_map_.end()) {
-	        	        CheckForNoAliasing(lb->first,
-	        	                           lb->second->Size(),
-	        	                           values,
-	        	                           size);
-	        	      }*/
-	        	    }
-	        	  }
-	          return null; // temporary placeholder
 
 		}
+		
+		
 	}
 		
 		class ResidualBlock {
-			public ResidualBlock() {
-				
+		    private CostFunction cost_function_;
+		    private LossFunction loss_function_;
+		    private ParameterBlock parameter_blocks_[];
+
+			// The index of the residual, typically in a Program. This is only to permit
+			// switching from a ResidualBlock* to an index in the Program's array, needed
+			// to do efficient removals.
+			private int index_;
+			public ResidualBlock(CostFunction cost_function,
+				    LossFunction loss_function,
+				    Vector<ParameterBlock> parameter_blocks,
+				    int index) {
+			    if (cost_function == null) {
+			    	System.err.println("cost_function == null in ResidualBlock constructor");
+			    }
+			    cost_function_ = cost_function;
+			    loss_function_ = loss_function;
+			    parameter_blocks_ = new ParameterBlock[cost_function.parameter_block_sizes().size()];
+			    index_ = index;
+			    for (int i = 0; i < parameter_blocks.size(); i++) {
+			    	parameter_blocks_[i] = parameter_blocks.get(i);
+			    }
 			}
 		}
 		
 		class ParameterBlock {
 			  int i, j;
-			  private double user_state_[];
+			  private ArrayList<Double> user_state_;
 			  private int size_;
 			  boolean is_constant_;
 			  LocalParameterization local_parameterization_;
+			  // If non-null, contains the residual blocks this parameter block is in.
+			  HashSet<ResidualBlock> residual_blocks_;
 
 			  // The "state" of the parameter. These fields are only needed while the
 			  // solver is running. While at first glance using mutable is a bad idea, this
 			  // ends up simplifying the internals of Ceres enough to justify the potential
 			  // pitfalls of using "mutable."
-			  double state_[];
+			  ArrayList<Double> state_;
 			  double local_parameterization_jacobian_[];
 			  //mutable scoped_array<double> local_parameterization_jacobian_;
 
@@ -556,11 +629,11 @@ public abstract class CeresSolver {
 			// Create a parameter block with the user state, size, and index specified.
 			  // The size is the size of the parameter block and the index is the position
 			  // of the parameter block inside a Program (if any).
-			  public ParameterBlock(double user_state[], int size, int index) {
+			  public ParameterBlock(ArrayList<Double> user_state, int size, int index) {
 			    Init(user_state, size, index, null);
 			  }
 
-			  public ParameterBlock(double user_state[],
+			  public ParameterBlock(ArrayList<Double> user_state,
 			                 int size,
 			                 int index,
 			                 LocalParameterization local_parameterization) {
@@ -619,14 +692,14 @@ public abstract class CeresSolver {
 			    if(!UpdateLocalParameterizationJacobian()) {
 			        System.err.println("Local parameterization Jacobian computation failed for x: ");
 			        for (i = 0; i < size_-1; i++) {
-			        System.err.print(state_[i] + " ");	
+			        System.err.print(state_.get(i) + " ");	
 			        }
-			        System.err.println(state_[size_-1]);
+			        System.err.println(state_.get(size_-1));
 			    }
 			  }
 
 			
-			void Init(double user_state[],
+			void Init(ArrayList<Double> user_state,
 		            int size,
 		            int index,
 		            LocalParameterization local_parameterization) {
@@ -658,14 +731,18 @@ public abstract class CeresSolver {
 			    // jacobian is a row-major GlobalSize() x LocalSize() matrix.
 			    InvalidateArray(jacobian_size,
 			                    local_parameterization_jacobian_);
+			    double Jstate_[] = new double[state_.size()];
+			    for (i = 0; i < state_.size(); i++) {
+			    	Jstate_[i] = state_.get(i);
+			    }
 			    if (!local_parameterization_.ComputeJacobian(
-			            state_,
+			            Jstate_,
 			            local_parameterization_jacobian_)) {
 			      System.err.println("Local parameterization Jacobian computation failed for x:");
 			      for (i = 0; i < size_-1; i++) {
-				        System.err.print(state_[i] + " ");	
+				        System.err.print(state_.get(i) + " ");	
 				  }
-				  System.err.println(state_[size_-1]);
+				  System.err.println(state_.get(size_-1));
 			      return false;
 			    }
 
@@ -673,9 +750,9 @@ public abstract class CeresSolver {
 			      System.err.println("Local parameterization Jacobian computation returned");
 			      System.err.println("an invalid matrix for x: ");
 			      for (i = 0; i < size_-1; i++) {
-				        System.err.print(state_[i] + " ");	
+				        System.err.print(state_.get(i) + " ");	
 				  }
-				  System.err.println(state_[size_-1]);
+				  System.err.println(state_.get(size_-1));
 			      System.err.println("\n Jacobian matrix : ");
 			      for (i = 0; i < size_; i++) {
 			          for (j = 0; j < LocalSize()-1; j++) {
@@ -686,6 +763,33 @@ public abstract class CeresSolver {
 			      return false;
 			    }
 			    return true;
+			  }
+			
+			void ToString() {
+				System.out.println("size_ = " + size_);
+				System.out.println("is_constant_ = " + is_constant_);
+				System.out.println("index_ = " + index_);
+				System.out.println("state_offset_ " + state_offset_);
+				System.out.println("delta_offset_ " + delta_offset_);
+			}
+			
+			void EnableResidualBlockDependencies() {
+			    if (residual_blocks_ != null) {
+			        System.err.println("Ceres bug: There is already a residual block collection ");
+			        System.err.println("for parameter block: ");
+			        ToString();
+			        return;
+			    }
+			    residual_blocks_ = new HashSet<ResidualBlock>();
+			  }
+			
+			void AddResidualBlock(ResidualBlock residual_block) {
+			    if (residual_blocks_ == null) {
+			        System.err.println("Ceres bug: The residual block collection is null for parameter block: ");
+			        ToString();
+			        return;
+			    }
+			    residual_blocks_.add(residual_block);
 			  }
 		}
 		
