@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -97,7 +96,7 @@ public abstract class CeresSolver {
 	  TAKE_OWNERSHIP
 	};
 	  
-	  private void runExample() {
+	  public void runExample() {
 		ArrayList<Double>x = new ArrayList<Double>();
 		x.add(0.5);
 		// auto-differentiation to obtain the derivative (jacobian).
@@ -277,6 +276,7 @@ public abstract class CeresSolver {
 		
 	    public SizedCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7, int N8, int N9,
 	    		int num_residuals) {
+	    	    super();
 			    if (kNumResiduals != DYNAMIC) {
 			       System.err.println("Cost functions must have at least one residual block.");
 			       return;
@@ -314,6 +314,7 @@ public abstract class CeresSolver {
 	}
 			    
 			    public SizedCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7, int N8, int N9) {
+			    	    super();
 					    if (kNumResiduals <= 0) {
 					       System.err.println("Cost functions must have at least one residual block.");
 					       return;
@@ -333,6 +334,7 @@ public abstract class CeresSolver {
 					        System.err.println ("(ignore trailing 0s): " + N0 + ", " + N1 + ", " + N2 + ", ");
 					        System.err.println(N3 + ", " + N4 + ", " + N5 + ", " + N6 + ", " + N7 + ", ");
 					        System.err.println(N8 + ", " + N9);
+					    }
 
 					    set_num_residuals(kNumResiduals);
 					    
@@ -347,7 +349,6 @@ public abstract class CeresSolver {
 					    if (N8 > 0) mutable_parameter_block_sizes().add(N8);
 					    if (N9 > 0) mutable_parameter_block_sizes().add(N9);
 			}
-	    }
 	}
 	
 	class AutoDiffCostFunction extends SizedCostFunction {
@@ -412,22 +413,38 @@ public abstract class CeresSolver {
 		private Vector<ArrayList<Double>>residual_parameters_;
 		private Program program_;
 		// Must ArrayList<Double> rather than the C++ double[] as keys in a TreeMap
-		private TreeMap<ArrayList<Double>, ParameterBlock> parameter_block_map_;
+		private HashMap<ArrayList<Double>, ParameterBlock> parameter_block_map_;
 		protected Options options_;
 		// Iff enable_fast_removal is enabled, contains the current residual blocks.
 		private HashSet<ResidualBlock> residual_block_set_;
 		private HashMap<CostFunction, Integer> cost_function_ref_count_;
 		private HashMap<LossFunction, Integer> loss_function_ref_count_;
+		private boolean context_impl_owned_;
+		private ContextImpl context_impl_;
 		private int count;
 		public ProblemImpl() {
 		    residual_parameters_ = new Vector<ArrayList<Double>>(10);
 		    options_ = new Options();
 		    program_ = new Program();
-		    parameter_block_map_ = new TreeMap<ArrayList<Double>, ParameterBlock>();
+		    parameter_block_map_ = new HashMap<ArrayList<Double>, ParameterBlock>();
 		    residual_block_set_ = new HashSet<ResidualBlock>();
 		    cost_function_ref_count_ = new HashMap<CostFunction, Integer>();
 		    loss_function_ref_count_ = new HashMap<LossFunction, Integer>();
+		    InitializeContext(options_.context, context_impl_, context_impl_owned_);
 		}
+		
+		void InitializeContext(Context context,
+                ContextImpl context_impl,
+                boolean context_impl_owned) {
+				if (context == null) {
+				    context_impl_owned = true;
+				    context_impl = new ContextImpl();
+				} else {
+				    context_impl_owned = false;
+				    context_impl = (ContextImpl)context;
+				}
+		}
+
 		
 		
 		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, ArrayList<Double> x0) {
@@ -444,7 +461,10 @@ public abstract class CeresSolver {
 				return null;
 			}
 			if (parameter_blocks.size() != cost_function.parameter_block_sizes().size()) {
-				System.err.println("parameters_blocks.size() != cost_function.parameter_block_sizes().size() in AddResidualBlock");
+				System.err.println("parameter_blocks.size() != cost_function.parameter_block_sizes().size() in AddResidualBlock");
+				System.err.println("parameter_blocks_size() = " + parameter_blocks.size());
+				System.err.println("cost_function.parameter_block_sizes().size() = " + cost_function.parameter_block_sizes().size());
+				
 				return null;
 			}
 			
@@ -515,14 +535,24 @@ public abstract class CeresSolver {
 				    // Increment the reference count, creating an entry in the table if
 				    // needed. Note: C++ maps guarantee that new entries have default
 				    // constructed values; this implies integers are zero initialized.
-				    count = cost_function_ref_count_.get(cost_function);
-				    cost_function_ref_count_.put(cost_function, count + 1);
+				    if (cost_function_ref_count_.get(cost_function) == null) {
+				    	cost_function_ref_count_.put(cost_function,1);
+				    }
+				    else {
+					    count = cost_function_ref_count_.get(cost_function);
+					    cost_function_ref_count_.put(cost_function, count + 1);
+				    }
 				  }
 
 			  if (options_.loss_function_ownership == Ownership.TAKE_OWNERSHIP &&
 				      loss_function != null) {
-				  count = loss_function_ref_count_.get(loss_function);
-				  loss_function_ref_count_.put(loss_function, count + 1);
+				  if (loss_function_ref_count_.get(loss_function) == null) {
+					  loss_function_ref_count_.put(loss_function,1);
+				  }
+				  else {
+					  count = loss_function_ref_count_.get(loss_function);
+					  loss_function_ref_count_.put(loss_function, count + 1);
+				  }
 		      }
 
 				  return new_residual_block;
@@ -572,6 +602,12 @@ public abstract class CeresSolver {
 		
 		
 	}
+		
+		class ContextImpl extends Context{
+			public ContextImpl() {
+				
+			}
+		}
 		
 		class ResidualBlock {
 		    private CostFunction cost_function_;
