@@ -95,6 +95,367 @@ public abstract class CeresSolver {
 	  DO_NOT_TAKE_OWNERSHIP,
 	  TAKE_OWNERSHIP
 	};
+	
+	enum MinimizerType {
+		  LINE_SEARCH,
+		  TRUST_REGION
+		};
+		
+enum LineSearchDirectionType {
+	  // Negative of the gradient.
+	  STEEPEST_DESCENT,
+
+	  // A generalization of the Conjugate Gradient method to non-linear
+	  // functions. The generalization can be performed in a number of
+	  // different ways, resulting in a variety of search directions. The
+	  // precise choice of the non-linear conjugate gradient algorithm
+	  // used is determined by NonlinerConjuateGradientType.
+	  NONLINEAR_CONJUGATE_GRADIENT,
+
+	  // BFGS, and it's limited memory approximation L-BFGS, are quasi-Newton
+	  // algorithms that approximate the Hessian matrix by iteratively refining
+	  // an initial estimate with rank-one updates using the gradient at each
+	  // iteration. They are a generalisation of the Secant method and satisfy
+	  // the Secant equation.  The Secant equation has an infinium of solutions
+	  // in multiple dimensions, as there are N*(N+1)/2 degrees of freedom in a
+	  // symmetric matrix but only N conditions are specified by the Secant
+	  // equation. The requirement that the Hessian approximation be positive
+	  // definite imposes another N additional constraints, but that still leaves
+	  // remaining degrees-of-freedom.  (L)BFGS methods uniquely deteremine the
+	  // approximate Hessian by imposing the additional constraints that the
+	  // approximation at the next iteration must be the 'closest' to the current
+	  // approximation (the nature of how this proximity is measured is actually
+	  // the defining difference between a family of quasi-Newton methods including
+	  // (L)BFGS & DFP). (L)BFGS is currently regarded as being the best known
+	  // general quasi-Newton method.
+	  //
+	  // The principal difference between BFGS and L-BFGS is that whilst BFGS
+	  // maintains a full, dense approximation to the (inverse) Hessian, L-BFGS
+	  // maintains only a window of the last M observations of the parameters and
+	  // gradients. Using this observation history, the calculation of the next
+	  // search direction can be computed without requiring the construction of the
+	  // full dense inverse Hessian approximation. This is particularly important
+	  // for problems with a large number of parameters, where storage of an N-by-N
+	  // matrix in memory would be prohibitive.
+	  //
+	  // For more details on BFGS see:
+	  //
+	  // Broyden, C.G., "The Convergence of a Class of Double-rank Minimization
+	  // Algorithms,"; J. Inst. Maths. Applics., Vol. 6, pp 76–90, 1970.
+	  //
+	  // Fletcher, R., "A New Approach to Variable Metric Algorithms,"
+	  // Computer Journal, Vol. 13, pp 317–322, 1970.
+	  //
+	  // Goldfarb, D., "A Family of Variable Metric Updates Derived by Variational
+	  // Means," Mathematics of Computing, Vol. 24, pp 23–26, 1970.
+	  //
+	  // Shanno, D.F., "Conditioning of Quasi-Newton Methods for Function
+	  // Minimization," Mathematics of Computing, Vol. 24, pp 647–656, 1970.
+	  //
+	  // For more details on L-BFGS see:
+	  //
+	  // Nocedal, J. (1980). "Updating Quasi-Newton Matrices with Limited
+	  // Storage". Mathematics of Computation 35 (151): 773–782.
+	  //
+	  // Byrd, R. H.; Nocedal, J.; Schnabel, R. B. (1994).
+	  // "Representations of Quasi-Newton Matrices and their use in
+	  // Limited Memory Methods". Mathematical Programming 63 (4):
+	  // 129–156.
+	  //
+	  // A general reference for both methods:
+	  //
+	  // Nocedal J., Wright S., Numerical Optimization, 2nd Ed. Springer, 1999.
+	  LBFGS,
+	  BFGS,
+	};
+	
+	enum LineSearchType {
+		  // Backtracking line search with polynomial interpolation or
+		  // bisection.
+		  ARMIJO,
+		  WOLFE,
+		};
+		
+		// Nonliner conjugate gradient methods are a generalization of the
+		// method of Conjugate Gradients for linear systems. The
+		// generalization can be carried out in a number of different ways
+		// leading to number of different rules for computing the search
+		// direction. Ceres provides a number of different variants. For more
+		// details see Numerical Optimization by Nocedal & Wright.
+		enum NonlinearConjugateGradientType {
+		  FLETCHER_REEVES,
+		  POLAK_RIBIERE,
+		  HESTENES_STIEFEL,
+		};
+		
+		// TODO(keir): Considerably expand the explanations of each solver type.
+		enum LinearSolverType {
+		  // These solvers are for general rectangular systems formed from the
+		  // normal equations A'A x = A'b. They are direct solvers and do not
+		  // assume any special problem structure.
+
+		  // Solve the normal equations using a dense Cholesky solver; based
+		  // on Eigen.
+		  DENSE_NORMAL_CHOLESKY,
+
+		  // Solve the normal equations using a dense QR solver; based on
+		  // Eigen.
+		  DENSE_QR,
+
+		  // Solve the normal equations using a sparse cholesky solver; requires
+		  // SuiteSparse or CXSparse.
+		  SPARSE_NORMAL_CHOLESKY,
+
+		  // Specialized solvers, specific to problems with a generalized
+		  // bi-partitite structure.
+
+		  // Solves the reduced linear system using a dense Cholesky solver;
+		  // based on Eigen.
+		  DENSE_SCHUR,
+
+		  // Solves the reduced linear system using a sparse Cholesky solver;
+		  // based on CHOLMOD.
+		  SPARSE_SCHUR,
+
+		  // Solves the reduced linear system using Conjugate Gradients, based
+		  // on a new Ceres implementation.  Suitable for large scale
+		  // problems.
+		  ITERATIVE_SCHUR,
+
+		  // Conjugate gradients on the normal equations.
+		  CGNR
+		};
+
+		enum PreconditionerType {
+		  // Trivial preconditioner - the identity matrix.
+		  IDENTITY,
+
+		  // Block diagonal of the Gauss-Newton Hessian.
+		  JACOBI,
+
+		  // Note: The following three preconditioners can only be used with
+		  // the ITERATIVE_SCHUR solver. They are well suited for Structure
+		  // from Motion problems.
+
+		  // Block diagonal of the Schur complement. This preconditioner may
+		  // only be used with the ITERATIVE_SCHUR solver.
+		  SCHUR_JACOBI,
+
+		  // Visibility clustering based preconditioners.
+		  //
+		  // The following two preconditioners use the visibility structure of
+		  // the scene to determine the sparsity structure of the
+		  // preconditioner. This is done using a clustering algorithm. The
+		  // available visibility clustering algorithms are described below.
+		  //
+		  // Note: Requires SuiteSparse.
+		  CLUSTER_JACOBI,
+		  CLUSTER_TRIDIAGONAL
+		};
+
+		enum VisibilityClusteringType {
+		  // Canonical views algorithm as described in
+		  //
+		  // "Scene Summarization for Online Image Collections", Ian Simon, Noah
+		  // Snavely, Steven M. Seitz, ICCV 2007.
+		  //
+		  // This clustering algorithm can be quite slow, but gives high
+		  // quality clusters. The original visibility based clustering paper
+		  // used this algorithm.
+		  CANONICAL_VIEWS,
+
+		  // The classic single linkage algorithm. It is extremely fast as
+		  // compared to CANONICAL_VIEWS, but can give slightly poorer
+		  // results. For problems with large number of cameras though, this
+		  // is generally a pretty good option.
+		  //
+		  // If you are using SCHUR_JACOBI preconditioner and have SuiteSparse
+		  // available, CLUSTER_JACOBI and CLUSTER_TRIDIAGONAL in combination
+		  // with the SINGLE_LINKAGE algorithm will generally give better
+		  // results.
+		  SINGLE_LINKAGE
+		};
+
+		enum SparseLinearAlgebraLibraryType {
+		  // High performance sparse Cholesky factorization and approximate
+		  // minimum degree ordering.
+		  SUITE_SPARSE,
+
+		  // A lightweight replacment for SuiteSparse, which does not require
+		  // a LAPACK/BLAS implementation. Consequently, its performance is
+		  // also a bit lower than SuiteSparse.
+		  CX_SPARSE,
+
+		  // Eigen's sparse linear algebra routines. In particular Ceres uses
+		  // the Simplicial LDLT routines.
+		  EIGEN_SPARSE,
+
+		  // No sparse linear solver should be used.  This does not necessarily
+		  // imply that Ceres was built without any sparse library, although that
+		  // is the likely use case, merely that one should not be used.
+		  NO_SPARSE
+		};
+
+		enum DenseLinearAlgebraLibraryType {
+		  EIGEN,
+		  LAPACK
+		};
+
+		// Logging options
+		// The options get progressively noisier.
+		enum LoggingType {
+		  SILENT,
+		  PER_MINIMIZER_ITERATION
+		};
+		
+		// Ceres supports different strategies for computing the trust region
+		// step.
+		enum TrustRegionStrategyType {
+		  // The default trust region strategy is to use the step computation
+		  // used in the Levenberg-Marquardt algorithm. For more details see
+		  // levenberg_marquardt_strategy.h
+		  LEVENBERG_MARQUARDT,
+
+		  // Powell's dogleg algorithm interpolates between the Cauchy point
+		  // and the Gauss-Newton step. It is particularly useful if the
+		  // LEVENBERG_MARQUARDT algorithm is making a large number of
+		  // unsuccessful steps. For more details see dogleg_strategy.h.
+		  //
+		  // NOTES:
+		  //
+		  // 1. This strategy has not been experimented with or tested as
+		  // extensively as LEVENBERG_MARQUARDT, and therefore it should be
+		  // considered EXPERIMENTAL for now.
+		  //
+		  // 2. For now this strategy should only be used with exact
+		  // factorization based linear solvers, i.e., SPARSE_SCHUR,
+		  // DENSE_SCHUR, DENSE_QR and SPARSE_NORMAL_CHOLESKY.
+		  DOGLEG
+		};
+
+		// Ceres supports two different dogleg strategies.
+		// The "traditional" dogleg method by Powell and the
+		// "subspace" method described in
+		// R. H. Byrd, R. B. Schnabel, and G. A. Shultz,
+		// "Approximate solution of the trust region problem by minimization
+		//  over two-dimensional subspaces", Mathematical Programming,
+		// 40 (1988), pp. 247--263
+		enum DoglegType {
+		  // The traditional approach constructs a dogleg path
+		  // consisting of two line segments and finds the furthest
+		  // point on that path that is still inside the trust region.
+		  TRADITIONAL_DOGLEG,
+
+		  // The subspace approach finds the exact minimum of the model
+		  // constrained to the subspace spanned by the dogleg path.
+		  SUBSPACE_DOGLEG
+		};
+
+		enum TerminationType {
+		  // Minimizer terminated because one of the convergence criterion set
+		  // by the user was satisfied.
+		  //
+		  // 1.  (new_cost - old_cost) < function_tolerance * old_cost;
+		  // 2.  max_i |gradient_i| < gradient_tolerance
+		  // 3.  |step|_2 <= parameter_tolerance * ( |x|_2 +  parameter_tolerance)
+		  //
+		  // The user's parameter blocks will be updated with the solution.
+		  CONVERGENCE,
+
+		  // The solver ran for maximum number of iterations or maximum amount
+		  // of time specified by the user, but none of the convergence
+		  // criterion specified by the user were met. The user's parameter
+		  // blocks will be updated with the solution found so far.
+		  NO_CONVERGENCE,
+
+		  // The minimizer terminated because of an error.  The user's
+		  // parameter blocks will not be updated.
+		  FAILURE,
+
+		  // Using an IterationCallback object, user code can control the
+		  // minimizer. The following enums indicate that the user code was
+		  // responsible for termination.
+		  //
+		  // Minimizer terminated successfully because a user
+		  // IterationCallback returned SOLVER_TERMINATE_SUCCESSFULLY.
+		  //
+		  // The user's parameter blocks will be updated with the solution.
+		  USER_SUCCESS,
+
+		  // Minimizer terminated because because a user IterationCallback
+		  // returned SOLVER_ABORT.
+		  //
+		  // The user's parameter blocks will not be updated.
+		  USER_FAILURE
+		};
+
+		// Enums used by the IterationCallback instances to indicate to the
+		// solver whether it should continue solving, the user detected an
+		// error or the solution is good enough and the solver should
+		// terminate.
+		enum CallbackReturnType {
+		  // Continue solving to next iteration.
+		  SOLVER_CONTINUE,
+
+		  // Terminate solver, and do not update the parameter blocks upon
+		  // return. Unless the user has set
+		  // Solver:Options:::update_state_every_iteration, in which case the
+		  // state would have been updated every iteration
+		  // anyways. Solver::Summary::termination_type is set to USER_ABORT.
+		  SOLVER_ABORT,
+
+		  // Terminate solver, update state and
+		  // return. Solver::Summary::termination_type is set to USER_SUCCESS.
+		  SOLVER_TERMINATE_SUCCESSFULLY
+		};
+
+		// The format in which linear least squares problems should be logged
+		// when Solver::Options::lsqp_iterations_to_dump is non-empty.
+		enum DumpFormatType {
+		  // Print the linear least squares problem in a human readable format
+		  // to stderr. The Jacobian is printed as a dense matrix. The vectors
+		  // D, x and f are printed as dense vectors. This should only be used
+		  // for small problems.
+		  CONSOLE,
+
+		  // Write out the linear least squares problem to the directory
+		  // pointed to by Solver::Options::lsqp_dump_directory as text files
+		  // which can be read into MATLAB/Octave. The Jacobian is dumped as a
+		  // text file containing (i,j,s) triplets, the vectors D, x and f are
+		  // dumped as text files containing a list of their values.
+		  //
+		  // A MATLAB/octave script called lm_iteration_???.m is also output,
+		  // which can be used to parse and load the problem into memory.
+		  TEXTFILE
+		};
+		
+		// The differentiation method used to compute numerical derivatives in
+		// NumericDiffCostFunction and DynamicNumericDiffCostFunction.
+		enum NumericDiffMethodType {
+		  // Compute central finite difference: f'(x) ~ (f(x+h) - f(x-h)) / 2h.
+		  CENTRAL,
+
+		  // Compute forward finite difference: f'(x) ~ (f(x+h) - f(x)) / h.
+		  FORWARD,
+
+		  // Adaptive numerical differentiation using Ridders' method. Provides more
+		  // accurate and robust derivatives at the expense of additional cost
+		  // function evaluations.
+		  RIDDERS
+		};
+
+		enum LineSearchInterpolationType {
+		  BISECTION,
+		  QUADRATIC,
+		  CUBIC
+		};
+
+		enum CovarianceAlgorithmType {
+		  DENSE_SVD,
+		  SPARSE_QR,
+		};
+
+
 	  
 	  public void runExample() {
 		ArrayList<Double>x = new ArrayList<Double>();
@@ -104,6 +465,12 @@ public abstract class CeresSolver {
 		      new AutoDiffCostFunction(1, 1,0,0,0,0,0,0,0,0,0);
 		  Problem problem = new Problem();
 		  problem.AddResidualBlock(cost_function, null, x);
+
+		  // Run the solver!
+		  Solver solver = new Solver();
+		  solver.options.minimizer_progress_to_stdout = true;
+		  //Solver::Summary summary;
+		  //Solve(options, &problem, &summary);
 
 	  }
 	  
@@ -217,7 +584,7 @@ public abstract class CeresSolver {
         		}
     			x[j] = xinit[j] - epsj;
     			if (testMode) {
-        		    fitToTestFunction(x, residualsxpm)	;
+        		    fitToTestFunction(x, residualsxpm);
         		}
         		else {
         		    fitToFunction(x, residualsxpm);	
@@ -410,6 +777,51 @@ public abstract class CeresSolver {
 	}
 	
 	class ProblemImpl {
+		class Options {
+			// These flags control whether the Problem object owns the cost
+		    // functions, loss functions, and parameterizations passed into
+		    // the Problem. If set to TAKE_OWNERSHIP, then the problem object
+		    // will delete the corresponding cost or loss functions on
+		    // destruction. The destructor is careful to delete the pointers
+		    // only once, since sharing cost/loss/parameterizations is
+		    // allowed.
+		    public Ownership cost_function_ownership;
+		    public Ownership loss_function_ownership;
+		    public Ownership local_parameterization_ownership;
+		    
+		    // The increase in memory usage is twofold: an additonal hash set per
+		    // parameter block containing all the residuals that depend on the parameter
+		    // block; and a hash set in the problem containing all residuals.
+		    public boolean enable_fast_removal;
+
+		    // By default, Ceres performs a variety of safety checks when constructing
+		    // the problem. There is a small but measurable performance penalty to
+		    // these checks, typically around 5% of construction time. If you are sure
+		    // your problem construction is correct, and 5% of the problem construction
+		    // time is truly an overhead you want to avoid, then you can set
+		    // disable_all_safety_checks to true.
+		    //
+		    // WARNING: Do not set this to true, unless you are absolutely sure of what
+		    // you are doing.
+		    public boolean disable_all_safety_checks;
+
+		    // A Ceres global context to use for solving this problem. This may help to
+		    // reduce computation time as Ceres can reuse expensive objects to create.
+		    // The context object can be NULL, in which case Ceres may create one.
+		    //
+		    // Ceres does NOT take ownership of the pointer.
+		    public Context context;
+			public Options() {
+				cost_function_ownership = Ownership.TAKE_OWNERSHIP;
+		        loss_function_ownership = Ownership.TAKE_OWNERSHIP;
+		        local_parameterization_ownership = Ownership.TAKE_OWNERSHIP;
+		        enable_fast_removal = false;
+		        disable_all_safety_checks = false;
+		        context = null;	
+			}
+		}
+		
+		
 		private Vector<ArrayList<Double>>residual_parameters_;
 		private Program program_;
 		// Must ArrayList<Double> rather than the C++ double[] as keys in a TreeMap
@@ -601,6 +1013,12 @@ public abstract class CeresSolver {
 		}
 		
 		
+	}
+	
+	class Context {
+		public Context() {
+			
+		}
 	}
 		
 		class ContextImpl extends Context{
@@ -842,55 +1260,321 @@ public abstract class CeresSolver {
 			  public abstract int LocalSize();
 		}
 		
-		class Options {
-			// These flags control whether the Problem object owns the cost
-		    // functions, loss functions, and parameterizations passed into
-		    // the Problem. If set to TAKE_OWNERSHIP, then the problem object
-		    // will delete the corresponding cost or loss functions on
-		    // destruction. The destructor is careful to delete the pointers
-		    // only once, since sharing cost/loss/parameterizations is
-		    // allowed.
-		    public Ownership cost_function_ownership;
-		    public Ownership loss_function_ownership;
-		    public Ownership local_parameterization_ownership;
-		    
-		    // The increase in memory usage is twofold: an additonal hash set per
-		    // parameter block containing all the residuals that depend on the parameter
-		    // block; and a hash set in the problem containing all residuals.
-		    public boolean enable_fast_removal;
-
-		    // By default, Ceres performs a variety of safety checks when constructing
-		    // the problem. There is a small but measurable performance penalty to
-		    // these checks, typically around 5% of construction time. If you are sure
-		    // your problem construction is correct, and 5% of the problem construction
-		    // time is truly an overhead you want to avoid, then you can set
-		    // disable_all_safety_checks to true.
-		    //
-		    // WARNING: Do not set this to true, unless you are absolutely sure of what
-		    // you are doing.
-		    public boolean disable_all_safety_checks;
-
-		    // A Ceres global context to use for solving this problem. This may help to
-		    // reduce computation time as Ceres can reuse expensive objects to create.
-		    // The context object can be NULL, in which case Ceres may create one.
-		    //
-		    // Ceres does NOT take ownership of the pointer.
-		    public Context context;
-			public Options() {
-				cost_function_ownership = Ownership.TAKE_OWNERSHIP;
-		        loss_function_ownership = Ownership.TAKE_OWNERSHIP;
-		        local_parameterization_ownership = Ownership.TAKE_OWNERSHIP;
-		        enable_fast_removal = false;
-		        disable_all_safety_checks = false;
-		        context = null;	
+		class Solver {
+			public Options options;
+			public Summary summary;
+			public Solver() {
+				options = new Options();
+				summary = new Summary();
 			}
-		}
+			
+			class Options {
+				public MinimizerType minimizer_type;
+				public LineSearchDirectionType line_search_direction_type;
+				public LineSearchType line_search_type;
+				public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
+				public int max_lbfgs_rank;
+				public boolean use_approximate_eigenvalue_bfgs_scaling;
+				public LineSearchInterpolationType line_search_interpolation_type;
+				// If during the line search, the step_size falls below this
+			    // value, it is truncated to zero.
+			    public double min_line_search_step_size;
+			    public double line_search_sufficient_function_decrease;
+			    public double max_line_search_step_contraction;
+			    public double min_line_search_step_contraction;
+			    public int max_num_line_search_step_size_iterations;
+			    public int max_num_line_search_direction_restarts;
+			    public double line_search_sufficient_curvature_decrease;
+			    public double max_line_search_step_expansion;
+			    public TrustRegionStrategyType trust_region_strategy_type;
+			    public DoglegType dogleg_type;
+			    public boolean use_nonmonotonic_steps;
+			    public int max_consecutive_nonmonotonic_steps;
+			    // Maximum number of iterations for the minimizer to run for.
+			    public int max_num_iterations;
+			    // Maximum time for which the minimizer should run for.
+			    public double max_solver_time_in_seconds;
+			    // Number of threads used by Ceres for evaluating the cost and jacobians.
+			    public int num_threads;
+			    // Trust region minimizer settings.
+			    public double initial_trust_region_radius;
+			    public double max_trust_region_radius;
+			    // Minimizer terminates when the trust region radius becomes
+			    // smaller than this value.
+			    public double min_trust_region_radius;
+			    // Lower bound for the relative decrease before a step is accepted.
+			    public double min_relative_decrease;
+			    public double min_lm_diagonal;
+			    public double max_lm_diagonal;
+			    public int max_num_consecutive_invalid_steps;
+			    public double function_tolerance;
+                public double gradient_tolerance;
+                public double parameter_tolerance;
+                public LinearSolverType linear_solver_type;
+                public PreconditionerType preconditioner_type;
+                public VisibilityClusteringType visibility_clustering_type;
+                public DenseLinearAlgebraLibraryType dense_linear_algebra_library_type;
+                public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+                // This setting is scheduled to be removed in 1.15.0.
+                public int num_linear_solver_threads;
+                // NOTE: This option can only be used with the SCHUR_JACOBI preconditioner.
+                public boolean use_explicit_schur_complement;
+                public boolean use_postordering;
+                // This settings affects the SPARSE_NORMAL_CHOLESKY solver.
+                public boolean dynamic_sparsity;
+                public boolean use_inner_iterations;
+                public double inner_iteration_tolerance;
+                // Minimum number of iterations for which the linear solver should
+                // run, even if the convergence criterion is satisfied.
+                public int min_linear_solver_iterations;
+                public  int max_linear_solver_iterations;
+                public double eta;
+                // Normalize the jacobian using Jacobi scaling before calling
+                // the linear least squares solver.
+                public boolean jacobi_scaling;
+                public LoggingType logging_type;
+                public boolean minimizer_progress_to_stdout;
+                public String trust_region_problem_dump_directory;
+                public DumpFormatType trust_region_problem_dump_format_type;
+                public boolean check_gradients;
+                public double gradient_check_relative_precision;
+                public double gradient_check_numeric_derivative_relative_step_size;
+                public boolean update_state_every_iteration;
+                // The solver does NOT take ownership of the pointer.
+                // EvaluationCallback* evaluation_callback;
+				public Options() {
+					// Default constructor that sets up a generic sparse problem.
+				      minimizer_type = MinimizerType.TRUST_REGION;
+				      line_search_direction_type = LineSearchDirectionType.LBFGS;
+				      line_search_type = LineSearchType.WOLFE;
+				      nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
+				      max_lbfgs_rank = 20;
+				      use_approximate_eigenvalue_bfgs_scaling = false;
+				      line_search_interpolation_type = LineSearchInterpolationType.CUBIC;
+				      min_line_search_step_size = 1e-9;
+				      line_search_sufficient_function_decrease = 1e-4;
+				      max_line_search_step_contraction = 1e-3;
+				      min_line_search_step_contraction = 0.6;
+				      max_num_line_search_step_size_iterations = 20;
+				      max_num_line_search_direction_restarts = 5;
+				      line_search_sufficient_curvature_decrease = 0.9;
+				      max_line_search_step_expansion = 10.0;
+				      trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+				      dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
+				      use_nonmonotonic_steps = false;
+				      max_consecutive_nonmonotonic_steps = 5;
+				      max_num_iterations = 50;
+				      max_solver_time_in_seconds = 1e9;
+				      num_threads = 1;
+				      initial_trust_region_radius = 1e4;
+				      max_trust_region_radius = 1e16;
+				      min_trust_region_radius = 1e-32;
+				      min_relative_decrease = 1e-3;
+				      min_lm_diagonal = 1e-6;
+				      max_lm_diagonal = 1e32;
+				      max_num_consecutive_invalid_steps = 5;
+				      function_tolerance = 1e-6;
+				      gradient_tolerance = 1e-10;
+				      parameter_tolerance = 1e-8;
+
+				//#if defined(CERES_NO_SUITESPARSE) && defined(CERES_NO_CXSPARSE) && !defined(CERES_ENABLE_LGPL_CODE)  // NOLINT
+				      linear_solver_type = LinearSolverType.DENSE_QR;
+				//#else
+				      //linear_solver_type = SPARSE_NORMAL_CHOLESKY;
+				//#endif
+
+				      preconditioner_type = PreconditionerType.JACOBI;
+				      visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
+				      //dense_linear_algebra_library_type = EIGEN;
+				      dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
+
+				      // Choose a default sparse linear algebra library in the order:
+				      //
+				      //   SUITE_SPARSE > CX_SPARSE > EIGEN_SPARSE > NO_SPARSE
+				      sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.NO_SPARSE;
+				/*#if !defined(CERES_NO_SUITESPARSE)
+				      sparse_linear_algebra_library_type = SUITE_SPARSE;
+				#else
+				  #if !defined(CERES_NO_CXSPARSE)
+				      sparse_linear_algebra_library_type = CX_SPARSE;
+				  #else
+				    #if defined(CERES_USE_EIGEN_SPARSE)
+				      sparse_linear_algebra_library_type = EIGEN_SPARSE;
+				    #endif
+				  #endif
+				#endif*/
+
+				      num_linear_solver_threads = -1;
+				      use_explicit_schur_complement = false;
+				      use_postordering = false;
+				      dynamic_sparsity = false;
+				      min_linear_solver_iterations = 0;
+				      max_linear_solver_iterations = 500;
+				      eta = 1e-1;
+				      jacobi_scaling = true;
+				      use_inner_iterations = false;
+				      inner_iteration_tolerance = 1e-3;
+				      logging_type = LoggingType.PER_MINIMIZER_ITERATION;
+				      minimizer_progress_to_stdout = false;
+				      trust_region_problem_dump_directory = "/tmp";
+				      trust_region_problem_dump_format_type = DumpFormatType.TEXTFILE;
+				      check_gradients = false;
+				      gradient_check_relative_precision = 1e-8;
+				      gradient_check_numeric_derivative_relative_step_size = 1e-6;
+				      update_state_every_iteration = false;
+				      //evaluation_callback = null;
+				    }
+	
+				}
+			
+			class Summary {
+				public MinimizerType minimizer_type;
+				public TerminationType termination_type;
+				// Reason why the solver terminated.
+			    public String message;
+			    // Cost of the problem (value of the objective function) before
+			    // the optimization.
+			    public double initial_cost;
+			    // Cost of the problem (value of the objective function) after the
+			    // optimization.
+			    public double final_cost;
+			    public double fixed_cost;
+			    // IterationSummary for each minimizer iteration in order.
+			    // public Vector<IterationSummary> iterations;
+			    public int num_successful_steps;
+			    public int num_unsuccessful_steps;
+			    // Number of times inner iterations were performed.
+			    public int num_inner_iteration_steps;
+			    public int num_line_search_steps;
+			    public double preprocessor_time_in_seconds;
+			    // Time spent in the TrustRegionMinimizer.
+			    public double minimizer_time_in_seconds;
+			    public double postprocessor_time_in_seconds;
+			    // Some total of all time spent inside Ceres when Solve is called.
+			    public double total_time_in_seconds;
+			    // Time (in seconds) spent in the linear solver computing the
+			    // trust region step.
+			    public double linear_solver_time_in_seconds;
+			    public int num_linear_solves;
+			    // Time (in seconds) spent evaluating the residual vector.
+			    public double residual_evaluation_time_in_seconds;
+			    // Number of residual only evaluations.
+			    public int num_residual_evaluations;
+			    // Time (in seconds) spent evaluating the jacobian matrix.
+			    public double jacobian_evaluation_time_in_seconds;
+			    // Number of Jacobian (and residual) evaluations.
+			    int num_jacobian_evaluations;
+			    // Time (in seconds) spent doing inner iterations.
+			    public double inner_iteration_time_in_seconds;
+			    // Time (in seconds) spent evaluating the univariate cost function as part
+			    // of a line search.
+			    public double line_search_cost_evaluation_time_in_seconds;
+			    // Time (in seconds) spent evaluating the gradient of the univariate cost
+			    // function as part of a line search.
+			    public double line_search_gradient_evaluation_time_in_seconds;
+			    // Time (in seconds) spent minimizing the interpolating polynomial
+			    // to compute the next candidate step size as part of a line search.
+			    public double line_search_polynomial_minimization_time_in_seconds;
+			    // Total time (in seconds) spent performing line searches.
+			    public double line_search_total_time_in_seconds;
+			    // Number of parameter blocks in the problem.
+			    public int num_parameter_blocks;
+			    // Number of parameters in the probem.
+			    public int num_parameters;
+			    public int num_effective_parameters;
+			    // Number of residual blocks in the problem.
+			    public int num_residual_blocks;
+			    // Number of residuals in the problem.
+			    public int num_residuals;
+			    public int num_parameter_blocks_reduced;
+			    // Number of parameters in the reduced problem.
+			    public int num_parameters_reduced;
+			    public int num_effective_parameters_reduced;
+			    // Number of residual blocks in the reduced problem.
+			    public int num_residual_blocks_reduced;
+			    //  Number of residuals in the reduced problem.
+			    public int num_residuals_reduced;
+			    // Is the reduced problem bounds constrained.
+			    public boolean is_constrained;
+			    //  Number of threads specified by the user for Jacobian and
+			    //  residual evaluation.
+			    public int num_threads_given;
+			    public int num_threads_used;
+			    // NOTE: This field is deprecated,
+			    // Solver::Summary::num_threads_given should be used instead.
+			    //
+			    // This field is scheduled to be removed in 1.15.0. In the interim
+			    // the value of this field will always be equal to
+			    // num_threads_given.
+			    //
+			    // Number of threads specified by the user for solving the trust
+			    // region problem.
+			    public int num_linear_solver_threads_given;
+			    // NOTE: This field is deprecated,
+			    // Solver::Summary::num_threads_used should be used instead.
+			    //
+			    // This field is scheduled to be removed in 1.15.0. In the interim
+			    // the value of this field will always be equal to
+			    // num_threads_used.
+			    //
+			    // Number of threads actually used by the solver for solving the
+			    // trust region problem. This number is not equal to
+			    // num_threads_given if OpenMP is not available.
+			    public int num_linear_solver_threads_used;
+			    // Type of the linear solver requested by the user.
+			    public LinearSolverType linear_solver_type_given;
+			    // Type of the linear solver actually used. This may be different
+			    // from linear_solver_type_given if Ceres determines that the
+			    // problem structure is not compatible with the linear solver
+			    // requested or if the linear solver requested by the user is not
+			    // available, e.g. The user requested SPARSE_NORMAL_CHOLESKY but
+			    // no sparse linear algebra library was available.
+			    public LinearSolverType linear_solver_type_used;
+			    // Size of the elimination groups given by the user as hints to
+			    // the linear solver.
+			    public Vector<Integer> linear_solver_ordering_given;
+			    public Vector<Integer> linear_solver_ordering_used;
+			    public String schur_structure_given;
+                public String schur_structure_used;
+                // True if the user asked for inner iterations to be used as part
+                // of the optimization.
+                public boolean inner_iterations_given;
+                public boolean inner_iterations_used;
+                // Size of the parameter groups given by the user for performing
+                // inner iterations.
+                public Vector<Integer> inner_iteration_ordering_given;
+                public Vector<Integer> inner_iteration_ordering_used;
+                // Type of the preconditioner requested by the user.
+                public PreconditionerType preconditioner_type_given;
+                public PreconditionerType preconditioner_type_used;
+                public VisibilityClusteringType visibility_clustering_type;
+                //  Type of trust region strategy.
+                public TrustRegionStrategyType trust_region_strategy_type;
+                //  Type of dogleg strategy used for solving the trust region
+                //  problem.
+                public DoglegType dogleg_type;
+                //  Type of the dense linear algebra library used.
+                public DenseLinearAlgebraLibraryType dense_linear_algebra_library_type;
+                // Type of the sparse linear algebra library used.
+                public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+                // Type of line search direction used.
+                public LineSearchDirectionType line_search_direction_type;
+                // Type of the line search algorithm used.
+                public LineSearchType line_search_type;
+                //  When performing line search, the degree of the polynomial used
+                //  to approximate the objective function.
+                public LineSearchInterpolationType line_search_interpolation_type;
+                public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
+                // If the type of the line search direction is LBFGS, then this
+                // indicates the rank of the Hessian approximation.
+                public int max_lbfgs_rank;
+				public Summary() {
+					
+				}
+			}
+	   }
 		
-		class Context {
-			public Context() {
-				
-			}
-		}
+		
 		
 		void InvalidateArray(int size, double x[]) {
 			  if (x != null) {
