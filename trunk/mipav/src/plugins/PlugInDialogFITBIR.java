@@ -6771,11 +6771,24 @@ public class PlugInDialogFITBIR extends JFrame
                         isMultifile = true;
                         File[] fileList = origSrcFile.listFiles();
                         if (fileList.length > 0) {
-                            // find first file that doesn't start with . (e.g., .DS_Store) and isn't a directory
+                            // if we find a likely dicom file, prefer that over other files
+                            boolean foundDicom = false;
                             for (File file : fileList) {
-                                if (file.isFile() && !file.getName().startsWith(".")) {
+                                if (file.isFile() && (file.getName().toLowerCase().endsWith(".dcm") || file.getName().toLowerCase().endsWith(".ima"))) {
+                                    foundDicom = true;
                                     origSrcFile = file;
                                     break;
+                                }
+                            }
+                            
+                            // if we didn't find an .dcm/.ima, search for other files (maybe dicoms without extensions, or some other image format)
+                            if (!foundDicom) {
+                                // find first file that doesn't start with . (e.g., .DS_Store) and isn't a directory
+                                for (File file : fileList) {
+                                    if (file.isFile() && !file.getName().startsWith(".")) {
+                                        origSrcFile = file;
+                                        break;
+                                    }
                                 }
                             }
 
