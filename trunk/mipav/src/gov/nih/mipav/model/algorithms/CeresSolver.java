@@ -470,7 +470,7 @@ enum LineSearchDirectionType {
 		  Solver solver = new Solver();
 		  solver.options.minimizer_progress_to_stdout = true;
 		  //Solver::Summary summary;
-		  //Solve(options, &problem, &summary);
+		  Solve(solver.options, problem, solver.summary);
 
 	  }
 	  
@@ -612,6 +612,32 @@ enum LineSearchDirectionType {
     		}
         }
     }
+    
+    public void Solve(Solver.Options options, Problem problem, Solver.Summary summary) {
+        if (problem == null) {
+        	System.err.println("Problem problem is null in Solve");
+        	return;
+        }
+        if (summary == null) {
+        	System.err.println("Solver.Summary summary is null in Solve");
+        	return;
+        }
+        double start_time = 1.0E-3*System.currentTimeMillis();
+        //Summary();
+        if (!options.IsValid(summary)) {
+            System.err.println("Terminating: " + summary.message);
+            return;
+        }
+
+        ProblemImpl problem_impl = (ProblemImpl)problem;
+        Program program = problem_impl.mutable_program();
+        PreSolveSummarize(options, problem_impl, summary);
+    }
+    
+    private void PreSolveSummarize(Solver.Options options, ProblemImpl problem, Solver.Summary summary) {
+    	
+    }
+
 
 	class CostFunction {
 		//private int num_residuals_;
@@ -855,6 +881,10 @@ enum LineSearchDirectionType {
 				    context_impl_owned = false;
 				    context_impl = (ContextImpl)context;
 				}
+		}
+		
+		public Program mutable_program() {
+			return program_;
 		}
 
 		
@@ -1340,6 +1370,10 @@ enum LineSearchDirectionType {
                 public double gradient_check_relative_precision;
                 public double gradient_check_numeric_derivative_relative_step_size;
                 public boolean update_state_every_iteration;
+                // List of iterations at which the minimizer should dump the trust
+                // region problem. Useful for testing and benchmarking. If empty
+                // (default), no problems are dumped.
+                public Vector<Integer> trust_region_minimizer_iterations_to_dump;
                 // The solver does NOT take ownership of the pointer.
                 // EvaluationCallback* evaluation_callback;
 				public Options() {
@@ -1424,8 +1458,351 @@ enum LineSearchDirectionType {
 				      update_state_every_iteration = false;
 				      //evaluation_callback = null;
 				    }
+				
+				public boolean IsValid(Solver.Summary summary) {
+					  if (!CommonOptionsAreValid(summary)) {
+					    return false;
+					  }
+
+					  if (minimizer_type == MinimizerType.TRUST_REGION &&
+					      !TrustRegionOptionsAreValid(summary)) {
+					    return false;
+					  }
+
+					  // We do not know if the problem is bounds constrained or not, if it
+					  // is then the trust region solver will also use the line search
+					  // solver to do a projection onto the box constraints, so make sure
+					  // that the line search options are checked independent of what
+					  // minimizer algorithm is being used.
+					  return LineSearchOptionsAreValid(summary);
+					}
+				
+				private boolean CommonOptionsAreValid(Solver.Summary summary) {
+					  if (max_num_iterations < 0) {
+						  summary.message = "max_num_iterations incorrectly < 0";
+						  return false;
+					  }
+				      if (max_solver_time_in_seconds < 0.0) {
+				    	  summary.message = "max_solver_time_in_seconds incorrectly < 0.0";
+				    	  return false;
+				      }
+					  if (function_tolerance < 0.0) {
+						  summary.message = "function_tolerance incorrectly < 0.0";
+						  return false;
+					  }
+					  if (gradient_tolerance < 0.0) {
+						  summary.message = "gradient_tolerance incorrectly < 0.0";
+						  return false;
+					  }
+					  if (parameter_tolerance < 0.0) {
+						  summary.message = "parameter_tolerance inocrrectly < 0.0";
+						  return false;
+					  }
+					  if (num_threads <= 0) {
+						  summary.message = "num_threads incorrectly <= 0";
+						  return false;
+					  }
+					  if (check_gradients) {
+						if (gradient_check_relative_precision <= 0.0) {
+							summary.message = "gradient_check_relative_precision incorrectly < = 0.0";
+							return false;
+						}
+					    if (gradient_check_numeric_derivative_relative_step_size <= 0.0) {
+					    	summary.message = "gradient_check_numeric_derivative_relative_step_size incorrectly <= 0.0";
+					    	return false;
+					    }
+					  }
+					  return true;
+					}
+				
+				public boolean TrustRegionOptionsAreValid(Solver.Summary summary) {
+					  if (initial_trust_region_radius <= 0.0) {
+						  summary.message = "initial_trust_region_radius incorrectly <= 0.0";
+						  return false;
+					  }
+					  if (min_trust_region_radius <=  0.0) {
+						  summary.message = "min_trust_region_radius incorrectly <= 0.0";
+						  return false;
+					  }
+					  if (max_trust_region_radius <= 0.0) {
+						  summary.message = "max_trust_region_radius incorrectly <= 0.0";
+						  return false;
+					  }
+					  if (min_trust_region_radius > max_trust_region_radius) {
+						  summary.message = "min_trust_region_radius incorrectly > max_trust_region_radius";
+						  return false;
+					  }
+					  if (min_trust_region_radius > initial_trust_region_radius) {
+				          summary.message = "min_trust_region_radius incorrectly > initial_trust_region_radius";
+				          return false;
+					  }
+					  if (initial_trust_region_radius > max_trust_region_radius) {
+						  summary.message = "initial_trust_region_radius incorrectly > max_trust_region_radius";
+						  return false;
+					  }
+					  if (min_relative_decrease < 0.0) {
+						  summary.message = "min_relative_decrease incorrectly < 0.0";
+						  return false;
+					  }
+					  if (min_lm_diagonal < 0.0) {
+						  summary.message = "min_lm_diagonal incorrectly < 0.0";
+						  return false;
+					  }
+					  if (max_lm_diagonal < 0.0) {
+						  summary.message = "max_lm_diagonal incorrectly < 0.0";
+						  return false;
+					  }
+					  if (min_lm_diagonal > max_lm_diagonal) {
+						  summary.message = "min_lm_diagonal incorrectly > max_lm_diagonal";
+						  return false;
+					  }
+					  if (max_num_consecutive_invalid_steps < 0) {
+						  summary.message = "max_num_consecutive_invalid_steps incorrectly < 0";
+						  return false;
+					  }
+					  if (eta <= 0.0) {
+						  summary.message = "eta incorrectly <= 0.0";
+						  return false;
+					  }
+					  if (min_linear_solver_iterations < 0) {
+						  summary.message = "min_linear_solver_iterations incorrectly < 0";
+						  return false;
+					  }
+					  if (max_linear_solver_iterations < 1) {
+						  summary.message = "max_linear_solver_iterations incorrectly < 1";
+						  return false;
+					  }
+					  if (min_linear_solver_iterations > max_linear_solver_iterations) {
+						  summary.message = "min_linear_solver_iterations incorrectly > max_linear_solver_iterations";
+						  return false;
+					  }
+
+					  if (use_inner_iterations) {
+						  if (inner_iteration_tolerance < 0.0) {
+							  summary.message = "inner_iteration_tolerance incorrectly < 0.0";
+							  return false;
+						  }
+					  }
+
+					  /*if (options.use_inner_iterations &&
+					      options.evaluation_callback != NULL) {
+					    *error =  "Inner iterations (use_inner_iterations = true) can't be "
+					        "combined with an evaluation callback "
+					        "(options.evaluation_callback != NULL).";
+					    return false;
+					  }*/
+
+					  if (use_nonmonotonic_steps) {
+						if (max_consecutive_nonmonotonic_steps <= 0) {
+						    summary.message = "max_consecutive_nonmonotonic_steps incorrectly <= 0";
+						    return false;
+						}
+					  }
+
+					  if (linear_solver_type == LinearSolverType.ITERATIVE_SCHUR &&
+					      use_explicit_schur_complement &&
+					      preconditioner_type != PreconditionerType.SCHUR_JACOBI) {
+					    summary.message =  "use_explicit_schur_complement only supports SCHUR_JACOBI as the preconditioner.";
+					    return false;
+					  }
+
+					  if (preconditioner_type == PreconditionerType.CLUSTER_JACOBI &&
+					      sparse_linear_algebra_library_type != SparseLinearAlgebraLibraryType.SUITE_SPARSE) {
+					    summary.message =  "CLUSTER_JACOBI requires Solver::Options::sparse_linear_algebra_library_type to be SUITE_SPARSE.";
+					    return false;
+					  }
+
+					  if (preconditioner_type == PreconditionerType.CLUSTER_TRIDIAGONAL &&
+					      sparse_linear_algebra_library_type != SparseLinearAlgebraLibraryType.SUITE_SPARSE) {
+					    summary.message =  "CLUSTER_TRIDIAGONAL requires Solver::Options::sparse_linear_algebra_library_type to be SUITE_SPARSE.";
+					    return false;
+					  }
+
+					/*#ifdef CERES_NO_LAPACK
+					  if (options.dense_linear_algebra_library_type == LAPACK) {
+					    if (options.linear_solver_type == DENSE_NORMAL_CHOLESKY) {
+					      *error = "Can't use DENSE_NORMAL_CHOLESKY with LAPACK because "
+					          "LAPACK was not enabled when Ceres was built.";
+					      return false;
+					    } else if (options.linear_solver_type == DENSE_QR) {
+					      *error = "Can't use DENSE_QR with LAPACK because "
+					          "LAPACK was not enabled when Ceres was built.";
+					      return false;
+					    } else if (options.linear_solver_type == DENSE_SCHUR) {
+					      *error = "Can't use DENSE_SCHUR with LAPACK because "
+					          "LAPACK was not enabled when Ceres was built.";
+					      return false;
+					    }
+					  }
+					#endif
+
+					#ifdef CERES_NO_SUITESPARSE
+					  if (options.sparse_linear_algebra_library_type == SUITE_SPARSE) {
+					    if (options.linear_solver_type == SPARSE_NORMAL_CHOLESKY) {
+					      *error = "Can't use SPARSE_NORMAL_CHOLESKY with SUITESPARSE because "
+					             "SuiteSparse was not enabled when Ceres was built.";
+					      return false;
+					    } else if (options.linear_solver_type == SPARSE_SCHUR) {
+					      *error = "Can't use SPARSE_SCHUR with SUITESPARSE because "
+					          "SuiteSparse was not enabled when Ceres was built.";
+					      return false;
+					    } else if (options.preconditioner_type == CLUSTER_JACOBI) {
+					      *error =  "CLUSTER_JACOBI preconditioner not supported. "
+					          "SuiteSparse was not enabled when Ceres was built.";
+					      return false;
+					    } else if (options.preconditioner_type == CLUSTER_TRIDIAGONAL) {
+					      *error =  "CLUSTER_TRIDIAGONAL preconditioner not supported. "
+					          "SuiteSparse was not enabled when Ceres was built.";
+					    return false;
+					    }
+					  }
+					#endif
+
+					#ifdef CERES_NO_CXSPARSE
+					  if (options.sparse_linear_algebra_library_type == CX_SPARSE) {
+					    if (options.linear_solver_type == SPARSE_NORMAL_CHOLESKY) {
+					      *error = "Can't use SPARSE_NORMAL_CHOLESKY with CX_SPARSE because "
+					             "CXSparse was not enabled when Ceres was built.";
+					      return false;
+					    } else if (options.linear_solver_type == SPARSE_SCHUR) {
+					      *error = "Can't use SPARSE_SCHUR with CX_SPARSE because "
+					          "CXSparse was not enabled when Ceres was built.";
+					      return false;
+					    }
+					  }
+					#endif
+
+					#ifndef CERES_USE_EIGEN_SPARSE
+					  if (options.sparse_linear_algebra_library_type == EIGEN_SPARSE) {
+					    if (options.linear_solver_type == SPARSE_NORMAL_CHOLESKY) {
+					      *error = "Can't use SPARSE_NORMAL_CHOLESKY with EIGEN_SPARSE because "
+					          "Eigen's sparse linear algebra was not enabled when Ceres was "
+					          "built.";
+					      return false;
+					    } else if (options.linear_solver_type == SPARSE_SCHUR) {
+					      *error = "Can't use SPARSE_SCHUR with EIGEN_SPARSE because "
+					          "Eigen's sparse linear algebra was not enabled when Ceres was "
+					          "built.";
+					      return false;
+					    }
+					  }
+					#endif*/
+
+					  if (sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.NO_SPARSE) {
+					    if (linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY) {
+					      summary.message = "Can't use SPARSE_NORMAL_CHOLESKY as sparse_linear_algebra_library_type is NO_SPARSE.";
+					      return false;
+					    } else if (linear_solver_type == LinearSolverType.SPARSE_SCHUR) {
+					      summary.message = "Can't use SPARSE_SCHUR as sparse_linear_algebra_library_type is NO_SPARSE.";
+					      return false;
+					    }
+					  }
+
+					  if (trust_region_strategy_type == TrustRegionStrategyType.DOGLEG) {
+					    if (linear_solver_type == LinearSolverType.ITERATIVE_SCHUR ||
+					        linear_solver_type == LinearSolverType.CGNR) {
+					      summary.message = "DOGLEG only supports exact factorization based linear solvers.\n";
+					      summary.message += "If you want to use an iterative solver please \n";
+					      summary.message += "use LEVENBERG_MARQUARDT as the trust_region_strategy_type";
+					      return false;
+					    }
+					  }
+
+					  if (trust_region_minimizer_iterations_to_dump != null &&
+						  trust_region_minimizer_iterations_to_dump.size() > 0 &&
+					      trust_region_problem_dump_format_type != DumpFormatType.CONSOLE &&
+					      ((trust_region_problem_dump_directory == null) ||
+					       (trust_region_problem_dump_directory.length() == 0))) {
+					    summary.message = "Solver::Options::trust_region_problem_dump_directory is empty.";
+					    return false;
+					  }
+
+					  if (dynamic_sparsity &&
+					      linear_solver_type != LinearSolverType.SPARSE_NORMAL_CHOLESKY) {
+					    summary.message = "Dynamic sparsity is only supported with SPARSE_NORMAL_CHOLESKY.";
+					    return false;
+					  }
+
+					  return true;
+					}
+
+				public boolean LineSearchOptionsAreValid(Solver.Summary summary) {
+					  if (max_lbfgs_rank <= 0) {
+						  summary.message = "max_lbfgs_rank incorrectly <= 0";
+						  return false;
+					  }
+					  if (min_line_search_step_size <= 0.0) {
+						  summary.message = "min_line_search_step_size incorrectly <= 0.0";
+						  return false; 
+					  }
+					  if (max_line_search_step_contraction <= 0.0) {
+						  summary.message = "max_line_search_step_contraction incorrectly <= 0.0";
+						  return false;
+					  }
+					  if (max_line_search_step_contraction >= 1.0) {
+						  summary.message = "max_line_search_step_contraction incorrectly >= 1.0";
+						  return false;
+					  }
+					  if (max_line_search_step_contraction >= min_line_search_step_contraction) {
+						  summary.message = "max_line_search_step_contraction incorrectly >= min_line_search_step_contraction";
+						  return false;
+					  }
+					  if (min_line_search_step_contraction > 1.0) {
+						  summary.message = "min_line_search_step_contraction incorrectly > 1.0";
+						  return false;
+					  }
+					  if (max_num_line_search_step_size_iterations <= 0) {
+						  summary.message = "max_num_line_search_step_size_iterations incorrectly <= 0";
+						  return false;
+					  }
+					  if (line_search_sufficient_function_decrease <= 0.0) {
+						  summary.message = "line_search_sufficient_function_decrease incorrectly <= 0.0";
+						  return false;
+					  }
+					  if (line_search_sufficient_function_decrease >= line_search_sufficient_curvature_decrease) {
+						  summary.message = "line_search_sufficient_function_decrease incorrectly >= line_search_sufficient_curvature_decrease";
+						  return false;
+					  }
+					  if (line_search_sufficient_curvature_decrease >= 1.0) {
+						  summary.message = "line_search_sufficient_curvature_decrease incorrectly >= 1.0";
+						  return false;
+					  }
+					  if (max_line_search_step_expansion <= 1.0) {
+						  summary.message = "max_line_search_step_expansion incorrectly <= 1.0";
+						  return false;
+					  }
+
+					  if ((line_search_direction_type == LineSearchDirectionType.BFGS ||
+					       line_search_direction_type == LineSearchDirectionType.LBFGS) &&
+					      line_search_type != LineSearchType.WOLFE) {
+					    summary.message = "Invalid configuration: Solver::Options::line_search_type = " + LineSearchTypeToString(line_search_type) + "\n";
+					    summary.message += "When using (L)BFGS, Solver::Options::line_search_type must be set to WOLFE.";
+					    return false;
+					  }
+
+					  // Warn user if they have requested BISECTION interpolation, but constraints
+					  // on max/min step size change during line search prevent bisection scaling
+					  // from occurring. Warn only, as this is likely a user mistake, but one which
+					  // does not prevent us from continuing.
+					  // LOG_IF(WARNING,
+					        if (line_search_interpolation_type == LineSearchInterpolationType.BISECTION &&
+					          (max_line_search_step_contraction > 0.5 ||
+					           options.min_line_search_step_contraction < 0.5)) {
+					      summary.message = "Warning, likely a user mistake but can continue\n";
+					      summary.message += "Line search interpolation type is BISECTION, but specified\n";
+					      summary.message += "max_line_search_step_contraction: " + max_line_search_step_contraction + ", and\n";
+					      summary.message += "min_line_search_step_contraction: " + min_line_search_step_contraction + ",\n";
+					      summary.message += "prevent bisection (0.5) scaling, continuing with solve regardless.";
+					        }
+
+					  return true;
+					}
+
 	
 				}
+			
+			
+
 			
 			class Summary {
 				public MinimizerType minimizer_type;
@@ -1569,7 +1946,63 @@ enum LineSearchDirectionType {
                 // indicates the rank of the Hessian approximation.
                 public int max_lbfgs_rank;
 				public Summary() {
-					
+					// Invalid values for most fields, to ensure that we are not
+				    // accidentally reporting default values.
+				    minimizer_type = MinimizerType.TRUST_REGION;
+				    termination_type = TerminationType.FAILURE;
+				    message = "ceres::Solve was not called.";
+				    initial_cost = -1.0;
+				    final_cost = -1.0;
+				    fixed_cost = -1.0;
+				    num_successful_steps = -1;
+				    num_unsuccessful_steps = -1;
+				    num_inner_iteration_steps = -1;
+				    num_line_search_steps = -1;
+				    preprocessor_time_in_seconds = -1.0;
+				    minimizer_time_in_seconds = -1.0;
+				    postprocessor_time_in_seconds = -1.0;
+				    total_time_in_seconds = -1.0;
+				    linear_solver_time_in_seconds = -1.0;
+				    num_linear_solves = -1;
+				    residual_evaluation_time_in_seconds = -1.0;
+				    num_residual_evaluations = -1;
+				    jacobian_evaluation_time_in_seconds = -1.0;
+				    num_jacobian_evaluations = -1;
+				    inner_iteration_time_in_seconds = -1.0;
+				    line_search_cost_evaluation_time_in_seconds = -1.0;
+				    line_search_gradient_evaluation_time_in_seconds = -1.0;
+				    line_search_polynomial_minimization_time_in_seconds = -1.0;
+				    line_search_total_time_in_seconds = -1.0;
+				    num_parameter_blocks = -1;
+				    num_parameters = -1;
+				    num_effective_parameters = -1;
+				    num_residual_blocks = -1;
+				    num_residuals = -1;
+				    num_parameter_blocks_reduced = -1;
+				    num_parameters_reduced = -1;
+				    num_effective_parameters_reduced = -1;
+				    num_residual_blocks_reduced = -1;
+				    num_residuals_reduced = -1;
+				    is_constrained = false;
+				    num_threads_given = -1;
+				    num_threads_used = -1;
+				    num_linear_solver_threads_given = -1;
+				    num_linear_solver_threads_used = -1;
+				    linear_solver_type_given = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+				    linear_solver_type_used = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+				    inner_iterations_given = false;
+				    inner_iterations_used = false;
+				    preconditioner_type_given = PreconditionerType.IDENTITY;
+				    preconditioner_type_used = PreconditionerType.IDENTITY;
+				    visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
+				    trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+				    dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+				    sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
+				    line_search_direction_type = LineSearchDirectionType.LBFGS;
+				    line_search_type = LineSearchType.ARMIJO;
+				    line_search_interpolation_type = LineSearchInterpolationType.BISECTION;
+				    nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
+				    max_lbfgs_rank = -1;
 				}
 			}
 	   }
@@ -1594,6 +2027,18 @@ enum LineSearchDirectionType {
 			  }
 			  return true;
 		}
+		
+		String LineSearchTypeToString(LineSearchType type) {
+			  switch (type) {
+			  case ARMIJO:
+				  return "ARMIJO";
+			  case WOLFE:
+				  return "WOLFE";
+			    default:
+			      return "UNKNOWN";
+			  }
+			}
+
 
 		
 		
