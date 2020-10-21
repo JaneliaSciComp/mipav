@@ -463,7 +463,7 @@ enum LineSearchDirectionType {
 		// auto-differentiation to obtain the derivative (jacobian).
 		  CostFunction cost_function =
 		      new AutoDiffCostFunction(1, 1,0,0,0,0,0,0,0,0,0);
-		  Problem problem = new Problem();
+		  ProblemImpl problem = new ProblemImpl();
 		  problem.AddResidualBlock(cost_function, null, x);
 
 		  // Run the solver!
@@ -613,9 +613,9 @@ enum LineSearchDirectionType {
         }
     }
     
-    public void Solve(Solver.Options options, Problem problem, Solver.Summary summary) {
+    public void Solve(Solver.Options options, ProblemImpl problem, Solver.Summary summary) {
         if (problem == null) {
-        	System.err.println("Problem problem is null in Solve");
+        	System.err.println("ProblemImpl problem is null in Solve");
         	return;
         }
         if (summary == null) {
@@ -632,11 +632,132 @@ enum LineSearchDirectionType {
         ProblemImpl problem_impl = (ProblemImpl)problem;
         Program program = problem_impl.mutable_program();
         PreSolveSummarize(options, problem_impl, summary);
+        
+        // The main thread also does work so we only need to launch num_threads - 1.
+        // When compiled with C++11 threading support, resize the thread pool to have
+        // at min(num_thread, num_hardware_threads) where num_hardware_threads is
+        // defined by the hardware.  Otherwise this call is a no-op.
+        //problem_impl.context().EnsureMinimumThreads(options.num_threads - 1);
+        
+        // Make sure that all the parameter blocks states are set to the
+        // values provided by the user.
+        // Set the parameter block pointers to the user pointers. Since this
+        // runs parameter block set state internally, which may call local
+        // parameterizations, this can fail. False is returned on failure.
+        program.SetParameterBlockStatePtrsToUserStatePtrs();
+
+        // If gradient_checking is enabled, wrap all cost functions in a
+        // gradient checker and install a callback that terminates if any gradient
+        // error is detected.
+        //scoped_ptr<internal::ProblemImpl> gradient_checking_problem;
+        ProblemImpl gradient_checking_problem = new ProblemImpl();
+        GradientCheckingIterationCallback gradient_checking_callback = new GradientCheckingIterationCallback();
+        Solver.Options modified_options = options;
+        if (options.check_gradients) {
+          modified_options.callbacks.add(gradient_checking_callback);
+          gradient_checking_problem = 
+              CreateGradientCheckingProblemImpl(
+                  problem_impl,
+                  options.gradient_check_numeric_derivative_relative_step_size,
+                  options.gradient_check_relative_precision,
+                  gradient_checking_callback);
+          problem_impl = gradient_checking_problem;
+          program = problem_impl.mutable_program();
+        }
+
     }
     
-    private void PreSolveSummarize(Solver.Options options, ProblemImpl problem, Solver.Summary summary) {
-    	
+    private ProblemImpl CreateGradientCheckingProblemImpl(
+    	    ProblemImpl problem_impl,
+    	    double relative_step_size,
+    	    double relative_precision,
+    	    GradientCheckingIterationCallback callback) {
+    	if (callback == null) {
+    		System.err.println("in CreateGradientCheckingProblemImpl callback is null");
+    		return null;
+    	}
+    	// We create new CostFunctions by wrapping the original CostFunction
+    	// in a gradient checking CostFunction. So its okay for the
+    	// ProblemImpl to take ownership of it and destroy it. The
+    	// LossFunctions and LocalParameterizations are reused and since
+    	// they are owned by problem_impl, gradient_checking_problem_impl
+    	// should not take ownership of it.
+    	ProblemImpl prob = new ProblemImpl();
+    	ProblemImpl.Options gradient_checking_problem_options = prob.options_;
+    	gradient_checking_problem_options.cost_function_ownership = Ownership.TAKE_OWNERSHIP;
+    	gradient_checking_problem_options.loss_function_ownership =
+    	      Ownership.DO_NOT_TAKE_OWNERSHIP;
+    	gradient_checking_problem_options.local_parameterization_ownership =
+    	      Ownership.DO_NOT_TAKE_OWNERSHIP;
+    	gradient_checking_problem_options.context = problem_impl.context();
+
+    	return null; // place holder
     }
+
+    
+    private void PreSolveSummarize(Solver.Options options, ProblemImpl problem, Solver.Summary summary) {
+    	SummarizeGivenProgram(problem.program(), summary);
+    	OrderingToGroupSizes(options.linear_solver_ordering,
+                summary.linear_solver_ordering_given);
+    	OrderingToGroupSizes(options.inner_iteration_ordering,
+                summary.inner_iteration_ordering_given);
+    	summary.dense_linear_algebra_library_type  = options.dense_linear_algebra_library_type; 
+    	summary.dogleg_type                        = options.dogleg_type;
+        summary.inner_iteration_time_in_seconds    = 0.0;
+    	summary.num_line_search_steps              = 0;
+    	summary.line_search_cost_evaluation_time_in_seconds = 0.0;
+        summary.line_search_gradient_evaluation_time_in_seconds = 0.0;
+    	summary.line_search_polynomial_minimization_time_in_seconds = 0.0;
+    	summary.line_search_total_time_in_seconds  = 0.0;
+    	summary.inner_iterations_given             = options.use_inner_iterations;
+    	summary.line_search_direction_type         = options.line_search_direction_type;  
+    	summary.line_search_interpolation_type     = options.line_search_interpolation_type; 
+    	summary.line_search_type                   = options.line_search_type;
+    	summary.linear_solver_type_given           = options.linear_solver_type;
+    	summary.max_lbfgs_rank                     = options.max_lbfgs_rank;
+    	summary.minimizer_type                     = options.minimizer_type;
+    	summary.nonlinear_conjugate_gradient_type  = options.nonlinear_conjugate_gradient_type;
+    	summary.num_linear_solver_threads_given    = options.num_threads;
+    	summary.num_threads_given                  = options.num_threads;
+    	summary.preconditioner_type_given          = options.preconditioner_type;
+    	summary.sparse_linear_algebra_library_type = options.sparse_linear_algebra_library_type; 
+    	summary.trust_region_strategy_type         = options.trust_region_strategy_type;   
+    	summary.visibility_clustering_type         = options.visibility_clustering_type; 
+    }
+    
+    private void OrderingToGroupSizes(OrderedGroups<double []> ordering, Vector<Integer> group_sizes) {
+    	if (group_sizes == null) {
+    		System.err.println("Vector<Integer> group_sizes is null in OrderingToGroupSizes");
+    		return;
+    	}
+    	group_sizes.clear();
+		if (ordering == null) {
+		    return;
+		}
+		
+		HashMap<Integer, Set<double[]> > group_to_elements = ordering.group_to_elements();
+		Set<Integer> keySet = group_to_elements.keySet();
+		Iterator<Integer> iter = keySet.iterator();
+		while (iter.hasNext()) {
+			Set<double[]>values = (Set<double[]>)group_to_elements.get(iter.next());
+			if (values == null) {
+				group_sizes.add(0);
+			}
+			else {
+				group_sizes.add(values.size());
+			}
+		}
+    }
+
+    
+    private void SummarizeGivenProgram(Program program, Solver.Summary summary) {
+			summary.num_parameter_blocks     = program.NumParameterBlocks();
+			summary.num_parameters           = program.NumParameters();
+			summary.num_effective_parameters = program.NumEffectiveParameters();
+			summary.num_residual_blocks      = program.NumResidualBlocks();
+			summary.num_residuals            = program.NumResiduals();
+    }
+
 
 
 	class CostFunction {
@@ -784,14 +905,6 @@ enum LineSearchDirectionType {
 		}
 	}
 	
-	class Problem extends ProblemImpl {
-		public Problem() {
-		    super();	
-		}
-		
-		
-	}
-	
 	class Program {
 		// The Program does not own the ParameterBlock or ResidualBlock objects.
 		  private Vector<ParameterBlock> parameter_blocks_;
@@ -800,9 +913,81 @@ enum LineSearchDirectionType {
 			  parameter_blocks_ = new Vector<ParameterBlock>();
 			  residual_blocks_ = new Vector<ResidualBlock>();
 		  }
+		  
+		  public int NumResidualBlocks()  {
+			  if (residual_blocks_ == null) {
+				  return 0;
+			  }
+			  return residual_blocks_.size();
+			}
+
+			public int NumParameterBlocks() {
+			  if (parameter_blocks_ == null) {
+				  return 0;
+			  }
+			  return parameter_blocks_.size();
+			}
+
+			public int NumResiduals() {
+			  int num_residuals = 0;
+			  if (residual_blocks_ == null) {
+				  return 0;
+			  }
+			  for (int i = 0; i < residual_blocks_.size(); ++i) {
+			    num_residuals += residual_blocks_.get(i).NumResiduals();
+			  }
+			  return num_residuals;
+			}
+
+			public int NumParameters() {
+			  if (parameter_blocks_ == null) {
+				  return 0;
+			  }
+			  int num_parameters = 0;
+			  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+			    num_parameters += parameter_blocks_.get(i).Size();
+			  }
+			  return num_parameters;
+			}
+
+			public int NumEffectiveParameters() {
+			  if (parameter_blocks_ == null) {
+				  return 0;
+			  }
+			  int num_parameters = 0;
+			  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+			    num_parameters += parameter_blocks_.get(i).LocalSize();
+			  }
+			  return num_parameters;
+			}
+			
+			public boolean SetParameterBlockStatePtrsToUserStatePtrs() {
+				  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+				    if (!parameter_blocks_.get(i).IsConstant() &&
+				        !parameter_blocks_.get(i).SetState(parameter_blocks_.get(i).user_state())) {
+				      return false;
+				    }
+				  }
+				  return true;
+			}
+
+
 	}
 	
 	class ProblemImpl {
+		private Vector<ArrayList<Double>>residual_parameters_;
+		private Program program_;
+		// Must ArrayList<Double> rather than the C++ double[] as keys in a TreeMap
+		private HashMap<ArrayList<Double>, ParameterBlock> parameter_block_map_;
+		protected Options options_;
+		// Iff enable_fast_removal is enabled, contains the current residual blocks.
+		private HashSet<ResidualBlock> residual_block_set_;
+		private HashMap<CostFunction, Integer> cost_function_ref_count_;
+		private HashMap<LossFunction, Integer> loss_function_ref_count_;
+		private boolean context_impl_owned_;
+		private ContextImpl context_impl_;
+		private int count;
+		
 		class Options {
 			// These flags control whether the Problem object owns the cost
 		    // functions, loss functions, and parameterizations passed into
@@ -837,6 +1022,7 @@ enum LineSearchDirectionType {
 		    //
 		    // Ceres does NOT take ownership of the pointer.
 		    public Context context;
+		 
 			public Options() {
 				cost_function_ownership = Ownership.TAKE_OWNERSHIP;
 		        loss_function_ownership = Ownership.TAKE_OWNERSHIP;
@@ -846,20 +1032,6 @@ enum LineSearchDirectionType {
 		        context = null;	
 			}
 		}
-		
-		
-		private Vector<ArrayList<Double>>residual_parameters_;
-		private Program program_;
-		// Must ArrayList<Double> rather than the C++ double[] as keys in a TreeMap
-		private HashMap<ArrayList<Double>, ParameterBlock> parameter_block_map_;
-		protected Options options_;
-		// Iff enable_fast_removal is enabled, contains the current residual blocks.
-		private HashSet<ResidualBlock> residual_block_set_;
-		private HashMap<CostFunction, Integer> cost_function_ref_count_;
-		private HashMap<LossFunction, Integer> loss_function_ref_count_;
-		private boolean context_impl_owned_;
-		private ContextImpl context_impl_;
-		private int count;
 		public ProblemImpl() {
 		    residual_parameters_ = new Vector<ArrayList<Double>>(10);
 		    options_ = new Options();
@@ -887,7 +1059,11 @@ enum LineSearchDirectionType {
 			return program_;
 		}
 
+		public Program program() {
+			return program_;
+		}
 		
+		public ContextImpl context() { return context_impl_; }
 		
 		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, ArrayList<Double> x0) {
 			  residual_parameters_.clear();
@@ -1045,6 +1221,19 @@ enum LineSearchDirectionType {
 		
 	}
 	
+	class OrderedGroups <T>{
+		private HashMap<Integer, Set<T> > group_to_elements_;
+		private HashMap <T, Integer> element_to_group_;
+		public OrderedGroups() {
+		    group_to_elements_ = new HashMap<Integer, Set<T>>();
+		    element_to_group_ = new HashMap<T, Integer>();
+		}
+		
+		public HashMap<Integer, Set<T> > group_to_elements() {
+		    return group_to_elements_;
+		}
+	}
+	
 	class Context {
 		public Context() {
 			
@@ -1081,6 +1270,9 @@ enum LineSearchDirectionType {
 			    	parameter_blocks_[i] = parameter_blocks.get(i);
 			    }
 			}
+			
+			  // The size of the residual vector returned by this residual function.
+			  public int NumResiduals() { return cost_function_.num_residuals(); }
 		}
 		
 		class ParameterBlock {
@@ -1274,8 +1466,27 @@ enum LineSearchDirectionType {
 			        return;
 			    }
 			    residual_blocks_.add(residual_block);
+		    }
+			
+			public boolean IsConstant() { return is_constant_; }
+			
+			public ArrayList<Double> user_state() { return user_state_; }
+			
+			// Manipulate the parameter state.
+			public boolean SetState(ArrayList<Double> x) {
+				if (x == null) {
+					System.err.println("In ParameterBlock.SetState x is null");
+					return false;
+				}
+			    if (is_constant_) {
+			    	System.err.println("In ParameterBlock.SetState is_constant_ is true");
+			    	return false;
+			    }
+
+			    state_ = x;
+			    return UpdateLocalParameterizationJacobian();
 			  }
-		}
+		} // class ParameterBlock
 		
 		// The class LocalParameterization defines the function Plus and its
 		// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
@@ -1375,7 +1586,49 @@ enum LineSearchDirectionType {
                 // (default), no problems are dumped.
                 public Vector<Integer> trust_region_minimizer_iterations_to_dump;
                 // The solver does NOT take ownership of the pointer.
-                // EvaluationCallback* evaluation_callback;
+                EvaluationCallback evaluation_callback;
+                // A particular case of interest is bundle adjustment, where the user
+    		    // has two options. The default is to not specify an ordering at all,
+    		    // the solver will see that the user wants to use a Schur type solver
+    		    // and figure out the right elimination ordering.
+    		    //
+    		    // But if the user already knows what parameter blocks are points and
+    		    // what are cameras, they can save preprocessing time by partitioning
+    		    // the parameter blocks into two groups, one for the points and one
+    		    // for the cameras, where the group containing the points has an id
+    		    // smaller than the group containing cameras.
+    		    //shared_ptr<ParameterBlockOrdering> linear_solver_ordering;
+    		    // Typedef for the most commonly used version of OrderedGroups.
+    		    // typedef OrderedGroups<double*> ParameterBlockOrdering;
+    		    public OrderedGroups<double[]> linear_solver_ordering;
+    		    // If inner_iterations is true, then the user has two choices.
+    		    //
+    		    // 1. Let the solver heuristically decide which parameter blocks
+    		    //    to optimize in each inner iteration. To do this leave
+    		    //    Solver::Options::inner_iteration_ordering untouched.
+    		    //
+    		    // 2. Specify a collection of of ordered independent sets. Where
+    		    //    the lower numbered groups are optimized before the higher
+    		    //    number groups. Each group must be an independent set. Not
+    		    //    all parameter blocks need to be present in the ordering.
+    		    //shared_ptr<ParameterBlockOrdering> inner_iteration_ordering;
+    		    public OrderedGroups<double[]> inner_iteration_ordering;
+    		    // Callbacks that are executed at the end of each iteration of the
+    		    // Minimizer. An iteration may terminate midway, either due to
+    		    // numerical failures or because one of the convergence tests has
+    		    // been satisfied. In this case none of the callbacks are
+    		    // executed.
+
+    		    // Callbacks are executed in the order that they are specified in
+    		    // this vector. By default, parameter blocks are updated only at the
+    		    // end of the optimization, i.e when the Minimizer terminates. This
+    		    // behaviour is controlled by update_state_every_iteration. If the
+    		    // user wishes to have access to the updated parameter blocks when
+    		    // his/her callbacks are executed, then set
+    		    // update_state_every_iteration to true.
+    		    //
+    		    // The solver does NOT take ownership of these pointers.
+    		    Vector<IterationCallback> callbacks;
 				public Options() {
 					// Default constructor that sets up a generic sparse problem.
 				      minimizer_type = MinimizerType.TRUST_REGION;
@@ -1456,7 +1709,25 @@ enum LineSearchDirectionType {
 				      gradient_check_relative_precision = 1e-8;
 				      gradient_check_numeric_derivative_relative_step_size = 1e-6;
 				      update_state_every_iteration = false;
-				      //evaluation_callback = null;
+				      // Callbacks that are executed at the end of each iteration of the
+				      // Minimizer. An iteration may terminate midway, either due to
+				      // numerical failures or because one of the convergence tests has
+				      // been satisfied. In this case none of the callbacks are
+				      // executed.
+
+				      // Callbacks are executed in the order that they are specified in
+				      // this vector. By default, parameter blocks are updated only at the
+				      // end of the optimization, i.e when the Minimizer terminates. This
+				      // behaviour is controlled by update_state_every_iteration. If the
+				      // user wishes to have access to the updated parameter blocks when
+				      // his/her callbacks are executed, then set
+				      // update_state_every_iteration to true.
+				      //
+				      // The solver does NOT take ownership of these pointers.
+				      callbacks = new Vector<IterationCallback>();
+				      
+				      // The solver does NOT take ownership of these pointers.
+				      evaluation_callback = null;
 				    }
 				
 				public boolean IsValid(Solver.Summary summary) {
@@ -2003,11 +2274,31 @@ enum LineSearchDirectionType {
 				    line_search_interpolation_type = LineSearchInterpolationType.BISECTION;
 				    nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
 				    max_lbfgs_rank = -1;
+				    linear_solver_ordering_given = new Vector<Integer>();
+				    inner_iteration_ordering_given = new Vector<Integer>();
 				}
 			}
 	   }
 		
+		class GradientCheckingIterationCallback extends IterationCallback {
+			private boolean gradient_error_detected_;
+			 public GradientCheckingIterationCallback() {	 
+			     super();
+			     gradient_error_detected_ = false;
+			 }
+		}
 		
+		class EvaluationCallback {
+			public EvaluationCallback() {
+				
+			}
+		}
+		
+		class IterationCallback {
+			public IterationCallback() {
+				
+			}
+		}
 		
 		void InvalidateArray(int size, double x[]) {
 			  if (x != null) {
