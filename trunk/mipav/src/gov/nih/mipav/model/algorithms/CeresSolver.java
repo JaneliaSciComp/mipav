@@ -690,6 +690,73 @@ enum LineSearchDirectionType {
     	gradient_checking_problem_options.local_parameterization_ownership =
     	      Ownership.DO_NOT_TAKE_OWNERSHIP;
     	gradient_checking_problem_options.context = problem_impl.context();
+    	
+    	NumericDiffOptions numeric_diff_options = new NumericDiffOptions();
+    	numeric_diff_options.relative_step_size = relative_step_size;
+    	
+    	ProblemImpl gradient_checking_problem_impl = new ProblemImpl(gradient_checking_problem_options);
+
+        Program program = problem_impl.mutable_program();
+
+        // For every ParameterBlock in problem_impl, create a new parameter
+        // block with the same local parameterization and constancy.
+    	Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+		  for (int i = 0; i < parameter_blocks.size(); ++i) {
+		    ParameterBlock parameter_block = parameter_blocks.get(i);
+		    gradient_checking_problem_impl.AddParameterBlock(
+		        parameter_block.mutable_user_state(),
+		        parameter_block.Size(),
+		        parameter_block.mutable_local_parameterization());
+
+		    if (parameter_block.IsConstant()) {
+		      gradient_checking_problem_impl.SetParameterBlockConstant(
+		          parameter_block.mutable_user_state());
+		    }
+		  }
+		  // For every ResidualBlock in problem_impl, create a new
+		  // ResidualBlock by wrapping its CostFunction inside a
+		  // GradientCheckingCostFunction.
+		  Vector<ResidualBlock> residual_blocks = program.residual_blocks();
+		  for (int i = 0; i < residual_blocks.size(); ++i) {
+		    ResidualBlock residual_block = residual_blocks.get(i);
+
+		    // Build a human readable string which identifies the
+		    // ResidualBlock. This is used by the GradientCheckingCostFunction
+		    // when logging debugging information.
+		    String extra_info = "Residual block id " + i ; // + "; depends on parameters [";
+		    Vector<ArrayList<Double>> parameter_blocks2 = new Vector<ArrayList<Double>>();
+		    Vector<LocalParameterization> local_parameterizations = new Vector<LocalParameterization>();
+		    parameter_blocks2.ensureCapacity(residual_block.NumParameterBlocks());
+		    local_parameterizations.ensureCapacity(residual_block.NumParameterBlocks());
+		    for (int j = 0; j < residual_block.NumParameterBlocks(); ++j) {
+		      ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+		      parameter_blocks2.add(parameter_block.mutable_user_state());
+		      //StringAppendF(&extra_info, "%p", parameter_block.mutable_user_state());
+		      //extra_info += (j < residual_block->NumParameterBlocks() - 1) ? ", " : "]";
+		      local_parameterizations.add(problem_impl.GetParameterization(
+		          parameter_block.mutable_user_state()));
+		    }
+
+		    // Wrap the original CostFunction in a GradientCheckingCostFunction.
+		    CostFunction gradient_checking_cost_function =
+		        new GradientCheckingCostFunction(residual_block.cost_function(),
+		                                         local_parameterizations,
+		                                         numeric_diff_options,
+		                                         relative_precision,
+		                                         extra_info,
+		                                         callback);
+
+		    // The const_cast is necessary because
+		    // ProblemImpl::AddResidualBlock can potentially take ownership of
+		    // the LossFunction, but in this case we are guaranteed that this
+		    // will not be the case, so this const_cast is harmless.
+		    /*gradient_checking_problem_impl->AddResidualBlock(
+		        gradient_checking_cost_function,
+		        const_cast<LossFunction*>(residual_block->loss_function()),
+		        parameter_blocks);*/
+		  }
+
+
 
     	return null; // place holder
     }
@@ -782,6 +849,14 @@ enum LineSearchDirectionType {
 		
 		protected void set_num_residuals(int num_residuals) {
 		    num_residuals_ = num_residuals;
+		}
+		
+		protected void AddParameterBlock(int size) {
+		   parameter_block_sizes_.add(size);
+		}
+
+		protected void SetNumResiduals(int num_residuals) {
+			num_residuals_ = num_residuals;
 		}
 
 	}
@@ -970,6 +1045,14 @@ enum LineSearchDirectionType {
 				  }
 				  return true;
 			}
+			
+			public Vector<ParameterBlock> parameter_blocks() {
+				  return parameter_blocks_;
+			}
+			
+			public Vector<ResidualBlock> residual_blocks() {
+				  return residual_blocks_;
+			}
 
 
 	}
@@ -1043,6 +1126,17 @@ enum LineSearchDirectionType {
 		    InitializeContext(options_.context, context_impl_, context_impl_owned_);
 		}
 		
+		public ProblemImpl(Options options) {
+		    residual_parameters_ = new Vector<ArrayList<Double>>(10);
+		    options_ = options;
+		    program_ = new Program();
+		    parameter_block_map_ = new HashMap<ArrayList<Double>, ParameterBlock>();
+		    residual_block_set_ = new HashSet<ResidualBlock>();
+		    cost_function_ref_count_ = new HashMap<CostFunction, Integer>();
+		    loss_function_ref_count_ = new HashMap<LossFunction, Integer>();
+		    InitializeContext(options_.context, context_impl_, context_impl_owned_);
+		}
+		
 		void InitializeContext(Context context,
                 ContextImpl context_impl,
                 boolean context_impl_owned) {
@@ -1054,6 +1148,43 @@ enum LineSearchDirectionType {
 				    context_impl = (ContextImpl)context;
 				}
 		}
+		
+		public void AddParameterBlock(
+			    ArrayList<Double> values,
+			    int size,
+			    LocalParameterization local_parameterization) {
+			  ParameterBlock parameter_block =
+			      InternalAddParameterBlock(values, size);
+			  if (local_parameterization != null) {
+			    parameter_block.SetParameterization(local_parameterization);
+			  }
+		}
+
+		public void SetParameterBlockConstant(ArrayList<Double> values) {
+			  ParameterBlock parameter_block =
+			      FindWithDefault(parameter_block_map_, values, null);
+			  if (parameter_block == null) {
+			    System.err.println("In SetParameterBlockConstant Parameter block not found for supplied ArrayList<Double> values.");
+			    System.err.println("You must add the parameter block to the problem before it can be set constant.");
+			    return;
+			  }
+
+			  parameter_block.SetConstant();
+		}
+		
+		public LocalParameterization GetParameterization(ArrayList<Double> values) {
+			  ParameterBlock parameter_block =
+			      FindWithDefault(parameter_block_map_, values, null);
+			  if (parameter_block == null) {
+			    System.err.println(" In GetParameterization Parameter block not found for supplied ArrayList<Double> values.");
+			    System.err.println("You must add the parameter block to the problem before you can get its local parameterization.");
+			    return null;
+			  }
+
+			  return parameter_block.local_parameterization();
+			}
+
+
 		
 		public Program mutable_program() {
 			return program_;
@@ -1273,6 +1404,20 @@ enum LineSearchDirectionType {
 			
 			  // The size of the residual vector returned by this residual function.
 			  public int NumResiduals() { return cost_function_.num_residuals(); }
+			  
+			  // Number of variable blocks that this residual term depends on.
+		      public int NumParameterBlocks() {
+				  return cost_function_.parameter_block_sizes().size();
+			  }
+		      
+		      // Access the parameter blocks for this residual. The array has size
+		      // NumParameterBlocks().
+		      public ParameterBlock[] parameter_blocks() {
+		        return parameter_blocks_;
+		      }
+		      
+		      public CostFunction cost_function() { return cost_function_; }
+		      
 		}
 		
 		class ParameterBlock {
@@ -1324,6 +1469,10 @@ enum LineSearchDirectionType {
 			        ? size_
 			        : local_parameterization_.LocalSize();
 			  }
+			
+			public void SetConstant() {
+				is_constant_ = true;
+			}
 			
 			 // Set the parameterization. The parameterization can be set exactly once;
 			  // multiple calls to set the parameterization to different values will crash.
@@ -1486,6 +1635,16 @@ enum LineSearchDirectionType {
 			    state_ = x;
 			    return UpdateLocalParameterizationJacobian();
 			  }
+			
+			public ArrayList<Double> mutable_user_state() { return user_state_; }
+			
+			public LocalParameterization mutable_local_parameterization() {
+			    return local_parameterization_;
+			}
+			
+			public LocalParameterization local_parameterization() {
+			    return local_parameterization_;
+			}
 		} // class ParameterBlock
 		
 		// The class LocalParameterization defines the function Plus and its
@@ -2300,6 +2459,142 @@ enum LineSearchDirectionType {
 			}
 		}
 		
+		// Options pertaining to numeric differentiation (e.g., convergence criteria,
+		// step sizes).
+		class NumericDiffOptions {
+		  public NumericDiffOptions() {
+		    relative_step_size = 1e-6;
+		    ridders_relative_initial_step_size = 1e-2;
+		    max_num_ridders_extrapolations = 10;
+		    ridders_epsilon = 1e-12;
+		    ridders_step_shrink_factor = 2.0;
+		  }
+
+		  // Numeric differentiation step size (multiplied by parameter block's
+		  // order of magnitude). If parameters are close to zero, the step size
+		  // is set to sqrt(machine_epsilon).
+		  public double relative_step_size;
+
+		  // Initial step size for Ridders adaptive numeric differentiation (multiplied
+		  // by parameter block's order of magnitude).
+		  // If parameters are close to zero, Ridders' method sets the step size
+		  // directly to this value. This parameter is separate from
+		  // "relative_step_size" in order to set a different default value.
+		  //
+		  // Note: For Ridders' method to converge, the step size should be initialized
+		  // to a value that is large enough to produce a significant change in the
+		  // function. As the derivative is estimated, the step size decreases.
+		  public double ridders_relative_initial_step_size;
+
+		  // Maximal number of adaptive extrapolations (sampling) in Ridders' method.
+		  public int max_num_ridders_extrapolations;
+
+		  // Convergence criterion on extrapolation error for Ridders adaptive
+		  // differentiation. The available error estimation methods are defined in
+		  // NumericDiffErrorType and set in the "ridders_error_method" field.
+		  public double ridders_epsilon;
+
+		  // The factor in which to shrink the step size with each extrapolation in
+		  // Ridders' method.
+		  public double ridders_step_shrink_factor;
+		}
+		
+		class GradientCheckingCostFunction extends CostFunction {
+			  private CostFunction function_;
+			  private GradientChecker gradient_checker_;
+			  private double relative_precision_;
+			  private String extra_info_;
+			  private GradientCheckingIterationCallback callback_;
+
+			public GradientCheckingCostFunction(
+				      CostFunction function,
+				      Vector<LocalParameterization> local_parameterizations,
+				      NumericDiffOptions options,
+				      double relative_precision,
+				      String extra_info,
+				      GradientCheckingIterationCallback callback) {
+				
+			}
+	
+		}
+		
+		class GradientChecker {
+			  private Vector<LocalParameterization> local_parameterizations_;
+			  private CostFunction function_;
+			  //internal::scoped_ptr<CostFunction> finite_diff_cost_function_
+			  private CostFunction finite_diff_cost_function_;
+			  public GradientChecker(CostFunction function, Vector<LocalParameterization> local_parameterizations,
+                                     NumericDiffOptions options) {
+				   function_ = function;
+				   if (function == null) {
+					   System.err.println("CostFunction function = null in GradientChecker constructor");
+					   return;
+				   }
+				   if (local_parameterizations != null) {
+					    local_parameterizations_ = local_parameterizations;
+					  } else {
+					    //local_parameterizations_.resize(function.parameter_block_sizes().size(), null);
+					    int newSize = function.parameter_block_sizes().size();
+					    int oldSize = local_parameterizations.size();
+					    if (oldSize > newSize) {
+					    	int numRemove = oldSize - newSize;
+					    	for (int i = 0; i < numRemove; i++) {
+					    		local_parameterizations_.remove(local_parameterizations_.size()-1);
+					    	}
+					    }
+					    else if (newSize > oldSize) {
+					    	int numAdd = newSize - oldSize;
+					    	for (int i = 0; i < numAdd; i++) {
+					    		local_parameterizations_.add(null);
+					    	}
+					    }
+					  }
+				   DynamicNumericDiffCostFunction<CostFunction>
+				      finite_diff_cost_function =
+				      new DynamicNumericDiffCostFunction<CostFunction>(
+				          function, Ownership.DO_NOT_TAKE_OWNERSHIP, options, NumericDiffMethodType.CENTRAL);
+				  finite_diff_cost_function_ = finite_diff_cost_function;
+
+				  Vector<Integer> parameter_block_sizes =
+					      function.parameter_block_sizes();
+					  int num_parameter_blocks = parameter_block_sizes.size();
+					  for (int i = 0; i < num_parameter_blocks; ++i) {
+					    finite_diff_cost_function.AddParameterBlock(parameter_block_sizes.get(i));
+					  }
+					  finite_diff_cost_function.SetNumResiduals(function.num_residuals());
+
+			  }
+		}
+		
+		class DynamicNumericDiffCostFunction<T>  extends DynamicCostFunction {
+			//internal::scoped_ptr<const CostFunctor> functor_;
+			 T functor_;
+			 Ownership ownership_;
+			 NumericDiffOptions options_;
+			 NumericDiffMethodType method;
+			 public DynamicNumericDiffCostFunction(
+				  T functor,
+			      Ownership ownership,
+			      NumericDiffOptions options,
+			      NumericDiffMethodType method) {
+				  super();
+			      functor_ = functor;
+			      ownership_ = ownership;
+			      options_ = options;
+			      this.method = method;
+			  }
+		}
+		
+		// A common base class for DynamicAutoDiffCostFunction and
+		// DynamicNumericDiffCostFunction which depend on methods that can add
+		// parameter blocks and set the number of residuals at run time.
+		class DynamicCostFunction extends CostFunction {
+		    public DynamicCostFunction() {
+		    	super();
+		    }
+		    
+		}
+		
 		void InvalidateArray(int size, double x[]) {
 			  if (x != null) {
 			    for (int i = 0; i < size; ++i) {
@@ -2330,7 +2625,17 @@ enum LineSearchDirectionType {
 			  }
 			}
 
-
+		ParameterBlock FindWithDefault(HashMap<ArrayList<Double>, ParameterBlock> collection,
+                ArrayList<Double> key,
+                ParameterBlock value) {
+			if (!collection.containsKey(key)) {
+				return value;
+			}
+			else {
+				return collection.get(key);
+			}
+			
+         }
 		
 		
 	} // public abstract class CeresSolver
