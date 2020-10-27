@@ -625,7 +625,7 @@ enum LineSearchDirectionType {
         double start_time = 1.0E-3*System.currentTimeMillis();
         //Summary();
         if (!options.IsValid(summary)) {
-            System.err.println("Terminating: " + summary.message);
+            System.err.println("Terminating: " + summary.message[0]);
             return;
         }
 
@@ -653,6 +653,7 @@ enum LineSearchDirectionType {
         ProblemImpl gradient_checking_problem = new ProblemImpl();
         GradientCheckingIterationCallback gradient_checking_callback = new GradientCheckingIterationCallback();
         Solver.Options modified_options = options;
+        //options.check_gradients = true;
         if (options.check_gradients) {
           modified_options.callbacks.add(gradient_checking_callback);
           gradient_checking_problem = 
@@ -664,8 +665,131 @@ enum LineSearchDirectionType {
           problem_impl = gradient_checking_problem;
           program = problem_impl.mutable_program();
         }
+        
+        //scoped_ptr<Preprocessor> preprocessor(
+        	      //Preprocessor::Create(modified_options.minimizer_type));
+        Preprocessor preprocessor = CreatePreprocessor(modified_options.minimizer_type);
+        PreprocessedProblem pp = new PreprocessedProblem();
+
+        boolean status = preprocessor.Preprocess(modified_options, problem_impl, pp);
+
+        //System.err.println("I finish");
+    }
+    
+    Preprocessor CreatePreprocessor(MinimizerType minimizer_type) {
+		  if (minimizer_type == MinimizerType.TRUST_REGION) {
+		    return new TrustRegionPreprocessor();
+		  }
+
+		  if (minimizer_type == MinimizerType.LINE_SEARCH) {
+		    return new LineSearchPreprocessor();
+		  }
+
+		  System.err.println("Unknown minimizer_type: " + minimizer_type);
+		  return null;
+		}
+    
+    abstract class Preprocessor {
+    	public Preprocessor() {
+    		
+    	}
+    	
+    	public abstract boolean Preprocess(Solver.Options options,
+                 ProblemImpl problem,
+                 PreprocessedProblem pp);
+    	
+    	
+
 
     }
+    
+    class TrustRegionPreprocessor extends Preprocessor {
+    	public TrustRegionPreprocessor() {
+    		super();
+    	}
+    	
+    	public boolean Preprocess(Solver.Options options,
+                ProblemImpl problem,
+                PreprocessedProblem pp) {
+    		if (pp == null) {
+    		    System.err.println("PreprocessedProblem pp == null in TrustRegionPreProcessor Preprocess");
+    		    return false;
+    		}
+    		pp.options = options;
+    		//ChangeNumThreadsIfNeeded(pp.options);
+    		
+    		pp.problem = problem;
+    		  Program program = problem.mutable_program();
+    		  if (!IsProgramValid(program, pp.error)) {
+    		    return false;
+    		  }
+    		  
+    		  pp.reduced_program = 
+    			      program.CreateReducedProgram(pp.removed_parameter_blocks,
+    			                                    pp.fixed_cost,
+    			                                    pp.error);
+
+
+
+    		return true;
+    	}
+    	
+    	// Check if all the user supplied values in the parameter blocks are
+    	// sane or not, and if the program is feasible or not.
+    	boolean IsProgramValid(Program program, String error[]) {
+    	  return (program.ParameterBlocksAreFinite(error) &&
+    	          program.IsFeasible(error));
+    	}
+
+    	
+    }
+    
+    class LineSearchPreprocessor extends Preprocessor {
+    	public LineSearchPreprocessor() {
+    		super();
+    	}
+    	
+    	public boolean Preprocess(Solver.Options options,
+                ProblemImpl problem,
+                PreprocessedProblem pp) {
+    		return true;
+    	}
+    }
+    
+ // A PreprocessedProblem is the result of running the Preprocessor on
+ // a Problem and Solver::Options object.
+ class PreprocessedProblem {
+	  String error[];
+	  Solver.Options options;
+	  //LinearSolver.Options linear_solver_options;
+	  //Evaluator.Options evaluator_options;
+	  //Minimizer.Options minimizer_options;
+
+	  ProblemImpl problem;
+	  //scoped_ptr<ProblemImpl> gradient_checking_problem;
+	  ProblemImpl gradient_checking_problem;
+	  //scoped_ptr<Program> reduced_program;
+	  Program reduced_program;
+	  //scoped_ptr<LinearSolver> linear_solver;
+	  //LinearSolver linear_solver;
+	  //scoped_ptr<IterationCallback> logging_callback;
+	  IterationCallback logging_callback;
+	  //scoped_ptr<IterationCallback> state_updating_callback;
+	  IterationCallback state_updating_callback;
+
+	  //shared_ptr<Evaluator> evaluator;
+	  //Evaluator evaluator;
+	  //shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
+	  //CoordinateDescentMinimizer inner_iterations_minimizer;
+
+	  Vector<ArrayList<Double>> removed_parameter_blocks;
+	  Vector reduced_parameters;
+	 double fixed_cost[];
+     public PreprocessedProblem() {
+    	 fixed_cost = new double[] {0.0};
+    	 error = new String[1];
+     }
+ }
     
     private ProblemImpl CreateGradientCheckingProblemImpl(
     	    ProblemImpl problem_impl,
@@ -750,15 +874,23 @@ enum LineSearchDirectionType {
 		    // ProblemImpl::AddResidualBlock can potentially take ownership of
 		    // the LossFunction, but in this case we are guaranteed that this
 		    // will not be the case, so this const_cast is harmless.
-		    /*gradient_checking_problem_impl->AddResidualBlock(
+		    gradient_checking_problem_impl.AddResidualBlock(
 		        gradient_checking_cost_function,
-		        const_cast<LossFunction*>(residual_block->loss_function()),
-		        parameter_blocks);*/
-		  }
+		        //const_cast<LossFunction*>(residual_block->loss_function()),
+		        residual_block.loss_function(),
+		        parameter_blocks2);		  }
+		  // Normally, when a problem is given to the solver, we guarantee
+		  // that the state pointers for each parameter block point to the
+		  // user provided data. Since we are creating this new problem from a
+		  // problem given to us at an arbitrary stage of the solve, we cannot
+		  // depend on this being the case, so we explicitly call
+		  // SetParameterBlockStatePtrsToUserStatePtrs to ensure that this is
+		  // the case.
+		  gradient_checking_problem_impl
+		      .mutable_program()
+		      .SetParameterBlockStatePtrsToUserStatePtrs();
 
-
-
-    	return null; // place holder
+		  return gradient_checking_problem_impl;
     }
 
     
@@ -849,6 +981,10 @@ enum LineSearchDirectionType {
 		
 		protected void set_num_residuals(int num_residuals) {
 		    num_residuals_ = num_residuals;
+		}
+		
+		protected void set_parameter_block_sizes(Vector<Integer>parameter_block_sizes) {
+			parameter_block_sizes_ = parameter_block_sizes;
 		}
 		
 		protected void AddParameterBlock(int size) {
@@ -1053,9 +1189,249 @@ enum LineSearchDirectionType {
 			public Vector<ResidualBlock> residual_blocks() {
 				  return residual_blocks_;
 			}
+			
+			public boolean ParameterBlocksAreFinite(String message[]) {
+				  if (message == null) {
+					  System.err.println("String message[] is null in Program.ParameterBlocksAreFinite");
+					  return false;
+				  }
+				  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+				    ParameterBlock parameter_block = parameter_blocks_.get(i);
+				    ArrayList<Double> array = parameter_block.user_state();
+				    int size = parameter_block.Size();
+				    int invalid_index = FindInvalidValue(size, array);
+				    if (invalid_index != size) {
+				      message[0] = "ParameterBlock with size " + size + " has at least one invalid value.\n"
+				          + "First invalid value = " + array.get(invalid_index) + " is at index " + invalid_index +
+				          "\nParameter block values: ";
+			              for (int k = 0; k < size; k++) {
+			            	  message[0] += "\n" + array.get(k);
+			              }
+				      return false;
+				    }
+				  }
+				  return true;
+				}
+
+			public boolean IsFeasible(String message[]) {
+				if (message == null) {
+					  System.err.println("String message[] is null in Program.IsFeasible");
+					  return false;
+				  }
+				  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+				    ParameterBlock parameter_block = parameter_blocks_.get(i);
+				    ArrayList<Double> parameters = parameter_block.user_state();
+				    int size = parameter_block.Size();
+				    if (parameter_block.IsConstant()) {
+				      // Constant parameter blocks must start in the feasible region
+				      // to ultimately produce a feasible solution, since Ceres cannot
+				      // change them.
+				      for (int j = 0; j < size; ++j) {
+				        double lower_bound = parameter_block.LowerBoundForParameter(j);
+				        double upper_bound = parameter_block.UpperBoundForParameter(j);
+				        if (parameters.get(j) < lower_bound || parameters.get(j) > upper_bound) {
+				          message[0] = "ParameterBlock with size " + size + " has at least one infeasible value." +
+				              "\nFirst infeasible value is at index: " + j + "." +
+				              "\nLower bound: " + lower_bound + " , value: " + parameters.get(j) + " , upper bound: " + upper_bound + 
+				              "\nParameter block values: ";
+				              for (int k = 0; k < size; k++) {
+				            	  message[0] += "\n" + parameters.get(k);
+				              }
+
+				          return false;
+				        }
+				      }
+				    } else {
+				      // Variable parameter blocks must have non-empty feasible
+				      // regions, otherwise there is no way to produce a feasible
+				      // solution.
+				      for (int j = 0; j < size; ++j) {
+				        double lower_bound = parameter_block.LowerBoundForParameter(j);
+				        double upper_bound = parameter_block.UpperBoundForParameter(j);
+				        if (lower_bound >= upper_bound) {
+				        	 message[0] = "ParameterBlock with size " + size + " has lower_bound >= upper_bound for parameter " + j + "." +
+						     "\nLower bound: " + lower_bound + " , value: " + parameters.get(j) + " , upper bound: " + upper_bound + 
+						     "\nParameter block values: ";
+				              for (int k = 0; k < size; k++) {
+				            	  message[0] += "\n" + parameters.get(k);
+				              }
+				          return false;
+				        }
+				      }
+				    }
+				  }
+
+				  return true;
+				}
+			
+			public Program CreateReducedProgram(
+				    Vector<ArrayList<Double>> removed_parameter_blocks,
+				    double fixed_cost[],
+				    String error[]) {
+				 if (removed_parameter_blocks == null) {
+					 System.err.println("In Program.CreateReducedProgram removed_parameter_blocks == null");
+					 return null;
+				 }
+				 if (fixed_cost == null) {
+					 System.err.println("In Program.CreateReducedProgram fixed_cost == null");
+					 return null;
+				 }
+				 if (error == null) {
+					 System.err.println("In Program.CreateReducedProgram error == null");
+					 return null;	 
+				 }
+
+				  //scoped_ptr<Program> reduced_program(new Program(*this));
+				  Program reduced_program = new Program();
+				  if (!reduced_program.RemoveFixedBlocks(removed_parameter_blocks,
+				                                          fixed_cost,
+				                                          error)) {
+				    return null;
+				  }
+
+				  reduced_program.SetParameterOffsetsAndIndex();
+				  return reduced_program;
+				}
+			
+			public boolean RemoveFixedBlocks(Vector<ArrayList<Double>> removed_parameter_blocks,
+                    double fixed_cost[],
+                    String error[]) {
+				if (removed_parameter_blocks == null) {
+					 System.err.println("In Program.RemoveFixedBlocks removed_parameter_blocks == null");
+					 return false;
+				 }
+				if (fixed_cost == null) {
+					System.err.println("In Program.RemoveFixedBlocks fixed_cost == null");
+					return false;
+				}
+				 if (error == null) {
+					 System.err.println("In Program.RemoveFixedBlocks error == null");
+					 return false;	 
+				 }
+		
+		//scoped_array<double> residual_block_evaluate_scratch;
+		double residual_block_evaluate_scratch[];
+		residual_block_evaluate_scratch = 
+		new double[MaxScratchDoublesNeededForEvaluate()];
+		fixed_cost[0] = 0.0;
+		
+		// Mark all the parameters as unused. Abuse the index member of the
+		// parameter blocks for the marking.
+		for (int i = 0; i < parameter_blocks_.size(); ++i) {
+		parameter_blocks_.get(i).set_index(-1);
+		}
+		
+		// Filter out residual that have all-constant parameters, and mark
+		// all the parameter blocks that appear in residuals.
+		int num_active_residual_blocks = 0;
+		for (int i = 0; i < residual_blocks_.size(); ++i) {
+		ResidualBlock residual_block = residual_blocks_.get(i);
+		int num_parameter_blocks = residual_block.NumParameterBlocks();
+		
+		// Determine if the residual block is fixed, and also mark varying
+		// parameters that appear in the residual block.
+		boolean all_constant = true;
+		for (int k = 0; k < num_parameter_blocks; k++) {
+		ParameterBlock parameter_block = residual_block.parameter_blocks()[k];
+		if (!parameter_block.IsConstant()) {
+		all_constant = false;
+		parameter_block.set_index(1);
+		}
+		}
+		
+		if (!all_constant) {
+		residual_blocks_.set(num_active_residual_blocks++,residual_block);
+		continue;
+		}
+		
+		// The residual is constant and will be removed, so its cost is
+		// added to the variable fixed_cost.
+		double cost[] = new double[] {0.0};
+		if (!residual_block.Evaluate(true,
+		                      cost,
+		                      null,
+		                      null,
+		                      residual_block_evaluate_scratch)) {
+		error[0] = "Evaluation of the residual " + i + " failed during removal of fixed residual blocks.";
+		return false;
+		}
+		fixed_cost[0] += cost[0];
+		}
+		//residual_blocks_.resize(num_active_residual_blocks);
+		int oldSize = residual_blocks_.size();
+		if (oldSize > num_active_residual_blocks) {
+		    while (residual_blocks_.size() > num_active_residual_blocks) {
+		    	residual_blocks_.removeElementAt(residual_blocks_.size()-1);
+		    }
+		}
+		
+		// Filter out unused or fixed parameter blocks.
+		int num_active_parameter_blocks = 0;
+		removed_parameter_blocks.clear();
+		for (int i = 0; i < parameter_blocks_.size(); ++i) {
+		ParameterBlock parameter_block = parameter_blocks_.get(i);
+		if (parameter_block.index() == -1) {
+		removed_parameter_blocks.add(
+		parameter_block.mutable_user_state());
+		} else {
+		parameter_blocks_.set(num_active_parameter_blocks++,parameter_block);
+		}
+		}
+		//parameter_blocks_.resize(num_active_parameter_blocks);
+		oldSize = parameter_blocks_.size();
+		if (oldSize > num_active_parameter_blocks) {
+		    while (parameter_blocks_.size() > num_active_parameter_blocks) {
+		    	parameter_blocks_.removeElementAt(parameter_blocks_.size()-1);
+		    }
+		}
+		
+		if (!(((NumResidualBlocks() == 0) &&
+		(NumParameterBlocks() == 0)) ||
+		((NumResidualBlocks() != 0) &&
+		(NumParameterBlocks() != 0)))) {
+		error[0] =  "Congratulations, you found a bug in Ceres. Please report it.";
+		return false;
+		}
+		
+		return true;
+       }
 
 
-	}
+	   public int MaxScratchDoublesNeededForEvaluate() {
+				  // Compute the scratch space needed for evaluate.
+				  int max_scratch_bytes_for_evaluate = 0;
+				  for (int i = 0; i < residual_blocks_.size(); ++i) {
+				    max_scratch_bytes_for_evaluate =
+				        Math.max(max_scratch_bytes_for_evaluate,
+				            residual_blocks_.get(i).NumScratchDoublesForEvaluate());
+				  }
+				  return max_scratch_bytes_for_evaluate;
+	   }
+	   
+	   public void SetParameterOffsetsAndIndex() {
+		   // Set positions for all parameters appearing as arguments to residuals to one
+		   // past the end of the parameter block array.
+		   for (int i = 0; i < residual_blocks_.size(); ++i) {
+		     ResidualBlock residual_block = residual_blocks_.get(i);
+		     for (int j = 0; j < residual_block.NumParameterBlocks(); ++j) {
+		       residual_block.parameter_blocks()[j].set_index(-1);
+		     }
+		   }
+		   // For parameters that appear in the program, set their position and offset.
+		   int state_offset = 0;
+		   int delta_offset = 0;
+		   for (int i = 0; i < parameter_blocks_.size(); ++i) {
+		     parameter_blocks_.get(i).set_index(i);
+		     parameter_blocks_.get(i).set_state_offset(state_offset);
+		     parameter_blocks_.get(i).set_delta_offset(delta_offset);
+		     state_offset += parameter_blocks_.get(i).Size();
+		     delta_offset += parameter_blocks_.get(i).LocalSize();
+		   }
+		 }
+
+
+
+	} // class Program
 	
 	class ProblemImpl {
 		private Vector<ArrayList<Double>>residual_parameters_;
@@ -1418,6 +1794,175 @@ enum LineSearchDirectionType {
 		      
 		      public CostFunction cost_function() { return cost_function_; }
 		      
+		      public LossFunction loss_function() { return loss_function_; }
+		      
+		      public int NumScratchDoublesForEvaluate() {
+		    	  // Compute the amount of scratch space needed to store the full-sized
+		    	  // jacobians. For parameters that have no local parameterization  no storage
+		    	  // is needed and the passed-in jacobian array is used directly. Also include
+		    	  // space to store the residuals, which is needed for cost-only evaluations.
+		    	  // This is slightly pessimistic, since both won't be needed all the time, but
+		    	  // the amount of excess should not cause problems for the caller.
+		    	  int num_parameters = NumParameterBlocks();
+		    	  int scratch_doubles = 1;
+		    	  for (int i = 0; i < num_parameters; ++i) {
+		    	    ParameterBlock parameter_block = parameter_blocks_[i];
+		    	    if (!parameter_block.IsConstant() &&
+		    	        parameter_block.LocalParameterizationJacobian() != null) {
+		    	      scratch_doubles += parameter_block.Size();
+		    	    }
+		    	  }
+		    	  scratch_doubles *= NumResiduals();
+		    	  return scratch_doubles;
+		    	}
+		      
+		      public boolean Evaluate(boolean apply_loss_function,
+                      double cost[],
+                      double residuals[],
+                      double jacobians[][],
+                      double scratch[]) {
+		              int num_parameter_blocks = NumParameterBlocks();
+		              int num_residuals = cost_function_.num_residuals();
+		
+		// Collect the parameters from their blocks. This will rarely allocate, since
+		// residuals taking more than 8 parameter block arguments are rare.
+		Vector<ArrayList<Double>> parameters = new Vector<ArrayList<Double>>();
+		for (int i = 0; i < num_parameter_blocks; ++i) {
+		parameters.add(parameter_blocks_[i].state());
+		}
+		
+		// Put pointers into the scratch space into global_jacobians as appropriate.
+		double[][] global_jacobians = new double[num_parameter_blocks][];
+		int scratchNum = 0;
+		Vector<Integer> scratchSize = new Vector<Integer>();
+		if (jacobians != null) {
+			for (int i = 0; i < num_parameter_blocks; ++i) {
+			     ParameterBlock parameter_block = parameter_blocks_[i];
+			if (jacobians[i] != null &&
+			   parameter_block.LocalParameterizationJacobian() != null) {
+			 scratchNum++;
+			 scratchSize.add(num_residuals * parameter_block.Size());
+			} 
+			}	
+		double scratch2D[][] = new double[scratchNum][];
+		for (int i = 0; i < scratchNum; i++) {
+		    scratch2D[i] = new double[scratchSize.get(i)];
+		}
+		for (int i = 0, j = 0; i < num_parameter_blocks; ++i) {
+		     ParameterBlock parameter_block = parameter_blocks_[i];
+		if (jacobians[i] != null &&
+		   parameter_block.LocalParameterizationJacobian() != null) {
+		 //global_jacobians[i] = scratch;
+		 //scratch += num_residuals * parameter_block.Size();
+		  global_jacobians[i] = scratch2D[j++];
+		} else {
+		 global_jacobians[i] = jacobians[i];
+		}
+		}
+		}
+		
+		// If the caller didn't request residuals, use the scratch space for them.
+		/*bool outputting_residuals = (residuals != NULL);
+		if (!outputting_residuals) {
+		residuals = scratch;
+		}
+		
+		// Invalidate the evaluation buffers so that we can check them after
+		// the CostFunction::Evaluate call, to see if all the return values
+		// that were required were written to and that they are finite.
+		double** eval_jacobians = (jacobians != NULL) ? global_jacobians.get() : NULL;
+		
+		InvalidateEvaluation(*this, cost, residuals, eval_jacobians);
+		
+		if (!cost_function_->Evaluate(parameters.get(), residuals, eval_jacobians)) {
+		return false;
+		}
+		
+		if (!IsEvaluationValid(*this,
+		                  parameters.get(),
+		                  cost,
+		                  residuals,
+		                  eval_jacobians)) {
+		std::string message =
+		 "\n\n"
+		 "Error in evaluating the ResidualBlock.\n\n"
+		 "There are two possible reasons. Either the CostFunction did not evaluate and fill all    \n"  // NOLINT
+		 "residual and jacobians that were requested or there was a non-finite value (nan/infinite)\n"  // NOLINT
+		 "generated during the or jacobian computation. \n\n" +
+		 EvaluationToString(*this,
+		                    parameters.get(),
+		                    cost,
+		                    residuals,
+		                    eval_jacobians);
+		LOG(WARNING) << message;
+		return false;
+		}
+		
+		double squared_norm = VectorRef(residuals, num_residuals).squaredNorm();
+		
+		// Update the jacobians with the local parameterizations.
+		if (jacobians != NULL) {
+		for (int i = 0; i < num_parameter_blocks; ++i) {
+		if (jacobians[i] != NULL) {
+		 const ParameterBlock* parameter_block = parameter_blocks_[i];
+		
+		 // Apply local reparameterization to the jacobians.
+		 if (parameter_block->LocalParameterizationJacobian() != NULL) {
+		   // jacobians[i] = global_jacobians[i] * global_to_local_jacobian.
+		   MatrixMatrixMultiply<Dynamic, Dynamic, Dynamic, Dynamic, 0>(
+		       global_jacobians[i],
+		       num_residuals,
+		       parameter_block->Size(),
+		       parameter_block->LocalParameterizationJacobian(),
+		       parameter_block->Size(),
+		       parameter_block->LocalSize(),
+		       jacobians[i], 0, 0,  num_residuals, parameter_block->LocalSize());
+		 }
+		}
+		}
+		}
+		
+		if (loss_function_ == NULL || !apply_loss_function) {
+		*cost = 0.5 * squared_norm;
+		return true;
+		}
+		
+		double rho[3];
+		loss_function_->Evaluate(squared_norm, rho);
+		*cost = 0.5 * rho[0];
+		
+		// No jacobians and not outputting residuals? All done. Doing an early exit
+		// here avoids constructing the "Corrector" object below in a common case.
+		if (jacobians == NULL && !outputting_residuals) {
+		return true;
+		}
+		
+		// Correct for the effects of the loss function. The jacobians need to be
+		// corrected before the residuals, since they use the uncorrected residuals.
+		Corrector correct(squared_norm, rho);
+		if (jacobians != NULL) {
+		for (int i = 0; i < num_parameter_blocks; ++i) {
+		if (jacobians[i] != NULL) {
+		 const ParameterBlock* parameter_block = parameter_blocks_[i];
+		
+		 // Correct the jacobians for the loss function.
+		 correct.CorrectJacobian(num_residuals,
+		                         parameter_block->LocalSize(),
+		                         residuals,
+		                         jacobians[i]);
+		}
+		}
+		}
+		
+		// Correct the residuals with the loss function.
+		if (outputting_residuals) {
+		correct.CorrectResiduals(num_residuals, residuals);
+		}*/
+		return true;
+		}
+
+
+		      
 		}
 		
 		class ParameterBlock {
@@ -1446,8 +1991,24 @@ enum LineSearchDirectionType {
 
 			  // The offset of this parameter block inside a larger delta vector.
 			  int delta_offset_;
+			  
+			  // Upper and lower bounds for the parameter block.  SetUpperBound
+			  // and SetLowerBound lazily initialize the upper_bounds_ and
+			  // lower_bounds_ arrays. If they are never called, then memory for
+			  // these arrays is never allocated. Thus for problems where there
+			  // are no bounds, or only one sided bounds we do not pay the cost of
+			  // allocating memory for the inactive bounds constraints.
+			  //
+			  // Upon initialization these arrays are initialized to
+			  // std::numeric_limits<double>::max() and
+			  // -std::numeric_limits<double>::max() respectively which correspond
+			  // to the parameter block being unconstrained.
+			  //scoped_array<double> upper_bounds_;
+			  //scoped_array<double> lower_bounds_;
+			  double upper_bounds_[];
+			  double lower_bounds_[];
 			
-			// Create a parameter block with the user state, size, and index specified.
+			  // Create a parameter block with the user state, size, and index specified.
 			  // The size is the size of the parameter block and the index is the position
 			  // of the parameter block inside a Program (if any).
 			  public ParameterBlock(ArrayList<Double> user_state, int size, int index) {
@@ -1480,7 +2041,7 @@ enum LineSearchDirectionType {
 			  // does not take ownership of the parameterization.
 			  public void SetParameterization(LocalParameterization new_parameterization) {
 			    if (new_parameterization == null) {
-			    	System.err.println("NULL parameterization invalid.");
+			    	System.err.println("null parameterization invalid.");
 			    	return;
 			    }
 			    // Nothing to do if the new parameterization is the same as the
@@ -1645,6 +2206,75 @@ enum LineSearchDirectionType {
 			public LocalParameterization local_parameterization() {
 			    return local_parameterization_;
 			}
+			
+			public double LowerBoundForParameter(int index) {
+			    if (lower_bounds_ == null) {
+			      return -Double.MAX_VALUE;
+			    } else {
+			      return lower_bounds_[index];
+			    }
+			  }
+
+			  public double UpperBoundForParameter(int index) {
+			    if (upper_bounds_ == null) {
+			      return Double.MAX_VALUE;
+			    } else {
+			      return upper_bounds_[index];
+			    }
+			  }
+			  
+			  public void SetUpperBound(int index, double upper_bound) {
+				    if (index >= size_) {
+				    	System.err.println("In ParameterBlock.SetUpperBound index >= size_");
+				    	return;
+				    }
+
+				    if (upper_bounds_ == null) {
+				      upper_bounds_ = new double[size_];
+				      for (int i = 0; i < size_; i++) {
+				    	  upper_bounds_[i] = Double.MAX_VALUE;
+				      }
+				    }
+
+				    upper_bounds_[index] = upper_bound;
+				  }
+
+				  void SetLowerBound(int index, double lower_bound) {
+					  if (index >= size_) {
+					    	System.err.println("In ParameterBlock.SetLowerBound index >= size_");
+					    	return;
+					  }
+
+				      if (lower_bounds_ == null) {
+				          lower_bounds_ = new double[size_];
+				          for (int i = 0; i < size_; i++) {
+					    	  lower_bounds_[i] = -Double.MAX_VALUE;
+					      }
+				    }
+
+				    lower_bounds_[index] = lower_bound;
+				  }
+				  
+				  // The local to global jacobian. Returns NULL if there is no local
+				  // parameterization for this parameter block. The returned matrix is row-major
+				  // and has Size() rows and  LocalSize() columns.
+				  public double[] LocalParameterizationJacobian() {
+				    return local_parameterization_jacobian_;
+				  }
+				  
+				  // This parameter block's index in an array.
+				  public int index() { return index_; }
+				  public void set_index(int index) { index_ = index; }
+				  
+				  // This parameter offset inside a larger state vector.
+				  public int state_offset() { return state_offset_; }
+				  public void set_state_offset(int state_offset) { state_offset_ = state_offset; }
+
+				  // This parameter offset inside a larger delta vector.
+				  public int delta_offset() { return delta_offset_; }
+				  public void set_delta_offset(int delta_offset) { delta_offset_ = delta_offset; }
+				  
+				  public  ArrayList<Double> state() { return state_; }
 		} // class ParameterBlock
 		
 		// The class LocalParameterization defines the function Plus and its
@@ -1909,36 +2539,36 @@ enum LineSearchDirectionType {
 				
 				private boolean CommonOptionsAreValid(Solver.Summary summary) {
 					  if (max_num_iterations < 0) {
-						  summary.message = "max_num_iterations incorrectly < 0";
+						  summary.message[0] = "max_num_iterations incorrectly < 0";
 						  return false;
 					  }
 				      if (max_solver_time_in_seconds < 0.0) {
-				    	  summary.message = "max_solver_time_in_seconds incorrectly < 0.0";
+				    	  summary.message[0] = "max_solver_time_in_seconds incorrectly < 0.0";
 				    	  return false;
 				      }
 					  if (function_tolerance < 0.0) {
-						  summary.message = "function_tolerance incorrectly < 0.0";
+						  summary.message[0] = "function_tolerance incorrectly < 0.0";
 						  return false;
 					  }
 					  if (gradient_tolerance < 0.0) {
-						  summary.message = "gradient_tolerance incorrectly < 0.0";
+						  summary.message[0] = "gradient_tolerance incorrectly < 0.0";
 						  return false;
 					  }
 					  if (parameter_tolerance < 0.0) {
-						  summary.message = "parameter_tolerance inocrrectly < 0.0";
+						  summary.message[0] = "parameter_tolerance inocrrectly < 0.0";
 						  return false;
 					  }
 					  if (num_threads <= 0) {
-						  summary.message = "num_threads incorrectly <= 0";
+						  summary.message[0] = "num_threads incorrectly <= 0";
 						  return false;
 					  }
 					  if (check_gradients) {
 						if (gradient_check_relative_precision <= 0.0) {
-							summary.message = "gradient_check_relative_precision incorrectly < = 0.0";
+							summary.message[0] = "gradient_check_relative_precision incorrectly < = 0.0";
 							return false;
 						}
 					    if (gradient_check_numeric_derivative_relative_step_size <= 0.0) {
-					    	summary.message = "gradient_check_numeric_derivative_relative_step_size incorrectly <= 0.0";
+					    	summary.message[0] = "gradient_check_numeric_derivative_relative_step_size incorrectly <= 0.0";
 					    	return false;
 					    }
 					  }
@@ -1947,69 +2577,69 @@ enum LineSearchDirectionType {
 				
 				public boolean TrustRegionOptionsAreValid(Solver.Summary summary) {
 					  if (initial_trust_region_radius <= 0.0) {
-						  summary.message = "initial_trust_region_radius incorrectly <= 0.0";
+						  summary.message[0] = "initial_trust_region_radius incorrectly <= 0.0";
 						  return false;
 					  }
 					  if (min_trust_region_radius <=  0.0) {
-						  summary.message = "min_trust_region_radius incorrectly <= 0.0";
+						  summary.message[0] = "min_trust_region_radius incorrectly <= 0.0";
 						  return false;
 					  }
 					  if (max_trust_region_radius <= 0.0) {
-						  summary.message = "max_trust_region_radius incorrectly <= 0.0";
+						  summary.message[0] = "max_trust_region_radius incorrectly <= 0.0";
 						  return false;
 					  }
 					  if (min_trust_region_radius > max_trust_region_radius) {
-						  summary.message = "min_trust_region_radius incorrectly > max_trust_region_radius";
+						  summary.message[0] = "min_trust_region_radius incorrectly > max_trust_region_radius";
 						  return false;
 					  }
 					  if (min_trust_region_radius > initial_trust_region_radius) {
-				          summary.message = "min_trust_region_radius incorrectly > initial_trust_region_radius";
+				          summary.message[0] = "min_trust_region_radius incorrectly > initial_trust_region_radius";
 				          return false;
 					  }
 					  if (initial_trust_region_radius > max_trust_region_radius) {
-						  summary.message = "initial_trust_region_radius incorrectly > max_trust_region_radius";
+						  summary.message[0] = "initial_trust_region_radius incorrectly > max_trust_region_radius";
 						  return false;
 					  }
 					  if (min_relative_decrease < 0.0) {
-						  summary.message = "min_relative_decrease incorrectly < 0.0";
+						  summary.message[0] = "min_relative_decrease incorrectly < 0.0";
 						  return false;
 					  }
 					  if (min_lm_diagonal < 0.0) {
-						  summary.message = "min_lm_diagonal incorrectly < 0.0";
+						  summary.message[0] = "min_lm_diagonal incorrectly < 0.0";
 						  return false;
 					  }
 					  if (max_lm_diagonal < 0.0) {
-						  summary.message = "max_lm_diagonal incorrectly < 0.0";
+						  summary.message[0] = "max_lm_diagonal incorrectly < 0.0";
 						  return false;
 					  }
 					  if (min_lm_diagonal > max_lm_diagonal) {
-						  summary.message = "min_lm_diagonal incorrectly > max_lm_diagonal";
+						  summary.message[0] = "min_lm_diagonal incorrectly > max_lm_diagonal";
 						  return false;
 					  }
 					  if (max_num_consecutive_invalid_steps < 0) {
-						  summary.message = "max_num_consecutive_invalid_steps incorrectly < 0";
+						  summary.message[0] = "max_num_consecutive_invalid_steps incorrectly < 0";
 						  return false;
 					  }
 					  if (eta <= 0.0) {
-						  summary.message = "eta incorrectly <= 0.0";
+						  summary.message[0] = "eta incorrectly <= 0.0";
 						  return false;
 					  }
 					  if (min_linear_solver_iterations < 0) {
-						  summary.message = "min_linear_solver_iterations incorrectly < 0";
+						  summary.message[0] = "min_linear_solver_iterations incorrectly < 0";
 						  return false;
 					  }
 					  if (max_linear_solver_iterations < 1) {
-						  summary.message = "max_linear_solver_iterations incorrectly < 1";
+						  summary.message[0] = "max_linear_solver_iterations incorrectly < 1";
 						  return false;
 					  }
 					  if (min_linear_solver_iterations > max_linear_solver_iterations) {
-						  summary.message = "min_linear_solver_iterations incorrectly > max_linear_solver_iterations";
+						  summary.message[0] = "min_linear_solver_iterations incorrectly > max_linear_solver_iterations";
 						  return false;
 					  }
 
 					  if (use_inner_iterations) {
 						  if (inner_iteration_tolerance < 0.0) {
-							  summary.message = "inner_iteration_tolerance incorrectly < 0.0";
+							  summary.message[0] = "inner_iteration_tolerance incorrectly < 0.0";
 							  return false;
 						  }
 					  }
@@ -2024,7 +2654,7 @@ enum LineSearchDirectionType {
 
 					  if (use_nonmonotonic_steps) {
 						if (max_consecutive_nonmonotonic_steps <= 0) {
-						    summary.message = "max_consecutive_nonmonotonic_steps incorrectly <= 0";
+						    summary.message[0] = "max_consecutive_nonmonotonic_steps incorrectly <= 0";
 						    return false;
 						}
 					  }
@@ -2032,19 +2662,19 @@ enum LineSearchDirectionType {
 					  if (linear_solver_type == LinearSolverType.ITERATIVE_SCHUR &&
 					      use_explicit_schur_complement &&
 					      preconditioner_type != PreconditionerType.SCHUR_JACOBI) {
-					    summary.message =  "use_explicit_schur_complement only supports SCHUR_JACOBI as the preconditioner.";
+					    summary.message[0] =  "use_explicit_schur_complement only supports SCHUR_JACOBI as the preconditioner.";
 					    return false;
 					  }
 
 					  if (preconditioner_type == PreconditionerType.CLUSTER_JACOBI &&
 					      sparse_linear_algebra_library_type != SparseLinearAlgebraLibraryType.SUITE_SPARSE) {
-					    summary.message =  "CLUSTER_JACOBI requires Solver::Options::sparse_linear_algebra_library_type to be SUITE_SPARSE.";
+					    summary.message[0] =  "CLUSTER_JACOBI requires Solver::Options::sparse_linear_algebra_library_type to be SUITE_SPARSE.";
 					    return false;
 					  }
 
 					  if (preconditioner_type == PreconditionerType.CLUSTER_TRIDIAGONAL &&
 					      sparse_linear_algebra_library_type != SparseLinearAlgebraLibraryType.SUITE_SPARSE) {
-					    summary.message =  "CLUSTER_TRIDIAGONAL requires Solver::Options::sparse_linear_algebra_library_type to be SUITE_SPARSE.";
+					    summary.message[0] =  "CLUSTER_TRIDIAGONAL requires Solver::Options::sparse_linear_algebra_library_type to be SUITE_SPARSE.";
 					    return false;
 					  }
 
@@ -2120,10 +2750,10 @@ enum LineSearchDirectionType {
 
 					  if (sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.NO_SPARSE) {
 					    if (linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY) {
-					      summary.message = "Can't use SPARSE_NORMAL_CHOLESKY as sparse_linear_algebra_library_type is NO_SPARSE.";
+					      summary.message[0] = "Can't use SPARSE_NORMAL_CHOLESKY as sparse_linear_algebra_library_type is NO_SPARSE.";
 					      return false;
 					    } else if (linear_solver_type == LinearSolverType.SPARSE_SCHUR) {
-					      summary.message = "Can't use SPARSE_SCHUR as sparse_linear_algebra_library_type is NO_SPARSE.";
+					      summary.message[0] = "Can't use SPARSE_SCHUR as sparse_linear_algebra_library_type is NO_SPARSE.";
 					      return false;
 					    }
 					  }
@@ -2131,9 +2761,9 @@ enum LineSearchDirectionType {
 					  if (trust_region_strategy_type == TrustRegionStrategyType.DOGLEG) {
 					    if (linear_solver_type == LinearSolverType.ITERATIVE_SCHUR ||
 					        linear_solver_type == LinearSolverType.CGNR) {
-					      summary.message = "DOGLEG only supports exact factorization based linear solvers.\n";
-					      summary.message += "If you want to use an iterative solver please \n";
-					      summary.message += "use LEVENBERG_MARQUARDT as the trust_region_strategy_type";
+					      summary.message[0] = "DOGLEG only supports exact factorization based linear solvers.\n";
+					      summary.message[0] += "If you want to use an iterative solver please \n";
+					      summary.message[0] += "use LEVENBERG_MARQUARDT as the trust_region_strategy_type";
 					      return false;
 					    }
 					  }
@@ -2143,13 +2773,13 @@ enum LineSearchDirectionType {
 					      trust_region_problem_dump_format_type != DumpFormatType.CONSOLE &&
 					      ((trust_region_problem_dump_directory == null) ||
 					       (trust_region_problem_dump_directory.length() == 0))) {
-					    summary.message = "Solver::Options::trust_region_problem_dump_directory is empty.";
+					    summary.message[0] = "Solver::Options::trust_region_problem_dump_directory is empty.";
 					    return false;
 					  }
 
 					  if (dynamic_sparsity &&
 					      linear_solver_type != LinearSolverType.SPARSE_NORMAL_CHOLESKY) {
-					    summary.message = "Dynamic sparsity is only supported with SPARSE_NORMAL_CHOLESKY.";
+					    summary.message[0] = "Dynamic sparsity is only supported with SPARSE_NORMAL_CHOLESKY.";
 					    return false;
 					  }
 
@@ -2158,55 +2788,55 @@ enum LineSearchDirectionType {
 
 				public boolean LineSearchOptionsAreValid(Solver.Summary summary) {
 					  if (max_lbfgs_rank <= 0) {
-						  summary.message = "max_lbfgs_rank incorrectly <= 0";
+						  summary.message[0] = "max_lbfgs_rank incorrectly <= 0";
 						  return false;
 					  }
 					  if (min_line_search_step_size <= 0.0) {
-						  summary.message = "min_line_search_step_size incorrectly <= 0.0";
+						  summary.message[0] = "min_line_search_step_size incorrectly <= 0.0";
 						  return false; 
 					  }
 					  if (max_line_search_step_contraction <= 0.0) {
-						  summary.message = "max_line_search_step_contraction incorrectly <= 0.0";
+						  summary.message[0] = "max_line_search_step_contraction incorrectly <= 0.0";
 						  return false;
 					  }
 					  if (max_line_search_step_contraction >= 1.0) {
-						  summary.message = "max_line_search_step_contraction incorrectly >= 1.0";
+						  summary.message[0] = "max_line_search_step_contraction incorrectly >= 1.0";
 						  return false;
 					  }
 					  if (max_line_search_step_contraction >= min_line_search_step_contraction) {
-						  summary.message = "max_line_search_step_contraction incorrectly >= min_line_search_step_contraction";
+						  summary.message[0] = "max_line_search_step_contraction incorrectly >= min_line_search_step_contraction";
 						  return false;
 					  }
 					  if (min_line_search_step_contraction > 1.0) {
-						  summary.message = "min_line_search_step_contraction incorrectly > 1.0";
+						  summary.message[0] = "min_line_search_step_contraction incorrectly > 1.0";
 						  return false;
 					  }
 					  if (max_num_line_search_step_size_iterations <= 0) {
-						  summary.message = "max_num_line_search_step_size_iterations incorrectly <= 0";
+						  summary.message[0] = "max_num_line_search_step_size_iterations incorrectly <= 0";
 						  return false;
 					  }
 					  if (line_search_sufficient_function_decrease <= 0.0) {
-						  summary.message = "line_search_sufficient_function_decrease incorrectly <= 0.0";
+						  summary.message[0] = "line_search_sufficient_function_decrease incorrectly <= 0.0";
 						  return false;
 					  }
 					  if (line_search_sufficient_function_decrease >= line_search_sufficient_curvature_decrease) {
-						  summary.message = "line_search_sufficient_function_decrease incorrectly >= line_search_sufficient_curvature_decrease";
+						  summary.message[0] = "line_search_sufficient_function_decrease incorrectly >= line_search_sufficient_curvature_decrease";
 						  return false;
 					  }
 					  if (line_search_sufficient_curvature_decrease >= 1.0) {
-						  summary.message = "line_search_sufficient_curvature_decrease incorrectly >= 1.0";
+						  summary.message[0] = "line_search_sufficient_curvature_decrease incorrectly >= 1.0";
 						  return false;
 					  }
 					  if (max_line_search_step_expansion <= 1.0) {
-						  summary.message = "max_line_search_step_expansion incorrectly <= 1.0";
+						  summary.message[0] = "max_line_search_step_expansion incorrectly <= 1.0";
 						  return false;
 					  }
 
 					  if ((line_search_direction_type == LineSearchDirectionType.BFGS ||
 					       line_search_direction_type == LineSearchDirectionType.LBFGS) &&
 					      line_search_type != LineSearchType.WOLFE) {
-					    summary.message = "Invalid configuration: Solver::Options::line_search_type = " + LineSearchTypeToString(line_search_type) + "\n";
-					    summary.message += "When using (L)BFGS, Solver::Options::line_search_type must be set to WOLFE.";
+					    summary.message[0] = "Invalid configuration: Solver::Options::line_search_type = " + LineSearchTypeToString(line_search_type) + "\n";
+					    summary.message[0] += "When using (L)BFGS, Solver::Options::line_search_type must be set to WOLFE.";
 					    return false;
 					  }
 
@@ -2218,11 +2848,11 @@ enum LineSearchDirectionType {
 					        if (line_search_interpolation_type == LineSearchInterpolationType.BISECTION &&
 					          (max_line_search_step_contraction > 0.5 ||
 					           options.min_line_search_step_contraction < 0.5)) {
-					      summary.message = "Warning, likely a user mistake but can continue\n";
-					      summary.message += "Line search interpolation type is BISECTION, but specified\n";
-					      summary.message += "max_line_search_step_contraction: " + max_line_search_step_contraction + ", and\n";
-					      summary.message += "min_line_search_step_contraction: " + min_line_search_step_contraction + ",\n";
-					      summary.message += "prevent bisection (0.5) scaling, continuing with solve regardless.";
+					      summary.message[0] = "Warning, likely a user mistake but can continue\n";
+					      summary.message[0] += "Line search interpolation type is BISECTION, but specified\n";
+					      summary.message[0] += "max_line_search_step_contraction: " + max_line_search_step_contraction + ", and\n";
+					      summary.message[0] += "min_line_search_step_contraction: " + min_line_search_step_contraction + ",\n";
+					      summary.message[0] += "prevent bisection (0.5) scaling, continuing with solve regardless.";
 					        }
 
 					  return true;
@@ -2238,7 +2868,7 @@ enum LineSearchDirectionType {
 				public MinimizerType minimizer_type;
 				public TerminationType termination_type;
 				// Reason why the solver terminated.
-			    public String message;
+			    public String message[];
 			    // Cost of the problem (value of the objective function) before
 			    // the optimization.
 			    public double initial_cost;
@@ -2380,7 +3010,7 @@ enum LineSearchDirectionType {
 				    // accidentally reporting default values.
 				    minimizer_type = MinimizerType.TRUST_REGION;
 				    termination_type = TerminationType.FAILURE;
-				    message = "ceres::Solve was not called.";
+				    message = new String[] {"ceres::Solve was not called."};
 				    initial_cost = -1.0;
 				    final_cost = -1.0;
 				    fixed_cost = -1.0;
@@ -2513,7 +3143,19 @@ enum LineSearchDirectionType {
 				      double relative_precision,
 				      String extra_info,
 				      GradientCheckingIterationCallback callback) {
-				
+				          function_ = function;
+				          gradient_checker_ = new GradientChecker(function, local_parameterizations, options);
+				          relative_precision_ = relative_precision;
+				          extra_info_ = extra_info; 
+				          callback_ = callback;
+				          if (callback == null) {
+				        	  System.err.println("callback == null in GradientCheckingCostFunction constructor");
+				        	  return;
+				          }
+				          Vector<Integer>parameter_block_sizes = function.parameter_block_sizes();
+				          set_parameter_block_sizes(parameter_block_sizes);
+				          set_num_residuals(function.num_residuals());
+
 			}
 	
 		}
@@ -2532,17 +3174,12 @@ enum LineSearchDirectionType {
 				   }
 				   if (local_parameterizations != null) {
 					    local_parameterizations_ = local_parameterizations;
-					  } else {
+					  } else {  
+						// local_parameterizations == null so local_parameterizations has size == 0
 					    //local_parameterizations_.resize(function.parameter_block_sizes().size(), null);
 					    int newSize = function.parameter_block_sizes().size();
-					    int oldSize = local_parameterizations.size();
-					    if (oldSize > newSize) {
-					    	int numRemove = oldSize - newSize;
-					    	for (int i = 0; i < numRemove; i++) {
-					    		local_parameterizations_.remove(local_parameterizations_.size()-1);
-					    	}
-					    }
-					    else if (newSize > oldSize) {
+					    int oldSize = 0; // local_parameterizations.size();
+					    if (newSize > oldSize) {
 					    	int numAdd = newSize - oldSize;
 					    	for (int i = 0; i < numAdd; i++) {
 					    		local_parameterizations_.add(null);
@@ -2612,6 +3249,18 @@ enum LineSearchDirectionType {
 			    }
 			  }
 			  return true;
+		}
+		
+	    int FindInvalidValue(int size, ArrayList<Double> x) {
+			  if (x == null) {
+				  return size;
+			  }
+		    for (int i = 0; i < size; ++i) {
+		      if (!Double.isFinite(x.get(i)) || (x.get(i) == kImpossibleValue))  {
+		        return i;
+		      }
+		    }
+		    return size;
 		}
 		
 		String LineSearchTypeToString(LineSearchType type) {
