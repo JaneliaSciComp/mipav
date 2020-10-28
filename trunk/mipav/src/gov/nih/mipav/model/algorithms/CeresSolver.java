@@ -454,15 +454,70 @@ enum LineSearchDirectionType {
 		  DENSE_SVD,
 		  SPARSE_QR,
 		};
+		
+		class CostFunctor {
+			public CostFunctor() {
+				
+			}
+			  public boolean operator(double x[], double residual[]) {
+			    residual[0] = 10.0 - x[0];
+			    return true;
+			  }
+			};
+			
+			// A CostFunction implementing analytically derivatives for the
+			// function f(x) = 10 - x.
+			class QuadraticCostFunction extends SizedCostFunction  {
+			 public QuadraticCostFunction() {
+				 // number of resdiuals
+				 // size of first parameter
+				 super(1, 1,0,0,0,0,0,0,0,0,0);
+			 }
+
+			  public boolean Evaluate(Vector<ArrayList<Double>> parameters,
+			                        double residuals[],
+			                        double jacobians[][]) {
+			    Double xD[] = (Double[])parameters.get(0).toArray();
+			    double x[] = new double[xD.length];
+			    for (int i = 0; i < xD.length; i++) {
+			    	x[i] = xD[i].doubleValue();
+			    }
+
+			    // f(x) = 10 - x.
+			    residuals[0] = 10 - x[0];
+
+			    // f'(x) = -1. Since there's only 1 parameter and that parameter
+			    // has 1 dimension, there is only 1 element to fill in the
+			    // jacobians.
+			    //
+			    // Since the Evaluate function can be called with the jacobians
+			    // pointer equal to NULL, the Evaluate function must check to see
+			    // if jacobians need to be computed.
+			    //
+			    // For this simple problem it is overkill to check if jacobians[0]
+			    // is NULL, but in general when writing more complex
+			    // CostFunctions, it is possible that Ceres may only demand the
+			    // derivatives w.r.t. a subset of the parameter blocks.
+			    if (jacobians != null && jacobians[0] != null) {
+			      jacobians[0][0] = -1;
+			    }
+
+			    return true;
+			  }
+			};
+
 
 
 	  
-	  public void runExample() {
+	  public void runAutoDiffCostFunctionExample() {
+		  
+
 		ArrayList<Double>x = new ArrayList<Double>();
 		x.add(0.5);
 		// auto-differentiation to obtain the derivative (jacobian).
+		  CostFunctor cf = new CostFunctor();
 		  CostFunction cost_function =
-		      new AutoDiffCostFunction(1, 1,0,0,0,0,0,0,0,0,0);
+		      new AutoDiffCostFunction<CostFunctor>(cf, 1, 1,0,0,0,0,0,0,0,0,0);
 		  ProblemImpl problem = new ProblemImpl();
 		  problem.AddResidualBlock(cost_function, null, x);
 
@@ -473,6 +528,23 @@ enum LineSearchDirectionType {
 		  Solve(solver.options, problem, solver.summary);
 
 	  }
+	  
+	  public void runSizedCostFunctionExample() {
+		  
+
+			  ArrayList<Double>x = new ArrayList<Double>();
+			  x.add(0.5);
+			  CostFunction cost_function = new QuadraticCostFunction();
+			  ProblemImpl problem = new ProblemImpl();
+			  problem.AddResidualBlock(cost_function, null, x);
+
+			  // Run the solver!
+			  Solver solver = new Solver();
+			  solver.options.minimizer_progress_to_stdout = true;
+			  //Solver::Summary summary;
+			  Solve(solver.options, problem, solver.summary);
+
+		  }
 	  
 	// A templated cost functor that implements the residual r = 10 -
 	// x. The method operator() is templated so that we can then use an
@@ -994,6 +1066,12 @@ enum LineSearchDirectionType {
 		protected void SetNumResiduals(int num_residuals) {
 			num_residuals_ = num_residuals;
 		}
+		
+		public boolean Evaluate(Vector<ArrayList<Double>> parameters,
+                double residuals[],
+                double jacobians[][]) {
+		    return true;	
+		}
 
 	}
 	
@@ -1076,16 +1154,19 @@ enum LineSearchDirectionType {
 			}
 	}
 	
-	class AutoDiffCostFunction extends SizedCostFunction {
-		//private CostFunctor functor_;
+	class AutoDiffCostFunction<CostFunctor> extends SizedCostFunction {
+		private CostFunctor functor_;
+		private int kNumResiduals;
+		private int num_residuals;
 		
 		// Takes ownership of functor. Uses the template-provided value for the
 		// number of residuals ("kNumResiduals").
-		public AutoDiffCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4,
+		public AutoDiffCostFunction(CostFunctor functor, int kNumResiduals, int N0, int N1, int N2, int N3, int N4,
 				int N5, int N6, int N7, int N8, int N9) {
 			super(kNumResiduals, N0, N1, N2, N3,
 		            N4, N5, N6, N7, N8, N9);
-			//this.functor_ = functor;
+			this.functor_ = functor;
+			this.kNumResiduals = kNumResiduals;
 			if (kNumResiduals == DYNAMIC) {
 				System.err.println("Can't run the fixed-size constructor if the number of residuals is set to DYNAMIC.");
 			}
@@ -1096,17 +1177,54 @@ enum LineSearchDirectionType {
 		  //
 		  // This allows for having autodiff cost functions which return varying
 		  // numbers of residuals at runtime.
-		  public AutoDiffCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4,
+		  public AutoDiffCostFunction(CostFunctor functor, int kNumResiduals, int N0, int N1, int N2, int N3, int N4,
 					int N5, int N6, int N7, int N8, int N9, int num_residuals) {
 			  super(kNumResiduals, N0, N1, N2, N3,
 			            N4, N5, N6, N7, N8, N9, num_residuals);
-			//this.functor_ = functor;
+			this.functor_ = functor;
+			this.kNumResiduals = kNumResiduals;
+			this.num_residuals = num_residuals;
 		    if (kNumResiduals != DYNAMIC) {
 		        System.err.println("Can't run the dynamic-size constructor if the number of residuals is not DYNAMIC.");
 		        return;
 		    }
 		    
 		  }
+		  
+		  public boolean Evaluate(Vector<ArrayList<Double>> parameters,
+                  double residuals[],
+                  double jacobians[][]) {
+			if (jacobians == null) {
+				if ((kNumResiduals == 1) || ((kNumResiduals == DYNAMIC) && (num_residuals == 1))) {
+					Double xD[] = (Double[])parameters.get(0).toArray();
+					double x[] = new double[xD.length];
+					for (int i = 0; i < xD.length; i++) {
+						x[i] = xD[i].doubleValue();
+					}
+					return ((gov.nih.mipav.model.algorithms.CeresSolver.CostFunctor) functor_).operator(x, residuals);
+				}
+				else {
+					return true;
+				}
+			}
+			else {
+				return true;
+			}
+		  }
+			/*return internal::VariadicEvaluate<
+			    CostFunctor, double, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9>
+			    ::Call(*functor_, parameters, residuals);
+			}
+			return internal::AutoDiff<CostFunctor, double,
+			     N0, N1, N2, N3, N4, N5, N6, N7, N8, N9>::Differentiate(
+			         *functor_,
+			         parameters,
+			         SizedCostFunction<kNumResiduals,
+			                           N0, N1, N2, N3, N4,
+			                           N5, N6, N7, N8, N9>::num_residuals(),
+			         residuals,
+			         jacobians);
+			}*/
 
 	}
 	
@@ -1862,7 +1980,7 @@ enum LineSearchDirectionType {
 		}
 		
 		// If the caller didn't request residuals, use the scratch space for them.
-		/*bool outputting_residuals = (residuals != NULL);
+		boolean outputting_residuals = (residuals != null);
 		if (!outputting_residuals) {
 		residuals = scratch;
 		}
@@ -1870,35 +1988,33 @@ enum LineSearchDirectionType {
 		// Invalidate the evaluation buffers so that we can check them after
 		// the CostFunction::Evaluate call, to see if all the return values
 		// that were required were written to and that they are finite.
-		double** eval_jacobians = (jacobians != NULL) ? global_jacobians.get() : NULL;
+		double[][] eval_jacobians = (jacobians != null) ? global_jacobians : null;
 		
-		InvalidateEvaluation(*this, cost, residuals, eval_jacobians);
+		InvalidateEvaluation(cost, residuals, eval_jacobians);
 		
-		if (!cost_function_->Evaluate(parameters.get(), residuals, eval_jacobians)) {
+		if (!cost_function_.Evaluate(parameters, residuals, eval_jacobians)) {
 		return false;
 		}
 		
-		if (!IsEvaluationValid(*this,
-		                  parameters.get(),
+		if (!IsEvaluationValid(parameters,
 		                  cost,
 		                  residuals,
 		                  eval_jacobians)) {
-		std::string message =
-		 "\n\n"
-		 "Error in evaluating the ResidualBlock.\n\n"
-		 "There are two possible reasons. Either the CostFunction did not evaluate and fill all    \n"  // NOLINT
-		 "residual and jacobians that were requested or there was a non-finite value (nan/infinite)\n"  // NOLINT
+	     String message =
+		 "\n\n" +
+		 "Error in evaluating the ResidualBlock.\n\n" +
+		 "There are two possible reasons. Either the CostFunction did not evaluate and fill all    \n"  +
+		 "residual and jacobians that were requested or there was a non-finite value (nan/infinite)\n"  +
 		 "generated during the or jacobian computation. \n\n" +
-		 EvaluationToString(*this,
-		                    parameters.get(),
+		 EvaluationToString(parameters,
 		                    cost,
 		                    residuals,
 		                    eval_jacobians);
-		LOG(WARNING) << message;
+		System.err.println(message);
 		return false;
 		}
 		
-		double squared_norm = VectorRef(residuals, num_residuals).squaredNorm();
+		/*double squared_norm = VectorRef(residuals, num_residuals).squaredNorm();
 		
 		// Update the jacobians with the local parameterizations.
 		if (jacobians != NULL) {
@@ -1961,9 +2077,102 @@ enum LineSearchDirectionType {
 		return true;
 		}
 
+		public void InvalidateEvaluation(
+                      double cost[],
+                      double residuals[],
+                      double[][] jacobians) {
+			int num_parameter_blocks = NumParameterBlocks();
+			int num_residuals = NumResiduals();
+			
+			InvalidateArray(1, cost);
+			InvalidateArray(num_residuals, residuals);
+			if (jacobians != null) {
+			for (int i = 0; i < num_parameter_blocks; ++i) {
+			  int parameter_block_size = parameter_blocks()[i].Size();
+			  InvalidateArray(num_residuals * parameter_block_size, jacobians[i]);
+			}
+			}
+		}
+		
+		public boolean IsEvaluationValid(Vector<ArrayList<Double>> parameters,
+                double cost[],
+                double residuals[],
+                double jacobians[][]) {
+				int num_parameter_blocks = NumParameterBlocks();
+				int num_residuals = NumResiduals();
+				
+				if (!IsArrayValid(num_residuals, residuals)) {
+				return false;
+				}
+				
+				if (jacobians != null) {
+				for (int i = 0; i < num_parameter_blocks; ++i) {
+				    int parameter_block_size = parameter_blocks()[i].Size();
+				if (!IsArrayValid(num_residuals * parameter_block_size, jacobians[i])) {
+				 return false;
+				}
+				}
+				}
+
+				return true;
+		}
+		
+		public String EvaluationToString(Vector<ArrayList<Double>> parameters,
+                double cost[],
+                double residuals[],
+                double jacobians[][]) {
+			if (cost == null) {
+				return null;
+			}
+			if (residuals == null) {
+				return null;
+			}
+			
+			int num_parameter_blocks = NumParameterBlocks();
+			int num_residuals = NumResiduals();
+			String result[] = new String[1];
+			
+			result[0] = 
+			      "Residual Block size: " + num_parameter_blocks + " parameter blocks x " + num_residuals + " residuals\n\n" +
+			"For each parameter block, the value of the parameters are printed in the first column   \n"  +
+			"and the value of the jacobian under the corresponding residual. If a ParameterBlock was \n"  +
+			"held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry \n"  +
+			"of the Jacobian/residual array was requested but was not written to by user code, it is \n"  +
+			"indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating \n"  +
+			"to Inf or NaN is also an error.  \n\n"; 
+			
+			String space = "Residuals:     ";
+			result[0] += space;
+			for (int i = 0; i < num_residuals; i++) {
+				result[0] = result[0] + "\n" + residuals[i];
+			}
+			result[0] += "\n\n";
+			
+			for (int i = 0; i < num_parameter_blocks; ++i) {
+			   int parameter_block_size = parameter_blocks()[i].Size();
+			result[0] = result[0] + "Parameter Block " + i +", size: " + parameter_block_size + "\n";
+			result[0] = result[0] + "\n";
+			for (int j = 0; j < parameter_block_size; ++j) {
+				double x[] = new double[] {parameters.get(i).get(j).doubleValue()};
+				AppendArrayToString(1, x, result);
+			    result[0] = result[0] + "| ";
+			for (int k = 0; k < num_residuals; ++k) {
+			if (jacobians != null && jacobians[i] != null) {
+				double y[] = new double[] {jacobians[i][k * parameter_block_size + j]};
+				AppendArrayToString(1,y ,result);
+			}
+			}
+			result[0] = result[0] + "\n";
+			}
+			result[0] = result[0] + "\n";
+			}
+			result[0] = result[0] + "\n";
+			return result[0];
+			}
+
 
 		      
-		}
+		} // class ResidualBlock
 		
 		class ParameterBlock {
 			  int i, j;
@@ -3262,6 +3471,22 @@ enum LineSearchDirectionType {
 		    }
 		    return size;
 		}
+	    
+	    public void AppendArrayToString(int size, double x[], String result[]) {
+	    	  for (int i = 0; i < size; ++i) {
+	    	    if (x == null) {
+	    	      result[0] = result[0] + "Not Computed  ";
+	    	      return;
+	    	    } else {
+	    	      if (x[i] == kImpossibleValue) {
+	    	        result[0] = result[0] + "Uninitialized ";
+	    	      } else {
+	    	        result[0] = result[0] + x[i] + " ";
+	    	      }
+	    	    }
+	    	  }
+	    	}
+
 		
 		String LineSearchTypeToString(LineSearchType type) {
 			  switch (type) {
