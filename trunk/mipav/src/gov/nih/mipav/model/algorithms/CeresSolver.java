@@ -455,8 +455,8 @@ enum LineSearchDirectionType {
 		  SPARSE_QR,
 		};
 		
-		class CostFunctor {
-			public CostFunctor() {
+		class CostFunctorExample {
+			public CostFunctorExample() {
 				
 			}
 			  public boolean operator(double x[], double residual[]) {
@@ -515,9 +515,9 @@ enum LineSearchDirectionType {
 		ArrayList<Double>x = new ArrayList<Double>();
 		x.add(0.5);
 		// auto-differentiation to obtain the derivative (jacobian).
-		  CostFunctor cf = new CostFunctor();
+		  CostFunctorExample cf = new CostFunctorExample();
 		  CostFunction cost_function =
-		      new AutoDiffCostFunction<CostFunctor>(cf, 1, 1,0,0,0,0,0,0,0,0,0);
+		      new AutoDiffCostFunction<CostFunctorExample>(cf, 1, 1,0,0,0,0,0,0,0,0,0);
 		  ProblemImpl problem = new ProblemImpl();
 		  problem.AddResidualBlock(cost_function, null, x);
 
@@ -824,9 +824,67 @@ enum LineSearchDirectionType {
     	public boolean Preprocess(Solver.Options options,
                 ProblemImpl problem,
                 PreprocessedProblem pp) {
+    		  if (pp == null) {
+    		    System.err.println("PreprocessedProblem pp == null in TrustRegionPreProcessor Preprocess");
+    		    return false;
+    		  }
+    		  pp.options = options;
+    		  //ChangeNumThreadsIfNeeded(pp.options);
+
+    		  pp.problem = problem;
+    		  Program program = problem.mutable_program();
+    		  if (!IsProgramValid(program, pp.error)) {
+    		    return false;
+    		  }
+
+    		  pp.reduced_program = 
+    		      program.CreateReducedProgram(pp.removed_parameter_blocks,
+    		                                    pp.fixed_cost,
+    		                                    pp.error);
+
+    		  if (pp.reduced_program == null) {
+    		    return false;
+    		  }
+
+    		  if (pp.reduced_program.NumParameterBlocks() == 0) {
+    		    return true;
+    		  }
+
+    		  if (!SetupEvaluator(pp)) {
+    		    return false;
+    		  }
+
+    		  SetupCommonMinimizerOptions(pp);
+
     		return true;
     	}
-    }
+    	
+    	public boolean IsProgramValid(Program program, String error[]) {
+    		  if (program.IsBoundsConstrained()) {
+    		    error[0] = "LINE_SEARCH Minimizer does not support bounds.";
+    		    return false;
+    		  }
+    		  return program.ParameterBlocksAreFinite(error);
+    		}
+    	
+    	public boolean SetupEvaluator(PreprocessedProblem pp) {
+    		  Evaluator ev = new Evaluator();
+    		  pp.evaluator_options = ev.options;
+    		  // This ensures that we get a Block Jacobian Evaluator without any
+    		  // requirement on orderings.
+    		  pp.evaluator_options.linear_solver_type = LinearSolverType.CGNR;
+    		  pp.evaluator_options.num_eliminate_blocks = 0;
+    		  pp.evaluator_options.num_threads = pp.options.num_threads;
+    		  pp.evaluator_options.context = pp.problem.context();
+    		  pp.evaluator_options.evaluation_callback = pp.options.evaluation_callback;
+    		  pp.evaluator = ev.Create(pp.evaluator_options,
+    		                                        pp.reduced_program,
+    		                                        pp.error);
+    		  return (pp.evaluator != null);
+    		}
+
+
+    } // class LineSearchPreProcessor
     
  // A PreprocessedProblem is the result of running the Preprocessor on
  // a Problem and Solver::Options object.
@@ -834,8 +892,8 @@ enum LineSearchDirectionType {
 	  String error[];
 	  Solver.Options options;
 	  //LinearSolver.Options linear_solver_options;
-	  //Evaluator.Options evaluator_options;
-	  //Minimizer.Options minimizer_options;
+	  Evaluator.Options evaluator_options;
+	  Minimizer.Options minimizer_options;
 
 	  ProblemImpl problem;
 	  //scoped_ptr<ProblemImpl> gradient_checking_problem;
@@ -850,18 +908,293 @@ enum LineSearchDirectionType {
 	  IterationCallback state_updating_callback;
 
 	  //shared_ptr<Evaluator> evaluator;
-	  //Evaluator evaluator;
+	  Evaluator evaluator;
 	  //shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
 	  //CoordinateDescentMinimizer inner_iterations_minimizer;
 
 	  Vector<ArrayList<Double>> removed_parameter_blocks;
-	  Vector reduced_parameters;
+	  Vector<ArrayList<Double>> reduced_parameters;
 	 double fixed_cost[];
      public PreprocessedProblem() {
     	 fixed_cost = new double[] {0.0};
     	 error = new String[1];
+    	 removed_parameter_blocks = new Vector<ArrayList<Double>>();
+    	 reduced_parameters = new Vector<ArrayList<Double>>();
      }
- }
+     
+     
+ } // class Preprocessed
+ 
+ public void SetupCommonMinimizerOptions(PreprocessedProblem pp) {
+	  Solver.Options options = pp.options;
+	  Program program = pp.reduced_program;
+
+	  // Assuming that the parameter blocks in the program have been
+	  // reordered as needed, extract them into a contiguous vector.
+	  while (pp.reduced_parameters.size() > program.NumParameters()) {
+		  pp.reduced_parameters.removeElementAt(pp.reduced_parameters.size()-1);
+	  }
+	  //pp.reduced_parameters.resize(program.NumParameters());
+	  Vector<ArrayList<Double>> reduced_parameters = pp.reduced_parameters;
+	  program.ParameterBlocksToStateVector(reduced_parameters);
+
+	  Minimizer.Options minimizer_options = pp.minimizer_options;
+	  Minimizer min = new Minimizer(options);
+	  minimizer_options = min.options_;
+	  minimizer_options.evaluator = pp.evaluator;
+
+	  /*if (options.logging_type != LoggingType.SILENT) {
+	    pp.logging_callback =
+	        new LoggingCallback(options.minimizer_type,
+	                            options.minimizer_progress_to_stdout);
+	    minimizer_options.callbacks.insert(minimizer_options.callbacks.begin(),
+	                                       pp->logging_callback.get());
+	  }
+
+	  if (options.update_state_every_iteration) {
+	    pp->state_updating_callback.reset(
+	      new StateUpdatingCallback(program, reduced_parameters));
+	    // This must get pushed to the front of the callbacks so that it
+	    // is run before any of the user callbacks.
+	    minimizer_options.callbacks.insert(minimizer_options.callbacks.begin(),
+	                                       pp->state_updating_callback.get());
+	  }*/
+	}
+
+ 
+     class Evaluator {
+    	 public Options options;
+    	 public Evaluator() {
+    	     options = new Options();	 
+    	 }
+    	 
+    	 class Options {
+    		public int num_threads;
+ 		    public int num_eliminate_blocks;
+ 		    public LinearSolverType linear_solver_type;
+ 		    public boolean dynamic_sparsity;
+ 		    public ContextImpl context;
+ 		    public EvaluationCallback evaluation_callback;
+    		    public Options() {
+    		        num_threads = 1;
+    		        num_eliminate_blocks = -1;
+    		        linear_solver_type = LinearSolverType.DENSE_QR;
+    		        dynamic_sparsity = false;
+    		        context = null;
+    		        evaluation_callback = null;
+    		    }
+
+    		    
+    		} // class Options
+    	 
+    	  // Options struct to control Evaluator::Evaluate;
+    	  class EvaluateOptions {
+    		// If false, the loss function correction is not applied to the
+      	    // residual blocks.
+      	    public boolean apply_loss_function;
+
+      	    // If false, this evaluation point is the same as the last one.
+      	    public boolean new_evaluation_point;
+    	    public EvaluateOptions() {
+    	        apply_loss_function = true;
+    	        new_evaluation_point = true;
+    	    }
+
+    	    
+    	  } // class EvaluateOptions
+    	  
+    	  public Evaluator Create(Evaluator.Options options,
+                  Program program,
+                  String error[]) {
+    		if (options.context == null) {
+    			System.err.println("options.context == null in public Evaluator Create");
+    			return null;
+    		}
+			
+			switch (options.linear_solver_type) {
+			/*case DENSE_QR:
+			case DENSE_NORMAL_CHOLESKY:
+			return new ProgramEvaluator<ScratchEvaluatePreparer,
+			                       DenseJacobianWriter>(options,
+			                                            program);
+			case DENSE_SCHUR:
+			case SPARSE_SCHUR:
+			case ITERATIVE_SCHUR:
+			case CGNR:
+			return new ProgramEvaluator<BlockEvaluatePreparer,
+			                       BlockJacobianWriter>(options,
+			                                            program);
+			case SPARSE_NORMAL_CHOLESKY:
+			if (options.dynamic_sparsity) {
+			return new ProgramEvaluator<ScratchEvaluatePreparer,
+			                         DynamicCompressedRowJacobianWriter,
+			                         DynamicCompressedRowJacobianFinalizer>(
+			                             options, program);
+			} else {
+			return new ProgramEvaluator<BlockEvaluatePreparer,
+			                         BlockJacobianWriter>(options,
+			                                              program);
+			}*/
+			
+			default:
+			error[0] = "Invalid Linear Solver Type. Unable to create evaluator.";
+			return null;
+			}
+			}
+
+     } // class Evaluator
+     
+  // Interface for non-linear least squares solvers.
+     class Minimizer {
+      public Options options_;
+      public Minimizer() {
+    	  options_ = new Options();
+      }
+      
+      public Minimizer(Solver.Options options) {
+    	  options_ = new Options(options);
+      }
+       // Options struct to control the behaviour of the Minimizer. Please
+       // see solver.h for detailed information about the meaning and
+       // default values of each of these parameters.
+       class Options {
+    	   public int max_num_iterations;
+           public double max_solver_time_in_seconds;
+           public int num_threads;
+
+           // Number of times the linear solver should be retried in case of
+           // numerical failure. The retries are done by exponentially scaling up
+           // mu at each retry. This leads to stronger and stronger
+           // regularization making the linear least squares problem better
+           // conditioned at each retry.
+           public int max_step_solver_retries;
+           public double gradient_tolerance;
+           public double parameter_tolerance;
+           public double function_tolerance;
+           public double min_relative_decrease;
+           public double eta;
+           public boolean jacobi_scaling;
+           public boolean use_nonmonotonic_steps;
+           public int max_consecutive_nonmonotonic_steps;
+           public Vector<Integer> trust_region_minimizer_iterations_to_dump;
+           public DumpFormatType trust_region_problem_dump_format_type;
+           public String trust_region_problem_dump_directory;
+           public int max_num_consecutive_invalid_steps;
+           public double min_trust_region_radius;
+           public LineSearchDirectionType line_search_direction_type;
+           public LineSearchType line_search_type;
+           public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
+           public int max_lbfgs_rank;
+           public boolean use_approximate_eigenvalue_bfgs_scaling;
+           public LineSearchInterpolationType line_search_interpolation_type;
+           public double min_line_search_step_size;
+           public double line_search_sufficient_function_decrease;
+           public double max_line_search_step_contraction;
+           public double min_line_search_step_contraction;
+           public int max_num_line_search_step_size_iterations;
+           public int max_num_line_search_direction_restarts;
+           public double line_search_sufficient_curvature_decrease;
+           public double max_line_search_step_expansion;
+           public double inner_iteration_tolerance;
+
+           // If true, then all logging is disabled.
+           public boolean is_silent;
+
+           // Use a bounds constrained optimization algorithm.
+           public boolean is_constrained;
+
+           // List of callbacks that are executed by the Minimizer at the end
+           // of each iteration.
+           //
+           // The Options struct does not own these pointers.
+           Vector<IterationCallback> callbacks;
+
+           // Object responsible for evaluating the cost, residuals and
+           // Jacobian matrix.
+           //shared_ptr<Evaluator> evaluator;
+           Evaluator evaluator;
+
+           // Object responsible for actually computing the trust region
+           // step, and sizing the trust region radius.
+           //shared_ptr<TrustRegionStrategy> trust_region_strategy;
+           //TrustRegionStrategy trust_region_strategy;
+
+           // Object holding the Jacobian matrix. It is assumed that the
+           // sparsity structure of the matrix has already been initialized
+           // and will remain constant for the life time of the
+           // optimization.
+           //shared_ptr<SparseMatrix> jacobian;
+           //SparseMatrix jacobian;
+
+           //shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
+           //CoordinateDescentMinimizer inner_iteration_minimizer;
+         public Options() {
+           Solver solver = new Solver();
+           Init(solver.options);
+         }
+
+         public Options(Solver.Options options) {
+           Init(options);
+         }
+
+         public void Init(Solver.Options options) {
+           num_threads = options.num_threads;
+           max_num_iterations = options.max_num_iterations;
+           max_solver_time_in_seconds = options.max_solver_time_in_seconds;
+           max_step_solver_retries = 5;
+           gradient_tolerance = options.gradient_tolerance;
+           parameter_tolerance = options.parameter_tolerance;
+           function_tolerance = options.function_tolerance;
+           min_relative_decrease = options.min_relative_decrease;
+           eta = options.eta;
+           jacobi_scaling = options.jacobi_scaling;
+           use_nonmonotonic_steps = options.use_nonmonotonic_steps;
+           max_consecutive_nonmonotonic_steps =
+               options.max_consecutive_nonmonotonic_steps;
+           trust_region_problem_dump_directory =
+               options.trust_region_problem_dump_directory;
+           trust_region_minimizer_iterations_to_dump =
+               options.trust_region_minimizer_iterations_to_dump;
+           trust_region_problem_dump_format_type =
+               options.trust_region_problem_dump_format_type;
+           max_num_consecutive_invalid_steps =
+               options.max_num_consecutive_invalid_steps;
+           min_trust_region_radius = options.min_trust_region_radius;
+           line_search_direction_type = options.line_search_direction_type;
+           line_search_type = options.line_search_type;
+           nonlinear_conjugate_gradient_type =
+               options.nonlinear_conjugate_gradient_type;
+           max_lbfgs_rank = options.max_lbfgs_rank;
+           use_approximate_eigenvalue_bfgs_scaling =
+               options.use_approximate_eigenvalue_bfgs_scaling;
+           line_search_interpolation_type =
+               options.line_search_interpolation_type;
+           min_line_search_step_size = options.min_line_search_step_size;
+           line_search_sufficient_function_decrease =
+               options.line_search_sufficient_function_decrease;
+           max_line_search_step_contraction =
+               options.max_line_search_step_contraction;
+           min_line_search_step_contraction =
+               options.min_line_search_step_contraction;
+           max_num_line_search_step_size_iterations =
+               options.max_num_line_search_step_size_iterations;
+           max_num_line_search_direction_restarts =
+               options.max_num_line_search_direction_restarts;
+           line_search_sufficient_curvature_decrease =
+               options.line_search_sufficient_curvature_decrease;
+           max_line_search_step_expansion =
+               options.max_line_search_step_expansion;
+           inner_iteration_tolerance = options.inner_iteration_tolerance;
+           is_silent = (options.logging_type == LoggingType.SILENT);
+           is_constrained = false;
+           callbacks = options.callbacks;
+         }
+
+         
+       };
+
+      
+     };
     
     private ProblemImpl CreateGradientCheckingProblemImpl(
     	    ProblemImpl problem_impl,
@@ -1201,7 +1534,7 @@ enum LineSearchDirectionType {
 					for (int i = 0; i < xD.length; i++) {
 						x[i] = xD[i].doubleValue();
 					}
-					return ((gov.nih.mipav.model.algorithms.CeresSolver.CostFunctor) functor_).operator(x, residuals);
+					return ((CostFunctorExample) functor_).operator(x, residuals);
 				}
 				else {
 					return true;
@@ -1228,10 +1561,36 @@ enum LineSearchDirectionType {
 
 	}
 	
-	class LossFunction {
+	abstract class LossFunction {
 		public LossFunction() {
 			
 		}
+		
+		// For a residual vector with squared 2-norm 'sq_norm', this method
+		  // is required to fill in the value and derivatives of the loss
+		  // function (rho in this example):
+		  //
+		  //   out[0] = rho(sq_norm),
+		  //   out[1] = rho'(sq_norm),
+		  //   out[2] = rho''(sq_norm),
+		  //
+		  // Here the convention is that the contribution of a term to the
+		  // cost function is given by 1/2 rho(s),  where
+		  //
+		  //   s = ||residuals||^2.
+		  //
+		  // Calling the method with a negative value of 's' is an error and
+		  // the implementations are not required to handle that case.
+		  //
+		  // Most sane choices of rho() satisfy:
+		  //
+		  //   rho(0) = 0,
+		  //   rho'(0) = 1,
+		  //   rho'(s) < 1 in outlier region,
+		  //   rho''(s) < 0 in outlier region,
+		  //
+		  // so that they mimic the least squares cost for small residuals.
+		  public abstract void Evaluate(double sq_norm, double out[]);
 	}
 	
 	class Program {
@@ -1381,6 +1740,26 @@ enum LineSearchDirectionType {
 
 				  return true;
 				}
+			
+			public boolean IsBoundsConstrained() {
+				  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+				    ParameterBlock parameter_block = parameter_blocks_.get(i);
+				    if (parameter_block.IsConstant()) {
+				      continue;
+				    }
+				    int size = parameter_block.Size();
+				    for (int j = 0; j < size; ++j) {
+				      double lower_bound = parameter_block.LowerBoundForParameter(j);
+				      double upper_bound = parameter_block.UpperBoundForParameter(j);
+				      if (lower_bound > -Double.MAX_VALUE ||
+				          upper_bound < Double.MAX_VALUE) {
+				        return true;
+				      }
+				    }
+				  }
+				  return false;
+				}
+
 			
 			public Program CreateReducedProgram(
 				    Vector<ArrayList<Double>> removed_parameter_blocks,
@@ -1547,6 +1926,11 @@ enum LineSearchDirectionType {
 		   }
 		 }
 
+	   void ParameterBlocksToStateVector(Vector<ArrayList<Double>> state) {
+		   for (int i = 0; i < parameter_blocks_.size(); ++i) {
+		     parameter_blocks_.get(i).GetState(state.get(i));
+		   }
+		 }
 
 
 	} // class Program
@@ -1698,7 +2082,6 @@ enum LineSearchDirectionType {
 		
 		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<ArrayList<Double>> parameter_blocks) {
 			int i,j;
-			int arraySize;
 			if (cost_function == null) {
 				System.err.println("cost_function is null in AddResidualBlock");
 				return null;
@@ -2014,56 +2397,59 @@ enum LineSearchDirectionType {
 		return false;
 		}
 		
-		/*double squared_norm = VectorRef(residuals, num_residuals).squaredNorm();
+		double squared_norm = 0.0;
+		for (int i = 0; i < num_residuals; i++) {
+			squared_norm += (residuals[i]*residuals[i]);
+		}
 		
 		// Update the jacobians with the local parameterizations.
-		if (jacobians != NULL) {
+		if (jacobians != null) {
 		for (int i = 0; i < num_parameter_blocks; ++i) {
-		if (jacobians[i] != NULL) {
-		 const ParameterBlock* parameter_block = parameter_blocks_[i];
+		if (jacobians[i] != null) {
+		 ParameterBlock parameter_block = parameter_blocks_[i];
 		
 		 // Apply local reparameterization to the jacobians.
-		 if (parameter_block->LocalParameterizationJacobian() != NULL) {
+		 if (parameter_block.LocalParameterizationJacobian() != null) {
 		   // jacobians[i] = global_jacobians[i] * global_to_local_jacobian.
-		   MatrixMatrixMultiply<Dynamic, Dynamic, Dynamic, Dynamic, 0>(
+		   MatrixMatrixMultiply(0,
 		       global_jacobians[i],
 		       num_residuals,
-		       parameter_block->Size(),
-		       parameter_block->LocalParameterizationJacobian(),
-		       parameter_block->Size(),
-		       parameter_block->LocalSize(),
-		       jacobians[i], 0, 0,  num_residuals, parameter_block->LocalSize());
+		       parameter_block.Size(),
+		       parameter_block.LocalParameterizationJacobian(),
+		       parameter_block.Size(),
+		       parameter_block.LocalSize(),
+		       jacobians[i], 0, 0,  num_residuals, parameter_block.LocalSize());
 		 }
 		}
 		}
 		}
 		
-		if (loss_function_ == NULL || !apply_loss_function) {
-		*cost = 0.5 * squared_norm;
-		return true;
+		if (loss_function_ == null || !apply_loss_function) {
+		    cost[0] = 0.5 * squared_norm;
+		    return true;
 		}
 		
-		double rho[3];
-		loss_function_->Evaluate(squared_norm, rho);
-		*cost = 0.5 * rho[0];
+		double rho[] = new double[3];
+		loss_function_.Evaluate(squared_norm, rho);
+		cost[0] = 0.5 * rho[0];
 		
 		// No jacobians and not outputting residuals? All done. Doing an early exit
 		// here avoids constructing the "Corrector" object below in a common case.
-		if (jacobians == NULL && !outputting_residuals) {
+		if (jacobians == null && !outputting_residuals) {
 		return true;
 		}
 		
 		// Correct for the effects of the loss function. The jacobians need to be
 		// corrected before the residuals, since they use the uncorrected residuals.
-		Corrector correct(squared_norm, rho);
-		if (jacobians != NULL) {
+		Corrector correct = new Corrector(squared_norm, rho);
+		if (jacobians != null) {
 		for (int i = 0; i < num_parameter_blocks; ++i) {
-		if (jacobians[i] != NULL) {
-		 const ParameterBlock* parameter_block = parameter_blocks_[i];
+		if (jacobians[i] != null) {
+		 ParameterBlock parameter_block = parameter_blocks_[i];
 		
 		 // Correct the jacobians for the loss function.
 		 correct.CorrectJacobian(num_residuals,
-		                         parameter_block->LocalSize(),
+		                         parameter_block.LocalSize(),
 		                         residuals,
 		                         jacobians[i]);
 		}
@@ -2073,7 +2459,7 @@ enum LineSearchDirectionType {
 		// Correct the residuals with the loss function.
 		if (outputting_residuals) {
 		correct.CorrectResiduals(num_residuals, residuals);
-		}*/
+		}
 		return true;
 		}
 
@@ -2173,6 +2559,152 @@ enum LineSearchDirectionType {
 
 		      
 		} // class ResidualBlock
+		
+		class Corrector {
+			private double sqrt_rho1_;
+			private double residual_scaling_;
+			private double alpha_sq_norm_;
+			
+			public Corrector(double sq_norm, double rho[]) {
+				  if (sq_norm < 0.0) {
+					  System.err.println("sq_norm < 0.0 in public Corrector(double sq_norm, double rho[])");
+					  return;
+				  }
+				  sqrt_rho1_ = Math.sqrt(rho[1]);
+
+				  // If sq_norm = 0.0, the correction becomes trivial, the residual
+				  // and the jacobian are scaled by the squareroot of the derivative
+				  // of rho. Handling this case explicitly avoids the divide by zero
+				  // error that would occur below.
+				  //
+				  // The case where rho'' < 0 also gets special handling. Technically
+				  // it shouldn't, and the computation of the scaling should proceed
+				  // as below, however we found in experiments that applying the
+				  // curvature correction when rho'' < 0, which is the case when we
+				  // are in the outlier region slows down the convergence of the
+				  // algorithm significantly.
+				  //
+				  // Thus, we have divided the action of the robustifier into two
+				  // parts. In the inliner region, we do the full second order
+				  // correction which re-wights the gradient of the function by the
+				  // square root of the derivative of rho, and the Gauss-Newton
+				  // Hessian gets both the scaling and the rank-1 curvature
+				  // correction. Normaly, alpha is upper bounded by one, but with this
+				  // change, alpha is bounded above by zero.
+				  //
+				  // Empirically we have observed that the full Triggs correction and
+				  // the clamped correction both start out as very good approximations
+				  // to the loss function when we are in the convex part of the
+				  // function, but as the function starts transitioning from convex to
+				  // concave, the Triggs approximation diverges more and more and
+				  // ultimately becomes linear. The clamped Triggs model however
+				  // remains quadratic.
+				  //
+				  // The reason why the Triggs approximation becomes so poor is
+				  // because the curvature correction that it applies to the gauss
+				  // newton hessian goes from being a full rank correction to a rank
+				  // deficient correction making the inversion of the Hessian fraught
+				  // with all sorts of misery and suffering.
+				  //
+				  // The clamped correction retains its quadratic nature and inverting it
+				  // is always well formed.
+				  if ((sq_norm == 0.0) || (rho[2] <= 0.0)) {
+				    residual_scaling_ = sqrt_rho1_;
+				    alpha_sq_norm_ = 0.0;
+				    return;
+				  }
+
+				  // We now require that the first derivative of the loss function be
+				  // positive only if the second derivative is positive. This is
+				  // because when the second derivative is non-positive, we do not use
+				  // the second order correction suggested by BANS and instead use a
+				  // simpler first order strategy which does not use a division by the
+				  // gradient of the loss function.
+				  if (rho[1] <= 0.0) {
+					  System.err.println("rho[1] <= 0.0 in public Corrector(double sq_norm, double rho[])");
+					  return;
+				  }
+
+				  // Calculate the smaller of the two solutions to the equation
+				  //
+				  // 0.5 *  alpha^2 - alpha - rho'' / rho' *  z'z = 0.
+				  //
+				  // Start by calculating the discriminant D.
+				  double D = 1.0 + 2.0 * sq_norm * rho[2] / rho[1];
+
+				  // Since both rho[1] and rho[2] are guaranteed to be positive at
+				  // this point, we know that D > 1.0.
+
+				  double alpha = 1.0 - Math.sqrt(D);
+
+				  // Calculate the constants needed by the correction routines.
+				  residual_scaling_ = sqrt_rho1_ / (1 - alpha);
+				  alpha_sq_norm_ = alpha / sq_norm;
+				}
+			
+			public void CorrectResiduals(int num_rows, double residuals[]) {
+				  int i;
+				  if (residuals == null) {
+					  System.err.println("residuals == null in Corrector.CorrectResiduals");
+					  return;
+				  }
+				  // Equation 11 in BANS.
+				  for (i = 0; i < num_rows; i++) {
+					  residuals[i] *= residual_scaling_;
+				  }
+				}
+
+			
+			public void CorrectJacobian(int num_rows,
+                    int num_cols,
+                    double residuals[],
+                    double jacobian[]) {
+				    int i;
+				if (residuals == null) {
+					System.err.println("residuals == null in Corrector.CorrectJacobian");
+					return;
+				}
+			    if (jacobian == null) {
+			    	System.err.println("jacobian == null in Corrector.CorrectJacobian");
+			    	return;
+			    }
+			
+			// The common case (rho[2] <= 0).
+			if (alpha_sq_norm_ == 0.0) {
+			for (i = 0; i < num_rows*num_cols; i++) {
+				jacobian[i] *= sqrt_rho1_;
+			}
+			return;
+			}
+			
+			// Equation 11 in BANS.
+			//
+			//  J = sqrt(rho) * (J - alpha^2 r * r' J)
+			//
+			// In days gone by this loop used to be a single Eigen expression of
+			// the form
+			//
+			//  J = sqrt_rho1_ * (J - alpha_sq_norm_ * r* (r.transpose() * J));
+			//
+			// Which turns out to about 17x slower on bal problems. The reason
+			// is that Eigen is unable to figure out that this expression can be
+			// evaluated columnwise and ends up creating a temporary.
+			for (int c = 0; c < num_cols; ++c) {
+			double r_transpose_j = 0.0;
+			for (int r = 0; r < num_rows; ++r) {
+			r_transpose_j += jacobian[r * num_cols + c] * residuals[r];
+			}
+			
+			for (int r = 0; r < num_rows; ++r) {
+			jacobian[r * num_cols + c] = sqrt_rho1_ *
+			(jacobian[r * num_cols + c] -
+			alpha_sq_norm_ * residuals[r] * r_transpose_j);
+			}
+			}
+			}
+
+
+		} // class Corrector
 		
 		class ParameterBlock {
 			  int i, j;
@@ -2484,6 +3016,18 @@ enum LineSearchDirectionType {
 				  public void set_delta_offset(int delta_offset) { delta_offset_ = delta_offset; }
 				  
 				  public  ArrayList<Double> state() { return state_; }
+				  
+				  // Copy the current parameter state out to x. This is "GetState()" rather than
+				  // simply "state()" since it is actively copying the data into the passed
+				  // pointer.
+				  public void GetState(ArrayList<Double> x) {
+				    if (x != state_) {
+				      x.clear();
+				      for (int i = 0; i < state_.size(); i++) {
+				    	  x.add(state_.get(i));
+				      }
+				    }
+				  }
 		} // class ParameterBlock
 		
 		// The class LocalParameterization defines the function Plus and its
@@ -3486,6 +4030,45 @@ enum LineSearchDirectionType {
 	    	    }
 	    	  }
 	    	}
+	    
+	    public void MatrixMatrixMultiply(int kOperation, double A[], int NUM_ROW_A, int NUM_COL_A,
+	    		double B[], int NUM_ROW_B, int NUM_COL_B,
+	    		double C[], int start_row_c, int start_col_c, int row_stride_c, int col_stride_c) {
+	    	  if (NUM_COL_A != NUM_ROW_B) {
+	    		  System.err.println("In MatrixMatrixMultiply NUM_COL_A != NUM_ROW_B");
+	    		  return;
+	    	  }
+
+	    	  int NUM_ROW_C = NUM_ROW_A;
+	    	  int NUM_COL_C = NUM_COL_B;
+	    	  if (start_row_c + NUM_ROW_C > row_stride_c) {
+	    		  System.err.println("In MatrixMatrixMultiply start_row_C + NUM_ROW_C > row_stride_c");
+	    		  return;
+	    	  }
+	    	  if (start_col_c + NUM_COL_C > col_stride_c) {
+	    		  System.err.println("In MatrixMatrixMultiply start_col_C + NUM_COL_C > col_stride_c");
+	    		  return;
+	    	  }
+
+	    	  for (int row = 0; row < NUM_ROW_C; ++row) {
+	    	    for (int col = 0; col < NUM_COL_C; ++col) {
+	    	      double tmp = 0.0;
+	    	      for (int k = 0; k < NUM_COL_A; ++k) {
+	    	        tmp += A[row * NUM_COL_A + k] * B[k * NUM_COL_B + col];
+	    	      }
+
+	    	      int index = (row + start_row_c) * col_stride_c + start_col_c + col;
+	    	      if (kOperation > 0) {
+	    	        C[index] += tmp;
+	    	      } else if (kOperation < 0) {
+	    	        C[index] -= tmp;
+	    	      } else {
+	    	        C[index] = tmp;
+	    	      }
+	    	    }
+	    	  }
+	    	}
+
 
 		
 		String LineSearchTypeToString(LineSearchType type) {
