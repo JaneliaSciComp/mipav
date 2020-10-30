@@ -943,22 +943,20 @@ enum LineSearchDirectionType {
 	  minimizer_options = min.options_;
 	  minimizer_options.evaluator = pp.evaluator;
 
-	  /*if (options.logging_type != LoggingType.SILENT) {
+	  if (options.logging_type != LoggingType.SILENT) {
 	    pp.logging_callback =
 	        new LoggingCallback(options.minimizer_type,
 	                            options.minimizer_progress_to_stdout);
-	    minimizer_options.callbacks.insert(minimizer_options.callbacks.begin(),
-	                                       pp->logging_callback.get());
+	    minimizer_options.callbacks.add(0,pp.logging_callback);
 	  }
 
 	  if (options.update_state_every_iteration) {
-	    pp->state_updating_callback.reset(
-	      new StateUpdatingCallback(program, reduced_parameters));
+	    pp.state_updating_callback = 
+	      new StateUpdatingCallback(program, reduced_parameters);
 	    // This must get pushed to the front of the callbacks so that it
 	    // is run before any of the user callbacks.
-	    minimizer_options.callbacks.insert(minimizer_options.callbacks.begin(),
-	                                       pp->state_updating_callback.get());
-	  }*/
+	    minimizer_options.callbacks.add(0, pp.state_updating_callback);
+	  }
 	}
 
  
@@ -1012,17 +1010,18 @@ enum LineSearchDirectionType {
     		}
 			
 			switch (options.linear_solver_type) {
-			/*case DENSE_QR:
+			case DENSE_QR:
 			case DENSE_NORMAL_CHOLESKY:
+			DenseJacobianWriter dw = new DenseJacobianWriter(options, program);
 			return new ProgramEvaluator<ScratchEvaluatePreparer,
-			                       DenseJacobianWriter>(options,
+			                       DenseJacobianWriter, NullJacobianFinalizer>(dw, options,
 			                                            program);
-			case DENSE_SCHUR:
+			/*case DENSE_SCHUR:
 			case SPARSE_SCHUR:
 			case ITERATIVE_SCHUR:
 			case CGNR:
 			return new ProgramEvaluator<BlockEvaluatePreparer,
-			                       BlockJacobianWriter>(options,
+			                       BlockJacobianWriter, NullJacobianFinalizer>(options,
 			                                            program);
 			case SPARSE_NORMAL_CHOLESKY:
 			if (options.dynamic_sparsity) {
@@ -1032,7 +1031,7 @@ enum LineSearchDirectionType {
 			                             options, program);
 			} else {
 			return new ProgramEvaluator<BlockEvaluatePreparer,
-			                         BlockJacobianWriter>(options,
+			                         BlockJacobianWriter, NullJacobianFinalizer>(options,
 			                                              program);
 			}*/
 			
@@ -1043,6 +1042,193 @@ enum LineSearchDirectionType {
 			}
 
      } // class Evaluator
+     
+     class NullJacobianFinalizer {
+    	 public NullJacobianFinalizer() {
+    		 
+    	 }
+    	  //void operator()(SparseMatrix* jacobian, int num_parameters) {}
+     };
+     
+     class ScratchEvaluatePreparer {
+    	// Scratch space for the jacobians; each jacobian is packed one after another.
+    	// There is enough scratch to hold all the jacobians for the largest residual.
+    	//scoped_array<double> jacobian_scratch_;
+    	private double jacobian_scratch_[];
+    	public ScratchEvaluatePreparer() {
+    		
+    	}
+    	
+    	public void Init(int max_derivatives_per_residual_block) {
+    		  jacobian_scratch_ =  new double[max_derivatives_per_residual_block];
+    	}
+
+
+     }
+     
+     class BlockEvaluatePreparer {
+    	 private int jacobian_layout_[][];
+
+    	  // For the case that the overall jacobian is not available, but the
+    	  // individual jacobians are requested, use a pass-through scratch evaluate
+    	  // preparer.
+    	  private ScratchEvaluatePreparer scratch_evaluate_preparer_;
+     }
+     
+     class DenseJacobianWriter {
+    	 private Program program_;
+    	 public DenseJacobianWriter(Evaluator.Options options/* ignored */,
+    		                      Program program) {
+    		    program_ = program;
+         }
+    	 
+    	  // Since the dense matrix has different layout than that assumed by the cost
+    	  // functions, use scratch space to store the jacobians temporarily then copy
+    	  // them over to the larger jacobian later.
+    	  public ScratchEvaluatePreparer[] CreateEvaluatePreparers(int num_threads) {
+    	    return Create(program_, num_threads);
+    	  }
+
+     } // class DenseJacobianWriter
+     
+     public ScratchEvaluatePreparer[] Create(Program program, int num_threads) {
+    		  ScratchEvaluatePreparer preparers[] = new ScratchEvaluatePreparer[num_threads];
+    		  int max_derivatives_per_residual_block =
+    		      program.MaxDerivativesPerResidualBlock();
+    		  for (int i = 0; i < num_threads; i++) {
+    			preparers[i] = new ScratchEvaluatePreparer();
+    		    preparers[i].Init(max_derivatives_per_residual_block);
+    		  }
+    		  return preparers;
+    		}
+
+     
+     /*template<typename EvaluatePreparer,
+     typename JacobianWriter,
+     typename JacobianFinalizer = NullJacobianFinalizer>*/
+		class ProgramEvaluator<EvaluatePreparer, JacobianWriter, JacobianFinalizer> extends Evaluator {
+			
+			private Evaluator.Options options_;
+			private Program program_;
+			private JacobianWriter jacobian_writer_;
+			//scoped_array<EvaluatePreparer> evaluate_preparers_;
+			private EvaluatePreparer evaluate_preparers_[];
+			//scoped_array<EvaluateScratch> evaluate_scratch_;
+			private EvaluateScratch evaluate_scratch_[];
+			private Vector<Integer> residual_layout_;
+			//private ExecutionSummary execution_summary_;
+		    public ProgramEvaluator(JacobianWriter jw, Evaluator.Options options, Program program) {
+		       super();
+		       options_ = options;
+		       program_ = program;
+		       jacobian_writer_ = jw;
+		       evaluate_scratch_ = CreateEvaluatorScratch(program, options.num_threads);
+				/*#ifdef CERES_NO_THREADS
+				if (options_.num_threads > 1) {
+				  LOG(WARNING)
+				      << "Neither OpenMP nor TBB support is compiled into this binary; "
+				      << "only options.num_threads = 1 is supported. Switching "
+				      << "to single threaded mode.";
+				  options_.num_threads = 1;
+				}
+				#endif // CERES_NO_THREADS*/
+		
+		        residual_layout_ = new Vector<Integer>();
+		        BuildResidualLayout(program, residual_layout_);
+		        evaluate_scratch_ = CreateEvaluatorScratch(program, options.num_threads);
+		}
+		    
+		    
+		} // class ProgramEvaluator
+		
+		class EvaluateScratch {
+			private double cost;
+		    //scoped_array<double> residual_block_evaluate_scratch;
+			private double residual_block_evaluate_scratch[];
+		    // The gradient in the local parameterization.
+		    //scoped_array<double> gradient;
+			private double gradient[];
+		    // Enough space to store the residual for the largest residual block.
+		    //scoped_array<double> residual_block_residuals;
+			private double residual_block_residuals[];
+		    //scoped_array<double*> jacobian_block_ptrs;
+			private double jacobian_block_ptrs[][];
+			public EvaluateScratch() {
+				
+			}
+		    public void Init(int max_parameters_per_residual_block,
+		              int max_scratch_doubles_needed_for_evaluate,
+		              int max_residuals_per_residual_block,
+		              int num_parameters) {
+		      residual_block_evaluate_scratch = new double[max_scratch_doubles_needed_for_evaluate];
+		      gradient = new double[num_parameters];
+		      residual_block_residuals = new double[max_residuals_per_residual_block];
+		      jacobian_block_ptrs = new double[max_parameters_per_residual_block][];
+		    }
+
+		    
+		  };
+	    
+	 // Create scratch space for each thread evaluating the program.
+	       public EvaluateScratch[] CreateEvaluatorScratch(Program program, int num_threads) {
+	int max_parameters_per_residual_block = program.MaxParametersPerResidualBlock();
+	int max_scratch_doubles_needed_for_evaluate = program.MaxScratchDoublesNeededForEvaluate();
+	int max_residuals_per_residual_block = program.MaxResidualsPerResidualBlock();
+	int num_parameters = program.NumEffectiveParameters();
+
+	EvaluateScratch evaluate_scratch[] = new EvaluateScratch[num_threads];
+	for (int i = 0; i < num_threads; i++) {
+	evaluate_scratch[i].Init(max_parameters_per_residual_block,
+	max_scratch_doubles_needed_for_evaluate,
+	max_residuals_per_residual_block,
+	num_parameters);
+	}
+	return evaluate_scratch;
+	}
+	    
+		
+		public void BuildResidualLayout(Program program, Vector<Integer> residual_layout) {
+			Vector<ResidualBlock> residual_blocks = program.residual_blocks();
+			while (residual_layout.size() > program.NumResidualBlocks()) {
+				residual_layout.removeElementAt(residual_layout.size()-1);
+			}
+			while (residual_layout.size() < program.NumResidualBlocks()) {
+				residual_layout.add(0);
+			}
+			int residual_pos = 0;
+			for (int i = 0; i < residual_blocks.size(); ++i) {
+			    int num_residuals = residual_blocks.get(i).NumResiduals();
+			    residual_layout.set(i,residual_pos);
+			    residual_pos += num_residuals;
+			}
+       }
+		
+       
+     
+  // Callback for logging the state of the minimizer to STDERR or
+  // STDOUT depending on the user's preferences and logging level.
+  class LoggingCallback extends IterationCallback {
+      private MinimizerType minimizer_type;
+	  private boolean log_to_stdout_;
+   public LoggingCallback(MinimizerType minimizer_type, boolean log_to_stdout) {
+	   this.minimizer_type = minimizer_type;
+	   log_to_stdout_ = log_to_stdout;   
+   }
+    //virtual CallbackReturnType operator()(const IterationSummary& summary);
+  };
+  
+	//Callback for updating the externally visible state of parameter
+	//blocks.
+	class StateUpdatingCallback extends IterationCallback {
+		private Program program_;
+		private Vector<ArrayList<Double>> parameters_;
+	    public StateUpdatingCallback(Program program, Vector<ArrayList<Double>> parameters) {
+	        program_ = program;
+	        parameters_ = parameters;
+	    }
+	
+	    // virtual CallbackReturnType operator()(const IterationSummary& summary);
+	};
      
   // Interface for non-linear least squares solvers.
      class Minimizer {
@@ -1926,11 +2112,43 @@ enum LineSearchDirectionType {
 		   }
 		 }
 
-	   void ParameterBlocksToStateVector(Vector<ArrayList<Double>> state) {
+	   public void ParameterBlocksToStateVector(Vector<ArrayList<Double>> state) {
 		   for (int i = 0; i < parameter_blocks_.size(); ++i) {
 		     parameter_blocks_.get(i).GetState(state.get(i));
 		   }
 		 }
+	   
+	   public int MaxParametersPerResidualBlock() {
+		   int max_parameters = 0;
+		   for (int i = 0; i < residual_blocks_.size(); ++i) {
+		     max_parameters = Math.max(max_parameters,
+		                          residual_blocks_.get(i).NumParameterBlocks());
+		   }
+		   return max_parameters;
+		 }
+
+		 public int MaxResidualsPerResidualBlock() {
+		   int max_residuals = 0;
+		   for (int i = 0; i < residual_blocks_.size(); ++i) {
+		     max_residuals = Math.max(max_residuals, residual_blocks_.get(i).NumResiduals());
+		   }
+		   return max_residuals;
+		 }
+
+		 public int MaxDerivativesPerResidualBlock() {
+			  int max_derivatives = 0;
+			  for (int i = 0; i < residual_blocks_.size(); ++i) {
+			    int derivatives = 0;
+			    ResidualBlock residual_block = residual_blocks_.get(i);
+			    int num_parameters = residual_block.NumParameterBlocks();
+			    for (int j = 0; j < num_parameters; ++j) {
+			      derivatives += residual_block.NumResiduals() *
+			                     residual_block.parameter_blocks()[j].LocalSize();
+			    }
+			    max_derivatives = Math.max(max_derivatives, derivatives);
+			  }
+			  return max_derivatives;
+			}
 
 
 	} // class Program
