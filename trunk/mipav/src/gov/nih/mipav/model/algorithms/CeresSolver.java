@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.locks.Lock;
 
 import Jama.Matrix;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
@@ -744,6 +745,34 @@ enum LineSearchDirectionType {
         PreprocessedProblem pp = new PreprocessedProblem();
 
         boolean status = preprocessor.Preprocess(modified_options, problem_impl, pp);
+        
+     // We check the linear_solver_options.type rather than
+        // modified_options.linear_solver_type because, depending on the
+        // lack of a Schur structure, the preprocessor may change the linear
+        // solver type.
+        /*if (IsSchurType(pp.linear_solver_options.type)) {
+          // TODO(sameeragarwal): We can likely eliminate the duplicate call
+          // to DetectStructure here and inside the linear solver, by
+          // calling this in the preprocessor.
+          int row_block_size[] = new int[1];
+          int e_block_size[] = new int[1];
+          int f_block_size[] = new int[1];
+          DetectStructure(*static_cast<internal::BlockSparseMatrix*>(
+                              pp.minimizer_options.jacobian.get())
+                          ->block_structure(),
+                          pp.linear_solver_options.elimination_groups[0],
+                          &row_block_size,
+                          &e_block_size,
+                          &f_block_size);
+          summary.schur_structure_given =
+              SchurStructureToString(row_block_size, e_block_size, f_block_size);
+          internal::GetBestSchurTemplateSpecialization(&row_block_size,
+                                                       &e_block_size,
+                                                       &f_block_size);
+          summary.schur_structure_used =
+              SchurStructureToString(row_block_size, e_block_size, f_block_size);
+        }*/
+
 
         //System.err.println("I finish");
     }
@@ -891,7 +920,7 @@ enum LineSearchDirectionType {
  class PreprocessedProblem {
 	  String error[];
 	  Solver.Options options;
-	  //LinearSolver.Options linear_solver_options;
+	  LinearSolver.Options linear_solver_options;
 	  Evaluator.Options evaluator_options;
 	  Minimizer.Options minimizer_options;
 
@@ -958,6 +987,93 @@ enum LineSearchDirectionType {
 	    minimizer_options.callbacks.add(0, pp.state_updating_callback);
 	  }
 	}
+ 
+    class LinearSolver {
+    	public Options options;
+    	public LinearSolver() {
+    		options = new Options();
+    	}
+    	
+    	class Options {
+    		public LinearSolverType type;
+    	    public PreconditionerType preconditioner_type;
+    	    public VisibilityClusteringType visibility_clustering_type;
+    	    public DenseLinearAlgebraLibraryType dense_linear_algebra_library_type;
+    	    public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+
+    	    // See solver.h for information about these flags.
+    	    public boolean use_postordering;
+    	    public boolean dynamic_sparsity;
+    	    public boolean use_explicit_schur_complement;
+
+    	    // Number of internal iterations that the solver uses. This
+    	    // parameter only makes sense for iterative solvers like CG.
+    	    public int min_num_iterations;
+    	    public int max_num_iterations;
+
+    	    // If possible, how many threads can the solver use.
+    	    public int num_threads;
+
+    	    // Hints about the order in which the parameter blocks should be
+    	    // eliminated by the linear solver.
+    	    //
+    	    // For example if elimination_groups is a vector of size k, then
+    	    // the linear solver is informed that it should eliminate the
+    	    // parameter blocks 0 ... elimination_groups[0] - 1 first, and
+    	    // then elimination_groups[0] ... elimination_groups[1] - 1 and so
+    	    // on. Within each elimination group, the linear solver is free to
+    	    // choose how the parameter blocks are ordered. Different linear
+    	    // solvers have differing requirements on elimination_groups.
+    	    //
+    	    // The most common use is for Schur type solvers, where there
+    	    // should be at least two elimination groups and the first
+    	    // elimination group must form an independent set in the normal
+    	    // equations. The first elimination group corresponds to the
+    	    // num_eliminate_blocks in the Schur type solvers.
+    	    public Vector<Integer> elimination_groups;
+
+    	    // Iterative solvers, e.g. Preconditioned Conjugate Gradients
+    	    // maintain a cheap estimate of the residual which may become
+    	    // inaccurate over time. Thus for non-zero values of this
+    	    // parameter, the solver can be told to recalculate the value of
+    	    // the residual using a |b - Ax| evaluation.
+    	    public int residual_reset_period;
+
+    	    // If the block sizes in a BlockSparseMatrix are fixed, then in
+    	    // some cases the Schur complement based solvers can detect and
+    	    // specialize on them.
+    	    //
+    	    // It is expected that these parameters are set programmatically
+    	    // rather than manually.
+    	    //
+    	    // Please see schur_complement_solver.h and schur_eliminator.h for
+    	    // more details.
+    	    public int row_block_size;
+    	    public int e_block_size;
+    	    public int f_block_size;
+
+    	    public ContextImpl context;
+    	    
+    	    public Options() {
+    	    	type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+    	        preconditioner_type = PreconditionerType.JACOBI;
+    	        visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
+    	        dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+    	        sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
+    	        use_postordering = false;
+    	        dynamic_sparsity = false;
+    	        use_explicit_schur_complement = false;
+    	        min_num_iterations = 1;
+    	        max_num_iterations = 1;
+    	        num_threads = 1;
+    	        residual_reset_period = 10;
+    	        //row_block_size(Eigen::Dynamic),
+    	        //e_block_size(Eigen::Dynamic),
+    	        //f_block_size(Eigen::Dynamic),
+    	        context = null;
+    	    }
+    	}
+    } // class LinearSolver
 
  
      class Evaluator {
@@ -1016,24 +1132,27 @@ enum LineSearchDirectionType {
 			return new ProgramEvaluator<ScratchEvaluatePreparer,
 			                       DenseJacobianWriter, NullJacobianFinalizer>(dw, options,
 			                                            program);
-			/*case DENSE_SCHUR:
+			case DENSE_SCHUR:
 			case SPARSE_SCHUR:
 			case ITERATIVE_SCHUR:
 			case CGNR:
+			BlockJacobianWriter bw = new BlockJacobianWriter(options, program);
 			return new ProgramEvaluator<BlockEvaluatePreparer,
-			                       BlockJacobianWriter, NullJacobianFinalizer>(options,
+			                       BlockJacobianWriter, NullJacobianFinalizer>(bw, options,
 			                                            program);
 			case SPARSE_NORMAL_CHOLESKY:
 			if (options.dynamic_sparsity) {
+			DynamicCompressedRowJacobianWriter dc = new DynamicCompressedRowJacobianWriter(options, program);
 			return new ProgramEvaluator<ScratchEvaluatePreparer,
 			                         DynamicCompressedRowJacobianWriter,
 			                         DynamicCompressedRowJacobianFinalizer>(
-			                             options, program);
+			                             dc, options, program);
 			} else {
+			BlockJacobianWriter bw2 = new BlockJacobianWriter(options, program);
 			return new ProgramEvaluator<BlockEvaluatePreparer,
-			                         BlockJacobianWriter, NullJacobianFinalizer>(options,
+			                         BlockJacobianWriter, NullJacobianFinalizer>(bw2, options,
 			                                              program);
-			}*/
+			}
 			
 			default:
 			error[0] = "Invalid Linear Solver Type. Unable to create evaluator.";
@@ -1042,6 +1161,14 @@ enum LineSearchDirectionType {
 			}
 
      } // class Evaluator
+     
+     class DynamicCompressedRowJacobianFinalizer {
+    	  /*void operator()(SparseMatrix* base_jacobian, int num_parameters) {
+    	    DynamicCompressedRowSparseMatrix* jacobian =
+    	      down_cast<DynamicCompressedRowSparseMatrix*>(base_jacobian);
+    	    jacobian->Finalize(num_parameters);
+    	  }*/
+    	};
      
      class NullJacobianFinalizer {
     	 public NullJacobianFinalizer() {
@@ -1067,12 +1194,21 @@ enum LineSearchDirectionType {
      }
      
      class BlockEvaluatePreparer {
-    	 private int jacobian_layout_[][];
+    	 private int jacobian_layout_[];
 
-    	  // For the case that the overall jacobian is not available, but the
-    	  // individual jacobians are requested, use a pass-through scratch evaluate
-    	  // preparer.
-    	  private ScratchEvaluatePreparer scratch_evaluate_preparer_;
+   	     // For the case that the overall jacobian is not available, but the
+   	     // individual jacobians are requested, use a pass-through scratch evaluate
+   	     // preparer.
+   	     private ScratchEvaluatePreparer scratch_evaluate_preparer_;
+    	 public BlockEvaluatePreparer() {
+    		 
+    	 }
+    	 
+    	 public void Init(int jacobian_layout[], int max_derivatives_per_residual_block) {
+           jacobian_layout_ = jacobian_layout;
+           scratch_evaluate_preparer_.Init(max_derivatives_per_residual_block);
+    	 }
+    	  
      }
      
      class DenseJacobianWriter {
@@ -1091,6 +1227,126 @@ enum LineSearchDirectionType {
 
      } // class DenseJacobianWriter
      
+     class DynamicCompressedRowJacobianWriter {
+    	 private Program program_;
+    	 public DynamicCompressedRowJacobianWriter(Evaluator.Options options/* ignored */,
+    		                      Program program) {
+    		    program_ = program;
+         }
+    	 
+    	  // Since the dense matrix has different layout than that assumed by the cost
+    	  // functions, use scratch space to store the jacobians temporarily then copy
+    	  // them over to the larger jacobian later.
+    	  public ScratchEvaluatePreparer[] CreateEvaluatePreparers(int num_threads) {
+    	    return Create(program_, num_threads);
+    	  }
+
+     } // class DynamicCompressedRowJacobianWriter
+     
+     class BlockJacobianWriter {
+    	 private Program program_;
+    	 private Vector<int[]> jacobian_layout_;
+
+    	  // The pointers in jacobian_layout_ point directly into this vector.
+    	  private Vector<Integer> jacobian_layout_storage_;
+    	  public BlockJacobianWriter(Evaluator.Options options, Program program) {
+    		  program_ = program;
+              if (options.num_eliminate_blocks < 0) {
+                   System.err.println("num_eliminate_blocks must be >= 0 in public BlockJacobian.");
+                   return;
+              }
+			  BuildJacobianLayout(program, options.num_eliminate_blocks, jacobian_layout_, jacobian_layout_storage_);
+          }
+    	  
+    	  public void BuildJacobianLayout(Program program,
+                  int num_eliminate_blocks,
+                  Vector<int[]> jacobian_layout,
+                  Vector<Integer> jacobian_layout_storage) {
+			      Vector<ResidualBlock> residual_blocks = program.residual_blocks();
+			
+			// Iterate over all the active residual blocks and determine how many E blocks
+			// are there. This will determine where the F blocks start in the jacobian
+			// matrix. Also compute the number of jacobian blocks.
+			int f_block_pos = 0;
+			int num_jacobian_blocks = 0;
+			for (int i = 0; i < residual_blocks.size(); ++i) {
+			ResidualBlock residual_block = residual_blocks.get(i);
+			int num_residuals = residual_block.NumResiduals();
+			int num_parameter_blocks = residual_block.NumParameterBlocks();
+			
+			// Advance f_block_pos over each E block for this residual.
+			for (int j = 0; j < num_parameter_blocks; ++j) {
+			ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+			if (!parameter_block.IsConstant()) {
+			 // Only count blocks for active parameters.
+			 num_jacobian_blocks++;
+			 if (parameter_block.index() < num_eliminate_blocks) {
+			   f_block_pos += num_residuals * parameter_block.LocalSize();
+			 }
+			}
+			}
+			}
+			
+			// We now know that the E blocks are laid out starting at zero, and the F
+			// blocks are laid out starting at f_block_pos. Iterate over the residual
+			// blocks again, and this time fill the jacobian_layout array with the
+			// position information.
+			
+			while (jacobian_layout.size() > program.NumResidualBlocks()) {
+				jacobian_layout.removeElementAt(jacobian_layout.size()-1);
+			}
+			//jacobian_layout->resize(program.NumResidualBlocks());
+			while (jacobian_layout_storage.size() > num_jacobian_blocks) {
+				jacobian_layout_storage.removeElementAt(jacobian_layout_storage.size()-1);
+			}
+			while (jacobian_layout_storage.size() < num_jacobian_blocks) {
+				jacobian_layout_storage.add(0);
+			}
+			//jacobian_layout_storage->resize(num_jacobian_blocks);
+			
+			int e_block_pos = 0;
+			for (int i = 0; i < residual_blocks.size(); ++i) {
+			ResidualBlock residual_block = residual_blocks.get(i);
+			int num_residuals = residual_block.NumResiduals();
+			int num_parameter_blocks = residual_block.NumParameterBlocks();
+			
+			for (int j = 0, k = 0; j < num_parameter_blocks; ++j) {
+			ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+			int parameter_block_index = parameter_block.index();
+			if (parameter_block.IsConstant()) {
+			 continue;
+			}
+			int jacobian_block_size =
+			   num_residuals * parameter_block.LocalSize();
+			if (parameter_block_index < num_eliminate_blocks) {
+			 jacobian_layout.get(i)[k] = e_block_pos;
+			 e_block_pos += jacobian_block_size;
+			} else {
+			 jacobian_layout.get(i)[k] = f_block_pos;
+			 f_block_pos += jacobian_block_size;
+			}
+			k++;
+			}
+			}
+			}
+
+    	  
+    	// Create evaluate prepareres that point directly into the final jacobian. This
+    	// makes the final Write() a nop.
+    	public BlockEvaluatePreparer[] CreateEvaluatePreparers(int num_threads) {
+    	  int max_derivatives_per_residual_block = program_.MaxDerivativesPerResidualBlock();
+
+    	  BlockEvaluatePreparer preparers[] = new BlockEvaluatePreparer[num_threads];
+    	  for (int i = 0; i < num_threads; i++) {
+    		preparers[i] = new BlockEvaluatePreparer();
+    	    preparers[i].Init(jacobian_layout_.get(0), max_derivatives_per_residual_block);
+    	  }
+    	  return preparers;
+    	}
+
+
+     }
+     
      public ScratchEvaluatePreparer[] Create(Program program, int num_threads) {
     		  ScratchEvaluatePreparer preparers[] = new ScratchEvaluatePreparer[num_threads];
     		  int max_derivatives_per_residual_block =
@@ -1100,7 +1356,37 @@ enum LineSearchDirectionType {
     		    preparers[i].Init(max_derivatives_per_residual_block);
     		  }
     		  return preparers;
-    		}
+    }
+     
+     class CallStatistics {
+    	 public double time;
+   	     public int calls;
+    	  public CallStatistics() {
+    		  time = 0;
+    		  calls = 0;
+    	  }
+    	  
+    	};
+
+    	// Struct used by various objects to report statistics about their
+    	// execution.
+    	class ExecutionSummary {
+    		private Lock mutex_;
+    	    private HashMap<String, CallStatistics> statistics_;
+    	  public void IncrementTimeBy(String name, double value) {
+    	    mutex_.lock();
+    	    CallStatistics call_stats = statistics_.get(name);
+    	    call_stats.time += value;
+    	    ++call_stats.calls;
+    	    mutex_.unlock();
+    	  }
+
+    	  public Map<String, CallStatistics> statistics() {
+    	    return statistics_;
+    	  }
+
+    	 
+    	};
 
      
      /*template<typename EvaluatePreparer,
@@ -1116,7 +1402,7 @@ enum LineSearchDirectionType {
 			//scoped_array<EvaluateScratch> evaluate_scratch_;
 			private EvaluateScratch evaluate_scratch_[];
 			private Vector<Integer> residual_layout_;
-			//private ExecutionSummary execution_summary_;
+			private ExecutionSummary execution_summary_;
 		    public ProgramEvaluator(JacobianWriter jw, Evaluator.Options options, Program program) {
 		       super();
 		       options_ = options;
@@ -1777,7 +2063,7 @@ enum LineSearchDirectionType {
 		  //
 		  // so that they mimic the least squares cost for small residuals.
 		  public abstract void Evaluate(double sq_norm, double out[]);
-	}
+	} // abstract class LossFunction
 	
 	class Program {
 		// The Program does not own the ParameterBlock or ResidualBlock objects.
