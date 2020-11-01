@@ -475,14 +475,10 @@ enum LineSearchDirectionType {
 				 super(1, 1,0,0,0,0,0,0,0,0,0);
 			 }
 
-			  public boolean Evaluate(Vector<ArrayList<Double>> parameters,
+			  public boolean Evaluate(Vector<double[]> parameters,
 			                        double residuals[],
 			                        double jacobians[][]) {
-			    Double xD[] = (Double[])parameters.get(0).toArray();
-			    double x[] = new double[xD.length];
-			    for (int i = 0; i < xD.length; i++) {
-			    	x[i] = xD[i].doubleValue();
-			    }
+			    double x[] = parameters.get(0);
 
 			    // f(x) = 10 - x.
 			    residuals[0] = 10 - x[0];
@@ -513,8 +509,7 @@ enum LineSearchDirectionType {
 	  public void runAutoDiffCostFunctionExample() {
 		  
 
-		ArrayList<Double>x = new ArrayList<Double>();
-		x.add(0.5);
+		  double x[] = new double[] {0.5};
 		// auto-differentiation to obtain the derivative (jacobian).
 		  CostFunctorExample cf = new CostFunctorExample();
 		  CostFunction cost_function =
@@ -533,8 +528,7 @@ enum LineSearchDirectionType {
 	  public void runSizedCostFunctionExample() {
 		  
 
-			  ArrayList<Double>x = new ArrayList<Double>();
-			  x.add(0.5);
+			  double x[] = new double[] {0.5};
 			  CostFunction cost_function = new QuadraticCostFunction();
 			  ProblemImpl problem = new ProblemImpl();
 			  problem.AddResidualBlock(cost_function, null, x);
@@ -702,7 +696,7 @@ enum LineSearchDirectionType {
             return;
         }
 
-        ProblemImpl problem_impl = (ProblemImpl)problem;
+        ProblemImpl problem_impl = problem;
         Program program = problem_impl.mutable_program();
         PreSolveSummarize(options, problem_impl, summary);
         
@@ -746,18 +740,19 @@ enum LineSearchDirectionType {
 
         boolean status = preprocessor.Preprocess(modified_options, problem_impl, pp);
         
-     // We check the linear_solver_options.type rather than
+        // We check the linear_solver_options.type rather than
         // modified_options.linear_solver_type because, depending on the
         // lack of a Schur structure, the preprocessor may change the linear
         // solver type.
-        /*if (IsSchurType(pp.linear_solver_options.type)) {
+        if (IsSchurType(pp.linear_solver_options.type)) {
+          System.out.println("Schur type");
           // TODO(sameeragarwal): We can likely eliminate the duplicate call
           // to DetectStructure here and inside the linear solver, by
           // calling this in the preprocessor.
           int row_block_size[] = new int[1];
           int e_block_size[] = new int[1];
           int f_block_size[] = new int[1];
-          DetectStructure(*static_cast<internal::BlockSparseMatrix*>(
+          /*DetectStructure(*static_cast<internal::BlockSparseMatrix*>(
                               pp.minimizer_options.jacobian.get())
                           ->block_structure(),
                           pp.linear_solver_options.elimination_groups[0],
@@ -770,12 +765,134 @@ enum LineSearchDirectionType {
                                                        &e_block_size,
                                                        &f_block_size);
           summary.schur_structure_used =
-              SchurStructureToString(row_block_size, e_block_size, f_block_size);
-        }*/
+              SchurStructureToString(row_block_size, e_block_size, f_block_size);*/
+        }
+        
+        summary.fixed_cost = pp.fixed_cost[0];
+        summary.preprocessor_time_in_seconds = 1.0E-3*System.currentTimeMillis() - start_time;
+
+        if (status) {
+            double minimizer_start_time = 1.0E-3*System.currentTimeMillis();
+            Minimize(pp, summary);
+            summary.minimizer_time_in_seconds = 1.0E-3*System.currentTimeMillis() - minimizer_start_time;
+          } else {
+            summary.message = pp.error;
+          }
+        
+        double postprocessor_start_time = 1.0E-3*System.currentTimeMillis();
+        problem_impl = problem;
+        program = problem_impl.mutable_program();
+        // On exit, ensure that the parameter blocks again point at the user
+        // provided values and the parameter blocks are numbered according
+        // to their position in the original user provided program.
+        program.SetParameterBlockStatePtrsToUserStatePtrs();
+        program.SetParameterOffsetsAndIndex();
+        PostSolveSummarize(pp, summary);
+        summary.postprocessor_time_in_seconds = 1.0E-3*System.currentTimeMillis() - postprocessor_start_time;
+
+        // If the gradient checker reported an error, we want to report FAILURE
+        // instead of USER_FAILURE and provide the error log.
+        if (gradient_checking_callback.gradient_error_detected()) {
+          summary.termination_type = TerminationType.FAILURE;
+          summary.message = gradient_checking_callback.error_log();
+        }
+
+        summary.total_time_in_seconds = 1.0E-3*System.currentTimeMillis() - start_time;
 
 
         //System.err.println("I finish");
-    }
+    } // public void Solve
+    
+    public void PostSolveSummarize(PreprocessedProblem pp, Solver.Summary summary) {
+			OrderingToGroupSizes(pp.options.linear_solver_ordering, summary.linear_solver_ordering_used);
+			OrderingToGroupSizes(pp.options.inner_iteration_ordering, summary.inner_iteration_ordering_used);
+			
+			summary.inner_iterations_used          = pp.inner_iteration_minimizer != null;     // NOLINT
+			summary.linear_solver_type_used        = pp.linear_solver_options.type;
+			summary.num_linear_solver_threads_used = pp.options.num_threads;
+			summary.num_threads_used               = pp.options.num_threads;
+			summary.preconditioner_type_used       = pp.options.preconditioner_type;
+			
+			/*internal::SetSummaryFinalCost(summary);
+			
+			if (pp.reduced_program.get() != NULL) {
+			SummarizeReducedProgram(*pp.reduced_program, summary);
+			}
+			
+			using internal::CallStatistics;
+			
+			// It is possible that no evaluator was created. This would be the
+			// case if the preprocessor failed, or if the reduced problem did
+			// not contain any parameter blocks. Thus, only extract the
+			// evaluator statistics if one exists.
+			if (pp.evaluator.get() != NULL) {
+			const map<string, CallStatistics>& evaluator_statistics =
+			pp.evaluator->Statistics();
+			{
+			const CallStatistics& call_stats = FindWithDefault(
+			evaluator_statistics, "Evaluator::Residual", CallStatistics());
+			
+			summary->residual_evaluation_time_in_seconds = call_stats.time;
+			summary->num_residual_evaluations = call_stats.calls;
+			}
+			{
+			const CallStatistics& call_stats = FindWithDefault(
+			evaluator_statistics, "Evaluator::Jacobian", CallStatistics());
+			
+			summary->jacobian_evaluation_time_in_seconds = call_stats.time;
+			summary->num_jacobian_evaluations = call_stats.calls;
+			}
+			}
+			
+			// Again, like the evaluator, there may or may not be a linear
+			// solver from which we can extract run time statistics. In
+			// particular the line search solver does not use a linear solver.
+			if (pp.linear_solver.get() != NULL) {
+			const map<string, CallStatistics>& linear_solver_statistics =
+			pp.linear_solver->Statistics();
+			const CallStatistics& call_stats = FindWithDefault(
+			linear_solver_statistics, "LinearSolver::Solve", CallStatistics());
+			summary->num_linear_solves = call_stats.calls;
+			summary->linear_solver_time_in_seconds = call_stats.time;
+			}*/
+			}
+
+    
+   public void Minimize(PreprocessedProblem pp, Solver.Summary summary) {
+			Program program = pp.reduced_program;
+			if (pp.reduced_program.NumParameterBlocks() == 0) {
+			  summary.message[0] = "Function tolerance reached. No non-constant parameter blocks found.";
+			  summary.termination_type = TerminationType.CONVERGENCE;
+			  if(pp.options.logging_type != LoggingType.SILENT) {
+				  Preferences.debug(summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			  }
+			  summary.initial_cost = summary.fixed_cost;
+			  summary.final_cost = summary.fixed_cost;
+			  return;
+			}
+
+			Vector original_reduced_parameters = pp.reduced_parameters;
+			  /*scoped_ptr<Minimizer> minimizer(
+			      Minimizer::Create(pp->options.minimizer_type));
+			  minimizer->Minimize(pp->minimizer_options,
+			                      pp->reduced_parameters.data(),
+			                      summary);
+
+			  program->StateVectorToParameterBlocks(
+			      summary->IsSolutionUsable()
+			      ? pp->reduced_parameters.data()
+			      : original_reduced_parameters.data());
+			  program->CopyParameterBlockStateToUserState();*/
+
+    } // public void Minimize
+
+    
+    public boolean IsSchurType(LinearSolverType type) {
+    	  return ((type == LinearSolverType.SPARSE_SCHUR) ||
+    	          (type == LinearSolverType.DENSE_SCHUR)  ||
+    	          (type == LinearSolverType.ITERATIVE_SCHUR));
+    	}
+
     
     Preprocessor CreatePreprocessor(MinimizerType minimizer_type) {
 		  if (minimizer_type == MinimizerType.TRUST_REGION) {
@@ -829,10 +946,25 @@ enum LineSearchDirectionType {
     			      program.CreateReducedProgram(pp.removed_parameter_blocks,
     			                                    pp.fixed_cost,
     			                                    pp.error);
+    		  
+    		  if (pp.reduced_program == null) {
+    			    return false;
+    		  }
 
+    		  if (pp.reduced_program.NumParameterBlocks() == 0) {
+    			    // The reduced problem has no parameter or residual blocks. There
+    			    // is nothing more to do.
+    			    return true;
+    		  }
 
+    		  /*if (!SetupLinearSolver(pp) ||
+    			  !SetupEvaluator(pp) ||
+    			  !SetupInnerIterationMinimizer(pp)) {
+    			  return false;
+    		  }
 
-    		return true;
+    		  SetupMinimizerOptions(pp);*/
+    		  return true;
     	}
     	
     	// Check if all the user supplied values in the parameter blocks are
@@ -841,9 +973,200 @@ enum LineSearchDirectionType {
     	  return (program.ParameterBlocksAreFinite(error) &&
     	          program.IsFeasible(error));
     	}
+    	
+    	// Configure and create a linear solver object. In doing so, if a
+    	// sparse direct factorization based linear solver is being used, then
+    	// find a fill reducing ordering and reorder the program as needed
+    	// too.
+    	public boolean SetupLinearSolver(PreprocessedProblem pp) {
+    	  Solver.Options options = pp.options;
+    	  if (options.linear_solver_ordering == null) {
+    	    // If the user has not supplied a linear solver ordering, then we
+    	    // assume that they are giving all the freedom to us in choosing
+    	    // the best possible ordering. This intent can be indicated by
+    	    // putting all the parameter blocks in the same elimination group.
+    	    options.linear_solver_ordering =
+    	        CreateDefaultLinearSolverOrdering(pp.reduced_program);
+    	  } else {
+    	    // If the user supplied an ordering, then check if the first
+    	    // elimination group is still non-empty after the reduced problem
+    	    // has been constructed.
+    	    //
+    	    // This is important for Schur type linear solvers, where the
+    	    // first elimination group is special -- it needs to be an
+    	    // independent set.
+    	    //
+    	    // If the first elimination group is empty, then we cannot use the
+    	    // user's requested linear solver (and a preconditioner as the
+    	    // case may be) so we must use a different one.
+    	    OrderedGroups<double[]> ordering = options.linear_solver_ordering;
+    	    int min_group_id = ordering.MinNonZeroGroup();
+    	    ordering.Remove(pp.removed_parameter_blocks);
+    	    if (IsSchurType(options.linear_solver_type) &&
+    	        min_group_id != ordering.MinNonZeroGroup()) {
+    	      AlternateLinearSolverAndPreconditionerForSchurTypeLinearSolver(
+    	          options);
+    	    }
+    	  }
+
+    	  // Reorder the program to reduce fill in and improve cache coherency
+    	  // of the Jacobian.
+    	  /*if (!ReorderProgram(pp)) {
+    	    return false;
+    	  }
+
+    	  // Configure the linear solver.
+    	  pp->linear_solver_options = LinearSolver::Options();
+    	  pp->linear_solver_options.min_num_iterations =
+    	      options.min_linear_solver_iterations;
+    	  pp->linear_solver_options.max_num_iterations =
+    	      options.max_linear_solver_iterations;
+    	  pp->linear_solver_options.type = options.linear_solver_type;
+    	  pp->linear_solver_options.preconditioner_type = options.preconditioner_type;
+    	  pp->linear_solver_options.visibility_clustering_type =
+    	      options.visibility_clustering_type;
+    	  pp->linear_solver_options.sparse_linear_algebra_library_type =
+    	      options.sparse_linear_algebra_library_type;
+    	  pp->linear_solver_options.dense_linear_algebra_library_type =
+    	      options.dense_linear_algebra_library_type;
+    	  pp->linear_solver_options.use_explicit_schur_complement =
+    	      options.use_explicit_schur_complement;
+    	  pp->linear_solver_options.dynamic_sparsity = options.dynamic_sparsity;
+    	  pp->linear_solver_options.num_threads = options.num_threads;
+    	  pp->linear_solver_options.use_postordering = options.use_postordering;
+    	  pp->linear_solver_options.context = pp->problem->context();
+
+    	  if (IsSchurType(pp->linear_solver_options.type)) {
+    	    OrderingToGroupSizes(options.linear_solver_ordering.get(),
+    	                         &pp->linear_solver_options.elimination_groups);
+
+    	    // Schur type solvers expect at least two elimination groups. If
+    	    // there is only one elimination group, then it is guaranteed that
+    	    // this group only contains e_blocks. Thus we add a dummy
+    	    // elimination group with zero blocks in it.
+    	    if (pp->linear_solver_options.elimination_groups.size() == 1) {
+    	      pp->linear_solver_options.elimination_groups.push_back(0);
+    	    }
+
+    	    if (options.linear_solver_type == SPARSE_SCHUR) {
+    	      // When using SPARSE_SCHUR, we ignore the user's postordering
+    	      // preferences in certain cases.
+    	      //
+    	      // 1. SUITE_SPARSE is the sparse linear algebra library requested
+    	      //    but cholmod_camd is not available.
+    	      // 2. CX_SPARSE is the sparse linear algebra library requested.
+    	      //
+    	      // This ensures that the linear solver does not assume that a
+    	      // fill-reducing pre-ordering has been done.
+    	      //
+    	      // TODO(sameeragarwal): Implement the reordering of parameter
+    	      // blocks for CX_SPARSE.
+    	      if ((options.sparse_linear_algebra_library_type == SUITE_SPARSE &&
+    	           !SuiteSparse::
+    	           IsConstrainedApproximateMinimumDegreeOrderingAvailable()) ||
+    	          (options.sparse_linear_algebra_library_type == CX_SPARSE)) {
+    	        pp->linear_solver_options.use_postordering = true;
+    	      }
+    	    }
+    	  }
+
+    	  pp->linear_solver.reset(LinearSolver::Create(pp->linear_solver_options));
+    	  return (pp->linear_solver.get() != NULL);*/
+    	  return true;
+    	}
+    	
+    	public void AlternateLinearSolverAndPreconditionerForSchurTypeLinearSolver(
+    		    Solver.Options options) {
+    		  if (!IsSchurType(options.linear_solver_type)) {
+    		    return;
+    		  }
+
+    		  LinearSolverType linear_solver_type_given = options.linear_solver_type;
+    		  PreconditionerType preconditioner_type_given = options.preconditioner_type;
+    		  options.linear_solver_type = LinearSolverForZeroEBlocks(linear_solver_type_given);
+
+    		  String message;
+    		  if (linear_solver_type_given == LinearSolverType.ITERATIVE_SCHUR) {
+    		    options.preconditioner_type = PreconditionerForZeroEBlocks(preconditioner_type_given);
+
+    		    message =
+    		            "No E blocks. Switching from " +
+    		            LinearSolverTypeToString(linear_solver_type_given) + "(" +
+    		            PreconditionerTypeToString(preconditioner_type_given) + ") to " +
+    		            LinearSolverTypeToString(options.linear_solver_type) + "(" +
+    		            PreconditionerTypeToString(options.preconditioner_type) + ").";
+    		  } else {
+    		    message =
+    		            "No E blocks. Switching from " +
+    		            LinearSolverTypeToString(linear_solver_type_given) + " to " +
+    		            LinearSolverTypeToString(options.linear_solver_type) + ".";
+    		  }
+
+    		  if (options.logging_type != LoggingType.SILENT) {
+    			  Preferences.debug(message + "\n", Preferences.DEBUG_ALGORITHM);
+    		  }
+    		}
+    	
+    	public OrderedGroups<double[]> CreateDefaultLinearSolverOrdering(Program program) {
+    		  OrderedGroups<double[]> ordering = new OrderedGroups<>();
+    		  Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+    		  for (int i = 0; i < parameter_blocks.size(); ++i) {
+    		    ordering.AddElementToGroup(parameter_blocks.get(i).user_state(), 0);
+    		  }
+    		  return ordering;
+    		}
 
     	
-    }
+    }  // class TrustRegionProprocessor
+    
+    public String LinearSolverTypeToString(LinearSolverType type) {
+    	  switch (type) {
+    	  case DENSE_NORMAL_CHOLESKY:
+    		  return "DENSE_NORMAL_CHOLESKY";
+    	  case DENSE_QR:
+    		  return "DENSE_QR";
+    	  case SPARSE_NORMAL_CHOLESKY:
+    		  return "NORMAL_CHOLESKY";
+    	  case DENSE_SCHUR:
+    		  return "DENSE_SCHUR";
+    	  case SPARSE_SCHUR:
+    		  return "SPARSE_SCHUR";
+    	  case ITERATIVE_SCHUR:
+    		  return "ITERATIVR_SCHUR";
+    	  case CGNR:
+    		  return "CGNR";
+    	    default:
+    	      return "UNKNOWN";
+    	  }
+    	}
+    
+    public String PreconditionerTypeToString(PreconditionerType type) {
+    	  switch (type) {
+    	  case IDENTITY:
+    		  return "IDENTITY";
+    	  case JACOBI:
+    		  return "JACOBI";
+    	  case SCHUR_JACOBI:
+    		  return "SCHUR_JACOBI";
+    	  case CLUSTER_JACOBI:
+    		  return "CLUSTER_JACOBI";
+    	  case CLUSTER_TRIDIAGONAL:
+    		  return "CLUSTER_TRIDIAGONAL";
+    	    default:
+    	      return "UNKNOWN";
+    	  }
+    	}
+
+
+    
+    public PreconditionerType PreconditionerForZeroEBlocks(PreconditionerType preconditioner_type) {
+		  if (preconditioner_type == PreconditionerType.SCHUR_JACOBI ||
+		      preconditioner_type == PreconditionerType.CLUSTER_JACOBI ||
+		      preconditioner_type == PreconditionerType.CLUSTER_TRIDIAGONAL) {
+		    return PreconditionerType.JACOBI;
+		  }
+		  return preconditioner_type;
+		}
     
     class LineSearchPreprocessor extends Preprocessor {
     	public LineSearchPreprocessor() {
@@ -939,16 +1262,18 @@ enum LineSearchDirectionType {
 	  //shared_ptr<Evaluator> evaluator;
 	  Evaluator evaluator;
 	  //shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
-	  //CoordinateDescentMinimizer inner_iterations_minimizer;
+	  CoordinateDescentMinimizer inner_iteration_minimizer;
 
-	  Vector<ArrayList<Double>> removed_parameter_blocks;
-	  Vector<ArrayList<Double>> reduced_parameters;
+	  Vector<double[]> removed_parameter_blocks;
+	  Vector<double[]> reduced_parameters;
 	 double fixed_cost[];
      public PreprocessedProblem() {
     	 fixed_cost = new double[] {0.0};
     	 error = new String[1];
-    	 removed_parameter_blocks = new Vector<ArrayList<Double>>();
-    	 reduced_parameters = new Vector<ArrayList<Double>>();
+    	 removed_parameter_blocks = new Vector<double[]>();
+    	 reduced_parameters = new Vector<double[]>();
+    	 LinearSolver ls = new LinearSolver();
+    	 linear_solver_options = ls.options;
      }
      
      
@@ -964,7 +1289,7 @@ enum LineSearchDirectionType {
 		  pp.reduced_parameters.removeElementAt(pp.reduced_parameters.size()-1);
 	  }
 	  //pp.reduced_parameters.resize(program.NumParameters());
-	  Vector<ArrayList<Double>> reduced_parameters = pp.reduced_parameters;
+	  Vector<double[]> reduced_parameters = pp.reduced_parameters;
 	  program.ParameterBlocksToStateVector(reduced_parameters);
 
 	  Minimizer.Options minimizer_options = pp.minimizer_options;
@@ -1072,8 +1397,33 @@ enum LineSearchDirectionType {
     	        //f_block_size(Eigen::Dynamic),
     	        context = null;
     	    }
-    	}
+    	} // class Options
+    	
     } // class LinearSolver
+    
+    public LinearSolverType LinearSolverForZeroEBlocks(LinearSolverType linear_solver_type) {
+		  if (!IsSchurType(linear_solver_type)) {
+		    return linear_solver_type;
+		  }
+
+		  if (linear_solver_type == LinearSolverType.SPARSE_SCHUR) {
+		    return LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+		  }
+
+		  if (linear_solver_type == LinearSolverType.DENSE_SCHUR) {
+		    // TODO(sameeragarwal): This is probably not a great choice.
+		    // Ideally, we should have a DENSE_NORMAL_CHOLESKY, that can take
+		    // a BlockSparseMatrix as input.
+		    return LinearSolverType.DENSE_QR;
+		  }
+
+		  if (linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) {
+		    return LinearSolverType.CGNR;
+		  }
+
+		  return linear_solver_type;
+		}
+
 
  
      class Evaluator {
@@ -1507,16 +1857,40 @@ enum LineSearchDirectionType {
 	//blocks.
 	class StateUpdatingCallback extends IterationCallback {
 		private Program program_;
-		private Vector<ArrayList<Double>> parameters_;
-	    public StateUpdatingCallback(Program program, Vector<ArrayList<Double>> parameters) {
+		private Vector<double[]> parameters_;
+	    public StateUpdatingCallback(Program program, Vector<double[]> parameters) {
 	        program_ = program;
 	        parameters_ = parameters;
 	    }
 	
 	    // virtual CallbackReturnType operator()(const IterationSummary& summary);
 	};
+	
+	class CoordinateDescentMinimizer extends Minimizer {
+		Vector<ParameterBlock> parameter_blocks_;
+		Vector<Vector<ResidualBlock> > residual_blocks_;
+		  // The optimization is performed in rounds. In each round all the
+		  // parameter blocks that form one independent set are optimized in
+		  // parallel. This array, marks the boundaries of the independent
+		  // sets in parameter_blocks_.
+		  Vector<Integer> independent_set_offsets_;
+
+		  Evaluator.Options evaluator_options_;
+
+		  ContextImpl context_;  
+		  
+		  public CoordinateDescentMinimizer(ContextImpl context) {
+			super();
+			if (context == null) {
+				System.err.println("ContextImpl context == null in public CoordinateDescentMinimizer");
+				return;
+			}
+		    context_ = context; 
+		  }
+
+	} // class CoordinateDescentMinimizer
      
-  // Interface for non-linear least squares solvers.
+     // Interface for non-linear least squares solvers.
      class Minimizer {
       public Options options_;
       public Minimizer() {
@@ -1599,7 +1973,7 @@ enum LineSearchDirectionType {
            //SparseMatrix jacobian;
 
            //shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
-           //CoordinateDescentMinimizer inner_iteration_minimizer;
+           CoordinateDescentMinimizer inner_iteration_minimizer;
          public Options() {
            Solver solver = new Solver();
            Init(solver.options);
@@ -1725,7 +2099,7 @@ enum LineSearchDirectionType {
 		    // ResidualBlock. This is used by the GradientCheckingCostFunction
 		    // when logging debugging information.
 		    String extra_info = "Residual block id " + i ; // + "; depends on parameters [";
-		    Vector<ArrayList<Double>> parameter_blocks2 = new Vector<ArrayList<Double>>();
+		    Vector<double[]> parameter_blocks2 = new Vector<double[]>();
 		    Vector<LocalParameterization> local_parameterizations = new Vector<LocalParameterization>();
 		    parameter_blocks2.ensureCapacity(residual_block.NumParameterBlocks());
 		    local_parameterizations.ensureCapacity(residual_block.NumParameterBlocks());
@@ -1872,7 +2246,7 @@ enum LineSearchDirectionType {
 			num_residuals_ = num_residuals;
 		}
 		
-		public boolean Evaluate(Vector<ArrayList<Double>> parameters,
+		public boolean Evaluate(Vector<double[]> parameters,
                 double residuals[],
                 double jacobians[][]) {
 		    return true;	
@@ -1996,16 +2370,12 @@ enum LineSearchDirectionType {
 		    
 		  }
 		  
-		  public boolean Evaluate(Vector<ArrayList<Double>> parameters,
+		  public boolean Evaluate(Vector<double[]> parameters,
                   double residuals[],
                   double jacobians[][]) {
 			if (jacobians == null) {
 				if ((kNumResiduals == 1) || ((kNumResiduals == DYNAMIC) && (num_residuals == 1))) {
-					Double xD[] = (Double[])parameters.get(0).toArray();
-					double x[] = new double[xD.length];
-					for (int i = 0; i < xD.length; i++) {
-						x[i] = xD[i].doubleValue();
-					}
+					double x[] = parameters.get(0);
 					return ((CostFunctorExample) functor_).operator(x, residuals);
 				}
 				else {
@@ -2146,15 +2516,15 @@ enum LineSearchDirectionType {
 				  }
 				  for (int i = 0; i < parameter_blocks_.size(); ++i) {
 				    ParameterBlock parameter_block = parameter_blocks_.get(i);
-				    ArrayList<Double> array = parameter_block.user_state();
+				    double[] array = parameter_block.user_state();
 				    int size = parameter_block.Size();
 				    int invalid_index = FindInvalidValue(size, array);
 				    if (invalid_index != size) {
 				      message[0] = "ParameterBlock with size " + size + " has at least one invalid value.\n"
-				          + "First invalid value = " + array.get(invalid_index) + " is at index " + invalid_index +
+				          + "First invalid value = " + array[invalid_index] + " is at index " + invalid_index +
 				          "\nParameter block values: ";
 			              for (int k = 0; k < size; k++) {
-			            	  message[0] += "\n" + array.get(k);
+			            	  message[0] += "\n" + array[k];
 			              }
 				      return false;
 				    }
@@ -2169,7 +2539,7 @@ enum LineSearchDirectionType {
 				  }
 				  for (int i = 0; i < parameter_blocks_.size(); ++i) {
 				    ParameterBlock parameter_block = parameter_blocks_.get(i);
-				    ArrayList<Double> parameters = parameter_block.user_state();
+				    double[] parameters = parameter_block.user_state();
 				    int size = parameter_block.Size();
 				    if (parameter_block.IsConstant()) {
 				      // Constant parameter blocks must start in the feasible region
@@ -2178,13 +2548,13 @@ enum LineSearchDirectionType {
 				      for (int j = 0; j < size; ++j) {
 				        double lower_bound = parameter_block.LowerBoundForParameter(j);
 				        double upper_bound = parameter_block.UpperBoundForParameter(j);
-				        if (parameters.get(j) < lower_bound || parameters.get(j) > upper_bound) {
+				        if (parameters[j] < lower_bound || parameters[j] > upper_bound) {
 				          message[0] = "ParameterBlock with size " + size + " has at least one infeasible value." +
 				              "\nFirst infeasible value is at index: " + j + "." +
-				              "\nLower bound: " + lower_bound + " , value: " + parameters.get(j) + " , upper bound: " + upper_bound + 
+				              "\nLower bound: " + lower_bound + " , value: " + parameters[j] + " , upper bound: " + upper_bound + 
 				              "\nParameter block values: ";
 				              for (int k = 0; k < size; k++) {
-				            	  message[0] += "\n" + parameters.get(k);
+				            	  message[0] += "\n" + parameters[k];
 				              }
 
 				          return false;
@@ -2199,10 +2569,10 @@ enum LineSearchDirectionType {
 				        double upper_bound = parameter_block.UpperBoundForParameter(j);
 				        if (lower_bound >= upper_bound) {
 				        	 message[0] = "ParameterBlock with size " + size + " has lower_bound >= upper_bound for parameter " + j + "." +
-						     "\nLower bound: " + lower_bound + " , value: " + parameters.get(j) + " , upper bound: " + upper_bound + 
+						     "\nLower bound: " + lower_bound + " , value: " + parameters[j] + " , upper bound: " + upper_bound + 
 						     "\nParameter block values: ";
 				              for (int k = 0; k < size; k++) {
-				            	  message[0] += "\n" + parameters.get(k);
+				            	  message[0] += "\n" + parameters[k];
 				              }
 				          return false;
 				        }
@@ -2234,7 +2604,7 @@ enum LineSearchDirectionType {
 
 			
 			public Program CreateReducedProgram(
-				    Vector<ArrayList<Double>> removed_parameter_blocks,
+				    Vector<double[]> removed_parameter_blocks,
 				    double fixed_cost[],
 				    String error[]) {
 				 if (removed_parameter_blocks == null) {
@@ -2262,7 +2632,7 @@ enum LineSearchDirectionType {
 				  return reduced_program;
 				}
 			
-			public boolean RemoveFixedBlocks(Vector<ArrayList<Double>> removed_parameter_blocks,
+			public boolean RemoveFixedBlocks(Vector<double[]> removed_parameter_blocks,
                     double fixed_cost[],
                     String error[]) {
 				if (removed_parameter_blocks == null) {
@@ -2398,7 +2768,7 @@ enum LineSearchDirectionType {
 		   }
 		 }
 
-	   public void ParameterBlocksToStateVector(Vector<ArrayList<Double>> state) {
+	   public void ParameterBlocksToStateVector(Vector<double[]> state) {
 		   for (int i = 0; i < parameter_blocks_.size(); ++i) {
 		     parameter_blocks_.get(i).GetState(state.get(i));
 		   }
@@ -2440,10 +2810,9 @@ enum LineSearchDirectionType {
 	} // class Program
 	
 	class ProblemImpl {
-		private Vector<ArrayList<Double>>residual_parameters_;
+		private Vector<double[]>residual_parameters_;
 		private Program program_;
-		// Must ArrayList<Double> rather than the C++ double[] as keys in a TreeMap
-		private HashMap<ArrayList<Double>, ParameterBlock> parameter_block_map_;
+		private HashMap<double[], ParameterBlock> parameter_block_map_;
 		protected Options options_;
 		// Iff enable_fast_removal is enabled, contains the current residual blocks.
 		private HashSet<ResidualBlock> residual_block_set_;
@@ -2498,10 +2867,10 @@ enum LineSearchDirectionType {
 			}
 		}
 		public ProblemImpl() {
-		    residual_parameters_ = new Vector<ArrayList<Double>>(10);
+		    residual_parameters_ = new Vector<double[]>(10);
 		    options_ = new Options();
 		    program_ = new Program();
-		    parameter_block_map_ = new HashMap<ArrayList<Double>, ParameterBlock>();
+		    parameter_block_map_ = new HashMap<double[], ParameterBlock>();
 		    residual_block_set_ = new HashSet<ResidualBlock>();
 		    cost_function_ref_count_ = new HashMap<CostFunction, Integer>();
 		    loss_function_ref_count_ = new HashMap<LossFunction, Integer>();
@@ -2509,10 +2878,10 @@ enum LineSearchDirectionType {
 		}
 		
 		public ProblemImpl(Options options) {
-		    residual_parameters_ = new Vector<ArrayList<Double>>(10);
+		    residual_parameters_ = new Vector<double[]>(10);
 		    options_ = options;
 		    program_ = new Program();
-		    parameter_block_map_ = new HashMap<ArrayList<Double>, ParameterBlock>();
+		    parameter_block_map_ = new HashMap<double[], ParameterBlock>();
 		    residual_block_set_ = new HashSet<ResidualBlock>();
 		    cost_function_ref_count_ = new HashMap<CostFunction, Integer>();
 		    loss_function_ref_count_ = new HashMap<LossFunction, Integer>();
@@ -2532,7 +2901,7 @@ enum LineSearchDirectionType {
 		}
 		
 		public void AddParameterBlock(
-			    ArrayList<Double> values,
+			    double[] values,
 			    int size,
 			    LocalParameterization local_parameterization) {
 			  ParameterBlock parameter_block =
@@ -2542,11 +2911,11 @@ enum LineSearchDirectionType {
 			  }
 		}
 
-		public void SetParameterBlockConstant(ArrayList<Double> values) {
+		public void SetParameterBlockConstant(double[] values) {
 			  ParameterBlock parameter_block =
 			      FindWithDefault(parameter_block_map_, values, null);
 			  if (parameter_block == null) {
-			    System.err.println("In SetParameterBlockConstant Parameter block not found for supplied ArrayList<Double> values.");
+			    System.err.println("In SetParameterBlockConstant Parameter block not found for supplied double[] values.");
 			    System.err.println("You must add the parameter block to the problem before it can be set constant.");
 			    return;
 			  }
@@ -2554,11 +2923,11 @@ enum LineSearchDirectionType {
 			  parameter_block.SetConstant();
 		}
 		
-		public LocalParameterization GetParameterization(ArrayList<Double> values) {
+		public LocalParameterization GetParameterization(double[] values) {
 			  ParameterBlock parameter_block =
 			      FindWithDefault(parameter_block_map_, values, null);
 			  if (parameter_block == null) {
-			    System.err.println(" In GetParameterization Parameter block not found for supplied ArrayList<Double> values.");
+			    System.err.println(" In GetParameterization Parameter block not found for supplied double[] values.");
 			    System.err.println("You must add the parameter block to the problem before you can get its local parameterization.");
 			    return null;
 			  }
@@ -2578,13 +2947,13 @@ enum LineSearchDirectionType {
 		
 		public ContextImpl context() { return context_impl_; }
 		
-		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, ArrayList<Double> x0) {
+		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, double[] x0) {
 			  residual_parameters_.clear();
 			  residual_parameters_.add(x0);
 			  return AddResidualBlock(cost_function, loss_function, residual_parameters_);
 		}
 		
-		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<ArrayList<Double>> parameter_blocks) {
+		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, Vector<double[]> parameter_blocks) {
 			int i,j;
 			if (cost_function == null) {
 				System.err.println("cost_function is null in AddResidualBlock");
@@ -2690,7 +3059,7 @@ enum LineSearchDirectionType {
 	
 		}
 		
-		ParameterBlock InternalAddParameterBlock(ArrayList<Double> values, int size) {
+		ParameterBlock InternalAddParameterBlock(double[] values, int size) {
 
 			  if (values == null) {
 				  System.err.println("Null pointer passed to AddParameterBlock for a parameter with size " + size);
@@ -2702,7 +3071,7 @@ enum LineSearchDirectionType {
 	        	  if (!options_.disable_all_safety_checks) {
 	        	      int existing_size = parameter_block_map_.get(values).Size();
 	        	      if (size != existing_size) {
-	        	          System.err.println("Tried adding a parameter block with the same ArrayList<Double>, ");
+	        	          System.err.println("Tried adding a parameter block with the same double[], ");
 	        	          System.err.println(" twice, but with different block sizes. Original ");
 	        	          System.err.println("size was " + existing_size + " but new size is " + size);
 	        	          return null;
@@ -2744,6 +3113,100 @@ enum LineSearchDirectionType {
 		public HashMap<Integer, Set<T> > group_to_elements() {
 		    return group_to_elements_;
 		}
+		
+			  // Add an element to a group. If a group with this id does not
+			  // exist, one is created. This method can be called any number of
+			  // times for the same element. Group ids should be non-negative
+			  // numbers.
+			  //
+			  // Return value indicates if adding the element was a success.
+			  public boolean AddElementToGroup( T element, int group) {
+			    if (group < 0) {
+			      return false;
+			    }
+			    
+			    Integer value_element_to_group = element_to_group_.get(element);
+			    if (value_element_to_group != null) {
+				    if (value_element_to_group.intValue() == group) {
+				    	// Element is already in the right group, nothing to do.
+				    	return true;
+				    }
+				    
+				    group_to_elements_.get(group).remove(element);
+				    if ( group_to_elements_.get(group).size() == 0) {
+				        group_to_elements_.remove(group);	
+				    }
+			    }
+			    element_to_group_.put(element, group);
+			    group_to_elements_.get(group).add(element);
+			    return true;
+			  }
+			  
+			// Number of groups with one or more elements.
+			public int NumGroups() {
+			    return group_to_elements_.size();
+			  }
+
+			  // The first group with one or more elements. Calling this when
+			  // there are no groups with non-zero elements will result in a
+			  // crash.
+			  public int MinNonZeroGroup() {
+			    if (NumGroups() == 0) {
+			    	System.err.println("In OrderedGroups.MinNonZeroGroup() == 0");
+			    	return -1;
+			    }
+			    return ((Integer)group_to_elements_.keySet().toArray()[0]).intValue();
+			  }
+			  
+			// Return the group id for the element. If the element is not a
+			  // member of any group, return -1.
+			  public int GroupId(T element) {
+			    Integer value = element_to_group_.get(element);
+			    if (value == null) {
+			      return -1;
+			    }
+			    return value.intValue();
+			  }
+			  
+			// Remove the element, no matter what group it is in. Return value
+			  // indicates if the element was actually removed.
+			  public boolean Remove(T element) {
+			    int current_group = GroupId(element);
+			    if (current_group < 0) {
+			      return false;
+			    }
+
+			    group_to_elements_.get(current_group).remove(element);
+
+			    if (group_to_elements_.get(current_group).size() == 0) {
+			      // If the group is empty, then get rid of it.
+			      group_to_elements_.remove(current_group);
+			    }
+
+			    element_to_group_.remove(element);
+			    return true;
+			  }
+			  
+			  public int NumElements() {
+			      return element_to_group_.size();
+			  }
+
+			  // Bulk remove elements. The return value indicates the number of
+			  // elements successfully removed.
+			  public int Remove(Vector<T> elements) {
+			    if (NumElements() == 0 || elements.size() == 0) {
+			      return 0;
+			    }
+
+			    int num_removed = 0;
+			    for (int i = 0; i < elements.size(); ++i) {
+			      if (Remove(elements.get(i))) {
+			    	  num_removed++;
+			      }
+			    }
+			    return num_removed;
+			  }
+
 	}
 	
 	class Context {
@@ -2831,7 +3294,7 @@ enum LineSearchDirectionType {
 		
 		// Collect the parameters from their blocks. This will rarely allocate, since
 		// residuals taking more than 8 parameter block arguments are rare.
-		Vector<ArrayList<Double>> parameters = new Vector<ArrayList<Double>>();
+		Vector<double[]> parameters = new Vector<double[]>();
 		for (int i = 0; i < num_parameter_blocks; ++i) {
 		parameters.add(parameter_blocks_[i].state());
 		}
@@ -2984,7 +3447,7 @@ enum LineSearchDirectionType {
 			}
 		}
 		
-		public boolean IsEvaluationValid(Vector<ArrayList<Double>> parameters,
+		public boolean IsEvaluationValid(Vector<double[]> parameters,
                 double cost[],
                 double residuals[],
                 double jacobians[][]) {
@@ -3007,7 +3470,7 @@ enum LineSearchDirectionType {
 				return true;
 		}
 		
-		public String EvaluationToString(Vector<ArrayList<Double>> parameters,
+		public String EvaluationToString(Vector<double[]> parameters,
                 double cost[],
                 double residuals[],
                 double jacobians[][]) {
@@ -3043,7 +3506,7 @@ enum LineSearchDirectionType {
 			result[0] = result[0] + "Parameter Block " + i +", size: " + parameter_block_size + "\n";
 			result[0] = result[0] + "\n";
 			for (int j = 0; j < parameter_block_size; ++j) {
-				double x[] = new double[] {parameters.get(i).get(j).doubleValue()};
+				double x[] = new double[] {parameters.get(i)[j]};
 				AppendArrayToString(1, x, result);
 			    result[0] = result[0] + "| ";
 			for (int k = 0; k < num_residuals; ++k) {
@@ -3212,7 +3675,7 @@ enum LineSearchDirectionType {
 		
 		class ParameterBlock {
 			  int i, j;
-			  private ArrayList<Double> user_state_;
+			  private double[] user_state_;
 			  private int size_;
 			  boolean is_constant_;
 			  LocalParameterization local_parameterization_;
@@ -3223,7 +3686,7 @@ enum LineSearchDirectionType {
 			  // solver is running. While at first glance using mutable is a bad idea, this
 			  // ends up simplifying the internals of Ceres enough to justify the potential
 			  // pitfalls of using "mutable."
-			  ArrayList<Double> state_;
+			  double[] state_;
 			  double local_parameterization_jacobian_[];
 			  //mutable scoped_array<double> local_parameterization_jacobian_;
 
@@ -3256,11 +3719,11 @@ enum LineSearchDirectionType {
 			  // Create a parameter block with the user state, size, and index specified.
 			  // The size is the size of the parameter block and the index is the position
 			  // of the parameter block inside a Program (if any).
-			  public ParameterBlock(ArrayList<Double> user_state, int size, int index) {
+			  public ParameterBlock(double[] user_state, int size, int index) {
 			    Init(user_state, size, index, null);
 			  }
 
-			  public ParameterBlock(ArrayList<Double> user_state,
+			  public ParameterBlock(double[] user_state,
 			                 int size,
 			                 int index,
 			                 LocalParameterization local_parameterization) {
@@ -3323,14 +3786,14 @@ enum LineSearchDirectionType {
 			    if(!UpdateLocalParameterizationJacobian()) {
 			        System.err.println("Local parameterization Jacobian computation failed for x: ");
 			        for (i = 0; i < size_-1; i++) {
-			        System.err.print(state_.get(i) + " ");	
+			        System.err.print(state_[i] + " ");	
 			        }
-			        System.err.println(state_.get(size_-1));
+			        System.err.println(state_[size_-1]);
 			    }
 			  }
 
 			
-			void Init(ArrayList<Double> user_state,
+			void Init(double[] user_state,
 		            int size,
 		            int index,
 		            LocalParameterization local_parameterization) {
@@ -3362,18 +3825,14 @@ enum LineSearchDirectionType {
 			    // jacobian is a row-major GlobalSize() x LocalSize() matrix.
 			    InvalidateArray(jacobian_size,
 			                    local_parameterization_jacobian_);
-			    double Jstate_[] = new double[state_.size()];
-			    for (i = 0; i < state_.size(); i++) {
-			    	Jstate_[i] = state_.get(i);
-			    }
 			    if (!local_parameterization_.ComputeJacobian(
-			            Jstate_,
+			            state_,
 			            local_parameterization_jacobian_)) {
 			      System.err.println("Local parameterization Jacobian computation failed for x:");
 			      for (i = 0; i < size_-1; i++) {
-				        System.err.print(state_.get(i) + " ");	
+				        System.err.print(state_[i] + " ");	
 				  }
-				  System.err.println(state_.get(size_-1));
+				  System.err.println(state_[size_-1]);
 			      return false;
 			    }
 
@@ -3381,9 +3840,9 @@ enum LineSearchDirectionType {
 			      System.err.println("Local parameterization Jacobian computation returned");
 			      System.err.println("an invalid matrix for x: ");
 			      for (i = 0; i < size_-1; i++) {
-				        System.err.print(state_.get(i) + " ");	
+				        System.err.print(state_[i] + " ");	
 				  }
-				  System.err.println(state_.get(size_-1));
+				  System.err.println(state_[size_-1]);
 			      System.err.println("\n Jacobian matrix : ");
 			      for (i = 0; i < size_; i++) {
 			          for (j = 0; j < LocalSize()-1; j++) {
@@ -3425,10 +3884,10 @@ enum LineSearchDirectionType {
 			
 			public boolean IsConstant() { return is_constant_; }
 			
-			public ArrayList<Double> user_state() { return user_state_; }
+			public double[] user_state() { return user_state_; }
 			
 			// Manipulate the parameter state.
-			public boolean SetState(ArrayList<Double> x) {
+			public boolean SetState(double[] x) {
 				if (x == null) {
 					System.err.println("In ParameterBlock.SetState x is null");
 					return false;
@@ -3442,7 +3901,7 @@ enum LineSearchDirectionType {
 			    return UpdateLocalParameterizationJacobian();
 			  }
 			
-			public ArrayList<Double> mutable_user_state() { return user_state_; }
+			public double[] mutable_user_state() { return user_state_; }
 			
 			public LocalParameterization mutable_local_parameterization() {
 			    return local_parameterization_;
@@ -3519,16 +3978,15 @@ enum LineSearchDirectionType {
 				  public int delta_offset() { return delta_offset_; }
 				  public void set_delta_offset(int delta_offset) { delta_offset_ = delta_offset; }
 				  
-				  public  ArrayList<Double> state() { return state_; }
+				  public  double[] state() { return state_; }
 				  
 				  // Copy the current parameter state out to x. This is "GetState()" rather than
 				  // simply "state()" since it is actively copying the data into the passed
 				  // pointer.
-				  public void GetState(ArrayList<Double> x) {
+				  public void GetState(double[] x) {
 				    if (x != state_) {
-				      x.clear();
-				      for (int i = 0; i < state_.size(); i++) {
-				    	  x.add(state_.get(i));
+				      for (int i = 0; i < state_.length; i++) {
+				    	  x[i] = state_[i];
 				      }
 				    }
 				  }
@@ -4328,10 +4786,15 @@ enum LineSearchDirectionType {
 		
 		class GradientCheckingIterationCallback extends IterationCallback {
 			private boolean gradient_error_detected_;
+			private String[] error_log_;
 			 public GradientCheckingIterationCallback() {	 
 			     super();
 			     gradient_error_detected_ = false;
 			 }
+			 
+			// Retrieve error status (not thread safe).
+			  public boolean gradient_error_detected() { return gradient_error_detected_; }
+			  public String[] error_log() { return error_log_; }
 		}
 		
 		class EvaluationCallback {
@@ -4508,12 +4971,12 @@ enum LineSearchDirectionType {
 			  return true;
 		}
 		
-	    int FindInvalidValue(int size, ArrayList<Double> x) {
+	    int FindInvalidValue(int size, double[] x) {
 			  if (x == null) {
 				  return size;
 			  }
 		    for (int i = 0; i < size; ++i) {
-		      if (!Double.isFinite(x.get(i)) || (x.get(i) == kImpossibleValue))  {
+		      if (!Double.isFinite(x[i]) || (x[i] == kImpossibleValue))  {
 		        return i;
 		      }
 		    }
@@ -4586,8 +5049,8 @@ enum LineSearchDirectionType {
 			  }
 			}
 
-		ParameterBlock FindWithDefault(HashMap<ArrayList<Double>, ParameterBlock> collection,
-                ArrayList<Double> key,
+		ParameterBlock FindWithDefault(HashMap<double[], ParameterBlock> collection,
+                double[] key,
                 ParameterBlock value) {
 			if (!collection.containsKey(key)) {
 				return value;
