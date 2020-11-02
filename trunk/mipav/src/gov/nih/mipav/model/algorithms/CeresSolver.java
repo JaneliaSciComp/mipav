@@ -71,6 +71,7 @@ public abstract class CeresSolver {
 	// before passing them to user code. If on return an element of the
 	// array still contains this value, we will assume that the user code
 	// did not write to that memory location.
+	private int MAX_LOG_LEVEL = 1;
 	private final double kImpossibleValue = 1e302;
 	private boolean testMode = false;
 	double epsilon = 2.2204460e-16;
@@ -1011,12 +1012,12 @@ enum LineSearchDirectionType {
 
     	  // Reorder the program to reduce fill in and improve cache coherency
     	  // of the Jacobian.
-    	  /*if (!ReorderProgram(pp)) {
+    	  if (!ReorderProgram(pp)) {
     	    return false;
     	  }
 
     	  // Configure the linear solver.
-    	  pp->linear_solver_options = LinearSolver::Options();
+    	  /*pp->linear_solver_options = LinearSolver::Options();
     	  pp->linear_solver_options.min_num_iterations =
     	      options.min_linear_solver_iterations;
     	  pp->linear_solver_options.max_num_iterations =
@@ -1075,6 +1076,34 @@ enum LineSearchDirectionType {
     	  return true;
     	}
     	
+    	// For Schur type and SPARSE_NORMAL_CHOLESKY linear solvers, reorder
+    	// the program to reduce fill-in and increase cache coherency.
+    	public boolean ReorderProgram(PreprocessedProblem pp) {
+    	  Solver.Options options = pp.options;
+    	  if (IsSchurType(options.linear_solver_type)) {
+    	    return ReorderProgramForSchurTypeLinearSolver(
+    	        options.linear_solver_type,
+    	        options.sparse_linear_algebra_library_type,
+    	        pp.problem.parameter_map(),
+    	        options.linear_solver_ordering,
+    	        pp.reduced_program,
+    	        pp.error);
+    	  }
+
+
+    	  if (options.linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY &&
+    	      !options.dynamic_sparsity) {
+    	    /*return ReorderProgramForSparseNormalCholesky(
+    	        options.sparse_linear_algebra_library_type,
+    	        options.linear_solver_ordering,
+    	        pp.reduced_program,
+    	        pp.error);*/
+    	  }
+
+    	  return true;
+    	}
+
+    	
     	public void AlternateLinearSolverAndPreconditionerForSchurTypeLinearSolver(
     		    Solver.Options options) {
     		  if (!IsSchurType(options.linear_solver_type)) {
@@ -1118,6 +1147,354 @@ enum LineSearchDirectionType {
 
     	
     }  // class TrustRegionProprocessor
+    
+    public boolean ReorderProgramForSchurTypeLinearSolver(
+    	    LinearSolverType linear_solver_type,
+    	    SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type,
+    	    HashMap<double[], ParameterBlock> parameter_map,
+    	    OrderedGroups<double[]> parameter_block_ordering,
+    	    Program program,
+    	    String error[]) {
+    	  if (parameter_block_ordering.NumElements() !=
+    	      program.NumParameterBlocks()) {
+    	    error[0] = 
+    	        "The program has " + program.NumParameterBlocks() + " parameter blocks, but the parameter block " + "\n" +
+    	        "ordering has" + parameter_block_ordering.NumElements() + " parameter blocks.";
+    	    return false;
+    	  }
+
+    	  /*if (parameter_block_ordering.NumGroups() == 1) {
+    	    // If the user supplied an parameter_block_ordering with just one
+    	    // group, it is equivalent to the user supplying NULL as an
+    	    // parameter_block_ordering. Ceres is completely free to choose the
+    	    // parameter block ordering as it sees fit. For Schur type solvers,
+    	    // this means that the user wishes for Ceres to identify the
+    	    // e_blocks, which we do by computing a maximal independent set.
+    	    Vector<ParameterBlock> schur_ordering = new Vector<ParameterBlock>();
+    	    int size_of_first_elimination_group =
+    	        ComputeStableSchurOrdering(program, schur_ordering);
+
+    	    CHECK_EQ(schur_ordering.size(), program->NumParameterBlocks())
+    	        << "Congratulations, you found a Ceres bug! Please report this error "
+    	        << "to the developers.";
+
+    	    // Update the parameter_block_ordering object.
+    	    for (int i = 0; i < schur_ordering.size(); ++i) {
+    	      double* parameter_block = schur_ordering[i]->mutable_user_state();
+    	      const int group_id = (i < size_of_first_elimination_group) ? 0 : 1;
+    	      parameter_block_ordering->AddElementToGroup(parameter_block, group_id);
+    	    }
+
+    	    // We could call ApplyOrdering but this is cheaper and
+    	    // simpler.
+    	    swap(*program->mutable_parameter_blocks(), schur_ordering);
+    	  } else {
+    	    // The user provided an ordering with more than one elimination
+    	    // group.
+
+    	    // Verify that the first elimination group is an independent set.
+    	    const set<double*>& first_elimination_group =
+    	        parameter_block_ordering
+    	        ->group_to_elements()
+    	        .begin()
+    	        ->second;
+    	    if (!program->IsParameterBlockSetIndependent(first_elimination_group)) {
+    	      *error =
+    	          StringPrintf("The first elimination group in the parameter block "
+    	                       "ordering of size %zd is not an independent set",
+    	                       first_elimination_group.size());
+    	      return false;
+    	    }
+
+    	    if (!ApplyOrdering(parameter_map,
+    	                       *parameter_block_ordering,
+    	                       program,
+    	                       error)) {
+    	      return false;
+    	    }
+    	  }
+
+    	  program->SetParameterOffsetsAndIndex();
+
+    	  const int size_of_first_elimination_group =
+    	      parameter_block_ordering->group_to_elements().begin()->second.size();
+
+    	  if (linear_solver_type == SPARSE_SCHUR) {
+    	    if (sparse_linear_algebra_library_type == SUITE_SPARSE) {
+    	      MaybeReorderSchurComplementColumnsUsingSuiteSparse(
+    	          *parameter_block_ordering,
+    	          program);
+    	    } else if (sparse_linear_algebra_library_type == EIGEN_SPARSE) {
+    	      MaybeReorderSchurComplementColumnsUsingEigen(
+    	          size_of_first_elimination_group,
+    	          parameter_map,
+    	          program);
+    	    }
+    	  }
+
+    	  // Schur type solvers also require that their residual blocks be
+    	  // lexicographically ordered.
+    	  if (!LexicographicallyOrderResidualBlocks(size_of_first_elimination_group,
+    	                                            program,
+    	                                            error)) {
+    	    return false;
+    	  }*/
+
+    	  return true;
+    	}
+    
+	 // A unweighted undirected graph templated over the vertex ids. Vertex
+	 // should be hashable.
+	 class Graph<Vertex> {
+		 private HashSet<Vertex> vertices_;
+		 private HashMap<Vertex, HashSet<Vertex> > edges_;
+	   public Graph() {
+		   vertices_ = new HashSet<Vertex>();
+		   edges_ = new HashMap<Vertex, HashSet<Vertex>>();
+	   }
+	   
+	   // Add a vertex.
+	   public void AddVertex(Vertex vertex) {
+	     if (vertices_.add(vertex)) {
+	       edges_.put(vertex, new HashSet<Vertex>());
+	     }
+	   }
+	   
+	   // Add an edge between the vertex1 and vertex2. Calling AddEdge on a
+	   // pair of vertices which do not exist in the graph yet will result
+	   // in undefined behavior.
+	   //
+	   // It is legal to call this method repeatedly for the same set of
+	   // vertices.
+	   public void AddEdge(Vertex vertex1, Vertex vertex2) {
+		 if (!vertices_.contains(vertex1)) {
+			 System.err.println("!vertices_contains(vertex1) in Graph.AddEdge");
+			 return;
+		 }
+		 if (!vertices_.contains(vertex2)) {
+			 System.err.println("!vertices_contains(vertex2) in Graph.AddEdge");
+			 return;
+		 }
+
+	     if (edges_.get(vertex1).add(vertex2)) {
+	       edges_.get(vertex2).add(vertex1);
+	     }
+	   } // public void AddEdge
+	   
+	   public HashSet<Vertex> vertices() {
+		    return vertices_;
+	   }
+	   
+	   // Calling Neighbors on a vertex not in the graph will result in
+	   // undefined behaviour.
+	   public HashSet<Vertex> Neighbors(Vertex vertex) {
+	     HashSet<Vertex> value = edges_.get(vertex);
+	     if (value == null) {
+	    	 System.err.println("In public HashSet<Vertex> Neighbors HashMap edges_ does not have key vertex");
+	    	 return null;
+	     }
+	     return value;
+	   }
+	 } // class Graph<Vertex>
+	 
+	 class VertexDegreeLessThan<Vertex> {
+	 private Graph<Vertex> graph_;
+	  public VertexDegreeLessThan(Graph<Vertex> graph) {
+	      graph_ = graph;
+	  }
+
+	// Compare two vertices of a graph by their degrees 
+	  public boolean operator(Vertex lhs, Vertex rhs) {
+	     return (graph_.Neighbors(lhs).size() < graph_.Neighbors(rhs).size());
+	   }
+	 };
+	 
+	 public Graph<ParameterBlock> CreateHessianGraph(Program program) {
+		  Graph<ParameterBlock> graph = new Graph<ParameterBlock>();
+		  Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+		  for (int i = 0; i < parameter_blocks.size(); ++i) {
+		    ParameterBlock parameter_block = parameter_blocks.get(i);
+		    if (!parameter_block.IsConstant()) {
+		      graph.AddVertex(parameter_block);
+		    }
+		  }
+
+		  Vector<ResidualBlock> residual_blocks = program.residual_blocks();
+		  for (int i = 0; i < residual_blocks.size(); ++i) {
+		    ResidualBlock residual_block = residual_blocks.get(i);
+		    int num_parameter_blocks = residual_block.NumParameterBlocks();
+		    ParameterBlock parameter_blocks2[] =
+		        residual_block.parameter_blocks();
+		    for (int j = 0; j < num_parameter_blocks; ++j) {
+		      if (parameter_blocks2[j].IsConstant()) {
+		        continue;
+		      }
+
+		      for (int k = j + 1; k < num_parameter_blocks; ++k) {
+		        if (parameter_blocks2[k].IsConstant()) {
+		          continue;
+		        }
+
+		        graph.AddEdge(parameter_blocks2[j], parameter_blocks2[k]);
+		      }
+		    }
+		  }
+
+		  return graph;
+		}
+
+    
+    public int ComputeStableSchurOrdering(Program program,
+            Vector<ParameterBlock> ordering) {
+    	    if (ordering == null) {
+    	    	System.err.println("Vector<ParameterBlock> ordering == null in ComputeStableSchurOrdering");
+    	    	return -1;
+    	    }
+			ordering.clear();
+			EventLogger event_logger = new EventLogger("ComputeStableSchurOrdering");
+			//scoped_ptr<Graph< ParameterBlock*> > graph(CreateHessianGraph(program));
+			Graph<ParameterBlock> graph = CreateHessianGraph(program);
+			event_logger.AddEvent("CreateHessianGraph");
+			
+			Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+			HashSet<ParameterBlock> vertices = graph.vertices();
+			for (int i = 0; i < parameter_blocks.size(); ++i) {
+			if (vertices.contains(parameter_blocks.get(i))) {
+			    ordering.add(parameter_blocks.get(i));
+			}
+			}
+			event_logger.AddEvent("Preordering");
+			
+			int independent_set_size = StableIndependentSetOrdering(graph, ordering);
+			event_logger.AddEvent("StableIndependentSet");
+			
+			// Add the excluded blocks to back of the ordering vector.
+			for (int i = 0; i < parameter_blocks.size(); ++i) {
+			ParameterBlock parameter_block = parameter_blocks.get(i);
+			if (parameter_block.IsConstant()) {
+			ordering.add(parameter_block);
+			}
+			}
+			event_logger.AddEvent("ConstantParameterBlocks");
+			
+			return independent_set_size;
+			}
+    
+ // Same as above with one important difference. The ordering parameter
+ // is an input/output parameter which carries an initial ordering of
+ // the vertices of the graph. The greedy independent set algorithm
+ // starts by sorting the vertices in increasing order of their
+ // degree. The input ordering is used to stabilize this sort, i.e., if
+ // two vertices have the same degree then they are ordered in the same
+ // order in which they occur in "ordering".
+ //
+ // This is useful in eliminating non-determinism from the Schur
+ // ordering algorithm over all.
+ public <Vertex>int StableIndependentSetOrdering(Graph<Vertex> graph,
+                                  Vector<Vertex> ordering) {
+   if (ordering == null) {
+	   System.err.println("Vector<Vertex> ordering == null in StableIndependentSetOrdering");
+	   return -1;
+   }
+   HashSet<Vertex> vertices = graph.vertices();
+   int num_vertices = vertices.size();
+   if (vertices.size() != ordering.size()) {
+	   System.err.println("vertices.size() != ordering.size() in StableIndependentSetOrdering");
+	   return -1;
+   }
+
+   // Colors for labeling the graph during the BFS.
+   final byte kWhite = 0;
+   final byte kGrey = 1;
+   final byte kBlack = 2;
+
+   Vector<Vertex> vertex_queue= new Vector<Vertex>();
+   for (int i = 0; i < ordering.size(); i++) {
+	   vertex_queue.add(ordering.get(i));
+   }
+
+   /*std::stable_sort(vertex_queue.begin(), vertex_queue.end(),
+                   VertexDegreeLessThan<Vertex>(graph));
+
+   // Mark all vertices white.
+   HashMap<Vertex, char> vertex_color;
+   for (typename HashSet<Vertex>::const_iterator it = vertices.begin();
+        it != vertices.end();
+        ++it) {
+     vertex_color[*it] = kWhite;
+   }
+
+   ordering->clear();
+   ordering->reserve(num_vertices);
+   // Iterate over vertex_queue. Pick the first white vertex, add it
+   // to the independent set. Mark it black and its neighbors grey.
+   for (int i = 0; i < vertex_queue.size(); ++i) {
+     const Vertex& vertex = vertex_queue[i];
+     if (vertex_color[vertex] != kWhite) {
+       continue;
+     }
+
+     ordering->push_back(vertex);
+     vertex_color[vertex] = kBlack;
+     const HashSet<Vertex>& neighbors = graph.Neighbors(vertex);
+     for (typename HashSet<Vertex>::const_iterator it = neighbors.begin();
+          it != neighbors.end();
+          ++it) {
+       vertex_color[*it] = kGrey;
+     }
+   }
+
+   int independent_set_size = ordering->size();
+
+   // Iterate over the vertices and add all the grey vertices to the
+   // ordering. At this stage there should only be black or grey
+   // vertices in the graph.
+   for (typename std::vector<Vertex>::const_iterator it = vertex_queue.begin();
+        it != vertex_queue.end();
+        ++it) {
+     const Vertex vertex = *it;
+     DCHECK(vertex_color[vertex] != kWhite);
+     if (vertex_color[vertex] != kBlack) {
+       ordering->push_back(vertex);
+     }
+   }
+
+   CHECK_EQ(ordering->size(), num_vertices);
+   return independent_set_size;*/
+   return 0;
+ }
+    
+    class EventLogger {
+    	private double start_time_;
+      	private double last_event_time_;
+      	String events_;
+    	  public EventLogger(String logger_name) {
+    		  start_time_ = 1.0E-3*System.currentTimeMillis();
+    	      last_event_time_ = start_time_;
+    	      events_ = 
+    	                "\n"+logger_name+"\n                                   Delta   Cumulative\n";
+    	 
+    	  }
+ 
+    	  public void AddEvent(String event_name) {
+    		  if (3 <= MAX_LOG_LEVEL) {
+    			    return;
+    			  }
+
+    			  double current_time = 1.0E-3*System.currentTimeMillis();
+    			  double relative_time_delta = current_time - last_event_time_;
+    			  double absolute_time_delta = current_time - start_time_;
+    			  last_event_time_ = current_time;
+
+    			  events_ = events_ + 
+    			                String.format("  %30s : %10.5f   %10.5f\n",
+    			                event_name,
+    			                relative_time_delta,
+    			                absolute_time_delta);
+  
+    	  }
+    	} // class EventLogger
+
     
     public String LinearSolverTypeToString(LinearSolverType type) {
     	  switch (type) {
@@ -3099,8 +3476,10 @@ enum LineSearchDirectionType {
 
 		}
 		
+		public HashMap<double[], ParameterBlock> parameter_map() { return parameter_block_map_;}
 		
-	}
+		
+	} // class ProblemImpl
 	
 	class OrderedGroups <T>{
 		private HashMap<Integer, Set<T> > group_to_elements_;
