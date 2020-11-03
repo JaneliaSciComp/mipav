@@ -74,6 +74,51 @@ public abstract class CeresSolver {
 	// array still contains this value, we will assume that the user code
 	// did not write to that memory location.
 	private int MAX_LOG_LEVEL = 1;
+	// Each package in SuiteSparse has its own separate
+	// CXSparse and CHOLMOD are SuiteSparse packages
+	
+	//CXSparse is free software; you can redistribute it and/or
+    //modify it under the terms of the GNU Lesser General Public
+    //License as published by the Free Software Foundation; either
+    //version 2.1 of the License, or (at your option) any later version.
+	
+	//CHOLMOD/Include/* files.  Copyright (C) 2005-2006, either Univ. of Florida
+    //or T. Davis, depending on the file.
+    //Each file is licensed separately, according to the Module for which it
+    //contains definitions and prototypes:
+    //Include/cholmod.h               LGPL
+    //Include/cholmod_blas.h          LGPL
+    //Include/cholmod_camd.h          part of Partition module
+    //Include/cholmod_check.h         part of Check module
+    //Include/cholmod_cholesky.h      part of Cholesky module
+    //Include/cholmod_complexity.h    LGPL
+    //Include/cholmod_config.h        LGPL
+    //Include/cholmod_core.h          part of Core module
+    //Include/cholmod_function.h      no license; freely usable, no restrictions
+    //Include/cholmod_gpu.h           part of GPU module
+    //Include/cholmod_gpu_kernels.h   part of GPU module
+    //Include/cholmod_internal.h      LGPL
+    //Include/cholmod_io64.h          LGPL
+    //Include/cholmod_matrixops.h     part of MatrixOps module
+    //Include/cholmod_modify.h        part of Modify module
+    //Include/cholmod_partition.h     part of Partition module
+    //Include/cholmod_supernodal.h    part of Supernodal module
+    //Include/cholmod_template.h      LGPL
+	
+	// SuiteSparse licensing not possible
+	private boolean CERES_NO_SUITESPARSE = true;
+	//Eigen is Free Software. Starting from the 3.1.1 version, it is licensed under the MPL2, 
+	//which is a simple weak copyleft license. Common questions about the MPL2 are answered in the official MPL2 FAQ. 
+	//Earlier versions were licensed under the LGPL3+. 
+	//Note that currently, a few features rely on third-party code licensed under the LGPL: SimplicialCholesky, 
+	// AMD ordering, and constrained_cg. Such features can be explicitly disabled by compiling with the EIGEN_MPL2_ONLY 
+	// preprocessor symbol defined. Furthermore, Eigen provides interface classes for various third-party libraries
+	// (usually recognizable by the <Eigen/*Support> header name). Of course you have to mind the license of the so-included library when using them. 
+	// Virtually any software may use Eigen. For example, closed-source software may use Eigen without having to disclose its own
+	// source code. Many proprietary and closed-source software projects are using Eigen right now, as well as many BSD-licensed projects. 
+	// See the MPL2 FAQ for more information, and do not hesitate to contact us if you have any questions.
+	// Licensing looks possible but EIGEN SPARSE library not currently implemented
+	private boolean CERES_USE_EIGEN_SPARSE = false;
 	private final double kImpossibleValue = 1e302;
 	private boolean testMode = false;
 	double epsilon = 2.2204460e-16;
@@ -193,6 +238,7 @@ enum LineSearchDirectionType {
 		};
 		
 		// TODO(keir): Considerably expand the explanations of each solver type.
+		
 		enum LinearSolverType {
 		  // These solvers are for general rectangular systems formed from the
 		  // normal equations A'A x = A'b. They are direct solvers and do not
@@ -219,6 +265,7 @@ enum LineSearchDirectionType {
 
 		  // Solves the reduced linear system using a sparse Cholesky solver;
 		  // based on CHOLMOD.
+		  // This requires that you build Ceres with support for SuiteSparse, CXSparse or Eigen’s sparse linear algebra libraries.
 		  SPARSE_SCHUR,
 
 		  // Solves the reduced linear system using Conjugate Gradients, based
@@ -1093,6 +1140,7 @@ enum LineSearchDirectionType {
     	  }
 
 
+    	  // SPARSE_NORMAL_CHOLESKY will not be used because of licensing problems
     	  if (options.linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY &&
     	      !options.dynamic_sparsity) {
     	    /*return ReorderProgramForSparseNormalCholesky(
@@ -1230,10 +1278,10 @@ enum LineSearchDirectionType {
     	  int size_of_first_elimination_group =
     	      first_elimination_group.size();
 
-    	  /*if (linear_solver_type == LinearSolverType.SPARSE_SCHUR) {
+    	  if (linear_solver_type == LinearSolverType.SPARSE_SCHUR) {
     	    if (sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.SUITE_SPARSE) {
     	      MaybeReorderSchurComplementColumnsUsingSuiteSparse(
-    	          *parameter_block_ordering,
+    	          parameter_block_ordering,
     	          program);
     	    } else if (sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.EIGEN_SPARSE) {
     	      MaybeReorderSchurComplementColumnsUsingEigen(
@@ -1249,10 +1297,236 @@ enum LineSearchDirectionType {
     	                                            program,
     	                                            error)) {
     	    return false;
-    	  }*/
+    	  }
 
     	  return true;
     	}
+    
+	 // Find the minimum index of any parameter block to the given
+	 // residual.  Parameter blocks that have indices greater than
+	 // size_of_first_elimination_group are considered to have an index
+	 // equal to size_of_first_elimination_group.
+	 public int MinParameterBlock(ResidualBlock residual_block,
+	                              int size_of_first_elimination_group) {
+	   int min_parameter_block_position = size_of_first_elimination_group;
+	   for (int i = 0; i < residual_block.NumParameterBlocks(); ++i) {
+	     ParameterBlock parameter_block = residual_block.parameter_blocks()[i];
+	     if (!parameter_block.IsConstant()) {
+	       if (parameter_block.index() == -1) {
+	           System.err.println("Did you forget to call Program::SetParameterOffsetsAndIndex()? ");
+	           System.err.println("This is a Ceres bug; please contact the developers!");
+	           System.err.println("In MinParameterBlock parameter_block.index() == -1");
+	           return -1;
+	       }
+	       min_parameter_block_position = Math.min(parameter_block.index(),
+	                                               min_parameter_block_position);
+	     }
+	   }
+	   return min_parameter_block_position;
+	 }
+
+    
+    public boolean LexicographicallyOrderResidualBlocks(
+    	    int size_of_first_elimination_group,
+    	    Program program,
+    	    String error[]) {
+    	    if (size_of_first_elimination_group < 1) {
+    	      System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
+    	      System.err.println("to the developers.");
+    	      System.err.println("In LexicographicallyOrderResidualBlocks size_of_first_elimination_group < 1");
+    	      return false;
+    	    }
+
+    	  // Create a histogram of the number of residuals for each E block. There is an
+    	  // extra bucket at the end to catch all non-eliminated F blocks.
+    	  Vector<Integer> residual_blocks_per_e_block = new Vector<Integer>(size_of_first_elimination_group + 1);
+    	  Vector<ResidualBlock> residual_blocks = program.mutable_residual_blocks();
+    	  Vector<Integer> min_position_per_residual = new Vector<Integer>(residual_blocks.size());
+    	  for (int i = 0; i < residual_blocks.size(); ++i) {
+    	    ResidualBlock residual_block = residual_blocks.get(i);
+    	    int position = MinParameterBlock(residual_block,
+    	                                     size_of_first_elimination_group);
+    	    min_position_per_residual.add(position);
+    	    if (position > size_of_first_elimination_group) {
+    	    	System.err.println("In LexicographicallyOrderResidualBlocks position > size_of_first_elimination_group");
+    	    	return false;
+    	    }
+    	    int value = residual_blocks_per_e_block.get(position);
+    	    residual_blocks_per_e_block.set(position,value+1);
+    	  }
+
+    	  // Run a cumulative sum on the histogram, to obtain offsets to the start of
+    	  // each histogram bucket (where each bucket is for the residuals for that
+    	  // E-block).
+    	  /*vector<int> offsets(size_of_first_elimination_group + 1);
+    	  std::partial_sum(residual_blocks_per_e_block.begin(),
+    	                   residual_blocks_per_e_block.end(),
+    	                   offsets.begin());
+    	  CHECK_EQ(offsets.back(), residual_blocks->size())
+    	      << "Congratulations, you found a Ceres bug! Please report this error "
+    	      << "to the developers.";
+
+    	  CHECK(find(residual_blocks_per_e_block.begin(),
+    	             residual_blocks_per_e_block.end() - 1, 0) !=
+    	        residual_blocks_per_e_block.end())
+    	      << "Congratulations, you found a Ceres bug! Please report this error "
+    	      << "to the developers.";
+
+    	  // Fill in each bucket with the residual blocks for its corresponding E block.
+    	  // Each bucket is individually filled from the back of the bucket to the front
+    	  // of the bucket. The filling order among the buckets is dictated by the
+    	  // residual blocks. This loop uses the offsets as counters; subtracting one
+    	  // from each offset as a residual block is placed in the bucket. When the
+    	  // filling is finished, the offset pointerts should have shifted down one
+    	  // entry (this is verified below).
+    	  vector<ResidualBlock*> reordered_residual_blocks(
+    	      (*residual_blocks).size(), static_cast<ResidualBlock*>(NULL));
+    	  for (int i = 0; i < residual_blocks->size(); ++i) {
+    	    int bucket = min_position_per_residual[i];
+
+    	    // Decrement the cursor, which should now point at the next empty position.
+    	    offsets[bucket]--;
+
+    	    // Sanity.
+    	    CHECK(reordered_residual_blocks[offsets[bucket]] == NULL)
+    	        << "Congratulations, you found a Ceres bug! Please report this error "
+    	        << "to the developers.";
+
+    	    reordered_residual_blocks[offsets[bucket]] = (*residual_blocks)[i];
+    	  }
+
+    	  // Sanity check #1: The difference in bucket offsets should match the
+    	  // histogram sizes.
+    	  for (int i = 0; i < size_of_first_elimination_group; ++i) {
+    	    CHECK_EQ(residual_blocks_per_e_block[i], offsets[i + 1] - offsets[i])
+    	        << "Congratulations, you found a Ceres bug! Please report this error "
+    	        << "to the developers.";
+    	  }
+    	  // Sanity check #2: No NULL's left behind.
+    	  for (int i = 0; i < reordered_residual_blocks.size(); ++i) {
+    	    CHECK(reordered_residual_blocks[i] != NULL)
+    	        << "Congratulations, you found a Ceres bug! Please report this error "
+    	        << "to the developers.";
+    	  }
+
+    	  // Now that the residuals are collected by E block, swap them in place.
+    	  swap(*program->mutable_residual_blocks(), reordered_residual_blocks);*/
+    	  return true;
+    	}
+
+    
+    
+    
+		 // Pre-order the columns corresponding to the schur complement if
+		 // possible.
+		 public void MaybeReorderSchurComplementColumnsUsingSuiteSparse(
+		     OrderedGroups<double[]> parameter_block_ordering,
+		     Program program) {
+	     // Cannot use SUITSPARSE because of licensing problems
+		 if (!CERES_NO_SUITESPARSE) {
+		   //SuiteSparse ss;
+		   /*if (!IsConstrainedApproximateMinimumDegreeOrderingAvailable()) {
+		     return;
+		   }
+		
+		   vector<int> constraints;
+		   vector<ParameterBlock*>& parameter_blocks =
+		       *(program->mutable_parameter_blocks());
+		
+		   for (int i = 0; i < parameter_blocks.size(); ++i) {
+		     constraints.push_back(
+		         parameter_block_ordering.GroupId(
+		             parameter_blocks[i]->mutable_user_state()));
+		   }
+		
+		   // Renumber the entries of constraints to be contiguous integers as
+		   // CAMD requires that the group ids be in the range [0,
+		   // parameter_blocks.size() - 1].
+		   MapValuesToContiguousRange(constraints.size(), &constraints[0]);
+		
+		   // Compute a block sparse presentation of J'.
+		   scoped_ptr<TripletSparseMatrix> tsm_block_jacobian_transpose(
+		       program->CreateJacobianBlockSparsityTranspose());
+		
+		   cholmod_sparse* block_jacobian_transpose =
+		       ss.CreateSparseMatrix(tsm_block_jacobian_transpose.get());
+		
+		   vector<int> ordering(parameter_blocks.size(), 0);
+		   ss.ConstrainedApproximateMinimumDegreeOrdering(block_jacobian_transpose,
+		                                                  &constraints[0],
+		                                                  &ordering[0]);
+		   ss.Free(block_jacobian_transpose);
+		
+		   const vector<ParameterBlock*> parameter_blocks_copy(parameter_blocks);
+		   for (int i = 0; i < program->NumParameterBlocks(); ++i) {
+		     parameter_blocks[i] = parameter_blocks_copy[ordering[i]];
+		   }
+		
+		   program->SetParameterOffsetsAndIndex();
+		   */
+		    } // if (!CERES_NO_SUITESPARSE)
+		 }
+
+		 public void MaybeReorderSchurComplementColumnsUsingEigen(
+		     int size_of_first_elimination_group,
+		     HashMap<double[], ParameterBlock> parameter_map,
+		     Program program) {
+		 if (/*(!EIGEN_VERSION_AT_LEAST(3, 2, 2)) || */(!CERES_USE_EIGEN_SPARSE)) {
+		   return;
+		 }
+		 /*
+		 #else
+		
+		   scoped_ptr<TripletSparseMatrix> tsm_block_jacobian_transpose(
+		       program->CreateJacobianBlockSparsityTranspose());
+		
+		   typedef Eigen::SparseMatrix<int> SparseMatrix;
+		   const SparseMatrix block_jacobian =
+		       CreateBlockJacobian(*tsm_block_jacobian_transpose);
+		   const int num_rows = block_jacobian.rows();
+		   const int num_cols = block_jacobian.cols();
+		
+		   // Vertically partition the jacobian in parameter blocks of type E
+		   // and F.
+		   const SparseMatrix E =
+		       block_jacobian.block(0,
+		                            0,
+		                            num_rows,
+		                            size_of_first_elimination_group);
+		   const SparseMatrix F =
+		       block_jacobian.block(0,
+		                            size_of_first_elimination_group,
+		                            num_rows,
+		                            num_cols - size_of_first_elimination_group);
+		
+		   // Block sparsity pattern of the schur complement.
+		   const SparseMatrix block_schur_complement =
+		       F.transpose() * F - F.transpose() * E * E.transpose() * F;
+		
+		   Eigen::AMDOrdering<int> amd_ordering;
+		   Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic, int> perm;
+		   amd_ordering(block_schur_complement, perm);
+		
+		   const vector<ParameterBlock*>& parameter_blocks = program->parameter_blocks();
+		   vector<ParameterBlock*> ordering(num_cols);
+		
+		   // The ordering of the first size_of_first_elimination_group does
+		   // not matter, so we preserve the existing ordering.
+		   for (int i = 0; i < size_of_first_elimination_group; ++i) {
+		     ordering[i] = parameter_blocks[i];
+		   }
+		
+		   // For the rest of the blocks, use the ordering computed using AMD.
+		   for (int i = 0; i < block_schur_complement.cols(); ++i) {
+		     ordering[size_of_first_elimination_group + i] =
+		         parameter_blocks[size_of_first_elimination_group + perm.indices()[i]];
+		   }
+		
+		   swap(*program->mutable_parameter_blocks(), ordering);
+		   program->SetParameterOffsetsAndIndex();
+		 #endif*/
+		 }
+
     
     public boolean ApplyOrdering(HashMap<double[], ParameterBlock> parameter_map,
             OrderedGroups<double[]> ordering,
@@ -3257,6 +3531,9 @@ enum LineSearchDirectionType {
 				  return true;
 				}
 
+		 public Vector<ResidualBlock> mutable_residual_blocks() {
+			  return residual_blocks_;
+	     }
 
 
 	} // class Program
