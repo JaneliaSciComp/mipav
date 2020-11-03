@@ -2,11 +2,13 @@ package gov.nih.mipav.model.algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -1148,6 +1150,12 @@ enum LineSearchDirectionType {
     	
     }  // class TrustRegionProprocessor
     
+    public <T> void swap(T el1, T el2) {
+    	T temp = el1;
+    	el1 = el2;
+    	el2 = temp;
+    }
+    
     public boolean ReorderProgramForSchurTypeLinearSolver(
     	    LinearSolverType linear_solver_type,
     	    SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type,
@@ -1163,7 +1171,7 @@ enum LineSearchDirectionType {
     	    return false;
     	  }
 
-    	  /*if (parameter_block_ordering.NumGroups() == 1) {
+    	  if (parameter_block_ordering.NumGroups() == 1) {
     	    // If the user supplied an parameter_block_ordering with just one
     	    // group, it is equivalent to the user supplying NULL as an
     	    // parameter_block_ordering. Ceres is completely free to choose the
@@ -1174,57 +1182,60 @@ enum LineSearchDirectionType {
     	    int size_of_first_elimination_group =
     	        ComputeStableSchurOrdering(program, schur_ordering);
 
-    	    CHECK_EQ(schur_ordering.size(), program->NumParameterBlocks())
-    	        << "Congratulations, you found a Ceres bug! Please report this error "
-    	        << "to the developers.";
+    	    if (schur_ordering.size() != program.NumParameterBlocks()) {
+    	        System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
+    	        System.err.println("to the developers.");
+    	        System.err.println("schur_ordering.size() != program.NumParameterBlocks() in ReorderProgramForSchurTypeLinearSolver");
+    	        return false;
+    	    }
 
     	    // Update the parameter_block_ordering object.
     	    for (int i = 0; i < schur_ordering.size(); ++i) {
-    	      double* parameter_block = schur_ordering[i]->mutable_user_state();
-    	      const int group_id = (i < size_of_first_elimination_group) ? 0 : 1;
-    	      parameter_block_ordering->AddElementToGroup(parameter_block, group_id);
+    	      double[] parameter_block = schur_ordering.get(i).mutable_user_state();
+    	      int group_id = (i < size_of_first_elimination_group) ? 0 : 1;
+    	      parameter_block_ordering.AddElementToGroup(parameter_block, group_id);
     	    }
 
     	    // We could call ApplyOrdering but this is cheaper and
     	    // simpler.
-    	    swap(*program->mutable_parameter_blocks(), schur_ordering);
+    	    swap(program.mutable_parameter_blocks(), schur_ordering);
     	  } else {
     	    // The user provided an ordering with more than one elimination
     	    // group.
 
     	    // Verify that the first elimination group is an independent set.
-    	    const set<double*>& first_elimination_group =
-    	        parameter_block_ordering
-    	        ->group_to_elements()
-    	        .begin()
-    	        ->second;
-    	    if (!program->IsParameterBlockSetIndependent(first_elimination_group)) {
-    	      *error =
-    	          StringPrintf("The first elimination group in the parameter block "
-    	                       "ordering of size %zd is not an independent set",
-    	                       first_elimination_group.size());
+    		Collection<Set<double[]>>  col = parameter_block_ordering.group_to_elements().values();
+    		Iterator <Set<double[]>>it = col.iterator();
+    		Set<double[]> first_elimination_group = (Set<double[]>) it.next();
+    	    if (!program.IsParameterBlockSetIndependent(first_elimination_group)) {
+    	      error[0] =
+    	          "The first elimination group in the parameter block \n" +
+    	          "ordering of size " + first_elimination_group.size() + " is not an independent set";
     	      return false;
     	    }
 
     	    if (!ApplyOrdering(parameter_map,
-    	                       *parameter_block_ordering,
+    	                       parameter_block_ordering,
     	                       program,
     	                       error)) {
     	      return false;
     	    }
     	  }
 
-    	  program->SetParameterOffsetsAndIndex();
+    	  program.SetParameterOffsetsAndIndex();
 
-    	  const int size_of_first_elimination_group =
-    	      parameter_block_ordering->group_to_elements().begin()->second.size();
+    	  Collection<Set<double[]>> col = parameter_block_ordering.group_to_elements().values();
+  		  Iterator <Set<double[]>>it = col.iterator();
+  		  Set<double[]> first_elimination_group = (Set<double[]>) it.next();
+    	  int size_of_first_elimination_group =
+    	      first_elimination_group.size();
 
-    	  if (linear_solver_type == SPARSE_SCHUR) {
-    	    if (sparse_linear_algebra_library_type == SUITE_SPARSE) {
+    	  /*if (linear_solver_type == LinearSolverType.SPARSE_SCHUR) {
+    	    if (sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.SUITE_SPARSE) {
     	      MaybeReorderSchurComplementColumnsUsingSuiteSparse(
     	          *parameter_block_ordering,
     	          program);
-    	    } else if (sparse_linear_algebra_library_type == EIGEN_SPARSE) {
+    	    } else if (sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.EIGEN_SPARSE) {
     	      MaybeReorderSchurComplementColumnsUsingEigen(
     	          size_of_first_elimination_group,
     	          parameter_map,
@@ -1242,6 +1253,46 @@ enum LineSearchDirectionType {
 
     	  return true;
     	}
+    
+    public boolean ApplyOrdering(HashMap<double[], ParameterBlock> parameter_map,
+            OrderedGroups<double[]> ordering,
+            Program program,
+            String error[]) {
+			int num_parameter_blocks =  program.NumParameterBlocks();
+			if (ordering.NumElements() != num_parameter_blocks) {
+			error[0] = "User specified ordering does not have the same \n" +
+			                   "number of parameters as the problem. The problem\n" +
+			                   "has " + num_parameter_blocks + " blocks while the ordering has " + ordering.NumElements() + " blocks.";
+			return false;
+			}
+			
+			Vector<ParameterBlock> parameter_blocks =
+			program.mutable_parameter_blocks();
+			parameter_blocks.clear();
+			
+			HashMap<Integer, Set<double[]> > groups = ordering.group_to_elements();
+			Collection<Set<double[]>>  col = groups.values();
+    		Iterator <Set<double[]>> group_it = col.iterator();
+    		Set<Integer> groupNumSet = groups.keySet();
+    		Iterator <Integer> num_iterator = groupNumSet.iterator();
+    		while (group_it.hasNext()) {
+    		    Set<double[]> group = group_it.next();	
+    		    int groupNum = num_iterator.next();
+    		    Iterator<double[]> parameter_block_ptr_it = group.iterator();
+    		    while (parameter_block_ptr_it.hasNext()) {
+    		    	ParameterBlock pm = parameter_map.get(parameter_block_ptr_it.next());
+    		    	if (pm == null) {
+    		    		error[0] = "User specified ordering contains a double[] \n" +
+			                       "that does not have a parameter block in \n" +
+			                       "the problem. The invalid double is in group: " + groupNum;
+			            return false;	
+    		    	}
+    		    	parameter_blocks.add(pm);
+    		    }
+    		}
+			return true;
+			}
+
     
 	 // A unweighted undirected graph templated over the vertex ids. Vertex
 	 // should be hashable.
@@ -1297,17 +1348,17 @@ enum LineSearchDirectionType {
 	   }
 	 } // class Graph<Vertex>
 	 
-	 class VertexDegreeLessThan<Vertex> {
+	 class VertexDegreeLessThan<Vertex> implements Comparator<Vertex> {
 	 private Graph<Vertex> graph_;
 	  public VertexDegreeLessThan(Graph<Vertex> graph) {
 	      graph_ = graph;
 	  }
 
 	// Compare two vertices of a graph by their degrees 
-	  public boolean operator(Vertex lhs, Vertex rhs) {
-	     return (graph_.Neighbors(lhs).size() < graph_.Neighbors(rhs).size());
+	  public int compare(Vertex lhs, Vertex rhs) {
+	     return (graph_.Neighbors(lhs).size() - graph_.Neighbors(rhs).size());
 	   }
-	 };
+	 } // class VertexDegreesLessThan
 	 
 	 public Graph<ParameterBlock> CreateHessianGraph(Program program) {
 		  Graph<ParameterBlock> graph = new Graph<ParameterBlock>();
@@ -1408,60 +1459,57 @@ enum LineSearchDirectionType {
    final byte kGrey = 1;
    final byte kBlack = 2;
 
-   Vector<Vertex> vertex_queue= new Vector<Vertex>();
+   List<Vertex> vertex_queue= new ArrayList<Vertex>();
    for (int i = 0; i < ordering.size(); i++) {
 	   vertex_queue.add(ordering.get(i));
    }
-
-   /*std::stable_sort(vertex_queue.begin(), vertex_queue.end(),
-                   VertexDegreeLessThan<Vertex>(graph));
+   
+   VertexDegreeLessThan<Vertex> VD = new VertexDegreeLessThan<Vertex>(graph);
+   Collections.sort(vertex_queue, VD);
 
    // Mark all vertices white.
-   HashMap<Vertex, char> vertex_color;
-   for (typename HashSet<Vertex>::const_iterator it = vertices.begin();
-        it != vertices.end();
-        ++it) {
-     vertex_color[*it] = kWhite;
+   HashMap<Vertex, Byte> vertex_color = new HashMap<Vertex, Byte>();
+   for (Vertex v: vertices) {
+	   vertex_color.put(v, kWhite);
    }
 
-   ordering->clear();
-   ordering->reserve(num_vertices);
+   ordering.clear();
+   ordering.ensureCapacity(num_vertices);
    // Iterate over vertex_queue. Pick the first white vertex, add it
    // to the independent set. Mark it black and its neighbors grey.
-   for (int i = 0; i < vertex_queue.size(); ++i) {
-     const Vertex& vertex = vertex_queue[i];
-     if (vertex_color[vertex] != kWhite) {
+   for (Vertex vertex: vertex_queue) {
+     if (vertex_color.get(vertex) != kWhite) {
        continue;
      }
 
-     ordering->push_back(vertex);
-     vertex_color[vertex] = kBlack;
-     const HashSet<Vertex>& neighbors = graph.Neighbors(vertex);
-     for (typename HashSet<Vertex>::const_iterator it = neighbors.begin();
-          it != neighbors.end();
-          ++it) {
-       vertex_color[*it] = kGrey;
+     ordering.add(vertex);
+     vertex_color.put(vertex,kBlack);
+     HashSet<Vertex> neighbors = graph.Neighbors(vertex);
+     for (Vertex it : neighbors) {
+    	 vertex_color.put(it, kGrey);
      }
    }
 
-   int independent_set_size = ordering->size();
+   int independent_set_size = ordering.size();
 
    // Iterate over the vertices and add all the grey vertices to the
    // ordering. At this stage there should only be black or grey
    // vertices in the graph.
-   for (typename std::vector<Vertex>::const_iterator it = vertex_queue.begin();
-        it != vertex_queue.end();
-        ++it) {
-     const Vertex vertex = *it;
-     DCHECK(vertex_color[vertex] != kWhite);
-     if (vertex_color[vertex] != kBlack) {
-       ordering->push_back(vertex);
+   for (Vertex vertex : vertex_queue) {
+     if (vertex_color.get(vertex) == kWhite) {
+    	 System.err.println("Unexpected kWhite found in vertex_color in StableIndependentSetOrdering");
+    	 return -1;
+     }
+     if (vertex_color.get(vertex) != kBlack) {
+       ordering.add(vertex);
      }
    }
 
-   CHECK_EQ(ordering->size(), num_vertices);
-   return independent_set_size;*/
-   return 0;
+   if (ordering.size() != num_vertices) {
+       System.err.println("ordering.size() != num_vertices in StableIndependentSetOrdering");
+       return -1;
+   }
+   return independent_set_size;
  }
     
     class EventLogger {
@@ -2882,6 +2930,11 @@ enum LineSearchDirectionType {
 				  return parameter_blocks_;
 			}
 			
+			public Vector<ParameterBlock> mutable_parameter_blocks() {
+				  return parameter_blocks_;
+		    }
+
+			
 			public Vector<ResidualBlock> residual_blocks() {
 				  return residual_blocks_;
 			}
@@ -3182,6 +3235,28 @@ enum LineSearchDirectionType {
 			  }
 			  return max_derivatives;
 			}
+		 
+		 public boolean IsParameterBlockSetIndependent(Set<double[]> independent_set) {
+				  // Loop over each residual block and ensure that no two parameter
+				  // blocks in the same residual block are part of
+				  // parameter_block_ptrs as that would violate the assumption that it
+				  // is an independent set in the Hessian matrix.
+			      for (ResidualBlock rb : residual_blocks_) {
+			    	  ParameterBlock parameter_blocks[] = rb.parameter_blocks();
+			    	  int num_parameter_blocks = rb.NumParameterBlocks();
+			    	  int count = 0;
+					    for (int i = 0; i < num_parameter_blocks; ++i) {
+					      if (independent_set.contains(parameter_blocks[i].mutable_user_state())) {
+					    	  count++;
+					      }
+					    }
+					    if (count > 1) {
+					      return false;
+					    }
+			      }
+				  return true;
+				}
+
 
 
 	} // class Program
