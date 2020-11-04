@@ -107,6 +107,8 @@ public abstract class CeresSolver {
 	
 	// SuiteSparse licensing not possible
 	private boolean CERES_NO_SUITESPARSE = true;
+	private boolean CERES_NO_CXSPARSE = true;
+	private int SUITESPARSE_VERSION = -1;
 	//Eigen is Free Software. Starting from the 3.1.1 version, it is licensed under the MPL2, 
 	//which is a simple weak copyleft license. Common questions about the MPL2 are answered in the official MPL2 FAQ. 
 	//Earlier versions were licensed under the LGPL3+. 
@@ -1066,39 +1068,40 @@ enum LineSearchDirectionType {
     	  }
 
     	  // Configure the linear solver.
-    	  /*pp->linear_solver_options = LinearSolver::Options();
-    	  pp->linear_solver_options.min_num_iterations =
+    	  LinearSolver ls = new LinearSolver();
+    	  pp.linear_solver_options = ls.options;
+    	  pp.linear_solver_options.min_num_iterations =
     	      options.min_linear_solver_iterations;
-    	  pp->linear_solver_options.max_num_iterations =
+    	  pp.linear_solver_options.max_num_iterations =
     	      options.max_linear_solver_iterations;
-    	  pp->linear_solver_options.type = options.linear_solver_type;
-    	  pp->linear_solver_options.preconditioner_type = options.preconditioner_type;
-    	  pp->linear_solver_options.visibility_clustering_type =
+    	  pp.linear_solver_options.type = options.linear_solver_type;
+    	  pp.linear_solver_options.preconditioner_type = options.preconditioner_type;
+    	  pp.linear_solver_options.visibility_clustering_type =
     	      options.visibility_clustering_type;
-    	  pp->linear_solver_options.sparse_linear_algebra_library_type =
+    	  pp.linear_solver_options.sparse_linear_algebra_library_type =
     	      options.sparse_linear_algebra_library_type;
-    	  pp->linear_solver_options.dense_linear_algebra_library_type =
+    	  pp.linear_solver_options.dense_linear_algebra_library_type =
     	      options.dense_linear_algebra_library_type;
-    	  pp->linear_solver_options.use_explicit_schur_complement =
+    	  pp.linear_solver_options.use_explicit_schur_complement =
     	      options.use_explicit_schur_complement;
-    	  pp->linear_solver_options.dynamic_sparsity = options.dynamic_sparsity;
-    	  pp->linear_solver_options.num_threads = options.num_threads;
-    	  pp->linear_solver_options.use_postordering = options.use_postordering;
-    	  pp->linear_solver_options.context = pp->problem->context();
+    	  pp.linear_solver_options.dynamic_sparsity = options.dynamic_sparsity;
+    	  pp.linear_solver_options.num_threads = options.num_threads;
+    	  pp.linear_solver_options.use_postordering = options.use_postordering;
+    	  pp.linear_solver_options.context = pp.problem.context();
 
-    	  if (IsSchurType(pp->linear_solver_options.type)) {
-    	    OrderingToGroupSizes(options.linear_solver_ordering.get(),
-    	                         &pp->linear_solver_options.elimination_groups);
+    	  if (IsSchurType(pp.linear_solver_options.type)) {
+    	    OrderingToGroupSizes(options.linear_solver_ordering,
+    	                         pp.linear_solver_options.elimination_groups);
 
     	    // Schur type solvers expect at least two elimination groups. If
     	    // there is only one elimination group, then it is guaranteed that
     	    // this group only contains e_blocks. Thus we add a dummy
     	    // elimination group with zero blocks in it.
-    	    if (pp->linear_solver_options.elimination_groups.size() == 1) {
-    	      pp->linear_solver_options.elimination_groups.push_back(0);
+    	    if (pp.linear_solver_options.elimination_groups.size() == 1) {
+    	      pp.linear_solver_options.elimination_groups.add(0);
     	    }
 
-    	    if (options.linear_solver_type == SPARSE_SCHUR) {
+    	    if (options.linear_solver_type == LinearSolverType.SPARSE_SCHUR) {
     	      // When using SPARSE_SCHUR, we ignore the user's postordering
     	      // preferences in certain cases.
     	      //
@@ -1111,19 +1114,25 @@ enum LineSearchDirectionType {
     	      //
     	      // TODO(sameeragarwal): Implement the reordering of parameter
     	      // blocks for CX_SPARSE.
-    	      if ((options.sparse_linear_algebra_library_type == SUITE_SPARSE &&
-    	           !SuiteSparse::
-    	           IsConstrainedApproximateMinimumDegreeOrderingAvailable()) ||
-    	          (options.sparse_linear_algebra_library_type == CX_SPARSE)) {
-    	        pp->linear_solver_options.use_postordering = true;
+    	      if ((options.sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.SUITE_SPARSE &&
+    	           (!IsConstrainedApproximateMinimumDegreeOrderingAvailable())) ||
+    	          (options.sparse_linear_algebra_library_type == SparseLinearAlgebraLibraryType.CX_SPARSE)) {
+    	        pp.linear_solver_options.use_postordering = true;
     	      }
     	    }
     	  }
 
-    	  pp->linear_solver.reset(LinearSolver::Create(pp->linear_solver_options));
-    	  return (pp->linear_solver.get() != NULL);*/
-    	  return true;
+    	  pp.linear_solver = Create(pp.linear_solver_options);
+    	  return (pp.linear_solver != null);
     	}
+    	
+    	// The fix was actually committed in 4.1.0, but there is
+    	  // some confusion about a silent update to the tar ball, so we are
+    	  // being conservative and choosing the next minor version where
+    	  // things are stable.
+    	  public boolean IsConstrainedApproximateMinimumDegreeOrderingAvailable() {
+    	    return (SUITESPARSE_VERSION > 4001);
+    	  }
     	
     	// For Schur type and SPARSE_NORMAL_CHOLESKY linear solvers, reorder
     	// the program to reduce fill-in and increase cache coherency.
@@ -1358,20 +1367,27 @@ enum LineSearchDirectionType {
     	  // Run a cumulative sum on the histogram, to obtain offsets to the start of
     	  // each histogram bucket (where each bucket is for the residuals for that
     	  // E-block).
-    	  /*vector<int> offsets(size_of_first_elimination_group + 1);
-    	  std::partial_sum(residual_blocks_per_e_block.begin(),
-    	                   residual_blocks_per_e_block.end(),
-    	                   offsets.begin());
-    	  CHECK_EQ(offsets.back(), residual_blocks->size())
-    	      << "Congratulations, you found a Ceres bug! Please report this error "
-    	      << "to the developers.";
+    	  int partial_sum = 0;
+    	  Vector<Integer> offsets = new Vector<Integer>(size_of_first_elimination_group + 1);
+    	  for (int i = 0; i < residual_blocks_per_e_block.size(); i++) {
+    		   partial_sum += residual_blocks_per_e_block.get(i);
+    		   offsets.add(partial_sum);
+    	  }
+    	  
+    	  if (offsets.get(offsets.size()-1) != residual_blocks.size()) {
+    	      System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
+    	      System.err.println("to the developers.");
+    	      System.err.println("In LexicographicallyOrderResidualBlocks offsets.get(offsets.size()-1) != residual_blocks.size())");
+    	      return false;
+    	  }
 
-    	  CHECK(find(residual_blocks_per_e_block.begin(),
-    	             residual_blocks_per_e_block.end() - 1, 0) !=
-    	        residual_blocks_per_e_block.end())
-    	      << "Congratulations, you found a Ceres bug! Please report this error "
-    	      << "to the developers.";
-
+    	  int value = residual_blocks_per_e_block.indexOf(0);
+    	  if ((value == -1) || (value == residual_blocks_per_e_block.size()-1)) {
+    	      System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
+    	      System.err.println("to the developers.");
+              System.err.println("In LexicographicallyOrderResidualBlocks ((value == -1) || (value == residual_blocks_per_e_block.size()-1))");
+              return false;
+    	  }
     	  // Fill in each bucket with the residual blocks for its corresponding E block.
     	  // Each bucket is individually filled from the back of the bucket to the front
     	  // of the bucket. The filling order among the buckets is dictated by the
@@ -1379,38 +1395,50 @@ enum LineSearchDirectionType {
     	  // from each offset as a residual block is placed in the bucket. When the
     	  // filling is finished, the offset pointerts should have shifted down one
     	  // entry (this is verified below).
-    	  vector<ResidualBlock*> reordered_residual_blocks(
-    	      (*residual_blocks).size(), static_cast<ResidualBlock*>(NULL));
-    	  for (int i = 0; i < residual_blocks->size(); ++i) {
-    	    int bucket = min_position_per_residual[i];
+    	  Vector<ResidualBlock> reordered_residual_blocks = new Vector<ResidualBlock>(residual_blocks.size());
+    	  for (int i = 0; i < residual_blocks.size(); ++i) {
+    		  reordered_residual_blocks.add(null);
+    	  }
+    	  for (int i = 0; i < residual_blocks.size(); ++i) {
+    	    int bucket = min_position_per_residual.get(i);
 
     	    // Decrement the cursor, which should now point at the next empty position.
-    	    offsets[bucket]--;
+    	    int content = offsets.get(bucket);
+    	    offsets.set(bucket,content-1);
 
     	    // Sanity.
-    	    CHECK(reordered_residual_blocks[offsets[bucket]] == NULL)
-    	        << "Congratulations, you found a Ceres bug! Please report this error "
-    	        << "to the developers.";
+    	    if (reordered_residual_blocks.get(offsets.get(bucket)) != null) {
+    	        System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
+    	        System.err.println("to the developers.");
+    	        System.err.println("In LexicographicallyOrderResidualBlocks reordered_residual_blocks.get(offsets.get(bucket)) != null");
+    	        return false;
+    	    }
 
-    	    reordered_residual_blocks[offsets[bucket]] = (*residual_blocks)[i];
+    	    reordered_residual_blocks.set(offsets.get(bucket),residual_blocks.get(i));
     	  }
 
     	  // Sanity check #1: The difference in bucket offsets should match the
     	  // histogram sizes.
     	  for (int i = 0; i < size_of_first_elimination_group; ++i) {
-    	    CHECK_EQ(residual_blocks_per_e_block[i], offsets[i + 1] - offsets[i])
-    	        << "Congratulations, you found a Ceres bug! Please report this error "
-    	        << "to the developers.";
+    	    if(residual_blocks_per_e_block.get(i) != (offsets.get(i + 1) - offsets.get(i))) {
+    	        System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
+    	        System.err.println("to the developers.");
+    	        System.err.println("In LexicographicallyOrderResidualBlocks residual_blocks_per_e_block.get(i) != (offsets.get(i + 1) - offsets.get(i))");
+    	        return false;
+    	    }
     	  }
     	  // Sanity check #2: No NULL's left behind.
     	  for (int i = 0; i < reordered_residual_blocks.size(); ++i) {
-    	    CHECK(reordered_residual_blocks[i] != NULL)
-    	        << "Congratulations, you found a Ceres bug! Please report this error "
-    	        << "to the developers.";
+    	    if (reordered_residual_blocks.get(i) == null) {
+    	        System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
+    	        System.err.println("to the developers.");
+    	        System.err.println("In LexicographicallyOrderResidualBlocks reordered_residual_blocks.get(i) == null");
+    	        return false;
+    	    }
     	  }
 
     	  // Now that the residuals are collected by E block, swap them in place.
-    	  swap(*program->mutable_residual_blocks(), reordered_residual_blocks);*/
+    	  swap(program.mutable_residual_blocks(), reordered_residual_blocks);
     	  return true;
     	}
 
@@ -1952,7 +1980,7 @@ enum LineSearchDirectionType {
 	  //scoped_ptr<Program> reduced_program;
 	  Program reduced_program;
 	  //scoped_ptr<LinearSolver> linear_solver;
-	  //LinearSolver linear_solver;
+	  LinearSolver linear_solver;
 	  //scoped_ptr<IterationCallback> logging_callback;
 	  IterationCallback logging_callback;
 	  //scoped_ptr<IterationCallback> state_updating_callback;
@@ -2099,6 +2127,60 @@ enum LineSearchDirectionType {
     	} // class Options
     	
     } // class LinearSolver
+    
+    public LinearSolver Create(LinearSolver.Options options) {
+    	  if (options.context == null) {
+    		  System.err.println("options.context == null in public LinearSolver Create");
+    		  return null;
+    	  }
+
+    	  switch (options.type) {
+    	    /*case CGNR:
+    	      return new CgnrSolver(options);
+
+    	    case SPARSE_NORMAL_CHOLESKY:
+    	        if (CERES_NO_SUITESPARSE && CERES_NO_CXSPARSE && (!CERES_USE_EIGEN_SPARSE)) {
+    	        return null;
+    	        }
+    	        else {
+		    	      if (options.dynamic_sparsity) {
+		    	        return new DynamicSparseNormalCholeskySolver(options);
+		    	      }
+		
+		    	      return new SparseNormalCholeskySolver(options);
+    	        }
+
+    	    case SPARSE_SCHUR:
+    	    	if (CERES_NO_SUITESPARSE && CERES_NO_CXSPARSE && (!CERES_USE_EIGEN_SPARSE)) {
+        	        return null;
+        	        }
+    	
+    	        else {
+    	          return new SparseSchurComplementSolver(options);
+    	        }
+
+    	    case DENSE_SCHUR:
+    	      return new DenseSchurComplementSolver(options);
+
+    	    case ITERATIVE_SCHUR:
+    	      if (options.use_explicit_schur_complement) {
+    	        return new SparseSchurComplementSolver(options);
+    	      } else {
+    	        return new IterativeSchurComplementSolver(options);
+    	      }
+
+    	    case DENSE_QR:
+    	      return new DenseQRSolver(options);
+
+    	    case DENSE_NORMAL_CHOLESKY:
+    	      return new DenseNormalCholeskySolver(options);*/
+
+    	    default:
+    	       System.err.println("Unknown linear solver type :" + options.type);
+    	      return null;  // MSVC doesn't understand that LOG(FATAL) never returns.
+    	  }
+    	}
+
     
     public LinearSolverType LinearSolverForZeroEBlocks(LinearSolverType linear_solver_type) {
 		  if (!IsSchurType(linear_solver_type)) {
