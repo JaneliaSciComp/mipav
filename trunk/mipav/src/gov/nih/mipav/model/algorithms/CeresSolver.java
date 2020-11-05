@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -507,6 +508,25 @@ enum LineSearchDirectionType {
 		  DENSE_SVD,
 		  SPARSE_QR,
 		};
+		
+		enum LinearSolverTerminationType {
+			  // Termination criterion was met.
+			  LINEAR_SOLVER_SUCCESS,
+
+			  // Solver ran for max_num_iterations and terminated before the
+			  // termination tolerance could be satisfied.
+			  LINEAR_SOLVER_NO_CONVERGENCE,
+
+			  // Solver was terminated due to numerical problems, generally due to
+			  // the linear system being poorly conditioned.
+			  LINEAR_SOLVER_FAILURE,
+
+			  // Solver failed with a fatal error that cannot be recovered from,
+			  // e.g. CHOLMOD ran out of memory when computing the symbolic or
+			  // numeric factorization or an underlying library was called with
+			  // the wrong arguments.
+			  LINEAR_SOLVER_FATAL_ERROR
+			};
 		
 		class CostFunctorExample {
 			public CostFunctorExample() {
@@ -2040,10 +2060,315 @@ enum LineSearchDirectionType {
 	  }
 	}
  
+ class Block {
+	  public int size;
+	  public int position;  // Position along the row/column.
+	  public Block() {
+		  size = -1;
+		  position = -1;
+	  }
+	  public Block(int size_, int position_) {
+		  size = size_;
+		  position = position_; 
+	  }
+
+	  
+	};
+	
+	class Cell {
+		  // Column or row block id as the case maybe.
+		  public int block_id;
+		  // Where in the values array of the jacobian is this cell located.
+		  public int position;
+		  public Cell() {
+			  block_id = -1;
+			  position = -1;
+		  }
+		  public Cell(int block_id_, int position_) {
+		      block_id = block_id_;
+		      position = position_;
+		  } 
+		};
+	
+	class CompressedList {
+		  Block block;
+		  Vector<Cell> cells;
+		  public CompressedList() {
+			  cells = new Vector<Cell>();
+		  }
+
+		  // Construct a CompressedList with the cells containing num_cells
+		  // entries.
+		  public CompressedList(int num_cells) {
+			  cells = new Vector<Cell>(num_cells);
+		  }
+		  
+		};
+ 
+   //typedef CompressedList CompressedRow;
+   class CompressedRowBlockStructure {
+	  public Vector<Block> cols;
+	  public Vector<CompressedList> rows;
+	  public CompressedRowBlockStructure() {
+		  cols = new Vector<Block>();
+		  rows = new Vector<CompressedList>();
+	  }
+	};
+ 
+ abstract class BlockSparseMatrix extends SparseMatrix {
+	  private int num_rows_;
+	  private int num_cols_;
+	  private int num_nonzeros_;
+	  private int max_num_nonzeros_;
+	  //scoped_array<double> values_;
+	  private double values_[];
+	  //scoped_ptr<CompressedRowBlockStructure> block_structure_;
+	  private CompressedRowBlockStructure block_structure_;
+	  // Construct a block sparse matrix with a fully initialized
+	  // CompressedRowBlockStructure objected. The matrix takes over
+	  // ownership of this object and destroys it upon destruction.
+	  //
+	  // TODO(sameeragarwal): Add a function which will validate legal
+	  // CompressedRowBlockStructure objects.
+	  public BlockSparseMatrix(CompressedRowBlockStructure block_structure) {
+		  num_rows_ = 0;
+	      num_cols_ = 0;
+	      num_nonzeros_ = 0;
+	      values_ = null;
+	      block_structure_ = block_structure; 
+	      if (block_structure == null) {
+	    	  System.err.println("In public BlockSparseMatrix block_structure == null");
+	    	  return;
+	      }
+
+	  // Count the number of columns in the matrix.
+	  for (int i = 0; i < block_structure_.cols.size(); ++i) {
+	    num_cols_ += block_structure_.cols.get(i).size;
+	  }
+
+	  // Count the number of non-zero entries and the number of rows in
+	  // the matrix.
+	  for (int i = 0; i < block_structure_.rows.size(); ++i) {
+	    int row_block_size = block_structure_.rows.get(i).block.size;
+	    num_rows_ += row_block_size;
+
+	    Vector<Cell> cells = block_structure_.rows.get(i).cells;
+	    for (int j = 0; j < cells.size(); ++j) {
+	      int col_block_id = cells.get(j).block_id;
+	      int col_block_size = block_structure_.cols.get(col_block_id).size;
+	      num_nonzeros_ += col_block_size * row_block_size;
+	    }
+	  }
+
+	  if (num_rows_ < 0) {
+		  System.err.println("In public BlockSparseMatrix num_rows_ < 0");
+		  return;
+	  }
+	  if (num_cols_ < 0) {
+		  System.err.println("In public BlockSparseMatrix num_cols_ < 0");
+		  return;
+	  }
+	  if (num_nonzeros_ < 0) {
+		  System.err.println("In public BlockSparseMatrix num_nonzeros_ < 0");
+		  return;
+	  }
+	  if (2 <= MAX_LOG_LEVEL) {
+		  Preferences.debug("Allocating values array with " + num_nonzeros_ + " doubles\n",
+				  Preferences.DEBUG_ALGORITHM);
+	  }
+	  values_ = new double[num_nonzeros_];
+	  max_num_nonzeros_ = num_nonzeros_;
+	  }
+
+	  public BlockSparseMatrix() {
+		  
+	  }
+
+	  // Implementation of SparseMatrix interface.
+	  public  void SetZero() {
+          for (int i = 0; i < num_nonzeros_; i++) {
+        	  values_[i] = 0.0;
+          }
+	  }
+	  
+	  public void RightMultiply(double x[], double y[]) {
+		  if (x == null) {
+			  System.err.println("x == null in RightMultiply");
+			  return;
+		  }
+		  if (y == null) {
+			  System.err.println("y == null in RightMultiply");
+			  return;
+		  }
+
+		  for (int i = 0; i < block_structure_.rows.size(); ++i) {
+		    int row_block_pos = block_structure_.rows.get(i).block.position;
+		    int row_block_size = block_structure_.rows.get(i).block.size;
+		    Vector<Cell> cells = block_structure_.rows.get(i).cells;
+		    for (int j = 0; j < cells.size(); ++j) {
+		      int col_block_id = cells.get(j).block_id;
+		      int col_block_size = block_structure_.cols.get(col_block_id).size;
+		      int col_block_pos = block_structure_.cols.get(col_block_id).position;
+		      MatrixVectorMultiply(DYNAMIC, DYNAMIC, 1,
+		          values_, cells.get(j).position, row_block_size, col_block_size,
+		          x, col_block_pos,
+		          y, row_block_pos);
+		    }
+		  }
+
+	  }
+	  public void LeftMultiply(double x[], double y[]) {
+		  if (x == null) {
+			  System.err.println("x == null in LeftMultiply");
+			  return;
+		  }
+		  if (y == null) {
+			  System.err.println("y == null in LeftMultiply");
+			  return;
+		  }
+
+		  for (int i = 0; i < block_structure_.rows.size(); ++i) {
+		    int row_block_pos = block_structure_.rows.get(i).block.position;
+		    int row_block_size = block_structure_.rows.get(i).block.size;
+		    Vector<Cell> cells = block_structure_.rows.get(i).cells;
+		    for (int j = 0; j < cells.size(); ++j) {
+		      int col_block_id = cells.get(j).block_id;
+		      int col_block_size = block_structure_.cols.get(col_block_id).size;
+		      int col_block_pos = block_structure_.cols.get(col_block_id).position;
+		      MatrixTransposeVectorMultiply(DYNAMIC, DYNAMIC, 1,
+		          values_, cells.get(j).position, row_block_size, col_block_size,
+		          x, row_block_pos,
+		          y, col_block_pos);
+		    }
+		  }
+  
+	  }
+	  /*virtual void SquaredColumnNorm(double* x) const;
+	  virtual void ScaleColumns(const double* scale);
+	  virtual void ToDenseMatrix(Matrix* dense_matrix) const;
+	  virtual void ToTextFile(FILE* file) const;
+
+	  virtual int num_rows()         const { return num_rows_;     }
+	  virtual int num_cols()         const { return num_cols_;     }
+	  virtual int num_nonzeros()     const { return num_nonzeros_; }
+	  virtual const double* values() const { return values_.get(); }
+	  virtual double* mutable_values()     { return values_.get(); }
+
+	  void ToTripletSparseMatrix(TripletSparseMatrix* matrix) const;
+	  const CompressedRowBlockStructure* block_structure() const;
+
+	  // Append the contents of m to the bottom of this matrix. m must
+	  // have the same column blocks structure as this matrix.
+	  void AppendRows(const BlockSparseMatrix& m);
+
+	  // Delete the bottom delta_rows_blocks.
+	  void DeleteRowBlocks(int delta_row_blocks);
+
+	  static BlockSparseMatrix* CreateDiagonalMatrix(
+	      const double* diagonal,
+	      const std::vector<Block>& column_blocks);
+
+	  struct RandomMatrixOptions {
+	    RandomMatrixOptions()
+	        : num_row_blocks(0),
+	          min_row_block_size(0),
+	          max_row_block_size(0),
+	          num_col_blocks(0),
+	          min_col_block_size(0),
+	          max_col_block_size(0),
+	          block_density(0.0) {
+	    }
+
+	    int num_row_blocks;
+	    int min_row_block_size;
+	    int max_row_block_size;
+	    int num_col_blocks;
+	    int min_col_block_size;
+	    int max_col_block_size;
+
+	    // 0 < block_density <= 1 is the probability of a block being
+	    // present in the matrix. A given random matrix will not have
+	    // precisely this density.
+	    double block_density;
+
+	    // If col_blocks is non-empty, then the generated random matrix
+	    // has this block structure and the column related options in this
+	    // struct are ignored.
+	    std::vector<Block> col_blocks;
+	  };
+
+	  // Create a random BlockSparseMatrix whose entries are normally
+	  // distributed and whose structure is determined by
+	  // RandomMatrixOptions.
+	  //
+	  // Caller owns the result.
+	  static BlockSparseMatrix* CreateRandomMatrix(
+	      const RandomMatrixOptions& options);
+      */
+	  
+	};
+ 
+ abstract class SparseMatrix extends LinearOperator {
+
+	  // y += Ax;
+	  public abstract void RightMultiply(double x[], double y[]);
+	  // y += A'x;
+	  public abstract void LeftMultiply(double x[], double y[]);
+
+	  // In MATLAB notation sum(A.*A, 1)
+	  public abstract void SquaredColumnNorm(double x[]);
+	  // A = A * diag(scale)
+	  public abstract void ScaleColumns(double scale[]);
+
+	  // A = 0. A->num_nonzeros() == 0 is true after this call. The
+	  // sparsity pattern is preserved.
+	  public abstract void SetZero();
+
+	  // Resize and populate dense_matrix with a dense version of the
+	  // sparse matrix.
+	  public abstract void ToDenseMatrix(Matrix dense_matrix);
+
+	  // Write out the matrix as a sequence of (i,j,s) triplets. This
+	  // format is useful for loading the matrix into MATLAB/octave as a
+	  // sparse matrix.
+	  public abstract void ToTextFile(File file);
+
+	  // Accessors for the values array that stores the entries of the
+	  // sparse matrix. The exact interpreptation of the values of this
+	  // array depends on the particular kind of SparseMatrix being
+	  // accessed.
+	  public abstract double[] mutable_values();
+	  public abstract double[] values();
+
+	  public abstract int num_rows();
+	  public abstract int num_cols();
+	  public abstract int num_nonzeros();
+	};
+ 
+		//This is an abstract base class for linear operators. It supports
+		//access to size information and left and right multiply operators.
+		abstract class LinearOperator {
+		public LinearOperator() {
+			
+		}
+		
+		// y = y + Ax;
+		public abstract void RightMultiply(double x[], double y[]);
+		// y = y + A'x;
+		public abstract void LeftMultiply(double x[], double y[]);
+		
+		public abstract int num_rows();
+		public abstract int num_cols();
+		};
+ 
     class LinearSolver {
     	public Options options;
+    	public Summary summary;
+    	public PerSolveOptions perSolveOptions;
     	public LinearSolver() {
     		options = new Options();
+    		summary = new Summary();
+    		perSolveOptions = new PerSolveOptions();
     	}
     	
     	class Options {
@@ -2126,6 +2451,118 @@ enum LineSearchDirectionType {
     	    }
     	} // class Options
     	
+    	// Summary of a call to the Solve method. We should move away from
+    	  // the true/false method for determining solver success. We should
+    	  // let the summary object do the talking.
+    	  class Summary {
+    		double residual_norm;
+      	    int num_iterations;
+      	    LinearSolverTerminationType termination_type;
+      	    String message[];
+    	    public Summary() {
+    	        residual_norm = 0.0;
+    	        num_iterations = -1;
+    	        termination_type =LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+    	    }
+
+    	    
+    	  } // class Summmary
+    	  
+    	  // Options for the Solve method.
+    	  class PerSolveOptions {
+    		// This option only makes sense for unsymmetric linear solvers
+      	    // that can solve rectangular linear systems.
+      	    //
+      	    // Given a matrix A, an optional diagonal matrix D as a vector,
+      	    // and a vector b, the linear solver will solve for
+      	    //
+      	    //   | A | x = | b |
+      	    //   | D |     | 0 |
+      	    //
+      	    // If D is null, then it is treated as zero, and the solver returns
+      	    // the solution to
+      	    //
+      	    //   A x = b
+      	    //
+      	    // In either case, x is the vector that solves the following
+      	    // optimization problem.
+      	    //
+      	    //   arg min_x ||Ax - b||^2 + ||Dx||^2
+      	    //
+      	    // Here A is a matrix of size m x n, with full column rank. If A
+      	    // does not have full column rank, the results returned by the
+      	    // solver cannot be relied on. D, if it is not null is an array of
+      	    // size n.  b is an array of size m and x is an array of size n.
+      	    private double D[];
+
+      	    // This option only makes sense for iterative solvers.
+      	    //
+      	    // In general the performance of an iterative linear solver
+      	    // depends on the condition number of the matrix A. For example
+      	    // the convergence rate of the conjugate gradients algorithm
+      	    // is proportional to the square root of the condition number.
+      	    //
+      	    // One particularly useful technique for improving the
+      	    // conditioning of a linear system is to precondition it. In its
+      	    // simplest form a preconditioner is a matrix M such that instead
+      	    // of solving Ax = b, we solve the linear system AM^{-1} y = b
+      	    // instead, where M is such that the condition number k(AM^{-1})
+      	    // is smaller than the conditioner k(A). Given the solution to
+      	    // this system, x = M^{-1} y. The iterative solver takes care of
+      	    // the mechanics of solving the preconditioned system and
+      	    // returning the corrected solution x. The user only needs to
+      	    // supply a linear operator.
+      	    //
+      	    // A null preconditioner is equivalent to an identity matrix being
+      	    // used a preconditioner.
+      	    private LinearOperator preconditioner;
+
+
+      	    // The following tolerance related options only makes sense for
+      	    // iterative solvers. Direct solvers ignore them.
+
+      	    // Solver terminates when
+      	    //
+      	    //   |Ax - b| <= r_tolerance * |b|.
+      	    //
+      	    // This is the most commonly used termination criterion for
+      	    // iterative solvers.
+      	    private double r_tolerance;
+
+      	    // For PSD matrices A, let
+      	    //
+      	    //   Q(x) = x'Ax - 2b'x
+      	    //
+      	    // be the cost of the quadratic function defined by A and b. Then,
+      	    // the solver terminates at iteration i if
+      	    //
+      	    //   i * (Q(x_i) - Q(x_i-1)) / Q(x_i) < q_tolerance.
+      	    //
+      	    // This termination criterion is more useful when using CG to
+      	    // solve the Newton step. This particular convergence test comes
+      	    // from Stephen Nash's work on truncated Newton
+      	    // methods. References:
+      	    //
+      	    //   1. Stephen G. Nash & Ariela Sofer, Assessing A Search
+      	    //      Direction Within A Truncated Newton Method, Operation
+      	    //      Research Letters 9(1990) 219-221.
+      	    //
+      	    //   2. Stephen G. Nash, A Survey of Truncated Newton Methods,
+      	    //      Journal of Computational and Applied Mathematics,
+      	    //      124(1-2), 45-59, 2000.
+      	    //
+      	    private double q_tolerance;
+    	    public PerSolveOptions() {
+    	        D = null;
+    	        preconditioner = null;
+    	        r_tolerance = 0.0;
+    	        q_tolerance = 0.0;
+    	    }
+
+    	    
+    	  } // class PerSolveOptions
+
+    	
     } // class LinearSolver
     
     public LinearSolver Create(LinearSolver.Options options) {
@@ -2180,6 +2617,75 @@ enum LineSearchDirectionType {
     	      return null;  // MSVC doesn't understand that LOG(FATAL) never returns.
     	  }
     	}
+    
+ // A conjugate gradients on the normal equations solver. This directly solves
+ // for the solution to
+ //
+ //   (A^T A + D^T D)x = A^T b
+ //
+ // as required for solving for x in the least squares sense. Currently only
+ // block diagonal preconditioning is supported.
+ /*class CgnrSolver extends TypedLinearSolver<BlockSparseMatrix> {
+     private LinearSolver.Options options_;
+     //scoped_ptr<Preconditioner> preconditioner_;
+     private Preconditioner preconditioner_;
+  public:
+   explicit CgnrSolver(const LinearSolver::Options& options);
+   virtual Summary SolveImpl(
+       BlockSparseMatrix* A,
+       const double* b,
+       const LinearSolver::PerSolveOptions& per_solve_options,
+       double* x);
+
+  
+ };*/
+    
+	 // Linear solvers that depend on acccess to the low level structure of
+	 // a SparseMatrix.
+	 // typedef TypedLinearSolver<BlockSparseMatrix>         BlockSparseMatrixSolver;          // NOLINT
+	 // typedef TypedLinearSolver<CompressedRowSparseMatrix> CompressedRowSparseMatrixSolver;  // NOLINT
+	 // typedef TypedLinearSolver<DenseSparseMatrix>         DenseSparseMatrixSolver;          // NOLINT
+	 // typedef TypedLinearSolver<TripletSparseMatrix>       TripletSparseMatrixSolver;        // NOLINT
+    abstract class TypedLinearSolver<MatrixType> extends LinearSolver {
+    	private ExecutionSummary execution_summary_;
+     //public:
+      //virtual LinearSolver::Summary Solve(
+    	public LinearSolver.Summary Solve(
+          LinearOperator A,
+          double b[],
+          LinearSolver.PerSolveOptions per_solve_options,
+          double x[]) {
+        new ScopedExecutionTimer("LinearSolver::Solve", execution_summary_);
+        if (A == null) {
+        	System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve LinearOperator A == null");
+        	return null;
+        }
+        if (b == null) {
+        	System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double b[] == null");
+        	return null;
+        }
+        if (x == null) {
+        	System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double x[] == null");
+        	return null;
+        }
+        //return SolveImpl(down_cast<MatrixType*>(A), b, per_solve_options, x);
+        return SolveImpl((MatrixType)A, b, per_solve_options, x);
+      }
+
+      //virtual std::map<std::string, CallStatistics> Statistics() const {
+      public HashMap<String, CallStatistics> Statistics() {
+        return execution_summary_.statistics();
+      }
+
+     public abstract LinearSolver.Summary SolveImpl(
+          MatrixType A,
+          double b[],
+          LinearSolver.PerSolveOptions per_solve_options,
+          double x[]);
+
+      
+    };
+
 
     
     public LinearSolverType LinearSolverForZeroEBlocks(LinearSolverType linear_solver_type) {
@@ -2512,12 +3018,29 @@ enum LineSearchDirectionType {
     	    mutex_.unlock();
     	  }
 
-    	  public Map<String, CallStatistics> statistics() {
+    	  public HashMap<String, CallStatistics> statistics() {
     	    return statistics_;
     	  }
 
     	 
-    	};
+    	} // class ExecutionSummary
+    	
+    	class ScopedExecutionTimer {
+    		private double start_time_;
+      		private String name_;
+      		private ExecutionSummary summary_;
+    		 public ScopedExecutionTimer(String name, ExecutionSummary summary) {
+    		      start_time_ = 1.0E-3*System.currentTimeMillis();
+    		      name_ = name;
+    		      summary_ = summary;
+    		 }
+
+    		 public void finalize() {
+    		    summary_.IncrementTimeBy(name_, 1.0E-3*System.currentTimeMillis() - start_time_);
+    		 }
+
+    		 
+    	} // class ScopedExecutionTimer
 
      
      /*template<typename EvaluatePreparer,
@@ -5810,6 +6333,100 @@ enum LineSearchDirectionType {
 	    	    }
 	    	  }
 	    	}
+	    
+	    public void MatrixTransposeVectorMultiply(int kRowA,
+                int kColA,
+                int kOperation,
+                double[] A,
+                int Astart,
+                int num_row_a,
+                int num_col_a,
+                double[] b,
+                int bstart,
+                double[] c,
+                int cstart) {
+	    	if (num_row_a <= 0) {
+	    		  System.err.println("In MatrixTransposeVectorMultiply num_row_a <= 0");
+	    		  return;
+	    	  }
+	    	  if (num_col_a <= 0) {
+	    		  System.err.println("In MatrixTransposeVectorMultiply num_col_a <= 0");
+	    		  return;
+	    	  }
+	    	  if ((kRowA != DYNAMIC) && (kRowA != num_row_a)) {
+	    		  System.err.println("In MatrixTransposeVectorMultiply (kRowA != DYNAMIC) && (kRowA != num_row_a)");
+	    		  return;
+	    	  }
+	    	  if ((kColA != DYNAMIC) && (kColA != num_col_a)) {
+	    		  System.err.println("In MatrixTransposeVectorMultiply (kColA != DYNAMIC) && (kColA != num_col_a)");
+	    		  return;
+	    	  }
+	    	  
+	    	  int NUM_ROW_A = (kRowA != DYNAMIC ? kRowA : num_row_a);
+	    	  int NUM_COL_A = (kColA != DYNAMIC ? kColA : num_col_a);
+
+	    	  for (int row = 0; row < NUM_COL_A; ++row) {
+	    	    double tmp = 0.0;
+	    	    for (int col = 0; col < NUM_ROW_A; ++col) {
+	    	      tmp += A[Astart + col * NUM_COL_A + row] * b[bstart + col];
+	    	    }
+
+	    	    if (kOperation > 0) {
+	    	      c[cstart + row] += tmp;
+	    	    } else if (kOperation < 0) {
+	    	      c[cstart + row] -= tmp;
+	    	    } else {
+	    	      c[cstart + row] = tmp;
+	    	    }
+	    	  }
+	    }
+	    
+	    public void MatrixVectorMultiply(int kRowA,
+	    		                         int kColA,
+	    		                         int kOperation,
+	    		                         double[] A,
+	    		                         int Astart,
+	                                     int num_row_a,
+	                                     int num_col_a,
+	                                     double[] b,
+	                                     int bstart,
+	                                     double[] c,
+	                                     int cstart) {
+	    	  if (num_row_a <= 0) {
+	    		  System.err.println("In MatrixVectorMultiply num_row_a <= 0");
+	    		  return;
+	    	  }
+	    	  if (num_col_a <= 0) {
+	    		  System.err.println("In MatrixVectorMultiply num_col_a <= 0");
+	    		  return;
+	    	  }
+	    	  if ((kRowA != DYNAMIC) && (kRowA != num_row_a)) {
+	    		  System.err.println("In MatrixVectorMultiply (kRowA != DYNAMIC) && (kRowA != num_row_a)");
+	    		  return;
+	    	  }
+	    	  if ((kColA != DYNAMIC) && (kColA != num_col_a)) {
+	    		  System.err.println("In MatrixVectorMultiply (kColA != DYNAMIC) && (kColA != num_col_a)");
+	    		  return;
+	    	  }
+
+	    	  int NUM_ROW_A = (kRowA != DYNAMIC ? kRowA : num_row_a);
+	    	  int NUM_COL_A = (kColA != DYNAMIC ? kColA : num_col_a);
+
+	    	  for (int row = 0; row < NUM_ROW_A; ++row) {
+	    	    double tmp = 0.0;
+	    	    for (int col = 0; col < NUM_COL_A; ++col) {
+	    	      tmp += A[Astart + row * NUM_COL_A + col] * b[bstart + col];
+	    	    }
+
+	    	    if (kOperation > 0) {
+	    	      c[cstart + row] += tmp;
+	    	    } else if (kOperation < 0) {
+	    	      c[cstart + row] -= tmp;
+	    	    } else {
+	    	      c[cstart + row] = tmp;
+	    	    }	
+	    	  }
+	    }
 	    
 	    public void MatrixMatrixMultiply(int kOperation, double A[], int NUM_ROW_A, int NUM_COL_A,
 	    		double B[], int NUM_ROW_B, int NUM_COL_B,
