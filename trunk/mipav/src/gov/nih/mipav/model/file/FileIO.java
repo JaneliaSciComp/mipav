@@ -3276,7 +3276,7 @@ public class FileIO {
                     file.mkdirs();
                 }
 
-                file = new File(fileDir + fileName);
+                file = new File(fileDir + File.separator + fileName);
 
                 compressedName = fileName;
                 compressedDir = fileDir;
