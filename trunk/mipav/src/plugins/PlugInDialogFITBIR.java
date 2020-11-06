@@ -84,6 +84,8 @@ public class PlugInDialogFITBIR extends JFrame
     private ViewTableModel structTableModel;
 
     private String outputDirBase;
+    
+    private int csvRecordCount = -1;
 
     private String csvFileDir;
 
@@ -2175,11 +2177,11 @@ public class PlugInDialogFITBIR extends JFrame
     }
 
     private void readDwiFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
-        // TODO - nothing to extract right now?
+        // nothing to extract right now
     }
 
     private void readDwiFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData) {
-        // TODO - nothing to extract right now?
+        // nothing to extract right now
     }
 
     private void setBvalBvecFields(ArrayList<String> recordRepeat, Vector<File> fileList) {
@@ -2834,35 +2836,39 @@ public class PlugInDialogFITBIR extends JFrame
             final long csvReadStartTime = System.currentTimeMillis();
             final int progressInc = 95 / recordList.size();
             final int rowsPerInc = (recordList.size() / 95) + 1;
-            int i = 1;
+            int recordNum = 1;
+            int csvExtraRows = 2;
             Vector<Vector<FileDicomTag>> csvProblemTagList = new Vector<Vector<FileDicomTag>>(recordList.size());
             Vector<String> csvProblemFileDirList = new Vector<String>(recordList.size());
             Vector<String> csvProblemFileNameList = new Vector<String>(recordList.size());
             for (final ArrayList<ArrayList<String>> record : recordList) {
-                progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
-                System.out.println("Reading CSV row " + i + " of " + recordList.size());
+                progressBar.setMessage("Reading CSV record " + recordNum + " of " + recordList.size() + " (row " + (recordNum + csvExtraRows) + ")");
+                System.out.println("Reading CSV record " + recordNum + " of " + recordList.size() + " (row " + (recordNum + csvExtraRows) + ")");
 
                 if (readErrorFileOut != null) {
-                    readErrorFileOut.println("Reading CSV row " + i + " of " + recordList.size());
+                    readErrorFileOut.println("Reading CSV record " + recordNum + " of " + recordList.size() + " (row " + (recordNum + csvExtraRows) + ")");
                 }
 
                 InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
                 if (progressInc > 0) {
                     progressBar.updateValue(progressBar.getValue() + progressInc);
-                } else if ( (i % rowsPerInc) == 0) {
+                } else if ( (recordNum % rowsPerInc) == 0) {
                     progressBar.updateValue(progressBar.getValue() + 1);
                 }
 
                 // change i counter to 0-based for problem lists
-                csvProblemTagList.add(i - 1, csvDialog.getProblemTags());
-                csvProblemFileDirList.add(i - 1, csvDialog.getProblemFileDir());
-                csvProblemFileNameList.add(i - 1, csvDialog.getProblemFileName());
+                csvProblemTagList.add(recordNum - 1, csvDialog.getProblemTags());
+                csvProblemFileDirList.add(recordNum - 1, csvDialog.getProblemFileDir());
+                csvProblemFileNameList.add(recordNum - 1, csvDialog.getProblemFileName());
 
-                i++;
+                recordNum++;
+                csvExtraRows += (record.size() - 1);
             }
             final long csvReadEndTime = System.currentTimeMillis();
             System.out.println("CSV input read took " + ( (csvReadEndTime - csvReadStartTime) / 1000) + " seconds (" + recordList.size() + " records)");
             System.out.println();
+            
+            csvRecordCount = recordList.size();
 
             for (int j = 0; j < csvProblemTagList.size(); j++) {
                 final Vector<FileDicomTag> problemTags = csvProblemTagList.get(j);
@@ -3450,7 +3456,6 @@ public class PlugInDialogFITBIR extends JFrame
 
                         // if MR, try to put the pulse sequence type into the zip name
                         if (isMRImagingStructure(dsName)) {
-                            // TODO
                             String pulseSeq = "";
                             boolean found = false;
                             final FormStructureData fsData = fsDataList.get(i);
@@ -4174,7 +4179,6 @@ public class PlugInDialogFITBIR extends JFrame
                     MipavUtil.displayError("Failed to write thumbnail image: " + name);
                 }
             } catch (IOException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
 
@@ -4190,7 +4194,6 @@ public class PlugInDialogFITBIR extends JFrame
                     MipavUtil.displayError("Failed to write thumbnail image: " + name);
                 }
             } catch (IOException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
 
@@ -6393,7 +6396,7 @@ public class PlugInDialogFITBIR extends JFrame
                         }
                     }
 
-                    // TODO if bval file given, try to read additional info
+                    // if bval file given, try to read additional info
                     if (bvalFile != null) {
                         HashMap<String, String> bvalDeTable = readBvalFile(bvalFile);
 
@@ -7838,8 +7841,6 @@ public class PlugInDialogFITBIR extends JFrame
 
         private void extractDicomSpectroscopyHeaderInfo(HashMap<String, String> extractedFields, FileInfoDicom fileInfoDicom) {
             if (isMRModality(fileInfoDicom, fsData.getStructInfo().getShortName()) && isSpectroscopyImagingStructure(fsData.getStructInfo().getShortName())) {
-                // TODO
-
                 String seriesDesc = getTagValue(fileInfoDicom, "0008,103E");
                 String protocolName = getTagValue(fileInfoDicom, "0018,1030");
 
@@ -8167,7 +8168,7 @@ public class PlugInDialogFITBIR extends JFrame
                                 previewImgPanel.validate();
                                 previewImgPanel.repaint();
                             } else {
-                                // TODO: read spect header, map onto data elements
+                                // read spect header, map onto data elements
                                 int[] extents = new int[] {256, 256};
 
                                 if (isMultiFile) {
@@ -8290,7 +8291,6 @@ public class PlugInDialogFITBIR extends JFrame
                             srcImage.disposeLocal();
                             srcImage = null;
                         } else if (isSpectroscopy) {
-                            // TODO
                             // basic check that image data is de-identified
                             Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(spectroscopyHeaderList);
                             if (problemTags != null) {
@@ -8325,7 +8325,7 @@ public class PlugInDialogFITBIR extends JFrame
                         }
                     }
                 } else if (isImagingStructure(dataStructureName) && isBValFileElement(groupName, deName)) {
-                    // TODO get bval file, read it, map onto data elements, and set GUI components
+                    // get bval file, read it, map onto data elements, and set GUI components
                     final JFileChooser chooser = new JFileChooser();
                     chooser.setDialogTitle("Choose BVal file");
                     chooser.setMultiSelectionEnabled(false);
@@ -9680,6 +9680,12 @@ public class PlugInDialogFITBIR extends JFrame
     }
 
     private boolean checkRecordsForSubmission() {
+        // when running from CSV, check to make sure that the number of records in the final list matches the number read in from the CSV
+        if (csvRecordCount != -1 && csvRecordCount != structTableModel.getRowCount()) {
+            MipavUtil.displayError("Not all records from the selected CSV were successfully processed. Contact the Operations or Imaging Team for help debugging the issue. " + structTableModel.getRowCount() + " / " + csvRecordCount);
+            return false;
+        }
+        
         // check that required fields have some value
         final int numRows = structTableModel.getRowCount();
         for (int i = 0; i < numRows; i++) {
@@ -9805,7 +9811,6 @@ public class PlugInDialogFITBIR extends JFrame
 
     private void setFormImpliedRecordDataElements(final FormStructureData fsData, final ModelImage img, final ArrayList<String> repeatValues) {
         if (isFMRIImagingStructure(fsData.getStructInfo().getShortName())) {
-            // TODO
             boolean foundDE = false;
             for (int i = 0; i < csvFieldNames.size(); i++) {
                 if (csvFieldNames.get(i).equalsIgnoreCase(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME)) {
@@ -9821,7 +9826,6 @@ public class PlugInDialogFITBIR extends JFrame
                 repeatValues.add("fMRI");
             }
         } else if (isDtiImagingStructure(fsData.getStructInfo().getShortName())) {
-            // TODO
             boolean foundDE = false;
             for (int i = 0; i < csvFieldNames.size(); i++) {
                 if (csvFieldNames.get(i).equalsIgnoreCase(IMG_MR_GROUP + "." + IMG_PULSE_SEQ_ELEMENT_NAME)) {
