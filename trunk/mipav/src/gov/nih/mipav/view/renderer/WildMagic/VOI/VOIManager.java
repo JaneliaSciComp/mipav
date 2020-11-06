@@ -1302,13 +1302,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{      
 		if ( !isActive() )
 		{
-			System.err.println("mouseMoved " + "not active");
+			//System.err.println("mouseMoved " + "not active");
 			return;
 		}
 		// On mouse move, if the mode is draw: set the cursor depending on the draw mode:
 		if ( m_bDrawVOI )
 		{
-			System.err.println("mouseMoved " + "draw");
+			//System.err.println("mouseMoved " + "draw");
 			// If the user is adding an annotation, set the cursor the the textCursor:
 			if ( m_iDrawType == TEXT )
 			{
@@ -1340,7 +1340,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		// Show any selected contours:
 		if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
 		{
-			System.err.println("mouseMoved " + "select");
+			//System.err.println("mouseMoved " + "select");
 			showSelectedVOI( kEvent );
 		}
 		// The levelset voi is created during a mouse moved event:
@@ -6115,14 +6115,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 	protected void showSelectedVOI( MouseEvent kEvent )
 	{
-		System.err.println("showSelectedVOI");
+		//System.err.println("showSelectedVOI");
 		
 		int iX = kEvent.getX();
 		int iY = kEvent.getY(); 
 		VOIVector kVOIs = m_kImageActive.getVOIs();
 		if ( kVOIs == null || kVOIs.size() <= 0 )
 		{
-			System.err.println("showSelectedVOI no VOIs");
+			//System.err.println("showSelectedVOI no VOIs");
 			return;
 		}
 		m_kComponent.removeMouseListener(m_kPopupPt);
@@ -6134,7 +6134,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
 			{
-				System.err.println("showSelectedVOI setting to crosshairCursor");
+				//System.err.println("showSelectedVOI setting to crosshairCursor");
 				m_kParent.setCursor(MipavUtil.crosshairCursor);
 				m_iNearStatus = NearBoundPoint;
 				m_kParent.updateDisplay();
@@ -6144,20 +6144,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{
 				if ( m_kCurrentVOI.getType() == VOI.POINT )
 				{
-					System.err.println("showSelectedVOI setting to moveCursor");
+					//System.err.println("showSelectedVOI setting to moveCursor");
 					m_kParent.setCursor(MipavUtil.moveCursor);
 					m_iNearStatus = NearNone;
 				}
 				else if ( kEvent.isShiftDown() )
 				{
-					System.err.println("showSelectedVOI setting to resizeCursor");
+					//System.err.println("showSelectedVOI setting to resizeCursor");
 					m_kParent.setCursor(MipavUtil.resizeCursor);
 					m_iNearStatus = NearPoint;
 					m_kParent.updateDisplay();
 				}
 				else
 				{
-					System.err.println("showSelectedVOI setting to crosshairCursor");
+					//System.err.println("showSelectedVOI setting to crosshairCursor");
 					m_kParent.setCursor(MipavUtil.crosshairCursor);
 					m_iNearStatus = NearPoint;
 					m_kParent.updateDisplay();
@@ -6169,14 +6169,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				if ( (m_kCurrentVOI.getType() == VOI.CONTOUR) ||
 						(m_kCurrentVOI.getType() == VOI.POLYLINE) )
 				{
-					System.err.println("showSelectedVOI setting to addPointCursor");
+					//System.err.println("showSelectedVOI setting to addPointCursor");
 					m_kParent.setCursor(MipavUtil.addPointCursor);
 					m_iNearStatus = NearLine;
 					m_kParent.updateDisplay();
 				}
 				else
 				{
-					System.err.println("showSelectedVOI setting to moveCursor");
+					//System.err.println("showSelectedVOI setting to moveCursor");
 					m_kParent.setCursor(MipavUtil.moveCursor);
 					m_iNearStatus = NearNone;
 				}
@@ -6196,7 +6196,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     						contains( kVOI3D, iX, iY, m_kDrawingContext.getSlice() ) )
     				{
     					m_iNearStatus = NearNone;
-    					System.err.println("showSelectedVOI setting to move cursor");
+    					//System.err.println("showSelectedVOI setting to move cursor");
     					m_kParent.setCursor(MipavUtil.moveCursor);
     					return;
     				}
@@ -6204,7 +6204,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			}
 		}
 		m_iNearStatus = NearNone;
-		System.err.println("showSelectedVOI setting to default cursor");
+		//System.err.println("showSelectedVOI setting to default cursor");
 		m_kParent.setCursor(MipavUtil.defaultCursor);
 		// not: m_kParent.setDefaultCursor() which changes the cursorMode...
 	}
