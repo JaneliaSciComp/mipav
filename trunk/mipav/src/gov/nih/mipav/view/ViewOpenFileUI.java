@@ -472,6 +472,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             try {
                 fileIO = new FileIO();
                 fileName = openedFiles[k].getName();
+                if (openedFiles[k].getParent() != null) {
+                    directory = openedFiles[k].getParent() + File.separator;
+                }
                 image = fileIO.readImage(fileName, directory, multiFile, null);
 
                 if (image == null) {
