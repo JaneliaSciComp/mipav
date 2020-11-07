@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
@@ -1722,7 +1723,7 @@ public abstract class CeresSolver {
 		}
 
 		public void AddEvent(String event_name) {
-			if (3 <= MAX_LOG_LEVEL) {
+			if (3 > MAX_LOG_LEVEL) {
 				return;
 			}
 
@@ -1978,7 +1979,7 @@ public abstract class CeresSolver {
 		}
 	};
 
-	abstract class BlockSparseMatrix extends SparseMatrix {
+	class BlockSparseMatrix extends SparseMatrix {
 		private int num_rows_;
 		private int num_cols_;
 		private int num_nonzeros_;
@@ -2195,15 +2196,8 @@ public abstract class CeresSolver {
 				return null;
 			}
 
-			double array[][] = dense_matrix.getArray();
-			if ((array.length != num_rows_) || (array[0].length != num_cols_)) {
-				array = new double[num_rows_][num_cols_];
-			}
-			for (int row = 0; row < num_rows_; row++) {
-				for (int col = 0; col < num_cols_; col++) {
-					array[row][col] = 0.0;
-				}
-			}
+			double array[][] = new double[num_rows_][num_cols_];
+			
 
 			for (int i = 0; i < block_structure_.rows.size(); ++i) {
 				int row_block_pos = block_structure_.rows.get(i).block.position;
@@ -2365,11 +2359,6 @@ public abstract class CeresSolver {
 			  }	  
 		  }
 
-		  /*static BlockSparseMatrix* CreateDiagonalMatrix(
-		      const double* diagonal,
-		      const std::vector<Block>& column_blocks);
-		      */
-
 		  class RandomMatrixOptions {
 			  public int num_row_blocks;
 			  public int min_row_block_size;
@@ -2399,19 +2388,452 @@ public abstract class CeresSolver {
 		    }
 
 		    
-		  };
+		  } // class RandomMatrixOptions
 
-		  // Create a random BlockSparseMatrix whose entries are normally
-		  // distributed and whose structure is determined by
-		  // RandomMatrixOptions.
-		  //
-		  // Caller owns the result.
-		  /*static BlockSparseMatrix* CreateRandomMatrix(
-		      const RandomMatrixOptions& options);
-          */
-		
+		 
+	} // class BlockSparseMatrix extends SparseMatrix
+	
+	public BlockSparseMatrix CreateDiagonalMatrix(double diagonal[], Vector<Block> column_blocks) {
+		  // Create the block structure for the diagonal matrix.
+		  CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+		  bs.cols = column_blocks;
+		  int position = 0;
+		  for (int i = 0; i < column_blocks.size(); i++) {
+			  bs.rows.add(new CompressedList(1));
+		  }
+		  for (int i = 0; i < column_blocks.size(); ++i) {
+		    CompressedList row = bs.rows.get(i);
+		    row.block = column_blocks.get(i);
+		    Cell cell = row.cells.get(0);
+		    cell.block_id = i;
+		    cell.position = position;
+		    position += row.block.size * row.block.size;
+		  }
 
-	};
+		  // Create the BlockSparseMatrix with the given block structure.
+		  BlockSparseMatrix matrix = new BlockSparseMatrix(bs);
+		  matrix.SetZero();
+
+		  // Fill the values array of the block sparse matrix.
+		  int diagonal_offset = 0;
+		  int values_offset = 0;
+		  double values[] = matrix.mutable_values();
+		  for (int i = 0; i < column_blocks.size(); ++i) {
+		    int size = column_blocks.get(i).size;
+		    for (int j = 0; j < size; ++j) {
+		      // (j + 1) * size is compact way of accessing the (j,j) entry.
+		      values[values_offset + j * (size + 1)] = diagonal[diagonal_offset + j];
+		    }
+		    diagonal_offset += size;
+		    values_offset += size * size;
+		  }
+
+		  return matrix;
+		}
+	
+	
+	// Create a random BlockSparseMatrix whose entries are normally
+	// distributed and whose structure is determined by
+	// RandomMatrixOptions.
+	public BlockSparseMatrix CreateRandomMatrix(BlockSparseMatrix.RandomMatrixOptions options) {
+		  if (options.num_row_blocks <= 0) {
+			  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.num_row_blocks <= 0");
+			  return null;
+		  }
+		  if (options.min_row_block_size <= 0) {
+			  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.min_row_block_size <= 0");
+			  return null;
+		  }
+		  if (options.max_row_block_size <= 0) {
+			  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.max_row_block_size <= 0");
+			  return null;
+		  }
+		  if (options.min_row_block_size > options.max_row_block_size) {
+			  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.min_row_block_size > options.max_row_block_size");
+			  return null;  
+		  }
+		  if (options.block_density <= 0) {
+			  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.block_density <= 0");
+			  return null;
+		  }
+		  if (options.block_density > 1.0) {
+			  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.block_density > 1.0");
+			  return null;  
+		  }
+
+		  CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+		  if (options.col_blocks.isEmpty()) {
+			  if (options.num_col_blocks <= 0) {
+				  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.num_col_blocks <= 0");
+				  return null;
+			  }
+			  if (options.min_col_block_size <= 0) {
+				  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.min_col_block_size <= 0");
+				  return null;
+			  }
+			  if (options.max_col_block_size <= 0) {
+				  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.max_col_block_size <= 0");
+				  return null;
+			  }
+			  if (options.min_col_block_size > options.max_col_block_size) {
+				  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.min_col_block_size > options.max_col_block_size");
+				  return null;  
+			  }
+
+		    // Generate the col block structure.
+		    int col_block_position = 0;
+		    for (int i = 0; i < options.num_col_blocks; ++i) {
+		      // Generate a random integer in [min_col_block_size, max_col_block_size]
+		      int delta_block_size =
+		          Uniform(options.max_col_block_size - options.min_col_block_size);
+		      int col_block_size = options.min_col_block_size + delta_block_size;
+		      bs.cols.add(new Block(col_block_size, col_block_position));
+		      col_block_position += col_block_size;
+		    }
+		  } else {
+		    bs.cols = options.col_blocks;
+		  }
+
+		  boolean matrix_has_blocks = false;
+		  while (!matrix_has_blocks) {
+			if (1 <= MAX_LOG_LEVEL) {
+				Preferences.debug("Clearing\n", Preferences.DEBUG_ALGORITHM);
+			}
+		    bs.rows.clear();
+		    int row_block_position = 0;
+		    int value_position = 0;
+		    for (int r = 0; r < options.num_row_blocks; ++r) {
+
+		      int delta_block_size =
+		          Uniform(options.max_row_block_size - options.min_row_block_size);
+		      int row_block_size = options.min_row_block_size + delta_block_size;
+		      bs.rows.add(new CompressedList());
+		      CompressedList row = bs.rows.get(bs.rows.size()-1);
+		      row.block.size = row_block_size;
+		      row.block.position = row_block_position;
+		      row_block_position += row_block_size;
+		      for (int c = 0; c < bs.cols.size(); ++c) {
+		        if (RandDouble() > options.block_density) continue;
+
+		        row.cells.add(new Cell());
+		        Cell cell = row.cells.get(row.cells.size()-1);
+		        cell.block_id = c;
+		        cell.position = value_position;
+		        value_position += row_block_size * bs.cols.get(c).size;
+		        matrix_has_blocks = true;
+		      }
+		    }
+		  }
+
+		  BlockSparseMatrix matrix = new BlockSparseMatrix(bs);
+		  double values[] = matrix.mutable_values();
+		  for (int i = 0; i < matrix.num_nonzeros(); ++i) {
+		    values[i] = RandNormal();
+		  }
+
+		  return matrix;
+		} // BlockSparseMatrix CreateRandomMatrix
+	
+	// An implementation of the SparseMatrix interface to store and
+	// manipulate sparse matrices in triplet (i,j,s) form.  This object is
+	// inspired by the design of the cholmod_triplet struct used in the
+	// SuiteSparse package and is memory layout compatible with it.
+	/*class TripletSparseMatrix extends SparseMatrix {
+		  public RandomMatrixOptions randomMatrixOptions;
+		  private int num_rows_;
+		  private int num_cols_;
+		  private int max_num_nonzeros_;
+		  private int num_nonzeros_;
+
+		  // The data is stored as three arrays. For each i, values_[i] is
+		  // stored at the location (rows_[i], cols_[i]). If the there are
+		  // multiple entries with the same (rows_[i], cols_[i]), the values_
+		  // entries corresponding to them are summed up.
+		  //scoped_array<int> rows_;
+		  private int rows_[];
+		  //scoped_array<int> cols_;
+		  private int cols_[];
+		  //scoped_array<double> values_;
+		  private double values_[];
+		  
+		  // Options struct to control the generation of random
+		  // TripletSparseMatrix objects.
+		  class RandomMatrixOptions {
+		    public int num_rows;
+		    public int num_cols;
+		    // 0 < density <= 1 is the probability of an entry being
+		    // structurally non-zero. A given random matrix will not have
+		    // precisely this density.
+		    public double density;
+		    
+		    public RandomMatrixOptions() {
+		    	
+		    }
+		  } // class RandomMatrixOptions
+	 public TripletSparseMatrix() {
+		  super();
+		  randomMatrixOptions = new RandomMatrixOptions();
+		  num_rows_ = 0;
+	      num_cols_ = 0;
+	      max_num_nonzeros_ = 0;
+	      num_nonzeros_ = 0;
+	      rows_ = null;
+	      cols_ = null;
+	      values_ = null;
+	 }
+	 
+	  public TripletSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros) {
+		  super();
+		  randomMatrixOptions = new RandomMatrixOptions();
+		  num_rows_ = num_rows;
+	      num_cols_ = num_cols;
+	      max_num_nonzeros_ = max_num_nonzeros;
+	      num_nonzeros_ = 0;
+	      rows_ = null;
+	      cols_ = null;
+	      values_ = null;
+	      // All the sizes should at least be zero
+	      if (num_rows < 0) {
+	    	  System.err.println("In public TripletSparseMatrix num_rows < 0");
+	    	  return;
+	      }
+	      if (num_cols < 0) {
+	    	  System.err.println("In public TripletSparseMatrix num_cols < 0");
+	    	  return;
+	      }
+	      if (max_num_nonzeros < 0) {
+	    	  System.err.println("In public TripletSparseMatrix max_num_nonzeros < 0");
+	    	  return;
+	      }
+	      AllocateMemory();
+
+	  }
+	  
+	  public TripletSparseMatrix(int num_rows,
+	                      int num_cols,
+	                      Vector<Integer> rows,
+	                      Vector<Integer> cols,
+	                      Vector<Double> values) {
+		  super();
+		  randomMatrixOptions = new RandomMatrixOptions();
+		  num_rows_ = num_rows;
+	      num_cols_ = num_cols;
+	      max_num_nonzeros_ = values.size();
+	      num_nonzeros_ = values.size();
+	      rows_ = null;
+	      cols_ = null;
+	      values_ = null;
+	      // All the sizes should at least be zero
+	      if (num_rows < 0) {
+	    	  System.err.println("In public TripletSparseMatrix num_rows < 0");
+	    	  return;
+	      }
+	      if (num_cols < 0) {
+	    	  System.err.println("In public TripletSparseMatrix num_cols < 0");
+	    	  return;
+	      }
+	      if (rows.size() != cols.size()) {
+	    	  System.err.println("In public TripletSparseMatrix rows.size() != cols.size()");
+	    	  return;
+	      }
+	      if (rows.size() != values.size()) {
+	    	  System.err.println("In public TripletSparseMatrix rows.size() != values.size()");
+	    	  return;
+	      }
+	      AllocateMemory();
+	      for (int i = 0; i < rows.size(); i++) {
+	    	  rows_[i] = rows.get(i);
+	    	  cols_[i] = cols.get(i);
+	    	  values_[i] = values.get(i);
+	      }  
+	  }
+	  
+	  public void AllocateMemory() {
+		  rows_ = new int[max_num_nonzeros_];
+		  cols_ = new int[max_num_nonzeros_];
+		  values_ = new double[max_num_nonzeros_];
+
+	  }
+
+	  public TripletSparseMatrix(TripletSparseMatrix orig) {
+		  super();
+		  randomMatrixOptions = new RandomMatrixOptions();
+	      num_rows_ = orig.num_rows_;
+	      num_cols_ = orig.num_cols_;
+	      max_num_nonzeros_ = orig.max_num_nonzeros_;
+	      num_nonzeros_ = orig.num_nonzeros_;
+	      rows_ = null;
+	      cols_ = null;
+	      values_ = null;
+	      AllocateMemory();
+	      CopyData(orig);
+	  }
+	  
+	  public void CopyData(TripletSparseMatrix orig) {
+		  for (int i = 0; i < num_nonzeros_; ++i) {
+			    rows_[i] = orig.rows_[i];
+			    cols_[i] = orig.cols_[i];
+			    values_[i] = orig.values_[i];
+		  }
+	  }
+
+	  // Implementation of the SparseMatrix interface.
+	  public void SetZero() {
+		  for (int i = 0; i < max_num_nonzeros_; i++) {
+			  values_[i] = 0.0;
+		  }
+		  num_nonzeros_ = 0;
+
+	  }
+	  
+	  public void RightMultiply(double x[], double y[]) {
+		  for (int i = 0; i < num_nonzeros_; ++i) {
+			    y[rows_[i]] += values_[i]*x[cols_[i]];
+			  }
+
+	  }
+	  
+	  
+	  public void LeftMultiply(double x[], double y[]) {
+		  for (int i = 0; i < num_nonzeros_; ++i) {
+			    y[cols_[i]] += values_[i]*x[rows_[i]];
+			  }
+	  }
+	  
+	  public void SquaredColumnNorm(double x[[]) {
+		  int i;
+          if (x == null) {
+        	  System.err.println("x == null in SquaredColumnNorm");
+        	  return;
+          }
+          for (i = 0; i < num_cols_; i++) {
+        	  x[i] = 0.0;
+          }
+
+		  for (i = 0; i < num_nonzeros_; ++i) {
+		    x[cols_[i]] += values_[i] * values_[i];
+		  }
+	  }
+	  
+	  public void ScaleColumns(double scale[]) {
+		  if (scale == null) {
+			  System.err.println("scale == null in ScaleColumns");
+			  return;
+		  }
+		  for (int i = 0; i < num_nonzeros_; ++i) {
+		    values_[i] = values_[i] * scale[cols_[i]];
+		  }
+	  }
+	  
+	  //public void ToDenseMatrix(Matrix* dense_matrix) const;
+	  public Matrix ToDenseMatrix(Matrix dense_matrix) {
+		  double array[][] = new double[num_rows_][num_cols_];
+		  for (int i = 0; i < num_nonzeros_; ++i) {
+		    array[rows_[i]][cols_[i]] += values_[i];
+		  }
+          Matrix output_dense_matrix = new Matrix(array);
+          return output_dense_matrix;
+	  }
+	  
+	  virtual void ToTextFile(FILE* file) const;
+	  virtual int num_rows()        const { return num_rows_;     }
+	  virtual int num_cols()        const { return num_cols_;     }
+	  virtual int num_nonzeros()    const { return num_nonzeros_; }
+	  virtual const double* values()  const { return values_.get(); }
+	  virtual double* mutable_values()      { return values_.get(); }
+	  virtual void set_num_nonzeros(int num_nonzeros);
+
+	  // Increase max_num_nonzeros and correspondingly increase the size
+	  // of rows_, cols_ and values_. If new_max_num_nonzeros is smaller
+	  // than max_num_nonzeros_, then num_non_zeros should be less than or
+	  // equal to new_max_num_nonzeros, otherwise data loss is possible
+	  // and the method crashes.
+	  void Reserve(int new_max_num_nonzeros);
+
+	  // Append the matrix B at the bottom of this matrix. B should have
+	  // the same number of columns as num_cols_.
+	  void AppendRows(const TripletSparseMatrix& B);
+
+	  // Append the matrix B at the right of this matrix. B should have
+	  // the same number of rows as num_rows_;
+	  void AppendCols(const TripletSparseMatrix& B);
+
+	  // Resize the matrix. Entries which fall outside the new matrix
+	  // bounds are dropped and the num_non_zeros changed accordingly.
+	  void Resize(int new_num_rows, int new_num_cols);
+
+	  int max_num_nonzeros() const { return max_num_nonzeros_; }
+	  const int* rows()      const { return rows_.get();       }
+	  const int* cols()      const { return cols_.get();       }
+	  int* mutable_rows()          { return rows_.get();       }
+	  int* mutable_cols()          { return cols_.get();       }
+
+	  // Returns true if the entries of the matrix obey the row, column,
+	  // and column size bounds and false otherwise.
+	  bool AllTripletsWithinBounds() const;
+
+	  bool IsValid() const { return AllTripletsWithinBounds(); }
+
+	  // Build a sparse diagonal matrix of size num_rows x num_rows from
+	  // the array values. Entries of the values array are copied into the
+	  // sparse matrix.
+	  static TripletSparseMatrix* CreateSparseDiagonalMatrix(const double* values,
+	                                                         int num_rows);
+
+	  
+
+	  // Create a random CompressedRowSparseMatrix whose entries are
+	  // normally distributed and whose structure is determined by
+	  // RandomMatrixOptions.
+	  //
+	  // Caller owns the result.
+	  static TripletSparseMatrix* CreateRandomMatrix(
+	      const TripletSparseMatrix::RandomMatrixOptions& options);
+
+	 
+
+	  
+	} // class TripletSparseMatrix
+	
+	public TripletSparseMatrix operator(TripletSparseMatrix lhs,
+		    TripletSparseMatrix rhs) {
+		  lhs.num_rows_ = rhs.num_rows_;
+		  lhs.num_cols_ = rhs.num_cols_;
+		  lhs.num_nonzeros_ = rhs.num_nonzeros_;
+		  lhs.max_num_nonzeros_ = rhs.max_num_nonzeros_;
+		  lhs.AllocateMemory();
+		  lhs.CopyData(rhs);
+		  return lhs;
+		}*/
+
+	
+	public int Uniform(int n) {
+		  if (n > 0) {
+			Random random = new Random();
+		    return random.nextInt(Integer.MAX_VALUE) % n;
+		  } else {
+		    return 0;
+		  }
+	} // public int Uniform(int n)
+	
+	public double RandDouble() {
+		Random random = new Random();
+		return ((double)random.nextInt(Integer.MAX_VALUE)/(double)(Integer.MAX_VALUE - 1));
+	}
+
+	// Box-Muller algorithm for normal random number generation.
+	// http://en.wikipedia.org/wiki/Box-Muller_transform
+	public double RandNormal() {
+	  double x1, x2, w;
+	  do {
+	    x1 = 2.0 * RandDouble() - 1.0;
+	    x2 = 2.0 * RandDouble() - 1.0;
+	    w = x1 * x1 + x2 * x2;
+	  } while ( w >= 1.0 || w == 0.0 );
+
+	  w = Math.sqrt((-2.0 * Math.log(w)) / w);
+	  return x1 * w;
+	}
 
 	abstract class SparseMatrix extends LinearOperator {
 
@@ -2558,9 +2980,9 @@ public abstract class CeresSolver {
 				max_num_iterations = 1;
 				num_threads = 1;
 				residual_reset_period = 10;
-				// row_block_size(Eigen::Dynamic),
-				// e_block_size(Eigen::Dynamic),
-				// f_block_size(Eigen::Dynamic),
+				row_block_size = DYNAMIC;
+				e_block_size = DYNAMIC;
+				f_block_size = DYNAMIC;
 				context = null;
 			}
 		} // class Options
@@ -2684,10 +3106,8 @@ public abstract class CeresSolver {
 		}
 
 		switch (options.type) {
-		/*
-		 * case CGNR: return new CgnrSolver(options);
-		 * 
-		 * case SPARSE_NORMAL_CHOLESKY: if (CERES_NO_SUITESPARSE && CERES_NO_CXSPARSE &&
+		 case CGNR: return new CgnrSolver(options); 
+		 /* case SPARSE_NORMAL_CHOLESKY: if (CERES_NO_SUITESPARSE && CERES_NO_CXSPARSE &&
 		 * (!CERES_USE_EIGEN_SPARSE)) { return null; } else { if
 		 * (options.dynamic_sparsity) { return new
 		 * DynamicSparseNormalCholeskySolver(options); }
@@ -2723,18 +3143,214 @@ public abstract class CeresSolver {
 	//
 	// as required for solving for x in the least squares sense. Currently only
 	// block diagonal preconditioning is supported.
-	/*
-	 * class CgnrSolver extends TypedLinearSolver<BlockSparseMatrix> { private
-	 * LinearSolver.Options options_; //scoped_ptr<Preconditioner> preconditioner_;
-	 * private Preconditioner preconditioner_; public: explicit CgnrSolver(const
-	 * LinearSolver::Options& options); virtual Summary SolveImpl(
-	 * BlockSparseMatrix* A, const double* b, const LinearSolver::PerSolveOptions&
-	 * per_solve_options, double* x);
-	 * 
-	 * 
-	 * };
-	 */
+	 class CgnrSolver extends TypedLinearSolver<BlockSparseMatrix> {
+	     private LinearSolver.Options options_; 
+	     //scoped_ptr<Preconditioner> preconditioner_;
+	     private Preconditioner preconditioner_; 
+	     
+	     public CgnrSolver(LinearSolver.Options options) {
+	       options_ = options;
+	       preconditioner_ = null;
+		     if (options_.preconditioner_type != PreconditionerType.JACOBI &&
+		         options_.preconditioner_type != PreconditionerType.IDENTITY) {
+		       System.err.println("CGNR only supports IDENTITY and JACOBI preconditioners.");
+		     }
+	   }
+	     
+	   public LinearSolver.Summary SolveImpl(
+	    		    BlockSparseMatrix A,
+	    		    double b[],
+	    		    LinearSolver.PerSolveOptions per_solve_options,
+	    		    double x[]) {
+	    		  EventLogger event_logger = new EventLogger("CgnrSolver::Solve");
 
+	    		  // Form z = Atb.
+	    		  double z[] = new double[A.num_cols()];
+	    		  A.LeftMultiply(b, z);
+
+	    		  // Precondition if necessary.
+	    		  LinearSolver.PerSolveOptions cg_per_solve_options = per_solve_options;
+	    		  /*if (options_.preconditioner_type == PreconditionerType.JACOBI) {
+	    		    if (preconditioner_ == null) {
+	    		      preconditioner_ = new BlockJacobiPreconditioner(A);
+	    		    }
+	    		    preconditioner_->Update(*A, per_solve_options.D);
+	    		    cg_per_solve_options.preconditioner = preconditioner_.get();
+	    		  }
+
+	    		  // Solve (AtA + DtD)x = z (= Atb).
+	    		  VectorRef(x, A->num_cols()).setZero();
+	    		  CgnrLinearOperator lhs(*A, per_solve_options.D);
+	    		  event_logger.AddEvent("Setup");
+
+	    		  ConjugateGradientsSolver conjugate_gradient_solver(options_);
+	    		  LinearSolver::Summary summary =
+	    		      conjugate_gradient_solver.Solve(&lhs, z.data(), cg_per_solve_options, x);
+	    		  event_logger.AddEvent("Solve");
+	    		  return summary;*/
+	    		  return null;
+	    		}
+
+
+	     
+	 } // class CgnrSolver
+	 
+	// A block Jacobi preconditioner. This is intended for use with
+	// conjugate gradients, or other iterative symmetric solvers. To use
+	// the preconditioner, create one by passing a BlockSparseMatrix "A"
+	// to the constructor. This fixes the sparsity pattern to the pattern
+	// of the matrix A^TA.
+	//
+	// Before each use of the preconditioner in a solve with conjugate gradients,
+	// update the matrix by running Update(A, D). The values of the matrix A are
+	// inspected to construct the preconditioner. The vector D is applied as the
+	// D^TD diagonal term.
+	/*class BlockJacobiPreconditioner extends BlockSparseMatrixPreconditioner {
+	 public:
+	  // A must remain valid while the BlockJacobiPreconditioner is.
+	  explicit BlockJacobiPreconditioner(const BlockSparseMatrix& A);
+	  virtual ~BlockJacobiPreconditioner();
+
+	  // Preconditioner interface
+	  virtual void RightMultiply(const double* x, double* y) const;
+	  virtual int num_rows() const { return m_->num_rows(); }
+	  virtual int num_cols() const { return m_->num_rows(); }
+	  const BlockRandomAccessDiagonalMatrix& matrix() const { return *m_; }
+
+	 private:
+	  virtual bool UpdateImpl(const BlockSparseMatrix& A, const double* D);
+
+	  scoped_ptr<BlockRandomAccessDiagonalMatrix> m_;
+	};*/
+	
+	// This templated subclass of Preconditioner serves as a base class for
+	// other preconditioners that depend on the particular matrix layout of
+	// the underlying linear operator.
+	abstract class TypedPreconditioner<MatrixType> extends Preconditioner {
+	 public TypedPreconditioner() {
+		 super();
+	 }
+	 public boolean Update(LinearOperator A, double D[]) {
+	    return UpdateImpl((MatrixType)A, D);
+	  }
+
+	  public abstract boolean UpdateImpl(MatrixType A, double D[]);
+	};
+	 
+	 abstract class Preconditioner extends LinearOperator {
+		 public Options options;
+		  class Options {
+			    public PreconditionerType type;
+			    public VisibilityClusteringType visibility_clustering_type;
+			    public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+
+			    // When using the subset preconditioner, all row blocks starting
+			    // from this row block are used to construct the preconditioner.
+			    //
+			    // i.e., the Jacobian matrix A is horizonatally partitioned as
+			    //
+			    // A = [P]
+			    //     [Q]
+			    //
+			    // where P has subset_preconditioner_start_row_block row blocks,
+			    // and the preconditioner is the inverse of the matrix Q'Q.
+			    public int subset_preconditioner_start_row_block;
+
+			    // See solver.h for information about these flags.
+			    public boolean use_postordering;
+
+			    // If possible, how many threads the preconditioner can use.
+			    public int num_threads;
+
+			    // Hints about the order in which the parameter blocks should be
+			    // eliminated by the linear solver.
+			    //
+			    // For example if elimination_groups is a vector of size k, then
+			    // the linear solver is informed that it should eliminate the
+			    // parameter blocks 0 ... elimination_groups[0] - 1 first, and
+			    // then elimination_groups[0] ... elimination_groups[1] - 1 and so
+			    // on. Within each elimination group, the linear solver is free to
+			    // choose how the parameter blocks are ordered. Different linear
+			    // solvers have differing requirements on elimination_groups.
+			    //
+			    // The most common use is for Schur type solvers, where there
+			    // should be at least two elimination groups and the first
+			    // elimination group must form an independent set in the normal
+			    // equations. The first elimination group corresponds to the
+			    // num_eliminate_blocks in the Schur type solvers.
+			    public Vector<Integer> elimination_groups;
+
+			    // If the block sizes in a BlockSparseMatrix are fixed, then in
+			    // some cases the Schur complement based solvers can detect and
+			    // specialize on them.
+			    //
+			    // It is expected that these parameters are set programmatically
+			    // rather than manually.
+			    //
+			    // Please see schur_complement_solver.h and schur_eliminator.h for
+			    // more details.
+			    public int row_block_size;
+			    public int e_block_size;
+			    public int f_block_size;
+
+			    public ContextImpl context;
+		    public Options() {
+		        type = PreconditionerType.JACOBI;
+		        visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
+		        //sparse_linear_algebra_library_type(SUITE_SPARSE),
+		        sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.EIGEN_SPARSE;
+		        subset_preconditioner_start_row_block = -1;
+		        use_postordering = false;
+		        num_threads = 1;
+		        row_block_size = DYNAMIC;
+		        e_block_size = DYNAMIC;
+		        f_block_size = DYNAMIC;
+		        context = null; 
+		    }
+
+		    
+		  } // class Options
+		  
+		  public Preconditioner() {
+			  options = new Options();
+		  }
+
+		  // If the optimization problem is such that there are no remaining
+		  // e-blocks, ITERATIVE_SCHUR with a Schur type preconditioner cannot
+		  // be used. This function returns JACOBI if a preconditioner for
+		  // ITERATIVE_SCHUR is used. The input preconditioner_type is
+		  // returned otherwise.
+		  /*static PreconditionerType PreconditionerForZeroEBlocks(
+		      PreconditionerType preconditioner_type);*/
+
+
+		  // Update the numerical value of the preconditioner for the linear
+		  // system:
+		  //
+		  //  |   A   | x = |b|
+		  //  |diag(D)|     |0|
+		  //
+		  // for some vector b. It is important that the matrix A have the
+		  // same block structure as the one used to construct this object.
+		  //
+		  // D can be NULL, in which case its interpreted as a diagonal matrix
+		  // of size zero.
+		  public abstract boolean Update(LinearOperator A, double[] D);
+
+		  // LinearOperator interface. Since the operator is symmetric,
+		  // LeftMultiply and num_cols are just calls to RightMultiply and
+		  // num_rows respectively. Update() must be called before
+		  // RightMultiply can be called.
+		  public abstract void RightMultiply(double[] x, double[] y);
+		  public void LeftMultiply(double[] x, double[] y) {
+		    RightMultiply(x, y);
+		  }
+
+		  public abstract int num_rows();
+		  public int num_cols() {
+		    return num_rows();
+		  }
+		} // abstract class Preconditioner
 	// Linear solvers that depend on acccess to the low level structure of
 	// a SparseMatrix.
 	// typedef TypedLinearSolver<BlockSparseMatrix> BlockSparseMatrixSolver; //
