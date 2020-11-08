@@ -2283,7 +2283,38 @@ public abstract class CeresSolver {
 			return values_;
 		}
 		
-		//void ToTripletSparseMatrix(TripletSparseMatrix* matrix) const;
+		public void ToTripletSparseMatrix(TripletSparseMatrix matrix) {
+			  if (matrix == null) {
+				  System.err.println("In ToTripletSparseMatrix matrix == null");
+				  return;
+			  }
+
+			  matrix.Reserve(num_nonzeros_);
+			  matrix.Resize(num_rows_, num_cols_);
+			  matrix.SetZero();
+
+			  for (int i = 0; i < block_structure_.rows.size(); ++i) {
+			    int row_block_pos = block_structure_.rows.get(i).block.position;
+			    int row_block_size = block_structure_.rows.get(i).block.size;
+			    Vector<Cell> cells = block_structure_.rows.get(i).cells;
+			    for (int j = 0; j < cells.size(); ++j) {
+			      int col_block_id = cells.get(j).block_id;
+			      int col_block_size = block_structure_.cols.get(col_block_id).size;
+			      int col_block_pos = block_structure_.cols.get(col_block_id).position;
+			      int jac_pos = cells.get(j).position;
+			       for (int r = 0; r < row_block_size; ++r) {
+			        for (int c = 0; c < col_block_size; ++c, ++jac_pos) {
+			          matrix.mutable_rows()[jac_pos] = row_block_pos + r;
+			          matrix.mutable_cols()[jac_pos] = col_block_pos + c;
+			          matrix.mutable_values()[jac_pos] = values_[jac_pos];
+			        }
+			      }
+			    }
+			  }
+			  matrix.set_num_nonzeros(num_nonzeros_);
+	
+		}
+		
 		public CompressedRowBlockStructure block_structure() {
 			return block_structure_;
 		}
@@ -2538,7 +2569,7 @@ public abstract class CeresSolver {
 	// manipulate sparse matrices in triplet (i,j,s) form.  This object is
 	// inspired by the design of the cholmod_triplet struct used in the
 	// SuiteSparse package and is memory layout compatible with it.
-	/*class TripletSparseMatrix extends SparseMatrix {
+	class TripletSparseMatrix extends SparseMatrix {
 		  public RandomMatrixOptions randomMatrixOptions;
 		  private int num_rows_;
 		  private int num_cols_;
@@ -2700,7 +2731,7 @@ public abstract class CeresSolver {
 			  }
 	  }
 	  
-	  public void SquaredColumnNorm(double x[[]) {
+	  public void SquaredColumnNorm(double x[]) {
 		  int i;
           if (x == null) {
         	  System.err.println("x == null in SquaredColumnNorm");
@@ -2735,64 +2766,169 @@ public abstract class CeresSolver {
           return output_dense_matrix;
 	  }
 	  
-	  virtual void ToTextFile(FILE* file) const;
-	  virtual int num_rows()        const { return num_rows_;     }
-	  virtual int num_cols()        const { return num_cols_;     }
-	  virtual int num_nonzeros()    const { return num_nonzeros_; }
-	  virtual const double* values()  const { return values_.get(); }
-	  virtual double* mutable_values()      { return values_.get(); }
-	  virtual void set_num_nonzeros(int num_nonzeros);
+	  public void ToTextFile(File file) {
+		  if (file == null) {
+			  System.err.println("file == null in ToTextFile");
+			  return;
+		  }
+		  FileWriter fw = null;
+			try {
+				fw = new FileWriter(file);
+			} catch (IOException e) {
+				System.err.println("IOException in ToTextFile on new FileWriter(file)");
+				return;
+			}
+		  for (int i = 0; i < num_nonzeros_; ++i) {
+		    String str = String.format( "% 10d % 10d %17f\n", rows_[i], cols_[i], values_[i]);
+			try {
+				fw.write(str, 0, str.length());
+			} catch (IOException e) {
+				System.err.println("IOException in ToTextFile on fw.write(str,0,str.length())");
+				return;
+			}
+		  }
+		  try {
+			    fw.close();
+			}
+			catch (IOException e) {
+				System.err.println("IOException in ToTextFile on fw.close()");
+			}
+		}
+
+	  public int num_rows()        { return num_rows_;     }
+	  public int num_cols()       { return num_cols_;     }
+	  public int num_nonzeros()   { return num_nonzeros_; }
+	  public double[] values()  { return values_; }
+	  public double[] mutable_values()      { return values_; }
+	  public void set_num_nonzeros(int num_nonzeros) {
+		  if (num_nonzeros < 0) {
+			  System.err.println("In set_num_nonzeros num_nonzeros < 0");
+			  return;
+		  }
+		  if (num_nonzeros > max_num_nonzeros_) {
+			  System.err.println("In set_num_nonzeros num_nonzeros > max_num_nonzeros");
+			  return;
+		  }
+		  num_nonzeros_ = num_nonzeros;
+
+	  }
 
 	  // Increase max_num_nonzeros and correspondingly increase the size
 	  // of rows_, cols_ and values_. If new_max_num_nonzeros is smaller
 	  // than max_num_nonzeros_, then num_non_zeros should be less than or
 	  // equal to new_max_num_nonzeros, otherwise data loss is possible
 	  // and the method crashes.
-	  void Reserve(int new_max_num_nonzeros);
+	  public void Reserve(int new_max_num_nonzeros) {
+		  if (num_nonzeros_ > new_max_num_nonzeros) {
+	      System.err.println("Reallocation in Reserve will cause data loss");
+	      return;
+		  }
+
+	  // Nothing to do if we have enough space already.
+	  if (new_max_num_nonzeros <= max_num_nonzeros_)
+	    return;
+
+	  int new_rows[] = new int[new_max_num_nonzeros];
+	  int new_cols[] = new int[new_max_num_nonzeros];
+	  double new_values[] = new double[new_max_num_nonzeros];
+
+	  for (int i = 0; i < num_nonzeros_; ++i) {
+	    new_rows[i] = rows_[i];
+	    new_cols[i] = cols_[i];
+	    new_values[i] = values_[i];
+	  }
+
+	  rows_ = new_rows;
+	  cols_ = new_cols;
+	  values_ = new_values;
+
+	  max_num_nonzeros_ = new_max_num_nonzeros;
+
+	  }
 
 	  // Append the matrix B at the bottom of this matrix. B should have
 	  // the same number of columns as num_cols_.
-	  void AppendRows(const TripletSparseMatrix& B);
+	  public void AppendRows(TripletSparseMatrix B) {
+		  if (B.num_cols() != num_cols_) {
+			  System.err.println("In AppendRows B.num_cols() != num_cols_");
+			  return;
+		  }
+		  Reserve(num_nonzeros_ + B.num_nonzeros_);
+		  for (int i = 0; i < B.num_nonzeros_; ++i) {
+		    rows_[num_nonzeros_] = B.rows()[i] + num_rows_;
+		    cols_[num_nonzeros_] = B.cols()[i];
+		    values_[num_nonzeros_++] = B.values()[i];
+		  }
+		  num_rows_ = num_rows_ + B.num_rows();
+
+	  }
 
 	  // Append the matrix B at the right of this matrix. B should have
 	  // the same number of rows as num_rows_;
-	  void AppendCols(const TripletSparseMatrix& B);
+	  public void AppendCols(TripletSparseMatrix B) {
+		  if (B.num_rows() !=  num_rows_) {
+			  System.err.println("In AppendCols B.num_rows() != num_rows_");
+			  return;
+		  }
+		  Reserve(num_nonzeros_ + B.num_nonzeros_);
+		  for (int i = 0; i < B.num_nonzeros_; ++i, ++num_nonzeros_) {
+		    rows_[num_nonzeros_] = B.rows()[i];
+		    cols_[num_nonzeros_] = B.cols()[i] + num_cols_;
+		    values_[num_nonzeros_] = B.values()[i];
+		  }
+		  num_cols_ = num_cols_ + B.num_cols();
+	  }
 
 	  // Resize the matrix. Entries which fall outside the new matrix
 	  // bounds are dropped and the num_non_zeros changed accordingly.
-	  void Resize(int new_num_rows, int new_num_cols);
+	  public void Resize(int new_num_rows, int new_num_cols) {
+		  if ((new_num_rows >= num_rows_) && (new_num_cols >= num_cols_)) {
+			    num_rows_  = new_num_rows;
+			    num_cols_ = new_num_cols;
+			    return;
+			  }
 
-	  int max_num_nonzeros() const { return max_num_nonzeros_; }
-	  const int* rows()      const { return rows_.get();       }
-	  const int* cols()      const { return cols_.get();       }
-	  int* mutable_rows()          { return rows_.get();       }
-	  int* mutable_cols()          { return cols_.get();       }
+			  num_rows_ = new_num_rows;
+			  num_cols_ = new_num_cols;
+
+			  int r_ptr[] = rows_;
+			  int c_ptr[] = cols_;
+			  double v_ptr[] = values_;
+
+			  int dropped_terms = 0;
+			  for (int i = 0; i < num_nonzeros_; ++i) {
+			    if ((r_ptr[i] < num_rows_) && (c_ptr[i] < num_cols_)) {
+			      if (dropped_terms > 0) {
+			        r_ptr[i-dropped_terms] = r_ptr[i];
+			        c_ptr[i-dropped_terms] = c_ptr[i];
+			        v_ptr[i-dropped_terms] = v_ptr[i];
+			      }
+			    } else {
+			      ++dropped_terms;
+			    }
+			  }
+			  num_nonzeros_ -= dropped_terms;
+
+	  }
+
+	  public int max_num_nonzeros() { return max_num_nonzeros_; }
+	  public int[] rows()      { return rows_;       }
+	  public int[] cols()      { return cols_;       }
+	  public int[] mutable_rows()          { return rows_;       }
+	  public int[] mutable_cols()          { return cols_;       }
 
 	  // Returns true if the entries of the matrix obey the row, column,
 	  // and column size bounds and false otherwise.
-	  bool AllTripletsWithinBounds() const;
+	  public boolean AllTripletsWithinBounds() {
+		  for (int i = 0; i < num_nonzeros_; ++i) {
+			    if ((rows_[i] < 0) || (rows_[i] >= num_rows_) ||
+			        (cols_[i] < 0) || (cols_[i] >= num_cols_))
+			      return false;
+			  }
+			  return true;
+	  }
 
-	  bool IsValid() const { return AllTripletsWithinBounds(); }
-
-	  // Build a sparse diagonal matrix of size num_rows x num_rows from
-	  // the array values. Entries of the values array are copied into the
-	  // sparse matrix.
-	  static TripletSparseMatrix* CreateSparseDiagonalMatrix(const double* values,
-	                                                         int num_rows);
-
-	  
-
-	  // Create a random CompressedRowSparseMatrix whose entries are
-	  // normally distributed and whose structure is determined by
-	  // RandomMatrixOptions.
-	  //
-	  // Caller owns the result.
-	  static TripletSparseMatrix* CreateRandomMatrix(
-	      const TripletSparseMatrix::RandomMatrixOptions& options);
-
-	 
-
-	  
+	  public boolean IsValid() { return AllTripletsWithinBounds(); }  
 	} // class TripletSparseMatrix
 	
 	public TripletSparseMatrix operator(TripletSparseMatrix lhs,
@@ -2804,7 +2940,263 @@ public abstract class CeresSolver {
 		  lhs.AllocateMemory();
 		  lhs.CopyData(rhs);
 		  return lhs;
-		}*/
+		}
+	
+	// Build a sparse diagonal matrix of size num_rows x num_rows from
+    // the array values. Entries of the values array are copied into the
+    // sparse matrix.
+	public TripletSparseMatrix CreateSparseDiagonalMatrix(double values[], int num_rows) {
+		TripletSparseMatrix m =
+			      new TripletSparseMatrix(num_rows, num_rows, num_rows);
+			  for (int i = 0; i < num_rows; ++i) {
+			    m.mutable_rows()[i] = i;
+			    m.mutable_cols()[i] = i;
+			    m.mutable_values()[i] = values[i];
+			  }
+			  m.set_num_nonzeros(num_rows);
+			  return m;
+	}
+	
+	// Create a random CompressedRowSparseMatrix whose entries are
+	// normally distributed and whose structure is determined by
+	// RandomMatrixOptions.
+	//
+	// Caller owns the result.
+	public TripletSparseMatrix CreateRandomMatrix(TripletSparseMatrix.RandomMatrixOptions options) {
+		  if (options.num_rows <= 0) {
+			  System.err.println("In TripletSparseMatrix CreateRandomMatrix options.num_rows <= 0");
+			  return null;
+		  }
+		  if (options.num_cols <= 0) {
+			  System.err.println("In TripletSparseMatrix CreateRandomMatrix options.num_cols <= 0");
+			  return null;
+		  }
+		  if (options.density <= 0.0) {
+			  System.err.println("In TripletSparseMatrix CreateRandomMatrix options.density <= 0.0");
+			  return null;
+		  }
+		  if (options.density > 1.0) {
+			  System.err.println("In TripletSparseMatrix CreateRandomMatrix options.density > 1.0");
+			  return null;
+		  }
+
+		  Vector<Integer> rows = new Vector<Integer>();
+		  Vector<Integer> cols = new Vector<Integer>();
+		  Vector<Double> values = new Vector<Double>();
+		  while (rows.isEmpty()) {
+		    rows.clear();
+		    cols.clear();
+		    values.clear();
+		    for (int r = 0; r < options.num_rows; ++r) {
+		      for (int c = 0; c < options.num_cols; ++c) {
+		        if (RandDouble() <= options.density) {
+		          rows.add(r);
+		          cols.add(c);
+		          values.add(RandNormal());
+		        }
+		      }
+		    }
+		  }
+
+		  return new TripletSparseMatrix(
+		      options.num_rows, options.num_cols, rows, cols, values);
+
+	}
+	
+	// Structure to carry a pointer to the array containing a cell and the
+	// Mutex guarding it.
+	class CellInfo {
+      public double values[];
+      public int values_index;
+	  public Lock m;
+	  public CellInfo() {
+	      values = null;
+	      values_index = 0;
+	  }
+
+	  public CellInfo(double ptr[], int index) {
+	      values = ptr;
+	      values_index = index;
+	  }
+	};
+	
+	abstract class BlockRandomAccessMatrix {
+		
+		public BlockRandomAccessMatrix() {
+			
+		}
+
+		  // If the cell (row_block_id, col_block_id) is present, then return
+		  // a CellInfo with a pointer to the dense matrix containing it,
+		  // otherwise return NULL. The dense matrix containing this cell has
+		  // size row_stride, col_stride and the cell is located at position
+		  // (row, col) within this matrix.
+		  //
+		  // The size of the cell is row_block_size x col_block_size is
+		  // assumed known to the caller. row_block_size less than or equal to
+		  // row_stride and col_block_size is upper bounded by col_stride.
+		  public abstract CellInfo GetCell(int row_block_id,
+		                            int col_block_id,
+		                            int row[],
+		                            int col[],
+		                            int row_stride[],
+		                            int[] col_stride);
+
+		  // Zero out the values of the array. The structure of the matrix
+		  // (size and sparsity) is preserved.
+		  public abstract void SetZero();
+
+		  // Number of scalar rows and columns in the matrix, i.e the sum of
+		  // all row blocks and column block sizes respectively.
+		  public abstract int num_rows();
+		  public abstract int num_cols();
+		}  // abstract class BlockRandomAccessMatrix
+	
+	// A thread safe block diagonal matrix implementation of
+	// BlockRandomAccessMatrix.
+	/*class BlockRandomAccessDiagonalMatrix extends BlockRandomAccessMatrix {
+		// row/column block sizes.
+		private Vector<Integer> blocks_;
+		private Vector<CellInfo> layout_;
+
+		// The underlying matrix object which actually stores the cells.
+		//scoped_ptr<TripletSparseMatrix> tsm_;
+		private TripletSparseMatrix tsm_;
+
+		//friend class BlockRandomAccessDiagonalMatrixTest;
+	  // blocks is an array of block sizes.
+	  public BlockRandomAccessDiagonalMatrix(Vector<Integer> blocks) {
+		      blocks_ = blocks;
+			  // Build the row/column layout vector and count the number of scalar
+			  // rows/columns.
+			  int num_cols = 0;
+			  int num_nonzeros = 0;
+			  Vector<Integer> block_positions = new Vector<Integer>();
+			  for (int i = 0; i < blocks_.size(); ++i) {
+			    block_positions.add(num_cols);
+			    num_cols += blocks_.get(i);
+			    num_nonzeros += blocks_.get(i) * blocks_.get(i);
+			  }
+
+			  if (1 <= MAX_LOG_LEVEL) {
+				  Preferences.debug("Matrix Size [" + num_cols + "," + num_cols
+			          + "] " + num_nonzeros + "\n", Preferences.DEBUG_ALGORITHM);
+			  }
+
+			  tsm_ = new TripletSparseMatrix(num_cols, num_cols, num_nonzeros);
+			  tsm_.set_num_nonzeros(num_nonzeros);
+			  int rows[] = tsm_.mutable_rows();
+			  int cols[] = tsm_.mutable_cols();
+			  double values[] = tsm_.mutable_values();
+
+			  int pos = 0;
+			  for (int i = 0; i < blocks_.size(); ++i) {
+			    int block_size = blocks_.get(i);
+			    layout_.add(new CellInfo(values,pos));
+			    int block_begin = block_positions.get(i);
+			    for (int r = 0; r < block_size; ++r) {
+			      for (int c = 0; c < block_size; ++c, ++pos) {
+			        rows[pos] = block_begin + r;
+			        cols[pos] = block_begin + c;
+			      }
+			    }
+			  }
+
+	  }
+
+	  // The destructor is not thread safe. It assumes that no one is
+	  // modifying any cells when the matrix is being destroyed.
+	// Assume that the user does not hold any locks on any cell blocks
+	// when they are calling SetZero.
+	public void finalize() {
+	 while (layout_.size() > 0) {
+		 CellInfo cf = layout_.remove(layout_.size()-1);
+		 cf.values = null;
+		 cf = null;
+	 }
+	 layout_ = null;
+	}
+
+
+	  // BlockRandomAccessMatrix Interface.
+	  public CellInfo GetCell(int row_block_id,
+	                            int col_block_id,
+	                            int row[],
+	                            int col[],
+	                            int row_stride[],
+	                            int col_stride[]) {
+		     if (row_block_id != col_block_id) {
+			    return null;
+			  }
+			  int stride = blocks_.get(row_block_id);
+
+			  // Each cell is stored contiguously as its own little dense matrix.
+			  row[0] = 0;
+			  col[0] = 0;
+			  row_stride[0] = stride;
+			  col_stride[0] = stride;
+			  return layout_.get(row_block_id);
+			}
+
+	  // This is not a thread safe method, it assumes that no cell is
+	  // locked.
+	  public void SetZero() {
+		  if (tsm_.num_nonzeros() > 0) {
+			  for (int i = 0; i < tsm_.num_nonzeros(); i++) {
+				  tsm_.mutable_values()[i] = 0;
+			  }
+		  }
+	  }
+
+
+	  // Invert the matrix assuming that each block is positive definite.
+	  public void Invert() {
+		  double values[] = tsm_.mutable_values();
+		  int values_index = 0;
+		  for (int i = 0; i < blocks_.size(); ++i) {
+		    int block_size = blocks_.get(i);
+		    //MatrixRef block(values, block_size, block_size);
+		    //block =
+		    //    block
+		    //    .selfadjointView<Eigen::Upper>()
+		    //    .llt()
+		    //    .solve(Matrix::Identity(block_size, block_size));
+		    values_index += block_size * block_size;
+		  }
+
+	  }
+
+	  // y += S * x
+	  public void RightMultiply(double x[], double y[]) {
+		  if (x == null) {
+			  System.err.println("In RightMultiply x == null");
+			  return;
+		  }
+		  if (y == null) {
+			  System.err.println("In RightMultiply y == null");
+			  return;
+		  }
+		  double values[] = tsm_.values();
+		  for (int i = 0; i < blocks_.size(); ++i) {
+		    int block_size = blocks_.get(i);
+		    ConstMatrixRef block(values, block_size, block_size);
+		    VectorRef(y, block_size).noalias() += block * ConstVectorRef(x, block_size);
+		    x += block_size;
+		    y += block_size;
+		    values += block_size * block_size;
+		  }
+
+	  };
+
+	  // Since the matrix is square, num_rows() == num_cols().
+	  virtual int num_rows() const { return tsm_->num_rows(); }
+	  virtual int num_cols() const { return tsm_->num_cols(); }
+
+	  const TripletSparseMatrix* matrix() const { return tsm_.get(); }
+	  TripletSparseMatrix* mutable_matrix() { return tsm_.get(); }
+
+	  
+	};*/
 
 	
 	public int Uniform(int n) {
