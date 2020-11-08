@@ -3054,7 +3054,7 @@ public abstract class CeresSolver {
 	
 	// A thread safe block diagonal matrix implementation of
 	// BlockRandomAccessMatrix.
-	/*class BlockRandomAccessDiagonalMatrix extends BlockRandomAccessMatrix {
+	class BlockRandomAccessDiagonalMatrix extends BlockRandomAccessMatrix {
 		// row/column block sizes.
 		private Vector<Integer> blocks_;
 		private Vector<CellInfo> layout_;
@@ -3150,6 +3150,7 @@ public abstract class CeresSolver {
 
 
 	  // Invert the matrix assuming that each block is positive definite.
+	  // Need to port Eigen sparse library before implementing
 	  public void Invert() {
 		  double values[] = tsm_.mutable_values();
 		  int values_index = 0;
@@ -3177,26 +3178,39 @@ public abstract class CeresSolver {
 			  return;
 		  }
 		  double values[] = tsm_.values();
+		  int values_index = 0;
+		  int xy_index = 0;
 		  for (int i = 0; i < blocks_.size(); ++i) {
 		    int block_size = blocks_.get(i);
-		    ConstMatrixRef block(values, block_size, block_size);
-		    VectorRef(y, block_size).noalias() += block * ConstVectorRef(x, block_size);
-		    x += block_size;
-		    y += block_size;
-		    values += block_size * block_size;
+		    double block[][] = new double[block_size][block_size];
+		    for (int row = 0; row < block_size; row++) {
+		    	for (int col = 0; col < block_size; col++, values_index++) {
+		    		block[row][col] = values[values_index];
+		    	}
+		    }
+		    double block_times_x[] = new double[block_size];
+		    for (int row = 0; row < block_size; row++) {
+		    	for (int col = 0; col < block_size; col++) {
+		    		block_times_x[row] += (block[row][col] * x[xy_index + col]);
+		    	}
+		    }
+		    for (int row = 0; row < block_size; row++) {
+		    	y[xy_index + row++] += block_times_x[row++];
+		    }
+		    xy_index += block_size;
 		  }
 
 	  };
 
 	  // Since the matrix is square, num_rows() == num_cols().
-	  virtual int num_rows() const { return tsm_->num_rows(); }
-	  virtual int num_cols() const { return tsm_->num_cols(); }
+	  public int num_rows() { return tsm_.num_rows(); }
+	  public int num_cols() { return tsm_.num_cols(); }
 
-	  const TripletSparseMatrix* matrix() const { return tsm_.get(); }
-	  TripletSparseMatrix* mutable_matrix() { return tsm_.get(); }
+	  public TripletSparseMatrix matrix() { return tsm_; }
+	  public TripletSparseMatrix mutable_matrix() { return tsm_; }
 
 	  
-	};*/
+	};
 
 	
 	public int Uniform(int n) {
@@ -3516,9 +3530,9 @@ public abstract class CeresSolver {
 		 * case ITERATIVE_SCHUR: if (options.use_explicit_schur_complement) { return new
 		 * SparseSchurComplementSolver(options); } else { return new
 		 * IterativeSchurComplementSolver(options); }
-		 * 
-		 * case DENSE_QR: return new DenseQRSolver(options);
-		 * 
+		 */
+		 //case DENSE_QR: return new DenseQRSolver(options);
+		 /* 
 		 * case DENSE_NORMAL_CHOLESKY: return new DenseNormalCholeskySolver(options);
 		 */
 
@@ -3527,6 +3541,65 @@ public abstract class CeresSolver {
 			return null; // MSVC doesn't understand that LOG(FATAL) never returns.
 		}
 	}
+	
+	/*class DenseSparseMatrix : public SparseMatrix {
+		 public:
+		  // Build a matrix with the same content as the TripletSparseMatrix
+		  // m. This assumes that m does not have any repeated entries.
+		  explicit DenseSparseMatrix(const TripletSparseMatrix& m);
+		  explicit DenseSparseMatrix(const ColMajorMatrix& m);
+
+		  DenseSparseMatrix(int num_rows, int num_cols);
+		  DenseSparseMatrix(int num_rows, int num_cols, bool reserve_diagonal);
+
+		  virtual ~DenseSparseMatrix() {}
+
+		  // SparseMatrix interface.
+		  virtual void SetZero();
+		  virtual void RightMultiply(const double* x, double* y) const;
+		  virtual void LeftMultiply(const double* x, double* y) const;
+		  virtual void SquaredColumnNorm(double* x) const;
+		  virtual void ScaleColumns(const double* scale);
+		  virtual void ToDenseMatrix(Matrix* dense_matrix) const;
+		  virtual void ToTextFile(FILE* file) const;
+		  virtual int num_rows() const;
+		  virtual int num_cols() const;
+		  virtual int num_nonzeros() const;
+		  virtual const double* values() const { return m_.data(); }
+		  virtual double* mutable_values() { return m_.data(); }
+
+		  ConstColMajorMatrixRef matrix() const;
+		  ColMajorMatrixRef mutable_matrix();
+
+		  // Only one diagonal can be appended at a time. The diagonal is appended to
+		  // as a new set of rows, e.g.
+		  //
+		  // Original matrix:
+		  //
+		  //   x x x
+		  //   x x x
+		  //   x x x
+		  //
+		  // After append diagonal (1, 2, 3):
+		  //
+		  //   x x x
+		  //   x x x
+		  //   x x x
+		  //   1 0 0
+		  //   0 2 0
+		  //   0 0 3
+		  //
+		  // Calling RemoveDiagonal removes the block. It is a fatal error to append a
+		  // diagonal to a matrix that already has an appended diagonal, and it is also
+		  // a fatal error to remove a diagonal from a matrix that has none.
+		  void AppendDiagonal(double *d);
+		  void RemoveDiagonal();
+
+		 private:
+		  ColMajorMatrix m_;
+		  bool has_diagonal_appended_;
+		  bool has_diagonal_reserved_;
+		};*/
 
 	// A conjugate gradients on the normal equations solver. This directly solves
 	// for the solution to
@@ -3547,7 +3620,7 @@ public abstract class CeresSolver {
 		         options_.preconditioner_type != PreconditionerType.IDENTITY) {
 		       System.err.println("CGNR only supports IDENTITY and JACOBI preconditioners.");
 		     }
-	   }
+	     } // public CgnrSolver
 	     
 	   public LinearSolver.Summary SolveImpl(
 	    		    BlockSparseMatrix A,
@@ -3562,30 +3635,326 @@ public abstract class CeresSolver {
 
 	    		  // Precondition if necessary.
 	    		  LinearSolver.PerSolveOptions cg_per_solve_options = per_solve_options;
-	    		  /*if (options_.preconditioner_type == PreconditionerType.JACOBI) {
+	    		  if (options_.preconditioner_type == PreconditionerType.JACOBI) {
 	    		    if (preconditioner_ == null) {
 	    		      preconditioner_ = new BlockJacobiPreconditioner(A);
 	    		    }
-	    		    preconditioner_->Update(*A, per_solve_options.D);
-	    		    cg_per_solve_options.preconditioner = preconditioner_.get();
+	    		    preconditioner_.Update(A, per_solve_options.D);
+	    		    cg_per_solve_options.preconditioner = preconditioner_;
 	    		  }
 
 	    		  // Solve (AtA + DtD)x = z (= Atb).
-	    		  VectorRef(x, A->num_cols()).setZero();
-	    		  CgnrLinearOperator lhs(*A, per_solve_options.D);
+	    		  for (int i = 0; i < A.num_cols(); i++) {
+	    			  x[i] = 0.0;
+	    		  }
+	    		  CgnrLinearOperator lhs = new CgnrLinearOperator(A, per_solve_options.D);
 	    		  event_logger.AddEvent("Setup");
 
-	    		  ConjugateGradientsSolver conjugate_gradient_solver(options_);
-	    		  LinearSolver::Summary summary =
-	    		      conjugate_gradient_solver.Solve(&lhs, z.data(), cg_per_solve_options, x);
+	    		  ConjugateGradientsSolver conjugate_gradient_solver = new ConjugateGradientsSolver(options_);
+	    		  LinearSolver.Summary summary =
+	    		      conjugate_gradient_solver.Solve(lhs, z, cg_per_solve_options, x);
 	    		  event_logger.AddEvent("Solve");
-	    		  return summary;*/
-	    		  return null;
+	    		  return summary;
 	    		}
-
-
 	     
 	 } // class CgnrSolver
+	 
+	 class ConjugateGradientsSolver extends LinearSolver {
+		   private LinearSolver.Options options_;
+		   public ConjugateGradientsSolver(LinearSolver.Options options) {
+			   super();
+			   options_ = options;
+		   }
+		   
+		    public Summary Solve(LinearOperator A,
+		                          double b[],
+		                          LinearSolver.PerSolveOptions per_solve_options,
+		                          double x[]) {
+		    	  int i;
+		    	  if (A == null) {
+		    		  System.err.println("LinearOperator A == null in ConjugateGradientsSolver Solve");
+		    		  return null;
+		    	  }
+		    	  if (x == null) {
+		    		  System.err.println("double x[] == null in ConjugateGradientsSolver Solve");
+		    		  return null;
+		    	  }
+		    	  if (b == null) {
+		    		  System.err.println("double b[] == null in ConjugateGradientsSolver Solve");
+		    		  return null;
+		    	  }
+		    	  if (A.num_rows() != A.num_cols()) {
+		    		  System.err.println("A.num_rows() != A.num_cols() in ConjugateGradientsSolver Solve");
+		    		  return null;
+		    	  }
+
+		    	  LinearSolver ls = new LinearSolver();
+		    	  LinearSolver.Summary summary = ls.summary;
+		    	  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_NO_CONVERGENCE;
+		    	  summary.message[0] = "Maximum number of iterations reached.";
+		    	  summary.num_iterations = 0;
+
+		    	  int num_cols = A.num_cols();
+		    	  //VectorRef xref(x, num_cols);
+		    	  //ConstVectorRef bref(b, num_cols);
+
+		    	  double norm_b = 0.0;
+		    	  for (i = 0; i < num_cols; i++) {
+		    		  norm_b += b[i]*b[i];
+		    	  }
+		    	  norm_b = Math.sqrt(norm_b);
+		    	  if (norm_b == 0.0) {
+		    		for (i = 0; i < num_cols; i++) {
+		    			x[i] = 0.0;
+		    		}
+		    	    summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		    	    summary.message[0] = "Convergence. |b| = 0.";
+		    	    return summary;
+		    	  }
+
+		    	  double r[] = new double[num_cols];
+		    	  double p[] = new double[num_cols];
+		    	  double z[] = new double[num_cols];
+		    	  double tmp[] = new double[num_cols];
+
+		    	  double tol_r = per_solve_options.r_tolerance * norm_b;
+
+		    	  A.RightMultiply(x, tmp);
+		    	  double norm_r = 0.0;
+		    	  for (i = 0; i < num_cols; i++) {
+		    		  r[i] = b[i] - tmp[i];
+		    		  norm_r += (r[i]*r[i]);
+		    	  }
+		    	  norm_r = Math.sqrt(norm_r);
+		    	  if (options_.min_num_iterations == 0 && norm_r <= tol_r) {
+		    	    summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		    	    summary.message[0] =
+		    	        String.format("Convergence. |r| = %e <= %e.", norm_r, tol_r);
+		    	    return summary;
+		    	  }
+
+		    	  double rho = 1.0;
+
+		    	  // Initial value of the quadratic model Q = x'Ax - 2 * b'x.
+		    	  double Q0 = 0.0;
+		    	  for (i = 0; i < num_cols; i++) {
+		    		  Q0 -= (x[i]*(b[i] + r[i]));
+		    	  }
+
+		    	  for (summary.num_iterations = 1;; ++summary.num_iterations) {
+		    	    // Apply preconditioner
+		    	    if (per_solve_options.preconditioner != null) {
+		    	      for (i = 0; i < num_cols; i++) {
+		    	    	  z[i] = 0.0;
+		    	      }
+		    	      per_solve_options.preconditioner.RightMultiply(r, z);
+		    	    } else {
+		    	      z = r;
+		    	    }
+
+		    	    double last_rho = rho;
+		    	    rho = 0.0;
+		    	    for (i = 0; i < num_cols; i++) {
+		    	    	rho += (r[i]*z[i]);
+		    	    }
+		    	    if ((Double.isInfinite(rho)) || (rho == 0.0)) {
+		    	      summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		    	      summary.message[0] = String.format("Numerical failure. rho = r'z = %e.", rho);
+		    	      break;
+		    	    }
+
+		    	    if (summary.num_iterations == 1) {
+		    	      p = z;
+		    	    } else {
+		    	      double beta = rho / last_rho;
+		    	      if ((Double.isInfinite(beta)) || (beta == 0.0)) {
+		    	        summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		    	        summary.message[0] = String.format(
+		    	            "Numerical failure. beta = rho_n / rho_{n-1} = %e, rho_n = %e, rho_{n-1} = %e", beta, rho, last_rho);
+		    	        break;
+		    	      }
+		    	      for (i = 0; i < num_cols; i++) {
+		    	      p[i] = z[i] + beta * p[i];
+		    	      }
+		    	    }
+
+		    	    double q[] = z;
+		    	    for (i = 0; i < num_cols; i++) {
+		    	        q[i] = 0.0;
+		    	    }
+		    	    A.RightMultiply(p, q);
+		    	    double pq = 0.0;
+		    	    for (i = 0; i < num_cols; i++) {
+		    	    	pq += (p[i]*q[i]);
+		    	    }
+		    	    if ((pq <= 0) || Double.isInfinite(pq))  {
+		    	      summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_NO_CONVERGENCE;
+		    	      double pnorm = 0.0;
+		    	      double qnorm = 0.0;
+		    	      for (i = 0; i < num_cols; i++) {
+		    	    	  pnorm += (p[i]*p[i]);
+		    	    	  qnorm += (q[i]*q[i]);
+		    	      }
+		    	      pnorm = Math.sqrt(pnorm);
+		    	      qnorm = Math.sqrt(qnorm);
+		    	      summary.message[0] = String.format(
+		    	          "Matrix is indefinite, no more progress can be made. p'q = %e. |p| = %e, |q| = %e",
+		    	          pq, pnorm, qnorm);
+		    	      break;
+		    	    }
+
+		    	    double alpha = rho / pq;
+		    	    if (Double.isInfinite(alpha)) {
+		    	      summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		    	      summary.message[0] =
+		    	          String.format("Numerical failure. alpha = rho / pq = %e, rho = %e, pq = %e.", alpha, rho, pq);
+		    	      break;
+		    	    }
+
+		    	    for (i = 0; i < num_cols; i++) {
+		    	        x[i] = x[i] + alpha * p[i];
+		    	    }
+
+		    	    // Ideally we would just use the update r = r - alpha*q to keep
+		    	    // track of the residual vector. However this estimate tends to
+		    	    // drift over time due to round off errors. Thus every
+		    	    // residual_reset_period iterations, we calculate the residual as
+		    	    // r = b - Ax. We do not do this every iteration because this
+		    	    // requires an additional matrix vector multiply which would
+		    	    // double the complexity of the CG algorithm.
+		    	    if (summary.num_iterations % options_.residual_reset_period == 0) {
+		    	      for (i = 0; i < num_cols; i++) {
+		    	          tmp[i] = 0.0;
+		    	      }
+		    	      A.RightMultiply(x, tmp);
+		    	      for (i = 0; i < num_cols; i++) {
+		    	          r[i] = b[i] - tmp[i];
+		    	      }
+		    	    } else {
+		    	    	for (i = 0; i < num_cols; i++) {
+		    	            r[i] = r[i] - alpha * q[i];
+		    	    	}
+		    	    }
+
+		    	    // Quadratic model based termination.
+		    	    //   Q1 = x'Ax - 2 * b' x.
+		    	    double Q1 = 0.0;
+		    	    for (i = 0; i < num_cols; i++) {
+		    	       Q1 -= (x[i]*(b[i] + r[i]));
+		    	    }
+
+		    	    // For PSD matrices A, let
+		    	    //
+		    	    //   Q(x) = x'Ax - 2b'x
+		    	    //
+		    	    // be the cost of the quadratic function defined by A and b. Then,
+		    	    // the solver terminates at iteration i if
+		    	    //
+		    	    //   i * (Q(x_i) - Q(x_i-1)) / Q(x_i) < q_tolerance.
+		    	    //
+		    	    // This termination criterion is more useful when using CG to
+		    	    // solve the Newton step. This particular convergence test comes
+		    	    // from Stephen Nash's work on truncated Newton
+		    	    // methods. References:
+		    	    //
+		    	    //   1. Stephen G. Nash & Ariela Sofer, Assessing A Search
+		    	    //   Direction Within A Truncated Newton Method, Operation
+		    	    //   Research Letters 9(1990) 219-221.
+		    	    //
+		    	    //   2. Stephen G. Nash, A Survey of Truncated Newton Methods,
+		    	    //   Journal of Computational and Applied Mathematics,
+		    	    //   124(1-2), 45-59, 2000.
+		    	    //
+		    	    double zeta = summary.num_iterations * (Q1 - Q0) / Q1;
+		    	    if (zeta < per_solve_options.q_tolerance &&
+		    	        summary.num_iterations >= options_.min_num_iterations) {
+		    	      summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		    	      double rnorm = 0.0;
+		    	      for (i = 0; i < num_cols; i++) {
+		    	    	  rnorm += (r[i]*r[i]);
+		    	      }
+		    	      rnorm = Math.sqrt(rnorm);
+		    	      summary.message[0] =
+		    	          String.format("Iteration: %d Convergence: zeta = %e < %e. |r| = %e",
+		    	                       summary.num_iterations,
+		    	                       zeta,
+		    	                       per_solve_options.q_tolerance,
+		    	                       rnorm);
+		    	      break;
+		    	    }
+		    	    Q0 = Q1;
+
+		    	    // Residual based termination.
+		    	      norm_r = 0.0;
+		    	      for (i = 0; i < num_cols; i++) {
+		    	    	  norm_r += (r[i]*r[i]);
+		    	      }
+		    	      norm_r = Math.sqrt(norm_r);
+		    	    if (norm_r <= tol_r &&
+		    	        summary.num_iterations >= options_.min_num_iterations) {
+		    	      summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		    	      summary.message[0] =
+		    	          String.format("Iteration: %d Convergence. |r| = %e <= %e.",
+		    	                       summary.num_iterations,
+		    	                       norm_r,
+		    	                       tol_r);
+		    	      break;
+		    	    }
+
+		    	    if (summary.num_iterations >= options_.max_num_iterations) {
+		    	      break;
+		    	    }
+		    	  }
+
+		    	  return summary;
+
+		    }
+
+		   
+		  };
+	 
+	// Note: This class is not thread safe, since it uses some temporary storage.
+	 class CgnrLinearOperator extends LinearOperator {
+		 private LinearOperator A_;
+	     private double D_[];
+	     //scoped_array<double> z_;
+	     private double z_[];
+	  
+	    public CgnrLinearOperator(LinearOperator A, double D[]) {
+	       super();
+	       A_ = A;
+	       D_ = D; 
+	       z_ = new double[A.num_rows()];
+	   }
+
+	   public void RightMultiply(double x[], double y[]) {
+		 int i;
+		 for (i = 0; i < A_.num_rows(); i++) {
+			 z_[i] = 0.0;
+		 }
+
+	     // z = Ax
+	     A_.RightMultiply(x, z_);
+
+	     // y = y + Atz
+	     A_.LeftMultiply(z_, y);
+
+	     // y = y + DtDx
+	     if (D_ != null) {
+	       int n = A_.num_cols();
+	       for (i = 0; i < n; i++) {
+	    	   y[i] += (D_[i]*D_[i]*x[i]);
+	       }
+	     }
+	   }
+
+	   public void LeftMultiply(double x[], double y[]) {
+	     RightMultiply(x, y);
+	   }
+
+	   public int num_rows() { return A_.num_cols(); }
+	   public int num_cols() { return A_.num_cols(); }
+	 };
 	 
 	// A block Jacobi preconditioner. This is intended for use with
 	// conjugate gradients, or other iterative symmetric solvers. To use
@@ -3597,23 +3966,123 @@ public abstract class CeresSolver {
 	// update the matrix by running Update(A, D). The values of the matrix A are
 	// inspected to construct the preconditioner. The vector D is applied as the
 	// D^TD diagonal term.
-	/*class BlockJacobiPreconditioner extends BlockSparseMatrixPreconditioner {
-	 public:
+	class BlockJacobiPreconditioner extends TypedPreconditioner<BlockSparseMatrix> {
+		//scoped_ptr<BlockRandomAccessDiagonalMatrix> m_;
+		private BlockRandomAccessDiagonalMatrix m_;
 	  // A must remain valid while the BlockJacobiPreconditioner is.
-	  explicit BlockJacobiPreconditioner(const BlockSparseMatrix& A);
-	  virtual ~BlockJacobiPreconditioner();
+	  public  BlockJacobiPreconditioner(BlockSparseMatrix A) {
+		  CompressedRowBlockStructure bs = A.block_structure();
+		  Vector<Integer> blocks = new Vector<Integer>(bs.cols.size());
+		  for (int i = 0; i < blocks.size(); ++i) {
+		    blocks.add(bs.cols.get(i).size);
+		  }
+
+		  m_ = new BlockRandomAccessDiagonalMatrix(blocks);
+
+	  }
 
 	  // Preconditioner interface
-	  virtual void RightMultiply(const double* x, double* y) const;
-	  virtual int num_rows() const { return m_->num_rows(); }
-	  virtual int num_cols() const { return m_->num_rows(); }
-	  const BlockRandomAccessDiagonalMatrix& matrix() const { return *m_; }
+	  public void RightMultiply(double x[], double y[]) {
+		  m_.RightMultiply(x, y);
 
-	 private:
-	  virtual bool UpdateImpl(const BlockSparseMatrix& A, const double* D);
+	  }
+	  public int num_rows() { return m_.num_rows(); }
+	  public int num_cols() { return m_.num_rows(); }
+	  public BlockRandomAccessDiagonalMatrix matrix() { return m_; }
 
-	  scoped_ptr<BlockRandomAccessDiagonalMatrix> m_;
-	};*/
+	  // Won't work until Invert() for BlockRandomAccessDiagonalMatrix is implemented
+	  public boolean UpdateImpl(BlockSparseMatrix A, double D[]) {
+		  CompressedRowBlockStructure bs = A.block_structure();
+		  double values[] = A.values();
+		  m_.SetZero();
+		  for (int i = 0; i < bs.rows.size(); ++i) {
+		    int row_block_size = bs.rows.get(i).block.size;
+		    Vector<Cell> cells = bs.rows.get(i).cells;
+		    for (int j = 0; j < cells.size(); ++j) {
+		      int block_id = cells.get(j).block_id;
+		      int col_block_size = bs.cols.get(block_id).size;
+
+		      int r[] = new int[1];
+		      int c[] = new int[1];
+		      int row_stride[] = new int[1];
+		      int col_stride[] = new int[1];
+		      CellInfo cell_info = m_.GetCell(block_id, block_id,
+		                                        r, c,
+		                                        row_stride, col_stride);
+		      double m[][] = new double[row_stride[0]][col_stride[0]];
+		      int values_index = 0;
+		      for (int row = 0; row < row_stride[0]; row++) {
+		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
+		    		  m[row][col] = cell_info.values[values_index];
+		    	  }
+		      }
+		      double b[][] = new double[row_block_size][col_block_size];
+		      double bT[][] = new double[col_block_size][row_block_size];
+		      values_index = 0;
+		      for (int row = 0; row < row_block_size; row++) {
+		    	  for (int col = 0; col < col_block_size; col++, values_index++) {
+		    		  b[row][col] = values[values_index + cells.get(j).position];
+		    		  bT[col][row] = b[row][col];
+		    	  }
+		      }
+		      double bTb[][] = new double[col_block_size][col_block_size];
+		      for (int row = 0; row < col_block_size; row++) {
+		    	  for (int col = 0; col < col_block_size; col++) {
+		    		  for (int k = 0; k < row_block_size; k++) {
+		    			  bTb[row][col] += (bT[row][k] * b[k][col]);
+		    		  }
+		    	  }
+		      }
+		      for (int row = 0; row < col_block_size; row++) {
+		    	  for (int col = 0; col < col_block_size; col++) {
+		    		  m[r[0] + row][c[0] + col] += bTb[row][col];
+		    	  }
+		      }
+		      values_index = 0;
+		      for (int row = 0; row < row_stride[0]; row++) {
+		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
+		    		  cell_info.values[values_index] = m[row][col];
+		    	  }
+		      }
+		    }
+		  }
+
+		  if (D != null) {
+		    // Add the diagonal.
+		    int position = 0;
+		    for (int i = 0; i < bs.cols.size(); ++i) {
+		      int block_size = bs.cols.get(i).size;
+		      int r[] = new int[1];
+		      int c[] = new int[1];
+		      int row_stride[] = new int[1];
+		      int col_stride[] = new int[1];
+		      CellInfo cell_info = m_.GetCell(i, i,
+		                                        r, c,
+		                                        row_stride, col_stride);
+		      double m[][] = new double[row_stride[0]][col_stride[0]];
+		      int values_index = 0;
+		      for (int row = 0; row < row_stride[0]; row++) {
+		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
+		    		  m[row][col] = cell_info.values[values_index];
+		    	  }
+		      }
+		      for (int k = 0; k < block_size; k++) {
+		    	  m[r[0] + k][c[0] + k] += (D[k + position]*D[k + position]);
+		      }
+		      position += block_size;
+		      values_index = 0;
+		      for (int row = 0; row < row_stride[0]; row++) {
+		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
+		    		  cell_info.values[values_index] = m[row][col];
+		    	  }
+		      }
+		    }
+		  }
+
+		  m_.Invert();
+		  return true;  
+	  }
+	};
 	
 	// This templated subclass of Preconditioner serves as a base class for
 	// other preconditioners that depend on the particular matrix layout of
