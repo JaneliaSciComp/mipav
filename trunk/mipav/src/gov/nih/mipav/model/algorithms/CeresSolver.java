@@ -3542,7 +3542,7 @@ public abstract class CeresSolver {
 		}
 	}
 	
-	/*class DenseSparseMatrix extends SparseMatrix {
+	class DenseSparseMatrix extends SparseMatrix {
 	     // Column major matrices for DenseSparseMatrix/DenseQRSolver
 	     // ColMajorMatrix m_;
 		 private Matrix m_;
@@ -3620,11 +3620,90 @@ public abstract class CeresSolver {
             	  y[r] += mx[r];
               }
 		  }
-		  virtual void LeftMultiply(const double* x, double* y) const;
-		  virtual void SquaredColumnNorm(double* x) const;
-		  virtual void ScaleColumns(const double* scale);
-		  virtual void ToDenseMatrix(Matrix* dense_matrix) const;
-		  virtual void ToTextFile(FILE* file) const;
+		  
+		  public void LeftMultiply(double x[], double y[]) {
+		      double array[][] = matrix().transpose().getArray();
+              double mx[] = new double[num_cols()];
+              for (int r = 0; r < num_cols(); r++) {
+            	  for (int c = 0; c < num_rows(); c++) {
+            		  mx[r] += (array[r][c] * x[c]);
+            	  }
+              }
+        	  for (int r = 0; r < num_cols(); r++) {
+            	  y[r] += mx[r];
+              }
+		  }
+		  
+		  public void SquaredColumnNorm(double x[]) {
+              double array[][] = m_.getArray();
+              int rows = m_.getRowDimension();
+              for (int c = 0; c < num_cols(); c++) {
+            	  x[c] = 0.0;
+            	  for (int r = 0; r < rows; r++) {
+            		  x[c] += (array[r][c]*array[r][c]);  
+            	  }
+              }
+		  }
+		  
+		  public void ScaleColumns(double[] scale) {
+			  double array[][] = m_.getArray();
+			  int rows = m_.getRowDimension();  
+              for (int c = 0; c < num_cols(); c++) {
+            	  for (int r = 0; r < rows; r++) {
+            		  array[r][c] *= scale[c];  
+            	  }
+              }
+		  }
+		  
+		  public Matrix ToDenseMatrix(Matrix dense_matrix) {
+			  double original_array[][] = dense_matrix.getArray();
+			  double new_array[][] = new double[num_rows()][num_cols()];
+			  for (int r = 0; r < num_rows(); r++) {
+				  for (int c = 0; c < num_cols(); c++) {
+					  new_array[r][c] = original_array[r][c];  
+				  }
+			  }
+			  return new Matrix(new_array);
+		  }
+		  
+		  public void ToTextFile(File file) {
+			  if (file == null) {
+				  System.err.println("file == null in ToTextFile");
+				  return;
+			  }
+			  FileWriter fw = null;
+				try {
+					fw = new FileWriter(file);
+				} catch (IOException e) {
+					System.err.println("IOException in ToTextFile on new FileWriter(file)");
+					return;
+				}
+			  
+				int active_rows =
+					      (has_diagonal_reserved_ && !has_diagonal_appended_)
+					      ? (m_.getRowDimension() - m_.getColumnDimension())
+					      : m_.getRowDimension();
+
+					  for (int r = 0; r < active_rows; ++r) {
+					    for (int c = 0; c < m_.getColumnDimension(); ++c) {
+					      String str = String.format("% 10d % 10d %17f\n", r, c, m_.getArray()[r][c]);
+					      try {
+								fw.write(str, 0, str.length());
+							} catch (IOException e) {
+								System.err.println("IOException in ToTextFile on fw.write(str,0,str.length())");
+								return;
+							}
+					    }
+					  }
+			  try {
+				    fw.close();
+				}
+				catch (IOException e) {
+					System.err.println("IOException in ToTextFile on fw.close()");
+				}
+  
+		  }
+		  
 		  public int num_rows() {
 			  if (has_diagonal_reserved_ && !has_diagonal_appended_) {
 				    return m_.getRowDimension() - m_.getColumnDimension();
@@ -3736,11 +3815,47 @@ public abstract class CeresSolver {
 		  // Calling RemoveDiagonal removes the block. It is a fatal error to append a
 		  // diagonal to a matrix that already has an appended diagonal, and it is also
 		  // a fatal error to remove a diagonal from a matrix that has none.
-		  void AppendDiagonal(double *d);
-		  void RemoveDiagonal();
+		  public void AppendDiagonal(double d[]) {
+			  if (has_diagonal_appended_) {
+				  System.err.println("has_diagonal_appended = true in AppendDiagonal");
+				  return;
+			  }
+			  
+			  if (!has_diagonal_reserved_) {
+				int original_rows = m_.getRowDimension();
+				int original_cols = m_.getColumnDimension();
+				double original_array[][] = m_.getArray();
+				int new_rows = original_rows + original_cols;
+				int new_cols = original_cols;
+				double new_array[][] = new double[new_rows][new_cols];
+				for (int r = 0; r < original_rows; r++) {
+					for (int c = 0; c < original_cols; c++) {
+						new_array[r][c] = original_array[r][c];
+					}
+				}
+			    m_ = new Matrix(new_array);
+			    has_diagonal_reserved_ = true;
+			  }
+
+			  for (int c = 0; c < m_.getColumnDimension(); c++) {
+				  m_.getArray()[m_.getRowDimension()-m_.getColumnDimension()+c][c] = d[c];
+			  }
+			  has_diagonal_appended_ = true;
+  
+		  }
+		  
+		  public void RemoveDiagonal() {
+			  if (!has_diagonal_appended_) {
+				  System.err.println("has_diagonal_appended_ = false in RemoveDiagonal");
+				  return;
+			  }
+			  has_diagonal_appended_ = false;
+			  // Leave the diagonal reserved.
+
+		  }
 
 		 
-		};*/
+		};
 
 	// A conjugate gradients on the normal equations solver. This directly solves
 	// for the solution to
