@@ -3542,34 +3542,178 @@ public abstract class CeresSolver {
 		}
 	}
 	
-	/*class DenseSparseMatrix : public SparseMatrix {
-		 public:
+	/*class DenseSparseMatrix extends SparseMatrix {
+	     // Column major matrices for DenseSparseMatrix/DenseQRSolver
+	     // ColMajorMatrix m_;
+		 private Matrix m_;
+	     private boolean has_diagonal_appended_;
+	     private boolean has_diagonal_reserved_;
 		  // Build a matrix with the same content as the TripletSparseMatrix
 		  // m. This assumes that m does not have any repeated entries.
-		  explicit DenseSparseMatrix(const TripletSparseMatrix& m);
-		  explicit DenseSparseMatrix(const ColMajorMatrix& m);
+		  public DenseSparseMatrix(TripletSparseMatrix m) {
+			  super();
+			  double array[][] = new double[m.num_rows()][m.num_cols()];
+			  m_ = new Matrix(array);
+		      has_diagonal_appended_ = false;
+		      has_diagonal_reserved_ = false;
+		      double values[] = m.values();
+		      int rows[] = m.rows();
+		      int cols[] = m.cols();
+		      int num_nonzeros = m.num_nonzeros();
 
-		  DenseSparseMatrix(int num_rows, int num_cols);
-		  DenseSparseMatrix(int num_rows, int num_cols, bool reserve_diagonal);
+		      for (int i = 0; i < num_nonzeros; ++i) {
+		    	  m_.getArray()[rows[i]][cols[i]] += values[i];
+		      }
 
-		  virtual ~DenseSparseMatrix() {}
+		  }
+		  
+		  //explicit DenseSparseMatrix(const ColMajorMatrix& m);
+		  public DenseSparseMatrix(Matrix m) {
+		      super();	
+		      m_ = m;
+		      has_diagonal_appended_ = false;
+		      has_diagonal_reserved_ = false; 
+		  }
+
+		  public DenseSparseMatrix(int num_rows, int num_cols) {
+			  super();
+			  has_diagonal_appended_ = false;
+		      has_diagonal_reserved_ = false;
+		      double array[][] = new double[num_rows][num_cols];
+		      m_ = new Matrix(array);
+		  }
+		  
+		  public DenseSparseMatrix(int num_rows, int num_cols, boolean reserve_diagonal) {
+			  super();
+			  has_diagonal_appended_ = false;
+		      has_diagonal_reserved_ = reserve_diagonal;
+		      double[][] array;
+		      if (reserve_diagonal) {
+		         // Allocate enough space for the diagonal.
+		    	 array = new double[num_rows + num_cols][num_cols];
+		      } else {
+		    	 array = new double[num_rows][num_cols];
+		      }
+		      m_ = new Matrix(array);
+		  }
 
 		  // SparseMatrix interface.
-		  virtual void SetZero();
-		  virtual void RightMultiply(const double* x, double* y) const;
+		  public void SetZero() {
+			  int rows = m_.getRowDimension();
+			  int cols = m_.getColumnDimension();
+			  for (int i = 0; i < rows; i++) {
+				  for (int j = 0; j < cols; j++) {
+					  m_.getArray()[i][j] = 0.0;
+				  }
+			  }
+		  }
+		  
+		  public void RightMultiply(double x[], double y[]) {
+              double array[][] = matrix().getArray();
+              double mx[] = new double[num_rows()];
+              for (int r = 0; r < num_rows(); r++) {
+            	  for (int c = 0; c < num_cols(); c++) {
+            		  mx[r] += (array[r][c] * x[c]);  
+            	  }
+              }
+              for (int r = 0; r < num_rows(); r++) {
+            	  y[r] += mx[r];
+              }
+		  }
 		  virtual void LeftMultiply(const double* x, double* y) const;
 		  virtual void SquaredColumnNorm(double* x) const;
 		  virtual void ScaleColumns(const double* scale);
 		  virtual void ToDenseMatrix(Matrix* dense_matrix) const;
 		  virtual void ToTextFile(FILE* file) const;
-		  virtual int num_rows() const;
-		  virtual int num_cols() const;
-		  virtual int num_nonzeros() const;
-		  virtual const double* values() const { return m_.data(); }
-		  virtual double* mutable_values() { return m_.data(); }
+		  public int num_rows() {
+			  if (has_diagonal_reserved_ && !has_diagonal_appended_) {
+				    return m_.getRowDimension() - m_.getColumnDimension();
+				  }
+				  return m_.getRowDimension();
+		  }
+		  
+		  public int num_cols() {
+			  return m_.getColumnDimension();
+		  }
+		  
+		  public int num_nonzeros() {
+			  if (has_diagonal_reserved_ && !has_diagonal_appended_) {
+				    return (m_.getRowDimension() - m_.getColumnDimension()) * m_.getColumnDimension();
+				  }
+				  return m_.getRowDimension() * m_.getColumnDimension();
 
-		  ConstColMajorMatrixRef matrix() const;
-		  ColMajorMatrixRef mutable_matrix();
+		  }
+		  public double[] values() { 
+			  int rows = m_.getRowDimension();
+			  int cols = m_.getColumnDimension();
+			  double array[][] = m_.getArray();
+			  double val[] = new double[rows * cols];
+			  int index = 0;
+			  for (int c = 0; c < cols; c++) {
+				  for (int r = 0; r < rows; r++, index++) {
+					  val[index] = array[r][c];
+				  }
+			  }
+			  return val;
+		  }
+		  
+		  public double[] mutable_values() {
+			  int rows = m_.getRowDimension();
+			  int cols = m_.getColumnDimension();
+			  double array[][] = m_.getArray();
+			  double val[] = new double[rows * cols];
+			  int index = 0;
+			  for (int c = 0; c < cols; c++) {
+				  for (int r = 0; r < rows; r++, index++) {
+					  val[index] = array[r][c];
+				  }
+			  }
+			  return val;  
+		  }
+
+		  //ConstColMajorMatrixRef matrix() const;
+		  public Matrix matrix() {
+			          int original_rows = m_.getRowDimension();
+			          int original_cols = m_.getColumnDimension();
+			          double original_array[][] = m_.getArray();
+                      int new_rows;
+                      if (has_diagonal_reserved_ && !has_diagonal_appended_) {
+                    	  new_rows = original_rows - original_cols;
+                      }
+                      else {
+                    	  new_rows = original_rows;
+                      }
+                      int new_cols = original_cols;
+                      double new_array[][] = new double[new_rows][new_cols];
+                      for (int row = 0; row < new_rows; row++) {
+                    	  for (int col = 0; col < new_cols; col++) {
+                    		  new_array[row][col] = original_array[row][col];
+                    	  }
+                      }
+                      return new Matrix(new_array);    
+		  }
+		  
+		  //ColMajorMatrixRef mutable_matrix();
+		  public Matrix mutable_matrix() {
+			  int original_rows = m_.getRowDimension();
+	          int original_cols = m_.getColumnDimension();
+	          double original_array[][] = m_.getArray();
+              int new_rows;
+              if (has_diagonal_reserved_ && !has_diagonal_appended_) {
+            	  new_rows = original_rows - original_cols;
+              }
+              else {
+            	  new_rows = original_rows;
+              }
+              int new_cols = original_cols;
+              double new_array[][] = new double[new_rows][new_cols];
+              for (int row = 0; row < new_rows; row++) {
+            	  for (int col = 0; col < new_cols; col++) {
+            		  new_array[row][col] = original_array[row][col];
+            	  }
+              }
+              return new Matrix(new_array);    	  
+		  }
 
 		  // Only one diagonal can be appended at a time. The diagonal is appended to
 		  // as a new set of rows, e.g.
@@ -3595,10 +3739,7 @@ public abstract class CeresSolver {
 		  void AppendDiagonal(double *d);
 		  void RemoveDiagonal();
 
-		 private:
-		  ColMajorMatrix m_;
-		  bool has_diagonal_appended_;
-		  bool has_diagonal_reserved_;
+		 
 		};*/
 
 	// A conjugate gradients on the normal equations solver. This directly solves
