@@ -9682,8 +9682,11 @@ public class PlugInDialogFITBIR extends JFrame
     private boolean checkRecordsForSubmission() {
         // when running from CSV, check to make sure that the number of records in the final list matches the number read in from the CSV
         if (csvRecordCount != -1 && csvRecordCount != structTableModel.getRowCount()) {
-            MipavUtil.displayError("Not all records from the selected CSV were successfully processed. Contact the Operations or Imaging Team for help debugging the issue. " + structTableModel.getRowCount() + " / " + csvRecordCount);
-            return false;
+            final int response = JOptionPane.showConfirmDialog(this, "Not all records from the selected CSV were successfully processed. Contact the Operations or Imaging Team for help debugging the issue (" + structTableModel.getRowCount() + " / " + csvRecordCount + " records). Continue anyway?", "Error processing all CSV records", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+            
+            if (response == JOptionPane.NO_OPTION) {
+                return false;
+            }
         }
         
         // check that required fields have some value
