@@ -88,6 +88,792 @@ public class GeneralizedInverse2 implements java.io.Serializable {
         return AIN;
     } // pinv
     
+    /*> \brief <b> DGELS solves overdetermined or underdetermined systems for GE matrices</b>
+    *
+    *  =========== DOCUMENTATION ===========
+    *
+    * Online html documentation available at
+    *            http://www.netlib.org/lapack/explore-html/
+    *
+    *> \htmlonly
+    *> Download DGELS + dependencies
+    *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dgels.f">
+    *> [TGZ]</a>
+    *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dgels.f">
+    *> [ZIP]</a>
+    *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dgels.f">
+    *> [TXT]</a>
+    *> \endhtmlonly
+    *
+    *  Definition:
+    *  ===========
+    *
+    *       SUBROUTINE DGELS( TRANS, M, N, NRHS, A, LDA, B, LDB, WORK, LWORK,
+    *                         INFO )
+    *
+    *       .. Scalar Arguments ..
+    *       CHARACTER          TRANS
+    *       INTEGER            INFO, LDA, LDB, LWORK, M, N, NRHS
+    *       ..
+    *       .. Array Arguments ..
+    *       DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), WORK( * )
+    *       ..
+    *
+    *
+    *> \par Purpose:
+    *  =============
+    *>
+    *> \verbatim
+    *>
+    *> DGELS solves overdetermined or underdetermined real linear systems
+    *> involving an M-by-N matrix A, or its transpose, using a QR or LQ
+    *> factorization of A.  It is assumed that A has full rank.
+    *>
+    *> The following options are provided:
+    *>
+    *> 1. If TRANS = 'N' and m >= n:  find the least squares solution of
+    *>    an overdetermined system, i.e., solve the least squares problem
+    *>                 minimize || B - A*X ||.
+    *>
+    *> 2. If TRANS = 'N' and m < n:  find the minimum norm solution of
+    *>    an underdetermined system A * X = B.
+    *>
+    *> 3. If TRANS = 'T' and m >= n:  find the minimum norm solution of
+    *>    an underdetermined system A**T * X = B.
+    *>
+    *> 4. If TRANS = 'T' and m < n:  find the least squares solution of
+    *>    an overdetermined system, i.e., solve the least squares problem
+    *>                 minimize || B - A**T * X ||.
+    *>
+    *> Several right hand side vectors b and solution vectors x can be
+    *> handled in a single call; they are stored as the columns of the
+    *> M-by-NRHS right hand side matrix B and the N-by-NRHS solution
+    *> matrix X.
+    *> \endverbatim
+    *
+    *  Arguments:
+    *  ==========
+    *
+    *> \param[in] TRANS
+    *> \verbatim
+    *>          TRANS is CHARACTER*1
+    *>          = 'N': the linear system involves A;
+    *>          = 'T': the linear system involves A**T.
+    *> \endverbatim
+    *>
+    *> \param[in] M
+    *> \verbatim
+    *>          M is INTEGER
+    *>          The number of rows of the matrix A.  M >= 0.
+    *> \endverbatim
+    *>
+    *> \param[in] N
+    *> \verbatim
+    *>          N is INTEGER
+    *>          The number of columns of the matrix A.  N >= 0.
+    *> \endverbatim
+    *>
+    *> \param[in] NRHS
+    *> \verbatim
+    *>          NRHS is INTEGER
+    *>          The number of right hand sides, i.e., the number of
+    *>          columns of the matrices B and X. NRHS >=0.
+    *> \endverbatim
+    *>
+    *> \param[in,out] A
+    *> \verbatim
+    *>          A is DOUBLE PRECISION array, dimension (LDA,N)
+    *>          On entry, the M-by-N matrix A.
+    *>          On exit,
+    *>            if M >= N, A is overwritten by details of its QR
+    *>                       factorization as returned by DGEQRF;
+    *>            if M <  N, A is overwritten by details of its LQ
+    *>                       factorization as returned by DGELQF.
+    *> \endverbatim
+    *>
+    *> \param[in] LDA
+    *> \verbatim
+    *>          LDA is INTEGER
+    *>          The leading dimension of the array A.  LDA >= max(1,M).
+    *> \endverbatim
+    *>
+    *> \param[in,out] B
+    *> \verbatim
+    *>          B is DOUBLE PRECISION array, dimension (LDB,NRHS)
+    *>          On entry, the matrix B of right hand side vectors, stored
+    *>          columnwise; B is M-by-NRHS if TRANS = 'N', or N-by-NRHS
+    *>          if TRANS = 'T'.
+    *>          On exit, if INFO = 0, B is overwritten by the solution
+    *>          vectors, stored columnwise:
+    *>          if TRANS = 'N' and m >= n, rows 1 to n of B contain the least
+    *>          squares solution vectors; the residual sum of squares for the
+    *>          solution in each column is given by the sum of squares of
+    *>          elements N+1 to M in that column;
+    *>          if TRANS = 'N' and m < n, rows 1 to N of B contain the
+    *>          minimum norm solution vectors;
+    *>          if TRANS = 'T' and m >= n, rows 1 to M of B contain the
+    *>          minimum norm solution vectors;
+    *>          if TRANS = 'T' and m < n, rows 1 to M of B contain the
+    *>          least squares solution vectors; the residual sum of squares
+    *>          for the solution in each column is given by the sum of
+    *>          squares of elements M+1 to N in that column.
+    *> \endverbatim
+    *>
+    *> \param[in] LDB
+    *> \verbatim
+    *>          LDB is INTEGER
+    *>          The leading dimension of the array B. LDB >= MAX(1,M,N).
+    *> \endverbatim
+    *>
+    *> \param[out] WORK
+    *> \verbatim
+    *>          WORK is DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+    *>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+    *> \endverbatim
+    *>
+    *> \param[in] LWORK
+    *> \verbatim
+    *>          LWORK is INTEGER
+    *>          The dimension of the array WORK.
+    *>          LWORK >= max( 1, MN + max( MN, NRHS ) ).
+    *>          For optimal performance,
+    *>          LWORK >= max( 1, MN + max( MN, NRHS )*NB ).
+    *>          where MN = min(M,N) and NB is the optimum block size.
+    *>
+    *>          If LWORK = -1, then a workspace query is assumed; the routine
+    *>          only calculates the optimal size of the WORK array, returns
+    *>          this value as the first entry of the WORK array, and no error
+    *>          message related to LWORK is issued by XERBLA.
+    *> \endverbatim
+    *>
+    *> \param[out] INFO
+    *> \verbatim
+    *>          INFO is INTEGER
+    *>          = 0:  successful exit
+    *>          < 0:  if INFO = -i, the i-th argument had an illegal value
+    *>          > 0:  if INFO =  i, the i-th diagonal element of the
+    *>                triangular factor of A is zero, so that A does not have
+    *>                full rank; the least squares solution could not be
+    *>                computed.
+    *> \endverbatim
+    *
+    *  Authors:
+    *  ========
+    *
+    *> \author Univ. of Tennessee
+    *> \author Univ. of California Berkeley
+    *> \author Univ. of Colorado Denver
+    *> \author NAG Ltd.
+    *
+    *> \date December 2016
+    *
+    *> \ingroup doubleGEsolve
+    *
+    *  =====================================================================
+    *  */
+          public void dgels(char trans, int m, int n, int nrhs, double A[][], 
+        		  int lda, double B[][], int ldb, double work[], int lwork, int info[] ) {
+    /*
+    *  -- LAPACK driver routine (version 3.7.0) --
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     December 2016
+    *
+    *     .. Scalar Arguments ..
+          CHARACTER          TRANS
+          INTEGER            INFO, LDA, LDB, LWORK, M, N, NRHS
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), WORK( * )
+    *     ..
+    *
+    *  =====================================================================
+    *
+    *     .. Parameters ..
+          DOUBLE PRECISION   ZERO, ONE
+          PARAMETER          ( ZERO = 0.0D0, ONE = 1.0D0 )
+    *     ..
+    *     .. Local Scalars ..*/
+          boolean            lquery;
+          boolean tpsd = true;
+          int            brow, i, iascl, ibscl, j, mn, nb, scllen;
+          int wsize = 0;
+          int itau;
+          int iwork;
+          double anrm;
+          double bnrm;
+          double[] smlnum = new double[1];
+          double[] bignum = new double[1];
+         
+          //     .. Local Arrays ..
+          double rwork[] = new double[1];
+          double vector1[];
+          double vector2[];
+    /*     ..
+    *     .. External Functions ..
+          LOGICAL            LSAME
+          INTEGER            ILAENV
+          DOUBLE PRECISION   DLAMCH, DLANGE
+          EXTERNAL           LSAME, ILAENV, DLABAD, DLAMCH, DLANGE
+    *     ..
+    *     .. External Subroutines ..
+          EXTERNAL           DGELQF, DGEQRF, DLASCL, DLASET, DORMLQ, DORMQR,
+         $                   DTRTRS, XERBLA
+    *     ..
+    *     .. Intrinsic Functions ..
+          INTRINSIC          DBLE, MAX, MIN
+    *     ..
+    *     .. Executable Statements ..
+    *
+    *     Test the input arguments.
+    */
+          info[0] = 0;
+          mn = Math.min( m, n );
+          lquery = (lwork == -1 );
+          if (!((trans == 'N') || (trans == 'n') || (trans == 'T') || (trans == 't'))) {
+        	  info[0] = -1;
+          }
+          else if(m < 0 ) {
+             info[0] = -2;
+          }
+          else if (n < 0) {
+             info[0] = -3;
+          }
+          else if(nrhs < 0) {
+             info[0] = -4;
+          }
+          else if(lda < Math.max( 1, m) ) {
+             info[0] = -6;
+          }
+          else if (ldb < Math.max( 1, Math.max(m, n) ) ) {
+             info[0] = -8;
+          }
+          else if(lwork < Math.max( 1, mn+Math.max( mn, nrhs ) ) && (!lquery) ) {
+             info[0] = -10;
+          }
+    
+          // Figure out optimal block size
+    
+          if( (info[0] == 0) || (info[0] == -10) ) {
+    
+             tpsd = true;
+             if ((trans == 'N' ) || (trans == 'n')) {
+               tpsd = false;
+             }
+    
+             if (m >= n) {
+                nb = ge.ilaenv( 1, "DGEQRF", " ", m, n, -1, -1 );
+                if (tpsd) {
+                   nb = Math.max(nb, ge.ilaenv( 1, "DORMQR", "LN", m, nrhs, n, -1 ) );
+                }
+                else {
+                   nb = Math.max(nb, ge.ilaenv( 1, "DORMQR", "LT", m, nrhs, n, -1 ) );
+                }
+             }
+             else {
+                nb = ge.ilaenv( 1, "DGELQF", " ", m, n, -1, -1 );
+                if (tpsd) {
+                   nb = Math.max(nb, ge.ilaenv( 1, "DORMLQ", "LT", n, nrhs, m, -1 ) );
+                }
+                else {
+                   nb = Math.max(nb, ge.ilaenv( 1, "DORMLQ", "LN", n, nrhs, m, -1 ) );
+                }
+             }
+    
+             wsize = Math.max( 1, mn+Math.max(mn, nrhs)*nb );
+             work[0] = (double)wsize;
+          } // if( (info[0] == 0) || (info[0] == -10) )
+    
+          if (info[0] != 0) {
+              MipavUtil.displayError("dgels exits with error info[0] = " + info[0]);
+              Preferences.debug("dgels exits with error info[0] = " + info[0] + "\n");
+              return;
+          }
+          else if (lquery) {
+              return;
+          }
+    
+         //     Quick return if possible
+    
+          if ( Math.min( Math.min(m, n), nrhs ) == 0 ) {
+             ge.dlaset( 'F', Math.max(m, n), nrhs, 0.0, 0.0, B, ldb);
+             return;
+          }
+    
+          // Get machine parameters
+    
+          eps = ge.dlamch('P');
+          sfmin = ge.dlamch('S');
+          smlnum[0] = sfmin/eps;
+          bignum[0] = 1.0 / smlnum[0];
+          ge.dlabad(smlnum, bignum);
+    
+          // Scale A, B if max element outside range [SMLNUM,BIGNUM]
+    
+          anrm = ge.dlange( 'M', m, n, A, lda, rwork );
+          iascl = 0;
+          if (anrm > 0.0 && anrm < smlnum[0]) {
+    
+             // Scale matrix norm up to SMLNUM
+    
+             ge.dlascl( 'G', 0, 0, anrm, smlnum[0], m, n, A, lda, info);
+             iascl = 1;
+          }
+          else if (anrm > bignum[0]) {
+    
+             // Scale matrix norm down to BIGNUM
+    
+             ge.dlascl( 'G', 0, 0, anrm, bignum[0], m, n, A, lda, info );
+             iascl = 2;
+          }
+          else if (anrm == 0.0) {
+    
+             // Matrix all zero. Return zero solution.
+    
+             ge.dlaset( 'F', Math.max( m, n ), nrhs, 0.0, 0.0, B, ldb );
+             work[0] = (double)wsize;
+             return;
+          }
+    
+          brow = m;
+          if (tpsd) {
+            brow = n;
+          }
+          bnrm = ge.dlange( 'M', brow, nrhs, B, ldb, rwork);
+          ibscl = 0;
+          if (bnrm > 0.0 && bnrm  < smlnum[0]) {
+    
+             // Scale matrix norm up to SMLNUM
+    
+             ge.dlascl( 'G', 0, 0, bnrm, smlnum[0], brow, nrhs, B, ldb, info);
+             ibscl = 1;
+          }
+          else if (bnrm > bignum[0]) {
+    
+             // Scale matrix norm down to BIGNUM
+    
+             ge.dlascl( 'G', 0, 0, bnrm, bignum[0], brow, nrhs, B, ldb, info );
+             ibscl = 2;
+          }
+    
+          if (m >= n) {
+        	  itau = 1;
+              iwork = itau + mn;
+             // compute QR factorization of A
+             vector1 = new double[Math.min(m, n)];
+             vector2 = new double[Math.max(1, lwork - mn)];
+             ge.dgeqrf( m, n, A, lda, vector1, vector2, lwork-mn, info );
+             for (i = 0; i < vector1.length; i++) {
+                 work[itau - 1 + i] = vector1[i];
+             }
+             
+             for (i = 0; i < vector2.length; i++) {
+                 work[iwork - 1 + i] = vector2[i];
+             }
+             
+    
+             // workspace at least N, optimally N*NB
+    
+             if (!tpsd) {
+    
+                // Least-Squares Problem min || A * X - B ||
+    
+                // B(1:M,1:NRHS) := Q**T * B(1:M,1:NRHS)
+    
+                vector1 = new double[n];
+                for (i = 0; i < n; i++) {
+                    vector1[i] = work[itau - 1 + i];
+                }
+                ge.dormqr('L', 'T', m, nrhs, n, A, lda, vector1, B, ldb, vector2, lwork - mn, info);
+                for (i = 0; i < vector2.length; i++) {
+                    work[iwork - 1 + i] = vector2[i];
+                }
+    
+                // workspace at least NRHS, optimally NRHS*NB
+    
+                // B(1:N,1:NRHS) := inv(R) * B(1:N,1:NRHS)
+    
+                dtrtrs( 'U', 'N', 'N', n, nrhs, A, lda, B, ldb, info);
+    
+                if (info[0] > 0) {
+                   return;
+                }
+    
+                scllen = n;
+             } // if (!tpsd)
+             else {
+    
+                // Underdetermined system of equations A**T * X = B
+    
+                // B(1:N,1:NRHS) := inv(R**T) * B(1:N,1:NRHS)
+    
+                dtrtrs( 'U', 'T', 'N', n, nrhs, A, lda, B, ldb, info);
+    
+                if (info[0] > 0) {
+                   return;
+                }
+    
+                // B(N+1:M,1:NRHS) = ZERO
+    
+                for (j = 0; j < nrhs; j++) {
+                   for (i = n; i < m; i++) {
+                      B[i][j] = 0.0;
+                   }
+                }
+    
+                // B(1:M,1:NRHS) := Q(1:N,:) * B(1:N,1:NRHS)
+    
+                vector1 = new double[n];
+                for (i = 0; i < n; i++) {
+                    vector1[i] = work[itau - 1 + i];
+                }
+                ge.dormqr('L', 'N', m, nrhs, n, A, lda, vector1, B, ldb, vector2, lwork - mn, info);
+                for (i = 0; i < vector2.length; i++) {
+                    work[iwork - 1 + i] = vector2[i];
+                }
+    
+                // workspace at least NRHS, optimally NRHS*NB
+    
+                scllen = m;
+             }
+    
+          } // if (m >= n)
+          else { // m < n
+        	  itau = 1;
+              iwork = itau + mn;
+              // Compute LQ factorization of A
+              vector1 = new double[Math.min(m, n)];
+              vector2 = new double[Math.max(1, lwork - mn)];
+              dgelqf(m,n,A,lda,vector1,vector2,lwork-mn,info);
+              for (i = 0; i < vector1.length; i++) {
+                  work[itau - 1 + i] = vector1[i];
+              }
+              
+              for (i = 0; i < vector2.length; i++) {
+                  work[iwork - 1 + i] = vector2[i];
+              }
+    
+              // workspace at least M, optimally M*NB.
+    
+             if (!tpsd) {
+    
+                // underdetermined system of equations A * X = B
+    
+                // B(1:M,1:NRHS) := inv(L) * B(1:M,1:NRHS)
+    
+                dtrtrs( 'L', 'N', 'N', m, nrhs, A, lda, B, ldb, info );
+    
+                if (info[0] > 0) {
+                   return;
+                }
+    
+                // B(M+1:N,1:NRHS) = 0
+    
+                for (j = 0; j < nrhs; j++) {
+                	for (i = m; i < n; i++) {
+                	    B[i][j] = 0.0;	
+                	}
+                }
+    
+                // B(1:N,1:NRHS) := Q(1:N,:)**T * B(1:M,1:NRHS)
+    
+                vector1 = new double[m];
+                for (i = 0; i < m; i++) {
+                    vector1[i] = work[itau - 1 + i];
+                }
+                dormlq( 'L', 'T', n, nrhs, m, A, lda, vector1, B, ldb, vector2, lwork-mn, info);
+                for (i = 0; i < vector2.length; i++) {
+                    work[iwork - 1 + i] = vector2[i];
+                }
+    
+                // workspace at least NRHS, optimally NRHS*NB
+    
+                scllen = n;
+             } // if (!tpsd)
+             else {
+    
+                // overdetermined system min || A**T * X - B ||
+    
+                // B(1:N,1:NRHS) := Q * B(1:N,1:NRHS)
+    
+            	 vector1 = new double[m];
+                 for (i = 0; i < m; i++) {
+                     vector1[i] = work[itau - 1 + i];
+                 }
+            	 dormlq( 'L', 'N', n, nrhs, m, A, lda, vector1, B, ldb, vector2, lwork-mn, info);
+            	 for (i = 0; i < vector2.length; i++) {
+                     work[iwork - 1 + i] = vector2[i];
+                 }
+    
+                 // workspace at least NRHS, optimally NRHS*NB
+    
+                 // B(1:M,1:NRHS) := inv(L**T) * B(1:M,1:NRHS)
+    
+                dtrtrs( 'L', 'T', 'N', m, nrhs, A, lda, B, ldb, info );
+    
+                if (info[0] > 0) {
+                   return;
+                }
+    
+                scllen = m;
+             } // else tpsd
+          } // else m < n
+    
+          // Undo scaling
+    
+          if (iascl == 1 ) {
+             ge.dlascl( 'G', 0, 0, anrm, smlnum[0], scllen, nrhs, B, ldb, info);
+          }
+          else if (iascl == 2) {
+             ge.dlascl( 'G', 0, 0, anrm, bignum[0], scllen, nrhs, B, ldb, info);
+          }
+          if (ibscl == 1) {
+             ge.dlascl( 'G', 0, 0, smlnum[0], bnrm, scllen, nrhs, B, ldb, info);
+          }
+          else if (ibscl == 2) {
+             ge.dlascl( 'G', 0, 0, bignum[0], bnrm, scllen, nrhs, B, ldb, info);
+          }
+    
+          work[0] = (double)wsize;
+          return;
+          } // dgels
+          
+          /*> \brief \b DTRTRS
+          *
+          *  =========== DOCUMENTATION ===========
+          *
+          * Online html documentation available at
+          *            http://www.netlib.org/lapack/explore-html/
+          *
+          *> \htmlonly
+          *> Download DTRTRS + dependencies
+          *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dtrtrs.f">
+          *> [TGZ]</a>
+          *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dtrtrs.f">
+          *> [ZIP]</a>
+          *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dtrtrs.f">
+          *> [TXT]</a>
+          *> \endhtmlonly
+          *
+          *  Definition:
+          *  ===========
+          *
+          *       SUBROUTINE DTRTRS( UPLO, TRANS, DIAG, N, NRHS, A, LDA, B, LDB,
+          *                          INFO )
+          *
+          *       .. Scalar Arguments ..
+          *       CHARACTER          DIAG, TRANS, UPLO
+          *       INTEGER            INFO, LDA, LDB, N, NRHS
+          *       ..
+          *       .. Array Arguments ..
+          *       DOUBLE PRECISION   A( LDA, * ), B( LDB, * )
+          *       ..
+          *
+          *
+          *> \par Purpose:
+          *  =============
+          *>
+          *> \verbatim
+          *>
+          *> DTRTRS solves a triangular system of the form
+          *>
+          *>    A * X = B  or  A**T * X = B,
+          *>
+          *> where A is a triangular matrix of order N, and B is an N-by-NRHS
+          *> matrix.  A check is made to verify that A is nonsingular.
+          *> \endverbatim
+          *
+          *  Arguments:
+          *  ==========
+          *
+          *> \param[in] UPLO
+          *> \verbatim
+          *>          UPLO is CHARACTER*1
+          *>          = 'U':  A is upper triangular;
+          *>          = 'L':  A is lower triangular.
+          *> \endverbatim
+          *>
+          *> \param[in] TRANS
+          *> \verbatim
+          *>          TRANS is CHARACTER*1
+          *>          Specifies the form of the system of equations:
+          *>          = 'N':  A * X = B  (No transpose)
+          *>          = 'T':  A**T * X = B  (Transpose)
+          *>          = 'C':  A**H * X = B  (Conjugate transpose = Transpose)
+          *> \endverbatim
+          *>
+          *> \param[in] DIAG
+          *> \verbatim
+          *>          DIAG is CHARACTER*1
+          *>          = 'N':  A is non-unit triangular;
+          *>          = 'U':  A is unit triangular.
+          *> \endverbatim
+          *>
+          *> \param[in] N
+          *> \verbatim
+          *>          N is INTEGER
+          *>          The order of the matrix A.  N >= 0.
+          *> \endverbatim
+          *>
+          *> \param[in] NRHS
+          *> \verbatim
+          *>          NRHS is INTEGER
+          *>          The number of right hand sides, i.e., the number of columns
+          *>          of the matrix B.  NRHS >= 0.
+          *> \endverbatim
+          *>
+          *> \param[in] A
+          *> \verbatim
+          *>          A is DOUBLE PRECISION array, dimension (LDA,N)
+          *>          The triangular matrix A.  If UPLO = 'U', the leading N-by-N
+          *>          upper triangular part of the array A contains the upper
+          *>          triangular matrix, and the strictly lower triangular part of
+          *>          A is not referenced.  If UPLO = 'L', the leading N-by-N lower
+          *>          triangular part of the array A contains the lower triangular
+          *>          matrix, and the strictly upper triangular part of A is not
+          *>          referenced.  If DIAG = 'U', the diagonal elements of A are
+          *>          also not referenced and are assumed to be 1.
+          *> \endverbatim
+          *>
+          *> \param[in] LDA
+          *> \verbatim
+          *>          LDA is INTEGER
+          *>          The leading dimension of the array A.  LDA >= max(1,N).
+          *> \endverbatim
+          *>
+          *> \param[in,out] B
+          *> \verbatim
+          *>          B is DOUBLE PRECISION array, dimension (LDB,NRHS)
+          *>          On entry, the right hand side matrix B.
+          *>          On exit, if INFO = 0, the solution matrix X.
+          *> \endverbatim
+          *>
+          *> \param[in] LDB
+          *> \verbatim
+          *>          LDB is INTEGER
+          *>          The leading dimension of the array B.  LDB >= max(1,N).
+          *> \endverbatim
+          *>
+          *> \param[out] INFO
+          *> \verbatim
+          *>          INFO is INTEGER
+          *>          = 0:  successful exit
+          *>          < 0: if INFO = -i, the i-th argument had an illegal value
+          *>          > 0: if INFO = i, the i-th diagonal element of A is zero,
+          *>               indicating that the matrix is singular and the solutions
+          *>               X have not been computed.
+          *> \endverbatim
+          *
+          *  Authors:
+          *  ========
+          *
+          *> \author Univ. of Tennessee
+          *> \author Univ. of California Berkeley
+          *> \author Univ. of Colorado Denver
+          *> \author NAG Ltd.
+          *
+          *> \date December 2016
+          *
+          *> \ingroup doubleOTHERcomputational
+          *
+          *  =====================================================================
+          */ 
+                private void dtrtrs(char uplo, char trans, char diag, int n, int nrhs, double A[][], 
+                		int lda, double B[][], int ldb, int info[]) {
+          /*
+          *  -- LAPACK computational routine (version 3.7.0) --
+          *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+          *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+          *     December 2016
+          *
+          *     .. Scalar Arguments ..
+                CHARACTER          DIAG, TRANS, UPLO
+                INTEGER            INFO, LDA, LDB, N, NRHS
+          *     ..
+          *     .. Array Arguments ..
+                DOUBLE PRECISION   A( LDA, * ), B( LDB, * )
+          *     ..
+          *
+          *  =====================================================================
+          *
+          *     .. Parameters ..
+                DOUBLE PRECISION   ZERO, ONE
+                PARAMETER          ( ZERO = 0.0D+0, ONE = 1.0D+0 )
+          *     ..
+          *     .. Local Scalars ..*/
+                boolean            nounit;
+                int i;
+          /*     ..
+          *     .. External Functions ..
+                LOGICAL            LSAME
+                EXTERNAL           LSAME
+          *     ..
+          *     .. External Subroutines ..
+                EXTERNAL           DTRSM, XERBLA
+          *     ..
+          *     .. Intrinsic Functions ..
+                INTRINSIC          MAX
+          *     ..
+          *     .. Executable Statements ..
+          *
+          *     Test the input parameters.
+          */
+                info[0] = 0;
+                nounit = ((diag == 'N' ) || (diag == 'n'));
+                if ((uplo != 'U') && (uplo != 'u') && (uplo != 'L') && (uplo != 'l')) {
+                   info[0] = -1;
+                }
+                else if ((trans != 'N') && (trans != 'n') && (trans != 'T') &&
+                		 (trans != 't') && (trans != 'C') && (trans != 'c')) {
+                	info[0] = -2;
+                }
+                else if ((!nounit) && (diag != 'U') && (diag != 'u')) {
+                	info[0] = -3;
+                }
+                else if(n < 0 ) {
+                   info[0] = -4;
+                }
+                else if(nrhs < 0) {
+                   info[0] = -5;
+                }
+                else if (lda < Math.max( 1, n) ) {
+                   info[0] = -7;
+                }
+                else if (ldb < Math.max( 1,n) ) {
+                   info[0] = -9;
+                }
+                if (info[0] != 0) {
+                    MipavUtil.displayError("dtrtrs exits with error info[0] = " + info[0]);
+                    Preferences.debug("dtrtrs exits with error info[0] = " + info[0] + "\n");
+                    return;
+                }
+                
+          
+                // Quick return if possible
+          
+                if (n == 0) {
+                    return;
+                }
+          
+                // Check for singularity.
+          
+                if (nounit) {
+                   for (i = 0; i < n; i++) {
+                      if( A[i][i] == 0.0) {
+                          return;
+                      }
+                   }
+                }
+            
+          
+                // Solve A * x = b  or  A**T * x = b.
+          
+                ge.dtrsm( 'L', uplo, trans, diag, n, nrhs, 1.0, A, lda, B, ldb);
+          
+                return;
+          
+          } // dtrtrs
+    
     // There are 3 self tests used in testing the port of dgelss.
     // 1.) dchklq_test() tests dgelqf, dorglq, and dormlq.  All 30744 tests run passed the threshold.
     // 2.) dchkbd_test() tests dgebrd, dorgbr, and dbdsqr.  All 4123 tests pass the threshold.
