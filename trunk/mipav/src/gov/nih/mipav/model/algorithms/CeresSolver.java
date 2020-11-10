@@ -3377,7 +3377,8 @@ public abstract class CeresSolver {
 				type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
 				preconditioner_type = PreconditionerType.JACOBI;
 				visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
-				dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+				//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+				dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
 				sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
 				use_postordering = false;
 				dynamic_sparsity = false;
@@ -3541,6 +3542,185 @@ public abstract class CeresSolver {
 			return null; // MSVC doesn't understand that LOG(FATAL) never returns.
 		}
 	}
+	
+	// This class uses the dense QR factorization routines from the Eigen
+	// library. This solver always returns a solution, it is the user's
+	// responsibility to judge if the solution is good enough for their
+	// purposes.
+	class DenseQRSolver extends TypedLinearSolver<DenseSparseMatrix> {
+		// Column major matrices for DenseSparseMatrix/DenseQRSolver
+		private LinearSolver.Options options_;
+		//ColMajorMatrix lhs_;
+		private Matrix lhs_;
+		private double rhs_[];
+		private double work_[];
+		
+	    public DenseQRSolver(LinearSolver.Options options) {
+	    	super();
+	    	options_ = options;
+	        work_ = new double[1];
+	    }
+
+	 public LinearSolver.Summary SolveImpl(
+	      DenseSparseMatrix A,
+	      double b[],
+	      LinearSolver.PerSolveOptions per_solve_options,
+	      double x[]) {
+		  if (options_.dense_linear_algebra_library_type == DenseLinearAlgebraLibraryType.EIGEN) {
+			    return SolveUsingEigen(A, b, per_solve_options, x);
+			  } else {
+			    return SolveUsingLAPACK(A, b, per_solve_options, x);
+			  }
+	  }
+
+	 // Eigen library must be implemented  
+	 private LinearSolver.Summary SolveUsingEigen(
+	      DenseSparseMatrix A,
+	      double b[],
+	      LinearSolver.PerSolveOptions per_solve_options,
+	      double x[]) {
+		  EventLogger event_logger = new EventLogger("DenseQRSolver::Solve");
+
+		  int num_rows = A.num_rows();
+		  int num_cols = A.num_cols();
+
+		  if (per_solve_options.D != null) {
+		    // Temporarily append a diagonal block to the A matrix, but undo
+		    // it before returning the matrix to the user.
+		    A.AppendDiagonal(per_solve_options.D);
+		  }
+
+		  // rhs = [b;0] to account for the additional rows in the lhs.
+		  int augmented_num_rows =
+		      num_rows + ((per_solve_options.D != null) ? num_cols : 0);
+		  if (rhs_.length != augmented_num_rows) {
+		    rhs_ = new double[augmented_num_rows];
+		  }
+		  for (int i = 0; i < num_rows; i++) {
+			  rhs_[i] = b[i];
+		  }
+		  event_logger.AddEvent("Setup");
+
+		  // Solve the system.
+		  //Must implement Eigen library for this line
+		  //VectorRef(x, num_cols) = A->matrix().householderQr().solve(rhs_);
+		  event_logger.AddEvent("Solve");
+
+		  if (per_solve_options.D != null) {
+		    // Undo the modifications to the matrix A.
+		    A.RemoveDiagonal();
+		  }
+
+		  // We always succeed, since the QR solver returns the best solution
+		  // it can. It is the job of the caller to determine if the solution
+		  // is good enough or not.
+		  LinearSolver ls = new LinearSolver();
+		  LinearSolver.Summary summary = ls.summary;
+		  summary.num_iterations = 1;
+		  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		  summary.message[0] = "Success.";
+
+		  event_logger.AddEvent("TearDown");
+		  return summary;
+
+	  }
+
+	  private LinearSolver.Summary SolveUsingLAPACK(
+	      DenseSparseMatrix A,
+	      double b[],
+	      LinearSolver.PerSolveOptions per_solve_options,
+	      double x[]) {
+
+		  EventLogger event_logger = new EventLogger("DenseQRSolver::Solve");
+
+		  int num_rows = A.num_rows();
+		  int num_cols = A.num_cols();
+
+		  if (per_solve_options.D != null) {
+		    // Temporarily append a diagonal block to the A matrix, but undo
+		    // it before returning the matrix to the user.
+		    A.AppendDiagonal(per_solve_options.D);
+		  }
+
+		  // TODO(sameeragarwal): Since we are copying anyways, the diagonal
+		  // can be appended to the matrix instead of doing it on A.
+		  lhs_ =  A.matrix();
+
+		  if (per_solve_options.D != null) {
+		    // Undo the modifications to the matrix A.
+		    A.RemoveDiagonal();
+		  }
+
+		  // rhs = [b;0] to account for the additional rows in the lhs.
+		  if (rhs_.length != lhs_.getRowDimension()) {
+		    rhs_ = new double[lhs_.getRowDimension()];
+		  }
+		  for (int i = 0; i < num_rows; i++) {
+			  rhs_[i] = b[i];
+		  }
+
+		  if (work_.length == 1) {
+		    int work_size =
+		        EstimateWorkSizeForQR(lhs_.getRowDimension(), lhs_.getColumnDimension());
+		    if (3 < MAX_LOG_LEVEL) {
+		        Preferences.debug("Working double memory size for Dense QR factorization: " + work_size + "\n", 
+		            Preferences.DEBUG_ALGORITHM);
+		    }
+		    work_ = new double[work_size];
+		  }
+
+		  LinearSolver ls = new LinearSolver();
+		  LinearSolver.Summary summary = ls.summary;
+		  summary.num_iterations = 1;
+		  /*summary.termination_type = SolveInPlaceUsingQR(lhs_.getRowDimension(),
+		                                                         lhs_.getColumnDimension(),
+		                                                         lhs_.getArray(),
+		                                                         work_.length,
+		                                                         work_,
+		                                                         rhs_,
+		                                                         summary.message);*/
+		  event_logger.AddEvent("Solve");
+		  if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
+			for (int i = 0; i < num_cols; i++) {
+				x[i] = rhs_[i];
+			}
+		  }
+
+		  event_logger.AddEvent("TearDown");
+		  return summary;
+
+	  }
+	};
+	
+	int EstimateWorkSizeForQR(int num_rows, int num_cols) {
+		
+		  /*char trans = 'N';
+		  int nrhs = 1;
+		  int lwork = -1;
+		  double work;
+		  int info = 0;
+		  dgels(&trans,
+		         &num_rows,
+		         &num_cols,
+		         &nrhs,
+		         NULL,
+		         &num_rows,
+		         NULL,
+		         &num_rows,
+		         &work,
+		         &lwork,
+		         &info);
+
+		  if (info < 0) {
+		    LOG(FATAL) << "Congratulations, you found a bug in Ceres."
+		               << "Please report it."
+		               << "LAPACK::dgels fatal error."
+		               << "Argument: " << -info << " is invalid.";
+		  }
+		  return static_cast<int>(work);*/
+		  return 0;
+		}
+
 	
 	class DenseSparseMatrix extends SparseMatrix {
 	     // Column major matrices for DenseSparseMatrix/DenseQRSolver
@@ -7824,7 +8004,8 @@ public abstract class CeresSolver {
 				preconditioner_type_used = PreconditionerType.IDENTITY;
 				visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
 				trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
-				dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+				//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+				dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
 				sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
 				line_search_direction_type = LineSearchDirectionType.LBFGS;
 				line_search_type = LineSearchType.ARMIJO;
