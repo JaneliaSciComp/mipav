@@ -9793,6 +9793,7 @@ ib = Math.min(nb, k-i+1);
                         double[][] B, double[][] COPYB, double[][] C, double[] s,
                         double[] copys, double[] work, int[] iwork) {
         // Only use 4 of the 18 tests, since only 4 apply to dgelss
+    	// In ddrvls all 26460 tests passed the threshold
         int ntests = 4;
         int smlsiz = 25;
         int iseedy[] = new int[]{1988, 1989, 1990, 1991};
@@ -9835,6 +9836,14 @@ ib = Math.min(nb, k-i+1);
         int q;
         double vec1[];
         double resid[] = new double[1];
+        int itran;
+        char trans;
+        int nrows;
+        int ncols;
+        double workB[][];
+        int row;
+        int col;
+        int index;
         
         // Initialize constants and the random number seed.
         nrun = 0;
@@ -9857,7 +9866,7 @@ ib = Math.min(nb, k-i+1);
         
         // Output the header if (NM == 0 || NN == 0) && THRESH === 0.
         if (((nm == 0) || (nn == 0)) && (thresh == 0.0)) {
-            Preferences.debug("Least squares driver routine dgelss\n");
+            Preferences.debug("Least squares driver routines dgels and dgelss\n");
             Preferences.debug("Matrix types:\n");
             Preferences.debug("1: Full rank normal scaling\n");
             Preferences.debug("2: Full rank scaled near overflow\n");
@@ -9867,6 +9876,9 @@ ib = Math.min(nb, k-i+1);
             Preferences.debug("6: Rank deficient scaled near underflow\n");
             // Do 11-14 of 18 test ratios
             Preferences.debug("Test ratios:\n");
+            Preferences.debug("1-2: dgels\n");
+            Preferences.debug("1: Check if X is in the row space of A or A'\n");    
+            Preferences.debug("2 norm((A*X-B)' * A)/(max(m,n,nrhs) * norm(A) * norm(B) * eps)\n");
             Preferences.debug("11-14: DGELSS\n");
             Preferences.debug("11-14 same as 3-6\n");
             Preferences.debug("3: norm(svd(A) - svd(R))/(min(m,n) * norm(svd(R)) * eps)\n");
@@ -9902,6 +9914,135 @@ ib = Math.min(nb, k-i+1);
                             if (!dotype[itype-1]) {
                                 continue;
                             }
+                            
+                            if (irank == 1) {
+                            
+                                // Test DGELS
+                            
+                                // Generate a matrix of scaling type ISCALE
+                            
+                                dqrt13( iscale, m, n, COPYA, lda, norma, iseed);
+                                for (inb = 1; inb <= nnb; inb++) {
+                                    nb = nbval[inb-1];
+                                    xlaenv( 1, nb);
+                                    xlaenv( 3, nxval[inb-1]);
+                            
+                                    for (itran = 1; itran <= 2; itran++) {                   
+                                    	if (itran == 1) {
+                                            trans = 'N';
+                                            nrows = m;
+                                            ncols = n;
+                                    	}
+                                    	else {
+                                    		trans = 'T';
+                                    		nrows = n;
+                                    		ncols = m;
+                                    	}
+                                        ldwork = Math.max(1, ncols);
+                            
+                                        // Set up a consistent rhs
+                            
+                                        if (ncols > 0 ) {
+                                            ge.dlarnv( 2, iseed, ncols*nrhs, work);
+                                            for (i = 0; i < ncols*nrhs; i++) {
+                                            	work[i] *= 1.0/(double)ncols;
+                                            }
+                                        } // if (ncols > 0)
+                                        
+                                        workB = new double[ldwork][nrhs];
+                                        index = 0;
+                                        for (col = 0; col < nrhs; col++) {
+                                        	for (row = 0; row < ldwork; row++, index++) {
+                                        		workB[row][col] = work[index];
+                                        	}
+                                        }
+                                        ge.dgemm(trans, 'N', nrows, nrhs, ncols, 1.0, COPYA, lda,
+                                                 workB, ldwork, 0.0, B, ldb);
+                                        ge.dlacpy( 'F', nrows, nrhs, B, ldb, COPYB, ldb);
+                            
+                                        // Solve LS or overdetermined system
+                            
+                                        if ( (m > 0) && (n > 0) ) {
+                                            ge.dlacpy( 'F', m, n, COPYA, lda, A, lda);
+                                            ge.dlacpy( 'F', nrows, nrhs, COPYB, ldb, B, ldb);
+                                        }
+                                        dgels(trans, m, n, nrhs, A, lda, B,
+                                              ldb, work, lwork, info);
+                                        if (info[0] != 0) {
+                                            if ((nfail == 0) && (nerrs == 0)) {
+                                                Preferences.debug("Least squares driver routine dgels\n");
+                                                Preferences.debug("Matrix types:\n");
+                                                Preferences.debug("1: Full rank normal scaling\n");
+                                                Preferences.debug("2: Full rank scaled near overflow\n");
+                                                Preferences.debug("3: Full rank scaled near underflow\n");
+                                                Preferences.debug("4: Rank deficient normal scaling\n");
+                                                Preferences.debug("5: Rank deficient scaled near overflow\n");
+                                                Preferences.debug("6: Rank deficient scaled near underflow\n");
+                                                // Do 2 test ratios
+                                                Preferences.debug("Test ratios:\n");
+                                                Preferences.debug("1: Check if X is in the row space of A or A'\n");    
+                                                Preferences.debug("2 norm((A*X-B)' * A)/(max(m,n,nrhs) * norm(A) * norm(B) * eps)\n");
+                                                  
+                                            } // if ((nfail == 0) && (nerrs == 0))
+                                            nerrs++;
+                                            Preferences.debug("dgels returned with info[0] = " + info[0] + "\n");
+                                            Preferences.debug("m = " + m + " n = " + n + " nrhs = " + nrhs + "\n");
+                                            Preferences.debug("nb = " + nb + " itype = " + itype + "\n");
+                                        } // if (info[0] != 0)
+                                                                                    
+                                        // Check correctness of results
+                            
+                                        ldwork = Math.max( 1, nrows);
+                                        if ((nrows > 0) && (nrhs > 0) ) {
+                                            ge.dlacpy( 'F', nrows, nrhs, COPYB, ldb, C, ldb);
+                                        }
+                                        dqrt16(trans, m, n, nrhs, COPYA, lda, B, ldb, C, ldb, work, resid);
+                                        result[0] = resid[0];
+                                        if ( (itran == 1 &&  m >= n) ||
+                                            (itran == 2 && m < n) ) {
+                            
+                                            // Solving LS system
+                             
+                                            result[1] = dqrt17(trans, 1, m, n, nrhs, COPYA, lda, B, ldb,
+                                                               COPYB, ldb, C);
+                                        }
+                                        else {
+                            
+                                            // Solving overdetermined system
+                            
+                                            result[0] = dqrt14(trans, m, n, nrhs, COPYA, lda, B, ldb,
+                                                                                work, lwork);
+                                        }
+                            
+                                        // Print information about the tests that
+                                        // did not pass the threshold.
+                            
+                                        for (k = 0; k < 2; k++) {
+                                            if (result[k] >= thresh) {
+                                            	if ((nfail == 0) && (nerrs == 0)) {
+                                            		Preferences.debug("Least squares driver routine dgels\n");
+                                                    Preferences.debug("Matrix types:\n");
+                                                    Preferences.debug("1: Full rank normal scaling\n");
+                                                    Preferences.debug("2: Full rank scaled near overflow\n");
+                                                    Preferences.debug("3: Full rank scaled near underflow\n");
+                                                    Preferences.debug("4: Rank deficient normal scaling\n");
+                                                    Preferences.debug("5: Rank deficient scaled near overflow\n");
+                                                    Preferences.debug("6: Rank deficient scaled near underflow\n");
+                                                    // Do 2 test ratios
+                                                    Preferences.debug("Test ratios:\n");
+                                                    Preferences.debug("1: Check if X is in the row space of A or A'\n");    
+                                                    Preferences.debug("2 norm((A*X-B)' * A)/(max(m,n,nrhs) * norm(A) * norm(B) * eps)\n");
+                                            	}
+                                            	Preferences.debug("m = " + m + " n = " + n + " nrhs = " + nrhs + "\n");
+                                                Preferences.debug("nb = " + nb + " itype = " + itype + "\n");
+                                                Preferences.debug("k = " + k + " result[" + k + "] = " + result[k] + "\n");
+                                                nfail++;
+                                            } // if (result[k] >= thresh)
+                                        } // for (k = 0; k < 2; k++)
+                                        nrun = nrun + 2;
+                                    } // for (itran = 1; itran <= 2; itran++)
+                                } // for (inb = 1; inb <= nnb; inb++)
+                            } // if (irank == 1)
                             
                             // Generate a matrix of scaling type iscale and rank type irank.
                             dqrt15(iscale, irank, m, n, nrhs, COPYA, lda, COPYB, ldb, copys,
@@ -11004,6 +11145,198 @@ ib = Math.min(nb, k-i+1);
         val = err / (ge.dlamch('E') * Math.max(m, Math.max(n, nrhs)));
         return val;
     } // dqrt17
+    
+    /*> \brief \b DQRT13
+    *
+    *  =========== DOCUMENTATION ===========
+    *
+    * Online html documentation available at
+    *            http://www.netlib.org/lapack/explore-html/
+    *
+    *  Definition:
+    *  ===========
+    *
+    *       SUBROUTINE DQRT13( SCALE, M, N, A, LDA, NORMA, ISEED )
+    *
+    *       .. Scalar Arguments ..
+    *       INTEGER            LDA, M, N, SCALE
+    *       DOUBLE PRECISION   NORMA
+    *       ..
+    *       .. Array Arguments ..
+    *       INTEGER            ISEED( 4 )
+    *       DOUBLE PRECISION   A( LDA, * )
+    *       ..
+    *
+    *
+    *> \par Purpose:
+    *  =============
+    *>
+    *> \verbatim
+    *>
+    *> DQRT13 generates a full-rank matrix that may be scaled to have large
+    *> or small norm.
+    *> \endverbatim
+    *
+    *  Arguments:
+    *  ==========
+    *
+    *> \param[in] SCALE
+    *> \verbatim
+    *>          SCALE is INTEGER
+    *>          SCALE = 1: normally scaled matrix
+    *>          SCALE = 2: matrix scaled up
+    *>          SCALE = 3: matrix scaled down
+    *> \endverbatim
+    *>
+    *> \param[in] M
+    *> \verbatim
+    *>          M is INTEGER
+    *>          The number of rows of the matrix A.
+    *> \endverbatim
+    *>
+    *> \param[in] N
+    *> \verbatim
+    *>          N is INTEGER
+    *>          The number of columns of A.
+    *> \endverbatim
+    *>
+    *> \param[out] A
+    *> \verbatim
+    *>          A is DOUBLE PRECISION array, dimension (LDA,N)
+    *>          The M-by-N matrix A.
+    *> \endverbatim
+    *>
+    *> \param[in] LDA
+    *> \verbatim
+    *>          LDA is INTEGER
+    *>          The leading dimension of the array A.
+    *> \endverbatim
+    *>
+    *> \param[out] NORMA
+    *> \verbatim
+    *>          NORMA is DOUBLE PRECISION
+    *>          The one-norm of A.
+    *> \endverbatim
+    *>
+    *> \param[in,out] ISEED
+    *> \verbatim
+    *>          ISEED is integer array, dimension (4)
+    *>          Seed for random number generator
+    *> \endverbatim
+    *
+    *  Authors:
+    *  ========
+    *
+    *> \author Univ. of Tennessee
+    *> \author Univ. of California Berkeley
+    *> \author Univ. of Colorado Denver
+    *> \author NAG Ltd.
+    *
+    *> \date December 2016
+    *
+    *> \ingroup double_lin
+    *
+    *  =====================================================================
+    */
+          private void dqrt13(int scale, int m, int n, double A[][], int lda, double norma[], int iseed[]) {
+    /*
+    *  -- LAPACK test routine (version 3.7.0) --
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     December 2016
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            LDA, M, N, SCALE
+          DOUBLE PRECISION   NORMA
+    *     ..
+    *     .. Array Arguments ..
+          INTEGER            ISEED( 4 )
+          DOUBLE PRECISION   A( LDA, * )
+    *     ..
+    *
+    *  =====================================================================
+    *
+    *     .. Parameters ..
+          DOUBLE PRECISION   ONE
+          PARAMETER          ( ONE = 1.0D0 )
+    *     ..
+    *     .. Local Scalars ..
+    */     
+          int info[] = new int[1];
+          int i, j;
+          double bignum[] = new double[1];
+          double smlnum[] = new double[1];
+    /*     ..
+    *     .. External Functions ..
+          DOUBLE PRECISION   DASUM, DLAMCH, DLANGE
+          EXTERNAL           DASUM, DLAMCH, DLANGE
+    *     ..
+    *     .. External Subroutines ..
+          EXTERNAL           DLABAD, DLARNV, DLASCL
+    *     ..
+    *     .. Intrinsic Functions ..
+          INTRINSIC          SIGN
+    *     ..
+    *     .. Local Arrays ..
+    */
+          double dummy[] = new double[1];
+          double vec1[];
+          double dasum;
+    /*     ..
+    *     .. Executable Statements ..
+    */
+          if ((m <= 0) || (n <= 0)) {
+              return;
+          }
+    
+          // benign matrix
+    
+          vec1 = new double[m];
+          for (j = 0; j < n; j++) {
+             ge.dlarnv( 2, iseed, m, vec1);
+             for (i = 0; i < m; i++) {
+            	 A[i][j] = vec1[i];
+             }
+              if (j < m) {
+            	dasum = 0;
+            	for (i = 0; i < m; i++) {
+            		dasum += Math.abs(A[i][j]);
+            	}
+            	if (A[j][j] < 0) {
+            		dasum = -dasum;
+            	}
+                A[j][j] = A[j][j] + dasum;
+              }
+          }
+    
+          // scaled versions
+    
+          if (scale != 1) {
+             norma[0] = ge.dlange( 'M', m, n, A, lda, dummy );
+             smlnum[0] = ge.dlamch('S');
+             bignum[0] = 1.0 / smlnum[0];
+             ge.dlabad( smlnum, bignum );
+             smlnum[0] = smlnum[0] / ge.dlamch( 'E' );
+             bignum[0] = 1.0 / smlnum[0];
+    
+             if (scale == 2) {
+    
+                // matrix scaled up
+    
+                ge.dlascl( 'G', 0, 0, norma[0], bignum[0], m, n, A, lda, info);
+             }
+             else if (scale == 3) {
+    
+                // matrix scaled down
+    
+                ge.dlascl( 'G', 0, 0, norma[0], smlnum[0], m, n, A, lda, info);
+             }
+          } // if (scale != 1)
+    
+          norma[0] = ge.dlange( 'O', m, n, A, lda, dummy);
+          return;
+      } // dqrt13
+
     
     /** This is a port of version 3.1 LAPACK test routine DQRT14. 
        *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
