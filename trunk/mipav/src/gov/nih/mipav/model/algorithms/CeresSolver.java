@@ -69,6 +69,9 @@ import gov.nih.mipav.view.Preferences;
  */
 
 public abstract class CeresSolver {
+	private GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+	private GeneralizedInverse2 ge2 = new GeneralizedInverse2();
+	private LinearEquations le = new LinearEquations();
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
 	// before passing them to user code. If on return an element of the
@@ -3532,16 +3535,154 @@ public abstract class CeresSolver {
 		 * SparseSchurComplementSolver(options); } else { return new
 		 * IterativeSchurComplementSolver(options); }
 		 */
-		 //case DENSE_QR: return new DenseQRSolver(options);
-		 /* 
-		 * case DENSE_NORMAL_CHOLESKY: return new DenseNormalCholeskySolver(options);
-		 */
+		 case DENSE_QR: return new DenseQRSolver(options);
+		  
+		 case DENSE_NORMAL_CHOLESKY: return new DenseNormalCholeskySolver(options);
 
 		default:
 			System.err.println("Unknown linear solver type :" + options.type);
 			return null; // MSVC doesn't understand that LOG(FATAL) never returns.
 		}
 	}
+	
+	// This class uses the LDLT factorization routines from the Eigen
+	// library. This solver always returns a solution, it is the user's
+	// responsibility to judge if the solution is good enough for their
+	// purposes.
+	class DenseNormalCholeskySolver extends TypedLinearSolver<DenseSparseMatrix>  {
+		private LinearSolver.Options options_;
+		
+	  public DenseNormalCholeskySolver(LinearSolver.Options options) {
+		  super();
+	    	options_ = options;  
+	  }
+
+	 public LinearSolver.Summary SolveImpl(
+	      DenseSparseMatrix A,
+	      double b[],
+	      LinearSolver.PerSolveOptions per_solve_options,
+	      double x[]) {
+		 if (options_.dense_linear_algebra_library_type == DenseLinearAlgebraLibraryType.EIGEN) {
+			    return SolveUsingEigen(A, b, per_solve_options, x);
+		 } else {
+			    return SolveUsingLAPACK(A, b, per_solve_options, x);
+		 }
+
+	 }
+
+	 private LinearSolver.Summary SolveUsingLAPACK(
+	      DenseSparseMatrix A,
+	      double b[],
+	      LinearSolver.PerSolveOptions per_solve_options,
+	      double x[]) {
+		 EventLogger event_logger = new EventLogger("DenseNormalCholeskySolver::Solve");
+
+		  if (per_solve_options.D != null) {
+		    // Temporarily append a diagonal block to the A matrix, but undo
+		    // it before returning the matrix to the user.
+		    A.AppendDiagonal(per_solve_options.D);
+		  }
+
+		  int num_cols = A.num_cols();
+		  Matrix lhs = new Matrix(num_cols, num_cols);
+		  event_logger.AddEvent("Setup");
+
+		  // lhs = A'A
+		  //
+		  // Note: This is a bit delicate, it assumes that the stride on this
+		  // matrix is the same as the number of rows.
+		  SymmetricRankKUpdate(A.num_rows(), num_cols, A.values(), true, 1.0, 0.0, lhs.getArray());
+
+		  if (per_solve_options.D != null) {
+		    // Undo the modifications to the matrix A.
+		    A.RemoveDiagonal();
+		  }
+
+		  // TODO(sameeragarwal): Replace this with a gemv call for true blasness.
+		  //   rhs = A'b
+		  for (int col = 0; col < num_cols; col++) {
+			  x[col] = 0;
+			  for (int row = 0; row < A.num_rows(); row++) {
+				  x[col] += A.matrix().getArray()[row][col]*b[row];
+			  }
+		  }
+		  event_logger.AddEvent("Product");
+
+		  LinearSolver ls = new LinearSolver();
+		  LinearSolver.Summary summary = ls.summary;
+		  summary.num_iterations = 1;
+		  summary.termination_type =
+		      SolveInPlaceUsingCholesky(num_cols,
+		                                        lhs.getArray(),
+		                                        x,
+		                                        summary.message);
+		  event_logger.AddEvent("Solve");
+		  return summary;
+	 
+	 }
+
+	  private LinearSolver.Summary SolveUsingEigen(
+	      DenseSparseMatrix A,
+	      double b[],
+	      LinearSolver.PerSolveOptions per_solve_options,
+	      double x[]) {
+		  EventLogger event_logger = new EventLogger("DenseNormalCholeskySolver::Solve");
+
+		  int num_rows = A.num_rows();
+		  int num_cols = A.num_cols();
+
+		  //ConstColMajorMatrixRef Aref = A->matrix();
+		  Matrix Aref = A.matrix();
+		  Matrix lhs = new Matrix(num_cols, num_cols);
+
+		  event_logger.AddEvent("Setup");
+
+		  //   lhs += A'A
+		  //
+		  // Using rankUpdate instead of GEMM, exposes the fact that its the
+		  // same matrix being multiplied with itself and that the product is
+		  // symmetric.
+		  // Need to implement Eigen library for this
+		  //lhs.selfadjointView<Eigen::Upper>().rankUpdate(Aref.transpose());
+
+		  //   rhs = A'b
+		  double rhs[] = new double[num_cols];
+		  for (int col = 0; col < num_cols; col++) {
+			  for (int row = 0; row < num_rows; row++) {
+				  rhs[col] += (Aref.getArray()[row][col] * b[row]);
+			  }
+		  }
+
+		  if (per_solve_options.D != null) {
+			double D[] = new double[num_cols];
+			for (int i = 0; i < num_cols; i++) {
+				D[i] = per_solve_options.D[i];
+				lhs.getArray()[i][i] += (D[i]*D[i]);
+			}
+		  }
+		  event_logger.AddEvent("Product");
+
+		  LinearSolver ls = new LinearSolver();
+		  LinearSolver.Summary summary = ls.summary;
+		  summary.num_iterations = 1;
+		  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		  //Eigen::LLT<Matrix, Eigen::Upper> llt =
+		      //lhs.selfadjointView<Eigen::Upper>().llt();
+
+		  //if (llt.info() != Eigen::Success) {
+		  //  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		  //  summary.message[0] = "Eigen LLT decomposition failed.";
+		 // } else {
+		 //   summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		  //  summary.message = "Success.";
+		  //}
+
+		  //VectorRef(x, num_cols) = llt.solve(rhs);
+		  event_logger.AddEvent("Solve");
+		  return summary; 
+	  }
+
+	};
 	
 	// This class uses the dense QR factorization routines from the Eigen
 	// library. This solver always returns a solution, it is the user's
@@ -3672,13 +3813,13 @@ public abstract class CeresSolver {
 		  LinearSolver ls = new LinearSolver();
 		  LinearSolver.Summary summary = ls.summary;
 		  summary.num_iterations = 1;
-		  /*summary.termination_type = SolveInPlaceUsingQR(lhs_.getRowDimension(),
+		  summary.termination_type = SolveInPlaceUsingQR(lhs_.getRowDimension(),
 		                                                         lhs_.getColumnDimension(),
 		                                                         lhs_.getArray(),
 		                                                         work_.length,
 		                                                         work_,
 		                                                         rhs_,
-		                                                         summary.message);*/
+		                                                         summary.message);
 		  event_logger.AddEvent("Solve");
 		  if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
 			for (int i = 0; i < num_cols; i++) {
@@ -3692,33 +3833,133 @@ public abstract class CeresSolver {
 	  }
 	};
 	
-	int EstimateWorkSizeForQR(int num_rows, int num_cols) {
+	private int EstimateWorkSizeForQR(int num_rows, int num_cols) {
 		
-		  /*char trans = 'N';
+		  char trans = 'N';
 		  int nrhs = 1;
 		  int lwork = -1;
-		  double work;
-		  int info = 0;
-		  dgels(&trans,
-		         &num_rows,
-		         &num_cols,
-		         &nrhs,
-		         NULL,
-		         &num_rows,
-		         NULL,
-		         &num_rows,
-		         &work,
-		         &lwork,
-		         &info);
+		  double work[] = new double[1];
+		  int info[] = new int[1];
+		  ge2.dgels(trans, num_rows, num_cols, nrhs, null, num_rows,
+		            null, num_rows, work, lwork, info);
 
-		  if (info < 0) {
-		    LOG(FATAL) << "Congratulations, you found a bug in Ceres."
-		               << "Please report it."
-		               << "LAPACK::dgels fatal error."
-		               << "Argument: " << -info << " is invalid.";
+		  if (info[0] < 0) {
+		    System.err.println("Congratulations, you found a bug in Ceres.");
+		    System.err.println("Please report it.");
+		    System.err.println("LAPACK::dgels fatal error.");
+		    System.err.println("Argument: " + (-info[0]) + " is invalid.");
 		  }
-		  return static_cast<int>(work);*/
-		  return 0;
+		  return (int)work[0];
+	}
+	
+	private void SymmetricRankKUpdate(int num_rows,
+            int num_cols,
+            double a[],
+            boolean transpose,
+            double alpha,
+            double beta,
+            double c[][]) {
+		
+		char uplo = 'L';
+		char trans = transpose ? 'T' : 'N';
+		int n = transpose ? num_cols : num_rows;
+		int k = transpose ? num_rows : num_cols;
+		int lda = k;
+		int ldc = n;
+		double A[][] = new double[lda][1];
+		for (int i = 0; i < Math.min(lda,a.length); i++) {
+			A[i][0] = a[i];
+		}
+		ge.dsyrk(uplo, trans, n, k, alpha, A, lda, beta, c, ldc);
+	}
+
+	
+	private LinearSolverTerminationType SolveInPlaceUsingQR(
+		    int num_rows,
+		    int num_cols,
+		    double in_lhs[][],
+		    int work_size,
+		    double work[],
+		    double rhs_and_solution[],
+		    String message[]) {
+		  char trans = 'N';
+		  int m = num_rows;
+		  int n = num_cols;
+		  int nrhs = 1;
+		  int lda = num_rows;
+		  int ldb = num_rows;
+		  int info[] = new int[1];
+		  double B[][] = new double[ldb][1];
+		  int i;
+		  for (i = 0; i < Math.min(rhs_and_solution.length,ldb); i++) {
+			  B[i][0] = rhs_and_solution[i];
+		  }
+
+		  ge2.dgels(trans, m, n, nrhs, in_lhs, lda,
+		         B, ldb, work, work_size, info);
+		  for (i = 0; i < Math.min(rhs_and_solution.length,ldb); i++) {
+			  rhs_and_solution[i] = B[i][0];
+		  }
+
+		  if (info[0] < 0) {
+		    System.err.println("Congratulations, you found a bug in Ceres.");
+		    System.err.println("Please report it.");
+		    System.err.println("LAPACK::dgels fatal error.");
+		    System.err.println("Argument: " + (-info[0]) + " is invalid.");
+		    return LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR;
+		  }
+
+		  message[0] = "Success.";
+		  return LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+		}
+
+	private LinearSolverTerminationType SolveInPlaceUsingCholesky(
+		    int num_rows,
+		    double in_lhs[][],
+		    double rhs_and_solution[],
+		    String message[]) {
+		  char uplo = 'L';
+		  int n = num_rows;
+		  int info[] = new int[1];
+		  int nrhs = 1;
+		  double B[][] = new double[n][1];
+		  int i;
+		  for (i = 0; i < Math.min(rhs_and_solution.length,n); i++) {
+			  B[i][0] = rhs_and_solution[i];
+		  }
+
+		  ge.dpotrf(uplo, n, in_lhs, n, info);
+		  if (info[0] < 0) {
+		    System.err.println("Congratulations, you found a bug in Ceres.");
+		    System.err.println("Please report it.");
+		    System.err.println("LAPACK::dpotrf fatal error.");
+		    System.err.println("Argument: " + (-info[0]) + " is invalid.");
+		    return LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR;
+		  }
+
+		  if (info[0] > 0) {
+		    message[0] =
+		        String.format(
+		            "LAPACK::dpotrf numerical failure.\n" + 
+		             "The leading minor of order %d is not positive definite.", info[0]);
+		    return LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		  }
+
+		  le.dpotrs(uplo, n, nrhs, in_lhs, n, B, n, info);
+		  for (i = 0; i < Math.min(rhs_and_solution.length,n); i++) {
+			  rhs_and_solution[i] = B[i][0];
+		  }
+
+		  if (info[0] < 0) {
+		    System.err.println("Congratulations, you found a bug in Ceres.");
+		    System.err.println("Please report it.");
+		    System.err.println("LAPACK::dpotrs fatal error.");
+		    System.err.println("Argument: " + (-info[0]) + " is invalid.");
+		    return LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR;
+		  }
+
+		  message[0] = "Success";
+		  return LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
 		}
 
 	
