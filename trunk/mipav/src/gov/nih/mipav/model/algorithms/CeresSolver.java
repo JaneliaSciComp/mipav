@@ -254,11 +254,11 @@ public abstract class CeresSolver {
 		// assume any special problem structure.
 
 		// Solve the normal equations using a dense Cholesky solver; based
-		// on Eigen.
+		// on Eigen or LAPACK.
 		DENSE_NORMAL_CHOLESKY,
 
 		// Solve the normal equations using a dense QR solver; based on
-		// Eigen.
+		// Eigen or LAPACK
 		DENSE_QR,
 
 		// Solve the normal equations using a sparse cholesky solver; requires
@@ -270,6 +270,7 @@ public abstract class CeresSolver {
 
 		// Solves the reduced linear system using a dense Cholesky solver;
 		// based on Eigen.
+		// DenseSchurComplementSolver uses Eigen's Cholesky factorization.
 		DENSE_SCHUR,
 
 		// Solves the reduced linear system using a sparse Cholesky solver;
@@ -748,7 +749,7 @@ public abstract class CeresSolver {
 			return;
 		}
 		double start_time = 1.0E-3 * System.currentTimeMillis();
-		// Summary();
+		//Summary();
 		if (!options.IsValid(summary)) {
 			System.err.println("Terminating: " + summary.message[0]);
 			return;
@@ -794,10 +795,6 @@ public abstract class CeresSolver {
 		PreprocessedProblem pp = new PreprocessedProblem();
 
 		boolean status = preprocessor.Preprocess(modified_options, problem_impl, pp);
-
-		// We check the linear_solver_options.type rather than
-		// modified_options.linear_solver_type because, depending on the
-		// lack of a Schur structure, the preprocessor may change the linear
 		// solver type.
 		if (IsSchurType(pp.linear_solver_options.type)) {
 			System.out.println("Schur type");
@@ -966,6 +963,7 @@ public abstract class CeresSolver {
 			// ChangeNumThreadsIfNeeded(pp.options);
 
 			pp.problem = problem;
+			
 			Program program = problem.mutable_program();
 			if (!IsProgramValid(program, pp.error)) {
 				return false;
@@ -997,6 +995,82 @@ public abstract class CeresSolver {
 		boolean IsProgramValid(Program program, String error[]) {
 			return (program.ParameterBlocksAreFinite(error) && program.IsFeasible(error));
 		}
+		
+		// If the user requested inner iterations, then find an inner
+		// iteration ordering as needed and configure and create a
+		// CoordinateDescentMinimizer object to perform the inner iterations.
+		public boolean SetupInnerIterationMinimizer(PreprocessedProblem pp) {
+		  Solver.Options options = pp.options;
+		  if (!options.use_inner_iterations) {
+		    return true;
+		  }
+
+		  // With just one parameter block, the outer iteration of the trust
+		  // region method and inner iterations are doing exactly the same
+		  // thing, and thus inner iterations are not needed.
+		  if (pp.reduced_program.NumParameterBlocks() == 1) {
+		    Preferences.debug("Reduced problem only contains one parameter block.\n", Preferences.DEBUG_ALGORITHM);
+		    Preferences.debug("Disabling inner iterations.\n", Preferences.DEBUG_ALGORITHM);
+		    return true;
+		  }
+
+		  /*if (options.inner_iteration_ordering != null) {
+		    // If the user supplied an ordering, then remove the set of
+		    // inactive parameter blocks from it
+		    options.inner_iteration_ordering.Remove(pp.removed_parameter_blocks);
+		    if (options.inner_iteration_ordering.NumElements() == 0) {
+		      Preferences.debug("No remaining elements in the inner iteration ordering.\n", Preferences.DEBUG_ALGORITHM);
+		      return true;
+		    }
+
+		    // Validate the reduced ordering.
+		    if (!CoordinateDescentMinimizer::IsOrderingValid(
+		            *pp->reduced_program,
+		            *options.inner_iteration_ordering,
+		            &pp->error)) {
+		      return false;
+		    }
+		  } else {
+		    // The user did not supply an ordering, so create one.
+		    options.inner_iteration_ordering.reset(
+		        CoordinateDescentMinimizer::CreateOrdering(*pp->reduced_program));
+		  }
+
+		  pp->inner_iteration_minimizer.reset(
+		      new CoordinateDescentMinimizer(pp->problem->context()));
+		  return pp->inner_iteration_minimizer->Init(*pp->reduced_program,
+		                                             pp->problem->parameter_map(),
+		                                             *options.inner_iteration_ordering,
+		                                             &pp->error);*/
+		    return false;
+		}
+
+		
+		// Configure and create the evaluator.
+		public boolean SetupEvaluator(PreprocessedProblem pp) {
+		  Solver.Options options = pp.options;
+		  Evaluator ev = new Evaluator();
+		  pp.evaluator_options = ev.options;
+		  pp.evaluator_options.linear_solver_type = options.linear_solver_type;
+		  pp.evaluator_options.num_eliminate_blocks = 0;
+		  if (IsSchurType(options.linear_solver_type)) {
+		    pp.evaluator_options.num_eliminate_blocks =
+		        options
+		        .linear_solver_ordering
+		        .group_to_elements().values().size();
+		  }
+
+		  pp.evaluator_options.num_threads = options.num_threads;
+		  pp.evaluator_options.dynamic_sparsity = options.dynamic_sparsity;
+		  pp.evaluator_options.context = pp.problem.context();
+		  pp.evaluator_options.evaluation_callback = options.evaluation_callback;
+		  pp.evaluator = ev.Create(pp.evaluator_options,
+		                                        pp.reduced_program,
+		                                        pp.error);
+
+		  return (pp.evaluator != null);
+		}
+
 
 		// Configure and create a linear solver object. In doing so, if a
 		// sparse direct factorization based linear solver is being used, then
@@ -3374,7 +3448,7 @@ public abstract class CeresSolver {
 			public int e_block_size;
 			public int f_block_size;
 
-			public ContextImpl context;
+			public Context context;
 
 			public Options() {
 				type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
@@ -3393,7 +3467,7 @@ public abstract class CeresSolver {
 				row_block_size = DYNAMIC;
 				e_block_size = DYNAMIC;
 				f_block_size = DYNAMIC;
-				context = null;
+				context = new Context();
 			}
 		} // class Options
 
@@ -3516,7 +3590,10 @@ public abstract class CeresSolver {
 		}
 
 		switch (options.type) {
-		 case CGNR: return new CgnrSolver(options); 
+		 case CGNR: {
+			 System.out.println("CGNR");
+			 return new CgnrSolver(options); 
+		 }
 		 /* case SPARSE_NORMAL_CHOLESKY: if (CERES_NO_SUITESPARSE && CERES_NO_CXSPARSE &&
 		 * (!CERES_USE_EIGEN_SPARSE)) { return null; } else { if
 		 * (options.dynamic_sparsity) { return new
@@ -3535,9 +3612,15 @@ public abstract class CeresSolver {
 		 * SparseSchurComplementSolver(options); } else { return new
 		 * IterativeSchurComplementSolver(options); }
 		 */
-		 case DENSE_QR: return new DenseQRSolver(options);
+		 case DENSE_QR: {
+			 System.out.println("DENSE_QR");
+			 return new DenseQRSolver(options);
+		 }
 		  
-		 case DENSE_NORMAL_CHOLESKY: return new DenseNormalCholeskySolver(options);
+		 case DENSE_NORMAL_CHOLESKY: {
+			 System.out.println("DENSE_NORMAL_CHOLESKY");
+			 return new DenseNormalCholeskySolver(options);
+		 }
 
 		default:
 			System.err.println("Unknown linear solver type :" + options.type);
@@ -4831,7 +4914,7 @@ public abstract class CeresSolver {
 			    public int e_block_size;
 			    public int f_block_size;
 
-			    public ContextImpl context;
+			    public Context context;
 		    public Options() {
 		        type = PreconditionerType.JACOBI;
 		        visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
@@ -4843,7 +4926,7 @@ public abstract class CeresSolver {
 		        row_block_size = DYNAMIC;
 		        e_block_size = DYNAMIC;
 		        f_block_size = DYNAMIC;
-		        context = null; 
+		        context = new Context(); 
 		    }
 
 		    
@@ -4968,7 +5051,7 @@ public abstract class CeresSolver {
 			public int num_eliminate_blocks;
 			public LinearSolverType linear_solver_type;
 			public boolean dynamic_sparsity;
-			public ContextImpl context;
+			public Context context;
 			public EvaluationCallback evaluation_callback;
 
 			public Options() {
@@ -4976,7 +5059,7 @@ public abstract class CeresSolver {
 				num_eliminate_blocks = -1;
 				linear_solver_type = LinearSolverType.DENSE_QR;
 				dynamic_sparsity = false;
-				context = null;
+				context = new Context();
 				evaluation_callback = null;
 			}
 
@@ -5410,12 +5493,12 @@ public abstract class CeresSolver {
 
 		Evaluator.Options evaluator_options_;
 
-		ContextImpl context_;
+		Context context_;
 
-		public CoordinateDescentMinimizer(ContextImpl context) {
+		public CoordinateDescentMinimizer(Context context) {
 			super();
 			if (context == null) {
-				System.err.println("ContextImpl context == null in public CoordinateDescentMinimizer");
+				System.err.println("Context context == null in public CoordinateDescentMinimizer");
 				return;
 			}
 			context_ = context;
@@ -6149,6 +6232,8 @@ public abstract class CeresSolver {
 
 			// scoped_ptr<Program> reduced_program(new Program(*this));
 			Program reduced_program = new Program();
+			reduced_program.parameter_blocks_ = parameter_blocks_;
+			reduced_program.residual_blocks_ = residual_blocks_;
 			if (!reduced_program.RemoveFixedBlocks(removed_parameter_blocks, fixed_cost, error)) {
 				return null;
 			}
@@ -6354,8 +6439,8 @@ public abstract class CeresSolver {
 		private HashSet<ResidualBlock> residual_block_set_;
 		private HashMap<CostFunction, Integer> cost_function_ref_count_;
 		private HashMap<LossFunction, Integer> loss_function_ref_count_;
-		private boolean context_impl_owned_;
-		private ContextImpl context_impl_;
+		private boolean context_impl_owned_[] = new boolean[] {false};
+		private Context context_impl_;
 		private int count;
 
 		class Options {
@@ -6399,7 +6484,7 @@ public abstract class CeresSolver {
 				local_parameterization_ownership = Ownership.TAKE_OWNERSHIP;
 				enable_fast_removal = false;
 				disable_all_safety_checks = false;
-				context = null;
+				context = new Context();
 			}
 		}
 
@@ -6411,7 +6496,9 @@ public abstract class CeresSolver {
 			residual_block_set_ = new HashSet<ResidualBlock>();
 			cost_function_ref_count_ = new HashMap<CostFunction, Integer>();
 			loss_function_ref_count_ = new HashMap<LossFunction, Integer>();
-			InitializeContext(options_.context, context_impl_, context_impl_owned_);
+			//InitializeContext(options_.context, context_impl_, context_impl_owned_);
+			context_impl_owned_[0] = false;
+			context_impl_ = options_.context;
 		}
 
 		public ProblemImpl(Options options) {
@@ -6422,16 +6509,18 @@ public abstract class CeresSolver {
 			residual_block_set_ = new HashSet<ResidualBlock>();
 			cost_function_ref_count_ = new HashMap<CostFunction, Integer>();
 			loss_function_ref_count_ = new HashMap<LossFunction, Integer>();
-			InitializeContext(options_.context, context_impl_, context_impl_owned_);
+			//InitializeContext(options_.context, context_impl_, context_impl_owned_);
+			context_impl_owned_[0] = false;
+			context_impl_ = options_.context;
 		}
 
-		void InitializeContext(Context context, ContextImpl context_impl, boolean context_impl_owned) {
+		void InitializeContext(Context context, Context context_impl, boolean context_impl_owned[]) {
 			if (context == null) {
-				context_impl_owned = true;
-				context_impl = new ContextImpl();
+				context_impl_owned[0] = true;
+				context_impl = new Context();
 			} else {
-				context_impl_owned = false;
-				context_impl = (ContextImpl) context;
+				context_impl_owned[0] = false;
+				context_impl = context;
 			}
 		}
 
@@ -6474,7 +6563,7 @@ public abstract class CeresSolver {
 			return program_;
 		}
 
-		public ContextImpl context() {
+		public Context context() {
 			return context_impl_;
 		}
 
@@ -6662,6 +6751,9 @@ public abstract class CeresSolver {
 				}
 			}
 			element_to_group_.put(element, group);
+			if (group_to_elements_.get(group) == null) {
+				group_to_elements_.put(group, new HashSet<T>());
+			}
 			group_to_elements_.get(group).add(element);
 			return true;
 		}
@@ -6735,12 +6827,6 @@ public abstract class CeresSolver {
 
 	class Context {
 		public Context() {
-
-		}
-	}
-
-	class ContextImpl extends Context {
-		public ContextImpl() {
 
 		}
 	}
@@ -8255,6 +8341,8 @@ public abstract class CeresSolver {
 				max_lbfgs_rank = -1;
 				linear_solver_ordering_given = new Vector<Integer>();
 				inner_iteration_ordering_given = new Vector<Integer>();
+				linear_solver_ordering_used = new Vector<Integer>();
+				inner_iteration_ordering_used = new Vector<Integer>();
 			}
 		}
 	}
