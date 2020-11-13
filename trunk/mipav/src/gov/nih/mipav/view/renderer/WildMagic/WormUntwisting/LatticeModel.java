@@ -391,9 +391,12 @@ public class LatticeModel {
 		VOI originalAnnotation = LatticeModel.readAnnotationsCSV(dir + File.separator + fileName );
 
 		if ( originalAnnotation != null ) {
-			// look for changes in annotations - build list to untwist:
-			VOI changed = annotationChanged( annotations, originalAnnotation );
-			if ( changed.getCurves().size() == 0 ) return;
+			if ( originalAnnotation.getCurves().size() == annotations.getCurves().size() ) {
+				// look for changes in annotations - build list to untwist:
+				VOI changed = annotationChanged( annotations, originalAnnotation );
+				System.err.println("saveAnnotationsAsCSV no changes - no save required");
+				if ( changed.getCurves().size() == 0 ) return;
+			}
 		}
 		
 		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
@@ -4137,23 +4140,23 @@ public class LatticeModel {
 	 * Enables the user to visualize the simple ellipse-based model of the worm during lattice construction.
 	 */
 	public void showModel(boolean display) {
-//		if ( display && (imageA.isRegistered(displayContours) == -1) ) {
-//			imageA.registerVOI(displayContours);
-//			imageA.notifyImageDisplayListeners();
-//		}
-//		if ( !display && (imageA.isRegistered(displayContours) != -1) ) {
-//			imageA.unregisterVOI(displayContours);
-//			imageA.notifyImageDisplayListeners();
-//		}
-		if ( samplingPlanes == null ) generateEllipses();
-		if ( display && (imageA.isRegistered(samplingPlanes) == -1) ) {
-			imageA.registerVOI(samplingPlanes);
+		if ( display && (imageA.isRegistered(displayContours) == -1) ) {
+			imageA.registerVOI(displayContours);
 			imageA.notifyImageDisplayListeners();
 		}
-		if ( !display && (imageA.isRegistered(samplingPlanes) != -1) ) {
-			imageA.unregisterVOI(samplingPlanes);
+		if ( !display && (imageA.isRegistered(displayContours) != -1) ) {
+			imageA.unregisterVOI(displayContours);
 			imageA.notifyImageDisplayListeners();
 		}
+//		if ( samplingPlanes == null ) generateEllipses();
+//		if ( display && (imageA.isRegistered(samplingPlanes) == -1) ) {
+//			imageA.registerVOI(samplingPlanes);
+//			imageA.notifyImageDisplayListeners();
+//		}
+//		if ( !display && (imageA.isRegistered(samplingPlanes) != -1) ) {
+//			imageA.unregisterVOI(samplingPlanes);
+//			imageA.notifyImageDisplayListeners();
+//		}
 	}
 	
 	public boolean isModelDisplayed()
@@ -9251,7 +9254,9 @@ public class LatticeModel {
 				}
 				tryCount++;
 			}
-//			System.err.println( markerNames.elementAt(i) + "   " + minSlice + "   " + minUntwist );
+			if ( minSlice == -1 && tryCount >= 3 ) {
+				System.err.println( "FAILED " + markerNames.elementAt(i) + "   " + minSlice + "   " + minUntwist );
+			}
 
 		}
 
