@@ -10465,9 +10465,11 @@ public class LatticeModel {
 
 	private static VOI annotationChanged( VOI annotationsNew, VOI annotationOld ) {
 		VOI annotationsChangeList = new VOI( (short)0, "changed annotations", VOI.ANNOTATION, 0 );
-		
+    	System.err.println("annotationChanged");
+
 		for ( int i = 0; i < annotationsNew.getCurves().size(); i++ ) {
         	VOIWormAnnotation annotation = (VOIWormAnnotation) annotationsNew.getCurves().elementAt(i);
+        	System.err.println(annotation.getText());
         	// find match by name:
         	boolean found = false;
     		for ( int j = 0; j < annotationOld.getCurves().size(); j++ ) {
@@ -10518,6 +10520,8 @@ public class LatticeModel {
 		for ( int i = 0; i < leftOrig.getCurves().size(); i++ ) {
         	VOIWormAnnotation leftPtOrig = (VOIWormAnnotation) leftOrig.getCurves().elementAt(i);
         	VOIWormAnnotation leftPt = (VOIWormAnnotation) left.getCurves().elementAt(i);
+        	
+        	if ( !leftPtOrig.getText().equals(leftPt.getText()) ) return true;
 
         	Vector3f ptO = new Vector3f(leftPtOrig.elementAt(0));
         	ptO.X = Math.round(ptO.X);
@@ -10534,6 +10538,9 @@ public class LatticeModel {
 
         	VOIWormAnnotation rightPtOrig = (VOIWormAnnotation) rightOrig.getCurves().elementAt(i);
         	VOIWormAnnotation rightPt = (VOIWormAnnotation) right.getCurves().elementAt(i);
+        	
+        	if ( !rightPtOrig.getText().equals(rightPt.getText()) ) return true;
+
         	ptO = new Vector3f(rightPtOrig.elementAt(0));
         	ptO.X = Math.round(ptO.X);
         	ptO.Y = Math.round(ptO.Y);
