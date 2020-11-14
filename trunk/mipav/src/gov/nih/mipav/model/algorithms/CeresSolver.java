@@ -1064,7 +1064,7 @@ public abstract class CeresSolver {
 		  pp.evaluator_options.dynamic_sparsity = options.dynamic_sparsity;
 		  pp.evaluator_options.context = pp.problem.context();
 		  pp.evaluator_options.evaluation_callback = options.evaluation_callback;
-		  pp.evaluator = ev.Create(pp.evaluator_options,
+		  pp.evaluator = Create(pp.evaluator_options,
 		                                        pp.reduced_program,
 		                                        pp.error);
 
@@ -1918,7 +1918,7 @@ public abstract class CeresSolver {
 			pp.evaluator_options.num_threads = pp.options.num_threads;
 			pp.evaluator_options.context = pp.problem.context();
 			pp.evaluator_options.evaluation_callback = pp.options.evaluation_callback;
-			pp.evaluator = ev.Create(pp.evaluator_options, pp.reduced_program, pp.error);
+			pp.evaluator = Create(pp.evaluator_options, pp.reduced_program, pp.error);
 			return (pp.evaluator != null);
 		}
 
@@ -5081,43 +5081,44 @@ public abstract class CeresSolver {
 
 		} // class EvaluateOptions
 
-		public Evaluator Create(Evaluator.Options options, Program program, String error[]) {
-			if (options.context == null) {
-				System.err.println("options.context == null in public Evaluator Create");
-				return null;
-			}
-
-			switch (options.linear_solver_type) {
-			case DENSE_QR:
-			case DENSE_NORMAL_CHOLESKY:
-				DenseJacobianWriter dw = new DenseJacobianWriter(options, program);
-				return new ProgramEvaluator<ScratchEvaluatePreparer, DenseJacobianWriter, NullJacobianFinalizer>(dw,
-						options, program);
-			case DENSE_SCHUR:
-			case SPARSE_SCHUR:
-			case ITERATIVE_SCHUR:
-			case CGNR:
-				BlockJacobianWriter bw = new BlockJacobianWriter(options, program);
-				return new ProgramEvaluator<BlockEvaluatePreparer, BlockJacobianWriter, NullJacobianFinalizer>(bw,
-						options, program);
-			case SPARSE_NORMAL_CHOLESKY:
-				if (options.dynamic_sparsity) {
-					DynamicCompressedRowJacobianWriter dc = new DynamicCompressedRowJacobianWriter(options, program);
-					return new ProgramEvaluator<ScratchEvaluatePreparer, DynamicCompressedRowJacobianWriter, DynamicCompressedRowJacobianFinalizer>(
-							dc, options, program);
-				} else {
-					BlockJacobianWriter bw2 = new BlockJacobianWriter(options, program);
-					return new ProgramEvaluator<BlockEvaluatePreparer, BlockJacobianWriter, NullJacobianFinalizer>(bw2,
-							options, program);
-				}
-
-			default:
-				error[0] = "Invalid Linear Solver Type. Unable to create evaluator.";
-				return null;
-			}
-		}
 
 	} // class Evaluator
+	
+	public Evaluator Create(Evaluator.Options options, Program program, String error[]) {
+		if (options.context == null) {
+			System.err.println("options.context == null in public Evaluator Create");
+			return null;
+		}
+
+		switch (options.linear_solver_type) {
+		case DENSE_QR:
+		case DENSE_NORMAL_CHOLESKY:
+			DenseJacobianWriter dw = new DenseJacobianWriter(options, program);
+			return new ProgramEvaluator<ScratchEvaluatePreparer, DenseJacobianWriter, NullJacobianFinalizer>(dw,
+					options, program);
+		case DENSE_SCHUR:
+		case SPARSE_SCHUR:
+		case ITERATIVE_SCHUR:
+		case CGNR:
+			BlockJacobianWriter bw = new BlockJacobianWriter(options, program);
+			return new ProgramEvaluator<BlockEvaluatePreparer, BlockJacobianWriter, NullJacobianFinalizer>(bw,
+					options, program);
+		case SPARSE_NORMAL_CHOLESKY:
+			if (options.dynamic_sparsity) {
+				DynamicCompressedRowJacobianWriter dc = new DynamicCompressedRowJacobianWriter(options, program);
+				return new ProgramEvaluator<ScratchEvaluatePreparer, DynamicCompressedRowJacobianWriter, DynamicCompressedRowJacobianFinalizer>(
+						dc, options, program);
+			} else {
+				BlockJacobianWriter bw2 = new BlockJacobianWriter(options, program);
+				return new ProgramEvaluator<BlockEvaluatePreparer, BlockJacobianWriter, NullJacobianFinalizer>(bw2,
+						options, program);
+			}
+
+		default:
+			error[0] = "Invalid Linear Solver Type. Unable to create evaluator.";
+			return null;
+		}
+	}
 
 	class DynamicCompressedRowJacobianFinalizer {
 		/*
@@ -5502,7 +5503,215 @@ public abstract class CeresSolver {
 				return;
 			}
 			context_ = context;
+			parameter_blocks_ = new Vector<ParameterBlock>();
+			residual_blocks_ = new Vector<Vector<ResidualBlock>>();
+			independent_set_offsets_ = new Vector<Integer>();
+			Evaluator ev = new Evaluator();
+			evaluator_options_ = ev.options;
 		}
+		
+		public boolean Init(
+			    Program program,
+			    HashMap<double[], ParameterBlock> parameter_map,
+			    OrderedGroups<double[]> ordering,
+			    String error[]) {
+			  int i,j;
+			  parameter_blocks_.clear();
+			  independent_set_offsets_.clear();
+			  independent_set_offsets_.add(0);
+
+			  // Serialize the OrderedGroups into a vector of parameter block
+			  // offsets for parallel access.
+			  HashMap<ParameterBlock, Integer> parameter_block_index = new HashMap<ParameterBlock, Integer>();
+			  HashMap<Integer, Set<double[]> > group_to_elements = ordering.group_to_elements();
+			  for (Set<double[]> collectionValues : group_to_elements.values()) {
+			      for (double[] values : collectionValues) {
+			    	  parameter_blocks_.add(parameter_map.get(values));
+			    	  parameter_block_index.put(parameter_blocks_.get(parameter_blocks_.size()-1),parameter_blocks_.size()-1); 
+			      }
+			      independent_set_offsets_.add(independent_set_offsets_.size()-1 + collectionValues.size());
+			  }
+
+			  // The ordering does not have to contain all parameter blocks, so
+			  // assign zero offsets/empty independent sets to these parameter
+			  // blocks.
+			  Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+			  for (i = 0; i < parameter_blocks.size(); ++i) {
+			    if (!ordering.IsMember(parameter_blocks.get(i).mutable_user_state())) {
+			      parameter_blocks_.add(parameter_blocks.get(i));
+			      independent_set_offsets_.add(independent_set_offsets_.get(independent_set_offsets_.size()-1));
+			    }
+			  }
+
+			  // Compute the set of residual blocks that depend on each parameter
+			  // block.
+			  while (residual_blocks_.size() > parameter_block_index.size()) {
+				  residual_blocks_.removeElementAt(residual_blocks_.size()-1);
+			  }
+			  while (residual_blocks_.size() < parameter_block_index.size()) {
+				  residual_blocks_.add(new Vector<ResidualBlock>());
+			  }
+			  Vector<ResidualBlock> residual_blocks = program.residual_blocks();
+			  for (i = 0; i < residual_blocks.size(); ++i) {
+			    ResidualBlock residual_block = residual_blocks.get(i);
+			    int num_parameter_blocks = residual_block.NumParameterBlocks();
+			    for (j = 0; j < num_parameter_blocks; ++j) {
+			      ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+			      Integer value = parameter_block_index.get(parameter_block);
+			      if (value != null) {
+			    	  residual_blocks_.get(value.intValue()).add(residual_block);
+			      }
+			    }
+			  }
+
+			  evaluator_options_.linear_solver_type = LinearSolverType.DENSE_QR;
+			  evaluator_options_.num_eliminate_blocks = 0;
+			  evaluator_options_.num_threads = 1;
+			  evaluator_options_.context = context_;
+
+			  return true;
+			}
+		
+		public void Minimize(
+			    Minimizer.Options options,
+			    double[] parameters,
+			    Solver.Summary summary) {
+			  int i, j;
+			  // Set the state and mark all parameter blocks constant.
+			  for (i = 0; i < parameter_blocks_.size(); ++i) {
+			    ParameterBlock parameter_block = parameter_blocks_.get(i);
+			    parameter_block.SetState(parameters,parameter_block.state_offset());
+			    parameter_block.SetConstant();
+			  }
+
+			  LinearSolver linear_solvers[] = new LinearSolver[options.num_threads];
+
+			  LinearSolver ls = new LinearSolver();
+			  LinearSolver.Options linear_solver_options = ls.options;
+			  linear_solver_options.type = LinearSolverType.DENSE_QR;
+			  linear_solver_options.context = context_;
+
+			  for (i = 0; i < options.num_threads; ++i) {
+			    linear_solvers[i] = Create(linear_solver_options);
+			  }
+
+			  for (i = 0; i < independent_set_offsets_.size() - 1; ++i) {
+			    int num_problems =
+			        independent_set_offsets_.get(i + 1) - independent_set_offsets_.get(i);
+			    // Avoid parallelization overhead call if the set is empty.
+			    if (num_problems == 0) {
+			      continue;
+			    }
+
+			    int num_inner_iteration_threads =
+			        Math.min(options.num_threads, num_problems);
+			    evaluator_options_.num_threads =
+			        Math.max(1, options.num_threads / num_inner_iteration_threads);
+
+			    /*ThreadTokenProvider thread_token_provider(num_inner_iteration_threads);
+
+			#ifdef CERES_USE_OPENMP
+			    // The parameter blocks in each independent set can be optimized
+			    // in parallel, since they do not co-occur in any residual block.
+			#pragma omp parallel for num_threads(num_inner_iteration_threads)
+			#endif
+
+			#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))*/
+			    for (j = independent_set_offsets_.get(i);
+			         j < independent_set_offsets_.get(i + 1);
+			         ++j) {
+			/*#else
+			    ParallelFor(context_,
+			                independent_set_offsets_[i],
+			                independent_set_offsets_[i + 1],
+			                num_inner_iteration_threads,
+			                [&](int j) {
+			#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+			      const ScopedThreadToken scoped_thread_token(&thread_token_provider);
+			      const int thread_id = scoped_thread_token.token();*/
+			      int thread_id = 0;
+
+			      ParameterBlock parameter_block = parameter_blocks_.get(j);
+			      int old_index = parameter_block.index();
+			      int old_delta_offset = parameter_block.delta_offset();
+			      parameter_block.SetVarying();
+			      parameter_block.set_index(0);
+			      parameter_block.set_delta_offset(0);
+
+			      Program inner_program = new Program();
+			      inner_program.mutable_parameter_blocks().add(parameter_block);
+			      inner_program.residual_blocks_.clear();
+			      inner_program.residual_blocks_.addAll(residual_blocks_.get(j));
+
+			      // TODO(sameeragarwal): Better error handling. Right now we
+			      // assume that this is not going to lead to problems of any
+			      // sort. Basically we should be checking for numerical failure
+			      // of some sort.
+			      //
+			      // On the other hand, if the optimization is a failure, that in
+			      // some ways is fine, since it won't change the parameters and
+			      // we are fine.
+			      Solver solver = new Solver();
+			      Solver.Summary inner_summary = solver.summary;
+			      Solve(inner_program,
+			            linear_solvers[thread_id],
+			            parameters, parameter_block.state_offset(),
+			            inner_summary);
+
+			      parameter_block.set_index(old_index);
+			      parameter_block.set_delta_offset(old_delta_offset);
+			      parameter_block.SetState(parameters,parameter_block.state_offset());
+			      parameter_block.SetConstant();
+			    }
+			//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			  //);
+			//#endif
+			  }
+
+			  for (i =  0; i < parameter_blocks_.size(); ++i) {
+			    parameter_blocks_.get(i).SetVarying();
+			  }
+
+			  for (i = 0; i < options.num_threads; ++i) {
+			    linear_solvers[i] = null;
+			  }
+			}
+
+		// Solve the optimization problem for one parameter block.
+		private void Solve(Program program,
+		                                       LinearSolver linear_solver,
+		                                       double[] parameter,
+		                                       int parameter_start,
+		                                       Solver.Summary summary) {
+		  Solver solver = new Solver();
+		  summary = solver.summary;
+		  summary.initial_cost = 0.0;
+		  summary.fixed_cost = 0.0;
+		  summary.final_cost = 0.0;
+		  String error[] = new String[1];
+
+		  Minimizer min = new Minimizer();
+		  Minimizer.Options minimizer_options = min.options_;
+		  Evaluator ev = Create(evaluator_options_,program,error);
+		  if (ev == null) {
+			  System.err.println("Evaluator ev == null in CoordinateDescentMinimizer.Solve");
+			  return;
+		  }
+		  minimizer_options.evaluator = ev;
+		  /*minimizer_options.jacobian.reset(
+		      CHECK_NOTNULL(minimizer_options.evaluator.CreateJacobian()));
+
+		  TrustRegionStrategy::Options trs_options;
+		  trs_options.linear_solver = linear_solver;
+		  minimizer_options.trust_region_strategy.reset(
+		      CHECK_NOTNULL(TrustRegionStrategy::Create(trs_options)));
+		  minimizer_options.is_silent = true;
+
+		  TrustRegionMinimizer minimizer;
+		  minimizer.Minimize(minimizer_options, parameter, summary);*/
+		}
+
 
 	} // class CoordinateDescentMinimizer
 
@@ -6103,7 +6312,7 @@ public abstract class CeresSolver {
 		public boolean SetParameterBlockStatePtrsToUserStatePtrs() {
 			for (int i = 0; i < parameter_blocks_.size(); ++i) {
 				if (!parameter_blocks_.get(i).IsConstant()
-						&& !parameter_blocks_.get(i).SetState(parameter_blocks_.get(i).user_state())) {
+						&& !parameter_blocks_.get(i).SetState(parameter_blocks_.get(i).user_state(),0)) {
 					return false;
 				}
 			}
@@ -6121,6 +6330,7 @@ public abstract class CeresSolver {
 		public Vector<ResidualBlock> residual_blocks() {
 			return residual_blocks_;
 		}
+
 
 		public boolean ParameterBlocksAreFinite(String message[]) {
 			if (message == null) {
@@ -6822,6 +7032,10 @@ public abstract class CeresSolver {
 			}
 			return num_removed;
 		}
+		
+		public boolean IsMember(T element) {
+			return(element_to_group_.containsKey(element));
+		}
 
 	}
 
@@ -6907,7 +7121,18 @@ public abstract class CeresSolver {
 			// residuals taking more than 8 parameter block arguments are rare.
 			Vector<double[]> parameters = new Vector<double[]>();
 			for (int i = 0; i < num_parameter_blocks; ++i) {
-				parameters.add(parameter_blocks_[i].state());
+				int state_start = parameter_blocks_[i].state_start();
+				if (state_start == 0) {
+				    parameters.add(parameter_blocks_[i].state());
+				}
+				else {
+					double state[] = parameter_blocks_[i].state();
+					double state_with_start[] = new double[state.length-state_start];
+					for (int j = state_start; j < state.length; j++) {
+						state_with_start[j-state_start] = state[j];
+						parameters.add(state_with_start);
+					}
+				}
 			}
 
 			// Put pointers into the scratch space into global_jacobians as appropriate.
@@ -7266,6 +7491,7 @@ public abstract class CeresSolver {
 		// ends up simplifying the internals of Ceres enough to justify the potential
 		// pitfalls of using "mutable."
 		double[] state_;
+		int state_start = 0;
 		double local_parameterization_jacobian_[];
 		// mutable scoped_array<double> local_parameterization_jacobian_;
 
@@ -7318,6 +7544,10 @@ public abstract class CeresSolver {
 		public void SetConstant() {
 			is_constant_ = true;
 		}
+		
+		 public void SetVarying() { 
+			 is_constant_ = false; 
+	     }
 
 		// Set the parameterization. The parameterization can be set exactly once;
 		// multiple calls to set the parameterization to different values will crash.
@@ -7361,10 +7591,10 @@ public abstract class CeresSolver {
 					* local_parameterization_.LocalSize()];
 			if (!UpdateLocalParameterizationJacobian()) {
 				System.err.println("Local parameterization Jacobian computation failed for x: ");
-				for (i = 0; i < size_ - 1; i++) {
+				for (i = state_start; i < state_start + size_ - 1; i++) {
 					System.err.print(state_[i] + " ");
 				}
-				System.err.println(state_[size_ - 1]);
+				System.err.println(state_[state_start + size_ - 1]);
 			}
 		}
 
@@ -7374,6 +7604,7 @@ public abstract class CeresSolver {
 			index_ = index;
 			is_constant_ = false;
 			state_ = user_state_;
+			state_start = 0;
 
 			local_parameterization_ = null;
 			if (local_parameterization != null) {
@@ -7396,22 +7627,22 @@ public abstract class CeresSolver {
 			int jacobian_size = Size() * LocalSize();
 			// jacobian is a row-major GlobalSize() x LocalSize() matrix.
 			InvalidateArray(jacobian_size, local_parameterization_jacobian_);
-			if (!local_parameterization_.ComputeJacobian(state_, local_parameterization_jacobian_)) {
+			if (!local_parameterization_.ComputeJacobian(state_, state_start, local_parameterization_jacobian_)) {
 				System.err.println("Local parameterization Jacobian computation failed for x:");
-				for (i = 0; i < size_ - 1; i++) {
+				for (i = state_start; i < state_start + size_ - 1; i++) {
 					System.err.print(state_[i] + " ");
 				}
-				System.err.println(state_[size_ - 1]);
+				System.err.println(state_[state_start + size_ - 1]);
 				return false;
 			}
 
 			if (!IsArrayValid(jacobian_size, local_parameterization_jacobian_)) {
 				System.err.println("Local parameterization Jacobian computation returned");
 				System.err.println("an invalid matrix for x: ");
-				for (i = 0; i < size_ - 1; i++) {
+				for (i = state_start; i < state_start + size_ - 1; i++) {
 					System.err.print(state_[i] + " ");
 				}
-				System.err.println(state_[size_ - 1]);
+				System.err.println(state_[state_start + size_ - 1]);
 				System.err.println("\n Jacobian matrix : ");
 				for (i = 0; i < size_; i++) {
 					for (j = 0; j < LocalSize() - 1; j++) {
@@ -7460,7 +7691,7 @@ public abstract class CeresSolver {
 		}
 
 		// Manipulate the parameter state.
-		public boolean SetState(double[] x) {
+		public boolean SetState(double[] x, int state_start) {
 			if (x == null) {
 				System.err.println("In ParameterBlock.SetState x is null");
 				return false;
@@ -7471,6 +7702,7 @@ public abstract class CeresSolver {
 			}
 
 			state_ = x;
+			this.state_start = state_start;
 			return UpdateLocalParameterizationJacobian();
 		}
 
@@ -7571,14 +7803,18 @@ public abstract class CeresSolver {
 		public double[] state() {
 			return state_;
 		}
+		
+		public int state_start() {
+			return state_start;
+		}
 
 		// Copy the current parameter state out to x. This is "GetState()" rather than
 		// simply "state()" since it is actively copying the data into the passed
 		// pointer.
 		public void GetState(double[] x) {
 			if (x != state_) {
-				for (int i = 0; i < state_.length; i++) {
-					x[i] = state_[i];
+				for (int i = state_start; i < state_start + size_; i++) {
+					x[i-state_start] = state_[i];
 				}
 			}
 		}
@@ -7588,7 +7824,7 @@ public abstract class CeresSolver {
 	// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
 	abstract class LocalParameterization {
 		// jacobian is a row-major GlobalSize() x LocalSize() matrix.
-		public abstract boolean ComputeJacobian(double x[], double jacobian[]);
+		public abstract boolean ComputeJacobian(double x[], int x_start, double jacobian[]);
 
 		// Size of x.
 		public abstract int GlobalSize();
