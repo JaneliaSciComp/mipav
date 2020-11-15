@@ -5080,6 +5080,15 @@ public abstract class CeresSolver {
 			}
 
 		} // class EvaluateOptions
+		
+		// It is expected that the classes implementing this interface will be aware
+		// of their client's requirements for the kind of sparse matrix storage and
+		// layout that is needed for an efficient implementation. For example
+		// CompressedRowOptimizationProblem creates a compressed row representation of
+		// the jacobian for use with CHOLMOD, where as BlockOptimizationProblem
+		// creates a BlockSparseMatrix representation of the jacobian for use in the
+		// Schur complement based methods.
+		// virtual SparseMatrix* CreateJacobian() const = 0;
 
 
 	} // class Evaluator
@@ -5699,13 +5708,18 @@ public abstract class CeresSolver {
 			  return;
 		  }
 		  minimizer_options.evaluator = ev;
-		  /*minimizer_options.jacobian.reset(
-		      CHECK_NOTNULL(minimizer_options.evaluator.CreateJacobian()));
+		  //minimizer_options.jacobian.reset(
+		      //CHECK_NOTNULL(minimizer_options.evaluator.CreateJacobian()));
 
-		  TrustRegionStrategy::Options trs_options;
+		  TrustRegionStrategy trs = new TrustRegionStrategy();
+		  TrustRegionStrategy.Options trs_options = trs.options;
 		  trs_options.linear_solver = linear_solver;
-		  minimizer_options.trust_region_strategy.reset(
-		      CHECK_NOTNULL(TrustRegionStrategy::Create(trs_options)));
+		  /*TrustRegionStrategy trust = Create(trs_options);
+		  if (trust == null) {
+			  System.err.println("TrustRegionStrategy trust = Create(trs_optons) == null in Solve");
+			  return;
+		  }
+		  minimizer_options.trust_region_strategy = trust;
 		  minimizer_options.is_silent = true;
 
 		  TrustRegionMinimizer minimizer;
@@ -5714,6 +5728,300 @@ public abstract class CeresSolver {
 
 
 	} // class CoordinateDescentMinimizer
+	
+	public class TrustRegionStrategy {
+		 public Options options;
+		 public PerSolveOptions perSolveOptions;
+		 public Summary summary;
+		 
+		 public TrustRegionStrategy() {
+			 options = new Options();
+			 perSolveOptions = new PerSolveOptions();
+			 summary = new Summary();
+		 }
+		
+		  class Options {
+			  public TrustRegionStrategyType trust_region_strategy_type;
+			  // Linear solver used for actually solving the trust region step.
+			  public LinearSolver linear_solver;
+			  public double initial_radius;
+			  public double max_radius;
+
+			  // Minimum and maximum values of the diagonal damping matrix used
+			  // by LevenbergMarquardtStrategy. The DoglegStrategy also uses
+			  // these bounds to construct a regularizing diagonal to ensure
+			  // that the Gauss-Newton step computation is of full rank.
+			  public double min_lm_diagonal;
+			  public double max_lm_diagonal;
+
+			  // Further specify which dogleg method to use
+			  public DoglegType dogleg_type;
+		      public Options() {
+		          trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		          initial_radius = 1e4;
+		          max_radius = 1e32;
+		          min_lm_diagonal = 1e-6;
+		          max_lm_diagonal = 1e32;
+		          dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
+		    }
+		  } // class Options
+
+		  // Per solve options.
+		  class PerSolveOptions {
+			    // Forcing sequence for inexact solves.
+			    public double eta;
+
+			    public DumpFormatType dump_format_type;
+
+			    // If non-empty and dump_format_type is not CONSOLE, the trust
+			    // regions strategy will write the linear system to file(s) with
+			    // name starting with dump_filename_base.  If dump_format_type is
+			    // CONSOLE then dump_filename_base will be ignored and the linear
+			    // system will be written to the standard error.
+			    public String dump_filename_base;
+			    public PerSolveOptions() {
+			        eta = 0.0;
+			        dump_format_type = DumpFormatType.TEXTFILE;
+			    }
+
+			    
+			  } // class PerSolveOptions
+
+			  class Summary {
+				    // If the trust region problem is,
+				    //
+				    //   1/2 x'Ax + b'x + c,
+				    //
+				    // then
+				    //
+				    //   residual_norm = |Ax -b|
+				    public double residual_norm;
+
+				    // Number of iterations used by the linear solver. If a linear
+				    // solver was not called (e.g., DogLegStrategy after an
+				    // unsuccessful step), then this would be zero.
+				    public int num_iterations;
+
+				    // Status of the linear solver used to solve the Newton system.
+				    public LinearSolverTerminationType termination_type;
+			        public Summary() {
+			          residual_norm = 0.0;
+			          num_iterations = -1;
+			          termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+			    }
+			    
+			    
+			  } // class Summary
+			  
+			  // Use the current radius to solve for the trust region step.
+			  /*public abstract Summary ComputeStep(PerSolveOptions per_solve_options,
+			                              SparseMatrix jacobian,
+			                              double residuals[],
+			                              double step[]);
+
+			  // Inform the strategy that the current step has been accepted, and
+			  // that the ratio of the decrease in the non-linear objective to the
+			  // decrease in the trust region model is step_quality.
+			  public abstract void StepAccepted(double step_quality);
+
+			  // Inform the strategy that the current step has been rejected, and
+			  // that the ratio of the decrease in the non-linear objective to the
+			  // decrease in the trust region model is step_quality.
+			  public abstract void StepRejected(double step_quality);
+
+			  // Inform the strategy that the current step has been rejected
+			  // because it was found to be numerically invalid.
+			  // StepRejected/StepAccepted will not be called for this step, and
+			  // the strategy is free to do what it wants with this information.
+			  public abstract void StepIsInvalid();
+
+			  // Current trust region radius.
+			  public abstract double Radius();*/
+
+	} // class TrustRegionStrategy
+	
+	/*public TrustRegionStrategy  Create(TrustRegionStrategy.Options options) {
+		  switch (options.trust_region_strategy_type) {
+		    case LEVENBERG_MARQUARDT:
+		      return new LevenbergMarquardtStrategy(options);
+		    case DOGLEG:
+		      return new DoglegStrategy(options);
+		    default:
+		      System.err.println("Unknown trust region strategy: " + options.trust_region_strategy_type);
+		      return null;
+		  }
+
+		  
+		}*/
+	
+	// Levenberg-Marquardt step computation and trust region sizing
+	// strategy based on on "Methods for Nonlinear Least Squares" by
+	// K. Madsen, H.B. Nielsen and O. Tingleff. Available to download from
+	//
+	// http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/3215/pdf/imm3215.pdf
+	/*class LevenbergMarquardtStrategy extends TrustRegionStrategy {
+		  private LinearSolver linear_solver_;
+		  private double radius_;
+		  private double max_radius_;
+		  private double min_diagonal_;
+		  private double max_diagonal_;
+		  private double decrease_factor_;
+		  private boolean reuse_diagonal_;
+		  private Vector<Double> diagonal_;   // diagonal_ =  diag(J'J)
+		  // Scaled copy of diagonal_. Stored here as optimization to prevent
+		  // allocations in every iteration and reuse when a step fails and
+		  // ComputeStep is called again.
+		  private Vector<Double> lm_diagonal_;  // lm_diagonal_ = diagonal_ / radius_;
+		  
+	      public LevenbergMarquardtStrategy(TrustRegionStrategy.Options options) {
+	    	  super();
+	    	  linear_solver_ = options.linear_solver;
+	          radius_ = options.initial_radius;
+	          max_radius_ = options.max_radius;
+	          min_diagonal_ = options.min_lm_diagonal;
+	          max_diagonal_ = options.max_lm_diagonal;
+	          decrease_factor_ = 2.0;
+	          reuse_diagonal_ = false;
+	          diagonal_ = new Vector<Double>();
+	          lm_diagonal_ = new Vector<Double>();
+	          if (linear_solver_ == null) {
+	        	  System.err.println("linear_solver_ == null in public LevenbergMarquardtStrategy");
+	        	  return;
+	          }
+	          if (min_diagonal_ <= 0;.0) {
+	        	  System.err.println("min_diagonal_ <= 0.0 in public LevenbergMarquardtStrategy");
+	        	  return;
+	          }
+	          if (min_diagonal_ > max_diagonal_) {
+	        	  System.err.println("min_diagonal_ > max_diagonal_ in public LevenbergMarquardtStrategy");
+	        	  return;
+	          }
+	          if (max_radius_ <= 0.0) {
+	        	  System.err.println("max_radius_ <= 0.0 in public LevenbergMarquardtStrategy");
+	        	  return;
+	          }
+	      }
+
+	  // TrustRegionStrategy interface
+	  public TrustRegionStrategy.Summary ComputeStep(
+	      TrustRegionStrategy.PerSolveOptions per_solve_options,
+	      SparseMatrix jacobian,
+	      double[] residuals,
+	      double[] step) {
+		  int i;
+		  if (jacobian == null) {
+			  System.err.println("jacobian == null in TrustRegionStrategy.Summary ComputeStep");
+			  return null;
+		  }
+		  if (residuals == null) {
+			  System.err.println("residuals == null in TrustRegionStrategy.Summary ComputeStep");
+			  return null;
+		  }
+		  if (step == null) {
+			  System.err.println("step == null in TrustRegionStrategy.Summary ComputeStep");
+			  return null;
+		  }
+
+		  int num_parameters = jacobian.num_cols();
+		  if (!reuse_diagonal_) {
+		    if (diagonal_.rows() != num_parameters) {
+		      while (diagonal_.size() < num_parameters) {
+		    	  diagonal_.add(1.0);
+		      }
+		      while (diagonal_.size > num_parameters) {
+		    	  diagonal_.removeElementAt(diagonal_.size()-1);
+		      }
+		    }
+
+		    jacobian.SquaredColumnNorm(diagonal_);
+		    for (i = 0; i < num_parameters; ++i) {
+		      diagonal_.set(i,Math.min(Math.max(diagonal_.get(i), min_diagonal_),
+		                              max_diagonal_));
+		    }
+		  }
+
+		  lm_diagonal_.clear();
+		  for (i = 0; i < num_parameters; ++i) {
+			  lm_diagonal_.add(Math.sqrt(diagonal_.get(i)/radius));
+		  }
+
+		  LinearSolver ls = new LinearSolver();
+		  LinearSolver.PerSolveOptions solve_options = ls.perSolveOptions;
+		  solve_options.D = lm_diagonal_;
+		  solve_options.q_tolerance = per_solve_options.eta;
+		  // Disable r_tolerance checking. Since we only care about
+		  // termination via the q_tolerance. As Nash and Sofer show,
+		  // r_tolerance based termination is essentially useless in
+		  // Truncated Newton methods.
+		  solve_options.r_tolerance = -1.0;
+
+		  // Invalidate the output array lm_step, so that we can detect if
+		  // the linear solver generated numerical garbage.  This is known
+		  // to happen for the DENSE_QR and then DENSE_SCHUR solver when
+		  // the Jacobin is severly rank deficient and mu is too small.
+		  InvalidateArray(num_parameters, step);
+
+		  // Instead of solving Jx = -r, solve Jy = r.
+		  // Then x can be found as x = -y, but the inputs jacobian and residuals
+		  // do not need to be modified.
+		  LinearSolver.Summary linear_solver_summary =
+		      linear_solver_.Solve(jacobian, residuals, solve_options, step);
+
+		  if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
+		    Preferences.debug("Linear solver fatal error: " + linear_solver_summary.message + "\n",
+		    		Preferences.DEBUG_ALGORITHM);
+		  } else if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE)  {
+		    Preferences.debug("Linear solver failure. Failed to compute a step: " + linear_solver_summary.message + "\n",
+		    		Preferences.DEBUG_ALGORITHM);
+		  } else if (!IsArrayValid(num_parameters, step)) {
+		    Preferences.debug("Linear solver failure. Failed to compute a finite step.\n", Preferences.DEBUG_ALGORITHM);
+		    linear_solver_summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		  } else {
+			for (i = 0; i < num_parametes; i++) {
+				step[i] *= -1.0;
+			}
+		  }
+		  reuse_diagonal_ = true;
+
+		  if (per_solve_options.dump_format_type == DumpFormatType.CONSOLE ||
+		      (per_solve_options.dump_format_type != DumpFormatType.CONSOLE &&
+		       !per_solve_options.dump_filename_base.isEmpty())) {
+		    if (!DumpLinearLeastSquaresProblem(per_solve_options.dump_filename_base,
+		                                       per_solve_options.dump_format_type,
+		                                       jacobian,
+		                                       solve_options.D,
+		                                       residuals,
+		                                       step,
+		                                       0)) {
+		      System.err.println("Unable to dump trust region problem.");
+		      System.err.println(" Filename base: " + per_solve_options.dump_filename_base);
+		    }
+		  }
+
+
+		  TrustRegionStrategy trs = new TrustRegionStrategy();
+		  TrustRegionStrategy.Summary summary = trs.summary;
+		  summary.residual_norm = linear_solver_summary.residual_norm;
+		  summary.num_iterations = linear_solver_summary.num_iterations;
+		  summary.termination_type = linear_solver_summary.termination_type;
+		  return summary;
+
+	  }
+	  virtual void StepAccepted(double step_quality);
+	  virtual void StepRejected(double step_quality);
+	  virtual void StepIsInvalid() {
+	    // Treat the current step as a rejected step with no increase in
+	    // solution quality. Since rejected steps lead to decrease in the
+	    // size of the trust region, the next time ComputeStep is called,
+	    // this will lead to a better conditioned system.
+	    StepRejected(0.0);
+	  }
+
+	  virtual double Radius() const;
+
+	} // class LevenbergMarquardtStrategy extends TrustRegionStrategy*/
+
+             
 
 	// Interface for non-linear least squares solvers.
 	class Minimizer {
@@ -5790,14 +6098,14 @@ public abstract class CeresSolver {
 			// Object responsible for actually computing the trust region
 			// step, and sizing the trust region radius.
 			// shared_ptr<TrustRegionStrategy> trust_region_strategy;
-			// TrustRegionStrategy trust_region_strategy;
+			TrustRegionStrategy trust_region_strategy;
 
 			// Object holding the Jacobian matrix. It is assumed that the
 			// sparsity structure of the matrix has already been initialized
 			// and will remain constant for the life time of the
 			// optimization.
 			// shared_ptr<SparseMatrix> jacobian;
-			// SparseMatrix jacobian;
+			SparseMatrix jacobian;
 
 			// shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
 			CoordinateDescentMinimizer inner_iteration_minimizer;
