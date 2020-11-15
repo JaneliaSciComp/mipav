@@ -477,7 +477,7 @@ private void buildPelvisDialog() {
     	voiList[1][0] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.ORANGE);
     	voiList[1][1] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.RED);
     	
-    	voiList[2] = new PlugInSelectableVOI542a[12];
+    	voiList[2] = new PlugInSelectableVOI542a[14];
     	voiList[2][0] = new PlugInSelectableVOI542a("Left Rectus Abdominus", true, 1, 2, true, true, imageSize, 2, Color.ORANGE);
     	voiList[2][1] = new PlugInSelectableVOI542a("Right Rectus Abdominus", true, 1, 2, true, true, imageSize, 3, Color.ORANGE);
     	voiList[2][2] = new PlugInSelectableVOI542a("Left Iliopsoas", true, 1, 2, true, true, imageSize, 4, Color.RED);
@@ -490,6 +490,8 @@ private void buildPelvisDialog() {
     	voiList[2][9] = new PlugInSelectableVOI542a("Right Rectus Femoris", true, 1, 2, true, true, imageSize, 11, Color.MAGENTA);
     	voiList[2][10] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.BLUE);
     	voiList[2][11] = new PlugInSelectableVOI542a("Right Sartorius", true, 1, 2, true, true, imageSize, 13, Color.BLUE);
+    	voiList[2][12] = new PlugInSelectableVOI542a("Left Tensor fascia lata", true, 1, 2, true, true, imageSize, 14, Color.PINK);
+    	voiList[2][13] = new PlugInSelectableVOI542a("Right Tensor fascia lata", true, 1, 2, true, true, imageSize, 15, Color.PINK);
     	
     	// Subcutaneous area has pelvis as child
     	voiList[0][1].addChild(voiList[0][0]);
@@ -609,7 +611,7 @@ private void buildChestDialog() {
     	voiList[1] = new PlugInSelectableVOI542a[1];
     	voiList[1][0] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.ORANGE);
     	
-    	voiList[2] = new PlugInSelectableVOI542a[15];
+    	voiList[2] = new PlugInSelectableVOI542a[17];
 	    voiList[2][0] = new PlugInSelectableVOI542a("Left Sternomastoid", true, 1, 2, false, true, imageSize, 2, Color.ORANGE);
     	voiList[2][1] = new PlugInSelectableVOI542a("Right Sternomastoid", true, 1, 2, false, true, imageSize, 3, Color.ORANGE);
 	    voiList[2][2] = new PlugInSelectableVOI542a("Left Paraspinus", true, 1, 2, true, true, imageSize, 4, Color.RED);
@@ -624,8 +626,10 @@ private void buildChestDialog() {
     	voiList[2][11] = new PlugInSelectableVOI542a("Right Sternothyroid", true, 1, 2, true, true, imageSize, 13, Color.BLUE);
     	voiList[2][12] = new PlugInSelectableVOI542a("Left Levator scapulae", true, 1, 2, true, true, imageSize, 14, Color.PINK);
     	voiList[2][13] = new PlugInSelectableVOI542a("Right Levator scapulae", true, 1, 2, true, true, imageSize, 15, Color.PINK);
+    	voiList[2][14] = new PlugInSelectableVOI542a("Left Rhomboid minor", true, 1, 2, true, true, imageSize, 16, Color.YELLOW);
+    	voiList[2][15] = new PlugInSelectableVOI542a("Right Rhomboid minor", true, 1, 2, true, true, imageSize, 17, Color.YELLOW);
     	
-    	voiList[2][14] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.YELLOW);
+    	voiList[2][16] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.LIGHT_GRAY);
     	
     	titles = new String[3];
 	    titles[0] = "Neck";
