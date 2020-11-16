@@ -5859,7 +5859,7 @@ public abstract class CeresSolver {
 	// K. Madsen, H.B. Nielsen and O. Tingleff. Available to download from
 	//
 	// http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/3215/pdf/imm3215.pdf
-	/*class LevenbergMarquardtStrategy extends TrustRegionStrategy {
+	class LevenbergMarquardtStrategy extends TrustRegionStrategy {
 		  private LinearSolver linear_solver_;
 		  private double radius_;
 		  private double max_radius_;
@@ -5888,7 +5888,7 @@ public abstract class CeresSolver {
 	        	  System.err.println("linear_solver_ == null in public LevenbergMarquardtStrategy");
 	        	  return;
 	          }
-	          if (min_diagonal_ <= 0;.0) {
+	          if (min_diagonal_ <= 0.0) {
 	        	  System.err.println("min_diagonal_ <= 0.0 in public LevenbergMarquardtStrategy");
 	        	  return;
 	          }
@@ -5923,31 +5923,45 @@ public abstract class CeresSolver {
 		  }
 
 		  int num_parameters = jacobian.num_cols();
+		  LinearSolver.Summary linear_solver_summary = null;
 		  if (!reuse_diagonal_) {
-		    if (diagonal_.rows() != num_parameters) {
+		    if (diagonal_.size() != num_parameters) {
 		      while (diagonal_.size() < num_parameters) {
 		    	  diagonal_.add(1.0);
 		      }
-		      while (diagonal_.size > num_parameters) {
+		      while (diagonal_.size() > num_parameters) {
 		    	  diagonal_.removeElementAt(diagonal_.size()-1);
 		      }
 		    }
 
-		    jacobian.SquaredColumnNorm(diagonal_);
+		    double diagonal_array[] = new double[diagonal_.size()];
+		    for (i = 0; i < diagonal_.size(); i++) {
+		    	diagonal_array[i] = diagonal_.get(i);
+		    }
+		    
+		    if (linear_solver_.options.type == LinearSolverType.CGNR) {
+		        ((BlockSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);
+            }
+		    else if ((linear_solver_.options.type == LinearSolverType.DENSE_QR) || (linear_solver_.options.type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
+            	((DenseSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);	
+            }
 		    for (i = 0; i < num_parameters; ++i) {
-		      diagonal_.set(i,Math.min(Math.max(diagonal_.get(i), min_diagonal_),
+		      diagonal_.set(i,Math.min(Math.max(diagonal_array[i], min_diagonal_),
 		                              max_diagonal_));
 		    }
 		  }
 
 		  lm_diagonal_.clear();
 		  for (i = 0; i < num_parameters; ++i) {
-			  lm_diagonal_.add(Math.sqrt(diagonal_.get(i)/radius));
+			  lm_diagonal_.add(Math.sqrt(diagonal_.get(i)/radius_));
 		  }
 
 		  LinearSolver ls = new LinearSolver();
 		  LinearSolver.PerSolveOptions solve_options = ls.perSolveOptions;
-		  solve_options.D = lm_diagonal_;
+		  solve_options.D = new double[lm_diagonal_.size()];
+		  for (i = 0; i < lm_diagonal_.size(); i++) {
+			  solve_options.D[i] = lm_diagonal_.get(i);
+		  }
 		  solve_options.q_tolerance = per_solve_options.eta;
 		  // Disable r_tolerance checking. Since we only care about
 		  // termination via the q_tolerance. As Nash and Sofer show,
@@ -5964,8 +5978,19 @@ public abstract class CeresSolver {
 		  // Instead of solving Jx = -r, solve Jy = r.
 		  // Then x can be found as x = -y, but the inputs jacobian and residuals
 		  // do not need to be modified.
-		  LinearSolver.Summary linear_solver_summary =
-		      linear_solver_.Solve(jacobian, residuals, solve_options, step);
+		  
+		  if (linear_solver_.options.type == LinearSolverType.CGNR) {
+		      linear_solver_summary =
+		      ((CgnrSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
+		  }
+		  else if (linear_solver_.options.type == LinearSolverType.DENSE_QR) {
+			  linear_solver_summary =
+				      ((DenseQRSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);  
+		  }
+		  else if (linear_solver_.options.type == LinearSolverType.DENSE_NORMAL_CHOLESKY) {
+			  linear_solver_summary =
+				      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);  
+		  }
 
 		  if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
 		    Preferences.debug("Linear solver fatal error: " + linear_solver_summary.message + "\n",
@@ -5977,7 +6002,7 @@ public abstract class CeresSolver {
 		    Preferences.debug("Linear solver failure. Failed to compute a finite step.\n", Preferences.DEBUG_ALGORITHM);
 		    linear_solver_summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
 		  } else {
-			for (i = 0; i < num_parametes; i++) {
+			for (i = 0; i < num_parameters; i++) {
 				step[i] *= -1.0;
 			}
 		  }
@@ -6007,7 +6032,7 @@ public abstract class CeresSolver {
 		  return summary;
 
 	  }
-	  virtual void StepAccepted(double step_quality);
+	  /*virtual void StepAccepted(double step_quality);
 	  virtual void StepRejected(double step_quality);
 	  virtual void StepIsInvalid() {
 	    // Treat the current step as a rejected step with no increase in
@@ -6017,11 +6042,801 @@ public abstract class CeresSolver {
 	    StepRejected(0.0);
 	  }
 
-	  virtual double Radius() const;
+	  virtual double Radius() const;*/
 
-	} // class LevenbergMarquardtStrategy extends TrustRegionStrategy*/
+	} // class LevenbergMarquardtStrategy extends TrustRegionStrategy
+	
+	// Structure defining a linear least squares problem and if possible
+	// ground truth solutions. To be used by various LinearSolver tests.
+	class LinearLeastSquaresProblem {
+		  //scoped_ptr<SparseMatrix> A;
+		  public SparseMatrix A;
+		  //scoped_array<double> b;
+		  public double b[];
+		  // scoped_array<double> D;
+		  public double D[];
+		  // If using the schur eliminator then how many of the variable
+		  // blocks are e_type blocks.
+		  public int num_eliminate_blocks;
 
-             
+		  // Solution to min_x |Ax - b|^2
+		  //scoped_array<double> x;
+		  public double x[];
+		  // Solution to min_x |Ax - b|^2 + |Dx|^2
+		  //scoped_array<double> x_D;
+		  public double x_D[];
+	  public LinearLeastSquaresProblem() {
+	      A = null;
+	      b = null;
+	      D = null;
+	      num_eliminate_blocks = 0;
+	      x = null;
+	      x_D = null;
+	  }
+
+	  
+	};
+	
+	public LinearLeastSquaresProblem CreateLinearLeastSquaresProblemFromId(int id) {
+		  switch (id) {
+		    case 0:
+		      return LinearLeastSquaresProblem0();
+		    case 1:
+		      return LinearLeastSquaresProblem1();
+		    case 2:
+		      return LinearLeastSquaresProblem2();
+		    case 3:
+		      return LinearLeastSquaresProblem3();
+		    case 4:
+		      return LinearLeastSquaresProblem4();
+		    default:
+		      System.err.println("Unknown problem id requested " + id);
+		  }
+		  return null;
+		}
+	
+	/*
+	A = [1   2]
+	    [3   4]
+	    [6 -10]
+
+	b = [  8
+	      18
+	     -18]
+
+	x = [2
+	     3]
+
+	D = [1
+	     2]
+
+	x_D = [1.78448275;
+	       2.82327586;]
+	 */
+	public LinearLeastSquaresProblem LinearLeastSquaresProblem0() {
+	  LinearLeastSquaresProblem problem = new LinearLeastSquaresProblem();
+
+	  TripletSparseMatrix A = new TripletSparseMatrix(3, 2, 6);
+	  problem.b = new double[3];
+	  problem.D = new double[2];
+
+	  problem.x = new double[2];
+	  problem.x_D = new double[2];
+
+	  int Ai[] = A.mutable_rows();
+	  int Aj[] = A.mutable_cols();
+	  double Ax[] = A.mutable_values();
+
+	  int counter = 0;
+	  for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j< 2; ++j) {
+	      Ai[counter] = i;
+	      Aj[counter] = j;
+	      ++counter;
+	    }
+	  }
+
+	  Ax[0] = 1.;
+	  Ax[1] = 2.;
+	  Ax[2] = 3.;
+	  Ax[3] = 4.;
+	  Ax[4] = 6;
+	  Ax[5] = -10;
+	  A.set_num_nonzeros(6);
+	  problem.A = A;
+
+	  problem.b[0] = 8;
+	  problem.b[1] = 18;
+	  problem.b[2] = -18;
+
+	  problem.x[0] = 2.0;
+	  problem.x[1] = 3.0;
+
+	  problem.D[0] = 1;
+	  problem.D[1] = 2;
+
+	  problem.x_D[0] = 1.78448275;
+	  problem.x_D[1] = 2.82327586;
+	  return problem;
+	}
+
+
+	/*
+    A = [1 0  | 2 0 0
+         3 0  | 0 4 0
+         0 5  | 0 0 6
+         0 7  | 8 0 0
+         0 9  | 1 0 0
+         0 0  | 1 1 1]
+
+    b = [0
+         1
+         2
+         3
+         4
+         5]
+
+    c = A'* b = [ 3
+                 67
+                 33
+                  9
+                 17]
+
+    A'A = [10    0    2   12   0
+            0  155   65    0  30
+            2   65   70    1   1
+           12    0    1   17   1
+            0   30    1    1  37]
+
+    S = [ 42.3419  -1.4000  -11.5806
+          -1.4000   2.6000    1.0000
+          11.5806   1.0000   31.1935]
+
+    r = [ 4.3032
+          5.4000
+          5.0323]
+
+    S\r = [ 0.2102
+            2.1367
+            0.1388]
+
+    A\b = [-2.3061
+            0.3172
+            0.2102
+            2.1367
+            0.1388]
+*/
+		//The following two functions create a TripletSparseMatrix and a
+		//BlockSparseMatrix version of this problem.
+		
+		//TripletSparseMatrix version.
+		public LinearLeastSquaresProblem LinearLeastSquaresProblem1() {
+		int num_rows = 6;
+		int num_cols = 5;
+		
+		LinearLeastSquaresProblem problem = new LinearLeastSquaresProblem();
+		TripletSparseMatrix A = new TripletSparseMatrix(num_rows,
+		                                                 num_cols,
+		                                                 num_rows * num_cols);
+		problem.b = new double[num_rows];
+		problem.D = new double[num_cols];
+		problem.num_eliminate_blocks = 2;
+		
+		int rows[] = A.mutable_rows();
+		int cols[] = A.mutable_cols();
+		double values[] = A.mutable_values();
+		
+		int nnz = 0;
+		
+		// Row 1
+		{
+		  rows[nnz] = 0;
+		  cols[nnz] = 0;
+		  values[nnz++] = 1;
+		
+		  rows[nnz] = 0;
+		  cols[nnz] = 2;
+		  values[nnz++] = 2;
+		}
+		
+		// Row 2
+		{
+		  rows[nnz] = 1;
+		  cols[nnz] = 0;
+		  values[nnz++] = 3;
+		
+		  rows[nnz] = 1;
+		  cols[nnz] = 3;
+		  values[nnz++] = 4;
+		}
+		
+		// Row 3
+		{
+		  rows[nnz] = 2;
+		  cols[nnz] = 1;
+		  values[nnz++] = 5;
+		
+		  rows[nnz] = 2;
+		  cols[nnz] = 4;
+		  values[nnz++] = 6;
+		}
+		
+		// Row 4
+		{
+		  rows[nnz] = 3;
+		  cols[nnz] = 1;
+		  values[nnz++] = 7;
+		
+		  rows[nnz] = 3;
+		  cols[nnz] = 2;
+		  values[nnz++] = 8;
+		}
+		
+		// Row 5
+		{
+		  rows[nnz] = 4;
+		  cols[nnz] = 1;
+		  values[nnz++] = 9;
+		
+		  rows[nnz] = 4;
+		  cols[nnz] = 2;
+		  values[nnz++] = 1;
+		}
+		
+		// Row 6
+		{
+		  rows[nnz] = 5;
+		  cols[nnz] = 2;
+		  values[nnz++] = 1;
+		
+		  rows[nnz] = 5;
+		  cols[nnz] = 3;
+		  values[nnz++] = 1;
+		
+		  rows[nnz] = 5;
+		  cols[nnz] = 4;
+		  values[nnz++] = 1;
+		}
+		
+		A.set_num_nonzeros(nnz);
+		if (!A.IsValid()) {
+			System.err.println("A.IsValid() == false in LinearLeastSquaresProblem1");
+			return null;
+		}
+		
+		problem.A = A;
+		
+		for (int i = 0; i < num_cols; ++i) {
+		  problem.D[i] = 1;
+		}
+		
+		for (int i = 0; i < num_rows; ++i) {
+		  problem.b[i] = i;
+		}
+		
+		return problem;
+		}
+		
+		// BlockSparseMatrix version
+		public LinearLeastSquaresProblem LinearLeastSquaresProblem2() {
+		  int num_rows = 6;
+		  int num_cols = 5;
+
+		  LinearLeastSquaresProblem problem = new LinearLeastSquaresProblem();
+
+		  problem.b = new double[num_rows];
+		  problem.D = new double[num_cols];
+		  problem.num_eliminate_blocks = 2;
+
+		  CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+		  double values[] = new double[num_rows * num_cols];
+
+		  for (int c = 0; c < num_cols; ++c) {
+		    bs.cols.add(new Block());
+		    bs.cols.get(bs.cols.size()-1).size = 1;
+		    bs.cols.get(bs.cols.size()-1).position = c;
+		  }
+
+		  int nnz = 0;
+
+		  // Row 1
+		  {
+		    values[nnz++] = 1;
+		    values[nnz++] = 2;
+
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    row.block.size = 1;
+		    row.block.position = 0;
+		    row.cells.add(new Cell(0, 0));
+		    row.cells.add(new Cell(2, 1));
+		  }
+
+		  // Row 2
+		  {
+		    values[nnz++] = 3;
+		    values[nnz++] = 4;
+
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    row.block.size = 1;
+		    row.block.position = 1;
+		    row.cells.add(new Cell(0, 2));
+		    row.cells.add(new Cell(3, 3));
+		  }
+
+		  // Row 3
+		  {
+		    values[nnz++] = 5;
+		    values[nnz++] = 6;
+
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    row.block.size = 1;
+		    row.block.position = 2;
+		    row.cells.add(new Cell(1, 4));
+		    row.cells.add(new Cell(4, 5));
+		  }
+
+		  // Row 4
+		  {
+		    values[nnz++] = 7;
+		    values[nnz++] = 8;
+
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    row.block.size = 1;
+		    row.block.position = 3;
+		    row.cells.add(new Cell(1, 6));
+		    row.cells.add(new Cell(2, 7));
+		  }
+
+		  // Row 5
+		  {
+		    values[nnz++] = 9;
+		    values[nnz++] = 1;
+
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    row.block.size = 1;
+		    row.block.position = 4;
+		    row.cells.add(new Cell(1, 8));
+		    row.cells.add(new Cell(2, 9));
+		  }
+
+		  // Row 6
+		  {
+		    values[nnz++] = 1;
+		    values[nnz++] = 1;
+		    values[nnz++] = 1;
+
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    row.block.size = 1;
+		    row.block.position = 5;
+		    row.cells.add(new Cell(2, 10));
+		    row.cells.add(new Cell(3, 11));
+		    row.cells.add(new Cell(4, 12));
+		  }
+
+		  BlockSparseMatrix A = new BlockSparseMatrix(bs);
+		  int values_to_transfer = nnz * A.values_.length;
+		  A.values_ = new double[values_to_transfer];
+		  for (int i = 0; i < values_to_transfer; i++) {
+			  A.values_[i] = values[i];
+		  }
+
+		  for (int i = 0; i < num_cols; ++i) {
+		    problem.D[i] = 1;
+		  }
+
+		  for (int i = 0; i < num_rows; ++i) {
+		    problem.b[i] = i;
+		  }
+
+		  problem.A = A;
+
+		  return problem;
+		}
+
+
+		/*
+	      A = [1 0
+	           3 0
+	           0 5
+	           0 7
+	           0 9
+	           0 0]
+
+	      b = [0
+	           1
+	           2
+	           3
+	           4
+	           5]
+	*/
+	// BlockSparseMatrix version
+	public LinearLeastSquaresProblem LinearLeastSquaresProblem3() {
+	  int num_rows = 5;
+	  int num_cols = 2;
+
+	  LinearLeastSquaresProblem problem = new LinearLeastSquaresProblem();
+
+	  problem.b = new double[num_rows];
+	  problem.D = new double[num_cols];
+	  problem.num_eliminate_blocks = 2;
+
+	  CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+	  double values[] = new double[num_rows * num_cols];
+
+	  for (int c = 0; c < num_cols; ++c) {
+	    bs.cols.add(new Block());
+	    bs.cols.get(bs.cols.size()-1).size = 1;
+	    bs.cols.get(bs.cols.size()-1).position = c;
+	  }
+
+	  int nnz = 0;
+
+	  // Row 1
+	  {
+	    values[nnz++] = 1;
+	    bs.rows.add(new CompressedList());
+	    CompressedList row = bs.rows.get(bs.rows.size()-1);
+	    row.block.size = 1;
+	    row.block.position = 0;
+	    row.cells.add(new Cell(0, 0));
+	  }
+
+	  // Row 2
+	  {
+	    values[nnz++] = 3;
+	    bs.rows.add(new CompressedList());
+	    CompressedList row = bs.rows.get(bs.rows.size()-1);
+	    row.block.size = 1;
+	    row.block.position = 1;
+	    row.cells.add(new Cell(0, 1));
+	  }
+
+	  // Row 3
+	  {
+	    values[nnz++] = 5;
+	    bs.rows.add(new CompressedList());
+	    CompressedList row = bs.rows.get(bs.rows.size()-1);
+	    row.block.size = 1;
+	    row.block.position = 2;
+	    row.cells.add(new Cell(1, 2));
+	  }
+
+	  // Row 4
+	  {
+	    values[nnz++] = 7;
+	    bs.rows.add(new CompressedList());
+	    CompressedList row = bs.rows.get(bs.rows.size()-1);
+	    row.block.size = 1;
+	    row.block.position = 3;
+	    row.cells.add(new Cell(1, 3));
+	  }
+
+	  // Row 5
+	  {
+	    values[nnz++] = 9;
+	    bs.rows.add(new CompressedList());
+	    CompressedList row = bs.rows.get(bs.rows.size()-1);
+	    row.block.size = 1;
+	    row.block.position = 4;
+	    row.cells.add(new Cell(1, 4));
+	  }
+
+	  BlockSparseMatrix A = new BlockSparseMatrix(bs);
+	  int values_to_transfer = nnz * A.values_.length;
+	  A.values_ = new double[values_to_transfer];
+	  for (int i = 0; i < values_to_transfer; i++) {
+		  A.values_[i] = values[i];
+	  }
+
+	  for (int i = 0; i < num_cols; ++i) {
+	    problem.D[i] = 1;
+	  }
+
+	  for (int i = 0; i < num_rows; ++i) {
+	    problem.b[i] = i;
+	  }
+
+	  problem.A = A;
+
+	  return problem;
+	}
+	
+	/*
+    A = [1 2 0 0 0 1 1
+         1 4 0 0 0 5 6
+         0 0 9 0 0 3 1]
+
+    b = [0
+         1
+         2]
+		*/
+		//BlockSparseMatrix version
+		//
+		//This problem has the unique property that it has two different
+		//sized f-blocks, but only one of them occurs in the rows involving
+		//the one e-block. So performing Schur elimination on this problem
+		//tests the Schur Eliminator's ability to handle non-e-block rows
+		//correctly when their structure does not conform to the static
+		//structure determined by DetectStructure.
+		//
+		//NOTE: This problem is too small and rank deficient to be solved without
+		//the diagonal regularization.
+		public LinearLeastSquaresProblem LinearLeastSquaresProblem4() {
+		int num_rows = 3;
+		int num_cols = 7;
+		
+		LinearLeastSquaresProblem problem = new LinearLeastSquaresProblem();
+		
+		problem.b = new double[num_rows];
+		problem.D = new double[num_cols];
+		problem.num_eliminate_blocks = 1;
+		
+		CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+		double values[] = new double[num_rows * num_cols];
+		
+		// Column block structure
+		bs.cols.add(new Block());
+		bs.cols.get(bs.cols.size()-1).size = 2;
+		bs.cols.get(bs.cols.size()-1).position = 0;
+		
+		bs.cols.add(new Block());
+		bs.cols.get(bs.cols.size()-1).size = 3;
+		bs.cols.get(bs.cols.size()-1).position = 2;
+		
+		bs.cols.add(new Block());
+		bs.cols.get(bs.cols.size()-1).size = 2;
+		bs.cols.get(bs.cols.size()-1).position = 5;
+		
+		int nnz = 0;
+		
+		// Row 1 & 2
+		{
+		  bs.rows.add(new CompressedList());
+		  CompressedList row = bs.rows.get(bs.rows.size()-1);
+		  row.block.size = 2;
+		  row.block.position = 0;
+		
+		  row.cells.add(new Cell(0, nnz));
+		  values[nnz++] = 1;
+		  values[nnz++] = 2;
+		  values[nnz++] = 1;
+		  values[nnz++] = 4;
+		
+		  row.cells.add(new Cell(2, nnz));
+		  values[nnz++] = 1;
+		  values[nnz++] = 1;
+		  values[nnz++] = 5;
+		  values[nnz++] = 6;
+		}
+		
+		// Row 3
+		{
+		  bs.rows.add(new CompressedList());
+		  CompressedList row = bs.rows.get(bs.rows.size()-1);
+		  row.block.size = 1;
+		  row.block.position = 2;
+		
+		  row.cells.add(new Cell(1, nnz));
+		  values[nnz++] = 9;
+		  values[nnz++] = 0;
+		  values[nnz++] = 0;
+		
+		  row.cells.add(new Cell(2, nnz));
+		  values[nnz++] = 3;
+		  values[nnz++] = 1;
+		}
+		
+		BlockSparseMatrix A = new BlockSparseMatrix(bs);
+		int values_to_transfer = nnz * A.values_.length;
+		  A.values_ = new double[values_to_transfer];
+		  for (int i = 0; i < values_to_transfer; i++) {
+			  A.values_[i] = values[i];
+		  }
+		
+		for (int i = 0; i < num_cols; ++i) {
+		  problem.D[i] = (i + 1) * 100;
+		}
+		
+		for (int i = 0; i < num_rows; ++i) {
+		  problem.b[i] = i;
+		}
+		
+		problem.A = A;
+		return problem;
+		}
+
+		public boolean DumpLinearLeastSquaresProblem(String filename_base,
+                DumpFormatType dump_format_type,
+                SparseMatrix A,
+                double D[],
+                double b[],
+                double x[],
+                int num_eliminate_blocks) {
+		switch (dump_format_type) {
+		case CONSOLE:
+		return DumpLinearLeastSquaresProblemToConsole(A, D, b, x,
+		                                 num_eliminate_blocks);
+		case TEXTFILE:
+		return DumpLinearLeastSquaresProblemToTextFile(filename_base,
+		                                  A, D, b, x,
+		                                  num_eliminate_blocks);
+		default:
+		System.err.println("Unknown DumpFormatType " + dump_format_type);
+		}
+		
+		return true;
+		}
+		
+		public boolean DumpLinearLeastSquaresProblemToConsole(SparseMatrix A,
+                double D[],
+                double b[],
+                double x[],
+                int num_eliminate_blocks) {
+		if (A == null) {
+		    System.err.println("A == null in DumpLinearLeastSquaresProblemToConsole");
+		    return false;
+		}
+		Matrix AA = new Matrix(A.num_rows(), A.num_cols());
+		A.ToDenseMatrix(AA);
+		Matrix AAT = AA.transpose();
+		Preferences.debug("A transpose: \n", Preferences.DEBUG_ALGORITHM);
+		for (int row = 0; row < AA.getRowDimension(); row++) {
+		    for (int col = 0; col < AA.getColumnDimension(); col++) {
+		         Preferences.debug("AT["+row+"]["+col+"] = " + AAT.getArray()[row][col] + "\n", Preferences.DEBUG_ALGORITHM);	
+		    }
+		}
+		
+		if (D != null) {
+		    Preferences.debug("A's appended diagonal:\n", Preferences.DEBUG_ALGORITHM);
+		    for (int i = 0; i < A.num_cols(); i++) {
+		    	Preferences.debug("D["+i+"] = " + D[i] + "\n", Preferences.DEBUG_ALGORITHM);
+		    }
+		}
+		
+		if (b != null) {
+			Preferences.debug("b: \n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < A.num_rows(); i++) {
+				Preferences.debug("b["+i+"] = " + b[i] + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+		}
+		
+		if (x != null) {
+			Preferences.debug("x: \n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < A.num_cols(); i++) {
+				Preferences.debug("x["+i+"] = " + x[i] + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+		}
+		return true;
+		}
+
+
+		void WriteArrayToFileOrDie(String filename,
+                double x[],
+                int size) {
+			if (x == null) {
+				System.err.println("x == null in WriteArrayToFileOrDie");
+				return;
+			}
+	
+		if (2 <= MAX_LOG_LEVEL) {
+			Preferences.debug("Writing array to: " + filename + "\n", Preferences.DEBUG_ALGORITHM);
+		}
+		File file = new File(filename);
+        FileWriter fw = null;
+		try {
+			fw = new FileWriter(file);
+		} catch (IOException e) {
+			System.err.println("IOException in WriteArrayToFileOrDie on new FileWriter(file)");
+			return;
+		}
+		
+		for (int i = 0; i < size; ++i) {
+			String str = String.format("% 17f\n", x[i]);
+			try {
+				fw.write(str, 0, str.length());
+			} catch (IOException e) {
+				System.err.println("IOException in WriteArrayToFileOrDie on fw.write(str,0,str.length())");
+				return;
+			}
+		}
+		try {
+		    fw.close();
+		}
+		catch (IOException e) {
+			System.err.println("IOException in WriteArrayToFileOrDie on fw.close()");
+		}
+		}
+		
+		public void WriteStringToFileOrDie(String data, String filename) {
+			File file = new File(filename);
+	        FileWriter fw = null;
+			try {
+				fw = new FileWriter(file);
+			} catch (IOException e) {
+				System.err.println("IOException in WriteStringToFileOrDie on new FileWriter(file)");
+				return;
+			}
+			try {
+				fw.write(data, 0, data.length());
+			} catch (IOException e) {
+				System.err.println("IOException in WriteStringToFileOrDie on fw.write(str,0,str.length())");
+				return;
+			}
+		try {
+		    fw.close();
+		}
+		catch (IOException e) {
+			System.err.println("IOException in WriteStringToFileOrDie on fw.close()");
+		}  
+			}
+
+		
+		public boolean DumpLinearLeastSquaresProblemToTextFile(String filename_base,
+                SparseMatrix A,
+                double D[],
+                double b[],
+                double x[],
+                int num_eliminate_blocks) {
+		/*CHECK_NOTNULL(A);
+		LOG(INFO) << "writing to: " << filename_base << "*";
+		
+		string matlab_script;
+		StringAppendF(&matlab_script,
+		"function lsqp = load_trust_region_problem()\n");
+		StringAppendF(&matlab_script,
+		"lsqp.num_rows = %d;\n", A->num_rows());
+		StringAppendF(&matlab_script,
+		"lsqp.num_cols = %d;\n", A->num_cols());
+		
+		{
+		string filename = filename_base + "_A.txt";
+		FILE* fptr = fopen(filename.c_str(), "w");
+		CHECK_NOTNULL(fptr);
+		A->ToTextFile(fptr);
+		fclose(fptr);
+		StringAppendF(&matlab_script,
+		"tmp = load('%s', '-ascii');\n", filename.c_str());
+		StringAppendF(
+		&matlab_script,
+		"lsqp.A = sparse(tmp(:, 1) + 1, tmp(:, 2) + 1, tmp(:, 3), %d, %d);\n",
+		A->num_rows(),
+		A->num_cols());
+		}
+		
+		
+		if (D != NULL) {
+		string filename = filename_base + "_D.txt";
+		WriteArrayToFileOrDie(filename, D, A->num_cols());
+		StringAppendF(&matlab_script,
+		"lsqp.D = load('%s', '-ascii');\n", filename.c_str());
+		}
+		
+		if (b != NULL) {
+		string filename = filename_base + "_b.txt";
+		WriteArrayToFileOrDie(filename, b, A->num_rows());
+		StringAppendF(&matlab_script,
+		"lsqp.b = load('%s', '-ascii');\n", filename.c_str());
+		}
+		
+		if (x != NULL) {
+		string filename = filename_base + "_x.txt";
+		WriteArrayToFileOrDie(filename, x, A->num_cols());
+		StringAppendF(&matlab_script,
+		"lsqp.x = load('%s', '-ascii');\n", filename.c_str());
+		}
+		
+		string matlab_filename = filename_base + ".m";
+		WriteStringToFileOrDie(matlab_script, matlab_filename);*/
+		return true;
+		}
+
+       
 
 	// Interface for non-linear least squares solvers.
 	class Minimizer {
