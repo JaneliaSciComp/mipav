@@ -19,6 +19,7 @@ import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 import Jama.Matrix;
+import WildMagic.LibFoundation.Mathematics.Vector2d;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations;
@@ -1111,8 +1112,6 @@ public abstract class CeresSolver {
 			}
 
 			// Configure the linear solver.
-			LinearSolver ls = new LinearSolver();
-			pp.linear_solver_options = ls.options;
 			pp.linear_solver_options.min_num_iterations = options.min_linear_solver_iterations;
 			pp.linear_solver_options.max_num_iterations = options.max_linear_solver_iterations;
 			pp.linear_solver_options.type = options.linear_solver_type;
@@ -3691,8 +3690,6 @@ public abstract class CeresSolver {
 		  }
 		  event_logger.AddEvent("Product");
 
-		  LinearSolver ls = new LinearSolver();
-		  LinearSolver.Summary summary = ls.summary;
 		  summary.num_iterations = 1;
 		  summary.termination_type =
 		      SolveInPlaceUsingCholesky(num_cols,
@@ -3745,8 +3742,6 @@ public abstract class CeresSolver {
 		  }
 		  event_logger.AddEvent("Product");
 
-		  LinearSolver ls = new LinearSolver();
-		  LinearSolver.Summary summary = ls.summary;
 		  summary.num_iterations = 1;
 		  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
 		  //Eigen::LLT<Matrix, Eigen::Upper> llt =
@@ -3838,8 +3833,6 @@ public abstract class CeresSolver {
 		  // We always succeed, since the QR solver returns the best solution
 		  // it can. It is the job of the caller to determine if the solution
 		  // is good enough or not.
-		  LinearSolver ls = new LinearSolver();
-		  LinearSolver.Summary summary = ls.summary;
 		  summary.num_iterations = 1;
 		  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
 		  summary.message[0] = "Success.";
@@ -3893,8 +3886,6 @@ public abstract class CeresSolver {
 		    work_ = new double[work_size];
 		  }
 
-		  LinearSolver ls = new LinearSolver();
-		  LinearSolver.Summary summary = ls.summary;
 		  summary.num_iterations = 1;
 		  summary.termination_type = SolveInPlaceUsingQR(lhs_.getRowDimension(),
 		                                                         lhs_.getColumnDimension(),
@@ -4411,7 +4402,7 @@ public abstract class CeresSolver {
 	    		  event_logger.AddEvent("Setup");
 
 	    		  ConjugateGradientsSolver conjugate_gradient_solver = new ConjugateGradientsSolver(options_);
-	    		  LinearSolver.Summary summary =
+	    		  summary = 
 	    		      conjugate_gradient_solver.Solve(lhs, z, cg_per_solve_options, x);
 	    		  event_logger.AddEvent("Solve");
 	    		  return summary;
@@ -4448,8 +4439,6 @@ public abstract class CeresSolver {
 		    		  return null;
 		    	  }
 
-		    	  LinearSolver ls = new LinearSolver();
-		    	  LinearSolver.Summary summary = ls.summary;
 		    	  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_NO_CONVERGENCE;
 		    	  summary.message[0] = "Maximum number of iterations reached.";
 		    	  summary.num_iterations = 0;
@@ -5594,9 +5583,9 @@ public abstract class CeresSolver {
 			  }
 
 			  LinearSolver linear_solvers[] = new LinearSolver[options.num_threads];
-
 			  LinearSolver ls = new LinearSolver();
 			  LinearSolver.Options linear_solver_options = ls.options;
+
 			  linear_solver_options.type = LinearSolverType.DENSE_QR;
 			  linear_solver_options.context = context_;
 
@@ -5693,20 +5682,18 @@ public abstract class CeresSolver {
 		                                       double[] parameter,
 		                                       int parameter_start,
 		                                       Solver.Summary summary) {
-		  Solver solver = new Solver();
-		  summary = solver.summary;
 		  summary.initial_cost = 0.0;
 		  summary.fixed_cost = 0.0;
 		  summary.final_cost = 0.0;
 		  String error[] = new String[1];
 
-		  Minimizer min = new Minimizer();
-		  Minimizer.Options minimizer_options = min.options_;
 		  Evaluator ev = Create(evaluator_options_,program,error);
 		  if (ev == null) {
 			  System.err.println("Evaluator ev == null in CoordinateDescentMinimizer.Solve");
 			  return;
 		  }
+		  Minimizer min = new Minimizer();
+		  Minimizer.Options minimizer_options = min.options_;
 		  minimizer_options.evaluator = ev;
 		  //minimizer_options.jacobian.reset(
 		      //CHECK_NOTNULL(minimizer_options.evaluator.CreateJacobian()));
@@ -5910,15 +5897,15 @@ public abstract class CeresSolver {
 	      double[] step) {
 		  int i;
 		  if (jacobian == null) {
-			  System.err.println("jacobian == null in TrustRegionStrategy.Summary ComputeStep");
+			  System.err.println("jacobian == null in LevenbergMarquardtStrategy TrustRegionStrategy.Summary ComputeStep");
 			  return null;
 		  }
 		  if (residuals == null) {
-			  System.err.println("residuals == null in TrustRegionStrategy.Summary ComputeStep");
+			  System.err.println("residuals == null in LevenbergMarquardtStrategy TrustRegionStrategy.Summary ComputeStep");
 			  return null;
 		  }
 		  if (step == null) {
-			  System.err.println("step == null in TrustRegionStrategy.Summary ComputeStep");
+			  System.err.println("step == null in LevenbergMarquardtStrategy TrustRegionStrategy.Summary ComputeStep");
 			  return null;
 		  }
 
@@ -6024,17 +6011,33 @@ public abstract class CeresSolver {
 		  }
 
 
-		  TrustRegionStrategy trs = new TrustRegionStrategy();
-		  TrustRegionStrategy.Summary summary = trs.summary;
 		  summary.residual_norm = linear_solver_summary.residual_norm;
 		  summary.num_iterations = linear_solver_summary.num_iterations;
 		  summary.termination_type = linear_solver_summary.termination_type;
 		  return summary;
 
 	  }
-	  /*virtual void StepAccepted(double step_quality);
-	  virtual void StepRejected(double step_quality);
-	  virtual void StepIsInvalid() {
+	  
+	  public void StepAccepted(double step_quality) {
+		  if (step_quality <= 0.0) {
+			  System.err.println("step_quality <= 0.0 in LevenbergMarquardtStrtegy StepAccepted");
+			  return;
+		  }
+		  radius_ = radius_ / Math.max(1.0 / 3.0,
+		                               1.0 - Math.pow(2.0 * step_quality - 1.0, 3));
+		  radius_ = Math.min(max_radius_, radius_);
+		  decrease_factor_ = 2.0;
+		  reuse_diagonal_ = false;
+
+	  }
+	  
+	  public void StepRejected(double step_quality) {
+		  radius_ = radius_ / decrease_factor_;
+		  decrease_factor_ *= 2.0;
+		  reuse_diagonal_ = true;
+	  }
+	  
+	  public void StepIsInvalid() {
 	    // Treat the current step as a rejected step with no increase in
 	    // solution quality. Since rejected steps lead to decrease in the
 	    // size of the trust region, the next time ComputeStep is called,
@@ -6042,9 +6045,655 @@ public abstract class CeresSolver {
 	    StepRejected(0.0);
 	  }
 
-	  virtual double Radius() const;*/
+	  public double Radius() {
+		  return radius_;
+	  }
 
 	} // class LevenbergMarquardtStrategy extends TrustRegionStrategy
+	
+	// Dogleg step computation and trust region sizing strategy based on
+	// on "Methods for Nonlinear Least Squares" by K. Madsen, H.B. Nielsen
+	// and O. Tingleff. Available to download from
+	//
+	// http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/3215/pdf/imm3215.pdf
+	//
+	// One minor modification is that instead of computing the pure
+	// Gauss-Newton step, we compute a regularized version of it. This is
+	// because the Jacobian is often rank-deficient and in such cases
+	// using a direct solver leads to numerical failure.
+	//
+	// If SUBSPACE is passed as the type argument to the constructor, the
+	// DoglegStrategy follows the approach by Shultz, Schnabel, Byrd.
+	// This finds the exact optimum over the two-dimensional subspace
+	// spanned by the two Dogleg vectors.
+	/*class DoglegStrategy extends TrustRegionStrategy {
+		  private LinearSolver linear_solver_;
+		  private double radius_;
+		  private double max_radius_;
+
+		  private double min_diagonal_;
+		  private double max_diagonal_;
+
+		  // mu is used to scale the diagonal matrix used to make the
+		  // Gauss-Newton solve full rank. In each solve, the strategy starts
+		  // out with mu = min_mu, and tries values upto max_mu. If the user
+		  // reports an invalid step, the value of mu_ is increased so that
+		  // the next solve starts with a stronger regularization.
+		  //
+		  // If a successful step is reported, then the value of mu_ is
+		  // decreased with a lower bound of min_mu_.
+		  private double mu_;
+		  private double min_mu_;
+		  private double max_mu_;
+		  private double mu_increase_factor_;
+		  private double increase_threshold_;
+		  private double decrease_threshold_;
+
+		  private Vector<Double> diagonal_;  // sqrt(diag(J^T J))
+		  private Vector<Double> lm_diagonal_;
+
+		  private Vector<Double> gradient_;
+		  private Vector<Double> gauss_newton_step_;
+
+		  // cauchy_step = alpha * gradient
+		  private double alpha_;
+		  private double dogleg_step_norm_;
+
+		  // When, ComputeStep is called, reuse_ indicates whether the
+		  // Gauss-Newton and Cauchy steps from the last call to ComputeStep
+		  // can be reused or not.
+		  //
+		  // If the user called StepAccepted, then it is expected that the
+		  // user has recomputed the Jacobian matrix and new Gauss-Newton
+		  // solve is needed and reuse is set to false.
+		  //
+		  // If the user called StepRejected, then it is expected that the
+		  // user wants to solve the trust region problem with the same matrix
+		  // but a different trust region radius and the Gauss-Newton and
+		  // Cauchy steps can be reused to compute the Dogleg, thus reuse is
+		  // set to true.
+		  //
+		  // If the user called StepIsInvalid, then there was a numerical
+		  // problem with the step computed in the last call to ComputeStep,
+		  // and the regularization used to do the Gauss-Newton solve is
+		  // increased and a new solve should be done when ComputeStep is
+		  // called again, thus reuse is set to false.
+		  private boolean reuse_;
+
+		  // The dogleg type determines how the minimum of the local
+		  // quadratic model is found.
+		  private DoglegType dogleg_type_;
+
+		  // If the type is SUBSPACE_DOGLEG, the two-dimensional
+		  // model 1/2 x^T B x + g^T x has to be computed and stored.
+		  private boolean subspace_is_one_dimensional_;
+		  private Matrix subspace_basis_;
+		  private Vector2d subspace_g_;
+		  // Matrix2d subspace_B_;
+		  private Matrix subspace_B_;
+		  
+		  private double kMaxMu = 1.0;
+		  private double kMinMu = 1e-8;
+
+	 
+	      public DoglegStrategy(TrustRegionStrategy.Options options) {
+	    	  super();
+	    	  linear_solver_ = options.linear_solver;
+	          radius_ = options.initial_radius;
+	          max_radius_ = options.max_radius;
+	          min_diagonal_ = options.min_lm_diagonal;
+	          max_diagonal_ = options.max_lm_diagonal);
+	          mu_ = kMinMu;
+	          min_mu_ = kMinMu;
+	          max_mu_ = kMaxMu;
+	          mu_increase_factor_ = 10.0;
+	          increase_threshold_ = 0.75;
+	          decrease_threshold_ = 0.25;
+	          dogleg_step_norm_ = 0.0;
+	          reuse_ = false;
+	          dogleg_type_ = options.dogleg_type;
+	          if (linear_sover_ == null) {
+	        	  System.err.println("linear_solver_ == null in public DoglegStrategy");
+	        	  return;
+	          }
+	          if (min_diagonal_ <= 0.0) {
+	        	  System.err.println("min_diagonal_ <= 0.0 in public DoglegStrategy");
+	        	  return;
+	          }
+	          if (min_diagonal_ > max_diagonal_) {
+	        	  System.err.println("min_diagonal_ > max_diagonal_ in public DoglegStrategy");
+	        	  return;
+	          }
+	          if (max_radius_ <= 0.0) {
+	        	  System.err.println("max_radius_ <= 0.0 in public DoglegStrategy");
+	        	  return;
+	          }
+              diagonal_ = new Vector<Double>();
+              lm_diagonal_ = new Vector<Double>();
+              gradient_ = new Vector<Double>();
+              gauss_newton_step_ = new Vector<Double>();
+	      }
+
+	  // TrustRegionStrategy interface
+	  public TrustRegionStrategy.Summary ComputeStep(PerSolveOptions per_solve_options,
+	                              SparseMatrix jacobian,
+	                              double residuals[],
+	                              double step[]) {
+		  if (jacobian == null) {
+			  System.err.println("jacobian == null in DoglegStrategy TrustRegionStrategy.Summary ComputeStep");
+			  return null;
+		  }
+		  if (residuals == null) {
+			  System.err.println("residuals == null in DoglegStrategy TrustRegionStrategy.Summary ComputeStep");
+			  return null;
+		  }
+		  if (step == null) {
+			  System.err.println("step == null in DoglegStrategy TrustRegionStrategy.Summary ComputeStep");
+			  return null;
+		  }
+
+		  int n = jacobian.num_cols();
+		  if (reuse_) {
+		    // Gauss-Newton and gradient vectors are always available, only a
+		    // new interpolant need to be computed. For the subspace case,
+		    // the subspace and the two-dimensional model are also still valid.
+		    switch (dogleg_type_) {
+		      case TRADITIONAL_DOGLEG:
+		        ComputeTraditionalDoglegStep(step);
+		        break;
+
+		      case SUBSPACE_DOGLEG:
+		        ComputeSubspaceDoglegStep(step);
+		        break;
+		    }
+		    
+		    summary.num_iterations = 0;
+		    summary.termination_type = LINEAR_SOLVER_SUCCESS;
+		    return summary;
+		  }
+
+		  reuse_ = true;
+		  // Check that we have the storage needed to hold the various
+		  // temporary vectors.
+		  if (diagonal_.size() != n) {
+			while (diagonal_.size() < n) {
+				diagonal_.add(1.0);
+			}
+			while (diagonal_.size() > n) {
+				diagonal_.removeElementAt(diagonal_.size()-1);
+			}
+		    while (gradient_.size() < n) {
+		    	gradient_.add(1.0);
+		    }
+		    while (gradient_.size() > n) {
+		    	gradient_.removeElementAt(gradient_.size()-1);
+		    }
+		    while (gauss_newton_step_.size() < n) {
+		    	gauss_newton_step.add(1.0);
+		    }
+		    while (gauss_newton_step_.size() > n) {
+		    	gauss_newton_step.removeElementAt(gauss_newton_step_.size()-1);
+		    }
+		  }
+
+		  // Vector used to form the diagonal matrix that is used to
+		  // regularize the Gauss-Newton solve and that defines the
+		  // elliptical trust region
+		  //
+		  //   || D * step || <= radius_ .
+		  //
+		  
+		  double diagonal_array[] = new double[diagonal_.size()];
+		    for (i = 0; i < diagonal_.size(); i++) {
+		    	diagonal_array[i] = diagonal_.get(i);
+		    }
+		  if (linear_solver_.options.type == LinearSolverType.CGNR) {
+		        ((BlockSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);
+          }
+		    else if ((linear_solver_.options.type == LinearSolverType.DENSE_QR) || (linear_solver_.options.type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
+          	((DenseSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);	
+          }
+		  for (int i = 0; i < n; ++i) {
+		    diagonal_.set(i,Math.sqrt(Math.min(Math.max(diagonal_array[i], min_diagonal_),
+		                            max_diagonal_));
+		  }
+
+		  ComputeGradient(jacobian, residuals);
+		  ComputeCauchyPoint(jacobian);
+
+		  LinearSolver::Summary linear_solver_summary =
+		      ComputeGaussNewtonStep(per_solve_options, jacobian, residuals);
+
+		  TrustRegionStrategy::Summary summary;
+		  summary.residual_norm = linear_solver_summary.residual_norm;
+		  summary.num_iterations = linear_solver_summary.num_iterations;
+		  summary.termination_type = linear_solver_summary.termination_type;
+
+		  if (linear_solver_summary.termination_type == LINEAR_SOLVER_FATAL_ERROR) {
+		    return summary;
+		  }
+
+		  if (linear_solver_summary.termination_type != LINEAR_SOLVER_FAILURE) {
+		    switch (dogleg_type_) {
+		      // Interpolate the Cauchy point and the Gauss-Newton step.
+		      case TRADITIONAL_DOGLEG:
+		        ComputeTraditionalDoglegStep(step);
+		        break;
+
+		      // Find the minimum in the subspace defined by the
+		      // Cauchy point and the (Gauss-)Newton step.
+		      case SUBSPACE_DOGLEG:
+		        if (!ComputeSubspaceModel(jacobian)) {
+		          summary.termination_type = LINEAR_SOLVER_FAILURE;
+		          break;
+		        }
+		        ComputeSubspaceDoglegStep(step);
+		        break;
+		    }
+		  }
+
+		  return summary;
+  
+	  }
+	  
+	  virtual void StepAccepted(double step_quality);
+	  virtual void StepRejected(double step_quality);
+	  virtual void StepIsInvalid();
+
+	  virtual double Radius() const;
+
+	  // These functions are predominantly for testing.
+	  Vector gradient() const { return gradient_; }
+	  Vector gauss_newton_step() const { return gauss_newton_step_; }
+	  Matrix subspace_basis() const { return subspace_basis_; }
+	  Vector subspace_g() const { return subspace_g_; }
+	  Matrix subspace_B() const { return subspace_B_; }
+
+		// The dogleg step is defined as the intersection of the trust region
+		// boundary with the piecewise linear path from the origin to the Cauchy
+		// point and then from there to the Gauss-Newton point (global minimizer
+		// of the model function). The Gauss-Newton point is taken if it lies
+		// within the trust region.
+		private void ComputeTraditionalDoglegStep(double dogleg[]) {
+		  int i;
+		  //VectorRef dogleg_step(dogleg, gradient_.rows());
+
+		  // Case 1. The Gauss-Newton step lies inside the trust region, and
+		  // is therefore the optimal solution to the trust-region problem.
+		  double gradient_norm = 0.0;
+		  for (i = 0; i < gradient_.size(); i++) {
+			  gradient_norm += gradient_.get(i)*gradient_.get(i);
+		  }
+		  gradient_norm = Math.sqrt(gradient_norm);
+		  double gauss_newton_norm = 0.0;
+		  for (i = 0; i < gauss_newton_step_.size(); i++) {
+			  gauss_newton_norm += gauss_newton_step_.get(i)*gauss_newton_step_.get(i);
+		  }
+		  gauss_newton_norm = Math.sqrt(gauss_newton_norm);
+		  if (gauss_newton_norm <= radius_) {
+			for (i = 0; i < gradient_.size(); i++) {
+				dogleg[i] = gauss_newton_step_.get(i);
+			}
+		    dogleg_step_norm_ = gauss_newton_norm;
+		    for (i = 0; i < gradient_.size(); i++) {
+		    	dogleg[i] /= diagonal_.get(i);
+		    }
+		    if (3 <= MAX_LOG_LEVEL) {
+		        Preferences.debug("GaussNewton step size: " + dogleg_step_norm_ + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("radius: " + radius_ + "\n", Preferences.DEBUG_ALGORITHM);
+		    }
+		    return;
+		  }
+
+		  // Case 2. The Cauchy point and the Gauss-Newton steps lie outside
+		  // the trust region. Rescale the Cauchy point to the trust region
+		  // and return.
+		  if  (gradient_norm * alpha_ >= radius_) {
+		    dogleg_step = -(radius_ / gradient_norm) * gradient_;
+		    dogleg_step_norm_ = radius_;
+		    for (i = 0; i < gradient_.size(); i++) {
+		    	dogleg[i] /= diagonal_.get(i);
+		    }
+		    if (3 <= MAX_LOG_LEVEL) {
+		        Preferences.debug("Cauchy step size: " + dogleg_step_norm_ + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("radius: " + radius_ + "\n", Preferences.DEBUG_ALGORITHM);
+		    }
+
+		    return;
+		  }
+
+		  // Case 3. The Cauchy point is inside the trust region and the
+		  // Gauss-Newton step is outside. Compute the line joining the two
+		  // points and the point on it which intersects the trust region
+		  // boundary.
+
+		  // a = alpha * -gradient
+		  // b = gauss_newton_step
+		  double dot_product = 0.0;
+		  for (i = 0; i < gradient_.size(); i++) {
+			  dot_product += (gradient_.get(i)*gauss_newton_step_.get(i));
+		  }
+		  b_dot_a = -alpha_ * dot_product;
+		  double a_squared_norm = Math.pow(alpha_ * gradient_norm, 2.0);
+		  double b_minus_a_squared_norm =
+		      a_squared_norm - 2 * b_dot_a + Math.pow(gauss_newton_norm, 2);
+
+		  // c = a' (b - a)
+		  //   = alpha * -gradient' gauss_newton_step - alpha^2 |gradient|^2
+		  double c = b_dot_a - a_squared_norm;
+		  double d = Math.sqrt(c * c + b_minus_a_squared_norm *
+		                        (Math.pow(radius_, 2.0) - a_squared_norm));
+
+		  double beta =
+		      (c <= 0)
+		      ? (d - c) /  b_minus_a_squared_norm
+		      : (radius_ * radius_ - a_squared_norm) / (d + c);
+		  for (i = 0; i < gradient_.size(); i++) {
+			  dogleg[i] = (-alpha_ * (1.0 - beta)) * gradient_.get(i)
+				      + beta * gauss_newton_step_.get(i);
+		  }
+		  dogleg_step_norm_ = 0.0;
+		  for (i = 0; i < gradient_.size(); i++) {
+			  dogleg_step_norm += dogleg[i]*dogleg[i];
+		  }
+		  dogleg_step_norm_ = Math.sqrt(dogleg_step_norm);
+		  for (i = 0; i < gradient_.size(); i++) {
+		    	dogleg[i] /= diagonal_.get(i);
+		  }
+		  if (3 <= MAX_LOG_LEVEL) {
+		        Preferences.debug("Dogleg step size: " + dogleg_step_norm_ + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("radius: " + radius_ + "\n", Preferences.DEBUG_ALGORITHM);
+		   }
+		}
+
+		// The subspace method finds the minimum of the two-dimensional problem
+		//
+		//   min. 1/2 x' B' H B x + g' B x
+		//   s.t. || B x ||^2 <= r^2
+		//
+		// where r is the trust region radius and B is the matrix with unit columns
+		// spanning the subspace defined by the steepest descent and Newton direction.
+		// This subspace by definition includes the Gauss-Newton point, which is
+		// therefore taken if it lies within the trust region.
+		private void ComputeSubspaceDoglegStep(double dogleg[]) {
+	      int i;
+		  //VectorRef dogleg_step(dogleg, gradient_.rows());
+
+		  // The Gauss-Newton point is inside the trust region if |GN| <= radius_.
+		  // This test is valid even though radius_ is a length in the two-dimensional
+		  // subspace while gauss_newton_step_ is expressed in the (scaled)
+		  // higher dimensional original space. This is because
+		  //
+		  //   1. gauss_newton_step_ by definition lies in the subspace, and
+		  //   2. the subspace basis is orthonormal.
+		  //
+		  // As a consequence, the norm of the gauss_newton_step_ in the subspace is
+		  // the same as its norm in the original space.
+	      double gauss_newton_norm = 0.0;
+		  for (i = 0; i < gauss_newton_step_.size(); i++) {
+			  gauss_newton_norm += gauss_newton_step_.get(i)*gauss_newton_step_.get(i);
+		  }
+		  gauss_newton_norm = Math.sqrt(gauss_newton_norm);
+		  if (gauss_newton_norm <= radius_) {
+			for (i = 0; i < gradient_.size(); i++) {
+				dogleg[i] = gauss_newton_step_.get(i);
+			}
+		    dogleg_step_norm_ = gauss_newton_norm;
+		    dogleg_step_norm_ = 0.0;
+			for (i = 0; i < gradient_.size(); i++) {
+				dogleg[i] /= diagonal_.get(i);
+			}
+		    
+			if (3 <= MAX_LOG_LEVEL) {
+		        Preferences.debug("GaussNewton step size: " + dogleg_step_norm_ + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("radius: " + radius_ + "\n", Preferences.DEBUG_ALGORITHM);
+		    }
+		    return;
+		  }
+		  
+
+
+		  // The optimum lies on the boundary of the trust region. The above problem
+		  // therefore becomes
+		  //
+		  //   min. 1/2 x^T B^T H B x + g^T B x
+		  //   s.t. || B x ||^2 = r^2
+		  //
+		  // Notice the equality in the constraint.
+		  //
+		  // This can be solved by forming the Lagrangian, solving for x(y), where
+		  // y is the Lagrange multiplier, using the gradient of the objective, and
+		  // putting x(y) back into the constraint. This results in a fourth order
+		  // polynomial in y, which can be solved using e.g. the companion matrix.
+		  // See the description of MakePolynomialForBoundaryConstrainedProblem for
+		  // details. The result is up to four real roots y*, not all of which
+		  // correspond to feasible points. The feasible points x(y*) have to be
+		  // tested for optimality.
+
+		  if (subspace_is_one_dimensional_) {
+		    // The subspace is one-dimensional, so both the gradient and
+		    // the Gauss-Newton step point towards the same direction.
+		    // In this case, we move along the gradient until we reach the trust
+		    // region boundary.
+			double gradientNorm = 0.0;
+			for (i = 0; i < gradient_.size(); i++) {
+				gradeintNorm += gradient_.get(i)*gradient_.get(i);
+			}
+			gradientNorm = Math.sqrt(gradientNorm);
+			for (i = 0; i < gradient_.size(); i++) {
+				dogleg[i] = _(radius_ / gradientNorm) * gradient_.get(i);
+			}
+		    dogleg_step_norm_ = radius_;
+		    for (i = 0; i < gradient_.size; i++) {
+		    	dogleg[i] /= diagonal_.get(i);
+		    }
+		    if (3 <= MAX_LOG_LEVEL) {
+		        Preferences.debug("Dogleg subspace step size (1D): " + dogleg_step_norm_ + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("radius: " + radius_ + "\n", Preferences.DEBUG_ALGORITHM);
+		    }
+		    return;
+		  }
+
+		  Vector2d minimum = new Vector2d(0.0, 0.0);
+		  if (!FindMinimumOnTrustRegionBoundary(minimum)) {
+		    // For the positive semi-definite case, a traditional dogleg step
+		    // is taken in this case.
+		    LOG(WARNING) << "Failed to compute polynomial roots. "
+		                 << "Taking traditional dogleg step instead.";
+		    ComputeTraditionalDoglegStep(dogleg);
+		    return;
+		  }
+
+		  // Test first order optimality at the minimum.
+		  // The first order KKT conditions state that the minimum x*
+		  // has to satisfy either || x* ||^2 < r^2 (i.e. has to lie within
+		  // the trust region), or
+		  //
+		  //   (B x* + g) + y x* = 0
+		  //
+		  // for some positive scalar y.
+		  // Here, as it is already known that the minimum lies on the boundary, the
+		  // latter condition is tested. To allow for small imprecisions, we test if
+		  // the angle between (B x* + g) and -x* is smaller than acos(0.99).
+		  // The exact value of the cosine is arbitrary but should be close to 1.
+		  //
+		  // This condition should not be violated. If it is, the minimum was not
+		  // correctly determined.
+		  const double kCosineThreshold = 0.99;
+		  const Vector2d grad_minimum = subspace_B_ * minimum + subspace_g_;
+		  const double cosine_angle = -minimum.dot(grad_minimum) /
+		      (minimum.norm() * grad_minimum.norm());
+		  if (cosine_angle < kCosineThreshold) {
+		    LOG(WARNING) << "First order optimality seems to be violated "
+		                 << "in the subspace method!\n"
+		                 << "Cosine of angle between x and B x + g is "
+		                 << cosine_angle << ".\n"
+		                 << "Taking a regular dogleg step instead.\n"
+		                 << "Please consider filing a bug report if this "
+		                 << "happens frequently or consistently.\n";
+		    ComputeTraditionalDoglegStep(dogleg);
+		    return;
+		  }
+
+		  // Create the full step from the optimal 2d solution.
+		  dogleg_step = subspace_basis_ * minimum;
+		  dogleg_step_norm_ = radius_;
+		  dogleg_step.array() /= diagonal_.array();
+		  VLOG(3) << "Dogleg subspace step size: " << dogleg_step_norm_
+		          << " radius: " << radius_;
+		}
+
+	  //typedef Eigen::Matrix<double, 2, 1, Eigen::DontAlign> Vector2d;
+	  //typedef Eigen::Matrix<double, 2, 2, Eigen::DontAlign> Matrix2d;
+
+	  LinearSolver::Summary ComputeGaussNewtonStep(
+	      const PerSolveOptions& per_solve_options,
+	      SparseMatrix* jacobian,
+	      const double* residuals);
+	  void ComputeCauchyPoint(SparseMatrix* jacobian);
+	  private void ComputeGradient(SparseMatrix jacobian, double residuals[]) {
+		  
+	  }
+	  bool ComputeSubspaceModel(SparseMatrix* jacobian);
+
+		  // This function attempts to solve the boundary-constrained subspace problem
+		  //
+		  //   min. 1/2 x^T B^T H B x + g^T B x
+		  //   s.t. || B x ||^2 = r^2
+		  //
+		  // where B is an orthonormal subspace basis and r is the trust-region radius.
+		  //
+		  // This is done by finding the roots of a fourth degree polynomial. If the
+		  // root finding fails, the function returns false and minimum will be set
+		  // to (0, 0). If it succeeds, true is returned.
+		  //
+		  // In the failure case, another step should be taken, such as the traditional
+		  // dogleg step.
+		  private boolean FindMinimumOnTrustRegionBoundary(Vector2d minimum) {
+		    if (minimum == null) {
+		    	System.err.println("minimum == null in FindMinimumOnTrustRegionBoundary");
+		    	return false;
+		    }
+
+		    // Return (0, 0) in all error cases.
+		    minimum.x = 0;
+		    minimum.y = 0;
+
+		    // Create the fourth-degree polynomial that is a necessary condition for
+		    // optimality.
+		    Vector<Double> polynomial = MakePolynomialForBoundaryConstrainedProblem();
+
+		    // Find the real parts y_i of its roots (not only the real roots).
+		    Vector roots_real;
+		    if (!FindPolynomialRoots(polynomial, &roots_real, NULL)) {
+		      // Failed to find the roots of the polynomial, i.e. the candidate
+		      // solutions of the constrained problem. Report this back to the caller.
+		      return false;
+		    }
+
+		    // For each root y, compute B x(y) and check for feasibility.
+		    // Notice that there should always be four roots, as the leading term of
+		    // the polynomial is r^2 and therefore non-zero. However, as some roots
+		    // may be complex, the real parts are not necessarily unique.
+		    double minimum_value = std::numeric_limits<double>::max();
+		    bool valid_root_found = false;
+		    for (int i = 0; i < roots_real.size(); ++i) {
+		      const Vector2d x_i = ComputeSubspaceStepFromRoot(roots_real(i));
+
+		      // Not all roots correspond to points on the trust region boundary.
+		      // There are at most four candidate solutions. As we are interested
+		      // in the minimum, it is safe to consider all of them after projecting
+		      // them onto the trust region boundary.
+		      if (x_i.norm() > 0) {
+		        const double f_i = EvaluateSubspaceModel((radius_ / x_i.norm()) * x_i);
+		        valid_root_found = true;
+		        if (f_i < minimum_value) {
+		          minimum_value = f_i;
+		          *minimum = x_i;
+		        }
+		      }
+		    }
+
+		    return valid_root_found;
+
+	  } 
+		  
+		// Build the polynomial that defines the optimal Lagrange multipliers.
+		// Let the Lagrangian be
+		//
+		//   L(x, y) = 0.5 x^T B x + x^T g + y (0.5 x^T x - 0.5 r^2).       (1)
+		//
+		// Stationary points of the Lagrangian are given by
+		//
+		//   0 = d L(x, y) / dx = Bx + g + y x                              (2)
+		//   0 = d L(x, y) / dy = 0.5 x^T x - 0.5 r^2                       (3)
+		//
+		// For any given y, we can solve (2) for x as
+		//
+		//   x(y) = -(B + y I)^-1 g .                                       (4)
+		//
+		// As B + y I is 2x2, we form the inverse explicitly:
+		//
+		//   (B + y I)^-1 = (1 / det(B + y I)) adj(B + y I)                 (5)
+		//
+		// where adj() denotes adjugation. This should be safe, as B is positive
+		// semi-definite and y is necessarily positive, so (B + y I) is indeed
+		// invertible.
+		// Plugging (5) into (4) and the result into (3), then dividing by 0.5 we
+		// obtain
+		//
+		//   0 = (1 / det(B + y I))^2 g^T adj(B + y I)^T adj(B + y I) g - r^2
+//		                                                                  (6)
+		//
+		// or
+		//
+		//   det(B + y I)^2 r^2 = g^T adj(B + y I)^T adj(B + y I) g         (7a)
+//		                      = g^T adj(B)^T adj(B) g
+//		                           + 2 y g^T adj(B)^T g + y^2 g^T g       (7b)
+		//
+		// as
+		//
+		//   adj(B + y I) = adj(B) + y I = adj(B)^T + y I .                 (8)
+		//
+		// The left hand side can be expressed explicitly using
+		//
+		//   det(B + y I) = det(B) + y tr(B) + y^2 .                        (9)
+		//
+		// So (7) is a polynomial in y of degree four.
+		// Bringing everything back to the left hand side, the coefficients can
+		// be read off as
+		//
+//		     y^4  r^2
+		//   + y^3  2 r^2 tr(B)
+		//   + y^2 (r^2 tr(B)^2 + 2 r^2 det(B) - g^T g)
+		//   + y^1 (2 r^2 det(B) tr(B) - 2 g^T adj(B)^T g)
+		//   + y^0 (r^2 det(B)^2 - g^T adj(B)^T adj(B) g)
+		//
+
+	  private Vector<Double> MakePolynomialForBoundaryConstrainedProblem() {
+		  const double detB = subspace_B_.determinant();
+		  const double trB = subspace_B_.trace();
+		  const double r2 = radius_ * radius_;
+		  Matrix2d B_adj;
+		  B_adj <<  subspace_B_(1, 1) , -subspace_B_(0, 1),
+		            -subspace_B_(1, 0) ,  subspace_B_(0, 0);
+
+		  Vector polynomial(5);
+		  polynomial(0) = r2;
+		  polynomial(1) = 2.0 * r2 * trB;
+		  polynomial(2) = r2 * (trB * trB + 2.0 * detB) - subspace_g_.squaredNorm();
+		  polynomial(3) = -2.0 * (subspace_g_.transpose() * B_adj * subspace_g_
+		      - r2 * detB * trB);
+		  polynomial(4) = r2 * detB * detB - (B_adj * subspace_g_).squaredNorm();
+
+		  return polynomial;
+  
+	  }
+	  Vector2d ComputeSubspaceStepFromRoot(double lambda) const;
+	  double EvaluateSubspaceModel(const Vector2d& x) const;
+
+	 
+	} // class DoglegStrategy */
 	
 	// Structure defining a linear least squares problem and if possible
 	// ground truth solutions. To be used by various LinearSolver tests.
@@ -6783,56 +7432,64 @@ public abstract class CeresSolver {
                 double b[],
                 double x[],
                 int num_eliminate_blocks) {
-		/*CHECK_NOTNULL(A);
-		LOG(INFO) << "writing to: " << filename_base << "*";
+		if (A == null) {
+			System.err.println("A == null in DumpLinearLeastSquaresProblemToTextFile");
+			return false;
+		}
+		Preferences.debug("Writing to: " + filename_base + "*\n", Preferences.DEBUG_ALGORITHM);
 		
-		string matlab_script;
-		StringAppendF(&matlab_script,
+		String matlab_script = null;
+		matlab_script = String.format(
 		"function lsqp = load_trust_region_problem()\n");
-		StringAppendF(&matlab_script,
-		"lsqp.num_rows = %d;\n", A->num_rows());
-		StringAppendF(&matlab_script,
-		"lsqp.num_cols = %d;\n", A->num_cols());
+		matlab_script = matlab_script + String.format(
+		"lsqp.num_rows = %d;\n", A.num_rows());
+		matlab_script = matlab_script + String.format(
+		"lsqp.num_cols = %d;\n", A.num_cols());
 		
 		{
-		string filename = filename_base + "_A.txt";
-		FILE* fptr = fopen(filename.c_str(), "w");
-		CHECK_NOTNULL(fptr);
-		A->ToTextFile(fptr);
-		fclose(fptr);
-		StringAppendF(&matlab_script,
-		"tmp = load('%s', '-ascii');\n", filename.c_str());
-		StringAppendF(
-		&matlab_script,
+		String filename = filename_base + "_A.txt";
+		File file = new File(filename);
+		if (A instanceof BlockSparseMatrix) {
+		     ((BlockSparseMatrix)A).ToTextFile(file);
+		}
+		else if (A instanceof TripletSparseMatrix) {
+			((TripletSparseMatrix)A).ToTextFile(file);
+		}
+		else if (A instanceof DenseSparseMatrix) {
+			((DenseSparseMatrix)A).ToTextFile(file);
+		}
+		matlab_script = matlab_script + String.format(
+		"tmp = load('%s', '-ascii');\n", filename);
+		matlab_script = matlab_script + String.format(
 		"lsqp.A = sparse(tmp(:, 1) + 1, tmp(:, 2) + 1, tmp(:, 3), %d, %d);\n",
-		A->num_rows(),
-		A->num_cols());
+		A.num_rows(),
+		A.num_cols());
 		}
 		
 		
-		if (D != NULL) {
-		string filename = filename_base + "_D.txt";
-		WriteArrayToFileOrDie(filename, D, A->num_cols());
-		StringAppendF(&matlab_script,
-		"lsqp.D = load('%s', '-ascii');\n", filename.c_str());
+		if (D != null) {
+		String filename = filename_base + "_D.txt";
+		WriteArrayToFileOrDie(filename, D, A.num_cols());
+		matlab_script = matlab_script + String.format(
+		"lsqp.D = load('%s', '-ascii');\n", filename);
 		}
 		
-		if (b != NULL) {
-		string filename = filename_base + "_b.txt";
-		WriteArrayToFileOrDie(filename, b, A->num_rows());
-		StringAppendF(&matlab_script,
-		"lsqp.b = load('%s', '-ascii');\n", filename.c_str());
+		if (b != null) {
+		String filename = filename_base + "_b.txt";
+		WriteArrayToFileOrDie(filename, b, A.num_rows());
+		matlab_script = matlab_script + String.format(
+		"lsqp.b = load('%s', '-ascii');\n", filename);
 		}
 		
-		if (x != NULL) {
-		string filename = filename_base + "_x.txt";
-		WriteArrayToFileOrDie(filename, x, A->num_cols());
-		StringAppendF(&matlab_script,
-		"lsqp.x = load('%s', '-ascii');\n", filename.c_str());
+		if (x != null) {
+		String filename = filename_base + "_x.txt";
+		WriteArrayToFileOrDie(filename, x, A.num_cols());
+		matlab_script = matlab_script + String.format(
+		"lsqp.x = load('%s', '-ascii');\n", filename);
 		}
 		
-		string matlab_filename = filename_base + ".m";
-		WriteStringToFileOrDie(matlab_script, matlab_filename);*/
+		String matlab_filename = filename_base + ".m";
+		WriteStringToFileOrDie(matlab_script, matlab_filename);
 		return true;
 		}
 
@@ -6988,8 +7645,8 @@ public abstract class CeresSolver {
 		// LossFunctions and LocalParameterizations are reused and since
 		// they are owned by problem_impl, gradient_checking_problem_impl
 		// should not take ownership of it.
-		ProblemImpl prob = new ProblemImpl();
-		ProblemImpl.Options gradient_checking_problem_options = prob.options_;
+		ProblemImpl problem = new ProblemImpl();
+		ProblemImpl.Options gradient_checking_problem_options = problem.options_;
 		gradient_checking_problem_options.cost_function_ownership = Ownership.TAKE_OWNERSHIP;
 		gradient_checking_problem_options.loss_function_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
 		gradient_checking_problem_options.local_parameterization_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
