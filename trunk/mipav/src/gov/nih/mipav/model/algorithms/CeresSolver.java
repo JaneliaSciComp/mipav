@@ -6142,7 +6142,7 @@ public abstract class CeresSolver {
 	          radius_ = options.initial_radius;
 	          max_radius_ = options.max_radius;
 	          min_diagonal_ = options.min_lm_diagonal;
-	          max_diagonal_ = options.max_lm_diagonal);
+	          max_diagonal_ = options.max_lm_diagonal;
 	          mu_ = kMinMu;
 	          min_mu_ = kMinMu;
 	          max_mu_ = kMaxMu;
@@ -6152,7 +6152,7 @@ public abstract class CeresSolver {
 	          dogleg_step_norm_ = 0.0;
 	          reuse_ = false;
 	          dogleg_type_ = options.dogleg_type;
-	          if (linear_sover_ == null) {
+	          if (linear_solver_ == null) {
 	        	  System.err.println("linear_solver_ == null in public DoglegStrategy");
 	        	  return;
 	          }
@@ -6179,6 +6179,7 @@ public abstract class CeresSolver {
 	                              SparseMatrix jacobian,
 	                              double residuals[],
 	                              double step[]) {
+		  int i;
 		  if (jacobian == null) {
 			  System.err.println("jacobian == null in DoglegStrategy TrustRegionStrategy.Summary ComputeStep");
 			  return null;
@@ -6208,7 +6209,7 @@ public abstract class CeresSolver {
 		    }
 		    
 		    summary.num_iterations = 0;
-		    summary.termination_type = LINEAR_SOLVER_SUCCESS;
+		    summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
 		    return summary;
 		  }
 
@@ -6229,10 +6230,10 @@ public abstract class CeresSolver {
 		    	gradient_.removeElementAt(gradient_.size()-1);
 		    }
 		    while (gauss_newton_step_.size() < n) {
-		    	gauss_newton_step.add(1.0);
+		    	gauss_newton_step_.add(1.0);
 		    }
 		    while (gauss_newton_step_.size() > n) {
-		    	gauss_newton_step.removeElementAt(gauss_newton_step_.size()-1);
+		    	gauss_newton_step_.removeElementAt(gauss_newton_step_.size()-1);
 		    }
 		  }
 
@@ -6253,9 +6254,9 @@ public abstract class CeresSolver {
 		    else if ((linear_solver_.options.type == LinearSolverType.DENSE_QR) || (linear_solver_.options.type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
           	((DenseSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);	
           }
-		  for (int i = 0; i < n; ++i) {
+		  for (i = 0; i < n; ++i) {
 		    diagonal_.set(i,Math.sqrt(Math.min(Math.max(diagonal_array[i], min_diagonal_),
-		                            max_diagonal_));
+		                            max_diagonal_)));
 		  }
 
 		  ComputeGradient(jacobian, residuals);
@@ -6349,7 +6350,9 @@ public abstract class CeresSolver {
 		  // the trust region. Rescale the Cauchy point to the trust region
 		  // and return.
 		  if  (gradient_norm * alpha_ >= radius_) {
-		    dogleg_step = -(radius_ / gradient_norm) * gradient_;
+			for (i = 0; i < gradient_.size(); i++ ) {
+		        dogleg[i] = -(radius_ / gradient_norm) * gradient_.get(i);
+			}
 		    dogleg_step_norm_ = radius_;
 		    for (i = 0; i < gradient_.size(); i++) {
 		    	dogleg[i] /= diagonal_.get(i);
@@ -6373,7 +6376,7 @@ public abstract class CeresSolver {
 		  for (i = 0; i < gradient_.size(); i++) {
 			  dot_product += (gradient_.get(i)*gauss_newton_step_.get(i));
 		  }
-		  b_dot_a = -alpha_ * dot_product;
+		  double b_dot_a = -alpha_ * dot_product;
 		  double a_squared_norm = Math.pow(alpha_ * gradient_norm, 2.0);
 		  double b_minus_a_squared_norm =
 		      a_squared_norm - 2 * b_dot_a + Math.pow(gauss_newton_norm, 2);
@@ -6394,9 +6397,9 @@ public abstract class CeresSolver {
 		  }
 		  dogleg_step_norm_ = 0.0;
 		  for (i = 0; i < gradient_.size(); i++) {
-			  dogleg_step_norm += dogleg[i]*dogleg[i];
+			  dogleg_step_norm_ += dogleg[i]*dogleg[i];
 		  }
-		  dogleg_step_norm_ = Math.sqrt(dogleg_step_norm);
+		  dogleg_step_norm_ = Math.sqrt(dogleg_step_norm_);
 		  for (i = 0; i < gradient_.size(); i++) {
 		    	dogleg[i] /= diagonal_.get(i);
 		  }
@@ -6477,14 +6480,14 @@ public abstract class CeresSolver {
 		    // region boundary.
 			double gradientNorm = 0.0;
 			for (i = 0; i < gradient_.size(); i++) {
-				gradeintNorm += gradient_.get(i)*gradient_.get(i);
+				gradientNorm += gradient_.get(i)*gradient_.get(i);
 			}
 			gradientNorm = Math.sqrt(gradientNorm);
 			for (i = 0; i < gradient_.size(); i++) {
-				dogleg[i] = _(radius_ / gradientNorm) * gradient_.get(i);
+				dogleg[i] = -(radius_ / gradientNorm) * gradient_.get(i);
 			}
 		    dogleg_step_norm_ = radius_;
-		    for (i = 0; i < gradient_.size; i++) {
+		    for (i = 0; i < gradient_.size(); i++) {
 		    	dogleg[i] /= diagonal_.get(i);
 		    }
 		    if (3 <= MAX_LOG_LEVEL) {
@@ -6570,46 +6573,135 @@ public abstract class CeresSolver {
 		  // In the failure case, another step should be taken, such as the traditional
 		  // dogleg step.
 		  private boolean FindMinimumOnTrustRegionBoundary(Vector2d minimum) {
+			int i;
 		    if (minimum == null) {
 		    	System.err.println("minimum == null in FindMinimumOnTrustRegionBoundary");
 		    	return false;
 		    }
 
 		    // Return (0, 0) in all error cases.
-		    minimum.x = 0;
-		    minimum.y = 0;
+		    minimum.X = 0;
+		    minimum.Y = 0;
 
 		    // Create the fourth-degree polynomial that is a necessary condition for
 		    // optimality.
 		    Vector<Double> polynomial = MakePolynomialForBoundaryConstrainedProblem();
 
 		    // Find the real parts y_i of its roots (not only the real roots).
-		    Vector roots_real;
-		    if (!FindPolynomialRoots(polynomial, &roots_real, NULL)) {
+		    Vector<Double> roots_real = new Vector<Double>();
+		    // FindPolynomialRoots calls Eigen::EigenSolver<Matrix> solver(companion_matrix, false);
+		    //if (!FindPolynomialRoots(polynomial, roots_real, null)) {
 		      // Failed to find the roots of the polynomial, i.e. the candidate
 		      // solutions of the constrained problem. Report this back to the caller.
-		      return false;
+		      //return false;
+		    //}
+		    if (polynomial.size() == 0) {
+		        System.err.println("Invalid polynomial of size 0 passed to FindPolynomialRoots");
+		        return false;
+		      }
+
+		    Vector<Double>polynomial_leading_zeros_stripped = RemoveLeadingZeros(polynomial);
+		    int degree = polynomial_leading_zeros_stripped.size() - 1;
+		    
+		    if (3 <= MAX_LOG_LEVEL) {
+		        Preferences.debug("Input polynomial: \n", Preferences.DEBUG_ALGORITHM);
+		        for (i = 0; i < polynomial.size(); i++) {
+		        	Preferences.debug(polynomial.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
+		        }
+		        if (polynomial.size() != polynomial_leading_zeros_stripped.size()) {
+		            Preferences.debug("Trimmed polynomial: \n", Preferences.DEBUG_ALGORITHM);
+		            	for (i = 0; i < polynomial_leading_zeros_stripped.size(); i++) {
+				        	Preferences.debug(polynomial_leading_zeros_stripped.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
+				        }
+		        }
 		    }
+		    
+		    // Is the polynomial constant?
+		    if (degree == 0) {
+		      Preferences.debug("Trying to extract roots from a constant polynomial\n",
+		    		  Preferences.DEBUG_ALGORITHM);
+		      // We return true with no roots, not false, as if the polynomial is constant
+		      // it is correct that there are no roots. It is not the case that they were
+		      // there, but that we have failed to extract them.
+		    }
+		    else if (degree == 1) {
+		    	FindLinearPolynomialRoots(polynomial_leading_zeros_stripped, roots_real, null);
+		    }
+		    else if (degree == 2) {
+		    	FindQuadraticPolynomialRoots(polynomial_leading_zeros_stripped, roots_real, null);
+		    }
+		    else {
+		    	// The degree is now known to be at least 3.
+		    	// Divide by leading term
+		    	double leading_term = polynomial_leading_zeros_stripped.get(0);
+		    	for (i = 0; i < polynomial_leading_zeros_stripped.size(); i++) {
+		    	  polynomial_leading_zeros_stripped.set(i, polynomial_leading_zeros_stripped.get(i)/leading_term);
+		    	}
+		    	double areal, aimag, breal, bimag, creal, cimag, dreal, dimag, ereal, eimag;
+		    	int num_sols[] = new int[1];
+		    	double solsreal[] = null;
+		    	double solsimag[] = null;
+		    	if (degree == 3) {
+		    		areal = 0.0;
+					aimag = 0.0;
+					breal = 1.0;
+					bimag = 0.0;
+					creal = polynomial_leading_zeros_stripped.get(1);
+					cimag = 0.0;
+					dreal = polynomial_leading_zeros_stripped.get(2);
+					dimag = 0.0;
+					ereal = polynomial_leading_zeros_stripped.get(3);
+					eimag = 0.0;
+					solsreal = new double[3];
+					solsimag = new double[3];	
+		    	}
+		    	else {
+			    	areal = 1.0;
+					aimag = 0.0;
+					breal = polynomial_leading_zeros_stripped.get(1);
+					bimag = 0.0;
+					creal = polynomial_leading_zeros_stripped.get(2);
+					cimag = 0.0;
+					dreal = polynomial_leading_zeros_stripped.get(3);
+					dimag = 0.0;
+					ereal = polynomial_leading_zeros_stripped.get(4);
+					eimag = 0.0;
+					solsreal = new double[4];
+					solsimag = new double[4];
+		    	}
+				QuarticEquation qe = new QuarticEquation(degree, areal, aimag, breal, bimag, creal, cimag,
+						dreal, dimag, ereal, eimag, num_sols, solsreal, solsimag);
+				qe.run();
+				for (i = 0; i < num_sols[0]; i++) {
+					roots_real.add(solsreal[i]);
+				}
+		    }
+
 
 		    // For each root y, compute B x(y) and check for feasibility.
 		    // Notice that there should always be four roots, as the leading term of
 		    // the polynomial is r^2 and therefore non-zero. However, as some roots
 		    // may be complex, the real parts are not necessarily unique.
-		    double minimum_value = std::numeric_limits<double>::max();
-		    bool valid_root_found = false;
-		    for (int i = 0; i < roots_real.size(); ++i) {
-		      const Vector2d x_i = ComputeSubspaceStepFromRoot(roots_real(i));
+		    double minimum_value = Double.MAX_VALUE;
+		    boolean valid_root_found = false;
+		    for (i = 0; i < roots_real.size(); ++i) {
+		      Vector2d x_i = ComputeSubspaceStepFromRoot(roots_real.get(i));
 
 		      // Not all roots correspond to points on the trust region boundary.
 		      // There are at most four candidate solutions. As we are interested
 		      // in the minimum, it is safe to consider all of them after projecting
 		      // them onto the trust region boundary.
-		      if (x_i.norm() > 0) {
-		        const double f_i = EvaluateSubspaceModel((radius_ / x_i.norm()) * x_i);
+		      double x_i_norm = 0.0;
+		      x_i_norm = Math.sqrt(x_i.X * x_i.X + x_i.Y * x_i.Y);
+		      if (x_i_norm > 0) {
+		    	double scale = radius_/x_i_norm;
+		    	Vector2d ev = new Vector2d(scale * x_i.X, scale * x_i.Y);
+		        double f_i = EvaluateSubspaceModel(ev);
 		        valid_root_found = true;
 		        if (f_i < minimum_value) {
 		          minimum_value = f_i;
-		          *minimum = x_i;
+		          minimum.X = x_i.X;
+		          minimum.Y = x_i.Y;
 		        }
 		      }
 		    }
@@ -6671,29 +6763,156 @@ public abstract class CeresSolver {
 		//
 
 	  private Vector<Double> MakePolynomialForBoundaryConstrainedProblem() {
-		  const double detB = subspace_B_.determinant();
-		  const double trB = subspace_B_.trace();
-		  const double r2 = radius_ * radius_;
-		  Matrix2d B_adj;
-		  B_adj <<  subspace_B_(1, 1) , -subspace_B_(0, 1),
-		            -subspace_B_(1, 0) ,  subspace_B_(0, 0);
+		  double detB = subspace_B_.det();
+		  double trB = subspace_B_.trace();
+		  double r2 = radius_ * radius_;
+		  double B_adj_array[][] = new double[2][2];
+		  B_adj_array[0][0] = subspace_B_.getArray()[1][1];
+		  B_adj_array[0][1] = -subspace_B_.getArray()[0][1];
+		  B_adj_array[1][0] = -subspace_B_.getArray()[1][0];
+		  B_adj_array[1][1] = subspace_B_.getArray()[0][0];
+		  Matrix B_adj = new Matrix(B_adj_array);
 
-		  Vector polynomial(5);
-		  polynomial(0) = r2;
-		  polynomial(1) = 2.0 * r2 * trB;
-		  polynomial(2) = r2 * (trB * trB + 2.0 * detB) - subspace_g_.squaredNorm();
-		  polynomial(3) = -2.0 * (subspace_g_.transpose() * B_adj * subspace_g_
-		      - r2 * detB * trB);
-		  polynomial(4) = r2 * detB * detB - (B_adj * subspace_g_).squaredNorm();
+		  Vector<Double> polynomial = new Vector<Double>(5);
+		  polynomial.add(r2);
+		  polynomial.add(2.0 * r2 * trB);
+		  polynomial.add(r2 * (trB * trB + 2.0 * detB) - (subspace_g_.X*subspace_g_.X + subspace_g_.Y*subspace_g_.Y));
+		  double subspace_g_array[][] = new double[2][1];
+		  subspace_g_array[0][0] = subspace_g_.X;
+		  subspace_g_array[1][0] = subspace_g_.Y;
+		  Matrix subspace_g_mat = new Matrix(subspace_g_array);
+		  double mult = (((subspace_g_mat.transpose()).times(B_adj)).times(subspace_g_mat)).getArray()[0][0];
+		  polynomial.add(-2.0 * (mult
+		      - r2 * detB * trB));
+		  Matrix multMatrix = B_adj.times(subspace_g_mat);
+		  double squaredNorm = multMatrix.getArray()[0][0]*multMatrix.getArray()[0][0]
+				  + multMatrix.getArray()[1][0]*multMatrix.getArray()[1][0];
+		  polynomial.add(r2 * detB * detB - squaredNorm);
 
 		  return polynomial;
   
 	  }
-	  Vector2d ComputeSubspaceStepFromRoot(double lambda) const;
-	  double EvaluateSubspaceModel(const Vector2d& x) const;
+	  
+	// Given a Lagrange multiplier y that corresponds to a stationary point
+	// of the Lagrangian L(x, y), compute the corresponding x from the
+	// equation
+	//
+	//   0 = d L(x, y) / dx
+    //	     = B * x + g + y * x
+    //	     = (B + y * I) * x + g
+	//
+	public Vector2d ComputeSubspaceStepFromRoot(double y) {
+	  // x = -(B + y * I).inverse() * g;
+	  double B_i_array[][] = new double[2][2];
+	  B_i_array[0][0] = subspace_B_.getArray()[0][0] + y;
+	  B_i_array[0][1] = subspace_B_.getArray()[0][1];
+	  B_i_array[1][0] = subspace_B_.getArray()[1][0];
+	  B_i_array[1][1] = subspace_B_.getArray()[1][1] + y;
+	  double det = (B_i_array[0][0]*B_i_array[1][1] - B_i_array[0][1]*B_i_array[1][0]);
+	  if (det == 0.0) {
+		  System.out.println("det == 0.0 in ComputeSubspaceStepFromRoot");
+		  return null;
+	  }
+	  double B_i_inverse[][] = new double[2][2];
+	  B_i_inverse[0][0] = B_i_array[1][1]/det;
+	  B_i_inverse[0][1] = -B_i_array[0][1]/det;
+	  B_i_inverse[1][0] = -B_i_array[1][0]/det;
+	  B_i_inverse[1][1] = B_i_array[0][0]/det;
+	  double X = -B_i_inverse[0][0]*subspace_g_.X -B_i_inverse[0][1]*subspace_g_.Y;
+	  double Y = -B_i_inverse[1][0]*subspace_g_.X -B_i_inverse[1][1]*subspace_g_.Y;
+	  return new Vector2d(X,Y);
+	}
+
+	// This function evaluates the quadratic model at a point x in the
+	// subspace spanned by subspace_basis_.
+	double EvaluateSubspaceModel(Vector2d x) {
+	  double Bx[] = new double[2];
+	  Bx[0] = subspace_B_.getArray()[0][0]*x.X + subspace_B_.getArray()[0][1]*x.Y;
+	  Bx[1] = subspace_B_.getArray()[1][0]*x.X + subspace_B_.getArray()[1][1]*x.Y;
+	  return(0.5 * x.X*Bx[0] + 0.5*x.Y*Bx[1] + subspace_g_.X*x.X + subspace_g_.Y*x.Y);
+	}
+
 
 	 
-	} // class DoglegStrategy */
+	} // class DoglegStrategy*/
+	
+	// Remove leading terms with zero coefficients.
+	public Vector<Double> RemoveLeadingZeros(Vector<Double> polynomial_in) {
+	  int i = 0;
+	  int j;
+	  while (i < (polynomial_in.size() - 1) && polynomial_in.get(i) == 0.0) {
+	    ++i;
+	  }
+	  Vector<Double>polynomial_leading_zeros_stripped = new Vector<Double>();
+	  for (j = i; j < polynomial_in.size(); j++) {
+		  polynomial_leading_zeros_stripped.add(polynomial_in.get(j));
+	  }
+	  return polynomial_leading_zeros_stripped;
+	}
+	
+	public void FindLinearPolynomialRoots(Vector<Double> polynomial,
+            Vector<Double> real,
+            Vector<Double> imaginary) {
+		if (polynomial.size() != 2) {
+			System.err.println("polynomial.size() != 2 in FindLinearPolynomialRoots");
+			return;
+		}
+		if (real != null) {
+		    real.clear();
+		    real.add(-polynomial.get(1) / polynomial.get(0));
+		}
+		
+		if (imaginary != null) {
+			imaginary.clear();
+		    imaginary.add(0.0);
+		}
+    }
+
+	public void FindQuadraticPolynomialRoots(Vector<Double> polynomial,
+            Vector<Double> real,
+            Vector<Double> imaginary) {
+	        if (polynomial.size() != 3) {
+	        	System.err.println("polynomial.size() != 3 in FindQuadraticPolynomialRoots");
+	        	return;
+	        }
+		    double a = polynomial.get(0);
+		    double b = polynomial.get(1);
+		    double c = polynomial.get(2);
+		    double D = b * b - 4 * a * c;
+		    double sqrt_D = Math.sqrt(Math.abs(D));
+		    if (real != null) {
+		        real.clear();
+		    }
+		    if (imaginary != null) {
+		        imaginary.clear();
+		    }
+		
+		    // Real roots.
+		    if (D >= 0) {
+			    if (real != null) {
+			        // Stable quadratic roots according to BKP Horn.
+			        // http://people.csail.mit.edu/bkph/articles/Quadratics.pdf
+			        if (b >= 0) {
+			            real.add((-b - sqrt_D) / (2.0 * a));
+			            real.add((2.0 * c) / (-b - sqrt_D));
+			        } else {
+			            real.add((2.0 * c) / (-b + sqrt_D));
+			            real.add((-b + sqrt_D) / (2.0 * a));
+			        }
+		        }
+		        return;
+	       }
+
+           // Use the normal quadratic formula for the complex case.
+           if (real != null) {
+               real.add(-b / (2.0 * a));
+               real.add(-b / (2.0 * a));
+           }
+           if (imaginary != null) {
+               imaginary.add(sqrt_D / (2.0 * a));
+               imaginary.add(-sqrt_D / (2.0 * a));
+           }
+    }
 	
 	// Structure defining a linear least squares problem and if possible
 	// ground truth solutions. To be used by various LinearSolver tests.
