@@ -1959,7 +1959,7 @@ public abstract class CeresSolver {
 			removed_parameter_blocks = new Vector<double[]>();
 			reduced_parameters = new Vector<double[]>();
 			LinearSolver ls = new LinearSolver();
-			linear_solver_options = ls.options;
+			linear_solver_options = ls.options_;
 		}
 
 	} // class Preprocessed
@@ -3379,12 +3379,12 @@ public abstract class CeresSolver {
 	};
 
 	class LinearSolver {
-		public Options options;
+		public Options options_;
 		public Summary summary;
 		public PerSolveOptions perSolveOptions;
 
 		public LinearSolver() {
-			options = new Options();
+			options_ = new Options();
 			summary = new Summary();
 			perSolveOptions = new PerSolveOptions();
 		}
@@ -3632,11 +3632,10 @@ public abstract class CeresSolver {
 	// responsibility to judge if the solution is good enough for their
 	// purposes.
 	class DenseNormalCholeskySolver extends TypedLinearSolver<DenseSparseMatrix>  {
-		private LinearSolver.Options options_;
 		
 	  public DenseNormalCholeskySolver(LinearSolver.Options options) {
 		  super();
-	    	options_ = options;  
+	      options_ = options;  
 	  }
 
 	 public LinearSolver.Summary SolveImpl(
@@ -3768,7 +3767,6 @@ public abstract class CeresSolver {
 	// purposes.
 	class DenseQRSolver extends TypedLinearSolver<DenseSparseMatrix> {
 		// Column major matrices for DenseSparseMatrix/DenseQRSolver
-		private LinearSolver.Options options_;
 		//ColMajorMatrix lhs_;
 		private Matrix lhs_;
 		private double rhs_[];
@@ -4360,11 +4358,11 @@ public abstract class CeresSolver {
 	// as required for solving for x in the least squares sense. Currently only
 	// block diagonal preconditioning is supported.
 	 class CgnrSolver extends TypedLinearSolver<BlockSparseMatrix> {
-	     private LinearSolver.Options options_; 
 	     //scoped_ptr<Preconditioner> preconditioner_;
 	     private Preconditioner preconditioner_; 
 	     
 	     public CgnrSolver(LinearSolver.Options options) {
+	       super();
 	       options_ = options;
 	       preconditioner_ = null;
 		     if (options_.preconditioner_type != PreconditionerType.JACOBI &&
@@ -5584,7 +5582,7 @@ public abstract class CeresSolver {
 
 			  LinearSolver linear_solvers[] = new LinearSolver[options.num_threads];
 			  LinearSolver ls = new LinearSolver();
-			  LinearSolver.Options linear_solver_options = ls.options;
+			  LinearSolver.Options linear_solver_options = ls.options_;
 
 			  linear_solver_options.type = LinearSolverType.DENSE_QR;
 			  linear_solver_options.context = context_;
@@ -5926,12 +5924,7 @@ public abstract class CeresSolver {
 		    	diagonal_array[i] = diagonal_.get(i);
 		    }
 		    
-		    if (linear_solver_.options.type == LinearSolverType.CGNR) {
-		        ((BlockSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);
-            }
-		    else if ((linear_solver_.options.type == LinearSolverType.DENSE_QR) || (linear_solver_.options.type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
-            	((DenseSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);	
-            }
+		    jacobian.SquaredColumnNorm(diagonal_array);
 		    for (i = 0; i < num_parameters; ++i) {
 		      diagonal_.set(i,Math.min(Math.max(diagonal_array[i], min_diagonal_),
 		                              max_diagonal_));
@@ -5966,15 +5959,15 @@ public abstract class CeresSolver {
 		  // Then x can be found as x = -y, but the inputs jacobian and residuals
 		  // do not need to be modified.
 		  
-		  if (linear_solver_.options.type == LinearSolverType.CGNR) {
+		  if (linear_solver_.options_.type == LinearSolverType.CGNR) {
 		      linear_solver_summary =
 		      ((CgnrSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
 		  }
-		  else if (linear_solver_.options.type == LinearSolverType.DENSE_QR) {
+		  else if (linear_solver_.options_.type == LinearSolverType.DENSE_QR) {
 			  linear_solver_summary =
 				      ((DenseQRSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);  
 		  }
-		  else if (linear_solver_.options.type == LinearSolverType.DENSE_NORMAL_CHOLESKY) {
+		  else if (linear_solver_.options_.type == LinearSolverType.DENSE_NORMAL_CHOLESKY) {
 			  linear_solver_summary =
 				      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);  
 		  }
@@ -6248,12 +6241,7 @@ public abstract class CeresSolver {
 		    for (i = 0; i < diagonal_.size(); i++) {
 		    	diagonal_array[i] = diagonal_.get(i);
 		    }
-		  if (linear_solver_.options.type == LinearSolverType.CGNR) {
-		        ((BlockSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);
-          }
-		    else if ((linear_solver_.options.type == LinearSolverType.DENSE_QR) || (linear_solver_.options.type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
-          	((DenseSparseMatrix)jacobian).SquaredColumnNorm(diagonal_array);	
-          }
+		    jacobian.SquaredColumnNorm(diagonal_array);
 		  for (i = 0; i < n; ++i) {
 		    diagonal_.set(i,Math.sqrt(Math.min(Math.max(diagonal_array[i], min_diagonal_),
 		                            max_diagonal_)));
@@ -6501,8 +6489,8 @@ public abstract class CeresSolver {
 		  if (!FindMinimumOnTrustRegionBoundary(minimum)) {
 		    // For the positive semi-definite case, a traditional dogleg step
 		    // is taken in this case.
-		    LOG(WARNING) << "Failed to compute polynomial roots. "
-		                 << "Taking traditional dogleg step instead.";
+		    Preferences.debug("Failed to compute polynomial roots.\n", Preferences.DEBUG_ALGORITHM);
+		    Preferences.debug("Taking traditional dogleg step instead.\n", Preferences.DEBUG_ALGORITHM);
 		    ComputeTraditionalDoglegStep(dogleg);
 		    return;
 		  }
@@ -6522,28 +6510,38 @@ public abstract class CeresSolver {
 		  //
 		  // This condition should not be violated. If it is, the minimum was not
 		  // correctly determined.
-		  const double kCosineThreshold = 0.99;
-		  const Vector2d grad_minimum = subspace_B_ * minimum + subspace_g_;
-		  const double cosine_angle = -minimum.dot(grad_minimum) /
-		      (minimum.norm() * grad_minimum.norm());
+		  double kCosineThreshold = 0.99;
+		  double Bmin[] = new double[2];
+		  Bmin[0] = subspace_B_.getArray()[0][0] * minimum.X + subspace_B_.getArray()[0][1] * minimum.Y;
+		  Bmin[1] = subspace_B_.getArray()[1][0] * minimum.X + subspace_B_.getArray()[1][1] * minimum.Y;
+		  Vector2d grad_minimum = new Vector2d(Bmin[0] + subspace_g_.X, Bmin[1] + subspace_g_.Y);
+		  double minimum_norm = Math.sqrt(minimum.X * minimum.X + minimum.Y * minimum.Y);
+		  double grad_minimum_norm = Math.sqrt(grad_minimum.X * grad_minimum.X + grad_minimum.Y * grad_minimum.Y);
+		  double cosine_angle = -(minimum.X * grad_minimum.X + minimum.Y * grad_minimum.Y)/(minimum_norm * grad_minimum_norm);
 		  if (cosine_angle < kCosineThreshold) {
-		    LOG(WARNING) << "First order optimality seems to be violated "
-		                 << "in the subspace method!\n"
-		                 << "Cosine of angle between x and B x + g is "
-		                 << cosine_angle << ".\n"
-		                 << "Taking a regular dogleg step instead.\n"
-		                 << "Please consider filing a bug report if this "
-		                 << "happens frequently or consistently.\n";
+		    Preferences.debug("First order optimality seems to be violated " +
+		                 "in the subspace method!\n" + 
+		                 "Cosine of angle between x and B x + g is " +
+		                 cosine_angle + ".\n" +
+		                 "Taking a regular dogleg step instead.\n" +
+		                 "Please consider filing a bug report if this " +
+		                 "happens frequently or consistently.\n", Preferences.DEBUG_ALGORITHM);
 		    ComputeTraditionalDoglegStep(dogleg);
 		    return;
 		  }
 
 		  // Create the full step from the optimal 2d solution.
-		  dogleg_step = subspace_basis_ * minimum;
+		  for (i = 0; i < gradient_.size(); i++) {
+		      dogleg[i] = subspace_basis_.getArray()[i][0] * minimum.X + subspace_basis_.getArray()[i][1] * minimum.Y;
+		  }
 		  dogleg_step_norm_ = radius_;
-		  dogleg_step.array() /= diagonal_.array();
-		  VLOG(3) << "Dogleg subspace step size: " << dogleg_step_norm_
-		          << " radius: " << radius_;
+		  for (i = 0; i < gradient_.size(); i++) {
+				dogleg[i] /= diagonal_.get(i);
+		  }
+		  if (3 <= MAX_LOG_LEVEL) {
+			  Preferences.debug("Dogleg subspace step size: " + dogleg_step_norm_ + "\n", Preferences.DEBUG_ALGORITHM);
+			  Preferences.debug("radius: " + radius_ + "\n", Preferences.DEBUG_ALGORITHM);
+		  }
 		}
 
 	  //typedef Eigen::Matrix<double, 2, 1, Eigen::DontAlign> Vector2d;
@@ -6553,7 +6551,31 @@ public abstract class CeresSolver {
 	      const PerSolveOptions& per_solve_options,
 	      SparseMatrix* jacobian,
 	      const double* residuals);
-	  void ComputeCauchyPoint(SparseMatrix* jacobian);
+	  
+	// The Cauchy point is the global minimizer of the quadratic model
+	// along the one-dimensional subspace spanned by the gradient.
+	private void ComputeCauchyPoint(SparseMatrix jacobian) {
+	  int i;
+	  // alpha * -gradient is the Cauchy point.
+	  double Jg[] = new double[jacobian.num_rows()];
+	  // The Jacobian is scaled implicitly by computing J * (D^-1 * (D^-1 * g))
+	  // instead of (J * D^-1) * (D^-1 * g).
+	  double scaled_gradient[] = new double[gradient_.size()];
+	  for (i = 0; i < gradient_.size(); i++) {
+		  scaled_gradient[i] = gradient_.get(i)/diagonal_.get(i);
+	  }
+	  jacobian.RightMultiply(scaled_gradient, Jg);
+	  double gradient_squaredNorm = 0.0;
+	  for (i = 0; i < gradient_.size(); i++) {
+		  gradient_squaredNorm += (gradient_.get(i) * gradient_.get(i));
+	  }
+	  double Jg_squaredNorm = 0.0;
+	  for (i = 0; i < Jg.length; i++) {
+		  Jg_squaredNorm += (Jg[i]*Jg[i]);
+	  }
+	  alpha_ = gradient_squaredNorm / Jg_squaredNorm;
+	}
+
 	  private void ComputeGradient(SparseMatrix jacobian, double residuals[]) {
 		  
 	  }
