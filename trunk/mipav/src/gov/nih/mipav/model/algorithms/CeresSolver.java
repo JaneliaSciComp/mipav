@@ -6765,6 +6765,8 @@ public abstract class CeresSolver {
 		  int lwork = -1; // output optimal lwork in work[0]
 	      double work[] = new double[Math.max(1,lwork)];
 	      int info[] = new int[1];
+	      // dgeqrf does not have pivoting
+	      // change to dgeqp3 which has pivoting
 		  ge.dgeqrf(jacobian.num_cols(),2,basis_vectors_array,jacobian.num_cols(),tau,work,lwork,info);
 		  if (info[0] < 0) {
 	    		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork = -1");
@@ -6792,16 +6794,23 @@ public abstract class CeresSolver {
 	    		return false;
 	    	}
 	    	// basis_vectors_array contains Q of the QR decomposition
-
+	    	// If m >= n, A = Q *[R]
+            //                   [0]
+	    	// where R is an n-by-n upper triangular matrix and Q is an m-by-m orthogonal (or unitary) matrix. 
+	    	// If A is of full rank n, then R is non-singular. It is sometimes convenient to write the factorization as 
+	    	// A = [Q1 Q2] * [R]
+	    	//               [0]
+	    	// which reduces to A = Q1R
+	    	// where Q1 consists of the ﬁrst n columns of Q, and Q2 the remaining m−n columns. 
 		  switch (rank) {
 		    case 0:
 		      // This should never happen, as it implies that both the gradient
 		      // and the Gauss-Newton step are zero. In this case, the minimizer should
 		      // have stopped due to the gradient being too small.
-		      LOG(ERROR) << "Rank of subspace basis is 0. "
-		                 << "This means that the gradient at the current iterate is "
-		                 << "zero but the optimization has not been terminated. "
-		                 << "You may have found a bug in Ceres.";
+		      System.err.println("Rank of subspace basis is 0. ");
+		      System.err.println("This means that the gradient at the current iterate is ");
+		      System.err.println("zero but the optimization has not been terminated. ");
+		      System.err.println("You may have found a bug in Ceres.");
 		      return false;
 
 		    case 1:
@@ -6816,10 +6825,10 @@ public abstract class CeresSolver {
 		      break;
 
 		    default:
-		      LOG(ERROR) << "Rank of the subspace basis matrix is reported to be "
-		                 << "greater than 2. As the matrix contains only two "
-		                 << "columns this cannot be true and is indicative of "
-		                 << "a bug.";
+		        System.err.println("Rank of the subspace basis matrix is reported to be ");
+		        System.err.println("greater than 2. As the matrix contains only two ");
+		        System.err.println("columns this cannot be true and is indicative of ");
+		        System.err.println("a bug.");
 		      return false;
 		  }
 
