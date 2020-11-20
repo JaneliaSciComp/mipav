@@ -1928,7 +1928,7 @@ public abstract class CeresSolver {
 	class PreprocessedProblem {
 		String error[];
 		Solver.Options options;
-		LinearSolver.Options linear_solver_options;
+		LinearSolverOptions linear_solver_options;
 		Evaluator.Options evaluator_options;
 		Minimizer.Options minimizer_options;
 
@@ -1958,8 +1958,7 @@ public abstract class CeresSolver {
 			error = new String[1];
 			removed_parameter_blocks = new Vector<double[]>();
 			reduced_parameters = new Vector<double[]>();
-			LinearSolver ls = new LinearSolver();
-			linear_solver_options = ls.options_;
+			linear_solver_options = new LinearSolverOptions();
 		}
 
 	} // class Preprocessed
@@ -3377,212 +3376,213 @@ public abstract class CeresSolver {
 
 		public abstract int num_cols();
 	};
+	
+	class LinearSolverOptions {
+		public LinearSolverType type;
+		public PreconditionerType preconditioner_type;
+		public VisibilityClusteringType visibility_clustering_type;
+		public DenseLinearAlgebraLibraryType dense_linear_algebra_library_type;
+		public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+
+		// See solver.h for information about these flags.
+		public boolean use_postordering;
+		public boolean dynamic_sparsity;
+		public boolean use_explicit_schur_complement;
+
+		// Number of internal iterations that the solver uses. This
+		// parameter only makes sense for iterative solvers like CG.
+		public int min_num_iterations;
+		public int max_num_iterations;
+
+		// If possible, how many threads can the solver use.
+		public int num_threads;
+
+		// Hints about the order in which the parameter blocks should be
+		// eliminated by the linear solver.
+		//
+		// For example if elimination_groups is a vector of size k, then
+		// the linear solver is informed that it should eliminate the
+		// parameter blocks 0 ... elimination_groups[0] - 1 first, and
+		// then elimination_groups[0] ... elimination_groups[1] - 1 and so
+		// on. Within each elimination group, the linear solver is free to
+		// choose how the parameter blocks are ordered. Different linear
+		// solvers have differing requirements on elimination_groups.
+		//
+		// The most common use is for Schur type solvers, where there
+		// should be at least two elimination groups and the first
+		// elimination group must form an independent set in the normal
+		// equations. The first elimination group corresponds to the
+		// num_eliminate_blocks in the Schur type solvers.
+		public Vector<Integer> elimination_groups;
+
+		// Iterative solvers, e.g. Preconditioned Conjugate Gradients
+		// maintain a cheap estimate of the residual which may become
+		// inaccurate over time. Thus for non-zero values of this
+		// parameter, the solver can be told to recalculate the value of
+		// the residual using a |b - Ax| evaluation.
+		public int residual_reset_period;
+
+		// If the block sizes in a BlockSparseMatrix are fixed, then in
+		// some cases the Schur complement based solvers can detect and
+		// specialize on them.
+		//
+		// It is expected that these parameters are set programmatically
+		// rather than manually.
+		//
+		// Please see schur_complement_solver.h and schur_eliminator.h for
+		// more details.
+		public int row_block_size;
+		public int e_block_size;
+		public int f_block_size;
+
+		public Context context;
+
+		public LinearSolverOptions() {
+			type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+			preconditioner_type = PreconditionerType.JACOBI;
+			visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
+			//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+			dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
+			sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
+			use_postordering = false;
+			dynamic_sparsity = false;
+			use_explicit_schur_complement = false;
+			min_num_iterations = 1;
+			max_num_iterations = 1;
+			num_threads = 1;
+			residual_reset_period = 10;
+			row_block_size = DYNAMIC;
+			e_block_size = DYNAMIC;
+			f_block_size = DYNAMIC;
+			context = new Context();
+		}
+	} // class LinearSolverOptions
+	
+	        // Options for the Solve method.
+			class LinearSolverPerSolveOptions {
+				// This option only makes sense for unsymmetric linear solvers
+				// that can solve rectangular linear systems.
+				//
+				// Given a matrix A, an optional diagonal matrix D as a vector,
+				// and a vector b, the linear solver will solve for
+				//
+				// | A | x = | b |
+				// | D | | 0 |
+				//
+				// If D is null, then it is treated as zero, and the solver returns
+				// the solution to
+				//
+				// A x = b
+				//
+				// In either case, x is the vector that solves the following
+				// optimization problem.
+				//
+				// arg min_x ||Ax - b||^2 + ||Dx||^2
+				//
+				// Here A is a matrix of size m x n, with full column rank. If A
+				// does not have full column rank, the results returned by the
+				// solver cannot be relied on. D, if it is not null is an array of
+				// size n. b is an array of size m and x is an array of size n.
+				private double D[];
+
+				// This option only makes sense for iterative solvers.
+				//
+				// In general the performance of an iterative linear solver
+				// depends on the condition number of the matrix A. For example
+				// the convergence rate of the conjugate gradients algorithm
+				// is proportional to the square root of the condition number.
+				//
+				// One particularly useful technique for improving the
+				// conditioning of a linear system is to precondition it. In its
+				// simplest form a preconditioner is a matrix M such that instead
+				// of solving Ax = b, we solve the linear system AM^{-1} y = b
+				// instead, where M is such that the condition number k(AM^{-1})
+				// is smaller than the conditioner k(A). Given the solution to
+				// this system, x = M^{-1} y. The iterative solver takes care of
+				// the mechanics of solving the preconditioned system and
+				// returning the corrected solution x. The user only needs to
+				// supply a linear operator.
+				//
+				// A null preconditioner is equivalent to an identity matrix being
+				// used a preconditioner.
+				private LinearOperator preconditioner;
+
+				// The following tolerance related options only makes sense for
+				// iterative solvers. Direct solvers ignore them.
+
+				// Solver terminates when
+				//
+				// |Ax - b| <= r_tolerance * |b|.
+				//
+				// This is the most commonly used termination criterion for
+				// iterative solvers.
+				private double r_tolerance;
+
+				// For PSD matrices A, let
+				//
+				// Q(x) = x'Ax - 2b'x
+				//
+				// be the cost of the quadratic function defined by A and b. Then,
+				// the solver terminates at iteration i if
+				//
+				// i * (Q(x_i) - Q(x_i-1)) / Q(x_i) < q_tolerance.
+				//
+				// This termination criterion is more useful when using CG to
+				// solve the Newton step. This particular convergence test comes
+				// from Stephen Nash's work on truncated Newton
+				// methods. References:
+				//
+				// 1. Stephen G. Nash & Ariela Sofer, Assessing A Search
+				// Direction Within A Truncated Newton Method, Operation
+				// Research Letters 9(1990) 219-221.
+				//
+				// 2. Stephen G. Nash, A Survey of Truncated Newton Methods,
+				// Journal of Computational and Applied Mathematics,
+				// 124(1-2), 45-59, 2000.
+				//
+				private double q_tolerance;
+
+				public LinearSolverPerSolveOptions() {
+					D = null;
+					preconditioner = null;
+					r_tolerance = 0.0;
+					q_tolerance = 0.0;
+				}
+
+			} // class LinearSolverPerSolveOptions
+			
+			// Summary of a call to the Solve method. We should move away from
+			// the true/false method for determining solver success. We should
+			// let the summary object do the talking.
+			class LinearSolverSummary {
+				double residual_norm;
+				int num_iterations;
+				LinearSolverTerminationType termination_type;
+				String message[];
+
+				public LinearSolverSummary() {
+					residual_norm = 0.0;
+					num_iterations = -1;
+					termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+				}
+
+			} // class LinearSolverSummmary
+
 
 	class LinearSolver {
-		public Options options_;
-		public Summary summary;
-		public PerSolveOptions perSolveOptions;
+		public LinearSolverOptions options_;
+		public LinearSolverSummary summary;
+		public LinearSolverPerSolveOptions perSolveOptions;
 
 		public LinearSolver() {
-			options_ = new Options();
-			summary = new Summary();
-			perSolveOptions = new PerSolveOptions();
+			options_ = new LinearSolverOptions();
+			summary = new LinearSolverSummary();
+			perSolveOptions = new LinearSolverPerSolveOptions();
 		}
-
-		class Options {
-			public LinearSolverType type;
-			public PreconditionerType preconditioner_type;
-			public VisibilityClusteringType visibility_clustering_type;
-			public DenseLinearAlgebraLibraryType dense_linear_algebra_library_type;
-			public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
-
-			// See solver.h for information about these flags.
-			public boolean use_postordering;
-			public boolean dynamic_sparsity;
-			public boolean use_explicit_schur_complement;
-
-			// Number of internal iterations that the solver uses. This
-			// parameter only makes sense for iterative solvers like CG.
-			public int min_num_iterations;
-			public int max_num_iterations;
-
-			// If possible, how many threads can the solver use.
-			public int num_threads;
-
-			// Hints about the order in which the parameter blocks should be
-			// eliminated by the linear solver.
-			//
-			// For example if elimination_groups is a vector of size k, then
-			// the linear solver is informed that it should eliminate the
-			// parameter blocks 0 ... elimination_groups[0] - 1 first, and
-			// then elimination_groups[0] ... elimination_groups[1] - 1 and so
-			// on. Within each elimination group, the linear solver is free to
-			// choose how the parameter blocks are ordered. Different linear
-			// solvers have differing requirements on elimination_groups.
-			//
-			// The most common use is for Schur type solvers, where there
-			// should be at least two elimination groups and the first
-			// elimination group must form an independent set in the normal
-			// equations. The first elimination group corresponds to the
-			// num_eliminate_blocks in the Schur type solvers.
-			public Vector<Integer> elimination_groups;
-
-			// Iterative solvers, e.g. Preconditioned Conjugate Gradients
-			// maintain a cheap estimate of the residual which may become
-			// inaccurate over time. Thus for non-zero values of this
-			// parameter, the solver can be told to recalculate the value of
-			// the residual using a |b - Ax| evaluation.
-			public int residual_reset_period;
-
-			// If the block sizes in a BlockSparseMatrix are fixed, then in
-			// some cases the Schur complement based solvers can detect and
-			// specialize on them.
-			//
-			// It is expected that these parameters are set programmatically
-			// rather than manually.
-			//
-			// Please see schur_complement_solver.h and schur_eliminator.h for
-			// more details.
-			public int row_block_size;
-			public int e_block_size;
-			public int f_block_size;
-
-			public Context context;
-
-			public Options() {
-				type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
-				preconditioner_type = PreconditionerType.JACOBI;
-				visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
-				//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
-				dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
-				sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
-				use_postordering = false;
-				dynamic_sparsity = false;
-				use_explicit_schur_complement = false;
-				min_num_iterations = 1;
-				max_num_iterations = 1;
-				num_threads = 1;
-				residual_reset_period = 10;
-				row_block_size = DYNAMIC;
-				e_block_size = DYNAMIC;
-				f_block_size = DYNAMIC;
-				context = new Context();
-			}
-		} // class Options
-
-		// Summary of a call to the Solve method. We should move away from
-		// the true/false method for determining solver success. We should
-		// let the summary object do the talking.
-		class Summary {
-			double residual_norm;
-			int num_iterations;
-			LinearSolverTerminationType termination_type;
-			String message[];
-
-			public Summary() {
-				residual_norm = 0.0;
-				num_iterations = -1;
-				termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
-			}
-
-		} // class Summmary
-
-		// Options for the Solve method.
-		class PerSolveOptions {
-			// This option only makes sense for unsymmetric linear solvers
-			// that can solve rectangular linear systems.
-			//
-			// Given a matrix A, an optional diagonal matrix D as a vector,
-			// and a vector b, the linear solver will solve for
-			//
-			// | A | x = | b |
-			// | D | | 0 |
-			//
-			// If D is null, then it is treated as zero, and the solver returns
-			// the solution to
-			//
-			// A x = b
-			//
-			// In either case, x is the vector that solves the following
-			// optimization problem.
-			//
-			// arg min_x ||Ax - b||^2 + ||Dx||^2
-			//
-			// Here A is a matrix of size m x n, with full column rank. If A
-			// does not have full column rank, the results returned by the
-			// solver cannot be relied on. D, if it is not null is an array of
-			// size n. b is an array of size m and x is an array of size n.
-			private double D[];
-
-			// This option only makes sense for iterative solvers.
-			//
-			// In general the performance of an iterative linear solver
-			// depends on the condition number of the matrix A. For example
-			// the convergence rate of the conjugate gradients algorithm
-			// is proportional to the square root of the condition number.
-			//
-			// One particularly useful technique for improving the
-			// conditioning of a linear system is to precondition it. In its
-			// simplest form a preconditioner is a matrix M such that instead
-			// of solving Ax = b, we solve the linear system AM^{-1} y = b
-			// instead, where M is such that the condition number k(AM^{-1})
-			// is smaller than the conditioner k(A). Given the solution to
-			// this system, x = M^{-1} y. The iterative solver takes care of
-			// the mechanics of solving the preconditioned system and
-			// returning the corrected solution x. The user only needs to
-			// supply a linear operator.
-			//
-			// A null preconditioner is equivalent to an identity matrix being
-			// used a preconditioner.
-			private LinearOperator preconditioner;
-
-			// The following tolerance related options only makes sense for
-			// iterative solvers. Direct solvers ignore them.
-
-			// Solver terminates when
-			//
-			// |Ax - b| <= r_tolerance * |b|.
-			//
-			// This is the most commonly used termination criterion for
-			// iterative solvers.
-			private double r_tolerance;
-
-			// For PSD matrices A, let
-			//
-			// Q(x) = x'Ax - 2b'x
-			//
-			// be the cost of the quadratic function defined by A and b. Then,
-			// the solver terminates at iteration i if
-			//
-			// i * (Q(x_i) - Q(x_i-1)) / Q(x_i) < q_tolerance.
-			//
-			// This termination criterion is more useful when using CG to
-			// solve the Newton step. This particular convergence test comes
-			// from Stephen Nash's work on truncated Newton
-			// methods. References:
-			//
-			// 1. Stephen G. Nash & Ariela Sofer, Assessing A Search
-			// Direction Within A Truncated Newton Method, Operation
-			// Research Letters 9(1990) 219-221.
-			//
-			// 2. Stephen G. Nash, A Survey of Truncated Newton Methods,
-			// Journal of Computational and Applied Mathematics,
-			// 124(1-2), 45-59, 2000.
-			//
-			private double q_tolerance;
-
-			public PerSolveOptions() {
-				D = null;
-				preconditioner = null;
-				r_tolerance = 0.0;
-				q_tolerance = 0.0;
-			}
-
-		} // class PerSolveOptions
 
 	} // class LinearSolver
 
-	public LinearSolver Create(LinearSolver.Options options) {
+	public LinearSolver Create(LinearSolverOptions options) {
 		if (options.context == null) {
 			System.err.println("options.context == null in public LinearSolver Create");
 			return null;
@@ -3633,15 +3633,34 @@ public abstract class CeresSolver {
 	// purposes.
 	class DenseNormalCholeskySolver extends TypedLinearSolver<DenseSparseMatrix>  {
 		
-	  public DenseNormalCholeskySolver(LinearSolver.Options options) {
+	  public DenseNormalCholeskySolver(LinearSolverOptions options) {
 		  super();
 	      options_ = options;  
 	  }
+	  
+	  public LinearSolverSummary Solve(LinearOperator A, double b[], LinearSolverPerSolveOptions per_solve_options,
+				double x[]) {
+			new ScopedExecutionTimer("LinearSolver::Solve", execution_summary_);
+			if (A == null) {
+				System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve LinearOperator A == null");
+				return null;
+			}
+			if (b == null) {
+				System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double b[] == null");
+				return null;
+			}
+			if (x == null) {
+				System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double x[] == null");
+				return null;
+			}
+			// return SolveImpl(down_cast<MatrixType*>(A), b, per_solve_options, x);
+			return SolveImpl((DenseSparseMatrix) A, b, per_solve_options, x);
+		}
 
-	 public LinearSolver.Summary SolveImpl(
+	 public LinearSolverSummary SolveImpl(
 	      DenseSparseMatrix A,
 	      double b[],
-	      LinearSolver.PerSolveOptions per_solve_options,
+	      LinearSolverPerSolveOptions per_solve_options,
 	      double x[]) {
 		 if (options_.dense_linear_algebra_library_type == DenseLinearAlgebraLibraryType.EIGEN) {
 			    return SolveUsingEigen(A, b, per_solve_options, x);
@@ -3651,10 +3670,10 @@ public abstract class CeresSolver {
 
 	 }
 
-	 private LinearSolver.Summary SolveUsingLAPACK(
+	 private LinearSolverSummary SolveUsingLAPACK(
 	      DenseSparseMatrix A,
 	      double b[],
-	      LinearSolver.PerSolveOptions per_solve_options,
+	      LinearSolverPerSolveOptions per_solve_options,
 	      double x[]) {
 		 EventLogger event_logger = new EventLogger("DenseNormalCholeskySolver::Solve");
 
@@ -3700,10 +3719,10 @@ public abstract class CeresSolver {
 	 
 	 }
 
-	  private LinearSolver.Summary SolveUsingEigen(
+	  private LinearSolverSummary SolveUsingEigen(
 	      DenseSparseMatrix A,
 	      double b[],
-	      LinearSolver.PerSolveOptions per_solve_options,
+	      LinearSolverPerSolveOptions per_solve_options,
 	      double x[]) {
 		  EventLogger event_logger = new EventLogger("DenseNormalCholeskySolver::Solve");
 
@@ -3772,16 +3791,35 @@ public abstract class CeresSolver {
 		private double rhs_[];
 		private double work_[];
 		
-	    public DenseQRSolver(LinearSolver.Options options) {
+	    public DenseQRSolver(LinearSolverOptions options) {
 	    	super();
 	    	options_ = options;
 	        work_ = new double[1];
 	    }
+	    
+	    public LinearSolverSummary Solve(LinearOperator A, double b[], LinearSolverPerSolveOptions per_solve_options,
+				double x[]) {
+			new ScopedExecutionTimer("LinearSolver::Solve", execution_summary_);
+			if (A == null) {
+				System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve LinearOperator A == null");
+				return null;
+			}
+			if (b == null) {
+				System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double b[] == null");
+				return null;
+			}
+			if (x == null) {
+				System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double x[] == null");
+				return null;
+			}
+			// return SolveImpl(down_cast<MatrixType*>(A), b, per_solve_options, x);
+			return SolveImpl((DenseSparseMatrix) A, b, per_solve_options, x);
+		}
 
-	 public LinearSolver.Summary SolveImpl(
+	 public LinearSolverSummary SolveImpl(
 	      DenseSparseMatrix A,
 	      double b[],
-	      LinearSolver.PerSolveOptions per_solve_options,
+	      LinearSolverPerSolveOptions per_solve_options,
 	      double x[]) {
 		  if (options_.dense_linear_algebra_library_type == DenseLinearAlgebraLibraryType.EIGEN) {
 			    return SolveUsingEigen(A, b, per_solve_options, x);
@@ -3791,10 +3829,10 @@ public abstract class CeresSolver {
 	  }
 
 	 // Eigen library must be implemented  
-	 private LinearSolver.Summary SolveUsingEigen(
+	 private LinearSolverSummary SolveUsingEigen(
 	      DenseSparseMatrix A,
 	      double b[],
-	      LinearSolver.PerSolveOptions per_solve_options,
+	      LinearSolverPerSolveOptions per_solve_options,
 	      double x[]) {
 		  EventLogger event_logger = new EventLogger("DenseQRSolver::Solve");
 
@@ -3840,10 +3878,10 @@ public abstract class CeresSolver {
 
 	  }
 
-	  private LinearSolver.Summary SolveUsingLAPACK(
+	  private LinearSolverSummary SolveUsingLAPACK(
 	      DenseSparseMatrix A,
 	      double b[],
-	      LinearSolver.PerSolveOptions per_solve_options,
+	      LinearSolverPerSolveOptions per_solve_options,
 	      double x[]) {
 
 		  EventLogger event_logger = new EventLogger("DenseQRSolver::Solve");
@@ -4361,7 +4399,7 @@ public abstract class CeresSolver {
 	     //scoped_ptr<Preconditioner> preconditioner_;
 	     private Preconditioner preconditioner_; 
 	     
-	     public CgnrSolver(LinearSolver.Options options) {
+	     public CgnrSolver(LinearSolverOptions options) {
 	       super();
 	       options_ = options;
 	       preconditioner_ = null;
@@ -4371,10 +4409,29 @@ public abstract class CeresSolver {
 		     }
 	     } // public CgnrSolver
 	     
-	   public LinearSolver.Summary SolveImpl(
+	     public LinearSolverSummary Solve(LinearOperator A, double b[], LinearSolverPerSolveOptions per_solve_options,
+					double x[]) {
+				new ScopedExecutionTimer("LinearSolver::Solve", execution_summary_);
+				if (A == null) {
+					System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve LinearOperator A == null");
+					return null;
+				}
+				if (b == null) {
+					System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double b[] == null");
+					return null;
+				}
+				if (x == null) {
+					System.err.println("In TypedLinearSolver public LinearSummary.Summary Solve double x[] == null");
+					return null;
+				}
+				// return SolveImpl(down_cast<MatrixType*>(A), b, per_solve_options, x);
+				return SolveImpl((BlockSparseMatrix) A, b, per_solve_options, x);
+			}
+	     
+	   public LinearSolverSummary SolveImpl(
 	    		    BlockSparseMatrix A,
 	    		    double b[],
-	    		    LinearSolver.PerSolveOptions per_solve_options,
+	    		    LinearSolverPerSolveOptions per_solve_options,
 	    		    double x[]) {
 	    		  EventLogger event_logger = new EventLogger("CgnrSolver::Solve");
 
@@ -4383,7 +4440,7 @@ public abstract class CeresSolver {
 	    		  A.LeftMultiply(b, z);
 
 	    		  // Precondition if necessary.
-	    		  LinearSolver.PerSolveOptions cg_per_solve_options = per_solve_options;
+	    		  LinearSolverPerSolveOptions cg_per_solve_options = per_solve_options;
 	    		  if (options_.preconditioner_type == PreconditionerType.JACOBI) {
 	    		    if (preconditioner_ == null) {
 	    		      preconditioner_ = new BlockJacobiPreconditioner(A);
@@ -4409,15 +4466,15 @@ public abstract class CeresSolver {
 	 } // class CgnrSolver
 	 
 	 class ConjugateGradientsSolver extends LinearSolver {
-		   private LinearSolver.Options options_;
-		   public ConjugateGradientsSolver(LinearSolver.Options options) {
+		   private LinearSolverOptions options_;
+		   public ConjugateGradientsSolver(LinearSolverOptions options) {
 			   super();
 			   options_ = options;
 		   }
 		   
-		    public Summary Solve(LinearOperator A,
+		    public LinearSolverSummary Solve(LinearOperator A,
 		                          double b[],
-		                          LinearSolver.PerSolveOptions per_solve_options,
+		                          LinearSolverPerSolveOptions per_solve_options,
 		                          double x[]) {
 		    	  int i;
 		    	  if (A == null) {
@@ -4970,11 +5027,11 @@ public abstract class CeresSolver {
 	// typedef TypedLinearSolver<TripletSparseMatrix> TripletSparseMatrixSolver; //
 	// NOLINT
 	abstract class TypedLinearSolver<MatrixType> extends LinearSolver {
-		private ExecutionSummary execution_summary_;
+		public ExecutionSummary execution_summary_;
 
 		// public:
 		// virtual LinearSolver::Summary Solve(
-		public LinearSolver.Summary Solve(LinearOperator A, double b[], LinearSolver.PerSolveOptions per_solve_options,
+		public LinearSolverSummary Solve(LinearOperator A, double b[], LinearSolverPerSolveOptions per_solve_options,
 				double x[]) {
 			new ScopedExecutionTimer("LinearSolver::Solve", execution_summary_);
 			if (A == null) {
@@ -4998,8 +5055,8 @@ public abstract class CeresSolver {
 			return execution_summary_.statistics();
 		}
 
-		public abstract LinearSolver.Summary SolveImpl(MatrixType A, double b[],
-				LinearSolver.PerSolveOptions per_solve_options, double x[]);
+		public abstract LinearSolverSummary SolveImpl(MatrixType A, double b[],
+				LinearSolverPerSolveOptions per_solve_options, double x[]);
 
 	};
 
@@ -5581,8 +5638,7 @@ public abstract class CeresSolver {
 			  }
 
 			  LinearSolver linear_solvers[] = new LinearSolver[options.num_threads];
-			  LinearSolver ls = new LinearSolver();
-			  LinearSolver.Options linear_solver_options = ls.options_;
+			  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
 
 			  linear_solver_options.type = LinearSolverType.DENSE_QR;
 			  linear_solver_options.context = context_;
@@ -5908,7 +5964,7 @@ public abstract class CeresSolver {
 		  }
 
 		  int num_parameters = jacobian.num_cols();
-		  LinearSolver.Summary linear_solver_summary = null;
+		  LinearSolverSummary linear_solver_summary = null;
 		  if (!reuse_diagonal_) {
 		    if (diagonal_.size() != num_parameters) {
 		      while (diagonal_.size() < num_parameters) {
@@ -5936,8 +5992,7 @@ public abstract class CeresSolver {
 			  lm_diagonal_.add(Math.sqrt(diagonal_.get(i)/radius_));
 		  }
 
-		  LinearSolver ls = new LinearSolver();
-		  LinearSolver.PerSolveOptions solve_options = ls.perSolveOptions;
+		  LinearSolverPerSolveOptions solve_options = new LinearSolverPerSolveOptions();
 		  solve_options.D = new double[lm_diagonal_.size()];
 		  for (i = 0; i < lm_diagonal_.size(); i++) {
 			  solve_options.D[i] = lm_diagonal_.get(i);
@@ -6250,19 +6305,19 @@ public abstract class CeresSolver {
 		  ComputeGradient(jacobian, residuals);
 		  ComputeCauchyPoint(jacobian);
 
-		  LinearSolver::Summary linear_solver_summary =
+		  LinearSolverSummary linear_solver_summary =
 		      ComputeGaussNewtonStep(per_solve_options, jacobian, residuals);
 
-		  TrustRegionStrategy::Summary summary;
+		  TrustRegionStrategy.Summary summary;
 		  summary.residual_norm = linear_solver_summary.residual_norm;
 		  summary.num_iterations = linear_solver_summary.num_iterations;
 		  summary.termination_type = linear_solver_summary.termination_type;
 
-		  if (linear_solver_summary.termination_type == LINEAR_SOLVER_FATAL_ERROR) {
+		  if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
 		    return summary;
 		  }
 
-		  if (linear_solver_summary.termination_type != LINEAR_SOLVER_FAILURE) {
+		  if (linear_solver_summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
 		    switch (dogleg_type_) {
 		      // Interpolate the Cauchy point and the Gauss-Newton step.
 		      case TRADITIONAL_DOGLEG:
@@ -6273,7 +6328,7 @@ public abstract class CeresSolver {
 		      // Cauchy point and the (Gauss-)Newton step.
 		      case SUBSPACE_DOGLEG:
 		        if (!ComputeSubspaceModel(jacobian)) {
-		          summary.termination_type = LINEAR_SOLVER_FAILURE;
+		          summary.termination_type = LinearSolverTerminatsionType.LINEAR_SOLVER_FAILURE;
 		          break;
 		        }
 		        ComputeSubspaceDoglegStep(step);
@@ -6547,10 +6602,126 @@ public abstract class CeresSolver {
 	  //typedef Eigen::Matrix<double, 2, 1, Eigen::DontAlign> Vector2d;
 	  //typedef Eigen::Matrix<double, 2, 2, Eigen::DontAlign> Matrix2d;
 
-	  LinearSolver::Summary ComputeGaussNewtonStep(
-	      const PerSolveOptions& per_solve_options,
-	      SparseMatrix* jacobian,
-	      const double* residuals);
+	  LinearSolverSummary ComputeGaussNewtonStep(
+	      PerSolveOptions per_solve_options,
+	      SparseMatrix jacobian,
+	      double residuals[]) {
+		  int i;
+		  int n = jacobian.num_cols();
+		  LinearSolverSummary linear_solver_summary = new LinearSolverSummary();
+		  linear_solver_summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+
+		  // The Jacobian matrix is often quite poorly conditioned. Thus it is
+		  // necessary to add a diagonal matrix at the bottom to prevent the
+		  // linear solver from failing.
+		  //
+		  // We do this by computing the same diagonal matrix as the one used
+		  // by Levenberg-Marquardt (other choices are possible), and scaling
+		  // it by a small constant (independent of the trust region radius).
+		  //
+		  // If the solve fails, the multiplier to the diagonal is increased
+		  // up to max_mu_ by a factor of mu_increase_factor_ every time. If
+		  // the linear solver is still not successful, the strategy returns
+		  // with LINEAR_SOLVER_FAILURE.
+		  //
+		  // Next time when a new Gauss-Newton step is requested, the
+		  // multiplier starts out from the last successful solve.
+		  //
+		  // When a step is declared successful, the multiplier is decreased
+		  // by half of mu_increase_factor_.
+
+		  while (mu_ < max_mu_) {
+		    // Dogleg, as far as I (sameeragarwal) understand it, requires a
+		    // reasonably good estimate of the Gauss-Newton step. This means
+		    // that we need to solve the normal equations more or less
+		    // exactly. This is reflected in the values of the tolerances set
+		    // below.
+		    //
+		    // For now, this strategy should only be used with exact
+		    // factorization based solvers, for which these tolerances are
+		    // automatically satisfied.
+		    //
+		    // The right way to combine inexact solves with trust region
+		    // methods is to use Stiehaug's method.
+		    LinearSolverPerSolveOptions solve_options = new LinearSolverPerSolveOptions();
+		    solve_options.q_tolerance = 0.0;
+		    solve_options.r_tolerance = 0.0;
+
+		    lm_diagonal_.clear();
+		    solve_options.D = new double[diagonal_.size()];
+		    for (i = 0; i < diagonal_.size(); i++) {
+		    	lm_diagonal_.add(diagonal_.get(i) * Math.sqrt(mu_));
+		    	solve_options.D[i] = lm_diagonal_.get(i);
+		    }
+
+		    // As in the LevenbergMarquardtStrategy, solve Jy = r instead
+		    // of Jx = -r and later set x = -y to avoid having to modify
+		    // either jacobian or residuals.
+		    InvalidateArray(n, gauss_newton_step_);
+		    double gauss_newton_step_array[] = new double[gauss_newton_step_.size()];
+		    for (i = 0; i < gauss_newton_step_.size(); i++) {
+		    	gauss_newton_step_array[i] = gauss_newton_step_.get(i);
+		    }
+		    if (linear_solver_.options_.type == LinearSolverType.CGNR) {
+			      linear_solver_summary =
+			      ((CgnrSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
+			  }
+			  else if (linear_solver_.options_.type == LinearSolverType.DENSE_QR) {
+				  linear_solver_summary =
+					      ((DenseQRSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);  
+			  }
+			  else if (linear_solver_.options_.type == LinearSolverType.DENSE_NORMAL_CHOLESKY) {
+				  linear_solver_summary =
+					      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);  
+			  }
+
+		    if (per_solve_options.dump_format_type == DumpFormatType.CONSOLE ||
+		        (per_solve_options.dump_format_type != DumpFormatType.CONSOLE &&
+		         !per_solve_options.dump_filename_base.isEmpty())) {
+		      if (!DumpLinearLeastSquaresProblem(per_solve_options.dump_filename_base,
+		                                         per_solve_options.dump_format_type,
+		                                         jacobian,
+		                                         solve_options.D,
+		                                         residuals,
+		                                         gauss_newton_step_array,
+		                                         0)) {
+		        System.err.println("Unable to dump trust region problem.");
+		        System.err.println("Filename base: " +per_solve_options.dump_filename_base);
+		      }
+		    }
+
+		    if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
+		      return linear_solver_summary;
+		    }
+
+		    if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE ||
+		        !IsArrayValid(n, gauss_newton_step_)) {
+		      mu_ *= mu_increase_factor_;
+		      if (2 <= MAX_LOG_LEVEL) {
+		          Preferences.debug("Increasing mu " + mu_ + "\n", Preferences.DEBUG_ALGORITHM);
+		      }
+		      linear_solver_summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		      continue;
+		    }
+		    break;
+		  }
+
+		  if (linear_solver_summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+		    // The scaled Gauss-Newton step is D * GN:
+		    //
+		    //     - (D^-1 J^T J D^-1)^-1 (D^-1 g)
+		    //   = - D (J^T J)^-1 D D^-1 g
+		    //   = D -(J^T J)^-1 g
+		    //
+			for (i = 0; i < diagonal_.size(); i++) {
+				double prod = gauss_newton_step_.get(i) * (-diagonal_.get(i));
+				gauss_newton_step_.set(i, prod);
+			}
+		  }
+
+		  return linear_solver_summary;
+  
+	  }
 	  
 	// The Cauchy point is the global minimizer of the quadratic model
 	// along the one-dimensional subspace spanned by the gradient.
@@ -6579,7 +6750,113 @@ public abstract class CeresSolver {
 	  private void ComputeGradient(SparseMatrix jacobian, double residuals[]) {
 		  
 	  }
-	  bool ComputeSubspaceModel(SparseMatrix* jacobian);
+	  
+	  private boolean ComputeSubspaceModel(SparseMatrix jacobian) {
+		  int i;
+		  // Compute an orthogonal basis for the subspace using QR decomposition.
+		  Matrix basis_vectors = new Matrix(jacobian.num_cols(), 2);
+		  for (i = 0; i < jacobian.num_cols(); i++) {
+			  basis_vectors.set(i, 0, gradient_.get(i));
+			  basis_vectors.set(i, 1, gauss_newton_step_.get(i));
+		  }
+		  int rank = basis_vectors.rank();
+		  double basis_vectors_array[][] = basis_vectors.getArray();
+		  double tau[] = new double[Math.min(jacobian.num_cols(),2)];
+		  int lwork = -1; // output optimal lwork in work[0]
+	      double work[] = new double[Math.max(1,lwork)];
+	      int info[] = new int[1];
+		  ge.dgeqrf(jacobian.num_cols(),2,basis_vectors_array,jacobian.num_cols(),tau,work,lwork,info);
+		  if (info[0] < 0) {
+	    		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork = -1");
+	    		return false;
+	      }
+	    	int optimallwork = (int)work[0];
+	    	work = new double[optimallwork];
+	    	ge.dgeqrf(jacobian.num_cols(),2,basis_vectors_array,jacobian.num_cols(),tau,work,optimallwork,info);
+	    	if (info[0] < 0) {
+	    		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork " + optimallwork);
+	    		return false;
+	    	}
+	    	lwork = -1; // output optimal lwork in work[0]
+		    work = new double[Math.max(1,lwork)];
+	    	ge.dorgqr(jacobian.num_cols(),2,Math.min(jacobian.num_cols(),2),basis_vectors_array,jacobian.num_cols(),tau,work,lwork,info);
+	    	if (info[0] < 0) {
+	    		System.err.println("ge.dorgqr had an illegal argument " + (-i) + " for lwork = -1");
+	    		return false;
+	        }
+	    	optimallwork = (int)work[0];
+	    	work = new double[optimallwork];
+	    	ge.dorgqr(jacobian.num_cols(),2,Math.min(jacobian.num_cols(),2),basis_vectors_array,jacobian.num_cols(),tau,work,optimallwork,info);
+	    	if (info[0] < 0) {
+	    		System.err.println("ge.dorgqr had an illegal argument " + (-i) + " for lwork " + optimallwork);
+	    		return false;
+	    	}
+	    	// basis_vectors_array contains Q of the QR decomposition
+
+		  switch (rank) {
+		    case 0:
+		      // This should never happen, as it implies that both the gradient
+		      // and the Gauss-Newton step are zero. In this case, the minimizer should
+		      // have stopped due to the gradient being too small.
+		      LOG(ERROR) << "Rank of subspace basis is 0. "
+		                 << "This means that the gradient at the current iterate is "
+		                 << "zero but the optimization has not been terminated. "
+		                 << "You may have found a bug in Ceres.";
+		      return false;
+
+		    case 1:
+		      // Gradient and Gauss-Newton step coincide, so we lie on one of the
+		      // major axes of the quadratic problem. In this case, we simply move
+		      // along the gradient until we reach the trust region boundary.
+		      subspace_is_one_dimensional_ = true;
+		      return true;
+
+		    case 2:
+		      subspace_is_one_dimensional_ = false;
+		      break;
+
+		    default:
+		      LOG(ERROR) << "Rank of the subspace basis matrix is reported to be "
+		                 << "greater than 2. As the matrix contains only two "
+		                 << "columns this cannot be true and is indicative of "
+		                 << "a bug.";
+		      return false;
+		  }
+
+		  // The subspace is two-dimensional, so compute the subspace model.
+		  // Given the basis U, this is
+		  //
+		  //   subspace_g_ = g_scaled^T U
+		  //
+		  // and
+		  //
+		  //   subspace_B_ = U^T (J_scaled^T J_scaled) U
+		  //
+		  // As J_scaled = J * D^-1, the latter becomes
+		  //
+		  //   subspace_B_ = ((U^T D^-1) J^T) (J (D^-1 U))
+		  //               = (J (D^-1 U))^T (J (D^-1 U))
+
+		  subspace_basis_ =
+		      basis_vectors_array * Matrix::Identity(jacobian->num_cols(), 2);
+
+		  subspace_g_ = subspace_basis_.transpose() * gradient_;
+
+		  Eigen::Matrix<double, 2, Eigen::Dynamic, Eigen::RowMajor>
+		      Jb(2, jacobian->num_rows());
+		  Jb.setZero();
+
+		  Vector tmp;
+		  tmp = (subspace_basis_.col(0).array() / diagonal_.array()).matrix();
+		  jacobian->RightMultiply(tmp.data(), Jb.row(0).data());
+		  tmp = (subspace_basis_.col(1).array() / diagonal_.array()).matrix();
+		  jacobian->RightMultiply(tmp.data(), Jb.row(1).data());
+
+		  subspace_B_ = Jb * Jb.transpose();
+
+		  return true;
+
+	  }
 
 		  // This function attempts to solve the boundary-constrained subspace problem
 		  //
@@ -7690,7 +7967,8 @@ public abstract class CeresSolver {
 		{
 		String filename = filename_base + "_A.txt";
 		File file = new File(filename);
-		if (A instanceof BlockSparseMatrix) {
+		A.ToTextFile(file);
+		/*if (A instanceof BlockSparseMatrix) {
 		     ((BlockSparseMatrix)A).ToTextFile(file);
 		}
 		else if (A instanceof TripletSparseMatrix) {
@@ -7698,7 +7976,7 @@ public abstract class CeresSolver {
 		}
 		else if (A instanceof DenseSparseMatrix) {
 			((DenseSparseMatrix)A).ToTextFile(file);
-		}
+		}*/
 		matlab_script = matlab_script + String.format(
 		"tmp = load('%s', '-ascii');\n", filename);
 		matlab_script = matlab_script + String.format(
@@ -10771,18 +11049,37 @@ public abstract class CeresSolver {
 
 	}
 
-	void InvalidateArray(int size, double x[]) {
+	public void InvalidateArray(int size, double x[]) {
 		if (x != null) {
 			for (int i = 0; i < size; ++i) {
 				x[i] = kImpossibleValue;
 			}
 		}
 	}
+	
+	public void InvalidateArray(int size, Vector<Double>x) {
+		if (x != null) {
+			for (int i = 0; i < size; ++i) {
+				x.set(i,kImpossibleValue);
+			}
+		}
+	}
 
-	boolean IsArrayValid(int size, double x[]) {
+	public boolean IsArrayValid(int size, double x[]) {
 		if (x != null) {
 			for (int i = 0; i < size; ++i) {
 				if (!Double.isFinite(x[i]) || (x[i] == kImpossibleValue)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	public boolean IsArrayValid(int size, Vector<Double>x) {
+		if (x != null) {
+			for (int i = 0; i < size; ++i) {
+				if (!Double.isFinite(x.get(i)) || (x.get(i) == kImpossibleValue)) {
 					return false;
 				}
 			}
