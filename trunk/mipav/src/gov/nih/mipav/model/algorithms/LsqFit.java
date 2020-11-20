@@ -4343,6 +4343,7 @@ end
     		return null;
     	}
     	int optimallwork = (int)work[0];
+    	work = new double[optimallwork];
     	ge.dgeqrf(m,n,JCopy,m,tau,work,optimallwork,info);
     	if (info[0] < 0) {
     		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork " + optimallwork);
