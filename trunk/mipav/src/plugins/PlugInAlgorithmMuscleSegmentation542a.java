@@ -377,7 +377,7 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
     	voiList[1][3] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.CYAN);
     	voiList[1][4] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.MAGENTA);
     	
-    	voiList[2] = new PlugInSelectableVOI542a[9];
+    	voiList[2] = new PlugInSelectableVOI542a[11];
     	voiList[2][0] = new PlugInSelectableVOI542a("Left Psoas", true, 1, 2, true, true, imageSize, 5, Color.ORANGE);
     	voiList[2][1] = new PlugInSelectableVOI542a("Right Psoas", true, 1, 2, true, true, imageSize, 6, Color.ORANGE);
     	voiList[2][2] = new PlugInSelectableVOI542a("Left Lat. obliques", true, 1, 2, true, true, imageSize, 7, Color.RED);
@@ -386,7 +386,9 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
     	voiList[2][5] = new PlugInSelectableVOI542a("Right Paraspinous", true, 1, 2, true, true, imageSize, 10, Color.GREEN);
     	voiList[2][6] = new PlugInSelectableVOI542a("Left Rectus", true, 1, 2, true, true, imageSize, 11, Color.CYAN);
     	voiList[2][7] = new PlugInSelectableVOI542a("Right Rectus", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
-    	voiList[2][8] = new PlugInSelectableVOI542a("Aortic Calcium", true, 5, 2, true, true, imageSize, 13, Color.MAGENTA);
+    	voiList[2][8] = new PlugInSelectableVOI542a("Left Quadratus lumborum", true, 1, 2, true, true, imageSize, 13, Color.MAGENTA);
+    	voiList[2][9] = new PlugInSelectableVOI542a("Right Quadratus lumborum", true, 1, 2, true, true, imageSize, 14, Color.MAGENTA);
+    	voiList[2][10] = new PlugInSelectableVOI542a("Aortic Calcium", true, 5, 2, true, true, imageSize, 15, Color.BLUE);
         
     	// Subcutaneous area has abdomen as child
     	voiList[0][1].addChild(voiList[0][0]);
