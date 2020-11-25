@@ -9,6 +9,384 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
     public GeneralizedEigenvalue2() {
     	
     }
+    
+    /*> \brief \b DCHKQ3
+    *
+    *  =========== DOCUMENTATION ===========
+    *
+    * Online html documentation available at
+    *            http://www.netlib.org/lapack/explore-html/
+    *
+    *  Definition:
+    *  ===========
+    *
+    *       SUBROUTINE DCHKQ3( DOTYPE, NM, MVAL, NN, NVAL, NNB, NBVAL, NXVAL,
+    *                          THRESH, A, COPYA, S, TAU, WORK, IWORK,
+    *                          NOUT )
+    *
+    *       .. Scalar Arguments ..
+    *       INTEGER            NM, NN, NNB, NOUT
+    *       DOUBLE PRECISION   THRESH
+    *       ..
+    *       .. Array Arguments ..
+    *       LOGICAL            DOTYPE( * )
+    *       INTEGER            IWORK( * ), MVAL( * ), NBVAL( * ), NVAL( * ),
+    *      $                   NXVAL( * )
+    *       DOUBLE PRECISION   A( * ), COPYA( * ), S( * ),
+    *      $                   TAU( * ), WORK( * )
+    *       ..
+    *
+    *
+    *> \par Purpose:
+    *  =============
+    *>
+    *> \verbatim
+    *>
+    *> DCHKQ3 tests DGEQP3.
+    *> \endverbatim
+    *
+    *  Arguments:
+    *  ==========
+    *
+    *> \param[in] DOTYPE
+    *> \verbatim
+    *>          DOTYPE is LOGICAL array, dimension (NTYPES)
+    *>          The matrix types to be used for testing.  Matrices of type j
+    *>          (for 1 <= j <= NTYPES) are used for testing if DOTYPE(j) =
+    *>          .TRUE.; if DOTYPE(j) = .FALSE., then type j is not used.
+    *> \endverbatim
+    *>
+    *> \param[in] NM
+    *> \verbatim
+    *>          NM is INTEGER
+    *>          The number of values of M contained in the vector MVAL.
+    *> \endverbatim
+    *>
+    *> \param[in] MVAL
+    *> \verbatim
+    *>          MVAL is INTEGER array, dimension (NM)
+    *>          The values of the matrix row dimension M.
+    *> \endverbatim
+    *>
+    *> \param[in] NN
+    *> \verbatim
+    *>          NN is INTEGER
+    *>          The number of values of N contained in the vector NVAL.
+    *> \endverbatim
+    *>
+    *> \param[in] NVAL
+    *> \verbatim
+    *>          NVAL is INTEGER array, dimension (NN)
+    *>          The values of the matrix column dimension N.
+    *> \endverbatim
+    *>
+    *> \param[in] NNB
+    *> \verbatim
+    *>          NNB is INTEGER
+    *>          The number of values of NB and NX contained in the
+    *>          vectors NBVAL and NXVAL.  The blocking parameters are used
+    *>          in pairs (NB,NX).
+    *> \endverbatim
+    *>
+    *> \param[in] NBVAL
+    *> \verbatim
+    *>          NBVAL is INTEGER array, dimension (NNB)
+    *>          The values of the blocksize NB.
+    *> \endverbatim
+    *>
+    *> \param[in] NXVAL
+    *> \verbatim
+    *>          NXVAL is INTEGER array, dimension (NNB)
+    *>          The values of the crossover point NX.
+    *> \endverbatim
+    *>
+    *> \param[in] THRESH
+    *> \verbatim
+    *>          THRESH is DOUBLE PRECISION
+    *>          The threshold value for the test ratios.  A result is
+    *>          included in the output file if RESULT >= THRESH.  To have
+    *>          every test ratio printed, use THRESH = 0.
+    *> \endverbatim
+    *>
+    *> \param[out] A
+    *> \verbatim
+    *>          A is DOUBLE PRECISION array, dimension (MMAX*NMAX)
+    *>          where MMAX is the maximum value of M in MVAL and NMAX is the
+    *>          maximum value of N in NVAL.
+    *> \endverbatim
+    *>
+    *> \param[out] COPYA
+    *> \verbatim
+    *>          COPYA is DOUBLE PRECISION array, dimension (MMAX*NMAX)
+    *> \endverbatim
+    *>
+    *> \param[out] S
+    *> \verbatim
+    *>          S is DOUBLE PRECISION array, dimension
+    *>                      (min(MMAX,NMAX))
+    *> \endverbatim
+    *>
+    *> \param[out] TAU
+    *> \verbatim
+    *>          TAU is DOUBLE PRECISION array, dimension (MMAX)
+    *> \endverbatim
+    *>
+    *> \param[out] WORK
+    *> \verbatim
+    *>          WORK is DOUBLE PRECISION array, dimension
+    *>                      (MMAX*NMAX + 4*NMAX + MMAX)
+    *> \endverbatim
+    *>
+    *> \param[out] IWORK
+    *> \verbatim
+    *>          IWORK is INTEGER array, dimension (2*NMAX)
+    *> \endverbatim
+    *>
+    *> \param[in] NOUT
+    *> \verbatim
+    *>          NOUT is INTEGER
+    *>          The unit number for output.
+    *> \endverbatim
+    *
+    *  Authors:
+    *  ========
+    *
+    *> \author Univ. of Tennessee
+    *> \author Univ. of California Berkeley
+    *> \author Univ. of Colorado Denver
+    *> \author NAG Ltd.
+    *
+    *> \date December 2016
+    *
+    *> \ingroup double_lin
+    *
+    *  =====================================================================
+    */
+          private void dchkq3(boolean[] dotype, int nm, int[] mval, int nn, int[] nval,
+        		  int nnb, int[] nbval, int[] nxval, double thresh, double[][] A, double[][] COPYA,
+        		  double s[], double[] tau, double[] work, int[] iwork) {
+    /*
+    *  -- LAPACK test routine (version 3.7.0) --
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     December 2016
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            NM, NN, NNB, NOUT
+          DOUBLE PRECISION   THRESH
+    *     ..
+    *     .. Array Arguments ..
+          LOGICAL            DOTYPE( * )
+          INTEGER            IWORK( * ), MVAL( * ), NBVAL( * ), NVAL( * ),
+         $                   NXVAL( * )
+          DOUBLE PRECISION   A( * ), COPYA( * ), S( * ),
+         $                   TAU( * ), WORK( * )
+    *     ..
+    *
+    *  =====================================================================
+    *
+    *     .. Parameters ..
+    */     
+          final int ntypes = 6;
+          final int ntests = 3;
+          final int iseedy[] = new int[] {1988, 1989, 1990, 1991};
+          String path;
+          int nrun;
+          int nfail;
+          int nerrs;
+          int i;
+          int iseed[] = new int[4];
+          double eps;
+          double result[] = new double[ntests];
+          int infot;
+          int im;
+          int m;
+          int lda;
+          int in;
+          int n;
+          int mnmin;
+          int lwork;
+          int imode;
+          int mode;
+          int info[] = new int[1];
+          int ilow = 0;
+          int ihigh = 0;
+          int istep = 0;
+          int inb;
+          /*INTEGER            K, LW, NB, NX
+    *     ..
+    *     .. External Functions ..
+          DOUBLE PRECISION   DLAMCH, DQPT01, DQRT11, DQRT12
+          EXTERNAL           DLAMCH, DQPT01, DQRT11, DQRT12
+    *     ..
+    *     .. External Subroutines ..
+          EXTERNAL           ALAHD, ALASUM, DGEQP3, DLACPY, DLAORD, DLASET,
+         $                   DLATMS, ICOPY, XLAENV
+    *     ..
+    *     .. Intrinsic Functions ..
+          INTRINSIC          MAX, MIN
+    *     ..
+    *     .. Scalars in Common ..
+          LOGICAL            LERR, OK
+          CHARACTER*32       SRNAMT
+          INTEGER            IOUNIT
+    *     ..
+    *     //.. Common blocks ..
+          //COMMON             / INFOC / INFOT, IOUNIT, OK, LERR
+          // COMMON             / SRNAMC / SRNAMT*/
+  
+          // Initialize constants and the random number seed.
+          path = new String("DQ3"); // D for double precision
+          nrun = 0;
+          nfail = 0;
+          nerrs = 0;
+          for (i = 0; i < 4; i++) {
+             iseed[i] = iseedy[i];
+          }
+          eps = ge.dlamch( 'E' );
+          infot = 0;
+    
+          for (im = 1; im <= nm; im++) {
+    
+             // Do for each value of M in MVAL.
+    
+             m = mval[im-1];
+             lda = Math.max( 1, m);
+    
+             for (in = 1; in <= nn; in++) {
+    
+                // Do for each value of N in NVAL.
+    
+                n = nval[in-1];
+                mnmin = Math.min( m, n );
+                lwork = Math.max( 1, Math.max(m*Math.max( m, n )+4*mnmin+Math.max( m, n ),
+                            m*n + 2*mnmin + 4*n) );
+    
+                for (imode = 1; imode <= ntypes; imode++) {
+                   if (!dotype[imode-1]) {
+                	   continue;
+                   }
+    
+                  // Do for each type of matrix
+                      // 1:  zero matrix
+                      // 2:  one small singular value
+                      // 3:  geometric distribution of singular values
+                      // 4:  first n/2 columns fixed
+                      // 5:  last n/2 columns fixed
+                      // 6:  every second column fixed
+    
+                   mode = imode;
+                   if (imode > 3) {
+                     mode = 1;
+                   }
+    
+                   // Generate test matrix of size m by n using
+                   // singular value distribution indicated by `mode'.
+    
+                   for (i = 0; i < n; i++) {
+                      iwork[i] = 0;
+                   }
+                   if (imode == 1) {
+                      ge.dlaset( 'F', m, n, 0.0, 0.0, COPYA, lda);
+                      for (i = 0; i < mnmin; i++) {
+                         s[i] = 0.0;
+                      }
+                   } // if (imode == 1)
+                   else { // imode != 1
+                      ge.dlatms( m, n, 'U', iseed, 'N', s,
+                                 mode, 1.0 / eps, 1.0, m, n, 'N',
+                                 COPYA, lda, work, info);
+                      if (imode >= 4) {
+                         if (imode == 4) {
+                            ilow = 1;
+                            istep = 1;
+                            ihigh = Math.max( 1, n / 2 );
+                         }
+                         else if (imode == 5) {
+                            ilow = Math.max( 1, n / 2 );
+                            istep = 1;
+                            ihigh = n;
+                         }
+                         else if (imode == 6) {
+                            ilow = 1;
+                            istep = 2;
+                            ihigh = n;
+                         }
+                         for(i = ilow; i <= ihigh; i += istep) {
+                            iwork[i-1] = 1;
+                         }
+                      } // if (imode >= 4)
+                      dlaord( 'D', mnmin, s, 1 );
+                   } // else imode != 1
+    
+                   for (inb = 1; inb <= nnb; inb++) {
+    /*
+    *                 Do for each pair of values (NB,NX) in NBVAL and NXVAL.
+    *
+                      NB = NBVAL( INB )
+                      CALL XLAENV( 1, NB )
+                      NX = NXVAL( INB )
+                      CALL XLAENV( 3, NX )
+    *
+    *                 Get a working copy of COPYA into A and a copy of
+    *                 vector IWORK.
+    *
+                      CALL DLACPY( 'All', M, N, COPYA, LDA, A, LDA )
+                      CALL ICOPY( N, IWORK( 1 ), 1, IWORK( N+1 ), 1 )
+    *
+    *                 Compute the QR factorization with pivoting of A
+    *
+                      LW = MAX( 1, 2*N+NB*( N+1 ) )
+    *
+    *                 Compute the QP3 factorization of A
+    *
+                      SRNAMT = 'DGEQP3'
+                      CALL DGEQP3( M, N, A, LDA, IWORK( N+1 ), TAU, WORK,
+         $                         LW, INFO )
+    *
+    *                 Compute norm(svd(a) - svd(r))
+    *
+                      RESULT( 1 ) = DQRT12( M, N, A, LDA, S, WORK,
+         $                          LWORK )
+    *
+    *                 Compute norm( A*P - Q*R )
+    *
+                      RESULT( 2 ) = DQPT01( M, N, MNMIN, COPYA, A, LDA, TAU,
+         $                          IWORK( N+1 ), WORK, LWORK )
+    *
+    *                 Compute Q'*Q
+    *
+                      RESULT( 3 ) = DQRT11( M, MNMIN, A, LDA, TAU, WORK,
+         $                          LWORK )
+    *
+    *                 Print information about the tests that did not pass
+    *                 the threshold.
+    *
+                      DO 50 K = 1, NTESTS
+                         IF( RESULT( K ).GE.THRESH ) THEN
+                            IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
+         $                     CALL ALAHD( NOUT, PATH )
+                            WRITE( NOUT, FMT = 9999 )'DGEQP3', M, N, NB,
+         $                     IMODE, K, RESULT( K )
+                            NFAIL = NFAIL + 1
+                         END IF
+       50             CONTINUE
+                      NRUN = NRUN + NTESTS
+    */
+                   } // for (inb = 1; inb <= nnb; inb++)
+                } // for (imode = 1; imode <= ntypes; imode++)
+             } // for (in = 1; in <= nn; in++)
+          } // for (im = 1; im <= nm; im++)
+    /*
+    *     Print a summary of the results.
+    *
+          CALL ALASUM( PATH, NOUT, NFAIL, NRUN, NERRS )
+    *
+     9999 FORMAT( 1X, A, ' M =', I5, ', N =', I5, ', NB =', I4, ', type ',
+         $      I2, ', test ', I2, ', ratio =', G12.5 )
+    */
+          } // dchkq3
+
     	
     	/*> \brief \b DGEQP3
         *
@@ -204,6 +582,7 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
               double             vn2[];
               double             auxv[];
               double             F[][];
+              double             work2[];
         /*     ..
         *     .. External Subroutines ..
               EXTERNAL           DGEQRF, DLAQP2, DLAQPS, DORMQR, DSWAP, XERBLA
@@ -452,9 +831,48 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
         
         
                  if (j <= minmn ) {
-             //       DLAQP2( M, N-J+1, J-1, A( 1, J ), LDA, JPVT( J ),
-             //                  TAU( J ), WORK( J ), WORK( N+J ),
-             //                   WORK( 2*N+1 ) )
+                	 Ainout = new double[m][n-j+1];
+                     for (i = 0; i < m; i++) {
+                  	   for (k = 0; k < n-j+1; k++) {
+                  		   Ainout[i][k] = A[i][j-1+k];
+                  	   }
+                     }
+                     jpvtinout = new int[n-j+1];
+                     for (i = 0; i < n-j+1; i++) {
+                         jpvtinout[i] = jpvt[j-1+i];
+                     }
+                     tauout = new double[Math.min(m,n-j+1)];
+                     vn1 = new double[n-j+1];
+                     for (i = 0; i < n-j+1; i++) {
+                  	   vn1[i] = work[j-1+i];
+                     }
+                     vn2 = new double[n-j+1];
+                     for (i = 0; i < n-j+1; i++) {
+                  	   vn2[i] = work[n+j-1+i];
+                     }
+                     work2 = new double[n-j+1];
+                    dlaqp2( m, n-j+1, j-1, Ainout, m, jpvtinout,
+                               tauout, vn1, vn2, work2);
+                    for (i = 0; i < m; i++) {
+                 	   for (k = 0; k < n-j+1; k++) {
+                 		   A[i][j-1+k] = Ainout[i][k];
+                 	   }
+                    }
+                    for (i = 0; i < n-j+1; i++) {
+                        jpvt[j-1+i] = jpvtinout[i];
+                    }
+                    for (i = 0; i < Math.min(m,n-j+1); i++) {
+                    	tau[j-1+i] = tauout[i];
+                    }
+                    for (i = 0; i < n-j+1; i++) {
+                 	   work[j-1+i] = vn1[i];
+                    }
+                    for (i = 0; i < n-j+1; i++) {
+                 	   work[n+j-1+i] = vn2[i];
+                    }
+                    for (i = 0; i < n-j+1; i++) {
+                    	work[2*n + i] = work2[i];
+                    }
                  } // if (j <= minmn )
         
               } // if (nfxd < minmn)
@@ -1098,10 +1516,10 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
            *> \endhtmlonly
            *
            *  =====================================================================
-           *
-                 SUBROUTINE DLAQP2( M, N, OFFSET, A, LDA, JPVT, TAU, VN1, VN2,
-                $                   WORK )
-           *
+           */
+                 private void dlaqp2(int m, int n, int offset, double A[][], int lda, 
+                		 int jpvt[], double tau[], double vn1[], double vn2[], double work[]) {
+           /*
            *  -- LAPACK auxiliary routine (version 3.7.0) --
            *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
            *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
@@ -1123,9 +1541,16 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                  PARAMETER          ( ZERO = 0.0D+0, ONE = 1.0D+0 )
            *     ..
            *     .. Local Scalars ..
-                 INTEGER            I, ITEMP, J, MN, OFFPI, PVT
-                 DOUBLE PRECISION   AII, TEMP, TEMP2, TOL3Z
-           *     ..
+           */     
+                 int            i, itemp, j, mn, offpi, pvt,k;
+                 double   aii, temp, temp2, tol3z;
+                 double   alpha[] = new double[1];
+                 double   x[];
+                 double   tauone[] = new double[1];
+                 double   v[];
+                 double   C[][];
+                 double   ratio;
+           /*     ..
            *     .. External Subroutines ..
                  EXTERNAL           DLARF, DLARFG, DSWAP
            *     ..
@@ -1138,80 +1563,214 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                  EXTERNAL           IDAMAX, DLAMCH, DNRM2
            *     ..
            *     .. Executable Statements ..
-           *
-                 MN = MIN( M-OFFSET, N )
-                 TOL3Z = SQRT(DLAMCH('Epsilon'))
-           *
-           *     Compute factorization.
-           *
-                 DO 20 I = 1, MN
-           *
-                    OFFPI = OFFSET + I
-           *
-           *        Determine ith pivot column and swap if necessary.
-           *
-                    PVT = ( I-1 ) + IDAMAX( N-I+1, VN1( I ), 1 )
-           *
-                    IF( PVT.NE.I ) THEN
-                       CALL DSWAP( M, A( 1, PVT ), 1, A( 1, I ), 1 )
-                       ITEMP = JPVT( PVT )
-                       JPVT( PVT ) = JPVT( I )
-                       JPVT( I ) = ITEMP
-                       VN1( PVT ) = VN1( I )
-                       VN2( PVT ) = VN2( I )
-                    END IF
-           *
-           *        Generate elementary reflector H(i).
-           *
-                    IF( OFFPI.LT.M ) THEN
-                       CALL DLARFG( M-OFFPI+1, A( OFFPI, I ), A( OFFPI+1, I ), 1,
-                $                   TAU( I ) )
-                    ELSE
-                       CALL DLARFG( 1, A( M, I ), A( M, I ), 1, TAU( I ) )
-                    END IF
-           *
-                    IF( I.LT.N ) THEN
-           *
-           *           Apply H(i)**T to A(offset+i:m,i+1:n) from the left.
-           *
-                       AII = A( OFFPI, I )
-                       A( OFFPI, I ) = ONE
-                       CALL DLARF( 'Left', M-OFFPI+1, N-I, A( OFFPI, I ), 1,
-                $                  TAU( I ), A( OFFPI, I+1 ), LDA, WORK( 1 ) )
-                       A( OFFPI, I ) = AII
-                    END IF
-           *
-           *        Update partial column norms.
-           *
-                    DO 10 J = I + 1, N
-                       IF( VN1( J ).NE.ZERO ) THEN
-           *
-           *              NOTE: The following 4 lines follow from the analysis in
-           *              Lapack Working Note 176.
-           *
-                          TEMP = ONE - ( ABS( A( OFFPI, J ) ) / VN1( J ) )**2
-                          TEMP = MAX( TEMP, ZERO )
-                          TEMP2 = TEMP*( VN1( J ) / VN2( J ) )**2
-                          IF( TEMP2 .LE. TOL3Z ) THEN
-                             IF( OFFPI.LT.M ) THEN
-                                VN1( J ) = DNRM2( M-OFFPI, A( OFFPI+1, J ), 1 )
-                                VN2( J ) = VN1( J )
-                             ELSE
-                                VN1( J ) = ZERO
-                                VN2( J ) = ZERO
-                             END IF
-                          ELSE
-                             VN1( J ) = VN1( J )*SQRT( TEMP )
-                          END IF
-                       END IF
-              10    CONTINUE
-           *
-              20 CONTINUE
-           *
-                 RETURN
-           *
-           *     End of DLAQP2
-           *
-                 END*/
-
+           */
+                 mn = Math.min( m-offset, n);
+                 tol3z = Math.sqrt(ge.dlamch('E'));
+           
+           //    Compute factorization.
+           
+                 for (i = 1; i <= mn; i++) {
+           
+                    offpi = offset + i;
+           
+           //       Determine ith pivot column and swap if necessary.
+                    
+                    int maxindex = -1;
+                    double maxabsval = -Double.MAX_VALUE;
+                    for (j = 0; j < n-i+1; j++) {
+                 	   if (Math.abs(vn1[i-1+j]) > maxabsval) {
+                 		   maxabsval = Math.abs(vn1[i-1+j]);
+                 		   maxindex = j+1;
+                 	   }
+                    }
+                    pvt = (i-1) + maxindex;
+                    if (pvt != i) {
+                 	  for (j = 0; j < m; j++) {
+                 		  temp = A[j][pvt-1];
+                 		  A[j][pvt-1] = A[j][i-1];
+                 		  A[j][i-1] = temp;
+                 	  }
+                      itemp = jpvt[pvt-1];
+                      jpvt[pvt-1] = jpvt[i-1];
+                      jpvt[i-1] = itemp;
+                      vn1[pvt-1] = vn1[i-1];
+                      vn2[pvt-1] = vn2[i-1];
+                    } // if (pvt != i)
+           
+           
+           //       Generate elementary reflector H(i).
+           
+                    if (offpi < m) {
+                       alpha[0] = A[offpi-1][i-1];
+                       x = new double[m-offpi];
+                       for (j = 0; j < m-offpi; j++) {
+                    	   x[j] = A[offpi+j][i-1];
+                       }
+                       ge.dlarfg(m-offpi+1, alpha, x, 1, tauone);
+                       A[offpi-1][i-1] = alpha[0];
+                       for (j = 0; j < m-offpi; j++) {
+                    	   A[offpi+j][i-1] = x[j];
+                       }
+                       tau[i-1] = tauone[0];
+                    }
+                    else {
+                      tau[i-1] = 0.0;
+                    }
+           
+                    if (i < n) {
+           
+           //          Apply H(i)**T to A(offset+i:m,i+1:n) from the left.
+           
+                       aii = A[offpi-1][i-1];
+                       A[offpi-1][i-1] = 1.0;
+                       v = new double[m-offpi+1];
+                       for (j = 0; j < m-offpi+1; j++) {
+                    	   v[j] = A[offpi-1+j][i-1];
+                       }
+                       C = new double[m-offpi+1][n-i];
+                       for (j = 0; j < m-offpi+1; j++) {
+                    	   for (k = 0; k < n-i; k++) {
+                    		   C[j][k] = A[offpi-1+j][i+k];
+                    	   }
+                       }
+                       ge.dlarf( 'L', m-offpi+1, n-i, v, 1,
+                                 tau[i-1], C, m-offpi+1, work);
+                       for (j = 0; j < m-offpi+1; j++) {
+                    	   for (k = 0; k < n-i; k++) {
+                    		   A[offpi-1+j][i+k] = C[j][k];
+                    	   }
+                       }
+                       A[offpi-1][i-1] = aii;
+                    } // if (i < n)
+           
+           //       Update partial column norms.
+           
+                    for (j = i + 1; j <= n; j++) {
+                       if( vn1[j-1] != 0.0) {
+           
+           //             NOTE: The following 4 lines follow from the analysis in
+           //             Lapack Working Note 176.
+           
+                          ratio = Math.abs(A[offpi-1][j-1])/vn1[j-1];
+                          temp = 1.0 - ratio * ratio;
+                          temp = Math.max(temp,0.0);
+                          ratio = vn1[j-1]/vn2[j-1];
+                          temp2 = temp * ratio * ratio;
+                          if (temp2 <= tol3z) {
+                             if (offpi < m) {
+                            	x = new double[m-offpi];
+                            	for (k = 0; k < m-offpi; k++) {
+                            		x[k] = A[offpi+k][j-1];
+                            	}
+                                vn1[j-1] = ge.dnrm2(m-offpi, x, 1 );
+                                vn2[j-1] = vn1[j-1];
+                             } // if (offpi < m)
+                             else {
+                                vn1[j-1] = 0.0;
+                                vn2[j-1] = 0.0;
+                             }
+                          } // if (temp2 <= tol3z) 
+                          else {
+                             vn1[j-1] = vn1[j-1]*Math.sqrt(temp);
+                          }
+                       } // if( vn1[j-1] != 0.0)
+                    } // for (j = i + 1; j <= n; j++)
+           
+                 } // for (i = 1; i <= mn; i++)
+           
+                 return;
+           
+           } // dlaqp2
+                 
+                 /** This is a port of version 3.1 LAPACK auxiliary routine DLAORD.
+                  *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+                  *     November 2006
+                  *
+                  *     .. Scalar Arguments ..
+                        CHARACTER          JOB
+                        INTEGER            INCX, N
+                  *     ..
+                  *     .. Array Arguments ..
+                        DOUBLE PRECISION   X( * )
+                  *     ..
+                  *
+                  *  Purpose
+                  *  =======
+                  *
+                  *  DLAORD sorts the elements of a vector x in increasing or decreasing
+                  *  order.
+                  *
+                  *  Arguments
+                  *  =========
+                  *
+                  *  JOB     (input) CHARACTER
+                  *          = 'I':  Sort in increasing order
+                  *          = 'D':  Sort in decreasing order
+                  *
+                  *  N       (input) INTEGER
+                  *          The length of the vector X.
+                  *
+                  *  X       (input/output) DOUBLE PRECISION array, dimension
+                  *                         (1+(N-1)*INCX)
+                  *          On entry, the vector of length n to be sorted.
+                  *          On exit, the vector x is sorted in the prescribed order.
+                  *
+                  *  INCX    (input) INTEGER
+                  *          The spacing between successive elements of X.  INCX >= 0.
+                  */
+                  private void dlaord(char job, int n, double[] x, int incx) {
+                      int i;
+                      int inc;
+                      int ix;
+                      int ixnext;
+                      double temp;
+                      
+                      inc = Math.abs(incx);
+                      if ((job == 'I') || (job == 'i')) {
+                          // Sort in increasing order
+                          loop1:
+                          for (i = 2; i <= n; i++) {
+                              ix = 1 + (i-1)*inc;
+                              do {
+                                  if (ix == 1) {
+                                      continue loop1;
+                                  }
+                                  ixnext = ix - inc;
+                                  if (x[ix-1] > x[ixnext-1]) {
+                                      continue loop1;
+                                  }
+                                  else {
+                                      temp = x[ix-1];
+                                      x[ix-1] = x[ixnext-1];
+                                      x[ixnext-1] = temp;
+                                  }
+                                  ix = ixnext;
+                              } while (true);
+                          } // for (i = 2; i <= n; i++)
+                      } // if ((job == 'I) || (job == 'i))
+                      else if ((job == 'D') || (job == 'd')) {
+                          // Sort inn decreasing order
+                          loop2:
+                          for (i = 2; i <= n; i++) {
+                              ix = 1 + (i-1)*inc;
+                              do {
+                                  if (ix == 1) {
+                                      continue loop2;
+                                  }
+                                  ixnext = ix - inc;
+                                  if (x[ix-1] < x[ixnext-1]) {
+                                      continue loop2;
+                                  }
+                                  else {
+                                      temp = x[ix-1];
+                                      x[ix-1] = x[ixnext-1];
+                                      x[ixnext-1] = temp;
+                                  }
+                                  ix = ixnext;
+                              } while (true);    
+                          } // for (i = 2; i <= n; i++)
+                      } // else if ((job == 'D') || (job == 'd'))
+                      return;
+                  } // dlaord
+          
 }
