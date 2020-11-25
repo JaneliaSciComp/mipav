@@ -48,7 +48,7 @@ import gov.nih.mipav.view.ViewUserInterface;
  * </p>
  * 
  * <p>
- * dckkqr.test() tests dgeqrf, dorgqr, and dormqr. All 30744 tests run passed the threshold.
+ * dchkqr.test() tests dgeqrf, dorgqr, and dormqr. All 30744 tests run passed the threshold.
  * </p>
  * 
  * Running 8 self-tests: if (runTest) { GeneralizedEigenvalue ge = new GeneralizedEigenvalue(); //ge.dchkgg_test();
