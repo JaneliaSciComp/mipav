@@ -5,6 +5,7 @@ import gov.nih.mipav.view.*;
 
 public class GeneralizedEigenvalue2 implements java.io.Serializable {
     GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    GeneralizedInverse2 gi2 = new GeneralizedInverse2();
     
     public GeneralizedEigenvalue2() {
     	
@@ -213,7 +214,11 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
           int ihigh = 0;
           int istep = 0;
           int inb;
-          /*INTEGER            K, LW, NB, NX
+          int nb;
+          int nx;
+          int iwork2[];
+          int lw;
+          /*INTEGER            K
     *     ..
     *     .. External Functions ..
           DOUBLE PRECISION   DLAMCH, DQPT01, DQRT11, DQRT12
@@ -284,7 +289,9 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                    // singular value distribution indicated by `mode'.
     
                    for (i = 0; i < n; i++) {
-                      iwork[i] = 0;
+                      //iwork[i] = 0;
+                	  // Set JPVT[j] = -1 for no pivoting
+                	   iwork[i] = -1;
                    }
                    if (imode == 1) {
                       ge.dlaset( 'F', m, n, 0.0, 0.0, COPYA, lda);
@@ -316,46 +323,48 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                             iwork[i-1] = 1;
                          }
                       } // if (imode >= 4)
-                      dlaord( 'D', mnmin, s, 1 );
+                      gi2.dlaord( 'D', mnmin, s, 1 );
                    } // else imode != 1
     
                    for (inb = 1; inb <= nnb; inb++) {
+    
+                      // Do for each pair of values (NB,NX) in NBVAL and NXVAL.
+    
+                      nb = nbval[inb-1];
+                      ge.xlaenv( 1, nb);
+                      nx = nxval[inb-1];
+                      ge.xlaenv( 3, nx);
+    
+                      // Get a working copy of COPYA into A and a copy of
+                      // vector IWORK.
+    
+                      ge.dlacpy( 'A', m, n, COPYA, lda, A, lda);
+                      iwork2 = new int[n];
+                      for (i = 0; i < n; i++) {
+                    	  iwork2[i] = iwork[i];
+                      }
+         
+    
+                      // Compute the QR factorization with pivoting of A
+    
+                      lw = Math.max( 1, 2*n+nb*( n+1 ) );
+    
+                      // Compute the QP3 factorization of A
+    
+                    
+                      dgeqp3( m, n, A, lda, iwork2, tau, work, lw, info);
+    
+                      // Compute norm(svd(a) - svd(r))
+    
+                      result[0] = dqrt12( m, n, A, lda, s, work, lwork);
+    
+                      // Compute norm( A*P - Q*R )
+    
+                      result[1] = dqpt01( m, n, mnmin, COPYA, A, lda, tau,
+                                   iwork2, work, lwork);
+    
+                      // Compute Q'*Q
     /*
-    *                 Do for each pair of values (NB,NX) in NBVAL and NXVAL.
-    *
-                      NB = NBVAL( INB )
-                      CALL XLAENV( 1, NB )
-                      NX = NXVAL( INB )
-                      CALL XLAENV( 3, NX )
-    *
-    *                 Get a working copy of COPYA into A and a copy of
-    *                 vector IWORK.
-    *
-                      CALL DLACPY( 'All', M, N, COPYA, LDA, A, LDA )
-                      CALL ICOPY( N, IWORK( 1 ), 1, IWORK( N+1 ), 1 )
-    *
-    *                 Compute the QR factorization with pivoting of A
-    *
-                      LW = MAX( 1, 2*N+NB*( N+1 ) )
-    *
-    *                 Compute the QP3 factorization of A
-    *
-                      SRNAMT = 'DGEQP3'
-                      CALL DGEQP3( M, N, A, LDA, IWORK( N+1 ), TAU, WORK,
-         $                         LW, INFO )
-    *
-    *                 Compute norm(svd(a) - svd(r))
-    *
-                      RESULT( 1 ) = DQRT12( M, N, A, LDA, S, WORK,
-         $                          LWORK )
-    *
-    *                 Compute norm( A*P - Q*R )
-    *
-                      RESULT( 2 ) = DQPT01( M, N, MNMIN, COPYA, A, LDA, TAU,
-         $                          IWORK( N+1 ), WORK, LWORK )
-    *
-    *                 Compute Q'*Q
-    *
                       RESULT( 3 ) = DQRT11( M, MNMIN, A, LDA, TAU, WORK,
          $                          LWORK )
     *
@@ -371,8 +380,8 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                             NFAIL = NFAIL + 1
                          END IF
        50             CONTINUE
-                      NRUN = NRUN + NTESTS
-    */
+                      NRUN = NRUN + NTESTS*/
+    
                    } // for (inb = 1; inb <= nnb; inb++)
                 } // for (imode = 1; imode <= ntypes; imode++)
              } // for (in = 1; in <= nn; in++)
@@ -386,6 +395,528 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
          $      I2, ', test ', I2, ', ratio =', G12.5 )
     */
           } // dchkq3
+          
+      /*> \brief \b DQRT12
+      *
+      *  =========== DOCUMENTATION ===========
+      *
+      * Online html documentation available at
+      *            http://www.netlib.org/lapack/explore-html/
+      *
+      *  Definition:
+      *  ===========
+      *
+      *       DOUBLE PRECISION FUNCTION DQRT12( M, N, A, LDA, S, WORK, LWORK )
+      *
+      *       .. Scalar Arguments ..
+      *       INTEGER            LDA, LWORK, M, N
+      *       ..
+      *       .. Array Arguments ..
+      *       DOUBLE PRECISION   A( LDA, * ), S( * ), WORK( LWORK )
+      *       ..
+      *
+      *
+      *> \par Purpose:
+      *  =============
+      *>
+      *> \verbatim
+      *>
+      *> DQRT12 computes the singular values `svlues' of the upper trapezoid
+      *> of A(1:M,1:N) and returns the ratio
+      *>
+      *>      || s - svlues||/(||svlues||*eps*max(M,N))
+      *> \endverbatim
+      *
+      *  Arguments:
+      *  ==========
+      *
+      *> \param[in] M
+      *> \verbatim
+      *>          M is INTEGER
+      *>          The number of rows of the matrix A.
+      *> \endverbatim
+      *>
+      *> \param[in] N
+      *> \verbatim
+      *>          N is INTEGER
+      *>          The number of columns of the matrix A.
+      *> \endverbatim
+      *>
+      *> \param[in] A
+      *> \verbatim
+      *>          A is DOUBLE PRECISION array, dimension (LDA,N)
+      *>          The M-by-N matrix A. Only the upper trapezoid is referenced.
+      *> \endverbatim
+      *>
+      *> \param[in] LDA
+      *> \verbatim
+      *>          LDA is INTEGER
+      *>          The leading dimension of the array A.
+      *> \endverbatim
+      *>
+      *> \param[in] S
+      *> \verbatim
+      *>          S is DOUBLE PRECISION array, dimension (min(M,N))
+      *>          The singular values of the matrix A.
+      *> \endverbatim
+      *>
+      *> \param[out] WORK
+      *> \verbatim
+      *>          WORK is DOUBLE PRECISION array, dimension (LWORK)
+      *> \endverbatim
+      *>
+      *> \param[in] LWORK
+      *> \verbatim
+      *>          LWORK is INTEGER
+      *>          The length of the array WORK. LWORK >= max(M*N + 4*min(M,N) +
+      *>          max(M,N), M*N+2*MIN( M, N )+4*N).
+      *> \endverbatim
+      *
+      *  Authors:
+      *  ========
+      *
+      *> \author Univ. of Tennessee
+      *> \author Univ. of California Berkeley
+      *> \author Univ. of Colorado Denver
+      *> \author NAG Ltd.
+      *
+      *> \date December 2016
+      *
+      *> \ingroup double_lin
+      *
+      *  =====================================================================
+      */  
+            private double dqrt12(int m, int n, double A[][], int lda,
+            		double s[], double work[], int lwork) {
+      /*
+      *  -- LAPACK test routine (version 3.7.0) --
+      *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+      *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+      *     December 2016
+      *
+      *     .. Scalar Arguments ..
+            INTEGER            LDA, LWORK, M, N
+      *     ..
+      *     .. Array Arguments ..
+            DOUBLE PRECISION   A( LDA, * ), S( * ), WORK( LWORK )
+      *     ..
+      *
+      *  =====================================================================
+      *
+      *     .. Parameters ..
+            DOUBLE PRECISION   ZERO, ONE
+            PARAMETER          ( ZERO = 0.0D0, ONE = 1.0D0 )
+      *     ..
+      *     .. Local Scalars ..
+      */
+            int info[] = new int[1];
+            double dummy[] = new double[1];
+            double DUM[][] = new double[1][1];
+            double smlnum[] = new double[1];
+            double bignum[] = new double[1];
+            double W[][];
+            int            i, iscl, j, mn;
+            double   anrm, nrmsvl;
+            double answer;
+            double d[];
+            double D[][];
+            double e[];
+            double tauq[];
+            double taup[];
+            double workspace[];
+            double workspace2[];
+            double abssum;
+      /*     ..
+      *     .. External Functions ..
+            DOUBLE PRECISION   DASUM, DLAMCH, DLANGE, DNRM2
+            EXTERNAL           DASUM, DLAMCH, DLANGE, DNRM2
+      *     ..
+      *     .. External Subroutines ..
+            EXTERNAL           DAXPY, DBDSQR, DGEBD2, DLABAD, DLASCL, DLASET,
+           $                   XERBLA
+      *     ..
+      *     .. Intrinsic Functions ..
+            INTRINSIC          DBLE, MAX, MIN
+      *     ..
+      *     .. Executable Statements ..
+      */
+            answer = 0.0;
+      
+            // Test that enough workspace is supplied
+      
+            if (lwork < Math.max( m*n+4*Math.min( m, n )+Math.max( m, n ),
+                        m*n+2*Math.min( m, n )+4*n) ) {
+               MipavUtil.displayError("workspace is too small in dqrt12");
+               return answer;
+            }
+      
+            // Quick return if possible
+      
+            mn = Math.min( m, n);
+            if (mn <= 0) {
+                return answer;
+            }
+      
+            nrmsvl = ge.dnrm2( mn, s, 1 );
+      
+            // Copy upper triangle of A into work
+      
+            for (i = 0; i < m*n; i++) {
+            	work[i] = 0;
+            }
+            for (j = 1; j <= n; j++) {
+               for (i = 1; i <= Math.min( j, m ); i++) {
+                  work[( j-1 )*m+i-1 ] = A[i-1][j-1];
+               }
+            }
+      
+            // Get machine parameters
+      
+            smlnum[0] = ge.dlamch( 'S' ) / ge.dlamch( 'P' );
+            bignum[0] = 1.0 / smlnum[0];
+            ge.dlabad(smlnum, bignum);
+      
+            // Scale work if max entry outside range [SMLNUM,BIGNUM]
+      
+            W = new double[m][n];
+            for (j = 1; j <= n; j++) {
+                for (i = 1; i <= m; i++) {
+                   W[i-1][j-1] = work[( j-1 )*m+i-1 ];
+                }
+             }
+            anrm = ge.dlange( 'M', m, n, W, m, dummy);
+            iscl = 0;
+            if ((anrm > 0.0) && (anrm < smlnum[0])) {
+      
+               // Scale matrix norm up to SMLNUM
+      
+               ge.dlascl( 'G', 0, 0, anrm, smlnum[0], m, n, W, m, info);
+               iscl = 1;
+            }
+            else if(anrm > bignum[0]) {
+      
+               // Scale matrix norm down to BIGNUM
+      
+               ge.dlascl( 'G', 0, 0, anrm, bignum[0], m, n, W, m, info);
+               iscl = 1;
+            }
+            for (j = 1; j <= n; j++) {
+                for (i = 1; i <= m; i++) {
+                   work[ ( j-1 )*m+i-1 ] = W[i-1][j-1];
+                }
+             }
+      
+            if (anrm != 0.0) {
+      
+               // Compute SVD of work
+               d = new double[mn];
+               e = new double[mn-1];
+               tauq = new double[mn];
+               taup = new double[mn];
+               workspace = new double[Math.max(m,n)];
+               workspace2 = new double[4*mn];
+               gi2.dgebd2( m, n, W, m, d, e,
+                           tauq, taup,
+                           workspace, info);
+               gi2.dbdsqr( 'U', mn, 0, 0, 0, d,
+                            e, DUM, mn, DUM, 1, DUM, mn,
+                            workspace2, info);
+      
+               if (iscl == 1) {
+            	  D = new double[mn][1];
+            	  for (i = 0; i < mn; i++) {
+            		  D[i][0] = d[i];
+            	  }
+                  if(anrm > bignum[0]) {
+                     ge.dlascl( 'G', 0, 0, bignum[0], anrm, mn, 1, D, mn, info);
+                  }
+                  if( anrm < smlnum[0]) {
+                     ge.dlascl( 'G', 0, 0, smlnum[0], anrm, mn, 1, D, mn, info);
+                  }
+                  for (i = 0; i < mn; i++) {
+                	  d[i] = D[i][0];
+                  }
+               } // if (iscl == 1)
+               for (i = 0; i < mn; i++) {
+             	  work[m*n + i] = d[i];
+               }
+               for (i = 0; i < mn-1; i++) {
+            	   work[m*n+mn+i] = e[i];
+               }
+            } // if (anrm != 0.0)
+            else {
+      
+               for (i = 1; i <= mn; i++) {
+                  work[ m*n+i-1 ] = 0.0;
+               }
+            }
+      
+            // Compare s and singular values of work
+      
+            d = new double[mn];
+            for (i = 0; i < mn; i++) {
+            	d[i] = work[mn+i];
+            }
+            ge.daxpy( mn, -1.0, s, 1, d, 1 );
+            abssum = 0.0;
+            for (i = 0; i < mn; i++) {
+            	work[mn+i] = d[i];
+            	abssum += Math.abs(d[i]);
+            }
+            answer = abssum /( ge.dlamch( 'E' )*(double)Math.max( m, n ) ) ;
+            if(nrmsvl != 0.0) {
+              answer = answer/nrmsvl;
+            }
+      
+            return answer;
+            } // dqrt12
+                
+        /*> \brief \b DQPT01
+        *
+        *  =========== DOCUMENTATION ===========
+        *
+        * Online html documentation available at
+        *            http://www.netlib.org/lapack/explore-html/
+        *
+        *  Definition:
+        *  ===========
+        *
+        *       DOUBLE PRECISION FUNCTION DQPT01( M, N, K, A, AF, LDA, TAU, JPVT,
+        *                        WORK, LWORK )
+        *
+        *       .. Scalar Arguments ..
+        *       INTEGER            K, LDA, LWORK, M, N
+        *       ..
+        *       .. Array Arguments ..
+        *       INTEGER            JPVT( * )
+        *       DOUBLE PRECISION   A( LDA, * ), AF( LDA, * ), TAU( * ),
+        *      $                   WORK( LWORK )
+        *       ..
+        *
+        *
+        *> \par Purpose:
+        *  =============
+        *>
+        *> \verbatim
+        *>
+        *> DQPT01 tests the QR-factorization with pivoting of a matrix A.  The
+        *> array AF contains the (possibly partial) QR-factorization of A, where
+        *> the upper triangle of AF(1:k,1:k) is a partial triangular factor,
+        *> the entries below the diagonal in the first k columns are the
+        *> Householder vectors, and the rest of AF contains a partially updated
+        *> matrix.
+        *>
+        *> This function returns ||A*P - Q*R||/(||norm(A)||*eps*M)
+        *> \endverbatim
+        *
+        *  Arguments:
+        *  ==========
+        *
+        *> \param[in] M
+        *> \verbatim
+        *>          M is INTEGER
+        *>          The number of rows of the matrices A and AF.
+        *> \endverbatim
+        *>
+        *> \param[in] N
+        *> \verbatim
+        *>          N is INTEGER
+        *>          The number of columns of the matrices A and AF.
+        *> \endverbatim
+        *>
+        *> \param[in] K
+        *> \verbatim
+        *>          K is INTEGER
+        *>          The number of columns of AF that have been reduced
+        *>          to upper triangular form.
+        *> \endverbatim
+        *>
+        *> \param[in] A
+        *> \verbatim
+        *>          A is DOUBLE PRECISION array, dimension (LDA, N)
+        *>          The original matrix A.
+        *> \endverbatim
+        *>
+        *> \param[in] AF
+        *> \verbatim
+        *>          AF is DOUBLE PRECISION array, dimension (LDA,N)
+        *>          The (possibly partial) output of DGEQPF.  The upper triangle
+        *>          of AF(1:k,1:k) is a partial triangular factor, the entries
+        *>          below the diagonal in the first k columns are the Householder
+        *>          vectors, and the rest of AF contains a partially updated
+        *>          matrix.
+        *> \endverbatim
+        *>
+        *> \param[in] LDA
+        *> \verbatim
+        *>          LDA is INTEGER
+        *>          The leading dimension of the arrays A and AF.
+        *> \endverbatim
+        *>
+        *> \param[in] TAU
+        *> \verbatim
+        *>          TAU is DOUBLE PRECISION array, dimension (K)
+        *>          Details of the Householder transformations as returned by
+        *>          DGEQPF.
+        *> \endverbatim
+        *>
+        *> \param[in] JPVT
+        *> \verbatim
+        *>          JPVT is INTEGER array, dimension (N)
+        *>          Pivot information as returned by DGEQPF.
+        *> \endverbatim
+        *>
+        *> \param[out] WORK
+        *> \verbatim
+        *>          WORK is DOUBLE PRECISION array, dimension (LWORK)
+        *> \endverbatim
+        *>
+        *> \param[in] LWORK
+        *> \verbatim
+        *>          LWORK is INTEGER
+        *>          The length of the array WORK.  LWORK >= M*N+N.
+        *> \endverbatim
+        *
+        *  Authors:
+        *  ========
+        *
+        *> \author Univ. of Tennessee
+        *> \author Univ. of California Berkeley
+        *> \author Univ. of Colorado Denver
+        *> \author NAG Ltd.
+        *
+        *> \date December 2016
+        *
+        *> \ingroup double_lin
+        *
+        *  =====================================================================
+        */  
+              private double dqpt01( int m, int n, int k, double A[][], double AF[][], 
+            		  int lda, double tau[], int jpvt[], double work[], int lwork) {
+        /*
+        *  -- LAPACK test routine (version 3.7.0) --
+        *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+        *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+        *     December 2016
+        *
+        *     .. Scalar Arguments ..
+              INTEGER            K, LDA, LWORK, M, N
+        *     ..
+        *     .. Array Arguments ..
+              INTEGER            JPVT( * )
+              DOUBLE PRECISION   A( LDA, * ), AF( LDA, * ), TAU( * ),
+             $                   WORK( LWORK )
+        *     ..
+        *
+        *  =====================================================================
+        *
+        *     .. Parameters ..
+              DOUBLE PRECISION   ZERO, ONE
+              PARAMETER          ( ZERO = 0.0D0, ONE = 1.0D0 )
+        *     ..
+        *     .. Local Scalars ..
+        */
+              double rwork[] = new double[1];
+              int info[] = new int[1];
+              int i,j;
+              double norma;
+              double answer;
+              double work2[];
+              double W[][];
+              double x[];
+              double y[];
+        /*     ..
+        *     .. External Functions ..
+              DOUBLE PRECISION   DLAMCH, DLANGE
+              EXTERNAL           DLAMCH, DLANGE
+        *     ..
+        *     .. External Subroutines ..
+              EXTERNAL           DAXPY, DCOPY, DORMQR, XERBLA
+        *     ..
+        *     .. Intrinsic Functions ..
+              INTRINSIC          DBLE, MAX, MIN
+        *     ..
+        *     .. Executable Statements ..
+        */
+              answer = 0.0;
+        
+              // Test if there is enough workspace
+        
+              if (lwork < m*n+n) {
+                 MipavUtil.displayError("Not enough workspace in dqpt01");
+                 return answer;
+              }
+        
+              // Quick return if possible
+        
+              if ((m <= 0) || (n <= 0) ) {
+                  return answer;
+              }
+        
+              norma = ge.dlange( 'O', m, n, A, lda, rwork);
+        
+              for (j = 1; j <= k; j++) {
+                 for (i = 1; i <= Math.min( j, m ); i++) {
+                    work[ ( j-1 )*m+i-1 ] = AF[i-1][j-1];
+                 }
+                 for (i = j + 1; i <= m; i++) {
+                    work[( j-1 )*m+i-1 ] = 0.0;
+                 }
+              } // for (j = 1; j <= k; j++)
+              for (j = k + 1; j <= n; j++) {
+            	 for (i = 0; i < m; i++) {
+            		 work[(j-1)*m + i] = AF[i][j-1];
+            	 }
+              }
+              W = new double[m][n];
+              for (j = 0; j < n; j++) {
+            	  for (i = 0; i < m; i++) {
+            		  W[i][j] = work[j*m+i];
+            	  }
+              }
+        
+              work2 = new double[Math.max(1,lwork-m*n)];
+              ge.dormqr( 'L', 'N', m, n, k, AF, lda, tau, W,
+                          m, work2, lwork-m*n, info);
+              for (j = 0; j < n; j++) {
+            	  for (i = 0; i < m; i++) {
+            		  work[j*m+i] = W[i][j];
+            	  }
+              }
+              for (i = 0; i < work2.length; i++) {
+            	  work[m*n + i] = work2[i];
+              }
+        
+              for (j = 0; j < n; j++) {
+        
+                 // Compare i-th column of QR and jpvt(i)-th column of A
+                 x = new double[m];
+                 y = new double[m];
+                 for (i = 0; i < m; i++) {
+                	 x[i] = A[i][jpvt[j]];
+                	 y[i] = work[j*m + i];
+                 }
+                 ge.daxpy( m, -1.0, x, 1, y,1 );
+                 for (i = 0; i < m; i++) {
+                	 work[j*m + i] = y[i];
+                 }
+              }
+        
+              for (j = 0; j < n; j++) {
+            	  for (i = 0; i < m; i++) {
+            		  W[i][j] = work[j*m+i];
+            	  }
+              }
+              answer = ge.dlange( 'O', m, n, W, m, rwork ) /(((double)( Math.max( m, n ) ))*ge.dlamch( 'E' ) );
+              if (norma != 0.0) {
+                  answer = answer / norma;
+              }
+        
+              return answer;
+              } // dqpt01
+        
+
+
 
     	
     	/*> \brief \b DGEQP3
@@ -1682,95 +2213,6 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
            
            } // dlaqp2
                  
-                 /** This is a port of version 3.1 LAPACK auxiliary routine DLAORD.
-                  *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
-                  *     November 2006
-                  *
-                  *     .. Scalar Arguments ..
-                        CHARACTER          JOB
-                        INTEGER            INCX, N
-                  *     ..
-                  *     .. Array Arguments ..
-                        DOUBLE PRECISION   X( * )
-                  *     ..
-                  *
-                  *  Purpose
-                  *  =======
-                  *
-                  *  DLAORD sorts the elements of a vector x in increasing or decreasing
-                  *  order.
-                  *
-                  *  Arguments
-                  *  =========
-                  *
-                  *  JOB     (input) CHARACTER
-                  *          = 'I':  Sort in increasing order
-                  *          = 'D':  Sort in decreasing order
-                  *
-                  *  N       (input) INTEGER
-                  *          The length of the vector X.
-                  *
-                  *  X       (input/output) DOUBLE PRECISION array, dimension
-                  *                         (1+(N-1)*INCX)
-                  *          On entry, the vector of length n to be sorted.
-                  *          On exit, the vector x is sorted in the prescribed order.
-                  *
-                  *  INCX    (input) INTEGER
-                  *          The spacing between successive elements of X.  INCX >= 0.
-                  */
-                  private void dlaord(char job, int n, double[] x, int incx) {
-                      int i;
-                      int inc;
-                      int ix;
-                      int ixnext;
-                      double temp;
-                      
-                      inc = Math.abs(incx);
-                      if ((job == 'I') || (job == 'i')) {
-                          // Sort in increasing order
-                          loop1:
-                          for (i = 2; i <= n; i++) {
-                              ix = 1 + (i-1)*inc;
-                              do {
-                                  if (ix == 1) {
-                                      continue loop1;
-                                  }
-                                  ixnext = ix - inc;
-                                  if (x[ix-1] > x[ixnext-1]) {
-                                      continue loop1;
-                                  }
-                                  else {
-                                      temp = x[ix-1];
-                                      x[ix-1] = x[ixnext-1];
-                                      x[ixnext-1] = temp;
-                                  }
-                                  ix = ixnext;
-                              } while (true);
-                          } // for (i = 2; i <= n; i++)
-                      } // if ((job == 'I) || (job == 'i))
-                      else if ((job == 'D') || (job == 'd')) {
-                          // Sort inn decreasing order
-                          loop2:
-                          for (i = 2; i <= n; i++) {
-                              ix = 1 + (i-1)*inc;
-                              do {
-                                  if (ix == 1) {
-                                      continue loop2;
-                                  }
-                                  ixnext = ix - inc;
-                                  if (x[ix-1] < x[ixnext-1]) {
-                                      continue loop2;
-                                  }
-                                  else {
-                                      temp = x[ix-1];
-                                      x[ix-1] = x[ixnext-1];
-                                      x[ixnext-1] = temp;
-                                  }
-                                  ix = ixnext;
-                              } while (true);    
-                          } // for (i = 2; i <= n; i++)
-                      } // else if ((job == 'D') || (job == 'd'))
-                      return;
-                  } // dlaord
+                 
           
 }
