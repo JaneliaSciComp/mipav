@@ -7491,7 +7491,7 @@ ib = Math.min(nb, k-i+1);
 *  the vector defining G(i).
 *
 */
-    private void dgebd2(int m, int n, double A[][], int lda, double d[], double e[], double tauq[],
+    public void dgebd2(int m, int n, double A[][], int lda, double d[], double e[], double tauq[],
                         double taup[], double work[], int info[]) {
         int i;
         double alpha[] = new double[1];
@@ -10506,7 +10506,7 @@ ib = Math.min(nb, k-i+1);
     *  INCX    (input) INTEGER
     *          The spacing between successive elements of X.  INCX >= 0.
     */
-    private void dlaord(char job, int n, double[] x, int incx) {
+    public void dlaord(char job, int n, double[] x, int incx) {
         int i;
         int inc;
         int ix;
