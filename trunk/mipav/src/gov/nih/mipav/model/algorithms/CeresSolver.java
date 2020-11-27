@@ -21,6 +21,7 @@ import java.util.concurrent.locks.Lock;
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations;
 import gov.nih.mipav.view.Preferences;
@@ -71,7 +72,8 @@ import gov.nih.mipav.view.Preferences;
 
 public abstract class CeresSolver {
 	private GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
-	private GeneralizedInverse2 ge2 = new GeneralizedInverse2();
+	private GeneralizedEigenvalue2 ge2 = new GeneralizedEigenvalue2();
+	private GeneralizedInverse2 gi2 = new GeneralizedInverse2();
 	private LinearEquations le = new LinearEquations();
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
@@ -3950,7 +3952,7 @@ public abstract class CeresSolver {
 		  int lwork = -1;
 		  double work[] = new double[1];
 		  int info[] = new int[1];
-		  ge2.dgels(trans, num_rows, num_cols, nrhs, null, num_rows,
+		  gi2.dgels(trans, num_rows, num_cols, nrhs, null, num_rows,
 		            null, num_rows, work, lwork, info);
 
 		  if (info[0] < 0) {
@@ -4005,7 +4007,7 @@ public abstract class CeresSolver {
 			  B[i][0] = rhs_and_solution[i];
 		  }
 
-		  ge2.dgels(trans, m, n, nrhs, in_lhs, lda,
+		  gi2.dgels(trans, m, n, nrhs, in_lhs, lda,
 		         B, ldb, work, work_size, info);
 		  for (i = 0; i < Math.min(rhs_and_solution.length,ldb); i++) {
 			  rhs_and_solution[i] = B[i][0];
@@ -6765,18 +6767,19 @@ public abstract class CeresSolver {
 		  int lwork = -1; // output optimal lwork in work[0]
 	      double work[] = new double[Math.max(1,lwork)];
 	      int info[] = new int[1];
-	      // dgeqrf does not have pivoting
-	      // change to dgeqp3 which has pivoting
-		  ge.dgeqrf(jacobian.num_cols(),2,basis_vectors_array,jacobian.num_cols(),tau,work,lwork,info);
+	      int jpvt[] = new int[2];
+	      jpvt[0] = -1;
+	      jpvt[1] = -1;
+		  ge2.dgeqp3(jacobian.num_cols(),2,basis_vectors_array,jacobian.num_cols(),jpvt,tau,work,lwork,info);
 		  if (info[0] < 0) {
-	    		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork = -1");
+	    		System.err.println("ge2.dgeqp3 had an illegal argument " + (-i) + " for lwork = -1");
 	    		return false;
 	      }
 	    	int optimallwork = (int)work[0];
 	    	work = new double[optimallwork];
-	    	ge.dgeqrf(jacobian.num_cols(),2,basis_vectors_array,jacobian.num_cols(),tau,work,optimallwork,info);
+	    	ge2.dgeqp3(jacobian.num_cols(),2,basis_vectors_array,jacobian.num_cols(),jpvt,tau,work,optimallwork,info);
 	    	if (info[0] < 0) {
-	    		System.err.println("ge.dgeqrf had an illegal argument " + (-i) + " for lwork " + optimallwork);
+	    		System.err.println("ge2.dgeqp3 had an illegal argument " + (-i) + " for lwork " + optimallwork);
 	    		return false;
 	    	}
 	    	lwork = -1; // output optimal lwork in work[0]
