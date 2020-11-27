@@ -6,10 +6,86 @@ import gov.nih.mipav.view.*;
 public class GeneralizedEigenvalue2 implements java.io.Serializable {
     GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
     GeneralizedInverse2 gi2 = new GeneralizedInverse2();
+    int iparms[];
     
     public GeneralizedEigenvalue2() {
     	
     }
+    
+    // In dchkq3 all 4410 tests run passed the threshold
+    /**
+     * This dchkqr_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by Univ. of
+     * Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from the test data file
+     * dtest.in.
+     */
+    public void dchkq3_test() {
+
+        // Number of values of m
+        final int nm = 7;
+
+        // Values of m (row dimension)
+        // dtest.in uses 50 rather than 16
+        final int[] mval = new int[] {0, 1, 2, 3, 5, 10, 16};
+
+        // Number of values of n
+        final int nn = 7;
+
+        // Values of n (column dimension)
+        // dtest.in uses 50 rather than 16
+        final int[] nval = new int[] {0, 1, 2, 3, 5, 10, 16};
+
+        // Values of nrhs (number of right hand sides)
+        // dchkaa uses only 2. dtest.in uses 1, 2, 15.
+        // Since dchkr only accepts nrhs = nsval[0] use only 2.
+        final int[] nsval = new int[] {2};
+
+        // Number of values of nb
+        final int nnb = 5;
+
+        // Values of nb (the blocksize)
+        final int nbval[] = new int[] {1, 3, 3, 3, 20};
+
+        // Values of nx (crossover point)
+        // There are nnb values of nx.
+        final int nxval[] = new int[] {1, 0, 5, 9, 1};
+
+        // Threshold value of test ratio
+        // dchkaa has 20.0, dtest.in has 30.0
+        final double thresh = 20.0;
+
+        // The maximum allowable value for n
+        final int nmax = 132;
+
+        final int ntypes = 6;
+        //final int nrhs = nsval[0];
+        final boolean dotype[] = new boolean[ntypes];
+        final double A[][] = new double[nmax][nmax];
+        final double AF[][] = new double[nmax][nmax];
+        double s[] = new double[nmax];
+        final double tau[] = new double[nmax];
+        final double work[] = new double[nmax * nmax];
+        final int iwork[] = new int[nmax];
+        iparms = new int[11];
+        int i;
+        double eps;
+
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
+
+        // Output the machine dependent constants
+        eps = ge.dlamch('U');
+        Preferences.debug("Underflow threshold = " + eps + "\n");
+        eps = ge.dlamch('O');
+        Preferences.debug("Overflow threshold = " + eps + "\n");
+        eps = ge.dlamch('E');
+        Preferences.debug("Precision = " + eps + "\n");
+
+        dchkq3(dotype, nm, mval, nn, nval, nnb, nbval, nxval,
+        	     thresh, A, AF, s,
+        	     tau, work, iwork);
+    } // dchkq3_test
+
     
     /*> \brief \b DCHKQ3
     *
@@ -191,7 +267,7 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
           final int ntypes = 6;
           final int ntests = 3;
           final int iseedy[] = new int[] {1988, 1989, 1990, 1991};
-          String path;
+          //String path;
           int nrun;
           int nfail;
           int nerrs;
@@ -199,7 +275,6 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
           int iseed[] = new int[4];
           double eps;
           double result[] = new double[ntests];
-          int infot;
           int im;
           int m;
           int lda;
@@ -218,8 +293,8 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
           int nx;
           int iwork2[];
           int lw;
-          /*INTEGER            K
-    *     ..
+          int k;
+    /*     ..
     *     .. External Functions ..
           DOUBLE PRECISION   DLAMCH, DQPT01, DQRT11, DQRT12
           EXTERNAL           DLAMCH, DQPT01, DQRT11, DQRT12
@@ -241,7 +316,7 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
           // COMMON             / SRNAMC / SRNAMT*/
   
           // Initialize constants and the random number seed.
-          path = new String("DQ3"); // D for double precision
+          //path = new String("DQ3"); // D for double precision
           nrun = 0;
           nfail = 0;
           nerrs = 0;
@@ -249,7 +324,6 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
              iseed[i] = iseedy[i];
           }
           eps = ge.dlamch( 'E' );
-          infot = 0;
     
           for (im = 1; im <= nm; im++) {
     
@@ -331,9 +405,9 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                       // Do for each pair of values (NB,NX) in NBVAL and NXVAL.
     
                       nb = nbval[inb-1];
-                      ge.xlaenv( 1, nb);
+                      xlaenv( 1, nb);
                       nx = nxval[inb-1];
-                      ge.xlaenv( 3, nx);
+                      xlaenv( 3, nx);
     
                       // Get a working copy of COPYA into A and a copy of
                       // vector IWORK.
@@ -364,36 +438,44 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                                    iwork2, work, lwork);
     
                       // Compute Q'*Q
-    /*
-                      RESULT( 3 ) = DQRT11( M, MNMIN, A, LDA, TAU, WORK,
-         $                          LWORK )
-    *
-    *                 Print information about the tests that did not pass
-    *                 the threshold.
-    *
-                      DO 50 K = 1, NTESTS
-                         IF( RESULT( K ).GE.THRESH ) THEN
-                            IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
-         $                     CALL ALAHD( NOUT, PATH )
-                            WRITE( NOUT, FMT = 9999 )'DGEQP3', M, N, NB,
-         $                     IMODE, K, RESULT( K )
-                            NFAIL = NFAIL + 1
-                         END IF
-       50             CONTINUE
-                      NRUN = NRUN + NTESTS*/
+    
+                      result[2] = dqrt11( m, mnmin, A, lda, tau, work, lwork);
+    
+                      // Print information about the tests that did not pass
+                      // the threshold.
+    
+                      for (k = 1; k <= ntests; k++) {
+                         if (result[k-1] >= thresh) {
+                            if((nfail == 0) && (nerrs == 0) ) {
+                              //CALL ALAHD( NOUT, PATH )
+                              // path DQ3 not found in ALAHD 
+                              Preferences.debug("1. Zero matrix\n", Preferences.DEBUG_ALGORITHM);
+                              Preferences.debug("2. One small singular value\n", Preferences.DEBUG_ALGORITHM);
+                              Preferences.debug("3. Geometric distribution of singular values\n", Preferences.DEBUG_ALGORITHM);
+                              Preferences.debug("4. First n/2 columns fixed\n", Preferences.DEBUG_ALGORITHM);
+                              Preferences.debug("5. Last n/2 columns fixed\n", Preferences.DEBUG_ALGORITHM);
+                              Preferences.debug("6. Every second column fixed\n", Preferences.DEBUG_ALGORITHM);
+                            } // if((nfail == 0) && (nerrs == 0) ) 
+                            Preferences.debug("dgeqp3 m = " + m + " n =" + n + " nb = " + nb + '\n', Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("type = " + imode + " test = " + k + " ratio = " + result[k-1] + "\n",
+                            		Preferences.DEBUG_ALGORITHM);
+                            nfail = nfail + 1;
+                         } // if (result[k-1] >= thresh)
+                      } // for (k = 1; k <= ntests; k++)
+                      nrun = nrun + ntests;
     
                    } // for (inb = 1; inb <= nnb; inb++)
                 } // for (imode = 1; imode <= ntypes; imode++)
              } // for (in = 1; in <= nn; in++)
           } // for (im = 1; im <= nm; im++)
-    /*
-    *     Print a summary of the results.
-    *
-          CALL ALASUM( PATH, NOUT, NFAIL, NRUN, NERRS )
-    *
-     9999 FORMAT( 1X, A, ' M =', I5, ', N =', I5, ', NB =', I4, ', type ',
-         $      I2, ', test ', I2, ', ratio =', G12.5 )
-    */
+    
+          // Print a summary of the results.
+          if (nfail > 0) {
+              Preferences.debug("In dchkq3 " + nfail + " out of " + nrun + " tests failed to pass the threshold\n");
+          } else {
+              Preferences.debug("In dchkq3 all " + nrun + " tests run passed the threshold\n");
+          }
+ 
           } // dchkq3
           
       /*> \brief \b DQRT12
@@ -579,9 +661,9 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
             // Scale work if max entry outside range [SMLNUM,BIGNUM]
       
             W = new double[m][n];
-            for (j = 1; j <= n; j++) {
-                for (i = 1; i <= m; i++) {
-                   W[i-1][j-1] = work[( j-1 )*m+i-1 ];
+            for (j = 0; j < n; j++) {
+                for (i = 0; i < m; i++) {
+                   W[i][j] = work[j*m+i];
                 }
              }
             anrm = ge.dlange( 'M', m, n, W, m, dummy);
@@ -600,9 +682,9 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                ge.dlascl( 'G', 0, 0, anrm, bignum[0], m, n, W, m, info);
                iscl = 1;
             }
-            for (j = 1; j <= n; j++) {
-                for (i = 1; i <= m; i++) {
-                   work[ ( j-1 )*m+i-1 ] = W[i-1][j-1];
+            for (j = 0; j < n; j++) {
+                for (i = 0; i < m; i++) {
+                   work[j*m+i] = W[i][j];
                 }
              }
       
@@ -618,6 +700,11 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
                gi2.dgebd2( m, n, W, m, d, e,
                            tauq, taup,
                            workspace, info);
+               for (j = 0; j < n; j++) {
+                   for (i = 0; i < m; i++) {
+                      work[j*m+i] = W[i][j];
+                   }
+                }
                gi2.dbdsqr( 'U', mn, 0, 0, 0, d,
                             e, DUM, mn, DUM, 1, DUM, mn,
                             workspace2, info);
@@ -655,12 +742,12 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
       
             d = new double[mn];
             for (i = 0; i < mn; i++) {
-            	d[i] = work[mn+i];
+            	d[i] = work[m*n+i];
             }
             ge.daxpy( mn, -1.0, s, 1, d, 1 );
             abssum = 0.0;
             for (i = 0; i < mn; i++) {
-            	work[mn+i] = d[i];
+            	work[m*n+i] = d[i];
             	abssum += Math.abs(d[i]);
             }
             answer = abssum /( ge.dlamch( 'E' )*(double)Math.max( m, n ) ) ;
@@ -915,7 +1002,200 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
               return answer;
               } // dqpt01
         
-
+      /*> \brief \b DQRT11
+      *
+      *  =========== DOCUMENTATION ===========
+      *
+      * Online html documentation available at
+      *            http://www.netlib.org/lapack/explore-html/
+      *
+      *  Definition:
+      *  ===========
+      *
+      *       DOUBLE PRECISION FUNCTION DQRT11( M, K, A, LDA, TAU, WORK, LWORK )
+      *
+      *       .. Scalar Arguments ..
+      *       INTEGER            K, LDA, LWORK, M
+      *       ..
+      *       .. Array Arguments ..
+      *       DOUBLE PRECISION   A( LDA, * ), TAU( * ), WORK( LWORK )
+      *       ..
+      *
+      *
+      *> \par Purpose:
+      *  =============
+      *>
+      *> \verbatim
+      *>
+      *> DQRT11 computes the test ratio
+      *>
+      *>       || Q'*Q - I || / (eps * m)
+      *>
+      *> where the orthogonal matrix Q is represented as a product of
+      *> elementary transformations.  Each transformation has the form
+      *>
+      *>    H(k) = I - tau(k) v(k) v(k)'
+      *>
+      *> where tau(k) is stored in TAU(k) and v(k) is an m-vector of the form
+      *> [ 0 ... 0 1 x(k) ]', where x(k) is a vector of length m-k stored
+      *> in A(k+1:m,k).
+      *> \endverbatim
+      *
+      *  Arguments:
+      *  ==========
+      *
+      *> \param[in] M
+      *> \verbatim
+      *>          M is INTEGER
+      *>          The number of rows of the matrix A.
+      *> \endverbatim
+      *>
+      *> \param[in] K
+      *> \verbatim
+      *>          K is INTEGER
+      *>          The number of columns of A whose subdiagonal entries
+      *>          contain information about orthogonal transformations.
+      *> \endverbatim
+      *>
+      *> \param[in] A
+      *> \verbatim
+      *>          A is DOUBLE PRECISION array, dimension (LDA,K)
+      *>          The (possibly partial) output of a QR reduction routine.
+      *> \endverbatim
+      *>
+      *> \param[in] LDA
+      *> \verbatim
+      *>          LDA is INTEGER
+      *>          The leading dimension of the array A.
+      *> \endverbatim
+      *>
+      *> \param[in] TAU
+      *> \verbatim
+      *>          TAU is DOUBLE PRECISION array, dimension (K)
+      *>          The scaling factors tau for the elementary transformations as
+      *>          computed by the QR factorization routine.
+      *> \endverbatim
+      *>
+      *> \param[out] WORK
+      *> \verbatim
+      *>          WORK is DOUBLE PRECISION array, dimension (LWORK)
+      *> \endverbatim
+      *>
+      *> \param[in] LWORK
+      *> \verbatim
+      *>          LWORK is INTEGER
+      *>          The length of the array WORK.  LWORK >= M*M + M.
+      *> \endverbatim
+      *
+      *  Authors:
+      *  ========
+      *
+      *> \author Univ. of Tennessee
+      *> \author Univ. of California Berkeley
+      *> \author Univ. of Colorado Denver
+      *> \author NAG Ltd.
+      *
+      *> \date December 2016
+      *
+      *> \ingroup double_lin
+      *
+      *  =====================================================================
+      */  
+            private double dqrt11(int m, int k, double A[][], int lda,
+            		double tau[], double work[], int lwork) {
+      /*
+      *  -- LAPACK test routine (version 3.7.0) --
+      *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+      *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+      *     December 2016
+      *
+      *     .. Scalar Arguments ..
+            INTEGER            K, LDA, LWORK, M
+      *     ..
+      *     .. Array Arguments ..
+            DOUBLE PRECISION   A( LDA, * ), TAU( * ), WORK( LWORK )
+      *     ..
+      *
+      *  =====================================================================
+      *
+      *     .. Parameters ..
+            DOUBLE PRECISION   ZERO, ONE
+            PARAMETER          ( ZERO = 0.0D0, ONE = 1.0D0 )
+      *     ..
+      *     .. Local Scalars ..
+      */
+            int info[] = new int[1];
+            int i;
+            int j;
+            double rdummy[] = new double[1];
+            double answer;
+            double W[][];
+            double workspace[];
+      /*     ..
+      *     .. External Functions ..
+            DOUBLE PRECISION   DLAMCH, DLANGE
+            EXTERNAL           DLAMCH, DLANGE
+      *     ..
+      *     .. External Subroutines ..
+            EXTERNAL           DLASET, DORM2R, XERBLA
+      *     ..
+      *     .. Intrinsic Functions ..
+            INTRINSIC          DBLE
+      *     ..
+      *     .. Executable Statements ..
+      */
+            answer = 0.0;
+      
+            // Test for sufficient workspace
+      
+            if(lwork < m*m + m) {
+               MipavUtil.displayError("Workspace is too small in dqrt11");
+               return answer;
+            }
+      
+            // Quick return if possible
+      
+            if (m <= 0) {
+                return answer;
+            }    
+      
+            W = new double[m][m];
+            for (j = 0; j < m; j++) {
+          	  for (i = 0; i < m; i++) {
+          		  W[i][j] = work[j*m+i];
+          	  }
+            }
+            ge.dlaset( 'F', m, m, 0.0, 1.0, W, m);
+      
+            // Form Q
+            workspace = new double[m];
+            ge.dorm2r( 'L', 'N', m, m, k, A, m, tau, W,
+                        m, workspace, info);
+      
+            // Form Q'*Q
+      
+            ge.dorm2r( 'L', 'T', m, m, k, A, m, tau, W, m,
+                       workspace, info);
+            for (j = 0; j < m; j++) {
+            	  for (i = 0; i < m; i++) {
+            		  work[j*m+i] = W[i][j];
+            	  }
+              }
+      
+            for (j = 1; j <= m; j++) {
+               work[( j-1 )*m+j-1 ] = work[( j-1 )*m+j-1] - 1.0;
+            }
+      
+            for (j = 0; j < m; j++) {
+            	  for (i = 0; i < m; i++) {
+            		  W[i][j] = work[j*m+i];
+            	  }
+              }
+            answer = ge.dlange( 'O', m, m, W, m, rdummy) /
+                     ( ((double) m )*ge.dlamch( 'E' ) );
+      
+            return answer;
+            } // dqrt11
 
 
     	
@@ -2213,6 +2493,38 @@ public class GeneralizedEigenvalue2 implements java.io.Serializable {
            
            } // dlaqp2
                  
-                 
+                 /**
+                  * This is a port of version 3.1 LAPACK auxiliary routine XLAENV. Univ. of Tennessee, Univ. of California Berkeley
+                  * and NAG Ltd.. November 2006
+                  * 
+                  * .. Scalar Arguments .. INTEGER ISPEC, NVALUE ..
+                  * 
+                  * Purpose =======
+                  * 
+                  * XLAENV sets certain machine- and problem-dependent quantities which will later be retrieved by ILAENV.
+                  * 
+                  * Arguments =========
+                  * 
+                  * ISPEC (input) INTEGER Specifies the parameter to be set in the COMMON array IPARMS. = 1: the optimal blocksize;
+                  * if this value is 1, an unblocked algorithm will give the best performance. = 2: the minimum block size for which
+                  * the block routine should be used; if the usable block size is less than this value, an unblocked routine should
+                  * be used. = 3: the crossover point (in a block routine, for N less than this value, an unblocked routine should be
+                  * used) = 4: the number of shifts, used in the nonsymmetric eigenvalue routines = 5: the minimum column dimension
+                  * for blocking to be used; rectangular blocks must have dimension at least k by m, where k is given by
+                  * ILAENV(2,...) and m by ILAENV(5,...) = 6: the crossover point for the SVD (when reducing an m by n matrix to
+                  * bidiagonal form, if max(m,n)/min(m,n) exceeds this value, a QR factorization is used first to reduce the matrix
+                  * to a triangular form) = 7: the number of processors = 8: another crossover point, for the multishift QR and QZ
+                  * methods for nonsymmetric eigenvalue problems. = 9: maximum size of the subproblems at the bottom of the
+                  * computation tree in the divide-and-conquer algorithm (used by xGELSD and xGESDD) =10: ieee NaN arithmetic can be
+                  * trusted not to trap =11: infinity arithmetic can be trusted not to trap
+                  * 
+                  * NVALUE (input) INTEGER The value of the parameter specified by ISPEC.
+                  */
+                 public void xlaenv(final int ispec, final int nvalue) {
+                     if ( (ispec >= 1) && (ispec <= 9)) {
+                         iparms[ispec - 1] = nvalue;
+                     }
+                     return;
+                 } // xlaenv             
           
 }
