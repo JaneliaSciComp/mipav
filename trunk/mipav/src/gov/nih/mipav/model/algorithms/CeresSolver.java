@@ -6116,7 +6116,7 @@ public abstract class CeresSolver {
 	// DoglegStrategy follows the approach by Shultz, Schnabel, Byrd.
 	// This finds the exact optimum over the two-dimensional subspace
 	// spanned by the two Dogleg vectors.
-	/*class DoglegStrategy extends TrustRegionStrategy {
+	class DoglegStrategy extends TrustRegionStrategy {
 		  private LinearSolver linear_solver_;
 		  private double radius_;
 		  private double max_radius_;
@@ -6178,7 +6178,7 @@ public abstract class CeresSolver {
 		  // model 1/2 x^T B x + g^T x has to be computed and stored.
 		  private boolean subspace_is_one_dimensional_;
 		  private Matrix subspace_basis_;
-		  private Vector2d subspace_g_;
+		  private Vector2d subspace_g_ = new Vector2d();
 		  // Matrix2d subspace_B_;
 		  private Matrix subspace_B_;
 		  
@@ -6310,7 +6310,6 @@ public abstract class CeresSolver {
 		  LinearSolverSummary linear_solver_summary =
 		      ComputeGaussNewtonStep(per_solve_options, jacobian, residuals);
 
-		  TrustRegionStrategy.Summary summary;
 		  summary.residual_norm = linear_solver_summary.residual_norm;
 		  summary.num_iterations = linear_solver_summary.num_iterations;
 		  summary.termination_type = linear_solver_summary.termination_type;
@@ -6330,7 +6329,7 @@ public abstract class CeresSolver {
 		      // Cauchy point and the (Gauss-)Newton step.
 		      case SUBSPACE_DOGLEG:
 		        if (!ComputeSubspaceModel(jacobian)) {
-		          summary.termination_type = LinearSolverTerminatsionType.LINEAR_SOLVER_FAILURE;
+		          summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
 		          break;
 		        }
 		        ComputeSubspaceDoglegStep(step);
@@ -6342,18 +6341,48 @@ public abstract class CeresSolver {
   
 	  }
 	  
-	  virtual void StepAccepted(double step_quality);
-	  virtual void StepRejected(double step_quality);
-	  virtual void StepIsInvalid();
+	  public void StepAccepted(double step_quality) {
+		  if (step_quality <= 0.0) {
+			  System.err.println("step_quality <= 0.0 in DoglegStrategy StepAccepted");
+			  return;
+		  }
 
-	  virtual double Radius() const;
+		  if (step_quality < decrease_threshold_) {
+		    radius_ *= 0.5;
+		  }
+
+		  if (step_quality > increase_threshold_) {
+		    radius_ = Math.max(radius_, 3.0 * dogleg_step_norm_);
+		  }
+
+		  // Reduce the regularization multiplier, in the hope that whatever
+		  // was causing the rank deficiency has gone away and we can return
+		  // to doing a pure Gauss-Newton solve.
+		  mu_ = Math.max(min_mu_, 2.0 * mu_ / mu_increase_factor_);
+		  reuse_ = false;
+
+	  }
+	  
+	  public void StepRejected(double step_quality) {
+		  radius_ *= 0.5;
+		  reuse_ = true;
+	  }
+	  
+	  public void StepIsInvalid() {
+		  mu_ *= mu_increase_factor_;
+		  reuse_ = false;
+	  }
+
+	  public double Radius() {
+		  return radius_;
+	  }
 
 	  // These functions are predominantly for testing.
-	  Vector gradient() const { return gradient_; }
-	  Vector gauss_newton_step() const { return gauss_newton_step_; }
-	  Matrix subspace_basis() const { return subspace_basis_; }
-	  Vector subspace_g() const { return subspace_g_; }
-	  Matrix subspace_B() const { return subspace_B_; }
+	  public Vector<Double> gradient() { return gradient_; }
+	  public Vector<Double> gauss_newton_step()  { return gauss_newton_step_; }
+	  public Matrix subspace_basis() { return subspace_basis_; }
+	  public Vector2d subspace_g() { return subspace_g_; }
+	  public Matrix subspace_B() { return subspace_B_; }
 
 		// The dogleg step is defined as the intersection of the trust region
 		// boundary with the piecewise linear path from the origin to the Cauchy
@@ -6748,10 +6777,25 @@ public abstract class CeresSolver {
 	  }
 	  alpha_ = gradient_squaredNorm / Jg_squaredNorm;
 	}
-
-	  private void ComputeGradient(SparseMatrix jacobian, double residuals[]) {
-		  
+	
+	// The trust region is assumed to be elliptical with the
+	// diagonal scaling matrix D defined by sqrt(diagonal_).
+	// It is implemented by substituting step' = D * step.
+	// The trust region for step' is spherical.
+	// The gradient, the Gauss-Newton step, the Cauchy point,
+	// and all calculations involving the Jacobian have to
+	// be adjusted accordingly.
+	private void ComputeGradient(
+	    SparseMatrix jacobian,
+	    double residuals[]) {
+	  int i;
+	  double gradient_array[] = new double[gradient_.size()];
+	  jacobian.LeftMultiply(residuals, gradient_array);
+	  for (i = 0; i < gradient_.size(); i++) {
+		  gradient_.set(i, gradient_array[i]/diagonal_.get(i));
 	  }
+	}
+
 	  
 	  private boolean ComputeSubspaceModel(SparseMatrix jacobian) {
 		  int i;
@@ -6849,22 +6893,42 @@ public abstract class CeresSolver {
 		  //   subspace_B_ = ((U^T D^-1) J^T) (J (D^-1 U))
 		  //               = (J (D^-1 U))^T (J (D^-1 U))
 
-		  subspace_basis_ =
-		      basis_vectors_array * Matrix::Identity(jacobian->num_cols(), 2);
+		  //Takes the first 2 columns of the m by m Q to form the m by n Q1
+		  // but basis_vectors_array from dorgqr is already the m by n Q1.
+		  //subspace_basis_ =
+		      //basis_qr.householderQ() * Matrix::Identity(jacobian->num_cols(), 2);
+		  subspace_basis_ = new Matrix(basis_vectors_array);
 
-		  subspace_g_ = subspace_basis_.transpose() * gradient_;
+		  subspace_g_.X = 0;
+		  subspace_g_.Y = 0;
+		  for (i = 0; i < jacobian.num_cols(); i++) {
+			  subspace_g_.X += (basis_vectors_array[i][0] * gradient_.get(i));
+			  subspace_g_.Y += (basis_vectors_array[i][1] * gradient_.get(i));
+		  }
+		  
+		  Matrix Jb = new Matrix(2,jacobian.num_rows());
 
-		  Eigen::Matrix<double, 2, Eigen::Dynamic, Eigen::RowMajor>
-		      Jb(2, jacobian->num_rows());
-		  Jb.setZero();
+		 double tmp[] = new double[jacobian.num_cols()];
+		  for (i = 0; i < jacobian.num_cols(); i++) {
+			  tmp[i] = basis_vectors_array[i][0]/diagonal_.get(i);
+		  }
+		  double y[] = new double[jacobian.num_rows()];
+		  jacobian.RightMultiply(tmp, y);
+		  for (i = 0; i < jacobian.num_rows(); i++) {
+			  Jb.set(0,i,y[i]);
+		  }
+		  for (i = 0; i < jacobian.num_cols(); i++) {
+			  tmp[i] = basis_vectors_array[i][1]/diagonal_.get(i);
+		  }
+		  for (i = 0; i < jacobian.num_rows(); i++) {
+			  y[i] = 0;
+		  }
+		  jacobian.RightMultiply(tmp, y);
+		  for (i = 0; i < jacobian.num_rows(); i++) {
+			  Jb.set(1,i,y[i]);
+		  }
 
-		  Vector tmp;
-		  tmp = (subspace_basis_.col(0).array() / diagonal_.array()).matrix();
-		  jacobian->RightMultiply(tmp.data(), Jb.row(0).data());
-		  tmp = (subspace_basis_.col(1).array() / diagonal_.array()).matrix();
-		  jacobian->RightMultiply(tmp.data(), Jb.row(1).data());
-
-		  subspace_B_ = Jb * Jb.transpose();
+		  subspace_B_ = Jb.times(Jb.transpose());
 
 		  return true;
 
@@ -7142,10 +7206,8 @@ public abstract class CeresSolver {
 	  Bx[1] = subspace_B_.getArray()[1][0]*x.X + subspace_B_.getArray()[1][1]*x.Y;
 	  return(0.5 * x.X*Bx[0] + 0.5*x.Y*Bx[1] + subspace_g_.X*x.X + subspace_g_.Y*x.Y);
 	}
-
-
 	 
-	} // class DoglegStrategy*/
+	} // class DoglegStrategy
 	
 	// Remove leading terms with zero coefficients.
 	public Vector<Double> RemoveLeadingZeros(Vector<Double> polynomial_in) {
