@@ -5134,7 +5134,7 @@ public abstract class CeresSolver {
 		// the jacobian for use with CHOLMOD, where as BlockOptimizationProblem
 		// creates a BlockSparseMatrix representation of the jacobian for use in the
 		// Schur complement based methods.
-		// virtual SparseMatrix* CreateJacobian() const = 0;
+		//public abstract SparseMatrix CreateJacobian();
 
 
 	} // class Evaluator
@@ -5239,6 +5239,12 @@ public abstract class CeresSolver {
 		public ScratchEvaluatePreparer[] CreateEvaluatePreparers(int num_threads) {
 			return Create(program_, num_threads);
 		}
+		
+		public SparseMatrix CreateJacobian() {
+		    return new DenseSparseMatrix(program_.NumResiduals(),
+		                                 program_.NumEffectiveParameters(),
+		                                 true);
+		  }
 
 	} // class DenseJacobianWriter
 
@@ -5355,8 +5361,108 @@ public abstract class CeresSolver {
 			}
 			return preparers;
 		}
+		
+		public SparseMatrix CreateJacobian() {
+			  CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
 
-	}
+			  Vector<ParameterBlock> parameter_blocks =
+			      program_.parameter_blocks();
+
+			  // Construct the column blocks.
+			  while (bs.cols.size() < parameter_blocks.size()) {
+				  bs.cols.add(new Block());
+			  }
+			  while (bs.cols.size() > parameter_blocks.size()) {
+				  bs.cols.removeElementAt(bs.cols.size()-1);
+			  }
+			  for (int i = 0, cursor = 0; i < parameter_blocks.size(); ++i) {
+				if (parameter_blocks.get(i).index() == -1) {
+					System.err.println("parameter_blocks.get("+i+").index() == -1 in BlockJacobianWriter CreateJacobian");
+					return null;
+				}
+			    if (parameter_blocks.get(i).IsConstant()) {
+			    	System.err.println("parameter_blocks.get("+i+").IsConstant() in BlockJacobianWrtier CreateJacobian");
+			    	return null;
+			    }
+			    bs.cols.get(i).size = parameter_blocks.get(i).LocalSize();
+			    bs.cols.get(i).position = cursor;
+			    cursor += bs.cols.get(i).size;
+			  }
+
+			  // Construct the cells in each row.
+			  Vector<ResidualBlock> residual_blocks = program_.residual_blocks();
+			  int row_block_position = 0;
+			  while (bs.rows.size() < residual_blocks.size()) {
+				  bs.rows.add(new CompressedList());
+			  }
+			  while (bs.rows.size() > residual_blocks.size()) {
+				  bs.rows.removeElementAt(bs.rows.size()-1);
+			  }
+			  for (int i = 0; i < residual_blocks.size(); ++i) {
+			    ResidualBlock residual_block = residual_blocks.get(i);
+			    CompressedList row = bs.rows.get(i);
+
+			    row.block.size = residual_block.NumResiduals();
+			    row.block.position = row_block_position;
+			    row_block_position += row.block.size;
+
+			    // Size the row by the number of active parameters in this residual.
+			    int num_parameter_blocks = residual_block.NumParameterBlocks();
+			    int num_active_parameter_blocks = 0;
+			    for (int j = 0; j < num_parameter_blocks; ++j) {
+			      if (residual_block.parameter_blocks()[j].index() != -1) {
+			        num_active_parameter_blocks++;
+			      }
+			    }
+			    while (row.cells.size() < num_active_parameter_blocks) {
+			    	row.cells.add(new Cell());
+			    }
+			    while (row.cells.size() > num_active_parameter_blocks) {
+			    	row.cells.removeElementAt(row.cells.size()-1);
+			    }
+
+			    // Add layout information for the active parameters in this row.
+			    for (int j = 0, k = 0; j < num_parameter_blocks; ++j) {
+			      ParameterBlock parameter_block =
+			          residual_block.parameter_blocks()[j];
+			      if (!parameter_block.IsConstant()) {
+			        Cell cell = row.cells.get(k);
+			        cell.block_id = parameter_block.index();
+			        cell.position = jacobian_layout_.get(i)[k];
+
+			        // Only increment k for active parameters, since there is only layout
+			        // information for active parameters.
+			        k++;
+			      }
+			    }
+			    
+			    
+
+				CellLessThan CD = new CellLessThan();
+				Collections.sort(row.cells, CD);
+			  }
+
+			  BlockSparseMatrix jacobian = new BlockSparseMatrix(bs);
+			  if (jacobian == null) {
+				  System.err.println("jacobian == null in BlockJacobianWriter CreateJacobian");
+			  }
+			  return jacobian;
+			}
+
+
+	} // class BlockJacobianWriter
+	
+	class CellLessThan implements Comparator<Cell> {
+		
+		
+		public int compare( Cell lhs, Cell rhs) {
+			  if (lhs.block_id == rhs.block_id) {
+			    return (lhs.position  - rhs.position);
+			  }
+			  return (lhs.block_id - rhs.block_id);
+			}
+
+	} // class VertexDegreesLessThan
 
 	public ScratchEvaluatePreparer[] Create(Program program, int num_threads) {
 		ScratchEvaluatePreparer preparers[] = new ScratchEvaluatePreparer[num_threads];
@@ -5450,6 +5556,41 @@ public abstract class CeresSolver {
 			BuildResidualLayout(program, residual_layout_);
 			evaluate_scratch_ = CreateEvaluatorScratch(program, options.num_threads);
 		}
+		
+		// Implementation of Evaluator interface.
+		  public SparseMatrix CreateJacobian() {
+			if ((options_.linear_solver_type == LinearSolverType.DENSE_QR) ||
+				(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
+				return ((DenseJacobianWriter)jacobian_writer_).CreateJacobian();
+			}
+			else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+				return ((BlockJacobianWriter)jacobian_writer_).CreateJacobian();
+			}
+			else {
+				System.err.println("In ProgramEvaluator CreateJacobian options_.linear_solver_type = " +
+			                          LinearSolverTypeToString(options_.linear_solver_type));
+				return null;
+			}
+		  }
+		  
+		  public int NumParameters() {
+			    return program_.NumParameters();
+		  }
+		  
+		  public int NumEffectiveParameters() {
+			    return program_.NumEffectiveParameters();
+		  }
+
+		  public int NumResiduals() {
+			    return program_.NumResiduals();
+		  }
+		  
+		  public boolean Plus(Vector<Double> state,
+		                      Vector<Double> delta,
+		            Vector<Double> state_plus_delta) {
+		    return program_.Plus(state, delta, state_plus_delta);
+		  }
+		 
 
 	} // class ProgramEvaluator
 
@@ -5510,6 +5651,123 @@ public abstract class CeresSolver {
 			residual_pos += num_residuals;
 		}
 	}
+	
+	// This struct describes the state of the optimizer after each
+	// iteration of the minimization.
+	 class IterationSummary {
+		// Current iteration number.
+		  public int iteration;
+
+		  // Step was numerically valid, i.e., all values are finite and the
+		  // step reduces the value of the linearized model.
+		  //
+		  // Note: step_is_valid is always true when iteration = 0.
+		  public boolean step_is_valid;
+
+		  // Step did not reduce the value of the objective function
+		  // sufficiently, but it was accepted because of the relaxed
+		  // acceptance criterion used by the non-monotonic trust region
+		  // algorithm.
+		  //
+		  // Note: step_is_nonmonotonic is always false when iteration = 0;
+		  public boolean step_is_nonmonotonic;
+
+		  // Whether or not the minimizer accepted this step or not. If the
+		  // ordinary trust region algorithm is used, this means that the
+		  // relative reduction in the objective function value was greater
+		  // than Solver::Options::min_relative_decrease. However, if the
+		  // non-monotonic trust region algorithm is used
+		  // (Solver::Options:use_nonmonotonic_steps = true), then even if the
+		  // relative decrease is not sufficient, the algorithm may accept the
+		  // step and the step is declared successful.
+		  //
+		  // Note: step_is_successful is always true when iteration = 0.
+		  public boolean step_is_successful;
+
+		  // Value of the objective function.
+		  public double cost;
+
+		  // Change in the value of the objective function in this
+		  // iteration. This can be positive or negative.
+		  public double cost_change;
+
+		  // Infinity norm of the gradient vector.
+		  public double gradient_max_norm;
+
+		  // 2-norm of the gradient vector.
+		  public double gradient_norm;
+
+		  // 2-norm of the size of the step computed by the optimization
+		  // algorithm.
+		  public double step_norm;
+
+		  // For trust region algorithms, the ratio of the actual change in
+		  // cost and the change in the cost of the linearized approximation.
+		  public double relative_decrease;
+
+		  // Size of the trust region at the end of the current iteration. For
+		  // the Levenberg-Marquardt algorithm, the regularization parameter
+		  // mu = 1.0 / trust_region_radius.
+		  public double trust_region_radius;
+
+		  // For the inexact step Levenberg-Marquardt algorithm, this is the
+		  // relative accuracy with which the Newton(LM) step is solved. This
+		  // number affects only the iterative solvers capable of solving
+		  // linear systems inexactly. Factorization-based exact solvers
+		  // ignore it.
+		  public double eta;
+
+		  // Step sized computed by the line search algorithm.
+		  public double step_size;
+
+		  // Number of function value evaluations used by the line search algorithm.
+		  public int line_search_function_evaluations;
+
+		  // Number of function gradient evaluations used by the line search algorithm.
+		  public int line_search_gradient_evaluations;
+
+		  // Number of iterations taken by the line search algorithm.
+		  public int line_search_iterations;
+
+		  // Number of iterations taken by the linear solver to solve for the
+		  // Newton step.
+		  public int linear_solver_iterations;
+
+		  // All times reported below are wall times.
+
+		  // Time (in seconds) spent inside the minimizer loop in the current
+		  // iteration.
+		  public double iteration_time_in_seconds;
+
+		  // Time (in seconds) spent inside the trust region step solver.
+		  public double step_solver_time_in_seconds;
+
+		  // Time (in seconds) since the user called Solve().
+		  public double cumulative_time_in_seconds;
+		  
+	      public IterationSummary() {
+	        iteration = 0;
+	        step_is_valid = false;
+	        step_is_nonmonotonic = false;
+	        step_is_successful = false;
+	        cost = 0.0;
+	        cost_change = 0.0;
+	        gradient_max_norm = 0.0;
+	        gradient_norm = 0.0;
+	        step_norm = 0.0;
+	        eta = 0.0;
+	        step_size = 0.0;
+	        line_search_function_evaluations = 0;
+	        line_search_gradient_evaluations = 0;
+	        line_search_iterations = 0;
+	        linear_solver_iterations = 0;
+	        iteration_time_in_seconds = 0.0;
+	        step_solver_time_in_seconds = 0.0;
+	        cumulative_time_in_seconds = 0.0;  
+	      }
+
+	  
+	} // class IterationSummary
 
 	// Callback for logging the state of the minimizer to STDERR or
 	// STDOUT depending on the user's preferences and logging level.
@@ -5751,13 +6009,16 @@ public abstract class CeresSolver {
 		  Minimizer min = new Minimizer();
 		  Minimizer.Options minimizer_options = min.options_;
 		  minimizer_options.evaluator = ev;
-		  //minimizer_options.jacobian.reset(
-		      //CHECK_NOTNULL(minimizer_options.evaluator.CreateJacobian()));
+		  minimizer_options.jacobian = ((ProgramEvaluator)ev).CreateJacobian();
+		  if (minimizer_options.jacobian == null) {
+			  System.err.println("minimizer_options.evaluator.createJacobian() create a null Jacobian in CoordinateDescentMinimizer.Solve");
+			  return;
+		  }
 
 		  TrustRegionStrategy trs = new TrustRegionStrategy();
 		  TrustRegionStrategy.Options trs_options = trs.options;
 		  trs_options.linear_solver = linear_solver;
-		  /*TrustRegionStrategy trust = Create(trs_options);
+		  TrustRegionStrategy trust = Create(trs_options);
 		  if (trust == null) {
 			  System.err.println("TrustRegionStrategy trust = Create(trs_optons) == null in Solve");
 			  return;
@@ -5765,12 +6026,367 @@ public abstract class CeresSolver {
 		  minimizer_options.trust_region_strategy = trust;
 		  minimizer_options.is_silent = true;
 
-		  TrustRegionMinimizer minimizer;
-		  minimizer.Minimize(minimizer_options, parameter, summary);*/
+		  TrustRegionMinimizer minimizer = new TrustRegionMinimizer();
+		  minimizer.Minimize(minimizer_options, parameter, summary);
 		}
 
 
 	} // class CoordinateDescentMinimizer
+	
+	class TrustRegionMinimizer extends Minimizer {
+		  private Minimizer.Options options_;
+
+		  // These pointers are shortcuts to objects passed to the
+		  // TrustRegionMinimizer. The TrustRegionMinimizer does not own them.
+		  private double[] parameters_;
+		  private Solver.Summary solver_summary_;
+		  private Evaluator evaluator_;
+		  private SparseMatrix jacobian_;
+		  private TrustRegionStrategy strategy_;
+
+		  //scoped_ptr<TrustRegionStepEvaluator> step_evaluator_;
+
+		  private boolean is_not_silent_;
+		  private boolean inner_iterations_are_enabled_;
+		  private boolean inner_iterations_were_useful_;
+
+		  // Summary of the current iteration.
+		  IterationSummary iteration_summary_;
+
+		  // Dimensionality of the problem in the ambient space.
+		  private int num_parameters_;
+		  // Dimensionality of the problem in the tangent space. This is the
+		  // number of columns in the Jacobian.
+		  private int num_effective_parameters_;
+		  // Length of the residual vector, also the number of rows in the Jacobian.
+		  private int num_residuals_;
+
+		  // Current point.
+		  private Vector<Double> x_;
+		  // Residuals at x_;
+		  private Vector<Double> residuals_;
+		  // Gradient at x_.
+		  private Vector<Double> gradient_;
+		  // Solution computed by the inner iterations.
+		  private Vector<Double> inner_iteration_x_;
+		  // model_residuals = J * trust_region_step
+		  private Vector<Double> model_residuals_;
+		  private Vector<Double> negative_gradient_;
+		  // projected_gradient_step = Plus(x, -gradient), an intermediate
+		  // quantity used to compute the projected gradient norm.
+		  private Vector<Double> projected_gradient_step_;
+		  // The step computed by the trust region strategy. If Jacobi scaling
+		  // is enabled, this is a vector in the scaled space.
+		  private Vector<Double> trust_region_step_;
+		  // The current proposal for how far the trust region algorithm
+		  // thinks we should move. In the most basic case, it is just the
+		  // trust_region_step_ with the Jacobi scaling undone. If bounds
+		  // constraints are present, then it is the result of the projected
+		  // line search.
+		  private Vector<Double> delta_;
+		  // candidate_x  = Plus(x, delta)
+		  private Vector<Double> candidate_x_;
+		  // Scaling vector to scale the columns of the Jacobian.
+		  private Vector<Double> jacobian_scaling_;
+
+		  // Euclidean norm of x_.
+		  private double x_norm_;
+		  // Cost at x_.
+		  private double x_cost_;
+		  // Minimum cost encountered up till now.
+		  private double minimum_cost_;
+		  // How much did the trust region strategy reduce the cost of the
+		  // linearized Gauss-Newton model.
+		  private double model_cost_change_;
+		  // Cost at candidate_x_.
+		  private double candidate_cost_;
+
+		  // Time at which the minimizer was started.
+		  private double start_time_in_secs_;
+		  // Time at which the current iteration was started.
+		  private double iteration_start_time_in_secs_;
+		  // Number of consecutive steps where the minimizer loop computed a
+		  // numerically invalid step.
+		  private int num_consecutive_invalid_steps_;
+		  
+		 public TrustRegionMinimizer() {
+			 super();
+		 }
+		 
+
+		  // This method is not thread safe.
+		  public void Minimize(Minimizer.Options options,
+		                        double[] parameters,
+		                        Solver.Summary solver_summary) {
+			  start_time_in_secs_ = 1.0E-3 * System.currentTimeMillis();
+			  iteration_start_time_in_secs_ = start_time_in_secs_;
+			  Init(options, parameters, solver_summary);
+			  /*RETURN_IF_ERROR_AND_LOG(IterationZero());
+
+			  // Create the TrustRegionStepEvaluator. The construction needs to be
+			  // delayed to this point because we need the cost for the starting
+			  // point to initialize the step evaluator.
+			  step_evaluator_.reset(new TrustRegionStepEvaluator(
+			      x_cost_,
+			      options_.use_nonmonotonic_steps
+			          ? options_.max_consecutive_nonmonotonic_steps
+			          : 0));
+
+			  while (FinalizeIterationAndCheckIfMinimizerCanContinue()) {
+			    iteration_start_time_in_secs_ = WallTimeInSeconds();
+			    iteration_summary_ = IterationSummary();
+			    iteration_summary_.iteration =
+			        solver_summary->iterations.back().iteration + 1;
+
+			    RETURN_IF_ERROR_AND_LOG(ComputeTrustRegionStep());
+			    if (!iteration_summary_.step_is_valid) {
+			      RETURN_IF_ERROR_AND_LOG(HandleInvalidStep());
+			      continue;
+			    }
+
+			    if (options_.is_constrained) {
+			      // Use a projected line search to enforce the bounds constraints
+			      // and improve the quality of the step.
+			      DoLineSearch(x_, gradient_, x_cost_, &delta_);
+			    }
+
+			    ComputeCandidatePointAndEvaluateCost();
+			    DoInnerIterationsIfNeeded();
+
+			    if (ParameterToleranceReached()) {
+			      return;
+			    }
+
+			    if (FunctionToleranceReached()) {
+			      return;
+			    }
+
+			    if (IsStepSuccessful()) {
+			      RETURN_IF_ERROR_AND_LOG(HandleSuccessfulStep());
+			      continue;
+			    }
+
+			    HandleUnsuccessfulStep();
+			  }*/
+	  
+		  }
+
+
+		// Initialize the minimizer, allocate working space and set some of
+		// the fields in the solver_summary.
+		private void Init(Minimizer.Options options,
+		                                double[] parameters,
+		                                Solver.Summary solver_summary) {
+		  int i;
+		  options_ = options;
+		  Collections.sort(options_.trust_region_minimizer_iterations_to_dump);
+
+		  parameters_ = parameters;
+
+		  solver_summary_ = solver_summary;
+		  solver_summary_.termination_type = TerminationType.NO_CONVERGENCE;
+		  solver_summary_.num_successful_steps = 0;
+		  solver_summary_.num_unsuccessful_steps = 0;
+		  solver_summary_.is_constrained = options.is_constrained;
+
+		  evaluator_ = options_.evaluator;
+		  if (evaluator_ == null) {
+			  System.err.println("options_.evaluator == null in TrustRegionMinimizer Init");
+			  return;
+		  }
+		  jacobian_ = options_.jacobian;
+		  if (jacobian_ == null) {
+			  System.err.println("options_.jacobian == null in TrustRegionMinimizer Init");
+			  return;
+		  }
+		  strategy_ = options_.trust_region_strategy;
+		  if (strategy_ == null) {
+			  System.err.println("options_.trust_region_strategy == null in TrustRegionMinimizer Init");
+			  return;
+		  }
+
+		  is_not_silent_ = !options.is_silent;
+		  inner_iterations_are_enabled_ =
+		      (options.inner_iteration_minimizer != null);
+		  inner_iterations_were_useful_ = false;
+
+		  num_parameters_ = ((ProgramEvaluator)evaluator_).NumParameters();
+		  num_effective_parameters_ = ((ProgramEvaluator)evaluator_).NumEffectiveParameters();
+		  num_residuals_ = ((ProgramEvaluator)evaluator_).NumResiduals();
+		  num_consecutive_invalid_steps_ = 0;
+
+		  //x_ = ConstVectorRef(parameters_, num_parameters_);
+		  //x_norm_ set to -1 later in routine
+		  //x_norm_ = 0.0;
+		  //for (i = 0; i < num_parameters_; i++) {
+			//  x_norm_ += (parameters_.get(i)*parameters_get(i));
+		  // }
+		  //x_norm_ = Math.sqrt(x_norm_);
+		  if (residuals_ == null) {
+			  residuals_ = new Vector<Double>();
+		  }
+		  while (residuals_.size() < num_residuals_) {
+			  residuals_.add(0.0);
+		  }
+		  while (residuals_.size() > num_residuals_) {
+			  residuals_.removeElementAt(residuals_.size() - 1);
+		  }
+		  if (trust_region_step_ == null) {
+			  trust_region_step_ = new Vector<Double>();
+		  }
+		  while (trust_region_step_.size() < num_effective_parameters_) {
+			  trust_region_step_.add(0.0);
+		  }
+		  while (trust_region_step_.size() > num_effective_parameters_) {
+			  trust_region_step_.removeElementAt(trust_region_step_.size()-1);
+		  }
+		  if (delta_ == null) {
+			  delta_ = new Vector<Double>();
+		  }
+		  while (delta_.size() < num_effective_parameters_) {
+			  delta_.add(0.0);
+		  }
+		  while (delta_.size() > num_effective_parameters_) {
+			  delta_.removeElementAt(delta_.size()-1);
+		  }
+		  if (candidate_x_ == null) {
+			  candidate_x_ = new Vector<Double>();
+		  }
+		  while (candidate_x_.size() < num_parameters_) {
+			  candidate_x_.add(0.0);
+		  }
+		  while (candidate_x_.size() > num_parameters_) {
+			  candidate_x_.removeElementAt(candidate_x_.size()-1);
+		  }
+		  if (gradient_ == null) {
+			  gradient_ = new Vector<Double>();
+		  }
+		  while (gradient_.size() < num_effective_parameters_) {
+			  gradient_.add(0.0);
+		  }
+		  while (gradient_.size() > num_effective_parameters_) {
+			  gradient_.removeElementAt(gradient_.size()-1);
+		  }
+		  if (model_residuals_ == null) {
+			  model_residuals_ = new Vector<Double>();
+		  }
+		  while (model_residuals_.size() < num_residuals_) {
+			  model_residuals_.add(0.0);
+		  }
+		  while (model_residuals_.size() > num_residuals_) {
+			  model_residuals_.removeElementAt(model_residuals_.size()-1);
+		  }
+		  if (negative_gradient_ == null) {
+			  negative_gradient_ = new Vector<Double>();
+		  }
+		  while (negative_gradient_.size() < num_effective_parameters_) {
+			  negative_gradient_.add(0.0);
+		  }
+		  while (negative_gradient_.size() > num_effective_parameters_) {
+			  negative_gradient_.removeElementAt(negative_gradient_.size()-1);
+		  }
+		  if (projected_gradient_step_ == null) {
+			  projected_gradient_step_ = new Vector<Double>();
+		  }
+		  while (projected_gradient_step_.size() < num_parameters_) {
+			  projected_gradient_step_.add(0.0);
+		  }
+		  while (projected_gradient_step_.size() > num_parameters_) {
+			  projected_gradient_step_.removeElementAt(projected_gradient_step_.size()-1);
+		  }
+
+		  // By default scaling is one, if the user requests Jacobi scaling of
+		  // the Jacobian, we will compute and overwrite this vector.
+		  if (jacobian_scaling_ == null) {
+			  jacobian_scaling_ = new Vector<Double>();
+		  }
+		  jacobian_scaling_.clear();
+		  for (i = 0; i < num_effective_parameters_; i++) {
+			  jacobian_scaling_.add(1.0);
+		  }
+
+		  x_norm_ = -1;  // Invalid value
+		  x_cost_ = Double.MAX_VALUE;
+		  minimum_cost_ = x_cost_;
+		  model_cost_change_ = 0.0;
+		}
+
+		// 1. Project the initial solution onto the feasible set if needed.
+		// 2. Compute the initial cost, jacobian & gradient.
+		//
+		// Return true if all computations can be performed successfully.
+		private boolean IterationZero() {
+		  int i;
+		  iteration_summary_ = new IterationSummary();
+		  iteration_summary_.iteration = 0;
+		  iteration_summary_.step_is_valid = false;
+		  iteration_summary_.step_is_successful = false;
+		  iteration_summary_.cost_change = 0.0;
+		  iteration_summary_.gradient_max_norm = 0.0;
+		  iteration_summary_.gradient_norm = 0.0;
+		  iteration_summary_.step_norm = 0.0;
+		  iteration_summary_.relative_decrease = 0.0;
+		  iteration_summary_.eta = options_.eta;
+		  iteration_summary_.linear_solver_iterations = 0;
+		  iteration_summary_.step_solver_time_in_seconds = 0;
+
+		  if (options_.is_constrained) {
+			for (i = 0; i < delta_.size(); i++) {
+				delta_.set(i,0.0);
+			}
+		    if (!((ProgramEvaluator)evaluator_).Plus(x_, delta_, candidate_x_)) {
+		      solver_summary_.message[0] =
+		          "Unable to project initial point onto the feasible set.";
+		      solver_summary_.termination_type = TerminationType.FAILURE;
+		      return false;
+		    }
+
+		    x_ = candidate_x_;
+		    x_norm_ = 0.0;
+		    for (i = 0; i < x_.size(); i++) {
+		    	x_norm_ += (x_.get(i)*x_.get(i));
+		    }
+		    x_norm_ = Math.sqrt(x_norm_);
+		  }
+		  
+		  //if (!EvaluateGradientAndJacobian(/*new_evaluation_point=*/true)) {
+			    //return false;
+			  //}
+
+			  solver_summary_.initial_cost = x_cost_ + solver_summary_.fixed_cost;
+			  iteration_summary_.step_is_valid = true;
+			  iteration_summary_.step_is_successful = true;
+			  return true;
+		}
+
+
+		  /*private:
+		  bool FinalizeIterationAndCheckIfMinimizerCanContinue();
+		  bool ComputeTrustRegionStep();
+
+		  bool EvaluateGradientAndJacobian(bool new_evaluation_point);
+		  void ComputeCandidatePointAndEvaluateCost();
+
+		  void DoLineSearch(const Vector& x,
+		                    const Vector& gradient,
+		                    const double cost,
+		                    Vector* delta);
+		  void DoInnerIterationsIfNeeded();
+
+		  bool ParameterToleranceReached();
+		  bool FunctionToleranceReached();
+		  bool GradientToleranceReached();
+		  bool MaxSolverTimeReached();
+		  bool MaxSolverIterationsReached();
+		  bool MinTrustRegionRadiusReached();
+
+		  bool IsStepSuccessful();
+		  void HandleUnsuccessfulStep();
+		  bool HandleSuccessfulStep();
+		  bool HandleInvalidStep();*/
+
+		  
+		};
 	
 	public class TrustRegionStrategy {
 		 public Options options;
@@ -5883,7 +6499,7 @@ public abstract class CeresSolver {
 
 	} // class TrustRegionStrategy
 	
-	/*public TrustRegionStrategy  Create(TrustRegionStrategy.Options options) {
+	public TrustRegionStrategy  Create(TrustRegionStrategy.Options options) {
 		  switch (options.trust_region_strategy_type) {
 		    case LEVENBERG_MARQUARDT:
 		      return new LevenbergMarquardtStrategy(options);
@@ -5895,7 +6511,7 @@ public abstract class CeresSolver {
 		  }
 
 		  
-		}*/
+		}
 	
 	// Levenberg-Marquardt step computation and trust region sizing
 	// strategy based on on "Methods for Nonlinear Least Squares" by
@@ -9010,6 +9626,25 @@ public abstract class CeresSolver {
 		public Vector<ResidualBlock> mutable_residual_blocks() {
 			return residual_blocks_;
 		}
+		
+		private boolean Plus(Vector<Double> state,
+                Vector<Double> delta,
+                Vector<Double> state_plus_delta) {
+			int state_index = 0;
+			int delta_index = 0;
+			int state_plus_delta_index = 0;
+			for (int i = 0; i < parameter_blocks_.size(); ++i) {
+			 if (!parameter_blocks_.get(i).Plus(state, state_index, delta, delta_index,
+					 state_plus_delta, state_plus_delta_index)) {
+			   return false;
+			 }
+			 state_index += parameter_blocks_.get(i).Size();
+			 delta_index += parameter_blocks_.get(i).LocalSize();
+			 state_plus_delta_index += parameter_blocks_.get(i).Size();
+			}
+			return true;
+			}
+
 
 	} // class Program
 
@@ -10191,6 +10826,36 @@ public abstract class CeresSolver {
 				}
 			}
 		}
+		
+		// Generalization of the addition operation. This is the same as
+		  // LocalParameterization::Plus() followed by projection onto the
+		  // hyper cube implied by the bounds constraints.
+		  public boolean Plus(Vector<Double> x, int x_index,Vector<Double> delta, int delta_index,
+				  Vector<Double> x_plus_delta, int x_plus_delta_index) {
+		    /*if (local_parameterization_ != NULL) {
+		      if (!local_parameterization_->Plus(x, delta, x_plus_delta)) {
+		        return false;
+		      }
+		    } else {
+		      VectorRef(x_plus_delta, size_) = ConstVectorRef(x, size_) +
+		                                       ConstVectorRef(delta,  size_);
+		    }
+
+		    // Project onto the box constraints.
+		    if (lower_bounds_.get() != NULL) {
+		      for (int i = 0; i < size_; ++i) {
+		        x_plus_delta[i] = std::max(x_plus_delta[i], lower_bounds_[i]);
+		      }
+		    }
+
+		    if (upper_bounds_.get() != NULL) {
+		      for (int i = 0; i < size_; ++i) {
+		        x_plus_delta[i] = std::min(x_plus_delta[i], upper_bounds_[i]);
+		      }
+		    }*/
+
+		    return true;
+		  }
 	} // class ParameterBlock
 
 	// The class LocalParameterization defines the function Plus and its
