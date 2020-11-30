@@ -899,6 +899,7 @@ public abstract class CeresSolver {
 	}
 
 	public void Minimize(PreprocessedProblem pp, Solver.Summary summary) {
+		int i;
 		Program program = pp.reduced_program;
 		if (pp.reduced_program.NumParameterBlocks() == 0) {
 			summary.message[0] = "Function tolerance reached. No non-constant parameter blocks found.";
@@ -911,17 +912,28 @@ public abstract class CeresSolver {
 			return;
 		}
 
-		Vector original_reduced_parameters = pp.reduced_parameters;
-		/*
-		 * scoped_ptr<Minimizer> minimizer(
-		 * Minimizer::Create(pp->options.minimizer_type));
-		 * minimizer->Minimize(pp->minimizer_options, pp->reduced_parameters.data(),
-		 * summary);
-		 * 
-		 * program->StateVectorToParameterBlocks( summary->IsSolutionUsable() ?
-		 * pp->reduced_parameters.data() : original_reduced_parameters.data());
-		 * program->CopyParameterBlockStateToUserState();
-		 */
+		Vector<Double> original_reduced_parameters = new Vector<Double>();
+	
+		 Minimizer minimizer = Create(pp.options.minimizer_type);
+		 double reduced_parameters_array[] = new double[pp.reduced_parameters.size()];
+		 for (i = 0; i < pp.reduced_parameters.size(); i++) {
+			 reduced_parameters_array[i] = pp.reduced_parameters.get(i);
+			 original_reduced_parameters.add(pp.reduced_parameters.get(i));
+		 }
+		 if (pp.options.minimizer_type == MinimizerType.TRUST_REGION) {
+		     ((TrustRegionMinimizer)minimizer).Minimize(pp.minimizer_options, reduced_parameters_array,summary);
+		 }
+		 for (i = 0; i < reduced_parameters_array.length; i++) {
+			 pp.reduced_parameters.set(i,reduced_parameters_array[i]);
+		 }
+		 if (IsSolutionUsable(summary)) {
+			 program.StateVectorToParameterBlocks(pp.reduced_parameters);
+		 }
+		 else {
+			 program.StateVectorToParameterBlocks(original_reduced_parameters);
+		 }
+		
+		 program.CopyParameterBlockStateToUserState();
 
 	} // public void Minimize
 
@@ -1952,14 +1964,14 @@ public abstract class CeresSolver {
 		CoordinateDescentMinimizer inner_iteration_minimizer;
 
 		Vector<double[]> removed_parameter_blocks;
-		Vector<double[]> reduced_parameters;
+		Vector<Double> reduced_parameters;
 		double fixed_cost[];
 
 		public PreprocessedProblem() {
 			fixed_cost = new double[] { 0.0 };
 			error = new String[1];
 			removed_parameter_blocks = new Vector<double[]>();
-			reduced_parameters = new Vector<double[]>();
+			reduced_parameters = new Vector<Double>();
 			linear_solver_options = new LinearSolverOptions();
 		}
 
@@ -1975,7 +1987,7 @@ public abstract class CeresSolver {
 			pp.reduced_parameters.removeElementAt(pp.reduced_parameters.size() - 1);
 		}
 		// pp.reduced_parameters.resize(program.NumParameters());
-		Vector<double[]> reduced_parameters = pp.reduced_parameters;
+		Vector<Double> reduced_parameters = pp.reduced_parameters;
 		program.ParameterBlocksToStateVector(reduced_parameters);
 
 		Minimizer.Options minimizer_options = pp.minimizer_options;
@@ -3325,9 +3337,30 @@ public abstract class CeresSolver {
 
 		// y += A'x;
 		public abstract void LeftMultiply(double x[], double y[]);
+		
+		public void SquaredColumnNorm(Vector<Double> x) {
+			int i;
+			double x_array[] = new double[x.size()];
+			for (i = 0; i < x.size(); i++) {
+				x_array[i] = x.get(i);
+			}
+			SquaredColumnNorm(x_array);
+			for (i = 0; i < x.size(); i++) {
+				x.set(i, x_array[i]);
+			}
+		}
 
 		// In MATLAB notation sum(A.*A, 1)
 		public abstract void SquaredColumnNorm(double x[]);
+		
+		public void ScaleColumns(Vector<Double> scale) {
+			int i;
+			double scale_array[] = new double[scale.size()];
+			for (i = 0; i < scale.size(); i++) {
+				scale_array[i] = scale.get(i);
+			}
+			ScaleColumns(scale_array);
+		}
 
 		// A = A * diag(scale)
 		public abstract void ScaleColumns(double scale[]);
@@ -5084,6 +5117,22 @@ public abstract class CeresSolver {
 
 		return linear_solver_type;
 	}
+	
+	// Options struct to control Evaluator::Evaluate;
+			class EvaluateOptions {
+				// If false, the loss function correction is not applied to the
+				// residual blocks.
+				public boolean apply_loss_function;
+
+				// If false, this evaluation point is the same as the last one.
+				public boolean new_evaluation_point;
+
+				public EvaluateOptions() {
+					apply_loss_function = true;
+					new_evaluation_point = true;
+				}
+
+			} // class EvaluateOptions
 
 	class Evaluator {
 		public Options options;
@@ -5111,21 +5160,7 @@ public abstract class CeresSolver {
 
 		} // class Options
 
-		// Options struct to control Evaluator::Evaluate;
-		class EvaluateOptions {
-			// If false, the loss function correction is not applied to the
-			// residual blocks.
-			public boolean apply_loss_function;
-
-			// If false, this evaluation point is the same as the last one.
-			public boolean new_evaluation_point;
-
-			public EvaluateOptions() {
-				apply_loss_function = true;
-				new_evaluation_point = true;
-			}
-
-		} // class EvaluateOptions
+		
 		
 		// It is expected that the classes implementing this interface will be aware
 		// of their client's requirements for the kind of sparse matrix storage and
@@ -5590,6 +5625,203 @@ public abstract class CeresSolver {
 		            Vector<Double> state_plus_delta) {
 		    return program_.Plus(state, delta, state_plus_delta);
 		  }
+		  
+		  public boolean Evaluate(EvaluateOptions evaluate_options,
+	                Vector<Double> state,
+	                double[] cost,
+	                Vector<Double> residuals,
+	                Vector<Double> gradient,
+	                SparseMatrix jacobian) {
+	    ScopedExecutionTimer total_timer = new ScopedExecutionTimer("Evaluator::Total", execution_summary_);
+	    ScopedExecutionTimer call_type_timer;
+	    if ((gradient == null) && (jacobian == null)) {
+	    	call_type_timer = new ScopedExecutionTimer("Evaluator::Residual", execution_summary_);
+	    }
+	    else {
+	    	call_type_timer = new ScopedExecutionTimer("Evaluator::Jacobian", execution_summary_);
+	    }
+	    // The parameters are stateful, so set the state before evaluating.
+	    if (!program_.StateVectorToParameterBlocks(state)) {
+	      return false;
+	    }
+
+	    // Notify the user about a new evaluation point if they are interested.
+	    /*if (options_.evaluation_callback != NULL) {
+	      program_->CopyParameterBlockStateToUserState();
+	      options_.evaluation_callback->PrepareForEvaluation(
+	          (gradient != NULL || jacobian != NULL),
+	          evaluate_options.new_evaluation_point);
+	    }
+
+	    if (residuals != NULL) {
+	      VectorRef(residuals, program_->NumResiduals()).setZero();
+	    }
+
+	    if (jacobian != NULL) {
+	      jacobian->SetZero();
+	    }
+
+	    // Each thread gets it's own cost and evaluate scratch space.
+	    for (int i = 0; i < options_.num_threads; ++i) {
+	      evaluate_scratch_[i].cost = 0.0;
+	      if (gradient != NULL) {
+	        VectorRef(evaluate_scratch_[i].gradient.get(),
+	                  program_->NumEffectiveParameters()).setZero();
+	      }
+	    }
+
+	    const int num_residual_blocks = program_->NumResidualBlocks();
+
+	#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+	    ThreadTokenProvider thread_token_provider(options_.num_threads);
+	#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+	#ifdef CERES_USE_OPENMP
+	    // This bool is used to disable the loop if an error is encountered
+	    // without breaking out of it. The remaining loop iterations are still run,
+	    // but with an empty body, and so will finish quickly.
+	    bool abort = false;
+	#pragma omp parallel for num_threads(options_.num_threads)
+	    for (int i = 0; i < num_residual_blocks; ++i) {
+	// Disable the loop instead of breaking, as required by OpenMP.
+	#pragma omp flush(abort)
+	#endif // CERES_USE_OPENMP
+
+	#ifdef CERES_NO_THREADS
+	    bool abort = false;
+	    for (int i = 0; i < num_residual_blocks; ++i) {
+	#endif // CERES_NO_THREADS
+
+	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	    std::atomic_bool abort(false);
+
+	    ParallelFor(options_.context,
+	                0,
+	                num_residual_blocks,
+	                options_.num_threads,
+	                [&](int thread_id, int i) {
+	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+
+	      if (abort) {
+	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	        return;
+	#else
+	        continue;
+	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	      }
+
+	#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+	      const ScopedThreadToken scoped_thread_token(&thread_token_provider);
+	      const int thread_id = scoped_thread_token.token();
+	#endif  // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+	      EvaluatePreparer* preparer = &evaluate_preparers_[thread_id];
+	      EvaluateScratch* scratch = &evaluate_scratch_[thread_id];
+
+	      // Prepare block residuals if requested.
+	      const ResidualBlock* residual_block = program_->residual_blocks()[i];
+	      double* block_residuals = NULL;
+	      if (residuals != NULL) {
+	        block_residuals = residuals + residual_layout_[i];
+	      } else if (gradient != NULL) {
+	        block_residuals = scratch->residual_block_residuals.get();
+	      }
+
+	      // Prepare block jacobians if requested.
+	      double** block_jacobians = NULL;
+	      if (jacobian != NULL || gradient != NULL) {
+	        preparer->Prepare(residual_block,
+	                          i,
+	                          jacobian,
+	                          scratch->jacobian_block_ptrs.get());
+	        block_jacobians = scratch->jacobian_block_ptrs.get();
+	      }
+
+	      // Evaluate the cost, residuals, and jacobians.
+	      double block_cost;
+	      if (!residual_block->Evaluate(
+	              evaluate_options.apply_loss_function,
+	              &block_cost,
+	              block_residuals,
+	              block_jacobians,
+	              scratch->residual_block_evaluate_scratch.get())) {
+	        abort = true;
+	#ifdef CERES_USE_OPENMP
+	// This ensures that the OpenMP threads have a consistent view of 'abort'. Do
+	// the flush inside the failure case so that there is usually only one
+	// synchronization point per loop iteration instead of two.
+	#pragma omp flush(abort)
+	#endif // CERES_USE_OPENMP
+
+	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	        return;
+	#else
+	        continue;
+	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	      }
+
+	      scratch->cost += block_cost;
+
+	      // Store the jacobians, if they were requested.
+	      if (jacobian != NULL) {
+	        jacobian_writer_.Write(i,
+	                               residual_layout_[i],
+	                               block_jacobians,
+	                               jacobian);
+	      }
+
+	      // Compute and store the gradient, if it was requested.
+	      if (gradient != NULL) {
+	        int num_residuals = residual_block->NumResiduals();
+	        int num_parameter_blocks = residual_block->NumParameterBlocks();
+	        for (int j = 0; j < num_parameter_blocks; ++j) {
+	          const ParameterBlock* parameter_block =
+	              residual_block->parameter_blocks()[j];
+	          if (parameter_block->IsConstant()) {
+	            continue;
+	          }
+
+	          MatrixTransposeVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
+	              block_jacobians[j],
+	              num_residuals,
+	              parameter_block->LocalSize(),
+	              block_residuals,
+	              scratch->gradient.get() + parameter_block->delta_offset());
+	        }
+	      }
+	    }
+	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	    );
+	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+
+	    if (!abort) {
+	      const int num_parameters = program_->NumEffectiveParameters();
+
+	      // Sum the cost and gradient (if requested) from each thread.
+	      (*cost) = 0.0;
+	      if (gradient != NULL) {
+	        VectorRef(gradient, num_parameters).setZero();
+	      }
+	      for (int i = 0; i < options_.num_threads; ++i) {
+	        (*cost) += evaluate_scratch_[i].cost;
+	        if (gradient != NULL) {
+	          VectorRef(gradient, num_parameters) +=
+	              VectorRef(evaluate_scratch_[i].gradient.get(), num_parameters);
+	        }
+	      }
+
+	      // Finalize the Jacobian if it is available.
+	      // `num_parameters` is passed to the finalizer so that additional
+	      // storage can be reserved for additional diagonal elements if
+	      // necessary.
+	      if (jacobian != NULL) {
+	        JacobianFinalizer f;
+	        f(jacobian, num_parameters);
+	      }
+	    }
+	    return !abort;*/
+	    return true;
+	  }
 		 
 
 	} // class ProgramEvaluator
@@ -5786,9 +6018,9 @@ public abstract class CeresSolver {
 	// blocks.
 	class StateUpdatingCallback extends IterationCallback {
 		private Program program_;
-		private Vector<double[]> parameters_;
+		private Vector<Double> parameters_;
 
-		public StateUpdatingCallback(Program program, Vector<double[]> parameters) {
+		public StateUpdatingCallback(Program program, Vector<Double> parameters) {
 			program_ = program;
 			parameters_ = parameters;
 		}
@@ -6092,7 +6324,7 @@ public abstract class CeresSolver {
 		  // Euclidean norm of x_.
 		  private double x_norm_;
 		  // Cost at x_.
-		  private double x_cost_;
+		  private double x_cost_[] = new double[1];
 		  // Minimum cost encountered up till now.
 		  private double minimum_cost_;
 		  // How much did the trust region strategy reduce the cost of the
@@ -6306,8 +6538,8 @@ public abstract class CeresSolver {
 		  }
 
 		  x_norm_ = -1;  // Invalid value
-		  x_cost_ = Double.MAX_VALUE;
-		  minimum_cost_ = x_cost_;
+		  x_cost_[0] = Double.MAX_VALUE;
+		  minimum_cost_ = x_cost_[0];
 		  model_cost_change_ = 0.0;
 		}
 
@@ -6349,22 +6581,105 @@ public abstract class CeresSolver {
 		    x_norm_ = Math.sqrt(x_norm_);
 		  }
 		  
-		  //if (!EvaluateGradientAndJacobian(/*new_evaluation_point=*/true)) {
-			    //return false;
-			  //}
+		  if (!EvaluateGradientAndJacobian(true)) {
+			    return false;
+		  }
 
-			  solver_summary_.initial_cost = x_cost_ + solver_summary_.fixed_cost;
+			  solver_summary_.initial_cost = x_cost_[0] + solver_summary_.fixed_cost;
 			  iteration_summary_.step_is_valid = true;
 			  iteration_summary_.step_is_successful = true;
 			  return true;
 		}
+		
+		// For the current x_, compute
+		//
+		//  1. Cost
+		//  2. Jacobian
+		//  3. Gradient
+		//  4. Scale the Jacobian if needed (and compute the scaling if we are
+//		     in iteration zero).
+		//  5. Compute the 2 and max norm of the gradient.
+		//
+		// Returns true if all computations could be performed
+		// successfully. Any failures are considered fatal and the
+		// Solver::Summary is updated to indicate this.
+		private boolean EvaluateGradientAndJacobian(
+		    boolean new_evaluation_point) {
+		  int i;
+		  EvaluateOptions evaluate_options = new EvaluateOptions();
+		  evaluate_options.new_evaluation_point = new_evaluation_point;
+		  if (!((ProgramEvaluator)evaluator_).Evaluate(evaluate_options,
+		                            x_,
+		                            x_cost_,
+		                            residuals_,
+		                            gradient_,
+		                            jacobian_)) {
+		    solver_summary_.message[0] = "Residual and Jacobian evaluation failed.";
+		    solver_summary_.termination_type = TerminationType.FAILURE;
+		    return false;
+		  }
+
+		  iteration_summary_.cost = x_cost_[0] + solver_summary_.fixed_cost;
+
+		  if (options_.jacobi_scaling) {
+		    if (iteration_summary_.iteration == 0) {
+		      // Compute a scaling vector that is used to improve the
+		      // conditioning of the Jacobian.
+		      //
+		      // jacobian_scaling_ = diag(J'J)^{-1}
+		      jacobian_.SquaredColumnNorm(jacobian_scaling_);
+		      for (i = 0; i < jacobian_.num_cols(); ++i) {
+		        // Add one to the denominator to prevent division by zero.
+		        jacobian_scaling_.set(i, 1.0 / (1.0 + Math.sqrt(jacobian_scaling_.get(i))));
+		      }
+		    }
+
+		    // jacobian = jacobian * diag(J'J) ^{-1}
+		    jacobian_.ScaleColumns(jacobian_scaling_);
+		  }
+
+		  // The gradient exists in the local tangent space. To account for
+		  // the bounds constraints correctly, instead of just computing the
+		  // norm of the gradient vector, we compute
+		  //
+		  // |Plus(x, -gradient) - x|
+		  //
+		  // Where the Plus operator lifts the negative gradient to the
+		  // ambient space, adds it to x and projects it on the hypercube
+		  // defined by the bounds.
+		  negative_gradient_.clear();
+		  for (i = 0; i < gradient_.size(); i++) {
+			  negative_gradient_.add(-gradient_.get(i));
+		  }
+		  if (!((ProgramEvaluator)evaluator_).Plus(x_,
+		                        negative_gradient_,
+		                        projected_gradient_step_)) {
+		    solver_summary_.message[0] =
+		        "projected_gradient_step = Plus(x, -gradient) failed.";
+		    solver_summary_.termination_type = TerminationType.FAILURE;
+		    return false;
+		  }
+
+		  iteration_summary_.gradient_max_norm = 0.0;
+		  double norm = 0.0;
+		  for (i = 0; i < x_.size(); i++) {
+			  double value = Math.abs(x_.get(i) - projected_gradient_step_.get(i));
+			  norm += (value * value);
+			  if (value > iteration_summary_.gradient_max_norm) {
+				  iteration_summary_.gradient_max_norm = value;
+			  }
+		  }
+		  norm = Math.sqrt(norm);
+		  iteration_summary_.gradient_norm = norm;
+		  return true;
+		}
+
 
 
 		  /*private:
 		  bool FinalizeIterationAndCheckIfMinimizerCanContinue();
 		  bool ComputeTrustRegionStep();
 
-		  bool EvaluateGradientAndJacobian(bool new_evaluation_point);
 		  void ComputeCandidatePointAndEvaluateCost();
 
 		  void DoLineSearch(const Vector& x,
@@ -8702,7 +9017,19 @@ public abstract class CeresSolver {
 		return true;
 		}
 
-       
+		public Minimizer Create(MinimizerType minimizer_type) {
+			  if (minimizer_type == MinimizerType.TRUST_REGION) {
+			    return new TrustRegionMinimizer();
+			  }
+
+			  /*if (minimizer_type == MinimizerType.LINE_SEARCH) {
+			    return new LineSearchMinimizer();
+			  }*/
+
+			  System.err.println("Unknown minimizer_type: " + minimizer_type);
+			  return null;
+			}
+ 
 
 	// Interface for non-linear least squares solvers.
 	class Minimizer {
@@ -9565,12 +9892,24 @@ public abstract class CeresSolver {
 				delta_offset += parameter_blocks_.get(i).LocalSize();
 			}
 		}
-
-		public void ParameterBlocksToStateVector(Vector<double[]> state) {
-			for (int i = 0; i < parameter_blocks_.size(); ++i) {
-				parameter_blocks_.get(i).GetState(state.get(i));
+		
+		public void ParameterBlocksToStateVector(Vector<Double> state) {
+			int i;
+			double state_array[] = new double[state.size()];
+			for (i = 0; i < state.size(); i++) {
+				state_array[i] = state.get(i);
 			}
+			ParameterBlocksToStateVector(state_array);
 		}
+		
+		public void ParameterBlocksToStateVector(double[] state) {
+			  int state_index = 0;
+			  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+			    parameter_blocks_.get(i).GetState(state,state_index);
+			    state_index += parameter_blocks_.get(i).Size();
+			  }
+			}
+
 
 		public int MaxParametersPerResidualBlock() {
 			int max_parameters = 0;
@@ -9645,6 +9984,32 @@ public abstract class CeresSolver {
 			return true;
 			}
 
+		public boolean StateVectorToParameterBlocks(Vector<Double> state) {
+		    int i;
+		    double state_array[] = new double[state.size()];
+		    for (i = 0; i < state.size(); i++) {
+		    	state_array[i] = state.get(i);
+		    }
+		    return StateVectorToParameterBlocks(state_array);
+		}
+		
+		public boolean StateVectorToParameterBlocks(double state[]) {
+			  int state_index = 0;
+			  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+			    if (!parameter_blocks_.get(i).IsConstant() &&
+			        !parameter_blocks_.get(i).SetState(state,state_index)) {
+			      return false;
+			    }
+			    state_index += parameter_blocks_.get(i).Size();
+			  }
+			  return true;
+			}
+
+		public void CopyParameterBlockStateToUserState() {
+			  for (int i = 0; i < parameter_blocks_.size(); ++i) {
+			    parameter_blocks_.get(i).GetState(parameter_blocks_.get(i).mutable_user_state(),0);
+			  }
+			}
 
 	} // class Program
 
@@ -10500,7 +10865,7 @@ public abstract class CeresSolver {
 		// pitfalls of using "mutable."
 		double[] state_;
 		int state_start = 0;
-		double local_parameterization_jacobian_[];
+		double local_parameterization_jacobian_[][];
 		// mutable scoped_array<double> local_parameterization_jacobian_;
 
 		// The index of the parameter. This is used by various other parts of Ceres to
@@ -10595,8 +10960,7 @@ public abstract class CeresSolver {
 
 			local_parameterization_ = new_parameterization;
 			// local_parameterization_jacobian_.reset(
-			local_parameterization_jacobian_ = new double[local_parameterization_.GlobalSize()
-					* local_parameterization_.LocalSize()];
+			local_parameterization_jacobian_ = new double[local_parameterization_.GlobalSize()][local_parameterization_.LocalSize()];
 			if (!UpdateLocalParameterizationJacobian()) {
 				System.err.println("Local parameterization Jacobian computation failed for x: ");
 				for (i = state_start; i < state_start + size_ - 1; i++) {
@@ -10634,7 +10998,7 @@ public abstract class CeresSolver {
 
 			int jacobian_size = Size() * LocalSize();
 			// jacobian is a row-major GlobalSize() x LocalSize() matrix.
-			InvalidateArray(jacobian_size, local_parameterization_jacobian_);
+			InvalidateArray(Size(), LocalSize(), local_parameterization_jacobian_);
 			if (!local_parameterization_.ComputeJacobian(state_, state_start, local_parameterization_jacobian_)) {
 				System.err.println("Local parameterization Jacobian computation failed for x:");
 				for (i = state_start; i < state_start + size_ - 1; i++) {
@@ -10644,7 +11008,7 @@ public abstract class CeresSolver {
 				return false;
 			}
 
-			if (!IsArrayValid(jacobian_size, local_parameterization_jacobian_)) {
+			if (!IsArrayValid(Size(), LocalSize(), local_parameterization_jacobian_)) {
 				System.err.println("Local parameterization Jacobian computation returned");
 				System.err.println("an invalid matrix for x: ");
 				for (i = state_start; i < state_start + size_ - 1; i++) {
@@ -10654,9 +11018,9 @@ public abstract class CeresSolver {
 				System.err.println("\n Jacobian matrix : ");
 				for (i = 0; i < size_; i++) {
 					for (j = 0; j < LocalSize() - 1; j++) {
-						System.err.print(local_parameterization_jacobian_[i * size_ + j] + " ");
+						System.err.print(local_parameterization_jacobian_[i][j] + " ");
 					}
-					System.err.println(local_parameterization_jacobian_[i * size_ + LocalSize() - 1]);
+					System.err.println(local_parameterization_jacobian_[i][LocalSize() - 1]);
 				}
 				return false;
 			}
@@ -10777,7 +11141,7 @@ public abstract class CeresSolver {
 		// The local to global jacobian. Returns NULL if there is no local
 		// parameterization for this parameter block. The returned matrix is row-major
 		// and has Size() rows and LocalSize() columns.
-		public double[] LocalParameterizationJacobian() {
+		public double[][] LocalParameterizationJacobian() {
 			return local_parameterization_jacobian_;
 		}
 
@@ -10819,10 +11183,10 @@ public abstract class CeresSolver {
 		// Copy the current parameter state out to x. This is "GetState()" rather than
 		// simply "state()" since it is actively copying the data into the passed
 		// pointer.
-		public void GetState(double[] x) {
+		public void GetState(double[] x, int x_start) {
 			if (x != state_) {
 				for (int i = state_start; i < state_start + size_; i++) {
-					x[i-state_start] = state_[i];
+					x[i-state_start+x_start] = state_[i];
 				}
 			}
 		}
@@ -10832,27 +11196,30 @@ public abstract class CeresSolver {
 		  // hyper cube implied by the bounds constraints.
 		  public boolean Plus(Vector<Double> x, int x_index,Vector<Double> delta, int delta_index,
 				  Vector<Double> x_plus_delta, int x_plus_delta_index) {
-		    /*if (local_parameterization_ != NULL) {
-		      if (!local_parameterization_->Plus(x, delta, x_plus_delta)) {
+			int i;
+		    if (local_parameterization_ != null) {
+		      if (!local_parameterization_.Plus(x, x_index, delta, delta_index,
+		    		  x_plus_delta, x_plus_delta_index)) {
 		        return false;
 		      }
 		    } else {
-		      VectorRef(x_plus_delta, size_) = ConstVectorRef(x, size_) +
-		                                       ConstVectorRef(delta,  size_);
+		      for (i = 0; i < size_; i++) {
+		    	  x_plus_delta.set(x_plus_delta_index + i, x.get(x_index + i) + delta.get(delta_index + i));
+		      }
 		    }
 
 		    // Project onto the box constraints.
-		    if (lower_bounds_.get() != NULL) {
-		      for (int i = 0; i < size_; ++i) {
-		        x_plus_delta[i] = std::max(x_plus_delta[i], lower_bounds_[i]);
+		    if (lower_bounds_ != null) {
+		      for (i = 0; i < size_; ++i) {
+		        x_plus_delta.set(x_plus_delta_index + i, Math.max(x_plus_delta.get(x_plus_delta_index + i), lower_bounds_[i]));
 		      }
 		    }
 
-		    if (upper_bounds_.get() != NULL) {
-		      for (int i = 0; i < size_; ++i) {
-		        x_plus_delta[i] = std::min(x_plus_delta[i], upper_bounds_[i]);
+		    if (upper_bounds_ != null) {
+		      for (i = 0; i < size_; ++i) {
+		        x_plus_delta.set(x_plus_delta_index + i, Math.min(x_plus_delta.get(x_plus_delta_index + i), upper_bounds_[i]));
 		      }
-		    }*/
+		    }
 
 		    return true;
 		  }
@@ -10861,15 +11228,42 @@ public abstract class CeresSolver {
 	// The class LocalParameterization defines the function Plus and its
 	// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
 	abstract class LocalParameterization {
+		
+		public boolean MultiplyByJacobian(double x[],
+                int num_rows,
+                double[][] global_matrix,
+                double[][] local_matrix) {
+			//Matrix jacobian(GlobalSize(), LocalSize());
+			double jacobian[][] = new double[GlobalSize()][LocalSize()];
+			if (!ComputeJacobian(x, 0, jacobian)) {
+			return false;
+			}
+			
+			//MatrixRef(local_matrix, num_rows, LocalSize()) =
+			//ConstMatrixRef(global_matrix, num_rows, GlobalSize()) * jacobian;
+			local_matrix = (new Matrix(global_matrix).times(new Matrix(jacobian))).getArray();
+			return true;
+		}
+
 		// jacobian is a row-major GlobalSize() x LocalSize() matrix.
-		public abstract boolean ComputeJacobian(double x[], int x_start, double jacobian[]);
+		public abstract boolean ComputeJacobian(double x[], int x_start, double jacobian[][]);
 
 		// Size of x.
 		public abstract int GlobalSize();
 
 		// Size of delta.
 		public abstract int LocalSize();
+		
+		public abstract boolean Plus(Vector<Double> x, int x_index,
+                Vector<Double> delta, int delta_index,
+                Vector<Double> x_plus_delta, int x_plus_delta_index);
 	}
+	
+	public boolean IsSolutionUsable(Solver.Summary  sum) {
+		  return (sum.termination_type == TerminationType.CONVERGENCE ||
+		          sum.termination_type == TerminationType.NO_CONVERGENCE ||
+		          sum.termination_type == TerminationType.USER_SUCCESS);
+		}
 
 	class Solver {
 		public Options options;
@@ -11619,7 +12013,7 @@ public abstract class CeresSolver {
 				inner_iteration_ordering_used = new Vector<Integer>();
 			}
 		}
-	}
+	} // class Solver
 
 	class GradientCheckingIterationCallback extends IterationCallback {
 		private boolean gradient_error_detected_;
@@ -11796,6 +12190,17 @@ public abstract class CeresSolver {
 		}
 	}
 	
+	public void InvalidateArray(int row, int col, double x[][]) {
+		int r,c;
+		if (x != null) {
+			for (r = 0; r < row; r++) {
+				for (c = 0; c < col; c++) {
+					x[r][c] = kImpossibleValue;
+				}
+			}
+		}
+	}
+	
 	public void InvalidateArray(int size, Vector<Double>x) {
 		if (x != null) {
 			for (int i = 0; i < size; ++i) {
@@ -11809,6 +12214,20 @@ public abstract class CeresSolver {
 			for (int i = 0; i < size; ++i) {
 				if (!Double.isFinite(x[i]) || (x[i] == kImpossibleValue)) {
 					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	public boolean IsArrayValid(int row, int col, double x[][]) {
+		int r,c;
+		if (x != null) {
+			for (r = 0; r < row; r++) {
+				for (c = 0; c < col; c++) {
+					if (!Double.isFinite(x[r][c]) || (x[r][c] == kImpossibleValue)) {
+						return false;
+					}
 				}
 			}
 		}
@@ -11966,6 +12385,44 @@ public abstract class CeresSolver {
 			}
 		}
 	}
+	
+	public void MatrixMatrixMultiply(int kOperation, double A[], int NUM_ROW_A, int NUM_COL_A, double B[][],
+			int NUM_ROW_B, int NUM_COL_B, double C[], int start_row_c, int start_col_c, int row_stride_c,
+			int col_stride_c) {
+		if (NUM_COL_A != NUM_ROW_B) {
+			System.err.println("In MatrixMatrixMultiply NUM_COL_A != NUM_ROW_B");
+			return;
+		}
+
+		int NUM_ROW_C = NUM_ROW_A;
+		int NUM_COL_C = NUM_COL_B;
+		if (start_row_c + NUM_ROW_C > row_stride_c) {
+			System.err.println("In MatrixMatrixMultiply start_row_C + NUM_ROW_C > row_stride_c");
+			return;
+		}
+		if (start_col_c + NUM_COL_C > col_stride_c) {
+			System.err.println("In MatrixMatrixMultiply start_col_C + NUM_COL_C > col_stride_c");
+			return;
+		}
+
+		for (int row = 0; row < NUM_ROW_C; ++row) {
+			for (int col = 0; col < NUM_COL_C; ++col) {
+				double tmp = 0.0;
+				for (int k = 0; k < NUM_COL_A; ++k) {
+					tmp += A[row * NUM_COL_A + k] * B[k][col];
+				}
+
+				int index = (row + start_row_c) * col_stride_c + start_col_c + col;
+				if (kOperation > 0) {
+					C[index] += tmp;
+				} else if (kOperation < 0) {
+					C[index] -= tmp;
+				} else {
+					C[index] = tmp;
+				}
+			}
+		}
+	}
 
 	String LineSearchTypeToString(LineSearchType type) {
 		switch (type) {
@@ -11986,6 +12443,8 @@ public abstract class CeresSolver {
 		}
 
 	}
+	
+	
 
 } // public abstract class CeresSolver
 
