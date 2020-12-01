@@ -5239,6 +5239,32 @@ public abstract class CeresSolver {
 		public void Init(int max_derivatives_per_residual_block) {
 			jacobian_scratch_ = new double[max_derivatives_per_residual_block];
 		}
+		
+		// Point the jacobian blocks into the scratch area of this evaluate preparer.
+		public void Prepare(ResidualBlock residual_block,
+		                                      int residual_block_index,
+		                                      SparseMatrix jacobian,
+		                                      double[][] jacobians) {
+		  int i;
+		  // residual_block_index and jacobian are not used in this routine
+		  double[] jacobian_block_cursor = jacobian_scratch_;
+		  int jacobian_block_cursor_index = 0;
+		  int num_residuals = residual_block.NumResiduals();
+		  int num_parameter_blocks = residual_block.NumParameterBlocks();
+		  for (int j = 0; j < num_parameter_blocks; ++j) {
+		    ParameterBlock parameter_block =
+		        residual_block.parameter_blocks()[j];
+		    if (parameter_block.IsConstant()) {
+		      jacobians[j] = null;
+		    } else {
+		      for (i = 0; i < num_residuals * parameter_block.LocalSize(); i++) {
+		          jacobians[j][i] = jacobian_block_cursor[jacobian_block_cursor_index + i];
+		      }
+		      jacobian_block_cursor_index += num_residuals * parameter_block.LocalSize();
+		    }
+		  }
+		}
+
 
 	}
 
@@ -5258,6 +5284,53 @@ public abstract class CeresSolver {
 			jacobian_layout_ = jacobian_layout;
 			scratch_evaluate_preparer_.Init(max_derivatives_per_residual_block);
 		}
+		
+		// Point the jacobian blocks directly into the block sparse matrix.
+		public void Prepare(ResidualBlock residual_block,
+		                                    int residual_block_index,
+		                                    SparseMatrix jacobian,
+		                                    double[][] jacobians) {
+		  int i;
+		  int jacobian_transfer_size;
+		  // If the overall jacobian is not available, use the scratch space.
+		  if (jacobian == null) {
+		    scratch_evaluate_preparer_.Prepare(residual_block,
+		                                       residual_block_index,
+		                                       jacobian,
+		                                       jacobians);
+		    return;
+		  }
+
+		  double[] jacobian_values =
+		      ((BlockSparseMatrix)jacobian).mutable_values();
+
+		  //int* jacobian_block_offset = jacobian_layout_[residual_block_index];
+		  int jacobian_block_offset = residual_block_index;
+		  int num_parameter_blocks = residual_block.NumParameterBlocks();
+		  for (int j = 0; j < num_parameter_blocks; ++j) {
+		    if (!residual_block.parameter_blocks()[j].IsConstant()) {
+		    	  if (j < num_parameter_blocks - 1) {
+		    	      jacobian_transfer_size = jacobian_layout_[jacobian_block_offset + 1] -
+		    	    		                   jacobian_layout_[jacobian_block_offset];
+		    	  }
+		    	  else {
+		    		  jacobian_transfer_size = jacobian_values.length - 
+		    				  jacobian_layout_[jacobian_block_offset];
+		    	  }
+		          for (i = 0; i < jacobian_transfer_size; i++) {
+		        	  jacobians[j][i] = jacobian_values[jacobian_layout_[jacobian_block_offset] + i];
+		          }
+
+		      // The jacobian_block_offset can't be indexed with 'j' since the code
+		      // that creates the layout strips out any blocks for inactive
+		      // parameters. Instead, bump the pointer for active parameters only.
+		      jacobian_block_offset++;
+		    } else {
+		      jacobians[j] = null;
+		    }
+		  }
+		}
+
 
 	}
 
@@ -5280,6 +5353,37 @@ public abstract class CeresSolver {
 		                                 program_.NumEffectiveParameters(),
 		                                 true);
 		  }
+		
+		public void Write(int residual_id,
+	             int residual_offset,
+	             double [][]jacobians,
+	             SparseMatrix jacobian) {
+		int r,c;
+	    DenseSparseMatrix dense_jacobian = (DenseSparseMatrix)jacobian;
+	    ResidualBlock residual_block =
+	        program_.residual_blocks().get(residual_id);
+	    int num_parameter_blocks = residual_block.NumParameterBlocks();
+	    int num_residuals = residual_block.NumResiduals();
+
+	    // Now copy the jacobians for each parameter into the dense jacobian matrix.
+	    for (int j = 0; j < num_parameter_blocks; ++j) {
+	      ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+
+	      // If the parameter block is fixed, then there is nothing to do.
+	      if (parameter_block.IsConstant()) {
+	        continue;
+	      }
+
+	      int parameter_block_size = parameter_block.LocalSize();
+	      double parameter_jacobian[][] = new double[num_residuals][parameter_block_size];
+	      for (r = 0; r < num_residuals; r++) {
+	    	  for (c = 0; c < parameter_block_size; c++) {
+	    		  dense_jacobian.mutable_matrix().set(r + residual_offset,
+	    				  c + parameter_block.delta_offset(),jacobians[j+r][c]);
+	    	  }
+	      }
+	    }
+	  }
 
 	} // class DenseJacobianWriter
 
@@ -5483,6 +5587,15 @@ public abstract class CeresSolver {
 			  }
 			  return jacobian;
 			}
+		
+		public void Write(int residual_id,
+	             int residual_offset,
+	             double[][] jacobians,
+	             SparseMatrix  jacobian ) {
+	    // This is a noop since the blocks were written directly into their final
+	    // position by the outside evaluate call, thanks to the jacobians array
+	    // prepared by the BlockEvaluatePreparers.
+	  }
 
 
 	} // class BlockJacobianWriter
@@ -5632,6 +5745,7 @@ public abstract class CeresSolver {
 	                Vector<Double> residuals,
 	                Vector<Double> gradient,
 	                SparseMatrix jacobian) {
+	    int i,j;
 	    ScopedExecutionTimer total_timer = new ScopedExecutionTimer("Evaluator::Total", execution_summary_);
 	    ScopedExecutionTimer call_type_timer;
 	    if ((gradient == null) && (jacobian == null)) {
@@ -5646,155 +5760,179 @@ public abstract class CeresSolver {
 	    }
 
 	    // Notify the user about a new evaluation point if they are interested.
-	    /*if (options_.evaluation_callback != NULL) {
-	      program_->CopyParameterBlockStateToUserState();
-	      options_.evaluation_callback->PrepareForEvaluation(
-	          (gradient != NULL || jacobian != NULL),
+	    if (options_.evaluation_callback != null) {
+	      program_.CopyParameterBlockStateToUserState();
+	      options_.evaluation_callback.PrepareForEvaluation(
+	          (gradient != null || jacobian != null),
 	          evaluate_options.new_evaluation_point);
 	    }
 
-	    if (residuals != NULL) {
-	      VectorRef(residuals, program_->NumResiduals()).setZero();
+	    if (residuals != null) {
+	      for (i = 0; i < program_.NumResiduals(); i++) {
+	    	  residuals.set(i,0.0);
+	      }
 	    }
 
-	    if (jacobian != NULL) {
-	      jacobian->SetZero();
+	    if (jacobian != null) {
+	      jacobian.SetZero();
 	    }
 
 	    // Each thread gets it's own cost and evaluate scratch space.
-	    for (int i = 0; i < options_.num_threads; ++i) {
+	    for (i = 0; i < options_.num_threads; ++i) {
 	      evaluate_scratch_[i].cost = 0.0;
-	      if (gradient != NULL) {
-	        VectorRef(evaluate_scratch_[i].gradient.get(),
-	                  program_->NumEffectiveParameters()).setZero();
+	      if (gradient != null) {
+	    	for (j = 0; j < program_.NumEffectiveParameters(); j++) {
+	    		evaluate_scratch_[i].gradient[j] = 0.0;
+	    	}
 	      }
 	    }
 
-	    const int num_residual_blocks = program_->NumResidualBlocks();
+	    int num_residual_blocks = program_.NumResidualBlocks();
 
-	#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
-	    ThreadTokenProvider thread_token_provider(options_.num_threads);
-	#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+	//#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+	//    ThreadTokenProvider thread_token_provider(options_.num_threads);
+	//#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
 
-	#ifdef CERES_USE_OPENMP
+	//#ifdef CERES_USE_OPENMP
 	    // This bool is used to disable the loop if an error is encountered
 	    // without breaking out of it. The remaining loop iterations are still run,
 	    // but with an empty body, and so will finish quickly.
-	    bool abort = false;
-	#pragma omp parallel for num_threads(options_.num_threads)
-	    for (int i = 0; i < num_residual_blocks; ++i) {
+	    //bool abort = false;
+	//#pragma omp parallel for num_threads(options_.num_threads)
+	    //for (int i = 0; i < num_residual_blocks; ++i) {
 	// Disable the loop instead of breaking, as required by OpenMP.
-	#pragma omp flush(abort)
-	#endif // CERES_USE_OPENMP
+	//#pragma omp flush(abort)
+	//#endif // CERES_USE_OPENMP
 
-	#ifdef CERES_NO_THREADS
-	    bool abort = false;
-	    for (int i = 0; i < num_residual_blocks; ++i) {
-	#endif // CERES_NO_THREADS
+	//#ifdef CERES_NO_THREADS
+	    boolean abort = false;
+	    for (i = 0; i < num_residual_blocks; ++i) {
+	//#endif // CERES_NO_THREADS
 
-	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
-	    std::atomic_bool abort(false);
+	//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	//    std::atomic_bool abort(false);
 
-	    ParallelFor(options_.context,
-	                0,
-	                num_residual_blocks,
-	                options_.num_threads,
-	                [&](int thread_id, int i) {
-	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	  //  ParallelFor(options_.context,
+	  //              0,
+	  //              num_residual_blocks,
+	  //              options_.num_threads,
+	  //              [&](int thread_id, int i) {
+	//#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 
 	      if (abort) {
-	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
-	        return;
-	#else
+	//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	        //return;
+	//#else
 	        continue;
-	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	//#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 	      }
 
-	#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
-	      const ScopedThreadToken scoped_thread_token(&thread_token_provider);
-	      const int thread_id = scoped_thread_token.token();
-	#endif  // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+	//#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+	      //const ScopedThreadToken scoped_thread_token(&thread_token_provider);
+	      //const int thread_id = scoped_thread_token.token();
+	//#endif  // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
 
-	      EvaluatePreparer* preparer = &evaluate_preparers_[thread_id];
-	      EvaluateScratch* scratch = &evaluate_scratch_[thread_id];
+//	      EvaluatePreparer preparer = &evaluate_preparers_[thread_id];
+//	      EvaluateScratch* scratch = &evaluate_scratch_[thread_id];
+	      EvaluatePreparer preparer = evaluate_preparers_[0];
+	      EvaluateScratch scratch = evaluate_scratch_[0];
 
 	      // Prepare block residuals if requested.
-	      const ResidualBlock* residual_block = program_->residual_blocks()[i];
-	      double* block_residuals = NULL;
-	      if (residuals != NULL) {
-	        block_residuals = residuals + residual_layout_[i];
-	      } else if (gradient != NULL) {
-	        block_residuals = scratch->residual_block_residuals.get();
+	      ResidualBlock residual_block = program_.residual_blocks().get(i);
+	      double block_residuals[] = null;
+	      if (residuals != null) {
+	    	block_residuals = new double[residuals.size() - 1 - residual_layout_.get(i) + 1];
+	    	for (j = residual_layout_.get(i); j < residuals.size(); j++) {
+	    		block_residuals[j-residual_layout_.get(i)] = residuals.get(j);
+	    	}
+	      } else if (gradient != null) {
+	    	block_residuals = new double[scratch.residual_block_residuals.length];
+	    	for (j = 0; j < scratch.residual_block_residuals.length; j++) {
+	    	    block_residuals[j] = scratch.residual_block_residuals[j];	
+	    	}
 	      }
 
 	      // Prepare block jacobians if requested.
-	      double** block_jacobians = NULL;
-	      if (jacobian != NULL || gradient != NULL) {
-	        preparer->Prepare(residual_block,
+	      double[][] block_jacobians = null;
+	      if (jacobian != null || gradient != null) {
+	    	  if ((options_.linear_solver_type == LinearSolverType.DENSE_QR) ||
+	  				(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
+	        ((ScratchEvaluatePreparer)preparer).Prepare(residual_block,
 	                          i,
 	                          jacobian,
-	                          scratch->jacobian_block_ptrs.get());
-	        block_jacobians = scratch->jacobian_block_ptrs.get();
+	                          scratch.jacobian_block_ptrs);
+	    	  }
+	    	  else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+	    		  ((BlockEvaluatePreparer)preparer).Prepare(residual_block,
+                          i,
+                          jacobian,
+                          scratch.jacobian_block_ptrs);	  
+	    	  }
+	        block_jacobians = scratch.jacobian_block_ptrs;
 	      }
 
 	      // Evaluate the cost, residuals, and jacobians.
-	      double block_cost;
-	      if (!residual_block->Evaluate(
+	      double block_cost[] = new double[1];
+	      if (!residual_block.Evaluate(
 	              evaluate_options.apply_loss_function,
-	              &block_cost,
+	              block_cost,
 	              block_residuals,
 	              block_jacobians,
-	              scratch->residual_block_evaluate_scratch.get())) {
+	              scratch.residual_block_evaluate_scratch)) {
 	        abort = true;
-	#ifdef CERES_USE_OPENMP
+	//#ifdef CERES_USE_OPENMP
 	// This ensures that the OpenMP threads have a consistent view of 'abort'. Do
 	// the flush inside the failure case so that there is usually only one
 	// synchronization point per loop iteration instead of two.
-	#pragma omp flush(abort)
-	#endif // CERES_USE_OPENMP
+	//#pragma omp flush(abort)
+	//#endif // CERES_USE_OPENMP
 
-	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
-	        return;
-	#else
+	//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	//        return;
+	//#else
 	        continue;
-	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	//#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 	      }
 
-	      scratch->cost += block_cost;
+	      scratch.cost += block_cost[0];
 
 	      // Store the jacobians, if they were requested.
-	      if (jacobian != NULL) {
-	        jacobian_writer_.Write(i,
-	                               residual_layout_[i],
+	      if (jacobian != null) {
+	    	  if ((options_.linear_solver_type == LinearSolverType.DENSE_QR) ||
+		  				(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
+	        ((DenseJacobianWriter)jacobian_writer_).Write(i,
+	                               residual_layout_.get(i),
 	                               block_jacobians,
 	                               jacobian);
+	    	  }
+	    	  // Write is a NOOP for BlockJacobianWriter
 	      }
 
 	      // Compute and store the gradient, if it was requested.
-	      if (gradient != NULL) {
-	        int num_residuals = residual_block->NumResiduals();
-	        int num_parameter_blocks = residual_block->NumParameterBlocks();
-	        for (int j = 0; j < num_parameter_blocks; ++j) {
-	          const ParameterBlock* parameter_block =
-	              residual_block->parameter_blocks()[j];
-	          if (parameter_block->IsConstant()) {
+	      if (gradient != null) {
+	        int num_residuals = residual_block.NumResiduals();
+	        int num_parameter_blocks = residual_block.NumParameterBlocks();
+	        for (j = 0; j < num_parameter_blocks; ++j) {
+	          ParameterBlock parameter_block =
+	              residual_block.parameter_blocks()[j];
+	          if (parameter_block.IsConstant()) {
 	            continue;
 	          }
 
-	          MatrixTransposeVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
+	          /*MatrixTransposeVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
 	              block_jacobians[j],
 	              num_residuals,
 	              parameter_block->LocalSize(),
 	              block_residuals,
-	              scratch->gradient.get() + parameter_block->delta_offset());
+	              scratch->gradient.get() + parameter_block->delta_offset());*/
 	        }
 	      }
 	    }
-	#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
-	    );
-	#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+	 //   );
+	//#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 
-	    if (!abort) {
+	    /*if (!abort) {
 	      const int num_parameters = program_->NumEffectiveParameters();
 
 	      // Sum the cost and gradient (if requested) from each thread.
@@ -12034,10 +12172,20 @@ public abstract class CeresSolver {
 		}
 	}
 
-	class EvaluationCallback {
+	abstract class EvaluationCallback {
 		public EvaluationCallback() {
 
 		}
+		
+		// Called before Ceres requests residuals or jacobians for a given setting of
+		  // the parameters. User parameters (the double* values provided to the cost
+		  // functions) are fixed until the next call to PrepareForEvaluation(). If
+		  // new_evaluation_point == true, then this is a new point that is different
+		  // from the last evaluated point. Otherwise, it is the same point that was
+		  // evaluated previously (either jacobian or residual) and the user can use
+		  // cached results from previous evaluations.
+		  public abstract void PrepareForEvaluation(boolean evaluate_jacobians,
+		                                    boolean new_evaluation_point);
 	}
 
 	class IterationCallback {
