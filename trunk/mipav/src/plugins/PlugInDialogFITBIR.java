@@ -8716,11 +8716,58 @@ public class PlugInDialogFITBIR extends JFrame
             FileInfoDicom dicomInfo = (FileInfoDicom) fInfo;
 
             FileDicomTagTable tagTable = dicomInfo.getTagTable();
+            
+            Vector<FileDicomTag> sequenceTags = new Vector<FileDicomTag>();
+            Hashtable<FileDicomKey, FileDicomTag> tagList = tagTable.getTagList();
+            for (FileDicomTag tag : tagList.values()) {
+                if (tag.getType() == FileDicomTagInfo.VR.SQ) {
+                    sequenceTags.add(tag);
+                }
+            }
 
             for (String anonTagKey : anonymizeTagIDs) {
                 FileDicomTag tag = tagTable.get(anonTagKey);
                 if (tag != null && tag.getValue(true) != null && ! ((String) tag.getValue(true)).trim().equals("")) {
                     problemTags.add(tag);
+                }
+                
+                // also check for each tag within sequence tags to make sure they are not buried
+                for (FileDicomTag seqTag : sequenceTags) {
+                    // if this tag has already been added because of another pii tag, we can skip further searches
+                    if (!problemTags.contains(seqTag) && doesTagExistWithValue(anonTagKey, seqTag)) {
+                        problemTags.add(seqTag);
+                    }
+                    
+//                    FileDicomSQ seqVal = (FileDicomSQ) seqTag.getValue(false);
+//                    Vector<FileDicomSQItem> seqItems = seqVal.getSequence();
+//                    for (FileDicomSQItem item : seqItems) {
+//                        for (FileDicomTag curTag : item.getTagList().values()) {
+//                            if (curTag.getType() == FileDicomTagInfo.VR.SQ) {
+//                                // go into sub sequence
+//                                FileDicomSQ subSeqVal = (FileDicomSQ) curTag.getValue(false);
+//                                Vector<FileDicomSQItem> subSeqItems = subSeqVal.getSequence();
+//                                for (FileDicomSQItem subItem : subSeqItems) {
+//                                    for (FileDicomTag subCurTag : subItem.getTagList().values()) {
+//                                        if (subCurTag.getType() == FileDicomTagInfo.VR.SQ) {
+//                                            // TODO go into sub sequence?
+//                                        } else {
+//                                            if (subCurTag.getKey().toString().equals(anonTagKey) && subCurTag.getValue(true) != null && ! ((String) subCurTag.getValue(true)).trim().equals("")) {
+//                                                if (!problemTags.contains(seqTag)) {
+//                                                    problemTags.add(seqTag);
+//                                                }
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            } else {
+//                                if (curTag.getKey().toString().equals(anonTagKey) && curTag.getValue(true) != null && ! ((String) curTag.getValue(true)).trim().equals("")) {
+//                                    if (!problemTags.contains(seqTag)) {
+//                                        problemTags.add(seqTag);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
                 }
             }
             // }
@@ -8729,6 +8776,26 @@ public class PlugInDialogFITBIR extends JFrame
         }
 
         return null;
+    }
+    
+    private static final boolean doesTagExistWithValue(final String needleTagKey, final FileDicomTag haystackTag) {
+        if (haystackTag.getType() == FileDicomTagInfo.VR.SQ) {
+            FileDicomSQ seqVal = (FileDicomSQ) haystackTag.getValue(false);
+            Vector<FileDicomSQItem> seqItems = seqVal.getSequence();
+            for (FileDicomSQItem item : seqItems) {
+                for (FileDicomTag curTag : item.getTagList().values()) {
+                    if (doesTagExistWithValue(needleTagKey, curTag)) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            if (haystackTag.getKey().toString().equals(needleTagKey) && haystackTag.getValue(true) != null && ! ((String) haystackTag.getValue(true)).trim().equals("")) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     private boolean deidentificationDialogDicom(String fDir, String fName, Vector<FileDicomTag> problemTags, boolean fromCsv) {
