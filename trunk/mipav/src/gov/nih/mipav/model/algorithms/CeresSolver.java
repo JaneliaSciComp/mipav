@@ -5919,12 +5919,12 @@ public abstract class CeresSolver {
 	            continue;
 	          }
 
-	          /*MatrixTransposeVectorMultiply<Eigen::Dynamic, Eigen::Dynamic, 1>(
-	              block_jacobians[j],
+	          MatrixTransposeVectorMultiply(DYNAMIC, DYNAMIC, 1,
+	              block_jacobians[j], 0,
 	              num_residuals,
-	              parameter_block->LocalSize(),
-	              block_residuals,
-	              scratch->gradient.get() + parameter_block->delta_offset());*/
+	              parameter_block.LocalSize(),
+	              block_residuals, 0,
+	              scratch.gradient,parameter_block.delta_offset());
 	        }
 	      }
 	    }
@@ -5932,19 +5932,22 @@ public abstract class CeresSolver {
 	 //   );
 	//#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 
-	    /*if (!abort) {
-	      const int num_parameters = program_->NumEffectiveParameters();
+	    if (!abort) {
+	      int num_parameters = program_.NumEffectiveParameters();
 
 	      // Sum the cost and gradient (if requested) from each thread.
-	      (*cost) = 0.0;
-	      if (gradient != NULL) {
-	        VectorRef(gradient, num_parameters).setZero();
+	      cost[0] = 0.0;
+	      if (gradient != null) {
+	    	for (i = 0; i < num_parameters; i++) {
+	    		gradient.set(i,0.0);
+	    	}
 	      }
-	      for (int i = 0; i < options_.num_threads; ++i) {
-	        (*cost) += evaluate_scratch_[i].cost;
-	        if (gradient != NULL) {
-	          VectorRef(gradient, num_parameters) +=
-	              VectorRef(evaluate_scratch_[i].gradient.get(), num_parameters);
+	      for (i = 0; i < options_.num_threads; ++i) {
+	        cost[0] += evaluate_scratch_[i].cost;
+	        if (gradient != null) {
+	          for (j = 0; j < num_parameters; j++) {
+	        	  gradient.set(j,gradient.get(j) + evaluate_scratch_[i].gradient[j]);
+	          }
 	        }
 	      }
 
@@ -5952,13 +5955,13 @@ public abstract class CeresSolver {
 	      // `num_parameters` is passed to the finalizer so that additional
 	      // storage can be reserved for additional diagonal elements if
 	      // necessary.
-	      if (jacobian != NULL) {
-	        JacobianFinalizer f;
-	        f(jacobian, num_parameters);
+	      if (jacobian != null) {
+	    	//Not presently implemented in NullJacobianFinalizer
+	        //JacobianFinalizer f;
+	        //f(jacobian, num_parameters);
 	      }
 	    }
-	    return !abort;*/
-	    return true;
+	    return !abort;
 	  }
 		 
 
@@ -6149,7 +6152,55 @@ public abstract class CeresSolver {
 			this.minimizer_type = minimizer_type;
 			log_to_stdout_ = log_to_stdout;
 		}
-		// virtual CallbackReturnType operator()(const IterationSummary& summary);
+		
+		
+		public CallbackReturnType operator(
+			    IterationSummary summary) {
+			  String output = null;
+			  if (minimizer_type == MinimizerType.LINE_SEARCH) {
+			    output =  String.format(
+			        "% 4d: f:% 8e d:% 3.2e g:% 3.2e h:% 3.2e " +
+			        "s:% 3.2e e:% 3d it:% 3.2e tt:% 3.2e",
+			                          summary.iteration,
+			                          summary.cost,
+			                          summary.cost_change,
+			                          summary.gradient_max_norm,
+			                          summary.step_norm,
+			                          summary.step_size,
+			                          summary.line_search_function_evaluations,
+			                          summary.iteration_time_in_seconds,
+			                          summary.cumulative_time_in_seconds);
+			  } else if (minimizer_type == MinimizerType.TRUST_REGION) {
+			    if (summary.iteration == 0) {
+			      output = "iter      cost      cost_change  |gradient|   |step|    tr_ratio  tr_radius  ls_iter  iter_time  total_time\n";
+			    }
+			    String output2  = String.format(
+			        "% 4d % 8e   % 3.2e   % 3.2e  % 3.2e  % 3.2e % 3.2e     % 4d   % 3.2e   % 3.2e",
+			                           summary.iteration,
+			                           summary.cost,
+			                           summary.cost_change,
+			                           summary.gradient_max_norm,
+			                           summary.step_norm,
+			                           summary.relative_decrease,
+			                           summary.trust_region_radius,
+			                           summary.linear_solver_iterations,
+			                           summary.iteration_time_in_seconds,
+			                           summary.cumulative_time_in_seconds);
+			    output = output + output2;
+			  } else {
+			    System.err.println("Unknown minimizer type.");
+			  }
+
+			  if (log_to_stdout_) {
+			    Preferences.debug(output + "\n", Preferences.DEBUG_ALGORITHM);
+			  } else {
+				if (1 <= MAX_LOG_LEVEL) {
+					Preferences.debug(output + "\n", Preferences.DEBUG_ALGORITHM);	
+				}
+			  }
+			  return CallbackReturnType.SOLVER_CONTINUE;
+			}
+
 	};
 
 	// Callback for updating the externally visible state of parameter
@@ -6163,8 +6214,46 @@ public abstract class CeresSolver {
 			parameters_ = parameters;
 		}
 
-		// virtual CallbackReturnType operator()(const IterationSummary& summary);
+		public CallbackReturnType operator(
+			    IterationSummary summary) {
+			  program_.StateVectorToParameterBlocks(parameters_);
+			  program_.CopyParameterBlockStateToUserState();
+			  return CallbackReturnType.SOLVER_CONTINUE;
+			}
+
 	};
+	
+	// Callback for updating the externally visible state of the
+	// parameters vector for GradientProblemSolver.
+	class GradientProblemSolverStateUpdatingCallback extends IterationCallback {
+		 private int num_parameters_;
+		 private Vector<Double> internal_parameters_;
+		 private Vector<Double> user_parameters_;
+	 public GradientProblemSolverStateUpdatingCallback(int num_parameters,
+	                                             Vector<Double> internal_parameters,
+	                                             Vector<Double> user_parameters) {
+		  num_parameters_ = num_parameters;
+	      internal_parameters_ = internal_parameters;
+	      user_parameters_ = user_parameters; 	 
+	 }
+	 
+	 public CallbackReturnType operator(
+			    IterationSummary summary) {
+		      int i;
+			  if (summary.step_is_successful) {
+				  for (i = 0; i < num_parameters_; i++) {
+					  if (i < user_parameters_.size()) {
+					  user_parameters_.set(i, internal_parameters_.get(i));
+					  }
+					  else {
+					  user_parameters_.add(internal_parameters_.get(i));
+					  }
+				  }
+				 
+			  }
+			  return CallbackReturnType.SOLVER_CONTINUE;
+	 }
+	 }
 
 	class CoordinateDescentMinimizer extends Minimizer {
 		Vector<ParameterBlock> parameter_blocks_;
@@ -6385,12 +6474,11 @@ public abstract class CeresSolver {
 			  return;
 		  }
 
-		  TrustRegionStrategy trs = new TrustRegionStrategy();
-		  TrustRegionStrategy.Options trs_options = trs.options;
+		  TrustRegionStrategyOptions trs_options = new TrustRegionStrategyOptions();
 		  trs_options.linear_solver = linear_solver;
 		  TrustRegionStrategy trust = Create(trs_options);
 		  if (trust == null) {
-			  System.err.println("TrustRegionStrategy trust = Create(trs_optons) == null in Solve");
+			  System.err.println("TrustRegionStrategy trust = Create(trs_options) == null in Solve");
 			  return;
 		  }
 		  minimizer_options.trust_region_strategy = trust;
@@ -6414,7 +6502,7 @@ public abstract class CeresSolver {
 		  private SparseMatrix jacobian_;
 		  private TrustRegionStrategy strategy_;
 
-		  //scoped_ptr<TrustRegionStepEvaluator> step_evaluator_;
+		  private TrustRegionStepEvaluator step_evaluator_;
 
 		  private boolean is_not_silent_;
 		  private boolean inner_iterations_are_enabled_;
@@ -6491,19 +6579,24 @@ public abstract class CeresSolver {
 			  start_time_in_secs_ = 1.0E-3 * System.currentTimeMillis();
 			  iteration_start_time_in_secs_ = start_time_in_secs_;
 			  Init(options, parameters, solver_summary);
-			  /*RETURN_IF_ERROR_AND_LOG(IterationZero());
+			  if(!IterationZero()) {
+				   System.err.println("Terminating: " + solver_summary_.message[0]);  
+				   return;
+			  }
 
 			  // Create the TrustRegionStepEvaluator. The construction needs to be
 			  // delayed to this point because we need the cost for the starting
 			  // point to initialize the step evaluator.
-			  step_evaluator_.reset(new TrustRegionStepEvaluator(
-			      x_cost_,
-			      options_.use_nonmonotonic_steps
-			          ? options_.max_consecutive_nonmonotonic_steps
-			          : 0));
+			  if (options_.use_nonmonotonic_steps) {
+				  step_evaluator_ = new TrustRegionStepEvaluator(x_cost_[0], options_.max_consecutive_nonmonotonic_steps); 
+			  }
+			  else {
+				  step_evaluator_ = new TrustRegionStepEvaluator(x_cost_[0],0);
+			  }
+			      
 
 			  while (FinalizeIterationAndCheckIfMinimizerCanContinue()) {
-			    iteration_start_time_in_secs_ = WallTimeInSeconds();
+			    /*iteration_start_time_in_secs_ = WallTimeInSeconds();
 			    iteration_summary_ = IterationSummary();
 			    iteration_summary_.iteration =
 			        solver_summary->iterations.back().iteration + 1;
@@ -6536,8 +6629,8 @@ public abstract class CeresSolver {
 			      continue;
 			    }
 
-			    HandleUnsuccessfulStep();
-			  }*/
+			    HandleUnsuccessfulStep();*/
+			  }
 	  
 		  }
 
@@ -6811,11 +6904,155 @@ public abstract class CeresSolver {
 		  iteration_summary_.gradient_norm = norm;
 		  return true;
 		}
+		
+		// 1. Add the final timing information to the iteration summary.
+		// 2. Run the callbacks
+		// 3. Check for termination based on
+//		    a. Run time
+//		    b. Iteration count
+//		    c. Max norm of the gradient
+//		    d. Size of the trust region radius.
+		//
+		// Returns true if user did not terminate the solver and none of these
+		// termination criterion are met.
+		private boolean FinalizeIterationAndCheckIfMinimizerCanContinue() {
+		  int i;
+		  if (iteration_summary_.step_is_successful) {
+		    ++solver_summary_.num_successful_steps;
+		    if (x_cost_[0] < minimum_cost_) {
+		      minimum_cost_ = x_cost_[0];
+		      for (i = 0; i < num_parameters_; i++) {
+		    	  parameters_[i] =  x_.get(i);
+		      }
+		      iteration_summary_.step_is_nonmonotonic = false;
+		    } else {
+		      iteration_summary_.step_is_nonmonotonic = true;
+		    }
+		  } else {
+		    ++solver_summary_.num_unsuccessful_steps;
+		  }
+
+		  iteration_summary_.trust_region_radius = strategy_.Radius();
+		  iteration_summary_.iteration_time_in_seconds =
+				  1.0E-3 * System.currentTimeMillis() - iteration_start_time_in_secs_;
+		  iteration_summary_.cumulative_time_in_seconds =
+				  1.0E-3 * System.currentTimeMillis() - start_time_in_secs_ +
+		      solver_summary_.preprocessor_time_in_seconds;
+
+		  solver_summary_.iterations.add(iteration_summary_);
+
+		  if (!RunCallbacks(options_, iteration_summary_, solver_summary_)) {
+		    return false;
+		  }
+
+		  if (MaxSolverTimeReached()) {
+		    return false;
+		  }
+
+		  if (MaxSolverIterationsReached()) {
+		    return false;
+		  }
+
+		  if (GradientToleranceReached()) {
+		    return false;
+		  }
+
+		  if (MinTrustRegionRadiusReached()) {
+		    return false;
+		  }
+
+		  return true;
+		}
+		
+		// Check convergence based on the max norm of the gradient (only for
+		// iterations where the step was declared successful).
+		private boolean GradientToleranceReached() {
+		  if (!iteration_summary_.step_is_successful ||
+		      iteration_summary_.gradient_max_norm > options_.gradient_tolerance) {
+		    return false;
+		  }
+
+		  solver_summary_.message[0] = 
+		      "Gradient tolerance reached. \n" +
+		      "Gradient max norm: " + iteration_summary_.gradient_max_norm + " <= " +
+		      options_.gradient_tolerance;
+		  solver_summary_.termination_type = TerminationType.CONVERGENCE;
+		  if ((1 <= MAX_LOG_LEVEL) && is_not_silent_) {
+			  Preferences.debug("Terminating: " + solver_summary_.message[0] + "\n",
+					  Preferences.DEBUG_ALGORITHM);
+		  }
+		  return true;
+		}
+
+		
+		// Check if the maximum number of iterations allowed by the user for
+		// the solver has been exceeded, and if so return false after updating
+		// Solver::Summary::message.
+		private boolean MaxSolverIterationsReached() {
+		  if (iteration_summary_.iteration < options_.max_num_iterations) {
+		    return false;
+		  }
+
+		  solver_summary_.message[0] =
+		      "Maximum number of iterations reached. \n" +
+		                   "Number of iterations: " +
+		                   iteration_summary_.iteration + ".";
+
+		  solver_summary_.termination_type = TerminationType.NO_CONVERGENCE;
+		  if ((1 <= MAX_LOG_LEVEL) && is_not_silent_) {
+			  Preferences.debug("Terminating: " + solver_summary_.message[0] + "\n",
+					  Preferences.DEBUG_ALGORITHM);
+		  }
+		  return true;
+		}
+
+
+		// Check if the maximum amount of time allowed by the user for the
+		// solver has been exceeded, and if so return false after updating
+		// Solver::Summary::message.
+		private boolean MaxSolverTimeReached() {
+		  double total_solver_time =
+		      1.0E-3 * System.currentTimeMillis() - start_time_in_secs_ +
+		      solver_summary_.preprocessor_time_in_seconds;
+		  if (total_solver_time < options_.max_solver_time_in_seconds) {
+		    return false;
+		  }
+
+		  solver_summary_.message[0] = "Maximum solver time reached. \n" +
+		                                          "Total solver time: " + total_solver_time +
+		                                         " >= " + options_.max_solver_time_in_seconds + ".";
+		  solver_summary_.termination_type = TerminationType.NO_CONVERGENCE;
+		  if ((1 <= MAX_LOG_LEVEL) && is_not_silent_) {
+			  Preferences.debug("Terminating: " + solver_summary_.message[0] + "\n",
+					  Preferences.DEBUG_ALGORITHM);
+		  }
+		  return true;
+		}
+		
+		// Check convergence based the size of the trust region radius.
+		private boolean MinTrustRegionRadiusReached() {
+		  if (iteration_summary_.trust_region_radius >
+		      options_.min_trust_region_radius) {
+		    return false;
+		  }
+
+		  solver_summary_.message[0] =
+		     "Minimum trust region radius reached. \n" +
+		                   "Trust region radius: " + iteration_summary_.trust_region_radius 
+		                   + " <=  " + 
+		                   options_.min_trust_region_radius;
+		  solver_summary_.termination_type = TerminationType.CONVERGENCE;
+		  if ((1 <= MAX_LOG_LEVEL) && is_not_silent_) {
+			  Preferences.debug("Terminating: " + solver_summary_.message[0] + "\n",
+					  Preferences.DEBUG_ALGORITHM);
+		  }
+		  return true;
+		}
+
 
 
 
 		  /*private:
-		  bool FinalizeIterationAndCheckIfMinimizerCanContinue();
 		  bool ComputeTrustRegionStep();
 
 		  void ComputeCandidatePointAndEvaluateCost();
@@ -6828,10 +7065,6 @@ public abstract class CeresSolver {
 
 		  bool ParameterToleranceReached();
 		  bool FunctionToleranceReached();
-		  bool GradientToleranceReached();
-		  bool MaxSolverTimeReached();
-		  bool MaxSolverIterationsReached();
-		  bool MinTrustRegionRadiusReached();
 
 		  bool IsStepSuccessful();
 		  void HandleUnsuccessfulStep();
@@ -6839,20 +7072,107 @@ public abstract class CeresSolver {
 		  bool HandleInvalidStep();*/
 
 		  
-		};
+		} // TrustRegionMinimizer
 	
-	public class TrustRegionStrategy {
-		 public Options options;
-		 public PerSolveOptions perSolveOptions;
-		 public Summary summary;
+	class TrustRegionStepEvaluator {
+			  private int max_consecutive_nonmonotonic_steps_;
+			  // The minimum cost encountered up till now.
+			  private double minimum_cost_;
+			  // The current cost of the trust region minimizer as informed by the
+			  // last call to StepAccepted.
+			  private double current_cost_;
+			  private double reference_cost_;
+			  private double candidate_cost_;
+			  // Accumulated model cost since the last time the reference model
+			  // cost was updated, i.e., when a step with cost less than the
+			  // current known minimum cost is accepted.
+			  private double accumulated_reference_model_cost_change_;
+			  // Accumulated model cost since the last time the candidate model
+			  // cost was updated, i.e., a non-monotonic step was taken with a
+			  // cost that was greater than the current candidate cost.
+			  private double accumulated_candidate_model_cost_change_;
+			  // Number of steps taken since the last time minimum_cost was updated.
+			  private int num_consecutive_nonmonotonic_steps_;
+			  // initial_cost is as the name implies the cost of the starting
+			  // state of the trust region minimizer.
+			  //
+			  // max_consecutive_nonmonotonic_steps controls the window size used
+			  // by the step selection algorithm to accept non-monotonic
+			  // steps. Setting this parameter to zero, recovers the classic
+			  // montonic descent algorithm.
+			  public TrustRegionStepEvaluator(double initial_cost,
+			                           int max_consecutive_nonmonotonic_steps) {
+				  max_consecutive_nonmonotonic_steps_ = max_consecutive_nonmonotonic_steps;
+			      minimum_cost_ = initial_cost;
+			      current_cost_ = initial_cost;
+			      reference_cost_ = initial_cost;
+			      candidate_cost_ = initial_cost;
+			      accumulated_reference_model_cost_change_ = 0.0;
+			      accumulated_candidate_model_cost_change_ = 0.0;
+			      num_consecutive_nonmonotonic_steps_ = 0; 
+			  }
+	
+			  // Return the quality of the step given its cost and the decrease in
+			  // the cost of the model. model_cost_change has to be positive.
+			  public double StepQuality(double cost, double model_cost_change) {
+				  double relative_decrease = (current_cost_ - cost) / model_cost_change;
+				  double historical_relative_decrease =
+				      (reference_cost_ - cost) /
+				      (accumulated_reference_model_cost_change_ + model_cost_change);
+				  return Math.max(relative_decrease, historical_relative_decrease);  
+			  };
+	
+			  // Inform the step evaluator that a step with the given cost and
+			  // model_cost_change has been accepted by the trust region
+			  // minimizer.
+			  public void StepAccepted(double cost, double model_cost_change) {
+				// Algorithm 10.1.2 from Trust Region Methods by Conn, Gould &
+				  // Toint.
+				  //
+				  // Step 3a
+				  current_cost_ = cost;
+				  accumulated_candidate_model_cost_change_ += model_cost_change;
+				  accumulated_reference_model_cost_change_ += model_cost_change;
+
+				  // Step 3b.
+				  if (current_cost_ < minimum_cost_) {
+				    minimum_cost_ = current_cost_;
+				    num_consecutive_nonmonotonic_steps_ = 0;
+				    candidate_cost_ = current_cost_;
+				    accumulated_candidate_model_cost_change_ = 0.0;
+				  } else {
+				    // Step 3c.
+				    ++num_consecutive_nonmonotonic_steps_;
+				    if (current_cost_ > candidate_cost_) {
+				      candidate_cost_ = current_cost_;
+				      accumulated_candidate_model_cost_change_ = 0.0;
+				    }
+				  }
+
+				  // Step 3d.
+				  //
+				  // At this point we have made too many non-monotonic steps and
+				  // we are going to reset the value of the reference iterate so
+				  // as to force the algorithm to descend.
+				  //
+				  // Note: In the original algorithm by Toint, this step was only
+				  // executed if the step was non-monotonic, but that would not handle
+				  // the case of max_consecutive_nonmonotonic_steps = 0. The small
+				  // modification of doing this always handles that corner case
+				  // correctly.
+				  if (num_consecutive_nonmonotonic_steps_ ==
+				      max_consecutive_nonmonotonic_steps_) {
+				    reference_cost_ = candidate_cost_;
+				    accumulated_reference_model_cost_change_ =
+				        accumulated_candidate_model_cost_change_;
+				  }
+  
+			  }
+
 		 
-		 public TrustRegionStrategy() {
-			 options = new Options();
-			 perSolveOptions = new PerSolveOptions();
-			 summary = new Summary();
-		 }
+		};
 		
-		  class Options {
+		class TrustRegionStrategyOptions {
 			  public TrustRegionStrategyType trust_region_strategy_type;
 			  // Linear solver used for actually solving the trust region step.
 			  public LinearSolver linear_solver;
@@ -6868,7 +7188,7 @@ public abstract class CeresSolver {
 
 			  // Further specify which dogleg method to use
 			  public DoglegType dogleg_type;
-		      public Options() {
+		      public TrustRegionStrategyOptions() {
 		          trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
 		          initial_radius = 1e4;
 		          max_radius = 1e32;
@@ -6878,6 +7198,18 @@ public abstract class CeresSolver {
 		    }
 		  } // class Options
 
+	
+	abstract class TrustRegionStrategy {
+		 public TrustRegionStrategyOptions options;
+		 public PerSolveOptions perSolveOptions;
+		 public Summary summary;
+		 
+		 public TrustRegionStrategy() {
+			 options = new TrustRegionStrategyOptions();
+			 summary = new Summary();
+		 }
+		
+		  
 		  // Per solve options.
 		  class PerSolveOptions {
 			    // Forcing sequence for inexact solves.
@@ -6926,7 +7258,7 @@ public abstract class CeresSolver {
 			  } // class Summary
 			  
 			  // Use the current radius to solve for the trust region step.
-			  /*public abstract Summary ComputeStep(PerSolveOptions per_solve_options,
+			  public abstract Summary ComputeStep(PerSolveOptions per_solve_options,
 			                              SparseMatrix jacobian,
 			                              double residuals[],
 			                              double step[]);
@@ -6948,11 +7280,11 @@ public abstract class CeresSolver {
 			  public abstract void StepIsInvalid();
 
 			  // Current trust region radius.
-			  public abstract double Radius();*/
+			  public abstract double Radius();
 
 	} // class TrustRegionStrategy
 	
-	public TrustRegionStrategy  Create(TrustRegionStrategy.Options options) {
+	public TrustRegionStrategy  Create(TrustRegionStrategyOptions options) {
 		  switch (options.trust_region_strategy_type) {
 		    case LEVENBERG_MARQUARDT:
 		      return new LevenbergMarquardtStrategy(options);
@@ -6985,7 +7317,7 @@ public abstract class CeresSolver {
 		  // ComputeStep is called again.
 		  private Vector<Double> lm_diagonal_;  // lm_diagonal_ = diagonal_ / radius_;
 		  
-	      public LevenbergMarquardtStrategy(TrustRegionStrategy.Options options) {
+	      public LevenbergMarquardtStrategy(TrustRegionStrategyOptions options) {
 	    	  super();
 	    	  linear_solver_ = options.linear_solver;
 	          radius_ = options.initial_radius;
@@ -7255,7 +7587,7 @@ public abstract class CeresSolver {
 		  private double kMinMu = 1e-8;
 
 	 
-	      public DoglegStrategy(TrustRegionStrategy.Options options) {
+	      public DoglegStrategy(TrustRegionStrategyOptions options) {
 	    	  super();
 	    	  linear_solver_ = options.linear_solver;
 	          radius_ = options.initial_radius;
@@ -9303,9 +9635,44 @@ public abstract class CeresSolver {
 				callbacks = options.callbacks;
 			}
 
-		};
+		} // class Options
+		
+		public boolean RunCallbacks(Minimizer.Options options,
+                IterationSummary iteration_summary,
+                Solver.Summary summary) {
+			boolean is_not_silent = !options.is_silent;
+			CallbackReturnType status = CallbackReturnType.SOLVER_CONTINUE;
+			int i = 0;
+			while (status == CallbackReturnType.SOLVER_CONTINUE && i < options.callbacks.size()) {
+			status = (options.callbacks.get(i)).operator(iteration_summary);
+			++i;
+			}
+			switch (status) {
+			case SOLVER_CONTINUE:
+			return true;
+			case SOLVER_TERMINATE_SUCCESSFULLY:
+			summary.termination_type = TerminationType.USER_SUCCESS;
+			summary.message[0] =
+			"User callback returned SOLVER_TERMINATE_SUCCESSFULLY.";
+			if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+			    Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);	
+			}
+			return false;
+			case SOLVER_ABORT:
+			summary.termination_type = TerminationType.USER_FAILURE;
+			summary.message[0] = "User callback returned SOLVER_ABORT.";
+			if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+			    Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);	
+			}
+			return false;
+			default:
+			System.err.println("Unknown type of user callback status");
+			}
+			return false;
+			}
 
-	};
+
+	} // class Minimizer
 
 	private ProblemImpl CreateGradientCheckingProblemImpl(ProblemImpl problem_impl, double relative_step_size,
 			double relative_precision, GradientCheckingIterationCallback callback) {
@@ -11957,7 +12324,7 @@ public abstract class CeresSolver {
 			public double final_cost;
 			public double fixed_cost;
 			// IterationSummary for each minimizer iteration in order.
-			// public Vector<IterationSummary> iterations;
+			public Vector<IterationSummary> iterations;
 			public int num_successful_steps;
 			public int num_unsuccessful_steps;
 			// Number of times inner iterations were performed.
@@ -12149,6 +12516,7 @@ public abstract class CeresSolver {
 				inner_iteration_ordering_given = new Vector<Integer>();
 				linear_solver_ordering_used = new Vector<Integer>();
 				inner_iteration_ordering_used = new Vector<Integer>();
+				iterations = new Vector<IterationSummary>();
 			}
 		}
 	} // class Solver
@@ -12170,6 +12538,16 @@ public abstract class CeresSolver {
 		public String[] error_log() {
 			return error_log_;
 		}
+		
+		public CallbackReturnType operator(
+			    IterationSummary summary) {
+			  if (gradient_error_detected_) {
+			    System.err.println("Gradient error detected. Terminating solver.");
+			    return CallbackReturnType.SOLVER_ABORT;
+			  }
+			  return CallbackReturnType.SOLVER_CONTINUE;
+		}
+
 	}
 
 	abstract class EvaluationCallback {
@@ -12188,10 +12566,12 @@ public abstract class CeresSolver {
 		                                    boolean new_evaluation_point);
 	}
 
-	class IterationCallback {
+	abstract class IterationCallback {
 		public IterationCallback() {
 
 		}
+		
+		public abstract CallbackReturnType operator(IterationSummary summary);
 	}
 
 	// Options pertaining to numeric differentiation (e.g., convergence criteria,
