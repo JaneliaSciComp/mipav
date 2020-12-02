@@ -321,7 +321,10 @@ public class JDialogDICOMTagEditor extends JDialogBase {
         	break;
         case SQ:
         	//TODO: Create panel for editing dicom sequences
-        	break;
+        	//break;
+            
+            inputPanel = new JPanelEditDefault(editString);
+            break;
         default:
         	if (tagTable.get(tagKey).getKeyword().equals("PatientSex")) {
         		inputPanel = new JPanelEditSex(editString);
