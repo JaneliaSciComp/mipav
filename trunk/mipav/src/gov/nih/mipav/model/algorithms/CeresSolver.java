@@ -1064,8 +1064,7 @@ public abstract class CeresSolver {
 		// Configure and create the evaluator.
 		public boolean SetupEvaluator(PreprocessedProblem pp) {
 		  Solver.Options options = pp.options;
-		  Evaluator ev = new Evaluator();
-		  pp.evaluator_options = ev.options;
+		  pp.evaluator_options = new EvaluatorOptions();
 		  pp.evaluator_options.linear_solver_type = options.linear_solver_type;
 		  pp.evaluator_options.num_eliminate_blocks = 0;
 		  if (IsSchurType(options.linear_solver_type)) {
@@ -1922,8 +1921,7 @@ public abstract class CeresSolver {
 		}
 
 		public boolean SetupEvaluator(PreprocessedProblem pp) {
-			Evaluator ev = new Evaluator();
-			pp.evaluator_options = ev.options;
+			pp.evaluator_options = new EvaluatorOptions();
 			// This ensures that we get a Block Jacobian Evaluator without any
 			// requirement on orderings.
 			pp.evaluator_options.linear_solver_type = LinearSolverType.CGNR;
@@ -1943,7 +1941,7 @@ public abstract class CeresSolver {
 		String error[];
 		Solver.Options options;
 		LinearSolverOptions linear_solver_options;
-		Evaluator.Options evaluator_options;
+		EvaluatorOptions evaluator_options;
 		Minimizer.Options minimizer_options;
 
 		ProblemImpl problem;
@@ -3331,6 +3329,22 @@ public abstract class CeresSolver {
 	}
 
 	abstract class SparseMatrix extends LinearOperator {
+		
+		public void RightMultiply(Vector<Double> x, Vector<Double>y) {
+			int i;
+			double x_array[] = new double[x.size()];
+			for (i = 0; i < x.size(); i++) {
+				x_array[i] = x.get(i);
+			}
+			double y_array[] = new double[y.size()];
+			for (i = 0; i < y.size(); i++) {
+				y_array[i] = y.get(i);
+			}
+			RightMultiply(x_array,y_array);
+			for (i = 0; i < y.size(); i++) {
+				y.set(i,y_array[i]);
+			}
+		}
 
 		// y += Ax;
 		public abstract void RightMultiply(double x[], double y[]);
@@ -5133,34 +5147,55 @@ public abstract class CeresSolver {
 				}
 
 			} // class EvaluateOptions
+			
+			class EvaluatorOptions {
+				public int num_threads;
+				public int num_eliminate_blocks;
+				public LinearSolverType linear_solver_type;
+				public boolean dynamic_sparsity;
+				public Context context;
+				public EvaluationCallback evaluation_callback;
 
-	class Evaluator {
-		public Options options;
+				public EvaluatorOptions() {
+					num_threads = 1;
+					num_eliminate_blocks = -1;
+					linear_solver_type = LinearSolverType.DENSE_QR;
+					dynamic_sparsity = false;
+					context = new Context();
+					evaluation_callback = null;
+				}
+				
+				  
+
+
+			} // class EvaluatorOptions
+
+
+	abstract class Evaluator {
+		public EvaluatorOptions options;
 
 		public Evaluator() {
-			options = new Options();
+			options = new EvaluatorOptions();
 		}
 
-		class Options {
-			public int num_threads;
-			public int num_eliminate_blocks;
-			public LinearSolverType linear_solver_type;
-			public boolean dynamic_sparsity;
-			public Context context;
-			public EvaluationCallback evaluation_callback;
-
-			public Options() {
-				num_threads = 1;
-				num_eliminate_blocks = -1;
-				linear_solver_type = LinearSolverType.DENSE_QR;
-				dynamic_sparsity = false;
-				context = new Context();
-				evaluation_callback = null;
-			}
-
-		} // class Options
-
 		
+		// however, the mapping is more complicated in the case of parameterizations
+		  // like quaternions. This is the same as the "Plus()" operation in
+		  // local_parameterization.h, but operating over the entire state vector for a
+		  // problem.
+		  public abstract boolean Plus(Vector<Double> state,
+		                    Vector<Double> delta,
+		                    Vector<Double> state_plus_delta);
+
+		  // The number of parameters in the optimization problem.
+		  public abstract int NumParameters();
+
+		  // This is the effective number of parameters that the optimizer may adjust.
+		  // This applies when there are parameterizations on some of the parameters.
+		  public abstract int NumEffectiveParameters();
+
+		  // The number of residuals in the optimization problem.
+		  public abstract int NumResiduals();
 		
 		// It is expected that the classes implementing this interface will be aware
 		// of their client's requirements for the kind of sparse matrix storage and
@@ -5174,7 +5209,7 @@ public abstract class CeresSolver {
 
 	} // class Evaluator
 	
-	public Evaluator Create(Evaluator.Options options, Program program, String error[]) {
+	public Evaluator Create(EvaluatorOptions options, Program program, String error[]) {
 		if (options.context == null) {
 			System.err.println("options.context == null in public Evaluator Create");
 			return null;
@@ -5337,7 +5372,7 @@ public abstract class CeresSolver {
 	class DenseJacobianWriter {
 		private Program program_;
 
-		public DenseJacobianWriter(Evaluator.Options options/* ignored */, Program program) {
+		public DenseJacobianWriter(EvaluatorOptions options/* ignored */, Program program) {
 			program_ = program;
 		}
 
@@ -5390,7 +5425,7 @@ public abstract class CeresSolver {
 	class DynamicCompressedRowJacobianWriter {
 		private Program program_;
 
-		public DynamicCompressedRowJacobianWriter(Evaluator.Options options/* ignored */, Program program) {
+		public DynamicCompressedRowJacobianWriter(EvaluatorOptions options/* ignored */, Program program) {
 			program_ = program;
 		}
 
@@ -5410,7 +5445,7 @@ public abstract class CeresSolver {
 		// The pointers in jacobian_layout_ point directly into this vector.
 		private Vector<Integer> jacobian_layout_storage_;
 
-		public BlockJacobianWriter(Evaluator.Options options, Program program) {
+		public BlockJacobianWriter(EvaluatorOptions options, Program program) {
 			program_ = program;
 			if (options.num_eliminate_blocks < 0) {
 				System.err.println("num_eliminate_blocks must be >= 0 in public BlockJacobian.");
@@ -5676,7 +5711,7 @@ public abstract class CeresSolver {
 	 */
 	class ProgramEvaluator<EvaluatePreparer, JacobianWriter, JacobianFinalizer> extends Evaluator {
 
-		private Evaluator.Options options_;
+		private EvaluatorOptions options_;
 		private Program program_;
 		private JacobianWriter jacobian_writer_;
 		// scoped_array<EvaluatePreparer> evaluate_preparers_;
@@ -5686,7 +5721,7 @@ public abstract class CeresSolver {
 		private Vector<Integer> residual_layout_;
 		private ExecutionSummary execution_summary_;
 
-		public ProgramEvaluator(JacobianWriter jw, Evaluator.Options options, Program program) {
+		public ProgramEvaluator(JacobianWriter jw, EvaluatorOptions options, Program program) {
 			super();
 			options_ = options;
 			program_ = program;
@@ -6264,7 +6299,7 @@ public abstract class CeresSolver {
 		// sets in parameter_blocks_.
 		Vector<Integer> independent_set_offsets_;
 
-		Evaluator.Options evaluator_options_;
+		EvaluatorOptions evaluator_options_;
 
 		Context context_;
 
@@ -6278,8 +6313,7 @@ public abstract class CeresSolver {
 			parameter_blocks_ = new Vector<ParameterBlock>();
 			residual_blocks_ = new Vector<Vector<ResidualBlock>>();
 			independent_set_offsets_ = new Vector<Integer>();
-			Evaluator ev = new Evaluator();
-			evaluator_options_ = ev.options;
+			evaluator_options_ = new EvaluatorOptions();
 		}
 		
 		public boolean Init(
@@ -6596,24 +6630,30 @@ public abstract class CeresSolver {
 			      
 
 			  while (FinalizeIterationAndCheckIfMinimizerCanContinue()) {
-			    /*iteration_start_time_in_secs_ = WallTimeInSeconds();
-			    iteration_summary_ = IterationSummary();
+			    iteration_start_time_in_secs_ = 1.0E-3 * System.currentTimeMillis();
+			    iteration_summary_ = new IterationSummary();
 			    iteration_summary_.iteration =
-			        solver_summary->iterations.back().iteration + 1;
+			        solver_summary.iterations.get(solver_summary.iterations.size()-1).iteration + 1;
 
-			    RETURN_IF_ERROR_AND_LOG(ComputeTrustRegionStep());
+			    if(!ComputeTrustRegionStep()) {
+			    	 System.err.println("Terminating: " + solver_summary_.message[0]);  
+					   return;	
+			    }
 			    if (!iteration_summary_.step_is_valid) {
-			      RETURN_IF_ERROR_AND_LOG(HandleInvalidStep());
+			      if(!HandleInvalidStep()) {
+			    	  System.err.println("Terminating: " + solver_summary_.message[0]);  
+					  return;	  
+			      }
 			      continue;
 			    }
 
 			    if (options_.is_constrained) {
 			      // Use a projected line search to enforce the bounds constraints
 			      // and improve the quality of the step.
-			      DoLineSearch(x_, gradient_, x_cost_, &delta_);
+			      DoLineSearch(x_, gradient_, x_cost_[0], delta_);
 			    }
 
-			    ComputeCandidatePointAndEvaluateCost();
+			    /*ComputeCandidatePointAndEvaluateCost();
 			    DoInnerIterationsIfNeeded();
 
 			    if (ParameterToleranceReached()) {
@@ -6625,7 +6665,10 @@ public abstract class CeresSolver {
 			    }
 
 			    if (IsStepSuccessful()) {
-			      RETURN_IF_ERROR_AND_LOG(HandleSuccessfulStep());
+			      if(!HandleSuccessfulStep()) {
+			    	  System.err.println("Terminating: " + solver_summary_.message[0]);  
+					  return;  
+			      }
 			      continue;
 			    }
 
@@ -7049,18 +7092,222 @@ public abstract class CeresSolver {
 		  return true;
 		}
 
+		// Compute the trust region step using the TrustRegionStrategy chosen
+		// by the user.
+		//
+		// If the strategy returns with LINEAR_SOLVER_FATAL_ERROR, which
+		// indicates an unrecoverable error, return false. This is the only
+		// condition that returns false.
+		//
+		// If the strategy returns with LINEAR_SOLVER_FAILURE, which indicates
+		// a numerical failure that could be recovered from by retrying
+		// (e.g. by increasing the strength of the regularization), we set
+		// iteration_summary_.step_is_valid to false and return true.
+		//
+		// In all other cases, we compute the decrease in the trust region
+		// model problem. In exact arithmetic, this should always be
+		// positive, but due to numerical problems in the TrustRegionStrategy
+		// or round off error when computing the decrease it may be
+		// negative. In which case again, we set
+		// iteration_summary_.step_is_valid to false.
+		private boolean ComputeTrustRegionStep() {
+		  int i;
+		  double strategy_start_time = 1.0E-3 * System.currentTimeMillis();
+		  iteration_summary_.step_is_valid = false;
+		  TrustRegionStrategyPerSolveOptions per_solve_options = new TrustRegionStrategyPerSolveOptions();
+		  per_solve_options.eta = options_.eta;
+		  if (options_.trust_region_minimizer_iterations_to_dump.indexOf(iteration_summary_.iteration) != -1) {
+		    per_solve_options.dump_format_type =
+		        options_.trust_region_problem_dump_format_type;
+		    per_solve_options.dump_filename_base =
+		        options_.trust_region_problem_dump_directory +
+		                 String.format("ceres_solver_iteration_%03d",
+		                              iteration_summary_.iteration);
+		  }
+		  
+		  double residuals_array[] = new double[residuals_.size()];
+		  for (i = 0; i < residuals_.size(); i++) {
+			  residuals_array[i] = residuals_.get(i);
+		  }
+		  double trust_region_step_array[] = new double[trust_region_step_.size()];
+		  for (i = 0; i < trust_region_step_.size(); i++) {
+			  trust_region_step_array[i] = trust_region_step_.get(i);
+		  }
+		  
+		  TrustRegionStrategy.Summary strategy_summary =
+			      strategy_.ComputeStep(per_solve_options,
+			                             jacobian_,
+			                             residuals_array,
+			                             trust_region_step_array);
+		  for (i = 0; i < residuals_.size(); i++) {
+			  residuals_.set(i,residuals_array[i]);
+		  }
+		  for (i = 0; i < trust_region_step_.size(); i++) {
+			  trust_region_step_.set(i,trust_region_step_array[i]);
+		  }
 
+			  if (strategy_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
+			    solver_summary_.message[0] =
+			        "Linear solver failed due to unrecoverable \n" +
+			        "non-numeric causes. Please see the error log for clues. ";
+			    solver_summary_.termination_type = TerminationType.FAILURE;
+			    return false;
+			  }
+
+			  iteration_summary_.step_solver_time_in_seconds =
+					  1.0E-3 * System.currentTimeMillis() - strategy_start_time;
+			  iteration_summary_.linear_solver_iterations = strategy_summary.num_iterations;
+
+			  if (strategy_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+			    return true;
+			  }
+
+			  // new_model_cost
+			  //  = 1/2 [f + J * step]^2
+			  //  = 1/2 [ f'f + 2f'J * step + step' * J' * J * step ]
+			  // model_cost_change
+			  //  = cost - new_model_cost
+			  //  = f'f/2  - 1/2 [ f'f + 2f'J * step + step' * J' * J * step]
+			  //  = -f'J * step - step' * J' * J * step / 2
+			  //  = -(J * step)'(f + J * step / 2)
+			  for (i = 0; i < model_residuals_.size(); i++) {
+				  model_residuals_.set(i,0.0);
+			  }
+			  jacobian_.RightMultiply(trust_region_step_, model_residuals_);
+			  model_cost_change_ = 0.0;
+			  for (i = 0; i < model_residuals_.size(); i++) {
+				  model_cost_change_ += (-model_residuals_.get(i))*(residuals_.get(i) + model_residuals_.get(i)/2.0);
+			  }
+
+			  // TODO(sameeragarwal)
+			  //
+			  //  1. What happens if model_cost_change_ = 0
+			  //  2. What happens if -epsilon <= model_cost_change_ < 0 for some
+			  //     small epsilon due to round off error.
+			  iteration_summary_.step_is_valid = (model_cost_change_ > 0.0);
+			  if (iteration_summary_.step_is_valid) {
+			    // Undo the Jacobian column scaling.
+				delta_.clear();
+				for (i = 0; i < trust_region_step_.size(); i++) {
+					delta_.add(trust_region_step_.get(i) * jacobian_scaling_.get(i));
+				}
+			    num_consecutive_invalid_steps_ = 0;
+			  }
+
+			  if ((1 <= MAX_LOG_LEVEL) && is_not_silent_ && !iteration_summary_.step_is_valid) {
+			      Preferences.debug("Invalid step: current_cost: " + x_cost_[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			      Preferences.debug(" absolute model cost change: " + model_cost_change_ + "\n", Preferences.DEBUG_ALGORITHM);
+			      Preferences.debug(" relative model cost change: " + (model_cost_change_ / x_cost_[0]) + "\n",
+			    		  Preferences.DEBUG_ALGORITHM);
+			  }
+			  return true;
+			}
+
+		// Invalid steps can happen due to a number of reasons, and we allow a
+		// limited number of consecutive failures, and return false if this
+		// limit is exceeded.
+		private boolean HandleInvalidStep() {
+		  // TODO(sameeragarwal): Should we be returning FAILURE or
+		  // NO_CONVERGENCE? The solution value is still usable in many cases,
+		  // it is not clear if we should declare the solver a failure
+		  // entirely. For example the case where model_cost_change ~ 0.0, but
+		  // just slightly negative.
+		  if (++num_consecutive_invalid_steps_ >=
+		      options_.max_num_consecutive_invalid_steps) {
+		    solver_summary_.message[0] = String.format(
+		        "Number of consecutive invalid steps more \n" +
+		        "than Solver::Options::max_num_consecutive_invalid_steps: %d",
+		        options_.max_num_consecutive_invalid_steps);
+		    solver_summary_.termination_type = TerminationType.FAILURE;
+		    return false;
+		  }
+
+		  strategy_.StepIsInvalid();
+
+		  // We are going to try and reduce the trust region radius and
+		  // solve again. To do this, we are going to treat this iteration
+		  // as an unsuccessful iteration. Since the various callbacks are
+		  // still executed, we are going to fill the iteration summary
+		  // with data that assumes a step of length zero and no progress.
+		  iteration_summary_.cost = x_cost_[0] + solver_summary_.fixed_cost;
+		  iteration_summary_.cost_change = 0.0;
+		  iteration_summary_.gradient_max_norm =
+		      solver_summary_.iterations.get(solver_summary_.iterations.size()-1).gradient_max_norm;
+		  iteration_summary_.gradient_norm =
+		      solver_summary_.iterations.get(solver_summary_.iterations.size()-1).gradient_norm;
+		  iteration_summary_.step_norm = 0.0;
+		  iteration_summary_.relative_decrease = 0.0;
+		  iteration_summary_.eta = options_.eta;
+		  return true;
+		}
+
+		// Perform a projected line search to improve the objective function
+		// value along delta.
+		//
+		// TODO(sameeragarwal): The current implementation does not do
+		// anything illegal but is incorrect and not terribly effective.
+		//
+		// https://github.com/ceres-solver/ceres-solver/issues/187
+		private void DoLineSearch(Vector<Double> x, Vector<Double> gradient, double cost, Vector<Double> delta) {
+		  int i;
+		  LineSearchFunction line_search_function = new LineSearchFunction(evaluator_);
+
+		  LineSearchOptions line_search_options = new LineSearchOptions();
+		  line_search_options.is_silent = true;
+		  line_search_options.interpolation_type =
+		      options_.line_search_interpolation_type;
+		  line_search_options.min_step_size = options_.min_line_search_step_size;
+		  line_search_options.sufficient_decrease =
+		      options_.line_search_sufficient_function_decrease;
+		  line_search_options.max_step_contraction =
+		      options_.max_line_search_step_contraction;
+		  line_search_options.min_step_contraction =
+		      options_.min_line_search_step_contraction;
+		  line_search_options.max_num_iterations =
+		      options_.max_num_line_search_step_size_iterations;
+		  line_search_options.sufficient_curvature_decrease =
+		      options_.line_search_sufficient_curvature_decrease;
+		  line_search_options.max_step_expansion =
+		      options_.max_line_search_step_expansion;
+		  line_search_options.function = line_search_function;
+
+		  String message[] = new String[1];
+		  LineSearch line_search = Create(LineSearchType.ARMIJO, line_search_options, message);
+		  if (line_search == null) {
+			  System.err.println("line_search == null in DoLineSearch");
+			  return;
+		  }
+		  LineSearchSummary line_search_summary = new LineSearchSummary();
+		  line_search_function.Init(x, delta);
+		  double initial_gradient = 0.0;
+		  for (i = 0; i < gradient.size(); i++) {
+		      initial_gradient += (gradient.get(i)*delta.get(i)); 
+		  }
+		  line_search.Search(1.0, cost, initial_gradient, line_search_summary);
+
+		  solver_summary_.num_line_search_steps += line_search_summary.num_iterations;
+		  solver_summary_.line_search_cost_evaluation_time_in_seconds +=
+		      line_search_summary.cost_evaluation_time_in_seconds;
+		  solver_summary_.line_search_gradient_evaluation_time_in_seconds +=
+		      line_search_summary.gradient_evaluation_time_in_seconds;
+		  solver_summary_.line_search_polynomial_minimization_time_in_seconds +=
+		      line_search_summary.polynomial_minimization_time_in_seconds;
+		  solver_summary_.line_search_total_time_in_seconds +=
+		      line_search_summary.total_time_in_seconds;
+
+		  if (line_search_summary.success) {
+			for (i = 0; i < delta.size(); i++) {
+				delta.set(i,delta.get(i)*line_search_summary.optimal_point.x);
+			}
+		  }
+		}
 
 
 		  /*private:
-		  bool ComputeTrustRegionStep();
 
 		  void ComputeCandidatePointAndEvaluateCost();
 
-		  void DoLineSearch(const Vector& x,
-		                    const Vector& gradient,
-		                    const double cost,
-		                    Vector* delta);
+		  
 		  void DoInnerIterationsIfNeeded();
 
 		  bool ParameterToleranceReached();
@@ -7068,11 +7315,376 @@ public abstract class CeresSolver {
 
 		  bool IsStepSuccessful();
 		  void HandleUnsuccessfulStep();
-		  bool HandleSuccessfulStep();
-		  bool HandleInvalidStep();*/
+		  bool HandleSuccessfulStep();*/
 
 		  
 		} // TrustRegionMinimizer
+	
+	public LineSearch Create(LineSearchType line_search_type,
+            LineSearchOptions options,
+            String[] error) {
+			LineSearch line_search = null;
+			switch (line_search_type) {
+			/*case ARMIJO:
+			line_search = new ArmijoLineSearch(options);
+			break;
+			case WOLFE:
+			line_search = new WolfeLineSearch(options);
+			break;*/
+			default:
+			error[0] = "Invalid line search algorithm type: " +
+			LineSearchTypeToString(line_search_type) +
+			", unable to create line search.";
+			return null;
+			}
+			//return line_search;
+			}
+
+	
+	abstract class LineSearch {
+		private LineSearchOptions options_;
+		
+		public LineSearch(LineSearchOptions options) {
+		    options_ = options;	
+		}
+		
+		public abstract void DoSearch(double step_size_estimate,
+                double initial_cost,
+                double initial_gradient,
+                LineSearchSummary summary);
+		
+		public LineSearchOptions options() { return options_; }
+		
+		public void Search(double step_size_estimate,
+                double initial_cost,
+                double initial_gradient,
+                LineSearchSummary summary) {
+			    double start_time = 1.0E-3 * System.currentTimeMillis();
+			
+			if (summary == null) {
+				System.err.println("LineSearchSummary summary == null in LineSearch Search");
+				return;
+			}
+			summary.cost_evaluation_time_in_seconds = 0.0;
+			summary.gradient_evaluation_time_in_seconds = 0.0;
+			summary.polynomial_minimization_time_in_seconds = 0.0;
+			//options().function.ResetTimeStatistics();
+			this.DoSearch(step_size_estimate, initial_cost, initial_gradient, summary);
+			//options().function.
+			//TimeStatistics(summary.cost_evaluation_time_in_seconds,
+			             //summary.gradient_evaluation_time_in_seconds);
+			
+			summary.total_time_in_seconds = 1.0E-3 * System.currentTimeMillis() - start_time;
+           }
+
+	} // abstract class LineSearch
+	
+	// FunctionSample is used by the line search routines to store and
+	// communicate the value and (optionally) the gradient of the function
+	// being minimized.
+	//
+	// Since line search as the name implies happens along a certain
+	// line/direction. FunctionSample contains the information in two
+	// ways. Information in the ambient space and information along the
+	// direction of search.
+	class FunctionSample {
+		  // x is the location of the sample along the search direction.
+		  public double x;
+
+		  // Let p be a point and d be the search direction then
+		  //
+		  // vector_x = p + x * d;
+		  public Vector<Double> vector_x;
+		  // True if vector_x has been assigned a valid value.
+		  public boolean vector_x_is_valid;
+
+		  // value = f(vector_x)
+		  public double value;
+		  // True of the evaluation was successful and value is a finite
+		  // number.
+		  public boolean value_is_valid;
+
+		  // vector_gradient = Df(vector_position);
+		  //
+		  // D is the derivative operator.
+		  public Vector<Double> vector_gradient;
+		  // True if the vector gradient was evaluated and the evaluation was
+		  // successful (the value is a finite number).
+		  public boolean vector_gradient_is_valid;
+
+		  // gradient = d.transpose() * vector_gradient
+		  //
+		  // where d is the search direction.
+		  public double gradient;
+		  // True if the evaluation of the gradient was sucessful and the
+		  // value is a finite number.
+		  public boolean gradient_is_valid;
+	      public FunctionSample() {
+	    	  x = 0.0;
+	          vector_x_is_valid = false;
+	          value = 0.0;
+	          value_is_valid = false;
+	          vector_gradient_is_valid = false;
+	          gradient = 0.0;
+	          gradient_is_valid = false; 
+	      }
+	  
+	      public FunctionSample(double x, double value) {
+	    	  this.x = x;
+	          vector_x_is_valid = false;
+	          this.value = value;
+	          value_is_valid = true;
+	          vector_gradient_is_valid = false;
+	          gradient = 0.0;
+	          gradient_is_valid = false; 
+	      }
+	      
+	      public FunctionSample(double x, double value, double gradient) {
+	    	  this.x = x;
+	          vector_x_is_valid = false;
+	          this.value = value;
+	          value_is_valid = true;
+	          vector_gradient_is_valid = false;
+	          this.gradient = gradient;
+	          gradient_is_valid = true; 
+	      }
+
+	      public String ToDebugString() {
+	    	  return String.format("[x: %.8e, value: %.8e, gradient: %.8e, " +
+                      "value_is_valid: %d, gradient_is_valid: %d]",
+                      x, value, gradient, value_is_valid, gradient_is_valid);  
+	      }
+
+	  
+	};
+	
+	// Result of the line search.
+	  class LineSearchSummary {
+		    public boolean success;
+		    FunctionSample optimal_point;
+		    public int num_function_evaluations;
+		    public int num_gradient_evaluations;
+		    public int num_iterations;
+		    // Cumulative time spent evaluating the value of the cost function across
+		    // all iterations.
+		    public double cost_evaluation_time_in_seconds;
+		    // Cumulative time spent evaluating the gradient of the cost function across
+		    // all iterations.
+		    public double gradient_evaluation_time_in_seconds;
+		    // Cumulative time spent minimizing the interpolating polynomial to compute
+		    // the next candidate step size across all iterations.
+		    public double polynomial_minimization_time_in_seconds;
+		    public double total_time_in_seconds;
+		    public String error;
+	        public LineSearchSummary() {
+	          success = false;
+	          num_function_evaluations = 0;
+	          num_gradient_evaluations = 0;
+	          num_iterations = 0;
+	          cost_evaluation_time_in_seconds = -1.0;
+	          gradient_evaluation_time_in_seconds = -1.0;
+	          polynomial_minimization_time_in_seconds = -1.0;
+	          total_time_in_seconds = -1.0;
+	        }
+
+	    
+	  };
+	
+	class LineSearchOptions {
+		// Degree of the polynomial used to approximate the objective
+	    // function.
+	    public LineSearchInterpolationType interpolation_type;
+
+	    // Armijo and Wolfe line search parameters.
+
+	    // Solving the line search problem exactly is computationally
+	    // prohibitive. Fortunately, line search based optimization
+	    // algorithms can still guarantee convergence if instead of an
+	    // exact solution, the line search algorithm returns a solution
+	    // which decreases the value of the objective function
+	    // sufficiently. More precisely, we are looking for a step_size
+	    // s.t.
+	    //
+	    //  f(step_size) <= f(0) + sufficient_decrease * f'(0) * step_size
+	    public double sufficient_decrease;
+
+	    // In each iteration of the Armijo / Wolfe line search,
+	    //
+	    // new_step_size >= max_step_contraction * step_size
+	    //
+	    // Note that by definition, for contraction:
+	    //
+	    //  0 < max_step_contraction < min_step_contraction < 1
+	    //
+	    public double max_step_contraction;
+
+	    // In each iteration of the Armijo / Wolfe line search,
+	    //
+	    // new_step_size <= min_step_contraction * step_size
+	    // Note that by definition, for contraction:
+	    //
+	    //  0 < max_step_contraction < min_step_contraction < 1
+	    //
+	    public double min_step_contraction;
+
+	    // If during the line search, the step_size falls below this
+	    // value, it is truncated to zero.
+	    public double min_step_size;
+
+	    // Maximum number of trial step size iterations during each line search,
+	    // if a step size satisfying the search conditions cannot be found within
+	    // this number of trials, the line search will terminate.
+	    public int max_num_iterations;
+
+	    // Wolfe-specific line search parameters.
+
+	    // The strong Wolfe conditions consist of the Armijo sufficient
+	    // decrease condition, and an additional requirement that the
+	    // step-size be chosen s.t. the _magnitude_ ('strong' Wolfe
+	    // conditions) of the gradient along the search direction
+	    // decreases sufficiently. Precisely, this second condition
+	    // is that we seek a step_size s.t.
+	    //
+	    //   |f'(step_size)| <= sufficient_curvature_decrease * |f'(0)|
+	    //
+	    // Where f() is the line search objective and f'() is the derivative
+	    // of f w.r.t step_size (d f / d step_size).
+	    public double sufficient_curvature_decrease;
+
+	    // During the bracketing phase of the Wolfe search, the step size is
+	    // increased until either a point satisfying the Wolfe conditions is
+	    // found, or an upper bound for a bracket containing a point satisfying
+	    // the conditions is found.  Precisely, at each iteration of the
+	    // expansion:
+	    //
+	    //   new_step_size <= max_step_expansion * step_size.
+	    //
+	    // By definition for expansion, max_step_expansion > 1.0.
+	    public double max_step_expansion;
+
+	    public boolean is_silent;
+
+	    // The one dimensional function that the line search algorithm
+	    // minimizes.
+	    LineSearchFunction function;
+	    public LineSearchOptions() {
+	          interpolation_type = LineSearchInterpolationType.CUBIC;
+	          sufficient_decrease = 1e-4;
+	          max_step_contraction = 1e-3;
+	          min_step_contraction = 0.9;
+	          min_step_size = 1e-9;
+	          max_num_iterations = 20;
+	          sufficient_curvature_decrease = 0.9;
+	          max_step_expansion = 10.0;
+	          is_silent = false;
+	          function = null; 
+	    }
+
+	    
+	  };
+	
+	// An object used by the line search to access the function values
+	// and gradient of the one dimensional function being optimized.
+	//
+	// In practice, this object provides access to the objective
+	// function value and the directional derivative of the underlying
+	// optimization problem along a specific search direction.
+	class LineSearchFunction {
+			  private Evaluator evaluator_;
+			  private Vector<Double> position_;
+			  private Vector<Double> direction_;
+
+			  // scaled_direction = x * direction_;
+			  private Vector<Double> scaled_direction_;
+
+			  // We may not exclusively own the evaluator (e.g. in the Trust Region
+			  // minimizer), hence we need to save the initial evaluation durations for the
+			  // value & gradient to accurately determine the duration of the evaluations
+			  // we invoked.  These are reset by a call to ResetTimeStatistics().
+			  private double initial_evaluator_residual_time_in_seconds;
+			  private double initial_evaluator_jacobian_time_in_seconds;
+			  
+			  public LineSearchFunction(Evaluator evaluator) {
+			      evaluator_ = evaluator;
+			      position_ = new Vector<Double>(evaluator.NumParameters());
+			      direction_ = new Vector<Double>(evaluator.NumEffectiveParameters());
+			      scaled_direction_ = new Vector<Double>(evaluator.NumEffectiveParameters());
+			      initial_evaluator_residual_time_in_seconds = 0.0;
+			      initial_evaluator_jacobian_time_in_seconds = 0.0;
+			  }
+
+			public void Init(Vector<Double> position, Vector<Double> direction) {
+			  position_ = position;
+			  direction_ = direction;
+			}
+
+	  // Evaluate the line search objective
+	  //
+	  //   f(x) = p(position + x * direction)
+	  //
+	  // Where, p is the objective function of the general optimization
+	  // problem.
+	  //
+	  // evaluate_gradient controls whether the gradient will be evaluated
+	  // or not.
+	  //
+	  // On return output->*_is_valid indicate indicate whether the
+	  // corresponding fields have numerically valid values or not.
+	  /*public void Evaluate(double x,
+                    boolean evaluate_gradient,
+                    FunctionSample output) {
+			output->x = x;
+			output->vector_x_is_valid = false;
+			output->value_is_valid = false;
+			output->gradient_is_valid = false;
+			output->vector_gradient_is_valid = false;
+			
+			scaled_direction_ = output->x * direction_;
+			output->vector_x.resize(position_.rows(), 1);
+			if (!evaluator_->Plus(position_.data(),
+			          scaled_direction_.data(),
+			          output->vector_x.data())) {
+			return;
+			}
+			output->vector_x_is_valid = true;
+			
+			double* gradient = NULL;
+			if (evaluate_gradient) {
+			output->vector_gradient.resize(direction_.rows(), 1);
+			gradient = output->vector_gradient.data();
+			}
+			const bool eval_status = evaluator_->Evaluate(
+			output->vector_x.data(), &(output->value), NULL, gradient, NULL);
+			
+			if (!eval_status || !IsFinite(output->value)) {
+			return;
+			}
+			
+			output->value_is_valid = true;
+			if (!evaluate_gradient) {
+			return;
+			}
+			
+			output->gradient = direction_.dot(output->vector_gradient);
+			if (!IsFinite(output->gradient)) {
+			return;
+			}
+			
+			output->gradient_is_valid = true;
+			output->vector_gradient_is_valid = true;
+			}
+
+	  double DirectionInfinityNorm() const;
+
+	  // Resets to now, the start point for the results from TimeStatistics().
+	  void ResetTimeStatistics();
+	  void TimeStatistics(double* cost_evaluation_time_in_seconds,
+	                      double* gradient_evaluation_time_in_seconds) const;*/
+	  public Vector<Double> position() { return position_; }
+	  public Vector<Double> direction() { return direction_; }
+
+	 
+	};
 	
 	class TrustRegionStepEvaluator {
 			  private int max_consecutive_nonmonotonic_steps_;
@@ -7196,22 +7808,10 @@ public abstract class CeresSolver {
 		          max_lm_diagonal = 1e32;
 		          dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
 		    }
-		  } // class Options
-
-	
-	abstract class TrustRegionStrategy {
-		 public TrustRegionStrategyOptions options;
-		 public PerSolveOptions perSolveOptions;
-		 public Summary summary;
-		 
-		 public TrustRegionStrategy() {
-			 options = new TrustRegionStrategyOptions();
-			 summary = new Summary();
-		 }
+		  } // class TrustStrategyRegionOptions
 		
-		  
 		  // Per solve options.
-		  class PerSolveOptions {
+		  class TrustRegionStrategyPerSolveOptions {
 			    // Forcing sequence for inexact solves.
 			    public double eta;
 
@@ -7223,13 +7823,25 @@ public abstract class CeresSolver {
 			    // CONSOLE then dump_filename_base will be ignored and the linear
 			    // system will be written to the standard error.
 			    public String dump_filename_base;
-			    public PerSolveOptions() {
+			    public TrustRegionStrategyPerSolveOptions() {
 			        eta = 0.0;
 			        dump_format_type = DumpFormatType.TEXTFILE;
 			    }
 
 			    
-			  } // class PerSolveOptions
+			  } // class TrustStrategyPerSolveOptions
+
+	
+	abstract class TrustRegionStrategy {
+		 public TrustRegionStrategyOptions options;
+		 public TrustRegionStrategyPerSolveOptions perSolveOptions;
+		 public Summary summary;
+		 
+		 public TrustRegionStrategy() {
+			 options = new TrustRegionStrategyOptions();
+			 perSolveOptions = new TrustRegionStrategyPerSolveOptions();
+			 summary = new Summary();
+		 }
 
 			  class Summary {
 				    // If the trust region problem is,
@@ -7258,7 +7870,7 @@ public abstract class CeresSolver {
 			  } // class Summary
 			  
 			  // Use the current radius to solve for the trust region step.
-			  public abstract Summary ComputeStep(PerSolveOptions per_solve_options,
+			  public abstract Summary ComputeStep(TrustRegionStrategyPerSolveOptions per_solve_options,
 			                              SparseMatrix jacobian,
 			                              double residuals[],
 			                              double step[]);
@@ -7348,7 +7960,7 @@ public abstract class CeresSolver {
 
 	  // TrustRegionStrategy interface
 	  public TrustRegionStrategy.Summary ComputeStep(
-	      TrustRegionStrategy.PerSolveOptions per_solve_options,
+	      TrustRegionStrategyPerSolveOptions per_solve_options,
 	      SparseMatrix jacobian,
 	      double[] residuals,
 	      double[] step) {
@@ -7626,7 +8238,7 @@ public abstract class CeresSolver {
 	      }
 
 	  // TrustRegionStrategy interface
-	  public TrustRegionStrategy.Summary ComputeStep(PerSolveOptions per_solve_options,
+	  public TrustRegionStrategy.Summary ComputeStep(TrustRegionStrategyPerSolveOptions per_solve_options,
 	                              SparseMatrix jacobian,
 	                              double residuals[],
 	                              double step[]) {
@@ -8035,7 +8647,7 @@ public abstract class CeresSolver {
 	  //typedef Eigen::Matrix<double, 2, 2, Eigen::DontAlign> Matrix2d;
 
 	  LinearSolverSummary ComputeGaussNewtonStep(
-	      PerSolveOptions per_solve_options,
+	      TrustRegionStrategyPerSolveOptions per_solve_options,
 	      SparseMatrix jacobian,
 	      double residuals[]) {
 		  int i;
