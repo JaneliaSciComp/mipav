@@ -24,6 +24,7 @@ import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.Preferences;
 
 /**
@@ -75,12 +76,18 @@ public abstract class CeresSolver {
 	private GeneralizedEigenvalue2 ge2 = new GeneralizedEigenvalue2();
 	private GeneralizedInverse2 gi2 = new GeneralizedInverse2();
 	private LinearEquations le = new LinearEquations();
+	private LinearEquations2 le2 = new LinearEquations2();
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
 	// before passing them to user code. If on return an element of the
 	// array still contains this value, we will assume that the user code
 	// did not write to that memory location.
 	private int MAX_LOG_LEVEL = 1;
+	// Log severity level constants.
+	private int FATAL   = -3;
+	private int ERROR   = -2;
+	private int WARNING = -1;
+	private int INFO    =  0;
 	// Each package in SuiteSparse has its own separate
 	// CXSparse and CHOLMOD are SuiteSparse packages
 
@@ -5196,6 +5203,35 @@ public abstract class CeresSolver {
 
 		  // The number of residuals in the optimization problem.
 		  public abstract int NumResiduals();
+		  
+		// state is an array of size NumParameters(), cost is a pointer to a single
+		  // double, and residuals is an array of doubles of size NumResiduals().
+		  public abstract boolean Evaluate(EvaluateOptions evaluate_options,
+		                        double[] state,
+		                        double[] cost,
+		                        double[] residuals,
+		                        double[] gradient,
+		                        SparseMatrix jacobian);
+
+		  // Variant of Evaluator::Evaluate where the user wishes to use the
+		  // default EvaluateOptions struct. This is mostly here as a
+		  // convenience method.
+		  public boolean Evaluate(double[] state,
+		                double[] cost,
+		                double[] residuals,
+		                double[] gradient,
+		                SparseMatrix jacobian) {
+		    return Evaluate(new EvaluateOptions(),
+		                    state,
+		                    cost,
+		                    residuals,
+		                    gradient,
+		                    jacobian);
+		  }
+		  
+		  public HashMap<String, CallStatistics> Statistics() {
+			    return new HashMap<String, CallStatistics>();
+		  }
 		
 		// It is expected that the classes implementing this interface will be aware
 		// of their client's requirements for the kind of sparse matrix storage and
@@ -5772,6 +5808,35 @@ public abstract class CeresSolver {
 		                      Vector<Double> delta,
 		            Vector<Double> state_plus_delta) {
 		    return program_.Plus(state, delta, state_plus_delta);
+		  }
+		  
+		  public boolean Evaluate(EvaluateOptions evaluate_options,
+				  double[] state_array, double[] cost, double residuals_array[], double[] gradient_array, SparseMatrix jacobian) {
+			  int i;
+			  boolean status;
+			  Vector<Double>state = new Vector<Double>();
+			  for (i = 0; i < state_array.length; i++) {
+				  state.add(state_array[i]);
+			  }
+			  Vector<Double>residuals = new Vector<Double>();
+			  for (i = 0; i < residuals_array.length; i++) {
+				  residuals.add(residuals_array[i]);
+			  }
+			  Vector<Double>gradient = new Vector<Double>();
+			  for (i = 0; i < gradient_array.length; i++) {
+				  gradient.add(gradient_array[i]);
+			  }
+			  status = Evaluate(evaluate_options, state, cost, residuals, gradient, jacobian);
+			  for (i = 0; i < state_array.length; i++) {
+				  state_array[i] = state.get(i);
+			  }
+			  for (i = 0; i < residuals_array.length; i++) {
+				  residuals_array[i] = residuals.get(i);
+			  }
+			  for (i = 0; i < gradient_array.length; i++) {
+				  gradient_array[i] = gradient.get(i);
+			  }
+			  return status;
 		  }
 		  
 		  public boolean Evaluate(EvaluateOptions evaluate_options,
@@ -7287,9 +7352,9 @@ public abstract class CeresSolver {
 
 		  solver_summary_.num_line_search_steps += line_search_summary.num_iterations;
 		  solver_summary_.line_search_cost_evaluation_time_in_seconds +=
-		      line_search_summary.cost_evaluation_time_in_seconds;
+		      line_search_summary.cost_evaluation_time_in_seconds[0];
 		  solver_summary_.line_search_gradient_evaluation_time_in_seconds +=
-		      line_search_summary.gradient_evaluation_time_in_seconds;
+		      line_search_summary.gradient_evaluation_time_in_seconds[0];
 		  solver_summary_.line_search_polynomial_minimization_time_in_seconds +=
 		      line_search_summary.polynomial_minimization_time_in_seconds;
 		  solver_summary_.line_search_total_time_in_seconds +=
@@ -7338,7 +7403,121 @@ public abstract class CeresSolver {
 			return null;
 			}
 			//return line_search;
-			}
+	}
+	
+	// Backtracking and interpolation based Armijo line search. This
+	// implementation is based on the Armijo line search that ships in the
+	// minFunc package by Mark Schmidt.
+	//
+	// For more details: http://www.di.ens.fr/~mschmidt/Software/minFunc.html
+	class ArmijoLineSearch extends LineSearch {
+	  public ArmijoLineSearch(LineSearchOptions options) {
+		  super(options);  
+	  }
+
+	 public void DoSearch(double step_size_estimate,
+	                        double initial_cost,
+	                        double initial_gradient,
+	                        LineSearchSummary summary) {
+		  if (step_size_estimate < 0.0) {
+			  System.err.println("step_size_estimate < 0.0 in ArmijoLineSearch DoSearch");
+			  return;
+		  }
+		  if (options().sufficient_decrease <= 0.0) {
+			  System.err.println("options().sufficient_decrease <= 0.0 in ArmijoLineSearch DoSearch");
+			  return;
+		  }
+		  if (options().sufficient_decrease >= 1.0) {
+			  System.err.println("options().sufficient_decrease >= 1.0 in ArmijoLineSearch DoSearch");
+			  return;
+		  }
+		  if (options().max_num_iterations <= 0) {
+			  System.err.println("options().max_num_iterations <= 0 in ArmijoLineSearch DoSearch");
+			  return;
+		  }
+		  LineSearchFunction function = options().function;
+
+		  // Note initial_cost & initial_gradient are evaluated at step_size = 0,
+		  // not step_size_estimate, which is our starting guess.
+		  FunctionSample initial_position = new FunctionSample(0.0, initial_cost, initial_gradient);
+		  initial_position.vector_x = function.position();
+		  initial_position.vector_x_is_valid = true;
+
+		  double descent_direction_max_norm = function.DirectionInfinityNorm();
+		  FunctionSample previous = new FunctionSample();
+		  FunctionSample current = new FunctionSample();
+
+		  // As the Armijo line search algorithm always uses the initial point, for
+		  // which both the function value and derivative are known, when fitting a
+		  // minimizing polynomial, we can fit up to a quadratic without requiring the
+		  // gradient at the current query point.
+		  boolean kEvaluateGradient = options().interpolation_type == LineSearchInterpolationType.CUBIC;
+
+		  ++summary.num_function_evaluations;
+		  if (kEvaluateGradient) {
+		    ++summary.num_gradient_evaluations;
+		  }
+
+		  function.Evaluate(step_size_estimate, kEvaluateGradient, current);
+		  while (!current.value_is_valid ||
+		         current.value[0] > (initial_cost
+		                          + options().sufficient_decrease
+		                          * initial_gradient
+		                          * current.x)) {
+		    // If current.value_is_valid is false, we treat it as if the cost at that
+		    // point is not large enough to satisfy the sufficient decrease condition.
+		    ++summary.num_iterations;
+		    if (summary.num_iterations >= options().max_num_iterations) {
+		      summary.error =
+		          String.format("Line search failed: Armijo failed to find a point \n" +
+		                       "satisfying the sufficient decrease condition within \n" +
+		                       "specified max_num_iterations: %d.",
+		                       options().max_num_iterations);
+		      
+		      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+		          Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+		      }
+		      return;
+		    }
+
+		    double polynomial_minimization_start_time = 1.0E-3 * System.currentTimeMillis();
+		    double step_size =
+		        this.InterpolatingPolynomialMinimizingStepSize(
+		            options().interpolation_type,
+		            initial_position,
+		            previous,
+		            current,
+		            (options().max_step_contraction * current.x),
+		            (options().min_step_contraction * current.x));
+		    summary.polynomial_minimization_time_in_seconds +=
+		        (1.0E-3 * System.currentTimeMillis() - polynomial_minimization_start_time);
+
+		    if (step_size * descent_direction_max_norm < options().min_step_size) {
+		      summary.error =
+		          String.format("Line search failed: step_size too small: %.5e " +
+		                       "with descent_direction_max_norm: %.5e.", step_size,
+		                       descent_direction_max_norm);
+		      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+		          Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+		      }
+		      return;
+		    }
+
+		    previous = current;
+
+		    ++summary.num_function_evaluations;
+		    if (kEvaluateGradient) {
+		      ++summary.num_gradient_evaluations;
+		    }
+
+		    function.Evaluate(step_size, kEvaluateGradient, current);
+		  }
+
+		  summary.optimal_point = current;
+		  summary.success = true;
+	 
+	 };
+	} // class ArmijoLineSearch
 
 	
 	abstract class LineSearch {
@@ -7365,17 +7544,104 @@ public abstract class CeresSolver {
 				System.err.println("LineSearchSummary summary == null in LineSearch Search");
 				return;
 			}
-			summary.cost_evaluation_time_in_seconds = 0.0;
-			summary.gradient_evaluation_time_in_seconds = 0.0;
+			summary.cost_evaluation_time_in_seconds[0] = 0.0;
+			summary.gradient_evaluation_time_in_seconds[0] = 0.0;
 			summary.polynomial_minimization_time_in_seconds = 0.0;
-			//options().function.ResetTimeStatistics();
+			options().function.ResetTimeStatistics();
 			this.DoSearch(step_size_estimate, initial_cost, initial_gradient, summary);
-			//options().function.
-			//TimeStatistics(summary.cost_evaluation_time_in_seconds,
-			             //summary.gradient_evaluation_time_in_seconds);
+			options().function.
+			TimeStatistics(summary.cost_evaluation_time_in_seconds,
+			             summary.gradient_evaluation_time_in_seconds);
 			
 			summary.total_time_in_seconds = 1.0E-3 * System.currentTimeMillis() - start_time;
            }
+		
+		// Returns step_size \in [min_step_size, max_step_size] which minimizes the
+		// polynomial of degree defined by interpolation_type which interpolates all
+		// of the provided samples with valid values.
+		protected double InterpolatingPolynomialMinimizingStepSize(
+		    LineSearchInterpolationType interpolation_type,
+		    FunctionSample lowerbound,
+		    FunctionSample previous,
+		    FunctionSample current,
+		    double min_step_size,
+		    double max_step_size) {
+		  if (!current.value_is_valid ||
+		      (interpolation_type == LineSearchInterpolationType.BISECTION &&
+		       max_step_size <= current.x)) {
+		    // Either: sample is invalid; or we are using BISECTION and contracting
+		    // the step size.
+		    return Math.min(Math.max(current.x * 0.5, min_step_size), max_step_size);
+		  } 
+		  else if (interpolation_type == LineSearchInterpolationType.BISECTION) {
+			if (max_step_size <= current.x) {
+				System.err.println("max_step_size <= current.x in LineSearch InterpolatingPolynomialMinimizingStepSize");
+				return Double.NaN;
+			}
+		    // We are expanding the search (during a Wolfe bracketing phase) using
+		    // BISECTION interpolation.  Using BISECTION when trying to expand is
+		    // strictly speaking an oxymoron, but we define this to mean always taking
+		    // the maximum step size so that the Armijo & Wolfe implementations are
+		    // agnostic to the interpolation type.
+		    return max_step_size;
+		  }
+		  // Only check if lower-bound is valid here, where it is required
+		  // to avoid replicating current.value_is_valid == false
+		  // behaviour in WolfeLineSearch.
+		  if (!lowerbound.value_is_valid) {
+		      // std::scientific << std::setprecision(kErrorMessageNumericPrecision)
+		      System.err.println("Ceres bug: lower-bound sample for interpolation is invalid, ");
+		      System.err.println("please contact the developers!, interpolation_type: "
+		      + LineSearchInterpolationTypeToString(interpolation_type));
+		      System.err.println("lowerbound: "); 
+		      System.err.println(lowerbound.ToDebugString()); 
+		      System.err.println(" previous: " );
+		      System.err.println(previous.ToDebugString());
+		      System.err.println("current: ");
+		      System.err.println(current.ToDebugString());
+		      return Double.NaN;
+		  }
+
+		  // Select step size by interpolating the function and gradient values
+		  // and minimizing the corresponding polynomial.
+		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+		  samples.add(lowerbound);
+
+		  if (interpolation_type == LineSearchInterpolationType.QUADRATIC) {
+		    // Two point interpolation using function values and the
+		    // gradient at the lower bound.
+		    samples.add(new FunctionSample(current.x, current.value[0]));
+
+		    if (previous.value_is_valid) {
+		      // Three point interpolation, using function values and the
+		      // gradient at the lower bound.
+		      samples.add(new FunctionSample(previous.x, previous.value[0]));
+		    }
+		  } 
+		  else if (interpolation_type == LineSearchInterpolationType.CUBIC) {
+		    // Two point interpolation using the function values and the gradients.
+		    samples.add(current);
+
+		    if (previous.value_is_valid) {
+		      // Three point interpolation using the function values and
+		      // the gradients.
+		      samples.add(previous);
+		    }
+		  } 
+		  else {
+		    System.err.println("Ceres bug: No handler for interpolation_type: " +
+		               LineSearchInterpolationTypeToString(interpolation_type));
+		    System.err.println("Please contact the developers!");
+		    return Double.NaN;
+		  }
+
+		  double step_size[] = new double[] {0.0};
+		  double unused_min_value[] = new double[] {0.0};
+		  MinimizeInterpolatingPolynomial(samples, min_step_size, max_step_size,
+		                                  step_size, unused_min_value);
+		  return step_size[0];
+		}
+
 
 	} // abstract class LineSearch
 	
@@ -7399,7 +7665,7 @@ public abstract class CeresSolver {
 		  public boolean vector_x_is_valid;
 
 		  // value = f(vector_x)
-		  public double value;
+		  public double value[] = new double[1];
 		  // True of the evaluation was successful and value is a finite
 		  // number.
 		  public boolean value_is_valid;
@@ -7422,7 +7688,7 @@ public abstract class CeresSolver {
 	      public FunctionSample() {
 	    	  x = 0.0;
 	          vector_x_is_valid = false;
-	          value = 0.0;
+	          value[0] = 0.0;
 	          value_is_valid = false;
 	          vector_gradient_is_valid = false;
 	          gradient = 0.0;
@@ -7432,7 +7698,7 @@ public abstract class CeresSolver {
 	      public FunctionSample(double x, double value) {
 	    	  this.x = x;
 	          vector_x_is_valid = false;
-	          this.value = value;
+	          this.value[0] = value;
 	          value_is_valid = true;
 	          vector_gradient_is_valid = false;
 	          gradient = 0.0;
@@ -7442,7 +7708,7 @@ public abstract class CeresSolver {
 	      public FunctionSample(double x, double value, double gradient) {
 	    	  this.x = x;
 	          vector_x_is_valid = false;
-	          this.value = value;
+	          this.value[0] = value;
 	          value_is_valid = true;
 	          vector_gradient_is_valid = false;
 	          this.gradient = gradient;
@@ -7452,7 +7718,7 @@ public abstract class CeresSolver {
 	      public String ToDebugString() {
 	    	  return String.format("[x: %.8e, value: %.8e, gradient: %.8e, " +
                       "value_is_valid: %d, gradient_is_valid: %d]",
-                      x, value, gradient, value_is_valid, gradient_is_valid);  
+                      x, value[0], gradient, value_is_valid, gradient_is_valid);  
 	      }
 
 	  
@@ -7467,10 +7733,10 @@ public abstract class CeresSolver {
 		    public int num_iterations;
 		    // Cumulative time spent evaluating the value of the cost function across
 		    // all iterations.
-		    public double cost_evaluation_time_in_seconds;
+		    public double cost_evaluation_time_in_seconds[] = new double[1];
 		    // Cumulative time spent evaluating the gradient of the cost function across
 		    // all iterations.
-		    public double gradient_evaluation_time_in_seconds;
+		    public double gradient_evaluation_time_in_seconds[] = new double[1];
 		    // Cumulative time spent minimizing the interpolating polynomial to compute
 		    // the next candidate step size across all iterations.
 		    public double polynomial_minimization_time_in_seconds;
@@ -7481,8 +7747,8 @@ public abstract class CeresSolver {
 	          num_function_evaluations = 0;
 	          num_gradient_evaluations = 0;
 	          num_iterations = 0;
-	          cost_evaluation_time_in_seconds = -1.0;
-	          gradient_evaluation_time_in_seconds = -1.0;
+	          cost_evaluation_time_in_seconds[0] = -1.0;
+	          gradient_evaluation_time_in_seconds[0] = -1.0;
 	          polynomial_minimization_time_in_seconds = -1.0;
 	          total_time_in_seconds = -1.0;
 	        }
@@ -7630,61 +7896,137 @@ public abstract class CeresSolver {
 	  //
 	  // On return output->*_is_valid indicate indicate whether the
 	  // corresponding fields have numerically valid values or not.
-	  /*public void Evaluate(double x,
+	  public void Evaluate(double x,
                     boolean evaluate_gradient,
                     FunctionSample output) {
-			output->x = x;
-			output->vector_x_is_valid = false;
-			output->value_is_valid = false;
-			output->gradient_is_valid = false;
-			output->vector_gradient_is_valid = false;
+		    int i;
+			output.x = x;
+			output.vector_x_is_valid = false;
+			output.value_is_valid = false;
+			output.gradient_is_valid = false;
+			output.vector_gradient_is_valid = false;
 			
-			scaled_direction_ = output->x * direction_;
-			output->vector_x.resize(position_.rows(), 1);
-			if (!evaluator_->Plus(position_.data(),
-			          scaled_direction_.data(),
-			          output->vector_x.data())) {
+			scaled_direction_.clear();
+			for (i = 0; i < direction_.size(); i++) {
+				scaled_direction_.add(output.x * direction_.get(i));
+			}
+			while(output.vector_x.size() < position_.size()) {
+				output.vector_x.add(0.0);
+			}
+			while (output.vector_x.size() > position_.size()) {
+				output.vector_x.removeElementAt(output.vector_x.size()-1);
+			}
+			if (!evaluator_.Plus(position_,
+			          scaled_direction_,
+			          output.vector_x)) {
 			return;
 			}
-			output->vector_x_is_valid = true;
+			output.vector_x_is_valid = true;
 			
-			double* gradient = NULL;
+			double[] gradient = null;
 			if (evaluate_gradient) {
-			output->vector_gradient.resize(direction_.rows(), 1);
-			gradient = output->vector_gradient.data();
+			while (output.vector_gradient.size() < direction_.size()) {
+				output.vector_gradient.add(0.0);
 			}
-			const bool eval_status = evaluator_->Evaluate(
-			output->vector_x.data(), &(output->value), NULL, gradient, NULL);
-			
-			if (!eval_status || !IsFinite(output->value)) {
+			while (output.vector_gradient.size() > direction_.size()) {
+				output.vector_gradient.removeElementAt(output.vector_gradient.size()-1);
+			}
+			gradient = new double[direction_.size()];
+			for (i = 0; i < direction_.size(); i++) {
+				gradient[i] = output.vector_gradient.get(i);
+			}
+			}
+			double vector_x_array[] = new double[output.vector_x.size()];
+			for (i = 0; i < output.vector_x.size(); i++) {
+				vector_x_array[i] = output.vector_x.get(i);
+			}
+			boolean eval_status = evaluator_.Evaluate(
+			vector_x_array, (output.value), null, gradient, null);
+			for (i = 0; i < output.vector_x.size(); i++) {
+				output.vector_x.set(i,vector_x_array[i]);
+			}
+			if (!eval_status || !Double.isFinite(output.value[0])) {
 			return;
 			}
 			
-			output->value_is_valid = true;
+			output.value_is_valid = true;
 			if (!evaluate_gradient) {
 			return;
 			}
 			
-			output->gradient = direction_.dot(output->vector_gradient);
-			if (!IsFinite(output->gradient)) {
+			output.gradient = 0.0;
+			for (i = 0; i < direction_.size(); i++) {
+				output.gradient += (direction_.get(i)*output.vector_gradient.get(i));
+			}
+			if (!Double.isFinite(output.gradient)) {
 			return;
 			}
 			
-			output->gradient_is_valid = true;
-			output->vector_gradient_is_valid = true;
+			output.gradient_is_valid = true;
+			output.vector_gradient_is_valid = true;
+			}
+	  
+	  public double DirectionInfinityNorm() {
+		  double maxVal = 0.0;
+		  for (int i = 0; i < direction_.size(); i++) {
+			  if (Math.abs(direction_.get(i)) > maxVal) {
+				  maxVal = Math.abs(direction_.get(i));
+			  }
+		  }
+		  return maxVal;
+		}
+	  
+	  // Resets to now, the start point for the results from TimeStatistics().
+	  public void ResetTimeStatistics() {
+		  HashMap<String, CallStatistics> evaluator_statistics =
+		      evaluator_.Statistics();
+
+		  initial_evaluator_residual_time_in_seconds =
+		      FindWithDefault(
+		          evaluator_statistics, "Evaluator::Residual", new CallStatistics())
+		          .time;
+		  initial_evaluator_jacobian_time_in_seconds =
+		      FindWithDefault(
+		          evaluator_statistics, "Evaluator::Jacobian", new CallStatistics())
+		          .time;
+		}
+	  
+	  public void TimeStatistics(
+			    double[] cost_evaluation_time_in_seconds,
+			    double[] gradient_evaluation_time_in_seconds) {
+			  HashMap<String, CallStatistics> evaluator_time_statistics =
+			      evaluator_.Statistics();
+			  cost_evaluation_time_in_seconds[0] =
+			      FindWithDefault(
+			          evaluator_time_statistics, "Evaluator::Residual", new CallStatistics())
+			          .time -
+			      initial_evaluator_residual_time_in_seconds;
+			  // Strictly speaking this will slightly underestimate the time spent
+			  // evaluating the gradient of the line search univariate cost function as it
+			  // does not count the time spent performing the dot product with the direction
+			  // vector.  However, this will typically be small by comparison, and also
+			  // allows direct subtraction of the timing information from the totals for
+			  // the evaluator returned in the solver summary.
+			  gradient_evaluation_time_in_seconds[0] =
+			      FindWithDefault(
+			          evaluator_time_statistics, "Evaluator::Jacobian", new CallStatistics())
+			          .time -
+			      initial_evaluator_jacobian_time_in_seconds;
 			}
 
-	  double DirectionInfinityNorm() const;
 
-	  // Resets to now, the start point for the results from TimeStatistics().
-	  void ResetTimeStatistics();
+
+
+	  /*
+
+	  
 	  void TimeStatistics(double* cost_evaluation_time_in_seconds,
 	                      double* gradient_evaluation_time_in_seconds) const;*/
 	  public Vector<Double> position() { return position_; }
 	  public Vector<Double> direction() { return direction_; }
 
 	 
-	};
+	} // class LineSearchFunction
 	
 	class TrustRegionStepEvaluator {
 			  private int max_consecutive_nonmonotonic_steps_;
@@ -13574,6 +13916,21 @@ public abstract class CeresSolver {
 			return "UNKNOWN";
 		}
 	}
+	
+	String LineSearchInterpolationTypeToString(
+		    LineSearchInterpolationType type) {
+		  switch (type) {
+		  case BISECTION:
+			  return "BISECTION";
+		  case QUADRATIC:
+		      return "QUADRATIC";
+		  case CUBIC:
+			  return "CUBIC";
+		    default:
+		      return "UNKNOWN";
+		  }
+		}
+
 
 	ParameterBlock FindWithDefault(HashMap<double[], ParameterBlock> collection, double[] key, ParameterBlock value) {
 		if (!collection.containsKey(key)) {
@@ -13584,7 +13941,119 @@ public abstract class CeresSolver {
 
 	}
 	
+	CallStatistics FindWithDefault(HashMap<String, CallStatistics> collection, String key, CallStatistics value) {
+		if (!collection.containsKey(key)) {
+			return value;
+		} else {
+			return collection.get(key);
+		}
+	}
 	
+	public void MinimizeInterpolatingPolynomial(Vector<FunctionSample> samples,
+            double x_min,
+            double x_max,
+            double[] optimal_x,
+            double[] optimal_value) {
+			Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+			/*MinimizePolynomial(polynomial, x_min, x_max, optimal_x, optimal_value);
+			for (int i = 0; i < samples.size(); ++i) {
+			const FunctionSample& sample = samples[i];
+			if ((sample.x < x_min) || (sample.x > x_max)) {
+			continue;
+			}
+			
+			const double value = EvaluatePolynomial(polynomial, sample.x);
+			if (value < *optimal_value) {
+			*optimal_x = sample.x;
+			*optimal_value = value;
+			}
+			}*/
+	} // public void MinimizeInterpolatingPolynomial
+
+	
+	Vector<Double> FindInterpolatingPolynomial(Vector<FunctionSample> samples) {
+		  int i;
+		  int num_samples = samples.size();
+		  int num_constraints = 0;
+		  for (i = 0; i < num_samples; ++i) {
+		    if (samples.get(i).value_is_valid) {
+		      ++num_constraints;
+		    }
+		    if (samples.get(i).gradient_is_valid) {
+		      ++num_constraints;
+		    }
+		  }
+
+		  int degree = num_constraints - 1;
+
+		  Matrix lhs = new Matrix(num_constraints, num_constraints);
+		  Vector<Double>rhs = new Vector<Double>(num_constraints);
+		  for (i = 0; i < num_constraints; i++) {
+			  rhs.add(0.0);
+		  }
+
+		  int row = 0;
+		  for (i = 0; i < num_samples; ++i) {
+		    FunctionSample sample = samples.get(i);
+		    if (sample.value_is_valid) {
+		      for (int j = 0; j <= degree; ++j) {
+		        lhs.set(row, j, Math.pow(sample.x, degree - j));
+		      }
+		      rhs.set(row,sample.value[0]);
+		      ++row;
+		    }
+
+		    if (sample.gradient_is_valid) {
+		      for (int j = 0; j < degree; ++j) {
+		        lhs.set(row, j, (degree - j) * Math.pow(sample.x, degree - j - 1));
+		      }
+		      rhs.set(row,sample.gradient);
+		      ++row;
+		    }
+		  }
+
+		  // TODO(sameeragarwal): This is a hack.
+		  // https://github.com/ceres-solver/ceres-solver/issues/248
+		// Compute the LU decomposition of A in place
+		  int m = num_constraints;
+		  int n = num_constraints;
+		  double lhs_array[][] = lhs.getArray();
+		  int lda = m;
+		  int ipiv[] = new int[m];
+		  int info[] = new int[1];
+	      le2.dgetrf(m, n, lhs_array, lda, ipiv, info);
+	      if (info[0] < 0) {
+	    	  System.err.println("In FindInterpolatingPolynomial dgetrf argument number " + 
+	      (-info[0]) + " is illegal");
+	    	  return null;
+	      }
+	      if (info[0] > 0) {
+	    	  System.err.println("In FindInterpolatingPolynomial dgetrf U["+(info[0]-1)+
+	    			  "]["+(info[0]-1)+"] is exactly 0");
+	    	  return null;
+	      }
+	      char trans = 'N'; // Solve A*X = B (no transpose)
+	      int nrhs = 1; // number of columns of B
+	      double rhs_array[][] = new double[m][1];
+	      for (i = 0; i < m; i++) {
+	    	  rhs_array[i][0] = rhs.get(i);
+	      }
+	      int ldb = n;
+	      le2.dgetrs(trans, n, nrhs, lhs_array, lda, ipiv,
+					rhs_array, ldb, info);
+	      if (info[0] < 0) {
+	    	  System.err.println("In FindInterpolatingPolynomial dgetrs argument number " + 
+	      (-info[0]) + " is illegal");
+	    	  return null;
+	      }
+	      for (i = 0; i < n; i++) {
+	    	  rhs.set(i,rhs_array[i][0]);
+	      }
+	      return rhs;
+		  //Eigen::FullPivLU<Matrix> lu(lhs);
+		  //return lu.setThreshold(0.0).solve(rhs);
+		}
+
 
 } // public abstract class CeresSolver
 
